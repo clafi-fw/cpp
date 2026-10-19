@@ -503,45 +503,45 @@ namespace ClaFi::PlatformImplementation::Wayland
         // it overlaps. A compositor offering less simply never sends it, and the scale stays 1.
         // 4 is where damage_buffer arrives, which takes buffer coordinates and so survives a
         // scale change; 3 is where set_buffer_scale does.
-        constexpr std::uint32_t compositor = 6;
-        constexpr std::uint32_t shm = 1;
+        constexpr std::uint32_t Compositor = 6;
+        constexpr std::uint32_t Shm = 1;
         // 3 is where xdg_popup.reposition arrives - moving a popup that is already on screen,
         // which is what a menu re-placed around content that grew needs. A compositor offering
         // less places a popup once, where it was created; see Window::canReposition.
-        constexpr std::uint32_t windowManager = 3;
-        constexpr std::uint32_t decorationManager = 1;
+        constexpr std::uint32_t WindowManager = 3;
+        constexpr std::uint32_t DecorationManager = 1;
         // 4 is where on_demand keyboard interactivity arrives, 3 the shell's own destructor, 2
         // set_layer on a surface already mapped. Nothing here needs more than 1; a compositor
         // offering less than 4 is bound at what it has.
-        constexpr std::uint32_t layerShell = 4;
+        constexpr std::uint32_t LayerShell = 4;
         // 1 is the whole protocol as it stands: a session asked for by id, a toplevel named in
         // it, and the three answers - created, restored, replaced.
-        constexpr std::uint32_t sessionManager = 1;
+        constexpr std::uint32_t SessionManager = 1;
         // 1 is the whole protocol: a token asked for against an input event, and the raise.
-        constexpr std::uint32_t activation = 1;
+        constexpr std::uint32_t Activation = 1;
         // 1 is the whole protocol: a toplevel exported, and the handle that names it.
-        constexpr std::uint32_t exporter = 1;
+        constexpr std::uint32_t Exporter = 1;
         // 5 is where wl_pointer.frame arrives, which groups the events of one hardware movement
         // so a diagonal scroll is one gesture rather than two. 4 is where wl_keyboard.repeat_info
         // arrives, without which a held key would repeat at a rate this client made up.
-        constexpr std::uint32_t seat = 5;
+        constexpr std::uint32_t Seat = 5;
         // 1 carries every shape a form asks for - the arrow, the I-beam, the hand, the wait and
         // the eight resize arrows. 2 adds the drag-and-drop shapes, which nothing here shows.
-        constexpr std::uint32_t cursorShapeManager = 1;
+        constexpr std::uint32_t CursorShapeManager = 1;
         // 2 is where wl_output.scale arrives. It is how a client learns the scale of a screen on
         // any compositor older than wl_compositor 6, which is most of them.
-        constexpr std::uint32_t output = 2;
-        constexpr std::uint32_t viewporter = 1;
-        constexpr std::uint32_t fractionalScaleManager = 1;
-        constexpr std::uint32_t alphaModifier = 1;
+        constexpr std::uint32_t Output = 2;
+        constexpr std::uint32_t Viewporter = 1;
+        constexpr std::uint32_t FractionalScaleManager = 1;
+        constexpr std::uint32_t AlphaModifier = 1;
         // 1 carries the whole of the selection: a source naming its MIME types, an offer listing
         // them, and set_selection against an input serial. 3 adds the drag-and-drop actions, whose
         // events would arrive on listener slots this layer does not fill, so it is not asked for
         // until something negotiates them.
-        constexpr std::uint32_t dataDeviceManager = 1;
+        constexpr std::uint32_t DataDeviceManager = 1;
         // 1 is the whole protocol as it stands: a device announcing the selection and the primary
         // selection, and an offer to read either from.
-        constexpr std::uint32_t dataControlManager = 1;
+        constexpr std::uint32_t DataControlManager = 1;
     }
 
     // **One notch of a wheel**, in the length units an axis event carries. The protocol states a
@@ -1035,7 +1035,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (interfaceName == ::wl_compositor_interface.name)
         {
             m_compositor = static_cast<wl_compositor*>(::wl_registry_bind(registry, name,
-                &::wl_compositor_interface, std::min(version, InterfaceVersion::compositor)));
+                &::wl_compositor_interface, std::min(version, InterfaceVersion::Compositor)));
             return;
         }
         if (interfaceName == ::wl_shm_interface.name)
@@ -1044,7 +1044,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 .format = &DisplayManager::onShmFormat
             };
             m_shm = static_cast<wl_shm*>(::wl_registry_bind(registry, name,
-                &::wl_shm_interface, std::min(version, InterfaceVersion::shm)));
+                &::wl_shm_interface, std::min(version, InterfaceVersion::Shm)));
             ::wl_shm_add_listener(m_shm, &k_shmListener, this);
             return;
         }
@@ -1054,7 +1054,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 .ping = &DisplayManager::onPing
             };
             m_windowManager = static_cast<xdg_wm_base*>(::wl_registry_bind(registry, name,
-                &::xdg_wm_base_interface, std::min(version, InterfaceVersion::windowManager)));
+                &::xdg_wm_base_interface, std::min(version, InterfaceVersion::WindowManager)));
             ::xdg_wm_base_add_listener(m_windowManager, &k_windowManagerListener, this);
             return;
         }
@@ -1065,7 +1065,7 @@ namespace ClaFi::PlatformImplementation::Wayland
                 .name = &DisplayManager::onSeatName
             };
             m_seat = static_cast<wl_seat*>(::wl_registry_bind(registry, name,
-                &::wl_seat_interface, std::min(version, InterfaceVersion::seat)));
+                &::wl_seat_interface, std::min(version, InterfaceVersion::Seat)));
             ::wl_seat_add_listener(m_seat, &k_seatListener, this);
             // The globals arrive in the order the compositor lists them, and the data device
             // manager may be bound already.
@@ -1076,7 +1076,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         {
             m_dataDeviceManager = static_cast<wl_data_device_manager*>(
                 ::wl_registry_bind(registry, name, &::wl_data_device_manager_interface,
-                    std::min(version, InterfaceVersion::dataDeviceManager)));
+                    std::min(version, InterfaceVersion::DataDeviceManager)));
             createDataDevice();
             return;
         }
@@ -1088,34 +1088,34 @@ namespace ClaFi::PlatformImplementation::Wayland
         {
             m_dataControlManager = static_cast<ext_data_control_manager_v1*>(
                 ::wl_registry_bind(registry, name, &::ext_data_control_manager_v1_interface,
-                    std::min(version, InterfaceVersion::dataControlManager)));
+                    std::min(version, InterfaceVersion::DataControlManager)));
             return;
         }
         if (interfaceName == ::wp_viewporter_interface.name)
         {
             m_viewporter = static_cast<wp_viewporter*>(::wl_registry_bind(registry, name,
-                &::wp_viewporter_interface, std::min(version, InterfaceVersion::viewporter)));
+                &::wp_viewporter_interface, std::min(version, InterfaceVersion::Viewporter)));
             return;
         }
         if (interfaceName == ::wp_fractional_scale_manager_v1_interface.name)
         {
             m_fractionalScaleManager = static_cast<wp_fractional_scale_manager_v1*>(
                 ::wl_registry_bind(registry, name, &::wp_fractional_scale_manager_v1_interface,
-                    std::min(version, InterfaceVersion::fractionalScaleManager)));
+                    std::min(version, InterfaceVersion::FractionalScaleManager)));
             return;
         }
         if (interfaceName == ::wp_alpha_modifier_v1_interface.name)
         {
             m_alphaModifier = static_cast<wp_alpha_modifier_v1*>(
                 ::wl_registry_bind(registry, name, &::wp_alpha_modifier_v1_interface,
-                    std::min(version, InterfaceVersion::alphaModifier)));
+                    std::min(version, InterfaceVersion::AlphaModifier)));
             return;
         }
         if (interfaceName == ::wp_cursor_shape_manager_v1_interface.name)
         {
             m_cursorShapeManager = static_cast<wp_cursor_shape_manager_v1*>(
                 ::wl_registry_bind(registry, name, &::wp_cursor_shape_manager_v1_interface,
-                    std::min(version, InterfaceVersion::cursorShapeManager)));
+                    std::min(version, InterfaceVersion::CursorShapeManager)));
             // The globals arrive in the order the compositor lists them, and the seat may have
             // named its pointer already.
             createCursorShapeDevice();
@@ -1134,7 +1134,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             // **Every one of them is bound.** A machine with three screens announces this global
             // three times, and a surface can be told it is on any of them.
             wl_output* output = static_cast<wl_output*>(::wl_registry_bind(registry, name,
-                &::wl_output_interface, std::min(version, InterfaceVersion::output)));
+                &::wl_output_interface, std::min(version, InterfaceVersion::Output)));
             m_outputs.push_back({ .output = output, .scale = 1, .modeSize = {} });
             ::wl_output_add_listener(output, &k_outputListener, this);
             return;
@@ -1143,35 +1143,35 @@ namespace ClaFi::PlatformImplementation::Wayland
         {
             m_decorationManager = static_cast<zxdg_decoration_manager_v1*>(
                 ::wl_registry_bind(registry, name, &::zxdg_decoration_manager_v1_interface,
-                    std::min(version, InterfaceVersion::decorationManager)));
+                    std::min(version, InterfaceVersion::DecorationManager)));
             return;
         }
         if (interfaceName == ::zwlr_layer_shell_v1_interface.name)
         {
             m_layerShell = static_cast<zwlr_layer_shell_v1*>(
                 ::wl_registry_bind(registry, name, &::zwlr_layer_shell_v1_interface,
-                    std::min(version, InterfaceVersion::layerShell)));
+                    std::min(version, InterfaceVersion::LayerShell)));
             return;
         }
         if (interfaceName == ::xdg_session_manager_v1_interface.name)
         {
             m_sessionManager = static_cast<xdg_session_manager_v1*>(
                 ::wl_registry_bind(registry, name, &::xdg_session_manager_v1_interface,
-                    std::min(version, InterfaceVersion::sessionManager)));
+                    std::min(version, InterfaceVersion::SessionManager)));
             return;
         }
         if (interfaceName == ::xdg_activation_v1_interface.name)
         {
             m_activation = static_cast<xdg_activation_v1*>(
                 ::wl_registry_bind(registry, name, &::xdg_activation_v1_interface,
-                    std::min(version, InterfaceVersion::activation)));
+                    std::min(version, InterfaceVersion::Activation)));
             return;
         }
         if (interfaceName == ::zxdg_exporter_v2_interface.name)
         {
             m_exporter = static_cast<zxdg_exporter_v2*>(
                 ::wl_registry_bind(registry, name, &::zxdg_exporter_v2_interface,
-                    std::min(version, InterfaceVersion::exporter)));
+                    std::min(version, InterfaceVersion::Exporter)));
             return;
         }
     }

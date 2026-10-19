@@ -298,7 +298,7 @@ namespace ClaFi
 
     FloatRect FormBase::geometry() const
     {
-        return FloatRect::fromDimensions(frameOrigin(), m_placed.size);
+        return FloatRect::FromDimensions(frameOrigin(), m_placed.size);
     }
 
     void FormBase::invalidateAlign()
@@ -397,7 +397,7 @@ namespace ClaFi
 
     FloatRect FormBase::rectOfControl(const Control* control, bool clipIntoParents) const
     {
-        FloatRect outRect = FloatRect::fromDimensions(boundsOriginOfControl(control), control->scaledSize());
+        FloatRect outRect = FloatRect::FromDimensions(boundsOriginOfControl(control), control->scaledSize());
 
         // Clamping reads each parent's box in form space rather than in that parent's own
         // coordinates. The two say the same thing - a shift applies to a bound and to the value
@@ -1825,7 +1825,7 @@ namespace ClaFi
                 .offset = scaler.scaleF(shadow.offset),
                 .spread = scaler.scaleF(shadow.spread)
             },
-            .radii = CornerRadii::uniform(scaler.scaleF(radius))
+            .radii = CornerRadii::Uniform(scaler.scaleF(radius))
         };
     }
 
@@ -1904,7 +1904,7 @@ namespace ClaFi
 
     FloatRect FormBase::rootRect() const
     {
-        return FloatRect::fromDimensions(frameOrigin(), m_content.scaledSize());
+        return FloatRect::FromDimensions(frameOrigin(), m_content.scaledSize());
     }
 
     // **A corner is painted twice.** A paint clears the rect it covers, and a rect reaching into a
@@ -2200,7 +2200,7 @@ namespace ClaFi
                 const CursorInfo cursorInfo = Platform::getCursorInfo(CursorShape::Arrow);
                 pt.offset(0.0f, static_cast<float>(cursorInfo.size.y - cursorInfo.hotSpot.y));
             }
-            return FloatRect::fromDimensions(pt, {});
+            return FloatRect::FromDimensions(pt, {});
         }
         // **A menu the keyboard raised stands on the part of its target that is on screen.** The
         // rect is the target's own statement and reaches wherever the target does - a scrolled
@@ -2278,7 +2278,7 @@ namespace ClaFi
         }
         // The whole window, since the form cannot know who reads the factor. See Control-Foundation
         // The shadow is one of the readers, and a design that has not changed is not baked again.
-        m_appContext.animator().start(this, AnimationSlots::windowFocused, m_windowFocusedFactor,
+        m_appContext.animator().start(this, AnimationSlots::WindowFocused, m_windowFocusedFactor,
             endValue, [this](AnimateParams& params) {
                 m_windowFocusedFactor = params.value;
                 m_shadowPainter.setDesign(shadowDesign());

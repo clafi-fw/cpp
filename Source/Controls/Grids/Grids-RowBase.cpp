@@ -437,7 +437,7 @@ namespace ClaFi::Controls::Grids
         // line between two differently coloured cells follow both colours.
         const Color lineColor = event.strokeRgbOn(bgHsl);
         const float halfWidth = (cellLt.border - shared) / 2.0f;
-        if (halfWidth > 0.0f && cellFrame.sides != RectSides::none())
+        if (halfWidth > 0.0f && cellFrame.sides != RectSides::None())
             event.canvas().drawPartialRoundedRectangle(ownFrame, lineColor, halfWidth);
         paintSharedLinePixels(event, cellFrame.bounds, cellFrame.sides, lineColor, surfaceColor);
 
@@ -480,7 +480,7 @@ namespace ClaFi::Controls::Grids
         else if (highlightMode != CellHighlightMode::None)
         {
             // highlight inner rect (hovered/selected)
-            ownFrame.sides = RectSides::all();
+            ownFrame.sides = RectSides::All();
             float hlOpacity = StateFactors::compose(hotFactor * 0.25f, selFactor * 0.5f);
             if (hlOpacity)
             {
@@ -673,7 +673,7 @@ namespace ClaFi::Controls::Grids
             hoveredColumn->verticalTextAnchor(),
             HorizontalTextAnchor::None,
         };
-        event.anchorRect = FloatRect::fromDimensions(
+        event.anchorRect = FloatRect::FromDimensions(
             anchoredOrigin(textBounds, drawn, anchor),
             { textBounds.width(), drawn.y }
         );

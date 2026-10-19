@@ -87,7 +87,7 @@ namespace ClaFi::Icons::HomeIcon
         const float strokeWidth = strokeWidthFor(iconRect);
         const FloatRect bounds = drawingBounds(iconRect, strokeWidth);
         const float size = bounds.width();
-        const Matrix3x2 transform = Matrix3x2::translation(bounds.topLeft());
+        const Matrix3x2 transform = Matrix3x2::Translation(bounds.topLeft());
 
         PixelPath path;
 
@@ -105,7 +105,7 @@ namespace ClaFi::Icons::HomeIcon
         path.lineTo(size * k_doorRight, size * k_doorTop);
         path.lineTo(size * k_doorRight, size * k_floorY);
 
-        event.canvas().drawPath(path, { PathDrawLayer::stroke(strokeColor, strokeWidth) }, &transform);
+        event.canvas().drawPath(path, { PathDrawLayer::Stroke(strokeColor, strokeWidth) }, &transform);
     }
 
     void paintBlock(PaintIconEvent& event)

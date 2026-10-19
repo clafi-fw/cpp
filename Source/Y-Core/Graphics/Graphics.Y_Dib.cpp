@@ -18,9 +18,9 @@ namespace ClaFi::Graphics
 
         namespace Compression
         {
-            constexpr std::uint32_t rgb = 0;
-            constexpr std::uint32_t bitFields = 3;
-            constexpr std::uint32_t alphaBitFields = 6;
+            constexpr std::uint32_t Rgb = 0;
+            constexpr std::uint32_t BitFields = 3;
+            constexpr std::uint32_t AlphaBitFields = 6;
         }
 
         // Past these a header is read as damaged rather than allocated for.
@@ -40,7 +40,7 @@ namespace ClaFi::Graphics
             int width{ 0 };
             int height{ 0 };   // as stated: negative for rows written top down
             int bitCount{ 0 };
-            std::uint32_t compression{ Compression::rgb };
+            std::uint32_t compression{ Compression::Rgb };
             std::uint32_t colorsUsed{ 0 };
             std::size_t size{ 0 };
             // Whether the masks stand after the header rather than inside it, and how many.
@@ -189,9 +189,9 @@ namespace ClaFi::Graphics
             if (!validBitCount(header.bitCount))
                 return std::nullopt;
 
-            const bool masked = header.compression == Compression::bitFields
-                || header.compression == Compression::alphaBitFields;
-            if (header.compression != Compression::rgb && !masked)
+            const bool masked = header.compression == Compression::BitFields
+                || header.compression == Compression::AlphaBitFields;
+            if (header.compression != Compression::Rgb && !masked)
                 return std::nullopt;
             if (masked && !readsAsPacked(header.bitCount))
                 return std::nullopt;
@@ -212,7 +212,7 @@ namespace ClaFi::Graphics
             }
             else
             {
-                const bool withAlpha = header.compression == Compression::alphaBitFields;
+                const bool withAlpha = header.compression == Compression::AlphaBitFields;
                 header.trailingMaskBytes = withAlpha ? 16 : 12;
                 if (bytes.size() < header.size + header.trailingMaskBytes)
                     return std::nullopt;

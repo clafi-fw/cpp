@@ -295,7 +295,7 @@ namespace TextEngine_App::AppIcon
 
             PixelPath path;
             addRoundedQuad(path, bandCorners(cornersOf(leaf), band), radii);
-            canvas.drawPath(path, { PathDrawLayer::fill(band.color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(band.color) }, &transform);
         }
 
         void strokeLeaf(Canvas& canvas, const Matrix3x2& transform, const Leaf& leaf)
@@ -304,7 +304,7 @@ namespace TextEngine_App::AppIcon
 
             PixelPath path;
             addRoundedQuad(path, cornersOf(leaf), radii);
-            canvas.drawPath(path, { PathDrawLayer::stroke(k_outlineColor, k_outlineWidth) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Stroke(k_outlineColor, k_outlineWidth) }, &transform);
         }
 
         // A leaf takes its outline before the next covers it, so the front one draws the seam.
@@ -329,7 +329,7 @@ namespace TextEngine_App::AppIcon
 
             const float edgeStroke = k_edgeWidth * 2.0f;
             canvas.drawPath(letter,
-                { PathDrawLayer::stroke(k_edgeColor, edgeStroke), PathDrawLayer::fill(k_inkColor) },
+                { PathDrawLayer::Stroke(k_edgeColor, edgeStroke), PathDrawLayer::Fill(k_inkColor) },
                 &transform);
         }
     }

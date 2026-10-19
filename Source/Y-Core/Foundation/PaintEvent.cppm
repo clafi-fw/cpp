@@ -261,7 +261,7 @@ namespace ClaFi
         bool m_pressScaleApplied{ false };
 #if !CLAFI_TEXT_MOVING
         // The canvas transform outside the press animation, which text is drawn under.
-        Graphics::Matrix3x2 m_unpressedTransform{ Graphics::Matrix3x2::identity() };
+        Graphics::Matrix3x2 m_unpressedTransform{ Graphics::Matrix3x2::Identity() };
 #endif
         // Metrics
         float m_zDepthFactor{ 0.0f };

@@ -83,8 +83,8 @@ namespace SeeDocs_App
             const SourceLanguage language)
         {
             const Syntax::Language& lexer = language == SourceLanguage::Pascal
-                ? Syntax::Languages::pascal
-                : Syntax::Languages::cpp;
+                ? Syntax::Languages::Pascal
+                : Syntax::Languages::Cpp;
             const Syntax::Inks inks = Syntax::defaultInks();
             const Ink textInk{};
             InkedRanges ranges;

@@ -72,8 +72,8 @@ namespace ClaFi::Browser
             for (const Dom::Section& entry : (tabConfig / key).as<VisitEntries>())
             {
                 result.push_back({
-                    .url = Url::parse((entry / ConfigNames::url).get<std::wstring>()),
-                    .position = (entry / ConfigNames::position).get<float>()
+                    .url = Url::Parse((entry / ConfigNames::Url).get<std::wstring>()),
+                    .position = (entry / ConfigNames::Position).get<float>()
                 });
             }
             return result;
@@ -87,8 +87,8 @@ namespace ClaFi::Browser
             for (const Visit& visit : visits)
             {
                 Dom::Section& entry = entries.add();
-                (entry / ConfigNames::url).set(visit.url.str());
-                (entry / ConfigNames::position).set(visit.position);
+                (entry / ConfigNames::Url).set(visit.url.str());
+                (entry / ConfigNames::Position).set(visit.position);
             }
         }
 
@@ -103,7 +103,7 @@ namespace ClaFi::Browser
                 const std::wstring& path = url.path();
                 const bool under = path.starts_with(oldPath)
                     && (path.size() == oldPath.size()
-                        || path[oldPath.size()] == ConfigNames::pathSeparator);
+                        || path[oldPath.size()] == ConfigNames::PathSeparator);
                 if (!under)
                     continue;
 
@@ -373,10 +373,10 @@ namespace ClaFi::Browser
         BrowserTab* tabToSelect{};
         for (const Dom::Section& tabEntry : settings.openTabs())
         {
-            const std::wstring tabId = (tabEntry / ConfigNames::id).get<std::wstring>();
+            const std::wstring tabId = (tabEntry / ConfigNames::Id).get<std::wstring>();
             const Visit visit{
-                .url = Url::parse((tabEntry / ConfigNames::path).get<std::wstring>()),
-                .position = (tabEntry / ConfigNames::position).get<float>()
+                .url = Url::Parse((tabEntry / ConfigNames::Path).get<std::wstring>()),
+                .position = (tabEntry / ConfigNames::Position).get<float>()
             };
             BrowserTab* newTab = restoreTab(tabId, visit);
             if (!newTab)
@@ -556,9 +556,9 @@ namespace ClaFi::Browser
     void BrowserControl::storeTabSettings(const BrowserTab& tab) const
     {
         Dom::Section& tabEntry = m_settings->tabEntry(tab.id());
-        (tabEntry / ConfigNames::title).set(tab.pageData()->title);
-        (tabEntry / ConfigNames::path).set(tab.url().str());
-        (tabEntry / ConfigNames::position).set(pagePosition(tab));
+        (tabEntry / ConfigNames::Title).set(tab.pageData()->title);
+        (tabEntry / ConfigNames::Path).set(tab.url().str());
+        (tabEntry / ConfigNames::Position).set(pagePosition(tab));
     }
 
     // The view state is saved while the entry it writes to is still listed. The tab is taken off
@@ -907,15 +907,15 @@ namespace ClaFi::Browser
 
         tab.m_historyRead = true;
         const Dom::Section& tabConfig = m_settings->tabConfig(tab.id());
-        tab.m_backVisits = visitsIn(tabConfig, ConfigNames::backVisits);
-        tab.m_forwardVisits = visitsIn(tabConfig, ConfigNames::forwardVisits);
+        tab.m_backVisits = visitsIn(tabConfig, ConfigNames::BackVisits);
+        tab.m_forwardVisits = visitsIn(tabConfig, ConfigNames::ForwardVisits);
     }
 
     void BrowserControl::storeHistory(const BrowserTab& tab) const
     {
         Dom::Section& tabConfig = m_settings->tabConfig(tab.id());
-        storeVisits(tabConfig, ConfigNames::backVisits, tab.backVisits());
-        storeVisits(tabConfig, ConfigNames::forwardVisits, tab.forwardVisits());
+        storeVisits(tabConfig, ConfigNames::BackVisits, tab.backVisits());
+        storeVisits(tabConfig, ConfigNames::ForwardVisits, tab.forwardVisits());
     }
 
     void BrowserControl::acceptPageName(PageData& pageData, AcceptEditEvent& event)

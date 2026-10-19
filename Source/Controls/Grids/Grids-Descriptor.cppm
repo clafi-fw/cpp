@@ -194,8 +194,8 @@ namespace ClaFi::Controls::Grids
         float m_lastBoundaryWidth{}; // for which the columns were calculated
         // TODO: why does the descriptor carry scroll bar width?
         float m_scrollBarWidthAndSpacing{};
-        HighlightChannel m_hoverChannel{ k_maxHoverHighlights,  AnimationSlots::hovered };
-        HighlightChannel m_selectChannel{ k_maxSelectHighlights, AnimationSlots::selected };
+        HighlightChannel m_hoverChannel{ k_maxHoverHighlights,  AnimationSlots::Hovered };
+        HighlightChannel m_selectChannel{ k_maxSelectHighlights, AnimationSlots::Selected };
         const OnAnimate m_onCellAnimate;
         //
         float m_desiredCellX{ k_maxFloat };

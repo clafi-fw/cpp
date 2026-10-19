@@ -19,7 +19,7 @@ namespace ClaFi
     // after it.
     [[nodiscard]] static FloatRect laidOutRect(const Control& control)
     {
-        return FloatRect::fromDimensions(control.parentContentOrigin() + control.topLeft(),
+        return FloatRect::FromDimensions(control.parentContentOrigin() + control.topLeft(),
             control.scaledSize());
     }
 

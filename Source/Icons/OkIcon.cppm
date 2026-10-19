@@ -31,7 +31,7 @@ namespace ClaFi::Icons::OkIcon
         path.moveTo(glyph.at(0.300f, 0.515f));
         path.lineTo(glyph.at(0.435f, 0.655f));
         path.lineTo(glyph.at(0.710f, 0.350f));
-        event.canvas().drawPath(path, { PathDrawLayer::stroke(glyph.color, glyph.strokeWidth) });
+        event.canvas().drawPath(path, { PathDrawLayer::Stroke(glyph.color, glyph.strokeWidth) });
     }
 
 }

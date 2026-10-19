@@ -173,7 +173,7 @@ namespace ClaFi::Transfer
 
             // Nothing here knows it, so its own spelling is its name. That is what lets a viewer
             // list it and read the bytes it arrived as.
-            return Format::custom(fromUtf8(mimeName));
+            return Format::Custom(fromUtf8(mimeName));
         }
 
         // **A reader that closes early must not kill the process.** Writing into a pipe nobody is
@@ -255,10 +255,10 @@ namespace ClaFi::Transfer
         {
             for (const StandardFormat standard : k_standardFormats)
             {
-                for (const std::string& candidate : mimeNamesFor(Format::of(standard)))
+                for (const std::string& candidate : mimeNamesFor(Format::Of(standard)))
                 {
                     if (sameIgnoringCase(candidate, mimeName))
-                        return Format::of(standard);
+                        return Format::Of(standard);
                 }
             }
 
@@ -464,7 +464,7 @@ namespace ClaFi::Transfer
 
     Format platformFormatOf(const StandardFormat standard)
     {
-        return formatForMimeName(mimeNamesFor(Format::of(standard)).front());
+        return formatForMimeName(mimeNamesFor(Format::Of(standard)).front());
     }
 
     // Clipboard

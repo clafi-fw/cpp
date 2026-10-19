@@ -121,7 +121,7 @@ namespace ClaFi::Graphics::Cpu
         }
 
         RectPainter rectPainter{ m_pixelView };
-        if (parts.radii.isSquare() && parts.sides == RectSides::all())
+        if (parts.radii.isSquare() && parts.sides == RectSides::All())
         {
             rectPainter.paintBorder(parts.bounds, brush, borderWidth, brushTransform);
             return;

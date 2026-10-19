@@ -39,14 +39,14 @@ namespace ClaFi::Icons
         path.close();
 
         Matrix3x2 transform =
-            Matrix3x2::translation(center)
-            * Matrix3x2::scale(2.0f)
-            * Matrix3x2::rotation(rotation * k_2Pi);
+            Matrix3x2::Translation(center)
+            * Matrix3x2::Scale(2.0f)
+            * Matrix3x2::Rotation(rotation * k_2Pi);
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::fill(Color{ 0xFF445566 }.withOpacity(0.5f)), // Sleek blue-grey
-                PathDrawLayer::stroke(Color{ 0xFFAABBCC }.withOpacity(0.5f), 3.5f) // Steel highlight
+                PathDrawLayer::Fill(Color{ 0xFF445566 }.withOpacity(0.5f)), // Sleek blue-grey
+                PathDrawLayer::Stroke(Color{ 0xFFAABBCC }.withOpacity(0.5f), 3.5f) // Steel highlight
             },
             &transform
         );
@@ -103,14 +103,14 @@ namespace ClaFi::Icons
         path.close();
 
         Matrix3x2 transform =
-            Matrix3x2::translation(center)
-            * Matrix3x2::scale(2.0f * scaleFactor)
-            * Matrix3x2::rotation(rotation * k_2Pi);
+            Matrix3x2::Translation(center)
+            * Matrix3x2::Scale(2.0f * scaleFactor)
+            * Matrix3x2::Rotation(rotation * k_2Pi);
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::fill(Color{ 0xFF445566 }.withOpacity(0.5f)), // Sleek blue-grey
-                PathDrawLayer::stroke(Color{ 0xFFAABBCC }.withOpacity(0.5f), 3.5f) // Steel highlight
+                PathDrawLayer::Fill(Color{ 0xFF445566 }.withOpacity(0.5f)), // Sleek blue-grey
+                PathDrawLayer::Stroke(Color{ 0xFFAABBCC }.withOpacity(0.5f), 3.5f) // Steel highlight
             },
             &transform);
     }

@@ -35,7 +35,7 @@ namespace ClaFi::Icons::QuestionIcon
         path.quadTo(glyph.at(0.655f, 0.245f), glyph.at(0.655f, 0.375f));
         path.quadTo(glyph.at(0.655f, 0.475f), glyph.at(0.500f, 0.525f));
         path.lineTo(glyph.at(0.500f, 0.615f));
-        event.canvas().drawPath(path, { PathDrawLayer::stroke(glyph.color, glyph.strokeWidth) });
+        event.canvas().drawPath(path, { PathDrawLayer::Stroke(glyph.color, glyph.strokeWidth) });
 
         event.canvas().fillCircle(glyph.at(0.5f, 0.755f), glyph.dotRadius(), glyph.color);
     }

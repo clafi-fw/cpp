@@ -814,7 +814,7 @@ namespace ClaFi
         // that has to be drawn whatever its bounds say.
         const float collapseBaseline = m_globalCollapseBaseline;
 
-        controlContext.canvas().pushClip(FloatRect::fromDimensions(position, m_bounds));
+        controlContext.canvas().pushClip(FloatRect::FromDimensions(position, m_bounds));
 
         std::size_t colorCursor = 0;
         std::size_t scriptCursor = 0;

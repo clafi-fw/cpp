@@ -1183,7 +1183,7 @@ namespace ClaFi::PlatformImplementation::Windows
         FontGlyphs& fontGlyphs = glyphsOf(m_face.Get(), m_emSize, DWRITE_MEASURING_MODE_NATURAL);
 
         const Graphics::Matrix3x2& canvasTransform = controlContext.canvas().transform();
-        const bool transformed = !(canvasTransform == Graphics::Matrix3x2::identity());
+        const bool transformed = !(canvasTransform == Graphics::Matrix3x2::Identity());
 
         m_compositor.begin();
         float penX = baselineOrigin.x;

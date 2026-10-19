@@ -89,7 +89,7 @@ namespace ClaFi::Browser
 
     PageData& PageData::addSubPath(std::wstring_view path, const AddPageDataCallback& callback)
     {
-        std::size_t i = path.find(ConfigNames::pathSeparator);
+        std::size_t i = path.find(ConfigNames::PathSeparator);
         if (i == path.npos)
             return addSubItem(path, callback);
         const std::wstring_view subItemName = path.substr(0, i);
@@ -110,7 +110,7 @@ namespace ClaFi::Browser
 
     std::wstring_view PageData::displayTitle() const
     {
-        return title.empty() ? (name.empty() ? ConfigNames::untitledPage : name) : title;
+        return title.empty() ? (name.empty() ? ConfigNames::UntitledPage : name) : title;
     }
 
     std::wstring PageData::path() const
@@ -127,7 +127,7 @@ namespace ClaFi::Browser
 
     PageData* PageData::findOrAdd(std::wstring_view path, const AddPageDataCallback& callback)
     {
-        std::size_t i = path.find(ConfigNames::pathSeparator, 0);
+        std::size_t i = path.find(ConfigNames::PathSeparator, 0);
         if (i == path.npos)
         {
             if (name == path)

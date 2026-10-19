@@ -139,7 +139,7 @@ namespace ClaFi::Browser
         // clockwise to point into that list once it is down.
         [[nodiscard]] DropdownMarkTurn dropdownMarkTurn() const override
         {
-            return { ChevronTurn::right, ChevronTurn::down };
+            return { ChevronTurn::Right, ChevronTurn::Down };
         }
     private:
         // Whether this crumb names the page the browser is showing, which is the crumb the path

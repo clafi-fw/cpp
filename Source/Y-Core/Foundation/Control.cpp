@@ -35,13 +35,13 @@ import ClaFi.StdLib;
 namespace ClaFi
 {
     static constexpr std::array<const AnimationSlot*, static_cast<std::size_t>(VisualStateIndex::Count)> k_animationVisualStateSlots{
-        &AnimationSlots::hovered,
-        &AnimationSlots::pressed,
-        &AnimationSlots::focused,
-        &AnimationSlots::selected,
-        &AnimationSlots::enabled,
-        &AnimationSlots::textHovered,
-        &AnimationSlots::current
+        &AnimationSlots::Hovered,
+        &AnimationSlots::Pressed,
+        &AnimationSlots::Focused,
+        &AnimationSlots::Selected,
+        &AnimationSlots::Enabled,
+        &AnimationSlots::TextHovered,
+        &AnimationSlots::Current
     };
 
     void attachAction(Action& action, Control& control, const PresenterRole role)
@@ -1806,7 +1806,7 @@ namespace ClaFi
 
     FloatRect Control::scrollHotspot() const
     {
-        return FloatRect::fromDimensions({ 0.0f, 0.0f }, m_scaledSize);
+        return FloatRect::FromDimensions({ 0.0f, 0.0f }, m_scaledSize);
     }
 
     void Control::mouseMove(MouseMoveEvent& event)
@@ -1938,7 +1938,7 @@ namespace ClaFi
                 wordWrap(),
                 textFormat()
             );
-            event.anchorRect = FloatRect::fromDimensions(
+            event.anchorRect = FloatRect::FromDimensions(
                 anchoredOrigin(textRect, drawn, textAnchor()),
                 { textRect.width(), drawn.y }
             );

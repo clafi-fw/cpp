@@ -117,7 +117,7 @@ namespace ClaFi::Graphics
         //
         // A caller that builds geometry in its own local space composes onto it rather than
         // replacing it, which is a one token change to the matrix it already builds:
-        //     Matrix3x2 transform = canvasTransform * Matrix3x2::translation(iconRect.topLeft());
+        //     Matrix3x2 transform = canvasTransform * Matrix3x2::Translation(iconRect.topLeft());
         // A caller that works in canvas coordinates maps its points through it directly.
         void stagingDraw(const FloatRect& requestedRect, const StagingDrawFunc&);
         // Lays the view over what is there, read premultiplied and scaled by opacity.
@@ -136,7 +136,7 @@ namespace ClaFi::Graphics
         std::vector<FloatRect> m_clipStack;
         // Mirrors what the backend was last told, so a transform can be composed onto it and put
         // back. The backend interface only sets, it does not report.
-        Matrix3x2 m_transform{ Matrix3x2::identity() };
+        Matrix3x2 m_transform{ Matrix3x2::Identity() };
         std::unique_ptr<IBackend> m_backend;
     };
 
@@ -151,7 +151,7 @@ namespace ClaFi::Graphics
     private:
         // Null when the matrix was identity and nothing was changed.
         Canvas* m_canvas{ nullptr };
-        Matrix3x2 m_restoreTo{ Matrix3x2::identity() };
+        Matrix3x2 m_restoreTo{ Matrix3x2::Identity() };
     };
 
     // Holds an opacity layer open for as long as it is alive. See Graphics-Types

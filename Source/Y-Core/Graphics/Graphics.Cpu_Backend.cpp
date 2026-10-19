@@ -48,7 +48,7 @@ namespace ClaFi::Graphics::Cpu
     void CpuBackend::beginPaint(void* /* nativeContext */, const IntRect* dirtyRect)
     {
         m_clipStack.clear();
-        m_transform = Matrix3x2::identity();
+        m_transform = Matrix3x2::Identity();
         m_poolIndex = 0;
         m_opacityLayers.clear();
         m_layerBufferIndex = 0;
@@ -375,8 +375,8 @@ namespace ClaFi::Graphics::Cpu
 
         RoundedRectangleParts parts{
             .bounds = rect,
-            .radii = CornerRadii::uniform(rx),
-            .sides = RectSides::all()
+            .radii = CornerRadii::Uniform(rx),
+            .sides = RectSides::All()
         };
         fillPartialRoundedRectangle(parts, brush);
     }
@@ -396,8 +396,8 @@ namespace ClaFi::Graphics::Cpu
 
         RoundedRectangleParts parts{
             .bounds = rect,
-            .radii = CornerRadii::uniform(rx),
-            .sides = RectSides::all()
+            .radii = CornerRadii::Uniform(rx),
+            .sides = RectSides::All()
         };
         drawPartialRoundedRectangle(parts, brush, strokeWidth);
     }

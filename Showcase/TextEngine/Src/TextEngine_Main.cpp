@@ -356,7 +356,7 @@ namespace TextEngine_App
             },
             BodyProps{
                 buildCodeShowcase(k_generatedLines),
-                Syntax::Languages::cpp,
+                Syntax::Languages::Cpp,
                 Padding{ 16.0f },
             }
         );

@@ -748,7 +748,7 @@
             <h3 id="window-opacity">Window Opacity</h3>
             <p>A window's opacity is a byte on its <code>IPlatformWindow</code> - <code>alpha()</code> and
             <code>setAlpha(ColorByte)</code> - applied to the whole window at once. A tooltip fades in and out
-            this way, stepping the byte on <code>AnimationSlots::formAlpha</code>. Each platform applies the
+            this way, stepping the byte on <code>AnimationSlots::FormAlpha</code>. Each platform applies the
             value where it costs least:</p>
             <table>
                 <tr><th>Platform</th><th>What applies it</th></tr>
@@ -796,12 +796,12 @@ source.<span class="fn">add</span>&lt;<span class="tp">Transfer</span>::<span cl
             <h3 id="animator-from-above">Animations</h3>
             <p>A control runs its animations through <code>Control::animate</code>, which reaches the application's
             controller through the control's form:</p>
-<pre><span class="fn">animate</span>(<span class="tp">AnimationSlots</span>::expander, m_expandedFactor, target, [<span class="kw">this</span>](<span class="tp">AnimateParams</span>&amp; params) {
+<pre><span class="fn">animate</span>(<span class="tp">AnimationSlots</span>::Expander, m_expandedFactor, target, [<span class="kw">this</span>](<span class="tp">AnimateParams</span>&amp; params) {
     m_expandedFactor = params.value;
     <span class="fn">invalidateChevron</span>();
 });
 
-<span class="fn">stopAnimation</span>(<span class="tp">AnimationSlots</span>::scroll);   <span class="cm">// one slot</span>
+<span class="fn">stopAnimation</span>(<span class="tp">AnimationSlots</span>::Scroll);   <span class="cm">// one slot</span>
 <span class="fn">stopAnimations</span>();                           <span class="cm">// every slot of this control</span></pre>
             <p><code>animator()</code> answers the controller, or null while the control stands in no form - there
             being no application to reach then. <code>animate</code> on a control in no form applies the end
@@ -843,7 +843,7 @@ source.<span class="fn">add</span>&lt;<span class="tp">Transfer</span>::<span cl
             finds it off, unless the pointer moved while that key was held down and repeating.</p>
             <p>The fades run on the application's animator, reached through the <code>AppContext</code> the form
             reporting the input hands in, so <code>Input</code> owns nothing that has to be released. The two
-            slots, <code>AnimationSlots::keyboardActive</code> and <code>mouseActive</code>, mirror each other, so
+            slots, <code>AnimationSlots::KeyboardActive</code> and <code>mouseActive</code>, mirror each other, so
             a switch from one device to the other is one crossfade. Each step of either fade raises
             <code>InputSwitchEvent</code> on <code>AppContext::events()</code>, and every visible form repaints
             whole on it: the colour rules read the two factors as <code>RuleInput::Keyboard</code> and

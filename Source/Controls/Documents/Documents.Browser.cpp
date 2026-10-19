@@ -226,7 +226,7 @@ namespace ClaFi::Documents
 
     bool DocumentsBrowserBase::isHomePage(const PageData& data)
     {
-        return data.name == ConfigNames::homePage;
+        return data.name == ConfigNames::HomePage;
     }
 
     bool DocumentsBrowserBase::isDocumentPage(const PageData& data) const

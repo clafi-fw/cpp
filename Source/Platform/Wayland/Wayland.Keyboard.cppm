@@ -28,37 +28,37 @@ namespace ClaFi::PlatformImplementation::Wayland
     // exported so the spelling of a shortcut reads the same names.
     export namespace VirtualKey
     {
-        constexpr KeyCode clear = 0x0c;
-        constexpr KeyCode pause = 0x13;
-        constexpr KeyCode capsLock = 0x14;
-        constexpr KeyCode print = 0x2c;
-        constexpr KeyCode help = 0x2f;
-        constexpr KeyCode leftWindows = 0x5b;
-        constexpr KeyCode rightWindows = 0x5c;
-        constexpr KeyCode applications = 0x5d;
-        constexpr KeyCode numpad0 = 0x60;
-        constexpr KeyCode multiply = 0x6a;
-        constexpr KeyCode add = 0x6b;
-        constexpr KeyCode separator = 0x6c;
-        constexpr KeyCode subtract = 0x6d;
-        constexpr KeyCode decimal = 0x6e;
-        constexpr KeyCode divide = 0x6f;
-        constexpr KeyCode f1 = 0x70;
-        constexpr KeyCode numLock = 0x90;
-        constexpr KeyCode scrollLock = 0x91;
+        constexpr KeyCode Clear = 0x0c;
+        constexpr KeyCode Pause = 0x13;
+        constexpr KeyCode CapsLock = 0x14;
+        constexpr KeyCode Print = 0x2c;
+        constexpr KeyCode Help = 0x2f;
+        constexpr KeyCode LeftWindows = 0x5b;
+        constexpr KeyCode RightWindows = 0x5c;
+        constexpr KeyCode Applications = 0x5d;
+        constexpr KeyCode Numpad0 = 0x60;
+        constexpr KeyCode Multiply = 0x6a;
+        constexpr KeyCode Add = 0x6b;
+        constexpr KeyCode Separator = 0x6c;
+        constexpr KeyCode Subtract = 0x6d;
+        constexpr KeyCode Decimal = 0x6e;
+        constexpr KeyCode Divide = 0x6f;
+        constexpr KeyCode F1 = 0x70;
+        constexpr KeyCode NumLock = 0x90;
+        constexpr KeyCode ScrollLock = 0x91;
         // The punctuation keys, named by their position on a US keyboard as Win32 names them.
-        constexpr KeyCode oem1 = 0xba;          // ;:
-        constexpr KeyCode oemPlus = 0xbb;       // =+
-        constexpr KeyCode oemComma = 0xbc;      // ,<
-        constexpr KeyCode oemMinus = 0xbd;      // -_
-        constexpr KeyCode oemPeriod = 0xbe;     // .>
-        constexpr KeyCode oem2 = 0xbf;          // /?
-        constexpr KeyCode oem3 = 0xc0;          // `~
-        constexpr KeyCode oem4 = 0xdb;          // [{
-        constexpr KeyCode oem5 = 0xdc;          // \|
-        constexpr KeyCode oem6 = 0xdd;          // ]}
-        constexpr KeyCode oem7 = 0xde;          // '"
-        constexpr KeyCode oem102 = 0xe2;        // the key beside the left Shift on a 102-key board
+        constexpr KeyCode Oem1 = 0xba;          // ;:
+        constexpr KeyCode OemPlus = 0xbb;       // =+
+        constexpr KeyCode OemComma = 0xbc;      // ,<
+        constexpr KeyCode OemMinus = 0xbd;      // -_
+        constexpr KeyCode OemPeriod = 0xbe;     // .>
+        constexpr KeyCode Oem2 = 0xbf;          // /?
+        constexpr KeyCode Oem3 = 0xc0;          // `~
+        constexpr KeyCode Oem4 = 0xdb;          // [{
+        constexpr KeyCode Oem5 = 0xdc;          // \|
+        constexpr KeyCode Oem6 = 0xdd;          // ]}
+        constexpr KeyCode Oem7 = 0xde;          // '"
+        constexpr KeyCode Oem102 = 0xe2;        // the key beside the left Shift on a 102-key board
     }
 
     // The keyboard as xkbcommon describes it, and nothing of the protocol. See Platform
@@ -140,9 +140,9 @@ namespace ClaFi::PlatformImplementation::Wayland
     [[nodiscard]] KeyCode namedKey(xkb_keysym_t keysym)
     {
         if (keysym >= XKB_KEY_KP_0 && keysym <= XKB_KEY_KP_9)
-            return VirtualKey::numpad0 + (keysym - XKB_KEY_KP_0);
+            return VirtualKey::Numpad0 + (keysym - XKB_KEY_KP_0);
         if (keysym >= XKB_KEY_F1 && keysym <= XKB_KEY_F24)
-            return VirtualKey::f1 + (keysym - XKB_KEY_F1);
+            return VirtualKey::F1 + (keysym - XKB_KEY_F1);
 
         switch (keysym)
         {
@@ -154,15 +154,15 @@ namespace ClaFi::PlatformImplementation::Wayland
             return Keys::Tab;
         case XKB_KEY_Clear:
         case XKB_KEY_KP_Begin:
-            return VirtualKey::clear;
+            return VirtualKey::Clear;
         case XKB_KEY_Return:
         case XKB_KEY_KP_Enter:
             return Keys::Return;
         case XKB_KEY_Pause:
         case XKB_KEY_Break:
-            return VirtualKey::pause;
+            return VirtualKey::Pause;
         case XKB_KEY_Scroll_Lock:
-            return VirtualKey::scrollLock;
+            return VirtualKey::ScrollLock;
         case XKB_KEY_Escape:
             return Keys::Escape;
         case XKB_KEY_space:
@@ -194,7 +194,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             return Keys::Down;
         case XKB_KEY_Print:
         case XKB_KEY_Sys_Req:
-            return VirtualKey::print;
+            return VirtualKey::Print;
         case XKB_KEY_Insert:
         case XKB_KEY_KP_Insert:
             return Keys::Insert;
@@ -202,29 +202,29 @@ namespace ClaFi::PlatformImplementation::Wayland
         case XKB_KEY_KP_Delete:
             return Keys::Delete;
         case XKB_KEY_Help:
-            return VirtualKey::help;
+            return VirtualKey::Help;
         case XKB_KEY_Super_L:
-            return VirtualKey::leftWindows;
+            return VirtualKey::LeftWindows;
         case XKB_KEY_Super_R:
-            return VirtualKey::rightWindows;
+            return VirtualKey::RightWindows;
         case XKB_KEY_Menu:
-            return VirtualKey::applications;
+            return VirtualKey::Applications;
         case XKB_KEY_KP_Multiply:
-            return VirtualKey::multiply;
+            return VirtualKey::Multiply;
         case XKB_KEY_KP_Add:
-            return VirtualKey::add;
+            return VirtualKey::Add;
         case XKB_KEY_KP_Separator:
-            return VirtualKey::separator;
+            return VirtualKey::Separator;
         case XKB_KEY_KP_Subtract:
-            return VirtualKey::subtract;
+            return VirtualKey::Subtract;
         case XKB_KEY_KP_Decimal:
-            return VirtualKey::decimal;
+            return VirtualKey::Decimal;
         case XKB_KEY_KP_Divide:
-            return VirtualKey::divide;
+            return VirtualKey::Divide;
         case XKB_KEY_Num_Lock:
-            return VirtualKey::numLock;
+            return VirtualKey::NumLock;
         case XKB_KEY_Caps_Lock:
-            return VirtualKey::capsLock;
+            return VirtualKey::CapsLock;
         case XKB_KEY_Shift_L:
         case XKB_KEY_Shift_R:
             return Keys::Shift;
@@ -285,9 +285,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         case KEY_0:
             return '0';
         case KEY_MINUS:
-            return VirtualKey::oemMinus;
+            return VirtualKey::OemMinus;
         case KEY_EQUAL:
-            return VirtualKey::oemPlus;
+            return VirtualKey::OemPlus;
         case KEY_Q:
             return 'Q';
         case KEY_W:
@@ -309,9 +309,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         case KEY_P:
             return 'P';
         case KEY_LEFTBRACE:
-            return VirtualKey::oem4;
+            return VirtualKey::Oem4;
         case KEY_RIGHTBRACE:
-            return VirtualKey::oem6;
+            return VirtualKey::Oem6;
         case KEY_A:
             return 'A';
         case KEY_S:
@@ -331,13 +331,13 @@ namespace ClaFi::PlatformImplementation::Wayland
         case KEY_L:
             return 'L';
         case KEY_SEMICOLON:
-            return VirtualKey::oem1;
+            return VirtualKey::Oem1;
         case KEY_APOSTROPHE:
-            return VirtualKey::oem7;
+            return VirtualKey::Oem7;
         case KEY_GRAVE:
-            return VirtualKey::oem3;
+            return VirtualKey::Oem3;
         case KEY_BACKSLASH:
-            return VirtualKey::oem5;
+            return VirtualKey::Oem5;
         case KEY_Z:
             return 'Z';
         case KEY_X:
@@ -353,13 +353,13 @@ namespace ClaFi::PlatformImplementation::Wayland
         case KEY_M:
             return 'M';
         case KEY_COMMA:
-            return VirtualKey::oemComma;
+            return VirtualKey::OemComma;
         case KEY_DOT:
-            return VirtualKey::oemPeriod;
+            return VirtualKey::OemPeriod;
         case KEY_SLASH:
-            return VirtualKey::oem2;
+            return VirtualKey::Oem2;
         case KEY_102ND:
-            return VirtualKey::oem102;
+            return VirtualKey::Oem102;
         default:
             return 0;
         }

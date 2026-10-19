@@ -214,9 +214,9 @@ namespace ClaFi::PlatformImplementation::Windows
     const wchar_t* nativeFamilyName(const wchar_t* family)
     {
         const std::wstring_view name = family;
-        if (name == GenericFamily::sansSerif)
+        if (name == GenericFamily::SansSerif)
             return L"Segoe UI";
-        if (name == GenericFamily::monospace)
+        if (name == GenericFamily::Monospace)
             return L"Consolas";
         return family;
     }
@@ -523,7 +523,7 @@ namespace ClaFi::PlatformImplementation::Windows
                 return S_OK;
 
             const Graphics::Matrix3x2& canvasTransform = m_canvas->transform();
-            const bool transformed = !(canvasTransform == Graphics::Matrix3x2::identity());
+            const bool transformed = !(canvasTransform == Graphics::Matrix3x2::Identity());
 
             FontGlyphs& fontGlyphs = glyphsOf(glyphRun->fontFace, glyphRun->fontEmSize,
                 measuringMode);

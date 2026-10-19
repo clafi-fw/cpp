@@ -246,7 +246,7 @@ namespace ClaFi::Controls
         // A mark nobody has seen has nothing to turn from.
         if (isPainted() && visible())
         {
-            animate(AnimationSlots::expander, m_expandedFactor, newValue,
+            animate(AnimationSlots::Expander, m_expandedFactor, newValue,
                 [this](AnimateParams& params) {
                     m_expandedFactor = params.value;
                     invalidateChevron();
@@ -491,7 +491,7 @@ namespace ClaFi::Controls
         const float travel = overlayChildOffset(*m_heldHeader).y;
         if (travel != 0.0f)
         {
-            const FloatRect rect = FloatRect::fromDimensions(
+            const FloatRect rect = FloatRect::FromDimensions(
                 event.contentPosition() + m_heldHeader->topLeft() + FloatPoint{ 0.0f, travel },
                 m_heldHeader->scaledSize());
             event.paintHeldBackdrop(m_heldHeader->silhouette(event, rect), travel);

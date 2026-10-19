@@ -24,13 +24,13 @@ namespace ClaFi::Icons::BrowseUpIcon
         switch (heading)
         {
             case ArrowHeading::Up:
-                return Matrix3x2::identity();
+                return Matrix3x2::Identity();
             case ArrowHeading::Left:
                 return { 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, size };
             case ArrowHeading::Right:
                 return { 0.0f, 1.0f, -1.0f, 0.0f, size, 0.0f };
         }
-        return Matrix3x2::identity();
+        return Matrix3x2::Identity();
     }
 
     // The arrow centred in the icon's square, pointing the way the heading says.
@@ -43,7 +43,7 @@ namespace ClaFi::Icons::BrowseUpIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);//std::max(1.0f, size * 0.08f);
         size -= strokeWidth;
 
-        const Matrix3x2 placement = Matrix3x2::translation(
+        const Matrix3x2 placement = Matrix3x2::Translation(
             iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         // The turn is the right operand: a point meets it first, and the placement second.
         const Matrix3x2 transform = placement * turnTo(heading, size);
@@ -55,7 +55,7 @@ namespace ClaFi::Icons::BrowseUpIcon
         path.lineTo(size * 0.50f, size * 0.075f);   // tip
         path.lineTo(size * 0.75f, size * 0.325f);   // right barb
 
-        event.canvas().drawPath(path, { PathDrawLayer::stroke(strokeColor, strokeWidth) }, &transform);
+        event.canvas().drawPath(path, { PathDrawLayer::Stroke(strokeColor, strokeWidth) }, &transform);
     }
 
     export void paint(PaintIconEvent& event)

@@ -17,9 +17,9 @@ A local and a member, or a parameter and a field, look alike on a line and get n
 
 ## LineState
 
-- `Mode::normal` (0) - ordinary source.
-- `Mode::blockComment` (1) - `aux` is the index of the open comment rule.
-- `Mode::firstLanguageMode` (8) and up - the language's own. A line starting in one goes to the
+- `Mode::Normal` (0) - ordinary source.
+- `Mode::BlockComment` (1) - `aux` is the index of the open comment rule.
+- `Mode::FirstLanguageMode` (8) and up - the language's own. A line starting in one goes to the
   hook first.
 
 **A state is four bytes**, so a raw string's delimiter goes in the StateStrings, and `text` holds
@@ -60,7 +60,7 @@ A leading capital says less, and a name before a parenthesis stays a Function.
 
 ## Claim
 
-- **Possible** is what the plain-text language, `Languages::text`, answers for any text.
+- **Possible** is what the plain-text language, `Languages::Text`, answers for any text.
 - **Likely** - a shape another language could share: an object in brackets, a tag, a key and its
   equals sign.
 - **Certain** - a signature no other language spells: a header, a declaration, the standard
@@ -79,7 +79,7 @@ search for a word. It is handed every text whole.
 
 ## detect
 
-**Put `Languages::text` in the list** and it answers for whatever no other language claims, so the
+**Put `Languages::Text` in the list** and it answers for whatever no other language claims, so the
 caller needs no fallback of its own. A language with no detector is never detected, and is only
 picked by hand.
 
@@ -90,7 +90,7 @@ answer that moved nothing makes the lexer throw.
 
 **To pass**, a hook leaves `index` where it was and answers false. The tables are asked next.
 
-**A mode carried across lines** goes in `state.mode`, from `Mode::firstLanguageMode` up. A line in
+**A mode carried across lines** goes in `state.mode`, from `Mode::FirstLanguageMode` up. A line in
 such a mode goes to the hook at every position, and the hook must claim each one.
 
 ## Scan

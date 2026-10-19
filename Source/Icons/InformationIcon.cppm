@@ -34,7 +34,7 @@ namespace ClaFi::Icons::InformationIcon
         PixelPath path;
         path.moveTo(glyph.at(0.5f, 0.420f));
         path.lineTo(glyph.at(0.5f, 0.745f));
-        event.canvas().drawPath(path, { PathDrawLayer::stroke(glyph.color, glyph.strokeWidth) });
+        event.canvas().drawPath(path, { PathDrawLayer::Stroke(glyph.color, glyph.strokeWidth) });
     }
 
 }

@@ -18,7 +18,7 @@ namespace ClaFi::Icons::DeleteIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         size -= strokeWidth;
 
-        const Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
@@ -42,7 +42,7 @@ namespace ClaFi::Icons::DeleteIcon
         path.lineTo(size * 0.42f, size * 0.80f);
         path.moveTo(size * 0.60f, size * 0.30f);
         path.lineTo(size * 0.58f, size * 0.80f);
-        canvas.drawPath(path, { PathDrawLayer::stroke(bodyColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
 
         // Handle, on the top edge.
         path.clear();
@@ -54,7 +54,7 @@ namespace ClaFi::Icons::DeleteIcon
         // Lid, wider than the bin it sits on.
         path.moveTo(size * 0.05f, size * 0.12f);
         path.lineTo(size * 0.95f, size * 0.12f);
-        canvas.drawPath(path, { PathDrawLayer::stroke(accentColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(accentColor, strokeWidth) }, &transform);
     }
 
 }

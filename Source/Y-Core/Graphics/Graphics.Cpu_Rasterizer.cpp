@@ -498,7 +498,7 @@ namespace ClaFi::Graphics::Cpu
             }
             else if constexpr (std::is_same_v<T, RadialGradient>)
             {
-                const Matrix3x2 transform = brushTransform ? *brushTransform : Matrix3x2::identity();
+                const Matrix3x2 transform = brushTransform ? *brushTransform : Matrix3x2::Identity();
                 compositeRadialGradient(target, brushArg, transform, maskBase, maskStride);
             }
             else if constexpr (std::is_same_v<T, PointGlow>)
@@ -786,8 +786,8 @@ namespace ClaFi::Graphics::Cpu
             gradient.offset.y / gradient.radiusY,
         };
         const Matrix3x2 pixelToRadii =
-            Matrix3x2::scale(1.0f / gradient.radiusX, 1.0f / gradient.radiusY)
-            * Matrix3x2::translation(-origin.x, -origin.y)
+            Matrix3x2::Scale(1.0f / gradient.radiusX, 1.0f / gradient.radiusY)
+            * Matrix3x2::Translation(-origin.x, -origin.y)
             * inverted(brushTransform);
         const float focusDepth = 1.0f - (focus.x * focus.x + focus.y * focus.y);
 

@@ -359,7 +359,7 @@ namespace ClaFi::Controls
 
         m_droppedDown = value;
         float target = value ? 1.0f : 0.0f;
-        animate(AnimationSlots::dropdownMark, m_droppedDownFactor, target,
+        animate(AnimationSlots::DropdownMark, m_droppedDownFactor, target,
             [this](AnimateParams& params) {
                 m_droppedDownFactor = params.value;
                 secondaryPart()->invalidate();

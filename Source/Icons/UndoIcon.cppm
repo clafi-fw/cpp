@@ -39,16 +39,16 @@ namespace ClaFi::Icons::UndoIcon
         float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         size -= strokeWidth;
 
-        Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
         buildShaftPath(path, size);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strong), strokeWidth) }, &transform);
 
         path.clear();
         buildHeadPath(path, size);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) }, &transform);
     }
 
 }

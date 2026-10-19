@@ -72,20 +72,20 @@ namespace ClaFi::Icons::SaveIcon
         size -= strokeWidth;
 
         FloppyMetrics m(size);
-        Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         PixelPath path;
 
         Color strokeColor = event.accentRgb(InkGrade::Strongest);
 
         addFloppyBody(path, m);
-        canvas.drawPath(path, { PathDrawLayer::stroke(strokeColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(strokeColor, strokeWidth) }, &transform);
 
         path.clear();
         addFloppyLabel(path, m);
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::stroke(strokeColor, strokeWidth)
+                PathDrawLayer::Stroke(strokeColor, strokeWidth)
             },
             &transform
         );
@@ -102,7 +102,7 @@ namespace ClaFi::Icons::SaveIcon
 
         FloppyMetrics m(size * 0.85f); // Slightly larger front icon
         float offset = size * 0.15f;
-        Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         PixelPath path;
 
         // 1. Draw **back floppy** (The Shadow)
@@ -121,12 +121,12 @@ namespace ClaFi::Icons::SaveIcon
         // Bottom edge
         path.lineTo(m.r + offset, m.fSize + offset);
 
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Muted), strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.textRgb(InkGrade::Muted), strokeWidth) }, &transform);
 
         // 2. Draw **front floppy** (Body)
         path.clear();
         addFloppyBody(path, m);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Strongest), strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strongest), strokeWidth) }, &transform);
 
         // 3. Draw **front floppy** (Label)
         path.clear();
@@ -134,8 +134,8 @@ namespace ClaFi::Icons::SaveIcon
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::fill(event.textRgb(InkGrade::Subtle)),
-                PathDrawLayer::stroke(event.textRgb(InkGrade::Strongest), strokeWidth)
+                PathDrawLayer::Fill(event.textRgb(InkGrade::Subtle)),
+                PathDrawLayer::Stroke(event.textRgb(InkGrade::Strongest), strokeWidth)
             },
             &transform
         );

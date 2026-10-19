@@ -634,7 +634,7 @@ namespace ClaFi
             {
                 const IntRect current = bounds();
                 const IntSize size = pos.flags & SWP_NOSIZE ? current.dimensions() : IntSize{ pos.cx, pos.cy };
-                const IntRect next = IntRect::fromDimensions({ pos.x, pos.y }, size);
+                const IntRect next = IntRect::FromDimensions({ pos.x, pos.y }, size);
                 syncShadow(&next);
             }
             break;
@@ -755,7 +755,7 @@ namespace ClaFi
 
     IntRect FormWindow::clientArea() const
     {
-        return IntRect::fromDimensions(surfaceOrigin(), m_statedBounds.dimensions());
+        return IntRect::FromDimensions(surfaceOrigin(), m_statedBounds.dimensions());
     }
 
     // **A window not shown only keeps the frame**, and applies it on the show. The first design

@@ -31,7 +31,7 @@ namespace ClaFi::Icons::ErrorIcon
         path.lineTo(glyph.at(0.655f, 0.655f));
         path.moveTo(glyph.at(0.655f, 0.345f));
         path.lineTo(glyph.at(0.345f, 0.655f));
-        event.canvas().drawPath(path, { PathDrawLayer::stroke(glyph.color, glyph.strokeWidth) });
+        event.canvas().drawPath(path, { PathDrawLayer::Stroke(glyph.color, glyph.strokeWidth) });
     }
 
 }

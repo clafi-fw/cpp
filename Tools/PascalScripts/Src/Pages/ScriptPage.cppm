@@ -64,7 +64,7 @@ namespace PascalScripts_App
         SearchResult m_found{ m_searcher, m_scrollBox };   // what the search finds in the script
         // The script, read as Pascal.
         CodeBox& m_box{ m_scrollBox.createBody<CodeBox>(
-            Syntax::Languages::pascal,
+            Syntax::Languages::Pascal,
             Padding{ 12.0f }
         ) };
         Panel& m_corner{ m_scrollBox.createCorner<Panel>() };

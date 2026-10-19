@@ -264,8 +264,8 @@ namespace ClaFi::Controls
 
         RoundedRectangleParts run{
             .bounds = m_pageSurface.bounds,
-            .radii = CornerRadii::square(),
-            .sides = RectSides::all()
+            .radii = CornerRadii::Square(),
+            .sides = RectSides::All()
         };
         run.bounds.left = tabLineX();
         run.bounds.right = m_pageSurface.bounds.left + m_pageSurface.strokeWidth;

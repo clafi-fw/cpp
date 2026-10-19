@@ -390,7 +390,7 @@ namespace MillScene_App::AppIcon
 
             PixelPath path;
             addRoundedQuad(path, bandCorners(cornersOf(leaf), band), radii);
-            canvas.drawPath(path, { PathDrawLayer::fill(band.color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(band.color) }, &transform);
         }
 
         void strokeLeaf(Canvas& canvas, const Matrix3x2& transform, const Leaf& leaf)
@@ -399,7 +399,7 @@ namespace MillScene_App::AppIcon
 
             PixelPath path;
             addRoundedQuad(path, cornersOf(leaf), radii);
-            canvas.drawPath(path, { PathDrawLayer::stroke(k_outlineColor, k_outlineWidth) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Stroke(k_outlineColor, k_outlineWidth) }, &transform);
         }
 
         // A leaf takes its outline before the next covers it, so the front one draws the seam.
@@ -427,8 +427,8 @@ namespace MillScene_App::AppIcon
             canvas.drawPath(
                 path,
                 {
-                    PathDrawLayer::stroke(k_edgeColor, edgeStroke),
-                    PathDrawLayer::fill(k_keylineColor)
+                    PathDrawLayer::Stroke(k_edgeColor, edgeStroke),
+                    PathDrawLayer::Fill(k_keylineColor)
                 },
                 &transform);
 
@@ -442,7 +442,7 @@ namespace MillScene_App::AppIcon
             path.quadTo({ 0.45f, -0.15f }, { 0.42f, 0.1f });
             path.lineTo({ 0.2f, 0.05f });
             path.close();
-            canvas.drawPath(path, { PathDrawLayer::fill(k_faceColor) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(k_faceColor) }, &transform);
 
             // Horns.
             path.clear();
@@ -454,7 +454,7 @@ namespace MillScene_App::AppIcon
             path.lineTo({ 0.18f, -0.42f });
             path.lineTo({ 0.05f, -0.38f });
             path.close();
-            canvas.drawPath(path, { PathDrawLayer::fill(k_hornColor) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(k_hornColor) }, &transform);
 
             // The tapered face.
             path.clear();
@@ -463,7 +463,7 @@ namespace MillScene_App::AppIcon
             path.lineTo({ 0.15f, 0.25f });
             path.lineTo({ -0.15f, 0.25f });
             path.close();
-            canvas.drawPath(path, { PathDrawLayer::fill(k_faceColor) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(k_faceColor) }, &transform);
 
             // The patch over one eye, which is what makes it read as a cow at 16 units.
             path.clear();
@@ -471,7 +471,7 @@ namespace MillScene_App::AppIcon
             path.quadTo({ -0.05f, -0.3f }, { 0.0f, -0.1f });
             path.lineTo({ -0.2f, 0.05f });
             path.close();
-            canvas.drawPath(path, { PathDrawLayer::fill(k_patchColor) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(k_patchColor) }, &transform);
 
             // The snout, and the grass being munched out of the side of it.
             const float snoutTop = k_snoutY - k_snoutHeight;
@@ -481,17 +481,17 @@ namespace MillScene_App::AppIcon
             path.quadTo({ -k_snoutWidth, snoutTop }, { k_snoutWidth, snoutTop });
             path.quadTo({ k_snoutWidth, snoutBottom }, { -k_snoutWidth, snoutBottom });
             path.close();
-            canvas.drawPath(path, { PathDrawLayer::fill(k_snoutColor) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(k_snoutColor) }, &transform);
 
             path.clear();
             for (const float x : { -0.07f, 0.07f })
                 addCapsule(path, { x, k_snoutY + 0.02f }, { x, k_snoutY + 0.05f }, k_nostrilRadius);
 
-            canvas.drawPath(path, { PathDrawLayer::fill(k_nostrilColor) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(k_nostrilColor) }, &transform);
 
             path.clear();
             addOutline(path, k_grassStart, k_grass);
-            canvas.drawPath(path, { PathDrawLayer::fill(k_grassColor) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(k_grassColor) }, &transform);
         }
     }
 }

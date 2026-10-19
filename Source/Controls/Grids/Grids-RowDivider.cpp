@@ -23,7 +23,7 @@ namespace ClaFi::Controls::Grids
             RoundedRectangleParts parts{
                 .bounds = FloatRect::intersection(fillRect, event.viewport()),
                 .radii = event.cornerRadii(),
-                .sides = RectSides::all()
+                .sides = RectSides::All()
             };
             event.canvas().fillPartialRoundedRectangle(parts, surfaceRgb);
         }

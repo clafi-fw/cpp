@@ -413,8 +413,8 @@ namespace ClaFi::Diagnostic
             event.canvas().drawPath(
                 m_path,
                 {
-                    Graphics::PathDrawLayer::fill(fill),
-                    Graphics::PathDrawLayer::stroke(stroke, event.scale(1.0f))
+                    Graphics::PathDrawLayer::Fill(fill),
+                    Graphics::PathDrawLayer::Stroke(stroke, event.scale(1.0f))
                 }
             );
         }

@@ -65,16 +65,16 @@ namespace ClaFi
 
         namespace CurlOption
         {
-            constexpr int writeData{ 10001 };
-            constexpr int url{ 10002 };
-            constexpr int timeout{ 13 };
-            constexpr int userAgent{ 10018 };
-            constexpr int writeFunction{ 20011 };
-            constexpr int noProgress{ 43 };
-            constexpr int progressData{ 10057 };
-            constexpr int connectTimeout{ 78 };
-            constexpr int noSignal{ 99 };
-            constexpr int progressFunction{ 20219 };
+            constexpr int WriteData{ 10001 };
+            constexpr int Url{ 10002 };
+            constexpr int Timeout{ 13 };
+            constexpr int UserAgent{ 10018 };
+            constexpr int WriteFunction{ 20011 };
+            constexpr int NoProgress{ 43 };
+            constexpr int ProgressData{ 10057 };
+            constexpr int ConnectTimeout{ 78 };
+            constexpr int NoSignal{ 99 };
+            constexpr int ProgressFunction{ 20219 };
         }
 
         // The entries of the first libcurl the system has, under either name it ships as.
@@ -133,17 +133,17 @@ namespace ClaFi
         const std::string url = toUtf8(m_owner.url());
         const std::string userAgent = toUtf8(k_userAgent);
         Download download{ body, m_cancelled, k_maxBodySize };
-        curl->easySetopt(handle, CurlOption::url, url.c_str());
-        curl->easySetopt(handle, CurlOption::userAgent, userAgent.c_str());
+        curl->easySetopt(handle, CurlOption::Url, url.c_str());
+        curl->easySetopt(handle, CurlOption::UserAgent, userAgent.c_str());
         // The fetch is not on the main thread, so libcurl must not time a lookup out with SIGALRM.
-        curl->easySetopt(handle, CurlOption::noSignal, 1L);
-        curl->easySetopt(handle, CurlOption::connectTimeout, k_connectTimeoutSeconds);
-        curl->easySetopt(handle, CurlOption::timeout, k_transferTimeoutSeconds);
-        curl->easySetopt(handle, CurlOption::writeFunction, &writeBody);
-        curl->easySetopt(handle, CurlOption::writeData, &download);
-        curl->easySetopt(handle, CurlOption::progressFunction, &reportProgress);
-        curl->easySetopt(handle, CurlOption::progressData, &download);
-        curl->easySetopt(handle, CurlOption::noProgress, 0L);
+        curl->easySetopt(handle, CurlOption::NoSignal, 1L);
+        curl->easySetopt(handle, CurlOption::ConnectTimeout, k_connectTimeoutSeconds);
+        curl->easySetopt(handle, CurlOption::Timeout, k_transferTimeoutSeconds);
+        curl->easySetopt(handle, CurlOption::WriteFunction, &writeBody);
+        curl->easySetopt(handle, CurlOption::WriteData, &download);
+        curl->easySetopt(handle, CurlOption::ProgressFunction, &reportProgress);
+        curl->easySetopt(handle, CurlOption::ProgressData, &download);
+        curl->easySetopt(handle, CurlOption::NoProgress, 0L);
         long status = 0;
         if (curl->easyPerform(handle) == k_curlOk)
             curl->easyGetinfo(handle, k_responseCodeInfo, &status);

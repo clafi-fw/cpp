@@ -33,8 +33,8 @@ namespace ClaFi::Icons::OpenChevron
             path.lineTo(2.0f * halfHeight, -tipY);
 
             const Color color = event.textRgb(InkGrade::Strongest);
-            const Matrix3x2 transform = Matrix3x2::translation(event.iconCenter());
-            event.canvas().drawPath(path, { PathDrawLayer::stroke(color, strokeWidth) }, &transform);
+            const Matrix3x2 transform = Matrix3x2::Translation(event.iconCenter());
+            event.canvas().drawPath(path, { PathDrawLayer::Stroke(color, strokeWidth) }, &transform);
         }
     }
 

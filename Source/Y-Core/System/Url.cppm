@@ -11,7 +11,7 @@ namespace ClaFi
         Url() = default;
         explicit Url(std::wstring_view path, std::wstring_view anchor = {});
     public:
-        [[nodiscard]] static Url parse(std::wstring_view spelling); // reads what str() writes
+        [[nodiscard]] static Url Parse(std::wstring_view spelling); // reads what str() writes
         [[nodiscard]] const std::wstring& path() const { return m_path; }
         [[nodiscard]] const std::wstring& anchor() const { return m_anchor; } // empty for none
         [[nodiscard]] Url withAnchor(std::wstring_view anchor) const;

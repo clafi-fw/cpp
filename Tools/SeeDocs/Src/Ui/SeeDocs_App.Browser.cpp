@@ -79,10 +79,10 @@ namespace SeeDocs_App
 
         namespace TreeKeys
         {
-            constexpr std::wstring_view project = L"Project";   // the project's folder
-            constexpr std::wstring_view home = L"Home";         // its own node open
-            constexpr std::wstring_view folders = L"Folders";   // by path
-            constexpr std::wstring_view modules = L"Modules";   // by name
+            constexpr std::wstring_view Project = L"Project";   // the project's folder
+            constexpr std::wstring_view Home = L"Home";         // its own node open
+            constexpr std::wstring_view Folders = L"Folders";   // by path
+            constexpr std::wstring_view Modules = L"Modules";   // by name
         }
 
         using TreeEntries = Dom::Sequence<Dom::Section>;
@@ -113,7 +113,7 @@ namespace SeeDocs_App
             if (folder.empty())
                 return std::wstring{ name };
             std::wstring result{ folder };
-            result.append(1, ConfigNames::pathSeparator).append(name);
+            result.append(1, ConfigNames::PathSeparator).append(name);
             return result;
         }
 
@@ -126,7 +126,7 @@ namespace SeeDocs_App
             {
                 if (current == L'%')
                     result += L"%25";
-                else if (current == ConfigNames::pathSeparator)
+                else if (current == ConfigNames::PathSeparator)
                     result += L"%2F";
                 else
                     result += current;
@@ -142,7 +142,7 @@ namespace SeeDocs_App
                 const std::wstring_view rest = segment.substr(i);
                 if (rest.starts_with(L"%2F") || rest.starts_with(L"%2f"))
                 {
-                    result += ConfigNames::pathSeparator;
+                    result += ConfigNames::PathSeparator;
                     i += 2;
                 }
                 else if (rest.starts_with(L"%25"))
@@ -314,7 +314,7 @@ namespace SeeDocs_App
             std::wstring_view rest = folder.path;
             while (!rest.empty())
             {
-                const std::size_t slash = rest.find(ConfigNames::pathSeparator);
+                const std::size_t slash = rest.find(ConfigNames::PathSeparator);
                 way = joinFolder(way, rest.substr(0, slash));
                 folders.try_emplace(way, nullptr);
                 targets.try_emplace(way, Target{ .folder = way });
@@ -652,8 +652,8 @@ namespace SeeDocs_App
     std::optional<Url> SurfaceBrowser::urlOf(const std::wstring_view target,
         const PageData& from) const
     {
-        if (target.starts_with(ConfigNames::pathSeparator))
-            return Url::parse(target);
+        if (target.starts_with(ConfigNames::PathSeparator))
+            return Url::Parse(target);
         const ShownProject* project = resolve(from).project;
         if (!project)
             return std::nullopt;
@@ -665,7 +665,7 @@ namespace SeeDocs_App
     // the project's segment after the separator - see closeCommand.
     void SurfaceBrowser::answerCommand(const std::wstring_view target)
     {
-        if (!target.starts_with(ConfigNames::pathSeparator))
+        if (!target.starts_with(ConfigNames::PathSeparator))
             return;
         ShownProject* shown = projectOf(target.substr(1));
         if (!shown)
@@ -679,7 +679,7 @@ namespace SeeDocs_App
         std::vector<OpenProject*> projects{};
         for (const std::wstring& target : targets)
         {
-            if (!target.starts_with(ConfigNames::pathSeparator))
+            if (!target.starts_with(ConfigNames::PathSeparator))
                 continue;
             if (ShownProject* shown = projectOf(std::wstring_view{ target }.substr(1)))
                 projects.push_back(&shown->open);
@@ -998,7 +998,7 @@ namespace SeeDocs_App
         const ShownProject* self) const
     {
         std::wstring base{ name };
-        std::ranges::replace(base, ConfigNames::pathSeparator, k_segmentSlash);
+        std::ranges::replace(base, ConfigNames::PathSeparator, k_segmentSlash);
         if (base.empty())
             base = k_unnamedSegment;
         std::wstring result = base;
@@ -1078,12 +1078,12 @@ namespace SeeDocs_App
         const std::wstring folder = shown.open.project.folder.wstring();
         for (const Dom::Section& state : states)
         {
-            if ((state / TreeKeys::project).get<std::wstring>() != folder)
+            if ((state / TreeKeys::Project).get<std::wstring>() != folder)
                 continue;
-            OpenRows open{ .home = (state / TreeKeys::home).get<bool>() };
-            for (const std::wstring& name : (state / TreeKeys::folders).as<NodeNames>().get())
+            OpenRows open{ .home = (state / TreeKeys::Home).get<bool>() };
+            for (const std::wstring& name : (state / TreeKeys::Folders).as<NodeNames>().get())
                 open.folders.push_back(name);
-            for (const std::wstring& name : (state / TreeKeys::modules).as<NodeNames>().get())
+            for (const std::wstring& name : (state / TreeKeys::Modules).as<NodeNames>().get())
                 open.modules.push_back(name);
             entry.tree->restoreRows(shown.id, open);
             return;
@@ -1101,15 +1101,15 @@ namespace SeeDocs_App
         const std::wstring folder = shown->open.project.folder.wstring();
         Dom::Section& config = settings().tabConfig(entry.tab->id());
         TreeEntries& states = (config / k_treeNodeName).as<TreeEntries>();
-        Dom::Section* found = states.childWhere(TreeKeys::project, folder);
+        Dom::Section* found = states.childWhere(TreeKeys::Project, folder);
         Dom::Section& state = found ? *found : states.add();
-        (state / TreeKeys::project).set(folder);
-        (state / TreeKeys::home).set(open.home);
-        NodeNames& folders = (state / TreeKeys::folders).as<NodeNames>();
+        (state / TreeKeys::Project).set(folder);
+        (state / TreeKeys::Home).set(open.home);
+        NodeNames& folders = (state / TreeKeys::Folders).as<NodeNames>();
         folders.clear();
         for (const std::wstring& name : open.folders)
             folders.add().set(name);
-        NodeNames& modules = (state / TreeKeys::modules).as<NodeNames>();
+        NodeNames& modules = (state / TreeKeys::Modules).as<NodeNames>();
         modules.clear();
         for (const std::wstring& name : open.modules)
             modules.add().set(name);
@@ -1139,10 +1139,10 @@ namespace SeeDocs_App
             Dom::Dt::Sequence{
                 k_treeNodeName,
                 Dom::Dt::Section{
-                    Dom::Dt::Value{ TreeKeys::project, std::wstring{} },
-                    Dom::Dt::Value{ TreeKeys::home, false },
-                    Dom::Dt::Sequence{ TreeKeys::folders, std::wstring{} },
-                    Dom::Dt::Sequence{ TreeKeys::modules, std::wstring{} }
+                    Dom::Dt::Value{ TreeKeys::Project, std::wstring{} },
+                    Dom::Dt::Value{ TreeKeys::Home, false },
+                    Dom::Dt::Sequence{ TreeKeys::Folders, std::wstring{} },
+                    Dom::Dt::Sequence{ TreeKeys::Modules, std::wstring{} }
                 }
             }
         };
@@ -1151,14 +1151,14 @@ namespace SeeDocs_App
     std::wstring SurfaceBrowser::homePath(const ShownProject& project)
     {
         std::wstring result;
-        result.append(1, ConfigNames::pathSeparator).append(project.segment);
+        result.append(1, ConfigNames::PathSeparator).append(project.segment);
         return result;
     }
 
     std::wstring SurfaceBrowser::optionsPath(const ShownProject& project)
     {
         std::wstring result = homePath(project);
-        result.append(1, ConfigNames::pathSeparator).append(k_optionsSegment);
+        result.append(1, ConfigNames::PathSeparator).append(k_optionsSegment);
         return result;
     }
 
@@ -1169,14 +1169,14 @@ namespace SeeDocs_App
     {
         std::wstring result = homePath(project);
         if (!folder.empty())
-            result.append(1, ConfigNames::pathSeparator).append(folder);
+            result.append(1, ConfigNames::PathSeparator).append(folder);
         if (!module)
             return result;
-        result.append(1, ConfigNames::pathSeparator).append(segmentOf(*module));
+        result.append(1, ConfigNames::PathSeparator).append(segmentOf(*module));
         if (type)
-            result.append(1, ConfigNames::pathSeparator).append(type->qualifiedName);
+            result.append(1, ConfigNames::PathSeparator).append(type->qualifiedName);
         if (!member.empty())
-            result.append(1, ConfigNames::pathSeparator).append(member);
+            result.append(1, ConfigNames::PathSeparator).append(member);
         return result;
     }
 
@@ -1192,14 +1192,14 @@ namespace SeeDocs_App
             if (!folder.empty())
             {
                 const bool under = rest.starts_with(folder) && rest.size() > folder.size()
-                    && rest[folder.size()] == ConfigNames::pathSeparator;
+                    && rest[folder.size()] == ConfigNames::PathSeparator;
                 if (!under)
                     continue;
                 rest.remove_prefix(folder.size() + 1);
             }
             if (rest.empty())
                 continue;
-            const std::wstring name{ rest.substr(0, rest.find(ConfigNames::pathSeparator)) };
+            const std::wstring name{ rest.substr(0, rest.find(ConfigNames::PathSeparator)) };
             if (std::ranges::find(result, name) == result.end())
                 result.push_back(name);
         }
@@ -1590,7 +1590,7 @@ namespace SeeDocs_App
             if (!folder.empty() && !project.folders.contains(folder))
                 return std::nullopt;
             std::wstring path = pathOf(project, folder, nullptr, nullptr);
-            path.append(1, ConfigNames::pathSeparator).append(listSegment(list->kind));
+            path.append(1, ConfigNames::PathSeparator).append(listSegment(list->kind));
             return Url{ path };
         }
         const Targets::const_iterator found = project.targets.find(std::wstring{ target });
@@ -1640,7 +1640,7 @@ namespace SeeDocs_App
         std::wstring result = project
             ? pathOf(*project, folder, nullptr, nullptr)
             : std::wstring{};
-        result.append(1, ConfigNames::pathSeparator);
+        result.append(1, ConfigNames::PathSeparator);
         result.append(k_searchPrefix);
         result.append(escapedQuery(query));
         return result;

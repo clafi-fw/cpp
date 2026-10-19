@@ -47,7 +47,7 @@ namespace ClaFi::Syntax
     // assertion beside it is what catches a word put in out of place.
     namespace CppTables
     {
-        constexpr auto keywords = std::to_array<std::wstring_view>({
+        constexpr auto Keywords = std::to_array<std::wstring_view>({
             L"alignas", L"alignof", L"and", L"and_eq", L"asm", L"auto", L"bitand", L"bitor",
             L"break", L"case", L"catch", L"class", L"co_await", L"co_return", L"co_yield",
             L"compl", L"concept", L"const", L"const_cast", L"consteval", L"constexpr",
@@ -61,27 +61,27 @@ namespace ClaFi::Syntax
             L"typedef", L"typeid", L"typename", L"union", L"using", L"virtual", L"volatile",
             L"while", L"xor", L"xor_eq"
         });
-        static_assert(std::ranges::is_sorted(keywords));
+        static_assert(std::ranges::is_sorted(Keywords));
 
-        constexpr auto types = std::to_array<std::wstring_view>({
+        constexpr auto Types = std::to_array<std::wstring_view>({
             L"bool", L"char", L"char16_t", L"char32_t", L"char8_t", L"double", L"float", L"int",
             L"int16_t", L"int32_t", L"int64_t", L"int8_t", L"intptr_t", L"long", L"ptrdiff_t",
             L"short", L"signed", L"size_t", L"uint16_t", L"uint32_t", L"uint64_t", L"uint8_t",
             L"uintptr_t", L"unsigned", L"void", L"wchar_t"
         });
-        static_assert(std::ranges::is_sorted(types));
+        static_assert(std::ranges::is_sorted(Types));
 
-        constexpr auto constants = std::to_array<std::wstring_view>({
+        constexpr auto Constants = std::to_array<std::wstring_view>({
             L"false", L"nullptr", L"true"
         });
-        static_assert(std::ranges::is_sorted(constants));
+        static_assert(std::ranges::is_sorted(Constants));
 
-        constexpr auto comments = std::to_array<CommentRule>({
+        constexpr auto Comments = std::to_array<CommentRule>({
             { L"//", L"" },
             { L"/*", L"*/" }
         });
 
-        constexpr auto strings = std::to_array<StringRule>({
+        constexpr auto Strings = std::to_array<StringRule>({
             { L'"', L'"', L'\\' },
             { L'\'', L'\'', L'\\' }
         });
@@ -92,7 +92,7 @@ namespace ClaFi::Syntax
     // table.
     namespace PascalTables
     {
-        constexpr auto keywords = std::to_array<std::wstring_view>({
+        constexpr auto Keywords = std::to_array<std::wstring_view>({
             L"absolute", L"abstract", L"and", L"array", L"as", L"asm", L"assembler", L"begin",
             L"case", L"cdecl", L"class", L"const", L"constructor", L"delayed", L"deprecated",
             L"destructor", L"dispinterface", L"div", L"do", L"downto", L"dynamic", L"else", L"end",
@@ -108,9 +108,9 @@ namespace ClaFi::Syntax
             L"unit", L"unsafe", L"until", L"uses", L"var", L"varargs", L"virtual", L"while",
             L"winapi", L"with", L"writeonly", L"xor"
         });
-        static_assert(std::ranges::is_sorted(keywords));
+        static_assert(std::ranges::is_sorted(Keywords));
 
-        constexpr auto types = std::to_array<std::wstring_view>({
+        constexpr auto Types = std::to_array<std::wstring_view>({
             L"ansichar", L"ansistring", L"boolean", L"byte", L"bytebool", L"cardinal", L"char",
             L"comp", L"currency", L"double", L"extended", L"int16", L"int32", L"int64", L"int8",
             L"integer", L"longbool", L"longint", L"longword", L"nativeint", L"nativeuint",
@@ -120,20 +120,20 @@ namespace ClaFi::Syntax
             L"uint64", L"uint8", L"unicodestring", L"utf8string", L"variant", L"widechar",
             L"widestring", L"word", L"wordbool"
         });
-        static_assert(std::ranges::is_sorted(types));
+        static_assert(std::ranges::is_sorted(Types));
 
-        constexpr auto constants = std::to_array<std::wstring_view>({
+        constexpr auto Constants = std::to_array<std::wstring_view>({
             L"false", L"nil", L"true"
         });
-        static_assert(std::ranges::is_sorted(constants));
+        static_assert(std::ranges::is_sorted(Constants));
 
         // The words that open a routine's header, which the reader of declarations walks by.
-        constexpr auto routineWords = std::to_array<std::wstring_view>({
+        constexpr auto RoutineWords = std::to_array<std::wstring_view>({
             L"constructor", L"destructor", L"function", L"operator", L"procedure"
         });
-        static_assert(std::ranges::is_sorted(routineWords));
+        static_assert(std::ranges::is_sorted(RoutineWords));
 
-        constexpr auto comments = std::to_array<CommentRule>({
+        constexpr auto Comments = std::to_array<CommentRule>({
             { L"//", L"" },
             { L"{", L"}" },
             { L"(*", L"*)" }
@@ -142,19 +142,19 @@ namespace ClaFi::Syntax
 
     namespace JsonTables
     {
-        constexpr auto constants = std::to_array<std::wstring_view>({
+        constexpr auto Constants = std::to_array<std::wstring_view>({
             L"false", L"null", L"true"
         });
-        static_assert(std::ranges::is_sorted(constants));
+        static_assert(std::ranges::is_sorted(Constants));
 
-        constexpr auto strings = std::to_array<StringRule>({
+        constexpr auto Strings = std::to_array<StringRule>({
             { L'"', L'"', L'\\' }
         });
     }
 
     namespace XmlTables
     {
-        constexpr auto comments = std::to_array<CommentRule>({
+        constexpr auto Comments = std::to_array<CommentRule>({
             { L"<!--", L"-->" }
         });
     }
@@ -163,13 +163,13 @@ namespace ClaFi::Syntax
     // keeps nothing alive for it.
     export namespace Languages
     {
-        constexpr Language cpp{
+        constexpr Language Cpp{
             .name = L"C++",
-            .keywords = CppTables::keywords,
-            .types = CppTables::types,
-            .constants = CppTables::constants,
-            .comments = CppTables::comments,
-            .strings = CppTables::strings,
+            .keywords = CppTables::Keywords,
+            .types = CppTables::Types,
+            .constants = CppTables::Constants,
+            .comments = CppTables::Comments,
+            .strings = CppTables::Strings,
             .operators = L"!%&*+-./:<=>?^|~",
             .punctuation = L"(){}[],;",
             .numbers = true,
@@ -183,13 +183,13 @@ namespace ClaFi::Syntax
         // string: its escape is a doubled quote, which is the hook's to read, as are the compiler
         // directives inside a comment's brackets and the numbers spelled with $ and %. The one
         // language here whose texts declare names a box completes to.
-        constexpr Language pascal{
+        constexpr Language Pascal{
             .name = L"Pascal",
-            .keywords = PascalTables::keywords,
-            .types = PascalTables::types,
-            .constants = PascalTables::constants,
-            .routineWords = PascalTables::routineWords,
-            .comments = PascalTables::comments,
+            .keywords = PascalTables::Keywords,
+            .types = PascalTables::Types,
+            .constants = PascalTables::Constants,
+            .routineWords = PascalTables::RoutineWords,
+            .comments = PascalTables::Comments,
             .operators = L"*+-./:<=>@^",
             .punctuation = L"()[],;",
             .numbers = true,
@@ -206,11 +206,11 @@ namespace ClaFi::Syntax
 
         // Comments as well, since the files that hold settings carry them. Strict JSON has none,
         // and a document with none is read the same.
-        constexpr Language json{
+        constexpr Language Json{
             .name = L"JSON",
-            .constants = JsonTables::constants,
-            .comments = CppTables::comments,
-            .strings = JsonTables::strings,
+            .constants = JsonTables::Constants,
+            .comments = CppTables::Comments,
+            .strings = JsonTables::Strings,
             .punctuation = L"{}[],:",
             .numbers = true,
             .keyBeforeColon = true,
@@ -219,9 +219,9 @@ namespace ClaFi::Syntax
 
         // Text between the tags is plain, so the tables say nothing and the hook says the rest:
         // a name is a tag or an attribute by where it stands, not by what it spells.
-        constexpr Language xml{
+        constexpr Language Xml{
             .name = L"XML",
-            .comments = XmlTables::comments,
+            .comments = XmlTables::Comments,
             .nameChars = L"-.:",
             .numbers = false,
             .hook = xmlHook,
@@ -230,7 +230,7 @@ namespace ClaFi::Syntax
 
         // A line's first character says what the line is, so the hook takes every line whole and
         // the tables stay empty.
-        constexpr Language claFi{
+        constexpr Language ClaFi{
             .name = L"ClaFi",
             .hook = claFiHook,
             .detect = claFiDetector,
@@ -238,7 +238,7 @@ namespace ClaFi::Syntax
 
         // Text read as text: no rule, every run plain, any text Possible - the name a list answers
         // for whatever nothing else claims.
-        constexpr Language text{
+        constexpr Language Text{
             .name = L"Text",
             .detect = textDetector,
         };

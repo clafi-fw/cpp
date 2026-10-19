@@ -23,7 +23,7 @@ namespace ClaFi
     {
         // The names a user theme may not take: every built-in's, without its extension.
         constexpr std::array<std::wstring_view, 1ull> k_reservedStems{
-            BuiltInThemes::defaultTheme
+            BuiltInThemes::DefaultTheme
         };
     }
 
@@ -75,9 +75,9 @@ namespace ClaFi
     {
         const std::wstring_view root = themePathRoot(path);
         const std::wstring_view name = themePathName(path);
-        if (root == ThemeRoots::builtIn)
+        if (root == ThemeRoots::BuiltIn)
             return builtInTheme(name);
-        if (root != ThemeRoots::user)
+        if (root != ThemeRoots::User)
             return nullptr;
 
         for (const UserThemePtr& theme : userThemes())
@@ -88,7 +88,7 @@ namespace ClaFi
 
     std::wstring ThemesManager::pathOf(const UserTheme& theme)
     {
-        return themePathOf(ThemeRoots::user, theme.path().stem().wstring());
+        return themePathOf(ThemeRoots::User, theme.path().stem().wstring());
     }
 
     bool ThemesManager::isReservedName(const std::wstring_view stem)

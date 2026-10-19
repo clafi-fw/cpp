@@ -64,7 +64,7 @@ namespace ClaFi::Icons::GearIcon
         PixelPath path;
 
         buildWheelPath(path, center, halfSize * k_rootShare, halfSize * k_tipShare);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), strokeWidth) });
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strong), strokeWidth) });
         canvas.drawCircle(center, halfSize * k_hubShare, event.textRgb(InkGrade::Muted), strokeWidth);
     }
 }

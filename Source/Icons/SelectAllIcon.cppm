@@ -45,7 +45,7 @@ namespace ClaFi::Icons::SelectAllIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         size -= strokeWidth;
 
-        const Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
@@ -63,7 +63,7 @@ namespace ClaFi::Icons::SelectAllIcon
         addDashedEdge(path, { high, low }, { high, high });
         addDashedEdge(path, { high, high }, { low, high });
         addDashedEdge(path, { low, high }, { low, low });
-        canvas.drawPath(path, { PathDrawLayer::stroke(bodyColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
 
         // The content inside it. The short last line reads as the end of the text, so the
         // marquee reads as having reached past it.
@@ -74,7 +74,7 @@ namespace ClaFi::Icons::SelectAllIcon
         path.lineTo(size * 0.76f, size * 0.50f);
         path.moveTo(size * 0.24f, size * 0.68f);
         path.lineTo(size * 0.58f, size * 0.68f);
-        canvas.drawPath(path, { PathDrawLayer::stroke(accentColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(accentColor, strokeWidth) }, &transform);
     }
 
 }

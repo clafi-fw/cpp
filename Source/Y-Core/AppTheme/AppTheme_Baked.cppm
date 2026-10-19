@@ -147,7 +147,7 @@ namespace ClaFi
     export [[nodiscard]] BakedRules blend(const BakedRules& from, const BakedRules& to,
         float factor);
     // Two factors, because a theme's lightness crosses on a slot of its own - see
-    // AnimationSlots::themeLightness. Everything else answers to the first.
+    // AnimationSlots::ThemeLightness. Everything else answers to the first.
     export [[nodiscard]] BakedColors blend(const BakedColors& from, const BakedColors& to,
         float factor, float lightnessFactor);
 

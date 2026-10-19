@@ -522,7 +522,7 @@ namespace PascalScripts_App::AppIcon
 
             PixelPath path;
             addRoundedQuad(path, bandCorners(cornersOf(leaf), band), radii);
-            canvas.drawPath(path, { PathDrawLayer::fill(band.color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(band.color) }, &transform);
         }
 
         void strokeLeaf(Canvas& canvas, const Matrix3x2& transform, const Leaf& leaf)
@@ -531,7 +531,7 @@ namespace PascalScripts_App::AppIcon
 
             PixelPath path;
             addRoundedQuad(path, cornersOf(leaf), radii);
-            canvas.drawPath(path, { PathDrawLayer::stroke(k_outlineColor, k_outlineWidth) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Stroke(k_outlineColor, k_outlineWidth) }, &transform);
         }
 
         // A leaf takes its outline before the next covers it, so the front one draws the seam.
@@ -562,7 +562,7 @@ namespace PascalScripts_App::AppIcon
             path.lineTo(right, bottom);
             path.lineTo(left, bottom);
             path.close();
-            canvas.drawPath(path, { PathDrawLayer::fill(band.color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(band.color) }, &transform);
         }
 
         // The frame is stroked first, so the bands cover the half of each line that falls inside.
@@ -573,8 +573,8 @@ namespace PascalScripts_App::AppIcon
 
             const float edgeStroke = (k_keylineWidth + k_edgeWidth) * 2.0f;
             const float keylineStroke = k_keylineWidth * 2.0f;
-            canvas.drawPath(arrow, { PathDrawLayer::stroke(k_edgeColor, edgeStroke) }, &transform);
-            canvas.drawPath(arrow, { PathDrawLayer::stroke(k_keylineColor, keylineStroke) }, &transform);
+            canvas.drawPath(arrow, { PathDrawLayer::Stroke(k_edgeColor, edgeStroke) }, &transform);
+            canvas.drawPath(arrow, { PathDrawLayer::Stroke(k_keylineColor, keylineStroke) }, &transform);
 
             canvas.pushClip(arrow, &transform);
             for (const Band& band : k_arrowBands)
@@ -595,12 +595,12 @@ namespace PascalScripts_App::AppIcon
             addFold(flap);
             canvas.pushClip(outline, &transform);
             canvas.drawPath(flap, {
-                PathDrawLayer::fill(fold),
-                PathDrawLayer::stroke(frame, lineWidth)
+                PathDrawLayer::Fill(fold),
+                PathDrawLayer::Stroke(frame, lineWidth)
             }, &transform);
             canvas.popClip();
 
-            canvas.drawPath(outline, { PathDrawLayer::stroke(frame, lineWidth) }, &transform);
+            canvas.drawPath(outline, { PathDrawLayer::Stroke(frame, lineWidth) }, &transform);
         }
 
         void paintBars(Canvas& canvas, const Matrix3x2& transform, const std::span<const Bar> bars,

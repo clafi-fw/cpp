@@ -177,7 +177,7 @@ namespace ClaFi
         // which reads nothing else from it.
         m_measured = syncedLayout(
             event.formContext(),
-            FloatRect::fromDimensions({ 0.0f, 0.0f }, asked),
+            FloatRect::FromDimensions({ 0.0f, 0.0f }, asked),
             text
         ).calculatedDimensions();
         m_measurement = measurement;

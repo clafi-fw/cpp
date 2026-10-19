@@ -65,7 +65,7 @@ namespace ClaFi::Syntax
         const std::size_t end = close + closer.size();
         scan.emit(start, end, kind);
         scan.index = end;
-        scan.state.mode = Mode::normal;
+        scan.state.mode = Mode::Normal;
     }
 
     // The text without the blanks at either end.
@@ -126,7 +126,7 @@ namespace ClaFi::Syntax
     {
         namespace CppMode
         {
-            constexpr std::uint8_t rawString = Mode::firstLanguageMode;
+            constexpr std::uint8_t RawString = Mode::FirstLanguageMode;
         }
 
         // What a C++ source spells and no other language here does: a directive, a module
@@ -256,7 +256,7 @@ namespace ClaFi::Syntax
             if (isListed(k_cppLabelWords, word))
                 return code.ends_with(L':');
 
-            return (isListed(k_cppLineWords, word) || isListed(CppTables::types, word))
+            return (isListed(k_cppLineWords, word) || isListed(CppTables::Types, word))
                 && closesLikeSource(code);
         }
 
@@ -380,7 +380,7 @@ namespace ClaFi::Syntax
                     const std::size_t end = at + 1 + delimiter.size() + 1;
                     scan.emit(start, end, TokenKind::String);
                     scan.index = end;
-                    scan.state.mode = Mode::normal;
+                    scan.state.mode = Mode::Normal;
                     scan.state.text = 0;
                     return;
                 }
@@ -389,7 +389,7 @@ namespace ClaFi::Syntax
 
             scan.emit(start, scan.line.size(), TokenKind::String);
             scan.index = scan.line.size();
-            scan.state.mode = CppMode::rawString;
+            scan.state.mode = CppMode::RawString;
             scan.state.text = delimiterId;
         }
 
@@ -444,7 +444,7 @@ namespace ClaFi::Syntax
 
     bool cppHook(Scan& scan)
     {
-        if (scan.state.mode == CppMode::rawString)
+        if (scan.state.mode == CppMode::RawString)
         {
             const std::uint16_t delimiterId = scan.state.text;
             continueRawString(scan, scan.index, scan.strings.stringOf(delimiterId), delimiterId);
@@ -672,9 +672,9 @@ namespace ClaFi::Syntax
     {
         namespace XmlMode
         {
-            constexpr std::uint8_t tag = Mode::firstLanguageMode;
-            constexpr std::uint8_t cData = Mode::firstLanguageMode + 1;
-            constexpr std::uint8_t instruction = Mode::firstLanguageMode + 2;
+            constexpr std::uint8_t Tag = Mode::FirstLanguageMode;
+            constexpr std::uint8_t CData = Mode::FirstLanguageMode + 1;
+            constexpr std::uint8_t Instruction = Mode::FirstLanguageMode + 2;
         }
 
         // The longest entity a document is likely to spell, past which an ampersand is text.
@@ -688,14 +688,14 @@ namespace ClaFi::Syntax
             {
                 scan.emit(scan.index, scan.index + 1, TokenKind::Punctuation);
                 ++scan.index;
-                scan.state.mode = Mode::normal;
+                scan.state.mode = Mode::Normal;
                 return;
             }
             if ((current == L'/' || current == L'?') && scan.peek() == L'>')
             {
                 scan.emit(scan.index, scan.index + 2, TokenKind::Punctuation);
                 scan.index += 2;
-                scan.state.mode = Mode::normal;
+                scan.state.mode = Mode::Normal;
                 return;
             }
             if (current == L'=')
@@ -724,14 +724,14 @@ namespace ClaFi::Syntax
     {
         switch (scan.state.mode)
         {
-            case XmlMode::tag:
+            case XmlMode::Tag:
                 continueTag(scan);
                 return true;
-            case XmlMode::cData:
-                takeToCloser(scan, scan.index, L"]]>", TokenKind::String, XmlMode::cData);
+            case XmlMode::CData:
+                takeToCloser(scan, scan.index, L"]]>", TokenKind::String, XmlMode::CData);
                 return true;
-            case XmlMode::instruction:
-                takeToCloser(scan, scan.index, L"?>", TokenKind::Directive, XmlMode::instruction);
+            case XmlMode::Instruction:
+                takeToCloser(scan, scan.index, L"?>", TokenKind::Directive, XmlMode::Instruction);
                 return true;
             default:
                 break;
@@ -748,13 +748,13 @@ namespace ClaFi::Syntax
             if (scan.startsWith(L"<![CDATA["))
             {
                 scan.index += 9;
-                takeToCloser(scan, start, L"]]>", TokenKind::String, XmlMode::cData);
+                takeToCloser(scan, start, L"]]>", TokenKind::String, XmlMode::CData);
                 return true;
             }
             if (scan.startsWith(L"<?"))
             {
                 scan.index += 2;
-                takeToCloser(scan, start, L"?>", TokenKind::Directive, XmlMode::instruction);
+                takeToCloser(scan, start, L"?>", TokenKind::Directive, XmlMode::Instruction);
                 return true;
             }
             if (scan.startsWith(L"<!"))
@@ -775,7 +775,7 @@ namespace ClaFi::Syntax
             const std::size_t nameEnd = endOfName(scan.line, nameStart, scan.language);
             scan.emit(nameStart, nameEnd, TokenKind::Tag);
             scan.index = nameEnd;
-            scan.state.mode = XmlMode::tag;
+            scan.state.mode = XmlMode::Tag;
             return true;
         }
         if (current == L'&')

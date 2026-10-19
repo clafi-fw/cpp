@@ -46,7 +46,7 @@ namespace ClaFi
     };
 
     // The named styles a run of text can carry.
-    export enum class TextStyleId : std::size_t {
+    export enum class [[deprecated]] TextStyleId : std::size_t {
         Body = 0ull,
         Title = 1ull,
         SubTitle = 2ull,
@@ -77,20 +77,33 @@ namespace ClaFi
     // falls on the fonts installed.
     export namespace GenericFamily
     {
-        constexpr const wchar_t* sansSerif = L"sans-serif";
-        constexpr const wchar_t* monospace = L"monospace";
+        constexpr const wchar_t* SansSerif = L"sans-serif";
+        constexpr const wchar_t* Monospace = L"monospace";
     }
 
-    export constexpr std::array<TextStyle, static_cast<std::size_t>(TextStyleId::Count)> k_textStyles = { {
-            { GenericFamily::sansSerif, 12.0f, FontWeight::Normal, FontStyle::Normal },  // Body
-            { GenericFamily::sansSerif, 24.0f, FontWeight::Bold,   FontStyle::Normal },  // Title
-            { GenericFamily::sansSerif, 17.0f, FontWeight::Normal, FontStyle::Normal },  // Subtitle
-            { GenericFamily::sansSerif, 16.0f, FontWeight::SemiBold, FontStyle::Normal },// Heading
-            { GenericFamily::sansSerif, 14.0f, FontWeight::Normal, FontStyle::Normal },  // SubHeading
-            { GenericFamily::sansSerif, 12.0f, FontWeight::Bold,   FontStyle::Normal },  // Section
-            { GenericFamily::sansSerif, 12.0f, FontWeight::Normal, FontStyle::Italic },  // SubSection
-            { GenericFamily::sansSerif, 10.0f, FontWeight::Normal, FontStyle::Normal },  // SubBody
-            { GenericFamily::monospace, 12.0f, FontWeight::Normal, FontStyle::Normal },  // Code
+    export namespace TextStyles
+    {
+        constexpr TextStyle Body        { GenericFamily::SansSerif, 12.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyle Title       { GenericFamily::SansSerif, 24.0f, FontWeight::Bold,   FontStyle::Normal };
+        constexpr TextStyle SubTitle    { GenericFamily::SansSerif, 17.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyle Heading     { GenericFamily::SansSerif, 16.0f, FontWeight::SemiBold, FontStyle::Normal };
+        constexpr TextStyle SubHeading  { GenericFamily::SansSerif, 14.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyle Section     { GenericFamily::SansSerif, 12.0f, FontWeight::Bold,   FontStyle::Normal };
+        constexpr TextStyle SubSection  { GenericFamily::SansSerif, 12.0f, FontWeight::Normal, FontStyle::Italic };
+        constexpr TextStyle SubBody     { GenericFamily::SansSerif, 10.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyle Code        { GenericFamily::Monospace, 12.0f, FontWeight::Normal, FontStyle::Normal };
+    }
+
+    export [[deprecated]] constexpr std::array<TextStyle, static_cast<std::size_t>(TextStyleId::Count)> k_textStyles = { {
+            TextStyles::Body,
+            TextStyles::Title,
+            TextStyles::SubTitle,
+            TextStyles::Heading,
+            TextStyles::SubHeading,
+            TextStyles::Section,
+            TextStyles::SubSection,
+            TextStyles::SubBody,
+            TextStyles::Code
         } };
 
     // What a script run comes to, as fractions of the run it stands on. A level multiplies the
@@ -105,9 +118,9 @@ namespace ClaFi
     // for it.
     export namespace ScriptMetrics
     {
-        constexpr float sizeFactor = 0.72f;
-        constexpr float superRise = 0.40f;
-        constexpr float subDrop = 0.16f;
+        constexpr float SizeFactor = 0.72f;
+        constexpr float SuperRise = 0.40f;
+        constexpr float SubDrop = 0.16f;
     }
 
     export template<typename T>

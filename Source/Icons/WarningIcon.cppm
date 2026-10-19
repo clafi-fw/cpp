@@ -29,7 +29,7 @@ namespace ClaFi::Icons::WarningIcon
         PixelPath path;
         path.moveTo(glyph.at(0.5f, 0.400f));
         path.lineTo(glyph.at(0.5f, 0.635f));
-        event.canvas().drawPath(path, { PathDrawLayer::stroke(glyph.color, glyph.strokeWidth) });
+        event.canvas().drawPath(path, { PathDrawLayer::Stroke(glyph.color, glyph.strokeWidth) });
 
         event.canvas().fillCircle(glyph.at(0.5f, 0.755f), glyph.dotRadius(), glyph.color);
     }

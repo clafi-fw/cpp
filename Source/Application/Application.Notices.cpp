@@ -327,7 +327,7 @@ namespace ClaFi
                 ));
                 for (const NoticeCard* card : m_cards)
                 {
-                    const FloatRect rect = FloatRect::fromDimensions(
+                    const FloatRect rect = FloatRect::FromDimensions(
                         event.contentPosition() + card->topLeft(), card->scaledSize());
                     painter.paint(event.canvas(), rect);
                 }

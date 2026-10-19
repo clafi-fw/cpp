@@ -494,7 +494,7 @@ namespace SeeDocs_App
                     end = text.size();
                 const std::wstring_view line = text.substr(start, end - start);
                 lexed.clear();
-                state = Syntax::lexLine(Syntax::Languages::pascal, line, state, strings, &lexed);
+                state = Syntax::lexLine(Syntax::Languages::Pascal, line, state, strings, &lexed);
                 for (const Syntax::Token& token : lexed)
                 {
                     if (token.kind != Syntax::TokenKind::Directive)
@@ -716,7 +716,7 @@ namespace SeeDocs_App
         {
             const std::wstring_view line = m_lines[index];
             Syntax::Tokens lexed;
-            state = Syntax::lexLine(Syntax::Languages::pascal, line, state, strings, &lexed);
+            state = Syntax::lexLine(Syntax::Languages::Pascal, line, state, strings, &lexed);
             std::size_t cursor = 0;
             for (const Syntax::Token& token : lexed)
             {
@@ -2210,7 +2210,7 @@ namespace SeeDocs_App
                     methodTypeOf(surface, property.type, owner.qualifiedName);
                 if (answer != MethodType::Unknown)
                     return answer == MethodType::Yes;
-                if (isListed(Syntax::Languages::pascal.types, plainType(property.type)))
+                if (isListed(Syntax::Languages::Pascal.types, plainType(property.type)))
                     return false;
             }
             const std::wstring_view name = property.name;

@@ -665,7 +665,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     // when there is nothing else waiting.
     void Window::invalidateRect(const IntRect* value)
     {
-        const IntRect whole = IntRect::fromDimensions({ 0, 0 }, m_size);
+        const IntRect whole = IntRect::FromDimensions({ 0, 0 }, m_size);
         const IntRect rect = value ? *value : whole;
 
         // **Told to the frames as well as to the window**, and the two mean different things. This
@@ -1136,7 +1136,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             return;
 
         const FrameMargins margins = surfaceMargins();
-        const IntRect geometry = IntRect::fromDimensions({ margins.left, margins.top }, m_geometrySize);
+        const IntRect geometry = IntRect::FromDimensions({ margins.left, margins.top }, m_geometrySize);
         // A layer surface has no window geometry to state: it wears no margins, so the surface
         // is the window.
         if (m_xdgSurface)

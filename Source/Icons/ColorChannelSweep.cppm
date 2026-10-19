@@ -145,7 +145,7 @@ namespace ClaFi::Icons::ColorChannelSweep
         {
             // Brush points are path-local: the CPU painter maps them through the draw transform and
             // D2D sets the same matrix on the render target, so both agree without a second matrix.
-            return LinearGradient::simple(startPt, endPt, startColor, endColor);
+            return LinearGradient::Simple(startPt, endPt, startColor, endColor);
         }
     }
 
@@ -166,14 +166,14 @@ namespace ClaFi::Icons::ColorChannelSweep
             size -= bandWidth;
 
             FloatPoint center = { size * 0.5f, size * 0.5f };
-            Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ bandWidth * 0.5f });
+            Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ bandWidth * 0.5f });
 
             drawRingSweep(canvas, center, size * k_ringRadiusRatio, bandWidth, colors, ends, transform);
         }
         else
         {
             FloatPoint center = { size * 0.5f, size * 0.5f };
-            Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft());
+            Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft());
 
             drawPieSweep(canvas, center, size * k_pieRadiusRatio, colors, ends, transform);
         }

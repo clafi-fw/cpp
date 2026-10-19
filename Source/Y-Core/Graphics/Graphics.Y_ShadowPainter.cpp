@@ -153,7 +153,7 @@ namespace ClaFi::Graphics
         Canvas canvas{ std::move(backend) };
         const IntRect whole = { 0, 0, surface.x, surface.y };
         canvas.beginPaint(nullptr, whole);
-        const FloatRect rect = FloatRect::fromDimensions(
+        const FloatRect rect = FloatRect::FromDimensions(
             { static_cast<float>(extent.left), static_cast<float>(extent.top) },
             { static_cast<float>(rectangle.x), static_cast<float>(rectangle.y) });
         const RoundedRectangleParts silhouette{
@@ -196,7 +196,7 @@ namespace ClaFi::Graphics
             static_cast<float>(from.width()),
             static_cast<float>(from.height())
         };
-        const PixelView source = from.pixelView({}, FloatRect::fromDimensions({}, size));
+        const PixelView source = from.pixelView({}, FloatRect::FromDimensions({}, size));
         // The source lands with rect's corner on the tile's origin, and the tile's own extent
         // bounds the copy.
         const FloatPoint origin = { static_cast<float>(-rect.left), static_cast<float>(-rect.top) };
@@ -285,7 +285,7 @@ namespace ClaFi::Graphics
     void ShadowPainter::place(Canvas& canvas, const FloatRect& clip, const Bitmap& bitmap,
         FloatPoint position, const float opacity) const
     {
-        const FloatRect rect = FloatRect::fromDimensions(position,
+        const FloatRect rect = FloatRect::FromDimensions(position,
             { static_cast<float>(bitmap.width()), static_cast<float>(bitmap.height()) });
         if (FloatRect::intersection(rect, clip).empty())
             return;

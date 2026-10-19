@@ -20,13 +20,13 @@ namespace SeeDocs_App
     {
         namespace Keys
         {
-            constexpr std::wstring_view name = L"Name";
-            constexpr std::wstring_view sources = L"Sources";
-            constexpr std::wstring_view path = L"Path";
-            constexpr std::wstring_view subfolders = L"Subfolders";
-            constexpr std::wstring_view limited = L"Limited";
-            constexpr std::wstring_view looseHints = L"LooseHints";
-            constexpr std::wstring_view editHints = L"EditHints";
+            constexpr std::wstring_view Name = L"Name";
+            constexpr std::wstring_view Sources = L"Sources";
+            constexpr std::wstring_view Path = L"Path";
+            constexpr std::wstring_view Subfolders = L"Subfolders";
+            constexpr std::wstring_view Limited = L"Limited";
+            constexpr std::wstring_view LooseHints = L"LooseHints";
+            constexpr std::wstring_view EditHints = L"EditHints";
         }
 
         constexpr std::wstring_view k_parentStep = L"..";
@@ -38,17 +38,17 @@ namespace SeeDocs_App
         {
             using namespace Dom::Dt;
             return Section{
-                Value{ Keys::name, std::wstring{} },
+                Value{ Keys::Name, std::wstring{} },
                 Sequence{
-                    Keys::sources,
+                    Keys::Sources,
                     Section{
-                        Value{ Keys::path, std::wstring{} },
-                        Value{ Keys::subfolders, true }
+                        Value{ Keys::Path, std::wstring{} },
+                        Value{ Keys::Subfolders, true }
                     }
                 },
-                Value{ Keys::limited, false },
-                Value{ Keys::looseHints, false },
-                Value{ Keys::editHints, false }
+                Value{ Keys::Limited, false },
+                Value{ Keys::LooseHints, false },
+                Value{ Keys::EditHints, false }
             };
         }
 
@@ -209,24 +209,24 @@ namespace SeeDocs_App
         };
         if (document.load())
         {
-            const std::wstring stated = (document / Keys::name).get<std::wstring>();
+            const std::wstring stated = (document / Keys::Name).get<std::wstring>();
             if (!stated.empty())
                 project.name = stated;
-            for (const Dom::Section& entry : (document / Keys::sources).as<Sections>())
+            for (const Dom::Section& entry : (document / Keys::Sources).as<Sections>())
             {
-                std::wstring written = (entry / Keys::path).get<std::wstring>();
+                std::wstring written = (entry / Keys::Path).get<std::wstring>();
                 if (written.empty())
                     continue;
                 project.sources.push_back({
                     .written = std::move(written),
-                    .subfolders = (entry / Keys::subfolders).get<bool>()
+                    .subfolders = (entry / Keys::Subfolders).get<bool>()
                 });
             }
-            if ((document / Keys::limited).get<bool>())
+            if ((document / Keys::Limited).get<bool>())
                 project.mode = ScanMode::Limited;
-            if ((document / Keys::looseHints).get<bool>())
+            if ((document / Keys::LooseHints).get<bool>())
                 project.hints = HintRules::Loose;
-            if ((document / Keys::editHints).get<bool>())
+            if ((document / Keys::EditHints).get<bool>())
                 project.edits = HintEdits::Direct;
         }
         return project;
@@ -263,17 +263,17 @@ namespace SeeDocs_App
             Dom::WriteDefaults::Yes
         };
         const bool folderNamed = project.name == project.folderName();
-        (document / Keys::name).set(folderNamed ? std::wstring{} : project.name);
-        Sections& sources = (document / Keys::sources).as<Sections>();
+        (document / Keys::Name).set(folderNamed ? std::wstring{} : project.name);
+        Sections& sources = (document / Keys::Sources).as<Sections>();
         for (const ProjectSource& source : project.sources)
         {
             Dom::Section& entry = sources.add();
-            (entry / Keys::path).set(source.written);
-            (entry / Keys::subfolders).set(source.subfolders);
+            (entry / Keys::Path).set(source.written);
+            (entry / Keys::Subfolders).set(source.subfolders);
         }
-        (document / Keys::limited).set(project.mode == ScanMode::Limited);
-        (document / Keys::looseHints).set(project.hints == HintRules::Loose);
-        (document / Keys::editHints).set(project.edits == HintEdits::Direct);
+        (document / Keys::Limited).set(project.mode == ScanMode::Limited);
+        (document / Keys::LooseHints).set(project.hints == HintRules::Loose);
+        (document / Keys::EditHints).set(project.edits == HintEdits::Direct);
         document.save();
     }
 }

@@ -4,22 +4,22 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Browser::ConfigNames
 {
-    export constexpr wchar_t pathSeparator = L'/';
+    export constexpr wchar_t PathSeparator = L'/';
     // we may want to make homePath a property of the BrowserControl,
     // then it may be like L"Home/" or L"NewPage/"
-    export constexpr std::wstring_view homePath = L"/";
-    export constexpr std::wstring_view homePage = { homePath.data(), homePath.length() - 1};
+    export constexpr std::wstring_view HomePath = L"/";
+    export constexpr std::wstring_view HomePage = { HomePath.data(), HomePath.length() - 1};
 
-    export constexpr std::wstring_view id{ L"Id" };
-    export constexpr std::wstring_view path{ L"Path" };
-    export constexpr std::wstring_view title{ L"Title" };
-    export constexpr std::wstring_view position{ L"Position" };
-    export constexpr std::wstring_view url{ L"Url" };
-    export constexpr std::wstring_view backVisits{ L"BackVisits" };
-    export constexpr std::wstring_view forwardVisits{ L"ForwardVisits" };
+    export constexpr std::wstring_view Id{ L"Id" };
+    export constexpr std::wstring_view Path{ L"Path" };
+    export constexpr std::wstring_view Title{ L"Title" };
+    export constexpr std::wstring_view Position{ L"Position" };
+    export constexpr std::wstring_view Url{ L"Url" };
+    export constexpr std::wstring_view BackVisits{ L"BackVisits" };
+    export constexpr std::wstring_view ForwardVisits{ L"ForwardVisits" };
 
-    export constexpr std::wstring_view untitledPage{ L"Untitled" };
+    export constexpr std::wstring_view UntitledPage{ L"Untitled" };
 
-    export constexpr std::wstring_view selectedTab{ L"SelectedTab" };
-    export constexpr std::wstring_view openTabs{ L"OpenTabs" };
+    export constexpr std::wstring_view SelectedTab{ L"SelectedTab" };
+    export constexpr std::wstring_view OpenTabs{ L"OpenTabs" };
 }

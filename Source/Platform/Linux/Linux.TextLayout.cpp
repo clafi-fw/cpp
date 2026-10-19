@@ -401,7 +401,7 @@ namespace ClaFi::Platform::Linux
 #endif
         const float fadeWidth = controlContext.scaleF(k_lineFadeWidth);
         const Graphics::Matrix3x2& canvasTransform = canvas.transform();
-        const bool transformed = !(canvasTransform == Graphics::Matrix3x2::identity());
+        const bool transformed = !(canvasTransform == Graphics::Matrix3x2::Identity());
         const Color defaultColor = controlContext.textRgb(InkGrade::Strongest);
         const ColorDef defaultColorDef{ std::in_place_type<Color>, defaultColor };
         const bool collapses = localCollapseBaseline > -9000.0f;
@@ -1070,7 +1070,7 @@ namespace ClaFi::Platform::Linux
             return;
 
         const Graphics::Matrix3x2& canvasTransform = canvas.transform();
-        const bool transformed = !(canvasTransform == Graphics::Matrix3x2::identity());
+        const bool transformed = !(canvasTransform == Graphics::Matrix3x2::Identity());
 
         m_compositor.begin();
         float penX = baselineOrigin.x;

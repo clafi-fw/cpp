@@ -18,7 +18,7 @@ namespace ClaFi::Icons::PasteIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         size -= strokeWidth;
 
-        const Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
@@ -58,7 +58,7 @@ namespace ClaFi::Icons::PasteIcon
         path.quadTo({ clipRight, 0.0f }, { clipRight, clipRadius });
         path.lineTo(clipRight, clipBottom);
         path.close();
-        canvas.drawPath(path, { PathDrawLayer::stroke(bodyColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
 
         // Two lines of content on the board.
         path.clear();
@@ -66,7 +66,7 @@ namespace ClaFi::Icons::PasteIcon
         path.lineTo(size * 0.74f, size * 0.57f);
         path.moveTo(size * 0.26f, size * 0.78f);
         path.lineTo(size * 0.74f, size * 0.78f);
-        canvas.drawPath(path, { PathDrawLayer::stroke(accentColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(accentColor, strokeWidth) }, &transform);
     }
 
 }

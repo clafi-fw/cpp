@@ -20,24 +20,24 @@ namespace ClaFi::Browser
     // What every entry keeps of a tab; an application adds to it what its own tab shows unopened.
     export const Section k_tabEntrySchema
     {
-        Value{ ConfigNames::id, L"" },
-        Value{ ConfigNames::title, ConfigNames::untitledPage },
-        Value{ ConfigNames::path, L"" },
-        Value{ ConfigNames::position, 0.0f }
+        Value{ ConfigNames::Id, L"" },
+        Value{ ConfigNames::Title, ConfigNames::UntitledPage },
+        Value{ ConfigNames::Path, L"" },
+        Value{ ConfigNames::Position, 0.0f }
     };
 
     // One visit of a tab's history: the url, and where its page stood in view.
     export const Section k_visitSchema
     {
-        Value{ ConfigNames::url, L"" },
-        Value{ ConfigNames::position, 0.0f }
+        Value{ ConfigNames::Url, L"" },
+        Value{ ConfigNames::Position, 0.0f }
     };
 
     // What the browser keeps in a tab's own file; the application's tab schema is added to it.
     export const Section k_tabFileSchema
     {
-        Sequence{ ConfigNames::backVisits, k_visitSchema },
-        Sequence{ ConfigNames::forwardVisits, k_visitSchema }
+        Sequence{ ConfigNames::BackVisits, k_visitSchema },
+        Sequence{ ConfigNames::ForwardVisits, k_visitSchema }
     };
 
     // The browser's part of the application config - the selected tab and an entry per open tab.
@@ -77,9 +77,9 @@ namespace ClaFi::Browser
     private:
         Dom::DocumentBase& m_appConfig;
         Dom::Dt::Section m_tabSchema;
-        TabEntries& m_openTabs{ (m_appConfig / ConfigNames::openTabs).as<TabEntries>() };
+        TabEntries& m_openTabs{ (m_appConfig / ConfigNames::OpenTabs).as<TabEntries>() };
         Dom::Value<std::wstring>& m_selectedTab{
-            m_appConfig.child(ConfigNames::selectedTab)->as<Dom::Value<std::wstring>>() };
+            m_appConfig.child(ConfigNames::SelectedTab)->as<Dom::Value<std::wstring>>() };
         TabDocuments m_tabDocuments{};
         ScopedEventConnection m_appConfigSaved{};
     };
@@ -91,10 +91,10 @@ namespace ClaFi::Browser
     Section createBrowserSettingsSchema(TTabEntrySchema&& tabEntrySchema)
     {
         return {
-            Value{ ConfigNames::selectedTab, L"" },
+            Value{ ConfigNames::SelectedTab, L"" },
             Sequence
             {
-                ConfigNames::openTabs,
+                ConfigNames::OpenTabs,
                 Section
                 {
                     k_tabEntrySchema,
@@ -118,7 +118,7 @@ namespace ClaFi::Browser
 
     Dom::Section& BrowserSettings::tabEntry(std::wstring_view tabId) const
     {
-        Dom::Section* entry = m_openTabs.childWhere(ConfigNames::id, tabId);
+        Dom::Section* entry = m_openTabs.childWhere(ConfigNames::Id, tabId);
         if (!entry)
             noReach("BrowserSettings: no tab is listed under this id");
         return *entry;
@@ -143,7 +143,7 @@ namespace ClaFi::Browser
     Dom::Section& BrowserSettings::addTabEntry(std::wstring_view tabId)
     {
         Dom::Section& entry = m_openTabs.add();
-        (entry / ConfigNames::id).set(tabId);
+        (entry / ConfigNames::Id).set(tabId);
         m_tabDocuments.insert_or_assign(std::wstring{ tabId }, createTabDocument(tabId));
         diagnosticLog(std::format(L"tab config new {}", tabFilePath(tabId).wstring()));
         return entry;
@@ -151,7 +151,7 @@ namespace ClaFi::Browser
 
     void BrowserSettings::deleteTabEntry(std::wstring_view tabId)
     {
-        if (Dom::Section* entry = m_openTabs.childWhere(ConfigNames::id, tabId))
+        if (Dom::Section* entry = m_openTabs.childWhere(ConfigNames::Id, tabId))
             entry->deleteSelf();
         const TabDocuments::iterator document = m_tabDocuments.find(tabId);
         if (document != m_tabDocuments.end())
@@ -165,7 +165,7 @@ namespace ClaFi::Browser
         std::size_t placed = 0ull;
         for (const std::wstring_view tabId : tabIds)
         {
-            const Dom::Section* entry = m_openTabs.childWhere(ConfigNames::id, tabId);
+            const Dom::Section* entry = m_openTabs.childWhere(ConfigNames::Id, tabId);
             const Entries::iterator found = std::ranges::find_if(entries,
                 [entry](const std::unique_ptr<Dom::DomNodeBase>& candidate) {
                     return candidate.get() == entry;
@@ -193,7 +193,7 @@ namespace ClaFi::Browser
         const std::filesystem::directory_iterator files{ tabsFolder(), error };
         for (const std::filesystem::directory_entry& entry : files)
         {
-            if (m_openTabs.childWhere(ConfigNames::id, entry.path().stem().wstring()))
+            if (m_openTabs.childWhere(ConfigNames::Id, entry.path().stem().wstring()))
                 continue;
             std::filesystem::remove(entry.path(), error);
             diagnosticLog(std::format(L"tab config removed {}", entry.path().wstring()));
@@ -209,7 +209,7 @@ namespace ClaFi::Browser
 
     std::filesystem::path BrowserSettings::tabsFolder() const
     {
-        return m_appConfig.path().parent_path() / ConfigNames::openTabs;
+        return m_appConfig.path().parent_path() / ConfigNames::OpenTabs;
     }
 
     // Named by the id, with the extension the application config file has.

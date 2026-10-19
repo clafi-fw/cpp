@@ -29,7 +29,7 @@ namespace ClaFi::Documents
     {
         if (fileName.empty())
             return {};
-        return std::wstring{ Browser::ConfigNames::homePath }.append(fileName);
+        return std::wstring{ Browser::ConfigNames::HomePath }.append(fileName);
     }
 
     std::wstring fileNameOfPage(const std::wstring_view pagePath)

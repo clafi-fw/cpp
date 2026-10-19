@@ -58,6 +58,6 @@ namespace ClaFi::Icons::DoorIcon
 
         PixelPath path;
         buildArrowPath(path, box, size);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) });
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) });
     }
 }

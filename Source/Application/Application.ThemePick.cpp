@@ -63,7 +63,7 @@ namespace ClaFi
         m_themes.clear();
         m_themeItems.clear();
 
-        addTheme(defaultTheme(), k_defaultThemePath, BuiltInThemes::defaultTheme);
+        addTheme(defaultTheme(), k_defaultThemePath, BuiltInThemes::DefaultTheme);
 
         for (const UserThemePtr& theme : appThemes().userThemes())
         {

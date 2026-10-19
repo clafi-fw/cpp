@@ -17,7 +17,7 @@ namespace ClaFi::PlatformImplementation::Linux
         // the file, not on each partial write. IN_MOVED_TO is not optional - editors that save
         // atomically write a temporary file and rename it over the target, so the rename is the
         // only event a plain IN_MODIFY watch would ever see, and it would see none.
-        constexpr std::uint32_t watched =
+        constexpr std::uint32_t Watched =
             IN_CLOSE_WRITE
             | IN_CREATE
             | IN_DELETE
@@ -144,7 +144,7 @@ namespace ClaFi::PlatformImplementation::Linux
         {
             return -1;
         }
-        int watchDescriptor = ::inotify_add_watch(m_notifyFd, path.c_str(), InotifyMask::watched);
+        int watchDescriptor = ::inotify_add_watch(m_notifyFd, path.c_str(), InotifyMask::Watched);
         if (!check(watchDescriptor != -1))
         {
             return -1;

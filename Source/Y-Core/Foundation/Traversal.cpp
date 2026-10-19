@@ -33,7 +33,7 @@ namespace ClaFi
         // the origin its children are measured from - then describes where the control is drawn
         // rather than where it was laid out, and a floating control needs no second idea of its
         // own geometry. See Control::floatOffset.
-        m_controlBounds = FloatRect::fromDimensions(
+        m_controlBounds = FloatRect::FromDimensions(
             m_control.topLeft() + m_control.floatOffset() + parentContentPosition,
             m_control.scaledSize());
 

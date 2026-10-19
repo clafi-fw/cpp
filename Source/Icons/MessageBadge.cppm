@@ -74,7 +74,7 @@ namespace ClaFi::Icons::MessageBadge
     {
         const FloatRect& iconRect = event.iconRect();
         const float size = std::min(iconRect.width(), iconRect.height());
-        return FloatRect::fromDimensions(iconRect.center() - FloatPoint{ size * 0.5f }, { size, size });
+        return FloatRect::FromDimensions(iconRect.center() - FloatPoint{ size * 0.5f }, { size, size });
     }
 
     static GlyphSlot glyphSlotOf(PaintIconEvent& event, const FloatRect& box)

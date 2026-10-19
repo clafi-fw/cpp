@@ -13,21 +13,21 @@ namespace ClaFi::PlatformImplementation::Linux
         // Where the desktop's own settings are served: the Settings interface of the XDG portal.
         namespace SettingsPortal
         {
-            constexpr const char* busName = "org.freedesktop.portal.Desktop";
-            constexpr const char* objectPath = "/org/freedesktop/portal/desktop";
-            constexpr const char* interfaceName = "org.freedesktop.portal.Settings";
-            constexpr const char* changeSignal = "SettingChanged";
+            constexpr const char* BusName = "org.freedesktop.portal.Desktop";
+            constexpr const char* ObjectPath = "/org/freedesktop/portal/desktop";
+            constexpr const char* InterfaceName = "org.freedesktop.portal.Settings";
+            constexpr const char* ChangeSignal = "SettingChanged";
             // ReadOne answers in one variant; Read, all an older portal has, answers in two.
-            constexpr const char* readOneMethod = "ReadOne";
-            constexpr const char* readMethod = "Read";
+            constexpr const char* ReadOneMethod = "ReadOne";
+            constexpr const char* ReadMethod = "Read";
         }
 
         // The one value read. 1 asks for dark; 0 is no preference, 2 light, anything later none.
         namespace ColorScheme
         {
-            constexpr const char* settingsNamespace = "org.freedesktop.appearance";
-            constexpr const char* key = "color-scheme";
-            constexpr dbus_uint32_t preferDark = 1;
+            constexpr const char* SettingsNamespace = "org.freedesktop.appearance";
+            constexpr const char* Key = "color-scheme";
+            constexpr dbus_uint32_t PreferDark = 1;
         }
 
         // **The bus filters the signals**, so a change of the colour scheme is the one delivered.
@@ -158,7 +158,7 @@ namespace ClaFi::PlatformImplementation::Linux
                 m_fd = -1;
             // Given no error to fill, this does not wait for the bus; the read's flush sends it.
             dbus_bus_add_match(m_connection, k_changeRule, nullptr);
-            requestScheme(SettingsPortal::readOneMethod);
+            requestScheme(SettingsPortal::ReadOneMethod);
 
             // **The first answer is waited for**, so the first window opens in the desktop's mode
             // rather than crossing to it. A portal slower than this - one the session starts for
@@ -197,12 +197,12 @@ namespace ClaFi::PlatformImplementation::Linux
         // serial its answer will carry.
         void Portal::requestScheme(const char* method)
         {
-            DBusMessage* message = dbus_message_new_method_call(SettingsPortal::busName,
-                SettingsPortal::objectPath, SettingsPortal::interfaceName, method);
+            DBusMessage* message = dbus_message_new_method_call(SettingsPortal::BusName,
+                SettingsPortal::ObjectPath, SettingsPortal::InterfaceName, method);
             if (!message)
                 return;
-            const char* settingsNamespace = ColorScheme::settingsNamespace;
-            const char* key = ColorScheme::key;
+            const char* settingsNamespace = ColorScheme::SettingsNamespace;
+            const char* key = ColorScheme::Key;
             dbus_uint32_t serial = 0;
             const bool sent = dbus_message_append_args(message,
                     DBUS_TYPE_STRING, &settingsNamespace,
@@ -257,9 +257,9 @@ namespace ClaFi::PlatformImplementation::Linux
                     return false;
                 m_readSerial = 0;
                 // A portal older than version 2 knows the read by its first name only.
-                if (m_readMethod == SettingsPortal::readOneMethod
+                if (m_readMethod == SettingsPortal::ReadOneMethod
                     && dbus_message_is_error(message, DBUS_ERROR_UNKNOWN_METHOD))
-                    requestScheme(SettingsPortal::readMethod);
+                    requestScheme(SettingsPortal::ReadMethod);
                 return false;
             }
             }
@@ -270,8 +270,8 @@ namespace ClaFi::PlatformImplementation::Linux
         // asks the bus for this one change, and the arguments are checked all the same.
         bool Portal::takeSignal(DBusMessage* message)
         {
-            if (!dbus_message_is_signal(message, SettingsPortal::interfaceName,
-                SettingsPortal::changeSignal))
+            if (!dbus_message_is_signal(message, SettingsPortal::InterfaceName,
+                SettingsPortal::ChangeSignal))
                 return false;
             DBusMessageIter arguments{};
             const char* settingsNamespace = nullptr;
@@ -284,8 +284,8 @@ namespace ClaFi::PlatformImplementation::Linux
                 || dbus_message_iter_get_arg_type(&arguments) != DBUS_TYPE_STRING)
                 return false;
             dbus_message_iter_get_basic(&arguments, &key);
-            if (std::string_view{ settingsNamespace } != ColorScheme::settingsNamespace
-                || std::string_view{ key } != ColorScheme::key)
+            if (std::string_view{ settingsNamespace } != ColorScheme::SettingsNamespace
+                || std::string_view{ key } != ColorScheme::Key)
                 return false;
             if (!dbus_message_iter_next(&arguments))
                 return false;
@@ -305,7 +305,7 @@ namespace ClaFi::PlatformImplementation::Linux
             dbus_uint32_t scheme = 0;
             if (dbus_message_iter_get_arg_type(&value) == DBUS_TYPE_UINT32)
                 dbus_message_iter_get_basic(&value, &scheme);
-            const ColorMode mode = scheme == ColorScheme::preferDark
+            const ColorMode mode = scheme == ColorScheme::PreferDark
                 ? ColorMode::Dark
                 : ColorMode::Light;
             if (mode == m_colorMode)

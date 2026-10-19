@@ -51,7 +51,7 @@ namespace ClaFi
     {
     }
 
-    Url Url::parse(const std::wstring_view spelling)
+    Url Url::Parse(const std::wstring_view spelling)
     {
         const std::size_t mark = spelling.find(k_anchorMark);
         if (mark == spelling.npos)

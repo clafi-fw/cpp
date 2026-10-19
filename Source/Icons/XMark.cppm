@@ -25,7 +25,7 @@ namespace ClaFi::Icons::XMark
         path.lineTo(markRect.bottomRight());
         path.moveTo(markRect.bottomLeft());
         path.lineTo(markRect.topRight());
-        const Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft());
-        event.canvas().drawPath(path, { PathDrawLayer::stroke(color, lineWidth) }, &transform);
+        const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft());
+        event.canvas().drawPath(path, { PathDrawLayer::Stroke(color, lineWidth) }, &transform);
     }
 }

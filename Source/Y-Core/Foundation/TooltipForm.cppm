@@ -150,7 +150,7 @@ namespace ClaFi
         if (m_breakWidth == 0.0f)
             asked.x = std::min(asked.x, Tooltip::k_lineWidth * event.scaleFactor());
         TextLayout& layout = syncedLayout(event.formContext(),
-            FloatRect::fromDimensions({ 0.0f, 0.0f }, asked), text);
+            FloatRect::FromDimensions({ 0.0f, 0.0f }, asked), text);
         asked.y = std::min(asked.y, layout.linesHeight(Tooltip::k_maxLines));
         return WithTextLayout<FormControlBase>::measureText(event, asked, text);
     }
@@ -233,7 +233,7 @@ namespace ClaFi
     {
         const float currentValue = static_cast<float>(window().alpha());
         const float targetValue = static_cast<float>(visible()) * m_alpha;
-        appContext().animator().start(this, AnimationSlots::formAlpha, currentValue, targetValue,
+        appContext().animator().start(this, AnimationSlots::FormAlpha, currentValue, targetValue,
             [this](const AnimateParams& params) {
                 window().setAlpha(static_cast<ColorByte>(params.value));
             });

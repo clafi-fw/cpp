@@ -327,7 +327,7 @@ namespace ClaFi::Transfer
                     return known;
             }
 
-            return Format::custom(std::move(name));
+            return Format::Custom(std::move(name));
         }
 
         // **Every platform format under its platform name**, the synthesised ones included: Windows
@@ -344,10 +344,10 @@ namespace ClaFi::Transfer
             for (const PredefinedFormat& predefined : k_predefinedFormats)
             {
                 if (predefined.clipFormat == clipFormat)
-                    return Format::custom(std::wstring{ predefined.name });
+                    return Format::Custom(std::wstring{ predefined.name });
             }
 
-            return Format::custom(L"CF_" + std::to_wstring(clipFormat));
+            return Format::Custom(L"CF_" + std::to_wstring(clipFormat));
         }
 
         [[nodiscard]] CLIPFORMAT clipFormatFor(const Format& format)
@@ -392,8 +392,8 @@ namespace ClaFi::Transfer
         {
             for (const StandardFormat standard : k_standardFormats)
             {
-                if (clipFormatFor(Format::of(standard)) == clipFormat)
-                    return Format::of(standard);
+                if (clipFormatFor(Format::Of(standard)) == clipFormat)
+                    return Format::Of(standard);
             }
 
             return formatFor(clipFormat);
@@ -1016,7 +1016,7 @@ namespace ClaFi::Transfer
 
     Format platformFormatOf(const StandardFormat standard)
     {
-        return formatFor(clipFormatFor(Format::of(standard)));
+        return formatFor(clipFormatFor(Format::Of(standard)));
     }
 
     // Clipboard

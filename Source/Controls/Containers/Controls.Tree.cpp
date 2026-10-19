@@ -64,10 +64,10 @@ namespace ClaFi::Controls
     // spacing, so the rounding comes out the same in both.
     float TreeItem::textLead(const Scaler& scaler) const
     {
-        return scaler.scale(static_cast<float>(m_level) * TreeRows::step)
-            + scaler.scale(TreeRows::markSize)
-            + scaler.scale(TreeRows::markPadding) * 2.0f
-            + scaler.scale(TreeRows::gap);
+        return scaler.scale(static_cast<float>(m_level) * TreeRows::Step)
+            + scaler.scale(TreeRows::MarkSize)
+            + scaler.scale(TreeRows::MarkPadding) * 2.0f
+            + scaler.scale(TreeRows::Gap);
     }
 
     // TreeDivider
@@ -93,7 +93,7 @@ namespace ClaFi::Controls
 
     float TreeDivider::lead() const
     {
-        return static_cast<float>(m_level) * TreeRows::step;
+        return static_cast<float>(m_level) * TreeRows::Step;
     }
 
     FloatPoint TreeDivider::leadingInset() const
@@ -145,15 +145,15 @@ namespace ClaFi::Controls
     void TreeNode::layOutHeader(const ControlMetrics& buttonMetrics)
     {
         ExpanderHeader& strip = header();
-        strip.setPadding(TreeRows::inset, buttonMetrics.padding.y);
-        strip.setSpacing(TreeRows::gap);
+        strip.setPadding(TreeRows::Inset, buttonMetrics.padding.y);
+        strip.setSpacing(TreeRows::Gap);
         strip.setMinSize(0.0f, buttonMetrics.minSize.y);
-        strip.setLead(static_cast<float>(m_level) * TreeRows::step);
+        strip.setLead(static_cast<float>(m_level) * TreeRows::Step);
         strip.setWordWrap(WordWrap::No);
         ExpanderButton& mark = strip.button();
-        mark.setIconSize(IconSize{ TreeRows::markSize });
+        mark.setIconSize(IconSize{ TreeRows::MarkSize });
         // No padding across, so the mark never makes the row taller than its text does.
-        mark.setPadding(TreeRows::markPadding, 0.0f);
+        mark.setPadding(TreeRows::MarkPadding, 0.0f);
         mark.setMinSize(0.0f);
     }
 

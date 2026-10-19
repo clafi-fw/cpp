@@ -41,10 +41,10 @@ namespace ClaFi::Tools::WhatsClip
             const std::wstring_view formatName)
         {
             if (formatName == Transfer::ClaFiText::k_name)
-                return listed(languages, Syntax::Languages::claFi.name);
+                return listed(languages, Syntax::Languages::ClaFi.name);
 
             if (nameCarries(formatName, L"XML") || nameCarries(formatName, L"HTML"))
-                return listed(languages, Syntax::Languages::xml.name);
+                return listed(languages, Syntax::Languages::Xml.name);
 
             return std::nullopt;
         }
@@ -63,12 +63,12 @@ namespace ClaFi::Tools::WhatsClip
     LanguageList defaultLanguages()
     {
         return {
-            Syntax::Languages::claFi,
-            Syntax::Languages::json,
-            Syntax::Languages::xml,
-            Syntax::Languages::cpp,
-            Syntax::Languages::pascal,
-            Syntax::Languages::text,
+            Syntax::Languages::ClaFi,
+            Syntax::Languages::Json,
+            Syntax::Languages::Xml,
+            Syntax::Languages::Cpp,
+            Syntax::Languages::Pascal,
+            Syntax::Languages::Text,
         };
     }
 }

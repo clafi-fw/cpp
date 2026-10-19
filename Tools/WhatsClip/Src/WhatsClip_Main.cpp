@@ -218,7 +218,7 @@ namespace ClaFi::Tools::WhatsClip
             if (!served)
                 return std::nullopt;
 
-            return PreviewSource{ Transfer::Format::of(kind), served->name() };
+            return PreviewSource{ Transfer::Format::Of(kind), served->name() };
         }
 
         // **The representation registry.** A format is not one thing to look at: it has bytes, and

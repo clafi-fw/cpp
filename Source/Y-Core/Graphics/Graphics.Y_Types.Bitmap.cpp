@@ -42,13 +42,13 @@ namespace ClaFi::Graphics
 
     PixelView Bitmap::pixelView(const FloatPoint position, const FloatRect& clipRect)
     {
-        FloatRect rect = FloatRect::fromDimensions(position, m_dimensions.toFloat());
+        FloatRect rect = FloatRect::FromDimensions(position, m_dimensions.toFloat());
         return PixelView{ rect, clipRect, scanLines() };
     }
 
     PixelView Bitmap::pixelView(const FloatPoint position, const FloatRect& clipRect) const
     {
-        const FloatRect rect = FloatRect::fromDimensions(position, m_dimensions.toFloat());
+        const FloatRect rect = FloatRect::FromDimensions(position, m_dimensions.toFloat());
         const ScanLines lines = {
             .data = const_cast<Color*>(data()),
             .stride = stride(),
@@ -60,7 +60,7 @@ namespace ClaFi::Graphics
 
     PixelView Bitmap::pixelView(const FloatPoint position, FloatSize dimensions)
     {
-        return pixelView(position, FloatRect::fromDimensions(position, dimensions));
+        return pixelView(position, FloatRect::FromDimensions(position, dimensions));
     }
 
     PixelView Bitmap::pixelView(const FloatPoint position)
@@ -70,7 +70,7 @@ namespace ClaFi::Graphics
 
     PixelView Bitmap::pixelView()
     {
-        return pixelView({}, FloatRect::fromDimensions({}, m_dimensions.toFloat()));
+        return pixelView({}, FloatRect::FromDimensions({}, m_dimensions.toFloat()));
     }
 
     void Bitmap::resize(IntSize dimensions)

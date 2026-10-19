@@ -429,7 +429,7 @@ namespace Themes_App::AppIcon
 
             PixelPath path;
             addRoundedQuad(path, bandCorners(cornersOf(leaf), band), radii);
-            canvas.drawPath(path, { PathDrawLayer::fill(band.color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(band.color) }, &transform);
         }
 
         void strokeLeaf(Canvas& canvas, const Matrix3x2& transform, const Leaf& leaf)
@@ -438,7 +438,7 @@ namespace Themes_App::AppIcon
 
             PixelPath path;
             addRoundedQuad(path, cornersOf(leaf), radii);
-            canvas.drawPath(path, { PathDrawLayer::stroke(k_outlineColor, k_outlineWidth) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Stroke(k_outlineColor, k_outlineWidth) }, &transform);
         }
 
         // A leaf takes its outline before the next covers it, so the front one draws the seam.
@@ -465,8 +465,8 @@ namespace Themes_App::AppIcon
 
             const float edgeStroke = (k_keylineWidth + k_edgeWidth) * 2.0f;
             const float keylineStroke = k_keylineWidth * 2.0f;
-            canvas.drawPath(outline, { PathDrawLayer::stroke(k_edgeColor, edgeStroke) }, &transform);
-            canvas.drawPath(outline, { PathDrawLayer::stroke(k_keylineColor, keylineStroke) }, &transform);
+            canvas.drawPath(outline, { PathDrawLayer::Stroke(k_edgeColor, edgeStroke) }, &transform);
+            canvas.drawPath(outline, { PathDrawLayer::Stroke(k_keylineColor, keylineStroke) }, &transform);
 
             canvas.pushClip(outline, &transform);
             paintSweep(canvas, transform);
@@ -485,7 +485,7 @@ namespace Themes_App::AppIcon
                 wedge.lineTo(sweepPoint(from));
                 wedge.lineTo(sweepPoint(from + k_wedgeAngle + k_wedgeOverlap));
                 wedge.close();
-                canvas.drawPath(wedge, { PathDrawLayer::fill(colors[step]) }, &transform);
+                canvas.drawPath(wedge, { PathDrawLayer::Fill(colors[step]) }, &transform);
             }
         }
     }

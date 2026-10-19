@@ -21,13 +21,13 @@ namespace ClaFi::Controls
     // The design geometry every row of a tree is laid out by.
     namespace TreeRows
     {
-        constexpr float inset = 6.0f;       // between a row's edges and what it holds
-        constexpr float markSize = 12.0f;   // the mark a node opens by
-        constexpr float markPadding = 3.0f; // either side of the mark
-        constexpr float markSlot = markSize + markPadding * 2.0f;
-        constexpr float gap = 4.0f;         // between the mark slot and the text
-        constexpr float step = markSlot;    // how far a level stands in from the one holding it
-        constexpr float dividerRoom = 4.0f; // above and below a divider's line
+        constexpr float Inset = 6.0f;       // between a row's edges and what it holds
+        constexpr float MarkSize = 12.0f;   // the mark a node opens by
+        constexpr float MarkPadding = 3.0f; // either side of the mark
+        constexpr float MarkSlot = MarkSize + MarkPadding * 2.0f;
+        constexpr float Gap = 4.0f;         // between the mark slot and the text
+        constexpr float Step = MarkSlot;    // how far a level stands in from the one holding it
+        constexpr float DividerRoom = 4.0f; // above and below a divider's line
     }
 
     export class TreeView;
@@ -197,7 +197,7 @@ namespace ClaFi::Controls
             params,
             HorizontalTextAnchor::Left,
             ShowSelectionOnSurface::Yes,
-            Padding{ TreeRows::inset, params.themeMetrics().button.padding.y },
+            Padding{ TreeRows::Inset, params.themeMetrics().button.padding.y },
             WordWrap::No, // a row is one line; before the caller's arguments, so a stated one wins
             std::forward<Args>(args)...
         },
@@ -213,7 +213,7 @@ namespace ClaFi::Controls
         :
         Divider{
             params,
-            Padding{ TreeRows::inset, TreeRows::dividerRoom },
+            Padding{ TreeRows::Inset, TreeRows::DividerRoom },
             std::forward<Args>(args)...
         },
         m_level{ level }

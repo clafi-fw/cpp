@@ -153,7 +153,9 @@ target_sources(ClaFi PUBLIC FILE_SET CXX_MODULES FILES ${clafi_modules})
 # "../Y-Core/System/EventBindings.h"` in Controls/ resolves through it rather than relative to
 # the including file - which is why the same spelling works from Controls/ and from
 # Controls/Base/. Reproduced here rather than rewritten, so both builds read one spelling.
-target_include_directories(ClaFi PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source/Controls")
+# PUBLIC, because the shared items hand the path to every project that imports them, and an
+# application's own controls spell the include the same way.
+target_include_directories(ClaFi PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Source/Controls")
 
 # Every target that imports these modules is compiled with this list, not the library alone. A
 # module interface's inline code is compiled in whoever imports it, and clang refuses to load a BMI

@@ -73,47 +73,47 @@ namespace SeeDocs_App
         // The columns of each table a page carries, unnamed where a reader tells them apart.
         namespace Columns
         {
-            const ColumnSet types = {
+            const ColumnSet Types = {
                 .columns = { { L"Name" }, { L"Hint", true, true } },
                 .header = false
             };
-            const ColumnSet properties = {
+            const ColumnSet Properties = {
                 .columns = {
                     { L"Name" }, { L"Type" }, { .name = L"Default", .maxLines = k_valueLines },
                     { L"Hint", true, true }
                 }
             };
-            const ColumnSet events = {
+            const ColumnSet Events = {
                 .columns = { { L"Event" }, { L"Type" }, { L"Hint", true, true } }
             };
-            const ColumnSet methods = {
+            const ColumnSet Methods = {
                 .columns = { { L"Name" }, { L"Hint", true, true } },
                 .header = false
             };
-            const ColumnSet functions = {
+            const ColumnSet Functions = {
                 .columns = { { L"Name" }, { L"Hint", true, true } },
                 .header = false
             };
-            const ColumnSet fields = {
+            const ColumnSet Fields = {
                 .columns = {
                     { L"Name" }, { L"Type" }, { .name = L"Value", .maxLines = k_valueLines },
                     { L"Hint", true, true }
                 }
             };
-            const ColumnSet members = {
+            const ColumnSet Members = {
                 .columns = {
                     { L"Name" }, { .name = L"Value", .maxLines = k_valueLines },
                     { L"Hint", true, true }
                 },
                 .header = false
             };
-            const ColumnSet folders = {
+            const ColumnSet Folders = {
                 .columns = {
                     { L"Folder", true }, { L"Modules" }, { L"Types" }, { L"Controls" }
                 }
             };
             // A folder's types, functions and constants, under the constants' columns.
-            const ColumnSet contents = {
+            const ColumnSet Contents = {
                 .columns = {
                     { L"Name" }, { L"Type" }, { .name = L"Value", .maxLines = k_valueLines },
                     { L"Hint", true, true }
@@ -121,7 +121,7 @@ namespace SeeDocs_App
                 .header = false
             };
             // A list's modules and folders, each beside a folder's path.
-            const ColumnSet placed = {
+            const ColumnSet Placed = {
                 .columns = { { L"Name" }, { L"Folder", true } },
                 .header = false
             };
@@ -916,7 +916,7 @@ namespace SeeDocs_App
             if (language == SourceLanguage::Pascal)
             {
                 const Syntax::SignatureParameters parameters =
-                    Syntax::Languages::pascal.parameters(signature);
+                    Syntax::Languages::Pascal.parameters(signature);
                 return { .parameters = parameters.names.size() };
             }
             std::size_t open = signature.find(function.name + L"(");
@@ -1990,7 +1990,7 @@ namespace SeeDocs_App
         void addProperties(Page& page, const Surface& surface, Notes& notes, const Type& type,
             const ReachedBases& bases)
         {
-            addPartedSections(page, surface, L"Properties", Columns::properties, type, bases,
+            addPartedSections(page, surface, L"Properties", Columns::Properties, type, bases,
                 [&](const Type& owner, const MemberFilter& filter, const TypesBelow& below) {
                     return propertyRows(surface, notes, owner, filter, below);
                 });
@@ -1999,7 +1999,7 @@ namespace SeeDocs_App
         void addEvents(Page& page, const Surface& surface, Notes& notes, const Type& type,
             const ReachedBases& bases)
         {
-            addPartedSections(page, surface, L"Events", Columns::events, type, bases,
+            addPartedSections(page, surface, L"Events", Columns::Events, type, bases,
                 [&](const Type& owner, const MemberFilter& filter, const TypesBelow&) {
                     return eventRows(surface, notes, owner, filter);
                 });
@@ -2011,7 +2011,7 @@ namespace SeeDocs_App
             const ReachedBases& bases)
         {
             const auto add = [&](const std::wstring_view heading, const Access access) {
-                addMemberSection(page, std::wstring{ heading }, Columns::methods, type, bases,
+                addMemberSection(page, std::wstring{ heading }, Columns::Methods, type, bases,
                     [&](const Type& owner, const ReachedBase* reached) {
                         return methodGroup(surface, owner, reached, basesAbove(bases, reached),
                             access);
@@ -2132,7 +2132,7 @@ namespace SeeDocs_App
             }
             TableGroups groups;
             groups.push_back(std::move(group));
-            Section& section = addTableSection(page, L"Fields", Columns::fields,
+            Section& section = addTableSection(page, L"Fields", Columns::Fields,
                 std::move(groups));
             section.table.takesFootnotes = true;
         }
@@ -2154,7 +2154,7 @@ namespace SeeDocs_App
             }
             TableGroups groups;
             groups.push_back(std::move(group));
-            Section& section = addTableSection(page, L"Members", Columns::members,
+            Section& section = addTableSection(page, L"Members", Columns::Members,
                 std::move(groups));
             section.table.takesFootnotes = true;
         }
@@ -2325,7 +2325,7 @@ namespace SeeDocs_App
             }
             TableGroups groups;
             groups.push_back({ .rows = std::move(rows) });
-            addTableSection(page, L"Folders", Columns::folders, std::move(groups));
+            addTableSection(page, L"Folders", Columns::Folders, std::move(groups));
         }
 
         void addSiblings(Page& page, const Surface& surface, const Type& type)
@@ -2343,7 +2343,7 @@ namespace SeeDocs_App
             });
             TableGroups groups;
             groups.push_back({ .rows = typeRows(surface, siblings) });
-            addTableSection(page, L"Also in this module", Columns::types, std::move(groups));
+            addTableSection(page, L"Also in this module", Columns::Types, std::move(groups));
         }
 
         // The first overload of every name a module's functions go by, in the order the names are
@@ -2487,7 +2487,7 @@ namespace SeeDocs_App
             if (modules.empty())
                 return;
             const std::size_t moduleCount = modules.size();
-            Section& section = addTableSection(page, L"Modules", Columns::contents,
+            Section& section = addTableSection(page, L"Modules", Columns::Contents,
                 std::move(modules));
             section.table.groupColumn = k_exportsColumn;
             section.table.hintTakesEmptyCells = true;
@@ -2887,8 +2887,8 @@ namespace SeeDocs_App
         [[nodiscard]] const Syntax::Language& lexerOf(const SourceLanguage language)
         {
             if (language == SourceLanguage::Pascal)
-                return Syntax::Languages::pascal;
-            return Syntax::Languages::cpp;
+                return Syntax::Languages::Pascal;
+            return Syntax::Languages::Cpp;
         }
 
         // A declaration as written, as code: the names it spells linked as a signature's are, the
@@ -3489,7 +3489,7 @@ namespace SeeDocs_App
         const ListSpelling spelling = spellingOf(kind);
         Holdings holdings = holdingsOf(folders, path);
         TableRows rows;
-        const ColumnSet* columns = &Columns::types;
+        const ColumnSet* columns = &Columns::Types;
         switch (kind)
         {
             case ListKind::Controls:
@@ -3503,15 +3503,15 @@ namespace SeeDocs_App
                 break;
             case ListKind::Functions:
                 rows = functionListRows(surface, std::move(holdings.functions));
-                columns = &Columns::functions;
+                columns = &Columns::Functions;
                 break;
             case ListKind::Modules:
                 rows = moduleListRows(std::move(holdings.modules), projectName);
-                columns = &Columns::placed;
+                columns = &Columns::Placed;
                 break;
             case ListKind::Folders:
                 rows = folderListRows(holdings.folders, projectName);
-                columns = &Columns::placed;
+                columns = &Columns::Placed;
                 break;
         }
 
@@ -3546,10 +3546,10 @@ namespace SeeDocs_App
         {
             TableGroups groups;
             groups.push_back({ .rows = typeRows(surface, module.types) });
-            addTableSection(page, L"Types", Columns::types, std::move(groups));
+            addTableSection(page, L"Types", Columns::Types, std::move(groups));
         }
-        addRowsSection(page, L"Functions", Columns::functions, functionRows(surface, module));
-        addRowsSection(page, L"Constants", Columns::fields, constantRows(surface, module));
+        addRowsSection(page, L"Functions", Columns::Functions, functionRows(surface, module));
+        addRowsSection(page, L"Constants", Columns::Fields, constantRows(surface, module));
         showSectionsOnce(page);
         return page;
     }

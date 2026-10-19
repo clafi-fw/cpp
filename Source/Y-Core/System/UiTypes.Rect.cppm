@@ -24,13 +24,13 @@ namespace ClaFi
         bool bottom;
         bool left;
         constexpr bool operator==(const RectSides&) const = default;
-        constexpr static RectSides all();
-        constexpr static RectSides none();
+        constexpr static RectSides All();
+        constexpr static RectSides None();
     };
-    constexpr RectSides RectSides::all() {
+    constexpr RectSides RectSides::All() {
         return { .top = true, .right = true, .bottom = true, .left = true };
     };
-    constexpr RectSides RectSides::none() {
+    constexpr RectSides RectSides::None() {
         return { .top = false, .right = false, .bottom = false, .left = false };
     };
 
@@ -89,13 +89,13 @@ namespace ClaFi
             bottomLeft *= value;
         }
         [[nodiscard]] bool operator==(const CornerRadii&) const = default;
-        [[nodiscard]] static constexpr CornerRadii square() { return {}; }
-        [[nodiscard]] static constexpr CornerRadii uniform(float radius) { return { .topLeft = radius, .topRight = radius, .bottomRight = radius, .bottomLeft = radius }; }
-        [[nodiscard]] static constexpr CornerRadii topSideRound(float radius) { return { .topLeft = radius, .topRight = radius, .bottomRight = 0.0f, .bottomLeft = 0.0f }; }
-        [[nodiscard]] static constexpr CornerRadii leftSideRound(float radius) { return { .topLeft = radius, .topRight = 0.0f, .bottomRight = 0.0f, .bottomLeft = radius }; }
-        [[nodiscard]] static constexpr CornerRadii rightSideRound(float radius) { return { .topLeft = 0.0f, .topRight = radius, .bottomRight = radius, .bottomLeft = 0.0f }; }
-        [[nodiscard]] static constexpr CornerRadii bottomSideRound(float radius) { return { .topLeft = 0.0f, .topRight = 0.0f, .bottomRight = radius, .bottomLeft = radius }; }
-        [[nodiscard]] static constexpr CornerRadii oneRound(Corner corner, float radius)
+        [[nodiscard]] static constexpr CornerRadii Square() { return {}; }
+        [[nodiscard]] static constexpr CornerRadii Uniform(float radius) { return { .topLeft = radius, .topRight = radius, .bottomRight = radius, .bottomLeft = radius }; }
+        [[nodiscard]] static constexpr CornerRadii TopSideRound(float radius) { return { .topLeft = radius, .topRight = radius, .bottomRight = 0.0f, .bottomLeft = 0.0f }; }
+        [[nodiscard]] static constexpr CornerRadii LeftSideRound(float radius) { return { .topLeft = radius, .topRight = 0.0f, .bottomRight = 0.0f, .bottomLeft = radius }; }
+        [[nodiscard]] static constexpr CornerRadii RightSideRound(float radius) { return { .topLeft = 0.0f, .topRight = radius, .bottomRight = radius, .bottomLeft = 0.0f }; }
+        [[nodiscard]] static constexpr CornerRadii BottomSideRound(float radius) { return { .topLeft = 0.0f, .topRight = 0.0f, .bottomRight = radius, .bottomLeft = radius }; }
+        [[nodiscard]] static constexpr CornerRadii OneRound(Corner corner, float radius)
         {
             CornerRadii result{};
             result.set(corner, radius);
@@ -156,7 +156,7 @@ namespace ClaFi
         Point<float> bottomCenter() const { return { centerX(), static_cast<float>(bottom) }; }
         // Corners come out by value. A reference into the four edges let a caller write one
         // corner and silently resize the rect, which reads like a move and is not one. To move a
-        // rect use offset() or setTopLeft(); to build one from a corner and a size, fromDimensions().
+        // rect use offset() or setTopLeft(); to build one from a corner and a size, FromDimensions().
         Point<T> topLeft() const { return { left, top }; }
         Point<T> bottomLeft() const { return { left, bottom }; }
         Point<T> topRight() const { return { right, top }; }
@@ -170,7 +170,7 @@ namespace ClaFi
         void setDimensions(T w, T h);
         // Moves the rect so its top-left lands on value. The dimensions are carried along.
         void setTopLeft(Point<T> value);
-        static Rect<T> fromDimensions(Point<T> position, Point<T> dimensions);
+        static Rect<T> FromDimensions(Point<T> position, Point<T> dimensions);
         void inflateX(T value);
         void inflateY(T value);
         void inflate(T dx, T dy);
@@ -236,8 +236,8 @@ namespace ClaFi
     export struct RoundedRectangleParts
     {
         FloatRect bounds;
-        CornerRadii radii{ CornerRadii::square() };
-        RectSides sides{ RectSides::all() };
+        CornerRadii radii{ CornerRadii::Square() };
+        RectSides sides{ RectSides::All() };
         bool operator==(const RoundedRectangleParts&) const = default;
     };
 
@@ -444,7 +444,7 @@ namespace ClaFi
     }
 
     template<ArithmeticType T>
-    Rect<T> Rect<T>::fromDimensions(Point<T> position, Point<T> dimensions)
+    Rect<T> Rect<T>::FromDimensions(Point<T> position, Point<T> dimensions)
     {
         return { position.x, position.y, position.x + dimensions.x, position.y + dimensions.y };
     }

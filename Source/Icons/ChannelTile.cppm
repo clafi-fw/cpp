@@ -319,7 +319,7 @@ namespace ClaFi::Icons::ChannelTile
         const ArmAngles& arms, float marginRatio, float dividerRatio, const CutSoftening& softening)
     {
         float size = std::min(iconRect.width(), iconRect.height());
-        Matrix3x2 transform = Matrix3x2::translation(iconRect.center());
+        Matrix3x2 transform = Matrix3x2::Translation(iconRect.center());
         float margin = size * marginRatio;
         float halfDivider = std::max(k_minDividerWidth, size * dividerRatio) * 0.5f;
 

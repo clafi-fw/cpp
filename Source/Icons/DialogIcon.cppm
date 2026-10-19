@@ -67,12 +67,12 @@ namespace ClaFi::Icons::DialogIcon
         path.quadTo({ boxRight, size }, { boxRight, size - radius });
         path.lineTo(boxRight, boxTop + (size - boxTop) * k_breakY);
 
-        const Matrix3x2 transform = Matrix3x2::translation(
+        const Matrix3x2 transform = Matrix3x2::Translation(
             iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
 
         event.canvas().drawPath(
             path,
-            { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), strokeWidth) },
+            { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strong), strokeWidth) },
             &transform
         );
 
@@ -87,7 +87,7 @@ namespace ClaFi::Icons::DialogIcon
 
         event.canvas().drawPath(
             path,
-            { PathDrawLayer::stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) },
+            { PathDrawLayer::Stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) },
             &transform
         );
     }

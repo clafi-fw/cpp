@@ -65,13 +65,13 @@ namespace ClaFi::PathArt
         // 1. Define the "Global" Clip (Rounded Rectangle centered at bounds)
         PixelPath path{};
         path.drawRoundedRect(w, h, cornersRadius);
-        Matrix3x2 transform = Matrix3x2::translation(bounds.center());
+        Matrix3x2 transform = Matrix3x2::Translation(bounds.center());
 
         // Push the geometric clip mask onto the canvas [CP]
         canvas.pushClip(path, &transform);
 
         // 2. Sky Gradient (Optimized to draw a simple rectangle directly clipped by the Canvas)
-        canvas.fillRectangle(bounds, LinearGradient::simple(
+        canvas.fillRectangle(bounds, LinearGradient::Simple(
             bounds.topLeft(),
             bounds.bottomLeft(),
             skyTop.withOpacity(opacity),
@@ -93,11 +93,11 @@ namespace ClaFi::PathArt
         path.quadTo({ -ctrl, -sunR }, { 0, -sunR });
         path.close();
 
-        transform = Matrix3x2::translation({ bounds.left + w * 0.75f, bounds.top + h * 0.25f });
+        transform = Matrix3x2::Translation({ bounds.left + w * 0.75f, bounds.top + h * 0.25f });
         canvas.fillPath(path, SolidColor{ sunDisk.withOpacity(opacity) }, &transform);
 
         // 4. Hill
-        transform = Matrix3x2::translation(bounds.topLeft());
+        transform = Matrix3x2::Translation(bounds.topLeft());
         path.clear();
         path.moveTo(0.0f, h * 0.9f);
         path.quadTo({ w * 0.5f, h * 0.5f }, { w, h * 0.8f });
@@ -117,9 +117,9 @@ namespace ClaFi::PathArt
         }
         if (hasSnow) {
             createSnowFlakePath(path);
-            transform = Matrix3x2::translation(
+            transform = Matrix3x2::Translation(
                 { bounds.left + w * 0.3f, bounds.top + h * 0.4f }
-            ) * Matrix3x2::scale(objectScale);
+            ) * Matrix3x2::Scale(objectScale);
             canvas.drawPath(path, SolidColor{ effectColor1.withOpacity(opacity) }, 1.0f, &transform);
         }
 

@@ -26,12 +26,12 @@ namespace ClaFi::Icons::SunMoonIcon
         const Color color = event.textRgb(InkGrade::Strongest);
         const FloatPoint center = { size * 0.5f, size * 0.5f };
         const Matrix3x2 transform =
-            Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+            Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         PixelPath path;
 
         MoonIcon::addCrescent(path, center, size * SunIcon::k_discRatio);
         SunIcon::addSunRays(path, center, size);
 
-        canvas.drawPath(path, { PathDrawLayer::stroke(color, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(color, strokeWidth) }, &transform);
     }
 }

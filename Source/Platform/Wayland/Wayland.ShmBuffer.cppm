@@ -154,7 +154,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             // **Whole, because a re-cut frame holds nothing it can be trusted to keep.** The pool
             // is never cleared and never shrinks, so these bytes are the last window's image at the
             // last window's stride. Only a frame written edge to edge is rid of it.
-            frame.damage = IntRect::fromDimensions({ 0, 0 }, value);
+            frame.damage = IntRect::FromDimensions({ 0, 0 }, value);
             ::wl_buffer_add_listener(frame.handle, &k_bufferListener, this);
         }
 

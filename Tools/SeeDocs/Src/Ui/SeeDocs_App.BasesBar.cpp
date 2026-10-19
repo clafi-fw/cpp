@@ -151,7 +151,7 @@ namespace SeeDocs_App
 
     DropdownMarkTurn BaseCrumb::dropdownMarkTurn() const
     {
-        return { ChevronTurn::left, ChevronTurn::down };
+        return { ChevronTurn::Left, ChevronTurn::Down };
     }
 
 

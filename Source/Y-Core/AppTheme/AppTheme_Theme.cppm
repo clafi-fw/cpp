@@ -17,18 +17,18 @@ namespace ClaFi
     // The roots a theme path stands under, and what parts a root from the name. See AppTheme
     export namespace ThemeRoots
     {
-        constexpr std::wstring_view builtIn{ L"BuiltIn" };
-        constexpr std::wstring_view user{ L"User" };
-        constexpr wchar_t separator{ L'/' };
+        constexpr std::wstring_view BuiltIn{ L"BuiltIn" };
+        constexpr std::wstring_view User{ L"User" };
+        constexpr wchar_t Separator{ L'/' };
     }
 
     // The themes compiled into the framework, by the name they stand under. See AppTheme
     export namespace BuiltInThemes
     {
-        constexpr std::wstring_view defaultTheme{ L"Default" };
+        constexpr std::wstring_view DefaultTheme{ L"Default" };
     }
 
-    // ThemeRoots::builtIn over BuiltInThemes::defaultTheme, which is what an application wears
+    // ThemeRoots::BuiltIn over BuiltInThemes::DefaultTheme, which is what an application wears
     // where nothing else is stated. See AppTheme
     export constexpr std::wstring_view k_defaultThemePath{ L"BuiltIn/Default" };
 
@@ -41,7 +41,7 @@ namespace ClaFi
     // The compiled-in theme of this name, or nullptr where no built-in goes by it.
     export [[nodiscard]] AppTheme* builtInTheme(std::wstring_view name);
 
-    // The theme compiled into the framework, which BuiltInThemes::defaultTheme names.
+    // The theme compiled into the framework, which BuiltInThemes::DefaultTheme names.
     export [[nodiscard]] AppTheme& defaultTheme();
 
 
@@ -53,14 +53,14 @@ namespace ClaFi
         std::wstring result{};
         result.reserve(root.size() + 1ull + name.size());
         result.append(root);
-        result.push_back(ThemeRoots::separator);
+        result.push_back(ThemeRoots::Separator);
         result.append(name);
         return result;
     }
 
     constexpr std::wstring_view themePathRoot(const std::wstring_view path)
     {
-        const std::size_t separator = path.find(ThemeRoots::separator);
+        const std::size_t separator = path.find(ThemeRoots::Separator);
         if (separator == std::wstring_view::npos)
             return {};
         return path.substr(0ull, separator);
@@ -68,7 +68,7 @@ namespace ClaFi
 
     constexpr std::wstring_view themePathName(const std::wstring_view path)
     {
-        const std::size_t separator = path.find(ThemeRoots::separator);
+        const std::size_t separator = path.find(ThemeRoots::Separator);
         if (separator == std::wstring_view::npos)
             return path;
         return path.substr(separator + 1ull);
@@ -76,7 +76,7 @@ namespace ClaFi
 
     AppTheme* builtInTheme(const std::wstring_view name)
     {
-        if (name == BuiltInThemes::defaultTheme)
+        if (name == BuiltInThemes::DefaultTheme)
             return &defaultTheme();
         return nullptr;
     }

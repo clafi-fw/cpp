@@ -343,10 +343,10 @@ namespace ClaFi
                             // is the same fraction of what the reader sees beside it at every
                             // depth.
                             const float rise = (arg == TextOp::PushSuperscript
-                                ? ScriptMetrics::superRise
-                                : -ScriptMetrics::subDrop) * getEffectiveSize();
+                                ? ScriptMetrics::SuperRise
+                                : -ScriptMetrics::SubDrop) * getEffectiveSize();
                             scriptStack.push_back({
-                                getEffectiveScale() * ScriptMetrics::sizeFactor,
+                                getEffectiveScale() * ScriptMetrics::SizeFactor,
                                 getEffectiveShift() + rise,
                             });
                             updateSize(at);

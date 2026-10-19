@@ -389,7 +389,7 @@ The place a browser tab is on, spelled `path#anchor`, or `path` alone. **`%23` i
 escape** - str() writes a `#` inside either part as `%23`, so a theme file named `C#.clafitheme`
 survives a round trip.
 
-Url::parse reads back that escape alone. A web address's `%20` passes through as written, and a
+Url::Parse reads back that escape alone. A web address's `%20` passes through as written, and a
 name holding `%23` reads back with a `#` there.
 
 ## NoInitAllocator

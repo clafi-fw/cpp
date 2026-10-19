@@ -294,7 +294,7 @@ namespace ClaFi::Controls
         m_positionTarget = m_position;
     }
 
-    // The same destination reached over AnimationSlots::scroll. Each tick's value is applied as it
+    // The same destination reached over AnimationSlots::Scroll. Each tick's value is applied as it
     // comes: a position sitting outside the range is what a glide back into the range starts from,
     // and clamping the way in would cover it in one step.
     void SliderBase::animatePosition(float value)
@@ -303,7 +303,7 @@ namespace ClaFi::Controls
         if (sameFactors(m_positionTarget, value))
             return;
         m_positionTarget = value;
-        animate(AnimationSlots::scroll, m_position, value, [this](AnimateParams& params) {
+        animate(AnimationSlots::Scroll, m_position, value, [this](AnimateParams& params) {
             applyPosition(params.value, true);
         });
     }
@@ -319,7 +319,7 @@ namespace ClaFi::Controls
 
     void SliderBase::stopPositionAnimation()
     {
-        stopAnimation(AnimationSlots::scroll);
+        stopAnimation(AnimationSlots::Scroll);
         m_positionTarget = m_position;
     }
 

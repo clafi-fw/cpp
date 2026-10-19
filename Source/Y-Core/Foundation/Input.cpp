@@ -256,7 +256,7 @@ namespace ClaFi
             delegate->invalidate();
     }
 
-    InputController Input::s_mouse{ AnimationSlots::mouseActive, true };
-    InputController Input::s_keyboard{ AnimationSlots::keyboardActive, false };
+    InputController Input::s_mouse{ AnimationSlots::MouseActive, true };
+    InputController Input::s_keyboard{ AnimationSlots::KeyboardActive, false };
 
 }

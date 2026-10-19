@@ -23,8 +23,8 @@ namespace ClaFi::Transfer
             Custom
         };
 
-        [[nodiscard]] static Format of(StandardFormat);
-        [[nodiscard]] static Format custom(std::wstring name);
+        [[nodiscard]] static Format Of(StandardFormat);
+        [[nodiscard]] static Format Custom(std::wstring name);
 
         [[nodiscard]] Kind kind() const;
         // Each answers for its own kind alone. Asking the other is a precondition failure.

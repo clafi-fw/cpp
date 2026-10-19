@@ -91,11 +91,11 @@ namespace ClaFi::Icons::GaugeIcon
         PixelPath path;
 
         buildDialPath(path, pivot, radius);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), strokeWidth) });
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strong), strokeWidth) });
 
         path.clear();
         buildTicksPath(path, pivot, radius);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Muted), strokeWidth) });
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.textRgb(InkGrade::Muted), strokeWidth) });
 
         const Color needleColor = event.accentRgb(InkGrade::Strongest);
         const FloatPoint tip = pointAt(pivot, radius * k_needleShare, radiansOf(k_needleDegrees));

@@ -19,7 +19,7 @@ namespace ClaFi::Transfer
 {
     Format ClaFiText::format()
     {
-        return Format::custom(std::wstring{ k_name });
+        return Format::Custom(std::wstring{ k_name });
     }
 
     std::string ClaFiText::toBytes(const Text& text)

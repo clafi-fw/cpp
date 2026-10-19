@@ -75,7 +75,7 @@ namespace ClaFi::Graphics::Cpu
 #endif
 
         void setTransform(const Matrix3x2& matrix) override { m_transform = matrix; }
-        void resetTransform() override { m_transform = Matrix3x2::identity(); }
+        void resetTransform() override { m_transform = Matrix3x2::Identity(); }
 
         // The glyph route reaches the canvas transform on its own: FadeTextRenderer maps each
         // glyph's pen position through it and resolves the fraction by sampling the cached
@@ -171,7 +171,7 @@ namespace ClaFi::Graphics::Cpu
 #if CLAFI_TEXT_MOVING
         bool m_snapTextOrigins{ true };
 #endif
-        Matrix3x2 m_transform{ Matrix3x2::identity() };
+        Matrix3x2 m_transform{ Matrix3x2::Identity() };
         std::vector<SavedClip> m_clipStack;
         PixelPath m_scratchPath;
         PixelView m_activeView{ {}, {}, {} };

@@ -40,7 +40,7 @@ namespace ClaFi::Icons::CutIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         size -= strokeWidth;
 
-        const Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
@@ -52,7 +52,7 @@ namespace ClaFi::Icons::CutIcon
         // The handles. The radius and the blade ends agree: each end sits on the ring it meets.
         addRing(path, { size * 0.33f, size * 0.85f }, size * 0.15f);
         addRing(path, { size * 0.67f, size * 0.85f }, size * 0.15f);
-        canvas.drawPath(path, { PathDrawLayer::stroke(bodyColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
 
         // The two blades. Each runs from a tip at the top into the ring diagonally opposite it,
         // so they cross on the icon's centre line at 0.46 of its height.
@@ -61,7 +61,7 @@ namespace ClaFi::Icons::CutIcon
         path.lineTo(size * 0.62f, size * 0.70f);
         path.moveTo(size * 0.72f, size * 0.02f);
         path.lineTo(size * 0.38f, size * 0.70f);
-        canvas.drawPath(path, { PathDrawLayer::stroke(accentColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(accentColor, strokeWidth) }, &transform);
     }
 
 }

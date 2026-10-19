@@ -1569,7 +1569,7 @@ namespace ClaFi::Controls
         // without reaching for the type, and a glide elsewhere costs this nothing but its own
         // length. A stack in no form has no controller, and nothing glides there.
         AnimationController* controller = animator();
-        if (controller && controller->isActive(AnimationSlots::scroll))
+        if (controller && controller->isActive(AnimationSlots::Scroll))
         {
             m_previewTimer.start(k_previewDelay);
             return;

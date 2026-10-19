@@ -39,9 +39,9 @@ namespace ClaFi
         path.lineTo(0.0f, k_markQuarterSize);
         path.lineTo(k_markHalfSize, -k_markQuarterSize);
         path.close();
-        Matrix3x2 transform = Matrix3x2::translation(chevronPos)
-            * Matrix3x2::scale(scaleFactor)
-            * Matrix3x2::rotation(turn * k_2Pi);
+        Matrix3x2 transform = Matrix3x2::Translation(chevronPos)
+            * Matrix3x2::Scale(scaleFactor)
+            * Matrix3x2::Rotation(turn * k_2Pi);
 
         // The placement matrix goes to the canvas rather than into the points, so the backend can
         // compose it with whatever transform is already in effect.

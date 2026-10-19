@@ -648,10 +648,10 @@ namespace ClaFi
     // Where a mark points, as a fraction of a full turn clockwise from pointing down.
     export namespace ChevronTurn
     {
-        constexpr float down = 0.0f;
-        constexpr float left = 0.25f;
-        constexpr float up = 0.5f;
-        constexpr float right = -0.25f;
+        constexpr float Down = 0.0f;
+        constexpr float Left = 0.25f;
+        constexpr float Up = 0.5f;
+        constexpr float Right = -0.25f;
     }
 
     // Below: the vocabulary the controls under Controls/Base take as construction properties.
@@ -721,8 +721,8 @@ namespace ClaFi
     // Where the dropdown mark points with the popup closed and with it open. See UI-Types
     export struct DropdownMarkTurn
     {
-        float closed{ ChevronTurn::down };
-        float open{ ChevronTurn::up };
+        float closed{ ChevronTurn::Down };
+        float open{ ChevronTurn::Up };
     };
 
     // Design width of a dropdown strip standing beside the control's face. See UI-Types

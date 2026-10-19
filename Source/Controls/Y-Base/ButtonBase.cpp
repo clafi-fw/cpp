@@ -388,7 +388,7 @@ namespace ClaFi::Controls
         // it.
         if (wordWrap())
         {
-            FloatRect box = FloatRect::fromDimensions({ 0.0f, 0.0f }, asked.toFloat());
+            FloatRect box = FloatRect::FromDimensions({ 0.0f, 0.0f }, asked.toFloat());
             adjustForSideParts(event.scaledSpacing(), iconWidth, box);
             asked.x = std::max(box.width(), 0.0f);
         }

@@ -253,8 +253,8 @@ namespace ClaFi::PathArt
         // Sky and sun glow
         path.moveTo(0, 0); path.lineTo(w, 0); path.lineTo(w, h); path.lineTo(0, h); path.close();
         p.drawPath(path, {
-            PathDrawLayer::linearGradient({ 0, 0 }, { 0, h }, m_theme.skyTop, m_theme.skyBottom),
-            PathDrawLayer::pointGlow({
+            PathDrawLayer::LinearGradient({ 0, 0 }, { 0, h }, m_theme.skyTop, m_theme.skyBottom),
+            PathDrawLayer::PointGlow({
                 .lightPos = m_sunPos,
                 .lightColor = m_theme.sunGlow,
                 .lightSpread = 166.0f * m_objectsScale,
@@ -266,7 +266,7 @@ namespace ClaFi::PathArt
         // Sun Disk / Crescent
         path.clear();
         float s = m_theme.hasStars;
-        Matrix3x2 sunTx = Matrix3x2::translation(m_sunPos) * Matrix3x2::rotation((s * 0.1f) * k_2Pi);
+        Matrix3x2 sunTx = Matrix3x2::Translation(m_sunPos) * Matrix3x2::Rotation((s * 0.1f) * k_2Pi);
 
         float r = m_sunRadius;
         float c = r * 0.4142f;
@@ -287,7 +287,7 @@ namespace ClaFi::PathArt
         path.quadTo({ cc1, -r }, { 0.0f, -r });
         path.close();
 
-        p.drawPath(path, { PathDrawLayer::fill(m_theme.sunDisk), PathDrawLayer::stroke(m_theme.sunStroke, 2.0f) }, &sunTx);
+        p.drawPath(path, { PathDrawLayer::Fill(m_theme.sunDisk), PathDrawLayer::Stroke(m_theme.sunStroke, 2.0f) }, &sunTx);
 
         // Hills
         drawHills(p, {}, w, h);
@@ -335,7 +335,7 @@ namespace ClaFi::PathArt
 
     void MillScene::drawWaterWheel(Canvas& canvas, float x, float y, float t)
     {
-        Matrix3x2 baseTx = Matrix3x2::translation(x, y) * Matrix3x2::rotation((-t * 2.0f) * k_2Pi) * Matrix3x2::scale(m_objectsScale);
+        Matrix3x2 baseTx = Matrix3x2::Translation(x, y) * Matrix3x2::Rotation((-t * 2.0f) * k_2Pi) * Matrix3x2::Scale(m_objectsScale);
         PixelPath path;
         path.drawCircle({}, 40.0f);
         const Color rimColor{ m_theme.millWheel, 0xff'000000, 0.2f };
@@ -343,7 +343,7 @@ namespace ClaFi::PathArt
 
         for (int i = 0; i < 8; ++i) {
             path.clear();
-            Matrix3x2 spokeTx = Matrix3x2::translation(x, y) * Matrix3x2::rotation((-t * 2.0f + (i * 0.125f)) * k_2Pi) * Matrix3x2::scale(m_objectsScale);
+            Matrix3x2 spokeTx = Matrix3x2::Translation(x, y) * Matrix3x2::Rotation((-t * 2.0f + (i * 0.125f)) * k_2Pi) * Matrix3x2::Scale(m_objectsScale);
             path.moveTo(-2.0f, 0.0f);
             path.lineTo(2.0f, 0.0f);
             path.lineTo(5.0f, 38.0f);
@@ -358,7 +358,7 @@ namespace ClaFi::PathArt
         for (int r = 0; r != 2; ++r) {
             for (int i = 0; i < 3; ++i) {
                 float ox = x + (i * 12.0f * s), sway = std::sin((t + (r * 0.5f)) * k_2Pi + i) * 0.08f;
-                Matrix3x2 tx = Matrix3x2::translation(ox, y) * Matrix3x2::rotation((sway + (r * 0.5f)) * k_2Pi) * Matrix3x2::scale(s);
+                Matrix3x2 tx = Matrix3x2::Translation(ox, y) * Matrix3x2::Rotation((sway + (r * 0.5f)) * k_2Pi) * Matrix3x2::Scale(s);
                 float opacity = 1.0f - (r * 0.85f);
 
                 PixelPath path;
@@ -384,7 +384,7 @@ namespace ClaFi::PathArt
 
                 canvas.fillPath(
                     path,
-                    LinearGradient::simple(
+                    LinearGradient::Simple(
                         { 0.0f, -44.5f },
                         { 0.0f, -22.5f },
                         headTop.toColor().withOpacity(opacity),
@@ -395,7 +395,7 @@ namespace ClaFi::PathArt
 
     void MillScene::drawWaterFoam(Canvas& canvas, float x, float y, float mS, float t) const
     {
-        Matrix3x2 tx = Matrix3x2::translation(x, y) * Matrix3x2::scale(mS);
+        Matrix3x2 tx = Matrix3x2::Translation(x, y) * Matrix3x2::Scale(mS);
         for (int i = -2; i <= 2; ++i) {
             PixelPath path;
             float ox = i * 15.0f + std::sin(t * 10.0f + i) * 5.0f;
@@ -408,7 +408,7 @@ namespace ClaFi::PathArt
     void MillScene::drawWaterLily(Canvas& canvas, float x, float y, float scale, float t)
     {
         float bob = std::sin(t * k_2Pi * 1.5f) * 3.0f * scale;
-        Matrix3x2 tx = Matrix3x2::translation(x, y + bob) * Matrix3x2::scale(scale);
+        Matrix3x2 tx = Matrix3x2::Translation(x, y + bob) * Matrix3x2::Scale(scale);
 
         PixelPath path;
         const float r = 22.0f;
@@ -423,7 +423,7 @@ namespace ClaFi::PathArt
 
         for (int i = 0; i < 5; ++i) {
             path.clear();
-            Matrix3x2 rotTx = tx * Matrix3x2::rotation((i * 0.2f) * k_2Pi);
+            Matrix3x2 rotTx = tx * Matrix3x2::Rotation((i * 0.2f) * k_2Pi);
             path.moveTo(0.0f, 0.0f);
             path.lineTo(-6.0f, -12.0f);
             path.lineTo(0.0f, -18.0f);
@@ -448,7 +448,7 @@ namespace ClaFi::PathArt
 
         // Hind Leg
         {
-            Matrix3x2 legTx = Matrix3x2::translation(x + s * 25.0f, y - s * 26.0f) * Matrix3x2::scale(s * 0.66f);
+            Matrix3x2 legTx = Matrix3x2::Translation(x + s * 25.0f, y - s * 26.0f) * Matrix3x2::Scale(s * 0.66f);
             PixelPath path;
             path.moveTo(30.0f, 37.0f + breath * s);
             path.lineTo(65.0f, 52.0f + breath * s * 0.5f);
@@ -460,20 +460,20 @@ namespace ClaFi::PathArt
         float earT = std::sin(t * 50.0f) > 0.95f ? 0.2f : 0.0f;
         // Ears
         {
-            Matrix3x2 earTx1 = Matrix3x2::translation(x - 8.0f * s, y + breath) * Matrix3x2::rotation((-0.3f + earT) * k_2Pi) * Matrix3x2::scale(s * 1.25f);
+            Matrix3x2 earTx1 = Matrix3x2::Translation(x - 8.0f * s, y + breath) * Matrix3x2::Rotation((-0.3f + earT) * k_2Pi) * Matrix3x2::Scale(s * 1.25f);
             PixelPath path;
             path.moveTo(-8.0f, 0.0f); path.lineTo(8.0f, 0.0f); path.lineTo(0.0f, -20.0f); path.close();
             canvas.fillPath(path, SolidColor{ m_theme.wolfEar.withOpacity(opacity) }, &earTx1);
         }
         {
-            Matrix3x2 earTx2 = Matrix3x2::translation(x + 8.0f * s, y + 5.0f * s + breath) * Matrix3x2::rotation(0.25f * k_2Pi) * Matrix3x2::scale(s * 1.25f);
+            Matrix3x2 earTx2 = Matrix3x2::Translation(x + 8.0f * s, y + 5.0f * s + breath) * Matrix3x2::Rotation(0.25f * k_2Pi) * Matrix3x2::Scale(s * 1.25f);
             PixelPath path;
             path.moveTo(-8.0f, 0.0f); path.lineTo(8.0f, 0.0f); path.lineTo(0.0f, -20.0f); path.close();
             canvas.fillPath(path, SolidColor{ m_theme.wolfEar.withOpacity(opacity) }, &earTx2);
         }
         // Snout
         {
-            Matrix3x2 headTx = Matrix3x2::translation(x, y + breath) * Matrix3x2::scale(s * 1.25f);
+            Matrix3x2 headTx = Matrix3x2::Translation(x, y + breath) * Matrix3x2::Scale(s * 1.25f);
             PixelPath path;
             path.moveTo(-10.0f, 0.0f); path.lineTo(10.0f, 0.0f); path.lineTo(15.0f, 15.0f); path.lineTo(-2.0f, 30.0f); path.lineTo(-15.0f, 15.0f); path.close();
             canvas.fillPath(path, SolidColor{ m_theme.wolfBody.withOpacity(opacity) }, &headTx);
@@ -482,7 +482,7 @@ namespace ClaFi::PathArt
         float blink = (std::sin(t * 12.0f) > 0.8f) ? 0.0f : 1.0f;
         if (blink > 0.0f)
         {
-            Matrix3x2 eyeTx = Matrix3x2::translation(x, y + breath + s * 4.0f) * Matrix3x2::scale(s * 1.25f);
+            Matrix3x2 eyeTx = Matrix3x2::Translation(x, y + breath + s * 4.0f) * Matrix3x2::Scale(s * 1.25f);
             PixelPath path;
             float eyeBegin = 3.0f, eyeEnd = 8.0f, xShift = -1.0f, yShift = 8.0f, eyeTop = 10.0f, eyeBottom = 12.0f;
             path.moveTo(xShift - eyeEnd, yShift); path.lineTo(xShift - eyeBegin, eyeTop); path.lineTo(xShift - eyeEnd, eyeBottom); path.close();
@@ -496,7 +496,7 @@ namespace ClaFi::PathArt
         float opacity = m_theme.isAfrica;
         if (opacity <= 0.0f) return;
 
-        Matrix3x2 baseTx = Matrix3x2::translation(x, y) * Matrix3x2::scale(s);
+        Matrix3x2 baseTx = Matrix3x2::Translation(x, y) * Matrix3x2::Scale(s);
         PixelPath path;
 
         // Jaw
@@ -513,7 +513,7 @@ namespace ClaFi::PathArt
 
         // Upper Jaw Snapping
         float snapVal = (std::fmod(t * 5.0f, 1.0f) > 0.88f) ? 0.05f : 0.0f;
-        Matrix3x2 jawTx = Matrix3x2::translation(x + 30.0f * s, y + 25.0f * s) * Matrix3x2::rotation(snapVal * k_2Pi) * Matrix3x2::scale(s);
+        Matrix3x2 jawTx = Matrix3x2::Translation(x + 30.0f * s, y + 25.0f * s) * Matrix3x2::Rotation(snapVal * k_2Pi) * Matrix3x2::Scale(s);
 
         path.clear();
         path.moveTo(0.0f, 0.0f); path.lineTo(-100.0f, 0.0f); path.lineTo(-95.0f, -15.0f); path.lineTo(0.0f, -15.0f); path.close();
@@ -547,11 +547,11 @@ namespace ClaFi::PathArt
         drawShadow(canvas, x, y + 50.0f * s, 40.0f * s);
 
         PixelPath path;
-        Matrix3x2 tailTx = Matrix3x2::translation(x + 40.0f * s, y - 10.0f * s) * Matrix3x2::rotation((std::sin(t * 30.0f) * 0.4f + 0.5f) * k_2Pi) * Matrix3x2::scale(s);
+        Matrix3x2 tailTx = Matrix3x2::Translation(x + 40.0f * s, y - 10.0f * s) * Matrix3x2::Rotation((std::sin(t * 30.0f) * 0.4f + 0.5f) * k_2Pi) * Matrix3x2::Scale(s);
         path.moveTo(0.0f, 0.0f); path.lineTo(0.0f, 25.0f);
         canvas.drawPath(path, SolidColor{ m_theme.cowDetail }, 3.0f, &tailTx);
 
-        Matrix3x2 bodyTx = Matrix3x2::translation(x, y) * Matrix3x2::scale(s);
+        Matrix3x2 bodyTx = Matrix3x2::Translation(x, y) * Matrix3x2::Scale(s);
         path.clear();
         path.moveTo(-45.0f, 0.0f);
         path.quadTo({ -45.0f, -40.0f }, { 0.0f, -40.0f });
@@ -572,7 +572,7 @@ namespace ClaFi::PathArt
         canvas.drawPath(path, SolidColor{ m_theme.cowDetail }, 6.0f, &bodyTx);
 
         float m = std::abs(std::sin(t * 15.0f)) * 8.0f;
-        Matrix3x2 headTx = Matrix3x2::translation(x - 45.0f * s, y - (15.0f - m) * s) * Matrix3x2::rotation(-0.2f * k_2Pi) * Matrix3x2::scale(s);
+        Matrix3x2 headTx = Matrix3x2::Translation(x - 45.0f * s, y - (15.0f - m) * s) * Matrix3x2::Rotation(-0.2f * k_2Pi) * Matrix3x2::Scale(s);
 
         path.clear();
         path.moveTo(-15.0f, -15.0f); path.lineTo(15.0f, -15.0f); path.lineTo(20.0f, 15.0f); path.lineTo(-20.0f, 15.0f); path.close();
@@ -593,7 +593,7 @@ namespace ClaFi::PathArt
     void MillScene::drawTree(Canvas& canvas, float x, float y, float s)
     {
         drawShadow(canvas, x, y, 24.0f * s);
-        Matrix3x2 tx = Matrix3x2::translation(x, y) * Matrix3x2::scale(s);
+        Matrix3x2 tx = Matrix3x2::Translation(x, y) * Matrix3x2::Scale(s);
 
         PixelPath path;
         path.moveTo(-10.0f, 0.0f); path.lineTo(10.0f, 0.0f); path.lineTo(10.0f, -30.0f); path.lineTo(-10.0f, -30.0f); path.close();
@@ -618,14 +618,14 @@ namespace ClaFi::PathArt
     void MillScene::drawMillWings(Canvas& canvas, FloatPoint off, float w, float h, float s, float t)
     {
         float cX = off.x + w * 0.5f, pY = off.y + h * 0.85f - 130.0f * s;
-        Matrix3x2 baseTx = Matrix3x2::translation(cX, pY) * Matrix3x2::scale(s);
+        Matrix3x2 baseTx = Matrix3x2::Translation(cX, pY) * Matrix3x2::Scale(s);
 
         PixelPath path;
         path.moveTo(-10.0f, -10.0f); path.lineTo(10.0f, -10.0f); path.lineTo(10.0f, 10.0f); path.lineTo(-10.0f, 10.0f); path.close();
         canvas.fillPath(path, SolidColor{ m_theme.millWingWood }, &baseTx);
 
         for (float i = 0.0f; i < 3.9f; i += 1.0f) {
-            Matrix3x2 wingTx = Matrix3x2::translation(cX, pY) * Matrix3x2::rotation((t + (i * 0.25f)) * k_2Pi) * Matrix3x2::scale(s);
+            Matrix3x2 wingTx = Matrix3x2::Translation(cX, pY) * Matrix3x2::Rotation((t + (i * 0.25f)) * k_2Pi) * Matrix3x2::Scale(s);
 
             path.clear();
             path.moveTo(-4.0f, 0.0f); path.lineTo(4.0f, 0.0f); path.lineTo(4.0f, -120.0f); path.lineTo(-4.0f, -120.0f); path.close();
@@ -642,15 +642,15 @@ namespace ClaFi::PathArt
     void MillScene::drawMillBody(Canvas& canvas, FloatPoint off, float w, float h, float s, float turns)
     {
         float cX = off.x + w * 0.5f, bY = off.y + h * 0.85f;
-        Matrix3x2 tx = Matrix3x2::translation(cX, bY) * Matrix3x2::rotation(turns * k_2Pi) * Matrix3x2::scale(s);
+        Matrix3x2 tx = Matrix3x2::Translation(cX, bY) * Matrix3x2::Rotation(turns * k_2Pi) * Matrix3x2::Scale(s);
 
         PixelPath path;
         path.moveTo(-60.0f, 0.0f); path.lineTo(-60.0f, -100.0f); path.lineTo(60.0f, -100.0f); path.lineTo(60.0f, 0.0f); path.close();
-        canvas.fillPath(path, LinearGradient::simple({ 40.0f, -100.0f }, { -40.0f, -80.0f }, m_theme.millBodyTop, m_theme.millBodyBottom), &tx);
+        canvas.fillPath(path, LinearGradient::Simple({ 40.0f, -100.0f }, { -40.0f, -80.0f }, m_theme.millBodyTop, m_theme.millBodyBottom), &tx);
 
         path.clear();
         path.moveTo(-75.0f, -100.0f); path.lineTo(0.0f, -160.0f); path.lineTo(75.0f, -100.0f); path.close();
-        canvas.fillPath(path, LinearGradient::simple({ 40.0f, -100.0f }, { -40.0f, -80.0f }, m_theme.millRoofTop, m_theme.millRoofBottom), &tx);
+        canvas.fillPath(path, LinearGradient::Simple({ 40.0f, -100.0f }, { -40.0f, -80.0f }, m_theme.millRoofTop, m_theme.millRoofBottom), &tx);
     }
 
     void MillScene::drawSunCorona(Canvas& canvas, float x, float y, float r, float t)
@@ -660,7 +660,7 @@ namespace ClaFi::PathArt
         for (int i = 0; i < 16; ++i) {
             float sV = std::sin(k_2Pi * (t * 2.0f) + static_cast<float>(i) * 0.8f);
             float dL = minL + (spr * (0.5f + 0.5f * sV));
-            Matrix3x2 tx = Matrix3x2::translation(x, y) * Matrix3x2::rotation((t + static_cast<float>(i) / 16.0f) * k_2Pi);
+            Matrix3x2 tx = Matrix3x2::Translation(x, y) * Matrix3x2::Rotation((t + static_cast<float>(i) / 16.0f) * k_2Pi);
 
             PixelPath path;
             path.moveTo(-rW, -rB); path.lineTo(rW, -rB); path.lineTo(0.0f, -dL); path.close();
@@ -670,7 +670,7 @@ namespace ClaFi::PathArt
 
     //void MillScene::drawCloud(Canvas& canvas, float x, float y, float s)
     //{
-    //    Matrix3x2 tx = Matrix3x2::translation(x, y) * Matrix3x2::scale(s);
+    //    Matrix3x2 tx = Matrix3x2::Translation(x, y) * Matrix3x2::Scale(s);
     //    PixelPath path;
     //    path.moveTo(-60.0f, 0.0f);
     //    path.quadTo({ -40.0f, -40.0f }, { -20.0f, -20.0f });
@@ -690,8 +690,8 @@ namespace ClaFi::PathArt
     //           canvas.drawPath(
     //                path,
     //                {
-    //                    PathDrawLayer::fill(0xffff00ff)
-    //                    //PathDrawLayer::outerGlow(m_theme.cloud, 10.0f * s)
+    //                    PathDrawLayer::Fill(0xffff00ff)
+    //                    //PathDrawLayer::OuterGlow(m_theme.cloud, 10.0f * s)
     //                },
     //                &tx
     //            );
@@ -709,8 +709,8 @@ namespace ClaFi::PathArt
     //    {
     //            PixelPathPainter p{ view };
     //            p.drawPath(path, {
-    //                PathDrawLayer::fill(m_theme.cloud),
-    //                PathDrawLayer::outerGlow(m_theme.cloud, glowRadius)
+    //                PathDrawLayer::Fill(m_theme.cloud),
+    //                PathDrawLayer::OuterGlow(m_theme.cloud, glowRadius)
     //                }, tx);
 
     //    });
@@ -721,7 +721,7 @@ namespace ClaFi::PathArt
 
     void MillScene::drawCloud(Canvas& canvas, float x, float y, float s)
     {
-        Matrix3x2 tx = Matrix3x2::translation(x, y) * Matrix3x2::scale(s);
+        Matrix3x2 tx = Matrix3x2::Translation(x, y) * Matrix3x2::Scale(s);
         PixelPath path;
         path.moveTo(-60.0f, 0.0f);
         path.quadTo({ -40.0f, -40.0f }, { -20.0f, -20.0f });
@@ -733,8 +733,8 @@ namespace ClaFi::PathArt
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::fill(m_theme.cloud),
-                PathDrawLayer::outerGlow(m_theme.cloud, 10.0f)
+                PathDrawLayer::Fill(m_theme.cloud),
+                PathDrawLayer::OuterGlow(m_theme.cloud, 10.0f)
             },
             &tx
         );
@@ -743,13 +743,13 @@ namespace ClaFi::PathArt
     float MillScene::drawRiver(Canvas& canvas, FloatPoint off, float w, float h, float t)
     {
         float rT = h * 0.85f;
-        Matrix3x2 tx = Matrix3x2::translation(off);
+        Matrix3x2 tx = Matrix3x2::Translation(off);
         PixelPath path;
         path.moveTo(0.0f, rT); path.lineTo(w, rT); path.lineTo(w, h); path.lineTo(0.0f, h); path.close();
 
         canvas.fillPath(
             path,
-            LinearGradient::simple(
+            LinearGradient::Simple(
                 { w * 0.5f, rT },
                 { w * 0.5f, h },
                 m_theme.riverTop.withOpacity(0.8f),
@@ -775,13 +775,13 @@ namespace ClaFi::PathArt
 
     void MillScene::drawHills(PixelPathPainter& p, FloatPoint off, float w, float h)
     {
-        Matrix3x2 tx = Matrix3x2::translation(off);
+        Matrix3x2 tx = Matrix3x2::Translation(off);
         PixelPath path;
         path.moveTo(0.0f, h * 0.8f);
         path.lineTo(w * 0.5f, h * 0.7f);
         path.quadTo({ w * 0.75f, h * 0.4f }, { w, h * 0.75f });
         path.lineTo(w, h); path.lineTo(0.0f, h); path.close();
-        p.drawPath(path, { PathDrawLayer::linearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, m_theme.hillTop, m_theme.hillBottom) }, &tx);
+        p.drawPath(path, { PathDrawLayer::LinearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, m_theme.hillTop, m_theme.hillBottom) }, &tx);
 
         path.clear();
         path.moveTo(0.0f, h * 0.8f);
@@ -790,7 +790,7 @@ namespace ClaFi::PathArt
 
         Hsl topHsl{ m_theme.hillTop }; topHsl.scaleLuminosity(0.9f);
         Hsl botHsl{ m_theme.hillBottom }; botHsl.scaleLuminosity(0.9f);
-        p.drawPath(path, { PathDrawLayer::linearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, topHsl.toColor(), botHsl.toColor()) }, &tx);
+        p.drawPath(path, { PathDrawLayer::LinearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, topHsl.toColor(), botHsl.toColor()) }, &tx);
     }
 
     // --- Effects ---
@@ -800,7 +800,7 @@ namespace ClaFi::PathArt
         float opacity = m_theme.hasRain;
         if (opacity <= 0.001f) return;
 
-        Matrix3x2 tx = Matrix3x2::translation(offset);
+        Matrix3x2 tx = Matrix3x2::Translation(offset);
         const int rainCount = 100;
         const float tilt = 0.15f;
         const float s = std::sin(tilt), c = std::cos(tilt);
@@ -830,7 +830,7 @@ namespace ClaFi::PathArt
     //    float flicker = (std::sin(flashT * 150.0f) > 0.0f) ? 1.0f : 0.0f;
     //    float fade = 1.0f - (flashT / 0.15f);
 
-    //    Matrix3x2 tx = Matrix3x2::translation(offset);
+    //    Matrix3x2 tx = Matrix3x2::Translation(offset);
     //    PixelPath path;
 
     //    // Soft sky flash (Fills the entire screen)
@@ -869,8 +869,8 @@ namespace ClaFi::PathArt
 
     //            PixelPathPainter p{ view };
     //            p.drawPath(path, {
-    //                PathDrawLayer::stroke(m_theme.sunDisk, 3.0f * m_objectsScale),
-    //                PathDrawLayer::outerGlow(m_theme.sunDisk, 20.0f * m_objectsScale)
+    //                PathDrawLayer::Stroke(m_theme.sunDisk, 3.0f * m_objectsScale),
+    //                PathDrawLayer::OuterGlow(m_theme.sunDisk, 20.0f * m_objectsScale)
     //                }, tx, opacityBolt);
 
     //            canvas.drawPixelView(view);
@@ -891,7 +891,7 @@ namespace ClaFi::PathArt
         float flicker = (std::sin(flashT * 150.0f) > 0.0f) ? 1.0f : 0.0f;
         float fade = 1.0f - (flashT / 0.15f);
 
-        Matrix3x2 tx = Matrix3x2::translation(offset);
+        Matrix3x2 tx = Matrix3x2::Translation(offset);
         PixelPath path;
 
         // Soft sky flash
@@ -923,8 +923,8 @@ namespace ClaFi::PathArt
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::stroke(boltColor, 3.0f * m_objectsScale),
-                PathDrawLayer::outerGlow(boltColor, 20.0f * m_objectsScale)
+                PathDrawLayer::Stroke(boltColor, 3.0f * m_objectsScale),
+                PathDrawLayer::OuterGlow(boltColor, 20.0f * m_objectsScale)
             },
             &tx //, opacityBolt
         );
@@ -945,7 +945,7 @@ namespace ClaFi::PathArt
                 float visibleFlicker = (flicker - 0.2f) / 0.8f;
                 float s = (1.0f + pseudoRand(i, 3.0f) * 2.0f) * m_objectsScale * visibleFlicker;
 
-                Matrix3x2 tx = Matrix3x2::translation(offset.x + xBase, offset.y + yBase);
+                Matrix3x2 tx = Matrix3x2::Translation(offset.x + xBase, offset.y + yBase);
                 PixelPath path;
                 path.moveTo(0.0f, -s); path.lineTo(s * 0.25f, -s * 0.25f);
                 path.lineTo(s, 0.0f); path.lineTo(s * 0.25f, s * 0.25f);
@@ -960,9 +960,9 @@ namespace ClaFi::PathArt
     {
         PixelPath path;
         createSnowFlakePath(path);
-        Matrix3x2 transform = Matrix3x2::translation({ x, y })
-            * Matrix3x2::scale(s)
-            * Matrix3x2::rotation(calculateSyncRotation(t, id, 6.0f) * k_2Pi);
+        Matrix3x2 transform = Matrix3x2::Translation({ x, y })
+            * Matrix3x2::Scale(s)
+            * Matrix3x2::Rotation(calculateSyncRotation(t, id, 6.0f) * k_2Pi);
         canvas.drawPath(
             path,
             SolidColor{ m_theme.effectColor1.withOpacity(m_theme.hasSnow) },
@@ -985,7 +985,7 @@ namespace ClaFi::PathArt
 
     void MillScene::drawLeaf(Canvas& canvas, float x, float y, float s, float t, int id, Color color, float opacity)
     {
-        Matrix3x2 tx = Matrix3x2::translation(x, y) * Matrix3x2::rotation(calculateSyncRotation(t, id, 2.0f) * k_2Pi) * Matrix3x2::scale(s - m_theme.hasPetals * 0.5f);
+        Matrix3x2 tx = Matrix3x2::Translation(x, y) * Matrix3x2::Rotation(calculateSyncRotation(t, id, 2.0f) * k_2Pi) * Matrix3x2::Scale(s - m_theme.hasPetals * 0.5f);
         PixelPath path;
         path.moveTo(0.0f, -10.0f); path.lineTo(8.0f, 0.0f); path.lineTo(0.0f, 10.0f); path.lineTo(-8.0f, 0.0f); path.close();
         canvas.fillPath(path, SolidColor{ color.withOpacity(opacity) }, &tx);
@@ -1031,7 +1031,7 @@ namespace ClaFi::PathArt
                     });
 
                 PixelPath path;
-                Matrix3x2 tx = Matrix3x2::translation(pos);
+                Matrix3x2 tx = Matrix3x2::Translation(pos);
                 path.drawCircle({}, 3.5f * m_objectsScale);
                 canvas.fillPath(path, SolidColor{ m_theme.effectColor1.withOpacity(opacity) }, &tx);
             }
@@ -1043,7 +1043,7 @@ namespace ClaFi::PathArt
         float opacity = m_theme.hasDust;
         if (opacity <= 0.001f) return;
 
-        Matrix3x2 tx = Matrix3x2::translation(offset);
+        Matrix3x2 tx = Matrix3x2::Translation(offset);
         for (int i = 0; i < 50; ++i) {
             float x = std::fmod(pseudoRand(i) * w + t * w * 3.0f, w);
             float y = pseudoRand(i, 7.0f) * h;

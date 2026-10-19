@@ -674,7 +674,7 @@ namespace SeeDocs_App::AppIcon
             PixelPath path;
             PathSink sink{ path, false };
             addCircle(sink, center, radius);
-            canvas.drawPath(path, { PathDrawLayer::fill(color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(color) }, &transform);
         }
 
         void paintStretch(Canvas& canvas, const Matrix3x2& transform, const Strand& strand,
@@ -687,7 +687,7 @@ namespace SeeDocs_App::AppIcon
 
             PixelPath path;
             addOutline(path, samples, strand, sampleBack(samples, first, k_seamReach), last);
-            canvas.drawPath(path, { PathDrawLayer::fill(strand.color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(strand.color) }, &transform);
 
             if (lastSpan == spanCount)
             {
@@ -723,7 +723,7 @@ namespace SeeDocs_App::AppIcon
             PixelPath path;
             PathSink sink{ path, true };
             addRoundedQuad(sink, lineCorners(leaf, line), radii);
-            canvas.drawPath(path, { PathDrawLayer::fill(line.color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(line.color) }, &transform);
         }
 
         void drawLeafShape(Canvas& canvas, const Matrix3x2& transform, const Leaf& leaf,
@@ -742,13 +742,13 @@ namespace SeeDocs_App::AppIcon
             const Corners front = cornersOf(k_frontLeaf);
 
             // The back leaf's lines go down before the front leaf covers them.
-            drawLeafShape(canvas, transform, k_backLeaf, PathDrawLayer::fill(k_paperBack));
+            drawLeafShape(canvas, transform, k_backLeaf, PathDrawLayer::Fill(k_paperBack));
             for (const Line& line : k_backLines)
                 fillLine(canvas, transform, back, line);
 
-            drawLeafShape(canvas, transform, k_backLeaf, PathDrawLayer::stroke(k_paperEdge, k_paperEdgeWidth));
-            drawLeafShape(canvas, transform, k_frontLeaf, PathDrawLayer::fill(k_paperFront));
-            drawLeafShape(canvas, transform, k_frontLeaf, PathDrawLayer::stroke(k_paperEdge, k_paperEdgeWidth));
+            drawLeafShape(canvas, transform, k_backLeaf, PathDrawLayer::Stroke(k_paperEdge, k_paperEdgeWidth));
+            drawLeafShape(canvas, transform, k_frontLeaf, PathDrawLayer::Fill(k_paperFront));
+            drawLeafShape(canvas, transform, k_frontLeaf, PathDrawLayer::Stroke(k_paperEdge, k_paperEdgeWidth));
 
             for (const Line& line : k_frontLines)
                 fillLine(canvas, transform, front, line);
@@ -760,12 +760,12 @@ namespace SeeDocs_App::AppIcon
             PathSink sink{ path, false };
 
             addCircle(sink, k_glassCenter, k_lensRadius - k_rimInset);
-            canvas.drawPath(path, { PathDrawLayer::stroke(k_rimShade, k_rimWidth) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Stroke(k_rimShade, k_rimWidth) }, &transform);
 
             path.clear();
             addArc(sink, k_glassCenter, k_highlightRadius,
                 k_highlightFromDegrees, k_highlightToDegrees, k_highlightSteps);
-            canvas.drawPath(path, { PathDrawLayer::stroke(k_highlight, k_highlightWidth) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Stroke(k_highlight, k_highlightWidth) }, &transform);
 
             PixelPath ring;
             PathSink ringSink{ ring, false };
@@ -777,11 +777,11 @@ namespace SeeDocs_App::AppIcon
 
             // Both edges before either fill, so only the fringe outside ring and tail shows.
             canvas.drawPath(ring,
-                { PathDrawLayer::stroke(k_frameEdgeColor, k_glassWidth + k_frameEdgeWidth * 2.0f) }, &transform);
+                { PathDrawLayer::Stroke(k_frameEdgeColor, k_glassWidth + k_frameEdgeWidth * 2.0f) }, &transform);
             canvas.drawPath(tail,
-                { PathDrawLayer::stroke(k_frameEdgeColor, k_frameEdgeWidth * 2.0f) }, &transform);
-            canvas.drawPath(tail, { PathDrawLayer::fill(k_frameColor) }, &transform);
-            canvas.drawPath(ring, { PathDrawLayer::stroke(k_frameColor, k_glassWidth) }, &transform);
+                { PathDrawLayer::Stroke(k_frameEdgeColor, k_frameEdgeWidth * 2.0f) }, &transform);
+            canvas.drawPath(tail, { PathDrawLayer::Fill(k_frameColor) }, &transform);
+            canvas.drawPath(ring, { PathDrawLayer::Stroke(k_frameColor, k_glassWidth) }, &transform);
         }
     }
 }

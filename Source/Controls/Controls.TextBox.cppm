@@ -777,7 +777,7 @@ namespace ClaFi::Controls
 
     FloatRect TextBox::textBoundsInControl() const
     {
-        return textBounds(formContext(), FloatRect::fromDimensions({ 0.0f, 0.0f }, scaledSize()));
+        return textBounds(formContext(), FloatRect::FromDimensions({ 0.0f, 0.0f }, scaledSize()));
     }
 
     CaretHit TextBox::caretHitAt(const FormContext& formContext, const FloatRect& textBounds,

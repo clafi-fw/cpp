@@ -734,7 +734,7 @@ namespace ClaFi::PlatformImplementation::Windows
             // OverText places the window by its **text** rather than by its box. The anchor is the
             // text being covered, and textOrigin is where this window's own text starts inside
             // it, so putting the second on the first lands the two texts on top of each other.
-            result = FloatRect::fromDimensions(
+            result = FloatRect::FromDimensions(
                 anchor.topLeft() - placement.textOrigin, placement.size);
             break;
 
@@ -755,7 +755,7 @@ namespace ClaFi::PlatformImplementation::Windows
             else
                 placeLeft = !fitsRight && roomLeft > roomRight;
             const float left = placeLeft ? leftX - placement.size.x : rightX;
-            result = FloatRect::fromDimensions({ left, anchor.top }, placement.size);
+            result = FloatRect::FromDimensions({ left, anchor.top }, placement.size);
             break;
         }
 
@@ -802,7 +802,7 @@ namespace ClaFi::PlatformImplementation::Windows
             const float left = placement.placement == FormPlacement::BottomRight
                 ? anchor.right - size.x
                 : anchor.left;
-            result = FloatRect::fromDimensions({ left, top }, size);
+            result = FloatRect::FromDimensions({ left, top }, size);
             break;
         }
         }
@@ -896,7 +896,7 @@ namespace ClaFi::PlatformImplementation::Windows
                 reinterpret_cast<IntRect&>(monInfo.rcWork).toFloat(),
                 -placement.screenMargin
             };
-            result = heldWithin(FloatRect::fromDimensions(topLeft, placement.size), screenArea);
+            result = heldWithin(FloatRect::FromDimensions(topLeft, placement.size), screenArea);
         }
         else
             result = placeWithin(

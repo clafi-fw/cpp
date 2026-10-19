@@ -138,7 +138,7 @@ namespace ClaFi::Controls
         if (!m_selection)
             return Control::contextMenuAnchor();
 
-        FloatRect pixel = FloatRect::fromDimensions(pointInForm(m_selection->toFloat()),
+        FloatRect pixel = FloatRect::FromDimensions(pointInForm(m_selection->toFloat()),
             { m_zoom, m_zoom });
         if (!pixel.intersectWith(visibleRectInForm()))
             return Control::contextMenuAnchor();
@@ -159,7 +159,7 @@ namespace ClaFi::Controls
             return;
 
         const FloatRect bounds = event.controlBounds();
-        const FloatRect pictureRect = FloatRect::fromDimensions(bounds.topLeft() + m_pictureAt,
+        const FloatRect pictureRect = FloatRect::FromDimensions(bounds.topLeft() + m_pictureAt,
             pictureSize());
         const FloatRect shown = FloatRect::intersection(event.viewport(), bounds);
         const FloatRect visible = FloatRect::intersection(shown, pictureRect);

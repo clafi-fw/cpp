@@ -416,7 +416,7 @@ namespace ClaFi::Browser
         // standing in the tree.
         [[nodiscard]] bool isPageInUse(const PageData&) const;
     private:
-        PageData m_homePageData{ nullptr, ConfigNames::homePage };
+        PageData m_homePageData{ nullptr, ConfigNames::HomePage };
         PageData* m_selectedPageData{};
         // The page a fetch is running for, and how many of its sub-items that fetch has named so
         // far. addSubItem moves each one to that position - see the order it states.

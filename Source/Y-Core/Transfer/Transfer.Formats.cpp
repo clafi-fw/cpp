@@ -5,12 +5,12 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Transfer
 {
-    Format Format::of(const StandardFormat standardFormat)
+    Format Format::Of(const StandardFormat standardFormat)
     {
         return Format{ standardFormat };
     }
 
-    Format Format::custom(std::wstring name)
+    Format Format::Custom(std::wstring name)
     {
         return Format{ std::move(name) };
     }
@@ -46,11 +46,11 @@ namespace ClaFi::Transfer
 
     Format PlainText::format()
     {
-        return Format::of(StandardFormat::Text);
+        return Format::Of(StandardFormat::Text);
     }
 
     Format Picture::format()
     {
-        return Format::of(StandardFormat::Picture);
+        return Format::Of(StandardFormat::Picture);
     }
 }

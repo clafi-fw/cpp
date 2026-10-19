@@ -38,8 +38,8 @@ namespace ClaFi
         // The names of the two values in that section.
         namespace RecordNodes
         {
-            constexpr std::wstring_view answeredAt = L"AnsweredAt";
-            constexpr std::wstring_view newestVersion = L"NewestVersion";
+            constexpr std::wstring_view AnsweredAt = L"AnsweredAt";
+            constexpr std::wstring_view NewestVersion = L"NewestVersion";
         }
 
         // Where GitHub answers questions about a repository, and where it shows one.
@@ -70,8 +70,8 @@ namespace ClaFi
     Dom::Dt::Section UpdateCheck::createConfigSchema()
     {
         return {
-            Dom::Dt::Value{ RecordNodes::answeredAt, std::wstring{} },
-            Dom::Dt::Value{ RecordNodes::newestVersion, std::wstring{} }
+            Dom::Dt::Value{ RecordNodes::AnsweredAt, std::wstring{} },
+            Dom::Dt::Value{ RecordNodes::NewestVersion, std::wstring{} }
         };
     }
 
@@ -162,17 +162,17 @@ namespace ClaFi
         if (!m_record)
             return;
         const Dom::Transaction transaction = m_record->startTransaction();
-        RecordNode& answeredAtNode = (*m_record / RecordNodes::answeredAt).as<RecordNode>();
-        RecordNode& newestVersionNode = (*m_record / RecordNodes::newestVersion).as<RecordNode>();
+        RecordNode& answeredAtNode = (*m_record / RecordNodes::AnsweredAt).as<RecordNode>();
+        RecordNode& newestVersionNode = (*m_record / RecordNodes::NewestVersion).as<RecordNode>();
         answeredAtNode.set(utcSpelling(answeredAt));
         newestVersionNode.set(std::wstring{ newestVersion });
     }
 
     void UpdateCheck::takeRecord()
     {
-        const RecordNode& answeredAtNode = (*m_record / RecordNodes::answeredAt).as<RecordNode>();
+        const RecordNode& answeredAtNode = (*m_record / RecordNodes::AnsweredAt).as<RecordNode>();
         const RecordNode& newestVersionNode =
-            (*m_record / RecordNodes::newestVersion).as<RecordNode>();
+            (*m_record / RecordNodes::NewestVersion).as<RecordNode>();
         const AnswerTime moment = parseUtcSpelling(answeredAtNode.get());
         if (!moment)
             return;

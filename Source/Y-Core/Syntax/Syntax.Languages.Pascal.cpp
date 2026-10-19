@@ -12,8 +12,8 @@ namespace ClaFi::Syntax
     {
         namespace PascalMode
         {
-            constexpr std::uint8_t braceDirective = Mode::firstLanguageMode;
-            constexpr std::uint8_t parenDirective = Mode::firstLanguageMode + 1;
+            constexpr std::uint8_t BraceDirective = Mode::FirstLanguageMode;
+            constexpr std::uint8_t ParenDirective = Mode::FirstLanguageMode + 1;
         }
 
         // A directive that is an everyday name as well - a property's accessors, a method's
@@ -299,12 +299,12 @@ namespace ClaFi::Syntax
             std::size_t at = from;
             while (at < to)
             {
-                if (!isNameStart(line[at], Languages::pascal))
+                if (!isNameStart(line[at], Languages::Pascal))
                 {
                     ++at;
                     continue;
                 }
-                const std::size_t end = std::min(endOfName(line, at, Languages::pascal), to);
+                const std::size_t end = std::min(endOfName(line, at, Languages::Pascal), to);
                 words.push_back({ line.substr(at, end - at), lineStart + at, TokenKind::Plain });
                 at = end;
             }
@@ -354,7 +354,7 @@ namespace ClaFi::Syntax
 
                 const std::wstring_view line = text.substr(lineStart, lineEnd - lineStart);
                 tokens.clear();
-                state = lexLine(Languages::pascal, line, state, strings, &tokens);
+                state = lexLine(Languages::Pascal, line, state, strings, &tokens);
                 appendLineWords(line, lineStart, tokens, words);
                 if (last)
                     return words;
@@ -483,10 +483,10 @@ namespace ClaFi::Syntax
         {
             if (atEnd())
                 return false;
-            if (isListedNoCase(PascalTables::routineWords, current().text))
+            if (isListedNoCase(PascalTables::RoutineWords, current().text))
                 return true;
             return currentSpells(L"class") && m_at + 1 < m_words.size()
-                && isListedNoCase(PascalTables::routineWords, m_words[m_at + 1].text);
+                && isListedNoCase(PascalTables::RoutineWords, m_words[m_at + 1].text);
         }
 
         bool PascalReader::endsSection() const
@@ -1512,9 +1512,9 @@ namespace ClaFi::Syntax
             {
                 const std::optional<Place> next = after(place);
                 return next.has_value() && next->line == place.line
-                    && isListed(next.value(), PascalTables::routineWords);
+                    && isListed(next.value(), PascalTables::RoutineWords);
             }
-            if (!isListed(place, PascalTables::routineWords))
+            if (!isListed(place, PascalTables::RoutineWords))
                 return false;
             const std::optional<Place> previous = before(place);
             if (!previous.has_value())
@@ -1886,13 +1886,13 @@ namespace ClaFi::Syntax
     {
         switch (scan.state.mode)
         {
-            case PascalMode::braceDirective:
+            case PascalMode::BraceDirective:
                 takeToCloser(scan, scan.index, L"}", TokenKind::Directive,
-                    PascalMode::braceDirective);
+                    PascalMode::BraceDirective);
                 return true;
-            case PascalMode::parenDirective:
+            case PascalMode::ParenDirective:
                 takeToCloser(scan, scan.index, L"*)", TokenKind::Directive,
-                    PascalMode::parenDirective);
+                    PascalMode::ParenDirective);
                 return true;
             default:
                 break;
@@ -1927,13 +1927,13 @@ namespace ClaFi::Syntax
         if (current == L'{' && next == L'$')
         {
             scan.index += 2;
-            takeToCloser(scan, start, L"}", TokenKind::Directive, PascalMode::braceDirective);
+            takeToCloser(scan, start, L"}", TokenKind::Directive, PascalMode::BraceDirective);
             return true;
         }
         if (current == L'(' && next == L'*' && scan.peek(2) == L'$')
         {
             scan.index += 3;
-            takeToCloser(scan, start, L"*)", TokenKind::Directive, PascalMode::parenDirective);
+            takeToCloser(scan, start, L"*)", TokenKind::Directive, PascalMode::ParenDirective);
             return true;
         }
 
@@ -2015,7 +2015,7 @@ namespace ClaFi::Syntax
         while (at < signature.size())
         {
             const wchar_t value = signature[at];
-            if (isNameChar(value, Languages::pascal))
+            if (isNameChar(value, Languages::Pascal))
             {
                 if (!wordStart)
                     wordStart = at;

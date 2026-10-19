@@ -33,9 +33,9 @@ namespace ClaFi::Syntax
     // before anything else looks at it.
     export namespace Mode
     {
-        constexpr std::uint8_t normal = 0;
-        constexpr std::uint8_t blockComment = 1;
-        constexpr std::uint8_t firstLanguageMode = 8;
+        constexpr std::uint8_t Normal = 0;
+        constexpr std::uint8_t BlockComment = 1;
+        constexpr std::uint8_t FirstLanguageMode = 8;
     }
 
     export using Words = std::span<const std::wstring_view>;

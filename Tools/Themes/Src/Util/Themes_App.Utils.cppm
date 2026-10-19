@@ -127,7 +127,7 @@ namespace Themes_App
 
         const float halfGap = event.scaleF(0.66f);
 
-        parts.radii = CornerRadii::topSideRound(radius);
+        parts.radii = CornerRadii::TopSideRound(radius);
         parts.bounds = event.iconRect().relativeRect({ 0.0f, 0.0f }, { 1.0f, 0.333f });
         parts.bounds.bottom -= halfGap;
         event.canvas().fillPartialRoundedRectangle(parts, harmony.color(map[0]).rgb());
@@ -137,7 +137,7 @@ namespace Themes_App
 
         parts.bounds = event.iconRect().relativeRect({ 0.0f, 0.666f }, { 1.0f, 1.0f });
         parts.bounds.top += halfGap;
-        parts.radii = CornerRadii::bottomSideRound(radius);
+        parts.radii = CornerRadii::BottomSideRound(radius);
         event.canvas().fillPartialRoundedRectangle(parts, harmony.color(map[2]).rgb());
     }
 
@@ -294,7 +294,7 @@ namespace Themes_App
         };
 
         // Built around the origin, the way drawRoundedRect builds, and placed by one matrix.
-        const Graphics::Matrix3x2 transform = Graphics::Matrix3x2::translation(mapRect.center());
+        const Graphics::Matrix3x2 transform = Graphics::Matrix3x2::Translation(mapRect.center());
         const float outerX = width;       // Past the clip on the left and right
         const float reach = height;       // Past the clip above the first band and below the last
 

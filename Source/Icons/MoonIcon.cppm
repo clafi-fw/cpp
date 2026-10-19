@@ -90,13 +90,13 @@ namespace ClaFi::Icons::MoonIcon
 
         Color color = event.textRgb(InkGrade::Strongest);
         FloatPoint center = { size * 0.5f, size * 0.5f };
-        Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         PixelPath path;
 
         const float radius = size * k_radiusRatio;
         addCrescent(path, center + boxCentringOffset(radius), radius);
 
-        canvas.drawPath(path, { PathDrawLayer::stroke(color, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(color, strokeWidth) }, &transform);
     }
 
 }

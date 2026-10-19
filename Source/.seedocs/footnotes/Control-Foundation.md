@@ -548,7 +548,7 @@ close included.
 
 ## FormBase::windowFocusedFactor
 
-**The form animates it** on `AnimationSlots::windowFocused` whenever its window takes or loses the
+**The form animates it** on `AnimationSlots::WindowFocused` whenever its window takes or loses the
 focus. A form not painted yet takes the value at once.
 
 **A popup reads the window it opens over.** A Menu or Tooltip window never takes the focus, so a

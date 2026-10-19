@@ -18,7 +18,7 @@ namespace ClaFi::Icons::CopyIcon
         float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         size -= strokeWidth;
 
-        Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
@@ -43,7 +43,7 @@ namespace ClaFi::Icons::CopyIcon
         path.lineTo(0.0f, back - radius);
         path.quadTo({ 0.0f, back }, { radius, back });
         path.lineTo(front, back);
-        canvas.drawPath(path, { PathDrawLayer::stroke(bodyColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
 
         // The front sheet, whole.
         path.clear();
@@ -57,7 +57,7 @@ namespace ClaFi::Icons::CopyIcon
         path.lineTo(front, front + radius);
         path.quadTo({ front, front }, { front + radius, front });
         path.close();
-        canvas.drawPath(path, { PathDrawLayer::stroke(accentColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(accentColor, strokeWidth) }, &transform);
     }
 
 }

@@ -129,7 +129,7 @@ namespace ClaFi
         const BakedColors& bakedColors() const { return m_bakedColors; }
         //
         // --- Switching themes ---:
-        // **The application puts this theme on**, crossing to it over AnimationSlots::themeSwitch.
+        // **The application puts this theme on**, crossing to it over AnimationSlots::ThemeSwitch.
         // Baking is answered above the core - see connectAppThemes - so the set arrives already
         // made, every value of which has a half way, which is what the crossing rests on.
         //
@@ -626,8 +626,8 @@ namespace ClaFi
 
     bool AppContext::crossing() const
     {
-        return m_animator.isActive(AnimationSlots::themeSwitch)
-            or m_animator.isActive(AnimationSlots::themeLightness);
+        return m_animator.isActive(AnimationSlots::ThemeSwitch)
+            or m_animator.isActive(AnimationSlots::ThemeLightness);
     }
 
     void AppContext::takeTheme(const AppTheme& theme, const BakedColors& colors)
@@ -677,8 +677,8 @@ namespace ClaFi
         m_crossingFactor = crossesColors ? 0.0f : 1.0f;
         m_lightnessFactor = crossesLightness ? 0.0f : 1.0f;
 
-        m_animator.stop(this, AnimationSlots::themeSwitch);
-        m_animator.stop(this, AnimationSlots::themeLightness);
+        m_animator.stop(this, AnimationSlots::ThemeSwitch);
+        m_animator.stop(this, AnimationSlots::ThemeLightness);
 
         // Neither axis moves, so there is no crossing to make and the set is worn at once. Two
         // themes stating the same colours at the same lightness are the same picture, whatever
@@ -697,7 +697,7 @@ namespace ClaFi
             });
         if (crossesColors)
         {
-            m_animator.start(this, AnimationSlots::themeSwitch, 0.0f, 1.0f,
+            m_animator.start(this, AnimationSlots::ThemeSwitch, 0.0f, 1.0f,
                 [this](AnimateParams& params) {
                     m_crossingFactor = params.value;
                     stateBakedColors();
@@ -705,7 +705,7 @@ namespace ClaFi
         }
         if (crossesLightness)
         {
-            m_animator.start(this, AnimationSlots::themeLightness, 0.0f, 1.0f,
+            m_animator.start(this, AnimationSlots::ThemeLightness, 0.0f, 1.0f,
                 [this](AnimateParams& params) {
                     m_lightnessFactor = params.value;
                     stateBakedColors();

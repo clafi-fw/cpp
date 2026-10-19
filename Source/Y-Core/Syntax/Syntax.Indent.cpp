@@ -283,7 +283,7 @@ namespace ClaFi::Syntax
 
     bool IndentLines::continues(const std::size_t line) const
     {
-        return m_states.stateOf(line).mode != Mode::normal;
+        return m_states.stateOf(line).mode != Mode::Normal;
     }
 
     const Language& IndentLines::language() const

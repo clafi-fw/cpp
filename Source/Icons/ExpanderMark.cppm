@@ -42,13 +42,13 @@ namespace ClaFi::Icons::ExpanderMark
         path.lineTo(0.0f, k_markHalfSize);
 
         Matrix3x2 transform =
-            Matrix3x2::translation(event.iconCenter())
-            * Matrix3x2::scale(scaleFactor)
-            * Matrix3x2::rotation(expandedFactor * 0.25f * k_2Pi);
+            Matrix3x2::Translation(event.iconCenter())
+            * Matrix3x2::Scale(scaleFactor)
+            * Matrix3x2::Rotation(expandedFactor * 0.25f * k_2Pi);
 
         event.canvas().drawPath(
             path,
-            { PathDrawLayer::stroke(event.textRgb(InkGrade::Strongest), k_strokeWidth) },
+            { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strongest), k_strokeWidth) },
             &transform);
     }
 

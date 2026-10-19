@@ -34,7 +34,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
         // A stroke lies inside its bounds, so the shape is built half a stroke in and that much
         // smaller rather than pre-inset at each point.
         const float size = std::min(iconRect.width(), iconRect.height()) - strokeWidth;
-        const Matrix3x2 transform = Matrix3x2::translation(
+        const Matrix3x2 transform = Matrix3x2::Translation(
             iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
 
         Canvas& canvas = event.canvas();
@@ -46,7 +46,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
 
         canvas.drawPath(
             path,
-            { PathDrawLayer::stroke(event.inkRgb(k_folderInk), strokeWidth) },
+            { PathDrawLayer::Stroke(event.inkRgb(k_folderInk), strokeWidth) },
             &transform
         );
 
@@ -64,12 +64,12 @@ namespace ClaFi::Icons::OpenInExplorerIcon
         // Magnifier's Halo is the same trick carried all the way round a shape.
         canvas.drawPath(
             path,
-            { PathDrawLayer::stroke(event.surfaceRgb(), strokeWidth * 2.0f) },
+            { PathDrawLayer::Stroke(event.surfaceRgb(), strokeWidth * 2.0f) },
             &transform
         );
         canvas.drawPath(
             path,
-            { PathDrawLayer::stroke(event.accentRgb(InkGrade::Strongest), strokeWidth)},
+            { PathDrawLayer::Stroke(event.accentRgb(InkGrade::Strongest), strokeWidth)},
             &transform
         );
     }

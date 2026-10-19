@@ -24,16 +24,16 @@ namespace ClaFi::Icons::RedoIcon
         // icon reflects it across the vertical centre of its own square. The reflection is the
         // right operand: a point meets that one first, and the placement second.
         Matrix3x2 mirror = { -1.0f, 0.0f, 0.0f, 1.0f, size, 0.0f };
-        Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f }) * mirror;
+        Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f }) * mirror;
         Canvas& canvas = event.canvas();
         PixelPath path;
 
         UndoIcon::buildShaftPath(path, size);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strong), strokeWidth) }, &transform);
 
         path.clear();
         UndoIcon::buildHeadPath(path, size);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) }, &transform);
     }
 
 }

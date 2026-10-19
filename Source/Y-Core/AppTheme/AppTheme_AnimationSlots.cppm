@@ -12,80 +12,80 @@ namespace ClaFi::AnimationSlots
     // travels a whole device pixel under the press scale, and one pixel spread over 55ms is two
     // frames at 30Hz - a step, whatever the easing says. At 175ms it is ten, which is enough for
     // the intermediate coverage to read as a glide.
-    export constexpr AnimationSlot hovered{
+    export constexpr AnimationSlot Hovered{
         .duration{.rise = 77ms, .fall = 330ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut },
         .tag = static_cast<AnimationTag>(VisualStateIndex::Hovered)
     };
 
-    export constexpr AnimationSlot pressed{
+    export constexpr AnimationSlot Pressed{
         .duration{.rise = 44ms, .fall = 33ms },
         .easingFactor{},
         .tag = static_cast<AnimationTag>(VisualStateIndex::Pressed)
     };
 
-    export constexpr AnimationSlot focused{
+    export constexpr AnimationSlot Focused{
         .duration{.rise = 77ms, .fall = 330ms },
         .easingFactor{},
         .tag = static_cast<AnimationTag>(VisualStateIndex::Focused)
     };
 
-    export constexpr AnimationSlot selected{
+    export constexpr AnimationSlot Selected{
         .duration{.rise = 66ms, .fall = 330ms },
         .easingFactor{EasingFactor::EaseOut, EasingFactor::EaseOut},
         .tag = static_cast<AnimationTag>(VisualStateIndex::Selected)
     };
 
-    export constexpr AnimationSlot enabled{
+    export constexpr AnimationSlot Enabled{
         .duration{.rise = 330ms, .fall = 330ms },
         .easingFactor{},
         .tag = static_cast<AnimationTag>(VisualStateIndex::Enabled)
     };
 
-    export constexpr AnimationSlot textHovered{
+    export constexpr AnimationSlot TextHovered{
         .duration{.rise = 55ms, .fall = 440ms },
         .easingFactor{ EasingFactor::EaseIn, EasingFactor::EaseInOut },
         .tag = static_cast<AnimationTag>(VisualStateIndex::TextHovered)
     };
 
-    export constexpr AnimationSlot current{
+    export constexpr AnimationSlot Current{
         .duration{.rise = 66ms, .fall = 440ms },
         .easingFactor{},
         .tag = static_cast<AnimationTag>(VisualStateIndex::Current)
     };
 
-    export constexpr AnimationSlot keyboardActive{
+    export constexpr AnimationSlot KeyboardActive{
         .duration{.rise = 90ms, .fall = 600ms },
         .easingFactor{}
     };
 
     // Mirrors keyboardActive, so a switch between the mouse and the keyboard is one crossfade.
-    export constexpr AnimationSlot mouseActive{
+    export constexpr AnimationSlot MouseActive{
         .duration{.rise = 600ms, .fall = 90ms },
         .easingFactor{ EasingFactor::EaseInOut, EasingFactor::EaseOut }
     };
 
-    export constexpr AnimationSlot formAlpha{
+    export constexpr AnimationSlot FormAlpha{
         .duration{.rise = 66ms, .fall = 1100ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut }
     };
 
     // A form's window taking or losing the focus.
-    export constexpr AnimationSlot windowFocused{
+    export constexpr AnimationSlot WindowFocused{
         .duration{.rise = 66ms, .fall = 330ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseOut }
     };
 
-    export constexpr AnimationSlot expander{
+    export constexpr AnimationSlot Expander{
         .duration{.rise = 400ms, .fall = 166ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut }
     };
 
     // The mark that says a popup is open. It turns as briskly as the popup appears and takes the
     // longer way back, so the turn home reads as the popup closing rather than as an event of its
-    // own. A mark cannot ride AnimationSlots::selected: an animation is keyed by control and slot
+    // own. A mark cannot ride AnimationSlots::Selected: an animation is keyed by control and slot
     // together, and the control carrying the mark animates that slot for its own selected state.
-    export constexpr AnimationSlot dropdownMark{
+    export constexpr AnimationSlot DropdownMark{
         .duration{.rise = 110ms, .fall = 165ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut }
     };
@@ -95,9 +95,9 @@ namespace ClaFi::AnimationSlots
     // into the light would read as two different commands. Long enough that the whole window is
     // seen crossing rather than found already changed, short enough to stay an answer to the
     // click that asked for it.
-    constexpr auto multiplicator = 1;
-    export constexpr AnimationSlot themeSwitch{
-        .duration{.rise = multiplicator * 500ms, .fall = multiplicator * 500ms },
+    constexpr auto Multiplicator = 1;
+    export constexpr AnimationSlot ThemeSwitch{
+        .duration{.rise = Multiplicator * 500ms, .fall = Multiplicator * 500ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseOut }
     };
 
@@ -107,8 +107,8 @@ namespace ClaFi::AnimationSlots
     // and the answer is shorter than the colours take - the palette settles at leisure once the
     // window is on the side it is going to. A crossing between two themes of one mode never runs
     // this slot at all.
-    export constexpr AnimationSlot themeLightness{
-        .duration{.rise = multiplicator * 0ms, .fall = multiplicator * 0ms },
+    export constexpr AnimationSlot ThemeLightness{
+        .duration{.rise = Multiplicator * 0ms, .fall = Multiplicator * 0ms },
         .easingFactor{ EasingFactor::Linear, EasingFactor::Linear }
     };
 
@@ -117,8 +117,8 @@ namespace ClaFi::AnimationSlots
     // are one movement, and a scroll bar that hurried one way would read as two controls. Long
     // enough that the eye follows the content across the gap instead of finding it in a new
     // place, short enough that a held key still pages at reading speed.
-    export constexpr AnimationSlot scroll{
-        .duration{.rise = multiplicator * 166ms, .fall = multiplicator * 166ms },
+    export constexpr AnimationSlot Scroll{
+        .duration{.rise = Multiplicator * 166ms, .fall = Multiplicator * 166ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseOut }
     };
 

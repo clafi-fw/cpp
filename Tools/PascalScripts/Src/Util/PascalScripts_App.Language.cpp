@@ -25,24 +25,24 @@ namespace PascalScripts_App
     {
         namespace Keys
         {
-            constexpr std::wstring_view extension = L"Extension";
-            constexpr std::wstring_view information = L"Information";
-            constexpr std::wstring_view templates = L"Templates";
-            constexpr std::wstring_view completion = L"Completion";
-            constexpr std::wstring_view name = L"Name";
-            constexpr std::wstring_view newStem = L"NewStem";
-            constexpr std::wstring_view text = L"Text";
-            constexpr std::wstring_view kind = L"Kind";
-            constexpr std::wstring_view signature = L"Signature";
-            constexpr std::wstring_view hint = L"Hint";
-            constexpr std::wstring_view type = L"Type";
-            constexpr std::wstring_view parent = L"Parent";
-            constexpr std::wstring_view methods = L"Methods";
-            constexpr std::wstring_view properties = L"Properties";
-            constexpr std::wstring_view titlePrefix = L"TitlePrefix";
-            constexpr std::wstring_view titleKeys = L"TitleKeys";
-            constexpr std::wstring_view list = L"List";
-            constexpr std::wstring_view values = L"Values";
+            constexpr std::wstring_view Extension = L"Extension";
+            constexpr std::wstring_view Information = L"Information";
+            constexpr std::wstring_view Templates = L"Templates";
+            constexpr std::wstring_view Completion = L"Completion";
+            constexpr std::wstring_view Name = L"Name";
+            constexpr std::wstring_view NewStem = L"NewStem";
+            constexpr std::wstring_view Text = L"Text";
+            constexpr std::wstring_view Kind = L"Kind";
+            constexpr std::wstring_view Signature = L"Signature";
+            constexpr std::wstring_view Hint = L"Hint";
+            constexpr std::wstring_view Type = L"Type";
+            constexpr std::wstring_view Parent = L"Parent";
+            constexpr std::wstring_view Methods = L"Methods";
+            constexpr std::wstring_view Properties = L"Properties";
+            constexpr std::wstring_view TitlePrefix = L"TitlePrefix";
+            constexpr std::wstring_view TitleKeys = L"TitleKeys";
+            constexpr std::wstring_view List = L"List";
+            constexpr std::wstring_view Values = L"Values";
         }
 
         using Sections = Dom::Sequence<Dom::Section>;
@@ -58,11 +58,11 @@ namespace PascalScripts_App
         {
             using namespace Dom::Dt;
             return {
-                Value{ Keys::name, std::wstring{} },
-                Value{ Keys::kind, std::wstring{} },
-                Value{ Keys::signature, std::wstring{} },
-                Value{ Keys::hint, std::wstring{} },
-                Value{ Keys::type, std::wstring{} }
+                Value{ Keys::Name, std::wstring{} },
+                Value{ Keys::Kind, std::wstring{} },
+                Value{ Keys::Signature, std::wstring{} },
+                Value{ Keys::Hint, std::wstring{} },
+                Value{ Keys::Type, std::wstring{} }
             };
         }
 
@@ -76,20 +76,20 @@ namespace PascalScripts_App
             for (const Dom::Section& item : list.as<Sections>())
             {
                 Syntax::CompletionEntry entry = {
-                    .name = stringOf(item, Keys::name),
-                    .kind = Syntax::completionKindOf(stringOf(item, Keys::kind)).value_or(listKind),
-                    .signature = stringOf(item, Keys::signature),
-                    .hint = stringOf(item, Keys::hint),
-                    .type = stringOf(item, Keys::type)
+                    .name = stringOf(item, Keys::Name),
+                    .kind = Syntax::completionKindOf(stringOf(item, Keys::Kind)).value_or(listKind),
+                    .signature = stringOf(item, Keys::Signature),
+                    .hint = stringOf(item, Keys::Hint),
+                    .type = stringOf(item, Keys::Type)
                 };
                 if (entry.name.empty())
                     continue;
                 if (withMembers)
                 {
-                    entry.parent = stringOf(item, Keys::parent);
-                    readEntries(item / Keys::methods, false, Syntax::CompletionKind::Procedure,
+                    entry.parent = stringOf(item, Keys::Parent);
+                    readEntries(item / Keys::Methods, false, Syntax::CompletionKind::Procedure,
                         entry.methods);
-                    readEntries(item / Keys::properties, false, Syntax::CompletionKind::Property,
+                    readEntries(item / Keys::Properties, false, Syntax::CompletionKind::Property,
                         entry.properties);
                 }
                 into.push_back(std::move(entry));
@@ -103,21 +103,21 @@ namespace PascalScripts_App
             {
                 Syntax::TitleKey key = {
                     .entry = {
-                        .name = stringOf(item, Keys::name),
+                        .name = stringOf(item, Keys::Name),
                         .kind = Syntax::CompletionKind::Key,
-                        .signature = stringOf(item, Keys::signature),
-                        .hint = stringOf(item, Keys::hint)
+                        .signature = stringOf(item, Keys::Signature),
+                        .hint = stringOf(item, Keys::Hint)
                     },
-                    .list = (item / Keys::list).get<bool>()
+                    .list = (item / Keys::List).get<bool>()
                 };
                 if (key.entry.name.empty())
                     continue;
-                for (const Dom::Section& value : (item / Keys::values).as<Sections>())
+                for (const Dom::Section& value : (item / Keys::Values).as<Sections>())
                 {
                     Syntax::CompletionEntry entry = {
-                        .name = stringOf(value, Keys::name),
+                        .name = stringOf(value, Keys::Name),
                         .kind = Syntax::CompletionKind::Value,
-                        .hint = stringOf(value, Keys::hint)
+                        .hint = stringOf(value, Keys::Hint)
                     };
                     if (!entry.name.empty())
                         key.values.push_back(std::move(entry));
@@ -161,46 +161,46 @@ namespace PascalScripts_App
     {
         using namespace Dom::Dt;
         const Section layout = {
-            Value{ Keys::extension, std::wstring{} },
-            Value{ Keys::information, std::wstring{} },
+            Value{ Keys::Extension, std::wstring{} },
+            Value{ Keys::Information, std::wstring{} },
             Sequence
             {
-                Keys::templates,
+                Keys::Templates,
                 Section
                 {
-                    Value{ Keys::name, std::wstring{} },
-                    Value{ Keys::newStem, std::wstring{} },
-                    Value{ Keys::text, std::wstring{} }
+                    Value{ Keys::Name, std::wstring{} },
+                    Value{ Keys::NewStem, std::wstring{} },
+                    Value{ Keys::Text, std::wstring{} }
                 }
             },
             Sequence
             {
-                Keys::completion,
+                Keys::Completion,
                 Section
                 {
                     entryLayout(),
-                    Value{ Keys::parent, std::wstring{} },
-                    Sequence{ Keys::methods, entryLayout() },
-                    Sequence{ Keys::properties, entryLayout() }
+                    Value{ Keys::Parent, std::wstring{} },
+                    Sequence{ Keys::Methods, entryLayout() },
+                    Sequence{ Keys::Properties, entryLayout() }
                 }
             },
-            Value{ Keys::titlePrefix, std::wstring{} },
+            Value{ Keys::TitlePrefix, std::wstring{} },
             Sequence
             {
-                Keys::titleKeys,
+                Keys::TitleKeys,
                 Section
                 {
-                    Value{ Keys::name, std::wstring{} },
-                    Value{ Keys::signature, std::wstring{} },
-                    Value{ Keys::hint, std::wstring{} },
-                    Value{ Keys::list, false },
+                    Value{ Keys::Name, std::wstring{} },
+                    Value{ Keys::Signature, std::wstring{} },
+                    Value{ Keys::Hint, std::wstring{} },
+                    Value{ Keys::List, false },
                     Sequence
                     {
-                        Keys::values,
+                        Keys::Values,
                         Section
                         {
-                            Value{ Keys::name, std::wstring{} },
-                            Value{ Keys::hint, std::wstring{} }
+                            Value{ Keys::Name, std::wstring{} },
+                            Value{ Keys::Hint, std::wstring{} }
                         }
                     }
                 }
@@ -216,29 +216,29 @@ namespace PascalScripts_App
             return;
 
         // A stated extension replaces the compiled-in one; a file saying nothing keeps it.
-        const std::wstring extension = stringOf(document, Keys::extension);
+        const std::wstring extension = stringOf(document, Keys::Extension);
         if (!extension.empty())
         {
             m_extension = extension;
             m_kind.extension = m_extension;
         }
-        m_information = stringOf(document, Keys::information);
+        m_information = stringOf(document, Keys::Information);
 
         // A template with no name could not be listed, so it is left out.
-        for (const Dom::Section& item : (document / Keys::templates).as<Sections>())
+        for (const Dom::Section& item : (document / Keys::Templates).as<Sections>())
         {
-            std::wstring name = stringOf(item, Keys::name);
+            std::wstring name = stringOf(item, Keys::Name);
             if (name.empty())
                 continue;
             m_templates.push_back({
                 .name = std::move(name),
-                .newStem = stringOf(item, Keys::newStem),
-                .text = stringOf(item, Keys::text)
+                .newStem = stringOf(item, Keys::NewStem),
+                .text = stringOf(item, Keys::Text)
             });
         }
-        readEntries(document / Keys::completion, true, Syntax::CompletionKind::Variable,
+        readEntries(document / Keys::Completion, true, Syntax::CompletionKind::Variable,
             m_completion);
-        m_titleBlock.prefix = stringOf(document, Keys::titlePrefix);
-        readTitleKeys(document / Keys::titleKeys, m_titleBlock.keys);
+        m_titleBlock.prefix = stringOf(document, Keys::TitlePrefix);
+        readTitleKeys(document / Keys::TitleKeys, m_titleBlock.keys);
     }
 }

@@ -255,9 +255,9 @@ inks; a control's <code>PaintEvent</code> answers the same.</p>
     path.<span class="fn">lineTo</span>(size * <span class="kw">0.5f</span>, size * <span class="kw">0.72f</span>);
     path.<span class="fn">moveTo</span>(size * <span class="kw">0.28f</span>, size * <span class="kw">0.5f</span>);
     path.<span class="fn">lineTo</span>(size * <span class="kw">0.72f</span>, size * <span class="kw">0.5f</span>);
-    <span class="kw">const</span> <span class="tp">Matrix3x2</span> place = <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(box.<span class="fn">topLeft</span>());
+    <span class="kw">const</span> <span class="tp">Matrix3x2</span> place = <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(box.<span class="fn">topLeft</span>());
     <span class="kw">const</span> <span class="tp">Color</span> mark = event.<span class="fn">accentRgb</span>(<span class="tp">InkGrade</span>::Strongest);
-    canvas.<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(mark, stroke) }, &amp;place);
+    canvas.<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">Stroke</span>(mark, stroke) }, &amp;place);
 }</code></pre>
 
 <p>Colours come from the event rather than from the code: an ink is resolved against the surface it
@@ -408,7 +408,7 @@ path moves, scales and turns with it.</p>
 
 <p>Stop positions run from 0 to 1 and ascend. A gradient of two colours has a shorthand:</p>
 
-<pre><code>canvas.<span class="fn">fillRectangle</span>(band, <span class="tp">LinearGradient</span>::<span class="fn">simple</span>(band.<span class="fn">topLeft</span>(), band.<span class="fn">bottomLeft</span>(), top, bottom));
+<pre><code>canvas.<span class="fn">fillRectangle</span>(band, <span class="tp">LinearGradient</span>::<span class="fn">Simple</span>(band.<span class="fn">topLeft</span>(), band.<span class="fn">bottomLeft</span>(), top, bottom));
 canvas.<span class="fn">fillTopBottomGradientRectangle</span>(band, top, bottom);   <span class="cm">// the same thing</span></code></pre>
 
 <p>A radial gradient's origin lies inside its ellipse, and both radii are above zero. An origin on
@@ -676,9 +676,9 @@ read as a border drawn round the shape.</p>
 
 <pre><code><span class="cm">// A badge: its glow first, so the fill covers the ramp's inward half, then the fill and its rim.</span>
 canvas.<span class="fn">drawPath</span>(badge, {
-    <span class="tp">PathDrawLayer</span>::<span class="fn">outerGlow</span>(halo, event.<span class="fn">scaleF</span>(<span class="kw">6.0f</span>)),
-    <span class="tp">PathDrawLayer</span>::<span class="fn">fill</span>(body),
-    <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(rim, line)
+    <span class="tp">PathDrawLayer</span>::<span class="fn">OuterGlow</span>(halo, event.<span class="fn">scaleF</span>(<span class="kw">6.0f</span>)),
+    <span class="tp">PathDrawLayer</span>::<span class="fn">Fill</span>(body),
+    <span class="tp">PathDrawLayer</span>::<span class="fn">Stroke</span>(rim, line)
 }, &amp;place);</code></pre>
 
 <svg class="grid-fig" viewBox="0 0 700 188" xmlns="http://www.w3.org/2000/svg" role="img"
@@ -692,16 +692,16 @@ canvas.<span class="fn">drawPath</span>(badge, {
     .ly-bg { fill:#f6f8fa; }
   </style>
   <rect class="ly-bg" x="15" y="34" width="160" height="126" rx="5"/>
-  <text class="ly-th" x="15" y="22">outerGlow(halo, 6)</text>
+  <text class="ly-th" x="15" y="22">OuterGlow(halo, 6)</text>
   <path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="32" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="28" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="24" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="20" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="16" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="12" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="8" stroke-opacity="0.11" stroke-linejoin="round"/><path d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z" fill="none" stroke="#ffb400" stroke-width="4" stroke-opacity="0.11" stroke-linejoin="round"/>
   <path class="ly-o" d="M63,70 L127,70 A18,18 0 0 1 145,88 L145,106 A18,18 0 0 1 127,124 L63,124 A18,18 0 0 1 45,106 L45,88 A18,18 0 0 1 63,70 Z"/>
   <text class="ly-t" x="15" y="178">both ways from the outline</text>
   <rect class="ly-bg" x="190" y="34" width="160" height="126" rx="5"/>
-  <text class="ly-th" x="190" y="22">fill(body)</text>
+  <text class="ly-th" x="190" y="22">Fill(body)</text>
   <path d="M238,70 L302,70 A18,18 0 0 1 320,88 L320,106 A18,18 0 0 1 302,124 L238,124 A18,18 0 0 1 220,106 L220,88 A18,18 0 0 1 238,70 Z" fill="#0066cc"/>
   <text class="ly-t" x="190" y="178">covers the inward half</text>
   <rect class="ly-bg" x="365" y="34" width="160" height="126" rx="5"/>
-  <text class="ly-th" x="365" y="22">stroke(rim, line)</text>
+  <text class="ly-th" x="365" y="22">Stroke(rim, line)</text>
   <path d="M413,70 L477,70 A18,18 0 0 1 495,88 L495,106 A18,18 0 0 1 477,124 L413,124 A18,18 0 0 1 395,106 L395,88 A18,18 0 0 1 413,70 Z" fill="none" stroke="#003d7a" stroke-width="3"/>
   <text class="ly-t" x="365" y="178">straddles the outline</text>
   <rect class="ly-bg" x="540" y="34" width="160" height="126" rx="5"/>
@@ -775,9 +775,9 @@ it rather than replacing it, through <code>ScopedCanvasTransform</code>, which p
 back when it goes:</p>
 
 <pre><code><span class="cm">// Grows what follows about a point. The matrix to the right applies first.</span>
-<span class="kw">const</span> <span class="tp">Matrix3x2</span> grow = <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(origin)
-    * <span class="tp">Matrix3x2</span>::<span class="fn">scale</span>(<span class="kw">1.1f</span>)
-    * <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(-origin.x, -origin.y);
+<span class="kw">const</span> <span class="tp">Matrix3x2</span> grow = <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(origin)
+    * <span class="tp">Matrix3x2</span>::<span class="fn">Scale</span>(<span class="kw">1.1f</span>)
+    * <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(-origin.x, -origin.y);
 <span class="kw">const</span> <span class="tp">ScopedCanvasTransform</span> scaled{ canvas, grow };</code></pre>
 
 <p>The framework uses the same guard to scale a pressed control about its press origin, so a paint
@@ -804,7 +804,7 @@ measures radii and widths on the larger axis. <a href="#differences">Backend dif
   <text class="tr-th" x="20" y="24">fillRectangle(rect)</text>
   <rect class="tr-a" x="60" y="76" width="120" height="60"/>
   <text class="tr-t" x="20" y="192">the rect, under no transform</text>
-  <text class="tr-th" x="250" y="24">CPU, under rotation(20&#176;)</text>
+  <text class="tr-th" x="250" y="24">CPU, under Rotation(20&#176;)</text>
   <rect class="tr-s" x="303.88" y="57.29" width="92.24" height="97.42"/>
   <polygon class="tr-d" points="303.88,57.29 416.64,98.33 396.12,154.71 283.36,113.67"/>
   <circle cx="303.88" cy="57.29" r="3.5" fill="#fff" stroke="#111"/>
@@ -984,7 +984,7 @@ outside the canvas transform by construction, so the transform is handed in besi
 coordinates the caller already works in:</p>
 
 <pre><code>canvas.<span class="fn">stagingDraw</span>(rect, [&amp;](<span class="tp">PixelView</span> view, <span class="kw">const</span> <span class="tp">Matrix3x2</span>&amp; canvasTransform) {
-    <span class="kw">const</span> <span class="tp">Matrix3x2</span> place = canvasTransform * <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(rect.<span class="fn">topLeft</span>());
+    <span class="kw">const</span> <span class="tp">Matrix3x2</span> place = canvasTransform * <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(rect.<span class="fn">topLeft</span>());
     <span class="fn">rasterize</span>(view, place);
 });</code></pre>
 
@@ -1060,7 +1060,7 @@ is one pixel.</p>
     <span class="tp">FloatPoint</span> startPoint;
     <span class="tp">FloatPoint</span> endPoint;
     <span class="tp">std</span>::<span class="tp">vector</span>&lt;<span class="tp">GradientStop</span>&gt; stops;
-    <span class="kw">static</span> <span class="tp">LinearGradient</span> <span class="fn">simple</span>(<span class="tp">FloatPoint</span> start, <span class="tp">FloatPoint</span> end, <span class="tp">Color</span> startColor, <span class="tp">Color</span> endColor);
+    <span class="kw">static</span> <span class="tp">LinearGradient</span> <span class="fn">Simple</span>(<span class="tp">FloatPoint</span> start, <span class="tp">FloatPoint</span> end, <span class="tp">Color</span> startColor, <span class="tp">Color</span> endColor);
 };
 
 <span class="kw">struct</span> <span class="tp">RadialGradient</span>
@@ -1095,12 +1095,12 @@ is one pixel.</p>
 
 <table>
 <tr><th>Shorthand</th><th>Layer</th></tr>
-<tr><td><code>PathDrawLayer::fill(color)</code></td><td>A fill in a colour.</td></tr>
-<tr><td><code>PathDrawLayer::stroke(color, width)</code></td><td>A stroke with round ends.</td></tr>
-<tr><td><code>PathDrawLayer::linearGradient(start, end, startColor, endColor)</code></td><td>A fill under a two-stop gradient.</td></tr>
-<tr><td><code>PathDrawLayer::pointGlow(glow)</code></td><td>A fill under a point of light.</td></tr>
-<tr><td><code>PathDrawLayer::outerGlow(color, reach, cap = Round, falloff = Linear)</code></td><td>A glow both ways from the outline.</td></tr>
-<tr><td><code>PathDrawLayer::shadow(color, reach, falloff = Smooth)</code></td><td>The shape solid, and its ramp outward.</td></tr>
+<tr><td><code>PathDrawLayer::Fill(color)</code></td><td>A fill in a colour.</td></tr>
+<tr><td><code>PathDrawLayer::Stroke(color, width)</code></td><td>A stroke with round ends.</td></tr>
+<tr><td><code>PathDrawLayer::LinearGradient(start, end, startColor, endColor)</code></td><td>A fill under a two-stop gradient.</td></tr>
+<tr><td><code>PathDrawLayer::PointGlow(glow)</code></td><td>A fill under a point of light.</td></tr>
+<tr><td><code>PathDrawLayer::OuterGlow(color, reach, cap = Round, falloff = Linear)</code></td><td>A glow both ways from the outline.</td></tr>
+<tr><td><code>PathDrawLayer::Shadow(color, reach, falloff = Smooth)</code></td><td>The shape solid, and its ramp outward.</td></tr>
 </table>
 
 <h3 id="ref-path">PixelPath</h3>
@@ -1124,10 +1124,10 @@ is one pixel.</p>
 <code>a * b</code>, <code>b</code> applies first - the opposite order to Direct2D's own
 <code>operator*</code>, which matters only to code that mixes the two.</p>
 
-<pre><code><span class="tp">Matrix3x2</span>::<span class="fn">identity</span>();
-<span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(dx, dy);    <span class="tp">Matrix3x2</span>::<span class="fn">translation</span>(point);
-<span class="tp">Matrix3x2</span>::<span class="fn">scale</span>(s);               <span class="tp">Matrix3x2</span>::<span class="fn">scale</span>(sx, sy);
-<span class="tp">Matrix3x2</span>::<span class="fn">rotation</span>(radians);     <span class="tp">Matrix3x2</span>::<span class="fn">rotationDeg</span>(degrees);
+<pre><code><span class="tp">Matrix3x2</span>::<span class="fn">Identity</span>();
+<span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(dx, dy);    <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(point);
+<span class="tp">Matrix3x2</span>::<span class="fn">Scale</span>(s);               <span class="tp">Matrix3x2</span>::<span class="fn">Scale</span>(sx, sy);
+<span class="tp">Matrix3x2</span>::<span class="fn">Rotation</span>(radians);     <span class="tp">Matrix3x2</span>::<span class="fn">RotationDeg</span>(degrees);
 
 <span class="tp">FloatPoint</span> p = m.<span class="fn">transform</span>(point);         <span class="cm">// a point</span>
 <span class="tp">FloatPoint</span> v = m.<span class="fn">transformVector</span>(vector);  <span class="cm">// a direction, translation left out</span>

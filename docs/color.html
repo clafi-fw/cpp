@@ -234,7 +234,7 @@ for the three families at a named step, and <code>inkRgb</code> for any <code>In
 <span class="tp">Color</span> mark = event.<span class="fn">accentRgb</span>(<span class="tp">InkGrade</span>::Strongest);   <span class="cm">// the theme's accent</span>
 <span class="tp">Color</span> warn = event.<span class="fn">inkRgb</span>(<span class="tp">InkWell</span>::Yellow);          <span class="cm">// a pigment</span>
 
-event.<span class="fn">canvas</span>().<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(mark, event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin)) });</code></pre>
+event.<span class="fn">canvas</span>().<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">Stroke</span>(mark, event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin)) });</code></pre>
 
 <p>Text takes the ink itself rather than a colour, so a run keeps its meaning until the layout is
 drawn:</p>
@@ -597,8 +597,8 @@ can be left out: the colour is then <code>text</code> and the grade <code>strong
     <span class="tp">Color</span> body = event.<span class="fn">textRgb</span>(<span class="tp">InkGrade</span>::Strong);
     <span class="tp">Color</span> accent = event.<span class="fn">accentRgb</span>(<span class="tp">InkGrade</span>::Strongest);
 
-    canvas.<span class="fn">drawPath</span>(bodyPath, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(body, strokeWidth) }, &amp;transform);
-    canvas.<span class="fn">drawPath</span>(headPath, { <span class="tp">PathDrawLayer</span>::<span class="fn">stroke</span>(accent, strokeWidth) }, &amp;transform);
+    canvas.<span class="fn">drawPath</span>(bodyPath, { <span class="tp">PathDrawLayer</span>::<span class="fn">Stroke</span>(body, strokeWidth) }, &amp;transform);
+    canvas.<span class="fn">drawPath</span>(headPath, { <span class="tp">PathDrawLayer</span>::<span class="fn">Stroke</span>(accent, strokeWidth) }, &amp;transform);
 }</code></pre>
 
 <div class="info">

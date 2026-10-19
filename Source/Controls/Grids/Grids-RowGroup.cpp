@@ -23,7 +23,7 @@ namespace ClaFi::Controls::Grids
             return;
         m_expanded = value;
         const float newValue = value ? 1.0f : 0.0f;
-        animate(AnimationSlots::expander, m_expandedFactor, newValue,
+        animate(AnimationSlots::Expander, m_expandedFactor, newValue,
             [this](AnimateParams& params) {
                 m_expandedFactor = params.value;
                 m_mark->invalidate();

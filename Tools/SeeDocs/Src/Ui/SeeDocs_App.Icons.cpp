@@ -53,12 +53,12 @@ namespace SeeDocs_App
 
             void stroke(const PixelPath& path, Color color) const
             {
-                canvas.drawPath(path, { PathDrawLayer::stroke(color, k_stroke) }, &transform);
+                canvas.drawPath(path, { PathDrawLayer::Stroke(color, k_stroke) }, &transform);
             }
 
             void fill(const PixelPath& path, Color color) const
             {
-                canvas.drawPath(path, { PathDrawLayer::fill(color) }, &transform);
+                canvas.drawPath(path, { PathDrawLayer::Fill(color) }, &transform);
             }
         };
 
@@ -117,8 +117,8 @@ namespace SeeDocs_App
             const float scale = size / k_menuGrid;
             return {
                 event.canvas(),
-                Matrix3x2::translation(rect.center() - FloatPoint{ size * 0.5f })
-                    * Matrix3x2::scale(scale),
+                Matrix3x2::Translation(rect.center() - FloatPoint{ size * 0.5f })
+                    * Matrix3x2::Scale(scale),
                 event.scaledStrokeWidth(Thickness::Thin) / scale
             };
         }
@@ -403,7 +403,7 @@ namespace SeeDocs_App
         const Drawing drawing = {
             event.canvas(),
             inksOf(event),
-            Matrix3x2::translation(rect.topLeft()) * Matrix3x2::scale(scale)
+            Matrix3x2::Translation(rect.topLeft()) * Matrix3x2::Scale(scale)
         };
         switch (icon)
         {
@@ -505,7 +505,7 @@ namespace SeeDocs_App
         PixelPath back;
         addFolderBack(back);
         drawing.canvas.drawPath(back,
-            { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), drawing.stroke) },
+            { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strong), drawing.stroke) },
             &drawing.transform);
 
         const std::array<FloatPoint, 4ull> corners{
@@ -519,8 +519,8 @@ namespace SeeDocs_App
         const Color accent = event.accentRgb(InkGrade::Strongest);
         drawing.canvas.drawPath(flap,
             {
-                PathDrawLayer::fill(accent.withOpacity(k_flapFill)),
-                PathDrawLayer::stroke(accent, drawing.stroke)
+                PathDrawLayer::Fill(accent.withOpacity(k_flapFill)),
+                PathDrawLayer::Stroke(accent, drawing.stroke)
             },
             &drawing.transform);
     }
@@ -533,15 +533,15 @@ namespace SeeDocs_App
         PixelPath folder;
         Icons::FolderIcon::addOutline(folder, { 2.0f, 7.5f, 26.5f, 27.5f });
         drawing.canvas.drawPath(folder,
-            { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), drawing.stroke) },
+            { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strong), drawing.stroke) },
             &drawing.transform);
 
         PixelPath spark;
         addSpark(spark, { 24.5f, 8.0f }, 7.0f, 2.1f);
         drawing.canvas.drawPath(spark,
             {
-                PathDrawLayer::stroke(event.surfaceRgb(), drawing.stroke * k_haloWidth),
-                PathDrawLayer::fill(event.accentRgb(InkGrade::Strongest))
+                PathDrawLayer::Stroke(event.surfaceRgb(), drawing.stroke * k_haloWidth),
+                PathDrawLayer::Fill(event.accentRgb(InkGrade::Strongest))
             },
             &drawing.transform);
     }

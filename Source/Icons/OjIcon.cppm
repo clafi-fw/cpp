@@ -43,7 +43,7 @@ namespace ClaFi
                     .strokeWidth = strokeWidth
                 },
                 //Graphics::SolidColor{ iconColor }
-                Graphics::LinearGradient::simple(
+                Graphics::LinearGradient::Simple(
                     { -45, -45 }, { 45, 45 },
                     iconColor, 0xffAA2BDD
                 )

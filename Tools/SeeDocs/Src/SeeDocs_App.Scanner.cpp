@@ -645,7 +645,7 @@ namespace SeeDocs_App
             }
 
             Syntax::Tokens lexed;
-            state = Syntax::lexLine(Syntax::Languages::cpp, line, state, strings, &lexed);
+            state = Syntax::lexLine(Syntax::Languages::Cpp, line, state, strings, &lexed);
             std::size_t cursor = 0;
             for (const Syntax::Token& token : lexed)
             {
@@ -784,7 +784,7 @@ namespace SeeDocs_App
             std::wstring& line = m_lines[index];
             Syntax::StateStrings scratch = strings;
             Syntax::Tokens lexed;
-            std::ignore = Syntax::lexLine(Syntax::Languages::cpp, line, state, scratch, &lexed);
+            std::ignore = Syntax::lexLine(Syntax::Languages::Cpp, line, state, scratch, &lexed);
             Runs kept;
             for (const Syntax::Token& token : lexed)
             {
@@ -938,45 +938,45 @@ namespace SeeDocs_App
         // The words the reader takes as declaration keywords, and the macros of the routine.
         namespace Words
         {
-            constexpr std::wstring_view exported = L"export";
-            constexpr std::wstring_view module = L"module";
-            constexpr std::wstring_view import = L"import";
-            constexpr std::wstring_view nameSpace = L"namespace";
-            constexpr std::wstring_view templateWord = L"template";
-            constexpr std::wstring_view requiresWord = L"requires";
-            constexpr std::wstring_view friendWord = L"friend";
-            constexpr std::wstring_view typedefWord = L"typedef";
-            constexpr std::wstring_view staticAssert = L"static_assert";
-            constexpr std::wstring_view usingWord = L"using";
-            constexpr std::wstring_view typenameWord = L"typename";
-            constexpr std::wstring_view conceptWord = L"concept";
-            constexpr std::wstring_view classWord = L"class";
-            constexpr std::wstring_view structWord = L"struct";
-            constexpr std::wstring_view unionWord = L"union";
-            constexpr std::wstring_view enumWord = L"enum";
-            constexpr std::wstring_view publicWord = L"public";
-            constexpr std::wstring_view protectedWord = L"protected";
-            constexpr std::wstring_view privateWord = L"private";
-            constexpr std::wstring_view virtualWord = L"virtual";
-            constexpr std::wstring_view finalWord = L"final";
-            constexpr std::wstring_view overrideWord = L"override";
-            constexpr std::wstring_view operatorWord = L"operator";
-            constexpr std::wstring_view alignasWord = L"alignas";
-            constexpr std::wstring_view deleteWord = L"delete";
-            constexpr std::wstring_view staticWord = L"static";
-            constexpr std::wstring_view constexprWord = L"constexpr";
-            constexpr std::wstring_view constevalWord = L"consteval";
-            constexpr std::wstring_view constinitWord = L"constinit";
-            constexpr std::wstring_view inlineWord = L"inline";
-            constexpr std::wstring_view explicitWord = L"explicit";
-            constexpr std::wstring_view externWord = L"extern";
-            constexpr std::wstring_view mutableWord = L"mutable";
-            constexpr std::wstring_view threadLocal = L"thread_local";
-            constexpr std::wstring_view constWord = L"const";
-            constexpr std::wstring_view props = L"Props";
-            constexpr std::wstring_view get = L"get";
-            constexpr std::wstring_view find = L"find";
-            constexpr std::wstring_view declareEvent = L"DECLARE_EVENT";
+            constexpr std::wstring_view Exported = L"export";
+            constexpr std::wstring_view Module = L"module";
+            constexpr std::wstring_view Import = L"import";
+            constexpr std::wstring_view NameSpace = L"namespace";
+            constexpr std::wstring_view TemplateWord = L"template";
+            constexpr std::wstring_view RequiresWord = L"requires";
+            constexpr std::wstring_view FriendWord = L"friend";
+            constexpr std::wstring_view TypedefWord = L"typedef";
+            constexpr std::wstring_view StaticAssert = L"static_assert";
+            constexpr std::wstring_view UsingWord = L"using";
+            constexpr std::wstring_view TypenameWord = L"typename";
+            constexpr std::wstring_view ConceptWord = L"concept";
+            constexpr std::wstring_view ClassWord = L"class";
+            constexpr std::wstring_view StructWord = L"struct";
+            constexpr std::wstring_view UnionWord = L"union";
+            constexpr std::wstring_view EnumWord = L"enum";
+            constexpr std::wstring_view PublicWord = L"public";
+            constexpr std::wstring_view ProtectedWord = L"protected";
+            constexpr std::wstring_view PrivateWord = L"private";
+            constexpr std::wstring_view VirtualWord = L"virtual";
+            constexpr std::wstring_view FinalWord = L"final";
+            constexpr std::wstring_view OverrideWord = L"override";
+            constexpr std::wstring_view OperatorWord = L"operator";
+            constexpr std::wstring_view AlignasWord = L"alignas";
+            constexpr std::wstring_view DeleteWord = L"delete";
+            constexpr std::wstring_view StaticWord = L"static";
+            constexpr std::wstring_view ConstexprWord = L"constexpr";
+            constexpr std::wstring_view ConstevalWord = L"consteval";
+            constexpr std::wstring_view ConstinitWord = L"constinit";
+            constexpr std::wstring_view InlineWord = L"inline";
+            constexpr std::wstring_view ExplicitWord = L"explicit";
+            constexpr std::wstring_view ExternWord = L"extern";
+            constexpr std::wstring_view MutableWord = L"mutable";
+            constexpr std::wstring_view ThreadLocal = L"thread_local";
+            constexpr std::wstring_view ConstWord = L"const";
+            constexpr std::wstring_view Props = L"Props";
+            constexpr std::wstring_view Get = L"get";
+            constexpr std::wstring_view Find = L"find";
+            constexpr std::wstring_view DeclareEvent = L"DECLARE_EVENT";
         }
 
         // A value handed to a base that is of no property type.
@@ -1056,13 +1056,13 @@ namespace SeeDocs_App
         });
 
         constexpr auto k_specifiers = std::to_array<std::wstring_view>({
-            Words::staticWord, Words::virtualWord, Words::inlineWord, Words::constexprWord,
-            Words::constevalWord, Words::constinitWord, Words::explicitWord, Words::friendWord,
-            Words::externWord, Words::mutableWord, Words::threadLocal
+            Words::StaticWord, Words::VirtualWord, Words::InlineWord, Words::ConstexprWord,
+            Words::ConstevalWord, Words::ConstinitWord, Words::ExplicitWord, Words::FriendWord,
+            Words::ExternWord, Words::MutableWord, Words::ThreadLocal
         });
 
         constexpr auto k_baseWords = std::to_array<std::wstring_view>({
-            Words::publicWord, Words::protectedWord, Words::privateWord, Words::virtualWord
+            Words::PublicWord, Words::ProtectedWord, Words::PrivateWord, Words::VirtualWord
         });
 
         [[nodiscard]] std::optional<PropertyForm> propertyMacro(const std::wstring_view word)
@@ -1378,14 +1378,14 @@ namespace SeeDocs_App
                 }
 
                 const std::wstring_view word = text(*token);
-                if (word == Words::exported)
+                if (word == Words::Exported)
                 {
                     advance();
                     if (isPunctuator(peek(), L"{"))
                         readBlock(true);
-                    else if (isName(peek(), Words::module))
+                    else if (isName(peek(), Words::Module))
                         readModuleLine(true);
-                    else if (isName(peek(), Words::import))
+                    else if (isName(peek(), Words::Import))
                         readImport(true);
                     else
                     {
@@ -1395,70 +1395,70 @@ namespace SeeDocs_App
                     prefix = {};
                     continue;
                 }
-                if (word == Words::module)
+                if (word == Words::Module)
                     readModuleLine(false);
-                else if (word == Words::import)
+                else if (word == Words::Import)
                     readImport(false);
-                else if (word == Words::nameSpace)
+                else if (word == Words::NameSpace)
                     readNamespace(prefix.exported, false);
-                else if (word == Words::inlineWord && isName(peek(1), Words::nameSpace))
+                else if (word == Words::InlineWord && isName(peek(1), Words::NameSpace))
                 {
                     advance();
                     readNamespace(prefix.exported, true);
                 }
-                else if (word == Words::externWord && peek(1)
+                else if (word == Words::ExternWord && peek(1)
                     && peek(1)->type == TokenType::Literal && isPunctuator(peek(2), L"{"))
                 {
                     advance();
                     advance();
                     readBlock(prefix.exported || scopeExported());
                 }
-                else if (word == Words::templateWord)
+                else if (word == Words::TemplateWord)
                 {
                     advance();
                     readTemplateHead(*token, prefix);
                     continue;
                 }
-                else if (word == Words::requiresWord)
+                else if (word == Words::RequiresWord)
                 {
                     advance();
                     skipRequiresClause();
                     continue;
                 }
-                else if (word == Words::typedefWord && m_limited)
+                else if (word == Words::TypedefWord && m_limited)
                     readTypedef(prefix);
-                else if (word == Words::friendWord || word == Words::typedefWord
-                    || word == Words::staticAssert)
+                else if (word == Words::FriendWord || word == Words::TypedefWord
+                    || word == Words::StaticAssert)
                 {
                     skipDeclaration();
                 }
-                else if (word == Words::usingWord)
+                else if (word == Words::UsingWord)
                     readUsing(prefix);
-                else if (word == Words::conceptWord)
+                else if (word == Words::ConceptWord)
                     readConcept(prefix);
-                else if (word == Words::classWord)
+                else if (word == Words::ClassWord)
                     readType(TypeKind::Class, prefix);
-                else if (word == Words::structWord)
+                else if (word == Words::StructWord)
                     readType(TypeKind::Struct, prefix);
-                else if (word == Words::unionWord)
+                else if (word == Words::UnionWord)
                     readType(TypeKind::Union, prefix);
-                else if (word == Words::enumWord)
+                else if (word == Words::EnumWord)
                     readEnum(prefix);
                 else if (typeScope() && isPunctuator(peek(1), L":")
-                    && (word == Words::publicWord || word == Words::protectedWord
-                        || word == Words::privateWord))
+                    && (word == Words::PublicWord || word == Words::ProtectedWord
+                        || word == Words::PrivateWord))
                 {
                     Scope& scope = *typeScope();
-                    if (word == Words::publicWord)
+                    if (word == Words::PublicWord)
                         scope.access = Access::Public;
-                    else if (word == Words::protectedWord)
+                    else if (word == Words::ProtectedWord)
                         scope.access = Access::Protected;
                     else
                         scope.access = Access::Private;
                     advance();
                     advance();
                 }
-                else if (!m_limited && (propertyMacro(word) || word == Words::declareEvent))
+                else if (!m_limited && (propertyMacro(word) || word == Words::DeclareEvent))
                 {
                     Scope* scope = typeScope();
                     readMacro(*token, scope ? scope->type.get() : nullptr,
@@ -1588,7 +1588,7 @@ namespace SeeDocs_App
             std::wstring name;
             while (const Token* token = peek())
             {
-                if (isName(token, Words::inlineWord))
+                if (isName(token, Words::InlineWord))
                 {
                     advance();
                     if (peek() && peek()->type == TokenType::Name)
@@ -1681,7 +1681,7 @@ namespace SeeDocs_App
             advance();
             while (peek() && peek()->type == TokenType::Attribute)
                 advance();
-            if (isName(peek(), Words::alignasWord))
+            if (isName(peek(), Words::AlignasWord))
             {
                 advance();
                 skipBalanced(L"(", L")");
@@ -1699,7 +1699,7 @@ namespace SeeDocs_App
                 skipPast(L";");
                 return;
             }
-            if (isName(peek(), Words::finalWord))
+            if (isName(peek(), Words::FinalWord))
                 advance();
             while (peek() && peek()->type == TokenType::Comment)
                 advance();
@@ -1819,8 +1819,8 @@ namespace SeeDocs_App
         {
             const Token& keyword = *peek();
             advance();
-            const bool scoped = isName(peek(), Words::classWord)
-                || isName(peek(), Words::structWord);
+            const bool scoped = isName(peek(), Words::ClassWord)
+                || isName(peek(), Words::StructWord);
             if (scoped)
                 advance();
             const std::wstring name = readQualifiedName();
@@ -1911,7 +1911,7 @@ namespace SeeDocs_App
         {
             const Token& keyword = *peek();
             advance();
-            if (isName(peek(), Words::nameSpace) || isName(peek(), Words::enumWord))
+            if (isName(peek(), Words::NameSpace) || isName(peek(), Words::EnumWord))
             {
                 skipPast(L";");
                 return;
@@ -1968,7 +1968,7 @@ namespace SeeDocs_App
             const TokenList& tokens = m_text.tokens();
             Scope* scope = typeScope();
             std::size_t first = m_at;
-            if (isName(peek(), Words::typenameWord))
+            if (isName(peek(), Words::TypenameWord))
                 ++first;
             std::size_t last = m_at;
             while (peek() && !isPunctuator(peek(), L";"))
@@ -2114,7 +2114,7 @@ namespace SeeDocs_App
                 advance();
             const Place place = placeOf(name);
 
-            if (word == Words::declareEvent)
+            if (word == Words::DeclareEvent)
             {
                 if (arguments.size() < 3)
                 {
@@ -2247,7 +2247,7 @@ namespace SeeDocs_App
                 if (token.type == TokenType::Name)
                 {
                     const std::wstring_view word = text(token);
-                    if (word == Words::operatorWord && depth == 0 && angle == 0)
+                    if (word == Words::OperatorWord && depth == 0 && angle == 0)
                     {
                         // operator==, operator(), operator bool: the name runs to the parameters.
                         nameAt = i;
@@ -2377,9 +2377,9 @@ namespace SeeDocs_App
                     && isListed(k_specifiers, text(token));
                 if (token.type == TokenType::Attribute || specifier)
                 {
-                    if (isName(&token, Words::staticWord))
+                    if (isName(&token, Words::StaticWord))
                         function.isStatic = true;
-                    if (isName(&token, Words::virtualWord))
+                    if (isName(&token, Words::VirtualWord))
                         function.isVirtual = true;
                     ++typeStart;
                     continue;
@@ -2409,11 +2409,11 @@ namespace SeeDocs_App
                 if (token->type == TokenType::Name)
                 {
                     const std::wstring_view word = text(*token);
-                    if (word == Words::overrideWord || word == Words::finalWord)
+                    if (word == Words::OverrideWord || word == Words::FinalWord)
                         function.isVirtual = true;
-                    if (word == Words::deleteWord)
+                    if (word == Words::DeleteWord)
                         function.isDeleted = true;
-                    if (word == Words::requiresWord)
+                    if (word == Words::RequiresWord)
                     {
                         signatureEnd = m_at;
                         advance();
@@ -2520,10 +2520,10 @@ namespace SeeDocs_App
                     && isListed(k_specifiers, text(token));
                 if (token.type == TokenType::Attribute || specifier)
                 {
-                    if (isName(&token, Words::staticWord))
+                    if (isName(&token, Words::StaticWord))
                         field.isStatic = true;
-                    const bool constant = isName(&token, Words::constexprWord)
-                        || isName(&token, Words::constinitWord);
+                    const bool constant = isName(&token, Words::ConstexprWord)
+                        || isName(&token, Words::ConstinitWord);
                     if (constant)
                         field.isConstant = true;
                     ++typeStart;
@@ -2533,7 +2533,7 @@ namespace SeeDocs_App
             }
             if (nameAt > typeStart)
                 field.type = textBetween(typeStart, nameAt - 1);
-            if (field.isStatic && field.type.starts_with(Words::constWord))
+            if (field.isStatic && field.type.starts_with(Words::ConstWord))
                 field.isConstant = true;
 
             // The initializer: what follows = up to the end, or the braces themselves.
@@ -2656,8 +2656,8 @@ namespace SeeDocs_App
                         previous = &tokens[m_at - 1];
                         continue;
                     }
-                    if (word == Words::props && isPunctuator(peek(1), L"::")
-                        && (isName(peek(2), Words::get) || isName(peek(2), Words::find))
+                    if (word == Words::Props && isPunctuator(peek(1), L"::")
+                        && (isName(peek(2), Words::Get) || isName(peek(2), Words::Find))
                         && (isPunctuator(peek(3), L"(") || isPunctuator(peek(3), L"<")))
                     {
                         m_surface.addPropsRead(placeOf(*token));
@@ -3087,20 +3087,20 @@ namespace SeeDocs_App
         // The steps of a scan, as its times name them.
         namespace Steps
         {
-            constexpr std::wstring_view listFiles = L"list files";
-            constexpr std::wstring_view readFiles = L"read files";
-            constexpr std::wstring_view lexSources = L"lex sources";
-            constexpr std::wstring_view gatherMacros = L"gather macros";
-            constexpr std::wstring_view gatherSymbols = L"gather symbols";
-            constexpr std::wstring_view expandSources = L"expand sources";
-            constexpr std::wstring_view readSources = L"read sources";
-            constexpr std::wstring_view readUnits = L"read units";
-            constexpr std::wstring_view mergeUnits = L"merge units";
-            constexpr std::wstring_view encloseIncludes = L"enclose includes";
-            constexpr std::wstring_view republish = L"republish";
-            constexpr std::wstring_view dropRedeclarations = L"drop redeclarations";
-            constexpr std::wstring_view settlePascal = L"settle pascal";
-            constexpr std::wstring_view resolveAll = L"resolve all";
+            constexpr std::wstring_view ListFiles = L"list files";
+            constexpr std::wstring_view ReadFiles = L"read files";
+            constexpr std::wstring_view LexSources = L"lex sources";
+            constexpr std::wstring_view GatherMacros = L"gather macros";
+            constexpr std::wstring_view GatherSymbols = L"gather symbols";
+            constexpr std::wstring_view ExpandSources = L"expand sources";
+            constexpr std::wstring_view ReadSources = L"read sources";
+            constexpr std::wstring_view ReadUnits = L"read units";
+            constexpr std::wstring_view MergeUnits = L"merge units";
+            constexpr std::wstring_view EncloseIncludes = L"enclose includes";
+            constexpr std::wstring_view Republish = L"republish";
+            constexpr std::wstring_view DropRedeclarations = L"drop redeclarations";
+            constexpr std::wstring_view SettlePascal = L"settle pascal";
+            constexpr std::wstring_view ResolveAll = L"resolve all";
         }
 
         using IndexTask = std::function<void(std::size_t)>;
@@ -3322,14 +3322,14 @@ namespace SeeDocs_App
             for (const TreeFile& file : files)
             {
                 const std::optional<std::wstring> text = Documents::readTextFile(file.path);
-                clock.lap(Steps::readFiles);
+                clock.lap(Steps::ReadFiles);
                 if (!text)
                     continue;
                 const SourceText source{ *text, rules };
-                clock.lap(Steps::lexSources);
+                clock.lap(Steps::LexSources);
                 const FilePlace place = addSourceFile(surface, sources, file);
                 readSource(surface, place, file, source, ScanMode::Full, rules);
-                clock.lap(Steps::readSources);
+                clock.lap(Steps::ReadSources);
             }
         }
 
@@ -3350,7 +3350,7 @@ namespace SeeDocs_App
             forEachIndex(files.size(), [&](const std::size_t i) {
                 texts[i] = Documents::readTextFile(files[i].path);
             });
-            clock.lap(Steps::readFiles);
+            clock.lap(Steps::ReadFiles);
 
             Macros macros;
             for (std::size_t i = 0; i != files.size(); ++i)
@@ -3359,7 +3359,7 @@ namespace SeeDocs_App
                     continue;
                 const SourceText gathered{ *texts[i], rules, Preprocess::Gather, &macros };
             }
-            clock.lap(Steps::gatherMacros);
+            clock.lap(Steps::GatherMacros);
 
             std::vector<std::wstring_view> pascalTexts;
             for (std::size_t i = 0; i != files.size(); ++i)
@@ -3368,7 +3368,7 @@ namespace SeeDocs_App
                     pascalTexts.emplace_back(*texts[i]);
             }
             const PascalSymbols symbols = pascalSymbolsOf(pascalTexts);
-            clock.lap(Steps::gatherSymbols);
+            clock.lap(Steps::GatherSymbols);
 
             // The records come first, so that a unit read on a worker knows its file's index.
             std::vector<std::optional<FilePlace>> places(files.size());
@@ -3384,7 +3384,7 @@ namespace SeeDocs_App
                 readPascalUnit(fragments[i], places[i]->file, *texts[i], places[i]->folder,
                     symbols, rules);
             });
-            clock.lap(Steps::readUnits);
+            clock.lap(Steps::ReadUnits);
 
             for (std::size_t i = 0; i != files.size(); ++i)
             {
@@ -3393,22 +3393,22 @@ namespace SeeDocs_App
                 if (files[i].role == FileRole::PascalUnit)
                 {
                     surface.append(std::move(fragments[i]));
-                    clock.lap(Steps::mergeUnits);
+                    clock.lap(Steps::MergeUnits);
                     continue;
                 }
                 const SourceText source{ *texts[i], rules, Preprocess::Expand, &macros };
-                clock.lap(Steps::expandSources);
+                clock.lap(Steps::ExpandSources);
                 readSource(surface, *places[i], files[i], source, ScanMode::Limited, rules);
-                clock.lap(Steps::readSources);
+                clock.lap(Steps::ReadSources);
             }
             surface.encloseIncludes();
-            clock.lap(Steps::encloseIncludes);
+            clock.lap(Steps::EncloseIncludes);
             surface.republish();
-            clock.lap(Steps::republish);
+            clock.lap(Steps::Republish);
             surface.dropRedeclarations();
-            clock.lap(Steps::dropRedeclarations);
+            clock.lap(Steps::DropRedeclarations);
             settlePascal(surface);
-            clock.lap(Steps::settlePascal);
+            clock.lap(Steps::SettlePascal);
         }
     }
 
@@ -3420,13 +3420,13 @@ namespace SeeDocs_App
         surface.setMode(mode);
         surface.setHintRules(rules);
         const TreeFiles files = filesOf(sources, mode);
-        clock.lap(Steps::listFiles);
+        clock.lap(Steps::ListFiles);
         if (mode == ScanMode::Limited)
             readLimited(surface, sources, files, rules, clock);
         else
             readFull(surface, sources, files, rules, clock);
         surface.resolveAll();
-        clock.lap(Steps::resolveAll);
+        clock.lap(Steps::ResolveAll);
         surface.setScanned(std::chrono::floor<std::chrono::seconds>(
             std::chrono::system_clock::now()));
         return surface;

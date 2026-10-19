@@ -28,7 +28,7 @@ namespace ClaFi::Syntax
             const std::size_t end = close + rule.close.size();
             scan.emit(scan.index, end, TokenKind::Comment);
             scan.index = end;
-            scan.state.mode = Mode::normal;
+            scan.state.mode = Mode::Normal;
             scan.state.aux = 0;
         }
 
@@ -55,7 +55,7 @@ namespace ClaFi::Syntax
                 {
                     scan.emit(scan.index, scan.line.size(), TokenKind::Comment);
                     scan.index = scan.line.size();
-                    scan.state.mode = Mode::blockComment;
+                    scan.state.mode = Mode::BlockComment;
                     scan.state.aux = static_cast<std::uint8_t>(i);
                     return true;
                 }
@@ -187,12 +187,12 @@ namespace ClaFi::Syntax
         Scan scan{ language, line, strings, tokens, 0, state };
         while (scan.index < line.size())
         {
-            if (scan.state.mode == Mode::blockComment)
+            if (scan.state.mode == Mode::BlockComment)
             {
                 continueBlockComment(scan);
                 continue;
             }
-            if (scan.state.mode >= Mode::firstLanguageMode)
+            if (scan.state.mode >= Mode::FirstLanguageMode)
             {
                 if (!takeByHook(scan))
                     noReach("A line stands in a language mode its hook does not carry.");

@@ -219,6 +219,7 @@ Converting a tab-indented file is safe only after confirming no tab appears outs
 - **[MUST] Object Names Are Nouns:** A variable, member or parameter that holds or refers to an object is named with a noun phrase for that object (`clickedControl`, `targetRow`). A bare participle or adjective (`clicked`, `selected`, `maximized`) reads as a flag, and is kept for a `bool`.
 
 - **[MUST] Functions/Methods:** camelCase (e.g., `writeIndent`, `childValue`).
+    - FACTORY EXCEPTION: A factory method - a static member function that makes an object of its own class out of arguments of other types - is PascalCase (e.g., `Rect::FromDimensions`, `CornerRadii::Uniform`). A static function that combines objects of its own class stays camelCase (`Color::blend`, `Rect::intersection`), and so does one that builds an object of another type (`createConfigSchema`) or an instance member that creates something (`createWindow`).
 
 - **[MUST] Argument Naming in Declarations:** In separated function declarations:
     - If the argument name exactly reflects its type name, strip the argument name entirely: `void scale(ScaleFactor);`
@@ -229,12 +230,12 @@ Converting a tab-indented file is safe only after confirming no tab appears outs
 - **[MUST] Public Struct Members:** MUST NOT use the `m_` prefix. Use standard camelCase (e.g., `bounds`, `maximized`).
 - **[MUST] Static Fields:** MUST be prefixed with `s_` followed by camelCase (e.g., `s_instanceCount`, `s_globalState`).
 - **[MUST] Compile-Time Constants:** MUST be prefixed with `k_` (e.g., `k_serializedFields`).
-    - NAMESPACE EXCEPTION: Grouping a set of constants in its own dedicated namespace is preferred. When constants live in such a dedicated namespace, the `k_` prefix MUST be skipped - the namespace already provides the scoping context.
+    - NAMESPACE EXCEPTION: Grouping a set of constants in its own dedicated namespace is preferred. A constant in such a namespace skips the `k_` prefix - the namespace already provides the scoping context - and is PascalCase.
   ```cpp
   namespace SerializedFields
   {
-      constexpr auto name = "name";
-      constexpr auto version = "version";
+      constexpr auto Name = "name";
+      constexpr auto Version = "version";
   }
   ```
 - **[MUST] Concepts:** PascalCase starting with an adjective or verb (e.g., `IsComposite`, `SerializableEnum`).

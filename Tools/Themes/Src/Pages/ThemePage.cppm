@@ -492,10 +492,10 @@ namespace Themes_App
             edited(EditPhase::Settled, m_floorStep);
             });
 
-        m_cppCodePage.box().setLanguage(Syntax::Languages::cpp);
-        m_claFiPage.box().setLanguage(Syntax::Languages::claFi);
-        m_xmlPage.box().setLanguage(Syntax::Languages::xml);
-        m_jsonPage.box().setLanguage(Syntax::Languages::json);
+        m_cppCodePage.box().setLanguage(Syntax::Languages::Cpp);
+        m_claFiPage.box().setLanguage(Syntax::Languages::ClaFi);
+        m_xmlPage.box().setLanguage(Syntax::Languages::Xml);
+        m_jsonPage.box().setLanguage(Syntax::Languages::Json);
 
         // Every page presents the same two commands. A presenter takes the action as a property
         // and takes its words, its mark and its click from it, so nothing here says what a button

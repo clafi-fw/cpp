@@ -452,7 +452,7 @@ namespace ClaFi::Controls
         switch (m_textPlacement)
         {
         case TextPlacement::Body:
-            event.textBounds = FloatRect::fromDimensions(
+            event.textBounds = FloatRect::FromDimensions(
                 event.textBounds.topLeft() + m_bodyRect.topLeft(),
                 m_bodyRect.dimensions());
             break;

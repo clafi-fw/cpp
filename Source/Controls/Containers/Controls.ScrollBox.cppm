@@ -751,7 +751,7 @@ namespace ClaFi::Controls
     // not the box's bounds, which sit a padding outside it.
     FloatRect ScrollBox::bodySlotInForm(FloatPoint contentOriginInForm) const
     {
-        return FloatRect::fromDimensions(contentOriginInForm + bodyRect().topLeft(), bodyRect().dimensions());
+        return FloatRect::FromDimensions(contentOriginInForm + bodyRect().topLeft(), bodyRect().dimensions());
     }
 
     bool ScrollBox::givesWay(const ScrollAxis axis) const

@@ -79,7 +79,7 @@ namespace ClaFi::Transfer
     const Format* Clipboard::SourceOffer::platformFormat(const StandardFormat standard) const
     {
         const Source* source = m_owner.m_source.get();
-        if (!source || !source->provides(Format::of(standard)))
+        if (!source || !source->provides(Format::Of(standard)))
             return nullptr;
 
         return &nameOf(standard);
@@ -117,7 +117,7 @@ namespace ClaFi::Transfer
             return {};
 
         const std::optional<StandardFormat> standard = standardBehind(format);
-        const Format held = standard ? Format::of(*standard) : format;
+        const Format held = standard ? Format::Of(*standard) : format;
         const Payload* content = source->content(held);
         if (!content)
             return {};

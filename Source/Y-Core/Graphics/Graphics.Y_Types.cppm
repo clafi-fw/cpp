@@ -98,7 +98,7 @@ namespace ClaFi::Graphics
         FloatPoint startPoint;
         FloatPoint endPoint;
         std::vector<GradientStop> stops;
-        static LinearGradient simple(FloatPoint startPt, FloatPoint endPt, Color startColor, Color endColor)
+        static LinearGradient Simple(FloatPoint startPt, FloatPoint endPt, Color startColor, Color endColor)
         {
             return {
                 .startPoint = startPt,
@@ -118,7 +118,7 @@ namespace ClaFi::Graphics
         float radiusX;
         float radiusY;
         std::vector<GradientStop> stops;
-        static RadialGradient simple(FloatPoint center, float radius, Color startColor, Color endColor)
+        static RadialGradient Simple(FloatPoint center, float radius, Color startColor, Color endColor)
         {
             return {
                 .center = center,
@@ -227,8 +227,8 @@ namespace ClaFi::Graphics
     export struct PathDrawLayer {
         PathGeometryOptions geometry;
         Brush brush;
-        static PathDrawLayer fill(Color color) { return { .geometry{}, .brush{ SolidColor{color} } }; }
-        static PathDrawLayer stroke(Color color, float strokeWidth)
+        static PathDrawLayer Fill(Color color) { return { .geometry{}, .brush{ SolidColor{color} } }; }
+        static PathDrawLayer Stroke(Color color, float strokeWidth)
         {
             return {
                 .geometry{
@@ -240,13 +240,13 @@ namespace ClaFi::Graphics
                 }
             };
         }
-        static PathDrawLayer linearGradient(FloatPoint startPt, FloatPoint endPt, Color startColor, Color endColor)
+        static PathDrawLayer LinearGradient(FloatPoint startPt, FloatPoint endPt, Color startColor, Color endColor)
         {
-            return { .geometry{}, .brush{ LinearGradient::simple(startPt, endPt, startColor, endColor) } };
+            return { .geometry{}, .brush{ LinearGradient::Simple(startPt, endPt, startColor, endColor) } };
         }
-        static PathDrawLayer pointGlow(const PointGlow& pointGlow) { return { .geometry{}, .brush{ pointGlow } }; }
+        static PathDrawLayer PointGlow(const Graphics::PointGlow& pointGlow) { return { .geometry{}, .brush{ pointGlow } }; }
 
-        static PathDrawLayer outerGlow(Color c, float radius, StrokeCap cap = StrokeCap::Round,
+        static PathDrawLayer OuterGlow(Color c, float radius, StrokeCap cap = StrokeCap::Round,
             GlowFalloff falloff = GlowFalloff::Linear)
         {
             return {
@@ -255,7 +255,7 @@ namespace ClaFi::Graphics
             };
         }
 
-        static PathDrawLayer shadow(Color c, float reach, GlowFalloff falloff = GlowFalloff::Smooth)
+        static PathDrawLayer Shadow(Color c, float reach, GlowFalloff falloff = GlowFalloff::Smooth)
         {
             return {
                 .geometry{ .mode = PathRenderMode::Shadow, .strokeWidth = reach, .falloff = falloff },
@@ -286,16 +286,16 @@ namespace ClaFi::Graphics
             return std::max(sx, sy);
         }
 
-        static constexpr Matrix3x2 identity() { return {}; }
-        static constexpr Matrix3x2 translation(float dx, float dy) { return { 1.0f, 0.0f, 0.0f, 1.0f, dx, dy }; }
-        static constexpr Matrix3x2 translation(FloatPoint p) { return { 1.0f, 0.0f, 0.0f, 1.0f, p.x, p.y }; }
-        static constexpr Matrix3x2 scale(float s) { return { s, 0.0f, 0.0f, s, 0.0f, 0.0f }; }
-        static constexpr Matrix3x2 scale(float sx, float sy) { return { sx, 0.0f, 0.0f, sy, 0.0f, 0.0f }; }
-        static Matrix3x2 rotation(float rad) {
+        static constexpr Matrix3x2 Identity() { return {}; }
+        static constexpr Matrix3x2 Translation(float dx, float dy) { return { 1.0f, 0.0f, 0.0f, 1.0f, dx, dy }; }
+        static constexpr Matrix3x2 Translation(FloatPoint p) { return { 1.0f, 0.0f, 0.0f, 1.0f, p.x, p.y }; }
+        static constexpr Matrix3x2 Scale(float s) { return { s, 0.0f, 0.0f, s, 0.0f, 0.0f }; }
+        static constexpr Matrix3x2 Scale(float sx, float sy) { return { sx, 0.0f, 0.0f, sy, 0.0f, 0.0f }; }
+        static Matrix3x2 Rotation(float rad) {
             float s = std::sin(rad), c = std::cos(rad);
             return { c, s, -s, c, 0.0f, 0.0f };
         }
-        static Matrix3x2 rotationDeg(float deg) { return rotation(deg * 0.0174533f); }
+        static Matrix3x2 RotationDeg(float deg) { return Rotation(deg * 0.0174533f); }
 
         constexpr Matrix3x2 operator*(const Matrix3x2& o) const {
             return {

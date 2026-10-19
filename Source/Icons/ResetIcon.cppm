@@ -24,15 +24,15 @@ namespace ClaFi::Icons::ResetIcon
         // the vertical centre of its own square. The reflection is the right operand: a point
         // meets that one first, and the placement second.
         const Matrix3x2 mirror = { -1.0f, 0.0f, 0.0f, 1.0f, size, 0.0f };
-        const Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f }) * mirror;
+        const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f }) * mirror;
         Canvas& canvas = event.canvas();
         PixelPath path;
 
         RestartIcon::buildRingPath(path, size);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.textRgb(InkGrade::Strong), strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.textRgb(InkGrade::Strong), strokeWidth) }, &transform);
 
         path.clear();
         RestartIcon::buildHeadPath(path, size);
-        canvas.drawPath(path, { PathDrawLayer::stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(event.accentRgb(InkGrade::Strongest), strokeWidth) }, &transform);
     }
 }

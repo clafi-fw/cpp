@@ -111,7 +111,7 @@ namespace ClaFi::Graphics
             return { 0.0f, 0.0f };
         };
 
-        if (parts.sides == RectSides::all())
+        if (parts.sides == RectSides::All())
         {
             path.moveTo(segs[0].start);
             for (int i = 0; i < 8; ++i)
@@ -501,7 +501,7 @@ namespace ClaFi::Graphics
 
     void Canvas::resetTransform()
     {
-        m_transform = Matrix3x2::identity();
+        m_transform = Matrix3x2::Identity();
         if (m_backend)
             m_backend->resetTransform();
     }
@@ -687,7 +687,7 @@ namespace ClaFi::Graphics
         if (parts.bounds.empty())
             return;
 
-        if (parts.sides == RectSides::all())
+        if (parts.sides == RectSides::All())
         {
             if (parts.radii.isSquare())
             {
@@ -700,7 +700,7 @@ namespace ClaFi::Graphics
                 return;
             }
         }
-        if (parts.sides == RectSides::none())
+        if (parts.sides == RectSides::None())
             return;
 
         // The two branches above delegate to primitives that place the stroke inside their
@@ -791,7 +791,7 @@ namespace ClaFi::Graphics
 
         PixelPath path = buildFillPartialPath(silhouette);
         drawPath(path, {
-            PathDrawLayer::shadow(shadow.color, shadow.blur, shadow.falloff)
+            PathDrawLayer::Shadow(shadow.color, shadow.blur, shadow.falloff)
         });
     }
 
@@ -877,7 +877,7 @@ namespace ClaFi::Graphics
     void Canvas::fadeEdge(const FloatRect& rect, const CornerRadii& radii, RectSide side, float fadeSize, Color opaqueColor)
     {
         const Color transparentColor = opaqueColor.withOpacity(0.0f);
-        RoundedRectangleParts band{ .bounds = rect, .radii = CornerRadii::square() };
+        RoundedRectangleParts band{ .bounds = rect, .radii = CornerRadii::Square() };
         FloatPoint opaqueEnd = {};
         FloatPoint transparentEnd = {};
         switch (side)
@@ -911,7 +911,7 @@ namespace ClaFi::Graphics
                 transparentEnd = band.bounds.topLeft();
                 break;
         }
-        fillPartialRoundedRectangle(band, LinearGradient::simple(opaqueEnd, transparentEnd, opaqueColor, transparentColor));
+        fillPartialRoundedRectangle(band, LinearGradient::Simple(opaqueEnd, transparentEnd, opaqueColor, transparentColor));
     }
 
     void Canvas::stagingDraw(const FloatRect& requestedRect, const StagingDrawFunc& drawFunc)
@@ -984,7 +984,7 @@ namespace ClaFi::Graphics
 
     ScopedCanvasTransform::ScopedCanvasTransform(Canvas& canvas, const Matrix3x2& local)
     {
-        if (local == Matrix3x2::identity())
+        if (local == Matrix3x2::Identity())
             return;
 
         m_canvas = &canvas;

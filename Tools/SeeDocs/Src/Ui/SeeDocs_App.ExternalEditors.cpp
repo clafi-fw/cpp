@@ -47,8 +47,8 @@ namespace SeeDocs_App
         // What each language's command line is kept under, in the editors' section.
         namespace EditorKey
         {
-            constexpr std::wstring_view cpp = L"Cpp";
-            constexpr std::wstring_view delphi = L"Delphi";
+            constexpr std::wstring_view Cpp = L"Cpp";
+            constexpr std::wstring_view Delphi = L"Delphi";
         }
         constexpr std::wstring_view k_commandPlaceHolder = L"A command line with {file} and {line}";
         constexpr std::wstring_view k_filePlaceHolder = L"{file}";
@@ -79,81 +79,81 @@ namespace SeeDocs_App
         // Each editor once, as the lists suggest it.
         namespace Editors
         {
-            constexpr Suggestion vsCode{ L"Visual Studio Code", LR"(code --goto "{file}:{line}")" };
-            constexpr Suggestion visualStudio{
+            constexpr Suggestion VsCode{ L"Visual Studio Code", LR"(code --goto "{file}:{line}")" };
+            constexpr Suggestion VisualStudio{
                 L"Visual Studio",
                 LR"(devenv /edit "{file}" /command "Edit.GoTo {line}")",
                 L"A running Visual Studio opens the file alone; one started here goes to the line"
             };
-            constexpr Suggestion clion64{ L"CLion", LR"(clion64 --line {line} "{file}")" };
-            constexpr Suggestion clion{ L"CLion", LR"(clion --line {line} "{file}")" };
-            constexpr Suggestion notepadPlusPlus{ L"Notepad++", LR"(notepad++ -n{line} "{file}")" };
-            constexpr Suggestion sublimeText{ L"Sublime Text", LR"(subl "{file}:{line}")" };
-            constexpr Suggestion cursor{ L"Cursor", LR"(cursor --goto "{file}:{line}")" };
-            constexpr Suggestion qtCreator{
+            constexpr Suggestion Clion64{ L"CLion", LR"(clion64 --line {line} "{file}")" };
+            constexpr Suggestion Clion{ L"CLion", LR"(clion --line {line} "{file}")" };
+            constexpr Suggestion NotepadPlusPlus{ L"Notepad++", LR"(notepad++ -n{line} "{file}")" };
+            constexpr Suggestion SublimeText{ L"Sublime Text", LR"(subl "{file}:{line}")" };
+            constexpr Suggestion Cursor{ L"Cursor", LR"(cursor --goto "{file}:{line}")" };
+            constexpr Suggestion QtCreator{
                 L"Qt Creator",
                 LR"(qtcreator -client "{file}:{line}")"
             };
-            constexpr Suggestion zed{ L"Zed", LR"(zed "{file}:{line}")" };
-            constexpr Suggestion kate{ L"Kate", LR"(kate --line {line} "{file}")" };
-            constexpr Suggestion geany{ L"Geany", LR"(geany +{line} "{file}")" };
-            constexpr Suggestion gedit{ L"gedit", LR"(gedit +{line} "{file}")" };
-            constexpr Suggestion emacs{ L"Emacs", LR"(emacs +{line} "{file}")" };
-            constexpr Suggestion gvim{ L"gVim", LR"(gvim +{line} "{file}")" };
-            constexpr Suggestion defaultApp{
+            constexpr Suggestion Zed{ L"Zed", LR"(zed "{file}:{line}")" };
+            constexpr Suggestion Kate{ L"Kate", LR"(kate --line {line} "{file}")" };
+            constexpr Suggestion Geany{ L"Geany", LR"(geany +{line} "{file}")" };
+            constexpr Suggestion Gedit{ L"gedit", LR"(gedit +{line} "{file}")" };
+            constexpr Suggestion Emacs{ L"Emacs", LR"(emacs +{line} "{file}")" };
+            constexpr Suggestion Gvim{ L"gVim", LR"(gvim +{line} "{file}")" };
+            constexpr Suggestion DefaultApp{
                 L"Default app",
                 LR"("{file}")",
                 L"Opens the file with the app set for its type, as Explorer does"
             };
-            constexpr Suggestion lazarus{ L"Lazarus", LR"(lazarus "{file}")" };
-            constexpr Suggestion lazarusIde{ L"Lazarus", LR"(lazarus-ide "{file}")" };
+            constexpr Suggestion Lazarus{ L"Lazarus", LR"(lazarus "{file}")" };
+            constexpr Suggestion LazarusIde{ L"Lazarus", LR"(lazarus-ide "{file}")" };
         }
 
         // What each language suggests on Windows, the most used first.
         namespace WindowsSuggestions
         {
-            constexpr std::array cpp{
-                Editors::vsCode,
-                Editors::visualStudio,
-                Editors::clion64,
-                Editors::notepadPlusPlus,
-                Editors::sublimeText,
-                Editors::cursor,
-                Editors::qtCreator,
-                Editors::zed,
-                Editors::gvim
+            constexpr std::array Cpp{
+                Editors::VsCode,
+                Editors::VisualStudio,
+                Editors::Clion64,
+                Editors::NotepadPlusPlus,
+                Editors::SublimeText,
+                Editors::Cursor,
+                Editors::QtCreator,
+                Editors::Zed,
+                Editors::Gvim
             };
-            constexpr std::array delphi{
-                Editors::defaultApp,
-                Editors::vsCode,
-                Editors::lazarus,
-                Editors::notepadPlusPlus,
-                Editors::sublimeText
+            constexpr std::array Delphi{
+                Editors::DefaultApp,
+                Editors::VsCode,
+                Editors::Lazarus,
+                Editors::NotepadPlusPlus,
+                Editors::SublimeText
             };
         }
 
         // What each language suggests on Linux, the most used first.
         namespace LinuxSuggestions
         {
-            constexpr std::array cpp{
-                Editors::vsCode,
-                Editors::clion,
-                Editors::qtCreator,
-                Editors::kate,
-                Editors::sublimeText,
-                Editors::cursor,
-                Editors::zed,
-                Editors::geany,
-                Editors::gedit,
-                Editors::emacs,
-                Editors::gvim
+            constexpr std::array Cpp{
+                Editors::VsCode,
+                Editors::Clion,
+                Editors::QtCreator,
+                Editors::Kate,
+                Editors::SublimeText,
+                Editors::Cursor,
+                Editors::Zed,
+                Editors::Geany,
+                Editors::Gedit,
+                Editors::Emacs,
+                Editors::Gvim
             };
-            constexpr std::array delphi{
-                Editors::lazarusIde,
-                Editors::vsCode,
-                Editors::kate,
-                Editors::sublimeText,
-                Editors::geany
+            constexpr std::array Delphi{
+                Editors::LazarusIde,
+                Editors::VsCode,
+                Editors::Kate,
+                Editors::SublimeText,
+                Editors::Geany
             };
         }
 
@@ -214,8 +214,8 @@ namespace SeeDocs_App
             const SourceLanguage language)
         {
             const std::wstring_view key = language == SourceLanguage::Pascal
-                ? EditorKey::delphi
-                : EditorKey::cpp;
+                ? EditorKey::Delphi
+                : EditorKey::Cpp;
             return commandNode(context, key);
         }
 
@@ -320,19 +320,19 @@ namespace SeeDocs_App
     {
         return Dom::Dt::Section{
             k_editorsNodeName,
-            Dom::Dt::Value{ EditorKey::cpp, std::wstring{} },
-            Dom::Dt::Value{ EditorKey::delphi, std::wstring{} }
+            Dom::Dt::Value{ EditorKey::Cpp, std::wstring{} },
+            Dom::Dt::Value{ EditorKey::Delphi, std::wstring{} }
         };
     }
 
     void buildExternalEditors(AppMenuPage& page)
     {
         StackPanel& group = page.addGroup(L"External editors");
-        addEditorRow(group, L"C++:", EditorKey::cpp,
-            onThisDesktop(WindowsSuggestions::cpp, LinuxSuggestions::cpp),
+        addEditorRow(group, L"C++:", EditorKey::Cpp,
+            onThisDesktop(WindowsSuggestions::Cpp, LinuxSuggestions::Cpp),
             TooltipText{ L"Opens a C++ source at a line - {file} and {line} are filled in" });
-        addEditorRow(group, L"Delphi:", EditorKey::delphi,
-            onThisDesktop(WindowsSuggestions::delphi, LinuxSuggestions::delphi),
+        addEditorRow(group, L"Delphi:", EditorKey::Delphi,
+            onThisDesktop(WindowsSuggestions::Delphi, LinuxSuggestions::Delphi),
             TooltipText{ L"Opens a Delphi source at a line - {file} and {line} are filled in" });
     }
 

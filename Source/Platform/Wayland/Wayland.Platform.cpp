@@ -143,10 +143,10 @@ namespace ClaFi
 
         constexpr KeyCode k_functionKeys = 24;
         constexpr KeyCode k_numpadDigits = 10;
-        if (key >= VirtualKey::f1 && key < VirtualKey::f1 + k_functionKeys)
-            return L"F" + std::to_wstring(key - VirtualKey::f1 + 1);
-        if (key >= VirtualKey::numpad0 && key < VirtualKey::numpad0 + k_numpadDigits)
-            return L"Num " + std::to_wstring(key - VirtualKey::numpad0);
+        if (key >= VirtualKey::F1 && key < VirtualKey::F1 + k_functionKeys)
+            return L"F" + std::to_wstring(key - VirtualKey::F1 + 1);
+        if (key >= VirtualKey::Numpad0 && key < VirtualKey::Numpad0 + k_numpadDigits)
+            return L"Num " + std::to_wstring(key - VirtualKey::Numpad0);
 
         switch (key)
         {
@@ -184,57 +184,57 @@ namespace ClaFi
             return L"Down";
         case Keys::Delete:
             return L"Delete";
-        case VirtualKey::clear:
+        case VirtualKey::Clear:
             return L"Clear";
-        case VirtualKey::pause:
+        case VirtualKey::Pause:
             return L"Pause";
-        case VirtualKey::capsLock:
+        case VirtualKey::CapsLock:
             return L"Caps Lock";
-        case VirtualKey::print:
+        case VirtualKey::Print:
             return L"Print Screen";
         case Keys::Insert:
             return L"Insert";
-        case VirtualKey::help:
+        case VirtualKey::Help:
             return L"Help";
-        case VirtualKey::applications:
+        case VirtualKey::Applications:
             return L"Menu";
-        case VirtualKey::multiply:
+        case VirtualKey::Multiply:
             return L"Num *";
-        case VirtualKey::add:
+        case VirtualKey::Add:
             return L"Num +";
-        case VirtualKey::separator:
+        case VirtualKey::Separator:
             return L"Separator";
-        case VirtualKey::subtract:
+        case VirtualKey::Subtract:
             return L"Num -";
-        case VirtualKey::decimal:
+        case VirtualKey::Decimal:
             return L"Num .";
-        case VirtualKey::divide:
+        case VirtualKey::Divide:
             return L"Num /";
-        case VirtualKey::numLock:
+        case VirtualKey::NumLock:
             return L"Num Lock";
-        case VirtualKey::scrollLock:
+        case VirtualKey::ScrollLock:
             return L"Scroll Lock";
-        case VirtualKey::oem1:
+        case VirtualKey::Oem1:
             return L";";
-        case VirtualKey::oemPlus:
+        case VirtualKey::OemPlus:
             return L"=";
-        case VirtualKey::oemComma:
+        case VirtualKey::OemComma:
             return L",";
-        case VirtualKey::oemMinus:
+        case VirtualKey::OemMinus:
             return L"-";
-        case VirtualKey::oemPeriod:
+        case VirtualKey::OemPeriod:
             return L".";
-        case VirtualKey::oem2:
+        case VirtualKey::Oem2:
             return L"/";
-        case VirtualKey::oem3:
+        case VirtualKey::Oem3:
             return L"`";
-        case VirtualKey::oem4:
+        case VirtualKey::Oem4:
             return L"[";
-        case VirtualKey::oem5:
+        case VirtualKey::Oem5:
             return L"\\";
-        case VirtualKey::oem6:
+        case VirtualKey::Oem6:
             return L"]";
-        case VirtualKey::oem7:
+        case VirtualKey::Oem7:
             return L"'";
         default:
             return {};

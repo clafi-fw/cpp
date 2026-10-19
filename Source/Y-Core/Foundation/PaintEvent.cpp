@@ -795,15 +795,15 @@ namespace ClaFi
             // stands where it was laid out while it is 0 - see the paintText call below. A
             // control inside one that is already scaled leaves it alone, so the origin is always
             // the outermost animating control.
-            Graphics::Matrix3x2 pressTransform = Graphics::Matrix3x2::identity();
+            Graphics::Matrix3x2 pressTransform = Graphics::Matrix3x2::Identity();
             if (!m_pressScaleApplied)
             {
                 if (float scale = pressScale(); scale != 1.0f)
                 {
                     FloatPoint origin = control.pressOrigin(*this);
-                    pressTransform = Graphics::Matrix3x2::translation(origin)
-                        * Graphics::Matrix3x2::scale(scale)
-                        * Graphics::Matrix3x2::translation(-origin.x, -origin.y);
+                    pressTransform = Graphics::Matrix3x2::Translation(origin)
+                        * Graphics::Matrix3x2::Scale(scale)
+                        * Graphics::Matrix3x2::Translation(-origin.x, -origin.y);
                     m_pressScaleApplied = true;
 #if !CLAFI_TEXT_MOVING
                     m_unpressedTransform = canvas().transform();
@@ -956,7 +956,7 @@ namespace ClaFi
         const RoundedRectangleParts parts{
             .bounds = shape.rect,
             .radii = shape.radii,
-            .sides = RectSides::all()
+            .sides = RectSides::All()
         };
         canvas().fillPartialRoundedRectangle(parts, color);
     }

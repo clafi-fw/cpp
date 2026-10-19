@@ -11,24 +11,24 @@ namespace ClaFi::PlatformImplementation::Linux
         // Where the portal serves the file chooser, and where it announces an answer.
         namespace ChooserPortal
         {
-            constexpr const char* busName = "org.freedesktop.portal.Desktop";
-            constexpr const char* objectPath = "/org/freedesktop/portal/desktop";
-            constexpr const char* interfaceName = "org.freedesktop.portal.FileChooser";
-            constexpr const char* openMethod = "OpenFile";
-            constexpr std::string_view requestInterface = "org.freedesktop.portal.Request";
-            constexpr std::string_view responseSignal = "Response";
+            constexpr const char* BusName = "org.freedesktop.portal.Desktop";
+            constexpr const char* ObjectPath = "/org/freedesktop/portal/desktop";
+            constexpr const char* InterfaceName = "org.freedesktop.portal.FileChooser";
+            constexpr const char* OpenMethod = "OpenFile";
+            constexpr std::string_view RequestInterface = "org.freedesktop.portal.Request";
+            constexpr std::string_view ResponseSignal = "Response";
             // A request's path: this, the caller's unique name, and the token it chose.
-            constexpr std::string_view requestFolder = "/org/freedesktop/portal/desktop/request/";
+            constexpr std::string_view RequestFolder = "/org/freedesktop/portal/desktop/request/";
         }
 
         // The options OpenFile takes, and the result it answers with.
         namespace ChooserKeys
         {
-            constexpr const char* handleToken = "handle_token";
-            constexpr const char* modal = "modal";
-            constexpr const char* directory = "directory";
-            constexpr const char* currentFolder = "current_folder";
-            constexpr std::string_view uris = "uris";
+            constexpr const char* HandleToken = "handle_token";
+            constexpr const char* Modal = "modal";
+            constexpr const char* Directory = "directory";
+            constexpr const char* CurrentFolder = "current_folder";
+            constexpr std::string_view Uris = "uris";
         }
 
         constexpr const char* k_optionsSignature = "{sv}";
@@ -124,14 +124,14 @@ namespace ClaFi::PlatformImplementation::Linux
         }
 
         const std::string token = nextToken();
-        std::string requestPath{ ChooserPortal::requestFolder };
+        std::string requestPath{ ChooserPortal::RequestFolder };
         requestPath.append(senderSegment(uniqueName));
         requestPath.push_back('/');
         requestPath.append(token);
         watchResponse(std::move(requestPath));
 
-        DBusMessage* message = dbus_message_new_method_call(ChooserPortal::busName,
-            ChooserPortal::objectPath, ChooserPortal::interfaceName, ChooserPortal::openMethod);
+        DBusMessage* message = dbus_message_new_method_call(ChooserPortal::BusName,
+            ChooserPortal::ObjectPath, ChooserPortal::InterfaceName, ChooserPortal::OpenMethod);
         if (!message)
         {
             settle();
@@ -151,11 +151,11 @@ namespace ClaFi::PlatformImplementation::Linux
             && dbus_message_iter_append_basic(&arguments, DBUS_TYPE_STRING, &captionText)
             && dbus_message_iter_open_container(&arguments, DBUS_TYPE_ARRAY, k_optionsSignature,
                 &options)
-            && appendTextOption(options, ChooserKeys::handleToken, token.c_str())
-            && appendFlagOption(options, ChooserKeys::modal, TRUE)
-            && appendFlagOption(options, ChooserKeys::directory, TRUE);
+            && appendTextOption(options, ChooserKeys::HandleToken, token.c_str())
+            && appendFlagOption(options, ChooserKeys::Modal, TRUE)
+            && appendFlagOption(options, ChooserKeys::Directory, TRUE);
         if (built && !startFolder.empty())
-            built = appendBytesOption(options, ChooserKeys::currentFolder, startBytes);
+            built = appendBytesOption(options, ChooserKeys::CurrentFolder, startBytes);
         built = built && dbus_message_iter_close_container(&arguments, &options);
         const bool sent = built && dbus_connection_send(m_connection, message, &m_callSerial);
         dbus_message_unref(message);
@@ -173,9 +173,9 @@ namespace ClaFi::PlatformImplementation::Linux
     {
         m_requestPath = std::move(path);
         std::string rule = "type='signal',interface='";
-        rule.append(ChooserPortal::requestInterface);
+        rule.append(ChooserPortal::RequestInterface);
         rule.append("',member='");
-        rule.append(ChooserPortal::responseSignal);
+        rule.append(ChooserPortal::ResponseSignal);
         rule.append("',path='");
         rule.append(m_requestPath);
         rule.push_back('\'');
@@ -224,8 +224,8 @@ namespace ClaFi::PlatformImplementation::Linux
         const char* path = dbus_message_get_path(message);
         if (!interfaceName || !member || !path)
             return;
-        if (ChooserPortal::requestInterface != interfaceName
-            || ChooserPortal::responseSignal != member
+        if (ChooserPortal::RequestInterface != interfaceName
+            || ChooserPortal::ResponseSignal != member
             || m_requestPath != path)
             return;
 
@@ -332,7 +332,7 @@ namespace ClaFi::PlatformImplementation::Linux
                 const char* key = nullptr;
                 if (dbus_message_iter_get_arg_type(&entry) == DBUS_TYPE_STRING)
                     dbus_message_iter_get_basic(&entry, &key);
-                if (key && ChooserKeys::uris == key && dbus_message_iter_next(&entry))
+                if (key && ChooserKeys::Uris == key && dbus_message_iter_next(&entry))
                     return folderOfUris(entry);
                 dbus_message_iter_next(&entries);
             }

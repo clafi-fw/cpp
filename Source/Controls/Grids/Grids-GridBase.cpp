@@ -191,7 +191,7 @@ namespace ClaFi::Controls::Grids
         const float travel = overlayChildOffset(*m_header).y;
         if (travel != 0.0f)
         {
-            const FloatRect rect = FloatRect::fromDimensions(
+            const FloatRect rect = FloatRect::FromDimensions(
                 event.contentPosition() + m_header->topLeft() + FloatPoint{ 0.0f, travel },
                 m_header->scaledSize());
             event.paintHeldBackdrop(m_header->silhouette(event, rect), travel);

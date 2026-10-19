@@ -198,7 +198,7 @@ namespace ClaFi
         if constexpr (Diagnostic::Options::highlightTextAreas())
         {
             highlightTextArea(controlContext, bounds,
-                FloatRect::fromDimensions(anchoredPos, layout.calculatedDimensions()));
+                FloatRect::FromDimensions(anchoredPos, layout.calculatedDimensions()));
         }
         return result;
     }

@@ -23,21 +23,21 @@ namespace ClaFi::Diagnostic::Options
     // Each option as stated here, read through the function of the same name below.
     namespace Stated
     {
-        constexpr ApiErrors apiErrors{ ApiErrors::Ignore };
-        constexpr bool logThemeCrossing{ false };
-        constexpr bool logPresentWait{ true };
-        constexpr bool logWindowSteps{ true };
-        constexpr bool logScrollIntoView{ false };
-        constexpr bool logFormPlacement{ false };
-        constexpr bool highlightTextAreas{ false };
-        constexpr bool logTextLayout{ false }; // with this true don't go to FPS page - it will be stuck
+        constexpr ApiErrors ApiErrors{ ApiErrors::Ignore };
+        constexpr bool LogThemeCrossing{ false };
+        constexpr bool LogPresentWait{ true };
+        constexpr bool LogWindowSteps{ true };
+        constexpr bool LogScrollIntoView{ false };
+        constexpr bool LogFormPlacement{ false };
+        constexpr bool HighlightTextAreas{ false };
+        constexpr bool LogTextLayout{ false }; // with this true don't go to FPS page - it will be stuck
     }
 
     /// @brief How a failed platform API call is handled - see ApiErrors. Anything but Ignore
     /// raises the Direct2D debug layer on Windows.
     export [[nodiscard]] constexpr ApiErrors apiErrors()
     {
-        return enabled ? Stated::apiErrors : ApiErrors::Ignore;
+        return enabled ? Stated::ApiErrors : ApiErrors::Ignore;
     }
 
     /// @brief Every frame a theme crossing makes goes to the Output page: the moment it was
@@ -46,7 +46,7 @@ namespace ClaFi::Diagnostic::Options
     /// other - a late tick widens the gaps, a slow paint widens the cost - and never in both.
     export [[nodiscard]] constexpr bool logThemeCrossing()
     {
-        return enabled && Stated::logThemeCrossing;
+        return enabled && Stated::LogThemeCrossing;
     }
 
     /// @brief Every wait the swap chain made the thread pay goes to the debugger's output: a
@@ -56,7 +56,7 @@ namespace ClaFi::Diagnostic::Options
     /// gone wrong.
     export [[nodiscard]] constexpr bool logPresentWait()
     {
-        return enabled && Stated::logPresentWait;
+        return enabled && Stated::LogPresentWait;
     }
 
     /// @brief Every step a composed window's resize is made of goes to the debugger's output
@@ -67,7 +67,7 @@ namespace ClaFi::Diagnostic::Options
     /// step leaves it standing that way for how long.
     export [[nodiscard]] constexpr bool logWindowSteps()
     {
-        return enabled && Stated::logWindowSteps;
+        return enabled && Stated::LogWindowSteps;
     }
 
     /// @brief Every scroll-into-view request goes to the Output page: the rect asked for,
@@ -76,7 +76,7 @@ namespace ClaFi::Diagnostic::Options
     /// moves on every line while the rect does not.
     export [[nodiscard]] constexpr bool logScrollIntoView()
     {
-        return enabled && Stated::logScrollIntoView;
+        return enabled && Stated::LogScrollIntoView;
     }
 
     /// @brief Every pass a form's placement makes goes to the Output page: the factor and the
@@ -86,7 +86,7 @@ namespace ClaFi::Diagnostic::Options
     /// first pass - which says the measure was bounded before the placement ran.
     export [[nodiscard]] constexpr bool logFormPlacement()
     {
-        return enabled && Stated::logFormPlacement;
+        return enabled && Stated::LogFormPlacement;
     }
 
     /// @brief Every text drawn through the TextEngine is painted over: the box the text took
@@ -95,7 +95,7 @@ namespace ClaFi::Diagnostic::Options
     /// hovered, which is the hit zone rather than the box.
     export [[nodiscard]] constexpr bool highlightTextAreas()
     {
-        return enabled && Stated::highlightTextAreas;
+        return enabled && Stated::HighlightTextAreas;
     }
 
     /// @brief Two things a text layout does that a paint should not have to go to the Output
@@ -107,6 +107,6 @@ namespace ClaFi::Diagnostic::Options
     /// which side moved, and by how much.
     export [[nodiscard]] constexpr bool logTextLayout()
     {
-        return enabled && Stated::logTextLayout;
+        return enabled && Stated::LogTextLayout;
     }
 }

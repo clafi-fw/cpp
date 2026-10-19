@@ -165,7 +165,7 @@ namespace ClaFi::Controls::Grids
                 else if (Control* control = controlAtColumn(*column))
                 {
                     const float lead = cellLead(*column).x;
-                    const FloatRect cellRect = FloatRect::fromDimensions(
+                    const FloatRect cellRect = FloatRect::FromDimensions(
                         { position.x + column->left(), position.y },
                         { column->calculatedWidth(), dimensions.y }
                     );

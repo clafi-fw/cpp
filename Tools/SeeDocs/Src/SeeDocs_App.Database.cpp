@@ -25,67 +25,67 @@ namespace SeeDocs_App
         // The steps of a write, as its times name them.
         namespace Steps
         {
-            constexpr std::wstring_view fillDocument = L"fill document";
-            constexpr std::wstring_view saveDatabase = L"save database";
-            constexpr std::wstring_view loadDatabase = L"load database";
-            constexpr std::wstring_view readDocument = L"read document";
+            constexpr std::wstring_view FillDocument = L"fill document";
+            constexpr std::wstring_view SaveDatabase = L"save database";
+            constexpr std::wstring_view LoadDatabase = L"load database";
+            constexpr std::wstring_view ReadDocument = L"read document";
         }
 
         namespace Keys
         {
-            constexpr std::wstring_view modules = L"Modules";
-            constexpr std::wstring_view types = L"Types";
-            constexpr std::wstring_view functions = L"Functions";
-            constexpr std::wstring_view constants = L"Constants";
-            constexpr std::wstring_view scanned = L"Scanned";
-            constexpr std::wstring_view limited = L"Limited";
-            constexpr std::wstring_view looseHints = L"LooseHints";
-            constexpr std::wstring_view name = L"Name";
-            constexpr std::wstring_view nameSpace = L"Namespace";
-            constexpr std::wstring_view kind = L"Kind";
-            constexpr std::wstring_view module = L"Module";
-            constexpr std::wstring_view file = L"File";
-            constexpr std::wstring_view root = L"Root";
-            constexpr std::wstring_view line = L"Line";
-            constexpr std::wstring_view hint = L"Hint";
-            constexpr std::wstring_view note = L"Note";
-            constexpr std::wstring_view interface = L"Interface";
-            constexpr std::wstring_view header = L"Header";
-            constexpr std::wstring_view language = L"Language";
-            constexpr std::wstring_view imports = L"Imports";
-            constexpr std::wstring_view exportedImports = L"ExportedImports";
-            constexpr std::wstring_view templateParameters = L"Template";
-            constexpr std::wstring_view bases = L"Bases";
-            constexpr std::wstring_view base = L"Base";
-            constexpr std::wstring_view target = L"Target";
-            constexpr std::wstring_view control = L"Control";
-            constexpr std::wstring_view scoped = L"Scoped";
-            constexpr std::wstring_view folder = L"Folder";
-            constexpr std::wstring_view properties = L"Properties";
-            constexpr std::wstring_view events = L"Events";
-            constexpr std::wstring_view methods = L"Methods";
-            constexpr std::wstring_view usings = L"Usings";
-            constexpr std::wstring_view fields = L"Fields";
-            constexpr std::wstring_view members = L"Members";
-            constexpr std::wstring_view restates = L"Restates";
-            constexpr std::wstring_view fixed = L"Fixed";
-            constexpr std::wstring_view type = L"Type";
-            constexpr std::wstring_view accepts = L"Accepts";
-            constexpr std::wstring_view defaultValue = L"Default";
-            constexpr std::wstring_view setter = L"Setter";
-            constexpr std::wstring_view form = L"Form";
-            constexpr std::wstring_view valueKind = L"ValueKind";
-            constexpr std::wstring_view optional = L"Optional";
-            constexpr std::wstring_view access = L"Access";
-            constexpr std::wstring_view alias = L"Alias";
-            constexpr std::wstring_view method = L"Method";
-            constexpr std::wstring_view signature = L"Signature";
-            constexpr std::wstring_view isStatic = L"Static";
-            constexpr std::wstring_view isVirtual = L"Virtual";
-            constexpr std::wstring_view isDeleted = L"Deleted";
-            constexpr std::wstring_view isConstant = L"Constant";
-            constexpr std::wstring_view value = L"Value";
-            constexpr std::wstring_view declaration = L"Declaration";
+            constexpr std::wstring_view Modules = L"Modules";
+            constexpr std::wstring_view Types = L"Types";
+            constexpr std::wstring_view Functions = L"Functions";
+            constexpr std::wstring_view Constants = L"Constants";
+            constexpr std::wstring_view Scanned = L"Scanned";
+            constexpr std::wstring_view Limited = L"Limited";
+            constexpr std::wstring_view LooseHints = L"LooseHints";
+            constexpr std::wstring_view Name = L"Name";
+            constexpr std::wstring_view NameSpace = L"Namespace";
+            constexpr std::wstring_view Kind = L"Kind";
+            constexpr std::wstring_view Module = L"Module";
+            constexpr std::wstring_view File = L"File";
+            constexpr std::wstring_view Root = L"Root";
+            constexpr std::wstring_view Line = L"Line";
+            constexpr std::wstring_view Hint = L"Hint";
+            constexpr std::wstring_view Note = L"Note";
+            constexpr std::wstring_view Interface = L"Interface";
+            constexpr std::wstring_view Header = L"Header";
+            constexpr std::wstring_view Language = L"Language";
+            constexpr std::wstring_view Imports = L"Imports";
+            constexpr std::wstring_view ExportedImports = L"ExportedImports";
+            constexpr std::wstring_view TemplateParameters = L"Template";
+            constexpr std::wstring_view Bases = L"Bases";
+            constexpr std::wstring_view Base = L"Base";
+            constexpr std::wstring_view Target = L"Target";
+            constexpr std::wstring_view Control = L"Control";
+            constexpr std::wstring_view Scoped = L"Scoped";
+            constexpr std::wstring_view Folder = L"Folder";
+            constexpr std::wstring_view Properties = L"Properties";
+            constexpr std::wstring_view Events = L"Events";
+            constexpr std::wstring_view Methods = L"Methods";
+            constexpr std::wstring_view Usings = L"Usings";
+            constexpr std::wstring_view Fields = L"Fields";
+            constexpr std::wstring_view Members = L"Members";
+            constexpr std::wstring_view Restates = L"Restates";
+            constexpr std::wstring_view Fixed = L"Fixed";
+            constexpr std::wstring_view Type = L"Type";
+            constexpr std::wstring_view Accepts = L"Accepts";
+            constexpr std::wstring_view DefaultValue = L"Default";
+            constexpr std::wstring_view Setter = L"Setter";
+            constexpr std::wstring_view Form = L"Form";
+            constexpr std::wstring_view ValueKind = L"ValueKind";
+            constexpr std::wstring_view Optional = L"Optional";
+            constexpr std::wstring_view Access = L"Access";
+            constexpr std::wstring_view Alias = L"Alias";
+            constexpr std::wstring_view Method = L"Method";
+            constexpr std::wstring_view Signature = L"Signature";
+            constexpr std::wstring_view IsStatic = L"Static";
+            constexpr std::wstring_view IsVirtual = L"Virtual";
+            constexpr std::wstring_view IsDeleted = L"Deleted";
+            constexpr std::wstring_view IsConstant = L"Constant";
+            constexpr std::wstring_view Value = L"Value";
+            constexpr std::wstring_view Declaration = L"Declaration";
         }
 
         using Sections = Dom::Sequence<Dom::Section>;
@@ -95,10 +95,10 @@ namespace SeeDocs_App
         {
             using namespace Dom::Dt;
             return {
-                Value{ Keys::name, std::wstring{} },
-                Value{ Keys::line, std::size_t{ 0 } },
-                Value{ Keys::hint, std::wstring{} },
-                Value{ Keys::note, std::wstring{} }
+                Value{ Keys::Name, std::wstring{} },
+                Value{ Keys::Line, std::size_t{ 0 } },
+                Value{ Keys::Hint, std::wstring{} },
+                Value{ Keys::Note, std::wstring{} }
             };
         }
 
@@ -107,7 +107,7 @@ namespace SeeDocs_App
             using namespace Dom::Dt;
             return {
                 placedEntry(),
-                Value{ Keys::access, std::wstring{} }
+                Value{ Keys::Access, std::wstring{} }
             };
         }
 
@@ -116,14 +116,14 @@ namespace SeeDocs_App
             using namespace Dom::Dt;
             return {
                 memberEntry(),
-                Value{ Keys::type, std::wstring{} },
-                Sequence{ Keys::accepts, std::wstring{} },
-                Value{ Keys::defaultValue, std::wstring{} },
-                Value{ Keys::setter, std::wstring{} },
-                Value{ Keys::target, std::wstring{} },
-                Value{ Keys::form, std::wstring{} },
-                Value{ Keys::valueKind, std::wstring{} },
-                Value{ Keys::optional, false }
+                Value{ Keys::Type, std::wstring{} },
+                Sequence{ Keys::Accepts, std::wstring{} },
+                Value{ Keys::DefaultValue, std::wstring{} },
+                Value{ Keys::Setter, std::wstring{} },
+                Value{ Keys::Target, std::wstring{} },
+                Value{ Keys::Form, std::wstring{} },
+                Value{ Keys::ValueKind, std::wstring{} },
+                Value{ Keys::Optional, false }
             };
         }
 
@@ -132,8 +132,8 @@ namespace SeeDocs_App
             using namespace Dom::Dt;
             return {
                 memberEntry(),
-                Value{ Keys::alias, std::wstring{} },
-                Value{ Keys::method, std::wstring{} }
+                Value{ Keys::Alias, std::wstring{} },
+                Value{ Keys::Method, std::wstring{} }
             };
         }
 
@@ -142,13 +142,13 @@ namespace SeeDocs_App
             using namespace Dom::Dt;
             return {
                 memberEntry(),
-                Value{ Keys::kind, std::wstring{} },
-                Value{ Keys::signature, std::wstring{} },
-                Value{ Keys::type, std::wstring{} },
-                Value{ Keys::templateParameters, std::wstring{} },
-                Value{ Keys::isStatic, false },
-                Value{ Keys::isVirtual, false },
-                Value{ Keys::isDeleted, false }
+                Value{ Keys::Kind, std::wstring{} },
+                Value{ Keys::Signature, std::wstring{} },
+                Value{ Keys::Type, std::wstring{} },
+                Value{ Keys::TemplateParameters, std::wstring{} },
+                Value{ Keys::IsStatic, false },
+                Value{ Keys::IsVirtual, false },
+                Value{ Keys::IsDeleted, false }
             };
         }
 
@@ -157,7 +157,7 @@ namespace SeeDocs_App
             using namespace Dom::Dt;
             return {
                 memberEntry(),
-                Value{ Keys::base, std::wstring{} }
+                Value{ Keys::Base, std::wstring{} }
             };
         }
 
@@ -166,10 +166,10 @@ namespace SeeDocs_App
             using namespace Dom::Dt;
             return {
                 memberEntry(),
-                Value{ Keys::type, std::wstring{} },
-                Value{ Keys::value, std::wstring{} },
-                Value{ Keys::isStatic, false },
-                Value{ Keys::isConstant, false }
+                Value{ Keys::Type, std::wstring{} },
+                Value{ Keys::Value, std::wstring{} },
+                Value{ Keys::IsStatic, false },
+                Value{ Keys::IsConstant, false }
             };
         }
 
@@ -178,7 +178,7 @@ namespace SeeDocs_App
             using namespace Dom::Dt;
             return {
                 placedEntry(),
-                Value{ Keys::value, std::wstring{} }
+                Value{ Keys::Value, std::wstring{} }
             };
         }
 
@@ -186,10 +186,10 @@ namespace SeeDocs_App
         {
             using namespace Dom::Dt;
             return {
-                Value{ Keys::type, std::wstring{} },
-                Value{ Keys::value, std::wstring{} },
-                Value{ Keys::fixed, false },
-                Value{ Keys::line, std::size_t{ 0 } }
+                Value{ Keys::Type, std::wstring{} },
+                Value{ Keys::Value, std::wstring{} },
+                Value{ Keys::Fixed, false },
+                Value{ Keys::Line, std::size_t{ 0 } }
             };
         }
 
@@ -198,10 +198,10 @@ namespace SeeDocs_App
         {
             using namespace Dom::Dt;
             return {
-                Value{ Keys::nameSpace, std::wstring{} },
-                Value{ Keys::module, std::wstring{} },
-                Value{ Keys::file, std::wstring{} },
-                Value{ Keys::root, std::size_t{ 0 } }
+                Value{ Keys::NameSpace, std::wstring{} },
+                Value{ Keys::Module, std::wstring{} },
+                Value{ Keys::File, std::wstring{} },
+                Value{ Keys::Root, std::size_t{ 0 } }
             };
         }
 
@@ -211,20 +211,20 @@ namespace SeeDocs_App
             return {
                 placedEntry(),
                 scopedEntry(),
-                Value{ Keys::kind, std::wstring{} },
-                Value{ Keys::templateParameters, std::wstring{} },
-                Sequence{ Keys::bases, std::wstring{} },
-                Value{ Keys::target, std::wstring{} },
-                Value{ Keys::scoped, false },
-                Value{ Keys::control, false },
-                Value{ Keys::folder, std::wstring{} },
-                Sequence{ Keys::properties, propertyLayout() },
-                Sequence{ Keys::events, eventLayout() },
-                Sequence{ Keys::methods, functionLayout() },
-                Sequence{ Keys::usings, usingLayout() },
-                Sequence{ Keys::fields, fieldLayout() },
-                Sequence{ Keys::members, enumMemberLayout() },
-                Sequence{ Keys::restates, restatementLayout() }
+                Value{ Keys::Kind, std::wstring{} },
+                Value{ Keys::TemplateParameters, std::wstring{} },
+                Sequence{ Keys::Bases, std::wstring{} },
+                Value{ Keys::Target, std::wstring{} },
+                Value{ Keys::Scoped, false },
+                Value{ Keys::Control, false },
+                Value{ Keys::Folder, std::wstring{} },
+                Sequence{ Keys::Properties, propertyLayout() },
+                Sequence{ Keys::Events, eventLayout() },
+                Sequence{ Keys::Methods, functionLayout() },
+                Sequence{ Keys::Usings, usingLayout() },
+                Sequence{ Keys::Fields, fieldLayout() },
+                Sequence{ Keys::Members, enumMemberLayout() },
+                Sequence{ Keys::Restates, restatementLayout() }
             };
         }
 
@@ -232,14 +232,14 @@ namespace SeeDocs_App
         {
             using namespace Dom::Dt;
             return {
-                Value{ Keys::name, std::wstring{} },
-                Value{ Keys::file, std::wstring{} },
-                Value{ Keys::root, std::size_t{ 0 } },
-                Value{ Keys::interface, false },
-                Value{ Keys::header, false },
-                Value{ Keys::language, std::wstring{} },
-                Sequence{ Keys::imports, std::wstring{} },
-                Sequence{ Keys::exportedImports, std::wstring{} }
+                Value{ Keys::Name, std::wstring{} },
+                Value{ Keys::File, std::wstring{} },
+                Value{ Keys::Root, std::size_t{ 0 } },
+                Value{ Keys::Interface, false },
+                Value{ Keys::Header, false },
+                Value{ Keys::Language, std::wstring{} },
+                Sequence{ Keys::Imports, std::wstring{} },
+                Sequence{ Keys::ExportedImports, std::wstring{} }
             };
         }
 
@@ -277,20 +277,20 @@ namespace SeeDocs_App
 
         [[nodiscard]] KeyOrders keyOrdersOf(Dom::Section& layout)
         {
-            Dom::Section& type = (layout / Keys::types).as<Sections>().add();
+            Dom::Section& type = (layout / Keys::Types).as<Sections>().add();
             return {
                 .root = keyOrderOf(layout),
-                .module = keyOrderOf((layout / Keys::modules).as<Sections>().add()),
+                .module = keyOrderOf((layout / Keys::Modules).as<Sections>().add()),
                 .type = keyOrderOf(type),
-                .property = keyOrderOf((type / Keys::properties).as<Sections>().add()),
-                .event = keyOrderOf((type / Keys::events).as<Sections>().add()),
-                .method = keyOrderOf((type / Keys::methods).as<Sections>().add()),
-                .usingDeclaration = keyOrderOf((type / Keys::usings).as<Sections>().add()),
-                .field = keyOrderOf((type / Keys::fields).as<Sections>().add()),
-                .member = keyOrderOf((type / Keys::members).as<Sections>().add()),
-                .restatement = keyOrderOf((type / Keys::restates).as<Sections>().add()),
-                .function = keyOrderOf((layout / Keys::functions).as<Sections>().add()),
-                .constant = keyOrderOf((layout / Keys::constants).as<Sections>().add())
+                .property = keyOrderOf((type / Keys::Properties).as<Sections>().add()),
+                .event = keyOrderOf((type / Keys::Events).as<Sections>().add()),
+                .method = keyOrderOf((type / Keys::Methods).as<Sections>().add()),
+                .usingDeclaration = keyOrderOf((type / Keys::Usings).as<Sections>().add()),
+                .field = keyOrderOf((type / Keys::Fields).as<Sections>().add()),
+                .member = keyOrderOf((type / Keys::Members).as<Sections>().add()),
+                .restatement = keyOrderOf((type / Keys::Restates).as<Sections>().add()),
+                .function = keyOrderOf((layout / Keys::Functions).as<Sections>().add()),
+                .constant = keyOrderOf((layout / Keys::Constants).as<Sections>().add())
             };
         }
 
@@ -395,8 +395,8 @@ namespace SeeDocs_App
         // A file as an entry names it: its path under its root, and the root.
         void setFile(Entry& entry, const SourceFile& file)
         {
-            entry.setText(Keys::file, file.relative);
-            entry.setNumber(Keys::root, file.root);
+            entry.setText(Keys::File, file.relative);
+            entry.setNumber(Keys::Root, file.root);
         }
 
         // A stamp as the database writes it, UTC to the second - 2026-10-09T03:12:45Z.
@@ -426,41 +426,41 @@ namespace SeeDocs_App
         void setPlaced(Entry& entry, const std::wstring_view name, const Place& place,
             const Comment& comment)
         {
-            entry.setText(Keys::name, name);
-            entry.setNumber(Keys::line, place.line);
-            entry.setText(Keys::hint, comment.text);
-            entry.setText(Keys::note, noteText(comment));
+            entry.setText(Keys::Name, name);
+            entry.setNumber(Keys::Line, place.line);
+            entry.setText(Keys::Hint, comment.text);
+            entry.setText(Keys::Note, noteText(comment));
         }
 
         void setScoped(Entry& entry, const Surface& surface, const std::wstring_view nameSpace,
             const std::wstring_view module, const Place& place)
         {
-            entry.setText(Keys::nameSpace, nameSpace);
-            entry.setText(Keys::module, module);
+            entry.setText(Keys::NameSpace, nameSpace);
+            entry.setText(Keys::Module, module);
             setFile(entry, surface.files()[place.file]);
         }
 
         void setFunction(Entry& entry, const Function& function)
         {
             setPlaced(entry, function.name, function.place, function.comment);
-            entry.setText(Keys::access, accessWord(function.access));
-            entry.setText(Keys::kind, kindWord(function.kind));
-            entry.setText(Keys::signature, function.signature);
-            entry.setText(Keys::type, function.returnType);
-            entry.setText(Keys::templateParameters, function.templateParameters);
-            entry.setFlag(Keys::isStatic, function.isStatic);
-            entry.setFlag(Keys::isVirtual, function.isVirtual);
-            entry.setFlag(Keys::isDeleted, function.isDeleted);
+            entry.setText(Keys::Access, accessWord(function.access));
+            entry.setText(Keys::Kind, kindWord(function.kind));
+            entry.setText(Keys::Signature, function.signature);
+            entry.setText(Keys::Type, function.returnType);
+            entry.setText(Keys::TemplateParameters, function.templateParameters);
+            entry.setFlag(Keys::IsStatic, function.isStatic);
+            entry.setFlag(Keys::IsVirtual, function.isVirtual);
+            entry.setFlag(Keys::IsDeleted, function.isDeleted);
         }
 
         void setField(Entry& entry, const Field& field)
         {
             setPlaced(entry, field.name, field.place, field.comment);
-            entry.setText(Keys::access, accessWord(field.access));
-            entry.setText(Keys::type, field.type);
-            entry.setText(Keys::value, field.value);
-            entry.setFlag(Keys::isStatic, field.isStatic);
-            entry.setFlag(Keys::isConstant, field.isConstant);
+            entry.setText(Keys::Access, accessWord(field.access));
+            entry.setText(Keys::Type, field.type);
+            entry.setText(Keys::Value, field.value);
+            entry.setFlag(Keys::IsStatic, field.isStatic);
+            entry.setFlag(Keys::IsConstant, field.isConstant);
         }
 
         [[nodiscard]] std::unique_ptr<Dom::Section> typeEntry(const KeyOrders& orders,
@@ -469,8 +469,8 @@ namespace SeeDocs_App
             Entry entry{ orders.type };
             setPlaced(entry, type.name, type.place, type.comment);
             setScoped(entry, surface, type.nameSpace, type.module, type.place);
-            entry.setText(Keys::kind, kindWord(type.kind));
-            entry.setText(Keys::templateParameters, type.templateParameters);
+            entry.setText(Keys::Kind, kindWord(type.kind));
+            entry.setText(Keys::TemplateParameters, type.templateParameters);
             Names bases;
             for (const std::wstring& base : type.bases)
             {
@@ -478,11 +478,11 @@ namespace SeeDocs_App
                     ? base
                     : surface.resolvedBase(base, type.enclosingScope()));
             }
-            entry.setList(Keys::bases, bases);
-            entry.setText(Keys::target, type.target);
-            entry.setFlag(Keys::scoped, type.scoped);
-            entry.setFlag(Keys::control, type.isControl);
-            entry.setText(Keys::folder, type.folder);
+            entry.setList(Keys::Bases, bases);
+            entry.setText(Keys::Target, type.target);
+            entry.setFlag(Keys::Scoped, type.scoped);
+            entry.setFlag(Keys::Control, type.isControl);
+            entry.setText(Keys::Folder, type.folder);
 
             Items properties;
             for (const Property& property : surface.mergedProperties(type))
@@ -491,18 +491,18 @@ namespace SeeDocs_App
                     continue;
                 Entry item{ orders.property };
                 setPlaced(item, property.name, property.place, property.comment);
-                item.setText(Keys::access, accessWord(property.access));
-                item.setText(Keys::type, property.type);
-                item.setList(Keys::accepts, property.accepts);
-                item.setText(Keys::defaultValue, property.defaultValue);
-                item.setText(Keys::setter, property.setter);
-                item.setText(Keys::target, property.target);
-                item.setText(Keys::form, formWord(property.form));
-                item.setText(Keys::valueKind, property.valueKind);
-                item.setFlag(Keys::optional, property.optional);
+                item.setText(Keys::Access, accessWord(property.access));
+                item.setText(Keys::Type, property.type);
+                item.setList(Keys::Accepts, property.accepts);
+                item.setText(Keys::DefaultValue, property.defaultValue);
+                item.setText(Keys::Setter, property.setter);
+                item.setText(Keys::Target, property.target);
+                item.setText(Keys::Form, formWord(property.form));
+                item.setText(Keys::ValueKind, property.valueKind);
+                item.setFlag(Keys::Optional, property.optional);
                 properties.push_back(item.finish());
             }
-            entry.setItems(Keys::properties, std::move(properties));
+            entry.setItems(Keys::Properties, std::move(properties));
 
             Items events;
             for (const Event& event : type.events)
@@ -511,12 +511,12 @@ namespace SeeDocs_App
                     continue;
                 Entry item{ orders.event };
                 setPlaced(item, event.type, event.place, event.comment);
-                item.setText(Keys::access, accessWord(event.access));
-                item.setText(Keys::alias, event.alias);
-                item.setText(Keys::method, event.method);
+                item.setText(Keys::Access, accessWord(event.access));
+                item.setText(Keys::Alias, event.alias);
+                item.setText(Keys::Method, event.method);
                 events.push_back(item.finish());
             }
-            entry.setItems(Keys::events, std::move(events));
+            entry.setItems(Keys::Events, std::move(events));
 
             Items methods;
             for (const Function& function : type.functions)
@@ -527,7 +527,7 @@ namespace SeeDocs_App
                 setFunction(item, function);
                 methods.push_back(item.finish());
             }
-            entry.setItems(Keys::methods, std::move(methods));
+            entry.setItems(Keys::Methods, std::move(methods));
 
             Items usings;
             for (const Using& declaration : type.usings)
@@ -536,11 +536,11 @@ namespace SeeDocs_App
                     continue;
                 Entry item{ orders.usingDeclaration };
                 setPlaced(item, declaration.name, declaration.place, declaration.comment);
-                item.setText(Keys::access, accessWord(declaration.access));
-                item.setText(Keys::base, declaration.base);
+                item.setText(Keys::Access, accessWord(declaration.access));
+                item.setText(Keys::Base, declaration.base);
                 usings.push_back(item.finish());
             }
-            entry.setItems(Keys::usings, std::move(usings));
+            entry.setItems(Keys::Usings, std::move(usings));
 
             Items fields;
             for (const Field& field : type.fields)
@@ -551,29 +551,29 @@ namespace SeeDocs_App
                 setField(item, field);
                 fields.push_back(item.finish());
             }
-            entry.setItems(Keys::fields, std::move(fields));
+            entry.setItems(Keys::Fields, std::move(fields));
 
             Items members;
             for (const EnumMember& member : type.members)
             {
                 Entry item{ orders.member };
                 setPlaced(item, member.name, member.place, member.comment);
-                item.setText(Keys::value, member.value);
+                item.setText(Keys::Value, member.value);
                 members.push_back(item.finish());
             }
-            entry.setItems(Keys::members, std::move(members));
+            entry.setItems(Keys::Members, std::move(members));
 
             Items restates;
             for (const Restatement& restatement : type.restatements)
             {
                 Entry item{ orders.restatement };
-                item.setText(Keys::type, restatement.type);
-                item.setText(Keys::value, restatement.value);
-                item.setFlag(Keys::fixed, restatement.fixed);
-                item.setNumber(Keys::line, restatement.place.line);
+                item.setText(Keys::Type, restatement.type);
+                item.setText(Keys::Value, restatement.value);
+                item.setFlag(Keys::Fixed, restatement.fixed);
+                item.setNumber(Keys::Line, restatement.place.line);
                 restates.push_back(item.finish());
             }
-            entry.setItems(Keys::restates, std::move(restates));
+            entry.setItems(Keys::Restates, std::move(restates));
             return entry.finish();
         }
 
@@ -581,18 +581,18 @@ namespace SeeDocs_App
             const Surface& surface, const Module& module)
         {
             Entry entry{ orders.module };
-            entry.setText(Keys::name, module.name);
+            entry.setText(Keys::Name, module.name);
             setFile(entry, surface.files()[module.file]);
-            entry.setFlag(Keys::interface, module.isInterface);
-            entry.setFlag(Keys::header, module.isHeader);
+            entry.setFlag(Keys::Interface, module.isInterface);
+            entry.setFlag(Keys::Header, module.isHeader);
             if (module.language == SourceLanguage::Pascal)
-                entry.setText(Keys::language, k_pascalWord);
+                entry.setText(Keys::Language, k_pascalWord);
             Names imports;
             Names exported;
             for (const Import& import : module.imports)
                 (import.exported ? exported : imports).push_back(import.name);
-            entry.setList(Keys::imports, imports);
-            entry.setList(Keys::exportedImports, exported);
+            entry.setList(Keys::Imports, imports);
+            entry.setList(Keys::ExportedImports, exported);
             return entry.finish();
         }
 
@@ -716,17 +716,17 @@ namespace SeeDocs_App
             for (const Dom::Section& entry : list)
             {
                 Module module{
-                    .name = textOf(entry, Keys::name),
-                    .isInterface = flagOf(entry, Keys::interface),
-                    .isHeader = flagOf(entry, Keys::header),
-                    .language = textOf(entry, Keys::language) == k_pascalWord
+                    .name = textOf(entry, Keys::Name),
+                    .isInterface = flagOf(entry, Keys::Interface),
+                    .isHeader = flagOf(entry, Keys::Header),
+                    .language = textOf(entry, Keys::Language) == k_pascalWord
                         ? SourceLanguage::Pascal
                         : SourceLanguage::Cpp
                 };
                 module.file = fileOf(entry, module.name);
-                for (const std::wstring& name : listOf(entry, Keys::imports))
+                for (const std::wstring& name : listOf(entry, Keys::Imports))
                     module.imports.push_back({ .name = name, .exported = false });
-                for (const std::wstring& name : listOf(entry, Keys::exportedImports))
+                for (const std::wstring& name : listOf(entry, Keys::ExportedImports))
                     module.imports.push_back({ .name = name, .exported = true });
                 m_surface.addModule(std::move(module));
             }
@@ -737,80 +737,80 @@ namespace SeeDocs_App
             for (const Dom::Section& entry : list)
             {
                 Type type{
-                    .name = textOf(entry, Keys::name),
-                    .nameSpace = textOf(entry, Keys::nameSpace),
-                    .kind = typeKindOf(textOf(entry, Keys::kind)).value_or(TypeKind::Class),
-                    .module = textOf(entry, Keys::module),
-                    .templateParameters = textOf(entry, Keys::templateParameters),
-                    .bases = listOf(entry, Keys::bases),
-                    .target = textOf(entry, Keys::target),
-                    .scoped = flagOf(entry, Keys::scoped),
+                    .name = textOf(entry, Keys::Name),
+                    .nameSpace = textOf(entry, Keys::NameSpace),
+                    .kind = typeKindOf(textOf(entry, Keys::Kind)).value_or(TypeKind::Class),
+                    .module = textOf(entry, Keys::Module),
+                    .templateParameters = textOf(entry, Keys::TemplateParameters),
+                    .bases = listOf(entry, Keys::Bases),
+                    .target = textOf(entry, Keys::Target),
+                    .scoped = flagOf(entry, Keys::Scoped),
                     .exported = true,
-                    .isControl = flagOf(entry, Keys::control),
-                    .folder = textOf(entry, Keys::folder)
+                    .isControl = flagOf(entry, Keys::Control),
+                    .folder = textOf(entry, Keys::Folder)
                 };
                 type.qualifiedName = qualifiedNameOf(type.nameSpace, type.name);
                 const std::size_t file = fileOf(entry, type.module);
                 type.place = placeOf(entry, file);
                 type.comment = commentOf(entry);
 
-                for (const Dom::Section& item : itemsOf(entry, Keys::properties))
+                for (const Dom::Section& item : itemsOf(entry, Keys::Properties))
                 {
                     type.properties.push_back({
-                        .name = textOf(item, Keys::name),
-                        .type = textOf(item, Keys::type),
-                        .accepts = listOf(item, Keys::accepts),
-                        .defaultValue = textOf(item, Keys::defaultValue),
-                        .setter = textOf(item, Keys::setter),
-                        .target = textOf(item, Keys::target),
-                        .form = formOf(textOf(item, Keys::form)).value_or(PropertyForm::Declared),
-                        .valueKind = textOf(item, Keys::valueKind),
-                        .optional = flagOf(item, Keys::optional),
+                        .name = textOf(item, Keys::Name),
+                        .type = textOf(item, Keys::Type),
+                        .accepts = listOf(item, Keys::Accepts),
+                        .defaultValue = textOf(item, Keys::DefaultValue),
+                        .setter = textOf(item, Keys::Setter),
+                        .target = textOf(item, Keys::Target),
+                        .form = formOf(textOf(item, Keys::Form)).value_or(PropertyForm::Declared),
+                        .valueKind = textOf(item, Keys::ValueKind),
+                        .optional = flagOf(item, Keys::Optional),
                         .access = accessIn(item),
                         .place = placeOf(item, file),
                         .comment = commentOf(item)
                     });
                 }
-                for (const Dom::Section& item : itemsOf(entry, Keys::events))
+                for (const Dom::Section& item : itemsOf(entry, Keys::Events))
                 {
                     type.events.push_back({
-                        .type = textOf(item, Keys::name),
-                        .alias = textOf(item, Keys::alias),
-                        .method = textOf(item, Keys::method),
+                        .type = textOf(item, Keys::Name),
+                        .alias = textOf(item, Keys::Alias),
+                        .method = textOf(item, Keys::Method),
                         .access = accessIn(item),
                         .place = placeOf(item, file),
                         .comment = commentOf(item)
                     });
                 }
-                for (const Dom::Section& item : itemsOf(entry, Keys::methods))
+                for (const Dom::Section& item : itemsOf(entry, Keys::Methods))
                     type.functions.push_back(functionOf(item, file, true));
-                for (const Dom::Section& item : itemsOf(entry, Keys::usings))
+                for (const Dom::Section& item : itemsOf(entry, Keys::Usings))
                 {
                     type.usings.push_back({
-                        .base = textOf(item, Keys::base),
-                        .name = textOf(item, Keys::name),
+                        .base = textOf(item, Keys::Base),
+                        .name = textOf(item, Keys::Name),
                         .access = accessIn(item),
                         .place = placeOf(item, file),
                         .comment = commentOf(item)
                     });
                 }
-                for (const Dom::Section& item : itemsOf(entry, Keys::fields))
+                for (const Dom::Section& item : itemsOf(entry, Keys::Fields))
                     type.fields.push_back(fieldOf(item, file, true));
-                for (const Dom::Section& item : itemsOf(entry, Keys::members))
+                for (const Dom::Section& item : itemsOf(entry, Keys::Members))
                 {
                     type.members.push_back({
-                        .name = textOf(item, Keys::name),
-                        .value = textOf(item, Keys::value),
+                        .name = textOf(item, Keys::Name),
+                        .value = textOf(item, Keys::Value),
                         .place = placeOf(item, file),
                         .comment = commentOf(item)
                     });
                 }
-                for (const Dom::Section& item : itemsOf(entry, Keys::restates))
+                for (const Dom::Section& item : itemsOf(entry, Keys::Restates))
                 {
                     type.restatements.push_back({
-                        .type = textOf(item, Keys::type),
-                        .value = textOf(item, Keys::value),
-                        .fixed = flagOf(item, Keys::fixed),
+                        .type = textOf(item, Keys::Type),
+                        .value = textOf(item, Keys::Value),
+                        .fixed = flagOf(item, Keys::Fixed),
                         .place = placeOf(item, file)
                     });
                 }
@@ -823,8 +823,8 @@ namespace SeeDocs_App
             for (const Dom::Section& entry : list)
             {
                 FreeFunction free{
-                    .nameSpace = textOf(entry, Keys::nameSpace),
-                    .module = textOf(entry, Keys::module),
+                    .nameSpace = textOf(entry, Keys::NameSpace),
+                    .module = textOf(entry, Keys::Module),
                     .exported = true
                 };
                 const std::size_t file = fileOf(entry, free.module);
@@ -838,21 +838,21 @@ namespace SeeDocs_App
             for (const Dom::Section& entry : list)
             {
                 Variable variable{
-                    .nameSpace = textOf(entry, Keys::nameSpace),
-                    .module = textOf(entry, Keys::module),
+                    .nameSpace = textOf(entry, Keys::NameSpace),
+                    .module = textOf(entry, Keys::Module),
                     .exported = true
                 };
                 const std::size_t file = fileOf(entry, variable.module);
                 variable.field = fieldOf(entry, file, false);
-                variable.declaration = textOf(entry, Keys::declaration);
+                variable.declaration = textOf(entry, Keys::Declaration);
                 m_surface.addVariable(std::move(variable));
             }
         }
 
         std::size_t Reader::fileOf(const Dom::Section& entry, const std::wstring& module)
         {
-            const std::wstring relative = textOf(entry, Keys::file);
-            const std::size_t root = numberOf(entry, Keys::root);
+            const std::wstring relative = textOf(entry, Keys::File);
+            const std::size_t root = numberOf(entry, Keys::Root);
             const auto found = m_files.find({ root, relative });
             if (found != m_files.end())
                 return found->second;
@@ -868,13 +868,13 @@ namespace SeeDocs_App
 
         Place Reader::placeOf(const Dom::Section& entry, const std::size_t file)
         {
-            return { .file = file, .line = numberOf(entry, Keys::line) };
+            return { .file = file, .line = numberOf(entry, Keys::Line) };
         }
 
         Comment Reader::commentOf(const Dom::Section& entry)
         {
-            Comment comment{ .text = textOf(entry, Keys::hint) };
-            const std::wstring note = textOf(entry, Keys::note);
+            Comment comment{ .text = textOf(entry, Keys::Hint) };
+            const std::wstring note = textOf(entry, Keys::Note);
             if (note.empty())
                 return comment;
             const std::size_t hash = note.find(L'#');
@@ -887,26 +887,26 @@ namespace SeeDocs_App
 
         Access Reader::accessIn(const Dom::Section& entry)
         {
-            return accessOf(textOf(entry, Keys::access)).value_or(Access::Public);
+            return accessOf(textOf(entry, Keys::Access)).value_or(Access::Public);
         }
 
         Function Reader::functionOf(const Dom::Section& entry, const std::size_t file,
             const bool member)
         {
             Function function{
-                .name = textOf(entry, Keys::name),
-                .kind = functionKindOf(textOf(entry, Keys::kind)).value_or(FunctionKind::Function),
-                .signature = textOf(entry, Keys::signature),
-                .returnType = textOf(entry, Keys::type),
-                .templateParameters = textOf(entry, Keys::templateParameters),
+                .name = textOf(entry, Keys::Name),
+                .kind = functionKindOf(textOf(entry, Keys::Kind)).value_or(FunctionKind::Function),
+                .signature = textOf(entry, Keys::Signature),
+                .returnType = textOf(entry, Keys::Type),
+                .templateParameters = textOf(entry, Keys::TemplateParameters),
                 .place = placeOf(entry, file),
                 .comment = commentOf(entry)
             };
             if (member)
             {
-                function.isStatic = flagOf(entry, Keys::isStatic);
-                function.isVirtual = flagOf(entry, Keys::isVirtual);
-                function.isDeleted = flagOf(entry, Keys::isDeleted);
+                function.isStatic = flagOf(entry, Keys::IsStatic);
+                function.isVirtual = flagOf(entry, Keys::IsVirtual);
+                function.isDeleted = flagOf(entry, Keys::IsDeleted);
                 function.access = accessIn(entry);
             }
             return function;
@@ -915,16 +915,16 @@ namespace SeeDocs_App
         Field Reader::fieldOf(const Dom::Section& entry, const std::size_t file, const bool member)
         {
             Field field{
-                .name = textOf(entry, Keys::name),
-                .type = textOf(entry, Keys::type),
-                .value = textOf(entry, Keys::value),
-                .isConstant = flagOf(entry, Keys::isConstant),
+                .name = textOf(entry, Keys::Name),
+                .type = textOf(entry, Keys::Type),
+                .value = textOf(entry, Keys::Value),
+                .isConstant = flagOf(entry, Keys::IsConstant),
                 .place = placeOf(entry, file),
                 .comment = commentOf(entry)
             };
             if (member)
             {
-                field.isStatic = flagOf(entry, Keys::isStatic);
+                field.isStatic = flagOf(entry, Keys::IsStatic);
                 field.access = accessIn(entry);
             }
             return field;
@@ -934,16 +934,16 @@ namespace SeeDocs_App
         [[nodiscard]] Surface surfaceOf(const Dom::Section& root)
         {
             Surface surface;
-            surface.setScanned(stampOf(textOf(root, Keys::scanned)));
-            surface.setMode(flagOf(root, Keys::limited) ? ScanMode::Limited : ScanMode::Full);
-            surface.setHintRules(flagOf(root, Keys::looseHints)
+            surface.setScanned(stampOf(textOf(root, Keys::Scanned)));
+            surface.setMode(flagOf(root, Keys::Limited) ? ScanMode::Limited : ScanMode::Full);
+            surface.setHintRules(flagOf(root, Keys::LooseHints)
                 ? HintRules::Loose
                 : HintRules::Strict);
             Reader reader{ surface };
-            reader.readModules(itemsOf(root, Keys::modules));
-            reader.readTypes(itemsOf(root, Keys::types));
-            reader.readFunctions(itemsOf(root, Keys::functions));
-            reader.readConstants(itemsOf(root, Keys::constants));
+            reader.readModules(itemsOf(root, Keys::Modules));
+            reader.readTypes(itemsOf(root, Keys::Types));
+            reader.readFunctions(itemsOf(root, Keys::Functions));
+            reader.readConstants(itemsOf(root, Keys::Constants));
             return surface;
         }
     }
@@ -952,35 +952,35 @@ namespace SeeDocs_App
     {
         using namespace Dom::Dt;
         return {
-            Value{ Keys::scanned, std::wstring{} },
-            Value{ Keys::limited, false },
-            Value{ Keys::looseHints, false },
-            Sequence{ Keys::modules, moduleLayout() },
-            Sequence{ Keys::types, typeLayout() },
+            Value{ Keys::Scanned, std::wstring{} },
+            Value{ Keys::Limited, false },
+            Value{ Keys::LooseHints, false },
+            Sequence{ Keys::Modules, moduleLayout() },
+            Sequence{ Keys::Types, typeLayout() },
             Sequence
             {
-                Keys::functions,
+                Keys::Functions,
                 Section
                 {
                     placedEntry(),
                     scopedEntry(),
-                    Value{ Keys::kind, std::wstring{} },
-                    Value{ Keys::signature, std::wstring{} },
-                    Value{ Keys::type, std::wstring{} },
-                    Value{ Keys::templateParameters, std::wstring{} }
+                    Value{ Keys::Kind, std::wstring{} },
+                    Value{ Keys::Signature, std::wstring{} },
+                    Value{ Keys::Type, std::wstring{} },
+                    Value{ Keys::TemplateParameters, std::wstring{} }
                 }
             },
             Sequence
             {
-                Keys::constants,
+                Keys::Constants,
                 Section
                 {
                     placedEntry(),
                     scopedEntry(),
-                    Value{ Keys::type, std::wstring{} },
-                    Value{ Keys::value, std::wstring{} },
-                    Value{ Keys::isConstant, false },
-                    Value{ Keys::declaration, std::wstring{} }
+                    Value{ Keys::Type, std::wstring{} },
+                    Value{ Keys::Value, std::wstring{} },
+                    Value{ Keys::IsConstant, false },
+                    Value{ Keys::Declaration, std::wstring{} }
                 }
             }
         };
@@ -998,14 +998,14 @@ namespace SeeDocs_App
         const KeyOrders orders = keyOrdersOf(layout);
 
         Entry root{ orders.root };
-        root.setText(Keys::scanned, stampText(surface.scanned()));
-        root.setFlag(Keys::limited, surface.mode() == ScanMode::Limited);
-        root.setFlag(Keys::looseHints, surface.hintRules() == HintRules::Loose);
+        root.setText(Keys::Scanned, stampText(surface.scanned()));
+        root.setFlag(Keys::Limited, surface.mode() == ScanMode::Limited);
+        root.setFlag(Keys::LooseHints, surface.hintRules() == HintRules::Loose);
 
         Items modules;
         for (const Module& module : surface.modules())
             modules.push_back(moduleEntry(orders, surface, module));
-        root.setItems(Keys::modules, std::move(modules));
+        root.setItems(Keys::Modules, std::move(modules));
 
         Items types;
         for (const Type& type : surface.types())
@@ -1013,7 +1013,7 @@ namespace SeeDocs_App
             if (type.isPublic())
                 types.push_back(typeEntry(orders, surface, type));
         }
-        root.setItems(Keys::types, std::move(types));
+        root.setItems(Keys::Types, std::move(types));
 
         Items functions;
         for (const FreeFunction& free : surface.functions())
@@ -1021,13 +1021,13 @@ namespace SeeDocs_App
             Entry entry{ orders.function };
             setPlaced(entry, free.function.name, free.function.place, free.function.comment);
             setScoped(entry, surface, free.nameSpace, free.module, free.function.place);
-            entry.setText(Keys::kind, kindWord(free.function.kind));
-            entry.setText(Keys::signature, free.function.signature);
-            entry.setText(Keys::type, free.function.returnType);
-            entry.setText(Keys::templateParameters, free.function.templateParameters);
+            entry.setText(Keys::Kind, kindWord(free.function.kind));
+            entry.setText(Keys::Signature, free.function.signature);
+            entry.setText(Keys::Type, free.function.returnType);
+            entry.setText(Keys::TemplateParameters, free.function.templateParameters);
             functions.push_back(entry.finish());
         }
-        root.setItems(Keys::functions, std::move(functions));
+        root.setItems(Keys::Functions, std::move(functions));
 
         Items constants;
         for (const Variable& variable : surface.variables())
@@ -1035,16 +1035,16 @@ namespace SeeDocs_App
             Entry entry{ orders.constant };
             setPlaced(entry, variable.field.name, variable.field.place, variable.field.comment);
             setScoped(entry, surface, variable.nameSpace, variable.module, variable.field.place);
-            entry.setText(Keys::type, variable.field.type);
-            entry.setText(Keys::value, variable.field.value);
-            entry.setFlag(Keys::isConstant, variable.field.isConstant);
-            entry.setText(Keys::declaration, variable.declaration);
+            entry.setText(Keys::Type, variable.field.type);
+            entry.setText(Keys::Value, variable.field.value);
+            entry.setFlag(Keys::IsConstant, variable.field.isConstant);
+            entry.setText(Keys::Declaration, variable.declaration);
             constants.push_back(entry.finish());
         }
-        root.setItems(Keys::constants, std::move(constants));
+        root.setItems(Keys::Constants, std::move(constants));
 
         m_root = root.finish();
-        clock.lap(Steps::fillDocument);
+        clock.lap(Steps::FillDocument);
     }
 
     Database::~Database() = default;
@@ -1054,7 +1054,7 @@ namespace SeeDocs_App
         StepClock clock{ m_steps };
         const Dom::FileFormat::ClaFi format{};
         const bool written = format.saveSectionToFile(*m_root, path);
-        clock.lap(Steps::saveDatabase);
+        clock.lap(Steps::SaveDatabase);
         return written;
     }
 
@@ -1062,7 +1062,7 @@ namespace SeeDocs_App
     {
         StepClock clock{ m_steps };
         Surface surface = surfaceOf(*m_root);
-        clock.lap(Steps::readDocument);
+        clock.lap(Steps::ReadDocument);
         return surface;
     }
 
@@ -1084,9 +1084,9 @@ namespace SeeDocs_App
         };
         if (!document.load())
             return std::nullopt;
-        clock.lap(Steps::loadDatabase);
+        clock.lap(Steps::LoadDatabase);
         Surface surface = surfaceOf(document);
-        clock.lap(Steps::readDocument);
+        clock.lap(Steps::ReadDocument);
         return surface;
     }
 

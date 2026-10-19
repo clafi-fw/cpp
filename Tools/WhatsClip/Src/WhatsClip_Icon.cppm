@@ -513,7 +513,7 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
             PathSink sink{ path, throughLens };
             const std::array<float, 4> radii{ band.topRadius, band.topRadius, band.bottomRadius, band.bottomRadius };
             addRoundedQuad(sink, quadOf(leaf, band), radii);
-            canvas.drawPath(path, { PathDrawLayer::fill(band.color) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Fill(band.color) }, &transform);
         }
 
         void drawLeafShape(Canvas& canvas, const Matrix3x2& transform, const bool throughLens,
@@ -536,25 +536,25 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
                 for (const Band& band : k_backBands)
                     fillBand(canvas, transform, false, back, band);
 
-                drawLeafShape(canvas, transform, false, k_backLeaf, PathDrawLayer::stroke(k_frameEdgeColor, k_leafEdgeWidth));
+                drawLeafShape(canvas, transform, false, k_backLeaf, PathDrawLayer::Stroke(k_frameEdgeColor, k_leafEdgeWidth));
 
                 for (const Band& band : k_frontBands)
                     fillBand(canvas, transform, false, front, band);
 
-                drawLeafShape(canvas, transform, false, k_frontLeaf, PathDrawLayer::stroke(k_frameEdgeColor, k_leafEdgeWidth));
+                drawLeafShape(canvas, transform, false, k_frontLeaf, PathDrawLayer::Stroke(k_frameEdgeColor, k_leafEdgeWidth));
 
                 return;
             }
 
             // The back leaf and its content go down before the front leaf covers them. A line
             // drawn after would run across the sheet standing over it.
-            drawLeafShape(canvas, transform, true, k_backLeaf, PathDrawLayer::fill(k_paperBack));
+            drawLeafShape(canvas, transform, true, k_backLeaf, PathDrawLayer::Fill(k_paperBack));
             for (const Band& band : k_backLines)
                 fillBand(canvas, transform, true, back, band);
 
-            drawLeafShape(canvas, transform, true, k_backLeaf, PathDrawLayer::stroke(k_paperEdge, k_paperEdgeWidth));
-            drawLeafShape(canvas, transform, true, k_frontLeaf, PathDrawLayer::fill(k_paperFront));
-            drawLeafShape(canvas, transform, true, k_frontLeaf, PathDrawLayer::stroke(k_paperEdge, k_paperEdgeWidth));
+            drawLeafShape(canvas, transform, true, k_backLeaf, PathDrawLayer::Stroke(k_paperEdge, k_paperEdgeWidth));
+            drawLeafShape(canvas, transform, true, k_frontLeaf, PathDrawLayer::Fill(k_paperFront));
+            drawLeafShape(canvas, transform, true, k_frontLeaf, PathDrawLayer::Stroke(k_paperEdge, k_paperEdgeWidth));
 
             for (const Band& band : k_frontLines)
                 fillBand(canvas, transform, true, front, band);
@@ -566,12 +566,12 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
             PathSink sink{ path, false };
 
             addCircle(sink, k_glassCenter, k_lensRadius - k_rimInset);
-            canvas.drawPath(path, { PathDrawLayer::stroke(k_rimShade, k_rimWidth) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Stroke(k_rimShade, k_rimWidth) }, &transform);
 
             path.clear();
             addArc(sink, k_glassCenter, k_highlightRadius,
                 k_highlightFromDegrees, k_highlightToDegrees, k_highlightSteps);
-            canvas.drawPath(path, { PathDrawLayer::stroke(k_highlight, k_highlightWidth) }, &transform);
+            canvas.drawPath(path, { PathDrawLayer::Stroke(k_highlight, k_highlightWidth) }, &transform);
 
             PixelPath ring;
             PathSink ringSink{ ring, false };
@@ -584,11 +584,11 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
             // **Both edges before either fill.** Where the ring and the tail meet, the fill covers
             // the edge under it and only the fringe outside the two shapes is left showing.
             canvas.drawPath(ring,
-                { PathDrawLayer::stroke(k_frameEdgeColor, k_glassWidth + k_frameEdgeWidth * 2.0f) }, &transform);
+                { PathDrawLayer::Stroke(k_frameEdgeColor, k_glassWidth + k_frameEdgeWidth * 2.0f) }, &transform);
             canvas.drawPath(tail,
-                { PathDrawLayer::stroke(k_frameEdgeColor, k_frameEdgeWidth * 2.0f) }, &transform);
-            canvas.drawPath(tail, { PathDrawLayer::fill(k_frameColor) }, &transform);
-            canvas.drawPath(ring, { PathDrawLayer::stroke(k_frameColor, k_glassWidth) }, &transform);
+                { PathDrawLayer::Stroke(k_frameEdgeColor, k_frameEdgeWidth * 2.0f) }, &transform);
+            canvas.drawPath(tail, { PathDrawLayer::Fill(k_frameColor) }, &transform);
+            canvas.drawPath(ring, { PathDrawLayer::Stroke(k_frameColor, k_glassWidth) }, &transform);
         }
     }
 }

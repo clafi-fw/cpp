@@ -21,7 +21,7 @@ namespace ClaFi::Icons::WipeIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         const float size = std::min(iconRect.width(), iconRect.height()) - strokeWidth;
 
-        const Matrix3x2 transform = Matrix3x2::translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
@@ -40,7 +40,7 @@ namespace ClaFi::Icons::WipeIcon
         path.close();
         path.moveTo(size * 0.48f, size * 0.42f);
         path.lineTo(size * 0.86f, size * 0.58f);
-        canvas.drawPath(path, { PathDrawLayer::stroke(bodyColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
 
         // The trail, running off the leading edge of the box and shortening away from the eraser,
         // which is what says the block has been travelling rather than merely standing there.
@@ -49,7 +49,7 @@ namespace ClaFi::Icons::WipeIcon
         path.lineTo(size * 0.32f, size * 0.30f);
         path.moveTo(0.0f, size * 0.66f);
         path.lineTo(size * 0.24f, size * 0.66f);
-        canvas.drawPath(path, { PathDrawLayer::stroke(accentColor, strokeWidth) }, &transform);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(accentColor, strokeWidth) }, &transform);
     }
 
 }

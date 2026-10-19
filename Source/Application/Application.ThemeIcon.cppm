@@ -129,8 +129,8 @@ namespace ClaFi
         {
             RoundedRectangleParts backgroundPart{
                 .bounds = rect,
-                .radii = CornerRadii::topSideRound(cornerRadius),
-                .sides = RectSides::all()
+                .radii = CornerRadii::TopSideRound(cornerRadius),
+                .sides = RectSides::All()
             };
             backgroundPart.bounds.bottom = titleBottom + 1.0f;
             canvas.fillPartialRoundedRectangle(backgroundPart, sample.title);
@@ -145,8 +145,8 @@ namespace ClaFi
                     rect.right,
                     bodyBottom
                 },
-                .radii = CornerRadii::square(),
-                .sides = RectSides::all()
+                .radii = CornerRadii::Square(),
+                .sides = RectSides::All()
             };
             canvas.fillPartialRoundedRectangle(backgroundPart, sample.section);
         }
@@ -155,8 +155,8 @@ namespace ClaFi
         {
             RoundedRectangleParts backgroundPart{
                 .bounds = rect,
-                .radii = CornerRadii::bottomSideRound(cornerRadius),
-                .sides = RectSides::all()
+                .radii = CornerRadii::BottomSideRound(cornerRadius),
+                .sides = RectSides::All()
             };
             backgroundPart.bounds.top = bottomBarTop;
             canvas.fillPartialRoundedRectangle(backgroundPart, sample.toolBar);
