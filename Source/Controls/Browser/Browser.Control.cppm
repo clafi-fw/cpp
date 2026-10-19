@@ -223,6 +223,8 @@ namespace ClaFi::Browser
         // Puts a control at the end of the crumb bar, past the crumbs - a search box, as a rule.
         template<typename ControlClass, typename... Args>
         ControlClass& createCrumbBarEnd(Args&&...);
+        // Puts a button for the command after Back, Forward, Up and any put there before.
+        ToolButton& addNavigationButton(Action&);
     public:
         // Opens a tab on the home page, which is where a browser with nothing said to it starts.
         void addTab();
@@ -416,6 +418,7 @@ namespace ClaFi::Browser
         // standing in the tree.
         [[nodiscard]] bool isPageInUse(const PageData&) const;
     private:
+        static constexpr float k_navigationIconSize{ 18.0f };   // the navigation bar's buttons
         PageData m_homePageData{ nullptr, ConfigNames::HomePage };
         PageData* m_selectedPageData{};
         // The page a fetch is running for, and how many of its sub-items that fetch has named so
@@ -477,19 +480,19 @@ namespace ClaFi::Browser
             Orientation::Horizontal
         ) };
         Button& m_backButton{ m_navigationBar.add<ToolButton>(
-            IconSize{ 18.0f },
+            IconSize{ k_navigationIconSize },
             ButtonViewMode::IconOnly,
             Actions::back,
             Interactivity::MouseOnly
         ) };
         Button& m_forwardButton{ m_navigationBar.add<ToolButton>(
-            IconSize{ 18.0f },
+            IconSize{ k_navigationIconSize },
             ButtonViewMode::IconOnly,
             Actions::forward,
             Interactivity::MouseOnly
         ) };
         Button& m_upButton{ m_navigationBar.add<ToolButton>(
-            IconSize{ 18.0f },
+            IconSize{ k_navigationIconSize },
             ButtonViewMode::IconOnly,
             ButtonBase::OnPaintIcon{ Icons::BrowseUpIcon::paint },
             L"Up"

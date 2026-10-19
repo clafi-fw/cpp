@@ -66,20 +66,6 @@ namespace SeeDocs_App
             return result;
         }
 
-        [[nodiscard]] bool isTreeProject(const std::filesystem::path& folder)
-        {
-            return folder.filename().wstring() == k_treeProjectFolder;
-        }
-
-        // The name a project goes by where it states none: its folder's, or for a tree's project
-        // folder, the tree's.
-        [[nodiscard]] std::wstring nameOfFolder(const std::filesystem::path& folder)
-        {
-            if (isTreeProject(folder))
-                return folder.parent_path().filename().wstring();
-            return folder.filename().wstring();
-        }
-
         // How many folders deep a path stands under the root of its volume.
         [[nodiscard]] std::size_t depthOf(const std::filesystem::path& path)
         {
@@ -93,9 +79,9 @@ namespace SeeDocs_App
         }
 
         // **A folder picked is written relative to the project** while the two share a folder
-        // under the root of their volume - a tree's project and its tree, a project kept beside
-        // the sources - so that they move together, and a project kept in a repository names no
-        // place outside it. Any other is written as it stands.
+        // under the root of their volume - a project kept inside its sources or beside them - so
+        // that they move together, and a project kept in a repository names no place outside it.
+        // Any other is written as it stands.
         [[nodiscard]] std::wstring storedPath(const std::filesystem::path& picked,
             const std::filesystem::path& folder)
         {
@@ -174,7 +160,7 @@ namespace SeeDocs_App
 
     std::wstring Project::folderName() const
     {
-        return nameOfFolder(folder);
+        return folder.filename().wstring();
     }
 
     bool Project::writesHints() const
@@ -182,31 +168,17 @@ namespace SeeDocs_App
         return edits == HintEdits::Direct && hints == HintRules::Strict;
     }
 
-    std::optional<std::filesystem::path> projectFolderOf(const std::filesystem::path& named)
+    // **A project reads what its properties name** and nothing besides: one kept inside the tree
+    // it reads names the tree as `..`, as any other source. Properties that state no name leave
+    // the project named after its folder.
+    std::optional<Project> readProject(const std::filesystem::path& named)
     {
         const std::filesystem::path folder = cleanFolder(named);
         std::error_code error;
-        if (std::filesystem::is_regular_file(folder / k_projectFileName, error))
-            return folder;
-        if (isTreeProject(folder) && std::filesystem::is_directory(folder, error))
-            return folder;
-        const std::filesystem::path inTree = folder / k_treeProjectFolder;
-        if (std::filesystem::is_directory(inTree, error))
-            return inTree;
-        return std::nullopt;
-    }
-
-    // **A project reads what its properties name** and nothing besides: a tree's project names its
-    // tree as `..`, as any other source. A folder with no properties in it, or with no name in
-    // them, is a project still, named after its folder.
-    std::optional<Project> readProject(const std::filesystem::path& named)
-    {
-        const std::optional<std::filesystem::path> found = projectFolderOf(named);
-        if (!found)
+        if (!std::filesystem::is_regular_file(folder / k_projectFileName, error))
             return std::nullopt;
 
-        const std::filesystem::path& folder = *found;
-        Project project{ .folder = folder, .name = nameOfFolder(folder) };
+        Project project{ .folder = folder, .name = folder.filename().wstring() };
         ProjectDocument document{
             folder / k_projectFileName,
             Dom::AutoSave::No,

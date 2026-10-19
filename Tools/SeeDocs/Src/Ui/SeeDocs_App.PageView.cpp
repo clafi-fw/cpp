@@ -28,6 +28,7 @@ import ClaFi.Controls.Base.WithEditMode;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.Context.PaintIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
@@ -165,8 +166,8 @@ namespace SeeDocs_App
             const bool counts = left.lead.empty() == right.lead.empty()
                 && left.leadSite.has_value() == right.leadSite.has_value()
                 && sameShape(left.facts, right.facts)
-                && left.links.empty() == right.links.empty()
                 && left.sections.size() == right.sections.size()
+                && left.titleCommands.size() == right.titleCommands.size()
                 && left.commands.size() == right.commands.size();
             if (!counts)
                 return false;
@@ -228,10 +229,11 @@ namespace SeeDocs_App
             to.leadSite = std::move(from.leadSite);
             for (std::size_t i = 0; i != to.facts.size(); ++i)
                 to.facts[i] = std::move(from.facts[i]);
-            to.links = std::move(from.links);
             for (std::size_t i = 0; i != to.sections.size(); ++i)
                 moveWords(to.sections[i], from.sections[i]);
             to.footnoteHome = std::move(from.footnoteHome);
+            for (std::size_t i = 0; i != to.titleCommands.size(); ++i)
+                to.titleCommands[i] = std::move(from.titleCommands[i]);
             for (std::size_t i = 0; i != to.commands.size(); ++i)
                 to.commands[i] = std::move(from.commands[i]);
         }
@@ -276,6 +278,10 @@ namespace SeeDocs_App
                     return std::nullopt;
                 case PageKind::Search:
                     return RowIcon::Search;
+                case PageKind::Options:
+                    return RowIcon::Options;
+                case PageKind::Sidebar:
+                    return RowIcon::Sidebar;
                 case PageKind::List:
                 case PageKind::Member:
                     break;
@@ -290,6 +296,14 @@ namespace SeeDocs_App
                 return rowIconOf(*row.type);
             if (row.pageKind.has_value())
                 return iconOf(*row.pageKind, nullptr);
+            return std::nullopt;
+        }
+
+        // A command wears the mark of the page its link opens.
+        [[nodiscard]] std::optional<RowIcon> iconOf(const Command& command)
+        {
+            if (command.pageKind.has_value())
+                return iconOf(*command.pageKind, nullptr);
             return std::nullopt;
         }
 
@@ -392,9 +406,10 @@ namespace SeeDocs_App
     // must not outlive it.
     void PageHead::write(const Page& page)
     {
+        const std::optional<RowIcon> icon = iconOf(page.kind, page.type);
         Text head;
         head << TextStyle::Title;
-        writeIcon(head, iconOf(page.kind, page.type));
+        writeIcon(head, icon);
         writeRuns(head, page.scope);
         head << page.title << PopTextStyle{};
         if (!page.badges.empty())
@@ -411,6 +426,8 @@ namespace SeeDocs_App
         m_title.text() = head;
         m_bases1.setBases(page.bases);
         m_bases2.setBases(page.bases);
+        const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
+        m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
     }
 
     void PageHead::write(const std::optional<RowIcon> icon, const std::wstring_view title)
@@ -451,7 +468,6 @@ namespace SeeDocs_App
         addHead();
         addLead();
         addFacts();
-        addLinks();
         for (const Section& section : m_page.sections)
         {
             if (section.kind == SectionKind::Signature)
@@ -491,7 +507,8 @@ namespace SeeDocs_App
                     break;
             }
         }
-        addCommands();
+        addCommands(m_head.titleCommandBar(), m_page.titleCommands);
+        addCommands(m_head.commandBar(), m_page.commands);
         render();
         invalidateFormAlign();
         m_pageBox.scrollToBegin();
@@ -733,24 +750,6 @@ namespace SeeDocs_App
         }
         connectLinks(grid);
         m_parts.push_back(&grid);
-    }
-
-    // The page's own links on a line of their own, ahead of the sections.
-    void PageView::addLinks()
-    {
-        if (m_page.links.empty())
-            return;
-        TextBox& box = m_pageBox.body().add<TextBox>(
-            ReadOnly::Yes,
-            EditModeSwitching::Yes,
-            Padding{ 0.0f }
-        );
-        connectLinks(box);
-        m_parts.push_back(&box);
-        anchorItem(std::wstring{ k_linksAnchor }, {}, box);
-        m_renders.push_back([this, &box]() {
-            box.text() = textOf(m_page.links);
-        });
     }
 
     // An expander in the page's look - the section's heading as its label, its count in the
@@ -1038,11 +1037,10 @@ namespace SeeDocs_App
         m_parts.push_back(&block);
     }
 
-    void PageView::addCommands()
+    void PageView::addCommands(StackPanel& bar, const Commands& commands)
     {
-        StackPanel& bar = m_head.commandBar();
-        bar.setVisible(!m_page.commands.empty());
-        for (const Command& command : m_page.commands)
+        bar.setVisible(!commands.empty());
+        for (const Command& command : commands)
         {
             Button& button = bar.add<Button>();
             connectCommand(button, command);
@@ -1318,8 +1316,18 @@ namespace SeeDocs_App
 
     void PageView::connectCommand(Button& button, const Command& command)
     {
-        button.onClick([this, &command](ClickEvent&) {
-            ask(command.target);
+        if (const std::optional<RowIcon> icon = iconOf(command))
+        {
+            button.setViewMode(ButtonViewMode::LeftIcon);
+            button.onPaintIcon([mark = *icon](PaintIconEvent& event) {
+                paintRowIcon(event, mark);
+            });
+        }
+        button.onClick([this, &button, &command](ClickEvent&) {
+            if (command.link.empty())
+                ask(command.target);
+            else
+                open(command.link, button);
         });
         m_renders.push_back([&button, &command]() {
             button.text() = Text{ command.text };

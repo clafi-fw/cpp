@@ -104,7 +104,7 @@ namespace SeeDocs_App
         // Shows the project, its database scanned first where it has none or was read otherwise
         // than the project asks.
         void openProject(Project, HomeTab);
-        // The open project the folder stands for, by its own folder.
+        // The open project kept in the folder.
         [[nodiscard]] OpenProject* openFor(const std::filesystem::path& folder) const;
         void close(OpenProject&);
         // Keeps the projects in this order, which the browser shows and the next start reads.

@@ -3275,9 +3275,8 @@ namespace SeeDocs_App
         {
         }
 
-        // A folder whose name starts with a dot is left out with everything under it - .seedocs,
-        // .git, .vs - which is what the recursion has to be told before the step that would
-        // enter it.
+        // A folder whose name starts with a dot - .git, .vs - is left out with everything under it,
+        // which is what the recursion has to be told before the step that would enter it.
         void FileGathering::take(const SourceFolder& folder, const std::size_t root)
         {
             std::error_code error;

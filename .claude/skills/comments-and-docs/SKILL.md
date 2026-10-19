@@ -67,7 +67,7 @@ These rules hold for every kind of text in section 1.
   DECLARE_PROPERTY(SelectionMode, selectionMode, SelectionMode::None)
   ```
 
-- **Run the checker.** `SeeDocsCli check Source`, built from `Tools/SeeDocs` (its README has the build lines), reports every comment that breaks the length and placement rules on the declarations it reads, and every `See` that names a note or a heading the footnotes do not have.
+- **Run the checker.** `SeeDocsCli check Source/.seedocs`, built from `Tools/SeeDocs` (its README has the build lines), reports every comment that breaks the length and placement rules on the declarations it reads, and every `See` that names a note or a heading the footnotes do not have.
 
 ## 4. Footnotes and Working Notes
 

@@ -20,14 +20,10 @@ namespace SeeDocs_App
     // What tells the projects of the tree apart, given by whoever adds them.
     export using ProjectId = std::size_t;
 
-    // A project's options page, as its row and its crumb name it.
-    export constexpr std::wstring_view k_optionsTitle = L"Project options";
-
     // What a row of the surface tree opens.
     export enum class RowKind
     {
         Home,       // the project's own node: its home page
-        Options,    // the project's options page
         Contents    // a folder, a module or a type of its surface
     };
 
@@ -71,10 +67,10 @@ namespace SeeDocs_App
         std::vector<std::wstring> modules{};
     };
 
-    // **The open projects as a tree**, a node each: its options row and a line, then its folders,
-    // modules and types, read off the project's contents tree, which every tree shares. A node's
-    // rows are made the first time it opens, so a tree costs the rows it has shown. A click on a
-    // row picks what it names, and Open in new tab on the row's menu picks it for a new tab.
+    // **The open projects as a tree**, a node each holding its folders, modules and types, read off
+    // the project's contents tree, which every tree shares. A node's rows are made the first time it
+    // opens, so a tree costs the rows it has shown. A click on a row picks what it names, and Open
+    // in new tab on the row's menu picks it for a new tab.
     export class SurfaceTree : public TreeView
     {
     public:
@@ -102,8 +98,7 @@ namespace SeeDocs_App
         // current row, the nodes over it opened, and scrolls it into view. Nothing named makes the
         // project's own node current. Raises no pick.
         void follow(ProjectId, std::wstring_view folder, const ContentsModule*, const Type*);
-        void followHome(ProjectId);      // the project's own node, the same way
-        void followOptions(ProjectId);   // the project's options row, the same way
+        void followHome(ProjectId);   // the project's own node, the same way
         // The project's nodes standing open, a node folded away under a closed one included.
         [[nodiscard]] OpenRows openRows(ProjectId) const;
         // Opens the project's nodes named, each that names a row; raises no toggle.
@@ -123,15 +118,14 @@ namespace SeeDocs_App
         };
         using MadeRows = std::vector<MadeRow>;
         // One project's rows: the heavy line over its node where a project stands above it, the
-        // node, its options row and the line under it, and a made row per row of its contents.
+        // node, and a made row per row of its contents.
         struct ProjectRows
         {
             ProjectId id{};
             const ContentsTree* contents{ nullptr };
             TreeDivider* above{ nullptr };   // none for the first project
             TreeNode* node{ nullptr };
-            TreeItem* options{ nullptr };   // made with the rows of the node
-            TreeDivider* divider{ nullptr };
+            bool filled{ false };   // the node's rows are made
             std::vector<Control*> topRows{};   // the rows of the contents under the node
             MadeRows made{};
         };
@@ -147,8 +141,7 @@ namespace SeeDocs_App
     private:
         void connectActions();   // claims Open in new tab while a menu is up on a row
         [[nodiscard]] ProjectRows* rowsOf(ProjectId) const;
-        // Makes the rows under the project's node: the options row, the line and the top rows.
-        void fillProject(ProjectRows&);
+        void fillProject(ProjectRows&);   // makes the rows under the project's node
         // Makes the rows under a node of the contents.
         void fillRow(ProjectRows&, std::size_t index);
         void makeRow(ProjectRows&, std::size_t index, TreeNode& holder);
@@ -158,7 +151,7 @@ namespace SeeDocs_App
         // A node the user opens or closes says so, a node opening with no rows asks for them.
         void connectNode(ProjectRows&, TreeNode&, std::optional<std::size_t> index);
         void pick(const ProjectRows&, std::size_t index, PickTab);
-        void pickRow(ProjectId, RowKind, PickTab);   // the project's own node or its options row
+        void pickHome(ProjectId, PickTab);   // the project's own node
         // The row the control is or stands in, where it is one a pick opens.
         [[nodiscard]] std::optional<MenuRow> menuRowOf(const Control&) const;
         // Makes the row current, the project's node opened over it, and scrolls it into view.

@@ -15,13 +15,17 @@ namespace ClaFi::Icons::RestartIcon
     // from three o'clock, increasing clockwise.
     constexpr float k_startDegrees{ -50.0f };
     constexpr float k_sweepDegrees{ 300.0f };
-    // The ring as a share of the icon's half size, leaving the head's outer barb inside the box.
-    constexpr float k_radiusShare{ 0.68f };
-    constexpr float k_headLength{ 0.5f };
-    constexpr float k_headHalfWidth{ 0.35f };
     // The sweep is drawn in cubics, none longer than a quarter turn: a cubic holds a circle to a
     // hair at that length and drifts past it.
     constexpr int k_segments{ 4 };
+
+    // How large the ring and its head stand in the icon's square.
+    export struct RingShape
+    {
+        float radiusShare{ 0.68f };     // of the half size, the head's outer barb inside the box
+        float headLength{ 0.5f };       // of the radius, along the chord the head lies on
+        float headHalfWidth{ 0.35f };   // of the radius, to each side of that chord
+    };
 
     [[nodiscard]] float radiansOf(const float degrees)
     {
@@ -42,10 +46,10 @@ namespace ClaFi::Icons::RestartIcon
     // The ring in local space, in a square of `size`, which ResetIcon draws mirrored. Each
     // segment's control points lie on the tangents at its ends, at the distance that keeps the
     // curve on the circle.
-    export void buildRingPath(PixelPath& path, const float size)
+    export void buildRingPath(PixelPath& path, const float size, const RingShape& shape = {})
     {
         const FloatPoint center = { size * 0.5f };
-        const float radius = size * 0.5f * k_radiusShare;
+        const float radius = size * 0.5f * shape.radiusShare;
         const float step = radiansOf(k_sweepDegrees) / k_segments;
         const float handle = 4.0f / 3.0f * std::tan(step / 4.0f) * radius;
         float angle = radiansOf(k_startDegrees);
@@ -66,16 +70,17 @@ namespace ClaFi::Icons::RestartIcon
     // The head, an open chevron on the tip the ring arrives at. It lies along the chord of the
     // ring it covers, so the ring runs in between its legs - laid on the tangent at the tip, its
     // inner leg would lie along the ring. Separate from the ring because it carries the accent.
-    export void buildHeadPath(PixelPath& path, const float size)
+    export void buildHeadPath(PixelPath& path, const float size, const RingShape& shape = {})
     {
         const FloatPoint center = { size * 0.5f };
-        const float radius = size * 0.5f * k_radiusShare;
+        const float radius = size * 0.5f * shape.radiusShare;
         const float end = radiansOf(k_startDegrees + k_sweepDegrees);
         const FloatPoint tip = pointAt(center, radius, end);
         // Where the ring's tangent runs parallel to that chord - at the chord's middle.
-        const float axis = end - std::asin(k_headLength * 0.5f);
-        const FloatPoint back = -headingAt(axis) * (radius * k_headLength);
-        const FloatPoint aside = FloatPoint{ std::cos(axis), std::sin(axis) } * (radius * k_headHalfWidth);
+        const float axis = end - std::asin(shape.headLength * 0.5f);
+        const FloatPoint back = -headingAt(axis) * (radius * shape.headLength);
+        const FloatPoint aside = FloatPoint{ std::cos(axis), std::sin(axis) }
+            * (radius * shape.headHalfWidth);
         path.moveTo(tip + back + aside);
         path.lineTo(tip);
         path.lineTo(tip + back - aside);

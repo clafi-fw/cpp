@@ -14,9 +14,8 @@ SeeDocsCli check [folder]                       reports deviations, exit code 1 
 SeeDocs [folder]                                opens the project the folder stands for
 ```
 
-- **The folder** is a project's own folder, or a tree with a `.seedocs` project in it. For the
-  framework, that is its `Source/` folder. SeeDocsCli takes the working directory when the folder is
-  left out.
+- **The folder** is a project's own, the one its `Project.cfg` stands in. For the framework, that
+  is `Source/.seedocs`. SeeDocsCli takes the working directory when the folder is left out.
 - **A scan with `--out`** takes any folder, read as the one source folder of a project of ClaFi
   modules.
 - **`--time`** prints how long each step of the scan took, then the write of the database and the
@@ -82,12 +81,12 @@ A path stands as it was typed, and is read as a folder when the sources are read
 - Folders of one name under two sources are one folder.
 - A file two sources reach is read once, as the first of them found it.
 
-### A project inside a tree
+### A project inside its sources
 
-A project can live in a tree's `.seedocs` folder, and the tree then stands for it: `SeeDocsCli check
-Source` checks the project in `Source/.seedocs`. Such a project names its tree among its sources as
-`..`, the way any project names a folder. It reads only what it names, so with `..` removed it reads
-nothing.
+A project's folder may stand inside the tree it reads, as the framework's does in
+`Source/.seedocs`. It names the tree as `..`, the way any project names a folder, and the dot that
+starts its name keeps it out of the scan. Commands name the project's folder itself:
+`SeeDocsCli check Source/.seedocs` checks the framework.
 
 ## How it reads
 
@@ -96,8 +95,8 @@ nothing.
 Every `.cppm` and then every `.cpp` in the source folders is lexed with the framework's own C++
 lexer (`ClaFi.Core.Syntax`) and read declaration by declaration over the tokens.
 
-- **Dot folders are skipped.** A folder whose name starts with a dot - `.seedocs`, `.git`, `.vs` -
-  is skipped with everything under it.
+- **Dot folders are skipped.** A folder whose name starts with a dot - `.git`, `.vs` - is skipped
+  with everything under it.
 - **Macros are read, not expanded.** Nothing is compiled. A macro of the declaration routine -
   `DECLARE_PROPERTY`, `DECLARE_EVENT`, `BIND_PROPERTY_*`, `READ_PROPERTY`, `REQUIRE_PROPERTY` - is
   read as the declaration it stands for.
@@ -473,20 +472,23 @@ The menu's Settings page holds External editors under the framework's own option
 - **Visual Studio** goes to the line when its command starts it. One already running opens the file
   alone, since `/command` is run by the instance it starts.
 
-### The project's node and options page
+### The project's node and its own pages
 
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
-it stand its Project options row and a line that parts the row from the project's folders.
+it stand the project's folders.
 
-The options page is titled as every page is. Under the title stand:
+The home's head holds Options and Sidebar, which open the project's options page and its sidebar
+page. The sidebar page holds its title alone.
+
+The options page is titled Project options. Under the title stand:
 
 - **The project's name**, in heading type, in a box that renames it. Return or leaving the box keeps
   the name, Escape puts it back, and an emptied box gives the project its folder's name.
 - **The project's folder.**
 - **How long ago it was scanned**, with a Rescan button that reads the sources again.
 
-Its url is the project's with `/.project` after it. The scanner passes over names that start with a
-dot, so no folder can take it.
+The two pages' urls are the project's with `/.project` and `/.sidebar` after it. The scanner passes
+over names that start with a dot, so no folder can take them.
 
 #### Sources
 
@@ -501,8 +503,7 @@ How the rows behave:
 - **Order.** A row dragged moves among the others. The sources are read in the order the rows stand
   in.
 - **Editing.** A mouse click on the folder of the row already picked edits it in place, on the words
-  `Sources` writes - the words typed, `..` for a tree's own folder from its `.seedocs`. An edit
-  refused keeps the editor open with the reason.
+  `Sources` writes - the words typed. An edit refused keeps the editor open with the reason.
 - **Replacing.** A folder typed or browsed over a row is read in its place, one typed relative read
   from the project's folder. An edit emptied stops reading it. The same folder typed another way is
   kept as typed, with no scan.
@@ -556,8 +557,14 @@ SeeDocs is a browser of the framework's own kind:
 
 - tabs across the top
 - under them the crumbs of the page shown, with a list dropping from each
-- Back, Forward and Up beside the crumbs
+- Back, Forward, Up and Rescan beside the crumbs
 - a search box at the bar's end - see [Search](#search)
+
+**Rescan reads the sources again**, from its button or from F5 anywhere in the window.
+
+- It scans the project the shown tab stands in, and every open project from the root. Its tooltip
+  names the project, or says all projects.
+- An options page on screen is built again, so its last scan reads just now.
 
 **Every page has a url** - `/project/folder/module/type/method`, the project named by its name.
 
@@ -576,9 +583,9 @@ SeeDocs is a browser of the framework's own kind:
 
 **A home page opens each project.**
 
-- It holds a link to the Project options page, then the folders under the root as the tree lists
-  them, with what each holds at every depth.
-- A Close project button stands at the page's top right.
+- It holds the folders under the root as the tree lists them, with what each holds at every depth.
+- Options and Sidebar stand in a row under the title, each marked with its page's icon, and Close
+  project stands at the page's top right.
 - A project with nothing to document has the same home, saying why under its title.
 - Modules standing in a source folder's own folder are home's. They stand in the project's node
   under its folders, and the home page carries what they export, by module, as a folder's page does.
@@ -1128,5 +1135,5 @@ wherever the tree is checked out:
 cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=none \
       -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_BUILD_TYPE=Release
 cmake --build build --target SeeDocsCli
-./build/SeeDocsCli check Source
+./build/SeeDocsCli check Source/.seedocs
 ```

@@ -94,7 +94,7 @@ namespace SeeDocs_App
         const std::vector<OpenProject*> projects;   // in the order the rows stand
     };
 
-    // A notice asked for a project to be scanned again. The surface has an Event of its own.
+    // Rescan asked for a project to be scanned again. The surface has an Event of its own.
     export class RescanProjectEvent : public ::ClaFi::Event
     {
     public:
@@ -112,6 +112,12 @@ namespace SeeDocs_App
     public:
         OpenProject& project;
     };
+
+    // The commands the browser answers about the projects it shows.
+    namespace Actions
+    {
+        export extern Action rescan;   // scans the shown tab's project, or every one from the root
+    }
 
     export class SurfaceBrowser;
 
@@ -145,14 +151,15 @@ namespace SeeDocs_App
         PageView& m_view;
     };
 
-    // A project's options as a page of the browser: the head every page wears, and under it the
-    // options, filled by the application.
+    // A project's options or its sidebar as a page of the browser: the head every page wears, and
+    // under it the groups the application fills the page with.
     export class ProjectPage : public BrowserPage
     {
     public:
         template<typename... Args>
         explicit ProjectPage(const CreateParams&, Args&&...);
     public:
+        [[nodiscard]] PageHead& head() { return m_head; }
         [[nodiscard]] AppMenuPage& options() { return m_optionsBox.body(); }
     private:
         PageHead& m_head{ createTopBar<PageHead>() };
@@ -190,7 +197,7 @@ namespace SeeDocs_App
         // Connects a handler raised when the root page's rows were carried into another order.
         template<typename F>
         EventConnection onOrderProjects(F&& callback);
-        // Connects a handler raised when a notice asks for a project to be scanned again.
+        // Connects a handler raised when Rescan asks for a project to be scanned again.
         template<typename F>
         EventConnection onRescanProject(F&& callback);
         // Connects a handler raised when a page's edit changed a project's surface.
@@ -232,7 +239,7 @@ namespace SeeDocs_App
         void pickLater(const PageData& from, std::wstring_view target, Control& owner,
             SelectTab);
         // A page's command was clicked: the project whose home the target names is asked to be
-        // closed, the one command a page has.
+        // closed, the one command a page asks of the browser.
         void answerCommand(std::wstring_view target);
         // The root's rows were carried about: the projects their home paths name are asked to be
         // put in that order.
@@ -263,11 +270,18 @@ namespace SeeDocs_App
         void nestedControlDeleted(Control*) override;
     private:
         struct ShownProject;
+        // A page of the project itself, named by a dot segment after the project's.
+        enum class OwnPage
+        {
+            None,
+            Options,
+            Sidebar
+        };
         // What a path names, read off its segments: the root for none, else a project by its
-        // segment, and in it its options page, or the folders down from its root as far as they
-        // go - its home for none - then a list of the last folder, or a module of it, a type of
-        // that or a function or a constant of the module, and a method of the type. A segment
-        // nothing answers for makes the path one no project open carries.
+        // segment, and in it its own page, or the folders down from its root as far as they go -
+        // its home for none - then a list of the last folder, or a module of it, a type of that or
+        // a function or a constant of the module, and a method of the type. A segment nothing
+        // answers for makes the path one no project open carries.
         struct Target
         {
             ShownProject* project{ nullptr };   // null for the root, and for no project open
@@ -281,8 +295,9 @@ namespace SeeDocs_App
             std::wstring search{};              // what a search page searches for
             std::optional<ListKind> list{};     // a list of the folder's
             std::size_t depth{ 0 };   // segments of the path
-            bool projectOptions{ false };   // the project's options page
+            OwnPage ownPage{ OwnPage::None };
             bool searching{ false };   // a search page - a folder's, a project's, or the root's
+            [[nodiscard]] bool isOwnPage() const { return ownPage != OwnPage::None; }
             [[nodiscard]] bool isRoot() const { return depth == 0; }
             [[nodiscard]] bool isHome() const { return project && depth == 1; }
             [[nodiscard]] bool isFolder() const { return project && depth == folderDepth + 1; }
@@ -392,7 +407,7 @@ namespace SeeDocs_App
         // Writes the trees' bar's width into the shown tab's file.
         void storeTreeWidth(float width);
         [[nodiscard]] static std::wstring homePath(const ShownProject&);
-        [[nodiscard]] static std::wstring optionsPath(const ShownProject&);
+        [[nodiscard]] static std::wstring pathOf(const ShownProject&, OwnPage);
         // The path of the nearest thing named in the project, down to the member where one is
         // given - a method of the type, or a function or a constant of the module where there is
         // no type.
@@ -404,18 +419,17 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring titleOf(const PageData&, const Target&) const;
         [[nodiscard]] static std::optional<RowIcon> iconOf(const Target&);
         // The page a target names, built over its project's surface; nothing where it names
-        // words - no project open, a path no project carries - or the options page.
+        // words - no project open, a path no project carries - or a page of the project itself.
         [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
-        // The project's home: its options page leads the contents, and Close project stands in
-        // the head.
+        // The project's home: Options and Sidebar in a row under its title, Close project beside it.
         [[nodiscard]] static Page homePageOf(const ShownProject&);
         [[nodiscard]] Page projectsPage() const;   // the root's, while a project is open
         [[nodiscard]] static Command closeCommand(const ShownProject&, std::wstring text);
         // Fills a page with what the target names: the projects or SeeDocs' words on the root,
         // the words of a page no project carries, and else the page the surface gives.
         void fill(SurfacePage&, const Target&, const PageData&) const;
-        // Puts the title and the list of every page data, and the icon of every tab, right for
-        // the projects shown.
+        // Puts the title and the list of every page data, the icon of every tab and Rescan's
+        // tooltip right for the projects shown.
         void refreshPageTree();
         void refreshPageData(PageData&);   // this one and every one under it
         // Whether a change to the project reaches the page: one in the project, or the root,
@@ -452,14 +466,14 @@ namespace SeeDocs_App
         // A menu line per page over the owner, the one picked opening as the select says.
         void showPicks(const PageData& from, const LinkedPlaces&, Control& owner, SelectTab);
         void showPendingPick();   // where its owner still stands
-        // The projects a search reaches: the one the shown tab stands in, or all from the root.
+        // What a search or Rescan reaches: the shown tab's project, or all of them from the root.
         [[nodiscard]] ShownProjects searchedProjects() const;
         // The projects a search page searches: its own, or all from the root.
         [[nodiscard]] ShownProjects searchedProjects(const Target&) const;
         // Search "row" in ClaFi - a search's list line, and the name of its page.
         [[nodiscard]] static std::wstring searchTitle(std::wstring_view typed,
             std::wstring_view place);
-        // Where the root's search searches: the one project open, all projects, or none named.
+        // What the root's search and Rescan reach: the one project open, all projects, or none.
         [[nodiscard]] std::wstring rootSearchPlace() const;
         // Where a search page searches: its folder, its project, or the root's place.
         [[nodiscard]] std::wstring searchPlaceOf(const Target&) const;
@@ -473,7 +487,7 @@ namespace SeeDocs_App
         // The box's words are the search's: the pages band them, and the list drops under the box
         // while it is typed in.
         void takeWords();
-        // The selected tab's page; null where it shows a project's options, or there is none.
+        // The selected tab's page; null where it shows a page of a project itself, or none.
         [[nodiscard]] SurfacePage* surfacePage();
         // Steps through the shown page's matches, the focus going with them from the page.
         void stepFound(FindTarget);
@@ -495,6 +509,9 @@ namespace SeeDocs_App
         // Opens a search's page, in a new tab where Alt was held.
         void openSearch(const Url&, KeyModifiers);
         void dropListed();   // the list down and its lines forgotten, a surface being read again
+        void connectRescan();   // claims Rescan, with its button after Up
+        void rescanShown();   // the shown tab's project scanned again, or every one from the root
+        void writeRescanTooltip();   // names what Rescan reaches from the page shown
     private:
         static constexpr float k_treeWidth = 300.0f;   // where the trees' bar starts
         static constexpr float k_leastTreeWidth = 120.0f;   // the least the bar is dragged to
@@ -516,6 +533,7 @@ namespace SeeDocs_App
         std::optional<Url> m_searchOpens{};   // what the search opened, which goes on with it
         std::optional<PendingPick> m_pendingPick{};
         UiTimer m_pickTimer{};
+        UiTimer m_rescanTimer{};
         EditorRuns m_editors{ appContext() };
 
         TabTrees m_tabTrees{};
@@ -589,7 +607,6 @@ namespace SeeDocs_App
             std::forward<Args>(args)...
         }
     {
-        m_head.write(RowIcon::Options, k_optionsTitle);
     }
 
     // SurfaceBrowser
@@ -611,6 +628,7 @@ namespace SeeDocs_App
             showPendingPick();
         });
         connectSearch();
+        connectRescan();
     }
 
     template<typename F>

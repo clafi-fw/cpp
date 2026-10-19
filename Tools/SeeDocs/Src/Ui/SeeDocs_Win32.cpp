@@ -9,8 +9,8 @@ import ClaFi.StdLib;
 // is built out of. SeeDocs itself is in SeeDocs_App.Main and names none of them.
 namespace
 {
-    // The command line as the tree's folder: the one argument, its quotes taken off.
-    [[nodiscard]] std::filesystem::path treeArgument(const wchar_t* commandLine)
+    // The command line as a project's folder: the one argument, its quotes taken off.
+    [[nodiscard]] std::filesystem::path folderArgument(const wchar_t* commandLine)
     {
         std::wstring_view stated = commandLine ? commandLine : L"";
         while (stated.starts_with(L' '))
@@ -29,5 +29,5 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t* commandLine, int
 
     SeeDocs_App::SeeDocsApplication<Win32Platform, Direct2DBackend> app{ { hInstance } };
 
-    return app.run(treeArgument(commandLine));
+    return app.run(folderArgument(commandLine));
 }

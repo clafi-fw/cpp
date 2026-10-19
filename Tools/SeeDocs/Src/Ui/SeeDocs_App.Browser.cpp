@@ -29,6 +29,8 @@ import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.SearchBox;
 import ClaFi.Controls.Tree;
 
+import ClaFi.Icons.RefreshIcon;
+
 import ClaFi.StdActions;
 
 import ClaFi.Core.Context.AppContext;
@@ -60,16 +62,21 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_noteExtension = L".md";
         constexpr std::wstring_view k_sourceJoin = L" › ";
         constexpr std::wstring_view k_separator = L" · ";
-        // The options page's segment, under its project's. The scanner reads no folder whose name
-        // starts with a dot, and no module or header is named so, so no page of a surface can
-        // take it.
+        // The segments of a project's own pages, under its project's. The scanner reads no folder
+        // whose name starts with a dot, and no module or header is named so, so no page of a
+        // surface can take them.
         constexpr std::wstring_view k_optionsSegment = L".project";
+        constexpr std::wstring_view k_sidebarSegment = L".sidebar";
         // What a search page's segment opens with, the query after it - a dot for the same reason.
         constexpr std::wstring_view k_searchPrefix = L".search=";
         constexpr std::wstring_view k_scope = L"::";
         constexpr float k_iconGap = 5.0f;   // between a list line's icon and its text
         constexpr float k_kindGap = 12.0f;  // the least room before a list line's kind word
         constexpr std::wstring_view k_unnamedSegment = L"Project";   // for a name that gives none
+        constexpr std::wstring_view k_optionsTitle = L"Project options";   // the page's title
+        constexpr std::wstring_view k_sidebarTitle = L"Sidebar";   // the page's title
+        constexpr std::wstring_view k_optionsCaption = L"Options";   // on a home
+        constexpr std::wstring_view k_sidebarCaption = L"Sidebar";   // on a home
         constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
         constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
         constexpr std::wstring_view k_closeTooltip = L"Closes the project and every tab on it";
@@ -223,6 +230,19 @@ namespace SeeDocs_App
     {
     }
 
+    // Actions
+
+    // Constructed before main, so nothing built here may touch the platform, the theme or the
+    // text engine.
+    namespace Actions
+    {
+        Action rescan{
+            Text{ L"Rescan" },
+            Shortcut{ Keys::F5 },
+            Action::OnPaintIcon{ ::ClaFi::Icons::RefreshIcon::paint }
+        };
+    }
+
     // SurfacePage
 
     SurfaceBrowser& SurfacePage::browser() const
@@ -306,7 +326,7 @@ namespace SeeDocs_App
         std::size_t resolved = folderDepth;
         if (project)
             ++resolved;
-        if (projectOptions)
+        if (isOwnPage())
             ++resolved;
         if (module)
             ++resolved;
@@ -514,7 +534,7 @@ namespace SeeDocs_App
         if (homeTab == HomeTab::Open)
             openHome(open);
         else if (homeTab == HomeTab::Options)
-            addTab(Url{ optionsPath(shown) });
+            addTab(Url{ pathOf(shown, OwnPage::Options) });
     }
 
     void SurfaceBrowser::openHome(const OpenProject& open)
@@ -523,9 +543,9 @@ namespace SeeDocs_App
             addTab(Url{ homePath(*shown) });
     }
 
-    // **The selected tab's options page stands**, where it is this project's: its own buttons are
-    // what read the sources again, and it shows no surface. Each tree's open nodes are asked for
-    // before the contents they were made over go.
+    // **The selected tab's page of the project itself stands**, where it is this project's: the
+    // options page's own buttons are what read the sources again, and neither page shows the
+    // surface. Each tree's open nodes are asked for before the contents they were made over go.
     void SurfaceBrowser::rebindProject(OpenProject& open)
     {
         ShownProject* shown = projectOf(open);
@@ -546,7 +566,7 @@ namespace SeeDocs_App
                 continue;
             const BrowserPage& page = static_cast<const BrowserPage&>(*tab.page());
             const Target target = resolve(page.pageData());
-            if (target.project == shown && target.projectOptions)
+            if (target.project == shown && target.isOwnPage())
                 keep = &page;
         }
         rebuildPages(shown, keep);
@@ -785,23 +805,23 @@ namespace SeeDocs_App
 
     // Said for every page as it is built, which is before anything asks for its list: a page
     // with a list carries a strip from the start. The root holds the projects, a folder holds
-    // folders or modules and a module what it exports, by construction; a type holds methods
-    // where it has any.
+    // folders or modules and a module what it exports, by construction; a home holds them where
+    // its project has any, and a type holds methods where it has any.
     void SurfaceBrowser::initPageData(PageData& data)
     {
         const Target target = resolve(data);
         data.title = titleOf(data, target);
         const bool hasList = target.isRoot()
-            || (target.project && !target.isGone() && !target.projectOptions && !target.searching
+            || (target.project && !target.isGone() && !target.isOwnPage() && !target.searching
                 && !target.list && target.method.empty() && target.exportName.empty()
+                && (!target.isHome() || !target.project->contents.empty())
                 && (!target.type || !methodNames(*target.type).empty()));
         if (hasList)
             data.fetchState = FetchState::HasChildren;
     }
 
     // The set under a page stands while the projects do, so the page is marked Fetched; a change
-    // to them puts the mark back - see refreshPageData. A home's list starts as its node in the
-    // tree does, with the project's options page.
+    // to them puts the mark back - see refreshPageData.
     void SurfaceBrowser::fetchSubItems(PageData& data)
     {
         const Target target = resolve(data);
@@ -812,13 +832,11 @@ namespace SeeDocs_App
             data.fetchState = FetchState::Fetched;
             return;
         }
-        if (target.isGone() || target.projectOptions || target.searching || target.list)
+        if (target.isGone() || target.isOwnPage() || target.searching || target.list)
             return;
         const ShownProject& project = *target.project;
         if (target.isFolder())
         {
-            if (target.isHome())
-                addSubItem(data, k_optionsSegment);
             for (const std::wstring& name : subfolderNames(project, target.folder))
                 addSubItem(data, name);
             if (target.contents)
@@ -863,11 +881,12 @@ namespace SeeDocs_App
         }
         if (!page)
         {
-            if (target.projectOptions)
+            if (target.isOwnPage())
             {
                 ProjectPage& projectPage = tab.createPage<ProjectPage>(
                     MinSize{ k_leastPageWidth, 0.0f });
-                if (m_projectPageBuilder)
+                projectPage.head().write(iconOf(target), data.title);
+                if (target.ownPage == OwnPage::Options && m_projectPageBuilder)
                     m_projectPageBuilder(projectPage.options(), target.project->open);
                 page = &projectPage;
             }
@@ -893,13 +912,18 @@ namespace SeeDocs_App
         SurfaceTree& tree = *tabTree.tree;
         const bool standsForFolder = target.searching || target.list;
         if (!target.project)
+        {
             tree.setCurrentItem(nullptr);
-        else if (target.projectOptions)
-            tree.followOptions(target.project->id);
-        else if (target.isHome() || target.isGone() || (standsForFolder && target.folder.empty()))
+        }
+        else if (target.isHome() || target.isOwnPage() || target.isGone()
+            || (standsForFolder && target.folder.empty()))
+        {
             tree.followHome(target.project->id);
+        }
         else
+        {
             tree.follow(target.project->id, target.folder, target.module, target.type);
+        }
 
         const OpenProject* shown = target.project ? &target.project->open : nullptr;
         if (shown != m_shownProject)
@@ -907,6 +931,7 @@ namespace SeeDocs_App
             m_shownProject = shown;
             ProjectShownEvent event{ shown };
             emitEvent(event);
+            writeRescanTooltip();
         }
         if (target.searching && trimmed(m_search.searchText()) != target.search)
             m_search.setSearchText(target.search);
@@ -973,7 +998,12 @@ namespace SeeDocs_App
         result.project = project;
         if (segments.size() == 2 && segments[1] == k_optionsSegment)
         {
-            result.projectOptions = true;
+            result.ownPage = OwnPage::Options;
+            return result;
+        }
+        if (segments.size() == 2 && segments[1] == k_sidebarSegment)
+        {
+            result.ownPage = OwnPage::Sidebar;
             return result;
         }
 
@@ -1096,9 +1126,6 @@ namespace SeeDocs_App
         {
             case RowKind::Home:
                 path = homePath(*project);
-                break;
-            case RowKind::Options:
-                path = optionsPath(*project);
                 break;
             case RowKind::Contents:
                 path = pathOf(*project, event.folder, event.module, event.type);
@@ -1227,10 +1254,13 @@ namespace SeeDocs_App
         return result;
     }
 
-    std::wstring SurfaceBrowser::optionsPath(const ShownProject& project)
+    std::wstring SurfaceBrowser::pathOf(const ShownProject& project, const OwnPage ownPage)
     {
+        const std::wstring_view segment = ownPage == OwnPage::Sidebar
+            ? k_sidebarSegment
+            : k_optionsSegment;
         std::wstring result = homePath(project);
-        result.append(1, ConfigNames::PathSeparator).append(k_optionsSegment);
+        result.append(1, ConfigNames::PathSeparator).append(segment);
         return result;
     }
 
@@ -1290,8 +1320,10 @@ namespace SeeDocs_App
             return data.name;
         if (target.isHome())
             return target.project->open.project.name;
-        if (target.projectOptions)
+        if (target.ownPage == OwnPage::Options)
             return std::wstring{ k_optionsTitle };
+        if (target.ownPage == OwnPage::Sidebar)
+            return std::wstring{ k_sidebarTitle };
         if (target.list)
             return std::wstring{ listTitle(*target.list) };
         const std::size_t folders = target.folderDepth + 1;
@@ -1315,8 +1347,10 @@ namespace SeeDocs_App
         {
             return std::nullopt;
         }
-        if (target.projectOptions)
+        if (target.ownPage == OwnPage::Options)
             return RowIcon::Options;
+        if (target.ownPage == OwnPage::Sidebar)
+            return RowIcon::Sidebar;
         if (target.isHome())
             return RowIcon::Project;
         if (target.type)
@@ -1340,7 +1374,7 @@ namespace SeeDocs_App
                 return std::nullopt;
             return searchPageOf(target);
         }
-        if (target.isGone() || target.projectOptions)
+        if (target.isGone() || target.isOwnPage())
             return std::nullopt;
         const ShownProject& project = *target.project;
         OpenProject& open = project.open;
@@ -1369,16 +1403,22 @@ namespace SeeDocs_App
         return methodPage(open.surface, open.notes, *target.type, target.method, roots);
     }
 
-    // The home links to the project's options page by path, ahead of its folders.
     Page SurfaceBrowser::homePageOf(const ShownProject& project)
     {
         OpenProject& open = project.open;
         Page page = homePage(open.surface, open.notes, project.contents, open.project.name);
         if (project.contents.empty())
             explainEmpty(page, open.project);
-        page.links = {
-            Run{ .text = std::wstring{ k_optionsTitle }, .link = optionsPath(project) }
-        };
+        page.titleCommands.push_back({
+            .text = std::wstring{ k_optionsCaption },
+            .link = pathOf(project, OwnPage::Options),
+            .pageKind = PageKind::Options
+        });
+        page.titleCommands.push_back({
+            .text = std::wstring{ k_sidebarCaption },
+            .link = pathOf(project, OwnPage::Sidebar),
+            .pageKind = PageKind::Sidebar
+        });
         page.commands.push_back(closeCommand(project, std::wstring{ k_closeProjectCaption }));
         return page;
     }
@@ -1459,12 +1499,13 @@ namespace SeeDocs_App
     // their titles were worked out against whatever projects stood then, and their lists are
     // those projects'. So were the tabs' icons, which a tab asks for again only when its page is
     // shown; a tab standing on a restored page is asked here, so it wears its mark before it is
-    // selected.
+    // selected. Rescan's tooltip names those projects, and is put right with them.
     void SurfaceBrowser::refreshPageTree()
     {
         refreshPageData(homePageData());
         for (BrowserTab& tab : tabs())
             tab.updateIconMode();
+        writeRescanTooltip();
     }
 
     void SurfaceBrowser::refreshPageData(PageData& data)
@@ -1503,8 +1544,8 @@ namespace SeeDocs_App
     // **The edit that asked stands on the selected tab's page**, so that page takes the new words
     // in place - nothing under the edit is deleted - and is built again only once the edit has
     // unwound, where the words changed what the page is made of: a footnote added. Any other
-    // tab's page the project reaches goes, and is built when its tab is selected. An options
-    // page takes no words from the files, and stands as it is.
+    // tab's page the project reaches goes, and is built when its tab is selected. A page of the
+    // project itself takes no words from the files, and stands as it is.
     void SurfaceBrowser::refreshPages(const ShownProject& project,
         std::optional<Reference> show)
     {
@@ -1521,7 +1562,7 @@ namespace SeeDocs_App
                 rebuildPage(tab);
                 continue;
             }
-            if (target.projectOptions)
+            if (target.isOwnPage())
                 continue;
             SurfacePage& page = static_cast<SurfacePage&>(*standing);
             std::optional<Page> built = pageOf(target);
@@ -1547,7 +1588,7 @@ namespace SeeDocs_App
         if (!tab || !tab->pageData())
             return;
         rebuildPage(*tab);
-        if (!show || !tab->page() || resolve(*tab->pageData()).projectOptions)
+        if (!show || !tab->page() || resolve(*tab->pageData()).isOwnPage())
             return;
         const SurfacePage& page = static_cast<const SurfacePage&>(*tab->page());
         const std::wstring anchor = page.view().anchorOf(*show);
@@ -1994,7 +2035,7 @@ namespace SeeDocs_App
     SurfacePage* SurfaceBrowser::surfacePage()
     {
         BrowserPage* page = currentPage();
-        if (!page || resolve(page->pageData()).projectOptions)
+        if (!page || resolve(page->pageData()).isOwnPage())
             return nullptr;
         return static_cast<SurfacePage*>(page);
     }
@@ -2013,7 +2054,7 @@ namespace SeeDocs_App
         writeFound();
     }
 
-    // An options page counts as a page holding none.
+    // A page of a project itself counts as a page holding none.
     void SurfaceBrowser::writeFound()
     {
         if (const SurfacePage* page = surfacePage())
@@ -2278,5 +2319,51 @@ namespace SeeDocs_App
     {
         m_search.hideList();
         m_listed.clear();
+    }
+
+    // **F5 is Rescan's from anywhere in the window**, as Ctrl+F is the search's. A scan builds the
+    // shown page again, so it waits for the press that asked to unwind.
+    void SurfaceBrowser::connectRescan()
+    {
+        AppActions::get().add(Actions::rescan);
+        addNavigationButton(Actions::rescan);
+        onGetActionState([this](GetActionStateEvent& event) {
+            if (&event.action == &Actions::rescan)
+                event.claim({ .enabled = !m_projects.empty() });
+        });
+        onActionClick([this](ActionClickEvent& event) {
+            if (&event.action == &Actions::rescan)
+                m_rescanTimer.start(MilliSeconds{ 0u });
+        });
+        m_rescanTimer.onTick([this](TimerEvent&) {
+            rescanShown();
+        });
+    }
+
+    // **A scan keeps the selected tab's options page standing** - see rebindProject - and the page
+    // says when its project was scanned as it was built. No press stands on it by now, so it is
+    // built again.
+    void SurfaceBrowser::rescanShown()
+    {
+        for (const ShownProject* project : searchedProjects())
+        {
+            RescanProjectEvent event{ project->open };
+            emitEvent(event);
+        }
+        const BrowserPage* page = currentPage();
+        if (page && resolve(page->pageData()).ownPage == OwnPage::Options)
+            rebuildCurrentPage();
+    }
+
+    // **The words are kept, not asked for**: an action's tooltip is its own, and this browser is
+    // the one place that answers Rescan. They follow the shown tab's project and the projects
+    // open, and the action puts the key after them.
+    void SurfaceBrowser::writeRescanTooltip()
+    {
+        const ShownProject* shown = m_shownProject ? projectOf(*m_shownProject) : nullptr;
+        const std::wstring place = shown ? shown->open.project.name : rootSearchPlace();
+        Actions::rescan.tooltipText() = place.empty()
+            ? TooltipText{}
+            : TooltipText{ L"Rescan " + place };
     }
 }

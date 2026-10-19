@@ -33,17 +33,6 @@ namespace SeeDocs_App
     export using Runs = std::vector<Run>;
     export using Cells = std::vector<Runs>;
 
-    // What a page offers whoever shows it - SeeDocs as a button, a generator not at all: the
-    // button's caption, its tooltip, and what it is about, which the shower spelled and reads back.
-    export struct Command
-    {
-        std::wstring text;
-        std::wstring tooltip;
-        std::wstring target;
-    };
-
-    export using Commands = std::vector<Command>;
-
     export constexpr std::wstring_view k_noHint = L"no hint";   // a missing hint, as a page says it
     export constexpr std::wstring_view k_boldMark = L"**";   // what a note sets words bold between
     export constexpr wchar_t k_codeMark = L'`';   // what a note sets words in code between
@@ -119,8 +108,23 @@ namespace SeeDocs_App
         Module,     // a module or a header
         Type,
         Member,     // a method, a function or a constant
-        Search      // what holds the words a search was given
+        Search,     // what holds the words a search was given
+        Options,    // a project's options
+        Sidebar     // a project's sidebar
     };
+
+    // What a page offers whoever shows it - SeeDocs as a button, a generator not at all: the
+    // button's caption, its tooltip, and what it is about, which the shower spelled and reads back.
+    export struct Command
+    {
+        std::wstring text;
+        std::wstring tooltip{};
+        std::wstring target{};
+        std::wstring link{};   // a page the button opens as a link of the page, asking nothing
+        std::optional<PageKind> pageKind{};   // the kind of page the link opens, which marks it
+    };
+
+    export using Commands = std::vector<Command>;
 
     // A row of a table: its cells, the type it stands for where it does, what the first cell's
     // tooltip shows where it has one, the note the declaration's comment references, the comment
@@ -266,9 +270,9 @@ namespace SeeDocs_App
         Runs lead;      // the hint
         std::optional<CommentSite> leadSite;   // the comment the lead is read from
         Facts facts;
-        Runs links;     // a line under the facts, ahead of the sections - the page's own links
         Sections sections;
         std::optional<FootnoteHome> footnoteHome;   // none where no note takes one
+        Commands titleCommands;   // in a row of their own under the title
         Commands commands;   // at the head's right end
     };
 

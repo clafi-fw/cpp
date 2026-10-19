@@ -643,8 +643,8 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
     add_dependencies(PascalScripts PascalScripts_Language)
 endif()
 
-# **SeeDocsCli**, the scanner that reads the design surface out of a tree of sources into the tree's
-# own .seedocs/Surface.cfg and holds the tree to the declaration routine. It draws on the Dom, the
+# **SeeDocsCli**, the scanner that reads the design surface out of a project's sources into its
+# Surface.cfg and holds the sources to the declaration routine. It draws on the Dom, the
 # Syntax lexer and the text file reader alone, none of which reaches the platform layer, so it is
 # built with or without one and a `check` runs wherever the tree is checked out.
 set(seedocs_cli_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")

@@ -102,8 +102,7 @@ namespace SeeDocs_App
         BasesTreeBase{
             params,
             UiElement::Tooltip,
-            std::forward<Args>(args)...,
-            Padding{ 48.0f }
+            std::forward<Args>(args)...
         }
     {
         

@@ -478,12 +478,10 @@ namespace SeeDocs_App
 
     OpenProject* Workspace::openFor(const std::filesystem::path& folder) const
     {
-        const std::optional<std::filesystem::path> own = projectFolderOf(folder);
-        if (!own)
-            return nullptr;
+        const std::filesystem::path projectFolder = cleanFolder(folder);
         for (const std::unique_ptr<OpenProject>& open : m_projects)
         {
-            if (open->project.folder == *own)
+            if (open->project.folder == projectFolder)
                 return open.get();
         }
         return nullptr;
@@ -615,15 +613,11 @@ namespace SeeDocs_App
         });
     }
 
-    // An entry naming the same project another way - a tree, where its project folder is kept
-    // now - goes with the old one.
     void Workspace::remember(const Project& project)
     {
         const std::wstring folder = project.folder.wstring();
         Names recent = storedRecent();
-        std::erase_if(recent, [&project](const std::wstring& name) {
-            return projectFolderOf(name) == project.folder;
-        });
+        std::erase(recent, folder);
         recent.insert(recent.begin(), folder);
         if (recent.size() > k_recentLimit)
             recent.resize(k_recentLimit);

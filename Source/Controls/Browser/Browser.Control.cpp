@@ -13,6 +13,7 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.Stack;
 import ClaFi.Controls.TabStrip;
 
 import ClaFi.Core.DomEngine;
@@ -391,6 +392,18 @@ namespace ClaFi::Browser
         // A browser always has a tab, so a run that restores none starts on the home page.
         if (m_tabs.controls().empty())
             addTab();
+    }
+
+    // Drawn as Back and Forward are, and kept off the focus as they are: a press leaves the focus
+    // on the page the command acts on.
+    ToolButton& BrowserControl::addNavigationButton(Action& action)
+    {
+        return m_navigationBar.add<ToolButton>(
+            IconSize{ k_navigationIconSize },
+            ButtonViewMode::IconOnly,
+            action,
+            Interactivity::MouseOnly
+        );
     }
 
     void BrowserControl::addTab()

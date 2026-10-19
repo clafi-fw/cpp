@@ -33,7 +33,7 @@ namespace SeeDocs_App
             L"    SeeDocsCli check [folder]                      "
             L"reports deviations, exit code 1 on errors\n"
             L"\n"
-            L"The folder is a project's own, or a tree with a .seedocs project in it; the working\n"
+            L"The folder is a project's own, holding its Project.cfg; the working\n"
             L"directory when left out. A project reads the folders of sources its Project.cfg\n"
             L"names, as it says; one with ReadAs = AnyCppAndDelphi is not\n"
             L"checked. A scan with --out takes any other folder too, read as ClaFi modules; one\n"

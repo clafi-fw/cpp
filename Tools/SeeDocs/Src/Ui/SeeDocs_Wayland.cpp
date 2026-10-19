@@ -13,7 +13,7 @@ import ClaFi.StdLib;
 //   cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=wayland \
 //         -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS=-stdlib=libc++
 //   cmake --build build --target SeeDocs
-//   ./build/SeeDocs Source
+//   ./build/SeeDocs Source/.seedocs
 
 int main(int argc, char** argv)
 {

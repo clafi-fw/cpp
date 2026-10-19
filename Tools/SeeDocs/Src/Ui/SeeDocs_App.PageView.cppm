@@ -102,9 +102,10 @@ namespace SeeDocs_App
     constexpr float k_headPadding = 12.0f;   // above and below the title, and over the body
 
     // The bar a page's title stands in, which stays while the page scrolls: the mark of what
-    // the page is, large, then the title with its scope before it and its badges after it, the
-    // title's lines under it and a class's bases under those as crumbs, with the page's commands
-    // at its right end. Every page of the browser wears one, whatever it is made of.
+    // the page is, large, then the title with its scope before it and its badges after it, and the
+    // page's commands at the title's right end; the title's lines under it, a class's bases under
+    // those as crumbs, and the commands that stand in a row under the title. Every page of the
+    // browser wears one, whatever it is made of.
     export class PageHead : public Panel
     {
     public:
@@ -115,6 +116,7 @@ namespace SeeDocs_App
         [[nodiscard]] BasesTreeBase& basesBar1() { return m_bases1; }
         [[nodiscard]] BasesTreeBase& basesBar2() { return m_bases2; }
         [[nodiscard]] StackPanel& commandBar() { return m_commands; }   // hidden at first
+        [[nodiscard]] StackPanel& titleCommandBar() { return m_titleCommands; }   // hidden at first
         void write(const Page&);
         void write(std::optional<RowIcon>, std::wstring_view title);
         void clear();
@@ -124,35 +126,44 @@ namespace SeeDocs_App
         static constexpr float k_iconGap = 8.0f;      // between the icon and the title
         static constexpr float k_basesIndent = 24.0f;   // of what stands under the title
         static constexpr float k_commandGap = 10.0f;    // before and between the buttons
+        static constexpr float k_titleCommandsGap = 4.0f;   // above and below the title's row
 
         StackPanel& m_lines{ createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 0.0f },
             Spacing{ 0.0f }
         ) };
-        TextBox& m_title{ m_lines.add<TextBox>(ReadOnly::Yes, Padding{ 0.0f }) };
-        
+        // The title with the commands beside it, so they centre on the title, not the whole head.
+        Panel& m_titleLine{ m_lines.add<Panel>(
+            Padding{ 0.0f },
+            Spacing{ k_commandGap }
+        ) };
+        TextBox& m_title{ m_titleLine.createBody<TextBox>(ReadOnly::Yes, Padding{ 0.0f }) };
+        StackPanel& m_commands{ m_titleLine.createRightBar<StackPanel>(
+            Orientation::Horizontal,
+            Padding{ 0.0f },
+            Spacing{ k_commandGap },
+            VerticalAlign::Center
+        ) };
         BasesTreeBase& m_bases1{ m_lines.add<BasesBar1>(
             Padding{ k_basesIndent, 0.0f }
             ) };
         BasesTreeBase& m_bases2{ m_lines.add<BasesBar2>(
             Padding{ k_basesIndent, 0.0f }
             ) };
-
-        StackPanel& m_commands{ createRightBar<StackPanel>(
+        StackPanel& m_titleCommands{ m_lines.add<StackPanel>(
             Orientation::Horizontal,
-            Padding{ 0.0f },
-            Spacing{ k_commandGap },
-            VerticalAlign::Center
+            Padding{ 0.0f, k_titleCommandsGap },
+            Spacing{ k_commandGap }
         ) };
     };
 
     // A page as controls: its head, with the page's commands as buttons at its right end, and
-    // under it, scrolling, its lead, its facts, its own links and an expander per section holding
-    // the section's prose, tree or grid - or a method page's declarations under their access
-    // labels, as code. Its hints and footnotes are edited where they stand. Every item the page
-    // selects has an anchor a url names it by, and the page says which is selected. See the
-    // README beside the project.
+    // under it, scrolling, its lead, its facts and an expander per section holding the section's
+    // prose, tree or grid - or a method page's declarations under their access labels, as code.
+    // Its hints and footnotes are edited where they stand. Every item the page selects has an
+    // anchor a url names it by, and the page says which is selected. See the README beside the
+    // project.
     export class PageView : public Panel
     {
     public:
@@ -247,13 +258,13 @@ namespace SeeDocs_App
         void addHead();
         void addLead();
         void addFacts();
-        void addLinks();
         [[nodiscard]] Expander& addSection(const Section&);
         void addProse(Expander&, const Section&);
         void addTree(Expander&, const Branches&, bool nodesOpen);
         void addTable(StackPanel& body, const Table&);   // the grid, and the footnotes under it
         void addSignatures(const Section&);
-        void addCommands();
+        // A button per command in the bar, the bar shown where there are any.
+        void addCommands(StackPanel& bar, const Commands&);
         // Under the tree or a node of it: a branch with nothing under it is an item, any other
         // a node whose rows are built as it opens; a click on either opens the type it names.
         template<typename Holder>
@@ -285,7 +296,8 @@ namespace SeeDocs_App
         [[nodiscard]] float topInBody(const Control& item) const;
         // Raises PageAnchorEvent with the selected item's anchor, empty for none.
         void reportAnchor();
-        // The button's caption and tooltip are written out of the command, and its click raises it.
+        // The button's icon, caption and tooltip are written out of the command; its click follows
+        // the command's link where it has one, and raises the command otherwise.
         void connectCommand(Button&, const Command&);
         // Raises PageOrderEvent with the rows' first links, in the order the rows stand in now.
         void reportOrder(Grids::Grid&);
@@ -363,7 +375,6 @@ namespace SeeDocs_App
         static constexpr std::wstring_view k_mark = L"*";
         static constexpr std::wstring_view k_openFolder = L"Open folder";
         static constexpr std::wstring_view k_leadAnchor = L"lead";
-        static constexpr std::wstring_view k_linksAnchor = L"links";
         static constexpr std::wstring_view k_signatureAnchor = L"declaration";   // unlabelled
         static constexpr std::wstring_view k_ownerJoin = L"::";   // between an owner and a name
         static constexpr wchar_t k_ordinalMark = L'.';   // before the number of a repeated name
@@ -420,11 +431,11 @@ namespace SeeDocs_App
         Panel{
             params,
             Padding{ k_pagePadding, k_headPadding },
-            Spacing{ k_commandGap },
             std::forward<Args>(args)...
         }
     {
         m_commands.setVisible(false);
+        m_titleCommands.setVisible(false);
     }
 
     // PageView

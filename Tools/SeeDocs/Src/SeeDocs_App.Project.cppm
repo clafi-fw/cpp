@@ -6,8 +6,7 @@ import ClaFi.StdLib;
 
 // **A project is a folder of its own.** Its properties, the database the scanner writes and the
 // footnotes the pages show stand in it; the sources it documents stand wherever they are - any
-// number of folders, each read as it stands. A project made inside a tree, in the tree's .seedocs
-// folder, is a project all the same, naming its tree as `..`. See README
+// number of folders, each read as it stands. See README
 namespace SeeDocs_App
 {
     export constexpr std::wstring_view k_projectFileName = L"Project.cfg";
@@ -16,8 +15,6 @@ namespace SeeDocs_App
     export constexpr std::wstring_view k_scanCacheFileName = L"Scan.cache";
     // The footnotes' folder, under the project's own.
     export constexpr std::wstring_view k_footnotesFolder = L"footnotes";
-    // The folder a project made inside a tree stands in, under the tree.
-    export constexpr std::wstring_view k_treeProjectFolder = L".seedocs";
 
     // What becomes of a hint edited on a page. See README
     export enum class HintEdits
@@ -54,21 +51,13 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring writtenSource(const std::filesystem::path& picked) const;
         // The folder a source written or typed names, read against the project's folder. See README
         [[nodiscard]] std::filesystem::path readSource(std::wstring_view written) const;
-        // The name it goes by where it states none: its folder's, or a tree's project's, the
-        // tree's.
-        [[nodiscard]] std::wstring folderName() const;
+        [[nodiscard]] std::wstring folderName() const;   // the name it goes by where it states none
         // Whether a hint edited on a page is written: hints edited directly, read by the strict
         // rules - the comment a hint is written into is the one a strict read takes it from.
         [[nodiscard]] bool writesHints() const;
     };
 
-    // The project's own folder for a folder named: the folder itself where it holds a project's
-    // properties or is a tree's project folder, and the tree's project folder for a tree that has
-    // one. Nothing where it stands for no project.
-    export [[nodiscard]] std::optional<std::filesystem::path> projectFolderOf(
-        const std::filesystem::path& folder);
-    // Reads the project the folder stands for, as projectFolderOf finds it; nothing where it
-    // stands for none.
+    // Reads the project whose properties the folder holds; nothing where it holds none.
     export [[nodiscard]] std::optional<Project> readProject(const std::filesystem::path& folder);
     // Makes the folder and the properties in it, the project reading no sources yet and set to
     // read them as any C++ and Delphi, every recognizable comment a hint. Nothing where the

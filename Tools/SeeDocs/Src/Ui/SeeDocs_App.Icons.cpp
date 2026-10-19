@@ -22,7 +22,6 @@ namespace SeeDocs_App
     {
         // Every icon is drawn on this grid and scaled to the rect it is given, stroke and all.
         constexpr float k_grid = 14.0f;
-        constexpr float k_titleIconSize = 32.0f;   // beside a 28 pt title
         constexpr float k_stroke = 1.1f;
         constexpr float k_softFill = 0.35f; // a face tinted rather than filled
         constexpr float k_kindGap = 12.0f;  // the least room before a row's kind word
@@ -239,6 +238,21 @@ namespace SeeDocs_App
             drawing.fill(dots, drawing.inks.accent);
         }
 
+        // A window, rows in the accent standing in its left pane.
+        void paintSidebar(const Drawing& drawing)
+        {
+            PixelPath frame;
+            frame.drawRoundedRect({ 1.5f, 2.5f, 12.5f, 11.5f }, 1.4f, 1.4f);
+            addLine(frame, { 6.0f, 2.5f }, { 6.0f, 11.5f });
+            drawing.stroke(frame, drawing.inks.body);
+
+            PixelPath rows;
+            addLine(rows, { 3.2f, 5.0f }, { 4.4f, 5.0f });
+            addLine(rows, { 3.2f, 7.0f }, { 4.4f, 7.0f });
+            addLine(rows, { 3.2f, 9.0f }, { 4.4f, 9.0f });
+            drawing.stroke(rows, drawing.inks.accent);
+        }
+
         void paintFolder(const Drawing& drawing)
         {
             PixelPath folder;
@@ -415,6 +429,9 @@ namespace SeeDocs_App
                 break;
             case RowIcon::Options:
                 paintOptions(drawing);
+                break;
+            case RowIcon::Sidebar:
+                paintSidebar(drawing);
                 break;
             case RowIcon::Folder:
                 paintFolder(drawing);

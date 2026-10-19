@@ -63,7 +63,7 @@ namespace SeeDocs_App
         rows.node = &addNode(projectText(name));
         rows.node->header().setExpanded(false);
         rows.node->header().onClick([this, id](ClickEvent&) {
-            pickRow(id, RowKind::Home, PickTab::Shown);
+            pickHome(id, PickTab::Shown);
         });
         m_projects.push_back(std::move(made));
         connectNode(rows, *rows.node, std::nullopt);
@@ -185,18 +185,6 @@ namespace SeeDocs_App
             setCurrentItem(nullptr);
     }
 
-    void SurfaceTree::followOptions(const ProjectId id)
-    {
-        ProjectRows* rows = rowsOf(id);
-        if (!rows)
-        {
-            setCurrentItem(nullptr);
-            return;
-        }
-        fillProject(*rows);
-        showRow(*rows, *rows->options);
-    }
-
     OpenRows SurfaceTree::openRows(const ProjectId id) const
     {
         OpenRows open;
@@ -277,7 +265,7 @@ namespace SeeDocs_App
             if (row.kind == RowKind::Contents)
                 pick(*row.rows, row.index, PickTab::New);
             else
-                pickRow(row.rows->id, row.kind, PickTab::New);
+                pickHome(row.rows->id, PickTab::New);
         });
     }
 
@@ -291,21 +279,12 @@ namespace SeeDocs_App
         return nullptr;
     }
 
-    // The line under the options row parts it from the contents, so it stands while there are
-    // any.
     void SurfaceTree::fillProject(ProjectRows& rows)
     {
-        if (rows.options)
+        if (rows.filled)
             return;
+        rows.filled = true;
         TreeNode& node = *rows.node;
-        const ProjectId id = rows.id;
-        rows.options = &node.addItem(
-            Text{ rowIcon(RowIcon::Options), Space{ k_iconGap }, k_optionsTitle });
-        rows.options->onClick([this, id](ClickEvent&) {
-            pickRow(id, RowKind::Options, PickTab::Shown);
-        });
-        rows.divider = &node.addDivider();
-        rows.divider->setVisible(!rows.contents->empty());
         for (const std::size_t index : rows.contents->top())
         {
             makeRow(rows, index, node);
@@ -390,12 +369,7 @@ namespace SeeDocs_App
         for (Control* row : rows.topRows)
             row->deleteSelf();
         rows.topRows.clear();
-        if (rows.options)
-            rows.options->deleteSelf();
-        if (rows.divider)
-            rows.divider->deleteSelf();
-        rows.options = nullptr;
-        rows.divider = nullptr;
+        rows.filled = false;
         rows.made.clear();
     }
 
@@ -424,9 +398,9 @@ namespace SeeDocs_App
         emitEvent(event);
     }
 
-    void SurfaceTree::pickRow(const ProjectId id, const RowKind kind, const PickTab tab)
+    void SurfaceTree::pickHome(const ProjectId id, const PickTab tab)
     {
-        TreePickEvent event{ id, kind, {}, nullptr, nullptr, tab };
+        TreePickEvent event{ id, RowKind::Home, {}, nullptr, nullptr, tab };
         emitEvent(event);
     }
 
@@ -438,8 +412,6 @@ namespace SeeDocs_App
         {
             if (rows->node->header().containsNested(control))
                 return MenuRow{ .rows = rows.get(), .kind = RowKind::Home };
-            if (rows->options && rows->options->containsNested(control))
-                return MenuRow{ .rows = rows.get(), .kind = RowKind::Options };
             for (std::size_t i = 0; i != rows->made.size(); ++i)
             {
                 const MadeRow& made = rows->made[i];

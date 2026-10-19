@@ -19,6 +19,7 @@ namespace SeeDocs_App
         Home,      // the root, listing the projects
         Project,
         Options,   // the project's options page
+        Sidebar,   // the project's sidebar page
         Folder,
         Module,
         Control,
@@ -33,6 +34,7 @@ namespace SeeDocs_App
 
     // How wide a row's icon stands, which a row with none leaves blank to line up with the rest.
     export constexpr float k_rowIconSize = 14.0f;
+    export constexpr float k_titleIconSize = 32.0f;   // a page title's, beside a 28 pt title
 
     // The icon of a type's row - a control's, whatever else the type is.
     export [[nodiscard]] RowIcon rowIconOf(const Type&);
