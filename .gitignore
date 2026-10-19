@@ -24,6 +24,8 @@ __pycache__/
 
 # What a SeeDocs scan keeps of each file it read, for the next scan on the same PC
 Scan.cache
+# A file SeeDocs is writing, renamed over its target once whole
+*.writing
 
 # Mockups and screenshots the desktop app mirrors into the tree; the kept copies live outside it
 Claude outputs/

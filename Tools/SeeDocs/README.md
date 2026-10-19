@@ -225,8 +225,9 @@ stays with ClaFi modules: no property, event or control is read, and nothing is 
 A unit is read through its interface section - what it publishes - over the framework's own Pascal
 lexer, as a module interface is read over the C++ one.
 
-- **A unit is a module**, named and shown by its whole name, every part of which tells it from the
-  others. Its `uses` are its imports.
+- **A unit is a module**, named and shown by its whole name. Its `uses` are its imports. Units of
+  one name in several folders are namesakes, told apart by their folders - see
+  [Namesakes](#namesakes).
 - **Its namespace is its name with `::` for each dot**, as C++Builder names them:
   `VirtualTrees.Header` is `VirtualTrees::Header`.
 - **Everything the interface declares is public.** A class member takes the access its section gives
@@ -385,8 +386,8 @@ Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, Fi
 **A scan reads only the files that changed since the last one.** SeeDocs keeps what each file gave
 the last scan in the project's `Scan.cache`, and takes a file from there while its size and last
 write are the ones the folder listing gave then. New and changed files are read, and a file gone
-from the folders is dropped. The passes over the whole tree and the database write run as they
-always do, and the database comes out as it does from a scan that reads every file.
+from the folders is dropped. The passes over the whole tree and the database are built as they
+always are, and the database comes out as it does from a scan that reads every file.
 
 A file the cache holds is read again where what it was read by has changed:
 
@@ -404,6 +405,25 @@ or that was written under other scan options, is put aside, and every file is re
 binary and holds the last-write times of the PC it was written on, so a project kept in a
 repository leaves it out - the next scan makes it again. SeeDocsCli reads every file and leaves the
 cache as it is.
+
+## Saving
+
+**The window writes the database and the scan cache on a thread of their own**, so a scan's pages
+show as soon as the scan is read. The pages come off the database built in memory, and the files
+follow it to disk:
+
+- **One write at a time**, in the order asked. A write still waiting gives way to a newer one of the
+  same file.
+- **Each file is written beside itself**, as `Surface.cfg.writing`, and renamed over the old one
+  once whole, so a write cut short leaves the file as it was.
+- **Reads wait for the writes**: opening a project, and the scan that reads the cache. Closing
+  SeeDocs waits for them too, once the window is down.
+- **A database that could not be written** puts up a notice naming the file, with Try again. The
+  pages keep the last scan, and the file holds the one before it until a write succeeds. A scan
+  cache that could not be written costs the next scan its speed, and says nothing.
+
+A hint edited on a page is saved the same way. SeeDocsCli writes the database itself, before it
+ends.
 
 ## The window
 
@@ -586,7 +606,8 @@ opens it in a tab behind the one shown.
 - to the project's own node, for a page the tree has no row for, a project's search, or a page gone
 
 The nodes a tree has open and how far it is scrolled are the tab's. The open nodes are kept with the
-tab, by project, so a restored tab, or a project opened again, comes back as it was left. A node's
+tab, by project - a folder by its path, a module by its folder's path and its name - so a restored
+tab, or a project opened again, comes back as it was left. A node's
 rows are made the first time it opens, out of the project's contents, which are read once and shared
 by every tab's tree.
 
@@ -660,9 +681,11 @@ plain text.
   controls list leaves the kind out - every row's mark says it.
 - A name the list holds more than once is written after its namespace, from the last part the
   namesakes share: `Grids::Cell` and `Grids::Dt::Cell`, `::` alone for the global namespace.
+- A type of one qualified name in several folders carries its folder at the end of its name cell,
+  ahead of its kind.
 - A function's row is its module page's: one per name, the overloads' signatures in the name's
   tooltip. A name several modules export in one namespace carries the module's name at the end of
-  its name cell.
+  its name cell, and the module's folder after it where the modules go by one name too.
 - A module and a folder stand beside a folder's path - the one the module stands in, the folder's
   own.
 - Its url is its folder's with `/.controls`, `/.types`, `/.functions`, `/.modules` or `/.folders`
@@ -714,7 +737,7 @@ A type's page holds, in this order:
   two trees. Each type has the types derived from it under it, closed.
 - **Details**, the page's footnote - the note the type's comment references, as prose, its file and
   section in the heading's tooltip.
-- **The types beside it in its module.**
+- **The types beside it in its module** - the module in its own folder, a namesake's left out.
 
 **A base's methods grid holds what reaches the type.**
 
@@ -822,9 +845,9 @@ writer puts words in - and only in C++ sources.
   something other than what the page was built from. A file changed in an editor since the scan is
   scanned again before it is edited here.
 - **A file keeps its byte order mark**, and each line its own line end.
-- **The words are written by `SeeDocs_App.Edits`.** The database follows every hint written, and the
-  page shown takes the new words where it stands. A footnote added builds the page again, at the new
-  footnote.
+- **The words are written by `SeeDocs_App.Edits`.** The database follows every hint written - see
+  [Saving](#saving) - and the page shown takes the new words where it stands. A footnote added
+  builds the page again, at the new footnote.
 
 ### Links
 
@@ -854,6 +877,26 @@ coloured.
   offers Open and Open in new tab. Open in new tab opens behind the tab shown.
 - A link to a member with no page of its own arrives at the member's row, with the row scrolled into
   view, as every first arrival does.
+
+### Namesakes
+
+**Modules of one name in several folders are namesakes**, and so are the types they declare under
+one qualified name. In a tree of Delphi projects every form's unit may be `Unit1` and every form
+`TForm1`. A url names the folder, so each namesake has a page of its own.
+
+- **A link the page builds names its namesake by its folder**: a module's row and a type's row, the
+  module a type stands in, a search's names, a list's rows, and the derived types a type page lists
+  under a base crumb and in its tree.
+- **A type a text names** - a hint, a note, a signature, a base - is read where it is written. The
+  namesake in the page's own module is the one meant, and else the one in the page's folder.
+- **Where neither settles it, the link asks.** A click on it, or Return, drops a menu of the
+  namesakes, each with its folder muted at the line's end, and the one picked opens. Open and Open
+  in new tab on the link's menu drop the same menu, and the pick opens as the command says. A
+  search's page and a list stand in no module of their own, so their links ask wherever there are
+  several. On the root's search, which spans the projects, such a name is left unlinked.
+- A link that asks shows no preview in its tooltip.
+- **A namesake reads apart by its folder** wherever names are listed - see [Lists](#lists), [The
+  list](#the-list) and [The search's page](#the-searchs-page).
 
 ### Keys on a page
 
@@ -968,7 +1011,7 @@ The box drops a list as it is typed into.
   - Search "row" in all projects
 - **The ten best names** follow, under a divider. Each carries the mark of what it is - a member's
   line leaves the mark's room blank - a member's type muted before it, the words typed in the
-  spot, and its kind at the line's end.
+  spot, and its kind at the line's end. A namesake carries its folder after its kind.
 - **A tooltip** beside the list holds the current line's hint and where it stands.
 
 A search that would search what the one above it does is left out: a project's home and its options
@@ -1028,7 +1071,8 @@ The search's page is a page of the browser like any other.
 
 It holds:
 
-- a section for each kind of name found, the names in the order they are ranked
+- a section for each kind of name found, the names in the order they are ranked, a namesake's
+  folder at the end of its name cell
 - **In hints** - the declarations whose hints hold the words and whose names do not
 - **In footnotes** - every footnote section holding them, named by its note and its heading, with
   the sentence the words stand in. Each is linked to the declaration it belongs to: the one its

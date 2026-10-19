@@ -332,7 +332,17 @@ namespace SeeDocs_App
 
     // PageLinkEvent
 
-    PageLinkEvent::PageLinkEvent(std::wstring linkTarget)
+    PageLinkEvent::PageLinkEvent(std::wstring linkTarget, Control& linkSource)
+        :
+        ::ClaFi::Event{},
+        target{ std::move(linkTarget) },
+        source{ linkSource }
+    {
+    }
+
+    // PageLinkTypeEvent
+
+    PageLinkTypeEvent::PageLinkTypeEvent(std::wstring linkTarget)
         :
         ::ClaFi::Event{},
         target{ std::move(linkTarget) }
@@ -1555,8 +1565,9 @@ namespace SeeDocs_App
     // See Browser
     void PageView::connectLinks(Grids::Grid& grid)
     {
+        // The event names its row const, and the row stands as any control of the page does.
         grid.onCellLinkClick([this](Grids::CellLinkClickEvent& event) {
-            open(event.target);
+            open(event.target, const_cast<Grids::RowBase&>(event.row()));
         });
         // The row, which is where the request was raised.
         grid.onCellLinkContextPopup([this](Grids::CellLinkContextPopupEvent& event) {
@@ -1575,7 +1586,7 @@ namespace SeeDocs_App
     void PageView::connectLinks(TextBox& box)
     {
         box.onLinkClick([this](LinkClickEvent& event) {
-            open(event.target);
+            open(event.target, event.sender());
         });
         box.onLinkContextPopup([this](LinkContextPopupEvent& event) {
             showLinkMenu(event.sender(), event.target, event.popup);
@@ -1588,18 +1599,24 @@ namespace SeeDocs_App
     void PageView::connectLinks(ExpanderHeader& header)
     {
         header.onLinkClick([this](HeaderLinkClickEvent& event) {
-            open(event.target);
+            open(event.target, event.sender());
         });
         header.onLinkContextPopup([this](HeaderLinkContextPopupEvent& event) {
             showLinkMenu(event.sender(), event.target, event.popup);
         });
     }
 
+    // **Whoever shows the page says which type a link names**: a name alone may name namesakes,
+    // and only the browser reads a link against the page it stands on.
     bool PageView::writePreview(Text& text, const std::wstring_view link) const
     {
         if (!m_page.surface)
             return false;
-        const std::optional<Preview> preview = previewOf(*m_page.surface, link);
+        PageLinkTypeEvent event{ std::wstring{ link } };
+        emitEvent(event);
+        if (!event.type)
+            return false;
+        const std::optional<Preview> preview = previewOf(*m_page.surface, *event.type);
         if (!preview.has_value())
             return false;
         writeSignature(text, preview->code, false, preview->language);
@@ -1614,9 +1631,9 @@ namespace SeeDocs_App
         
         for (BasesTreeBase* bases : { &m_head.basesBar1(), &m_head.basesBar2() })
         {
-            bases->onBaseLink([this](BaseLinkEvent& event) {
-                later([this, target = event.target]() {
-                    open(target);
+            bases->onBaseLink([this, bases](BaseLinkEvent& event) {
+                later([this, bases, target = event.target]() {
+                    open(target, *bases);
                     });
                 });
             bases->onBaseLinkContextPopup([this](BaseLinkContextPopupEvent& event) {
@@ -1625,9 +1642,9 @@ namespace SeeDocs_App
         }
     }
 
-    void PageView::open(std::wstring target) const
+    void PageView::open(std::wstring target, Control& source) const
     {
-        PageLinkEvent event{ std::move(target) };
+        PageLinkEvent event{ std::move(target), source };
         emitEvent(event);
     }
 
@@ -1650,12 +1667,14 @@ namespace SeeDocs_App
         if (target.starts_with(k_anchorPrefix))
             return;
         m_menuLink = target;
+        m_menuOwner = &owner;
         Menu menu{ owner };
         menu.add(Browser::Actions::open);
         menu.add(Browser::Actions::openInNewTab);
         event.stopPropagation();
         menu.execute();
         m_menuLink.clear();
+        m_menuOwner = nullptr;
     }
 
     bool PageView::hasFootnotes(const Table& table)

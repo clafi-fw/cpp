@@ -45,11 +45,20 @@ namespace SeeDocs_App
     export class PageLinkEvent : public ::ClaFi::Event
     {
     public:
-        explicit PageLinkEvent(std::wstring target);
+        PageLinkEvent(std::wstring target, Control& source);
     public:
-        // A type's qualified name, a module's name, a folder's path, a member link, or # and an
-        // anchor of the page.
-        const std::wstring target;
+        const std::wstring target;   // what the link was written with, or # and an anchor
+        Control& source;   // what the link was followed from, which a menu of its pages stands on
+    };
+
+    // A link's tooltip asks which type the link names. The surface has an Event of its own.
+    export class PageLinkTypeEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit PageLinkTypeEvent(std::wstring target);
+    public:
+        const std::wstring target;   // what the link was written with
+        const Type* type{ nullptr };   // the answer; null where it names none, or several
     };
 
     // A command's button on the page was clicked. The surface has an Event of its own.
@@ -154,6 +163,9 @@ namespace SeeDocs_App
         // Connects a handler raised when a link on the page is clicked.
         template<typename F>
         EventConnection onPageLink(F&& callback);
+        // Connects a handler raised when a link's tooltip asks which type the link names.
+        template<typename F>
+        EventConnection onPageLinkType(F&& callback);
         // Connects a handler raised when a command's button on the page is clicked.
         template<typename F>
         EventConnection onPageCommand(F&& callback);
@@ -194,6 +206,8 @@ namespace SeeDocs_App
         [[nodiscard]] SearchResult& found() { return m_found; }
         // The link a menu is up for, as the text states it; empty while no link menu is up.
         [[nodiscard]] std::wstring_view menuLink() const { return m_menuLink; }
+        // What the link menu that is up stands on; null while none is up.
+        [[nodiscard]] Control* menuOwner() { return m_menuOwner; }
     private:
         // A footnote standing on the page: its slot, the words it shows, the anchor a link reaches
         // it by - none for the type's own note - and the row it belongs to where it is a member's.
@@ -302,7 +316,7 @@ namespace SeeDocs_App
         // Writes the declaration a link's type shows in a tooltip; false for a link naming none.
         bool writePreview(Text&, std::wstring_view link) const;
         void connectHead();
-        void open(std::wstring target) const;
+        void open(std::wstring target, Control& source) const;
         void ask(std::wstring target) const;   // raises the command the target is about
         // Runs the menu for a link - Open and Open in new tab - on the control it was asked on.
         void showLinkMenu(Control& owner, std::wstring_view target, ContextPopupEvent&);
@@ -373,6 +387,7 @@ namespace SeeDocs_App
         std::map<const TableRow*, FootnoteSlot*> m_newFootnotes{};
         std::size_t m_footnoteCount{ 0 };   // numbered through the page, so an anchor names one
         std::wstring m_menuLink{};   // the link the menu that is up is about
+        Control* m_menuOwner{ nullptr };   // what that menu stands on
         std::function<void()> m_pending{};
         UiTimer m_later{};
         std::vector<ScopedEventConnection> m_editorWatches{};   // on the editors' command lines
@@ -451,6 +466,12 @@ namespace SeeDocs_App
     }
 
     template<typename F>
+    EventConnection PageView::onPageLinkType(F&& callback)
+    {
+        return connectEvent<PageLinkTypeEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
     EventConnection PageView::onPageCommand(F&& callback)
     {
         return connectEvent<PageCommandEvent>(std::forward<F>(callback));
@@ -483,17 +504,18 @@ namespace SeeDocs_App
             if (branch.children.empty())
             {
                 TreeItem& item = holder.addItem(treeRowText(branch));
-                item.onClick([this, type](ClickEvent&) {
+                item.onClick([this, type, &item](ClickEvent&) {
                     if (type)
-                        open(type->qualifiedName);
+                        open(typeLink(*type), item);
                 });
                 rowBuilt(branch, item, nullptr);
                 continue;
             }
             Controls::TreeNode& node = holder.addNode(treeHeaderText(branch));
-            node.header().onClick([this, type](ClickEvent&) {
+            Control& header = node.header();
+            header.onClick([this, type, &header](ClickEvent&) {
                 if (type)
-                    open(type->qualifiedName);
+                    open(typeLink(*type), header);
             });
             rowBuilt(branch, node.header(), &node);
             if (nodesOpen)

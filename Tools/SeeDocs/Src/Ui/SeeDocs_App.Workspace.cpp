@@ -2,6 +2,7 @@ module SeeDocs_App.Workspace;
 
 import SeeDocs_App.Browser;
 import SeeDocs_App.NewProject;
+import SeeDocs_App.FileWriter;
 import SeeDocs_App.Database;
 import SeeDocs_App.Project;
 import SeeDocs_App.Scanner;
@@ -12,6 +13,7 @@ import ClaFi.Controls.AppButton;
 import ClaFi.Controls.MessageDialog;
 
 import ClaFi.App.Application;
+import ClaFi.App.Notices;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.FormContext;
@@ -57,6 +59,25 @@ namespace SeeDocs_App
             const std::int64_t ticks =
                 static_cast<std::int64_t>(written.time_since_epoch().count());
             return std::to_wstring(size) + L":" + std::to_wstring(ticks);
+        }
+
+        using DatabasePtr = std::shared_ptr<const Database>;
+
+        // Hands the database to the writer, which lets it go once it is written.
+        void writeDatabaseLater(FileWriter& writer, const Project& project, DatabasePtr database)
+        {
+            writer.write(project.databasePath(), [database](const std::filesystem::path& file) {
+                return database->save(file);
+            });
+        }
+
+        void writeCacheLater(FileWriter& writer, const Project& project, ScanCache cache)
+        {
+            const std::shared_ptr<const ScanCache> kept =
+                std::make_shared<const ScanCache>(std::move(cache));
+            writer.write(project.scanCachePath(), [kept](const std::filesystem::path& file) {
+                return writeScanCache(*kept, file);
+            });
         }
 
         // One spelling for a folder wherever it is compared or stored: absolute, normal, and
@@ -117,9 +138,8 @@ namespace SeeDocs_App
         });
         m_madeTimer.onTick([this](TimerEvent&) {
             std::optional<Project> made = std::exchange(m_made, std::nullopt);
-            Text reason;
-            if (made && !openProject(std::move(*made), reason, HomeTab::Options))
-                refuse(L"Cannot open the project", reason);
+            if (made)
+                openProject(std::move(*made), HomeTab::Options);
         });
         // The window title names the project the tab shown stands in.
         m_projectShown = m_browser.onProjectShown([this](ProjectShownEvent& event) {
@@ -134,6 +154,12 @@ namespace SeeDocs_App
         });
         m_rescanAsked = m_browser.onRescanProject([this](RescanProjectEvent& event) {
             rescan(event.project);
+        });
+        m_surfaceEdited = m_browser.onSurfaceEdited([this](SurfaceEditedEvent& event) {
+            saveDatabase(event.project);
+        });
+        m_writeFailed = m_writer.onWriteFailed([this](WriteFailedEvent& event) {
+            noteUnwritten(event.file);
         });
     }
 
@@ -150,41 +176,34 @@ namespace SeeDocs_App
 
     // Projects that stand already open before the window is up, so the first frame shows them. A
     // folder that stands for no project is offered one once the window is up, since the offer
-    // asks. A project left open that cannot be opened now is left out of those open, and its
-    // reason is said on the root while nothing else is. Nothing is guessed from where SeeDocs
-    // stands: the project is the user's to name.
+    // asks. A project left open whose properties cannot be read now is left out of those open.
+    // Nothing is guessed from where SeeDocs stands: the project is the user's to name.
     void Workspace::start(const std::filesystem::path& stated)
     {
-        Text reasons;
         for (const std::wstring& name : storedOpen())
         {
             std::optional<Project> project = readProject(name);
-            if (!project || openFor(project->folder))
-                continue;
-            Text reason;
-            if (!openProject(std::move(*project), reason, HomeTab::None))
-                reasons << reason << k_endLine << k_endLine;
+            if (project && !openFor(project->folder))
+                openProject(std::move(*project), HomeTab::None);
         }
 
         if (!stated.empty())
         {
             const std::filesystem::path folder = cleanFolder(stated);
             std::optional<Project> project = readProject(folder);
-            Text reason;
             if (!project)
             {
                 m_statedToMake = folder;
                 m_startTimer.start(MilliSeconds{ 0u });
             }
-            else if (!openFor(project->folder)
-                && !openProject(std::move(*project), reason, HomeTab::Open))
+            else if (!openFor(project->folder))
             {
-                reasons << reason << k_endLine << k_endLine;
+                openProject(std::move(*project), HomeTab::Open);
             }
         }
 
         storeOpen();
-        m_browser.showWords(noProjectWords(reasons));
+        m_browser.showWords(noProjectWords());
     }
 
     bool Workspace::openFolder(const std::filesystem::path& stated)
@@ -216,11 +235,8 @@ namespace SeeDocs_App
             return false;
         }
 
-        Text reason;
-        if (openProject(std::move(*project), reason, HomeTab::Open))
-            return true;
-        refuse(L"Cannot open the project", reason);
-        return false;
+        openProject(std::move(*project), HomeTab::Open);
+        return true;
     }
 
     void Workspace::browse()
@@ -306,21 +322,13 @@ namespace SeeDocs_App
         return open.project.name;
     }
 
-    // **The surface shown is the database as written**, read off the document the file was
-    // written from, so a scan that could not be written leaves the project as it was last read.
+    // **The surface shown is the database as scanned**, read off the document the file is written
+    // from; a write that fails says so in a notice. See README#saving
     void Workspace::rescan(OpenProject& open)
     {
         ScopedWaitCursor wait{};
-        std::optional<Surface> surface = scan(open.project);
-        if (!surface)
-        {
-            Text reason;
-            reason << L"The database could not be written to";
-            writeFolder(reason, open.project.databasePath());
-            refuse(L"Cannot rescan the project", reason);
-            return;
-        }
-        open.surface = std::move(*surface);
+        open.unwritten.withdraw();
+        open.surface = scan(open.project);
         open.notes.forgetAll();
         m_browser.rebindProject(open);
     }
@@ -447,32 +455,25 @@ namespace SeeDocs_App
         };
     }
 
-    // **The database is read before anything is shown**, so a project that cannot be opened leaves
-    // the window as it was. A project with no database is scanned first, and so is one whose
-    // database was read otherwise than the project now asks; what is shown is always the
-    // database, read off the document a fresh scan writes and off the file otherwise, by the
-    // one reader.
-    bool Workspace::openProject(Project project, Text& reason, const HomeTab homeTab)
+    // **The database is read before anything is shown**, once the writes asked for are done. A
+    // project with no database is scanned first, and so is one whose database was read otherwise
+    // than the project now asks; what is shown is always the database, read off the document a
+    // fresh scan writes and off the file otherwise, by the one reader.
+    void Workspace::openProject(Project project, const HomeTab homeTab)
     {
         ScopedWaitCursor wait{};
+        m_writer.waitIdle();
         std::optional<Surface> surface = readDatabase(project.databasePath());
         if (surface && (surface->mode() != project.mode || surface->hintRules() != project.hints))
             surface.reset();
         if (!surface)
             surface = scan(project);
-        if (!surface)
-        {
-            reason << L"The database could not be written to";
-            writeFolder(reason, project.databasePath());
-            return false;
-        }
 
         m_projects.push_back(std::make_unique<OpenProject>(std::move(project),
             std::move(*surface)));
         OpenProject& open = *m_projects.back();
         remember(open.project);
         m_browser.addProject(open, homeTab);
-        return true;
     }
 
     OpenProject* Workspace::openFor(const std::filesystem::path& folder) const
@@ -558,24 +559,60 @@ namespace SeeDocs_App
             m_browser.rebindProject(open);
     }
 
-    // **Only the files changed since the last scan are read.** See README#scan-cache
-    std::optional<Surface> Workspace::scan(const Project& project)
+    // **Only the files changed since the last scan are read**, by the cache the last write left.
+    // See README#scan-cache
+    Surface Workspace::scan(const Project& project)
     {
         const std::wstring build = programStamp();
+        m_writer.waitIdle();
         ScanCache cache = build.empty()
             ? ScanCache{}
             : readScanCache(project.scanCachePath(), build);
-        const Database database{
-            scanSources(project.sourceFolders(), project.mode, project.hints, cache)
-        };
-        if (!database.save(project.databasePath()))
-            return std::nullopt;
+        const DatabasePtr database = std::make_shared<const Database>(
+            scanSources(project.sourceFolders(), project.mode, project.hints, cache));
+        Surface surface = database->surface();
+        writeDatabaseLater(m_writer, project, database);
         if (!build.empty())
         {
             cache.build = build;
-            writeScanCache(cache, project.scanCachePath());
+            writeCacheLater(m_writer, project, std::move(cache));
         }
-        return database.surface();
+        return surface;
+    }
+
+    void Workspace::saveDatabase(OpenProject& open)
+    {
+        open.unwritten.withdraw();
+        writeDatabaseLater(m_writer, open.project, std::make_shared<const Database>(open.surface));
+    }
+
+    // A cache that could not be written costs the next scan its speed, and says nothing.
+    void Workspace::noteUnwritten(const std::filesystem::path& file)
+    {
+        const Projects::iterator found = std::ranges::find_if(m_projects,
+            [&file](const std::unique_ptr<OpenProject>& open) {
+                return open->project.databasePath() == file;
+            });
+        if (found == m_projects.end())
+            return;
+        OpenProject& open = **found;
+        Text message;
+        message << L"The database could not be written to ";
+        message << PushThemeColor{ InkWell::spotInk() } << file.wstring() << PopColor{};
+        message << L". The pages show the last scan, and the file holds the one before it.";
+        open.unwritten = notices().post(Notice{
+            .icon = MessageIcon::Error,
+            .title = L"Save database: " + open.project.name,
+            .message = std::move(message),
+            .answers = {
+                NoticeAnswer{
+                    .caption = L"Try again",
+                    .run = [this, &open](ClickEvent&) {
+                        saveDatabase(open);
+                    }
+                }
+            }
+        });
     }
 
     // An entry naming the same project another way - a tree, where its project folder is kept
@@ -653,13 +690,11 @@ namespace SeeDocs_App
             (m_application.config() / k_locationNodeName).set(location.wstring());
     }
 
-    Text Workspace::noProjectWords(const Text& reasons) const
+    Text Workspace::noProjectWords() const
     {
         Text text;
         text << TextStyle::Title << m_application.name() << PopTextStyle{};
         text << k_endLine << k_endLine;
-        if (!reasons.empty())
-            text << reasons;
         text << L"No project is open. The Open page of the application menu opens one, or "
             L"makes a new one - a folder of its own, reading the folders of sources it is "
             L"given." << k_endLine;

@@ -2,6 +2,7 @@ export module SeeDocs_App.Workspace;
 
 import SeeDocs_App.Browser;
 import SeeDocs_App.NewProject;
+import SeeDocs_App.FileWriter;
 import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
@@ -101,8 +102,8 @@ namespace SeeDocs_App
         };
     private:
         // Shows the project, its database scanned first where it has none or was read otherwise
-        // than the project asks. False where it could not be, the reason written out.
-        [[nodiscard]] bool openProject(Project, Text& reason, HomeTab);
+        // than the project asks.
+        void openProject(Project, HomeTab);
         // The open project the folder stands for, by its own folder.
         [[nodiscard]] OpenProject* openFor(const std::filesystem::path& folder) const;
         void close(OpenProject&);
@@ -113,9 +114,12 @@ namespace SeeDocs_App
         void refuse(std::wstring_view title, const Text& message);
         // Writes the properties as the edit leaves them, reads them back, and rereads as asked.
         void change(OpenProject&, const std::function<void(Project&)>& edit, Reread);
-        // Scans the project's sources and writes its database; the surface as written, and
-        // nothing where the file could not be written.
-        [[nodiscard]] std::optional<Surface> scan(const Project&);
+        // Scans the project's sources, its database and scan cache written on the writer's thread;
+        // the surface the database holds.
+        [[nodiscard]] Surface scan(const Project&);
+        void saveDatabase(OpenProject&);   // as its surface stands, on the writer's thread
+        // Puts up a notice where the file is an open project's database, Try again its answer.
+        void noteUnwritten(const std::filesystem::path& file);
         void remember(const Project&);   // first among the recent, and among those open
         void forget(const std::filesystem::path& folder);
         [[nodiscard]] Names storedRecent() const;
@@ -124,8 +128,7 @@ namespace SeeDocs_App
         void storeOpen();   // the projects open as they stand, in the order they were opened
         [[nodiscard]] std::filesystem::path storedLocation() const;
         void storeLocation(const std::filesystem::path&);
-        // What the root shows while no project is open, the reasons first where there are any.
-        [[nodiscard]] Text noProjectWords(const Text& reasons) const;
+        [[nodiscard]] Text noProjectWords() const;   // what the root shows while no project is open
         void writeTitle();
     private:
         ApplicationBase& m_application;
@@ -134,6 +137,7 @@ namespace SeeDocs_App
         // What a question or a refusal is dropped under: the browser's app button.
         Control& m_asker;
         Projects m_projects{};
+        FileWriter m_writer{};   // every database and scan cache the projects write
         const OpenProject* m_shown{ nullptr };   // the project the tab shown stands in
         OpenProject* m_closing{ nullptr };       // to close once the click has unwound
         // A folder stated at start that stands for no project; the offer to make one asks, and
@@ -145,6 +149,8 @@ namespace SeeDocs_App
         ScopedEventConnection m_closeAsked{};
         ScopedEventConnection m_orderAsked{};
         ScopedEventConnection m_rescanAsked{};
+        ScopedEventConnection m_surfaceEdited{};
+        ScopedEventConnection m_writeFailed{};
         // A project the new project dialog made, opened once the dialog is down.
         std::optional<Project> m_made{};
         UiTimer m_madeTimer{};

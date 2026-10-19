@@ -42,6 +42,7 @@ namespace SeeDocs_App
         std::wstring folder;   // the path of the folder it stands in, or a folder's own
         const Comment* comment{ nullptr };         // where its hint is read from; null for none
         std::wstring link;     // what a page links it by
+        bool namesake{ false };   // another of its kind goes by its name, in another folder
     };
 
     export using NamedEntries = std::vector<NamedEntry>;
@@ -90,6 +91,7 @@ namespace SeeDocs_App
         void addType(const Surface&, const ContentsFolder&, const ContentsModule&, const Type&);
         void add(NamedEntry);
         void addOwner(const NamedEntry&, std::size_t index);
+        void markNamesakes();   // every entry sharing its kind and its name with another
         // The types named exactly so, and every type they stand on, as far as the surface reads.
         [[nodiscard]] std::unordered_set<const Type*> typesUnder(
             const ClaFi::Searcher& owner) const;

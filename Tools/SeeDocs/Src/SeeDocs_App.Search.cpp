@@ -393,6 +393,15 @@ namespace SeeDocs_App
             return hintRunsOf(surface, *entry.comment, entry.scope);
         }
 
+        // A namesake reads apart by its folder at its name's end. A folder's row and a module's say
+        // where they stand already.
+        void placeNamesake(TableRow& row, const SearchedProject& project, const NamedEntry& entry)
+        {
+            const bool placed = entry.kind == NameKind::Folder || entry.kind == NameKind::Module;
+            if (entry.namesake && !placed)
+                row.qualifiers = { { muted(treePath(project.name, entry.folder)) } };
+        }
+
         [[nodiscard]] TableRow nameRow(const SearchedProject& project, const NameHit& hit)
         {
             const Surface& surface = *project.surface;
@@ -407,7 +416,7 @@ namespace SeeDocs_App
                     row.cells.push_back({ Run{
                         .text = entry.module->shownName,
                         .style = RunStyle::Plain,
-                        .link = entry.module->name
+                        .link = moduleLink(entry.folder, entry.module->name)
                     } });
                     row.cells.push_back(hintCell(surface, entry));
                     break;
@@ -420,7 +429,7 @@ namespace SeeDocs_App
                     row.cells.push_back({ Run{
                         .text = entry.module->shownName,
                         .style = RunStyle::Plain,
-                        .link = entry.module->name
+                        .link = moduleLink(entry.folder, entry.module->name)
                     } });
                     row.cells.push_back(hintCell(surface, entry));
                     break;
@@ -432,6 +441,7 @@ namespace SeeDocs_App
                     row.cells.push_back(hintCell(surface, entry));
                     break;
             }
+            placeNamesake(row, project, entry);
             return row;
         }
 
@@ -480,6 +490,7 @@ namespace SeeDocs_App
                     row.type = entry.type;
                 row.cells.push_back(nameCell(entry));
                 row.cells.push_back(hintCell(*project.surface, entry));
+                placeNamesake(row, project, entry);
                 keep(section, index, std::move(row), spell);
             }
         }
@@ -586,6 +597,7 @@ namespace SeeDocs_App
             for (const ContentsModule& module : folder.modules)
                 addModule(surface, folder, module);
         }
+        markNamesakes();
     }
 
     NameHits SearchIndex::find(const std::wstring_view query, const std::size_t limit) const
@@ -770,7 +782,7 @@ namespace SeeDocs_App
             .module = &module,
             .folder = folder.path,
             .comment = nullptr,
-            .link = module.name
+            .link = moduleLink(folder.path, module.name)
         });
         for (const Type* type : module.types)
             addType(surface, folder, module, *type);
@@ -855,7 +867,7 @@ namespace SeeDocs_App
             .module = &module,
             .folder = folder.path,
             .comment = &type.comment,
-            .link = type.qualifiedName
+            .link = typeLink(type)
         });
 
         for (const Property& property : type.properties)
@@ -940,6 +952,49 @@ namespace SeeDocs_App
             ? footnoteHeading(entry.type->name, citedName)
             : std::wstring{ citedName };
         m_named.try_emplace(heading, index);
+    }
+
+    // **A name is what tells it apart from the others of its kind**: a folder's own name, a
+    // module's, a type's qualified name, and a member or an export with its owner's before it.
+    void SearchIndex::markNamesakes()
+    {
+        const auto identity = [](const NamedEntry& entry) {
+            std::wstring result = std::to_wstring(static_cast<int>(entry.kind));
+            result += k_space;
+            switch (entry.kind)
+            {
+                case NameKind::Type:
+                    result += entry.type->qualifiedName;
+                    break;
+                case NameKind::Folder:
+                    result += entry.name;
+                    break;
+                case NameKind::Module:
+                    result += entry.module->name;
+                    break;
+                case NameKind::Function:
+                case NameKind::Constant:
+                    result.append(entry.module->name).append(k_scope).append(entry.name);
+                    break;
+                case NameKind::Property:
+                case NameKind::Event:
+                case NameKind::Method:
+                case NameKind::Field:
+                case NameKind::Member:
+                    result.append(entry.type->qualifiedName).append(k_scope).append(entry.name);
+                    break;
+            }
+            return result;
+        };
+        std::vector<std::wstring> identities;
+        identities.reserve(m_entries.size());
+        std::unordered_map<std::wstring_view, std::size_t> counts;
+        for (const NamedEntry& entry : m_entries)
+            identities.push_back(identity(entry));
+        for (const std::wstring& each : identities)
+            ++counts[each];
+        for (std::size_t i = 0; i != m_entries.size(); ++i)
+            m_entries[i].namesake = counts[identities[i]] > 1;
     }
 
     std::unordered_set<const Type*> SearchIndex::typesUnder(const Searcher& owner) const

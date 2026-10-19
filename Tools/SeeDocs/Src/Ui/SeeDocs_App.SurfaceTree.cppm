@@ -63,7 +63,7 @@ namespace SeeDocs_App
     };
 
     // The nodes of a project open in a tree: its own, its folders by path and its modules by
-    // name.
+    // moduleLink.
     export struct OpenRows
     {
         bool home{ false };

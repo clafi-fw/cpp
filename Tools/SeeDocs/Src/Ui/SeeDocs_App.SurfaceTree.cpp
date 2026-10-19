@@ -213,7 +213,7 @@ namespace SeeDocs_App
             if (contents[i].kind == ContentsRowKind::Folder)
                 open.folders.emplace_back(contents[i].folder);
             else
-                open.modules.push_back(contents[i].module->name);
+                open.modules.push_back(moduleLink(contents[i].folder, contents[i].module->name));
         }
         return open;
     }

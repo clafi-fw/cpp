@@ -55,6 +55,7 @@ namespace SeeDocs_App
         Project project;
         Surface surface;
         Notes notes;   // the project's footnotes folder
+        NoticeHandle unwritten{};   // the database the pages show could not be written
     };
 
     // Whether showing a project opens a tab on it.
@@ -102,6 +103,16 @@ namespace SeeDocs_App
         OpenProject& project;
     };
 
+    // A page's edit changed the project's surface, for its database to hold. The surface has an
+    // Event of its own.
+    export class SurfaceEditedEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit SurfaceEditedEvent(OpenProject&);
+    public:
+        OpenProject& project;
+    };
+
     export class SurfaceBrowser;
 
     // One page of the browser: a PageView over what the tab's url names.
@@ -120,8 +131,10 @@ namespace SeeDocs_App
         // The browser the page is shown in. Structure rather than state, so const stops here.
         [[nodiscard]] SurfaceBrowser& browser() const;
         // Takes the tab where a link on the page points: an anchor of the page stays on it,
-        // anything else names a page of the surface.
-        void followLink(std::wstring_view target);
+        // anything else names a page of the surface - or several, picked from over the source.
+        void followLink(std::wstring_view target, Control& source);
+        // Claims Open and Open in new tab for a link menu over a link naming several pages.
+        void connectLinkActions();
         void runCommand(std::wstring_view target);   // hands a command's click to the browser
         void orderRows(std::span<const std::wstring> targets);   // hands a carry to the browser
         void openSource(const SourcePlace&);   // hands a source button's click to the browser
@@ -180,6 +193,9 @@ namespace SeeDocs_App
         // Connects a handler raised when a notice asks for a project to be scanned again.
         template<typename F>
         EventConnection onRescanProject(F&& callback);
+        // Connects a handler raised when a page's edit changed a project's surface.
+        template<typename F>
+        EventConnection onSurfaceEdited(F&& callback);
         // Shows a project opened: a node of its own at the end of the tree, and its pages under a
         // segment of its name. The project is held by reference until it is removed, and what its
         // pages edit is written into it - its sources, its footnotes and its database - as its
@@ -200,9 +216,21 @@ namespace SeeDocs_App
         // What a project's options page is filled with, each time one is built.
         void connectProjectPage(ProjectPageBuilder);
         // The url of what a link on the page names - a type, a module, a folder or a member of
-        // the page's own project, or a path of the browser - or nothing where it names none.
+        // the page's own project, or a path of the browser - or nothing where it names none, or
+        // several.
         [[nodiscard]] std::optional<Url> urlOf(std::wstring_view target,
             const PageData& from) const;
+        // Whether a link on the page names namesakes in several folders. See README#namesakes
+        [[nodiscard]] bool namesSeveral(std::wstring_view target, const PageData& from) const;
+        // The type a link on the page names; null where it names none, several or no type.
+        [[nodiscard]] const Type* typeOf(std::wstring_view target, const PageData& from) const;
+        // Opens what a link on the page names, or drops the pages it names over the source to
+        // pick one from. See README#namesakes
+        void followLink(const PageData& from, std::wstring_view target, Control& source);
+        // Drops the pages a link names over the owner once the press that asked has unwound -
+        // the menu it was asked from gone - the one picked opening as the select says.
+        void pickLater(const PageData& from, std::wstring_view target, Control& owner,
+            SelectTab);
         // A page's command was clicked: the project whose home the target names is asked to be
         // closed, the one command a page has.
         void answerCommand(std::wstring_view target);
@@ -231,7 +259,8 @@ namespace SeeDocs_App
         void paintTabIcon(BrowserTab&, PaintIconEvent&) override;
         // Notes the control the focus comes into the search box from - Escape hands it back.
         void nestedControlFocusing(FocusEvent&) override;
-        void nestedControlDeleted(Control*) override;   // forgets a focus origin being deleted
+        // Forgets a focus origin being deleted, and a pending pick's owner.
+        void nestedControlDeleted(Control*) override;
     private:
         struct ShownProject;
         // What a path names, read off its segments: the root for none, else a project by its
@@ -259,9 +288,12 @@ namespace SeeDocs_App
             [[nodiscard]] bool isFolder() const { return project && depth == folderDepth + 1; }
             [[nodiscard]] bool isGone() const;
         };
-        // The folder, module and type a link's spelling names, keyed by that spelling - a
-        // folder by its path, whether or not it holds modules.
+        // The folder, module and type a link names, keyed by the link - a folder by its path,
+        // whether or not it holds modules, a module by moduleLink and a type by typeLink.
         using Targets = std::unordered_map<std::wstring, Target>;
+        // The types a qualified name alone names, as a text spells one, in reading order - several
+        // where namesakes stand in several folders.
+        using Namesakes = std::unordered_map<std::wstring, std::vector<Target>>;
         // Every folder on the way to one with modules, keyed by its path, with the modules
         // the folder holds - null for one that only holds other folders.
         using Folders = std::unordered_map<std::wstring, const ContentsFolder*>;
@@ -278,6 +310,7 @@ namespace SeeDocs_App
             ContentsTree contentsTree{};   // over the contents, which every tab's tree reads
             SearchIndex index{};   // over the contents, which a search reads
             Targets targets{};
+            Namesakes namesakes{};
             Folders folders{};
             NoticeHandle goneSource{};   // a source a page names that is not where it was read
             // Reads the contents, the targets and the folders off the surface as it now reads.
@@ -321,6 +354,23 @@ namespace SeeDocs_App
         };
         using SearchPlaces = std::vector<SearchPlace>;
         using ShownProjects = std::vector<const ShownProject*>;
+        // A page a link names: its url, and the target it is where it is a module's or a type's.
+        struct LinkedPlace
+        {
+            Url url{};
+            const Target* target{ nullptr };   // null for a list's, or a url the link spells
+            std::wstring_view member{};   // a member's or an export's name, the target its owner
+        };
+        using LinkedPlaces = std::vector<LinkedPlace>;
+        using TargetList = std::vector<const Target*>;
+        // A pick of a link's pages asked for from a link menu, waiting for that menu to go.
+        struct PendingPick
+        {
+            const PageData* from{ nullptr };
+            std::wstring target{};
+            Control* owner{ nullptr };
+            SelectTab select{ SelectTab::Yes };
+        };
     private:
         [[nodiscard]] Target resolve(const PageData&) const;
         [[nodiscard]] ShownProject* projectOf(std::wstring_view segment) const;
@@ -387,9 +437,21 @@ namespace SeeDocs_App
         [[nodiscard]] static bool exports(const ContentsModule&, std::wstring_view name);
         // Whether a row of the type's page is named so: a property, an event, a field or a member.
         [[nodiscard]] static bool hasRow(const Type&, std::wstring_view name);
-        // The url a link of the project's pages names; nothing where it names none.
+        // The url a link of the project's pages names; nothing where it names none, or several.
         [[nodiscard]] std::optional<Url> urlIn(const ShownProject&,
             std::wstring_view target) const;
+        // The pages a link on the page names: none, the one, or namesakes to pick from.
+        [[nodiscard]] LinkedPlaces placesOf(std::wstring_view target, const PageData& from) const;
+        // The pages a link of the project's pages names, read from the page the target stands
+        // for. See README#namesakes
+        [[nodiscard]] LinkedPlaces placesIn(const ShownProject&, std::wstring_view target,
+            const Target& from) const;
+        // The namesakes a page names its link by: the one in its own module, else in its folder,
+        // else all of them.
+        [[nodiscard]] static TargetList narrowed(const std::vector<Target>&, const Target& from);
+        // A menu line per page over the owner, the one picked opening as the select says.
+        void showPicks(const PageData& from, const LinkedPlaces&, Control& owner, SelectTab);
+        void showPendingPick();   // where its owner still stands
         // The projects a search reaches: the one the shown tab stands in, or all from the root.
         [[nodiscard]] ShownProjects searchedProjects() const;
         // The projects a search page searches: its own, or all from the root.
@@ -452,6 +514,8 @@ namespace SeeDocs_App
         Control* m_focusOrigin{ nullptr };   // what held the focus before the search box took it
         Searcher m_searcher{};   // the box's words, which every page shown bands
         std::optional<Url> m_searchOpens{};   // what the search opened, which goes on with it
+        std::optional<PendingPick> m_pendingPick{};
+        UiTimer m_pickTimer{};
         EditorRuns m_editors{ appContext() };
 
         TabTrees m_tabTrees{};
@@ -489,7 +553,10 @@ namespace SeeDocs_App
         m_view{ createBody<PageView>(browser().searcher()) }
     {
         m_view.onPageLink([this](PageLinkEvent& event) {
-            followLink(event.target);
+            followLink(event.target, event.source);
+        });
+        m_view.onPageLinkType([this](PageLinkTypeEvent& event) {
+            event.type = browser().typeOf(event.target, pageData());
         });
         m_view.onPageCommand([this](PageCommandEvent& event) {
             runCommand(event.target);
@@ -506,6 +573,7 @@ namespace SeeDocs_App
         onShowAnchor([this](ShowAnchorEvent& event) {
             arrive(event.url, event.position);
         });
+        connectLinkActions();
     }
 
     // ProjectPage
@@ -539,6 +607,9 @@ namespace SeeDocs_App
         m_rebuildTimer.onTick([this](TimerEvent&) {
             rebuildCurrentPage();
         });
+        m_pickTimer.onTick([this](TimerEvent&) {
+            showPendingPick();
+        });
         connectSearch();
     }
 
@@ -564,5 +635,11 @@ namespace SeeDocs_App
     EventConnection SurfaceBrowser::onRescanProject(F&& callback)
     {
         return connectEvent<RescanProjectEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection SurfaceBrowser::onSurfaceEdited(F&& callback)
+    {
+        return connectEvent<SurfaceEditedEvent>(std::forward<F>(callback));
     }
 }

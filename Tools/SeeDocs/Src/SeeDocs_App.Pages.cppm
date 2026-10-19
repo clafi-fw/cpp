@@ -26,8 +26,7 @@ namespace SeeDocs_App
     {
         std::wstring text;
         RunStyle style{ RunStyle::Plain };
-        // A type's qualified name, a module's name, a folder's path, or a link to a type's
-        // member or to a module's function or constant (memberLink, exportLink); empty for none.
+        // A folder's path, a type named in a text, or what moduleLink and its kin spell.
         std::wstring link;
     };
 
@@ -281,6 +280,7 @@ namespace SeeDocs_App
     {
         std::wstring name;        // the module's full name, a header's path
         std::wstring shownName;   // what a reader sees: the full name, a header's file name
+        std::wstring folder;      // the path of the folder it stands in
         bool header{ false };
         TypeList types;
         FunctionList functions;
@@ -346,7 +346,8 @@ namespace SeeDocs_App
         [[nodiscard]] std::optional<std::size_t> rowOf(std::wstring_view folder,
             const ContentsModule*, const Type*) const;
         [[nodiscard]] std::optional<std::size_t> folderRow(std::wstring_view path) const;
-        [[nodiscard]] std::optional<std::size_t> moduleRow(std::wstring_view name) const;
+        // The row of the module a link names, else of the one module going by the name.
+        [[nodiscard]] std::optional<std::size_t> moduleRow(std::wstring_view spelling) const;
     private:
         // The folder's row, made with every folder above it that is not there yet.
         std::size_t addFolder(std::wstring_view path);
@@ -358,7 +359,9 @@ namespace SeeDocs_App
         RowIndexes m_top{};
         std::unordered_map<std::wstring, std::size_t> m_folders{};   // its keys are what rows view
         std::unordered_map<const void*, std::size_t> m_named{};      // a module's or a type's
-        std::unordered_map<std::wstring_view, std::size_t> m_modules{};   // by the module's name
+        std::unordered_map<std::wstring, std::size_t> m_modules{};   // by the module's link
+        // By the module's name, none for a name modules in several folders go by.
+        std::unordered_map<std::wstring_view, std::optional<std::size_t>> m_moduleNames{};
     };
 
     // The last folder of a path - the folder's own name; the root's is empty.
@@ -444,15 +447,20 @@ namespace SeeDocs_App
     export [[nodiscard]] Runs noteRunsOf(const Surface&, const std::wstring& text,
         std::wstring_view scope);
 
-    // The link to a member's page: the type's qualified name, ::, the member's name.
+    // The link to a module's page, which no namesake shares - its folder's path before it.
+    export [[nodiscard]] std::wstring moduleLink(std::wstring_view folder,
+        std::wstring_view module);
+    // The link to a type's page: its module's link, a slash, its qualified name.
+    export [[nodiscard]] std::wstring typeLink(const Type&);
+    // The link to a member's page: the type's link, ::, the member's name.
     export [[nodiscard]] std::wstring memberLink(const Type&, std::wstring_view member);
-    // The link to a function's or a constant's page: the module's name, ::, the export's name.
+    // The link to a function's or a constant's page: the module's link, ::, the export's name.
     export [[nodiscard]] std::wstring exportLink(const ContentsModule&, std::wstring_view name);
 
     // The two names a member link is made of, each a view into the link.
     export struct MemberLink
     {
-        std::wstring_view type;     // a type's qualified name, or a module's name
+        std::wstring_view type;     // a type's link or qualified name, or a module's link or name
         std::wstring_view member;
     };
 
@@ -466,7 +474,7 @@ namespace SeeDocs_App
         SourceLanguage language{ SourceLanguage::Cpp };
     };
 
-    // What a tooltip over a link to a type shows: an alias's, a struct's, a union's or an enum's
-    // declaration, written as its language writes one; nothing for any other link.
-    export [[nodiscard]] std::optional<Preview> previewOf(const Surface&, std::wstring_view link);
+    // What a tooltip over a link to the type shows: an alias's, a struct's, a union's or an enum's
+    // declaration, written as its language writes one; nothing for any other kind.
+    export [[nodiscard]] std::optional<Preview> previewOf(const Surface&, const Type&);
 }

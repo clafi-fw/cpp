@@ -402,7 +402,7 @@ namespace SeeDocs_App
 
         [[nodiscard]] Run nameRun(const Type& type)
         {
-            return code(type.name, type.qualifiedName);
+            return code(type.name, typeLink(type));
         }
 
         // A value cell: the initializer as written, after an equals sign; nothing where none.
@@ -818,15 +818,22 @@ namespace SeeDocs_App
         }
 
         // The unit declaring a module - its interface, a header or a Delphi unit; null for none.
+        // **The one in the folder comes first**: a namesake stands in another folder, and a module
+        // exporting from a folder its interface is not in takes the interface where it stands.
         [[nodiscard]] const Module* interfaceOf(const Surface& surface,
-            const std::wstring_view name)
+            const std::wstring_view folder, const std::wstring_view name)
         {
+            const Module* elsewhere = nullptr;
             for (const Module& module : surface.modules())
             {
-                if (module.isInterface && module.name == name)
+                if (!module.isInterface || module.name != name)
+                    continue;
+                if (folderOf(surface.files()[module.file].relative) == folder)
                     return &module;
+                if (!elsewhere)
+                    elsewhere = &module;
             }
-            return nullptr;
+            return elsewhere;
         }
 
         // The folder under every source holding a file at or below it.
@@ -877,7 +884,8 @@ namespace SeeDocs_App
             page.lead = hintRuns(surface, type.comment, type.qualifiedName);
             page.leadSite = siteOf(type);
             addFact(page, L"namespace", { code(type.nameSpace) });
-            addFact(page, moduleWordOf(surface, type.module), { code(type.module, type.module) });
+            addFact(page, moduleWordOf(surface, type.module),
+                { code(type.module, moduleLink(type.folder, type.module)) });
             addPlaceFact(page, surface, roots, type.place, surface.languageOf(type.module));
             if (type.target.empty())
                 return;
@@ -2328,12 +2336,14 @@ namespace SeeDocs_App
             addTableSection(page, L"Folders", Columns::Folders, std::move(groups));
         }
 
+        // A module of the name in another folder is a namesake, and none of its types is a sibling.
         void addSiblings(Page& page, const Surface& surface, const Type& type)
         {
             TypeList siblings;
             for (const Type& other : surface.types())
             {
-                if (&other != &type && other.module == type.module && other.isPublic())
+                const bool inModule = other.module == type.module && other.folder == type.folder;
+                if (&other != &type && inModule && other.isPublic())
                     siblings.push_back(&other);
             }
             if (siblings.empty())
@@ -2470,7 +2480,10 @@ namespace SeeDocs_App
             for (const ContentsModule& module : folder.modules)
             {
                 TableGroup group{
-                    .label = { { .text = module.shownName, .link = module.name } },
+                    .label = { {
+                        .text = module.shownName,
+                        .link = moduleLink(folder.path, module.name)
+                    } },
                     .pageKind = PageKind::Module,
                     .folded = true
                 };
@@ -2655,14 +2668,16 @@ namespace SeeDocs_App
         }
 
         // By name regardless of case, then as spelled, then by the qualified name, so the names a
-        // list holds more than once stand together.
+        // list holds more than once stand together, and namesakes in the order their folders read.
         [[nodiscard]] bool listsTypeBefore(const Type& left, const Type& right)
         {
             const auto key = [](const Type& type) {
                 return std::tuple{ lowered(type.name), std::wstring_view{ type.name },
                     std::wstring_view{ type.qualifiedName } };
             };
-            return key(left) < key(right);
+            if (key(left) != key(right))
+                return key(left) < key(right);
+            return listsBefore(left.folder, right.folder);
         }
 
         using NameParts = std::vector<std::wstring_view>;
@@ -2748,9 +2763,21 @@ namespace SeeDocs_App
             }
         }
 
-        // The types by name, each with its kind at its name cell's end where the list shows it.
+        // A namesake's folder at its name cell's end, ahead of whatever stands there already.
+        void addFolderQualifier(TableRow& row, std::wstring path)
+        {
+            if (row.qualifiers.empty())
+                row.qualifiers.resize(1);
+            Runs& qualifier = row.qualifiers.front();
+            if (!qualifier.empty())
+                qualifier.insert(qualifier.begin(), muted(std::wstring{ k_separator }));
+            qualifier.insert(qualifier.begin(), muted(std::move(path)));
+        }
+
+        // The types by name, each with its kind at its name cell's end where the list shows it. A
+        // namesake - a type of the qualified name in another folder - reads apart by its folder.
         [[nodiscard]] TableRows typeListRows(const Surface& surface, TypeList types,
-            const bool showsKind)
+            const bool showsKind, const std::wstring_view projectName)
         {
             std::ranges::sort(types, [](const Type* left, const Type* right) {
                 return listsTypeBefore(*left, *right);
@@ -2765,12 +2792,27 @@ namespace SeeDocs_App
             for (const Type* type : types)
                 names.push_back({ .name = type->name, .nameSpace = type->nameSpace });
             addScopes(rows, names);
+            for (std::size_t first = 0; first < types.size();)
+            {
+                std::size_t end = first + 1;
+                const std::wstring_view qualifiedName = types[first]->qualifiedName;
+                while (end < types.size() && types[end]->qualifiedName == qualifiedName)
+                    ++end;
+                if (end - first > 1)
+                {
+                    for (std::size_t at = first; at != end; ++at)
+                        addFolderQualifier(rows[at], treePath(projectName, types[at]->folder));
+                }
+                first = end;
+            }
             return rows;
         }
 
         // The functions by name, each row as its module's page has it. A name exported in one
-        // namespace by several modules reads apart by the module's name at its name cell's end.
-        [[nodiscard]] TableRows functionListRows(const Surface& surface, HeldFunctions functions)
+        // namespace by several modules reads apart by the module's name at its name cell's end,
+        // and by its folder too where several of the modules go by one name.
+        [[nodiscard]] TableRows functionListRows(const Surface& surface, HeldFunctions functions,
+            const std::wstring_view projectName)
         {
             const auto key = [](const HeldFunction& held) {
                 return std::tuple{ lowered(held.function->function.name),
@@ -2780,7 +2822,9 @@ namespace SeeDocs_App
             };
             std::ranges::sort(functions, [&key](const HeldFunction& left,
                 const HeldFunction& right) {
-                return key(left) < key(right);
+                if (key(left) != key(right))
+                    return key(left) < key(right);
+                return listsBefore(left.module->folder, right.module->folder);
             });
             TableRows rows;
             ScopedNames names;
@@ -2800,8 +2844,19 @@ namespace SeeDocs_App
                     ++end;
                 if (end - first > 1)
                 {
+                    bool modulesRepeat = false;
+                    for (std::size_t at = first + 1; at != end; ++at)
+                    {
+                        if (functions[at].module->shownName == functions[at - 1].module->shownName)
+                            modulesRepeat = true;
+                    }
                     for (std::size_t at = first; at != end; ++at)
-                        rows[at].qualifiers = { { muted(functions[at].module->shownName) } };
+                    {
+                        const ContentsModule& module = *functions[at].module;
+                        rows[at].qualifiers = { { muted(module.shownName) } };
+                        if (modulesRepeat)
+                            addFolderQualifier(rows[at], treePath(projectName, module.folder));
+                    }
                 }
                 first = end;
             }
@@ -2824,7 +2879,10 @@ namespace SeeDocs_App
             {
                 rows.push_back({
                     .cells = {
-                        { plain(held.module->shownName, held.module->name) },
+                        {
+                            plain(held.module->shownName,
+                                moduleLink(held.folder, held.module->name))
+                        },
                         { muted(treePath(projectName, held.folder)) }
                     },
                     .pageKind = PageKind::Module
@@ -2944,7 +3002,7 @@ namespace SeeDocs_App
         {
             addFact(page, L"namespace", { code(std::wstring{ nameSpace }) });
             addFact(page, std::wstring{ module.header ? k_headerWord : k_moduleWord },
-                { code(module.name, module.name) });
+                { code(module.name, moduleLink(module.folder, module.name)) });
             addPlaceFact(page, surface, roots, place, surface.languageOf(module.name));
         }
 
@@ -3249,6 +3307,7 @@ namespace SeeDocs_App
                     return readsBefore(*left, *right);
                 });
                 contents.name = name;
+                contents.folder = path;
                 contents.header = headers.contains(name);
                 if (contents.header)
                     contents.shownName = name.substr(name.rfind(L'/') + 1);
@@ -3303,7 +3362,10 @@ namespace SeeDocs_App
                     .parent = parent
                 });
                 m_named.emplace(&module, moduleIndex);
-                m_modules.emplace(module.name, moduleIndex);
+                m_modules.emplace(moduleLink(folder.path, module.name), moduleIndex);
+                const auto [named, first] = m_moduleNames.try_emplace(module.name, moduleIndex);
+                if (!first)
+                    named->second.reset();
                 for (const Type* type : module.types)
                 {
                     const std::size_t typeIndex = addRow({
@@ -3345,12 +3407,17 @@ namespace SeeDocs_App
         return found->second;
     }
 
-    std::optional<std::size_t> ContentsTree::moduleRow(const std::wstring_view name) const
+    // A tab's file may keep a module by its name alone, which names it only where no other module
+    // goes by the name.
+    std::optional<std::size_t> ContentsTree::moduleRow(const std::wstring_view spelling) const
     {
-        const auto found = m_modules.find(name);
-        if (found == m_modules.end())
+        const auto linked = m_modules.find(std::wstring{ spelling });
+        if (linked != m_modules.end())
+            return linked->second;
+        const auto named = m_moduleNames.find(spelling);
+        if (named == m_moduleNames.end())
             return std::nullopt;
-        return found->second;
+        return named->second;
     }
 
     std::size_t ContentsTree::addFolder(const std::wstring_view path)
@@ -3496,13 +3563,13 @@ namespace SeeDocs_App
                 std::erase_if(holdings.types, [](const Type* type) {
                     return !type->isControl;
                 });
-                rows = typeListRows(surface, std::move(holdings.types), false);
+                rows = typeListRows(surface, std::move(holdings.types), false, projectName);
                 break;
             case ListKind::Types:
-                rows = typeListRows(surface, std::move(holdings.types), true);
+                rows = typeListRows(surface, std::move(holdings.types), true, projectName);
                 break;
             case ListKind::Functions:
-                rows = functionListRows(surface, std::move(holdings.functions));
+                rows = functionListRows(surface, std::move(holdings.functions), projectName);
                 columns = &Columns::Functions;
                 break;
             case ListKind::Modules:
@@ -3537,7 +3604,7 @@ namespace SeeDocs_App
         page.footnoteHome = folderFootnoteHome(surface, notes, folder.path);
         if (module.header)
             addFact(page, word, { code(module.name) });
-        if (const Module* unit = interfaceOf(surface, module.name))
+        if (const Module* unit = interfaceOf(surface, folder.path, module.name))
         {
             addSourceFact(page, roots, surface.files()[unit->file], {},
                 { .place = { .file = unit->file, .line = 1 }, .language = unit->language });
@@ -3603,10 +3670,11 @@ namespace SeeDocs_App
         Page page;
         page.surface = &surface;
         page.type = &type;
-        page.scope = { { .text = type.name, .link = type.qualifiedName },
+        page.scope = { { .text = type.name, .link = typeLink(type) },
             plain(std::wstring{ k_scope }) };
         page.title = std::wstring{ name };
-        addFact(page, moduleWordOf(surface, type.module), { code(type.module, type.module) });
+        addFact(page, moduleWordOf(surface, type.module),
+            { code(type.module, moduleLink(type.folder, type.module)) });
         page.footnoteHome = typeFootnoteHome(surface, notes, type);
         // An override with no comment of its own speaks with its base's, as its row does.
         const BaseWalk walk = baseWalkOf(surface, type);
@@ -3680,14 +3748,34 @@ namespace SeeDocs_App
         return inlineRuns(text, surface, scope);
     }
 
+    // A header is named by its path, so its own name ends with the file's.
+    std::wstring moduleLink(const std::wstring_view folder, const std::wstring_view module)
+    {
+        const std::wstring_view segment = module.substr(module.rfind(k_folderSeparator) + 1);
+        std::wstring result{ folder };
+        if (!result.empty())
+            result += k_folderSeparator;
+        result += segment;
+        return result;
+    }
+
+    std::wstring typeLink(const Type& type)
+    {
+        std::wstring result = moduleLink(type.folder, type.module);
+        result += k_folderSeparator;
+        result += type.qualifiedName;
+        return result;
+    }
+
     std::wstring memberLink(const Type& type, const std::wstring_view member)
     {
-        return type.qualifiedName + std::wstring{ k_scope } + std::wstring{ member };
+        return typeLink(type) + std::wstring{ k_scope } + std::wstring{ member };
     }
 
     std::wstring exportLink(const ContentsModule& module, const std::wstring_view name)
     {
-        return module.name + std::wstring{ k_scope } + std::wstring{ name };
+        return moduleLink(module.folder, module.name) + std::wstring{ k_scope }
+            + std::wstring{ name };
     }
 
     std::optional<MemberLink> readMemberLink(const std::wstring_view link)
@@ -3735,15 +3823,12 @@ namespace SeeDocs_App
         return page;
     }
 
-    std::optional<Preview> previewOf(const Surface& surface, const std::wstring_view link)
+    std::optional<Preview> previewOf(const Surface& surface, const Type& type)
     {
-        const Type* type = surface.typeNamed(link);
-        if (!type)
-            return std::nullopt;
-        const SourceLanguage language = surface.languageOf(type->module);
+        const SourceLanguage language = surface.languageOf(type.module);
         const std::optional<Lines> lines = language == SourceLanguage::Pascal
-            ? pascalPreview(*type)
-            : cppPreview(*type);
+            ? pascalPreview(type)
+            : cppPreview(type);
         if (!lines.has_value())
             return std::nullopt;
         return Preview{ .code = codeOf(*lines), .language = language };

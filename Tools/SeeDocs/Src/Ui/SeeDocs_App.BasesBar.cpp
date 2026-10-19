@@ -107,7 +107,7 @@ namespace SeeDocs_App
                     paintRowIcon(event, icon);
                 } },
                 MenuItem::OnClick{ [this, type](ClickEvent&) {
-                    BaseLinkEvent linkEvent{ type->qualifiedName };
+                    BaseLinkEvent linkEvent{ typeLink(*type) };
                     emitEvent(linkEvent);
                 } }
             );

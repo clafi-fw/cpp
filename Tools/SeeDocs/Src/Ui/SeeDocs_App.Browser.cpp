@@ -5,7 +5,6 @@ import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageView;
 import SeeDocs_App.SurfaceTree;
-import SeeDocs_App.Database;
 import SeeDocs_App.Edits;
 import SeeDocs_App.Notes;
 import SeeDocs_App.PageText;
@@ -17,11 +16,13 @@ import SeeDocs_App.Surface;
 import ClaFi.App.Notices;
 import ClaFi.App.Settings;
 
+import ClaFi.Browser.Actions;
 import ClaFi.Browser.Consts;
 import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
 
 import ClaFi.Controls.DropList;
+import ClaFi.Controls.Menu;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
@@ -82,7 +83,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view Project = L"Project";   // the project's folder
             constexpr std::wstring_view Home = L"Home";         // its own node open
             constexpr std::wstring_view Folders = L"Folders";   // by path
-            constexpr std::wstring_view Modules = L"Modules";   // by name
+            constexpr std::wstring_view Modules = L"Modules";   // by link
         }
 
         using TreeEntries = Dom::Sequence<Dom::Section>;
@@ -213,6 +214,15 @@ namespace SeeDocs_App
     {
     }
 
+    // SurfaceEditedEvent
+
+    SurfaceEditedEvent::SurfaceEditedEvent(OpenProject& edited)
+        :
+        ::ClaFi::Event{},
+        project{ edited }
+    {
+    }
+
     // SurfacePage
 
     SurfaceBrowser& SurfacePage::browser() const
@@ -234,7 +244,7 @@ namespace SeeDocs_App
     // An anchor is a move on the page standing, so nothing goes down and the move runs at once;
     // it replaces, so a walk through the footnotes leaves no trail. A page named is a move that
     // takes this page down with it, and waits for the click to unwind. See Browser
-    void SurfacePage::followLink(const std::wstring_view target)
+    void SurfacePage::followLink(const std::wstring_view target, Control& source)
     {
         if (target.starts_with(k_anchorPrefix))
         {
@@ -242,8 +252,30 @@ namespace SeeDocs_App
             browser().goTo(url, HistoryEntry::Replace);
             return;
         }
-        if (const std::optional<Url> url = browser().urlOf(target, pageData()))
-            browser().openLinked(pageData(), *url);
+        browser().followLink(pageData(), target, source);
+    }
+
+    // **The page answers Open and Open in new tab before the browser does** while its link menu
+    // stands over a link naming namesakes: each drops the pages to pick from once the menu has
+    // gone, the pick opening as the command would. See README#namesakes
+    void SurfacePage::connectLinkActions()
+    {
+        const auto isOpen = [](const Action& action) {
+            return &action == &Browser::Actions::open || &action == &Browser::Actions::openInNewTab;
+        };
+        onGetActionState([this, isOpen](GetActionStateEvent& event) {
+            if (isOpen(event.action) && browser().namesSeveral(m_view.menuLink(), pageData()))
+                event.claim({ .enabled = true });
+        });
+        onActionClick([this, isOpen](ActionClickEvent& event) {
+            Control* owner = m_view.menuOwner();
+            if (!isOpen(event.action) || !owner)
+                return;
+            const SelectTab select = &event.action == &Browser::Actions::open
+                ? SelectTab::Yes
+                : SelectTab::No;
+            browser().pickLater(pageData(), m_view.menuLink(), *owner, select);
+        });
     }
 
     void SurfacePage::runCommand(const std::wstring_view target)
@@ -304,6 +336,7 @@ namespace SeeDocs_App
         contentsTree = ContentsTree{ contents };
         index = SearchIndex{ open.surface, contents };
         targets.clear();
+        namesakes.clear();
         folders.clear();
         for (const ContentsFolder& folder : contents)
         {
@@ -323,19 +356,22 @@ namespace SeeDocs_App
             folders[folder.path] = &folder;
             for (const ContentsModule& module : folder.modules)
             {
-                targets[module.name] = {
+                const Target moduleTarget{
                     .folder = folder.path,
                     .contents = &folder,
                     .module = &module
                 };
+                targets.try_emplace(moduleLink(folder.path, module.name), moduleTarget);
                 for (const Type* type : module.types)
                 {
-                    targets[type->qualifiedName] = {
+                    const Target typeTarget{
                         .folder = folder.path,
                         .contents = &folder,
                         .module = &module,
                         .type = type
                     };
+                    targets.try_emplace(typeLink(*type), typeTarget);
+                    namesakes[type->qualifiedName].push_back(typeTarget);
                 }
             }
         }
@@ -392,7 +428,8 @@ namespace SeeDocs_App
             site, hint);
         if (!refusal.empty())
             return refusal;
-        writeDatabase(open.surface, open.project.databasePath());
+        SurfaceEditedEvent edited{ open };
+        browser.emitEvent(edited);
         browser.refreshPages(*this, std::nullopt);
         return {};
     }
@@ -647,17 +684,48 @@ namespace SeeDocs_App
         m_projectPageBuilder = std::move(builder);
     }
 
-    // A target starting with the path separator is a url already, an anchor and all - the root's
-    // links are; anything else is looked up in the page's own project.
     std::optional<Url> SurfaceBrowser::urlOf(const std::wstring_view target,
         const PageData& from) const
     {
-        if (target.starts_with(ConfigNames::PathSeparator))
-            return Url::Parse(target);
-        const ShownProject* project = resolve(from).project;
-        if (!project)
+        const LinkedPlaces places = placesOf(target, from);
+        if (places.size() != 1)
             return std::nullopt;
-        return urlIn(*project, target);
+        return places.front().url;
+    }
+
+    bool SurfaceBrowser::namesSeveral(const std::wstring_view target, const PageData& from) const
+    {
+        return placesOf(target, from).size() > 1;
+    }
+
+    const Type* SurfaceBrowser::typeOf(const std::wstring_view target, const PageData& from) const
+    {
+        const LinkedPlaces places = placesOf(target, from);
+        if (places.size() != 1 || !places.front().target || !places.front().member.empty())
+            return nullptr;
+        return places.front().target->type;
+    }
+
+    void SurfaceBrowser::followLink(const PageData& from, const std::wstring_view target,
+        Control& source)
+    {
+        const LinkedPlaces places = placesOf(target, from);
+        if (places.size() == 1)
+            openLinked(from, places.front().url);
+        else if (places.size() > 1)
+            showPicks(from, places, source, SelectTab::Yes);
+    }
+
+    void SurfaceBrowser::pickLater(const PageData& from, const std::wstring_view target,
+        Control& owner, const SelectTab select)
+    {
+        m_pendingPick = PendingPick{
+            .from = &from,
+            .target = std::wstring{ target },
+            .owner = &owner,
+            .select = select
+        };
+        m_pickTimer.start(MilliSeconds{ 0u });
     }
 
     // **The click is still unwinding on the page that asked**, and the answer may take that page
@@ -884,9 +952,9 @@ namespace SeeDocs_App
     }
 
     // The project is taken by its segment, the folders as far as the segments after it spell
-    // folders its surface has, and what follows is a search's segment or is looked up by its
-    // spelling and held to the one above it, so a module's name under the wrong folder resolves to
-    // nothing, as a path no project carries does.
+    // folders its surface has, and what follows is a search's segment, or a module of the last
+    // folder and what stands in it, so a module's name under the wrong folder resolves to nothing,
+    // as a path no project carries does.
     SurfaceBrowser::Target SurfaceBrowser::resolve(const PageData& data) const
     {
         const std::vector<std::wstring_view> segments = segmentsOf(data);
@@ -933,27 +1001,31 @@ namespace SeeDocs_App
         if (next == segments.size() || !result.contents || result.list)
             return result;
 
-        // A header's segment is its file name, and the folders before it make its name.
-        const Targets& targets = project->targets;
-        Targets::const_iterator found = targets.find(joinFolder(result.folder, segments[next]));
-        if (found == targets.end() || !found->second.module || !found->second.module->header)
-            found = targets.find(std::wstring{ segments[next] });
-        if (found == targets.end() || !found->second.module || found->second.type
-            || found->second.contents != result.contents)
+        // **A module is one of the folder's own**, by its segment - a header's file name - so a
+        // namesake in another folder is never taken for it, and a type is the module's own.
+        const std::wstring_view moduleSegment = segments[next];
+        const ContentsModules::const_iterator module = std::ranges::find_if(
+            result.contents->modules, [moduleSegment](const ContentsModule& each) {
+                return segmentOf(each) == moduleSegment;
+            });
+        if (module == result.contents->modules.end())
             return result;
-        result.module = found->second.module;
+        result.module = &*module;
         if (++next == segments.size())
             return result;
 
-        found = targets.find(std::wstring{ segments[next] });
-        if (found == targets.end() || !found->second.type
-            || found->second.module != result.module)
+        const std::wstring_view typeSegment = segments[next];
+        const TypeList::const_iterator type = std::ranges::find_if(result.module->types,
+            [typeSegment](const Type* each) {
+                return each->qualifiedName == typeSegment;
+            });
+        if (type == result.module->types.end())
         {
-            if (exports(*result.module, segments[next]))
-                result.exportName = segments[next];
+            if (exports(*result.module, typeSegment))
+                result.exportName = typeSegment;
             return result;
         }
-        result.type = found->second.type;
+        result.type = *type;
         if (++next == segments.size())
             return result;
 
@@ -1579,43 +1651,173 @@ namespace SeeDocs_App
         return property || event || field || member;
     }
 
-    // A member that has no page of its own is a row of its type's page, which the anchor names. A
-    // list stands under its folder's path, the root's under the home's.
+    // Read from no page, a name alone names every namesake going by it.
     std::optional<Url> SurfaceBrowser::urlIn(const ShownProject& project,
         const std::wstring_view target) const
+    {
+        const LinkedPlaces places = placesIn(project, target, Target{});
+        if (places.size() != 1)
+            return std::nullopt;
+        return places.front().url;
+    }
+
+    // A target starting with the path separator is a url already, an anchor and all - the root's
+    // links are; anything else is looked up in the page's own project.
+    SurfaceBrowser::LinkedPlaces SurfaceBrowser::placesOf(const std::wstring_view target,
+        const PageData& from) const
+    {
+        if (target.starts_with(ConfigNames::PathSeparator))
+            return { { .url = Url::Parse(target) } };
+        const Target page = resolve(from);
+        if (!page.project)
+            return {};
+        return placesIn(*page.project, target, page);
+    }
+
+    // **A link spelled by moduleLink and its kin names one page**, and a name alone names every
+    // namesake going by it, narrowed by the page it is read from. A member that has no page of its
+    // own is a row of its type's page, which the anchor names. A list stands under its folder's
+    // path, the root's under the home's.
+    SurfaceBrowser::LinkedPlaces SurfaceBrowser::placesIn(const ShownProject& project,
+        const std::wstring_view target, const Target& from) const
     {
         if (const std::optional<ListLink> list = readListLink(target))
         {
             const std::wstring folder{ list->folder };
             if (!folder.empty() && !project.folders.contains(folder))
-                return std::nullopt;
+                return {};
             std::wstring path = pathOf(project, folder, nullptr, nullptr);
             path.append(1, ConfigNames::PathSeparator).append(listSegment(list->kind));
-            return Url{ path };
+            return { { .url = Url{ path } } };
         }
+        const auto pageOfTarget = [&project](const Target& named) {
+            return Url{ pathOf(project, named.folder, named.module, named.type) };
+        };
         const Targets::const_iterator found = project.targets.find(std::wstring{ target });
         if (found != project.targets.end())
+            return { { .url = pageOfTarget(found->second), .target = &found->second } };
+        LinkedPlaces result;
+        const Namesakes::const_iterator named = project.namesakes.find(std::wstring{ target });
+        if (named != project.namesakes.end())
         {
-            const Target& named = found->second;
-            return Url{ pathOf(project, named.folder, named.module, named.type) };
+            for (const Target* each : narrowed(named->second, from))
+                result.push_back({ .url = pageOfTarget(*each), .target = each });
+            return result;
         }
 
         const std::optional<MemberLink> link = readMemberLink(target);
         if (!link.has_value())
-            return std::nullopt;
-        const Targets::const_iterator owner = project.targets.find(std::wstring{ link->type });
-        if (owner == project.targets.end() || !owner->second.module)
-            return std::nullopt;
-        const Target& named = owner->second;
-        if (named.type && !hasMethod(*named.type, link->member))
-        {
-            if (!hasRow(*named.type, link->member))
+            return {};
+        const auto memberPage = [&project](const Target& owner,
+            const std::wstring_view member) -> std::optional<Url> {
+            if (!owner.module)
                 return std::nullopt;
-            return Url{ pathOf(project, named.folder, named.module, named.type), link->member };
-        }
-        if (!named.type && !exports(*named.module, link->member))
+            if (owner.type && hasMethod(*owner.type, member))
+                return Url{ pathOf(project, owner.folder, owner.module, owner.type, member) };
+            if (owner.type && hasRow(*owner.type, member))
+                return Url{ pathOf(project, owner.folder, owner.module, owner.type), member };
+            if (!owner.type && exports(*owner.module, member))
+                return Url{ pathOf(project, owner.folder, owner.module, nullptr, member) };
             return std::nullopt;
-        return Url{ pathOf(project, named.folder, named.module, named.type, link->member) };
+        };
+        TargetList owners;
+        const std::wstring ownerSpelling{ link->type };
+        const Targets::const_iterator exact = project.targets.find(ownerSpelling);
+        const Namesakes::const_iterator ownerNamesakes = project.namesakes.find(ownerSpelling);
+        if (exact != project.targets.end())
+            owners.push_back(&exact->second);
+        else if (ownerNamesakes != project.namesakes.end())
+            owners = narrowed(ownerNamesakes->second, from);
+        for (const Target* owner : owners)
+        {
+            std::optional<Url> url = memberPage(*owner, link->member);
+            if (url.has_value())
+            {
+                result.push_back({
+                    .url = std::move(*url),
+                    .target = owner,
+                    .member = link->member
+                });
+            }
+        }
+        return result;
+    }
+
+    // **The namesake in the page's own module is the one it means**, and else the one in its
+    // folder. A page that stands in no module or folder of its own - a search's, a list's, the
+    // root's - means any of them, and so does one with several there.
+    SurfaceBrowser::TargetList SurfaceBrowser::narrowed(const std::vector<Target>& namesakes,
+        const Target& from)
+    {
+        TargetList all;
+        for (const Target& each : namesakes)
+            all.push_back(&each);
+        if (all.size() < 2 || !from.project || from.searching || from.list)
+            return all;
+        TargetList inModule;
+        TargetList inFolder;
+        for (const Target* each : all)
+        {
+            if (from.module && each->module == from.module)
+                inModule.push_back(each);
+            if (each->folder == from.folder)
+                inFolder.push_back(each);
+        }
+        if (inModule.size() == 1)
+            return inModule;
+        if (inFolder.size() == 1)
+            return inFolder;
+        return all;
+    }
+
+    // **A line per page**: its mark, its name, and its folder muted at the line's end, as a
+    // namesake reads apart wherever it is listed. See README#namesakes
+    void SurfaceBrowser::showPicks(const PageData& from, const LinkedPlaces& places,
+        Control& owner, const SelectTab select)
+    {
+        const ShownProject* project = resolve(from).project;
+        if (!project)
+            return;
+        Menu menu{ owner };
+        for (const LinkedPlace& place : places)
+        {
+            const Target* target = place.target;
+            if (!target || !target->module)
+                continue;
+            const RowIcon icon = target->type ? rowIconOf(*target->type) : RowIcon::Module;
+            Text line;
+            line << (target->type ? target->type->name : target->module->shownName);
+            if (!place.member.empty())
+                line << k_scope << place.member;
+            line << FlexSpace{ k_kindGap } << TextStyle::SubBody << InkGrade::Muted;
+            line << treePath(project->open.project.name, target->folder);
+            line << PopColor{} << PopTextStyle{};
+            menu.add(
+                line,
+                MenuItem::OnPaintIcon{ [icon](PaintIconEvent& event) {
+                    paintRowIcon(event, icon);
+                } },
+                MenuItem::OnClick{ [this, &from, url = place.url, select](ClickEvent&) {
+                    if (select == SelectTab::No)
+                        addTab(url, SelectTab::No);
+                    else
+                        openLinked(from, url);
+                } }
+            );
+        }
+        menu.execute();
+    }
+
+    // The menu that asked has gone, and the pages the link names are read again: a surface read
+    // in between may name another set.
+    void SurfaceBrowser::showPendingPick()
+    {
+        const std::optional<PendingPick> pick = std::exchange(m_pendingPick, std::nullopt);
+        if (!pick.has_value() || !pick->owner)
+            return;
+        const LinkedPlaces places = placesOf(pick->target, *pick->from);
+        if (places.size() > 1)
+            showPicks(*pick->from, places, *pick->owner, pick->select);
     }
 
     SurfaceBrowser::ShownProjects SurfaceBrowser::searchedProjects() const
@@ -1879,6 +2081,8 @@ namespace SeeDocs_App
     {
         if (value == m_focusOrigin)
             m_focusOrigin = nullptr;
+        if (m_pendingPick.has_value() && value == m_pendingPick->owner)
+            m_pendingPick->owner = nullptr;
         BrowserControl::nestedControlDeleted(value);
     }
 
@@ -1970,8 +2174,8 @@ namespace SeeDocs_App
     }
 
     // The mark of what the name is - a member's line keeps the room blank - a member's type muted
-    // before it, the typed words in the spot and the kind at the line's end; the tooltip is the
-    // declaration's words and where it stands.
+    // before it, the typed words in the spot and the kind at the line's end, a namesake's folder
+    // after it; the tooltip is the declaration's words and where it stands.
     DropListLine SurfaceBrowser::lineOf(const ListedLine& listed, const NameHit& hit,
         const bool namesProject) const
     {
@@ -2001,8 +2205,19 @@ namespace SeeDocs_App
         }
         text << FlexSpace{ k_kindGap } << TextStyle::SubBody << InkGrade::Muted;
         text << entry.kindWord;
-        if (namesProject)
-            text << k_separator << listed.project->open.project.name;
+        // A namesake's folder is written from the project's name, which names the project too.
+        const std::wstring_view projectName = listed.project->open.project.name;
+        if (entry.namesake)
+        {
+            const std::wstring_view folder = entry.kind == NameKind::Folder
+                ? std::wstring_view{ entry.owner }
+                : std::wstring_view{ entry.folder };
+            text << k_separator << treePath(projectName, folder);
+        }
+        else if (namesProject)
+        {
+            text << k_separator << projectName;
+        }
         text << PopColor{} << PopTextStyle{};
 
         if (entry.comment && !entry.comment->text.empty())

@@ -116,6 +116,12 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.ExternalEditors.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.FileWriter.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.FileWriter.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.FolderBox.cpp">
       <Filter>Src\Ui</Filter>
     </ClCompile>
