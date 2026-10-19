@@ -17,7 +17,7 @@ namespace ClaFi::Diagnostic::Options
     export constexpr bool enabled{ false };
 #else
     /// @brief The global diagnostic switch: turns everything off. See Diagnostic#options
-    export constexpr bool enabled{ true };
+    export constexpr bool enabled{ false };
 #endif
 
     // Each option as stated here, read through the function of the same name below.

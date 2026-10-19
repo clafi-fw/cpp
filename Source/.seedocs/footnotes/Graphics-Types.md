@@ -75,8 +75,10 @@ painting one corner square pays for one tile.
 
 - The tiles go on whole pixels: the rectangle's edges round to the nearest.
 - One bake serves every opacity, so a shadow fading in costs one bake.
-- A rectangle too small for its corner tiles to stand apart is cast directly, its colour's alpha
-  scaled by the opacity.
+- A rectangle too short or too narrow for two corner tiles to stand apart takes a strip of three
+  tiles baked at that length - the ends and the piece between - and the strip is kept for the next
+  rectangle of that length. One too small on both axes is cast directly, its colour's alpha scaled
+  by the opacity.
 - A bake leaves the CPU rasterizer's clip as it found it, so setDesign is safe in the middle of a
   paint.
 

@@ -23,6 +23,12 @@ A form holds its own painter around its window, which the platform reads. Its ma
 painted a strip at a time with the strip as the clip - by the form around its rectangle, or by a
 shadow window around the window it shadows.
 
+2026-10-19: a one-line tooltip (713x56, shorter than two corner reaches) was cast directly, and
+each of the shadow window's four margin strips cast the whole of it: 6 ms per fill, 15 ms cold,
+against 2 ms for a 477 px tooltip drawn from tiles. Measured with logWindowSteps while chasing the
+tooltip flash - the fill stood on the chain between the window's move and its shadow. The strips
+by short side came out of that: one bake per distinct height, then tile blits.
+
 ## GlyphCompositor
 
 Accumulating every glyph into one mask before compositing is not an optimisation: N
