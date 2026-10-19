@@ -1,3 +1,5 @@
+module;
+#include "../Y-Core/System/EventBindings.h"
 export module SeeDocs_App.BasesBar;
 
 import SeeDocs_App.Pages;
@@ -46,6 +48,8 @@ namespace SeeDocs_App
     public:
         BaseCrumb(const CreateParams&, BasesBar&, const BaseNode&);
     public:
+        DECLARE_EVENT(BaseLinkEvent, OnBaseLink, onBaseLink);
+    public:
         std::wstring_view diagnosticText() const override { return L"BaseCrumb"; }
         const BaseNode& node() const { return m_node; }
     protected:
@@ -62,7 +66,7 @@ namespace SeeDocs_App
         const BaseNode& m_node;
     };
 
-    export class BasesTreeView : public ContainerBase
+    export class BasesTree : public ContainerBase
     {
         
     };
@@ -70,17 +74,15 @@ namespace SeeDocs_App
     // A class's bases as reversed crumbs, the ways up running right and parting where they fork.
     export class BasesBar : public ContainerBase
     {
-        friend BaseCrumb;
     public:
         template<typename... Args>
         explicit BasesBar(const CreateParams&, Args&&...);
     public:
         // Connects a handler raised when a crumb or a line of its list is chosen.
-        template<typename F>
-        EventConnection onBaseLink(F&& callback);
+        DECLARE_EVENT(BaseLinkEvent, OnBaseLink, onBaseLink);
         // Connects a handler raised when a menu is asked for on a crumb.
-        template<typename F>
-        EventConnection onBaseLinkContextPopup(F&& callback);
+        DECLARE_EVENT(BaseLinkContextPopupEvent, OnBaseLinkContextPopup, onBaseLinkContextPopup);
+    public:
         // Builds a crumb per base, the bases kept by whoever shows them while the crumbs stand.
         void setBases(const BaseNodes&);
         void clearBases();
@@ -128,23 +130,8 @@ namespace SeeDocs_App
     template<typename... Args>
     BasesBar::BasesBar(const CreateParams& params, Args&&... args)
         :
-        ContainerBase{
-            params,
-            Padding{ 0.0f },
-            std::forward<Args>(args)...
-        }
+        ContainerBase{ params, std::forward<Args>(args)... }
     {
     }
 
-    template<typename F>
-    EventConnection BasesBar::onBaseLink(F&& callback)
-    {
-        return connectEvent<BaseLinkEvent>(std::forward<F>(callback));
-    }
-
-    template<typename F>
-    EventConnection BasesBar::onBaseLinkContextPopup(F&& callback)
-    {
-        return connectEvent<BaseLinkContextPopupEvent>(std::forward<F>(callback));
-    }
 }

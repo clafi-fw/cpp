@@ -106,7 +106,8 @@ namespace SeeDocs_App
                     paintRowIcon(event, icon);
                 } },
                 MenuItem::OnClick{ [this, type](ClickEvent&) {
-                    m_bar.choose(type->qualifiedName);
+                    BaseLinkEvent linkEvent{ type->qualifiedName };
+                    emitEvent(linkEvent);
                 } }
             );
             if (type != m_node.from)
@@ -144,7 +145,8 @@ namespace SeeDocs_App
         const std::wstring_view target = targetOf(m_node);
         if (target.empty())
             return;
-        m_bar.choose(std::wstring{ target });
+        BaseLinkEvent linkEvent{ std::wstring{ target } };
+        emitEvent(linkEvent);
     }
 
     DropdownMarkTurn BaseCrumb::dropdownMarkTurn() const
@@ -206,6 +208,10 @@ namespace SeeDocs_App
                 if (target.empty())
                     return;
                 askMenu(newCrumb, std::wstring{ target }, event);
+            });
+            newCrumb.onBaseLink([this](BaseLinkEvent& event) {
+                // re-emitting the crumb's event
+                emitEvent(event);
             });
             addCrumbs(base.bases);
         }
