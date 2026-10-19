@@ -5,6 +5,7 @@ import SeeDocs_App.NewProject;
 import SeeDocs_App.Database;
 import SeeDocs_App.Project;
 import SeeDocs_App.Scanner;
+import SeeDocs_App.ScanCache;
 import SeeDocs_App.Surface;
 
 import ClaFi.Controls.AppButton;
@@ -38,6 +39,25 @@ namespace SeeDocs_App
         using FoldersNode = Dom::Sequence<std::wstring>;
 
         constexpr std::wstring_view k_titleSeparator = L" - ";
+
+        // The running program's size and last write, which tell one build of it from another;
+        // empty where the platform cannot name the program.
+        [[nodiscard]] std::wstring programStamp()
+        {
+            const std::filesystem::path program{ Platform::executablePath() };
+            if (program.empty())
+                return {};
+            std::error_code sizeError;
+            std::error_code timeError;
+            const std::uintmax_t size = std::filesystem::file_size(program, sizeError);
+            const std::filesystem::file_time_type written =
+                std::filesystem::last_write_time(program, timeError);
+            if (sizeError || timeError)
+                return {};
+            const std::int64_t ticks =
+                static_cast<std::int64_t>(written.time_since_epoch().count());
+            return std::to_wstring(size) + L":" + std::to_wstring(ticks);
+        }
 
         // One spelling for a folder wherever it is compared or stored: absolute, normal, and
         // without a trailing separator.
@@ -538,13 +558,23 @@ namespace SeeDocs_App
             m_browser.rebindProject(open);
     }
 
+    // **Only the files changed since the last scan are read.** See README#scan-cache
     std::optional<Surface> Workspace::scan(const Project& project)
     {
+        const std::wstring build = programStamp();
+        ScanCache cache = build.empty()
+            ? ScanCache{}
+            : readScanCache(project.scanCachePath(), build);
         const Database database{
-            scanSources(project.sourceFolders(), project.mode, project.hints)
+            scanSources(project.sourceFolders(), project.mode, project.hints, cache)
         };
         if (!database.save(project.databasePath()))
             return std::nullopt;
+        if (!build.empty())
+        {
+            cache.build = build;
+            writeScanCache(cache, project.scanCachePath());
+        }
         return database.surface();
     }
 

@@ -55,6 +55,12 @@
     <ClCompile Include="Src\SeeDocs_App.Reading.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.ScanCache.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.ScanCache.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Scanner.cpp">
       <Filter>Src</Filter>
     </ClCompile>

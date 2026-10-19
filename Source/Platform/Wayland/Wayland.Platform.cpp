@@ -423,6 +423,16 @@ namespace ClaFi
         return fromUtf8(home) + L"/Documents/";
     }
 
+    std::wstring Platform::executablePath()
+    {
+        std::error_code error;
+        const std::filesystem::path executable =
+            std::filesystem::read_symlink("/proc/self/exe", error);
+        if (error)
+            return {};
+        return fromUtf8(executable.native());
+    }
+
     std::wstring Platform::executableDirectory()
     {
         std::error_code error;

@@ -361,6 +361,34 @@ namespace SeeDocs_App
     // When a tree was read, to the second; nothing for a surface no scan stamped.
     export using ScanStamp = std::optional<std::chrono::sys_seconds>;
 
+    // What reading one file puts into a surface, list by list.
+    export struct FileRecords
+    {
+        Modules modules;
+        Types types;
+        FreeFunctions functions;
+        Variables variables;
+        Bindings bindings;
+        Places propsReads;
+        Problems problems;
+        Republications republications;
+        EnclosedIncludes enclosedIncludes;
+    };
+
+    // How many records each list of a surface holds - where the next file's own begin.
+    export struct RecordCounts
+    {
+        std::size_t modules{ 0 };
+        std::size_t types{ 0 };
+        std::size_t functions{ 0 };
+        std::size_t variables{ 0 };
+        std::size_t bindings{ 0 };
+        std::size_t propsReads{ 0 };
+        std::size_t problems{ 0 };
+        std::size_t republications{ 0 };
+        std::size_t enclosedIncludes{ 0 };
+    };
+
     // The tree as the scanner read it. Types are looked up by qualified name.
     export class Surface
     {
@@ -397,6 +425,13 @@ namespace SeeDocs_App
         void addEnclosedInclude(EnclosedInclude);
         // Takes the other's records over as they stand; their file indexes are this surface's.
         void append(Surface&&);
+        [[nodiscard]] RecordCounts recordCounts() const;
+        // A copy of what the surface took in since it held the counts.
+        [[nodiscard]] FileRecords recordsSince(const RecordCounts&) const;
+        // Takes in one file's records as reading the file puts them, every place naming the file.
+        void addRecords(const FileRecords&, std::size_t file);
+        // Drops what the surface took in since it held the counts.
+        void dropRecordsSince(const RecordCounts&);
 
         [[nodiscard]] const Type* typeNamed(std::wstring_view qualifiedName) const;
         [[nodiscard]] Type* typeNamed(std::wstring_view qualifiedName);

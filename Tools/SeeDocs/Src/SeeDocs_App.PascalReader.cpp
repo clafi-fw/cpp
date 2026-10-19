@@ -2287,6 +2287,11 @@ namespace SeeDocs_App
         return known;
     }
 
+    bool definesSymbols(const std::wstring_view text)
+    {
+        return mentionsDefine(text);
+    }
+
     void readPascalUnit(Surface& surface, const std::size_t file, const std::wstring_view text,
         const std::wstring& folder, const PascalSymbols& symbols, const HintRules rules)
     {

@@ -12,6 +12,8 @@ namespace SeeDocs_App
 {
     export constexpr std::wstring_view k_projectFileName = L"Project.cfg";
     export constexpr std::wstring_view k_databaseFileName = L"Surface.cfg";
+    // What the last scan read of each file, so that the next reads only what changed.
+    export constexpr std::wstring_view k_scanCacheFileName = L"Scan.cache";
     // The footnotes' folder, under the project's own.
     export constexpr std::wstring_view k_footnotesFolder = L"footnotes";
     // The folder a project made inside a tree stands in, under the tree.
@@ -44,6 +46,7 @@ namespace SeeDocs_App
         HintEdits edits{ HintEdits::None };
 
         [[nodiscard]] std::filesystem::path databasePath() const;
+        [[nodiscard]] std::filesystem::path scanCachePath() const;
         [[nodiscard]] std::filesystem::path footnotesFolder() const;
         [[nodiscard]] SourceFolders sourceFolders() const;   // the sources, each read as a folder
         [[nodiscard]] SourceRoots sourceRoots() const;       // the sources' folders, a root each

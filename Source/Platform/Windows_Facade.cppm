@@ -432,7 +432,7 @@ namespace ClaFi
         return result.append(L"\\");
     }
 
-    std::wstring Platform::executableDirectory()
+    std::wstring Platform::executablePath()
     {
         std::wstring file(MAX_PATH, L'\0');
         while (true)
@@ -445,10 +445,17 @@ namespace ClaFi
             if (length < file.size())
             {
                 file.resize(length);
-                break;
+                return file;
             }
             file.resize(file.size() * 2u);
         }
+    }
+
+    std::wstring Platform::executableDirectory()
+    {
+        const std::wstring file = executablePath();
+        if (file.empty())
+            return {};
         std::wstring directory = std::filesystem::path{ file }.parent_path().wstring();
         return directory.append(L"\\");
     }

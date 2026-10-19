@@ -22,5 +22,8 @@ enc_temp_folder/
 Tools/Surface Scanner/surface.json
 __pycache__/
 
+# What a SeeDocs scan keeps of each file it read, for the next scan on the same PC
+Scan.cache
+
 # Mockups and screenshots the desktop app mirrors into the tree; the kept copies live outside it
 Claude outputs/

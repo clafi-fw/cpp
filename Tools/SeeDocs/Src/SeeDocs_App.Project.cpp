@@ -131,6 +131,11 @@ namespace SeeDocs_App
         return folder / k_databaseFileName;
     }
 
+    std::filesystem::path Project::scanCachePath() const
+    {
+        return folder / k_scanCacheFileName;
+    }
+
     std::filesystem::path Project::footnotesFolder() const
     {
         return folder / k_footnotesFolder;

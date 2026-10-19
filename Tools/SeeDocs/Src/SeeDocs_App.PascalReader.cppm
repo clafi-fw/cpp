@@ -20,6 +20,8 @@ namespace SeeDocs_App
     // reads. A conditional reads by what any of them defines, so the gathering goes over them
     // until the symbols settle.
     export [[nodiscard]] PascalSymbols pascalSymbolsOf(std::span<const std::wstring_view> texts);
+    // Whether the symbols are gathered from the text - whether it holds a {$DEFINE}.
+    export [[nodiscard]] bool definesSymbols(std::wstring_view text);
 
     // Reads one unit into the surface, the file being the surface's own already, its hints by
     // the rules given.

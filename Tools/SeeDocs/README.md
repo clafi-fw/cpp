@@ -42,6 +42,7 @@ A project is a folder of its own, kept wherever the user chooses. SeeDocs offers
 
 - `Project.cfg` - the project's properties
 - `Surface.cfg` - the database the scanner writes
+- `Scan.cache` - what the last scan read of each file - see [Scan cache](#scan-cache)
 - `footnotes` - the notes the pages show beside the hints
 
 The sources stay where they are, in any number of folders, and are read in place.
@@ -378,6 +379,31 @@ Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, Fi
 - Its **`Declaration`** is the whole declaration as written, from its first specifier to the
   semicolon, with lines, indents and comments kept. Each line after the first is set back by the
   first one's indent.
+
+## Scan cache
+
+**A scan reads only the files that changed since the last one.** SeeDocs keeps what each file gave
+the last scan in the project's `Scan.cache`, and takes a file from there while its size and last
+write are the ones the folder listing gave then. New and changed files are read, and a file gone
+from the folders is dropped. The passes over the whole tree and the database write run as they
+always do, and the database comes out as it does from a scan that reads every file.
+
+A file the cache holds is read again where what it was read by has changed:
+
+- **A class another file declares.** A definition such as `Button::Button()` is read against its
+  class, and a constructor's initializers against the class's bases. Each file keeps the classes it
+  found that way. Where a name now finds another class, or the class has other bases, the file is
+  read again.
+- **The tree's macros**, in a read of any C++. Each file keeps the macros it defines. Where the
+  tree's macros come out different, every C++ file is read again.
+- **The Delphi symbols.** Where a file holding a `{$DEFINE}` changed, every such file is gathered
+  from again, and where the symbols come out different, every unit is read again.
+
+**A cache serves one build of SeeDocs and one set of scan options.** One that another build wrote,
+or that was written under other scan options, is put aside, and every file is read. The file is
+binary and holds the last-write times of the PC it was written on, so a project kept in a
+repository leaves it out - the next scan makes it again. SeeDocsCli reads every file and leaves the
+cache as it is.
 
 ## The window
 

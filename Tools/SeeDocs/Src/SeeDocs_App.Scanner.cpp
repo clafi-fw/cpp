@@ -1,5 +1,6 @@
 module SeeDocs_App.Scanner;
 
+import SeeDocs_App.ScanCache;
 import SeeDocs_App.PascalReader;
 import SeeDocs_App.Reading;
 import SeeDocs_App.Surface;
@@ -192,6 +193,48 @@ namespace SeeDocs_App
         using MacroTable = std::unordered_map<std::wstring, Macro>;
         using ActiveMacros = std::vector<std::wstring_view>;
 
+        [[nodiscard]] Macro macroOf(const MacroDefinition& definition)
+        {
+            return {
+                .body = definition.body,
+                .literals = literalRuns(definition.body),
+                .takesArguments = definition.takesArguments
+            };
+        }
+
+        // The table's definitions by name, the way a cache keeps them.
+        [[nodiscard]] MacroDefinitions definitionsOf(const MacroTable& table)
+        {
+            MacroDefinitions result;
+            result.reserve(table.size());
+            for (const auto& [name, macro] : table)
+            {
+                result.push_back({
+                    .name = name,
+                    .body = macro.body,
+                    .takesArguments = macro.takesArguments
+                });
+            }
+            std::ranges::sort(result, {}, &MacroDefinition::name);
+            return result;
+        }
+
+        [[nodiscard]] bool sameTable(const MacroTable& left, const MacroTable& right)
+        {
+            if (left.size() != right.size())
+                return false;
+            for (const auto& [name, macro] : left)
+            {
+                const auto found = right.find(name);
+                if (found == right.end() || found->second.body != macro.body
+                    || found->second.takesArguments != macro.takesArguments)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         // An expanded line, and where each of its characters stands in the line as written.
         struct Expansion
         {
@@ -224,7 +267,9 @@ namespace SeeDocs_App
             Macros();
             void define(std::wstring_view directive, bool read);
             void undefine(std::wstring_view directive, bool read);
-            void endFile();   // the file's definitions join the tree's
+            FileMacros endFile();   // the file's definitions join the tree's, and are answered
+            void takeFile(const FileMacros&);   // as though the file had just been gathered
+            [[nodiscard]] bool sameDefinitions(const Macros&) const;
             // The line with its code expanded, the kept runs - its comments and literals - left
             // as they stand. A dropped call's arguments may run on into the lines after it, and
             // the depth carries that from one line to the next.
@@ -283,12 +328,31 @@ namespace SeeDocs_App
         }
 
         // A name the tree holds keeps its definition: merge moves only the names it lacks.
-        void Macros::endFile()
+        FileMacros Macros::endFile()
         {
+            FileMacros given{
+                .read = definitionsOf(m_fileRead),
+                .unread = definitionsOf(m_fileUnread)
+            };
             m_read.merge(m_fileRead);
             m_unread.merge(m_fileUnread);
             m_fileRead.clear();
             m_fileUnread.clear();
+            return given;
+        }
+
+        void Macros::takeFile(const FileMacros& given)
+        {
+            for (const MacroDefinition& definition : given.read)
+                m_fileRead.try_emplace(definition.name, macroOf(definition));
+            for (const MacroDefinition& definition : given.unread)
+                m_fileUnread.try_emplace(definition.name, macroOf(definition));
+            endFile();
+        }
+
+        bool Macros::sameDefinitions(const Macros& other) const
+        {
+            return sameTable(m_read, other.m_read) && sameTable(m_unread, other.m_unread);
         }
 
         Expansion Macros::expanded(const std::wstring_view line, const std::span<const Run> kept,
@@ -513,8 +577,6 @@ namespace SeeDocs_App
                 }
                 classifyLine(firstToken, insideComment);
             }
-            if (m_preprocess == Preprocess::Gather && m_macros)
-                m_macros->endFile();
         }
 
         std::wstring_view SourceText::text(const Token& token) const
@@ -1144,6 +1206,25 @@ namespace SeeDocs_App
             Access access{ Access::Public };
         };
 
+        // What a file's read found of the classes read before it, and what it added to theirs.
+        struct FileTrace
+        {
+            OwnerLookups lookups;
+            AddedMembersList added;
+
+            [[nodiscard]] AddedMembers& addedTo(const Type& owner);
+        };
+
+        AddedMembers& FileTrace::addedTo(const Type& owner)
+        {
+            for (AddedMembers& members : added)
+            {
+                if (members.owner == owner.qualifiedName)
+                    return members;
+            }
+            return added.emplace_back(AddedMembers{ .owner = owner.qualifiedName });
+        }
+
         // Reads one file's tokens into the surface. A read of any C++ takes none of the routine's
         // macros; in a header it takes what stands at namespace scope for exported, the header
         // for a module, and a using-declaration there for a re-publication.
@@ -1151,7 +1232,7 @@ namespace SeeDocs_App
         {
         public:
             FileReader(Surface&, std::size_t file, const SourceText&, std::wstring folder,
-                ScanMode, HintRules, bool header);
+                ScanMode, HintRules, bool header, FileTrace&);
             void read();
         private:
             [[nodiscard]] const Token* peek(std::size_t ahead = 0) const;
@@ -1232,10 +1313,12 @@ namespace SeeDocs_App
             std::optional<Module> m_module;
             // The file's own constants by name, which type a bare one handed to a base.
             std::unordered_map<std::wstring, std::wstring> m_localTypes;
+            FileTrace& m_trace;
         };
 
         FileReader::FileReader(Surface& surface, const std::size_t file, const SourceText& text,
-            std::wstring folder, const ScanMode mode, const HintRules rules, const bool header)
+            std::wstring folder, const ScanMode mode, const HintRules rules, const bool header,
+            FileTrace& trace)
             :
             m_surface{ surface },
             m_file{ file },
@@ -1243,7 +1326,8 @@ namespace SeeDocs_App
             m_folder{ std::move(folder) },
             m_anyCpp{ mode == ScanMode::AnyCppAndDelphi },
             m_looseHints{ rules == HintRules::Loose },
-            m_header{ header }
+            m_header{ header },
+            m_trace{ trace }
         {
         }
 
@@ -1325,13 +1409,20 @@ namespace SeeDocs_App
             return &m_scopes.back();
         }
 
-        // The type a qualified definition belongs to - one already read, in this file or before.
+        // The class a qualified definition belongs to, read before it; the trace keeps the find.
         Type* FileReader::ownerNamed(const std::wstring_view qualifier)
         {
-            const Type* found = m_surface.resolve(qualifier, currentNamespace());
-            if (!found)
-                return nullptr;
-            return m_surface.typeNamed(found->qualifiedName);
+            OwnerLookup lookup{ .spelled = std::wstring{ qualifier }, .scope = currentNamespace() };
+            const Type* found = m_surface.resolve(lookup.spelled, lookup.scope);
+            Type* owner = found ? m_surface.typeNamed(found->qualifiedName) : nullptr;
+            if (owner)
+            {
+                lookup.found = owner->qualifiedName;
+                lookup.name = owner->name;
+                lookup.bases = owner->bases;
+            }
+            m_trace.lookups.push_back(std::move(lookup));
+            return owner;
         }
 
         void FileReader::readDeclarations()
@@ -2135,6 +2226,8 @@ namespace SeeDocs_App
                 event.access = access;
                 event.place = place;
                 event.comment = commentAt(name.line, std::nullopt, event.type);
+                if (owner->place.file != m_file)
+                    m_trace.addedTo(*owner).events.push_back(event);
                 owner->events.push_back(std::move(event));
                 return;
             }
@@ -2221,6 +2314,8 @@ namespace SeeDocs_App
                 return;
             }
             property.comment = commentAt(name.line, std::nullopt, property.name);
+            if (owner->place.file != m_file)
+                m_trace.addedTo(*owner).properties.push_back(property);
             owner->properties.push_back(std::move(property));
         }
 
@@ -2751,6 +2846,8 @@ namespace SeeDocs_App
                         {
                             restatement->fixed = fixed;
                             restatement->place = placeOf(tokens[first]);
+                            if (owner.place.file != m_file)
+                                m_trace.addedTo(owner).restatements.push_back(*restatement);
                             owner.restatements.push_back(std::move(*restatement));
                         }
                     }
@@ -3101,6 +3198,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view DropRedeclarations = L"drop redeclarations";
             constexpr std::wstring_view SettlePascal = L"settle pascal";
             constexpr std::wstring_view ResolveAll = L"resolve all";
+            constexpr std::wstring_view TakeCached = L"take cached";
         }
 
         using IndexTask = std::function<void(std::size_t)>;
@@ -3136,6 +3234,7 @@ namespace SeeDocs_App
             std::filesystem::path path;
             FileRole role{ FileRole::Module };
             std::size_t root{ 0 };   // the folder of sources it was found in, by its index
+            std::optional<FileStamp> stamp;
         };
 
         using TreeFiles = std::vector<TreeFile>;
@@ -3159,7 +3258,7 @@ namespace SeeDocs_App
             void take(const SourceFolder&, std::size_t root);
             [[nodiscard]] TreeFiles files();
         private:
-            void takeFile(const std::filesystem::path&, std::size_t root);
+            void takeFile(const std::filesystem::directory_entry&, std::size_t root);
             [[nodiscard]] static bool readsBefore(const TreeFile&, const TreeFile&);
         private:
             ScanMode m_mode;
@@ -3188,7 +3287,7 @@ namespace SeeDocs_App
                     std::filesystem::directory_iterator{ folder.path, error })
                 {
                     if (entry.is_regular_file(error))
-                        takeFile(entry.path(), root);
+                        takeFile(entry, root);
                 }
                 return;
             }
@@ -3208,7 +3307,7 @@ namespace SeeDocs_App
                 }
                 else if (entry.is_regular_file(error))
                 {
-                    takeFile(entry.path(), root);
+                    takeFile(entry, root);
                 }
                 walk.increment(error);
                 if (error)
@@ -3216,8 +3315,11 @@ namespace SeeDocs_App
             }
         }
 
-        void FileGathering::takeFile(const std::filesystem::path& path, const std::size_t root)
+        // The stamp comes with the listing - on Windows the entry holds it already.
+        void FileGathering::takeFile(const std::filesystem::directory_entry& entry,
+            const std::size_t root)
         {
+            const std::filesystem::path& path = entry.path();
             TreeFiles* list = nullptr;
             FileRole role = FileRole::Module;
             if (m_mode == ScanMode::ClaFiModules)
@@ -3249,7 +3351,19 @@ namespace SeeDocs_App
             }
             if (!list || !m_taken.insert(path.lexically_normal()).second)
                 return;
-            list->push_back({ .path = path, .role = role, .root = root });
+            std::optional<FileStamp> stamp;
+            std::error_code sizeError;
+            std::error_code timeError;
+            const std::uintmax_t size = entry.file_size(sizeError);
+            const std::filesystem::file_time_type written = entry.last_write_time(timeError);
+            if (!sizeError && !timeError)
+            {
+                stamp = FileStamp{
+                    .size = size,
+                    .written = static_cast<std::int64_t>(written.time_since_epoch().count())
+                };
+            }
+            list->push_back({ .path = path, .role = role, .root = root, .stamp = stamp });
         }
 
         // What a read takes, in reading order. ClaFi modules: every module interface, then every
@@ -3307,28 +3421,189 @@ namespace SeeDocs_App
             return { .file = surface.addFile(std::move(record)), .folder = std::move(folder) };
         }
 
-        void readSource(Surface& surface, const FilePlace& place, const TreeFile& file,
-            const SourceText& source, const ScanMode mode, const HintRules rules)
+        using PathKey = std::filesystem::path::string_type;
+
+        [[nodiscard]] PathKey keyOf(const std::filesystem::path& path)
+        {
+            return path.lexically_normal().native();
+        }
+
+        // The files the scan before read, and those this one keeps. See README#scan-cache
+        class CacheUse
+        {
+        public:
+            CacheUse(ScanCache*, ScanMode, HintRules);
+            [[nodiscard]] bool keeps() const { return m_cache != nullptr; }
+            // The file as the scan before read it, where its stamp is the same; null otherwise.
+            [[nodiscard]] CachedFile* unchanged(const TreeFile&);
+            [[nodiscard]] const CachedFiles& previous() const { return m_previous; }
+            [[nodiscard]] const PascalSymbols& previousSymbols() const { return m_previousSymbols; }
+            void keep(CachedFile);
+            void finish(PascalSymbols);   // leaves the files kept, in the order kept, in the cache
+        private:
+            ScanCache* m_cache;
+            ScanMode m_mode;
+            HintRules m_rules;
+            CachedFiles m_previous;
+            PascalSymbols m_previousSymbols;
+            std::unordered_map<PathKey, std::size_t> m_byPath;
+            CachedFiles m_kept;
+        };
+
+        CacheUse::CacheUse(ScanCache* cache, const ScanMode mode, const HintRules rules)
+            :
+            m_cache{ cache },
+            m_mode{ mode },
+            m_rules{ rules }
+        {
+            if (!m_cache || m_cache->mode != mode || m_cache->hints != rules)
+                return;
+            m_previous = std::move(m_cache->files);
+            m_previousSymbols = std::move(m_cache->symbols);
+            for (std::size_t i = 0; i != m_previous.size(); ++i)
+                m_byPath.emplace(keyOf(m_previous[i].path), i);
+        }
+
+        CachedFile* CacheUse::unchanged(const TreeFile& file)
+        {
+            if (!file.stamp)
+                return nullptr;
+            const auto found = m_byPath.find(keyOf(file.path));
+            if (found == m_byPath.end())
+                return nullptr;
+            CachedFile& cached = m_previous[found->second];
+            return cached.stamp == *file.stamp ? &cached : nullptr;
+        }
+
+        void CacheUse::keep(CachedFile file)
+        {
+            if (m_cache)
+                m_kept.push_back(std::move(file));
+        }
+
+        void CacheUse::finish(PascalSymbols symbols)
+        {
+            if (!m_cache)
+                return;
+            m_cache->mode = m_mode;
+            m_cache->hints = m_rules;
+            m_cache->symbols = std::move(symbols);
+            m_cache->files = std::move(m_kept);
+        }
+
+        // Reads the file into the surface, and answers what the scan after it takes of the file.
+        [[nodiscard]] CachedFile readSource(Surface& surface, const FilePlace& place,
+            const TreeFile& file, const SourceText& source, const ScanMode mode,
+            const HintRules rules, const CacheUse& cache)
         {
             const bool header = file.role == FileRole::Header;
-            FileReader reader{ surface, place.file, source, place.folder, mode, rules, header };
+            const RecordCounts counts = surface.recordCounts();
+            FileTrace trace;
+            FileReader reader{
+                surface, place.file, source, place.folder, mode, rules, header, trace
+            };
             reader.read();
+            if (!cache.keeps())
+                return {};
+            return {
+                .path = file.path,
+                .stamp = file.stamp.value_or(FileStamp{}),
+                .records = surface.recordsSince(counts),
+                .lookups = std::move(trace.lookups),
+                .added = std::move(trace.added)
+            };
+        }
+
+        // Whether each class the file was read against is found again, alike in name and bases.
+        [[nodiscard]] bool lookupsHold(const Surface& surface, const OwnerLookups& lookups)
+        {
+            for (const OwnerLookup& lookup : lookups)
+            {
+                const Type* found = surface.resolve(lookup.spelled, lookup.scope);
+                const Type* owner = found ? surface.typeNamed(found->qualifiedName) : nullptr;
+                if (!owner)
+                {
+                    if (!lookup.found.empty())
+                        return false;
+                    continue;
+                }
+                if (owner->qualifiedName != lookup.found || owner->name != lookup.name
+                    || owner->bases != lookup.bases)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        void addMembers(Surface& surface, const AddedMembersList& added, const std::size_t file)
+        {
+            for (const AddedMembers& members : added)
+            {
+                Type* owner = surface.typeNamed(members.owner);
+                if (!owner)
+                    continue;
+                for (Property property : members.properties)
+                {
+                    property.place.file = file;
+                    owner->properties.push_back(std::move(property));
+                }
+                for (Event event : members.events)
+                {
+                    event.place.file = file;
+                    owner->events.push_back(std::move(event));
+                }
+                for (Restatement restatement : members.restatements)
+                {
+                    restatement.place.file = file;
+                    owner->restatements.push_back(std::move(restatement));
+                }
+            }
+        }
+
+        // Takes the cached file in where its look-ups hold; false, and nothing taken, where not.
+        [[nodiscard]] bool takeCached(Surface& surface, const CachedFile& cached,
+            const std::size_t file)
+        {
+            const RecordCounts counts = surface.recordCounts();
+            surface.addRecords(cached.records, file);
+            if (!lookupsHold(surface, cached.lookups))
+            {
+                surface.dropRecordsSince(counts);
+                return false;
+            }
+            addMembers(surface, cached.added, file);
+            return true;
         }
 
         // A file that cannot be read is left out.
         void readClaFiModules(Surface& surface, const SourceFolders& sources,
-            const TreeFiles& files, const HintRules rules, StepClock& clock)
+            const TreeFiles& files, const HintRules rules, CacheUse& cache, StepClock& clock)
         {
             for (const TreeFile& file : files)
             {
+                std::optional<FilePlace> place;
+                if (CachedFile* cached = cache.unchanged(file))
+                {
+                    place = addSourceFile(surface, sources, file);
+                    const bool taken = takeCached(surface, *cached, place->file);
+                    clock.lap(Steps::TakeCached);
+                    if (taken)
+                    {
+                        cache.keep(std::move(*cached));
+                        continue;
+                    }
+                }
                 const std::optional<std::wstring> text = Documents::readTextFile(file.path);
                 clock.lap(Steps::ReadFiles);
                 if (!text)
                     continue;
                 const SourceText source{ *text, rules };
                 clock.lap(Steps::LexSources);
-                const FilePlace place = addSourceFile(surface, sources, file);
-                readSource(surface, place, file, source, ScanMode::ClaFiModules, rules);
+                if (!place)
+                    place = addSourceFile(surface, sources, file);
+                cache.keep(readSource(surface, *place, file, source, ScanMode::ClaFiModules,
+                    rules, cache));
                 clock.lap(Steps::ReadSources);
             }
         }
@@ -3338,67 +3613,189 @@ namespace SeeDocs_App
             return file.role == FileRole::PascalUnit || file.role == FileRole::PascalInclude;
         }
 
+        using Texts = std::vector<std::optional<std::wstring>>;
+        using CachedPointers = std::vector<CachedFile*>;
+
+        // Reads the files the cache gives nothing for, on every thread the hardware has.
+        void readTexts(const TreeFiles& files, const CachedPointers& cached, Texts& texts)
+        {
+            forEachIndex(files.size(), [&](const std::size_t i) {
+                if (!cached[i] && !texts[i])
+                    texts[i] = Documents::readTextFile(files[i].path);
+            });
+        }
+
+        // Whether the tree's macros come out as they did for the scan before.
+        [[nodiscard]] bool sameMacros(const Macros& macros, const CachedFiles& previous)
+        {
+            Macros before;
+            for (const CachedFile& file : previous)
+                before.takeFile(file.macros);
+            return macros.sameDefinitions(before);
+        }
+
         // **Every file is gathered from before any is read**, a macro being used far from the
         // header that defines it and a Delphi symbol far from the unit testing it; each is read
         // from disk once, for both passes. A Delphi include file is gathered from only. The units
         // are read on every thread the hardware has, each into a surface of its own, and taken
         // into the one surface in file order, so its records stand as one thread would put them.
-        void readAnyCppAndDelphi(Surface& surface, const SourceFolders& sources,
-            const TreeFiles& files, const HintRules rules, StepClock& clock)
+        [[nodiscard]] PascalSymbols readAnyCppAndDelphi(Surface& surface,
+            const SourceFolders& sources, const TreeFiles& files, const HintRules rules,
+            CacheUse& cache, StepClock& clock)
         {
-            std::vector<std::optional<std::wstring>> texts(files.size());
-            forEachIndex(files.size(), [&](const std::size_t i) {
-                texts[i] = Documents::readTextFile(files[i].path);
-            });
+            const std::size_t count = files.size();
+            CachedPointers cached(count);
+            for (std::size_t i = 0; i != count; ++i)
+                cached[i] = cache.unchanged(files[i]);
+            Texts texts(count);
+            readTexts(files, cached, texts);
             clock.lap(Steps::ReadFiles);
 
             Macros macros;
-            for (std::size_t i = 0; i != files.size(); ++i)
+            std::vector<FileMacros> given(count);
+            for (std::size_t i = 0; i != count; ++i)
             {
-                if (!texts[i] || isPascal(files[i]))
+                if (isPascal(files[i]))
                     continue;
-                const SourceText gathered{ *texts[i], rules, Preprocess::Gather, &macros };
+                if (cached[i])
+                {
+                    given[i] = cached[i]->macros;
+                    macros.takeFile(given[i]);
+                }
+                else if (texts[i])
+                {
+                    const SourceText gathered{ *texts[i], rules, Preprocess::Gather, &macros };
+                    given[i] = macros.endFile();
+                }
+            }
+            if (!sameMacros(macros, cache.previous()))
+            {
+                for (std::size_t i = 0; i != count; ++i)
+                {
+                    if (!isPascal(files[i]))
+                        cached[i] = nullptr;
+                }
+                readTexts(files, cached, texts);
             }
             clock.lap(Steps::GatherMacros);
 
-            std::vector<std::wstring_view> pascalTexts;
-            for (std::size_t i = 0; i != files.size(); ++i)
+            std::unordered_set<PathKey> unchangedPaths;
+            bool regather = false;
+            for (std::size_t i = 0; i != count; ++i)
             {
-                if (texts[i] && isPascal(files[i]))
-                    pascalTexts.emplace_back(*texts[i]);
+                if (cached[i])
+                    unchangedPaths.insert(keyOf(files[i].path));
+                else if (isPascal(files[i]) && texts[i] && definesSymbols(*texts[i]))
+                    regather = true;
             }
-            const PascalSymbols symbols = pascalSymbolsOf(pascalTexts);
+            for (const CachedFile& file : cache.previous())
+            {
+                if (file.definesSymbols && !unchangedPaths.contains(keyOf(file.path)))
+                    regather = true;
+            }
+            PascalSymbols symbols = cache.previousSymbols();
+            if (regather)
+            {
+                std::vector<std::wstring_view> defining;
+                for (std::size_t i = 0; i != count; ++i)
+                {
+                    if (!isPascal(files[i]))
+                        continue;
+                    if (cached[i] && cached[i]->definesSymbols && !texts[i])
+                        texts[i] = Documents::readTextFile(files[i].path);
+                    if (texts[i] && definesSymbols(*texts[i]))
+                        defining.emplace_back(*texts[i]);
+                }
+                symbols = pascalSymbolsOf(defining);
+                if (symbols != cache.previousSymbols())
+                {
+                    for (std::size_t i = 0; i != count; ++i)
+                    {
+                        if (files[i].role == FileRole::PascalUnit)
+                            cached[i] = nullptr;
+                    }
+                    readTexts(files, cached, texts);
+                }
+            }
             clock.lap(Steps::GatherSymbols);
 
             // The records come first, so that a unit read on a worker knows its file's index.
-            std::vector<std::optional<FilePlace>> places(files.size());
-            for (std::size_t i = 0; i != files.size(); ++i)
+            std::vector<std::optional<FilePlace>> places(count);
+            for (std::size_t i = 0; i != count; ++i)
             {
-                if (texts[i] && files[i].role != FileRole::PascalInclude)
+                if ((cached[i] || texts[i]) && files[i].role != FileRole::PascalInclude)
                     places[i] = addSourceFile(surface, sources, files[i]);
             }
-            std::vector<Surface> fragments(files.size());
-            forEachIndex(files.size(), [&](const std::size_t i) {
-                if (!places[i] || files[i].role != FileRole::PascalUnit)
+            std::vector<Surface> fragments(count);
+            forEachIndex(count, [&](const std::size_t i) {
+                if (!places[i] || cached[i] || files[i].role != FileRole::PascalUnit)
                     return;
                 readPascalUnit(fragments[i], places[i]->file, *texts[i], places[i]->folder,
                     symbols, rules);
             });
             clock.lap(Steps::ReadUnits);
 
-            for (std::size_t i = 0; i != files.size(); ++i)
+            for (std::size_t i = 0; i != count; ++i)
             {
+                const TreeFile& file = files[i];
+                if (file.role == FileRole::PascalInclude)
+                {
+                    if (cached[i])
+                    {
+                        cache.keep(std::move(*cached[i]));
+                    }
+                    else if (texts[i])
+                    {
+                        cache.keep({
+                            .path = file.path,
+                            .stamp = file.stamp.value_or(FileStamp{}),
+                            .definesSymbols = definesSymbols(*texts[i])
+                        });
+                    }
+                    continue;
+                }
                 if (!places[i])
                     continue;
-                if (files[i].role == FileRole::PascalUnit)
+                if (file.role == FileRole::PascalUnit)
                 {
+                    if (cached[i])
+                    {
+                        surface.addRecords(cached[i]->records, places[i]->file);
+                        cache.keep(std::move(*cached[i]));
+                        clock.lap(Steps::TakeCached);
+                        continue;
+                    }
+                    CachedFile read{
+                        .path = file.path,
+                        .stamp = file.stamp.value_or(FileStamp{}),
+                        .records = cache.keeps() ? fragments[i].recordsSince({}) : FileRecords{},
+                        .definesSymbols = definesSymbols(*texts[i])
+                    };
                     surface.append(std::move(fragments[i]));
+                    cache.keep(std::move(read));
                     clock.lap(Steps::MergeUnits);
                     continue;
                 }
+                if (cached[i])
+                {
+                    const bool taken = takeCached(surface, *cached[i], places[i]->file);
+                    clock.lap(Steps::TakeCached);
+                    if (taken)
+                    {
+                        cache.keep(std::move(*cached[i]));
+                        continue;
+                    }
+                    if (!texts[i])
+                        texts[i] = Documents::readTextFile(file.path);
+                    if (!texts[i])
+                        continue;
+                }
                 const SourceText source{ *texts[i], rules, Preprocess::Expand, &macros };
                 clock.lap(Steps::ExpandSources);
-                readSource(surface, *places[i], files[i], source, ScanMode::AnyCppAndDelphi, rules);
+                CachedFile read = readSource(surface, *places[i], file, source,
+                    ScanMode::AnyCppAndDelphi, rules, cache);
+                read.macros = std::move(given[i]);
+                cache.keep(std::move(read));
                 clock.lap(Steps::ReadSources);
             }
             surface.encloseIncludes();
@@ -3409,26 +3806,42 @@ namespace SeeDocs_App
             clock.lap(Steps::DropRedeclarations);
             settlePascal(surface);
             clock.lap(Steps::SettlePascal);
+            return symbols;
+        }
+
+        [[nodiscard]] Surface scanWith(const SourceFolders& sources, const ScanMode mode,
+            const HintRules rules, ScanCache* cache, ScanSteps* steps)
+        {
+            StepClock clock{ steps };
+            Surface surface;
+            surface.setMode(mode);
+            surface.setHintRules(rules);
+            const TreeFiles files = filesOf(sources, mode);
+            clock.lap(Steps::ListFiles);
+            CacheUse use{ cache, mode, rules };
+            PascalSymbols symbols;
+            if (mode == ScanMode::AnyCppAndDelphi)
+                symbols = readAnyCppAndDelphi(surface, sources, files, rules, use, clock);
+            else
+                readClaFiModules(surface, sources, files, rules, use, clock);
+            use.finish(std::move(symbols));
+            surface.resolveAll();
+            clock.lap(Steps::ResolveAll);
+            surface.setScanned(std::chrono::floor<std::chrono::seconds>(
+                std::chrono::system_clock::now()));
+            return surface;
         }
     }
 
     Surface scanSources(const SourceFolders& sources, const ScanMode mode, const HintRules rules,
         ScanSteps* steps)
     {
-        StepClock clock{ steps };
-        Surface surface;
-        surface.setMode(mode);
-        surface.setHintRules(rules);
-        const TreeFiles files = filesOf(sources, mode);
-        clock.lap(Steps::ListFiles);
-        if (mode == ScanMode::AnyCppAndDelphi)
-            readAnyCppAndDelphi(surface, sources, files, rules, clock);
-        else
-            readClaFiModules(surface, sources, files, rules, clock);
-        surface.resolveAll();
-        clock.lap(Steps::ResolveAll);
-        surface.setScanned(std::chrono::floor<std::chrono::seconds>(
-            std::chrono::system_clock::now()));
-        return surface;
+        return scanWith(sources, mode, rules, nullptr, steps);
+    }
+
+    Surface scanSources(const SourceFolders& sources, const ScanMode mode, const HintRules rules,
+        ScanCache& cache, ScanSteps* steps)
+    {
+        return scanWith(sources, mode, rules, &cache, steps);
     }
 }

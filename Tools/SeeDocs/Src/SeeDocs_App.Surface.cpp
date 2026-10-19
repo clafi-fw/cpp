@@ -259,6 +259,19 @@ namespace SeeDocs_App
                     return;
             }
         }
+
+        // The list's records from the index on.
+        template<typename List>
+        [[nodiscard]] List tailOf(const List& list, const std::size_t from)
+        {
+            return List{ list.begin() + static_cast<std::ptrdiff_t>(from), list.end() };
+        }
+
+        template<typename List>
+        void cutTo(List& list, const std::size_t size)
+        {
+            list.erase(list.begin() + static_cast<std::ptrdiff_t>(size), list.end());
+        }
     }
 
     StepClock::StepClock(ScanSteps* steps)
@@ -373,6 +386,114 @@ namespace SeeDocs_App
             addRepublication(std::move(republication));
         for (EnclosedInclude& include : other.m_enclosedIncludes)
             addEnclosedInclude(std::move(include));
+    }
+
+    RecordCounts Surface::recordCounts() const
+    {
+        return {
+            .modules = m_modules.size(),
+            .types = m_types.size(),
+            .functions = m_functions.size(),
+            .variables = m_variables.size(),
+            .bindings = m_bindings.size(),
+            .propsReads = m_propsReads.size(),
+            .problems = m_problems.size(),
+            .republications = m_republications.size(),
+            .enclosedIncludes = m_enclosedIncludes.size()
+        };
+    }
+
+    FileRecords Surface::recordsSince(const RecordCounts& counts) const
+    {
+        return {
+            .modules = tailOf(m_modules, counts.modules),
+            .types = tailOf(m_types, counts.types),
+            .functions = tailOf(m_functions, counts.functions),
+            .variables = tailOf(m_variables, counts.variables),
+            .bindings = tailOf(m_bindings, counts.bindings),
+            .propsReads = tailOf(m_propsReads, counts.propsReads),
+            .problems = tailOf(m_problems, counts.problems),
+            .republications = tailOf(m_republications, counts.republications),
+            .enclosedIncludes = tailOf(m_enclosedIncludes, counts.enclosedIncludes)
+        };
+    }
+
+    void Surface::addRecords(const FileRecords& records, const std::size_t file)
+    {
+        FileRecords placed = records;
+        const auto renumber = [file](Place& place, Comment&) {
+            place.file = file;
+            return false;
+        };
+        visitDeclarations(placed.types, placed.functions, placed.variables, renumber);
+        for (Module& module : placed.modules)
+        {
+            module.file = file;
+            addModule(std::move(module));
+        }
+        for (Type& type : placed.types)
+        {
+            for (Restatement& restatement : type.restatements)
+                restatement.place.file = file;
+            addType(std::move(type));
+        }
+        for (FreeFunction& function : placed.functions)
+            addFunction(std::move(function));
+        for (Variable& variable : placed.variables)
+            addVariable(std::move(variable));
+        for (Binding& binding : placed.bindings)
+        {
+            binding.place.file = file;
+            addBinding(std::move(binding));
+        }
+        for (Place& place : placed.propsReads)
+        {
+            place.file = file;
+            addPropsRead(place);
+        }
+        for (Problem& problem : placed.problems)
+        {
+            problem.place.file = file;
+            addProblem(std::move(problem));
+        }
+        for (Republication& republication : placed.republications)
+        {
+            republication.file = file;
+            addRepublication(std::move(republication));
+        }
+        for (EnclosedInclude& include : placed.enclosedIncludes)
+        {
+            include.file = file;
+            addEnclosedInclude(std::move(include));
+        }
+    }
+
+    // The look-ups are built again: a type dropped may have hidden an earlier one of its name.
+    void Surface::dropRecordsSince(const RecordCounts& counts)
+    {
+        cutTo(m_modules, counts.modules);
+        cutTo(m_types, counts.types);
+        cutTo(m_functions, counts.functions);
+        cutTo(m_variables, counts.variables);
+        cutTo(m_bindings, counts.bindings);
+        cutTo(m_propsReads, counts.propsReads);
+        cutTo(m_problems, counts.problems);
+        cutTo(m_republications, counts.republications);
+        cutTo(m_enclosedIncludes, counts.enclosedIncludes);
+        m_byQualifiedName.clear();
+        m_byBareName.clear();
+        m_languageByModule.clear();
+        for (std::size_t index = 0; index != m_types.size(); ++index)
+        {
+            const Type& type = m_types[index];
+            m_byQualifiedName[type.qualifiedName] = index;
+            m_byBareName[std::wstring{ bareName(type.name) }].push_back(index);
+        }
+        for (const Module& module : m_modules)
+        {
+            if (module.language != SourceLanguage::Cpp)
+                m_languageByModule[module.name] = module.language;
+        }
     }
 
     const Type* Surface::typeNamed(const std::wstring_view qualifiedName) const

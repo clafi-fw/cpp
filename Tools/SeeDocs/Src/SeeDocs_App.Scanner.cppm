@@ -1,5 +1,6 @@
 export module SeeDocs_App.Scanner;
 
+import SeeDocs_App.ScanCache;
 import SeeDocs_App.Surface;
 
 import ClaFi.StdLib;
@@ -16,4 +17,7 @@ namespace SeeDocs_App
     // steps, where a list is handed in, say how long each took.
     export [[nodiscard]] Surface scanSources(const SourceFolders&, ScanMode, HintRules,
         ScanSteps* steps = nullptr);
+    // The same, reading what changed since the cache's scan, and updating it. See README#scan-cache
+    export [[nodiscard]] Surface scanSources(const SourceFolders&, ScanMode, HintRules,
+        ScanCache&, ScanSteps* steps = nullptr);
 }

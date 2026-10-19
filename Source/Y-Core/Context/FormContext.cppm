@@ -460,6 +460,8 @@ namespace ClaFi
         static std::wstring appDataPath();
         // The user's own documents folder, with a trailing separator - empty where there is none.
         static std::wstring documentsPath();
+        // The running executable's own file - empty where the platform cannot tell.
+        static std::wstring executablePath();
         // The folder the running executable stands in, with a trailing separator - empty where
         // the platform cannot tell.
         static std::wstring executableDirectory();
