@@ -10,8 +10,8 @@ namespace SeeDocs_App
     // How a tree is read. See README
     export enum class ScanMode
     {
-        Full,      // ClaFi modules, written to the declaration routine and checked against it
-        Limited    // anyone's C++ or Delphi, headers included, nothing checked
+        AnyCppAndDelphi,   // anyone's C++ or Delphi, headers included, nothing checked
+        ClaFiModules       // written to the declaration routine and checked against it
     };
 
     // Which comment gives a declaration its hint. See README
@@ -277,7 +277,7 @@ namespace SeeDocs_App
         bool exported{ false };
     };
 
-    // A module unit: an interface or an implementation, with what it imports. A limited read
+    // A module unit: an interface or an implementation, with what it imports. A read of any C++
     // takes a header for one, named by its path under the tree, its includes for its imports.
     export struct Module
     {
@@ -467,7 +467,7 @@ namespace SeeDocs_App
         Republications m_republications;
         EnclosedIncludes m_enclosedIncludes;
         ScanStamp m_scanned{};
-        ScanMode m_mode{ ScanMode::Full };
+        ScanMode m_mode{ ScanMode::AnyCppAndDelphi };
         HintRules m_hintRules{ HintRules::Strict };
         std::unordered_map<std::wstring, std::size_t> m_byQualifiedName;
         std::unordered_map<std::wstring, std::vector<std::size_t>> m_byBareName;

@@ -38,7 +38,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view Functions = L"Functions";
             constexpr std::wstring_view Constants = L"Constants";
             constexpr std::wstring_view Scanned = L"Scanned";
-            constexpr std::wstring_view Limited = L"Limited";
+            constexpr std::wstring_view ReadAs = L"ReadAs";
             constexpr std::wstring_view LooseHints = L"LooseHints";
             constexpr std::wstring_view Name = L"Name";
             constexpr std::wstring_view NameSpace = L"Namespace";
@@ -935,7 +935,8 @@ namespace SeeDocs_App
         {
             Surface surface;
             surface.setScanned(stampOf(textOf(root, Keys::Scanned)));
-            surface.setMode(flagOf(root, Keys::Limited) ? ScanMode::Limited : ScanMode::Full);
+            surface.setMode(scanModeOf(textOf(root, Keys::ReadAs))
+                .value_or(ScanMode::AnyCppAndDelphi));
             surface.setHintRules(flagOf(root, Keys::LooseHints)
                 ? HintRules::Loose
                 : HintRules::Strict);
@@ -953,7 +954,7 @@ namespace SeeDocs_App
         using namespace Dom::Dt;
         return {
             Value{ Keys::Scanned, std::wstring{} },
-            Value{ Keys::Limited, false },
+            Value{ Keys::ReadAs, std::wstring{} },
             Value{ Keys::LooseHints, false },
             Sequence{ Keys::Modules, moduleLayout() },
             Sequence{ Keys::Types, typeLayout() },
@@ -999,7 +1000,8 @@ namespace SeeDocs_App
 
         Entry root{ orders.root };
         root.setText(Keys::Scanned, stampText(surface.scanned()));
-        root.setFlag(Keys::Limited, surface.mode() == ScanMode::Limited);
+        if (surface.mode() != ScanMode::AnyCppAndDelphi)
+            root.setText(Keys::ReadAs, modeWord(surface.mode()));
         root.setFlag(Keys::LooseHints, surface.hintRules() == HintRules::Loose);
 
         Items modules;
@@ -1172,6 +1174,18 @@ namespace SeeDocs_App
         return {};
     }
 
+    std::wstring_view modeWord(const ScanMode mode)
+    {
+        switch (mode)
+        {
+            case ScanMode::AnyCppAndDelphi:
+                return L"AnyCppAndDelphi";
+            case ScanMode::ClaFiModules:
+                return L"ClaFiModules";
+        }
+        return {};
+    }
+
     std::optional<TypeKind> typeKindOf(const std::wstring_view word)
     {
         for (const TypeKind kind : { TypeKind::Class, TypeKind::Struct, TypeKind::Union,
@@ -1215,6 +1229,16 @@ namespace SeeDocs_App
         {
             if (accessWord(access) == word)
                 return access;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<ScanMode> scanModeOf(const std::wstring_view word)
+    {
+        for (const ScanMode mode : { ScanMode::AnyCppAndDelphi, ScanMode::ClaFiModules })
+        {
+            if (modeWord(mode) == word)
+                return mode;
         }
         return std::nullopt;
     }

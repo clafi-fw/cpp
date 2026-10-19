@@ -39,7 +39,7 @@ namespace SeeDocs_App
         std::filesystem::path folder;
         std::wstring name;
         ProjectSources sources;   // in the order their roots count them
-        ScanMode mode{ ScanMode::Full };
+        ScanMode mode{ ScanMode::AnyCppAndDelphi };
         HintRules hints{ HintRules::Strict };
         HintEdits edits{ HintEdits::None };
 

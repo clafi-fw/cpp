@@ -41,14 +41,16 @@ namespace SeeDocs_App
     export [[nodiscard]] std::optional<Surface> readDatabase(const std::filesystem::path&,
         ScanSteps* steps = nullptr);
 
-    // The words the Kind and Form keys take.
+    // The words the Kind, Form, Access and ReadAs keys take.
     export [[nodiscard]] std::wstring_view kindWord(TypeKind);
     export [[nodiscard]] std::wstring_view kindWord(FunctionKind);
     export [[nodiscard]] std::wstring_view formWord(PropertyForm);
     export [[nodiscard]] std::wstring_view accessWord(Access);
-    // The enumerators those words stand for; nothing for a word the database does not write.
+    export [[nodiscard]] std::wstring_view modeWord(ScanMode);
+    // The enumerators those words stand for; nothing for a word none of those keys takes.
     export [[nodiscard]] std::optional<TypeKind> typeKindOf(std::wstring_view word);
     export [[nodiscard]] std::optional<FunctionKind> functionKindOf(std::wstring_view word);
     export [[nodiscard]] std::optional<PropertyForm> formOf(std::wstring_view word);
     export [[nodiscard]] std::optional<Access> accessOf(std::wstring_view word);
+    export [[nodiscard]] std::optional<ScanMode> scanModeOf(std::wstring_view word);
 }

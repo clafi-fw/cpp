@@ -35,7 +35,7 @@ namespace SeeDocs_App
             L"\n"
             L"The folder is a project's own, or a tree with a .seedocs project in it; the working\n"
             L"directory when left out. A project reads the folders of sources its Project.cfg\n"
-            L"names, as it says; one reading any C++ and Delphi - Limited = true - is not\n"
+            L"names, as it says; one with ReadAs = AnyCppAndDelphi is not\n"
             L"checked. A scan with --out takes any other folder too, read as ClaFi modules; one\n"
             L"with --time prints how long each step of the scan took, then the write of the\n"
             L"database and the read of it SeeDocs shows a scan from.\n";
@@ -128,7 +128,10 @@ namespace SeeDocs_App
         {
             if (std::optional<Project> project = readProject(folder))
                 return std::move(*project);
-            return Project{ .sources = { { .written = folder.wstring() } } };
+            return Project{
+                .sources = { { .written = folder.wstring() } },
+                .mode = ScanMode::ClaFiModules
+            };
         }
 
         [[nodiscard]] int scan(const Options& options)
@@ -175,12 +178,12 @@ namespace SeeDocs_App
                 print(L"No project stands for " + options.folder.wstring() + L"\n");
                 return k_misused;
             }
-            if (project.mode == ScanMode::Limited)
+            if (project.mode == ScanMode::AnyCppAndDelphi)
             {
                 print(project.name + L" reads any C++ and Delphi, which checks nothing\n");
                 return k_ok;
             }
-            const Surface surface = scanSources(project.sourceFolders(), ScanMode::Full,
+            const Surface surface = scanSources(project.sourceFolders(), ScanMode::ClaFiModules,
                 project.hints);
             const Report report = checkSurface(surface, project.footnotesFolder());
             print(formatReport(report, surface));

@@ -20,7 +20,7 @@ namespace SeeDocs_App
     {
         constexpr std::wstring_view k_interfaceExtension = L".cppm";
         constexpr std::wstring_view k_implementationExtension = L".cpp";
-        // What a limited read takes for a module interface and for a header, in lower case.
+        // What a read of any C++ takes for a module interface and for a header, in lower case.
         constexpr auto k_moduleExtensions = std::to_array<std::wstring_view>({
             L".cppm", L".ixx", L".mpp", L".cxxm", L".ccm", L".c++m"
         });
@@ -209,7 +209,7 @@ namespace SeeDocs_App
                 origins.push_back(origin.value_or(Run{ at + i, at + i + 1 }));
         }
 
-        // **The tree's own macros**, expanded where their names stand in a limited read's code. An
+        // **The tree's own macros**, expanded where their names stand in code read as any C++. An
         // object-like macro is replaced by its body, expanded in turn; a function-like one is
         // dropped with its arguments, since what it makes of them takes a preprocessor to know.
         // The first definition met in a branch that is read stands, and a name defined only in
@@ -393,7 +393,7 @@ namespace SeeDocs_App
         using Includes = std::vector<Include>;
         using Lines = std::vector<std::wstring>;
 
-        // How a file is lexed: as written, or as a limited read takes it - its conditionals read
+        // How a file is lexed: as written, or as any C++ is read - its conditionals read
         // down their first branch, and the tree's macros gathered from it or expanded in it.
         enum class Preprocess
         {
@@ -1144,7 +1144,7 @@ namespace SeeDocs_App
             Access access{ Access::Public };
         };
 
-        // Reads one file's tokens into the surface. A limited read takes none of the routine's
+        // Reads one file's tokens into the surface. A read of any C++ takes none of the routine's
         // macros; in a header it takes what stands at namespace scope for exported, the header
         // for a module, and a using-declaration there for a re-publication.
         class FileReader
@@ -1224,7 +1224,7 @@ namespace SeeDocs_App
             std::size_t m_file;
             const SourceText& m_text;
             std::wstring m_folder;
-            bool m_limited{ false };
+            bool m_anyCpp{ false };
             bool m_looseHints{ false };
             bool m_header{ false };
             std::size_t m_at{ 0 };
@@ -1241,7 +1241,7 @@ namespace SeeDocs_App
             m_file{ file },
             m_text{ text },
             m_folder{ std::move(folder) },
-            m_limited{ mode == ScanMode::Limited },
+            m_anyCpp{ mode == ScanMode::AnyCppAndDelphi },
             m_looseHints{ rules == HintRules::Loose },
             m_header{ header }
         {
@@ -1425,7 +1425,7 @@ namespace SeeDocs_App
                     skipRequiresClause();
                     continue;
                 }
-                else if (word == Words::TypedefWord && m_limited)
+                else if (word == Words::TypedefWord && m_anyCpp)
                     readTypedef(prefix);
                 else if (word == Words::FriendWord || word == Words::TypedefWord
                     || word == Words::StaticAssert)
@@ -1458,7 +1458,7 @@ namespace SeeDocs_App
                     advance();
                     advance();
                 }
-                else if (!m_limited && (propertyMacro(word) || word == Words::DeclareEvent))
+                else if (!m_anyCpp && (propertyMacro(word) || word == Words::DeclareEvent))
                 {
                     Scope* scope = typeScope();
                     readMacro(*token, scope ? scope->type.get() : nullptr,
@@ -2479,7 +2479,7 @@ namespace SeeDocs_App
                     scope->type->functions.push_back(std::move(function));
                 }
                 else if ((prefix.exported || scopeExported())
-                    && !(m_limited && isDeductionGuide(function)))
+                    && !(m_anyCpp && isDeductionGuide(function)))
                 {
                     function.comment = commentAt(start.line, prefix.templateLine, function.name);
                     FreeFunction free;
@@ -2632,7 +2632,7 @@ namespace SeeDocs_App
                     advance();
                     return;
                 }
-                else if (token->type == TokenType::Name && !m_limited)
+                else if (token->type == TokenType::Name && !m_anyCpp)
                 {
                     const std::wstring_view word = text(*token);
                     if (propertyMacro(word))
@@ -3220,7 +3220,7 @@ namespace SeeDocs_App
         {
             TreeFiles* list = nullptr;
             FileRole role = FileRole::Module;
-            if (m_mode == ScanMode::Full)
+            if (m_mode == ScanMode::ClaFiModules)
             {
                 const std::wstring extension = path.extension().wstring();
                 if (extension == k_interfaceExtension)
@@ -3252,9 +3252,9 @@ namespace SeeDocs_App
             list->push_back({ .path = path, .role = role, .root = root });
         }
 
-        // What a read takes, in reading order: a full read every module interface and then every
-        // implementation unit, a limited one every module interface, every header, every Delphi
-        // unit and then every Delphi include file - each by its folder's place, then by path.
+        // What a read takes, in reading order. ClaFi modules: every module interface, then every
+        // implementation unit. Any C++ and Delphi: every module interface, every header, every
+        // Delphi unit, then every Delphi include file. Each by its folder's place, then by path.
         TreeFiles FileGathering::files()
         {
             TreeFiles result;
@@ -3316,8 +3316,8 @@ namespace SeeDocs_App
         }
 
         // A file that cannot be read is left out.
-        void readFull(Surface& surface, const SourceFolders& sources, const TreeFiles& files,
-            const HintRules rules, StepClock& clock)
+        void readClaFiModules(Surface& surface, const SourceFolders& sources,
+            const TreeFiles& files, const HintRules rules, StepClock& clock)
         {
             for (const TreeFile& file : files)
             {
@@ -3328,7 +3328,7 @@ namespace SeeDocs_App
                 const SourceText source{ *text, rules };
                 clock.lap(Steps::LexSources);
                 const FilePlace place = addSourceFile(surface, sources, file);
-                readSource(surface, place, file, source, ScanMode::Full, rules);
+                readSource(surface, place, file, source, ScanMode::ClaFiModules, rules);
                 clock.lap(Steps::ReadSources);
             }
         }
@@ -3343,8 +3343,8 @@ namespace SeeDocs_App
         // from disk once, for both passes. A Delphi include file is gathered from only. The units
         // are read on every thread the hardware has, each into a surface of its own, and taken
         // into the one surface in file order, so its records stand as one thread would put them.
-        void readLimited(Surface& surface, const SourceFolders& sources, const TreeFiles& files,
-            const HintRules rules, StepClock& clock)
+        void readAnyCppAndDelphi(Surface& surface, const SourceFolders& sources,
+            const TreeFiles& files, const HintRules rules, StepClock& clock)
         {
             std::vector<std::optional<std::wstring>> texts(files.size());
             forEachIndex(files.size(), [&](const std::size_t i) {
@@ -3398,7 +3398,7 @@ namespace SeeDocs_App
                 }
                 const SourceText source{ *texts[i], rules, Preprocess::Expand, &macros };
                 clock.lap(Steps::ExpandSources);
-                readSource(surface, *places[i], files[i], source, ScanMode::Limited, rules);
+                readSource(surface, *places[i], files[i], source, ScanMode::AnyCppAndDelphi, rules);
                 clock.lap(Steps::ReadSources);
             }
             surface.encloseIncludes();
@@ -3421,10 +3421,10 @@ namespace SeeDocs_App
         surface.setHintRules(rules);
         const TreeFiles files = filesOf(sources, mode);
         clock.lap(Steps::ListFiles);
-        if (mode == ScanMode::Limited)
-            readLimited(surface, sources, files, rules, clock);
+        if (mode == ScanMode::AnyCppAndDelphi)
+            readAnyCppAndDelphi(surface, sources, files, rules, clock);
         else
-            readFull(surface, sources, files, rules, clock);
+            readClaFiModules(surface, sources, files, rules, clock);
         surface.resolveAll();
         clock.lap(Steps::ResolveAll);
         surface.setScanned(std::chrono::floor<std::chrono::seconds>(

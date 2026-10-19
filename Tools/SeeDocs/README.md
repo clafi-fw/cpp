@@ -51,20 +51,21 @@ Name = ClaFi
 Sources = [
     =[ Path = ../ClaFi/Source, Subfolders = true ]
 ]
-Limited = false
+ReadAs = ClaFiModules
 LooseHints = false
 EditHints = true
 ```
 
 - **`Name`** is what the project goes by. Left empty, the project goes by its folder's name.
 - **`Sources`** are the folders it reads, each with or without the folders under it.
-- **`Limited`** reads the sources as any C++ and Delphi instead of as ClaFi modules.
+- **`ReadAs`** is how the sources are read: `AnyCppAndDelphi` for anyone's C++ and Delphi, the
+  default, or `ClaFiModules`.
 - **`LooseHints`** takes the hint of every recognizable comment instead of following the strict
   rules - see [Hints](#hints).
 - **`EditHints`** writes a hint edited on a page into its source.
 
-A project the window makes is written with `Limited` and `LooseHints`. A project stating neither
-reads its sources as ClaFi modules by the strict rules.
+A project the window makes is written with `ReadAs = AnyCppAndDelphi` and `LooseHints`. A project
+stating neither reads any C++ and Delphi by the strict rules.
 
 ### Source paths
 
@@ -296,7 +297,7 @@ says, it uses the same key: `Name`, `Kind`, `Signature`, `Hint`, `Type`, and a c
 
 ```
 Scanned = 2026-10-09T03:12:45Z
-Limited = true
+ReadAs = ClaFiModules
 LooseHints = true
 Modules = [
     =[ Name, File, Root, Interface, Header, Language, Imports = [...], ExportedImports = [...] ]
@@ -326,9 +327,9 @@ Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, Fi
 ### The file and its modules
 
 - **`Scanned`** is when the scan that wrote the file ran, in UTC to the second.
-- **`Limited`** says the scan read the sources as any C++ and Delphi, and **`LooseHints`** that it
-  took every recognizable comment's hint. A hint written from SeeDocs keeps both, since such an edit
-  reads nothing of the sources beyond what it changes.
+- **`ReadAs`** says how the scan read the sources, left out for any C++ and Delphi, and
+  **`LooseHints`** that it took every recognizable comment's hint. A hint written from SeeDocs keeps
+  both, since such an edit reads nothing of the sources beyond what it changes.
 - **`File`** is the path under its source folder, and **`Root`** that folder, counted from zero in
   the order the project names them.
 - **`Header`** marks a module that is a header, as a read of any C++ takes one. Its `Name` is its

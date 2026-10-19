@@ -805,7 +805,7 @@ namespace SeeDocs_App
                 L":" + std::to_wstring(place.line), { .place = place, .language = language });
         }
 
-        // What a reader calls the unit a declaration stands in: a header, which a limited read
+        // What a reader calls the unit a declaration stands in: a header, which a read of any C++
         // takes for a module, or a module.
         [[nodiscard]] std::wstring moduleWordOf(const Surface& surface,
             const std::wstring_view name)

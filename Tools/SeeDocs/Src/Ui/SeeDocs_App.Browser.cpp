@@ -1513,7 +1513,7 @@ namespace SeeDocs_App
             };
             return;
         }
-        if (project.mode == ScanMode::Full)
+        if (project.mode == ScanMode::ClaFiModules)
         {
             page.lead = {
                 Run{ .text = L"There is nothing to document: no source in its folders exports a "

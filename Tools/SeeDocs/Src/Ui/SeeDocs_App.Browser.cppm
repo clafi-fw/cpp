@@ -182,8 +182,8 @@ namespace SeeDocs_App
         EventConnection onRescanProject(F&& callback);
         // Shows a project opened: a node of its own at the end of the tree, and its pages under a
         // segment of its name. The project is held by reference until it is removed, and what its
-        // pages edit is written into it - its tree and its database - unless it is read in
-        // limited mode.
+        // pages edit is written into it - its sources, its footnotes and its database - as its
+        // options allow.
         void addProject(OpenProject&, HomeTab);
         void openHome(const OpenProject&);   // a new tab on the project's home
         // Shows the project again over its surface as it now reads, the tabs standing.

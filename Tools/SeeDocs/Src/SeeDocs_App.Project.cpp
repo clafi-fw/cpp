@@ -1,5 +1,6 @@
 module SeeDocs_App.Project;
 
+import SeeDocs_App.Database;
 import SeeDocs_App.Surface;
 
 import ClaFi.Dom.Formats.ClaFi;
@@ -24,7 +25,7 @@ namespace SeeDocs_App
             constexpr std::wstring_view Sources = L"Sources";
             constexpr std::wstring_view Path = L"Path";
             constexpr std::wstring_view Subfolders = L"Subfolders";
-            constexpr std::wstring_view Limited = L"Limited";
+            constexpr std::wstring_view ReadAs = L"ReadAs";
             constexpr std::wstring_view LooseHints = L"LooseHints";
             constexpr std::wstring_view EditHints = L"EditHints";
         }
@@ -46,7 +47,7 @@ namespace SeeDocs_App
                         Value{ Keys::Subfolders, true }
                     }
                 },
-                Value{ Keys::Limited, false },
+                Value{ Keys::ReadAs, std::wstring{} },
                 Value{ Keys::LooseHints, false },
                 Value{ Keys::EditHints, false }
             };
@@ -222,8 +223,8 @@ namespace SeeDocs_App
                     .subfolders = (entry / Keys::Subfolders).get<bool>()
                 });
             }
-            if ((document / Keys::Limited).get<bool>())
-                project.mode = ScanMode::Limited;
+            project.mode = scanModeOf((document / Keys::ReadAs).get<std::wstring>())
+                .value_or(ScanMode::AnyCppAndDelphi);
             if ((document / Keys::LooseHints).get<bool>())
                 project.hints = HintRules::Loose;
             if ((document / Keys::EditHints).get<bool>())
@@ -245,7 +246,6 @@ namespace SeeDocs_App
         Project project{
             .folder = folder,
             .name = std::wstring{ name },
-            .mode = ScanMode::Limited,
             .hints = HintRules::Loose
         };
         writeProject(project);
@@ -271,7 +271,7 @@ namespace SeeDocs_App
             (entry / Keys::Path).set(source.written);
             (entry / Keys::Subfolders).set(source.subfolders);
         }
-        (document / Keys::Limited).set(project.mode == ScanMode::Limited);
+        (document / Keys::ReadAs).set(std::wstring{ modeWord(project.mode) });
         (document / Keys::LooseHints).set(project.hints == HintRules::Loose);
         (document / Keys::EditHints).set(project.edits == HintEdits::Direct);
         document.save();

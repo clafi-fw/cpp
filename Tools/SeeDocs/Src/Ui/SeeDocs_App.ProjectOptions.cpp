@@ -282,19 +282,19 @@ namespace SeeDocs_App
         addChoice(readAs, L"Any C++ and Delphi",
             L"Anyone's C++ and Delphi files",
             [&project]() {
-                return project.project.mode == ScanMode::Limited;
+                return project.project.mode == ScanMode::AnyCppAndDelphi;
             },
             [&workspace, &project, rescanned]() {
-                workspace.setMode(project, ScanMode::Limited);
+                workspace.setMode(project, ScanMode::AnyCppAndDelphi);
                 rescanned();
             });
         addChoice(readAs, L"ClaFi modules",
             L"Module interfaces and implementation units that adhere ClaFi declaration routines",
             [&project]() {
-                return project.project.mode == ScanMode::Full;
+                return project.project.mode == ScanMode::ClaFiModules;
             },
             [&workspace, &project, rescanned]() {
-                workspace.setMode(project, ScanMode::Full);
+                workspace.setMode(project, ScanMode::ClaFiModules);
                 rescanned();
             });
         StackPanel& hints = addChoiceSet(scan, L"Hints format");
