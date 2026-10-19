@@ -12,7 +12,6 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    // Where a split control's secondary part stands against its content - right, below or left.
     export enum class SecondaryPartPlacement
     {
         Right,
@@ -20,73 +19,25 @@ namespace ClaFi::Controls
         Left
     };
 
-    // SplitButtonBase
-
-    // A button carrying a second target that is pressed on its own account. See Controls-Base
     export class SplitButtonBase : public ButtonBase
     {
     public:
         template <typename... Args>
         explicit SplitButtonBase(const CreateParams&, Args&&...);
     public:
-        /// Null on a control that never made one - a tab outside a browser has no close button.
-        /// The part whatever its state, which is what a control that shows and hides one holds it
-        /// by.
         [[nodiscard]] Control* secondaryPart() const { return m_secondaryPart; }
-        /// The part, when there is one and it is shown. **A part that is not shown is not there**:
-        /// it takes no room on either axis, nothing is laid out against it, and no press lands on
-        /// it. Every reader that asks what the control's face is made of asks this one.
         [[nodiscard]] Control* shownSecondaryPart() const;
     protected:
-        /// Creates the part and hands it to ButtonBase to own. A member initializer is the usual
-        /// place to call it from: the base subobject is complete by then.
-        ///
-        /// The part's Interactivity is the caller's to pick, and it settles both how the keyboard
-        /// reaches the part and what a press on it does to the container above the host.
-        ///
-        /// MouseOnly keeps the part off the focus walk in Input::setMouseDown, so a press on it
-        /// focuses the host, and the keyboard reaches what the part does through a key on the host
-        /// instead - DropdownControlBase answers F4 and Alt+Down that way. That suits a host
-        /// standing on its own.
-        ///
-        /// Focusable makes the part a focus stop in its own right, which is what a host inside an
-        /// ActiveContainer needs. The walk stops at the first control that can take focus, so a
-        /// part that cannot take it lets the walk climb to the host, and the container picks the
-        /// host as its current item. A tab's close button takes focus for exactly that reason: the
-        /// strip is then asked about the button rather than the tab, and declines it.
         template <typename PartClass, typename... Args>
             requires std::derived_from<PartClass, Control>
         PartClass& createSecondaryPart(Args&&...);
 
         [[nodiscard]] virtual SecondaryPartPlacement secondaryPartPlacement() const;
-        /// Whether the part runs out to the control's own edge, taking over the content padding on
-        /// the side it sits on, or stays inside that padding like any other content.
-        ///
-        /// It also says whether the part is structure or content. A part on the edge is one face
-        /// of the control and holds its axis even at zero size; one inside the padding is content,
-        /// and content shrunk to nothing takes its spacing with it.
         [[nodiscard]] virtual bool secondaryReachesEdge() const { return false; }
-        /// Whether a press on the part goes on to the control and its ancestors. A container above
-        /// reads a nested press as "make this item current", which is right for a strip that is
-        /// half of the control's face and wrong for a button that removes the control outright.
         [[nodiscard]] virtual bool secondaryPressPropagates() const { return true; }
-        /// Puts the part in the box the content has left it, at its own size against the edge it
-        /// belongs to and centred on the other axis. Overridden by a control whose part is a strip
-        /// rather than a mark, which spans the whole of the cross axis instead.
-        ///
-        /// The box is in child coordinates, which begin at the child inset rather than at the
-        /// control's top left.
-        ///
-        /// Called only where there is a part and it is shown, so an override may take
-        /// shownSecondaryPart() as the part it places.
         virtual void placeSecondaryPart(ScaledSize childArea);
-        /// What a press on the part does. Called only when there is a part, so a control that
-        /// creates one has to answer here.
         virtual void secondaryClicked(NestedClickEvent&);
-
-        /// Whether the control pressed is the part or lies inside it.
         [[nodiscard]] bool pressedSecondary(const Control* pressed) const;
-        /// How much of the content box the part takes, on the axis it sits on.
         [[nodiscard]] ScaledSize secondaryExtent(const FormContext&, ScaledPadding, ScaledSpacing) const;
 
         ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
@@ -95,7 +46,6 @@ namespace ClaFi::Controls
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         FloatRect iconRect(const PaintEvent&) const override;
-        void adjustPaint(AdjustPaintEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedClick(NestedClickEvent&) override;
     private:
@@ -106,12 +56,6 @@ namespace ClaFi::Controls
 
     //-------------------------------------------------------------------------
 
-
-    // SplitButtonBase
-    //
-    // The constructor and createSecondaryPart() are the definitions that stay here: they are
-    // templates, so every caller instantiates them from this interface. Every other body lives in
-    // SplitButtonBase.cpp.
 
     template<typename ...Args>
     SplitButtonBase::SplitButtonBase(const CreateParams& params, Args && ...args)
@@ -134,4 +78,4 @@ namespace ClaFi::Controls
         return result;
     }
 
-} // of namespace ClaFi
+}

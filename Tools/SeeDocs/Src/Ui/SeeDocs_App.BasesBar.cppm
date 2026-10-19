@@ -13,6 +13,7 @@ import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
+import ClaFi.Core.AppTheme_Colors;
 
 namespace SeeDocs_App
 {
@@ -32,21 +33,21 @@ namespace SeeDocs_App
     export class BaseLinkContextPopupEvent : public ::ClaFi::Event
     {
     public:
-        BaseLinkContextPopupEvent(Control& owner, std::wstring linkTarget,
+        BaseLinkContextPopupEvent(Control& owner, std::wstring_view linkTarget,
             ContextPopupEvent& request);
     public:
         Control& crumb;
-        const std::wstring target;   // the page the crumb names
+        const std::wstring_view target;   // the page the crumb names
         ContextPopupEvent& popup;
     };
 
-    export class BasesBar;
+    export class BasesTreeBase;
 
     /// One base on the bar: its spelling, and behind the mark before it the types standing on it.
     class BaseCrumb : public DropdownControlBase
     {
     public:
-        BaseCrumb(const CreateParams&, BasesBar&, const BaseNode&);
+        BaseCrumb(const CreateParams&, const BaseNode&);
     public:
         DECLARE_EVENT(BaseLinkEvent, OnBaseLink, onBaseLink);
     public:
@@ -62,37 +63,65 @@ namespace SeeDocs_App
         /// The mark points back toward the type the way up came from, and turns down into its list.
         [[nodiscard]] DropdownMarkTurn dropdownMarkTurn() const override;
     private:
-        BasesBar& m_bar;
         const BaseNode& m_node;
     };
 
-    export class BasesTree : public ContainerBase
-    {
-        
-    };
+    using BaseSpan = std::span<const BaseNode>;
+    using CrumbsVector = std::vector<BaseCrumb*>;
 
-    // A class's bases as reversed crumbs, the ways up running right and parting where they fork.
-    export class BasesBar : public ContainerBase
+    export class BasesTreeBase : public ContainerBase
     {
-    public:
-        template<typename... Args>
-        explicit BasesBar(const CreateParams&, Args&&...);
+        using ContainerBase::ContainerBase;
     public:
         // Connects a handler raised when a crumb or a line of its list is chosen.
         DECLARE_EVENT(BaseLinkEvent, OnBaseLink, onBaseLink);
         // Connects a handler raised when a menu is asked for on a crumb.
         DECLARE_EVENT(BaseLinkContextPopupEvent, OnBaseLinkContextPopup, onBaseLinkContextPopup);
     public:
-        // Builds a crumb per base, the bases kept by whoever shows them while the crumbs stand.
-        void setBases(const BaseNodes&);
-        void clearBases();
+        virtual void setBases(const BaseNodes&);
+        virtual void clear();
+        const CrumbsVector& crumbs() const { return m_crumbs; }
+    protected:
+        BaseSpan m_bases{};
+        CrumbsVector m_crumbs{};   // in the order addCrumbs made them
+    private:
+        void addCrumbs(BaseSpan);
+    };
+
+    export class BasesBar1 : public BasesTreeBase
+    {
+        using BasesTreeBase::BasesTreeBase;
+    public:
+        template<typename... Args>
+        explicit BasesBar1(const CreateParams&, Args...);
+    };
+
+    template <typename... Args>
+    BasesBar1::BasesBar1(const CreateParams& params, Args... args)
+        :
+        BasesTreeBase{
+            params,
+            UiElement::Tooltip,
+            std::forward<Args>(args)...,
+            Padding{ 48.0f }
+        }
+    {
+        
+    }
+
+    // A class's bases as reversed crumbs, the ways up running right and parting where they fork.
+    export class BasesBar2: public BasesTreeBase
+    {
+        using BasesTreeBase::BasesTreeBase;
+    public:
+        void setBases(const BaseNodes&) override;
+        void clear() override;
     protected:
         ScaledSize calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         // A crumb's width is read off it and narrowed here, as a row reads its items' widths.
         [[nodiscard]] bool isChildWidthGiven(const Control&) const override { return false; }
     private:
-        using BaseSpan = std::span<const BaseNode>;
         // What a way up comes to from where it starts, the column it parts into included.
         struct RunExtent
         {
@@ -100,8 +129,6 @@ namespace SeeDocs_App
             float height{ 0.0f };
         };
     private:
-        // A crumb per base, each way walked down before the next - the order every walk keeps.
-        void addCrumbs(BaseSpan);
         [[nodiscard]] RunExtent runExtent(BaseSpan, std::size_t& crumb, float cap) const;
         // The crumbs of one way up side by side, level with the middle of the height given, and a
         // column of rows where the way parts.
@@ -115,23 +142,7 @@ namespace SeeDocs_App
     private:
         static constexpr float k_leastCrumb = 48.0f;   // what a narrowed crumb keeps of itself
         static constexpr int k_capSteps = 24;          // halvings of the range the cap is found in
-
-        BaseSpan m_bases{};
-        std::vector<BaseCrumb*> m_crumbs{};   // in the order addCrumbs made them
         std::vector<float> m_fullWidths{};    // what each crumb measured
     };
-
-
-    //-------------------------------------------------------------------------
-
-
-    // BasesBar
-
-    template<typename... Args>
-    BasesBar::BasesBar(const CreateParams& params, Args&&... args)
-        :
-        ContainerBase{ params, std::forward<Args>(args)... }
-    {
-    }
 
 }

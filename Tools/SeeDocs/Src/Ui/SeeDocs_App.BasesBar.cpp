@@ -53,7 +53,7 @@ namespace SeeDocs_App
 
     // BaseLinkContextPopupEvent
 
-    BaseLinkContextPopupEvent::BaseLinkContextPopupEvent(Control& owner, std::wstring linkTarget,
+    BaseLinkContextPopupEvent::BaseLinkContextPopupEvent(Control& owner, std::wstring_view linkTarget,
         ContextPopupEvent& request)
         :
         ::ClaFi::Event{},
@@ -65,14 +65,16 @@ namespace SeeDocs_App
 
     // BaseCrumb
 
-    BaseCrumb::BaseCrumb(const CreateParams& params, BasesBar& bar, const BaseNode& node)
+    BaseCrumb::BaseCrumb(const CreateParams& params, const BaseNode& node)
         :
         DropdownControlBase{
             params,
             Interactivity::Focusable,
             SecondaryPartPlacement::Left,
-            params.themeMetrics().toolButton,
-            Padding{ 4.0f },
+            UiElement::Button,
+            ShowSelectionOnSurface::Yes,
+            params.themeMetrics().button,
+            //Padding{ 4.0f },
             // The bar narrows its crumbs itself, so only the height is held: a button's.
             MinSize{ 0.0f, params.themeMetrics().button.minSize.y },
             // One line, cut short where the bar narrows it.
@@ -80,7 +82,6 @@ namespace SeeDocs_App
             // Level with the middle of the run it stands in, a column of bases beside it included.
             VerticalAlign::Center
         },
-        m_bar{ bar },
         m_node{ node }
     {
     }
@@ -134,7 +135,6 @@ namespace SeeDocs_App
     void BaseCrumb::adjustPaint(AdjustPaintEvent& event)
     {
         DropdownControlBase::adjustPaint(event);
-        event.setColorRules(UiElement::ToolButton);
     }
 
     // A click on the crumb's face opens the page of the base it names. A click on the strip is a
@@ -154,28 +154,64 @@ namespace SeeDocs_App
         return { ChevronTurn::left, ChevronTurn::down };
     }
 
-    // BasesBar
 
-    void BasesBar::setBases(const BaseNodes& bases)
+    // BasesTreeBase
+
+    void BasesTreeBase::setBases(const BaseNodes& value)
     {
-        clearBases();
-        m_bases = bases;
+        clear();
+        m_bases = value;
         addCrumbs(m_bases);
-        m_fullWidths.assign(m_crumbs.size(), 0.0f);
     }
 
-    void BasesBar::clearBases()
+    void BasesTreeBase::clear()
     {
         m_bases = {};
         m_crumbs.clear();
-        m_fullWidths.clear();
         while (!controls().empty())
             controls().back()->deleteSelf();
     }
 
+    void BasesTreeBase::addCrumbs(BaseSpan bases)
+    {
+        for (const BaseNode& base : bases)
+        {
+            BaseCrumb& newCrumb = add<BaseCrumb>(base);
+            m_crumbs.push_back(&newCrumb);
+            newCrumb.onContextPopup([this, &newCrumb](ContextPopupEvent& event) {
+                // event.control could also be the dropdown button - it's "onNestedContextPopup" actually
+                //BaseCrumb* crumb = static_cast<BaseCrumb*>(event.control);
+                std::wstring_view target = targetOf(newCrumb.node());
+                if (target.empty())
+                    return;
+                BaseLinkContextPopupEvent linkEvent{ newCrumb, target, event };
+                emitEvent(linkEvent);
+                });
+            newCrumb.onBaseLink([this](BaseLinkEvent& event) {
+                // re-emitting the crumb's event
+                emitEvent(event);
+                });
+            addCrumbs(base.bases);
+        }
+    }
+
+    // BasesBar2
+
+    void BasesBar2::setBases(const BaseNodes& value)
+    {
+        BasesTreeBase::setBases(value);
+        m_fullWidths.assign(crumbs().size(), 0.0f);
+    }
+
+    void BasesBar2::clear()
+    {
+        BasesTreeBase::clear();
+        m_fullWidths.clear();
+    }
+
     // **What a crumb measured is kept here**, where it is still its measurement: the align pass
     // writes the width a crumb is given over it.
-    ScaledSize BasesBar::calculateContent(AlignEvent&)
+    ScaledSize BasesBar2::calculateContent(AlignEvent&)
     {
         for (std::size_t i = 0; i != m_crumbs.size(); ++i)
             m_fullWidths[i] = m_crumbs[i]->scaledWidth();
@@ -184,7 +220,7 @@ namespace SeeDocs_App
         return { whole.width, whole.height };
     }
 
-    void BasesBar::alignContent(AlignEvent& event, ScaledPosition position,
+    void BasesBar2::alignContent(AlignEvent& event, ScaledPosition position,
         ScaledSize& contentDimensions)
     {
         const float cap = capFor(contentDimensions.x, event.scale(k_leastCrumb));
@@ -195,39 +231,17 @@ namespace SeeDocs_App
         contentDimensions = { whole.width, whole.height };
     }
 
-    void BasesBar::addCrumbs(const BaseSpan bases)
-    {
-        for (const BaseNode& base : bases)
-        {
-            BaseCrumb& newCrumb = add<BaseCrumb>(*this, base);
-            m_crumbs.push_back(&newCrumb);
-            newCrumb.onContextPopup([this, &newCrumb](ContextPopupEvent& event) {
-                // event.control could also be the dropdown button - it's "onNestedContextPopup" actually
-                //BaseCrumb* crumb = static_cast<BaseCrumb*>(event.control);
-                const std::wstring_view target = targetOf(newCrumb.node());
-                if (target.empty())
-                    return;
-                askMenu(newCrumb, std::wstring{ target }, event);
-            });
-            newCrumb.onBaseLink([this](BaseLinkEvent& event) {
-                // re-emitting the crumb's event
-                emitEvent(event);
-            });
-            addCrumbs(base.bases);
-        }
-    }
-
     // Along a way the crumbs add up, and a column is as wide as its widest row and as tall as its
     // rows together.
-    BasesBar::RunExtent BasesBar::runExtent(BaseSpan bases, std::size_t& crumb,
+    BasesBar2::RunExtent BasesBar2::runExtent(BaseSpan bases, std::size_t& crumbIndex,
         const float cap) const
     {
         RunExtent run = {};
         while (bases.size() == 1)
         {
-            run.width += crumbWidth(crumb, cap);
-            run.height = std::max(run.height, m_crumbs[crumb]->scaledHeight());
-            ++crumb;
+            run.width += crumbWidth(crumbIndex, cap);
+            run.height = std::max(run.height, crumbs()[crumbIndex]->scaledHeight());
+            ++crumbIndex;
             bases = bases.front().bases;
         }
         if (bases.empty())
@@ -235,7 +249,7 @@ namespace SeeDocs_App
         RunExtent column = {};
         for (std::size_t i = 0; i != bases.size(); ++i)
         {
-            const RunExtent row = runExtent(bases.subspan(i, 1), crumb, cap);
+            const RunExtent row = runExtent(bases.subspan(i, 1), crumbIndex, cap);
             column.width = std::max(column.width, row.width);
             column.height += row.height;
         }
@@ -244,14 +258,14 @@ namespace SeeDocs_App
         return run;
     }
 
-    void BasesBar::placeRun(AlignEvent& event, BaseSpan bases, std::size_t& crumb,
+    void BasesBar2::placeRun(AlignEvent& event, BaseSpan bases, std::size_t& crumbIndex,
         const float cap, ScaledPosition position, const float height)
     {
         while (bases.size() == 1)
         {
-            const float width = crumbWidth(crumb, cap);
-            alignControl(m_crumbs[crumb], event, position, { width, height });
-            ++crumb;
+            const float width = crumbWidth(crumbIndex, cap);
+            alignControl(crumbs()[crumbIndex], event, position, { width, height });
+            ++crumbIndex;
             position.x += width;
             bases = bases.front().bases;
         }
@@ -259,7 +273,7 @@ namespace SeeDocs_App
             return;
         std::vector<float> rowHeights;
         float columnHeight = 0.0f;
-        std::size_t ahead = crumb;
+        std::size_t ahead = crumbIndex;
         for (std::size_t i = 0; i != bases.size(); ++i)
         {
             rowHeights.push_back(runExtent(bases.subspan(i, 1), ahead, cap).height);
@@ -268,12 +282,12 @@ namespace SeeDocs_App
         position.y += (height - columnHeight) / 2.0f;
         for (std::size_t i = 0; i != bases.size(); ++i)
         {
-            placeRun(event, bases.subspan(i, 1), crumb, cap, position, rowHeights[i]);
+            placeRun(event, bases.subspan(i, 1), crumbIndex, cap, position, rowHeights[i]);
             position.y += rowHeights[i];
         }
     }
 
-    float BasesBar::crumbWidth(const std::size_t crumb, const float cap) const
+    float BasesBar2::crumbWidth(const std::size_t crumb, const float cap) const
     {
         return std::min(m_fullWidths[crumb], cap);
     }
@@ -283,9 +297,9 @@ namespace SeeDocs_App
     // width the widest of its rows rather than their sum, so the cap is found by halving the range
     // it can stand in rather than solved for. A bar that overruns at the least a crumb keeps is
     // left to overrun. A bar with no crumbs takes no cap, even at a width under zero.
-    float BasesBar::capFor(const float width, const float leastCrumb) const
+    float BasesBar2::capFor(const float width, const float leastCrumb) const
     {
-        if (m_crumbs.empty())
+        if (crumbs().empty())
             return k_maxFloat;
         std::size_t crumb = 0;
         if (runExtent(m_bases, crumb, k_maxFloat).width <= width)
@@ -306,15 +320,4 @@ namespace SeeDocs_App
         return std::floor(fits);
     }
 
-    void BasesBar::choose(std::wstring target)
-    {
-        BaseLinkEvent event{ std::move(target) };
-        emitEvent(event);
-    }
-
-    void BasesBar::askMenu(Control& crumb, std::wstring target, ContextPopupEvent& popup) const
-    {
-        BaseLinkContextPopupEvent event{ crumb, std::move(target), popup };
-        emitEvent(event);
-    }
 }

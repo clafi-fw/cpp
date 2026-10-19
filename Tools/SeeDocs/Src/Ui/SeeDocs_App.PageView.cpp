@@ -399,7 +399,8 @@ namespace SeeDocs_App
             writeRuns(head, line);
         }
         m_title.text() = head;
-        m_bases.setBases(page.bases);
+        m_bases1.setBases(page.bases);
+        m_bases2.setBases(page.bases);
     }
 
     void PageHead::write(const std::optional<RowIcon> icon, const std::wstring_view title)
@@ -409,13 +410,15 @@ namespace SeeDocs_App
         writeIcon(head, icon);
         head << title << PopTextStyle{};
         m_title.text() = head;
-        m_bases.clearBases();
+        m_bases1.clear();
+        m_bases2.clear();
     }
 
     void PageHead::clear()
     {
         m_title.text().clear();
-        m_bases.clearBases();
+        m_bases1.clear();
+        m_bases2.clear();
     }
 
     void PageHead::writeIcon(Text& head, const std::optional<RowIcon> icon)
@@ -1608,18 +1611,21 @@ namespace SeeDocs_App
     void PageView::connectHead()
     {
         connectLinks(m_head.titleBox());
-        BasesBar& bases = m_head.basesBar();
-        bases.onBaseLink([this](BaseLinkEvent& event) {
-            later([this, target = event.target]() {
-                open(target);
-            });
-        });
-        bases.onBaseLinkContextPopup([this](BaseLinkContextPopupEvent& event) {
-            showLinkMenu(event.crumb, event.target, event.popup);
-        });
+        
+        for (BasesTreeBase* bases : { &m_head.basesBar1(), &m_head.basesBar2() })
+        {
+            bases->onBaseLink([this](BaseLinkEvent& event) {
+                later([this, target = event.target]() {
+                    open(target);
+                    });
+                });
+            bases->onBaseLinkContextPopup([this](BaseLinkContextPopupEvent& event) {
+                showLinkMenu(event.crumb, event.target, event.popup);
+                });
+        }
     }
 
-    void PageView::open(std::wstring target)
+    void PageView::open(std::wstring target) const
     {
         PageLinkEvent event{ std::move(target) };
         emitEvent(event);
@@ -1628,7 +1634,7 @@ namespace SeeDocs_App
     // **A command is answered by whoever shows the page**, as a link is: what it is about was
     // spelled by whoever built the page, and the page may be one of the things its answer takes
     // down.
-    void PageView::ask(std::wstring target)
+    void PageView::ask(std::wstring target) const
     {
         PageCommandEvent event{ std::move(target) };
         emitEvent(event);
@@ -1639,11 +1645,11 @@ namespace SeeDocs_App
     // exactly that long, so a target the surface does not carry arrives greyed. An anchor of the
     // page is a move on the page standing, and no menu is made for one. Stopped before the menu
     // runs, so nothing above raises a second menu behind it. See Browser
-    void PageView::showLinkMenu(Control& owner, std::wstring target, ContextPopupEvent& event)
+    void PageView::showLinkMenu(Control& owner, std::wstring_view target, ContextPopupEvent& event)
     {
         if (target.starts_with(k_anchorPrefix))
             return;
-        m_menuLink = std::move(target);
+        m_menuLink = target;
         Menu menu{ owner };
         menu.add(Browser::Actions::open);
         menu.add(Browser::Actions::openInNewTab);

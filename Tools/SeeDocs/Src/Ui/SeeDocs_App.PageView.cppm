@@ -103,7 +103,8 @@ namespace SeeDocs_App
         explicit PageHead(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] TextBox& titleBox() { return m_title; }
-        [[nodiscard]] BasesBar& basesBar() { return m_bases; }
+        [[nodiscard]] BasesTreeBase& basesBar1() { return m_bases1; }
+        [[nodiscard]] BasesTreeBase& basesBar2() { return m_bases2; }
         [[nodiscard]] StackPanel& commandBar() { return m_commands; }   // hidden at first
         void write(const Page&);
         void write(std::optional<RowIcon>, std::wstring_view title);
@@ -121,7 +122,14 @@ namespace SeeDocs_App
             Spacing{ 0.0f }
         ) };
         TextBox& m_title{ m_lines.add<TextBox>(ReadOnly::Yes, Padding{ 0.0f }) };
-        BasesBar& m_bases{ m_lines.add<BasesBar>(Padding{ k_basesIndent, 0.0f }) };
+        
+        BasesTreeBase& m_bases1{ m_lines.add<BasesBar1>(
+            Padding{ k_basesIndent, 0.0f }
+            ) };
+        BasesTreeBase& m_bases2{ m_lines.add<BasesBar2>(
+            Padding{ k_basesIndent, 0.0f }
+            ) };
+
         StackPanel& m_commands{ createRightBar<StackPanel>(
             Orientation::Horizontal,
             Padding{ 0.0f },
@@ -294,10 +302,10 @@ namespace SeeDocs_App
         // Writes the declaration a link's type shows in a tooltip; false for a link naming none.
         bool writePreview(Text&, std::wstring_view link) const;
         void connectHead();
-        void open(std::wstring target);
-        void ask(std::wstring target);   // raises the command the target is about
+        void open(std::wstring target) const;
+        void ask(std::wstring target) const;   // raises the command the target is about
         // Runs the menu for a link - Open and Open in new tab - on the control it was asked on.
-        void showLinkMenu(Control& owner, std::wstring target, ContextPopupEvent&);
+        void showLinkMenu(Control& owner, std::wstring_view target, ContextPopupEvent&);
         [[nodiscard]] static bool hasFootnotes(const Table&);
         [[nodiscard]] static bool hasFootnotes(const TableGroup&);
         [[nodiscard]] static bool hasCommands(const Table&);

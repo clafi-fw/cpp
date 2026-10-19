@@ -280,7 +280,8 @@ namespace ClaFi::Controls
 
     void Tab::adjustPaint(AdjustPaintEvent& event)
     {
-        TabBaseClass::adjustPaint(event);
+        // TabBaseClass::adjustPaint(event);
+
         if (drawnAsToolButton())
         {
             event.setColorRules(UiElement::ToolButton);

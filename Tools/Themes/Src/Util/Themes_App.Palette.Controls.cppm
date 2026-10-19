@@ -3,12 +3,13 @@ export module Themes_App.Palette.Controls;
 import Themes_App.Utils;
 //
 import ClaFi;
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Types;
-import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.System.InkWell;
 import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.System.InkWell;
+import ClaFi.Core.System.UiTypes;
 
 namespace Themes_App
 {
@@ -147,6 +148,7 @@ namespace Themes_App
             IconSize{ 32.f, 32.0f },
             params.themeMetrics().button,
             UiElement::Button,
+            ShowSelectionOnSurface::Yes,
             VerticalTextAnchor::Center,
             //params.theme().colors.button,
             //params.theme().metrics.listItem,
