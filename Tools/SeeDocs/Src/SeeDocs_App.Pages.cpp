@@ -2346,44 +2346,65 @@ namespace SeeDocs_App
             addTableSection(page, L"Also in this module", Columns::types, std::move(groups));
         }
 
-        // A module's functions as rows, one per name: the name linked to the function's page,
+        // The first overload of every name a module's functions go by, in the order the names are
+        // declared.
+        [[nodiscard]] FunctionList firstOverloadsOf(const ContentsModule& module)
+        {
+            FunctionList result;
+            for (const FreeFunction* free : module.functions)
+            {
+                const bool held = std::ranges::any_of(result, [free](const FreeFunction* other) {
+                    return other->function.name == free->function.name;
+                });
+                if (!held)
+                    result.push_back(free);
+            }
+            return result;
+        }
+
+        // A function's row in a table of one row per name: the name linked to the function's page,
         // every overload's signature in the name's tooltip a line each, and the comment of the
         // first overload that has one beside it.
-        [[nodiscard]] TableRows functionRows(const Surface& surface, const ContentsModule& module)
+        [[nodiscard]] TableRow functionRow(const Surface& surface, const ContentsModule& module,
+            const std::wstring_view name)
         {
-            TableRows rows;
-            std::map<std::wstring_view, NameRow> rowByName;
+            TableRow row;
+            bool commented = false;
             for (const FreeFunction* free : module.functions)
             {
                 const Function& function = free->function;
+                if (function.name != name)
+                    continue;
                 Runs signature = signatureRuns(surface, *free, k_tooltipJoin);
-                const auto known = rowByName.find(function.name);
-                if (known == rowByName.end())
+                if (row.cells.empty())
                 {
-                    rowByName.emplace(function.name, NameRow{
-                        .index = rows.size(),
-                        .commented = !function.comment.text.empty()
-                    });
-                    rows.push_back({
-                        .cells = { { code(function.name, exportLink(module, function.name)) },
-                            hintRuns(surface, function.comment, free->nameSpace) },
-                        .tooltip = std::move(signature),
-                        .language = surface.languageOf(free->module),
-                        .site = siteOf(function)
-                    });
+                    row.cells = { { code(function.name, exportLink(module, function.name)) },
+                        hintRuns(surface, function.comment, free->nameSpace) };
+                    row.tooltip = std::move(signature);
+                    row.language = surface.languageOf(free->module);
+                    row.site = siteOf(function);
+                    commented = !function.comment.text.empty();
                     continue;
                 }
-                TableRow& row = rows[known->second.index];
                 row.tooltip.push_back(code(std::wstring{ k_signatureJoin }));
                 row.tooltip.insert(row.tooltip.end(), std::make_move_iterator(signature.begin()),
                     std::make_move_iterator(signature.end()));
-                if (!known->second.commented && !function.comment.text.empty())
+                if (!commented && !function.comment.text.empty())
                 {
                     row.cells[1] = hintRuns(surface, function.comment, free->nameSpace);
                     row.site = siteOf(function);
-                    known->second.commented = true;
+                    commented = true;
                 }
             }
+            return row;
+        }
+
+        // A module's functions as rows, one per name in the order the names are declared.
+        [[nodiscard]] TableRows functionRows(const Surface& surface, const ContentsModule& module)
+        {
+            TableRows rows;
+            for (const FreeFunction* first : firstOverloadsOf(module))
+                rows.push_back(functionRow(surface, module, first->function.name));
             return rows;
         }
 
@@ -2481,19 +2502,30 @@ namespace SeeDocs_App
         };
 
         using HeldModules = std::vector<HeldModule>;
+
+        // A function name a module exports, standing under a path: the name's first overload, and
+        // the module.
+        struct HeldFunction
+        {
+            const FreeFunction* function{ nullptr };
+            const ContentsModule* module{ nullptr };
+        };
+
+        using HeldFunctions = std::vector<HeldFunction>;
         using FolderPaths = std::set<std::wstring_view>;
 
         // What stands under a path at every depth, its views into the folders it is read from.
         struct Holdings
         {
             TypeList types;
+            HeldFunctions functions;
             HeldModules modules;
             FolderPaths folders;
         };
 
         // **The holds row counts what the lists list**, so a list is as long as its figure: the
-        // types and modules of the path's folder and of every folder under it, and the folders -
-        // every one on the way down, with modules in it or not.
+        // types, function names and modules of the path's folder and of every folder under it, and
+        // the folders - every one on the way down, with modules in it or not.
         [[nodiscard]] Holdings holdingsOf(const ContentsFolders& folders,
             const std::wstring_view path)
         {
@@ -2507,6 +2539,8 @@ namespace SeeDocs_App
                     result.modules.push_back({ .module = &module, .folder = folder.path });
                     result.types.insert(result.types.end(), module.types.begin(),
                         module.types.end());
+                    for (const FreeFunction* first : firstOverloadsOf(module))
+                        result.functions.push_back({ .function = first, .module = &module });
                 }
                 for (std::wstring_view way = folder.path; standsUnder(way, path);)
                 {
@@ -2531,8 +2565,8 @@ namespace SeeDocs_App
         }
 
         // What stands under a path at every depth, counted, each figure linked to its list:
-        // controls, types, modules, the folders, and under the strict rules the types without a
-        // hint.
+        // controls, types, functions, modules, the folders, and under the strict rules the types
+        // without a hint.
         void addHoldings(Page& page, const Surface& surface, const ContentsFolders& folders,
             const std::wstring_view path)
         {
@@ -2549,6 +2583,8 @@ namespace SeeDocs_App
                 figureOf(controls, k_controlWord, path, ListKind::Controls),
                 muted(std::wstring{ k_separator }),
                 figureOf(holdings.types.size(), L"type", path, ListKind::Types),
+                muted(std::wstring{ k_separator }),
+                figureOf(holdings.functions.size(), k_functionWord, path, ListKind::Functions),
                 muted(std::wstring{ k_separator }),
                 figureOf(holdings.modules.size(), k_moduleWord, path, ListKind::Modules)
             };
@@ -2595,6 +2631,7 @@ namespace SeeDocs_App
         constexpr auto k_listKinds = std::to_array<ListKind>({
             ListKind::Controls,
             ListKind::Types,
+            ListKind::Functions,
             ListKind::Modules,
             ListKind::Folders
         });
@@ -2607,6 +2644,8 @@ namespace SeeDocs_App
                     return { L".controls", L"Controls" };
                 case ListKind::Types:
                     return { L".types", L"Types" };
+                case ListKind::Functions:
+                    return { L".functions", L"Functions" };
                 case ListKind::Modules:
                     return { L".modules", L"Modules" };
                 case ListKind::Folders:
@@ -2671,21 +2710,32 @@ namespace SeeDocs_App
             return result;
         }
 
+        // A name a list spells, and the namespace it stands in.
+        struct ScopedName
+        {
+            std::wstring_view name;
+            std::wstring_view nameSpace;
+
+            [[nodiscard]] bool operator==(const ScopedName&) const = default;
+        };
+
+        using ScopedNames = std::vector<ScopedName>;
+
         // **A name a list holds more than once reads apart by its namespace**, written before it
         // from the last part the namesakes share - Grids::Cell, Grids::Dt::Cell. A row stands
-        // where its type does, and the namesakes stand together.
-        void addScopes(TableRows& rows, const TypeList& types)
+        // where its name does, and the namesakes stand together.
+        void addScopes(TableRows& rows, const ScopedNames& names)
         {
-            for (std::size_t first = 0; first < types.size();)
+            for (std::size_t first = 0; first < names.size();)
             {
                 std::size_t end = first + 1;
-                while (end < types.size() && types[end]->name == types[first]->name)
+                while (end < names.size() && names[end].name == names[first].name)
                     ++end;
                 if (end - first > 1)
                 {
                     Namespaces namespaces;
                     for (std::size_t at = first; at != end; ++at)
-                        namespaces.push_back(namespaceParts(types[at]->nameSpace));
+                        namespaces.push_back(namespaceParts(names[at].nameSpace));
                     const std::size_t shared = sharedLength(namespaces);
                     const std::size_t from = shared == 0 ? 0 : shared - 1;
                     for (std::size_t at = first; at != end; ++at)
@@ -2711,7 +2761,50 @@ namespace SeeDocs_App
                 for (TableRow& row : rows)
                     row.qualifiers.clear();
             }
-            addScopes(rows, types);
+            ScopedNames names;
+            for (const Type* type : types)
+                names.push_back({ .name = type->name, .nameSpace = type->nameSpace });
+            addScopes(rows, names);
+            return rows;
+        }
+
+        // The functions by name, each row as its module's page has it. A name exported in one
+        // namespace by several modules reads apart by the module's name at its name cell's end.
+        [[nodiscard]] TableRows functionListRows(const Surface& surface, HeldFunctions functions)
+        {
+            const auto key = [](const HeldFunction& held) {
+                return std::tuple{ lowered(held.function->function.name),
+                    std::wstring_view{ held.function->function.name },
+                    std::wstring_view{ held.function->nameSpace },
+                    std::wstring_view{ held.module->shownName } };
+            };
+            std::ranges::sort(functions, [&key](const HeldFunction& left,
+                const HeldFunction& right) {
+                return key(left) < key(right);
+            });
+            TableRows rows;
+            ScopedNames names;
+            for (const HeldFunction& held : functions)
+            {
+                rows.push_back(functionRow(surface, *held.module, held.function->function.name));
+                names.push_back({
+                    .name = held.function->function.name,
+                    .nameSpace = held.function->nameSpace
+                });
+            }
+            addScopes(rows, names);
+            for (std::size_t first = 0; first < names.size();)
+            {
+                std::size_t end = first + 1;
+                while (end < names.size() && names[end] == names[first])
+                    ++end;
+                if (end - first > 1)
+                {
+                    for (std::size_t at = first; at != end; ++at)
+                        rows[at].qualifiers = { { muted(functions[at].module->shownName) } };
+                }
+                first = end;
+            }
             return rows;
         }
 
@@ -3407,6 +3500,10 @@ namespace SeeDocs_App
                 break;
             case ListKind::Types:
                 rows = typeListRows(surface, std::move(holdings.types), true);
+                break;
+            case ListKind::Functions:
+                rows = functionListRows(surface, std::move(holdings.functions));
+                columns = &Columns::functions;
                 break;
             case ListKind::Modules:
                 rows = moduleListRows(std::move(holdings.modules), projectName);

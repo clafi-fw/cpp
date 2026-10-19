@@ -116,7 +116,7 @@ namespace SeeDocs_App
         Projects,   // the root, listing the projects open
         Project,    // a project's home
         Folder,     // a folder of sources
-        List,       // a folder's controls, types, modules or folders, at every depth
+        List,       // a folder's controls, types, functions, modules or folders, at every depth
         Module,     // a module or a header
         Type,
         Member,     // a method, a function or a constant
@@ -393,6 +393,7 @@ namespace SeeDocs_App
     {
         Controls,
         Types,
+        Functions,
         Modules,
         Folders
     };

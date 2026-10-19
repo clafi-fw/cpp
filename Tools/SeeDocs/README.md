@@ -621,9 +621,10 @@ before it.
 
 #### Lists
 
-The figures a folder's page counts - its controls, types, modules and folders - each open a list of
-everything of that kind under the folder at every depth, as many rows as the figure counts. The
-project's home counts and lists the whole project the same way. A figure of none stays plain text.
+The figures a folder's page counts - its controls, types, functions, modules and folders - each
+open a list of everything of that kind under the folder at every depth, as many rows as the figure
+counts. The project's home counts and lists the whole project the same way. A figure of none stays
+plain text.
 
 - The head names the list and, on its second row, the path of the folder it stands under. The row
   stays with the title while the list scrolls.
@@ -632,10 +633,13 @@ project's home counts and lists the whole project the same way. A figure of none
   controls list leaves the kind out - every row's mark says it.
 - A name the list holds more than once is written after its namespace, from the last part the
   namesakes share: `Grids::Cell` and `Grids::Dt::Cell`, `::` alone for the global namespace.
+- A function's row is its module page's: one per name, the overloads' signatures in the name's
+  tooltip. A name several modules export in one namespace carries the module's name at the end of
+  its name cell.
 - A module and a folder stand beside a folder's path - the one the module stands in, the folder's
   own.
-- Its url is its folder's with `/.controls`, `/.types`, `/.modules` or `/.folders` after it, a dot
-  segment as the options page's. The tree follows it to its folder's node.
+- Its url is its folder's with `/.controls`, `/.types`, `/.functions`, `/.modules` or `/.folders`
+  after it, a dot segment as the options page's. The tree follows it to its folder's node.
 
 #### Module pages
 
