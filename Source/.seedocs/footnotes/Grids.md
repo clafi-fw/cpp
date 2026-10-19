@@ -41,6 +41,8 @@ the nearest band ahead holding anything, at the column nearest the line.
 - Home and End go to the ends of the band the selected cell is on, in every grid. Ctrl+Home and
   Ctrl+End go to the first and the last row of a grid that is a container of its own.
 - A selection scrolled out of view is still where a key moves from.
+- A cell is a stop only in a row that can take the focus. A grid's header is
+  Interactivity::None, so no key lands on its cells and no press selects one.
 
 ## RowGroupSpan
 

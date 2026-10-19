@@ -44,12 +44,6 @@ namespace ClaFi::Controls::Grids
                 break;
             if (!child.enabled(true))
                 continue;
-            // A held header is drawn on a line of its own, while the cells reported for it here
-            // are the ones it was laid out with, which the scroll has carried away from where the
-            // eye reads them. A key landing on one of those would select a cell nothing shows and
-            // move the view nowhere, so the header rejoins the field when it comes back to rest.
-            if (&child == m_header && isHeaderHeld())
-                continue;
             // Every child of a grid is a row.
             RowBase& row = static_cast<RowBase&>(child);
             visitor(row, contentOrigin + child.topLeft());
@@ -767,17 +761,24 @@ namespace ClaFi::Controls::Grids
         const Column* sourceColumn = m_descriptor.selectedColumn();
         std::size_t result = k_maxSize;
         traverseRows(window, [&](RowBase& row, FloatPoint rowOrigin){
-            row.traverseLanes(rowOrigin, [&](const RowCell& cell, const FloatRect& lane){
-                if (sourceColumn && &row == sourceStop && &cell.column == sourceColumn)
-                    result = stops.size();
-                stops.push_back({
-                    .row = &row,
-                    .column = &cell.column,
-                    .origin = rowOrigin,
-                    .rect = cell.rect,
-                    .lane = lane,
+            // **A cell is a stop only in a row the user can be on.** The focus never rests on a
+            // control of Interactivity::None, and the field reads that the way the navigator
+            // and a mouse press do. A grid's header is one: it paints cells, and a key passes
+            // them over.
+            if (row.canTakeFocus())
+            {
+                row.traverseLanes(rowOrigin, [&](const RowCell& cell, const FloatRect& lane){
+                    if (sourceColumn && &row == sourceStop && &cell.column == sourceColumn)
+                        result = stops.size();
+                    stops.push_back({
+                        .row = &row,
+                        .column = &cell.column,
+                        .origin = rowOrigin,
+                        .rect = cell.rect,
+                        .lane = lane,
+                    });
                 });
-            });
+            }
             const RowStop stop = row.navigationStop();
             if (stop.control && stop.control->visible())
             {
@@ -959,22 +960,17 @@ namespace ClaFi::Controls::Grids
             RowBase& row = static_cast<RowBase&>(*rows[toBegin ? i : rows.size() - 1 - i]);
             if (!row.visible() || !row.enabled(true))
                 continue;
-            // A header at rest is the grid's first row, and an edge key reaches it. A held one
-            // stands over the view instead, at a place no scroll brings the rest of the grid to,
-            // so the edge of the grid is the first row under it.
-            if (&row == m_header && isHeaderHeld())
-                continue;
             RowBase* span = row.spanRow();
             GridBase* nested = row.subGrid();
             // A row comes before the span standing beside the rows it spans, and both come
             // before those rows. Read the other way round when the search runs from the end.
-            const bool spanCounts = span && span->visible() && rowPaintsCells(*span);
+            const bool spanCounts = span && span->visible() && rowHoldsCellStops(*span);
             // The rows of a collapsed expander are hidden, so the end of the grid is the last
             // one still shown.
             const bool nestedCounts = nested && nested->visible();
             if (toBegin)
             {
-                if (rowPaintsCells(row))
+                if (rowHoldsCellStops(row))
                     return &row;
                 if (spanCounts)
                     return span;
@@ -989,25 +985,24 @@ namespace ClaFi::Controls::Grids
                         return result;
                 if (spanCounts)
                     return span;
-                if (rowPaintsCells(row))
+                if (rowHoldsCellStops(row))
                     return &row;
             }
         }
         return nullptr;
     }
 
-    bool GridBase::rowPaintsCells(RowBase& row)
+    // The rule collectFieldIn states, read off the structure: a cell is a stop only in a row the
+    // user can be on, and a row holds one only where it paints a cell.
+    bool GridBase::rowHoldsCellStops(RowBase& row)
     {
+        if (!row.canTakeFocus())
+            return false;
         bool result = false;
         row.traverseCells([&](const RowCell&){
             result = true;
         });
         return result;
-    }
-
-    bool GridBase::isHeaderHeld() const
-    {
-        return m_header && m_header->isHeldInView();
     }
 
     void GridBase::selectedRowChanged(Control* from, Control* to)

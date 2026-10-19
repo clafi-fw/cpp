@@ -86,10 +86,10 @@ namespace ClaFi::Controls::Grids
         template <std::invocable<RowExpander&> Func>
         void forEachExpander(Func&& func);
 
-        // Every row that can matter to a key press: the ones the window reaches, plus the
-        // header and the rows of any group among them. The origin handed over is the row's own
-        // top-left in form space, which is what makes one field out of the cells of rows that
-        // sit at different depths.
+        // Every row that can matter to a key press: the ones the window reaches, and the rows
+        // of any group among them. The origin handed over is the row's own top-left in form
+        // space, which is what makes one field out of the cells of rows that sit at different
+        // depths.
         void traverseRows(const FloatRect& windowInForm, const RowVisitor&);
 
         void setViewMode(ViewMode value) { m_descriptor.setViewMode(value); }
@@ -282,17 +282,11 @@ namespace ClaFi::Controls::Grids
         // The stop furthest down or up a column that `within` shows whole - see showsWhole.
         [[nodiscard]] static std::size_t lastWholeInColumn(const FieldTable&, const FieldStops&,
             const FloatRect& within, std::size_t column, bool forward);
-        // The first or last row of this grid that paints a cell, in the order the eye reads
-        // them. Structural rather than geometric: the far end of a grid is normally off screen,
-        // where the walk that answers the arrow keys does not reach.
+        // The first or last row of this grid holding a cell a key lands on, in the order the eye
+        // reads them. Structural rather than geometric: the far end of a grid is normally off
+        // screen, where the walk that answers the arrow keys does not reach.
         RowBase* edgeRow(ScrollDirection edge);
-        [[nodiscard]] bool rowPaintsCells(RowBase&);
-        // Whether the header is being carried past where it was laid out. A held header stands
-        // over the rows rather than among them: it is drawn on a line of its own, while the cells
-        // it is laid out with stay where the scroll has taken them. So it takes part in the
-        // keyboard field only while it is at rest, where the two are the same place - see
-        // traverseRows and edgeRow.
-        [[nodiscard]] bool isHeaderHeld() const;
+        [[nodiscard]] bool rowHoldsCellStops(RowBase&);
         // **Both paths of a selection move.** The rows in effect are the row the selected cell
         // stands in and every row that row stands inside, so a move changes the state of two
         // paths - and only below where they meet. The first control above the row being left

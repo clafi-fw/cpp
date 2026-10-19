@@ -70,6 +70,21 @@ the layout alignContent makes: header over body. PageDown then stopped on every 
 the steps of a page press walk navigationNeighbour, and the default leaves the expander from its
 header. The neighbour override states the same layout for a step inside.
 
+## GridBase collectFieldIn
+
+2026-10-19. A grid's own header was missed on the way down and hit on the way up. Two walks
+answered the two directions. The navigator enters a grid from above through holdsNavigationStop,
+which is canTakeFocus, and GridHeader is Interactivity::None - RowBase leaves Control's default,
+only Row says Focusable. Up inside the grid walked the field, which took every row at rest, and
+focusStop's setFocus asks nothing. That made the header the one control in the tree holding the
+focus while saying None: no focused weight on its cell, no ring, never an item, passed over by a
+press. Oj's rule: a control of Interactivity::None is not a place to be, and headers stay None.
+So the field reads interactivity the way everything else does - a cell is a stop only in a row
+that can take the focus, in collectFieldIn and in edgeRow through rowHoldsCellStops - and a
+press selects a cell only in such a row (RowBase::selectColumnUnderMouse). The held-header rule
+went with it: a header that is never a stop has nothing to rejoin at rest, so isHeaderHeld is
+gone, and the open point of a held header carrying the selection is closed.
+
 ## RowCell
 
 Everything the walk knows of one cell and no more. A property of the row as a whole - whether the

@@ -835,7 +835,9 @@ namespace ClaFi::Controls::Grids
 
     void RowBase::selectColumnUnderMouse()
     {
-        if (!Input::mouse().active())
+        // The press moves the focus to the first control up the chain that can take it, and a
+        // cell selected in a row it passes over - a grid's header - would stand apart from it.
+        if (!Input::mouse().active() || !canTakeFocus())
             return;
         const PointInForm mousePosition = form().mouseDownPos();
         if (const Column* columnToSelect = laneColumnAt(mousePosition))
