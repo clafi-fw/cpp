@@ -143,7 +143,7 @@ namespace ClaFi
     }
 
     // A marker put into the text as itself. A style is the one stated through another spelling of
-    // Text's stream - it is written as its TextStyleId.
+    // Text's stream - it is written as its TextStyle.
     void streamFormatItem(Text& tb, const FormatItem& item)
     {
         std::visit([&tb](const auto& value) {

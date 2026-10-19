@@ -540,7 +540,7 @@ hoverable cell that happens to be empty. Both are useful; pick deliberately.
 column's <code>TextFormat</code> - see the <a href="textengine.html#format">Text in Controls manual</a> - it is laid out under the text every cell writes, and it reaches a
 cell's tooltip and its in-place editor the way it reaches the paint:</p>
 
-<pre><code><span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Reading</span>::Last }, <span class="tp">Text</span>{ <span class="st">L"Last"</span> }, <span class="tp">TextAlign</span>::Right, <span class="tp">TextFormat</span>{ <span class="tp">TextStyleId</span>::Code } }
+<pre><code><span class="tp">Column</span>{ <span class="tp">Tag</span>{ <span class="tp">Reading</span>::Last }, <span class="tp">Text</span>{ <span class="st">L"Last"</span> }, <span class="tp">TextAlign</span>::Right, <span class="tp">TextFormat</span>{ <span class="tp">TextStyle</span>::Code } }
 
 <span class="kw">void</span> <span class="tp">FpsPage</span>::<span class="fn">writeReading</span>(<span class="tp">Grids::GetCellTextEvent</span>&amp; event) <span class="kw">const</span>
 {
@@ -803,7 +803,7 @@ cell.</p>
 
 <pre><code><span class="tp">Rows</span>{
     <span class="tp">Grids::Dt::Expander</span>{
-        <span class="tp">Header</span>{ <span class="tp">Text</span>{ <span class="tp">TextStyleId</span>::SubHeading, <span class="st">L"Outputs"</span> } },
+        <span class="tp">Header</span>{ <span class="tp">Text</span>{ <span class="tp">TextStyle</span>::SubHeading, <span class="st">L"Outputs"</span> } },
         <span class="tp">Group</span>{
             <span class="tp">Span</span>{ <span class="tp">Tag</span>{ <span class="tp">Kind</span>::Group, <span class="tp">Device</span>::Mixer },
                 <span class="tp">Cell</span>{ <span class="tp">Tag</span>{ <span class="tp">Col</span>::Name }, <span class="kw">this</span>, &amp;<span class="tp">Page</span>::groupNameCell } },

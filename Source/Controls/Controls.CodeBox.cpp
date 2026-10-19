@@ -152,7 +152,7 @@ namespace ClaFi::Controls
         else
         {
             const std::wstring_view signature = entry.signature;
-            m_text << TextStyleId::Code;
+            m_text << TextStyle::Code;
             // A caret past the last parameter marks none, and the tooltip stands as it is.
             std::size_t at = parameters.bracket;
             if (argument < parameters.names.size())
@@ -831,7 +831,7 @@ namespace ClaFi::Controls
         if (!entry || (entry->signature.empty() && entry->hint.empty()))
             return line;
         const std::wstring& signature = entry->signature.empty() ? entry->name : entry->signature;
-        line.tooltip << TextStyleId::Code << signature << PopTextStyle{};
+        line.tooltip << TextStyle::Code << signature << PopTextStyle{};
         if (!entry->hint.empty())
             line.tooltip << L"\n" << InkGrade::Muted << entry->hint << PopColor{};
         return line;

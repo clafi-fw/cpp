@@ -119,7 +119,7 @@ namespace TextEngine_App
             out << TabTo{ k_sampleStop };
             out << row.sample;
             out << TabTo{ k_pointStop };
-            out << TextStyleId::SubBody;
+            out << TextStyle::SubBody;
             out << InkGrade::Muted;
             writeCodePoints(out, row.sample);
             out << PopColor{};

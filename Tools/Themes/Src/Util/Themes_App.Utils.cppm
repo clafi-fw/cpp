@@ -65,7 +65,7 @@ namespace Themes_App
     // Design side of the blob a popup tile carries, the harmony picker's icon size.
     export constexpr float k_blobSize{ 32.0f };
     // The style a glyph takes on a tile's blob, sized to the blob rather than to a line.
-    export constexpr TextStyleId k_blobGlyphStyle{ TextStyleId::SubTitle };
+    export constexpr TextStyle k_blobGlyphStyle{ TextStyle::SubTitle };
     // A blob's corner radius as a share of its side.
     export constexpr float k_blobCornerShare{ 0.25f };
 
@@ -105,17 +105,17 @@ namespace Themes_App
             if (extendedMode)
                 tt << L' '; // Space{ extSpace };
             else
-                tt << k_endLine << TextStyleId::SubBody;
+                tt << k_endLine << TextStyle::SubBody;
             std::wstring hexString = toHex(color.asUint() & 0xFFFFFF);
             while (hexString.size() < 6ull)
                 hexString = L'0' + hexString;
-            tt << TextStyleId::SubBody << L'#' << hexString;
+            tt << TextStyle::SubBody << L'#' << hexString;
         }
         else
         {
             tt << InTextIcon{ 1.0f, k_markH, k_markH * 0.85, nullptr, nullptr };
             if (!extendedMode)
-                tt << k_endLine << TextStyleId::SubBody;
+                tt << k_endLine << TextStyle::SubBody;
             tt << L' ';
         };
     }

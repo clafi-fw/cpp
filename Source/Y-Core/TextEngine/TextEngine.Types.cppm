@@ -46,7 +46,7 @@ namespace ClaFi
     };
 
     // The named styles a run of text can carry.
-    export enum class [[deprecated]] TextStyleId : std::size_t {
+    export enum class TextStyle : std::size_t {
         Body = 0ull,
         Title = 1ull,
         SubTitle = 2ull,
@@ -64,7 +64,7 @@ namespace ClaFi
     // Whether a face is upright or italic.
     export enum class FontStyle { Normal, Italic };
 
-    export struct TextStyle {
+    export struct TextStyleProps {
         const wchar_t* family;
         float size;
         FontWeight weight;
@@ -83,28 +83,31 @@ namespace ClaFi
 
     export namespace TextStyles
     {
-        constexpr TextStyle Body        { GenericFamily::SansSerif, 12.0f, FontWeight::Normal, FontStyle::Normal };
-        constexpr TextStyle Title       { GenericFamily::SansSerif, 24.0f, FontWeight::Bold,   FontStyle::Normal };
-        constexpr TextStyle SubTitle    { GenericFamily::SansSerif, 17.0f, FontWeight::Normal, FontStyle::Normal };
-        constexpr TextStyle Heading     { GenericFamily::SansSerif, 16.0f, FontWeight::SemiBold, FontStyle::Normal };
-        constexpr TextStyle SubHeading  { GenericFamily::SansSerif, 14.0f, FontWeight::Normal, FontStyle::Normal };
-        constexpr TextStyle Section     { GenericFamily::SansSerif, 12.0f, FontWeight::Bold,   FontStyle::Normal };
-        constexpr TextStyle SubSection  { GenericFamily::SansSerif, 12.0f, FontWeight::Normal, FontStyle::Italic };
-        constexpr TextStyle SubBody     { GenericFamily::SansSerif, 10.0f, FontWeight::Normal, FontStyle::Normal };
-        constexpr TextStyle Code        { GenericFamily::Monospace, 12.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyleProps Body        { GenericFamily::SansSerif, 12.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyleProps Title       { GenericFamily::SansSerif, 24.0f, FontWeight::Bold,   FontStyle::Normal };
+        constexpr TextStyleProps SubTitle    { GenericFamily::SansSerif, 17.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyleProps Heading     { GenericFamily::SansSerif, 16.0f, FontWeight::SemiBold, FontStyle::Normal };
+        constexpr TextStyleProps SubHeading  { GenericFamily::SansSerif, 14.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyleProps Section     { GenericFamily::SansSerif, 12.0f, FontWeight::Bold,   FontStyle::Normal };
+        constexpr TextStyleProps SubSection  { GenericFamily::SansSerif, 12.0f, FontWeight::Normal, FontStyle::Italic };
+        constexpr TextStyleProps SubBody     { GenericFamily::SansSerif, 10.0f, FontWeight::Normal, FontStyle::Normal };
+        constexpr TextStyleProps Code        { GenericFamily::Monospace, 12.0f, FontWeight::Normal, FontStyle::Normal };
+        const TextStyleProps& Of(TextStyle style)
+        {
+            constexpr std::array<std::reference_wrapper<const TextStyleProps>, static_cast<std::size_t>(TextStyle::Count)> array = { {
+                    Body,
+                    Title,
+                    SubTitle,
+                    Heading,
+                    SubHeading,
+                    Section,
+                    SubSection,
+                    SubBody,
+                    Code
+                } };
+            return array[static_cast<std::size_t>(style)];
+        };
     }
-
-    export [[deprecated]] constexpr std::array<TextStyle, static_cast<std::size_t>(TextStyleId::Count)> k_textStyles = { {
-            TextStyles::Body,
-            TextStyles::Title,
-            TextStyles::SubTitle,
-            TextStyles::Heading,
-            TextStyles::SubHeading,
-            TextStyles::Section,
-            TextStyles::SubSection,
-            TextStyles::SubBody,
-            TextStyles::Code
-        } };
 
     // What a script run comes to, as fractions of the run it stands on. A level multiplies the
     // size and moves the baseline by its share of the size that level was entered at, so a script
@@ -227,7 +230,7 @@ namespace ClaFi
 
     export struct ParaIndent { float indent; bool operator==(const ParaIndent&) const = default; };
     export struct ParaLineSpacing { float spacing; bool operator==(const ParaLineSpacing&) const = default; };
-    export struct PushTextStyle { TextStyleId style; bool operator==(const PushTextStyle&) const = default; };
+    export struct PushTextStyle { TextStyle style; bool operator==(const PushTextStyle&) const = default; };
     export struct PopTextStyle { bool operator==(const PopTextStyle&) const = default; };
     export struct PushFontSize { float size; bool operator==(const PushFontSize&) const = default; };
     export struct PopFontSize { bool operator==(const PopFontSize&) const = default; };

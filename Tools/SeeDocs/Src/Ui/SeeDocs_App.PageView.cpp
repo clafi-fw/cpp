@@ -383,13 +383,13 @@ namespace SeeDocs_App
     void PageHead::write(const Page& page)
     {
         Text head;
-        head << TextStyleId::Title;
+        head << TextStyle::Title;
         writeIcon(head, iconOf(page.kind, page.type));
         writeRuns(head, page.scope);
         head << page.title << PopTextStyle{};
         if (!page.badges.empty())
         {
-            head << L"   " << TextStyleId::SubBody;
+            head << L"   " << TextStyle::SubBody;
             writeRuns(head, page.badges);
             head << PopTextStyle{};
         }
@@ -406,7 +406,7 @@ namespace SeeDocs_App
     void PageHead::write(const std::optional<RowIcon> icon, const std::wstring_view title)
     {
         Text head;
-        head << TextStyleId::Title;
+        head << TextStyle::Title;
         writeIcon(head, icon);
         head << title << PopTextStyle{};
         m_title.text() = head;
@@ -640,7 +640,7 @@ namespace SeeDocs_App
             return;
         HintBox& box = m_pageBox.body().add<HintBox>(
             ReadOnly::Yes,
-            TextFormat{ TextStyleId::SubTitle },
+            TextFormat{ TextStyle::SubTitle },
             noHintText()
         );
         connectLinks(box);
@@ -748,7 +748,7 @@ namespace SeeDocs_App
     Expander& PageView::addSection(const Section& section)
     {
         HeaderText header;
-        header << TextStyleId::Heading;
+        header << TextStyle::Heading;
         writeRuns(header, section.heading);
         header << PopTextStyle{};
         Expander& expander = m_pageBox.body().add<Expander>(
@@ -1078,7 +1078,7 @@ namespace SeeDocs_App
         {
             Grids::RowExpander& groupExpander = grid.addExpander();
             ExpanderHeader& header = groupExpander.header();
-            header.setTextFormat(TextFormat{ TextStyleId::SubSection });
+            header.setTextFormat(TextFormat{ TextStyle::SubSection });
             header.setVerticalTextAnchor(VerticalTextAnchor::Center);
             Text label;
             writeLabel(label, group);
@@ -1181,7 +1181,7 @@ namespace SeeDocs_App
                 // A qualifier stands at its cell's end, as a tree row's kind word does.
                 if (column < row.qualifiers.size() && !row.qualifiers[column].empty())
                 {
-                    event.text() << FlexSpace{ k_kindGap } << TextStyleId::SubBody;
+                    event.text() << FlexSpace{ k_kindGap } << TextStyle::SubBody;
                     writeRuns(event.text(), row.qualifiers[column]);
                     event.text() << PopTextStyle{};
                 }

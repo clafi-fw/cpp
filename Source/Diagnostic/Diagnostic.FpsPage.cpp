@@ -131,7 +131,7 @@ namespace ClaFi::Diagnostic
             Cell{ Tag{ Reading::Best }, this, &FpsPage::writeReading }
         },
         m_caption{ body().add<Label>(
-            Text{ TextStyleId::Section, L"Window under the pointer" },
+            Text{ TextStyle::Section, L"Window under the pointer" },
             OnEvent{ [](GetTooltipEvent& event) {
                 writeMethodTooltip(event);
             } }
@@ -169,16 +169,16 @@ namespace ClaFi::Diagnostic
             } },
             Columns{
                 Column{ Tag{ Reading::Stats }, Text{ L"Stats" }, TextAlign::Right,
-                    TextFormat{ TextStyleId::Code }, ColumnWidthMode::Fixed,
+                    TextFormat{ TextStyle::Code }, ColumnWidthMode::Fixed,
                     ColumnWidth{ k_statsWidth }, MovingText::Yes },
                 Column{ Tag{ Reading::Last }, Text{ L"Last" }, TextAlign::Right,
-                    TextFormat{ TextStyleId::Code }, ColumnWidthMode::Fixed,
+                    TextFormat{ TextStyle::Code }, ColumnWidthMode::Fixed,
                     ColumnWidth{ k_readingWidth }, MovingText::Yes, VerticalTextAnchor::Center },
                 Column{ Tag{ Reading::Worst }, Text{ L"Worst" }, TextAlign::Right,
-                    TextFormat{ TextStyleId::Code }, ColumnWidthMode::Fixed,
+                    TextFormat{ TextStyle::Code }, ColumnWidthMode::Fixed,
                     ColumnWidth{ k_readingWidth }, MovingText::Yes, VerticalTextAnchor::Center },
                 Column{ Tag{ Reading::Best }, Text{ L"Best" }, TextAlign::Right,
-                    TextFormat{ TextStyleId::Code }, ColumnWidthMode::Fixed,
+                    TextFormat{ TextStyle::Code }, ColumnWidthMode::Fixed,
                     ColumnWidth{ k_readingWidth }, MovingText::Yes, VerticalTextAnchor::Center }
             },
             Header{},

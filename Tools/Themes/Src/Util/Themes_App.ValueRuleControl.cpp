@@ -105,7 +105,7 @@ namespace Themes_App
             if (rule.operation() == ColorRuleOp::NoChange)
             {
                 text << InkWell::textInk(InkGrade::Subtle)
-                    << TextStyleId::SubBody
+                    << TextStyle::SubBody
                     << k_operationNames[static_cast<std::size_t>(ColorRuleOp::NoChange)]
                     << PopTextStyle{}
                     << PopColor{};
@@ -113,7 +113,7 @@ namespace Themes_App
             }
             const float value = rule.value();
             writeGlyph(text, operationGlyph(rule.operation(), value));
-            text << TextStyleId::Code
+            text << TextStyle::Code
                 << std::format(L"{:.2f}", std::abs(value))
                 << PopTextStyle{};
         }
@@ -474,7 +474,7 @@ namespace Themes_App
         
         writeGlyph(event.text, operationGlyph(m_operation, value));
 
-        event.text << TextStyleId::Code
+        event.text << TextStyle::Code
             << std::format(L"{:.2f}", std::abs(value))
             << PopTextStyle{};
     }

@@ -626,7 +626,7 @@ namespace SeeDocs_App
     Text Workspace::noProjectWords(const Text& reasons) const
     {
         Text text;
-        text << TextStyleId::Title << m_application.name() << PopTextStyle{};
+        text << TextStyle::Title << m_application.name() << PopTextStyle{};
         text << k_endLine << k_endLine;
         if (!reasons.empty())
             text << reasons;

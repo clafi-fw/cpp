@@ -308,7 +308,7 @@ namespace ClaFi::Tools::WhatsClip
                 event.scaledStrokeWidth(Thickness::Thin));
         } };
         text << Space{ k_swatchGap };
-        text << TextStyleId::Code;
+        text << TextStyle::Code;
         appendSpelling(text, shown, m_spelling);
         return text;
     }

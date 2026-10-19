@@ -539,7 +539,7 @@ namespace ClaFi::Platform::Linux
 
     void HarfBuzzLayout::itemize(const BuildParams& params)
     {
-        const TextStyle& body = k_textStyles[static_cast<std::size_t>(TextStyleId::Body)];
+        const TextStyleProps& body = TextStyles::Body;
 
         // An empty paragraph is one placeholder character in the style in force where it stands.
         if (params.isEmpty)
@@ -936,7 +936,7 @@ namespace ClaFi::Platform::Linux
 
     float HarfBuzzLayout::leadingSpaceAdvance(const BuildParams& params) const
     {
-        const TextStyle& body = k_textStyles[static_cast<std::size_t>(TextStyleId::Body)];
+        const TextStyleProps& body = TextStyles::Body;
         const std::wstring family = leadingSpanValue(params.families, params.isEmpty,
             std::wstring{ body.family });
         FaceChain& chain = fontSet().chain(family,

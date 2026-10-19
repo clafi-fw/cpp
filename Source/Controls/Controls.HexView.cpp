@@ -28,7 +28,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    const TextFormat HexView::s_lineFormat{ TextStyleId::Code };
+    const TextFormat HexView::s_lineFormat{ TextStyle::Code };
 
     void HexView::setBytes(const ByteView value)
     {

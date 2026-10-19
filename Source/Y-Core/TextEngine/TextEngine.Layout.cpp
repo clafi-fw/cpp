@@ -1874,7 +1874,7 @@ namespace ClaFi
 
         // The font a native build would read at the paragraph's first character, provided the
         // span stating each part of it reaches the paragraph's end.
-        const TextStyle& body = k_textStyles[static_cast<std::size_t>(TextStyleId::Body)];
+        const TextStyleProps& body = TextStyles::Body;
         std::wstring_view family = body.family;
         float size = body.size;
         FontWeight weight = body.weight;

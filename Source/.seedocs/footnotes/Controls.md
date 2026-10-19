@@ -412,7 +412,7 @@ press re-shapes one paragraph, and a copy carries the user's own formatting.
 
 - `language` is a Syntax::Language by value - one of Syntax::Languages, or a caller's own.
 - `inks` holds one ink per kind of token. A kind left in the text's own ink costs nothing.
-- WordWrap::No and TextFormat{ TextStyleId::Code } come ahead of the caller's arguments, which may
+- WordWrap::No and TextFormat{ TextStyle::Code } come ahead of the caller's arguments, which may
   override them. A text needs no style of its own to be set in the monospace font - see TextFormat.
 
 **Completion** draws on the Syntax::CompletionEntries set through `completion`, the keywords, and

@@ -51,7 +51,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
         if (g_baseFormat) return g_baseFormat;
 
-        const auto& bodyProps = ClaFi::k_textStyles[static_cast<std::size_t>(TextStyleId::Body)];
+        const auto& bodyProps = TextStyles::Body;
 
         checkHr(g_dwriteFactory->CreateTextFormat(
             nativeFamilyName(bodyProps.family),

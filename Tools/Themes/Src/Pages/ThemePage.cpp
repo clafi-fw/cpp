@@ -208,12 +208,12 @@ namespace Themes_App
     void ThemePage::pigmentNameCell(Grids::GetCellTextEvent& event) const
     {
         const UiElement element = event.row().tag<UiElement>();
-        event.text() << TextStyleId::SubHeading
+        event.text() << TextStyle::SubHeading
             << uiElementOf(element).name
             << PopTextStyle{}
             << L'\n'
             << InkGrade::Muted
-            << TextStyleId::SubBody
+            << TextStyle::SubBody
             << pigmentUse(element)
             << PopTextStyle{}
             << PopColor{};

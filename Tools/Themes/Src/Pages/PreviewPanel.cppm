@@ -25,7 +25,7 @@ namespace Themes_App
         ) };
 
         Label& m_titleLabel{ m_stack.add<Label>(
-            Text{ TextAlign::Center, TextStyleId::SubTitle, L"Live preview" },
+            Text{ TextAlign::Center, TextStyle::SubTitle, L"Live preview" },
             WordWrap::No,
             HorizontalAlign::Center,
             VerticalAlign::Center,
@@ -41,10 +41,10 @@ namespace Themes_App
             Padding{ 4.0f },
             Text{
                 TextAlign::Center,
-                TextStyleId::SubBody, InkWell::textInk(InkGrade::Muted), L"A color is judged\n", PopColor{}, PopTextStyle{},
+                TextStyle::SubBody, InkWell::textInk(InkGrade::Muted), L"A color is judged\n", PopColor{}, PopTextStyle{},
                 L"In Context\n",
-                TextStyleId::SubBody, InkWell::textInk(InkGrade::Muted), L"and never", PopColor{}, PopTextStyle{}, TextStyleId::Heading, InkWell::textInk(InkGrade::Muted), L" in isolation\n", PopColor{}, PopTextStyle{},
-                TextStyleId::Title, InkWell::spotInk(), L"Select", PopColor{}, PopTextStyle{}, TextStyleId::SubBody, InkWell::textInk(InkGrade::Muted), L" any part of\n",
+                TextStyle::SubBody, InkWell::textInk(InkGrade::Muted), L"and never", PopColor{}, PopTextStyle{}, TextStyle::Heading, InkWell::textInk(InkGrade::Muted), L" in isolation\n", PopColor{}, PopTextStyle{},
+                TextStyle::Title, InkWell::spotInk(), L"Select", PopColor{}, PopTextStyle{}, TextStyle::SubBody, InkWell::textInk(InkGrade::Muted), L" any part of\n",
                 L"this passage to see how\n", PopColor{}, PopTextStyle{},
                 L"The Theme Responds"
             }

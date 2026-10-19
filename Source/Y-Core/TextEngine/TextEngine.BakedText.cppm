@@ -90,7 +90,7 @@ namespace ClaFi
         float currentLineSpacing = 1.0f;
         std::size_t currentParagraphStart = 0;
 
-        std::vector<TextStyleId> styleStack;
+        std::vector<TextStyle> styleStack;
         std::vector<ColorDef> colorStack;
         std::size_t boldCount = 0; std::size_t italicCount = 0;
         std::vector<float> sizeStack;
@@ -117,18 +117,18 @@ namespace ClaFi
         };
         std::vector<OpenLink> linkStack;
 
-        auto getEffectiveTextStyle = [&]() { return styleStack.empty() ? TextStyleId::Body : styleStack.back(); };
+        auto getEffectiveTextStyle = [&]() { return styleStack.empty() ? TextStyle::Body : styleStack.back(); };
         auto getEffectiveColor = [&]() -> ColorDef {
             if (!linkStack.empty() && colorStack.size() <= linkStack.back().colorDepth)
                 return ColorDef{ k_linkInk };
             return colorStack.empty() ? ColorDef{ InkWell::textInk() } : colorStack.back();
         };
-        auto getEffectiveWeight = [&]() { return boldCount > 0 ? FontWeight::Bold : k_textStyles[(std::size_t)getEffectiveTextStyle()].weight; };
-        auto getEffectiveStyle = [&]() { return italicCount > 0 ? FontStyle::Italic : k_textStyles[(std::size_t)getEffectiveTextStyle()].style; };
+        auto getEffectiveWeight = [&]() { return boldCount > 0 ? FontWeight::Bold : TextStyles::Of(getEffectiveTextStyle()).weight; };
+        auto getEffectiveStyle = [&]() { return italicCount > 0 ? FontStyle::Italic : TextStyles::Of(getEffectiveTextStyle()).style; };
         auto getEffectiveScale = [&]() { return scriptStack.empty() ? 1.0f : scriptStack.back().scale; };
         auto getEffectiveShift = [&]() { return scriptStack.empty() ? 0.0f : scriptStack.back().shift; };
-        auto getEffectiveSize = [&]() { return (sizeStack.empty() ? k_textStyles[(std::size_t)getEffectiveTextStyle()].size : sizeStack.back()) * getEffectiveScale(); };
-        auto getEffectiveFamily = [&]() -> std::wstring_view { return familyStack.empty() ? k_textStyles[(std::size_t)getEffectiveTextStyle()].family : familyStack.back(); };
+        auto getEffectiveSize = [&]() { return (sizeStack.empty() ? TextStyles::Of(getEffectiveTextStyle()).size : sizeStack.back()) * getEffectiveScale(); };
+        auto getEffectiveFamily = [&]() -> std::wstring_view { return familyStack.empty() ? TextStyles::Of(getEffectiveTextStyle()).family : familyStack.back(); };
 
         std::size_t colorStart = 0, weightStart = 0, styleStart = 0, sizeStart = 0, familyStart = 0;
         ColorDef currentColor = getEffectiveColor(); FontWeight currentWeight = getEffectiveWeight();

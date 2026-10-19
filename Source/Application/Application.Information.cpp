@@ -130,7 +130,7 @@ namespace ClaFi
     {
         Text titleText(const AppContext& context)
         {
-            Text text{ TextStyleId::Title, context.appName(), PopTextStyle{} };
+            Text text{ TextStyle::Title, context.appName(), PopTextStyle{} };
             if (!context.version().empty())
             {
                 text << FlexSpace{ k_versionGap };
@@ -146,7 +146,7 @@ namespace ClaFi
         // the button at the page's usual width, so the line links it under a name.
         Text statusText(const UpdateCheck& updates, const std::chrono::sys_seconds now)
         {
-            Text text{ TextStyleId::SubHeading };
+            Text text{ TextStyle::SubHeading };
             switch (updates.state())
             {
                 case UpdateState::Unchecked:
@@ -170,7 +170,7 @@ namespace ClaFi
             if (updates.state() == UpdateState::Newer)
             {
                 text << k_endLine;
-                text << TextStyleId::SubBody;
+                text << TextStyle::SubBody;
                 text << PushLink{ updates.releaseAddress() };
                 text << L"Release page on GitHub";
                 text << PopLink{};
@@ -179,7 +179,7 @@ namespace ClaFi
             else if (updates.answeredAt())
             {
                 text << k_endLine;
-                text << TextStyleId::SubBody;
+                text << TextStyle::SubBody;
                 text << L"last check: ";
                 text << ageSpelling(updates.answeredAt().value(), now);
                 text << PopTextStyle{};

@@ -59,7 +59,7 @@ namespace ClaFi::Tools::WhatsClip
     void BytesPage::writeSelectionReadout()
     {
         Text reading{};
-        //reading << TextStyleId::Code;
+        //reading << TextStyle::Code;
 
         // **The offsets are the view's own spelling** - see HexView::offsetText - so the reading
         // and the left column cannot disagree about how wide an offset is. A single byte reads as

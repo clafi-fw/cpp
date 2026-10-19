@@ -495,7 +495,7 @@ namespace SeeDocs_App
     {
         if (type.isControl)
             return;
-        text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted
+        text << FlexSpace{ k_kindGap } << TextStyle::SubBody << InkGrade::Muted
             << kindWord(type.kind) << PopColor{} << PopTextStyle{};
     }
 

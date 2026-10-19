@@ -118,7 +118,7 @@ namespace ClaFi::Tools::WhatsClip
         Text reading{};
         if (answered)
         {
-            reading << TextStyleId::Code;
+            reading << TextStyle::Code;
             reading << entry->handleType;
             reading << L"  ";
             reading << hexOf(value);

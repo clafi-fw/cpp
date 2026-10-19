@@ -84,7 +84,7 @@ namespace Themes_App
         if (value == ColorRuleHueOp::NoChange)
         {
             text << InkWell::textInk(InkGrade::Subtle)
-                << TextStyleId::SubBody
+                << TextStyle::SubBody
                 << k_hueOpNames[static_cast<std::size_t>(value)]
                 << PopTextStyle{}
                 << PopColor{};

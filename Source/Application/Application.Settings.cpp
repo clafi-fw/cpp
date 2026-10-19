@@ -255,7 +255,7 @@ namespace ClaFi
             HostProps{
                 VerticalAlign::Top,
                 ExpanderViewMode::Divider,
-                HeaderText{ TextStyleId::Heading, caption }
+                HeaderText{ TextStyle::Heading, caption }
             },
             BodyProps{
                 Orientation::Vertical,

@@ -43,7 +43,7 @@ namespace SeeDocs_App
                     break;
                 case BlockKind::SubHeading:
                     openLine(text, opened, indent);
-                    text << TextStyleId::Section;
+                    text << TextStyle::Section;
                     writeRuns(text, block.runs);
                     text << PopTextStyle{};
                     break;
@@ -51,7 +51,7 @@ namespace SeeDocs_App
                     for (const Runs& line : block.lines)
                     {
                         openLine(text, opened, indent + k_codeIndent);
-                        text << TextStyleId::Code;
+                        text << TextStyle::Code;
                         writeRuns(text, line);
                         text << PopTextStyle{};
                     }
@@ -134,10 +134,10 @@ namespace SeeDocs_App
                     text << run.text;
                     break;
                 case RunStyle::Code:
-                    text << TextStyleId::Code << run.text << PopTextStyle{};
+                    text << TextStyle::Code << run.text << PopTextStyle{};
                     break;
                 case RunStyle::Path:
-                    text << TextStyleId::Code << InkWell::spotInk() << run.text << PopColor{}
+                    text << TextStyle::Code << InkWell::spotInk() << run.text << PopColor{}
                         << PopTextStyle{};
                     break;
                 case RunStyle::Muted:
@@ -172,7 +172,7 @@ namespace SeeDocs_App
         const Text::Markers& markers = text.markers();
         std::wstring result;
         std::size_t boldDepth = 0;
-        std::vector<TextStyleId> styles;
+        std::vector<TextStyle> styles;
         bool boldOpen = false;
         bool codeOpen = false;
         std::size_t next = 0;
@@ -200,7 +200,7 @@ namespace SeeDocs_App
             const bool atEnd = at == plain.size();
             const bool bold = !atEnd && boldDepth > 0;
             const bool code = !atEnd
-                && std::ranges::find(styles, TextStyleId::Code) != styles.end();
+                && std::ranges::find(styles, TextStyle::Code) != styles.end();
             if (codeOpen && !code)
             {
                 result += k_codeMark;
@@ -290,7 +290,7 @@ namespace SeeDocs_App
         for (const Run& run : runs)
             source += run.text;
         const InkedRanges inked = inkedTokens(source, language);
-        text << TextStyleId::Code;
+        text << TextStyle::Code;
         std::size_t at = 0;     // where the run starts in the source
         std::size_t next = 0;   // the first inked token not yet written out
         for (const Run& run : runs)

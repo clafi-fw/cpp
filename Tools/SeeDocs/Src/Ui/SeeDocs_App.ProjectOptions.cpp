@@ -368,7 +368,7 @@ namespace SeeDocs_App
                 MinSize{ k_fieldWidth, 0.0f },
 
                 Interactivity::Focusable,
-                TextFormat{ TextStyleId::Heading },
+                TextFormat{ TextStyle::Heading },
                 WordWrap::No,
                 VerticalTextAnchor::Center,
                 std::move(folderName),

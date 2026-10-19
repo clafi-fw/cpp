@@ -101,19 +101,19 @@ namespace ClaFi
         struct StyleName
         {
             std::wstring_view name{};
-            TextStyleId style{ TextStyleId::Body };
+            TextStyle style{ TextStyle::Body };
         };
 
         constexpr std::array k_styleNames{
-            StyleName{ L"section", TextStyleId::Section },
-            StyleName{ L"subsection", TextStyleId::SubSection },
-            StyleName{ L"title", TextStyleId::Title },
-            StyleName{ L"subtitle", TextStyleId::SubTitle },
-            StyleName{ L"heading", TextStyleId::Heading },
-            StyleName{ L"subheading", TextStyleId::SubHeading },
-            StyleName{ L"body", TextStyleId::Body },
-            StyleName{ L"subbody", TextStyleId::SubBody },
-            StyleName{ L"code", TextStyleId::Code },
+            StyleName{ L"section", TextStyle::Section },
+            StyleName{ L"subsection", TextStyle::SubSection },
+            StyleName{ L"title", TextStyle::Title },
+            StyleName{ L"subtitle", TextStyle::SubTitle },
+            StyleName{ L"heading", TextStyle::Heading },
+            StyleName{ L"subheading", TextStyle::SubHeading },
+            StyleName{ L"body", TextStyle::Body },
+            StyleName{ L"subbody", TextStyle::SubBody },
+            StyleName{ L"code", TextStyle::Code },
         };
 
         constexpr std::wstring_view k_styleCommand = L"style";
@@ -192,7 +192,7 @@ namespace ClaFi
             return std::nullopt;
         }
 
-        [[nodiscard]] std::wstring_view styleName(TextStyleId style)
+        [[nodiscard]] std::wstring_view styleName(TextStyle style)
         {
             for (const StyleName& named : k_styleNames)
             {
@@ -257,7 +257,7 @@ namespace ClaFi
             return PushThemeColor{ ink };
         }
 
-        [[nodiscard]] std::optional<TextStyleId> styleOf(std::wstring_view name)
+        [[nodiscard]] std::optional<TextStyle> styleOf(std::wstring_view name)
         {
             for (const StyleName& named : k_styleNames)
             {
@@ -430,7 +430,7 @@ namespace ClaFi
 
         if (command == k_styleCommand)
         {
-            if (const std::optional<TextStyleId> style = styleOf(arguments))
+            if (const std::optional<TextStyle> style = styleOf(arguments))
                 return PushTextStyle{ *style };
             return std::nullopt;
         }
@@ -453,7 +453,7 @@ namespace ClaFi
         if (command == L"tabto")
             return TabTo{ takeFloat(arguments, 0.0f) };
         if (command == L"size")
-            return PushFontSize{ takeFloat(arguments, k_textStyles[static_cast<std::size_t>(TextStyleId::Body)].size) };
+            return PushFontSize{ takeFloat(arguments, TextStyles::Body.size) };
         if (command == L"font")
             return PushFontFamily{ std::wstring{ arguments } };
         if (command == k_linkCommand)
@@ -468,7 +468,7 @@ namespace ClaFi
         }
 
         // Fmt's shorthand: a style opened by its name alone and closed by that name.
-        if (const std::optional<TextStyleId> style = styleOf(tag))
+        if (const std::optional<TextStyle> style = styleOf(tag))
             return PushTextStyle{ *style };
         if (tag.starts_with(L'/') && styleOf(tag.substr(1)))
             return PopTextStyle{};

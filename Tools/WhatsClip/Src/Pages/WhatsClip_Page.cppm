@@ -136,7 +136,7 @@ namespace ClaFi::Tools::WhatsClip
             WordWrap::No,
             Padding{ 12.0f, 4.0f },
             VerticalTextAnchor::Center,
-            TextFormat{ TextStyleId::SubBody }
+            TextFormat{ TextStyle::SubBody }
         ) };
         // The corner in two parts: the reading as its body, and what a page stands after it.
         Panel& m_corner;

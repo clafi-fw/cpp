@@ -217,7 +217,7 @@ namespace Themes_App
 
     TreeItem& DesignPage::addRootItem()
     {
-        return m_tree.addItem(TextFormat{ TextStyleId::SubHeading });
+        return m_tree.addItem(TextFormat{ TextStyle::SubHeading });
     }
 
     // An item is named after the page it opens.
@@ -256,7 +256,7 @@ namespace Themes_App
             Padding{ 12.0f, 8.0f }
         ).createBody<Label>(
             VerticalTextAnchor::Center,
-            Text{ TextStyleId::SubTitle, nameOf(entry) }
+            Text{ TextStyle::SubTitle, nameOf(entry) }
         );
         StackPanel& rows = page.createBody<ScrollBox>(
             ScrollBars::Vertical
@@ -313,7 +313,7 @@ namespace Themes_App
     {
         const std::size_t count = entry.list ? entry.list->size() : 0;
         Text text{ nameOf(entry) };
-        text << L"  " << TextStyleId::SubBody << InkGrade::Muted;
+        text << L"  " << TextStyle::SubBody << InkGrade::Muted;
         if (count == 0)
             text << L"no rules";
         else

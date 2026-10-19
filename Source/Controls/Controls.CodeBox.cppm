@@ -314,7 +314,7 @@ namespace ClaFi::Controls
         // Source is lines, and a line is never broken to the box it is drawn in - see HexView.
         // It is columns too, which only the monospace style keeps. Both before the caller's own
         // arguments, so a stated WordWrap or TextFormat still wins.
-        TextBox{ params, WordWrap::No, TextFormat{ TextStyleId::Code }, std::forward<Args>(args)... },
+        TextBox{ params, WordWrap::No, TextFormat{ TextStyle::Code }, std::forward<Args>(args)... },
         INIT_PROPERTY(language),
         INIT_PROPERTY(inks),
         INIT_PROPERTY(detectLanguage),

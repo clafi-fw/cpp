@@ -76,7 +76,7 @@ namespace ClaFi
         Text& operator<<(const PushCustomColor&);
         Text& operator<<(Color);
         Text& operator<<(const PopColor&);
-        Text& operator<<(TextStyleId);
+        Text& operator<<(TextStyle);
         Text& operator<<(const PopTextStyle&);
         Text& operator<<(TextAlign);
         Text& operator<<(const InTextIcon&);
@@ -276,7 +276,7 @@ namespace ClaFi
         TextFormat& operator<<(InkGrade); // the framework's own ink at that step
         TextFormat& operator<<(InkColor); // that colour at Strongest
         TextFormat& operator<<(Color);
-        TextFormat& operator<<(TextStyleId);
+        TextFormat& operator<<(TextStyle);
         TextFormat& operator<<(TextOp); // bold or italic
         TextFormat& operator<<(const TextFormat&);
         // Refused, a value that only converts to one of the above included - a wchar_t is no Color.

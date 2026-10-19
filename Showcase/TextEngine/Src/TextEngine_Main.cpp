@@ -96,7 +96,7 @@ namespace TextEngine_App
         void showCaretPosition(ScrollBox& page, TextBox& body)
         {
             CaretReadout* readout = &page.createCorner<CaretReadout>(
-                Text{ TextStyleId::SubBody, L"Ln 1, Col 1" },
+                Text{ TextStyle::SubBody, L"Ln 1, Col 1" },
                 MinSize{ k_caretReadoutWidth, 0.0f },
                 MaxSize{ k_caretReadoutWidth, k_maxFloat },
                 WordWrap::No,
@@ -110,7 +110,7 @@ namespace TextEngine_App
             body.onCaretMove([readout](CaretMoveEvent& event){
                 const TextLineColumn caret = event.sender().caretLineColumn();
                 readout->text() = Text{
-                    TextStyleId::SubBody,
+                    TextStyle::SubBody,
                     Fmt{ L"Ln {}, Col {}", caret.line, caret.column }
                 };
                 // The width is stated, so a new reading moves nothing on the page: a repaint of the
@@ -425,7 +425,7 @@ namespace TextEngine_App
         .select();
 
         tabs.strip().addTab(
-            Text{ TextStyleId::Code, L"Syntax" },
+            Text{ TextStyle::Code, L"Syntax" },
             k_tabPadding, k_tabSize, k_tabAnchor,
             Page{ codePage }
         );

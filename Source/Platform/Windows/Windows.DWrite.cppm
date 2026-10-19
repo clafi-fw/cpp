@@ -476,7 +476,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
     FontRequest leadingFont(const INativeTextLayout::BuildParams& params)
     {
-        const TextStyle& body = k_textStyles[static_cast<std::size_t>(TextStyleId::Body)];
+        const TextStyleProps& body = TextStyles::Of(TextStyle::Body);
         return {
             leadingSpanValue(params.families, params.isEmpty, std::wstring{ body.family }),
             leadingSpanValue(params.sizes, params.isEmpty, body.size) * params.scaleFactor,
@@ -520,7 +520,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
         if (params.isEmpty) {
             DWRITE_TEXT_RANGE dRange{ 0, 1 };
-            const auto& bodyProps = k_textStyles[static_cast<std::size_t>(TextStyleId::Body)];
+            const auto& bodyProps = TextStyles::Of(TextStyle::Body);
 
             auto family = params.families.empty() ? std::wstring(bodyProps.family) : params.families.back().value;
             checkHr(m_layout->SetFontFamilyName(nativeFamilyName(family.c_str()), dRange));

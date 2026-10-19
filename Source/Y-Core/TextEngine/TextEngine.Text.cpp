@@ -454,7 +454,7 @@ namespace ClaFi
         m_markers.emplace_back(m_plainText.size(), op);
         return *this;
     }
-    Text& Text::operator<<(TextStyleId op) {
+    Text& Text::operator<<(TextStyle op) {
         m_markers.emplace_back(m_plainText.size(), PushTextStyle{ op });
         return *this;
     }
@@ -1017,7 +1017,7 @@ namespace ClaFi
         return *this;
     }
 
-    TextFormat& TextFormat::operator<<(TextStyleId style)
+    TextFormat& TextFormat::operator<<(TextStyle style)
     {
         place(PushTextStyle{ style });
         return *this;

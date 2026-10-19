@@ -52,7 +52,7 @@ namespace Themes_App
         void writeFramingWord(Text& text, const std::wstring_view word)
         {
             text << InkGrade::Muted
-                << TextStyleId::SubBody
+                << TextStyle::SubBody
                 << word
                 << PopTextStyle{}
                 << PopColor{};
@@ -211,7 +211,7 @@ namespace Themes_App
         if (!m_rules)
             return;
         const ColorRule& value = rule();
-        event.text << TextStyleId::SubHeading
+        event.text << TextStyle::SubHeading
             << itemLabel(k_channelLabels[static_cast<std::size_t>(value.output)])
             << PopTextStyle{};
         if (value.atRest())

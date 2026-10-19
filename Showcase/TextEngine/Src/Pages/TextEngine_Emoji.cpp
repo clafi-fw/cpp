@@ -111,7 +111,7 @@ namespace TextEngine_App
 
         void writeNote(Text& out, std::wstring_view note)
         {
-            out << TextStyleId::SubBody;
+            out << TextStyle::SubBody;
             out << InkGrade::Muted;
             out << note;
             out << PopColor{};
@@ -124,7 +124,7 @@ namespace TextEngine_App
         // the only run on the line the family applies to.
         void writeFamilyRow(Text& out, const FamilyRow& row)
         {
-            out << TextStyleId::Code;
+            out << TextStyle::Code;
             out << row.family;
             out << PopTextStyle{};
             out << TabTo{ k_familySampleStop };

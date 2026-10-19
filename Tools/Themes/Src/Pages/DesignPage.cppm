@@ -151,7 +151,7 @@ namespace Themes_App
             Padding{ 12.0f, 8.0f }
         ).createBody<Label>(
             VerticalTextAnchor::Center,
-            Text{ TextStyleId::SubTitle, k_paletteTitle }
+            Text{ TextStyle::SubTitle, k_paletteTitle }
         ) };
 
         StackPanel& m_paletteView{ m_palettePage.createBody<ScrollBox>(

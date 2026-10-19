@@ -1487,7 +1487,7 @@ namespace SeeDocs_App
     {
         const ShownProject* project = resolve(data).project;
         Text text;
-        text << TextStyleId::Title << L"No such page" << PopTextStyle{};
+        text << TextStyle::Title << L"No such page" << PopTextStyle{};
         text << k_endLine << k_endLine;
         if (project)
             text << project->open.project.name << L" has no page at this path:";
@@ -1999,7 +1999,7 @@ namespace SeeDocs_App
         {
             text << name;
         }
-        text << FlexSpace{ k_kindGap } << TextStyleId::SubBody << InkGrade::Muted;
+        text << FlexSpace{ k_kindGap } << TextStyle::SubBody << InkGrade::Muted;
         text << entry.kindWord;
         if (namesProject)
             text << k_separator << listed.project->open.project.name;

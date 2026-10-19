@@ -123,7 +123,7 @@ namespace ClaFi::Controls
         Text reading{};
         if (!searchText().empty())
         {
-            reading << TextStyleId::SubBody;
+            reading << TextStyle::SubBody;
             if (count == 0 && m_countPlace.empty())
                 reading << InkWell::redInk() << L"No results";
             else

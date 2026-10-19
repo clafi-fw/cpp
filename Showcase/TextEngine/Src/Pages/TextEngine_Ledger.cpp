@@ -184,7 +184,7 @@ namespace TextEngine_App
         void writeRoundHeading(Text& out, std::size_t round, std::size_t line)
         {
             out << ParaIndent{ 0.0f };
-            out << TextStyleId::Heading;
+            out << TextStyle::Heading;
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
             out << L"Round ";
             out << static_cast<int>(round);
@@ -663,12 +663,12 @@ namespace TextEngine_App
 
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
             out << TextAlign::Center;
-            out << TextStyleId::Title;
+            out << TextStyle::Title;
             out << L"The Ledger of Ninety-Nine Rooms";
             out << PopTextStyle{};
             endLine();
 
-            out << TextStyleId::SubTitle;
+            out << TextStyle::SubTitle;
             out << InkWell::textInk(InkGrade::Muted);
             out << L"A puzzle in the manner of Einstein's, at a length nobody asked for";
             out << PopColor{};
@@ -692,7 +692,7 @@ namespace TextEngine_App
             out << TextAlign::Left;
             endLine();
 
-            out << TextStyleId::Section;
+            out << TextStyle::Section;
             out << L"What each clue is about";
             out << PopTextStyle{};
             out << PopFontFamily{};
@@ -763,7 +763,7 @@ namespace TextEngine_App
             endLine();
 
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << TextStyleId::Section;
+            out << TextStyle::Section;
             out << L"How to read a round";
             out << PopTextStyle{};
             out << PopFontFamily{};
@@ -836,7 +836,7 @@ namespace TextEngine_App
             out << ParaIndent{ 0.0f };
             out << TextAlign::Left;
             out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << TextStyleId::Section;
+            out << TextStyle::Section;
             out << PushAnchor{ L"solution" };
             out << L"The solution";
             out << PopAnchor{};

@@ -240,7 +240,7 @@ a type of its own, so a control tells which one it was handed by the type alone:
 <pre><code><span class="tp">Label</span>&amp; m_status{ m_strip.<span class="fn">createBody</span>&lt;<span class="tp">Label</span>&gt;(
     <span class="tp">Text</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ready"</span> },
     <span class="tp">TooltipText</span>{ <span class="st">L"What the page is showing"</span> },
-    <span class="tp">TextFormat</span>{ <span class="tp">TextStyleId</span>::SubBody }
+    <span class="tp">TextFormat</span>{ <span class="tp">TextStyle</span>::SubBody }
 ) };</code></pre>
 
 <h3 id="control-text-writing">Writing it later</h3>
@@ -274,7 +274,7 @@ that <a href="#own-layout">holds its own layout</a>, goes on drawing the old wor
 built for a control is moved in rather than copied, and a text taken out of a control is a copy that
 owes the control nothing.</p>
 
-<pre><code>m_title.<span class="fn">text</span>() = <span class="tp">Text</span>{ <span class="tp">TextStyleId</span>::Heading, name };   <span class="cm">// moved in</span>
+<pre><code>m_title.<span class="fn">text</span>() = <span class="tp">Text</span>{ <span class="tp">TextStyle</span>::Heading, name };   <span class="cm">// moved in</span>
 <span class="tp">Text</span> kept = m_title.<span class="fn">text</span>();                               <span class="cm">// a copy</span></code></pre>
 
 <p><code>selectedText(range)</code> answers a range of a text as a text of its own. It states at its
@@ -335,14 +335,14 @@ engine reads it ahead of the text's own markers, and it never becomes part of th
 
 <pre><code><span class="cm">// Built like a Text: the stream, or the same sequence as one expression.</span>
 <span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">InkGrade</span>::Muted };
-format &lt;&lt; <span class="tp">TextStyleId</span>::SubBody;</code></pre>
+format &lt;&lt; <span class="tp">TextStyle</span>::SubBody;</code></pre>
 
 <h3 id="format-holds">What it holds</h3>
 
 <table>
 <tr><th>Streamed</th><th>Holds</th></tr>
 <tr><td><code>Ink</code>, <code>InkGrade</code>, <code>InkColor</code>, <code>Color</code>, <code>PushThemeColor{ ink }</code>, <code>PushCustomColor{ c }</code></td><td>The colour the text runs in, spelt as the stream spells it.</td></tr>
-<tr><td><code>TextStyleId</code></td><td>The style.</td></tr>
+<tr><td><code>TextStyle</code></td><td>The style.</td></tr>
 <tr><td><code>PushFontSize{ f }</code>, <code>PushFontFamily{ L"..." }</code></td><td>A size or a family over the style's.</td></tr>
 <tr><td><code>TextOp::PushBold</code>, <code>TextOp::PushItalic</code></td><td>Weight and slant.</td></tr>
 <tr><td><code>TextAlign</code>, <code>ParaIndent{ f }</code>, <code>ParaLineSpacing{ f }</code></td><td>Paragraph geometry, for every paragraph of the text.</td></tr>
@@ -390,7 +390,7 @@ property. Along a chain of constructors the caller's value wins for every kind i
 most derived class's, and so on down to the base. A <code>CodeBox</code> is laid out in the
 monospace style that way, and the text handed to it states no style of its own:</p>
 
-<pre><code><span class="tp">TextBox</span>{ params, <span class="tp">WordWrap</span>::No, <span class="tp">TextFormat</span>{ <span class="tp">TextStyleId</span>::Code }, std::<span class="fn">forward</span>&lt;<span class="tp">Args</span>&gt;(args)... }</code></pre>
+<pre><code><span class="tp">TextBox</span>{ params, <span class="tp">WordWrap</span>::No, <span class="tp">TextFormat</span>{ <span class="tp">TextStyle</span>::Code }, std::<span class="fn">forward</span>&lt;<span class="tp">Args</span>&gt;(args)... }</code></pre>
 
 <div class="warning">
 <strong>Never call <code>setTextFormat</code> in a constructor body.</strong> The body runs after the

@@ -225,7 +225,7 @@ is for text whose shape is known and whose values are not.</p>
 
 <pre><code><span class="cm">// The stream.</span>
 <span class="tp">Text</span> text;
-text &lt;&lt; <span class="tp">TextStyleId</span>::Section &lt;&lt; <span class="st">L"Performance"</span> &lt;&lt; <span class="tp">PopTextStyle</span>{} &lt;&lt; k_endLine
+text &lt;&lt; <span class="tp">TextStyle</span>::Section &lt;&lt; <span class="st">L"Performance"</span> &lt;&lt; <span class="tp">PopTextStyle</span>{} &lt;&lt; k_endLine
      &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted) &lt;&lt; <span class="st">L"Frames: "</span> &lt;&lt; <span class="tp">PopColor</span>{}
      &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">accentInk</span>() &lt;&lt; frameCount;
 
@@ -269,7 +269,7 @@ without it.</p>
 <tr><td><code>InkColor</code></td><td>Pushes that colour at <code>Strongest</code> - <code>InkColor::Red</code> is <code>InkWell::Red</code>, written as the colour alone. Any other grade is streamed as the <code>Ink</code> it is.</td></tr>
 <tr><td><code>Color</code>, <code>PushCustomColor{ c }</code></td><td>Pushes a colour stated outright, which the theme does not touch.</td></tr>
 <tr><td><code>PopColor{}</code></td><td>Pops one colour off the stack.</td></tr>
-<tr><td><code>TextStyleId</code>, <code>PopTextStyle{}</code></td><td>Pushes and pops a named style.</td></tr>
+<tr><td><code>TextStyle</code>, <code>PopTextStyle{}</code></td><td>Pushes and pops a named style.</td></tr>
 <tr><td><code>PushFontSize{ f }</code>, <code>PopFontSize{}</code></td><td>Overrides the size within the current style.</td></tr>
 <tr><td><code>PushFontFamily{ L"..." }</code>, <code>PopFontFamily{}</code></td><td>Overrides the family.</td></tr>
 <tr><td><code>k_endLine</code></td><td>Ends the paragraph. It is the character <code>L'\n'</code>, streamed as any other <code>wchar_t</code>.</td></tr>
@@ -363,7 +363,7 @@ format's from the paragraph it stands in - see <a href="textengine.html#format">
 
 <table>
 <tr><th>Tag</th><th>Style</th><th>Drawn as</th></tr>
-<tr><td><code>[title]</code></td><td><code>TextStyleId::Title</code></td><td>sans-serif 28, bold</td></tr>
+<tr><td><code>[title]</code></td><td><code>TextStyle::Title</code></td><td>sans-serif 28, bold</td></tr>
 <tr><td><code>[subtitle]</code></td><td><code>SubTitle</code></td><td>sans-serif 20</td></tr>
 <tr><td><code>[heading]</code></td><td><code>Heading</code></td><td>sans-serif 18, semibold</td></tr>
 <tr><td><code>[subheading]</code></td><td><code>SubHeading</code></td><td>sans-serif 16</td></tr>
@@ -374,7 +374,7 @@ format's from the paragraph it stands in - see <a href="textengine.html#format">
 <tr><td><code>[code]</code></td><td><code>Code</code></td><td>monospace 14</td></tr>
 </table>
 
-<p>Each tag is the style's <code>TextStyleId</code> member in lower case, and is short for
+<p>Each tag is the style's <code>TextStyle</code> member in lower case, and is short for
 <code>[style title]</code> - the spelling a document writes. Either form reads.</p>
 
 <p>The two families are generic - <code>GenericFamily::sansSerif</code> and
