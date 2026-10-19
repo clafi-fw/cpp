@@ -31,6 +31,7 @@ namespace ClaFi::PlatformImplementation::Windows
         void setAlpha(ColorByte) override;
     protected:
         void setStoredBounds(const IntRect& value) override;
+        [[nodiscard]] IntRect statedBounds() const override { return m_statedBounds; }
         LRESULT getBorderSizingHitTest(IntPoint mp);
         void wndProc(WinApiMsg& msg) override;
         virtual void focusChanged() override;
@@ -69,6 +70,8 @@ namespace ClaFi::PlatformImplementation::Windows
         // window filled again where the rect reaches the margins.
         void present(const Graphics::Bitmap*, const IntRect& dirty);
         void paint();
+        // The form laid out, painted, presented and shadowed for the rect the window takes next.
+        void stateBounds(const IntRect&);
         void schedulePaint();
     private:
         // **What the form has invalidated since the last paint**, in the surface: one rect, or the
@@ -95,6 +98,8 @@ namespace ClaFi::PlatformImplementation::Windows
         bool m_dwmFrameDisabled{ false };
         // The design changed while the window was not shown; the show tells the form.
         bool m_frameStale{ false };
+        // The rect the surface is laid out for: the window's own, or the one it is about to take.
+        IntRect m_statedBounds{};
         IntRect m_surfaceDirty{};
         bool m_surfaceWholeDirty{ true };
         bool m_paintScheduled{ false };

@@ -247,11 +247,10 @@ namespace ClaFi
         //    }
         //}
 
-        // A tooltip already on screen keeps the pixels it has: a resize paints only the part of
-        // the window that was newly exposed, so whatever stood there before is still standing
-        // under the new text. Every caller whose content moves under a tooltip that is already
-        // up asks for the repaint - a thumb dragged along a slider with its value on the tooltip,
-        // and a control that answers with different text than it did last time.
+        // A tooltip already on screen keeps the pixels it has until something invalidates them. A
+        // caller whose text changes under a window nothing else invalidated asks for the repaint:
+        // a thumb dragged along a slider with its value on the tooltip, in a window measured once
+        // for the widest value.
         if (forceRepaint)
         {
             form.invalidate();
@@ -358,11 +357,10 @@ namespace ClaFi
                 // a longer tooltip that stood there before, holding a value the user has gone past.
                 form.show();
                 if (answerMoved)
-                    // Forced wherever the window still has pixels of its own up, which is the
-                    // whole of what the force is for: a window keeps what it has through a move
-                    // and through a resize - only what is newly exposed is painted - so the
-                    // answer it went out with would stand under the one coming in.
-                    updatePosition(event.anchorRect, form.stillVisible());
+                    // The new answer is on its way to the screen: setControl invalidated the
+                    // whole window, and a placement paints a window for its rect before the
+                    // window takes it. Nothing is forced here.
+                    updatePosition(event.anchorRect, false);
                 s_current = this;
                 return;
             }

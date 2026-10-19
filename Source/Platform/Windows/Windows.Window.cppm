@@ -175,6 +175,8 @@ namespace ClaFi::PlatformImplementation::Windows
     protected:
         // setStoredBounds is overriden in FormWindow
         virtual void setStoredBounds(const IntRect&) {}
+        // Where the window stands, or the rect it is about to take - see FormWindow::stateBounds.
+        [[nodiscard]] virtual IntRect statedBounds() const { return bounds(); }
         void wndProc(WinApiMsg& msg) override;
         virtual void focusChanged() {}
         [[nodiscard]] float scaleFactor() const { return m_scaleFactor; }
@@ -920,8 +922,10 @@ namespace ClaFi::PlatformImplementation::Windows
         // GetWindowRect with the rect it was created at however often that is stated - so for one
         // of those the rect last asked for is the only record there is. A shown window cannot be
         // held to that record: the user may have moved it since, and only the window itself knows.
+        // A shown window made ready for a rect it has not yet taken answers with that rect, so
+        // the pass that runs inside its own paint settles - see FormWindow::stateBounds.
         const bool settled = ::IsWindowVisible(handle())
-            ? windowRect == bounds()
+            ? windowRect == statedBounds()
             : windowRect == m_placedBounds;
         m_placedBounds = windowRect;
         if (!settled)

@@ -89,16 +89,27 @@ namespace ClaFi::PlatformImplementation::Windows
     {
         using Clock = std::chrono::steady_clock;
 
-        // What a swap chain call held the thread for, said to the debugger when it is a wait
-        // and not the call itself. See Diagnostic::Options::logPresentWait
-        void logWait(const wchar_t* call, Clock::time_point startedAt)
+        // The call made, and a wait of a millisecond or more in it said to the debugger's output.
+        template <std::invocable Call>
+        HRESULT timedCall(const wchar_t* name, HWND window, Call&& call)
         {
-            const double waitedMs =
-                std::chrono::duration<double, std::milli>(Clock::now() - startedAt).count();
-            if (waitedMs < 1.0)
-                return;
-            const std::wstring line = std::format(L"{} waited {:.1f} ms\n", call, waitedMs);
-            ::OutputDebugStringW(line.c_str());
+            if constexpr (Diagnostic::Options::logPresentWait())
+            {
+                const Clock::time_point startedAt = Clock::now();
+                const HRESULT hr = call();
+                const double waitedMs =
+                    std::chrono::duration<double, std::milli>(Clock::now() - startedAt).count();
+                if (waitedMs >= 1.0)
+                {
+                    logStep(std::format(L"{} {} waited {:.1f} ms",
+                        static_cast<const void*>(window), name, waitedMs));
+                }
+                return hr;
+            }
+            else
+            {
+                return call();
+            }
         }
     }
 
@@ -282,12 +293,10 @@ namespace ClaFi::PlatformImplementation::Windows
         }
         else
         {
-            const Clock::time_point startedAt =
-                Diagnostic::Options::logPresentWait() ? Clock::now() : Clock::time_point{};
-            hr = m_swapChain->ResizeBuffers(0, static_cast<UINT>(m_size.x),
-                static_cast<UINT>(m_size.y), DXGI_FORMAT_UNKNOWN, 0);
-            if constexpr (Diagnostic::Options::logPresentWait())
-                logWait(L"ResizeBuffers", startedAt);
+            hr = timedCall(L"ResizeBuffers", m_window, [this]() {
+                return m_swapChain->ResizeBuffers(0, static_cast<UINT>(m_size.x),
+                    static_cast<UINT>(m_size.y), DXGI_FORMAT_UNKNOWN, 0);
+            });
         }
 
         if (FAILED(hr))
@@ -360,11 +369,9 @@ namespace ClaFi::PlatformImplementation::Windows
         DXGI_PRESENT_PARAMETERS parameters{};
         parameters.DirtyRectsCount = 1;
         parameters.pDirtyRects = &dirty;
-        constexpr Clock::time_point startedAt =
-            Diagnostic::Options::logPresentWait() ? Clock::now() : Clock::time_point{};
-        hr = m_swapChain->Present1(1, 0, &parameters);
-        if constexpr (Diagnostic::Options::logPresentWait())
-            logWait(L"Present1", startedAt);
+        hr = timedCall(L"Present1", m_window, [&]() {
+            return m_swapChain->Present1(1, 0, &parameters);
+        });
         if (FAILED(hr))
         {
             discardDevice();

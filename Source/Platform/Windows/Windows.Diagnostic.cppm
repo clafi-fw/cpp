@@ -33,6 +33,9 @@ namespace ClaFi::PlatformImplementation::Windows
         }
     }
 
+    // A line to the debugger's output, stamped with the seconds since the first line.
+    export void logStep(std::wstring_view line);
+
     // A COM call.
     export void checkHr(const HRESULT hr,
         const std::source_location& loc = std::source_location::current())
@@ -58,5 +61,14 @@ namespace ClaFi::PlatformImplementation::Windows
             message += '\n';
             ::OutputDebugStringA(message.c_str());
         }
+    }
+
+    void logStep(const std::wstring_view line)
+    {
+        using Clock = std::chrono::steady_clock;
+        static const Clock::time_point s_firstLine = Clock::now();
+        const double seconds = std::chrono::duration<double>(Clock::now() - s_firstLine).count();
+        const std::wstring stamped = std::format(L"{:9.4f} {}\n", seconds, line);
+        ::OutputDebugStringW(stamped.c_str());
     }
 }

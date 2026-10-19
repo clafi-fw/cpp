@@ -25,7 +25,8 @@ namespace ClaFi::Diagnostic::Options
     {
         constexpr ApiErrors apiErrors{ ApiErrors::Ignore };
         constexpr bool logThemeCrossing{ false };
-        constexpr bool logPresentWait{ false };
+        constexpr bool logPresentWait{ true };
+        constexpr bool logWindowSteps{ true };
         constexpr bool logScrollIntoView{ false };
         constexpr bool logFormPlacement{ false };
         constexpr bool highlightTextAreas{ false };
@@ -56,6 +57,17 @@ namespace ClaFi::Diagnostic::Options
     export [[nodiscard]] constexpr bool logPresentWait()
     {
         return enabled && Stated::logPresentWait;
+    }
+
+    /// @brief Every step a composed window's resize is made of goes to the debugger's output
+    /// with the moment it was made: the rect about to change, the content presented at the new
+    /// size, the shadow filled around it, each line naming the window. The compositor shows
+    /// whatever stands at its frame, so a frame falling between the first line and the last
+    /// shows the window moved with its old content or its old shadow - and the gaps say which
+    /// step leaves it standing that way for how long.
+    export [[nodiscard]] constexpr bool logWindowSteps()
+    {
+        return enabled && Stated::logWindowSteps;
     }
 
     /// @brief Every scroll-into-view request goes to the Output page: the rect asked for,

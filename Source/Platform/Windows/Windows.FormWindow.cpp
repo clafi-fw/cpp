@@ -2,6 +2,7 @@ module;
 #include "Windows.Headers.h"
 module ClaFi.Platform.Windows.FormWindow;
 
+import ClaFi.Platform.Windows.Diagnostic;
 import ClaFi.App.Application;
 
 import ClaFi.Core.Graphics.Canvas;
@@ -12,6 +13,8 @@ import ClaFi.Core.System.Utils;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine;
+import ClaFi.Diagnostic.Options;
+import ClaFi.StdLib;
 
 namespace ClaFi
 {
@@ -40,6 +43,7 @@ namespace ClaFi
         m_form{ form }
     {
         dwmEnableDarkMode();
+        m_statedBounds = bounds();
         // **Made before any other window this one owns**, so it stands lowest among them: a tooltip
         // or a menu raised later stands above the shadow rather than under it.
         m_shadow = std::make_unique<ShadowWindow>(
@@ -119,6 +123,10 @@ namespace ClaFi
 
     void FormWindow::setStoredBounds(const IntRect& value)
     {
+        // A maximized or minimized window keeps its size and only records the rect for its
+        // restore, so there is nothing to make ready.
+        if (!isMaximized() && !isMinimized())
+            stateBounds(value);
         m_lockDpiChange = true;
         setBounds(value);
         m_lockDpiChange = false;
@@ -583,7 +591,9 @@ namespace ClaFi
         // **The surface follows the client area**: less the ring, plus the margins. Minimized has
         // no area and nothing to lay out into. The form marks the whole surface and paints it
         // inside the call - see FormBase::wnd_resize - so nothing is invalidated after it: that
-        // would post a second whole paint behind the one just made.
+        // would post a second whole paint behind the one just made. A rect a placement stated
+        // was laid out and painted for before the move - see stateBounds - and the resize
+        // reporting it is one that moved nothing.
         //
         // **A step is composed before the next one begins.** The paint the form posted arrives
         // ahead of the next pointer position and waits there for the compositor to show this step,
@@ -609,6 +619,17 @@ namespace ClaFi
         case WM_WINDOWPOSCHANGING:
         {
             const ::WINDOWPOS& pos = *reinterpret_cast<const ::WINDOWPOS*>(msg.lParam);
+            if constexpr (Diagnostic::Options::logWindowSteps())
+            {
+                const IntSize current = bounds().dimensions();
+                const bool resized = !(pos.flags & SWP_NOSIZE)
+                    && (pos.cx != current.x || pos.cy != current.y);
+                if (resized)
+                {
+                    logStep(std::format(L"{} rect {}x{} to {}x{}",
+                        static_cast<const void*>(handle()), current.x, current.y, pos.cx, pos.cy));
+                }
+            }
             if (m_shadow && !(pos.flags & SWP_NOMOVE))
             {
                 const IntRect current = bounds();
@@ -620,6 +641,8 @@ namespace ClaFi
         }
 
         case WM_WINDOWPOSCHANGED:
+            // What the system made of the rect, which the WM_SIZE that follows is measured against.
+            m_statedBounds = bounds();
             syncShadow(nullptr);
             m_form.wnd_posChanged();
             break;
@@ -732,7 +755,7 @@ namespace ClaFi
 
     IntRect FormWindow::clientArea() const
     {
-        return IntRect::fromDimensions(surfaceOrigin(), WindowBase::clientRect().dimensions());
+        return IntRect::fromDimensions(surfaceOrigin(), m_statedBounds.dimensions());
     }
 
     // **A window not shown only keeps the frame**, and applies it on the show. The first design
@@ -764,7 +787,7 @@ namespace ClaFi
 
     void FormWindow::reframe()
     {
-        m_form.wnd_resize(surfaceSize(WindowBase::clientRect().dimensions()), appliedFrame());
+        m_form.wnd_resize(surfaceSize(m_statedBounds.dimensions()), appliedFrame());
         invalidateRect(nullptr);
         syncShadow(nullptr);
     }
@@ -814,6 +837,11 @@ namespace ClaFi
 
         const bool reachesMargins = dirty.left < area.left || dirty.top < area.top
             || dirty.right > area.right || dirty.bottom > area.bottom;
+        if constexpr (Diagnostic::Options::logWindowSteps())
+        {
+            if (reachesMargins)
+                logStep(std::format(L"{} content", static_cast<const void*>(handle())));
+        }
         const FrameMargins margins = appliedFrame().margins;
         if (!m_shadow || !reachesMargins || margins.empty())
             return;
@@ -825,9 +853,10 @@ namespace ClaFi
             static_cast<float>(surface.x - margins.right),
             static_cast<float>(surface.y - margins.bottom)
         };
-        const IntRect window = bounds();
-        const IntPoint position{ window.left - origin.x, window.top - origin.y };
+        const IntPoint position{ m_statedBounds.left - origin.x, m_statedBounds.top - origin.y };
         m_shadow->fill(m_form.wnd_shadowPainter(), surface, geometry, area, position, m_alpha);
+        if constexpr (Diagnostic::Options::logWindowSteps())
+            logStep(std::format(L"{} shadow", static_cast<const void*>(handle())));
     }
 
     // **The dirty rect is taken before the form is called**, so what the form invalidates while it
@@ -836,14 +865,14 @@ namespace ClaFi
     // GPU backend draws on its device, a CPU backend ignores it and hands its bitmap back.
     void FormWindow::paint()
     {
-        // **A window nobody can see is not painted.** Nothing it paints reaches the screen, and the
-        // show asks for the whole surface - see WM_SHOWWINDOW.
-        if (!::IsWindowVisible(handle()))
+        // **A window nobody can see is not painted**, hidden or minimized. Nothing it paints
+        // reaches the screen, and the show asks for the whole surface - see WM_SHOWWINDOW.
+        if (!::IsWindowVisible(handle()) || ::IsIconic(handle()))
             return;
         IntRect dirty = m_surfaceDirty;
         if (m_surfaceWholeDirty)
         {
-            const IntSize surface = surfaceSize(WindowBase::clientRect().dimensions());
+            const IntSize surface = surfaceSize(m_statedBounds.dimensions());
             dirty = { 0, 0, surface.x, surface.y };
         }
         m_surfaceDirty = {};
@@ -856,7 +885,7 @@ namespace ClaFi
             m_presenter = std::make_unique<CompositionPresenter>(handle());
             m_presenter->setOpacity(m_alpha / 255.0f);
         }
-        m_presenter->resize(WindowBase::clientRect().dimensions());
+        m_presenter->resize(m_statedBounds.dimensions());
 
         m_form.wnd_beforePaint();
         // The form paints what this window shows. The margins past it are the shadow window's.
@@ -865,6 +894,21 @@ namespace ClaFi
         if (!shown.empty())
             m_form.wnd_paint(m_presenter.get(), shown, bitmap);
         present(bitmap, dirty);
+    }
+
+    // **Ready before the window moves.** The form is laid out and painted for the rect, the frame
+    // presented and the shadow filled around it, and only then does the caller change the rect -
+    // so the three reach the compositor together. A frame composed between the move and the
+    // paint shows the window at its new rect with the old answer in it and the old ring around
+    // it, for as long as the paint and the fill take. The WM_SIZE the move sends afterwards
+    // finds a form already at that size and paints nothing - see FormBase::wnd_resize.
+    void FormWindow::stateBounds(const IntRect& value)
+    {
+        m_statedBounds = value;
+        m_form.wnd_resize(surfaceSize(value.dimensions()), appliedFrame());
+        // A new answer in a window of the size it has - the resize above returns at once - is
+        // painted now rather than after the move.
+        paint();
     }
 
     // **One posted message for any number of invalidations.** Posted rather than left to WM_PAINT:
