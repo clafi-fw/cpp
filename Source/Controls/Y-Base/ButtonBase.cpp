@@ -2,6 +2,7 @@ module ClaFi.Controls.Base.ButtonBase;
 
 import ClaFi.Icons.CheckMark;
 import ClaFi.Icons.DialogIcon;
+import ClaFi.Icons.OpenChevron;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -352,9 +353,14 @@ namespace ClaFi::Controls
         if (m_endIcon == EndIcon::None)
             return;
 
-        const InTextIcon mark{ k_endIconSize, [](PaintIconEvent& iconEvent) {
-            Icons::DialogIcon::paint(iconEvent);
-        } };
+        const float size = m_endIcon == EndIcon::OpensWindow ? k_endIconSize : k_listMarkSize;
+        // Tagged by its kind: two marks of one size compare equal without it.
+        const InTextIcon mark{ size, [kind = m_endIcon](PaintIconEvent& iconEvent) {
+            if (kind == EndIcon::OpensWindow)
+                Icons::DialogIcon::paint(iconEvent);
+            else
+                Icons::OpenChevron::paintRight(iconEvent);
+        }, Tag{ m_endIcon } };
         event.text << FlexSpace{ k_endIconGap } << mark;
     }
 

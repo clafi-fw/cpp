@@ -143,6 +143,11 @@ namespace ClaFi
             m_shortcuts.push_back(value);
     }
 
+    void Action::setItems(ActionList value)
+    {
+        m_items = std::move(value);
+    }
+
     Control* Action::subject(FormBase& form, Control* presenter) const
     {
         Control* result = nullptr;
@@ -290,11 +295,21 @@ namespace ClaFi
         // What a popup was opened **on** is the third, and for a menu it is **the** answer: the
         // focus moves into the menu so that its items can be walked, and a menu item is never what
         // the command is about. It is the more precise answer anyway - a context menu acts on the
-        // control it was raised from, whether or not the focus ever reached it.
+        // control it was raised from, whether or not the focus ever reached it. A popup opened on
+        // a line of another popup - a list beside a menu - reaches on through that one to what
+        // it was opened on, down to the form that is no popup.
         //
         // The form's current item is the last, for a form that is neither: the focus is in
         // another window, and this is what this one was last in.
-        return { presenter, focused, form.popupTarget(), form.currentItem() };
+        EntryControls entries{ presenter, focused };
+        std::size_t count = 2;
+        for (FormBase* at = &form; at && count + 1 < entries.size(); at = at->popupTargetForm())
+        {
+            if (Control* target = at->popupTarget())
+                entries[count++] = target;
+        }
+        entries[count] = form.currentItem();
+        return entries;
     }
 
     void Action::connectPresenter(Attachment& attachment, const PresenterRole role)
@@ -311,9 +326,9 @@ namespace ClaFi
                 event.text << m_text;
         }));
 
-        // A Line states the command in full by itself, so nothing is composed for it: a tooltip
-        // there would say back the very line the pointer is standing on.
-        if (role != PresenterRole::Line)
+        // A Line or an Opener states the command in full by itself, so nothing is composed for
+        // it: a tooltip there would say back the very line the pointer is standing on.
+        if (role != PresenterRole::Line && role != PresenterRole::Opener)
             connections.push_back(presenter.onGetTooltip([this](GetTooltipEvent& event) {
                 getTooltip(event);
             }));
@@ -324,8 +339,10 @@ namespace ClaFi
 
         // A Display presenter is shown the command and does not deliver it. Its press belongs to
         // whatever routes it - a strip's goes to the button it is part of - and connecting here
-        // as well would run the command twice off one press.
-        if (role != PresenterRole::Display)
+        // as well would run the command twice off one press. An Opener's press opens the
+        // command's list, which the presenter does for itself.
+        const bool delivers = role == PresenterRole::Button || role == PresenterRole::Line;
+        if (delivers)
             connections.push_back(presenter.onClick([this, control](ClickEvent& event) {
                 // Answered from the presenter, so the click acts on whatever its own state said
                 // it would. Resolved from the focus alone the two can differ: pressing a

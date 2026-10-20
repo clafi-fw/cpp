@@ -49,6 +49,20 @@ have to move through the part nobody can see. The drag's ceiling is the bar's ex
 the body has over its floor, read off the laid-out rects: the sum of the two stays put while the
 drag moves the line between them, so the ceiling holds through the drag.
 
+The layout holds the bar in the same range. A window made narrower never goes through the drag:
+`adjustChildMetrics` hands the pass the stated extent as the bar's preference, `Control::calculate`
+clamps that between the bar's own minimum and maximum, which know nothing of the body, and
+`alignContent` used to lay the bar out at what it measured and hand the body what was left - with
+the extent dragged to the ceiling of a wide window and the window then made narrower, the body
+and its scroll bar went out of the window and stayed out until the window was wide again (Oj's
+recording, 2026-10-20). A preference is what a control would like and a floor is what it is owed,
+so `laidBarExtent` cuts the bar the way the drag refuses to move it: no larger than leaves the
+body its floor past the gap and the bar across from it, never below the bar's own. The stated
+extent is not touched, so the bar is back at it as soon as the panel has the room, and
+`OnBarResize` is not raised - the value the application keeps is still the one the pointer stated.
+A bar with no splitter is laid out as it measured, as before: the rule is the splitter's range
+kept by the layout, not a new rule for every bar.
+
 The splitter is a direct child registered as the panel's own overlay. The hit test walks a panel's
 children in collection order and stops at the first that contains the point, and the band has to
 win over the bar and the body it lies on - overlays are met before the children and painted after

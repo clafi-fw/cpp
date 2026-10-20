@@ -524,6 +524,23 @@ straight under the home, unlisted, where a link still reaches them.
 holds no slash and is no other item's beside it, and renaming an item moves every url under it, as
 renaming the project does.
 
+**The sidebar is edited where it stands, in every tab's tree, and on the sidebar page.** Both go
+by the same rules, and an edit in either shows in both.
+
+**In the tree**, a sidebar row's menu holds the edits, under Open in new tab:
+
+- **Add** opens the four kinds. The item goes at the end of the category the menu is on, after any
+  other item, and at the end of the top level from the project's node's menu; it is named by its
+  kind and opens for its name as the item does on the page.
+- **Rename** opens an editor over the row's name, as F2 and a second click on it do.
+- **Delete** takes the item out with everything under it; a category holding items asks first.
+- **Kind** opens the kinds the item can be made, the one it is marked.
+- **The items under one node are carried** to another place among themselves, a press on a row and
+  a drag - the rows under the project's node and under a category. The folders under All the APIs
+  stand as the scan lists them.
+
+A divider is a row like any other in the tree: it opens nothing, and its menu has no Rename.
+
 **The sidebar page** edits the sidebar:
 
 - **The tree** of the items under the project's own node, which always stands and cannot be
@@ -663,7 +680,8 @@ item.
 Down the left, under each project's node, stand the items of its sidebar - a category a node
 holding its items, a divider a line, a content item a row - and under its All the APIs item a tree
 of the sources' folders, named as they stand on disk. The page of the row clicked shows on the
-right, and Open in new tab on a row's menu opens it in a tab behind the one shown.
+right, and Open in new tab on a row's menu opens it in a tab behind the one shown. The sidebar's
+rows are edited in place, by their menus and by a drag - see [The sidebar](#the-sidebar).
 
 - Each folder holds the folders under it, then its modules by their full names.
 - Each module holds the types it exports, controls first.

@@ -47,8 +47,11 @@ does.
 its bar.
 
 **The bar keeps its metrics.** A drag or a fit sets only the bar's preferred size, so `MinSize` and
-`MaxSize` still clamp it. A drag also stops where the body reaches its own floor. A
-`PreferredSize` on the bar is where it starts.
+`MaxSize` still clamp it. A `PreferredSize` on the bar is where it starts.
+
+**The body keeps its floor.** A drag stops where the body reaches its floor, and a panel made too
+small for both cuts the bar instead, down to the bar's own floor. The extent stays what was
+stated, so the bar comes back as the panel grows.
 
 **Keep the split through OnBarResize.** Store the extent it carries, and hand it back with
 setBarExtent.

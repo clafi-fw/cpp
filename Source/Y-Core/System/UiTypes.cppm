@@ -78,7 +78,8 @@ namespace ClaFi
     {
         Button,   // delivers the click and shows nothing of the command but its face
         Line,     // delivers the click and writes the name and the key itself
-        Display   // shows the command without delivering it
+        Display,  // shows the command without delivering it
+        Opener    // writes the name itself and opens the command's own list instead of delivering it
     };
 
 
@@ -715,7 +716,8 @@ namespace ClaFi
     export enum class EndIcon
     {
         None,
-        OpensWindow
+        OpensWindow,   // the command opens a window of its own
+        OpensList      // the command opens a list of its own, beside the line
     };
 
     // Where the dropdown mark points with the popup closed and with it open. See UI-Types

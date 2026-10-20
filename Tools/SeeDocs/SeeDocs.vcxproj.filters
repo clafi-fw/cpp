@@ -80,6 +80,12 @@
     <ClCompile Include="Src\SeeDocs_App.Search.cppm">
       <Filter>Src</Filter>
     </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.SidebarEdits.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.SidebarEdits.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp">
       <Filter>Src</Filter>
     </ClCompile>
@@ -174,6 +180,12 @@
       <Filter>Src\Ui</Filter>
     </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.SidebarEditor.cppm">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.SidebarRows.cpp">
+      <Filter>Src\Ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Ui\SeeDocs_App.SidebarRows.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cpp">

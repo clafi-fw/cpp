@@ -15,6 +15,7 @@ import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.InkWell;
 
@@ -78,12 +79,35 @@ namespace ClaFi::Controls
 
     export using BaseMenuForm = Form<ScrollBoxWith<StackPanel>>;
 
+    export class Menu;
+
+    // A line for a command that holds commands: a press opens them beside it, as a list of their
+    // own, and the menu stays up. See Controls
+    export class MenuGroupItem : public MenuItem
+    {
+    public:
+        template<typename... Args>
+        MenuGroupItem(const CreateParams&, Menu&, Action&, Args&&...);
+    public:
+        [[nodiscard]] Action& action() const { return m_action; }
+        std::wstring_view diagnosticText() const override { return L"MenuGroupItem"; }
+    protected:
+        void click(ClickEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;   // Right opens the list
+    private:
+        Menu& m_menu;
+        Action& m_action;
+    };
+
     // A popup list of commands, owned by the control it was opened from. See Controls
     export class Menu : public BaseMenuForm
     {
+        friend class MenuGroupItem;
     public:
         explicit Menu(Control& owner);
     public:
+        // Every command as a line, a null as a separator, and one holding commands as a line
+        // with its list beside it.
         void addActions(const ActionList&);
         void addSeparator();
         MenuCommand& addToCommandBar(Action&);
@@ -97,26 +121,54 @@ namespace ClaFi::Controls
         /// BottomLeft hangs it from the control's left end, BottomRight from its right end.
         /// Answers once it has closed, and a menu with nothing to show does not open.
         int executeUnder(const Control&, FormPlacement placement = FormPlacement::BottomLeft);
+        /// Stands the menu beside a line of another menu, as the list of the command the line
+        /// holds, and runs it. Left closes it; a command run in it closes the menu it stands beside.
+        int executeBeside(const Control& line);
     protected:
         void nestedClick(NestedClickEvent&) override;
+        void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Nothing in it, and no placeholder to stand in for the nothing.
         [[nodiscard]] bool nothingToShow() const { return empty() && body().placeholderText().empty(); }
     public:
-        // One place for what every item shares: the separator waiting on it, and the count that
-        // says the menu has something in it. What differs between an action item and a text item
-        // is only what the button is built from.
+        // A line of the caller's own, built from what it is given, that closes the menu behind
+        // its click.
         template<typename... Args>
         MenuItem& add(Args&&...);
+        // A line that opens the command's list beside it. See Controls
+        MenuGroupItem& addGroup(Action&);
     private:
+        // One place for what every line shares: the separator waiting on it, the count that says
+        // the menu has something in it, and the rest the pointer is timed on.
+        template<typename Item, typename... Args>
+        Item& place(Args&&...);
+        // Opens the group's list beside it and runs it, then the list of whichever other group
+        // the pointer settled on while that one was up, until none did. A command run in any of
+        // them closes this menu too.
+        void openGroup(MenuGroupItem&);
+        // The pointer has rested on a line: a group's list opens, and another line's closes the
+        // list up beside the group it left.
+        void hoverSettled();
+        [[nodiscard]] MenuGroupItem* groupOf(const Control&) const;
+    private:
+        // How long the pointer rests on a line before the list under it opens, or the list up
+        // beside another line closes: long enough to cross a line on the way somewhere else. A
+        // member, since place is a template the importers instantiate.
+        static constexpr MilliSeconds k_listDelay{ 300u };
+
         // The strip is built when something is put in it. A menu with no commands in the strip
         // has no top bar at all, and measures exactly as it did before there was one.
         StackPanel* m_commandBar{ nullptr };
         // Held by address, which is how an action is recognised everywhere else.
         std::vector<const Action*> m_commandBarActions;
+        std::vector<MenuGroupItem*> m_groups;
         std::size_t m_itemCount{ 0 };
         // A separator waits for an item to follow it, so one asked for at the end never lands.
         bool m_separatorPending{ false };
+        bool m_isList{ false };       // stands beside a line of another menu
+        bool m_commandRan{ false };   // a command was run from a line, or from a list under one
+        MenuGroupItem* m_pendingGroup{ nullptr };   // whose list opens once the one up has closed
+        UiTimer m_hoverTimer{};
     };
 
 
@@ -177,6 +229,9 @@ namespace ClaFi::Controls
         // The window is whatever the items came out as. A menu is never laid out into a size it
         // was given: it has no size until it has been filled.
         setAutoFit(AutoFit::Yes);
+        m_hoverTimer.onTick([this](TimerEvent&) {
+            hoverSettled();
+        });
     }
 
     void Menu::addActions(const ActionList& actions)
@@ -185,9 +240,18 @@ namespace ClaFi::Controls
         {
             if (!action)
                 addSeparator();
+            else if (action->opensList())
+                addGroup(*action);
             else if (!onCommandBar(*action))
                 add(*action);
         }
+    }
+
+    MenuGroupItem& Menu::addGroup(Action& action)
+    {
+        MenuGroupItem& item = place<MenuGroupItem>(*this, action);
+        m_groups.push_back(&item);
+        return item;
     }
 
     void Menu::addSeparator()
@@ -251,14 +315,99 @@ namespace ClaFi::Controls
         return BaseMenuForm::execute();
     }
 
+    int Menu::executeBeside(const Control& line)
+    {
+        if (nothingToShow())
+            return 0;
+        m_isList = true;
+        setPlacement(FormPlacement::Right, line.boundsInForm());
+        return BaseMenuForm::execute();
+    }
+
     void Menu::nestedClick(NestedClickEvent& nestedClickEvent)
     {
         Form<ScrollBoxWith<StackPanel>>::nestedClick(nestedClickEvent);
         Platform::beep();
     }
 
+    void Menu::nestedKeyDown(KeyDownEvent& event)
+    {
+        if (m_isList && event.key == Keys::Left && event.modifiers.empty())
+        {
+            close();
+            event.handled = true;
+            return;
+        }
+        BaseMenuForm::nestedKeyDown(event);
+    }
+
+    void Menu::openGroup(MenuGroupItem& group)
+    {
+        if (activePopup() && activePopup()->popupTarget() == &group)
+            return;
+        closeActivePopup();
+        if (activePopup())
+            return;
+        for (MenuGroupItem* next = &group; next;)
+        {
+            m_pendingGroup = nullptr;
+            Menu list{ *next };
+            list.addActions(next->action().items());
+            list.executeBeside(*next);
+            if (list.m_commandRan)
+            {
+                m_commandRan = true;
+                close();
+                return;
+            }
+            next = m_pendingGroup;
+        }
+    }
+
+    void Menu::hoverSettled()
+    {
+        Control* hovered = Input::hoveredControl();
+        if (!hovered || &hovered->form() != this)
+            return;
+        MenuGroupItem* group = groupOf(*hovered);
+        if (const FormBase* list = activePopup())
+        {
+            if (list->popupTarget() == group)
+                return;
+            // Closed here and opened by openGroup, whose loop this close returns into.
+            m_pendingGroup = group;
+            closeActivePopup();
+            return;
+        }
+        if (group)
+            openGroup(*group);
+    }
+
+    MenuGroupItem* Menu::groupOf(const Control& control) const
+    {
+        for (MenuGroupItem* group : m_groups)
+        {
+            if (group == &control)
+                return group;
+        }
+        return nullptr;
+    }
+
     template<typename ...Args>
     MenuItem& Menu::add(Args&&... args)
+    {
+        MenuItem& item = place<MenuItem>(std::forward<Args>(args)...);
+        // Read once the handlers have run: a click they stopped keeps the menu up, and runs no
+        // command - see closeBehindCommand.
+        item.onClick([this](ClickEvent& event) {
+            if (!event.propagationStopped())
+                m_commandRan = true;
+        });
+        return item;
+    }
+
+    template<typename Item, typename... Args>
+    Item& Menu::place(Args&&... args)
     {
         if (m_separatorPending)
         {
@@ -266,7 +415,11 @@ namespace ClaFi::Controls
             m_separatorPending = false;
         }
         ++m_itemCount;
-        return body().add<MenuItem>(std::forward<Args>(args)...);
+        Item& item = body().add<Item>(std::forward<Args>(args)...);
+        item.onHoverEnter([this](HoverEnterEvent&) {
+            m_hoverTimer.start(k_listDelay);
+        });
+        return item;
     }
 
     //-----------------------------------------------------------------------------
@@ -347,6 +500,46 @@ namespace ClaFi::Controls
         event.text << InkWell::textInk(InkGrade::Muted) << shortcutText;
     }
 
+
+    //-----------------------------------------------------------------------------
+
+
+    // MenuGroupItem
+
+    template<typename... Args>
+    MenuGroupItem::MenuGroupItem(const CreateParams& params, Menu& menu, Action& action,
+        Args&&... args)
+        :
+        MenuItem{
+            params,
+            EndIcon::OpensList,
+            // Shown the command and left to open it: the action connects no click of its own.
+            PresenterRole::Opener,
+            action,
+            std::forward<Args>(args)...
+        },
+        m_menu{ menu },
+        m_action{ action }
+    {
+    }
+
+    // The list opens, and the menu stays: nothing closes behind this press.
+    void MenuGroupItem::click(ClickEvent& event)
+    {
+        Button::click(event);
+        m_menu.openGroup(*this);
+    }
+
+    void MenuGroupItem::nestedKeyDown(KeyDownEvent& event)
+    {
+        if (event.key == Keys::Right && event.modifiers.empty())
+        {
+            m_menu.openGroup(*this);
+            event.handled = true;
+            return;
+        }
+        MenuItem::nestedKeyDown(event);
+    }
 
 
     //-----------------------------------------------------------------------------

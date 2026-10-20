@@ -6,4 +6,5 @@ namespace ClaFi::Icons::OpenChevron
 {
     export void paintUp(PaintIconEvent&);     // two strokes meeting at a right angle, point up
     export void paintDown(PaintIconEvent&);   // the same, point down
+    export void paintRight(PaintIconEvent&);  // the same, point right
 }

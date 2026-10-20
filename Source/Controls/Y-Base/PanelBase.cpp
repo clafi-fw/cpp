@@ -339,13 +339,14 @@ namespace ClaFi::Controls
         {
             if (m_contentRect.top)
                 m_contentRect.top += event.scaledSpacingY();
+            m_bodyRect.top = m_contentRect.top;
             alignControl(
                 topBar(),
                 event,
                 m_contentRect.topLeft(),
-                { m_contentRect.width(), topBar()->scaledHeight() }
+                { m_contentRect.width(), laidBarExtent(PanelSlot::Top, PanelSlot::Bottom, event) }
             );
-            m_bodyRect.top = m_contentRect.top + topBar()->scaledHeight();
+            m_bodyRect.top += topBar()->scaledHeight();
         }
         if (m_bodyRect.top)
         {
@@ -356,12 +357,13 @@ namespace ClaFi::Controls
         if (isNotNullAndVisible(bottomBar()))
         {
             FloatRect itsRect = m_contentRect;
-            m_bodyRect.bottom = m_contentRect.bottom - bottomBar()->scaledHeight();
+            const float height = laidBarExtent(PanelSlot::Bottom, {}, event);
+            m_bodyRect.bottom = m_contentRect.bottom - height;
             alignControl(
                 bottomBar(),
                 event,
                 { m_contentRect.left, m_bodyRect.bottom },
-                { m_contentRect.right, bottomBar()->scaledHeight() }
+                { m_contentRect.right, height }
             );
             if (bottomBar()->scaledHeight())
             {
@@ -376,7 +378,7 @@ namespace ClaFi::Controls
                 leftBar(),
                 event,
                 m_bodyRect.topLeft(),
-                { leftBar()->scaledWidth(), m_bodyRect.height() }
+                { laidBarExtent(PanelSlot::Left, PanelSlot::Right, event), m_bodyRect.height() }
             );
             m_bodyRect.left += leftBar()->scaledWidth();
             if (leftBar()->scaledWidth())
@@ -393,7 +395,7 @@ namespace ClaFi::Controls
                 rightBar(),
                 event,
                 { m_bodyRect.right, m_bodyRect.top },
-                { rightBar()->scaledWidth(), m_bodyRect.height() }
+                { laidBarExtent(PanelSlot::Right, {}, event), m_bodyRect.height() }
             );
             float w = rightBar()->scaledWidth();
             if (w)
@@ -634,6 +636,32 @@ namespace ClaFi::Controls
             alignControl(splitter, event,
                 { m_contentRect.left, bandStart }, { m_contentRect.width(), bandWidth });
         }
+    }
+
+    // A bar the pointer sizes is laid out inside the range the drag holds it in, whatever the
+    // panel comes to: no larger than leaves the body its floor, never below its own. See
+    // Controls-Base
+    float PanelBase::laidBarExtent(const PanelSlot slotId,
+        const std::optional<PanelSlot> oppositeSlot, const AlignEvent& event)
+    {
+        const Control& bar = *slot(slotId);
+        const bool upright = isSideBar(slotId);
+        const float measured = upright ? bar.scaledWidth() : bar.scaledHeight();
+        if (!shownSplitter(slotId))
+            return measured;
+        const float spacing = upright ? event.scaledSpacingX() : event.scaledSpacingY();
+        const ScaledSize bodyMin = bodyMinSize();
+        float room = upright ? m_bodyRect.width() - bodyMin.x : m_bodyRect.height() - bodyMin.y;
+        room -= splitterGap(slotId, spacing);
+        if (oppositeSlot && isNotNullAndVisible(slot(*oppositeSlot)))
+        {
+            const Control& opposite = *slot(*oppositeSlot);
+            const float extent = upright ? opposite.scaledWidth() : opposite.scaledHeight();
+            if (extent)
+                room -= extent + splitterGap(*oppositeSlot, spacing);
+        }
+        const ScaledSize barMin = bar.composedMinSize();
+        return std::max(std::min(measured, room), upright ? barMin.x : barMin.y);
     }
 
     // A bar is dragged no smaller than its floor, and no larger than leaves the body its own.

@@ -183,6 +183,9 @@ namespace ClaFi::Controls
         [[nodiscard]] float splitterGap(PanelSlot slotId, float spacing);
         // Lays the splitter of the bar in slotId into the gap that starts at gapStart.
         void placeSplitter(PanelSlot slotId, AlignEvent&, float gapStart, float gap);
+        // What the bar in slotId is laid out at, the bar in oppositeSlot still to be laid out.
+        [[nodiscard]] float laidBarExtent(PanelSlot slotId, std::optional<PanelSlot> oppositeSlot,
+            const AlignEvent&);
         [[nodiscard]] ExtentRange barExtentRange(PanelSlot slotId) const;
         // What a drag states for the bar in slotId, and the word that it has.
         void dragBarTo(PanelSlot slotId, float extent);

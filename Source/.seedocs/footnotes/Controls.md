@@ -76,6 +76,17 @@ behind it.
 **Build it on the stack**, fill it, then run it - execute returns once the menu has closed. An empty
 menu stays closed, unless setPlaceHolderText gave it a placeholder to show.
 
+**A command holding commands is a line with its list beside it** - a MenuGroupItem, which addActions
+adds for an Action whose items are set. The list opens when the pointer rests on the line, on its
+press, and on Right; it closes when the pointer rests on another line, on Left, and on Escape. A
+command run in the list closes every menu it stands beside, and a list holds lines of its own the
+same way.
+
+## MenuGroupItem
+
+**Shown the command and left to open it**: the action is attached in the Opener role, so the press
+opens the list and runs nothing.
+
 ## HistoryButton
 
 The strip drops a StepsMenu of the IEditHistory the face's click would act on, and walks the run

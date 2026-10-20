@@ -15,7 +15,8 @@ namespace ClaFi::Icons::OpenChevron
         enum class Point
         {
             Up,
-            Down
+            Down,
+            Right
         };
 
         void paintPointing(PaintIconEvent& event, const Point point)
@@ -25,12 +26,21 @@ namespace ClaFi::Icons::OpenChevron
             const float size = std::min(iconRect.width(), iconRect.height()) - strokeWidth;
             // The arms run at 45 degrees, so the mark spans three quarters of the square.
             const float halfHeight = size * 0.19f;
-            const float tipY = point == Point::Up ? -halfHeight : halfHeight;
+            const float tip = point == Point::Up ? -halfHeight : halfHeight;
 
             PixelPath path;
-            path.moveTo(-2.0f * halfHeight, -tipY);
-            path.lineTo(0.0f, tipY);
-            path.lineTo(2.0f * halfHeight, -tipY);
+            if (point == Point::Right)
+            {
+                path.moveTo(-tip, -2.0f * halfHeight);
+                path.lineTo(tip, 0.0f);
+                path.lineTo(-tip, 2.0f * halfHeight);
+            }
+            else
+            {
+                path.moveTo(-2.0f * halfHeight, -tip);
+                path.lineTo(0.0f, tip);
+                path.lineTo(2.0f * halfHeight, -tip);
+            }
 
             const Color color = event.textRgb(InkGrade::Strongest);
             const Matrix3x2 transform = Matrix3x2::Translation(event.iconCenter());
@@ -46,6 +56,11 @@ namespace ClaFi::Icons::OpenChevron
     void paintDown(PaintIconEvent& event)
     {
         paintPointing(event, Point::Down);
+    }
+
+    void paintRight(PaintIconEvent& event)
+    {
+        paintPointing(event, Point::Right);
     }
 
 }

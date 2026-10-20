@@ -99,6 +99,7 @@ namespace ClaFi::Controls
         // Both of them depend on text size - making them const is wrong:
         // How large the end icon is drawn, in design units.
         static constexpr float k_endIconSize = 18.0f;
+        static constexpr float k_listMarkSize = 12.0f;   // the list mark, which is a chevron
         // The least room left between the caption and the end icon.
         static constexpr float k_endIconGap = 8.0f;
         

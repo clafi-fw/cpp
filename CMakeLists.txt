@@ -512,6 +512,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/Ui/SeeDocs_App.PageView.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.ProjectOptions.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.SidebarEditor.cpp"
+        "${seedocs_dir}/Ui/SeeDocs_App.SidebarRows.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.SurfaceTree.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.Workspace.cpp"
         "${seedocs_dir}/SeeDocs_App.Database.cpp"
@@ -524,6 +525,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/SeeDocs_App.Reading.cpp"
         "${seedocs_dir}/SeeDocs_App.ScanCache.cpp"
         "${seedocs_dir}/SeeDocs_App.Scanner.cpp"
+        "${seedocs_dir}/SeeDocs_App.SidebarEdits.cpp"
         "${seedocs_dir}/SeeDocs_App.Search.cpp"
         "${seedocs_dir}/SeeDocs_App.Surface.cpp")
     target_sources(SeeDocs PRIVATE FILE_SET CXX_MODULES FILES
@@ -542,6 +544,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/Ui/SeeDocs_App.PageView.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.ProjectOptions.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.SidebarEditor.cppm"
+        "${seedocs_dir}/Ui/SeeDocs_App.SidebarRows.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.SurfaceTree.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Workspace.cppm"
         "${seedocs_dir}/SeeDocs_App.Database.cppm"
@@ -554,6 +557,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/SeeDocs_App.Reading.cppm"
         "${seedocs_dir}/SeeDocs_App.ScanCache.cppm"
         "${seedocs_dir}/SeeDocs_App.Scanner.cppm"
+        "${seedocs_dir}/SeeDocs_App.SidebarEdits.cppm"
         "${seedocs_dir}/SeeDocs_App.Search.cppm"
         "${seedocs_dir}/SeeDocs_App.Surface.cppm")
     target_link_libraries(SeeDocs PRIVATE ClaFi)

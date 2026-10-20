@@ -11,6 +11,7 @@ import SeeDocs_App.PageText;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
 import SeeDocs_App.Search;
+import SeeDocs_App.SidebarEdits;
 import SeeDocs_App.Surface;
 
 import ClaFi.App.Notices;
@@ -1343,6 +1344,13 @@ namespace SeeDocs_App
         const std::size_t index = m_tabTrees.size() - 1;
         tree.onPick([this](TreePickEvent& event) {
             openPicked(event);
+        });
+        tree.onEdit([this](TreeEditEvent& event) {
+            if (ShownProject* shown = projectOf(event.project))
+            {
+                SidebarEditedEvent edited{ shown->open, std::move(event.items) };
+                emitEvent(edited);
+            }
         });
         const BrowserTab* owner = &tab;
         tree.onToggle([this, owner](TreeToggleEvent& event) {

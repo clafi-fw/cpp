@@ -332,6 +332,10 @@ Call invalidateState() when the answer changes.
 **A control given an action as a property presents it**, in the role its `PresenterRole` property
 gives - `Button` unless it states another.
 
+**A command holding commands opens them as a list of its own.** `setItems` gives it the list - a
+null parts two groups - and a menu shows it as a line with the list beside it, by a presenter in
+the `Opener` role: the press opens the list, and the command's own click is never run.
+
 ## Shortcut
 
 **An empty shortcut matches no key** and adds nothing to a tooltip.

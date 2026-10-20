@@ -124,6 +124,11 @@ namespace ClaFi
         [[nodiscard]] const ShortcutCollection& shortcuts() const { return m_shortcuts; }
         void setShortcut(Shortcut); // makes this the only key, and an empty one leaves none
         void addShortcut(Shortcut); // one more key that runs it, after the ones it has
+        // The commands this one opens as a list of its own, a null for a rule between two groups.
+        // A menu shows such a command as a line with its list beside it. See Control-Foundation
+        [[nodiscard]] const ActionList& items() const { return m_items; }
+        void setItems(ActionList);
+        [[nodiscard]] bool opensList() const { return !m_items.empty(); }
     public:
         // What answers for this action in that form, or null when nothing up the focus chain
         // claimed it and the action answers for itself. Asked, never stored: two calls a frame
@@ -166,7 +171,9 @@ namespace ClaFi
         void invalidateText();
     private:
         using ConnectionCollection = std::vector<EventConnection>;
-        using EntryControls = std::array<Control*, 4>;
+        // The presenter, the focus, what each popup down the stack was opened on, and the
+        // form's current item; a slot with nothing in it is null.
+        using EntryControls = std::array<Control*, 8>;
 
         // One presenter, and what was connected on it. The connections are plain, never scoped:
         // the only path that drops them without disconnecting is a presenter being destroyed,
@@ -201,6 +208,7 @@ namespace ClaFi
         Text m_text{};
         TooltipText m_tooltipText{};
         ShortcutCollection m_shortcuts{};
+        ActionList m_items{};
         AttachmentCollection m_attachments{};
     };
 

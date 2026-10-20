@@ -320,6 +320,7 @@
                     <li><a href="#ownership">Who Owns an Action</a></li>
                     <li><a href="#giving-to-control">Handing It to a Control</a></li>
                     <li><a href="#what-it-supplies">What the Control Takes From It</a></li>
+                    <li><a href="#presenter-roles">The Presenter's Role</a></li>
                     <li><a href="#presenter-rules">What a Presenter Has to Be</a></li>
                     <li><a href="#state">State</a></li>
                     <li><a href="#invalidating">Saying the Answer Changed</a></li>
@@ -354,6 +355,11 @@
             <li>
                 <div class="nav-item-wrapper">
                     <a href="#writing">Writing an Action of Your Own</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#holding">A Command Holding Commands</a>
                 </div>
             </li>
             <li class="has-children collapsed">
@@ -470,6 +476,17 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
             <div class="info"><strong>A control's own text wins.</strong> The action supplies the words for a
             presenter that has none, which is the ordinary case; a presenter that spells its own text is stating a
             local exception, and gets it.</div>
+
+            <h3 id="presenter-roles">The Presenter's Role</h3>
+            <p>A <code>PresenterRole</code> property says what the control does for the action, and
+            <code>Button</code> is the role a control takes when it states none:</p>
+            <table>
+                <tr><th>Role</th><th>What the presenter does</th></tr>
+                <tr><td><code>Button</code></td><td>Delivers the click, and shows nothing of the command but its face: the icon, and the name where the control has no text of its own.</td></tr>
+                <tr><td><code>Line</code></td><td>Delivers the click, and writes the name and the key itself - a menu line. The tooltip is left out, since it would say back the line the pointer stands on.</td></tr>
+                <tr><td><code>Display</code></td><td>Shows the command without delivering it. A split button's face is one: its press belongs to the button that routes it.</td></tr>
+                <tr><td><code>Opener</code></td><td>Writes the name itself and opens the command's own list instead of delivering it - the line a menu shows for a command holding commands, see <a href="#holding">below</a>.</td></tr>
+            </table>
 
             <h3 id="presenter-rules">What a Presenter Has to Be</h3>
             <div class="rules-grid">
@@ -693,6 +710,25 @@ view.<span class="fn">onActionClick</span>([&amp;](<span class="tp">ActionClickE
             <code>actions().add(...)</code>, which returns a reference. Never put actions in a container that
             reallocates.</div>
 
+            <h2 id="holding">A Command Holding Commands</h2>
+            <p>An action holds a list of actions with <code>setItems</code>, a null in it parting two groups the
+            way one parts them in a context menu's list. A menu given such an action shows it as a line with the
+            list beside it: the list opens when the pointer rests on the line, on its press and on Right, and
+            closes when the pointer rests on another line, on Left and on Escape. A command run in the list closes
+            every menu it stands beside, and a list holds lines of its own the same way. The holding command's
+            own click is never run - its line presents it in the <code>Opener</code> role - and its state greys the
+            line as any other's does.</p>
+<pre><span class="tp">Action</span> kind{ <span class="tp">Text</span>{ L<span class="st">"Kind"</span> } };
+<span class="tp">Action</span> asFolder{ <span class="tp">Text</span>{ L<span class="st">"Folder"</span> } };
+<span class="tp">Action</span> asPage{ <span class="tp">Text</span>{ L<span class="st">"Page"</span> } };
+kind.<span class="fn">setItems</span>({ &amp;asFolder, &amp;asPage });
+
+<span class="cm">// on the subject: the lines of the list resolve to it through the menu they stand beside</span>
+view.<span class="fn">onGetActionState</span>([&amp;](<span class="tp">GetActionStateEvent</span>&amp; event) {
+    <span class="kw">if</span> (&amp;event.action == &amp;asFolder)
+        event.<span class="fn">claim</span>({ .selected = view.<span class="fn">isFolder</span>() });
+});</pre>
+
             <h2 id="internals">How It Works</h2>
 
             <h3 id="resolving">Resolving the Subject</h3>
@@ -704,7 +740,9 @@ view.<span class="fn">onActionClick</span>([&amp;](<span class="tp">ActionClickE
             actually run. Nothing is stored: two calls a frame apart may answer differently, which is the point -
             the answer belongs to whatever the user is in now.</p>
             <p>Because a menu takes the pointer without taking the focus, a menu item's action resolves to the
-            control in the window behind it, with nothing written to make that happen.</p>
+            control in the window behind it, with nothing written to make that happen. A popup opened on a line of
+            another popup - a list beside a menu - resolves on through that one to what it was opened on, down to
+            the form that is no popup, so a line of the list reaches the same subject the menu's lines do.</p>
 
             <h3 id="attachments">Attachments and Lifetime</h3>
             <p>The action holds a list of its presenters; a presenter holds nothing, and neither does a subject -
@@ -750,6 +788,7 @@ view.<span class="fn">onActionClick</span>([&amp;](<span class="tp">ActionClickE
                 <tr><td><code>text()</code>, <code>tooltipText()</code></td><td>Mutable. Follow a change with <code>invalidateText()</code> or <code>invalidate()</code>.</td></tr>
                 <tr><td><code>shortcut()</code>, <code>shortcuts()</code></td><td>The key shown for it, and every key that runs it.</td></tr>
                 <tr><td><code>setShortcut()</code>, <code>addShortcut()</code></td><td>Make one key the only one, or put one more after the ones it has.</td></tr>
+                <tr><td><code>items()</code>, <code>setItems()</code>, <code>opensList()</code></td><td>The commands it opens as a list of its own, a null parting two groups; whether it holds any.</td></tr>
                 <tr><td><code>subject(form)</code></td><td>What would answer for it in that form, or null.</td></tr>
                 <tr><td><code>state(form)</code>, <code>enabled(form)</code></td><td>Ask for the state now.</td></tr>
                 <tr><td><code>invoke(form)</code></td><td>Run it, on the subject if there is one. Answers whether it ran.</td></tr>

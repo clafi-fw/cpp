@@ -2,6 +2,7 @@ export module SeeDocs_App.SidebarEditor;
 
 import SeeDocs_App.Icons;
 import SeeDocs_App.Project;
+import SeeDocs_App.SidebarEdits;
 
 import ClaFi.Controls.Button;
 import ClaFi.Controls.InPlaceEdit;
@@ -28,15 +29,6 @@ namespace SeeDocs_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // The sidebar was edited on its page: what it is to be. The surface has an Event of its own.
-    export class SidebarEditEvent : public ::ClaFi::Event
-    {
-    public:
-        explicit SidebarEditEvent(SidebarItems);
-    public:
-        SidebarItems items;
-    };
-
     // **A project's sidebar as its editor**: the items as a tree under the project's own node,
     // which always stands; Add, dropping the kinds, and Delete over the selected item, in the bar
     // the editor is given; the selected item's kind picked at the right; a name typed where it
@@ -60,11 +52,6 @@ namespace SeeDocs_App
     protected:
         void nestedKeyDown(KeyDownEvent&) override;   // Delete takes the selected item out
     private:
-        // Where an item stands: its index in each list down from the top.
-        using IndexPath = std::vector<std::size_t>;
-        class CategoryHeader;
-        class ItemRow;
-        class DividerRow;
         class AddButton;
         // A row of the editor's tree, and the item it stands for. Its controls carry it as their
         // tag.
@@ -92,19 +79,10 @@ namespace SeeDocs_App
         [[nodiscard]] const Row* selectedRow() const;
         [[nodiscard]] const Row* rowAt(const IndexPath&) const;
         [[nodiscard]] const SidebarItem* selectedItem() const;
-        // The list the path's last index counts in, and the item it names - null where the items
-        // no longer reach that far, the rows standing until the tick that builds them again.
-        [[nodiscard]] static SidebarItems& listAt(SidebarItems&, const IndexPath&);
-        [[nodiscard]] static const SidebarItem* itemAt(const SidebarItems&, const IndexPath&);
-        // A name no item of the list goes by: the kind's, numbered where that is taken.
-        [[nodiscard]] static std::wstring newName(SidebarKind, const SidebarItems&);
-        // Why the name cannot be an item's here; empty where it can.
-        [[nodiscard]] static std::wstring refusalOf(std::wstring_view name,
-            const SidebarItems& siblings, const SidebarItem* self);
         void addItem(SidebarKind);   // under the selected category, else after the selected item
         void deleteSelected();
         [[nodiscard]] bool canDelete() const;
-        // Whether the item may be of the kind: a category holding items keeps its kind.
+        // Whether the selected item may be of the kind.
         [[nodiscard]] bool canBeKind(SidebarKind) const;
         void setKind(SidebarKind);
         // Takes the name typed for the item, or refuses it with the reason.
@@ -114,7 +92,6 @@ namespace SeeDocs_App
         // Says what the sidebar is to be, and shows it read back where the shape changed.
         void edit(SidebarItems, bool rebuild);
         void selectionChanged();
-        [[nodiscard]] static std::wstring_view kindCaption(SidebarKind);
     private:
         static constexpr float k_treeWidth = 340.0f;    // the bar the tree stands in
         static constexpr float k_treePadding = 4.0f;

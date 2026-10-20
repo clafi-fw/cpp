@@ -139,6 +139,8 @@
     <ClCompile Include="Src\SeeDocs_App.Scanner.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Search.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Search.cppm" />
+    <ClCompile Include="Src\SeeDocs_App.SidebarEdits.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.SidebarEdits.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Surface.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.AppIcon.cpp" />
@@ -171,6 +173,8 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.ProjectOptions.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.SidebarEditor.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.SidebarEditor.cppm" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.SidebarRows.cpp" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.SidebarRows.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Workspace.cpp" />
