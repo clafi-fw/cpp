@@ -62,7 +62,12 @@ namespace SeeDocs_App
     private:
         // Where an item stands: its index in each list down from the top.
         using IndexPath = std::vector<std::size_t>;
-        // A row of the editor's tree, and the item it stands for.
+        class CategoryHeader;
+        class ItemRow;
+        class DividerRow;
+        class AddButton;
+        // A row of the editor's tree, and the item it stands for. Its controls carry it as their
+        // tag.
         struct Row
         {
             IndexPath path{};
@@ -70,22 +75,20 @@ namespace SeeDocs_App
             TreeItem* row{ nullptr };    // a page's, an All the APIs item's, or a divider's
         };
         using Rows = std::vector<Row>;
-        class CategoryHeader;
-        class ItemRow;
-        class DividerRow;
-        class AddButton;
     private:
         // Adds the project's own node to the tree: its mark, its name, and the carry for its rows.
         [[nodiscard]] TreeNode& addRoot(std::wstring_view projectName);
+        // Adds the kind set's caption and the set under it, set in from the caption.
+        [[nodiscard]] StackPanel& addKindSet();
         void connectKinds();   // the kind set, each kind an answer of it
         void addKind(SidebarKind, std::wstring_view caption);
         // Makes the rows under the node for the items, each knowing where it stands.
         void buildRows(const SidebarItems&, TreeNode& holder, const IndexPath& under);
+        void tagRows();   // every row's controls take the row, once the rows stand
         void rebuildRows();   // over the items as they now read, the selection kept
-        // The row the control is or stands in; null for the project's own node, or none.
-        [[nodiscard]] const Row* rowOf(const Control*) const;
-        // The row a child of a node's rows is: a category's node, or any other item's row.
-        [[nodiscard]] const Row* rowOfChild(const Control*) const;
+        // The row the control stands for - a node, its header, or an item's row; null for the
+        // project's own node, or none.
+        [[nodiscard]] static const Row* rowOf(const Control*);
         [[nodiscard]] const Row* selectedRow() const;
         [[nodiscard]] const Row* rowAt(const IndexPath&) const;
         [[nodiscard]] const SidebarItem* selectedItem() const;
@@ -117,6 +120,7 @@ namespace SeeDocs_App
         static constexpr float k_treePadding = 4.0f;
         static constexpr float k_kindsPadding = 12.0f;  // between the tree and the kind set
         static constexpr float k_choiceIndent = 20.0f;  // the kinds in from their caption
+        static constexpr std::wstring_view k_kindCaption = L"Kind";
 
         const SidebarItems& m_items;   // the project's, read whenever the rows are built
         Rows m_rows{};
@@ -135,10 +139,7 @@ namespace SeeDocs_App
             Orientation::Vertical,
             Padding{ k_kindsPadding, 0.0f }
         ) };
-        StackPanel& m_kindSet{ m_kinds.add<StackPanel>(
-            Orientation::Vertical,
-            Padding{ k_choiceIndent, 0.0f }
-        ) };
+        StackPanel& m_kindSet{ addKindSet() };
     };
 
 

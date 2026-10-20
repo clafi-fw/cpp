@@ -38,7 +38,6 @@ namespace SeeDocs_App
     {
         constexpr float k_iconGap = 5.0f;   // between a row's mark and its text
         constexpr float k_markRoom = k_rowIconSize + k_iconGap;   // what a row's mark takes
-        constexpr std::wstring_view k_kindCaption = L"Kind";
         constexpr std::wstring_view k_addCaption = L"Add";
         constexpr std::wstring_view k_deleteCaption = L"Delete";
         constexpr std::wstring_view k_addTooltip = L"Adds an item under the selected category, "
@@ -212,6 +211,12 @@ namespace SeeDocs_App
         );
     }
 
+    StackPanel& SidebarEditor::addKindSet()
+    {
+        m_kinds.add<Label>(Text{ k_kindCaption });
+        return m_kinds.add<StackPanel>(Orientation::Vertical, Padding{ k_choiceIndent, 0.0f });
+    }
+
     void SidebarEditor::addCommands(StackPanel& bar)
     {
         bar.add<AddButton>(
@@ -254,7 +259,6 @@ namespace SeeDocs_App
 
     void SidebarEditor::connectKinds()
     {
-        m_kinds.add<Label>(Text{ k_kindCaption });
         for (const SidebarKind kind : k_kinds)
             addKind(kind, kindCaption(kind));
         m_kinds.setVisible(false);
@@ -361,6 +365,7 @@ namespace SeeDocs_App
         }
         m_rows.clear();
         buildRows(m_items, m_root, {});
+        tagRows();
         m_root.header().setExpanded(true);
         for (const Row& row : m_rows)
         {
@@ -383,37 +388,39 @@ namespace SeeDocs_App
         current.scrollIntoViewOnAlign();
         selectionChanged();
 
-        if (std::exchange(m_renameNext, false) && found)
+        const SidebarItem* item = found ? itemAt(m_items, found->path) : nullptr;
+        if (std::exchange(m_renameNext, false) && item)
         {
             if (found->node)
                 static_cast<CategoryHeader&>(found->node->header()).openEditor();
-            else if (ItemRow* row = dynamic_cast<ItemRow*>(found->row))
-                row->openEditor();
+            else if (item->kind != SidebarKind::Divider)
+                static_cast<ItemRow&>(*found->row).openEditor();
         }
     }
 
-    const SidebarEditor::Row* SidebarEditor::rowOf(const Control* control) const
+    // **The rows are tagged once they all stand**: a row is where its vector put it, and the
+    // vector settles only then. A node and its header carry the row alike, the header being
+    // what the tree makes current and the node what its rows stack carries.
+    void SidebarEditor::tagRows()
     {
-        if (!control)
-            return nullptr;
-        for (const Row& row : m_rows)
+        for (Row& row : m_rows)
         {
-            const Control& own = row.node ? static_cast<const Control&>(row.node->header())
-                : *row.row;
-            if (own.containsNested(*control))
-                return &row;
+            const Tag tag{ &row };
+            if (row.node)
+            {
+                row.node->setTag(tag);
+                row.node->header().setTag(tag);
+            }
+            else
+            {
+                row.row->setTag(tag);
+            }
         }
-        return nullptr;
     }
 
-    const SidebarEditor::Row* SidebarEditor::rowOfChild(const Control* control) const
+    const SidebarEditor::Row* SidebarEditor::rowOf(const Control* control)
     {
-        for (const Row& row : m_rows)
-        {
-            if (row.node == control || row.row == control)
-                return &row;
-        }
-        return nullptr;
+        return control ? control->tag().get<const Row*>() : nullptr;
     }
 
     const SidebarEditor::Row* SidebarEditor::selectedRow() const
@@ -647,7 +654,7 @@ namespace SeeDocs_App
         std::vector<std::size_t> order;   // the items' old indexes, in the rows' order
         for (const ControlPtr& child : rows.controls())
         {
-            const Row* row = rowOfChild(child.get());
+            const Row* row = rowOf(child.get());
             if (row && row->path.size() == under.size() + 1ull)
                 order.push_back(row->path.back());
         }
