@@ -1,5 +1,6 @@
 export module SeeDocs_App.Icons;
 
+import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
 import ClaFi.Core.Context.PaintIconEvent;
@@ -20,6 +21,9 @@ namespace SeeDocs_App
         Project,
         Options,   // the project's options page
         Sidebar,   // the project's sidebar page
+        Category,     // a category of the sidebar
+        Content,      // a page of the project's own, from the sidebar
+        AllTheApis,   // the sidebar's item holding the folders
         Folder,
         Module,
         Control,
@@ -38,6 +42,8 @@ namespace SeeDocs_App
 
     // The icon of a type's row - a control's, whatever else the type is.
     export [[nodiscard]] RowIcon rowIconOf(const Type&);
+    // The icon of a sidebar item's row; a divider has none.
+    export [[nodiscard]] std::optional<RowIcon> rowIconOf(SidebarKind);
     // The icon a row kind is marked with, sized for a tree row, for the head of the row's text.
     export [[nodiscard]] InTextIcon rowIcon(RowIcon);
     // The same mark sized for a page's title, for the head of the title's text.

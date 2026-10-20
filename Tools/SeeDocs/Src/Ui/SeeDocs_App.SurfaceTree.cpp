@@ -2,6 +2,7 @@ module SeeDocs_App.SurfaceTree;
 
 import SeeDocs_App.Icons;
 import SeeDocs_App.Pages;
+import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
 import ClaFi.Browser.Actions;
@@ -21,15 +22,45 @@ namespace SeeDocs_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
+    namespace
+    {
+        constexpr wchar_t k_pathSeparator = L'/';   // between an item's names, and after them
+
+        // An item's path with one more name under it; the top's is the name alone.
+        [[nodiscard]] std::wstring joinPath(const std::wstring_view path,
+            const std::wstring_view name)
+        {
+            if (path.empty())
+                return std::wstring{ name };
+            std::wstring result{ path };
+            result.append(1, k_pathSeparator).append(name);
+            return result;
+        }
+
+        // What follows the item's path and its slash in a key; nothing where the key is not
+        // the item's.
+        [[nodiscard]] std::optional<std::wstring_view> underItem(const std::wstring_view key,
+            const std::wstring_view item)
+        {
+            if (!key.starts_with(item) || key.size() <= item.size()
+                || key[item.size()] != k_pathSeparator)
+            {
+                return std::nullopt;
+            }
+            return key.substr(item.size() + 1);
+        }
+    }
+
     // TreePickEvent
 
     TreePickEvent::TreePickEvent(const ProjectId pickedProject, const RowKind pickedKind,
-        const std::wstring_view pickedFolder, const ContentsModule* pickedModule,
-        const Type* pickedType, const PickTab pickedTab)
+        const std::wstring_view pickedItem, const std::wstring_view pickedFolder,
+        const ContentsModule* pickedModule, const Type* pickedType, const PickTab pickedTab)
         :
         ::ClaFi::Event{},
         project{ pickedProject },
         kind{ pickedKind },
+        item{ pickedItem },
         folder{ pickedFolder },
         module{ pickedModule },
         type{ pickedType },
@@ -51,13 +82,14 @@ namespace SeeDocs_App
     // **A row is picked by a click, not by becoming current**: the arrow keys walk the rows without
     // opening a page for each one passed, and Enter opens the row they stop on.
     void SurfaceTree::addProject(const ProjectId id, const std::wstring_view name,
-        const ContentsTree& contents)
+        const SidebarItems& sidebar, const ContentsTree& contents)
     {
         std::unique_ptr<ProjectRows> made = std::make_unique<ProjectRows>();
         ProjectRows& rows = *made;
         rows.id = id;
+        rows.sidebar = &sidebar;
         rows.contents = &contents;
-        rows.made.resize(contents.rows().size());
+        rows.items = flattenItems(sidebar);
         if (!m_projects.empty())
             rows.above = &addDivider(Thickness::Heavy);
         rows.node = &addNode(projectText(name));
@@ -66,20 +98,21 @@ namespace SeeDocs_App
             pickHome(id, PickTab::Shown);
         });
         m_projects.push_back(std::move(made));
-        connectNode(rows, *rows.node, std::nullopt);
+        connectNode(rows, *rows.node, {});
     }
 
-    // **The rows standing were made over the contents before**, which the project has let go of by
-    // now, so they are taken down by what was made and not by what the contents say.
-    void SurfaceTree::rebuildProject(const ProjectId id, const ContentsTree& contents,
-        const OpenRows& open)
+    // **The rows standing were made over the sidebar and the contents before**, which the project
+    // has let go of by now, so they are taken down by what was made and not by what those say.
+    void SurfaceTree::rebuildProject(const ProjectId id, const SidebarItems& sidebar,
+        const ContentsTree& contents, const OpenRows& open)
     {
         ProjectRows* rows = rowsOf(id);
         if (!rows)
             return;
         clearRows(*rows);
+        rows->sidebar = &sidebar;
         rows->contents = &contents;
-        rows->made.assign(contents.rows().size(), MadeRow{});
+        rows->items = flattenItems(sidebar);
         restoreRows(id, open);
     }
 
@@ -152,37 +185,58 @@ namespace SeeDocs_App
         }
     }
 
-    // Opened from the row up, so the row stands in the tree before it is made current.
-    void SurfaceTree::follow(const ProjectId id, const std::wstring_view folder,
-        const ContentsModule* module, const Type* type)
+    // Opened from the row up, so the row stands in the tree before it is made current. A divider
+    // has no row to show, and the item's category stands in for it.
+    void SurfaceTree::follow(const ProjectId id, const std::wstring_view item,
+        const std::wstring_view folder, const ContentsModule* module, const Type* type)
     {
         ProjectRows* rows = rowsOf(id);
-        const std::optional<std::size_t> index = rows
-            ? rows->contents->rowOf(folder, module, type)
-            : std::nullopt;
+        const std::optional<std::size_t> index = rows ? itemOf(*rows, item) : std::nullopt;
         if (!index.has_value())
         {
             followHome(id);
             return;
         }
-
-        ensureRow(*rows, *index);
-        const ContentsRows& contents = rows->contents->rows();
-        std::optional<std::size_t> at = contents[*index].parent;
-        while (at.has_value())
+        const ItemRows& itemRows = rows->items[*index];
+        const std::optional<std::size_t> contents =
+            itemRows.item->kind == SidebarKind::AllTheApis
+                ? rows->contents->rowOf(folder, module, type)
+                : std::nullopt;
+        if (contents.has_value())
         {
-            rows->made[*at].node->header().setExpanded(true);
-            at = contents[*at].parent;
+            ensureContentsRow(*rows, *index, *contents);
+            const ContentsRows& contentsRows = rows->contents->rows();
+            std::optional<std::size_t> at = contentsRows[*contents].parent;
+            while (at.has_value())
+            {
+                itemRows.made[*at].node->header().setExpanded(true);
+                at = contentsRows[*at].parent;
+            }
+            itemRows.node->header().setExpanded(true);
+            showRow(*rows, *index, rowOf(itemRows.made[*contents]));
+            return;
         }
-        showRow(*rows, rowOf(rows->made[*index]));
+        ensureItemRow(*rows, *index);
+        if (Control* row = rowOf(itemRows))
+            showRow(*rows, *index, *row);
+        else if (itemRows.parent.has_value())
+            showRow(*rows, *itemRows.parent, *rowOf(rows->items[*itemRows.parent]));
+        else
+            followHome(id);
     }
 
     void SurfaceTree::followHome(const ProjectId id)
     {
         if (ProjectRows* rows = rowsOf(id))
-            showRow(*rows, rows->node->header());
+        {
+            rows->node->header().setExpanded(true);
+            setCurrentItem(rows->node->header());
+            rows->node->header().scrollIntoViewOnAlign();
+        }
         else
+        {
             setCurrentItem(nullptr);
+        }
     }
 
     OpenRows SurfaceTree::openRows(const ProjectId id) const
@@ -193,15 +247,24 @@ namespace SeeDocs_App
             return open;
         open.home = rows->node->header().expanded();
         const ContentsRows& contents = rows->contents->rows();
-        for (std::size_t i = 0; i != rows->made.size(); ++i)
+        for (const ItemRows& item : rows->items)
         {
-            TreeNode* node = rows->made[i].node;
-            if (!node || !node->header().expanded())
+            if (!item.node || !item.node->header().expanded())
                 continue;
-            if (contents[i].kind == ContentsRowKind::Folder)
-                open.folders.emplace_back(contents[i].folder);
-            else
-                open.modules.push_back(moduleLink(contents[i].folder, contents[i].module->name));
+            open.items.push_back(item.path);
+            for (std::size_t i = 0; i != item.made.size(); ++i)
+            {
+                TreeNode* node = item.made[i].node;
+                if (!node || !node->header().expanded())
+                    continue;
+                if (contents[i].kind == ContentsRowKind::Folder)
+                    open.folders.push_back(joinPath(item.path, contents[i].folder));
+                else
+                {
+                    open.modules.push_back(joinPath(item.path,
+                        moduleLink(contents[i].folder, contents[i].module->name)));
+                }
+            }
         }
         return open;
     }
@@ -214,17 +277,39 @@ namespace SeeDocs_App
         if (!rows)
             return;
         m_restoring = true;
-        const auto openRow = [this, rows](const std::optional<std::size_t> index) {
+        for (const std::wstring& path : open.items)
+        {
+            const std::optional<std::size_t> index = itemOf(*rows, path);
             if (!index.has_value())
-                return;
-            ensureRow(*rows, *index);
-            if (TreeNode* node = rows->made[*index].node)
+                continue;
+            ensureItemRow(*rows, *index);
+            if (TreeNode* node = rows->items[*index].node)
                 node->header().setExpanded(true);
+        }
+        const auto openContents = [this, rows](const std::wstring& key, const bool isFolder) {
+            for (std::size_t i = 0; i != rows->items.size(); ++i)
+            {
+                const ItemRows& item = rows->items[i];
+                if (item.item->kind != SidebarKind::AllTheApis)
+                    continue;
+                const std::optional<std::wstring_view> rest = underItem(key, item.path);
+                if (!rest.has_value())
+                    continue;
+                const std::optional<std::size_t> contents = isFolder
+                    ? rows->contents->folderRow(*rest)
+                    : rows->contents->moduleRow(*rest);
+                if (!contents.has_value())
+                    return;
+                ensureContentsRow(*rows, i, *contents);
+                if (TreeNode* node = rows->items[i].made[*contents].node)
+                    node->header().setExpanded(true);
+                return;
+            }
         };
-        for (const std::wstring& folder : open.folders)
-            openRow(rows->contents->folderRow(folder));
-        for (const std::wstring& module : open.modules)
-            openRow(rows->contents->moduleRow(module));
+        for (const std::wstring& key : open.folders)
+            openContents(key, true);
+        for (const std::wstring& key : open.modules)
+            openContents(key, false);
         if (open.home)
             fillProject(*rows);
         rows->node->header().setExpanded(open.home);
@@ -262,10 +347,18 @@ namespace SeeDocs_App
             if (&event.action != &Browser::Actions::openInNewTab)
                 return;
             const MenuRow& row = *m_menuRow;
-            if (row.kind == RowKind::Contents)
-                pick(*row.rows, row.index, PickTab::New);
-            else
-                pickHome(row.rows->id, PickTab::New);
+            switch (row.kind)
+            {
+                case RowKind::Home:
+                    pickHome(row.rows->id, PickTab::New);
+                    break;
+                case RowKind::Item:
+                    pickItem(*row.rows, row.item, PickTab::New);
+                    break;
+                case RowKind::Contents:
+                    pickContents(*row.rows, row.item, row.contents, PickTab::New);
+                    break;
+            }
         });
     }
 
@@ -279,38 +372,119 @@ namespace SeeDocs_App
         return nullptr;
     }
 
+    SurfaceTree::ItemsRows SurfaceTree::flattenItems(const SidebarItems& sidebar)
+    {
+        ItemsRows result;
+        const auto add = [&result](const auto& self, const SidebarItems& items,
+            const std::optional<std::size_t> parent, const std::wstring_view path) -> void {
+            for (const SidebarItem& item : items)
+            {
+                const std::size_t index = result.size();
+                result.push_back({
+                    .item = &item,
+                    .path = joinPath(path, item.name),
+                    .parent = parent
+                });
+                if (item.kind == SidebarKind::Category)
+                    self(self, item.items, index, result[index].path);
+            }
+        };
+        add(add, sidebar, std::nullopt, {});
+        return result;
+    }
+
+    std::optional<std::size_t> SurfaceTree::itemOf(const ProjectRows& rows,
+        const std::wstring_view path)
+    {
+        if (path.empty())
+            return std::nullopt;
+        for (std::size_t i = 0; i != rows.items.size(); ++i)
+        {
+            if (rows.items[i].path == path && rows.items[i].item->kind != SidebarKind::Divider)
+                return i;
+        }
+        return std::nullopt;
+    }
+
     void SurfaceTree::fillProject(ProjectRows& rows)
     {
         if (rows.filled)
             return;
         rows.filled = true;
-        TreeNode& node = *rows.node;
-        for (const std::size_t index : rows.contents->top())
+        for (std::size_t i = 0; i != rows.items.size(); ++i)
         {
-            makeRow(rows, index, node);
-            const MadeRow& made = rows.made[index];
-            if (made.node)
-                rows.topRows.push_back(made.node);
-            else
-                rows.topRows.push_back(made.item);
+            if (!rows.items[i].parent.has_value())
+                makeItemRow(rows, i, *rows.node);
         }
     }
 
-    void SurfaceTree::fillRow(ProjectRows& rows, const std::size_t index)
+    void SurfaceTree::fillItem(ProjectRows& rows, const std::size_t item)
     {
-        MadeRow& made = rows.made[index];
+        ItemRows& itemRows = rows.items[item];
+        if (itemRows.filled || !itemRows.node)
+            return;
+        itemRows.filled = true;
+        if (itemRows.item->kind == SidebarKind::Category)
+        {
+            for (std::size_t i = 0; i != rows.items.size(); ++i)
+            {
+                if (rows.items[i].parent == item)
+                    makeItemRow(rows, i, *itemRows.node);
+            }
+            return;
+        }
+        itemRows.made.assign(rows.contents->rows().size(), MadeRow{});
+        for (const std::size_t index : rows.contents->top())
+            makeContentsRow(rows, item, index, *itemRows.node);
+    }
+
+    void SurfaceTree::fillContentsRow(ProjectRows& rows, const std::size_t item,
+        const std::size_t contents)
+    {
+        MadeRow& made = rows.items[item].made[contents];
         if (made.filled || !made.node)
             return;
         made.filled = true;
-        for (const std::size_t child : rows.contents->rows()[index].children)
-            makeRow(rows, child, *made.node);
+        for (const std::size_t child : rows.contents->rows()[contents].children)
+            makeContentsRow(rows, item, child, *made.node);
     }
 
-    // A node is made closed: its rows are made as it opens.
-    void SurfaceTree::makeRow(ProjectRows& rows, const std::size_t index, TreeNode& holder)
+    // A node is made closed: its rows are made as it opens. A divider is a line, which no pick
+    // lands on.
+    void SurfaceTree::makeItemRow(ProjectRows& rows, const std::size_t item, TreeNode& holder)
     {
-        const ContentsRow& row = rows.contents->rows()[index];
-        MadeRow& made = rows.made[index];
+        ItemRows& itemRows = rows.items[item];
+        const SidebarItem& sidebarItem = *itemRows.item;
+        ProjectRows* holderRows = &rows;
+        const auto picked = [this, holderRows, item](ClickEvent&) {
+            pickItem(*holderRows, item, PickTab::Shown);
+        };
+        switch (sidebarItem.kind)
+        {
+            case SidebarKind::Divider:
+                itemRows.line = &holder.addDivider();
+                return;
+            case SidebarKind::Content:
+                itemRows.row = &holder.addItem(itemText(sidebarItem));
+                itemRows.row->onClick(picked);
+                return;
+            case SidebarKind::Category:
+            case SidebarKind::AllTheApis:
+                break;
+        }
+        HeaderText header;
+        header << itemText(sidebarItem);
+        itemRows.node = &holder.addNode(std::move(header));
+        itemRows.node->header().setExpanded(false);
+        itemRows.node->header().onClick(picked);
+        connectNode(rows, *itemRows.node, { .item = item });
+    }
+
+    void SurfaceTree::makeContentsRow(ProjectRows& rows, const std::size_t item,
+        const std::size_t contents, TreeNode& holder)
+    {
+        const ContentsRow& row = rows.contents->rows()[contents];
+        MadeRow& made = rows.items[item].made[contents];
         if (row.kind == ContentsRowKind::Folder)
         {
             made.node = &holder.addNode(folderText(row.folder));
@@ -331,8 +505,8 @@ namespace SeeDocs_App
         }
 
         ProjectRows* holderRows = &rows;
-        const auto picked = [this, holderRows, index](ClickEvent&) {
-            pick(*holderRows, index, PickTab::Shown);
+        const auto picked = [this, holderRows, item, contents](ClickEvent&) {
+            pickContents(*holderRows, item, contents, PickTab::Shown);
         };
         if (made.item)
         {
@@ -341,22 +515,36 @@ namespace SeeDocs_App
         }
         made.node->header().setExpanded(false);
         made.node->header().onClick(picked);
-        connectNode(rows, *made.node, index);
+        connectNode(rows, *made.node, { .item = item, .contents = contents });
     }
 
-    void SurfaceTree::ensureRow(ProjectRows& rows, const std::size_t index)
+    void SurfaceTree::ensureItemRow(ProjectRows& rows, const std::size_t item)
     {
-        const MadeRow& made = rows.made[index];
-        if (made.node || made.item)
+        const ItemRows& itemRows = rows.items[item];
+        if (itemRows.node || itemRows.row || itemRows.line)
             return;
-        const std::optional<std::size_t> parent = rows.contents->rows()[index].parent;
-        if (!parent.has_value())
+        if (!itemRows.parent.has_value())
         {
             fillProject(rows);
             return;
         }
-        ensureRow(rows, *parent);
-        fillRow(rows, *parent);
+        ensureItemRow(rows, *itemRows.parent);
+        fillItem(rows, *itemRows.parent);
+    }
+
+    void SurfaceTree::ensureContentsRow(ProjectRows& rows, const std::size_t item,
+        const std::size_t contents)
+    {
+        ensureItemRow(rows, item);
+        fillItem(rows, item);
+        const MadeRow& made = rows.items[item].made[contents];
+        if (made.node || made.item)
+            return;
+        const std::optional<std::size_t> parent = rows.contents->rows()[contents].parent;
+        if (!parent.has_value())
+            return;
+        ensureContentsRow(rows, item, *parent);
+        fillContentsRow(rows, item, *parent);
     }
 
     // The current row is let go before any row is deleted where it is one of them, so it never
@@ -366,22 +554,31 @@ namespace SeeDocs_App
         const Control* current = currentItem();
         if (current && rows.node->rows().containsNested(current))
             setCurrentItem(nullptr);
-        for (Control* row : rows.topRows)
-            row->deleteSelf();
-        rows.topRows.clear();
+        for (const ItemRows& item : rows.items)
+        {
+            if (item.parent.has_value())
+                continue;
+            if (item.node)
+                item.node->deleteSelf();
+            if (item.row)
+                item.row->deleteSelf();
+            if (item.line)
+                item.line->deleteSelf();
+        }
         rows.filled = false;
-        rows.made.clear();
+        rows.items.clear();
     }
 
     // Connected after the node is made closed, so only the user's opening and closing - and a
     // follow's - is told.
-    void SurfaceTree::connectNode(ProjectRows& rows, TreeNode& node,
-        const std::optional<std::size_t> index)
+    void SurfaceTree::connectNode(ProjectRows& rows, TreeNode& node, const Fetch fetch)
     {
         ProjectRows* holder = &rows;
-        node.onFetchRows([this, holder, index](FetchRowsEvent&) {
-            if (index.has_value())
-                fillRow(*holder, *index);
+        node.onFetchRows([this, holder, fetch](FetchRowsEvent&) {
+            if (fetch.contents.has_value())
+                fillContentsRow(*holder, *fetch.item, *fetch.contents);
+            else if (fetch.item.has_value())
+                fillItem(*holder, *fetch.item);
             else
                 fillProject(*holder);
         });
@@ -391,16 +588,25 @@ namespace SeeDocs_App
         });
     }
 
-    void SurfaceTree::pick(const ProjectRows& rows, const std::size_t index, const PickTab tab)
+    void SurfaceTree::pickItem(const ProjectRows& rows, const std::size_t item, const PickTab tab)
     {
-        const ContentsRow& row = rows.contents->rows()[index];
-        TreePickEvent event{ rows.id, RowKind::Contents, row.folder, row.module, row.type, tab };
+        TreePickEvent event{ rows.id, RowKind::Item, rows.items[item].path, {}, nullptr, nullptr,
+            tab };
+        emitEvent(event);
+    }
+
+    void SurfaceTree::pickContents(const ProjectRows& rows, const std::size_t item,
+        const std::size_t contents, const PickTab tab)
+    {
+        const ContentsRow& row = rows.contents->rows()[contents];
+        TreePickEvent event{ rows.id, RowKind::Contents, rows.items[item].path, row.folder,
+            row.module, row.type, tab };
         emitEvent(event);
     }
 
     void SurfaceTree::pickHome(const ProjectId id, const PickTab tab)
     {
-        TreePickEvent event{ id, RowKind::Home, {}, nullptr, nullptr, tab };
+        TreePickEvent event{ id, RowKind::Home, {}, {}, nullptr, nullptr, tab };
         emitEvent(event);
     }
 
@@ -412,18 +618,39 @@ namespace SeeDocs_App
         {
             if (rows->node->header().containsNested(control))
                 return MenuRow{ .rows = rows.get(), .kind = RowKind::Home };
-            for (std::size_t i = 0; i != rows->made.size(); ++i)
+            for (std::size_t i = 0; i != rows->items.size(); ++i)
             {
-                const MadeRow& made = rows->made[i];
-                if ((made.item || made.node) && rowOf(made).containsNested(control))
-                    return MenuRow{ .rows = rows.get(), .kind = RowKind::Contents, .index = i };
+                const ItemRows& item = rows->items[i];
+                const Control* row = rowOf(item);
+                if (row && row->containsNested(control))
+                    return MenuRow{ .rows = rows.get(), .kind = RowKind::Item, .item = i };
+                for (std::size_t j = 0; j != item.made.size(); ++j)
+                {
+                    const MadeRow& made = item.made[j];
+                    if ((made.item || made.node) && rowOf(made).containsNested(control))
+                    {
+                        return MenuRow{
+                            .rows = rows.get(),
+                            .kind = RowKind::Contents,
+                            .item = i,
+                            .contents = j
+                        };
+                    }
+                }
             }
         }
         return std::nullopt;
     }
 
-    void SurfaceTree::showRow(ProjectRows& rows, Control& row)
+    // Every category over the item is opened, and the project's node over them.
+    void SurfaceTree::showRow(ProjectRows& rows, const std::size_t item, Control& row)
     {
+        std::optional<std::size_t> at = rows.items[item].parent;
+        while (at.has_value())
+        {
+            rows.items[*at].node->header().setExpanded(true);
+            at = rows.items[*at].parent;
+        }
         rows.node->header().setExpanded(true);
         setCurrentItem(row);
         row.scrollIntoViewOnAlign();
@@ -435,6 +662,17 @@ namespace SeeDocs_App
         if (!current)
             return false;
         return current == &rows.node->header() || rows.node->rows().containsNested(current);
+    }
+
+    // The row an item is picked by: a page's is its row, a node's is its header; a divider has
+    // none.
+    Control* SurfaceTree::rowOf(const ItemRows& item)
+    {
+        if (item.row)
+            return item.row;
+        if (item.node)
+            return &item.node->header();
+        return nullptr;
     }
 
     // The row a made row is picked by: an item's is the item, a node's is its header.
@@ -460,6 +698,15 @@ namespace SeeDocs_App
     {
         Text text{ rowIcon(rowIconOf(type)), Space{ k_iconGap }, type.name };
         writeRowKind(text, type);
+        return text;
+    }
+
+    Text SurfaceTree::itemText(const SidebarItem& item)
+    {
+        Text text;
+        if (const std::optional<RowIcon> icon = rowIconOf(item.kind))
+            text << rowIcon(*icon) << Space{ k_iconGap };
+        text << item.name;
         return text;
     }
 }

@@ -80,6 +80,9 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
         constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
         constexpr std::wstring_view k_closeTooltip = L"Closes the project and every tab on it";
+        constexpr std::wstring_view k_projectWord = L"project";     // the home's badge
+        constexpr std::wstring_view k_categoryWord = L"category";   // a category page's badge
+        constexpr std::wstring_view k_pageWord = L"page";           // a content page's badge
         // What a tab's file keeps its tree's open nodes under, an entry per project.
         constexpr std::wstring_view k_treeNodeName = L"Tree";
         // What a tab's file keeps the trees' bar's width under; zero is a bar never resized.
@@ -89,8 +92,9 @@ namespace SeeDocs_App
         {
             constexpr std::wstring_view Project = L"Project";   // the project's folder
             constexpr std::wstring_view Home = L"Home";         // its own node open
-            constexpr std::wstring_view Folders = L"Folders";   // by path
-            constexpr std::wstring_view Modules = L"Modules";   // by link
+            constexpr std::wstring_view Items = L"Items";       // the sidebar's, by path
+            constexpr std::wstring_view Folders = L"Folders";   // by path, under an item's
+            constexpr std::wstring_view Modules = L"Modules";   // by link, under an item's
         }
 
         using TreeEntries = Dom::Sequence<Dom::Section>;
@@ -173,6 +177,45 @@ namespace SeeDocs_App
             text << PushThemeColor{ InkWell::spotInk() } << path << PopColor{};
             text << ParaIndent{ 0.0f } << k_endLine;
         }
+
+        // The item of the list a segment names: one of its name that is no divider, the first
+        // where a hand-written file repeats one.
+        [[nodiscard]] const SidebarItem* itemNamed(const SidebarItems& items,
+            const std::wstring_view segment)
+        {
+            for (const SidebarItem& item : items)
+            {
+                if (item.kind != SidebarKind::Divider && item.name == segment)
+                    return &item;
+            }
+            return nullptr;
+        }
+
+        // The path of the first All the APIs item at any depth, reading in order; nothing for
+        // none.
+        [[nodiscard]] std::optional<std::wstring> apisPathOf(const SidebarItems& items,
+            const std::wstring_view under)
+        {
+            for (const SidebarItem& item : items)
+            {
+                const std::wstring path = joinFolder(under, item.name);
+                if (item.kind == SidebarKind::AllTheApis)
+                    return path;
+                if (item.kind != SidebarKind::Category)
+                    continue;
+                if (std::optional<std::wstring> found = apisPathOf(item.items, path))
+                    return found;
+            }
+            return std::nullopt;
+        }
+
+        // Whether any item of the list has a page of its own: anything but a divider.
+        [[nodiscard]] bool listsAny(const SidebarItems& items)
+        {
+            return std::ranges::any_of(items, [](const SidebarItem& item) {
+                return item.kind != SidebarKind::Divider;
+            });
+        }
     }
 
     // OpenProject
@@ -227,6 +270,16 @@ namespace SeeDocs_App
         :
         ::ClaFi::Event{},
         project{ edited }
+    {
+    }
+
+    // SidebarEditedEvent
+
+    SidebarEditedEvent::SidebarEditedEvent(OpenProject& edited, SidebarItems toBe)
+        :
+        ::ClaFi::Event{},
+        project{ edited },
+        items{ std::move(toBe) }
     {
     }
 
@@ -321,9 +374,18 @@ namespace SeeDocs_App
 
     // SurfaceBrowser::Target
 
+    bool SurfaceBrowser::Target::holdsFolders() const
+    {
+        if (!project)
+            return false;
+        if (item)
+            return item->kind == SidebarKind::AllTheApis;
+        return project->apisPath.empty();
+    }
+
     bool SurfaceBrowser::Target::isGone() const
     {
-        std::size_t resolved = folderDepth;
+        std::size_t resolved = itemDepth + folderDepth;
         if (project)
             ++resolved;
         if (isOwnPage())
@@ -352,6 +414,7 @@ namespace SeeDocs_App
 
     void SurfaceBrowser::ShownProject::read()
     {
+        readSidebar();
         contents = contentsOf(open.surface);
         contentsTree = ContentsTree{ contents };
         index = SearchIndex{ open.surface, contents };
@@ -395,6 +458,11 @@ namespace SeeDocs_App
                 }
             }
         }
+    }
+
+    void SurfaceBrowser::ShownProject::readSidebar()
+    {
+        apisPath = apisPathOf(open.project.sidebar, {}).value_or(std::wstring{});
     }
 
     // **A scan is how the pages catch up with the disk**, so Rescan is the answer. The notice goes
@@ -557,7 +625,10 @@ namespace SeeDocs_App
         dropListed();
         shown->read();
         for (std::size_t i = 0; i != m_tabTrees.size(); ++i)
-            m_tabTrees[i].tree->rebuildProject(shown->id, shown->contentsTree, opened[i]);
+        {
+            m_tabTrees[i].tree->rebuildProject(shown->id, open.project.sidebar,
+                shown->contentsTree, opened[i]);
+        }
         refreshPageTree();
         const BrowserPage* keep = nullptr;
         for (BrowserTab& tab : tabs())
@@ -567,6 +638,38 @@ namespace SeeDocs_App
             const BrowserPage& page = static_cast<const BrowserPage&>(*tab.page());
             const Target target = resolve(page.pageData());
             if (target.project == shown && target.isOwnPage())
+                keep = &page;
+        }
+        rebuildPages(shown, keep);
+    }
+
+    // **The selected tab's sidebar page stands**, being what asked, and reads the items back for
+    // itself; the home, the items' pages and the folders' - under the item the sidebar now hangs
+    // them from - are built again, as are every tree's nodes, the ones open standing open.
+    void SurfaceBrowser::rebindSidebar(OpenProject& open)
+    {
+        ShownProject* shown = projectOf(open);
+        if (!shown)
+            return;
+        std::vector<OpenRows> opened;
+        for (const TabTree& entry : m_tabTrees)
+            opened.push_back(entry.tree->openRows(shown->id));
+        dropListed();
+        shown->readSidebar();
+        for (std::size_t i = 0; i != m_tabTrees.size(); ++i)
+        {
+            m_tabTrees[i].tree->rebuildProject(shown->id, open.project.sidebar,
+                shown->contentsTree, opened[i]);
+        }
+        refreshPageTree();
+        const BrowserPage* keep = nullptr;
+        for (BrowserTab& tab : tabs())
+        {
+            if (!tab.selected() || !tab.page())
+                continue;
+            const BrowserPage& page = static_cast<const BrowserPage&>(*tab.page());
+            const Target target = resolve(page.pageData());
+            if (target.project == shown && target.ownPage == OwnPage::Sidebar)
                 keep = &page;
         }
         rebuildPages(shown, keep);
@@ -804,18 +907,29 @@ namespace SeeDocs_App
     }
 
     // Said for every page as it is built, which is before anything asks for its list: a page
-    // with a list carries a strip from the start. The root holds the projects, a folder holds
-    // folders or modules and a module what it exports, by construction; a home holds them where
-    // its project has any, and a type holds methods where it has any.
+    // with a list carries a strip from the start. The root holds the projects, a home its
+    // sidebar's items and a category its own, by construction, as a folder holds folders or
+    // modules and a module what it exports; an All the APIs item holds the folders where its
+    // project has any, and a type holds methods where it has any.
     void SurfaceBrowser::initPageData(PageData& data)
     {
         const Target target = resolve(data);
         data.title = titleOf(data, target);
-        const bool hasList = target.isRoot()
-            || (target.project && !target.isGone() && !target.isOwnPage() && !target.searching
-                && !target.list && target.method.empty() && target.exportName.empty()
-                && (!target.isHome() || !target.project->contents.empty())
-                && (!target.type || !methodNames(*target.type).empty()));
+        bool hasList = target.isRoot();
+        const bool pageOfProject = target.project && !target.isGone() && !target.isOwnPage()
+            && !target.searching && !target.list && target.method.empty()
+            && target.exportName.empty();
+        if (pageOfProject && target.isHome())
+            hasList = listsAny(target.project->open.project.sidebar);
+        else if (pageOfProject && target.isItem())
+        {
+            if (target.item->kind == SidebarKind::Category)
+                hasList = listsAny(target.item->items);
+            else if (target.item->kind == SidebarKind::AllTheApis)
+                hasList = !target.project->contents.empty();
+        }
+        else if (pageOfProject)
+            hasList = !target.type || !methodNames(*target.type).empty();
         if (hasList)
             data.fetchState = FetchState::HasChildren;
     }
@@ -835,15 +949,37 @@ namespace SeeDocs_App
         if (target.isGone() || target.isOwnPage() || target.searching || target.list)
             return;
         const ShownProject& project = *target.project;
-        if (target.isFolder())
-        {
-            for (const std::wstring& name : subfolderNames(project, target.folder))
-                addSubItem(data, name);
-            if (target.contents)
+        const auto addItems = [this, &data](const SidebarItems& items) {
+            for (const SidebarItem& item : items)
             {
-                for (const ContentsModule& module : target.contents->modules)
+                if (item.kind != SidebarKind::Divider)
+                    addSubItem(data, item.name);
+            }
+        };
+        const auto addFolderItems = [this, &data, &project](const std::wstring_view folder,
+            const ContentsFolder* contents) {
+            for (const std::wstring& name : subfolderNames(project, folder))
+                addSubItem(data, name);
+            if (contents)
+            {
+                for (const ContentsModule& module : contents->modules)
                     addSubItem(data, segmentOf(module));
             }
+        };
+        if (target.isHome())
+        {
+            addItems(project.open.project.sidebar);
+        }
+        else if (target.isItem())
+        {
+            if (target.item->kind == SidebarKind::Category)
+                addItems(target.item->items);
+            else if (target.item->kind == SidebarKind::AllTheApis)
+                addFolderItems({}, target.contents);
+        }
+        else if (target.isFolder())
+        {
+            addFolderItems(target.folder, target.contents);
         }
         else if (!target.type)
         {
@@ -881,12 +1017,23 @@ namespace SeeDocs_App
         }
         if (!page)
         {
-            if (target.isOwnPage())
+            if (target.ownPage == OwnPage::Sidebar)
+            {
+                OpenProject& open = target.project->open;
+                SidebarPage& sidebarPage = tab.createPage<SidebarPage>(
+                    open.project.name,
+                    open.project.sidebar,
+                    MinSize{ k_leastPageWidth, 0.0f });
+                sidebarPage.head().write(iconOf(target), data.title);
+                connectSidebarPage(sidebarPage, *target.project);
+                page = &sidebarPage;
+            }
+            else if (target.isOwnPage())
             {
                 ProjectPage& projectPage = tab.createPage<ProjectPage>(
                     MinSize{ k_leastPageWidth, 0.0f });
                 projectPage.head().write(iconOf(target), data.title);
-                if (target.ownPage == OwnPage::Options && m_projectPageBuilder)
+                if (m_projectPageBuilder)
                     m_projectPageBuilder(projectPage.options(), target.project->open);
                 page = &projectPage;
             }
@@ -909,21 +1056,7 @@ namespace SeeDocs_App
         TabTree& tabTree = treeOf(tab);
         m_trees.setCurrentItem(tabTree.box);
         showTreeWidth(tab);
-        SurfaceTree& tree = *tabTree.tree;
-        const bool standsForFolder = target.searching || target.list;
-        if (!target.project)
-        {
-            tree.setCurrentItem(nullptr);
-        }
-        else if (target.isHome() || target.isOwnPage() || target.isGone()
-            || (standsForFolder && target.folder.empty()))
-        {
-            tree.followHome(target.project->id);
-        }
-        else
-        {
-            tree.follow(target.project->id, target.folder, target.module, target.type);
-        }
+        followPage(*tabTree.tree, target);
 
         const OpenProject* shown = target.project ? &target.project->open : nullptr;
         if (shown != m_shownProject)
@@ -936,6 +1069,40 @@ namespace SeeDocs_App
         if (target.searching && trimmed(m_search.searchText()) != target.search)
             m_search.setSearchText(target.search);
         writeFound();
+    }
+
+    // A search's or a list's page stands for the folder it is of, and for the item or the home
+    // where it is of the whole project.
+    void SurfaceBrowser::followPage(SurfaceTree& tree, const Target& target)
+    {
+        if (!target.project)
+        {
+            tree.setCurrentItem(nullptr);
+            return;
+        }
+        const ProjectId id = target.project->id;
+        const bool standsForFolder = target.searching || target.list;
+        if (target.isHome() || target.isOwnPage() || target.isGone())
+            tree.followHome(id);
+        else if (standsForFolder && target.folder.empty() && target.itemPath.empty())
+            tree.followHome(id);
+        else if (standsForFolder && target.folder.empty())
+            tree.follow(id, target.itemPath, {}, nullptr, nullptr);
+        else
+            tree.follow(id, target.itemPath, target.folder, target.module, target.type);
+    }
+
+    // The editor's say goes to whoever owns the project as a browser event, answered before the
+    // editor goes on to read the items back.
+    void SurfaceBrowser::connectSidebarPage(SidebarPage& page, ShownProject& shown)
+    {
+        SidebarEditor& editor = page.editor();
+        editor.addCommands(page.head().titleCommandBar());
+        OpenProject* open = &shown.open;
+        editor.onEdit([this, open](SidebarEditEvent& event) {
+            SidebarEditedEvent edited{ *open, std::move(event.items) };
+            emitEvent(edited);
+        });
     }
 
     // **Asked as a tab's page goes with the tab**, which is the one time it is: the nodes the tree
@@ -976,10 +1143,11 @@ namespace SeeDocs_App
             paintPageIcon(*tab.pageData(), event);
     }
 
-    // The project is taken by its segment, the folders as far as the segments after it spell
-    // folders its surface has, and what follows is a search's segment, or a module of the last
-    // folder and what stands in it, so a module's name under the wrong folder resolves to nothing,
-    // as a path no project carries does.
+    // The project is taken by its segment, its sidebar's items as far as the segments after it
+    // name items down from the top - a category's items after it - then, where the items reach the
+    // folders, the folders as far as the segments spell folders its surface has, and what follows
+    // is a search's segment, or a module of the last folder and what stands in it, so a module's
+    // name under the wrong folder resolves to nothing, as a path no project carries does.
     SurfaceBrowser::Target SurfaceBrowser::resolve(const PageData& data) const
     {
         const std::vector<std::wstring_view> segments = segmentsOf(data);
@@ -1008,6 +1176,24 @@ namespace SeeDocs_App
         }
 
         std::size_t next = 1;
+        const SidebarItems* level = &project->open.project.sidebar;
+        while (next < segments.size())
+        {
+            const SidebarItem* item = itemNamed(*level, segments[next]);
+            if (!item)
+                break;
+            result.item = item;
+            result.itemPath = joinFolder(result.itemPath, item->name);
+            ++next;
+            if (item->kind != SidebarKind::Category)
+                break;
+            level = &item->items;
+        }
+        result.itemDepth = next - 1;
+        if (!result.holdsFolders())
+            return result;
+
+        const std::size_t folderStart = next;
         while (next < segments.size())
         {
             const std::wstring candidate = joinFolder(result.folder, segments[next]);
@@ -1016,7 +1202,7 @@ namespace SeeDocs_App
             result.folder = candidate;
             ++next;
         }
-        result.folderDepth = next - 1;
+        result.folderDepth = next - folderStart;
         if (next + 1 == segments.size() && segments[next].starts_with(k_searchPrefix))
         {
             result.searching = true;
@@ -1127,8 +1313,11 @@ namespace SeeDocs_App
             case RowKind::Home:
                 path = homePath(*project);
                 break;
+            case RowKind::Item:
+                path = itemPathOf(*project, event.item);
+                break;
             case RowKind::Contents:
-                path = pathOf(*project, event.folder, event.module, event.type);
+                path = pathUnder(*project, event.item, event.folder, event.module, event.type);
                 break;
         }
         if (event.tab == PickTab::New)
@@ -1171,7 +1360,8 @@ namespace SeeDocs_App
     // A project the tab's file says nothing of comes in closed.
     void SurfaceBrowser::addToTree(const TabTree& entry, const ShownProject& shown)
     {
-        entry.tree->addProject(shown.id, shown.open.project.name, shown.contentsTree);
+        entry.tree->addProject(shown.id, shown.open.project.name, shown.open.project.sidebar,
+            shown.contentsTree);
         const Dom::Section& config = settings().tabConfig(entry.tab->id());
         const TreeEntries& states = (config / k_treeNodeName).as<TreeEntries>();
         const std::wstring folder = shown.open.project.folder.wstring();
@@ -1180,6 +1370,8 @@ namespace SeeDocs_App
             if ((state / TreeKeys::Project).get<std::wstring>() != folder)
                 continue;
             OpenRows open{ .home = (state / TreeKeys::Home).get<bool>() };
+            for (const std::wstring& name : (state / TreeKeys::Items).as<NodeNames>().get())
+                open.items.push_back(name);
             for (const std::wstring& name : (state / TreeKeys::Folders).as<NodeNames>().get())
                 open.folders.push_back(name);
             for (const std::wstring& name : (state / TreeKeys::Modules).as<NodeNames>().get())
@@ -1204,6 +1396,10 @@ namespace SeeDocs_App
         Dom::Section& state = found ? *found : states.add();
         (state / TreeKeys::Project).set(folder);
         (state / TreeKeys::Home).set(open.home);
+        NodeNames& items = (state / TreeKeys::Items).as<NodeNames>();
+        items.clear();
+        for (const std::wstring& name : open.items)
+            items.add().set(name);
         NodeNames& folders = (state / TreeKeys::Folders).as<NodeNames>();
         folders.clear();
         for (const std::wstring& name : open.folders)
@@ -1240,6 +1436,7 @@ namespace SeeDocs_App
                 Dom::Dt::Section{
                     Dom::Dt::Value{ TreeKeys::Project, std::wstring{} },
                     Dom::Dt::Value{ TreeKeys::Home, false },
+                    Dom::Dt::Sequence{ TreeKeys::Items, std::wstring{} },
                     Dom::Dt::Sequence{ TreeKeys::Folders, std::wstring{} },
                     Dom::Dt::Sequence{ TreeKeys::Modules, std::wstring{} }
                 }
@@ -1264,12 +1461,29 @@ namespace SeeDocs_App
         return result;
     }
 
-    // A folder's path spells its folders with the url's own separator.
+    // An item's path spells its names with the url's own separator, as a folder's does.
+    std::wstring SurfaceBrowser::itemPathOf(const ShownProject& project,
+        const std::wstring_view item)
+    {
+        std::wstring result = homePath(project);
+        if (!item.empty())
+            result.append(1, ConfigNames::PathSeparator).append(item);
+        return result;
+    }
+
     std::wstring SurfaceBrowser::pathOf(const ShownProject& project,
         const std::wstring_view folder, const ContentsModule* module, const Type* type,
         const std::wstring_view member)
     {
-        std::wstring result = homePath(project);
+        return pathUnder(project, project.apisPath, folder, module, type, member);
+    }
+
+    // A folder's path spells its folders with the url's own separator.
+    std::wstring SurfaceBrowser::pathUnder(const ShownProject& project,
+        const std::wstring_view item, const std::wstring_view folder,
+        const ContentsModule* module, const Type* type, const std::wstring_view member)
+    {
+        std::wstring result = itemPathOf(project, item);
         if (!folder.empty())
             result.append(1, ConfigNames::PathSeparator).append(folder);
         if (!module)
@@ -1326,7 +1540,9 @@ namespace SeeDocs_App
             return std::wstring{ k_sidebarTitle };
         if (target.list)
             return std::wstring{ listTitle(*target.list) };
-        const std::size_t folders = target.folderDepth + 1;
+        if (target.depth <= target.itemDepth + 1)
+            return data.name;
+        const std::size_t folders = target.itemDepth + target.folderDepth + 1;
         if (target.depth <= folders)
             return folderNameOf(data.name);
         if (target.module && target.depth == folders + 1)
@@ -1353,6 +1569,8 @@ namespace SeeDocs_App
             return RowIcon::Sidebar;
         if (target.isHome())
             return RowIcon::Project;
+        if (target.isItem())
+            return rowIconOf(target.item->kind);
         if (target.type)
             return rowIconOf(*target.type);
         if (target.module)
@@ -1385,6 +1603,19 @@ namespace SeeDocs_App
         }
         if (target.isHome())
             return homePageOf(project);
+        if (target.isItem())
+        {
+            switch (target.item->kind)
+            {
+                case SidebarKind::Category:
+                    return itemsPageOf(project, target.item, target.itemPath);
+                case SidebarKind::AllTheApis:
+                    return apisPageOf(project, *target.item);
+                case SidebarKind::Content:
+                case SidebarKind::Divider:
+                    return contentPageOf(*target.item);
+            }
+        }
         const PathRoots roots = {
             .project = open.project.name,
             .folders = open.project.sourceRoots()
@@ -1405,10 +1636,7 @@ namespace SeeDocs_App
 
     Page SurfaceBrowser::homePageOf(const ShownProject& project)
     {
-        OpenProject& open = project.open;
-        Page page = homePage(open.surface, open.notes, project.contents, open.project.name);
-        if (project.contents.empty())
-            explainEmpty(page, open.project);
+        Page page = itemsPageOf(project, nullptr, {});
         page.titleCommands.push_back({
             .text = std::wstring{ k_optionsCaption },
             .link = pathOf(project, OwnPage::Options),
@@ -1420,6 +1648,92 @@ namespace SeeDocs_App
             .pageKind = PageKind::Sidebar
         });
         page.commands.push_back(closeCommand(project, std::wstring{ k_closeProjectCaption }));
+        return page;
+    }
+
+    // **A divider parts the list into tables**, each standing on the page bare; a row wears the
+    // mark of its item's kind and links to the item's page by path.
+    Page SurfaceBrowser::itemsPageOf(const ShownProject& project, const SidebarItem* category,
+        const std::wstring_view itemPath)
+    {
+        const SidebarItems& items = category ? category->items : project.open.project.sidebar;
+        Page page;
+        page.surface = &project.open.surface;
+        if (category)
+        {
+            page.kind = PageKind::Category;
+            page.title = category->name;
+            page.badges.push_back({ .text = std::wstring{ k_categoryWord },
+                .style = RunStyle::Muted });
+        }
+        else
+        {
+            page.kind = PageKind::Project;
+            page.title = project.open.project.name;
+            page.badges.push_back({ .text = std::wstring{ k_projectWord },
+                .style = RunStyle::Muted });
+        }
+        TableRows rows;
+        const auto addTable = [&page, &rows]() {
+            if (rows.empty())
+                return;
+            Section section;
+            section.kind = SectionKind::Table;
+            section.table.columns = { TableColumn{ .name = L"Item", .fills = true } };
+            section.table.header = false;
+            section.table.groups.push_back({ .rows = std::move(rows) });
+            page.sections.push_back(std::move(section));
+            rows = {};
+        };
+        for (const SidebarItem& item : items)
+        {
+            if (item.kind == SidebarKind::Divider)
+            {
+                addTable();
+                continue;
+            }
+            std::optional<PageKind> kind;
+            switch (item.kind)
+            {
+                case SidebarKind::Category:
+                    kind = PageKind::Category;
+                    break;
+                case SidebarKind::AllTheApis:
+                    kind = PageKind::AllTheApis;
+                    break;
+                case SidebarKind::Content:
+                    kind = PageKind::Content;
+                    break;
+                case SidebarKind::Divider:
+                    break;
+            }
+            const std::wstring link = itemPathOf(project, joinFolder(itemPath, item.name));
+            rows.push_back({
+                .cells = { { Run{ .text = item.name, .link = link } } },
+                .pageKind = kind
+            });
+        }
+        addTable();
+        return page;
+    }
+
+    Page SurfaceBrowser::apisPageOf(const ShownProject& project, const SidebarItem& item)
+    {
+        OpenProject& open = project.open;
+        Page page = homePage(open.surface, open.notes, project.contents, item.name);
+        page.kind = PageKind::AllTheApis;
+        page.badges.clear();
+        if (project.contents.empty())
+            explainEmpty(page, open.project);
+        return page;
+    }
+
+    Page SurfaceBrowser::contentPageOf(const SidebarItem& item)
+    {
+        Page page;
+        page.kind = PageKind::Content;
+        page.title = item.name;
+        page.badges.push_back({ .text = std::wstring{ k_pageWord }, .style = RunStyle::Muted });
         return page;
     }
 

@@ -158,6 +158,9 @@ namespace SeeDocs_App
         m_surfaceEdited = m_browser.onSurfaceEdited([this](SurfaceEditedEvent& event) {
             saveDatabase(event.project);
         });
+        m_sidebarEdited = m_browser.onSidebarEdited([this](SidebarEditedEvent& event) {
+            setSidebar(event.project, std::move(event.items));
+        });
         m_writeFailed = m_writer.onWriteFailed([this](WriteFailedEvent& event) {
             noteUnwritten(event.file);
         });
@@ -440,6 +443,14 @@ namespace SeeDocs_App
         }, Reread::Pages);
     }
 
+    // A sidebar emptied reads back as the default, so the last item deleted gives way to it.
+    void Workspace::setSidebar(OpenProject& open, SidebarItems items)
+    {
+        change(open, [&items](Project& project) {
+            project.sidebar = std::move(items);
+        }, Reread::Sidebar);
+    }
+
     void Workspace::closeLater(OpenProject& open)
     {
         m_closing = &open;
@@ -553,6 +564,8 @@ namespace SeeDocs_App
             open.project = std::move(*read);
         if (reread == Reread::Sources)
             rescan(open);
+        else if (reread == Reread::Sidebar)
+            m_browser.rebindSidebar(open);
         else
             m_browser.rebindProject(open);
     }

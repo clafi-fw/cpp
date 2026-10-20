@@ -110,7 +110,10 @@ namespace SeeDocs_App
         Member,     // a method, a function or a constant
         Search,     // what holds the words a search was given
         Options,    // a project's options
-        Sidebar     // a project's sidebar
+        Sidebar,    // a project's sidebar
+        Category,   // a category of the sidebar, listing its items
+        Content,    // a page of the project's own, from the sidebar
+        AllTheApis  // the sidebar's item holding the folders: what the home said of them
     };
 
     // What a page offers whoever shows it - SeeDocs as a button, a generator not at all: the

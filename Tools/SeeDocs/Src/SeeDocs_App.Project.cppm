@@ -32,7 +32,35 @@ namespace SeeDocs_App
 
     export using ProjectSources = std::vector<ProjectSource>;
 
-    // A project: its folder, what it is called, the folders it reads and how it reads them.
+    // What an item of a project's sidebar is. See README
+    export enum class SidebarKind
+    {
+        Category,     // holds items of its own, which its page lists
+        Divider,      // a line between the items either side of it
+        AllTheApis,   // the folders the sources read, as the scan lists them
+        Content       // a page of the project's own
+    };
+
+    export struct SidebarItem;
+    export using SidebarItems = std::vector<SidebarItem>;
+
+    // An item of a project's sidebar: its kind, its name, which a url names it by, and the items
+    // under it where it is a category.
+    export struct SidebarItem
+    {
+        SidebarKind kind{ SidebarKind::Content };
+        std::wstring name;    // empty on a divider
+        SidebarItems items;   // a category's
+    };
+
+    // What a project's sidebar lists while its properties list nothing: the folders the
+    // sources read, as one item.
+    export [[nodiscard]] SidebarItems defaultSidebar();
+    // The first item of the kind at any depth, read in order; null where there is none.
+    export [[nodiscard]] const SidebarItem* firstOfKind(const SidebarItems&, SidebarKind);
+
+    // A project: its folder, what it is called, the folders it reads and how it reads them, and
+    // the sidebar its tree and its home list.
     export struct Project
     {
         std::filesystem::path folder;
@@ -41,6 +69,7 @@ namespace SeeDocs_App
         ScanMode mode{ ScanMode::AnyCppAndDelphi };
         HintRules hints{ HintRules::Strict };
         HintEdits edits{ HintEdits::None };
+        SidebarItems sidebar{ defaultSidebar() };
 
         [[nodiscard]] std::filesystem::path databasePath() const;
         [[nodiscard]] std::filesystem::path scanCachePath() const;

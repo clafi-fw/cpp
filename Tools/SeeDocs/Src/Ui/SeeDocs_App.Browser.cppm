@@ -5,6 +5,7 @@ import SeeDocs_App.Editing;
 import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageView;
+import SeeDocs_App.SidebarEditor;
 import SeeDocs_App.SurfaceTree;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
@@ -113,6 +114,17 @@ namespace SeeDocs_App
         OpenProject& project;
     };
 
+    // The sidebar page said what the project's sidebar is to be, for its properties to hold. The
+    // surface has an Event of its own.
+    export class SidebarEditedEvent : public ::ClaFi::Event
+    {
+    public:
+        SidebarEditedEvent(OpenProject&, SidebarItems);
+    public:
+        OpenProject& project;
+        SidebarItems items;
+    };
+
     // The commands the browser answers about the projects it shows.
     namespace Actions
     {
@@ -151,8 +163,8 @@ namespace SeeDocs_App
         PageView& m_view;
     };
 
-    // A project's options or its sidebar as a page of the browser: the head every page wears, and
-    // under it the groups the application fills the page with.
+    // A project's options as a page of the browser: the head every page wears, and under it the
+    // groups the application fills the page with.
     export class ProjectPage : public BrowserPage
     {
     public:
@@ -171,17 +183,35 @@ namespace SeeDocs_App
         ) };
     };
 
+    // A project's sidebar as a page of the browser: the head, with Add and Delete in a row under
+    // the title, and under it the editor of the sidebar's items.
+    export class SidebarPage : public BrowserPage
+    {
+    public:
+        // The tab is the page's, as every page's; the name and the items are the editor's.
+        template<typename... Args>
+        SidebarPage(const CreateParams&, BrowserTab*, std::wstring_view projectName,
+            const SidebarItems&, Args&&...);
+    public:
+        [[nodiscard]] PageHead& head() { return m_head; }
+        [[nodiscard]] SidebarEditor& editor() { return m_editor; }
+    private:
+        PageHead& m_head{ createTopBar<PageHead>() };
+        SidebarEditor& m_editor;
+    };
+
     // What a project's options page is filled with.
     export using ProjectPageBuilder = std::function<void(AppMenuPage&, OpenProject&)>;
 
-    // The browser over the open projects: down the left the tab's own tree, a node per project,
-    // and a page per url on the right - /project/folder/.../module/type/method, the folders as
-    // the sources stand on disk, and the root listing the projects - with SeeDocs' words while
-    // none is open. What a project's pages edit is written through the browser into that project,
-    // and a project's closing, which its home and the root offer, is asked of whoever owns it. A
-    // tab's tree is made the first time the tab is shown, and the nodes it has open are kept
-    // with the tab. A search is typed at the crumb bar's end, and every page shown bands its
-    // words. See the README beside the project.
+    // The browser over the open projects: down the left the tab's own tree, a node per project
+    // holding its sidebar's items, and a page per url on the right - /project/item/.../folder/
+    // .../module/type/method, the items as the sidebar lists them, the folders as the sources
+    // stand on disk under its All the APIs item, and the root listing the projects - with
+    // SeeDocs' words while none is open. What a project's pages edit is written through the
+    // browser into that project, and a project's closing, which its home and the root offer, is
+    // asked of whoever owns it. A tab's tree is made the first time the tab is shown, and the
+    // nodes it has open are kept with the tab. A search is typed at the crumb bar's end, and
+    // every page shown bands its words. See the README beside the project.
     export class SurfaceBrowser : public BrowserControl
     {
     public:
@@ -203,6 +233,9 @@ namespace SeeDocs_App
         // Connects a handler raised when a page's edit changed a project's surface.
         template<typename F>
         EventConnection onSurfaceEdited(F&& callback);
+        // Connects a handler raised when the sidebar page said what a project's sidebar is to be.
+        template<typename F>
+        EventConnection onSidebarEdited(F&& callback);
         // Shows a project opened: a node of its own at the end of the tree, and its pages under a
         // segment of its name. The project is held by reference until it is removed, and what its
         // pages edit is written into it - its sources, its footnotes and its database - as its
@@ -211,6 +244,9 @@ namespace SeeDocs_App
         void openHome(const OpenProject&);   // a new tab on the project's home
         // Shows the project again over its surface as it now reads, the tabs standing.
         void rebindProject(OpenProject&);
+        // Shows the project again over its sidebar as it now reads, the surface standing: every
+        // tree's node and the pages the sidebar is read into.
+        void rebindSidebar(OpenProject&);
         // Calls the project by its name as it now reads: its node, its segment with every url
         // under it, and the words on a page that say it.
         void renameProject(OpenProject&);
@@ -278,15 +314,19 @@ namespace SeeDocs_App
             Sidebar
         };
         // What a path names, read off its segments: the root for none, else a project by its
-        // segment, and in it its own page, or the folders down from its root as far as they go -
-        // its home for none - then a list of the last folder, or a module of it, a type of that or
+        // segment, and in it its own page, or its sidebar's items down from the top as far as they
+        // go - its home for none - then, under an All the APIs item, the folders down from the
+        // root as far as they go, a list of the last folder, or a module of it, a type of that or
         // a function or a constant of the module, and a method of the type. A segment nothing
         // answers for makes the path one no project open carries.
         struct Target
         {
             ShownProject* project{ nullptr };   // null for the root, and for no project open
+            const SidebarItem* item{ nullptr }; // the item the path names, or stands under
+            std::wstring itemPath{};            // the item's names from the top, a slash between
+            std::size_t itemDepth{ 0 };         // how many segments past the project's are items
             std::wstring folder{};              // the path the folder segments spell
-            std::size_t folderDepth{ 0 };       // how many segments past the project's are folders
+            std::size_t folderDepth{ 0 };       // how many segments past the items are folders
             const ContentsFolder* contents{ nullptr };   // the folder's modules, where it has any
             const ContentsModule* module{ nullptr };
             const Type* type{ nullptr };
@@ -300,7 +340,14 @@ namespace SeeDocs_App
             [[nodiscard]] bool isOwnPage() const { return ownPage != OwnPage::None; }
             [[nodiscard]] bool isRoot() const { return depth == 0; }
             [[nodiscard]] bool isHome() const { return project && depth == 1; }
-            [[nodiscard]] bool isFolder() const { return project && depth == folderDepth + 1; }
+            // The item's own page: a category's, a page's, or the All the APIs item's.
+            [[nodiscard]] bool isItem() const { return item && depth == itemDepth + 1; }
+            // A folder's page, the root's being the All the APIs item's or the home.
+            [[nodiscard]] bool isFolder() const
+                { return project && folderDepth > 0 && depth == itemDepth + folderDepth + 1; }
+            // Whether the path reaches the folders: it stands under an All the APIs item, or
+            // under the home of a project whose sidebar has none.
+            [[nodiscard]] bool holdsFolders() const;
             [[nodiscard]] bool isGone() const;
         };
         // The folder, module and type a link names, keyed by the link - a folder by its path,
@@ -321,6 +368,9 @@ namespace SeeDocs_App
             OpenProject& open;
             ProjectId id;
             std::wstring segment{};
+            // The path of the sidebar's first All the APIs item, which the folders stand under;
+            // empty where it has none, the folders then standing under the home, unlisted.
+            std::wstring apisPath{};
             ContentsFolders contents{};
             ContentsTree contentsTree{};   // over the contents, which every tab's tree reads
             SearchIndex index{};   // over the contents, which a search reads
@@ -330,6 +380,7 @@ namespace SeeDocs_App
             NoticeHandle goneSource{};   // a source a page names that is not where it was read
             // Reads the contents, the targets and the folders off the surface as it now reads.
             void read();
+            void readSidebar();   // where the folders stand, off the sidebar as it now reads
             // Puts up a notice that the source is gone, Rescan its answer. See README
             void noteGone(const SourceFile&, bool rootRead);
             // A hint read by the strict rules from C++, where the project edits hints directly.
@@ -408,11 +459,24 @@ namespace SeeDocs_App
         void storeTreeWidth(float width);
         [[nodiscard]] static std::wstring homePath(const ShownProject&);
         [[nodiscard]] static std::wstring pathOf(const ShownProject&, OwnPage);
-        // The path of the nearest thing named in the project, down to the member where one is
-        // given - a method of the type, or a function or a constant of the module where there is
-        // no type.
+        // The path of a sidebar item, by its names from the top; the home's for none.
+        [[nodiscard]] static std::wstring itemPathOf(const ShownProject&,
+            std::wstring_view item);
+        // The path of the nearest thing named in the project, under its All the APIs item, down
+        // to the member where one is given - a method of the type, or a function or a constant
+        // of the module where there is no type.
         [[nodiscard]] static std::wstring pathOf(const ShownProject&, std::wstring_view folder,
             const ContentsModule*, const Type*, std::wstring_view member = {});
+        // The same under the item the path names, which another All the APIs item may be.
+        [[nodiscard]] static std::wstring pathUnder(const ShownProject&, std::wstring_view item,
+            std::wstring_view folder, const ContentsModule*, const Type*,
+            std::wstring_view member = {});
+        // The tab's tree follows the page: the item's row, the folder's, the module's or the
+        // type's, or the project's node for a page none of those is.
+        void followPage(SurfaceTree&, const Target&);
+        // Puts Add and Delete into the page's head and hands what the editor says on to whoever
+        // owns the project.
+        void connectSidebarPage(SidebarPage&, ShownProject&);
         // The names of the folders directly under this one, in reading order.
         [[nodiscard]] static std::vector<std::wstring> subfolderNames(const ShownProject&,
             std::wstring_view folder);
@@ -421,8 +485,16 @@ namespace SeeDocs_App
         // The page a target names, built over its project's surface; nothing where it names
         // words - no project open, a path no project carries - or a page of the project itself.
         [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
-        // The project's home: Options and Sidebar in a row under its title, Close project beside it.
+        // The project's home: its sidebar's items, Options and Sidebar in a row under its title,
+        // Close project beside it.
         [[nodiscard]] static Page homePageOf(const ShownProject&);
+        // The items under the category, or the sidebar's top ones for none, each linked to its
+        // page, a divider parting the tables.
+        [[nodiscard]] static Page itemsPageOf(const ShownProject&, const SidebarItem* category,
+            std::wstring_view itemPath);
+        // The All the APIs item's page: what the home said of the folders before the sidebar.
+        [[nodiscard]] static Page apisPageOf(const ShownProject&, const SidebarItem&);
+        [[nodiscard]] static Page contentPageOf(const SidebarItem&);   // its head alone, so far
         [[nodiscard]] Page projectsPage() const;   // the root's, while a project is open
         [[nodiscard]] static Command closeCommand(const ShownProject&, std::wstring text);
         // Fills a page with what the target names: the projects or SeeDocs' words on the root,
@@ -609,6 +681,24 @@ namespace SeeDocs_App
     {
     }
 
+    // SidebarPage
+
+    template<typename... Args>
+    SidebarPage::SidebarPage(const CreateParams& params, BrowserTab* tab,
+        const std::wstring_view projectName, const SidebarItems& items, Args&&... args)
+        :
+        BrowserPage{
+            params,
+            tab,
+            Padding{ 0.0f },
+            Spacing{ 0.0f },
+            UiElement::Page,
+            std::forward<Args>(args)...
+        },
+        m_editor{ createBody<SidebarEditor>(projectName, items) }
+    {
+    }
+
     // SurfaceBrowser
 
     template<typename... Args>
@@ -659,5 +749,11 @@ namespace SeeDocs_App
     EventConnection SurfaceBrowser::onSurfaceEdited(F&& callback)
     {
         return connectEvent<SurfaceEditedEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection SurfaceBrowser::onSidebarEdited(F&& callback)
+    {
+        return connectEvent<SidebarEditedEvent>(std::forward<F>(callback));
     }
 }

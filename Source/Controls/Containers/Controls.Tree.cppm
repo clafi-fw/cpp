@@ -12,6 +12,7 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -88,12 +89,17 @@ namespace ClaFi::Controls
     };
 
     // A branch of a tree: a header that is a row of its own, and under it the rows its mark opens.
+    // The rows take the ItemsOrder the node is made with, so they can be carried among themselves.
     export class TreeNode : public Expander
     {
         friend TreeNodeHeader;
     public:
         template<typename... Args>
         explicit TreeNode(const CreateParams&, TreeView& tree, std::size_t level, Args&&...);
+        // A node headed by a header of the stated kind, one standing on TreeNodeHeader.
+        template<std::derived_from<TreeNodeHeader> Header, typename... Args>
+        TreeNode(const CreateParams&, TreeView& tree, std::size_t level, std::type_identity<Header>,
+            Args&&...);
     public:
         // The node is opening with no rows under it, and asks for them.
         DECLARE_EVENT(FetchRowsEvent, OnFetchRows, onFetchRows)
@@ -104,9 +110,15 @@ namespace ClaFi::Controls
         // Adds a row a pick can land on, one level in.
         template<typename... Args>
         TreeItem& addItem(Args&&...);
+        // Adds a row of the stated kind, one standing on TreeItem, one level in.
+        template<std::derived_from<TreeItem> Row, typename... Args>
+        Row& addItem(std::type_identity<Row>, Args&&...);
         // Adds a branch one level in.
         template<typename... Args>
         TreeNode& addNode(Args&&...);
+        // Adds a branch one level in, headed by a header of the stated kind.
+        template<std::derived_from<TreeNodeHeader> Header, typename... Args>
+        TreeNode& addNode(std::type_identity<Header>, Args&&...);
         // Adds a line between two groups of rows, one level in.
         template<typename... Args>
         TreeDivider& addDivider(Args&&...);
@@ -139,9 +151,15 @@ namespace ClaFi::Controls
         // Adds a row a pick can land on, at the top level.
         template<typename... Args>
         TreeItem& addItem(Args&&...);
+        // Adds a row of the stated kind, one standing on TreeItem, at the top level.
+        template<std::derived_from<TreeItem> Row, typename... Args>
+        Row& addItem(std::type_identity<Row>, Args&&...);
         // Adds a branch at the top level.
         template<typename... Args>
         TreeNode& addNode(Args&&...);
+        // Adds a branch at the top level, headed by a header of the stated kind.
+        template<std::derived_from<TreeNodeHeader> Header, typename... Args>
+        TreeNode& addNode(std::type_identity<Header>, Args&&...);
         // Adds a line between two groups of rows, at the top level.
         template<typename... Args>
         TreeDivider& addDivider(Args&&...);
@@ -226,9 +244,23 @@ namespace ClaFi::Controls
     TreeNode::TreeNode(const CreateParams& params, TreeView& tree, const std::size_t level,
         Args&&... args)
         :
+        TreeNode{
+            params,
+            tree,
+            level,
+            std::type_identity<TreeNodeHeader>{},
+            std::forward<Args>(args)...
+        }
+    {
+    }
+
+    template<std::derived_from<TreeNodeHeader> Header, typename... Args>
+    TreeNode::TreeNode(const CreateParams& params, TreeView& tree, const std::size_t level,
+        std::type_identity<Header>, Args&&... args)
+        :
         Expander{
             params,
-            std::type_identity<TreeNodeHeader>{},
+            std::type_identity<Header>{},
             ExpanderViewMode::TreeNode,
             VerticalAlign::Top, // a panel filling its slot does not grow to hold its body
             Padding{ 0.0f },    // the page's padding would add up level after level
@@ -236,7 +268,10 @@ namespace ClaFi::Controls
         },
         m_tree{ tree },
         m_level{ level },
-        m_rows{ createBody<StackPanel>(Orientation::Vertical) }
+        m_rows{ createBody<StackPanel>(
+            Orientation::Vertical,
+            Props::get(ItemsOrder::Fixed, std::forward<Args>(args)...)
+        ) }
     {
         layOutHeader(params.themeMetrics().button);
         // Opening with no rows asks for them.
@@ -252,10 +287,22 @@ namespace ClaFi::Controls
         return m_rows.add<TreeItem>(m_tree, m_level + 1, std::forward<Args>(args)...);
     }
 
+    template<std::derived_from<TreeItem> Row, typename... Args>
+    Row& TreeNode::addItem(std::type_identity<Row>, Args&&... args)
+    {
+        return m_rows.add<Row>(m_tree, m_level + 1, std::forward<Args>(args)...);
+    }
+
     template<typename... Args>
     TreeNode& TreeNode::addNode(Args&&... args)
     {
         return m_tree.createNode(m_rows, m_level + 1, std::forward<Args>(args)...);
+    }
+
+    template<std::derived_from<TreeNodeHeader> Header, typename... Args>
+    TreeNode& TreeNode::addNode(const std::type_identity<Header> header, Args&&... args)
+    {
+        return m_tree.createNode(m_rows, m_level + 1, header, std::forward<Args>(args)...);
     }
 
     template<typename... Args>
@@ -285,10 +332,22 @@ namespace ClaFi::Controls
         return add<TreeItem>(*this, std::size_t{ 0 }, std::forward<Args>(args)...);
     }
 
+    template<std::derived_from<TreeItem> Row, typename... Args>
+    Row& TreeView::addItem(std::type_identity<Row>, Args&&... args)
+    {
+        return add<Row>(*this, std::size_t{ 0 }, std::forward<Args>(args)...);
+    }
+
     template<typename... Args>
     TreeNode& TreeView::addNode(Args&&... args)
     {
         return createNode(*this, std::size_t{ 0 }, std::forward<Args>(args)...);
+    }
+
+    template<std::derived_from<TreeNodeHeader> Header, typename... Args>
+    TreeNode& TreeView::addNode(const std::type_identity<Header> header, Args&&... args)
+    {
+        return createNode(*this, std::size_t{ 0 }, header, std::forward<Args>(args)...);
     }
 
     template<typename... Args>

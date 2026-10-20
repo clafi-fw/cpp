@@ -74,6 +74,9 @@ namespace SeeDocs_App
         void setHints(OpenProject&, HintRules);
         // Whether a hint edited on a page is written into its source; the pages are built again.
         void setEdits(OpenProject&, HintEdits);
+        // What the project's sidebar is to be; the trees and the pages it is read into are built
+        // again.
+        void setSidebar(OpenProject&, SidebarItems);
         // Closes the project and every tab on it once the click that asked has unwound - the
         // page it was pressed on may be one of those going. What the browser's pages ask for.
         void closeLater(OpenProject&);
@@ -98,7 +101,8 @@ namespace SeeDocs_App
         enum class Reread
         {
             Sources,   // a scan: what is read has changed
-            Pages      // the pages built again over the surface as it stands
+            Pages,     // the pages built again over the surface as it stands
+            Sidebar    // the trees and the pages built again over the sidebar as it now reads
         };
     private:
         // Shows the project, its database scanned first where it has none or was read otherwise
@@ -150,6 +154,7 @@ namespace SeeDocs_App
         ScopedEventConnection m_orderAsked{};
         ScopedEventConnection m_rescanAsked{};
         ScopedEventConnection m_surfaceEdited{};
+        ScopedEventConnection m_sidebarEdited{};
         ScopedEventConnection m_writeFailed{};
         // A project the new project dialog made, opened once the dialog is down.
         std::optional<Project> m_made{};

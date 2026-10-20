@@ -1,6 +1,7 @@
 module SeeDocs_App.Icons;
 
 import SeeDocs_App.Database;
+import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
 import ClaFi.Icons.FolderIcon;
@@ -253,6 +254,66 @@ namespace SeeDocs_App
             drawing.stroke(rows, drawing.inks.accent);
         }
 
+        // A section: a header band in the accent, two rows under it.
+        void paintCategory(const Drawing& drawing)
+        {
+            PixelPath band;
+            band.drawRoundedRect({ 1.5f, 2.2f, 12.5f, 4.8f }, 1.0f, 1.0f);
+            drawing.fill(band, drawing.inks.accent);
+
+            PixelPath rows;
+            addLine(rows, { 1.5f, 8.0f }, { 12.5f, 8.0f });
+            addLine(rows, { 1.5f, 11.3f }, { 12.5f, 11.3f });
+            drawing.stroke(rows, drawing.inks.body);
+        }
+
+        // A sheet, its corner folded and the fold tinted, with two lines of its text.
+        void paintContent(const Drawing& drawing)
+        {
+            PixelPath fold;
+            fold.moveTo(8.5f, 1.5f);
+            fold.lineTo(8.5f, 4.5f);
+            fold.lineTo(11.5f, 4.5f);
+            fold.close();
+            drawing.fill(fold, drawing.inks.accentSoft);
+
+            PixelPath sheet;
+            sheet.moveTo(3.0f, 1.5f);
+            sheet.lineTo(8.5f, 1.5f);
+            sheet.lineTo(11.5f, 4.5f);
+            sheet.lineTo(11.5f, 12.5f);
+            sheet.lineTo(3.0f, 12.5f);
+            sheet.close();
+            sheet.moveTo(8.5f, 1.5f);
+            sheet.lineTo(8.5f, 4.5f);
+            sheet.lineTo(11.5f, 4.5f);
+            addLine(sheet, { 5.0f, 7.5f }, { 9.5f, 7.5f });
+            addLine(sheet, { 5.0f, 10.0f }, { 9.5f, 10.0f });
+            drawing.stroke(sheet, drawing.inks.body);
+        }
+
+        // Three layers, the top one tinted.
+        void paintAllTheApis(const Drawing& drawing)
+        {
+            PixelPath top;
+            top.moveTo(7.0f, 2.0f);
+            top.lineTo(12.3f, 4.6f);
+            top.lineTo(7.0f, 7.2f);
+            top.lineTo(1.7f, 4.6f);
+            top.close();
+            drawing.fill(top, drawing.inks.accentSoft);
+            drawing.stroke(top, drawing.inks.body);
+
+            PixelPath layers;
+            layers.moveTo(1.7f, 7.3f);
+            layers.lineTo(7.0f, 9.9f);
+            layers.lineTo(12.3f, 7.3f);
+            layers.moveTo(1.7f, 10.0f);
+            layers.lineTo(7.0f, 12.6f);
+            layers.lineTo(12.3f, 10.0f);
+            drawing.stroke(layers, drawing.inks.body);
+        }
+
         void paintFolder(const Drawing& drawing)
         {
             PixelPath folder;
@@ -433,6 +494,15 @@ namespace SeeDocs_App
             case RowIcon::Sidebar:
                 paintSidebar(drawing);
                 break;
+            case RowIcon::Category:
+                paintCategory(drawing);
+                break;
+            case RowIcon::Content:
+                paintContent(drawing);
+                break;
+            case RowIcon::AllTheApis:
+                paintAllTheApis(drawing);
+                break;
             case RowIcon::Folder:
                 paintFolder(drawing);
                 break;
@@ -488,6 +558,22 @@ namespace SeeDocs_App
                 break;
         }
         return RowIcon::Class;
+    }
+
+    std::optional<RowIcon> rowIconOf(const SidebarKind kind)
+    {
+        switch (kind)
+        {
+            case SidebarKind::Category:
+                return RowIcon::Category;
+            case SidebarKind::Content:
+                return RowIcon::Content;
+            case SidebarKind::AllTheApis:
+                return RowIcon::AllTheApis;
+            case SidebarKind::Divider:
+                break;
+        }
+        return std::nullopt;
     }
 
     // **The kind is the icon's tag**: the layout cache tells icons apart by size and tag alone, so

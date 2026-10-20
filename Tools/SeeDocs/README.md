@@ -39,7 +39,7 @@ Two more choices stand apart from that: how a comment gives a declaration its hi
 A project is a folder of its own, kept wherever the user chooses. SeeDocs offers
 `Documents/SeeDocs`. The folder holds everything SeeDocs keeps of the project:
 
-- `Project.cfg` - the project's properties
+- `Project.cfg` - the project's properties, its sidebar among them
 - `Surface.cfg` - the database the scanner writes
 - `Scan.cache` - what the last scan read of each file - see [Scan cache](#scan-cache)
 - `footnotes` - the notes the pages show beside the hints
@@ -54,6 +54,12 @@ Sources = [
 ReadAs = ClaFiModules
 LooseHints = false
 EditHints = true
+Sidebar = [
+    =[ Kind = AllTheApis, Name = All the APIs, Level = 0 ]
+    =[ Kind = Divider, Name = , Level = 0 ]
+    =[ Kind = Category, Name = Guides, Level = 0 ]
+    =[ Kind = Content, Name = Quick start, Level = 1 ]
+]
 ```
 
 - **`Name`** is what the project goes by. Left empty, the project goes by its folder's name.
@@ -63,6 +69,9 @@ EditHints = true
 - **`LooseHints`** takes the hint of every recognizable comment instead of following the strict
   rules - see [Hints](#hints).
 - **`EditHints`** writes a hint edited on a page into its source.
+- **`Sidebar`** is what the project's tree and home list - see [The sidebar](#the-sidebar) - as
+  an outline: an entry per item in reading order, `Level` saying how deep it stands under the
+  categories above it. A sidebar listing nothing reads as the default, one All the APIs item.
 
 A project the window makes is written with `ReadAs = AnyCppAndDelphi` and `LooseHints`. A project
 stating neither reads any C++ and Delphi by the strict rules.
@@ -475,10 +484,10 @@ The menu's Settings page holds External editors under the framework's own option
 ### The project's node and its own pages
 
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
-it stand the project's folders.
+it stand the items of the project's sidebar.
 
 The home's head holds Options and Sidebar, which open the project's options page and its sidebar
-page. The sidebar page holds its title alone.
+page - see [The sidebar](#the-sidebar).
 
 The options page is titled Project options. Under the title stand:
 
@@ -489,6 +498,53 @@ The options page is titled Project options. Under the title stand:
 
 The two pages' urls are the project's with `/.project` and `/.sidebar` after it. The scanner passes
 over names that start with a dot, so no folder can take them.
+
+### The sidebar
+
+**The sidebar is what a project's tree and its home list**: items the user arranges, of four
+kinds.
+
+- **A category** holds items of its own. Its page lists them, and its node in the tree opens on
+  them.
+- **A divider** is a line between the items either side of it, in the tree and on the page that
+  lists them, where it parts the list in two. It has no name and no page.
+- **All the APIs** holds the folders the sources read, as the scan lists them: in the tree its node
+  opens on the folders, and its page is what the home page said of them before there was a
+  sidebar - the folders under the root with what each holds, the root's own modules, and why there
+  is nothing to document where there is none.
+- **Content** is a page of the project's own, with a name and, so far, nothing under its head.
+
+A new project's sidebar holds one All the APIs item. **The folders stand under the sidebar's first
+All the APIs item**, every url of theirs starting with its path; a sidebar with none hangs them
+straight under the home, unlisted, where a link still reaches them.
+
+**Every item is a segment of its page's url**, its name as the sidebar spells it -
+`/project/Guides/Quick start`, and `/project/All the APIs/Core/...` for the folders. An item's name
+holds no slash and is no other item's beside it, and renaming an item moves every url under it, as
+renaming the project does.
+
+**The sidebar page** edits the sidebar:
+
+- **The tree** of the items under the project's own node, which always stands and cannot be
+  deleted or moved. Every node stands open.
+- **Add**, in the row under the title, drops the four kinds. The item is added at the end of the
+  selected category, after the selected item otherwise, and at the end of the top level with the
+  project's node selected; it is named by its kind - New category, New page, All the APIs - with a
+  number where that name is taken, and opens for its name at once.
+- **Delete** takes the selected item out with everything under it. A category holding items asks
+  first. Delete on the keyboard does the same.
+- **A name is typed where it stands**: a second click on the name, F2, or Rename from the row's
+  menu opens an editor over it. An empty name, a slash, or a name another item beside it goes by is
+  refused with the reason, the editor standing.
+- **Kind**, at the right, is the selected item's kind, which a click on another answer changes. A
+  category holding items keeps its kind. An item made a divider loses its name; a divider made
+  anything else is named by its new kind.
+- **The items under one node are carried** to another place among themselves - a press on a row and
+  a drag. Moving an item into or out of a category is not a drag: it is added where it goes.
+
+Every edit is written into the project's properties at once, and every tab's tree and every page
+the sidebar is read into are built again, the sidebar page standing. A sidebar emptied reads back as
+the default, so the last item deleted gives way to All the APIs.
 
 #### Sources
 
@@ -566,7 +622,9 @@ SeeDocs is a browser of the framework's own kind:
   names the project, or says all projects.
 - An options page on screen is built again, so its last scan reads just now.
 
-**Every page has a url** - `/project/folder/module/type/method`, the project named by its name.
+**Every page has a url** - `/project/item/folder/module/type/method`, the project named by its
+name, the items of its sidebar after it as far as they go, and the folders under its All the APIs
+item.
 
 - A tab goes back and forward through the pages it has visited: Alt+Left and Alt+Right, the mouse's
   side buttons, or a right click on either button for the list.
@@ -583,12 +641,14 @@ SeeDocs is a browser of the framework's own kind:
 
 **A home page opens each project.**
 
-- It holds the folders under the root as the tree lists them, with what each holds at every depth.
+- It lists the sidebar's items as the tree lists them, each marked with its kind's mark and linked
+  to its page, a divider parting the list.
 - Options and Sidebar stand in a row under the title, each marked with its page's icon, and Close
   project stands at the page's top right.
-- A project with nothing to document has the same home, saying why under its title.
-- Modules standing in a source folder's own folder are home's. They stand in the project's node
-  under its folders, and the home page carries what they export, by module, as a folder's page does.
+- A project with nothing to document says why on its All the APIs page, under the title.
+- Modules standing in a source folder's own folder are the root's. They stand under the All the
+  APIs item's node after its folders, and its page carries what they export, by module, as a
+  folder's page does.
 
 **Renaming and restoring**
 
@@ -599,9 +659,10 @@ SeeDocs is a browser of the framework's own kind:
 
 ### The tree
 
-Down the left, under each project's node, stands a tree of the sources' folders, named as they stand
-on disk. The page of the row clicked shows on the right, and Open in new tab on a row's menu
-opens it in a tab behind the one shown.
+Down the left, under each project's node, stand the items of its sidebar - a category a node
+holding its items, a divider a line, a content item a row - and under its All the APIs item a tree
+of the sources' folders, named as they stand on disk. The page of the row clicked shows on the
+right, and Open in new tab on a row's menu opens it in a tab behind the one shown.
 
 - Each folder holds the folders under it, then its modules by their full names.
 - Each module holds the types it exports, controls first.
@@ -610,13 +671,14 @@ opens it in a tab behind the one shown.
 **Each tab has a tree of its own**, which follows wherever the tab goes:
 
 - to the folder's node, for a folder's search or list
-- to the project's own node, for a page the tree has no row for, a project's search, or a page gone
+- to the item's row, for an item's page, or a search or a list of the whole project
+- to the project's own node, for a page the tree has no row for, or a page gone
 
 The nodes a tree has open and how far it is scrolled are the tab's. The open nodes are kept with the
-tab, by project - a folder by its path, a module by its folder's path and its name - so a restored
-tab, or a project opened again, comes back as it was left. A node's
-rows are made the first time it opens, out of the project's contents, which are read once and shared
-by every tab's tree.
+tab, by project - an item by its path, a folder by its path and a module by its folder's path and
+its name, each under the path of the item it hangs from - so a restored tab, or a project opened
+again, comes back as it was left. A node's rows are made the first time it opens, out of the
+sidebar and the project's contents, which are read once and shared by every tab's tree.
 
 ### Pages
 

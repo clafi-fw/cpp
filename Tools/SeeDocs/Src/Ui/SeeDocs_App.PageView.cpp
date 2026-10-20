@@ -282,6 +282,12 @@ namespace SeeDocs_App
                     return RowIcon::Options;
                 case PageKind::Sidebar:
                     return RowIcon::Sidebar;
+                case PageKind::Category:
+                    return RowIcon::Category;
+                case PageKind::Content:
+                    return RowIcon::Content;
+                case PageKind::AllTheApis:
+                    return RowIcon::AllTheApis;
                 case PageKind::List:
                 case PageKind::Member:
                     break;
@@ -439,6 +445,8 @@ namespace SeeDocs_App
         m_title.text() = head;
         m_bases1.clear();
         m_bases2.clear();
+        const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
+        m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
     }
 
     void PageHead::clear()

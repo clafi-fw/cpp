@@ -754,3 +754,9 @@ only when it is painted.
 Interactivity::None it stands in the container above it instead, as a grid does - see Grid: its
 rows are that container's items, and Up, Down, Home, End and the page keys travel out of it.
 A node shut over the current row makes its header the row either way - see Expander.
+
+**A node's rows take the ItemsOrder the node is made with** - `addNode(ItemsOrder::Rearrangeable,
+...)` - so the rows under it can be carried among themselves, and the node's `rows()` raises the
+carry's events - see ItemsMoveEvent. A row or a header of a kind of the caller's own, standing on
+TreeItem or on TreeNodeHeader, is added with `std::type_identity<Kind>{}` ahead of its arguments,
+the way an Expander takes its header.
