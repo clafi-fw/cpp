@@ -380,13 +380,15 @@ namespace SeeDocs_App
             for (const SidebarItem& item : items)
             {
                 const std::size_t index = result.size();
+                // Held here, since the rows added under it move the vector's strings.
+                const std::wstring itemPath = joinPath(path, item.name);
                 result.push_back({
                     .item = &item,
-                    .path = joinPath(path, item.name),
+                    .path = itemPath,
                     .parent = parent
                 });
                 if (item.kind == SidebarKind::Category)
-                    self(self, item.items, index, result[index].path);
+                    self(self, item.items, index, itemPath);
             }
         };
         add(add, sidebar, std::nullopt, {});

@@ -2,6 +2,8 @@ export module SeeDocs_App.Project;
 
 import SeeDocs_App.Surface;
 
+import ClaFi.Core.System.Serialization;
+
 import ClaFi.StdLib;
 
 // **A project is a folder of its own.** Its properties, the database the scanner writes and the
@@ -41,6 +43,12 @@ namespace SeeDocs_App
         Content       // a page of the project's own
     };
 
+    // The kinds as a project's properties spell them.
+    export constexpr auto enumNames(SidebarKind)
+    {
+        return std::array{ L"Category", L"Divider", L"AllTheApis", L"Content" };
+    }
+
     export struct SidebarItem;
     export using SidebarItems = std::vector<SidebarItem>;
 
@@ -52,6 +60,17 @@ namespace SeeDocs_App
         std::wstring name;    // empty on a divider
         SidebarItems items;   // a category's
     };
+
+    // How a project's properties write an item: the items under it the same way, as deep as
+    // they go.
+    export constexpr auto serializedFields(const SidebarItem&)
+    {
+        return std::make_tuple(
+            ClaFi::SerializedField{ L"Kind", &SidebarItem::kind },
+            ClaFi::SerializedField{ L"Name", &SidebarItem::name },
+            ClaFi::SerializedField{ L"Items", &SidebarItem::items }
+        );
+    }
 
     // What a project's sidebar lists while its properties list nothing: the folders the
     // sources read, as one item.

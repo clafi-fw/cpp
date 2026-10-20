@@ -363,6 +363,7 @@
                 <ul>
                     <li><a href="#homogeneous-seq">Value Sequences</a></li>
                     <li><a href="#dynamic-seq">Section Sequences</a></li>
+                    <li><a href="#tree-seq">Trees</a></li>
                     <li><a href="#search-seq">Search and Removal inside Sequences</a></li>
                     <li><a href="#iterating-large-values">Iterating Sequences of Large or Complex Values</a></li>
                 </ul>
@@ -522,7 +523,7 @@
     );
 };</code></pre>
 
-            <p>In the ClaFi Dom, both primitive scalars and complex reflected structs are represented by the unified template class <code>Value&lt;T&gt;</code>. When you define a <code>Value</code> with a reflected C++ struct, the DOM engine expands the struct into a sub-tree of nested nodes. This allows you to traverse inside it (e.g., <code>settings / L"Placement" / L"Bounds"</code>) exactly like inside a regular <code>Section</code>.</p>
+            <p>In the ClaFi Dom, both primitive scalars and complex reflected structs are represented by the unified template class <code>Value&lt;T&gt;</code>. When you define a <code>Value</code> with a reflected C++ struct, the DOM engine expands the struct into a sub-tree of nested nodes. This allows you to traverse inside it (e.g., <code>settings / L"Placement" / L"Bounds"</code>) exactly like inside a regular <code>Section</code>. A struct holding a sequence of its own type stores a tree - see <a href="#tree-seq">Trees</a>.</p>
 
             <h3 id="external-structs">External Structs (Non-Intrusive)</h3>
             <p>If you need to serialize a C++ struct or class that you cannot modify, define a standalone <code>constexpr auto serializedFields(Type)</code> function in the same namespace.</p>
@@ -863,6 +864,72 @@ dynamicTabs.<span class="fn">clear</span>();
 <span class="kw">auto</span>&amp; tabNode = dynamicTabs.<span class="fn">add</span>();
 (tabNode / <span class="st">L"Id"</span>).<span class="fn">set</span>&lt;<span class="tp">std::wstring</span>&gt;(<span class="st">L"Tab1"</span>);
 (tabNode / <span class="st">L"Title"</span>).<span class="fn">set</span>&lt;<span class="tp">std::wstring</span>&gt;(<span class="st">L"Home"</span>);</code></pre>
+
+            <h3 id="tree-seq">Trees</h3>
+            <p>A struct that holds a sequence of its own type stores a tree. Its <code>serializedFields</code> name that sequence like any other member, and the depth comes from the data. A <code>Value&lt;T&gt;</code> builds its schema from its default value as the node is made, so the sequence under it starts with a default item and no children. Every item added to that sequence - by <code>set</code>, or by a file being read - is a <code>Value&lt;T&gt;</code> again, and builds its own sequence the same way. The blueprint declares the root once; the document nests as deep as the value does, on the write and on the read.</p>
+
+            <pre><code><span class="kw">struct</span> <span class="tp">TreeNode</span>
+{
+    <span class="tp">std::wstring</span> name{};
+    <span class="tp">std::vector</span>&lt;<span class="tp">TreeNode</span>&gt; items{};
+};
+
+<span class="kw">constexpr auto</span> <span class="fn">serializedFields</span>(<span class="kw">const</span> <span class="tp">TreeNode</span>&amp;)
+{
+    <span class="kw">return</span> <span class="tp">std::make_tuple</span>(
+        <span class="tp">SerializedField</span>{ <span class="st">L"Name"</span>, &amp;<span class="tp">TreeNode</span>::name },
+        <span class="tp">SerializedField</span>{ <span class="st">L"Items"</span>, &amp;<span class="tp">TreeNode</span>::items }
+    );
+}
+
+<span class="cm">// The blueprint names the root alone. For a forest, declare Dt::Sequence{ L"Roots", TreeNode{} } instead.</span>
+<span class="tp">Document</span>&lt;<span class="tp">FileFormat::ClaFi</span>&gt; document
+{
+    <span class="st">L"tree.cfg"</span>,
+    <span class="tp">AutoSave</span>::<span class="tp">No</span>,
+    <span class="tp">Dt::Section</span>{ <span class="tp">Dt::Value</span>{ <span class="st">L"Root"</span>, <span class="tp">TreeNode</span>{} } }
+};
+
+<span class="tp">TreeNode</span> root{
+    .name = <span class="st">L"Root"</span>,
+    .items = {
+        { .name = <span class="st">L"Child1"</span> },
+        { .name = <span class="st">L"Child2"</span>, .items = { { <span class="st">L"Child2.1"</span> }, { <span class="st">L"Child2.2"</span> } } }
+    }
+};
+(document / <span class="st">L"Root"</span>).<span class="fn">set</span>(root);   <span class="cm">// writes the whole tree</span>
+document.<span class="fn">save</span>();
+
+<span class="tp">TreeNode</span> read = (document / <span class="st">L"Root"</span>).<span class="fn">get</span>&lt;<span class="tp">TreeNode</span>&gt;();   <span class="cm">// the whole tree back</span></code></pre>
+
+            <p>The file holds the same shape. Each item is a section of the node's fields, its own <code>Items</code> among them:</p>
+            <pre><code>Root=[
+    Items=[
+        =[
+            Items=[
+            ]
+            Name=Child1
+        ]
+        =[
+            Items=[
+                =[
+                    Items=[
+                    ]
+                    Name=Child2.1
+                ]
+                =[
+                    Items=[
+                    ]
+                    Name=Child2.2
+                ]
+            ]
+            Name=Child2
+        ]
+    ]
+    Name=Root
+]</code></pre>
+
+            <p>The path operator walks into the tree like into any sequence of composites. <code>(document / L"Root" / L"Items")</code> is the root's <code>Sequence&lt;TreeNode&gt;</code>, each of its children a <code>Value&lt;TreeNode&gt;</code> with an <code>Items</code> of its own, so one node can be read or set in place while the rest of the tree stands - see <a href="#iterating-large-values">Iterating Sequences of Large or Complex Values</a> for the live and the detached ways of reaching an item.</p>
 
             <h3 id="search-seq">Search and Removal inside Sequences</h3>
             <p>The <code>SequenceBase</code> provides safe template search operations to locate elements matching a specific nested value, and <code>NodeBase</code> allows elements to destroy themselves from their parent containers:</p>

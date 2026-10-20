@@ -55,10 +55,11 @@ ReadAs = ClaFiModules
 LooseHints = false
 EditHints = true
 Sidebar = [
-    =[ Kind = AllTheApis, Name = All the APIs, Level = 0 ]
-    =[ Kind = Divider, Name = , Level = 0 ]
-    =[ Kind = Category, Name = Guides, Level = 0 ]
-    =[ Kind = Content, Name = Quick start, Level = 1 ]
+    =[ Kind = AllTheApis, Name = All the APIs, Items = [ ] ]
+    =[ Kind = Divider, Name = , Items = [ ] ]
+    =[ Kind = Category, Name = Guides, Items = [
+        =[ Kind = Content, Name = Quick start, Items = [ ] ]
+    ] ]
 ]
 ```
 
@@ -69,9 +70,9 @@ Sidebar = [
 - **`LooseHints`** takes the hint of every recognizable comment instead of following the strict
   rules - see [Hints](#hints).
 - **`EditHints`** writes a hint edited on a page into its source.
-- **`Sidebar`** is what the project's tree and home list - see [The sidebar](#the-sidebar) - as
-  an outline: an entry per item in reading order, `Level` saying how deep it stands under the
-  categories above it. A sidebar listing nothing reads as the default, one All the APIs item.
+- **`Sidebar`** is what the project's tree and home list - see [The sidebar](#the-sidebar): an
+  entry per item in reading order, a category's items under it as `Items`, as deep as they go.
+  A sidebar listing nothing reads as the default, one All the APIs item.
 
 A project the window makes is written with `ReadAs = AnyCppAndDelphi` and `LooseHints`. A project
 stating neither reads any C++ and Delphi by the strict rules.

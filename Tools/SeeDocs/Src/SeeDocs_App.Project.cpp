@@ -29,8 +29,6 @@ namespace SeeDocs_App
             constexpr std::wstring_view LooseHints = L"LooseHints";
             constexpr std::wstring_view EditHints = L"EditHints";
             constexpr std::wstring_view Sidebar = L"Sidebar";
-            constexpr std::wstring_view Kind = L"Kind";
-            constexpr std::wstring_view Level = L"Level";
         }
 
         constexpr std::wstring_view k_parentStep = L"..";
@@ -39,9 +37,7 @@ namespace SeeDocs_App
         using ProjectDocument = Dom::Document<Dom::FileFormat::ClaFi>;
         using Sections = Dom::Sequence<Dom::Section>;
 
-        // **The sidebar is written as an outline**: an entry per item in reading order, its level
-        // saying how deep it stands, since the file's reader is bound to a layout and a layout
-        // cannot hold items under items without end.
+        // The sidebar's items are written as the item spells itself, a category's under it.
         [[nodiscard]] Dom::Dt::Section projectLayout()
         {
             using namespace Dom::Dt;
@@ -57,91 +53,8 @@ namespace SeeDocs_App
                 Value{ Keys::ReadAs, std::wstring{} },
                 Value{ Keys::LooseHints, false },
                 Value{ Keys::EditHints, false },
-                Sequence{
-                    Keys::Sidebar,
-                    Section{
-                        Value{ Keys::Kind, std::wstring{} },
-                        Value{ Keys::Name, std::wstring{} },
-                        Value{ Keys::Level, 0 }
-                    }
-                }
+                Sequence{ Keys::Sidebar, SidebarItem{} }
             };
-        }
-
-        // The kind as the file spells it, read either way.
-        struct KindSpelling
-        {
-            SidebarKind kind;
-            std::wstring_view word;
-        };
-
-        constexpr std::array<KindSpelling, 4ull> k_kindSpellings{
-            KindSpelling{ SidebarKind::Category, L"Category" },
-            KindSpelling{ SidebarKind::Divider, L"Divider" },
-            KindSpelling{ SidebarKind::AllTheApis, L"AllTheApis" },
-            KindSpelling{ SidebarKind::Content, L"Content" }
-        };
-
-        [[nodiscard]] std::wstring_view kindWord(const SidebarKind kind)
-        {
-            for (const KindSpelling& spelling : k_kindSpellings)
-            {
-                if (spelling.kind == kind)
-                    return spelling.word;
-            }
-            return {};
-        }
-
-        [[nodiscard]] std::optional<SidebarKind> kindOf(const std::wstring_view word)
-        {
-            for (const KindSpelling& spelling : k_kindSpellings)
-            {
-                if (spelling.word == word)
-                    return spelling.kind;
-            }
-            return std::nullopt;
-        }
-
-        // **An entry deeper than the category above it allows stands as deep as it can**: under
-        // the nearest category open at its level, else beside it.
-        [[nodiscard]] SidebarItems readSidebar(const Sections& entries)
-        {
-            SidebarItems result;
-            std::vector<SidebarItems*> open{ &result };   // the list an entry of each level joins
-            for (const Dom::Section& entry : entries)
-            {
-                const std::optional<SidebarKind> kind =
-                    kindOf((entry / Keys::Kind).get<std::wstring>());
-                if (!kind.has_value())
-                    continue;
-                const int stated = (entry / Keys::Level).get<int>();
-                const std::size_t level = std::min<std::size_t>(
-                    static_cast<std::size_t>(std::max(stated, 0)), open.size() - 1ull);
-                open.resize(level + 1ull);
-                SidebarItems& list = *open[level];
-                list.push_back({
-                    .kind = *kind,
-                    .name = *kind == SidebarKind::Divider
-                        ? std::wstring{}
-                        : (entry / Keys::Name).get<std::wstring>()
-                });
-                if (*kind == SidebarKind::Category)
-                    open.push_back(&list.back().items);
-            }
-            return result;
-        }
-
-        void writeSidebar(Sections& entries, const SidebarItems& items, const int level)
-        {
-            for (const SidebarItem& item : items)
-            {
-                Dom::Section& entry = entries.add();
-                (entry / Keys::Kind).set(std::wstring{ kindWord(item.kind) });
-                (entry / Keys::Name).set(item.name);
-                (entry / Keys::Level).set(level);
-                if (item.kind == SidebarKind::Category)
-                    writeSidebar(entries, item.items, level + 1);
-            }
         }
 
         // One spelling for a folder: absolute, normal, and without a trailing separator.
@@ -314,7 +227,7 @@ namespace SeeDocs_App
                 project.hints = HintRules::Loose;
             if ((document / Keys::EditHints).get<bool>())
                 project.edits = HintEdits::Direct;
-            SidebarItems sidebar = readSidebar((document / Keys::Sidebar).as<Sections>());
+            SidebarItems sidebar = (document / Keys::Sidebar).get<SidebarItems>();
             if (!sidebar.empty())
                 project.sidebar = std::move(sidebar);
         }
@@ -362,7 +275,7 @@ namespace SeeDocs_App
         (document / Keys::ReadAs).set(std::wstring{ modeWord(project.mode) });
         (document / Keys::LooseHints).set(project.hints == HintRules::Loose);
         (document / Keys::EditHints).set(project.edits == HintEdits::Direct);
-        writeSidebar((document / Keys::Sidebar).as<Sections>(), project.sidebar, 0);
+        (document / Keys::Sidebar).set(project.sidebar);
         document.save();
     }
 }
