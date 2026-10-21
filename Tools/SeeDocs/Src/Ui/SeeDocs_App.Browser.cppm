@@ -315,7 +315,7 @@ namespace SeeDocs_App
         };
         // What a path names, read off its segments: the root for none, else a project by its
         // segment, and in it its own page, or its sidebar's items down from the top as far as they
-        // go - its home for none - then, under an All the APIs item, the folders down from the
+        // go - its home for none - then, where the folders stand, the folders down from the
         // root as far as they go, a list of the last folder, or a module of it, a type of that or
         // a function or a constant of the module, and a method of the type. A segment nothing
         // answers for makes the path one no project open carries.
@@ -345,8 +345,8 @@ namespace SeeDocs_App
             // A folder's page, the root's being the All the APIs item's or the home.
             [[nodiscard]] bool isFolder() const
                 { return project && folderDepth > 0 && depth == itemDepth + folderDepth + 1; }
-            // Whether the path reaches the folders: it stands under an All the APIs item, or
-            // under the home of a project whose sidebar has none.
+            // Whether the folders stand where the path does: under an All the APIs item, in the
+            // list one without a subgroup stands in, or under the home of a sidebar with none.
             [[nodiscard]] bool holdsFolders() const;
             [[nodiscard]] bool isGone() const;
         };
@@ -368,8 +368,8 @@ namespace SeeDocs_App
             OpenProject& open;
             ProjectId id;
             std::wstring segment{};
-            // The path of the sidebar's first All the APIs item, which the folders stand under;
-            // empty where it has none, the folders then standing under the home, unlisted.
+            // Where the sidebar's first All the APIs item puts the folders - its own path in a
+            // subgroup, else its list's; empty where it has none, the folders then unlisted.
             std::wstring apisPath{};
             ContentsFolders contents{};
             ContentsTree contentsTree{};   // over the contents, which every tab's tree reads
@@ -447,6 +447,8 @@ namespace SeeDocs_App
         [[nodiscard]] std::wstring segmentFor(std::wstring_view name,
             const ShownProject* self) const;
         void openPicked(const TreePickEvent&);
+        // Shows the project's sidebar page in the tab shown, the row's item selected in it.
+        void editSidebar(const TreeEditSidebarEvent&);
         // The tab's tree, made with a node per project where the tab has none yet.
         [[nodiscard]] TabTree& treeOf(const BrowserTab&);
         // Adds the project's node to the tab's tree, open as the tab last left it.
@@ -485,8 +487,8 @@ namespace SeeDocs_App
         // The page a target names, built over its project's surface; nothing where it names
         // words - no project open, a path no project carries - or a page of the project itself.
         [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
-        // The project's home: its sidebar's items, Options and Sidebar in a row under its title,
-        // Close project beside it.
+        // The project's home: its sidebar's items, Options and Edit sidebar in a row under its
+        // title, Close project beside it.
         [[nodiscard]] static Page homePageOf(const ShownProject&);
         // The items under the category, or the sidebar's top ones for none, each linked to its
         // page, a divider parting the tables.
@@ -494,6 +496,8 @@ namespace SeeDocs_App
             std::wstring_view itemPath);
         // The All the APIs item's page: what the home said of the folders before the sidebar.
         [[nodiscard]] static Page apisPageOf(const ShownProject&, const SidebarItem&);
+        // What the All the APIs page says, put on the page that lists the item without a subgroup.
+        static void addApisContents(Page&, const ShownProject&);
         [[nodiscard]] static Page contentPageOf(const SidebarItem&);   // its head alone, so far
         [[nodiscard]] Page projectsPage() const;   // the root's, while a project is open
         [[nodiscard]] static Command closeCommand(const ShownProject&, std::wstring text);

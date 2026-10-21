@@ -58,6 +58,7 @@ namespace SeeDocs_App
     {
         SidebarKind kind{ SidebarKind::Content };
         std::wstring name;    // empty on a divider
+        bool subgroup{ false };   // an All the APIs item's: the folders under a node of its own
         SidebarItems items;   // a category's
     };
 
@@ -68,6 +69,7 @@ namespace SeeDocs_App
         return std::make_tuple(
             ClaFi::SerializedField{ L"Kind", &SidebarItem::kind },
             ClaFi::SerializedField{ L"Name", &SidebarItem::name },
+            ClaFi::SerializedField{ L"Subgroup", &SidebarItem::subgroup },
             ClaFi::SerializedField{ L"Items", &SidebarItem::items }
         );
     }
@@ -77,6 +79,11 @@ namespace SeeDocs_App
     export [[nodiscard]] SidebarItems defaultSidebar();
     // The first item of the kind at any depth, read in order; null where there is none.
     export [[nodiscard]] const SidebarItem* firstOfKind(const SidebarItems&, SidebarKind);
+    // Whether the item has a page, which a url names: all but a divider and an All the APIs item
+    // without a subgroup, whose folders stand in its place.
+    export [[nodiscard]] bool hasOwnPage(const SidebarItem&);
+    // Whether the folders stand in the list, an All the APIs item without a subgroup in it.
+    export [[nodiscard]] bool listsFolders(const SidebarItems&);
 
     // A project: its folder, what it is called, the folders it reads and how it reads them, and
     // the sidebar its tree and its home list.

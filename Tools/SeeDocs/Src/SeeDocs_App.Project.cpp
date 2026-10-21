@@ -189,6 +189,20 @@ namespace SeeDocs_App
         return nullptr;
     }
 
+    bool hasOwnPage(const SidebarItem& item)
+    {
+        if (item.kind == SidebarKind::AllTheApis)
+            return item.subgroup;
+        return item.kind != SidebarKind::Divider;
+    }
+
+    bool listsFolders(const SidebarItems& items)
+    {
+        return std::ranges::any_of(items, [](const SidebarItem& item) {
+            return item.kind == SidebarKind::AllTheApis && !item.subgroup;
+        });
+    }
+
     // **A project reads what its properties name** and nothing besides: one kept inside the tree
     // it reads names the tree as `..`, as any other source. Properties that state no name leave
     // the project named after its folder, and ones that list no sidebar leave it the default.

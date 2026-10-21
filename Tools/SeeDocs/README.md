@@ -55,10 +55,10 @@ ReadAs = ClaFiModules
 LooseHints = false
 EditHints = true
 Sidebar = [
-    =[ Kind = AllTheApis, Name = All the APIs, Items = [ ] ]
-    =[ Kind = Divider, Name = , Items = [ ] ]
-    =[ Kind = Category, Name = Guides, Items = [
-        =[ Kind = Content, Name = Quick start, Items = [ ] ]
+    =[ Kind = AllTheApis, Name = All the APIs, Subgroup = false, Items = [ ] ]
+    =[ Kind = Divider, Name = , Subgroup = false, Items = [ ] ]
+    =[ Kind = Category, Name = Guides, Subgroup = false, Items = [
+        =[ Kind = Content, Name = Quick start, Subgroup = false, Items = [ ] ]
     ] ]
 ]
 ```
@@ -72,7 +72,9 @@ Sidebar = [
 - **`EditHints`** writes a hint edited on a page into its source.
 - **`Sidebar`** is what the project's tree and home list - see [The sidebar](#the-sidebar): an
   entry per item in reading order, a category's items under it as `Items`, as deep as they go.
-  A sidebar listing nothing reads as the default, one All the APIs item.
+  `Subgroup` says whether an All the APIs item puts the folders under a node of its own; an item
+  that does not state it has none. A sidebar listing nothing reads as the default, one All the
+  APIs item without a subgroup.
 
 A project the window makes is written with `ReadAs = AnyCppAndDelphi` and `LooseHints`. A project
 stating neither reads any C++ and Delphi by the strict rules.
@@ -487,8 +489,8 @@ The menu's Settings page holds External editors under the framework's own option
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
 it stand the items of the project's sidebar.
 
-The home's head holds Options and Sidebar, which open the project's options page and its sidebar
-page - see [The sidebar](#the-sidebar).
+The home's head holds Options and Edit sidebar, which open the project's options page and its
+sidebar page - see [The sidebar](#the-sidebar).
 
 The options page is titled Project options. Under the title stand:
 
@@ -509,39 +511,29 @@ kinds.
   them.
 - **A divider** is a line between the items either side of it, in the tree and on the page that
   lists them, where it parts the list in two. It has no name and no page.
-- **All the APIs** holds the folders the sources read, as the scan lists them: in the tree its node
-  opens on the folders, and its page is what the home page said of them before there was a
-  sidebar - the folders under the root with what each holds, the root's own modules, and why there
-  is nothing to document where there is none.
+- **All the APIs** holds the folders the sources read, as the scan lists them, and the root's own
+  modules after them. **Without a subgroup**, the default, they stand in the item's place: in the
+  tree under the node the item stands in, and on the page that lists the item - the home or a
+  category's - with what each folder holds and why there is nothing to document where there is
+  none. **In a subgroup** they stand under a node of the item's own, whose page says the same.
 - **Content** is a page of the project's own, with a name and, so far, nothing under its head.
 
-A new project's sidebar holds one All the APIs item. **The folders stand under the sidebar's first
-All the APIs item**, every url of theirs starting with its path; a sidebar with none hangs them
-straight under the home, unlisted, where a link still reaches them.
+A new project's sidebar holds one All the APIs item, without a subgroup. **The folders stand where
+the sidebar's first All the APIs item puts them** - in its place, or under it in a subgroup - every
+url of theirs starting with that path; a sidebar with none hangs them straight under the home,
+unlisted, where a link still reaches them.
 
-**Every item is a segment of its page's url**, its name as the sidebar spells it -
-`/project/Guides/Quick start`, and `/project/All the APIs/Core/...` for the folders. An item's name
-holds no slash and is no other item's beside it, and renaming an item moves every url under it, as
-renaming the project does.
+**Every item with a page is a segment of its url**, its name as the sidebar spells it -
+`/project/Guides/Quick start`. The folders follow where they stand: `/project/Core/...` under an
+All the APIs item at the top without a subgroup, `/project/All the APIs/Core/...` in one. Where an
+item and a folder go by one name in one place, the url names the item. An item's name holds no
+slash and is no other item's beside it, and renaming an item moves every url under it, as renaming
+the project does. Switching the subgroup moves the folders' urls, and a tab left on the old ones
+shows the gone page.
 
-**The sidebar is edited where it stands, in every tab's tree, and on the sidebar page.** Both go
-by the same rules, and an edit in either shows in both.
-
-**In the tree**, a sidebar row's menu holds the edits, under Open in new tab:
-
-- **Add** opens the four kinds. The item goes at the end of the category the menu is on, after any
-  other item, and at the end of the top level from the project's node's menu; it is named by its
-  kind and opens for its name as the item does on the page.
-- **Rename** opens an editor over the row's name, as F2 and a second click on it do.
-- **Delete** takes the item out with everything under it; a category holding items asks first.
-- **Kind** opens the kinds the item can be made, the one it is marked.
-- **The items under one node are carried** to another place among themselves, a press on a row and
-  a drag - the rows under the project's node and under a category. The folders under All the APIs
-  stand as the scan lists them.
-
-A divider is a row like any other in the tree: it opens nothing, and its menu has no Rename.
-
-**The sidebar page** edits the sidebar:
+**The sidebar is edited on the sidebar page**, which Edit sidebar opens in the tab shown: on the
+home, under the title, and in the tree, on the menu of the project's node and of a sidebar item's
+row, where the page opens with the row's item selected. The page holds:
 
 - **The tree** of the items under the project's own node, which always stands and cannot be
   deleted or moved. Every node stands open.
@@ -557,6 +549,8 @@ A divider is a row like any other in the tree: it opens nothing, and its menu ha
 - **Kind**, at the right, is the selected item's kind, which a click on another answer changes. A
   category holding items keeps its kind. An item made a divider loses its name; a divider made
   anything else is named by its new kind.
+- **In a subgroup**, under the kinds for an All the APIs item, puts the folders under a node and a
+  page of the item's own. It starts unticked.
 - **The items under one node are carried** to another place among themselves - a press on a row and
   a drag. Moving an item into or out of a category is not a drag: it is added where it goes.
 
@@ -641,8 +635,8 @@ SeeDocs is a browser of the framework's own kind:
 - An options page on screen is built again, so its last scan reads just now.
 
 **Every page has a url** - `/project/item/folder/module/type/method`, the project named by its
-name, the items of its sidebar after it as far as they go, and the folders under its All the APIs
-item.
+name, the items of its sidebar after it as far as they go, and the folders where its All the APIs
+item puts them.
 
 - A tab goes back and forward through the pages it has visited: Alt+Left and Alt+Right, the mouse's
   side buttons, or a right click on either button for the list.
@@ -661,12 +655,15 @@ item.
 
 - It lists the sidebar's items as the tree lists them, each marked with its kind's mark and linked
   to its page, a divider parting the list.
-- Options and Sidebar stand in a row under the title, each marked with its page's icon, and Close
-  project stands at the page's top right.
-- A project with nothing to document says why on its All the APIs page, under the title.
-- Modules standing in a source folder's own folder are the root's. They stand under the All the
-  APIs item's node after its folders, and its page carries what they export, by module, as a
-  folder's page does.
+- Options and Edit sidebar stand in a row under the title, each marked with its page's icon, and
+  Close project stands at the page's top right.
+- In the place of an All the APIs item without a subgroup, the home - or the category page that
+  lists the item - shows the folders under the root with what each holds, and the root's own
+  modules; a project with nothing to document says why under the title. In a subgroup, the item's
+  own page shows them.
+- Modules standing in a source folder's own folder are the root's. They stand after the folders in
+  the tree, and the page that shows the folders carries what they export, by module, as a folder's
+  page does.
 
 **Renaming and restoring**
 
@@ -678,10 +675,12 @@ item.
 ### The tree
 
 Down the left, under each project's node, stand the items of its sidebar - a category a node
-holding its items, a divider a line, a content item a row - and under its All the APIs item a tree
-of the sources' folders, named as they stand on disk. The page of the row clicked shows on the
-right, and Open in new tab on a row's menu opens it in a tab behind the one shown. The sidebar's
-rows are edited in place, by their menus and by a drag - see [The sidebar](#the-sidebar).
+holding its items, a divider a line, a content item a row - and a tree of the sources' folders,
+named as they stand on disk, where its All the APIs item puts them: in the item's place, or under
+its node in a subgroup. The page of the row clicked shows on the
+right, and Open in new tab on a row's menu opens it in a tab behind the one shown. Edit sidebar on
+the menu of the project's node or of an item's row opens the sidebar page - see
+[The sidebar](#the-sidebar).
 
 - Each folder holds the folders under it, then its modules by their full names.
 - Each module holds the types it exports, controls first.

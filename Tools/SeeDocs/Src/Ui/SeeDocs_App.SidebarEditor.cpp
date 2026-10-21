@@ -7,6 +7,7 @@ import SeeDocs_App.SidebarRows;
 import SeeDocs_App.Surface;
 
 import ClaFi.Controls.Button;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Menu;
@@ -142,6 +143,23 @@ namespace SeeDocs_App
         m_rebuildTimer.start(MilliSeconds{ 0u });
     }
 
+    void SidebarEditor::select(IndexPath path)
+    {
+        const Row* found = nullptr;
+        while (!path.empty() && !found)
+        {
+            found = rowAt(path);
+            if (!found)
+                path.pop_back();
+        }
+        Control& current = found
+            ? (found->node ? static_cast<Control&>(found->node->header()) : *found->row)
+            : m_root.header();
+        m_tree.setCurrentItem(current);
+        current.scrollIntoViewOnAlign();
+        selectionChanged();
+    }
+
     void SidebarEditor::nestedKeyDown(KeyDownEvent& event)
     {
         if (event.key == Keys::Delete && event.modifiers.empty() && m_tree.isFocused()
@@ -158,6 +176,7 @@ namespace SeeDocs_App
     {
         for (const SidebarKind kind : k_sidebarKinds)
             addKind(kind, kindCaption(kind));
+        addSubgroupOption();
         m_kinds.setVisible(false);
     }
 
@@ -179,6 +198,30 @@ namespace SeeDocs_App
                 if (item && item->kind != kind)
                     setKind(kind);
                 event.control->invalidateSiblingStates();
+            } }
+        );
+    }
+
+    // Set in as the kinds are, its box under their marks.
+    void SidebarEditor::addSubgroupOption()
+    {
+        m_subgroupOption = &m_kinds.add<StackPanel>(
+            Orientation::Vertical,
+            Padding{ k_choiceIndent, k_optionGap }
+        );
+        m_subgroupOption->add<CheckBox>(
+            k_subgroupCaption,
+            Padding{ 0.0f, m_kinds.themeMetrics().listItem.padding.y },
+            HorizontalAlign::Left,
+            CheckBox::OnGetState{ [this](GetStateEvent& event) {
+                const SidebarItem* item = selectedItem();
+                event.state.selected = item && item->subgroup;
+            } },
+            CheckBox::OnClick{ [this](ClickEvent& event) {
+                const SidebarItem* item = selectedItem();
+                if (item)
+                    setSubgroup(!item->subgroup);
+                event.control->invalidateState();
             } }
         );
     }
@@ -243,11 +286,11 @@ namespace SeeDocs_App
     // stands open, the sidebar being small.
     void SidebarEditor::rebuildRows()
     {
-        IndexPath select = m_select.value_or(IndexPath{});
+        IndexPath wanted = m_select.value_or(IndexPath{});
         if (!m_select.has_value())
         {
             if (const Row* selected = selectedRow())
-                select = selected->path;
+                wanted = selected->path;
         }
         m_select.reset();
         m_tree.setCurrentItem(nullptr);
@@ -270,21 +313,8 @@ namespace SeeDocs_App
                 row.node->header().setExpanded(true);
         }
 
-        // The nearest row standing on the way to the one asked for, where it has gone.
-        const Row* found = nullptr;
-        while (!select.empty() && !found)
-        {
-            found = rowAt(select);
-            if (!found)
-                select.pop_back();
-        }
-        Control& current = found
-            ? (found->node ? static_cast<Control&>(found->node->header()) : *found->row)
-            : m_root.header();
-        m_tree.setCurrentItem(current);
-        current.scrollIntoViewOnAlign();
-        selectionChanged();
-
+        select(std::move(wanted));
+        const Row* found = selectedRow();
         const SidebarItem* item = found ? itemAt(m_items, found->path) : nullptr;
         if (std::exchange(m_renameNext, false) && item)
         {
@@ -401,6 +431,20 @@ namespace SeeDocs_App
         edit(std::move(items), true);
     }
 
+    // The rows stand as they are: only the folders move, in the trees and on the pages.
+    void SidebarEditor::setSubgroup(const bool subgroup)
+    {
+        const Row* selected = selectedRow();
+        if (!selected)
+            return;
+        SidebarItems items = m_items;
+        SidebarItem* item = itemAt(items, selected->path);
+        if (!item || item->subgroup == subgroup)
+            return;
+        item->subgroup = subgroup;
+        edit(std::move(items), false);
+    }
+
     // The row keeps its place, so its words are put right where it stands and no row is built
     // again under the editor.
     void SidebarEditor::acceptName(const IndexPath& path, AcceptEditEvent& event)
@@ -467,8 +511,12 @@ namespace SeeDocs_App
     // The kind set shows for an item, and Delete reads the selection again.
     void SidebarEditor::selectionChanged()
     {
-        m_kinds.setVisible(selectedItem() != nullptr);
+        const SidebarItem* item = selectedItem();
+        m_kinds.setVisible(item != nullptr);
+        m_subgroupOption->setVisible(item && item->kind == SidebarKind::AllTheApis);
         for (const ControlPtr& answer : m_kindSet.controls())
+            answer->invalidateState();
+        for (const ControlPtr& answer : m_subgroupOption->controls())
             answer->invalidateState();
         if (m_deleteButton)
             m_deleteButton->invalidateState();

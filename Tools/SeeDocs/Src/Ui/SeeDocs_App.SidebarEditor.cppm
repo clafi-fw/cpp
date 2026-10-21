@@ -5,6 +5,7 @@ import SeeDocs_App.Project;
 import SeeDocs_App.SidebarEdits;
 
 import ClaFi.Controls.Button;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.ScrollBox;
@@ -32,9 +33,9 @@ namespace SeeDocs_App
     // **A project's sidebar as its editor**: the items as a tree under the project's own node,
     // which always stands; Add, dropping the kinds, and Delete over the selected item, in the bar
     // the editor is given; the selected item's kind picked at the right; a name typed where it
-    // stands; and the items under one node carried into another order. Every edit says what the
-    // sidebar is to be, and the editor shows the items as they read once it is written. See the
-    // README beside the project.
+    // stands; whether an All the APIs item puts the folders in a subgroup; and the items under one
+    // node carried into another order. Every edit says what the sidebar is to be, and the editor
+    // shows the items as they read once it is written. See the README beside the project.
     export class SidebarEditor : public Panel
     {
     public:
@@ -49,6 +50,8 @@ namespace SeeDocs_App
         void addCommands(StackPanel& bar);
         // Shows the items as they now read, once whatever asked for it has unwound.
         void reload();
+        // Makes the item's row current, or the nearest row standing on the way to it.
+        void select(IndexPath);
     protected:
         void nestedKeyDown(KeyDownEvent&) override;   // Delete takes the selected item out
     private:
@@ -67,8 +70,9 @@ namespace SeeDocs_App
         [[nodiscard]] TreeNode& addRoot(std::wstring_view projectName);
         // Adds the kind set's caption and the set under it, set in from the caption.
         [[nodiscard]] StackPanel& addKindSet();
-        void connectKinds();   // the kind set, each kind an answer of it
+        void connectKinds();   // the kind set, each kind an answer of it, and the subgroup option
         void addKind(SidebarKind, std::wstring_view caption);
+        void addSubgroupOption();   // under the kinds, for an All the APIs item
         // Makes the rows under the node for the items, each knowing where it stands.
         void buildRows(const SidebarItems&, TreeNode& holder, const IndexPath& under);
         void tagRows();   // every row's controls take the row, once the rows stand
@@ -85,6 +89,7 @@ namespace SeeDocs_App
         // Whether the selected item may be of the kind.
         [[nodiscard]] bool canBeKind(SidebarKind) const;
         void setKind(SidebarKind);
+        void setSubgroup(bool);
         // Takes the name typed for the item, or refuses it with the reason.
         void acceptName(const IndexPath&, AcceptEditEvent&);
         // The items under one node were carried into another order.
@@ -97,7 +102,9 @@ namespace SeeDocs_App
         static constexpr float k_treePadding = 4.0f;
         static constexpr float k_kindsPadding = 12.0f;  // between the tree and the kind set
         static constexpr float k_choiceIndent = 20.0f;  // the kinds in from their caption
+        static constexpr float k_optionGap = 8.0f;      // between the kinds and the option
         static constexpr std::wstring_view k_kindCaption = L"Kind";
+        static constexpr std::wstring_view k_subgroupCaption = L"In a subgroup";
 
         const SidebarItems& m_items;   // the project's, read whenever the rows are built
         Rows m_rows{};
@@ -117,6 +124,7 @@ namespace SeeDocs_App
             Padding{ k_kindsPadding, 0.0f }
         ) };
         StackPanel& m_kindSet{ addKindSet() };
+        StackPanel* m_subgroupOption{ nullptr };   // shown for an All the APIs item
     };
 
 

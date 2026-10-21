@@ -77,7 +77,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_optionsTitle = L"Project options";   // the page's title
         constexpr std::wstring_view k_sidebarTitle = L"Sidebar";   // the page's title
         constexpr std::wstring_view k_optionsCaption = L"Options";   // on a home
-        constexpr std::wstring_view k_sidebarCaption = L"Sidebar";   // on a home
+        constexpr std::wstring_view k_sidebarCaption = L"Edit sidebar";   // on a home
         constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
         constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
         constexpr std::wstring_view k_closeTooltip = L"Closes the project and every tab on it";
@@ -179,21 +179,21 @@ namespace SeeDocs_App
             text << ParaIndent{ 0.0f } << k_endLine;
         }
 
-        // The item of the list a segment names: one of its name that is no divider, the first
+        // The item of the list a segment names: one of its name with a page of its own, the first
         // where a hand-written file repeats one.
         [[nodiscard]] const SidebarItem* itemNamed(const SidebarItems& items,
             const std::wstring_view segment)
         {
             for (const SidebarItem& item : items)
             {
-                if (item.kind != SidebarKind::Divider && item.name == segment)
+                if (hasOwnPage(item) && item.name == segment)
                     return &item;
             }
             return nullptr;
         }
 
-        // The path of the first All the APIs item at any depth, reading in order; nothing for
-        // none.
+        // Where the first All the APIs item at any depth, reading in order, puts the folders: its
+        // own path in a subgroup, else the path of the list it stands in; nothing for none.
         [[nodiscard]] std::optional<std::wstring> apisPathOf(const SidebarItems& items,
             const std::wstring_view under)
         {
@@ -201,7 +201,7 @@ namespace SeeDocs_App
             {
                 const std::wstring path = joinFolder(under, item.name);
                 if (item.kind == SidebarKind::AllTheApis)
-                    return path;
+                    return item.subgroup ? path : std::wstring{ under };
                 if (item.kind != SidebarKind::Category)
                     continue;
                 if (std::optional<std::wstring> found = apisPathOf(item.items, path))
@@ -210,11 +210,13 @@ namespace SeeDocs_App
             return std::nullopt;
         }
 
-        // Whether any item of the list has a page of its own: anything but a divider.
-        [[nodiscard]] bool listsAny(const SidebarItems& items)
+        // Whether the list names any page: an item's own, or the folders standing in it.
+        [[nodiscard]] bool listsAny(const SidebarItems& items, const ContentsFolders& folders)
         {
+            if (listsFolders(items) && !folders.empty())
+                return true;
             return std::ranges::any_of(items, [](const SidebarItem& item) {
-                return item.kind != SidebarKind::Divider;
+                return hasOwnPage(item);
             });
         }
     }
@@ -379,9 +381,11 @@ namespace SeeDocs_App
     {
         if (!project)
             return false;
-        if (item)
-            return item->kind == SidebarKind::AllTheApis;
-        return project->apisPath.empty();
+        if (!item)
+            return project->apisPath.empty() || listsFolders(project->open.project.sidebar);
+        if (item->kind == SidebarKind::AllTheApis)
+            return true;
+        return item->kind == SidebarKind::Category && listsFolders(item->items);
     }
 
     bool SurfaceBrowser::Target::isGone() const
@@ -921,11 +925,11 @@ namespace SeeDocs_App
             && !target.searching && !target.list && target.method.empty()
             && target.exportName.empty();
         if (pageOfProject && target.isHome())
-            hasList = listsAny(target.project->open.project.sidebar);
+            hasList = listsAny(target.project->open.project.sidebar, target.project->contents);
         else if (pageOfProject && target.isItem())
         {
             if (target.item->kind == SidebarKind::Category)
-                hasList = listsAny(target.item->items);
+                hasList = listsAny(target.item->items, target.project->contents);
             else if (target.item->kind == SidebarKind::AllTheApis)
                 hasList = !target.project->contents.empty();
         }
@@ -950,13 +954,6 @@ namespace SeeDocs_App
         if (target.isGone() || target.isOwnPage() || target.searching || target.list)
             return;
         const ShownProject& project = *target.project;
-        const auto addItems = [this, &data](const SidebarItems& items) {
-            for (const SidebarItem& item : items)
-            {
-                if (item.kind != SidebarKind::Divider)
-                    addSubItem(data, item.name);
-            }
-        };
         const auto addFolderItems = [this, &data, &project](const std::wstring_view folder,
             const ContentsFolder* contents) {
             for (const std::wstring& name : subfolderNames(project, folder))
@@ -965,6 +962,15 @@ namespace SeeDocs_App
             {
                 for (const ContentsModule& module : contents->modules)
                     addSubItem(data, segmentOf(module));
+            }
+        };
+        const auto addItems = [this, &data, &target, &addFolderItems](const SidebarItems& items) {
+            for (const SidebarItem& item : items)
+            {
+                if (hasOwnPage(item))
+                    addSubItem(data, item.name);
+                else if (item.kind == SidebarKind::AllTheApis)
+                    addFolderItems({}, target.contents);
             }
         };
         if (target.isHome())
@@ -1327,6 +1333,21 @@ namespace SeeDocs_App
             goTo(Url{ path });
     }
 
+    // The move is done once goTo returns, unless the page shown refused to be left.
+    void SurfaceBrowser::editSidebar(const TreeEditSidebarEvent& event)
+    {
+        const ShownProject* project = projectOf(event.project);
+        if (!project)
+            return;
+        goTo(Url{ pathOf(*project, OwnPage::Sidebar) });
+        BrowserPage* page = currentPage();
+        if (!page)
+            return;
+        const Target target = resolve(page->pageData());
+        if (target.project == project && target.ownPage == OwnPage::Sidebar)
+            static_cast<SidebarPage*>(page)->editor().select(event.item);
+    }
+
     // The tree stands apart from the page a pick's move takes down, so the move needs no wait.
     SurfaceBrowser::TabTree& SurfaceBrowser::treeOf(const BrowserTab& tab)
     {
@@ -1345,12 +1366,8 @@ namespace SeeDocs_App
         tree.onPick([this](TreePickEvent& event) {
             openPicked(event);
         });
-        tree.onEdit([this](TreeEditEvent& event) {
-            if (ShownProject* shown = projectOf(event.project))
-            {
-                SidebarEditedEvent edited{ shown->open, std::move(event.items) };
-                emitEvent(edited);
-            }
+        tree.onEditSidebar([this](TreeEditSidebarEvent& event) {
+            editSidebar(event);
         });
         const BrowserTab* owner = &tab;
         tree.onToggle([this, owner](TreeToggleEvent& event) {
@@ -1660,7 +1677,8 @@ namespace SeeDocs_App
     }
 
     // **A divider parts the list into tables**, each standing on the page bare; a row wears the
-    // mark of its item's kind and links to the item's page by path.
+    // mark of its item's kind and links to the item's page by path. An All the APIs item without
+    // a subgroup puts what its page would say in its place.
     Page SurfaceBrowser::itemsPageOf(const ShownProject& project, const SidebarItem* category,
         const std::wstring_view itemPath)
     {
@@ -1700,6 +1718,12 @@ namespace SeeDocs_App
                 addTable();
                 continue;
             }
+            if (!hasOwnPage(item))
+            {
+                addTable();
+                addApisContents(page, project);
+                continue;
+            }
             std::optional<PageKind> kind;
             switch (item.kind)
             {
@@ -1734,6 +1758,24 @@ namespace SeeDocs_App
         if (project.contents.empty())
             explainEmpty(page, open.project);
         return page;
+    }
+
+    // The holdings and the words for a project with nothing to document go to the head, the
+    // folders and the root's modules where the page stands so far.
+    void SurfaceBrowser::addApisContents(Page& page, const ShownProject& project)
+    {
+        OpenProject& open = project.open;
+        Page apis = homePage(open.surface, open.notes, project.contents, {});
+        if (project.contents.empty())
+            explainEmpty(apis, open.project);
+        if (page.lead.empty())
+            page.lead = std::move(apis.lead);
+        for (Fact& fact : apis.facts)
+            page.facts.push_back(std::move(fact));
+        for (Section& section : apis.sections)
+            page.sections.push_back(std::move(section));
+        if (!page.footnoteHome.has_value())
+            page.footnoteHome = std::move(apis.footnoteHome);
     }
 
     Page SurfaceBrowser::contentPageOf(const SidebarItem& item)

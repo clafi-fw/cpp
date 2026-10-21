@@ -38,8 +38,7 @@ namespace SeeDocs_App
         std::optional<RowIcon> m_mark{};
     };
 
-    // The header of a sidebar item's node - a category's, or an All the APIs item's where the
-    // folders hang under it: its name typed where it stands, its mark ahead of it.
+    // The header of a category's node: its name typed where it stands, its mark ahead of it.
     export class SidebarNodeHeader : public WithMark<WithInPlaceEdit<TreeNodeHeader>>
     {
     public:
