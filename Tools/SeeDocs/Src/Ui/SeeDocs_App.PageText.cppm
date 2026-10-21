@@ -16,7 +16,9 @@ namespace SeeDocs_App
     // Writes the runs as they are styled, a linked run inside a link.
     export void writeRuns(Text&, const Runs&);
     export [[nodiscard]] Text textOf(const Runs&);
-    // The words of a text as a note line writes them: bold between its marks, code between its.
+    // The words of a text as a note writes them: bold between its marks, code between its, a
+    // paragraph to a line and a blank line between two, an item behind a dash, a line of code
+    // set in by four blanks.
     export [[nodiscard]] std::wstring markdownOf(const Text&);
     // The prose of a note, a paragraph per line, the whole of it set in from the margin as asked.
     export void writeBlocks(Text&, const Blocks&, float indent = 0.0f);

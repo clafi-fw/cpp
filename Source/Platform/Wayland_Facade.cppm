@@ -23,12 +23,8 @@ namespace ClaFi
     public:
         struct Params
         {
-            // **Watching the clipboard is not the same privilege as pasting from it.** A compositor
-            // announces a selection to the client holding the keyboard focus and to nobody else,
-            // so a window that shows what is on the clipboard is told nothing while it is not the
-            // one being typed into. An application that states this here is given the clipboard
-            // manager's channel instead, where the compositor advertises one - Mutter does not,
-            // and there the focus rule stands whatever is asked for.
+            /// Whether the application running in background gets the clipboard change
+            /// notifications
             bool watchesClipboard{ false };
         };
         // Connects to the compositor, or throws - see DisplayManager.

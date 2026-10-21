@@ -508,6 +508,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MessageBadge.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MessageIcons.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MoonIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>

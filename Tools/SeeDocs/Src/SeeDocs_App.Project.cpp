@@ -169,7 +169,7 @@ namespace SeeDocs_App
 
     bool Project::writesHints() const
     {
-        return edits == HintEdits::Direct && hints == HintRules::Strict;
+        return edits == HintEdits::Direct;
     }
 
     SidebarItems defaultSidebar()

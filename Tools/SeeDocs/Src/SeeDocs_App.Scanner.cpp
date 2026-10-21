@@ -1297,9 +1297,12 @@ namespace SeeDocs_App
             [[nodiscard]] std::wstring textBetween(std::size_t first, std::size_t last) const;
             [[nodiscard]] Comment commentAt(std::size_t line, std::optional<std::size_t> fallback,
                 std::wstring_view name, bool aboveCounts = true) const;
-            void gatherAbove(std::size_t line, Comment&) const;
-            // A loose read's trailing comment on the line, with the lines that carry it on.
-            [[nodiscard]] Names trailingLines(std::size_t line, const std::wstring& trailing) const;
+            // The first of the comment lines above the line that are its own; the line where none.
+            std::size_t gatherAbove(std::size_t line, Comment&) const;
+            // The words of the comment on the lines from the first to the end, opening at the
+            // column given on the first.
+            [[nodiscard]] std::wstring wordsOf(std::size_t first, std::size_t end,
+                std::size_t start) const;
         private:
             Surface& m_surface;
             std::size_t m_file;
@@ -3094,59 +3097,69 @@ namespace SeeDocs_App
             return m_text.slice(tokens[first], tokens[last]);
         }
 
+        // **Strict rules read the comment on the line first, loose ones the comment above**: a
+        // comment on a line is as often a tool's directive as words. Either reads the whole of it -
+        // every line of the comment above, or the comment on the line with the lines carrying it
+        // on. By strict rules a See ending it reaches a footnote; by loose ones it is words, and
+        // words that only name the declaration are a label, which tells a reader nothing.
         Comment FileReader::commentAt(const std::size_t line,
             const std::optional<std::size_t> fallback, const std::wstring_view name,
             const bool aboveCounts) const
         {
             Comment comment;
+            std::wstring trailingWords;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
             {
                 comment.trailing = m_looseHints
                     ? withoutSeparators(docCommentBody(*trailing))
                     : std::wstring{ commentBody(*trailing) };
+                const std::wstring_view written = m_text.line(line);
+                const auto start = static_cast<std::size_t>(trailing->data() - written.data());
+                trailingWords = wordsOf(line, line + 1 + m_text.continuationsOf(line), start);
             }
             comment.lineWidth = m_text.width(line);
+            std::wstring aboveWords;
             if (aboveCounts)
-                gatherAbove(line, comment);
-            if (aboveCounts && comment.above.empty() && fallback && *fallback != line)
-                gatherAbove(*fallback, comment);
+            {
+                std::size_t end = line;
+                std::size_t first = gatherAbove(line, comment);
+                if (comment.above.empty() && fallback && *fallback != line)
+                {
+                    end = *fallback;
+                    first = gatherAbove(*fallback, comment);
+                }
+                if (first != end)
+                    aboveWords = wordsOf(first, end, leadingBlanks(m_text.line(first)));
+            }
 
-            // Loose rules are not the routine's: the hint is the brief of the doc comment above, or
-            // of the one on the line where there is none above - a comment on a line is as often a
-            // tool's directive as words - and a See in it is words. A hint that only names the
-            // declaration is a label, which tells a reader nothing.
             if (m_looseHints)
             {
-                if (comment.above.empty() && comment.trailing)
-                    comment.text = briefOf(trailingLines(line, *comment.trailing));
-                else
-                    comment.text = briefOf(comment.above);
+                comment.text = aboveWords.empty()
+                    ? std::move(trailingWords)
+                    : std::move(aboveWords);
                 if (comment.text == bareName(name))
                     comment.text.clear();
                 return comment;
             }
-
-            std::wstring source;
-            if (comment.trailing)
-                source = *comment.trailing;
-            else if (!comment.above.empty())
-                source = comment.above.front();
+            std::wstring source = comment.trailing
+                ? std::move(trailingWords)
+                : std::move(aboveWords);
             comment.reference = cutReference(source, name);
             comment.text = std::move(source);
             return comment;
         }
 
-        // By loose rules, the lines carrying on the trailing comment of the line above them are
-        // that line's, not the comment of the declaration under them.
-        void FileReader::gatherAbove(const std::size_t line, Comment& comment) const
+        // The lines carrying on the trailing comment of the line above them are that line's, not
+        // the comment of the declaration under them.
+        std::size_t FileReader::gatherAbove(const std::size_t line, Comment& comment) const
         {
             std::size_t first = line;
             while (first != 0 && m_text.kindOf(first - 1) == LineKind::CommentOnly)
                 --first;
-            if (m_looseHints && first != 0 && first != line)
+            if (first != 0 && first != line)
                 first = std::min(line, first + m_text.continuationsOf(first - 1));
             if (first == line)
-                return;
+                return line;
             comment.aboveLine = first + 1;
             for (std::size_t i = first; i != line; ++i)
             {
@@ -3161,15 +3174,17 @@ namespace SeeDocs_App
                 if (!body.starts_with(k_todo))
                     comment.above.push_back(body);
             }
+            return first;
         }
 
-        Names FileReader::trailingLines(const std::size_t line, const std::wstring& trailing) const
+        std::wstring FileReader::wordsOf(const std::size_t first, const std::size_t end,
+            const std::size_t start) const
         {
-            Names lines{ trailing };
-            const std::size_t continued = m_text.continuationsOf(line);
-            for (std::size_t i = line + 1; i <= line + continued; ++i)
-                lines.push_back(withoutSeparators(docCommentBody(m_text.line(i))));
-            return lines;
+            std::vector<std::wstring_view> lines;
+            for (std::size_t i = first; i != end; ++i)
+                lines.push_back(m_text.line(i));
+            const HintRules rules = m_looseHints ? HintRules::Loose : HintRules::Strict;
+            return commentText(cutComment(lines, start, SourceLanguage::Cpp, rules));
         }
 
         [[nodiscard]] std::wstring posixRelative(const std::filesystem::path& file,

@@ -19,18 +19,6 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    /// @brief The painter a named icon stands for, and nothing for None. A dialog needing a
-    /// picture this set does not carry hands its own painter in place of a name.
-    export [[nodiscard]] PaintIconFunc iconPainterOf(MessageIcon);
-
-    /// @brief A line led by one of these icons, drawn at the size of the words beside it. It is
-    /// what a context message raised about a control is written as - the icon says what kind of
-    /// news it is before the words are read, the way a dialog's picture does.
-    /// @note The icon and the gap after it are stated in one place, so two messages raised from
-    /// opposite ends of an application never lead differently. MessageIcon::None leads with
-    /// nothing and answers the words alone.
-    export [[nodiscard]] Text messageText(MessageIcon, std::wstring_view);
-
     /// @brief The word an answer is offered under. Stated once, here, so two dialogs asking the
     /// same question never word it differently.
     export [[nodiscard]] std::wstring_view captionOf(DialogAnswer);

@@ -49,6 +49,8 @@ namespace SeeDocs_App
             constexpr std::wstring_view Line = L"Line";
             constexpr std::wstring_view Hint = L"Hint";
             constexpr std::wstring_view Note = L"Note";
+            constexpr std::wstring_view HintLine = L"HintLine";
+            constexpr std::wstring_view Borrowed = L"Borrowed";
             constexpr std::wstring_view Interface = L"Interface";
             constexpr std::wstring_view Header = L"Header";
             constexpr std::wstring_view Language = L"Language";
@@ -98,7 +100,9 @@ namespace SeeDocs_App
                 Value{ Keys::Name, std::wstring{} },
                 Value{ Keys::Line, std::size_t{ 0 } },
                 Value{ Keys::Hint, std::wstring{} },
-                Value{ Keys::Note, std::wstring{} }
+                Value{ Keys::Note, std::wstring{} },
+                Value{ Keys::HintLine, std::size_t{ 0 } },
+                Value{ Keys::Borrowed, false }
             };
         }
 
@@ -430,6 +434,8 @@ namespace SeeDocs_App
             entry.setNumber(Keys::Line, place.line);
             entry.setText(Keys::Hint, comment.text);
             entry.setText(Keys::Note, noteText(comment));
+            entry.setNumber(Keys::HintLine, comment.readAt);
+            entry.setFlag(Keys::Borrowed, comment.borrowed);
         }
 
         void setScoped(Entry& entry, const Surface& surface, const std::wstring_view nameSpace,
@@ -873,7 +879,11 @@ namespace SeeDocs_App
 
         Comment Reader::commentOf(const Dom::Section& entry)
         {
-            Comment comment{ .text = textOf(entry, Keys::Hint) };
+            Comment comment{
+                .text = textOf(entry, Keys::Hint),
+                .readAt = numberOf(entry, Keys::HintLine),
+                .borrowed = flagOf(entry, Keys::Borrowed)
+            };
             const std::wstring note = textOf(entry, Keys::Note);
             if (note.empty())
                 return comment;

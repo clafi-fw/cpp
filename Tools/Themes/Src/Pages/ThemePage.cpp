@@ -17,6 +17,8 @@ import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Documents.Page;
 
+import ClaFi.Icons.MessageIcons;
+
 import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.MessageDialog;
@@ -608,19 +610,21 @@ namespace Themes_App
         case SourceWrite::Written:
             ContextMessage::show(
                 button,
-                messageText(MessageIcon::Ok, L"Written. The built-in theme from the next build")
+                Icons::messageText(MessageIcon::Ok,
+                    L"Written. The built-in theme from the next build")
             );
             break;
         case SourceWrite::Unchanged:
             ContextMessage::show(
                 button,
-                messageText(MessageIcon::Information, L"The source already states this theme")
+                Icons::messageText(MessageIcon::Information,
+                    L"The source already states this theme")
             );
             break;
         case SourceWrite::Failed:
             ContextMessage::show(
                 button,
-                messageText(MessageIcon::Error, L"The source could not be written")
+                Icons::messageText(MessageIcon::Error, L"The source could not be written")
             );
             break;
         }

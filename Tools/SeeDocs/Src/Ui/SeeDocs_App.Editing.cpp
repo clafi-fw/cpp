@@ -12,6 +12,8 @@ import ClaFi.Controls.Spacer;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
+import ClaFi.Icons.MessageIcons;
+
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.History;
@@ -87,7 +89,7 @@ namespace SeeDocs_App
 
     void WordsBox::charPress(CharPressEvent& event)
     {
-        if (event.character() == Keys::Return)
+        if (event.character() == Keys::Return && !takesLineBreaks())
             return;
         PromptBox::charPress(event);
     }
@@ -130,6 +132,16 @@ namespace SeeDocs_App
     std::wstring HintBox::wordsOf(const Text& words) const
     {
         return markdownOf(words);
+    }
+
+    // The mode leaves a line break taken to the box, which types it.
+    void HintBox::editModeKeyDown(KeyDownEvent& event)
+    {
+        m_lineBreakPress = event.key == Keys::Return && event.modifiers.shift
+            && !event.modifiers.ctrl && !event.modifiers.alt;
+        WordsBox::editModeKeyDown(event);
+        if (m_lineBreakPress)
+            event.handled = true;
     }
 
     // FootnoteSlot
@@ -243,7 +255,8 @@ namespace SeeDocs_App
     void FootnoteSlot::showRefusal(const std::wstring_view reason)
     {
         Text text;
-        text << InkWell::redInk(InkGrade::Strong) << reason << PopColor{};
+        text << InkWell::redInk(InkGrade::Strong) << Icons::messageText(MessageIcon::Error, reason)
+            << PopColor{};
         m_place->text() = text;
         invalidateFormAlign();
     }

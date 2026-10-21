@@ -921,6 +921,8 @@ namespace SeeDocs_App
         const auto move = [&](Place& place, Comment& comment) {
             if (place.file == file && comment.aboveLine != 0)
                 shift(comment.aboveLine);
+            if (place.file == file && comment.readAt != 0)
+                shift(comment.readAt);
             shiftPlace(place);
             return false;
         };
@@ -1337,10 +1339,15 @@ namespace SeeDocs_App
         {
             const bool boundary = at == 0 || !isNameChar(text[at - 1]);
             const std::size_t afterWord = at + k_see.size();
-            const bool spaced = afterWord < text.size() && isBlank(text[afterWord]);
+            // The words of a comment may break their line between the See and the stem.
+            const bool spaced = afterWord < text.size()
+                && (isBlank(text[afterWord]) || text[afterWord] == L'\n');
             if (boundary && spaced)
             {
-                std::wstring_view rest = trimmed(std::wstring_view{ text }.substr(afterWord));
+                std::wstring_view rest = std::wstring_view{ text }.substr(afterWord);
+                while (!rest.empty() && (isBlank(rest.front()) || rest.front() == L'\n'))
+                    rest.remove_prefix(1);
+                rest = trimmed(rest);
                 const std::size_t hash = rest.find(L'#');
                 const std::wstring_view stem = trimmed(rest.substr(0, hash));
                 const std::wstring_view anchor = hash == std::wstring_view::npos
@@ -1356,6 +1363,8 @@ namespace SeeDocs_App
                         .anchor = anchor.empty() ? slug(bareName(name)) : std::wstring{ anchor }
                     };
                     text = std::wstring{ trimmed(std::wstring_view{ text }.substr(0, at)) };
+                    while (!text.empty() && (text.back() == L'\n' || isBlank(text.back())))
+                        text.pop_back();
                     return reference;
                 }
             }

@@ -73,6 +73,7 @@ export import ClaFi.Icons.ErrorIcon;
 export import ClaFi.Icons.QuestionIcon;
 export import ClaFi.Icons.InformationIcon;
 export import ClaFi.Icons.OkIcon;
+export import ClaFi.Icons.MessageIcons;
 
 export import ClaFi.StdActions;
 

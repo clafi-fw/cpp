@@ -18,6 +18,7 @@ import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.Spacer;
 import ClaFi.Controls.Stack;
 
+import ClaFi.Icons.MessageIcons;
 import ClaFi.Icons.XMark;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -45,7 +46,6 @@ namespace SeeDocs_App
         constexpr float k_pathWidth = 440.0f;
         constexpr float k_rowSpacing = 10.0f;    // between the parts of a row
         constexpr float k_fieldWidth = 440.0f;   // the narrowest a field stands
-        constexpr float k_noteWidth = 520.0f;    // the widest a note under a group runs
         constexpr float k_choiceIndent = 20.0f;  // a set of choices in from its caption
         constexpr float k_removeSize = 20.0f;
         constexpr float k_removeMark = 8.0f;
@@ -198,17 +198,6 @@ namespace SeeDocs_App
                 } }
             );
         }
-
-        // A muted paragraph under a group's options, saying what they do not.
-        void addNote(StackPanel& group, const std::wstring_view words)
-        {
-            group.add<Label>(
-                Text{ words },
-                TextFormat{ InkGrade::Muted },
-                WordWrap::Yes,
-                MaxSize{ k_noteWidth, k_maxFloat }
-            );
-        }
     }
 
     // **The page stands through a scan of its project.** A scan shows the surface again, and the
@@ -273,10 +262,6 @@ namespace SeeDocs_App
         });
 
 
-        // The edit choices are built after the hint choices, which grey one of them; the hints
-        // reach them through this once they stand.
-        const std::shared_ptr<StackPanel*> editSet = std::make_shared<StackPanel*>(nullptr);
-
         StackPanel& scan = page.addGroup(L"Scan options");
         StackPanel& readAs = addChoiceSet(scan, L"Read sources as");
         addChoice(readAs, L"Any C++ and Delphi",
@@ -298,33 +283,27 @@ namespace SeeDocs_App
                 rescanned();
             });
         StackPanel& hints = addChoiceSet(scan, L"Hints format");
-        const ChooseFunc hintsChanged = [rescanned, editSet]() {
-            rescanned();
-            if (*editSet)
-                (*editSet)->invalidateChildrenStates();
-        };
         addChoice(hints, L"Every recognizable comment",
-            L"Includes a brief summary of declarations as a hint",
+            L"Takes the whole comment above a declaration, however it is written, as its hint",
             [&project]() {
                 return project.project.hints == HintRules::Loose;
             },
-            [&workspace, &project, hintsChanged]() {
+            [&workspace, &project, rescanned]() {
                 workspace.setHints(project, HintRules::Loose);
-                hintsChanged();
+                rescanned();
             });
         addChoice(hints, L"Strict ClaFi rules",
-            L"Uses the comment on the declaration line as the hint; or the first line above it.",
+            L"Uses the comment on the declaration line as the hint, or else the comment above it",
             [&project]() {
                 return project.project.hints == HintRules::Strict;
             },
-            [&workspace, &project, hintsChanged]() {
+            [&workspace, &project, rescanned]() {
                 workspace.setHints(project, HintRules::Strict);
-                hintsChanged();
+                rescanned();
             });
 
         StackPanel& edits = page.addGroup(L"Edit hints");
         StackPanel& editChoices = addChoiceSet(edits);
-        *editSet = &editChoices;
         addChoice(editChoices, L"Not allowed",
             L"Hints are read, and never written back",
             [&project]() {
@@ -340,14 +319,7 @@ namespace SeeDocs_App
             },
             [&workspace, &project]() {
                 workspace.setEdits(project, HintEdits::Direct);
-            },
-            [&project]() {
-                return project.project.hints == HintRules::Strict;
             });
-        addNote(
-            edits,
-            L"Hints are only modified if they adhere to strict ClaFi rules and are written into C++ sources."
-            );
     }
 
     // NameBox
@@ -649,7 +621,7 @@ namespace SeeDocs_App
                 return;
             const std::wstring refusal = take(project.writtenSource(*picked));
             if (!refusal.empty())
-                ContextMessage::show(*this, Text{ refusal });
+                ContextMessage::show(*this, Icons::messageText(MessageIcon::Error, refusal));
         }
     }
 }

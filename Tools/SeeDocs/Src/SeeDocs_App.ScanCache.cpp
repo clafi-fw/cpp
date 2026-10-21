@@ -11,7 +11,7 @@ namespace SeeDocs_App
     {
         // What opens the file, and the layout it is written in: a file stating another is none.
         constexpr std::uint32_t k_signature = 0x53434453u;
-        constexpr std::uint32_t k_layoutVersion = 1u;
+        constexpr std::uint32_t k_layoutVersion = 2u;
 
         template<typename Value, typename Record>
         concept IsRecordOf = std::same_as<std::remove_const_t<Value>, Record>;
@@ -48,7 +48,8 @@ namespace SeeDocs_App
         void fields(Archive& archive, Value& comment)
         {
             archive(comment.above, comment.trailing, comment.aboveLine, comment.aboveWidth,
-                comment.lineWidth, comment.text, comment.reference);
+                comment.lineWidth, comment.text, comment.reference, comment.readAt,
+                comment.borrowed);
         }
 
         template<typename Archive, IsRecordOf<Property> Value>

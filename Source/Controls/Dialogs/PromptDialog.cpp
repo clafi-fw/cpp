@@ -1,5 +1,7 @@
 module ClaFi.Controls.PromptDialog;
 
+import ClaFi.Icons.MessageIcons;
+
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.Foundation;
@@ -22,7 +24,7 @@ namespace ClaFi::Controls
     PromptDialog::PromptDialog(Control& owner, const std::wstring_view title,
         const std::wstring_view value, const MessageIcon icon)
         :
-        PromptDialog{ owner, title, value, iconPainterOf(icon) }
+        PromptDialog{ owner, title, value, Icons::iconPainterOf(icon) }
     {
     }
 

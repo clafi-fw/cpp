@@ -125,7 +125,8 @@ around it cannot:
 - which characters belong - none before a key press reaches it, so the press that opened its window
   types nothing;
 - which line breaks belong - Shift+Return's, while a plain Return is the window's;
-- why a value was refused - setRefusal and showRefusal, cleared by the next key or mouse press.
+- why a value was refused - setRefusal and showRefusal, led by the error icon and cleared by the
+  next key or mouse press.
 
 ## InPlaceEditForm
 

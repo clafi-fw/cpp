@@ -4,12 +4,13 @@ import ClaFi.Documents.BasePage;
 import ClaFi.Documents.Folder;
 import ClaFi.Documents.Utils;
 
+import ClaFi.Icons.MessageIcons;
+
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.HistoryButton;
 import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.Stack;
-import ClaFi.Controls.Base.MessageBoxBase;
 
 import ClaFi.StdActions;
 
@@ -135,7 +136,7 @@ namespace ClaFi::Documents
                 // it did - so the command says so itself, beside the button that ran it.
                 const std::wstring_view noun = folder().kind().noun;
                 ContextMessage::show(shownBy, writeDocument()
-                    ? messageText(MessageIcon::Ok, capitalized(noun).append(L" saved"))
+                    ? Icons::messageText(MessageIcon::Ok, capitalized(noun).append(L" saved"))
                     : notSavedText());
                 return;
             }

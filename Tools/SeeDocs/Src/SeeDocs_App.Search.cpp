@@ -30,6 +30,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_headerWord = L"header";
         constexpr std::size_t k_sectionRows = 200;   // what a section of the page lists at most
         constexpr std::size_t k_maxBaseDepth = 16;   // what a base chain is followed to
+        constexpr std::size_t k_hintLines = 3;       // the most lines a hint cell shows
 
         // Where a word of a name starts: after _, :, . or /, at a capital after a lower-case
         // letter or a digit, and at the last capital of a run before a lower-case letter - the P
@@ -323,6 +324,12 @@ namespace SeeDocs_App
             return { .name = std::move(name), .fills = fills, .hint = false, .maxLines = 0 };
         }
 
+        // Where the rows' hints stand, each cut to a few lines.
+        [[nodiscard]] TableColumn hintColumn()
+        {
+            return { .name = L"Hint", .fills = true, .hint = false, .maxLines = k_hintLines };
+        }
+
         [[nodiscard]] Gathered gathered(std::wstring heading, TableColumns columns,
             const std::size_t projects)
         {
@@ -354,14 +361,14 @@ namespace SeeDocs_App
             {
                 case NameKind::Type:
                     return { column(L"Name"), column(L"Kind"), column(L"Module"),
-                        column(L"Hint", true) };
+                        hintColumn() };
                 case NameKind::Folder:
                     return { column(L"Folder"), column(L"Path", true) };
                 case NameKind::Module:
                     return { column(L"Module"), column(L"Folder", true) };
                 case NameKind::Function:
                 case NameKind::Constant:
-                    return { column(L"Name"), column(L"Module"), column(L"Hint", true) };
+                    return { column(L"Name"), column(L"Module"), hintColumn() };
                 case NameKind::Property:
                 case NameKind::Event:
                 case NameKind::Method:
@@ -369,7 +376,7 @@ namespace SeeDocs_App
                 case NameKind::Member:
                     break;
             }
-            return { column(L"Name"), column(L"Hint", true) };
+            return { column(L"Name"), hintColumn() };
         }
 
         // A name's first cell: a member's type before it, muted, and the name as code, linked.
@@ -483,7 +490,10 @@ namespace SeeDocs_App
                     continue;
                 if (!standsIn(entry, project.folder))
                     continue;
-                if (!findRead(entry.comment->text, searcher))
+                // A hint's words run on over its line ends, as it reads.
+                std::wstring read = entry.comment->text;
+                std::ranges::replace(read, L'\n', L' ');
+                if (!findRead(read, searcher))
                     continue;
                 TableRow row;
                 if (entry.kind == NameKind::Type)
@@ -1028,7 +1038,7 @@ namespace SeeDocs_App
             sections.push_back(gathered(std::wstring{ k_nameHeadings[kind] },
                 columnsOf(static_cast<NameKind>(kind)), count));
         }
-        Gathered hints = gathered(L"In hints", { column(L"Name"), column(L"Hint", true) }, count);
+        Gathered hints = gathered(L"In hints", { column(L"Name"), hintColumn() }, count);
         Gathered footnotes = gathered(L"In footnotes",
             { column(L"Section"), column(L"Words", true) }, count);
         for (std::size_t i = 0; i != count && !whole.empty(); ++i)

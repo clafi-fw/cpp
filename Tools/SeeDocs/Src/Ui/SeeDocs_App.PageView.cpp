@@ -2,6 +2,7 @@ module SeeDocs_App.PageView;
 
 import SeeDocs_App.BasesBar;
 import SeeDocs_App.Editing;
+import SeeDocs_App.Edits;
 import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageText;
@@ -1388,13 +1389,14 @@ namespace SeeDocs_App
     }
 
     // **The cell shows more than the comment holds** - its types linked, a missing hint marked, an
-    // event's payload named after it - so the editor opens on the comment's own words.
+    // event's payload named after it - so the editor opens on the comment's own words, a
+    // paragraph to a line.
     void PageView::connectHintCell(Grids::Row& gridRow, const TableRow& row,
         const TagValue hintColumn)
     {
         gridRow.onGetCellEditorText([&row, hintColumn](Grids::GetCellEditorTextEvent& event) {
             if (event.column().tag().value == hintColumn && row.site.has_value())
-                event.text = Text{ row.site->comment->text };
+                event.text = Text{ hintSource(*row.site->comment) };
         });
         gridRow.onAcceptCellText([this, &row, hintColumn](Grids::AcceptCellTextEvent& event) {
             if (event.column().tag().value != hintColumn)

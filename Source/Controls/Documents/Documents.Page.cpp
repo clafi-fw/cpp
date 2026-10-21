@@ -7,10 +7,11 @@ import ClaFi.Documents.Utils;
 import ClaFi.Browser.Control;
 import ClaFi.Browser.PageData;
 
+import ClaFi.Icons.MessageIcons;
+
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.MessageDialog;
 import ClaFi.Controls.PromptDialog;
-import ClaFi.Controls.Base.MessageBoxBase;
 
 import ClaFi.StdActions;
 
@@ -93,7 +94,7 @@ namespace ClaFi::Documents
 
     Text DocumentPage::notSavedText() const
     {
-        return messageText(MessageIcon::Error,
+        return Icons::messageText(MessageIcon::Error,
             std::wstring{ L"The " }.append(folder().kind().noun).append(L" could not be saved"));
     }
 

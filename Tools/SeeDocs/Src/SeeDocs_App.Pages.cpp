@@ -62,6 +62,9 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_tooltipJoin = L" ";      // the same on a tooltip's one line
         constexpr std::size_t k_maxTreeDepth = 16;   // what a base chain is followed to
         constexpr std::size_t k_valueLines = 3;      // a value cell's height, in lines
+        constexpr std::size_t k_hintLines = 3;       // the most lines a hint cell shows
+        constexpr wchar_t k_lineEnd = L'\n';
+        constexpr std::wstring_view k_hintBullet = L"\u2022 ";   // what an item of a hint follows
 
         // A table's columns, and whether they are named over its rows.
         struct ColumnSet
@@ -73,37 +76,44 @@ namespace SeeDocs_App
         // The columns of each table a page carries, unnamed where a reader tells them apart.
         namespace Columns
         {
+            // Where the rows' hints stand, each cut to a few lines.
+            const TableColumn Hint = {
+                .name = L"Hint",
+                .fills = true,
+                .hint = true,
+                .maxLines = k_hintLines
+            };
             const ColumnSet Types = {
-                .columns = { { L"Name" }, { L"Hint", true, true } },
+                .columns = { { L"Name" }, Hint },
                 .header = false
             };
             const ColumnSet Properties = {
                 .columns = {
                     { L"Name" }, { L"Type" }, { .name = L"Default", .maxLines = k_valueLines },
-                    { L"Hint", true, true }
+                    Hint
                 }
             };
             const ColumnSet Events = {
-                .columns = { { L"Event" }, { L"Type" }, { L"Hint", true, true } }
+                .columns = { { L"Event" }, { L"Type" }, Hint }
             };
             const ColumnSet Methods = {
-                .columns = { { L"Name" }, { L"Hint", true, true } },
+                .columns = { { L"Name" }, Hint },
                 .header = false
             };
             const ColumnSet Functions = {
-                .columns = { { L"Name" }, { L"Hint", true, true } },
+                .columns = { { L"Name" }, Hint },
                 .header = false
             };
             const ColumnSet Fields = {
                 .columns = {
                     { L"Name" }, { L"Type" }, { .name = L"Value", .maxLines = k_valueLines },
-                    { L"Hint", true, true }
+                    Hint
                 }
             };
             const ColumnSet Members = {
                 .columns = {
                     { L"Name" }, { .name = L"Value", .maxLines = k_valueLines },
-                    { L"Hint", true, true }
+                    Hint
                 },
                 .header = false
             };
@@ -116,7 +126,7 @@ namespace SeeDocs_App
             const ColumnSet Contents = {
                 .columns = {
                     { L"Name" }, { L"Type" }, { .name = L"Value", .maxLines = k_valueLines },
-                    { L"Hint", true, true }
+                    Hint
                 },
                 .header = false
             };
@@ -467,17 +477,6 @@ namespace SeeDocs_App
             return linkNames(surface, runs, scope);
         }
 
-        // The hint read as a note line is, in a scope. A tree read by loose rules owes no hint,
-        // so one it does not give is nothing rather than missing.
-        [[nodiscard]] Runs hintRuns(const Surface& surface, const Comment& comment,
-            const std::wstring_view scope)
-        {
-            if (!comment.text.empty())
-                return inlineRuns(comment.text, surface, scope);
-            if (surface.hintRules() == HintRules::Loose)
-                return {};
-            return { missing(std::wstring{ k_noHint }) };
-        }
 
         [[nodiscard]] bool isCodeLine(const std::wstring_view line)
         {
@@ -584,6 +583,69 @@ namespace SeeDocs_App
             }
             flush();
             return blocks;
+        }
+
+        // The words of a hint, a line of the comment apiece.
+        [[nodiscard]] Lines hintLines(const std::wstring_view text)
+        {
+            Lines lines;
+            std::size_t start = 0;
+            while (true)
+            {
+                const std::size_t end = text.find(k_lineEnd, start);
+                if (end == std::wstring_view::npos)
+                {
+                    lines.emplace_back(text.substr(start));
+                    return lines;
+                }
+                lines.emplace_back(text.substr(start, end - start));
+                start = end + 1;
+            }
+        }
+
+        // **The hint read as a note's prose is**, in a scope: a paragraph to a line, each line of
+        // code set in by its fence, each item behind its bullet. A tree read by loose rules owes
+        // no hint, so one it does not give is nothing rather than missing.
+        [[nodiscard]] Runs hintRuns(const Surface& surface, const Comment& comment,
+            const std::wstring_view scope)
+        {
+            if (comment.text.empty())
+            {
+                if (surface.hintRules() == HintRules::Loose)
+                    return {};
+                return { missing(std::wstring{ k_noHint }) };
+            }
+            Runs runs;
+            const auto addLine = [&runs](const Runs& words) {
+                if (!runs.empty())
+                    runs.push_back(plain(std::wstring(1, k_lineEnd)));
+                runs.insert(runs.end(), words.begin(), words.end());
+            };
+            for (const Block& block : blocksOf(hintLines(comment.text), surface, scope))
+            {
+                switch (block.kind)
+                {
+                    case BlockKind::Paragraph:
+                    case BlockKind::SubHeading:
+                        addLine(block.runs);
+                        break;
+                    case BlockKind::Code:
+                        for (Runs line : block.lines)
+                        {
+                            line.insert(line.begin(), code(std::wstring{ k_codeFence }));
+                            addLine(line);
+                        }
+                        break;
+                    case BlockKind::Bullets:
+                        for (Runs item : block.items)
+                        {
+                            item.insert(item.begin(), plain(std::wstring{ k_hintBullet }));
+                            addLine(item);
+                        }
+                        break;
+                }
+            }
+            return runs;
         }
 
         // The section a declaration's words come from, and the note it stands in.
@@ -1602,10 +1664,11 @@ namespace SeeDocs_App
         }
 
         // A type's own events, one row each, those the filter takes; the hint names what the
-        // event carries.
+        // event carries. A Delphi event is a property, and its comment is read by its name.
         [[nodiscard]] TableRows eventRows(const Surface& surface, Notes& notes, const Type& type,
             const MemberFilter& filter)
         {
+            const bool pascal = surface.languageOf(type.module) == SourceLanguage::Pascal;
             TableRows rows;
             for (const Event& event : type.events)
             {
@@ -1628,7 +1691,7 @@ namespace SeeDocs_App
                     .cells = { { code(event.alias) },
                         { typeRun(surface, event.type, type.qualifiedName) }, std::move(hint) },
                     .excerpt = memberExcerpt(surface, notes, event.comment, event.type, type),
-                    .site = siteOf(event.comment, event.place, event.type),
+                    .site = siteOf(event.comment, event.place, pascal ? event.alias : event.type),
                     .anchor = event.alias
                 });
             }

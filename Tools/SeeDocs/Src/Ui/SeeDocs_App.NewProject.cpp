@@ -13,6 +13,8 @@ import ClaFi.Controls.Panel;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
+import ClaFi.Icons.MessageIcons;
+
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
@@ -307,7 +309,8 @@ namespace SeeDocs_App
     void NewProjectDialog::showRefusal(const std::wstring_view reason)
     {
         Text text;
-        text << InkWell::redInk(InkGrade::Strong) << reason << PopColor{};
+        text << InkWell::redInk(InkGrade::Strong) << Icons::messageText(MessageIcon::Error, reason)
+            << PopColor{};
         m_refusal.text() = text;
         m_refusal.setVisible(true);
         m_refusal.invalidateFormAlign();

@@ -1,6 +1,6 @@
 module ClaFi.Controls.MessageBar;
 
-import ClaFi.Controls.Base.MessageBoxBase;
+import ClaFi.Icons.MessageIcons;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.PaintIconEvent;
@@ -60,7 +60,7 @@ namespace ClaFi::Controls
 
     void MessageBar::paintIcon(PaintIconEvent& event)
     {
-        const PaintIconFunc painter = iconPainterOf(m_icon);
+        const PaintIconFunc painter = Icons::iconPainterOf(m_icon);
         if (painter)
             painter(event);
     }

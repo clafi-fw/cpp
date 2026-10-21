@@ -496,17 +496,14 @@ namespace SeeDocs_App
         });
     }
 
-    // The writer puts words where a strict read takes them from, in a C++ comment; a surface read
-    // otherwise than the project now asks is written into by nothing until it is scanned again.
+    // The writer puts words where the project's rules read them from; a surface read by other
+    // rules than the project now asks is written into by nothing until it is scanned again.
     bool SurfaceBrowser::ShownProject::writesHint(const CommentSite& site) const
     {
         const Surface& surface = open.surface;
-        if (!open.project.writesHints() || surface.hintRules() != HintRules::Strict)
+        if (!open.project.writesHints() || surface.hintRules() != open.project.hints)
             return false;
-        if (site.place.file >= surface.files().size())
-            return false;
-        const std::wstring& module = surface.files()[site.place.file].module;
-        return surface.languageOf(module) == SourceLanguage::Cpp;
+        return site.place.file < surface.files().size();
     }
 
     std::wstring SurfaceBrowser::ShownProject::writeHint(const CommentSite& site,

@@ -67,7 +67,7 @@ namespace SeeDocs_App
             std::wstring_view text) = 0;
     };
 
-    // One line typed into where it stands: Return or leaving writes it, Escape puts it back.
+    // Words typed into where they stand: Return or leaving writes them, Escape puts them back.
     export class WordsBox : public PromptBox
     {
     public:
@@ -82,7 +82,7 @@ namespace SeeDocs_App
         [[nodiscard]] virtual std::wstring wordsOf(const Text&) const;
         [[nodiscard]] bool edited() const;
         void editModeLeft(bool accepted) override;   // leaving writes, Escape puts back
-        void charPress(CharPressEvent&) override;   // one line, and Return writes it
+        void charPress(CharPressEvent&) override;   // a line break only where one is taken
     private:
         void write();
         void putBack();
@@ -90,7 +90,8 @@ namespace SeeDocs_App
         Text m_shown{};
     };
 
-    // A hint typed into where it stands, written into the comment it was read from.
+    // A hint typed into where it stands, written into the comment it was read from. Shift+Return
+    // breaks its line.
     export class HintBox : public WordsBox
     {
     public:
@@ -100,11 +101,15 @@ namespace SeeDocs_App
         void connectSite(IPageWriter&, const CommentSite&);
     protected:
         [[nodiscard]] std::wstring writeWords(std::wstring_view words) override;
-        // The bold and the code the box shows, written back as the comment marks them.
+        // The bold, the code, the items and the paragraphs the box shows, written back as the
+        // comment marks them.
         [[nodiscard]] std::wstring wordsOf(const Text&) const override;
+        void editModeKeyDown(KeyDownEvent&) override;
+        [[nodiscard]] bool takesLineBreaks() const override { return m_lineBreakPress; }
     private:
         IPageWriter* m_writer{ nullptr };
         const CommentSite* m_site{ nullptr };
+        bool m_lineBreakPress{ false };   // the press being answered is Shift+Return
     };
 
     // One footnote on a page: its words as the page shows them, and while it is edited, its

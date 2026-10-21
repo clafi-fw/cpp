@@ -107,8 +107,7 @@ namespace SeeDocs_App
         // The folder a source written or typed names, read against the project's folder. See README
         [[nodiscard]] std::filesystem::path readSource(std::wstring_view written) const;
         [[nodiscard]] std::wstring folderName() const;   // the name it goes by where it states none
-        // Whether a hint edited on a page is written: hints edited directly, read by the strict
-        // rules - the comment a hint is written into is the one a strict read takes it from.
+        // Whether a hint edited on a page is written into its comment.
         [[nodiscard]] bool writesHints() const;
     };
 

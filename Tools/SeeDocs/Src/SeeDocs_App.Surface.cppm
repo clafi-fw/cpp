@@ -69,8 +69,10 @@ namespace SeeDocs_App
         std::size_t aboveLine{ 0 };             // where the lines above start
         std::size_t aboveWidth{ 0 };            // the widest of them, in columns
         std::size_t lineWidth{ 0 };             // the declaration line's width, comment included
-        std::wstring text;                      // the one line the database carries
-        std::optional<Reference> reference;     // the See reference that line ended with
+        std::wstring text;                      // the words the database carries, a line apiece
+        std::optional<Reference> reference;     // the See reference the words ended with
+        std::size_t readAt{ 0 };                // the line a routine's body comment starts on
+        bool borrowed{ false };                 // the words are a base's, the declaration has none
         [[nodiscard]] bool empty() const { return above.empty() && !trailing; }
     };
 
@@ -529,7 +531,7 @@ namespace SeeDocs_App
     export [[nodiscard]] std::wstring_view trimmed(std::wstring_view text);
     // A markdown heading's anchor, the way a renderer makes one, of the name's last component.
     export [[nodiscard]] std::wstring slug(std::wstring_view text);
-    // The reference a comment line ends with, cut off the line: the word See, the note's stem, an
+    // The reference a comment's words end with, cut off them: the word See, the note's stem, an
     // optional # and anchor, and nothing after. The anchor defaults to the name's own slug.
     export [[nodiscard]] std::optional<Reference> cutReference(std::wstring& text,
         std::wstring_view name);

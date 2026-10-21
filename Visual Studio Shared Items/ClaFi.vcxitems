@@ -436,6 +436,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\LuminosityIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\Magnifier.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MessageBadge.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MessageIcons.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\MoonIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OjIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\OkIcon.cppm" />

@@ -1,10 +1,6 @@
 module ClaFi.Controls.Base.MessageBoxBase;
 
-import ClaFi.Icons.ErrorIcon;
-import ClaFi.Icons.InformationIcon;
-import ClaFi.Icons.OkIcon;
-import ClaFi.Icons.QuestionIcon;
-import ClaFi.Icons.WarningIcon;
+import ClaFi.Icons.MessageIcons;
 
 import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.Base.PanelBase;
@@ -49,14 +45,6 @@ namespace ClaFi::Controls
     // it is what the dialog is about, and it is read before the text beside it.
     constexpr float k_iconSize = 32.0f;
 
-    // The same picture inside a run of text is the size of the text. A message is one line under
-    // a control, and a badge taller than the line it stands in reads as a thing of its own beside
-    // the words rather than as the first thing in them.
-    constexpr float k_messageIconSize = 14.0f;
-
-    // What stands between that picture and the first word.
-    constexpr float k_messageIconSpacing = 5.0f;
-
     // Wide enough that a short question does not come up as a sliver, and the width a long one
     // wraps against. The maximum is what keeps a paragraph from taking the window sideways: the
     // text box is told how wide it may be, so the text turns instead of the window growing.
@@ -71,38 +59,6 @@ namespace ClaFi::Controls
 
     //-----------------------------------------------------------------------------
 
-
-    PaintIconFunc iconPainterOf(const MessageIcon value)
-    {
-        switch (value)
-        {
-        case MessageIcon::None:
-            return {};
-        case MessageIcon::Warning:
-            return Icons::WarningIcon::paint;
-        case MessageIcon::Error:
-            return Icons::ErrorIcon::paint;
-        case MessageIcon::Question:
-            return Icons::QuestionIcon::paint;
-        case MessageIcon::Information:
-            return Icons::InformationIcon::paint;
-        case MessageIcon::Ok:
-            return Icons::OkIcon::paint;
-        }
-        noReach("a message icon with no painter of its own");
-    }
-
-    Text messageText(const MessageIcon icon, const std::wstring_view text)
-    {
-        Text result{};
-        if (icon != MessageIcon::None)
-        {
-            result << InTextIcon{ k_messageIconSize, iconPainterOf(icon) };
-            result << Space{ k_messageIconSpacing };
-        }
-        result << text;
-        return result;
-    }
 
     std::wstring_view captionOf(const DialogAnswer value)
     {
@@ -133,7 +89,7 @@ namespace ClaFi::Controls
     MessageBoxBase::MessageBoxBase(Control& owner, const std::wstring_view title,
         const Text& text, const MessageIcon icon)
         :
-        MessageBoxBase{ owner, title, text, iconPainterOf(icon) }
+        MessageBoxBase{ owner, title, text, Icons::iconPainterOf(icon) }
     {
     }
 

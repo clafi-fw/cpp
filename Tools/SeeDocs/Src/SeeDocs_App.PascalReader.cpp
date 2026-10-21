@@ -184,50 +184,6 @@ namespace SeeDocs_App
             return trimmed(comment);
         }
 
-        // The words with the markup a doc comment writes in them taken out: an XML tag goes, the
-        // name a <see cref="X"/> gives stays, and a PasDoc @link(X) is its X.
-        [[nodiscard]] std::wstring withoutMarkup(const std::wstring_view text)
-        {
-            constexpr std::wstring_view crefOpener = L"cref=\"";
-            std::wstring result;
-            std::size_t i = 0;
-            while (i < text.size())
-            {
-                const wchar_t current = text[i];
-                if (current == L'<')
-                {
-                    const std::size_t close = text.find(L'>', i);
-                    if (close == std::wstring_view::npos)
-                        break;
-                    const std::wstring_view tag = text.substr(i, close - i + 1);
-                    const std::size_t cref = tag.find(crefOpener);
-                    if (cref != std::wstring_view::npos)
-                    {
-                        const std::size_t from = cref + crefOpener.size();
-                        result += tag.substr(from, tag.find(L'"', from) - from);
-                    }
-                    i = close + 1;
-                    continue;
-                }
-                if (current == L'@' && i + 1 < text.size() && isNameStart(text[i + 1]))
-                {
-                    std::size_t end = i + 1;
-                    while (end < text.size() && isNameChar(text[end]))
-                        ++end;
-                    const std::size_t close = text.find(L')', end);
-                    if (end < text.size() && text[end] == L'(' && close != std::wstring_view::npos)
-                    {
-                        result += text.substr(end + 1, close - end - 1);
-                        i = close + 1;
-                        continue;
-                    }
-                }
-                result += current;
-                ++i;
-            }
-            return result;
-        }
-
         // Blanks and line ends folded into one blank each, the ends trimmed.
         [[nodiscard]] std::wstring folded(const std::wstring_view text)
         {
@@ -246,38 +202,6 @@ namespace SeeDocs_App
                 result += current;
             }
             return result;
-        }
-
-        // **The hint a Delphi doc comment gives**: its <summary>, Delphi's own brief, where it has
-        // one; else what any doc comment gives, a line opening with a tag ending a paragraph as
-        // a command does.
-        [[nodiscard]] std::wstring pascalBrief(const std::span<const std::wstring> lines)
-        {
-            constexpr std::wstring_view opener = L"<summary>";
-            constexpr std::wstring_view closer = L"</summary>";
-            std::wstring joined;
-            for (const std::wstring& line : lines)
-                joined.append(line).append(1, L'\n');
-            const std::wstring lower = lowered(joined);
-            const std::size_t open = lower.find(opener);
-            if (open != std::wstring::npos)
-            {
-                const std::size_t from = open + opener.size();
-                const std::size_t close = lower.find(closer, from);
-                const std::size_t length = close == std::wstring::npos
-                    ? std::wstring::npos
-                    : close - from;
-                return folded(withoutMarkup(std::wstring_view{ joined }.substr(from, length)));
-            }
-            Names words;
-            for (const std::wstring& line : lines)
-            {
-                if (line.starts_with(L'<'))
-                    words.emplace_back(L"@tag");
-                else
-                    words.push_back(withoutMarkup(line));
-            }
-            return briefOf(words);
         }
 
         // The text cut at a separator standing outside brackets and quotes, each piece trimmed.
@@ -904,9 +828,12 @@ namespace SeeDocs_App
             [[nodiscard]] const Token& code(std::size_t index) const;
             [[nodiscard]] Place placeOf(const Token&) const;
             [[nodiscard]] Comment commentAt(std::size_t line, std::wstring_view name);
-            void gatherAbove(std::size_t line, Comment&) const;
-            // A loose read's trailing comment on the line, with the lines that carry it on.
-            [[nodiscard]] Names trailingLines(std::size_t line, const std::wstring& trailing) const;
+            // The first of the comment lines above the line that are its own; the line where none.
+            std::size_t gatherAbove(std::size_t line, Comment&) const;
+            // The words of the comment on the lines from the first to the end, opening at the
+            // column given on the first.
+            [[nodiscard]] std::wstring wordsOf(std::size_t first, std::size_t end,
+                std::size_t start) const;
 
             [[nodiscard]] bool readHeader();
             void readInterface();
@@ -925,9 +852,8 @@ namespace SeeDocs_App
             // a parameter or a procedural type.
             [[nodiscard]] bool opensHeader() const;
             void readRoutineBody();
-            // The hint of the comment lines standing between two lines.
-            [[nodiscard]] std::wstring hintBetween(std::size_t afterLine,
-                std::size_t beforeLine) const;
+            // The comment of the comment lines standing between two lines, and where it starts.
+            [[nodiscard]] Comment hintBetween(std::size_t afterLine, std::size_t beforeLine) const;
             [[nodiscard]] Function* declarationOf(const Names& qualified,
                 std::wstring_view parameters);
             void skipAttributes();
@@ -1045,53 +971,56 @@ namespace SeeDocs_App
 
         // By loose rules the comment above comes before the one on the line, and a hint that only
         // names the declaration is a label - { TName } - which tells nothing; by strict rules the
-        // one on the line comes first, and its See reaches a footnote. The attributes a
-        // declaration is written under stand between it and the comment above.
+        // one on the line comes first, and its See reaches a footnote. Either reads the whole of
+        // the comment. The attributes a declaration is written under stand between it and the
+        // comment above.
         Comment UnitReader::commentAt(std::size_t line, const std::wstring_view name)
         {
             if (m_attributeLine)
                 line = std::min(line, *m_attributeLine);
             m_attributeLine.reset();
             Comment comment;
+            std::wstring trailingWords;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
             {
                 comment.trailing = m_looseHints
                     ? withoutSeparators(commentWords(*trailing))
                     : std::wstring{ commentWords(*trailing) };
+                const std::wstring_view written = m_text.line(line);
+                const auto start = static_cast<std::size_t>(trailing->data() - written.data());
+                trailingWords = wordsOf(line, line + 1 + m_text.continuationsOf(line), start);
             }
-            gatherAbove(line, comment);
+            const std::size_t first = gatherAbove(line, comment);
+            std::wstring aboveWords;
+            if (first != line)
+                aboveWords = wordsOf(first, line, leadingBlanks(m_text.line(first)));
             if (!m_looseHints)
             {
-                std::wstring source;
-                if (comment.trailing)
-                    source = *comment.trailing;
-                else if (!comment.above.empty())
-                    source = comment.above.front();
+                std::wstring source = comment.trailing
+                    ? std::move(trailingWords)
+                    : std::move(aboveWords);
                 comment.reference = cutReference(source, name);
                 comment.text = std::move(source);
                 return comment;
             }
-            if (comment.above.empty() && comment.trailing)
-                comment.text = pascalBrief(trailingLines(line, *comment.trailing));
-            else
-                comment.text = pascalBrief(comment.above);
+            comment.text = aboveWords.empty() ? std::move(trailingWords) : std::move(aboveWords);
             if (sameWord(comment.text, name))
                 comment.text.clear();
             return comment;
         }
 
-        // By loose rules, the lines carrying on the trailing comment of the line above them are
-        // that line's, not the comment of the declaration under them. By strict rules a TODO is
-        // no words of the declaration's.
-        void UnitReader::gatherAbove(const std::size_t line, Comment& comment) const
+        // The lines carrying on the trailing comment of the line above them are that line's, not
+        // the comment of the declaration under them. By strict rules a TODO is no words of the
+        // declaration's.
+        std::size_t UnitReader::gatherAbove(const std::size_t line, Comment& comment) const
         {
             std::size_t first = line;
             while (first != 0 && m_text.kindOf(first - 1) == LineKind::CommentOnly)
                 --first;
-            if (m_looseHints && first != 0 && first != line)
+            if (first != 0 && first != line)
                 first = std::min(line, first + m_text.continuationsOf(first - 1));
             if (first == line)
-                return;
+                return line;
             comment.aboveLine = first + 1;
             for (std::size_t i = first; i != line; ++i)
             {
@@ -1101,15 +1030,17 @@ namespace SeeDocs_App
                 else if (!words.starts_with(k_todo))
                     comment.above.emplace_back(words);
             }
+            return first;
         }
 
-        Names UnitReader::trailingLines(const std::size_t line, const std::wstring& trailing) const
+        std::wstring UnitReader::wordsOf(const std::size_t first, const std::size_t end,
+            const std::size_t start) const
         {
-            Names lines{ trailing };
-            const std::size_t continued = m_text.continuationsOf(line);
-            for (std::size_t i = line + 1; i <= line + continued; ++i)
-                lines.push_back(withoutSeparators(commentWords(m_text.line(i))));
-            return lines;
+            std::vector<std::wstring_view> lines;
+            for (std::size_t i = first; i != end; ++i)
+                lines.push_back(m_text.line(i));
+            const HintRules rules = m_looseHints ? HintRules::Loose : HintRules::Strict;
+            return commentText(cutComment(lines, start, SourceLanguage::Pascal, rules));
         }
 
         // unit A.B.C platform; interface - the unit's name is its module's, and with :: for its
@@ -1867,8 +1798,16 @@ namespace SeeDocs_App
                 if (m_at - open > 2)
                     parameters = textBetween(open + 1, m_at - 2);
             }
-            skipToSemicolon();
+            // A directive may stand in the header itself - function F external;
             bool hasBody = true;
+            for (std::size_t ahead = 0; const Token* token = peek(ahead); ++ahead)
+            {
+                if (isMark(token, L";"))
+                    break;
+                if (isWord(token, L"forward") || isWord(token, L"external"))
+                    hasBody = false;
+            }
+            skipToSemicolon();
             while (isListedWord(peek(), k_routineDirectives) && !isMark(peek(1), L":")
                 && !isMark(peek(1), L","))
             {
@@ -1879,27 +1818,48 @@ namespace SeeDocs_App
             // A hint under the header is a loose read's: the strict rules read the declaration's.
             if (!hasBody || !peek() || !m_looseHints)
                 return;
-            const std::wstring hint = hintBetween(code(m_at - 1).line, peek()->line);
-            if (hint.empty())
+            Comment hint = hintBetween(code(m_at - 1).line, peek()->line);
+            if (hint.text.empty())
                 return;
             Function* function = declarationOf(qualified, parameters);
-            if (function && function->comment.text.empty())
-                function->comment.text = hint;
+            if (!function || !function->comment.text.empty())
+                return;
+            function->comment.text = std::move(hint.text);
+            function->comment.readAt = hint.readAt;
         }
 
         // A blank line or a directive between the comment lines parts their paragraphs.
-        std::wstring UnitReader::hintBetween(const std::size_t afterLine,
+        Comment UnitReader::hintBetween(const std::size_t afterLine,
             const std::size_t beforeLine) const
         {
-            Names lines;
-            for (std::size_t i = afterLine + 1; i < beforeLine; ++i)
+            Comment comment;
+            CommentLines lines;
+            std::size_t at = afterLine + 1;
+            while (at < beforeLine)
             {
-                if (m_text.kindOf(i) == LineKind::CommentOnly)
-                    lines.push_back(withoutSeparators(commentWords(m_text.line(i))));
-                else
-                    lines.emplace_back();
+                if (m_text.kindOf(at) != LineKind::CommentOnly)
+                {
+                    lines.push_back({
+                        .lead = std::wstring{ m_text.line(at) },
+                        .words = {},
+                        .tail = {},
+                        .speaks = false,
+                        .opensParagraph = true
+                    });
+                    ++at;
+                    continue;
+                }
+                if (comment.readAt == 0)
+                    comment.readAt = at + 1;
+                std::vector<std::wstring_view> run;
+                for (; at < beforeLine && m_text.kindOf(at) == LineKind::CommentOnly; ++at)
+                    run.push_back(m_text.line(at));
+                const CommentLines cut = cutComment(run, leadingBlanks(run.front()),
+                    SourceLanguage::Pascal, HintRules::Loose);
+                lines.insert(lines.end(), cut.begin(), cut.end());
             }
-            return pascalBrief(lines);
+            comment.text = commentText(lines);
+            return comment;
         }
 
         // The routine of the interface a header of the implementation defines: by its name, the
@@ -2319,8 +2279,11 @@ namespace SeeDocs_App
                 property.type = found->type;
                 if (property.defaultValue.empty())
                     property.defaultValue = found->defaultValue;
-                if (property.comment.text.empty())
+                if (property.comment.text.empty() && !found->hint.empty())
+                {
                     property.comment.text = found->hint;
+                    property.comment.borrowed = true;
+                }
             }
         }
         for (Type& type : types)

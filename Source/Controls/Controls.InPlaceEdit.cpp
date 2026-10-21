@@ -1,5 +1,7 @@
 module ClaFi.Controls.InPlaceEdit;
 
+import ClaFi.Icons.MessageIcons;
+
 import ClaFi.Controls.DropList;
 import ClaFi.Controls.TextItems;
 import ClaFi.Controls.TextBox;
@@ -117,7 +119,7 @@ namespace ClaFi::Controls
         // which is what puts the reason in front of a user who is looking at the keyboard;
         // nestedGetTooltip below is what answers every hover after that, for as long as the value
         // is still refused.
-        ContextMessage::show(*this, Text{ m_refusal });
+        ContextMessage::show(*this, Icons::messageText(MessageIcon::Error, m_refusal));
     }
 
     void PromptBox::nestedGetTooltip(GetTooltipEvent& event)
@@ -130,7 +132,7 @@ namespace ClaFi::Controls
         // A refusal stands in front of anything else this box would say, and it is placed under
         // the box rather than at the pointer: it answers what was **typed**, and the user reaching
         // for Enter has left the pointer wherever it happened to be.
-        event.text << m_refusal;
+        event.text << Icons::messageText(MessageIcon::Error, m_refusal);
         event.placement = FormPlacement::BottomLeft;
         event.anchorRect = boundsInForm();
     }

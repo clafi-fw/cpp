@@ -1,5 +1,7 @@
 module ClaFi.Controls.MessageDialog;
 
+import ClaFi.Icons.MessageIcons;
+
 import ClaFi.Controls.Button;
 import ClaFi.Controls.TextBox;
 
@@ -17,7 +19,7 @@ namespace ClaFi::Controls
     MessageDialog::MessageDialog(Control& owner, const std::wstring_view title,
         const Text& message, const MessageIcon icon)
         :
-        MessageDialog{ owner, title, message, iconPainterOf(icon) }
+        MessageDialog{ owner, title, message, Icons::iconPainterOf(icon) }
     {
     }
 

@@ -23,6 +23,8 @@ namespace SeeDocs_App
         constexpr float k_codeIndent = 18.0f;
         constexpr float k_bulletIndent = 18.0f;
         constexpr std::wstring_view k_bullet = L"• ";
+        constexpr std::wstring_view k_noteBullet = L"- ";   // what a note writes an item behind
+        constexpr std::wstring_view k_codeFence = L"    ";  // what a note sets a line of code in by
 
         // Starts a line under what the text holds already, so the prose ends with no line end.
         void openLine(Text& text, bool& opened, const float indent)
@@ -65,6 +67,62 @@ namespace SeeDocs_App
                     }
                     break;
             }
+        }
+
+        // What a line of a hint's text stands for in a note.
+        enum class ProseLine
+        {
+            Words,
+            Item,
+            Code
+        };
+
+        // A line all code behind its fence, as a hint shows a line of code: `    code`.
+        [[nodiscard]] bool isFencedCode(const std::wstring_view line)
+        {
+            return line.size() > k_codeFence.size() + 2 && line.front() == k_codeMark
+                && line.back() == k_codeMark && line.find(k_codeMark, 1) == line.size() - 1
+                && line.substr(1).starts_with(k_codeFence);
+        }
+
+        // **The marked lines as a note's prose**: an item's bullet a note's dash, a line of code
+        // set in by its fence alone, a paragraph a blank line from what stands round it.
+        [[nodiscard]] std::wstring proseOf(const std::wstring_view marked)
+        {
+            std::wstring result;
+            std::optional<ProseLine> previous;
+            std::size_t start = 0;
+            while (start <= marked.size())
+            {
+                std::size_t end = marked.find(k_endLine, start);
+                if (end == std::wstring_view::npos)
+                    end = marked.size();
+                const std::wstring_view line = marked.substr(start, end - start);
+                start = end + 1;
+                ProseLine kind = ProseLine::Words;
+                std::wstring said{ line };
+                if (line.starts_with(k_bullet))
+                {
+                    kind = ProseLine::Item;
+                    said = std::wstring{ k_noteBullet }
+                        + std::wstring{ line.substr(k_bullet.size()) };
+                }
+                else if (isFencedCode(line))
+                {
+                    kind = ProseLine::Code;
+                    said = std::wstring{ line.substr(1, line.size() - 2) };
+                }
+                if (said.find_first_not_of(L" \t") == std::wstring::npos)
+                    continue;
+                if (previous)
+                {
+                    const bool runsOn = kind == *previous && kind != ProseLine::Words;
+                    result += runsOn ? L"\n" : L"\n\n";
+                }
+                result += said;
+                previous = kind;
+            }
+            return result;
         }
 
         // A token of a declaration with an ink of its own: where it stands in the whole text.
@@ -165,12 +223,13 @@ namespace SeeDocs_App
 
     // **A mark is written where the look changes between two characters**, not where a marker
     // stands: a run cut round a link closes its bold and opens it again at one place, and the
-    // words read on as one bold span.
+    // words read on as one bold span. A line end closes whatever is open, as a paragraph's end
+    // does in a note.
     std::wstring markdownOf(const Text& text)
     {
         const std::wstring& plain = text.plainText();
         const Text::Markers& markers = text.markers();
-        std::wstring result;
+        std::wstring marked;
         std::size_t boldDepth = 0;
         std::vector<TextStyle> styles;
         bool boldOpen = false;
@@ -198,28 +257,29 @@ namespace SeeDocs_App
                 }
             }
             const bool atEnd = at == plain.size();
-            const bool bold = !atEnd && boldDepth > 0;
-            const bool code = !atEnd
+            const bool atBreak = !atEnd && plain[at] == k_endLine;
+            const bool bold = !atEnd && !atBreak && boldDepth > 0;
+            const bool code = !atEnd && !atBreak
                 && std::ranges::find(styles, TextStyle::Code) != styles.end();
             if (codeOpen && !code)
             {
-                result += k_codeMark;
+                marked += k_codeMark;
                 codeOpen = false;
             }
             if (boldOpen != bold)
             {
-                result += k_boldMark;
+                marked += k_boldMark;
                 boldOpen = bold;
             }
             if (code && !codeOpen)
             {
-                result += k_codeMark;
+                marked += k_codeMark;
                 codeOpen = true;
             }
             if (!atEnd)
-                result += plain[at];
+                marked += plain[at];
         }
-        return result;
+        return proseOf(marked);
     }
 
     void writeBlocks(Text& text, const Blocks& blocks, const float indent)
