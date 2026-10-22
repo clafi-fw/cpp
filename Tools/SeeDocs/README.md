@@ -508,8 +508,9 @@ The menu's Settings page holds External editors under the framework's own option
 Each open project is a node of the tree, named after the project, and the node opens its home. Under
 it stand the items of the project's sidebar.
 
-The home's head holds Options and Edit sidebar, which open the project's options page and its
-sidebar page - see [The sidebar](#the-sidebar).
+The home's head holds Project options and Edit sidebar, which open the project's options page and
+its sidebar page - see [The sidebar](#the-sidebar). Both stand at the foot of a row's menu in the
+tree as well.
 
 The options page is titled Project options. Under the title stand:
 
@@ -551,8 +552,9 @@ the project does. Switching the subgroup moves the folders' urls, and a tab left
 shows the gone page.
 
 **The sidebar is edited on the sidebar page**, which Edit sidebar opens in the tab shown: on the
-home, under the title, and in the tree, on the menu of the project's node and of a sidebar item's
-row, where the page opens with the row's item selected. The page holds:
+home, under the title, and in the tree, on every row's menu, where the page opens with the row's
+item selected - for a folder, a module or a type, the All the APIs item it stands under. The page
+holds:
 
 - **The tree** of the items under the project's own node, which always stands and cannot be
   deleted or moved. Every node stands open.
@@ -674,8 +676,8 @@ item puts them.
 
 - It lists the sidebar's items as the tree lists them, each marked with its kind's mark and linked
   to its page, a divider parting the list.
-- Options and Edit sidebar stand in a row under the title, each marked with its page's icon, and
-  Close project stands at the page's top right.
+- Project options and Edit sidebar stand in a row under the title, each marked with its page's
+  icon, and Close project stands at the page's top right.
 - In the place of an All the APIs item without a subgroup, the home - or the category page that
   lists the item - shows the folders under the root with what each holds, and the root's own
   modules; a project with nothing to document says why under the title. In a subgroup, the item's
@@ -697,9 +699,9 @@ Down the left, under each project's node, stand the items of its sidebar - a cat
 holding its items, a divider a line, a content item a row - and a tree of the sources' folders,
 named as they stand on disk, where its All the APIs item puts them: in the item's place, or under
 its node in a subgroup. The page of the row clicked shows on the
-right, and Open in new tab on a row's menu opens it in a tab behind the one shown. Edit sidebar on
-the menu of the project's node or of an item's row opens the sidebar page - see
-[The sidebar](#the-sidebar).
+right, and Open in new tab on a row's menu opens it in a tab behind the one shown. The foot of every
+row's menu holds Project options and Edit sidebar, which open the project's options page and its
+sidebar page - see [The sidebar](#the-sidebar).
 
 - Each folder holds the folders under it, then its modules by their full names.
 - Each module holds the types it exports, controls first.

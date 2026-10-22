@@ -371,6 +371,7 @@ namespace SeeDocs_App
             Grids::Grid{
                 params,
                 params.themeMetrics().page,
+                Interactivity::None,
                 UiElement::Section,
                 Grids::GridLines::Horizontal,
                 ItemsOrder::Rearrangeable

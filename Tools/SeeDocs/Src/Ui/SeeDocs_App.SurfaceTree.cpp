@@ -52,6 +52,11 @@ namespace SeeDocs_App
             return key.substr(item.size() + 1);
         }
 
+        void paintOptionsMark(PaintIconEvent& event)
+        {
+            paintRowIcon(event, RowIcon::Options);
+        }
+
         void paintSidebarMark(PaintIconEvent& event)
         {
             paintRowIcon(event, RowIcon::Sidebar);
@@ -60,6 +65,8 @@ namespace SeeDocs_App
 
     namespace Actions
     {
+        Action projectOptions{ Text{ L"Project options" },
+            Action::OnPaintIcon{ paintOptionsMark } };
         Action editSidebar{ Text{ L"Edit sidebar" }, Action::OnPaintIcon{ paintSidebarMark } };
     }
 
@@ -96,6 +103,15 @@ namespace SeeDocs_App
         ::ClaFi::Event{},
         project{ editedProject },
         item{ std::move(rowItem) }
+    {
+    }
+
+    // TreeProjectOptionsEvent
+
+    TreeProjectOptionsEvent::TreeProjectOptionsEvent(const ProjectId optionsProject)
+        :
+        ::ClaFi::Event{},
+        project{ optionsProject }
     {
     }
 
@@ -258,7 +274,6 @@ namespace SeeDocs_App
     {
         if (ProjectRows* rows = rowsOf(id))
         {
-            rows->node->header().setExpanded(true);
             setCurrentItem(rows->node->header());
             rows->node->header().scrollIntoViewOnAlign();
         }
@@ -361,10 +376,14 @@ namespace SeeDocs_App
     {
         if (m_menuRow.has_value())
         {
-            ActionList leading = { &Browser::Actions::openInNewTab, nullptr };
-            if (m_menuRow->kind != RowKind::Contents)
-                leading.insert(leading.end(), { &Actions::editSidebar, nullptr });
+            const ActionList leading = { &Browser::Actions::openInNewTab, nullptr };
+            const ActionList trailing = {
+                nullptr,
+                &Actions::projectOptions,
+                &Actions::editSidebar
+            };
             event.actions.insert(event.actions.begin(), leading.begin(), leading.end());
+            event.actions.insert(event.actions.end(), trailing.begin(), trailing.end());
         }
         TreeView::adjustContextPopup(event);
     }
@@ -378,13 +397,21 @@ namespace SeeDocs_App
                 return;
             if (&event.action == &Browser::Actions::openInNewTab)
                 event.claim({});
-            else if (&event.action == &Actions::editSidebar && m_menuRow->kind != RowKind::Contents)
+            else if (&event.action == &Actions::projectOptions)
+                event.claim({});
+            else if (&event.action == &Actions::editSidebar)
                 event.claim({});
         });
         onActionClick([this](ActionClickEvent& event) {
             if (!m_menuRow.has_value())
                 return;
             const MenuRow& row = *m_menuRow;
+            if (&event.action == &Actions::projectOptions)
+            {
+                TreeProjectOptionsEvent optionsEvent{ row.rows->id };
+                emitEvent(optionsEvent);
+                return;
+            }
             if (&event.action == &Actions::editSidebar)
             {
                 editSidebar(row);
@@ -719,7 +746,7 @@ namespace SeeDocs_App
     void SurfaceTree::editSidebar(const MenuRow& row)
     {
         IndexPath item;
-        if (row.kind == RowKind::Item)
+        if (row.kind != RowKind::Home)
             item = indexPathOf(*row.rows, row.item);
         TreeEditSidebarEvent event{ row.rows->id, std::move(item) };
         emitEvent(event);

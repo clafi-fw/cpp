@@ -143,7 +143,6 @@ namespace SeeDocs_App
     public:
         [[nodiscard]] PageView& view() const { return m_view; }
         float viewPosition() const override { return m_view.viewPosition(); }
-    protected:
         std::wstring pathToOpen() override;
     private:
         // The browser the page is shown in. Structure rather than state, so const stops here.
@@ -449,6 +448,7 @@ namespace SeeDocs_App
         void openPicked(const TreePickEvent&);
         // Shows the project's sidebar page in the tab shown, the row's item selected in it.
         void editSidebar(const TreeEditSidebarEvent&);
+        void openProjectOptions(const TreeProjectOptionsEvent&);   // in the tab shown
         // The tab's tree, made with a node per project where the tab has none yet.
         [[nodiscard]] TabTree& treeOf(const BrowserTab&);
         // Adds the project's node to the tab's tree, open as the tab last left it.
@@ -487,8 +487,8 @@ namespace SeeDocs_App
         // The page a target names, built over its project's surface; nothing where it names
         // words - no project open, a path no project carries - or a page of the project itself.
         [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
-        // The project's home: its sidebar's items, Options and Edit sidebar in a row under its
-        // title, Close project beside it.
+        // The project's home: its sidebar's items, Project options and Edit sidebar in a row
+        // under its title, Close project beside it.
         [[nodiscard]] static Page homePageOf(const ShownProject&);
         // The items under the category, or the sidebar's top ones for none, each linked to its
         // page, a divider parting the tables.

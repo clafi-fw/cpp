@@ -76,7 +76,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_unnamedSegment = L"Project";   // for a name that gives none
         constexpr std::wstring_view k_optionsTitle = L"Project options";   // the page's title
         constexpr std::wstring_view k_sidebarTitle = L"Sidebar";   // the page's title
-        constexpr std::wstring_view k_optionsCaption = L"Options";   // on a home
+        constexpr std::wstring_view k_optionsCaption = L"Project options";   // on a home
         constexpr std::wstring_view k_sidebarCaption = L"Edit sidebar";   // on a home
         constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
         constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
@@ -1345,6 +1345,12 @@ namespace SeeDocs_App
             static_cast<SidebarPage*>(page)->editor().select(event.item);
     }
 
+    void SurfaceBrowser::openProjectOptions(const TreeProjectOptionsEvent& event)
+    {
+        if (const ShownProject* project = projectOf(event.project))
+            goTo(Url{ pathOf(*project, OwnPage::Options) });
+    }
+
     // The tree stands apart from the page a pick's move takes down, so the move needs no wait.
     SurfaceBrowser::TabTree& SurfaceBrowser::treeOf(const BrowserTab& tab)
     {
@@ -1365,6 +1371,9 @@ namespace SeeDocs_App
         });
         tree.onEditSidebar([this](TreeEditSidebarEvent& event) {
             editSidebar(event);
+        });
+        tree.onProjectOptions([this](TreeProjectOptionsEvent& event) {
+            openProjectOptions(event);
         });
         const BrowserTab* owner = &tab;
         tree.onToggle([this, owner](TreeToggleEvent& event) {

@@ -64,19 +64,31 @@ namespace SeeDocs_App
         ProjectId project;
     };
 
-    // Edit sidebar was taken from the menu of the project's node or of a sidebar item's row.
+    // Edit sidebar was taken from the menu of a row of the project's.
     export class TreeEditSidebarEvent : public ::ClaFi::Event
     {
     public:
         TreeEditSidebarEvent(ProjectId, IndexPath);
     public:
         ProjectId project;
-        IndexPath item;   // where the row's item stands; empty for the project's node
+        // Where the row's item stands - for a row of the contents, the All the APIs item over it;
+        // empty for the project's node.
+        IndexPath item;
+    };
+
+    // Project options was taken from the menu of a row of the project's.
+    export class TreeProjectOptionsEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit TreeProjectOptionsEvent(ProjectId);
+    public:
+        ProjectId project;
     };
 
     // Constructed before main, so nothing here touches the platform, the theme or the text engine.
     namespace Actions
     {
+        export extern Action projectOptions;   // opens the project's options page
         export extern Action editSidebar;   // opens the project's sidebar page on the row's item
     }
 
@@ -110,6 +122,9 @@ namespace SeeDocs_App
         // Connects a handler raised when Edit sidebar is taken from a row's menu.
         template<typename F>
         EventConnection onEditSidebar(F&& callback);
+        // Connects a handler raised when Project options is taken from a row's menu.
+        template<typename F>
+        EventConnection onProjectOptions(F&& callback);
         // Adds the project's node at the end of the tree, closed. The sidebar and the contents are
         // held by reference for as long as the rows stand.
         void addProject(ProjectId, std::wstring_view name, const SidebarItems&,
@@ -136,8 +151,8 @@ namespace SeeDocs_App
     protected:
         // Holds the row the menu is asked for while it runs, so the commands are about that row.
         void nestedContextPopup(ContextPopupEvent&) override;
-        // Open in new tab leads the tree's own commands on a row a pick opens, and Edit sidebar
-        // follows it on the project's node and on an item's row.
+        // Open in new tab leads the tree's own commands on a row a pick opens, and Project
+        // options and Edit sidebar follow them.
         void adjustContextPopup(AdjustContextPopupEvent&) override;
     private:
         // The controls a row of the contents is shown by, none until its holder's rows are made.
@@ -273,5 +288,11 @@ namespace SeeDocs_App
     EventConnection SurfaceTree::onEditSidebar(F&& callback)
     {
         return connectEvent<TreeEditSidebarEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection SurfaceTree::onProjectOptions(F&& callback)
+    {
+        return connectEvent<TreeProjectOptionsEvent>(std::forward<F>(callback));
     }
 }
