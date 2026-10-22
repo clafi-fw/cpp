@@ -188,10 +188,10 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.SidebarRows.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cpp">
+    <ClCompile Include="Src\Ui\SeeDocs_App.Ui.SidebarTree.cpp">
       <Filter>Src\Ui</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cppm">
+    <ClCompile Include="Src\Ui\SeeDocs_App.Ui.SidebarTree.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.Workspace.cpp">
@@ -222,4 +222,4 @@
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
-</Project>
+</Project>

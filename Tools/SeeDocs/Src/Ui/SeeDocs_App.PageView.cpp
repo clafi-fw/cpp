@@ -1685,14 +1685,14 @@ namespace SeeDocs_App
         if (target.starts_with(k_anchorPrefix))
             return;
         m_menuLink = target;
-        m_menuOwner = &owner;
+        m_menuOwner2 = &owner;
         Menu menu{ owner };
-        menu.add(Browser::Actions::open);
-        menu.add(Browser::Actions::openInNewTab);
+        menu.add(Browser::Actions::Open);
+        menu.add(Browser::Actions::OpenInNewTab);
         event.stopPropagation();
         menu.execute();
         m_menuLink.clear();
-        m_menuOwner = nullptr;
+        m_menuOwner2 = nullptr;
     }
 
     bool PageView::hasFootnotes(const Table& table)

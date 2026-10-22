@@ -4,7 +4,7 @@ import SeeDocs_App.Editing;
 import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageView;
-import SeeDocs_App.SurfaceTree;
+import SeeDocs_App.Ui.SidebarTree;
 import SeeDocs_App.Edits;
 import SeeDocs_App.Notes;
 import SeeDocs_App.PageText;
@@ -51,7 +51,7 @@ import ClaFi.Core.System.Url;
 
 import ClaFi.StdLib;
 
-namespace SeeDocs_App
+namespace SeeDocs_App::Ui
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
@@ -336,18 +336,18 @@ namespace SeeDocs_App
     // gone, the pick opening as the command would. See README#namesakes
     void SurfacePage::connectLinkActions()
     {
-        const auto isOpen = [](const Action& action) {
-            return &action == &Browser::Actions::open || &action == &Browser::Actions::openInNewTab;
+        const auto isAnOpenAction = [](const Action& action) {
+            return &action == &Browser::Actions::Open || &action == &Browser::Actions::OpenInNewTab;
         };
-        onGetActionState([this, isOpen](GetActionStateEvent& event) {
-            if (isOpen(event.action) && browser().namesSeveral(m_view.menuLink(), pageData()))
+        onGetActionState([this, isAnOpenAction](GetActionStateEvent& event) {
+            if (isAnOpenAction(event.action) && browser().namesSeveral(m_view.menuLink(), pageData()))
                 event.claim({ .enabled = true });
         });
-        onActionClick([this, isOpen](ActionClickEvent& event) {
-            Control* owner = m_view.menuOwner();
-            if (!isOpen(event.action) || !owner)
+        onActionClick([this, isAnOpenAction](ActionClickEvent& event) {
+            Control* owner = m_view.menuOwner2();
+            if (!isAnOpenAction(event.action) || !owner)
                 return;
-            const SelectTab select = &event.action == &Browser::Actions::open
+            const SelectTab select = &event.action == &Browser::Actions::Open
                 ? SelectTab::Yes
                 : SelectTab::No;
             browser().pickLater(pageData(), m_view.menuLink(), *owner, select);
@@ -1077,7 +1077,7 @@ namespace SeeDocs_App
 
     // A search's or a list's page stands for the folder it is of, and for the item or the home
     // where it is of the whole project.
-    void SurfaceBrowser::followPage(SurfaceTree& tree, const Target& target)
+    void SurfaceBrowser::followPage(SidebarTree& tree, const Target& target)
     {
         if (!target.project)
         {
@@ -1363,7 +1363,7 @@ namespace SeeDocs_App
             ScrollBars::Vertical,
             UiElement::Section
         );
-        SurfaceTree& tree = box.createBody<SurfaceTree>(Padding{ 4.0f });
+        SidebarTree& tree = box.createBody<SidebarTree>(Padding{ 4.0f });
         m_tabTrees.push_back({ .tab = &tab, .box = &box, .tree = &tree });
         const std::size_t index = m_tabTrees.size() - 1;
         tree.onPick([this](TreePickEvent& event) {

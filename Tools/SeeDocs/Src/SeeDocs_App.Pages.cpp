@@ -210,13 +210,6 @@ namespace SeeDocs_App
             return type.name.find(k_scope) != std::wstring::npos;
         }
 
-        [[nodiscard]] bool hasControl(const ContentsModule& module)
-        {
-            return std::ranges::any_of(module.types, [](const Type* type) {
-                return type->isControl;
-            });
-        }
-
         [[nodiscard]] std::wstring countOf(const std::size_t value, const std::wstring_view noun)
         {
             return std::to_wstring(value) + L" " + std::wstring{ noun } + (value == 1 ? L"" : L"s");
@@ -3380,8 +3373,7 @@ namespace SeeDocs_App
             }
             std::ranges::sort(folder.modules,
                 [](const ContentsModule& left, const ContentsModule& right) {
-                    return std::tuple{ !hasControl(left), lowered(left.shownName) }
-                        < std::tuple{ !hasControl(right), lowered(right.shownName) };
+                    return lowered(left.shownName) < lowered(right.shownName);
                 });
             folders.push_back(std::move(folder));
         }

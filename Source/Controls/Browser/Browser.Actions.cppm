@@ -17,9 +17,9 @@ namespace ClaFi::Browser::Actions
     // out.
     //
     // Neither carries an icon: each is a line in a menu and names itself in words.
-    export extern Action open;
+    export extern Action Open;
     // Opens the page in a tab behind the one shown, so the page the user is on stays on screen.
-    export extern Action openInNewTab;
+    export extern Action OpenInNewTab;
 
     // **Neither carries a shortcut**, and Enter is the reason. Enter on a focused control is that
     // control's press, answered by FocusNavigator after the shortcut scopes have had their turn,

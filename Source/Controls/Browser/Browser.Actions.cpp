@@ -15,11 +15,11 @@ namespace ClaFi::Browser::Actions
     // EventComponent connects handlers into a map of its own, so both are safe; anything added
     // to an action below has to answer the same question. The same rule ClaFi::StdActions
     // states for the standard set.
-    Action open{
+    Action Open{
         Text{ L"Open" }
         // ,Shortcut{ vkReturn } - it won't let you press any other button
     };
-    Action openInNewTab{
+    Action OpenInNewTab{
         Text{ L"Open in new tab" }
     };
     Action back{
@@ -56,8 +56,8 @@ namespace ClaFi::Browser::Actions
         AppActions& actions = AppActions::get();
         // Open and Open in new tab carry no shortcut. They are added anyway, so an application
         // that gives one a key needs to do no more than that.
-        actions.add(open);
-        actions.add(openInNewTab);
+        actions.add(Open);
+        actions.add(OpenInNewTab);
         actions.add(back);
         actions.add(forward);
         actions.add(newTab);

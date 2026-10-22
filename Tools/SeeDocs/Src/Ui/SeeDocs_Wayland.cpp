@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     using namespace ClaFi;
 
     // No GPU backend is named, because this platform has none.
-    SeeDocs_App::SeeDocsApplication<WaylandPlatform> app{ WaylandPlatform::Params{} };
+    SeeDocs_App::Ui::SeeDocsApplication<WaylandPlatform> app{ WaylandPlatform::Params{} };
 
     std::filesystem::path stated;
     if (argc > 1)

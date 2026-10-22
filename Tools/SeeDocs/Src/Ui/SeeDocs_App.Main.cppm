@@ -20,7 +20,7 @@ import ClaFi.StdLib;
 // system asks for and the two types the application is built out of; what SeeDocs is called,
 // what it keeps and what it builds into its window stand here and run over any platform the
 // framework has.
-namespace SeeDocs_App
+namespace SeeDocs_App::Ui
 {
     using namespace ClaFi;
 

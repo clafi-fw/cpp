@@ -161,8 +161,8 @@ namespace ClaFi::Documents
         Menu menu{ tile };
         menu.addToCommandBar(StdActions::rename);
         menu.addToCommandBar(StdActions::del);
-        menu.add(Browser::Actions::open);
-        menu.add(Browser::Actions::openInNewTab);
+        menu.add(Browser::Actions::Open);
+        menu.add(Browser::Actions::OpenInNewTab);
         // The tile has answered, so nothing above it raises a second menu behind this one. Said
         // before the menu runs, because a command is free to take this tile down with it.
         event.stopPropagation();
@@ -173,7 +173,7 @@ namespace ClaFi::Documents
     // press that asked. The tile is the presenter: it is where the command was given.
     void DocumentsHomePageBase::openDocument(Control& presenter, const InputStamp stamp)
     {
-        Browser::Actions::open.invoke(form(), &presenter, stamp);
+        Browser::Actions::Open.invoke(form(), &presenter, stamp);
     }
 
     void DocumentsHomePageBase::createNewFile(const DocumentTemplate* documentTemplate)

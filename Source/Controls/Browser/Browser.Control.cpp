@@ -695,7 +695,7 @@ namespace ClaFi::Browser
         // walk reaches it, and a page naming nothing is a state the commands are disabled in
         // rather than a reason to say nothing: the commands are still about this browser.
         onGetActionState([this](GetActionStateEvent& event){
-            if (&event.action != &Actions::open && &event.action != &Actions::openInNewTab)
+            if (&event.action != &Actions::Open && &event.action != &Actions::OpenInNewTab)
                 return;
             BrowserPage* page = currentPage();
             event.claim({ .enabled = page && !page->pathToOpen().empty() });
@@ -712,11 +712,11 @@ namespace ClaFi::Browser
             // **A command that navigates takes the page it was run from down with it**, and the
             // frames above it - a menu item, the press under that - go on reading controls that
             // went with the page. goToLater is the wait that answers it.
-            if (&event.action == &Actions::open)
+            if (&event.action == &Actions::Open)
                 goToLater(Url{ path });
             // **A new tab opens behind the one shown**, so the page it was asked from stays on
             // screen - several can be opened from it in turn, and there is nothing to wait for.
-            else if (&event.action == &Actions::openInNewTab)
+            else if (&event.action == &Actions::OpenInNewTab)
                 addTab(Url{ path }, SelectTab::No);
         });
     }

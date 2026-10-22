@@ -6,7 +6,7 @@ import SeeDocs_App.ExternalEditors;
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageView;
 import SeeDocs_App.SidebarEditor;
-import SeeDocs_App.SurfaceTree;
+import SeeDocs_App.Ui.SidebarTree;
 import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
@@ -42,7 +42,7 @@ import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
-namespace SeeDocs_App
+namespace SeeDocs_App::Ui
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
@@ -399,7 +399,7 @@ namespace SeeDocs_App
         {
             const BrowserTab* tab{ nullptr };
             ScrollBox* box{ nullptr };
-            SurfaceTree* tree{ nullptr };
+            SidebarTree* tree{ nullptr };
         };
         using TabTrees = std::vector<TabTree>;
         // A line of the search box's list: a name and the project it stands in, or a search.
@@ -475,7 +475,7 @@ namespace SeeDocs_App
             std::wstring_view member = {});
         // The tab's tree follows the page: the item's row, the folder's, the module's or the
         // type's, or the project's node for a page none of those is.
-        void followPage(SurfaceTree&, const Target&);
+        void followPage(SidebarTree&, const Target&);
         // Puts Add and Delete into the page's head and hands what the editor says on to whoever
         // owns the project.
         void connectSidebarPage(SidebarPage&, ShownProject&);

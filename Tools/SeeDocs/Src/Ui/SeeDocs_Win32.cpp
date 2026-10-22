@@ -27,7 +27,7 @@ int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t* commandLine, int
 {
     using namespace ClaFi;
 
-    SeeDocs_App::SeeDocsApplication<Win32Platform, Direct2DBackend> app{ { hInstance } };
+    SeeDocs_App::Ui::SeeDocsApplication<Win32Platform, Direct2DBackend> app{ { hInstance } };
 
     return app.run(folderArgument(commandLine));
 }

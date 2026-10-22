@@ -4,7 +4,7 @@ import SeeDocs_App.Workspace;
 
 import ClaFi.App.Settings;
 
-namespace SeeDocs_App
+namespace SeeDocs_App::Ui
 {
     // Fills the application menu's Open page: Browse, and the projects opened before, each
     // opening a project in a new tab. Built afresh as the menu opens.

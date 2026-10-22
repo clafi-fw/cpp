@@ -218,7 +218,7 @@ namespace SeeDocs_App
         // The link a menu is up for, as the text states it; empty while no link menu is up.
         [[nodiscard]] std::wstring_view menuLink() const { return m_menuLink; }
         // What the link menu that is up stands on; null while none is up.
-        [[nodiscard]] Control* menuOwner() { return m_menuOwner; }
+        [[nodiscard]] Control* menuOwner2() const { return m_menuOwner2; }
     private:
         // A footnote standing on the page: its slot, the words it shows, the anchor a link reaches
         // it by - none for the type's own note - and the row it belongs to where it is a member's.
@@ -387,8 +387,8 @@ namespace SeeDocs_App
         Anchors m_anchors{};
         AnchorsOf m_anchorsOf{};
         BranchRows m_branchRows{};
-        Grids::Row* m_firstRow{ nullptr };      // the first row a table of the page holds
-        Grids::Row* m_anchoredRow{ nullptr };   // the row the anchor shown selected
+        Grids::Row* m_firstRow{ nullptr };          // the first row a table of the page holds
+        Grids::Row* m_anchoredRow{ nullptr };       // the row the anchor shown selected
         std::optional<float> m_pendingPosition{};   // put back once the page is laid out
         // The anchor the page stands at - the one shown, or the selected item's since - which is
         // what the tab's url names, and what the position is measured from.
@@ -397,10 +397,13 @@ namespace SeeDocs_App
         // A footnote not written yet, by the row it is for, while its editor stands.
         std::map<const TableRow*, FootnoteSlot*> m_newFootnotes{};
         std::size_t m_footnoteCount{ 0 };   // numbered through the page, so an anchor names one
-        std::wstring m_menuLink{};   // the link the menu that is up is about
-        Control* m_menuOwner{ nullptr };   // what that menu stands on
+        
+        std::wstring m_menuLink{};          // the link the menu that is up is about
+        Control* m_menuOwner2{ nullptr };    // what that menu stands on
+        
         std::function<void()> m_pending{};
         UiTimer m_later{};
+
         std::vector<ScopedEventConnection> m_editorWatches{};   // on the editors' command lines
 
         PageHead& m_head{ createTopBar<PageHead>() };

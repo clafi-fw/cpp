@@ -175,8 +175,8 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.SidebarEditor.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.SidebarRows.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.SidebarRows.cppm" />
-    <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cpp" />
-    <ClCompile Include="Src\Ui\SeeDocs_App.SurfaceTree.cppm" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.Ui.SidebarTree.cpp" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.Ui.SidebarTree.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Workspace.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Workspace.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_Win32.cpp" />

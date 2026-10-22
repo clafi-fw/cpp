@@ -17,7 +17,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace SeeDocs_App
+namespace SeeDocs_App::Ui
 {
     using namespace ::ClaFi;
 

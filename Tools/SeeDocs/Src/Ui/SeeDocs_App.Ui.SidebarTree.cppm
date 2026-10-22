@@ -1,4 +1,6 @@
-export module SeeDocs_App.SurfaceTree;
+module;
+#include "../Y-Core/System/EventBindings.h"
+export module SeeDocs_App.Ui.SidebarTree;
 
 import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
@@ -14,7 +16,7 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
-namespace SeeDocs_App
+namespace SeeDocs_App::Ui
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
@@ -88,8 +90,8 @@ namespace SeeDocs_App
     // Constructed before main, so nothing here touches the platform, the theme or the text engine.
     namespace Actions
     {
-        export extern Action projectOptions;   // opens the project's options page
-        export extern Action editSidebar;   // opens the project's sidebar page on the row's item
+        export extern Action ProjectOptions;   // opens the project's options page
+        export extern Action EditSidebar;      // opens the project's sidebar page
     }
 
     // The nodes of a project open in a tree: its own, its sidebar's items by path, and its
@@ -107,24 +109,21 @@ namespace SeeDocs_App
     // contents tree, which every tree shares. A node's rows are made the first time it opens, so a
     // tree costs the rows it has shown. A click on a row picks what it names, and Open in new tab
     // on the row's menu picks it for a new tab.
-    export class SurfaceTree : public TreeView
+    export class SidebarTree : public TreeView
     {
     public:
         template<typename... Args>
-        explicit SurfaceTree(const CreateParams&, Args&&...);
+        explicit SidebarTree(const CreateParams&, Args&&...);
     public:
         // Connects a handler raised when a row is clicked, or opened in a new tab from its menu.
-        template<typename F>
-        EventConnection onPick(F&& callback);
+        DECLARE_EVENT(TreePickEvent, OnTreePick, onPick)
         // Connects a handler raised when a node opens or closes, other than by restoreRows.
-        template<typename F>
-        EventConnection onToggle(F&& callback);
+        DECLARE_EVENT(TreeToggleEvent, OnTreeToggle, onToggle)
         // Connects a handler raised when Edit sidebar is taken from a row's menu.
-        template<typename F>
-        EventConnection onEditSidebar(F&& callback);
+        DECLARE_EVENT(TreeEditSidebarEvent, OnTreeEditSideBar, onEditSidebar)
         // Connects a handler raised when Project options is taken from a row's menu.
-        template<typename F>
-        EventConnection onProjectOptions(F&& callback);
+        DECLARE_EVENT(TreeProjectOptionsEvent, OnTreeProjectOptions, onProjectOptions)
+    public:
         // Adds the project's node at the end of the tree, closed. The sidebar and the contents are
         // held by reference for as long as the rows stand.
         void addProject(ProjectId, std::wstring_view name, const SidebarItems&,
@@ -265,34 +264,11 @@ namespace SeeDocs_App
 
 
     template<typename... Args>
-    SurfaceTree::SurfaceTree(const CreateParams& params, Args&&... args)
+    SidebarTree::SidebarTree(const CreateParams& params, Args&&... args)
         :
         TreeView{ params, std::forward<Args>(args)... }
     {
         connectActions();
     }
 
-    template<typename F>
-    EventConnection SurfaceTree::onPick(F&& callback)
-    {
-        return connectEvent<TreePickEvent>(std::forward<F>(callback));
-    }
-
-    template<typename F>
-    EventConnection SurfaceTree::onToggle(F&& callback)
-    {
-        return connectEvent<TreeToggleEvent>(std::forward<F>(callback));
-    }
-
-    template<typename F>
-    EventConnection SurfaceTree::onEditSidebar(F&& callback)
-    {
-        return connectEvent<TreeEditSidebarEvent>(std::forward<F>(callback));
-    }
-
-    template<typename F>
-    EventConnection SurfaceTree::onProjectOptions(F&& callback)
-    {
-        return connectEvent<TreeProjectOptionsEvent>(std::forward<F>(callback));
-    }
 }
