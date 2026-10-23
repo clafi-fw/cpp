@@ -504,18 +504,16 @@ namespace ClaFi::Controls
     template <IsControl HostClass>
     void WithInPlaceEdit<HostClass>::nestedControlFocusing(FocusEvent& event)
     {
-        // **Before** the base, which is what carries the walk up to the container. isFocused()
-        // answers for where the user **was** only until that container has recorded its new current
+        // **Before** the base, which is what carries the walk up to the container. The delegate
+        // names where the user **was** only until that container has recorded its new current
         // item, and it does that from inside the base call below.
         //
         // Control::setFocus raises this on **every** press, including a press on the control that
         // already holds the focus, so the case being detected is reported rather than skipped.
         //
-        // focusChanged cannot answer this. A container that owns its items retargets the event
-        // to itself - StackBase does - so the focus is written to the **container** and an item
-        // is only its focusDelegate. No such item is ever told its focus changed.
+        // focusChanged cannot answer this: it is told after the move.
         if (event.control == this)
-            m_wasCurrentBeforePress = this->isFocused();
+            m_wasCurrentBeforePress = Input::focusDelegate() == this;
         HostClass::nestedControlFocusing(event);
     }
 

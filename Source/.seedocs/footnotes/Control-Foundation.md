@@ -264,8 +264,8 @@ keeps text, icons and children together.
 ## InvalidateEvent
 
 `None` and `InputController` are the invalidation alone. `HoverEnter` and `HoverLeave` also tell
-each control the hover entered or left it. `PressDown` and `PressUp` invalidate only a control that
-responds to the pointer.
+each control the hover entered or left it, and `FocusEnter` and `FocusLeave` that the focus did.
+`PressDown` and `PressUp` invalidate only a control that responds to the pointer.
 
 ## DropPopupEvent
 
@@ -483,9 +483,19 @@ such child in reading order, whichever way the step comes.
 **One per application, not per form**, so every member is static. The focus leaves a control when it
 arrives elsewhere, and that may be another window.
 
+**Two controls name the focus.** `focusedControl()` is the holder - a container holds the focus for
+its current item - and `focusDelegate()` is the control the focus is on: the holder's
+Control::focusDelegate, which is the item. Both are the holder where it delegates to nothing.
+
+**A state is on a path, not on one control.** The hover is on the hovered control and on everything
+it stands in; the focus is on the delegate and on everything it stands in, so a panel and the form's
+root are focused while the focus is inside them. A move walks each side up to the common parent,
+telling every control on the way and animating its factor, and stops there: everything above
+answers the same before and after. Whether a control shows the state is its own business.
+
 **A control asks about itself through Control::isFocused(), isHovered() and isPressed()**, rather
-than comparing pointers with these. A container answers for the item it holds, and only those
-helpers know it.
+than comparing pointers with these. A test for the delegate itself - the row a grid's keys apply to,
+the item a press landed on - compares with `focusDelegate()`.
 
 ## InputController
 

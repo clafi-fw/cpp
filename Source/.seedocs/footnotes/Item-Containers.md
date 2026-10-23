@@ -34,8 +34,8 @@ holds - see Grid. Code that picks an item calls Control::makeCurrentItem on it, 
 whichever container keeps the current item.
 
 **What the current item leaves is told** - see Control nestedCurrentItemChange - so a grid the
-item has left drops its selected cell. The focus a container holds moves with its item, and both
-items hear it as the two sides of a focus change do - see Input focusMovedWithin.
+item has left drops its selected cell. The focus a container holds moves with its item, and the
+move is told as any other - see Input focusDelegateChanged.
 
 ## Expander
 

@@ -605,6 +605,8 @@ namespace ClaFi
         None,
         HoverEnter,
         HoverLeave,
+        FocusEnter,
+        FocusLeave,
         PressUp,
         PressDown,
         InputController
@@ -910,6 +912,7 @@ namespace ClaFi
         [[nodiscard]] virtual bool enabled(const bool deep = false) const;
         [[nodiscard]] bool selected() const { return state().selected; }
         // framework driven states
+        // The pointer is on this control or on something inside it.
         [[nodiscard]] bool isHovered() const;
         // Whether this control has reached its first paint. Anything that moves from what is on
         // screen has nothing to move from until it has.
@@ -917,6 +920,7 @@ namespace ClaFi
         [[nodiscard]] bool isTextDrawn() const { return m_flags2 & cfTextDrawn; }
         [[nodiscard]] bool isTextHovered() const;
         [[nodiscard]] bool isPressed() const;
+        // The focus is on this control or on something inside it. See Control-Foundation#input
         [[nodiscard]] bool isFocused() const;
         [[nodiscard]] bool isDroppedDown() const;
         //
@@ -1235,7 +1239,7 @@ namespace ClaFi
         virtual void visibilityChanged() {}
         // The control this one answers for while it holds the focus. A container answers with the
         // item inside it; everything else answers with itself, which is the default. It is what
-        // isFocused() is tested against, so a container that delegates does not read as focused.
+        // Input::focusDelegate() answers, and where isFocused() walks up from.
         virtual Control* focusDelegate();
         // makeCurrentItem's question: a container keeping a current item takes it and answers yes.
         [[nodiscard]] virtual bool takeCurrentItem(Control& /*item*/) { return false; }
@@ -1263,9 +1267,9 @@ namespace ClaFi
         // hovered is what Input now reports, and is never null: the hover being given up
         // altogether is not a control being hovered, and hoverLeave is what says it.
         virtual void nestedControlHovered(Control* hovered);
-        // The focus has arrived at this control or left it. Both sides of every change are told,
-        // **after** the move, so isFocused() answers for the control being told whichever side it
-        // is on - which is also why nothing is passed in.
+        // The focus has arrived at this control - on it or inside it - or left it. Told to every
+        // control whose isFocused() answer changed, **after** the move, so that answer is for the
+        // control being told whichever side it is on - which is also why nothing is passed in.
         //
         // A control that only looks different while focused needs none of this: the state is
         // invalidated alongside the call and the focused factor animates itself. This is for a

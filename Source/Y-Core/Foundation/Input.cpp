@@ -74,62 +74,46 @@ namespace ClaFi
             Tooltip::hoveredZoneChanged();
     }
 
+    Control* Input::focusDelegate()
+    {
+        return s_focusedControl ? s_focusedControl->focusDelegate() : nullptr;
+    }
+
     void Input::setFocusedControl(Control* value)
     {
         if (s_focusedControl == value)
             return;
-
-        Control* previousControl = s_focusedControl;
-
+        Control* previousDelegate = focusDelegate();
         s_focusedControl = value;
-
-        // Told after s_focusedControl has moved, so isFocused() answers for the control being
-        // told whichever side of the change it is on. The control that **holds** the focus and the
-        // one it delegates to can be two controls - a container answers focusDelegate() with the
-        // item inside it - and each is told once. A control that answers with itself is one
-        // control and is told once, which is what the identity test is for.
-        auto notifyFocusChange = [](Control* control) {
-            if (!control)
-                return;
-            control->invalidateState();
-            control->focusChanged();
-            Control* delegate = control->focusDelegate();
-            if (!delegate || delegate == control)
-                return;
-            delegate->invalidateState();
-            delegate->focusChanged();
-        };
-
-        notifyFocusChange(previousControl);
-        notifyFocusChange(s_focusedControl);
-
-        if constexpr (Diagnostic::Options::logFocusedItem())
-        {
-            Control* focusedItem = s_focusedControl ? s_focusedControl->focusDelegate() : nullptr;
-            diagnosticLog(L"focused", focusedItem);
-        }
+        focusMoved(previousDelegate, focusDelegate());
     }
 
-    // The holder has not changed, so the write above does not run - and its delegate has, which
-    // is what the two items are the sides of.
-    void Input::focusMovedWithin(const Control& container, Control* previousItem,
-        Control* currentItem)
+    // The holder has not changed, so setFocusedControl does not run - and its delegate has. A
+    // null on either side is the holder answering for itself.
+    void Input::focusDelegateChanged(Control& holder, Control* previousDelegate,
+        Control* currentDelegate)
     {
-        if (s_focusedControl != &container)
+        if (s_focusedControl != &holder)
             return;
-        auto tell = [](Control* item) {
-            if (!item)
-                return;
-            item->invalidateState();
-            item->focusChanged();
-        };
-        tell(previousItem);
-        tell(currentItem);
+        focusMoved(previousDelegate ? previousDelegate : &holder,
+            currentDelegate ? currentDelegate : &holder);
+    }
+
+    // The two walks a hover move makes. Each stops at the common parent, which answers the same
+    // before and after; every control on the way hears focusChanged **after** the move, so
+    // isFocused() answers for it whichever side it is on.
+    void Input::focusMoved(Control* previousDelegate, Control* currentDelegate)
+    {
+        if (previousDelegate == currentDelegate)
+            return;
+        Control* upTo = commonParent(previousDelegate, currentDelegate);
+        Control::invalidateStateUp(previousDelegate, upTo, InvalidateEvent::FocusLeave);
+        Control::invalidateStateUp(currentDelegate, upTo, InvalidateEvent::FocusEnter);
 
         if constexpr (Diagnostic::Options::logFocusedItem())
         {
-            Control* focusedItem = s_focusedControl ? s_focusedControl->focusDelegate() : nullptr;
-            diagnosticLog(L"focused", focusedItem);
+            diagnosticLog(L"focused control", s_focusedControl);
+            diagnosticLog(L"focus delegate", currentDelegate);
         }
     }
 
@@ -242,14 +226,15 @@ namespace ClaFi
         return nullptr;
     }
 
-    // Both factors reach the ring, so the control holding the focus has to be repainted as either
+    // Both factors reach the ring, so the control the focus is on has to be repainted as either
     // moves - and so does the hovered one, whose ring the same factors gate. A rule reading
     // Keyboard or Mouse can stand on any control of any window, so every window repaints as well.
     void Input::controllerFactorChanged(AppContext& appContext)
     {
+        Control* delegate = focusDelegate();
         invalidateForControllers(s_hoveredControl);
-        if (s_focusedControl != s_hoveredControl)
-            invalidateForControllers(s_focusedControl);
+        if (delegate != s_hoveredControl)
+            invalidateForControllers(delegate);
         appContext.events().emit<InputSwitchEvent>();
     }
 
@@ -258,17 +243,12 @@ namespace ClaFi
     // invalidateState repaints only when one of the control's own factors has - it would leave
     // the ring at its last painted width until something else happened to repaint the control,
     // and then drop it in one step instead of fading.
-    //
-    // The control that **holds** the focus and the item it answers for can be two controls, and the
-    // ring is on the item.
     void Input::invalidateForControllers(Control* control)
     {
         if (!control)
             return;
         Control::invalidateStateUp(control, nullptr, InvalidateEvent::InputController);
         control->invalidate();
-        if (Control* delegate = control->focusDelegate(); delegate != control)
-            delegate->invalidate();
     }
 
     InputController Input::s_mouse{ AnimationSlots::MouseActive, true };

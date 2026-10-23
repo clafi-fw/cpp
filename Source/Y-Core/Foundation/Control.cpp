@@ -1020,11 +1020,7 @@ namespace ClaFi
 
     void Control::setFocus()
     {
-        auto focusedItem = []() -> const Control* {
-            Control* focused = Input::focusedControl();
-            return focused ? focused->focusDelegate() : nullptr;
-        };
-        const Control* previousItem = focusedItem();
+        const Control* previousDelegate = Input::focusDelegate();
         FocusEvent event{ *this, form() };
         nestedControlFocusing(event);
         // Only a retarget needs this. When the focus lands here the write at the end of the walk
@@ -1038,7 +1034,7 @@ namespace ClaFi
         // **The tooltip hears a landing only where the item changed.** A list going down hands the
         // focus back to the box it was dropped from, which held it all along, and a tooltip that
         // went down with the list stays down.
-        if (focusedItem() != previousItem)
+        if (Input::focusDelegate() != previousDelegate)
             Tooltip::focusedControlChanged();
     }
 
@@ -1137,14 +1133,7 @@ namespace ClaFi
 
     bool Control::isHovered() const
     {
-        const Control* control = Input::hoveredControl();
-        while (control)
-        {
-            if (control == this)
-                return true;
-            control = control->m_parent;
-        }
-        return false;
+        return containsNested(Input::hoveredControl());
     }
 
     bool Control::isTextHovered() const
@@ -1158,16 +1147,14 @@ namespace ClaFi
     {
         const bool pointerPressed = Input::isMouseDown()
             && containsNested(Input::hoveredControl(), CheckSelf::Yes);
-        Control* focused = Input::focusedControl();
         const bool keyPressed = form().isKeyboardClick()
-            && focused
-            && containsNested(focused->focusDelegate(), CheckSelf::Yes);
+            && containsNested(Input::focusDelegate(), CheckSelf::Yes);
         return pointerPressed || keyPressed;
     }
 
     bool Control::isFocused() const
     {
-        return Input::focusedControl() && Input::focusedControl()->focusDelegate() == this;
+        return containsNested(Input::focusDelegate());
     }
 
     bool Control::isDroppedDown() const
@@ -2648,6 +2635,10 @@ namespace ClaFi
                 break;
             case InvalidateEvent::HoverEnter:
                 control->doHoverEnter();
+                break;
+            case InvalidateEvent::FocusEnter:
+            case InvalidateEvent::FocusLeave:
+                control->focusChanged();
                 break;
             case InvalidateEvent::PressDown:
             case InvalidateEvent::PressUp:

@@ -62,7 +62,7 @@ namespace ClaFi::Controls
 
         // The focus this container holds moves with its item; then what the item left is told,
         // and a grid standing in this container drops its selected cell on it.
-        Input::focusMovedWithin(*this, previousValue, m_currentItem);
+        Input::focusDelegateChanged(*this, previousValue, m_currentItem);
         raiseCurrentItemChange(previousValue, m_currentItem);
         doCurrentItemChanged(previousValue);
     }

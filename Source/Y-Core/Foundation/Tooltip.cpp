@@ -118,8 +118,8 @@ namespace ClaFi
     // focus's.
     void Tooltip::mouseTookOver()
     {
-        Control* focused = Input::focusedControl();
-        if (focused && focused->focusDelegate() == Input::hoveredControl())
+        Control* delegate = Input::focusDelegate();
+        if (delegate && delegate == Input::hoveredControl())
             return;
         pointedControlChanged();
     }
@@ -128,10 +128,8 @@ namespace ClaFi
     {
         if (Input::mouse().active())
             return Input::hoveredControl();
-        // The holder answers for the item inside it - a container holds the focus for its current
-        // item, and the item is what the key landed on.
-        Control* focused = Input::focusedControl();
-        return focused ? focused->focusDelegate() : nullptr;
+        // The item the key landed on, which a container holds the focus for.
+        return Input::focusDelegate();
     }
 
     void Tooltip::pointedControlChanged()

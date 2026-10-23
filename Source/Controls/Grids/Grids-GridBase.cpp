@@ -719,9 +719,9 @@ namespace ClaFi::Controls::Grids
         const Control* sourceStop = m_descriptor.selectedRow();
         if (!sourceStop)
             return false;
-        // isFocused() is the test to use rather than Input::focusedControl(): the focus is held
-        // by the container that answers for the row, and only focusDelegate() names the row.
-        return sourceStop->isFocused();
+        // The row itself, not a control hosted in one of its cells: that one holds the focus for
+        // itself, and the row reads as focused around it.
+        return Input::focusDelegate() == sourceStop;
     }
 
     bool GridBase::isFieldRoot() const

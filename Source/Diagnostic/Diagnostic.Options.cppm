@@ -111,7 +111,7 @@ namespace ClaFi::Diagnostic::Options
         return enabled && Stated::LogTextLayout;
     }
 
-    /// @brief Each focus move goes to the Output page, naming the item isFocused() answers for.
+    /// @brief Each focus move goes to the Output page: the focused control, then the focus delegate.
     export [[nodiscard]] constexpr bool logFocusedItem()
     {
         return enabled && Stated::LogFocusedItem;

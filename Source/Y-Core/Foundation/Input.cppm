@@ -33,9 +33,10 @@ namespace ClaFi
         friend FormBase;
         friend InputController;
     public:
-        // Where the focus rests. This may be a container answering for an item inside it -
-        // Control::focusDelegate() names the leaf.
+        // Where the focus rests. This may be a container answering for an item inside it.
         [[nodiscard]] static Control* focusedControl() { return s_focusedControl; }
+        // focusedControl(), or the item it answers for. See Control-Foundation#input
+        [[nodiscard]] static Control* focusDelegate();
         [[nodiscard]] static Control* hoveredControl() { return s_hoveredControl; }
         [[nodiscard]] static HitTest hoveredZone() { return s_hoveredZone; }
         // Whether the pointer stands on the hovered control's own text. Apart from the zone: a
@@ -44,14 +45,15 @@ namespace ClaFi
         [[nodiscard]] static const InputController& mouse() { return s_mouse; }
         [[nodiscard]] static const InputController& keyboard() { return s_keyboard; }
         [[nodiscard]] static bool isMouseDown() { return s_isMouseDown; }
-        // A container holding the focus moved it between its items, and both items are told.
-        static void focusMovedWithin(const Control& container, Control* previousItem,
-            Control* currentItem);
+        // A control holding the focus changed the item it answers for.
+        static void focusDelegateChanged(Control& holder, Control* previousDelegate,
+            Control* currentDelegate);
     private:
-        // The single write to the focus holder. Both sides of the change are told afterwards -
-        // see Control::focusChanged.
+        // The single write to the focus holder.
         static void setFocusedControl(Control* value);
         static void setFocusedControl(Control& value) { setFocusedControl(&value); }
+        // The focus moved from one delegate to another, and the path each stands on is told.
+        static void focusMoved(Control* previousDelegate, Control* currentDelegate);
         // The single write to the hover: what the pointer is over, as the form hit-tests it.
         static void setHoveredControl(Control*, HitTest, bool overText);
         static void setHoveredControl(Control* control) { setHoveredControl(control, HitTest::Client, false); }
