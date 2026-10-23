@@ -811,6 +811,9 @@ namespace ClaFi::Controls
                 m_completionListed.push_back(*pick);
             at = end;
         }
+        std::ranges::stable_partition(m_completionListed, [&](const std::size_t item){
+            return Syntax::completionNamesEqual(language, items[item].name, typed);
+        });
     }
 
     // The part typed so far in the spot, the rest in the text's own ink, and the kind muted at

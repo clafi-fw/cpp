@@ -500,10 +500,11 @@ leaves - a mouse click, an arrow key, the focus going.
 - After a dot, the members of the class the dot reads and of its parents - see
   completionMemberClasses. Where that class is unknown the list stays closed, Ctrl+Space included.
 - Elsewhere, the text's own names first, nearest scope ahead - the caret's routine, the routines
-  around it, the globals - then the host's names and the keywords. Each run is in name order, so
-  an exact match leads it.
+  around it, the globals - then the host's names and the keywords, each run in name order.
 - A name shows only where it is in force. A local and a global of one name both show, the local
   first, and a host name of that spelling after both.
+- An exact match leads the list, whichever run it stands in - typing `do` lists the keyword ahead
+  of a `Document` the text declares. Several exact matches keep the order their runs give them.
 
 The text's declarations are read as the list opens, and again on Ctrl+Space - see
 DeclarationReader. The current row's signature and hint show beside the list - for the text's own
