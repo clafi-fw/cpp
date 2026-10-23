@@ -94,6 +94,8 @@ namespace ClaFi::Controls
     {
         friend TreeNodeHeader;
     public:
+        std::wstring_view diagnosticText() const override { return L"TreeNode"; }
+    public:
         template<typename... Args>
         explicit TreeNode(const CreateParams&, TreeView& tree, std::size_t level, Args&&...);
         // A node headed by a header of the stated kind, one standing on TreeNodeHeader.

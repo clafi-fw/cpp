@@ -19,6 +19,7 @@ import ClaFi.StdActions;
 import ClaFi.StdActions.Transfer;
 
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Source;
@@ -192,10 +193,10 @@ namespace ClaFi
             newItem.text() << counter << L". " << text;
             if (showPtr)
             {
-                newItem.text() << L": " << toHex(reinterpret_cast<std::uint64_t>(ptr));
+                const std::wstring address = toHex(reinterpret_cast<std::uint64_t>(ptr));
+                newItem.text() << L": ";
                 if (ptr)
                 {
-                    std::wstring_view s = ptr->diagnosticText();
                     Color color;
                     if (!window.controlColors.contains(ptr))
                     {
@@ -205,9 +206,13 @@ namespace ClaFi
                     }
                     else
                         color = window.controlColors[ptr];
-                    if (!s.empty())
-                        newItem.text() << color << L" (" << s << L")";
+                    newItem.text() << color << address << PopColor{};
+                    const std::wstring_view label = ptr->diagnosticText();
+                    if (!label.empty())
+                        newItem.text() << L" (" << label << L")";
                 }
+                else
+                    newItem.text() << address;
             }
             // The same line where a debugger shows it, for the records the window is torn down
             // before it can paint - those of the exit save.

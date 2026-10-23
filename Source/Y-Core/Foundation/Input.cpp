@@ -5,6 +5,9 @@ import :Control;
 import :Form;
 import :Tooltip;
 
+import ClaFi.Diagnostic.Log;
+import ClaFi.Diagnostic.Options;
+
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.System.Animation;
@@ -99,6 +102,12 @@ namespace ClaFi
 
         notifyFocusChange(previousControl);
         notifyFocusChange(s_focusedControl);
+
+        if constexpr (Diagnostic::Options::logFocusedItem())
+        {
+            Control* focusedItem = s_focusedControl ? s_focusedControl->focusDelegate() : nullptr;
+            diagnosticLog(L"focused", focusedItem);
+        }
     }
 
     // The holder has not changed, so the write above does not run - and its delegate has, which
@@ -116,6 +125,12 @@ namespace ClaFi
         };
         tell(previousItem);
         tell(currentItem);
+
+        if constexpr (Diagnostic::Options::logFocusedItem())
+        {
+            Control* focusedItem = s_focusedControl ? s_focusedControl->focusDelegate() : nullptr;
+            diagnosticLog(L"focused", focusedItem);
+        }
     }
 
     void Input::mouseActed(AppContext& appContext)

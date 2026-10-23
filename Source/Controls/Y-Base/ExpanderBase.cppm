@@ -87,6 +87,8 @@ namespace ClaFi::Controls
     export class ExpanderHeader : public PanelBase
     {
     public:
+        std::wstring_view diagnosticText() const override { return L"ExpanderHeader"; }
+    public:
         template<typename... Args>
         explicit ExpanderHeader(const CreateParams& params, Args&&...);
     public:

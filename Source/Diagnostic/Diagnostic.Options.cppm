@@ -17,7 +17,7 @@ namespace ClaFi::Diagnostic::Options
     export constexpr bool enabled{ false };
 #else
     /// @brief The global diagnostic switch: turns everything off. See Diagnostic#options
-    export constexpr bool enabled{ false };
+    export constexpr bool enabled{ true };
 #endif
 
     // Each option as stated here, read through the function of the same name below.
@@ -31,6 +31,7 @@ namespace ClaFi::Diagnostic::Options
         constexpr bool LogFormPlacement{ false };
         constexpr bool HighlightTextAreas{ false };
         constexpr bool LogTextLayout{ false }; // with this true don't go to FPS page - it will be stuck
+        constexpr bool LogFocusedItem{ true };
     }
 
     /// @brief How a failed platform API call is handled - see ApiErrors. Anything but Ignore
@@ -108,5 +109,11 @@ namespace ClaFi::Diagnostic::Options
     export [[nodiscard]] constexpr bool logTextLayout()
     {
         return enabled && Stated::LogTextLayout;
+    }
+
+    /// @brief Each focus move goes to the Output page, naming the item isFocused() answers for.
+    export [[nodiscard]] constexpr bool logFocusedItem()
+    {
+        return enabled && Stated::LogFocusedItem;
     }
 }

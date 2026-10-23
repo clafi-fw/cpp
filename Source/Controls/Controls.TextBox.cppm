@@ -92,6 +92,8 @@ namespace ClaFi::Controls
         public IEditHistory
     {
     public:
+        std::wstring_view diagnosticText() const override { return L"TextBox"; }
+    public:
         template<typename... Args>
         explicit TextBox(const CreateParams&, Args&&...);
     public:
