@@ -111,7 +111,17 @@ namespace ClaFi
         }
     };
 
-    export template <ArithmeticType T>
+    export template <IsArithmeticType T>
+        struct Inset
+    {
+        T left{}, top{}, right{}, bottom{};
+        static Inset AllSides(T value) { return { value, value, value, value }; }
+        static Inset Bilateral(FloatPoint value) { return { value.x, value.y, value.x, value.y }; }
+        
+    };
+    export using FloatInset = Inset<float>;
+
+    export template <IsArithmeticType T>
     struct Rect
     {
         T left;
@@ -177,10 +187,11 @@ namespace ClaFi
         void inflate(const T value) { inflate(value, value); }
         Rect<T> inflated(T dx, T dy) const;
         Rect<T> inflated(T value) const;
-        template<ArithmeticType T2>
+        template<IsArithmeticType T2>
         void inflate(const Point<T2> value) { inflate(value.x, value.y); }
         void offset(T x, T y);
         void offset(const Point<T>& value)  { offset(value.x, value.y); }
+        void inset(const Inset<T>);
         void unionWith(const Rect&);
         bool intersectWith(const Rect&);
         static  Rect<T> intersection(Rect, const Rect&);
@@ -201,7 +212,7 @@ namespace ClaFi
     //  SerializedField{ L"Right",  &Rect::right },
     //  SerializedField{ L"Bottom", &Rect::bottom }
     //);
-    export template<ArithmeticType T>
+    export template<IsArithmeticType T>
     constexpr auto serializedFields(Rect<T>) {
         return std::make_tuple
         (
@@ -212,10 +223,10 @@ namespace ClaFi
         );
     };
 
+
     //export using DoubleRect = Rect<double>;
     export using FloatRect  = Rect<float>;
     export using IntRect    = Rect<std::int32_t>; // WinApi compatible
-    export using IntMargins = Rect<std::int32_t>; // **Not** WinApi compatible (suddenly members order differs)
 
     export struct CornerNook
     {
@@ -245,7 +256,7 @@ namespace ClaFi
     //----------------------------------------------------------------------------
 
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T>::Rect() :
         left{},
         top{},
@@ -254,7 +265,7 @@ namespace ClaFi
     {
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T>::Rect(const T left, const T top, const T right, const T bottom) :
         left{ left },
         top{ top },
@@ -263,7 +274,7 @@ namespace ClaFi
     {
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T>::Rect(const Rect& other, const T inflate) :
         left{ other.left - inflate },
         top{ other.top - inflate },
@@ -272,7 +283,7 @@ namespace ClaFi
     {
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T>::Rect(const Rect& other, const T inflateX, const T inflateY) :
         left{ other.left - inflateX },
         top{ other.top - inflateY },
@@ -281,7 +292,7 @@ namespace ClaFi
     {
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T>::Rect(const Rect& other, const Point<T> inflate) :
         left{ other.left - inflate.x },
         top{ other.top - inflate.y },
@@ -290,7 +301,7 @@ namespace ClaFi
     {
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T>::Rect(const Rect& other) :
         left{ other.left },
         top{ other.top },
@@ -299,19 +310,19 @@ namespace ClaFi
     {
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     bool Rect<T>::operator==(const Rect& other) const
     {
         return left == other.left && top == other.top && right == other.right && bottom == other.bottom;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     bool Rect<T>::operator!=(const Rect& other) const
     {
         return left != other.left || top != other.top || right != other.right || bottom != other.bottom;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<double> Rect<T>::toDouble() const
     {
         return {
@@ -322,7 +333,7 @@ namespace ClaFi
         };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<float> Rect<T>::toFloat() const
     {
         return {
@@ -333,7 +344,7 @@ namespace ClaFi
         };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::toFloat(Rect<float>& outValue) const
     {
         outValue = {
@@ -344,7 +355,7 @@ namespace ClaFi
         };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<int> Rect<T>::rounded() const
     {
         return {
@@ -355,7 +366,7 @@ namespace ClaFi
         };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<int> Rect<T>::roundedOut() const
     {
         return {
@@ -366,7 +377,7 @@ namespace ClaFi
         };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<float> Rect<T>::centerRect(float w, float h) const
     {
         Rect<float> result;
@@ -377,7 +388,7 @@ namespace ClaFi
         return result;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<float> Rect<T>::fitRect(float wRatio, float hRatio) const
     {
         float k = std::max(wRatio / width(), hRatio / height());
@@ -389,7 +400,7 @@ namespace ClaFi
         return centerRect(wRatio, hRatio);
     }
 
-    template <ArithmeticType T>
+    template <IsArithmeticType T>
     Rect<float> Rect<T>::relativeRect(FloatPoint topLeft, FloatPoint bottomRight) const
     {
         const FloatPoint dims = dimensions();
@@ -399,71 +410,71 @@ namespace ClaFi
         return { lt.x, lt.y, rb.x, rb.y };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T> Rect<T>::topLeftSquare(T sideSize) const
     {
         return { left, top, left + sideSize, top + sideSize };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T> Rect<T>::bottomLeftSquare(T sideSize) const
     {
         return { left, bottom - sideSize, left + sideSize, bottom };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T> Rect<T>::topRightSquare(T sideSize) const
     {
         return { right - sideSize, top, right, top + sideSize };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T> Rect<T>::bottomRightSquare(T sideSize) const
     {
         return { right - sideSize, bottom - sideSize, right, bottom };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::setDimensions(const Point<T> value)
     {
         right = left + value.x;
         bottom = top + value.y;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::setDimensions(const T w, const T h)
     {
         right = left + w;
         bottom = top + h;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::setTopLeft(const Point<T> value)
     {
         offset(value.x - left, value.y - top);
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T> Rect<T>::FromDimensions(Point<T> position, Point<T> dimensions)
     {
         return { position.x, position.y, position.x + dimensions.x, position.y + dimensions.y };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::inflateX(T value)
     {
         left -= value;
         right += value;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::inflateY(T value)
     {
         top -= value;
         bottom += value;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::inflate(T dx, T dy)
     {
         left -= dx;
@@ -472,19 +483,19 @@ namespace ClaFi
         bottom += dy;
     }
 
-    template <ArithmeticType T>
+    template <IsArithmeticType T>
     Rect<T> Rect<T>::inflated(T dx, T dy) const
     {
         return Rect<T>{ *this, dx, dy };
     }
 
-    template <ArithmeticType T>
+    template <IsArithmeticType T>
     Rect<T> Rect<T>::inflated(T value) const
     {
         return Rect<T>{ *this, value };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::offset(const T x, const T y)
     {
         left += x;
@@ -493,7 +504,16 @@ namespace ClaFi
         bottom += y;
     }
 
-    template<ArithmeticType T>
+    template <IsArithmeticType T>
+    void Rect<T>::inset(const Inset<T> value)
+    {
+        left += value.left;
+        top += value.top;
+        right -= value.right;
+        bottom -= value.bottom;
+    }
+
+    template<IsArithmeticType T>
     void Rect<T>::unionWith(const Rect& red)
     {
         if (red.empty())
@@ -509,7 +529,7 @@ namespace ClaFi
         bottom = std::max(bottom, red.bottom);
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     bool Rect<T>::intersectWith(const Rect& red)
     {
         left = std::max(left, red.left);
@@ -519,14 +539,14 @@ namespace ClaFi
         return !empty();
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Rect<T> Rect<T>::intersection(Rect rect1, const Rect& rect2)
     {
         rect1.intersectWith(rect2);
         return rect1;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     bool Rect<T>::intersects(const Rect& red) const
     {
         if (red.empty() || empty())
@@ -538,13 +558,13 @@ namespace ClaFi
             );
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     bool Rect<T>::contains(const T x, const T y) const
     {
         return x >= left && x < right && y >= top && y < bottom;
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::clampTo(Rect<T> boundary)
     {
         static auto clampAxis = [](T& posMin, T& posMax, T bMin, T bMax) {
@@ -572,7 +592,7 @@ namespace ClaFi
 
     // Each edge on its own, which is the intersection while the two overlap and a rect of no
     // area on the boundary's edge once they do not - never the inverted rect intersectWith leaves.
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     void Rect<T>::clipTo(const Rect<T>& boundary)
     {
         left = std::clamp(left, boundary.left, boundary.right);
@@ -581,7 +601,7 @@ namespace ClaFi
         bottom = std::clamp(bottom, boundary.top, boundary.bottom);
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Point<T> Rect<T>::closestPoint(Point<T> value) const
     {
         return {
@@ -590,15 +610,15 @@ namespace ClaFi
         };
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     Point<T> Rect<T>::corner(Corner value)
     {
         switch (value)
         {
-        case Corner::TopLeft: return topLeft(); break;
-        case Corner::TopRight: return topRight(); break;
-        case Corner::BottomRight: return bottomRight(); break;
-        case Corner::BottomLeft: return bottomLeft(); break;
+        case Corner::TopLeft: return topLeft();
+        case Corner::TopRight: return topRight();
+        case Corner::BottomRight: return bottomRight();
+        case Corner::BottomLeft: return bottomLeft();
         }
         noReach();
     }

@@ -37,7 +37,7 @@ namespace ClaFi::Controls
     private:
         [[nodiscard]] PanelBase& panel() const;
         // How far the line stands in from the band's edges across it, in design units.
-        [[nodiscard]] FloatPoint lineInset(const PaintEvent&) const;
+        [[nodiscard]] FloatInset lineInset(const PaintEvent&) const;
     private:
         static constexpr Thickness k_thickness = Thickness::Thin;
         // The band the pointer takes the line by, in design units.

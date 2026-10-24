@@ -61,12 +61,12 @@ namespace ClaFi::Controls
     // the paint rather than the layout.
     void Divider::paintSurface(PaintEvent& event)
     {
-        event.defaultPaintSurface(m_padding);
+        event.defaultPaintSurface(FloatInset::Bilateral(m_padding));
     }
 
     void Divider::paintFrame(PaintEvent& event)
     {
-        event.defaultPaintFrame(m_padding);
+        event.defaultPaintFrame(FloatInset::Bilateral(m_padding));
     }
 
     ScaledSize Divider::calculateContent(AlignEvent& event)

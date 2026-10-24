@@ -5,7 +5,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    export template <ArithmeticType T>
+    export template <IsArithmeticType T>
     struct Point
     {
         T x;
@@ -69,7 +69,7 @@ namespace ClaFi
         }
     };
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     constexpr Point<T>::Point()
         :
         x{},
@@ -77,7 +77,7 @@ namespace ClaFi
     {
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     constexpr Point<T>::Point(const T oneValue)
         :
         x{ oneValue },
@@ -85,7 +85,7 @@ namespace ClaFi
     {
     }
 
-    template<ArithmeticType T>
+    template<IsArithmeticType T>
     constexpr Point<T>::Point(const T x, const T y)
         :
         x{ x },

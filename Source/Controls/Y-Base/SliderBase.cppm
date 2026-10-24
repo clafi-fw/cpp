@@ -211,7 +211,7 @@ namespace ClaFi::Controls
         virtual void adjustButtonMetrics(AdjustMetricsEvent&) const = 0;
         virtual void adjustButtonPaint(AdjustPaintEvent&) = 0;
         // How far a scroll button's surface sits inside its bounds. A design value.
-        [[nodiscard]] virtual FloatPoint buttonInset() const { return {}; }
+        [[nodiscard]] virtual FloatInset buttonInset() const { return {}; }
         virtual void adjustThumbMetrics(AdjustMetricsEvent&) const = 0;
         virtual void adjustThumbPaint(AdjustPaintEvent&) = 0;
         virtual void paintButtonMark(PaintEvent&, float size, ScrollDirection) = 0;

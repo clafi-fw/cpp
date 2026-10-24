@@ -74,7 +74,7 @@ namespace ClaFi::Controls
     private:
         [[nodiscard]] float lead() const; // how far the line stands in past the padding
         // The padding on the top and on the left, the lead added to the left.
-        [[nodiscard]] FloatPoint leadingInset() const;
+        [[nodiscard]] FloatInset leadingInset() const;
     private:
         std::size_t m_level;
     };

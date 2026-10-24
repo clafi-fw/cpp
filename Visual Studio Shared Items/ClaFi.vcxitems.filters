@@ -916,88 +916,88 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Graphics\Graphics.Y_Types.cppm">
       <Filter>Y_Core\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Animation.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Animation.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Csv.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Csv.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\DirWatch.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.DirWatch.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Dt.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Dt.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Events.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Events.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\InkWell.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.InkWell.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Props.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Props.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\RingBuffer.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.RingBuffer.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Scaler.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Scaler.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Serialization.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Serialization.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\StdLib.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\StepHistory.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.StepHistory.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTimer.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTimer.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Color.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-Color.cpp">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Color.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-Color.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Keys.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-Keys.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Point.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-Point.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.Rect.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-Rect.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\UiTypes.TextTypes.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-TextTypes.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Url.cpp">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Url.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Url.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\WebFetch.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.WebFetch.cpp">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\WebFetch.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.WebFetch.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\CommandRun.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.CommandRun.cpp">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\CommandRun.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.CommandRun.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Utils.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Utils.cpp">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\Utils.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Utils.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.BakedText.cppm">

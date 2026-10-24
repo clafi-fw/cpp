@@ -474,26 +474,16 @@ namespace ClaFi
         childContext.traverse();
     }
 
-    void PaintEvent::defaultPaintSurface(FloatPoint inset)
+    void PaintEvent::defaultPaintSurface(const FloatInset& inset)
     {
-        defaultPaintSurface(inset, inset);
-    }
-
-    void PaintEvent::defaultPaintSurface(FloatPoint topLeftInset, FloatPoint bottomRightInset)
-    {
-        const SurfaceShape shape = surfaceShape({ topLeftInset, bottomRightInset });
+        const SurfaceShape shape = surfaceShape(inset);
         if (!shape.rect.empty())
             paintFill(shape);
     }
 
-    void PaintEvent::defaultPaintFrame(FloatPoint inset)
+    void PaintEvent::defaultPaintFrame(const FloatInset& inset)
     {
-        defaultPaintFrame(inset, inset);
-    }
-
-    void PaintEvent::defaultPaintFrame(FloatPoint topLeftInset, FloatPoint bottomRightInset)
-    {
-        const SurfaceShape shape = surfaceShape({ topLeftInset, bottomRightInset });
+        const SurfaceShape shape = surfaceShape(inset);
         if (!shape.rect.empty())
             paintStroke(shape);
     }
@@ -883,15 +873,10 @@ namespace ClaFi
             canvas().popClip();
     }
 
-    PaintEvent::SurfaceShape PaintEvent::surfaceShape(const SurfaceInset& inset)
+    PaintEvent::SurfaceShape PaintEvent::surfaceShape(const FloatInset& inset)
     {
         FloatRect bounds = controlBounds();
-        const FloatPoint topLeft = scaleF(inset.topLeft);
-        const FloatPoint bottomRight = scaleF(inset.bottomRight);
-        bounds.left += topLeft.x;
-        bounds.top += topLeft.y;
-        bounds.right -= bottomRight.x;
-        bounds.bottom -= bottomRight.y;
+        bounds.inset(inset);
         // The surface is the part of the control in view, and the outline runs along the edges
         // that are the control's own: a cut edge carries no line.
         SurfaceShape result{

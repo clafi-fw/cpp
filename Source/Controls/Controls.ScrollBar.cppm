@@ -43,7 +43,7 @@ namespace ClaFi::Controls
         float buttonSize(const AppTheme&) override;
         void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().scrollButton; }
         void adjustButtonPaint(AdjustPaintEvent&) override;
-        [[nodiscard]] FloatPoint buttonInset() const override { return { 0.0f, 0.0f }; }
+        [[nodiscard]] FloatInset buttonInset() const override { return {}; }
         void adjustThumbMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().scrollThumb; }
         void adjustThumbPaint(AdjustPaintEvent&) override;
         void adjustPaint(AdjustPaintEvent& event) override { SliderBase::adjustPaint(event); event.setDisabledBlendAmount(0.0f); }

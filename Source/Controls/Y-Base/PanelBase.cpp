@@ -90,13 +90,13 @@ namespace ClaFi::Controls
 
     // The line is drawn in the middle of the band, which is laid out as the line plus the same
     // lead either side - so the lead is read back off the box rather than computed again.
-    FloatPoint Splitter::lineInset(const PaintEvent& event) const
+    FloatInset Splitter::lineInset(const PaintEvent& event) const
     {
-        const float line = event.scaledStrokeWidth(k_thickness);
+        const float lineWidth = event.scaledStrokeWidth(k_thickness);
         const float lead = upright()
-            ? event.unScale((scaledWidth() - line) / 2.0f)
-            : event.unScale((scaledHeight() - line) / 2.0f);
-        return upright() ? FloatPoint{ lead, 0.0f } : FloatPoint{ 0.0f, lead };
+            ? event.unScale((scaledWidth() - lineWidth) / 2.0f)
+            : event.unScale((scaledHeight() - lineWidth) / 2.0f);
+        return upright() ? FloatInset::Bilateral({ lead, 0.0f }) : FloatInset::Bilateral({ 0.0f, lead });
     }
 
     // BarResizeEvent

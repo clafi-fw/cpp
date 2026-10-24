@@ -85,6 +85,8 @@ namespace ClaFi
             return;
         Control* previousDelegate = focusDelegate();
         s_focusedControl = value;
+        if constexpr (Diagnostic::Options::logFocusedItem())
+            diagnosticLog(L"focused control", s_focusedControl);
         focusMoved(previousDelegate, focusDelegate());
     }
 
@@ -111,10 +113,7 @@ namespace ClaFi
         Control::invalidateStateUp(currentDelegate, upTo, InvalidateEvent::FocusEnter);
 
         if constexpr (Diagnostic::Options::logFocusedItem())
-        {
-            diagnosticLog(L"focused control", s_focusedControl);
             diagnosticLog(L"focus delegate", currentDelegate);
-        }
     }
 
     void Input::mouseActed(AppContext& appContext)

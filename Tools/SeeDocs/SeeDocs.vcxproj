@@ -206,6 +206,96 @@
     <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\Foundation\WithTextLayout.cppm">
       <FileType>Document</FileType>
     </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\StdLib.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Animation.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.CommandRun.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Csv.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.DirWatch.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Dt.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Events.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.InkWell.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Props.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.RingBuffer.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Scaler.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Serialization.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.StdLib.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.StepHistory.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTimer.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes-Color.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes-Keys.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes-Point.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes-Rect.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes-TextTypes.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes.Color.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Url.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Utils.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.WebFetch.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\UiTypes-Keys.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\UiTypes-Point.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\UiTypes-Rect.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\UiTypes-TextTypes.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
+    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\Y_StdLib.cppm">
+      <FileType>Document</FileType>
+    </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

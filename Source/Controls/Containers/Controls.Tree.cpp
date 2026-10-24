@@ -83,12 +83,12 @@ namespace ClaFi::Controls
     // The lead is on the left alone: the line starts where the rows of its level do.
     void TreeDivider::paintSurface(PaintEvent& event)
     {
-        event.defaultPaintSurface(leadingInset(), padding());
+        event.defaultPaintSurface(leadingInset());
     }
 
     void TreeDivider::paintFrame(PaintEvent& event)
     {
-        event.defaultPaintFrame(leadingInset(), padding());
+        event.defaultPaintFrame(leadingInset());
     }
 
     float TreeDivider::lead() const
@@ -96,10 +96,15 @@ namespace ClaFi::Controls
         return static_cast<float>(m_level) * TreeRows::Step;
     }
 
-    FloatPoint TreeDivider::leadingInset() const
+    FloatInset TreeDivider::leadingInset() const
     {
         const Padding room = padding();
-        return { room.x + lead(), room.y };
+        return {
+            .left = room.x + lead(),
+            .top = room.y,
+            .right = room.x,
+            .bottom = room.y
+        };
     }
 
     // TreeNodeHeader

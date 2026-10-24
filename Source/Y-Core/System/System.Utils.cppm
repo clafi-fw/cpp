@@ -10,7 +10,7 @@ namespace ClaFi
     // reach it from up there.
     export using FlagByte = std::uint8_t;
 
-    export template<typename T> concept ArithmeticType = std::is_arithmetic_v<T>;
+    export template<typename T> concept IsArithmeticType = std::is_arithmetic_v<T>;
 
     export constexpr float k_maxFloat = std::numeric_limits<float>::max();
     export constexpr int k_maxInt = std::numeric_limits<int>::max();
