@@ -476,7 +476,7 @@ namespace ClaFi
 
     void PaintEvent::defaultPaintSurface(const FloatInset& inset)
     {
-        const SurfaceShape shape = surfaceShape2(inset);
+        const SurfaceShape shape = surfaceShape(inset);
         if (shape.bounds.empty())
             return;
         const Color color = surfaceRgb();
@@ -487,7 +487,7 @@ namespace ClaFi
 
     void PaintEvent::defaultPaintFrame(const FloatInset& inset)
     {
-        const SurfaceShape shape = surfaceShape2(inset);
+        const SurfaceShape shape = surfaceShape(inset);
         if (shape.bounds.empty())
             return;
 
@@ -884,13 +884,13 @@ namespace ClaFi
             canvas().popClip();
     }
 
-    PaintEvent::SurfaceShape PaintEvent::surfaceShape2(const FloatInset& inset)
+    PaintEvent::SurfaceShape PaintEvent::surfaceShape(const FloatInset& inset)
     {
         // The surface is the part of the control in view, and the outline runs along the edges
         // that are the control's own: a cut edge carries no line.
 
         FloatRect bounds = controlBounds();
-        bounds.inset(inset);
+        bounds.inset(scaleF(inset));
         SurfaceShape result{
             .bounds = FloatRect::intersection(bounds, viewport()),
             };

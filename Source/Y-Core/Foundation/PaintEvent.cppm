@@ -129,8 +129,8 @@ namespace ClaFi
         Color applyDisabledFactor(Color) const;
         void paintChildren() const;
         void paintChild(Control&) const;
-        void defaultPaintSurface(const FloatInset& = {});
-        void defaultPaintFrame(const FloatInset & = {});
+        void defaultPaintSurface(const FloatInset& = {}); // inset in design units
+        void defaultPaintFrame(const FloatInset& = {}); // inset in design units
         bool overlayStage() const { return m_overlayStage; }
         const Control* overlayHost() const { return m_overlayHost; }
         // Whether this is the stage that paints the control itself. The surface, the text and
@@ -202,7 +202,7 @@ namespace ClaFi
             float* namedHue) const;
         void inheritCornerRadii();
         void paint();
-        [[nodiscard]] SurfaceShape surfaceShape2(const FloatInset& inset);
+        [[nodiscard]] SurfaceShape surfaceShape(const FloatInset& inset);
     private:
         TraversalContext& m_context;
         // The theme and the baked set the walk arrived at this control in, and what the

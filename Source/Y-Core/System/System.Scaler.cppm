@@ -31,6 +31,7 @@ namespace ClaFi
         [[nodiscard]] float scaledStrokeWidth(Thickness) const;
         float scaleF(float) const;
         FloatPoint scaleF(FloatPoint) const;
+        FloatInset scaleF(const FloatInset&) const;
         FloatPoint scale(FloatPoint) const;
         float unScale(float) const;
     public:
@@ -162,6 +163,16 @@ namespace ClaFi
     FloatPoint Scaler::scaleF(FloatPoint value) const
     {
         return { scaleF(value.x), scaleF(value.y) };
+    }
+
+    FloatInset Scaler::scaleF(const FloatInset& value) const
+    {
+        return {
+            .left = scaleF(value.left),
+            .top = scaleF(value.top),
+            .right = scaleF(value.right),
+            .bottom = scaleF(value.bottom)
+        };
     }
 
     FloatPoint Scaler::scale(FloatPoint value) const

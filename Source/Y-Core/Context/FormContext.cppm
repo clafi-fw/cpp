@@ -93,6 +93,7 @@ namespace ClaFi
         float scaleF(float value) const { return m_formContext.scaler().scaleF(value); }
         float unScale(float value) const { return m_formContext.scaler().unScale(value); }
         FloatPoint scaleF(FloatPoint value) const { return m_formContext.scaler().scaleF(value); }
+        FloatInset scaleF(const FloatInset& value) const { return m_formContext.scaler().scaleF(value); }
         float scaleBorder(float value) const { return m_formContext.scaler().scaleBorder(value); }
         float scaledStrokeWidth(Thickness thickness) const { return m_formContext.scaler().scaledStrokeWidth(thickness); }
         //

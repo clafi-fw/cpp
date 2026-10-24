@@ -73,7 +73,7 @@ namespace ClaFi::Controls
         void paintFrame(PaintEvent&) override;
     private:
         [[nodiscard]] float lead() const; // how far the line stands in past the padding
-        // The padding on the top and on the left, the lead added to the left.
+        // The padding on every side, the lead added to the left.
         [[nodiscard]] FloatInset leadingInset() const;
     private:
         std::size_t m_level;

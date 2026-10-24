@@ -112,12 +112,14 @@ namespace ClaFi
     };
 
     export template <IsArithmeticType T>
-        struct Inset
+    struct Inset
     {
-        T left{}, top{}, right{}, bottom{};
-        static Inset AllSides(T value) { return { value, value, value, value }; }
-        static Inset Bilateral(FloatPoint value) { return { value.x, value.y, value.x, value.y }; }
-        
+        T left{};
+        T top{};
+        T right{};
+        T bottom{};
+        [[nodiscard]] static constexpr Inset Uniform(T value) { return { value, value, value, value }; }
+        [[nodiscard]] static constexpr Inset Bilateral(Point<T> value) { return { value.x, value.y, value.x, value.y }; }
     };
     export using FloatInset = Inset<float>;
 

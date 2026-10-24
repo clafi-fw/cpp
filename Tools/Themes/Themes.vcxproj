@@ -505,9 +505,6 @@
     <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.Serialization.cppm">
       <FileType>Document</FileType>
     </ClCompile>
-    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.StdLib.cppm">
-      <FileType>Document</FileType>
-    </ClCompile>
     <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.StepHistory.cppm">
       <FileType>Document</FileType>
     </ClCompile>
@@ -529,9 +526,6 @@
     <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes-TextTypes.cppm">
       <FileType>Document</FileType>
     </ClCompile>
-    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes.Color.cppm">
-      <FileType>Document</FileType>
-    </ClCompile>
     <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.UiTypes.cppm">
       <FileType>Document</FileType>
     </ClCompile>
@@ -542,21 +536,6 @@
       <FileType>Document</FileType>
     </ClCompile>
     <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\System.WebFetch.cppm">
-      <FileType>Document</FileType>
-    </ClCompile>
-    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\UiTypes-Keys.cppm">
-      <FileType>Document</FileType>
-    </ClCompile>
-    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\UiTypes-Point.cppm">
-      <FileType>Document</FileType>
-    </ClCompile>
-    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\UiTypes-Rect.cppm">
-      <FileType>Document</FileType>
-    </ClCompile>
-    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\UiTypes-TextTypes.cppm">
-      <FileType>Document</FileType>
-    </ClCompile>
-    <ClCompile Update="A:\My Code\Lib\ClaFi\Visual Studio Shared Items\..\Source\Y-Core\System\Y_StdLib.cppm">
       <FileType>Document</FileType>
     </ClCompile>
   </ItemGroup>
