@@ -90,13 +90,12 @@ namespace ClaFi::Documents
         virtual void filesRead(const FilePaths&) {}
         // Whether the file still holds what one of the templates puts there.
         [[nodiscard]] bool matchesTemplate(const std::filesystem::path&) const;
+        void update();
     private:
         [[nodiscard]] std::filesystem::path newFile(std::wstring_view stem, int counter) const;
         // Puts the watch over a directory that was made after the watch was set up.
         void watchDirectory();
-        void update();
-        void readFiles();
-        void notifyListeners();
+        void notifyListeners() const;
     private:
         std::filesystem::path m_directory;
         DocumentKind m_kind;

@@ -81,9 +81,9 @@ namespace ClaFi
         PaletteColor2,
         PaletteColor3,
         NoChange,
-        EndPalette = NoChange,
+            EndPalette = NoChange,
         ExactValue,
-        Count // required for Config:: serialization
+        Count
     };
 
     export class ColorRuleHue
@@ -106,8 +106,6 @@ namespace ClaFi
 
     export struct ColorEffect
     {
-    public:
-        static constexpr ColorRuleHueOp k_defaultHueAction{ ColorRuleHueOp::NoChange };
     public:
         constexpr ColorEffect() = default;
         constexpr ColorEffect(ColorRuleValue saturation, ColorRuleValue elevation);

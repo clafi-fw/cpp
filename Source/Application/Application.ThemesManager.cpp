@@ -54,8 +54,7 @@ namespace ClaFi
 
     const UserThemeList& ThemesManager::userThemes()
     {
-        // Asking for the files is what parses them again after the folder has changed.
-        static_cast<void>(files());
+        update();
         return m_userThemes;
     }
 

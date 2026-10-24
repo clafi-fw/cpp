@@ -49,7 +49,7 @@ namespace ClaFi::Documents
 
     const FilePaths& DocumentsFolder::files()
     {
-        readFiles();
+        update();
         return m_files;
     }
 
@@ -172,30 +172,9 @@ namespace ClaFi::Documents
         return false;
     }
 
-    std::filesystem::path DocumentsFolder::newFile(const std::wstring_view stem,
-        const int counter) const
-    {
-        std::wstring name{ stem };
-        if (counter > 1)
-            name.append(L" (").append(std::to_wstring(counter)).append(L")");
-        name.append(m_kind.extension);
-        return m_directory / name;
-    }
-
-    void DocumentsFolder::watchDirectory()
-    {
-        if (m_dirWatcher.watching())
-            return;
-        std::error_code errorCode;
-        if (!std::filesystem::exists(m_directory, errorCode))
-            return;
-        m_dirWatcher.restart();
-        // Whatever the list holds was read while nothing was watching, so it is read again.
-        m_loaded = false;
-    }
-
     void DocumentsFolder::update()
     {
+        watchDirectory();
         if (m_loaded)
             return;
         m_loaded = true;
@@ -220,19 +199,35 @@ namespace ClaFi::Documents
                 if (keyA.words == keyB.words)
                     return keyA.number < keyB.number;
                 return keyA.words < keyB.words;
-            });
+                });
         }
         // A directory that is not there reads as no files, and that is told too.
         filesRead(m_files);
     }
 
-    void DocumentsFolder::readFiles()
+    std::filesystem::path DocumentsFolder::newFile(const std::wstring_view stem,
+                                                   const int counter) const
     {
-        watchDirectory();
-        update();
+        std::wstring name{ stem };
+        if (counter > 1)
+            name.append(L" (").append(std::to_wstring(counter)).append(L")");
+        name.append(m_kind.extension);
+        return m_directory / name;
     }
 
-    void DocumentsFolder::notifyListeners()
+    void DocumentsFolder::watchDirectory()
+    {
+        if (m_dirWatcher.watching())
+            return;
+        std::error_code errorCode;
+        if (!std::filesystem::exists(m_directory, errorCode))
+            return;
+        m_dirWatcher.restart();
+        // Whatever the list holds was read while nothing was watching, so it is read again.
+        m_loaded = false;
+    }
+
+    void DocumentsFolder::notifyListeners() const
     {
         for (IListener* listener : m_listeners)
             listener->documentsFolderChanged();
