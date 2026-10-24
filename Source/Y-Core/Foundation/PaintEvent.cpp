@@ -476,16 +476,27 @@ namespace ClaFi
 
     void PaintEvent::defaultPaintSurface(const FloatInset& inset)
     {
-        const SurfaceShape shape = surfaceShape(inset);
-        if (!shape.rect.empty())
-            paintFill(shape);
+        const SurfaceShape shape = surfaceShape2(inset);
+        if (shape.bounds.empty())
+            return;
+        const Color color = surfaceRgb();
+        if (!color.alpha)
+            return;
+        canvas().fillPartialRoundedRectangle(shape, color);
     }
 
     void PaintEvent::defaultPaintFrame(const FloatInset& inset)
     {
-        const SurfaceShape shape = surfaceShape(inset);
-        if (!shape.rect.empty())
-            paintStroke(shape);
+        const SurfaceShape shape = surfaceShape2(inset);
+        if (shape.bounds.empty())
+            return;
+
+        const Color color = strokeRgb();
+        const float strokeWidth = borderWidth();
+        if (!color.alpha || !strokeWidth)
+            return;
+
+        canvas().drawPartialRoundedRectangle(shape, color, strokeWidth);
     }
 
     // Every event on the way to the root carries it, because which one reads it is not the
@@ -873,26 +884,27 @@ namespace ClaFi
             canvas().popClip();
     }
 
-    PaintEvent::SurfaceShape PaintEvent::surfaceShape(const FloatInset& inset)
+    PaintEvent::SurfaceShape PaintEvent::surfaceShape2(const FloatInset& inset)
     {
-        FloatRect bounds = controlBounds();
-        bounds.inset(inset);
         // The surface is the part of the control in view, and the outline runs along the edges
         // that are the control's own: a cut edge carries no line.
+
+        FloatRect bounds = controlBounds();
+        bounds.inset(inset);
         SurfaceShape result{
-            .rect = FloatRect::intersection(bounds, viewport()),
+            .bounds = FloatRect::intersection(bounds, viewport()),
             };
-        if (result.rect.empty())
+        if (result.bounds.empty())
         {
             result.radii = {};
             result.sides = {};
             return result;
         }
         result.sides = {
-            .top = result.rect.top == bounds.top,
-            .right = result.rect.right == bounds.right,
-            .bottom = result.rect.bottom == bounds.bottom,
-            .left = result.rect.left == bounds.left
+            .top = result.bounds.top == bounds.top,
+            .right = result.bounds.right == bounds.right,
+            .bottom = result.bounds.bottom == bounds.bottom,
+            .left = result.bounds.left == bounds.left
         };
         result.radii = m_cornerRadii;
 
@@ -920,46 +932,17 @@ namespace ClaFi
                 // The same origin the press animation uses, so a control that anchors on its icon
                 // has its surface come out of that icon rather than out of its own middle.
                 FloatPoint origin = m_context.control().pressOrigin(*this);
-                result.rect = {
-                    std::lerp(origin.x, result.rect.left, scale),
-                    std::lerp(origin.y, result.rect.top, scale),
-                    std::lerp(origin.x, result.rect.right, scale),
-                    std::lerp(origin.y, result.rect.bottom, scale)
+                result.bounds = {
+                    std::lerp(origin.x, result.bounds.left, scale),
+                    std::lerp(origin.y, result.bounds.top, scale),
+                    std::lerp(origin.x, result.bounds.right, scale),
+                    std::lerp(origin.y, result.bounds.bottom, scale)
                 };
                 // Kept proportional, so the shape that grows in is the shape that settles.
                 result.radii.scale(scale);
             }
         }
         return result;
-    }
-
-    void PaintEvent::paintFill(const SurfaceShape& shape)
-    {
-        const Color color = surfaceRgb();
-        if (!color.alpha)
-            return;
-        const RoundedRectangleParts parts{
-            .bounds = shape.rect,
-            .radii = shape.radii,
-            .sides = RectSides::All()
-        };
-        canvas().fillPartialRoundedRectangle(parts, color);
-    }
-
-    // No inset here. A stroke lies inside the bounds it is given - see IBackend - so the border's
-    // outer edge is the same edge the fill covers, and nothing of the fill shows past it.
-    void PaintEvent::paintStroke(const SurfaceShape& shape)
-    {
-        const Color color = strokeRgb();
-        const float strokeWidth = borderWidth();
-        if (!color.alpha || !strokeWidth)
-            return;
-        const RoundedRectangleParts parts{
-            .bounds = shape.rect,
-            .radii = shape.radii,
-            .sides = shape.sides
-        };
-        canvas().drawPartialRoundedRectangle(parts, color, strokeWidth);
     }
 
     // AdjustPaintEvent

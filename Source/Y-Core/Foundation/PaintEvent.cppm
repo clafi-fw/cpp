@@ -37,7 +37,7 @@ namespace ClaFi
         friend AdjustPaintEvent;
     public:
         explicit PaintEvent(TraversalContext&);
-        ~PaintEvent();
+        ~PaintEvent() override;
     public:
         PaintEvent* parentEvent() const { return m_parentEvent; }
         Control& control() { return m_context.control(); }
@@ -167,12 +167,7 @@ namespace ClaFi
     private:
         // The surface as it is painted: the part of the control in view, the corners it turns and
         // the sides that are its own edges, at the grow-in scale.
-        struct SurfaceShape
-        {
-            FloatRect rect{};
-            CornerRadii radii{};
-            RectSides sides{};
-        };
+        using SurfaceShape = RoundedRectangleParts;
     private:
         [[nodiscard]] float zAnimationFactor(VisualStateIndex) const;
         // The parent this control may take state from, which is not always the one above it.
@@ -207,9 +202,7 @@ namespace ClaFi
             float* namedHue) const;
         void inheritCornerRadii();
         void paint();
-        [[nodiscard]] SurfaceShape surfaceShape(const FloatInset& inset);
-        void paintFill(const SurfaceShape&);
-        void paintStroke(const SurfaceShape&);
+        [[nodiscard]] SurfaceShape surfaceShape2(const FloatInset& inset);
     private:
         TraversalContext& m_context;
         // The theme and the baked set the walk arrived at this control in, and what the
