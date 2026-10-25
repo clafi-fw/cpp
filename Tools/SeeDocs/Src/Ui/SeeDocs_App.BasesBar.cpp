@@ -168,8 +168,23 @@ namespace SeeDocs_App
     {
         m_bases = {};
         m_crumbs.clear();
+        m_crumbsMap.clear();
         while (!controls().empty())
             controls().back()->deleteSelf();
+    }
+
+    ScaledSize BasesTreeBase::calculateContent(AlignEvent& event)
+    {
+        //return ContainerBase::calculateContent(event);
+        ScaledSize result{};
+        const float rowHeight = event.scale(28.0f);
+        for (const BaseNode& node : m_bases)
+        {
+            const auto crumb = m_crumbsMap[&node];
+            setControlTop(*crumb, result.y);
+            result.y += rowHeight;
+        }
+        return { event.scale(100.0f), result.y };
     }
 
     void BasesTreeBase::addCrumbs(BaseSpan bases)
@@ -177,7 +192,11 @@ namespace SeeDocs_App
         for (const BaseNode& base : bases)
         {
             BaseCrumb& newCrumb = add<BaseCrumb>(base);
+
             m_crumbs.push_back(&newCrumb);
+
+            m_crumbsMap.emplace(&base, &newCrumb);
+
             newCrumb.onContextPopup([this, &newCrumb](ContextPopupEvent& event) {
                 // event.control could also be the dropdown button - it's "onNestedContextPopup" actually
                 //BaseCrumb* crumb = static_cast<BaseCrumb*>(event.control);
@@ -200,7 +219,7 @@ namespace SeeDocs_App
     void BasesBar2::setBases(const BaseNodes& value)
     {
         BasesTreeBase::setBases(value);
-        m_fullWidths.assign(crumbs().size(), 0.0f);
+        m_fullWidths.assign(m_crumbs.size(), 0.0f);
     }
 
     void BasesBar2::clear()
@@ -240,7 +259,7 @@ namespace SeeDocs_App
         while (bases.size() == 1)
         {
             run.width += crumbWidth(crumbIndex, cap);
-            run.height = std::max(run.height, crumbs()[crumbIndex]->scaledHeight());
+            run.height = std::max(run.height, m_crumbs[crumbIndex]->scaledHeight());
             ++crumbIndex;
             bases = bases.front().bases;
         }
@@ -264,7 +283,7 @@ namespace SeeDocs_App
         while (bases.size() == 1)
         {
             const float width = crumbWidth(crumbIndex, cap);
-            alignControl(crumbs()[crumbIndex], event, position, { width, height });
+            alignControl(m_crumbs[crumbIndex], event, position, { width, height });
             ++crumbIndex;
             position.x += width;
             bases = bases.front().bases;
@@ -299,7 +318,7 @@ namespace SeeDocs_App
     // left to overrun. A bar with no crumbs takes no cap, even at a width under zero.
     float BasesBar2::capFor(const float width, const float leastCrumb) const
     {
-        if (crumbs().empty())
+        if (m_crumbs.empty())
             return k_maxFloat;
         std::size_t crumb = 0;
         if (runExtent(m_bases, crumb, k_maxFloat).width <= width)

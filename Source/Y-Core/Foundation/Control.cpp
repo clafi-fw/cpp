@@ -1730,7 +1730,7 @@ namespace ClaFi
         m_topLeft = { x, y };
     }
 
-    void Control::setDimensions(const ScaledSize value)
+    void Control::setSize(const ScaledSize value)
     {
         if (value != m_scaledSize)
         {
@@ -2400,7 +2400,7 @@ namespace ClaFi
             alignedDimensions.y = std::max(newDimensions.y, alignedDimensions.y);
 
         m_topLeft = position + FloatPoint{ x, y };
-        setDimensions(alignedDimensions);
+        setSize(alignedDimensions);
 
         adjustPlacement(event.scaler(), m_topLeft, m_scaledSize);
     }

@@ -1278,7 +1278,7 @@ namespace ClaFi
         virtual void focusChanged() {}
         virtual void sizeChanged();
         void setTopLeft(float x, float y);
-        void setDimensions(const ScaledSize);
+        void setSize(const ScaledSize);
         void setTop(float value);
         void setLeft(float value);
         void setWidth(float value);
@@ -1418,7 +1418,7 @@ namespace ClaFi
     protected:
         //
         // helpers to control children from within a derived class
-        static void setControlDimensions(Control& control, ScaledSize dimensions) { control.setDimensions(dimensions); }
+        static void setControlDimensions(Control& control, ScaledSize dimensions) { control.setSize(dimensions); }
         static void setControlWidth(Control& control, float value) { control.setWidth(value); };
         static void setControlHeight(Control& control, float value) { control.setHeight(value); };
         static void setControlTop(Control& control, float value) { control.setTop(value); };

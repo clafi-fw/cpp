@@ -67,7 +67,6 @@ namespace SeeDocs_App
     };
 
     using BaseSpan = std::span<const BaseNode>;
-    using CrumbsVector = std::vector<BaseCrumb*>;
 
     export class BasesTreeBase : public ContainerBase
     {
@@ -80,10 +79,15 @@ namespace SeeDocs_App
     public:
         virtual void setBases(const BaseNodes&);
         virtual void clear();
-        const CrumbsVector& crumbs() const { return m_crumbs; }
+    protected:
+        using CrumbsVector = std::vector<BaseCrumb*>;
+        using CrumbsMap = std::unordered_map<const BaseNode*, BaseCrumb*>;
+        ScaledSize calculateContent(AlignEvent&) override;
     protected:
         BaseSpan m_bases{};
         CrumbsVector m_crumbs{};   // in the order addCrumbs made them
+        CrumbsMap m_crumbsMap{};
+
     private:
         void addCrumbs(BaseSpan);
     };
