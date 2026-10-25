@@ -1,8 +1,8 @@
 module SeeDocs_App.OpenPage;
 
 import SeeDocs_App.Workspace;
+import SeeDocs_App.Browser;
 import SeeDocs_App.Icons;
-import SeeDocs_App.Project;
 
 import ClaFi.App.Settings;
 
@@ -32,15 +32,6 @@ namespace SeeDocs_App::Ui
         constexpr float k_iconGap = 5.0f;   // between a row's icon and its text
         constexpr float k_nameGap = 12.0f;  // between a row's name and its folder
 
-        // The name a recent row shows: the project's where the folder still stands for one, else
-        // the folder's own.
-        [[nodiscard]] std::wstring nameOf(const std::filesystem::path& folder)
-        {
-            if (const std::optional<Project> project = readProject(folder))
-                return project->name;
-            return folder.filename().wstring();
-        }
-
         // The button that opens a project in a new tab, under a line saying none is open while
         // none is. A new one is made by the menu's own command, and an open project's options
         // stand on its page, under its node in the tree.
@@ -65,13 +56,14 @@ namespace SeeDocs_App::Ui
 
         void addRecentGroup(AppMenuPage& page, Workspace& workspace)
         {
-            const Workspace::Folders recent = workspace.recentFolders();
+            const RecentProjects recent = workspace.recentProjects();
             if (recent.empty())
                 return;
             StackPanel& group = page.addGroup(L"Recent");
-            for (const std::filesystem::path& folder : recent)
+            for (const RecentProject& project : recent)
             {
-                Text row{ rowIcon(RowIcon::Folder), Space{ k_iconGap }, nameOf(folder) };
+                const std::filesystem::path& folder = project.folder;
+                Text row{ rowIcon(RowIcon::Folder), Space{ k_iconGap }, project.name };
                 row << Space{ k_nameGap } << InkGrade::Muted << folder.wstring() << PopColor{};
                 group.add<ToolButton>(
                     row,

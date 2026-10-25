@@ -172,7 +172,7 @@ namespace ClaFi
                 text << k_endLine;
                 text << TextStyle::SubBody;
                 text << PushLink{ updates.releaseAddress() };
-                text << L"Release page on GitHub";
+                text << L"GitHub release page";
                 text << PopLink{};
                 text << PopTextStyle{};
             }

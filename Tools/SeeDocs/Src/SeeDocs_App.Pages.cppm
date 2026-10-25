@@ -116,6 +116,13 @@ namespace SeeDocs_App
         AllTheApis  // the sidebar's item holding the folders: what the home said of them
     };
 
+    // The mark of a command that opens no page - the application menu's mark for the same command.
+    export enum class CommandMark
+    {
+        NewProject,
+        Open
+    };
+
     // What a page offers whoever shows it - SeeDocs as a button, a generator not at all: the
     // button's caption, its tooltip, and what it is about, which the shower spelled and reads back.
     export struct Command
@@ -125,6 +132,8 @@ namespace SeeDocs_App
         std::wstring target{};
         std::wstring link{};   // a page the button opens as a link of the page, asking nothing
         std::optional<PageKind> pageKind{};   // the kind of page the link opens, which marks it
+        std::optional<CommandMark> mark{};   // where no page kind marks it
+        bool opensWindow{ false };   // the command opens a window of its own
     };
 
     export using Commands = std::vector<Command>;

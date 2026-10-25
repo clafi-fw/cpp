@@ -666,11 +666,17 @@ item puts them.
 - A url no open project carries - a project closed, or a type gone since the sources were scanned -
   shows a page saying so.
 
-**The root page**, `/`, lists the open projects.
+**The root page**, `/`, opens and lists the projects.
 
-- Each has a Close button that closes the project and every tab on it.
-- A row dragged to another place puts the projects in that order, which the tree and the next start
-  follow.
+- Create and Open stand in a row under the title, marked as the menu marks New project and Open.
+  Create opens the New project window, and Open asks for a project's folder as Browse does.
+- Projects lists the open ones, each with a Close button that closes the project and every tab on
+  it. A row dragged to another place puts the projects in that order, which the tree and the next
+  start follow.
+- Recent lists the projects opened before that are not open now, most recent first. A project's
+  name is a link that opens it in the same tab, on its home; the link's menu opens it in a new tab
+  too.
+- The page says so under the title while no project is open.
 
 **A home page opens each project.**
 

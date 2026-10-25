@@ -29,23 +29,21 @@ namespace SeeDocs_App::Ui
     export class Workspace
     {
     public:
-        using Folders = std::vector<std::filesystem::path>;
-    public:
         Workspace(ApplicationBase&, FormBase& form, SurfaceBrowser&);
         Workspace(const Workspace&) = delete;
         Workspace& operator=(const Workspace&) = delete;
     public:
         [[nodiscard]] bool anyOpen() const { return !m_projects.empty(); }
         // The projects opened before, most recent first, the ones open left out.
-        [[nodiscard]] Folders recentFolders() const;
+        [[nodiscard]] RecentProjects recentProjects() const;
         // Opens the projects left open last time, the tabs on them standing as they were
         // restored, and the project the folder stated stands for in a new tab where it is not
         // one of them.
         void start(const std::filesystem::path& stated);
-        // Opens the project the folder stands for in a new tab - a project open already gets a
-        // new tab on its home - and for a folder that stands for none, offers to make one that
-        // reads it. False where nothing was opened.
-        bool openFolder(const std::filesystem::path& folder);
+        // Opens the project the folder stands for, its home shown where the home tab says - a
+        // project open already too - and for a folder that stands for none, offers to make one
+        // that reads it. False where nothing was opened.
+        bool openFolder(const std::filesystem::path& folder, HomeTab = HomeTab::Open);
         // Asks for a project's folder in the desktop's own dialog and opens it.
         void browse();
         // Asks for a new project's name and where to store it in a window of its own, makes it,
@@ -111,6 +109,8 @@ namespace SeeDocs_App::Ui
         // The open project kept in the folder.
         [[nodiscard]] OpenProject* openFor(const std::filesystem::path& folder) const;
         void close(OpenProject&);
+        // Opens the folder, or one asked for where it is empty, once the asking click has unwound.
+        void openLater(const std::filesystem::path& folder, HomeTab);
         // Keeps the projects in this order, which the browser shows and the next start reads.
         void orderProjects(std::span<OpenProject* const>);
         // Asks whether to make a project that reads a folder that stands for none.
@@ -132,7 +132,7 @@ namespace SeeDocs_App::Ui
         void storeOpen();   // the projects open as they stand, in the order they were opened
         [[nodiscard]] std::filesystem::path storedLocation() const;
         void storeLocation(const std::filesystem::path&);
-        [[nodiscard]] Text noProjectWords() const;   // what the root shows while no project is open
+        void writeRecent();   // the projects opened before, for the root to list
         void writeTitle();
     private:
         ApplicationBase& m_application;
@@ -144,13 +144,18 @@ namespace SeeDocs_App::Ui
         FileWriter m_writer{};   // every database and scan cache the projects write
         const OpenProject* m_shown{ nullptr };   // the project the tab shown stands in
         OpenProject* m_closing{ nullptr };       // to close once the click has unwound
+        std::optional<std::filesystem::path> m_opening{};   // to open once the click has unwound
+        HomeTab m_openingTab{ HomeTab::Open };   // where its home is shown
         // A folder stated at start that stands for no project; the offer to make one asks, and
         // asking waits for the window to be up.
         std::filesystem::path m_statedToMake{};
         UiTimer m_startTimer{};
         UiTimer m_closeTimer{};
+        UiTimer m_openTimer{};
         ScopedEventConnection m_projectShown{};
         ScopedEventConnection m_closeAsked{};
+        ScopedEventConnection m_newAsked{};
+        ScopedEventConnection m_openAsked{};
         ScopedEventConnection m_orderAsked{};
         ScopedEventConnection m_rescanAsked{};
         ScopedEventConnection m_surfaceEdited{};

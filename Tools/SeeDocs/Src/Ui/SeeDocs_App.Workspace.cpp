@@ -136,6 +136,16 @@ namespace SeeDocs_App::Ui
             if (OpenProject* closing = std::exchange(m_closing, nullptr))
                 close(*closing);
         });
+        m_openTimer.onTick([this](TimerEvent&) {
+            const std::optional<std::filesystem::path> folder =
+                std::exchange(m_opening, std::nullopt);
+            if (!folder)
+                return;
+            if (folder->empty())
+                browse();
+            else
+                openFolder(*folder, m_openingTab);
+        });
         m_madeTimer.onTick([this](TimerEvent&) {
             std::optional<Project> made = std::exchange(m_made, std::nullopt);
             if (made)
@@ -148,6 +158,12 @@ namespace SeeDocs_App::Ui
         });
         m_closeAsked = m_browser.onCloseProject([this](CloseProjectEvent& event) {
             closeLater(event.project);
+        });
+        m_newAsked = m_browser.onNewProject([this](NewProjectEvent& event) {
+            createNew({}, event.stamp);
+        });
+        m_openAsked = m_browser.onOpenFolder([this](OpenFolderEvent& event) {
+            openLater(event.folder, event.homeTab);
         });
         m_orderAsked = m_browser.onOrderProjects([this](OrderProjectsEvent& event) {
             orderProjects(event.projects);
@@ -166,13 +182,20 @@ namespace SeeDocs_App::Ui
         });
     }
 
-    Workspace::Folders Workspace::recentFolders() const
+    // A folder is named by the project it stands for, else by its own name.
+    RecentProjects Workspace::recentProjects() const
     {
-        Folders result;
+        RecentProjects result;
         for (const std::wstring& name : storedRecent())
         {
-            if (!openFor(name))
-                result.emplace_back(name);
+            if (openFor(name))
+                continue;
+            const std::filesystem::path folder = name;
+            const std::optional<Project> project = readProject(folder);
+            result.push_back({
+                .name = project ? project->name : folder.filename().wstring(),
+                .folder = folder
+            });
         }
         return result;
     }
@@ -206,10 +229,10 @@ namespace SeeDocs_App::Ui
         }
 
         storeOpen();
-        m_browser.showWords(noProjectWords());
+        writeRecent();
     }
 
-    bool Workspace::openFolder(const std::filesystem::path& stated)
+    bool Workspace::openFolder(const std::filesystem::path& stated, const HomeTab homeTab)
     {
         const std::filesystem::path folder = cleanFolder(stated);
         std::error_code error;
@@ -225,7 +248,7 @@ namespace SeeDocs_App::Ui
 
         if (OpenProject* open = openFor(folder))
         {
-            m_browser.openHome(*open);
+            m_browser.showProject(*open, homeTab);
             remember(open->project);
             return true;
         }
@@ -238,7 +261,7 @@ namespace SeeDocs_App::Ui
             return false;
         }
 
-        openProject(std::move(*project), HomeTab::Open);
+        openProject(std::move(*project), homeTab);
         return true;
     }
 
@@ -520,7 +543,7 @@ namespace SeeDocs_App::Ui
         m_browser.orderProjects(order);
     }
 
-    // The browser lets go of the project before it is dropped.
+    // The browser lets go of the project before it is dropped, and lists it among the recent after.
     void Workspace::close(OpenProject& open)
     {
         m_browser.removeProject(open);
@@ -528,6 +551,16 @@ namespace SeeDocs_App::Ui
             return project.get() == &open;
         });
         storeOpen();
+        writeRecent();
+    }
+
+    // **The page the click was on may be the root**, which a project opened or forgotten builds
+    // again, so the folder waits on a timer for the click to unwind.
+    void Workspace::openLater(const std::filesystem::path& folder, const HomeTab homeTab)
+    {
+        m_opening = folder;
+        m_openingTab = homeTab;
+        m_openTimer.start(MilliSeconds{ 0u });
     }
 
     bool Workspace::confirmMaking(const std::filesystem::path& folder)
@@ -636,13 +669,16 @@ namespace SeeDocs_App::Ui
             recent.resize(k_recentLimit);
         storeRecent(recent);
         storeOpen();
+        writeRecent();
     }
 
     void Workspace::forget(const std::filesystem::path& folder)
     {
         Names recent = storedRecent();
-        if (std::erase(recent, folder.wstring()) > 0)
-            storeRecent(recent);
+        if (std::erase(recent, folder.wstring()) == 0)
+            return;
+        storeRecent(recent);
+        writeRecent();
     }
 
     Workspace::Names Workspace::storedRecent() const
@@ -697,15 +733,9 @@ namespace SeeDocs_App::Ui
             (m_application.config() / k_locationNodeName).set(location.wstring());
     }
 
-    Text Workspace::noProjectWords() const
+    void Workspace::writeRecent()
     {
-        Text text;
-        text << TextStyle::Title << m_application.name() << PopTextStyle{};
-        text << k_endLine << k_endLine;
-        text << L"No project is open. The Open page of the application menu opens one, or "
-            L"makes a new one - a folder of its own, reading the folders of sources it is "
-            L"given." << k_endLine;
-        return text;
+        m_browser.showRecent(recentProjects());
     }
 
     // The browser's own bar carries the application's name; the project shown goes to the window.

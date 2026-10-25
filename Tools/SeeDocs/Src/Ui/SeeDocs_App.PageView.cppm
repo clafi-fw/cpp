@@ -65,9 +65,10 @@ namespace SeeDocs_App
     export class PageCommandEvent : public ::ClaFi::Event
     {
     public:
-        explicit PageCommandEvent(std::wstring target);
+        PageCommandEvent(std::wstring target, InputStamp);
     public:
         const std::wstring target;   // what the command is about, as the page was given it
+        const InputStamp stamp;   // the press that clicked the button
     };
 
     // The rows of a rearrangeable table were carried to another order. The surface has an Event
@@ -329,7 +330,7 @@ namespace SeeDocs_App
         bool writePreview(Text&, std::wstring_view link) const;
         void connectHead();
         void open(std::wstring target, Control& source) const;
-        void ask(std::wstring target) const;   // raises the command the target is about
+        void ask(std::wstring target, InputStamp) const;   // raises the command the target is about
         // Runs the menu for a link - Open and Open in new tab - on the control it was asked on.
         void showLinkMenu(Control& owner, std::wstring_view target, ContextPopupEvent&);
         [[nodiscard]] static bool hasFootnotes(const Table&);

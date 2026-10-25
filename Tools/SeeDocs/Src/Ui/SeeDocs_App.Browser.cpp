@@ -81,6 +81,14 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
         constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
         constexpr std::wstring_view k_closeTooltip = L"Closes the project and every tab on it";
+        constexpr std::wstring_view k_createCaption = L"Create";   // on the root
+        constexpr std::wstring_view k_createTooltip =
+            L"Makes a new project - a folder of its own, reading the sources it is given";
+        constexpr std::wstring_view k_openCaption = L"Open";   // on the root
+        constexpr std::wstring_view k_openTooltip = L"Opens a project's folder";
+        constexpr std::wstring_view k_projectsHeading = L"Projects";   // the root's open ones
+        constexpr std::wstring_view k_recentHeading = L"Recent";   // the root's opened before
+        constexpr std::wstring_view k_noProjectLead = L"No project is open.";
         constexpr std::wstring_view k_projectWord = L"project";     // the home's badge
         constexpr std::wstring_view k_categoryWord = L"category";   // a category page's badge
         constexpr std::wstring_view k_pageWord = L"page";           // a content page's badge
@@ -88,6 +96,14 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_treeNodeName = L"Tree";
         // What a tab's file keeps the trees' bar's width under; zero is a bar never resized.
         constexpr std::wstring_view k_treeWidthName = L"TreeWidth";
+
+        // The root's own targets - a dot first, where a home path has the separator.
+        namespace RootTargets
+        {
+            constexpr std::wstring_view Create = L".create";
+            constexpr std::wstring_view Open = L".open";
+            constexpr std::wstring_view Recent = L".recent=";   // before a recent row's folder
+        }
 
         namespace TreeKeys
         {
@@ -219,6 +235,23 @@ namespace SeeDocs_App::Ui
                 return hasOwnPage(item);
             });
         }
+
+        // The root's table of projects: the name, then the folder taking the room left.
+        [[nodiscard]] Section projectsTable(const std::wstring_view heading, TableGroup projects)
+        {
+            const std::size_t count = projects.rows.size();
+            Section section;
+            section.kind = SectionKind::Table;
+            section.heading = { Run{ .text = std::wstring{ heading } } };
+            section.tooltip = std::to_wstring(count) + (count == 1 ? L" element" : L" elements");
+            section.table.columns = {
+                TableColumn{ .name = L"Project" },
+                TableColumn{ .name = L"Folder", .fills = true }
+            };
+            section.table.header = false;
+            section.table.groups.push_back(std::move(projects));
+            return section;
+        }
     }
 
     // OpenProject
@@ -286,6 +319,25 @@ namespace SeeDocs_App::Ui
     {
     }
 
+    // NewProjectEvent
+
+    NewProjectEvent::NewProjectEvent(const InputStamp askStamp)
+        :
+        ::ClaFi::Event{},
+        stamp{ askStamp }
+    {
+    }
+
+    // OpenFolderEvent
+
+    OpenFolderEvent::OpenFolderEvent(std::filesystem::path askedFolder, const HomeTab shownIn)
+        :
+        ::ClaFi::Event{},
+        folder{ std::move(askedFolder) },
+        homeTab{ shownIn }
+    {
+    }
+
     // Actions
 
     // Constructed before main, so nothing built here may touch the platform, the theme or the
@@ -334,29 +386,39 @@ namespace SeeDocs_App::Ui
     // **The page answers Open and Open in new tab before the browser does** while its link menu
     // stands over a link naming namesakes: each drops the pages to pick from once the menu has
     // gone, the pick opening as the command would. See README#namesakes
+    //
+    // A recent row's link names a project no url reaches yet, so the two ask for it to be opened,
+    // its home in this tab or in a new one.
     void SurfacePage::connectLinkActions()
     {
         const auto isAnOpenAction = [](const Action& action) {
             return &action == &Browser::Actions::Open || &action == &Browser::Actions::OpenInNewTab;
         };
         onGetActionState([this, isAnOpenAction](GetActionStateEvent& event) {
-            if (isAnOpenAction(event.action) && browser().namesSeveral(m_view.menuLink(), pageData()))
+            if (!isAnOpenAction(event.action))
+                return;
+            const std::wstring_view link = m_view.menuLink();
+            if (link.starts_with(RootTargets::Recent) || browser().namesSeveral(link, pageData()))
                 event.claim({ .enabled = true });
         });
         onActionClick([this, isAnOpenAction](ActionClickEvent& event) {
             Control* owner = m_view.menuOwner2();
             if (!isAnOpenAction(event.action) || !owner)
                 return;
-            const SelectTab select = &event.action == &Browser::Actions::Open
-                ? SelectTab::Yes
-                : SelectTab::No;
+            const bool here = &event.action == &Browser::Actions::Open;
+            if (m_view.menuLink().starts_with(RootTargets::Recent))
+            {
+                browser().openRecent(m_view.menuLink(), here ? HomeTab::Here : HomeTab::Open);
+                return;
+            }
+            const SelectTab select = here ? SelectTab::Yes : SelectTab::No;
             browser().pickLater(pageData(), m_view.menuLink(), *owner, select);
         });
     }
 
-    void SurfacePage::runCommand(const std::wstring_view target)
+    void SurfacePage::runCommand(const std::wstring_view target, const InputStamp stamp)
     {
-        browser().answerCommand(target);
+        browser().answerCommand(target, stamp);
     }
 
     void SurfacePage::orderRows(const std::span<const std::wstring> targets)
@@ -601,16 +663,28 @@ namespace SeeDocs_App::Ui
             addToTree(entry, shown);
         refreshPageTree();
         rebuildPages(&shown, nullptr);
-        if (homeTab == HomeTab::Open)
-            openHome(open);
-        else if (homeTab == HomeTab::Options)
-            addTab(Url{ pathOf(shown, OwnPage::Options) });
+        showProject(open, homeTab);
     }
 
-    void SurfaceBrowser::openHome(const OpenProject& open)
+    void SurfaceBrowser::showProject(const OpenProject& open, const HomeTab homeTab)
     {
-        if (const ShownProject* shown = projectOf(open))
-            addTab(Url{ homePath(*shown) });
+        const ShownProject* shown = projectOf(open);
+        if (!shown)
+            return;
+        switch (homeTab)
+        {
+            case HomeTab::Open:
+                addTab(Url{ homePath(*shown) });
+                break;
+            case HomeTab::Here:
+                goTo(Url{ homePath(*shown) });
+                break;
+            case HomeTab::Options:
+                addTab(Url{ pathOf(*shown, OwnPage::Options) });
+                break;
+            case HomeTab::None:
+                break;
+        }
     }
 
     // **The selected tab's page of the project itself stands**, where it is this project's: the
@@ -798,9 +872,11 @@ namespace SeeDocs_App::Ui
         rebuildPages(nullptr, keep);
     }
 
-    void SurfaceBrowser::showWords(const Text& words)
+    void SurfaceBrowser::showRecent(RecentProjects recent)
     {
-        m_words = words;
+        if (recent == m_recent)
+            return;
+        m_recent = std::move(recent);
         rebuildPages(nullptr, nullptr);
     }
 
@@ -834,11 +910,23 @@ namespace SeeDocs_App::Ui
     void SurfaceBrowser::followLink(const PageData& from, const std::wstring_view target,
         Control& source)
     {
+        if (target.starts_with(RootTargets::Recent))
+        {
+            openRecent(target, HomeTab::Here);
+            return;
+        }
         const LinkedPlaces places = placesOf(target, from);
         if (places.size() == 1)
             openLinked(from, places.front().url);
         else if (places.size() > 1)
             showPicks(from, places, source, SelectTab::Yes);
+    }
+
+    void SurfaceBrowser::openRecent(const std::wstring_view target, const HomeTab homeTab)
+    {
+        const std::filesystem::path folder = target.substr(RootTargets::Recent.size());
+        OpenFolderEvent event{ folder, homeTab };
+        emitEvent(event);
     }
 
     void SurfaceBrowser::pickLater(const PageData& from, const std::wstring_view target,
@@ -854,10 +942,23 @@ namespace SeeDocs_App::Ui
     }
 
     // **The click is still unwinding on the page that asked**, and the answer may take that page
-    // down, so the owner is told and does the closing when it sees fit. The target is a home path,
-    // the project's segment after the separator - see closeCommand.
-    void SurfaceBrowser::answerCommand(const std::wstring_view target)
+    // down, so the owner is told and does the work when it sees fit. A home path - the project's
+    // segment after the separator, see closeCommand - closes the project, and a root target makes
+    // or opens one.
+    void SurfaceBrowser::answerCommand(const std::wstring_view target, const InputStamp stamp)
     {
+        if (target == RootTargets::Create)
+        {
+            NewProjectEvent event{ stamp };
+            emitEvent(event);
+            return;
+        }
+        if (target == RootTargets::Open)
+        {
+            OpenFolderEvent event{ std::filesystem::path{}, HomeTab::Open };
+            emitEvent(event);
+            return;
+        }
         if (!target.starts_with(ConfigNames::PathSeparator))
             return;
         ShownProject* shown = projectOf(target.substr(1));
@@ -1612,15 +1713,11 @@ namespace SeeDocs_App::Ui
     std::optional<Page> SurfaceBrowser::pageOf(const Target& target) const
     {
         if (target.isRoot())
-        {
-            if (m_projects.empty())
-                return std::nullopt;
-            return projectsPage();
-        }
+            return rootPage();
         if (target.searching)
         {
             if (m_projects.empty())
-                return std::nullopt;
+                return rootPage();
             return searchPageOf(target);
         }
         if (target.isGone() || target.isOwnPage())
@@ -1793,8 +1890,38 @@ namespace SeeDocs_App::Ui
         return page;
     }
 
+    // **Create and Open are marked as the application menu marks the same commands**, and the
+    // lead says why the projects are missing while none is open.
+    Page SurfaceBrowser::rootPage() const
+    {
+        Page page;
+        page.kind = PageKind::Projects;
+        page.title = appContext().appName().plainText();
+        page.titleCommands.push_back({
+            .text = std::wstring{ k_createCaption },
+            .tooltip = std::wstring{ k_createTooltip },
+            .target = std::wstring{ RootTargets::Create },
+            .mark = CommandMark::NewProject,
+            .opensWindow = true
+        });
+        page.titleCommands.push_back({
+            .text = std::wstring{ k_openCaption },
+            .tooltip = std::wstring{ k_openTooltip },
+            .target = std::wstring{ RootTargets::Open },
+            .mark = CommandMark::Open,
+            .opensWindow = true
+        });
+        if (m_projects.empty())
+            page.lead = { Run{ .text = std::wstring{ k_noProjectLead } } };
+        else
+            page.sections.push_back(projectsSection());
+        if (!m_recent.empty())
+            page.sections.push_back(recentSection());
+        return page;
+    }
+
     // Each project links to its home by path, beside the folder it reads, and closes from its row.
-    Page SurfaceBrowser::projectsPage() const
+    Section SurfaceBrowser::projectsSection() const
     {
         TableGroup projects;
         for (const std::unique_ptr<ShownProject>& shown : m_projects)
@@ -1810,24 +1937,31 @@ namespace SeeDocs_App::Ui
             row.command = closeCommand(*shown, std::wstring{ k_closeCaption });
             projects.rows.push_back(std::move(row));
         }
-        const std::size_t count = projects.rows.size();
-        Section section;
-        section.kind = SectionKind::Table;
-        section.heading = { Run{ .text = L"Open projects" } };
-        section.tooltip = std::to_wstring(count) + (count == 1 ? L" element" : L" elements");
-        section.table.columns = {
-            TableColumn{ .name = L"Project" },
-            TableColumn{ .name = L"Folder", .fills = true }
-        };
-        section.table.header = false;
+        Section section = projectsTable(k_projectsHeading, std::move(projects));
         section.table.rearrangeable = true;
-        section.table.groups.push_back(std::move(projects));
+        return section;
+    }
 
-        Page page;
-        page.kind = PageKind::Projects;
-        page.title = appContext().appName().plainText();
-        page.sections.push_back(std::move(section));
-        return page;
+    // A project opened before is linked by its folder, which followLink opens it from.
+    Section SurfaceBrowser::recentSection() const
+    {
+        TableGroup projects;
+        for (const RecentProject& project : m_recent)
+        {
+            TableRow row;
+            row.pageKind = PageKind::Project;
+            row.cells.push_back({
+                Run{
+                    .text = project.name,
+                    .link = std::wstring{ RootTargets::Recent } + project.folder.wstring()
+                }
+            });
+            row.cells.push_back({
+                Run{ .text = project.folder.wstring(), .style = RunStyle::Muted }
+            });
+            projects.rows.push_back(std::move(row));
+        }
+        return projectsTable(k_recentHeading, std::move(projects));
     }
 
     // The command is about the project's home path, which answerCommand reads the project off.
@@ -1845,10 +1979,7 @@ namespace SeeDocs_App::Ui
         PageView& view = page.view();
         if (target.isRoot() || (target.searching && m_projects.empty()))
         {
-            if (m_projects.empty())
-                view.showText(m_words);
-            else
-                view.show(projectsPage());
+            view.show(rootPage());
             return;
         }
         if (target.searching)

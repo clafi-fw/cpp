@@ -314,6 +314,19 @@ namespace SeeDocs_App
             return std::nullopt;
         }
 
+        void paintCommandMark(PaintIconEvent& event, const CommandMark mark)
+        {
+            switch (mark)
+            {
+                case CommandMark::NewProject:
+                    paintNewProjectIcon(event);
+                    break;
+                case CommandMark::Open:
+                    paintOpenIcon(event);
+                    break;
+            }
+        }
+
         // The runs' words as one, which anchors an item that has no name of its own.
         [[nodiscard]] std::wstring wordsOf(const Runs& runs)
         {
@@ -372,10 +385,11 @@ namespace SeeDocs_App
 
     // PageCommandEvent
 
-    PageCommandEvent::PageCommandEvent(std::wstring commandTarget)
+    PageCommandEvent::PageCommandEvent(std::wstring commandTarget, const InputStamp clickStamp)
         :
         ::ClaFi::Event{},
-        target{ std::move(commandTarget) }
+        target{ std::move(commandTarget) },
+        stamp{ clickStamp }
     {
     }
 
@@ -1332,9 +1346,18 @@ namespace SeeDocs_App
                 paintRowIcon(event, mark);
             });
         }
-        button.onClick([this, &button, &command](ClickEvent&) {
+        else if (command.mark.has_value())
+        {
+            button.setViewMode(ButtonViewMode::LeftIcon);
+            button.onPaintIcon([mark = *command.mark](PaintIconEvent& event) {
+                paintCommandMark(event, mark);
+            });
+        }
+        if (command.opensWindow)
+            button.setEndIcon(EndIcon::OpensWindow);
+        button.onClick([this, &button, &command](ClickEvent& event) {
             if (command.link.empty())
-                ask(command.target);
+                ask(command.target, event.stamp);
             else
                 open(command.link, button);
         });
@@ -1669,9 +1692,9 @@ namespace SeeDocs_App
     // **A command is answered by whoever shows the page**, as a link is: what it is about was
     // spelled by whoever built the page, and the page may be one of the things its answer takes
     // down.
-    void PageView::ask(std::wstring target) const
+    void PageView::ask(std::wstring target, const InputStamp stamp) const
     {
-        PageCommandEvent event{ std::move(target) };
+        PageCommandEvent event{ std::move(target), stamp };
         emitEvent(event);
     }
 

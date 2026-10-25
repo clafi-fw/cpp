@@ -59,13 +59,24 @@ namespace SeeDocs_App::Ui
         NoticeHandle unwritten{};   // the database the pages show could not be written
     };
 
-    // Whether showing a project opens a tab on it.
+    // Which tab showing a project puts it in, if any.
     export enum class HomeTab
     {
         Open,      // a new tab on the project's home, selected
+        Here,      // the tab shown goes on to the project's home
         Options,   // a new tab on the project's options page, selected
         None       // the tabs stand as they are, a restored one reaching the project by its url
     };
+
+    // A project opened before and not open now: the name it goes by, and its folder.
+    export struct RecentProject
+    {
+        std::wstring name;
+        std::filesystem::path folder;
+        [[nodiscard]] bool operator==(const RecentProject&) const = default;
+    };
+
+    export using RecentProjects = std::vector<RecentProject>;
 
     // The tab shown stands in another project, or in none. The surface has an Event of its own.
     export class ProjectShownEvent : public ::ClaFi::Event
@@ -125,6 +136,25 @@ namespace SeeDocs_App::Ui
         SidebarItems items;
     };
 
+    // A page asked for a new project to be made. The surface has an Event of its own.
+    export class NewProjectEvent : public ::ClaFi::Event
+    {
+    public:
+        explicit NewProjectEvent(InputStamp);
+    public:
+        const InputStamp stamp;   // the press that asked
+    };
+
+    // A page asked for a project's folder to be opened. The surface has an Event of its own.
+    export class OpenFolderEvent : public ::ClaFi::Event
+    {
+    public:
+        OpenFolderEvent(std::filesystem::path, HomeTab);
+    public:
+        const std::filesystem::path folder;   // empty to ask the desktop's dialog for one
+        const HomeTab homeTab;   // where the project's home is shown
+    };
+
     // The commands the browser answers about the projects it shows.
     namespace Actions
     {
@@ -152,7 +182,7 @@ namespace SeeDocs_App::Ui
         void followLink(std::wstring_view target, Control& source);
         // Claims Open and Open in new tab for a link menu over a link naming several pages.
         void connectLinkActions();
-        void runCommand(std::wstring_view target);   // hands a command's click to the browser
+        void runCommand(std::wstring_view target, InputStamp);   // hands a click to the browser
         void orderRows(std::span<const std::wstring> targets);   // hands a carry to the browser
         void openSource(const SourcePlace&);   // hands a source button's click to the browser
         // Shows the anchor the tab arrived at, the page at the position where one is given, and
@@ -205,8 +235,8 @@ namespace SeeDocs_App::Ui
     // The browser over the open projects: down the left the tab's own tree, a node per project
     // holding its sidebar's items, and a page per url on the right - /project/item/.../folder/
     // .../module/type/method, the items as the sidebar lists them, the folders as the sources
-    // stand on disk under its All the APIs item, and the root listing the projects - with
-    // SeeDocs' words while none is open. What a project's pages edit is written through the
+    // stand on disk under its All the APIs item, and the root listing the projects open and the
+    // ones opened before, under Create and Open. What a project's pages edit is written through the
     // browser into that project, and a project's closing, which its home and the root offer, is
     // asked of whoever owns it. A tab's tree is made the first time the tab is shown, and the
     // nodes it has open are kept with the tab. A search is typed at the crumb bar's end, and
@@ -235,12 +265,18 @@ namespace SeeDocs_App::Ui
         // Connects a handler raised when the sidebar page said what a project's sidebar is to be.
         template<typename F>
         EventConnection onSidebarEdited(F&& callback);
+        // Connects a handler raised when a page asks for a new project to be made.
+        template<typename F>
+        EventConnection onNewProject(F&& callback);
+        // Connects a handler raised when a page asks for a project's folder to be opened.
+        template<typename F>
+        EventConnection onOpenFolder(F&& callback);
         // Shows a project opened: a node of its own at the end of the tree, and its pages under a
         // segment of its name. The project is held by reference until it is removed, and what its
         // pages edit is written into it - its sources, its footnotes and its database - as its
         // options allow.
         void addProject(OpenProject&, HomeTab);
-        void openHome(const OpenProject&);   // a new tab on the project's home
+        void showProject(const OpenProject&, HomeTab);   // in the tab the home tab says
         // Shows the project again over its surface as it now reads, the tabs standing.
         void rebindProject(OpenProject&);
         // Shows the project again over its sidebar as it now reads, the surface standing: every
@@ -254,7 +290,7 @@ namespace SeeDocs_App::Ui
         void removeProject(OpenProject&);
         // Shows the projects in this order: the nodes of every tree, the root's rows and lists.
         void orderProjects(std::span<OpenProject* const>);
-        void showWords(const Text&);   // what the root shows while no project is open
+        void showRecent(RecentProjects);   // the projects opened before, which the root lists
         // What a project's options page is filled with, each time one is built.
         void connectProjectPage(ProjectPageBuilder);
         // The url of what a link on the page names - a type, a module, a folder or a member of
@@ -269,13 +305,14 @@ namespace SeeDocs_App::Ui
         // Opens what a link on the page names, or drops the pages it names over the source to
         // pick one from. See README#namesakes
         void followLink(const PageData& from, std::wstring_view target, Control& source);
+        // Asks for the project a recent row's link names to be opened, its home as the tab says.
+        void openRecent(std::wstring_view target, HomeTab);
         // Drops the pages a link names over the owner once the press that asked has unwound -
         // the menu it was asked from gone - the one picked opening as the select says.
         void pickLater(const PageData& from, std::wstring_view target, Control& owner,
             SelectTab);
-        // A page's command was clicked: the project whose home the target names is asked to be
-        // closed, the one command a page asks of the browser.
-        void answerCommand(std::wstring_view target);
+        // A page's command was clicked: a project is made, opened or closed as the target says.
+        void answerCommand(std::wstring_view target, InputStamp);
         // The root's rows were carried about: the projects their home paths name are asked to be
         // put in that order.
         void answerOrder(std::span<const std::wstring> targets);
@@ -484,8 +521,8 @@ namespace SeeDocs_App::Ui
             std::wstring_view folder);
         [[nodiscard]] std::wstring titleOf(const PageData&, const Target&) const;
         [[nodiscard]] static std::optional<RowIcon> iconOf(const Target&);
-        // The page a target names, built over its project's surface; nothing where it names
-        // words - no project open, a path no project carries - or a page of the project itself.
+        // The page a target names, built over its project's surface, or the root's; nothing where
+        // it names words - a path no project carries - or a page of the project itself.
         [[nodiscard]] std::optional<Page> pageOf(const Target&) const;
         // The project's home: its sidebar's items, Project options and Edit sidebar in a row
         // under its title, Close project beside it.
@@ -499,10 +536,13 @@ namespace SeeDocs_App::Ui
         // What the All the APIs page says, put on the page that lists the item without a subgroup.
         static void addApisContents(Page&, const ShownProject&);
         [[nodiscard]] static Page contentPageOf(const SidebarItem&);   // its head alone, so far
-        [[nodiscard]] Page projectsPage() const;   // the root's, while a project is open
+        // The root's: Create and Open in a row under the title, the open projects, the recent ones.
+        [[nodiscard]] Page rootPage() const;
+        [[nodiscard]] Section projectsSection() const;   // each linked to its home, with Close
+        [[nodiscard]] Section recentSection() const;   // each linked to its project
         [[nodiscard]] static Command closeCommand(const ShownProject&, std::wstring text);
-        // Fills a page with what the target names: the projects or SeeDocs' words on the root,
-        // the words of a page no project carries, and else the page the surface gives.
+        // Fills a page with what the target names: the root's own page on the root, the words of
+        // a page no project carries, and else the page the surface gives.
         void fill(SurfacePage&, const Target&, const PageData&) const;
         // Puts the title and the list of every page data, the icon of every tab and Rescan's
         // tooltip right for the projects shown.
@@ -601,7 +641,7 @@ namespace SeeDocs_App::Ui
         const OpenProject* m_shownProject{ nullptr };   // the selected tab's, as last told
         UiTimer m_rebuildTimer{};
         std::optional<Reference> m_rebuildFootnote{};   // to show once the page stands again
-        Text m_words{};   // what the root shows while no project is open
+        RecentProjects m_recent{};   // the projects opened before, which the root lists
         ProjectPageBuilder m_projectPageBuilder{};
         ListedLines m_listed{};   // what each line of the search box's list stands for
         Control* m_focusOrigin{ nullptr };   // what held the focus before the search box took it
@@ -653,7 +693,7 @@ namespace SeeDocs_App::Ui
             event.type = browser().typeOf(event.target, pageData());
         });
         m_view.onPageCommand([this](PageCommandEvent& event) {
-            runCommand(event.target);
+            runCommand(event.target, event.stamp);
         });
         m_view.onPageOrder([this](PageOrderEvent& event) {
             orderRows(event.targets);
@@ -759,5 +799,17 @@ namespace SeeDocs_App::Ui
     EventConnection SurfaceBrowser::onSidebarEdited(F&& callback)
     {
         return connectEvent<SidebarEditedEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection SurfaceBrowser::onNewProject(F&& callback)
+    {
+        return connectEvent<NewProjectEvent>(std::forward<F>(callback));
+    }
+
+    template<typename F>
+    EventConnection SurfaceBrowser::onOpenFolder(F&& callback)
+    {
+        return connectEvent<OpenFolderEvent>(std::forward<F>(callback));
     }
 }
