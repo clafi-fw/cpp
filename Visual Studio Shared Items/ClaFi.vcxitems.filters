@@ -1300,6 +1300,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithTextLayout.cppm">
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-State.cppm">
+      <Filter>Y_Core\System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Headers.h">

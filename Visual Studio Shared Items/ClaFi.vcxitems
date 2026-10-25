@@ -206,6 +206,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\ControlContext.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\PaintIconEvent.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-Keys.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.UiTypes-State.cppm" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Fonts.cpp" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.Fonts.cppm" />
     <None Include="$(MSBuildThisFileDirectory)..\Source\Platform\Linux\Linux.MonoFont.Factory.cpp" />
