@@ -423,6 +423,8 @@ namespace ClaFi::Browser
         }
         while (idExists(newTabId));
 
+        // A held width would squeeze the new tab in among the tabs it holds.
+        releaseTabsWidth();
         BrowserTab& tab = m_tabs.add<BrowserTab>();
         settings().addTabEntry(newTabId);
 
@@ -591,10 +593,11 @@ namespace ClaFi::Browser
     {
         Panel::alignContent(event, position, newDimensions);
 
-        const float spareWidth = m_title.bodyRect().width() - event.scale(k_titleDragWidth);
-        if (spareWidth < 0.0f)
+        float delta = event.scale(k_titleDragWidth) - m_title.bodyRect().width();
+        if (m_heldTabsWidth)
+            delta = std::max(delta, tabsWidth() - *m_heldTabsWidth);
+        if (delta > 0.0f)
         {
-            const float delta = -spareWidth;
             m_tabs.fitTabs(delta);
             for (const ControlPtr& ptr : m_tabs.controls())
             {
@@ -622,6 +625,14 @@ namespace ClaFi::Browser
         event.stopPropagation();
         const std::ptrdiff_t offset = event.button == SideButton::Back ? -1 : 1;
         travel(offset, historyButton(offset));
+    }
+
+    // Windows gives the hover up on the way onto the drag room, so only where it lands counts.
+    void BrowserControl::nestedControlHovered(Control* hoveredControl)
+    {
+        Panel::nestedControlHovered(hoveredControl);
+        if (!m_title.containsNested(hoveredControl))
+            releaseTabsWidth();
     }
 
     bool BrowserControl::idExists(std::wstring value)
@@ -1054,6 +1065,12 @@ namespace ClaFi::Browser
             return;
         }
 
+        // A close by mouse holds the tabs, so the next close button comes under the pointer.
+        if (Input::mouse().active())
+            holdTabsWidth(tab);
+        else
+            releaseTabsWidth();
+
         if (tab.selected())
         {
             // Selecting the item that supposed to be selected after this one will be closed
@@ -1079,12 +1096,6 @@ namespace ClaFi::Browser
         tab.deleteSelf();
         tabClosed();
 
-        // Todo: to implement Chrome behavior (delayed tabs realigning),
-        // first shift the tabs on right to the freshly vacant space,
-        // without changing their size, then make invalidateAlign() call on hotLeave
-        // (but make sure to do that only if user is using the mouse)
-        // form().validateAlign(); // this cancels invalidateAlign() triggered by closing/reselecting the tabs and/or showing/hiding their pages
-
         // To highlight a tab, or its close button that moved under the mouse
         form().mouseTick();
     }
@@ -1096,6 +1107,47 @@ namespace ClaFi::Browser
 
     void BrowserControl::tabClosed()
     {
+    }
+
+    void BrowserControl::holdTabsWidth(const BrowserTab& closingTab)
+    {
+        const ControlSpanC tabControls = m_tabs.controls();
+        const ControlSpanC::iterator closing = std::ranges::find_if(
+            tabControls,
+            [&closingTab](const ControlPtr& control){
+                return &*control == &closingTab;
+            }
+        );
+        const ControlSpanC::iterator next = std::next(closing);
+        float width = tabsWidth(&closingTab);
+        if (next == tabControls.end())
+        {
+            // The tabs before a last one widen into its place, the gap before it included.
+            width += closingTab.right() - (*std::prev(closing))->right();
+        }
+        else if (closingTab.selected())
+        {
+            // The tab opened in its place widens to an open tab's minimum.
+            width += std::max(closingTab.fitData().minWidth - (*next)->scaledWidth(), 0.0f);
+        }
+        m_heldTabsWidth = width;
+    }
+
+    void BrowserControl::releaseTabsWidth()
+    {
+        if (!m_heldTabsWidth)
+            return;
+        m_heldTabsWidth.reset();
+        invalidateFormAlign();
+    }
+
+    float BrowserControl::tabsWidth(const BrowserTab* skippedTab) const
+    {
+        float result = 0.0f;
+        for (const BrowserTab& tab : tabs())
+            if (&tab != skippedTab)
+                result += tab.scaledWidth();
+        return result;
     }
 
     // **Nothing a tab stood on is there afterwards**, and that is what lets the pages go: a tab

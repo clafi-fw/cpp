@@ -354,6 +354,8 @@ namespace ClaFi::Browser
         virtual ButtonViewMode rootCrumbViewMode() const { return ButtonViewMode::LeftIcon; }
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void nestedSideClick(SideClickEvent&) override;
+        // Lets go of the held tabs as the pointer leaves the title bar. See Browser#browsercontrol
+        void nestedControlHovered(Control* hoveredControl) override;
         bool tabsRestoring() const { return m_tabsRestoring; }
     private:
         // What a move made of the tab it was asked of.
@@ -410,6 +412,11 @@ namespace ClaFi::Browser
         void closeTab(BrowserTab&); // closes the window instead when it is the only tab
         void tabClosing(BrowserTab&);
         void tabClosed();
+        // Holds the tabs where a mouse close of this one leaves them.
+        void holdTabsWidth(const BrowserTab& closingTab);
+        void releaseTabsWidth(); // lays the tabs out in the room the title gives
+        // The tabs' widths in strip order - a hold and the align after it sum them alike.
+        [[nodiscard]] float tabsWidth(const BrowserTab* skippedTab = nullptr) const;
         void pagePathChanged();
         void ensureSubItems(PageData&);
         // Frees the sub-items a fetch of this page did not name.
@@ -431,6 +438,8 @@ namespace ClaFi::Browser
         std::ptrdiff_t m_travelOffset{ 0 };
         BrowserSettings* m_settings{};
         bool m_tabsRestoring{};
+        // The tabs' widths summed while a mouse close holds them.
+        std::optional<float> m_heldTabsWidth{};
     private:
         AddPageDataCallback m_addPageDataCallback;
         DialogTitle& m_title{ createTopBar<DialogTitle>(

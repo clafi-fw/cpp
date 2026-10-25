@@ -153,3 +153,10 @@ Closing a tab changes nothing on disk until that save.
 tab's view state for the next run, and that reaches the disk only where the config folder exists.
 Where the folder is missing, the browser asks canLeavePage of every tab with a page, under that tab.
 The first no keeps the window up. DocumentsBrowserBase asks Save, Discard or Cancel.
+
+**Closing tabs with mouse clicks keeps a close button under the pointer.** The tabs after a closed
+tab slide into its place at the widths they have, and the tabs before a closed last tab widen into
+the room it leaves. Where the title has narrowed the tabs to one width, the next close button lands
+where the last one was, so clicks in one place close one tab after another. The tabs are laid out
+in the whole room again once the pointer leaves the title bar - the row of tabs and the crumb bar
+under it - or a tab is opened. A tab closed by a key lays them out at once.
