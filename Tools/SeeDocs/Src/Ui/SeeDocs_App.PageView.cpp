@@ -1,6 +1,6 @@
 module SeeDocs_App.PageView;
 
-import SeeDocs_App.BasesBar;
+import SeeDocs_App.BasesTree;
 import SeeDocs_App.Editing;
 import SeeDocs_App.Edits;
 import SeeDocs_App.ExternalEditors;
@@ -441,8 +441,7 @@ namespace SeeDocs_App
             writeRuns(head, line);
         }
         m_title.text() = head;
-        m_bases1.setBases(page.bases);
-        m_bases2.setBases(page.bases);
+        m_basesTree.setBases(page.bases);
         const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
         m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
     }
@@ -454,8 +453,7 @@ namespace SeeDocs_App
         writeIcon(head, icon);
         head << title << PopTextStyle{};
         m_title.text() = head;
-        m_bases1.clear();
-        m_bases2.clear();
+        m_basesTree.clear();
         const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
         m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
     }
@@ -463,8 +461,7 @@ namespace SeeDocs_App
     void PageHead::clear()
     {
         m_title.text().clear();
-        m_bases1.clear();
-        m_bases2.clear();
+        m_basesTree.clear();
     }
 
     void PageHead::writeIcon(Text& head, const std::optional<RowIcon> icon)
@@ -1672,18 +1669,16 @@ namespace SeeDocs_App
     void PageView::connectHead()
     {
         connectLinks(m_head.titleBox());
-        
-        for (BasesTreeBase* bases : { &m_head.basesBar1(), &m_head.basesBar2() })
-        {
-            bases->onBaseLink([this, bases](BaseLinkEvent& event) {
-                later([this, bases, target = event.target]() {
-                    open(target, *bases);
-                    });
+
+        BasesTree* bases = &m_head.basesTree();
+        bases->onBaseLink([this, bases](BaseLinkEvent& event) {
+            later([this, bases, target = event.target]() {
+                open(target, *bases);
                 });
-            bases->onBaseLinkContextPopup([this](BaseLinkContextPopupEvent& event) {
-                showLinkMenu(event.crumb, event.target, event.popup);
-                });
-        }
+            });
+        bases->onBaseLinkContextPopup([this](BaseLinkContextPopupEvent& event) {
+            showLinkMenu(event.crumb, event.target, event.popup);
+            });
     }
 
     void PageView::open(std::wstring target, Control& source) const

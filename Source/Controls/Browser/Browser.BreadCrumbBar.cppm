@@ -256,7 +256,7 @@ namespace ClaFi::Browser
 
     void BreadCrumbBarItem::takeOffWidth(const float value)
     {
-        setWidth(scaledWidth() - value);
+        setScaledWidth(scaledWidth() - value);
     }
 
     void BreadCrumbBarItem::getMainText(GetTextEvent& event) const

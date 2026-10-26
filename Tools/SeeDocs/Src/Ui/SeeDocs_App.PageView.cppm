@@ -1,6 +1,6 @@
 export module SeeDocs_App.PageView;
 
-import SeeDocs_App.BasesBar;
+import SeeDocs_App.BasesTree;
 import SeeDocs_App.Editing;
 import SeeDocs_App.Icons;
 import SeeDocs_App.Pages;
@@ -113,11 +113,10 @@ namespace SeeDocs_App
         template<typename... Args>
         explicit PageHead(const CreateParams&, Args&&...);
     public:
-        [[nodiscard]] TextBox& titleBox() { return m_title; }
-        [[nodiscard]] BasesTreeBase& basesBar1() { return m_bases1; }
-        [[nodiscard]] BasesTreeBase& basesBar2() { return m_bases2; }
-        [[nodiscard]] StackPanel& commandBar() { return m_commands; }   // hidden at first
-        [[nodiscard]] StackPanel& titleCommandBar() { return m_titleCommands; }   // hidden at first
+        [[nodiscard]] TextBox& titleBox() const { return m_title; }
+        [[nodiscard]] BasesTree& basesTree() const { return m_basesTree; }
+        [[nodiscard]] StackPanel& commandBar() const { return m_commands; }   // hidden at first
+        [[nodiscard]] StackPanel& titleCommandBar() const { return m_titleCommands; }   // hidden at first
         void write(const Page&);
         void write(std::optional<RowIcon>, std::wstring_view title);
         void clear();
@@ -146,10 +145,7 @@ namespace SeeDocs_App
             Spacing{ k_commandGap },
             VerticalAlign::Center
         ) };
-        BasesTreeBase& m_bases1{ m_lines.add<BasesBar1>(
-            Padding{ k_basesIndent, 0.0f }
-            ) };
-        BasesTreeBase& m_bases2{ m_lines.add<BasesBar2>(
+        BasesTree& m_basesTree{ m_lines.add<BasesTree>(
             Padding{ k_basesIndent, 0.0f }
             ) };
         StackPanel& m_titleCommands{ m_lines.add<StackPanel>(

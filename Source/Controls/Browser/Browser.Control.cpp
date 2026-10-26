@@ -606,10 +606,10 @@ namespace ClaFi::Browser
                 {
                     if (tab.scaledWidth() > event.scale(48.f))
                         break;
-                    setControlWidth(tab.closeButton(), 0);
+                    setScaledWidth(tab.closeButton(), 0);
                 }
             }
-            setControlWidth(m_titleBox, m_titleBox.scaledWidth() - delta);
+            setScaledWidth(m_titleBox, m_titleBox.scaledWidth() - delta);
             // The title bar alone. A page aligned twice reads the sizes its first align handed out.
             alignControl(&m_title, event, m_title.topLeft(), m_title.scaledSize());
         }

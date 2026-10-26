@@ -168,11 +168,11 @@ namespace ClaFi::Controls
             }, std::forward<Args>(args)...);
 
         m_hScrollBar.onChange([this](const SliderChangeEvent& params) {
-            setControlLeft(*body(), bodyRect().left - params.newPosition);
+            setScaledLeft(*body(), bodyRect().left - params.newPosition);
             bodyScrolled({ params.newPosition - params.previousPosition, 0 });
             });
         m_vScrollBar.onChange([this](const SliderChangeEvent& params) {
-            setControlTop(*body(), bodyRect().top - params.newPosition);
+            setScaledTop(*body(), bodyRect().top - params.newPosition);
             bodyScrolled({ 0, params.newPosition - params.previousPosition });
             });
 

@@ -1,6 +1,6 @@
 module;
 #include "../Y-Core/System/EventBindings.h"
-export module SeeDocs_App.BasesBar;
+export module SeeDocs_App.BasesTree;
 
 import SeeDocs_App.Pages;
 
@@ -41,7 +41,7 @@ namespace SeeDocs_App
         ContextPopupEvent& popup;
     };
 
-    export class BasesTreeBase;
+    export class BasesTree;
 
     /// One base on the bar: its spelling, and behind the mark before it the types standing on it.
     class BaseCrumb : public DropdownControlBase
@@ -68,7 +68,7 @@ namespace SeeDocs_App
 
     using BaseSpan = std::span<const BaseNode>;
 
-    export class BasesTreeBase : public ContainerBase
+    export class BasesTree : public ContainerBase
     {
         using ContainerBase::ContainerBase;
     public:
@@ -89,63 +89,9 @@ namespace SeeDocs_App
         CrumbsMap m_crumbsMap{};
 
     private:
+        ScaledSize calculateBases(AlignEvent&, const BaseSpan&, ScaledPosition);
+        ScaledSize calculateBranch(AlignEvent&, const BaseNode&, ScaledPosition);
         void addCrumbs(BaseSpan);
-    };
-
-    export class BasesBar1 : public BasesTreeBase
-    {
-        using BasesTreeBase::BasesTreeBase;
-    public:
-        template<typename... Args>
-        explicit BasesBar1(const CreateParams&, Args...);
-    };
-
-    template <typename... Args>
-    BasesBar1::BasesBar1(const CreateParams& params, Args... args)
-        :
-        BasesTreeBase{
-            params,
-            UiElement::Tooltip,
-            std::forward<Args>(args)...
-        }
-    {
-        
-    }
-
-    // A class's bases as reversed crumbs, the ways up running right and parting where they fork.
-    export class BasesBar2: public BasesTreeBase
-    {
-        using BasesTreeBase::BasesTreeBase;
-    public:
-        void setBases(const BaseNodes&) override;
-        void clear() override;
-    protected:
-        ScaledSize calculateContent(AlignEvent&) override;
-        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
-        // A crumb's width is read off it and narrowed here, as a row reads its items' widths.
-        [[nodiscard]] bool isChildWidthGiven(const Control&) const override { return false; }
-    private:
-        // What a way up comes to from where it starts, the column it parts into included.
-        struct RunExtent
-        {
-            float width{ 0.0f };
-            float height{ 0.0f };
-        };
-    private:
-        [[nodiscard]] RunExtent runExtent(BaseSpan, std::size_t& crumb, float cap) const;
-        // The crumbs of one way up side by side, level with the middle of the height given, and a
-        // column of rows where the way parts.
-        void placeRun(AlignEvent&, BaseSpan, std::size_t& crumb, float cap, ScaledPosition,
-            float height);
-        [[nodiscard]] float crumbWidth(std::size_t crumb, float cap) const;
-        // The widest a crumb may stay for the bar to come to no more than the width.
-        [[nodiscard]] float capFor(float width, float leastCrumb) const;
-        void choose(std::wstring target);
-        void askMenu(Control& crumb, std::wstring target, ContextPopupEvent&) const;
-    private:
-        static constexpr float k_leastCrumb = 48.0f;   // what a narrowed crumb keeps of itself
-        static constexpr int k_capSteps = 24;          // halvings of the range the cap is found in
-        std::vector<float> m_fullWidths{};    // what each crumb measured
     };
 
 }

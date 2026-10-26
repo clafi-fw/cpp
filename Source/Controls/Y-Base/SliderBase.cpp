@@ -226,9 +226,9 @@ namespace ClaFi::Controls
         newTop = std::min(std::max(newTop, areaTop), areaBottom - myHeight);
 
         if (parent()->m_axis == ScrollAxis::Vertical)
-            setTop(newTop);
+            setScaledTop(newTop);
         else
-            setLeft(newTop);
+            setScaledLeft(newTop);
 
         update();
         float newScrollPos = areaHeight - myHeight;
@@ -425,7 +425,7 @@ namespace ClaFi::Controls
     void SliderBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& contentSize)
     {
         SliderBaseClass::alignContent(event, position, contentSize);
-        setControlDimensions(m_bodySpacer, { 0, 0 });
+        setScaledSize(m_bodySpacer, { 0, 0 });
         alignThumb();
     }
 

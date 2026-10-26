@@ -98,10 +98,10 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.AppIcon.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Ui\SeeDocs_App.BasesBar.cpp">
+    <ClCompile Include="Src\Ui\SeeDocs_App.BasesTree.cpp">
       <Filter>Src\Ui</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Ui\SeeDocs_App.BasesBar.cppm">
+    <ClCompile Include="Src\Ui\SeeDocs_App.BasesTree.cppm">
       <Filter>Src\Ui</Filter>
     </ClCompile>
     <ClCompile Include="Src\Ui\SeeDocs_App.Browser.cpp">

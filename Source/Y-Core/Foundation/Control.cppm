@@ -1277,12 +1277,12 @@ namespace ClaFi
         // doing it, since adjustFocus reports only the arrival.
         virtual void focusChanged() {}
         virtual void sizeChanged();
-        void setTopLeft(float x, float y);
-        void setSize(const ScaledSize);
-        void setTop(float value);
-        void setLeft(float value);
-        void setWidth(float value);
-        void setHeight(float value);
+        void setScaledPosition(ScaledPosition);
+        void setScaledSize(ScaledSize);
+        void setScaledTop(float value);
+        void setScaledLeft(float value);
+        void setScaledWidth(float value);
+        void setScaledHeight(float value);
         //
         virtual void getControlState(GetStateEvent&) const;
         virtual void adjustMetrics(AdjustMetricsEvent&) const {};
@@ -1417,12 +1417,13 @@ namespace ClaFi
         //
     protected:
         //
-        // helpers to control children from within a derived class
-        static void setControlDimensions(Control& control, ScaledSize dimensions) { control.setSize(dimensions); }
-        static void setControlWidth(Control& control, float value) { control.setWidth(value); };
-        static void setControlHeight(Control& control, float value) { control.setHeight(value); };
-        static void setControlTop(Control& control, float value) { control.setTop(value); };
-        static void setControlLeft(Control& control, float value) { control.setLeft(value); };
+        // helpers to lay out children from a container
+        static void setScaledSize(Control& control, ScaledSize value) { control.setScaledSize(value); }
+        static void setScaledPosition(Control& control, ScaledPosition value) { control.setScaledPosition(value); }
+        static void setScaledWidth(Control& control, float value) { control.setScaledWidth(value); };
+        static void setScaledHeight(Control& control, float value) { control.setScaledHeight(value); };
+        static void setScaledTop(Control& control, float value) { control.setScaledTop(value); };
+        static void setScaledLeft(Control& control, float value) { control.setScaledLeft(value); };
 
         // Sizes one child. A host whose calculateChildren() does not walk controls() - ButtonBase
         // places its indicator by hand rather than calculating it - has to size the rest itself,

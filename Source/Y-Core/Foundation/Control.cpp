@@ -1725,12 +1725,12 @@ namespace ClaFi
     {
     }
 
-    void Control::setTopLeft(float x, float y)
+    void Control::setScaledPosition(ScaledPosition value)
     {
-        m_topLeft = { x, y };
+        m_topLeft = value;
     }
 
-    void Control::setSize(const ScaledSize value)
+    void Control::setScaledSize(ScaledSize value)
     {
         if (value != m_scaledSize)
         {
@@ -1739,7 +1739,7 @@ namespace ClaFi
         }
     }
 
-    void Control::setTop(float value)
+    void Control::setScaledTop(float value)
     {
         if (m_topLeft.y == value)
             return;
@@ -1748,7 +1748,7 @@ namespace ClaFi
         invalidate();
     }
 
-    void Control::setLeft(float value)
+    void Control::setScaledLeft(float value)
     {
         if (m_topLeft.x == value)
             return;
@@ -1757,7 +1757,7 @@ namespace ClaFi
         invalidate();
     }
 
-    void Control::setWidth(float value)
+    void Control::setScaledWidth(float value)
     {
         if (m_scaledSize.x == value)
             return;
@@ -1766,7 +1766,7 @@ namespace ClaFi
         invalidate();
     }
 
-    void Control::setHeight(float value)
+    void Control::setScaledHeight(float value)
     {
         if (m_scaledSize.y == value)
             return;
@@ -2400,7 +2400,7 @@ namespace ClaFi
             alignedDimensions.y = std::max(newDimensions.y, alignedDimensions.y);
 
         m_topLeft = position + FloatPoint{ x, y };
-        setSize(alignedDimensions);
+        setScaledSize(alignedDimensions);
 
         adjustPlacement(event.scaler(), m_topLeft, m_scaledSize);
     }
@@ -2537,13 +2537,13 @@ namespace ClaFi
     void Control::placeControlToHorizontalCenter(Control& control, float boundsLeft, float boundsRight)
     {
         float delta = (boundsRight - control.right()) / 2.0f;
-        control.setLeft(boundsLeft + std::max(delta, 0.0f));
+        control.setScaledLeft(boundsLeft + std::max(delta, 0.0f));
     }
 
     void Control::placeControlToVerticalCenter(Control& control, float boundsTop, float boundsBottom)
     {
         float delta = (boundsBottom - control.bottom()) / 2.0f;
-        control.setTop(boundsTop + std::max(delta, 0.0f));
+        control.setScaledTop(boundsTop + std::max(delta, 0.0f));
     }
 
     void Control::setControlPlacement(Control& control, ScaledPosition topLeft, ScaledSize dimensions)

@@ -1,4 +1,4 @@
-module SeeDocs_App.BasesBar;
+module SeeDocs_App.BasesTree;
 
 import SeeDocs_App.Icons;
 import SeeDocs_App.PageText;
@@ -155,16 +155,16 @@ namespace SeeDocs_App
     }
 
 
-    // BasesTreeBase
+    // BasesTree
 
-    void BasesTreeBase::setBases(const BaseNodes& value)
+    void BasesTree::setBases(const BaseNodes& value)
     {
         clear();
         m_bases = value;
         addCrumbs(m_bases);
     }
 
-    void BasesTreeBase::clear()
+    void BasesTree::clear()
     {
         m_bases = {};
         m_crumbs.clear();
@@ -173,21 +173,43 @@ namespace SeeDocs_App
             controls().back()->deleteSelf();
     }
 
-    ScaledSize BasesTreeBase::calculateContent(AlignEvent& event)
+    ScaledSize BasesTree::calculateContent(AlignEvent& event)
     {
         //return ContainerBase::calculateContent(event);
         ScaledSize result{};
-        const float rowHeight = event.scale(28.0f);
-        for (const BaseNode& node : m_bases)
-        {
-            const auto crumb = m_crumbsMap[&node];
-            setControlTop(*crumb, result.y);
-            result.y += rowHeight;
-        }
-        return { event.scale(100.0f), result.y };
+        return calculateBases(event, m_bases, result);
     }
 
-    void BasesTreeBase::addCrumbs(BaseSpan bases)
+    ScaledSize BasesTree::calculateBases(AlignEvent& event, const BaseSpan& bases, ScaledPosition position)
+    {
+        ScaledSize resultSize;
+        for (const BaseNode& node : bases)
+        {
+            ScaledSize branchSize = calculateBranch(event, node, { position.x, position.y + resultSize.y });
+            resultSize.y += branchSize.y;
+            resultSize.x = std::max(branchSize.x, resultSize.x);
+        }
+        return resultSize;
+    }
+
+    ScaledSize BasesTree::calculateBranch(AlignEvent& event, const BaseNode& node, ScaledPosition position)
+    {
+        const auto crumb = m_crumbsMap[&node];
+        ScaledSize result{ crumb->scaledWidth(), crumb->scaledHeight() };
+        
+        setScaledPosition(*crumb, { position.x, position.y });
+
+        {
+            ScaledPosition nextPosition = { position.x + result.x, position.y };
+            ScaledSize basesSize = calculateBases(event, node.bases, nextPosition);
+            result.x += basesSize.x;
+            result.y = std::max(basesSize.y, result.y);
+        }
+
+        return result;
+    }
+
+    void BasesTree::addCrumbs(BaseSpan bases)
     {
         for (const BaseNode& base : bases)
         {
@@ -212,131 +234,6 @@ namespace SeeDocs_App
                 });
             addCrumbs(base.bases);
         }
-    }
-
-    // BasesBar2
-
-    void BasesBar2::setBases(const BaseNodes& value)
-    {
-        BasesTreeBase::setBases(value);
-        m_fullWidths.assign(m_crumbs.size(), 0.0f);
-    }
-
-    void BasesBar2::clear()
-    {
-        BasesTreeBase::clear();
-        m_fullWidths.clear();
-    }
-
-    // **What a crumb measured is kept here**, where it is still its measurement: the align pass
-    // writes the width a crumb is given over it.
-    ScaledSize BasesBar2::calculateContent(AlignEvent&)
-    {
-        for (std::size_t i = 0; i != m_crumbs.size(); ++i)
-            m_fullWidths[i] = m_crumbs[i]->scaledWidth();
-        std::size_t crumb = 0;
-        const RunExtent whole = runExtent(m_bases, crumb, k_maxFloat);
-        return { whole.width, whole.height };
-    }
-
-    void BasesBar2::alignContent(AlignEvent& event, ScaledPosition position,
-        ScaledSize& contentDimensions)
-    {
-        const float cap = capFor(contentDimensions.x, event.scale(k_leastCrumb));
-        std::size_t crumb = 0;
-        const RunExtent whole = runExtent(m_bases, crumb, cap);
-        crumb = 0;
-        placeRun(event, m_bases, crumb, cap, position, whole.height);
-        contentDimensions = { whole.width, whole.height };
-    }
-
-    // Along a way the crumbs add up, and a column is as wide as its widest row and as tall as its
-    // rows together.
-    BasesBar2::RunExtent BasesBar2::runExtent(BaseSpan bases, std::size_t& crumbIndex,
-        const float cap) const
-    {
-        RunExtent run = {};
-        while (bases.size() == 1)
-        {
-            run.width += crumbWidth(crumbIndex, cap);
-            run.height = std::max(run.height, m_crumbs[crumbIndex]->scaledHeight());
-            ++crumbIndex;
-            bases = bases.front().bases;
-        }
-        if (bases.empty())
-            return run;
-        RunExtent column = {};
-        for (std::size_t i = 0; i != bases.size(); ++i)
-        {
-            const RunExtent row = runExtent(bases.subspan(i, 1), crumbIndex, cap);
-            column.width = std::max(column.width, row.width);
-            column.height += row.height;
-        }
-        run.width += column.width;
-        run.height = std::max(run.height, column.height);
-        return run;
-    }
-
-    void BasesBar2::placeRun(AlignEvent& event, BaseSpan bases, std::size_t& crumbIndex,
-        const float cap, ScaledPosition position, const float height)
-    {
-        while (bases.size() == 1)
-        {
-            const float width = crumbWidth(crumbIndex, cap);
-            alignControl(m_crumbs[crumbIndex], event, position, { width, height });
-            ++crumbIndex;
-            position.x += width;
-            bases = bases.front().bases;
-        }
-        if (bases.empty())
-            return;
-        std::vector<float> rowHeights;
-        float columnHeight = 0.0f;
-        std::size_t ahead = crumbIndex;
-        for (std::size_t i = 0; i != bases.size(); ++i)
-        {
-            rowHeights.push_back(runExtent(bases.subspan(i, 1), ahead, cap).height);
-            columnHeight += rowHeights.back();
-        }
-        position.y += (height - columnHeight) / 2.0f;
-        for (std::size_t i = 0; i != bases.size(); ++i)
-        {
-            placeRun(event, bases.subspan(i, 1), crumbIndex, cap, position, rowHeights[i]);
-            position.y += rowHeights[i];
-        }
-    }
-
-    float BasesBar2::crumbWidth(const std::size_t crumb, const float cap) const
-    {
-        return std::min(m_fullWidths[crumb], cap);
-    }
-
-    // **The widest crumbs come down to one common width**, the way a fit levels a row of tabs, so
-    // a short name stays whole while a long template spelling gives way. A column makes the bar's
-    // width the widest of its rows rather than their sum, so the cap is found by halving the range
-    // it can stand in rather than solved for. A bar that overruns at the least a crumb keeps is
-    // left to overrun. A bar with no crumbs takes no cap, even at a width under zero.
-    float BasesBar2::capFor(const float width, const float leastCrumb) const
-    {
-        if (m_crumbs.empty())
-            return k_maxFloat;
-        std::size_t crumb = 0;
-        if (runExtent(m_bases, crumb, k_maxFloat).width <= width)
-            return k_maxFloat;
-        float fits = leastCrumb;
-        float overruns = std::ranges::max(m_fullWidths);
-        for (int step = 0; step != k_capSteps; ++step)
-        {
-            const float cap = (fits + overruns) / 2.0f;
-            crumb = 0;
-            if (runExtent(m_bases, crumb, cap).width <= width)
-                fits = cap;
-            else
-                overruns = cap;
-        }
-        // Whole pixels: a crumb's align ceils the width it is given, and a fraction would push it
-        // over the next crumb.
-        return std::floor(fits);
     }
 
 }

@@ -217,8 +217,8 @@ namespace ClaFi::Controls::Grids
             return;
         // Read before setControlHeight() below overwrites it.
         const float stackedSpanHeight = span().scaledHeight();
-        setControlTop(body(), span().top());
-        setControlHeight(span(), body().scaledHeight());
+        setScaledTop(body(), span().top());
+        setScaledHeight(span(), body().scaledHeight());
         dimensions.y -= stackedSpanHeight;
     }
 
