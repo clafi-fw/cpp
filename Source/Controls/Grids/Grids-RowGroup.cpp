@@ -31,9 +31,6 @@ namespace ClaFi::Controls::Grids
         );
         ToggleExpandedEvent event{ m_expanded };
         emitEvent(event);
-        // Opening is what makes the group taller, and the group is its span and its rows together.
-        if (m_expanded)
-            parent()->scrollIntoViewOnAlign();
     }
 
     void RowGroupSpan::hitTest(HitTestEvent& event) const
@@ -121,7 +118,7 @@ namespace ClaFi::Controls::Grids
             && descriptor().selectedRow() == this
             && descriptor().selectedColumn() == markColumn())
         {
-            setExpanded(opens);
+            setExpandedByUser(opens);
             event.handled = true;
             return;
         }
@@ -140,8 +137,18 @@ namespace ClaFi::Controls::Grids
         }
         // On the mark the first press has turned the group already. Passed on, a double click
         // would reach the grid and open an editor over the selected cell.
-        toggleExpanded();
+        setExpandedByUser(!m_expanded);
         event.stopPropagation();
+    }
+
+    // **Only an opening the user makes brings the group into view**, the span and its rows
+    // together, as an expander's header does - see ExpanderHeader::setExpandedByUser.
+    void RowGroupSpan::setExpandedByUser(const bool value)
+    {
+        const bool wasExpanded = m_expanded;
+        setExpanded(value);
+        if (m_expanded && !wasExpanded)
+            parent()->scrollIntoViewOnAlign();
     }
 
     void RowGroupSpan::createMark()
@@ -151,7 +158,7 @@ namespace ClaFi::Controls::Grids
             Icons::ExpanderMark::paint(event, m_expandedFactor);
         });
         m_mark->onClick([this](ClickEvent&) {
-            toggleExpanded();
+            setExpandedByUser(!m_expanded);
         });
     }
 

@@ -116,7 +116,7 @@ namespace SeeDocs_App::Ui
         // Asks whether to make a project that reads a folder that stands for none.
         [[nodiscard]] bool confirmMaking(const std::filesystem::path& folder);
         void refuse(std::wstring_view title, const Text& message);
-        // Writes the properties as the edit leaves them, reads them back, and rereads as asked.
+        // Writes the properties as the edit leaves them, and rereads as asked.
         void change(OpenProject&, const std::function<void(Project&)>& edit, Reread);
         // Scans the project's sources, its database and scan cache written on the writer's thread;
         // the surface the database holds.

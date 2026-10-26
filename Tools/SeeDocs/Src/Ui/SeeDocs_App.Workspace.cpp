@@ -586,10 +586,19 @@ namespace SeeDocs_App::Ui
     }
 
     // **Written before anything is read again**, so a scan that fails leaves the project set as
-    // asked all the same; what stands afterwards is what was read back.
+    // asked all the same; what stands afterwards is what was read back. **A change only the pages
+    // read is made in place** instead: a project read back brings a new sidebar, and every tree's
+    // rows point into the one standing.
     void Workspace::change(OpenProject& open, const std::function<void(Project&)>& edit,
         const Reread reread)
     {
+        if (reread == Reread::Pages)
+        {
+            edit(open.project);
+            writeProject(open.project);
+            m_browser.rebuildProjectPages(open);
+            return;
+        }
         Project changed = open.project;
         edit(changed);
         writeProject(changed);
@@ -597,10 +606,8 @@ namespace SeeDocs_App::Ui
             open.project = std::move(*read);
         if (reread == Reread::Sources)
             rescan(open);
-        else if (reread == Reread::Sidebar)
-            m_browser.rebindSidebar(open);
         else
-            m_browser.rebindProject(open);
+            m_browser.rebindSidebar(open);
     }
 
     // **Only the files changed since the last scan are read**, by the cache the last write left.

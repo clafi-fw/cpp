@@ -161,6 +161,16 @@ namespace SeeDocs_App::Ui
             return Text{ L"Last scan: " + ageSpelling(*scanned, now) };
         }
 
+        // The syntax's examples in the spot ink, the words round them plain.
+        [[nodiscard]] TooltipText seeLinksTooltip()
+        {
+            TooltipText text;
+            text << L"A comment ending in " << InkColor::Spot << L"See <note>" << PopColor{}
+                << L" or " << InkColor::Spot << L"See <note>#<anchor>" << PopColor{}
+                << L" links that footnote, and the See is left out of the hint";
+            return text;
+        }
+
         // The column a set of choices stands in, whose answers redraw each other.
         [[nodiscard]] StackPanel& addChoiceSet(StackPanel& group)
         {
@@ -286,21 +296,41 @@ namespace SeeDocs_App::Ui
         addChoice(hints, L"Every recognizable comment",
             L"Takes the whole comment above a declaration, however it is written, as its hint",
             [&project]() {
-                return project.project.hints == HintRules::Loose;
+                return project.project.hints.format == HintFormat::AnyComment;
             },
             [&workspace, &project, rescanned]() {
-                workspace.setHints(project, HintRules::Loose);
+                HintRules rules = project.project.hints;
+                rules.format = HintFormat::AnyComment;
+                workspace.setHints(project, rules);
                 rescanned();
             });
-        addChoice(hints, L"Strict ClaFi rules",
-            L"Uses the comment on the declaration line as the hint, or else the comment above it",
+        addChoice(hints, L"Only comments starting with ///",
+            L"Takes a comment as a hint only where it opens with three slashes",
             [&project]() {
-                return project.project.hints == HintRules::Strict;
+                return project.project.hints.format == HintFormat::TripleSlash;
             },
             [&workspace, &project, rescanned]() {
-                workspace.setHints(project, HintRules::Strict);
+                HintRules rules = project.project.hints;
+                rules.format = HintFormat::TripleSlash;
+                workspace.setHints(project, rules);
                 rescanned();
             });
+        hints.add<CheckBox>(
+            L"Use SeeLinks syntax",
+            seeLinksTooltip(),
+            Padding{ 0.0f, hints.themeMetrics().listItem.padding.y },
+            HorizontalAlign::Left,
+            CheckBox::OnGetState{ [&project](GetStateEvent& event) {
+                event.state.selected = project.project.hints.seeLinks;
+            } },
+            CheckBox::OnClick{ [&workspace, &project, rescanned](ClickEvent& event) {
+                HintRules rules = project.project.hints;
+                rules.seeLinks = !rules.seeLinks;
+                workspace.setHints(project, rules);
+                rescanned();
+                event.control->invalidateState();
+            } }
+        );
 
         StackPanel& edits = page.addGroup(L"Edit hints");
         StackPanel& editChoices = addChoiceSet(edits);

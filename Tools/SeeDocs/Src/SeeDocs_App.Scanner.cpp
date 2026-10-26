@@ -37,7 +37,6 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_lineComment = L"//";
         constexpr std::wstring_view k_blockComment = L"/*";
         constexpr std::wstring_view k_blockCommentEnd = L"*/";
-        constexpr std::wstring_view k_brief = L"@brief ";
         constexpr std::wstring_view k_todo = L"TODO";
         constexpr std::wstring_view k_textMacro = L"DERIVED_TEXT_CLASS";
         constexpr std::wstring_view k_textBase = L"Text";
@@ -470,12 +469,11 @@ namespace SeeDocs_App
         // once more where that lexer, built for colouring, leaves a plain name without a token.
         // Preprocessed, a line in a branch left out stands blank, and a line of code holds its
         // macros expanded; the lines keep their count, so every place is the file's own, and the
-        // lines as written stay beside them. Which lines are comment lines is the hint rules':
-        // // alone by strict ones, /* */ too by loose.
+        // lines as written stay beside them.
         class SourceText
         {
         public:
-            SourceText(std::wstring_view text, HintRules, Preprocess = Preprocess::None,
+            explicit SourceText(std::wstring_view text, Preprocess = Preprocess::None,
                 Macros* macros = nullptr);
             [[nodiscard]] const TokenList& tokens() const { return m_tokens; }
             [[nodiscard]] bool preprocessed() const { return m_preprocess != Preprocess::None; }
@@ -524,7 +522,6 @@ namespace SeeDocs_App
             std::vector<LineKind> m_kinds;
             std::vector<std::size_t> m_firstTokens;   // per line, the index of its first token
             Preprocess m_preprocess{ Preprocess::None };
-            bool m_blockComments{ false };   // a /* */ comment stands as a comment line
             Macros* m_macros{ nullptr };
             Branches m_branches;
             Includes m_includes;
@@ -533,11 +530,10 @@ namespace SeeDocs_App
             int m_dropDepth{ 0 };                 // brackets a dropped macro call still holds open
         };
 
-        SourceText::SourceText(const std::wstring_view text, const HintRules rules,
-            const Preprocess preprocess, Macros* macros)
+        SourceText::SourceText(const std::wstring_view text, const Preprocess preprocess,
+            Macros* macros)
             :
             m_preprocess{ preprocess },
-            m_blockComments{ rules == HintRules::Loose },
             m_macros{ macros }
         {
             std::size_t start = 0;
@@ -944,14 +940,13 @@ namespace SeeDocs_App
                 m_tokens.push_back({ type, line, start, end - start });
         }
 
-        // By loose rules a /* */ comment is a comment line as // is, and so is a blank line inside
-        // one, so a doc comment's paragraphs gather as one comment.
+        // A /* */ comment is a comment line as // is, and so is a blank line inside one, so a doc
+        // comment's paragraphs gather as one comment.
         void SourceText::classifyLine(const std::size_t firstToken, const bool insideComment)
         {
             if (firstToken == m_tokens.size())
             {
-                const bool commentLine = m_blockComments && insideComment;
-                m_kinds.push_back(commentLine ? LineKind::CommentOnly : LineKind::Blank);
+                m_kinds.push_back(insideComment ? LineKind::CommentOnly : LineKind::Blank);
                 return;
             }
             bool commentsOnly = true;
@@ -960,9 +955,7 @@ namespace SeeDocs_App
                 if (m_tokens[i].type != TokenType::Comment)
                     commentsOnly = false;
             }
-            const bool lineComment = text(m_tokens[firstToken]).starts_with(k_lineComment);
-            const bool counts = lineComment || m_blockComments;
-            m_kinds.push_back(commentsOnly && counts ? LineKind::CommentOnly : LineKind::Code);
+            m_kinds.push_back(commentsOnly ? LineKind::CommentOnly : LineKind::Code);
         }
 
         const Token* SourceText::trailingToken(const std::size_t line) const
@@ -979,8 +972,7 @@ namespace SeeDocs_App
             if (tail.type != TokenType::Comment || last - 1 == first)
                 return nullptr;
             const std::wstring_view comment = text(tail);
-            const bool block = m_blockComments && comment.starts_with(k_blockComment);
-            if (!comment.starts_with(k_lineComment) && !block)
+            if (!comment.starts_with(k_lineComment) && !comment.starts_with(k_blockComment))
                 return nullptr;
             return &tail;
         }
@@ -1143,17 +1135,6 @@ namespace SeeDocs_App
             return std::ranges::find(words, word) != words.end();
         }
 
-        // The comment's words: the slashes and the blanks around them gone, @brief dropped.
-        [[nodiscard]] std::wstring_view commentBody(std::wstring_view comment)
-        {
-            while (comment.starts_with(L'/'))
-                comment.remove_prefix(1);
-            comment = trimmed(comment);
-            if (comment.starts_with(k_brief))
-                comment = trimmed(comment.substr(k_brief.size()));
-            return comment;
-        }
-
         // A doc comment's words, whichever way it is written - ///, //!, /** */, /*! */, the *
         // leading a line inside a block, the < turning one to the member before it.
         [[nodiscard]] std::wstring_view docCommentBody(std::wstring_view comment)
@@ -1309,7 +1290,7 @@ namespace SeeDocs_App
             const SourceText& m_text;
             std::wstring m_folder;
             bool m_anyCpp{ false };
-            bool m_looseHints{ false };
+            HintRules m_rules;
             bool m_header{ false };
             std::size_t m_at{ 0 };
             std::vector<Scope> m_scopes;
@@ -1328,7 +1309,7 @@ namespace SeeDocs_App
             m_text{ text },
             m_folder{ std::move(folder) },
             m_anyCpp{ mode == ScanMode::AnyCppAndDelphi },
-            m_looseHints{ rules == HintRules::Loose },
+            m_rules{ rules },
             m_header{ header },
             m_trace{ trace }
         {
@@ -3097,11 +3078,11 @@ namespace SeeDocs_App
             return m_text.slice(tokens[first], tokens[last]);
         }
 
-        // **Strict rules read the comment on the line first, loose ones the comment above**: a
-        // comment on a line is as often a tool's directive as words. Either reads the whole of it -
-        // every line of the comment above, or the comment on the line with the lines carrying it
-        // on. By strict rules a See ending it reaches a footnote; by loose ones it is words, and
-        // words that only name the declaration are a label, which tells a reader nothing.
+        // **The comment above comes before the one on the line** when it says any words: a comment
+        // on a line is as often a tool's directive as words. Either is read whole - every line of
+        // the comment above, or the comment on the line with the lines carrying it on. With the
+        // SeeLinks syntax a See ending the words reaches a footnote; and words that only name the
+        // declaration are a label, which tells a reader nothing.
         Comment FileReader::commentAt(const std::size_t line,
             const std::optional<std::size_t> fallback, const std::wstring_view name,
             const bool aboveCounts) const
@@ -3110,9 +3091,7 @@ namespace SeeDocs_App
             std::wstring trailingWords;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
             {
-                comment.trailing = m_looseHints
-                    ? withoutSeparators(docCommentBody(*trailing))
-                    : std::wstring{ commentBody(*trailing) };
+                comment.trailing = withoutSeparators(docCommentBody(*trailing));
                 const std::wstring_view written = m_text.line(line);
                 const auto start = static_cast<std::size_t>(trailing->data() - written.data());
                 trailingWords = wordsOf(line, line + 1 + m_text.continuationsOf(line), start);
@@ -3132,20 +3111,11 @@ namespace SeeDocs_App
                     aboveWords = wordsOf(first, end, leadingBlanks(m_text.line(first)));
             }
 
-            if (m_looseHints)
-            {
-                comment.text = aboveWords.empty()
-                    ? std::move(trailingWords)
-                    : std::move(aboveWords);
-                if (comment.text == bareName(name))
-                    comment.text.clear();
-                return comment;
-            }
-            std::wstring source = comment.trailing
-                ? std::move(trailingWords)
-                : std::move(aboveWords);
-            comment.reference = cutReference(source, name);
-            comment.text = std::move(source);
+            comment.text = aboveWords.empty() ? std::move(trailingWords) : std::move(aboveWords);
+            if (m_rules.seeLinks)
+                comment.reference = cutReference(comment.text, name);
+            if (comment.text == bareName(name))
+                comment.text.clear();
             return comment;
         }
 
@@ -3166,11 +3136,9 @@ namespace SeeDocs_App
                 comment.aboveWidth = std::max(comment.aboveWidth, m_text.width(i));
                 const std::wstring_view written = trimmed(m_text.line(i));
                 // A block opening under other lines - //! over /** - is a paragraph of its own.
-                if (m_looseHints && !comment.above.empty() && written.starts_with(k_blockComment))
+                if (!comment.above.empty() && written.starts_with(k_blockComment))
                     comment.above.emplace_back();
-                const std::wstring body = m_looseHints
-                    ? withoutSeparators(docCommentBody(written))
-                    : std::wstring{ commentBody(written) };
+                const std::wstring body = withoutSeparators(docCommentBody(written));
                 if (!body.starts_with(k_todo))
                     comment.above.push_back(body);
             }
@@ -3183,8 +3151,7 @@ namespace SeeDocs_App
             std::vector<std::wstring_view> lines;
             for (std::size_t i = first; i != end; ++i)
                 lines.push_back(m_text.line(i));
-            const HintRules rules = m_looseHints ? HintRules::Loose : HintRules::Strict;
-            return commentText(cutComment(lines, start, SourceLanguage::Cpp, rules));
+            return commentText(cutComment(lines, start, SourceLanguage::Cpp, m_rules.format));
         }
 
         [[nodiscard]] std::wstring posixRelative(const std::filesystem::path& file,
@@ -3612,7 +3579,7 @@ namespace SeeDocs_App
                 clock.lap(Steps::ReadFiles);
                 if (!text)
                     continue;
-                const SourceText source{ *text, rules };
+                const SourceText source{ *text };
                 clock.lap(Steps::LexSources);
                 if (!place)
                     place = addSourceFile(surface, sources, file);
@@ -3678,7 +3645,7 @@ namespace SeeDocs_App
                 }
                 else if (texts[i])
                 {
-                    const SourceText gathered{ *texts[i], rules, Preprocess::Gather, &macros };
+                    const SourceText gathered{ *texts[i], Preprocess::Gather, &macros };
                     given[i] = macros.endFile();
                 }
             }
@@ -3804,7 +3771,7 @@ namespace SeeDocs_App
                     if (!texts[i])
                         continue;
                 }
-                const SourceText source{ *texts[i], rules, Preprocess::Expand, &macros };
+                const SourceText source{ *texts[i], Preprocess::Expand, &macros };
                 clock.lap(Steps::ExpandSources);
                 CachedFile read = readSource(surface, *places[i], file, source,
                     ScanMode::AnyCppAndDelphi, rules, cache);

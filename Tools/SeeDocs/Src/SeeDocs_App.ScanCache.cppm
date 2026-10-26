@@ -78,7 +78,7 @@ namespace SeeDocs_App
     {
         std::wstring build;   // the program that read them
         ScanMode mode{ ScanMode::AnyCppAndDelphi };
-        HintRules hints{ HintRules::Strict };
+        HintRules hints{};
         PascalSymbols symbols;
         CachedFiles files;
     };

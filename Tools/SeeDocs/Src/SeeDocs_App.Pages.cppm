@@ -17,8 +17,7 @@ namespace SeeDocs_App
         Code,      // a name, a type or a signature
         Path,      // a file's or a folder's, as code in the spot ink
         Muted,
-        Bold,
-        Missing    // what the surface ought to state and does not - a hint, a base
+        Bold
     };
 
     // A run of words, and the page it links to where it names one.
@@ -33,7 +32,7 @@ namespace SeeDocs_App
     export using Runs = std::vector<Run>;
     export using Cells = std::vector<Runs>;
 
-    export constexpr std::wstring_view k_noHint = L"no hint";   // a missing hint, as a page says it
+    export constexpr std::wstring_view k_noHint = L"no hint";   // where a hint can be typed in
     export constexpr std::wstring_view k_boldMark = L"**";   // what a note sets words bold between
     export constexpr wchar_t k_codeMark = L'`';   // what a note sets words in code between
 

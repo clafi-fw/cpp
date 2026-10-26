@@ -16,7 +16,6 @@ namespace SeeDocs_App
     namespace
     {
         constexpr std::wstring_view k_scope = L"::";
-        constexpr std::wstring_view k_todo = L"TODO";
         // How many aliases a type is followed through before it is given up as circular.
         constexpr std::size_t k_aliasDepth = 8;
         // How many times a tree's symbols are gathered before they are taken as settled.
@@ -874,7 +873,7 @@ namespace SeeDocs_App
             std::size_t m_file;
             const UnitText& m_text;
             std::wstring m_folder;
-            bool m_looseHints{ false };
+            HintRules m_rules;
             std::vector<std::size_t> m_code;   // the code tokens, comments and directives left out
             std::size_t m_at{ 0 };
             std::wstring m_nameSpace;
@@ -891,7 +890,7 @@ namespace SeeDocs_App
             m_file{ file },
             m_text{ text },
             m_folder{ std::move(folder) },
-            m_looseHints{ rules == HintRules::Loose },
+            m_rules{ rules },
             m_typesBegin{ surface.types().size() },
             m_functionsBegin{ surface.functions().size() }
         {
@@ -969,11 +968,10 @@ namespace SeeDocs_App
             return { m_file, token.line + 1 };
         }
 
-        // By loose rules the comment above comes before the one on the line, and a hint that only
-        // names the declaration is a label - { TName } - which tells nothing; by strict rules the
-        // one on the line comes first, and its See reaches a footnote. Either reads the whole of
-        // the comment. The attributes a declaration is written under stand between it and the
-        // comment above.
+        // The comment above comes before the one on the line, and a hint that only names the
+        // declaration is a label - { TName } - which tells nothing; with the SeeLinks syntax a See
+        // ending the words reaches a footnote. Either comment is read whole. The attributes a
+        // declaration is written under stand between it and the comment above.
         Comment UnitReader::commentAt(std::size_t line, const std::wstring_view name)
         {
             if (m_attributeLine)
@@ -983,9 +981,7 @@ namespace SeeDocs_App
             std::wstring trailingWords;
             if (const std::optional<std::wstring_view> trailing = m_text.trailingComment(line))
             {
-                comment.trailing = m_looseHints
-                    ? withoutSeparators(commentWords(*trailing))
-                    : std::wstring{ commentWords(*trailing) };
+                comment.trailing = withoutSeparators(commentWords(*trailing));
                 const std::wstring_view written = m_text.line(line);
                 const auto start = static_cast<std::size_t>(trailing->data() - written.data());
                 trailingWords = wordsOf(line, line + 1 + m_text.continuationsOf(line), start);
@@ -994,24 +990,16 @@ namespace SeeDocs_App
             std::wstring aboveWords;
             if (first != line)
                 aboveWords = wordsOf(first, line, leadingBlanks(m_text.line(first)));
-            if (!m_looseHints)
-            {
-                std::wstring source = comment.trailing
-                    ? std::move(trailingWords)
-                    : std::move(aboveWords);
-                comment.reference = cutReference(source, name);
-                comment.text = std::move(source);
-                return comment;
-            }
             comment.text = aboveWords.empty() ? std::move(trailingWords) : std::move(aboveWords);
+            if (m_rules.seeLinks)
+                comment.reference = cutReference(comment.text, name);
             if (sameWord(comment.text, name))
                 comment.text.clear();
             return comment;
         }
 
         // The lines carrying on the trailing comment of the line above them are that line's, not
-        // the comment of the declaration under them. By strict rules a TODO is no words of the
-        // declaration's.
+        // the comment of the declaration under them.
         std::size_t UnitReader::gatherAbove(const std::size_t line, Comment& comment) const
         {
             std::size_t first = line;
@@ -1024,11 +1012,7 @@ namespace SeeDocs_App
             comment.aboveLine = first + 1;
             for (std::size_t i = first; i != line; ++i)
             {
-                const std::wstring_view words = commentWords(m_text.line(i));
-                if (m_looseHints)
-                    comment.above.push_back(withoutSeparators(words));
-                else if (!words.starts_with(k_todo))
-                    comment.above.emplace_back(words);
+                comment.above.push_back(withoutSeparators(commentWords(m_text.line(i))));
             }
             return first;
         }
@@ -1039,8 +1023,7 @@ namespace SeeDocs_App
             std::vector<std::wstring_view> lines;
             for (std::size_t i = first; i != end; ++i)
                 lines.push_back(m_text.line(i));
-            const HintRules rules = m_looseHints ? HintRules::Loose : HintRules::Strict;
-            return commentText(cutComment(lines, start, SourceLanguage::Pascal, rules));
+            return commentText(cutComment(lines, start, SourceLanguage::Pascal, m_rules.format));
         }
 
         // unit A.B.C platform; interface - the unit's name is its module's, and with :: for its
@@ -1815,8 +1798,7 @@ namespace SeeDocs_App
                     hasBody = false;
                 skipToSemicolon();
             }
-            // A hint under the header is a loose read's: the strict rules read the declaration's.
-            if (!hasBody || !peek() || !m_looseHints)
+            if (!hasBody || !peek())
                 return;
             Comment hint = hintBetween(code(m_at - 1).line, peek()->line);
             if (hint.text.empty())
@@ -1855,7 +1837,7 @@ namespace SeeDocs_App
                 for (; at < beforeLine && m_text.kindOf(at) == LineKind::CommentOnly; ++at)
                     run.push_back(m_text.line(at));
                 const CommentLines cut = cutComment(run, leadingBlanks(run.front()),
-                    SourceLanguage::Pascal, HintRules::Loose);
+                    SourceLanguage::Pascal, m_rules.format);
                 lines.insert(lines.end(), cut.begin(), cut.end());
             }
             comment.text = commentText(lines);

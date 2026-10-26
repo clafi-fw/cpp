@@ -204,10 +204,6 @@ namespace SeeDocs_App
                 case RunStyle::Bold:
                     text << TextOp::PushBold << run.text << TextOp::PopBold;
                     break;
-                case RunStyle::Missing:
-                    text << InkWell::redInk(InkGrade::Muted) << TextOp::PushItalic << run.text
-                        << TextOp::PopItalic << PopColor{};
-                    break;
             }
             if (linked)
                 text << PopLink{};

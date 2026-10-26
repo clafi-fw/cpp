@@ -17,7 +17,7 @@ SeeDocs [folder]                                opens the project the folder sta
 - **The folder** is a project's own, the one its `Project.cfg` stands in. For the framework, that
   is `Source/.seedocs`. SeeDocsCli takes the working directory when the folder is left out.
 - **A scan with `--out`** takes any folder, read as the one source folder of a project of ClaFi
-  modules.
+  modules in the SeeLinks syntax.
 - **`--time`** prints how long each step of the scan took, then the write of the database and the
   read of it that SeeDocs shows a scan from.
 - **The report** reads `file:line: level: text`, one line per finding, in file and line order.
@@ -31,8 +31,9 @@ A project reads its sources in one of two ways:
 - **As any C++ and Delphi.** This is for anyone else's code, such as a third-party library. Headers
   and units are read as well as modules, for what they declare, and nothing is checked.
 
-Two more choices stand apart from that: how a comment gives a declaration its hint (see
-[Hints](#hints)), and whether a hint edited in SeeDocs is written back into the sources.
+Three more choices stand apart from that: which comments give the hints, whether a `See` ending
+one links a footnote (see [Hints](#hints)), and whether a hint edited in SeeDocs is written back
+into the sources.
 
 ## Projects
 
@@ -52,7 +53,8 @@ Sources = [
     =[ Path = ../ClaFi/Source, Subfolders = true ]
 ]
 ReadAs = ClaFiModules
-LooseHints = false
+Hints = AnyComment
+SeeLinks = true
 EditHints = true
 Sidebar = [
     =[ Kind = AllTheApis, Name = All the APIs, Subgroup = false, Items = [ ] ]
@@ -67,8 +69,9 @@ Sidebar = [
 - **`Sources`** are the folders it reads, each with or without the folders under it.
 - **`ReadAs`** is how the sources are read: `AnyCppAndDelphi` for anyone's C++ and Delphi, the
   default, or `ClaFiModules`.
-- **`LooseHints`** takes the hint of every recognizable comment instead of following the strict
-  rules - see [Hints](#hints).
+- **`Hints`** is which comments give the hints: `AnyComment` for every recognizable comment, the
+  default, or `TripleSlash` for those opening with `///` - see [Hints](#hints).
+- **`SeeLinks`** reads the SeeLinks syntax, in which a `See` ending a comment links a footnote.
 - **`EditHints`** writes a hint edited on a page into its source.
 - **`Sidebar`** is what the project's tree and home list - see [The sidebar](#the-sidebar): an
   entry per item in reading order, a category's items under it as `Items`, as deep as they go.
@@ -76,8 +79,8 @@ Sidebar = [
   that does not state it has none. A sidebar listing nothing reads as the default, one All the
   APIs item without a subgroup.
 
-A project the window makes is written with `ReadAs = AnyCppAndDelphi` and `LooseHints`. A project
-stating neither reads any C++ and Delphi by the strict rules.
+A project the window makes reads any C++ and Delphi, every recognizable comment a hint, with no
+SeeLinks syntax. So does a project that states none of the three.
 
 ### Source paths
 
@@ -166,44 +169,40 @@ left out.
 
 ### Hints
 
-A declaration's hint is the whole of its comment, as written, read by one of two sets of rules,
-whichever way the sources are read. Each line of the comment is a line of the hint, with its marks
-taken off - the slashes, a block's opener and closer and the stars dressing its lines, and the blank
-after them.
+A declaration's hint is the whole of its comment, as written, whichever way the sources are read.
+Each line of the comment is a line of the hint, with its marks taken off - the slashes and the `!`
+and `<` of a doc comment, a block's opener and closer and the stars dressing its lines, and the
+blank after them.
 
+- The comment above a declaration comes before the one on its line, which is as often a tool's
+  directive as words. The one on the line gives the hint where the one above says nothing.
 - A comment on a line goes on in the comment lines under it that open in its column. Those lines are
   its own, not a comment above the declaration under them.
-- A TODO says nothing, down to the end of its paragraph or its block, and neither does a block's
-  opener or closer standing alone.
-- A line set in by four blanks is code, which stands apart from the words round it.
-- A line opening with a doc command - `@param`, `\sa` - starts a paragraph. An `@brief` opening the
-  comment is a mark.
-- A hint reads as a note's prose does: a paragraph runs to a blank line, a dashed line is an item,
-  `**` sets words bold and backticks set code.
-
-**The strict ClaFi rules**
-
-- A declaration's comment is the `//` comment on the declaration's own line, or else the `//` lines
-  touching it from above.
 - A class template's comment may sit between the `template` line and the `class` line, or above the
   `template` line.
-- A `See <note>#<anchor>` reference ending the comment is cut off into the entry's `Note`. The line
-  may break between the See and the note.
-- A declaration with no comment owes one, and its pages say so.
-
-**Every recognizable comment**
-
-- Any comment is a doc comment, however it is written: `//`, `///`, `//!`, `/** */`, `/*! */`, a
-  trailing `///<`.
-- The comment above a declaration comes before the one on its line, which is as often a tool's
-  directive as words.
-- A block opening under other comment lines starts a paragraph, and so does a line opening with a
-  doc tag such as `<param>`. The tags of a `<summary>` are marks.
-- A `See` in a comment is plain words.
+- A TODO says nothing, down to the end of its paragraph or its block, and neither does a block's
+  opener or closer standing alone.
 - A separator says nothing: a run of three or more of one mark - `---`, `===`, `***`, `~~~`, `###`,
   `___`, `+++`.
 - A hint that only names its declaration is none - a label such as `// ----- logger -----`.
-- A declaration owes no hint.
+- A line set in by four blanks is code, which stands apart from the words round it.
+- A block opening under other comment lines starts a paragraph, and so does a line opening with a
+  doc command - `@param`, `\sa` - or a doc tag such as `<param>`. An `@brief` or a `\brief` opening
+  a part is a mark, and so are the tags of a `<summary>`.
+- A hint reads as a note's prose does: a paragraph runs to a blank line, a dashed line is an item,
+  `**` sets words bold and backticks set code.
+
+**The hints format** says which comments give the hints:
+
+- **Every recognizable comment** - `AnyComment` - takes a comment however it is written: `//`,
+  `///`, `//!`, `/** */`, `/*! */`, a trailing `///<`.
+- **Only comments starting with `///`** - `TripleSlash` - takes a line comment that opens with three
+  slashes and no fourth, a trailing `///<` included. Any other comment says nothing, and parts the
+  paragraphs of those round it.
+
+**The SeeLinks syntax** is a choice of its own. In it, a `See <note>` or a `See <note>#<anchor>`
+ending a comment is cut off into the entry's `Note`, and the page shows that footnote. The line may
+break between the See and the note. Without it, a `See` is plain words.
 
 ### Any C++
 
@@ -292,17 +291,15 @@ lexer, as a module interface is read over the C++ one.
     `VER370`, `MSWINDOWS`, `WIN32` and `WIN64` among them.
   - An `{$I}` includes nothing.
 - **Comments** are any of `//`, `///`, `{ }`, `(* *)`.
-  - By the strict rules, a unit's hints are read as a C++ file's are.
-  - By every recognizable comment, the comment above comes first, as in C++, with the same rules for
-    continued lines, separators, tags and labels. A tag inside the words - `<see cref="X"/>` - and a
-    PasDoc `@link(X)` read as written.
-  - By every recognizable comment, a routine the interface gives no comment takes the comment
-    standing under its header in the implementation section, between the header and the `var`,
-    `const` or `begin` the routine opens with. A blank line or a directive among its lines parts its
-    paragraphs. The header is matched to the routine by its name and
-    the types it is a member of - `TOuter.TInner.Name` - in any case. Where the name is overloaded,
-    it is matched by how each parameter is passed and its type. A `forward` or an `external` routine
-    has no body, and the lines under its header are not its own.
+  - A unit's hints are read as a C++ file's are, by the same hints format and with the same rules
+    for continued lines, separators, tags and labels. A tag inside the words - `<see cref="X"/>` -
+    and a PasDoc `@link(X)` read as written.
+  - A routine the interface gives no hint takes the comment standing under its header in the
+    implementation section, between the header and the `var`, `const` or `begin` the routine opens
+    with. A blank line or a directive among its lines parts its paragraphs. The header is matched to
+    the routine by its name and the types it is a member of - `TOuter.TInner.Name` - in any case.
+    Where the name is overloaded, it is matched by how each parameter is passed and its type. A
+    `forward` or an `external` routine has no body, and the lines under its header are not its own.
 
 ## The database
 
@@ -322,7 +319,7 @@ says, it uses the same key: `Name`, `Kind`, `Signature`, `Hint`, `Type`, and a c
 ```
 Scanned = 2026-10-09T03:12:45Z
 ReadAs = ClaFiModules
-LooseHints = true
+SeeLinks = true
 Modules = [
     =[ Name, File, Root, Interface, Header, Language, Imports = [...], ExportedImports = [...] ]
 ]
@@ -351,9 +348,10 @@ Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, Fi
 ### The file and its modules
 
 - **`Scanned`** is when the scan that wrote the file ran, in UTC to the second.
-- **`ReadAs`** says how the scan read the sources, left out for any C++ and Delphi, and
-  **`LooseHints`** that it took every recognizable comment's hint. A hint written from SeeDocs keeps
-  both, since such an edit reads nothing of the sources beyond what it changes.
+- **`ReadAs`** says how the scan read the sources, left out for any C++ and Delphi. **`Hints`** says
+  which comments gave the hints, left out for every recognizable comment, and **`SeeLinks`** that
+  the scan read the SeeLinks syntax. A hint written from SeeDocs keeps all three, since such an edit
+  reads nothing of the sources beyond what it changes.
 - **`File`** is the path under its source folder, and **`Root`** that folder, counted from zero in
   the order the project names them.
 - **`Header`** marks a module that is a header, as a read of any C++ takes one. Its `Name` is its
@@ -605,8 +603,9 @@ How the rows behave:
 #### Scan options and Edit hints
 
 - **Scan options** asks whether the sources are read as any C++ and Delphi or as ClaFi modules, and
-  whether hints come from every recognizable comment or follow the strict ClaFi rules. A new project
-  starts on the first of each.
+  whether hints come from every recognizable comment or only from comments starting with `///`. A
+  new project starts on the first of each. Use SeeLinks syntax, under them, reads a `See` ending a
+  comment as a link to a footnote, and starts unticked.
 - **Edit hints** asks whether a hint edited on a page is not written at all, or written directly
   into the source, with no undo.
 
@@ -736,9 +735,8 @@ A page is a column of controls:
 - **A section per expander.** A section's heading says what the section is. How many elements it
   holds is the heading's tooltip.
 
-Where the surface states no hint, the page says so in place of the words, so what the documentation
-still lacks reads off the preview. Hints read from every recognizable comment owe nothing, and their
-pages leave a missing one empty.
+Where a hint can be typed in and the surface states none, the page shows `no hint`, muted, in its
+place. Anywhere else a page leaves a missing hint empty.
 
 A page's trees start closed, and a node's rows are built the first time it opens.
 
@@ -917,7 +915,7 @@ a variable's declaration stand as written, coloured as Pascal.
 ### Editing hints and footnotes
 
 **Footnotes are edited where they stand, in every project.** Hints are edited where the project
-writes them into the sources, by either set of rules, in C++ and in Delphi alike.
+writes them into the sources, in either hints format, in C++ and in Delphi alike.
 
 #### Editing a hint
 
@@ -926,9 +924,9 @@ writes them into the sources, by either set of rules, in C++ and in Delphi alike
 - **A hint cell** opens its editor with F2, Enter or a double click, on the comment's own words -
   each paragraph and each item on one line, its types unlinked, a missing hint empty.
 - **The hint under a page's title**, and the one under each declaration of a method page, are typed
-  into where they stand, a missing one an empty box. Ctrl+click follows a link there, and Escape
-  puts back the words the page shows. The bold, the code, the items and the paragraphs a box shows
-  are written back as their marks.
+  into where they stand, a missing one an empty box that shows `no hint`. Ctrl+click follows a link
+  there, and Escape puts back the words the page shows. The bold, the code, the items and the
+  paragraphs a box shows are written back as their marks.
 - **Enter writes the words** into the comment the hint is read from, and leaving one of those boxes
   writes them too. Shift+Enter breaks the line, which starts a paragraph. The `See` the comment
   ends with is kept. Words the file would not give back as written - a TODO, a separator, a `See`
@@ -937,13 +935,15 @@ writes them into the sources, by either set of rules, in C++ and in Delphi alike
 - **The comment's marks.** The words are written in the comment's own marks - `//`, `///`, a
   block's opener, stars and closer, `{ }`, `(* *)`. A paragraph that reads as it did keeps its
   lines, and any other is broken at 100 columns again, opening with the `@brief` or the `<summary>`
-  it opened with. The lines saying no words - a TODO, a tag, an opener or a closer alone - stay
-  where they stood. Words put into a comment that says none open it, or take a `//` line under it
-  where it has no room - a separator's block. A comment written new is a `//` one.
+  it opened with. The lines saying no words - a TODO, a tag, an opener or a closer alone, a comment
+  the hints format does not take - stay where they stood. Words put into a comment that says none
+  open it, on `///` lines of their own. A comment written new is a `///` one, and `///<` on a C++
+  declaration's line.
 - **The comment's place.** Words that fit one line stand on the declaration's line while the whole
   line fits 100 columns, lined up with the comments of the lines of code round it - never for a
-  class, a struct or an enum, a declaration under Delphi attributes, or a comment above that says
-  more than its words, such as a TODO. Any other words stand above the declaration. A comment under
+  class, a struct or an enum, a declaration under Delphi attributes, a line that ends in a comment
+  saying nothing, or a comment above that says more than its words, such as a TODO. Any other words
+  stand above the declaration. A comment under
   a Delphi routine's header in the implementation keeps its place.
 - **Overloads and overrides.** A method's row writes the overload whose words it shows. An override
   that shows its base's words writes the base's comment, and a Delphi property declared again that

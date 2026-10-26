@@ -101,7 +101,7 @@ namespace ClaFi::Controls
         void toggleExpanded() { setExpanded(!expanded()); }
         bool expanded() const { return m_expanded; }
         float expandedFactor() const { return m_expandedFactor; }
-        void setExpanded(bool value);
+        void setExpanded(bool value);   // the user's opening scrolls to the section, this does not
         [[nodiscard]] ExpanderViewMode viewMode() const { return m_viewMode; }
         // The header shows the label in every look, so a host spells the header text one way and
         // the button stays a target of its own.
@@ -148,6 +148,7 @@ namespace ClaFi::Controls
         ExpanderButton& createChevronButton();
         void createDividerLine();
         void paintButton(PaintIconEvent&) const;
+        void setExpandedByUser(bool value);
         void scrollSectionIntoView() const;
         [[nodiscard]] bool squaresBottomCorners() const;
         // The link under the point, as the label is drawn; nothing where none stands.
@@ -224,7 +225,7 @@ namespace ClaFi::Controls
     {
         m_button.connectEvent<PaintIconEvent>(this, &ExpanderHeader::paintButton);
         m_button.onClick([this](ClickEvent& event) {
-            toggleExpanded();
+            setExpandedByUser(!m_expanded);
             // In the tree look the header is a row of the view around it, and a click climbing
             // past the button would pick that row. The button opens the node and nothing more.
             if (m_viewMode == ExpanderViewMode::TreeNode)
@@ -258,11 +259,7 @@ namespace ClaFi::Controls
             m_expandedFactor = newValue;
         ToggleExpandedEvent event{ m_expanded };
         emitEvent(event);
-        if (m_expanded)
-        {
-            scrollSectionIntoView();
-        }
-        else if (travel != 0.0f)
+        if (!m_expanded && travel != 0.0f)
         {
             // A held header goes home on collapse, and home is above the window: the strip under
             // the pointer would vanish and everything below it jump up. Scrolling back by the
@@ -305,7 +302,7 @@ namespace ClaFi::Controls
     void ExpanderHeader::nestedDoubleClick(NestedDoubleClickEvent& event)
     {
         PanelBase::nestedDoubleClick(event);
-        toggleExpanded();
+        setExpandedByUser(!m_expanded);
     }
 
     // Counted in the floor only where there is one, the way the padding is.

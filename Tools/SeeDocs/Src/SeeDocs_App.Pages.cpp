@@ -242,11 +242,6 @@ namespace SeeDocs_App
             return { .text = std::move(text), .style = RunStyle::Bold };
         }
 
-        [[nodiscard]] Run missing(std::wstring text)
-        {
-            return { .text = std::move(text), .style = RunStyle::Missing };
-        }
-
         // Where a declaration's comment is written, for a page that lets its words be edited.
         [[nodiscard]] CommentSite siteOf(const Comment& comment, const Place& place,
             std::wstring name, const bool opensScope = false)
@@ -375,16 +370,15 @@ namespace SeeDocs_App
             }
         }
 
-        // The runs with the types they name linked; a run already linked, a muted one and a
-        // missing one stand as they are.
+        // The runs with the types they name linked; a run already linked and a muted one stand
+        // as they are.
         [[nodiscard]] Runs linkNames(const Surface& surface, const Runs& runs,
             const std::wstring_view scope, const Names& leftOut = {})
         {
             Runs linked;
             for (const Run& run : runs)
             {
-                const bool asIs = !run.link.empty() || run.style == RunStyle::Muted
-                    || run.style == RunStyle::Missing;
+                const bool asIs = !run.link.empty() || run.style == RunStyle::Muted;
                 if (asIs)
                     linked.push_back(run);
                 else
@@ -597,17 +591,13 @@ namespace SeeDocs_App
         }
 
         // **The hint read as a note's prose is**, in a scope: a paragraph to a line, each line of
-        // code set in by its fence, each item behind its bullet. A tree read by loose rules owes
-        // no hint, so one it does not give is nothing rather than missing.
+        // code set in by its fence, each item behind its bullet. A comment that gives none gives
+        // no runs.
         [[nodiscard]] Runs hintRuns(const Surface& surface, const Comment& comment,
             const std::wstring_view scope)
         {
             if (comment.text.empty())
-            {
-                if (surface.hintRules() == HintRules::Loose)
-                    return {};
-                return { missing(std::wstring{ k_noHint }) };
-            }
+                return {};
             Runs runs;
             const auto addLine = [&runs](const Runs& words) {
                 if (!runs.empty())
@@ -2634,19 +2624,13 @@ namespace SeeDocs_App
         }
 
         // What stands under a path at every depth, counted, each figure linked to its list:
-        // controls, types, functions, modules, the folders, and under the strict rules the types
-        // without a hint.
-        void addHoldings(Page& page, const Surface& surface, const ContentsFolders& folders,
-            const std::wstring_view path)
+        // controls, types, functions, modules and the folders.
+        void addHoldings(Page& page, const ContentsFolders& folders, const std::wstring_view path)
         {
             const Holdings holdings = holdingsOf(folders, path);
             const std::size_t controls = static_cast<std::size_t>(std::ranges::count_if(
                 holdings.types, [](const Type* type) {
                     return type->isControl;
-                }));
-            const std::size_t withoutHint = static_cast<std::size_t>(std::ranges::count_if(
-                holdings.types, [](const Type* type) {
-                    return type->comment.text.empty();
                 }));
             Runs figures = {
                 figureOf(controls, k_controlWord, path, ListKind::Controls),
@@ -2663,11 +2647,6 @@ namespace SeeDocs_App
                 figures.push_back(figureOf(holdings.folders.size(), k_folderWord, path,
                     ListKind::Folders));
             }
-            if (withoutHint != 0 && surface.hintRules() == HintRules::Strict)
-            {
-                figures.push_back(muted(std::wstring{ k_separator }));
-                figures.push_back(missing(countOf(withoutHint, L"type") + L" without a hint"));
-            }
             addFact(page, L"holds", std::move(figures));
         }
 
@@ -2677,7 +2656,7 @@ namespace SeeDocs_App
         void addFolderContents(Page& page, const Surface& surface, Notes& notes,
             const ContentsFolders& folders, const std::wstring_view path)
         {
-            addHoldings(page, surface, folders, path);
+            addHoldings(page, folders, path);
             addFolderSection(page, folders, path);
             const auto own = std::ranges::find_if(folders, [path](const ContentsFolder& folder) {
                 return folder.path == path;

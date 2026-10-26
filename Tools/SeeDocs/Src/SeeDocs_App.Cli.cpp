@@ -123,14 +123,15 @@ namespace SeeDocs_App
         }
 
         // The project the folder stands for; for a folder that stands for none, one reading it
-        // as ClaFi modules, with no folder of its own.
+        // as ClaFi modules in the SeeLinks syntax, with no folder of its own.
         [[nodiscard]] Project projectOf(const std::filesystem::path& folder)
         {
             if (std::optional<Project> project = readProject(folder))
                 return std::move(*project);
             return Project{
                 .sources = { { .written = folder.wstring() } },
-                .mode = ScanMode::ClaFiModules
+                .mode = ScanMode::ClaFiModules,
+                .hints = { .format = HintFormat::AnyComment, .seeLinks = true }
             };
         }
 

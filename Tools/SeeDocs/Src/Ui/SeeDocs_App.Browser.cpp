@@ -706,17 +706,17 @@ namespace SeeDocs_App::Ui
                 shown->contentsTree, opened[i]);
         }
         refreshPageTree();
-        const BrowserPage* keep = nullptr;
-        for (BrowserTab& tab : tabs())
-        {
-            if (!tab.selected() || !tab.page())
-                continue;
-            const BrowserPage& page = static_cast<const BrowserPage&>(*tab.page());
-            const Target target = resolve(page.pageData());
-            if (target.project == shown && target.isOwnPage())
-                keep = &page;
-        }
-        rebuildPages(shown, keep);
+        rebuildPages(shown, selectedOwnPage(*shown));
+    }
+
+    // **The selected tab's page of the project itself stands**, as in rebindProject. The surface
+    // and the sidebar stand too, so the trees, the contents and the search index are left alone.
+    void SurfaceBrowser::rebuildProjectPages(const OpenProject& open)
+    {
+        const ShownProject* shown = projectOf(open);
+        if (!shown)
+            return;
+        rebuildPages(shown, selectedOwnPage(*shown));
     }
 
     // **The selected tab's sidebar page stands**, being what asked, and reads the items back for
@@ -2024,6 +2024,20 @@ namespace SeeDocs_App::Ui
         if (target.isRoot() || (target.searching && !target.project))
             return true;
         return project && target.project == project;
+    }
+
+    const BrowserPage* SurfaceBrowser::selectedOwnPage(const ShownProject& shown)
+    {
+        for (BrowserTab& tab : tabs())
+        {
+            if (!tab.selected() || !tab.page())
+                continue;
+            const BrowserPage& page = static_cast<const BrowserPage&>(*tab.page());
+            const Target target = resolve(page.pageData());
+            if (target.project == &shown && target.isOwnPage())
+                return &page;
+        }
+        return nullptr;
     }
 
     // The selected tab's page is built again where it stands; any other tab's page is built

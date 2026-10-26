@@ -90,7 +90,7 @@ namespace ClaFi::Controls
         }
         else if (m_viewMode != ExpanderViewMode::TreeNode)
         {
-            toggleExpanded();
+            setExpandedByUser(!m_expanded);
         }
         PanelBase::click(event);
     }
@@ -148,7 +148,7 @@ namespace ClaFi::Controls
             const bool opens = event.key == Keys::Right;
             const bool acts = opens != m_expanded;
             if (acts)
-                setExpanded(opens);
+                setExpandedByUser(opens);
             if (acts || m_viewMode != ExpanderViewMode::TreeNode)
             {
                 event.handled = true;
@@ -174,6 +174,17 @@ namespace ClaFi::Controls
             textFormat(),
             m_hoveredLink
         );
+    }
+
+    // **Only an opening the user makes brings the section into view.** One made from code - a tree
+    // built again with its nodes open, Expand all, a reveal - leaves the view where it stands, and
+    // asks for a scroll of its own where it wants one.
+    void ExpanderHeader::setExpandedByUser(const bool value)
+    {
+        const bool wasExpanded = m_expanded;
+        setExpanded(value);
+        if (m_expanded && !wasExpanded)
+            scrollSectionIntoView();
     }
 
     // Asked the way paintText draws the label: the same box, and the point measured from where

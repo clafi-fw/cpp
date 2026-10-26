@@ -279,6 +279,8 @@ namespace SeeDocs_App::Ui
         void showProject(const OpenProject&, HomeTab);   // in the tab the home tab says
         // Shows the project again over its surface as it now reads, the tabs standing.
         void rebindProject(OpenProject&);
+        // Shows the project's pages again over its properties as they now read, the trees standing.
+        void rebuildProjectPages(const OpenProject&);
         // Shows the project again over its sidebar as it now reads, the surface standing: every
         // tree's node and the pages the sidebar is read into.
         void rebindSidebar(OpenProject&);
@@ -419,7 +421,8 @@ namespace SeeDocs_App::Ui
             void readSidebar();   // where the folders stand, off the sidebar as it now reads
             // Puts up a notice that the source is gone, Rescan its answer. See README
             void noteGone(const SourceFile&, bool rootRead);
-            // A hint read by the strict rules from C++, where the project edits hints directly.
+            // Whether the hint can be written: the project edits hints directly, and its surface
+            // was read by the rules it asks.
             [[nodiscard]] bool writesHint(const CommentSite&) const override;
             [[nodiscard]] std::wstring writeHint(const CommentSite&,
                 std::wstring_view hint) override;
@@ -551,6 +554,8 @@ namespace SeeDocs_App::Ui
         // Whether a change to the project reaches the page: one in the project, or the root,
         // which lists the projects. Null reaches the root alone.
         [[nodiscard]] static bool reaches(const Target&, const ShownProject*);
+        // The selected tab's page, where it is one of the project's own.
+        [[nodiscard]] const BrowserPage* selectedOwnPage(const ShownProject&);
         // Drops every page the project reaches but the one kept, and shows the selected tab's
         // again.
         void rebuildPages(const ShownProject*, const BrowserPage* keep);

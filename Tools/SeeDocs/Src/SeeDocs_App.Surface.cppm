@@ -14,11 +14,20 @@ namespace SeeDocs_App
         ClaFiModules       // written to the declaration routine and checked against it
     };
 
-    // Which comment gives a declaration its hint. See README
-    export enum class HintRules
+    // Which comments give a declaration its hint. See README
+    export enum class HintFormat
     {
-        Strict,   // the ClaFi rules: the comment on its line, else the first line above it
-        Loose     // every recognizable comment: the brief of a doc comment, its lines run on
+        AnyComment,    // every recognizable comment
+        TripleSlash    // only comments opening with ///
+    };
+
+    // How a tree's comments are read into hints. See README
+    export struct HintRules
+    {
+        HintFormat format{ HintFormat::AnyComment };
+        bool seeLinks{ false };   // a See ending a comment names a footnote and leaves the hint
+
+        [[nodiscard]] bool operator==(const HintRules&) const = default;
     };
 
     // One step of a scan and how long it took; a scan's steps stand in the order they ran.
@@ -411,7 +420,7 @@ namespace SeeDocs_App
         void setScanned(const ScanStamp& value) { m_scanned = value; }
         [[nodiscard]] ScanMode mode() const { return m_mode; }   // how the tree was read
         void setMode(const ScanMode value) { m_mode = value; }
-        // How its comments gave the hints - a tree read by loose rules owes none.
+        // How its comments gave the hints.
         [[nodiscard]] HintRules hintRules() const { return m_hintRules; }
         void setHintRules(const HintRules value) { m_hintRules = value; }
 
@@ -505,7 +514,7 @@ namespace SeeDocs_App
         EnclosedIncludes m_enclosedIncludes;
         ScanStamp m_scanned{};
         ScanMode m_mode{ ScanMode::AnyCppAndDelphi };
-        HintRules m_hintRules{ HintRules::Strict };
+        HintRules m_hintRules{};
         std::unordered_map<std::wstring, std::size_t> m_byQualifiedName;
         std::unordered_map<std::wstring, std::vector<std::size_t>> m_byBareName;
         std::unordered_map<std::wstring, SourceLanguage> m_languageByModule;

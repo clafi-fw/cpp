@@ -34,7 +34,7 @@ namespace ClaFi::Controls::Grids
         RowGroupSpan(const CreateParams&, GridDescriptor&, Collapsible, Args&&...);
         // Whether the group's rows are showing, as they always are in a group that cannot fold.
         [[nodiscard]] bool expanded() const { return m_expanded; }
-        void setExpanded(bool value);
+        void setExpanded(bool value);   // the user's opening scrolls to the group, this does not
         void toggleExpanded() { setExpanded(!expanded()); }
         [[nodiscard]] float expandedFactor() const { return m_expandedFactor; }
     protected:
@@ -49,6 +49,7 @@ namespace ClaFi::Controls::Grids
         // A double click on the mark is two presses of it, and one on a blank opens the group.
         void nestedDoubleClick(NestedDoubleClickEvent&) override;
     private:
+        void setExpandedByUser(bool value);
         void createMark();
         // The cell the mark leads: the first column this span fills, left to right.
         [[nodiscard]] const Column* markColumn() const;

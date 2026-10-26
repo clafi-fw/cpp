@@ -239,23 +239,19 @@ namespace SeeDocs_App
                 to.commands[i] = std::move(from.commands[i]);
         }
 
+        // What stands where a hint can be typed in and the comment states none.
+        [[nodiscard]] Runs noHintRuns()
+        {
+            return { Run{ .text = std::wstring{ k_noHint }, .style = RunStyle::Muted } };
+        }
+
         // A hint the comment does not state is the box's placeholder, so typing starts on an
         // empty box.
         [[nodiscard]] PlaceHolderText noHintText()
         {
             PlaceHolderText text;
-            const Run missing{ .text = std::wstring{ k_noHint }, .style = RunStyle::Missing };
-            writeRuns(text, { missing });
+            writeRuns(text, noHintRuns());
             return text;
-        }
-
-        // The words a hint box holds: none for a missing hint, which the placeholder shows.
-        [[nodiscard]] Text hintWords(const Runs& runs)
-        {
-            const bool missing = runs.size() == 1 && runs.front().style == RunStyle::Missing;
-            if (missing)
-                return {};
-            return textOf(runs);
         }
 
         // A page wears the mark its tree row does - a folder's the folder, a header's the
@@ -684,9 +680,10 @@ namespace SeeDocs_App
         });
     }
 
+    // A page with no hint has no box for one, unless a hint can be typed in there.
     void PageView::addLead()
     {
-        if (m_page.lead.empty())
+        if (m_page.lead.empty() && !writesHint(m_page.leadSite))
             return;
         HintBox& box = m_pageBox.body().add<HintBox>(
             ReadOnly::Yes,
@@ -698,7 +695,7 @@ namespace SeeDocs_App
         m_parts.push_back(&box);
         anchorItem(std::wstring{ k_leadAnchor }, {}, box);
         m_renders.push_back([this, &box]() {
-            box.showWords(hintWords(m_page.lead));
+            box.showWords(textOf(m_page.lead));
         });
     }
 
@@ -1040,14 +1037,14 @@ namespace SeeDocs_App
                 writeSignature(text, signature.code, true, signature.language);
                 code.text() = text;
             });
-            if (!signature.lead.empty())
+            if (!signature.lead.empty() || writesHint(signature.site))
             {
                 HintBox& lead = entry.add<HintBox>(ReadOnly::Yes, noHintText(), indent);
                 connectLinks(lead);
                 connectHintBox(lead, signature.site);
                 anchorItem(name, {}, lead);
                 m_renders.push_back([&lead, &signature]() {
-                    lead.showWords(hintWords(signature.lead));
+                    lead.showWords(textOf(signature.lead));
                 });
             }
             if (signature.excerpt.has_value())
@@ -1187,36 +1184,42 @@ namespace SeeDocs_App
                     event.stopPropagation();
                 });
             }
-            gridRow.onGetCellText([&row, anchor, spanColumn](Grids::GetCellTextEvent& event) {
-                TagValue column = event.column().tag().value;
-                if (column == k_markColumn)
-                {
-                    if (anchor.has_value())
+            // An empty hint cell that a hint can be typed in shows the placeholder.
+            const TagValue placeholderColumn = writesHint(row.site) ? hintColumn : k_noColumn;
+            gridRow.onGetCellText(
+                [&row, anchor, spanColumn, placeholderColumn](Grids::GetCellTextEvent& event) {
+                    TagValue column = event.column().tag().value;
+                    if (column == k_markColumn)
                     {
-                        event.text() << PushLink{ std::wstring{ k_anchorPrefix } + *anchor }
-                            << InkColor::Spot << k_mark << PopColor{} << PopLink{};
+                        if (anchor.has_value())
+                        {
+                            event.text() << PushLink{ std::wstring{ k_anchorPrefix } + *anchor }
+                                << InkColor::Spot << k_mark << PopColor{} << PopLink{};
+                        }
+                        return;
                     }
-                    return;
-                }
-                if (column == spanColumn)
-                    column = row.cells.size() - 1;
-                if (column >= row.cells.size())
-                    return;
-                if (column == 0)
-                {
-                    const std::optional<RowIcon> icon = iconOf(row);
-                    if (icon.has_value())
-                        event.text() << rowIcon(*icon) << k_cellIconGap;
-                }
-                writeRuns(event.text(), row.cells[column]);
-                // A qualifier stands at its cell's end, as a tree row's kind word does.
-                if (column < row.qualifiers.size() && !row.qualifiers[column].empty())
-                {
-                    event.text() << FlexSpace{ k_kindGap } << TextStyle::SubBody;
-                    writeRuns(event.text(), row.qualifiers[column]);
-                    event.text() << PopTextStyle{};
-                }
-            });
+                    if (column == spanColumn)
+                        column = row.cells.size() - 1;
+                    if (column >= row.cells.size())
+                        return;
+                    if (column == 0)
+                    {
+                        const std::optional<RowIcon> icon = iconOf(row);
+                        if (icon.has_value())
+                            event.text() << rowIcon(*icon) << k_cellIconGap;
+                    }
+                    if (column == placeholderColumn && row.cells[column].empty())
+                        writeRuns(event.text(), noHintRuns());
+                    else
+                        writeRuns(event.text(), row.cells[column]);
+                    // A qualifier stands at its cell's end, as a tree row's kind word does.
+                    if (column < row.qualifiers.size() && !row.qualifiers[column].empty())
+                    {
+                        event.text() << FlexSpace{ k_kindGap } << TextStyle::SubBody;
+                        writeRuns(event.text(), row.qualifiers[column]);
+                        event.text() << PopTextStyle{};
+                    }
+                });
             if (row.site.has_value() && m_writer)
             {
                 if (hintColumn != k_noColumn && writesHint(row.site))

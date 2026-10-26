@@ -17,6 +17,7 @@ namespace SeeDocs_App
         constexpr std::string_view k_byteOrderMark = "\xEF\xBB\xBF";
         constexpr std::wstring_view k_noteExtension = L".md";
         constexpr std::wstring_view k_lineComment = L"//";
+        constexpr std::wstring_view k_newMarks = L"///";   // what a comment written new opens with
         constexpr std::wstring_view k_blockComment = L"/*";
         constexpr std::wstring_view k_blockCommentEnd = L"*/";
         constexpr std::wstring_view k_braceComment = L"{";
@@ -296,7 +297,7 @@ namespace SeeDocs_App
         // marks, a TODO, a doc command or tag.
         [[nodiscard]] bool opensMarkup(const std::wstring_view word)
         {
-            if (word == L"-" || word.starts_with(k_todo) || opensPart(word, HintRules::Loose))
+            if (word == L"-" || word.starts_with(k_todo) || opensPart(word))
                 return true;
             return !word.empty() && word.find_first_not_of(L'#') == std::wstring_view::npos;
         }
@@ -535,26 +536,22 @@ namespace SeeDocs_App
 
         using LineTokens = std::vector<LineToken>;
 
-        // **A comment line is one holding comments alone**: by strict C++ rules a // comment, by
-        // loose rules and in Delphi any, a blank line inside a block included. A comment ending a
-        // line of code is the line's last run - in C++ one that is not its first, opening with //,
-        // or by loose rules with /*.
+        // **A comment line is one holding comments alone**, a blank line inside a block included. A
+        // comment ending a line of code is the line's last run - in C++ one that is not its first,
+        // opening with // or /*.
         [[nodiscard]] SourceLine sourceLineOf(const LineTokens& tokens, const bool insideComment,
-            const SourceLanguage language, const HintRules rules)
+            const SourceLanguage language)
         {
-            const bool everyComment = language == SourceLanguage::Pascal
-                || rules == HintRules::Loose;
             SourceLine line{ .carried = insideComment };
             if (tokens.empty())
             {
-                line.kind = insideComment && everyComment ? LineKind::CommentOnly : LineKind::Blank;
+                line.kind = insideComment ? LineKind::CommentOnly : LineKind::Blank;
                 return line;
             }
             const bool commentsOnly = std::ranges::all_of(tokens, [](const LineToken& token) {
                 return token.comment;
             });
-            const bool counts = tokens.front().lineComment || everyComment;
-            line.kind = commentsOnly && counts ? LineKind::CommentOnly : LineKind::Code;
+            line.kind = commentsOnly ? LineKind::CommentOnly : LineKind::Code;
             const bool anyDirective = std::ranges::any_of(tokens, [](const LineToken& token) {
                 return token.directive;
             });
@@ -572,8 +569,7 @@ namespace SeeDocs_App
                 line.trailing = tail.start;
                 return line;
             }
-            const bool opens = tail.lineComment
-                || (rules == HintRules::Loose && tail.blockOpener);
+            const bool opens = tail.lineComment || tail.blockOpener;
             if (opens && tokens.size() > 1)
                 line.trailing = tail.start;
             return line;
@@ -598,7 +594,7 @@ namespace SeeDocs_App
             return std::min(i + 1, text.size());
         }
 
-        [[nodiscard]] SourceLines cppLines(const FileLines& file, const HintRules rules)
+        [[nodiscard]] SourceLines cppLines(const FileLines& file)
         {
             SourceLines result;
             bool inBlock = false;
@@ -657,7 +653,7 @@ namespace SeeDocs_App
                     else
                         ++i;
                 }
-                result.push_back(sourceLineOf(tokens, insideComment, SourceLanguage::Cpp, rules));
+                result.push_back(sourceLineOf(tokens, insideComment, SourceLanguage::Cpp));
             }
             return result;
         }
@@ -750,16 +746,15 @@ namespace SeeDocs_App
                     tokens.push_back({ .start = i });
                     i = current == L'\'' ? pascalStringEnd(text, i) : i + 1;
                 }
-                result.push_back(sourceLineOf(tokens, insideComment, SourceLanguage::Pascal,
-                    HintRules::Strict));
+                result.push_back(sourceLineOf(tokens, insideComment, SourceLanguage::Pascal));
             }
             return result;
         }
 
         [[nodiscard]] SourceLines sourceLinesOf(const FileLines& file,
-            const SourceLanguage language, const HintRules rules)
+            const SourceLanguage language)
         {
-            return language == SourceLanguage::Pascal ? pascalLines(file) : cppLines(file, rules);
+            return language == SourceLanguage::Pascal ? pascalLines(file) : cppLines(file);
         }
 
         // The comment lines under a line that carry on the comment ending it: those opening in its
@@ -902,13 +897,13 @@ namespace SeeDocs_App
 
         [[nodiscard]] FoundComment cutFound(const FileLines& file, const CommentPlace place,
             const std::size_t first, const std::size_t end, const std::size_t start,
-            const SourceLanguage language, const HintRules rules)
+            const SourceLanguage language, const HintFormat format)
         {
             std::vector<std::wstring_view> views;
             for (std::size_t i = first; i != end; ++i)
                 views.push_back(file.lines[i].text);
             FoundComment found{ .place = place, .first = first };
-            found.lines = cutComment(views, start, language, rules);
+            found.lines = cutComment(views, start, language, format);
             found.words = commentText(found.lines);
             return found;
         }
@@ -916,7 +911,7 @@ namespace SeeDocs_App
         // **A Delphi routine's body comment** runs from its first comment line down over blank
         // lines and directives to its last comment line; those lines part its paragraphs.
         [[nodiscard]] std::optional<FoundComment> bodyComment(const FileLines& file,
-            const SourceLines& lines, const std::size_t from)
+            const SourceLines& lines, const std::size_t from, const HintFormat format)
         {
             if (from >= lines.size() || lines[from].kind != LineKind::CommentOnly)
                 return std::nullopt;
@@ -949,7 +944,7 @@ namespace SeeDocs_App
                 while (end <= last && lines[end].kind == LineKind::CommentOnly)
                     ++end;
                 const FoundComment run = cutFound(file, CommentPlace::Body, at, end,
-                    leadingBlanks(file.lines[at].text), SourceLanguage::Pascal, HintRules::Loose);
+                    leadingBlanks(file.lines[at].text), SourceLanguage::Pascal, format);
                 found.lines.insert(found.lines.end(), run.lines.begin(), run.lines.end());
                 at = end;
             }
@@ -968,9 +963,9 @@ namespace SeeDocs_App
             bool attributed{ false };   // Delphi attributes stand on the lines over it
         };
 
-        // **Strict rules read the comment on the line first, loose ones the comment above** when
-        // it says any words - as the readers do. A C++ declaration with no comment right above it
-        // reads the one above its template head.
+        // **The comment above comes before the one on the line** when it says any words, as the
+        // readers take them; a comment on the line that says none is no place for words. A C++
+        // declaration with no comment right above it reads the one above its template head.
         [[nodiscard]] std::optional<FoundDeclaration> locate(const FileLines& file,
             const SourceLines& lines, const CommentSite& site, const SourceLanguage language,
             const HintRules rules)
@@ -1003,7 +998,7 @@ namespace SeeDocs_App
                 found.code = withoutTrailingBlanks(std::wstring_view{ text }.substr(0, start));
                 const std::size_t end = line + 1 + continuationsOf(file, lines, line);
                 trailing = cutFound(file, CommentPlace::Trailing, line, end, start, language,
-                    rules);
+                    rules.format);
             }
             else
             {
@@ -1012,7 +1007,7 @@ namespace SeeDocs_App
             if (site.comment && site.comment->readAt != 0)
             {
                 const std::optional<FoundComment> body = bodyComment(file, lines,
-                    site.comment->readAt - 1);
+                    site.comment->readAt - 1, rules.format);
                 if (!body)
                     return std::nullopt;
                 found.comment = *body;
@@ -1033,16 +1028,14 @@ namespace SeeDocs_App
                 if (first != end)
                 {
                     above = cutFound(file, CommentPlace::Above, first, end,
-                        leadingBlanks(file.lines[first].text), language, rules);
+                        leadingBlanks(file.lines[first].text), language, rules.format);
                 }
             }
             const auto says = [](const std::optional<FoundComment>& comment) {
                 return comment && !comment->words.empty();
             };
-            const bool fromLine = rules == HintRules::Strict
-                ? trailing.has_value()
-                : !says(above) && (says(trailing) || !above);
-            if (fromLine && trailing)
+            const bool fromLine = !says(above) && says(trailing);
+            if (fromLine)
             {
                 found.comment = *trailing;
                 found.aboveTaken = above.has_value();
@@ -1074,7 +1067,8 @@ namespace SeeDocs_App
             return result;
         }
 
-        // What a reader takes from a comment: the hint, and the See cut off it by strict rules.
+        // What a reader takes from a comment: the hint, and the See cut off it in the SeeLinks
+        // syntax.
         struct ReadWords
         {
             std::wstring text;
@@ -1082,19 +1076,18 @@ namespace SeeDocs_App
             std::wstring see;   // the See as written
         };
 
-        // By loose rules words that only name the declaration are a label, which says nothing.
+        // Words that only name the declaration are a label, which says nothing.
         [[nodiscard]] ReadWords readOf(const FoundComment& comment, const std::wstring_view name,
             const SourceLanguage language, const HintRules rules)
         {
             ReadWords read{ .text = comment.words };
             if (comment.place == CommentPlace::None || comment.place == CommentPlace::Body)
                 return read;
-            if (rules == HintRules::Strict)
+            if (rules.seeLinks)
             {
                 read.reference = cutReference(read.text, name);
                 if (read.reference)
                     read.see = folded(std::wstring_view{ comment.words }.substr(read.text.size()));
-                return read;
             }
             const std::wstring_view bare = bareName(name);
             const bool label = language == SourceLanguage::Pascal
@@ -1581,33 +1574,18 @@ namespace SeeDocs_App
                 }
             };
 
-            // **Words put into a comment that says none open its first line comment**, or stand
-            // under a block's opener standing alone - a TODO they went after would carry them on
-            // as its own. A comment with room for neither, such as a separator's block, takes a
-            // line comment of their own under it.
-            std::size_t prefixEnd = before.empty() ? lines.size() : before.front().first;
-            std::size_t firstSegment = before.empty() ? segments.size() : segmentOf[prefixEnd];
-            for (std::size_t i = 0; before.empty() && i != segments.size(); ++i)
+            // **Words put into a comment that says none open it**, on lines of their own in the
+            // marks a new comment takes - a TODO they went after would carry them on as its own.
+            const std::size_t prefixEnd = before.empty() ? 0 : before.front().first;
+            const std::size_t firstSegment = before.empty()
+                ? segments.size()
+                : segmentOf[prefixEnd];
+            if (before.empty())
             {
-                const CommentLine& opening = lines[segments[i].first];
-                const std::optional<Marks> marks = leadMarks(opening.lead);
-                if (!marks)
-                    continue;
-                const bool lineRun = marks->closer.empty();
-                const bool openerAlone = !lineRun && !opening.speaks && opening.tail.empty();
-                if (lineRun || openerAlone)
-                {
-                    prefixEnd = segments[i].first + (openerAlone ? 1 : 0);
-                    firstSegment = i;
-                    break;
-                }
-            }
-            if (firstSegment == segments.size())
-            {
-                const std::wstring marks = std::wstring{ indent } + std::wstring{ k_lineComment };
+                const std::wstring marks = std::wstring{ indent } + std::wstring{ k_newMarks };
                 segments.push_back({
-                    .first = lines.size(),
-                    .end = lines.size(),
+                    .first = 0,
+                    .end = 0,
                     .firstLead = marks + L" ",
                     .innerLead = marks + L" ",
                     .blankLead = marks
@@ -1818,13 +1796,13 @@ namespace SeeDocs_App
             return std::wstring{ marks };
         }
 
-        // The marks a comment on a declaration's line takes after the one above it: by loose
-        // rules a C++ doc comment points back to the declaration with a <.
+        // The marks a comment on a declaration's line takes after the one above it: a C++ doc
+        // comment points back to the declaration with a <.
         [[nodiscard]] std::wstring marksOnLine(const std::wstring_view marks,
-            const SourceLanguage language, const HintRules rules)
+            const SourceLanguage language)
         {
             const bool doc = marks == L"///" || marks == L"//!";
-            if (doc && language == SourceLanguage::Cpp && rules == HintRules::Loose)
+            if (doc && language == SourceLanguage::Cpp)
                 return std::wstring{ marks } + L"<";
             return std::wstring{ marks };
         }
@@ -1877,13 +1855,18 @@ namespace SeeDocs_App
         }
 
         // The lines of a comment that stay when its words are taken out: in lines of a line
-        // comment the TODOs; in a block, none.
+        // comment the TODOs; in a block, none. A comment the hint format does not read stays whole.
         [[nodiscard]] Lines silentRemains(const FoundComment& comment, const FileLines& file)
         {
             Lines result;
             for (std::size_t i = 0; i != comment.lines.size(); ++i)
             {
                 const CommentLine& line = comment.lines[i];
+                if (!line.counted)
+                {
+                    result.push_back(file.lines[comment.first + i].text);
+                    continue;
+                }
                 const std::size_t indent = leadingBlanks(line.lead);
                 const std::optional<Marks> marks = marksAt(line.lead, indent);
                 const bool lineComment = marks && marks->closer.empty() && line.tail.empty();
@@ -1900,12 +1883,11 @@ namespace SeeDocs_App
 
         // **Where the words go**: words that fit one line stand on the declaration's line while the
         // whole line fits the width - never a type opening a scope, nor a comment above that says
-        // more than the words, such as a TODO - and any others stand above it. A comment under a
-        // Delphi routine's header keeps its place.
+        // more than the words, such as a TODO, nor a line that ends in a comment already - and any
+        // others stand above it. A comment under a Delphi routine's header keeps its place.
         [[nodiscard]] std::optional<Replacements> placeWords(const FileLines& file,
             const SourceLines& lines, const FoundDeclaration& found, const CommentSite& site,
-            const std::wstring& words, const SourceLanguage language, const HintRules rules,
-            Refusal& refusal)
+            const std::wstring& words, const SourceLanguage language, Refusal& refusal)
         {
             const FoundComment& comment = found.comment;
             const std::size_t line = found.line;
@@ -1989,7 +1971,7 @@ namespace SeeDocs_App
                         const std::wstring own{ lead.substr(at, marks->end - at) };
                         const std::optional<std::wstring> riding = ridingLine(found.code,
                             alignedGap(lines, line, found.code),
-                            marksOnLine(own, language, rules), words, {});
+                            marksOnLine(own, language), words, {});
                         if (riding)
                         {
                             result.push_back({ line, 1, { *riding } });
@@ -2005,10 +1987,12 @@ namespace SeeDocs_App
                 {
                     if (words.empty())
                         return result;
-                    if (oneLine && mayRide)
+                    const bool free = lines[line].trailing == std::wstring::npos;
+                    if (oneLine && mayRide && free)
                     {
                         const std::optional<std::wstring> riding = ridingLine(found.code,
-                            alignedGap(lines, line, found.code), k_lineComment, words, {});
+                            alignedGap(lines, line, found.code), marksOnLine(k_newMarks, language),
+                            words, {});
                         if (riding)
                         {
                             result.push_back({ line, 1, { *riding } });
@@ -2020,8 +2004,7 @@ namespace SeeDocs_App
                         rideRefusal();
                         return std::nullopt;
                     }
-                    result.push_back({ found.head, 0,
-                        newComment(indent, k_lineComment, {}, words) });
+                    result.push_back({ found.head, 0, newComment(indent, k_newMarks, {}, words) });
                     return result;
                 }
             }
@@ -2035,7 +2018,7 @@ namespace SeeDocs_App
             FileLines file;
             SourceLines lines;
             SourceLanguage language{ SourceLanguage::Cpp };
-            HintRules rules{ HintRules::Strict };
+            HintRules rules{};
             FoundDeclaration declaration;
             ReadWords read;
         };
@@ -2081,7 +2064,7 @@ namespace SeeDocs_App
             read.file = std::move(*file);
             read.language = surface.languageOf(source.module);
             read.rules = surface.hintRules();
-            read.lines = sourceLinesOf(read.file, read.language, read.rules);
+            read.lines = sourceLinesOf(read.file, read.language);
             std::optional<FoundDeclaration> found = locate(read.file, read.lines, site,
                 read.language, read.rules);
             if (!found)
@@ -2137,7 +2120,7 @@ namespace SeeDocs_App
             if (blockWords(body) == blockWords(found.comment.words))
                 return {};
             std::optional<Replacements> placed = placeWords(read->file, read->lines, found, site,
-                body, read->language, read->rules, refusal);
+                body, read->language, refusal);
             if (!placed)
                 return refusal;
             std::ranges::sort(*placed, [](const Replacement& left, const Replacement& right) {
@@ -2166,7 +2149,7 @@ namespace SeeDocs_App
             CommentSite moved = site;
             moved.place.line = static_cast<std::size_t>(
                 static_cast<std::ptrdiff_t>(site.place.line) + declarationShift);
-            const SourceLines lines = sourceLinesOf(read->file, read->language, read->rules);
+            const SourceLines lines = sourceLinesOf(read->file, read->language);
             const std::optional<FoundDeclaration> now = locate(read->file, lines, moved,
                 read->language, read->rules);
             const ReadWords reread = now

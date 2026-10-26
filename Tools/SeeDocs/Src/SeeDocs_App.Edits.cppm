@@ -27,10 +27,10 @@ namespace SeeDocs_App
     };
 
     // Writes the hint into the comment the site names, in that comment's own marks, the See it
-    // ends with kept. Words that fit one line stand on the declaration's line while the whole
-    // line fits, and any others above it - always above a type that opens a scope. An empty hint
-    // with no See takes the comment out. A file is found under the root its record names.
-    // See README
+    // ends with kept; words with no comment to go into open with ///. Words that fit one line
+    // stand on the declaration's line while the whole line fits, and any others above it -
+    // always above a type that opens a scope. An empty hint with no See takes the comment out. A
+    // file is found under the root its record names. See README
     export [[nodiscard]] Refusal writeHint(Surface&, const SourceRoots&, const CommentSite&,
         std::wstring_view hint);
     // Whether the words differ from the comment's own, as writeHint compares them.

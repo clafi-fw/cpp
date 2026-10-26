@@ -243,7 +243,9 @@ namespace SeeDocs_App::Ui
         // The row the control is or stands in, where it is one a pick opens.
         [[nodiscard]] std::optional<MenuRow> menuRowOf(const Control&) const;
         // Makes the row current, the nodes over it opened, and scrolls it into view.
-        void showRow(ProjectRows&, std::size_t item, Control& row);
+        void showRow(ProjectRows&, std::size_t item, Control& row, TreeNode* node);
+        // The row, or the node it heads with the rows under it where that node is open.
+        static void scrollRowIntoView(Control& row, TreeNode* node);
         [[nodiscard]] bool holdsCurrentRow(const ProjectRows&) const;
         [[nodiscard]] static Control* rowOf(const ItemRows&);
         [[nodiscard]] static Control& rowOf(const MadeRow&);

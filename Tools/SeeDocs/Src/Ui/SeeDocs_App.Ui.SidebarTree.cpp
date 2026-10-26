@@ -251,7 +251,8 @@ namespace SeeDocs_App::Ui
             }
             if (apisRows.node)
                 apisRows.node->header().setExpanded(true);
-            showRow(*rows, *apis, rowOf(apisRows.made[*contents]));
+            const MadeRow& made = apisRows.made[*contents];
+            showRow(*rows, *apis, rowOf(made), made.node);
             return;
         }
         const std::optional<std::size_t> index = itemOf(*rows, item);
@@ -263,9 +264,10 @@ namespace SeeDocs_App::Ui
         const ItemRows& itemRows = rows->items[*index];
         ensureItemRow(*rows, *index);
         if (Control* row = rowOf(itemRows))
-            showRow(*rows, *index, *row);
+            showRow(*rows, *index, *row, itemRows.node);
         else if (itemRows.parent.has_value())
-            showRow(*rows, *itemRows.parent, *rowOf(rows->items[*itemRows.parent]));
+            showRow(*rows, *itemRows.parent, *rowOf(rows->items[*itemRows.parent]),
+                rows->items[*itemRows.parent].node);
         else
             followHome(id);
     }
@@ -275,7 +277,7 @@ namespace SeeDocs_App::Ui
         if (ProjectRows* rows = rowsOf(id))
         {
             setCurrentItem(rows->node->header());
-            rows->node->header().scrollIntoViewOnAlign();
+            scrollRowIntoView(rows->node->header(), rows->node);
         }
         else
         {
@@ -785,7 +787,8 @@ namespace SeeDocs_App::Ui
     }
 
     // Every category over the item is opened, and the project's node over them.
-    void SidebarTree::showRow(ProjectRows& rows, const std::size_t item, Control& row)
+    void SidebarTree::showRow(ProjectRows& rows, const std::size_t item, Control& row,
+        TreeNode* node)
     {
         std::optional<std::size_t> at = rows.items[item].parent;
         while (at.has_value())
@@ -795,7 +798,16 @@ namespace SeeDocs_App::Ui
         }
         rows.node->header().setExpanded(true);
         setCurrentItem(row);
-        row.scrollIntoViewOnAlign();
+        scrollRowIntoView(row, node);
+    }
+
+    // **A row heading an open node is shown with its rows**, as a user's opening shows them.
+    void SidebarTree::scrollRowIntoView(Control& row, TreeNode* node)
+    {
+        if (node && node->header().expanded())
+            node->scrollIntoViewOnAlign();
+        else
+            row.scrollIntoViewOnAlign();
     }
 
     bool SidebarTree::holdsCurrentRow(const ProjectRows& rows) const

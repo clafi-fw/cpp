@@ -93,7 +93,7 @@ namespace SeeDocs_App
         std::wstring name;
         ProjectSources sources;   // in the order their roots count them
         ScanMode mode{ ScanMode::AnyCppAndDelphi };
-        HintRules hints{ HintRules::Strict };
+        HintRules hints{};
         HintEdits edits{ HintEdits::None };
         SidebarItems sidebar{ defaultSidebar() };
 

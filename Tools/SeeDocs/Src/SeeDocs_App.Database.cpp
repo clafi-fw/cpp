@@ -39,7 +39,8 @@ namespace SeeDocs_App
             constexpr std::wstring_view Constants = L"Constants";
             constexpr std::wstring_view Scanned = L"Scanned";
             constexpr std::wstring_view ReadAs = L"ReadAs";
-            constexpr std::wstring_view LooseHints = L"LooseHints";
+            constexpr std::wstring_view Hints = L"Hints";
+            constexpr std::wstring_view SeeLinks = L"SeeLinks";
             constexpr std::wstring_view Name = L"Name";
             constexpr std::wstring_view NameSpace = L"Namespace";
             constexpr std::wstring_view Kind = L"Kind";
@@ -947,9 +948,10 @@ namespace SeeDocs_App
             surface.setScanned(stampOf(textOf(root, Keys::Scanned)));
             surface.setMode(scanModeOf(textOf(root, Keys::ReadAs))
                 .value_or(ScanMode::AnyCppAndDelphi));
-            surface.setHintRules(flagOf(root, Keys::LooseHints)
-                ? HintRules::Loose
-                : HintRules::Strict);
+            surface.setHintRules({
+                .format = hintFormatOf(textOf(root, Keys::Hints)).value_or(HintFormat::AnyComment),
+                .seeLinks = flagOf(root, Keys::SeeLinks)
+            });
             Reader reader{ surface };
             reader.readModules(itemsOf(root, Keys::Modules));
             reader.readTypes(itemsOf(root, Keys::Types));
@@ -965,7 +967,8 @@ namespace SeeDocs_App
         return {
             Value{ Keys::Scanned, std::wstring{} },
             Value{ Keys::ReadAs, std::wstring{} },
-            Value{ Keys::LooseHints, false },
+            Value{ Keys::Hints, std::wstring{} },
+            Value{ Keys::SeeLinks, false },
             Sequence{ Keys::Modules, moduleLayout() },
             Sequence{ Keys::Types, typeLayout() },
             Sequence
@@ -1012,7 +1015,9 @@ namespace SeeDocs_App
         root.setText(Keys::Scanned, stampText(surface.scanned()));
         if (surface.mode() != ScanMode::AnyCppAndDelphi)
             root.setText(Keys::ReadAs, modeWord(surface.mode()));
-        root.setFlag(Keys::LooseHints, surface.hintRules() == HintRules::Loose);
+        if (surface.hintRules().format != HintFormat::AnyComment)
+            root.setText(Keys::Hints, formatWord(surface.hintRules().format));
+        root.setFlag(Keys::SeeLinks, surface.hintRules().seeLinks);
 
         Items modules;
         for (const Module& module : surface.modules())
@@ -1196,6 +1201,18 @@ namespace SeeDocs_App
         return {};
     }
 
+    std::wstring_view formatWord(const HintFormat format)
+    {
+        switch (format)
+        {
+            case HintFormat::AnyComment:
+                return L"AnyComment";
+            case HintFormat::TripleSlash:
+                return L"TripleSlash";
+        }
+        return {};
+    }
+
     std::optional<TypeKind> typeKindOf(const std::wstring_view word)
     {
         for (const TypeKind kind : { TypeKind::Class, TypeKind::Struct, TypeKind::Union,
@@ -1249,6 +1266,16 @@ namespace SeeDocs_App
         {
             if (modeWord(mode) == word)
                 return mode;
+        }
+        return std::nullopt;
+    }
+
+    std::optional<HintFormat> hintFormatOf(const std::wstring_view word)
+    {
+        for (const HintFormat format : { HintFormat::AnyComment, HintFormat::TripleSlash })
+        {
+            if (formatWord(format) == word)
+                return format;
         }
         return std::nullopt;
     }

@@ -26,7 +26,8 @@ namespace SeeDocs_App
             constexpr std::wstring_view Path = L"Path";
             constexpr std::wstring_view Subfolders = L"Subfolders";
             constexpr std::wstring_view ReadAs = L"ReadAs";
-            constexpr std::wstring_view LooseHints = L"LooseHints";
+            constexpr std::wstring_view Hints = L"Hints";
+            constexpr std::wstring_view SeeLinks = L"SeeLinks";
             constexpr std::wstring_view EditHints = L"EditHints";
             constexpr std::wstring_view Sidebar = L"Sidebar";
         }
@@ -51,7 +52,8 @@ namespace SeeDocs_App
                     }
                 },
                 Value{ Keys::ReadAs, std::wstring{} },
-                Value{ Keys::LooseHints, false },
+                Value{ Keys::Hints, std::wstring{} },
+                Value{ Keys::SeeLinks, false },
                 Value{ Keys::EditHints, false },
                 Sequence{ Keys::Sidebar, SidebarItem{} }
             };
@@ -237,8 +239,9 @@ namespace SeeDocs_App
             }
             project.mode = scanModeOf((document / Keys::ReadAs).get<std::wstring>())
                 .value_or(ScanMode::AnyCppAndDelphi);
-            if ((document / Keys::LooseHints).get<bool>())
-                project.hints = HintRules::Loose;
+            project.hints.format = hintFormatOf((document / Keys::Hints).get<std::wstring>())
+                .value_or(HintFormat::AnyComment);
+            project.hints.seeLinks = (document / Keys::SeeLinks).get<bool>();
             if ((document / Keys::EditHints).get<bool>())
                 project.edits = HintEdits::Direct;
             SidebarItems sidebar = (document / Keys::Sidebar).get<SidebarItems>();
@@ -260,8 +263,7 @@ namespace SeeDocs_App
 
         Project project{
             .folder = folder,
-            .name = std::wstring{ name },
-            .hints = HintRules::Loose
+            .name = std::wstring{ name }
         };
         writeProject(project);
         return readProject(folder);
@@ -287,7 +289,8 @@ namespace SeeDocs_App
             (entry / Keys::Subfolders).set(source.subfolders);
         }
         (document / Keys::ReadAs).set(std::wstring{ modeWord(project.mode) });
-        (document / Keys::LooseHints).set(project.hints == HintRules::Loose);
+        (document / Keys::Hints).set(std::wstring{ formatWord(project.hints.format) });
+        (document / Keys::SeeLinks).set(project.hints.seeLinks);
         (document / Keys::EditHints).set(project.edits == HintEdits::Direct);
         (document / Keys::Sidebar).set(project.sidebar);
         document.save();

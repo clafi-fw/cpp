@@ -14,6 +14,7 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_todo = L"TODO";
         constexpr std::wstring_view k_codeFence = L"    ";   // what sets a line of code in
         constexpr std::wstring_view k_lineComment = L"//";
+        constexpr std::wstring_view k_tripleSlash = L"///";
         constexpr std::wstring_view k_cppBlock = L"/*";
         constexpr std::wstring_view k_cppBlockEnd = L"*/";
         constexpr std::wstring_view k_pascalParen = L"(*";
@@ -78,19 +79,18 @@ namespace SeeDocs_App
         {
             std::size_t length{ 0 };      // the marks, those a doc comment adds included
             std::wstring_view closer;     // empty for a comment running to the line's end
+            bool counted{ true };         // of a kind the hint format reads
         };
 
-        // The marks a doc comment adds after the opening ones: stars, then ! and < by loose rules.
+        // The marks a doc comment adds after the opening ones: stars, then ! and <.
         [[nodiscard]] std::size_t docMarksEnd(const std::wstring_view text, std::size_t at,
-            const std::wstring_view closer, const wchar_t repeated, const HintRules rules)
+            const std::wstring_view closer, const wchar_t repeated)
         {
             while (at < text.size() && text[at] == repeated
                 && (closer.empty() || !text.substr(at).starts_with(closer)))
             {
                 ++at;
             }
-            if (rules != HintRules::Loose)
-                return at;
             if (at < text.size() && text[at] == L'!')
                 ++at;
             if (at < text.size() && text[at] == L'<')
@@ -98,15 +98,24 @@ namespace SeeDocs_App
             return at;
         }
 
+        // Three slashes and no fourth: //// and longer runs are no doc comment.
+        [[nodiscard]] bool opensTripleSlash(const std::wstring_view rest)
+        {
+            return rest.starts_with(k_tripleSlash)
+                && !rest.substr(k_tripleSlash.size()).starts_with(L'/');
+        }
+
         [[nodiscard]] std::optional<Opener> openerAt(const std::wstring_view line,
-            const std::size_t at, const SourceLanguage language, const HintRules rules)
+            const std::size_t at, const SourceLanguage language, const HintFormat format)
         {
             const std::wstring_view rest = line.substr(std::min(at, line.size()));
+            const bool anyCounts = format == HintFormat::AnyComment;
             if (rest.starts_with(k_lineComment))
             {
                 return Opener{
-                    .length = docMarksEnd(rest, k_lineComment.size(), {}, L'/', rules),
-                    .closer = {}
+                    .length = docMarksEnd(rest, k_lineComment.size(), {}, L'/'),
+                    .closer = {},
+                    .counted = anyCounts || opensTripleSlash(rest)
                 };
             }
             if (language == SourceLanguage::Cpp)
@@ -114,24 +123,25 @@ namespace SeeDocs_App
                 if (!rest.starts_with(k_cppBlock))
                     return std::nullopt;
                 return Opener{
-                    .length = docMarksEnd(rest, k_cppBlock.size(), k_cppBlockEnd, L'*', rules),
-                    .closer = k_cppBlockEnd
+                    .length = docMarksEnd(rest, k_cppBlock.size(), k_cppBlockEnd, L'*'),
+                    .closer = k_cppBlockEnd,
+                    .counted = anyCounts
                 };
             }
             if (rest.starts_with(k_pascalParen))
             {
                 return Opener{
-                    .length = docMarksEnd(rest, k_pascalParen.size(), k_pascalParenEnd, L'*',
-                        rules),
-                    .closer = k_pascalParenEnd
+                    .length = docMarksEnd(rest, k_pascalParen.size(), k_pascalParenEnd, L'*'),
+                    .closer = k_pascalParenEnd,
+                    .counted = anyCounts
                 };
             }
             if (rest.starts_with(k_pascalBrace))
             {
                 return Opener{
-                    .length = docMarksEnd(rest, k_pascalBrace.size(), k_pascalBraceEnd, L'*',
-                        rules),
-                    .closer = k_pascalBraceEnd
+                    .length = docMarksEnd(rest, k_pascalBrace.size(), k_pascalBraceEnd, L'*'),
+                    .closer = k_pascalBraceEnd,
+                    .counted = anyCounts
                 };
             }
             return std::nullopt;
@@ -149,15 +159,14 @@ namespace SeeDocs_App
         }
 
         // Moves what the words open with into the lead and what they end with into the tail,
-        // where the rules read those as marks: a brief's command, a summary's tags.
-        void takeMarks(CommentLine& line, const HintRules rules)
+        // where those are marks: a brief's command, a summary's tags.
+        void takeMarks(CommentLine& line)
         {
             const std::size_t blanks = leadingBlanks(line.words);
             const std::wstring_view words = std::wstring_view{ line.words }.substr(blanks);
             for (const std::wstring_view command : k_briefCommands)
             {
-                const bool strictOne = command.front() == L'@';
-                if (!words.starts_with(command) || (rules == HintRules::Strict && !strictOne))
+                if (!words.starts_with(command))
                     continue;
                 const std::size_t after = command.size();
                 if (after != words.size() && !isBlankChar(words[after]))
@@ -169,8 +178,6 @@ namespace SeeDocs_App
                 line.opensParagraph = true;
                 return;
             }
-            if (rules != HintRules::Loose)
-                return;
             if (startsWithLowered(words, k_summaryOpener))
             {
                 const std::size_t cut = blanks + k_summaryOpener.size()
@@ -188,9 +195,16 @@ namespace SeeDocs_App
             }
         }
 
-        // The words a line says by the rules, or that it says none.
-        void settleWords(CommentLine& line, const HintRules rules)
+        // The words a line says, or that it says none. A comment the format does not read says
+        // none, and parts the paragraphs of those round it.
+        void settleWords(CommentLine& line)
         {
+            if (!line.counted)
+            {
+                line.speaks = false;
+                line.opensParagraph = true;
+                return;
+            }
             if (!line.speaks)
                 return;
             const std::wstring_view said = trimmedText(line.words);
@@ -200,21 +214,17 @@ namespace SeeDocs_App
                 line.opensParagraph = false;
                 return;
             }
-            takeMarks(line, rules);
-            if (rules == HintRules::Loose)
+            takeMarks(line);
+            std::wstring cleaned = withoutSeparators(line.words);
+            const bool separator = trimmedText(cleaned).empty() && !trimmedText(line.words).empty();
+            if (separator)
             {
-                std::wstring cleaned = withoutSeparators(line.words);
-                const bool separator = trimmedText(cleaned).empty()
-                    && !trimmedText(line.words).empty();
-                if (separator)
-                {
-                    line.speaks = false;
-                    line.opensParagraph = true;
-                    return;
-                }
-                line.words = std::move(cleaned);
+                line.speaks = false;
+                line.opensParagraph = true;
+                return;
             }
-            if (opensPart(trimmedText(line.words), rules))
+            line.words = std::move(cleaned);
+            if (opensPart(trimmedText(line.words)))
                 line.opensParagraph = true;
             if (trimmedText(line.words).empty() && !line.tail.empty())
             {
@@ -283,13 +293,14 @@ namespace SeeDocs_App
 
     // **A comment opens on the first line at the column given**; on the others it opens where the
     // line does, or carries on the block a line before left open. A line comment's marks are its
-    // slashes, and by loose rules the ! and the < a doc comment adds; a block's are its opener,
-    // the stars after it and those dressing a line inside it, and its closer.
+    // slashes and the ! and the < a doc comment adds; a block's are its opener, the stars after
+    // it and those dressing a line inside it, and its closer.
     CommentLines cutComment(const std::span<const std::wstring_view> lines, const std::size_t start,
-        const SourceLanguage language, const HintRules rules)
+        const SourceLanguage language, const HintFormat format)
     {
         CommentLines result;
         std::wstring_view closer;          // what closes the block a line ended inside
+        bool blockCounted = true;          // whether the format reads that block
         std::vector<std::size_t> bare;     // the lines of the open block no star dresses
         for (std::size_t i = 0; i != lines.size(); ++i)
         {
@@ -298,7 +309,7 @@ namespace SeeDocs_App
             if (closer.empty())
             {
                 const std::size_t at = i == 0 ? start : leadingBlanks(line);
-                const std::optional<Opener> opener = openerAt(line, at, language, rules);
+                const std::optional<Opener> opener = openerAt(line, at, language, format);
                 if (!opener)
                 {
                     entry.lead = std::wstring{ line };
@@ -313,6 +324,7 @@ namespace SeeDocs_App
                 const std::wstring_view body = line.substr(wordsAt);
                 entry.lead = std::wstring{ line.substr(0, wordsAt) };
                 entry.words = std::wstring{ body };
+                entry.counted = opener->counted;
                 if (!opener->closer.empty())
                 {
                     entry.opensParagraph = !result.empty();
@@ -320,6 +332,7 @@ namespace SeeDocs_App
                     if (close == std::wstring_view::npos)
                     {
                         closer = opener->closer;
+                        blockCounted = opener->counted;
                         bare.clear();
                         if (trimmedText(body).empty())
                         {
@@ -337,6 +350,7 @@ namespace SeeDocs_App
             }
             else
             {
+                entry.counted = blockCounted;
                 const std::size_t close = line.find(closer);
                 const std::size_t end = close == std::wstring_view::npos
                     ? line.size()
@@ -372,7 +386,7 @@ namespace SeeDocs_App
         }
         setInBare(result, bare);
         for (CommentLine& entry : result)
-            settleWords(entry, rules);
+            settleWords(entry);
         // A TODO runs on over the lines under it to the end of its paragraph, or of the block it
         // stands in, saying nothing.
         bool todo = false;
@@ -439,7 +453,7 @@ namespace SeeDocs_App
 
     // A doc command is @ or \\ and a letter or a brace; a doc tag opens with < and a tag's name,
     // or </ and one.
-    bool opensPart(const std::wstring_view words, const HintRules rules)
+    bool opensPart(const std::wstring_view words)
     {
         if (words.size() >= 2 && (words.front() == L'@' || words.front() == L'\\'))
         {
@@ -447,7 +461,7 @@ namespace SeeDocs_App
             if (std::iswalpha(next) != 0 || next == L'{' || next == L'}')
                 return true;
         }
-        if (rules != HintRules::Loose || !words.starts_with(L'<'))
+        if (!words.starts_with(L'<'))
             return false;
         std::wstring_view tag = words.substr(1);
         if (tag.starts_with(L'/'))

@@ -38,6 +38,7 @@ namespace SeeDocs_App
         std::wstring tail;              // the marks closing a block, and the blanks before them
         bool speaks{ true };            // false for a TODO, a separator, a mark standing alone
         bool opensParagraph{ false };   // the words start a paragraph of their own
+        bool counted{ true };           // its comment is of a kind the hint format reads
     };
 
     export using CommentLines = std::vector<CommentLine>;
@@ -54,15 +55,15 @@ namespace SeeDocs_App
     // A comment's lines as the file holds them, cut into what each says. The comment opens at the
     // column given on the first line, and on every other line it is the line's whole. See README
     export [[nodiscard]] CommentLines cutComment(std::span<const std::wstring_view> lines,
-        std::size_t start, SourceLanguage, HintRules);
+        std::size_t start, SourceLanguage, HintFormat);
     // The words of the lines that speak, a line apiece, one empty line between two paragraphs.
     export [[nodiscard]] CommentTextLines textLinesOf(const CommentLines&);
     // The words of the lines that speak, a line apiece, a blank line between two paragraphs.
     export [[nodiscard]] std::wstring commentText(const CommentLines&);
 
     // Whether words opening a line of a comment start a part of it of their own: a doc command
-    // such as @param, and by loose rules a doc tag such as <summary>.
-    export [[nodiscard]] bool opensPart(std::wstring_view words, HintRules);
+    // such as @param, or a doc tag such as <summary>.
+    export [[nodiscard]] bool opensPart(std::wstring_view words);
     // A comment line's lead without the brief's command or the summary's tag it may end with.
     export [[nodiscard]] std::wstring_view leadWithoutBrief(std::wstring_view lead);
     // How many blanks a text opens with, in characters.
