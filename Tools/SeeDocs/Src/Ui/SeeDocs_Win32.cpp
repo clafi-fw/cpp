@@ -1,4 +1,4 @@
-import SeeDocs_App.Main;
+import SeeDocs_App.Ui.Main;
 
 import ClaFi.Platform.Windows;
 

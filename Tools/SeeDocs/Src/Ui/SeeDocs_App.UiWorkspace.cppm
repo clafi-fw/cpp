@@ -1,0 +1,170 @@
+export module SeeDocs_App.Ui.Workspace;
+
+import SeeDocs_App.Ui.Browser;
+import SeeDocs_App.Ui.NewProject;
+import SeeDocs_App.Ui.FileWriter;
+import SeeDocs_App.Project;
+import SeeDocs_App.Surface;
+
+import ClaFi.App.Application;
+
+import ClaFi.Core.Foundation;
+import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.System.Events;
+import ClaFi.Core.System.Timer;
+import ClaFi.Core.System.UiTypes;
+
+import ClaFi.StdLib;
+
+namespace SeeDocs_App::Ui
+{
+    using namespace ::ClaFi;
+
+    // **The projects SeeDocs has open**, and everything that follows from them: the surface read
+    // out of each one's database, its notes, the window title that names the one shown, and the
+    // record of them in the application's config - the projects to start on next time, the list
+    // of those opened before, and where new ones were last stored. One per window, standing for
+    // as long as the window does.
+    export class Workspace
+    {
+    public:
+        Workspace(ApplicationBase&, FormBase& form, SurfaceBrowser&);
+        Workspace(const Workspace&) = delete;
+        Workspace& operator=(const Workspace&) = delete;
+    public:
+        [[nodiscard]] bool anyOpen() const { return !m_projects.empty(); }
+        // The projects opened before, most recent first, the ones open left out.
+        [[nodiscard]] RecentProjects recentProjects() const;
+        // Opens the projects left open last time, the tabs on them standing as they were
+        // restored, and the project the folder stated stands for in a new tab where it is not
+        // one of them.
+        void start(const std::filesystem::path& stated);
+        // Opens the project the folder stands for, its home shown where the home tab says - a
+        // project open already too - and for a folder that stands for none, offers to make one
+        // that reads it. False where nothing was opened.
+        bool openFolder(const std::filesystem::path& folder, HomeTab = HomeTab::Open);
+        // Asks for a project's folder in the desktop's own dialog and opens it.
+        void browse();
+        // Asks for a new project's name and where to store it in a window of its own, makes it,
+        // and opens it on its options page. A source given is the first folder it reads. Asked
+        // again with none while that window stands, it brings the window forward as it was left.
+        void createNew(const std::filesystem::path& source = {}, InputStamp = {});
+        [[nodiscard]] static ScanStamp scanned(const OpenProject&);   // when it was last scanned
+        // Names the project, the folder's name for an empty one; answers the name it goes by.
+        [[nodiscard]] std::wstring rename(OpenProject&, std::wstring_view name);
+        // Scans the project's sources again and shows what was read back, the tabs standing.
+        void rescan(OpenProject&);
+        // Reads the folder written as one more source and scans again; the reason where refused.
+        [[nodiscard]] std::wstring addSource(OpenProject&, std::wstring_view written);
+        // Writes a source in place of another and scans again; the reason where it was refused.
+        [[nodiscard]] std::wstring replaceSource(OpenProject&, std::wstring_view source,
+            std::wstring_view written);
+        // Stops reading the folder of sources, and scans the project again.
+        void removeSource(OpenProject&, std::wstring_view source);
+        // Whether the folders under the source are read too; scans the project again.
+        void setSubfolders(OpenProject&, std::wstring_view source, bool);
+        // Reads the sources in this order, one not named after those that are; scans again.
+        void orderSources(OpenProject&, std::span<const std::wstring_view> sources);
+        // How the sources are read and how their comments give the hints - each scans the
+        // project again so read.
+        void setMode(OpenProject&, ScanMode);
+        void setHints(OpenProject&, HintRules);
+        // Whether a hint edited on a page is written into its source; the pages are built again.
+        void setEdits(OpenProject&, HintEdits);
+        // What the project's sidebar is to be; the trees and the pages it is read into are built
+        // again.
+        void setSidebar(OpenProject&, SidebarItems);
+        // Closes the project and every tab on it once the click that asked has unwound - the
+        // page it was pressed on may be one of those going. What the browser's pages ask for.
+        void closeLater(OpenProject&);
+    public:
+        // What the config keeps the open projects' folders under, in the order they were opened.
+        static constexpr std::wstring_view k_openNodeName = L"OpenProjects";
+        // What the config keeps the folders opened before under, most recent first.
+        static constexpr std::wstring_view k_recentNodeName = L"RecentProjects";
+        // What the config keeps the folder a new project was last stored in under.
+        static constexpr std::wstring_view k_locationNodeName = L"ProjectsLocation";
+        static constexpr std::size_t k_recentLimit = 10;
+        // Where a new project is offered to be stored before one has been: under the user's
+        // documents.
+        static constexpr std::wstring_view k_defaultLocation = L"SeeDocs";
+        // What SeeDocs keeps of its own, beside the framework's schema.
+        [[nodiscard]] static Dom::Dt::Section createConfigSchema();
+    private:
+        using Names = std::vector<std::wstring>;
+        // Held by pointer: the browser shows each one by reference.
+        using Projects = std::vector<std::unique_ptr<OpenProject>>;
+        // What a change of the project's properties asks for once they are written.
+        enum class Reread
+        {
+            Sources,   // a scan: what is read has changed
+            Pages,     // the pages built again over the surface as it stands
+            Sidebar    // the trees and the pages built again over the sidebar as it now reads
+        };
+    private:
+        // Shows the project, its database scanned first where it has none or was read otherwise
+        // than the project asks.
+        void openProject(Project, HomeTab);
+        // The open project kept in the folder.
+        [[nodiscard]] OpenProject* openFor(const std::filesystem::path& folder) const;
+        void close(OpenProject&);
+        // Opens the folder, or one asked for where it is empty, once the asking click has unwound.
+        void openLater(const std::filesystem::path& folder, HomeTab);
+        // Keeps the projects in this order, which the browser shows and the next start reads.
+        void orderProjects(std::span<OpenProject* const>);
+        // Asks whether to make a project that reads a folder that stands for none.
+        [[nodiscard]] bool confirmMaking(const std::filesystem::path& folder);
+        void refuse(std::wstring_view title, const Text& message);
+        // Writes the properties as the edit leaves them, and rereads as asked.
+        void change(OpenProject&, const std::function<void(Project&)>& edit, Reread);
+        // Scans the project's sources, its database and scan cache written on the writer's thread;
+        // the surface the database holds.
+        [[nodiscard]] Surface scan(const Project&);
+        void saveDatabase(OpenProject&);   // as its surface stands, on the writer's thread
+        // Puts up a notice where the file is an open project's database, Try again its answer.
+        void noteUnwritten(const std::filesystem::path& file);
+        void remember(const Project&);   // first among the recent, and among those open
+        void forget(const std::filesystem::path& folder);
+        [[nodiscard]] Names storedRecent() const;
+        void storeRecent(const Names&);
+        [[nodiscard]] Names storedOpen() const;
+        void storeOpen();   // the projects open as they stand, in the order they were opened
+        [[nodiscard]] std::filesystem::path storedLocation() const;
+        void storeLocation(const std::filesystem::path&);
+        void writeRecent();   // the projects opened before, for the root to list
+        void writeTitle();
+    private:
+        ApplicationBase& m_application;
+        FormBase& m_form;
+        SurfaceBrowser& m_browser;
+        // What a question or a refusal is dropped under: the browser's app button.
+        Control& m_asker;
+        Projects m_projects{};
+        FileWriter m_writer{};   // every database and scan cache the projects write
+        const OpenProject* m_shown{ nullptr };   // the project the tab shown stands in
+        OpenProject* m_closing{ nullptr };       // to close once the click has unwound
+        std::optional<std::filesystem::path> m_opening{};   // to open once the click has unwound
+        HomeTab m_openingTab{ HomeTab::Open };   // where its home is shown
+        // A folder stated at start that stands for no project; the offer to make one asks, and
+        // asking waits for the window to be up.
+        std::filesystem::path m_statedToMake{};
+        UiTimer m_startTimer{};
+        UiTimer m_closeTimer{};
+        UiTimer m_openTimer{};
+        ScopedEventConnection m_projectShown{};
+        ScopedEventConnection m_closeAsked{};
+        ScopedEventConnection m_newAsked{};
+        ScopedEventConnection m_openAsked{};
+        ScopedEventConnection m_orderAsked{};
+        ScopedEventConnection m_rescanAsked{};
+        ScopedEventConnection m_surfaceEdited{};
+        ScopedEventConnection m_sidebarEdited{};
+        ScopedEventConnection m_writeFailed{};
+        // A project the new project dialog made, opened once the dialog is down.
+        std::optional<Project> m_made{};
+        UiTimer m_madeTimer{};
+        // The last one asked for, standing or closed; let go when the next is asked for.
+        std::unique_ptr<NewProjectDialog> m_newProject{};
+    };
+}

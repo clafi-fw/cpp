@@ -1,6 +1,6 @@
 module SeeDocs_App.Ui.SidebarTree;
 
-import SeeDocs_App.Icons;
+import SeeDocs_App.Ui.Icons;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
 import SeeDocs_App.SidebarEdits;
