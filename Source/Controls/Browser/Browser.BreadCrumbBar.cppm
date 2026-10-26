@@ -155,7 +155,7 @@ namespace ClaFi::Browser
 
     // BreadCrumbBar
 
-    /// @brief The path down to the page a tab is showing, one crumb per level.
+    /// Bread Crumb Bar
     export class BreadCrumbBar : public StackPanel, private IFittableList
     {
         friend BreadCrumbBarItem;

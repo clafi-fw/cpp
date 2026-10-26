@@ -107,7 +107,7 @@ namespace SeeDocs_App::Ui
     // page's commands at the title's right end; the title's lines under it, a class's bases under
     // those as crumbs, and the commands that stand in a row under the title. Every page of the
     // browser wears one, whatever it is made of.
-    export class PageHead : public Panel
+    export class PageHead : public StackPanel
     {
     public:
         template<typename... Args>
@@ -128,13 +128,7 @@ namespace SeeDocs_App::Ui
         static constexpr float k_commandGap = 10.0f;    // before and between the buttons
         static constexpr float k_titleCommandsGap = 4.0f;   // above and below the title's row
 
-        StackPanel& m_lines{ createBody<StackPanel>(
-            Orientation::Vertical,
-            Padding{ 0.0f },
-            Spacing{ 0.0f }
-        ) };
-        // The title with the commands beside it, so they centre on the title, not the whole head.
-        Panel& m_titleLine{ m_lines.add<Panel>(
+        Panel& m_titleLine{ add<Panel>(
             Padding{ 0.0f },
             Spacing{ k_commandGap }
         ) };
@@ -145,10 +139,10 @@ namespace SeeDocs_App::Ui
             Spacing{ k_commandGap },
             VerticalAlign::Center
         ) };
-        BasesTree& m_basesTree{ m_lines.add<BasesTree>(
+        BasesTree& m_basesTree{ add<BasesTree>(
             Padding{ k_basesIndent, 0.0f }
             ) };
-        StackPanel& m_titleCommands{ m_lines.add<StackPanel>(
+        StackPanel& m_titleCommands{ add<StackPanel>(
             Orientation::Horizontal,
             Padding{ 0.0f, k_titleCommandsGap },
             Spacing{ k_commandGap }
@@ -428,8 +422,9 @@ namespace SeeDocs_App::Ui
     template<typename... Args>
     PageHead::PageHead(const CreateParams& params, Args&&... args)
         :
-        Panel{
+        StackPanel{
             params,
+            Orientation::Vertical,
             Padding{ k_pagePadding, k_headPadding },
             std::forward<Args>(args)...
         }

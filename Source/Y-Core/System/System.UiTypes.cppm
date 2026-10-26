@@ -454,7 +454,6 @@ namespace ClaFi
     export struct PreferredSize : public CustomFloatPoint { using CustomFloatPoint::CustomFloatPoint; };
     export struct MaxSize : public CustomFloatPoint { using CustomFloatPoint::CustomFloatPoint; };
     export struct FixedSize : public CustomFloatPoint { using CustomFloatPoint::CustomFloatPoint; };
-    export struct ContentSize : public CustomFloatPoint { using CustomFloatPoint::CustomFloatPoint; };
     
     // How heavy a stroke is, from no stroke up. Each grade's design width is strokeWidth's answer.
     export enum class Thickness

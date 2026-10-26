@@ -53,7 +53,10 @@ namespace SeeDocs_App::Ui
     public:
         std::wstring_view diagnosticText() const override { return L"BaseCrumb"; }
         const BaseNode& node() const { return m_node; }
+        int moved() const { return m_moved; }
+        void incMoved() { ++m_moved; }
     protected:
+        ScaledSize calculateContent(AlignEvent&) override;
         void getMainText(GetTextEvent&) const override;
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
@@ -64,13 +67,16 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] DropdownMarkTurn dropdownMarkTurn() const override;
     private:
         const BaseNode& m_node;
+        int m_moved;
     };
 
     using BaseSpan = std::span<const BaseNode>;
 
     export class BasesTree : public ContainerBase
     {
-        using ContainerBase::ContainerBase;
+    public:
+        template <typename... Args>
+        explicit BasesTree(const CreateParams&, Args&&...);
     public:
         // Connects a handler raised when a crumb or a line of its list is chosen.
         DECLARE_EVENT(BaseLinkEvent, OnBaseLink, onBaseLink);
@@ -80,18 +86,33 @@ namespace SeeDocs_App::Ui
         virtual void setBases(const BaseNodes&);
         virtual void clear();
     protected:
+        ScaledSize calculateContent(AlignEvent&) override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
+        void paintSurface(PaintEvent&) override;
+    private:
+        ScaledSize calculateBases(AlignEvent&, const BaseSpan&, ScaledPosition, float wallX);
+        void offsetBases(AlignEvent&, const BaseSpan&, FloatPoint);
+        ScaledSize calculateBranch(AlignEvent&, const BaseNode&, ScaledPosition, float wallX);
+        void addCrumbs(BaseSpan);
+        BaseSpan m_bases{};
         using CrumbsVector = std::vector<BaseCrumb*>;
         using CrumbsMap = std::unordered_map<const BaseNode*, BaseCrumb*>;
-        ScaledSize calculateContent(AlignEvent&) override;
-    protected:
-        BaseSpan m_bases{};
-        CrumbsVector m_crumbs{};   // in the order addCrumbs made them
+        //CrumbsVector m_crumbs{};   // in the order addCrumbs made them
         CrumbsMap m_crumbsMap{};
-
-    private:
-        ScaledSize calculateBases(AlignEvent&, const BaseSpan&, ScaledPosition);
-        ScaledSize calculateBranch(AlignEvent&, const BaseNode&, ScaledPosition);
-        void addCrumbs(BaseSpan);
     };
 
+    template <typename ... Args>
+    BasesTree::BasesTree(const CreateParams& params, Args&&... args)
+        :
+        ContainerBase{
+            params,
+            Spacing{ 8.0f },
+            HorizontalAlign::Fill,
+            VerticalAlign::Top,
+            UiElement::Section,
+            std::forward<Args>(args)...
+        }
+    {
+        
+    }
 }

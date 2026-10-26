@@ -19,6 +19,7 @@ import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
+import ClaFi.Core.Context.FormContext;
 
 namespace SeeDocs_App::Ui
 {
@@ -86,6 +87,12 @@ namespace SeeDocs_App::Ui
     {
     }
 
+    ScaledSize BaseCrumb::calculateContent(AlignEvent& alignEvent)
+    {
+        m_moved = 0;
+        return DropdownControlBase::calculateContent(alignEvent);
+    }
+
     void BaseCrumb::getMainText(GetTextEvent& event) const
     {
         writeRuns(event.text, m_node.text);
@@ -103,10 +110,10 @@ namespace SeeDocs_App::Ui
             const RowIcon icon = rowIconOf(*type);
             MenuItem& line = menu.add(
                 Text{ type->name },
-                MenuItem::OnPaintIcon{ [icon](PaintIconEvent& event) {
+                OnPaintIcon{ [icon](PaintIconEvent& event) {
                     paintRowIcon(event, icon);
                 } },
-                MenuItem::OnClick{ [this, type](ClickEvent&) {
+                OnClick{ [this, type](ClickEvent&) {
                     BaseLinkEvent linkEvent{ typeLink(*type) };
                     emitEvent(linkEvent);
                 } }
@@ -167,7 +174,7 @@ namespace SeeDocs_App::Ui
     void BasesTree::clear()
     {
         m_bases = {};
-        m_crumbs.clear();
+        //m_crumbs.clear();
         m_crumbsMap.clear();
         while (!controls().empty())
             controls().back()->deleteSelf();
@@ -175,35 +182,83 @@ namespace SeeDocs_App::Ui
 
     ScaledSize BasesTree::calculateContent(AlignEvent& event)
     {
-        //return ContainerBase::calculateContent(event);
-        ScaledSize result{};
-        return calculateBases(event, m_bases, result);
+        return calculateBases(event, m_bases, {}, k_maxFloat);
     }
 
-    ScaledSize BasesTree::calculateBases(AlignEvent& event, const BaseSpan& bases, ScaledPosition position)
+    void BasesTree::alignContent(AlignEvent& event, ScaledPosition scaledPosition, ScaledSize& newSize)
     {
-        ScaledSize resultSize;
+        const ScaledSize calculatedSize = scaledSize() - event.scaledPadding() * 2.0f;
+        if (calculatedSize.x <= newSize.x)
+            return;
+        newSize = calculateBases(event, m_bases, {}, newSize.x);
+    }
+
+    void BasesTree::paintSurface(PaintEvent& paintEvent)
+    {
+        ContainerBase::paintSurface(paintEvent);
+    }
+
+    ScaledSize BasesTree::calculateBases(AlignEvent& event, const BaseSpan& bases, ScaledPosition position, float wallX)
+    {
+        ScaledSize resultSize{};
         for (const BaseNode& node : bases)
         {
-            ScaledSize branchSize = calculateBranch(event, node, { position.x, position.y + resultSize.y });
+            if (resultSize.y)
+                resultSize.y += event.scaledSpacingY();
+            ScaledSize branchSize = calculateBranch(event, node, { position.x, position.y + resultSize.y }, wallX);
             resultSize.y += branchSize.y;
             resultSize.x = std::max(branchSize.x, resultSize.x);
         }
         return resultSize;
     }
 
-    ScaledSize BasesTree::calculateBranch(AlignEvent& event, const BaseNode& node, ScaledPosition position)
+    void BasesTree::offsetBases(AlignEvent& event, const BaseSpan& bases, FloatPoint value)
     {
-        const auto crumb = m_crumbsMap[&node];
+        for (const BaseNode& node : bases)
+        {
+            const auto& crumb = m_crumbsMap[&node];
+            ScaledPosition old = crumb->topLeft();
+            setScaledPosition(*crumb, old + value);
+            crumb->incMoved();
+            offsetBases(event, node.bases, value);
+        }
+    }
+
+    ScaledSize BasesTree::calculateBranch(AlignEvent& event, const BaseNode& node, ScaledPosition position, float wallX)
+    {
+        const auto& crumb = m_crumbsMap[&node];
         ScaledSize result{ crumb->scaledWidth(), crumb->scaledHeight() };
         
         setScaledPosition(*crumb, { position.x, position.y });
 
         {
-            ScaledPosition nextPosition = { position.x + result.x, position.y };
-            ScaledSize basesSize = calculateBases(event, node.bases, nextPosition);
-            result.x += basesSize.x;
-            result.y = std::max(basesSize.y, result.y);
+            const float spacingX = event.scaledSpacingX();
+            const ScaledPosition nextPosition = { position.x + spacingX + result.x, position.y };
+            const ScaledSize basesSize = calculateBases(event, node.bases, nextPosition, wallX);
+            bool isOverflow = false;
+            if (basesSize.x)
+            {
+                result.x += spacingX;
+                result.x += basesSize.x;
+                float overflow = nextPosition.x + basesSize.x - wallX;
+                if (overflow > 0.0f)
+                {
+                    isOverflow = true;
+                    constexpr float k_indent = 32.0f;
+                    const float indent = event.scale(k_indent);
+                    overflow = std::min(overflow, std::min(basesSize.x, crumb->scaledWidth() - indent));
+                    offsetBases(event, node.bases, { -overflow, result.y + event.scaledSpacingY() });
+                    result.x -= (overflow);
+                }
+            }
+            if (isOverflow)
+            {
+                if (basesSize.y)
+                    result.y += event.scaledSpacingY();
+                result.y += basesSize.y;
+            }
+            else
+                result.y = std::max(basesSize.y, result.y);
         }
 
         return result;
@@ -215,7 +270,7 @@ namespace SeeDocs_App::Ui
         {
             BaseCrumb& newCrumb = add<BaseCrumb>(base);
 
-            m_crumbs.push_back(&newCrumb);
+            //m_crumbs.push_back(&newCrumb);
 
             m_crumbsMap.emplace(&base, &newCrumb);
 
