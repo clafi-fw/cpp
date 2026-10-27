@@ -127,7 +127,7 @@ namespace ClaFi::Controls
         ScaledSize calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
-        void paintText(PaintEvent&) override;
+        void paintOwnText(PaintEvent&) override;
         // The label, with the link under the pointer underlined.
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
         void paintSurface(PaintEvent& event) override
@@ -337,9 +337,9 @@ namespace ClaFi::Controls
 
     // A collapsed ellipsis header trails its button with a muted ellipsis on the label's line, set
     // in the style the label ends in.
-    void ExpanderHeader::paintText(PaintEvent& event)
+    void ExpanderHeader::paintOwnText(PaintEvent& event)
     {
-        PanelBase::paintText(event);
+        PanelBase::paintOwnText(event);
         if (m_viewMode != ExpanderViewMode::Ellipsis || m_expanded)
             return;
         Text buffer;

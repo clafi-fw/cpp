@@ -176,11 +176,11 @@ namespace ClaFi::Controls
         event.text = m_text;
     }
 
-    ScaledSize ParameterTooltip::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize ParameterTooltip::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
-        asked.x = std::min(asked.x, Tooltip::k_lineWidth * event.scaleFactor());
-        return WithTextLayout<FormControlBase>::measureText(event, asked, text);
+        maxDimensions.x = std::min(maxDimensions.x, Tooltip::k_lineWidth * event.scaleFactor());
+        return WithTextLayout<FormControlBase>::measureText(event, maxDimensions, text);
     }
 
     // CodeBox

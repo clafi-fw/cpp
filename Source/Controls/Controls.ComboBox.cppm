@@ -203,7 +203,7 @@ namespace ClaFi::Controls
         void paintIcon(PaintIconEvent&) override;
         void getMainText(GetTextEvent&) const override;
         // The widest face of any item, so that a pick never changes the size.
-        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         void adjustPaint(AdjustPaintEvent&) override;
         [[nodiscard]] bool clickOpensEditor() const override;
         void getEditorText(Text&) const override;
@@ -463,16 +463,16 @@ namespace ClaFi::Controls
             event.text << m_placeHolderText;
     }
 
-    ScaledSize ComboBox::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize ComboBox::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
         // The face as it reads now counts too - a derived control may word it unlike any item.
-        ScaledSize result = ComboBoxBaseClass::measureText(event, asked, text);
+        ScaledSize result = ComboBoxBaseClass::measureText(event, maxDimensions, text);
         for (const TextItem& item : items())
         {
             Text face{};
             itemFaceText(item, face, EventPhase::Calculate);
-            const ScaledSize faceSize = ComboBoxBaseClass::measureText(event, asked, face);
+            const ScaledSize faceSize = ComboBoxBaseClass::measureText(event, maxDimensions, face);
             result.x = std::max(result.x, faceSize.x);
             result.y = std::max(result.y, faceSize.y);
         }

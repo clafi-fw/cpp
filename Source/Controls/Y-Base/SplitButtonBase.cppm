@@ -40,7 +40,7 @@ namespace ClaFi::Controls
         [[nodiscard]] bool pressedSecondary(const Control* pressed) const;
         [[nodiscard]] ScaledSize secondaryExtent(const FormContext&, ScaledPadding, ScaledSpacing) const;
 
-        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         void calculateChildren(FormBase&) override;
         ScaledSize calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;

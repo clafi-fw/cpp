@@ -29,7 +29,7 @@ namespace ClaFi
         void setCellFallback(CellFallback);
     protected:
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
-        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
 
         /// @brief The layout, brought up to date with the text it draws, the rect it draws in and
         /// the scale, and returned ready to answer.
@@ -65,7 +65,7 @@ namespace ClaFi
         // about the control, and the layout is the answer's working - a memo of the control's own
         // text, not state a caller can observe by any other route. What a const measurement must
         // not do is **change** what is drawn, and it cannot: every path here builds the layout from
-        // doGetText, which is what paintText hands it too.
+        // doGetText, which is what paintOwnText hands it too.
         mutable Text m_layoutText;
         mutable TextLayout m_layout;
     private:
@@ -76,7 +76,7 @@ namespace ClaFi
         struct Measurement
         {
             TextStamp text{};
-            ScaledSize asked{ 0.0f, 0.0f };
+            ScaledSize maxDimensions{ 0.0f, 0.0f };
             ScaleFactor scaleFactor{ 0.0f };
             float breakWidth{ 0.0f };
             bool wrap{ false };
@@ -153,11 +153,11 @@ namespace ClaFi
     // one question, and leaves the entry for the evictor to sweep.
     template <IsControl HostClass>
     ScaledSize WithTextLayout<HostClass>::measureText(AlignEvent& event,
-        ScaledSize asked, const Text& text)
+        ScaledSize maxDimensions, const Text& text)
     {
         const Measurement measurement{
             .text = stampOf(text),
-            .asked = asked,
+            .maxDimensions = maxDimensions,
             .scaleFactor = event.scaleFactor(),
             .breakWidth = this->lineBreakWidth(),
             .wrap = this->wordWrap(),
@@ -177,7 +177,7 @@ namespace ClaFi
         // which reads nothing else from it.
         m_measured = syncedLayout(
             event.formContext(),
-            FloatRect::FromDimensions({ 0.0f, 0.0f }, asked),
+            FloatRect::FromDimensions({ 0.0f, 0.0f }, maxDimensions),
             text
         ).calculatedDimensions();
         m_measurement = measurement;

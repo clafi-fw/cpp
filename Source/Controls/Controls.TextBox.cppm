@@ -189,11 +189,11 @@ namespace ClaFi::Controls
         [[nodiscard]] FloatRect caretRectInForm(std::size_t pos) const;
         void setSelection(std::size_t otherPos, std::size_t caretPos);
         // The caret's one drawing site - the blink, the visual state and the window's focus meet.
-        void paintText(PaintEvent&) override;
+        void paintOwnText(PaintEvent&) override;
         // The placeholder while the text is empty, and the box's own layout over it for the caret.
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
         // Room for the placeholder while the text is empty, and a flex space at its floor.
-        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         // What the layout is told when the box's text has moved. An edit reaches a paragraph or
         // two, and the rest of the document keeps the shaping it has - which is what the base's
         // answer, stating the whole text, cannot do.
@@ -357,7 +357,7 @@ namespace ClaFi::Controls
         Places m_backPlaces;
         Places m_forwardPlaces;
         PointedLink m_pointedLink;
-        // Which half of the blink the caret stands in - see paintText for whether it is drawn.
+        // Which half of the blink the caret stands in - see paintOwnText for whether it is drawn.
         bool m_caretOn{ true };
         // The edit that produced a text the layout has not been told about yet, recorded by
         // applyEdit and consumed by the next syncedLayout - which is what lets a paragraph the
@@ -561,12 +561,12 @@ namespace ClaFi::Controls
         caretMoved();
     }
 
-    void TextBox::paintText(PaintEvent& event)
+    void TextBox::paintOwnText(PaintEvent& event)
     {
         m_editProps.caretVisible = m_caretOn
             && visualState().focused
             && event.windowFocusedFactor() >= 1.0f;
-        TextBoxBase::paintText(event);
+        TextBoxBase::paintOwnText(event);
     }
 
     // The whole text only when this box cannot say what changed. An edit was measured against

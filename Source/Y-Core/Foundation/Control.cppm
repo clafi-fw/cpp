@@ -1369,10 +1369,8 @@ namespace ClaFi
         // The outline over the surface, under the children; a form's root draws it over them.
         virtual void paintFrame(PaintEvent&);
         virtual void paintChildren(PaintEvent&);
-        virtual void paintText(PaintEvent&);
-        // The draw itself, split off so a control holding a layout of its own replaces this and
-        // nothing else: the rect, the text and the flags the result raises stay with paintText,
-        // which is the whole of what the framework needs to be the same for every control.
+        virtual void paintOwnText(PaintEvent&);
+        // Draws the text handed in; a control overriding it overrides measureText as well.
         virtual DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&);
         virtual const EditProps* editProps() const { return nullptr; }
         // The texts the control shows, as a search reads them.
@@ -1394,13 +1392,9 @@ namespace ClaFi
         [[nodiscard]] virtual const TextFormat* textFormat() const { return nullptr; }
         //
         void calculate(FormBase&);
-        ScaledSize calculateText(AlignEvent&, ScaledSize);
-        // The measurement itself, split off so a control holding a layout of its own replaces this
-        // and nothing else: the gather, the width a run that does not wrap is measured against and
-        // the clamp to the box stay with calculateText, which is the whole of what the framework
-        // needs to be the same for every control. The mirror of drawText above - a control that
-        // overrides one and not the other measures on one layout and draws on another.
-        virtual ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&);
+        ScaledSize measureOwnText(AlignEvent&, ScaledSize box);
+        // Measures the text handed in; a control overriding it overrides drawText as well.
+        virtual ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&);
         // The width the own text is measured at. See Control-Foundation#remembered-text-width
         [[nodiscard]] float textWidthLimit(const AlignEvent&) const;
         // Keeps the width an align broke the own text at, and asks for a pass where it changed.
@@ -1496,7 +1490,7 @@ namespace ClaFi
         static void invalidateStateUp(Control* from, const Control* upTo, InvalidateEvent);
         // The text the framework would draw for this control, gathered through the parent so that
         // a host supplying its children's text is asked. Reachable by a control that holds a
-        // layout of its own: it has to build that layout from the same text paintText hands to
+        // layout of its own: it has to build that layout from the same text paintOwnText hands to
         // drawText, or it measures one text and shows another.
         // The text this control answers with, gathered into the caller's buffer. What comes back
         // is the answer, which is the buffer only when one had to be built - see

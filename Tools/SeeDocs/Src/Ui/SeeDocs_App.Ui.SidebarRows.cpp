@@ -15,7 +15,7 @@ namespace SeeDocs_App::Ui
 
     // SidebarDividerRow
 
-    void SidebarDividerRow::paintText(PaintEvent& event)
+    void SidebarDividerRow::paintOwnText(PaintEvent& event)
     {
         const FloatRect bounds = textBounds(event);
         const float y = std::round(bounds.center().y);

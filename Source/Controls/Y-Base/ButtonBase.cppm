@@ -61,14 +61,14 @@ namespace ClaFi::Controls
         // that a control painting a surface of its own - a tab draws a silhouette instead of
         // the rounded rect Control paints - can still put an icon on top of it.
         void paintIconLayer(PaintEvent&);
-        void paintText(PaintEvent&) override;
+        void paintOwnText(PaintEvent&) override;
         // The text where it is drawn, which on a button showing its icon alone it is not.
         void searchTexts(const SearchTextVisitor&) override;
         virtual FloatRect iconRect(const PaintEvent&) const;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void getText(GetTextEvent&) const override;
         void nestedGetTooltip(GetTooltipEvent&) override;
-        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         void calculateChildren(FormBase& form) override;
         ScaledSize calculateContent(AlignEvent&) override;
         ScaledSize contentAroundText(AlignEvent&, ScaledSize text) const override;

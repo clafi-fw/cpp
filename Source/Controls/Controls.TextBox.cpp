@@ -244,18 +244,18 @@ namespace ClaFi::Controls
     // Label's text in. The box's own layout is built for the paint, where a flex space takes the
     // room its line has over: measured on it, the text claims the whole width it is asked at, and a
     // measuring pass asks at an unbounded one.
-    ScaledSize TextBox::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize TextBox::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
         const ScaledSize measured = text.hasFlexSpace()
-            ? textEngine().calculateText(event.formContext(), text, asked, true, wordWrap(),
+            ? textEngine().measureText(event.formContext(), text, maxDimensions, true, wordWrap(),
                 textFormat())
-            : TextBoxBase::measureText(event, asked, text);
+            : TextBoxBase::measureText(event, maxDimensions, text);
         if (!text.plainText().empty() || m_placeHolderText.empty())
             return measured;
 
-        const ScaledSize placeHolder = textEngine().calculateText(event.formContext(),
-            m_placeHolderText, asked, false, wordWrap(), textFormat());
+        const ScaledSize placeHolder = textEngine().measureText(event.formContext(),
+            m_placeHolderText, maxDimensions, false, wordWrap(), textFormat());
         return {
             std::max(measured.x, placeHolder.x),
             std::max(measured.y, placeHolder.y),

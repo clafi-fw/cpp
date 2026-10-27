@@ -187,7 +187,7 @@ namespace ClaFi::Controls
             scrollSectionIntoView();
     }
 
-    // Asked the way paintText draws the label: the same box, and the point measured from where
+    // Asked the way paintOwnText draws the label: the same box, and the point measured from where
     // the anchor put the block in it.
     std::optional<ExpanderHeader::LabelLink> ExpanderHeader::linkAt(const PointInForm point) const
     {
@@ -199,7 +199,7 @@ namespace ClaFi::Controls
         const FloatRect bounds = textBounds(context, boundsInForm());
         if (bounds.empty())
             return std::nullopt;
-        const ScaledSize drawn = textEngine().calculateText(context, label, bounds.dimensions(),
+        const ScaledSize drawn = textEngine().measureText(context, label, bounds.dimensions(),
             false, wordWrap(), textFormat());
         const FloatPoint origin = anchoredOrigin(bounds, drawn, textAnchor());
         const std::optional<LinkHit> hit = textEngine().linkAt(context, label,

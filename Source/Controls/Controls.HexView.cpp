@@ -378,7 +378,7 @@ namespace ClaFi::Controls
         m_lineText.clear();
         m_lineText << k_measuredRun;
 
-        const ScaledSize measured = textEngine().calculateText(formContext, m_lineText,
+        const ScaledSize measured = textEngine().measureText(formContext, m_lineText,
             { k_maxFloat, k_maxFloat }, false, false, &s_lineFormat);
         m_charWidth = measured.x / static_cast<float>(k_measuredRun.size());
         m_lineHeight = measured.y;

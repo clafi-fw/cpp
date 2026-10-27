@@ -41,7 +41,7 @@ namespace ClaFi
         // stand on it. Measured as not editable, that row is missing from the size the control is
         // given, and the paint then places it past the control's own bottom edge where the clip
         // removes it - along with any caret standing on it.
-        ScaledSize calculateText(const FormContext&, const Text&,
+        ScaledSize measureText(const FormContext&, const Text&,
             MaxSize = { k_maxFloat, k_maxFloat }, bool editable = false, bool wrap = true,
             const TextFormat* = nullptr);
         // The height of a text's first count lines in a box that wide, or the whole text's.
@@ -203,7 +203,7 @@ namespace ClaFi
         return result;
     }
 
-    ScaledSize TextEngine::calculateText(const FormContext& formContext, const Text& text,
+    ScaledSize TextEngine::measureText(const FormContext& formContext, const Text& text,
         MaxSize maxDimensions, bool editable, bool wrap, const TextFormat* format)
     {
         return select(text, format, maxDimensions, formContext.scaleFactor(), editable, wrap,
@@ -248,10 +248,8 @@ namespace ClaFi
         ++m_layoutGeneration;
     }
 
-    // The one place a layout is found or made. Every entry point below goes through here, so they
-    // all state their inputs the same way and none of them can forget one - which the old sequence
-    // of setters allowed: calculateText never set editable, and silently inherited whatever the
-    // previous caller had left behind.
+    // The one place a layout is found or made. Every entry point goes through here, so each states
+    // all of its inputs, editable included, and none inherits what the previous caller left.
     TextLayout& TextEngine::select(const Text& text, const TextFormat* format, MaxSize bounds,
         ScaleFactor scaleFactor, bool editable, bool wrap, EventPhase phase)
     {

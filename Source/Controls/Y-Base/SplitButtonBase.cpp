@@ -89,7 +89,7 @@ namespace ClaFi::Controls
 
     // A part at either side stands beside a wrapping text, so its room comes off the box the text
     // is broken in - the way adjustTextRect takes it off the box the text is drawn in.
-    ScaledSize SplitButtonBase::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize SplitButtonBase::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
         if (wordWrap())
@@ -98,9 +98,9 @@ namespace ClaFi::Controls
                 event.formContext(),
                 event.scaledPadding(),
                 event.scaledSpacing());
-            asked.x = std::max(asked.x - extent.x, 0.0f);
+            maxDimensions.x = std::max(maxDimensions.x - extent.x, 0.0f);
         }
-        return ButtonBase::measureText(event, asked, text);
+        return ButtonBase::measureText(event, maxDimensions, text);
     }
 
     void SplitButtonBase::calculateChildren(FormBase& form)

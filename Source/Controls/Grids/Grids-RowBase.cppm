@@ -148,7 +148,7 @@ namespace ClaFi::Controls::Grids
             Color lineColor, Color surfaceColor) const;
         [[nodiscard]] float sharedLinePixel() const { return m_descriptor.sharedLinePixel(); }
         void doPaintColumns(PaintEvent&);
-        void paintText(PaintEvent&) override {}
+        void paintOwnText(PaintEvent&) override {}
         // A row's texts are its cells', each named by its place in the cell walk.
         void searchTexts(const SearchTextVisitor&) override;
         // Selects the cell the match stands in and scrolls it into view.

@@ -31,7 +31,7 @@ namespace SeeDocs_App::Ui
     protected:
         ScaledSize calculateContent(AlignEvent&) override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
-        void paintText(PaintEvent&) override;
+        void paintOwnText(PaintEvent&) override;
     private:
         static constexpr float k_markRoom = k_rowIconSize + k_rowIconGap;   // what the mark takes
 
@@ -58,7 +58,7 @@ namespace SeeDocs_App::Ui
     public:
         using TreeItem::TreeItem;
     protected:
-        void paintText(PaintEvent&) override;
+        void paintOwnText(PaintEvent&) override;
     };
 
 
@@ -84,7 +84,7 @@ namespace SeeDocs_App::Ui
     }
 
     template<typename Host>
-    void WithMark<Host>::paintText(PaintEvent& event)
+    void WithMark<Host>::paintOwnText(PaintEvent& event)
     {
         if (m_mark.has_value())
         {
@@ -100,6 +100,6 @@ namespace SeeDocs_App::Ui
             };
             paintRowIcon(icon, *m_mark);
         }
-        Host::paintText(event);
+        Host::paintOwnText(event);
     }
 }

@@ -94,7 +94,7 @@ namespace ClaFi::Controls
     protected:
         void getText(GetTextEvent&) const override;
         // Asked no wider than a tooltip's line, so a long signature wraps rather than runs.
-        ScaledSize measureText(AlignEvent&, ScaledSize asked,
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions,
             const Text&) override;
     private:
         Text m_text{};

@@ -5,7 +5,7 @@ The author's side of the footnote of the same name.
 ## ComboBox measureText
 
 Every pass that measures the face measures every item, answered by the text cache after the
-first. `Control::calculateText` answers an empty text without calling `measureText`, so a face
+first. `Control::measureOwnText` answers an empty text without calling `measureText`, so a face
 with nothing picked and no placeholder measures no item at all - a combo box is built standing
 on an item.
 

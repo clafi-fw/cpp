@@ -38,13 +38,13 @@ namespace ClaFi::Controls
         contentSize.x += lead;
     }
 
-    // A row stating a format of its own is measured whole: the tree's line is one of body text.
-    ScaledSize TreeItem::measureText(AlignEvent& event, ScaledSize asked,
+    // A row stating a format of its own is measured whole: m_rowTextHeight is that of body text.
+    ScaledSize TreeItem::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
-        if (m_tree.m_rowLine.has_value() && !textFormat())
-            return { 0.0f, *m_tree.m_rowLine };
-        return ToolButton::measureText(event, asked, text);
+        if (m_tree.m_rowTextHeight.has_value() && !textFormat())
+            return { 0.0f, *m_tree.m_rowTextHeight };
+        return ToolButton::measureText(event, maxDimensions, text);
     }
 
     FloatRect TreeItem::iconRect(const PaintEvent& event) const
@@ -110,13 +110,13 @@ namespace ClaFi::Controls
     // TreeNodeHeader
 
     // A tree node builds its header and holds it, so the parent is that node.
-    ScaledSize TreeNodeHeader::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize TreeNodeHeader::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
         const TreeView& tree = static_cast<const TreeNode*>(parent())->m_tree;
-        if (tree.m_rowLine.has_value() && !textFormat())
-            return { 0.0f, *tree.m_rowLine };
-        return ExpanderHeader::measureText(event, asked, text);
+        if (tree.m_rowTextHeight.has_value() && !textFormat())
+            return { 0.0f, *tree.m_rowTextHeight };
+        return ExpanderHeader::measureText(event, maxDimensions, text);
     }
 
     // TreeNode
@@ -190,16 +190,16 @@ namespace ClaFi::Controls
         showCurrentRow();
     }
 
-    // **Every row is one line**, and where the tree's width is given nothing reads a row's own,
-    // so the line is measured once for all of them. A tree scrolled across is as wide as its
+    // **Every row is one line**, and where the tree's width is given no row's width is read, so
+    // one line's height is measured for all of them. A tree scrolled across is as wide as its
     // widest row. See Controls#tree
     void TreeView::calculateChildren(FormBase& form)
     {
-        m_rowLine.reset();
+        m_rowTextHeight.reset();
         if (isWidthGivenFromOutside() && !isScrolledByParent(ScrollAxis::Horizontal))
         {
-            const Text probe{ k_lineProbe };
-            m_rowLine = textEngine().calculateText(form.context(), probe,
+            const Text sample{ k_lineHeightSample };
+            m_rowTextHeight = textEngine().measureText(form.context(), sample,
                 { k_maxFloat, k_maxFloat }, false, false).y;
         }
         TreeViewBase::calculateChildren(form);

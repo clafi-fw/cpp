@@ -107,7 +107,7 @@ namespace ClaFi::Controls::Grids
                 result.y = std::min(result.y, layout.linesHeight(maxLines));
             return result;
         }
-        ScaledSize result = textEngine().calculateText(formContext, cellText,
+        ScaledSize result = textEngine().measureText(formContext, cellText,
             maxSize, false, true, &format);
         if (maxLines != 0)
         {
@@ -1107,7 +1107,7 @@ namespace ClaFi::Controls::Grids
         const TextFormat& format = cellTextFormat(column);
         if (column.movingText() == MovingText::No)
         {
-            drawn = textEngine().calculateText(formContext, text, bounds, false, true, &format);
+            drawn = textEngine().measureText(formContext, text, bounds, false, true, &format);
             return textEngine().isTextTrimmed(formContext, text, bounds, true, &format);
         }
 
@@ -1165,7 +1165,7 @@ namespace ClaFi::Controls::Grids
         std::optional<LinkHit> hit;
         if (column.movingText() == MovingText::No)
         {
-            const ScaledSize drawn = textEngine().calculateText(formContext, cellText,
+            const ScaledSize drawn = textEngine().measureText(formContext, cellText,
                 bounds, false, true, &format);
             const FloatPoint origin = anchoredOrigin(textBounds, drawn, anchor);
             hit = textEngine().linkAt(formContext, cellText, bounds, point - origin, true,

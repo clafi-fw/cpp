@@ -155,7 +155,6 @@ namespace ClaFi::Browser
 
     // BreadCrumbBar
 
-    /// Bread Crumb Bar
     export class BreadCrumbBar : public StackPanel, private IFittableList
     {
         friend BreadCrumbBarItem;

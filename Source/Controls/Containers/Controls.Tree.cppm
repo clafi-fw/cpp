@@ -51,7 +51,7 @@ namespace ClaFi::Controls
     protected:
         ScaledSize calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
-        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         FloatRect iconRect(const PaintEvent&) const override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
     private:
@@ -85,7 +85,7 @@ namespace ClaFi::Controls
     public:
         using ExpanderHeader::ExpanderHeader;
     protected:
-        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
     };
 
     // A branch of a tree: a header that is a row of its own, and under it the rows its mark opens.
@@ -194,10 +194,10 @@ namespace ClaFi::Controls
         // Brings the current row back after the nodes have moved.
         void showCurrentRow();
     private:
-        static constexpr std::wstring_view k_lineProbe = L"0"; // what a row's line is measured on
+        static constexpr std::wstring_view k_lineHeightSample = L"0";
 
         Nodes m_nodes{}; // every node of the tree, each after the one holding it
-        std::optional<float> m_rowLine{}; // the height of every row's text while the width is given
+        std::optional<float> m_rowTextHeight{}; // set while the width is given from outside
         Action m_expandAll{ Text{ L"Expand all" } };
         Action m_collapseAll{ Text{ L"Collapse all" } };
         Action m_collapseOthers{ Text{ L"Collapse others" } };

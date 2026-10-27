@@ -318,7 +318,7 @@ namespace ClaFi::Controls
         {
         case TextPlacement::Top:
         {
-            const ScaledSize newTextSize = calculateText(event, contentSize);
+            const ScaledSize newTextSize = measureOwnText(event, contentSize);
             m_contentRect.top += newTextSize.y;
             const float delta = newTextSize.y - m_textSize.y;
             m_contentRect.bottom += delta;

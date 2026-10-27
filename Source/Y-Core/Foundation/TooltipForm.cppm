@@ -36,7 +36,7 @@ namespace ClaFi
         [[nodiscard]] const TextFormat* textFormat() const override;
         [[nodiscard]] float lineBreakWidth() const override { return m_breakWidth; }
         // Held to Tooltip::k_maxLines, and to k_lineWidth unless it repeats lines broken elsewhere.
-        ScaledSize measureText(AlignEvent&, ScaledSize asked, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         ScaledSize calculateContent(AlignEvent& event) override { return FormControlBase::calculateContent(event); }
     private:
         Control* m_control{ nullptr };
@@ -142,17 +142,17 @@ namespace ClaFi
         return m_format.empty() ? nullptr : &m_format;
     }
 
-    ScaledSize TooltipLabel::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize TooltipLabel::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
         // A tooltip the screen alone bounds runs a long sentence out as one line from the pointer
         // to the edge. The window is then sized to the widest line, so a short tooltip stays short.
         if (m_breakWidth == 0.0f)
-            asked.x = std::min(asked.x, Tooltip::k_lineWidth * event.scaleFactor());
+            maxDimensions.x = std::min(maxDimensions.x, Tooltip::k_lineWidth * event.scaleFactor());
         TextLayout& layout = syncedLayout(event.formContext(),
-            FloatRect::FromDimensions({ 0.0f, 0.0f }, asked), text);
-        asked.y = std::min(asked.y, layout.linesHeight(Tooltip::k_maxLines));
-        return WithTextLayout<FormControlBase>::measureText(event, asked, text);
+            FloatRect::FromDimensions({ 0.0f, 0.0f }, maxDimensions), text);
+        maxDimensions.y = std::min(maxDimensions.y, layout.linesHeight(Tooltip::k_maxLines));
+        return WithTextLayout<FormControlBase>::measureText(event, maxDimensions, text);
     }
 
     // TooltipForm

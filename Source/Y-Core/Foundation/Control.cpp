@@ -1917,7 +1917,7 @@ namespace ClaFi
             // left. The width is the box's, which is the width the lines were broken at and what
             // TooltipForm breaks its own at.
             const FloatRect textRect = textBounds(event.formContext(), boundsInForm());
-            const ScaledSize drawn = s_textEngine.calculateText(
+            const ScaledSize drawn = s_textEngine.measureText(
                 event.formContext(),
                 event.text,
                 textRect.dimensions(),
@@ -2019,7 +2019,7 @@ namespace ClaFi
         event.paintChildren();
     }
 
-    void Control::paintText(PaintEvent& event)
+    void Control::paintOwnText(PaintEvent& event)
     {
         FloatRect txtRect = textBounds(event);
         if (txtRect.empty())
@@ -2161,7 +2161,7 @@ namespace ClaFi
         }
     }
 
-    ScaledSize Control::calculateText(AlignEvent& event, ScaledSize constraints)
+    ScaledSize Control::measureOwnText(AlignEvent& event, ScaledSize box)
     {
         Text text;
         const Text& gathered = doGetText(event.formContext(), text, EventPhase::Calculate);
@@ -2170,23 +2170,23 @@ namespace ClaFi
         // A text that does not wrap is measured against no width at all. What a horizontal scroll
         // has to be told is how wide the text is, and a width to break at is the one thing that
         // would stop it saying so.
-        const ScaledSize asked = wordWrap()
-            ? constraints
-            : ScaledSize{ k_maxFloat, constraints.y };
-        ScaledSize result = measureText(event, asked, gathered);
+        const ScaledSize maxDimensions = wordWrap()
+            ? box
+            : ScaledSize{ k_maxFloat, box.y };
+        ScaledSize result = measureText(event, maxDimensions, gathered);
         return {
             result.x,
             std::min(result.y, event.scaledMaxHeight())
         };
     }
 
-    ScaledSize Control::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize Control::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
-        return s_textEngine.calculateText(
+        return s_textEngine.measureText(
             event.formContext(),
             text,
-            asked,
+            maxDimensions,
             editProps() != nullptr,
             wordWrap(),
             textFormat()
@@ -2237,7 +2237,7 @@ namespace ClaFi
     ScaledSize Control::calculateContent(AlignEvent& event)
     {
         const ScaledSize text =
-            calculateText(event, { textWidthLimit(event), event.maxContentHeight() });
+            measureOwnText(event, { textWidthLimit(event), event.maxContentHeight() });
         return contentAroundText(event, text);
     }
 
@@ -2266,7 +2266,7 @@ namespace ClaFi
             if (event.scaledMaxSize() == event.scaledMinSize())
                 return;
 
-            // **An empty measurement is not a size.** calculateText answers {0, 0} for a control
+            // **An empty measurement is not a size.** measureOwnText answers {0, 0} for a control
             // that holds no text, and this box is what the control's children are laid out in -
             // a grid row hands it to the control standing in every one of its cells. Taking the
             // empty answer gives each of them a slot of no height, and a control with no height
@@ -2275,7 +2275,7 @@ namespace ClaFi
             // A control with no text reaches here because a calculated size is **ceiled** while the
             // size it is then given is not, so a box measured at a fractional width arrives a
             // fraction of a pixel narrower than the width it was measured at.
-            const ScaledSize measuredText = calculateText(event, { newDimensions.x, k_maxFloat });
+            const ScaledSize measuredText = measureOwnText(event, { newDimensions.x, k_maxFloat });
             if (measuredText.x || measuredText.y)
             {
                 rememberTextWidth(event, newDimensions.x);
@@ -2855,8 +2855,8 @@ namespace ClaFi
     // a clear on the visit leaves the answer the drawing stage wrote wiped by the stage that
     // drew nothing.
     //
-    // Ahead of paintText rather than inside it: an override is free to draw no text at all - see
-    // ButtonBase::paintText in IconOnly mode - and both flags have to read false for it.
+    // Ahead of paintOwnText rather than inside it: an override is free to draw no text at all - see
+    // ButtonBase::paintOwnText in IconOnly mode - and both flags have to read false for it.
     void Control::doPaintTextInitialization()
     {
         m_flags &= ~cfTextTrimmed;

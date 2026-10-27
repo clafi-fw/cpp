@@ -793,7 +793,7 @@ namespace ClaFi
             // control stays clipped to the bounds it actually occupies, and it wraps the
             // surface and the children - which is what makes the whole button move as one piece
             // about a single origin. The text moves with them while CLAFI_TEXT_MOVING is 1 and
-            // stands where it was laid out while it is 0 - see the paintText call below. A
+            // stands where it was laid out while it is 0 - see the paintOwnText call below. A
             // control inside one that is already scaled leaves it alone, so the origin is always
             // the outermost animating control.
             Graphics::Matrix3x2 pressTransform = Graphics::Matrix3x2::Identity();
@@ -858,7 +858,7 @@ namespace ClaFi
             {
                 control.doPaintTextInitialization();
 #if CLAFI_TEXT_MOVING
-                control.paintText(*this);
+                control.paintOwnText(*this);
 #else
                 // Text stands where it was laid out: the press animation scales the surface and
                 // the children around it, and the text is drawn without it, so it never moves.
@@ -866,12 +866,12 @@ namespace ClaFi
                 {
                     const Graphics::Matrix3x2 pressed = canvas().transform();
                     canvas().setTransform(m_unpressedTransform);
-                    control.paintText(*this);
+                    control.paintOwnText(*this);
                     canvas().setTransform(pressed);
                 }
                 else
                 {
-                    control.paintText(*this);
+                    control.paintOwnText(*this);
                 }
 #endif
                 control.doPainted(*this);

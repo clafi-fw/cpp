@@ -272,10 +272,10 @@ namespace ClaFi::Controls
         paintIcon(event2);
     }
 
-    void ButtonBase::paintText(PaintEvent& event)
+    void ButtonBase::paintOwnText(PaintEvent& event)
     {
         if (m_viewMode != ButtonViewMode::IconOnly)
-            RichControl::paintText(event);
+            RichControl::paintOwnText(event);
     }
 
     void ButtonBase::searchTexts(const SearchTextVisitor& visit)
@@ -377,12 +377,12 @@ namespace ClaFi::Controls
     }
 
     // **An icon-only button does not lay its text out.** Its words are what the tooltip says - see
-    // nestedGetTooltip - and paintText draws none of them, so they take no space in either pass.
+    // nestedGetTooltip - and paintOwnText draws none of them, so they take no space in either pass.
     // calculateContent answers for that mode with the icon alone, and the align pass re-measures a
     // wrapping text against the box the control was granted and takes that answer as its content:
     // a button measuring words it never shows comes out as tall as they are wrapped in its own
     // width - three lines for a three-word tooltip - and spills out of the bar it stands in.
-    ScaledSize ButtonBase::measureText(AlignEvent& event, ScaledSize asked,
+    ScaledSize ButtonBase::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {
         if (m_viewMode == ButtonViewMode::IconOnly)
@@ -394,9 +394,9 @@ namespace ClaFi::Controls
         // it.
         if (wordWrap())
         {
-            FloatRect box = FloatRect::FromDimensions({ 0.0f, 0.0f }, asked.toFloat());
+            FloatRect box = FloatRect::FromDimensions({ 0.0f, 0.0f }, maxDimensions.toFloat());
             adjustForSideParts(event.scaledSpacing(), iconWidth, box);
-            asked.x = std::max(box.width(), 0.0f);
+            maxDimensions.x = std::max(box.width(), 0.0f);
         }
 
         // **A picture standing over the words sets the width**, and the words wrap under it. Asked
@@ -410,10 +410,10 @@ namespace ClaFi::Controls
             && iconWidth > 0.0f
             && (hasTopIcon(m_viewMode) || m_viewMode == ButtonViewMode::BottomIcon))
         {
-            asked.x = std::min(asked.x, iconWidth);
+            maxDimensions.x = std::min(maxDimensions.x, iconWidth);
         }
 
-        return RichControl::measureText(event, asked, text);
+        return RichControl::measureText(event, maxDimensions, text);
     }
 
     void ButtonBase::calculateChildren(FormBase& form)
