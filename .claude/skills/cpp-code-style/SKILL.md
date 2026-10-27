@@ -9,6 +9,10 @@ Language: Modern C++ (C++20). Architecture context: Modules, Concepts, Strong Ty
 
 Apply every rule below when generating or refactoring C++ code. Follow the rules silently within code blocks. Do not explain style choices, and do not add conversational padding about optimization or architecture unless asked.
 
+## Clarity First
+
+ClaFi stands for Clarity First, and clarity is the first priority of every rule below. Where rules pull different ways, or a rule meets a convenience, the code a reader understands at the first reading wins - over brevity, over habit, over matching an unclear name that already exists. The test for a name, a signature or a structure is whether it says what it is to someone who did not write it, without its comment and without the reasoning that produced it. An existing name that fails the test is pointed out, not copied.
+
 ## 1. Decision and Design Protocol
 
 **[MUST] Pre-Coding Discussion:** Discuss the selected implementation strategy before generating code if fulfilling the request involves:
@@ -217,6 +221,23 @@ Converting a tab-indented file is safe only after confirming no tab appears outs
     - Never use snake_case for a local (`r_bound`). If a short name collides with something, lengthen it into a real word.
 
 - **[MUST] Object Names Are Nouns:** A variable, member or parameter that holds or refers to an object is named with a noun phrase for that object (`clickedControl`, `targetRow`). A bare participle or adjective (`clicked`, `selected`, `maximized`) reads as a flag, and is kept for a `bool`.
+
+- **[MUST] A Name Says What It Holds:** A name is read without its comment, so it carries what the thing is in the reader's words. A short name that needs a comment to say what it holds is not a shortening - it is the comment cut until it no longer says it. Put the comment's words into the name and strike the comment.
+    - Keep the word for the quantity: a height ends in `Height`, a count in `Count`, an index in `Index`.
+    - Never name a thing after the shorthand of the reasoning that produced it. In "every row is one line, so measure the line once", "line" stands for a height inside that sentence only.
+    - BAD: `std::optional<float> m_rowLine{}; // the height of every row's text` - read cold, a row line is a line drawn under a row.
+    - GOOD: `std::optional<float> m_rowTextHeight{};`
+    - BAD: `k_lineProbe = L"0"; // what a row's line is measured on`
+    - GOOD: `k_lineHeightSample = L"0";`
+    - The test: cover the comment and the surrounding code, and read the name. If a reader cannot say what it holds, rename it. A comment that says what a name means is the sign.
+    - A comment on a well-named declaration carries only what no name can: when it is set, an invariant, a reason.
+
+- **[MUST] Paint, Draw and the Pixel Verbs:** Each word names one level of putting things on screen.
+    - **paint** is a step of the paint pass - what a form or a control does for its own part of the frame: `paintSurface`, `paintFrame`, `paintChildren`, `paintOwnText`, a slider's `paintThumb`, a form's `paintWindow`.
+    - **draw** puts a given thing at a given place: a canvas call (`drawPath`, `drawRectangle`), a text handed in (`drawText`), an icon into its rect (`drawIcon`, `DrawIconEvent`, `OnDrawIcon`), a picture built of canvas calls (`ShadowPainter::draw`, `HomeIcon::drawHouse`). An icon is drawn, not painted: the text engine draws one inside a run, outside any control's paint.
+    - **The rasterizer's pixel work** is named by what happens to the pixels: `fill`, `stroke`, `blendSurface`, `compositeSurface`, `rasterize`.
+    - **Words put into a `Text`** are written: `writeText`, `writeValue`, `writeColorDot`.
+    - The rule names verbs. A noun keeps its word - `RectPainter`, `ShadowPainter` and `iconPainter` name the thing.
 
 - **[MUST] Functions/Methods:** camelCase (e.g., `writeIndent`, `childValue`).
     - FACTORY EXCEPTION: A factory method - a static member function that makes an object of its own class out of arguments of other types - is PascalCase (e.g., `Rect::FromDimensions`, `CornerRadii::Uniform`). A static function that combines objects of its own class stays camelCase (`Color::blend`, `Rect::intersection`), and so does one that builds an object of another type (`createConfigSchema`) or an instance member that creates something (`createWindow`).

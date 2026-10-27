@@ -7,6 +7,10 @@ description: "Apply the ClaFi rules for comments and documentation - code commen
 
 These rules cover every word written for a reader of the ClaFi tree: comments in code, the footnotes under `Source/.seedocs/footnotes/`, the working notes under `Source/Working Notes/`, the manuals under `docs/`, and copy for sites and install guides. Every rule is binding. Apply them silently in what you write, and do not explain them unless asked.
 
+## Clarity First
+
+ClaFi stands for Clarity First, and clarity is the first priority of every rule below. Where rules pull different ways, the wording a reader understands at the first reading wins - over brevity, over the author's own shorthand, over phrasing borrowed from text that is already unclear. The test for a sentence is whether someone who did not write it understands it the first time through.
+
 ## 1. Where the Words Go
 
 - **A comment** stands beside the declaration or the line it is about. Section 3 says when one is written at all.
@@ -38,11 +42,12 @@ These rules hold for every kind of text in section 1.
 - **No exclamation marks.** None in comments, documentation or explanations. A run of `!!!!!` or `?????` used as an attention marker becomes a `TODO:` with the actual question in it.
 - **Short sentences.** Keep sentences short and direct, and avoid nested clauses.
 - **Spaced hyphens.** Use a spaced hyphen ( - ) where a long dash would go.
+- **Write the phrase, not a shorthand for it.** A word that stands for a longer phrase only inside the reasoning that produced it is a riddle to the next reader - "the line is measured once" where the height of one line is meant. Write the phrase.
 - **Click and press.** These are the framework's event names, and both fire from the keyboard as well as the mouse. When the pointer is meant, write "mouse click".
 
 ## 3. Comments in Code
 
-- **No comment by default.** A comment earns its line only by carrying what the code cannot say for itself - an invariant, a trap, a constraint imposed from outside, a rejected alternative, a reason. Strike the comment and read what is left. If the code is as clear and nothing true became unrecoverable, leave it struck. A clearer name or a named local retires a comment for good.
+- **No comment by default.** A comment earns its line only by carrying what the code cannot say for itself - an invariant, a trap, a constraint imposed from outside, a rejected alternative, a reason. Strike the comment and read what is left. If the code is as clear and nothing true became unrecoverable, leave it struck. A clearer name or a named local retires a comment for good, and a comment that only says what a name means marks a name to fix - see A Name Says What It Holds in cpp-code-style.
     - The public surface is the exception: a control, its properties and events, and the enums they take each carry one comment line. SeeDocs reads it as the declaration's hint.
 - **For the reader of the code.** A comment serves whoever reads the code later. Nothing that only makes sense in the history of a prompt or a session, such as `// Added`, `// new member` or `// <--- changed`.
 - **Comment the invariant, not the habit.** When a comment justifies why something is safe, state the property that makes it safe and what would break it. A justification that is merely true today misleads the next reader.
