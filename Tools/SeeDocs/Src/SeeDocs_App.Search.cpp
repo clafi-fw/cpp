@@ -1062,8 +1062,8 @@ namespace SeeDocs_App
         addGathered(page, footnotes, projects);
         const std::wstring place = placeWords(projects);
         std::wstring lead = page.sections.empty()
-            ? L"Nothing in " + place + L" holds the words."
-            : L"The names, hints and footnotes of " + place + L" that hold the words.";
+            ? L"Nothing was found in " + place
+            : L"Found in " + place + L":";
         page.lead = { plain(std::move(lead)) };
         return page;
     }
