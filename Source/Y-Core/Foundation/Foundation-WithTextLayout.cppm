@@ -16,8 +16,8 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    /// A control that shapes its own text in place, for a text that changes
-    export template <IsControl HostClass>
+    // A control that shapes its own text in place, for a text that changes. See Control-Foundation
+    export template <IsRichControl HostClass>
     class WithTextLayout : public HostClass
     {
     public:
@@ -30,43 +30,18 @@ namespace ClaFi
     protected:
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
-
-        /// @brief The layout, brought up to date with the text it draws, the rect it draws in and
-        /// the scale, and returned ready to answer.
-        ///
-        /// @note Every measurement and the paint both come through here, so a position can never
-        /// be read off one build and drawn on another. The overload taking no text gathers one -
-        /// see Control::doGetText.
-        [[nodiscard]] TextLayout& syncedLayout(const FormContext&, const FloatRect& textBounds) const;
+        // The layout, in step with the control's text, the rect it draws in and the scale.
+        [[nodiscard]] TextLayout& syncedLayout(const FormContext&,
+            const FloatRect& textBounds) const;
+        // The same, once the answer a gather gave is the control's text.
         [[nodiscard]] TextLayout& syncedLayout(const FormContext&, const FloatRect& textBounds,
-            const Text&) const;
-
-        /// @brief The width this control's lines are broken at, when that is not the box it is
-        /// laid out into. Zero - the standing answer - breaks them at the box.
+            const Text& answer);
+        // The width the lines are broken at; zero, the standing answer, breaks them at the box.
         [[nodiscard]] virtual float lineBreakWidth() const;
-
-        /// @brief Puts a text the layout has not been told about into it.
-        ///
-        /// @note The whole of it, which is what a text rewritten from nothing needs. A host that
-        /// knows what **changed** says so instead: TextBox splices the paragraphs its edit reached
-        /// and leaves the rest of the document where it stands.
-        virtual void takeText(const Text&) const;
-
-        /// @brief The stamp of the control's **own** text, when that is what a gather answered
-        /// with.
-        ///
-        /// @note A gather **names** a control's text rather than copying it, so the answer is that
-        /// object itself and is recognised by address. Anything else - a text composed by a
-        /// parent, or built by a handler - has no life of its own and no stamp, and is told from
-        /// the last one by being compared.
-        [[nodiscard]] TextStamp stampOf(const Text& answer) const;
+        // Tells the layout the control's text at its present revision - the whole of it.
+        virtual void takeText() const;
     protected:
-        // What the layout was built from. Mutable, both of them: measuring is a const question
-        // about the control, and the layout is the answer's working - a memo of the control's own
-        // text, not state a caller can observe by any other route. What a const measurement must
-        // not do is **change** what is drawn, and it cannot: every path here builds the layout from
-        // doGetText, which is what paintOwnText hands it too.
-        mutable Text m_layoutText;
+        // Mutable because measuring is a const question, and the layout is the answer's working.
         mutable TextLayout m_layout;
     private:
         // The last measurement and everything its answer depends on. A wrapping control is
@@ -86,14 +61,10 @@ namespace ClaFi
             bool operator==(const Measurement&) const = default;
         };
     private:
-        // Where doGetText gathers, held so that the buffers a gather needs are grown once rather
-        // than taken from the allocator per measurement. It is working, never an answer: what it
-        // holds after a call is whatever the last gather put there, and only m_layoutText says
-        // what the layout was built from.
-        mutable Text m_gatheredText;
-        // The stamp the layout was built from, so an unchanged text is recognised without reading
-        // it. A text with no life of its own stamps nothing and is compared instead.
-        mutable TextStamp m_layoutStamp{};
+        // What a gather answered becomes the control's text, where it says something else.
+        void takeAnswer(const Text& answer);
+    private:
+        mutable TextStamp m_layoutStamp{}; // the revision of the control's text the layout holds
         Measurement m_measurement{};
         ScaledSize m_measured{};
         TextFormat m_measuredFormat{}; // what the last measurement was laid out over
@@ -108,15 +79,18 @@ namespace ClaFi
 //-----------------------------------------------------------------------------
 
 
-    template <IsControl HostClass>
+    template <IsRichControl HostClass>
     template <typename... Args>
     WithTextLayout<HostClass>::WithTextLayout(const CreateParams& params, Args&&... args)
         :
         HostClass{ params, std::forward<Args>(args)... }
     {
+        // Pointed at the control's own text once. From here on syncedLayout keeps the layout in
+        // step with the text's revision, and nothing else is ever stated to it.
+        m_layout.setText(this->text());
     }
 
-    template <IsControl HostClass>
+    template <IsRichControl HostClass>
     void WithTextLayout<HostClass>::setCellFallback(const CellFallback value)
     {
         if (m_cellFallback == value)
@@ -126,11 +100,11 @@ namespace ClaFi
         this->invalidateFormAlign();
     }
 
-    template <IsControl HostClass>
+    template <IsRichControl HostClass>
     DrawTextResult WithTextLayout<HostClass>::drawText(PaintEvent& event,
-        const FloatRect& textBounds, const Text& text)
+        const FloatRect& textBounds, const Text& answer)
     {
-        TextLayout& layout = syncedLayout(event.formContext(), textBounds, text);
+        TextLayout& layout = syncedLayout(event.formContext(), textBounds, answer);
 #if CLAFI_TEXT_MOVING
         return layout.draw(
             event.controlContext(),
@@ -151,12 +125,14 @@ namespace ClaFi
     // control building a text of its own gets a **second** layout of it: the key carries the text's
     // hash, so a control whose text moved misses on every measurement, shapes it again to answer
     // one question, and leaves the entry for the evictor to sweep.
-    template <IsControl HostClass>
+    template <IsRichControl HostClass>
     ScaledSize WithTextLayout<HostClass>::measureText(AlignEvent& event,
-        ScaledSize maxDimensions, const Text& text)
+        ScaledSize maxDimensions, const Text& answer)
     {
+        // Ahead of the stamp, which is the answer's once the answer is the control's text.
+        takeAnswer(answer);
         const Measurement measurement{
-            .text = stampOf(text),
+            .text = this->text().stamp(),
             .maxDimensions = maxDimensions,
             .scaleFactor = event.scaleFactor(),
             .breakWidth = this->lineBreakWidth(),
@@ -165,20 +141,15 @@ namespace ClaFi
             .editable = this->editProps() != nullptr,
             .layoutGeneration = Control::textEngine().layoutGeneration(),
         };
-        // A measurement of a text with no life of its own is not kept: it would be recognised by
-        // a stamp that names nothing, which is every other such measurement.
         const TextFormat* format = this->textFormat();
-        if (measurement.text.named()
-            && measurement == m_measurement
-            && m_measuredFormat.matches(format))
+        if (measurement == m_measurement && m_measuredFormat.matches(format))
             return m_measured;
 
         // Only the size reaches the layout, so the rect is built at the origin - see syncedLayout,
         // which reads nothing else from it.
         m_measured = syncedLayout(
             event.formContext(),
-            FloatRect::FromDimensions({ 0.0f, 0.0f }, maxDimensions),
-            text
+            FloatRect::FromDimensions({ 0.0f, 0.0f }, maxDimensions)
         ).calculatedDimensions();
         m_measurement = measurement;
         if (!m_measuredFormat.matches(format))
@@ -186,43 +157,19 @@ namespace ClaFi
         return m_measured;
     }
 
-    template <IsControl HostClass>
+    template <IsRichControl HostClass>
     TextLayout& WithTextLayout<HostClass>::syncedLayout(const FormContext& formContext,
         const FloatRect& textBounds) const
     {
-        // Gathered into a member rather than a local. A gather that has to **build** its answer
-        // copies the whole text and every marker in it, and a Text declared here would take the
-        // buffers for that copy from the allocator on every measurement. Cleared instead, so the
-        // buffers one gather grew are the ones the next fills.
-        m_gatheredText.clear();
-        const Text& gathered = this->doGetText(formContext, m_gatheredText, EventPhase::Paint);
-        return syncedLayout(formContext, textBounds, gathered);
-    }
-
-    template <IsControl HostClass>
-    TextLayout& WithTextLayout<HostClass>::syncedLayout(const FormContext& formContext,
-        const FloatRect& textBounds, const Text& text) const
-    {
-        // The stamp first, because it answers without reading either text: the control's own text
-        // at the revision the layout was built from is the same text, and nothing has to be
-        // compared or copied. A stamp that names nothing - a composed or built answer - falls
-        // through to the comparison, which is what such an answer needs.
-        //
-        // Compared rather than assigned: setText invalidates whatever it is handed, so a control
+        // The stamp says whether the text was written since the layout took it, without reading
+        // the text. Compared rather than taken every time: setText invalidates, so a control
         // measured four times in one pass would rebuild four times.
-        //
-        // **A layout not yet stated a text is told one whatever the comparison says.** An empty
-        // first text compares equal to the empty text this was constructed beside, so nothing would
-        // be taken and the layout would be asked to shape from a text it never held - a control
-        // whose reading stands empty until something is there to read draws exactly that.
-        const TextStamp stamp = stampOf(text);
-        const bool recognised = stamp.named() && stamp == m_layoutStamp;
-        if (!m_layout.isTextStated() || (!recognised && text != m_layoutText))
-            takeText(text);
-
-        // Taken whether or not anything was rebuilt: a text that compared equal is one the next
-        // measurement can recognise without comparing it again.
-        m_layoutStamp = stamp;
+        const TextStamp stamp = this->text().stamp();
+        if (stamp != m_layoutStamp)
+        {
+            takeText();
+            m_layoutStamp = stamp;
+        }
         if (m_layoutGeneration != Control::textEngine().layoutGeneration())
         {
             m_layoutGeneration = Control::textEngine().layoutGeneration();
@@ -242,27 +189,35 @@ namespace ClaFi
         return m_layout;
     }
 
-    template <IsControl HostClass>
+    template <IsRichControl HostClass>
+    TextLayout& WithTextLayout<HostClass>::syncedLayout(const FormContext& formContext,
+        const FloatRect& textBounds, const Text& answer)
+    {
+        takeAnswer(answer);
+        return syncedLayout(formContext, textBounds);
+    }
+
+    template <IsRichControl HostClass>
     float WithTextLayout<HostClass>::lineBreakWidth() const
     {
         return 0.0f;
     }
 
-    template <IsControl HostClass>
-    void WithTextLayout<HostClass>::takeText(const Text& text) const
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::takeText() const
     {
-        m_layoutText = text;
-        m_layout.setText(m_layoutText);
+        m_layout.setText(this->text());
     }
 
-    template <IsControl HostClass>
-    TextStamp WithTextLayout<HostClass>::stampOf(const Text& answer) const
+    // The layout draws the control's text and nothing else, so an answer a gather built - a
+    // handler's or a parent's words - is made that text. Compared first: a built answer has no
+    // stamp, and one saying what the text already says would move the stamp on for nothing.
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::takeAnswer(const Text& answer)
     {
-        const ControlText& own = this->text();
-        if (&answer != static_cast<const Text*>(&own))
-            return {};
-
-        return own.stamp();
+        const Text& own = this->text();
+        if (&answer != &own && answer != own)
+            this->text() = answer;
     }
 
 }

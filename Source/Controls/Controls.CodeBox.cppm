@@ -87,17 +87,14 @@ namespace ClaFi::Controls
     {
     public:
         using WithTextLayout<FormControlBase>::WithTextLayout;
-        // States what the tooltip says: the signature from where its list opens with the argument
+        // Writes what the tooltip says: the signature from where its list opens with the argument
         // the caret stands in bold, or No parameters where it lists none, and the entry's hint.
         void setCall(const Syntax::CompletionEntry&, const Syntax::SignatureParameters&,
             std::size_t argument);
     protected:
-        void getText(GetTextEvent&) const override;
         // Asked no wider than a tooltip's line, so a long signature wraps rather than runs.
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions,
             const Text&) override;
-    private:
-        Text m_text{};
     };
 
     using ParameterTooltipForm = Form<ParameterTooltip>;
@@ -325,9 +322,8 @@ namespace ClaFi::Controls
         INIT_PROPERTY(indentGuides)
     {
         m_layout.setColorOverlay(this);
-        // TextBox's constructor stated the empty text to the layout, where textTaken cannot reach
-        // this class, so the line states are brought into step with it here.
-        readWhole(m_layoutText.plainText());
+        // The line states stand beside the text from construction on, ahead of the first sync.
+        readWhole(text().plainText());
         // Connected here rather than given to the timer as a construction property: MSVC rejects
         // a this-capturing lambda in a default member initializer.
         m_completionRequest.onTick([this](TimerEvent&){

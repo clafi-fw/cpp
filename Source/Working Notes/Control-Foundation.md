@@ -185,3 +185,22 @@ above a title's tabs answers as the tab, so it no longer drags the window.
 A point outside the window is left alone. A drag carried past the edge keeps the coordinates it
 has, and the positions handed to a drag are the pointer's own - only what the pointer meets is
 moved.
+
+## WithTextLayout
+
+**One text per host, since 2026-10-27.** The layout points at the control's own ControlText for
+life, and the stamp is what says it moved. Before that the mixin kept a copy of whatever the gather
+answered, with a gather buffer beside it, and every text change was a whole copy - for a TextBox,
+the whole document per key press.
+
+**A built answer is absorbed, not copied.** The gather still runs over Control's scratch buffer. An
+answer that is not the control's text by address is assigned into it in drawText and measureText,
+after a comparison, so an answer saying what the text already says moves nothing. Handing the
+gather the control's own text as its buffer was the first idea and does not work: the buffer is a
+`Text&`, and a write through it never reaches the ControlText stamp - the layout would keep its old
+build on the paint that changed the words. Fixing that means the event tracking writes, exposure
+through `operator Text&` included, and a non-const seam at Control's four own-text gathers.
+
+**The composed case is TooltipLabel alone**, whose answer is re-asked per paint and differs by
+phase. ParameterTooltip had carried a second Text and a getText override to replace the answer;
+setCall writes text() now.

@@ -829,15 +829,15 @@ namespace ClaFi::Controls
         Text& out = event.text;
         const std::wstring_view target = m_pointedLink.target;
         const std::optional<TextRange> anchor = target.starts_with(L'#')
-            ? m_layoutText.anchorRange(target.substr(1))
+            ? text().anchorRange(target.substr(1))
             : std::nullopt;
         if (anchor.has_value())
         {
-            TextRange paragraph = textEngine().paragraphAt(m_layoutText, anchor->start);
-            const std::wstring& plain = m_layoutText.plainText();
+            TextRange paragraph = textEngine().paragraphAt(text(), anchor->start);
+            const std::wstring& plain = text().plainText();
             if (paragraph.length && plain[paragraph.end() - 1] == L'\n')
                 --paragraph.length;
-            event.writePreview(m_layoutText.selectedText(paragraph));
+            event.writePreview(text().selectedText(paragraph));
         }
         else
         {

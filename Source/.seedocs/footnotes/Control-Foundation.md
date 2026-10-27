@@ -648,6 +648,20 @@ rectangle being dragged. Deriving is the whole declaration.
 paint and evicts the layouts the rest of the form draws from. A host here shapes its own text in
 place.
 
+**The layout draws the control's own text and nothing else.** An answer a gather builds - words a
+handler or a parent adds, a tooltip's answer - becomes the control's text as it is measured or
+drawn. So a handler writing a host's text states the whole of it: TooltipLabel's clears before it
+writes, and an Action writes its words into an empty text only, so a presenter here keeps the first
+words it was given. A handler adding to what it finds would add to the control's text on every
+paint - a ButtonBase end icon is one such addition, so a host takes no EndIcon.
+
+## WithTextLayout syncedLayout
+
+**Every measurement, the paint and every question put to the layout come through here**, so a
+position is never read off one build and drawn on another. The control's text is written freely
+between two paints; the stamp says when it moved, and takeText tells the layout before anything is
+read off it.
+
 ## Form
 
 **Call the root's members on the form:** `form.createTopBar<DialogTitle>()` rather than

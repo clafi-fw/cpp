@@ -197,7 +197,7 @@ namespace ClaFi::Controls
         // What the layout is told when the box's text has moved. An edit reaches a paragraph or
         // two, and the rest of the document keeps the shaping it has - which is what the base's
         // answer, stating the whole text, cannot do.
-        void takeText(const Text&) const override;
+        void takeText() const override;
         // The text the layout now holds, and the edit that carried it there - or nothing, where
         // the whole text was stated. A box keeping an account of its text beside the layout's -
         // the line states a CodeBox colours from - brings it into step here, on the same terms.
@@ -365,6 +365,8 @@ namespace ClaFi::Controls
         // undo, redo, a host calling setText - leaves this empty, and the layout is handed the
         // whole text the way it always was.
         mutable std::optional<TextEdit> m_pendingEdit;
+        // The length of the text the layout holds - what a pending edit's delta is checked against.
+        mutable std::size_t m_layoutTextLength{ 0 };
     };
 
 
@@ -385,11 +387,8 @@ namespace ClaFi::Controls
         m_caretTimer.onTick([this](TimerEvent&){
             blinkCaret();
         });
-        // Pointed at the box's own text once, and re-pointed only when the text changes value -
-        // setText invalidates, so calling it per measurement would rebuild the layout each time.
         // Phase and editable never change for a box: it is drawn in the paint phase, and it keeps
         // the row a trailing newline opens because a caret has to be able to stand on it.
-        m_layout.setText(m_layoutText);
         m_layout.setEventPhase(EventPhase::Paint);
         m_layout.setEditable(true);
         connectEditActions();
@@ -569,28 +568,29 @@ namespace ClaFi::Controls
         TextBoxBase::paintOwnText(event);
     }
 
-    // The whole text only when this box cannot say what changed. An edit was measured against
-    // text(), the box's own, while the layout is handed whatever the gather produced - and a box
-    // whose text comes from its parent is not the same text. The lengths agreeing is what says the
-    // two are one story; where they do not, the whole text is stated and nothing is assumed.
-    void TextBox::takeText(const Text& text) const
+    // The whole text only when this box cannot say what changed. An edit describes the text as it
+    // stood, and a text rewritten whole since, such as by an undo handled before the paint the key
+    // asked for, is another text. The lengths agreeing is what says the two are one story; where
+    // they do not, the whole text is stated and nothing is assumed.
+    void TextBox::takeText() const
     {
+        const Text& text = this->text();
         bool incremental = false;
         if (m_pendingEdit.has_value())
         {
-            const std::ptrdiff_t expected = static_cast<std::ptrdiff_t>(m_layoutText.plainText().size())
+            const std::ptrdiff_t expected = static_cast<std::ptrdiff_t>(m_layoutTextLength)
                 + static_cast<std::ptrdiff_t>(m_pendingEdit.value().insertedLength)
                 - static_cast<std::ptrdiff_t>(m_pendingEdit.value().replacedRange.length);
             incremental = expected == static_cast<std::ptrdiff_t>(text.plainText().size());
         }
 
-        m_layoutText = text;
-        if (!incremental || !m_layout.applyTextEdit(m_layoutText, m_pendingEdit.value()))
-            m_layout.setText(m_layoutText);
+        if (!incremental || !m_layout.applyTextEdit(text, m_pendingEdit.value()))
+            m_layout.setText(text);
+        m_layoutTextLength = text.plainText().size();
 
         // The edit is handed on whenever the lengths agreed, whether or not the layout took it:
         // it describes what the text did either way, and only the layout has a reason to decline.
-        textTaken(m_layoutText, incremental ? &m_pendingEdit.value() : nullptr);
+        textTaken(text, incremental ? &m_pendingEdit.value() : nullptr);
 
         // One edit, one chance to use it: a record left standing would be applied to a change it
         // does not describe.
@@ -623,10 +623,8 @@ namespace ClaFi::Controls
             return;
         const FormContext& formContext = this->formContext();
         FloatRect textBounds = this->textBounds(formContext, boundsInForm());
-        // The word is looked for in the text the hit indexes, which is the one the layout was
-        // built from and the one on screen.
         CaretHit hit = caretHitAt(formContext, textBounds, event.clickPos());
-        m_editProps.selRange = textEngine().wordAt(m_layoutText, hit.pos);
+        m_editProps.selRange = textEngine().wordAt(text(), hit.pos);
         m_editProps.caretOnLeft = false;
         caretMoved();
         event.stopPropagation(); // to prevent nestedPressDown()
@@ -639,10 +637,8 @@ namespace ClaFi::Controls
             return;
         const FormContext& formContext = this->formContext();
         FloatRect textBounds = this->textBounds(formContext, boundsInForm());
-        // The paragraph is read out of the text the hit indexes, which is the one the layout was
-        // built from and the one on screen - the same text the double click takes its word from.
         CaretHit hit = caretHitAt(formContext, textBounds, event.clickPos());
-        m_editProps.selRange = textEngine().paragraphAt(m_layoutText, hit.pos);
+        m_editProps.selRange = textEngine().paragraphAt(text(), hit.pos);
         m_editProps.caretOnLeft = false;
         caretMoved();
         event.stopPropagation(); // to prevent nestedPressDown()

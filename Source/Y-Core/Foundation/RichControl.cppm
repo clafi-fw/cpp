@@ -109,6 +109,9 @@ namespace ClaFi
         TooltipText m_tooltipText{};
     };
 
+    export template<typename T>
+        concept IsRichControl = std::derived_from<T, RichControl>;
+
 
     template<typename ...Args>
     RichControl::RichControl(const CreateParams& params, Args&& ...args)

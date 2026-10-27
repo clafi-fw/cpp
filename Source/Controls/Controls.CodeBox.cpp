@@ -144,36 +144,31 @@ namespace ClaFi::Controls
     void ParameterTooltip::setCall(const Syntax::CompletionEntry& entry,
         const Syntax::SignatureParameters& parameters, const std::size_t argument)
     {
-        m_text.clear();
+        text().clear();
         if (parameters.names.empty())
         {
-            m_text << L"No parameters";
+            text() << L"No parameters";
         }
         else
         {
             const std::wstring_view signature = entry.signature;
-            m_text << TextStyle::Code;
+            text() << TextStyle::Code;
             // A caret past the last parameter marks none, and the tooltip stands as it is.
             std::size_t at = parameters.bracket;
             if (argument < parameters.names.size())
             {
                 const TextRange& name = parameters.names[argument];
-                m_text << signature.substr(at, name.start - at)
+                text() << signature.substr(at, name.start - at)
                     << TextOp::PushBold << signature.substr(name.start, name.length)
                     << TextOp::PopBold;
                 at = name.end();
             }
-            m_text << signature.substr(at) << PopTextStyle{};
+            text() << signature.substr(at) << PopTextStyle{};
         }
         if (!entry.hint.empty())
-            m_text << L"\n" << InkGrade::Muted << entry.hint << PopColor{};
+            text() << L"\n" << InkGrade::Muted << entry.hint << PopColor{};
         invalidate();
         invalidateFormAlign();
-    }
-
-    void ParameterTooltip::getText(GetTextEvent& event) const
-    {
-        event.text = m_text;
     }
 
     ScaledSize ParameterTooltip::measureText(AlignEvent& event, ScaledSize maxDimensions,
@@ -189,16 +184,14 @@ namespace ClaFi::Controls
     {
         m_language = language;
         m_detectLanguage = DetectLanguage::No;
-        // Read from the text the layout holds, which is the text the line states stand beside: a
-        // text the box has since been handed reaches both together, through textTaken.
-        readWhole(m_layoutText.plainText());
+        readWhole(text().plainText());
         invalidate();
     }
 
     void CodeBox::setDetectLanguage(const DetectLanguage value)
     {
         m_detectLanguage = value;
-        readWhole(m_layoutText.plainText());
+        readWhole(text().plainText());
         invalidate();
     }
 
@@ -240,7 +233,7 @@ namespace ClaFi::Controls
         m_detectIndent = value;
         m_detectedIndent.reset();
         if (value == DetectIndent::Yes)
-            m_detectedIndent = Syntax::detectIndentUnit(m_layoutText.plainText());
+            m_detectedIndent = Syntax::detectIndentUnit(text().plainText());
     }
 
     void CodeBox::setIndentGuides(const IndentGuides value)
@@ -1198,12 +1191,11 @@ namespace ClaFi::Controls
 
     void CodeBox::paintIndentGuides(PaintEvent& event, TextLayout& layout, const FloatPoint origin)
     {
-        // The layout's text is the one the line states stand beside, and syncing the layout
-        // brought both up to the box's own.
-        const std::wstring_view text = m_layoutText.plainText();
-        if (text.empty())
+        // Synced ahead of this, so the line states stand beside the text as it is.
+        const std::wstring_view plain = this->text().plainText();
+        if (plain.empty())
             return;
-        const Syntax::IndentLines lines{ m_lines, text };
+        const Syntax::IndentLines lines{ m_lines, plain };
         if (std::exchange(m_blocksStale, false))
             m_blocks = Syntax::sourceBlocks(m_lines.language(), lines);
         if (m_blocks.empty())
@@ -1222,7 +1214,7 @@ namespace ClaFi::Controls
         if (editProps()->selRange.start != k_maxSize)
         {
             const std::size_t caretLine =
-                m_lines.lineAt(std::min(editProps()->caretPos(), text.size()));
+                m_lines.lineAt(std::min(editProps()->caretPos(), plain.size()));
             for (std::size_t index = 0; index != m_blocks.size(); ++index)
             {
                 const Syntax::SourceBlock& block = m_blocks[index];
