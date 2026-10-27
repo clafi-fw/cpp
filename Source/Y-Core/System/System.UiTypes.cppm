@@ -589,9 +589,9 @@ namespace ClaFi
     // Where a button's selection indicator sits.
     export enum class IndicatorPlacement
     {
-        LeftCenter,
-        TopLeft,
-        TopLeftIn
+        LeftCenter, ///< Before the Icon and label, centered vertically
+        TopLeft,    ///< Before the Icon and label, at top left corner
+        TopLeftIn   ///< Over the Icon, at top left corner - for a list view items
     };
 
     // Design size of the icon a control draws.
