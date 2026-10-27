@@ -2460,7 +2460,8 @@ namespace SeeDocs_App::Ui
                 .surface = &project->open.surface,
                 .notes = &project->open.notes,
                 .index = &project->index,
-                .folder = target.folder
+                .folder = target.folder,
+                .home = homePath(*project)
             });
         }
         const bool rooted = !target.project;

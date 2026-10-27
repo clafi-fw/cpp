@@ -110,6 +110,7 @@ namespace SeeDocs_App
         Notes* notes{ nullptr };
         const SearchIndex* index{ nullptr };
         std::wstring_view folder;   // with every folder under it; empty for the whole project
+        std::wstring home;   // the url of its home, which a search of the whole project links to
     };
 
     export using SearchedProjects = std::vector<SearchedProject>;

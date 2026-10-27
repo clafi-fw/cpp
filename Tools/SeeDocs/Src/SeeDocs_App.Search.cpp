@@ -168,12 +168,12 @@ namespace SeeDocs_App
 
         // Runs
 
-        [[nodiscard]] Run plain(std::wstring text)
+        [[nodiscard]] Run plain(std::wstring text, std::wstring link = {})
         {
             return {
                 .text = std::move(text),
                 .style = RunStyle::Plain,
-                .link = {}
+                .link = std::move(link)
             };
         }
 
@@ -581,14 +581,14 @@ namespace SeeDocs_App
             page.sections.push_back(std::move(section));
         }
 
-        [[nodiscard]] std::wstring placeWords(const SearchedProjects& projects)
+        [[nodiscard]] Run placeRun(const SearchedProjects& projects)
         {
             if (projects.size() != 1)
-                return L"the projects open";
+                return plain(L"the projects open");
             const SearchedProject& project = projects.front();
             if (!project.folder.empty())
-                return folderNameOf(project.folder);
-            return std::wstring{ project.name };
+                return plain(folderNameOf(project.folder), std::wstring{ project.folder });
+            return plain(std::wstring{ project.name }, project.home);
         }
     }
 
@@ -1060,11 +1060,11 @@ namespace SeeDocs_App
             addGathered(page, section, projects);
         addGathered(page, hints, projects);
         addGathered(page, footnotes, projects);
-        const std::wstring place = placeWords(projects);
-        std::wstring lead = page.sections.empty()
-            ? L"Nothing was found in " + place
-            : L"Found in " + place + L":";
-        page.lead = { plain(std::move(lead)) };
+        Run place = placeRun(projects);
+        if (page.sections.empty())
+            page.lead = { plain(L"Nothing was found in "), std::move(place) };
+        else
+            page.lead = { plain(L"Found in "), std::move(place), plain(L":") };
         return page;
     }
 
