@@ -8,7 +8,7 @@ import ClaFi.Icons.ExpanderMark;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.Foundation;
@@ -154,8 +154,8 @@ namespace ClaFi::Controls::Grids
     void RowGroupSpan::createMark()
     {
         m_mark = &addOwnControl<ExpanderButton>();
-        m_mark->connectEvent<PaintIconEvent>([this](PaintIconEvent& event) {
-            Icons::ExpanderMark::paint(event, m_expandedFactor);
+        m_mark->connectEvent<DrawIconEvent>([this](DrawIconEvent& event) {
+            Icons::ExpanderMark::draw(event, m_expandedFactor);
         });
         m_mark->onClick([this](ClickEvent&) {
             setExpandedByUser(!m_expanded);

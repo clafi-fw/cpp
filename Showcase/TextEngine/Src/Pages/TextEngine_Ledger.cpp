@@ -1,6 +1,6 @@
 module TextEngine_App.Rich;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -101,15 +101,15 @@ namespace TextEngine_App
 
         // A bullet drawn into the indent its line stands at rather than into a width of its own.
         // A free function rather than a lambda: it is written into tens of thousands of paragraphs,
-        // and a function pointer is what a PaintIconFunc holds without allocating.
-        void paintBullet(PaintIconEvent& event)
+        // and a function pointer is what a DrawIconFunc holds without allocating.
+        void drawBullet(DrawIconEvent& event)
         {
             FloatPoint center = event.iconCenter();
             center.x -= event.scaleF(16.0f);
             event.canvas().fillCircle(center, event.scaleF(3.0f), event.accentRgb(InkGrade::Strongest));
         }
 
-        void paintCheck(PaintIconEvent& event)
+        void drawCheck(DrawIconEvent& event)
         {
             FloatPoint center = event.iconCenter();
             center.x -= event.scaleF(16.0f);
@@ -126,7 +126,7 @@ namespace TextEngine_App
         // the page the way the line it stands on does - the icon is written into a centred
         // paragraph, and the box arrives where that paragraph put it. The box is taller than the
         // drawing, so the air above and below the rule is the icon's own and costs no blank line.
-        void paintOrnament(PaintIconEvent& event)
+        void drawOrnament(DrawIconEvent& event)
         {
             const FloatRect& box = event.iconRect();
             const FloatPoint center = box.center();
@@ -356,7 +356,7 @@ namespace TextEngine_App
         void writeClueBullet(Text& out, std::size_t clue)
         {
             out << ParaIndent{ k_bulletIndent };
-            out << InTextIcon{ 0.0f, 18.0f, paintBullet };
+            out << InTextIcon{ 0.0f, 18.0f, drawBullet };
             out << TextOp::PushBold;
             writeClueStatement(out, clue);
             out << L":";
@@ -485,7 +485,7 @@ namespace TextEngine_App
             // paragraph keeps the one in force when its newline is reached.
             out << TextAlign::Center;
             out << L'\n';
-            out << InTextIcon{ 220.0f, 24.0f, paintOrnament };
+            out << InTextIcon{ 220.0f, 24.0f, drawOrnament };
             out << L'\n';
             out << TextAlign::Left;
             out << L'\n';
@@ -674,7 +674,7 @@ namespace TextEngine_App
             out << PopColor{};
             out << PopTextStyle{};
             endLine();
-            out << InTextIcon{ 220.0f, 24.0f, paintOrnament };
+            out << InTextIcon{ 220.0f, 24.0f, drawOrnament };
             endLine();
 
             out << TextAlign::Justified;
@@ -699,7 +699,7 @@ namespace TextEngine_App
             endLine();
 
             out << ParaIndent{ k_bulletIndent };
-            out << InTextIcon{ 0.0f, 18.0f, paintCheck };
+            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
             out << TextOp::PushBold;
             out << L"The people:";
             out << TextOp::PopBold;
@@ -710,7 +710,7 @@ namespace TextEngine_App
             out << PopColor{};
             endLine();
 
-            out << InTextIcon{ 0.0f, 18.0f, paintCheck };
+            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
             out << TextOp::PushBold;
             out << L"The trades:";
             out << TextOp::PopBold;
@@ -720,7 +720,7 @@ namespace TextEngine_App
             out << PopColor{};
             endLine();
 
-            out << InTextIcon{ 0.0f, 18.0f, paintCheck };
+            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
             out << TextOp::PushBold;
             out << L"The objects:";
             out << TextOp::PopBold;
@@ -731,7 +731,7 @@ namespace TextEngine_App
             out << PopColor{};
             endLine();
 
-            out << InTextIcon{ 0.0f, 18.0f, paintCheck };
+            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
             out << TextOp::PushBold;
             out << L"The states:";
             out << TextOp::PopBold;
@@ -742,7 +742,7 @@ namespace TextEngine_App
             out << PopColor{};
             endLine();
 
-            out << InTextIcon{ 0.0f, 18.0f, paintCheck };
+            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
             out << TextOp::PushBold;
             out << PushAnchor{ L"rooms" };
             out << L"The rooms:";

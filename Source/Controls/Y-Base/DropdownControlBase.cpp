@@ -77,10 +77,10 @@ namespace ClaFi::Controls
         m_owner.getDropdownPartText(event);
     }
 
-    void DropdownPart::paintIcon(PaintIconEvent& event)
+    void DropdownPart::drawIcon(DrawIconEvent& event)
     {
-        ToolButton::paintIcon(event);
-        m_owner.paintDropdownMark(event);
+        ToolButton::drawIcon(event);
+        m_owner.drawDropdownMark(event);
     }
 
     void DropdownPart::adjustPaint(AdjustPaintEvent& event)
@@ -137,7 +137,7 @@ namespace ClaFi::Controls
         RichControl::getText(event);
     }
 
-    void DropdownControlBase::paintDropdownMark(PaintIconEvent& event) const
+    void DropdownControlBase::drawDropdownMark(DrawIconEvent& event) const
     {
         // The mark is lit while the popup is up: it is the one part of the control that says so
         // wherever the press landed, and a muted mark over an open popup reads as a control at
@@ -148,7 +148,7 @@ namespace ClaFi::Controls
             m_droppedDownFactor
         );
         const DropdownMarkTurn turn = dropdownMarkTurn();
-        ChevronPainter::paint(
+        ChevronPainter::draw(
             event.canvas(),
             event.iconCenter(),
             color,
@@ -334,12 +334,12 @@ namespace ClaFi::Controls
             k_markBox,
             k_markBox,
             k_markBox * 0.85f,
-            [](PaintIconEvent& event)
+            [](DrawIconEvent& event)
             {
                 // Reached through the tag rather than captured, because text layouts are cached.
                 // A text run carries no state factors of its own, so everything the mark is drawn
                 // from comes off the control it belongs to.
-                event.tag().get<DropdownControlBase*>()->paintDropdownMark(event);
+                event.tag().get<DropdownControlBase*>()->drawDropdownMark(event);
             },
             Tag{ this }
         };

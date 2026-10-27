@@ -320,7 +320,7 @@ argument when none is left is dropped rather than diagnosed.</p>
 <div class="info">
 An argument's type picks its handler. Integers and floating point go through
 <code>std::vformat</code>; a <code>Color</code> prints as text under <code>{}</code> and pushes as a
-colour under <code>[color {}]</code>; anything callable with a <code>PaintIconEvent&amp;</code> is an
+colour under <code>[color {}]</code>; anything callable with a <code>DrawIconEvent&amp;</code> is an
 icon painter. Everything else is streamed as it stands.
 </div>
 
@@ -344,7 +344,7 @@ paragraph after until it is set again. One line set apart from the rest takes th
 its newline and gives it back after:</p>
 
 <pre><code>out &lt;&lt; <span class="tp">TextAlign</span>::Center;
-out &lt;&lt; <span class="tp">InTextIcon</span>{ <span class="kw">220.0f</span>, <span class="kw">24.0f</span>, paintOrnament };
+out &lt;&lt; <span class="tp">InTextIcon</span>{ <span class="kw">220.0f</span>, <span class="kw">24.0f</span>, drawOrnament };
 out &lt;&lt; k_endLine;
 out &lt;&lt; <span class="tp">TextAlign</span>::Left;</code></pre>
 
@@ -447,8 +447,8 @@ reads, so that a text built from code can be written out and read back.
 
 <h3 id="tags-icons">Icons</h3>
 
-<p>An icon in text is a <code>PaintIconFunc</code> - anything callable with a
-<code>PaintIconEvent&amp;</code> - given a box in the flow. The tag takes the painter from the
+<p>An icon in text is a <code>DrawIconFunc</code> - anything callable with a
+<code>DrawIconEvent&amp;</code> - given a box in the flow. The tag takes the painter from the
 arguments and the box from its own text:</p>
 
 <table>
@@ -555,7 +555,7 @@ spaces of the font the paragraph starts in, so in a monospace font a tab is four
 
 <h3 id="ex-icons">Bullets and inline icons</h3>
 
-<pre><code><span class="kw">auto</span> paintBullet = [](<span class="tp">PaintIconEvent</span>&amp; event) {
+<pre><code><span class="kw">auto</span> drawBullet = [](<span class="tp">DrawIconEvent</span>&amp; event) {
     <span class="tp">FloatPoint</span> center = event.<span class="fn">iconRect</span>().<span class="fn">center</span>();
     <span class="cm">// The icon has no width, so the centre sits on the indent - shift it into the margin.</span>
     center.x -= event.<span class="fn">scaleF</span>(<span class="kw">16.0f</span>);
@@ -568,7 +568,7 @@ spaces of the font the paragraph starts in, so in a monospace font a tab is four
     <span class="st">L"[icon {} 0,18][b]Lambda drawables:[/b] [color muted]any callable renders into the flow.[/color]\n"</span>
     <span class="st">L"[icon {} 0,18][b]Reusability:[/b] [color muted]pass one painter as many times as you need.[/color]"</span>
     <span class="st">L"[indent 0]"</span>,
-    paintBullet, paintBullet } };</code></pre>
+    drawBullet, drawBullet } };</code></pre>
 
 <div class="example-render" style="padding-left:2.5rem">
     <div><span class="accent bullet"></span><strong>Lambda drawables:</strong> <span class="quiet">any callable renders into the flow.</span></div>

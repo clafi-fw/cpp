@@ -1,6 +1,6 @@
 export module ClaFi.Icons.CheckMark;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -12,11 +12,11 @@ namespace ClaFi::Icons::CheckMark
 
     // Everything the mark needs is on the event: how far it is drawn from the pressed and selected
     // factors, its weight and padding from the metrics, its size and place from the icon rect. That
-    // is what lets it be a plain PaintIconFunc rather than something a control has to feed by hand.
+    // is what lets it be a plain DrawIconFunc rather than something a control has to feed by hand.
     //
     // The caller decides what the icon rect is. ButtonBase hands over its indicator's bounds inset
     // by a third of the margin, which is a framing decision and stays with the control.
-    export void paint(PaintIconEvent&, const StateFactors&);
+    export void draw(DrawIconEvent&, const StateFactors&);
 
 
     //-------------------------------------------------------------------------
@@ -153,7 +153,7 @@ namespace ClaFi::Icons::CheckMark
         return w;
     }
 
-    void paint(PaintIconEvent& event, const StateFactors& stateFactors)
+    void draw(DrawIconEvent& event, const StateFactors& stateFactors)
     {
         const float lineFactor = StateFactors::compose(stateFactors.pressed(), stateFactors.selected());
         if (!lineFactor)

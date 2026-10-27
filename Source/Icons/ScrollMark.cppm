@@ -1,6 +1,6 @@
 export module ClaFi.Icons.ScrollMark;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -19,13 +19,13 @@ namespace ClaFi::Icons::ScrollMark
     //
     // Axis and direction cannot come off the event, so they are arguments. Everything else does:
     // the mark is sized and placed by the icon rect, exactly as XMark and PlusMark are.
-    export void paint(PaintIconEvent&, ScrollAxis, ScrollDirection);
+    export void draw(DrawIconEvent&, ScrollAxis, ScrollDirection);
 
 
     //-------------------------------------------------------------------------
 
 
-    void paint(PaintIconEvent& event, ScrollAxis axis, ScrollDirection direction)
+    void draw(DrawIconEvent& event, ScrollAxis axis, ScrollDirection direction)
     {
         constexpr float k_chevronSlope = 1.66f;
         constexpr float k_footSlope = 1.5f;

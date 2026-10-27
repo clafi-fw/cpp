@@ -74,10 +74,10 @@ namespace SeeDocs_App::Ui
         const std::filesystem::path& stated)
     {
         Workspace workspace{ application, form, form.content() };
-        connectAppPage(k_openPageCaption, paintOpenIcon, [&workspace](AppMenuPage& page) {
+        connectAppPage(k_openPageCaption, drawOpenIcon, [&workspace](AppMenuPage& page) {
             buildOpenPage(page, workspace);
         });
-        connectAppCommand(k_newProjectCaption, paintNewProjectIcon, EndIcon::OpensWindow,
+        connectAppCommand(k_newProjectCaption, drawNewProjectIcon, EndIcon::OpensWindow,
             [&workspace](ClickEvent& event) {
                 event.closeForm();
                 workspace.createNew({}, event.stamp);

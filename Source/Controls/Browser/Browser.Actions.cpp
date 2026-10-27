@@ -25,17 +25,17 @@ namespace ClaFi::Browser::Actions
     Action back{
         Text{ L"Back" },
         Shortcut{ Keys::Left, { .alt = true } },
-        Action::OnPaintIcon{ Icons::BrowseBackIcon::paint }
+        Action::OnDrawIcon{ Icons::BrowseBackIcon::draw }
     };
     Action forward{
         Text{ L"Forward" },
         Shortcut{ Keys::Right, { .alt = true } },
-        Action::OnPaintIcon{ Icons::BrowseForwardIcon::paint }
+        Action::OnDrawIcon{ Icons::BrowseForwardIcon::draw }
     };
     Action newTab{
         Text{ L"New tab" },
         Shortcut{ L'T', { .ctrl = true } },
-        Action::OnPaintIcon{ Icons::PlusMark::paint }
+        Action::OnDrawIcon{ Icons::PlusMark::draw }
     };
     Action closeTab{
         Text{ L"Close tab" },

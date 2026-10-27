@@ -42,7 +42,7 @@ namespace ClaFi::Controls
         float trackingValue() const { return *m_trackingValue; }
         void invalidateSlot();
         void trackingValueChanged(bool propagateChanges = false);
-        void paintValue(Text&, EventPhase) const;
+        void writeValue(Text&, EventPhase) const;
         void setChannel(HslChannel);
         void setEditedColor(Hsl& value);
         // A slider over a bare hue rather than over a colour. What it edits is one number, so the
@@ -133,7 +133,7 @@ namespace ClaFi::Controls
         m_originalValue = *m_trackingValue;
     }
 
-    void ColorSlider::paintValue(Text& text, EventPhase phase) const
+    void ColorSlider::writeValue(Text& text, EventPhase phase) const
     {
         const bool calcOnly = phase == EventPhase::Calculate;
         switch (m_channel)
@@ -242,7 +242,7 @@ namespace ClaFi::Controls
 
     void ColorSlider::writeValueTooltip(Text& text, EventPhase phase) const
     {
-        paintValue(text, phase);
+        writeValue(text, phase);
     }
 
     void ColorSlider::changed(SliderChangeEvent& event)

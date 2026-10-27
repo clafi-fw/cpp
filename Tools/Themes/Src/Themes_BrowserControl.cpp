@@ -14,7 +14,7 @@ import ClaFi.Browser.Settings;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.System.UiTypes;
@@ -44,15 +44,15 @@ namespace Themes_App
         Base::fetchSubItems(data);
     }
 
-    void ThemesBrowser::paintTabIcon(BrowserTab& tab, PaintIconEvent& event)
+    void ThemesBrowser::drawTabIcon(BrowserTab& tab, DrawIconEvent& event)
     {
         const PageData* data = tab.pageData();
         if (!data || !isDocumentPage(*data))
         {
-            Base::paintTabIcon(tab, event);
+            Base::drawTabIcon(tab, event);
             return;
         }
-        paintThemeIcon(event, tabIconColors(tab));
+        drawThemeIcon(event, tabIconColors(tab));
     }
 
     // Writes into the entry what the icon is drawn from, for the runs in which this tab is

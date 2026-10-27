@@ -1,6 +1,6 @@
 export module ClaFi.Icons.DialogIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -11,7 +11,7 @@ namespace ClaFi::Icons::DialogIcon
     using namespace ::ClaFi::Graphics;
 
     // A box with an arrow leaving its top right corner: a command that opens a window of its own.
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //-------------------------------------------------------------------------
@@ -40,7 +40,7 @@ namespace ClaFi::Icons::DialogIcon
     // hairline, so the mark keeps the weight of the text it rides in at every size.
     constexpr float k_strokeShare = 0.075f;
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
 

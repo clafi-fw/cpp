@@ -1,6 +1,6 @@
 export module ClaFi.Icons.SaveIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -62,7 +62,7 @@ namespace ClaFi::Icons::SaveIcon
         }
     }
 
-    export void paintSaveIcon(PaintIconEvent& event)
+    export void drawSaveIcon(DrawIconEvent& event)
     {
         Canvas& canvas = event.canvas();
         FloatRect iconRect = event.iconRect();
@@ -91,7 +91,7 @@ namespace ClaFi::Icons::SaveIcon
         );
     }
 
-    export void paintSaveAllIcon(PaintIconEvent& event)
+    export void drawSaveAllIcon(DrawIconEvent& event)
     {
         Canvas& canvas = event.canvas();
         FloatRect iconRect = event.iconRect();

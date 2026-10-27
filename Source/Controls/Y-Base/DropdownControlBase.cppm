@@ -7,7 +7,7 @@ import ClaFi.Controls.Button;
 
 import ClaFi.Icons.Chevron;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
@@ -54,7 +54,7 @@ namespace ClaFi::Controls
     protected:
         void getControlState(GetStateEvent&) const override;
         void getText(GetTextEvent&) const override;
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;
     private:
         [[nodiscard]] bool enabledAlone() const;
@@ -127,7 +127,7 @@ namespace ClaFi::Controls
         // Draws the mark in whatever slot it was given - the strip's icon, or the box that ends a
         // ribbon strip's text. The two differ in where the slot comes from and in nothing else, so
         // the colour and the turn are settled here for both.
-        void paintDropdownMark(PaintIconEvent&) const;
+        void drawDropdownMark(DrawIconEvent&) const;
 
         // Drops a popup under this control and runs it.
         template <ClassOfFormControl ControlClass, typename... Args>

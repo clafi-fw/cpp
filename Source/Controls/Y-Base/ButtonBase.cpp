@@ -14,7 +14,7 @@ import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 namespace ClaFi::Controls
 {
@@ -204,13 +204,13 @@ namespace ClaFi::Controls
                 // The factors handed over are this button's, not the ones on the event. The
                 // event belongs to the indicator child, which carries none of the selection,
                 // and the mark is drawn by how far pressed and selected have travelled.
-                PaintIconEvent iconEvent{
+                DrawIconEvent iconEvent{
                     event.controlContext(),
                     event.controlBounds(),
                     event.control().tag(),
                     event.disabledAmount()
                 };
-                Icons::CheckMark::paint(iconEvent, factors());
+                Icons::CheckMark::draw(iconEvent, factors());
                 break;
             }
             case IndicatorStyle::Radio:
@@ -263,13 +263,13 @@ namespace ClaFi::Controls
         // No press inset or fade here: the whole control, icon included, is scaled as one piece by
         // PaintEvent::pressScale(), about the origin pressOrigin() picks.
         FloatRect rect = iconRect(event);
-        PaintIconEvent event2{
+        DrawIconEvent event2{
             event.controlContext(),
             rect,
             event.control().tag(),
             event.disabledAmount()
         };
-        paintIcon(event2);
+        drawIcon(event2);
     }
 
     void ButtonBase::paintOwnText(PaintEvent& event)
@@ -355,11 +355,11 @@ namespace ClaFi::Controls
 
         const float size = m_endIcon == EndIcon::OpensWindow ? k_endIconSize : k_listMarkSize;
         // Tagged by its kind: two marks of one size compare equal without it.
-        const InTextIcon mark{ size, [kind = m_endIcon](PaintIconEvent& iconEvent) {
+        const InTextIcon mark{ size, [kind = m_endIcon](DrawIconEvent& iconEvent) {
             if (kind == EndIcon::OpensWindow)
-                Icons::DialogIcon::paint(iconEvent);
+                Icons::DialogIcon::draw(iconEvent);
             else
-                Icons::OpenChevron::paintRight(iconEvent);
+                Icons::OpenChevron::drawRight(iconEvent);
         }, Tag{ m_endIcon } };
         event.text << FlexSpace{ k_endIconGap } << mark;
     }

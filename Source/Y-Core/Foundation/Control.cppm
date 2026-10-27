@@ -6,7 +6,7 @@ export module ClaFi.Core.Foundation :Control;
 
 import :PaintEvent;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Baked;
@@ -702,8 +702,8 @@ namespace ClaFi
         DECLARE_EVENT(PaintEvent, OnPaint, onPaint)   // the control painting itself
         // The paint being set up, before anything is drawn.
         DECLARE_EVENT(AdjustPaintEvent, OnAdjustPaint, onAdjustPaint)
-        // Painting an icon is not a button's privilege - see paintIcon, which emits it.
-        DECLARE_EVENT(PaintIconEvent, OnPaintIcon, onPaintIcon)
+        // Painting an icon is not a button's privilege - see drawIcon, which emits it.
+        DECLARE_EVENT(DrawIconEvent, OnDrawIcon, onDrawIcon)
         DECLARE_EVENT(DestroyEvent, OnDestroy, onDestroy)   // the control being destroyed
         // An action asking whether this control is its subject. See Control-Foundation
         DECLARE_EVENT(GetActionStateEvent, OnGetActionState, onGetActionState)
@@ -1361,10 +1361,10 @@ namespace ClaFi
         FloatRect textBounds(PaintEvent&) const;
 
         // Painting an icon is not a button's privilege. The default hands the event to whatever
-        // OnPaintIcon was connected, so a control can take an icon as a property; a control that
+        // OnDrawIcon was connected, so a control can take an icon as a property; a control that
         // always draws the same mark overrides this instead and pays nothing for it - no member,
         // no connection, just the vtable slot it already has.
-        virtual void paintIcon(PaintIconEvent&);
+        virtual void drawIcon(DrawIconEvent&);
         virtual void paintSurface(PaintEvent&);
         // The outline over the surface, under the children; a form's root draws it over them.
         virtual void paintFrame(PaintEvent&);

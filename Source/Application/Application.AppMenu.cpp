@@ -46,7 +46,7 @@ namespace ClaFi
     struct AppCommand
     {
         std::wstring caption;
-        PaintIconFunc paintIcon;
+        DrawIconFunc drawIcon;
         EndIcon endIcon{ EndIcon::None };
         ClickFunc run;
     };
@@ -56,7 +56,7 @@ namespace ClaFi
 
     // A command in the strip, doing whatever its handler does with the click that chose it.
     static void addCommand(TabStripBase& strip, const Text& caption,
-        const PaintIconFunc& paintIcon, EndIcon, const ClickFunc& run);
+        const DrawIconFunc& drawIcon, EndIcon, const ClickFunc& run);
     // Closes the menu, then asks the application's window to close as its close button does.
     static void closeApplication(ClickEvent&);
 
@@ -91,13 +91,13 @@ namespace ClaFi
         return commands;
     }
 
-    void connectAppCommand(const std::wstring_view caption, PaintIconFunc paintIcon,
+    void connectAppCommand(const std::wstring_view caption, DrawIconFunc drawIcon,
         const EndIcon endIcon, ClickFunc run)
     {
         appCommands().push_back(
             AppCommand{
                 .caption = std::wstring{ caption },
-                .paintIcon = std::move(paintIcon),
+                .drawIcon = std::move(drawIcon),
                 .endIcon = endIcon,
                 .run = std::move(run)
         });
@@ -132,7 +132,7 @@ namespace ClaFi
 
     // addCommand
 
-    void addCommand(TabStripBase& strip, const Text& caption, const PaintIconFunc& paintIcon,
+    void addCommand(TabStripBase& strip, const Text& caption, const DrawIconFunc& drawIcon,
         const EndIcon endIcon, const ClickFunc& run)
     {
         strip.add<ToolButton>(
@@ -142,7 +142,7 @@ namespace ClaFi
             ButtonViewMode::LeftIcon,
             k_iconSize,
             k_textAnchor,
-            ToolButton::OnPaintIcon{ paintIcon },
+            ToolButton::OnDrawIcon{ drawIcon },
             ToolButton::OnClick{ run }
         );
     }
@@ -187,20 +187,20 @@ namespace ClaFi
         {
             AppMenuPage& appPage = pageControl().add<AppMenuPage>();
             page.build(appPage);
-            addPageTab(page.caption, appPage, page.paintIcon);
+            addPageTab(page.caption, appPage, page.drawIcon);
         }
 
         // The application's own commands lead the framework's.
         for (const AppCommand& command : appCommands())
         {
             addCommand(strip(), Text{ TextStyle::SubHeading, command.caption },
-                command.paintIcon, command.endIcon, command.run);
+                command.drawIcon, command.endIcon, command.run);
         }
 
         if constexpr (Diagnostic::Options::enabled)
         {
             addCommand(strip(), Text{ TextStyle::SubHeading, L"Show diagnostic" },
-                Icons::GaugeIcon::paint, EndIcon::OpensWindow,
+                Icons::GaugeIcon::draw, EndIcon::OpensWindow,
                 [](ClickEvent& event) {
                     event.closeForm();
                     showDiagnosticWindow(event.stamp);
@@ -208,15 +208,15 @@ namespace ClaFi
         }
         addCommand(strip(),
             Text{ TextStyle::SubHeading, L"Exit ", params.appContext().appName() },
-            Icons::DoorIcon::paint, EndIcon::None, closeApplication);
+            Icons::DoorIcon::draw, EndIcon::None, closeApplication);
 
         // The settings sit at the foot of the strip, whatever the commands above them come to.
         strip().add<FlexSpacer>();
         // strip().add<Divider>(Thickness::Heavy, Padding{ 8.0f, 4.0f });
 
         // The strip takes a button beside its tabs the way a title bar's does.
-        addPageTab(L"Information", pageControl().add<InformationPage>(), Icons::InformationIcon::paint);
-        addPageTab(k_settingsPageCaption, pageControl().add<SettingsPage>(), Icons::GearIcon::paint);
+        addPageTab(L"Information", pageControl().add<InformationPage>(), Icons::InformationIcon::draw);
+        addPageTab(k_settingsPageCaption, pageControl().add<SettingsPage>(), Icons::GearIcon::draw);
 
         openStoredPage();
     }
@@ -231,7 +231,7 @@ namespace ClaFi
 
     // **The caption is what is stored**, not the tab's place: a page an application adds moves
     // every index after it, and a config read by hand should show a name.
-    void AppMenu::addPageTab(const std::wstring_view caption, RichControl& page, const PaintIconFunc& paintIcon)
+    void AppMenu::addPageTab(const std::wstring_view caption, RichControl& page, const DrawIconFunc& drawIcon)
     {
         Controls::Tab& tab = strip().addTab(
             Text{ TextStyle::Heading, caption },
@@ -239,7 +239,7 @@ namespace ClaFi
             ButtonViewMode::LeftIcon,
             k_iconSize,
             k_textAnchor,
-            Controls::Tab::OnPaintIcon{ paintIcon },
+            Controls::Tab::OnDrawIcon{ drawIcon },
             Page{ page }
         );
         // A tab is what opens a page, so the press that opens one is where the answer changes.

@@ -11,7 +11,7 @@ import ClaFi.Browser.PageData;
 
 import ClaFi.Controls.InPlaceEdit;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
@@ -45,13 +45,13 @@ namespace ClaFi::Documents
         void initPageData(PageData&) override;
         void fetchSubItems(PageData&) override;
         IconSize pageIconSize(PageData&) override;
-        void paintPageIcon(PageData&, PaintIconEvent&) override;
+        void drawPageIcon(PageData&, DrawIconEvent&) override;
         bool canLeavePage(BrowserTab&, Control& initiator) override;
         bool canRenamePage(PageData&) override;
         std::wstring renamePage(PageData&, AcceptEditEvent&) override;
         void showPage(BrowserTab&) override;
         IconSize tabIconSize(BrowserTab&) override;
-        void paintTabIcon(BrowserTab&, PaintIconEvent&) override;
+        void drawTabIcon(BrowserTab&, DrawIconEvent&) override;
         // The pages, built on the tab under the tag that tells them apart.
         [[nodiscard]] virtual DocumentsHomePageBase& createHomePage(BrowserTab&) = 0;
         [[nodiscard]] virtual DocumentPage& createDocumentPage(BrowserTab&) = 0;

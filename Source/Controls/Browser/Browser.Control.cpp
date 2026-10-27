@@ -22,7 +22,7 @@ import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Timer;
@@ -151,7 +151,7 @@ namespace ClaFi::Browser
         // a this-capturing lambda in a default member initializer.
         m_closeButton.onGetTooltip([this](GetTooltipEvent& event) {
             event.text << L"Close " << InkWell::textInk(InkGrade::Muted);
-            m_pageData->paintText(event.text);
+            m_pageData->writeText(event.text);
             event.placement = FormPlacement::Mouse;
         });
     }
@@ -219,15 +219,15 @@ namespace ClaFi::Browser
 
     void BrowserTab::getText(GetTextEvent& event) const
     {
-        m_pageData->paintText(event.text);
+        m_pageData->writeText(event.text);
     }
 
-    void BrowserTab::paintIcon(PaintIconEvent& event)
+    void BrowserTab::drawIcon(DrawIconEvent& event)
     {
-        Tab::paintIcon(event);
+        Tab::drawIcon(event);
         if (m_browserControl)
         {
-            m_browserControl->paintTabIcon(*this, event);
+            m_browserControl->drawTabIcon(*this, event);
         }
     }
 
@@ -675,8 +675,8 @@ namespace ClaFi::Browser
             event.viewMode = rootCrumbViewMode();
         });
 
-        m_breadCrumbBar.onPaintPageIcon([this](PaintPageIconEvent& event) {
-            paintPageIcon(event.pageData, event);
+        m_breadCrumbBar.onDrawPageIcon([this](DrawPageIconEvent& event) {
+            drawPageIcon(event.pageData, event);
         });
 
         m_breadCrumbBar.onCanRenamePage([this](CanRenamePageEvent& event) {
@@ -906,8 +906,8 @@ namespace ClaFi::Browser
             menu.add(
                 line,
                 Events{
-                    [this, &pageData](PaintIconEvent& event) {
-                        paintPageIcon(pageData, event);
+                    [this, &pageData](DrawIconEvent& event) {
+                        drawPageIcon(pageData, event);
                     },
                     [this, offset](const ClickEvent& event) {
                         travel(offset, *event.control);

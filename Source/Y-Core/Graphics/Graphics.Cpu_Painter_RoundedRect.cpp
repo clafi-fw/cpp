@@ -54,12 +54,12 @@ namespace ClaFi::Graphics::Cpu
 
     // The arc's radius is the mean of the joint's two distances from the edges, which keeps the
     // outer fractional edges in place.
-    static void paintCorner(CirclePainter& painter, Corner corner, FloatPoint joint, float reachX, float reachY, const Matrix3x2* brushTransform)
+    static void rasterizeCorner(CirclePainter& painter, Corner corner, FloatPoint joint, float reachX, float reachY, const Matrix3x2* brushTransform)
     {
         painter.setPivot(joint);
         painter.setRadius((reachX + reachY) * 0.5f);
         painter.initBoundary(corner);
-        painter.paint(brushTransform);
+        painter.rasterize(brushTransform);
     }
 
     void RoundedRectPainter::fillPartial(const RoundedRectangleParts& parts, const Brush& brush, const Matrix3x2* brushTransform)
@@ -72,7 +72,7 @@ namespace ClaFi::Graphics::Cpu
         RectPainter rectPainter{ m_pixelView };
         if (parts.radii.isSquare())
         {
-            rectPainter.paintSolid(parts.bounds, brush, brushTransform);
+            rectPainter.fill(parts.bounds, brush, brushTransform);
             return;
         }
 
@@ -84,7 +84,7 @@ namespace ClaFi::Graphics::Cpu
 
         auto fill = [&](const FloatRect& rect) {
             if (!rect.empty())
-                rectPainter.paintSolid(rect, brush, brushTransform);
+                rectPainter.fill(rect, brush, brushTransform);
         };
 
         // The bodies: a band across the middle, one between the two corners of the top edge and
@@ -104,13 +104,13 @@ namespace ClaFi::Graphics::Cpu
         circlePainter.setBackgroundColor(brush);
 
         if (joints.radii.topLeft > 0.0f)
-            paintCorner(circlePainter, Corner::TopLeft, joints.topLeft, joints.topLeft.x - left, joints.topLeft.y - top, brushTransform);
+            rasterizeCorner(circlePainter, Corner::TopLeft, joints.topLeft, joints.topLeft.x - left, joints.topLeft.y - top, brushTransform);
         if (joints.radii.topRight > 0.0f)
-            paintCorner(circlePainter, Corner::TopRight, joints.topRight, right - joints.topRight.x, joints.topRight.y - top, brushTransform);
+            rasterizeCorner(circlePainter, Corner::TopRight, joints.topRight, right - joints.topRight.x, joints.topRight.y - top, brushTransform);
         if (joints.radii.bottomRight > 0.0f)
-            paintCorner(circlePainter, Corner::BottomRight, joints.bottomRight, right - joints.bottomRight.x, bottom - joints.bottomRight.y, brushTransform);
+            rasterizeCorner(circlePainter, Corner::BottomRight, joints.bottomRight, right - joints.bottomRight.x, bottom - joints.bottomRight.y, brushTransform);
         if (joints.radii.bottomLeft > 0.0f)
-            paintCorner(circlePainter, Corner::BottomLeft, joints.bottomLeft, joints.bottomLeft.x - left, bottom - joints.bottomLeft.y, brushTransform);
+            rasterizeCorner(circlePainter, Corner::BottomLeft, joints.bottomLeft, joints.bottomLeft.x - left, bottom - joints.bottomLeft.y, brushTransform);
     }
 
     void RoundedRectPainter::drawPartial(const RoundedRectangleParts& parts, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform)
@@ -123,7 +123,7 @@ namespace ClaFi::Graphics::Cpu
         RectPainter rectPainter{ m_pixelView };
         if (parts.radii.isSquare() && parts.sides == RectSides::All())
         {
-            rectPainter.paintBorder(parts.bounds, brush, borderWidth, brushTransform);
+            rectPainter.stroke(parts.bounds, brush, borderWidth, brushTransform);
             return;
         }
 
@@ -161,36 +161,36 @@ namespace ClaFi::Graphics::Cpu
 
         if (parts.sides.top && joints.topLeft.x < joints.topRight.x)
         {
-            rectPainter.paintSolid({ joints.topLeft.x, top, joints.topRight.x, top + borderWidth }, brush, brushTransform);
+            rectPainter.fill({ joints.topLeft.x, top, joints.topRight.x, top + borderWidth }, brush, brushTransform);
         }
 
         if (parts.sides.right && rightStart < rightEnd)
         {
-            rectPainter.paintSolid({ right - borderWidth, rightStart, right, rightEnd }, brush, brushTransform);
+            rectPainter.fill({ right - borderWidth, rightStart, right, rightEnd }, brush, brushTransform);
         }
 
         if (parts.sides.bottom && joints.bottomLeft.x < joints.bottomRight.x)
         {
-            rectPainter.paintSolid({ joints.bottomLeft.x, bottom - borderWidth, joints.bottomRight.x, bottom }, brush, brushTransform);
+            rectPainter.fill({ joints.bottomLeft.x, bottom - borderWidth, joints.bottomRight.x, bottom }, brush, brushTransform);
         }
 
         if (parts.sides.left && leftStart < leftEnd)
         {
-            rectPainter.paintSolid({ left, leftStart, left + borderWidth, leftEnd }, brush, brushTransform);
+            rectPainter.fill({ left, leftStart, left + borderWidth, leftEnd }, brush, brushTransform);
         }
 
         // A corner arc is drawn only when at least one of the two sides it joins is present.
 
         if (roundTopLeft && (parts.sides.top || parts.sides.left))
-            paintCorner(circlePainter, Corner::TopLeft, joints.topLeft, joints.topLeft.x - left, joints.topLeft.y - top, brushTransform);
+            rasterizeCorner(circlePainter, Corner::TopLeft, joints.topLeft, joints.topLeft.x - left, joints.topLeft.y - top, brushTransform);
 
         if (roundTopRight && (parts.sides.top || parts.sides.right))
-            paintCorner(circlePainter, Corner::TopRight, joints.topRight, right - joints.topRight.x, joints.topRight.y - top, brushTransform);
+            rasterizeCorner(circlePainter, Corner::TopRight, joints.topRight, right - joints.topRight.x, joints.topRight.y - top, brushTransform);
 
         if (roundBottomRight && (parts.sides.right || parts.sides.bottom))
-            paintCorner(circlePainter, Corner::BottomRight, joints.bottomRight, right - joints.bottomRight.x, bottom - joints.bottomRight.y, brushTransform);
+            rasterizeCorner(circlePainter, Corner::BottomRight, joints.bottomRight, right - joints.bottomRight.x, bottom - joints.bottomRight.y, brushTransform);
 
         if (roundBottomLeft && (parts.sides.bottom || parts.sides.left))
-            paintCorner(circlePainter, Corner::BottomLeft, joints.bottomLeft, joints.bottomLeft.x - left, bottom - joints.bottomLeft.y, brushTransform);
+            rasterizeCorner(circlePainter, Corner::BottomLeft, joints.bottomLeft, joints.bottomLeft.x - left, bottom - joints.bottomLeft.y, brushTransform);
     }
 }

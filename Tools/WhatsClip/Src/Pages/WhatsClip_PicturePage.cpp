@@ -26,7 +26,7 @@ import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Transfer.Source;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -301,7 +301,7 @@ namespace ClaFi::Tools::WhatsClip
         }
 
         const Color shown = *color;
-        text << InTextIcon{ k_swatchSize, [shown](PaintIconEvent& event) {
+        text << InTextIcon{ k_swatchSize, [shown](DrawIconEvent& event) {
             const float radius = event.iconWidth() / 2.0f;
             event.canvas().fillCircle(event.iconCenter(), radius, shown);
             event.canvas().drawCircle(event.iconCenter(), radius, event.textRgb(InkGrade::Muted),

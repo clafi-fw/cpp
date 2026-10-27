@@ -19,7 +19,7 @@ import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 namespace ClaFi::Controls
 {
@@ -147,7 +147,7 @@ namespace ClaFi::Controls
         [[nodiscard]] static OptionalUiElement colorRulesFor(ExpanderViewMode);
         ExpanderButton& createChevronButton();
         void createDividerLine();
-        void paintButton(PaintIconEvent&) const;
+        void drawButton(DrawIconEvent&) const;
         void setExpandedByUser(bool value);
         void scrollSectionIntoView() const;
         [[nodiscard]] bool squaresBottomCorners() const;
@@ -223,7 +223,7 @@ namespace ClaFi::Controls
         },
         m_viewMode{ READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section) } // the same, kept
     {
-        m_button.connectEvent<PaintIconEvent>(this, &ExpanderHeader::paintButton);
+        m_button.connectEvent<DrawIconEvent>(this, &ExpanderHeader::drawButton);
         m_button.onClick([this](ClickEvent& event) {
             setExpandedByUser(!m_expanded);
             // In the tree look the header is a row of the view around it, and a click climbing
@@ -420,9 +420,9 @@ namespace ClaFi::Controls
         createBody<Controls::Divider>(VerticalAlign::Center);
     }
 
-    void ExpanderHeader::paintButton(PaintIconEvent& event) const
+    void ExpanderHeader::drawButton(DrawIconEvent& event) const
     {
-        Icons::ExpanderMark::paint(event, m_expandedFactor);
+        Icons::ExpanderMark::draw(event, m_expandedFactor);
     }
 
     // A section is its header and its body together, so what is brought into view is the host

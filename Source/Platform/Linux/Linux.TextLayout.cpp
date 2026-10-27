@@ -8,7 +8,7 @@ import ClaFi.Platform.Linux.Fonts;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.BakedText;
 import ClaFi.Core.TextEngine.Types;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Context.ControlContext;
 import ClaFi.Core.Graphics.Cpu_GlyphCompositor;
 import ClaFi.Core.Graphics.Canvas;
@@ -480,7 +480,7 @@ namespace ClaFi::Platform::Linux
                         runX + object.width * m_scaleFactor,
                         top + object.height * m_scaleFactor,
                     };
-                    PaintIconEvent event{ controlContext, rect, object.tag, 0.0f };
+                    DrawIconEvent event{ controlContext, rect, object.tag, 0.0f };
                     object.paintLambda(event);
                     continue;
                 }

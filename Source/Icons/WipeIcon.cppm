@@ -1,6 +1,6 @@
 export module ClaFi.Icons.WipeIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -14,7 +14,7 @@ namespace ClaFi::Icons::WipeIcon
     // about four strokes before it turns to mush - so the eraser is one block with one band across
     // it, the trail is two lines, and both reach the edges of the box rather than sitting inside a
     // margin of their own.
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
 

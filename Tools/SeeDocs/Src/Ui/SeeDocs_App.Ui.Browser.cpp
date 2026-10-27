@@ -35,7 +35,7 @@ import ClaFi.Icons.RefreshIcon;
 import ClaFi.StdActions;
 
 import ClaFi.Core.Context.AppContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Dt;
 // The std::wstring serializer, which is what makes the tab's nodes readable as strings.
@@ -347,7 +347,7 @@ namespace SeeDocs_App::Ui
         Action rescan{
             Text{ L"Rescan" },
             Shortcut{ Keys::F5 },
-            Action::OnPaintIcon{ ::ClaFi::Icons::RefreshIcon::paint }
+            Action::OnDrawIcon{ ::ClaFi::Icons::RefreshIcon::draw }
         };
     }
 
@@ -1229,10 +1229,10 @@ namespace SeeDocs_App::Ui
         return iconOf(resolve(data)).has_value() ? k_pageIconSize : IconSize{ 0.0f };
     }
 
-    void SurfaceBrowser::paintPageIcon(PageData& data, PaintIconEvent& event)
+    void SurfaceBrowser::drawPageIcon(PageData& data, DrawIconEvent& event)
     {
         if (const std::optional<RowIcon> icon = iconOf(resolve(data)))
-            paintRowIcon(event, *icon);
+            drawRowIcon(event, *icon);
     }
 
     IconSize SurfaceBrowser::tabIconSize(BrowserTab& tab)
@@ -1242,10 +1242,10 @@ namespace SeeDocs_App::Ui
         return pageIconSize(*tab.pageData());
     }
 
-    void SurfaceBrowser::paintTabIcon(BrowserTab& tab, PaintIconEvent& event)
+    void SurfaceBrowser::drawTabIcon(BrowserTab& tab, DrawIconEvent& event)
     {
         if (tab.pageData())
-            paintPageIcon(*tab.pageData(), event);
+            drawPageIcon(*tab.pageData(), event);
     }
 
     // The project is taken by its segment, its sidebar's items as far as the segments after it
@@ -2350,8 +2350,8 @@ namespace SeeDocs_App::Ui
             line << PopColor{} << PopTextStyle{};
             menu.add(
                 line,
-                MenuItem::OnPaintIcon{ [icon](PaintIconEvent& event) {
-                    paintRowIcon(event, icon);
+                MenuItem::OnDrawIcon{ [icon](DrawIconEvent& event) {
+                    drawRowIcon(event, icon);
                 } },
                 MenuItem::OnClick{ [this, &from, url = place.url, select](ClickEvent&) {
                     if (select == SelectTab::No)

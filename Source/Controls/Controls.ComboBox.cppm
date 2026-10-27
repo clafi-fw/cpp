@@ -13,7 +13,7 @@ import ClaFi.Controls.ScrollBox;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
@@ -107,13 +107,13 @@ namespace ClaFi::Controls
         using DesignDimensions::DesignDimensions;
     };
 
-    // PaintItemIconEvent
+    // DrawItemIconEvent
 
     // The icon one item is drawn with.
-    export class PaintItemIconEvent : public PaintIconEvent
+    export class DrawItemIconEvent : public DrawIconEvent
     {
     public:
-        PaintItemIconEvent(PaintIconEvent&, const TextItem&);
+        DrawItemIconEvent(DrawIconEvent&, const TextItem&);
         const TextItem& item() const { return m_item; }
     private:
         const TextItem& m_item;
@@ -131,7 +131,7 @@ namespace ClaFi::Controls
         // event an index.
         [[nodiscard]] std::size_t itemIndex() const { return m_itemIndex; }
     protected:
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void getText(GetTextEvent&) const override;
         void nestedGetTooltip(GetTooltipEvent&) override;
         void click(ClickEvent&) override;
@@ -187,7 +187,7 @@ namespace ClaFi::Controls
         // The text one item is about to be written with.
         DECLARE_EVENT(AdjustItemTextEvent, OnAdjustItemText, onAdjustItemText)
         // The icon one item is drawn with.
-        DECLARE_EVENT(PaintItemIconEvent, OnPaintItemIcon, onPaintItemIcon)
+        DECLARE_EVENT(DrawItemIconEvent, OnDrawItemIcon, onDrawItemIcon)
         // An item is being looked at before it is chosen.
         DECLARE_EVENT(PreviewItemEvent, OnPreviewItem, onPreviewItem)
         // The text typed over the face, before it is looked up among the items. See Controls
@@ -199,8 +199,8 @@ namespace ClaFi::Controls
         [[nodiscard]] bool dropOnPrimaryPress() const override;
         void showDropdown(Control&) override;
         void itemIndexChanged() override;
-        void paintItemIcon(PaintItemIconEvent&) const;
-        void paintIcon(PaintIconEvent&) override;
+        void drawItemIcon(DrawItemIconEvent&) const;
+        void drawIcon(DrawIconEvent&) override;
         void getMainText(GetTextEvent&) const override;
         // The widest face of any item, so that a pick never changes the size.
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
@@ -265,11 +265,11 @@ namespace ClaFi::Controls
     {
     }
 
-    // PaintItemIconEvent
+    // DrawItemIconEvent
 
-    PaintItemIconEvent::PaintItemIconEvent(PaintIconEvent& event, const TextItem& item)
+    DrawItemIconEvent::DrawItemIconEvent(DrawIconEvent& event, const TextItem& item)
         :
-        PaintIconEvent{ event },
+        DrawIconEvent{ event },
         m_item{ item }
     {
     }
@@ -303,10 +303,10 @@ namespace ClaFi::Controls
     {
     }
 
-    void ComboBoxItemControl::paintIcon(PaintIconEvent& event)
+    void ComboBoxItemControl::drawIcon(DrawIconEvent& event)
     {
-        PaintItemIconEvent event2{ event, m_comboBox.items()[m_itemIndex] };
-        m_comboBox.paintItemIcon(event2);
+        DrawItemIconEvent event2{ event, m_comboBox.items()[m_itemIndex] };
+        m_comboBox.drawItemIcon(event2);
     }
 
     void ComboBoxItemControl::getText(GetTextEvent& event) const
@@ -435,17 +435,17 @@ namespace ClaFi::Controls
         invalidate();
     }
 
-    void ComboBox::paintItemIcon(PaintItemIconEvent& event) const
+    void ComboBox::drawItemIcon(DrawItemIconEvent& event) const
     {
         emitEvent(event);
     }
 
-    void ComboBox::paintIcon(PaintIconEvent& event)
+    void ComboBox::drawIcon(DrawIconEvent& event)
     {
         if (itemIndex().has_value())
         {
-            PaintItemIconEvent event2{ event, items()[itemIndex().value()] };
-            paintItemIcon(event2);
+            DrawItemIconEvent event2{ event, items()[itemIndex().value()] };
+            drawItemIcon(event2);
         }
     }
 

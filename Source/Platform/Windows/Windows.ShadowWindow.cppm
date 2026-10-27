@@ -106,7 +106,7 @@ namespace ClaFi::PlatformImplementation::Windows
                 continue;
             m_canvas->beginPaint(nullptr, strip);
             m_canvas->pushClip(strip.toFloat());
-            painter.paint(*m_canvas, geometry);
+            painter.draw(*m_canvas, geometry);
             m_canvas->popClip();
             Graphics::Bitmap* painted = nullptr;
             m_canvas->endPaint(nullptr, strip, painted);

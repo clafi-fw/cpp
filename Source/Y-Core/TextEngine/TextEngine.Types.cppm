@@ -3,7 +3,7 @@ module;
 
 export module ClaFi.Core.TextEngine.Types;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
@@ -164,18 +164,18 @@ namespace ClaFi
         bool operator==(const ParagraphStyle&) const = default;
     };
 
-    export using PaintIconFunc = std::function<void(PaintIconEvent&)>;
+    export using DrawIconFunc = std::function<void(DrawIconEvent&)>;
 
     export class InTextIcon {
     public:
-        InTextIcon(float designWidth, float designHeight, float designBaseline, const PaintIconFunc&, Tag = {});
-        InTextIcon(float designWidth, float designHeight, const PaintIconFunc&, Tag = {});
-        InTextIcon(float designWidth, const PaintIconFunc&, Tag = {});
+        InTextIcon(float designWidth, float designHeight, float designBaseline, const DrawIconFunc&, Tag = {});
+        InTextIcon(float designWidth, float designHeight, const DrawIconFunc&, Tag = {});
+        InTextIcon(float designWidth, const DrawIconFunc&, Tag = {});
     public:
         float designWidth;
         float designHeight;
         float designBaseline;
-        PaintIconFunc paintLambda;
+        DrawIconFunc paintLambda;
         Tag tag;
     public:
         bool operator==(const InTextIcon& other) const {
@@ -183,7 +183,7 @@ namespace ClaFi
         }
     };
 
-    InTextIcon::InTextIcon(float designWidth, float designHeight, float designBaseline, const PaintIconFunc& paintLambda, Tag tag)
+    InTextIcon::InTextIcon(float designWidth, float designHeight, float designBaseline, const DrawIconFunc& paintLambda, Tag tag)
         :
         designWidth{ designWidth },
         designHeight{ designHeight },
@@ -193,13 +193,13 @@ namespace ClaFi
     {
     }
 
-    InTextIcon::InTextIcon(float designWidth, float designHeight, const PaintIconFunc& paintLambda, Tag tag)
+    InTextIcon::InTextIcon(float designWidth, float designHeight, const DrawIconFunc& paintLambda, Tag tag)
         :
         InTextIcon{ designWidth, designHeight, designHeight * 0.85f, paintLambda, tag }
     {
     }
 
-    InTextIcon::InTextIcon(float designWidth, const PaintIconFunc& paintLambda, Tag tag)
+    InTextIcon::InTextIcon(float designWidth, const DrawIconFunc& paintLambda, Tag tag)
         :
         InTextIcon{ designWidth, designWidth, paintLambda, tag }
     {

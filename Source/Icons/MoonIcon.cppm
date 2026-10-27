@@ -1,6 +1,6 @@
 export module ClaFi.Icons.MoonIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -79,7 +79,7 @@ namespace ClaFi::Icons::MoonIcon
         path.close();
     }
 
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         Canvas& canvas = event.canvas();
         const FloatRect& iconRect = event.iconRect();

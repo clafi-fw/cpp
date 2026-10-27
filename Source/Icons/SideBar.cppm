@@ -1,7 +1,7 @@
 export module ClaFi.Icons.SideBar;
 
 import ClaFi.Icons.Magnifier;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -28,17 +28,17 @@ namespace ClaFi::Icons::SideBar
         }
 
         // What is left of the icon rect once the badge has been let out of it.
-        [[nodiscard]] FloatRect pictureRect(const PaintIconEvent& event)
+        [[nodiscard]] FloatRect pictureRect(const DrawIconEvent& event)
         {
             const FloatRect& iconRect = event.iconRect();
             const float protrusion = badgeSide(iconRect) * k_protrusionRatio;
             return { iconRect.left + protrusion, iconRect.top, iconRect.right, iconRect.bottom - protrusion };
         }
 
-        void paintPreviewBadge(PaintIconEvent& event)
+        void drawPreviewBadge(DrawIconEvent& event)
         {
             const FloatRect& iconRect = event.iconRect();
-            Magnifier::paintIn(
+            Magnifier::drawIn(
                 event,
                 iconRect.bottomLeftSquare(badgeSide(iconRect)),
                 Magnifier::Lens::Empty,
@@ -49,7 +49,7 @@ namespace ClaFi::Icons::SideBar
     }
 
 
-    export void paintRightBarIcon(PaintIconEvent& event)
+    export void drawRightBarIcon(DrawIconEvent& event)
     {
         const FloatRect iconRect = pictureRect(event);
         RoundedRectangleParts parts;
@@ -75,10 +75,10 @@ namespace ClaFi::Icons::SideBar
         parts.sides = { true, true, true, true };
         event.canvas().drawPartialRoundedRectangle(parts, event.accentRgb(InkGrade::Strongest), strokeWidth);
 
-        paintPreviewBadge(event);
+        drawPreviewBadge(event);
     }
 
-    export void paintPanelIcon(PaintIconEvent& event)
+    export void drawPanelIcon(DrawIconEvent& event)
     {
         const FloatRect iconRect = pictureRect(event);
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
@@ -91,6 +91,6 @@ namespace ClaFi::Icons::SideBar
         );
 
         event.canvas().drawRoundedRectangle(iconRect, radius, radius, event.accentRgb(InkGrade::Strongest), strokeWidth);
-        paintPreviewBadge(event);
+        drawPreviewBadge(event);
     }
 }

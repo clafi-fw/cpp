@@ -28,7 +28,7 @@ namespace ClaFi::Graphics::Cpu
     protected:
         Color color() { return m_color; }
         void beginPaint(FloatPoint origin, Color c, AxisDirection axis = AxisDirection::xRightYUp);
-        void paint(float startX, float endX);
+        void rasterize(float startX, float endX);
     private:
         inline void setPixInternal(int x, int y, float k, int shiftY)
         {
@@ -48,8 +48,8 @@ namespace ClaFi::Graphics::Cpu
                     px->blend(static_cast<Derived*>(this)->calculateColor(x, y), k);
             }
         }
-        void paintLedge(int x, float pixW, float v0, float v1, int ySign, int& ledgeInner, int shiftY);
-        void paintColumn(int xCoord, float pixW, const FuncResult& res1, const FuncResult& next);
+        void fillLedge(int x, float pixW, float v0, float v1, int ySign, int& ledgeInner, int shiftY);
+        void fillColumn(int xCoord, float pixW, const FuncResult& res1, const FuncResult& next);
     private:
         AxisDirection m_axis;
         int m_origX, m_origY;
@@ -77,7 +77,7 @@ namespace ClaFi::Graphics::Cpu
     }
 
     template<typename Derived, FillMode fillMode>
-    void FuncPainterBase<Derived, fillMode>::paint(float startX, float endX)
+    void FuncPainterBase<Derived, fillMode>::rasterize(float startX, float endX)
     {
         int xCoord = static_cast<int>(std::floor(startX));
         int endXCoord = static_cast<int>(std::floor(endX));
@@ -90,7 +90,7 @@ namespace ClaFi::Graphics::Cpu
         {
             FuncResult nextResult;
             static_cast<Derived*>(this)->calculateY(xCoord + 1.0f, nextResult);
-            paintColumn(xCoord, pixW, prevResult, nextResult);
+            fillColumn(xCoord, pixW, prevResult, nextResult);
             prevResult = nextResult;
             ++xCoord;
             pixW = 1.0f;
@@ -101,12 +101,12 @@ namespace ClaFi::Graphics::Cpu
         {
             FuncResult nextResult;
             static_cast<Derived*>(this)->calculateY(endX, nextResult);
-            paintColumn(xCoord, finalW, prevResult, nextResult);
+            fillColumn(xCoord, finalW, prevResult, nextResult);
         }
     }
 
     template<typename Derived, FillMode fillMode>
-    void FuncPainterBase<Derived, fillMode>::paintLedge(int x, float pixW, float v0, float v1,
+    void FuncPainterBase<Derived, fillMode>::fillLedge(int x, float pixW, float v0, float v1,
         int ySign, int& ledgeInner, int shiftY)
     {
         if (v0 > v1)
@@ -143,18 +143,18 @@ namespace ClaFi::Graphics::Cpu
     }
 
     template<typename Derived, FillMode fillMode>
-    void FuncPainterBase<Derived, fillMode>::paintColumn(int xCoord, float pixW, const FuncResult& res1, const FuncResult& next)
+    void FuncPainterBase<Derived, fillMode>::fillColumn(int xCoord, float pixW, const FuncResult& res1, const FuncResult& next)
     {
         FloatRect clip = m_pixelView.clippedBounds();
         int solidsLast, solidsBegin;
 
         int sTop = (m_axis == AxisDirection::xDownYLeft) ? m_origX : m_origY;
-        paintLedge(xCoord, pixW, res1.y2, next.y2, 1, solidsLast, sTop);
+        fillLedge(xCoord, pixW, res1.y2, next.y2, 1, solidsLast, sTop);
 
         int sBottom = (m_axis == AxisDirection::xRightYUp) ? m_origY + 1 :
             (m_axis == AxisDirection::xRightYDown) ? m_origY - 1 :
             (m_axis == AxisDirection::xDownYLeft) ? m_origX + 1 : m_origY;
-        paintLedge(xCoord, pixW, -res1.y1, -next.y1, -1, solidsBegin, sBottom);
+        fillLedge(xCoord, pixW, -res1.y1, -next.y1, -1, solidsBegin, sBottom);
 
         int yStart = 1 - solidsBegin;
         int yEnd = solidsLast;

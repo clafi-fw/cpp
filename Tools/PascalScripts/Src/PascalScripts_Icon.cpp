@@ -1,6 +1,6 @@
 module PascalScripts_App.AppIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Context.ControlContext;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Canvas;
@@ -180,12 +180,12 @@ namespace PascalScripts_App::AppIcon
 
         void fillBand(Canvas&, const Matrix3x2& transform, const Leaf&, const Band&);
         void strokeLeaf(Canvas&, const Matrix3x2& transform, const Leaf&);
-        void paintLeaves(Canvas&, const Matrix3x2& transform);
+        void drawLeaves(Canvas&, const Matrix3x2& transform);
         void fillArrowBand(Canvas&, const Matrix3x2& transform, const Band&);
-        void paintArrow(Canvas&, const Matrix3x2& transform);
-        void paintSheet(Canvas&, const Matrix3x2& transform, float lineWidth, Color paper,
+        void drawArrow(Canvas&, const Matrix3x2& transform);
+        void drawSheet(Canvas&, const Matrix3x2& transform, float lineWidth, Color paper,
             Color frame, Color fold);
-        void paintBars(Canvas&, const Matrix3x2& transform, std::span<const Bar> bars, Color);
+        void drawBars(Canvas&, const Matrix3x2& transform, std::span<const Bar> bars, Color);
     }
 }
 
@@ -193,22 +193,22 @@ namespace PascalScripts_App::AppIcon
 
 namespace PascalScripts_App::AppIcon
 {
-    void paint(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
+    void draw(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
     {
         // One layer for the whole mark: its parts overlap, and faded one by one they would show.
         const ScopedCanvasOpacity layer{ canvas, opacity };
         const Matrix3x2 transform = fitTo(bounds);
 
-        paintLeaves(canvas, transform);
-        paintArrow(canvas, transform);
+        drawLeaves(canvas, transform);
+        drawArrow(canvas, transform);
     }
 
-    void paintIcon(PaintIconEvent& event)
+    void drawIcon(DrawIconEvent& event)
     {
-        paint(event.canvas(), event.iconRect(), 1.0f - event.disabledAmount());
+        draw(event.canvas(), event.iconRect(), 1.0f - event.disabledAmount());
     }
 
-    void paintScriptIcon(PaintIconEvent& event)
+    void drawScriptIcon(DrawIconEvent& event)
     {
         Canvas& canvas = event.canvas();
         const FloatRect& iconRect = event.iconRect();
@@ -216,7 +216,7 @@ namespace PascalScripts_App::AppIcon
         // The form's own stroke weight, in design units because the transform scales it.
         const float lineWidth = event.scaledStrokeWidth(Thickness::Thin) / scaleFor(iconRect);
         const ControlPaintContext paper = paperContext(event.controlContext());
-        paintSheet(canvas, transform, lineWidth,
+        drawSheet(canvas, transform, lineWidth,
             paper.surfaceRgb(),
             paper.textRgb(InkGrade::Subtle),
             paper.inkRgb(InkWell::textInk(k_foldShare)));
@@ -224,15 +224,15 @@ namespace PascalScripts_App::AppIcon
         const float iconSide = std::min(iconRect.width(), iconRect.height());
         if (iconSide / event.controlContext().scaleFactor() < k_smallIconSize)
         {
-            paintArrow(canvas, fitArrowTo(transform, k_smallArrow));
+            drawArrow(canvas, fitArrowTo(transform, k_smallArrow));
             return;
         }
 
         // The keywords keep the hue CodeBox gives them, softened to sit with the body lines.
         const Color keywordInk = paper.inkRgb(InkWell::blueInk(InkGrade::Muted));
-        paintBars(canvas, transform, k_keywordBars, keywordInk);
-        paintBars(canvas, transform, k_bodyBars, paper.textRgb(InkGrade::Subtle));
-        paintArrow(canvas, fitArrowTo(transform, k_tileArrow));
+        drawBars(canvas, transform, k_keywordBars, keywordInk);
+        drawBars(canvas, transform, k_bodyBars, paper.textRgb(InkGrade::Subtle));
+        drawArrow(canvas, fitArrowTo(transform, k_tileArrow));
     }
 
     namespace
@@ -535,7 +535,7 @@ namespace PascalScripts_App::AppIcon
         }
 
         // A leaf takes its outline before the next covers it, so the front one draws the seam.
-        void paintLeaves(Canvas& canvas, const Matrix3x2& transform)
+        void drawLeaves(Canvas& canvas, const Matrix3x2& transform)
         {
             for (const Band& band : k_backBands)
                 fillBand(canvas, transform, k_backLeaf, band);
@@ -566,7 +566,7 @@ namespace PascalScripts_App::AppIcon
         }
 
         // The frame is stroked first, so the bands cover the half of each line that falls inside.
-        void paintArrow(Canvas& canvas, const Matrix3x2& transform)
+        void drawArrow(Canvas& canvas, const Matrix3x2& transform)
         {
             PixelPath arrow;
             addArrow(arrow);
@@ -583,7 +583,7 @@ namespace PascalScripts_App::AppIcon
             canvas.popClip();
         }
 
-        void paintSheet(Canvas& canvas, const Matrix3x2& transform, const float lineWidth,
+        void drawSheet(Canvas& canvas, const Matrix3x2& transform, const float lineWidth,
             const Color paper, const Color frame, const Color fold)
         {
             PixelPath outline;
@@ -603,7 +603,7 @@ namespace PascalScripts_App::AppIcon
             canvas.drawPath(outline, { PathDrawLayer::Stroke(frame, lineWidth) }, &transform);
         }
 
-        void paintBars(Canvas& canvas, const Matrix3x2& transform, const std::span<const Bar> bars,
+        void drawBars(Canvas& canvas, const Matrix3x2& transform, const std::span<const Bar> bars,
             const Color color)
         {
             PixelPath path;

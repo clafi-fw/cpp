@@ -1,6 +1,6 @@
 module TextEngine_App.Math;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine.Fmt;
@@ -47,7 +47,7 @@ namespace TextEngine_App
 
         // A rule struck across the whole of the box it is given. Nothing else stands in the row a
         // fraction bar is written on, so the row is the height of this box.
-        void paintRule(PaintIconEvent& event)
+        void drawRule(DrawIconEvent& event)
         {
             const FloatRect& box = event.iconRect();
             const float thickness = event.scaleF(1.25f);
@@ -61,7 +61,7 @@ namespace TextEngine_App
         // is laid the way the vinculum after it is laid - a fill hanging off the top of the box,
         // not a stroke centred on it - so the two are one bar rather than two a half stroke apart.
         // The rise ends at the middle of that bar, where a turn should meet it.
-        void paintRadicalSign(PaintIconEvent& event)
+        void drawRadicalSign(DrawIconEvent& event)
         {
             const FloatRect& box = event.iconRect();
             const float stroke = event.scaleF(k_radicalStroke);
@@ -83,9 +83,9 @@ namespace TextEngine_App
         // the radicand is not pushed along by it - the bar lies across what comes next. How far it
         // reaches is the page's own statement, because a Text is written before anything has been
         // shaped and there is nothing here to measure.
-        [[nodiscard]] PaintIconFunc vinculum(float width)
+        [[nodiscard]] DrawIconFunc vinculum(float width)
         {
-            return [width](PaintIconEvent& event){
+            return [width](DrawIconEvent& event){
                 const FloatRect& box = event.iconRect();
                 const float stroke = event.scaleF(k_radicalStroke);
                 event.canvas().fillRectangle(
@@ -111,9 +111,9 @@ namespace TextEngine_App
         // of the rows above and below meet it with no seam; the arm is what tells a top piece from
         // a middle one. A Middle piece on its own is the plain vertical bar a determinant is
         // written between.
-        [[nodiscard]] PaintIconFunc bracketPiece(BracketSide side, BracketPart part)
+        [[nodiscard]] DrawIconFunc bracketPiece(BracketSide side, BracketPart part)
         {
-            return [side, part](PaintIconEvent& event){
+            return [side, part](DrawIconEvent& event){
                 const FloatRect& box = event.iconRect();
                 const float stroke = event.scaleF(1.25f);
                 const Color ink = event.textRgb(InkGrade::Strongest);
@@ -173,7 +173,7 @@ namespace TextEngine_App
 
         void writeRuleRow(Text& out, float ruleWidth)
         {
-            out << InTextIcon{ ruleWidth, k_ruleHeight, k_ruleBaseline, paintRule };
+            out << InTextIcon{ ruleWidth, k_ruleHeight, k_ruleBaseline, drawRule };
             out << k_endLine;
         }
 
@@ -204,7 +204,7 @@ namespace TextEngine_App
         // written under it.
         void writeRoot(Text& out, const Text& radicand, float coverWidth)
         {
-            out << InTextIcon{ k_radicalWidth, k_radicalHeight, k_radicalBaseline, paintRadicalSign };
+            out << InTextIcon{ k_radicalWidth, k_radicalHeight, k_radicalBaseline, drawRadicalSign };
             out << InTextIcon{ 0.0f, k_radicalHeight, k_radicalBaseline, vinculum(coverWidth) };
             out << radicand;
         }
@@ -308,7 +308,7 @@ namespace TextEngine_App
         writeRoot(quadraticTop, Text{ Fmt{ L"[i]b[/i][sup]2[/sup] − 4[i]ac[/i]" } }, 76.0f);
         writeRow(page, quadraticTop);
         page << Fmt{ L"[i]x[/i] = " };
-        page << InTextIcon{ 132.0f, k_ruleHeight, k_ruleBaseline, paintRule };
+        page << InTextIcon{ 132.0f, k_ruleHeight, k_ruleBaseline, drawRule };
         page << Space{ 26.0f };
         page << k_endLine;
         writeRow(page, Text{ Fmt{ L"2[i]a[/i]" } });

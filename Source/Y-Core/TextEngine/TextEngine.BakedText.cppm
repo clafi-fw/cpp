@@ -15,7 +15,7 @@ namespace ClaFi
         float width{ 0.0f };
         float height{ 0.0f };
         float baseline{ 0.0f };
-        PaintIconFunc paintLambda{};
+        DrawIconFunc paintLambda{};
         Tag tag{};
         bool isFlexSpace{ false };
         bool isTabTo{ false };

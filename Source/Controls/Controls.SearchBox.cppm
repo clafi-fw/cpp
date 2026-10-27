@@ -131,7 +131,7 @@ namespace ClaFi::Controls
             ButtonViewMode::IconOnly,
             IconSize{ 10.0f },
             Interactivity::MouseOnly,
-            ButtonBase::OnPaintIcon{ Icons::OpenChevron::paintUp },
+            ButtonBase::OnDrawIcon{ Icons::OpenChevron::drawUp },
             L"Previous"
         ) };
         ToolButton& m_next{ m_tools.add<ToolButton>(
@@ -139,7 +139,7 @@ namespace ClaFi::Controls
             ButtonViewMode::IconOnly,
             IconSize{ 10.0f },
             Interactivity::MouseOnly,
-            ButtonBase::OnPaintIcon{ Icons::OpenChevron::paintDown },
+            ButtonBase::OnDrawIcon{ Icons::OpenChevron::drawDown },
             L"Next"
         ) };
         ToolButton& m_clear{ m_tools.add<ToolButton>(
@@ -147,7 +147,7 @@ namespace ClaFi::Controls
             ButtonViewMode::IconOnly,
             IconSize{ 8.0f },
             Interactivity::MouseOnly,
-            ButtonBase::OnPaintIcon{ Icons::XMark::paint },
+            ButtonBase::OnDrawIcon{ Icons::XMark::draw },
             L"Clear"
         ) };
         // The field keeps the focus, and Up on the list's first line gives the keys back to it.

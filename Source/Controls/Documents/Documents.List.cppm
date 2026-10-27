@@ -13,7 +13,7 @@ import ClaFi.Controls.Base.Container;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
@@ -46,7 +46,7 @@ namespace ClaFi::Documents
         [[nodiscard]] std::wstring fileName() const;
         [[nodiscard]] std::wstring stem() const;
     protected:
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
     private:
         using Base = WithInPlaceEdit<Button>;
     private:

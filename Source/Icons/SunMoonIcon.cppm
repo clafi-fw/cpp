@@ -3,7 +3,7 @@ export module ClaFi.Icons.SunMoonIcon;
 import ClaFi.Icons.MoonIcon;
 import ClaFi.Icons.SunIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -14,7 +14,7 @@ namespace ClaFi::Icons::SunMoonIcon
     using namespace ::ClaFi::Graphics;
 
     // The sun's rays around the moon's crescent, at the weight SunIcon and MoonIcon are drawn at.
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         Canvas& canvas = event.canvas();
         const FloatRect& iconRect = event.iconRect();

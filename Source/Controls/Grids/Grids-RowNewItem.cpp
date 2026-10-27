@@ -6,7 +6,7 @@ import :RowNewItem;
 
 import ClaFi.Icons.PlusMark;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -18,7 +18,7 @@ namespace ClaFi::Controls::Grids
     namespace
     {
         // The plus the placeholder leads with, in the placeholder's own ink.
-        void paintMutedPlus(PaintIconEvent& event)
+        void drawMutedPlus(DrawIconEvent& event)
         {
             Icons::PlusMark mark{
                 .canvas = event.canvas(),
@@ -27,7 +27,7 @@ namespace ClaFi::Controls::Grids
                 .lineWidth = event.scaledStrokeWidth(Thickness::Thin),
                 .color = event.textRgb(InkGrade::Muted)
             };
-            mark.paintPlusOrMinus(true);
+            mark.drawPlusOrMinus(true);
         }
     }
 
@@ -56,7 +56,7 @@ namespace ClaFi::Controls::Grids
 
     void RowNewItem::getCellText(const Column&, Text& text)
     {
-        text << InkGrade::Muted << InTextIcon{ 12.0f, 12.0f, paintMutedPlus } << L" "
+        text << InkGrade::Muted << InTextIcon{ 12.0f, 12.0f, drawMutedPlus } << L" "
             << m_placeHolderText;
     }
 

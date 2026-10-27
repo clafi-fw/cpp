@@ -7,7 +7,7 @@ import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 
@@ -35,7 +35,7 @@ namespace Themes_App
         void nestedGetTooltip(GetTooltipEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         void dropdown(DropdownEvent&) override;
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
     private:
         class DropDownMenu : public StackPanel
         {
@@ -118,9 +118,9 @@ namespace Themes_App
                 ShowSelectionOnSurface::Yes,
                 IconSize{ 32.0f },
                 ButtonViewMode::IconOnly,
-                OnPaintIcon{[this](PaintIconEvent& event){
+                OnDrawIcon{[this](DrawIconEvent& event){
                     std::size_t index = event.tag().value;
-                    paintPaletteMap(event, m_harmony, m_harmony.maps()[index]);
+                    drawPaletteMap(event, m_harmony, m_harmony.maps()[index]);
                 } }
                 ) };
             if (m_harmony.selectedMap() == &m_harmony.maps()[i])
@@ -165,7 +165,7 @@ namespace Themes_App
 
         //m_dropDownButton.onClick([this](ClickEvent& params) { dropDown(*params.control);  });
         //m_dropDownButton.onPaint([](PaintEvent& event) {
-        //  ChevronPainter::paint(
+        //  ChevronPainter::draw(
         //      event.canvas(),
         //      event.center(),
         //      textInk(InkGrade::Muted).toColor(event),
@@ -202,9 +202,9 @@ namespace Themes_App
         event.executeDropdown<DropDownPanel>(*this);
     }
 
-    void ColorHarmonyItem::paintIcon(PaintIconEvent& event)
+    void ColorHarmonyItem::drawIcon(DrawIconEvent& event)
     {
-        paintPaletteMap(event, m_harmony, *m_harmony.selectedMap(), static_cast<std::size_t>(m_harmony.kind()));
+        drawPaletteMap(event, m_harmony, *m_harmony.selectedMap(), static_cast<std::size_t>(m_harmony.kind()));
     }
 
     ColorHarmonyItem::DropDownPanel::DropDownPanel(const CreateParams& params, const ColorHarmonyItem& harmonyItem)

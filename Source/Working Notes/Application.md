@@ -154,7 +154,7 @@ The four overrides read and write a theme the way the tab config holds it, as a 
 readDocument seeds the node with the defaults and loads the file over them, because a file states
 only what it changes; writeDocument writes what differs from the defaults, statedTheme. isEdited
 is that same difference asked of a file: a theme that states nothing is one nobody has touched.
-paintIcon looks the theme up by file name, and the built-in's page is named with its own name -
+drawIcon looks the theme up by file name, and the built-in's page is named with its own name -
 Default.theme - so a crumb, a tab and a tile draw the built-in through the same call as a user's
 theme. checkNameShape adds the built-in names to what the base refuses: a user theme under one of
 them would never be read.

@@ -39,7 +39,7 @@ namespace Themes_App
     export constexpr std::wstring_view k_paletteToken{ L"Palette" };
 
     // What a tab's icon is drawn from, kept in the tab's entry so that an unopened tab reads no
-    // file for it - see ThemesBrowser::paintTabIcon.
+    // file for it - see ThemesBrowser::drawTabIcon.
     export constexpr std::wstring_view k_tabIconAttrName{ L"Icon" };
 
     // The five hue operations as the editor names them, indexed by ColorRuleHueOp. The names the

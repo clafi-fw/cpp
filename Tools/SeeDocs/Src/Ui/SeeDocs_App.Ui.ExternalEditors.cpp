@@ -19,7 +19,7 @@ import ClaFi.Icons.Chevron;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Document;
 import ClaFi.Core.DomEngine_Dt;
@@ -199,7 +199,7 @@ namespace SeeDocs_App::Ui
             // The box: a press with its list up takes it down. See Control-Foundation#popup-owner
             [[nodiscard]] Control& popupOwner() override { return m_box; }
         protected:
-            void paintIcon(PaintIconEvent&) override;   // the mark a combo box's strip wears
+            void drawIcon(DrawIconEvent&) override;   // the mark a combo box's strip wears
         private:
             CommandBox& m_box;
         };
@@ -646,10 +646,10 @@ namespace SeeDocs_App::Ui
         }
 
         // In the ink a combo box's mark wears at rest, so the two read as one kind of control.
-        void DropButton::paintIcon(PaintIconEvent& event)
+        void DropButton::drawIcon(DrawIconEvent& event)
         {
-            ToolButton::paintIcon(event);
-            ChevronPainter::paint(
+            ToolButton::drawIcon(event);
+            ChevronPainter::draw(
                 event.canvas(),
                 event.iconCenter(),
                 event.textRgb(InkGrade::Muted),

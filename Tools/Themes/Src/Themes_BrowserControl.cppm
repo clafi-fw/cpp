@@ -16,7 +16,7 @@ import ClaFi.Controls.Base.ButtonBase;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.StdLib;
 
@@ -35,7 +35,7 @@ namespace Themes_App
         ~ThemesBrowser() override;
     protected:
         void fetchSubItems(PageData&) override;
-        void paintTabIcon(BrowserTab&, PaintIconEvent&) override;
+        void drawTabIcon(BrowserTab&, DrawIconEvent&) override;
         void saveViewState(BrowserTab&) override;
         [[nodiscard]] bool isDocumentPage(const PageData&) const override;
         [[nodiscard]] std::filesystem::path documentFileOf(const PageData&) const override;
@@ -61,6 +61,6 @@ namespace Themes_App
         // The mark itself is in AppIcon, so the same drawing answers the button and writes
         // the .ico. The button states its own view mode and icon size; nothing here restates
         // them.
-        appButton().onPaintIcon(AppIcon::paintIcon);
+        appButton().onDrawIcon(AppIcon::drawIcon);
     }
 }

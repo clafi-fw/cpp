@@ -29,7 +29,7 @@ namespace ClaFi::Controls
     }
 
     PromptDialog::PromptDialog(Control& owner, const std::wstring_view title,
-        const std::wstring_view value, const PaintIconFunc& iconPainter)
+        const std::wstring_view value, const DrawIconFunc& iconPainter)
         :
         // The value is what the user is being asked to change, so it goes in as the plain run
         // of characters it is: nothing about it is marked, and the box is about to be typed in.

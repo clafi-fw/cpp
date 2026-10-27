@@ -2000,7 +2000,7 @@ namespace ClaFi
             if (part.empty())
                 return;
             m_canvas.pushClip(part);
-            m_shadowPainter.paint(m_canvas, windowRect);
+            m_shadowPainter.draw(m_canvas, windowRect);
             m_canvas.popClip();
         };
         if (cornerPass)

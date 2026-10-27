@@ -1,6 +1,6 @@
 export module ClaFi.Icons.MessageBadge;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -16,7 +16,7 @@ namespace ClaFi::Icons::MessageBadge
     // differ in their glyph and their pigment and in nothing else, so the container is stated here
     // once and each icon is left holding only what makes it that icon.
     //
-    // Not an icon itself: it takes an ink, so it can never be a PaintIconFunc.
+    // Not an icon itself: it takes an ink, so it can never be a DrawIconFunc.
 
     // Where a glyph goes and what it is drawn with, as fractions of the whole badge. See Icons
     export struct GlyphSlot
@@ -33,10 +33,10 @@ namespace ClaFi::Icons::MessageBadge
     };
 
     // The disc four of the five stand on, filling the icon rect.
-    export GlyphSlot paintDisc(PaintIconEvent&, Ink);
+    export GlyphSlot drawDisc(DrawIconEvent&, Ink);
 
     // The triangle a warning stands on, filling the icon rect, its corners rounded.
-    export GlyphSlot paintTriangle(PaintIconEvent&, Ink);
+    export GlyphSlot drawTriangle(DrawIconEvent&, Ink);
 
 
     //-------------------------------------------------------------------------
@@ -70,14 +70,14 @@ namespace ClaFi::Icons::MessageBadge
     // MessageBadge
 
     // The square a badge is drawn in: the largest the icon rect holds, centred in it.
-    static FloatRect badgeBox(const PaintIconEvent& event)
+    static FloatRect badgeBox(const DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
         const float size = std::min(iconRect.width(), iconRect.height());
         return FloatRect::FromDimensions(iconRect.center() - FloatPoint{ size * 0.5f }, { size, size });
     }
 
-    static GlyphSlot glyphSlotOf(PaintIconEvent& event, const FloatRect& box)
+    static GlyphSlot glyphSlotOf(DrawIconEvent& event, const FloatRect& box)
     {
         return {
             .box = box,
@@ -86,14 +86,14 @@ namespace ClaFi::Icons::MessageBadge
         };
     }
 
-    GlyphSlot paintDisc(PaintIconEvent& event, Ink ink)
+    GlyphSlot drawDisc(DrawIconEvent& event, Ink ink)
     {
         const FloatRect box = badgeBox(event);
         event.canvas().fillCircle(box.center(), box.width() * 0.5f, event.inkRgb(ink));
         return glyphSlotOf(event, box);
     }
 
-    GlyphSlot paintTriangle(PaintIconEvent& event, Ink ink)
+    GlyphSlot drawTriangle(DrawIconEvent& event, Ink ink)
     {
         const FloatRect box = badgeBox(event);
         const float size = box.width();

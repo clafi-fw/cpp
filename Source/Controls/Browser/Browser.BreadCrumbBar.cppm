@@ -12,7 +12,7 @@ import ClaFi.Controls.Stack;
 
 import ClaFi.Icons.Chevron;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
@@ -63,12 +63,12 @@ namespace ClaFi::Browser
     };
 
     /// @brief Paints a page's icon - in a crumb's own slot, or beside a line of a crumb's list.
-    export class PaintPageIconEvent : public PaintIconEvent
+    export class DrawPageIconEvent : public DrawIconEvent
     {
     public:
-        PaintPageIconEvent(PaintIconEvent& event, PageData& pageData)
+        DrawPageIconEvent(DrawIconEvent& event, PageData& pageData)
             :
-            PaintIconEvent{ event },
+            DrawIconEvent{ event },
             pageData{ pageData }
         {
         }
@@ -127,7 +127,7 @@ namespace ClaFi::Browser
         [[nodiscard]] EditorMode editorMode() const override;
         [[nodiscard]] FloatPoint editorMaxTextSize(const FloatRect&) const override;
         [[nodiscard]] bool clickOpensEditor() const override;
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
         void getControlState(GetStateEvent&) const override;
@@ -168,7 +168,7 @@ namespace ClaFi::Browser
         // What a page's icon is. See Browser
         DECLARE_EVENT(GetPageIconSizeEvent, OnGetPageIconSize, onGetPageIconSize)
         // Paints a page's icon - in a crumb's own slot, or beside a line of a crumb's list.
-        DECLARE_EVENT(PaintPageIconEvent, OnPaintPageIcon, onPaintPageIcon)
+        DECLARE_EVENT(DrawPageIconEvent, OnDrawPageIcon, onDrawPageIcon)
         // Whether this page's name is the user's to change. See Browser
         DECLARE_EVENT(CanRenamePageEvent, OnCanRenamePage, onCanRenamePage)
         // The name typed over a crumb, on its way to whatever the page stands for. See Browser
@@ -186,7 +186,7 @@ namespace ClaFi::Browser
         void selectBrowserData(PageData&, Control& initiator);
         void fetchSubItems(PageData&);
         void getPageIcon(GetPageIconSizeEvent&);
-        void paintPageIcon(PageData&, PaintIconEvent&);
+        void drawPageIcon(PageData&, DrawIconEvent&);
         // Const because a crumb asks it while answering editorMode(), which is const. Raising an
         // event is a const operation - the answer is the handler's, and none of it is the bar's
         // own state.
@@ -262,7 +262,7 @@ namespace ClaFi::Browser
     {
         // Where the mark goes, and whether it goes here or on the strip, is the base's business.
         if (m_data)
-            m_data->paintText(event.text);
+            m_data->writeText(event.text);
     }
 
     void BreadCrumbBarItem::getEditorText(Text& text) const
@@ -271,7 +271,7 @@ namespace ClaFi::Browser
         // keeps no text of its own - it writes its caption out of the page every time it is
         // asked to draw - so the base would open the editor empty.
         if (m_data)
-            m_data->paintText(text);
+            m_data->writeText(text);
     }
 
     EditorMode BreadCrumbBarItem::editorMode() const
@@ -312,11 +312,11 @@ namespace ClaFi::Browser
         return true;
     }
 
-    void BreadCrumbBarItem::paintIcon(PaintIconEvent& event)
+    void BreadCrumbBarItem::drawIcon(DrawIconEvent& event)
     {
-        BreadCrumbBarItemBase::paintIcon(event);
+        BreadCrumbBarItemBase::drawIcon(event);
         if (m_data)
-            parentAs<BreadCrumbBar>().paintPageIcon(*m_data, event);
+            parentAs<BreadCrumbBar>().drawPageIcon(*m_data, event);
     }
 
     void BreadCrumbBarItem::showDropdown(Control& initiator)
@@ -339,8 +339,8 @@ namespace ClaFi::Browser
             PageData* target = subItem.get();
             MenuItem& line = menu.add(
                 target->displayTitle(),
-                MenuItem::OnPaintIcon{ [&bar, target](PaintIconEvent& event) {
-                    bar.paintPageIcon(*target, event);
+                MenuItem::OnDrawIcon{ [&bar, target](DrawIconEvent& event) {
+                    bar.drawPageIcon(*target, event);
                 } },
                 MenuItem::OnClick{ [&bar, target](const ClickEvent& event) {
                     bar.selectBrowserData(*target, *event.control);
@@ -528,9 +528,9 @@ namespace ClaFi::Browser
         emitEvent(event);
     }
 
-    void BreadCrumbBar::paintPageIcon(PageData& value, PaintIconEvent& iconEvent)
+    void BreadCrumbBar::drawPageIcon(PageData& value, DrawIconEvent& iconEvent)
     {
-        PaintPageIconEvent event{ iconEvent, value };
+        DrawPageIconEvent event{ iconEvent, value };
         emitEvent(event);
     }
 

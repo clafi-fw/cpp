@@ -13,7 +13,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Context.AppContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 
@@ -101,8 +101,8 @@ namespace ClaFi
     {
         appThemes().listeners().insert(this);
 
-        onPaintItemIcon([this](PaintItemIconEvent& event) {
-            paintThemeIcon(event, entryOf(event.item()).theme->colors);
+        onDrawItemIcon([this](DrawItemIconEvent& event) {
+            drawThemeIcon(event, entryOf(event.item()).theme->colors);
         });
         // **Tried on, not stated.** The colours are taken directly rather than through the config
         // node, so nothing is written for a theme the user is only looking at.

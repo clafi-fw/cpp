@@ -1,7 +1,7 @@
 export module ClaFi.Icons.LuminosityIcon;
 
 import ClaFi.Icons.ColorChannelSweep;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -12,7 +12,7 @@ namespace ClaFi::Icons::LuminosityIcon
     using namespace ::ClaFi::Graphics;
     namespace Sweep = ::ClaFi::Icons::ColorChannelSweep;
 
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //----------------------------------------------------------------------------
@@ -27,7 +27,7 @@ namespace ClaFi::Icons::LuminosityIcon
         constexpr float k_highInset = 0.04f;
     }
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
         // The ramp runs where the elevation slider runs - from the form surface up to the text
         // colour - so the icon shows the range the control actually moves through. It follows the

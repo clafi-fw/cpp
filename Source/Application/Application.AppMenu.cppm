@@ -27,7 +27,7 @@ namespace ClaFi
         static constexpr std::wstring_view k_pageNodeName{ L"AppMenuPage" };
     private:
         // A tab for a page, kept so that the stored page can be opened by its caption.
-        void addPageTab(std::wstring_view caption, RichControl& page, const PaintIconFunc& paintIcon);
+        void addPageTab(std::wstring_view caption, RichControl& page, const DrawIconFunc& drawIcon);
         // Opens the page under that caption, and answers whether the strip has one.
         bool openPage(std::wstring_view caption);
         void openStoredPage();
@@ -50,7 +50,7 @@ namespace ClaFi
     export void connectAppMenu();
 
     // Adds a command of the application's own below its pages. See Application
-    export void connectAppCommand(std::wstring_view caption, PaintIconFunc paintIcon, EndIcon,
+    export void connectAppCommand(std::wstring_view caption, DrawIconFunc drawIcon, EndIcon,
         ClickFunc);
 
     // Opens the menu over the form on the page under that caption. See Application

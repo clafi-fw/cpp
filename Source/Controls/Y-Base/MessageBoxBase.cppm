@@ -36,7 +36,7 @@ namespace ClaFi::Controls
     public:
         MessageBoxBase(Control& owner, std::wstring_view title, const Text& text, MessageIcon);
         MessageBoxBase(Control& owner, std::wstring_view title, const Text& text,
-            const PaintIconFunc& iconPainter);
+            const DrawIconFunc& iconPainter);
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"MessageBox"; }
     protected:

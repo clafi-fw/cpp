@@ -55,7 +55,7 @@ namespace ClaFi::Graphics
     // rather than one for each step of the fade. **The tiles go on whole pixels**, where each lands
     // whatever position it is given: around an edge between two pixels, the run along it and the
     // corner past it would both draw the column the edge falls in.
-    void ShadowPainter::paint(Canvas& canvas, const FloatRect& rect, const float opacity) const
+    void ShadowPainter::draw(Canvas& canvas, const FloatRect& rect, const float opacity) const
     {
         const ShadowParams& shadow = m_design.shadow;
         if (rect.empty() || opacity <= 0.0f || shadow.blur <= 0.0f || !shadow.color.alpha)
@@ -85,7 +85,7 @@ namespace ClaFi::Graphics
         const FloatRect clip = canvas.clipBox();
         if (shortHeight || narrowWidth)
         {
-            paintStrip(canvas, clip, placed, shortHeight, opacity);
+            drawStrip(canvas, clip, placed, shortHeight, opacity);
             return;
         }
 
@@ -252,7 +252,7 @@ namespace ClaFi::Graphics
         return strip;
     }
 
-    void ShadowPainter::paintStrip(Canvas& canvas, const FloatRect& clip, const FloatRect& placed,
+    void ShadowPainter::drawStrip(Canvas& canvas, const FloatRect& clip, const FloatRect& placed,
         const bool horizontal, const float opacity) const
     {
         const Extent extent = this->extent();

@@ -197,7 +197,7 @@ namespace ClaFi::Diagnostic
         m_restartButton{ m_footerBar.add<ToolButton>(
             IconSize{ k_restartIconSize },
             ButtonViewMode::IconOnly,
-            OnPaintIcon{ Icons::RestartIcon::paint },
+            OnDrawIcon{ Icons::RestartIcon::draw },
             L"Start the measurement over",
             OnEvent{ [this](ClickEvent&) {
                 restartMeasurement();

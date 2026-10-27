@@ -3,7 +3,7 @@ module ClaFi.Controls.MessageBar;
 import ClaFi.Icons.MessageIcons;
 
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -58,9 +58,9 @@ namespace ClaFi::Controls
             alignControl(&m_answers, event, m_answers.topLeft(), m_answers.scaledSize());
     }
 
-    void MessageBar::paintIcon(PaintIconEvent& event)
+    void MessageBar::drawIcon(DrawIconEvent& event)
     {
-        const PaintIconFunc painter = Icons::iconPainterOf(m_icon);
+        const DrawIconFunc painter = Icons::iconPainterOf(m_icon);
         if (painter)
             painter(event);
     }

@@ -5,7 +5,7 @@ import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
 import ClaFi.Icons.FolderIcon;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.TextEngine.Text;
@@ -62,7 +62,7 @@ namespace SeeDocs_App::Ui
             }
         };
 
-        [[nodiscard]] Inks inksOf(const PaintIconEvent& event)
+        [[nodiscard]] Inks inksOf(const DrawIconEvent& event)
         {
             const Color accent = event.accentRgb(InkGrade::Strongest);
             return {
@@ -110,7 +110,7 @@ namespace SeeDocs_App::Ui
             float stroke{};
         };
 
-        [[nodiscard]] MenuDrawing menuDrawing(PaintIconEvent& event)
+        [[nodiscard]] MenuDrawing menuDrawing(DrawIconEvent& event)
         {
             const FloatRect& rect = event.iconRect();
             const float size = std::min(rect.width(), rect.height());
@@ -164,7 +164,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A house, its door in the spot.
-        void paintHome(const Drawing& drawing)
+        void drawHome(const Drawing& drawing)
         {
             PixelPath door;
             door.moveTo(5.8f, 12.0f);
@@ -194,7 +194,7 @@ namespace SeeDocs_App::Ui
         // The folder with its tab and the band under it lit: the root of the folders.
         // The band follows the outline's tab and slant - see FolderIcon - with sharp corners,
         // which lie within the outline's rounded stroke.
-        void paintProject(const Drawing& drawing)
+        void drawProject(const Drawing& drawing)
         {
             const FloatRect box = folderBox();
             const float width = box.width();
@@ -216,7 +216,7 @@ namespace SeeDocs_App::Ui
         }
 
         // Three sliders, their knobs in the accent, each knob clearing the line it rides.
-        void paintOptions(const Drawing& drawing)
+        void drawOptions(const Drawing& drawing)
         {
             const std::array<FloatPoint, 3ull> knobs{
                 FloatPoint{ 9.2f, 3.5f },
@@ -240,7 +240,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A window, rows in the accent standing in its left pane.
-        void paintSidebar(const Drawing& drawing)
+        void drawSidebar(const Drawing& drawing)
         {
             PixelPath frame;
             frame.drawRoundedRect({ 1.5f, 2.5f, 12.5f, 11.5f }, 1.4f, 1.4f);
@@ -255,7 +255,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A section: a header band in the accent, two rows under it.
-        void paintCategory(const Drawing& drawing)
+        void drawCategory(const Drawing& drawing)
         {
             PixelPath band;
             band.drawRoundedRect({ 1.5f, 2.2f, 12.5f, 4.8f }, 1.0f, 1.0f);
@@ -268,7 +268,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A sheet, its corner folded and the fold tinted, with two lines of its text.
-        void paintContent(const Drawing& drawing)
+        void drawContent(const Drawing& drawing)
         {
             PixelPath fold;
             fold.moveTo(8.5f, 1.5f);
@@ -293,7 +293,7 @@ namespace SeeDocs_App::Ui
         }
 
         // Three layers, the top one tinted.
-        void paintAllTheApis(const Drawing& drawing)
+        void drawAllTheApis(const Drawing& drawing)
         {
             PixelPath top;
             top.moveTo(7.0f, 2.0f);
@@ -314,7 +314,7 @@ namespace SeeDocs_App::Ui
             drawing.stroke(layers, drawing.inks.body);
         }
 
-        void paintFolder(const Drawing& drawing)
+        void drawFolder(const Drawing& drawing)
         {
             PixelPath folder;
             Icons::FolderIcon::addOutline(folder, folderBox());
@@ -322,7 +322,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A cube with its top face lit.
-        void paintModule(const Drawing& drawing)
+        void drawModule(const Drawing& drawing)
         {
             PixelPath top;
             top.moveTo(7.0f, 1.6f);
@@ -348,7 +348,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A window: a title band over a body.
-        void paintControl(const Drawing& drawing)
+        void drawControl(const Drawing& drawing)
         {
             PixelPath band;
             band.moveTo(1.5f, 5.2f);
@@ -367,7 +367,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A box with a header band and two member lines.
-        void paintClass(const Drawing& drawing)
+        void drawClass(const Drawing& drawing)
         {
             PixelPath box;
             box.drawRoundedRect({ 2.0f, 1.5f, 12.0f, 12.5f }, 1.0f, 1.0f);
@@ -381,7 +381,7 @@ namespace SeeDocs_App::Ui
         }
 
         // Data laid out in cells.
-        void paintStruct(const Drawing& drawing)
+        void drawStruct(const Drawing& drawing)
         {
             PixelPath cell;
             addRect(cell, { 2.0f, 2.0f, 7.0f, 7.0f });
@@ -395,7 +395,7 @@ namespace SeeDocs_App::Ui
         }
 
         // Two views of one storage, the shared part lit.
-        void paintUnion(const Drawing& drawing)
+        void drawUnion(const Drawing& drawing)
         {
             PixelPath shared;
             addRect(shared, { 4.5f, 4.5f, 8.5f, 8.5f });
@@ -408,7 +408,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A list of named values, one of them current.
-        void paintEnum(const Drawing& drawing)
+        void drawEnum(const Drawing& drawing)
         {
             PixelPath current;
             addCircle(current, { 3.2f, 3.4f }, 1.4f);
@@ -424,7 +424,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A name standing for a type.
-        void paintAlias(const Drawing& drawing)
+        void drawAlias(const Drawing& drawing)
         {
             PixelPath name;
             addLine(name, { 1.8f, 5.0f }, { 6.5f, 5.0f });
@@ -440,7 +440,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A constraint on a template argument.
-        void paintConcept(const Drawing& drawing)
+        void drawConcept(const Drawing& drawing)
         {
             PixelPath brackets;
             brackets.moveTo(4.2f, 2.5f);
@@ -459,7 +459,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A lens over what is searched, its handle in the accent.
-        void paintSearch(const Drawing& drawing)
+        void drawSearch(const Drawing& drawing)
         {
             PixelPath lens;
             addCircle(lens, { 6.0f, 6.0f }, 3.9f);
@@ -471,7 +471,7 @@ namespace SeeDocs_App::Ui
         }
     }
 
-    void paintRowIcon(PaintIconEvent& event, const RowIcon icon)
+    void drawRowIcon(DrawIconEvent& event, const RowIcon icon)
     {
         const FloatRect& rect = event.iconRect();
         const float scale = std::min(rect.width(), rect.height()) / k_grid;
@@ -483,55 +483,55 @@ namespace SeeDocs_App::Ui
         switch (icon)
         {
             case RowIcon::Home:
-                paintHome(drawing);
+                drawHome(drawing);
                 break;
             case RowIcon::Project:
-                paintProject(drawing);
+                drawProject(drawing);
                 break;
             case RowIcon::Options:
-                paintOptions(drawing);
+                drawOptions(drawing);
                 break;
             case RowIcon::Sidebar:
-                paintSidebar(drawing);
+                drawSidebar(drawing);
                 break;
             case RowIcon::Category:
-                paintCategory(drawing);
+                drawCategory(drawing);
                 break;
             case RowIcon::Content:
-                paintContent(drawing);
+                drawContent(drawing);
                 break;
             case RowIcon::AllTheApis:
-                paintAllTheApis(drawing);
+                drawAllTheApis(drawing);
                 break;
             case RowIcon::Folder:
-                paintFolder(drawing);
+                drawFolder(drawing);
                 break;
             case RowIcon::Module:
-                paintModule(drawing);
+                drawModule(drawing);
                 break;
             case RowIcon::Control:
-                paintControl(drawing);
+                drawControl(drawing);
                 break;
             case RowIcon::Class:
-                paintClass(drawing);
+                drawClass(drawing);
                 break;
             case RowIcon::Struct:
-                paintStruct(drawing);
+                drawStruct(drawing);
                 break;
             case RowIcon::Union:
-                paintUnion(drawing);
+                drawUnion(drawing);
                 break;
             case RowIcon::Enum:
-                paintEnum(drawing);
+                drawEnum(drawing);
                 break;
             case RowIcon::Alias:
-                paintAlias(drawing);
+                drawAlias(drawing);
                 break;
             case RowIcon::Concept:
-                paintConcept(drawing);
+                drawConcept(drawing);
                 break;
             case RowIcon::Search:
-                paintSearch(drawing);
+                drawSearch(drawing);
                 break;
         }
     }
@@ -580,16 +580,16 @@ namespace SeeDocs_App::Ui
     // a folder's row and a module's row of one name would otherwise be drawn from one layout.
     InTextIcon rowIcon(const RowIcon icon)
     {
-        const PaintIconFunc paint = [icon](PaintIconEvent& event) {
-            paintRowIcon(event, icon);
+        const DrawIconFunc paint = [icon](DrawIconEvent& event) {
+            drawRowIcon(event, icon);
         };
         return InTextIcon{ k_rowIconSize, paint, Tag{ icon } };
     }
 
     InTextIcon titleIcon(const RowIcon icon)
     {
-        const PaintIconFunc paint = [icon](PaintIconEvent& event) {
-            paintRowIcon(event, icon);
+        const DrawIconFunc paint = [icon](DrawIconEvent& event) {
+            drawRowIcon(event, icon);
         };
         return InTextIcon{ k_titleIconSize, paint, Tag{ icon } };
     }
@@ -602,7 +602,7 @@ namespace SeeDocs_App::Ui
             << kindWord(type.kind) << PopColor{} << PopTextStyle{};
     }
 
-    void paintOpenIcon(PaintIconEvent& event)
+    void drawOpenIcon(DrawIconEvent& event)
     {
         const MenuDrawing drawing = menuDrawing(event);
         PixelPath back;
@@ -630,7 +630,7 @@ namespace SeeDocs_App::Ui
 
     // The spark crosses the folder's corner, so a band in the surface's colour is cleared round
     // it first, the way the framework's Open in Explorer arrow crosses its folder.
-    void paintNewProjectIcon(PaintIconEvent& event)
+    void drawNewProjectIcon(DrawIconEvent& event)
     {
         const MenuDrawing drawing = menuDrawing(event);
         PixelPath folder;

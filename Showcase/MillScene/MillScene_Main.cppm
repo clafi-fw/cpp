@@ -24,7 +24,7 @@ import ClaFi.Controls.Button;
 
 import ClaFi.Icons.DotMark;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Fmt;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -130,7 +130,7 @@ namespace MillScene_App
 
         AppButton& m_appButton{ m_titleBar.createLeftBar<AppButton>(
             VerticalAlign::Center
-            ,      OnEvent{ AppIcon::paintIcon }
+            ,      OnEvent{ AppIcon::drawIcon }
         ) };
         Panel& m_scenePanel{ createBody<Panel>(
             Padding{ 8.0f },
@@ -186,7 +186,7 @@ namespace MillScene_App
         restoreSceneTheme();
 
 
-        connectAppPage(L"Scene", Icons::DotMark::paint, [this](AppMenuPage& page) {
+        connectAppPage(L"Scene", Icons::DotMark::draw, [this](AppMenuPage& page) {
             buildScenePage(page);
             });
         applySceneColors();
@@ -229,13 +229,13 @@ void MillSceneForm::paintScene(PaintEvent& event)
     if (isSignificantPaint)
     {
         m_benchmark.run([this, &event]() {
-            m_scene.paint(event.canvas(), event.controlBounds(), m_cycleTime);
+            m_scene.draw(event.canvas(), event.controlBounds(), m_cycleTime);
             });
         traceMetrics();
     }
     else
     {
-        m_scene.paint(event.canvas(), event.controlBounds(), m_cycleTime);
+        m_scene.draw(event.canvas(), event.controlBounds(), m_cycleTime);
     }
 
 }
@@ -340,10 +340,10 @@ void MillSceneForm::buildScenePage(AppMenuPage& page)
             ShowSelectionOnSurface::Yes
         );
         // The theme is read off the button's own tag, so one painter answers for all of them.
-        item.onPaintIcon([](PaintIconEvent& event) {
+        item.onDrawIcon([](DrawIconEvent& event) {
             const PathArt::SceneTheme& painted = PathArt::Themes::allThemes[event.tag().value];
             const float radius = event.iconWidth() * k_themeIconRadiusRatio;
-            painted.paintIcon(event.canvas(), event.iconRect(), radius, 1.0f);
+            painted.drawIcon(event.canvas(), event.iconRect(), radius, 1.0f);
             });
         item.onGetState([this, index](GetStateEvent& event) {
             event.state.selected = m_pickedTheme == index;
@@ -449,7 +449,7 @@ MillSceneForm::WindowReadings MillSceneForm::windowReadings() const
 void MillSceneForm::writeMetricsTooltip(GetTooltipEvent& event)
 {
     event.placement = FormPlacement::BottomLeft;
-    auto paintBullet = [](PaintIconEvent& event) {
+    auto drawBullet = [](DrawIconEvent& event) {
         float radius = event.scaleF(3.0f);
         event.canvas().fillCircle(event.iconRect().center(), radius, event.textRgb(InkGrade::Strongest));
         };
@@ -475,7 +475,7 @@ void MillSceneForm::writeMetricsTooltip(GetTooltipEvent& event)
         L"[space 18]and whatever pace the display server keeps.\n"
         L"[space 18]The chart shows both - the filled area is FPS, the line over it draw.\n"
         L"[space 18]Time, draw and FPS are read over the two seconds the chart spans.",
-        paintBullet, paintBullet, paintBullet, paintBullet, paintBullet,
+        drawBullet, drawBullet, drawBullet, drawBullet, drawBullet,
         drawnOn
     };
 }

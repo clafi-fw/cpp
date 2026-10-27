@@ -1,6 +1,6 @@
 export module ClaFi.Icons.DotMark;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -15,7 +15,7 @@ namespace ClaFi::Icons::DotMark
 
     // What an item holds its icon slot with when it has nothing of its own to show. It claims no
     // meaning, which is the point: the captions beside it stay in line with the ones that do.
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
         const float size = std::min(iconRect.width(), iconRect.height());

@@ -468,7 +468,7 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
                 <tr><th>The action's</th><th>Becomes the presenter's</th></tr>
                 <tr><td><code>text()</code></td><td>Text - but only if the control has none of its own.</td></tr>
                 <tr><td><code>tooltipText()</code></td><td>Tooltip, with the shortcut appended to it.</td></tr>
-                <tr><td><code>OnPaintIcon</code></td><td>Icon, wherever that control paints one.</td></tr>
+                <tr><td><code>OnDrawIcon</code></td><td>Icon, wherever that control paints one.</td></tr>
                 <tr><td>state</td><td>Enabled and selected.</td></tr>
                 <tr><td>-</td><td>A click on the presenter runs the action.</td></tr>
                 <tr><td><code>shortcut()</code></td><td>The key it prints beside itself, if it prints one.</td></tr>
@@ -784,7 +784,7 @@ view.<span class="fn">onGetActionState</span>([&amp;](<span class="tp">GetAction
                 <tr><th>Member</th><th>What it does</th></tr>
                 <tr><td><code>OnClick</code>, <code>onClick</code></td><td>Run it - the fallback when no subject claims.</td></tr>
                 <tr><td><code>OnGetState</code>, <code>onGetState</code></td><td>Its own answer for its state.</td></tr>
-                <tr><td><code>OnPaintIcon</code>, <code>onPaintIcon</code></td><td>Its icon.</td></tr>
+                <tr><td><code>OnDrawIcon</code>, <code>onDrawIcon</code></td><td>Its icon.</td></tr>
                 <tr><td><code>text()</code>, <code>tooltipText()</code></td><td>Mutable. Follow a change with <code>invalidateText()</code> or <code>invalidate()</code>.</td></tr>
                 <tr><td><code>shortcut()</code>, <code>shortcuts()</code></td><td>The key shown for it, and every key that runs it.</td></tr>
                 <tr><td><code>setShortcut()</code>, <code>addShortcut()</code></td><td>Make one key the only one, or put one more after the ones it has.</td></tr>

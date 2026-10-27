@@ -473,7 +473,7 @@ namespace TextEngine_App
         );
         title.createLeftBar<AppButton>(
             VerticalAlign::Center,
-            AppButton::OnPaintIcon{ AppIcon::paintIcon }
+            AppButton::OnDrawIcon{ AppIcon::drawIcon }
         );
         SearchBox& searchBox = title.createBody<SearchBox>(
             HorizontalAlign::Right,

@@ -226,7 +226,7 @@ a control wears, live in <code>ClaFi.Core.AppTheme_Colors</code>. The form the p
 <p>An ink becomes a colour where it is used, against the surface the painter stands on. A
 <code>PaintEvent</code> answers <code>textRgb</code>, <code>accentRgb</code> and <code>spotRgb</code>
 for the three families at a named step, and <code>inkRgb</code> for any <code>Ink</code>. An icon's
-<code>PaintIconEvent</code> answers the same four.</p>
+<code>DrawIconEvent</code> answers the same four.</p>
 
 <pre><code><span class="cm">// In a control's paint handler.</span>
 <span class="tp">Color</span> body = event.<span class="fn">textRgb</span>(<span class="tp">InkGrade</span>::Strongest);     <span class="cm">// the full ink</span>
@@ -509,7 +509,7 @@ light and lemon on dark.</p>
 <h3 id="ref-resolving">Resolving an ink</h3>
 
 <p>An ink is resolved by the event the painter holds, against the surface and the lightness that
-event carries. <code>PaintEvent</code> and <code>PaintIconEvent</code> answer the same calls, each a
+event carries. <code>PaintEvent</code> and <code>DrawIconEvent</code> answer the same calls, each a
 forward to the event's <code>ControlPaintContext</code>, which is where the resolution happens.</p>
 
 <table>
@@ -591,7 +591,7 @@ can be left out: the colour is then <code>text</code> and the grade <code>strong
     <li><strong>A brand mark</strong> - the application's own icon and name - is the spot.</li>
 </ul>
 
-<pre><code><span class="kw">void</span> <span class="fn">paint</span>(<span class="tp">PaintIconEvent</span>&amp; event)
+<pre><code><span class="kw">void</span> <span class="fn">draw</span>(<span class="tp">DrawIconEvent</span>&amp; event)
 {
     <span class="kw">const float</span> strokeWidth = event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin);
     <span class="tp">Color</span> body = event.<span class="fn">textRgb</span>(<span class="tp">InkGrade</span>::Strong);

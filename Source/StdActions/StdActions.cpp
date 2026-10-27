@@ -28,19 +28,19 @@ namespace ClaFi::StdActions
         Text{ L"Cut" },
         Shortcut{ L'X', { .ctrl = true } },
         Shortcut{ Keys::Delete, { .shift = true } },
-        Action::OnPaintIcon{ Icons::CutIcon::paint }
+        Action::OnDrawIcon{ Icons::CutIcon::draw }
     };
     Action copy{
         Text{ L"Copy" },
         Shortcut{ L'C', { .ctrl = true } },
         Shortcut{ Keys::Insert, { .ctrl = true } },
-        Action::OnPaintIcon{ Icons::CopyIcon::paint }
+        Action::OnDrawIcon{ Icons::CopyIcon::draw }
     };
     Action paste{
         Text{ L"Paste" },
         Shortcut{ L'V', { .ctrl = true } },
         Shortcut{ Keys::Insert, { .shift = true } },
-        Action::OnPaintIcon{ Icons::PasteIcon::paint }
+        Action::OnDrawIcon{ Icons::PasteIcon::draw }
     };
     // Delete removes what is selected. A control whose Delete key means more than that keeps the
     // key: a text box with nothing selected deletes forward, by a character or by a word, and
@@ -48,12 +48,12 @@ namespace ClaFi::StdActions
     Action del{
         Text{ L"Delete" },
         Shortcut{ Keys::Delete },
-        Action::OnPaintIcon{ Icons::DeleteIcon::paint }
+        Action::OnDrawIcon{ Icons::DeleteIcon::draw }
     };
     Action selectAll{
         Text{ L"Select all" },
         Shortcut{ L'A', { .ctrl = true } },
-        Action::OnPaintIcon{ Icons::SelectAllIcon::paint }
+        Action::OnDrawIcon{ Icons::SelectAllIcon::draw }
     };
     // No shortcut. Every key that would read as Clear is one an application may want for itself,
     // and a key given here is given to every application at once. One that wants it says so:
@@ -61,26 +61,26 @@ namespace ClaFi::StdActions
     //     StdActions::clear.setShortcut({ Keys::Delete, { .alt = true } });
     Action clear{
         Text{ L"Clear" },
-        Action::OnPaintIcon{ Icons::WipeIcon::paint }
+        Action::OnDrawIcon{ Icons::WipeIcon::draw }
     };
     // Which direction to travel along the subject's own history, and no more than that: what a
     // step is, and how many of them there are, belongs to whatever kept it.
     Action undo{
         Text{ L"Undo" },
         Shortcut{ L'Z', { .ctrl = true } },
-        Action::OnPaintIcon{ Icons::UndoIcon::paint }
+        Action::OnDrawIcon{ Icons::UndoIcon::draw }
     };
     Action redo{
         Text{ L"Redo" },
         Shortcut{ L'Y', { .ctrl = true } },
         Shortcut{ L'Z', { .shift = true, .ctrl = true } },
-        Action::OnPaintIcon{ Icons::RedoIcon::paint }
+        Action::OnDrawIcon{ Icons::RedoIcon::draw }
     };
 
     Action save{
         Text{ L"Save" },
         Shortcut{ L'S', { .ctrl = true } },
-        Action::OnPaintIcon{ Icons::SaveIcon::paintSaveIcon }
+        Action::OnDrawIcon{ Icons::SaveIcon::drawSaveIcon }
     };
     // No icon. It is presented beside Save rather than instead of it - the second half of a split
     // button, a line in a menu - and in both places the word is what tells the two apart. A
@@ -98,7 +98,7 @@ namespace ClaFi::StdActions
     Action rename{
         Text{ L"Rename" },
         Shortcut{ Keys::F2 },
-        Action::OnPaintIcon{ Icons::RenameIcon::paint }
+        Action::OnDrawIcon{ Icons::RenameIcon::draw }
     };
     // No key and no icon. Every editor spells the key differently, and a key given here is given
     // to every application at once; one that wants a key says so, as it would for clear.

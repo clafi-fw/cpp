@@ -1,6 +1,6 @@
 module TextEngine_App.Icon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -155,8 +155,8 @@ namespace TextEngine_App::AppIcon
 
         void fillBand(Canvas&, const Matrix3x2& transform, const Leaf&, const Band&);
         void strokeLeaf(Canvas&, const Matrix3x2& transform, const Leaf&);
-        void paintLeaves(Canvas&, const Matrix3x2& transform);
-        void paintLetter(Canvas&, const Matrix3x2& transform);
+        void drawLeaves(Canvas&, const Matrix3x2& transform);
+        void drawLetter(Canvas&, const Matrix3x2& transform);
     }
 }
 
@@ -164,19 +164,19 @@ namespace TextEngine_App::AppIcon
 
 namespace TextEngine_App::AppIcon
 {
-    void paint(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
+    void draw(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
     {
         // One layer for the whole mark: its parts overlap, and faded one by one they would show.
         const ScopedCanvasOpacity layer{ canvas, opacity };
         const Matrix3x2 transform = fitTo(bounds);
 
-        paintLeaves(canvas, transform);
-        paintLetter(canvas, transform);
+        drawLeaves(canvas, transform);
+        drawLetter(canvas, transform);
     }
 
-    void paintIcon(PaintIconEvent& event)
+    void drawIcon(DrawIconEvent& event)
     {
-        paint(event.canvas(), event.iconRect(), 1.0f - event.disabledAmount());
+        draw(event.canvas(), event.iconRect(), 1.0f - event.disabledAmount());
     }
 
     namespace
@@ -308,7 +308,7 @@ namespace TextEngine_App::AppIcon
         }
 
         // A leaf takes its outline before the next covers it, so the front one draws the seam.
-        void paintLeaves(Canvas& canvas, const Matrix3x2& transform)
+        void drawLeaves(Canvas& canvas, const Matrix3x2& transform)
         {
             for (const Band& band : k_backBands)
                 fillBand(canvas, transform, k_backLeaf, band);
@@ -322,7 +322,7 @@ namespace TextEngine_App::AppIcon
         }
 
         // The edge is stroked first, so the ink covers the half of it that falls inside.
-        void paintLetter(Canvas& canvas, const Matrix3x2& transform)
+        void drawLetter(Canvas& canvas, const Matrix3x2& transform)
         {
             PixelPath letter;
             addLetter(letter);

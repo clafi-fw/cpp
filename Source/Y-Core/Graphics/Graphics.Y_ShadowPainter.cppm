@@ -32,7 +32,7 @@ namespace ClaFi::Graphics
         [[nodiscard]] const Design& design() const { return m_design; }
         [[nodiscard]] Reach reach() const;
         // Draws the shadow around rect at opacity, inside the canvas's clip and nowhere else.
-        void paint(Canvas&, const FloatRect& rect, float opacity = 1.0f) const;
+        void draw(Canvas&, const FloatRect& rect, float opacity = 1.0f) const;
     private:
         enum class Tile
         {
@@ -75,7 +75,7 @@ namespace ClaFi::Graphics
         [[nodiscard]] const Bitmap& tile(Tile) const;
         // The strip for a short side of this length, baked on the first ask and kept.
         [[nodiscard]] const Strip& strip(bool horizontal, int shortSide) const;
-        void paintStrip(Canvas&, const FloatRect& clip, const FloatRect& placed, bool horizontal,
+        void drawStrip(Canvas&, const FloatRect& clip, const FloatRect& placed, bool horizontal,
             float opacity) const;
         // One tile at position, when the clip reaches it.
         void place(Canvas&, const FloatRect& clip, const Bitmap&, FloatPoint position,

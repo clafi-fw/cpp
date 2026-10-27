@@ -2,7 +2,7 @@ export module ClaFi.Icons.WarningIcon;
 
 import ClaFi.Icons.MessageBadge;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.InkWell;
@@ -14,15 +14,15 @@ namespace ClaFi::Icons::WarningIcon
     using namespace ::ClaFi::Graphics;
 
     // An exclamation mark on a triangle, in the theme's yellowish hue.
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //-------------------------------------------------------------------------
 
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
-        const MessageBadge::GlyphSlot glyph = MessageBadge::paintTriangle(event, InkWell::Yellow);
+        const MessageBadge::GlyphSlot glyph = MessageBadge::drawTriangle(event, InkWell::Yellow);
 
         // The bar sits below the middle of the badge rather than on it: a triangle's room is at
         // the bottom, and a mark centred in the box would stand with its point in the apex.

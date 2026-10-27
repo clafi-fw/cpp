@@ -1,6 +1,6 @@
 export module ClaFi.Icons.RenameIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -30,7 +30,7 @@ namespace ClaFi::Icons::RenameIcon
     }
 
     // A name being typed where it sits: a caret standing in the field the name is written in.
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
         // A square, so the picture reads the same in a slot that is not one. Every share below is

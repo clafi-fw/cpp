@@ -94,7 +94,7 @@ namespace ClaFi::Controls
     }
 
     MessageBoxBase::MessageBoxBase(Control& owner, const std::wstring_view title,
-        const Text& text, const PaintIconFunc& iconPainter)
+        const Text& text, const DrawIconFunc& iconPainter)
         :
         MessageBoxForm{
             owner.appContext(),
@@ -169,7 +169,7 @@ namespace ClaFi::Controls
 
         if (iconPainter)
         {
-            m_icon.onPaintIcon(iconPainter);
+            m_icon.onDrawIcon(iconPainter);
             return;
         }
         // Nothing to draw. The slot goes with the picture: PanelBase skips a bar that is not

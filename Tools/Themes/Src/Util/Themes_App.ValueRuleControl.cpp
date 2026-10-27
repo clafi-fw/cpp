@@ -15,7 +15,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.Graphics.Canvas;
@@ -119,7 +119,7 @@ namespace Themes_App
         }
 
         // The operation's glyph on a blob in the muted spot ink, shaped as the hue popup's.
-        void paintOperationBlob(PaintIconEvent& event, const ColorRuleOp operation)
+        void drawOperationBlob(DrawIconEvent& event, const ColorRuleOp operation)
         {
             const FloatRect& blob = event.iconRect();
             const float radius = blob.height() * k_blobCornerShare;
@@ -165,7 +165,7 @@ namespace Themes_App
     protected:
         [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override;
         void getText(GetTextEvent&) const override;
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void nestedGetTooltip(GetTooltipEvent&) override;
         void getControlState(GetStateEvent&) const override;
         void click(ClickEvent&) override;
@@ -479,9 +479,9 @@ namespace Themes_App
             << PopTextStyle{};
     }
 
-    void OperationItem::paintIcon(PaintIconEvent& event)
+    void OperationItem::drawIcon(DrawIconEvent& event)
     {
-        paintOperationBlob(event, m_operation);
+        drawOperationBlob(event, m_operation);
     }
 
     void OperationItem::nestedGetTooltip(GetTooltipEvent& event)

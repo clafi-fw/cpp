@@ -11,7 +11,7 @@ import ClaFi.StdLib;
 namespace ClaFi::Graphics::Cpu
 {
 
-    void RectPainter::paintSolid(const FloatRect& rect, const Brush& brush, const Matrix3x2* brushTransform)
+    void RectPainter::fill(const FloatRect& rect, const Brush& brush, const Matrix3x2* brushTransform)
     {
         FloatRect boundary = rect;
         boundary.intersectWith(m_pixelView.clippedBounds());
@@ -194,16 +194,16 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
-    void RectPainter::paintBorder(const FloatRect& rect, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform)
+    void RectPainter::stroke(const FloatRect& rect, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform)
     {
         if (borderWidth <= 0.0f)
         {
             return;
         }
 
-        paintSolid({ rect.left, rect.top, rect.right, rect.top + borderWidth }, brush, brushTransform);
-        paintSolid({ rect.left, rect.bottom - borderWidth, rect.right, rect.bottom }, brush, brushTransform);
-        paintSolid({ rect.left, rect.top + borderWidth, rect.left + borderWidth, rect.bottom - borderWidth }, brush, brushTransform);
-        paintSolid({ rect.right - borderWidth, rect.top + borderWidth, rect.right, rect.bottom - borderWidth }, brush, brushTransform);
+        fill({ rect.left, rect.top, rect.right, rect.top + borderWidth }, brush, brushTransform);
+        fill({ rect.left, rect.bottom - borderWidth, rect.right, rect.bottom }, brush, brushTransform);
+        fill({ rect.left, rect.top + borderWidth, rect.left + borderWidth, rect.bottom - borderWidth }, brush, brushTransform);
+        fill({ rect.right - borderWidth, rect.top + borderWidth, rect.right, rect.bottom - borderWidth }, brush, brushTransform);
     }
 }

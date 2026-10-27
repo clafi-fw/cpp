@@ -1,6 +1,6 @@
 export module ClaFi.Icons.CutIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -32,7 +32,7 @@ namespace ClaFi::Icons::CutIcon
         }
     }
 
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
 

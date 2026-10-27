@@ -24,7 +24,7 @@ import ClaFi.Icons.BrowseUpIcon;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.DomEngine;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.Core.Foundation;
 
@@ -113,7 +113,7 @@ namespace ClaFi::Browser
         virtual RichControl* visualPage(RichControl*) override;
         void nestedGetTooltip(GetTooltipEvent&) override;
         void getText(GetTextEvent&) const override;
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void secondaryClicked(NestedClickEvent&) override;
     private:
         // Keeps the visit this tab has just moved from, the way the move asked.
@@ -154,7 +154,7 @@ namespace ClaFi::Browser
             Radius{ 10.0f },
             ButtonViewMode::IconOnly,
             IconSize{ 8.0f },
-            OnEvent{ Icons::XMark::paint }
+            OnEvent{ Icons::XMark::draw }
         );
     };
 
@@ -340,16 +340,16 @@ namespace ClaFi::Browser
         // built, so an answer that needs a page must have a second one for the tab that has none
         // yet - a tab restored from settings carries its icon before it is first opened.
         virtual IconSize tabIconSize(BrowserTab&) { return IconSize{ 0.0f }; }
-        virtual void paintTabIcon(BrowserTab&, PaintIconEvent&) {}
+        virtual void drawTabIcon(BrowserTab&, DrawIconEvent&) {}
         // What a page shows for itself, wherever the page rather than the tab is what is on
         // screen: the root crumb of the path, and every line of the list a crumb drops. Keyed by
         // page data rather than by control for that reason - one answer serves both.
         //
         // A zero size is how a browser says this page has no icon, and closes the slot. Only the
         // root crumb asks it; a list line sizes its own slot and asks only for the paint, so a
-        // page with no icon there is one paintPageIcon leaves blank.
+        // page with no icon there is one drawPageIcon leaves blank.
         virtual IconSize pageIconSize(PageData&) { return IconSize{ 0.0f }; }
-        virtual void paintPageIcon(PageData&, PaintIconEvent&) {}
+        virtual void drawPageIcon(PageData&, DrawIconEvent&) {}
         // How the root crumb shows its icon: by its title, or alone with the title as its tooltip.
         virtual ButtonViewMode rootCrumbViewMode() const { return ButtonViewMode::LeftIcon; }
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
@@ -503,7 +503,7 @@ namespace ClaFi::Browser
         Button& m_upButton{ m_navigationBar.add<ToolButton>(
             IconSize{ k_navigationIconSize },
             ButtonViewMode::IconOnly,
-            ButtonBase::OnPaintIcon{ Icons::BrowseUpIcon::paint },
+            ButtonBase::OnDrawIcon{ Icons::BrowseUpIcon::draw },
             L"Up"
         ) };
         PageControl& m_pageControl{ createBody<PageControl>() };

@@ -1,6 +1,6 @@
 export module ClaFi.Icons.BrowseUpIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -34,7 +34,7 @@ namespace ClaFi::Icons::BrowseUpIcon
     }
 
     // The arrow centred in the icon's square, pointing the way the heading says.
-    export void paintHeading(PaintIconEvent& event, const ArrowHeading heading)
+    export void drawHeading(DrawIconEvent& event, const ArrowHeading heading)
     {
         const FloatRect iconRect = event.iconRect();
         const Color strokeColor = event.textRgb(InkGrade::Strongest);
@@ -58,9 +58,9 @@ namespace ClaFi::Icons::BrowseUpIcon
         event.canvas().drawPath(path, { PathDrawLayer::Stroke(strokeColor, strokeWidth) }, &transform);
     }
 
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
-        paintHeading(event, ArrowHeading::Up);
+        drawHeading(event, ArrowHeading::Up);
     }
 
 }

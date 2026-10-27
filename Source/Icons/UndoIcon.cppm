@@ -1,6 +1,6 @@
 export module ClaFi.Icons.UndoIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -12,7 +12,7 @@ namespace ClaFi::Icons::UndoIcon
 
     // The shaft in local space, in a square of `size`: it rises out of the bottom right and
     // sweeps over to where the head sits. Redo is this same curve mirrored, which is why the
-    // shape is stated here rather than inside paint().
+    // shape is stated here rather than inside draw().
     export void buildShaftPath(PixelPath& path, float size)
     {
         path.moveTo(size * 0.90f, size * 0.92f);
@@ -31,7 +31,7 @@ namespace ClaFi::Icons::UndoIcon
         path.lineTo(size * 0.42f, size * 0.50f);
     }
 
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
 

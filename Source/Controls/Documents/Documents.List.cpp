@@ -6,7 +6,7 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.StackView;
 
 import ClaFi.Core.Foundation;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 
@@ -28,9 +28,9 @@ namespace ClaFi::Documents
         return m_path.stem().wstring();
     }
 
-    void DocumentTile::paintIcon(PaintIconEvent& event)
+    void DocumentTile::drawIcon(DrawIconEvent& event)
     {
-        m_folder.paintIcon(fileName(), event);
+        m_folder.drawIcon(fileName(), event);
     }
 
     // DocumentsRebuiltEvent

@@ -23,7 +23,7 @@ an alignment lays the content out inside the window that is already there and cu
 taken at the scale being left. Nothing else would ask: a popup is placed again when the control
 it stands on moves, and the form underneath is standing still by then.
 
-## PaintIconEvent
+## DrawIconEvent
 
 Lives here rather than beside PaintEvent because an icon is painted from two places that
 cannot see each other: a control's paint, in Foundation, and a text run, in TextEngine.

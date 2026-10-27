@@ -1,6 +1,6 @@
 export module ClaFi.Icons.DoorIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -35,7 +35,7 @@ namespace ClaFi::Icons::DoorIcon
         path.lineTo({ tipX - head, centerY + head });
     }
 
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         const FloatRect& iconRect = event.iconRect();

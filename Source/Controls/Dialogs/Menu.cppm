@@ -22,7 +22,7 @@ import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 import ClaFi.Controls.Button;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 namespace ClaFi::Controls
 {

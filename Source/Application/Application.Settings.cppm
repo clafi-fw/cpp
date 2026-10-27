@@ -130,7 +130,7 @@ namespace ClaFi
     export struct AppMenuPageDescriptor
     {
         std::wstring caption;
-        PaintIconFunc paintIcon;
+        DrawIconFunc drawIcon;
         AppMenuPageBuilder build;
     };
 
@@ -138,7 +138,7 @@ namespace ClaFi
     export [[nodiscard]] const std::vector<AppMenuPageDescriptor>& appPages();
 
     // Adds a page of the application's own beside Settings, once per application. See Application
-    export void connectAppPage(std::wstring_view caption, PaintIconFunc paintIcon,
+    export void connectAppPage(std::wstring_view caption, DrawIconFunc drawIcon,
         AppMenuPageBuilder);
 
     // Adds the application's own groups to Settings, under the common ones. See Application

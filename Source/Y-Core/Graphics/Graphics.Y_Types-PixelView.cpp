@@ -165,7 +165,7 @@ namespace ClaFi::Graphics
         }
     }
 
-    void PixelView::paintSurfaceOver(const PixelView& source, const FloatPoint& destPos,
+    void PixelView::compositeSurface(const PixelView& source, const FloatPoint& destPos,
         const float opacity) const
     {
         if (opacity <= 0.0f)

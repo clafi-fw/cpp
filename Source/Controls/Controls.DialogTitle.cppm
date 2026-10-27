@@ -9,7 +9,7 @@ import ClaFi.Controls.Button;
 import ClaFi.Icons.XMark;
 
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.Foundation;
@@ -32,7 +32,7 @@ namespace ClaFi::Controls
     public:
         using SysMenuButton::SysMenuButton;
     protected:
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void click(ClickEvent&) override;
     };
 
@@ -43,7 +43,7 @@ namespace ClaFi::Controls
         using SysMenuButton::SysMenuButton;
     protected:
         void hitTest(HitTestEvent& event) const override { event.zone = HitTest::MaxButton; }
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void click(ClickEvent&) override;
     };
 
@@ -53,7 +53,7 @@ namespace ClaFi::Controls
     public:
         using SysMenuButton::SysMenuButton;
     protected:
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void click(ClickEvent&) override;
     };
 
@@ -111,7 +111,7 @@ namespace ClaFi::Controls
 
     // MinimizeButton
 
-    void MinimizeButton::paintIcon(PaintIconEvent& event)
+    void MinimizeButton::drawIcon(DrawIconEvent& event)
     {
         float centerY = event.iconRect().centerY();
         event.canvas().drawLine(
@@ -129,7 +129,7 @@ namespace ClaFi::Controls
 
     // MaximizeButton
 
-    void MaximizeButton::paintIcon(PaintIconEvent& event)
+    void MaximizeButton::drawIcon(DrawIconEvent& event)
     {
         FloatRect rect = event.iconRect();
         float strokeWidth = event.scale(1.0f);
@@ -166,9 +166,9 @@ namespace ClaFi::Controls
 
     // CloseButton
 
-    void CloseButton::paintIcon(PaintIconEvent& event)
+    void CloseButton::drawIcon(DrawIconEvent& event)
     {
-        Icons::XMark::paint(event);
+        Icons::XMark::draw(event);
     }
 
     // Asked, not done: the form answers with readyToClose. The press does nothing else either.

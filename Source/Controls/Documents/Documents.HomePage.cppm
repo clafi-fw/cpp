@@ -94,7 +94,7 @@ namespace ClaFi::Documents
         SplitButton& m_newButton{ toolBar().add<SplitButton>(
             k_buttonIconSize,
             ButtonViewMode::LeftIcon,
-            Button::OnPaintIcon{ Icons::PlusMark::paint },
+            Button::OnDrawIcon{ Icons::PlusMark::draw },
             Text{ L"New ", folder().kind().noun }
         ) };
         Divider& m_dividerAfterNew{ toolBar().add<Divider>(Padding{ 4.0f }) };
@@ -110,7 +110,7 @@ namespace ClaFi::Documents
         Button& m_exploreButton{ toolBar().add<ToolButton>(
             k_buttonIconSize,
             ButtonViewMode::IconOnly,
-            Button::OnPaintIcon{ Icons::OpenInExplorerIcon::paint },
+            Button::OnDrawIcon{ Icons::OpenInExplorerIcon::draw },
             L"Open folder"
         ) };
     };

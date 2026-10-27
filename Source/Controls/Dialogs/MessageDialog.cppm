@@ -48,7 +48,7 @@ namespace ClaFi::Controls
         MessageDialog(Control& owner, std::wstring_view title, const Text& message,
             MessageIcon = MessageIcon::None);
         MessageDialog(Control& owner, std::wstring_view title, const Text& message,
-            const PaintIconFunc& iconPainter);
+            const DrawIconFunc& iconPainter);
     public:
         // An answer was given, and whether it settles the question. See Controls
         DECLARE_EVENT(DialogAnswerEvent, OnAnswer, onAnswer)

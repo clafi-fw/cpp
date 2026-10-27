@@ -415,11 +415,11 @@ save.<span class="fn">onGetState</span>([<span class="kw">this</span>](<span cla
 <span class="cm">// 3. a list - several handlers without repeating OnEvent</span>
 <span class="tp">Button</span>{ params, <span class="tp">Events</span>{
     [](<span class="tp">ClickEvent</span>&amp; event) { ... },
-    [](<span class="tp">PaintIconEvent</span>&amp; event) { ... },
+    [](<span class="tp">DrawIconEvent</span>&amp; event) { ... },
 } }</pre>
             <p>An <code>Events</code> list is heterogeneous and its order means nothing. It accepts already-wrapped
             handlers next to bare ones, so you can name the one that needs naming:</p>
-<pre><span class="tp">Events</span>{ <span class="tp">Button</span>::<span class="tp">OnPaintIcon</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::paint }, [](<span class="tp">ClickEvent</span>&amp; event) { ... } }</pre>
+<pre><span class="tp">Events</span>{ <span class="tp">Button</span>::<span class="tp">OnDrawIcon</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::draw }, [](<span class="tp">ClickEvent</span>&amp; event) { ... } }</pre>
             <div class="info">A named alias such as <code>OnClick</code> is a member of the control that declares
             it. <code>Button::OnClick</code> resolves anywhere; a bare <code>OnClick</code> resolves only inside a
             class that inherits it. At namespace scope, qualify it or use <code>OnEvent</code>.</div>
@@ -432,8 +432,8 @@ save.<span class="fn">onGetState</span>([<span class="kw">this</span>](<span cla
                 <li>Use <code>Events{ ... }</code> when a control takes more than one handler.</li>
             </ul>
             <p>The difference is only readability. This is the case the second rule is about:</p>
-<pre><span class="tp">OnEvent</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::paintSaveIcon }              <span class="cm">// which event? unclear</span>
-<span class="tp">FlatButton</span>::<span class="tp">OnPaintIcon</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::paintSaveIcon }  <span class="cm">// clear</span></pre>
+<pre><span class="tp">OnEvent</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::drawSaveIcon }              <span class="cm">// which event? unclear</span>
+<span class="tp">FlatButton</span>::<span class="tp">OnDrawIcon</span>{ <span class="tp">Icons</span>::<span class="tp">SaveIcon</span>::drawSaveIcon }  <span class="cm">// clear</span></pre>
 
             <h3 id="connecting-later">Connecting Later</h3>
             <p>Every event has a connect method named after it, and <code>connectEvent</code> works for any event

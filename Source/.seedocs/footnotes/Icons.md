@@ -15,7 +15,7 @@ shows.
 
 ## GlyphSlot
 
-paintDisc and paintTriangle hand one back once the fill is drawn.
+drawDisc and drawTriangle hand one back once the fill is drawn.
 
 **The box is the badge's square, not the shape's**, so one set of fractions places a glyph the same
 on the disc and on the triangle.

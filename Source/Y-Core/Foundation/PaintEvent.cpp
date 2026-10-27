@@ -528,7 +528,7 @@ namespace ClaFi
                 .radii = silhouette.radii
             };
             const float strength = std::min(travel / reach, 1.0f);
-            control().form().shadowPainter(design).paint(canvas(), silhouette.bounds, strength);
+            control().form().shadowPainter(design).draw(canvas(), silhouette.bounds, strength);
         }
         canvas().fillPartialRoundedRectangle(silhouette, surfaceRgb().withOpacity(1.0f));
     }

@@ -1,7 +1,7 @@
 export module ClaFi.Icons.SaturationIcon;
 
 import ClaFi.Icons.ColorChannelSweep;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Canvas;
@@ -14,7 +14,7 @@ namespace ClaFi::Icons::SaturationIcon
     using namespace ::ClaFi::Graphics;
     namespace Sweep = ::ClaFi::Icons::ColorChannelSweep;
 
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //----------------------------------------------------------------------------
@@ -30,7 +30,7 @@ namespace ClaFi::Icons::SaturationIcon
         constexpr float k_startLum = 0.45f;
     }
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
         // The saturated end follows the theme accent, so the icon reads as part of the theme it is
         // sitting in rather than as a fixed sample. The accent rule names a palette hue; anything

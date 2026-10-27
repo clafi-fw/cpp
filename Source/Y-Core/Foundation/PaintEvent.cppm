@@ -117,7 +117,7 @@ namespace ClaFi
         [[nodiscard]] Color inkRgb(Pigment pigment, InkTone tone) const { return m_controlContext.inkRgb(pigment, tone); }
         [[nodiscard]] Color inkRgb(Pigment pigment, float saturation, float elevation) const { return m_controlContext.inkRgb(pigment, saturation, elevation); }
         // How far every ink is blended toward the backdrop because the control is not fully
-        // enabled. Exposed because a PaintIconEvent has to be given it: the colours it carries
+        // enabled. Exposed because a DrawIconEvent has to be given it: the colours it carries
         // have already had it applied, so an icon drawing in colours of its own cannot work it
         // out from them.
         [[nodiscard]] float disabledAmount() const;

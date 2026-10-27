@@ -712,7 +712,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\UpdateCheck.cppm">
       <Filter>Y_Core\Context</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\PaintIconEvent.cppm">
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Context\DrawIconEvent.cppm">
       <Filter>Y_Core\Context</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Core.cppm">

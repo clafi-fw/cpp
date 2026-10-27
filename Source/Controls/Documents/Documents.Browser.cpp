@@ -16,7 +16,7 @@ import ClaFi.Controls.MessageDialog;
 import ClaFi.Icons.HomeIcon;
 
 import ClaFi.Core.Context.AppContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
@@ -73,12 +73,12 @@ namespace ClaFi::Documents
         return isHomePage(data) || isDocumentPage(data) ? k_pageIconSize : IconSize{ 0.0f };
     }
 
-    void DocumentsBrowserBase::paintPageIcon(PageData& data, PaintIconEvent& event)
+    void DocumentsBrowserBase::drawPageIcon(PageData& data, DrawIconEvent& event)
     {
         if (isHomePage(data))
-            Icons::HomeIcon::paintBlock(event);
+            Icons::HomeIcon::drawBlock(event);
         else if (isDocumentPage(data))
-            m_folder.paintIcon(data.name, event);
+            m_folder.drawIcon(data.name, event);
     }
 
     bool DocumentsBrowserBase::canLeavePage(BrowserTab& tab, Control& initiator)
@@ -213,15 +213,15 @@ namespace ClaFi::Documents
         return k_pageIconSize;
     }
 
-    void DocumentsBrowserBase::paintTabIcon(BrowserTab& tab, PaintIconEvent& event)
+    void DocumentsBrowserBase::drawTabIcon(BrowserTab& tab, DrawIconEvent& event)
     {
         const PageData* data = tab.pageData();
         if (!data)
             return;
         if (isHomePage(*data))
-            Icons::HomeIcon::paintBlock(event);
+            Icons::HomeIcon::drawBlock(event);
         else if (isDocumentPage(*data))
-            m_folder.paintIcon(data->name, event);
+            m_folder.drawIcon(data->name, event);
     }
 
     bool DocumentsBrowserBase::isHomePage(const PageData& data)

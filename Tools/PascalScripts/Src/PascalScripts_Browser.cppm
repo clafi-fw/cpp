@@ -45,6 +45,6 @@ namespace PascalScripts_App
     {
         // The mark itself is in AppIcon, so the same drawing answers the button and the icon
         // file. The button states its own view mode and icon size; nothing here restates them.
-        appButton().onPaintIcon(AppIcon::paintIcon);
+        appButton().onDrawIcon(AppIcon::drawIcon);
     }
 }

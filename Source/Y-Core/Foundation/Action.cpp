@@ -333,7 +333,7 @@ namespace ClaFi
                 getTooltip(event);
             }));
 
-        connections.push_back(presenter.onPaintIcon([this](PaintIconEvent& event) {
+        connections.push_back(presenter.onDrawIcon([this](DrawIconEvent& event) {
             emitEvent(event);
         }));
 

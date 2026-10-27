@@ -26,7 +26,7 @@ namespace ClaFi::Controls
         PromptDialog(Control& owner, std::wstring_view title, std::wstring_view value,
             MessageIcon = MessageIcon::None);
         PromptDialog(Control& owner, std::wstring_view title, std::wstring_view value,
-            const PaintIconFunc& iconPainter);
+            const DrawIconFunc& iconPainter);
     public:
         // The text the user is committing, and the sink's answer to it. See Controls
         DECLARE_EVENT(AcceptEditEvent, OnAccept, onAccept)

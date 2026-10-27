@@ -1,6 +1,6 @@
 export module ClaFi.Icons.Eye;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -19,7 +19,7 @@ namespace ClaFi::Icons::Eye
     // closed path that meets at the corners by construction, so neither reason is left - and with
     // the sample goes the scratch buffer, the CPU rasterization and the texture upload a GPU
     // backend was paying for every frame the icon was on screen.
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //----------------------------------------------------------------------------
@@ -36,7 +36,7 @@ namespace ClaFi::Icons::Eye
         constexpr float k_strokeRatio = 1.0f / 16.0f;
     }
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
         const FloatPoint center = iconRect.center();

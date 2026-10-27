@@ -1,6 +1,6 @@
 export module ClaFi.Icons.ExpanderMark;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -15,13 +15,13 @@ namespace ClaFi::Icons::ExpanderMark
     // PaintEvent::pressScale(), and a second shrink here would compound with it.
     //
     // The expanded factor cannot come off the event, so it is an argument. Everything else does.
-    export void paint(PaintIconEvent&, float expandedFactor);
+    export void draw(DrawIconEvent&, float expandedFactor);
 
 
     //----------------------------------------------------------------------------
 
 
-    void paint(PaintIconEvent& event, float expandedFactor)
+    void draw(DrawIconEvent& event, float expandedFactor)
     {
         constexpr float k_etalonIconSize = 18.0f;
         constexpr float k_strokeWidth = 1.6f;

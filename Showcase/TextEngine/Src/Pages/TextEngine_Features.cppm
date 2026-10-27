@@ -2,7 +2,7 @@ export module TextEngine_App;
 
 import ClaFi.Icons.Eye;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Fmt;
@@ -21,18 +21,18 @@ namespace TextEngine_App
         unsigned int demoHex = 255;
         Color injectedColor{ 0, 255, 128, 255 };
 
-        // An icon in the flow is any callable taking a PaintIconEvent.
-        const PaintIconFunc& myIconPainter = Icons::Eye::paint;
+        // An icon in the flow is any callable taking a DrawIconEvent.
+        const DrawIconFunc& myIconPainter = Icons::Eye::draw;
 
         // Yellow has no format tag: at the reading threshold on a light page the warm arc collapses
         // to brown, so the colour is carried by a shape instead of by a run of text.
-        auto paintWarning = [](PaintIconEvent& event){
+        auto paintWarning = [](DrawIconEvent& event){
             event.canvas().fillCircle(event.iconCenter(), event.scaleF(5.0f),
                 event.inkRgb(InkWell::Yellow));
             };
 
         // A bullet: no width, so it draws into the indent it stands at rather than occupying it.
-        auto paintBullet = [](PaintIconEvent& event){
+        auto drawBullet = [](DrawIconEvent& event){
             FloatPoint center = event.iconCenter();
             center.x -= event.scaleF(16.0f);
             event.canvas().fillCircle(center, event.scaleF(3.0f), event.accentRgb(InkGrade::Strongest));
@@ -151,10 +151,10 @@ namespace TextEngine_App
             myIconPainter,      // Arg 7
 
             // Bullets
-            paintBullet,        // Arg 8
-            paintBullet,        // Arg 9
-            paintBullet,        // Arg 10
-            paintBullet         // Arg 11
+            drawBullet,        // Arg 8
+            drawBullet,        // Arg 9
+            drawBullet,        // Arg 10
+            drawBullet         // Arg 11
             } };
     }
 }

@@ -75,7 +75,7 @@ namespace ClaFi::Graphics
         void blendSurface(const PixelView& source, const FloatPoint& destPos, float amount) const;
         // The same placement as drawSurface, each source pixel laid over what is there, read
         // premultiplied and scaled by opacity.
-        void paintSurfaceOver(const PixelView& source, const FloatPoint& destPos,
+        void compositeSurface(const PixelView& source, const FloatPoint& destPos,
             float opacity) const;
     private:
         FloatRect m_bounds;

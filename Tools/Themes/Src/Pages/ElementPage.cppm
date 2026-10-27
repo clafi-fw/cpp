@@ -130,7 +130,7 @@ namespace Themes_App
         ToolButton& m_resetButton{ m_tools.add<ToolButton>(
             IconSize{ 18.0f },
             ButtonViewMode::IconOnly,
-            OnPaintIcon{ Icons::ResetIcon::paint },
+            OnDrawIcon{ Icons::ResetIcon::draw },
             L"Reset to defaults",
             Interactivity::MouseOnly
         ) };
@@ -162,14 +162,14 @@ namespace Themes_App
                     Grids::ColumnWidthMode::Fill
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Hue },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::paint }, L" Hue" }
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::draw }, L" Hue" }
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Saturation },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::paint },
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::draw },
                         L" Saturation" }
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Elevation },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation" }
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::draw }, L" Elevation" }
                 }
             },
             Grids::Dt::Header{},

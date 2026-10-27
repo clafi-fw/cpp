@@ -91,7 +91,7 @@ namespace ClaFi::Graphics::Cpu
         void commitStagingView(const PixelView&) override {}
         void drawPixelView(const PixelView& view, float opacity) override
         {
-            getActiveView().paintSurfaceOver(view, view.topLeft(), opacity);
+            getActiveView().compositeSurface(view, view.topLeft(), opacity);
         }
 
         // ====================================================================

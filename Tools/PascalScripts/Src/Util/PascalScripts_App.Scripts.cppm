@@ -4,7 +4,7 @@ import PascalScripts_App.Language;
 
 import ClaFi.Documents.Folder;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine;
 
 import ClaFi.StdLib;
@@ -28,7 +28,7 @@ namespace PascalScripts_App
         [[nodiscard]] bool writeDocument(const Dom::DomNodeBase&,
             const std::filesystem::path&) const override;
         [[nodiscard]] bool isEdited(const std::filesystem::path&) const override;
-        void paintIcon(std::wstring_view fileName, PaintIconEvent&) override;
+        void drawIcon(std::wstring_view fileName, DrawIconEvent&) override;
     private:
         const Language& m_language;
     };

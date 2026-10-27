@@ -18,7 +18,7 @@ namespace ClaFi
         // the canvas rather than into a pixel view, so that whole-control scale is applied by the
         // backend - and so a GPU backend fills an outline instead of taking a CPU rasterization and
         // a texture upload for every mark on screen.
-        static void paint(Graphics::Canvas&, FloatPoint chevronPos, Color color, float turn,
+        static void draw(Graphics::Canvas&, FloatPoint chevronPos, Color color, float turn,
             ScaleFactor scaleFactor);
     };
 
@@ -26,7 +26,7 @@ namespace ClaFi
     //----------------------------------------------------------------------------
 
 
-    void ChevronPainter::paint(Graphics::Canvas& canvas, FloatPoint chevronPos, Color color,
+    void ChevronPainter::draw(Graphics::Canvas& canvas, FloatPoint chevronPos, Color color,
         const float turn, ScaleFactor scaleFactor)
     {
         static constexpr float k_markSize = 8.0f;

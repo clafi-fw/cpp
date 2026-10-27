@@ -143,7 +143,7 @@ in the config, so a new run shows an earlier run's - see UpdateCheck::keepIn.
 **Runs each time the menu opens**, so it reads every option where it lives. It calls addGroup for
 each caption and fills the column that comes back:
 
-    connectAppPage(L"Scene", Icons::DotMark::paint, [](OptionsPage& page){
+    connectAppPage(L"Scene", Icons::DotMark::draw, [](OptionsPage& page){
         Stack& picked = page.addGroup(L"Picked Window");
         picked.add<CheckBox>(L"Highlight corners");
     });
@@ -151,7 +151,7 @@ each caption and fills the column that comes back:
 ## connectAppPage
 
 **Once per application** for each page, in the order the strip shows them. The icon is drawn at the
-size of the framework pages' icons, and `Icons::DotMark::paint` holds the slot for a page with no
+size of the framework pages' icons, and `Icons::DotMark::draw` holds the slot for a page with no
 picture, so its caption lines up with the others.
 
 ## connectAppSettings
@@ -175,7 +175,7 @@ raise against the click that asked for it.
 **Once per application** for each command, in the order the strip shows them. A command that opens
 a window states `EndIcon::OpensWindow`.
 
-    connectAppCommand(L"New project", paintNewProjectIcon, EndIcon::OpensWindow,
+    connectAppCommand(L"New project", drawNewProjectIcon, EndIcon::OpensWindow,
         [&workspace](ClickEvent& event){
             event.closeForm();
             workspace.createNew({}, event.stamp);

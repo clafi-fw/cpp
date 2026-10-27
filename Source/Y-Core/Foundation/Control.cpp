@@ -1983,7 +1983,7 @@ namespace ClaFi
         return event.textBounds;
     }
 
-    void Control::paintIcon(PaintIconEvent& event)
+    void Control::drawIcon(DrawIconEvent& event)
     {
         emitEvent(event);
     }

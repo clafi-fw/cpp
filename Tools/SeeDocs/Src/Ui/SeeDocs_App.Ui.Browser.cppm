@@ -28,7 +28,7 @@ import ClaFi.Controls.SearchBox;
 import ClaFi.Controls.Tree;
 
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
@@ -334,10 +334,10 @@ namespace SeeDocs_App::Ui
         void showPage(BrowserTab&) override;
         void saveViewState(BrowserTab&) override;   // the tab is closing: its tree goes
         IconSize pageIconSize(PageData&) override;
-        void paintPageIcon(PageData&, PaintIconEvent&) override;
+        void drawPageIcon(PageData&, DrawIconEvent&) override;
         ButtonViewMode rootCrumbViewMode() const override { return ButtonViewMode::IconOnly; }
         IconSize tabIconSize(BrowserTab&) override;
-        void paintTabIcon(BrowserTab&, PaintIconEvent&) override;
+        void drawTabIcon(BrowserTab&, DrawIconEvent&) override;
         // Notes the control the focus comes into the search box from - Escape hands it back.
         void nestedControlFocusing(FocusEvent&) override;
         // Forgets a focus origin being deleted, and a pending pick's owner.
@@ -755,7 +755,7 @@ namespace SeeDocs_App::Ui
         :
         BrowserControl{ params, std::forward<Args>(args)... }
     {
-        appButton().onPaintIcon(AppIcon::paintIcon);
+        appButton().onDrawIcon(AppIcon::drawIcon);
         createSplitter(PanelSlot::Left);
         onBarResize([this](BarResizeEvent& event) {
             storeTreeWidth(event.extent);

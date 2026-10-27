@@ -2,7 +2,7 @@ export module ClaFi.Icons.RefreshIcon;
 
 import ClaFi.Icons.RestartIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -20,7 +20,7 @@ namespace ClaFi::Icons::RefreshIcon
     };
 
     // The ring and its head in the one ink the browser's arrows are drawn in.
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         const FloatRect iconRect = event.iconRect();
         const Color strokeColor = event.textRgb(InkGrade::Strongest);

@@ -1,7 +1,7 @@
 export module ClaFi.Icons.HueIcon;
 
 import ClaFi.Icons.ColorChannelSweep;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -12,7 +12,7 @@ namespace ClaFi::Icons::HueIcon
     using namespace ::ClaFi::Graphics;
     namespace Sweep = ::ClaFi::Icons::ColorChannelSweep;
 
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //----------------------------------------------------------------------------
@@ -27,7 +27,7 @@ namespace ClaFi::Icons::HueIcon
         constexpr float k_luminosity = 0.55f;
     }
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
         // The wheel is the icon's own - it is the same hues whatever the theme is - so every
         // colour it produces goes through the event's fade, which is the one thing it would

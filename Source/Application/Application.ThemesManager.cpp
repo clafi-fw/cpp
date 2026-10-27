@@ -10,7 +10,7 @@ import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Theme;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Document;
@@ -150,7 +150,7 @@ namespace ClaFi
         return !Dom::sameValue(themeNode, defaults);
     }
 
-    void ThemesManager::paintIcon(const std::wstring_view fileName, PaintIconEvent& event)
+    void ThemesManager::drawIcon(const std::wstring_view fileName, DrawIconEvent& event)
     {
         return;
 
@@ -158,7 +158,7 @@ namespace ClaFi
         // has read the directory yet.
         static_cast<void>(userThemes());
         if (const AppTheme* theme = themeByName(fileName))
-            paintThemeIcon(event, theme->colors);
+            drawThemeIcon(event, theme->colors);
     }
 
     void ThemesManager::checkNameShape(Controls::AcceptEditEvent& event,

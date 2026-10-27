@@ -587,7 +587,7 @@ namespace Themes_App
             //ButtonViewMode::LeftIcon,
             //IconSize{ k_closeIconSize },
             Events{
-                //Icons::XMark::paint,
+                //Icons::XMark::draw,
                 [](ClickEvent& event) { event.closeForm(); }
             },
             Text{ L"Close" },

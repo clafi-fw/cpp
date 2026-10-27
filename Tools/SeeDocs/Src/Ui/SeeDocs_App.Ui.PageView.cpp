@@ -29,7 +29,7 @@ import ClaFi.Controls.Base.WithEditMode;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
@@ -310,15 +310,15 @@ namespace SeeDocs_App::Ui
             return std::nullopt;
         }
 
-        void paintCommandMark(PaintIconEvent& event, const CommandMark mark)
+        void drawCommandMark(DrawIconEvent& event, const CommandMark mark)
         {
             switch (mark)
             {
                 case CommandMark::NewProject:
-                    paintNewProjectIcon(event);
+                    drawNewProjectIcon(event);
                     break;
                 case CommandMark::Open:
-                    paintOpenIcon(event);
+                    drawOpenIcon(event);
                     break;
             }
         }
@@ -1342,15 +1342,15 @@ namespace SeeDocs_App::Ui
         if (const std::optional<RowIcon> icon = iconOf(command))
         {
             button.setViewMode(ButtonViewMode::LeftIcon);
-            button.onPaintIcon([mark = *icon](PaintIconEvent& event) {
-                paintRowIcon(event, mark);
+            button.onDrawIcon([mark = *icon](DrawIconEvent& event) {
+                drawRowIcon(event, mark);
             });
         }
         else if (command.mark.has_value())
         {
             button.setViewMode(ButtonViewMode::LeftIcon);
-            button.onPaintIcon([mark = *command.mark](PaintIconEvent& event) {
-                paintCommandMark(event, mark);
+            button.onDrawIcon([mark = *command.mark](DrawIconEvent& event) {
+                drawCommandMark(event, mark);
             });
         }
         if (command.opensWindow)

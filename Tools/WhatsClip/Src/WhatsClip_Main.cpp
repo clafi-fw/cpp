@@ -705,7 +705,7 @@ namespace ClaFi::Tools::WhatsClip
         );
         title.createLeftBar<AppButton>(
             VerticalAlign::Center,
-            AppButton::OnPaintIcon{ AppIcon::paintIcon }
+            AppButton::OnDrawIcon{ AppIcon::drawIcon }
         );
 
         return form->execute();

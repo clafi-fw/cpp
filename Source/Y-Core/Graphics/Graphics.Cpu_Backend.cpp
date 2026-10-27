@@ -355,13 +355,13 @@ namespace ClaFi::Graphics::Cpu
     void CpuBackend::fillRectangle(const FloatRect& rect, const Brush& brush)
     {
         RectPainter painter{ getActiveView() };
-        painter.paintSolid(mapRect(rect), brush, &m_transform);
+        painter.fill(mapRect(rect), brush, &m_transform);
     }
 
     void CpuBackend::drawRectangle(const FloatRect& rect, const Brush& brush, float strokeWidth)
     {
         RectPainter painter{ getActiveView() };
-        painter.paintBorder(mapRect(rect), brush, mapLength(strokeWidth), &m_transform);
+        painter.stroke(mapRect(rect), brush, mapLength(strokeWidth), &m_transform);
     }
 
     void CpuBackend::fillRoundedRectangle(const FloatRect& rect, float rx, float ry, const Brush& brush)
@@ -407,7 +407,7 @@ namespace ClaFi::Graphics::Cpu
         if (rx == ry)
         {
             CirclePainter painter{ getActiveView() };
-            painter.paintSolid(m_transform.transform(center), brush, mapLength(rx), &m_transform);
+            painter.fill(m_transform.transform(center), brush, mapLength(rx), &m_transform);
             return;
         }
 
@@ -420,7 +420,7 @@ namespace ClaFi::Graphics::Cpu
         if (rx == ry)
         {
             CirclePainter painter{ getActiveView() };
-            painter.paintRing(m_transform.transform(center), brush, mapLength(rx), mapLength(strokeWidth), &m_transform);
+            painter.stroke(m_transform.transform(center), brush, mapLength(rx), mapLength(strokeWidth), &m_transform);
             return;
         }
 

@@ -11,7 +11,7 @@ import ClaFi.Browser.Actions;
 import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -52,22 +52,22 @@ namespace SeeDocs_App::Ui
             return key.substr(item.size() + 1);
         }
 
-        void paintOptionsMark(PaintIconEvent& event)
+        void drawOptionsMark(DrawIconEvent& event)
         {
-            paintRowIcon(event, RowIcon::Options);
+            drawRowIcon(event, RowIcon::Options);
         }
 
-        void paintSidebarMark(PaintIconEvent& event)
+        void drawSidebarMark(DrawIconEvent& event)
         {
-            paintRowIcon(event, RowIcon::Sidebar);
+            drawRowIcon(event, RowIcon::Sidebar);
         }
     }
 
     namespace Actions
     {
         Action ProjectOptions{ Text{ L"Project options" },
-            Action::OnPaintIcon{ paintOptionsMark } };
-        Action EditSidebar{ Text{ L"Edit sidebar" }, Action::OnPaintIcon{ paintSidebarMark } };
+            Action::OnDrawIcon{ drawOptionsMark } };
+        Action EditSidebar{ Text{ L"Edit sidebar" }, Action::OnDrawIcon{ drawSidebarMark } };
     }
 
     // TreePickEvent

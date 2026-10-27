@@ -35,7 +35,7 @@ namespace ClaFi::PathArt
         void animationTick();
 
         // Exact target bounds passed explicitly to anchor layout geometry
-        void paint(Canvas& canvas, const FloatRect& bounds, float t);
+        void draw(Canvas& canvas, const FloatRect& bounds, float t);
 
     private:
         void crossFadeToPickedTheme();
@@ -121,7 +121,7 @@ namespace ClaFi::PathArt
         m_animator.externalTimerTick();
     }
 
-    void MillScene::paint(Canvas& canvas, const FloatRect& bounds, float t)
+    void MillScene::draw(Canvas& canvas, const FloatRect& bounds, float t)
     {
         m_offset = bounds.topLeft(); // Anchored to widget's logical position
         float w = bounds.width();

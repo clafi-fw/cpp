@@ -3,7 +3,7 @@ export module SeeDocs_App.Ui.Icons;
 import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
@@ -49,12 +49,12 @@ namespace SeeDocs_App::Ui
     // The same mark sized for a page's title, for the head of the title's text.
     export [[nodiscard]] InTextIcon titleIcon(RowIcon);
     // Draws a row kind's mark into the icon rect of the event - a crumb's or a tab's slot.
-    export void paintRowIcon(PaintIconEvent&, RowIcon);
+    export void drawRowIcon(DrawIconEvent&, RowIcon);
     // What a tree row of a type ends with: its kind word at the row's far end; nothing for a
     // control, whose icon says what it is.
     export void writeRowKind(Text&, const Type&);
     // The application menu's Open page: an open folder, its front flap in the accent.
-    export void paintOpenIcon(PaintIconEvent&);
+    export void drawOpenIcon(DrawIconEvent&);
     // The application menu's New project command: a folder with a spark at its corner.
-    export void paintNewProjectIcon(PaintIconEvent&);
+    export void drawNewProjectIcon(DrawIconEvent&);
 }

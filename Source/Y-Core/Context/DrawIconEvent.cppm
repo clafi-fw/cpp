@@ -1,4 +1,4 @@
-export module ClaFi.Core.Context.PaintIconEvent;
+export module ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.ControlContext;
@@ -9,11 +9,11 @@ import ClaFi.Core.System.InkWell;
 namespace ClaFi
 {
     // An icon being painted, from a control's paint or from a text run.
-    export class PaintIconEvent : public ControlEventBase
+    export class DrawIconEvent : public ControlEventBase
     {
     public:
-        PaintIconEvent(ControlPaintContext&, const FloatRect&, Tag, float disabledAmount);
-        PaintIconEvent(PaintIconEvent&);
+        DrawIconEvent(ControlPaintContext&, const FloatRect&, Tag, float disabledAmount);
+        DrawIconEvent(DrawIconEvent&);
         // Whatever was attached to this icon, which is not the same thing on both routes. A
         // control's paint passes the control's own tag; a text run passes the one the InTextIcon
         // was written with, which the text engine never looks inside. Naming it after the control
@@ -45,9 +45,9 @@ namespace ClaFi
 
     //-------------------------------------------------------------------------
 
-    // PaintIconEvent
+    // DrawIconEvent
 
-    PaintIconEvent::PaintIconEvent(ControlPaintContext& controlContext, const FloatRect& iconRect, Tag tag, float disabledAmount)
+    DrawIconEvent::DrawIconEvent(ControlPaintContext& controlContext, const FloatRect& iconRect, Tag tag, float disabledAmount)
         :
         ControlEventBase{ controlContext.formContext() },
         m_iconRect{ iconRect },
@@ -57,7 +57,7 @@ namespace ClaFi
     {
     }
 
-    PaintIconEvent::PaintIconEvent(PaintIconEvent& other)
+    DrawIconEvent::DrawIconEvent(DrawIconEvent& other)
         :
         ControlEventBase{ other.formContext() },
         m_iconRect{ other.m_iconRect },

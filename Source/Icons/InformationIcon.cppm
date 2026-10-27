@@ -2,7 +2,7 @@ export module ClaFi.Icons.InformationIcon;
 
 import ClaFi.Icons.MessageBadge;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -16,15 +16,15 @@ namespace ClaFi::Icons::InformationIcon
     // A lower case i on a disc, in the theme's blueish hue - the hue QuestionIcon also carries,
     // the two being a notice and a question rather than two degrees of the same thing. The glyph
     // is the whole of what tells them apart, so neither may be reduced to its colour.
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //-------------------------------------------------------------------------
 
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
-        const MessageBadge::GlyphSlot glyph = MessageBadge::paintDisc(event, InkWell::Blue);
+        const MessageBadge::GlyphSlot glyph = MessageBadge::drawDisc(event, InkWell::Blue);
 
         // The tittle first, then the stem: the gap between them is what says i rather than
         // exclamation, and it is the first thing to close up as the badge shrinks, so it is the

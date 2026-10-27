@@ -17,7 +17,7 @@ import ClaFi.Controls.StackView;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
@@ -50,7 +50,7 @@ namespace ClaFi
         [[nodiscard]] const UserTheme* userTheme() const { return m_userTheme; }
     protected:
         [[nodiscard]] EditorMode editorMode() const override;
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void paintSurface(PaintEvent&) override;
         void adjustChildPaint(AdjustPaintEvent&) override;
     private:

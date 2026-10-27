@@ -15,7 +15,7 @@ import ClaFi.Core.Foundation;
 
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -56,7 +56,7 @@ namespace ClaFi::Controls
         {
             Text caption{};
             caption << original;
-            caption << InTextIcon{ k_sampleSwatch, [original](PaintIconEvent& event) {
+            caption << InTextIcon{ k_sampleSwatch, [original](DrawIconEvent& event) {
                 event.canvas().fillCircle(event.iconCenter(), event.iconWidth() / 2.0f, original);
             } };
             caption << Space{ k_sampleGap };
@@ -252,7 +252,7 @@ namespace ClaFi::Controls
         for (const Row& row : { m_hue, m_saturation, m_luminosity })
         {
             Text reading{};
-            row.slider->paintValue(reading, EventPhase::Paint);
+            row.slider->writeValue(reading, EventPhase::Paint);
             row.value->text() = std::move(reading);
             row.value->invalidate();
         }

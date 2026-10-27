@@ -2,13 +2,13 @@ export module ClaFi.Icons.BrowseForwardIcon;
 
 import ClaFi.Icons.BrowseUpIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 namespace ClaFi::Icons::BrowseForwardIcon
 {
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
-        BrowseUpIcon::paintHeading(event, BrowseUpIcon::ArrowHeading::Right);
+        BrowseUpIcon::drawHeading(event, BrowseUpIcon::ArrowHeading::Right);
     }
 
 }

@@ -47,7 +47,7 @@ namespace ClaFi::PathArt
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
         static constexpr std::size_t effectsNum() { return 8; }
-        void paintIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const;
+        void drawIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const;
     };
 
     export void createSnowFlakePath(PixelPath& p);
@@ -56,7 +56,7 @@ namespace ClaFi::PathArt
     //-------------------------------------------------------------------------
 
 
-    void SceneTheme::paintIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const
+    void SceneTheme::drawIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const
     {
         float w = bounds.width();
         float h = bounds.height();

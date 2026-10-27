@@ -23,7 +23,7 @@ than as the end of one.
 The colour is an ink at elevation 0, which lies flush with the surface and carries the same
 disabled fade the fill does.
 
-## paintTriangle
+## drawTriangle
 
 A triangle is what says warning where a theme's hues are not the ones a reader expects, which
 is why the shape carries the meaning rather than the colour alone.

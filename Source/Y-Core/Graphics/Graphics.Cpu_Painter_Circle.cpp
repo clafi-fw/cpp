@@ -77,7 +77,7 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
-    void CirclePainter::paint(const Matrix3x2* brushTransform)
+    void CirclePainter::rasterize(const Matrix3x2* brushTransform)
     {
         FloatRect boundary = m_boundingBox;
         boundary.intersectWith(m_pixelView.clippedBounds());
@@ -103,7 +103,7 @@ namespace ClaFi::Graphics::Cpu
 
         if (canUseFastPath)
         {
-            paintDirectCircle(boundary);
+            rasterizeWithSolidColors(boundary);
             return;
         }
 
@@ -128,7 +128,7 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
-    void CirclePainter::paintRing(FloatPoint pivot, const Brush& borderBrush, float radius, float borderWidth, const Matrix3x2* brushTransform)
+    void CirclePainter::stroke(FloatPoint pivot, const Brush& borderBrush, float radius, float borderWidth, const Matrix3x2* brushTransform)
     {
         m_pivot = pivot;
         m_radius = radius;
@@ -138,10 +138,10 @@ namespace ClaFi::Graphics::Cpu
         m_corner.reset();
 
         initBoundary();
-        paint(brushTransform);
+        rasterize(brushTransform);
     }
 
-    void CirclePainter::paintSolid(FloatPoint pivot, const Brush& bgColor, float radius, const Matrix3x2* brushTransform)
+    void CirclePainter::fill(FloatPoint pivot, const Brush& bgColor, float radius, const Matrix3x2* brushTransform)
     {
         m_pivot = pivot;
         m_radius = radius;
@@ -151,10 +151,10 @@ namespace ClaFi::Graphics::Cpu
         m_corner.reset();
 
         initBoundary();
-        paint(brushTransform);
+        rasterize(brushTransform);
     }
 
-    void CirclePainter::paintDirectCircle(const FloatRect& boundary)
+    void CirclePainter::rasterizeWithSolidColors(const FloatRect& boundary)
     {
         int startX = static_cast<int>(std::floor(boundary.left));
         int endX = static_cast<int>(std::ceil(boundary.right));

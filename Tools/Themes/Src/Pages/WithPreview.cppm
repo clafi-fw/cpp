@@ -86,7 +86,7 @@ namespace Themes_App
             ShowSelectionOnSurface::Yes,
             IconSize{ 20.0f },
             ButtonViewMode::IconOnly,
-            Control::OnPaintIcon{ Icons::MoonIcon::paint },
+            Control::OnDrawIcon{ Icons::MoonIcon::draw },
             TooltipText{ L"Preview in dark mode" },
             Tag{ ColorMode::Dark }
         ) };
@@ -95,7 +95,7 @@ namespace Themes_App
             ShowSelectionOnSurface::Yes,
             IconSize{ 20.0f },
             ButtonViewMode::IconOnly,
-            Control::OnPaintIcon{ Icons::SunIcon::paint },
+            Control::OnDrawIcon{ Icons::SunIcon::draw },
             TooltipText{ L"Preview in light mode" },
             Tag{ ColorMode::Light }
         ) };
@@ -107,7 +107,7 @@ namespace Themes_App
             ShowSelectionOnSurface::Yes,
             IconSize{ 20.0f },
             ButtonViewMode::IconOnly,
-            Control::OnPaintIcon{ Icons::SideBar::paintPanelIcon },
+            Control::OnDrawIcon{ Icons::SideBar::drawPanelIcon },
             TooltipText{ L"Preview in application" }
         ) };
 
@@ -115,7 +115,7 @@ namespace Themes_App
             ShowSelectionOnSurface::Yes,
             IconSize{ 20.0f },
             ButtonViewMode::IconOnly,
-            Control::OnPaintIcon{ Icons::SideBar::paintRightBarIcon },
+            Control::OnDrawIcon{ Icons::SideBar::drawRightBarIcon },
             TooltipText{ L"Preview in sidebar" }
         ) };
 

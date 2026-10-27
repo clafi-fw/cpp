@@ -189,7 +189,7 @@ namespace Themes_App
         // the colours a palette takes, and a pigment is not one of them.
         const ColorHarmony& harmony = m_harmonySelector.harmony(static_cast<std::size_t>(editColors().harmonyKind));
         for (const PaletteColor& color : harmony.pigmentColors())
-            paintColorDot(event.text, color.rgb());
+            writeColorDot(event.text, color.rgb());
     }
 
     Row ThemePage::pigmentRow(const UiElement element) const

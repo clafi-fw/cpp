@@ -329,7 +329,7 @@ namespace ClaFi
                 {
                     const FloatRect rect = FloatRect::FromDimensions(
                         event.contentPosition() + card->topLeft(), card->scaledSize());
-                    painter.paint(event.canvas(), rect);
+                    painter.draw(event.canvas(), rect);
                 }
             }
             ContainerBase::paintChildren(event);

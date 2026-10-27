@@ -2,7 +2,7 @@ export module ClaFi.Documents.Folder;
 
 import ClaFi.Controls.InPlaceEdit;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.System.DirWatch;
 import ClaFi.Core.System.Events;
@@ -84,7 +84,7 @@ namespace ClaFi::Documents
         // Whether a file holds work, which is what is asked about before the file is deleted.
         [[nodiscard]] virtual bool isEdited(const std::filesystem::path&) const = 0;
         // A document's mark, in the inks of where it stands: a crumb, a tab, a tile.
-        virtual void paintIcon(std::wstring_view fileName, PaintIconEvent&) = 0;
+        virtual void drawIcon(std::wstring_view fileName, DrawIconEvent&) = 0;
     protected:
         // Told when the files have been read afresh, for a folder that keeps something per file.
         virtual void filesRead(const FilePaths&) {}

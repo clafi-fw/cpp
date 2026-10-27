@@ -24,7 +24,7 @@ namespace ClaFi::Controls
     }
 
     MessageDialog::MessageDialog(Control& owner, const std::wstring_view title,
-        const Text& message, const PaintIconFunc& iconPainter)
+        const Text& message, const DrawIconFunc& iconPainter)
         :
         MessageBoxBase{ owner, title, message, iconPainter }
     {

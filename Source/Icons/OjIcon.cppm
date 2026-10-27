@@ -15,11 +15,11 @@ namespace ClaFi
     public:
         // Takes the rect it should fill rather than reading one off a buffer, so the icon is
         // sized by its caller and the canvas transform reaches it through the canvas.
-        void paint(Canvas&, const FloatRect& bounds, const Color c) const;
+        void draw(Canvas&, const FloatRect& bounds, const Color c) const;
     };
 
 
-    void OjIcon::paint(Canvas& canvas, const FloatRect& rect, const Color iconColor) const
+    void OjIcon::draw(Canvas& canvas, const FloatRect& rect, const Color iconColor) const
     {
         // 1. Calculate relative scaling to fit a virtual 100x100 logical grid
         float size = std::min(rect.right - rect.left, rect.bottom - rect.top);

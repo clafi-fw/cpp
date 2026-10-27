@@ -4,7 +4,7 @@ import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Icons.ChannelTile;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.Graphics.Canvas;
@@ -51,11 +51,11 @@ namespace ClaFi
         ThemeSampleColors lightSample{};
     };
 
-    export void paintThemeIcon(PaintIconEvent&, const ThemeIconColors&);
-    export void paintThemeIcon(PaintIconEvent&, const ThemeColors&);
-    export void paintThemeBackground(Graphics::Canvas& canvas, const FloatRect& rect,
+    export void drawThemeIcon(DrawIconEvent&, const ThemeIconColors&);
+    export void drawThemeIcon(DrawIconEvent&, const ThemeColors&);
+    export void drawThemeBackground(Graphics::Canvas& canvas, const FloatRect& rect,
         float cornerRadius, const ThemeSampleColors& sample, float borderWidth);
-    export void paintThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect,
+    export void drawThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect,
         const ThemeSampleColors& sample);
 
 
@@ -113,7 +113,7 @@ namespace ClaFi
 
     // Painting
 
-    void paintThemeBackground(Graphics::Canvas& canvas, const FloatRect& rect,
+    void drawThemeBackground(Graphics::Canvas& canvas, const FloatRect& rect,
         float cornerRadius, const ThemeSampleColors& sample, float borderWidth)
     {
         constexpr float k_topShare = 0.3f;
@@ -167,7 +167,7 @@ namespace ClaFi
             sample.border, borderWidth);
     }
 
-    void paintThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect, const ThemeSampleColors& sample )
+    void drawThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect, const ThemeSampleColors& sample )
     {
         // Rows
         {
@@ -200,21 +200,21 @@ namespace ClaFi
         }
     }
 
-    void paintThemeIcon(PaintIconEvent& event, const ThemeColors& colors)
+    void drawThemeIcon(DrawIconEvent& event, const ThemeColors& colors)
     {
-        paintThemeIcon(event, ThemeIconColors{ colors });
+        drawThemeIcon(event, ThemeIconColors{ colors });
     }
 
-    void paintThemeIcon(PaintIconEvent& event, const ThemeIconColors& colors)
+    void drawThemeIcon(DrawIconEvent& event, const ThemeIconColors& colors)
     {
         const FloatRect backgroundRect = event.iconRect();
         const float cornersRadius = backgroundRect.height() / 8.0f;
         const ColorMode mode = colorModeOf(event.lightness());
         const ThemeSampleColors& sample = colors.sample(mode);
-        paintThemeBackground(event.canvas(), backgroundRect, cornersRadius, sample,
+        drawThemeBackground(event.canvas(), backgroundRect, cornersRadius, sample,
             event.scaledStrokeWidth(Thickness::Thin));
         
-        paintThemeIconOnly(event.canvas(), backgroundRect, sample);
+        drawThemeIconOnly(event.canvas(), backgroundRect, sample);
     }
 
 }

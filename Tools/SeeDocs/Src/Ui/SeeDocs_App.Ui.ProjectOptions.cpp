@@ -551,7 +551,7 @@ namespace SeeDocs_App::Ui
                 IconSize{ k_removeMark },
                 VerticalAlign::Center,
                 Interactivity::MouseOnly,
-                ButtonBase::OnPaintIcon{ Icons::XMark::paint },
+                ButtonBase::OnDrawIcon{ Icons::XMark::draw },
                 TooltipText{ L"Remove source" },
                 Button::OnClick{ [this](ClickEvent&) {
                     m_list.removeLater(*this);

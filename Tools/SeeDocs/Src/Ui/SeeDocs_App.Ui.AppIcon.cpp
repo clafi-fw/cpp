@@ -1,6 +1,6 @@
 module SeeDocs_App.Ui.AppIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -255,13 +255,13 @@ namespace SeeDocs_App::Ui::AppIcon
 
         void fillCircle(Canvas&, const Matrix3x2& transform, FloatPoint center, float radius,
             Color);
-        void paintStretch(Canvas&, const Matrix3x2& transform, const Strand&, const Samples&,
+        void drawStretch(Canvas&, const Matrix3x2& transform, const Strand&, const Samples&,
             std::size_t stretch);
-        void paintStrands(Canvas&, const Matrix3x2& transform);
+        void drawStrands(Canvas&, const Matrix3x2& transform);
         void fillLine(Canvas&, const Matrix3x2& transform, const Corners& leaf, const Line&);
         void drawLeafShape(Canvas&, const Matrix3x2& transform, const Leaf&, const PathDrawLayer&);
-        void paintPaper(Canvas&, const Matrix3x2& transform);
-        void paintGlass(Canvas&, const Matrix3x2& transform);
+        void drawPaper(Canvas&, const Matrix3x2& transform);
+        void drawGlass(Canvas&, const Matrix3x2& transform);
     }
 }
 
@@ -269,28 +269,28 @@ namespace SeeDocs_App::Ui::AppIcon
 
 namespace SeeDocs_App::Ui::AppIcon
 {
-    void paint(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
+    void draw(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
     {
         // One layer for the whole mark: its parts overlap, and faded one by one they would show.
         const ScopedCanvasOpacity layer{ canvas, opacity };
         const Matrix3x2 transform = fitTo(bounds);
 
-        paintStrands(canvas, transform);
+        drawStrands(canvas, transform);
 
         // The glass shows paper where the strands run, kept inside the disc by the clip alone.
         PixelPath lens;
         PathSink lensSink{ lens, false };
         addCircle(lensSink, k_glassCenter, k_lensRadius);
         canvas.pushClip(lens, &transform);
-        paintPaper(canvas, transform);
+        drawPaper(canvas, transform);
         canvas.popClip();
 
-        paintGlass(canvas, transform);
+        drawGlass(canvas, transform);
     }
 
-    void paintIcon(PaintIconEvent& event)
+    void drawIcon(DrawIconEvent& event)
     {
-        paint(event.canvas(), event.iconRect(), 1.0f - event.disabledAmount());
+        draw(event.canvas(), event.iconRect(), 1.0f - event.disabledAmount());
     }
 
     namespace
@@ -677,7 +677,7 @@ namespace SeeDocs_App::Ui::AppIcon
             canvas.drawPath(path, { PathDrawLayer::Fill(color) }, &transform);
         }
 
-        void paintStretch(Canvas& canvas, const Matrix3x2& transform, const Strand& strand,
+        void drawStretch(Canvas& canvas, const Matrix3x2& transform, const Strand& strand,
             const Samples& samples, const std::size_t stretch)
         {
             const std::size_t spanCount = strand.points.size() - 1;
@@ -696,7 +696,7 @@ namespace SeeDocs_App::Ui::AppIcon
             }
         }
 
-        void paintStrands(Canvas& canvas, const Matrix3x2& transform)
+        void drawStrands(Canvas& canvas, const Matrix3x2& transform)
         {
             std::array<Samples, k_strands.size()> samples;
             std::size_t stretches = 0;
@@ -711,7 +711,7 @@ namespace SeeDocs_App::Ui::AppIcon
                 for (std::size_t index = 0; index < k_strands.size(); ++index)
                 {
                     if (stretch < stretchCount(k_strands[index]))
-                        paintStretch(canvas, transform, k_strands[index], samples[index], stretch);
+                        drawStretch(canvas, transform, k_strands[index], samples[index], stretch);
                 }
             }
         }
@@ -736,7 +736,7 @@ namespace SeeDocs_App::Ui::AppIcon
             canvas.drawPath(path, { layer }, &transform);
         }
 
-        void paintPaper(Canvas& canvas, const Matrix3x2& transform)
+        void drawPaper(Canvas& canvas, const Matrix3x2& transform)
         {
             const Corners back = cornersOf(k_backLeaf);
             const Corners front = cornersOf(k_frontLeaf);
@@ -754,7 +754,7 @@ namespace SeeDocs_App::Ui::AppIcon
                 fillLine(canvas, transform, front, line);
         }
 
-        void paintGlass(Canvas& canvas, const Matrix3x2& transform)
+        void drawGlass(Canvas& canvas, const Matrix3x2& transform)
         {
             PixelPath path;
             PathSink sink{ path, false };

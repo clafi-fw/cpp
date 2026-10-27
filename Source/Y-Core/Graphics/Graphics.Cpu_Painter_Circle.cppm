@@ -32,24 +32,24 @@ namespace ClaFi::Graphics::Cpu
 
         void initBoundary();
         void initBoundary(Corner);
-        void paint(const Matrix3x2* brushTransform = nullptr);
+        void rasterize(const Matrix3x2* brushTransform = nullptr);
 
         // Brush Overloads
-        void paintRing(FloatPoint pivot, const Brush& borderBrush, float radius, float borderWidth, const Matrix3x2* brushTransform = nullptr);
-        void paintSolid(FloatPoint pivot, const Brush& bgColor, float radius, const Matrix3x2* brushTransform = nullptr);
+        void stroke(FloatPoint pivot, const Brush& borderBrush, float radius, float borderWidth, const Matrix3x2* brushTransform = nullptr);
+        void fill(FloatPoint pivot, const Brush& bgColor, float radius, const Matrix3x2* brushTransform = nullptr);
 
         // Raw Color Compatibility Overloads
-        void paintRing(FloatPoint pivot, Color borderColor, float radius, float borderWidth, const Matrix3x2* brushTransform = nullptr)
+        void stroke(FloatPoint pivot, Color borderColor, float radius, float borderWidth, const Matrix3x2* brushTransform = nullptr)
         {
-            paintRing(pivot, SolidColor{ borderColor }, radius, borderWidth, brushTransform);
+            stroke(pivot, SolidColor{ borderColor }, radius, borderWidth, brushTransform);
         }
-        void paintSolid(FloatPoint pivot, Color bgColor, float radius, const Matrix3x2* brushTransform = nullptr)
+        void fill(FloatPoint pivot, Color bgColor, float radius, const Matrix3x2* brushTransform = nullptr)
         {
-            paintSolid(pivot, SolidColor{ bgColor }, radius, brushTransform);
+            fill(pivot, SolidColor{ bgColor }, radius, brushTransform);
         }
 
     private:
-        void paintDirectCircle(const FloatRect& boundary);
+        void rasterizeWithSolidColors(const FloatRect& boundary);
         void rasterizeCircleMask(bool isRing, const FloatRect& bounds, float* mask, int stride);
         static void compositeBrush(const PixelView& target, const Brush& brush, const Matrix3x2* brushTransform);
 

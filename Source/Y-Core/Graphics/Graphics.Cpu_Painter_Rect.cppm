@@ -13,7 +13,7 @@ namespace ClaFi::Graphics::Cpu
     public:
         using PainterBase::PainterBase;
     public:
-        void paintSolid(const FloatRect& rect, const Brush& brush, const Matrix3x2* brushTransform = nullptr);
-        void paintBorder(const FloatRect& rect, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform = nullptr);
+        void fill(const FloatRect& rect, const Brush& brush, const Matrix3x2* brushTransform = nullptr);
+        void stroke(const FloatRect& rect, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform = nullptr);
     };
 }

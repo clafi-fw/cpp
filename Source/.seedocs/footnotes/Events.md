@@ -29,10 +29,10 @@ The handlers go in bare, without an OnEvent around each:
 
     Button{ params, Events{
         [](ClickEvent& event) { ... },
-        [](PaintIconEvent& event) { ... },
+        [](DrawIconEvent& event) { ... },
     } }
 
 **The order says nothing**, since each handler names its own event. A wrapped handler mixes with
 bare ones, for a call site that wants the event named:
 
-    Events{ Button::OnClick{ handler }, [](PaintIconEvent& event) { ... } }
+    Events{ Button::OnClick{ handler }, [](DrawIconEvent& event) { ... } }

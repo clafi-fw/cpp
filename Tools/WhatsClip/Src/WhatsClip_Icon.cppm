@@ -1,6 +1,6 @@
 export module ClaFi.Tools.WhatsClip.Icon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -14,12 +14,12 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
     // sides. It takes no colour from the theme: this icon stands on a task bar and a title bar
     // the framework does not paint, so it carries its own palette and has to hold on a light
     // ground and a dark one alike.
-    export void paint(Canvas&, const FloatRect& bounds);
+    export void draw(Canvas&, const FloatRect& bounds);
 
-    // The same mark shaped as a PaintIconFunc, so a control can take it as a property. It
+    // The same mark shaped as a DrawIconFunc, so a control can take it as a property. It
     // reads the rect off the event and nothing else - there is no ink here to take from
     // the theme.
-    export void paintIcon(PaintIconEvent&);
+    export void drawIcon(DrawIconEvent&);
 }
 
 namespace ClaFi::Tools::WhatsClip::AppIcon
@@ -197,8 +197,8 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
 
         void fillBand(Canvas&, const Matrix3x2&, bool throughLens, const std::array<FloatPoint, 4>& leaf, const Band&);
         void drawLeafShape(Canvas&, const Matrix3x2&, bool throughLens, const Leaf&, const PathDrawLayer&);
-        void paintLeaves(Canvas&, const Matrix3x2&, Rendering);
-        void paintGlass(Canvas&, const Matrix3x2&);
+        void drawLeaves(Canvas&, const Matrix3x2&, Rendering);
+        void drawGlass(Canvas&, const Matrix3x2&);
     }
 }
 
@@ -206,11 +206,11 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
 
 namespace ClaFi::Tools::WhatsClip::AppIcon
 {
-    void paint(Canvas& canvas, const FloatRect& bounds)
+    void draw(Canvas& canvas, const FloatRect& bounds)
     {
         const Matrix3x2 transform = fitTo(bounds);
 
-        paintLeaves(canvas, transform, Rendering::Swatch);
+        drawLeaves(canvas, transform, Rendering::Swatch);
 
         // What the glass shows is not a magnified copy of what is under it - it is the same
         // leaves drawn as paper, cut to the disc. The clip is the only thing that keeps the
@@ -219,15 +219,15 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
         PathSink lensSink{ lens, false };
         addCircle(lensSink, k_glassCenter, k_lensRadius);
         canvas.pushClip(lens, &transform);
-        paintLeaves(canvas, transform, Rendering::Paper);
+        drawLeaves(canvas, transform, Rendering::Paper);
         canvas.popClip();
 
-        paintGlass(canvas, transform);
+        drawGlass(canvas, transform);
     }
 
-    void paintIcon(PaintIconEvent& event)
+    void drawIcon(DrawIconEvent& event)
     {
-        paint(event.canvas(), event.iconRect());
+        draw(event.canvas(), event.iconRect());
     }
 
     namespace
@@ -525,7 +525,7 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
             canvas.drawPath(path, { layer }, &transform);
         }
 
-        void paintLeaves(Canvas& canvas, const Matrix3x2& transform, const Rendering rendering)
+        void drawLeaves(Canvas& canvas, const Matrix3x2& transform, const Rendering rendering)
         {
             const std::array<FloatPoint, 4> back = cornersOf(k_backLeaf);
             const std::array<FloatPoint, 4> front = cornersOf(k_frontLeaf);
@@ -560,7 +560,7 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
                 fillBand(canvas, transform, true, front, band);
         }
 
-        void paintGlass(Canvas& canvas, const Matrix3x2& transform)
+        void drawGlass(Canvas& canvas, const Matrix3x2& transform)
         {
             PixelPath path;
             PathSink sink{ path, false };

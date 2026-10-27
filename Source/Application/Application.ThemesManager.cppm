@@ -7,7 +7,7 @@ import ClaFi.Documents.Folder;
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.AppTheme_Theme;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine;
 
@@ -81,7 +81,7 @@ namespace ClaFi
         [[nodiscard]] bool writeDocument(const Dom::DomNodeBase&,
             const std::filesystem::path&) const override;
         [[nodiscard]] bool isEdited(const std::filesystem::path&) const override;
-        void paintIcon(std::wstring_view fileName, PaintIconEvent&) override;
+        void drawIcon(std::wstring_view fileName, DrawIconEvent&) override;
         void checkNameShape(Controls::AcceptEditEvent&, std::wstring_view stem) const override;
     protected:
         void filesRead(const Documents::FilePaths&) override;

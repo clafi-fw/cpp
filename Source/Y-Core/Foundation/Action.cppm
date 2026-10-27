@@ -108,7 +108,7 @@ namespace ClaFi
         // Whether the action can be run, and by whom. See Control-Foundation
         DECLARE_EVENT(GetActionStateEvent, OnGetState, onGetState)
         // An icon being painted, from a control's paint or from a text run.
-        DECLARE_EVENT(PaintIconEvent, OnPaintIcon, onPaintIcon)
+        DECLARE_EVENT(DrawIconEvent, OnDrawIcon, onDrawIcon)
     public:
         [[nodiscard]] Text& text() { return m_text; }
         [[nodiscard]] const Text& text() const { return m_text; }

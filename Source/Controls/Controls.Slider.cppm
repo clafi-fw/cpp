@@ -13,7 +13,7 @@ import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -361,7 +361,7 @@ namespace ClaFi::Controls
                 .lineWidth = stroke,
                 .color = ink
             };
-            sign.paintPlusOrMinus(scrollDirection == ScrollDirection::ToEnd);
+            sign.drawPlusOrMinus(scrollDirection == ScrollDirection::ToEnd);
             return;
         }
 
@@ -372,13 +372,13 @@ namespace ClaFi::Controls
         //
         // Packed the same way ScrollBar packs one for its own mark. size is the lens radius, and
         // the icon rect has to be big enough to hold the tail below it.
-        PaintIconEvent iconEvent{
+        DrawIconEvent iconEvent{
             event.controlContext(),
             Icons::Magnifier::rectForLensRadius(event.center(), size),
             event.control().tag(),
             event.disabledAmount()
         };
-        Icons::Magnifier::paint(
+        Icons::Magnifier::draw(
             iconEvent,
             scrollDirection == ScrollDirection::ToEnd ? Icons::Magnifier::Lens::Plus : Icons::Magnifier::Lens::Minus,
             m_paintTails ? Icons::Magnifier::Tail::Yes : Icons::Magnifier::Tail::No

@@ -6,7 +6,7 @@ import ClaFi.Controls.Stack;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
@@ -34,7 +34,7 @@ namespace ClaFi::Controls
     protected:
         void secondaryClicked(NestedClickEvent&) override {} // an answer acts on its own click
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
-        void paintIcon(PaintIconEvent&) override;
+        void drawIcon(DrawIconEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;
         void paintSurface(PaintEvent&) override;
     private:

@@ -22,7 +22,7 @@ namespace ClaFi::Graphics::Cpu
     public:
         using FuncPainterBase::FuncPainterBase;
     public:
-        void paint(const CircleParams&, float xFrom, float xTo);
+        void rasterize(const CircleParams&, float xFrom, float xTo);
         void calculateY(float x, FuncResult& result) const;
     private:
         float m_sqrRadius;
@@ -35,7 +35,7 @@ namespace ClaFi::Graphics::Cpu
 
     // CustomCirclePainter
 
-    void CustomCirclePainter::paint(const CircleParams& params, float xFrom, float xTo)
+    void CustomCirclePainter::rasterize(const CircleParams& params, float xFrom, float xTo)
     {
         m_sqrRadius = params.radius * params.radius;
         m_innerRadius = params.radius - params.lineWidth;
@@ -43,12 +43,12 @@ namespace ClaFi::Graphics::Cpu
         if (params.bottom)
         {
             beginPaint(params.origin, params.color, xRightYDown);
-            FuncPainterBase::paint(xFrom, xTo);
+            FuncPainterBase::rasterize(xFrom, xTo);
         }
         if (params.top)
         {
             beginPaint(params.origin, params.color, xRightYUp);
-            FuncPainterBase::paint(xFrom, xTo);
+            FuncPainterBase::rasterize(xFrom, xTo);
         }
     }
 

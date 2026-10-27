@@ -11,7 +11,7 @@ import ClaFi.Controls.Menu;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
@@ -110,8 +110,8 @@ namespace SeeDocs_App::Ui
             const RowIcon icon = rowIconOf(*type);
             MenuItem& line = menu.add(
                 Text{ type->name },
-                OnPaintIcon{ [icon](PaintIconEvent& event) {
-                    paintRowIcon(event, icon);
+                OnDrawIcon{ [icon](DrawIconEvent& event) {
+                    drawRowIcon(event, icon);
                 } },
                 OnClick{ [this, type](ClickEvent&) {
                     BaseLinkEvent linkEvent{ typeLink(*type) };

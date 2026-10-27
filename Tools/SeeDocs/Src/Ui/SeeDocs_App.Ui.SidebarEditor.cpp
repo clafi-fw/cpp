@@ -20,7 +20,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -87,9 +87,9 @@ namespace SeeDocs_App::Ui
             const std::optional<RowIcon> icon = rowIconOf(kind);
             menu.add(
                 Text{ kindCaption(kind) },
-                MenuItem::OnPaintIcon{ [icon](PaintIconEvent& paint) {
+                MenuItem::OnDrawIcon{ [icon](DrawIconEvent& paint) {
                     if (icon.has_value())
-                        paintRowIcon(paint, *icon);
+                        drawRowIcon(paint, *icon);
                 } },
                 MenuItem::OnClick{ [this, kind](ClickEvent&) {
                     m_editor.addItem(kind);

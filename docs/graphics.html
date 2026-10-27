@@ -235,10 +235,10 @@ imports neither.
 <h2 id="quickstart">Quick Start</h2>
 
 <p>A paint handler takes the canvas from its event and draws in the rect the event hands it. An
-icon's <code>PaintIconEvent</code> answers the canvas, the icon's rect, the stroke weights and the
+icon's <code>DrawIconEvent</code> answers the canvas, the icon's rect, the stroke weights and the
 inks; a control's <code>PaintEvent</code> answers the same.</p>
 
-<pre><code><span class="kw">void</span> <span class="fn">paintAddIcon</span>(<span class="tp">PaintIconEvent</span>&amp; event)
+<pre><code><span class="kw">void</span> <span class="fn">paintAddIcon</span>(<span class="tp">DrawIconEvent</span>&amp; event)
 {
     <span class="tp">Canvas</span>&amp; canvas = event.<span class="fn">canvas</span>();
     <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; box = event.<span class="fn">iconRect</span>();
@@ -859,8 +859,8 @@ brushes shows its own background through its own text.</p>
 
 <pre><code><span class="cm">// One layer for the whole mark: its parts overlap, and faded one by one they would show.</span>
 <span class="kw">const</span> <span class="tp">ScopedCanvasOpacity</span> layer{ canvas, <span class="kw">1.0f</span> - event.<span class="fn">disabledAmount</span>() };
-<span class="fn">paintLeaves</span>(canvas, transform);
-<span class="fn">paintBlot</span>(canvas, transform);</code></pre>
+<span class="fn">drawLeaves</span>(canvas, transform);
+<span class="fn">drawBlot</span>(canvas, transform);</code></pre>
 
 <p><code>ScopedCanvasOpacity</code> opens nothing at full opacity, so a caller with a factor that may
 reach 1 states it there rather than branching round the passage it guards. One shape fading on its

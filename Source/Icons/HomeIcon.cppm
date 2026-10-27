@@ -1,6 +1,6 @@
 export module ClaFi.Icons.HomeIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -11,10 +11,10 @@ namespace ClaFi::Icons::HomeIcon
     using namespace ::ClaFi::Graphics;
 
     // A pitched roof over a door - home as the place you live.
-    export void paintHouse(PaintIconEvent&);
+    export void drawHouse(DrawIconEvent&);
     // A block of windows - home as the building, and as a grid of tiles. The one shape carries
     // both readings, which is what a home that opens onto a list of things wants.
-    export void paintBlock(PaintIconEvent&);
+    export void drawBlock(DrawIconEvent&);
 
 
     //----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ namespace ClaFi::Icons::HomeIcon
         }
     }
 
-    void paintHouse(PaintIconEvent& event)
+    void drawHouse(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
         const Color strokeColor = event.textRgb(InkGrade::Strongest);
@@ -108,7 +108,7 @@ namespace ClaFi::Icons::HomeIcon
         event.canvas().drawPath(path, { PathDrawLayer::Stroke(strokeColor, strokeWidth) }, &transform);
     }
 
-    void paintBlock(PaintIconEvent& event)
+    void drawBlock(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
         Color blockColor = event.textRgb(InkGrade::Muted);

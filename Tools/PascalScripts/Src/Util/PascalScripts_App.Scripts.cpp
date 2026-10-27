@@ -6,7 +6,7 @@ import PascalScripts_App.Language;
 import ClaFi.Documents.Folder;
 import ClaFi.Documents.TextFile;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine;
 // The std::wstring serializer: without it the node's set and get read a string as a sequence.
 import ClaFi.Core.Dom_StdSerializers;
@@ -60,8 +60,8 @@ namespace PascalScripts_App
     }
 
     // One mark for every script, whatever it holds.
-    void ScriptsFolder::paintIcon(std::wstring_view, PaintIconEvent& event)
+    void ScriptsFolder::drawIcon(std::wstring_view, DrawIconEvent& event)
     {
-        AppIcon::paintScriptIcon(event);
+        AppIcon::drawScriptIcon(event);
     }
 }

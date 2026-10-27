@@ -8,7 +8,7 @@ import ClaFi.Browser;
 
 import Themes_App.Consts;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.Graphics.Canvas;
@@ -27,16 +27,16 @@ namespace Themes_App
 
     //export BrowserSettings* settings{};
 
-    export void paintColorSpot(Text&, Color);
-    // One colour as a round mark the height of a line, where paintColorSpot writes a wider one.
+    export void writeColorSpot(Text&, Color);
+    // One colour as a round mark the height of a line, where writeColorSpot writes a wider one.
     // A hue that stands beside a palette rather than in it is written with this, so the two kinds
     // of mark are told apart by shape before they are read.
-    export void paintColorDot(Text&, Color);
+    export void writeColorDot(Text&, Color);
     // A glyph on a blob: bold, in the surface ink, which reads against the blob.
     export void writeBlobGlyph(Text&, std::wstring_view glyph);
 
-    export void paintColorCell(Text&, Color, bool extendedMode = false);
-    export void paintPaletteMap(PaintIconEvent&, const ColorHarmony&, const PaletteMap&);
+    export void writeColorCell(Text&, Color, bool extendedMode = false);
+    export void drawPaletteMap(DrawIconEvent&, const ColorHarmony&, const PaletteMap&);
 
 
     export inline auto disabledState = [](GetStateEvent& event) {
@@ -52,7 +52,7 @@ namespace Themes_App
     class ColorSpot
     {
     public:
-        static PaintIconFunc paint;
+        static DrawIconFunc draw;
     };
 
 
@@ -77,15 +77,15 @@ namespace Themes_App
     constexpr float k_themeBackgroundRadius = 4.0f;
     constexpr float k_themeIconPadding = 2.0f;
 
-    void paintColorSpot(Text& text, Color color)
+    void writeColorSpot(Text& text, Color color)
     {
-        text << InTextIcon{ k_markW, k_markH, k_markH * 0.85, ColorSpot::paint, Tag{ color.asUint() } };
+        text << InTextIcon{ k_markW, k_markH, k_markH * 0.85, ColorSpot::draw, Tag{ color.asUint() } };
     }
 
-    void paintColorDot(Text& text, Color color)
+    void writeColorDot(Text& text, Color color)
     {
         // Square, so the rounding ColorSpot applies - half the height - closes into a circle.
-        text << InTextIcon{ k_markH, k_markH, k_markH * 0.85f, ColorSpot::paint, Tag{ color.asUint() } };
+        text << InTextIcon{ k_markH, k_markH, k_markH * 0.85f, ColorSpot::draw, Tag{ color.asUint() } };
     }
 
     void writeBlobGlyph(Text& text, std::wstring_view glyph)
@@ -97,11 +97,11 @@ namespace Themes_App
             << PopColor{};
     }
 
-    void paintColorCell(Text& tt, Color color, bool extendedMode)
+    void writeColorCell(Text& tt, Color color, bool extendedMode)
     {
         if (color.alpha)
         {
-            paintColorSpot(tt, color);
+            writeColorSpot(tt, color);
             if (extendedMode)
                 tt << L' '; // Space{ extSpace };
             else
@@ -120,7 +120,7 @@ namespace Themes_App
         };
     }
 
-    void paintPaletteMap(PaintIconEvent& event, const ColorHarmony& harmony, const PaletteMap& map)
+    void drawPaletteMap(DrawIconEvent& event, const ColorHarmony& harmony, const PaletteMap& map)
     {
         RoundedRectangleParts parts{};
         const float radius = event.iconWidth() / 8.0f;
@@ -141,9 +141,9 @@ namespace Themes_App
         event.canvas().fillPartialRoundedRectangle(parts, harmony.color(map[2]).rgb());
     }
 
-    PaintIconFunc ColorSpot::paint
+    DrawIconFunc ColorSpot::draw
     {
-        [](PaintIconEvent& event)
+        [](DrawIconEvent& event)
         {
             const Scaler& scaler = event.scaler();
             FloatRect rect = event.iconRect();
@@ -158,7 +158,7 @@ namespace Themes_App
 
 
 
-    // Drop-in replacement for Themes_App.Utils::paintPaletteMap, plus the slant enum it takes.
+    // Drop-in replacement for Themes_App.Utils::drawPaletteMap, plus the slant enum it takes.
     //
     // Needs, on top of what the module already imports:
     //     import ClaFi.Core.Graphics.Types;     // PixelPath, Matrix3x2, FloatRect
@@ -169,7 +169,7 @@ namespace Themes_App
     // outline comes from a clip instead - which also means the corner rounding no longer has to be
     // spelled out per band.
 
-    export void paintPaletteMap(PaintIconEvent&, const ColorHarmony&, const PaletteMap&, std::size_t slantIndex);
+    export void drawPaletteMap(DrawIconEvent&, const ColorHarmony&, const PaletteMap&, std::size_t slantIndex);
 
 
     //----------------------------------------------------------------------------
@@ -269,7 +269,7 @@ namespace Themes_App
         }
     }
 
-    void paintPaletteMap(PaintIconEvent& event, const ColorHarmony& harmony, const PaletteMap& map,
+    void drawPaletteMap(DrawIconEvent& event, const ColorHarmony& harmony, const PaletteMap& map,
         std::size_t slantIndex)
     {
         Graphics::Canvas& canvas = event.canvas();

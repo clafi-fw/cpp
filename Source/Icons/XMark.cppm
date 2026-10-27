@@ -1,6 +1,6 @@
 export module ClaFi.Icons.XMark;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -12,7 +12,7 @@ namespace ClaFi::Icons::XMark
 
     // The path is built at the icon rect's own size and placed by the transform below. The canvas
     // transform is composed by the backend, which scales the cross and its line width together.
-    export void paint(PaintIconEvent& event)
+    export void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
         const float lineWidth = event.scaledStrokeWidth(Thickness::Thin);

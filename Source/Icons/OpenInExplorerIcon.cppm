@@ -1,7 +1,7 @@
 export module ClaFi.Icons.OpenInExplorerIcon;
 
 import ClaFi.Icons.FolderIcon;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -15,7 +15,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
     // A folder with an arrow leaving it. The folder is drawn in the framework's yellow and the
     // arrow in the theme's accent, so what is being opened and the opening of it are told apart by
     // colour as well as by shape.
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //-------------------------------------------------------------------------
@@ -26,7 +26,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
     // user is acting on something is drawn in.
     constexpr Ink k_folderInk = InkWell::Yellow;
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);

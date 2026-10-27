@@ -29,7 +29,7 @@ namespace ClaFi::Browser
         PageData& addSubItem(std::wstring_view, const AddPageDataCallback&);
         PageData& addSubPath(std::wstring_view, const AddPageDataCallback&);
         std::size_t level();
-        void paintText(Text&) const;
+        void writeText(Text&) const;
         std::wstring_view displayTitle() const;
         std::wstring path() const;
         PageData* findOrAdd(std::wstring_view, const AddPageDataCallback&);
@@ -103,7 +103,7 @@ namespace ClaFi::Browser
         return parent ? parent->level() + 1ull : 0;
     }
 
-    void PageData::paintText(Text& tt) const
+    void PageData::writeText(Text& tt) const
     {
         tt << displayTitle();
     }

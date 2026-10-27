@@ -17,7 +17,7 @@ import ClaFi.Controls.StackView;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 
@@ -38,9 +38,9 @@ namespace ClaFi
         return DocumentTile::editorMode();
     }
 
-    void ThemeTile::paintIcon(PaintIconEvent& event)
+    void ThemeTile::drawIcon(DrawIconEvent& event)
     {
-        paintThemeIconOnly(event.canvas(), event.iconRect(),
+        drawThemeIconOnly(event.canvas(), event.iconRect(),
             ThemeSampleColors{ m_linkedTheme.colors, colorModeOf(event.lightness()) }
             );
     }
@@ -48,7 +48,7 @@ namespace ClaFi
     void ThemeTile::paintSurface(PaintEvent& event)
     {
         const FloatRect rect = event.controlBounds();
-        paintThemeBackground(event.canvas(), rect, event.scaleF(4.0f),
+        drawThemeBackground(event.canvas(), rect, event.scaleF(4.0f),
             ThemeSampleColors{ m_linkedTheme.colors, colorModeOf(event.lightness()) },
             event.scaledStrokeWidth(Thickness::Thin)
             );

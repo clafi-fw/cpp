@@ -1,6 +1,6 @@
 export module ClaFi.Core.TextEngine.Fmt;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Tags;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine.Text;
@@ -81,7 +81,7 @@ namespace ClaFi
             return dispatchDouble;
         else if constexpr (std::is_same_v<DT, ClaFi::Color>)
             return dispatchColor;
-        else if constexpr (requires(DT t, PaintIconEvent & e) { t(e); })
+        else if constexpr (requires(DT t, DrawIconEvent & e) { t(e); })
             return dispatchIconPainter<T>;
         else
             return dispatchDirect<T>;

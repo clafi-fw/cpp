@@ -2,7 +2,7 @@ export module ClaFi.Icons.ErrorIcon;
 
 import ClaFi.Icons.MessageBadge;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -14,15 +14,15 @@ namespace ClaFi::Icons::ErrorIcon
     using namespace ::ClaFi::Graphics;
 
     // A cross on a disc, in the theme's reddish hue.
-    export void paint(PaintIconEvent&);
+    export void draw(DrawIconEvent&);
 
 
     //-------------------------------------------------------------------------
 
 
-    void paint(PaintIconEvent& event)
+    void draw(DrawIconEvent& event)
     {
-        const MessageBadge::GlyphSlot glyph = MessageBadge::paintDisc(event, InkWell::Red);
+        const MessageBadge::GlyphSlot glyph = MessageBadge::drawDisc(event, InkWell::Red);
 
         // The cross is kept well inside the disc: its arms run diagonally, which is where a disc
         // has least room, and an arm reaching as far as an upright would touch the edge.

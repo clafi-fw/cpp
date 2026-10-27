@@ -1,10 +1,10 @@
 export module ClaFi.Icons.OpenChevron;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 namespace ClaFi::Icons::OpenChevron
 {
-    export void paintUp(PaintIconEvent&);     // two strokes meeting at a right angle, point up
-    export void paintDown(PaintIconEvent&);   // the same, point down
-    export void paintRight(PaintIconEvent&);  // the same, point right
+    export void drawUp(DrawIconEvent&);     // two strokes meeting at a right angle, point up
+    export void drawDown(DrawIconEvent&);   // the same, point down
+    export void drawRight(DrawIconEvent&);  // the same, point right
 }

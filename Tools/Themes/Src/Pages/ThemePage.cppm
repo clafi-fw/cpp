@@ -396,13 +396,13 @@ namespace Themes_App
                     ColumnWidthMode::Fill
                 },
                 Column{ Tag{ PigmentColumn::Hue },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::paint }, L" Hue" }
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::draw }, L" Hue" }
                 },
                 Column{ Tag{ PigmentColumn::Saturation },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::paint }, L" Saturation" }
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::draw }, L" Saturation" }
                 },
                 Column{ Tag{ PigmentColumn::Elevation },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::paint }, L" Elevation" }
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::draw }, L" Elevation" }
                 }
             },
             Header{},

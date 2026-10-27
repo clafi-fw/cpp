@@ -22,7 +22,7 @@ import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 
 namespace ClaFi::PlatformImplementation::Windows
 {
@@ -387,7 +387,7 @@ namespace ClaFi::PlatformImplementation::Windows
             // there was nothing here to fade it with.
             // A text run has no control behind it to be disabled, and the colours it hands over
             // are the ones the layout resolved, so nothing is faded on the way in.
-            PaintIconEvent evt{ *controlContext, rect, m_icon.tag, 0.0f };
+            DrawIconEvent evt{ *controlContext, rect, m_icon.tag, 0.0f };
             m_icon.paintLambda(evt);
         }
         return S_OK;

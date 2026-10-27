@@ -1,7 +1,7 @@
 export module ClaFi.Icons.Magnifier;
 
 import ClaFi.Icons.PlusMark;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -36,10 +36,10 @@ namespace ClaFi::Icons::Magnifier
     };
 
     // A magnifier filling the icon rect.
-    export void paint(PaintIconEvent&, Lens = Lens::Empty, Tail = Tail::Yes, Halo = Halo::No);
+    export void draw(DrawIconEvent&, Lens = Lens::Empty, Tail = Tail::Yes, Halo = Halo::No);
     // The same glass in a rect of the caller's choosing, so it can sit on top of something else.
     // Pair it with FloatRect::bottomLeftSquare to badge another icon.
-    export void paintIn(PaintIconEvent&, const FloatRect& bounds, Lens = Lens::Empty, Tail = Tail::Yes, Halo = Halo::No);
+    export void drawIn(DrawIconEvent&, const FloatRect& bounds, Lens = Lens::Empty, Tail = Tail::Yes, Halo = Halo::No);
     // The rect a lens of this radius needs, room for the tail included - for a caller that thinks
     // in lens sizes rather than in icon rects. No allowance for a halo: a caller that sizes by the
     // lens is drawing the glass on its own, which is the case that does not want one.
@@ -77,12 +77,12 @@ namespace ClaFi::Icons::Magnifier
         [[nodiscard]] PixelPath tailOutline(FloatPoint center, float radius, float strokeWidth);
     }
 
-    void paint(PaintIconEvent& event, Lens lens, Tail tail, Halo halo)
+    void draw(DrawIconEvent& event, Lens lens, Tail tail, Halo halo)
     {
-        paintIn(event, event.iconRect(), lens, tail, halo);
+        drawIn(event, event.iconRect(), lens, tail, halo);
     }
 
-    void paintIn(PaintIconEvent& event, const FloatRect& bounds, Lens lens, Tail tail, Halo halo)
+    void drawIn(DrawIconEvent& event, const FloatRect& bounds, Lens lens, Tail tail, Halo halo)
     {
         const bool withHalo = halo == Halo::Yes;
 
@@ -139,7 +139,7 @@ namespace ClaFi::Icons::Magnifier
             .lineWidth = event.scaledStrokeWidth(Thickness::Regular),
             .color = event.inkRgb(InkWell::accentInk())
         };
-        mark.paintPlusOrMinus(lens == Lens::Plus);
+        mark.drawPlusOrMinus(lens == Lens::Plus);
     }
 
     FloatRect rectForLensRadius(FloatPoint center, float lensRadius)

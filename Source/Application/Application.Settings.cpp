@@ -205,11 +205,11 @@ namespace ClaFi
         return mutableAppPages();
     }
 
-    void connectAppPage(const std::wstring_view caption, PaintIconFunc paintIcon,
+    void connectAppPage(const std::wstring_view caption, DrawIconFunc drawIcon,
         AppMenuPageBuilder build)
     {
         mutableAppPages().push_back(
-            AppMenuPageDescriptor{ std::wstring{ caption }, std::move(paintIcon), std::move(build) });
+            AppMenuPageDescriptor{ std::wstring{ caption }, std::move(drawIcon), std::move(build) });
     }
 
     // connectAppSettings
@@ -336,7 +336,7 @@ namespace ClaFi
             TooltipText{ L"Follow system" },
             ButtonViewMode::IconOnly,
             k_themeIconSize,
-            OnPaintIcon{ Icons::SunMoonIcon::paint },
+            OnDrawIcon{ Icons::SunMoonIcon::draw },
             ShowSelectionOnSurface::Yes,
             VerticalAlign::Center,
             Tag{ ColorModeSetting::Auto }
@@ -345,7 +345,7 @@ namespace ClaFi
             L"Dark",
             ButtonViewMode::IconOnly,
             k_themeIconSize,
-            OnPaintIcon{ Icons::MoonIcon::paint },
+            OnDrawIcon{ Icons::MoonIcon::draw },
             ShowSelectionOnSurface::Yes,
             VerticalAlign::Center,
             Tag{ ColorModeSetting::Dark }
@@ -354,7 +354,7 @@ namespace ClaFi
             L"Light",
             ButtonViewMode::IconOnly,
             k_themeIconSize,
-            OnPaintIcon{ Icons::SunIcon::paint },
+            OnDrawIcon{ Icons::SunIcon::draw },
             ShowSelectionOnSurface::Yes,
             VerticalAlign::Center,
             Tag{ ColorModeSetting::Light }

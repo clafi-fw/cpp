@@ -18,7 +18,7 @@ and its strip lists them all. With none, New makes an empty file.
 
 ## DocumentsFolder
 
-**The derived folder states the format** - readDocument, writeDocument, paintIcon and isEdited.
+**The derived folder states the format** - readDocument, writeDocument, drawIcon and isEdited.
 
 **The application owns the folder.** It is built after the platform and outlives every window.
 Hand it on as a `DocumentsFolder*` prop - the exact type Props::get looks for.

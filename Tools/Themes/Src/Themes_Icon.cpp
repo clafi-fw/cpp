@@ -1,6 +1,6 @@
 module Themes_App.AppIcon;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -177,9 +177,9 @@ namespace Themes_App::AppIcon
 
         void fillBand(Canvas&, const Matrix3x2& transform, const Leaf&, const Band&);
         void strokeLeaf(Canvas&, const Matrix3x2& transform, const Leaf&);
-        void paintLeaves(Canvas&, const Matrix3x2& transform);
-        void paintBlot(Canvas&, const Matrix3x2& transform);
-        void paintSweep(Canvas&, const Matrix3x2& transform);
+        void drawLeaves(Canvas&, const Matrix3x2& transform);
+        void drawBlot(Canvas&, const Matrix3x2& transform);
+        void drawSweep(Canvas&, const Matrix3x2& transform);
     }
 }
 
@@ -187,19 +187,19 @@ namespace Themes_App::AppIcon
 
 namespace Themes_App::AppIcon
 {
-    void paint(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
+    void draw(Canvas& canvas, const FloatRect& bounds, const Opacity opacity)
     {
         // One layer for the whole mark: its parts overlap, and faded one by one they would show.
         const ScopedCanvasOpacity layer{ canvas, opacity };
         const Matrix3x2 transform = fitTo(bounds);
 
-        paintLeaves(canvas, transform);
-        paintBlot(canvas, transform);
+        drawLeaves(canvas, transform);
+        drawBlot(canvas, transform);
     }
 
-    void paintIcon(PaintIconEvent& event)
+    void drawIcon(DrawIconEvent& event)
     {
-        paint(event.canvas(), event.iconRect(), 1.0f - event.disabledAmount());
+        draw(event.canvas(), event.iconRect(), 1.0f - event.disabledAmount());
     }
 
     namespace
@@ -442,7 +442,7 @@ namespace Themes_App::AppIcon
         }
 
         // A leaf takes its outline before the next covers it, so the front one draws the seam.
-        void paintLeaves(Canvas& canvas, const Matrix3x2& transform)
+        void drawLeaves(Canvas& canvas, const Matrix3x2& transform)
         {
             for (const Band& band : k_backBands)
                 fillBand(canvas, transform, k_backLeaf, band);
@@ -456,7 +456,7 @@ namespace Themes_App::AppIcon
         }
 
         // Both edges go down before the sweep, which covers their inner halves.
-        void paintBlot(Canvas& canvas, const Matrix3x2& transform)
+        void drawBlot(Canvas& canvas, const Matrix3x2& transform)
         {
             PixelPath outline;
             addOutline(outline);
@@ -469,11 +469,11 @@ namespace Themes_App::AppIcon
             canvas.drawPath(outline, { PathDrawLayer::Stroke(k_keylineColor, keylineStroke) }, &transform);
 
             canvas.pushClip(outline, &transform);
-            paintSweep(canvas, transform);
+            drawSweep(canvas, transform);
             canvas.popClip();
         }
 
-        void paintSweep(Canvas& canvas, const Matrix3x2& transform)
+        void drawSweep(Canvas& canvas, const Matrix3x2& transform)
         {
             const SweepColors& colors = sweepColors();
             for (std::size_t step = 0; step < colors.size(); ++step)

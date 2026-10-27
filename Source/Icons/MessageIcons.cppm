@@ -16,7 +16,7 @@ namespace ClaFi::Icons
 {
     /// @brief The painter a named icon stands for, and nothing for None. A dialog needing a
     /// picture this set does not carry hands its own painter in place of a name.
-    export [[nodiscard]] PaintIconFunc iconPainterOf(MessageIcon);
+    export [[nodiscard]] DrawIconFunc iconPainterOf(MessageIcon);
 
     /// @brief A line led by one of these icons, drawn at the size of the words beside it. It is
     /// what a context message raised about a control is written as - the icon says what kind of
@@ -38,22 +38,22 @@ namespace ClaFi::Icons
     // What stands between that picture and the first word.
     constexpr float k_messageIconSpacing = 5.0f;
 
-    PaintIconFunc iconPainterOf(const MessageIcon value)
+    DrawIconFunc iconPainterOf(const MessageIcon value)
     {
         switch (value)
         {
         case MessageIcon::None:
             return {};
         case MessageIcon::Warning:
-            return WarningIcon::paint;
+            return WarningIcon::draw;
         case MessageIcon::Error:
-            return ErrorIcon::paint;
+            return ErrorIcon::draw;
         case MessageIcon::Question:
-            return QuestionIcon::paint;
+            return QuestionIcon::draw;
         case MessageIcon::Information:
-            return InformationIcon::paint;
+            return InformationIcon::draw;
         case MessageIcon::Ok:
-            return OkIcon::paint;
+            return OkIcon::draw;
         }
         noReach("a message icon with no painter of its own");
     }

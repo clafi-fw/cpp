@@ -1,6 +1,6 @@
 module ClaFi.Icons.OpenChevron;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -19,7 +19,7 @@ namespace ClaFi::Icons::OpenChevron
             Right
         };
 
-        void paintPointing(PaintIconEvent& event, const Point point)
+        void drawPointing(DrawIconEvent& event, const Point point)
         {
             const FloatRect& iconRect = event.iconRect();
             const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
@@ -48,19 +48,19 @@ namespace ClaFi::Icons::OpenChevron
         }
     }
 
-    void paintUp(PaintIconEvent& event)
+    void drawUp(DrawIconEvent& event)
     {
-        paintPointing(event, Point::Up);
+        drawPointing(event, Point::Up);
     }
 
-    void paintDown(PaintIconEvent& event)
+    void drawDown(DrawIconEvent& event)
     {
-        paintPointing(event, Point::Down);
+        drawPointing(event, Point::Down);
     }
 
-    void paintRight(PaintIconEvent& event)
+    void drawRight(DrawIconEvent& event)
     {
-        paintPointing(event, Point::Right);
+        drawPointing(event, Point::Right);
     }
 
 }

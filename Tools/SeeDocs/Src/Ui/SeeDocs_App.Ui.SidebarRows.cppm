@@ -6,7 +6,7 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
 
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.UiTypes;
 
@@ -92,13 +92,13 @@ namespace SeeDocs_App::Ui
             const float size = event.scaler().scale(k_rowIconSize);
             const float left = bounds.left - event.scaler().scale(k_markRoom);
             const float top = bounds.top + (bounds.height() - size) / 2.0f;
-            PaintIconEvent icon{
+            DrawIconEvent icon{
                 event.controlContext(),
                 FloatRect{ left, top, left + size, top + size },
                 event.control().tag(),
                 event.disabledAmount()
             };
-            paintRowIcon(icon, *m_mark);
+            drawRowIcon(icon, *m_mark);
         }
         Host::paintOwnText(event);
     }

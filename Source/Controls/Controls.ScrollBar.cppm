@@ -2,7 +2,7 @@ export module ClaFi.Controls.ScrollBar;
 
 import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Icons.ScrollMark;
-import ClaFi.Core.Context.PaintIconEvent;
+import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Theme;
@@ -120,15 +120,15 @@ namespace ClaFi::Controls
         // Packed the same way ButtonBase packs one for its own icon. It belongs in
         // SliderBase::paintButton, so that the virtual takes the icon event directly and both
         // marks are reached the same way - that move waits on Slider's mark, which still reads
-        // controlBounds off the paint event, and PaintIconEvent cannot offer that without
+        // controlBounds off the paint event, and DrawIconEvent cannot offer that without
         // depending on Foundation.
-        PaintIconEvent iconEvent{
+        DrawIconEvent iconEvent{
             event.controlContext(),
             event.centerRect(size, size),
             event.control().tag(),
             event.disabledAmount()
         };
-        Icons::ScrollMark::paint(iconEvent, axis(), scrollDirection);
+        Icons::ScrollMark::draw(iconEvent, axis(), scrollDirection);
     }
 
     void ScrollBar::paintThumb(PaintEvent& event)
