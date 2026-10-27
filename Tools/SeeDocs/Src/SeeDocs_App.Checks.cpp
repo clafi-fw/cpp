@@ -292,11 +292,11 @@ namespace SeeDocs_App
                     continue;
                 if (type.properties.empty() && type.events.empty())
                     continue;
-                const Names parameters = templateParameterNames(type.templateParameters);
+                const Names parameters = parameterNames(type);
                 std::wstring unknown;
                 for (const std::wstring& base : type.bases)
                 {
-                    const std::wstring_view head = plainType(withoutArguments(base));
+                    const std::wstring head{ plainType(withoutArguments(base)) };
                     if (std::ranges::find(parameters, head) != parameters.end())
                         continue;
                     if (m_surface.resolve(base, type.enclosingScope()))

@@ -865,6 +865,10 @@ namespace SeeDocs_App
             [[nodiscard]] std::size_t endOfType(Words stops, std::wstring_view stopMark, Angles);
             [[nodiscard]] std::wstring textBetween(std::size_t first, std::size_t last) const;
             [[nodiscard]] std::wstring typeBetween(std::size_t first, std::size_t last) const;
+            // The parameter list a generic's name carries, read off the tokens between its
+            // brackets: the names alone, constraints left off - <T, U> of <T: class; U: record>.
+            [[nodiscard]] std::wstring spelledParameters(std::size_t first,
+                std::size_t last) const;
             // Whether the tokens from first to last name one type, dotted or generic.
             [[nodiscard]] bool namesType(std::size_t first, std::size_t last) const;
             [[nodiscard]] Type newType(const Token& name, const Type* outer, Access) const;
@@ -1158,7 +1162,8 @@ namespace SeeDocs_App
         }
 
         // A class, a record, an interface, an enumeration or anything else, which is an alias
-        // where it names one type. A forward declaration - class; interface; - is none.
+        // where it names one type. A forward declaration - class; interface; - is none. A generic
+        // is named with its parameters, TList<T>, a type apart from the TList beside it.
         void UnitReader::readTypeDeclaration(const Type* outer, const Access access)
         {
             const Token& nameToken = *peek();
@@ -1171,6 +1176,9 @@ namespace SeeDocs_App
                 const std::size_t open = m_at;
                 skipBalanced(L"<", L">");
                 type.templateParameters = textBetween(open + 1, m_at - 2);
+                const std::wstring parameters = spelledParameters(open + 1, m_at - 2);
+                type.name += parameters;
+                type.qualifiedName += parameters;
             }
             if (!isMark(peek(), L"="))
             {
@@ -1757,7 +1765,7 @@ namespace SeeDocs_App
             return !types;
         }
 
-        // procedure TOuter.TInner.Name<T>(Parameters): Result; directives; - a forward or an
+        // procedure TOuter<T>.TInner.Name<U>(Parameters): Result; directives; - a forward or an
         // external routine has no body, and what follows its header is not its own.
         void UnitReader::readRoutineBody()
         {
@@ -1768,7 +1776,13 @@ namespace SeeDocs_App
                 qualified.emplace_back(text(*peek()));
                 advance();
                 if (isMark(peek(), L"<"))
+                {
+                    const std::size_t open = m_at;
                     skipBalanced(L"<", L">");
+                    // An owner's parameters are part of its name, the routine's own are not.
+                    if (isMark(peek(), L"."))
+                        qualified.back() += spelledParameters(open + 1, m_at - 2);
+                }
                 if (!isMark(peek(), L"."))
                     break;
                 advance();
@@ -1845,8 +1859,8 @@ namespace SeeDocs_App
         }
 
         // The routine of the interface a header of the implementation defines: by its name, the
-        // types it is a member of, and where the name is overloaded, the parameters, all read in
-        // any case.
+        // types it is a member of - a generic one with its parameters - and where the name is
+        // overloaded, the parameters, all read in any case.
         Function* UnitReader::declarationOf(const Names& qualified,
             const std::wstring_view parameters)
         {
@@ -2070,6 +2084,39 @@ namespace SeeDocs_App
                     result += current;
             }
             return result;
+        }
+
+        std::wstring UnitReader::spelledParameters(const std::size_t first,
+            const std::size_t last) const
+        {
+            std::wstring result = L"<";
+            bool constrained = false;
+            int depth = 0;
+            for (std::size_t at = first; at <= last && at < m_code.size(); ++at)
+            {
+                const Token* token = &code(at);
+                if (isMark(token, L"<"))
+                    ++depth;
+                else if (isMark(token, L">"))
+                    --depth;
+                if (depth != 0)
+                    continue;
+                if (isMark(token, L":"))
+                {
+                    constrained = true;
+                }
+                else if (isMark(token, L";"))
+                {
+                    constrained = false;
+                }
+                else if (!constrained && isDeclaredName(token))
+                {
+                    if (result.size() > 1)
+                        result += L", ";
+                    result += text(*token);
+                }
+            }
+            return result + L">";
         }
 
         bool UnitReader::namesType(const std::size_t first, const std::size_t last) const

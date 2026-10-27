@@ -325,10 +325,8 @@ namespace SeeDocs_App
 
     void Surface::addType(Type type)
     {
-        const std::size_t index = m_types.size();
-        m_byQualifiedName[type.qualifiedName] = index;
-        m_byBareName[std::wstring{ bareName(type.name) }].push_back(index);
         m_types.push_back(std::move(type));
+        indexType(m_types.size() - 1);
     }
 
     void Surface::addFunction(FreeFunction function)
@@ -480,15 +478,11 @@ namespace SeeDocs_App
         cutTo(m_problems, counts.problems);
         cutTo(m_republications, counts.republications);
         cutTo(m_enclosedIncludes, counts.enclosedIncludes);
-        m_byQualifiedName.clear();
+        m_byQualifiedHead.clear();
         m_byBareName.clear();
         m_languageByModule.clear();
         for (std::size_t index = 0; index != m_types.size(); ++index)
-        {
-            const Type& type = m_types[index];
-            m_byQualifiedName[type.qualifiedName] = index;
-            m_byBareName[std::wstring{ bareName(type.name) }].push_back(index);
-        }
+            indexType(index);
         for (const Module& module : m_modules)
         {
             if (module.language != SourceLanguage::Cpp)
@@ -498,31 +492,33 @@ namespace SeeDocs_App
 
     const Type* Surface::typeNamed(const std::wstring_view qualifiedName) const
     {
-        const auto found = m_byQualifiedName.find(std::wstring{ qualifiedName });
-        if (found == m_byQualifiedName.end())
+        const auto found = m_byQualifiedHead.find(withoutArguments(qualifiedName));
+        if (found == m_byQualifiedHead.end())
             return nullptr;
-        return &m_types[found->second];
+        for (const std::size_t index : found->second)
+        {
+            if (m_types[index].qualifiedName == qualifiedName)
+                return &m_types[index];
+        }
+        return nullptr;
     }
 
     Type* Surface::typeNamed(const std::wstring_view qualifiedName)
     {
-        const auto found = m_byQualifiedName.find(std::wstring{ qualifiedName });
-        if (found == m_byQualifiedName.end())
-            return nullptr;
-        return &m_types[found->second];
+        return const_cast<Type*>(std::as_const(*this).typeNamed(qualifiedName));
     }
 
     const Type* Surface::resolve(const std::wstring_view spelled,
         const std::wstring_view scope) const
     {
-        std::wstring_view name = plainType(withoutArguments(spelled));
+        std::wstring_view name = plainType(spelled);
         std::wstring_view from = scope;
         for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
         {
             const Type* type = lookUp(name, from);
             if (!type || type->kind != TypeKind::Alias)
                 return type;
-            name = plainType(withoutArguments(type->target));
+            name = plainType(type->target);
             from = type->enclosingScope();
         }
         return nullptr;
@@ -531,13 +527,13 @@ namespace SeeDocs_App
     const Type* Surface::named(const std::wstring_view spelled,
         const std::wstring_view scope) const
     {
-        return lookUp(plainType(withoutArguments(spelled)), scope);
+        return lookUp(plainType(spelled), scope);
     }
 
     const Type* Surface::publicType(const std::wstring_view spelled,
         const std::wstring_view scope) const
     {
-        std::wstring_view name = plainType(withoutArguments(spelled));
+        std::wstring_view name = plainType(spelled);
         std::wstring_view from = scope;
         for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
         {
@@ -546,7 +542,7 @@ namespace SeeDocs_App
                 return type;
             if (type->kind != TypeKind::Alias)
                 return nullptr;
-            name = plainType(withoutArguments(type->target));
+            name = plainType(type->target);
             from = type->enclosingScope();
         }
         return nullptr;
@@ -564,7 +560,7 @@ namespace SeeDocs_App
         std::wstring result = std::wstring{ spelled };
         for (std::size_t depth = 0; depth != k_aliasDepth; ++depth)
         {
-            const Type* type = lookUp(plainType(withoutArguments(result)), scope);
+            const Type* type = lookUp(plainType(result), scope);
             if (!type || type->kind != TypeKind::Alias || type->isPublic())
                 return result;
             result = type->target;
@@ -595,18 +591,19 @@ namespace SeeDocs_App
         {
             const Spelled spelled = std::move(queue.back());
             queue.pop_back();
-            const std::wstring_view head = plainType(withoutArguments(spelled.text));
+            const std::wstring_view plain = plainType(spelled.text);
             const std::wstring key =
-                spelled.scope + std::wstring{ k_scope } + std::wstring{ head };
+                spelled.scope + std::wstring{ k_scope } + std::wstring{ plain };
             if (!seen.insert(key).second)
                 continue;
 
-            const Type* found = lookUp(head, spelled.scope);
+            const Type* found = lookUp(plain, spelled.scope);
             // The libraries answer for a class the tree does not declare, and only for one.
             if (!found)
             {
                 const bool libraryControl = pascal
-                    && isLibraryControl(bareName(head), libraryOf(m_modules, spelled.module));
+                    && isLibraryControl(bareName(withoutArguments(plain)),
+                        libraryOf(m_modules, spelled.module));
                 if (libraryControl)
                     return true;
                 continue;
@@ -624,11 +621,11 @@ namespace SeeDocs_App
             if (root)
                 return true;
 
-            const Names parameters = templateParameterNames(found->templateParameters);
+            const Names parameters = parameterNames(*found);
             const Names arguments = argumentsOf(spelled.text);
             for (const std::wstring& base : found->bases)
             {
-                const std::wstring_view baseHead = plainType(withoutArguments(base));
+                const std::wstring baseHead{ plainType(withoutArguments(base)) };
                 const auto parameter = std::ranges::find(parameters, baseHead);
                 if (parameter == parameters.end())
                 {
@@ -666,11 +663,11 @@ namespace SeeDocs_App
                 optional = true;
                 spelled = std::wstring{ plainType(arguments.front()) };
             }
-            const std::wstring_view head = withoutArguments(spelled);
+            const std::wstring head = withoutArguments(spelled);
             if (const std::optional<std::wstring_view> known = knownKindOf(head))
                 return std::wstring{ *known };
 
-            const Type* found = lookUp(head, scope);
+            const Type* found = lookUp(spelled, scope);
             if (!found)
                 return std::wstring{ k_unknownKind };
             if (found->kind == TypeKind::Alias)
@@ -686,7 +683,7 @@ namespace SeeDocs_App
 
             for (const std::wstring& base : found->bases)
             {
-                const std::wstring_view baseHead = withoutArguments(base);
+                const std::wstring baseHead = withoutArguments(base);
                 if (const std::optional<std::wstring_view> known = knownKindOf(baseHead))
                     return std::wstring{ *known };
                 if (bareName(baseHead) == k_numericWrapper)
@@ -941,7 +938,8 @@ namespace SeeDocs_App
     }
 
     // **A name is looked up the way C++ looks it up**, then among the types of that name at a
-    // namespace's scope, the one nearest. See README#names
+    // namespace's scope, the one nearest. Of the Delphi types of one name, the one taking the
+    // arguments the spelling hands it. See README#names
     const Type* Surface::lookUp(std::wstring_view spelled, std::wstring_view scope,
         const std::size_t depth) const
     {
@@ -950,14 +948,16 @@ namespace SeeDocs_App
             spelled.remove_prefix(k_scope.size());
             scope = {};
         }
-        if (spelled.empty())
+        const std::wstring head = withoutArguments(spelled);
+        if (head.empty())
             return nullptr;
-        const std::wstring_view bare = bareName(spelled);
+        const std::size_t arguments = argumentsOf(bareName(spelled)).size();
+        const std::wstring_view bare = bareName(head);
         const auto found = m_byBareName.find(std::wstring{ bare });
         if (found == m_byBareName.end())
             return nullptr;
 
-        if (bare.size() == spelled.size())
+        if (bare.size() == head.size())
         {
             const bool nestedNamesake = std::ranges::any_of(found->second,
                 [this](const std::size_t index) {
@@ -969,12 +969,12 @@ namespace SeeDocs_App
                 const std::wstring qualified = prefix.empty()
                     ? std::wstring{ spelled }
                     : std::wstring{ prefix } + std::wstring{ k_scope } + std::wstring{ spelled };
-                if (const Type* type = typeNamed(qualified))
+                if (const Type* type = typeUnder(qualified, arguments))
                     return type;
                 const Type* owner = nestedNamesake ? typeNamed(prefix) : nullptr;
                 if (owner)
                 {
-                    if (const Type* inherited = inheritedType(*owner, spelled, depth))
+                    if (const Type* inherited = inheritedType(*owner, head, depth))
                         return inherited;
                 }
                 if (prefix.empty())
@@ -983,16 +983,19 @@ namespace SeeDocs_App
             }
         }
 
-        const std::wstring tail = std::wstring{ k_scope } + std::wstring{ spelled };
+        const std::wstring tail = std::wstring{ k_scope } + head;
         const Type* nearest = nullptr;
         std::size_t nearestShare = 0;
         for (const std::size_t index : found->second)
         {
             const Type& type = m_types[index];
-            // Outside the scopes it is seen in, a nested type is named with its outer type.
-            if (spelled.size() < type.name.size())
+            if (!matchesArguments(type, arguments))
                 continue;
-            if (type.qualifiedName != spelled && !type.qualifiedName.ends_with(tail))
+            // Outside the scopes it is seen in, a nested type is named with its outer type.
+            if (head.size() < withoutArguments(type.name).size())
+                continue;
+            const std::wstring typeHead = withoutArguments(type.qualifiedName);
+            if (typeHead != head && !typeHead.ends_with(tail))
                 continue;
             const std::size_t share = sharedPrefix(type.nameSpace, scope);
             if (!nearest || share > nearestShare)
@@ -1002,6 +1005,39 @@ namespace SeeDocs_App
             }
         }
         return nearest;
+    }
+
+    const Type* Surface::typeUnder(const std::wstring_view qualified,
+        const std::size_t arguments) const
+    {
+        const auto found = m_byQualifiedHead.find(withoutArguments(qualified));
+        if (found == m_byQualifiedHead.end())
+            return nullptr;
+        for (const std::size_t index : found->second)
+        {
+            if (m_types[index].qualifiedName == qualified)
+                return &m_types[index];
+        }
+        for (const std::size_t index : found->second)
+        {
+            if (matchesArguments(m_types[index], arguments))
+                return &m_types[index];
+        }
+        return nullptr;
+    }
+
+    bool Surface::matchesArguments(const Type& type, const std::size_t arguments) const
+    {
+        if (languageOf(type.module) != SourceLanguage::Pascal)
+            return true;
+        return argumentsOf(bareName(type.name)).size() == arguments;
+    }
+
+    void Surface::indexType(const std::size_t index)
+    {
+        const Type& type = m_types[index];
+        m_byQualifiedHead[withoutArguments(type.qualifiedName)].push_back(index);
+        m_byBareName[std::wstring{ bareName(withoutArguments(type.name)) }].push_back(index);
     }
 
     // A base that is one of a template's parameters stands for the argument the spelling reaching
@@ -1029,7 +1065,7 @@ namespace SeeDocs_App
         {
             const Reached reached = std::move(pending.front());
             pending.pop_front();
-            const Names parameters = templateParameterNames(reached.type->templateParameters);
+            const Names parameters = parameterNames(*reached.type);
             const Names arguments = argumentsOf(reached.spelling);
             for (const std::wstring& base : reached.type->bases)
             {
@@ -1049,7 +1085,7 @@ namespace SeeDocs_App
                 const Type* type = nullptr;
                 for (std::size_t step = 0; step != k_aliasDepth; ++step)
                 {
-                    type = lookUp(plainType(withoutArguments(spelling)), scope, depth + 1);
+                    type = lookUp(plainType(spelling), scope, depth + 1);
                     if (!type || type->kind != TypeKind::Alias)
                         break;
                     spelling = type->target;
@@ -1181,14 +1217,12 @@ namespace SeeDocs_App
     void Surface::rekeyType(const std::size_t index, std::wstring nameSpace)
     {
         Type& type = m_types[index];
-        const auto found = m_byQualifiedName.find(type.qualifiedName);
-        if (found != m_byQualifiedName.end() && found->second == index)
-            m_byQualifiedName.erase(found);
+        std::erase(m_byQualifiedHead[withoutArguments(type.qualifiedName)], index);
         type.nameSpace = std::move(nameSpace);
         type.qualifiedName = type.nameSpace.empty()
             ? type.name
             : type.nameSpace + std::wstring{ k_scope } + type.name;
-        m_byQualifiedName[type.qualifiedName] = index;
+        m_byQualifiedHead[withoutArguments(type.qualifiedName)].push_back(index);
     }
 
     // Beside the file the include stands in, under the root of any folder read, or - the build
@@ -1247,9 +1281,19 @@ namespace SeeDocs_App
         return qualified.substr(cut + k_scope.size());
     }
 
-    std::wstring_view withoutArguments(const std::wstring_view spelled)
+    std::wstring withoutArguments(const std::wstring_view spelled)
     {
-        return trimmed(spelled.substr(0, spelled.find(L'<')));
+        std::wstring result;
+        for (std::size_t i = 0; i < spelled.size(); ++i)
+        {
+            if (spelled[i] == L'<')
+            {
+                i = closeOf(spelled, i);
+                continue;
+            }
+            result += spelled[i];
+        }
+        return std::wstring{ trimmed(result) };
     }
 
     Names argumentsOf(const std::wstring_view spelled)
@@ -1395,9 +1439,17 @@ namespace SeeDocs_App
         return names;
     }
 
+    Names parameterNames(const Type& type)
+    {
+        Names own = argumentsOf(bareName(type.name));
+        if (!own.empty())
+            return own;
+        return templateParameterNames(type.templateParameters);
+    }
+
     bool isTemplateParameter(const Type& type, const std::wstring_view spelled)
     {
-        const Names parameters = templateParameterNames(type.templateParameters);
+        const Names parameters = parameterNames(type);
         return std::ranges::find(parameters, plainType(withoutArguments(spelled)))
             != parameters.end();
     }

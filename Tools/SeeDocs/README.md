@@ -144,6 +144,10 @@ names, are read in the scope the type is declared in.
   scope, the one nearest.
 - **A qualified name** is matched by its tail: `Grids::Row` names `ClaFi::Controls::Grids::Row`.
   One that opens with `::` is looked for from the global scope.
+- **A Delphi generic is a type apart from the type of its name declared beside it**, as Delphi has
+  it: `TList<T>` is not `TList`, nor `IEnumerable<T>` `IEnumerable`. A spelling names the one taking
+  the arguments it hands - `TList<Integer>` names `TList<T>`, `TList` alone the one with no
+  parameters. A C++ template is one type of its name, whatever arguments a spelling hands it.
 
 ### Restated properties
 
@@ -257,7 +261,9 @@ lexer, as a module interface is read over the C++ one.
   members. A record is a struct, and an interface a kind of its own. An enumeration is an enum. Any
   other type is an alias of what follows its equals sign, a method type's calling convention kept. A
   forward declaration is skipped. A helper is a class or a struct whose line says what it helps. A
-  generic's parameters are its template's. A type nested in a class is `Outer::Inner`.
+  generic is named with its parameters, `TList<T>` - its constraints stay in its declaration - and
+  is told from the `TList` beside it as [Names](#names) says. A type nested in a class is
+  `Outer::Inner`.
 - **Routines.** A routine's signature is its declaration as written, from its first word - `class`
   where it has one - to the semicolon of its last directive. `virtual`, `dynamic`, `override` and
   `abstract` make it virtual, and `class` makes it static.
@@ -297,7 +303,8 @@ lexer, as a module interface is read over the C++ one.
   - A routine the interface gives no hint takes the comment standing under its header in the
     implementation section, between the header and the `var`, `const` or `begin` the routine opens
     with. A blank line or a directive among its lines parts its paragraphs. The header is matched to
-    the routine by its name and the types it is a member of - `TOuter.TInner.Name` - in any case.
+    the routine by its name and the types it is a member of - `TOuter.TInner.Name`, a generic
+    with its parameters - in any case.
     Where the name is overloaded, it is matched by how each parameter is passed and its type. A
     `forward` or an `external` routine has no body, and the lines under its header are not its own.
 
@@ -909,7 +916,8 @@ one.
 
 A Delphi type's page is spelled as a C++ type's is - its title, its bases as crumbs under it, the
 access labels written `public:`. Its code is Delphi's own: a routine's signature and a constant's or
-a variable's declaration stand as written, coloured as Pascal.
+a variable's declaration stand as written, coloured as Pascal. A generic's title carries its
+parameters, `TList<T>`, and no template badge; its constraints show in the preview of a link to it.
 
 - Its properties and its events stand in a grid per access - published, public, protected.
 - A base's member that a type below declares again is the type's own, counted once.

@@ -973,7 +973,7 @@ namespace SeeDocs_App
             if (site.place.line == 0 || site.place.line > file.lines.size())
                 return std::nullopt;
             const std::size_t declared = site.place.line - 1;
-            const std::wstring_view name = withoutArguments(bareName(site.name));
+            const std::wstring name = withoutArguments(bareName(site.name));
             const std::size_t reach = std::min(declared + k_nameReach, file.lines.size());
             bool named = false;
             for (std::size_t i = declared; i < reach && !named; ++i)

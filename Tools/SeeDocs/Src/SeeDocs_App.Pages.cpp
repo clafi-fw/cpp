@@ -322,6 +322,29 @@ namespace SeeDocs_App
             return std::nullopt;
         }
 
+        // The name with the argument list written right after it, where there is one -
+        // TList<Integer> - which names the generic taking those arguments.
+        [[nodiscard]] std::wstring_view spelledWithArguments(const std::wstring_view text,
+            const NameSpan& span)
+        {
+            std::size_t end = span.end;
+            if (end < text.size() && text[end] == L'<')
+            {
+                int depth = 0;
+                for (std::size_t i = end; i != text.size(); ++i)
+                {
+                    if (text[i] == L'<')
+                        ++depth;
+                    if (text[i] == L'>' && --depth == 0)
+                    {
+                        end = i + 1;
+                        break;
+                    }
+                }
+            }
+            return text.substr(span.start, end - span.start);
+        }
+
         // The run with every name in it the surface has a page for linked to it, cut round each;
         // the names left out are never linked - a template's parameters.
         void linkNamesIn(Runs& out, const Run& run, const Surface& surface,
@@ -339,7 +362,7 @@ namespace SeeDocs_App
                 });
                 if (left)
                     continue;
-                const Type* type = surface.publicType(name, scope);
+                const Type* type = surface.publicType(spelledWithArguments(text, *span), scope);
                 if (!type)
                     continue;
                 if (span->start != plainStart)
@@ -921,7 +944,9 @@ namespace SeeDocs_App
                 page.badges.push_back(muted(std::wstring{ k_separator }
                     + std::wstring{ k_controlWord }));
             }
-            if (!type.templateParameters.empty())
+            const SourceLanguage language = surface.languageOf(type.module);
+            // A Delphi generic's title carries its parameters, so it wears no template badge.
+            if (!type.templateParameters.empty() && language == SourceLanguage::Cpp)
             {
                 page.badges.push_back(muted(std::wstring{ k_separator } + L"template <"
                     + type.templateParameters + L">"));
@@ -931,7 +956,7 @@ namespace SeeDocs_App
             addFact(page, L"namespace", { code(type.nameSpace) });
             addFact(page, moduleWordOf(surface, type.module),
                 { code(type.module, moduleLink(type.folder, type.module)) });
-            addPlaceFact(page, surface, roots, type.place, surface.languageOf(type.module));
+            addPlaceFact(page, surface, roots, type.place, language);
             if (type.target.empty())
                 return;
             if (type.kind == TypeKind::Concept)
@@ -943,7 +968,7 @@ namespace SeeDocs_App
             const std::wstring_view join = equated ? k_aliasJoin : k_baseJoin;
             Runs line = { muted(std::wstring{ join }) };
             const Runs target = linkNames(surface, { code(type.target) }, type.enclosingScope(),
-                templateParameterNames(type.templateParameters));
+                parameterNames(type));
             line.insert(line.end(), target.begin(), target.end());
             page.titleLines.push_back(std::move(line));
         }
@@ -1078,8 +1103,8 @@ namespace SeeDocs_App
             const std::wstring_view spelled, const std::wstring_view scope,
             const std::wstring& base, const std::wstring_view baseScope)
         {
-            const Names parameters = templateParameterNames(type.templateParameters);
-            const std::wstring_view head = plainType(withoutArguments(base));
+            const Names parameters = parameterNames(type);
+            const std::wstring head{ plainType(withoutArguments(base)) };
             const auto parameter = std::ranges::find(parameters, head);
             if (parameter == parameters.end())
                 return BaseReading{ .spelling = base, .scope = baseScope };
@@ -1294,7 +1319,7 @@ namespace SeeDocs_App
                 if (!direct)
                     continue;
                 add(direct);
-                const Names parameters = templateParameterNames(direct->templateParameters);
+                const Names parameters = parameterNames(*direct);
                 const Names arguments = argumentsOf(resolvedSpelling);
                 for (const std::wstring& handedOn : direct->bases)
                 {
@@ -1550,9 +1575,9 @@ namespace SeeDocs_App
         [[nodiscard]] bool restates(const Restatement& restatement, const Property& property)
         {
             const auto bare = [](const std::wstring& spelled) {
-                return bareName(plainType(withoutArguments(spelled)));
+                return std::wstring{ bareName(plainType(withoutArguments(spelled))) };
             };
-            const std::wstring_view type = bare(restatement.type);
+            const std::wstring type = bare(restatement.type);
             if (type == bare(property.type))
                 return true;
             return std::ranges::any_of(property.accepts, [&](const std::wstring& accepted) {
@@ -1819,7 +1844,7 @@ namespace SeeDocs_App
         [[nodiscard]] Runs signatureRuns(const Surface& surface, const Type& owner,
             const Function& function, const std::wstring_view join)
         {
-            Names leftOut = templateParameterNames(owner.templateParameters);
+            Names leftOut = parameterNames(owner);
             for (std::wstring& name : templateParameterNames(function.templateParameters))
                 leftOut.push_back(std::move(name));
             const std::wstring spelled =
@@ -3242,7 +3267,12 @@ namespace SeeDocs_App
         {
             std::wstring name = type.name;
             if (!type.templateParameters.empty())
-                name += L"<" + type.templateParameters + L">";
+            {
+                // The head as declared, constraints and all, in place of the name's parameters.
+                name.resize(name.size() - bareName(name).size());
+                name += withoutArguments(bareName(type.name)) + L"<" + type.templateParameters
+                    + L">";
+            }
             const std::wstring equals = name + L" = ";
             if (type.kind == TypeKind::Alias || type.kind == TypeKind::Defined)
                 return Lines{ equals + type.target + L";" };

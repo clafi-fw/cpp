@@ -159,8 +159,7 @@ namespace SeeDocs_App
             {
                 if (isTemplateParameter(type, spelled))
                     continue;
-                const Type* base =
-                    surface.resolve(withoutArguments(spelled), type.enclosingScope());
+                const Type* base = surface.resolve(spelled, type.enclosingScope());
                 if (!base || !bases.insert(base).second)
                     continue;
                 addBases(surface, *base, bases, depth + 1);

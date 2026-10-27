@@ -489,6 +489,13 @@ namespace SeeDocs_App
     private:
         [[nodiscard]] const Type* lookUp(std::wstring_view spelled, std::wstring_view scope,
             std::size_t depth = 0) const;
+        // The type of that qualified head taking that many arguments; null where there is none.
+        [[nodiscard]] const Type* typeUnder(std::wstring_view qualifiedHead,
+            std::size_t arguments) const;
+        // Whether a type takes the arguments a spelling hands it: a Delphi type takes the count
+        // its own name declares - TList none, TList<T> one - and a C++ template takes any.
+        [[nodiscard]] bool matchesArguments(const Type&, std::size_t arguments) const;
+        void indexType(std::size_t index);
         // The type of that name nested in one of the type's bases, the nearest base first.
         [[nodiscard]] const Type* inheritedType(const Type& owner, std::wstring_view name,
             std::size_t depth) const;
@@ -515,7 +522,9 @@ namespace SeeDocs_App
         ScanStamp m_scanned{};
         ScanMode m_mode{ ScanMode::AnyCppAndDelphi };
         HintRules m_hintRules{};
-        std::unordered_map<std::wstring, std::size_t> m_byQualifiedName;
+        // The types of one qualified name, argument lists taken off - Unit::TList holds TList
+        // and TList<T> both. See README#names
+        std::unordered_map<std::wstring, std::vector<std::size_t>> m_byQualifiedHead;
         std::unordered_map<std::wstring, std::vector<std::size_t>> m_byBareName;
         std::unordered_map<std::wstring, SourceLanguage> m_languageByModule;
     };
@@ -524,14 +533,17 @@ namespace SeeDocs_App
     export [[nodiscard]] bool inheritsConstructors(const Using&);
     // The last component of a qualified name.
     export [[nodiscard]] std::wstring_view bareName(std::wstring_view qualified);
-    // A spelled type without its template arguments - the name before the first bracket.
-    export [[nodiscard]] std::wstring_view withoutArguments(std::wstring_view spelled);
+    // A spelled type with every argument list taken off - Outer::Inner of Outer<int>::Inner.
+    export [[nodiscard]] std::wstring withoutArguments(std::wstring_view spelled);
     // The template arguments of a spelled type, split at the top level.
     export [[nodiscard]] Names argumentsOf(std::wstring_view spelled);
     // A type spelling with const, references and pointers taken off.
     export [[nodiscard]] std::wstring_view plainType(std::wstring_view spelled);
     // The names a template head declares - T of typename T, N of std::size_t N.
     export [[nodiscard]] Names templateParameterNames(std::wstring_view parameters);
+    // The names a type's parameters go by: a Delphi generic's stand in its own name, TList<T>,
+    // and a C++ template's in its template head.
+    export [[nodiscard]] Names parameterNames(const Type&);
     // Whether a base spelled inside a type is one of the type's own template parameters.
     export [[nodiscard]] bool isTemplateParameter(const Type&, std::wstring_view spelled);
     // The text cut at its top-level commas, each piece trimmed - a macro's or template's arguments.
