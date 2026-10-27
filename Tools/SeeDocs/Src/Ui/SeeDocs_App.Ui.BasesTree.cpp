@@ -221,13 +221,15 @@ namespace SeeDocs_App::Ui
     }
 
     // The measuring pass placed the crumbs against no wall. They stand where they are when that
-    // fits the room given, and are placed again against its end when it does not.
+    // fits the room given, and are placed again against its end when it does not. Either way
+    // every crumb is then aligned where it stands - the pass that places its strip.
     void BasesTree::alignContent(AlignEvent& event, ScaledPosition, ScaledSize& newSize)
     {
         const ScaledSize measuredSize = scaledSize() - event.scaledPadding() * 2.0f;
-        if (measuredSize.x <= newSize.x)
-            return;
-        newSize = placeCrumbs(event, newSize.x);
+        if (measuredSize.x > newSize.x)
+            newSize = placeCrumbs(event, newSize.x);
+        for (ControlPtr& crumb : controls())
+            alignControl(crumb.get(), event, crumb->topLeft(), crumb->scaledSize());
     }
 
     // The lines go under the crumbs, which are painted after the surface.
