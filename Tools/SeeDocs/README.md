@@ -823,11 +823,15 @@ its name's cell, as a tree row does.
 
 #### Type pages
 
-**A class's title carries its bases under it as a reversed breadcrumb bar.**
+**A class's bases stand first on the page, under its title, as a reversed breadcrumb bar.** They
+scroll with the page; the title stays.
 
 - Each base has a crumb, its mark before it pointing back toward the type standing on it.
-- The ways up run right, and part into a column of rows where a type has several bases. A mixin's
-  host is reached through the argument it was given.
+- Lines join the crumbs. A way up runs right along its row while the room before the page's edge
+  holds everything over it, and turns down under a crumb where it does not. A crumb's other bases
+  stand under it too, in their order, each on the first row with room for it, so the rows pack
+  and a chain stands beside another's bases. The direct bases hang from the title's icon. A
+  mixin's host is reached through the argument it was given.
 - A crumb opens its base's page. Its mark drops the types standing directly on that base, the one
   the way up came through marked. For a base the surface does not have, it drops the types whose
   bases spell it the same way, template arguments aside.

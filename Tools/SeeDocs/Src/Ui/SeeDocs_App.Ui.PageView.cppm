@@ -1,6 +1,5 @@
 export module SeeDocs_App.Ui.PageView;
 
-import SeeDocs_App.Ui.BasesTree;
 import SeeDocs_App.Ui.Editing;
 import SeeDocs_App.Ui.Icons;
 import SeeDocs_App.Pages;
@@ -101,12 +100,12 @@ namespace SeeDocs_App::Ui
 
     constexpr float k_pagePadding = 24.0f;   // at the sides of a page's parts
     constexpr float k_headPadding = 12.0f;   // above and below the title, and over the body
+    constexpr float k_basesIndent = 24.0f;   // of what stands under the title
 
     // The bar a page's title stands in, which stays while the page scrolls: the mark of what
     // the page is, large, then the title with its scope before it and its badges after it, and the
-    // page's commands at the title's right end; the title's lines under it, a class's bases under
-    // those as crumbs, and the commands that stand in a row under the title. Every page of the
-    // browser wears one, whatever it is made of.
+    // page's commands at the title's right end; the title's lines under it, and the commands that
+    // stand in a row under the title. Every page of the browser wears one, whatever it is made of.
     export class PageHead : public StackPanel
     {
     public:
@@ -114,7 +113,6 @@ namespace SeeDocs_App::Ui
         explicit PageHead(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] TextBox& titleBox() const { return m_title; }
-        [[nodiscard]] BasesTree& basesTree() const { return m_basesTree; }
         [[nodiscard]] StackPanel& commandBar() const { return m_commands; }   // hidden at first
         [[nodiscard]] StackPanel& titleCommandBar() const { return m_titleCommands; }   // hidden at first
         void write(const Page&);
@@ -124,7 +122,6 @@ namespace SeeDocs_App::Ui
         static void writeIcon(Text&, std::optional<RowIcon>);
     private:
         static constexpr float k_iconGap = 8.0f;      // between the icon and the title
-        static constexpr float k_basesIndent = 24.0f;   // of what stands under the title
         static constexpr float k_commandGap = 10.0f;    // before and between the buttons
         static constexpr float k_titleCommandsGap = 4.0f;   // above and below the title's row
 
@@ -139,9 +136,6 @@ namespace SeeDocs_App::Ui
             Spacing{ k_commandGap },
             VerticalAlign::Center
         ) };
-        BasesTree& m_basesTree{ add<BasesTree>(
-            Padding{ k_basesIndent, 0.0f }
-            ) };
         StackPanel& m_titleCommands{ add<StackPanel>(
             Orientation::Horizontal,
             Padding{ 0.0f, k_titleCommandsGap },
@@ -247,6 +241,7 @@ namespace SeeDocs_App::Ui
     private:
         void clear();
         void addHead();
+        void addBases();
         void addLead();
         void addFacts();
         [[nodiscard]] Expander& addSection(const Section&);

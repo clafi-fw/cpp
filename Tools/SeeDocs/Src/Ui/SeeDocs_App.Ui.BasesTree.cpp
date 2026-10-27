@@ -12,14 +12,16 @@ import ClaFi.Controls.Menu;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.DrawIconEvent;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Graphics.Canvas;
+import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
-import ClaFi.Core.Context.FormContext;
 
 namespace SeeDocs_App::Ui
 {
@@ -40,6 +42,21 @@ namespace SeeDocs_App::Ui
                     return run.link;
             }
             return {};
+        }
+
+        // A line's centre where a stroke that wide covers whole pixels.
+        [[nodiscard]] float pixelCentre(const float value, const float strokeWidth)
+        {
+            const bool oddWidth = static_cast<int>(strokeWidth) % 2 == 1;
+            return std::floor(value) + (oddWidth ? 0.5f : 0.0f);
+        }
+
+        // From a radius above the corner, the turn right into a line ending at endX.
+        void turnInto(Graphics::PixelPath& path, const FloatPoint corner, const float endX,
+            const float radius)
+        {
+            path.quadTo(corner, { corner.x + radius, corner.y });
+            path.hLineTo(endX);
         }
     }
 
@@ -87,10 +104,11 @@ namespace SeeDocs_App::Ui
     {
     }
 
-    ScaledSize BaseCrumb::calculateContent(AlignEvent& alignEvent)
+    // The strip stands at the crumb's edge, inside the child inset alone.
+    float BaseCrumb::markCentreX(const FormContext& formContext) const
     {
-        m_moved = 0;
-        return DropdownControlBase::calculateContent(alignEvent);
+        const Control& strip = *secondaryPart();
+        return childInset(formContext, scaledPadding()).x + strip.scaledWidth() / 2.0f;
     }
 
     void BaseCrumb::getMainText(GetTextEvent& event) const
@@ -174,94 +192,266 @@ namespace SeeDocs_App::Ui
     void BasesTree::clear()
     {
         m_bases = {};
-        //m_crumbs.clear();
         m_crumbsMap.clear();
+        m_links.clear();
+        m_branches.clear();
+        m_trunks.clear();
         while (!controls().empty())
             controls().back()->deleteSelf();
     }
 
     ScaledSize BasesTree::calculateContent(AlignEvent& event)
     {
-        return calculateBases(event, m_bases, {}, k_maxFloat);
+        return placeCrumbs(event, k_maxFloat);
     }
 
-    void BasesTree::alignContent(AlignEvent& event, ScaledPosition scaledPosition, ScaledSize& newSize)
+    // The measuring pass placed the crumbs against no wall. They stand where they are when that
+    // fits the room given, and are placed again against its end when it does not.
+    void BasesTree::alignContent(AlignEvent& event, ScaledPosition, ScaledSize& newSize)
     {
-        const ScaledSize calculatedSize = scaledSize() - event.scaledPadding() * 2.0f;
-        if (calculatedSize.x <= newSize.x)
+        const ScaledSize measuredSize = scaledSize() - event.scaledPadding() * 2.0f;
+        if (measuredSize.x <= newSize.x)
             return;
-        newSize = calculateBases(event, m_bases, {}, newSize.x);
+        newSize = placeCrumbs(event, newSize.x);
     }
 
-    void BasesTree::paintSurface(PaintEvent& paintEvent)
+    // The lines go under the crumbs, which are painted after the surface.
+    void BasesTree::paintSurface(PaintEvent& event)
     {
-        ContainerBase::paintSurface(paintEvent);
-    }
-
-    ScaledSize BasesTree::calculateBases(AlignEvent& event, const BaseSpan& bases, ScaledPosition position, float wallX)
-    {
-        ScaledSize resultSize{};
-        for (const BaseNode& node : bases)
+        ContainerBase::paintSurface(event);
+        if (m_trunks.empty())
+            return;
+        const FloatPoint origin = event.contentPosition();
+        const Color ink = event.textRgb(InkGrade::Subtle);
+        const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
+        const auto snapped = [origin, strokeWidth](const FloatPoint point) {
+            return FloatPoint{
+                pixelCentre(origin.x + point.x, strokeWidth),
+                pixelCentre(origin.y + point.y, strokeWidth),
+            };
+        };
+        Graphics::Canvas& canvas = event.canvas();
+        for (const Line& link : m_links)
+            canvas.drawLine(snapped(link.from), snapped(link.to), ink, strokeWidth);
+        for (const Line& branch : m_branches)
         {
-            if (resultSize.y)
-                resultSize.y += event.scaledSpacingY();
-            ScaledSize branchSize = calculateBranch(event, node, { position.x, position.y + resultSize.y }, wallX);
-            resultSize.y += branchSize.y;
-            resultSize.x = std::max(branchSize.x, resultSize.x);
+            const FloatPoint corner = snapped(branch.from);
+            Graphics::PixelPath path;
+            path.moveTo({ corner.x, corner.y - m_cornerRadius });
+            turnInto(path, corner, snapped(branch.to).x, m_cornerRadius);
+            canvas.drawPath(path, ink, strokeWidth);
         }
-        return resultSize;
-    }
-
-    void BasesTree::offsetBases(AlignEvent& event, const BaseSpan& bases, FloatPoint value)
-    {
-        for (const BaseNode& node : bases)
+        for (const Trunk& trunk : m_trunks)
         {
-            const auto& crumb = m_crumbsMap[&node];
-            ScaledPosition old = crumb->topLeft();
-            setScaledPosition(*crumb, old + value);
-            crumb->incMoved();
-            offsetBases(event, node.bases, value);
+            const FloatPoint top = snapped(trunk.top);
+            const FloatPoint end = snapped({ trunk.endX, trunk.bottomY });
+            Graphics::PixelPath path;
+            path.moveTo(top);
+            path.vLineTo(end.y - m_cornerRadius);
+            turnInto(path, { top.x, end.y }, end.x, m_cornerRadius);
+            canvas.drawPath(path, ink, strokeWidth);
         }
     }
 
-    ScaledSize BasesTree::calculateBranch(AlignEvent& event, const BaseNode& node, ScaledPosition position, float wallX)
+    ScaledSize BasesTree::placeCrumbs(AlignEvent& event, const float wallX)
     {
-        const auto& crumb = m_crumbsMap[&node];
-        ScaledSize result{ crumb->scaledWidth(), crumb->scaledHeight() };
-        
-        setScaledPosition(*crumb, { position.x, position.y });
+        m_links.clear();
+        m_branches.clear();
+        m_trunks.clear();
+        if (m_bases.empty())
+            return {};
+        Placing placing = {
+            .wallX = wallX,
+            .spacing = event.scaledSpacing(),
+        };
+        for (const CrumbsMap::value_type& entry : m_crumbsMap)
+            placing.rowHeight = std::max(placing.rowHeight, entry.second->scaledHeight());
+        placing.rowPitch = placing.rowHeight + placing.spacing.y;
+        // Every crumb wears the same strip, so one says where a base stacked under a crumb starts.
+        const BaseCrumb& firstCrumb = crumbOf(m_bases.front());
+        placing.indent = firstCrumb.markCentreX(event.formContext()) + placing.spacing.x;
+        placing.clearance = placing.spacing.x / 2.0f;
+        m_cornerRadius = placing.spacing.x / 2.0f;
+        placeDirectBases(event, placing);
+        return {
+            placing.rightX,
+            static_cast<float>(placing.lastRow) * placing.rowPitch + placing.rowHeight,
+        };
+    }
 
+    // The direct bases hang from the title's icon: their trunk runs under its centre, in the
+    // padding the head gives the tree, from the tree's top edge.
+    void BasesTree::placeDirectBases(AlignEvent& event, Placing& placing)
+    {
+        const float trunkX = event.scale(k_titleIconSize / 2.0f) - event.scaledPadding().x;
+        const float topY = -event.scaledPadding().y;
+        Lines stubs;
+        int previousRow = -1;
+        for (const BaseNode& node : m_bases)
         {
-            const float spacingX = event.scaledSpacingX();
-            const ScaledPosition nextPosition = { position.x + spacingX + result.x, position.y };
-            const ScaledSize basesSize = calculateBases(event, node.bases, nextPosition, wallX);
-            bool isOverflow = false;
-            if (basesSize.x)
+            BaseCrumb& crumb = crumbOf(node);
+            const int row = freeRow(placing, crumb, 0.0f, trunkX, previousRow);
+            put(placing, crumb, row, 0.0f);
+            addStub(placing, stubs, trunkX, row, 0.0f);
+            previousRow = row;
+            placeBases(event, placing, node);
+        }
+        addTrunk(placing, stubs, trunkX, topY, 0, previousRow);
+    }
+
+    // A crumb's first base continues its row where the way up fits before the wall and nothing
+    // stands there. Every other base stands under the crumb, on the first row with room for it
+    // below the base before it, so the bases keep their order while the rows pack.
+    void BasesTree::placeBases(AlignEvent& event, Placing& placing, const BaseNode& parent)
+    {
+        const BaseCrumb& parentCrumb = crumbOf(parent);
+        const int parentRow = rowOf(placing, parentCrumb);
+        const float parentRightX = parentCrumb.topLeft().x + parentCrumb.scaledWidth();
+        const float trunkX = parentCrumb.topLeft().x + parentCrumb.markCentreX(event.formContext());
+        const float x = trunkX + placing.spacing.x;
+        Lines stubs;
+        int previousRow = parentRow;
+        bool first = true;
+        for (const BaseNode& base : parent.bases)
+        {
+            BaseCrumb& crumb = crumbOf(base);
+            if (first && fitsOnRow(placing, parentCrumb, base))
             {
-                result.x += spacingX;
-                result.x += basesSize.x;
-                float overflow = nextPosition.x + basesSize.x - wallX;
-                if (overflow > 0.0f)
-                {
-                    isOverflow = true;
-                    constexpr float k_indent = 32.0f;
-                    const float indent = event.scale(k_indent);
-                    overflow = std::min(overflow, std::min(basesSize.x, crumb->scaledWidth() - indent));
-                    offsetBases(event, node.bases, { -overflow, result.y + event.scaledSpacingY() });
-                    result.x -= (overflow);
-                }
-            }
-            if (isOverflow)
-            {
-                if (basesSize.y)
-                    result.y += event.scaledSpacingY();
-                result.y += basesSize.y;
+                put(placing, crumb, parentRow, parentRightX + placing.spacing.x);
+                addLink(placing, parentRightX, crumb.topLeft().x, parentRow);
             }
             else
-                result.y = std::max(basesSize.y, result.y);
+            {
+                const int row = freeRow(placing, crumb, x, trunkX, previousRow);
+                put(placing, crumb, row, x);
+                addStub(placing, stubs, trunkX, row, x);
+                previousRow = row;
+            }
+            first = false;
+            placeBases(event, placing, base);
         }
+        if (stubs.empty())
+            return;
+        const float parentBottomY = parentCrumb.topLeft().y + parentCrumb.scaledHeight();
+        addTrunk(placing, stubs, trunkX, parentBottomY, parentRow + 1, previousRow);
+    }
 
-        return result;
+    bool BasesTree::fitsOnRow(const Placing& placing, const BaseCrumb& parent,
+        const BaseNode& base) const
+    {
+        const float parentRightX = parent.topLeft().x + parent.scaledWidth();
+        const float x = parentRightX + placing.spacing.x;
+        if (x + requiredWidth(placing, base) > placing.wallX)
+            return false;
+        const float rightX = x + crumbOf(base).scaledWidth() + placing.clearance;
+        return rowFree(placing, rowOf(placing, parent), { parentRightX, rightX });
+    }
+
+    // The first row below the previous one where the crumb, its clearance and the stub reaching
+    // it from the trunk meet nothing.
+    int BasesTree::freeRow(const Placing& placing, const BaseCrumb& crumb, const float x,
+        const float trunkX, const int previousRow) const
+    {
+        const Span span = {
+            std::min(trunkX, x - placing.clearance),
+            x + crumb.scaledWidth() + placing.clearance,
+        };
+        int row = previousRow + 1;
+        while (!rowFree(placing, row, span))
+            ++row;
+        return row;
+    }
+
+    // The least room a base and everything over it take: every base stacked under its crumb, a
+    // row continued being wider. A crumb placed with this much room before the wall can place
+    // everything over it, since each base stacked under it has this much less to place in.
+    float BasesTree::requiredWidth(const Placing& placing, const BaseNode& base) const
+    {
+        float innerWidth = 0.0f;
+        for (const BaseNode& node : base.bases)
+            innerWidth = std::max(innerWidth, requiredWidth(placing, node));
+        const float width = crumbOf(base).scaledWidth();
+        if (!innerWidth)
+            return width;
+        return std::max(width, placing.indent + innerWidth);
+    }
+
+    void BasesTree::put(Placing& placing, BaseCrumb& crumb, const int row, const float x)
+    {
+        setScaledPosition(crumb, { x, static_cast<float>(row) * placing.rowPitch });
+        const float rightX = x + crumb.scaledWidth();
+        takeSpan(placing, row, { x, rightX });
+        placing.rightX = std::max(placing.rightX, rightX);
+        placing.lastRow = std::max(placing.lastRow, row);
+    }
+
+    void BasesTree::addLink(Placing& placing, const float fromX, const float toX, const int row)
+    {
+        const float y = rowCentreY(placing, row);
+        m_links.push_back({ { fromX, y }, { toX, y } });
+        takeSpan(placing, row, { fromX, toX });
+    }
+
+    void BasesTree::addStub(Placing& placing, Lines& stubs, const float trunkX, const int row,
+        const float x)
+    {
+        const float y = rowCentreY(placing, row);
+        stubs.push_back({ { trunkX, y }, { x, y } });
+        takeSpan(placing, row, { trunkX, x });
+    }
+
+    // The stubs but the last branch off the trunk; the last is where it turns.
+    void BasesTree::addTrunk(Placing& placing, const Lines& stubs, const float trunkX,
+        const float topY, const int fromRow, const int toRow)
+    {
+        for (int row = fromRow; row <= toRow; ++row)
+            takeSpan(placing, row, { trunkX, trunkX });
+        const Line& last = stubs.back();
+        m_trunks.push_back({ .top = { trunkX, topY }, .bottomY = last.from.y, .endX = last.to.x });
+        m_branches.insert(m_branches.end(), stubs.begin(), stubs.end() - 1);
+    }
+
+    // Touching is not meeting: a link starts where its crumb ends, and a crumb's clearance may
+    // end on a line.
+    bool BasesTree::rowFree(const Placing& placing, const int row, const Span span)
+    {
+        const std::size_t index = static_cast<std::size_t>(row);
+        if (index >= placing.rows.size())
+            return true;
+        for (const Span& taken : placing.rows[index])
+        {
+            if (span.right > taken.left && span.left < taken.right)
+                return false;
+        }
+        return true;
+    }
+
+    void BasesTree::takeSpan(Placing& placing, const int row, const Span span)
+    {
+        const std::size_t index = static_cast<std::size_t>(row);
+        if (index >= placing.rows.size())
+            placing.rows.resize(index + 1);
+        placing.rows[index].push_back(span);
+    }
+
+    int BasesTree::rowOf(const Placing& placing, const BaseCrumb& crumb)
+    {
+        return static_cast<int>(std::lround(crumb.topLeft().y / placing.rowPitch));
+    }
+
+    float BasesTree::rowCentreY(const Placing& placing, const int row)
+    {
+        return static_cast<float>(row) * placing.rowPitch + placing.rowHeight / 2.0f;
+    }
+
+    BaseCrumb& BasesTree::crumbOf(const BaseNode& node)
+    {
+        return *m_crumbsMap.at(&node);
+    }
+
+    const BaseCrumb& BasesTree::crumbOf(const BaseNode& node) const
+    {
+        return *m_crumbsMap.at(&node);
     }
 
     void BasesTree::addCrumbs(BaseSpan bases)
@@ -269,9 +459,6 @@ namespace SeeDocs_App::Ui
         for (const BaseNode& base : bases)
         {
             BaseCrumb& newCrumb = add<BaseCrumb>(base);
-
-            //m_crumbs.push_back(&newCrumb);
-
             m_crumbsMap.emplace(&base, &newCrumb);
 
             newCrumb.onContextPopup([this, &newCrumb](ContextPopupEvent& event) {

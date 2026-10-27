@@ -418,9 +418,6 @@ namespace SeeDocs_App::Ui
 
     // PageHead
 
-    // **The crumbs are built again on every write**, because each holds the base it names by
-    // reference: a page refreshed in place takes a new set of bases, and the crumbs of the old set
-    // must not outlive it.
     void PageHead::write(const Page& page)
     {
         const std::optional<RowIcon> icon = iconOf(page.kind, page.type);
@@ -441,7 +438,6 @@ namespace SeeDocs_App::Ui
             writeRuns(head, line);
         }
         m_title.text() = head;
-        m_basesTree.setBases(page.bases);
         const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
         m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
     }
@@ -453,7 +449,6 @@ namespace SeeDocs_App::Ui
         writeIcon(head, icon);
         head << title << PopTextStyle{};
         m_title.text() = head;
-        m_basesTree.clear();
         const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
         m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
     }
@@ -461,7 +456,6 @@ namespace SeeDocs_App::Ui
     void PageHead::clear()
     {
         m_title.text().clear();
-        m_basesTree.clear();
     }
 
     void PageHead::writeIcon(Text& head, const std::optional<RowIcon> icon)
@@ -482,6 +476,7 @@ namespace SeeDocs_App::Ui
         clear();
         m_page = std::move(page);
         addHead();
+        addBases();
         addLead();
         addFacts();
         for (const Section& section : m_page.sections)
@@ -674,6 +669,31 @@ namespace SeeDocs_App::Ui
         m_head.setVisible(true);
         m_renders.push_back([this]() {
             m_head.write(m_page);
+        });
+    }
+
+    // A class's bases as crumbs, first on the page under the title. **A crumb's page opens once
+    // the press has unwound**: the page shown next builds the body again, and the crumb pressed -
+    // or the one whose list is still closing - goes with it.
+    void PageView::addBases()
+    {
+        if (m_page.bases.empty())
+            return;
+        BasesTree& tree = m_pageBox.body().add<BasesTree>(Padding{ k_basesIndent, 0.0f });
+        tree.onBaseLink([this, &tree](BaseLinkEvent& event) {
+            later([this, &tree, target = event.target]() {
+                open(target, tree);
+            });
+        });
+        tree.onBaseLinkContextPopup([this](BaseLinkContextPopupEvent& event) {
+            showLinkMenu(event.crumb, event.target, event.popup);
+        });
+        m_parts.push_back(&tree);
+        // The crumbs are built again on every render, because each holds the base it names by
+        // reference: a page refreshed in place takes a new set of bases, and the crumbs of the old
+        // set must not outlive it.
+        m_renders.push_back([this, &tree]() {
+            tree.setBases(m_page.bases);
         });
     }
 
@@ -1664,21 +1684,9 @@ namespace SeeDocs_App::Ui
         return true;
     }
 
-    // **A crumb's page opens once the press has unwound**: the page shown next builds the crumbs
-    // again, and the one pressed - or the one whose list is still closing - goes with them.
     void PageView::connectHead()
     {
         connectLinks(m_head.titleBox());
-
-        BasesTree* bases = &m_head.basesTree();
-        bases->onBaseLink([this, bases](BaseLinkEvent& event) {
-            later([this, bases, target = event.target]() {
-                open(target, *bases);
-                });
-            });
-        bases->onBaseLinkContextPopup([this](BaseLinkContextPopupEvent& event) {
-            showLinkMenu(event.crumb, event.target, event.popup);
-            });
     }
 
     void PageView::open(std::wstring target, Control& source) const
