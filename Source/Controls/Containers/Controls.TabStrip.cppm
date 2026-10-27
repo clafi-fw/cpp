@@ -232,7 +232,7 @@ namespace ClaFi::Controls
     {
         setScaledWidth(scaledWidth() - value);
         Control& strip = *TabBaseClass::parent();
-        setScaledWidth(strip, strip.scaledWidth() - value);
+        setControlScaledWidth(strip, strip.scaledWidth() - value);
     }
 
     void Tab::setPage(RichControl* page)

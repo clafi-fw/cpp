@@ -174,7 +174,6 @@ namespace SeeDocs_App::Ui
             Spacing{ 8.0f },
             HorizontalAlign::Fill,
             VerticalAlign::Top,
-            UiElement::Section,
             std::forward<Args>(args)...
         }
     {

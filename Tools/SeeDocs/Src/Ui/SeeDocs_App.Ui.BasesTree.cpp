@@ -420,7 +420,7 @@ namespace SeeDocs_App::Ui
     void BasesTree::put(Placing& placing, const BaseNode& base, const int row, const float x)
     {
         const float y = static_cast<float>(row) * placing.rowPitch;
-        setScaledPosition(crumbOf(base), { x, y });
+        setControlScaledPosition(crumbOf(base), { x, y });
         const float rightX = x + crumbRoom(placing, base);
         takeSpan(placing, row, { x, rightX });
         placing.rightX = std::max(placing.rightX, rightX);

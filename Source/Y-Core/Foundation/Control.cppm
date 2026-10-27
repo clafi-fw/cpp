@@ -1412,12 +1412,12 @@ namespace ClaFi
     protected:
         //
         // helpers to lay out children from a container
-        static void setScaledSize(Control& control, ScaledSize value) { control.setScaledSize(value); }
-        static void setScaledPosition(Control& control, ScaledPosition value) { control.setScaledPosition(value); }
-        static void setScaledWidth(Control& control, float value) { control.setScaledWidth(value); };
-        static void setScaledHeight(Control& control, float value) { control.setScaledHeight(value); };
-        static void setScaledTop(Control& control, float value) { control.setScaledTop(value); };
-        static void setScaledLeft(Control& control, float value) { control.setScaledLeft(value); };
+        static void setControlScaledSize(Control& control, ScaledSize value) { control.setScaledSize(value); }
+        static void setControlScaledPosition(Control& control, ScaledPosition value) { control.setScaledPosition(value); }
+        static void setControlScaledWidth(Control& control, float value) { control.setScaledWidth(value); };
+        static void setControlScaledHeight(Control& control, float value) { control.setScaledHeight(value); };
+        static void setControlScaledTop(Control& control, float value) { control.setScaledTop(value); };
+        static void setControlScaledLeft(Control& control, float value) { control.setScaledLeft(value); };
 
         // Sizes one child. A host whose calculateChildren() does not walk controls() - ButtonBase
         // places its indicator by hand rather than calculating it - has to size the rest itself,

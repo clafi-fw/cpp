@@ -425,7 +425,7 @@ namespace ClaFi::Controls
     void SliderBase::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& contentSize)
     {
         SliderBaseClass::alignContent(event, position, contentSize);
-        setScaledSize(m_bodySpacer, { 0, 0 });
+        setControlScaledSize(m_bodySpacer, { 0, 0 });
         alignThumb();
     }
 

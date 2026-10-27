@@ -307,7 +307,7 @@ namespace ClaFi
             {
                 alignControl(card, event, { left, 0.0f }, { width, std::max(bottom, 0.0f) });
                 bottom -= card->scaledHeight();
-                setScaledTop(*card, bottom);
+                setControlScaledTop(*card, bottom);
                 bottom -= spacing;
             }
         }
