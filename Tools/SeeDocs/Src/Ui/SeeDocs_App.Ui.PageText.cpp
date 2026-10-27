@@ -177,37 +177,52 @@ namespace SeeDocs_App::Ui
                 lineStart = newline + 1;
             }
         }
+
+        // The runs as styled, each linked run inside its link, a colour given pushed inside it.
+        void writeStyledRuns(Text& text, const Runs& runs, const std::optional<Color> color)
+        {
+            for (const Run& run : runs)
+            {
+                const bool linked = !run.link.empty();
+                if (linked)
+                    text << PushLink{ run.link };
+                if (color)
+                    text << *color;
+                switch (run.style)
+                {
+                    case RunStyle::Plain:
+                        text << run.text;
+                        break;
+                    case RunStyle::Code:
+                        text << TextStyle::Code << run.text << PopTextStyle{};
+                        break;
+                    case RunStyle::Path:
+                        text << TextStyle::Code << InkWell::spotInk() << run.text << PopColor{}
+                            << PopTextStyle{};
+                        break;
+                    case RunStyle::Muted:
+                        text << InkGrade::Muted << run.text << PopColor{};
+                        break;
+                    case RunStyle::Bold:
+                        text << TextOp::PushBold << run.text << TextOp::PopBold;
+                        break;
+                }
+                if (color)
+                    text << PopColor{};
+                if (linked)
+                    text << PopLink{};
+            }
+        }
     }
 
     void writeRuns(Text& text, const Runs& runs)
     {
-        for (const Run& run : runs)
-        {
-            const bool linked = !run.link.empty();
-            if (linked)
-                text << PushLink{ run.link };
-            switch (run.style)
-            {
-                case RunStyle::Plain:
-                    text << run.text;
-                    break;
-                case RunStyle::Code:
-                    text << TextStyle::Code << run.text << PopTextStyle{};
-                    break;
-                case RunStyle::Path:
-                    text << TextStyle::Code << InkWell::spotInk() << run.text << PopColor{}
-                        << PopTextStyle{};
-                    break;
-                case RunStyle::Muted:
-                    text << InkGrade::Muted << run.text << PopColor{};
-                    break;
-                case RunStyle::Bold:
-                    text << TextOp::PushBold << run.text << TextOp::PopBold;
-                    break;
-            }
-            if (linked)
-                text << PopLink{};
-        }
+        writeStyledRuns(text, runs, std::nullopt);
+    }
+
+    void writeRuns(Text& text, const Runs& runs, const Color color)
+    {
+        writeStyledRuns(text, runs, color);
     }
 
     Text textOf(const Runs& runs)

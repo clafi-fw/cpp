@@ -378,6 +378,13 @@ Saturation 0, at luminosity 0 and 1. A lower grade fades it toward the surface.
   in the unit cube can be drawn;
 - hue is a fraction of a turn, and equal steps around it look equal.
 
+## ColorCodes
+
+**A key's colour is the one it was first given.** The first key takes the colour the codes were
+made with, each new key the hue a step further round the wheel, and asking for a key again answers
+the same colour. Six steps of the default go round the wheel once, so the seventh key wears the
+first key's colour again. `clear` forgets every key and starts from the first colour.
+
 ## UiTimer
 
 **A timer fires once.** Each start arms one tick, and the timer is inactive by the time OnTick is

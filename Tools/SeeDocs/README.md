@@ -839,6 +839,9 @@ scroll with the page; the title stays.
   stand under it too, in their order, each on the first row with room for it, so the rows pack
   and a chain stands beside another's bases. The direct bases hang from the title's icon. A
   mixin's host is reached through the argument it was given.
+- A base reached by several ways has its bases drawn once, under its crumb nearest the type. Its
+  other crumbs stand alone, a muted ellipsis after one whose bases are left out, and every crumb of
+  the base wears one colour.
 - A crumb opens its base's page. Its mark drops the types standing directly on that base, the one
   the way up came through marked. For a base the surface does not have, it drops the types whose
   bases spell it the same way, template arguments aside.

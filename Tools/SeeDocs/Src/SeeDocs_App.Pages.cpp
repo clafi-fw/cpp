@@ -1237,7 +1237,11 @@ namespace SeeDocs_App
             const Type* type = surface.resolve(resolvedSpelling, reading.scope);
             if (type && isNested(*type))
                 return;
-            BaseNode node{ .text = baseText(resolvedSpelling, type), .type = type };
+            BaseNode node{
+                .text = baseText(resolvedSpelling, type),
+                .spelling = resolvedSpelling,
+                .type = type,
+            };
             if (type && !closesRing(walk, *type, resolvedSpelling))
             {
                 ReachedBase base = reachedBase(resolvedSpelling, *type, flow);
@@ -1271,7 +1275,7 @@ namespace SeeDocs_App
                     addBaseNode(walk, into, surface, *reading, depth, outward);
                     continue;
                 }
-                into.push_back({ .text = baseText(base, nullptr) });
+                into.push_back({ .text = baseText(base, nullptr), .spelling = base });
             }
         }
 
@@ -1293,6 +1297,73 @@ namespace SeeDocs_App
             addBaseNodes(walk, walk.bases, surface, type, type.name, type.enclosingScope(), 0,
                 Flow{ .constructors = true });
             return walk;
+        }
+
+        // A node of the tree and how many steps up from the type it stands.
+        struct TreeStep
+        {
+            BaseNode* node{ nullptr };
+            std::size_t depth{ 0 };
+        };
+
+        using TreeSteps = std::vector<TreeStep>;
+        using KeeperBySpelling = std::unordered_map<std::wstring, TreeStep>;
+
+        // Every node reading down, as a reader meets them.
+        void collectSteps(BaseNodes& bases, const std::size_t depth, TreeSteps& into)
+        {
+            for (BaseNode& base : bases)
+            {
+                into.push_back({ .node = &base, .depth = depth });
+                collectSteps(base.bases, depth + 1, into);
+            }
+        }
+
+        // Of the crumbs spelling one base, the one that keeps the base's bases: the nearest the
+        // type, the first reading down among those as near.
+        [[nodiscard]] KeeperBySpelling keepersOf(const TreeSteps& steps)
+        {
+            KeeperBySpelling keepers;
+            for (const TreeStep& step : steps)
+            {
+                const auto found = keepers.find(step.node->spelling);
+                if (found == keepers.end())
+                    keepers.emplace(step.node->spelling, step);
+                else if (step.depth < found->second.depth)
+                    found->second = step;
+            }
+            return keepers;
+        }
+
+        // Every crumb but a base's keeper stands alone: its bases are left out, and all over them.
+        void leaveOutRepeats(BaseNodes& bases, const KeeperBySpelling& keepers)
+        {
+            for (BaseNode& base : bases)
+            {
+                if (keepers.at(base.spelling).node == &base)
+                {
+                    leaveOutRepeats(base.bases, keepers);
+                    continue;
+                }
+                base.basesLeftOut = !base.bases.empty();
+                base.bases.clear();
+            }
+        }
+
+        // A base that stands more than once on the tree keeps its bases under one crumb, the
+        // nearest the type, and every crumb of it is marked as one of several.
+        void foldRepeats(BaseNodes& bases)
+        {
+            TreeSteps steps;
+            collectSteps(bases, 0, steps);
+            leaveOutRepeats(bases, keepersOf(steps));
+            steps.clear();
+            collectSteps(bases, 0, steps);
+            std::unordered_map<std::wstring, std::size_t> crumbCounts;
+            for (const TreeStep& step : steps)
+                ++crumbCounts[step.node->spelling];
+            for (const TreeStep& step : steps)
+                step.node->repeated = crumbCounts.at(step.node->spelling) > 1;
         }
 
         // The derived types
@@ -1433,14 +1504,6 @@ namespace SeeDocs_App
             return index;
         }
 
-        [[nodiscard]] std::wstring spellingOf(const BaseNode& base)
-        {
-            std::wstring result;
-            for (const Run& run : base.text)
-                result += run.text;
-            return result;
-        }
-
         // The types standing directly on a base: by the type it names, or by what it is known by
         // where the surface does not have it; null for none.
         [[nodiscard]] const TypeList* derivedOf(const BaseNode& base, const DerivedIndex& index,
@@ -1451,7 +1514,7 @@ namespace SeeDocs_App
                 const auto found = index.find(base.type);
                 return found == index.end() ? nullptr : &found->second;
             }
-            const auto found = unknown.find(unknownBaseKey(spellingOf(base)));
+            const auto found = unknown.find(unknownBaseKey(base.spelling));
             return found == unknown.end() ? nullptr : &found->second;
         }
 
@@ -1482,6 +1545,7 @@ namespace SeeDocs_App
             const DerivedIndex& index, const Type& type)
         {
             BaseWalk walk = baseWalkOf(surface, type);
+            foldRepeats(walk.bases);
             const UnknownBaseIndex unknown = unknownBaseIndexOf(surface);
             TypeList way = { &type };
             addDerivedLists(walk.bases, index, unknown, way);

@@ -131,9 +131,7 @@ namespace ClaFi
         // which page the window opens on is the config's answer, and that is not read yet.
         Tab& outputTab{ form.body().strip().addTab(k_outputTabCaption, Page{ output }) };
         Tab& fpsTab{ form.body().strip().addTab(k_fpsTabCaption, Page{ fps }) };
-        // The colour a line names each control in, and the hue the next control is given.
-        std::unordered_map<const Control*, Color> controlColors{};
-        Hsl nextControlColor{ 0.6f, 1.0f, 0.66f };
+        ColorCodes<const Control*> controlColors{};   // the colour a line names each control in
     };
 
     // Not at namespace scope, where its destructor is registered at startup. See Diagnostic#Options
@@ -197,15 +195,7 @@ namespace ClaFi
                 newItem.text() << L": ";
                 if (ptr)
                 {
-                    Color color;
-                    if (!window.controlColors.contains(ptr))
-                    {
-                        color = window.nextControlColor.toColor();
-                        window.controlColors.insert({ ptr, color });
-                        window.nextControlColor.offsetHue(1.0f / 6.0f);
-                    }
-                    else
-                        color = window.controlColors[ptr];
+                    const Color color = window.controlColors.colorOf(ptr);
                     newItem.text() << color << address << PopColor{};
                     const std::wstring_view label = ptr->diagnosticText();
                     if (!label.empty())

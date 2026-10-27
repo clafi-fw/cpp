@@ -207,6 +207,25 @@ namespace ClaFi
         static void clampValue(float& value);
     };
 
+    // A colour per key - a new key takes the next hue round the wheel, a known key the one it has.
+    export template <typename Key>
+    class ColorCodes
+    {
+    public:
+        ColorCodes() = default;
+        ColorCodes(Hsl firstColor, float hueStep);
+    public:
+        [[nodiscard]] Color colorOf(const Key&);   // given on the first ask, kept after
+        void clear();
+    private:
+        using Colors = std::unordered_map<Key, Color>;
+    private:
+        Colors m_colors{};
+        Hsl m_first{ 0.6f, 1.0f, 0.66f };
+        Hsl m_next{ m_first };
+        float m_hueStep{ 1.0f / 6.0f };
+    };
+
 
     //----------------------------------------------------------------------------
 
@@ -251,6 +270,33 @@ namespace ClaFi
     }
 
 
-    // Color
+    // ColorCodes
 
+    template <typename Key>
+    ColorCodes<Key>::ColorCodes(const Hsl firstColor, const float hueStep)
+        :
+        m_first{ firstColor },
+        m_next{ firstColor },
+        m_hueStep{ hueStep }
+    {
+    }
+
+    template <typename Key>
+    Color ColorCodes<Key>::colorOf(const Key& key)
+    {
+        const auto found = m_colors.find(key);
+        if (found != m_colors.end())
+            return found->second;
+        const Color color = m_next.toColor();
+        m_colors.emplace(key, color);
+        m_next.offsetHue(m_hueStep);
+        return color;
+    }
+
+    template <typename Key>
+    void ColorCodes<Key>::clear()
+    {
+        m_colors.clear();
+        m_next = m_first;
+    }
 }

@@ -4,6 +4,7 @@ import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
@@ -15,6 +16,8 @@ namespace SeeDocs_App::Ui
 
     // Writes the runs as they are styled, a linked run inside a link.
     export void writeRuns(Text&, const Runs&);
+    // The same in a colour of their own, inside each link, so the words wear it over the link ink.
+    export void writeRuns(Text&, const Runs&, Color);
     export [[nodiscard]] Text textOf(const Runs&);
     // The words of a text as a note writes them: bold between its marks, code between its, a
     // paragraph to a line and a blank line between two, an item behind a dash, a line of code

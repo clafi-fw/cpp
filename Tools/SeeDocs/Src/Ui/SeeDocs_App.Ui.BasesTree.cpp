@@ -32,6 +32,14 @@ namespace SeeDocs_App::Ui
     {
         // What a base's list says while no type the surface has stands on the base.
         constexpr std::wstring_view k_noDerived = L"No derived types";
+        // After a crumb whose bases are left out.
+        constexpr std::wstring_view k_ellipsis = L"\u2026";
+
+        // The ellipsis as a collapsed expander draws its own.
+        [[nodiscard]] Text ellipsisText()
+        {
+            return Text{ InkGrade::Muted, k_ellipsis };
+        }
 
         // The page a crumb names: the link its words carry; empty for a base with no page.
         [[nodiscard]] std::wstring_view targetOf(const BaseNode& node)
@@ -83,7 +91,8 @@ namespace SeeDocs_App::Ui
 
     // BaseCrumb
 
-    BaseCrumb::BaseCrumb(const CreateParams& params, const BaseNode& node)
+    BaseCrumb::BaseCrumb(const CreateParams& params, const BaseNode& node,
+        const std::optional<Color> nameColor)
         :
         DropdownControlBase{
             params,
@@ -100,7 +109,8 @@ namespace SeeDocs_App::Ui
             // Level with the middle of the run it stands in, a column of bases beside it included.
             VerticalAlign::Center
         },
-        m_node{ node }
+        m_node{ node },
+        m_nameColor{ nameColor }
     {
     }
 
@@ -113,7 +123,10 @@ namespace SeeDocs_App::Ui
 
     void BaseCrumb::getMainText(GetTextEvent& event) const
     {
-        writeRuns(event.text, m_node.text);
+        if (m_nameColor)
+            writeRuns(event.text, m_node.text, *m_nameColor);
+        else
+            writeRuns(event.text, m_node.text);
     }
 
     // The types standing directly on the base, the one the way up came through marked and entered
@@ -196,6 +209,8 @@ namespace SeeDocs_App::Ui
         m_links.clear();
         m_branches.clear();
         m_trunks.clear();
+        m_ellipses.clear();
+        m_colorCodes.clear();
         while (!controls().empty())
             controls().back()->deleteSelf();
     }
@@ -253,16 +268,33 @@ namespace SeeDocs_App::Ui
         }
     }
 
+    void BasesTree::paintOwnText(PaintEvent& event)
+    {
+        ContainerBase::paintOwnText(event);
+        if (m_ellipses.empty())
+            return;
+        const FloatPoint origin = event.contentPosition();
+        const Text ellipsis = ellipsisText();
+        for (const FloatRect& place : m_ellipses)
+        {
+            FloatRect bounds = place;
+            bounds.offset(origin);
+            drawText(event, bounds, ellipsis);
+        }
+    }
+
     ScaledSize BasesTree::placeCrumbs(AlignEvent& event, const float wallX)
     {
         m_links.clear();
         m_branches.clear();
         m_trunks.clear();
+        m_ellipses.clear();
         if (m_bases.empty())
             return {};
         Placing placing = {
             .wallX = wallX,
             .spacing = event.scaledSpacing(),
+            .ellipsisSize = measureText(event, { k_maxFloat, k_maxFloat }, ellipsisText()),
         };
         for (const CrumbsMap::value_type& entry : m_crumbsMap)
             placing.rowHeight = std::max(placing.rowHeight, entry.second->scaledHeight());
@@ -289,9 +321,8 @@ namespace SeeDocs_App::Ui
         int previousRow = -1;
         for (const BaseNode& node : m_bases)
         {
-            BaseCrumb& crumb = crumbOf(node);
-            const int row = freeRow(placing, crumb, 0.0f, trunkX, previousRow);
-            put(placing, crumb, row, 0.0f);
+            const int row = freeRow(placing, crumbRoom(placing, node), 0.0f, trunkX, previousRow);
+            put(placing, node, row, 0.0f);
             addStub(placing, stubs, trunkX, row, 0.0f);
             previousRow = row;
             placeBases(event, placing, node);
@@ -314,16 +345,15 @@ namespace SeeDocs_App::Ui
         bool first = true;
         for (const BaseNode& base : parent.bases)
         {
-            BaseCrumb& crumb = crumbOf(base);
             if (first && fitsOnRow(placing, parentCrumb, base))
             {
-                put(placing, crumb, parentRow, parentRightX + placing.spacing.x);
-                addLink(placing, parentRightX, crumb.topLeft().x, parentRow);
+                put(placing, base, parentRow, parentRightX + placing.spacing.x);
+                addLink(placing, parentRightX, crumbOf(base).topLeft().x, parentRow);
             }
             else
             {
-                const int row = freeRow(placing, crumb, x, trunkX, previousRow);
-                put(placing, crumb, row, x);
+                const int row = freeRow(placing, crumbRoom(placing, base), x, trunkX, previousRow);
+                put(placing, base, row, x);
                 addStub(placing, stubs, trunkX, row, x);
                 previousRow = row;
             }
@@ -343,18 +373,18 @@ namespace SeeDocs_App::Ui
         const float x = parentRightX + placing.spacing.x;
         if (x + requiredWidth(placing, base) > placing.wallX)
             return false;
-        const float rightX = x + crumbOf(base).scaledWidth() + placing.clearance;
+        const float rightX = x + crumbRoom(placing, base) + placing.clearance;
         return rowFree(placing, rowOf(placing, parent), { parentRightX, rightX });
     }
 
     // The first row below the previous one where the crumb, its clearance and the stub reaching
     // it from the trunk meet nothing.
-    int BasesTree::freeRow(const Placing& placing, const BaseCrumb& crumb, const float x,
+    int BasesTree::freeRow(const Placing& placing, const float width, const float x,
         const float trunkX, const int previousRow) const
     {
         const Span span = {
             std::min(trunkX, x - placing.clearance),
-            x + crumb.scaledWidth() + placing.clearance,
+            x + width + placing.clearance,
         };
         int row = previousRow + 1;
         while (!rowFree(placing, row, span))
@@ -370,19 +400,34 @@ namespace SeeDocs_App::Ui
         float innerWidth = 0.0f;
         for (const BaseNode& node : base.bases)
             innerWidth = std::max(innerWidth, requiredWidth(placing, node));
-        const float width = crumbOf(base).scaledWidth();
+        const float width = crumbRoom(placing, base);
         if (!innerWidth)
             return width;
         return std::max(width, placing.indent + innerWidth);
     }
 
-    void BasesTree::put(Placing& placing, BaseCrumb& crumb, const int row, const float x)
+    float BasesTree::crumbRoom(const Placing& placing, const BaseNode& base) const
     {
-        setScaledPosition(crumb, { x, static_cast<float>(row) * placing.rowPitch });
-        const float rightX = x + crumb.scaledWidth();
+        const float width = crumbOf(base).scaledWidth();
+        if (!base.basesLeftOut)
+            return width;
+        return width + placing.spacing.x + placing.ellipsisSize.x;
+    }
+
+    // The ellipsis stands a spacing after the crumb, level with the middle of its row.
+    void BasesTree::put(Placing& placing, const BaseNode& base, const int row, const float x)
+    {
+        const float y = static_cast<float>(row) * placing.rowPitch;
+        setScaledPosition(crumbOf(base), { x, y });
+        const float rightX = x + crumbRoom(placing, base);
         takeSpan(placing, row, { x, rightX });
         placing.rightX = std::max(placing.rightX, rightX);
         placing.lastRow = std::max(placing.lastRow, row);
+        if (!base.basesLeftOut)
+            return;
+        const ScaledSize size = placing.ellipsisSize;
+        m_ellipses.push_back(FloatRect::FromDimensions(
+            { rightX - size.x, y + (placing.rowHeight - size.y) / 2.0f }, size));
     }
 
     void BasesTree::addLink(Placing& placing, const float fromX, const float toX, const int row)
@@ -458,7 +503,10 @@ namespace SeeDocs_App::Ui
     {
         for (const BaseNode& base : bases)
         {
-            BaseCrumb& newCrumb = add<BaseCrumb>(base);
+            std::optional<Color> nameColor;
+            if (base.repeated)
+                nameColor = m_colorCodes.colorOf(base.spelling);
+            BaseCrumb& newCrumb = add<BaseCrumb>(base, nameColor);
             m_crumbsMap.emplace(&base, &newCrumb);
 
             newCrumb.onContextPopup([this, &newCrumb](ContextPopupEvent& event) {

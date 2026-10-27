@@ -249,10 +249,13 @@ namespace SeeDocs_App
     export struct BaseNode
     {
         Runs text;                     // the base as spelled, linked where the surface has its page
+        std::wstring spelling;         // text as plain words
         const Type* type{ nullptr };   // what it names; null for a base the surface does not have
         TypeList derived;              // the public types standing directly on it, in reading order
         const Type* from{ nullptr };   // the one of them the way up came through last
         std::vector<BaseNode> bases;   // a base each, the ways up parting where there are several
+        bool repeated{ false };        // the base stands more than once on the tree
+        bool basesLeftOut{ false };    // its bases stand under another of its crumbs, not here
     };
 
     export using BaseNodes = std::vector<BaseNode>;

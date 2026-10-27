@@ -48,7 +48,7 @@ namespace SeeDocs_App::Ui
     class BaseCrumb : public DropdownControlBase
     {
     public:
-        BaseCrumb(const CreateParams&, const BaseNode&);
+        BaseCrumb(const CreateParams&, const BaseNode&, std::optional<Color> nameColor);
     public:
         DECLARE_EVENT(BaseLinkEvent, OnBaseLink, onBaseLink);
     public:
@@ -67,6 +67,7 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] DropdownMarkTurn dropdownMarkTurn() const override;
     private:
         const BaseNode& m_node;
+        const std::optional<Color> m_nameColor;   // the base's code, where it stands more than once
     };
 
     using BaseSpan = std::span<const BaseNode>;
@@ -89,6 +90,7 @@ namespace SeeDocs_App::Ui
         ScaledSize calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void paintSurface(PaintEvent&) override;
+        void paintOwnText(PaintEvent&) override;
     private:
         // A line's two ends, in the tree's content coordinates.
         struct Line
@@ -113,6 +115,8 @@ namespace SeeDocs_App::Ui
         using Trunks = std::vector<Trunk>;
         using RowSpans = std::vector<Span>;
         using Rows = std::vector<RowSpans>;
+        using Ellipses = std::vector<FloatRect>;
+        using ColorCodesBySpelling = ColorCodes<std::wstring>;
         // One placing of the crumbs: the room it may use, and what every row holds so far.
         struct Placing
         {
@@ -122,6 +126,7 @@ namespace SeeDocs_App::Ui
             float rowPitch{ 0.0f };    // from one row's top to the next
             float indent{ 0.0f };      // from a crumb's left to a base stacked under it
             float clearance{ 0.0f };   // a crumb keeps this much from what it is not joined to
+            ScaledSize ellipsisSize{};   // of the mark after a crumb whose bases are left out
             Rows rows{};
             float rightX{ 0.0f };      // the widest row's end
             int lastRow{ 0 };
@@ -133,10 +138,12 @@ namespace SeeDocs_App::Ui
         void placeBases(AlignEvent&, Placing&, const BaseNode& parent);
         [[nodiscard]] bool fitsOnRow(const Placing&, const BaseCrumb& parent,
             const BaseNode&) const;
-        [[nodiscard]] int freeRow(const Placing&, const BaseCrumb&, float x, float trunkX,
+        [[nodiscard]] int freeRow(const Placing&, float width, float x, float trunkX,
             int previousRow) const;
         [[nodiscard]] float requiredWidth(const Placing&, const BaseNode&) const;
-        void put(Placing&, BaseCrumb&, int row, float x);
+        // The room a crumb takes on its row: its width, plus its ellipsis where bases are left out.
+        [[nodiscard]] float crumbRoom(const Placing&, const BaseNode&) const;
+        void put(Placing&, const BaseNode&, int row, float x);
         void addLink(Placing&, float fromX, float toX, int row);
         void addStub(Placing&, Lines& stubs, float trunkX, int row, float x);
         void addTrunk(Placing&, const Lines& stubs, float trunkX, float topY, int fromRow,
@@ -154,6 +161,8 @@ namespace SeeDocs_App::Ui
         Lines m_links{};      // between row neighbours
         Lines m_branches{};   // the stubs a trunk runs on past, each leaving it with a turn
         Trunks m_trunks{};
+        Ellipses m_ellipses{};   // after the crumbs whose bases are left out
+        ColorCodesBySpelling m_colorCodes{};   // worn by the bases standing more than once
         float m_cornerRadius{ 0.0f };   // of a trunk's turn
     };
 
