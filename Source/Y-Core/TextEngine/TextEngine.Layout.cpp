@@ -1272,7 +1272,11 @@ namespace ClaFi
         FloatRect cRect = getCaretRect(caretHit);
         FloatPoint targetPt;
         targetPt.x = targetX.has_value() ? targetX.value() : cRect.left;
-        targetPt.y = (dir == ScrollDirection::ToBegin) ? cRect.top - 1.0f : cRect.bottom + 1.0f;
+        // The point just past the edge: one float, not one pixel, so the step is never lost
+        // to the float's spacing at a tall text's far end.
+        targetPt.y = (dir == ScrollDirection::ToBegin)
+            ? std::nextafter(cRect.top, -k_maxFloat)
+            : std::nextafter(cRect.bottom, k_maxFloat);
         return caretPos(targetPt);
     }
 

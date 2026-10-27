@@ -66,7 +66,7 @@ namespace ClaFi
     private:
         mutable TextStamp m_layoutStamp{}; // the revision of the control's text the layout holds
         Measurement m_measurement{};
-        ScaledSize m_measured{};
+        ScaledSize m_measuredTextSize{};
         TextFormat m_measuredFormat{}; // what the last measurement was laid out over
         // The engine generation the layout was built at. invalidateLayouts drops the cache and
         // moves that number on for anything a key does not carry - the font table above all - and
@@ -143,18 +143,18 @@ namespace ClaFi
         };
         const TextFormat* format = this->textFormat();
         if (measurement == m_measurement && m_measuredFormat.matches(format))
-            return m_measured;
+            return m_measuredTextSize;
 
         // Only the size reaches the layout, so the rect is built at the origin - see syncedLayout,
         // which reads nothing else from it.
-        m_measured = syncedLayout(
+        m_measuredTextSize = syncedLayout(
             event.formContext(),
             FloatRect::FromDimensions({ 0.0f, 0.0f }, maxDimensions)
         ).calculatedDimensions();
         m_measurement = measurement;
         if (!m_measuredFormat.matches(format))
             m_measuredFormat = format ? *format : TextFormat{};
-        return m_measured;
+        return m_measuredTextSize;
     }
 
     template <IsRichControl HostClass>
