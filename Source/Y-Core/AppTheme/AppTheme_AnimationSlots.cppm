@@ -12,10 +12,10 @@ namespace ClaFi::AnimationSlots
     // travels a whole device pixel under the press scale, and one pixel spread over 55ms is two
     // frames at 30Hz - a step, whatever the easing says. At 175ms it is ten, which is enough for
     // the intermediate coverage to read as a glide.
-    export constexpr AnimationSlot Hovered{
+    export constexpr AnimationSlot Hot{
         .duration{.rise = 77ms, .fall = 330ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut },
-        .tag = static_cast<AnimationTag>(VisualStateIndex::Hovered)
+        .tag = static_cast<AnimationTag>(VisualStateIndex::Hot)
     };
 
     export constexpr AnimationSlot Pressed{
@@ -40,12 +40,6 @@ namespace ClaFi::AnimationSlots
         .duration{.rise = 330ms, .fall = 330ms },
         .easingFactor{},
         .tag = static_cast<AnimationTag>(VisualStateIndex::Enabled)
-    };
-
-    export constexpr AnimationSlot TextHovered{
-        .duration{.rise = 55ms, .fall = 440ms },
-        .easingFactor{ EasingFactor::EaseIn, EasingFactor::EaseInOut },
-        .tag = static_cast<AnimationTag>(VisualStateIndex::TextHovered)
     };
 
     export constexpr AnimationSlot Current{

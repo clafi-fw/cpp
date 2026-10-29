@@ -43,7 +43,7 @@ namespace ClaFi
         Control& control() { return m_context.control(); }
         const Control& control() const { return m_context.control(); }
         const StateFactors& factors() const;
-        float hoveredFactor() const;
+        float hotFactor() const;
         float selectedFactor() const;
         float pressedFactor() const;
         float enabledFactor() const;
@@ -80,9 +80,9 @@ namespace ClaFi
         // centre. Surface, text, icon, indicator and any child all inherit it from one
         // transform, so no element animates its size on its own account.
         [[nodiscard]] float pressScale() const;
-        // The hover and press that drive the depth, this control's own blended with its parent's by
+        // The hot and press that drive the depth, this control's own blended with its parent's by
         // the amount the parent asked for. See AdjustPaintEvent::setParentZAmount.
-        [[nodiscard]] float zHoveredFactor() const;
+        [[nodiscard]] float zHotFactor() const;
         [[nodiscard]] float zPressedFactor() const;
         // The lightness this control stands at: the theme's own at the form root, and inherited
         // by every control from the one above it. A control that knows better states it outright
@@ -223,7 +223,7 @@ namespace ClaFi
     private:
         OptionalUiElement m_element{}; // the element this control wears, as setColorRules named it
         std::span<const BakedColorRule> m_ownRules{}; // applied ahead of the element's
-        float m_parentHoverAmount{ 0.0f };
+        float m_parentHotAmount{ 0.0f };
         float m_parentSelectedAmount{ 0.0f };
         float m_parentPressedAmount{ 0.0f };
         float m_windowSelectedAmount{ 0.0f };
@@ -303,10 +303,10 @@ namespace ClaFi
         // see DropdownPart, which makes this same division for the state walk, and whose own
         // factor already carries what the owner stands on.
         void dropInheritedEnabled();
-        void setParentHoverAmount(float value) { m_target.m_parentHoverAmount = value; }
+        void setParentHotAmount(float value) { m_target.m_parentHotAmount = value; }
         void setParentSelectedAmount(float value) { m_target.m_parentSelectedAmount = value; }
         void setParentPressedAmount(float value) { m_target.m_parentPressedAmount = value; }
-        // How much of the parent's hover and press drive this child's depth. Separate from the three
+        // How much of the parent's hot and press drive this child's depth. Separate from the three
         // above, which weight colour: a mark can be lit partly on its parent's account and still
         // have to move entirely on its own, or the other way about.
         //

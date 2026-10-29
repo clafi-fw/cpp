@@ -678,17 +678,16 @@ it writes, and the effect it applies there.</p>
 <p>Every input is a factor from 0 to 1 that follows its state through an animation, so a rule fades
 in as its input rises. The inputs joined as "or" stand where any one of them would take them -
 <code>1 - (1 - a) * (1 - b)</code> - and the ones joined as "and" multiply that. A rule reading
-"when hovered, and mouse and current" applies as far as all three hold.</p>
+"when focused, and keyboard and window focused" applies as far as all three hold.</p>
 
 <table>
 <tr><th>RuleInput</th><th>What it reads</th></tr>
-<tr><td><code>Hovered</code></td><td>The pointer over the control, and nothing else. A control reached by a key is not hovered.</td></tr>
+<tr><td><code>Hot</code></td><td>The user on the control: the mouse over it, or the keys on it while its window holds the focus - see <a href="#pointer-and-keys">The pointer and the keys</a>.</td></tr>
 <tr><td><code>Pressed</code></td><td>A press held on the control.</td></tr>
 <tr><td><code>Focused</code></td><td>The control's own focus, whether or not its window has it.</td></tr>
 <tr><td><code>Selected</code></td><td>A checked box, an open tab, a picked item. A control that keeps its selection off its surface keeps it off its stroke as well.</td></tr>
 <tr><td><code>Disabled</code></td><td>The enabled factor turned over.</td></tr>
-<tr><td><code>TextHovered</code></td><td>The pointer on the control's own text.</td></tr>
-<tr><td><code>Current</code></td><td>A container's current item - the one a Shift range grows from.</td></tr>
+<tr><td><code>Current</code></td><td>The control wears a ring: the keys' focus, or a container's current item - the one a Shift range grows from.</td></tr>
 <tr><td><code>WindowFocused</code></td><td>How far the window the control stands in holds the focus. A menu or a tooltip reads the window it stands on.</td></tr>
 <tr><td><code>Keyboard</code></td><td>How far the keyboard drives the input. The same on every control of every window.</td></tr>
 <tr><td><code>Mouse</code></td><td>How far the mouse drives the input. The same on every control of every window.</td></tr>
@@ -702,21 +701,12 @@ in as its input rises. The inputs joined as "or" stand where any one of them wou
 <tr><td><code>Shadow</code></td><td>Black in the stroke's hue, the stroke as it stands before the ring. It is read at the dark end in both modes with no floor, so elevation here is luminosity. A window's blur, offset, spread and opacity are metrics, in <code>WindowShadow</code>.</td></tr>
 </table>
 
-<p>A button's look under the pointer, as the framework's own theme states it, is two rules: the look
-gated on the mouse, and the same look for a key that reached the button - see
+<p>A button's look while the user is on it, as the framework's own theme states it, is one rule,
+whichever device brought the user there - see
 <a href="#pointer-and-keys">The pointer and the keys</a>.</p>
 
 <pre><code><span class="tp">ColorRule</span>{
-    .inputs{ <span class="tp">RuleInput</span>::Hovered },
-    .andInputs{ <span class="tp">RuleInput</span>::Mouse },
-    .effect{
-        { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.085609f</span> },     <span class="cm">// S</span>
-        { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.126926f</span> }      <span class="cm">// E</span>
-    }
-},
-<span class="tp">ColorRule</span>{
-    .inputs{ <span class="tp">RuleInput</span>::Focused },
-    .andInputs{ <span class="tp">RuleInput</span>::Keyboard },
+    .inputs{ <span class="tp">RuleInput</span>::Hot },
     .effect{
         { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.085609f</span> },     <span class="cm">// S</span>
         { <span class="tp">ColorRuleOp</span>::Offset, <span class="kw">0.126926f</span> }      <span class="cm">// E</span>
@@ -764,7 +754,7 @@ a span that has to outlive the paint: a member of the control, or a rule of the 
 carries.</p>
 
 <pre><code><span class="cm">// A member, so the span outlives the paint.</span>
-<span class="tp">BakedColorRule</span> m_pageRule{ .inputs{ <span class="tp">RuleInput</span>::Hovered, <span class="tp">RuleInput</span>::Selected } };
+<span class="tp">BakedColorRule</span> m_pageRule{ .inputs{ <span class="tp">RuleInput</span>::Hot, <span class="tp">RuleInput</span>::Selected } };
 
 <span class="kw">void</span> <span class="tp">Tab</span>::<span class="fn">adjustPaint</span>(<span class="tp">AdjustPaintEvent</span>&amp; event)
 {
@@ -775,10 +765,14 @@ carries.</p>
 
 <h3 id="pointer-and-keys">The pointer and the keys</h3>
 
-<p><code>Hovered</code> means the pointer is over the control, and only the form's hit test moves it.
-A control the user reached by a key is focused, not hovered, and reads through <code>Focused</code>
-and the keyboard. So a look that answers the user being on a control is stated twice: when hovered,
-and mouse, and when focused, and keyboard. With one of the two controllers on, one item is lit.</p>
+<p><code>Hot</code> is the user on the control, by whichever device: the mouse over it, or the keys
+on it while its window holds the focus. The hover is where the pointer is, and only the form's hit
+test moves it; a control the user reached by a key is focused, not hovered. <code>Hot</code> joins
+the two, each gated on its device, so a look that answers the user being on a control is stated once.
+With one of the two controllers on, one item is lit. <code>Current</code> is the ring's input the same
+way: the keys' focus, or a container's current item - see <a href="#focus-ring">The focus ring</a>.
+<code>Focused</code> stays the control's own focus by either device, which the selected-text band
+reads: a box focused by a click keeps its band while the pointer wanders.</p>
 
 <p><code>Keyboard</code> and <code>Mouse</code> are the two input controllers' factors. The pointer
 turns the mouse on and the keyboard off, a key does the opposite, and a bare modifier turns the
@@ -803,18 +797,17 @@ control's frame and not its surface. Both are paint effects, and neither moves a
 shadow takes its hue from the stroke before the ring, so a focused control does not tint the shadow
 it casts.</p>
 
-<p>The framework's own theme states four rules:</p>
+<p>The framework's own theme states two rules:</p>
 
 <table>
 <tr><th>Rule</th><th>Ink</th></tr>
-<tr><td>when focused, and keyboard</td><td>Full contrast - no saturation, elevation 1.</td></tr>
-<tr><td>when current</td><td>Full contrast. A container's current item wears the ring under the mouse as well, since it marks where a Shift range grows from.</td></tr>
-<tr><td>when hovered, and mouse and current and window focused</td><td>The accent.</td></tr>
-<tr><td>when focused, and keyboard and window focused</td><td>The accent.</td></tr>
+<tr><td>when current</td><td>Full contrast - no saturation, elevation 1. The keys' focus, and a container's current item under the mouse as well, since it marks where a Shift range grows from.</td></tr>
+<tr><td>when hot, and current</td><td>The accent.</td></tr>
 </table>
 
-<p>So the ring is drawn in the accent only while its window holds the focus. The accent's values are
-written into these rules, so a theme that moves its accent moves the ring by editing them too.</p>
+<p>So the ring is drawn in the accent only while its window holds the focus, since the window's focus
+is part of <code>Hot</code>. The accent's values are written into these rules, so a theme that moves
+its accent moves the ring by editing them too.</p>
 
 <h3 id="elements">Elements</h3>
 
@@ -863,7 +856,7 @@ else.</p>
             <li><strong>Use a grade for anything grey.</strong> Grey is the ladder between the surface and the ink, not a colour.</li>
             <li><strong>Name a meaning with a semantic colour</strong> - <code>InkWell::Red</code>, or <code>redInk(grade)</code> for a quieter one - and leave its tones to <code>InkWell::pigmentTones</code>, the one declaration serving both modes.</li>
             <li><strong>Take <code>controlContext().inkHsl</code> when an effect comes next</strong>, and let the last step be the one that makes a <code>Color</code>.</li>
-            <li><strong>State a look for the user being on a control twice</strong> - when hovered, and mouse; when focused, and keyboard. <code>Hovered</code> is the pointer and nothing else.</li>
+            <li><strong>State a look for the user being on a control once, on <code>Hot</code></strong> - it is the mouse over the control or the keys on it, each gated on its device. <code>Focused</code> alone is for what a click keeps while the pointer wanders.</li>
             <li><strong>Reach for the accent for interface emphasis</strong> and the spot for what stands apart from the interface.</li>
             <li><strong>Ask <code>wornColorMode</code> which side the application is on.</strong> Under Auto the answer is the desktop's, and it moves while the application runs.</li>
         </ul>

@@ -155,9 +155,9 @@ namespace ClaFi
             StateFactors factors = control.factors();
             const Control* lender = lendingParent();
 
-            // **How far the enabled factor gates a state.** Hovered and pressed are things a
-            // pointer is doing to a control, and a control that cannot be acted on is having none
-            // of them done to it. Selected is what the data says, and goes on being true of a
+            // **How far the enabled factor gates a state.** Hot and pressed are things the user
+            // is doing to a control, and a control that cannot be acted on is having none of
+            // them done to it. Selected is what the data says, and goes on being true of a
             // control that cannot be acted on - which is how the check and the dot have always read
             // it, so the fill reads it the same way. What disabled still takes off it is the blend
             // towards the surface behind, which every colour here goes through.
@@ -178,8 +178,8 @@ namespace ClaFi
                     return effectiveFactor;
                 };
 
-            const float hoverEffectiveFactor = calcEffectiveFactor(VisualStateIndex::Hovered,
-                m_parentHoverAmount);
+            const float hotEffectiveFactor = calcEffectiveFactor(VisualStateIndex::Hot,
+                m_parentHotAmount);
             // How far this control is the one in effect: its own selected state, or its window's
             // focus as far as setWindowSelectedAmount asked. The ink reads it whatever the surface
             // does with it, so a Selected text rule applies where no selected fill is painted.
@@ -212,12 +212,11 @@ namespace ClaFi
             // band reads these too - handed over rather than resolved, since almost nothing asks
             // for the band.
             m_controlContext.ruleInputLevels = {
-                hoverEffectiveFactor,
+                hotEffectiveFactor,
                 effectivePressedFactor,
                 factors.focused(),
                 selectedFactor,
                 1.0f - m_enabledFactor,
-                factors.textHovered(),
                 factors.current(),
                 m_windowFocusedFactor,
                 Input::keyboard().factor(),
@@ -229,7 +228,7 @@ namespace ClaFi
             // be at full opacity while still at rest size, whatever combination of its own state
             // and its parent's put it there.
             m_surfaceVisibility = StateFactors::compose(
-                hoverEffectiveFactor,
+                hotEffectiveFactor,
                 selectedEffectiveFactor,
                 effectivePressedFactor
             );
@@ -320,9 +319,9 @@ namespace ClaFi
         return m_context.control().factors();
     }
 
-    float PaintEvent::hoveredFactor() const
+    float PaintEvent::hotFactor() const
     {
-        return m_context.control().hoveredFactor();
+        return m_context.control().hotFactor();
     }
 
     float PaintEvent::selectedFactor() const
@@ -350,21 +349,17 @@ namespace ClaFi
         if (!m_zDepthFactor)
             return 1.0f;
         const ThemeMetrics& metrics = themeMetrics();
-        // Rest to full size on arrival, then in again while held. The pointer arrives at the
-        // control it hovers and the keyboard at the one it focuses, so a key press travels as far
-        // as a mouse click. Taking the steps in that order keeps a press on a control nothing has
-        // arrived at from growing it on its way down.
-        const float keyboardArrived = zAnimationFactor(VisualStateIndex::Focused)
-            * Input::keyboard().factor();
-        const float arrived = std::max(zHoveredFactor(), keyboardArrived);
-        float result = std::lerp(metrics.pressRestScale, 1.0f, arrived);
+        // Rest to full size on arrival, then in again while held. Hot is the arrival by either
+        // device, so a key press travels as far as a mouse click. Taking the steps in that order
+        // keeps a press on a control nothing has arrived at from growing it on its way down.
+        float result = std::lerp(metrics.pressRestScale, 1.0f, zHotFactor());
         result = std::lerp(result, metrics.pressHeldScale, zPressedFactor());
         return std::lerp(1.0f, result, m_zDepthFactor);
     }
 
-    float PaintEvent::zHoveredFactor() const
+    float PaintEvent::zHotFactor() const
     {
-        return zAnimationFactor(VisualStateIndex::Hovered);
+        return zAnimationFactor(VisualStateIndex::Hot);
     }
 
     float PaintEvent::zPressedFactor() const

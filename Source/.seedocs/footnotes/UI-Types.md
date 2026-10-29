@@ -65,9 +65,19 @@ enabled and selected animate through StateFactors.
 
 ## VisualStateIndex
 
-**Current is a separate state from Focused.** A multi-select view anchors its Shift ranges on its
-current item, and keeps it while the mouse drives the input. The items it selected are drawn
-Selected.
+**Hot and Current carry the input device**, so a rule reads one input where it read two. Hot is
+the user on the control: the mouse over it, or the keys on it while its window holds the focus. A
+look that answers the user being on a control reads Hot and nothing else. Current is the control
+wearing a ring: the keys' focus, or a container's current item - the item a multi-select view
+anchors its Shift ranges on, which it keeps while the mouse drives the input and which wears the
+ring under the mouse too. The items it selected are drawn Selected.
+
+**Focused is the control's own focus by either device.** The selected-text band, a caret and a
+grid's cell ring read it: a box focused by a click keeps them while the pointer wanders.
+
+The hovered and the focused control re-read their state as the device switches, and the focused
+control as its window takes or loses the focus, since Hot and Current are stored per control and
+animate on their own slots - see Input and FormBase::stateWindowFocus.
 
 ## HorizontalTextAnchor
 

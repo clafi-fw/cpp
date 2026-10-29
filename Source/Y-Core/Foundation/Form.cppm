@@ -234,6 +234,8 @@ namespace ClaFi
         IPlatformWindow& window() const { return *m_window; }
         // How far this form's window holds the focus, from 0 to 1. See Control-Foundation
         [[nodiscard]] float windowFocusedFactor() const;
+        // Whether it holds the focus now, which the factor is on its way to.
+        [[nodiscard]] bool isWindowFocused() const;
         // A shadow of these metrics as the rule set colours a window's. See Control-Foundation
         [[nodiscard]] Graphics::ShadowPainter::Design shadowDesign(OptionalUiElement colorRules,
             const WindowShadow& shadow, float radius) const;

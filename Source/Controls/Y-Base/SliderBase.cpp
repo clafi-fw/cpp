@@ -50,7 +50,7 @@ namespace ClaFi::Controls
     void SliderBase::ChildItem::adjustPaint(AdjustPaintEvent& event)
     {
         Control::adjustPaint(event);
-        event.setParentHoverAmount(0.33f);
+        event.setParentHotAmount(0.33f);
     }
 
 #pragma endregion
@@ -341,7 +341,7 @@ namespace ClaFi::Controls
         // slider method, and the button is the slider's child - so a scroll bar sitting in a scroll
         // box grew its marks whenever the pointer was anywhere over the box's body.
         const PaintEvent& sliderEvent = *event.parentEvent();
-        float phf = sliderEvent.hoveredFactor() * sliderEvent.enabledFactor();
+        float phf = sliderEvent.hotFactor() * sliderEvent.enabledFactor();
 
         event.defaultPaintSurface(buttonInset());
         float size = 6.0f - pressedFactor() + phf * 2.0f;

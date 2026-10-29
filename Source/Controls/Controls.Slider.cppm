@@ -390,8 +390,8 @@ namespace ClaFi::Controls
         event.defaultPaintSurface();
         FloatPoint pt = event.center();
         const Color innerColor = event.parentEvent()->applyDisabledFactor(thumbColor(event, pt));
-        const float thisHotFactor = hoveredFactor();
-        const float innerRadius = event.scaleF(4.0f + thisHotFactor + event.hoveredFactor() - pressedFactor() * 2.0f);
+        const float thisHotFactor = hotFactor();
+        const float innerRadius = event.scaleF(4.0f + thisHotFactor + event.hotFactor() - pressedFactor() * 2.0f);
         event.canvas().fillCircle(pt, innerRadius, innerColor);
     }
 

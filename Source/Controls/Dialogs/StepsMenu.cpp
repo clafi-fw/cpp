@@ -64,12 +64,12 @@ namespace ClaFi::Controls
         return m_taken;
     }
 
-    // Every step down to the one in effect reads as hovered, which is what shows the run.
+    // Every step down to the one in effect reads as hot, which is what shows the run.
     void StepsMenu::adjustNestedControlVisualState(const Control& control, VisualState& state) const
     {
         const std::size_t place = runOf(&control);
         if (place != 0ull && place <= m_run)
-            state.hovered = true;
+            state.hot = true;
     }
 
     // A step under the pointer names the run; the pointer arriving from off the steps is what

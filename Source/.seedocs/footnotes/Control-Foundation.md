@@ -517,10 +517,11 @@ The first move after the pointer comes into a form only hit-tests - see FormBase
 on. A key other than a modifier finds it off, unless the pointer moved during the key's repeats.
 
 **The hover is where the pointer is**, moved only by the form's hit-test. A control reached by a key
-reads its focus and the keyboard's factor instead.
+is hot through its focus and the keyboard instead - see VisualStateIndex.
 
 **Paint reads the factors** through `RuleInput::Keyboard` and `RuleInput::Mouse`. A switch is one
-crossfade, and each step repaints every window - see InputSwitchEvent.
+crossfade, and each step repaints every window - see InputSwitchEvent. The hovered and the focused
+control re-read their state as well, since their Hot and Current carry the device.
 
 ## ContextMessage
 
@@ -582,8 +583,9 @@ What reads it:
 - `RuleInput::WindowFocused`, alone or joined to another input in a rule's `andInputs`. `Focused`
   is the control's own focus alone. The band's focus rule reads "when focused and window focused",
   so a selection in an unfocused window shows only the band's resting rules.
-- The focus ring's default rules: a keyboard focus ring is in the accent only while its window
-  has the focus, and in the strongest ink otherwise.
+- The focused control's `VisualStateIndex::Hot`, which the window's focus is part of, so the
+  ring is in the accent only while its window has the focus and in the strongest ink otherwise.
+  The form re-reads that control's state as the focus changes.
 - `TextBox`'s caret, drawn only while the factor is 1.
 
 `FormFocusChangeEvent` marks the moment of each change. Paint reads the factor.

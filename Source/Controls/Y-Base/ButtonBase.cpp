@@ -153,7 +153,7 @@ namespace ClaFi::Controls
         event.setParentPressedAmount(1.0f);
 
         //
-        event.setParentHoverAmount(1.0f);
+        event.setParentHotAmount(1.0f);
 
         // The whole of the parent's, unlike the hover amount above. On a check box or radio button
         // the mark is pressed as part of the row - the pointer is over the row and nestedClick

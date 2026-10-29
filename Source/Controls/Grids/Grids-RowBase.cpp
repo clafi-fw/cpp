@@ -449,8 +449,16 @@ namespace ClaFi::Controls::Grids
         // Per-cell state. Not rowFactor * columnFactor: two independent axes
         // cannot name a cell, and their product lights the corners the cursor
         // never visited just as brightly as the ones it did.
-        const float hotFactor = m_descriptor.cellHoveredFactor(*this, cell.column);
         const float selFactor = m_descriptor.cellSelectedFactor(*this, cell.column);
+        // Focus belongs to the row and selection to the cell, so the keys are on the cell where
+        // the two meet: the focus travels to whichever cell the selection moves to, and leaves
+        // the row entirely when the row loses it.
+        const float keysOnCell = event.focusedFactor() * selFactor;
+        // Hot as a control's is: the mouse over the cell, or the keys on it in a focused window.
+        // The hover channel moves with the pointer alone, so the mouse's share is its own.
+        const float hotFactor = StateFactors::compose(
+            m_descriptor.cellHoveredFactor(*this, cell.column) * Input::mouse().factor(),
+            keysOnCell * Input::keyboard().factor() * event.windowFocusedFactor());
 
         // The mode is read before the control is looked up: one is a field read, the
         // other a map lookup. A frame around a control would state twice what the
@@ -465,32 +473,29 @@ namespace ClaFi::Controls::Grids
             // animates the cell, and every step of that animation invalidates the
             // grid already. The control's paint event samples them when it is built,
             // which happens in paintChildren() - after this surface pass.
-            hostedControl->setStateFactor(VisualStateIndex::Hovered, hotFactor, false);
+            hostedControl->setStateFactor(VisualStateIndex::Hot, hotFactor, false);
             hostedControl->setStateFactor(VisualStateIndex::Selected, selFactor, false);
-            // Focus belongs to the row, selection to the cell, and the control shows
-            // it only where the two meet: the focus travels to whichever cell the
-            // selection moves to, and leaves the row entirely when the row loses it.
-            // The control itself is MouseOnly, so this is the only focus it ever has.
-            hostedControl->setStateFactor(VisualStateIndex::Focused,
-                                          event.focusedFactor() * selFactor, false);
+            // The control itself is MouseOnly, so this is the only focus it ever has, and the
+            // only ring: current as a control's own is, the keys' focus.
+            hostedControl->setStateFactor(VisualStateIndex::Focused, keysOnCell, false);
+            hostedControl->setStateFactor(VisualStateIndex::Current,
+                                          keysOnCell * Input::keyboard().factor(), false);
         }
         // A Control cell with no control in this row - the header cell, or a plain
         // text cell in the same column - has no better cue to defer to, so it lands
         // here with the Grid ones.
         else if (highlightMode != CellHighlightMode::None)
         {
-            // highlight inner rect (hovered/selected)
+            // highlight inner rect (hot/selected)
             ownFrame.sides = RectSides::All();
             float hlOpacity = StateFactors::compose(hotFactor * 0.25f, selFactor * 0.5f);
             if (hlOpacity)
             {
                 Color borderColor = Color(event.textRgb(InkGrade::Strongest), event.indicatorRgb(), hotFactor);
 
-                // The focus belongs to the row and the selection to the cell, so the ring
-                // thickens only where the two meet. A cell the pointer is merely on wears
-                // the line's own width, whichever cell in the row holds the selection.
-                const float strokeWidth = cellLt.border
-                    + event.scaleF(event.focusedFactor() * selFactor);
+                // The ring thickens only where the keys are. A cell the pointer is merely on
+                // wears the line's own width, whichever cell in the row holds the selection.
+                const float strokeWidth = cellLt.border + event.scaleF(keysOnCell);
                 ownFrame.bounds.inflate(-event.scaleF(event.pressedFactor()));
                 event.canvas().drawPartialRoundedRectangle(ownFrame, borderColor.withOpacity(hlOpacity), strokeWidth);
             }

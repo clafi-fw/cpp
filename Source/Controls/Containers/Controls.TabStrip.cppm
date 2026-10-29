@@ -103,7 +103,7 @@ namespace ClaFi::Controls
         Hsl m_actualPageTextHsl{};
         Lightness m_actualPageLightness{ k_darkLightness };
         // The page's surface under the pointer and on the open tab, as the tab's own rule.
-        BakedColorRule m_pageRule{ .inputs{ RuleInput::Hovered, RuleInput::Selected } };
+        BakedColorRule m_pageRule{ .inputs{ RuleInput::Hot, RuleInput::Selected } };
         ScopedEventConnection m_pageConnection{};
     };
 
@@ -293,10 +293,10 @@ namespace ClaFi::Controls
         {
             // A tab becomes the page it opens, and that is both of the page's colours or neither -
             // a tab wearing the page's surface under the strip's ink is the one combination
-            // nothing chose. The page rule reads hovered and selected joined as "or", which is
-            // what hoveredOrSelected() is, and the ink is taken the same distance so the two
+            // nothing chose. The page rule reads hot and selected joined as "or", which is
+            // what hotOrSelected() is, and the ink is taken the same distance so the two
             // arrive together.
-            const float pageFactor = factors().hoveredOrSelected() * factors().enabled();
+            const float pageFactor = factors().hotOrSelected() * factors().enabled();
 
             // The lightness comes with the colours. Past the half way point the tab is more the
             // page's surface than the strip's, so an ink or a border raised off it has to rise
@@ -322,14 +322,14 @@ namespace ClaFi::Controls
             TabBaseClass::paintSurface(event);
             return;
         }
-        const float geometryVisibilityFactor = factors().hoveredOrSelected(0.75f, 1.0f);
+        const float geometryVisibilityFactor = factors().hotOrSelected(0.75f, 1.0f);
         PaintEvent* outEvent;
         prepareGeometry(event, geometryVisibilityFactor, outEvent);
 
         TabColors tabColors;
         //prepareColors
         {
-            float visibilityFactor = factors().hoveredOrSelected(1.0f, 1.0f);
+            float visibilityFactor = factors().hotOrSelected(1.0f, 1.0f);
             tabColors.surface = event.surfaceRgb();
             // The open tab's fill covers the page's border across its mouth - see
             // TabbedBox::alignContent - so it stands at the selected factor even where the page's

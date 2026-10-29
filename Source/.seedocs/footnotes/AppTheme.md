@@ -134,11 +134,9 @@ takes its hue from the stroke before the ring.
 
 The default rules:
 
-- focused and keyboard - the strongest ink
-- current - the strongest ink, under the mouse too, since a current item marks where a Shift range
-  grows from
-- hovered, and current and mouse - the accent
-- focused, and keyboard and window focused - the accent
+- current - the strongest ink: the keys' focus, and a container's current item under the mouse
+  too, since it marks where a Shift range grows from
+- hot, and current - the accent, since hot has the window's focus in it
 
 The accent's values are written into these rules, so a theme that moves Accent edits them too.
 

@@ -377,19 +377,19 @@ namespace ClaFi::Controls
     // in the painting, because what is being said is about the **state** - see the ring's two terms
     // in the Focus ring list's default rules.
     //
-    // hovered - what keeps the ring drawn **live** rather than in the inactive grey. That is a
+    // hot     - what keeps the ring drawn **live** rather than in the inactive grey. That is a
     //           question the input device decides for every other control, and here there is
     //           nothing for it to decide.
-    // current - what says there is a ring at all. A ring the keyboard put on is gated on the
-    //           keyboard, so a box focused after a mouse press would wear none; a container's
-    //           current item wears one ungated, and this box is the one item of this container.
+    // current - what says there is a ring at all. The keys' focus is current and the mouse's is
+    //           not, so a box focused after a mouse press would wear none; a container's current
+    //           item is current whichever device, and this box is the one item of this container.
     //
     // Only this box. A text box anywhere else answers for itself the ordinary way.
     void InPlaceEditRoot::adjustNestedControlVisualState(const Control& child, VisualState& state) const
     {
         if (&child != &body())
             return;
-        state.hovered = true;
+        state.hot = true;
         state.current = true;
     }
 

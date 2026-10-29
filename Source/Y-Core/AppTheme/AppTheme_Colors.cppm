@@ -202,13 +202,12 @@ namespace ClaFi
     // What a colour rule reads.
     export enum class RuleInput
     {
-        Hovered,
+        Hot,            // the mouse over the control, or the keys on it in a focused form
         Pressed,
         Focused,        // the control's own focus, whether or not its form has it
         Selected,
         Disabled,       // the enabled factor turned over
-        TextHovered,
-        Current,
+        Current,        // the control wears a ring: a container's current item, or the keys' focus
         WindowFocused,  // the focus of the form the control stands in
         Keyboard,       // how far the keyboard drives the input, the same on every control
         Mouse,          // how far the mouse drives the input, the same on every control

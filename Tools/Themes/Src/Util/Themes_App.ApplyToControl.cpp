@@ -33,12 +33,11 @@ namespace Themes_App
 
         constexpr std::array<std::wstring_view, static_cast<std::size_t>(RuleInput::Count)>
             k_inputLabels{
-                L"hovered",
+                L"hot",
                 L"pressed",
                 L"focused",
                 L"selected",
                 L"disabled",
-                L"text hovered",
                 L"current",
                 L"window focused",
                 L"keyboard",

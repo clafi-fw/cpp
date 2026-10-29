@@ -296,6 +296,13 @@ namespace ClaFi
         return m_windowFocusedFactor;
     }
 
+    bool FormBase::isWindowFocused() const
+    {
+        if (m_windowRole != WindowRole::Dialog && m_popupTargetForm)
+            return m_popupTargetForm->isWindowFocused();
+        return m_window->isFocused();
+    }
+
     FloatRect FormBase::geometry() const
     {
         return FloatRect::FromDimensions(frameOrigin(), m_placed.size);
@@ -2267,6 +2274,10 @@ namespace ClaFi
     void FormBase::stateWindowFocus()
     {
         const float endValue = m_window->isFocused() ? 1.0f : 0.0f;
+        // The focused control's hot has the window's focus in it - see Control::visualState.
+        Control* delegate = Input::focusDelegate();
+        if (delegate && m_content.containsNested(delegate))
+            Control::invalidateStateUp(delegate, nullptr, InvalidateEvent::InputController);
         // A form not painted yet has nothing on screen to fade.
         if (!m_content.isPainted())
         {

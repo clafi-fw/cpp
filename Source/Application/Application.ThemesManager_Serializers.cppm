@@ -102,12 +102,11 @@ namespace ClaFi // AppTheme serializers
 
     export constexpr std::array<std::wstring_view, static_cast<std::size_t>(RuleInput::Count)>
         k_ruleInputKeys{
-            L"Hovered",
+            L"Hot",
             L"Pressed",
             L"Focused",
             L"Selected",
             L"Disabled",
-            L"TextHovered",
             L"Current",
             L"WindowFocused",
             L"Keyboard",

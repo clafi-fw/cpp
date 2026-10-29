@@ -134,7 +134,7 @@ namespace ClaFi::Controls
     void ScrollBar::paintThumb(PaintEvent& event)
     {
         FloatRect rect = event.controlBounds();
-        float margin = event.scaler().scaled3F * (1.0f - hoveredFactor());
+        float margin = event.scaler().scaled3F * (1.0f - hotFactor());
         if (axis() == ScrollAxis::Vertical)
         {
             rect.inflate(-event.scaler().scaled1 - margin, 0.0f);

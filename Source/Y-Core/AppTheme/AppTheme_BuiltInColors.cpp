@@ -69,15 +69,6 @@ namespace ClaFi
 
         rules.focusRing = {
             ColorRule{
-                .inputs{ RuleInput::Focused },
-                .andInputs{ RuleInput::Keyboard },
-                .output = PaintChannel::Stroke,
-                .effect{
-                    { ColorRuleOp::Set, 0.0f },             // S
-                    { ColorRuleOp::Set, 1.0f }              // E
-                }
-            },
-            ColorRule{
                 .inputs{ RuleInput::Current },
                 .output = PaintChannel::Stroke,
                 .effect{
@@ -86,18 +77,8 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered },
-                .andInputs{ RuleInput::Current, RuleInput::Mouse },
-                .output = PaintChannel::Stroke,
-                .effect{
-                    { ColorRuleHueOp::PaletteColor2 },      // H
-                    { ColorRuleOp::Set, 1.0f },             // S
-                    { ColorRuleOp::Set, 0.544542f }         // E
-                }
-            },
-            ColorRule{
-                .inputs{ RuleInput::Focused },
-                .andInputs{ RuleInput::WindowFocused, RuleInput::Keyboard },
+                .inputs{ RuleInput::Hot },
+                .andInputs{ RuleInput::Current },
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
@@ -135,7 +116,7 @@ namespace ClaFi
 
         rules.of(UiElement::Tab) = {
             ColorRule{
-                .inputs{ RuleInput::Hovered, RuleInput::Selected },
+                .inputs{ RuleInput::Hot, RuleInput::Selected },
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.928767f }, // H
@@ -301,19 +282,10 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered },
-                .andInputs{ RuleInput::Mouse },
+                .inputs{ RuleInput::Hot },
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.073892f }      // E
-                }
-            },
-            ColorRule{
-                .inputs{ RuleInput::Focused },
-                .andInputs{ RuleInput::Keyboard },
-                .effect{
-                    {},                                     // S
-                    { ColorRuleOp::Offset, 0.080827f }      // E
                 }
             },
             ColorRule{
@@ -342,16 +314,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered },
-                .andInputs{ RuleInput::Mouse },
-                .effect{
-                    { ColorRuleOp::Offset, 0.085609f },     // S
-                    { ColorRuleOp::Offset, 0.126926f }      // E
-                }
-            },
-            ColorRule{
-                .inputs{ RuleInput::Focused },
-                .andInputs{ RuleInput::Keyboard },
+                .inputs{ RuleInput::Hot },
                 .effect{
                     { ColorRuleOp::Offset, 0.085609f },     // S
                     { ColorRuleOp::Offset, 0.126926f }      // E
@@ -383,16 +346,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered },
-                .andInputs{ RuleInput::Mouse },
-                .effect{
-                    { ColorRuleOp::Offset, 0.085609f },     // S
-                    { ColorRuleOp::Offset, 0.126926f }      // E
-                }
-            },
-            ColorRule{
-                .inputs{ RuleInput::Focused },
-                .andInputs{ RuleInput::Keyboard },
+                .inputs{ RuleInput::Hot },
                 .effect{
                     { ColorRuleOp::Offset, 0.085609f },     // S
                     { ColorRuleOp::Offset, 0.126926f }      // E
@@ -406,7 +360,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered, RuleInput::Selected },
+                .inputs{ RuleInput::Hot, RuleInput::Selected },
                 .output = PaintChannel::Stroke,
                 .effect{
                     {},                                     // S
@@ -459,7 +413,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered },
+                .inputs{ RuleInput::Hot },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
                     { ColorRuleOp::Offset, 0.125f },        // S
@@ -492,7 +446,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered },
+                .inputs{ RuleInput::Hot },
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
                     { ColorRuleOp::Offset, 0.125f },        // S
@@ -523,7 +477,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered },
+                .inputs{ RuleInput::Hot },
                 .effect{
                     { ColorRuleOp::Offset, 0.0f },          // S
                     { ColorRuleOp::Offset, 0.3f }           // E
@@ -546,7 +500,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Hovered },
+                .inputs{ RuleInput::Hot },
                 .effect{
                     { ColorRuleOp::Offset, 0.0f },          // S
                     { ColorRuleOp::Offset, 0.06f }          // E

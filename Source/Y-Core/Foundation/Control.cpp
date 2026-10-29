@@ -35,12 +35,11 @@ import ClaFi.StdLib;
 namespace ClaFi
 {
     static constexpr std::array<const AnimationSlot*, static_cast<std::size_t>(VisualStateIndex::Count)> k_animationVisualStateSlots{
-        &AnimationSlots::Hovered,
+        &AnimationSlots::Hot,
         &AnimationSlots::Pressed,
         &AnimationSlots::Focused,
         &AnimationSlots::Selected,
         &AnimationSlots::Enabled,
-        &AnimationSlots::TextHovered,
         &AnimationSlots::Current
     };
 
@@ -1958,7 +1957,7 @@ namespace ClaFi
         // starting or has just ended. Everything a glyph's raster could depend on beyond the
         // rasterizer itself - snapping, grid fit, antialiasing - is already the same on both sides
         // of them.
-        return (hoveredFactor() > 0.0f || pressedFactor() > 0.0f)
+        return (hotFactor() > 0.0f || pressedFactor() > 0.0f)
             ? TextRenderMode::Moving
             : TextRenderMode::Movable;
     }
@@ -1990,13 +1989,12 @@ namespace ClaFi
         // The hit zone the pointer stands in, outlined - see Diagnostic::Options::highlightTextAreas.
         if constexpr (Diagnostic::Options::highlightTextAreas())
         {
-            float textFactor = m_factors.textHovered();
-            if (textFactor)
+            if (isTextHovered())
             {
                 FloatRect textBounds = this->textBounds(event);
                 event.canvas().drawRectangle(
                     textBounds,
-                    event.strokeRgb().withOpacity(textFactor),
+                    event.strokeRgb(),
                     event.scale(1.0f)
                 );
             }
@@ -2578,18 +2576,10 @@ namespace ClaFi
         const ActionState actionState = state();
 
         // A grid expander depends on this: it wears GridRow and holds its section's rows,
-        // so read as hovered it would light the whole section.
+        // so read as hot it would light the whole section.
         // Only the visual state is gated - a tooltip still asks isHovered().
         const bool interactive = interactivity() != Interactivity::None;
 
-        VisualState result{
-            .hovered = interactive && isHovered(),
-            .pressed = interactive && isPressed(),
-            .focused = interactive && isFocused(),
-            .selected = actionState.selected,
-            .enabled = actionState.enabled,
-            .textHovered = interactive && isTextHovered()
-        };
         // **A control with a popup of its own open is still where the user is.** The popup takes
         // the focus so that its items can be walked, and the control it was opened on would
         // otherwise read as abandoned the moment it opened: the ring goes out, the fill goes cold,
@@ -2604,11 +2594,22 @@ namespace ClaFi
         //
         // This is how the control **reads**. Where the focus **rests** is Input::focusedControl,
         // and that is untouched - the two answers differ for exactly as long as the popup is up.
-        if (isDroppedDown())
-        {
-            result.focused = true;
-            result.selected = true;
-        }
+        const bool droppedDown = isDroppedDown();
+        const bool focused = (interactive && isFocused()) || droppedDown;
+        // Hot and current carry the input device - see UI-Types#visualstateindex. The window's
+        // focus is part of hot, so FormBase::stateWindowFocus re-reads the focused control.
+        const bool keyboard = Input::keyboard().active();
+        const FormBase* form = getForm();
+        const bool windowFocused = form && form->isWindowFocused();
+        VisualState result{
+            .hot = (interactive && isHovered() && Input::mouse().active())
+                || (focused && keyboard && windowFocused),
+            .pressed = interactive && isPressed(),
+            .focused = focused,
+            .selected = actionState.selected || droppedDown,
+            .enabled = actionState.enabled,
+            .current = focused && keyboard
+        };
         const Control* p = m_parent;
         while (p)
         {

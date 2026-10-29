@@ -788,7 +788,7 @@ namespace ClaFi
         ActionState state() const;
         const StateFactors& factors() const { return m_factors; }
         void setStateFactor(VisualStateIndex, float value, bool triggerInvalidate = true);
-        float hoveredFactor() const { return m_factors.hovered(); }
+        float hotFactor() const { return m_factors.hot(); }
         float selectedFactor() const { return m_factors.selected(); }
         float pressedFactor() const { return m_factors.pressed(); }
         float enabledFactor() const { return m_factors.enabled(); }
