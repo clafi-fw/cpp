@@ -103,12 +103,16 @@ namespace ClaFi
 
     // The two walks a hover move makes. Each stops at the common parent, which answers the same
     // before and after; every control on the way hears focusChanged **after** the move, so
-    // isFocused() answers for it whichever side it is on.
+    // isFocused() answers for it whichever side it is on. The one common parent that answers
+    // differently is a container the focus moved between and an item of its own: it is the anchor
+    // on one side only, and its ring goes with that - see Control::focusAnchor.
     void Input::focusMoved(Control* previousDelegate, Control* currentDelegate)
     {
         if (previousDelegate == currentDelegate)
             return;
         Control* upTo = commonParent(previousDelegate, currentDelegate);
+        if (upTo && (upTo == previousDelegate || upTo == currentDelegate))
+            upTo = upTo->parent();
         Control::invalidateStateUp(previousDelegate, upTo, InvalidateEvent::FocusLeave);
         Control::invalidateStateUp(currentDelegate, upTo, InvalidateEvent::FocusEnter);
 
@@ -237,6 +241,10 @@ namespace ClaFi
         appContext.events().emit<InputSwitchEvent>();
     }
 
+    // **To the root form**, through the popups between: the control a popup was opened on and
+    // everything it stands in read focused through the popup, and their hot and current carry
+    // the device as any control's do - see Control::focusAnchor.
+    //
     // The repaint is asked for **outright**, not left to invalidateState. These factors belong to
     // the application rather than to any control, so no control's own state has moved, and
     // invalidateState repaints only when one of the control's own factors has - it would leave
@@ -246,7 +254,7 @@ namespace ClaFi
     {
         if (!control)
             return;
-        Control::invalidateStateUp(control, nullptr, InvalidateEvent::InputController);
+        Control::invalidateStateToRoot(control, InvalidateEvent::InputController);
         control->invalidate();
     }
 

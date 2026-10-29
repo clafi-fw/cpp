@@ -2109,7 +2109,7 @@ namespace ClaFi
     {
         Control* delegate = Input::focusDelegate();
         if (delegate && m_content.containsNested(delegate))
-            Control::invalidateStateUp(delegate, nullptr, InvalidateEvent::InputController);
+            Control::invalidateStateToRoot(delegate, InvalidateEvent::InputController);
     }
 
 #if CLAFI_TEXT_MOVING

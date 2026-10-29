@@ -900,7 +900,11 @@ namespace ClaFi
         [[nodiscard]] bool isPressed() const;
         // The focus is on this control or on something inside it. See Control-Foundation#input
         [[nodiscard]] bool isFocused() const;
+        // The active popup was opened on this control.
         [[nodiscard]] bool isDroppedDown() const;
+        // The control the focus is on, or comes back to while a popup holds it: what the popup was
+        // opened on, or the item that control answers for. See Control-Foundation#input
+        [[nodiscard]] Control* focusAnchor() const;
         //
         [[nodiscard]] float left() const { return m_topLeft.x; }
         [[nodiscard]] float top()   const { return m_topLeft.y; }
@@ -1466,6 +1470,9 @@ namespace ClaFi
         // one invalidation and nothing else - a grid standing between two rows is walked
         // through like anything else.
         static void invalidateStateUp(Control* from, const Control* upTo, InvalidateEvent);
+        // The same walk carried on to the root form: at a popup's root it steps to the control the
+        // popup was opened on, whose chain reads focused through the popup - see focusAnchor.
+        static void invalidateStateToRoot(Control* from, InvalidateEvent);
         // The text the framework would draw for this control, gathered through the parent so that
         // a host supplying its children's text is asked. Reachable by a control that holds a
         // layout of its own: it has to build that layout from the same text paintOwnText hands to

@@ -492,7 +492,8 @@ namespace ClaFi
         void scaleSwitched(ScaleSwitchEvent&);
         void inputSwitched(InputSwitchEvent&);
         void focusVisibilitySwitched(FocusVisibilitySwitchEvent&);
-        // The focused control's chain re-reads its state, where that control stands in this form.
+        // The focused control's chain re-reads its state, to the root form, where that control
+        // stands in this form.
         void invalidateFocusedState();
 #if CLAFI_TEXT_MOVING
         void zAnimationSwitched(ZAnimationSwitchEvent&);

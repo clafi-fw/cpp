@@ -71,14 +71,16 @@ look that answers the user being on a control reads Hot and nothing else. Curren
 wearing a ring: the keys' focus - any focus, where AppContext::alwaysShowFocus says so - or a
 container's current item, the item a multi-select view anchors its Shift ranges on, which it keeps
 while the mouse drives the input and which wears the ring under the mouse too. The items it
-selected are drawn Selected.
+selected are drawn Selected. An ActiveContainer is current only as a fallback, while the focus is
+on it and on no item inside it - see Control::focusAnchor.
 
 **Focused is the control's own focus by either device.** The selected-text band, a caret and a
 grid's cell ring read it: a box focused by a click keeps them while the pointer wanders.
 
 The hovered and the focused control re-read their state as the device switches, and the focused
 control as its window takes or loses the focus, since Hot and Current are stored per control and
-animate on their own slots - see Input and FormBase::stateWindowFocus.
+animate on their own slots - up to the root form, through the popups between. See Input and
+FormBase::stateWindowFocus.
 
 ## HorizontalTextAnchor
 

@@ -503,6 +503,17 @@ answers the same before and after. Whether a control shows the state is its own 
 than comparing pointers with these. A test for the delegate itself - the row a grid's keys apply to,
 the item a press landed on - compares with `focusDelegate()`.
 
+**A popup takes the focus and leaves the look.** The control a popup was opened on reads focused and
+selected for as long as the popup is up - Control::isDroppedDown - and the item it answers for
+reads focused with everything it stands in, since the focus comes back there: Control::focusAnchor
+is that item, or the focus delegate itself while no popup is up, and the drawn focus is the chain
+above it. So a row whose cell holds the open list keeps its ring. `isFocused()` answers for the
+focus itself, which is in the popup.
+
+**An active container wears the ring as a fallback.** While the anchor is an item inside it, the
+item wears the ring and the container reads focused without one; a container that is the anchor
+itself - a list with nothing in it - wears its own.
+
 ## InputController
 
 **What the user does switches the two:**
@@ -521,7 +532,8 @@ is hot through its focus and the keyboard instead - see VisualStateIndex.
 
 **Paint reads the factors** through `RuleInput::Keyboard` and `RuleInput::Mouse`. A switch is one
 crossfade, and each step repaints every window - see InputSwitchEvent. The hovered and the focused
-control re-read their state as well, since their Hot and Current carry the device.
+control re-read their state as well, since their Hot and Current carry the device - up to the root
+form, through the popups between, since what a popup was opened on reads focused through it.
 
 ## ContextMessage
 

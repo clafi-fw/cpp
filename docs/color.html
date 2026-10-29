@@ -791,6 +791,9 @@ list can state a ring of its own the same way. A line a control raises through
 <code>PaintEvent::strokeRgbOn</code> - a grid cell's, a divider row's - reads the same rules and
 nothing of the weight below.</p>
 
+<p>An active container - a grid, a list - is current only as a fallback, while the focus is on it
+and on no item inside it; with an item to hand the ring to, the item wears it alone.</p>
+
 <p>The ring's weight is the control's <code>Current</code> factor, whatever colour the rules gave the
 stroke. The border thickens toward <code>ThemeMetrics::focusedBorder</code> by it, and a surface that
 grows in as it arrives is held at full size by it, since a ring marks the control's frame and not its

@@ -1156,6 +1156,15 @@ namespace ClaFi
         return m_parent && m_parent->isChildDroppedDown(*this);
     }
 
+    Control* Control::focusAnchor() const
+    {
+        const FormBase* form = getForm();
+        const FormBase* popup = form ? form->activePopup() : nullptr;
+        if (popup && popup->popupTarget())
+            return popup->popupTarget()->focusDelegate();
+        return Input::focusDelegate();
+    }
+
     // Not gated on an overlay entry naming this control. The two are independent: the parent says
     // where its child is drawn, and whichever container holds the entry says when it is painted
     // and what clips it. A grid answers for its own header while the entry naming that header
@@ -2594,8 +2603,18 @@ namespace ClaFi
         //
         // This is how the control **reads**. Where the focus **rests** is Input::focusedControl,
         // and that is untouched - the two answers differ for exactly as long as the popup is up.
+        //
+        // **And the item that control answers for reads focused, with everything it stands in.**
+        // The focus went into the popup from there and comes back there - see focusAnchor: a row
+        // whose cell holds the open list is still the row the keys are about, and its cell keeps
+        // the ring. Focused alone - the selected look is the opened-on control's own.
         const bool droppedDown = isDroppedDown();
-        const bool focused = (interactive && isFocused()) || droppedDown;
+        const Control* anchor = focusAnchor();
+        const bool focused = (interactive && containsNested(anchor)) || droppedDown;
+        // An active container wears the ring as a fallback: while it is the anchor itself, with no
+        // item inside it to hand the ring to.
+        const bool ringsItself = interactivity() != Interactivity::ActiveContainer
+            || anchor == this;
         // Hot and current carry the input device - see UI-Types#visualstateindex. The window's
         // focus is part of hot and the Always show focus setting of current, so the form
         // re-reads the focused control as either moves - see FormBase::invalidateFocusedState.
@@ -2610,7 +2629,7 @@ namespace ClaFi
             .focused = focused,
             .selected = actionState.selected || droppedDown,
             .enabled = actionState.enabled,
-            .current = focused && ringShown
+            .current = focused && ringShown && ringsItself
         };
         const Control* p = m_parent;
         while (p)
@@ -2649,6 +2668,16 @@ namespace ClaFi
             if (pass)
                 control->invalidateState();
             control = control->m_parent;
+        }
+    }
+
+    void Control::invalidateStateToRoot(Control* from, const InvalidateEvent event)
+    {
+        while (from)
+        {
+            invalidateStateUp(from, nullptr, event);
+            const FormBase* form = from->getForm();
+            from = form ? form->popupTarget() : nullptr;
         }
     }
 
