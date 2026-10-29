@@ -93,7 +93,7 @@ namespace ClaFi
         [[nodiscard]] float radius() const { return m_metrics.radius; }
         void setRadius(const float value) { m_metrics.radius = value; }
         //
-        [[nodiscard]] virtual Interactivity interactivity() const override final { return m_interactivity; }
+        [[nodiscard]] Interactivity interactivity() const final { return m_interactivity; }
         void setInteractivity(const Interactivity value) { m_interactivity = value; }
     protected:
         // Each override adds the state RichControl stores, then lets the base emit the event.

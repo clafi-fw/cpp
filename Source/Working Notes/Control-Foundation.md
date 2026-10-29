@@ -201,6 +201,9 @@ gather the control's own text as its buffer was the first idea and does not work
 build on the paint that changed the words. Fixing that means the event tracking writes, exposure
 through `operator Text&` included, and a non-const seam at Control's four own-text gathers.
 
-**The composed case is TooltipLabel alone**, whose answer is re-asked per paint and differs by
-phase. ParameterTooltip had carried a second Text and a getText override to replace the answer;
-setCall writes text() now.
+**No host composes its answer now.** TooltipLabel re-asked its control per paint and answered
+differently by phase - the Calculate answer sized the window and the Paint answer was shown, so
+a hue slider's tooltip kept the width of 360 degrees through a drag - until 2026-10-29, when
+Tooltip began writing the words into the label's own text, as any host's caller does. The window
+is sized to what it shows. ParameterTooltip had carried a second Text and a getText override to
+replace the answer; setCall writes text() now.

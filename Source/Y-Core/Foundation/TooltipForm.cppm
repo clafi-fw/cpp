@@ -9,7 +9,6 @@ import :Control;
 import :Form;
 import :WithTextLayout;
 import :Tooltip;
-import :ContextMessage;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.AppTheme_Colors;
@@ -30,10 +29,8 @@ namespace ClaFi
     {
         friend TooltipForm;
     public:
-        using WithTextLayout<FormControlBase>::WithTextLayout;
+        using WithTextLayout::WithTextLayout;
     protected:
-        void getText(GetTextEvent&) const override;
-        [[nodiscard]] const TextFormat* textFormat() const override;
         [[nodiscard]] float lineBreakWidth() const override { return m_breakWidth; }
         // Held to Tooltip::k_maxLines, and to k_lineWidth unless it repeats lines broken elsewhere.
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
@@ -43,35 +40,21 @@ namespace ClaFi
         // The width the words this tooltip repeats were broken at, and zero for a tooltip repeating
         // none - see TooltipForm::setControl.
         float m_breakWidth{ 0.0f };
-        mutable TextFormat m_format{}; // as the control last answered - written by getText
     };
 
     // The window a tooltip is shown in, owned by the window of the form the tooltip belongs to.
     export class TooltipForm : public Form<TooltipLabel>
     {
         friend Tooltip;
-        friend TooltipLabel;
     public:
         explicit TooltipForm(FormBase& ownerForm);
         ~TooltipForm() override;
         Control* control() { return content().m_control; }
         void setControl(Control* control);
-        void setControl(Control&, const GetTooltipEvent&);
+        void setControl(Control&, const GetTooltipEvent&); // the answer becomes the label's text
         void startAlphaAnimation();
         bool stillVisible() const;
         bool hideOnUserInput() const { return m_hideOnUserInput; }
-        // The text the layout on screen was measured from, which is what the control answers in
-        // the Calculate phase. A control is free to be measured from a line it never shows - a
-        // hue slider asks for the room 360 degrees needs and shows the degree it is on - so this
-        // is what says whether the answer has moved since that layout, and is not what the
-        // window says.
-        [[nodiscard]] const Text& measuredText() const { return m_measuredText; }
-        // The words the last visible paint put on screen.
-        //
-        // **They outlive the control being cleared**, because the pixels do. A window taken down
-        // goes out over an alpha animation and is painted the whole way, and these are the words
-        // every one of those paints repeats - see TooltipLabel::getText.
-        [[nodiscard]] const Text& shownText() const { return m_shownText; }
     protected:
         void updateVisibility() override;
         // The control the tooltip is about, which the window goes along with as a popup does.
@@ -83,11 +66,6 @@ namespace ClaFi
         static constexpr ColorByte m_alpha = 255; // a bit of transparency looks good only when bg is blurred
     private:
         bool m_hideOnUserInput{ true };
-        Text m_measuredText{};
-        // Written by TooltipLabel::getText, which is const because asking a control for its text
-        // does not change the label. What that answer was is a record of the window rather than
-        // state of the label, so the const does not propagate to it.
-        mutable Text m_shownText{};
     };
 
 
@@ -95,52 +73,6 @@ namespace ClaFi
 
 
     // TooltipLabel
-
-    void TooltipLabel::getText(GetTextEvent& event) const
-    {
-        const TooltipForm& form = static_cast<const TooltipForm&>(this->form());
-
-        // **A window that has been let go of keeps the words it went out with.** It goes on being
-        // painted for as long as its alpha runs down, and every one of those paints asks again -
-        // so asking a control there would repaint the window part way through the fade as
-        // whatever that control says for itself **now**. A message being taken down is exactly that
-        // case: it has been forgotten by the time the fade starts, and what the user was reading
-        // would turn into the control's own tooltip in front of them.
-        //
-        // **Having no control is the whole test**, and the form's own visibility is not part of it.
-        // A tooltip stands over a control whose answer changes underneath it - a slider dragged
-        // with its value on the thumb - and the visible flag says where the alpha is heading rather
-        // than whether there is anything to say. Read here, it stops a window that is on screen
-        // from ever asking again, and the value stands at whatever it last said for the length of
-        // the drag. Every route that takes a tooltip down goes through setControl(nullptr), so the
-        // control being gone is exactly the state these words are kept for.
-        if (!m_control)
-        {
-            event.text = form.shownText();
-            return;
-        }
-
-        GetTooltipEvent tooltipEvent{ form.context(), *m_control, event.text, event.phase() };
-        tooltipEvent.hideOnUserInput = form.m_hideOnUserInput;
-        tooltipEvent.placement = form.placement();
-        event.text.clear();
-        // Asked in the same order the tooltip asked it in when it decided there was something to
-        // show. Asked of the control alone, a message standing about this control would be laid
-        // out as the control's own tooltip and the window would show the wrong words.
-        if (!ContextMessage::answer(*m_control, tooltipEvent))
-            m_control->nestedGetTooltip(tooltipEvent);
-        m_format = tooltipEvent.format;
-        // **What a paint produced is what the fade repeats.** A calculation is a measurement and is
-        // answered with the room a later value will need, so recording that one would send the
-        // window out saying a line it never showed.
-        if (event.phase() == EventPhase::Paint)
-            form.m_shownText = event.text;
-    }
-
-    const TextFormat* TooltipLabel::textFormat() const
-    {
-        return m_format.empty() ? nullptr : &m_format;
-    }
 
     ScaledSize TooltipLabel::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
@@ -196,11 +128,8 @@ namespace ClaFi
         content().m_control = control;
         if (!control)
         {
-            // The window is about nothing from here on, and it says nothing more: the label
-            // stops asking once the form is not visible. The words it went out with are left
-            // standing - see m_shownText - because the pixels they were laid out for are still on
-            // screen for the whole of the fade, and wiping them empties the window in front of
-            // whoever is reading it.
+            // The window is about nothing from here on. The words stay in the label, since the
+            // pixels they were laid out for are on screen for the whole of the fade.
             hide();
             return;
         }
@@ -212,7 +141,8 @@ namespace ClaFi
         setControl(&control);
         // Taken here too - a rect stated equal to the last one records nothing.
         rememberPlacementTarget();
-        m_measuredText = event.text;
+        content().text() = event.text;
+        content().setTextFormat(event.format);
         setPlacement(event.placement);
         m_hideOnUserInput = event.hideOnUserInput;
         // **An over-text tooltip is the control's own layout, uncut.** It stands on the words it

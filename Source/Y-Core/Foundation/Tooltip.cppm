@@ -64,9 +64,7 @@ namespace ClaFi
         [[nodiscard]] static bool answersFor(Control&);
         void showOrHide(Control* = nullptr);
         void startWaiting(MilliSeconds);
-        void updatePosition(const FloatRect& anchorRect, bool forceRepaint);
-        // The rect the control states for its tooltip - its bounds unless it names another.
-        [[nodiscard]] FloatRect anchorOf(Control&) const;
+        void updatePosition(Control&, const FloatRect& anchorRect);
         [[nodiscard]] bool stillVisible() const;
         void destroyForm();
     private:

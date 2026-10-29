@@ -174,9 +174,9 @@ namespace ClaFi
         // Escape answers by dismissing. It stops being the one only when another takes over
         // below, or when stopAndHide finishes it off.
         //
-        // The **control** is let go of, which is what hides the window and what tells the label to
-        // keep the words it went out with rather than ask again - see TooltipLabel::getText. A
-        // tooltip the pointer has left is about nothing from here on, exactly as one dismissed is.
+        // The **control** is let go of, which is what hides the window. The label keeps the words
+        // it went out with, and the fade paints them. A tooltip the pointer has left is about
+        // nothing from here on, exactly as one dismissed is.
         if (s_current)
         {
             s_current->m_timer.stop();
@@ -207,13 +207,13 @@ namespace ClaFi
         Text text{};
         for (it = &pointed; it; it = it->parent())
         {
-            GetTooltipEvent event{ form.context(), *it, text, EventPhase::Calculate };
+            GetTooltipEvent event{ form.context(), *it, text, EventPhase::Paint };
             if (!ContextMessage::answer(*it, event))
                 it->nestedGetTooltip(event);
             if (it == shown || !text.empty())
                 break;
         }
-        return it == shown && text == form.measuredText();
+        return it == shown && text == form.text();
     }
 
     void Tooltip::startWaiting(MilliSeconds delay)
@@ -222,15 +222,13 @@ namespace ClaFi
         m_timer.start(delay);
     }
 
-    void Tooltip::updatePosition(const FloatRect& anchorRect, bool forceRepaint)
+    void Tooltip::updatePosition(Control& control, const FloatRect& anchorRect)
     {
         TooltipForm& form = *m_form;
-        if (!form.control())
-            return;
         // Where the control comes to rest rather than where a glide has carried it so far - see
         // TooltipForm::placementTargetBounds.
         FloatRect restingRect = anchorRect;
-        restingRect.offset(-form.control()->viewTravelRemaining());
+        restingRect.offset(-control.viewTravelRemaining());
         form.setPlacementRect(restingRect);
 
         // TODO: move this OverText height adjustment into form.initPlacement().
@@ -244,41 +242,17 @@ namespace ClaFi
         //        form.window().setBounds(frmBounds);
         //    }
         //}
-
-        // A tooltip already on screen keeps the pixels it has until something invalidates them. A
-        // caller whose text changes under a window nothing else invalidated asks for the repaint:
-        // a thumb dragged along a slider with its value on the tooltip, in a window measured once
-        // for the widest value.
-        if (forceRepaint)
-        {
-            form.invalidate();
-            form.update();
-        }
     }
 
     void Tooltip::showRightNow(Control& target)
     {
-        if (control() == &target)
-        {
-            updatePosition(anchorOf(target), true);
-        }
-        else
-        {
-            // Whatever is up goes first, and it is not always this form's: a message is raised by
-            // something the user did, and a tooltip may stand over another window at the time.
+        // Whatever is up about anything else goes first, and it is not always this form's: a
+        // message is raised by something the user did, and a tooltip may stand over another
+        // window at the time. One already up about this control is asked again in place - a
+        // thumb being dragged with its value on the tooltip.
+        if (control() != &target)
             stopAndHide();
-            showOrHide(&target);
-        }
-    }
-
-    FloatRect Tooltip::anchorOf(Control& target) const
-    {
-        // Asked as showOrHide asks it, so a message about the control keeps the rect it states.
-        Text text{};
-        GetTooltipEvent event{ m_form->context(), target, text, EventPhase::Calculate };
-        if (!ContextMessage::answer(target, event))
-            target.nestedGetTooltip(event);
-        return event.anchorRect;
+        showOrHide(&target);
     }
 
     bool Tooltip::stopAndHide()
@@ -331,7 +305,8 @@ namespace ClaFi
         while (it)
         {
             tmpText.clear();
-            GetTooltipEvent event{ form.context(), *it, tmpText, EventPhase::Calculate };
+            // The words the tooltip shows, which are also what the window is sized to.
+            GetTooltipEvent event{ form.context(), *it, tmpText, EventPhase::Paint };
             // A message raised about this control stands in front of whatever it would say for
             // itself, and is the whole of the answer wherever it stands.
             if (!ContextMessage::answer(*it, event))
@@ -343,22 +318,10 @@ namespace ClaFi
                 // holds the layout it was given, not the one it would be given, so a moved answer
                 // has to re-place it exactly as a moved control does: the text is what the size
                 // was measured from.
-                const bool answerMoved = form.control() != it or form.measuredText() != tmpText;
-                if (answerMoved)
+                if (form.control() != it or form.text() != tmpText)
                     form.setControl(*it, event);
-                // **Shown before it is measured or painted.** While a form is not visible its label
-                // answers for it with the words the window went out with - see
-                // TooltipLabel::getText, which is how a window keeps them for the whole of its
-                // fade - and a placement measures the label. Taken before this, the window is
-                // sized to the **previous** answer and the paint forced inside it puts that answer
-                // back on the screen: a box cut short of the words in it, or one left as wide as
-                // a longer tooltip that stood there before, holding a value the user has gone past.
+                updatePosition(*it, event.anchorRect);
                 form.show();
-                if (answerMoved)
-                    // The new answer is on its way to the screen: setControl invalidated the
-                    // whole window, and a placement paints a window for its rect before the
-                    // window takes it. Nothing is forced here.
-                    updatePosition(event.anchorRect, false);
                 s_current = this;
                 return;
             }

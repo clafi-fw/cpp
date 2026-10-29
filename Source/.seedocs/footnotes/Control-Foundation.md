@@ -22,8 +22,7 @@ Control returns none - see TextFormat.
 - WithTextLayout states it to the layout it holds.
 - A TextBox lays its placeholder out over it.
 - An in-place editor lays its text out over the format of the control it covers.
-- An over-text tooltip repeats it - GetTooltipEvent::format carries it, and TooltipLabel answers
-  with it.
+- An over-text tooltip repeats it - GetTooltipEvent::format carries it to the tooltip's label.
 
 ## RichControl textFormat
 
@@ -649,11 +648,11 @@ paint and evicts the layouts the rest of the form draws from. A host here shapes
 place.
 
 **The layout draws the control's own text and nothing else.** An answer a gather builds - words a
-handler or a parent adds, a tooltip's answer - becomes the control's text as it is measured or
-drawn. So a handler writing a host's text states the whole of it: TooltipLabel's clears before it
-writes, and an Action writes its words into an empty text only, so a presenter here keeps the first
-words it was given. A handler adding to what it finds would add to the control's text on every
-paint - a ButtonBase end icon is one such addition, so a host takes no EndIcon.
+handler or a parent adds - becomes the control's text as it is measured or drawn. So a handler
+writing a host's text states the whole of it: an Action writes its words into an empty text only,
+so a presenter here keeps the first words it was given. A handler adding to what it finds would
+add to the control's text on every paint - a ButtonBase end icon is one such addition, so a host
+takes no EndIcon.
 
 ## WithTextLayout syncedLayout
 
