@@ -236,7 +236,6 @@ namespace ClaFi
         bool m_showSelectionOnSurface{ true };
         float m_surfaceVisibility{ 0.0f };
         float m_surfaceGrowInScale{ 1.0f }; // the size the surface arrives from
-        Interactivity m_interactivity;
         // Set for the control that owns the press animation, and inherited by everything it
         // contains, so a child does not scale a second time about its own centre.
         bool m_pressScaleApplied{ false };
@@ -249,7 +248,7 @@ namespace ClaFi
 #if CLAFI_TEXT_MOVING
         float m_zAnimationAmount{ 1.0f }; // the application's, inherited from the root
 #endif
-        // How far the Focus ring list reached the stroke. A ring stands out of the grow-in.
+        // The ring's weight, the control's current. A ring stands out of the grow-in.
         float m_focusRingFactor{ 0.0f };
         float m_borderWidth;
         float m_radius{};
@@ -354,7 +353,6 @@ namespace ClaFi
         [[nodiscard]] const CornerRadii& cornerRadii() const { return m_target.m_cornerRadii; }
         void setCornerRadii(const CornerRadii& value) { m_target.m_cornerRadii = value; }
         void setCornerRadius(Corner corner, float value) { m_target.m_cornerRadii.set(corner, value); }
-        void setInteractivity(Interactivity value) { m_target.m_interactivity = value; }
         void setBorderWidth(float value) { m_target.m_borderWidth = value; }
     private:
         PaintEvent& m_target;

@@ -112,6 +112,7 @@ namespace ClaFi
         Slider& m_zAnimationSlider;
 #endif
         CheckBox& m_alwaysOnTop;
+        CheckBox& m_alwaysShowFocus;
         // Held whole: all of it goes where the application named no GPU backend.
         AppMenuPage::Section& m_performanceSection;
         StackPanel& m_performanceGroup;

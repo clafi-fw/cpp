@@ -696,7 +696,7 @@ in as its input rises. The inputs joined as "or" stand where any one of them wou
 <table>
 <tr><th>Channel</th><th>Where it starts</th></tr>
 <tr><td><code>Surface</code></td><td>The surface the control stands on. A control whose rules move nothing paints no surface of its own.</td></tr>
-<tr><td><code>Stroke</code></td><td>The control's own surface. The focus ring takes it further - see <a href="#focus-ring">The focus ring</a>.</td></tr>
+<tr><td><code>Stroke</code></td><td>The control's own surface. The focus ring is this channel under the rules reading <code>Current</code> - see <a href="#focus-ring">The focus ring</a>.</td></tr>
 <tr><td><code>Text</code></td><td>The ink the control above passes on, in the control's own surface's hue until a rule names one.</td></tr>
 <tr><td><code>Shadow</code></td><td>Black in the stroke's hue, the stroke as it stands before the ring. It is read at the dark end in both modes with no floor, so elevation here is luminosity. A window's blur, offset, spread and opacity are metrics, in <code>WindowShadow</code>.</td></tr>
 </table>
@@ -724,8 +724,8 @@ before it left:</p>
 <tr><td>The control's own</td><td>The control that states them through <code>AdjustPaintEvent::setOwnRules</code>.</td></tr>
 <tr><td><code>of(UiElement)</code></td><td>Every control wearing that element.</td></tr>
 <tr><td><code>anyWindow</code></td><td>A form's root control, by its position, whatever element it wears. A root that wears none takes this list all the same.</td></tr>
+<tr><td><code>anyNonWindow</code></td><td>Every other control, whatever element it wears, read where <code>anyWindow</code> is read for a root. The focus ring's rules live here - see <a href="#focus-ring">The focus ring</a>.</td></tr>
 <tr><td><code>shared</code></td><td>Every control that wears an element. The Themes app calls it Any element.</td></tr>
-<tr><td><code>focusRing</code></td><td>The own stroke of every control that takes input, read after the rest - see <a href="#focus-ring">The focus ring</a>.</td></tr>
 </table>
 
 <p>A control wears an element in one of two ways. A <code>RichControl</code> takes it as a property,
@@ -784,24 +784,23 @@ from.</p>
 
 <h3 id="focus-ring">The focus ring</h3>
 
-<p>The ring is the control's own stroke, taken further by the theme's <code>focusRing</code> list -
-Focus ring in the Themes app. The list reaches every control whose <code>Interactivity</code> is not
-<code>None</code>, whatever element it wears, and it is read after the stroke's own lists. Only its
-Stroke rules are read, and only for the control's own stroke: a line a control raises through
-<code>PaintEvent::strokeRgbOn</code> - a grid cell's, a divider row's - does not take the ring.</p>
+<p>The ring is the control's own stroke as the rules reading <code>Current</code> leave it. The
+framework's own theme states them in <code>anyNonWindow</code> - Any Non-Window in the Themes app -
+so they reach every control that is not a window root, whatever element it wears; an element's own
+list can state a ring of its own the same way. A line a control raises through
+<code>PaintEvent::strokeRgbOn</code> - a grid cell's, a divider row's - reads the same rules and
+nothing of the weight below.</p>
 
-<p>How far the list reaches the stroke is how much ring there is, and that share sets the ring's
-weight as well as its colour. The border thickens toward <code>ThemeMetrics::focusedBorder</code> by
-it, and a surface that grows in as it arrives is held at full size by it, since a ring marks the
-control's frame and not its surface. Both are paint effects, and neither moves any layout. The
-shadow takes its hue from the stroke before the ring, so a focused control does not tint the shadow
-it casts.</p>
+<p>The ring's weight is the control's <code>Current</code> factor, whatever colour the rules gave the
+stroke. The border thickens toward <code>ThemeMetrics::focusedBorder</code> by it, and a surface that
+grows in as it arrives is held at full size by it, since a ring marks the control's frame and not its
+surface. Both are paint effects, and neither moves any layout.</p>
 
 <p>The framework's own theme states two rules:</p>
 
 <table>
 <tr><th>Rule</th><th>Ink</th></tr>
-<tr><td>when current</td><td>Full contrast - no saturation, elevation 1. The keys' focus, and a container's current item under the mouse as well, since it marks where a Shift range grows from.</td></tr>
+<tr><td>when current</td><td>Full contrast - no saturation, elevation 1. The keys' focus - any focus, with Always show focus ticked in Settings - and a container's current item under the mouse as well, since it marks where a Shift range grows from.</td></tr>
 <tr><td>when hot, and current</td><td>The accent.</td></tr>
 </table>
 
@@ -952,10 +951,10 @@ channels are resolved in one order, because each seeds the next:</p>
     <li>The <strong>ink</strong>: the parent's ink, in this surface's hue as far as neither a rule nor
         a host has named one, with this control's Text rules applied. A Text rule raising saturation
         alone tints toward what the text is on.</li>
-    <li>The <strong>stroke</strong>: this control's own surface with its Stroke rules applied, then
-        the focus ring's list where the control takes input.</li>
-    <li>The <strong>shadow</strong>: the parent's shadow, in the hue of the stroke before the ring as
-        far as no rule has named one, with the Shadow rules applied.</li>
+    <li>The <strong>stroke</strong>: this control's own surface with its Stroke rules applied, the
+        focus ring among them.</li>
+    <li>The <strong>shadow</strong>: the parent's shadow, in the hue of the stroke as far as no rule
+        has named one, with the Shadow rules applied.</li>
 </ol>
 
 <ul>

@@ -407,6 +407,11 @@ namespace ClaFi
             TooltipText{ L"Keep above others" },
             Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
         ) },
+        m_alwaysShowFocus{ m_interfaceGroup.add<CheckBox>(
+            L"Always show focus",
+            TooltipText{ L"Ring the focused control under the mouse too" },
+            Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
+        ) },
         m_performanceSection{ m_options.addSection(L"Performance / Display") },
         m_performanceGroup{ m_performanceSection.body() },
         m_gpuAcceleration{ m_performanceGroup.add<CheckBox>(
@@ -472,6 +477,16 @@ namespace ClaFi
         // hold says something untrue about the window.
         if (!form().rootForm().canSetAlwaysOnTop())
             m_alwaysOnTop.setVisible(false);
+
+        // Written, not acted on here: the node carries it to the context, which tells the focused
+        // control - see AppContext::stateAlwaysShowFocus.
+        m_alwaysShowFocus.onGetState([this](GetStateEvent& event) {
+            event.state.selected = appContext().focusAlwaysShown();
+        });
+        m_alwaysShowFocus.onClick([this](ClickEvent&) {
+            appContext().alwaysShowFocus().set(!appContext().focusAlwaysShown());
+            m_alwaysShowFocus.invalidateState();
+        });
 
         // **The answer is written, not acted on here.** The node carries it to the context, which
         // states the backend and tells every window - see AppContext::stateBackend - the same

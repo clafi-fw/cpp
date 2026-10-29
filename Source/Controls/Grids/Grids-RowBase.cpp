@@ -476,10 +476,14 @@ namespace ClaFi::Controls::Grids
             hostedControl->setStateFactor(VisualStateIndex::Hot, hotFactor, false);
             hostedControl->setStateFactor(VisualStateIndex::Selected, selFactor, false);
             // The control itself is MouseOnly, so this is the only focus it ever has, and the
-            // only ring: current as a control's own is, the keys' focus.
+            // only ring: current as a control's own is, the keys' focus - or any focus, where
+            // the application always shows it.
+            const float ringFactor = appContext().focusAlwaysShown()
+                ? 1.0f
+                : Input::keyboard().factor();
             hostedControl->setStateFactor(VisualStateIndex::Focused, keysOnCell, false);
-            hostedControl->setStateFactor(VisualStateIndex::Current,
-                                          keysOnCell * Input::keyboard().factor(), false);
+            hostedControl->setStateFactor(VisualStateIndex::Current, keysOnCell * ringFactor,
+                                          false);
         }
         // A Control cell with no control in this row - the header cell, or a plain
         // text cell in the same column - has no better cue to defer to, so it lands

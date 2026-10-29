@@ -110,7 +110,7 @@ namespace Themes_App
     constexpr std::array<NamedRules, 3ull> k_namedRules{
         NamedRules{ .codeName = L"shared", .rules = &ThemeRules::shared },
         NamedRules{ .codeName = L"anyWindow", .rules = &ThemeRules::anyWindow },
-        NamedRules{ .codeName = L"focusRing", .rules = &ThemeRules::focusRing }
+        NamedRules{ .codeName = L"anyNonWindow", .rules = &ThemeRules::anyNonWindow }
     };
 
     // The value a literal has to carry to rebuild a rule value. A rule holds its value

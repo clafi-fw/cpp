@@ -67,7 +67,6 @@ namespace ClaFi
         m_parentEvent{
             context.parent() ? static_cast<PaintEvent*>(context.parent()->visitorData()) : nullptr
         },
-        m_interactivity{ context.control().interactivity() },
         m_frameOverContent{ m_parentEvent == nullptr }
     {
         if (m_parentEvent)
@@ -259,21 +258,13 @@ namespace ClaFi
                 m_controlContext.lightness = m_lightness;
             }
 
-            // The stroke is seeded from this control's own surface.
+            // The stroke is seeded from this control's own surface. The focus ring is this stroke
+            // as the rules reading Current leave it - Any Non-Window's by default. See AppTheme
             Hsl stroke = surface;
-            float strokeChanged = applyColorRules(PaintChannel::Stroke, stroke);
-            // The focus ring is this stroke taken further by the Focus ring list, on any control
-            // the user can be on. The shadow seeds from the stroke before it. See AppTheme
-            Hsl ring = stroke;
-            if (m_interactivity != Interactivity::None)
-            {
-                m_focusRingFactor = applyColorRules(bakedColors().rules.focusRing,
-                    PaintChannel::Stroke, ring, nullptr);
-                strokeChanged = StateFactors::compose(strokeChanged, m_focusRingFactor);
-            }
+            const float strokeChanged = applyColorRules(PaintChannel::Stroke, stroke);
             if (strokeChanged > 0.0f)
             {
-                m_strokeRgb = ring.toColor();
+                m_strokeRgb = stroke.toColor();
                 m_strokeRgb = disabledFormOf(m_strokeRgb, standsOn, disabledAmount());
                 m_strokeRgb.setOpacity(strokeChanged);
             }
@@ -292,8 +283,9 @@ namespace ClaFi
             // surface, so an ink asked for while painting matches one that was ready.
             m_controlContext.disabledAmount = disabledAmount();
 
-            // The ring's weight: the border thickens toward focusedBorder as far as the Focus ring
-            // list reached the stroke.
+            // The ring's weight is the control's current: the border thickens toward focusedBorder
+            // by it, whatever colour the rules gave the stroke.
+            m_focusRingFactor = factors.current();
             if (m_focusRingFactor > 0.0f)
             {
                 const float focusedBorder = scaledStrokeWidth(ThemeMetrics::focusedBorder);
@@ -620,9 +612,10 @@ namespace ClaFi
         return rule.inputs.anyLevelIn(levels) * rule.andInputs.allLevelIn(levels);
     }
 
-    // The control's own rules, the element's list, then the window's, then the shared one. A
-    // form's root control is a window whichever element it wears, so the window's list reaches it
-    // with no element at all.
+    // The control's own rules, the element's list, then the window's or the non-window's, then
+    // the shared one. A form's root control is a window whichever element it wears, and every
+    // other control is a non-window, so one of the two lists reaches a control with no element
+    // at all.
     float PaintEvent::applyColorRules(const PaintChannel channel, Hsl& color, float* namedHue) const
     {
         const BakedRules& rules = bakedColors().rules;
@@ -632,11 +625,9 @@ namespace ClaFi
             changed = StateFactors::compose(changed,
                 applyColorRules(rules.of(*m_element), channel, color, namedHue));
         }
-        if (!m_parentEvent)
-        {
-            changed = StateFactors::compose(changed,
-                applyColorRules(rules.anyWindow, channel, color, namedHue));
-        }
+        changed = StateFactors::compose(changed,
+            applyColorRules(m_parentEvent ? rules.anyNonWindow : rules.anyWindow,
+                channel, color, namedHue));
         if (m_element)
         {
             changed = StateFactors::compose(changed,

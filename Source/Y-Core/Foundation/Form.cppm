@@ -491,6 +491,9 @@ namespace ClaFi
         void backendSwitched(BackendSwitchEvent&);
         void scaleSwitched(ScaleSwitchEvent&);
         void inputSwitched(InputSwitchEvent&);
+        void focusVisibilitySwitched(FocusVisibilitySwitchEvent&);
+        // The focused control's chain re-reads its state, where that control stands in this form.
+        void invalidateFocusedState();
 #if CLAFI_TEXT_MOVING
         void zAnimationSwitched(ZAnimationSwitchEvent&);
 #endif
@@ -612,6 +615,7 @@ namespace ClaFi
         ScopedEventConnection m_backendSwitchConnection;
         ScopedEventConnection m_scaleSwitchConnection;
         ScopedEventConnection m_inputSwitchConnection;
+        ScopedEventConnection m_focusVisibilitySwitchConnection;
 #if CLAFI_TEXT_MOVING
         ScopedEventConnection m_zAnimationSwitchConnection;
 #endif

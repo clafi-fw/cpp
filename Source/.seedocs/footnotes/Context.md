@@ -39,6 +39,14 @@ Raised on `AppContext::events()` at every step of either fade. `Input::mouse()` 
 **Every visible window repaints whole**, since a rule reading `RuleInput::Keyboard` or
 `RuleInput::Mouse` can sit on any control.
 
+## FocusVisibilitySwitchEvent
+
+Raised on `AppContext::events()` when `AppContext::alwaysShowFocus` is written.
+`AppContext::focusAlwaysShown` returns the answer.
+
+**Only the focused control re-reads its state** - FormBase::invalidateFocusedState, in the form
+it stands in - since VisualStateIndex::Current is the one thing the answer reaches.
+
 ## ScaleSwitchEvent
 
 Raised on `AppContext::events()`. `AppContext::scalePercent` returns the percent.
@@ -190,6 +198,12 @@ by default. **Writing it rescales every window** - the context raises ScaleSwitc
 `scalePercent` is the percent taken, held between `k_minScalePercent` and `k_maxScalePercent`
 because the config is text the user may edit. It is read as the context is built, so the first
 window opens at the stored size.
+
+## AppContext alwaysShowFocus
+
+The `AlwaysShowFocus` node of the `Interface` section, off by default: whether the focused control
+wears its ring whichever device put the focus there, where by default the keys alone do.
+**Writing it re-reads the focused control** - the context raises FocusVisibilitySwitchEvent.
 
 ## AppContext::zAnimation
 

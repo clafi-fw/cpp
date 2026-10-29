@@ -275,12 +275,13 @@ namespace ClaFi
 
     export using ColorRules = std::vector<ColorRule>;
 
-    // The rules a theme states: each element's own, then the window's, then the shared ones.
+    // The rules a theme states: each element's own, then the window's or the non-window's, then
+    // the shared ones.
     export struct ThemeRules
     {
         ColorRules shared{};
-        ColorRules anyWindow{}; // what every form's root control takes, whatever it wears
-        ColorRules focusRing{}; // what an interactive control's own stroke takes
+        ColorRules anyWindow{};    // what every form's root control takes, whatever it wears
+        ColorRules anyNonWindow{}; // what every other control takes, whatever it wears - the ring's
         std::array<ColorRules, k_uiElementCount> elements{}; // indexed by UiElement
         [[nodiscard]] ColorRules& of(UiElement element)
         {

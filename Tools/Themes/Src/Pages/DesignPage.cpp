@@ -27,7 +27,6 @@ namespace Themes_App
 {
     namespace
     {
-        constexpr std::array k_strokeOutput{ PaintChannel::Stroke };
         constexpr std::array k_selectedTextOutputs{ PaintChannel::Surface, PaintChannel::Text };
         constexpr std::array k_foundTextOutputs{ PaintChannel::Surface };
 
@@ -43,11 +42,10 @@ namespace Themes_App
             .rules = &ThemeRules::anyWindow
         };
 
-        constexpr SharedRules k_focusRing{
-            .name = L"Focus Ring",
-            .token = k_focusRingRulesToken,
-            .rules = &ThemeRules::focusRing,
-            .outputs = k_strokeOutput
+        constexpr SharedRules k_anyNonWindow{
+            .name = L"Any Non-Window",
+            .token = k_anyNonWindowRulesToken,
+            .rules = &ThemeRules::anyNonWindow
         };
 
         constexpr auto k_windowRoots = std::to_array<CategoryEntry>({
@@ -77,7 +75,6 @@ namespace Themes_App
         });
 
         constexpr auto k_focusAndSelection = std::to_array<CategoryEntry>({
-            k_focusRing,
             UiElement::SelectionIndicator,
             UiElement::HoverIndicator,
             UiElement::SelectedText,
@@ -193,6 +190,7 @@ namespace Themes_App
         addItemEntry(addRootItem(), TreeEntry{ .page = &m_palettePage });
         addItemEntry(addRootItem(), TreeEntry{ .shared = &k_anyElement });
         addItemEntry(addRootItem(), TreeEntry{ .shared = &k_anyWindow });
+        addItemEntry(addRootItem(), TreeEntry{ .shared = &k_anyNonWindow });
         // Sets the theme-wide pages apart, so they read as peers of the categories.
         m_tree.addDivider(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         for (const Category& category : k_categories)

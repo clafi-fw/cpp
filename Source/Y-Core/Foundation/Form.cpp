@@ -1592,6 +1592,10 @@ namespace ClaFi
         m_inputSwitchConnection{
             appContext.events().connect<InputSwitchEvent>(this, &FormBase::inputSwitched)
         },
+        m_focusVisibilitySwitchConnection{
+            appContext.events().connect<FocusVisibilitySwitchEvent>(this,
+                &FormBase::focusVisibilitySwitched)
+        },
 #if CLAFI_TEXT_MOVING
         m_zAnimationSwitchConnection{
             appContext.events().connect<ZAnimationSwitchEvent>(this, &FormBase::zAnimationSwitched)
@@ -2096,6 +2100,18 @@ namespace ClaFi
         invalidate();
     }
 
+    void FormBase::focusVisibilitySwitched(FocusVisibilitySwitchEvent&)
+    {
+        invalidateFocusedState();
+    }
+
+    void FormBase::invalidateFocusedState()
+    {
+        Control* delegate = Input::focusDelegate();
+        if (delegate && m_content.containsNested(delegate))
+            Control::invalidateStateUp(delegate, nullptr, InvalidateEvent::InputController);
+    }
+
 #if CLAFI_TEXT_MOVING
     // The whole window, since every control that moves in depth rests at a new size.
     void FormBase::zAnimationSwitched(ZAnimationSwitchEvent&)
@@ -2275,9 +2291,7 @@ namespace ClaFi
     {
         const float endValue = m_window->isFocused() ? 1.0f : 0.0f;
         // The focused control's hot has the window's focus in it - see Control::visualState.
-        Control* delegate = Input::focusDelegate();
-        if (delegate && m_content.containsNested(delegate))
-            Control::invalidateStateUp(delegate, nullptr, InvalidateEvent::InputController);
+        invalidateFocusedState();
         // A form not painted yet has nothing on screen to fade.
         if (!m_content.isPainted())
         {

@@ -153,7 +153,7 @@ namespace ClaFi // AppTheme serializers
             std::make_tuple(
                 SerializedField{ L"Shared", &ThemeRules::shared },
                 SerializedField{ L"AnyWindow", &ThemeRules::anyWindow },
-                SerializedField{ L"FocusRing", &ThemeRules::focusRing }
+                SerializedField{ L"AnyNonWindow", &ThemeRules::anyNonWindow }
             ),
             elementRulesFields(std::make_index_sequence<k_uiElementCount>{})
         );

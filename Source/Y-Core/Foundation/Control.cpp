@@ -2597,10 +2597,12 @@ namespace ClaFi
         const bool droppedDown = isDroppedDown();
         const bool focused = (interactive && isFocused()) || droppedDown;
         // Hot and current carry the input device - see UI-Types#visualstateindex. The window's
-        // focus is part of hot, so FormBase::stateWindowFocus re-reads the focused control.
+        // focus is part of hot and the Always show focus setting of current, so the form
+        // re-reads the focused control as either moves - see FormBase::invalidateFocusedState.
         const bool keyboard = Input::keyboard().active();
         const FormBase* form = getForm();
         const bool windowFocused = form && form->isWindowFocused();
+        const bool ringShown = keyboard || (form && form->appContext().focusAlwaysShown());
         VisualState result{
             .hot = (interactive && isHovered() && Input::mouse().active())
                 || (focused && keyboard && windowFocused),
@@ -2608,7 +2610,7 @@ namespace ClaFi
             .focused = focused,
             .selected = actionState.selected || droppedDown,
             .enabled = actionState.enabled,
-            .current = focused && keyboard
+            .current = focused && ringShown
         };
         const Control* p = m_parent;
         while (p)

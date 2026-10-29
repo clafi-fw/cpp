@@ -120,17 +120,19 @@ theme is baked.
 - Two rule lists cross rule by rule when both read the same inputs and write the same channels, in
   one order. Lists that differ in any of that take the destination's.
 
-## ThemeRules focusRing
+## ThemeRules anyNonWindow
 
-**The ring is the control's own stroke, taken further by these rules.** They apply after the
-stroke's own rules, on every control whose interactivity is other than None, whatever element it
-wears. Only their Stroke rules count.
+**What every control that is not a form's root takes, whatever element it wears** - the
+counterpart of anyWindow, read in its place: after the element's own list, before the shared one.
+A control wearing no element takes it all the same. The focus ring lives here: its rules read
+Current and write the Stroke.
 
-**How far the rules reach is how much ring there is.** That share thickens the border toward
-ThemeMetrics::focusedBorder, in paint only. It also holds the frame out of the surface grow-in.
+**The ring's weight is the control's current**, whatever colour the rules gave the stroke. That
+factor thickens the border toward ThemeMetrics::focusedBorder, in paint only, and holds the frame
+out of the surface grow-in.
 
-A line drawn through `strokeRgbOn`, such as a grid cell's or a divider's, takes no ring. The shadow
-takes its hue from the stroke before the ring.
+A line drawn through `strokeRgbOn`, such as a grid cell's or a divider's, reads the lists and
+nothing of the weight.
 
 The default rules:
 

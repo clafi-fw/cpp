@@ -85,6 +85,8 @@ menu opens, so every option is read where it lives.
   that depth.
 - **Always on top** - for the application's window. It is hidden where the platform has no
   keep-above - see IPlatformWindow::canSetAlwaysOnTop.
+- **Always show focus** - writes AppContext::alwaysShowFocus: the focused control wears its ring
+  under the mouse too, where by default only the keys put one on.
 - **GPU acceleration** - writes AppContext::gpuAcceleration, and every window switches backend.
   Its section is hidden where the application named no GPU backend.
 

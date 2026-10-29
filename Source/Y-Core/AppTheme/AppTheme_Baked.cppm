@@ -81,7 +81,7 @@ namespace ClaFi
     public:
         BakedColorRules shared{};
         BakedColorRules anyWindow{};
-        BakedColorRules focusRing{};
+        BakedColorRules anyNonWindow{};
         std::array<BakedColorRules, k_uiElementCount> elements{}; // indexed by UiElement
     };
 
@@ -372,7 +372,7 @@ namespace ClaFi
         BakedRules result{};
         result.shared = bake(rules.shared, themeColors);
         result.anyWindow = bake(rules.anyWindow, themeColors);
-        result.focusRing = bake(rules.focusRing, themeColors);
+        result.anyNonWindow = bake(rules.anyNonWindow, themeColors);
         for (std::size_t i = 0; i < result.elements.size(); ++i)
             result.elements[i] = bake(rules.elements[i], themeColors);
         return result;
@@ -477,7 +477,7 @@ namespace ClaFi
         BakedRules result{};
         result.shared = blend(from.shared, to.shared, factor);
         result.anyWindow = blend(from.anyWindow, to.anyWindow, factor);
-        result.focusRing = blend(from.focusRing, to.focusRing, factor);
+        result.anyNonWindow = blend(from.anyNonWindow, to.anyNonWindow, factor);
         for (std::size_t i = 0; i < result.elements.size(); ++i)
             result.elements[i] = blend(from.elements[i], to.elements[i], factor);
         return result;

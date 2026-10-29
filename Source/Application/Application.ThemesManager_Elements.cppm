@@ -243,19 +243,18 @@ namespace ClaFi
     namespace
     {
         // The element's own list, the window's where the element is worn by a form's root
-        // control, then the shared list. True where one of them names a hue.
+        // control and the non-window's otherwise, then the shared list. True where one of them
+        // names a hue.
         bool applyRestingRules(Hsl& color, const ThemeColors& themeColors,
             const UiElement element, const PaintChannel channel, const ColorMode mode)
         {
             const ThemeRules& rules = themeColors.rules;
-            const ColorRules* windowRules = uiElementOf(element).isWindowRoot
-                ? &rules.anyWindow
-                : nullptr;
+            const ColorRules& windowRules = uiElementOf(element).isWindowRoot
+                ? rules.anyWindow
+                : rules.anyNonWindow;
             bool namesHue = false;
-            for (const ColorRules* list : { &rules.of(element), windowRules, &rules.shared })
+            for (const ColorRules* list : { &rules.of(element), &windowRules, &rules.shared })
             {
-                if (!list)
-                    continue;
                 for (const ColorRule& rule : *list)
                 {
                     if (!rule.atRest() or rule.output != channel)

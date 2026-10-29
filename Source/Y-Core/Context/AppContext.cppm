@@ -65,6 +65,11 @@ namespace ClaFi
     {
     };
 
+    // Whether the focus is always shown has moved, and the focused control re-reads. See Context
+    export struct FocusVisibilitySwitchEvent : public Event
+    {
+    };
+
 #if CLAFI_TEXT_MOVING
     // The Z animation amount has moved, and every window repaints. See Context
     export struct ZAnimationSwitchEvent : public Event
@@ -148,6 +153,7 @@ namespace ClaFi
         using ColorModeNode = Dom::Value<ColorModeSetting>;
         using GpuAccelerationNode = Dom::Value<bool>;
         using ScaleNode = Dom::Value<int>;
+        using AlwaysShowFocusNode = Dom::Value<bool>;
 #if CLAFI_TEXT_MOVING
         using ZAnimationNode = Dom::Value<float>;
 #endif
@@ -174,6 +180,10 @@ namespace ClaFi
         static constexpr int k_minScalePercent{ 75 };
         static constexpr int k_maxScalePercent{ 150 };
         static constexpr int k_defaultScalePercent{ 100 };
+        // Where the answer about the focus ring is kept - the Settings check writes it. See Context
+        [[nodiscard]] AlwaysShowFocusNode& alwaysShowFocus() const { return m_alwaysShowFocus; }
+        // Whether the focused control wears its ring under the mouse too, not only under the keys.
+        [[nodiscard]] bool focusAlwaysShown() const { return m_focusAlwaysShown; }
 #if CLAFI_TEXT_MOVING
         // Where the Z animation amount is kept - the Settings slider writes it. See Context
         [[nodiscard]] ZAnimationNode& zAnimation() const { return m_zAnimation; }
@@ -226,6 +236,10 @@ namespace ClaFi
         void stateScale(int percent);
         // Takes the answer the config holds and keeps every later one there. See Context
         void connectUpdateCheck();
+        // Takes the answer the config holds and stands on the node for what follows.
+        void connectAlwaysShowFocus();
+        // The focus is shown this way from now on, and the focused control is told.
+        void stateAlwaysShowFocus(bool always);
 #if CLAFI_TEXT_MOVING
         // Takes the amount the config holds and stands on the node for what follows.
         void connectZAnimation();
@@ -237,6 +251,7 @@ namespace ClaFi
         static constexpr std::wstring_view k_themeNodeName = L"Theme";
         static constexpr std::wstring_view k_colorModeNodeName = L"ColorMode";
         static constexpr std::wstring_view k_scaleNodeName = L"Scale";
+        static constexpr std::wstring_view k_alwaysShowFocusNodeName = L"AlwaysShowFocus";
 #if CLAFI_TEXT_MOVING
         static constexpr std::wstring_view k_zAnimationNodeName = L"ZAnimation";
 #endif
@@ -301,6 +316,10 @@ namespace ClaFi
         // to once it is up.
         int m_scalePercent{ k_defaultScalePercent };
         ScopedEventConnection m_scaleConnection{};
+        AlwaysShowFocusNode& m_alwaysShowFocus{
+            *(static_cast<AlwaysShowFocusNode*>(m_interface.child(k_alwaysShowFocusNodeName))) };
+        bool m_focusAlwaysShown{ false };
+        ScopedEventConnection m_alwaysShowFocusConnection{};
 #if CLAFI_TEXT_MOVING
         ZAnimationNode& m_zAnimation{
             *(static_cast<ZAnimationNode*>(m_interface.child(k_zAnimationNodeName))) };
@@ -345,6 +364,7 @@ namespace ClaFi
         connectGpuAcceleration();
         connectScale();
         connectUpdateCheck();
+        connectAlwaysShowFocus();
 #if CLAFI_TEXT_MOVING
         connectZAnimation();
 #endif
@@ -375,6 +395,7 @@ namespace ClaFi
         connectGpuAcceleration();
         connectScale();
         connectUpdateCheck();
+        connectAlwaysShowFocus();
 #if CLAFI_TEXT_MOVING
         connectZAnimation();
 #endif
@@ -403,7 +424,8 @@ namespace ClaFi
             k_interfaceSectionName,
             Dom::Dt::Value{ k_themeNodeName, std::wstring{ k_defaultThemePath } },
             Dom::Dt::Value{ k_colorModeNodeName, ColorModeSetting::Auto },
-            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent });
+            Dom::Dt::Value{ k_scaleNodeName, k_defaultScalePercent },
+            Dom::Dt::Value{ k_alwaysShowFocusNodeName, false });
 #if CLAFI_TEXT_MOVING
         interfaceSection->append(Dom::Dt::Section{
             Dom::Dt::Value{ k_zAnimationNodeName, k_defaultZAnimationAmount } });
@@ -498,6 +520,23 @@ namespace ClaFi
         if (!m_updateCheck.available())
             return;
         m_updateCheck.keepIn(m_config.childSection(k_updateCheckSectionName));
+    }
+
+    void AppContext::connectAlwaysShowFocus()
+    {
+        m_focusAlwaysShown = m_alwaysShowFocus.get();
+        m_alwaysShowFocusConnection = ScopedEventConnection{ m_alwaysShowFocus.connectEvent(
+            [this](Dom::ChangeEvent&) {
+                stateAlwaysShowFocus(m_alwaysShowFocus.get());
+            }) };
+    }
+
+    void AppContext::stateAlwaysShowFocus(const bool always)
+    {
+        if (always == m_focusAlwaysShown)
+            return;
+        m_focusAlwaysShown = always;
+        m_events.emit<FocusVisibilitySwitchEvent>();
     }
 
 #if CLAFI_TEXT_MOVING

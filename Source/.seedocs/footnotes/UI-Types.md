@@ -68,9 +68,10 @@ enabled and selected animate through StateFactors.
 **Hot and Current carry the input device**, so a rule reads one input where it read two. Hot is
 the user on the control: the mouse over it, or the keys on it while its window holds the focus. A
 look that answers the user being on a control reads Hot and nothing else. Current is the control
-wearing a ring: the keys' focus, or a container's current item - the item a multi-select view
-anchors its Shift ranges on, which it keeps while the mouse drives the input and which wears the
-ring under the mouse too. The items it selected are drawn Selected.
+wearing a ring: the keys' focus - any focus, where AppContext::alwaysShowFocus says so - or a
+container's current item, the item a multi-select view anchors its Shift ranges on, which it keeps
+while the mouse drives the input and which wears the ring under the mouse too. The items it
+selected are drawn Selected.
 
 **Focused is the control's own focus by either device.** The selected-text band, a caret and a
 grid's cell ring read it: a box focused by a click keeps them while the pointer wanders.

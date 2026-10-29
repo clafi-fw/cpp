@@ -67,7 +67,7 @@ namespace ClaFi
             }
         };
 
-        rules.focusRing = {
+        rules.anyNonWindow = {
             ColorRule{
                 .inputs{ RuleInput::Current },
                 .output = PaintChannel::Stroke,
