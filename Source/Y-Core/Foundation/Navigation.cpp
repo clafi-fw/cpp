@@ -184,16 +184,16 @@ namespace ClaFi
         while (!isFormRoot(child) && child->parent())
         {
             Control& parent = *child->parent();
-            const std::size_t count = parent.navigationCount();
+            const std::size_t count = parent.navigationSlotsCount();
             std::size_t index = 0;
-            while (index != count && parent.navigationChild(index) != child)
+            while (index != count && parent.navigationSlot(index) != child)
                 ++index;
             // A child the container keeps out of its reading order has no siblings in it, and the
             // walk carries on from the container.
             const std::size_t siblings = index == count ? 0 : (reverse ? index : count - 1 - index);
             for (std::size_t i = 1; i <= siblings; ++i)
             {
-                Control* sibling = parent.navigationChild(reverse ? index - i : index + i);
+                Control* sibling = parent.navigationSlot(reverse ? index - i : index + i);
                 if (!sibling)
                     continue;
                 if (Control* stop = readingEntry(*sibling, entryEdge))
@@ -212,10 +212,10 @@ namespace ClaFi
     // is already the order its layout reads in.
     Control* FocusNavigator::edgeStop(Control& container, const ScrollDirection edge)
     {
-        const std::size_t count = container.navigationCount();
+        const std::size_t count = container.navigationSlotsCount();
         for (std::size_t i = 0; i != count; ++i)
         {
-            Control* child = container.navigationChild(edge == ScrollDirection::ToBegin
+            Control* child = container.navigationSlot(edge == ScrollDirection::ToBegin
                 ? i
                 : count - 1 - i);
             if (!child)

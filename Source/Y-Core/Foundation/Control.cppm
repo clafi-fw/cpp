@@ -812,36 +812,14 @@ namespace ClaFi
         // wrapping stack answers nothing here: a lane it broke to fit has no room left by
         // definition.
         [[nodiscard]] virtual bool fillsLane() const { return false; }
-        // Whether the pointer **addresses** this control - MouseOnly or Focusable, the two answers
-        // that mean a press here is a press on something. ActiveContainer is not one of them: a
-        // container is what a press lands inside rather than what it was aimed at, and None is
-        // decoration. Everything a press spends on its way out asks this - the state invalidation
-        // that walks up from the pressed control, and the scroll a release asks for - so a click on
-        // a label neither lights the host it stands in nor moves the view under it.
-        [[nodiscard]] bool respondsToPointer() const;
-        // Whether a mouse click landing here is this control's. See Control-Foundation
-        [[nodiscard]] virtual bool isClickTarget() const;
+        // True for focusable or mouse only controls, not for active containers
+        [[nodiscard]] bool isMouseResponsive() const;
         // The pointer shape over this control. It stands for what a press here would do, so a
         // control that takes text answers IBeam and everything else keeps the arrow. Asked of the
         // control the pointer is actually over - the deepest one hit - so a child answers for
         // itself rather than inheriting whatever its host would say.
         [[nodiscard]] virtual CursorShape cursor() const { return CursorShape::Arrow; }
-        // Whether the focus may rest here. Not the same question as whether this control is
-        // interactive: MouseOnly means hovered and clicked but never focused, which is exactly the
-        // distinction a test for "not None" throws away. Everything that moves the focus asks this
-        // - the focus navigator, and the walk that runs on mouse down - so that a scroll bar or a
-        // scroll button is clicked without the focus leaving whatever the pointer came from.
-        //
-        // Being enabled is part of the answer rather than a check each caller adds afterwards. A
-        // caller that searches for the nearest focus target has to skip a disabled one and keep
-        // looking; testing it separately stops the search at the disabled control instead, and
-        // leaves the focus nowhere.
-        //
-        // Deep, because disabling a container disables what it holds. Nothing inside a disabled
-        // control is interactive - the one thing that still works there is the tooltip, which is
-        // how a disabled control gets to say why it is disabled, and tooltips follow hover rather
-        // than focus. See also canClick, which answers the same way for the same reason.
-        [[nodiscard]] bool canTakeFocus() const;
+        [[nodiscard]] bool canTakeFocus() const; ///< True if both interactive and deep enabled, false otherwise
         // Whether the focus can land on this control or on something inside it.
         [[nodiscard]] bool holdsNavigationStop() const;
         // Whether this control moves in Z - towards the viewer as the pointer arrives, away from it
@@ -1532,8 +1510,8 @@ namespace ClaFi
         [[nodiscard]] bool doDoubleClick(DoubleClickEvent&);
         // True when the press was spent - see FormBase::wnd_tripleClick.
         [[nodiscard]] bool doTripleClick(TripleClickEvent&);
-        [[nodiscard]] bool canClick() { return enabled(true); }
-        // The nearest isClickTarget at or above this control, or this control when none is.
+        [[nodiscard]] bool canClick() const { return enabled(true); }
+        // The nearest isMouseResponsive control at or above this one, or this one when none is.
         [[nodiscard]] Control& clickTarget();
         void doHoverEnter();
         void doHoverLeave();
@@ -1549,15 +1527,14 @@ namespace ClaFi
         void doPainted(PaintEvent&) const;
         bool isOnScrollBox();
         // How many children navigation reads - see navigationSlots.
-        [[nodiscard]] std::size_t navigationCount() const;
+        [[nodiscard]] std::size_t navigationSlotsCount() const;
         // The child at a place in that order, null for an unfilled slot.
-        [[nodiscard]] Control* navigationChild(std::size_t index);
-        [[nodiscard]] const Control* navigationChild(std::size_t index) const
-            { return const_cast<Control*>(this)->navigationChild(index); }
+        [[nodiscard]] Control* navigationSlot(std::size_t index);
+        [[nodiscard]] const Control* navigationSlot(std::size_t index) const
+            { return const_cast<Control*>(this)->navigationSlot(index); }
     private:
         inline static TextEngine s_textEngine{};
         static OnAnimate s_onAnimateState;
-        static OnAnimate s_onClickRelease;
         static constexpr float k_textWidthEpsilon{ 0.5f }; // under this two widths are one
     private:
         Control* m_parent{};
@@ -1569,6 +1546,5 @@ namespace ClaFi
         ScaledSize m_scaledSize{};
         ScaledSize m_composedMinSize{};
     };
-
 
 }

@@ -8,22 +8,28 @@ ClickEvent reaches the target alone and NestedClickEvent walks up from it. One b
 served both before, and every handler on a container had to tell its own clicks from its
 children's by `event.control`.
 
-**The target skips ActiveContainer** because isClickTarget defaults to respondsToPointer: a press
-on a label inside a plain panel inside a stack is a click on the label, not on the stack.
+**The target skips ActiveContainer** because clickTarget walks on isMouseResponsive: a press on a
+label inside a plain panel inside a stack is a click on the label, not on the stack.
 
 **`clickedControl` is never rewritten.** RowContainer and ButtonBase used to set `event.control` to
 themselves on the way up, so the stack above would pick the row or the button. The stack now
-finds its item with itemAt from `clickedControl`, and the indicator is no click target at all.
-The one behaviour this moved: a mouse click on a MouseOnly control inside a stack item picks that
-item, where it used to read as a click on nothing.
+finds its item with itemAt from `clickedControl`. The one behaviour this moved: a mouse click on a
+MouseOnly control inside a stack item picks that item, where it used to read as a click on
+nothing.
+
+**The indicator is the target of a click on the mark**, being MouseOnly, and
+ButtonBase::nestedClick raises the button's own click from it and lets the walk go on with Ctrl
+set. Until 2026-10-29 a virtual isClickTarget let the indicator answer false, which made the
+button the target; it was the one override left, and went when respondsToPointer became
+isMouseResponsive and clickTarget started walking on that.
 
 **DoubleClickEvent and TripleClickEvent split the same way**, through Control::raiseClick, which
-holds the one walk all three use. Two things moved with them. The indicator stopped its own double
-click so a tile would not open from its mark; being no target, it never sees one, and
-ButtonBase::doubleClick spends it instead. ExpanderHeader, None in three of its looks then, claimed
-isClickTarget so that a double click anywhere on its strip toggled it - without that, a target
-above it would take the double click and the walk would start past the header. Since 2026-10-16
-the header is Focusable in every look, which makes it a target with no override.
+holds the one walk all three use. Two things moved with them. A double click on the mark is spent
+in ButtonBase::nestedDoubleClick so a tile does not open from its mark. ExpanderHeader, None in
+three of its looks then, claimed isClickTarget so that a double click anywhere on its strip
+toggled it - without that, a target above it would take the double click and the walk would start
+past the header. Since 2026-10-16 the header is Focusable in every look, which makes it a target
+with no override.
 
 ## RichControl
 

@@ -19,6 +19,7 @@ import ClaFi.Core.Context.DrawIconEvent;
 namespace ClaFi::Controls
 {
 
+    // The selection mark. A mouse click on it is its button's - see ButtonBase::nestedClick.
     class SelectionIndicator : public Control
     {
     public:
@@ -29,8 +30,6 @@ namespace ClaFi::Controls
         // business moving; the mark is the part that reads as a thing being pressed. It carries no
         // text of its own, so the depth costs nothing in rasterization.
         [[nodiscard]] bool allowZAnimation() const override { return true; }
-        // A click on the mark is a click on its button, which injectCtrl reads as a toggle.
-        [[nodiscard]] bool isClickTarget() const override { return false; }
     };
 
     // ButtonBase
@@ -157,8 +156,8 @@ namespace ClaFi::Controls
         event.setParentHoverAmount(1.0f);
 
         // The whole of the parent's, unlike the hover amount above. On a check box or radio button
-        // the mark is not a target in its own right - the pointer is over the row and injectCtrl
-        // forwards the click to the host - so its own factors barely move, and a share of them
+        // the mark is pressed as part of the row - the pointer is over the row and nestedClick
+        // raises the click on the host - so its own factors barely move, and a share of them
         // would leave the depth almost never seen. Colour is half inherited because a mark has to
         // stay legible against a row that is only lit; movement has no such reason to hold back.
         //
@@ -539,16 +538,36 @@ namespace ClaFi::Controls
         RichControl::click(event);
     }
 
-    // A double click on the mark is two toggles. It is spent here, which keeps a host that opens
-    // on a double click from opening when its mark is pressed twice.
-    void ButtonBase::doubleClick(DoubleClickEvent& event)
+    // The mark takes the mouse click on it, and the button's own click is raised from here with
+    // Ctrl set. The walk goes on up with Ctrl set too, so a stack above reads a toggle of this
+    // item. A handler that stops the button's click spends the whole click.
+    void ButtonBase::nestedClick(NestedClickEvent& event)
     {
-        if (indicatorPointedAt())
+        if (&event.clickedControl == m_indicator)
+        {
+            event.modifiers.ctrl = true;
+            ClickEvent ownClick{ *this, event.form, event.stamp };
+            ownClick.modifiers = event.modifiers;
+            click(ownClick);
+            if (ownClick.propagationStopped())
+            {
+                event.stopPropagation();
+                return;
+            }
+        }
+        RichControl::nestedClick(event);
+    }
+
+    // A double click on the mark is spent here, which keeps a host that opens on a double click
+    // from opening when its mark is pressed twice.
+    void ButtonBase::nestedDoubleClick(NestedDoubleClickEvent& event)
+    {
+        if (&event.clickedControl == m_indicator)
         {
             event.stopPropagation();
             return;
         }
-        RichControl::doubleClick(event);
+        RichControl::nestedDoubleClick(event);
     }
 
     void ButtonBase::nestedControlFocusing(FocusEvent& event)

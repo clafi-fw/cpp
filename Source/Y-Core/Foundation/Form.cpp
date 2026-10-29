@@ -882,11 +882,9 @@ namespace ClaFi
 
                 if (!handled.propagationStopped)
                 {
-                    // What the pointer addresses, and nothing else. A release brings the control
-                    // the user has just acted on fully into view; a press that landed on decoration
-                    // or on a container's own surface acted on nothing, and a label cut by the edge
-                    // of a scroll box has no business moving the view under the click.
-                    if (m_downItem && scrollIntoView && m_downItem->respondsToPointer())
+                    // A mouse button release brings the **interactive** control into view;
+                    // a press on decoration, a label, or on a container's own surface does nothing.
+                    if (m_downItem && scrollIntoView && m_downItem->isMouseResponsive())
                         m_downItem->scrollIntoView();
                 }
 

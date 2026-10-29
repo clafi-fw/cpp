@@ -15,6 +15,21 @@ width, as MenuCommand does. At the icon's width, a long word would be cut.
 
 `IconOnly` lays no text out, and its words serve as the tooltip where none is set.
 
+## ButtonBase nestedClick
+
+**A mouse click on the selection indicator is the button's click, with Ctrl held.** The indicator
+is MouseOnly, so the click is raised on it and walks up to the button, which raises its own
+ClickEvent from here - the one a derived class and OnClick listeners see - and lets the walk go on
+with Ctrl set, so a stack above takes the item in or out of the selection and leaves the rest of
+it alone.
+
+**A handler that stops the button's click spends the whole click.** The walk above the button
+stops with it, and a handler that deletes the button stops its click, as any click handler that
+deletes its control does - see ClickEvent.
+
+**A double click on the indicator is spent in nestedDoubleClick**, so a host that opens on a
+double click stays closed when its mark is pressed twice.
+
 ## PanelBase
 
 **A panel's own text in the body slot** - `TextPlacement::Body` - wraps at the slot's width. That

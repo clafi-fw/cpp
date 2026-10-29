@@ -969,7 +969,7 @@ namespace ClaFi
         }
     }
 
-    bool Control::respondsToPointer() const
+    bool Control::isMouseResponsive() const
     {
         switch (interactivity())
         {
@@ -979,11 +979,6 @@ namespace ClaFi
         default:
             return false;
         }
-    }
-
-    bool Control::isClickTarget() const
-    {
-        return respondsToPointer();
     }
 
     bool Control::canTakeFocus() const
@@ -1008,10 +1003,10 @@ namespace ClaFi
             return false;
         if (canTakeFocus())
             return true;
-        const std::size_t count = navigationCount();
+        const std::size_t count = navigationSlotsCount();
         for (std::size_t index = 0; index != count; ++index)
         {
-            const Control* child = navigationChild(index);
+            const Control* child = navigationSlot(index);
             if (child && child->holdsNavigationStop())
                 return true;
         }
@@ -1657,10 +1652,10 @@ namespace ClaFi
     // Such a control is entered at its first stop in reading order, whichever way the step comes.
     Control* Control::navigationEntry(const NavigationStep&)
     {
-        const std::size_t count = navigationCount();
+        const std::size_t count = navigationSlotsCount();
         for (std::size_t index = 0; index != count; ++index)
         {
-            Control* child = navigationChild(index);
+            Control* child = navigationSlot(index);
             if (child && child->holdsNavigationStop())
                 return child;
         }
@@ -2642,7 +2637,7 @@ namespace ClaFi
                 break;
             case InvalidateEvent::PressDown:
             case InvalidateEvent::PressUp:
-                pass = control->respondsToPointer();
+                pass = control->isMouseResponsive();
                 break;
             case InvalidateEvent::None:
             case InvalidateEvent::InputController:
@@ -2794,7 +2789,7 @@ namespace ClaFi
     Control& Control::clickTarget()
     {
         Control* control = this;
-        while (control && !control->isClickTarget())
+        while (control && !control->isMouseResponsive())
             control = control->m_parent;
         return control ? *control : *this;
     }
@@ -2908,13 +2903,13 @@ namespace ClaFi
         return m_parent && m_parent->controlIsOnScrollBox(*this);
     }
 
-    std::size_t Control::navigationCount() const
+    std::size_t Control::navigationSlotsCount() const
     {
         const ControlSlots slots = navigationSlots();
         return slots.empty() ? controls().size() : slots.size();
     }
 
-    Control* Control::navigationChild(const std::size_t index)
+    Control* Control::navigationSlot(const std::size_t index)
     {
         const ControlSlots slots = navigationSlots();
         return slots.empty() ? controls()[index].get() : slots[index];

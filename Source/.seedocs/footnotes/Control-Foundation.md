@@ -189,8 +189,9 @@ one lane end at different offsets.
 ## ClickEvent
 
 **Raised once, on the control the click is on.** A key's press is on the focused control. A mouse
-click is on the control under the pointer, or on the nearest click target above it - see Control
-isClickTarget. A mouse click on a label inside a tile is a click on the tile.
+click is on the control under the pointer, or on the nearest control above it that answers the
+mouse - see Control isMouseResponsive. A mouse click on a label inside a tile is a click on the
+tile.
 
 **NestedClickEvent follows it**, from the same control up to the root. A handler that stops the
 ClickEvent spends the whole click, and no NestedClickEvent is raised.
@@ -215,18 +216,24 @@ OnNestedClick hears a click on its own control and on every control inside it.
 current item from it - the item `clickedControl` stands in - so stopping it below a stack keeps
 that stack's current item where it was.
 
-## Control isClickTarget
+## Control isMouseResponsive
 
-**True for a control the pointer addresses** - MouseOnly or Focusable - unless the control says
-otherwise. A mouse click on a control that is not a target is a click on the nearest target above
-it, or on the control itself when there is none.
+**True for a control the mouse addresses** - MouseOnly or Focusable. ActiveContainer answers false:
+a container is what a press lands inside rather than what it was aimed at. None is decoration and
+answers false too.
 
-**A part that stands for its host answers false.** A button's selection indicator does: a click on
-the mark is a click on the button, read as a toggle, and a double click on it is spent by the
-button.
+**Everything a press spends on its way out asks this** - the state invalidation that walks up from
+the pressed control, the scroll a release asks for, and the control the click is raised on. So a
+mouse click on a label neither lights the host it stands in nor moves the view under it, and the
+click is raised on the nearest control above the label that answers true, or on the label itself
+when there is none.
 
-**A control that answers the pointer without taking input answers true**, so a double click on it
-is its own rather than that of a target above it.
+**A part that stands for its host hands its click on.** A button's selection indicator is MouseOnly
+and takes the click on the mark; ButtonBase::nestedClick raises the button's own click from it and
+spends a double click on the mark - see ButtonBase nestedClick.
+
+**A control that answers the mouse without taking input answers true**, so a double click on it is
+its own rather than that of a control above it.
 
 ## DoubleClickEvent
 
