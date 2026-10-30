@@ -97,14 +97,21 @@ Direct2D reads a bitmap. ShadowPainter's tiles are baked that way.
 
 ## Canvas fillEdgeIndicator
 
-**The band is the shape cut down to one side.** It reaches thickness in from the outer edge on that
-side, and its ends keep the shape's corners, so along a rounded side it ends on the arcs.
+**The band follows the outline along one side and round its two corners.** It is thickness deep
+along the side. Round each corner its inner edge is one arc, its radius the corner's radius plus
+the thickness. The arc leaves the inner line along it and meets the neighbouring side along it,
+so the band reaches up that side twice the thickness past the corner's arc and thins to a point.
 
 **Draw it after the outline.** The band starts at the shape's outer edge, so drawn last it covers
 the outline along that side, as a tab's indicator covers the tab line.
 
-- lengthFactor is the share of the side the band covers, centred on it.
-- At 1 the band runs corner to corner, and at 0 it draws nothing.
+**As the thickness falls the arcs close in on the corners**, so a band whose thickness is
+animated thins away whole.
+
+- lengthFactor is the share of the side the band covers, centred on it, its ends cut square
+  across the side.
+- At 1 the band runs from one neighbouring side to the other.
+- A lengthFactor or a thickness of 0 draws nothing.
 
 ## GlyphCompositor
 

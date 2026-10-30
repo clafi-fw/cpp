@@ -917,37 +917,97 @@ namespace ClaFi::Graphics
     void Canvas::fillEdgeIndicator(const RoundedRectangleParts& shape, RectSide side,
         float thickness, Color color, float lengthFactor)
     {
-        if (lengthFactor <= 0.0f)
+        if (lengthFactor <= 0.0f || thickness <= 0.0f)
             return;
 
+        // The band is laid out in side terms - a distance along the side from its first corner
+        // and a depth in from its edge - and placed on the shape by sideStart, along and inward.
         const FloatRect& bounds = shape.bounds;
-        FloatRect band = bounds;
+        const CornerRadii radii = clampedRadii(shape);
+        FloatPoint sideStart = {};
+        FloatPoint along = {};
+        FloatPoint inward = {};
+        float sideLength = 0.0f;
+        float startCornerRadius = 0.0f;
+        float endCornerRadius = 0.0f;
+        bool frameIsMirrored = false; // along and inward make a mirror image of x and y
         switch (side)
         {
             case RectSide::Top:
-                band.bottom = bounds.top + thickness;
+                sideStart = bounds.topLeft();
+                along = { 1.0f, 0.0f };
+                inward = { 0.0f, 1.0f };
+                sideLength = bounds.width();
+                startCornerRadius = radii.topLeft;
+                endCornerRadius = radii.topRight;
+                frameIsMirrored = false;
                 break;
             case RectSide::Bottom:
-                band.top = bounds.bottom - thickness;
+                sideStart = bounds.bottomLeft();
+                along = { 1.0f, 0.0f };
+                inward = { 0.0f, -1.0f };
+                sideLength = bounds.width();
+                startCornerRadius = radii.bottomLeft;
+                endCornerRadius = radii.bottomRight;
+                frameIsMirrored = true;
                 break;
             case RectSide::Left:
-                band.right = bounds.left + thickness;
+                sideStart = bounds.topLeft();
+                along = { 0.0f, 1.0f };
+                inward = { 1.0f, 0.0f };
+                sideLength = bounds.height();
+                startCornerRadius = radii.topLeft;
+                endCornerRadius = radii.bottomLeft;
+                frameIsMirrored = true;
                 break;
             case RectSide::Right:
-                band.left = bounds.right - thickness;
+                sideStart = bounds.topRight();
+                along = { 0.0f, 1.0f };
+                inward = { -1.0f, 0.0f };
+                sideLength = bounds.height();
+                startCornerRadius = radii.topRight;
+                endCornerRadius = radii.bottomRight;
+                frameIsMirrored = false;
                 break;
         }
+        auto onSide = [&](float distance, float depth){
+            return sideStart + along * distance + inward * depth;
+        };
+        const ArcSweep outerArcSweep =
+            frameIsMirrored ? ArcSweep::CounterClockwise : ArcSweep::Clockwise;
+        const ArcSweep innerArcSweep =
+            frameIsMirrored ? ArcSweep::Clockwise : ArcSweep::CounterClockwise;
+
+        // From the tip on the neighbouring side at the start, along the outline to the tip at the
+        // end, and back along the inner edge.
+        const float startArcRadius = startCornerRadius + thickness;
+        const float endArcRadius = endCornerRadius + thickness;
+        PixelPath band;
+        band.moveTo(onSide(0.0f, thickness + startArcRadius));
+        band.lineTo(onSide(0.0f, startCornerRadius));
+        band.arcTo({ startCornerRadius, startCornerRadius }, 0.0f, ArcSize::Small, outerArcSweep,
+            onSide(startCornerRadius, 0.0f));
+        band.lineTo(onSide(sideLength - endCornerRadius, 0.0f));
+        band.arcTo({ endCornerRadius, endCornerRadius }, 0.0f, ArcSize::Small, outerArcSweep,
+            onSide(sideLength, endCornerRadius));
+        band.lineTo(onSide(sideLength, thickness + endArcRadius));
+        band.arcTo({ endArcRadius, endArcRadius }, 0.0f, ArcSize::Small, innerArcSweep,
+            onSide(sideLength - endArcRadius, thickness));
+        band.lineTo(onSide(startArcRadius, thickness));
+        band.arcTo({ startArcRadius, startArcRadius }, 0.0f, ArcSize::Small, innerArcSweep,
+            onSide(0.0f, thickness + startArcRadius));
+        band.close();
 
         const bool sideIsHorizontal = side == RectSide::Top || side == RectSide::Bottom;
-        const float sideLength = sideIsHorizontal ? bounds.width() : bounds.height();
         const float endInset = sideLength * (1.0f - lengthFactor) / 2.0f;
+        FloatRect lengthClip = bounds;
         if (sideIsHorizontal)
-            band.inflateX(-endInset);
+            lengthClip.inflateX(-endInset);
         else
-            band.inflateY(-endInset);
+            lengthClip.inflateY(-endInset);
 
-        pushClip(band);
-        fillPartialRoundedRectangle(shape, color);
+        pushClip(lengthClip);
+        fillPath(band, color);
         popClip();
     }
 
