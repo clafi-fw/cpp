@@ -36,7 +36,7 @@ namespace ClaFi::Controls
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void drawIcon(DrawIconEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;
-        void paintSurface(PaintEvent&) override;
+        void paintFrame(PaintEvent&) override;
     private:
         static constexpr float k_paddingX = 16.0f;
         static constexpr float k_paddingY = 12.0f;

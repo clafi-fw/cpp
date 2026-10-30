@@ -108,6 +108,9 @@ namespace ClaFi::Graphics
         // two corners on that edge take the rect's radii there, so a fade over a rounded view
         // ends on the view's arc.
         void fadeEdge(const FloatRect& rect, const CornerRadii& radii, RectSide side, float fadeSize, Color opaqueColor);
+        // A band along one side of the shape, its corners the shape's own. See Graphics-Types
+        void fillEdgeIndicator(const RoundedRectangleParts& shape, RectSide side, float thickness,
+            Color, float lengthFactor = 1.0f);
 
         // --- Software Rendering & Bitmap Drawing ---
         // Handing out a raw pixel buffer is an escape hatch from the canvas, so whatever the caller

@@ -72,21 +72,17 @@ namespace ClaFi::Controls
         event.setColorRules(k_colorRules);
     }
 
-    void MessageBar::paintSurface(PaintEvent& event)
+    void MessageBar::paintFrame(PaintEvent& event)
     {
-        SplitButtonBase::paintSurface(event);
+        SplitButtonBase::paintFrame(event);
         if (m_icon == MessageIcon::None)
             return;
 
-        // The band's own shape cut down to its left edge, so the stripe keeps the band's corners.
-        const FloatRect bounds = event.controlBounds();
-        FloatRect stripe = bounds;
-        stripe.right = stripe.left + event.scaleF(k_stripeWidth);
-        event.canvas().pushClip(stripe);
-        event.canvas().fillPartialRoundedRectangle(
-            { .bounds = bounds, .radii = event.cornerRadii() },
+        event.canvas().fillEdgeIndicator(
+            { .bounds = event.controlBounds(), .radii = event.cornerRadii() },
+            RectSide::Left,
+            event.scaleF(k_stripeWidth),
             event.inkRgb(stripeInk(m_icon))
         );
-        event.canvas().popClip();
     }
 }

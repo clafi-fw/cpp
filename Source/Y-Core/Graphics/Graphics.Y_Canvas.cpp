@@ -914,6 +914,43 @@ namespace ClaFi::Graphics
         fillPartialRoundedRectangle(band, LinearGradient::Simple(opaqueEnd, transparentEnd, opaqueColor, transparentColor));
     }
 
+    void Canvas::fillEdgeIndicator(const RoundedRectangleParts& shape, RectSide side,
+        float thickness, Color color, float lengthFactor)
+    {
+        if (lengthFactor <= 0.0f)
+            return;
+
+        const FloatRect& bounds = shape.bounds;
+        FloatRect band = bounds;
+        switch (side)
+        {
+            case RectSide::Top:
+                band.bottom = bounds.top + thickness;
+                break;
+            case RectSide::Bottom:
+                band.top = bounds.bottom - thickness;
+                break;
+            case RectSide::Left:
+                band.right = bounds.left + thickness;
+                break;
+            case RectSide::Right:
+                band.left = bounds.right - thickness;
+                break;
+        }
+
+        const bool sideIsHorizontal = side == RectSide::Top || side == RectSide::Bottom;
+        const float sideLength = sideIsHorizontal ? bounds.width() : bounds.height();
+        const float endInset = sideLength * (1.0f - lengthFactor) / 2.0f;
+        if (sideIsHorizontal)
+            band.inflateX(-endInset);
+        else
+            band.inflateY(-endInset);
+
+        pushClip(band);
+        fillPartialRoundedRectangle(shape, color);
+        popClip();
+    }
+
     void Canvas::stagingDraw(const FloatRect& requestedRect, const StagingDrawFunc& drawFunc)
     {
         // The buffer has to cover both the rect that was asked for and the rect the transform maps

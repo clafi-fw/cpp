@@ -135,85 +135,54 @@ namespace ClaFi::Graphics
         );
 
         // 8. Draw the indicator over the line, flush with its outer edge
-        if (colors.indicatorFactor > 0.0f)
+        // The line's outer edge around the peak - its centerline grown by half its width
+        const float uOuterStart = uTabStart - halfWidth;
+        const float uOuterEnd = uTabEnd + halfWidth;
+        const float vOuter = vTop + halfWidth;
+        const float outerRadius = actualRadius > 0.0f ? actualRadius + halfWidth : 0.0f;
+
+        const FloatPoint baseCorner = toWorld(uOuterStart, 0.0f);
+        const FloatPoint peakCorner = toWorld(uOuterEnd, vOuter);
+        RoundedRectangleParts peakOuterShape = {
+            .bounds = {
+                std::min(baseCorner.x, peakCorner.x),
+                std::min(baseCorner.y, peakCorner.y),
+                std::max(baseCorner.x, peakCorner.x),
+                std::max(baseCorner.y, peakCorner.y)
+            }
+        };
+        RectSide peakSide = RectSide::Top;
+        switch (geometry.orientation)
         {
-            // The line's outer edge around the peak - its centerline grown by half its width
-            const float uOuterStart = uTabStart - halfWidth;
-            const float uOuterEnd = uTabEnd + halfWidth;
-            const float vOuter = vTop + halfWidth;
-            const float outerRadius = actualRadius > 0.0f ? actualRadius + halfWidth : 0.0f;
-
-            PixelPath outerPath;
-            outerPath.moveTo(toWorld(uOuterStart, 0.0f));
-            outerPath.lineTo(toWorld(uOuterStart, vOuter - outerRadius));
-            if (outerRadius > 0.0f)
-            {
-                outerPath.quadTo(
-                    toWorld(uOuterStart, vOuter),
-                    toWorld(uOuterStart + outerRadius, vOuter)
-                );
-            }
-            outerPath.lineTo(toWorld(uOuterEnd - outerRadius, vOuter));
-            if (outerRadius > 0.0f)
-            {
-                outerPath.quadTo(
-                    toWorld(uOuterEnd, vOuter),
-                    toWorld(uOuterEnd, vOuter - outerRadius)
-                );
-            }
-            outerPath.lineTo(toWorld(uOuterEnd, 0.0f));
-            outerPath.close();
-
-            // Compute horizontal span of the indicator based on the scaling factor
-            const float tabWidth = uOuterEnd - uOuterStart;
-            const float indWidth = tabWidth * colors.indicatorFactor;
-            const float uIndCenter = (uTabStart + uTabEnd) / 2.0f;
-            const float uIndStart = uIndCenter - indWidth / 2.0f;
-            const float uIndEnd = uIndCenter + indWidth / 2.0f;
-
-            // Geometry levels
-            const float vBottomInd = vOuter - geometry.indicatorHeight;
-            const float vTopIndOver = vOuter + halfWidth; // past the edge the clip draws
-
-            // Calculate the corner radius for the indicator (capsule-bottom appearance)
-            const float indRadius = std::clamp(geometry.indicatorHeight * 0.5f, 0.0f, indWidth * 0.5f);
-
-            // Construct the bottom-rounded indicator path
-            PixelPath indPath;
-            indPath.moveTo(toWorld(uIndStart, vTopIndOver));
-            indPath.lineTo(toWorld(uIndEnd, vTopIndOver));
-
-            if (indRadius > 0.0f)
-            {
-                // Line down to bottom-right corner start
-                indPath.lineTo(toWorld(uIndEnd, vBottomInd + indRadius));
-                // Round bottom-right corner
-                indPath.quadTo(
-                    toWorld(uIndEnd, vBottomInd),
-                    toWorld(uIndEnd - indRadius, vBottomInd)
-                );
-                // Line across to bottom-left corner start
-                indPath.lineTo(toWorld(uIndStart + indRadius, vBottomInd));
-                // Round bottom-left corner
-                indPath.quadTo(
-                    toWorld(uIndStart, vBottomInd),
-                    toWorld(uIndStart, vBottomInd + indRadius)
-                );
-            }
-            else
-            {
-                // Fallback straight lines if radius is zero
-                indPath.lineTo(toWorld(uIndEnd, vBottomInd));
-                indPath.lineTo(toWorld(uIndStart, vBottomInd));
-            }
-
-            indPath.close(); // Automatically connects back to top-left (uIndStart, vTopIndOver)
-
-            // Push the clip mask, paint the capsule indicator, and restore
-            canvas.pushClip(outerPath);
-            canvas.fillPath(indPath, colors.indicator);
-            canvas.popClip();
+            case TabsOrientation::HorizontalTop:
+                peakSide = RectSide::Top;
+                peakOuterShape.radii.topLeft = outerRadius;
+                peakOuterShape.radii.topRight = outerRadius;
+                break;
+            case TabsOrientation::HorizontalBottom:
+                peakSide = RectSide::Bottom;
+                peakOuterShape.radii.bottomRight = outerRadius;
+                peakOuterShape.radii.bottomLeft = outerRadius;
+                break;
+            case TabsOrientation::VerticalLeft:
+                peakSide = RectSide::Left;
+                peakOuterShape.radii.topLeft = outerRadius;
+                peakOuterShape.radii.bottomLeft = outerRadius;
+                break;
+            case TabsOrientation::VerticalRight:
+                peakSide = RectSide::Right;
+                peakOuterShape.radii.topRight = outerRadius;
+                peakOuterShape.radii.bottomRight = outerRadius;
+                break;
         }
+
+        canvas.fillEdgeIndicator(
+            peakOuterShape,
+            peakSide,
+            geometry.indicatorHeight,
+            colors.indicator,
+            colors.indicatorFactor
+        );
     }
 
 }

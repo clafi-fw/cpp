@@ -95,6 +95,17 @@ Direct2D reads a bitmap. ShadowPainter's tiles are baked that way.
   it is.
 - Opacity scales all four channels alike.
 
+## Canvas fillEdgeIndicator
+
+**The band is the shape cut down to one side.** It reaches thickness in from the outer edge on that
+side, and its ends keep the shape's corners, so along a rounded side it ends on the arcs.
+
+**Draw it after the outline.** The band starts at the shape's outer edge, so drawn last it covers
+the outline along that side, as a tab's indicator covers the tab line.
+
+- lengthFactor is the share of the side the band covers, centred on it.
+- At 1 the band runs corner to corner, and at 0 it draws nothing.
+
 ## GlyphCompositor
 
 **A fractional pen position is sampled, not dropped.** Coverage sits at a whole pixel origin,
