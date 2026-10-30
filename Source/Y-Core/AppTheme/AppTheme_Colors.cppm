@@ -209,8 +209,6 @@ namespace ClaFi
         Disabled,       // the enabled factor turned over
         Current,        // the control wears a ring: a container's current item, or the keys' focus
         WindowFocused,  // the focus of the form the control stands in
-        Keyboard,       // how far the keyboard drives the input, the same on every control
-        Mouse,          // how far the mouse drives the input, the same on every control
         Count
     };
 

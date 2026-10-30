@@ -43,7 +43,7 @@ namespace ClaFi::AnimationSlots
     };
 
     export constexpr AnimationSlot Current{
-        .duration{.rise = 66ms, .fall = 440ms },
+        .duration{.rise = 66ms, .fall = 330ms },
         .easingFactor{},
         .tag = static_cast<AnimationTag>(VisualStateIndex::Current)
     };
@@ -71,7 +71,7 @@ namespace ClaFi::AnimationSlots
     };
 
     export constexpr AnimationSlot Expander{
-        .duration{.rise = 400ms, .fall = 166ms },
+        .duration{.rise = 330ms, .fall = 166ms },
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut }
     };
 

@@ -39,9 +39,7 @@ namespace Themes_App
                 L"selected",
                 L"disabled",
                 L"current",
-                L"window focused",
-                L"keyboard",
-                L"mouse"
+                L"window focused"
             };
 
         // Shaped with a line's height and no width.

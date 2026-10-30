@@ -5,7 +5,6 @@ module ClaFi.Core.Foundation;
 
 import :PaintEvent;
 import :SearchResult;
-import :Input;
 import :Form;
 import :Control;
 import :Traversal;
@@ -217,9 +216,7 @@ namespace ClaFi
                 selectedFactor,
                 1.0f - m_enabledFactor,
                 factors.current(),
-                m_windowFocusedFactor,
-                Input::keyboard().factor(),
-                Input::mouse().factor()
+                m_windowFocusedFactor
             };
             const float surfaceChanged = applyColorRules(PaintChannel::Surface, surface);
 

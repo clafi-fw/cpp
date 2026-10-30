@@ -108,9 +108,7 @@ namespace ClaFi // AppTheme serializers
             L"Selected",
             L"Disabled",
             L"Current",
-            L"WindowFocused",
-            L"Keyboard",
-            L"Mouse"
+            L"WindowFocused"
         };
 
     export constexpr auto enumNames(RuleInput) { return k_ruleInputKeys; }

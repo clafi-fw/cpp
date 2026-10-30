@@ -517,7 +517,7 @@ namespace ClaFi::Controls
             m_profile.lineEnd = m_profile.tabEnd + m_profile.cornerRadius;
         }
 
-        m_profile.lineWidth = event.scaledStrokeWidth(th.m_tabLineThickness);
+        m_profile.lineWidth = event.borderWidth();// event.scaledStrokeWidth(th.m_tabLineThickness);
         m_profile.indicatorHeight = m_profile.lineWidth * 2.0f; //event.scaledStrokeWidth(Thickness::Heavy);
         // was in TabRenderer before:
         //const float indicatorHeight = std::min(

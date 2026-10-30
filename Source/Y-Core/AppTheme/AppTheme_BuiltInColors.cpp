@@ -72,7 +72,7 @@ namespace ClaFi
                 .inputs{ RuleInput::Current },
                 .output = PaintChannel::Stroke,
                 .effect{
-                    { ColorRuleOp::Set, 0.0f },             // S
+                    { ColorRuleOp::NoChange, 0.0f },        // S
                     { ColorRuleOp::Set, 0.664659f }         // E
                 }
             },
@@ -177,7 +177,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Selected },
+                .inputs{ RuleInput::WindowFocused },
                 .effect{
                     { ColorRuleOp::NoChange, 0.501121f },   // S
                     { ColorRuleOp::Set, 0.08f }             // E
@@ -192,7 +192,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Selected },
+                .inputs{ RuleInput::WindowFocused },
                 .output = PaintChannel::Text,
                 .effect{
                     {},                                     // S
@@ -511,28 +511,6 @@ namespace ClaFi
                 .effect{
                     { ColorRuleOp::Scale, 0.8f },           // S
                     { ColorRuleOp::Scale, 0.9f }            // E
-                }
-            }
-        };
-
-        rules.of(UiElement::Testee) = {
-            ColorRule{
-                .inputs{ RuleInput::Keyboard },
-                .effect{
-                    { ColorRuleHueOp::PaletteColor3 },      // H
-                    { ColorRuleOp::Set, 0.5f },             // S
-                    { ColorRuleOp::Set, 0.5f }              // E
-                }
-            }
-        };
-
-        rules.of(UiElement::Bestee) = {
-            ColorRule{
-                .inputs{ RuleInput::Mouse },
-                .effect{
-                    { ColorRuleHueOp::PaletteColor2 },      // H
-                    { ColorRuleOp::Set, 0.5f },             // S
-                    { ColorRuleOp::Set, 0.5f }              // E
                 }
             }
         };
