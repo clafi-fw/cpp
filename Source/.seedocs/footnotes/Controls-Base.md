@@ -159,6 +159,9 @@ into keeps the text the mode opened on and puts it back on Escape, as an edit of
 keeps its position. A read-only box has nothing to put back: its mode is a caret mode - arrows to
 a link and Return to follow it, Return off a link or Escape to leave.
 
+**editModeEntered is told what turned the mode on** - see EditModeEntry. A text box opened by a
+key opens with its whole text selected; a press keeps the caret it placed.
+
 **A search showing a match in a box turns the mode on**, so the match stands selected, and takes
 it off again as the search moves on.
 
@@ -179,3 +182,16 @@ The mode as it stands. Under EditModeSwitching::No it is Yes from construction a
 - `Yes` - the user turns the mode on and off - see WithEditMode. A box on a page walked with the
   keys, and every Slider unless the caller says No: a slider stands among other controls, and
   its arrows are the page's until Return.
+
+## EditModeEntry
+
+What turned the mode on, handed to editModeEntered so the host opens on what suits it. A host
+whose own handler turns the mode on - a text box's menu, answered ahead of the base - names the
+entry through enterEditMode.
+
+- `Key` - Return on the control out of the mode. A text box selects its whole text, the key
+  naming no place in it.
+- `Press` - a press, or a menu asked on the control. A text box keeps the caret the press placed,
+  or the one the menu is about.
+- `Call` - setEditMode from code. The caller states what is selected, as a search showing a match
+  does.

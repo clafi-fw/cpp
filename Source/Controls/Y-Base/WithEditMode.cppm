@@ -27,6 +27,14 @@ namespace ClaFi::Controls
         Yes    // Return and a press turn it on, Escape and leaving turn it off
     };
 
+    // What turned the edit mode on. See Controls-Base
+    export enum class EditModeEntry
+    {
+        Key,      // Return on the control out of the mode
+        Press,    // a press, or a menu asked on the control
+        Call      // setEditMode
+    };
+
     // A control whose own keys apply in edit mode only. See Controls-Base
     export template <IsControl HostClass>
         class WithEditMode : public HostClass
@@ -46,7 +54,7 @@ namespace ClaFi::Controls
         // The host's keys, asked in edit mode only and ahead of the mode's own answer.
         virtual void editModeKeyDown(KeyDownEvent&) {}
         // The mode has turned on; what Escape puts back is read here.
-        virtual void editModeEntered() {}
+        virtual void editModeEntered(EditModeEntry) {}
         // The mode has turned off; accepted is false for Escape alone.
         virtual void editModeLeft(bool /*accepted*/) {}
         // Whether Return is a line break the host types, which the mode then leaves to it.
@@ -60,8 +68,8 @@ namespace ClaFi::Controls
         void nestedPressDown(PressDownEvent&) override;
         void nestedContextPopup(ContextPopupEvent&) override;
         void focusChanged() override;
+        void enterEditMode(EditModeEntry);   // for a host's handler that turns the mode on itself
     private:
-        void enterEditMode();
         void leaveEditMode(bool accepted);
         void animateEditModeIndicator();
     private:
@@ -94,7 +102,7 @@ namespace ClaFi::Controls
     void WithEditMode<HostClass>::setEditMode(const EditMode value)
     {
         if (value == EditMode::Yes)
-            enterEditMode();
+            enterEditMode(EditModeEntry::Call);
         else
             leaveEditMode(true);
     }
@@ -142,7 +150,7 @@ namespace ClaFi::Controls
         {
             if (event.key == Keys::Return && event.modifiers.empty())
             {
-                enterEditMode();
+                enterEditMode(EditModeEntry::Key);
                 m_entryCharPending = true;
                 event.handled = true;
             }
@@ -190,7 +198,7 @@ namespace ClaFi::Controls
     void WithEditMode<HostClass>::nestedPressDown(PressDownEvent& event)
     {
         HostClass::nestedPressDown(event);
-        enterEditMode();
+        enterEditMode(EditModeEntry::Press);
     }
 
     // A menu on the control is about what the mode shows. A host that answers the request ahead
@@ -198,7 +206,7 @@ namespace ClaFi::Controls
     template <IsControl HostClass>
     void WithEditMode<HostClass>::nestedContextPopup(ContextPopupEvent& event)
     {
-        enterEditMode();
+        enterEditMode(EditModeEntry::Press);
         HostClass::nestedContextPopup(event);
     }
 
@@ -213,14 +221,14 @@ namespace ClaFi::Controls
     }
 
     template <IsControl HostClass>
-    void WithEditMode<HostClass>::enterEditMode()
+    void WithEditMode<HostClass>::enterEditMode(const EditModeEntry entry)
     {
         if (isInEditMode())
             return;
         m_editMode = EditMode::Yes;
         animateEditModeIndicator();
         HostClass::invalidate();
-        editModeEntered();
+        editModeEntered(entry);
     }
 
     template <IsControl HostClass>

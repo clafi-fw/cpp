@@ -98,7 +98,7 @@ namespace ClaFi::Controls
         
         void nestedKeyDown(KeyDownEvent&) override;
         void editModeKeyDown(KeyDownEvent&) override;
-        void editModeEntered() override;   // keeps the position Escape puts back
+        void editModeEntered(EditModeEntry) override;   // keeps the position Escape puts back
         void editModeLeft(bool accepted) override;
         void thumbPressDown() override;
         void changed(SliderChangeEvent&) override;
@@ -274,7 +274,7 @@ namespace ClaFi::Controls
         }
     }
 
-    void Slider::editModeEntered()
+    void Slider::editModeEntered(EditModeEntry)
     {
         m_positionAtEntry = position();
     }

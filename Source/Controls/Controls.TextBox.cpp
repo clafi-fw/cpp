@@ -330,7 +330,7 @@ namespace ClaFi::Controls
     {
         // The menu is about the caret or the selection, which the mode shows - ahead of the link
         // menu below, which answers before the base is reached.
-        setEditMode(EditMode::Yes);
+        enterEditMode(EditModeEntry::Press);
         // Outside the selection the click states a new caret, as a left one does. Inside it, the
         // click is aimed at the selection the menu's Copy and Cut act on, and placing a caret
         // there would collapse the range before the menu is even up.
@@ -648,10 +648,13 @@ namespace ClaFi::Controls
     }
 
     // A read-only box has nothing to put back, and a prose box's text is not copied for nothing.
-    void TextBox::editModeEntered()
+    // A key names no place in the text, so the box opens with the whole of it selected.
+    void TextBox::editModeEntered(const EditModeEntry entry)
     {
         if (readOnly() == ReadOnly::No)
             m_textAtEntry = text();
+        if (entry == EditModeEntry::Key)
+            selectAll();
     }
 
     // An edit of the box's own, so Ctrl+Z brings the words typed back.

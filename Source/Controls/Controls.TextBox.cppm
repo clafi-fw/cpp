@@ -223,7 +223,8 @@ namespace ClaFi::Controls
         // Keyboard events
         void editModeKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
-        void editModeEntered() override;   // a box typed into keeps the text it opened on
+        // A box typed into keeps the text it opened on, and selects it all when a key opened it.
+        void editModeEntered(EditModeEntry) override;
         void editModeLeft(bool accepted) override;   // Escape puts that text back
         // The tail every edit shares. The caret is asked for after the pass rather than now: an
         // edit can add or drop a row, and the box's height and the scroll range that follows it
