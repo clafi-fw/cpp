@@ -100,6 +100,9 @@ namespace ClaFi::Controls
         void editModeKeyDown(KeyDownEvent&) override;
         void editModeEntered(EditModeEntry) override;   // keeps the position Escape puts back
         void editModeLeft(bool accepted) override;
+        // In edit mode the thumb is current, and hot while the keys are on it. See Controls-Base
+        void adjustNestedControlVisualState(const Control&, VisualState&) const override;
+        void inputContextChanged() override;   // re-reads the thumb, whose hot carries the device
         void thumbPressDown() override;
         void changed(SliderChangeEvent&) override;
         void adjustThumbTooltip(AdjustTooltipEvent&) override;
@@ -277,12 +280,31 @@ namespace ClaFi::Controls
     void Slider::editModeEntered(EditModeEntry)
     {
         m_positionAtEntry = position();
+        thumb().invalidateState();
     }
 
     void Slider::editModeLeft(const bool accepted)
     {
         if (!accepted)
             setPosition(m_positionAtEntry);
+        thumb().invalidateState();
+    }
+
+    // Hot as a focused control's is: the keys on it while its window holds the focus.
+    void Slider::adjustNestedControlVisualState(const Control& control, VisualState& state) const
+    {
+        EditableSlider::adjustNestedControlVisualState(control, state);
+        if (&control != &thumb() || !isInEditMode())
+            return;
+        const FormBase* form = getForm();
+        const bool windowFocused = form && form->isWindowFocused();
+        state.current = true;
+        state.hot = state.hot || (Input::keyboard().active() && windowFocused);
+    }
+
+    void Slider::inputContextChanged()
+    {
+        thumb().invalidateState();
     }
 
     void Slider::thumbPressDown()

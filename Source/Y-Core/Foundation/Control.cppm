@@ -1252,6 +1252,8 @@ namespace ClaFi
         // control that **does** something - draws a caret, runs a timer - and would otherwise go on
         // doing it, since adjustFocus reports only the arrival.
         virtual void focusChanged() {}
+        // The device, the window's focus or Always show focus has moved. See Control-Foundation
+        virtual void inputContextChanged() {}
         virtual void sizeChanged();
         void setScaledPosition(ScaledPosition);
         void setScaledSize(ScaledSize);

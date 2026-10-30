@@ -80,7 +80,8 @@ grid's cell ring read it: a box focused by a click keeps them while the pointer 
 The hovered and the focused control re-read their state as the device switches, and the focused
 control as its window takes or loses the focus, since Hot and Current are stored per control and
 animate on their own slots - up to the root form, through the popups between. See Input and
-FormBase::stateWindowFocus.
+FormBase::stateWindowFocus. A part that takes its Hot or Current from its owner is re-read by that
+owner - see Control::inputContextChanged.
 
 ## HorizontalTextAnchor
 

@@ -2655,8 +2655,10 @@ namespace ClaFi
             case InvalidateEvent::PressUp:
                 pass = control->isMouseResponsive();
                 break;
-            case InvalidateEvent::None:
             case InvalidateEvent::InputController:
+                control->inputContextChanged();
+                break;
+            case InvalidateEvent::None:
                 break;
             }
             if (pass)

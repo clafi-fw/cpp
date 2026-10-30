@@ -148,6 +148,9 @@ from the middle of the edge as the mode turns on, drawn over the frame, and the 
 as much - see AdjustPaintEvent replaceRing. A control under EditModeSwitching::No is in the mode
 throughout and wears its ring.
 
+**A slider's thumb is current while the mode is on**, and hot while the keys drive it in a focused
+window - the looks of a focused control, on the part the keys move.
+
 **In the mode the host's keys apply**, through editModeKeyDown, and they are asked first: Return
 on a link at the caret is the box's before it is the mode's. What the host leaves, the mode
 answers: Return accepts and turns the mode off, Escape rejects and turns it off. A host that

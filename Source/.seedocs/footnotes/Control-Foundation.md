@@ -130,6 +130,17 @@ control answers no, and the question goes on up.
 that was current up to the first one still holding the new item hears it, the item itself first. A
 grid standing in a container drops its selected cell on it - see Grid.
 
+## Control inputContextChanged
+
+**Told just before the control re-reads its state** for something Hot and Current carry beyond the
+control itself: the device switching, its window taking or losing the focus, or the Always show
+focus setting. It reaches the hovered and the focused control and every control they stand in -
+see VisualStateIndex.
+
+**The re-read walks up and never reaches a control's parts.** A control that states a part's Hot
+or Current through adjustNestedControlVisualState re-reads that part here. A slider does so for
+its thumb, which reads hot in edit mode while the keys drive it.
+
 ## Control reveal
 
 **Opened from the host down**, so an outer body is opened ahead of one inside it. A holder says
