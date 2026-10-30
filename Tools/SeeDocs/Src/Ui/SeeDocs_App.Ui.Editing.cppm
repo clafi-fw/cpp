@@ -10,6 +10,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -139,7 +140,13 @@ namespace SeeDocs_App::Ui
         IPageWriter* m_writer{ nullptr };
         FootnoteDraft m_draft{};
         bool m_editing{ false };
-        TextBox& m_shown{ add<TextBox>(ReadOnly::Yes, EditModeSwitching::Yes, Padding{ 0.0f }) };
+        // At a list item's padding and radius, as the page's other boxes are.
+        TextBox& m_shown{ add<TextBox>(
+            ReadOnly::Yes,
+            EditModeSwitching::Yes,
+            Radius{ themeMetrics().listItem.radius },
+            themeMetrics().listItem.padding
+        ) };
         StackPanel* m_editor{ nullptr };
         TextBox* m_box{ nullptr };
         Label* m_place{ nullptr };

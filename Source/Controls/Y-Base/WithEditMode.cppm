@@ -2,9 +2,11 @@ module;
 #include "../Y-Core/System/EventBindings.h"
 export module ClaFi.Controls.Base.WithEditMode;
 
-import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_AnimationSlots;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -50,6 +52,9 @@ namespace ClaFi::Controls
         // Whether Return is a line break the host types, which the mode then leaves to it.
         [[nodiscard]] virtual bool takesLineBreaks() const { return false; }
         void adjustPaint(AdjustPaintEvent&) override;
+        void paintFrame(PaintEvent&) override;
+        // The mode's indicator on the left edge. A host overriding paintFrame calls it there.
+        void paintEditModeIndicator(PaintEvent&);
         void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
@@ -58,9 +63,11 @@ namespace ClaFi::Controls
     private:
         void enterEditMode();
         void leaveEditMode(bool accepted);
+        void animateEditModeIndicator();
     private:
         // The Return that turned the mode on has its character still to come.
         bool m_entryCharPending{ false };
+        float m_editModeIndicatorFactor{ 0.0f }; // stays 0 under EditModeSwitching::No
     };
 
 
@@ -79,6 +86,8 @@ namespace ClaFi::Controls
     {
         if (m_editModeSwitching == EditModeSwitching::No)
             m_editMode = EditMode::Yes;
+        else if (isInEditMode())
+            m_editModeIndicatorFactor = 1.0f;
     }
 
     template <IsControl HostClass>
@@ -90,16 +99,34 @@ namespace ClaFi::Controls
             leaveEditMode(true);
     }
 
-    // Temporary edit mode indication - to be done right later.
     template <IsControl HostClass>
     void WithEditMode<HostClass>::adjustPaint(AdjustPaintEvent& event)
     {
-        if (m_editModeSwitching == EditModeSwitching::Yes && isInEditMode())
-        {
-            event.setColorRules(UiElement::Button);
-            event.setSurfaceHsl({ 0.69f, 0.5f, 0.5f });
-        }
         HostClass::adjustPaint(event);
+        event.replaceRing(m_editModeIndicatorFactor);
+    }
+
+    // Drawn after the host's frame, so the indicator covers the border along its edge.
+    template <IsControl HostClass>
+    void WithEditMode<HostClass>::paintFrame(PaintEvent& event)
+    {
+        HostClass::paintFrame(event);
+        paintEditModeIndicator(event);
+    }
+
+    // As deep as an open tab's indicator: twice the border.
+    template <IsControl HostClass>
+    void WithEditMode<HostClass>::paintEditModeIndicator(PaintEvent& event)
+    {
+        if (m_editModeIndicatorFactor <= 0.0f)
+            return;
+        event.canvas().fillEdgeIndicator(
+            { .bounds = event.controlBounds(), .radii = event.cornerRadii() },
+            RectSide::Bottom,
+            2.0f * event.scaledStrokeWidth(ThemeMetrics::border) * m_editModeIndicatorFactor,
+            event.indicatorRgb().withOpacity(m_editModeIndicatorFactor),
+            1.0f
+        );
     }
 
     // The host answers first, so Return on a link at the caret is the host's before it is the
@@ -191,6 +218,7 @@ namespace ClaFi::Controls
         if (isInEditMode())
             return;
         m_editMode = EditMode::Yes;
+        animateEditModeIndicator();
         HostClass::invalidate();
         editModeEntered();
     }
@@ -201,8 +229,26 @@ namespace ClaFi::Controls
         if (!isInEditMode() || m_editModeSwitching == EditModeSwitching::No)
             return;
         m_editMode = EditMode::No;
+        animateEditModeIndicator();
         HostClass::invalidate();
         editModeLeft(accepted);
+    }
+
+    // An indicator nobody has seen has nothing to grow from.
+    template <IsControl HostClass>
+    void WithEditMode<HostClass>::animateEditModeIndicator()
+    {
+        const float target = isInEditMode() ? 1.0f : 0.0f;
+        if (!HostClass::isPainted() || !HostClass::visible())
+        {
+            m_editModeIndicatorFactor = target;
+            return;
+        }
+        HostClass::animate(AnimationSlots::EditMode, m_editModeIndicatorFactor, target,
+            [this](AnimateParams& params) {
+                m_editModeIndicatorFactor = params.value;
+                HostClass::invalidate();
+            });
     }
 
 }

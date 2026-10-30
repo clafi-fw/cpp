@@ -227,6 +227,7 @@ namespace ClaFi
         float m_parentSelectedAmount{ 0.0f };
         float m_parentPressedAmount{ 0.0f };
         float m_windowSelectedAmount{ 0.0f };
+        float m_ringReplaced{ 0.0f }; // what replaceRing takes off the ring
         // Zero by default: a control's depth answers to its own state unless its host says
         // otherwise, so nothing starts out moving on someone else's behalf.
         float m_parentZAmount{ 0.0f };
@@ -248,7 +249,7 @@ namespace ClaFi
 #if CLAFI_TEXT_MOVING
         float m_zAnimationAmount{ 1.0f }; // the application's, inherited from the root
 #endif
-        // The ring's weight, the control's current. A ring stands out of the grow-in.
+        // The ring's weight, the current less m_ringReplaced. A ring stands out of the grow-in.
         float m_focusRingFactor{ 0.0f };
         float m_borderWidth;
         float m_radius{};
@@ -316,6 +317,8 @@ namespace ClaFi
         void setParentZAmount(float value) { m_target.m_parentZAmount = value; }
         // How much of the selected factor is the window's focus rather than the control's own.
         void setWindowSelectedAmount(float value) { m_target.m_windowSelectedAmount = value; }
+        // How far an indicator of the control's own stands in for its ring. See Control-Foundation
+        void replaceRing(float amount) { m_target.m_ringReplaced = amount; }
         void setDisabledBlendAmount(float value) { m_target.m_disablingStrength = value; }
         // The ink this control has inherited, before its own text rule is applied to it: what a
         // host has named for it, or what the chain hands down. Read and written where a control's

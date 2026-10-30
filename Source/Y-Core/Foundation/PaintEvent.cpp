@@ -206,6 +206,9 @@ namespace ClaFi
 
             // A control that keeps its selection off the surface says so to the stroke as well.
             m_selectedOnSurface = selectedEffectiveFactor;
+            // The ring as it is drawn: the current, less what an indicator of the control's own
+            // stands in for. The stroke reads it in place of the current - see inputFactor.
+            m_focusRingFactor = std::max(factors.current() - m_ringReplaced, 0.0f);
             // In RuleInput order. The control drawing a selection is the one that owns it, so the
             // band reads these too - handed over rather than resolved, since almost nothing asks
             // for the band.
@@ -280,9 +283,8 @@ namespace ClaFi
             // surface, so an ink asked for while painting matches one that was ready.
             m_controlContext.disabledAmount = disabledAmount();
 
-            // The ring's weight is the control's current: the border thickens toward focusedBorder
-            // by it, whatever colour the rules gave the stroke.
-            m_focusRingFactor = factors.current();
+            // The border thickens toward focusedBorder by the ring's weight, whatever colour the
+            // rules gave the stroke.
             if (m_focusRingFactor > 0.0f)
             {
                 const float focusedBorder = scaledStrokeWidth(ThemeMetrics::focusedBorder);
@@ -605,6 +607,11 @@ namespace ClaFi
         {
             const std::size_t selected = static_cast<std::size_t>(RuleInput::Selected);
             levels[selected] = m_selectedOnSurface;
+        }
+        if (channel == PaintChannel::Stroke)
+        {
+            const std::size_t current = static_cast<std::size_t>(RuleInput::Current);
+            levels[current] = m_focusRingFactor;
         }
         return rule.inputs.anyLevelIn(levels) * rule.andInputs.allLevelIn(levels);
     }

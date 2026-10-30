@@ -117,7 +117,8 @@ namespace ClaFi::Controls
         void paintThumb(PaintEvent& pp) override;
         void paintThumbFrame(PaintEvent&) override;
         void paintSurface(PaintEvent&) override;
-        void paintFrame(PaintEvent&) override {} // a slider draws its slot and no outline
+        // A slider draws its slot and no outline, and the edit mode's indicator all the same.
+        void paintFrame(PaintEvent& event) override { paintEditModeIndicator(event); }
         void paintSlotBorder(PaintEvent&, FloatRect, float radius);
 
         virtual Color thumbColor(PaintEvent&, FloatPoint&);

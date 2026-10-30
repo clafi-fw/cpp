@@ -84,6 +84,12 @@ namespace ClaFi::AnimationSlots
         .easingFactor{ EasingFactor::EaseOut, EasingFactor::EaseInOut }
     };
 
+    // The edit mode's indicator, timed as Current so the ring it replaces falls with it.
+    export constexpr AnimationSlot EditMode{
+        .duration{.rise = 66ms, .fall = 330ms },
+        .easingFactor{}
+    };
+
     // One theme coming over another. The same numbers both ways: a switch is one movement
     // whichever theme is being left, and a window that hurried into the dark and strolled back
     // into the light would read as two different commands. Long enough that the whole window is

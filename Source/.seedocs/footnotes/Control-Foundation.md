@@ -631,6 +631,16 @@ What reads it:
 **A control reads the factor here while it paints**, with no subscription. Each step of the
 animation repaints the whole window, since the form cannot know which controls read it.
 
+## AdjustPaintEvent replaceRing
+
+**The ring is drawn at the control's current less the amount.** The stroke's Current rules, the
+border's thickening toward ThemeMetrics::focusedBorder and the frame's hold out of the grow-in all
+read that. A rule reading Current on the surface or the ink reads the whole current.
+
+**Time the amount as AnimationSlots::Current is timed**, as WithEditMode does with
+AnimationSlots::EditMode. A control losing its indicator and the focus at once then has both fall
+at one pace, and no ring shows between them.
+
 ## FormBase::shadowDesign
 
 **Scaled to the form, and coloured as the rule set colours a window's shadow** at the focus this

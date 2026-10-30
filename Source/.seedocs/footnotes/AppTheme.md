@@ -129,7 +129,8 @@ Current and write the Stroke.
 
 **The ring's weight is the control's current**, whatever colour the rules gave the stroke. That
 factor thickens the border toward ThemeMetrics::focusedBorder, in paint only, and holds the frame
-out of the surface grow-in.
+out of the surface grow-in. A control drawing an indicator in the ring's place takes that share
+off - see AdjustPaintEvent replaceRing.
 
 A line drawn through `strokeRgbOn`, such as a grid cell's or a divider's, reads the lists and
 nothing of the weight.

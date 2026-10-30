@@ -18,6 +18,7 @@ import ClaFi.Controls.Base.SliderBase;
 import ClaFi.Controls.Base.StackBase;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
@@ -255,6 +256,9 @@ namespace SeeDocs_App::Ui
         // a node whose rows are built as it opens; a click on either opens the type it names.
         template<typename Holder>
         void addTreeRows(Holder&, const Branches&, bool nodesOpen);
+        // A box the page walks as one of its items, at a list item's padding and radius.
+        template<typename BoxClass, typename Holder, typename... Args>
+        BoxClass& addItemBox(Holder&, Args&&...);
         // Anchors every branch of a tree ahead of its rows, in the tree's order, so a row built
         // as its node opens is named the same whatever opened first.
         void anchorBranches(const Branches&, const Branch* parent);
@@ -529,5 +533,16 @@ namespace SeeDocs_App::Ui
                 addTreeRows(event.node, branch.children, false);
             });
         }
+    }
+
+    template<typename BoxClass, typename Holder, typename... Args>
+    BoxClass& PageView::addItemBox(Holder& holder, Args&&... args)
+    {
+        const ControlMetrics& itemMetrics = themeMetrics().listItem;
+        return holder.template add<BoxClass>(
+            Radius{ itemMetrics.radius },
+            itemMetrics.padding,
+            std::forward<Args>(args)...
+        );
     }
 }

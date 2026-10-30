@@ -143,6 +143,11 @@ modifier, a press or a menu asked on the control turns the mode on; Escape and t
 turn it off, and so does EditMode::No from code. A popup opened on the control - an edit menu, a
 link's menu - takes the focus for a while and keeps the mode up.
 
+**The mode is shown by an indicator on the control's left edge**, in place of its ring. It grows
+from the middle of the edge as the mode turns on, drawn over the frame, and the ring gives way by
+as much - see AdjustPaintEvent replaceRing. A control under EditModeSwitching::No is in the mode
+throughout and wears its ring.
+
 **In the mode the host's keys apply**, through editModeKeyDown, and they are asked first: Return
 on a link at the caret is the box's before it is the mode's. What the host leaves, the mode
 answers: Return accepts and turns the mode off, Escape rejects and turns it off. A host that

@@ -543,7 +543,7 @@ namespace SeeDocs_App::Ui
         m_head.clear();
         m_page = {};
         m_head.setVisible(false);
-        TextBox& box = m_pageBox.body().add<TextBox>(ReadOnly::Yes, EditModeSwitching::Yes);
+        TextBox& box = addItemBox<TextBox>(m_pageBox.body(), ReadOnly::Yes, EditModeSwitching::Yes);
         box.text() = text;
         m_parts.push_back(&box);
         invalidateFormAlign();
@@ -702,7 +702,8 @@ namespace SeeDocs_App::Ui
     {
         if (m_page.lead.empty() && !writesHint(m_page.leadSite))
             return;
-        HintBox& box = m_pageBox.body().add<HintBox>(
+        HintBox& box = addItemBox<HintBox>(
+            m_pageBox.body(),
             ReadOnly::Yes,
             TextFormat{ TextStyle::SubTitle },
             noHintText()
@@ -1025,11 +1026,7 @@ namespace SeeDocs_App::Ui
             : std::wstring{ k_signatureAnchor };
         if (labelled)
         {
-            TextBox& label = block.add<TextBox>(
-                ReadOnly::Yes,
-                EditModeSwitching::Yes,
-                Padding{ 0.0f }
-            );
+            TextBox& label = addItemBox<TextBox>(block, ReadOnly::Yes, EditModeSwitching::Yes);
             anchorItem(name, {}, label);
             m_renders.push_back([&label, &section]() {
                 Text text;
@@ -1043,10 +1040,10 @@ namespace SeeDocs_App::Ui
         {
             StackPanel& entry = block.add<StackPanel>(
                 Orientation::Vertical,
-                Padding{ 0.0f },
+                indent,
                 Spacing{ k_leadGap }
             );
-            TextBox& code = entry.add<TextBox>(ReadOnly::Yes, EditModeSwitching::Yes, indent);
+            TextBox& code = addItemBox<TextBox>(entry, ReadOnly::Yes, EditModeSwitching::Yes);
             connectLinks(code);
             anchorItem(name, {}, code);
             m_renders.push_back([&code, &signature]() {
@@ -1056,7 +1053,7 @@ namespace SeeDocs_App::Ui
             });
             if (!signature.lead.empty() || writesHint(signature.site))
             {
-                HintBox& lead = entry.add<HintBox>(ReadOnly::Yes, noHintText(), indent);
+                HintBox& lead = addItemBox<HintBox>(entry, ReadOnly::Yes, noHintText());
                 connectLinks(lead);
                 connectHintBox(lead, signature.site);
                 anchorItem(name, {}, lead);
@@ -1067,7 +1064,7 @@ namespace SeeDocs_App::Ui
             if (signature.excerpt.has_value())
             {
                 FootnoteSlot& slot = addFootnoteSlot(entry, { .excerpt = &*signature.excerpt },
-                    indent);
+                    Padding{ 0.0f });
                 anchorItem(name, {}, slot.shown());
             }
         }
