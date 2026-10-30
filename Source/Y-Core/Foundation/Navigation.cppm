@@ -16,6 +16,8 @@ namespace ClaFi
         explicit FocusNavigator(FormBase& form) : m_form{ form } {}
     public:
         void formKeyDown(KeyDownEvent& event);
+        // Puts the focus where entering a control from outside lands it. See Control-Foundation
+        Control* enterReading(Control&);
     private:
         // The form has no outside. It is an ActiveContainer so that Home, End and the page keys
         // have something to move within, and so that it can keep the item the focus returns to -

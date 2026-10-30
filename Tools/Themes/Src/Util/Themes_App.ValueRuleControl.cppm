@@ -57,8 +57,8 @@ namespace Themes_App
         // The face is typed over on any press the grid leaves it, and the strip drops the popup.
         [[nodiscard]] bool clickOpensEditor() const override { return true; }
         void showDropdown(Control&) override;
-        void getMainText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void adjustMainText(AdjustTextEvent&) const override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void getEditorText(Text&) const override;
         void acceptEditorText(AcceptEditEvent&) override;
         [[nodiscard]] FloatPoint editorMaxTextSize(const FloatRect& textRect) const override;

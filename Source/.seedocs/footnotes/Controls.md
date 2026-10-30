@@ -177,7 +177,7 @@ drops under the line where the screen has no room above.
 nothing, the box writes its own:
 
 - `#name` the box's text holds - the anchor's paragraph, formatted, cut after six lines by
-  GetTooltipEvent::writePreview;
+  AdjustTooltipEvent::writePreview;
 - any other target - the target as the text states it.
 
 In a box the user types into, the tooltip ends with a muted line, whoever wrote the words:

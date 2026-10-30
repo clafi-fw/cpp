@@ -136,6 +136,13 @@ What changed for a user: a page press counts from the focused item even after th
 scrolled it away - it used to page from the screen in that case - and a diagonal jump into
 another panel is gone.
 
+2026-10-30. enterReading is the one public entry besides formKeyDown: PageControl enters the page it
+turns to with it when the focus was inside the page it turns from - see Item-Containers. It is
+readingEntry from the top, landed with no line, so a page's first arrow starts a run from the stop.
+The alternative was a redirect in Control::setFocus for a control that cannot take the focus; Oj
+kept setFocus as it is. Exporting :Navigation from Foundation_Facade is what made the class
+reachable outside the module.
+
 ## InputController
 
 The fades run on the application's animator, reached through the AppContext the form reporting
@@ -207,9 +214,19 @@ gather the control's own text as its buffer was the first idea and does not work
 build on the paint that changed the words. Fixing that means the event tracking writes, exposure
 through `operator Text&` included, and a non-const seam at Control's four own-text gathers.
 
+**A composed answer is kept beside the words, since 2026-10-30.** Absorbing it into the text was
+the mistake: RichControl::adjustText names the text as the first contribution of the next gather, so
+whatever a gather had added - a handler's words, an end icon - was named back in and added again,
+one copy per gather, shaped whole each time. The FPS page's footer grew that way for as long as the
+page was up, and the frame rate it reported fell as 1/t with the pointer still. The mixin now keeps
+`m_composedAnswer`, a ControlText of its own, and points the layout at it while the gather composed
+something; a stamp carries its object's id, so the two sources are told apart with no flag read at
+sync. The words stay the owner's, which is also what let the Action write a presenter's words into
+its text instead of answering every gather with a handler, and what readmits an EndIcon on a host.
+
 **No host composes its answer now.** TooltipLabel re-asked its control per paint and answered
 differently by phase - the Calculate answer sized the window and the Paint answer was shown, so
 a hue slider's tooltip kept the width of 360 degrees through a drag - until 2026-10-29, when
 Tooltip began writing the words into the label's own text, as any host's caller does. The window
-is sized to what it shows. ParameterTooltip had carried a second Text and a getText override to
+is sized to what it shows. ParameterTooltip had carried a second Text and a adjustText override to
 replace the answer; setCall writes text() now.

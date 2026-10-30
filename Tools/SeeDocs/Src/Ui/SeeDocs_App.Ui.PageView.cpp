@@ -1130,7 +1130,7 @@ namespace SeeDocs_App::Ui
             header.setHeaderText(label);
             if (!group.tooltip.empty())
             {
-                header.onGetTooltip([&group](GetTooltipEvent& event) {
+                header.onAdjustTooltip([&group](AdjustTooltipEvent& event) {
                     writeRuns(event.text, group.tooltip);
                 });
             }
@@ -1179,7 +1179,7 @@ namespace SeeDocs_App::Ui
                 gridRow.onGetCellTooltip([&row](Grids::GetCellTooltipEvent& event) {
                     if (event.column().tag().value != k_markColumn)
                         return;
-                    GetTooltipEvent& tooltip = event.tooltip();
+                    AdjustTooltipEvent& tooltip = event.tooltip();
                     tooltip.placement = FormPlacement::Top;
                     tooltip.writePreview(textOf(row.excerpt->blocks));
                 });
@@ -1395,7 +1395,7 @@ namespace SeeDocs_App::Ui
         button.onGetState([this, &fact](GetStateEvent& event) {
             event.state.enabled = hasEditorCommand(appContext(), fact.source->language);
         });
-        button.onGetTooltip([this, &fact](GetTooltipEvent& event) {
+        button.onAdjustTooltip([this, &fact](AdjustTooltipEvent& event) {
             const SourceLanguage language = fact.source->language;
             if (hasEditorCommand(appContext(), language))
                 return;

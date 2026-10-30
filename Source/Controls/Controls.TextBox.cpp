@@ -58,7 +58,7 @@ namespace ClaFi::Controls
     }
 
     GetLinkTooltipEvent::GetLinkTooltipEvent(TextBox& box, std::wstring_view target,
-        TextRange range, GetTooltipEvent& tooltip)
+        TextRange range, AdjustTooltipEvent& tooltip)
         :
         EventOf<TextBox>{ box },
         target{ target },
@@ -282,11 +282,11 @@ namespace ClaFi::Controls
         hoverLink({});
     }
 
-    void TextBox::nestedGetTooltip(GetTooltipEvent& event)
+    void TextBox::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         if (!m_pointedLink.range.length)
         {
-            TextBoxBase::nestedGetTooltip(event);
+            TextBoxBase::nestedAdjustTooltip(event);
             return;
         }
 
@@ -820,7 +820,7 @@ namespace ClaFi::Controls
         Tooltip::hoveredZoneChanged();
     }
 
-    void TextBox::writeLinkTooltip(GetTooltipEvent& event) const
+    void TextBox::writeLinkTooltip(AdjustTooltipEvent& event) const
     {
         // **The paragraph, not the anchor.** An anchor holds a few words - a clue's number, a
         // heading - and what the reader wants before jumping is what stands around them. Taken

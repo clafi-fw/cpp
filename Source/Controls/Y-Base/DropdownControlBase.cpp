@@ -72,9 +72,9 @@ namespace ClaFi::Controls
         event.stopPropagation();
     }
 
-    void DropdownPart::getText(GetTextEvent& event) const
+    void DropdownPart::adjustText(AdjustTextEvent& event) const
     {
-        m_owner.getDropdownPartText(event);
+        m_owner.adjustDropdownPartText(event);
     }
 
     void DropdownPart::drawIcon(DrawIconEvent& event)
@@ -132,9 +132,9 @@ namespace ClaFi::Controls
         runDropdown(part ? *part : *this);
     }
 
-    void DropdownControlBase::getMainText(GetTextEvent& event) const
+    void DropdownControlBase::adjustMainText(AdjustTextEvent& event) const
     {
-        RichControl::getText(event);
+        RichControl::adjustText(event);
     }
 
     void DropdownControlBase::drawDropdownMark(DrawIconEvent& event) const
@@ -200,9 +200,9 @@ namespace ClaFi::Controls
         event.inset = { border, border };
     }
 
-    void DropdownControlBase::getText(GetTextEvent& event) const
+    void DropdownControlBase::adjustText(AdjustTextEvent& event) const
     {
-        getMainText(event);
+        adjustMainText(event);
     }
 
     void DropdownControlBase::calculateChildren(FormBase& form)
@@ -309,7 +309,7 @@ namespace ClaFi::Controls
         return config.viewMode;
     }
 
-    void DropdownControlBase::getDropdownPartText(GetTextEvent& event) const
+    void DropdownControlBase::adjustDropdownPartText(AdjustTextEvent& event) const
     {
         // **A strip that carries no text states none.** Its mark is its icon, and ButtonBase asks
         // an icon-only control for its text to fill an empty tooltip - a chevron is not what a
@@ -322,7 +322,7 @@ namespace ClaFi::Controls
         // centres the line inside the layout; centring the layout inside the strip is the part's
         // horizontal text anchor, which is the other half of it.
         event.text << TextAlign::Center;
-        getMainText(event);
+        adjustMainText(event);
         if (!event.text.plainText().empty())
             event.text << Space{ k_markSpacing };
         appendDropdownMark(event.text);

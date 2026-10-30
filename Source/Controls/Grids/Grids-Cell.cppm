@@ -76,14 +76,14 @@ namespace ClaFi::Controls::Grids
     export class GetCellTooltipEvent : public CellEventBase
     {
     public:
-        GetCellTooltipEvent(const RowBase&, const Column&, GetTooltipEvent&,
+        GetCellTooltipEvent(const RowBase&, const Column&, AdjustTooltipEvent&,
             std::wstring_view link);
-        [[nodiscard]] GetTooltipEvent& tooltip() { return m_tooltip; }
+        [[nodiscard]] AdjustTooltipEvent& tooltip() { return m_tooltip; }
         [[nodiscard]] Text& text() { return m_tooltip.text; }
         // What the link under the pointer names, as the cell's text states it; empty off a link.
         [[nodiscard]] std::wstring_view link() const { return m_link; }
     private:
-        GetTooltipEvent& m_tooltip;
+        AdjustTooltipEvent& m_tooltip;
         std::wstring_view m_link;
     };
 
@@ -156,7 +156,7 @@ namespace ClaFi::Controls::Grids
     // GetCellTooltipEvent
 
     GetCellTooltipEvent::GetCellTooltipEvent(const RowBase& row, const Column& column,
-        GetTooltipEvent& tooltip, const std::wstring_view link)
+        AdjustTooltipEvent& tooltip, const std::wstring_view link)
         :
         CellEventBase{ row, column },
         m_tooltip{ tooltip },

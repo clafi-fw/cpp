@@ -73,11 +73,7 @@ namespace ClaFi
     private:
         void copyRows(const Control* single, InputStamp);
     private:
-        Label& m_statusLabel{ createTopBar<Label>(
-            OnEvent{ [this](GetTextEvent& event) {
-                event.text << (m_stopped ? L"Stopped" : L"Active");
-            } }
-        ) };
+        Label& m_statusLabel{ createTopBar<Label>(L"Active") };
         bool m_stopped{};
         RichControl* m_itemToSelect{};
         // **The whole page**, which is what a log is copied **for** - StdActions::copy beside it
@@ -250,6 +246,7 @@ namespace ClaFi
     void OutputPage::hoverEnter()
     {
         m_stopped = true;
+        m_statusLabel.text() = L"Stopped";
         m_statusLabel.invalidate();
         ScrollBox::hoverEnter();
     }
@@ -257,6 +254,7 @@ namespace ClaFi
     void OutputPage::hoverLeave()
     {
         m_stopped = false;
+        m_statusLabel.text() = L"Active";
         m_statusLabel.invalidate();
         ScrollBox::hoverLeave();
     }

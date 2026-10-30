@@ -29,7 +29,7 @@ namespace ClaFi::Tools::WhatsClip
         // dropped by an align pass in progress, whose paint reads the face anyway, and needed
         // when the question came from outside one. See Controls#detectlanguageevent
         void setFoundName(std::wstring_view);
-        void getMainText(GetTextEvent&) const override;
+        void adjustMainText(AdjustTextEvent&) const override;
     private:
         [[nodiscard]] bool isAuto() const;
         // Auto, then the names, every item at the size given.

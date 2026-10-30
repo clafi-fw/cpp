@@ -93,7 +93,7 @@ cell needs. A stated break width is where such a text is placed - see TextLayout
 
 **A wrapped text's block is at most its break width**, even where a line overflows it.
 
-**An over-text tooltip repeats an anchored text inside its block.** GetTooltipEvent::textAnchor
+**An over-text tooltip repeats an anchored text inside its block.** AdjustTooltipEvent::textAnchor
 comes back Left, and the anchor rect starts at the block.
 
 ## WordWrap

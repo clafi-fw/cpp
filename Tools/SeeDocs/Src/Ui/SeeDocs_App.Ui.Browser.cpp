@@ -1113,13 +1113,12 @@ namespace SeeDocs_App::Ui
         data.title = titleOf(data, target);
 
         BrowserPage* page = static_cast<BrowserPage*>(tab.page());
-        // The tab is taken off the page before the page goes, as the browser takes it.
-        if (page && &page->pageData() != &data)
-        {
-            tab.setPage(nullptr);
-            page->deleteSelf();
+        // **The page replaced goes after its successor shows**, so the page control carries a focus
+        // held inside it over to the new page as it switches - see Item-Containers. The tab stands
+        // on the new page by then, off the one that goes, as the browser wants it.
+        BrowserPage* replacedPage = page && &page->pageData() != &data ? page : nullptr;
+        if (replacedPage)
             page = nullptr;
-        }
         if (!page)
         {
             if (target.ownPage == OwnPage::Sidebar)
@@ -1157,6 +1156,8 @@ namespace SeeDocs_App::Ui
             tab.updateIconMode();
             page->show();
         }
+        if (replacedPage)
+            replacedPage->deleteSelf();
 
         TabTree& tabTree = treeOf(tab);
         m_trees.setCurrentItem(tabTree.box);

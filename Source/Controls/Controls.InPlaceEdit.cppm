@@ -124,7 +124,7 @@ namespace ClaFi::Controls
         // hovered for. Nothing to show is not an error.
         void showRefusal();
     protected:
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void charPress(CharPressEvent&) override;

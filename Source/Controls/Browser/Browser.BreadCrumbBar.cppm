@@ -122,7 +122,7 @@ namespace ClaFi::Browser
         // Off the crumb alone - the bar's width is its slot's, whatever its crumbs come to.
         void takeOffWidth(float value) override;
     protected:
-        void getMainText(GetTextEvent&) const override;
+        void adjustMainText(AdjustTextEvent&) const override;
         void getEditorText(Text&) const override;
         [[nodiscard]] EditorMode editorMode() const override;
         [[nodiscard]] FloatPoint editorMaxTextSize(const FloatRect&) const override;
@@ -258,7 +258,7 @@ namespace ClaFi::Browser
         setScaledWidth(scaledWidth() - value);
     }
 
-    void BreadCrumbBarItem::getMainText(GetTextEvent& event) const
+    void BreadCrumbBarItem::adjustMainText(AdjustTextEvent& event) const
     {
         // Where the mark goes, and whether it goes here or on the strip, is the base's business.
         if (m_data)

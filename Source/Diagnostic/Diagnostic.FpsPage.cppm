@@ -113,13 +113,14 @@ namespace ClaFi::Diagnostic
         void writeSize(Text&) const;
         void writeBackend(Text&) const;
         void writeReading(GetCellTextEvent&) const;
-        void writeFooter(GetTextEvent&) const;
+        // The frame counts, written as the readings are and when the measurement starts over.
+        void writeFooter();
         // The tooltips: one per cell of each grid, the method on the caption, the curves on the
         // chart.
         void writeWindowTooltip(GetCellTooltipEvent&) const;
         void writeReadingTooltip(GetCellTooltipEvent&) const;
-        static void writeMethodTooltip(GetTooltipEvent&);
-        static void writeChartTooltip(GetTooltipEvent&);
+        static void writeMethodTooltip(AdjustTooltipEvent&);
+        static void writeChartTooltip(AdjustTooltipEvent&);
         // The readings themselves. A metric that has measured nothing answers none.
         [[nodiscard]] std::optional<double> readingOf(Metric, Reading) const;
         [[nodiscard]] std::optional<double> paintTimeOf(Reading) const;

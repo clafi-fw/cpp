@@ -98,7 +98,7 @@ namespace ClaFi::Controls
 
     void SplitButton::dropdownAction(Action& action)
     {
-        Control* part = secondaryPart();
+        RichControl* part = secondaryPart();
         // Whatever stood here stops standing for anything. Left attached it would go on
         // answering for the strip's tooltip and its state behind the command that replaced it.
         if (m_dropdownAction && part)

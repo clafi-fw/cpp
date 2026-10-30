@@ -1,7 +1,5 @@
 module ClaFi.Core.Foundation;
 
-// :Navigation is not re-exported by Foundation_Facade, so the implicit import of the primary
-// interface does not bring it in. Without this the whole partition is invisible here.
 import :Navigation;
 import :Control;
 import :Input;
@@ -115,6 +113,14 @@ namespace ClaFi
                 moveInContainer(*sourceContainer, *focusedItem, key);
             return;
         }
+    }
+
+    Control* FocusNavigator::enterReading(Control& control)
+    {
+        Control* stop = readingEntry(control, ScrollDirection::ToBegin);
+        if (stop)
+            land(*stop);
+        return stop;
     }
 
     bool FocusNavigator::isFormRoot(const Control* control) const

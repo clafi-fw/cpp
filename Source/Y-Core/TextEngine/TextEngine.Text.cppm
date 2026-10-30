@@ -103,7 +103,7 @@ namespace ClaFi
         bool empty() const { return m_plainText.empty(); }
         // Nothing written into it at all, markers included. A text carrying only markers says
         // nothing and is not empty, which is the difference a caller collecting contributions has
-        // to see - see GetTextEventBase::contribute.
+        // to see - see AdjustTextEventBase::contribute.
         [[nodiscard]] bool blank() const { return m_plainText.empty() && m_markers.empty(); }
         void clear();
         std::size_t hash() const;

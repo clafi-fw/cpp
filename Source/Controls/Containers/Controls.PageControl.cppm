@@ -15,7 +15,7 @@ namespace ClaFi::Controls
         WidestPage     // the widest of them all - see PageControl::calculateChildren
     };
 
-    // A stack showing one of its pages at a time.
+    // A stack showing one of its pages at a time. See Item-Containers
     export class PageControl : public StackBase
     {
     public:
@@ -91,13 +91,19 @@ namespace ClaFi::Controls
         return true;
     }
 
+    // A hidden page is no place for the focus, so the page that shows takes it over.
     void PageControl::currentItemChanged(CurrentItemChangeEvent& event)
     {
+        const bool focused = isFocused();
         StackBase::currentItemChanged(event);
         if (event.previousItem)
             event.previousItem->hide();
         if (currentItem())
+        {
             currentItem()->show();
+            if (focused)
+                FocusNavigator{ form() }.enterReading(*currentItem());
+        }
         // And align is invalidated in the base updateVisibility()
     }
 

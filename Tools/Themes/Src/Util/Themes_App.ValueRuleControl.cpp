@@ -164,9 +164,9 @@ namespace Themes_App
         OperationItem(const CreateParams&, ValueRulePopup&, ColorRuleOp);
     protected:
         [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override;
-        void getText(GetTextEvent&) const override;
+        void adjustText(AdjustTextEvent&) const override;
         void drawIcon(DrawIconEvent&) override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void getControlState(GetStateEvent&) const override;
         void click(ClickEvent&) override;
     private:
@@ -234,17 +234,17 @@ namespace Themes_App
         dropPopup<ValueRulePopup>(form(), *this);
     }
 
-    void ValueRuleControl::getMainText(GetTextEvent& event) const
+    void ValueRuleControl::adjustMainText(AdjustTextEvent& event) const
     {
         if (m_value)
             writeValueContent(event.text, *m_value);
     }
 
-    void ValueRuleControl::nestedGetTooltip(GetTooltipEvent& event)
+    void ValueRuleControl::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         if (m_value)
             event.text << k_operationNames[static_cast<std::size_t>(operation())];
-        DropdownControlBase::nestedGetTooltip(event);
+        DropdownControlBase::nestedAdjustTooltip(event);
     }
 
     void ValueRuleControl::getEditorText(Text& text) const
@@ -468,7 +468,7 @@ namespace Themes_App
     }
 
     // The value the rule takes under this operation, sign included - the blob holds only the mark.
-    void OperationItem::getText(GetTextEvent& event) const
+    void OperationItem::adjustText(AdjustTextEvent& event) const
     {
         const float value = m_popup.owner().value().value(m_operation);
         
@@ -484,10 +484,10 @@ namespace Themes_App
         drawOperationBlob(event, m_operation);
     }
 
-    void OperationItem::nestedGetTooltip(GetTooltipEvent& event)
+    void OperationItem::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         event.text << k_operationNames[static_cast<std::size_t>(m_operation)];
-        Button::nestedGetTooltip(event);
+        Button::nestedAdjustTooltip(event);
     }
 
     // Stopped here, so the tile row's current item is not written over the mark.

@@ -154,12 +154,14 @@ namespace Themes_App
         //
         void anchorChanged(EditPhase);
         void harmonyChanged();
+        // The panel's caption: the label and the harmony picked, or that none is.
+        void writeHarmonyCaption();
         void paletteMapChanged();
         void mapHuesToColors();
         // The pigments of the harmony the theme names, written as marks after the row's caption, in
         // pigment order. They are derived from the anchor and the harmony kind alone, so nothing
         // here reads or writes the palette.
-        void otherPigmentsText(GetTextEvent&);
+        void writeOtherPigments();
         // A row for a pigment the theme states itself: its name and an element page's editors.
         [[nodiscard]] Row pigmentRow(UiElement) const;
         // The name, and under it in gray what the pigment is used for.
@@ -518,15 +520,9 @@ namespace Themes_App
             });
         m_writeSourceButton.connectEvent(this, &ThemePage::writeToSource);
 
-        m_harmonyPanel.connectEvent([this](GetTextEvent& event) {
-            event.text << L" "
-                << (m_harmonyStack.currentItem()
-                    ? static_cast<ColorHarmonyItem*>(m_harmonyStack.currentItem())->harmony().name()
-                    : L"Not selected" // add textInk(InkGrade::Muted) and subBody
-                    );
-            });
+        writeHarmonyCaption();
 
-        m_otherPigmentsLabel.connectEvent(this, &ThemePage::otherPigmentsText);
+        writeOtherPigments();
 
         m_harmonyStack.connectEvent([this](CurrentItemChangeEvent&) {
                 harmonyChanged();

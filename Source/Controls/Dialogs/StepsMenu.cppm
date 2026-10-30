@@ -39,7 +39,7 @@ namespace ClaFi::Controls
         [[nodiscard]] std::size_t runOf(const Control*) const;
         void setRun(std::size_t);
         void take(std::size_t steps);
-        void footText(GetTextEvent&);
+        void writeFootText(); // the foot's words, for the run in effect
     private:
         // How tall the list may stand before it scrolls, in design units.
         static constexpr float k_maxListHeight = 400.0f;

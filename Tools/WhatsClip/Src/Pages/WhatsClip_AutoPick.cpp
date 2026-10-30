@@ -26,11 +26,11 @@ namespace ClaFi::Tools::WhatsClip
         invalidate();
     }
 
-    void AutoPicker::getMainText(GetTextEvent& event) const
+    void AutoPicker::adjustMainText(AdjustTextEvent& event) const
     {
         if (!isAuto() || m_foundName.empty())
         {
-            ComboBox::getMainText(event);
+            ComboBox::adjustMainText(event);
             return;
         }
 

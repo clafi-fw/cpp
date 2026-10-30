@@ -163,3 +163,36 @@ far side. Everything that reads the layout's padding - the paint, the hit test, 
 The spacing across is free for the line gap because a single lane has no use for it.
 `adjustChildBox` cuts the gap off a non-tab's box on the line side, and `calculateContent` counts it
 on top of the widest of them.
+
+## PageControl
+
+2026-10-30. Oj: "if you press the link inside a page and that page switches to the new one, focus is
+somewhere else in the form. Expected: focus goes to the new opened page, and if it's an active
+container to the first focusable (only when the previous page was focused - clicks in the sidebar
+should keep focus in the sidebar)".
+
+The focus was nowhere. SeeDocs' showPage deleted the old page before it built the new one:
+~ContainerBase detaches and destroys the children, the focused leaf's ~Control runs
+Input::forgetControl and the pointer is dropped, and only then does the page's own ~Control reach
+the page control through nestedControlDeleted. Nothing named a successor, and
+FocusNavigator::formKeyDown starts a key with no holder from the form's content, which is where the
+ring turned up. A sidebar click never showed it because the tree is not deleted.
+
+Decided with Oj:
+
+- The rule lives in PageControl::currentItemChanged, not in the browser - the thing that switches
+  pages is the one that knows both. TabbedBox gets it for free.
+- `isFocused()` is asked of the page control itself, not of the previous item - a container is
+  focused when its child is, and the answer does not depend on which page held it.
+- `newPage->setFocus()` would have rested the focus on the page itself: setFocus never asks
+  canTakeFocus, and a Panel has no focusDelegate into its children - no ring, and an arrow steps
+  around the page as an item of the form. Oj: leave setFocus as it is; a public
+  FocusNavigator::enterReading does the entering, which took :Navigation into the facade's exports.
+- SeeDocs shows the new page before it deletes the old one, so the old page is hidden with the focus
+  still inside it when the page control reads isFocused().
+- closeTab needed nothing: it selects the neighbour before the closing tab goes, so the switch runs
+  while the closing page still holds the focus.
+
+Left as it was: BrowserControl::rebuildPage deletes the page first and builds it again through goTo,
+so a focus inside a rebuilt page is dropped as before.
+

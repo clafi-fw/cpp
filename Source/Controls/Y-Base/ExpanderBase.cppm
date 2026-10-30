@@ -343,7 +343,7 @@ namespace ClaFi::Controls
         if (m_viewMode != ExpanderViewMode::Ellipsis || m_expanded)
             return;
         Text buffer;
-        const Text& label = doGetText(event.formContext(), buffer, EventPhase::Paint);
+        const Text& label = adjustedText(event.formContext(), buffer, EventPhase::Paint);
         if (label.empty())
             return;
         Text ellipsis = label.selectedText({ label.plainText().size() - 1, 1 });

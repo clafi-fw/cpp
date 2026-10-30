@@ -29,7 +29,7 @@ namespace ClaFi::Controls
         m_verb{ std::move(verb) }
     {
         setAutoFit(AutoFit::Yes);
-        m_foot.connectEvent(this, &StepsMenu::footText);
+        writeFootText();
         m_foot.onClick([this](ClickEvent&) {
             take(m_run);
         });
@@ -110,6 +110,7 @@ namespace ClaFi::Controls
         for (std::size_t i = first; i != last; ++i)
             m_items[i]->invalidateState();
         // The foot's words change length with the count.
+        writeFootText();
         m_foot.invalidateFormAlign();
     }
 
@@ -120,14 +121,16 @@ namespace ClaFi::Controls
         m_taken = steps;
     }
 
-    void StepsMenu::footText(GetTextEvent& event)
+    void StepsMenu::writeFootText()
     {
+        Text words;
         if (m_run == 0ull)
+            words << L"Cancel";
+        else
         {
-            event.text << L"Cancel";
-            return;
+            words << m_verb << L' ' << std::to_wstring(m_run);
+            words << (m_run == 1ull ? L" step" : L" steps");
         }
-        event.text << m_verb << L' ' << std::to_wstring(m_run);
-        event.text << (m_run == 1ull ? L" step" : L" steps");
+        m_foot.text() = std::move(words);
     }
 }

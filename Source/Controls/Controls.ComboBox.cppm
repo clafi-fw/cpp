@@ -132,8 +132,8 @@ namespace ClaFi::Controls
         [[nodiscard]] std::size_t itemIndex() const { return m_itemIndex; }
     protected:
         void drawIcon(DrawIconEvent&) override;
-        void getText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void adjustText(AdjustTextEvent&) const override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void click(ClickEvent&) override;
         ScaledSize calculateContent(AlignEvent& event) override {
             return Button::calculateContent(event);
@@ -201,7 +201,7 @@ namespace ClaFi::Controls
         void itemIndexChanged() override;
         void drawItemIcon(DrawItemIconEvent&) const;
         void drawIcon(DrawIconEvent&) override;
-        void getMainText(GetTextEvent&) const override;
+        void adjustMainText(AdjustTextEvent&) const override;
         // The widest face of any item, so that a pick never changes the size.
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         void adjustPaint(AdjustPaintEvent&) override;
@@ -309,15 +309,15 @@ namespace ClaFi::Controls
         m_comboBox.drawItemIcon(event2);
     }
 
-    void ComboBoxItemControl::getText(GetTextEvent& event) const
+    void ComboBoxItemControl::adjustText(AdjustTextEvent& event) const
     {
         m_comboBox.itemFaceText(m_comboBox.items()[m_itemIndex], event.text, event.phase());
     }
 
-    void ComboBoxItemControl::nestedGetTooltip(GetTooltipEvent& event)
+    void ComboBoxItemControl::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         event.text << m_comboBox.items()[m_itemIndex].tooltipText();
-        Button::nestedGetTooltip(event);
+        Button::nestedAdjustTooltip(event);
     }
 
     void ComboBoxItemControl::click(ClickEvent& event)
@@ -449,7 +449,7 @@ namespace ClaFi::Controls
         }
     }
 
-    void ComboBox::getMainText(GetTextEvent& event) const
+    void ComboBox::adjustMainText(AdjustTextEvent& event) const
     {
         // Only the selected item. Where the mark goes, and whether it goes here or on a strip,
         // is the base's business.

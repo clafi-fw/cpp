@@ -621,11 +621,11 @@ namespace ClaFi::Controls::Grids
     }
 
     // **A cell says what its column is too narrow to show**, which is the over-text tooltip
-    // Control::nestedGetTooltip offers for a control's own text - see that one for the shape of the
-    // answer. A row draws its cells rather than holding a control per cell, so the question is
+    // Control::nestedAdjustTooltip offers for a control's own text - see that one for the shape of
+    // the answer. A row draws its cells rather than holding a control per cell, so the question is
     // asked of the row about one of its cells, and every part of the answer is worked out here
     // rather than read off what a paint recorded.
-    void RowBase::nestedGetTooltip(GetTooltipEvent& event)
+    void RowBase::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         // **Only the row the hover names answers.** The walk that asks this climbs from the control
         // under the pointer, so a row holding the hovered one is asked in its turn - and the

@@ -6,7 +6,6 @@ module ClaFi.Core.Foundation;
 import :Form;
 import :Tooltip;
 import :Input;
-import :Action;
 import :SearchResult;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.TextEngine;
@@ -42,11 +41,6 @@ namespace ClaFi
         &AnimationSlots::Enabled,
         &AnimationSlots::Current
     };
-
-    void attachAction(Action& action, Control& control, const PresenterRole role)
-    {
-        action.attach(control, role);
-    }
 
     namespace
     {
@@ -454,15 +448,15 @@ namespace ClaFi
     }
 
     // Any access to the buffer at all, which is where a named text is put into it.
-    Text& GetTextEventBase::Buffer::built() const
+    Text& AdjustTextEventBase::Buffer::built() const
     {
         m_owner.materialise();
         return m_owner.m_buffer;
     }
 
-    // GetTextEventBase
+    // AdjustTextEventBase
 
-    GetTextEventBase::GetTextEventBase(const FormContext& formContext, const Control& control, Text& text, EventPhase phase)
+    AdjustTextEventBase::AdjustTextEventBase(const FormContext& formContext, const Control& control, Text& text, EventPhase phase)
         :
         ControlEventBaseCC{ formContext, control },
         m_buffer{ text },
@@ -473,7 +467,7 @@ namespace ClaFi
 
     // Not delegated to the constructor above: this one shares the other event's name slot as well
     // as its buffer, and delegating would bind the slot to its own.
-    GetTextEventBase::GetTextEventBase(GetTextEventBase& other, bool /*dummy*/)
+    AdjustTextEventBase::AdjustTextEventBase(AdjustTextEventBase& other, bool /*dummy*/)
         :
         ControlEventBaseCC{ other.formContext(), other.control() },
         m_buffer{ other.m_buffer },
@@ -482,7 +476,7 @@ namespace ClaFi
     {
     }
 
-    void GetTextEventBase::contribute(const Text& contribution)
+    void AdjustTextEventBase::contribute(const Text& contribution)
     {
         if (!m_source && m_buffer.blank())
         {
@@ -494,7 +488,7 @@ namespace ClaFi
         m_buffer << contribution;
     }
 
-    const Text& GetTextEventBase::result()
+    const Text& AdjustTextEventBase::result()
     {
         // Something wrote into the buffer after a text was named, so the answer is the two of them.
         if (m_source && !m_buffer.blank())
@@ -505,7 +499,7 @@ namespace ClaFi
 
     // In **front** of whatever the buffer already holds: a text is named before anything that
     // reaches the buffer afterwards, so that is the order the two go in.
-    void GetTextEventBase::materialise()
+    void AdjustTextEventBase::materialise()
     {
         if (!m_source)
             return;
@@ -523,9 +517,9 @@ namespace ClaFi
         m_buffer = std::move(combined);
     }
 
-    // GetTooltipEvent
+    // AdjustTooltipEvent
 
-    GetTooltipEvent::GetTooltipEvent(const FormContext& formContext, const Control& control, Text& text, EventPhase phase)
+    AdjustTooltipEvent::AdjustTooltipEvent(const FormContext& formContext, const Control& control, Text& text, EventPhase phase)
         :
         ControlEventBaseC{ formContext },
         control{ control },
@@ -535,7 +529,7 @@ namespace ClaFi
     {
     }
 
-    void GetTooltipEvent::writePreview(Text preview)
+    void AdjustTooltipEvent::writePreview(Text preview)
     {
         cutPreview(preview, formContext().scaleFactor());
         text << preview;
@@ -1385,8 +1379,8 @@ namespace ClaFi
     void Control::copyText(const TextRange range, const InputStamp stamp)
     {
         Text tmpText;
-        GetTextEvent event{ formContext(), *this, tmpText, EventPhase::Paint };
-        getText(event);
+        AdjustTextEvent event{ formContext(), *this, tmpText, EventPhase::Paint };
+        adjustText(event);
         const Text& text = event.result();
         const std::size_t cnt = (std::min)(text.plainText().size() - range.start, range.length);
         const std::wstring_view plainText{ &text.plainText()[range.start], cnt };
@@ -1626,10 +1620,10 @@ namespace ClaFi
         return activePopup && activePopup->popupTarget() == &control;
     }
 
-    void Control::getChildText(GetChildTextEvent& event) const
+    void Control::adjustChildText(AdjustChildTextEvent& event) const
     {
-        GetTextEvent childEvent{ event, true };
-        event.control().getText(childEvent);
+        AdjustTextEvent childEvent{ event, true };
+        event.control().adjustText(childEvent);
         emitEvent(event);
     }
 
@@ -1886,7 +1880,7 @@ namespace ClaFi
         emitEvent(event);
     }
 
-    void Control::nestedGetTooltip(GetTooltipEvent& event)
+    void Control::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         emitEvent(event);
         // A handler that produced text wins over the trimmed-text fallback below.
@@ -1913,7 +1907,7 @@ namespace ClaFi
             // The tooltip reads its own text, so a named answer is put into it. Assigning what
             // the buffer already holds to itself is the gather having built one, and costs the
             // comparison in Text::operator= and nothing else.
-            event.text = doGetText(event.formContext(), event.text, EventPhase::Paint);
+            event.text = adjustedText(event.formContext(), event.text, EventPhase::Paint);
             // **The tooltip stands on the glyphs, not on the box they were given.** An anchor moves
             // the block inside that box - a line centred in a title bar sits half the band below
             // its top - and the placement lands the tooltip's own first glyph on this rect's top
@@ -1935,7 +1929,7 @@ namespace ClaFi
         }
     }
 
-    void Control::getText(GetTextEvent& event) const
+    void Control::adjustText(AdjustTextEvent& event) const
     {
         emitEvent(event);
     }
@@ -2027,7 +2021,7 @@ namespace ClaFi
         if (txtRect.empty())
             return;
         Text text;
-        const Text& gathered = doGetText(event.formContext(), text, EventPhase::Paint);
+        const Text& gathered = adjustedText(event.formContext(), text, EventPhase::Paint);
         event.controlContext().currentMatch = event.currentFoundIn(*this, 0);
         DrawTextResult result = drawText(event, txtRect, gathered);
         if (result.drawn)
@@ -2059,7 +2053,7 @@ namespace ClaFi
     void Control::searchTexts(const SearchTextVisitor& visit)
     {
         Text buffer;
-        const Text& shown = doGetText(formContext(), buffer, EventPhase::Paint);
+        const Text& shown = adjustedText(formContext(), buffer, EventPhase::Paint);
         if (shown.empty())
             return;
         const EditProps* edit = editProps();
@@ -2166,7 +2160,7 @@ namespace ClaFi
     ScaledSize Control::measureOwnText(AlignEvent& event, ScaledSize box)
     {
         Text text;
-        const Text& gathered = doGetText(event.formContext(), text, EventPhase::Calculate);
+        const Text& gathered = adjustedText(event.formContext(), text, EventPhase::Calculate);
         if (gathered.empty() && !editProps())
             return {};
         // A text that does not wrap is measured against no width at all. What a horizontal scroll
@@ -2681,17 +2675,18 @@ namespace ClaFi
         }
     }
 
-    const Text& Control::doGetText(const FormContext& formContext, Text& text, EventPhase phase) const
+    const Text& Control::adjustedText(const FormContext& formContext, Text& text,
+        EventPhase phase) const
     {
         if (m_parent)
         {
-            GetChildTextEvent event{ formContext, *this, text, phase };
-            m_parent->getChildText(event);
+            AdjustChildTextEvent event{ formContext, *this, text, phase };
+            m_parent->adjustChildText(event);
             return event.result();
         }
 
-        GetTextEvent event{ formContext, *this, text, phase };
-        getText(event);
+        AdjustTextEvent event{ formContext, *this, text, phase };
+        adjustText(event);
         return event.result();
     }
 

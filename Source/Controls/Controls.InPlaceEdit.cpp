@@ -117,16 +117,16 @@ namespace ClaFi::Controls
             return;
         // Raised rather than waited for. A message is shown at once and goes as any tooltip goes,
         // which is what puts the reason in front of a user who is looking at the keyboard;
-        // nestedGetTooltip below is what answers every hover after that, for as long as the value
-        // is still refused.
+        // nestedAdjustTooltip below is what answers every hover after that, for as long as the
+        // value is still refused.
         ContextMessage::show(*this, Icons::messageText(MessageIcon::Error, m_refusal));
     }
 
-    void PromptBox::nestedGetTooltip(GetTooltipEvent& event)
+    void PromptBox::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         if (m_refusal.empty())
         {
-            TextBox::nestedGetTooltip(event);
+            TextBox::nestedAdjustTooltip(event);
             return;
         }
         // A refusal stands in front of anything else this box would say, and it is placed under

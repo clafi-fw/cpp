@@ -24,9 +24,9 @@ namespace ClaFi
     //export class HoverEnterEvent;
     //export class HoverLeaveEvent;
     //export class MouseMoveEvent;
-    //export class GetTextEvent;
-    //export class GetChildTextEvent;
-    //export class GetTooltipEvent;
+    //export class AdjustTextEvent;
+    //export class AdjustChildTextEvent;
+    //export class AdjustTooltipEvent;
     //export class DoubleClickEvent;
     //export class PressDownEvent;
     //export struct CreateParams;
@@ -99,8 +99,8 @@ namespace ClaFi
         // Each override adds the state RichControl stores, then lets the base emit the event.
         void adjustMetrics(AdjustMetricsEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
-        void getText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void adjustText(AdjustTextEvent&) const override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
     private:
         ControlMetrics m_metrics{};
         OptionalUiElement m_colorRules{};
@@ -111,6 +111,10 @@ namespace ClaFi
 
     export template<typename T>
         concept IsRichControl = std::derived_from<T, RichControl>;
+
+    // Takes an action given to a control as a construction property. Declared here and defined
+    // in the implementation unit, so this interface needs no more than the action's name.
+    export void attachAction(Action&, RichControl&, PresenterRole = PresenterRole::Button);
 
 
     template<typename ...Args>
@@ -150,6 +154,11 @@ namespace ClaFi
         BIND_PROPERTY_ACTION(std::wstring_view, appendText(p));
         // The control's own text, as a literal.
         BIND_PROPERTY_ACTION(const wchar_t*, appendText(p));
+        // What an Action given as a property takes this control for.
+        const PresenterRole presenterRole = READ_PROPERTY(PresenterRole, PresenterRole::Button);
+        // An action this control presents, taking it as a presenter. Bound after the text, since
+        // the action writes its words only into a text with none. See Control-Foundation
+        BIND_PROPERTY_ACTION(Action, attachAction(p, *this, presenterRole));
 
         // The On... handler properties are bound by Control's constructor.
     }

@@ -6,6 +6,7 @@ export import :RichControl;
 export import :WithTextLayout;
 export import :Action;
 export import :Form;
+export import :Navigation;
 export import :PaintEvent;
 export import :Tooltip;
 export import :SearchResult;

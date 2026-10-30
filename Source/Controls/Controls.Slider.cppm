@@ -102,7 +102,7 @@ namespace ClaFi::Controls
         void editModeLeft(bool accepted) override;
         void thumbPressDown() override;
         void changed(SliderChangeEvent&) override;
-        void getThumbTooltip(GetTooltipEvent&) override;
+        void adjustThumbTooltip(AdjustTooltipEvent&) override;
         float stepSize() override { return 1.0f; }
         float buttonSize(const AppTheme&) override { return 24.0f; }
 
@@ -297,7 +297,7 @@ namespace ClaFi::Controls
 
     // The alignment is a marker, so a slider writing no value still answers an empty text, and
     // the tooltip goes on to ask the slider's parents.
-    void Slider::getThumbTooltip(GetTooltipEvent& event)
+    void Slider::adjustThumbTooltip(AdjustTooltipEvent& event)
     {
         event.placement = FormPlacement::Top;
         event.hideOnUserInput = false;

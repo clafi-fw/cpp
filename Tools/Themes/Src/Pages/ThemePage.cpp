@@ -140,10 +140,20 @@ namespace Themes_App
     {
         m_harmonySelector.anchorChanged();
         m_harmonyStack.invalidate();
-        m_otherPigmentsLabel.invalidate();
+        writeOtherPigments();
         mapHuesToColors();
 
         edited(phase, m_anchorStep);
+    }
+
+    void ThemePage::writeHarmonyCaption()
+    {
+        Text caption{ k_labelPush, L"Harmony:", m_labelsMargin, k_labelPop };
+        caption << L" "
+            << (m_harmonyStack.currentItem()
+                ? static_cast<ColorHarmonyItem*>(m_harmonyStack.currentItem())->harmony().name()
+                : L"Not selected"); // add textInk(InkGrade::Muted) and subBody
+        m_harmonyPanel.text() = std::move(caption);
     }
 
     void ThemePage::harmonyChanged()
@@ -152,8 +162,9 @@ namespace Themes_App
             editColors().harmonyKind = static_cast<ColorHarmonyItem&>(*m_harmonyStack.currentItem()).harmony().kind();
         else
             editColors().harmonyKind = k_defaultHarmonyKind;
+        writeHarmonyCaption();
         m_harmonyPanel.invalidate();
-        m_otherPigmentsLabel.invalidate();
+        writeOtherPigments();
         mapHuesToColors();
 
         const ColorHarmony& harmony = m_harmonySelector.harmony(
@@ -182,14 +193,17 @@ namespace Themes_App
         m_darkModeFloorSlider.invalidate();
     }
 
-    void ThemePage::otherPigmentsText(GetTextEvent& event)
+    void ThemePage::writeOtherPigments()
     {
         // The selector holds every harmony built against the current anchor, so the one the theme
         // names answers for itself. Which map is selected does not reach these hues: a map orders
         // the colours a palette takes, and a pigment is not one of them.
         const ColorHarmony& harmony = m_harmonySelector.harmony(static_cast<std::size_t>(editColors().harmonyKind));
+        Text words{ k_labelPush, L"Other pigments:", m_labelsMargin, k_labelPop };
         for (const PaletteColor& color : harmony.pigmentColors())
-            writeColorDot(event.text, color.rgb());
+            writeColorDot(words, color.rgb());
+        m_otherPigmentsLabel.text() = std::move(words);
+        m_otherPigmentsLabel.invalidate();
     }
 
     Row ThemePage::pigmentRow(const UiElement element) const
@@ -323,7 +337,7 @@ namespace Themes_App
         // fills m_colors out of it - and the search below matches on those colours.
         m_harmonySelector.anchorChanged();
         m_harmonyStack.invalidate();
-        m_otherPigmentsLabel.invalidate();
+        writeOtherPigments();
 
         for (ColorHarmonyItem& item : m_harmonyStack.controlsAs<ColorHarmonyItem>())
         {

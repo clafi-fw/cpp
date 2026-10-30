@@ -68,10 +68,11 @@ namespace ClaFi::Controls
     // The tooltip of the link under the pointer is being asked for. See Controls
     export struct GetLinkTooltipEvent : public EventOf<TextBox>
     {
-        GetLinkTooltipEvent(TextBox&, std::wstring_view target, TextRange range, GetTooltipEvent&);
+        GetLinkTooltipEvent(TextBox&, std::wstring_view target, TextRange range,
+            AdjustTooltipEvent&);
         std::wstring_view target;   // what the link names, as the text states it
         TextRange range;            // the text the link covers
-        GetTooltipEvent& tooltip;   // the tooltip itself: its text, placement and anchor
+        AdjustTooltipEvent& tooltip;   // the tooltip itself: its text, placement and anchor
     };
 
     // The menu for a link under the pointer is being asked for. See Controls
@@ -207,7 +208,7 @@ namespace ClaFi::Controls
         void mouseMove(MouseMoveEvent&) override;
         void hoverLeave() override;
         // The tooltip of the link under the pointer, where there is one, else the box's own.
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         // Follows a link when the press and the release stayed on it and nothing was selected
         // between them. Defined in TextBox.cpp, with the rest of what a link does.
@@ -316,7 +317,7 @@ namespace ClaFi::Controls
         // Records the link the pointer stands on, and has the tooltip asked again when it changed.
         void pointAtLink(const std::optional<LinkHit>&);
         // What a link's tooltip says when no handler says it. See Controls#getlinktooltipevent
-        void writeLinkTooltip(GetTooltipEvent&) const;
+        void writeLinkTooltip(AdjustTooltipEvent&) const;
         // Ends a link's tooltip, whoever wrote it, with how a link is followed in a box that types.
         void writeFollowLine(Text&) const;
         // The line of the pointed link the pointer is on, in form coordinates.
@@ -534,7 +535,7 @@ namespace ClaFi::Controls
 
         // Measured in **form** space by handing the form rect in: textBounds and caretRect both
         // answer in whatever space the rect they are given is in, so nothing is converted
-        // afterwards. Same route Control::nestedGetTooltip takes for an OverText anchor.
+        // afterwards. Same route Control::nestedAdjustTooltip takes for an OverText anchor.
         const FloatRect textBounds = this->textBounds(formContext(), boundsInForm());
         return caretRect(textBounds, { m_editProps.caretPos(), m_editProps.affinityTrailing });
     }

@@ -111,8 +111,8 @@ namespace ClaFi::Browser
         [[nodiscard]] bool isOnRestoredPage() const { return m_onRestoredPage; }
     protected:
         virtual RichControl* visualPage(RichControl*) override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
-        void getText(GetTextEvent&) const override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
+        void adjustText(AdjustTextEvent&) const override;
         void drawIcon(DrawIconEvent&) override;
         void secondaryClicked(NestedClickEvent&) override;
     private:
@@ -446,7 +446,7 @@ namespace ClaFi::Browser
             WordWrap::No,
             MinSize{ 0.0f, 36.0f },
             Spacing{ 4.0f, 0.0f },
-            OnEvent{ [](GetTextEvent& event) {
+            OnEvent{ [](AdjustTextEvent& event) {
                 // checking the calcOnly, because all the space should be available for tabs,
                 // so the
                 if (event.phase() == EventPhase::Paint)

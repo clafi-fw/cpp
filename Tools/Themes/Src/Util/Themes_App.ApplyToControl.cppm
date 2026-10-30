@@ -43,7 +43,7 @@ namespace Themes_App
     protected:
         [[nodiscard]] bool dropOnPrimaryPress() const override { return true; }
         void showDropdown(Control&) override;
-        void getMainText(GetTextEvent&) const override;
+        void adjustMainText(AdjustTextEvent&) const override;
     private:
         [[nodiscard]] const ColorRule& rule() const;
         [[nodiscard]] ColorRule& rule();

@@ -94,11 +94,15 @@ namespace ClaFi
     Action::~Action()
     {
         for (const Attachment& attachment : m_attachments)
+        {
             for (const EventConnection& connection : attachment.connections)
                 connection.disconnect();
+            if (attachment.holdsWords)
+                attachment.control->text().clear();
+        }
     }
 
-    void Action::getTooltip(GetTooltipEvent& event) const
+    void Action::adjustTooltip(AdjustTooltipEvent& event) const
     {
         // Whatever else answered wins. An action supplies the words for a presenter that has
         // none of its own, and a presenter that spells its own tooltip is stating an exception.
@@ -113,7 +117,7 @@ namespace ClaFi
         else
             event.text << m_tooltipText;
         // A nameless action contributes nothing at all, so that the trimmed-text fallback
-        // Control::nestedGetTooltip ends with is left the way it was found.
+        // Control::nestedAdjustTooltip ends with is left the way it was found.
         if (event.text.empty())
             return;
 
@@ -175,12 +179,14 @@ namespace ClaFi
         return true;
     }
 
-    void Action::attach(Control& presenter, const PresenterRole role)
+    void Action::attach(RichControl& presenter, const PresenterRole role)
     {
         m_attachments.push_back(Attachment{ .control = &presenter });
         connectPresenter(m_attachments.back(), role);
     }
 
+    // The words go with the action, so a presenter handed to another action next takes that
+    // one's.
     void Action::detach(const Control& presenter)
     {
         const auto it = findAttachment(presenter);
@@ -188,6 +194,8 @@ namespace ClaFi
             return;
         for (const EventConnection& connection : it->connections)
             connection.disconnect();
+        if (it->holdsWords)
+            it->control->text().clear();
         m_attachments.erase(it);
     }
 
@@ -216,7 +224,12 @@ namespace ClaFi
     void Action::invalidateText()
     {
         for (const Attachment& attachment : m_attachments)
+        {
+            if (!attachment.holdsWords)
+                continue;
+            attachment.control->text() = m_text;
             attachment.control->invalidateFormAlign();
+        }
     }
 
     ActionState Action::resolve(FormBase& form, Control*& subject, Control* presenter) const
@@ -314,23 +327,25 @@ namespace ClaFi
 
     void Action::connectPresenter(Attachment& attachment, const PresenterRole role)
     {
-        Control& presenter = *attachment.control;
+        RichControl& presenter = *attachment.control;
         Control* control = attachment.control;
         ConnectionCollection& connections = attachment.connections;
         connections.reserve(k_presenterChannels);
 
         // The control's own text wins. An action supplies the words for a presenter that has
-        // none of its own, and a presenter that spells its own text is stating an exception.
-        connections.push_back(presenter.onGetText([this](GetTextEvent& event) {
-            if (event.text.empty())
-                event.text << m_text;
-        }));
+        // none of its own, written here and again by invalidateText, and a presenter that
+        // spells its own text is stating an exception.
+        if (presenter.text().empty())
+        {
+            presenter.text() = m_text;
+            attachment.holdsWords = true;
+        }
 
         // A Line or an Opener states the command in full by itself, so nothing is composed for
         // it: a tooltip there would say back the very line the pointer is standing on.
         if (role != PresenterRole::Line && role != PresenterRole::Opener)
-            connections.push_back(presenter.onGetTooltip([this](GetTooltipEvent& event) {
-                getTooltip(event);
+            connections.push_back(presenter.onAdjustTooltip([this](AdjustTooltipEvent& event) {
+                adjustTooltip(event);
             }));
 
         connections.push_back(presenter.onDrawIcon([this](DrawIconEvent& event) {
@@ -378,7 +393,8 @@ namespace ClaFi
     // class.
     auto Action::findAttachment(const Control& presenter) -> AttachmentCollection::iterator
     {
-        return std::ranges::find(m_attachments, &presenter, &Attachment::control);
+        return std::ranges::find(m_attachments, &presenter,
+            [](const Attachment& attachment) -> const Control* { return attachment.control; });
     }
 
     void Action::dropAttachment(const Control& presenter)

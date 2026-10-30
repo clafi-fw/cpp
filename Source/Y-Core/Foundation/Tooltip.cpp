@@ -207,9 +207,9 @@ namespace ClaFi
         Text text{};
         for (it = &pointed; it; it = it->parent())
         {
-            GetTooltipEvent event{ form.context(), *it, text, EventPhase::Paint };
+            AdjustTooltipEvent event{ form.context(), *it, text, EventPhase::Paint };
             if (!ContextMessage::answer(*it, event))
-                it->nestedGetTooltip(event);
+                it->nestedAdjustTooltip(event);
             if (it == shown || !text.empty())
                 break;
         }
@@ -306,11 +306,11 @@ namespace ClaFi
         {
             tmpText.clear();
             // The words the tooltip shows, which are also what the window is sized to.
-            GetTooltipEvent event{ form.context(), *it, tmpText, EventPhase::Paint };
+            AdjustTooltipEvent event{ form.context(), *it, tmpText, EventPhase::Paint };
             // A message raised about this control stands in front of whatever it would say for
             // itself, and is the whole of the answer wherever it stands.
             if (!ContextMessage::answer(*it, event))
-                it->nestedGetTooltip(event);
+                it->nestedAdjustTooltip(event);
             if (!tmpText.empty())
             {
                 // A control is free to answer differently from one hover to the next - a toggle

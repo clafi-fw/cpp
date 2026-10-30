@@ -4,6 +4,7 @@ module;
 export module ClaFi.Core.Foundation :Action;
 
 import :Control;
+import :RichControl;
 
 import ClaFi.Core.Context.FormContext;
 
@@ -117,7 +118,7 @@ namespace ClaFi
         // Writes what this action says of itself into a tooltip, and does nothing to one that
         // already says something. Every presenter is given it; a caller showing the command
         // somewhere the action is not attached - a line drawn by hand - asks for it here.
-        void getTooltip(GetTooltipEvent&) const;
+        void adjustTooltip(AdjustTooltipEvent&) const;
         //
         [[nodiscard]] Shortcut shortcut() const; // the key shown on a menu line and in the tooltip
         // Every key that runs it, the one shown first.
@@ -153,10 +154,10 @@ namespace ClaFi
         // subject is not attached - it is found - so this is the only side that is wired.
         //
         // Callable from the presenter's own constructor, which is where a control given an
-        // action as a property attaches itself. Connecting only inserts into the dispatcher the
-        // control has already contributed, and nothing is asked of the control until its first
-        // state query.
-        void attach(Control& presenter, PresenterRole role = PresenterRole::Button);
+        // action as a property attaches itself once its text is bound. Connecting only inserts
+        // into the dispatcher the control has already contributed, and nothing is asked of the
+        // control until its first state query. See Control-Foundation#action-presenter-words
+        void attach(RichControl& presenter, PresenterRole role = PresenterRole::Button);
         void detach(const Control& presenter);
         [[nodiscard]] std::size_t attachedCount() const { return m_attachments.size(); }
         // The first presenter standing in the form, or null where none does.
@@ -167,7 +168,8 @@ namespace ClaFi
         void invalidateState();
         // Repaints every attached presenter, for an icon that draws something new.
         void invalidate() const;
-        // The text changed, so the size every presenter asked for is stale.
+        // The text changed: every presenter holding the action's words takes them again, and the
+        // size it asked for is stale.
         void invalidateText();
     private:
         using ConnectionCollection = std::vector<EventConnection>;
@@ -184,7 +186,8 @@ namespace ClaFi
         // live in a vector, and taking another moves the ones already there.
         struct Attachment
         {
-            Control* control{};
+            RichControl* control{};
+            bool holdsWords{}; // the presenter's text is this action's - see connectPresenter
             ConnectionCollection connections{};
         };
 
@@ -203,7 +206,7 @@ namespace ClaFi
         // erase from the vector that emit is walking.
         void dropAttachment(const Control&);
     private:
-        static constexpr std::size_t k_presenterChannels = 7;
+        static constexpr std::size_t k_presenterChannels = 6;
     private:
         Text m_text{};
         TooltipText m_tooltipText{};

@@ -57,7 +57,7 @@ namespace SeeDocs_App::Ui
         // The mark's centre, from the crumb's left edge: where a line to the bases under it leaves.
         [[nodiscard]] float markCentreX(const FormContext&) const;
     protected:
-        void getMainText(GetTextEvent&) const override;
+        void adjustMainText(AdjustTextEvent&) const override;
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
         void click(ClickEvent&) override;

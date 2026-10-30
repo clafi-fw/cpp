@@ -149,7 +149,7 @@ namespace ClaFi::Browser
     {
         // Connected here rather than given to the button as a construction property: MSVC rejects
         // a this-capturing lambda in a default member initializer.
-        m_closeButton.onGetTooltip([this](GetTooltipEvent& event) {
+        m_closeButton.onAdjustTooltip([this](AdjustTooltipEvent& event) {
             event.text << L"Close " << InkWell::textInk(InkGrade::Muted);
             m_pageData->writeText(event.text);
             event.placement = FormPlacement::Mouse;
@@ -211,13 +211,13 @@ namespace ClaFi::Browser
         return &m_browserControl->m_breadCrumbArea;
     }
 
-    void BrowserTab::nestedGetTooltip(GetTooltipEvent& event)
+    void BrowserTab::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
-        Tab::nestedGetTooltip(event);
+        Tab::nestedAdjustTooltip(event);
         event.placement = FormPlacement::BottomLeft;
     }
 
-    void BrowserTab::getText(GetTextEvent& event) const
+    void BrowserTab::adjustText(AdjustTextEvent& event) const
     {
         m_pageData->writeText(event.text);
     }
@@ -1073,7 +1073,8 @@ namespace ClaFi::Browser
 
         if (tab.selected())
         {
-            // Selecting the item that supposed to be selected after this one will be closed
+            // **The neighbour is selected before this one goes**, so a focus in the closing page is
+            // still in the page control when the switch carries it to the page that shows.
             auto prevIterator = std::ranges::find_if(
                 tabControls,
                 [&](const ControlPtr& aTab){

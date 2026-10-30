@@ -205,7 +205,7 @@ namespace Themes_App
 
     // The channel the rule writes, and under it the states it reads, one grade down. Measured as
     // two lines whatever the rule reads, so every row of the grid stands at one height.
-    void ApplyToControl::getMainText(GetTextEvent& event) const
+    void ApplyToControl::adjustMainText(AdjustTextEvent& event) const
     {
         if (!m_rules)
             return;

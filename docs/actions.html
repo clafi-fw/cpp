@@ -466,7 +466,7 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
             <h3 id="what-it-supplies">What the Control Takes From It</h3>
             <table>
                 <tr><th>The action's</th><th>Becomes the presenter's</th></tr>
-                <tr><td><code>text()</code></td><td>Text - but only if the control has none of its own.</td></tr>
+                <tr><td><code>text()</code></td><td>Text, written into the control as they attach - but only if the control has none of its own.</td></tr>
                 <tr><td><code>tooltipText()</code></td><td>Tooltip, with the shortcut appended to it.</td></tr>
                 <tr><td><code>OnDrawIcon</code></td><td>Icon, wherever that control paints one.</td></tr>
                 <tr><td>state</td><td>Enabled and selected.</td></tr>
@@ -475,7 +475,9 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
             </table>
             <div class="info"><strong>A control's own text wins.</strong> The action supplies the words for a
             presenter that has none, which is the ordinary case; a presenter that spells its own text is stating a
-            local exception, and gets it.</div>
+            local exception, and gets it. The decision is made as the two attach: a control given the action as a
+            property attaches once its own text is bound, and <code>attach</code> called afterwards sees whatever
+            the control says by then.</div>
 
             <h3 id="presenter-roles">The Presenter's Role</h3>
             <p>A <code>PresenterRole</code> property says what the control does for the action, and
@@ -534,7 +536,7 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
                 <tr><th>Call</th><th>When</th></tr>
                 <tr><td><code>invalidateState()</code></td><td>What the action reads has changed, so enabled or selected may be different. Every presenter is asked again and animates the difference.</td></tr>
                 <tr><td><code>invalidate()</code></td><td>The icon would draw something new.</td></tr>
-                <tr><td><code>invalidateText()</code></td><td>The text changed, so the size every presenter asked for is stale.</td></tr>
+                <tr><td><code>invalidateText()</code></td><td>The text changed: every presenter holding the action's words takes them again, and the size it asked for is stale.</td></tr>
             </table>
 <pre><span class="kw">void</span> <span class="tp">Window</span>::<span class="fn">documentChanged</span>()
 {
@@ -747,10 +749,12 @@ view.<span class="fn">onGetActionState</span>([&amp;](<span class="tp">GetAction
             <h3 id="attachments">Attachments and Lifetime</h3>
             <p>The action holds a list of its presenters; a presenter holds nothing, and neither does a subject -
             no member was added to <code>Control</code> for any of this. Attaching connects handlers on the
-            presenter's own dispatcher and records the connections.</p>
+            presenter's own dispatcher, records the connections, and writes the action's words into a presenter
+            that has none; detaching takes them back, so a part handed to another action next takes that one's.</p>
             <p>Both directions of death are covered. When a presenter is destroyed - a menu rebuilt, a toolbar
             repopulated - <code>~Control</code> emits <code>DestroyEvent</code> and the action drops that
-            attachment. When the action goes first, it disconnects from every presenter still alive.</p>
+            attachment. When the action goes first, it disconnects from every presenter still alive and takes its
+            words back from those it gave them to.</p>
             <p>A subject needs none of this: it was found by a walk rather than registered, so there is nothing to
             undo when one is destroyed.</p>
 

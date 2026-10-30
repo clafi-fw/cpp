@@ -298,15 +298,17 @@ in whatever style the box it goes into lays its text out in.</p>
 
 <h2 id="events">Text Events</h2>
 
-<p>A control is asked for its text rather than read. Every measurement and every paint gathers it
-through <code>GetTextEvent</code>, so a handler can write what a control shows without the control
-holding it:</p>
+<p>A control's words are its <code>text()</code>, written by whoever owns the control when they
+change - a reading on its tick, a count as it moves. Every measurement and every paint lays that
+text out, and raises <code>AdjustTextEvent</code> first, where the control, its host and the handlers
+put things around the words: a mark, a key at the end of a menu line, a parent's words, an answer
+that differs by phase. The words stay the owner's; the event adjusts what is laid out.</p>
 
 <table>
 <tr><th>Event</th><th>On</th><th>Raised</th></tr>
-<tr><td><code>OnGetText</code><br><code>GetTextEvent</code></td><td>Every control</td><td>When the control's text is gathered. A handler streams into <code>event.text</code>, after the control's own text.</td></tr>
-<tr><td><code>OnGetChildText</code><br><code>GetChildTextEvent</code></td><td>A parent</td><td>When a child's text is gathered. The child answers first, and the parent's handlers stream after it into the same text.</td></tr>
-<tr><td><code>OnGetTooltip</code><br><code>GetTooltipEvent</code></td><td>Every control</td><td>When a tooltip is about to stand over the control. The <code>TooltipText</code> is written first and the handlers after it; where neither wrote anything and the control's own text is cut, the tooltip repeats that text over it.</td></tr>
+<tr><td><code>OnAdjustText</code><br><code>AdjustTextEvent</code></td><td>Every control</td><td>The control's text about to be laid out. The text is named first; a handler streams after it into <code>event.text</code>, or starts over with <code>event.text.clear()</code>.</td></tr>
+<tr><td><code>OnAdjustChildText</code><br><code>AdjustChildTextEvent</code></td><td>A parent</td><td>A child's text about to be laid out. The child answers first, and the parent's handlers stream after it into the same text.</td></tr>
+<tr><td><code>OnAdjustTooltip</code><br><code>AdjustTooltipEvent</code></td><td>Every control</td><td>When a tooltip is about to stand over the control. The <code>TooltipText</code> is written first and the handlers after it; where neither wrote anything and the control's own text is cut, the tooltip repeats that text over it.</td></tr>
 <tr><td><code>OnCaretMove</code><br><code>CaretMoveEvent</code></td><td><code>TextBox</code></td><td>The caret came to rest somewhere new. Where it stands is asked of the box, through <code>caretLineColumn()</code>.</td></tr>
 <tr><td><code>OnTextEdit</code><br><code>TextEditEvent</code></td><td><code>TextBox</code></td><td>The text was changed through the box - typed, deleted, pasted, cut, undone or redone. Raised last, once the box is done with the edit.</td></tr>
 <tr><td><code>OnLinkClick</code>, <code>OnGetLinkTooltip</code></td><td><code>TextBox</code></td><td>A link was followed, or its tooltip is about to show - see <a href="#links">Links in a TextBox</a>.</td></tr>
@@ -317,7 +319,7 @@ holding it:</p>
 measured from a line it never shows - a reading answers the room its widest value needs, and paints
 the value it holds - and a text answered only in the paint takes no room at all:</p>
 
-<pre><code><span class="tp">OnEvent</span>{ [](<span class="tp">GetTextEvent</span>&amp; event) {
+<pre><code><span class="tp">OnEvent</span>{ [](<span class="tp">AdjustTextEvent</span>&amp; event) {
     <span class="cm">// Measured as nothing, so the tabs beside the title keep the room.</span>
     <span class="kw">if</span> (event.<span class="fn">phase</span>() == <span class="tp">EventPhase</span>::Paint)
         event.text &lt;&lt; event.<span class="fn">control</span>().<span class="fn">appContext</span>().<span class="fn">appName</span>();
@@ -325,7 +327,9 @@ the value it holds - and a text answered only in the paint takes no room at all:
 
 <p>A control's own text is <em>named</em> by the gather rather than copied into it, so asking for a
 text nothing writes to costs a pointer. A handler that writes adds to it, and the answer is then
-built.</p>
+built. Words computed inside the handler are built at every measure and every paint, so a value
+that changes on its own clock is written into <code>text()</code> when it changes, and the handlers
+are left to what has to be composed at the moment of asking.</p>
 
 <h2 id="format">Text Format</h2>
 
@@ -399,7 +403,7 @@ caller's properties were bound, and the call replaces them.
 
 <p>The format reaches everything that lays the control's text out: the paint and the measurement, a
 <code>TextBox</code>'s placeholder, the tooltip that repeats a cut text over it
-(<code>GetTooltipEvent::format</code>), and an in-place editor, which lays its own text out over the
+(<code>AdjustTooltipEvent::format</code>), and an in-place editor, which lays its own text out over the
 covered control's (<code>EditTarget::textFormat</code>). A grid column states one for all of its
 cells - see the <a href="grids.html#cells">Grid manual</a>.</p>
 
@@ -551,13 +555,14 @@ what keeps a position from being read off one build and drawn on another:</p>
 <pre><code><span class="tp">TextLayout</span>&amp; <span class="fn">syncedLayout</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds) <span class="kw">const</span>;
 <span class="tp">TextLayout</span>&amp; <span class="fn">syncedLayout</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds, <span class="kw">const</span> <span class="tp">Text</span>&amp;) <span class="kw">const</span>;
 
-<span class="kw">virtual</span> <span class="kw">void</span> <span class="fn">takeText</span>(<span class="kw">const</span> <span class="tp">Text</span>&amp;) <span class="kw">const</span>;</code></pre>
+<span class="kw">virtual</span> <span class="kw">void</span> <span class="fn">takeText</span>() <span class="kw">const</span>;</code></pre>
 
 <p>The one-argument overload gathers a text itself, the way a paint does. Asking twice is free: a
 gather <em>names</em> a control's own text rather than copying it, so an answer that is that object
-is recognised by address, and an answer with no life of its own - one a parent composed, or a
-handler built - is compared instead. Either way an unchanged text rebuilds nothing, and a control
-measured four times in one pass shapes once.</p>
+is recognised by its stamp, and an answer composed around it - a parent's words, a mark - is kept
+in a copy beside the text and compared against the next one. The text stays what its owner wrote,
+and the layout draws whichever of the two the last gather answered. Either way an unchanged text
+rebuilds nothing, and a control measured four times in one pass shapes once.</p>
 
 <p>Only the <em>size</em> of the rect is taken. Where it sits is the caller's business and the
 anchor's, so a control carried sideways under a viewport does not rebuild for every pixel it

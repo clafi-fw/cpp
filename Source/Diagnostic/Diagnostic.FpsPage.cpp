@@ -132,7 +132,7 @@ namespace ClaFi::Diagnostic
         },
         m_caption{ body().add<Label>(
             Text{ TextStyle::Section, L"Window under the pointer" },
-            OnEvent{ [](GetTooltipEvent& event) {
+            OnEvent{ [](AdjustTooltipEvent& event) {
                 writeMethodTooltip(event);
             } }
         ) },
@@ -207,14 +207,11 @@ namespace ClaFi::Diagnostic
             MinSize{ k_footerWidth, 0.0f },
             MaxSize{ k_footerWidth, k_maxFloat },
             WordWrap::No,
-            VerticalAlign::Center,
-            OnEvent{ [this](GetTextEvent& event) {
-                writeFooter(event);
-            } }
+            VerticalAlign::Center
         ) },
         m_chart{ body().add<FpsChart>(
             m_benchmark,
-            OnEvent{ [](GetTooltipEvent& event) {
+            OnEvent{ [](AdjustTooltipEvent& event) {
                 writeChartTooltip(event);
             } }
         ) },
@@ -225,6 +222,7 @@ namespace ClaFi::Diagnostic
             appContext().events().connect<FormPaintedEvent>(this, &FpsPage::formPainted)
         }
     {
+        writeFooter();
     }
 
     // The page drives only while it shows. Hidden - another tab in front of it - it asks nothing
@@ -315,7 +313,7 @@ namespace ClaFi::Diagnostic
         takeTargetFacts(event.sender());
         m_windowGrid.invalidate();
         m_metricsGrid.invalidate();
-        m_footer.invalidate();
+        writeFooter();
     }
 
     FormBase* FpsPage::formUnderPointer()
@@ -349,6 +347,7 @@ namespace ClaFi::Diagnostic
     {
         m_benchmark.restart();
         m_benchmark.resetCpuUsage();
+        writeFooter();
         invalidate();
     }
 
@@ -456,13 +455,16 @@ namespace ClaFi::Diagnostic
         };
     }
 
-    void FpsPage::writeFooter(GetTextEvent& event) const
+    void FpsPage::writeFooter()
     {
-        event.text << Fmt{
+        Text words;
+        words << Fmt{
             L"[subbody][color muted]Measured {} frames, {} whole[/color]",
             m_benchmark.frameInterval().timesNum(),
             m_benchmark.paintTime().timesNum()
         };
+        m_footer.text() = std::move(words);
+        m_footer.invalidate();
     }
 
     // Both columns of a row say the same thing: the row is one fact about the window.
@@ -498,7 +500,7 @@ namespace ClaFi::Diagnostic
         };
     }
 
-    void FpsPage::writeMethodTooltip(GetTooltipEvent& event)
+    void FpsPage::writeMethodTooltip(AdjustTooltipEvent& event)
     {
         event.placement = FormPlacement::BottomLeft;
         event.text.clear();
@@ -512,7 +514,7 @@ namespace ClaFi::Diagnostic
         };
     }
 
-    void FpsPage::writeChartTooltip(GetTooltipEvent& event)
+    void FpsPage::writeChartTooltip(AdjustTooltipEvent& event)
     {
         event.placement = FormPlacement::BottomLeft;
         event.text.clear();

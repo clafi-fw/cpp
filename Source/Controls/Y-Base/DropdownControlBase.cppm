@@ -53,7 +53,7 @@ namespace ClaFi::Controls
         [[nodiscard]] Control& popupOwner() override;
     protected:
         void getControlState(GetStateEvent&) const override;
-        void getText(GetTextEvent&) const override;
+        void adjustText(AdjustTextEvent&) const override;
         void drawIcon(DrawIconEvent&) override;
         void adjustPaint(AdjustPaintEvent&) override;
     private:
@@ -117,7 +117,7 @@ namespace ClaFi::Controls
         [[nodiscard]] virtual bool dropdownActsAlone() const { return false; }
         // The control's own text, without the mark. Overridden by a control whose text is not
         // simply the text property - a combo box's is its selected item.
-        virtual void getMainText(GetTextEvent&) const;
+        virtual void adjustMainText(AdjustTextEvent&) const;
         [[nodiscard]] virtual Ink dropdownMarkInk() const { return InkWell::textInk(InkGrade::Muted); }
         // Which way the mark points at each end of its turn. A control that means something by the
         // direction of its mark says so here - a breadcrumb crumb points along the path and turns
@@ -141,7 +141,7 @@ namespace ClaFi::Controls
         void secondaryClicked(NestedClickEvent&) override;
 
         void adjustChildInset(AdjustChildInsetEvent&) const override;
-        void getText(GetTextEvent&) const override;
+        void adjustText(AdjustTextEvent&) const override;
         void calculateChildren(FormBase&) override;
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
         void adjustChildPaint(AdjustPaintEvent&) override;
@@ -154,7 +154,7 @@ namespace ClaFi::Controls
         static ButtonViewMode mainViewMode(const Config&);
         // The text a ribbon strip carries: the control's own text, then the mark. A strip that
         // carries no text states nothing here - the mark is its icon.
-        void getDropdownPartText(GetTextEvent&) const;
+        void adjustDropdownPartText(AdjustTextEvent&) const;
         void appendDropdownMark(Text&) const;
         // Opens the popup and holds the dropped down state for as long as it is up. showDropdown()
         // runs the popup modally, so it returns once the popup has closed.

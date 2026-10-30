@@ -113,7 +113,7 @@ namespace ClaFi::Controls::Grids
         // What this row's cell in that column is laid out over - the column's cell format.
         [[nodiscard]] virtual const TextFormat& cellTextFormat(const Column&) const;
         // The tooltip for one cell, asked of this row's listeners and then of the grid - the pair
-        // getCellText asks. Raised by nestedGetTooltip for the cell under the pointer.
+        // getCellText asks. Raised by nestedAdjustTooltip for the cell under the pointer.
         virtual void getCellTooltip(GetCellTooltipEvent&);
         // What an editor opens on for one cell, asked of this row's listeners and then of the grid.
         virtual void getCellEditorText(GetCellEditorTextEvent&);
@@ -153,7 +153,7 @@ namespace ClaFi::Controls::Grids
         void searchTexts(const SearchTextVisitor&) override;
         // Selects the cell the match stands in and scrolls it into view.
         void showFound(std::size_t part, TextRange) override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         //
         void getControlState(GetStateEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;

@@ -847,7 +847,9 @@ source.<span class="fn">add</span>&lt;<span class="tp">Transfer</span>::<span cl
             a switch from one device to the other is one crossfade. Each step of either fade raises
             <code>InputSwitchEvent</code> on <code>AppContext::events()</code>, and every visible form repaints
             whole on it: the colour rules read the two factors as <code>RuleInput::Keyboard</code> and
-            <code>RuleInput::Mouse</code>, and nothing knows which controls of which windows do. The
+            <code>RuleInput::Mouse</code>, and nothing knows which controls of which windows do. The hovered
+            control and the focused one re-read their state as well, up to the root form through any popup
+            between, since their <code>Hot</code> and <code>Current</code> carry the device. The
             <a href="color.html#pointer-and-keys">Colour manual</a> says what the rules do with them.</p>
 
             <h3 id="side-buttons">Side Buttons</h3>

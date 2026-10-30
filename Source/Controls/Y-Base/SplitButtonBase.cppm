@@ -25,11 +25,11 @@ namespace ClaFi::Controls
         template <typename... Args>
         explicit SplitButtonBase(const CreateParams&, Args&&...);
     public:
-        [[nodiscard]] Control* secondaryPart() const { return m_secondaryPart; }
+        [[nodiscard]] RichControl* secondaryPart() const { return m_secondaryPart; }
         [[nodiscard]] Control* shownSecondaryPart() const;
     protected:
         template <typename PartClass, typename... Args>
-            requires std::derived_from<PartClass, Control>
+            requires std::derived_from<PartClass, RichControl>
         PartClass& createSecondaryPart(Args&&...);
 
         [[nodiscard]] virtual SecondaryPartPlacement secondaryPartPlacement() const;
@@ -50,7 +50,7 @@ namespace ClaFi::Controls
         void nestedClick(NestedClickEvent&) override;
     private:
         // Owned by ButtonBase, which holds the one child slot a button has.
-        Control* m_secondaryPart{ nullptr };
+        RichControl* m_secondaryPart{ nullptr };
     };
 
 
@@ -65,7 +65,7 @@ namespace ClaFi::Controls
     }
 
     template<typename PartClass, typename ...Args>
-        requires std::derived_from<PartClass, Control>
+        requires std::derived_from<PartClass, RichControl>
     PartClass& SplitButtonBase::createSecondaryPart(Args&&... args)
     {
         if (m_secondaryPart)

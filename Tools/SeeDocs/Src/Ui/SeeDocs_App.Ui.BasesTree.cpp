@@ -121,7 +121,7 @@ namespace SeeDocs_App::Ui
         return childInset(formContext, scaledPadding()).x + strip.scaledWidth() / 2.0f;
     }
 
-    void BaseCrumb::getMainText(GetTextEvent& event) const
+    void BaseCrumb::adjustMainText(AdjustTextEvent& event) const
     {
         if (m_nameColor)
             writeRuns(event.text, m_node.text, *m_nameColor);

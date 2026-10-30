@@ -97,9 +97,10 @@ namespace MillScene_App
         void storeSceneTheme();
 
         void traceMetrics();
-        void writeMetrics(GetTextEvent&);
+        // The readings, written ahead of every frame. See writeMetricsTooltip
+        void writeMetrics();
         [[nodiscard]] WindowReadings windowReadings() const;
-        void writeMetricsTooltip(GetTooltipEvent&);
+        void writeMetricsTooltip(AdjustTooltipEvent&);
 
     private:
         DialogTitle& m_titleBar{ createTopBar<DialogTitle>(
@@ -144,6 +145,7 @@ namespace MillScene_App
             }
         ) };
         EventRepeater m_paintTimer{ [this](RepeatEvent&) {
+                writeMetrics();
                 m_scenePanel.invalidate();
             }, MilliSeconds{ 0 } };
 
@@ -158,10 +160,7 @@ namespace MillScene_App
             MinSize{Diagnostic::k_fpsChartWidth, 0.0f },
             MaxSize{Diagnostic::k_fpsChartWidth, k_maxFloat },
             WordWrap::No,
-            OnEvent{ [this](GetTextEvent& event) {
-                writeMetrics(event);
-            } },
-            OnEvent{ [this](GetTooltipEvent& event) {
+            OnEvent{ [this](AdjustTooltipEvent& event) {
                 writeMetricsTooltip(event);
             } }
         ) };
@@ -191,6 +190,8 @@ namespace MillScene_App
             });
         applySceneColors();
 
+        // The readout has its lines before the first layout, so the first frame moves nothing.
+        writeMetrics();
         m_paintTimer.start();
     }
 
@@ -409,7 +410,7 @@ void MillSceneForm::traceMetrics()
         m_benchmark.cpuUsage().lastValue());
 }
 
-void MillSceneForm::writeMetrics(GetTextEvent& event)
+void MillSceneForm::writeMetrics()
 {
     double cpuVal = m_benchmark.cpuUsage().lastValue();
     if (cpuVal > 10000.0)
@@ -418,7 +419,8 @@ void MillSceneForm::writeMetrics(GetTextEvent& event)
     const WindowReadings readings = windowReadings();
 
     // TODO: the text disappears under some conditions - which ones?
-    event.text << Fmt{
+    Text words;
+    words << Fmt{
         L"[code][right]"
         L"[nobr]{:.0f}[color muted]x[/color]{:.0f} [color muted]pix\u202F[space 0][/color]\n"
         L"{:.2f} [color muted]CPU\u202F[space 0][/color]\n"
@@ -432,6 +434,7 @@ void MillSceneForm::writeMetrics(GetTextEvent& event)
         readings.drawMs > 0.0 ? 1000.0 / readings.drawMs : 0.0,
         readings.fps
     };
+    m_metricsReadout.text() = std::move(words);
 }
 
 // The same window and the same sums as the FPS page - see FpsPage::paintTimeOf and
@@ -446,7 +449,7 @@ MillSceneForm::WindowReadings MillSceneForm::windowReadings() const
     return result;
 }
 
-void MillSceneForm::writeMetricsTooltip(GetTooltipEvent& event)
+void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
 {
     event.placement = FormPlacement::BottomLeft;
     auto drawBullet = [](DrawIconEvent& event) {

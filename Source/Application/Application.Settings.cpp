@@ -498,7 +498,7 @@ namespace ClaFi
             appContext().gpuAcceleration()->set(!appContext().usingGpu());
             m_gpuAcceleration.invalidateState();
         });
-        m_gpuAcceleration.onGetTooltip([](GetTooltipEvent& event) {
+        m_gpuAcceleration.onAdjustTooltip([](AdjustTooltipEvent& event) {
             event.text << Fmt{
                 L"[b]On[/b][tabto 26] The windows are drawn through the graphics card\n"
                 L"[b]Off[/b][tabto 26] They are drawn on the CPU instead"
@@ -526,7 +526,7 @@ namespace ClaFi
             m_keepSettings.invalidateState();
         });
         // Unticked, what the answer is for. Ticked, where the settings are kept.
-        m_keepSettings.onGetTooltip([this](GetTooltipEvent& event) {
+        m_keepSettings.onAdjustTooltip([this](AdjustTooltipEvent& event) {
             if (appContext().configFolderExists())
             {
                 event.text << L"Settings are stored in";

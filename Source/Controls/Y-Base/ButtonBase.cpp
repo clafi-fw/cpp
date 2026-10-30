@@ -345,9 +345,9 @@ namespace ClaFi::Controls
     // buys: a column of buttons stretched to one width lands every mark on the same edge, the
     // way a menu's keys do. A button measured to its own caption leaves the space nothing to
     // take, and the mark follows the words. See Controls-Base
-    void ButtonBase::getText(GetTextEvent& event) const
+    void ButtonBase::adjustText(AdjustTextEvent& event) const
     {
-        RichControl::getText(event);
+        RichControl::adjustText(event);
 
         if (m_endIcon == EndIcon::None)
             return;
@@ -363,24 +363,25 @@ namespace ClaFi::Controls
         event.text << FlexSpace{ k_endIconGap } << mark;
     }
 
-    void ButtonBase::nestedGetTooltip(GetTooltipEvent& event)
+    void ButtonBase::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
-        RichControl::nestedGetTooltip(event);
+        RichControl::nestedAdjustTooltip(event);
         if (event.text.empty() && m_viewMode == ButtonViewMode::IconOnly)
         {
-            GetTextEvent textEvent(event.formContext(), *this, event.text, EventPhase::Paint);
-            getText(textEvent);
+            AdjustTextEvent textEvent(event.formContext(), *this, event.text, EventPhase::Paint);
+            adjustText(textEvent);
             // The tooltip reads the buffer rather than the answer, so a named text is put in it.
             textEvent.materialise();
         }
     }
 
     // **An icon-only button does not lay its text out.** Its words are what the tooltip says - see
-    // nestedGetTooltip - and paintOwnText draws none of them, so they take no space in either pass.
-    // calculateContent answers for that mode with the icon alone, and the align pass re-measures a
-    // wrapping text against the box the control was granted and takes that answer as its content:
-    // a button measuring words it never shows comes out as tall as they are wrapped in its own
-    // width - three lines for a three-word tooltip - and spills out of the bar it stands in.
+    // nestedAdjustTooltip - and paintOwnText draws none of them, so they take no space in either
+    // pass. calculateContent answers for that mode with the icon alone, and the align pass
+    // re-measures a wrapping text against the box the control was granted and takes that answer as
+    // its content: a button measuring words it never shows comes out as tall as they are wrapped
+    // in its own width - three lines for a three-word tooltip - and spills out of the bar it
+    // stands in.
     ScaledSize ButtonBase::measureText(AlignEvent& event, ScaledSize maxDimensions,
         const Text& text)
     {

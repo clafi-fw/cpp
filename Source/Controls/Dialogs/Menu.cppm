@@ -62,7 +62,7 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"MenuItem"; }
     protected:
-        void getText(GetTextEvent&) const override;
+        void adjustText(AdjustTextEvent&) const override;
     };
 
     // A menu item in TopIcon mode on the top bar.
@@ -74,7 +74,7 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"MenuCommand"; }
     protected:
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
     };
 
     export using BaseMenuForm = Form<ScrollBoxWith<StackPanel>>;
@@ -463,7 +463,7 @@ namespace ClaFi::Controls
             // icon and the space beside it. Should a button's text be given the width its own
             // icon leaves?
             MaxSize{ k_maxItemWidth, k_maxFloat },
-            // An item writes the command's name and its key into its own line - see getText -
+            // An item writes the command's name and its key into its own line - see adjustText -
             // so an action attached here says nothing further in a tooltip.
             PresenterRole::Line,
             std::forward<Args>(args)...
@@ -477,9 +477,9 @@ namespace ClaFi::Controls
         closeBehindCommand(clickEvent);
     }
 
-    void MenuItem::getText(GetTextEvent& event) const
+    void MenuItem::adjustText(AdjustTextEvent& event) const
     {
-        MenuItemBase::getText(event);
+        MenuItemBase::adjustText(event);
 
         // The key goes at the right-hand end of the item's own line. A menu is a column of items
         // stretched to one width, so a flex space ahead of it lands every key on the same edge
@@ -572,17 +572,17 @@ namespace ClaFi::Controls
     {
     }
 
-    void MenuCommand::nestedGetTooltip(GetTooltipEvent& event)
+    void MenuCommand::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
-        MenuItemBase::nestedGetTooltip(event);
-        // An action says its own name and key - see Action::getTooltip - and this is what a
+        MenuItemBase::nestedAdjustTooltip(event);
+        // An action says its own name and key - see Action::adjustTooltip - and this is what a
         // command with none says instead. The strip writes the name under each icon and has
         // nowhere to put the key beside it, so this is where the two are said together.
         if (!event.text.empty())
             return;
 
-        GetTextEvent textEvent{ event.formContext(), *this, event.text, EventPhase::Paint };
-        getText(textEvent);
+        AdjustTextEvent textEvent{ event.formContext(), *this, event.text, EventPhase::Paint };
+        adjustText(textEvent);
         // The tooltip reads the buffer rather than the answer, so a named text is put in it.
         textEvent.materialise();
         if (event.text.empty())

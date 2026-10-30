@@ -36,7 +36,7 @@ namespace ClaFi
         return s_control && Clock::now() - s_raisedAt < k_movesIgnoredFor;
     }
 
-    bool ContextMessage::answer(const Control& about, GetTooltipEvent& event)
+    bool ContextMessage::answer(const Control& about, AdjustTooltipEvent& event)
     {
         if (s_control != &about)
             return false;

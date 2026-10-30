@@ -91,7 +91,7 @@ namespace ClaFi::Controls
         // wherever that control dies rather than only where it was held. ~Control walks every
         // ancestor, which makes this the one place that hears about all of them.
         void nestedControlDeleted(Control*) override;
-        void getText(GetTextEvent&) const override;
+        void adjustText(AdjustTextEvent&) const override;
         void setSearchResult(SearchResult* value) override { m_searchResult = value; }
         [[nodiscard]] SearchResult* searchResult() const override { return m_searchResult; }
     private:
@@ -229,9 +229,9 @@ namespace ClaFi::Controls
             m_searchResult->controlDeleted(*control);
     }
 
-    void ContainerBase::getText(GetTextEvent& event) const
+    void ContainerBase::adjustText(AdjustTextEvent& event) const
     {
-        FormControlBase::getText(event);
+        FormControlBase::adjustText(event);
         if (!m_placeHolderText.empty() && isEmpty())
             event.text << TextAlign::Center << InkWell::textInk(InkGrade::Muted) << m_placeHolderText;
     }

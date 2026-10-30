@@ -66,8 +66,8 @@ namespace ClaFi::Controls
         void searchTexts(const SearchTextVisitor&) override;
         virtual FloatRect iconRect(const PaintEvent&) const;
         void adjustTextRect(AdjustTextRectEvent&) const override;
-        void getText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void adjustText(AdjustTextEvent&) const override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         void calculateChildren(FormBase& form) override;
         ScaledSize calculateContent(AlignEvent&) override;

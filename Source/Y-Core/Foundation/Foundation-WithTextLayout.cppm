@@ -33,7 +33,7 @@ namespace ClaFi
         // The layout, in step with the control's text, the rect it draws in and the scale.
         [[nodiscard]] TextLayout& syncedLayout(const FormContext&,
             const FloatRect& textBounds) const;
-        // The same, once the answer a gather gave is the control's text.
+        // The same, once the answer a gather gave is what the layout draws.
         [[nodiscard]] TextLayout& syncedLayout(const FormContext&, const FloatRect& textBounds,
             const Text& answer);
         // The width the lines are broken at; zero, the standing answer, breaks them at the box.
@@ -61,10 +61,16 @@ namespace ClaFi
             bool operator==(const Measurement&) const = default;
         };
     private:
-        // What a gather answered becomes the control's text, where it says something else.
+        // The text the layout draws: the control's own, or the answer a gather composed around it.
+        [[nodiscard]] const ControlText& layoutSource() const;
+        // What a gather answered: the control's own text, or a composed one kept beside it.
         void takeAnswer(const Text& answer);
     private:
-        mutable TextStamp m_layoutStamp{}; // the revision of the control's text the layout holds
+        mutable TextStamp m_layoutStamp{}; // the revision of the source the layout holds
+        // An answer composed around the control's text - a parent's or a handler's words - kept
+        // apart from the text, which stays whatever its owner wrote. See Control-Foundation
+        ControlText m_composedAnswer{};
+        bool m_answerComposed{ false }; // whether the layout draws m_composedAnswer
         Measurement m_measurement{};
         ScaledSize m_measuredTextSize{};
         TextFormat m_measuredFormat{}; // what the last measurement was laid out over
@@ -129,10 +135,10 @@ namespace ClaFi
     ScaledSize WithTextLayout<HostClass>::measureText(AlignEvent& event,
         ScaledSize maxDimensions, const Text& answer)
     {
-        // Ahead of the stamp, which is the answer's once the answer is the control's text.
+        // Ahead of the stamp, which is the source's once the answer is taken.
         takeAnswer(answer);
         const Measurement measurement{
-            .text = this->text().stamp(),
+            .text = layoutSource().stamp(),
             .maxDimensions = maxDimensions,
             .scaleFactor = event.scaleFactor(),
             .breakWidth = this->lineBreakWidth(),
@@ -161,13 +167,16 @@ namespace ClaFi
     TextLayout& WithTextLayout<HostClass>::syncedLayout(const FormContext& formContext,
         const FloatRect& textBounds) const
     {
-        // The stamp says whether the text was written since the layout took it, without reading
-        // the text. Compared rather than taken every time: setText invalidates, so a control
-        // measured four times in one pass would rebuild four times.
-        const TextStamp stamp = this->text().stamp();
+        // The stamp says whether the source was written since the layout took it, without reading
+        // it. Compared rather than taken every time: setText invalidates, so a control measured
+        // four times in one pass would rebuild four times.
+        const TextStamp stamp = layoutSource().stamp();
         if (stamp != m_layoutStamp)
         {
-            takeText();
+            if (m_answerComposed)
+                m_layout.setText(m_composedAnswer);
+            else
+                takeText();
             m_layoutStamp = stamp;
         }
         if (m_layoutGeneration != Control::textEngine().layoutGeneration())
@@ -209,15 +218,26 @@ namespace ClaFi
         m_layout.setText(this->text());
     }
 
-    // The layout draws the control's text and nothing else, so an answer a gather built - a
-    // handler's or a parent's words - is made that text. Compared first: a built answer has no
-    // stamp, and one saying what the text already says would move the stamp on for nothing.
+    template <IsRichControl HostClass>
+    const ControlText& WithTextLayout<HostClass>::layoutSource() const
+    {
+        return m_answerComposed ? m_composedAnswer : this->text();
+    }
+
+    // Compared first: a composed answer has no stamp of its own, and one saying what the kept copy
+    // already says would move its stamp on for nothing.
     template <IsRichControl HostClass>
     void WithTextLayout<HostClass>::takeAnswer(const Text& answer)
     {
         const Text& own = this->text();
-        if (&answer != &own && answer != own)
-            this->text() = answer;
+        if (&answer == &own)
+        {
+            m_answerComposed = false;
+            return;
+        }
+        if (!m_answerComposed || m_composedAnswer != answer)
+            m_composedAnswer = answer;
+        m_answerComposed = true;
     }
 
 }

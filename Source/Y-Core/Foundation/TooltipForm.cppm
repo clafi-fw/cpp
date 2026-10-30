@@ -51,7 +51,7 @@ namespace ClaFi
         ~TooltipForm() override;
         Control* control() { return content().m_control; }
         void setControl(Control* control);
-        void setControl(Control&, const GetTooltipEvent&); // the answer becomes the label's text
+        void setControl(Control&, const AdjustTooltipEvent&); // the answer becomes the label's text
         void startAlphaAnimation();
         bool stillVisible() const;
         bool hideOnUserInput() const { return m_hideOnUserInput; }
@@ -136,7 +136,7 @@ namespace ClaFi
         content().invalidate();
     }
 
-    void TooltipForm::setControl(Control& control, const GetTooltipEvent& event)
+    void TooltipForm::setControl(Control& control, const AdjustTooltipEvent& event)
     {
         setControl(&control);
         // Taken here too - a rect stated equal to the last one records nothing.

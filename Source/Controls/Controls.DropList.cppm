@@ -60,9 +60,9 @@ namespace ClaFi::Controls
     public:
         DropListRow(const CreateParams&, DropList&, std::size_t line);
     protected:
-        void getText(GetTextEvent&) const override;
+        void adjustText(AdjustTextEvent&) const override;
         // The line's tooltip beside the list, at the row's height. See Controls#droplistline
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void click(ClickEvent&) override;
     private:
         DropList& m_list;

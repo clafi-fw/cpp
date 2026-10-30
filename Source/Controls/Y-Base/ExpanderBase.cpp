@@ -193,7 +193,7 @@ namespace ClaFi::Controls
     {
         const FormContext& context = formContext();
         Text buffer;
-        const Text& label = doGetText(context, buffer, EventPhase::Paint);
+        const Text& label = adjustedText(context, buffer, EventPhase::Paint);
         if (!hasLink(label))
             return std::nullopt;
         const FloatRect bounds = textBounds(context, boundsInForm());
@@ -212,7 +212,7 @@ namespace ClaFi::Controls
     std::optional<std::wstring> ExpanderHeader::firstLink() const
     {
         Text buffer;
-        const Text& label = doGetText(formContext(), buffer, EventPhase::Paint);
+        const Text& label = adjustedText(formContext(), buffer, EventPhase::Paint);
         for (const auto& marker : label.markers())
         {
             if (const PushLink* link = std::get_if<PushLink>(&marker.second))

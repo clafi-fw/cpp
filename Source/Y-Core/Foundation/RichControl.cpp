@@ -1,5 +1,6 @@
 module ClaFi.Core.Foundation;
 
+import :Action;
 import :Control;
 import :PaintEvent;
 import ClaFi.Core.TextEngine.Text;
@@ -33,20 +34,25 @@ namespace ClaFi
         Control::adjustPaint(event);
     }
 
-    void RichControl::getText(GetTextEvent& event) const
+    void attachAction(Action& action, RichControl& control, const PresenterRole role)
     {
-        // Named rather than written in: a control's own text is usually the whole answer, and
-        // what a gather costs is what it copies - see GetTextEventBase::contribute.
-        event.contribute(m_text);
-        Control::getText(event);
+        action.attach(control, role);
     }
 
-    void RichControl::nestedGetTooltip(GetTooltipEvent& event)
+    void RichControl::adjustText(AdjustTextEvent& event) const
+    {
+        // Named rather than written in: a control's own text is usually the whole answer, and
+        // what a gather costs is what it copies - see AdjustTextEventBase::contribute.
+        event.contribute(m_text);
+        Control::adjustText(event);
+    }
+
+    void RichControl::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         event.text << m_tooltipText;
         // The base emits the event and, if nothing produced text, adds the control's own
         // text when it is trimmed.
-        Control::nestedGetTooltip(event);
+        Control::nestedAdjustTooltip(event);
     }
 
 }

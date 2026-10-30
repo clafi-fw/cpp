@@ -197,6 +197,19 @@ buttons reads as one band.
 **The share is a box, not a size.** An item that fills takes the whole share; one aligned to an
 edge or centred keeps its own size inside it. Filled items all come out the same width.
 
+## PageControl
+
+**The focus goes with the switch.** A page control holding the focus - a container holds what its
+child holds, so this is a focus in the page that shows - enters the page it turns to the way a step
+from outside enters it: an ActiveContainer at its current item, else at its first stop, any other
+page at its first stop in reading order - see FocusNavigator enterReading. A focus elsewhere, in the
+tab strip or a sidebar, stays where it is.
+
+**A replaced page is shown before its predecessor goes.** A page deleted while it holds the focus
+drops it, and nothing is told; a page hidden by the switch still holds it when the page control
+reads where the focus is. So the successor is added and shown first, and the page it replaces is
+deleted after.
+
 ## PageSizing
 
 - `CurrentPage` - hidden pages are never measured.

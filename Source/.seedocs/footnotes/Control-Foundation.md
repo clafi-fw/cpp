@@ -12,6 +12,11 @@ stored state to an event, then let the base raise it.
 **A `ControlText`**, so every write through it moves on the stamp that each measurement and paint
 reads. See ControlText.
 
+**The words are written here, when they change** - by whoever owns the control. A AdjustTextEvent
+composes around them as they are asked for: what a parent adds, a mark, an answer that differs by
+phase. A handler that computes the words themselves inside the gather pays for it at every measure
+and every paint, and moves the stamp whether or not the words moved.
+
 ## Text format
 
 Control returns none - see TextFormat.
@@ -22,7 +27,7 @@ Control returns none - see TextFormat.
 - WithTextLayout states it to the layout it holds.
 - A TextBox lays its placeholder out over it.
 - An in-place editor lays its text out over the format of the control it covers.
-- An over-text tooltip repeats it - GetTooltipEvent::format carries it to the tooltip's label.
+- An over-text tooltip repeats it - AdjustTooltipEvent::format carries it to the tooltip's label.
 
 ## RichControl textFormat
 
@@ -338,6 +343,14 @@ Call invalidateState() when the answer changes.
 **A control given an action as a property presents it**, in the role its `PresenterRole` property
 gives - `Button` unless it states another.
 
+## Action presenter words
+
+**The action writes its words into a presenter that has none**, when the presenter attaches and
+again at every invalidateText, and takes them back when the presenter is detached. A presenter
+with words of its own keeps them: the action's words are for a presenter that states nothing, and
+the decision is made as the two meet. A control given the action as a property attaches once its
+own text is bound, which is what makes that decision answerable.
+
 **A command holding commands opens them as a list of its own.** `setItems` gives it the list - a
 null parts two groups - and a menu shows it as a line with the list beside it, by a presenter in
 the `Opener` role: the press opens the list, and the command's own click is never run.
@@ -376,7 +389,7 @@ a walk in document order rather than over what is on screen.
 
 ## Tooltip
 
-**The framework drives it**, asking a control for its tooltip through nestedGetTooltip. A control
+**The framework drives it**, asking a control for its tooltip through nestedAdjustTooltip. A control
 that must show its tooltip at once calls `form().tooltip().showRightNow(control)`.
 
 **What a tooltip is about follows the controller:**
@@ -409,7 +422,7 @@ the tooltip may be up calls this - a tooltip spelling out what the typed text me
 A tooltip up about this control is then asked again and placed afresh. A tooltip about another
 control stays as it is.
 
-## GetTooltipEvent::writePreview
+## AdjustTooltipEvent::writePreview
 
 **For a tooltip previewing a longer text**, such as the paragraph an anchor link leads to. The
 preview goes after what the tooltip holds.
@@ -438,6 +451,17 @@ page keys move inside it, and Home and End go to its first and last stop.
   viewport, the item it starts from counted. Where nothing overflows, it goes to the end.
 
 **Entering an ActiveContainer lands on its current item**, whichever way the focus comes in.
+
+## FocusNavigator enterReading
+
+**Moves the focus into a control the way a step from outside enters it.** An ActiveContainer hands
+it to its current item, else to its first stop, and takes it itself with none to hand it to; a
+control that can take the focus takes it; any other control hands it to its first stop in reading
+order. The stop is scrolled into view, and the navigation line is dropped, so the next arrow starts
+a run from there.
+
+**Answers the stop**, or nothing where the control is hidden, disabled or holds no stop - the focus
+then stays where it was.
 
 ## NavigationStep
 
@@ -543,7 +567,7 @@ was written. It shows in the tooltip window under its control, since the pointer
 **It lasts as long as that window.** Moving the pointer to another control, or any user action,
 hides and forgets it, with no timer. A second message replaces the first.
 
-**What a control says every time it is asked belongs in its nestedGetTooltip** - see PromptBox.
+**What a control says every time it is asked belongs in its nestedAdjustTooltip** - see PromptBox.
 
 ## GetShortcutEvent
 
@@ -668,12 +692,11 @@ rectangle being dragged. Deriving is the whole declaration.
 paint and evicts the layouts the rest of the form draws from. A host here shapes its own text in
 place.
 
-**The layout draws the control's own text and nothing else.** An answer a gather builds - words a
-handler or a parent adds - becomes the control's text as it is measured or drawn. So a handler
-writing a host's text states the whole of it: an Action writes its words into an empty text only,
-so a presenter here keeps the first words it was given. A handler adding to what it finds would
-add to the control's text on every paint - a ButtonBase end icon is one such addition, so a host
-takes no EndIcon.
+**The words are written into the host's text, as any control's are** - a readout on its tick, a
+count as it moves - and the stamp says when they moved. A gather that composes around them - a
+parent's words, a ButtonBase end icon - is drawn from a copy the host keeps beside its text, so the
+text stays what its owner wrote and the composition is made afresh at each gather. A text that
+composes nothing is drawn in place, with no copy.
 
 ## WithTextLayout syncedLayout
 

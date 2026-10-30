@@ -54,12 +54,12 @@ namespace ClaFi::Controls
     {
     }
 
-    void DropListRow::getText(GetTextEvent& event) const
+    void DropListRow::adjustText(AdjustTextEvent& event) const
     {
         event.text << m_list.lines()[m_line].text;
     }
 
-    void DropListRow::nestedGetTooltip(GetTooltipEvent& event)
+    void DropListRow::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         const Text& tooltip = m_list.lines()[m_line].tooltip;
         if (tooltip.empty())

@@ -172,8 +172,8 @@ namespace Themes_App
         // Every part of the control opens the same popup, so there is no separate primary action.
         [[nodiscard]] bool dropOnPrimaryPress() const override { return true; }
         void showDropdown(Control&) override;
-        void getMainText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void adjustMainText(AdjustTextEvent&) const override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
     private:
         void setOperation(ColorRuleHueOp);
@@ -202,8 +202,8 @@ namespace Themes_App
         HueRuleItem(const CreateParams&, HueRulePopup&, ColorRuleHueOp, HueItemView, Args&&...);
     protected:
         [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override { return k_indicatorSize; }
-        void getText(GetTextEvent&) const override;
-        void nestedGetTooltip(GetTooltipEvent&) override;
+        void adjustText(AdjustTextEvent&) const override;
+        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void getControlState(GetStateEvent&) const override;
         void click(ClickEvent&) override;
         DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
@@ -337,7 +337,7 @@ namespace Themes_App
 
     // Measured as the widest face, No change, so a column of these keeps one width whatever
     // operation each row holds, and holds it while one changes.
-    void HueRuleControl::getMainText(GetTextEvent& event) const
+    void HueRuleControl::adjustMainText(AdjustTextEvent& event) const
     {
         if (!bound())
             return;
@@ -347,11 +347,11 @@ namespace Themes_App
         writeHueOpContent(event.text, shown, true);
     }
 
-    void HueRuleControl::nestedGetTooltip(GetTooltipEvent& event)
+    void HueRuleControl::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         if (bound())
             event.text << k_hueOpNames[static_cast<std::size_t>(operation())];
-        DropdownControlBase::nestedGetTooltip(event);
+        DropdownControlBase::nestedAdjustTooltip(event);
     }
 
     DrawTextResult HueRuleControl::drawText(PaintEvent& event, const FloatRect& textBounds, const Text& text)
@@ -406,15 +406,15 @@ namespace Themes_App
     {
     }
 
-    void HueRuleItem::getText(GetTextEvent& event) const
+    void HueRuleItem::adjustText(AdjustTextEvent& event) const
     {
         writeHueOpContent(event.text, m_operation, m_view == HueItemView::Tile);
     }
 
-    void HueRuleItem::nestedGetTooltip(GetTooltipEvent& event)
+    void HueRuleItem::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         event.text << k_hueOpNames[static_cast<std::size_t>(m_operation)];
-        Button::nestedGetTooltip(event);
+        Button::nestedAdjustTooltip(event);
     }
 
     void HueRuleItem::getControlState(GetStateEvent& event) const

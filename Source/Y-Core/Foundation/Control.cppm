@@ -43,10 +43,6 @@ namespace ClaFi
     // The commands a menu shows, in order. A null entry is a separator.
     export using ActionList = std::vector<Action*>;
 
-    // Takes an action given to a control as a construction property. Declared here and defined
-    // in the implementation unit, so this interface needs no more than the name.
-    export void attachAction(Action&, Control&, PresenterRole = PresenterRole::Button);
-
     export using ControlPtr = std::unique_ptr<Control>;
     export using ControlSpan = std::span<ControlPtr>;
     export using ControlSpanC = std::span<const ControlPtr>;
@@ -349,7 +345,7 @@ namespace ClaFi
     };
 
 
-    class GetTextEventBase : public ControlEventBaseCC
+    class AdjustTextEventBase : public ControlEventBaseCC
     {
     public:
         // The buffer a gather builds its answer in. Everything that reads or writes it comes
@@ -358,7 +354,7 @@ namespace ClaFi
         class Buffer
         {
         public:
-            explicit Buffer(GetTextEventBase& owner) : m_owner{ owner } {}
+            explicit Buffer(AdjustTextEventBase& owner) : m_owner{ owner } {}
             // Both of these **replace** what the buffer holds, so a named text is dropped rather
             // than put into it: what was named is no part of the answer any more.
             Buffer& operator=(const Text& text)
@@ -385,11 +381,11 @@ namespace ClaFi
         private:
             Text& built() const;
         private:
-            GetTextEventBase& m_owner;
+            AdjustTextEventBase& m_owner;
         };
     public:
-        GetTextEventBase(const FormContext&, const Control&, Text& text, EventPhase);
-        GetTextEventBase(GetTextEventBase& other, bool dummy);
+        AdjustTextEventBase(const FormContext&, const Control&, Text& text, EventPhase);
+        AdjustTextEventBase(AdjustTextEventBase& other, bool dummy);
         Buffer text{ *this };
         EventPhase phase() const { return m_phase; }
         // A control whose own text is the whole of its answer **names** it here instead of writing
@@ -415,31 +411,32 @@ namespace ClaFi
         Text& m_buffer;
         EventPhase m_phase;
         // Where a name is kept, and the slot it is kept in. A child event names into the event it
-        // was built from: Control::getChildText asks the child through one of its own, and the
+        // was built from: Control::adjustChildText asks the child through one of its own, and the
         // handlers that follow write into the buffer both of them share, so the name has to
         // outlive the child event.
         const Text* m_ownSource{ nullptr };
         const Text*& m_source;
     };
 
-    // Asked for the control's own text.
-    export class GetTextEvent : public GetTextEventBase {
+    // The control's text about to be laid out, open to what the control, its host and the handlers
+    // put around it. See Control-Foundation#control-text
+    export class AdjustTextEvent : public AdjustTextEventBase {
     public:
-        using GetTextEventBase::GetTextEventBase;
+        using AdjustTextEventBase::AdjustTextEventBase;
     };
 
-    // Asked for the text of a child, by a control that shows what its child says.
-    export class GetChildTextEvent : public GetTextEventBase {
+    // A child's text about to be laid out, adjusted by the parent after the child has answered.
+    export class AdjustChildTextEvent : public AdjustTextEventBase {
     public:
-        using GetTextEventBase::GetTextEventBase;
+        using AdjustTextEventBase::AdjustTextEventBase;
     };
 
-    // TODO: derive GetTooltipEvent from GetTextEventBase as GetTextEvent and GetChildTextEvent are.
-    // Asked for the tooltip the control shows.
-    export class GetTooltipEvent : public ControlEventBaseC
+    // TODO: derive AdjustTooltipEvent from AdjustTextEventBase as AdjustTextEvent and AdjustChildTextEvent are.
+    // The tooltip about to stand over the control: its own tooltip text, adjusted the same way.
+    export class AdjustTooltipEvent : public ControlEventBaseC
     {
     public:
-        GetTooltipEvent(const FormContext&, const Control&, Text&, EventPhase);
+        AdjustTooltipEvent(const FormContext&, const Control&, Text&, EventPhase);
     public:
         const Control& control;
         Text& text;
@@ -653,10 +650,6 @@ namespace ClaFi
             BIND_PROPERTY_CALL(HorizontalTextAnchor, setHorizontalTextAnchor);
             // Whether the control's text wraps rather than being trimmed.
             BIND_PROPERTY_CALL(WordWrap, setWordWrap);
-            // What an Action given as a property takes this control for.
-            const PresenterRole presenterRole = READ_PROPERTY(PresenterRole, PresenterRole::Button);
-            // An action this control presents, taking it as a presenter. See Control-Foundation
-            BIND_PROPERTY_ACTION(Action, attachAction(p, *this, presenterRole));
         }
         virtual ~Control();
         Control(const Control&) = delete;
@@ -694,11 +687,12 @@ namespace ClaFi
         DECLARE_EVENT(SideClickEvent, OnSideClick, onSideClick)
         // The control being asked what state it is in.
         DECLARE_EVENT(GetStateEvent, OnGetState, onGetState)
-        // The control being asked for its own text.
-        DECLARE_EVENT(GetTextEvent, OnGetText, onGetText)
-        // The control being asked for a child's text.
-        DECLARE_EVENT(GetChildTextEvent, OnGetChildText, onGetChildText)
-        DECLARE_EVENT(GetTooltipEvent, OnGetTooltip, onGetTooltip)   // asked for its tooltip
+        // The control's text about to be laid out - its words, adjusted. See Control-Foundation
+        DECLARE_EVENT(AdjustTextEvent, OnAdjustText, onAdjustText)
+        // A child's text about to be laid out, adjusted by this control after the child.
+        DECLARE_EVENT(AdjustChildTextEvent, OnAdjustChildText, onAdjustChildText)
+        // The tooltip about to stand over the control - its own, adjusted.
+        DECLARE_EVENT(AdjustTooltipEvent, OnAdjustTooltip, onAdjustTooltip)
         DECLARE_EVENT(PaintEvent, OnPaint, onPaint)   // the control painting itself
         // The paint being set up, before anything is drawn.
         DECLARE_EVENT(AdjustPaintEvent, OnAdjustPaint, onAdjustPaint)
@@ -1202,7 +1196,7 @@ namespace ClaFi
         virtual bool isChildWidthGiven(const Control&) const { return true; }
         // Whether this control decides that child's height rather than reading it off the child.
         [[nodiscard]] virtual bool isChildHeightGiven(const Control&) const { return true; }
-        virtual void getChildText(GetChildTextEvent& event) const;
+        virtual void adjustChildText(AdjustChildTextEvent& event) const;
         virtual void childHoverEnter(Control&) {}
         virtual void childHoverLeave(Control&) {}
         virtual bool controlIsOnScrollBox(Control&) { return false; }
@@ -1316,8 +1310,8 @@ namespace ClaFi
         virtual void adjustViewPort(AdjustViewportEvent&) const {}
         //
         // Text routine (protected)
-        virtual void nestedGetTooltip(GetTooltipEvent&);
-        virtual void getText(GetTextEvent&) const;
+        virtual void nestedAdjustTooltip(AdjustTooltipEvent&);
+        virtual void adjustText(AdjustTextEvent&) const;
         // Moves where the children begin. The event arrives holding the content padding and
         // carries the scaler with it, so an override states its inset in design units.
         virtual void adjustChildInset(AdjustChildInsetEvent&) const {}
@@ -1479,8 +1473,8 @@ namespace ClaFi
         // drawText, or it measures one text and shows another.
         // The text this control answers with, gathered into the caller's buffer. What comes back
         // is the answer, which is the buffer only when one had to be built - see
-        // GetTextEventBase::contribute.
-        [[nodiscard]] const Text& doGetText(const FormContext&, Text&, EventPhase) const;
+        // AdjustTextEventBase::contribute.
+        [[nodiscard]] const Text& adjustedText(const FormContext&, Text&, EventPhase) const;
     private:
         // The point the press animation scales about, in form coordinates. Everything the control
         // draws converges on it, so it is the one thing that does not move. The centre of the

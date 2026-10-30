@@ -82,7 +82,7 @@ anywhere - `Control::calculate` throws it away once the preference stands in its
 `fitBarToContent` only marks the bar (`fitAsked`) and asks for a pass; `adjustChildMetrics` hands
 that pass a zero preference, and `keepFittedExtents`, first thing in `calculateContent` with the
 children measured, reads the bar's box, keeps it as the extent and raises `OnBarResize`. Raised
-inside the measuring pass, which the framework does already for `GetTextEvent`; a handler writes
+inside the measuring pass, which the framework does already for `AdjustTextEvent`; a handler writes
 the number down and asks for nothing. The drag raises the same event from `dragBarTo` with the
 value it stated, because `barExtent` would still read the box of the pass before.
 
