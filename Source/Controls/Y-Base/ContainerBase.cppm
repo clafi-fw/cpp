@@ -78,6 +78,11 @@ namespace ClaFi::Controls
         bool hasControls() const { return !m_controls.empty(); }
         void reserve(std::size_t value) { m_controls.reserve(value); }
         void clearControls() { m_controls.clear(); }
+        // Where showing this container enters it. See Item-Containers#containerbase-currentitem
+        [[nodiscard]] Control* currentItem() const override { return m_currentItem; }
+        // Names the item showing this container enters - any control inside it, or none.
+        virtual void setCurrentItem(Control* item) { m_currentItem = item; }
+        void setCurrentItem(Control& item) { setCurrentItem(&item); }
         std::span<const OverlayEntry> overlayControls() const override { return { m_overlayControls }; }
         void tryRemoveOverlayControl(const Control&);
         template<IsControl ControlClass>
@@ -94,6 +99,8 @@ namespace ClaFi::Controls
         void adjustText(AdjustTextEvent&) const override;
         void setSearchResult(SearchResult* value) override { m_searchResult = value; }
         [[nodiscard]] SearchResult* searchResult() const override { return m_searchResult; }
+    protected:
+        Control* m_currentItem{ nullptr };
     private:
         ControlCollection m_controls{};
         std::vector<OverlayEntry> m_overlayControls{};
@@ -227,6 +234,8 @@ namespace ClaFi::Controls
         tryRemoveOverlayControl(*control);
         if (m_searchResult)
             m_searchResult->controlDeleted(*control);
+        if (control == m_currentItem)
+            m_currentItem = nullptr;
     }
 
     void ContainerBase::adjustText(AdjustTextEvent& event) const

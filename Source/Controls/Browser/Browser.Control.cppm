@@ -438,6 +438,7 @@ namespace ClaFi::Browser
         std::ptrdiff_t m_travelOffset{ 0 };
         BrowserSettings* m_settings{};
         bool m_tabsRestoring{};
+        bool m_showingPage{};   // selectPage is inside its call to showPage
         // The tabs' widths summed while a mouse close holds them.
         std::optional<float> m_heldTabsWidth{};
     private:

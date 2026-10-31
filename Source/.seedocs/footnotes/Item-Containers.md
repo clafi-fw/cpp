@@ -16,10 +16,32 @@ header with a container outside the grid, so the header's shadow falls on the pa
 
 Each paint walks a hosting container's children twice.
 
+## ContainerBase currentItem
+
+**The item a show enters the container at.** When a container is shown with the focus going into
+it - its form's window coming up, or a page control turning to it while the page control holds the
+focus - the focus goes into the current item, and to the first stop in reading order where there
+is none. Each container on the way is entered by the same rule, so a page whose current item is a
+panel lands inside that panel, at the panel's own current item - see FocusNavigator enterShown.
+
+- A form built on a panel whose current item is its left bar opens with the focus on the left
+  bar's first stop.
+- A dialog whose root names its default answer as the current item opens on that answer.
+
+**An ActiveContainer moves its current item with the focus**, so a show brings the focus back to
+the item the user left. Any other container keeps the item it was given. Tab and the arrows follow
+an ActiveContainer's current item alone - see StackBase.
+
+The item is any control inside the container, or none, and it is dropped when it is deleted.
+
 ## StackBase
 
-**One current item.** A PageControl shows its page through it, and a TabStrip its open tab. For
-several items selected at once, see StackView.
+**One current item**, the one every container keeps - see ContainerBase currentItem. A PageControl
+shows its page through it, and a TabStrip its open tab. For several items selected at once, see
+StackView.
+
+**Current is not focused.** The item stays current while the focus is anywhere else, so its cue,
+VisualStateIndex::Current, is not gated on the keyboard.
 
 **An ActiveContainer moves the current item itself**, following whatever the user acts on - a
 click, or the focus arriving from the keyboard - and answers for which of its items is selected.
@@ -200,10 +222,9 @@ edge or centred keeps its own size inside it. Filled items all come out the same
 ## PageControl
 
 **The focus goes with the switch.** A page control holding the focus - a container holds what its
-child holds, so this is a focus in the page that shows - enters the page it turns to the way a step
-from outside enters it: an ActiveContainer at its current item, else at its first stop, any other
-page at its first stop in reading order - see FocusNavigator enterReading. A focus elsewhere, in the
-tab strip or a sidebar, stays where it is.
+child holds, so this is a focus in the page that shows - enters the page it turns to as a show
+enters it: at the page's current item, else at its first stop - see ContainerBase currentItem. A
+focus elsewhere, in the tab strip or a sidebar, stays where it is.
 
 **A replaced page is shown before its predecessor goes.** A page deleted while it holds the focus
 drops it, and nothing is told; a page hidden by the switch still holds it when the page control

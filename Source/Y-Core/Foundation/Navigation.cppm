@@ -16,8 +16,8 @@ namespace ClaFi
         explicit FocusNavigator(FormBase& form) : m_form{ form } {}
     public:
         void formKeyDown(KeyDownEvent& event);
-        // Puts the focus where entering a control from outside lands it. See Control-Foundation
-        Control* enterReading(Control&);
+        // Puts the focus where showing a control lands it. See Control-Foundation
+        Control* enterShown(Control&);
     private:
         // The form has no outside. It is an ActiveContainer so that Home, End and the page keys
         // have something to move within, and so that it can keep the item the focus returns to -
@@ -35,6 +35,8 @@ namespace ClaFi
         [[nodiscard]] Control* edgeStop(Control& container, ScrollDirection edge);
         // The stop control is, or holds at the end entered from.
         [[nodiscard]] Control* readingEntry(Control& control, ScrollDirection edge);
+        // The stop showing control lands on, every container's current item followed first.
+        [[nodiscard]] Control* shownEntry(Control& control);
         // Home, End and the page keys inside the container in scope.
         void moveInContainer(Control& container, Control& item, KeyCode);
         // The way a page press travels, none where the container shows all it holds.

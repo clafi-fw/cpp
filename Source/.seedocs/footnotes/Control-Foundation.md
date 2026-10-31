@@ -463,16 +463,19 @@ page keys move inside it, and Home and End go to its first and last stop.
 
 **Entering an ActiveContainer lands on its current item**, whichever way the focus comes in.
 
-## FocusNavigator enterReading
+## FocusNavigator enterShown
 
-**Moves the focus into a control the way a step from outside enters it.** An ActiveContainer hands
-it to its current item, else to its first stop, and takes it itself with none to hand it to; a
-control that can take the focus takes it; any other control hands it to its first stop in reading
-order. The stop is scrolled into view, and the navigation line is dropped, so the next arrow starts
-a run from there.
+**Moves the focus into a control the way showing it enters it.** A container is entered at its
+current item, and at its first stop in reading order where that holds none, each level by the same
+rule - see ContainerBase currentItem. An ActiveContainer whose item moves with the focus is entered
+as a step from outside enters it, and an ActiveContainer holding no other stop takes the focus
+itself. The stop is scrolled into view, and the navigation line is dropped, so the next arrow
+starts a run from there.
 
 **Answers the stop**, or nothing where the control is hidden, disabled or holds no stop - the focus
-then stays where it was.
+then stays where it was. The form's root is never landed on.
+
+A form's window coming up enters its root this way, and so does a page control turning pages.
 
 ## NavigationStep
 

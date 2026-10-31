@@ -239,7 +239,7 @@ namespace ClaFi
         // TODO: a container holding the focus answers for an item inside it, and
         // Control::focusDelegate names that item. It is protected, so the walk starts at the
         // holder and an item below it is not asked. Should Action be a friend of Control, or
-        // should the delegate be reachable the way FormBase::currentItem already makes the
+        // should the delegate be reachable the way FormBase::rootFocusDelegate already makes the
         // root's reachable?
         const EntryControls entries = entryControls(form, presenter);
         for (std::size_t index = 0; index != entries.size(); ++index)
@@ -312,7 +312,7 @@ namespace ClaFi
         // a line of another popup - a list beside a menu - reaches on through that one to what
         // it was opened on, down to the form that is no popup.
         //
-        // The form's current item is the last, for a form that is neither: the focus is in
+        // The root's focus delegate is the last, for a form that is neither: the focus is in
         // another window, and this is what this one was last in.
         EntryControls entries{ presenter, focused };
         std::size_t count = 2;
@@ -321,7 +321,7 @@ namespace ClaFi
             if (Control* target = at->popupTarget())
                 entries[count++] = target;
         }
-        entries[count] = form.currentItem();
+        entries[count] = form.rootFocusDelegate();
         return entries;
     }
 

@@ -49,9 +49,8 @@ namespace ClaFi
         // **Navigation is within the form the key was delivered to**, and the focus is one per
         // application rather than one per form - so a form that has not taken it sees a control
         // in another window. Starting there searches a tree this form has nothing to do with:
-        // a menu shown over a text box is opened with the focus still on the box, and its very
-        // first move - the emulated Tab that gives the menu its first item - would walk the form
-        // **behind** it.
+        // a menu shown over a text box is opened with the focus still on the box, and a walk
+        // started there would search the form **behind** it.
         //
         // The same case as no focus at all, and it has the same answer. Nothing has been focused
         // yet, or whatever held the focus has been deleted - the pointer is dropped without a
@@ -115,11 +114,13 @@ namespace ClaFi
         }
     }
 
-    Control* FocusNavigator::enterReading(Control& control)
+    // The form's root is never landed on: it has no outside to be entered from.
+    Control* FocusNavigator::enterShown(Control& control)
     {
-        Control* stop = readingEntry(control, ScrollDirection::ToBegin);
-        if (stop)
-            land(*stop);
+        Control* stop = shownEntry(control);
+        if (!stop || isFormRoot(stop))
+            return nullptr;
+        land(*stop);
         return stop;
     }
 
@@ -248,6 +249,36 @@ namespace ClaFi
         if (control.canTakeFocus())
             return &control;
         return edgeStop(control, edge);
+    }
+
+    // **Every container's current item comes first**, at any depth, and the reading order after
+    // it. An ActiveContainer whose item moves with the focus is entered by the reading rule, which
+    // follows that item already; one with no such item - a panel at a form's root - is entered at
+    // the item it was given, and takes the focus itself where it holds no other stop.
+    Control* FocusNavigator::shownEntry(Control& control)
+    {
+        if (!control.holdsNavigationStop())
+            return nullptr;
+        const bool isActiveContainer = control.interactivity() == Interactivity::ActiveContainer;
+        if (isActiveContainer && control.focusDelegate() != &control)
+            return readingEntry(control, ScrollDirection::ToBegin);
+        if (Control* item = control.currentItem())
+        {
+            if (Control* stop = shownEntry(*item))
+                return stop;
+        }
+        if (!isActiveContainer && control.canTakeFocus())
+            return &control;
+        const std::size_t count = control.navigationSlotsCount();
+        for (std::size_t index = 0; index != count; ++index)
+        {
+            Control* child = control.navigationSlot(index);
+            if (!child)
+                continue;
+            if (Control* stop = shownEntry(*child))
+                return stop;
+        }
+        return isActiveContainer ? &control : nullptr;
     }
 
     // **A page is as many steps as fit in the container's viewport**, along the axis it scrolls

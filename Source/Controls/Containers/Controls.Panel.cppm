@@ -25,5 +25,7 @@ namespace ClaFi::Controls
         using PanelBase::setBarExtent;
         using PanelBase::resetBarExtent;
         using PanelBase::fitBarToContent;
+        using PanelBase::currentItem;
+        using PanelBase::setCurrentItem;
     };
 }

@@ -115,14 +115,13 @@ namespace ClaFi::Controls
         return m_currentItem == &item;
     }
 
+    // Read ahead of the base call, which drops the current item.
     void StackBase::nestedControlDeleted(Control* item)
     {
+        const bool wasCurrent = item == m_currentItem;
         Container::nestedControlDeleted(item);
-        if (item == m_currentItem)
-        {
-            m_currentItem = nullptr;
+        if (wasCurrent)
             doCurrentItemChanged(item);
-        }
     }
 
     void StackBase::getControlState(GetStateEvent& event) const

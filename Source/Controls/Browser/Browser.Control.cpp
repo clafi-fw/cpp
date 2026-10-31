@@ -840,10 +840,14 @@ namespace ClaFi::Browser
 
     // A step to the url the selection just made is a step that goes nowhere, and goes as a
     // replace drops it.
+    //
+    // **What a page reports while it is being shown is dropped.** A focus carried over lands on
+    // the page's entry, a place the user did not pick, and the anchor the tab arrived at is shown
+    // after the show - see selectPage.
     void BrowserControl::setTabAnchor(BrowserTab& tab, const BrowserPage& page,
         const std::wstring_view anchor)
     {
-        if (tab.page() != &page || tab.anchor() == anchor)
+        if (m_showingPage || tab.page() != &page || tab.anchor() == anchor)
             return;
 
         readHistory(tab);
@@ -1003,7 +1007,9 @@ namespace ClaFi::Browser
         if (tab)
         {
             const RichControl* pageBefore = tab->page();
+            m_showingPage = true;
             showPage(*tab);
+            m_showingPage = false;
             // **Spent after the page has been shown**, which is what reads it. From here on the
             // view state under this tab is whatever the page just put there, so the next page shown
             // on it is an ordinary navigation.

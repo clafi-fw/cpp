@@ -102,7 +102,7 @@ namespace ClaFi::Controls
         {
             currentItem()->show();
             if (focused)
-                FocusNavigator{ form() }.enterReading(*currentItem());
+                FocusNavigator{ form() }.enterShown(*currentItem());
         }
         // And align is invalidated in the base updateVisibility()
     }

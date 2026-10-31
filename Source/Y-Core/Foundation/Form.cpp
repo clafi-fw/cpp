@@ -1769,33 +1769,12 @@ namespace ClaFi
         stateFrame();
     }
 
-    // **A form is entered, not stepped through.** Where the focus belongs the moment the window
-    // appears is the form's entry - the item its root is on, which is a dropdown's selected
-    // entry - and the first item in the form when the root is on none, which is every root that
-    // is not a container in its own right.
-    //
-    // Those are two different moves, and only the second one is a search. Tab means "leave what
-    // I am on and take the next", so a Tab emulated from the entry lands one item **past** it: a
-    // combo box opened on its third entry comes up with the fourth lit. Landing on the item is
-    // therefore said outright, and the walk is what answers the case with nothing to return to -
-    // there the root answers with itself, the search starts from it, and the first item is what
-    // it finds.
-    //
-    // An entry that cannot take the focus - disabled, or no longer focusable since it was
-    // recorded - is no entry, and falls to the same walk.
+    // **A form is entered, not stepped through**, the way any shown control is: at the root's
+    // current item - a dropdown's selected entry, a dialog's default answer - and at the first stop
+    // where it has none. A Tab emulated from the entry would land one item past it.
     void FormBase::focusEntryPoint()
     {
-        Control* entry = currentItem();
-        if (entry && entry != &m_content && entry->canTakeFocus())
-        {
-            entry->setFocus();
-            return;
-        }
-
-        FocusNavigator focusNavigator{ *this };
-        bool dummy{};
-        KeyDownEvent emulatedEvent{ m_context, Keys::Tab, {}, false, dummy };
-        focusNavigator.formKeyDown(emulatedEvent);
+        FocusNavigator{ *this }.enterShown(m_content);
     }
 
     WindowFrame FormBase::designFrame() const

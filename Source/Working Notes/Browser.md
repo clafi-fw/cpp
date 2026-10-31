@@ -47,3 +47,12 @@ closeTab carried.
   hover given up is never heard, so a pointer that leaves the window keeps the tabs held until it
   lands in the browser outside the title bar.
 - Open: a scale change while the tabs are held leaves the sum in the old pixels until the release.
+
+2026-10-31. m_showingPage drops what a page reports through setTabAnchor while selectPage is inside
+showPage. With SeeDocs' page entered in its body, a focus carried over to a page just built lands
+on the body's first item, which becomes current and is reported as the tab's anchor. That rewrites
+the url and the history step before selectPage raises ShowAnchorEvent from the url, so Back would
+come back on the first item - read off the code, not seen. The alternative was showing the anchor
+before the page shows. It needs the position, which only selectPage has, while the show happens
+inside the application's showPage - a contract change for both implementations. Oj picked the
+guard.

@@ -441,6 +441,8 @@ namespace SeeDocs_App::Ui
         m_found{ searcher, *this }
     {
         Actions::registerAll();
+        // A show enters the page in its body, past the title and the commands in the head.
+        setCurrentItem(m_pageBox);
         connectHead();
         m_later.onTick([this](TimerEvent&) {
             const std::function<void()> pending = std::exchange(m_pending, {});

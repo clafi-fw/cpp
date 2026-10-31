@@ -1218,6 +1218,8 @@ namespace ClaFi
         // item inside it; everything else answers with itself, which is the default. It is what
         // Input::focusDelegate() answers, and where isFocused() walks up from.
         virtual Control* focusDelegate();
+        // Where showing this control enters it, null where it keeps no item.
+        [[nodiscard]] virtual Control* currentItem() const { return nullptr; }
         // makeCurrentItem's question: a container keeping a current item takes it and answers yes.
         [[nodiscard]] virtual bool takeCurrentItem(Control& /*item*/) { return false; }
         // A container above moved its current item out of here, to currentItem (null where none).

@@ -30,7 +30,7 @@ namespace ClaFi::Controls
         Control* previousItem;   // what was current before, null where nothing was
     };
 
-    // A base for StackPanelBase and PageControl, owning the current item. See Item-Containers
+    // A base for StackPanelBase and PageControl, recording the current item. See Item-Containers
     export class StackBase : public Container
     {
     public:
@@ -42,14 +42,9 @@ namespace ClaFi::Controls
         // Raised after the current item has changed.
         DECLARE_EVENT(CurrentItemChangeEvent, OnCurrentItemChange, onCurrentItemChange)
     protected:
-        // The one item this container treats as current - the page a PageControl shows, the tab
-        // a TabStrip has open, the item the focus goes to when the container is entered. Current
-        // is not focused: it stays current while the focus is somewhere else entirely, which is
-        // why the cue for it, VisualStateIndex::Current, is not gated on the keyboard.
-        [[nodiscard]] Control* currentItem() const { return m_currentItem; }
         // Makes item the current one from code: records it, tells the container the user was not
         // what moved it, and scrolls it into view. This is the one to call from outside.
-        void setCurrentItem(Control*);
+        void setCurrentItem(Control*) override;
         void setCurrentItem(Control& item) { setCurrentItem(&item); }
     protected:
         // Records the change and nothing more - the state of both items is invalidated and the
@@ -105,8 +100,6 @@ namespace ClaFi::Controls
         void doCurrentItemChanged(Control* previous);
     private:
         [[nodiscard]] bool appliesGesture(const Control& item, KeyModifiers) const;
-    private:
-        Control* m_currentItem{ nullptr };
     };
 
 

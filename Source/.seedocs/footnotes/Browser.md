@@ -82,6 +82,10 @@ the url a tab leaves by a link carries the item the user was on, and Back brings
 A page going down with its tab already off it is not heard: what a dying page says of its
 selection is not the tab's.
 
+**What a page reports while it is being shown is dropped.** A focus carried over to a page lands on
+its entry, a place the user did not pick, and the anchor the tab arrived at is shown after the
+show - see ShowAnchorEvent.
+
 ## BrowserPage viewPosition
 
 **The measure is the page's own.** The browser keeps the number and hands it back; what it

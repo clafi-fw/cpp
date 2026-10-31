@@ -221,12 +221,8 @@ namespace ClaFi
         [[nodiscard]] FormControlBase* topLayer() const { return m_topLayer.get(); }
         // Puts a control over the root, or takes the one standing there away.
         void setTopLayer(std::unique_ptr<FormControlBase>);
-        // The control the focus goes to when this form is entered. **The root answers**, and only a
-        // root that keeps a current item has anything but itself to answer with: a Stack or
-        // a Grid names the item it is on, and a plain Panel names itself. The form stores
-        // nothing of its own - remembering where the focus was is what a container does, and a
-        // form whose root is not one has no second place to keep it.
-        [[nodiscard]] Control* currentItem() { return m_content.focusDelegate(); }
+        // A stack root's current item, else the root - Control keeps focusDelegate protected.
+        [[nodiscard]] Control* rootFocusDelegate() { return m_content.focusDelegate(); }
         // The actions whose shortcuts this form answers, asked before the application's and
         // both only after the focused control has had the key.
         [[nodiscard]] Actions& actions() { return m_actions; }
@@ -458,9 +454,7 @@ namespace ClaFi
     protected:
         void initialize();
     private:
-        // Puts the focus where entering this form should land it - the item the form is on, or
-        // the first item when it is on none. Called as the window is shown, for every role that
-        // takes the focus at all.
+        // Enters the root as a show enters a control, for every role that takes the focus at all.
         void focusEntryPoint();
         // Walks nestedKeyDown from `from` up to `until`, exclusive, while the key is unhandled.
         void dispatchKey(Control* from, const Control* until, KeyDownEvent&);

@@ -728,6 +728,8 @@ namespace SeeDocs_App::Ui
             std::forward<Args>(args)...
         }
     {
+        // A show enters the page at its options, past the head.
+        setCurrentItem(m_optionsBox);
     }
 
     // SidebarPage
@@ -746,6 +748,8 @@ namespace SeeDocs_App::Ui
         },
         m_editor{ createBody<SidebarEditor>(projectName, items) }
     {
+        // A show enters the page at the editor, past Add and Delete in the head.
+        setCurrentItem(m_editor);
     }
 
     // SurfaceBrowser

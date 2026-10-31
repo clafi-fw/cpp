@@ -143,6 +143,13 @@ The alternative was a redirect in Control::setFocus for a control that cannot ta
 kept setFocus as it is. Exporting :Navigation from Foundation_Facade is what made the class
 reachable outside the module.
 
+2026-10-31. enterReading became enterShown, which follows every container's current item ahead of
+the reading order - see Item-Containers. FormBase::focusEntryPoint enters the root through it. It
+set the focus on the root's focus delegate, and for a root with none emulated a Tab from the root,
+which reached the same first stop. Tab and the arrows read readingEntry as before.
+FormBase::currentItem became rootFocusDelegate: a Form<T> derives from both FormBase and its
+root, and the root's own currentItem means the item a show enters. Action is its one caller.
+
 ## InputController
 
 The fades run on the application's animator, reached through the AppContext the form reporting

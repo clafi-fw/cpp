@@ -196,3 +196,22 @@ Decided with Oj:
 Left as it was: BrowserControl::rebuildPage deletes the page first and builds it again through goTo,
 so a focus inside a rebuilt page is dropped as before.
 
+2026-10-31. Oj: the user comes back to the control they left; where there is none, the page's
+entry; where there is no entry, the first stop. The entry is the current item, kept in the page.
+ContainerBase holds the member StackBase had: an ActiveContainer moves it with the focus as before,
+and any other container keeps what it was given. A page control is one of those - its current item
+is the page it shows, which is where a show enters it. The goal was SeeDocs' page view entered past
+its head; PageView, ProjectPage and SidebarPage name the part under the head.
+
+Decided with Oj:
+
+- In the page, not in a map on the page control.
+- A show follows the current item - a page switch, a form's window coming up - and Tab and the
+  arrows do not. Applied to Tab entering a page, the head would be reachable by Shift+Tab alone.
+- A focus left in the head comes back to the body: on a Panel page only the body's own current item
+  remembers anything.
+- The entry made SeeDocs' history restore lose its anchor - see the Browser working note.
+
+Open: StackBase::defaultCanFocusItem answers no for a container that is not an ActiveContainer, so
+setCurrentItem on such a stack records nothing, and a plain stack has no entry yet.
+
