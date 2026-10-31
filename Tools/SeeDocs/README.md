@@ -1040,14 +1040,15 @@ one qualified name. In a tree of Delphi projects every form's unit may be `Unit1
 
 ### Keys on a page
 
-A page holds one selected item - a row of one of its grids, a section's header or a box of text -
-and the keys walk the page as one.
+A page holds one selected item - a row of one of its grids, a section's header, a box of text or a
+base's crumb - and the keys walk the page as one.
 
-- **Up and Down** move over rows, headers and boxes alike, from one section into the next.
+- **Up and Down** move over rows, headers, boxes and crumbs alike, from one section into the next.
 - **Home and End** go to the ends of a row; Ctrl+Home and Ctrl+End to the page's first and last
   item.
 - **PageUp and PageDown** go a screenful on.
-- **Left and Right** stay on the row or the header.
+- **Left and Right** stay on the row or the header. On a base's crumb they follow the lines: Right
+  to its first base, Left back to the crumb it is a base of.
 - **Tab** leaves the page as a whole.
 
 **A box of text is walked past like a row** until Return or a mouse click opens it for the caret.

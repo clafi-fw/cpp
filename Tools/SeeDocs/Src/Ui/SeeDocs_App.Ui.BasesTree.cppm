@@ -91,6 +91,11 @@ namespace SeeDocs_App::Ui
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         void paintSurface(PaintEvent&) override;
         void paintOwnText(PaintEvent&) override;
+        // Right to the crumb's first base, Left to the crumb it is a base of, Up and Down by row.
+        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+            const NavigationStep&) override;
+        // From above or below, the crumb nearest the line on the near row; from a side, the first.
+        [[nodiscard]] Control* navigationEntry(const NavigationStep&) override;
     private:
         // A line's two ends, in the tree's content coordinates.
         struct Line
@@ -132,6 +137,7 @@ namespace SeeDocs_App::Ui
             int lastRow{ 0 };
         };
         using CrumbsMap = std::unordered_map<const BaseNode*, BaseCrumb*>;
+        using ParentCrumbsMap = std::unordered_map<const BaseCrumb*, BaseCrumb*>;
     private:
         ScaledSize placeCrumbs(AlignEvent&, float wallX);
         void placeDirectBases(AlignEvent&, Placing&);
@@ -154,10 +160,15 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] static float rowCentreY(const Placing&, int row);
         [[nodiscard]] BaseCrumb& crumbOf(const BaseNode&);
         [[nodiscard]] const BaseCrumb& crumbOf(const BaseNode&) const;
-        void addCrumbs(BaseSpan);
+        void addCrumbs(BaseSpan, BaseCrumb* parentCrumb);
+        // A step's line in the coordinates the crumbs are placed in.
+        [[nodiscard]] FloatPoint lineAmongCrumbs(const NavigationStep&) const;
+        // On the nearest row past fromTopY the way downward says, the crumb nearest lineX.
+        [[nodiscard]] BaseCrumb* crumbNearLine(float fromTopY, bool downward, float lineX);
     private:
         BaseSpan m_bases{};
         CrumbsMap m_crumbsMap{};
+        ParentCrumbsMap m_parentCrumbs{};   // each to the crumb it is a base of
         Lines m_links{};      // between row neighbours
         Lines m_branches{};   // the stubs a trunk runs on past, each leaving it with a turn
         Trunks m_trunks{};

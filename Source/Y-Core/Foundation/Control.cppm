@@ -833,6 +833,7 @@ namespace ClaFi
         // the same indicator on a list item is clickable in its own right and keeps a share of the
         // movement for its own hover.
 
+
         // Asks for the focus. Every ancestor gets to redirect it on the way up - see
         // adjustFocus - so the control that ends up focused may not be this one.
         void setFocus();

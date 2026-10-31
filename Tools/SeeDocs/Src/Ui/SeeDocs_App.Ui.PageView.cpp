@@ -606,7 +606,7 @@ namespace SeeDocs_App::Ui
     }
 
     // A match whose section was shut since stands hidden, and is passed over.
-    bool PageView::focusFound()
+    bool PageView::focusFound() const
     {
         Control* holder = m_found.currentHolder();
         if (!holder || !shownWithin(*holder, *this) || !holder->canTakeFocus())

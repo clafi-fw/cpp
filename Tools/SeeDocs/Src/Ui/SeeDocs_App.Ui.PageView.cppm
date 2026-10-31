@@ -196,7 +196,7 @@ namespace SeeDocs_App::Ui
         // The anchor of the footnote that section's words stand in; empty where none on the page.
         [[nodiscard]] std::wstring anchorOf(const Reference&) const;
         // Focuses the current match's control, where it takes the focus; false where none does.
-        bool focusFound();
+        bool focusFound() const;
         // Focuses the current match's control, else the row the anchor selected, else the first.
         void focusContent();
         // What the page holds of the window's search.

@@ -199,13 +199,14 @@ namespace SeeDocs_App::Ui
     {
         clear();
         m_bases = value;
-        addCrumbs(m_bases);
+        addCrumbs(m_bases, nullptr);
     }
 
     void BasesTree::clear()
     {
         m_bases = {};
         m_crumbsMap.clear();
+        m_parentCrumbs.clear();
         m_links.clear();
         m_branches.clear();
         m_trunks.clear();
@@ -283,6 +284,33 @@ namespace SeeDocs_App::Ui
             bounds.offset(origin);
             drawText(event, bounds, ellipsis);
         }
+    }
+
+    // The lines are what Right and Left follow, as a TreeView's do, so a crumb the rows packed
+    // beside another is reached from it by Up and Down only.
+    Control* BasesTree::navigationNeighbour(const Control& child, const NavigationStep& step)
+    {
+        const BaseCrumb& crumb = static_cast<const BaseCrumb&>(child);
+        if (step.direction == NavigationDirection::Right)
+        {
+            const BaseNodes& bases = crumb.node().bases;
+            return bases.empty() ? nullptr : &crumbOf(bases.front());
+        }
+        if (step.direction == NavigationDirection::Left)
+        {
+            const ParentCrumbsMap::const_iterator found = m_parentCrumbs.find(&crumb);
+            return found == m_parentCrumbs.end() ? nullptr : found->second;
+        }
+        return crumbNearLine(crumb.topLeft().y, step.forward(), lineAmongCrumbs(step).x);
+    }
+
+    Control* BasesTree::navigationEntry(const NavigationStep& step)
+    {
+        if (!step.vertical())
+            return ContainerBase::navigationEntry(step);
+        const bool downward = step.forward();
+        const float beforeNearRowY = downward ? -k_maxFloat : k_maxFloat;
+        return crumbNearLine(beforeNearRowY, downward, lineAmongCrumbs(step).x);
     }
 
     ScaledSize BasesTree::placeCrumbs(AlignEvent& event, const float wallX)
@@ -501,7 +529,7 @@ namespace SeeDocs_App::Ui
         return *m_crumbsMap.at(&node);
     }
 
-    void BasesTree::addCrumbs(BaseSpan bases)
+    void BasesTree::addCrumbs(BaseSpan bases, BaseCrumb* parentCrumb)
     {
         for (const BaseNode& base : bases)
         {
@@ -510,6 +538,8 @@ namespace SeeDocs_App::Ui
                 nameColor = m_colorCodes.colorOf(base.spelling);
             BaseCrumb& newCrumb = add<BaseCrumb>(base, nameColor);
             m_crumbsMap.emplace(&base, &newCrumb);
+            if (parentCrumb)
+                m_parentCrumbs.emplace(&newCrumb, parentCrumb);
 
             newCrumb.onContextPopup([this, &newCrumb](ContextPopupEvent& event) {
                 // event.control could also be the dropdown button - it's "onNestedContextPopup" actually
@@ -524,8 +554,42 @@ namespace SeeDocs_App::Ui
                 // re-emitting the crumb's event
                 emitEvent(event);
                 });
-            addCrumbs(base.bases);
+            addCrumbs(base.bases, &newCrumb);
         }
+    }
+
+    FloatPoint BasesTree::lineAmongCrumbs(const NavigationStep& step) const
+    {
+        return step.line - form().contentOriginOfControl(this);
+    }
+
+    // A row is the crumbs standing at one top: put places every crumb of a row at the same y.
+    BaseCrumb* BasesTree::crumbNearLine(const float fromTopY, const bool downward,
+        const float lineX)
+    {
+        BaseCrumb* result = nullptr;
+        float rowTopY = 0.0f;
+        float nearest = k_maxFloat;
+        for (BaseCrumb& crumb : controlsAs<BaseCrumb>())
+        {
+            const float topY = crumb.topLeft().y;
+            const bool past = downward ? topY > fromTopY : topY < fromTopY;
+            if (!past)
+                continue;
+            const bool nearerRow = !result || (downward ? topY < rowTopY : topY > rowTopY);
+            if (!nearerRow && topY != rowTopY)
+                continue;
+            const float leftX = crumb.topLeft().x;
+            const AxisSpan span = { leftX, leftX + crumb.scaledWidth() };
+            const float distance = span.distanceTo(lineX);
+            if (nearerRow || distance < nearest)
+            {
+                result = &crumb;
+                rowTopY = topY;
+                nearest = distance;
+            }
+        }
+        return result;
     }
 
 }
