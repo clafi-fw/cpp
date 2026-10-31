@@ -83,7 +83,7 @@ namespace ClaFi
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
                     { ColorRuleOp::Set, 0.817269f },        // S
-                    { ColorRuleOp::Set, 0.544542f }         // E
+                    { ColorRuleOp::Set, 0.65880865f }       // E
                 }
             }
         };
@@ -379,7 +379,6 @@ namespace ClaFi
             },
             ColorRule{
                 .inputs{ RuleInput::Focused },
-                .andInputs{ RuleInput::WindowFocused },
                 .effect{
                     { ColorRuleOp::Offset, 0.382042f },     // S
                     { ColorRuleOp::Offset, 0.094934f }      // E
@@ -409,7 +408,7 @@ namespace ClaFi
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
                     { ColorRuleOp::Set, 1.0f },             // S
-                    { ColorRuleOp::Set, 0.544542f }         // E
+                    { ColorRuleOp::Set, 0.6627063f }        // E
                 }
             },
             ColorRule{
