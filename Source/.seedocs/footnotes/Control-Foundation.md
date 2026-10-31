@@ -337,7 +337,7 @@ The popup's target, `FormBase::popupTarget`, is the owner whichever part opened 
 upwards from each of these, then of the action itself:
 
 - the presenter asking;
-- the focused control;
+- the control the focus is on - Input::focusDelegate, the item where a container holds the focus;
 - the control a popup form was opened on;
 - the form's current item.
 

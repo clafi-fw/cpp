@@ -734,10 +734,12 @@ view.<span class="fn">onGetActionState</span>([&amp;](<span class="tp">GetAction
             <h2 id="internals">How It Works</h2>
 
             <h3 id="resolving">Resolving the Subject</h3>
-            <p>The walk starts at the control holding the focus and climbs the parent chain - the same path a key
-            takes. Each control is asked <code>GetActionStateEvent</code>, and the first that claims ends it. A
-            control with no handler for that event is stepped over without an event being built, so a form of
-            ordinary controls costs a pointer chase per level.</p>
+            <p>The walk starts at the control the focus is on and climbs the parent chain - the same path a key
+            takes. Where a container holds the focus for an item inside it, the walk starts at that item, so a
+            text box on a page claims Select All ahead of the page. Each control is asked
+            <code>GetActionStateEvent</code>, and the first that claims ends it. A control with no handler for that
+            event is stepped over without an event being built, so a form of ordinary controls costs a pointer
+            chase per level.</p>
             <p>The walk runs when a state is invalidated rather than per frame, and again when the action is
             actually run. Nothing is stored: two calls a frame apart may answer differently, which is the point -
             the answer belongs to whatever the user is in now.</p>

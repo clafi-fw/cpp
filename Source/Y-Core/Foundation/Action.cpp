@@ -236,11 +236,6 @@ namespace ClaFi
     {
         subject = nullptr;
 
-        // TODO: a container holding the focus answers for an item inside it, and
-        // Control::focusDelegate names that item. It is protected, so the walk starts at the
-        // holder and an item below it is not asked. Should Action be a friend of Control, or
-        // should the delegate be reachable the way FormBase::rootFocusDelegate already makes the
-        // root's reachable?
         const EntryControls entries = entryControls(form, presenter);
         for (std::size_t index = 0; index != entries.size(); ++index)
         {
@@ -298,10 +293,14 @@ namespace ClaFi
         // straight through to the ones below, which is what a presenter outside its subject - a
         // menu item over a text box - does every time.
         //
-        // The focus is the second, and it is only usable when it is in this form: there is one
-        // focus for the whole application, so a form that never took it sees a control in
-        // another window. An in-place editor took it, and a command typed into one acts there.
-        Control* focused = Input::focusedControl();
+        // The focus is the second, at the control it is on - Input::focusDelegate, the item a
+        // container holding the focus answers for. A key reaches that item first, and an action
+        // has to agree: walked from the holder, a box on a page would never hear its own Ctrl+A.
+        //
+        // It is only usable when it is in this form: there is one focus for the whole
+        // application, so a form that never took it sees a control in another window. An
+        // in-place editor took it, and a command typed into one acts there.
+        Control* focused = Input::focusDelegate();
         if (focused && &focused->form() != &form)
             focused = nullptr;
 
