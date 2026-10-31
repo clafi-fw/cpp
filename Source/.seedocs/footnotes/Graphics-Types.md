@@ -98,9 +98,14 @@ Direct2D reads a bitmap. ShadowPainter's tiles are baked that way.
 ## Canvas fillEdgeIndicator
 
 **The band follows the outline along one side and round its two corners.** It is thickness deep
-along the side. Round each corner its inner edge is one arc, its radius the corner's radius plus
-the thickness. The arc leaves the inner line along it and meets the neighbouring side along it,
-so the band reaches up that side twice the thickness past the corner's arc and thins to a point.
+along the side and only thins from there. Round each corner its inner edge is one arc. The arc
+leaves the inner line along it and meets the neighbouring side along it, where the band ends in a
+point.
+
+**The arc's radius is the corner's, or the thickness where that is larger.** With the corner's
+radius the arc is the corner's own arc moved in by the thickness, and the band reaches one
+thickness past the corner's arc. A larger arc would swell the band past its thickness round the
+corner. A square corner takes the thickness, so the band still wraps it.
 
 **Draw it after the outline.** The band starts at the shape's outer edge, so drawn last it covers
 the outline along that side, as a tab's indicator covers the tab line.

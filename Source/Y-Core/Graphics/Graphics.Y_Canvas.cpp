@@ -978,10 +978,13 @@ namespace ClaFi::Graphics
         const ArcSweep innerArcSweep =
             frameIsMirrored ? ArcSweep::Clockwise : ArcSweep::CounterClockwise;
 
+        // An inner arc larger than the corner's would swell the band round the corner. One as
+        // large as the thickness keeps a square corner wrapped.
+        const float startArcRadius = std::max(startCornerRadius, thickness);
+        const float endArcRadius = std::max(endCornerRadius, thickness);
+
         // From the tip on the neighbouring side at the start, along the outline to the tip at the
         // end, and back along the inner edge.
-        const float startArcRadius = startCornerRadius + thickness;
-        const float endArcRadius = endCornerRadius + thickness;
         PixelPath band;
         band.moveTo(onSide(0.0f, thickness + startArcRadius));
         band.lineTo(onSide(0.0f, startCornerRadius));
