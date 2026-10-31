@@ -554,7 +554,9 @@ namespace SeeDocs_App::Ui
     // The position waits for the layout: a page just built has no height to be scrolled through,
     // and a row selected as the page is built would be scrolled to by the pass otherwise. It is
     // measured from the item where the anchor names one, so a page laid out at another width
-    // shows the item where it stood.
+    // shows the item where it stood. **The item takes the focus where the page holds it.** A page
+    // switched to with the focus inside it is entered at its first stop, the title in the head,
+    // and a selection made in the body carries only a focus the body holds.
     Control& PageView::showAnchor(const std::wstring_view anchor,
         const std::optional<float> position)
     {
@@ -587,6 +589,8 @@ namespace SeeDocs_App::Ui
         {
             m_pageBox.body().setCurrentItem(item);
         }
+        if (isFocused())
+            item.setFocus();
         if (!position.has_value())
             item.scrollIntoViewOnAlign();
         return item;
