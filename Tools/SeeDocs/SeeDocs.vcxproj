@@ -178,7 +178,7 @@
     <ClCompile Include="Src\Ui\SeeDocs_App.Ui.SidebarTree.cpp" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Ui.SidebarTree.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_App.Ui.Workspace.cpp" />
-    <ClCompile Include="Src\Ui\SeeDocs_App.UiWorkspace.cppm" />
+    <ClCompile Include="Src\Ui\SeeDocs_App.Ui.Workspace.cppm" />
     <ClCompile Include="Src\Ui\SeeDocs_Win32.cpp" />
   </ItemGroup>
   <ItemGroup>

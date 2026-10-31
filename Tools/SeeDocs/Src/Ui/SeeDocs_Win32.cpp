@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 // **The whole of what this project knows about Windows**: the entry point the operating system
 // calls, the instance handle and the command line it hands over, and the two types the application
-// is built out of. SeeDocs itself is in SeeDocs_App.Main and names none of them.
+// is built out of. SeeDocs itself is in SeeDocs_App.Ui.Main and names none of them.
 namespace
 {
     // The command line as a project's folder: the one argument, its quotes taken off.

@@ -1,4 +1,4 @@
-import SeeDocs_App.Main;
+import SeeDocs_App.Ui.Main;
 
 import ClaFi.Platform.Wayland;
 
@@ -7,7 +7,7 @@ import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 // **The whole of what this entry point knows about Wayland**: the two types the application is
-// built out of, and the arguments arriving as UTF-8. SeeDocs itself is in SeeDocs_App.Main,
+// built out of, and the arguments arriving as UTF-8. SeeDocs itself is in SeeDocs_App.Ui.Main,
 // beside the Win32 entry point that names it the same way.
 //
 //   cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=wayland \
