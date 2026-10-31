@@ -128,17 +128,25 @@ from https:// to the next blank in one becomes a link.
 
 **Every text is a read-only TextBox**, so its links work and it can be selected and copied.
 
-**The update row** shows what the check found:
+**The first update row** shows what the check found:
 
 - Unchecked - only the button.
 - Checking - "Checking for updates…", the button dimmed.
 - Latest - "You're up to date".
-- Newer - "Version 0.2.0 is out", and a link to the release page.
+- Newer - "Version 0.2.0 is available", a link to the release page.
 - Failed - "Could not check for updates", and the button reads Try again.
 
-Checking, Latest and Failed show "last check:" under them, with the age of the last answer that
-arrived. The age is worked out when the page is built and when the check moves. The answer is kept
-in the config, so a new run shows an earlier run's - see UpdateCheck::keepIn.
+**The second row holds Check automatically**, and at its end "last check:" with the age of the
+last answer that arrived. The age is worked out when the page is built and when the check moves.
+The answer is kept in the config, so a new run shows an earlier run's - see UpdateCheck::keepIn.
+
+**Check automatically asks at the application's start**, at most once in 24 hours - see
+UpdateCheck::startIfDue. The value is kept in the config, so ticking it where no settings folder
+exists asks for one first - see allowSettingsStorage. The box stays clear where the answer is no.
+
+**A newer release is told at start as a notice**, where Check automatically is on - found by the
+check made then, or kept from an earlier run's answer where no check is due. Visit opens the
+release page, and its tooltip shows the address. A check made later from the page raises no notice.
 
 ## AppPageBuilder
 
@@ -165,6 +173,12 @@ options, which keep one place in every application.
         Stack& editors = page.addGroup(L"External editors");
         editors.add<TextBox>(PlaceHolderText{ L"A command line" });
     });
+
+## allowSettingsStorage
+
+**The question Keep settings on this PC asks when it is ticked**, for any option that means nothing
+unless the config is kept. Ok makes the folder and writes the config into it at once. The question
+names the folder to be made, so ask it only where AppContext::configFolderExists is false.
 
 ## AppCommandHandler
 
@@ -227,6 +241,8 @@ ties it back. The message says what happened.
 
 **An answer is something the application does** about the notice - Settings, Rescan, Release page.
 Dismiss follows the answers on every notice.
+
+**An answer's tooltip says where it leads** where the caption does not - the address a Visit opens.
 
 ## NoticeAnswerHandler
 

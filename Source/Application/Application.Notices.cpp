@@ -233,6 +233,7 @@ namespace ClaFi
                             notices().answer(id, index, event);
                         });
                     },
+                    TooltipText{ notice.answers[index].tooltip },
                     Interactivity::MouseOnly
                 );
             }

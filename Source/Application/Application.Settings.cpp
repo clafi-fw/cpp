@@ -38,6 +38,7 @@ import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 // HostProps and BodyProps are declared here - see WithBody, which the options box is one of.
 import ClaFi.Core.System.Props;
@@ -223,6 +224,39 @@ namespace ClaFi
     void connectAppSettings(AppMenuPageBuilder build)
     {
         mutableAppSettings().push_back(std::move(build));
+    }
+
+    // allowSettingsStorage
+
+    // **Asked before the folder is made**, because the folder is what is being allowed: the path is
+    // in the question so that what appears on the disk is what was read there.
+    bool allowSettingsStorage(Control& owner)
+    {
+        AppContext& context = owner.appContext();
+        // The name stands as it is spelled.
+        Text message{};
+        message << context.appName();
+        message << L" will make a folder to store its settings:";
+        message << k_endLine;
+        message << folderText(context, FolderDisplayPurpose::ToCreate);
+
+        MessageDialog dialog{
+            owner,
+            L"Setup settings storage",
+            message,
+            MessageIcon::Question
+        };
+        dialog.onLinkClick(openLinkedFolder);
+        dialog.add(DialogAnswer::Ok);
+        dialog.add(DialogAnswer::Cancel);
+        if (dialog.execute() != DialogAnswer::Ok)
+            return false;
+
+        context.ensureConfigFolder();
+        // Written at once rather than at the application's exit: the answer was about keeping
+        // settings on this computer, and an empty directory keeps nothing.
+        context.config().save();
+        return true;
     }
 
     // OptionsPage
@@ -522,7 +556,7 @@ namespace ClaFi
             if (appContext().configFolderExists())
                 withdrawStorage();
             else
-                allowStorage();
+                allowSettingsStorage(m_keepSettings);
             m_keepSettings.invalidateState();
         });
         // Unticked, what the answer is for. Ticked, where the settings are kept.
@@ -541,35 +575,13 @@ namespace ClaFi
                 event.text << L"things between sessions.";
             }
         });
-    }
-
-    // **Asked before the folder is made**, because the folder is what is being allowed: the path is
-    // in the question so that what appears on the disk is what was read there.
-    void SettingsPage::allowStorage()
-    {
-        // The name stands as it is spelled.
-        Text message{};
-        message << appContext().appName();
-        message << L" will make a folder to store its settings:";
-        message << k_endLine;
-        message << folderText(appContext(), FolderDisplayPurpose::ToCreate);
-
-        MessageDialog dialog{
-            m_keepSettings,
-            L"Setup settings storage",
-            message,
-            MessageIcon::Question
-        };
-        dialog.onLinkClick(openLinkedFolder);
-        dialog.add(DialogAnswer::Ok);
-        dialog.add(DialogAnswer::Cancel);
-        if (dialog.execute() != DialogAnswer::Ok)
-            return;
-
-        appContext().ensureConfigFolder();
-        // Written at once rather than at the application's exit: the answer was about keeping
-        // settings on this computer, and an empty directory keeps nothing.
-        appContext().config().save();
+        // **Another page can make the folder** while this one stands in the menu - see
+        // allowSettingsStorage - so the check re-reads whenever the folder comes or goes.
+        m_configFolderConnection = ScopedEventConnection{
+            appContext().events().connect<ConfigFolderSwitchEvent>(
+                [this](ConfigFolderSwitchEvent&) {
+                    m_keepSettings.invalidateState();
+                }) };
     }
 
     // The whole folder goes, which is what the question names. The publisher's folder above it

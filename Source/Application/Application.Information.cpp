@@ -1,11 +1,15 @@
 module ClaFi.App.Information;
 
+import ClaFi.App.Settings;
+
 import ClaFi.Controls.Button;
+import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Divider;
 import ClaFi.Controls.Spacer;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
@@ -27,8 +31,10 @@ namespace ClaFi
     {
         // The name, and the version at the far end of its line.
         [[nodiscard]] Text titleText(const AppContext&);
-        // What the check found, and under it how long ago, or where the newer release is.
-        [[nodiscard]] Text statusText(const UpdateCheck&, std::chrono::sys_seconds now);
+        // What the check found.
+        [[nodiscard]] Text statusText(const UpdateCheck&);
+        // How long ago the last answer arrived - empty until one has.
+        [[nodiscard]] Text lastCheckText(const UpdateCheck&, std::chrono::sys_seconds now);
         // The rest of the page - publisher, site, description, framework.
         [[nodiscard]] Text aboutText(const AppContext&);
         // Appends a plain paragraph, every web address in it made a link.
@@ -65,7 +71,7 @@ namespace ClaFi
             titleText(params.appContext())
         );
         if (appContext().updateCheck().available())
-            addUpdateRow();
+            addUpdateRows();
         add<TextBox>(
             ReadOnly::Yes,
             Padding{ 0.0f },
@@ -75,22 +81,40 @@ namespace ClaFi
         );
     }
 
-    // **The row spans the page**, so the button stands at the end of the line the version ends. The
-    // status is hidden until there is something to say - see stateUpdateRow.
-    void InformationPage::addUpdateRow()
+    // **The rows span the page**, so the button and the age stand at the end of the line the
+    // version ends. The status and the age are hidden until there is something to say - see
+    // stateUpdateRows.
+    void InformationPage::addUpdateRows()
     {
-        StackPanel& row = add<StackPanel>(
+        StackPanel& statusRow = add<StackPanel>(
             Orientation::Horizontal,
             Spacing{ k_pageSpacing }
         );
-        m_status = &row.add<TextBox>(
+        m_status = &statusRow.add<TextBox>(
             ReadOnly::Yes,
             Padding{ 0.0f },
             VerticalAlign::Center
         );
-        row.add<FlexSpacer>();
-        m_checkButton = &row.add<Button>(
+        statusRow.add<FlexSpacer>();
+        m_checkButton = &statusRow.add<Button>(
             L"Check for updates",
+            VerticalAlign::Center
+        );
+        StackPanel& automaticRow = add<StackPanel>(
+            Orientation::Horizontal,
+            Spacing{ k_pageSpacing }
+        );
+        // No padding at the sides, so the box lines up with the status text above it.
+        m_checkAutomaticallyBox = &automaticRow.add<CheckBox>(
+            L"Check automatically",
+            TooltipText{ L"Checks for updates on start, at most once in 24 hours" },
+            Padding{ 0.0f, themeMetrics().listItem.padding.y },
+            VerticalAlign::Center
+        );
+        automaticRow.add<FlexSpacer>();
+        m_lastCheckLine = &automaticRow.add<TextBox>(
+            ReadOnly::Yes,
+            Padding{ 0.0f },
             VerticalAlign::Center
         );
         add<Divider>();
@@ -101,30 +125,48 @@ namespace ClaFi
         m_checkButton->onClick([this](ClickEvent&) {
             appContext().updateCheck().start();
         });
+        m_checkAutomaticallyBox->onGetState([this](GetStateEvent& event) {
+            event.state.selected = appContext().updateCheck().automatic();
+        });
+        // **The answer is kept in the config**, so turning it on where no settings folder exists
+        // asks for one first - the question Keep settings on this PC asks.
+        m_checkAutomaticallyBox->onClick([this](ClickEvent&) {
+            UpdateCheck& updates = appContext().updateCheck();
+            const bool turningOn = !updates.automatic();
+            if (turningOn && !appContext().configFolderExists())
+            {
+                if (!allowSettingsStorage(*m_checkAutomaticallyBox))
+                    return;
+            }
+            updates.setAutomatic(turningOn);
+            m_checkAutomaticallyBox->invalidateState();
+        });
         m_updateConnection = ScopedEventConnection{ appContext().updateCheck().onChange(
             [this](UpdateCheckEvent&) {
-                stateUpdateRow();
+                stateUpdateRows();
                 invalidateFormAlign();
             }) };
-        stateUpdateRow();
+        stateUpdateRows();
     }
 
     // **The age is worked out here and nowhere else** - when the page is built, which is every time
     // the menu opens, and when the check moves. It does not tick while the menu stays open.
-    void InformationPage::stateUpdateRow()
+    void InformationPage::stateUpdateRows()
     {
         const UpdateCheck& updates = appContext().updateCheck();
         const std::chrono::sys_seconds now =
             std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
         m_status->setVisible(updates.state() != UpdateState::Unchecked);
-        m_status->text() = statusText(updates, now);
+        m_status->text() = statusText(updates);
+        m_lastCheckLine->setVisible(updates.answeredAt().has_value());
+        m_lastCheckLine->text() = lastCheckText(updates, now);
         m_checkButton->text() = Text{
             updates.state() == UpdateState::Failed ? L"Try again" : L"Check for updates"
         };
         m_checkButton->invalidateState();
     }
 
-    // titleText, statusText, aboutText
+    // titleText, statusText, lastCheckText, aboutText
 
     namespace
     {
@@ -142,9 +184,9 @@ namespace ClaFi
             return text;
         }
 
-        // **A newer release names its page in place of the age.** The address in full runs under
-        // the button at the page's usual width, so the line links it under a name.
-        Text statusText(const UpdateCheck& updates, const std::chrono::sys_seconds now)
+        // **A newer release is linked from the status line** - the address in full would run under
+        // the button at the page's usual width.
+        Text statusText(const UpdateCheck& updates)
         {
             Text text{ TextStyle::SubHeading };
             switch (updates.state())
@@ -158,32 +200,29 @@ namespace ClaFi
                     text << L"You're up to date";
                     break;
                 case UpdateState::Newer:
+                    text << PushLink{ updates.releaseAddress() };
                     text << L"Version ";
                     text << updates.newerVersion();
-                    text << L" is out";
+                    text << L" is available";
+                    text << PopLink{};
                     break;
                 case UpdateState::Failed:
                     text << L"Could not check for updates";
                     break;
             }
             text << PopTextStyle{};
-            if (updates.state() == UpdateState::Newer)
+            return text;
+        }
+
+        Text lastCheckText(const UpdateCheck& updates, const std::chrono::sys_seconds now)
+        {
+            Text text{ TextStyle::SubBody };
+            if (updates.answeredAt())
             {
-                text << k_endLine;
-                text << TextStyle::SubBody;
-                text << PushLink{ updates.releaseAddress() };
-                text << L"GitHub release page";
-                text << PopLink{};
-                text << PopTextStyle{};
-            }
-            else if (updates.answeredAt())
-            {
-                text << k_endLine;
-                text << TextStyle::SubBody;
                 text << L"last check: ";
                 text << ageSpelling(updates.answeredAt().value(), now);
-                text << PopTextStyle{};
             }
+            text << PopTextStyle{};
             return text;
         }
 

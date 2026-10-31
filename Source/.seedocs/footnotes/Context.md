@@ -47,6 +47,15 @@ Raised on `AppContext::events()` when `AppContext::alwaysShowFocus` is written.
 **Only the focused control re-reads its state** - FormBase::invalidateFocusedState, in the form
 it stands in - since VisualStateIndex::Current is the one thing the answer reaches.
 
+## ConfigFolderSwitchEvent
+
+Raised on `AppContext::events()` by AppContext::ensureConfigFolder and
+AppContext::deleteConfigFolder, where the folder comes or goes. `AppContext::configFolderExists`
+returns the answer.
+
+**A control showing the answer re-reads its state on it.** One page of the menu can make the
+folder while another stands - Check automatically does, and Keep settings on this PC re-reads.
+
 ## ScaleSwitchEvent
 
 Raised on `AppContext::events()`. `AppContext::scalePercent` returns the percent.
@@ -220,7 +229,8 @@ theme's full depth, and a `ZAnimation` key in a config is discarded as unrecogni
 
 **Storing waits for the user's permission**, and the config folder is that permission. With the
 folder there, the application reads its config on every start. The flag is read off the folder at
-start, set by ensureConfigFolder and cleared by deleteConfigFolder.
+start, set by ensureConfigFolder and cleared by deleteConfigFolder, each raising
+ConfigFolderSwitchEvent.
 
 A window's placement waits for it too: there is no config to restore from, and on Wayland no
 session is asked of the compositor.
@@ -276,7 +286,8 @@ on Wayland, so a Close goes through wnd_closeRequested.
 Built from AppParams::updates and the version, and alive as long as the context, so an answer
 outlives the page that asked.
 
-**It asks only when the user does** - the Information page's button calls start.
+**It asks when the user does**, through the Information page's button, and at the application's
+start where Check automatically is on - see UpdateCheck::startIfDue.
 
 **The last answer is kept in the config** under `UpdateCheck`, where the check is available and the
 user allowed storing.
@@ -320,8 +331,14 @@ Each version reads as major.minor.patch, and a tag that reads otherwise is skipp
 - `AnsweredAt` - UTC to the second, as `2026-10-04T09:20:34Z`.
 - `NewestVersion` - the newest published version as its tag spells it after the prefix, newer or
   not. Empty where no tag is published.
+- `Automatic` - true where Check automatically is ticked. False by default.
 
-Both are text. AppContext keeps the section under `UpdateCheck`.
+The first two are text. AppContext keeps the section under `UpdateCheck`.
+
+## UpdateCheck automatic
+
+**Kept in the config beside the answer**, so it lasts past the run only where the user allowed
+storing. False until keepIn has a section to read it from.
 
 ## UpdateCheck::keepIn
 
@@ -337,3 +354,10 @@ a date that does not exist. The state stays `Unchecked`.
 
 **Call it from outside an OnChange handler** - start replaces the fetch whose done event may be
 raising that handler.
+
+## UpdateCheck startIfDue
+
+**ApplicationBase::initialize calls it once**, after the config is read. It asks where automatic is
+on and no answer arrived in the last 24 hours, whichever way that answer was asked for.
+
+**A failure stores no answer**, so the next start asks again.

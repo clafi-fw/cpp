@@ -70,6 +70,11 @@ namespace ClaFi
     {
     };
 
+    // The config folder has been made or deleted, and what shows it re-reads. See Context
+    export struct ConfigFolderSwitchEvent : public Event
+    {
+    };
+
 #if CLAFI_TEXT_MOVING
     // The Z animation amount has moved, and every window repaints. See Context
     export struct ZAnimationSwitchEvent : public Event
@@ -575,6 +580,7 @@ namespace ClaFi
             return;
         std::filesystem::create_directories(folder);
         m_configFolderExists = true;
+        m_events.emit<ConfigFolderSwitchEvent>();
     }
 
     // **Everything under the folder goes**, because the folder is what the user was asked about: a
@@ -594,6 +600,7 @@ namespace ClaFi
         std::error_code error{};
         std::filesystem::remove_all(folder, error);
         m_configFolderExists = false;
+        m_events.emit<ConfigFolderSwitchEvent>();
 
         const std::filesystem::path publisher = folder.parent_path();
         if (publisher.empty())

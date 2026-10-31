@@ -32,15 +32,21 @@ namespace ClaFi
         // The moment a spelling names, or none for anything utcSpelling would not have written.
         [[nodiscard]] UpdateCheck::AnswerTime parseUtcSpelling(std::wstring_view spelling);
 
-        // Both values of the section an answer is kept in.
+        // The two values an answer is kept in.
         using RecordNode = Dom::Value<std::wstring>;
+        // The value Check automatically writes, in the same section.
+        using AutomaticNode = Dom::Value<bool>;
 
-        // The names of the two values in that section.
+        // The names of the values in that section.
         namespace RecordNodes
         {
             constexpr std::wstring_view AnsweredAt = L"AnsweredAt";
             constexpr std::wstring_view NewestVersion = L"NewestVersion";
+            constexpr std::wstring_view Automatic = L"Automatic";
         }
+
+        // The least time from the last answer to the question startIfDue asks.
+        constexpr std::chrono::hours k_automaticInterval{ 24 };
 
         // Where GitHub answers questions about a repository, and where it shows one.
         constexpr std::wstring_view k_apiAddress{ L"https://api.github.com/repos/" };
@@ -71,7 +77,8 @@ namespace ClaFi
     {
         return {
             Dom::Dt::Value{ RecordNodes::AnsweredAt, std::wstring{} },
-            Dom::Dt::Value{ RecordNodes::NewestVersion, std::wstring{} }
+            Dom::Dt::Value{ RecordNodes::NewestVersion, std::wstring{} },
+            Dom::Dt::Value{ RecordNodes::Automatic, false }
         };
     }
 
@@ -90,6 +97,20 @@ namespace ClaFi
         address += m_source.tagPrefix;
         address += m_newerVersion;
         return address;
+    }
+
+    bool UpdateCheck::automatic() const
+    {
+        if (!m_record)
+            return false;
+        return (*m_record / RecordNodes::Automatic).as<AutomaticNode>().get();
+    }
+
+    void UpdateCheck::setAutomatic(const bool enabled)
+    {
+        if (!m_record)
+            return;
+        (*m_record / RecordNodes::Automatic).as<AutomaticNode>().set(enabled);
     }
 
     // **The section's own change is what a stored answer arrives on.** The config is read after the
@@ -115,6 +136,18 @@ namespace ClaFi
             finish(event.sender());
         });
         setState(UpdateState::Checking);
+    }
+
+    // **The time is the last answer's**, and a failure stores none, so the next start asks again.
+    void UpdateCheck::startIfDue()
+    {
+        if (!automatic())
+            return;
+        const std::chrono::sys_seconds now =
+            std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now());
+        if (m_answeredAt && now - m_answeredAt.value() < k_automaticInterval)
+            return;
+        start();
     }
 
     std::wstring UpdateCheck::tagsAddress() const

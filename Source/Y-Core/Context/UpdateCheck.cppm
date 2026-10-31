@@ -62,10 +62,16 @@ namespace ClaFi
         [[nodiscard]] std::wstring releaseAddress() const;
         // When the last answer arrived, in this run or an earlier one - none until one has.
         [[nodiscard]] AnswerTime answeredAt() const { return m_answeredAt; }
+        // Whether the check asks by itself when the application starts. See Context
+        [[nodiscard]] bool automatic() const;
+        // Writes automatic into the section keepIn took, where it took one.
+        void setAutomatic(bool enabled);
         // Takes the answer the section holds and keeps every later one there. See Context
         void keepIn(Dom::Section&);
         // Asks, unless the question is out already. See Context
         void start();
+        // Calls start where automatic is on and no answer arrived in the last 24 hours. See Context
+        void startIfDue();
     private:
         // Where the tags starting with the prefix are listed.
         [[nodiscard]] std::wstring tagsAddress() const;

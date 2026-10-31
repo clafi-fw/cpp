@@ -21,6 +21,7 @@ namespace ClaFi
     {
         std::wstring caption{};
         NoticeAnswerHandler run{};
+        std::wstring tooltip{}; // what the button's tooltip says - none where empty
     };
 
     export using NoticeAnswers = std::vector<NoticeAnswer>;

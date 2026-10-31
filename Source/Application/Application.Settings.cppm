@@ -17,6 +17,7 @@ import ClaFi.Controls.Divider;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -76,7 +77,6 @@ namespace ClaFi
             RowCaption(const CreateParams&, std::wstring_view caption);
         };
     private:
-        void allowStorage(); // asks, and makes the folder where the answer allows it
         void withdrawStorage(); // asks, and takes the folder away where the answer allows it
         void writeScaleReadout(); // writes the percent the application is drawn at into the readout
 #if CLAFI_TEXT_MOVING
@@ -122,6 +122,8 @@ namespace ClaFi
         StackPanel& m_footer;
         Controls::Divider& m_footerDivider;
         CheckBox& m_keepSettings;
+        // Re-reads m_keepSettings where the folder comes or goes from another page.
+        ScopedEventConnection m_configFolderConnection{};
     };
 
     // What an application puts on a page of the backstage, its own or Settings. See Application
@@ -144,6 +146,9 @@ namespace ClaFi
 
     // Adds the application's own groups to Settings, under the common ones. See Application
     export void connectAppSettings(AppMenuPageBuilder);
+
+    // Asks to make the settings folder and makes it on Ok - true where it was made. See Application
+    export bool allowSettingsStorage(Control& owner);
 
 
     //-------------------------------------------------------------------------

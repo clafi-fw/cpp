@@ -10,6 +10,7 @@ import ClaFi.Application.ThemesManager;
 import ClaFi.StdActions.Transfer;
 import ClaFi.StdActions;
 
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.Core.Foundation;
@@ -85,6 +86,9 @@ namespace ClaFi
         void finalize();
     private:
         std::filesystem::path& initializeConfigPath(const AppParams&);
+        // Tells of a newer release at start, where Check automatically is on.
+        void connectUpdateNotice();
+        void postUpdateNotice(); // puts the newer release up as a notice, where there is one
     private:
         bool m_finalized{ false };
         // --- Paths ---
@@ -101,6 +105,10 @@ namespace ClaFi
         // Built over the path above, which initializeConfigPath has filled in by the time the
         // context is constructed.
         ThemesManager m_themesManager{ m_themesPath };
+        NoticeHandle m_updateNotice{};
+        // Whether the check made at start is still to answer - its answer alone is told.
+        bool m_startAnswerAwaited{ false };
+        ScopedEventConnection m_updateCheckConnection{};
     };
 
     template<typename T>
@@ -211,6 +219,8 @@ namespace ClaFi
                 L"config {} {}", read ? L"read" : L"absent", config().path().wstring()));
         }
         restoreDiagnosticLogState();
+        // After the config is read, which is where Check automatically is kept.
+        connectUpdateNotice();
     }
 
     // **What the user allowed to be kept is kept**, whether or not the application saves for
@@ -269,6 +279,59 @@ namespace ClaFi
         m_themesPath = m_configSharePath;
         m_themesPath.append(k_themesFolderName);
         return m_configFilePath;
+    }
+
+    // **Told once, at start.** An answer kept by an earlier run is told at once where no check is
+    // due, and a check that is due is told when it answers. A later answer is the Information
+    // page's to show. The connection stays for the application's life: a handler that dropped it
+    // would take down the listener it is running in.
+    void ApplicationBase::connectUpdateNotice()
+    {
+        UpdateCheck& updates = m_context.updateCheck();
+        if (!updates.automatic())
+            return;
+        updates.startIfDue();
+        if (updates.state() != UpdateState::Checking)
+        {
+            postUpdateNotice();
+            return;
+        }
+        m_startAnswerAwaited = true;
+        m_updateCheckConnection = ScopedEventConnection{ updates.onChange(
+            [this](UpdateCheckEvent& event) {
+                if (!m_startAnswerAwaited || event.sender().state() == UpdateState::Checking)
+                    return;
+                m_startAnswerAwaited = false;
+                postUpdateNotice();
+            }) };
+    }
+
+    void ApplicationBase::postUpdateNotice()
+    {
+        const UpdateCheck& updates = m_context.updateCheck();
+        if (updates.state() != UpdateState::Newer)
+            return;
+        const std::wstring address = updates.releaseAddress();
+        Text message{};
+        message << L"Version ";
+        message << updates.newerVersion();
+        message << L" is available - you have ";
+        message << m_context.version();
+        message << L".";
+        m_updateNotice = notices().post(Notice{
+            .icon = MessageIcon::Information,
+            .title = L"Update available",
+            .message = std::move(message),
+            .answers = {
+                NoticeAnswer{
+                    .caption = L"Visit",
+                    .run = [address](ClickEvent&) {
+                        Platform::shellExecute(nullptr, address);
+                    },
+                    .tooltip = address
+                }
+            }
+        });
     }
 
     // ApplicationBase
