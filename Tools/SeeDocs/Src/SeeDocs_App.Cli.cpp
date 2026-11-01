@@ -1,5 +1,6 @@
 module SeeDocs_App.Cli;
 
+import SeeDocs_App.Articles;
 import SeeDocs_App.Checks;
 import SeeDocs_App.Database;
 import SeeDocs_App.Project;
@@ -35,10 +36,10 @@ namespace SeeDocs_App
             L"\n"
             L"The folder is a project's own, holding its Project.cfg; the working\n"
             L"directory when left out. A project reads the folders of sources its Project.cfg\n"
-            L"names, as it says; one with ReadAs = AnyCppAndDelphi is not\n"
-            L"checked. A scan with --out takes any other folder too, read as ClaFi modules; one\n"
-            L"with --time prints how long each step of the scan took, then the write of the\n"
-            L"database and the read of it SeeDocs shows a scan from.\n";
+            L"names, as it says; a check of one with ReadAs = AnyCppAndDelphi covers its\n"
+            L"articles alone. A scan with --out takes any other folder too, read as ClaFi\n"
+            L"modules; one with --time prints how long each step of the scan took, then the\n"
+            L"write of the database and the read of it SeeDocs shows a scan from.\n";
 
         // The process's text goes out as UTF-8, whichever platform the console belongs to.
         void print(const std::wstring_view text)
@@ -169,8 +170,22 @@ namespace SeeDocs_App
             return k_ok;
         }
 
-        // A project reading any C++ is held to nothing: what the checks ask is the routine's. The
-        // footnotes the references reach are a project's, so a folder that is none is refused.
+        // A line for each article no item of the sidebar reaches, its path under the project's.
+        [[nodiscard]] std::wstring unreachedText(const Project& project,
+            const std::vector<std::filesystem::path>& articles)
+        {
+            std::wstring text;
+            for (const std::filesystem::path& article : articles)
+            {
+                text += article.lexically_relative(project.folder).generic_wstring();
+                text += L": warning: no item of the sidebar reaches this article\n";
+            }
+            return text;
+        }
+
+        // **A project reading any C++ has its articles checked alone**: what the checks ask of
+        // the sources is the routine's. The footnotes the references reach are a project's, so a
+        // folder that is none is refused.
         [[nodiscard]] int check(const Options& options)
         {
             const Project project = projectOf(options.folder);
@@ -179,18 +194,22 @@ namespace SeeDocs_App
                 print(L"No project stands for " + options.folder.wstring() + L"\n");
                 return k_misused;
             }
+            const std::vector<std::filesystem::path> unreached = Articles::unreached(project);
             if (project.mode == ScanMode::AnyCppAndDelphi)
             {
-                print(project.name + L" reads any C++ and Delphi, which checks nothing\n");
+                print(unreachedText(project, unreached));
+                print(project.name + L" reads any C++ and Delphi, so its sources are not checked; "
+                    + std::to_wstring(unreached.size()) + L" warnings\n");
                 return k_ok;
             }
             const Surface surface = scanSources(project.sourceFolders(), ScanMode::ClaFiModules,
                 project.hints);
             const Report report = checkSurface(surface, project.footnotesFolder());
             print(formatReport(report, surface));
+            print(unreachedText(project, unreached));
             print(L"\n" + std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(report.errorCount()) + L" errors, "
-                + std::to_wstring(report.warningCount()) + L" warnings\n");
+                + std::to_wstring(report.warningCount() + unreached.size()) + L" warnings\n");
             return report.errorCount() == 0 ? k_ok : k_failed;
         }
     }

@@ -117,6 +117,8 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Src\SeeDocs_App.Articles.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.Articles.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Database.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Database.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Edits.cpp" />

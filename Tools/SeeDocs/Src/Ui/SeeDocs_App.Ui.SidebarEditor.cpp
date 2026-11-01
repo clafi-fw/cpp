@@ -478,7 +478,7 @@ namespace SeeDocs_App::Ui
                 row->row->invalidateFormAlign();
             }
         }
-        edit(std::move(items), false);
+        edit(std::move(items), false, path);
     }
 
     // The rows stand in the order carried, so the items are put in the order the rows name, and
@@ -500,9 +500,10 @@ namespace SeeDocs_App::Ui
         edit(std::move(items), true);
     }
 
-    void SidebarEditor::edit(SidebarItems items, const bool rebuild)
+    void SidebarEditor::edit(SidebarItems items, const bool rebuild,
+        std::optional<IndexPath> renamedAt)
     {
-        SidebarEditEvent event{ std::move(items) };
+        SidebarEditEvent event{ std::move(items), std::move(renamedAt) };
         emitEvent(event);
         if (rebuild)
             reload();

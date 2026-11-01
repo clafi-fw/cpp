@@ -311,11 +311,13 @@ namespace SeeDocs_App::Ui
 
     // SidebarEditedEvent
 
-    SidebarEditedEvent::SidebarEditedEvent(OpenProject& edited, SidebarItems toBe)
+    SidebarEditedEvent::SidebarEditedEvent(OpenProject& edited, SidebarItems toBe,
+        std::optional<IndexPath> renamedAt)
         :
         ::ClaFi::Event{},
         project{ edited },
-        items{ std::move(toBe) }
+        items{ std::move(toBe) },
+        renamedItem{ std::move(renamedAt) }
     {
     }
 
@@ -1206,7 +1208,8 @@ namespace SeeDocs_App::Ui
         editor.addCommands(page.head().titleCommandBar());
         OpenProject* open = &shown.open;
         editor.onEdit([this, open](SidebarEditEvent& event) {
-            SidebarEditedEvent edited{ *open, std::move(event.items) };
+            SidebarEditedEvent edited{ *open, std::move(event.items),
+                std::move(event.renamedItem) };
             emitEvent(edited);
         });
     }

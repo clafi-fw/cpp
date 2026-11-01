@@ -17,6 +17,8 @@ namespace SeeDocs_App
     export constexpr std::wstring_view k_scanCacheFileName = L"Scan.cache";
     // The footnotes' folder, under the project's own.
     export constexpr std::wstring_view k_footnotesFolder = L"footnotes";
+    // The articles' folder, under the project's own. See README#articles
+    export constexpr std::wstring_view k_articlesFolder = L"Articles";
 
     // What becomes of a hint edited on a page. See README
     export enum class HintEdits
@@ -74,6 +76,9 @@ namespace SeeDocs_App
         );
     }
 
+    // The names on the way down to an item, each category's, and the item's own last.
+    export using SidebarNames = std::vector<std::wstring>;
+
     // What a project's sidebar lists while its properties list nothing: the folders the
     // sources read, as one item.
     export [[nodiscard]] SidebarItems defaultSidebar();
@@ -100,6 +105,7 @@ namespace SeeDocs_App
         [[nodiscard]] std::filesystem::path databasePath() const;
         [[nodiscard]] std::filesystem::path scanCachePath() const;
         [[nodiscard]] std::filesystem::path footnotesFolder() const;
+        [[nodiscard]] std::filesystem::path articlesFolder() const;
         [[nodiscard]] SourceFolders sourceFolders() const;   // the sources, each read as a folder
         [[nodiscard]] SourceRoots sourceRoots() const;       // the sources' folders, a root each
         // A folder picked as the properties write it: relative while the two share one. See README

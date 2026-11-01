@@ -515,6 +515,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.SidebarRows.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.SidebarTree.cpp"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.Workspace.cpp"
+        "${seedocs_dir}/SeeDocs_App.Articles.cpp"
         "${seedocs_dir}/SeeDocs_App.Database.cpp"
         "${seedocs_dir}/SeeDocs_App.Edits.cpp"
         "${seedocs_dir}/SeeDocs_App.Notes.cpp"
@@ -547,6 +548,7 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.SidebarRows.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.SidebarTree.cppm"
         "${seedocs_dir}/Ui/SeeDocs_App.Ui.Workspace.cppm"
+        "${seedocs_dir}/SeeDocs_App.Articles.cppm"
         "${seedocs_dir}/SeeDocs_App.Database.cppm"
         "${seedocs_dir}/SeeDocs_App.Edits.cppm"
         "${seedocs_dir}/SeeDocs_App.Notes.cppm"
@@ -656,6 +658,7 @@ endif()
 set(seedocs_cli_dir "${CMAKE_CURRENT_SOURCE_DIR}/Tools/SeeDocs/Src")
 add_executable(SeeDocsCli
     "${seedocs_cli_dir}/SeeDocsCli_Linux.cpp"
+    "${seedocs_cli_dir}/SeeDocs_App.Articles.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Checks.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Cli.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Database.cpp"
@@ -668,6 +671,7 @@ add_executable(SeeDocsCli
     "${seedocs_cli_dir}/SeeDocs_App.Scanner.cpp"
     "${seedocs_cli_dir}/SeeDocs_App.Surface.cpp")
 target_sources(SeeDocsCli PRIVATE FILE_SET CXX_MODULES FILES
+    "${seedocs_cli_dir}/SeeDocs_App.Articles.cppm"
     "${seedocs_cli_dir}/SeeDocs_App.Checks.cppm"
     "${seedocs_cli_dir}/SeeDocs_App.Cli.cppm"
     "${seedocs_cli_dir}/SeeDocs_App.Database.cppm"

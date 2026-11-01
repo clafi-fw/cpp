@@ -95,7 +95,7 @@ namespace SeeDocs_App::Ui
         // The items under one node were carried into another order.
         void itemsMoved(const IndexPath& under, StackPanel& rows);
         // Says what the sidebar is to be, and shows it read back where the shape changed.
-        void edit(SidebarItems, bool rebuild);
+        void edit(SidebarItems, bool rebuild, std::optional<IndexPath> renamedAt = std::nullopt);
         void selectionChanged();
     private:
         static constexpr float k_treeWidth = 340.0f;    // the bar the tree stands in

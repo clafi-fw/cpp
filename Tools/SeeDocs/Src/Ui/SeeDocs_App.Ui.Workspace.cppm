@@ -4,6 +4,7 @@ import SeeDocs_App.Ui.Browser;
 import SeeDocs_App.Ui.NewProject;
 import SeeDocs_App.Ui.FileWriter;
 import SeeDocs_App.Project;
+import SeeDocs_App.SidebarEdits;
 import SeeDocs_App.Surface;
 
 import ClaFi.App.Application;
@@ -72,9 +73,9 @@ namespace SeeDocs_App::Ui
         void setHints(OpenProject&, HintRules);
         // Whether a hint edited on a page is written into its source; the pages are built again.
         void setEdits(OpenProject&, HintEdits);
-        // What the project's sidebar is to be; the trees and the pages it is read into are built
-        // again.
-        void setSidebar(OpenProject&, SidebarItems);
+        // What the project's sidebar is to be, a renamed item's article moving with it; the trees
+        // and the pages it is read into are built again.
+        void setSidebar(OpenProject&, SidebarItems, const std::optional<IndexPath>& renamedItem);
         // Closes the project and every tab on it once the click that asked has unwound - the
         // page it was pressed on may be one of those going. What the browser's pages ask for.
         void closeLater(OpenProject&);

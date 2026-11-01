@@ -7,6 +7,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\SeeDocs_App.Articles.cpp">
+      <Filter>Src</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\SeeDocs_App.Articles.cppm">
+      <Filter>Src</Filter>
+    </ClCompile>
     <ClCompile Include="Src\SeeDocs_App.Checks.cpp">
       <Filter>Src</Filter>
     </ClCompile>

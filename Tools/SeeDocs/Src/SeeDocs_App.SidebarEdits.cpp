@@ -3,6 +3,7 @@ module SeeDocs_App.SidebarEdits;
 import SeeDocs_App.Project;
 
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -13,7 +14,38 @@ namespace SeeDocs_App
         constexpr std::wstring_view k_categoryName = L"New category";
         constexpr std::wstring_view k_contentName = L"New page";
         constexpr std::wstring_view k_apisName = L"All the APIs";
-        constexpr wchar_t k_pathSeparator = L'/';   // what a url parts an item's names with
+        // What no Windows file name holds, the slash that parts a url's names among it.
+        constexpr std::wstring_view k_unsafeCharacters = L"/\\:*?\"<>|";
+        constexpr std::wstring_view k_unsafeRefusal =
+            L"A name cannot hold any of / \\ : * ? \" < > |.";
+
+        // The device names Windows keeps, which no file takes, with an extension after them or not.
+        constexpr std::array<std::wstring_view, 30> k_deviceNames{
+            L"con", L"prn", L"aux", L"nul",
+            L"com0", L"com1", L"com2", L"com3", L"com4",
+            L"com5", L"com6", L"com7", L"com8", L"com9",
+            L"com\u00B9", L"com\u00B2", L"com\u00B3",
+            L"lpt0", L"lpt1", L"lpt2", L"lpt3", L"lpt4",
+            L"lpt5", L"lpt6", L"lpt7", L"lpt8", L"lpt9",
+            L"lpt\u00B9", L"lpt\u00B2", L"lpt\u00B3"
+        };
+
+        [[nodiscard]] bool holdsControlCharacter(const std::wstring_view name)
+        {
+            for (const wchar_t character : name)
+            {
+                if (character < L' ')
+                    return true;
+            }
+            return false;
+        }
+
+        [[nodiscard]] std::wstring folded(const std::wstring_view name)
+        {
+            std::wstring result{ name };
+            ::ClaFi::foldCase(result);
+            return result;
+        }
 
         // A name no item of the list goes by: the kind's, numbered where that is taken.
         [[nodiscard]] std::wstring newName(const SidebarKind kind, const SidebarItems& siblings)
@@ -42,10 +74,11 @@ namespace SeeDocs_App
 
     // SidebarEditEvent
 
-    SidebarEditEvent::SidebarEditEvent(SidebarItems edited)
+    SidebarEditEvent::SidebarEditEvent(SidebarItems edited, std::optional<IndexPath> renamedAt)
         :
         ::ClaFi::Event{},
-        items{ std::move(edited) }
+        items{ std::move(edited) },
+        renamedItem{ std::move(renamedAt) }
     {
     }
 
@@ -90,6 +123,19 @@ namespace SeeDocs_App
     SidebarItem* itemAt(SidebarItems& items, const IndexPath& path)
     {
         return const_cast<SidebarItem*>(itemAt(std::as_const(items), path));
+    }
+
+    SidebarNames namesTo(const SidebarItems& items, const IndexPath& path)
+    {
+        SidebarNames names;
+        const SidebarItems* list = &items;
+        for (const std::size_t index : path)
+        {
+            const SidebarItem& item = (*list)[index];
+            names.push_back(item.name);
+            list = &item.items;
+        }
+        return names;
     }
 
     IndexPath placeToAdd(const SidebarItems& items, const IndexPath* picked)
@@ -148,12 +194,24 @@ namespace SeeDocs_App
     {
         if (name.empty())
             return L"The name is empty.";
-        if (name.find(k_pathSeparator) != std::wstring_view::npos)
-            return L"A name cannot hold a slash.";
+        if (name.find_first_of(k_unsafeCharacters) != std::wstring_view::npos)
+            return std::wstring{ k_unsafeRefusal };
+        if (holdsControlCharacter(name))
+            return L"A name cannot hold a tab or another control character.";
+        if (name.back() == L'.' || name.back() == L' ')
+            return L"A name cannot end in a dot or a space.";
+        const std::wstring_view stem = name.substr(0, name.find(L'.'));
+        if (std::ranges::find(k_deviceNames, folded(stem)) != k_deviceNames.end())
+            return std::format(L"Windows keeps the name {} for a device.", stem);
+        const std::wstring foldedName = folded(name);
         for (const SidebarItem& sibling : siblings)
         {
-            if (&sibling != self && sibling.kind != SidebarKind::Divider && sibling.name == name)
+            if (&sibling == self || sibling.kind == SidebarKind::Divider)
+                continue;
+            if (sibling.name == name)
                 return L"Another item here is named so.";
+            if (folded(sibling.name) == foldedName)
+                return L"Another item here has this name in other letter case.";
         }
         return {};
     }

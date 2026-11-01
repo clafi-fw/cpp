@@ -108,6 +108,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Src\SeeDocs_App.Articles.cpp" />
+    <ClCompile Include="Src\SeeDocs_App.Articles.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Checks.cpp" />
     <ClCompile Include="Src\SeeDocs_App.Checks.cppm" />
     <ClCompile Include="Src\SeeDocs_App.Cli.cpp" />

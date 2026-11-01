@@ -23,9 +23,10 @@ namespace SeeDocs_App
     export class SidebarEditEvent : public ::ClaFi::Event
     {
     public:
-        explicit SidebarEditEvent(SidebarItems);
+        explicit SidebarEditEvent(SidebarItems, std::optional<IndexPath> renamedAt = std::nullopt);
     public:
         SidebarItems items;
+        std::optional<IndexPath> renamedItem;   // where the edit was a rename
     };
 
     export [[nodiscard]] std::wstring_view kindCaption(SidebarKind);
@@ -35,6 +36,9 @@ namespace SeeDocs_App
     // The item the path names; null where the items do not reach that far.
     export [[nodiscard]] const SidebarItem* itemAt(const SidebarItems&, const IndexPath&);
     export [[nodiscard]] SidebarItem* itemAt(SidebarItems&, const IndexPath&);
+    // The names on the way down to the item the path names. The path's indexes name items that
+    // are there.
+    export [[nodiscard]] SidebarNames namesTo(const SidebarItems&, const IndexPath&);
     // Where an item added with this one picked goes: the end of a category, after any other
     // item, and the end of the top level with none picked. See README
     export [[nodiscard]] IndexPath placeToAdd(const SidebarItems&, const IndexPath* picked);
@@ -49,8 +53,9 @@ namespace SeeDocs_App
     // Makes the item of the kind. One made a divider loses its name, and a divider made anything
     // else is named by its new kind.
     export void setKind(SidebarItems&, const IndexPath&, SidebarKind);
-    // Why the name cannot be the item's; empty where it can. A name is a segment of the item's
-    // url, so it holds no slash, and it tells the item from the others beside it.
+    // Why the name cannot be the item's; empty where it can. A name is a segment of the item's url
+    // and the name of its article's file or folder, so a file can take it on every desktop, and it
+    // tells the item from the others beside it, letter case aside. See README#names-and-files
     export [[nodiscard]] std::wstring refusalOf(std::wstring_view name,
         const SidebarItems& siblings, const SidebarItem* self);
     // Puts the items under the path in the order of their indexes as they stand - each named

@@ -11,6 +11,7 @@ import SeeDocs_App.Notes;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Project;
 import SeeDocs_App.Search;
+import SeeDocs_App.SidebarEdits;
 import SeeDocs_App.Surface;
 
 import ClaFi.App.Notices;
@@ -130,10 +131,11 @@ namespace SeeDocs_App::Ui
     export class SidebarEditedEvent : public ::ClaFi::Event
     {
     public:
-        SidebarEditedEvent(OpenProject&, SidebarItems);
+        SidebarEditedEvent(OpenProject&, SidebarItems, std::optional<IndexPath> renamedAt);
     public:
         OpenProject& project;
         SidebarItems items;
+        std::optional<IndexPath> renamedItem;   // where the edit was a rename
     };
 
     // A page asked for a new project to be made. The surface has an Event of its own.

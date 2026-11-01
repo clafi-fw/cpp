@@ -133,6 +133,11 @@ namespace SeeDocs_App
         return folder / k_footnotesFolder;
     }
 
+    std::filesystem::path Project::articlesFolder() const
+    {
+        return folder / k_articlesFolder;
+    }
+
     SourceFolders Project::sourceFolders() const
     {
         SourceFolders folders;

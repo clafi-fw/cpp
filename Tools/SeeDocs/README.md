@@ -44,6 +44,7 @@ A project is a folder of its own, kept wherever the user chooses. SeeDocs offers
 - `Surface.cfg` - the database the scanner writes
 - `Scan.cache` - what the last scan read of each file - see [Scan cache](#scan-cache)
 - `footnotes` - the notes the pages show beside the hints
+- `Articles` - the project's own pages, one per Content item - see [Articles](#articles)
 
 The sources stay where they are, in any number of folders, and are read in place.
 
@@ -460,6 +461,74 @@ follow it to disk:
 A hint edited on a page is saved the same way. SeeDocsCli writes the database itself, before it
 ends.
 
+## Articles
+
+**An article is a page of the project's own**, the one a Content item of the sidebar shows: a
+title, a lead under it, and blocks. Each is a file under the project's `Articles` folder, in a
+folder for each category on the way - the Content item Quick start under the category Guides reads
+`Articles/Guides/Quick start.cfg`. The pages show no article yet, and nothing makes one;
+`SeeDocs_App.Articles` reads and writes the files.
+
+An article is a list of blocks, each of one kind:
+
+- **Paragraph** - a paragraph of prose.
+- **Heading** - a heading at level 1 to 3 under the title, with the anchor a link reaches it by.
+  The anchor is made from the words once and kept when they change.
+- **ListItem** - an item of a bullet or a numbered list. A list is a run of items standing together.
+- **Code** - code as written, and the name of the Syntax language it is coloured in: `C++`,
+  `Pascal`, `JSON`, `XML`, `ClaFi`, or none for plain text.
+- **Table** - the header's cells, one to a column, and the rows. A row is a cell under each column,
+  or one group cell across the table.
+- **Figure** - a PNG or SVG file of the project's `Images` folder, reached from the article's file,
+  and a description of what it shows for a reader who cannot see it.
+- **DoDont** - a list of what to do beside a list of what not to.
+- **Callout** - an Info or a Warning box holding paragraphs, list items and code.
+- **Fold** - blocks shown under a summary when it is opened: any block but a callout or a fold.
+
+**The words are a Text**: a paragraph's, a heading's, a list item's, a cell's, a summary's and the
+lead. They are set in bold, italic, the code style and theme inks with their grades, and they hold
+links: to an anchor (`#name`), to an article by its sidebar path, to a page outside (`https://`),
+or to the reference by a qualified name (`ClaFi::Control::form`), found when the page is shown so
+that it holds while folders move. Names in code link by the rule the footnotes follow, and the
+article stores no such link.
+
+```
+Title = Writing ClaFi Text
+Lead = [ Text = One string and a list of markers ]
+Blocks = [
+    =[ Kind = Heading, Anchor = paragraphs, Text = [ Text = Paragraphs ] ]
+    =[ Kind = Paragraph, Text = [
+        Text = Call form() before the paint.
+        Markers = [ =[ At = 5, Tag = style code ] =[ At = 11, Tag = /style ] ]
+    ] ]
+    =[ Kind = Code, Language = C++, Code = import ClaFi.Core.Foundation; ]
+    =[ Kind = Callout, Callout = Warning, Blocks = [
+        =[ Kind = ListItem, List = Numbered, Text = [ Text = Register the action ] ]
+    ] ]
+]
+```
+
+**An entry states only what it has.** A key at its default is left out and reads back as that
+default: a heading at level 1, a bullet item, an Info callout, a row that is not a group, an empty
+word, a text's markers where it has none. Every cell of a row and every item of a Do list is
+written, an empty one too, so that the rest keep their places. A block whose Kind no block takes,
+or one its list may not hold - a callout inside a fold - is left out on reading.
+
+### Names and files
+
+**An item's name is the name of its article's file or folder**, so the sidebar refuses a name a
+file cannot take on Windows: one holding any of `/ \ : * ? " < > |` or a control character, one
+ending in a dot or a space, and a device name such as `CON`, `NUL.txt` or `COM1`. The names of two
+items beside each other differ in more than letter case, since a folder on Windows holds two such
+files as one.
+
+**The file follows its item.** Renaming a Content item renames its article, and renaming a
+category renames its folder with every article under it. Where something already stands at the new
+name, nothing moves: the item reaches what stands there, and the file it reached before is left
+for no item. Deleting an item, or making it another kind, leaves its article where it is, and an
+item given that name again reaches it. `check` lists the articles no item reaches - see
+[The checks](#the-checks).
+
 ## The window
 
 `SeeDocs` opens projects, as many at once as are asked for: the ones left open last time, and the
@@ -542,6 +611,7 @@ kinds.
   category's - with what each folder holds and why there is nothing to document where there is
   none. **In a subgroup** they stand under a node of the item's own, whose page says the same.
 - **Content** is a page of the project's own, with a name and, so far, nothing under its head.
+  Its words are an article - see [Articles](#articles).
 
 A new project's sidebar holds one All the APIs item, without a subgroup. **The folders stand where
 the sidebar's first All the APIs item puts them** - in its place, or under it in a subgroup - every
@@ -551,10 +621,10 @@ unlisted, where a link still reaches them.
 **Every item with a page is a segment of its url**, its name as the sidebar spells it -
 `/project/Guides/Quick start`. The folders follow where they stand: `/project/Core/...` under an
 All the APIs item at the top without a subgroup, `/project/All the APIs/Core/...` in one. Where an
-item and a folder go by one name in one place, the url names the item. An item's name holds no
-slash and is no other item's beside it, and renaming an item moves every url under it, as renaming
-the project does. Switching the subgroup moves the folders' urls, and a tab left on the old ones
-shows the gone page.
+item and a folder go by one name in one place, the url names the item. An item's name is one a
+file can take - see [Names and files](#names-and-files) - and is no other item's beside it in any
+letter case, and renaming an item moves every url under it, as renaming the project does.
+Switching the subgroup moves the folders' urls, and a tab left on the old ones shows the gone page.
 
 **The sidebar is edited on the sidebar page**, which Edit sidebar opens in the tab shown: on the
 home, under the title, and in the tree, on every row's menu, where the page opens with the row's
@@ -570,8 +640,8 @@ holds:
 - **Delete** takes the selected item out with everything under it. A category holding items asks
   first. Delete on the keyboard does the same.
 - **A name is typed where it stands**: a second click on the name, F2, or Rename from the row's
-  menu opens an editor over it. An empty name, a slash, or a name another item beside it goes by is
-  refused with the reason, the editor standing.
+  menu opens an editor over it. An empty name, one a file cannot take, or a name another item beside
+  it goes by in any letter case is refused with the reason, the editor standing.
 - **Kind**, at the right, is the selected item's kind, which a click on another answer changes. A
   category holding items keeps its kind. An item made a divider loses its name; a divider made
   anything else is named by its new kind.
@@ -1247,7 +1317,8 @@ there. A section that belongs to no declaration is found by the searches of whol
 - a value type declared under `Controls/Base`, where it reaches an application only through an
   import of the base
 
-A project reading any C++ and Delphi is held to nothing.
+Every project's check also lists the articles in its `Articles` folder that no Content item of
+the sidebar reaches. A project reading any C++ and Delphi has those checked alone.
 
 ## Building
 

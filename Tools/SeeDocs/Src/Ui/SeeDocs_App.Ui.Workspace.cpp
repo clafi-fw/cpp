@@ -3,10 +3,12 @@ module SeeDocs_App.Ui.Workspace;
 import SeeDocs_App.Ui.Browser;
 import SeeDocs_App.Ui.NewProject;
 import SeeDocs_App.Ui.FileWriter;
+import SeeDocs_App.Articles;
 import SeeDocs_App.Database;
 import SeeDocs_App.Project;
 import SeeDocs_App.Scanner;
 import SeeDocs_App.ScanCache;
+import SeeDocs_App.SidebarEdits;
 import SeeDocs_App.Surface;
 
 import ClaFi.Controls.AppButton;
@@ -175,7 +177,7 @@ namespace SeeDocs_App::Ui
             saveDatabase(event.project);
         });
         m_sidebarEdited = m_browser.onSidebarEdited([this](SidebarEditedEvent& event) {
-            setSidebar(event.project, std::move(event.items));
+            setSidebar(event.project, std::move(event.items), event.renamedItem);
         });
         m_writeFailed = m_writer.onWriteFailed([this](WriteFailedEvent& event) {
             noteUnwritten(event.file);
@@ -467,8 +469,19 @@ namespace SeeDocs_App::Ui
     }
 
     // A sidebar emptied reads back as the default, so the last item deleted gives way to it.
-    void Workspace::setSidebar(OpenProject& open, SidebarItems items)
+    void Workspace::setSidebar(OpenProject& open, SidebarItems items,
+        const std::optional<IndexPath>& renamedItem)
     {
+        if (renamedItem)
+        {
+            const SidebarItem* before = itemAt(open.project.sidebar, *renamedItem);
+            const SidebarItem* after = itemAt(items, *renamedItem);
+            if (before && after && before->kind == after->kind)
+            {
+                Articles::followRename(open.project, namesTo(open.project.sidebar, *renamedItem),
+                    namesTo(items, *renamedItem), after->kind);
+            }
+        }
         change(open, [&items](Project& project) {
             project.sidebar = std::move(items);
         }, Reread::Sidebar);
