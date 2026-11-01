@@ -163,6 +163,21 @@ inside the key-down, and the character of that press, queued before the dispatch
 the control the focus went back to - a space typed into a text box. m_popupTookKey answers the
 same shape for a popup.
 
+2026-11-01, later. The form root was described as a focus scope from the first public tree - so
+that Home, End and the page keys had something to move within - and createDialog's comment said
+the root was offered one, but no code made a root one. Decided with Oj: a root answers for itself,
+as the code and selection.html already said, and a menu's frame says FocusScope::Yes so that the
+four keys reach its lines. Weighed and not taken: every root as the outermost scope for those keys
+(Home on a dialog's OK would jump to its first field), and the menu's list as the scope (Up from
+the first line would no longer reach the command strip, and the focused line would read selected,
+as a group line does while its list is open). isFormRoot stays: a root that is a scope is still
+never entered, left or landed on, and every rule about crossing a container's edge has to say so.
+
+A menu's frame is the ScrollBox and its list the body, so a page measured on the frame found no
+overflow. pagedContent measures on the content a box scrolls the item in, where the box is the
+scope or stands inside it; a scope scrolled from outside - a page's stack - is measured as before.
+In the tree, the two menus are the only scopes with a box scrolling inside them.
+
 ## Control setFocus
 
 2026-11-01. Oj, on the manual's setFocus paragraph: "Either API is bad either the manual. I can't

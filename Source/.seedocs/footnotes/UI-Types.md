@@ -84,6 +84,9 @@ and MouseFocus::Self as the stock scopes do, and wears the ring then - see Contr
 **A container keeping a current item outside a scope** - a page control's page - holds no focus for
 it.
 
+**A StackBase is what holds the focus for an item.** Any other container answering Yes bounds the
+keys alone - a Menu's frame, whose lines carry the focus themselves.
+
 ## WindowRole
 
 **The role is given where the form is created**, and sets what the window does with activation.

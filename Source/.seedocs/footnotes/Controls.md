@@ -82,6 +82,9 @@ press, and on Right; it closes when the pointer rests on another line, on Left, 
 command run in the list closes every menu it stands beside, and a list holds lines of its own the
 same way.
 
+**The menu is the focus scope its lines stand in.** Home and End go to its first and last stop -
+the strip's first command where it has one - and the page keys page through the list.
+
 ## MenuGroupItem
 
 **Shown the command and left to open it**: the action is attached in the Opener role, so the press
@@ -106,6 +109,9 @@ or a mouse click outside.
 **A step stands for its run** - itself and every step above it - and the pointer or the arrows
 light the whole run. The foot says what a click takes, "Undo 3 steps", or reads Cancel off the
 steps. The list scrolls past 400 design units.
+
+**The menu is the focus scope its steps stand in**, as a Menu is: Home and End go to the first and
+last step, and the page keys page through the list.
 
 ## AcceptEditEvent
 

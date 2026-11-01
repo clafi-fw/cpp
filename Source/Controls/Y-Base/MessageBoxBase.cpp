@@ -104,8 +104,7 @@ namespace ClaFi::Controls
             owner.themeMetrics().secondaryWindowShadow,
             UiElement::Menu,
             // Clicked and hovered, never focused. The text and the answers carry the focus
-            // themselves and the frame around them is not a focus scope of its own - the same
-            // division a menu draws.
+            // themselves, and the frame around them is not a focus scope.
             ClickTarget::Self,
             MouseFocus::Keep,
             // The window keeps of itself exactly the border it draws, which is what the bars run

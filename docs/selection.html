@@ -476,7 +476,8 @@
                 <tr><td>A tool bar button acting on the editor beside it</td><td><code>No</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A notice's answer - reached by the keys, pressed without moving the focus</td><td><code>Yes</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A part - a slider's thumb, a check box's mark</td><td><code>No</code></td><td><code>Parent</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
-                <tr><td>A scroll bar, a splitter, a menu's frame</td><td><code>No</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A scroll bar, a splitter</td><td><code>No</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A menu's frame - its lines carry the focus</td><td><code>No</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>Yes</code></td></tr>
                 <tr><td>A list, a tool bar, a grid - a container keeping the item the user is on</td><td><code>Yes</code></td><td><code>Self</code></td><td><code>Parent</code></td><td><code>Yes</code></td></tr>
             </table>
 
@@ -703,9 +704,12 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
 
             <h3 id="container-keys">Home, End and the Page Keys</h3>
             <p><strong>These four address the nearest focus scope.</strong> Home and End go to
-            its first and last stop. A page key is as many arrow steps along the axis the container scrolls on as
-            fit in its viewport, the item it starts from counted, and where the container holds a single screen it
-            goes to the end. Outside any focus scope, the focus stays where it is.</p>
+            its first and last stop. A page key is as many arrow steps as fit in the view, along the axis the view
+            scrolls on, the item it starts from counted. The view is the one the scope or a box inside it scrolls
+            the item in, and the scope's own otherwise. Where the view shows all the content holds, a page key goes
+            to the end. Outside any focus scope, the focus stays where it is.</p>
+            <p><strong>A menu's frame is a focus scope for these keys alone.</strong> Its lines hold the focus
+            themselves, and its list scrolls inside it, so the page keys page through the list.</p>
 
             <h3 id="taking-key">Taking a Key</h3>
             <p><strong>A control takes a key in <code>nestedKeyDown</code></strong> by setting

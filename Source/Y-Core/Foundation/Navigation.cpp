@@ -293,9 +293,9 @@ namespace ClaFi
         return isScope ? &control : nullptr;
     }
 
-    // **A page is as many steps as fit in the container's viewport**, along the axis it scrolls
-    // on, so a page press lands where a run of arrow presses would have. A container that holds
-    // a single screenful has no page to cross, and a press goes to its end.
+    // **A page is as many steps as fit in the view the content is scrolled in**, along the axis it
+    // scrolls on, so a page press lands where a run of arrow presses would have. Content that
+    // shows all it holds has no page to cross, and a press goes to the container's end.
     void FocusNavigator::moveInContainer(Control& container, Control& item, const KeyCode key,
         const KeyModifiers modifiers)
     {
@@ -303,8 +303,9 @@ namespace ClaFi
             ? ScrollDirection::ToBegin
             : ScrollDirection::ToEnd;
         const bool pages = key == Keys::Prior || key == Keys::Next;
+        Control& content = pagedContent(container, item);
         const std::optional<NavigationDirection> pageWay = pages
-            ? pageDirection(container, edge)
+            ? pageDirection(content, edge)
             : std::nullopt;
         if (!pageWay)
         {
@@ -314,23 +315,37 @@ namespace ClaFi
         }
 
         const NavigationStep step = stepFrom(item, *pageWay, NavigationSource::Page);
-        Control* stop = pageStop(container, item, step);
+        Control* stop = pageStop(container, content, item, step);
         if (!stop)
             stop = edgeStop(container, edge);
         if (stop)
             land(*stop, step, modifiers);
     }
 
-    std::optional<NavigationDirection> FocusNavigator::pageDirection(Control& container,
+    // **The box that scrolls the item is the one paged**, where it is the container or stands
+    // inside it - a menu's frame scrolls the list its lines stand in. A container scrolled from
+    // outside is its own content, as a page's stack is.
+    Control& FocusNavigator::pagedContent(Control& container, Control& item) const
+    {
+        for (Control* content = &item; content != &container; content = content->parent())
+        {
+            if (content->isScrolledByParent(ScrollAxis::Vertical)
+                || content->isScrolledByParent(ScrollAxis::Horizontal))
+                return *content;
+        }
+        return container;
+    }
+
+    std::optional<NavigationDirection> FocusNavigator::pageDirection(Control& content,
         const ScrollDirection direction) const
     {
-        const FloatRect bounds = m_form.rectOfControl(&container);
-        const FloatRect viewport = container.visibleRectInForm(m_form);
+        const FloatRect bounds = m_form.rectOfControl(&content);
+        const FloatRect viewport = content.visibleRectInForm(m_form);
 
-        // The axis carrying the greater overflow is the one the container scrolls on. Which axis
+        // The axis carrying the greater overflow is the one the content scrolls on. Which axis
         // overflows at all is not enough to tell them apart: a wrapping layout wraps at the
         // viewport extent rather than at a whole item, so it spills a few pixels onto the axis it
-        // fills, and a container is free to overflow an axis whose scroll bar is hidden.
+        // fills, and content is free to overflow an axis whose scroll bar is hidden.
         const float verticalOverflow = bounds.height() - viewport.height();
         const float horizontalOverflow = bounds.width() - viewport.width();
         const bool vertical = verticalOverflow >= horizontalOverflow;
@@ -346,9 +361,10 @@ namespace ClaFi
     // What a page crosses includes the item it starts from, so that item is still in sight at the
     // far edge of the page that follows. The first step is taken whatever it crosses: a stop
     // longer than the viewport is still the next one.
-    Control* FocusNavigator::pageStop(Control& container, Control& item, const NavigationStep& step)
+    Control* FocusNavigator::pageStop(Control& container, Control& content, Control& item,
+        const NavigationStep& step)
     {
-        const FloatRect viewport = container.visibleRectInForm(m_form);
+        const FloatRect viewport = content.visibleRectInForm(m_form);
         const float page = step.vertical() ? viewport.height() : viewport.width();
         const AxisSpan source = spanAlong(laidOutRect(item), step);
 

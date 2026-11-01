@@ -215,13 +215,11 @@ namespace ClaFi::Controls
                 // four commands shows no bar at all.
                 ScrollBars::Auto,
                 Padding{ 4.0f },
-                // Clicked and hovered, never focused. The items carry the focus themselves and
-                // the frame around them is not a focus scope of its own.
-                // TODO: Home, End and the page keys address the nearest focus scope, and a menu
-                // has none, so those four do nothing in one. Should this root be a focus scope so
-                // they reach the items?
+                // Clicked and hovered, never focused. The lines carry the focus, and the frame is
+                // the focus scope they stand in, so Home, End and the page keys reach them.
                 ClickTarget::Self,
                 MouseFocus::Keep,
+                FocusScope::Yes,
             },
             BodyProps{
                 Orientation::Vertical,

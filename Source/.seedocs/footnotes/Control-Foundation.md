@@ -499,8 +499,10 @@ page keys move inside it, and Home and End go to its first and last stop - see F
   Control::navigationSlots where a container keeps one. Shift+Tab walks the same order back. Past
   the root's last stop the walk goes on into the top layer, and past the layer's last stop it
   comes round to the root's first - see FormBase::topLayer.
-- **A page press** is as many arrow steps along the axis the scope scrolls on as fit in its
-  viewport, the item it starts from counted. Where nothing overflows, it goes to the end.
+- **A page press** is as many arrow steps as fit in the view, along the axis the view scrolls
+  on, the item it starts from counted. The view is the one the scope or a box inside it scrolls
+  the item in - a Menu's list - and the scope's own otherwise. Where nothing overflows, it goes
+  to the end.
 
 **Entering a focus scope lands on its current item**, whichever way the focus comes in.
 
