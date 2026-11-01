@@ -1548,9 +1548,9 @@ namespace ClaFi
         [[nodiscard]] const Control* navigationSlot(std::size_t index) const
             { return const_cast<Control*>(this)->navigationSlot(index); }
         // Walks event up from this control and settles the focus where the walk leaves it.
-        void moveFocus(FocusEvent&);
-        // The focus moved here by code, with no check that this control can take it.
-        void moveFocusFromCode();
+        void offerFocus(FocusEvent&);
+        // Offers the focus here with no gesture, and no check that this control can take it.
+        void setFocusUnchecked();
     private:
         inline static TextEngine s_textEngine{};
         static OnAnimate s_onAnimateState;

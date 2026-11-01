@@ -1026,7 +1026,7 @@ namespace ClaFi
     {
         if (!canTakeFocus() || !standsShown(*this))
             return false;
-        moveFocusFromCode();
+        setFocusUnchecked();
         return true;
     }
 
@@ -1888,14 +1888,14 @@ namespace ClaFi
             return;
         FocusEvent event{ *target, target->form() };
         event.byMouse = true;
-        target->moveFocus(event);
+        target->offerFocus(event);
     }
 
     void Control::setFocusByKey(Control& target, const KeyModifiers modifiers)
     {
         FocusEvent event{ target, target.form() };
         event.modifiers = modifiers;
-        target.moveFocus(event);
+        target.offerFocus(event);
     }
 
     void Control::adjustPaint(AdjustPaintEvent& event)
@@ -2960,7 +2960,7 @@ namespace ClaFi
         return slots.empty() ? controls()[index].get() : slots[index];
     }
 
-    void Control::moveFocus(FocusEvent& event)
+    void Control::offerFocus(FocusEvent& event)
     {
         const Control* previousDelegate = Input::focusDelegate();
         nestedControlFocusing(event);
@@ -2979,14 +2979,13 @@ namespace ClaFi
             Tooltip::focusedControlChanged();
     }
 
-    // **Code carries no gesture.** The keys held and the device that acted last are the user's,
-    // and a call from code reads neither: a container takes this control as a key with no
-    // modifier would land on it.
-    void Control::moveFocusFromCode()
+    // **It carries no gesture.** The keys held and the device that acted last are for the input
+    // paths to read, so a container takes this control as a key with no modifier would land on it.
+    void Control::setFocusUnchecked()
     {
         FocusEvent event{ *this, form() };
         event.modifiers = {};
-        moveFocus(event);
+        offerFocus(event);
     }
 
     OnAnimate Control::s_onAnimateState{

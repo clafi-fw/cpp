@@ -102,7 +102,7 @@ namespace ClaFi::Controls
         void toggleExpanded() { setExpanded(!expanded()); }
         bool expanded() const { return m_expanded; }
         float expandedFactor() const { return m_expandedFactor; }
-        void setExpanded(bool value);   // the user's opening scrolls to the section, this does not
+        void setExpanded(bool value);   // leaves the view as it is, unlike the header's gestures
         [[nodiscard]] ExpanderViewMode viewMode() const { return m_viewMode; }
         // The header shows the label in every look, so a host spells the header text one way and
         // the button stays a target of its own.
@@ -149,7 +149,8 @@ namespace ClaFi::Controls
         ExpanderButton& createChevronButton();
         void createDividerLine();
         void drawButton(DrawIconEvent&) const;
-        void setExpandedByUser(bool value);
+        void expandIntoView();
+        void toggleIntoView();   // closes an open section, opens a closed one into view
         void scrollSectionIntoView() const;
         [[nodiscard]] bool squaresBottomCorners() const;
         // The link under the point, as the label is drawn; nothing where none stands.
@@ -228,7 +229,7 @@ namespace ClaFi::Controls
     {
         m_button.connectEvent<DrawIconEvent>(this, &ExpanderHeader::drawButton);
         m_button.onClick([this](ClickEvent& event) {
-            setExpandedByUser(!m_expanded);
+            toggleIntoView();
             // In the tree look the header is a row of the view around it, and a click climbing
             // past the button would pick that row. The button opens the node and nothing more.
             if (m_viewMode == ExpanderViewMode::TreeNode)
@@ -305,7 +306,7 @@ namespace ClaFi::Controls
     void ExpanderHeader::nestedDoubleClick(NestedDoubleClickEvent& event)
     {
         PanelBase::nestedDoubleClick(event);
-        setExpandedByUser(!m_expanded);
+        toggleIntoView();
     }
 
     // Counted in the floor only where there is one, the way the padding is.

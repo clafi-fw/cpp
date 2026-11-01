@@ -90,7 +90,7 @@ namespace ClaFi::Controls
         }
         else if (m_viewMode != ExpanderViewMode::TreeNode)
         {
-            setExpandedByUser(!m_expanded);
+            toggleIntoView();
         }
         PanelBase::click(event);
     }
@@ -147,8 +147,10 @@ namespace ClaFi::Controls
         {
             const bool opens = event.key == Keys::Right;
             const bool acts = opens != m_expanded;
-            if (acts)
-                setExpandedByUser(opens);
+            if (acts && opens)
+                expandIntoView();
+            else if (acts)
+                setExpanded(false);
             if (acts || m_viewMode != ExpanderViewMode::TreeNode)
             {
                 event.handled = true;
@@ -176,15 +178,21 @@ namespace ClaFi::Controls
         );
     }
 
-    // **Only an opening the user makes brings the section into view.** One made from code - a tree
-    // built again with its nodes open, Expand all, a reveal - leaves the view where it stands, and
-    // asks for a scroll of its own where it wants one.
-    void ExpanderHeader::setExpandedByUser(const bool value)
+    // **The header's own gestures open a section into view.** setExpanded leaves the view where it
+    // stands - a tree built again with its nodes open, Expand all, a reveal - and a caller that
+    // wants a scroll asks for one of its own.
+    void ExpanderHeader::expandIntoView()
     {
-        const bool wasExpanded = m_expanded;
-        setExpanded(value);
-        if (m_expanded && !wasExpanded)
-            scrollSectionIntoView();
+        setExpanded(true);
+        scrollSectionIntoView();
+    }
+
+    void ExpanderHeader::toggleIntoView()
+    {
+        if (m_expanded)
+            setExpanded(false);
+        else
+            expandIntoView();
     }
 
     // Asked the way paintOwnText draws the label: the same box, and the point measured from where

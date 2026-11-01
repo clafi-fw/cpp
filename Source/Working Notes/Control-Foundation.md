@@ -198,7 +198,7 @@ I had proposed that code leave the selection alone. StackBase::setCurrentItem wa
 with no modifiers from code - "all from code ever meant" - and setFocus follows it, so
 makeCurrentItem and setFocus agree.
 
-The popup's return of the focus to its target stays unchecked (moveFocusFromCode): a MouseOnly
+The popup's return of the focus to its target stays unchecked (setFocusUnchecked): a MouseOnly
 button that opened a menu is handed the focus back. Open: whether it should go where the focus was
 before the popup took it.
 

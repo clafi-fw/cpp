@@ -1559,7 +1559,7 @@ namespace ClaFi
             // controls are told the focus left. **Unchecked**, so a target that takes no focus - a
             // tool bar's button that opened a menu - is handed it too.
             if (m_popupTarget)
-                m_popupTarget->moveFocusFromCode();
+                m_popupTarget->setFocusUnchecked();
             if (popupTargetForm)
             {
                 if (popupTargetForm->m_activePopup == this)
