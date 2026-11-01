@@ -23,3 +23,16 @@ reads larger than the same step off a light one.
 
 Named for WM_TIMER, which the Windows backend ticks on: Windows generates no WM_TIMER while input
 messages are still pending, which is what keeps a tick from landing in the middle of user input.
+
+## Interactivity
+
+KeyFocusable came on 2026-11-01 with the notices joining the Tab ring. Focusable answers would have
+moved the focus onto the card for the length of a mouse press and back when the card went, and a
+press dragged off the button would have left it on the card. Oj chose a value of its own over a
+rule in Input::setMouseDown that a press inside the top layer moves no focus: the rule would have
+been one place in the code and invisible on the buttons it governs.
+
+The right-click walk in FormBase takes takesFocusOnPress too, so a right click on a KeyFocusable
+control does not focus it. That walk goes on to the parent of a control that cannot take the focus
+from a press, MouseOnly included, where the left-click walk stops at a MouseOnly control - a
+difference older than KeyFocusable.

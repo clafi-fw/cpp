@@ -56,6 +56,7 @@ namespace ClaFi
     export enum class Interactivity {
         None,           // a static label or container, taking no input
         MouseOnly,      // hovered and clicked with the mouse, never focused; a press moves no focus
+        KeyFocusable,   // focused by the keys, clicked with the mouse; a press moves no focus
         Focusable,      // a button, a text box, a list item: focus, click and selection
         ActiveContainer // a container managing focus traversal and child selection
     };

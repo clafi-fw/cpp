@@ -150,6 +150,8 @@ namespace ClaFi
         FormBase* getForm() override;
         // A control under this root is gone, and the form forgets it where this is its top layer.
         void nestedControlDeleted(Control*) override;
+        // Where this is the top layer, the form keeps the content control the focus comes from.
+        void nestedControlFocusing(FocusEvent&) override;
     private:
         FormBase& m_form;
     };
@@ -456,6 +458,8 @@ namespace ClaFi
     private:
         // Enters the root as a show enters a control, for every role that takes the focus at all.
         void focusEntryPoint();
+        // Keeps the content control the focus is leaving for the top layer, to hand it back.
+        void rememberContentFocus();
         // Walks nestedKeyDown from `from` up to `until`, exclusive, while the key is unhandled.
         void dispatchKey(Control* from, const Control* until, KeyDownEvent&);
         // The frame this form asks for: the root's, at the scale the form is drawn at. Stated to
@@ -650,6 +654,7 @@ namespace ClaFi
         // press and no other; see wnd_keyDown, which raises it and clears it, and wnd_char, which
         // spends it once the popup has had its chance at the character.
         bool m_popupTookKey{};
+        Control* m_contentFocusBeforeTopLayer{ nullptr };
         // Declared after everything its controls read, so it goes down before any of it.
         std::unique_ptr<FormControlBase> m_topLayer{};
         // **The last member, and it has to stay last.** It is a form of its own that takes this

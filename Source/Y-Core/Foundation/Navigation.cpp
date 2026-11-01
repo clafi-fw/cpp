@@ -185,9 +185,10 @@ namespace ClaFi
         // at the item inside it - a grid or a list is one stop, not one stop per cell. The form is
         // the one container with nothing outside it to step out to, and an item whose nearest
         // container is the form starts the walk at itself.
-        Control* child = sourceContainer && !isFormRoot(sourceContainer)
+        Control* start = sourceContainer && !isFormRoot(sourceContainer)
             ? sourceContainer
             : &item;
+        Control* child = start;
         while (!isFormRoot(child) && child->parent())
         {
             Control& parent = *child->parent();
@@ -209,9 +210,18 @@ namespace ClaFi
             child = &parent;
         }
 
-        // Nothing past it anywhere: the walk comes round to the end it started from, which is
-        // where entering the form from outside would have put it.
-        return edgeStop(m_form.content(), entryEdge);
+        // **The root and the top layer are one ring**, the layer after the root. A walk that ran
+        // off one goes on into the other, and comes round to its own first stop - its last for
+        // Shift+Tab - where the other holds none. A walk that began at the root itself, nothing
+        // in the form being focused, enters the root.
+        Control& root = m_form.content();
+        Control* otherRoot = child == &root ? m_form.topLayer() : &root;
+        if (start != &root && otherRoot)
+        {
+            if (Control* stop = edgeStop(*otherRoot, entryEdge))
+                return stop;
+        }
+        return edgeStop(*child, entryEdge);
     }
 
     // **Reading order is the only thing consulted**, never geometry: the item at the end of a

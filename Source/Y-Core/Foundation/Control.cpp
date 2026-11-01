@@ -967,6 +967,7 @@ namespace ClaFi
         switch (interactivity())
         {
         case Interactivity::MouseOnly:
+        case Interactivity::KeyFocusable:
         case Interactivity::Focusable:
             return true;
         default:
@@ -980,12 +981,18 @@ namespace ClaFi
             return false;
         switch (interactivity())
         {
+        case Interactivity::KeyFocusable:
         case Interactivity::Focusable:
         case Interactivity::ActiveContainer:
             return true;
         default:
             return false;
         }
+    }
+
+    bool Control::takesFocusOnPress() const
+    {
+        return canTakeFocus() && interactivity() != Interactivity::KeyFocusable;
     }
 
     // Read through the same order navigation enters in, so a container that answers yes always has

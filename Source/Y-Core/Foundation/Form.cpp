@@ -184,6 +184,15 @@ namespace ClaFi
             m_form.forgetControl(control);
     }
 
+    // Asked before the walk ends at this root, while Input still names the control the focus is
+    // leaving.
+    void FormControlBase::nestedControlFocusing(FocusEvent& event)
+    {
+        if (m_form.m_topLayer.get() == this)
+            m_form.rememberContentFocus();
+        RichControl::nestedControlFocusing(event);
+    }
+
     // FormBase
 
     FormBase::FormBase(AppContext& appContext, WindowRole windowRole, FormControlBase& content, Control* popupTarget,
@@ -349,6 +358,19 @@ namespace ClaFi
 
     void FormBase::controlHidden(const Control& control)
     {
+        // **The focus a hidden top layer control held goes back to the content**, to the control
+        // it came from, or where showing the form would put it when that control cannot take it.
+        // A notice answered from the keyboard hides its card under the focus.
+        if (m_topLayer && m_topLayer->containsNested(&control)
+            && control.containsNested(Input::focusedControl()))
+        {
+            Control* origin = std::exchange(m_contentFocusBeforeTopLayer, nullptr);
+            if (origin && origin->canTakeFocus())
+                origin->setFocus();
+            else
+                focusEntryPoint();
+        }
+
         // **A hidden target is as gone as a deleted one.** The popup was placed on where the
         // control stood, and a hidden control stands nowhere: followPopupTarget2 has no rect to
         // carry it to, so the window stays over the place the control left, with its loop running.
@@ -1010,7 +1032,7 @@ namespace ClaFi
             // A right click focuses what a left click would, before the control under it answers
             // - a control showing a menu of its own stops the walk, and nothing above it is told.
             Control* controlToFocus = it;
-            while (controlToFocus && !controlToFocus->canTakeFocus())
+            while (controlToFocus && !controlToFocus->takesFocusOnPress())
                 controlToFocus = controlToFocus->parent();
             if (controlToFocus)
                 controlToFocus->setFocus();
@@ -1294,7 +1316,9 @@ namespace ClaFi
         while (control)
         {
             control->nestedKeyUp();
-            if (control->interactivity() == Interactivity::Focusable)
+            const Interactivity interactivity = control->interactivity();
+            if (interactivity == Interactivity::Focusable
+                || interactivity == Interactivity::KeyFocusable)
                 control->invalidateState();
             control = control->parent();
         };
@@ -1457,6 +1481,8 @@ namespace ClaFi
     {
         if (m_downItem == item)
             m_downItem = nullptr;
+        if (m_contentFocusBeforeTopLayer == item)
+            m_contentFocusBeforeTopLayer = nullptr;
         std::erase(m_scrollIntoViewOnAlign, item);
         // **The popup goes with the control it is over.** A list rebuilt under an open in-place
         // editor deletes the item being edited, and a popup is placed, sized and aimed by that
@@ -1775,6 +1801,17 @@ namespace ClaFi
     void FormBase::focusEntryPoint()
     {
         FocusNavigator{ *this }.enterShown(m_content);
+    }
+
+    // A move between the layer's own controls keeps the one the focus first came in from. Focus
+    // coming from nowhere, or from another window, keeps none.
+    void FormBase::rememberContentFocus()
+    {
+        Control* holder = Input::focusedControl();
+        if (holder && m_topLayer->containsNested(holder))
+            return;
+        const bool fromContent = holder && m_content.containsNested(holder);
+        m_contentFocusBeforeTopLayer = fromContent ? holder : nullptr;
     }
 
     WindowFrame FormBase::designFrame() const

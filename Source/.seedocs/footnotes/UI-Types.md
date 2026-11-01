@@ -33,11 +33,17 @@ ActiveContainer. A mouse press on a label inside a tile focuses the tile.
 **A MouseOnly control is pressed for itself**, and leaves the focus where it is. A tool bar's
 button keeps the caret in the editor beside it. A part is the exception - see Control::isChildPart.
 
+**A KeyFocusable control is reached by the keys and pressed for itself by the mouse.** Tab and the
+arrows land on it as on a Focusable control, and a mouse press leaves the focus where it is, as on
+a MouseOnly one. A notice's answers are KeyFocusable. It is never an ActiveContainer's current item
+or one of its selected items, since a container picks those on a mouse click.
+
 ## Control isChildPart
 
 **A part's mouse press is its owner's.** A part is a slider's thumb, a check box's mark, a split
-button's strip or a control hosted in a grid cell. The focus walk passes over a MouseOnly part and
-goes on from the owner. ButtonBase, SliderBase and Grids::RowContainer answer yes for every child.
+button's strip or a control hosted in a grid cell. The focus walk passes over a MouseOnly or
+KeyFocusable part and goes on from the owner. ButtonBase, SliderBase and Grids::RowContainer
+answer yes for every child.
 
 ## WindowRole
 

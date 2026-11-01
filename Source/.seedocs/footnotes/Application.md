@@ -209,9 +209,10 @@ What the application tells the user on its own time - the answer to work that ra
 that asked for it, or a newer release found by a check nobody is watching. `notices()` answers the
 one list.
 
-**The main window shows each notice as a card** at its bottom right, the newest lowest. The cards
-answer mouse clicks only, so the focus stays where the user left it. A notice stays up until the
-user dismisses or answers it, or its owner withdraws it.
+**The main window shows each notice as a card** at its bottom right, the newest lowest. Tab reaches
+the answers after the window's last stop, and a mouse click on one leaves the focus where the user
+left it. The focus a card held goes back where it came from when the card goes. A notice stays up
+until the user dismisses or answers it, or its owner withdraws it.
 
 **A notice is held by a handle**, and the handle by what the notice is about - a project holds the
 notice about its source. The handle going takes the notice down, so an answer never outlives its

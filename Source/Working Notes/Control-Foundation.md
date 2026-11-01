@@ -150,6 +150,19 @@ which reached the same first stop. Tab and the arrows read readingEntry as befor
 FormBase::currentItem became rootFocusDelegate: a Form<T> derives from both FormBase and its
 root, and the root's own currentItem means the item a show enters. Action is its one caller.
 
+2026-11-01. The top layer joined the Tab ring, after the root, so that a notice's answers are
+reached from the keyboard - Oj's report was that they show unfocused and should be reachable by
+Tab. Until then the walk left the layer out. Decided with Oj: the layer after the root rather than
+before it, and the focus a hidden layer control held goes back to the root control it came from
+rather than on to the next card. FormControlBase::nestedControlFocusing has the form note that
+control while Input still names it (rememberContentFocus); forgetControl drops it, and
+controlHidden hands the focus back.
+
+Not handled, named as a risk and not yet seen: Return or Space on an answer hands the focus back
+inside the key-down, and the character of that press, queued before the dispatch, then reaches
+the control the focus went back to - a space typed into a text box. m_popupTookKey answers the
+same shape for a popup.
+
 ## InputController
 
 The fades run on the application's animator, reached through the AppContext the form reporting

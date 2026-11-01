@@ -205,8 +205,8 @@ namespace ClaFi
         // NoticeCard
 
         // **The title heads the message in bold, and Dismiss ends the answers.** Every answer is
-        // MouseOnly, so a press on one leaves the focus with whatever held it - the notice came on
-        // its own time, and the user was doing something else.
+        // KeyFocusable: Tab reaches it, and a mouse press on one leaves the focus with whatever
+        // held it - the notice came on its own time, and the user was doing something else.
         NoticeCard::NoticeCard(const CreateParams& params, NoticesLayer& layer, const NoticeId id,
             const Notice& notice)
             :
@@ -234,7 +234,7 @@ namespace ClaFi
                         });
                     },
                     TooltipText{ notice.answers[index].tooltip },
-                    Interactivity::MouseOnly
+                    Interactivity::KeyFocusable
                 );
             }
             addAnswer(
@@ -244,7 +244,7 @@ namespace ClaFi
                         notices().close(id);
                     });
                 },
-                Interactivity::MouseOnly
+                Interactivity::KeyFocusable
             );
         }
 

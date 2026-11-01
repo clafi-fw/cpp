@@ -68,7 +68,11 @@ owns at most one, and setTopLayer replaces it.
 - It has no say in the window's size.
 - It is painted after the root and meets the pointer first. A point where it meets only itself goes
   on to the root.
-- The focus walk leaves it out. A control in it that should leave the focus alone says MouseOnly.
+- Tab reaches it after the root's last stop - see FocusNavigator.
+- The focus goes back to the root when the control holding it in the layer is hidden: to the
+  control in the root it came from, or where showing the form puts it when that control is gone.
+- A control in it that should leave the focus alone on a mouse press says KeyFocusable, or
+  MouseOnly where the keys should not reach it either.
 
 ## FormClosingEvent
 
@@ -456,8 +460,9 @@ page keys move inside it, and Home and End go to its first and last stop.
   Control navigationNeighbour. A parent with none hands the step to its own parent, up to the
   scope. The child named is entered down to a stop - see Control navigationEntry.
 - **Tab** reads the order the containers keep their children in: the collection, or
-  Control::navigationSlots where a container keeps one. Shift+Tab walks the same order back, and
-  past the last stop the walk comes round to the first.
+  Control::navigationSlots where a container keeps one. Shift+Tab walks the same order back. Past
+  the root's last stop the walk goes on into the top layer, and past the layer's last stop it
+  comes round to the root's first - see FormBase::topLayer.
 - **A page press** is as many arrow steps along the axis the scope scrolls on as fit in its
   viewport, the item it starts from counted. Where nothing overflows, it goes to the end.
 

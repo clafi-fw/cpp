@@ -814,6 +814,7 @@ namespace ClaFi
         // itself rather than inheriting whatever its host would say.
         [[nodiscard]] virtual CursorShape cursor() const { return CursorShape::Arrow; }
         [[nodiscard]] bool canTakeFocus() const; ///< True if both interactive and deep enabled, false otherwise
+        [[nodiscard]] bool takesFocusOnPress() const; // canTakeFocus, KeyFocusable excepted
         // Whether the focus can land on this control or on something inside it.
         [[nodiscard]] bool holdsNavigationStop() const;
         // Whether this control moves in Z - towards the viewer as the pointer arrives, away from it
