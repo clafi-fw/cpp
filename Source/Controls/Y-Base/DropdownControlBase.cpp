@@ -21,7 +21,8 @@ namespace ClaFi::Controls
         const SecondaryPartPlacement placement)
         :
         ToolButton{ params,
-            Interactivity::MouseOnly,
+            NavigationReach::No,
+            MouseFocus::Parent,
             // **The mark is the strip's icon where the strip has nothing else to show.** IconOnly
             // centres it in the content box, which is the whole of the strip - carried as text it
             // would be placed by the text anchor instead, and a run narrower than the strip leaves

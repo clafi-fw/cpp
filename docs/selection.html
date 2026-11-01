@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi Selection and Focus - Developer Manual</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Ccircle%20cx=%2216%22%20cy=%2216%22%20r=%229%22%20fill=%22%239cde4c%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2216%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2216%22%20cy=%2248%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2248%22%20r=%229%22%20fill=%22%2373b722%22/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-color: #f9f9fb;
+            --text-color: #333;
+            --accent-color: #0066cc;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        /* --- Sidebar & Collapsible Layout --- */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: #fff;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 2rem 1rem;
+            box-sizing: border-box;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+            color: #111;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Top-level list items (root nodes) */
+        .sidebar > ul > li {
+            margin-bottom: 0.8rem;
+        }
+
+        /* Group wrapper for link + toggle button */
+        .nav-item-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-item-wrapper:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Root-level link styling */
+        .sidebar > ul > li > .nav-item-wrapper > a {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111;
+            flex-grow: 1;
+        }
+
+        /* Sub-level lists */
+        .sidebar ul ul {
+            padding-left: 0.8rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color);
+            margin-left: 1.1rem;
+        }
+
+        .sidebar ul ul li {
+            margin-bottom: 0.4rem;
+        }
+
+        .sidebar ul ul a {
+            font-size: 0.9rem;
+            color: #555;
+            display: block;
+            padding: 0.15rem 0;
+            transition: color 0.15s ease;
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            display: block;
+            transition: color 0.2s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar ul ul a:hover {
+            color: var(--accent-color);
+        }
+
+        /* Toggle Button styling */
+        .toggle-btn {
+            background: none;
+            border: none;
+            padding: 4px;
+            margin: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            border-radius: 4px;
+            transition: background-color 0.2s, color 0.2s;
+            outline: none;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: var(--accent-color);
+        }
+
+        .toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            transform: rotate(90deg); /* Points down when expanded */
+            transition: transform 0.2s ease;
+        }
+
+        /* Interactive Collapsible states managed by JS */
+        .sidebar li.has-children.collapsed ul {
+            display: none !important;
+        }
+
+        .sidebar li.has-children.collapsed .toggle-btn svg {
+            transform: rotate(0deg); /* Points right when collapsed */
+        }
+
+        /* --- Base Page Layout --- */
+        .page-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        header {
+            background-color: #fff;
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        h1, h2, h3, h4 {
+            color: #111;
+            margin-top: 2rem;
+        }
+
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+
+        main {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding-bottom: 2rem;
+        }
+
+        p, li { font-size: 1.1rem; }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        code {
+            background-color: rgba(0,0,0,0.05);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.9em;
+            color: #d14;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .kw { color: #569cd6; }
+        .tp { color: #4ec9b0; }
+        .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; }
+        .fn { color: #dcdcaa; }
+
+        .warning {
+            background-color: #fff3f3;
+            border-left: 4px solid #cc0000;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0066cc;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .rule-card {
+            padding: 1.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .rule-card.dos {
+            background-color: #f4faf4;
+            border-left: 4px solid #2e7d32;
+        }
+
+        .rule-card.donts {
+            background-color: #fff8f8;
+            border-left: 4px solid #c62828;
+        }
+
+        .rule-card h4 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-card ul {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .rule-card li {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .sidebar {
+                display: none;
+            }
+            .page-content {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .manuals-link:hover { color: var(--accent-color); }
+        .manuals-link::before { content: "\2190\00a0"; }
+        .page-end { display: flex; justify-content: space-between; max-width: 900px; margin: 0 auto 2rem; padding: 0 2rem; }
+        .top-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .top-link:hover { color: var(--accent-color); }
+        .top-link::before { content: "\2191\00a0"; }
+        header .manuals-link-line { margin: 0.2rem 0 0; }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">Contents</div>
+        <ul>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#introduction">Introduction</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#basic-usage">Basic Usage Example</a>
+                </div>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#taking-part">How a Control Takes Part</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#answers">Four Answers</a></li>
+                    <li><a href="#choosing">Choosing the Answers</a></li>
+                    <li><a href="#parts">Parts</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#focus">The Focus</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#two-names">One Focus, Two Names</a></li>
+                    <li><a href="#from-code">Moving It from Code</a></li>
+                    <li><a href="#mouse-press">What a Mouse Press Focuses</a></li>
+                    <li><a href="#window-shown">When a Window Comes Up</a></li>
+                    <li><a href="#focus-look">How the Focus Looks</a></li>
+                    <li><a href="#following-focus">Following the Focus in a Control</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#keys">Keys</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#key-order">Who Gets a Key First</a></li>
+                    <li><a href="#tab">Tab</a></li>
+                    <li><a href="#arrows">The Arrows</a></li>
+                    <li><a href="#container-keys">Home, End and the Page Keys</a></li>
+                    <li><a href="#taking-key">Taking a Key</a></li>
+                    <li><a href="#own-container">A Container's Own Navigation</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#current-item">The Current Item</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#show-entry">Where a Show Enters</a></li>
+                    <li><a href="#following-user">Following the User</a></li>
+                    <li><a href="#nested-containers">A Container Inside Another</a></li>
+                    <li><a href="#page-controls">Page Controls</a></li>
+                </ul>
+            </li>
+            <li class="has-children collapsed">
+                <div class="nav-item-wrapper">
+                    <a href="#selection">Selection</a>
+                    <button class="toggle-btn" aria-label="Toggle Section"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#gestures">Gestures</a></li>
+                    <li><a href="#selection-code">From Code</a></li>
+                </ul>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#top-layer">The Top Layer</a>
+                </div>
+            </li>
+            <li>
+                <div class="nav-item-wrapper">
+                    <a href="#reference">Reference</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="page-content">
+        <header>
+            <h1>Selection and Focus</h1>
+            <p>ClaFi Framework Developer Manual</p>
+            <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
+        </header>
+
+        <main>
+            <h2 id="introduction">Introduction</h2>
+            <p>Three things say where the user is in a window, and each is easier to work with once they are
+            apart:</p>
+            <ul>
+                <li>The <strong>focus</strong> is where the keys go. There is one per application, and it moves
+                between windows with the user.</li>
+                <li>The <strong>current item</strong> is the item a container is on - the page a tab strip shows,
+                the row a list stands at. It stays while the focus is elsewhere, and it is where the focus comes
+                back to.</li>
+                <li>The <strong>selection</strong> is the set of items a multi-select view holds, on top of its
+                current item.</li>
+            </ul>
+
+            <p>A control states how it takes part with four answers - <code>NavigationReach</code>,
+            <code>MouseFocus</code>, <code>ClickTarget</code> and <code>FocusScope</code>. What a mouse press
+            focuses, where Tab goes and which item a list is on all follow from them and from the containers the
+            control stands in.</p>
+
+            <div class="info">
+                <strong>Module Import:</strong>
+                <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
+<span class="kw">import</span> <span class="tp">ClaFi.Controls.StackView</span>;       <span class="cm">// StackView, SelectionMode, DragMode</span>
+<span class="kw">import</span> <span class="tp">ClaFi.Core.Foundation</span>;          <span class="cm">// Control, Input, FocusNavigator</span>
+<span class="kw">import</span> <span class="tp">ClaFi.Core.System.UiTypes</span>;      <span class="cm">// NavigationReach, MouseFocus, ClickTarget, FocusScope</span></pre>
+            </div>
+
+            <h2 id="basic-usage">Basic Usage Example</h2>
+            <p>A page built on <code>Panel</code>, with a tool bar in its head and a list in its body. The page
+            opens with the focus in the list. Tab steps from the list to the tool bar and back, one stop each,
+            and the arrows move inside whichever of them holds the focus.</p>
+
+<pre><span class="tp">Panel</span>&amp; topBar = <span class="fn">createTopBar</span>&lt;<span class="tp">Panel</span>&gt;();
+
+<span class="cm">// The tool bar: one stop for Tab, and the arrows move between its buttons.</span>
+<span class="tp">StackPanel</span>&amp; tools = topBar.<span class="fn">createRightBar</span>&lt;<span class="tp">StackPanel</span>&gt;(
+    <span class="tp">Orientation</span>::Horizontal,
+    <span class="tp">FocusScope</span>::Yes,
+    <span class="tp">NavigationReach</span>::Yes,
+    <span class="tp">MouseFocus</span>::Self,
+    <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
+);
+
+<span class="cm">// The list: it keeps the item the user is on, and holds a selection on top of it.</span>
+<span class="tp">StackView</span>&amp; files = <span class="fn">createBody</span>&lt;<span class="tp">ScrollBox</span>&gt;(
+    <span class="tp">ScrollBars</span>::Vertical
+).<span class="fn">createBody</span>&lt;<span class="tp">StackView</span>&gt;(
+    <span class="tp">Orientation</span>::Vertical,
+    <span class="tp">SelectionMode</span>::Multi
+);
+
+<span class="cm">// A show enters the page at the list, past the tool bar.</span>
+<span class="fn">setCurrentItem</span>(files);</pre>
+
+            <p>The rest is the framework's. A mouse click on a file makes it the list's current item, Shift and
+            Ctrl extend the selection, and the list remembers the file it was on when the focus leaves and comes
+            back.</p>
+
+            <h2 id="taking-part">How a Control Takes Part</h2>
+
+            <h3 id="answers">Four Answers</h3>
+            <p><strong>HitTest picks the control the pointer is over, and four answers say what that control
+            does with input.</strong> Each answers one question, and every control has all four.</p>
+
+            <table>
+                <tr><th>Answer</th><th>The question</th><th>Values</th><th>Default</th></tr>
+                <tr><td><code>NavigationReach</code></td><td>Can Tab and the arrows land on it?</td><td><code>Yes</code>, <code>No</code></td><td><code>No</code></td></tr>
+                <tr><td><code>MouseFocus</code></td><td>What does a mouse press on it do with the focus?</td><td><code>Self</code> takes it, <code>Parent</code> asks the parent, <code>Keep</code> leaves it where it is.</td><td><code>Parent</code></td></tr>
+                <tr><td><code>ClickTarget</code></td><td>Is a mouse press aimed at it, or at its parent?</td><td><code>Self</code>, <code>Parent</code></td><td><code>Parent</code></td></tr>
+                <tr><td><code>FocusScope</code></td><td>Does it hold the focus for a current item?</td><td><code>Yes</code>, <code>No</code></td><td><code>No</code></td></tr>
+            </table>
+
+            <p><strong>The defaults make a label</strong>: the keys pass over it, and a mouse press on it is its
+            parent's in every way. The stock controls state their own:</p>
+
+            <table>
+                <tr><th>Control</th><th>NavigationReach</th><th>MouseFocus</th><th>ClickTarget</th><th>FocusScope</th></tr>
+                <tr><td>A label, a panel, decoration</td><td><code>No</code></td><td><code>Parent</code></td><td><code>Parent</code></td><td><code>No</code></td></tr>
+                <tr><td>A button, a text box, a check box, a list item</td><td><code>Yes</code></td><td><code>Self</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A tool bar button acting on the editor beside it</td><td><code>No</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A notice's answer - reached by the keys, pressed without moving the focus</td><td><code>Yes</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A part - a slider's thumb, a check box's mark</td><td><code>No</code></td><td><code>Parent</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A scroll bar, a splitter, a menu's frame</td><td><code>No</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A list, a tool bar, a grid - a container keeping the item the user is on</td><td><code>Yes</code></td><td><code>Self</code></td><td><code>Parent</code></td><td><code>Yes</code></td></tr>
+            </table>
+
+            <p><strong><code>ClickTarget::Self</code> gives a control press looks of its own</strong>, the mouse
+            click, and the scroll a release asks for. A container is what a press lands inside rather than what
+            it was aimed at, so it answers <code>Parent</code>. Any of <code>ClickTarget::Self</code>,
+            <code>NavigationReach::Yes</code>, <code>MouseFocus::Self</code> and <code>FocusScope::Yes</code>
+            makes a control interactive - <code>isInteractive()</code> - and only an interactive control lights up
+            hot and pressed.</p>
+
+            <p>A control built with props takes each answer as one of them, and the last one in the pack wins, so a
+            caller names only the answers it changes:</p>
+
+<pre>m_answers.<span class="fn">add</span>&lt;<span class="tp">Button</span>&gt;(
+    caption,
+    <span class="tp">OnEvent</span>{ onClick },
+    <span class="tp">MouseFocus</span>::Keep   <span class="cm">// a Button answers Self by default</span>
+);</pre>
+
+            <p>A control of its own built on <code>Control</code> overrides <code>navigationReach()</code>,
+            <code>mouseFocus()</code>, <code>clickTarget()</code> and <code>focusScope()</code> instead.</p>
+
+            <h3 id="choosing">Choosing the Answers</h3>
+            <div class="rules-grid">
+                <div class="rule-card dos">
+                    <h4>Do</h4>
+                    <ul>
+                        <li>Give a control the user edits or picks <code>NavigationReach::Yes</code>,
+                        <code>MouseFocus::Self</code> and <code>ClickTarget::Self</code>. The stock controls
+                        answer so already.</li>
+                        <li>Give a button that acts on the focused control <code>NavigationReach::No</code> and
+                        <code>MouseFocus::Keep</code>, so pressing it leaves the focus on what it acts on - see
+                        <a href="actions.html#presenter-rules">Actions</a>.</li>
+                        <li>Give a button that stands beside the work and has to be reached from the keyboard
+                        <code>MouseFocus::Keep</code> alone.</li>
+                        <li>Make a container that keeps the item the user is on <code>FocusScope::Yes</code>,
+                        with <code>NavigationReach::Yes</code> and <code>MouseFocus::Self</code>. A
+                        <code>StackView</code> answers so already.</li>
+                    </ul>
+                </div>
+                <div class="rule-card donts">
+                    <h4>Don't</h4>
+                    <ul>
+                        <li>Leave a button that acts on the focused control in the keys' reach. Tab moves the
+                        focus onto it, and its action then resolves to the button itself.</li>
+                        <li>Make a container a focus scope when it stands inside one and its items belong to the
+                        outer one - see <a href="#nested-containers">A Container Inside Another</a>.</li>
+                        <li>Use a control answering <code>MouseFocus::Keep</code> as a list item. A focus scope
+                        makes current and selects only the items a mouse press focuses.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 id="parts">Parts</h3>
+            <p><strong>A part answers <code>MouseFocus::Parent</code></strong>, so a mouse press on it focuses
+            what a press on its owner would. A slider's thumb, a check box's mark, a split button's strip and a
+            control hosted in a grid cell are parts.</p>
+            <p><strong>Only the focus is the owner's.</strong> A part answers <code>ClickTarget::Self</code>, so
+            the press and the release, the mouse click and the hover and press looks stay its own.</p>
+            <p><strong>A grid row makes its controls parts.</strong> <code>Grids::RowContainer::addControl</code>
+            gives each one <code>ClickTarget::Self</code>, <code>MouseFocus::Parent</code>,
+            <code>NavigationReach::No</code> and <code>FocusScope::No</code>, over whatever the caller
+            passed.</p>
+
+            <h2 id="focus">The Focus</h2>
+
+            <h3 id="two-names">One Focus, Two Names</h3>
+            <p><strong>The application has one focus.</strong> It leaves one control as it arrives at another,
+            and the other may stand in another window. <code>Input</code> holds it, and all of its members are
+            static.</p>
+
+            <p><strong><code>Input</code> names it twice.</strong> <code>focusHolder()</code> is the holder,
+            and <code>focusDelegate()</code> is the control the focus is on. A focus scope holds the focus for its
+            current item, so a list holding the focus has its item as the delegate. Where nothing delegates,
+            both names answer the same control.</p>
+
+            <p><strong>The focus is on a path.</strong> <code>isFocused()</code> answers true for the delegate
+            and for everything it stands in, so a panel and the window's root read focused while the focus is
+            inside them. At the root of a popup that is up, the path goes on at the control the popup was opened
+            on - at the item that control answers for - and up from there, through every popup of a stack.
+            A dialog is a window of its own and no part of its owner's path. A control asks about itself with
+            <code>isFocused()</code>, <code>isHovered()</code> and
+            <code>isPressed()</code>. A test for the delegate alone - the row a key applies to - compares with
+            <code>Input::focusDelegate()</code>.</p>
+
+            <h3 id="from-code">Moving It from Code</h3>
+            <p><strong><code>setFocus()</code> moves the focus to the control</strong>, or to its current item
+            where it keeps one. In a list, the control becomes the current item as <code>setCurrentItem</code>
+            makes it - a pick with no modifiers, so a multi-select view's selection becomes that control alone.
+            Focus arriving at the item already current leaves the selection as it is.</p>
+            <p><strong>The result is the same from any handler.</strong> The keys the user holds and the device
+            used last play no part: a container takes the control as a key with no modifier held would bring the
+            focus to it.</p>
+            <p><strong>A control that cannot take the focus makes <code>setFocus()</code> throw</strong>
+            <code>std::logic_error</code> - one that is hidden or stands in something hidden, one whose window
+            is not up, one disabled, and one that answers neither <code>NavigationReach::Yes</code> nor
+            <code>MouseFocus::Self</code>. <code>trySetFocus()</code> moves the focus where the control can take
+            it, leaves it where it cannot, and answers which. It suits a control named some time before the
+            call, which may have been hidden or disabled since.</p>
+            <p><strong>The focus is only ever on something on screen.</strong> Where a window that is built but
+            not yet shown should open is its root's current item - see
+            <a href="#window-shown">When a Window Comes Up</a>.</p>
+
+<pre>m_editor-&gt;<span class="fn">setVisible</span>(<span class="kw">true</span>);
+m_box-&gt;<span class="fn">setFocus</span>();             <span class="cm">// shown a line above, so it takes the focus</span>
+
+<span class="kw">if</span> (!origin.<span class="fn">trySetFocus</span>())     <span class="cm">// hidden or disabled since it was named</span>
+    <span class="fn">focusContent</span>();</pre>
+
+            <p>Scrolling the control into view is the caller's - <code>scrollIntoView()</code>. To move the focus
+            the way a show does, into a container at its current item, call
+            <code>FocusNavigator{ form }.enterShown(control)</code>. It answers the stop it landed on, or null
+            where the control holds none.</p>
+
+            <h3 id="mouse-press">What a Mouse Press Focuses</h3>
+            <p><strong>The first control up from the pressed one to answer <code>Self</code> or
+            <code>Keep</code> settles it.</strong> <code>Self</code> takes the focus, and <code>Parent</code>
+            hands the question to the parent. A mouse press on a label inside a tile focuses the tile, and a press
+            on a part focuses its owner - see <a href="#parts">Parts</a>.</p>
+            <p><strong><code>Keep</code> stops the walk</strong> with the focus where it was. A tool bar's button
+            keeps the caret in the editor beside it, and so does a notice's answer. A disabled control answering
+            <code>Self</code> hands the press on, as <code>Parent</code> does.</p>
+            <p><strong>A right click walks the chain the same way</strong>, before the menu is raised.</p>
+
+            <h3 id="window-shown">When a Window Comes Up</h3>
+            <p><strong>Every window but a tooltip enters its root as it is shown.</strong> The root is entered at
+            its current item, each container on the way by the same rule, and at the first stop in reading order
+            where a container names none - see <a href="#show-entry">Where a Show Enters</a>.</p>
+            <p><strong>Where a window opens is said before it is shown, with
+            <code>makeCurrentItem()</code>.</strong> Called on a control with no focus scope above it, it makes
+            the control the root's current item. A message box opens on its first answer this way, and a caller
+            names another one the same way:</p>
+
+<pre><span class="tp">MessageDialog</span> dialog{ initiator, <span class="st">L"Write to source"</span>, message, <span class="tp">MessageIcon</span>::Question };
+dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::Yes);
+dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<span class="fn">makeCurrentItem</span>();   <span class="cm">// opens on No</span>
+<span class="kw">return</span> dialog.<span class="fn">execute</span>() == <span class="tp">DialogAnswer</span>::Yes;</pre>
+
+            <p><code>setFocus()</code> called before <code>execute()</code> throws, since the window is not up
+            yet.</p>
+            <p><strong>Escape closes a window that does not hold the root loop</strong>, such as a dialog, when it
+            reaches that point in the key order - see <a href="#key-order">Who Gets a Key First</a>. In the main
+            window it goes on to the navigator.</p>
+
+            <h3 id="focus-look">How the Focus Looks</h3>
+            <p><strong>The ring follows the keyboard.</strong> A control reached by a key wears the ring, and
+            reads hot while its window has the focus. A control focused by a mouse click wears none, unless
+            Always show focus is on in the application's settings - <code>AppContext::focusAlwaysShown()</code>.
+            </p>
+            <p><strong>Focused is the focus from either device.</strong> A caret, the selected-text band and a
+            grid's cell ring read it, so a box focused by a mouse click keeps them while the pointer wanders. The
+            colour rules read these states - see <a href="color.html">Colour</a>.</p>
+            <p><strong>A popup takes the focus and leaves the look.</strong> The control a popup was opened on
+            stays on the focus path while the focus is in the popup, so it reads focused with everything it
+            stands in: a text box keeps its caret under its own menu, and a row whose cell holds an open list
+            keeps its ring. It also reads selected while the popup is up - <code>isDroppedDown()</code>.</p>
+            <p><strong>Keys stop at the popup.</strong> A key the popup leaves never reaches the control it was
+            opened on - see <a href="#key-order">Who Gets a Key First</a>.</p>
+            <p><strong>A key landing on a control brings up its tooltip</strong> while the keyboard drives, as
+            the pointer resting on a control does while the mouse drives.</p>
+
+            <h3 id="following-focus">Following the Focus in a Control</h3>
+            <p><strong><code>focusChanged()</code> is told to every control whose <code>isFocused()</code>
+            answer changed</strong>, after the move, so the answer it reads is the new one. Override it for
+            something a control does while focused - a caret blinking, a timer running. A control that only looks
+            different needs none of it: its state is invalidated with the move, and its focused factor animates
+            by itself. Opening a popup on a control and closing it again leave that control's chain untold, since
+            it stays on the path.</p>
+            <p><strong><code>nestedControlFocusing(FocusEvent&amp;)</code> runs before the move</strong>, from the
+            target up to the root. A container brings its items in line there, and may retarget the focus by
+            writing <code>event.control</code>.</p>
+            <p>Whether the window has the focus is a fact of its own. <code>FormFocusChangeEvent</code> marks each
+            change, and paint reads <code>PaintEvent::windowFocusedFactor</code>.</p>
+
+            <h2 id="keys">Keys</h2>
+
+            <h3 id="key-order">Who Gets a Key First</h3>
+            <p>A key goes down this list until one of them takes it:</p>
+            <ol>
+                <li>An open popup, which runs the same list in its own window. A key it leaves goes no
+                further, though the focus path runs on to the control it was opened on.</li>
+                <li>During a drag, the pressed control and its parents.</li>
+                <li>The focus delegate and each of its parents, through <code>nestedKeyDown</code>.</li>
+                <li>A tooltip that is up, for Escape.</li>
+                <li>The window's shortcuts, then the application's - see <a href="actions.html#shortcuts">Actions</a>.</li>
+                <li>Escape closes a window that does not hold the root loop.</li>
+                <li>The navigator, <code>FocusNavigator</code>, which moves the focus.</li>
+            </ol>
+            <p><strong>Return and Space click the focused item</strong> when they reach the navigator - the click
+            a mouse click would raise, carrying the key's stamp.</p>
+
+            <h3 id="tab">Tab</h3>
+            <p><strong>Tab reads the order the containers keep their children in</strong> - the collection, or
+            the slots a container names in <code>navigationSlots</code>. Shift+Tab walks it back. Reading order is
+            all it consults.</p>
+            <p><strong>Tab leaves a focus scope as a whole.</strong> A list, a grid or a tool
+            bar is one stop. Tab entering it lands on its current item, and the arrows move inside.</p>
+            <p><strong>The window's root and its top layer are one ring.</strong> Past the root's last stop Tab
+            goes on into the top layer, and past the layer's last stop it comes round to the root's first. Where
+            the layer holds no stop, Tab comes round within the root. See <a href="#top-layer">The Top Layer</a>.</p>
+            <p><strong>A stop is a control that is shown, enabled and answers
+            <code>NavigationReach::Yes</code>.</strong>
+            <code>holdsNavigationStop()</code> answers whether a control is one or holds one.</p>
+
+            <h3 id="arrows">The Arrows</h3>
+            <p><strong>Each container answers for its own children.</strong> The navigator asks the focused
+            item's parent for the child a step lands in - <code>navigationNeighbour</code>. A parent with none
+            hands the step to its own parent, up to the nearest focus scope. The child it names
+            is entered down to a stop - <code>navigationEntry</code>.</p>
+            <ul>
+                <li><code>StackPanelBase</code> - along the lanes, the next item. Across them, the item of the
+                next lane nearest the line.</li>
+                <li><code>PanelBase</code> - up and down from row to row, sideways along the middle row.</li>
+                <li>A grid - over its cells as a table, and on past its first and last row - see
+                <a href="grids.html">Grid</a>.</li>
+                <li><code>TreeNode</code> - Right from an open node's header into its rows, and Left from a row
+                back to the header.</li>
+            </ul>
+            <p><strong>A run of steps one way keeps its line.</strong> Down from a button and Up again come back
+            to that button, however wide the item between them. Any other move of the focus starts a new run, from
+            the middle of the item it lands on.</p>
+            <p><strong>Entering a focus scope lands on its current item</strong>, whichever way
+            the step comes.</p>
+
+            <h3 id="container-keys">Home, End and the Page Keys</h3>
+            <p><strong>These four address the nearest focus scope.</strong> Home and End go to
+            its first and last stop. A page key is as many arrow steps along the axis the container scrolls on as
+            fit in its viewport, the item it starts from counted, and where the container holds a single screen it
+            goes to the end. Outside any focus scope, the focus stays where it is.</p>
+
+            <h3 id="taking-key">Taking a Key</h3>
+            <p><strong>A control takes a key in <code>nestedKeyDown</code></strong> by setting
+            <code>event.handled</code>, which ends the walk before the shortcuts and the navigator see the key.
+            The walk runs from the focus delegate up, so a container sees every key its items leave. Call the
+            base for a key you leave.</p>
+            <p><strong>A key that moves the focus hands it on with <code>setFocusByKey(target,
+            event.modifiers)</code></strong>, a protected call of <code>Control</code>. A list reads the key's
+            Shift and Ctrl as it reads them on an arrow the navigator answers - a range, or the current item
+            moved alone.</p>
+
+<pre><span class="kw">void</span> <span class="tp">TreeNode</span>::<span class="fn">nestedKeyDown</span>(<span class="tp">KeyDownEvent</span>&amp; event)
+{
+    <span class="tp">ExpanderHeader</span>&amp; strip = <span class="fn">header</span>();
+    <span class="kw">if</span> (event.key == <span class="tp">Keys</span>::Left &amp;&amp; event.modifiers.<span class="fn">empty</span>() &amp;&amp; !strip.<span class="fn">isFocused</span>())
+    {
+        <span class="fn">setFocusByKey</span>(strip, event.modifiers);
+        strip.<span class="fn">scrollIntoView</span>();
+        event.handled = <span class="kw">true</span>;
+        <span class="kw">return</span>;
+    }
+    <span class="tp">Expander</span>::<span class="fn">nestedKeyDown</span>(event);
+}</pre>
+
+            <h3 id="own-container">A Container's Own Navigation</h3>
+            <p><strong><code>navigationNeighbour(child, step)</code> moves the arrows among a container's
+            children.</strong> It answers the child a step from <code>child</code> lands in, holding a stop, or
+            null to hand the step to the parent. The default answers null: a control has to say how its children
+            are placed before a step moves among them.</p>
+
+<pre><span class="tp">Control</span>* <span class="tp">TreeNode</span>::<span class="fn">navigationNeighbour</span>(<span class="kw">const</span> <span class="tp">Control</span>&amp; child, <span class="kw">const</span> <span class="tp">NavigationStep</span>&amp; step)
+{
+    <span class="kw">const bool</span> intoRows = &amp;child == &amp;<span class="fn">header</span>() &amp;&amp; step.direction == <span class="tp">NavigationDirection</span>::Right;
+    <span class="kw">if</span> (intoRows &amp;&amp; m_rows.<span class="fn">holdsNavigationStop</span>())
+        <span class="kw">return</span> &amp;m_rows;
+    <span class="kw">return</span> <span class="tp">Expander</span>::<span class="fn">navigationNeighbour</span>(child, step);
+}</pre>
+
+            <ul>
+                <li><code>navigationEntry(step)</code> answers the child a step from outside lands in. The
+                default is the first child in reading order holding a stop.</li>
+                <li><code>navigationSlots()</code> names the reading order where it differs from the collection -
+                a container holding its children in named slots. A slot may be unfilled, so an entry may be
+                null.</li>
+                <li><code>NavigationStep</code> carries the <code>direction</code>, the <code>source</code> -
+                an arrow press or one step of a page press - and the <code>line</code> in form space, with
+                <code>vertical()</code> and <code>forward()</code>.</li>
+            </ul>
+
+            <h2 id="current-item">The Current Item</h2>
+
+            <h3 id="show-entry">Where a Show Enters</h3>
+            <p><strong><code>ContainerBase::currentItem()</code> is the item a show enters the container
+            at.</strong> When the focus goes into a container as it is shown - its window coming up, or a page
+            control turning to it while the page control holds the focus - it lands in the current item, and at
+            the first stop in reading order where there is none. Each container on the way is entered by the same
+            rule, so a page whose current item is a panel lands inside that panel, at the panel's own current
+            item.</p>
+
+<pre><span class="cm">// A show enters the page at its options, past the head.</span>
+<span class="fn">setCurrentItem</span>(m_optionsBox);</pre>
+
+            <p>The item is any control inside the container, at any depth, or none, and it is dropped when it is
+            deleted. A window's root takes the item <code>makeCurrentItem()</code> names where no focus scope
+            above the control keeps one - see <a href="#window-shown">When a Window Comes Up</a>.</p>
+
+            <h3 id="following-user">Following the User</h3>
+            <p><strong>A focus scope moves its current item itself</strong>, to whatever the
+            user acts on - a mouse click on an item, or the focus arriving from a key - so a show brings the focus
+            back to the item the user left. Any other container keeps the item it was given.</p>
+            <p><strong>Current is not focused.</strong> The item stays current while the focus is anywhere else,
+            and wears its cue, <code>VisualStateIndex::Current</code>, whichever device drives.</p>
+            <p><strong>A control a mouse press focuses can be current</strong>, by default - one that answers
+            <code>NavigationReach::Yes</code> and <code>MouseFocus::Self</code> and is no focus scope itself.
+            <code>CanFocusItemEvent</code> lets a handler answer otherwise:</p>
+
+<pre><span class="tp">SingleSelectionStackView</span>&amp; m_harmonyStack{ m_harmonyPanel.<span class="fn">createBody</span>&lt;<span class="tp">SingleSelectionStackView</span>&gt;(
+    <span class="tp">Orientation</span>::HorizontalWrap,
+    <span class="tp">Events</span>{
+        [](<span class="tp">CanFocusItemEvent</span>&amp; event) {
+            event.canFocus = event.item.<span class="fn">tag</span>().value == k_harmonyTag;
+        }
+    }
+) };</pre>
+
+            <p><strong><code>CurrentItemChangeEvent</code> follows every move</strong>, carrying the item that
+            was current before:</p>
+
+<pre>m_pageBox.<span class="fn">body</span>().<span class="fn">onCurrentItemChange</span>([<span class="kw">this</span>](<span class="tp">CurrentItemChangeEvent</span>&amp;) {
+    <span class="fn">reportAnchor</span>();
+});</pre>
+
+            <p><strong><code>makeCurrentItem()</code> makes a control current from code</strong>, in the nearest
+            focus scope above it, or in its window's root where there is none. The focus stays where it is; a focus scope holding the focus
+            shows the new item through its delegate. <code>setCurrentItem</code> on the container does the same
+            from the container's side, and on a stack it also scrolls the item into view.</p>
+
+            <h3 id="nested-containers">A Container Inside Another</h3>
+            <p><strong>A container inside a focus scope lends its items to it.</strong> A grid on a page that keeps
+            the current item is built with <code>FocusScope::No</code>, <code>NavigationReach::No</code> and
+            <code>MouseFocus::Parent</code>. Its rows are the page's items, one selection stands on the whole page, and the arrows travel over every item the page
+            holds.</p>
+            <p><strong>What the current item leaves is told</strong> - <code>nestedCurrentItemChange</code> - so a
+            grid the item has left drops its selected cell.</p>
+            <p><strong>A shut expander stands for the item inside it.</strong> Shut over the container's current
+            item, its header is what the next key moves on from.</p>
+
+            <h3 id="page-controls">Page Controls</h3>
+            <p><strong>The focus goes with the switch.</strong> A page control holding the focus enters the page it
+            turns to as a show enters it. A focus elsewhere - in the tab strip, in a sidebar - stays where it
+            is.</p>
+
+            <h2 id="selection">Selection</h2>
+            <p><strong><code>StackView</code> holds a selection on top of the current item</strong>, under
+            <code>SelectionMode::Multi</code>. The current item belongs to the stack underneath and follows the
+            keys and plain mouse clicks. The selection belongs to the view. A <code>StackView</code> is a focus
+            scope unless it is built otherwise.</p>
+
+            <h3 id="gestures">Gestures</h3>
+            <table>
+                <tr><th>Gesture</th><th>What it does</th></tr>
+                <tr><td>A mouse click, or an arrow</td><td>Picks the item: it becomes current and is the selection alone.</td></tr>
+                <tr><td>Shift with either</td><td>Selects the range from the anchor to the item. Every pick without Shift moves the anchor.</td></tr>
+                <tr><td>Ctrl with a mouse click, or Ctrl+Space</td><td>Toggles the item.</td></tr>
+                <tr><td>Ctrl with an arrow</td><td>Moves the current item alone, for Ctrl+Space to toggle.</td></tr>
+                <tr><td>A drag from the surface</td><td>Sweeps a rectangle over the items it crosses.</td></tr>
+                <tr><td>A drag from an item</td><td>Under <code>DragMode::EasySelect</code>, starts a rectangle. Under <code>EasyDrag</code>, carries the selection when the item is selected and the item alone when it is not.</td></tr>
+            </table>
+            <p>Ranges and rectangles reach items in nested panels too.</p>
+            <p><strong>A mouse press that may become a drag waits for its click.</strong> One with Ctrl or Shift may
+            become a rectangle, and one inside the selection may become a drag of the selection. A plain press
+            outside the selection selects at once.</p>
+            <p><strong><code>CanSelectItemEvent</code> says whether an item may join the selection</strong> - yes
+            in a <code>Multi</code> view for an item that can be current, before any handler. It is asked apart
+            from <code>CanFocusItemEvent</code>, since a rectangle needs answers for items it never makes
+            current.</p>
+
+            <h3 id="selection-code">From Code</h3>
+
+<pre>files.<span class="fn">onSelectionChange</span>([&amp;files](<span class="tp">SelectionChangeEvent</span>&amp;) {
+    <span class="kw">for</span> (<span class="tp">Control</span>* item : files.<span class="fn">selection</span>())
+        <span class="fn">mark</span>(*item);
+});</pre>
+
+            <ul>
+                <li><code>selection()</code> is the set, with <code>contains()</code> and
+                <code>empty()</code>.</li>
+                <li><code>setSelection(items)</code> replaces the selection with the items that
+                <code>CanSelectItemEvent</code> lets in, and drops the rest without a word - the same test a
+                Ctrl+click or a rectangle passes. The current item stays where it is. In a view that is not
+                <code>SelectionMode::Multi</code> the call does nothing.</li>
+                <li><code>setFocus()</code> on an item that is not current picks it, and the selection becomes
+                that item alone - see <a href="#from-code">Moving It from Code</a>.</li>
+                <li>A grid moves both with <code>GridBase::selectCell</code> - see <a href="grids.html">Grid</a>.</li>
+            </ul>
+
+            <h2 id="top-layer">The Top Layer</h2>
+            <p><strong>A window's top layer stands over its root</strong> - <code>FormBase::setTopLayer</code>.
+            The application's notices are shown in one, as cards at the bottom right of the main window.</p>
+            <p><strong>Tab reaches it after the root</strong> - see <a href="#tab">Tab</a>. A notice leaves the
+            focus where it is when it is posted. Its answers are buttons that answer <code>MouseFocus::Keep</code>,
+            so Tab lands on them and a mouse click on one leaves the focus where the user was.</p>
+            <p><strong>The focus goes back to the root when the control holding it in the layer is hidden</strong>
+            - to the control in the root it came from, or where showing the window puts it when that control is
+            gone. A notice answered from the keyboard hides its card, and the focus returns to where the user
+            was.</p>
+
+            <h2 id="reference">Reference</h2>
+
+            <p><code>Input</code>, all static:</p>
+            <table>
+                <tr><th>Member</th><th>What it answers</th></tr>
+                <tr><td><code>focusHolder()</code></td><td>The control holding the focus, or null.</td></tr>
+                <tr><td><code>focusDelegate()</code></td><td>The control the focus is on - the holder's item where it holds one.</td></tr>
+                <tr><td><code>hoveredControl()</code></td><td>The control under the pointer, or null.</td></tr>
+                <tr><td><code>mouse()</code>, <code>keyboard()</code></td><td>Which device drives the input - see <a href="platform.html">Platform</a>.</td></tr>
+            </table>
+
+            <p><code>Control</code>:</p>
+            <table>
+                <tr><th>Member</th><th>What it does</th></tr>
+                <tr><td><code>navigationReach()</code>, <code>mouseFocus()</code>, <code>clickTarget()</code>, <code>focusScope()</code></td><td>The four answers - see <a href="#answers">Four Answers</a>. <code>RichControl</code> sets them with <code>setNavigationReach()</code>, <code>setMouseFocus()</code>, <code>setClickTarget()</code> and <code>setFocusScope()</code>.</td></tr>
+                <tr><td><code>setFocus()</code></td><td>Moves the focus here. Throws where the control cannot take it.</td></tr>
+                <tr><td><code>trySetFocus()</code></td><td>Moves the focus here where the control can take it, and answers whether it did.</td></tr>
+                <tr><td><code>isFocused()</code>, <code>isHovered()</code>, <code>isPressed()</code></td><td>Whether the state is on this control or on something inside it - the focus through the popups up as well.</td></tr>
+                <tr><td><code>isDroppedDown()</code></td><td>Whether the open popup of this control's window was opened on it.</td></tr>
+                <tr><td><code>canTakeFocus()</code></td><td>Enabled, and <code>NavigationReach::Yes</code> or <code>MouseFocus::Self</code>.</td></tr>
+                <tr><td><code>takesFocusOnPress()</code></td><td>Enabled, and <code>MouseFocus::Self</code>.</td></tr>
+                <tr><td><code>isNavigationStop()</code></td><td>Enabled, and <code>NavigationReach::Yes</code>.</td></tr>
+                <tr><td><code>isInteractive()</code></td><td>Whether any answer is other than a label's.</td></tr>
+                <tr><td><code>holdsNavigationStop()</code></td><td>Whether a key can land on this control or on something inside it.</td></tr>
+                <tr><td><code>makeCurrentItem()</code></td><td>Makes this control the current item of the nearest focus scope above it, or of its window's root where there is none.</td></tr>
+            </table>
+
+            <p>Overrides and protected calls on <code>Control</code>, for a control or a container of your own:</p>
+            <table>
+                <tr><th>Member</th><th>What it answers</th></tr>
+                <tr><td><code>setFocusByKey(target, modifiers)</code></td><td>Moves the focus by a key the control handles itself, carrying that key's modifiers.</td></tr>
+                <tr><td><code>focusChanged()</code></td><td>Told after the focus arrived or left, to every control whose <code>isFocused()</code> changed.</td></tr>
+                <tr><td><code>nestedControlFocusing(event)</code></td><td>The focus is on its way to <code>event.control</code>. Runs from the target up, before the move.</td></tr>
+                <tr><td><code>nestedKeyDown(event)</code></td><td>A key on the focus path. Set <code>event.handled</code> to take it.</td></tr>
+                <tr><td><code>focusDelegate()</code></td><td>The control this one answers for while it holds the focus.</td></tr>
+                <tr><td><code>currentItem()</code>, <code>takeCurrentItem(item)</code></td><td>The item a show enters at, and whether this control keeps a current item.</td></tr>
+                <tr><td><code>nestedCurrentItemChange(item)</code></td><td>A container above moved its current item out of here.</td></tr>
+                <tr><td><code>navigationNeighbour(child, step)</code></td><td>The child an arrow step lands in, or null to hand it up.</td></tr>
+                <tr><td><code>navigationEntry(step)</code></td><td>The child a step from outside lands in.</td></tr>
+                <tr><td><code>navigationSlots()</code></td><td>The reading order, where it differs from the collection.</td></tr>
+            </table>
+
+            <p>Containers and the window:</p>
+            <table>
+                <tr><th>Member</th><th>What it does</th></tr>
+                <tr><td><code>ContainerBase::currentItem()</code>, <code>setCurrentItem()</code></td><td>The item a show enters the container at.</td></tr>
+                <tr><td><code>StackBase::OnCanFocusItem</code></td><td><code>CanFocusItemEvent</code> - may this item be current. Carries <code>item</code> and <code>canFocus</code>.</td></tr>
+                <tr><td><code>StackBase::OnCurrentItemChange</code></td><td><code>CurrentItemChangeEvent</code> - the current item moved. Carries <code>previousItem</code>.</td></tr>
+                <tr><td><code>StackView::selectionMode</code>, <code>dragMode</code></td><td><code>SelectionMode::None</code> or <code>Multi</code>; <code>DragMode::EasySelect</code> or <code>EasyDrag</code>.</td></tr>
+                <tr><td><code>StackView::selection()</code>, <code>setSelection()</code></td><td>The selected set, and a way to state it.</td></tr>
+                <tr><td><code>StackView::OnSelectionChange</code>, <code>OnCanSelectItem</code></td><td>The set changed; may this item join it.</td></tr>
+                <tr><td><code>FocusNavigator::enterShown(control)</code></td><td>Moves the focus into a control the way a show enters it, and answers the stop.</td></tr>
+                <tr><td><code>FormBase::topLayer()</code>, <code>setTopLayer()</code></td><td>The control standing over the root, in the Tab ring after it.</td></tr>
+                <tr><td><code>AppContext::focusAlwaysShown()</code></td><td>Whether the ring shows under the mouse too.</td></tr>
+            </table>
+        </main>
+        <div class="page-end">
+            <a class="manuals-link" href="index.html">All manuals</a>
+            <a class="top-link" href="#top">Top</a>
+        </div>
+    </div>
+
+    <!-- Collapsible Sidebar Logic Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibleElements = document.querySelectorAll('.sidebar li.has-children');
+            collapsibleElements.forEach(li => {
+                const btn = li.querySelector('.toggle-btn');
+                const link = li.querySelector('.nav-item-wrapper > a');
+
+                const toggle = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    li.classList.toggle('collapsed');
+                };
+
+                if (btn) {
+                    btn.addEventListener('click', toggle);
+                }
+
+                // Allow clicking the primary root link to expand the node if it's currently collapsed
+                if (link) {
+                    link.addEventListener('click', () => {
+                        if (li.classList.contains('collapsed')) {
+                            li.classList.remove('collapsed');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

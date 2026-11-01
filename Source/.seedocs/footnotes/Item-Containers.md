@@ -26,13 +26,20 @@ panel lands inside that panel, at the panel's own current item - see FocusNaviga
 
 - A form built on a panel whose current item is its left bar opens with the focus on the left
   bar's first stop.
-- A dialog whose root names its default answer as the current item opens on that answer.
+- A dialog opens on its default answer, which is its root's current item - see MessageBoxBase.
 
-**An ActiveContainer moves its current item with the focus**, so a show brings the focus back to
-the item the user left. Any other container keeps the item it was given. Tab and the arrows follow
-an ActiveContainer's current item alone - see StackBase.
+**A focus scope moves its current item with the focus**, so a show brings the focus back to the
+item the user left. Any other container keeps the item it was given. Tab and the arrows follow a
+focus scope's current item alone - see FocusScope.
 
 The item is any control inside the container, or none, and it is dropped when it is deleted.
+
+## ContainerBase takeCurrentItem
+
+**A window's root takes what no container below it took**, as the item a show enters the window at.
+Control::makeCurrentItem on a control with no focus scope above it names where its window opens,
+so code says it before the window is shown - the focus itself lands only in a window that is up.
+A container that is not a root answers no, and the question goes on up.
 
 ## StackBase
 
@@ -43,17 +50,17 @@ StackView.
 **Current is not focused.** The item stays current while the focus is anywhere else, so its cue,
 VisualStateIndex::Current, is not gated on the keyboard.
 
-**An ActiveContainer moves the current item itself**, following whatever the user acts on - a
-click, or the focus arriving from the keyboard - and answers for which of its items is selected.
-That is the one switch for it: a container that tracks nothing is not one, and a container whose
-current item is settled elsewhere is not one either. PageControl's is whichever page was made
-visible, and the tab strip is what makes one visible.
+**A focus scope moves the current item itself**, following whatever the user acts on - a click,
+or the focus arriving from the keyboard - holds the focus for it, and answers for which of its
+items is selected - see FocusScope. A container whose current item is settled elsewhere is no
+scope: PageControl's is whichever page was made visible, and the tab strip is what makes one
+visible.
 
-**A container standing in an ActiveContainer is not one of its own.** A grid on a page that keeps
-the current item is built with Interactivity::None: its rows are the page's items, one selection
-stands on the whole page, and the arrows and the page keys travel over every item the page
-holds - see Grid. Code that picks an item calls Control::makeCurrentItem on it, which reaches
-whichever container keeps the current item.
+**A container standing in a focus scope is no scope of its own.** A grid on a page that keeps the
+current item is built with FocusScope::No, NavigationReach::No and MouseFocus::Parent: its rows are
+the page's items, one selection stands on the whole page, and the arrows and the page keys travel
+over every item the page holds - see Grid. Code that picks an item calls Control::makeCurrentItem on
+it, which reaches whichever container keeps the current item.
 
 **What the current item leaves is told** - see Control nestedCurrentItemChange - so a grid the
 item has left drops its selected cell. The focus a container holds moves with its item, and the

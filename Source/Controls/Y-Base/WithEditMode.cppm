@@ -210,13 +210,13 @@ namespace ClaFi::Controls
         HostClass::nestedContextPopup(event);
     }
 
-    // Leaving accepts. A popup opened on the control - an edit menu, a link's menu - holds the
-    // focus for a while and keeps the mode up.
+    // Leaving accepts. A popup opened on the control - an edit menu, a link's menu - keeps it on
+    // the focus path, and the mode with it.
     template <IsControl HostClass>
     void WithEditMode<HostClass>::focusChanged()
     {
         HostClass::focusChanged();
-        if (!HostClass::isFocused() && !HostClass::isDroppedDown())
+        if (!HostClass::isFocused())
             leaveEditMode(true);
     }
 

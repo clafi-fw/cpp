@@ -1034,7 +1034,7 @@ namespace ClaFi::Controls
             // its place as the popup on the box - which one window at a time is.
             WindowRole::Tooltip,
             this,
-            Interactivity::None,
+            ClickTarget::Parent,
             UiElement::Tooltip,
             WordWrap::Yes,
             metrics.secondaryWindow,

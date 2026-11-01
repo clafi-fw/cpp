@@ -24,7 +24,7 @@ namespace ClaFi::Controls
     {
     public:
         using Control::Control;
-        Interactivity interactivity() const override { return Interactivity::MouseOnly; }
+        ClickTarget clickTarget() const override { return ClickTarget::Self; }
         // The indicator takes the depth its host does not. A check box or radio button is a row of
         // text that happens to be clickable, and pushing the whole row moves a label that has no
         // business moving; the mark is the part that reads as a thing being pressed. It carries no
@@ -166,8 +166,8 @@ namespace ClaFi::Controls
         // being hovered by itself.
         event.setParentZAmount(1.0f);
 
-        // The indicator is given no Focusable role. That role gates focus painting, which an
-        // indicator never has, and a press is expressed by scaling the whole control about one
+        // The indicator takes no focus. Taking it gates focus painting, which an indicator never
+        // has, and a press is expressed by scaling the whole control about one
         // origin - see PaintEvent::pressScale() - rather than per element.
     }
 
@@ -571,9 +571,11 @@ namespace ClaFi::Controls
         RichControl::nestedDoubleClick(event);
     }
 
+    // A key or a call from code leaves the pointer wherever it rests, so only a press reads it.
     void ButtonBase::nestedControlFocusing(FocusEvent& event)
     {
-        injectCtrl(event);
+        if (event.byMouse)
+            injectCtrl(event);
         RichControl::nestedControlFocusing(event);
     }
 
@@ -632,8 +634,8 @@ namespace ClaFi::Controls
         // A press on the indicator means the same as a press with Ctrl held: take this item
         // in or out of the selection and leave the rest of it alone.
         //
-        // The event does not always say so by itself. The indicator is MouseOnly, so the focus
-        // walk in setMouseDown climbs past it to the button before it builds the FocusEvent,
+        // The event does not always say so by itself. The indicator's MouseFocus is Parent, so
+        // setFocusByPress climbs past it to the button before it builds the FocusEvent,
         // and that event arrives here already named after the button. What the mouse is over
         // is what still tells the two apart while the mouse is what acted - a key reaching the
         // button leaves the pointer wherever it rests. A hidden indicator cannot be hovered, so

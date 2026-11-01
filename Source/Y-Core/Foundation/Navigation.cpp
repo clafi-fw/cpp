@@ -58,7 +58,7 @@ namespace ClaFi
         // of the form's life. The form is the container this navigation belongs to, and it
         // answers with its current item or with itself, which is the start a walk needs either
         // way.
-        Control* focusHolder = Input::focusedControl();
+        Control* focusHolder = Input::focusHolder();
         if (focusHolder && &focusHolder->form() != &m_form)
             focusHolder = nullptr;
         if (!focusHolder)
@@ -83,7 +83,7 @@ namespace ClaFi
         {
         case Keys::Tab:
             if (Control* stop = tabStop(*focusedItem, sourceContainer, event.modifiers.shift))
-                land(*stop);
+                land(*stop, event.modifiers);
             return;
         case Keys::Left:
         case Keys::Right:
@@ -99,7 +99,7 @@ namespace ClaFi
                 ? enter(*focusedItem, step)
                 : arrowStop(*focusedItem, step, sourceContainer);
             if (stop && stop != focusedItem)
-                land(*stop, step);
+                land(*stop, step, event.modifiers);
             return;
         }
         case Keys::Home:
@@ -109,18 +109,20 @@ namespace ClaFi
             // These four address a container. With none in scope there is nothing for them to
             // move within, and the focus stays where it is.
             if (sourceContainer)
-                moveInContainer(*sourceContainer, *focusedItem, key);
+                moveInContainer(*sourceContainer, *focusedItem, key, event.modifiers);
             return;
         }
     }
 
-    // The form's root is never landed on: it has no outside to be entered from.
+    // The form's root is never landed on: it has no outside to be entered from. A show carries no
+    // gesture, so the stop takes the focus as it takes it from code.
     Control* FocusNavigator::enterShown(Control& control)
     {
         Control* stop = shownEntry(control);
-        if (!stop || isFormRoot(stop))
+        if (!stop || isFormRoot(stop) || !stop->trySetFocus())
             return nullptr;
-        land(*stop);
+        m_form.m_navigationLine = {};
+        stop->scrollIntoView();
         return stop;
     }
 
@@ -151,19 +153,19 @@ namespace ClaFi
         return nullptr;
     }
 
-    // **An active container answers for the item it holds.** A step entering it lands on its
+    // **A focus scope answers for the item it holds.** A step entering it lands on its
     // current item, wherever that is and however far it is scrolled away; scrollIntoView brings
     // it back. A container with nothing current is entered the way any container is, and one with
     // nothing to hand the focus to keeps it.
     Control* FocusNavigator::enter(Control& control, const NavigationStep& step)
     {
-        if (control.interactivity() == Interactivity::ActiveContainer)
+        if (control.focusScope() == FocusScope::Yes)
         {
             Control* currentItem = control.focusDelegate();
-            if (currentItem != &control && currentItem->canTakeFocus())
+            if (currentItem != &control && currentItem->isNavigationStop())
                 return currentItem;
         }
-        else if (control.canTakeFocus())
+        else if (control.isNavigationStop())
             return &control;
 
         if (Control* child = control.navigationEntry(step))
@@ -171,7 +173,7 @@ namespace ClaFi
             if (Control* stop = enter(*child, step))
                 return stop;
         }
-        return control.canTakeFocus() ? &control : nullptr;
+        return control.isNavigationStop() ? &control : nullptr;
     }
 
     Control* FocusNavigator::tabStop(Control& item, Control* sourceContainer, const bool reverse)
@@ -243,41 +245,41 @@ namespace ClaFi
         return nullptr;
     }
 
-    // The active container rule of enter, read in order rather than by a step.
+    // The focus scope rule of enter, read in order rather than by a step.
     Control* FocusNavigator::readingEntry(Control& control, const ScrollDirection edge)
     {
         if (!control.holdsNavigationStop())
             return nullptr;
-        if (control.interactivity() == Interactivity::ActiveContainer)
+        if (control.focusScope() == FocusScope::Yes)
         {
             Control* currentItem = control.focusDelegate();
-            if (currentItem != &control && currentItem->canTakeFocus())
+            if (currentItem != &control && currentItem->isNavigationStop())
                 return currentItem;
             Control* stop = edgeStop(control, edge);
             return stop ? stop : &control;
         }
-        if (control.canTakeFocus())
+        if (control.isNavigationStop())
             return &control;
         return edgeStop(control, edge);
     }
 
     // **Every container's current item comes first**, at any depth, and the reading order after
-    // it. An ActiveContainer whose item moves with the focus is entered by the reading rule, which
+    // it. A focus scope whose item moves with the focus is entered by the reading rule, which
     // follows that item already; one with no such item - a panel at a form's root - is entered at
     // the item it was given, and takes the focus itself where it holds no other stop.
     Control* FocusNavigator::shownEntry(Control& control)
     {
         if (!control.holdsNavigationStop())
             return nullptr;
-        const bool isActiveContainer = control.interactivity() == Interactivity::ActiveContainer;
-        if (isActiveContainer && control.focusDelegate() != &control)
+        const bool isScope = control.focusScope() == FocusScope::Yes;
+        if (isScope && control.focusDelegate() != &control)
             return readingEntry(control, ScrollDirection::ToBegin);
         if (Control* item = control.currentItem())
         {
             if (Control* stop = shownEntry(*item))
                 return stop;
         }
-        if (!isActiveContainer && control.canTakeFocus())
+        if (!isScope && control.isNavigationStop())
             return &control;
         const std::size_t count = control.navigationSlotsCount();
         for (std::size_t index = 0; index != count; ++index)
@@ -288,13 +290,14 @@ namespace ClaFi
             if (Control* stop = shownEntry(*child))
                 return stop;
         }
-        return isActiveContainer ? &control : nullptr;
+        return isScope ? &control : nullptr;
     }
 
     // **A page is as many steps as fit in the container's viewport**, along the axis it scrolls
     // on, so a page press lands where a run of arrow presses would have. A container that holds
     // a single screenful has no page to cross, and a press goes to its end.
-    void FocusNavigator::moveInContainer(Control& container, Control& item, const KeyCode key)
+    void FocusNavigator::moveInContainer(Control& container, Control& item, const KeyCode key,
+        const KeyModifiers modifiers)
     {
         const ScrollDirection edge = key == Keys::Home || key == Keys::Prior
             ? ScrollDirection::ToBegin
@@ -306,7 +309,7 @@ namespace ClaFi
         if (!pageWay)
         {
             if (Control* stop = edgeStop(container, edge))
-                land(*stop);
+                land(*stop, modifiers);
             return;
         }
 
@@ -315,7 +318,7 @@ namespace ClaFi
         if (!stop)
             stop = edgeStop(container, edge);
         if (stop)
-            land(*stop, step);
+            land(*stop, step, modifiers);
     }
 
     std::optional<NavigationDirection> FocusNavigator::pageDirection(Control& container,
@@ -382,7 +385,8 @@ namespace ClaFi
     // **A step writes only the line across it**, brought into the stop it landed on - at the edge
     // the step crossed, which is where the eye is - and leaves the line along it as it was. Kept
     // as an offset from the stop, so a scroll carrying the stop away carries the line with it.
-    void FocusNavigator::land(Control& stop, const NavigationStep& step)
+    void FocusNavigator::land(Control& stop, const NavigationStep& step,
+        const KeyModifiers modifiers)
     {
         const FloatRect rect = laidOutRect(stop);
         FloatPoint line = step.line;
@@ -392,13 +396,13 @@ namespace ClaFi
             line.x = AxisSpan{ rect.left, rect.right }.clampInto(line.x);
         m_form.m_navigationLine = { &stop, line - rect.topLeft() };
         stop.scrollIntoView();
-        stop.setFocus();
+        Control::setFocusByKey(stop, modifiers);
     }
 
-    void FocusNavigator::land(Control& stop)
+    void FocusNavigator::land(Control& stop, const KeyModifiers modifiers)
     {
         m_form.m_navigationLine = {};
         stop.scrollIntoView();
-        stop.setFocus();
+        Control::setFocusByKey(stop, modifiers);
     }
 }

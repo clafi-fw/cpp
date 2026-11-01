@@ -508,8 +508,9 @@ namespace ClaFi::Controls
         // names where the user **was** only until that container has recorded its new current
         // item, and it does that from inside the base call below.
         //
-        // Control::setFocus raises this on **every** press, including a press on the control that
-        // already holds the focus, so the case being detected is reported rather than skipped.
+        // Control::setFocusByPress raises this on **every** press, including a press on the
+        // control that already holds the focus, so the case being detected is reported rather
+        // than skipped.
         //
         // focusChanged cannot answer this: it is told after the move.
         if (event.control == this)

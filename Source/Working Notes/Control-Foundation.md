@@ -163,6 +163,72 @@ inside the key-down, and the character of that press, queued before the dispatch
 the control the focus went back to - a space typed into a text box. m_popupTookKey answers the
 same shape for a popup.
 
+## Control setFocus
+
+2026-11-01. Oj, on the manual's setFocus paragraph: "Either API is bad either the manual. I can't
+imagine anyone wanting to use setFocus with that vague description. And it's public and easy to
+call." It was the API. setFocus was the mouse press's own path: FocusEvent took its modifiers from
+Platform::keyModifiers() at the call, and StackBase, RowBase and ButtonBase read
+Input::mouse().active(). So the same row->setFocus() collapsed a multi-selection after a key,
+left it after a mouse click on a selected row, and selected a range with Shift held.
+
+Decided with Oj: split the call code makes from the path input takes, and two calls for code -
+setFocus throws (noReach) where the control cannot take the focus, trySetFocus answers false.
+FocusEvent::byMouse replaces every read of the device in a focus walk; code builds its event with
+no modifiers and byMouse false, so it lands as a key with no modifier would. The input paths are
+protected statics, setFocusByPress and setFocusByKey, so the grid's and the tree's key handling
+outside Foundation reach them.
+
+I had proposed that code leave the selection alone. StackBase::setCurrentItem was already a pick
+with no modifiers from code - "all from code ever meant" - and setFocus follows it, so
+makeCurrentItem and setFocus agree.
+
+The popup's return of the focus to its target stays unchecked (moveFocusFromCode): a MouseOnly
+button that opened a menu is handed the focus back. Open: whether it should go where the focus was
+before the popup took it.
+
+2026-11-01, later. Oj, on the manual's "unless the focus is already inside it - an owner may focus a
+dialog's default button before running it": "I don't understand, how focus can be in a window that
+is yet invisible". standsShown left the window out on purpose, so setFocus on a control of a dialog
+built and not yet run moved Input::focusHolder into it, and FormBase::updateVisibility skipped
+entering a window whose form the holder already stood in. MessageBoxBase::addAnswer, PromptDialog,
+the Themes App's write-to-source question, SeeDocs' New Project dialog, both crumb lists and the
+palette's drop-down leaned on it.
+
+Decided with Oj (his pick of the two I offered): the focus lands only in a window that is up -
+standsShown asks form().visible() - and every window but a tooltip is entered as it comes up. Where
+a window opens is its root's current item, named with makeCurrentItem. For that call to reach a
+root with no focus scope above the control, ContainerBase::takeCurrentItem answers yes on a root and
+records the item directly; StackBase hands a stack that is not a scope on to it. I had said
+makeCurrentItem without checking that only scopes answered it.
+
+Not taken: keeping the pre-show focus and documenting it. A dialog built and never shown left the
+focus in it until it died, and then nowhere.
+
+## Control isFocused
+
+2026-11-01. Oj, on the manual's "A popup takes the focus and leaves the look ... -
+Control::focusAnchor": "focusAnchor is a redundant entity, isFocused should answer that "reads like"
+and popup stack be on a focus path". focusAnchor answered, per form, the opener's delegate while
+the form held an active popup; visualState read it, and isFocused answered the delegate's own chain
+only - so the opener read focused and was told it had lost the focus, and WithEditMode and
+visualState each added isDroppedDown to make up for it.
+
+Decided with Oj: the focus path runs from the delegate up, and at the root of a popup its opener
+holds as active popup, on at the popup target's focusDelegate. isFocused answers whether a control
+is on it; focusAnchor went. Input::focusMoved diffs the two paths, so opening and closing a popup
+tell the popup's own controls only; FormBase::updateVisibility hands the focus back before it
+unregisters the popup for that reason. A focus scope's fallback ring is read off the step the path
+takes into it. A dropped-down control no longer reads focused by being dropped down - only selected.
+
+Asked and decided: keys stay where they were. A key the popup leaves stops at its root - Oj picked
+that over letting keys walk the path, which would hand a menu's unused arrow to the text box under
+it.
+
+Left as it was: a page control switching pages from a menu command now reads itself focused and
+enters the new page while the menu is up, and the menu's unchecked hand-back then aims at the
+control it was opened on - hidden with the old page. The same end as before, by another route.
+
 ## InputController
 
 The fades run on the application's animator, reached through the AppContext the form reporting

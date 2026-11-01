@@ -440,7 +440,9 @@ namespace ClaFi::Controls
         :
         StackPanelBase{
             params,
-            Interactivity::ActiveContainer, // keeps a current item unless the caller says not
+            FocusScope::Yes, // keeps a current item unless the caller says not
+            NavigationReach::Yes,
+            MouseFocus::Self,
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(previewMode),
@@ -1254,8 +1256,7 @@ namespace ClaFi::Controls
         Control* child = &event.control();
         while (child && child->parent() != this)
             child = child->parent();
-        if (!child || (interactivity() == Interactivity::ActiveContainer
-            && itemAt(&event.control()) != child))
+        if (!child || (focusScope() == FocusScope::Yes && itemAt(&event.control()) != child))
             return;
         if (canMoveItem(*child))
             beginCarry(*child, event);

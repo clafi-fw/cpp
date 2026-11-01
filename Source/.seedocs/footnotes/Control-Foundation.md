@@ -71,8 +71,8 @@ owns at most one, and setTopLayer replaces it.
 - Tab reaches it after the root's last stop - see FocusNavigator.
 - The focus goes back to the root when the control holding it in the layer is hidden: to the
   control in the root it came from, or where showing the form puts it when that control is gone.
-- A control in it that should leave the focus alone on a mouse press says KeyFocusable, or
-  MouseOnly where the keys should not reach it either.
+- A control in it that should leave the focus alone on a mouse press says MouseFocus::Keep, and
+  NavigationReach::No where the keys should not reach it either.
 
 ## FormClosingEvent
 
@@ -116,17 +116,60 @@ a grid cell selected before the grid shows, takes this route.
 stopAnimation and stopAnimations take the same route. GridDescriptor::animateCell does the same for
 a cell.
 
+## Control setFocus
+
+**The focus lands on this control**, or on its current item where it keeps one. A container above
+that keeps a current item makes the control that item, as setCurrentItem does: a pick with no
+modifiers, so a multi-select view's selection becomes the control alone. Focus arriving at the item
+already current leaves the selection as it is.
+
+**The call reads nothing of the user's input.** The keys held and the device that acted last play
+no part. A container takes the control as a key with no modifier held would bring the focus to it.
+
+**A control that cannot take the focus throws** `std::logic_error`: one that is hidden or stands in
+something hidden, one whose window is not up, one disabled, and one that answers neither
+NavigationReach::Yes nor MouseFocus::Self. Where any of that can happen by the time of the call,
+call trySetFocus.
+
+**The focus is only ever on something on screen.** A window that is built but not yet shown opens
+where its root's current item says - see Control makeCurrentItem.
+
+Scrolling the control into view is the caller's - see scrollIntoView.
+
+## Control trySetFocus
+
+**setFocus where the control can take the focus, and nothing where it cannot.** It answers which.
+It suits a control named some time before the call, which may have been hidden or disabled since -
+a focus handed back to where it came from, a match in a section shut since it was found.
+
+## Control setFocusByKey
+
+**For a control's own key handling.** The focus is moved by that key and carries its modifiers, so
+a stack reads Shift and Ctrl as it reads them on an arrow the navigator answers - a range, or the
+current item moved alone. The handler names a stop, and the call takes it unchecked.
+
+## Control setFocusByPress
+
+**The mouse press's own.** The framework calls it with the control the press is on, and the focus
+goes where MouseFocus sends it - see MouseFocus. A stack reads the press's modifiers, and a grid
+row the cell the press landed on.
+
 ## Control makeCurrentItem
 
 **The nearest container above that keeps a current item answers**, whether or not it takes the
-control - see Control takeCurrentItem. The focus stays where it is; a container that holds the
-focus shows the new item through its focusDelegate.
+control - see Control takeCurrentItem. The focus stays where it is; a focus scope holding the focus
+shows the new item through its focusDelegate.
+
+**Where no focus scope stands above, the window's root takes the control** as the item its window
+opens on - see ContainerBase takeCurrentItem. A dialog opens on another answer this way, and a list
+on the line the path went through.
 
 ## Control takeCurrentItem
 
-Asked up the chain by makeCurrentItem. A container that keeps a current item answers yes, and
-takes the control where it can be an item of that container - StackBase does. Every other
-control answers no, and the question goes on up.
+Asked up the chain by makeCurrentItem. A focus scope answers yes, and takes the control where it
+can be an item of that scope - see StackBase. A window's root answers yes for what nothing below it
+took - see ContainerBase takeCurrentItem. Every other control answers no, and the question goes on
+up.
 
 ## Control nestedCurrentItemChange
 
@@ -209,8 +252,8 @@ one lane end at different offsets.
 ## ClickEvent
 
 **Raised once, on the control the click is on.** A key's press is on the focused control. A mouse
-click is on the control under the pointer, or on the nearest control above it that answers the
-mouse - see Control isMouseResponsive. A mouse click on a label inside a tile is a click on the
+click is on the control under the pointer, or on the nearest control above it that answers
+ClickTarget::Self - see ClickTarget. A mouse click on a label inside a tile is a click on the
 tile.
 
 **NestedClickEvent follows it**, from the same control up to the root. A handler that stops the
@@ -236,24 +279,17 @@ OnNestedClick hears a click on its own control and on every control inside it.
 current item from it - the item `clickedControl` stands in - so stopping it below a stack keeps
 that stack's current item where it was.
 
-## Control isMouseResponsive
+## Control isInteractive
 
-**True for a control the mouse addresses** - MouseOnly or Focusable. ActiveContainer answers false:
-a container is what a press lands inside rather than what it was aimed at. None is decoration and
-answers false too.
+**Any one of four answers makes a control interactive**: ClickTarget::Self, NavigationReach::Yes,
+MouseFocus::Self or FocusScope::Yes. MouseFocus::Keep alone leaves the press to the parent, and
+does not count.
 
-**Everything a press spends on its way out asks this** - the state invalidation that walks up from
-the pressed control, the scroll a release asks for, and the control the click is raised on. So a
-mouse click on a label neither lights the host it stands in nor moves the view under it, and the
-click is raised on the nearest control above the label that answers true, or on the label itself
-when there is none.
+**Only an interactive control lights up hot and pressed**, and only one lends its look to a child
+painted inside it. A label or a plain container has no state of its own.
 
-**A part that stands for its host hands its click on.** A button's selection indicator is MouseOnly
-and takes the click on the mark; ButtonBase::nestedClick raises the button's own click from it and
-spends a double click on the mark - see ButtonBase nestedClick.
-
-**A control that answers the mouse without taking input answers true**, so a double click on it is
-its own rather than that of a control above it.
+**An action needs one.** Attaching an action to a control that is not interactive throws, except
+in PresenterRole::Display.
 
 ## DoubleClickEvent
 
@@ -453,8 +489,8 @@ its own.
 **It takes the keys no control on the focus path took**, after the form's shortcuts and the
 application's: Return and Space, Tab, the arrows, Home, End and the page keys.
 
-**The nearest ActiveContainer is the scope.** Tab steps out of it as a whole, the arrows and the
-page keys move inside it, and Home and End go to its first and last stop.
+**The nearest focus scope bounds the keys.** Tab steps out of it as a whole, the arrows and the
+page keys move inside it, and Home and End go to its first and last stop - see FocusScope.
 
 - **An arrow** asks the focused item's parent for the child the step lands in - see
   Control navigationNeighbour. A parent with none hands the step to its own parent, up to the
@@ -466,16 +502,16 @@ page keys move inside it, and Home and End go to its first and last stop.
 - **A page press** is as many arrow steps along the axis the scope scrolls on as fit in its
   viewport, the item it starts from counted. Where nothing overflows, it goes to the end.
 
-**Entering an ActiveContainer lands on its current item**, whichever way the focus comes in.
+**Entering a focus scope lands on its current item**, whichever way the focus comes in.
 
 ## FocusNavigator enterShown
 
 **Moves the focus into a control the way showing it enters it.** A container is entered at its
 current item, and at its first stop in reading order where that holds none, each level by the same
-rule - see ContainerBase currentItem. An ActiveContainer whose item moves with the focus is entered
-as a step from outside enters it, and an ActiveContainer holding no other stop takes the focus
-itself. The stop is scrolled into view, and the navigation line is dropped, so the next arrow
-starts a run from there.
+rule - see ContainerBase currentItem. A focus scope whose item moves with the focus is entered as
+a step from outside enters it, and a focus scope holding no other stop takes the focus itself.
+The stop is scrolled into view, and the navigation line is dropped, so the next arrow starts a run
+from there.
 
 **Answers the stop**, or nothing where the control is hidden, disabled or holds no stop - the focus
 then stays where it was. The form's root is never landed on.
@@ -532,30 +568,41 @@ such child in reading order, whichever way the step comes.
 **One per application, not per form**, so every member is static. The focus leaves a control when it
 arrives elsewhere, and that may be another window.
 
-**Two controls name the focus.** `focusedControl()` is the holder - a container holds the focus for
+**Two controls name the focus.** `focusHolder()` is the holder - a container holds the focus for
 its current item - and `focusDelegate()` is the control the focus is on: the holder's
 Control::focusDelegate, which is the item. Both are the holder where it delegates to nothing.
 
 **A state is on a path, not on one control.** The hover is on the hovered control and on everything
-it stands in; the focus is on the delegate and on everything it stands in, so a panel and the form's
-root are focused while the focus is inside them. A move walks each side up to the common parent,
-telling every control on the way and animating its factor, and stops there: everything above
-answers the same before and after. Whether a control shows the state is its own business.
+it stands in. The focus is on the delegate, on everything it stands in, and on through the popups
+up - see Control isFocused - so a panel and the form's root are focused while the focus is inside
+them. A move walks each side up to where the two paths meet, telling every control on the way and
+animating its factor, and stops there: everything above answers the same before and after. Whether
+a control shows the state is its own business.
 
 **A control asks about itself through Control::isFocused(), isHovered() and isPressed()**, rather
 than comparing pointers with these. A test for the delegate itself - the row a grid's keys apply to,
 the item a press landed on - compares with `focusDelegate()`.
 
-**A popup takes the focus and leaves the look.** The control a popup was opened on reads focused and
-selected for as long as the popup is up - Control::isDroppedDown - and the item it answers for
-reads focused with everything it stands in, since the focus comes back there: Control::focusAnchor
-is that item, or the focus delegate itself while no popup is up, and the drawn focus is the chain
-above it. So a row whose cell holds the open list keeps its ring. `isFocused()` answers for the
-focus itself, which is in the popup.
+## Control isFocused
 
-**An active container wears the ring as a fallback.** While the anchor is an item inside it, the
-item wears the ring and the container reads focused without one; a container that is the anchor
-itself - a list with nothing in it - wears its own.
+**The focus is on a path.** It starts at Input::focusDelegate and goes up through the parents. At
+the root of a popup that is up, it goes on at what the control the popup was opened on answers for -
+its focusDelegate - and up from there, through every popup of a stack. A dialog is a window of its
+own and no part of its owner's path.
+
+**So a popup takes the focus and leaves the look.** The control a popup was opened on reads focused
+with everything it stands in for as long as the focus is in the popup: a text box keeps its caret
+under its own menu, and a row whose cell holds the open list keeps its ring. It also reads selected
+while the popup is up - see Control::isDroppedDown.
+
+**Only a control whose answer changed is told** - see Control::focusChanged. Opening a popup and
+closing it leave the chain it was opened on quiet.
+
+**Keys stop at a popup's root.** A key the popup leaves never reaches the control it was opened on.
+
+**A focus scope wears the ring as a fallback**, while the path starts at it or comes into it from a
+popup opened on it, with no item of its own below it. Otherwise the item wears the ring and the
+scope reads focused without one; a list with nothing in it wears its own.
 
 ## InputController
 
@@ -575,8 +622,8 @@ is hot through its focus and the keyboard instead - see VisualStateIndex.
 
 **Paint reads the factors** through `RuleInput::Keyboard` and `RuleInput::Mouse`. A switch is one
 crossfade, and each step repaints every window - see InputSwitchEvent. The hovered and the focused
-control re-read their state as well, since their Hot and Current carry the device - up to the root
-form, through the popups between, since what a popup was opened on reads focused through it.
+control re-read their state as well, since their Hot and Current carry the device - the focused
+one all along the focus path - see Control isFocused.
 
 ## ContextMessage
 

@@ -130,7 +130,8 @@ namespace ClaFi::Controls
             FixedSize{ 20.0f },
             ButtonViewMode::IconOnly,
             IconSize{ 10.0f },
-            Interactivity::MouseOnly,
+            NavigationReach::No,
+            MouseFocus::Keep,
             ButtonBase::OnDrawIcon{ Icons::OpenChevron::drawUp },
             L"Previous"
         ) };
@@ -138,7 +139,8 @@ namespace ClaFi::Controls
             FixedSize{ 20.0f },
             ButtonViewMode::IconOnly,
             IconSize{ 10.0f },
-            Interactivity::MouseOnly,
+            NavigationReach::No,
+            MouseFocus::Keep,
             ButtonBase::OnDrawIcon{ Icons::OpenChevron::drawDown },
             L"Next"
         ) };
@@ -146,7 +148,8 @@ namespace ClaFi::Controls
             FixedSize{ 20.0f },
             ButtonViewMode::IconOnly,
             IconSize{ 8.0f },
-            Interactivity::MouseOnly,
+            NavigationReach::No,
+            MouseFocus::Keep,
             ButtonBase::OnDrawIcon{ Icons::XMark::draw },
             L"Clear"
         ) };

@@ -299,8 +299,8 @@ beside it, and the answers sit at the right end, each as wide as the widest. Onl
 input.
 
 **An answer names what the page does** - Read as text. It is a Button, and the arguments after the
-handler in addAnswer override the band's own - an icon for the caption, or MouseOnly to leave the
-focus where it is.
+handler in addAnswer override the band's own - an icon for the caption, or MouseFocus::Keep to
+leave the focus where it is.
 
 ## EditTarget
 
@@ -764,8 +764,9 @@ only when it is painted.
   measures every row.
 
 **A tree follows the user as a container of its own**, keeping the current row. Built with
-Interactivity::None it stands in the container above it instead, as a grid does - see Grid: its
-rows are that container's items, and Up, Down, Home, End and the page keys travel out of it.
+FocusScope::No, NavigationReach::No and MouseFocus::Parent it stands in the container above it
+instead, as a grid does - see Grid: its rows are that container's items, and Up, Down, Home, End
+and the page keys travel out of it.
 A node shut over the current row makes its header the row either way - see Expander.
 
 **A node's rows take the ItemsOrder the node is made with** - `addNode(ItemsOrder::Rearrangeable,

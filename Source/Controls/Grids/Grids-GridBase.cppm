@@ -235,11 +235,11 @@ namespace ClaFi::Controls::Grids
         // One step of the selected cell, answered by the field root; false lets Up and Down leave.
         bool moveCellSelection(const KeyDownEvent& event);
         // Home and End: the first or last stop of the line the selection sits on.
-        bool moveCellToLineEdge(const Scaler&, ScrollDirection edge);
+        bool moveCellToLineEdge(const Scaler&, ScrollDirection edge, KeyModifiers);
         // Ctrl with Home or End: the first or last cell of the whole grid.
-        bool moveCellToGridEdge(ScrollDirection edge);
+        bool moveCellToGridEdge(ScrollDirection edge, KeyModifiers);
         // PageUp and PageDown: one screenful along the field, keeping the line the run follows.
-        bool moveCellByPage(const Scaler&, ScrollDirection direction);
+        bool moveCellByPage(const Scaler&, ScrollDirection direction, KeyModifiers);
         // Whether the selection is what the keyboard is driving. A grid also carries controls
         // that answer their own keys - a control hosted in a cell - and those keys are theirs.
         [[nodiscard]] bool cellKeysApply() const;
@@ -269,7 +269,7 @@ namespace ClaFi::Controls::Grids
         // Gives a stop the focus and records it as the selected cell. Showing it is the caller's
         // business, since a page press has a whole page to show and the stop is only where that
         // page ends.
-        void focusStop(const FieldStop&);
+        void focusStop(const FieldStop&, KeyModifiers);
         // The least scroll that shows the stop.
         void scrollStopIntoView(const FieldStop&);
         // Scrolls until the view stands where `viewInForm` says, a viewport-tall rect. Asked for
@@ -320,7 +320,9 @@ namespace ClaFi::Controls::Grids
         StackView{
             params,
             Orientation::Vertical,
-            Interactivity::None,
+            FocusScope::No,
+            NavigationReach::No,
+            MouseFocus::Parent,
             std::forward<Args>(args)...,
             Spacing{ 0.0f },
             Padding{ 0.0f }

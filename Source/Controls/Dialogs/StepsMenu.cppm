@@ -69,9 +69,10 @@ namespace ClaFi::Controls
             Padding{ 0.0f, 4.0f }
         ) };
 
-        // Reads what a click takes, or Cancel; mouse only keeps the arrows on the steps.
+        // Reads what a click takes, or Cancel; out of the keys' reach, so arrows stay on the steps.
         MenuItem& m_foot{ m_footBar.add<MenuItem>(
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
     };
 }

@@ -962,37 +962,28 @@ namespace ClaFi
         }
     }
 
-    bool Control::isMouseResponsive() const
-    {
-        switch (interactivity())
-        {
-        case Interactivity::MouseOnly:
-        case Interactivity::KeyFocusable:
-        case Interactivity::Focusable:
-            return true;
-        default:
-            return false;
-        }
-    }
-
     bool Control::canTakeFocus() const
     {
-        if (!enabled(true))
-            return false;
-        switch (interactivity())
-        {
-        case Interactivity::KeyFocusable:
-        case Interactivity::Focusable:
-        case Interactivity::ActiveContainer:
-            return true;
-        default:
-            return false;
-        }
+        return enabled(true)
+            && (navigationReach() == NavigationReach::Yes || mouseFocus() == MouseFocus::Self);
     }
 
     bool Control::takesFocusOnPress() const
     {
-        return canTakeFocus() && interactivity() != Interactivity::KeyFocusable;
+        return enabled(true) && mouseFocus() == MouseFocus::Self;
+    }
+
+    bool Control::isNavigationStop() const
+    {
+        return enabled(true) && navigationReach() == NavigationReach::Yes;
+    }
+
+    // Keep is left out: on its own it only says where the focus stays, and the press is still the
+    // parent's.
+    bool Control::isInteractive() const
+    {
+        return clickTarget() == ClickTarget::Self || navigationReach() == NavigationReach::Yes
+            || mouseFocus() == MouseFocus::Self || focusScope() == FocusScope::Yes;
     }
 
     // Read through the same order navigation enters in, so a container that answers yes always has
@@ -1001,7 +992,7 @@ namespace ClaFi
     {
         if (!visible() || !enabled(true))
             return false;
-        if (canTakeFocus())
+        if (isNavigationStop())
             return true;
         const std::size_t count = navigationSlotsCount();
         for (std::size_t index = 0; index != count; ++index)
@@ -1013,24 +1004,30 @@ namespace ClaFi
         return false;
     }
 
+    // Shown, standing in nothing hidden, and in a window that is up: the focus is only ever on
+    // something on screen.
+    [[nodiscard]] static bool standsShown(const Control& control)
+    {
+        for (const Control* level = &control; level; level = level->parent())
+        {
+            if (!level->visible())
+                return false;
+        }
+        return control.form().visible();
+    }
+
     void Control::setFocus()
     {
-        const Control* previousDelegate = Input::focusDelegate();
-        FocusEvent event{ *this, form() };
-        nestedControlFocusing(event);
-        // Only a retarget needs this. When the focus lands here the write at the end of the walk
-        // has already invalidated both sides of the change.
-        if (event.control != this)
-            invalidateState();
-        // Read after the walk, so that a container has recorded the item it now answers for. A
-        // control a key lands on is what a tooltip is about while the keyboard drives, the way the
-        // one under the pointer is while the mouse does.
-        //
-        // **The tooltip hears a landing only where the item changed.** A list going down hands the
-        // focus back to the box it was dropped from, which held it all along, and a tooltip that
-        // went down with the list stays down.
-        if (Input::focusDelegate() != previousDelegate)
-            Tooltip::focusedControlChanged();
+        if (!trySetFocus())
+            noReach("setFocus: the control is hidden, disabled, or takes no focus");
+    }
+
+    bool Control::trySetFocus()
+    {
+        if (!canTakeFocus() || !standsShown(*this))
+            return false;
+        moveFocusFromCode();
+        return true;
     }
 
     // The first container up the chain that keeps a current item answers, whether or not it took
@@ -1149,21 +1146,17 @@ namespace ClaFi
 
     bool Control::isFocused() const
     {
-        return containsNested(Input::focusDelegate());
+        for (Control* step = Input::focusDelegate(); step; step = Input::focusPathParent(*step))
+        {
+            if (step == this)
+                return true;
+        }
+        return false;
     }
 
     bool Control::isDroppedDown() const
     {
         return m_parent && m_parent->isChildDroppedDown(*this);
-    }
-
-    Control* Control::focusAnchor() const
-    {
-        const FormBase* form = getForm();
-        const FormBase* popup = form ? form->activePopup() : nullptr;
-        if (popup && popup->popupTarget())
-            return popup->popupTarget()->focusDelegate();
-        return Input::focusDelegate();
     }
 
     // Not gated on an overlay entry naming this control. The two are independent: the parent says
@@ -1674,7 +1667,7 @@ namespace ClaFi
     Control* Control::navigationContainer(CheckSelf checkSelf)
     {
         Control* control = checkSelf == CheckSelf::Yes ? this : m_parent;
-        while (control && control->interactivity() != Interactivity::ActiveContainer)
+        while (control && control->focusScope() != FocusScope::Yes)
             control = control->m_parent;
         return control;
     }
@@ -1710,7 +1703,7 @@ namespace ClaFi
         if (Control* parent = this->parent())
             parent->nestedControlFocusing(event);
         else
-            Input::setFocusedControl(*event.control);
+            Input::setFocusHolder(*event.control);
     }
 
     void Control::nestedControlDroppingPopup(DropPopupEvent& event)
@@ -1882,6 +1875,29 @@ namespace ClaFi
         }
     }
 
+    // **The first control up from the pressed one to answer Self or Keep settles it.** Keep leaves
+    // the focus where it is: a tool bar's button beside an editor keeps the caret in the editor.
+    // Parent hands the question up - a slider's thumb, a check box's mark, a control hosted in a
+    // grid cell. The modifiers are the press's own, read while it is being answered.
+    void Control::setFocusByPress(Control& pressed)
+    {
+        Control* target = &pressed;
+        while (target && !target->takesFocusOnPress())
+            target = target->mouseFocus() == MouseFocus::Keep ? nullptr : target->m_parent;
+        if (!target)
+            return;
+        FocusEvent event{ *target, target->form() };
+        event.byMouse = true;
+        target->moveFocus(event);
+    }
+
+    void Control::setFocusByKey(Control& target, const KeyModifiers modifiers)
+    {
+        FocusEvent event{ target, target.form() };
+        event.modifiers = modifiers;
+        target.moveFocus(event);
+    }
+
     void Control::adjustPaint(AdjustPaintEvent& event)
     {
         emitEvent(event);
@@ -1944,7 +1960,7 @@ namespace ClaFi
 #if CLAFI_TEXT_MOVING
     TextRenderMode Control::textRenderMode() const
     {
-        // Keyed on whether the control moves, not on whether it is interactive. Interactivity was
+        // Keyed on whether the control moves, not on whether it is interactive. Taking input was
         // the wrong question: a check box responds to the pointer without its label ever leaving
         // the pixel it was laid out on, and asking it to give up snapping, grid fit and subpixel
         // antialiasing bought nothing and cost it every bit of crispness.
@@ -2588,34 +2604,27 @@ namespace ClaFi
         // A grid expander depends on this: it wears GridRow and holds its section's rows,
         // so read as hot it would light the whole section.
         // Only the visual state is gated - a tooltip still asks isHovered().
-        const bool interactive = interactivity() != Interactivity::None;
+        const bool interactive = isInteractive();
 
         // **A control with a popup of its own open is still where the user is.** The popup takes
-        // the focus so that its items can be walked, and the control it was opened on would
-        // otherwise read as abandoned the moment it opened: the ring goes out, the fill goes cold,
-        // and a text box's caret goes dark - while every command in the popup names that control
-        // and nothing else. Said here, once, so that a control needing it says nothing of its own:
-        // TextBox draws its caret from this focused, and a dropped-down control keeps its ring.
+        // the focus so that its items can be walked, and the focus path runs on from the popup's
+        // root to the control it was opened on - see isFocused. So that control keeps its ring
+        // and its warm fill, and a text box its caret, while every command in the popup names it.
         //
         // **No exceptions**, and the one worth naming is the control an in-place editor covers: it
         // reads live while the editor is over it, because being edited is the same relation. A
         // control that wants to read otherwise dims itself from its own popup's
         // adjustNestedControlVisualState, which runs after this.
         //
-        // This is how the control **reads**. Where the focus **rests** is Input::focusedControl,
-        // and that is untouched - the two answers differ for exactly as long as the popup is up.
-        //
-        // **And the item that control answers for reads focused, with everything it stands in.**
-        // The focus went into the popup from there and comes back there - see focusAnchor: a row
-        // whose cell holds the open list is still the row the keys are about, and its cell keeps
-        // the ring. Focused alone - the selected look is the opened-on control's own.
+        // **The path goes on from what that control answers for**, its focusDelegate: a row whose
+        // cell holds the open list is still the row the keys are about, and its cell keeps the
+        // ring. Focused alone - the selected look is the opened-on control's own.
         const bool droppedDown = isDroppedDown();
-        const Control* anchor = focusAnchor();
-        const bool focused = (interactive && containsNested(anchor)) || droppedDown;
-        // An active container wears the ring as a fallback: while it is the anchor itself, with no
-        // item inside it to hand the ring to.
-        const bool ringsItself = interactivity() != Interactivity::ActiveContainer
-            || anchor == this;
+        const bool focused = interactive && isFocused();
+        // A focus scope wears the ring as a fallback: while the focus path starts at it, or comes
+        // into it from a popup opened on it, with no item of its own below it on the path.
+        const bool ringsItself = focusScope() != FocusScope::Yes
+            || !containsNested(Input::focusPathStepBelow(Input::focusDelegate(), *this));
         // Hot and current carry the input device - see UI-Types#visualstateindex. The window's
         // focus is part of hot and the Always show focus setting of current, so the form
         // re-reads the focused control as either moves - see FormBase::invalidateFocusedState.
@@ -2660,7 +2669,7 @@ namespace ClaFi
                 break;
             case InvalidateEvent::PressDown:
             case InvalidateEvent::PressUp:
-                pass = control->isMouseResponsive();
+                pass = control->clickTarget() == ClickTarget::Self;
                 break;
             case InvalidateEvent::InputController:
                 control->inputContextChanged();
@@ -2822,10 +2831,10 @@ namespace ClaFi
         return raiseClick(event, &Control::tripleClick, &Control::nestedTripleClick);
     }
 
-    Control& Control::clickTarget()
+    Control& Control::clickReceiver()
     {
         Control* control = this;
-        while (control && !control->isMouseResponsive())
+        while (control && control->clickTarget() != ClickTarget::Self)
             control = control->m_parent;
         return control ? *control : *this;
     }
@@ -2949,6 +2958,35 @@ namespace ClaFi
     {
         const ControlSlots slots = navigationSlots();
         return slots.empty() ? controls()[index].get() : slots[index];
+    }
+
+    void Control::moveFocus(FocusEvent& event)
+    {
+        const Control* previousDelegate = Input::focusDelegate();
+        nestedControlFocusing(event);
+        // Only a retarget needs this. When the focus lands here the write at the end of the walk
+        // has already invalidated both sides of the change.
+        if (event.control != this)
+            invalidateState();
+        // Read after the walk, so that a container has recorded the item it now answers for. A
+        // control a key lands on is what a tooltip is about while the keyboard drives, the way the
+        // one under the pointer is while the mouse does.
+        //
+        // **The tooltip hears a landing only where the item changed.** A list going down hands the
+        // focus back to the box it was dropped from, which held it all along, and a tooltip that
+        // went down with the list stays down.
+        if (Input::focusDelegate() != previousDelegate)
+            Tooltip::focusedControlChanged();
+    }
+
+    // **Code carries no gesture.** The keys held and the device that acted last are the user's,
+    // and a call from code reads neither: a container takes this control as a key with no
+    // modifier would land on it.
+    void Control::moveFocusFromCode()
+    {
+        FocusEvent event{ *this, form() };
+        event.modifiers = {};
+        moveFocus(event);
     }
 
     OnAnimate Control::s_onAnimateState{

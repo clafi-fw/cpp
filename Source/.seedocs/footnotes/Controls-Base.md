@@ -18,9 +18,9 @@ width, as MenuCommand does. At the icon's width, a long word would be cut.
 ## ButtonBase nestedClick
 
 **A mouse click on the selection indicator is the button's click, with Ctrl held.** The indicator
-is MouseOnly, so the click is raised on it and walks up to the button, which raises its own
-ClickEvent from here - the one a derived class and OnClick listeners see - and lets the walk go on
-with Ctrl set, so a stack above takes the item in or out of the selection and leaves the rest of
+answers ClickTarget::Self, so the click is raised on it and walks up to the button, which raises its
+own ClickEvent from here - the one a derived class and OnClick listeners see - and lets the walk go
+on with Ctrl set, so a stack above takes the item in or out of the selection and leaves the rest of
 it alone.
 
 **A handler that stops the button's click spends the whole click.** The walk above the button
@@ -94,6 +94,10 @@ indicator stays where ButtonBase puts it.
 
 A title across the top, an icon and the text in the middle, answers across the bottom. A derived
 dialog adds the answers and what it does with the text.
+
+**The first answer is what the dialog opens on**, as the root's current item. A dialog opening on
+another calls makeCurrentItem on it once its answers are in - an answer, or the box where the
+answer is the text it holds.
 
 **The bars are full bleed** - each states its own colours and padding.
 

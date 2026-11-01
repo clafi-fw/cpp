@@ -24,7 +24,9 @@ namespace ClaFi::Controls
         :
         ButtonBase{
             params,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,
             params.themeMetrics().listItem, std::forward<Args>(args)... }

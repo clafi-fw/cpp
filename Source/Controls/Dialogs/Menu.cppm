@@ -200,7 +200,8 @@ namespace ClaFi::Controls
             // captioned and active behind it. The **focus** does move here, so that the arrows read
             // the items the way they read any other list. What the menu is about stays behind:
             // an item's action finds its subject through FormBase::popupTarget, and the owner
-            // keeps its caret and its selected look through Control::isDroppedDown.
+            // stays on the focus path, so it keeps its caret, and its selected look comes from
+            // Control::isDroppedDown.
             owner.appContext(), WindowRole::Menu, &owner,
             HostProps{
                 owner.themeMetrics().secondaryWindow,
@@ -216,10 +217,11 @@ namespace ClaFi::Controls
                 Padding{ 4.0f },
                 // Clicked and hovered, never focused. The items carry the focus themselves and
                 // the frame around them is not a focus scope of its own.
-                // TODO: Home, End and the page keys address the nearest ActiveContainer in
-                // scope, and a menu has none, so those four do nothing in one. Should this root
-                // be an ActiveContainer so they reach the items?
-                Interactivity::MouseOnly,
+                // TODO: Home, End and the page keys address the nearest focus scope, and a menu
+                // has none, so those four do nothing in one. Should this root be a focus scope so
+                // they reach the items?
+                ClickTarget::Self,
+                MouseFocus::Keep,
             },
             BodyProps{
                 Orientation::Vertical,
@@ -432,7 +434,6 @@ namespace ClaFi::Controls
         :
         Button{
             params,
-            Interactivity::Focusable,
             params.themeMetrics().toolButton,
             UiElement::ToolButton,
             std::forward<Args>(args)...

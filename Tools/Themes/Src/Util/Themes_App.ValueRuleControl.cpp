@@ -334,7 +334,9 @@ namespace Themes_App
         :
         StackPanel{ params,
             Orientation::Vertical,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             params.themeMetrics().secondaryWindow,
             params.themeMetrics().secondaryWindowShadow,
             UiElement::Menu,
@@ -355,7 +357,9 @@ namespace Themes_App
 
             tileRow = &add<StackPanel>(
                 Orientation::HorizontalWrap,
-                Interactivity::ActiveContainer,
+                FocusScope::Yes,
+                NavigationReach::Yes,
+                MouseFocus::Self,
                 LaneSize{ k_tileOperations.size() },
                 Spacing{ k_spacing }
             );

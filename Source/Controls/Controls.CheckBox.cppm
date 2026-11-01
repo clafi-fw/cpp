@@ -21,7 +21,9 @@ namespace ClaFi::Controls
                 params,
                 IndicatorVisibility::Always,
                 IndicatorStyle::Check,
-                Interactivity::Focusable,
+                NavigationReach::Yes,
+                MouseFocus::Self,
+                ClickTarget::Self,
                 params.themeMetrics().listItem,
                 std::forward<Args>(args)...
             }

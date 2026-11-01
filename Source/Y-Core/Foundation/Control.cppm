@@ -528,6 +528,7 @@ namespace ClaFi
     export struct FocusEvent : public ClickEventBase
     {
         using ClickEventBase::ClickEventBase;
+        bool byMouse{ false };   // moved by a mouse press, whose place and gesture containers read
     };
 
     // The control named is about to drop a popup from its click. See Control-Foundation
@@ -798,7 +799,14 @@ namespace ClaFi
         void invalidateTooltip();   // its tooltip's words moved: one up about it is asked again
         void invalidateFound();   // a text it shows moved: the search over it is read again
 
-        virtual Interactivity interactivity() const { return Interactivity::None; }
+        // Whether Tab and the arrows can land on this control. See UI-Types
+        [[nodiscard]] virtual NavigationReach navigationReach() const { return NavigationReach::No; }
+        // What a mouse press on this control does with the focus. See UI-Types
+        [[nodiscard]] virtual MouseFocus mouseFocus() const { return MouseFocus::Parent; }
+        // Whether a mouse press is aimed at this control or at its parent. See UI-Types
+        [[nodiscard]] virtual ClickTarget clickTarget() const { return ClickTarget::Parent; }
+        // Whether this control holds the focus for its current item. See UI-Types
+        [[nodiscard]] virtual FocusScope focusScope() const { return FocusScope::No; }
         // **Whether this control takes what its lane has over.** A stack places its items at the
         // sizes they measured and the room left sits at the lane's end; a control answering true
         // is handed that room instead, shared evenly with any other item in the lane that asked.
@@ -806,16 +814,16 @@ namespace ClaFi
         // wrapping stack answers nothing here: a lane it broke to fit has no room left by
         // definition.
         [[nodiscard]] virtual bool fillsLane() const { return false; }
-        // True for focusable or mouse only controls, not for active containers
-        [[nodiscard]] bool isMouseResponsive() const;
         // The pointer shape over this control. It stands for what a press here would do, so a
         // control that takes text answers IBeam and everything else keeps the arrow. Asked of the
         // control the pointer is actually over - the deepest one hit - so a child answers for
         // itself rather than inheriting whatever its host would say.
         [[nodiscard]] virtual CursorShape cursor() const { return CursorShape::Arrow; }
-        [[nodiscard]] bool canTakeFocus() const; ///< True if both interactive and deep enabled, false otherwise
-        [[nodiscard]] bool takesFocusOnPress() const; // canTakeFocus, KeyFocusable excepted
-        // Whether the focus can land on this control or on something inside it.
+        [[nodiscard]] bool canTakeFocus() const; // enabled, and a key or a mouse press can focus it
+        [[nodiscard]] bool takesFocusOnPress() const; // enabled, and MouseFocus::Self
+        [[nodiscard]] bool isNavigationStop() const; // enabled, and NavigationReach::Yes
+        [[nodiscard]] bool isInteractive() const; // anything but a label or a plain container
+        // Whether Tab or an arrow can land on this control or on something inside it.
         [[nodiscard]] bool holdsNavigationStop() const;
         // Whether this control moves in Z - towards the viewer as the pointer arrives, away from it
         // while held. It is one answer with two consequences, and they must not be given separately:
@@ -835,9 +843,10 @@ namespace ClaFi
         // movement for its own hover.
 
 
-        // Asks for the focus. Every ancestor gets to redirect it on the way up - see
-        // adjustFocus - so the control that ends up focused may not be this one.
+        // Moves the focus to this control, which must be able to take it. See Control-Foundation
         void setFocus();
+        // setFocus where this control can take the focus; answers whether it did.
+        bool trySetFocus();
         // Makes this control the current item of the container above it. The focus stays put.
         void makeCurrentItem();
         //
@@ -894,13 +903,10 @@ namespace ClaFi
         [[nodiscard]] bool isTextDrawn() const { return m_flags2 & cfTextDrawn; }
         [[nodiscard]] bool isTextHovered() const;
         [[nodiscard]] bool isPressed() const;
-        // The focus is on this control or on something inside it. See Control-Foundation#input
+        // The focus path passes through this control. See Control-Foundation#control-isfocused
         [[nodiscard]] bool isFocused() const;
         // The active popup was opened on this control.
         [[nodiscard]] bool isDroppedDown() const;
-        // The control the focus is on, or comes back to while a popup holds it: what the popup was
-        // opened on, or the item that control answers for. See Control-Foundation#input
-        [[nodiscard]] Control* focusAnchor() const;
         //
         [[nodiscard]] float left() const { return m_topLeft.x; }
         [[nodiscard]] float top()   const { return m_topLeft.y; }
@@ -1190,8 +1196,6 @@ namespace ClaFi
         // yes - see PanelBase. Asked through isHostedAsBody() above rather than read directly,
         // so the answer stays with the host that owns the slot.
         virtual bool isChildBody(const Control&) const { return false; }
-        // Whether a press on that child is this control's press. See UI-Types#control-ischildpart
-        virtual bool isChildPart(const Control&) const { return false; }
         // Whether this control decides that child's width rather than reading it off the child.
         // A container that lays its children across a lane or into a slot does - which is the
         // usual case, and the default.
@@ -1215,7 +1219,7 @@ namespace ClaFi
         const FormBase* getForm() const;
         Control* navigationContainer(CheckSelf);
         virtual void visibilityChanged() {}
-        // The control this one answers for while it holds the focus. A container answers with the
+        // The control this one answers for while it holds the focus. A focus scope answers with the
         // item inside it; everything else answers with itself, which is the default. It is what
         // Input::focusDelegate() answers, and where isFocused() walks up from.
         virtual Control* focusDelegate();
@@ -1406,6 +1410,10 @@ namespace ClaFi
         // and calculate() is protected, so it cannot be reached through a Control& without this.
         static void calculateControl(Control& control, FormBase& form) { control.calculate(form); }
 
+        // The focus moved by a mouse press on pressed, to what its MouseFocus names. See UI-Types
+        static void setFocusByPress(Control& pressed);
+        // The focus moved to target by a key, whose modifiers a container reads as its gesture.
+        static void setFocusByKey(Control& target, KeyModifiers);
         // A key press, and the character it produced, for a child whose focus this host holds.
         static void forwardKeyDown(Control& control, KeyDownEvent& event) { control.nestedKeyDown(event); }
         static void forwardCharPress(Control& control, CharPressEvent& event) { control.charPress(event); }
@@ -1452,7 +1460,7 @@ namespace ClaFi
 
         // **How the control reads**, which is not always where the framework's pointers are: a
         // control with a popup of its own open is still the one being acted on, and this says so
-        // while Input::focusedControl names something inside that popup. state() is the other
+        // while Input::focusHolder names something inside that popup. state() is the other
         // half - what the control **is** - and the two meet here.
         //
         // Reachable by a derived class because a control drawing something the focus decides
@@ -1471,7 +1479,7 @@ namespace ClaFi
         // through like anything else.
         static void invalidateStateUp(Control* from, const Control* upTo, InvalidateEvent);
         // The same walk carried on to the root form: at a popup's root it steps to the control the
-        // popup was opened on, whose chain reads focused through the popup - see focusAnchor.
+        // popup was opened on.
         static void invalidateStateToRoot(Control* from, InvalidateEvent);
         // The text the framework would draw for this control, gathered through the parent so that
         // a host supplying its children's text is asked. Reachable by a control that holds a
@@ -1518,8 +1526,8 @@ namespace ClaFi
         // True when the press was spent - see FormBase::wnd_tripleClick.
         [[nodiscard]] bool doTripleClick(TripleClickEvent&);
         [[nodiscard]] bool canClick() const { return enabled(true); }
-        // The nearest isMouseResponsive control at or above this one, or this one when none is.
-        [[nodiscard]] Control& clickTarget();
+        // The nearest control at or above this one that is its own ClickTarget, else this one.
+        [[nodiscard]] Control& clickReceiver();
         void doHoverEnter();
         void doHoverLeave();
         void doContextPopup(ContextPopupEvent&);
@@ -1539,6 +1547,10 @@ namespace ClaFi
         [[nodiscard]] Control* navigationSlot(std::size_t index);
         [[nodiscard]] const Control* navigationSlot(std::size_t index) const
             { return const_cast<Control*>(this)->navigationSlot(index); }
+        // Walks event up from this control and settles the focus where the walk leaves it.
+        void moveFocus(FocusEvent&);
+        // The focus moved here by code, with no check that this control can take it.
+        void moveFocusFromCode();
     private:
         inline static TextEngine s_textEngine{};
         static OnAnimate s_onAnimateState;

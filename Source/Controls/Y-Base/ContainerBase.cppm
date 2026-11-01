@@ -97,6 +97,8 @@ namespace ClaFi::Controls
         // ancestor, which makes this the one place that hears about all of them.
         void nestedControlDeleted(Control*) override;
         void adjustText(AdjustTextEvent&) const override;
+        // A window's root takes an item no container below it kept. See Item-Containers
+        bool takeCurrentItem(Control&) override;
         void setSearchResult(SearchResult* value) override { m_searchResult = value; }
         [[nodiscard]] SearchResult* searchResult() const override { return m_searchResult; }
     protected:
@@ -243,6 +245,16 @@ namespace ClaFi::Controls
         FormControlBase::adjustText(event);
         if (!m_placeHolderText.empty() && isEmpty())
             event.text << TextAlign::Center << InkWell::textInk(InkGrade::Muted) << m_placeHolderText;
+    }
+
+    // Stated rather than handed to the virtual setter: the root keeps it as the item a show enters
+    // at, whether or not this is a focus scope that could make it current.
+    bool ContainerBase::takeCurrentItem(Control& item)
+    {
+        if (parent())
+            return false;
+        m_currentItem = &item;
+        return true;
     }
 
 }

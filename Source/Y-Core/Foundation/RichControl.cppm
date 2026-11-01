@@ -36,15 +36,21 @@ namespace ClaFi
     //export class GetStateEvent;
     ////
 
-    // Adds to Control the stored appearance state - metrics, colors, text. See Control-Foundation
+    // Adds to Control the stored properties See Control-Foundation
     export class RichControl : public Control
     {
     public:
         template <typename... Args>
         explicit RichControl(const CreateParams& params, Args&&... args);
     public:
-        // How much of the input the control takes, and whether it can hold the focus.
-        DECLARE_PROPERTY_STORAGE(Interactivity, interactivity, Interactivity::None)
+        // Whether Tab and the arrows can land on the control. See UI-Types
+        DECLARE_PROPERTY_STORAGE(NavigationReach, navigationReach, NavigationReach::No)
+        // What a mouse press on the control does with the focus. See UI-Types
+        DECLARE_PROPERTY_STORAGE(MouseFocus, mouseFocus, MouseFocus::Parent)
+        // Whether a mouse press is aimed at the control or at its parent. See UI-Types
+        DECLARE_PROPERTY_STORAGE(ClickTarget, clickTarget, ClickTarget::Parent)
+        // Whether the control holds the focus for its current item. See UI-Types
+        DECLARE_PROPERTY_STORAGE(FocusScope, focusScope, FocusScope::No)
     public:
         // color
         [[nodiscard]] OptionalUiElement colorRules() const { return m_colorRules; }
@@ -93,8 +99,14 @@ namespace ClaFi
         [[nodiscard]] float radius() const { return m_metrics.radius; }
         void setRadius(const float value) { m_metrics.radius = value; }
         //
-        [[nodiscard]] Interactivity interactivity() const final { return m_interactivity; }
-        void setInteractivity(const Interactivity value) { m_interactivity = value; }
+        [[nodiscard]] NavigationReach navigationReach() const final { return m_navigationReach; }
+        void setNavigationReach(const NavigationReach value) { m_navigationReach = value; }
+        [[nodiscard]] MouseFocus mouseFocus() const final { return m_mouseFocus; }
+        void setMouseFocus(const MouseFocus value) { m_mouseFocus = value; }
+        [[nodiscard]] ClickTarget clickTarget() const final { return m_clickTarget; }
+        void setClickTarget(const ClickTarget value) { m_clickTarget = value; }
+        [[nodiscard]] FocusScope focusScope() const final { return m_focusScope; }
+        void setFocusScope(const FocusScope value) { m_focusScope = value; }
     protected:
         // Each override adds the state RichControl stores, then lets the base emit the event.
         void adjustMetrics(AdjustMetricsEvent&) const override;
@@ -121,7 +133,10 @@ namespace ClaFi
     RichControl::RichControl(const CreateParams& params, Args&& ...args)
         :
         Control{ params, std::forward<Args>(args)... },
-        INIT_PROPERTY(interactivity)
+        INIT_PROPERTY(navigationReach),
+        INIT_PROPERTY(mouseFocus),
+        INIT_PROPERTY(clickTarget),
+        INIT_PROPERTY(focusScope)
     {
         // The whole metric block at once, for a control handed a themed set.
         BIND_PROPERTY_MEMBER(ControlMetrics, m_metrics);

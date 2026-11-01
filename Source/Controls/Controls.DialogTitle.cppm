@@ -75,7 +75,9 @@ namespace ClaFi::Controls
         void hitTest(HitTestEvent& event) const override { event.zone = HitTest::Title; };
     private:
         StackPanel& m_sysButtons{ createRightBar<StackPanel>(
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             Orientation::Horizontal,
             Padding{ 4.0f, 4.0f }
         ) };
@@ -92,7 +94,7 @@ namespace ClaFi::Controls
 
     // SysMenuButton
 
-    // The strip these sit in is an ActiveContainer, so it keeps whichever button the user last
+    // The strip these sit in is a focus scope, so it keeps whichever button the user last
     // reached as its current item and reports that one as selected. A title-bar button wearing a
     // selected fill reads as a window state stuck on, so the fill is declined here; the focus
     // ring still says where the keyboard is.

@@ -168,11 +168,11 @@ namespace ClaFi::Controls
     }
 
     // Only a view holding a set has one to add to, and what it adds are the controls the user
-    // acts on - the same shape of thing the current item lands on, said here in its own right
-    // rather than borrowed, because the two questions are answered apart.
+    // acts on - the same shape of thing the current item lands on, asked here in its own right
+    // rather than through defaultCanFocusItem, because the two questions are answered apart.
     bool StackView::defaultCanSelectItem(Control& value)
     {
-        return isMultiSelect() && value.interactivity() == Interactivity::Focusable;
+        return isMultiSelect() && isPickable(value);
     }
 
     // Nothing picked needs no branch of its own. A range to nowhere is no range, adding

@@ -52,8 +52,9 @@ namespace ClaFi::Controls
         // **The first answer is what the dialog opens on.** Return and Space run the focused
         // control, so a dialog opening anywhere else is a dialog only the mouse can answer: the
         // text takes the focus otherwise, being the first focusable thing in slot order, and
-        // pressing Return on it does nothing. A dialog whose answer is the text it holds says so
-        // by focusing its own box after its answers are in.
+        // pressing Return on it does nothing. A dialog that opens on something else names it
+        // with makeCurrentItem once its answers are in - its own box, where the answer is the
+        // text it holds.
         template <typename Handler>
         Button& addAnswer(DialogAnswer answer, Handler&& onClick)
         {
@@ -70,7 +71,7 @@ namespace ClaFi::Controls
                 OnEvent{ std::forward<Handler>(onClick) }
             );
             if (isFirst)
-                result.setFocus();
+                result.makeCurrentItem();
             return result;
         }
         // Drops the question under the control it was raised from and runs it. Returns once the

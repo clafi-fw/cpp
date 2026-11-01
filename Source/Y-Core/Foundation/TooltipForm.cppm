@@ -103,7 +103,7 @@ namespace ClaFi
             ownerForm,
             // And the label under it is not pointed at either. Said in its own right rather than
             // taken from the window: the two are separate answers, and this one is the label's.
-            Interactivity::None,
+            ClickTarget::Parent,
             UiElement::Tooltip,
             ownerForm.appContext().themeMetrics().secondaryWindow,
             ownerForm.appContext().themeMetrics().secondaryWindowShadow

@@ -209,7 +209,9 @@ namespace ClaFi::Controls
         // first and each individual metric prop after it, whatever order they arrive in.
         TabBaseClass{
             params,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             metricsIn(params),
             std::forward<Args>(args)...
         }
@@ -575,10 +577,10 @@ namespace ClaFi::Controls
     template<typename ...Args>
     TabStripBase::TabStripBase(const CreateParams& params, Args && ...args)
         :
-        // ActiveContainer is what makes a strip keep a current item at all, and the open tab is
-        // that item. Load-bearing and quiet: drop it and everything still compiles, the tabs just
-        // stop answering to a click.
-        TabStripBaseClass{ params, Interactivity::ActiveContainer, std::forward<Args>(args)... },
+        // FocusScope is what makes a strip keep a current item at all, and the open tab is that
+        // item. Load-bearing and quiet: drop it and everything still compiles, the tabs just stop
+        // answering to a click.
+        TabStripBaseClass{ params, FocusScope::Yes, std::forward<Args>(args)... },
         INIT_PROPERTY(tabViewMode)
     {
         // Which edge of the box the tabs run along.

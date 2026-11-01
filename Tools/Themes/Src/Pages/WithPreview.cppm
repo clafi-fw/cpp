@@ -69,7 +69,9 @@ namespace Themes_App
     private:
         StackPanel& m_rightToolBar{ this->topPanel().template createRightBar<StackPanel>(
             Orientation::Horizontal,
-            Interactivity::ActiveContainer
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self
         ) };
 
         // **What the preview is showing** - taken by invalidatePreview, and read by both halves of

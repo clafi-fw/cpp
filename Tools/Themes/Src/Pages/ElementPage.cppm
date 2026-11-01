@@ -123,7 +123,9 @@ namespace Themes_App
 
         StackPanel& m_tools{ m_topBar.createRightBar<StackPanel>(
             Orientation::Horizontal,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             Spacing{ 4.0f }
         ) };
 
@@ -132,15 +134,17 @@ namespace Themes_App
             ButtonViewMode::IconOnly,
             OnDrawIcon{ Icons::ResetIcon::draw },
             L"Reset to defaults",
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
 
-        // Words, icon and state come from the action; mouse only keeps the focus in the grid.
+        // Words, icon and state come from the action; Keep leaves the focus in the grid.
         ToolButton& m_deleteButton{ m_tools.add<ToolButton>(
             IconSize{ 18.0f },
             ButtonViewMode::IconOnly,
             StdActions::del,
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
 
         // A row names its rule by the rule's place in the list, carried as the row's tag.

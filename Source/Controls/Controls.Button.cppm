@@ -47,7 +47,9 @@ namespace ClaFi::Controls
         :
         ButtonBase{
             params,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             params.themeMetrics().button,
             UiElement::Button,
             std::forward<Args>(args)...

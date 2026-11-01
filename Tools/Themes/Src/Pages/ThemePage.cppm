@@ -374,7 +374,7 @@ namespace Themes_App
 
         SingleSelectionStackView& m_harmonyStack{ m_harmonyPanel.createBody<SingleSelectionStackView>(
             Orientation::HorizontalWrap,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
             Padding{ 12.0f, 4.0f },
             Spacing{ 4.0f },
             Events{

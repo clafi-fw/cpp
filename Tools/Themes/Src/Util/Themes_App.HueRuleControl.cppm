@@ -423,7 +423,7 @@ namespace Themes_App
             return;
         event.state.selected = m_popup.m_owner.operation() == m_operation;
         // The mark says which operation the rule names. The walk runs leaf to root and the
-        // last writer wins, so it is stopped here before the enclosing ActiveContainer writes
+        // last writer wins, so it is stopped here before the enclosing focus scope writes
         // its own current item over it - what is focused is not what is chosen.
         event.stopPropagation();
     }
@@ -465,7 +465,9 @@ namespace Themes_App
         :
         StackPanel{ params,
             Orientation::Vertical,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             params.themeMetrics().secondaryWindow,
             params.themeMetrics().secondaryWindowShadow,
             UiElement::Menu,
@@ -496,7 +498,9 @@ namespace Themes_App
         // straight into paletteHues - a storage concern, not a reading one.
         StackPanel& tileRow = add<StackPanel>(
             Orientation::HorizontalWrap,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             LaneSize{ 3 },
             Spacing{ k_dividerPadding }
         );

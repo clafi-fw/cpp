@@ -20,8 +20,8 @@ namespace ClaFi::Controls
     public:
         // Not the inherited constructors: the role has to be set, and it has to be set for every
         // scroll bar rather than at each creation site. A scroll bar is hovered whenever the
-        // pointer is on it or on one of its parts, which is the whole of what MouseOnly claims -
-        // it stays out of the focus chain, unlike Slider, which is Focusable.
+        // pointer is on it or on one of its parts, which is the whole of what ClickTarget::Self
+        // claims - and a press keeps the focus where it is, unlike on Slider, which takes it.
         template<typename... Args>
         explicit ScrollBar(const CreateParams& params, Args&&... args)
             :
@@ -29,7 +29,8 @@ namespace ClaFi::Controls
                 // UiElement::Section, looks bad in tabbed box
                 std::forward<Args>(args)... }
         {
-            setInteractivity(Interactivity::MouseOnly);
+            setClickTarget(ClickTarget::Self);
+            setMouseFocus(MouseFocus::Keep);
         }
     public:
         std::wstring_view diagnosticText() const override { return L"ScrollBar"; }

@@ -2542,7 +2542,7 @@ namespace SeeDocs_App::Ui
             if (BrowserPage* page = currentPage())
                 page->invalidate();
         }
-        if (m_search.containsNested(Input::focusedControl()))
+        if (m_search.containsNested(Input::focusHolder()))
             listMatches();
         else
             dropListed();
@@ -2564,7 +2564,7 @@ namespace SeeDocs_App::Ui
         SurfacePage* page = surfacePage();
         if (!page)
             return;
-        const bool fromPage = page->containsNested(Input::focusedControl());
+        const bool fromPage = page->containsNested(Input::focusHolder());
         page->view().found().step(target);
         if (fromPage)
             page->view().focusFound();
@@ -2612,11 +2612,8 @@ namespace SeeDocs_App::Ui
         SurfacePage* page = surfacePage();
         if (page && page->view().focusFound())
             return;
-        if (m_focusOrigin && shownWithin(*m_focusOrigin, *this) && m_focusOrigin->canTakeFocus())
-        {
-            m_focusOrigin->setFocus();
+        if (m_focusOrigin && m_focusOrigin->trySetFocus())
             return;
-        }
         if (page)
             page->view().focusContent();
     }
@@ -2625,7 +2622,7 @@ namespace SeeDocs_App::Ui
     // browser, which is told of its controls' deletion.
     void SurfaceBrowser::nestedControlFocusing(FocusEvent& event)
     {
-        Control* from = Input::focusedControl();
+        Control* from = Input::focusHolder();
         if (m_search.containsNested(event.control)
             && containsNested(from)
             && !m_search.containsNested(from))

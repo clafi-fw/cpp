@@ -78,7 +78,9 @@ namespace ClaFi::Controls
         void setPadding(Padding);
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"HexView"; }
     protected:
-        [[nodiscard]] Interactivity interactivity() const override { return Interactivity::Focusable; }
+        [[nodiscard]] NavigationReach navigationReach() const override { return NavigationReach::Yes; }
+        [[nodiscard]] MouseFocus mouseFocus() const override { return MouseFocus::Self; }
+        [[nodiscard]] ClickTarget clickTarget() const override { return ClickTarget::Self; }
         [[nodiscard]] CursorShape cursor() const override
         {
             return enabled(true) ? CursorShape::IBeam : CursorShape::Arrow;

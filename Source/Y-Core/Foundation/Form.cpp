@@ -362,12 +362,10 @@ namespace ClaFi
         // it came from, or where showing the form would put it when that control cannot take it.
         // A notice answered from the keyboard hides its card under the focus.
         if (m_topLayer && m_topLayer->containsNested(&control)
-            && control.containsNested(Input::focusedControl()))
+            && control.containsNested(Input::focusHolder()))
         {
             Control* origin = std::exchange(m_contentFocusBeforeTopLayer, nullptr);
-            if (origin && origin->canTakeFocus())
-                origin->setFocus();
-            else
+            if (!origin || !origin->trySetFocus())
                 focusEntryPoint();
         }
 
@@ -388,11 +386,8 @@ namespace ClaFi
         dropActivePopup();
         for (Control* over = control.parent(); over; over = over->parent())
         {
-            if (over->canTakeFocus())
-            {
-                over->setFocus();
+            if (over->trySetFocus())
                 return;
-            }
         }
     }
 
@@ -913,13 +908,14 @@ namespace ClaFi
                 {
                     // A mouse button release brings the **interactive** control into view;
                     // a press on decoration, a label, or on a container's own surface does nothing.
-                    if (m_downItem && scrollIntoView && m_downItem->isMouseResponsive())
+                    if (m_downItem && scrollIntoView
+                        && m_downItem->clickTarget() == ClickTarget::Self)
                         m_downItem->scrollIntoView();
                 }
 
                 if (!handled.preventClick)
                 {
-                    Control& target = searhResult.control->clickTarget();
+                    Control& target = searhResult.control->clickReceiver();
                     if (target.canClick())
                     {
                         ClickEvent clickParams{ target, *this };
@@ -947,7 +943,7 @@ namespace ClaFi
         if (SearchControlResult searhResult = controlAt(pt))
             if (searhResult.control == Input::hoveredControl())
             {
-                Control& target = searhResult.control->clickTarget();
+                Control& target = searhResult.control->clickReceiver();
                 if (target.canClick())
                 {
                     DoubleClickEvent event{ target, *this };
@@ -973,7 +969,7 @@ namespace ClaFi
         if (SearchControlResult searhResult = controlAt(pt))
             if (searhResult.control == Input::hoveredControl())
             {
-                Control& target = searhResult.control->clickTarget();
+                Control& target = searhResult.control->clickReceiver();
                 if (target.canClick())
                 {
                     TripleClickEvent event{ target, *this };
@@ -1031,15 +1027,12 @@ namespace ClaFi
             it = Input::hoveredControl();
             // A right click focuses what a left click would, before the control under it answers
             // - a control showing a menu of its own stops the walk, and nothing above it is told.
-            Control* controlToFocus = it;
-            while (controlToFocus && !controlToFocus->takesFocusOnPress())
-                controlToFocus = controlToFocus->parent();
-            if (controlToFocus)
-                controlToFocus->setFocus();
+            if (it)
+                Control::setFocusByPress(*it);
         }
         else
         {
-            it = Input::focusedControl();
+            it = Input::focusHolder();
             // One focus per application: a form that never took it sees a control in another
             // window, and that control is not what this form's key was about.
             if (it && &it->form() != this)
@@ -1233,7 +1226,7 @@ namespace ClaFi
         // processing focused item
         if (!event.handled)
         {
-            Control* control = Input::focusedControl();
+            Control* control = Input::focusHolder();
             if (!control)
                 control = &m_content;
             if (control)
@@ -1306,7 +1299,7 @@ namespace ClaFi
             return;
         }
 
-        Control* control = Input::focusedControl();
+        Control* control = Input::focusHolder();
         if (!control)
             control = &m_content;
         if (!control)
@@ -1316,9 +1309,8 @@ namespace ClaFi
         while (control)
         {
             control->nestedKeyUp();
-            const Interactivity interactivity = control->interactivity();
-            if (interactivity == Interactivity::Focusable
-                || interactivity == Interactivity::KeyFocusable)
+            if (control->navigationReach() == NavigationReach::Yes
+                && control->focusScope() == FocusScope::No)
                 control->invalidateState();
             control = control->parent();
         };
@@ -1345,7 +1337,7 @@ namespace ClaFi
         // innermost by being forwarded at every level. A character has to travel the same way, or
         // the focus two levels down never matches here, the forward is declined, and the flag
         // below spends the character the press already handed on.
-        Control* control = Input::focusedControl();
+        Control* control = Input::focusHolder();
         if (m_activePopup && control && isNestedPopup(&control->form()))
         {
             m_activePopup->wnd_char(character);
@@ -1535,12 +1527,11 @@ namespace ClaFi
 
             m_window->show();
 
-            // **Registered before the focus moves.** Both sides of a focus change are told as it
-            // happens, and what the control this popup was opened on answers there - its
-            // selected look, and a text box's caret - is read off activePopup(). Told after the
-            // focus had already left, it answered as though nothing had been opened on it and
-            // was never asked again: the box stopped its blink timer on the way out and then
-            // stood with a caret that never blinked for as long as the menu was up.
+            // **Registered before the focus moves**, so that the path the focus moves onto
+            // already runs through the control this popup was opened on - see Control::isFocused.
+            // That control and everything it stands in are on the path before and after, so none
+            // of them is told the focus left: a text box keeps its caret blinking for as long as
+            // the menu is up.
             if (popupTargetForm)
             {
                 popupTargetForm->m_activePopup = this;
@@ -1551,19 +1542,11 @@ namespace ClaFi
                     m_popupTarget->invalidateState();
             }
 
-            switch (m_windowRole)
-            {
-            case WindowRole::Tooltip:
-                // non activated windows
-                break;
-            
-            default:
-                // the owner of the dialog may want to focus a default button
-                // before executing, so we need to check if it's already focused
-                const bool alreadyFocused = Input::focusedControl() && (&Input::focusedControl()->form() == this);
-                if (!alreadyFocused)
-                    focusEntryPoint();
-            }
+            // **Every window but a tooltip is entered as it comes up**, at its root's current item -
+            // which is how a dialog opens on its default answer. The focus cannot already be
+            // inside: it lands only on a control in a window that is up.
+            if (m_windowRole != WindowRole::Tooltip)
+                focusEntryPoint();
         }
         else
         {
@@ -1571,6 +1554,12 @@ namespace ClaFi
             if (!m_configName.empty() && m_placementRestored)
                 m_appContext.storeFormPlacement(m_configName, *this);
             m_window->hide();
+            // **Handed back while the popup is still registered**, the way it went in: the control
+            // it was opened on is on the focus path before and after, and only the popup's own
+            // controls are told the focus left. **Unchecked**, so a target that takes no focus - a
+            // tool bar's button that opened a menu - is handed it too.
+            if (m_popupTarget)
+                m_popupTarget->moveFocusFromCode();
             if (popupTargetForm)
             {
                 if (popupTargetForm->m_activePopup == this)
@@ -1578,8 +1567,6 @@ namespace ClaFi
                 if (m_popupTarget)
                     m_popupTarget->invalidateState();
             }
-            if (m_popupTarget)
-                m_popupTarget->setFocus();
         }
     }
 
@@ -1807,7 +1794,7 @@ namespace ClaFi
     // coming from nowhere, or from another window, keeps none.
     void FormBase::rememberContentFocus()
     {
-        Control* holder = Input::focusedControl();
+        Control* holder = Input::focusHolder();
         if (holder && m_topLayer->containsNested(holder))
             return;
         const bool fromContent = holder && m_content.containsNested(holder);
@@ -2121,11 +2108,19 @@ namespace ClaFi
         invalidateFocusedState();
     }
 
+    // Wherever the focus path passes through this form's root - the focus in it, or in a popup
+    // opened on one of its controls.
     void FormBase::invalidateFocusedState()
     {
         Control* delegate = Input::focusDelegate();
-        if (delegate && m_content.containsNested(delegate))
-            Control::invalidateStateToRoot(delegate, InvalidateEvent::InputController);
+        for (Control* step = delegate; step; step = Input::focusPathParent(*step))
+        {
+            if (step == &m_content)
+            {
+                Input::invalidateFocusPath(delegate, nullptr, InvalidateEvent::InputController);
+                return;
+            }
+        }
     }
 
 #if CLAFI_TEXT_MOVING

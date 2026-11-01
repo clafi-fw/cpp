@@ -18,7 +18,9 @@ namespace ClaFi::Controls::Grids
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"Row"; }
     protected:
-        Interactivity interactivity() const override { return Interactivity::Focusable; }
+        NavigationReach navigationReach() const override { return NavigationReach::Yes; }
+        MouseFocus mouseFocus() const override { return MouseFocus::Self; }
+        ClickTarget clickTarget() const override { return ClickTarget::Self; }
         void paintSurface(PaintEvent&) override;
     };
 

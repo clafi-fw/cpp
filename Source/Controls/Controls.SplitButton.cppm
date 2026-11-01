@@ -89,7 +89,9 @@ namespace ClaFi::Controls
             params,
             // The base sits on ButtonBase so that a combo box can share it without being handed a
             // button's metrics, so a split button asks for a tool button's here.
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             params.themeMetrics().toolButton,
             std::forward<Args>(args)...
         }

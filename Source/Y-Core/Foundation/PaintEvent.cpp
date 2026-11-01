@@ -541,7 +541,7 @@ namespace ClaFi
     const Control* PaintEvent::lendingParent() const
     {
         const TraversalContext* parent = m_context.parent();
-        if (!parent || parent->control().interactivity() == Interactivity::None)
+        if (!parent || !parent->control().isInteractive())
             return nullptr;
         return &parent->control();
     }

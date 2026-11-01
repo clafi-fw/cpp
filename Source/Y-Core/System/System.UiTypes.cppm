@@ -52,13 +52,33 @@ namespace ClaFi
         Transparent   // input passes through to the controls or windows underneath
     };
 
-    // How far a control takes part in input - focus, selection, hover. See UI-Types
-    export enum class Interactivity {
-        None,           // a static label or container, taking no input
-        MouseOnly,      // hovered and clicked with the mouse, never focused; a press moves no focus
-        KeyFocusable,   // focused by the keys, clicked with the mouse; a press moves no focus
-        Focusable,      // a button, a text box, a list item: focus, click and selection
-        ActiveContainer // a container managing focus traversal and child selection
+    // Whether Tab and the arrows can land on a control. See UI-Types
+    export enum class NavigationReach
+    {
+        Yes,
+        No
+    };
+
+    // What a mouse press on a control does with the focus. See UI-Types
+    export enum class MouseFocus
+    {
+        Self,     // the control takes it
+        Parent,   // what a press on the parent does - a label, a slider's thumb
+        Keep      // it stays where it is - a tool bar's button beside an editor
+    };
+
+    // Whether a mouse press is aimed at the control or at its parent. See UI-Types
+    export enum class ClickTarget
+    {
+        Self,     // its own hover and press looks, and the mouse click raised on it
+        Parent    // the parent's, as though the control were part of the parent
+    };
+
+    // Whether a container holds the focus for its current item. See UI-Types
+    export enum class FocusScope
+    {
+        Yes,      // the current item follows the focus, and Tab steps over the scope as a whole
+        No
     };
 
     // What the platform layer switches on - window class, styles, activation. See UI-Types

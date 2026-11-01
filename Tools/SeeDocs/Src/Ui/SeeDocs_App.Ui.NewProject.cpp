@@ -47,7 +47,6 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] Box& addBox(Panel& field)
         {
             return field.createBody<Box>(
-                Interactivity::Focusable,
                 WordWrap::No,
                 Padding{ 0.0f },
                 VerticalTextAnchor::Center
@@ -70,7 +69,8 @@ namespace SeeDocs_App::Ui
             owner.themeMetrics().primaryWindow,
             owner.themeMetrics().primaryWindowShadow,
             UiElement::ToolBar,
-            Interactivity::MouseOnly,
+            ClickTarget::Self,
+            MouseFocus::Keep,
             Border{ Thickness::Thin },
             Padding{ 0.0f },
             Spacing{ 0.0f }
@@ -170,9 +170,9 @@ namespace SeeDocs_App::Ui
         });
         m_refusal.setVisible(false);
         writeFolder();
-        // The name is what is typed first, and a name offered arrives selected so that typing
-        // replaces it.
-        m_name.setFocus();
+        // The name is what is typed first, so the dialog opens on it, and a name offered arrives
+        // selected so that typing replaces it.
+        m_name.makeCurrentItem();
         m_name.selectAll();
     }
 

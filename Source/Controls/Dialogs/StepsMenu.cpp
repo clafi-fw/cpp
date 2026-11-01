@@ -24,7 +24,8 @@ namespace ClaFi::Controls
             owner.themeMetrics().secondaryWindow,
             owner.themeMetrics().secondaryWindowShadow,
             UiElement::Menu,
-            Interactivity::MouseOnly
+            ClickTarget::Self,
+            MouseFocus::Keep
         },
         m_verb{ std::move(verb) }
     {

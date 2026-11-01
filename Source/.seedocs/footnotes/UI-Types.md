@@ -21,36 +21,75 @@ call that needs it takes it back. The value is the server's serial for the event
 **Transparent covers the children too.** A parent answering Transparent keeps mouse input from
 every control inside it.
 
-## Interactivity
+**HitTest comes first.** It routes mouse input by the pointer position alone. The input answers -
+NavigationReach, MouseFocus, ClickTarget and FocusScope - are read once the pointer is over the
+control.
 
-**HitTest comes first.** It routes mouse input by the pointer position alone. Interactivity is read
-once the pointer is over the control, and sets how it takes part in keyboard navigation and
-answers the mouse - hover and click animations.
+## NavigationReach
 
-**A mouse press focuses the first control up the chain that can take the focus** - Focusable or
-ActiveContainer. A mouse press on a label inside a tile focuses the tile.
+**Tab and the arrows land on a control that answers Yes**, while it is shown and enabled. One that
+answers No is passed over, and a step goes on into its children. A tool bar's buttons beside an
+editor answer No, so the keys stay with the editor.
 
-**A MouseOnly control is pressed for itself**, and leaves the focus where it is. A tool bar's
-button keeps the caret in the editor beside it. A part is the exception - see Control::isChildPart.
+**Code can focus more than the keys reach.** Control::trySetFocus takes a control that answers Yes
+here or Self to MouseFocus, and refuses one that answers neither.
 
-**A KeyFocusable control is reached by the keys and pressed for itself by the mouse.** Tab and the
-arrows land on it as on a Focusable control, and a mouse press leaves the focus where it is, as on
-a MouseOnly one. A notice's answers are KeyFocusable. It is never an ActiveContainer's current item
-or one of its selected items, since a container picks those on a mouse click.
+## MouseFocus
 
-## Control isChildPart
+**The first control up from the pressed one to answer Self or Keep settles the press.**
 
-**A part's mouse press is its owner's.** A part is a slider's thumb, a check box's mark, a split
-button's strip or a control hosted in a grid cell. The focus walk passes over a MouseOnly or
-KeyFocusable part and goes on from the owner. ButtonBase, SliderBase and Grids::RowContainer
-answer yes for every child.
+- `Self` - the control takes the focus: a button, a text box, a list item.
+- `Parent` - the parent answers instead: a label inside a tile, a slider's thumb, a check box's
+  mark, a split button's strip, a control hosted in a grid cell. It is the default.
+- `Keep` - the focus stays where it is. A tool bar's button keeps the caret in the editor beside
+  it, and a notice's answers leave the focus with whatever held it.
+
+**A disabled control answering Self hands the press on**, as Parent does.
+
+**Only the focus is decided here.** The press and the release, the mouse click and the hover and
+press looks follow ClickTarget. A right mouse press focuses what a left one would.
+
+## ClickTarget
+
+**The mouse click goes to the nearest control up from the pressed one that answers Self**, and to
+the pressed control itself where none does. A label inside a button answers Parent, so a mouse
+click on the label is the button's.
+
+**Everything a press spends on its way out reads this** - the press looks lit up the parent chain,
+the scroll a release asks for, and the control the mouse click is raised on. So a mouse click on a
+label neither lights the tile it stands in nor moves the view under it.
+
+**A part that stands for its host hands its click on.** A button's selection indicator answers Self
+and takes the mouse click on the mark; ButtonBase::nestedClick raises the button's own click from
+it - see ButtonBase nestedClick. A splitter answers Self too, so a double click on it is its own
+rather than that of a control above it.
+
+## FocusScope
+
+**A focus scope holds the focus for its current item.** Input::focusHolder names the scope and
+Input::focusDelegate the item - the two differ exactly while a scope holds the focus. A key or a
+mouse press inside the scope moves its current item, and the scope answers which of its items read
+selected.
+
+**Tab steps over the scope as a whole**, landing on its current item, and the arrows, Home, End and
+the page keys move within it. A scope with nothing current is entered as any container is.
+
+**Its items are the controls that answer NavigationReach::Yes and MouseFocus::Self** and are no
+scope themselves. A caption or a panel between them is passed over, and so is a control answering
+Keep. A view keeping a set picks its selected items from the same controls.
+
+**A scope takes the focus itself while it holds no item**, where it answers NavigationReach::Yes
+and MouseFocus::Self as the stock scopes do, and wears the ring then - see Control::isFocused.
+
+**A container keeping a current item outside a scope** - a page control's page - holds no focus for
+it.
 
 ## WindowRole
 
 **The role is given where the form is created**, and sets what the window does with activation.
-The root control's Interactivity is a separate answer, for how the control takes part in focus and
-selection. A popup list whose root tracks a current item is `WindowRole::Menu` with an
-`ActiveContainer` root.
+The root control's FocusScope and the other input answers are separate, for how the control takes
+part in focus and selection. A popup list whose root tracks a current item is `WindowRole::Menu`
+with a `FocusScope::Yes` root.
 
 ## PresenterRole
 
@@ -77,8 +116,8 @@ look that answers the user being on a control reads Hot and nothing else. Curren
 wearing a ring: the keys' focus - any focus, where AppContext::alwaysShowFocus says so - or a
 container's current item, the item a multi-select view anchors its Shift ranges on, which it keeps
 while the mouse drives the input and which wears the ring under the mouse too. The items it
-selected are drawn Selected. An ActiveContainer is current only as a fallback, while the focus is
-on it and on no item inside it - see Control::focusAnchor.
+selected are drawn Selected. A focus scope is current only as a fallback, while the focus is on
+it and on no item inside it - see Control::isFocused.
 
 **Focused is the control's own focus by either device.** The selected-text band, a caret and a
 grid's cell ring read it: a box focused by a click keeps them while the pointer wanders.

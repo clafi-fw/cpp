@@ -129,7 +129,7 @@ namespace ClaFi::Controls
         ExpanderHeader& strip = header();
         if (event.key == Keys::Left && event.modifiers.empty() && !strip.isFocused())
         {
-            strip.setFocus();
+            setFocusByKey(strip, event.modifiers);
             strip.scrollIntoView();
             event.handled = true;
             return;

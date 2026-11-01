@@ -26,8 +26,8 @@ A plain press outside the selection selects at once.
 
 ## StackView setSelection
 
-Items the view would refuse the user are left out - see CanSelectItemEvent. A view holding no set
-ignores the call.
+**The selection becomes the items CanSelectItemEvent lets in**, and the rest are dropped without
+a word - the same test a Ctrl+click or a rectangle passes. A view holding no set ignores the call.
 
 **The current item stays where it is.** A grid moves both with GridBase::selectCell.
 
@@ -37,8 +37,8 @@ ignores the call.
 anchor. The anchor and the current item join the set only when something puts them there. So a
 mouse press on a current item outside the set picks it.
 
-Tracking a current item at all is what `Interactivity::ActiveContainer` means, and a StackView
-always is one.
+Tracking a current item at all is what `FocusScope::Yes` means, and a StackView is one unless it
+is built otherwise.
 
 ## DragMode
 
@@ -53,4 +53,5 @@ A drag from the surface sweeps a rectangle in either mode.
 **Separate from whether an item may be current**, which is CanFocusItemEvent. A rubber band needs
 answers for controls it never makes current.
 
-canSelect arrives as the view's own answer - yes for a Focusable item in a Multi view.
+canSelect arrives as the view's own answer - yes in a Multi view for an item that answers
+NavigationReach::Yes and MouseFocus::Self and is no focus scope itself.

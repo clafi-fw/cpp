@@ -143,12 +143,13 @@ namespace ClaFi::Browser
         // The close button is the tab's secondary part, so the base keeps a press on it from
         // reading as a press on the tab and routes the click to secondaryClicked().
         //
-        // It takes Button's Focusable, and that is what keeps pressing it off the tab's
-        // selection. The focus walk in Input::setMouseDown stops at the first control that can
-        // take focus, so the focus lands here, and TabStripBase::defaultCanFocusItem then declines
-        // it as a current item because it is not a tab. Made MouseOnly, the button would be
-        // invisible to that walk, which would climb to the tab and select it on the way to
-        // closing it. Focus is also how the keyboard reaches the button at all.
+        // It takes Button's MouseFocus::Self, and that is what keeps pressing it off the tab's
+        // selection. The focus walk in Control::setFocusByPress stops at the first control that
+        // takes the focus on a press, so the focus lands here, and
+        // TabStripBase::defaultCanFocusItem then declines it as a current item because it is not
+        // a tab. Answering Parent, the button would hand the press to the tab, which would select
+        // it on the way to closing it. Button's NavigationReach is also how the keyboard reaches
+        // the button at all.
         Button& m_closeButton = createSecondaryPart<ToolButton>(
             FixedSize{ 20.0f },
             Radius{ 10.0f },
@@ -493,13 +494,15 @@ namespace ClaFi::Browser
             IconSize{ k_navigationIconSize },
             ButtonViewMode::IconOnly,
             Actions::back,
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
         Button& m_forwardButton{ m_navigationBar.add<ToolButton>(
             IconSize{ k_navigationIconSize },
             ButtonViewMode::IconOnly,
             Actions::forward,
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
         Button& m_upButton{ m_navigationBar.add<ToolButton>(
             IconSize{ k_navigationIconSize },

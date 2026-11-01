@@ -22,7 +22,6 @@ namespace ClaFi::Controls::Grids
     public:
         SubGrid& body();
     protected:
-        Interactivity interactivity() const override { return Interactivity::None; }
         ControlSpan controls() override { return { m_controls }; }
         bool hasContent(const Column&) const override { return false; }
         void preCalcColumn(const FormContext& formContext, Column& column) override;

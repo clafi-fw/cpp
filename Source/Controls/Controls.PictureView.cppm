@@ -71,10 +71,9 @@ namespace ClaFi::Controls
         static constexpr float k_zoomStep = 1.25f;
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"PictureView"; }
     protected:
-        [[nodiscard]] Interactivity interactivity() const override
-        {
-            return Interactivity::Focusable;
-        }
+        [[nodiscard]] NavigationReach navigationReach() const override { return NavigationReach::Yes; }
+        [[nodiscard]] MouseFocus mouseFocus() const override { return MouseFocus::Self; }
+        [[nodiscard]] ClickTarget clickTarget() const override { return ClickTarget::Self; }
         // What is on screen, so a release after a pan does not carry the view back to the pixel.
         [[nodiscard]] FloatRect scrollHotspot() const override;
         // The selected pixel, and for the same reason. A menu raised by the keyboard drops under

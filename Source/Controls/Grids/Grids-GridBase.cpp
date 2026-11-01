@@ -138,7 +138,7 @@ namespace ClaFi::Controls::Grids
     // whatever a container above does with the row.
     void GridBase::nestedCurrentItemChange(Control*)
     {
-        if (interactivity() != Interactivity::ActiveContainer && isFieldRoot())
+        if (focusScope() != FocusScope::Yes && isFieldRoot())
             m_descriptor.setSelectedCell(nullptr, nullptr);
     }
 
@@ -280,14 +280,14 @@ namespace ClaFi::Controls::Grids
                 // The ends of the line are the row's wherever the grid stands. Under Ctrl the keys
                 // address a container, as the page keys do: a grid standing in one leaves them to
                 // it, and the selection leaves the grid with them.
-                if (event.modifiers.ctrl && interactivity() != Interactivity::ActiveContainer)
+                if (event.modifiers.ctrl && focusScope() != FocusScope::Yes)
                     break;
                 const ScrollDirection edge = event.key == Keys::Home
                     ? ScrollDirection::ToBegin
                     : ScrollDirection::ToEnd;
                 const bool moved = event.modifiers.ctrl
-                    ? moveCellToGridEdge(edge)
-                    : moveCellToLineEdge(event.scaler(), edge);
+                    ? moveCellToGridEdge(edge, event.modifiers)
+                    : moveCellToLineEdge(event.scaler(), edge, event.modifiers);
                 if (moved)
                 {
                     event.handled = true;
@@ -299,12 +299,12 @@ namespace ClaFi::Controls::Grids
         case Keys::Next:
             {
                 // The page keys address a container, and a grid standing in one leaves them to it.
-                if (interactivity() != Interactivity::ActiveContainer)
+                if (focusScope() != FocusScope::Yes)
                     break;
                 const ScrollDirection direction = event.key == Keys::Next
                     ? ScrollDirection::ToEnd
                     : ScrollDirection::ToBegin;
-                if (moveCellByPage(event.scaler(), direction))
+                if (moveCellByPage(event.scaler(), direction, event.modifiers))
                 {
                     event.handled = true;
                     return;
@@ -527,12 +527,13 @@ namespace ClaFi::Controls::Grids
         // The line is written before anything scrolls: a stop rect and the grid origin it is
         // measured against were read from one snapshot, and a scroll moves both.
         rememberCellLine(stops[bestIndex].rect, horizontal ? band.x : band.y, horizontal);
-        focusStop(stops[bestIndex]);
+        focusStop(stops[bestIndex], event.modifiers);
         scrollStopIntoView(stops[bestIndex]);
         return true;
     }
 
-    bool GridBase::moveCellToLineEdge(const Scaler& scaler, ScrollDirection edge)
+    bool GridBase::moveCellToLineEdge(const Scaler& scaler, ScrollDirection edge,
+        const KeyModifiers modifiers)
     {
         if (!cellKeysApply())
             return false;
@@ -564,12 +565,12 @@ namespace ClaFi::Controls::Grids
 
         const FloatRect& targetRect = stops[bestIndex].rect;
         rememberCellLine(targetRect, toBegin ? targetRect.left : targetRect.right, true);
-        focusStop(stops[bestIndex]);
+        focusStop(stops[bestIndex], modifiers);
         scrollStopIntoView(stops[bestIndex]);
         return true;
     }
 
-    bool GridBase::moveCellToGridEdge(ScrollDirection edge)
+    bool GridBase::moveCellToGridEdge(ScrollDirection edge, const KeyModifiers modifiers)
     {
         if (!cellKeysApply())
             return false;
@@ -619,12 +620,13 @@ namespace ClaFi::Controls::Grids
             .origin = rowOrigin,
             .rect = targetRect,
         };
-        focusStop(target);
+        focusStop(target, modifiers);
         scrollStopIntoView(target);
         return true;
     }
 
-    bool GridBase::moveCellByPage(const Scaler& scaler, ScrollDirection direction)
+    bool GridBase::moveCellByPage(const Scaler& scaler, ScrollDirection direction,
+        const KeyModifiers modifiers)
     {
         if (!cellKeysApply())
             return false;
@@ -681,7 +683,7 @@ namespace ClaFi::Controls::Grids
             if (endIndex == k_maxSize)
                 return true;
             rememberCellLine(stops[endIndex].rect, band.y, false);
-            focusStop(stops[endIndex]);
+            focusStop(stops[endIndex], modifiers);
             scrollStopIntoView(stops[endIndex]);
             return true;
         }
@@ -710,7 +712,7 @@ namespace ClaFi::Controls::Grids
         scrollViewToStop(next, arriving);
         // The view is on its way, so this settles the focus without moving it: the stop it lands
         // on is one that view shows whole.
-        focusStop(stops[bestIndex]);
+        focusStop(stops[bestIndex], modifiers);
         return true;
     }
 
@@ -762,8 +764,8 @@ namespace ClaFi::Controls::Grids
         std::size_t result = k_maxSize;
         traverseRows(window, [&](RowBase& row, FloatPoint rowOrigin){
             // **A cell is a stop only in a row the user can be on.** The focus never rests on a
-            // control of Interactivity::None, and the field reads that the way the navigator
-            // and a mouse press do. A grid's header is one: it paints cells, and a key passes
+            // control that takes none, and the field reads that the way the navigator and a
+            // mouse press do. A grid's header is one: it paints cells, and a key passes
             // them over.
             if (row.canTakeFocus())
             {
@@ -889,7 +891,9 @@ namespace ClaFi::Controls::Grids
         }
     }
 
-    void GridBase::focusStop(const FieldStop& stop)
+    // The key's modifiers go with the focus, so a stack reads Shift and Ctrl as it reads them on
+    // an arrow the navigator answers.
+    void GridBase::focusStop(const FieldStop& stop, const KeyModifiers modifiers)
     {
         if (stop.control)
         {
@@ -898,11 +902,11 @@ namespace ClaFi::Controls::Grids
             // moves, so that the grid's own item selection - which rewrites the row half as the
             // focus settles - finds the column already cleared.
             m_descriptor.setSelectedCell(stop.control, nullptr);
-            stop.control->setFocus();
+            setFocusByKey(*stop.control, modifiers);
             return;
         }
         stop.row->selectColumn(*stop.column);
-        stop.row->setFocus();
+        setFocusByKey(*stop.row, modifiers);
     }
 
     void GridBase::scrollStopIntoView(const FieldStop& stop)

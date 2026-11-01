@@ -154,7 +154,7 @@ names, are read in the scope the type is declared in.
 **A constructor restates a base's property by handing the base a value for it.** A pack reads the
 last value it holds of a type, which gives two cases:
 
-- **A value before the pack it forwards** - `Button{ params, Interactivity::Focusable,
+- **A value before the pack it forwards** - `Button{ params, MouseFocus::Self,
   std::forward<Args>(args)... }` - is the default the type gives that property. The caller's own
   value overrides it.
 - **A value after the pack** is fixed: the caller's value loses to it. Every value a constructor
@@ -164,7 +164,7 @@ The scanner reads each initializer naming a base of the type, argument by argume
 arguments whose type it can tell from their spelling:
 
 - A construction, `Padding{ 4.0f }`, is of the type it opens with.
-- A qualified name alone, `Interactivity::Focusable`, is an enum's member or a class's constant.
+- A qualified name alone, `MouseFocus::Self`, is an enum's member or a class's constant.
 - A bare name alone is a constant the file or the tree declares, of its declared type.
 
 The caller's own values - `params`, any parameter of the constructor - are passed on, not restated.

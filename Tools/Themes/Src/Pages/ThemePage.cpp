@@ -495,7 +495,7 @@ namespace Themes_App
         };
         dialog.add(DialogAnswer::Yes);
         // Opens on No: Return declines, Escape dismisses, and only a deliberate move reaches Yes.
-        dialog.add(DialogAnswer::No).setFocus();
+        dialog.add(DialogAnswer::No).makeCurrentItem();
         return dialog.execute() == DialogAnswer::Yes;
     }
 

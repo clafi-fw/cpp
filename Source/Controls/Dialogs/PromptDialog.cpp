@@ -48,9 +48,9 @@ namespace ClaFi::Controls
         buildAnswers();
 
         // The answer is the text, so the box is where this dialog opens - not on OK, which
-        // addAnswer would otherwise have left the focus on. It goes after the answers for that
-        // reason: it is the last word on where the focus starts.
-        box().setFocus();
+        // addAnswer named first. It goes after the answers for that reason: it is the last word
+        // on where the dialog opens.
+        box().makeCurrentItem();
         // The value arrives selected, so the first character typed replaces it - a name offered
         // to be changed, rather than one to be edited from wherever the caret happened to land.
         box().selectAll();

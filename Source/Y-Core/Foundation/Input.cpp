@@ -76,48 +76,102 @@ namespace ClaFi
 
     Control* Input::focusDelegate()
     {
-        return s_focusedControl ? s_focusedControl->focusDelegate() : nullptr;
+        return s_focusHolder ? s_focusHolder->focusDelegate() : nullptr;
     }
 
-    void Input::setFocusedControl(Control* value)
+    void Input::setFocusHolder(Control* value)
     {
-        if (s_focusedControl == value)
+        if (s_focusHolder == value)
             return;
         Control* previousDelegate = focusDelegate();
-        s_focusedControl = value;
+        s_focusHolder = value;
         if constexpr (Diagnostic::Options::logFocusedItem())
-            diagnosticLog(L"focused control", s_focusedControl);
+            diagnosticLog(L"focus holder", s_focusHolder);
         focusMoved(previousDelegate, focusDelegate());
     }
 
-    // The holder has not changed, so setFocusedControl does not run - and its delegate has. A
+    // The holder has not changed, so setFocusHolder does not run - and its delegate has. A
     // null on either side is the holder answering for itself.
     void Input::focusDelegateChanged(Control& holder, Control* previousDelegate,
         Control* currentDelegate)
     {
-        if (s_focusedControl != &holder)
+        if (s_focusHolder != &holder)
             return;
         focusMoved(previousDelegate ? previousDelegate : &holder,
             currentDelegate ? currentDelegate : &holder);
     }
 
-    // The two walks a hover move makes. Each stops at the common parent, which answers the same
-    // before and after; every control on the way hears focusChanged **after** the move, so
-    // isFocused() answers for it whichever side it is on. The one common parent that answers
-    // differently is a container the focus moved between and an item of its own: it is the anchor
-    // on one side only, and its ring goes with that - see Control::focusAnchor.
+    // **Every control whose isFocused() answer changed is told**, after the move, so that answer
+    // is for the side it is on. The two walks stop where the paths meet, which answers the same
+    // before and after - except a control that wears the ring on one side only: a focus scope the
+    // focus moved between it and an item of its own. A popup's root stepping onto the control it
+    // was opened on is no such move, since that control starts its window's part of the path on
+    // both sides.
     void Input::focusMoved(Control* previousDelegate, Control* currentDelegate)
     {
         if (previousDelegate == currentDelegate)
             return;
-        Control* upTo = commonParent(previousDelegate, currentDelegate);
-        if (upTo && (upTo == previousDelegate || upTo == currentDelegate))
-            upTo = upTo->parent();
-        Control::invalidateStateUp(previousDelegate, upTo, InvalidateEvent::FocusLeave);
-        Control::invalidateStateUp(currentDelegate, upTo, InvalidateEvent::FocusEnter);
+        Control* upTo = focusPathMeeting(previousDelegate, currentDelegate);
+        if (upTo)
+        {
+            Control* belowBefore = focusPathStepBelow(previousDelegate, *upTo);
+            Control* belowAfter = focusPathStepBelow(currentDelegate, *upTo);
+            if (upTo->containsNested(belowBefore) != upTo->containsNested(belowAfter))
+                upTo = focusPathParent(*upTo);
+        }
+        invalidateFocusPath(previousDelegate, upTo, InvalidateEvent::FocusLeave);
+        invalidateFocusPath(currentDelegate, upTo, InvalidateEvent::FocusEnter);
 
         if constexpr (Diagnostic::Options::logFocusedItem())
             diagnosticLog(L"focus delegate", currentDelegate);
+    }
+
+    // At a root the path goes on only from a popup that is up, which the form it stands on holds
+    // as its active popup - and from there at what the control it was opened on answers for. A
+    // dialog is a window of its own: its owner reads nothing through it.
+    Control* Input::focusPathParent(Control& control)
+    {
+        if (Control* parent = control.parent())
+            return parent;
+        FormBase* form = control.getForm();
+        if (!form)
+            return nullptr;
+        FormBase* opener = form->popupTargetForm();
+        Control* target = form->popupTarget();
+        if (!opener || !target || opener->activePopup() != form)
+            return nullptr;
+        return target->focusDelegate();
+    }
+
+    Control* Input::focusPathMeeting(Control* first, Control* second)
+    {
+        for (Control* step = first; step; step = focusPathParent(*step))
+        {
+            for (Control* other = second; other; other = focusPathParent(*other))
+            {
+                if (other == step)
+                    return step;
+            }
+        }
+        return nullptr;
+    }
+
+    Control* Input::focusPathStepBelow(Control* start, const Control& control)
+    {
+        Control* below = nullptr;
+        for (Control* step = start; step; step = focusPathParent(*step))
+        {
+            if (step == &control)
+                return below;
+            below = step;
+        }
+        return nullptr;
+    }
+
+    void Input::invalidateFocusPath(Control* from, const Control* upTo, const InvalidateEvent event)
+    {
+        for (Control* step = from; step && step != upTo; step = focusPathParent(*step))
+            Control::invalidateStateUp(step, step->parent(), event);
     }
 
     void Input::mouseActed(AppContext& appContext)
@@ -158,24 +212,7 @@ namespace ClaFi
         s_isMouseDown = true;
         if (s_hoveredControl)
         {
-            Control* controlToFocus = s_hoveredControl;
-            while (controlToFocus && !controlToFocus->takesFocusOnPress())
-            {
-                Control* parent = controlToFocus->m_parent;
-                // **A MouseOnly or KeyFocusable control is pressed for itself**, and its press
-                // leaves the focus where it is: a tool bar's button beside an editor keeps the
-                // caret in the editor. A part is the exception - a slider's thumb, a check box's
-                // mark, a control hosted in a grid cell - there the press is the owner's, and the
-                // walk goes on from it. See UI-Types#interactivity
-                const Interactivity interactivity = controlToFocus->interactivity();
-                const bool movesNoFocus = interactivity == Interactivity::MouseOnly
-                    || interactivity == Interactivity::KeyFocusable;
-                const bool pressedForItself = movesNoFocus
-                    && !(parent && parent->isChildPart(*controlToFocus));
-                controlToFocus = pressedForItself ? nullptr : parent;
-            }
-            if (controlToFocus)
-                controlToFocus->setFocus();
+            Control::setFocusByPress(*s_hoveredControl);
 
             PressDownEvent event{ *s_hoveredControl, form };
             s_hoveredControl->doPressDown(event);
@@ -209,8 +246,8 @@ namespace ClaFi
 
     void Input::forgetControl(const Control* value)
     {
-        if (value == s_focusedControl)
-            s_focusedControl = nullptr;
+        if (value == s_focusHolder)
+            s_focusHolder = nullptr;
         if (value == s_hoveredControl)
             s_hoveredControl = nullptr;
     }
@@ -238,14 +275,16 @@ namespace ClaFi
     {
         Control* delegate = focusDelegate();
         invalidateForControllers(s_hoveredControl);
-        if (delegate != s_hoveredControl)
-            invalidateForControllers(delegate);
+        if (delegate && delegate != s_hoveredControl)
+        {
+            invalidateFocusPath(delegate, nullptr, InvalidateEvent::InputController);
+            delegate->invalidate();
+        }
         appContext.events().emit<InputSwitchEvent>();
     }
 
-    // **To the root form**, through the popups between: the control a popup was opened on and
-    // everything it stands in read focused through the popup, and their hot and current carry
-    // the device as any control's do - see Control::focusAnchor.
+    // **Up to the root form**, through the control each popup between was opened on. The focused
+    // control's chain is walked along the focus path instead - see controllerFactorChanged.
     //
     // The repaint is asked for **outright**, not left to invalidateState. These factors belong to
     // the application rather than to any control, so no control's own state has moved, and

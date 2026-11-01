@@ -190,7 +190,9 @@ namespace ClaFi::Controls
             params,
             SliderViewMode::Slider,
             ScrollAxis::Horizontal,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             Radius{ params.themeMetrics().listItem.radius }, // rounded as a list item
             EditModeSwitching::Yes, // an item until Return; before the caller, who may say No
             std::forward<Args>(args)...

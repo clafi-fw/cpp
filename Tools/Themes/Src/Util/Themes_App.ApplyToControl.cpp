@@ -249,7 +249,9 @@ namespace Themes_App
         :
         StackPanel{ params,
             Orientation::Horizontal,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             params.themeMetrics().secondaryWindow,
             params.themeMetrics().secondaryWindowShadow,
             UiElement::Menu,
@@ -281,7 +283,9 @@ namespace Themes_App
     {
         StackPanel& result = add<StackPanel>(
             Orientation::Vertical,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             VerticalAlign::Top
         );
         result.add<Label>(

@@ -21,7 +21,8 @@ namespace ClaFi::Controls
         Splitter(const CreateParams&, PanelSlot bar);
     public:
         std::wstring_view diagnosticText() const override { return L"Splitter"; }
-        Interactivity interactivity() const override { return Interactivity::MouseOnly; }
+        ClickTarget clickTarget() const override { return ClickTarget::Self; }
+        MouseFocus mouseFocus() const override { return MouseFocus::Keep; }
         [[nodiscard]] CursorShape cursor() const override;
         [[nodiscard]] PanelSlot bar() const { return m_bar; }
         // Whether the bar is a side one, so the line stands upright and a drag moves it sideways.

@@ -59,7 +59,6 @@ namespace ClaFi::Controls
         SplitButtonBase{
             params,
             params.themeMetrics().page,
-            Interactivity::None,
             WordWrap::Yes,
             IconSize{ k_iconSize },
             HorizontalTextAnchor::Left,

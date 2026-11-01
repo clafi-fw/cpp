@@ -68,6 +68,8 @@ namespace ClaFi::Controls
         virtual void currentItemChanged(CurrentItemChangeEvent&);
         // The answer before any handler sees it.
         virtual bool defaultCanFocusItem(Control&);
+        // Whether a key and a mouse press both land on value, and it is no focus scope itself.
+        [[nodiscard]] static bool isPickable(const Control& value);
         // The user's gesture, or a call to setCurrentItem, settled on item - and a container
         // that keeps more than one item brings its selection in line here. StackView grows,
         // toggles or replaces it.
@@ -99,7 +101,7 @@ namespace ClaFi::Controls
         void autoSelectItem(Control&, KeyModifiers, bool& handled, bool applyGesture = true);
         void doCurrentItemChanged(Control* previous);
     private:
-        [[nodiscard]] bool appliesGesture(const Control& item, KeyModifiers) const;
+        [[nodiscard]] bool appliesGesture(const Control& item, KeyModifiers, bool byMouse) const;
     };
 
 

@@ -71,8 +71,8 @@ namespace ClaFi
         [[nodiscard]] ThemesManager& themes() { return m_themesManager; }
         void saveConfig(bool evenIfNotExists);
         Dom::DocumentBase& config() { return m_context.config(); }
-        // Builds a dialog window and its root. The root is offered Interactivity::ActiveContainer
-        // and may name its own instead - see the definition.
+        // Builds a dialog window and its root, which answers for its own focus - see the
+        // definition.
         template<ClassOfFormControl ControlClass, typename... Args>
         std::unique_ptr<Form<ControlClass>> createDialog(Args&&... args);
     protected:
@@ -339,16 +339,10 @@ namespace ClaFi
     template <ClassOfFormControl ControlClass, typename ... Args>
     std::unique_ptr<Form<ControlClass>> ApplicationBase::createDialog(Args&&... args)
     {
-        // **What a dialog's root is for**, offered rather than imposed. It leads the pack, and
-        // Props takes the last match, so a root naming its own Interactivity overrides this while
-        // one that says nothing gets what a dialog root wants: Home, End and the page keys, which
-        // address the nearest ActiveContainer in scope, and a current item the focus returns to
-        // when the window is shown again.
-        //
-        // The window is a dialog either way - that is FormBase's answer and this does not touch
-        // it. Reaching the root through the pack is what makes the value overridable, and it
-        // asks that the root take props at all: a root built from a fixed argument list names
-        // its Interactivity in its own constructor instead.
+        // **The root answers for its own focus**, and nothing is offered to it here. The window is
+        // a dialog - that is FormBase's answer. A root that wants Home, End and the page keys,
+        // which address the nearest focus scope, and a current item the focus returns to when the
+        // window is shown again, says FocusScope::Yes itself, in its props or its constructor.
         return std::make_unique<Form<ControlClass>>(
             m_context, WindowRole::Dialog, nullptr, std::forward<Args>(args)...);
     }

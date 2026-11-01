@@ -267,7 +267,9 @@ namespace ClaFi
         :
         StackPanel{
             params,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             Orientation::Vertical,
             Padding{ k_pagePadding },
             Spacing{ k_pageSpacing }

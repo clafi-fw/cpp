@@ -96,7 +96,9 @@ namespace SeeDocs_App::Ui
         :
         DropdownControlBase{
             params,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             SecondaryPartPlacement::Left,
             UiElement::Button,
             ShowSelectionOnSurface::Yes,
@@ -155,7 +157,7 @@ namespace SeeDocs_App::Ui
             line.onGetState([](GetStateEvent& event) {
                 event.state.selected = true;
             });
-            line.setFocus();
+            line.makeCurrentItem();
             // Once the list has its window: the pass that measures it has no scroll range to spend
             // a scroll on - see BreadCrumbBarItem::showDropdown.
             menu.onAligned([&line, scrolled = false](FormAlignedEvent&) mutable {

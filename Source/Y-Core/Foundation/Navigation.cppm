@@ -19,7 +19,7 @@ namespace ClaFi
         // Puts the focus where showing a control lands it. See Control-Foundation
         Control* enterShown(Control&);
     private:
-        // The form has no outside. It is an ActiveContainer so that Home, End and the page keys
+        // The form has no outside. It is a focus scope so that Home, End and the page keys
         // have something to move within, and so that it can keep the item the focus returns to -
         // but it is never entered, never left, and never landed on, because the focus is already
         // inside it wherever it is. Every rule about crossing a container's edge has to say so.
@@ -38,7 +38,7 @@ namespace ClaFi
         // The stop showing control lands on, every container's current item followed first.
         [[nodiscard]] Control* shownEntry(Control& control);
         // Home, End and the page keys inside the container in scope.
-        void moveInContainer(Control& container, Control& item, KeyCode);
+        void moveInContainer(Control& container, Control& item, KeyCode, KeyModifiers);
         // The way a page press travels, none where the container shows all it holds.
         [[nodiscard]] std::optional<NavigationDirection> pageDirection(Control& container,
             ScrollDirection) const;
@@ -47,10 +47,10 @@ namespace ClaFi
         // A step from item, with the line the run it continues keeps.
         [[nodiscard]] NavigationStep stepFrom(const Control& item, NavigationDirection,
             NavigationSource) const;
-        // Moves the focus to stop, keeping the line the step ran along for the next press.
-        void land(Control& stop, const NavigationStep&);
-        // Moves the focus to stop, a move that keeps no line.
-        void land(Control& stop);
+        // Moves the focus to stop by a key, keeping the line the step ran along for the next press.
+        void land(Control& stop, const NavigationStep&, KeyModifiers);
+        // Moves the focus to stop by a key, a move that keeps no line.
+        void land(Control& stop, KeyModifiers);
     private:
         FormBase& m_form;
     };

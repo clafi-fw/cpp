@@ -93,17 +93,21 @@ namespace Themes_App
             OnGetState{ [](GetStateEvent& event) { event.state.selected = m_selectedRb; }}
         ) };
 
-        // A button's metrics give a stroke something to be drawn at; focusable gives the states.
+        // A button's metrics give a stroke something to be drawn at; the focus gives the states.
         RichControl& m_testee{ m_stack.add<RichControl>(
             themeMetrics().button,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             UiElement::Testee,
             Text{ L"Testee" }
         ) };
 
         RichControl& m_bestee{ m_stack.add<RichControl>(
             themeMetrics().button,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             UiElement::Bestee,
             Text{ L"Bestee" }
         ) };

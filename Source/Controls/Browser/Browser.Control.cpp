@@ -402,7 +402,8 @@ namespace ClaFi::Browser
             IconSize{ k_navigationIconSize },
             ButtonViewMode::IconOnly,
             action,
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         );
     }
 

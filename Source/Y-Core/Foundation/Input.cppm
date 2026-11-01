@@ -34,8 +34,8 @@ namespace ClaFi
         friend InputController;
     public:
         // Where the focus rests. This may be a container answering for an item inside it.
-        [[nodiscard]] static Control* focusedControl() { return s_focusedControl; }
-        // focusedControl(), or the item it answers for. See Control-Foundation#input
+        [[nodiscard]] static Control* focusHolder() { return s_focusHolder; }
+        // focusHolder(), or the item it answers for. See Control-Foundation#input
         [[nodiscard]] static Control* focusDelegate();
         [[nodiscard]] static Control* hoveredControl() { return s_hoveredControl; }
         [[nodiscard]] static HitTest hoveredZone() { return s_hoveredZone; }
@@ -50,10 +50,18 @@ namespace ClaFi
             Control* currentDelegate);
     private:
         // The single write to the focus holder.
-        static void setFocusedControl(Control* value);
-        static void setFocusedControl(Control& value) { setFocusedControl(&value); }
+        static void setFocusHolder(Control* value);
+        static void setFocusHolder(Control& value) { setFocusHolder(&value); }
         // The focus moved from one delegate to another, and the path each stands on is told.
         static void focusMoved(Control* previousDelegate, Control* currentDelegate);
+        // The next control up the focus path. See Control-Foundation#control-isfocused
+        [[nodiscard]] static Control* focusPathParent(Control&);
+        // Where the focus paths up from two controls meet, null where they never do.
+        [[nodiscard]] static Control* focusPathMeeting(Control* first, Control* second);
+        // What the focus path from start passes just before control, null where there is none.
+        [[nodiscard]] static Control* focusPathStepBelow(Control* start, const Control& control);
+        // Each control on the focus path from `from` up to upTo, upTo left out, told of the event.
+        static void invalidateFocusPath(Control* from, const Control* upTo, InvalidateEvent);
         // The single write to the hover: what the pointer is over, as the form hit-tests it.
         static void setHoveredControl(Control*, HitTest, bool overText);
         static void setHoveredControl(Control* control) { setHoveredControl(control, HitTest::Client, false); }
@@ -71,7 +79,7 @@ namespace ClaFi
     private:
         static InputController s_mouse;
         static InputController s_keyboard;
-        inline static Control* s_focusedControl{ nullptr };
+        inline static Control* s_focusHolder{ nullptr };
         inline static Control* s_hoveredControl{ nullptr };
         inline static HitTest s_hoveredZone{ HitTest::Client };
         inline static bool s_hoveredOverText{ false };

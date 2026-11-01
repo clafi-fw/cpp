@@ -460,7 +460,6 @@ namespace SeeDocs_App::Ui
             :
             TextBox{
                 params,
-                Interactivity::Focusable,
                 WordWrap::No,
                 Padding{ 0.0f },
                 VerticalTextAnchor::Center,
@@ -635,7 +634,8 @@ namespace SeeDocs_App::Ui
                 IconSize{ k_dropMarkBox },
                 Padding{ 0.0f },
                 MinSize{ k_dropWidth, 0.0f },
-                Interactivity::MouseOnly,
+                NavigationReach::No,
+                MouseFocus::Keep,
                 Button::OnClick{ [&box](ClickEvent&) {
                     box.setFocus();
                     box.dropSuggestions();

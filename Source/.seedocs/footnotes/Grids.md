@@ -22,12 +22,13 @@ forEachRow.
 
 ## Grid
 
-**A grid follows the user as a container of its own**, keeping the selected cell and answering
-the keys inside it: the arrows, Home, End, PageUp and PageDown. Built with Interactivity::None it
-stands in the container above it instead - a page holding the one selected item: its rows are
-that container's items, the selection goes where the container's item goes, the keys that address
-a container - Ctrl+Home, Ctrl+End and the page keys - are the container's, and Up and Down travel
-on past the first and the last row into the rest of it - see StackBase.
+**A grid follows the user as a container of its own**, keeping the selected cell and answering the
+keys inside it: the arrows, Home, End, PageUp and PageDown. Built with FocusScope::No,
+NavigationReach::No and MouseFocus::Parent it stands in the container above it instead - a page
+holding the one selected item: its rows are that container's items, the selection goes where the
+container's item goes, the keys that address a container - Ctrl+Home, Ctrl+End and the page keys -
+are the container's, and Up and Down travel on past the first and the last row into the rest of it -
+see StackBase.
 
 **The arrows read the cells as a table.** The edges the cells share are its lines - bands down,
 columns across - and a merged cell, a group's span or an expander's header covers more than one
@@ -41,8 +42,8 @@ the nearest band ahead holding anything, at the column nearest the line.
 - Home and End go to the ends of the band the selected cell is on, in every grid. Ctrl+Home and
   Ctrl+End go to the first and the last row of a grid that is a container of its own.
 - A selection scrolled out of view is still where a key moves from.
-- A cell is a stop only in a row that can take the focus. A grid's header is
-  Interactivity::None, so no key lands on its cells and no press selects one.
+- A cell is a stop only in a row that can take the focus. A grid's header takes none, so no key
+  lands on its cells and no press selects one.
 
 ## RowGroupSpan
 
@@ -51,8 +52,10 @@ whole group shares. In a group that folds, the span opens and closes it - see Co
 
 ## RowContainer
 
-**The row holds the focus for its controls**, which are all MouseOnly. The control in the
-selected cell takes what is typed, and every key the grid leaves:
+**The row holds the focus for its controls.** A press on one focuses the row, and no key lands on
+one: addControl gives each ClickTarget::Self, MouseFocus::Parent, NavigationReach::No and
+FocusScope::No, over whatever the caller passed. The control in the selected cell takes what is
+typed, and every key the grid leaves:
 
 - The grid keeps the arrows, Home, End, PageUp, PageDown and Tab. With Alt held they go to the
   control - Alt+Down drops a combo box's list.
@@ -91,7 +94,7 @@ Control::isWidthGivenFromOutside.
 
 `selectCell` puts the selection where a pick would - in a `SelectionMode::Multi` grid, on that row
 alone. A null column selects the row with no cell. The row is made the current item of whichever
-container keeps one - the grid, or the container a grid built with Interactivity::None stands in -
+container keeps one - the grid, or the focus scope a grid built as none of its own stands in -
 see Control makeCurrentItem.
 
 **The focus stays where it is.** To move it there, call `setFocus` on the row, then

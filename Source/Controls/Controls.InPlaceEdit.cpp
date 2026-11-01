@@ -206,7 +206,8 @@ namespace ClaFi::Controls
                 Border{ Thickness::None },
                 // The box inside takes the focus; the holder around it is reachable by the
                 // pointer and is not a focus scope of its own.
-                Interactivity::MouseOnly
+                ClickTarget::Self,
+                MouseFocus::Keep
             },
             // **The padding and the border are the box's.** The ring a focused text box draws sits
             // on its own edge, so with the inset here it falls **outside** the text rather than

@@ -171,9 +171,9 @@ namespace ClaFi
         // The role is what kind of window this is, and it is named by whoever builds the form.
         // Nothing about the root is read to arrive at it: what the **window** does with activation
         // and how the **root control** takes part in focus and selection are separate questions,
-        // and the root answers its own with its Interactivity. A popup list whose root tracks a
-        // current item is the case that needs them apart - WindowRole::Menu, root
-        // ActiveContainer - and neither value can be inferred from the other.
+        // and the root answers its own with its FocusScope and the other input answers. A popup
+        // list whose root tracks a current item is the case that needs them apart -
+        // WindowRole::Menu, root FocusScope::Yes - and neither can be inferred from the other.
         FormBase(AppContext&, WindowRole, FormControlBase&, Control* popupTarget, FormPlacement);
         // The form this one's window is **owned by**, named outright rather than read off a
         // control. A popup stands on a control and its form is whatever holds that control; a
@@ -247,7 +247,7 @@ namespace ClaFi
         // it, or into as much of it as the content asked for - see contentExtent.
         [[nodiscard]] FloatRect geometry() const;
         // What kind of window this is. It says nothing about the root control, which answers for
-        // itself with Control::interactivity().
+        // itself with Control::focusScope() and the other input answers.
         [[nodiscard]] WindowRole windowRole() const { return m_windowRole; }
         // This form's tooltip. A control raises one about itself through the form it is in -
         // control.form().tooltip().showRightNow(control) - because the window a tooltip shows in is

@@ -78,7 +78,7 @@ namespace ClaFi::Controls::Grids
     template<typename ...Args>
     RowExpander::RowExpander(const CreateParams& params, GridDescriptor& descriptor, Args && ...args)
         :
-        WithHeldHeader{ params, descriptor, Interactivity::None, std::forward<Args>(args)...}
+        WithHeldHeader{ params, descriptor, std::forward<Args>(args)...}
     {
         m_controls[k_head] = std::make_unique<RowExpanderHeader>(
             CreateParams{ *this },

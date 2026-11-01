@@ -104,7 +104,8 @@ namespace ClaFi::Documents
             k_buttonIconSize,
             ButtonViewMode::IconOnly,
             StdActions::del,
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
         Divider& m_dividerAfterDelete{ toolBar().add<Divider>(Padding{ 4.0f }) };
         Button& m_exploreButton{ toolBar().add<ToolButton>(

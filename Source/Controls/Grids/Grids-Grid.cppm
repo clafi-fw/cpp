@@ -89,7 +89,9 @@ namespace ClaFi::Controls::Grids
         GridBase{
             params,
             m_descriptor,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             std::forward<Args>(args)...
         },
         m_descriptor{ *this,

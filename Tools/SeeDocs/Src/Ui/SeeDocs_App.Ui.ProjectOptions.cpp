@@ -369,7 +369,6 @@ namespace SeeDocs_App::Ui
                 params.themeMetrics().button.padding,
                 MinSize{ k_fieldWidth, 0.0f },
 
-                Interactivity::Focusable,
                 TextFormat{ TextStyle::Heading },
                 WordWrap::No,
                 VerticalTextAnchor::Center,
@@ -401,7 +400,9 @@ namespace SeeDocs_App::Ui
             Grids::Grid{
                 params,
                 params.themeMetrics().page,
-                Interactivity::None,
+                FocusScope::No,
+                NavigationReach::No,
+                MouseFocus::Parent,
                 UiElement::Section,
                 Grids::GridLines::Horizontal,
                 ItemsOrder::Rearrangeable
@@ -455,7 +456,7 @@ namespace SeeDocs_App::Ui
             {
                 m_workspace.removeSource(m_project, row->source());
                 const Rows::iterator next = m_rows.erase(std::ranges::find(m_rows, row));
-                const bool held = row->containsNested(Input::focusedControl())
+                const bool held = row->containsNested(Input::focusHolder())
                     || descriptor().selectedRow() == row;
                 row->deleteSelf();
                 if (held)
@@ -512,7 +513,6 @@ namespace SeeDocs_App::Ui
                 VerticalAlign::Center,
                 HorizontalTextAnchor::Center,
                 VerticalTextAnchor::Center,
-                Interactivity::MouseOnly,
                 TooltipText{ k_browseTooltip },
                 Button::OnClick{ [this](ClickEvent&) {
                     browse();
@@ -550,7 +550,6 @@ namespace SeeDocs_App::Ui
                 ButtonViewMode::IconOnly,
                 IconSize{ k_removeMark },
                 VerticalAlign::Center,
-                Interactivity::MouseOnly,
                 ButtonBase::OnDrawIcon{ Icons::XMark::draw },
                 TooltipText{ L"Remove source" },
                 Button::OnClick{ [this](ClickEvent&) {

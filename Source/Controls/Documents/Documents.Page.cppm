@@ -71,7 +71,8 @@ namespace ClaFi::Documents
             StdActions::save,
             ButtonViewMode::LeftIcon,
             k_toolButtonIconSize,
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
         Divider& m_dividerAfterSave{ toolBar().add<Divider>(Padding{ 4.0f }) };
         // The strips list the steps the history holds.
@@ -79,13 +80,15 @@ namespace ClaFi::Documents
             HistoryDirection::Undo,
             ButtonViewMode::IconOnly,
             k_toolButtonIconSize,
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
         HistoryButton& m_redoButton{ toolBar().add<HistoryButton>(
             HistoryDirection::Redo,
             ButtonViewMode::IconOnly,
             k_toolButtonIconSize,
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
         IEditHistory* m_editHistory{ nullptr }; // what Undo and Redo act on, where named
         // Set by Save as, which has just written this page's work under another name. What stands

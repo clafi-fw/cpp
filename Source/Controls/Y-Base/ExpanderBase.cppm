@@ -47,7 +47,8 @@ namespace ClaFi::Controls
         :
         ToolButton{
             params,
-            Interactivity::MouseOnly,
+            NavigationReach::No,
+            MouseFocus::Keep,
             ButtonViewMode::IconOnly,
             IconSize{ 12.0f },
             ShowSelectionOnSurface::No, // visible in grids
@@ -210,7 +211,9 @@ namespace ClaFi::Controls
         :
         PanelBase{
             params,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             // What the expander draws of itself, which is what the header is measured by.
             metricsFor(params, READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             Padding{ 4.0f },

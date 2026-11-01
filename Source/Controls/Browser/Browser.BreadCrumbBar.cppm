@@ -208,7 +208,9 @@ namespace ClaFi::Browser
             params,
             // The base sits on ButtonBase so that a combo box can share it without being handed a
             // button's metrics, so a crumb asks for a tool button's here.
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             // **The filled surface is what says which page the browser is showing**, and that is
             // the crumb's own answer to getControlState - so the selected state has to reach the
             // surface. A button keeps it off by default, which is right where an indicator or
@@ -361,8 +363,8 @@ namespace ClaFi::Browser
             line.onGetState([](GetStateEvent& event){
                 event.state.selected = true;
             });
-            // Ahead of the run: a form finds the focus already inside it and enters there.
-            line.setFocus();
+            // The list opens on it: a window is entered at its root's current item.
+            line.makeCurrentItem();
             // **Into view once the list has its window.** The pass that measures what to ask for is
             // bounded by nothing, so nothing overruns in it and a scroll asked of it is spent on
             // nothing; the aligned event is raised by the pass that lays the list out into the
@@ -454,7 +456,7 @@ namespace ClaFi::Browser
 
     BreadCrumbBar::BreadCrumbBar(const CreateParams& params)
         :
-        StackPanel{ params, Interactivity::ActiveContainer }
+        StackPanel{ params, FocusScope::Yes, NavigationReach::Yes, MouseFocus::Self }
     {
         const AppTheme& theme = params.theme();
         setMetrics(theme.metrics.page);

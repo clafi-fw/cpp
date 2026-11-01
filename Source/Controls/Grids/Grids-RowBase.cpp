@@ -475,7 +475,7 @@ namespace ClaFi::Controls::Grids
             // which happens in paintChildren() - after this surface pass.
             hostedControl->setStateFactor(VisualStateIndex::Hot, hotFactor, false);
             hostedControl->setStateFactor(VisualStateIndex::Selected, selFactor, false);
-            // The control itself is MouseOnly, so this is the only focus it ever has, and the
+            // The control itself takes no focus, so this is the only focus it ever has, and the
             // only ring: current as a control's own is, the keys' focus - or any focus, where
             // the application always shows it.
             const float ringFactor = appContext().focusAlwaysShown()
@@ -700,7 +700,7 @@ namespace ClaFi::Controls::Grids
         // selection where it holds several rows. Never the container's current item.
         //
         // **The walk ends here**, and it has to. `Control::state()` runs leaf to root and the last
-        // writer wins; a grid is an ActiveContainer, so `StackBase::getControlState` above
+        // writer wins; a grid is a focus scope, so `StackBase::getControlState` above
         // answers for its items with `m_currentItem == item` and would replace this. That answer
         // is true of the one row the user last landed on and false of every row that merely holds
         // the cell inside it, which is exactly the set this rule exists to name.
@@ -759,18 +759,24 @@ namespace ClaFi::Controls::Grids
             m_descriptor.setHoveredCell(nullptr, nullptr, false);
     }
 
+    // **A mouse press names its cell by where it landed.** A key or a call from code names none,
+    // and the row is entered at a cell of its own.
     void RowBase::nestedControlFocusing(FocusEvent& event)
     {
         m_descriptor.beginCellSelection();
         // Recorded by the row the focus lands on, before the selection moves under the press.
-        if (event.control == this)
+        if (event.byMouse && event.control == this)
             recordPress(event.modifiers);
-        selectColumnUnderMouse();
+        if (event.byMouse)
+            selectColumnUnderMouse();
         // Only when the row itself is the control being focused. The event passes through every
         // row on the way up, and a row holding controls in its cells must not answer for the
         // one of them the focus actually landed on.
         if (event.control == this)
-            selectCellOnKeyboardEntry();
+        {
+            if (!event.byMouse)
+                selectCellOnEntry();
+        }
         // The control standing in for this row has taken the focus - clicked, or reached by the
         // focus navigator rather than by a key the grid answered. The grid holds no cell while
         // the focus rests there, and recording that is what lets the next key move on from it
@@ -871,10 +877,8 @@ namespace ClaFi::Controls::Grids
         return press.kind;
     }
 
-    void RowBase::selectCellOnKeyboardEntry()
+    void RowBase::selectCellOnEntry()
     {
-        if (Input::mouse().active())
-            return;
         // A cell of this row already selected is where the user left it, and the grid returning
         // to this row returns to that cell.
         if (m_descriptor.selectedRow() == this && m_descriptor.selectedColumn())

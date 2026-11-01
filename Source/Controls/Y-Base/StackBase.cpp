@@ -60,9 +60,10 @@ namespace ClaFi::Controls
         if (m_currentItem)
             m_currentItem->invalidateState();
 
-        // The focus this container holds moves with its item; then what the item left is told,
+        // The focus a focus scope holds moves with its item; then what the item left is told,
         // and a grid standing in this container drops its selected cell on it.
-        Input::focusDelegateChanged(*this, previousValue, m_currentItem);
+        if (focusScope() == FocusScope::Yes)
+            Input::focusDelegateChanged(*this, previousValue, m_currentItem);
         raiseCurrentItemChange(previousValue, m_currentItem);
         doCurrentItemChanged(previousValue);
     }
@@ -102,12 +103,18 @@ namespace ClaFi::Controls
     {
     }
 
-    // Inside an ActiveContainer an item is a control the user can land on, rather than a caption
-    // or a panel sitting between them. A container of any other kind has no current item to offer.
+    // Inside a focus scope an item is a control the user can land on, rather than a caption or a
+    // panel sitting between them. A container of any other kind has no current item to offer.
     bool StackBase::defaultCanFocusItem(Control& value)
     {
-        return interactivity() == Interactivity::ActiveContainer
-            && value.interactivity() == Interactivity::Focusable;
+        return focusScope() == FocusScope::Yes && isPickable(value);
+    }
+
+    // A scope of its own is left out: it hands the focus on to its own item.
+    bool StackBase::isPickable(const Control& value)
+    {
+        return value.navigationReach() == NavigationReach::Yes
+            && value.mouseFocus() == MouseFocus::Self && value.focusScope() == FocusScope::No;
     }
 
     bool StackBase::isItemSelected(const Control& item) const
@@ -130,26 +137,28 @@ namespace ClaFi::Controls
         if (event.propagationStopped())
             return;
 
-        // An ActiveContainer answers for which of its items is selected. A container of any other
-        // kind leaves the state to whoever does.
-        if (interactivity() != Interactivity::ActiveContainer)
+        // A focus scope answers for which of its items is selected. A container of any other kind
+        // leaves the state to whoever does.
+        if (focusScope() != FocusScope::Yes)
             return;
 
         event.state.selected = isItemSelected(event.control);
         event.stopPropagation();
     }
 
+    // A container keeping a current item without being a focus scope - a page control's page -
+    // holds no focus for it.
     Control* StackBase::focusDelegate()
     {
-        return m_currentItem ? m_currentItem : this;
+        return focusScope() == FocusScope::Yes && m_currentItem ? m_currentItem : this;
     }
 
-    // An ActiveContainer is the one asked, and it answers yes for an item it cannot make current
-    // too: nothing above it is the container that item is in.
+    // A focus scope is the one asked, and it answers yes for an item it cannot make current too:
+    // nothing above it is the container that item is in.
     bool StackBase::takeCurrentItem(Control& item)
     {
-        if (interactivity() != Interactivity::ActiveContainer)
-            return false;
+        if (focusScope() != FocusScope::Yes)
+            return Container::takeCurrentItem(item);
         if (canFocusItem(&item))
             setCurrentItem(&item);
         return true;
@@ -168,30 +177,34 @@ namespace ClaFi::Controls
         Container::nestedClick(event);
     }
 
-    // A press on the current item is still a pick while the selection does not hold it - a view
-    // keeping a set can have its current item outside the set. Focus arriving any other way
-    // moves nothing there.
+    // A mouse press on the current item is still a pick while the selection does not hold it - a
+    // view keeping a set can have its current item outside the set. Focus arriving any other way
+    // moves nothing there. Only a focus scope takes the focus over for its item; inside any other
+    // container the focus stays on the control it was aimed at.
     void StackBase::nestedControlFocusing(FocusEvent& event)
     {
-        const bool alreadyPicked = event.control == currentItem()
-            && (!Input::mouse().active() || isItemSelected(*event.control));
-        bool handled = (event.control == this || alreadyPicked);
-        if (!handled)
+        if (focusScope() == FocusScope::Yes)
         {
-            const KeyModifiers modifiers = event.modifiers;
-            const bool applyGesture = appliesGesture(*event.control, modifiers);
-            autoSelectItem(*event.control, modifiers, handled, applyGesture);
-        }
-        if (handled)
-        {
-            event.control = this;
+            const bool alreadyPicked = event.control == currentItem()
+                && (!event.byMouse || isItemSelected(*event.control));
+            bool handled = (event.control == this || alreadyPicked);
+            if (!handled)
+            {
+                const KeyModifiers modifiers = event.modifiers;
+                const bool applyGesture = appliesGesture(*event.control, modifiers, event.byMouse);
+                autoSelectItem(*event.control, modifiers, handled, applyGesture);
+            }
+            if (handled)
+            {
+                event.control = this;
+            }
         }
         Container::nestedControlFocusing(event);
     }
 
     void StackBase::autoSelectItem(Control& item, KeyModifiers modifiers, bool& handled, bool applyGesture)
     {
-        if (interactivity() != Interactivity::ActiveContainer)
+        if (focusScope() != FocusScope::Yes)
             return;
 
         // Nothing is recorded when the user reaches something that cannot be current, so the
@@ -239,10 +252,11 @@ namespace ClaFi::Controls
     // read here and the item is selected under the pointer before any drag of it begins.
     //
     // For a container keeping a selection of one this is the current item, and a press on that
-    // never reaches here - adjustFocus answers it before asking.
-    bool StackBase::appliesGesture(const Control& item, KeyModifiers modifiers) const
+    // never reaches here - nestedControlFocusing answers it before asking.
+    bool StackBase::appliesGesture(const Control& item, KeyModifiers modifiers,
+        const bool byMouse) const
     {
-        if (!Input::mouse().active())
+        if (!byMouse)
             return modifiers.shift || !modifiers.ctrl;
 
         if (modifiers.ctrl || modifiers.shift)

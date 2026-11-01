@@ -380,7 +380,9 @@ namespace ClaFi::Controls
         :
         TextBoxBase{
             params,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(readOnly),

@@ -416,7 +416,8 @@ namespace ClaFi::Controls
                 MaxSize{ m_dropdownMaxSize },
                 // The items carry the focus themselves, and the box around them is not a
                 // focus scope of its own.
-                Interactivity::MouseOnly
+                ClickTarget::Self,
+                MouseFocus::Keep
             },
             BodyProps{ *this }
         );
@@ -497,7 +498,9 @@ namespace ClaFi::Controls
         ComboBoxBaseClass{
             params,
             params.themeMetrics().toolButton,
-            Interactivity::Focusable,
+            NavigationReach::Yes,
+            MouseFocus::Self,
+            ClickTarget::Self,
             // The face is one line. A label too wide for it fades at the end rather than breaking,
             // which a control of one line's height would collapse.
             WordWrap::No,

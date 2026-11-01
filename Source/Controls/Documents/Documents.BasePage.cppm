@@ -58,7 +58,9 @@ namespace ClaFi::Documents
         ) };
         StackPanel& m_toolBar{ m_topPanel.createBody<StackPanel>(
             Orientation::Horizontal,
-            Interactivity::ActiveContainer
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self
         ) };
     };
 

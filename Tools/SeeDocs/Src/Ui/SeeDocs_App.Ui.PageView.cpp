@@ -350,16 +350,6 @@ namespace SeeDocs_App::Ui
         }
     }
 
-    bool shownWithin(const Control& control, const Control& host)
-    {
-        for (const Control* item = &control; item && item != &host; item = item->parent())
-        {
-            if (!item->visible())
-                return false;
-        }
-        return true;
-    }
-
     // PageLinkEvent
 
     PageLinkEvent::PageLinkEvent(std::wstring linkTarget, Control& linkSource)
@@ -590,7 +580,7 @@ namespace SeeDocs_App::Ui
             m_pageBox.body().setCurrentItem(item);
         }
         if (isFocused())
-            item.setFocus();
+            item.trySetFocus();
         if (!position.has_value())
             item.scrollIntoViewOnAlign();
         return item;
@@ -609,10 +599,9 @@ namespace SeeDocs_App::Ui
     bool PageView::focusFound() const
     {
         Control* holder = m_found.currentHolder();
-        if (!holder || !shownWithin(*holder, *this) || !holder->canTakeFocus())
+        if (!holder || !holder->trySetFocus())
             return false;
         holder->scrollIntoView();
-        holder->setFocus();
         return true;
     }
 
@@ -623,10 +612,9 @@ namespace SeeDocs_App::Ui
             return;
         for (Grids::Row* row : { m_anchoredRow, m_firstRow })
         {
-            if (row && shownWithin(*row, *this))
+            if (row && row->trySetFocus())
             {
                 row->scrollIntoView();
-                row->setFocus();
                 return;
             }
         }
@@ -731,7 +719,9 @@ namespace SeeDocs_App::Ui
             themeMetrics().page,
             UiElement::Section,
             Grids::GridLines::Horizontal,
-            Interactivity::None // the page is the container; the rows are its items
+            FocusScope::No, // the page is the container; the rows are its items
+            NavigationReach::No,
+            MouseFocus::Parent
         );
         grid.columns().add(Tag{ k_factLabel }, TextFormat{ InkGrade::Muted });
         const bool opens = std::ranges::any_of(m_page.facts, takesButton);
@@ -833,7 +823,9 @@ namespace SeeDocs_App::Ui
         TreeView& tree = expander.createBody<TreeView>(
             Padding{ k_treePadding },
             HorizontalAlign::Left,
-            Interactivity::None // the page is the container; the rows are its items
+            FocusScope::No, // the page is the container; the rows are its items
+            NavigationReach::No,
+            MouseFocus::Parent
         );
         anchorBranches(branches, nullptr);
         addTreeRows(tree, branches, nodesOpen);
@@ -924,7 +916,9 @@ namespace SeeDocs_App::Ui
             themeMetrics().page,
             UiElement::Section,
             Grids::GridLines::Horizontal,
-            Interactivity::None, // the page is the container; the rows are its items
+            FocusScope::No, // the page is the container; the rows are its items
+            NavigationReach::No,
+            MouseFocus::Parent,
             table.rearrangeable ? ItemsOrder::Rearrangeable : ItemsOrder::Fixed
         );
         if (table.rearrangeable)

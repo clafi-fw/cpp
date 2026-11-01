@@ -80,7 +80,8 @@ namespace ClaFi::Controls
             UiElement::Menu,
             // Clicked and hovered, never focused: the sliders and the answers carry the focus
             // themselves, the way a message box's text and answers do.
-            Interactivity::MouseOnly,
+            ClickTarget::Self,
+            MouseFocus::Keep,
             // The window keeps of itself exactly the border it draws, and the bars meet.
             Padding{ strokeWidth(owner.themeMetrics().secondaryWindow.border) },
             Spacing{ 0.0f }

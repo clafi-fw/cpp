@@ -79,8 +79,6 @@ namespace ClaFi::Controls
         void nestedClick(NestedClickEvent&) override;
         void nestedDoubleClick(NestedDoubleClickEvent&) override;
         void nestedControlFocusing(FocusEvent&) override;
-        // A button's children are its parts, and there is room for two - see addChild.
-        bool isChildPart(const Control&) const override { return true; }
         // Registers a child owned by a derived class. It shares one array with the selection
         // indicator, so controls() can hand out both in a single contiguous span. There is room
         // for exactly one - a button is not a container.

@@ -495,8 +495,9 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
                 <div class="rule-card dos">
                     <h4>Do</h4>
                     <ul>
-                        <li>Give a presenter <code>Interactivity::MouseOnly</code> when its action has a subject,
-                        so pressing it never moves the focus.</li>
+                        <li>Give a presenter <code>NavigationReach::No</code> and <code>MouseFocus::Keep</code>
+                        when its action has a subject, so neither a key nor a press moves the focus onto it - see
+                        <a href="selection.html#choosing">Selection and Focus</a>.</li>
                         <li>Let menu items be as they are - a menu takes the pointer without taking the focus
                         already, so they need nothing.</li>
                     </ul>
@@ -511,10 +512,11 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
                     </ul>
                 </div>
             </div>
-            <div class="warning">A presenter whose <code>interactivity()</code> is <code>None</code> can never
-            deliver a click, so attaching one is a mistake with no correct reading. It is caught on that control's
-            first state query - which happens before its first paint - with
-            <code>unreachable("An action was attached to a control that never delivers a click")</code>.</div>
+            <div class="warning">A presenter that is not interactive - <code>isInteractive()</code> answers false,
+            as for a label - can never deliver a click, so attaching one is a mistake with no correct reading. It is
+            caught on that control's first state query - which happens before its first paint - with
+            <code>noReach("An action was attached to a control that never delivers a click")</code>, which throws
+            <code>std::logic_error</code>.</div>
 
             <h3 id="state">State</h3>
             <p>An action's state is <code>ActionState</code> - <code>enabled</code> and <code>selected</code> - and

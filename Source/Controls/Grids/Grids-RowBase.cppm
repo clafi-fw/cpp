@@ -174,7 +174,7 @@ namespace ClaFi::Controls::Grids
         void selectColumnUnderMouse();
         // What the last press was to this row's cell in that column.
         [[nodiscard]] CellPressKind pressOn(const Column&) const;
-        void selectCellOnKeyboardEntry();
+        void selectCellOnEntry();
         void selectColumn(const Column& value);
         void selectNavigationStop(); // the selection on the row's stop, with no cell
         void scrollCellIntoView(const FloatRect& cellRect);

@@ -38,9 +38,6 @@ namespace SeeDocs_App::Ui
     // What a link to an anchor of the page opens with, ahead of the anchor's name.
     export constexpr std::wstring_view k_anchorPrefix = L"#";
 
-    // Whether the control and every holder up to the host are shown.
-    export [[nodiscard]] bool shownWithin(const Control&, const Control& host);
-
     // A link on the page was clicked. The surface has an Event of its own.
     export class PageLinkEvent : public ::ClaFi::Event
     {
@@ -404,7 +401,7 @@ namespace SeeDocs_App::Ui
             },
             BodyProps{
                 Orientation::Vertical,
-                Interactivity::ActiveContainer, // the page holds the one selected item
+                FocusScope::Yes, // the page holds the one selected item
                 Padding{ k_pagePadding, k_headPadding },
                 Spacing{ k_sectionSpacing }
             }

@@ -72,7 +72,7 @@ namespace ClaFi::Controls
             // so is what puts it in reach of the core hover and press animations - and, on the
             // other side of the same rule, what lets a child tell a parent worth following from a
             // plain container that merely happens to contain the pointer.
-            Interactivity interactivity() const override { return Interactivity::MouseOnly; }
+            ClickTarget clickTarget() const override { return ClickTarget::Self; }
         protected:
             void adjustMetrics(AdjustMetricsEvent& event) const override { parent()->adjustButtonMetrics(event); }
             void adjustPaint(AdjustPaintEvent&) override;
@@ -110,7 +110,7 @@ namespace ClaFi::Controls
             using ChildItem::ChildItem;
             std::wstring_view diagnosticText() const override { return L"Thumb"; }
             // Dragged, so it is a mouse target on the same terms as the buttons.
-            Interactivity interactivity() const override { return Interactivity::MouseOnly; }
+            ClickTarget clickTarget() const override { return ClickTarget::Self; }
         protected:
             void adjustMetrics(AdjustMetricsEvent& event) const override { parent()->adjustThumbMetrics(event); }
             void getControlState(GetStateEvent&) const override;
@@ -227,8 +227,6 @@ namespace ClaFi::Controls
         void nestedPressDown(PressDownEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
         void nestedDrag(DragEvent&) override;
-        // The thumb and the buttons are the slider's parts.
-        bool isChildPart(const Control&) const override { return true; }
         static constexpr float k_thumbSize = 20.0f;
     private:
         void applyPosition(float value, bool triggerChange);

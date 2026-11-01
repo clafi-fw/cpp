@@ -369,11 +369,11 @@ namespace ClaFi
         // const reference. It is the same control either way, and this side already holds it.
         connections.push_back(presenter.onGetState([this, control, role](GetStateEvent& event) {
             // Asked here rather than in attach, because attach runs from the presenter's own
-            // constructor: interactivity() answers for Control while the derived part is still
-            // on its way up, and a control that hard-codes it - a Grid Row does - never puts it
-            // in the property pack either. A state query is the earliest moment the answer is
-            // the control's own, and it comes before the first paint.
-            if (role != PresenterRole::Display && control->interactivity() == Interactivity::None)
+            // constructor: isInteractive() answers for Control while the derived part is still
+            // on its way up, and a control that hard-codes its answers - a Grid Row does - never
+            // puts them in the property pack either. A state query is the earliest moment the
+            // answer is the control's own, and it comes before the first paint.
+            if (role != PresenterRole::Display && !control->isInteractive())
                 noReach("An action was attached to a control that never delivers a click");
             event.state = state(control->form(), control);
         }));

@@ -47,7 +47,8 @@ namespace ClaFi::Controls
             // Every row is as wide as the list, which is what a flex space in a line spans to.
             HorizontalAlign::Fill,
             // Reached by the pointer and never focused - the caret stays in the target.
-            Interactivity::MouseOnly
+            NavigationReach::No,
+            MouseFocus::Keep
         },
         m_list{ list },
         m_line{ line }
@@ -460,7 +461,8 @@ namespace ClaFi::Controls
                 Padding{ k_padding },
                 // Nothing in the list takes the focus: the rows are reached by the pointer, and
                 // by the keys the target hands on.
-                Interactivity::MouseOnly
+                ClickTarget::Self,
+                MouseFocus::Keep
             },
             BodyProps{ *this }
         );

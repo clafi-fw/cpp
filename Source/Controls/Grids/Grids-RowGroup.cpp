@@ -153,7 +153,7 @@ namespace ClaFi::Controls::Grids
 
     void RowGroupSpan::createMark()
     {
-        m_mark = &addOwnControl<ExpanderButton>();
+        m_mark = &addOwnControl<ExpanderButton>(MouseFocus::Parent); // a press on it is the row's
         m_mark->connectEvent<DrawIconEvent>([this](DrawIconEvent& event) {
             Icons::ExpanderMark::draw(event, m_expandedFactor);
         });

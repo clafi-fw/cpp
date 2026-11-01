@@ -73,7 +73,8 @@ namespace Themes_App
         ColorHarmony& m_harmony;
         const OnSelectPaletteMap& m_onSelectPaletteMap{};
         //RichControl& m_dropDownButton{ createRightBar<ToolButton>(
-        //  Interactivity::MouseOnly,
+        //  NavigationReach::No,
+        //  MouseFocus::Keep,
         //  MinSize{ 8.0f },
         //  OnAdjustPaint{ [](AdjustPaintEvent& event) {
         //      event.setRoundCorners({ false, true, true, false });
@@ -92,7 +93,9 @@ namespace Themes_App
         StackPanel{
             params,
             Orientation::HorizontalWrap,
-            Interactivity::ActiveContainer,
+            FocusScope::Yes,
+            NavigationReach::Yes,
+            MouseFocus::Self,
             LaneSize{ 3 }
         },
         m_owner{ item }
@@ -211,7 +214,6 @@ namespace Themes_App
         :
         Panel{
             params,
-            Interactivity::None,
             TextPlacement::Top,
             Padding{ 4.0f },
             Spacing{ 4.0f },
@@ -231,7 +233,7 @@ namespace Themes_App
         Form<DropDownPanel> menuForm{ form().createPopup<DropDownPanel>(&dropDownButton, *this) };
 
         menuForm.setPlacement(FormPlacement::BottomLeft, boundsInForm());
-        menuForm.body()->setFocus();
+        menuForm.body()->makeCurrentItem();
         menuForm.execute();
     }
 

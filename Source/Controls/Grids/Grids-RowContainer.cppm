@@ -42,8 +42,6 @@ namespace ClaFi::Controls::Grids
         ScaledSize calculateCellContent(const FormContext&, const ScaledCellMetrics&, const Column&, float boundW) override;
         RowContainer* asRowContainer() override { return this; }
         Control* cellControl(const Column& column) override { return controlAtColumn(column); }
-        // A hosted control and a group's mark are the row's: a press on one lands on the grid.
-        bool isChildPart(const Control&) const override { return true; }
         // A column fitted to its content reads a control's width off it.
         [[nodiscard]] bool isChildWidthGiven(const Control&) const override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
@@ -81,7 +79,10 @@ namespace ClaFi::Controls::Grids
         m_controls.emplace_back(std::make_unique<ControlClass>(
             params,
             std::forward<Args>(args)...,
-            Interactivity::MouseOnly
+            ClickTarget::Self,
+            MouseFocus::Parent,
+            NavigationReach::No,
+            FocusScope::No
             )
         );
         return static_cast<ControlClass&>(*m_controls.back());
