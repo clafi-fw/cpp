@@ -295,8 +295,9 @@ namespace ClaFi
     {
     }
 
-    // A paragraph's piece states the paragraph the text has reached, ahead of its words. A base
-    // the styles do not reach is found among them by its name, as a style put in is.
+    // **A paragraph's piece states the whole look of the paragraph the text has reached**, and the
+    // paragraphs started after it take that look until another piece states one. A base the styles
+    // do not reach is found among them by its name, as a style put in is.
     Text::Text(TextPieces pieces, StyleSheet styles)
         :
         m_styles{ std::move(styles) }
@@ -321,10 +322,12 @@ namespace ClaFi
             }
             if (piece.words.empty())
                 continue;
+            const std::size_t from = m_plainText.size();
             m_plainText.append(piece.words);
             Run words = run;
             words.length = piece.words.size();
             appendRun(words);
+            carryLook(from);
         }
     }
 
@@ -332,7 +335,6 @@ namespace ClaFi
     {
         if (words.empty())
             return *this;
-        breakOwnLine();
         appendWords(words);
         return *this;
     }
@@ -349,7 +351,6 @@ namespace ClaFi
 
     Text& Text::operator<<(wchar_t character)
     {
-        breakOwnLine();
         appendWords(std::wstring_view{ &character, 1 });
         return *this;
     }
@@ -366,36 +367,49 @@ namespace ClaFi
 
     Text& Text::operator<<(const InTextIcon& icon)
     {
-        breakOwnLine();
         appendObject(icon);
         return *this;
     }
 
     Text& Text::operator<<(const Space& space)
     {
-        breakOwnLine();
         appendObject(space);
         return *this;
     }
 
     Text& Text::operator<<(const VSpace& space)
     {
-        breakOwnLine();
         appendObject(space);
         return *this;
     }
 
     Text& Text::operator<<(const FlexSpace& space)
     {
-        breakOwnLine();
         appendObject(space);
         return *this;
     }
 
     Text& Text::operator<<(const TabTo& tab)
     {
-        breakOwnLine();
         appendObject(tab);
+        return *this;
+    }
+
+    Text& Text::operator<<(TextAlign align)
+    {
+        layLastLook(ParagraphLook{ .align = align });
+        return *this;
+    }
+
+    Text& Text::operator<<(TextIndent indent)
+    {
+        layLastLook(ParagraphLook{ .indent = indent.indent });
+        return *this;
+    }
+
+    Text& Text::operator<<(TextLineSpacing spacing)
+    {
+        layLastLook(ParagraphLook{ .lineSpacing = spacing.spacing });
         return *this;
     }
 
@@ -416,8 +430,8 @@ namespace ClaFi
         return *this;
     }
 
-    // A text whose words own their first or last line keeps them on it wherever it is put. Its
-    // first paragraph's look goes where it starts a paragraph, and a line it joins keeps its own.
+    // **Written as its words and tags would be**: its first paragraph joins the one the text has
+    // reached, and each of its paragraphs takes the look it states over the look in effect there.
     Text& Text::operator<<(const Text& other)
     {
         if (&other == this)
@@ -425,28 +439,22 @@ namespace ClaFi
             const Text copy{ other };
             return *this << copy;
         }
-        if (other.empty())
-            return *this;
-
-        breakOwnLine();
-        if (m_plainText.empty())
-            m_startsOwnLine = other.m_startsOwnLine;
-        else if (other.m_startsOwnLine && m_plainText.back() != k_endLine)
-            appendWords(std::wstring_view{ &k_endLine, 1 });
 
         const std::size_t offset = m_plainText.size();
-        const bool startsAParagraph = startsParagraph(offset);
+        const std::size_t joined = paragraphStartOf(offset);
+        const ParagraphLook inEffect = paragraphLookAt(joined);
         const Runs added = runsOf(other, 0, other.m_plainText.size());
         m_plainText.append(other.m_plainText);
         for (const Run& run : added)
             appendRun(run);
-        for (const StatedParagraph& stated : other.m_paragraphs)
+        stateParagraph(joined, laidUnder(other.paragraphLookAt(0), inEffect));
+        const std::wstring& words = other.m_plainText;
+        for (std::size_t lineEnd = words.find(k_endLine); lineEnd != std::wstring::npos;
+            lineEnd = words.find(k_endLine, lineEnd + 1))
         {
-            if (stated.start == 0 && !startsAParagraph)
-                continue;
-            stateParagraph(offset + stated.start, stated.look);
+            const ParagraphLook own = other.paragraphLookAt(lineEnd + 1);
+            stateParagraph(offset + lineEnd + 1, laidUnder(own, inEffect));
         }
-        m_endsOwnLine = other.m_endsOwnLine;
         return *this;
     }
 
@@ -460,8 +468,6 @@ namespace ClaFi
         m_names.clear();
         m_objects.clear();
         m_paragraphs.clear();
-        m_startsOwnLine = false;
-        m_endsOwnLine = false;
     }
 
     std::size_t Text::hash() const
@@ -537,12 +543,26 @@ namespace ClaFi
     // words begin. A base the text does not find by its name is folded into the piece.
     TextPieces Text::pieces() const
     {
+        // A paragraph's piece stands where the look changes, the first look stated included, and
+        // one stating nothing where a paragraph has no look after one that had.
+        StatedParagraphs changes;
+        ParagraphLook previous{};
+        for (std::size_t paragraphStart = 0; paragraphStart != std::wstring::npos;)
+        {
+            const ParagraphLook look = paragraphLookAt(paragraphStart);
+            if (look != previous)
+                changes.push_back({ paragraphStart, look });
+            previous = look;
+            const std::size_t lineEnd = m_plainText.find(k_endLine, paragraphStart);
+            paragraphStart = lineEnd == std::wstring::npos ? lineEnd : lineEnd + 1;
+        }
+
         TextPieces result;
         std::size_t nextParagraph = 0;
-        const auto stateParagraphsUpTo = [this, &result, &nextParagraph](std::size_t pos){
-            while (nextParagraph != m_paragraphs.size() && m_paragraphs[nextParagraph].start <= pos)
+        const auto stateParagraphsUpTo = [&changes, &result, &nextParagraph](std::size_t pos){
+            while (nextParagraph != changes.size() && changes[nextParagraph].start <= pos)
             {
-                result.push_back(TextPiece{ .paragraph = m_paragraphs[nextParagraph].look });
+                result.push_back(TextPiece{ .paragraph = changes[nextParagraph].look });
                 ++nextParagraph;
             }
         };
@@ -555,9 +575,9 @@ namespace ClaFi
             while (from != end)
             {
                 stateParagraphsUpTo(from);
-                const std::size_t to = nextParagraph != m_paragraphs.size()
-                    && m_paragraphs[nextParagraph].start < end
-                    ? m_paragraphs[nextParagraph].start
+                const std::size_t to = nextParagraph != changes.size()
+                    && changes[nextParagraph].start < end
+                    ? changes[nextParagraph].start
                     : end;
                 TextPiece piece{
                     .words = m_plainText.substr(from, to - from),
@@ -856,8 +876,10 @@ namespace ClaFi
 
     void Text::appendWords(std::wstring_view words)
     {
+        const std::size_t from = m_plainText.size();
         m_plainText.append(words);
         appendRun(Run{ .length = words.size() });
+        carryLook(from);
     }
 
     void Text::appendObject(InlineObject object)
@@ -865,13 +887,6 @@ namespace ClaFi
         m_objects.push_back(std::move(object));
         m_plainText.push_back(k_objectChar);
         m_runs.push_back(Run{ .length = 1, .object = static_cast<std::uint32_t>(m_objects.size()) });
-    }
-
-    void Text::dropLastCharacter()
-    {
-        m_plainText.pop_back();
-        if (--m_runs.back().length == 0)
-            m_runs.pop_back();
     }
 
     // A look that states nothing is no entry, which is how a paragraph's look is taken off.
@@ -892,9 +907,26 @@ namespace ClaFi
             m_paragraphs.insert(found, StatedParagraph{ paragraphStart, look });
     }
 
-    void Text::layParagraph(std::size_t paragraphStart, const ParagraphLook& outer)
+    // **A paragraph takes the look of the one before it**, so a look stays in effect until a tag
+    // replaces it. See TextEngine-Types#paragraphlook
+    void Text::carryLook(std::size_t from)
     {
-        stateParagraph(paragraphStart, laidUnder(paragraphLookAt(paragraphStart), outer));
+        const ParagraphLook look = paragraphLookAt(paragraphStartOf(from));
+        if (look.empty())
+            return;
+        for (std::size_t lineEnd = m_plainText.find(k_endLine, from); lineEnd != std::wstring::npos;
+            lineEnd = m_plainText.find(k_endLine, lineEnd + 1))
+        {
+            stateParagraph(lineEnd + 1, look);
+        }
+    }
+
+    // A tag states its field for the whole paragraph it is written in, a field written there
+    // before included.
+    void Text::layLastLook(const ParagraphLook& fields)
+    {
+        const std::size_t start = paragraphStartOf(m_plainText.size());
+        stateParagraph(start, laidUnder(fields, paragraphLookAt(start)));
     }
 
     // Another text's runs from one position to another, cut to that range, each index moved into
@@ -1030,8 +1062,6 @@ namespace ClaFi
             return;
         }
 
-        m_startsOwnLine = false;
-        m_endsOwnLine = false;
         const std::size_t start = std::min(range.start, m_plainText.size());
         const std::size_t end = start + std::min(range.length, m_plainText.size() - start);
         const std::size_t insertedLength = inserted.m_plainText.size();
@@ -1139,82 +1169,10 @@ namespace ClaFi
         joinRuns(first, last);
     }
 
-    // The line the last words own is ended first, so the run starts where its words do.
-    Text::WriteStart Text::openScope()
+    void Text::closeScope(std::size_t start, const TextLayer& layer)
     {
-        const bool endsOwnLine = m_endsOwnLine;
-        breakOwnLine();
-        return {
-            .plainLength = m_plainText.size(),
-            .lineBroken = endsOwnLine,
-            .startsOwnLine = m_startsOwnLine,
-            .endsOwnLine = endsOwnLine,
-        };
-    }
-
-    void Text::closeScope(const WriteStart& start, const TextLayer& layer)
-    {
-        if (m_plainText.size() == start.plainLength)
-        {
-            undoOpening(start);
-            return;
-        }
-        applyLayer(start.plainLength, m_plainText.size(), layer);
-    }
-
-    Text::WriteStart Text::openParagraph()
-    {
-        const bool startsOwnLine = m_startsOwnLine;
-        const bool endsOwnLine = m_endsOwnLine;
-        const bool lineBroken = !m_plainText.empty() && m_plainText.back() != k_endLine;
-        if (lineBroken)
-            appendWords(std::wstring_view{ &k_endLine, 1 });
-        if (m_plainText.empty())
-            m_startsOwnLine = true;
-        m_endsOwnLine = false;
-        return {
-            .plainLength = m_plainText.size(),
-            .lineBroken = lineBroken,
-            .startsOwnLine = startsOwnLine,
-            .endsOwnLine = endsOwnLine,
-        };
-    }
-
-    // Every line the words start takes the look, under whatever the words state there themselves.
-    void Text::closeParagraph(const WriteStart& start, const ParagraphLook& look)
-    {
-        if (m_plainText.size() == start.plainLength)
-        {
-            undoOpening(start);
-            return;
-        }
-
-        layParagraph(start.plainLength, look);
-        for (std::size_t at = start.plainLength; at + 1 < m_plainText.size(); ++at)
-        {
-            if (m_plainText[at] == k_endLine)
-                layParagraph(at + 1, look);
-        }
-        m_endsOwnLine = m_plainText.back() != k_endLine;
-    }
-
-    // A wrapper that wrote nothing leaves the text as it found it.
-    void Text::undoOpening(const WriteStart& start)
-    {
-        if (start.lineBroken)
-            dropLastCharacter();
-        m_startsOwnLine = start.startsOwnLine;
-        m_endsOwnLine = start.endsOwnLine;
-    }
-
-    // The line end a paragraph wrapper leaves to whatever is written after it, so a text that
-    // ends in one ends with no line end.
-    void Text::breakOwnLine()
-    {
-        if (!m_endsOwnLine)
-            return;
-        appendWords(std::wstring_view{ &k_endLine, 1 });
-        m_endsOwnLine = false;
+        if (m_plainText.size() != start)
+            applyLayer(start, m_plainText.size(), layer);
     }
 
     Text Text::blank() const
@@ -1233,8 +1191,6 @@ namespace ClaFi
         m_names.swap(other.m_names);
         m_objects.swap(other.m_objects);
         m_paragraphs.swap(other.m_paragraphs);
-        std::swap(m_startsOwnLine, other.m_startsOwnLine);
-        std::swap(m_endsOwnLine, other.m_endsOwnLine);
     }
 
     // TextFormat
@@ -1273,13 +1229,13 @@ namespace ClaFi
         return *this;
     }
 
-    TextFormat& TextFormat::operator<<(ParaIndent indent)
+    TextFormat& TextFormat::operator<<(TextIndent indent)
     {
         m_paragraph.indent = indent.indent;
         return *this;
     }
 
-    TextFormat& TextFormat::operator<<(ParaLineSpacing spacing)
+    TextFormat& TextFormat::operator<<(TextLineSpacing spacing)
     {
         m_paragraph.lineSpacing = spacing.spacing;
         return *this;

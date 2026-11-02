@@ -36,8 +36,9 @@ section's schema. A name may repeat, and one blueprint may be the unnamed one:
 - XML: an element per item, named as the item is. Unnamed items are the text between the
   elements, written with nothing added around it, and a reader takes every blank there as words.
 
-**An item whose name no blueprint has is skipped**, with a schema error, and so is one whose value
-is of another kind than its blueprint's.
+**An item whose name no blueprint has is skipped**, with a schema error. One whose value is of
+another kind than its blueprint's is skipped by the ClaFi reader, with a schema error, and kept at
+its blueprint's value by the JSON and XML readers.
 
 ## CompositeSerializer<Text>
 
@@ -72,7 +73,9 @@ name - Icon, Space, VSpace, FlexSpace or TabTo - whose character goes without sa
 Style, Link and Anchor. Style names one of the text's own styles, or else one in the reading sheet
 or up its parents - see StyleSheet ReadingScope; any other name reads as words in no style.
 
-**A P states the paragraph's Align, Indent or LineSpacing** and stands where the paragraph starts.
+**A P states the paragraph's Align, Indent and LineSpacing** and stands where the paragraph starts,
+where the look changes. The paragraphs after it take the same look up to the next P, and a P stating
+nothing ends the look in effect.
 
 **In XML a run's words are its element's text**, and an unnamed piece is text between the elements:
 
@@ -118,6 +121,20 @@ listed as the file lists them.
 
 **Read over a sheet in use**, by getTo, the sheet keeps every style the two name alike where it
 stands, and the parent it is over - see StyleSheet.
+
+## CompositeSerializer<TextFormat>
+
+**A text format is a section of the values it states**, each left out where it states none:
+
+    Format=[
+        Style=Code
+        Ink=muted
+        Align=Center
+        Indent=12
+    ]
+
+Style is a name, found where the text is laid out - see TextFormat. Ink is spelled as a style's is,
+and Align, Indent and LineSpacing as a P's.
 
 ## Dt::Section
 

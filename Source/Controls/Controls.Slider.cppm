@@ -329,7 +329,7 @@ namespace ClaFi::Controls
         event.hideOnUserInput = false;
         Text value;
         writeValueTooltip(value, event.phase);
-        event.text << ParagraphText{ TextAlign::Center, value };
+        event.text << TextAlign::Center << value;
     }
 
     void Slider::adjustButtonPaint(AdjustPaintEvent& event)

@@ -111,14 +111,12 @@ namespace SeeDocs_App::Ui
             return {};
         }
 
-        // A path as a paragraph of its own, in spot ink, the way a question names a folder.
+        // A path as a paragraph of its own, indented and in spot ink, the way a question names a
+        // folder. The indent is in effect after it until the words after it state another.
         void writeFolder(Text& text, const std::filesystem::path& folder)
         {
             text << VSpace{ 8.0f } << k_endLine;
-            text << ParagraphText{
-                ParaIndent{ 12.0f },
-                ColoredText{ InkWell::spotInk(), folder.wstring() }
-            };
+            text << TextIndent{ 12.0f } << ColoredText{ InkWell::spotInk(), folder.wstring() };
         }
     }
 
@@ -581,7 +579,8 @@ namespace SeeDocs_App::Ui
         Text message;
         message << L"No project is stored in this folder:";
         writeFolder(message, folder);
-        message << k_endLine << L"Make a new project that reads it? The project is "
+        message << k_endLine << TextIndent{ 0.0f } << k_endLine;
+        message << L"Make a new project that reads it? The project is "
             L"stored in a folder of its own, wherever you choose, and the sources are left as "
             L"they are.";
 

@@ -365,13 +365,13 @@ namespace TextEngine_App
                     break;
             }
 
-            out << ParagraphText{
-                ParaIndent{ k_bulletIndent },
-                InTextIcon{ 0.0f, 18.0f, drawBullet },
-                BoldText{ statement, L":" },
-                L" ",
-                ColoredText{ InkGrade::Muted, words }
-            };
+            out << TextIndent{ k_bulletIndent };
+            out << InTextIcon{ 0.0f, 18.0f, drawBullet };
+            out << BoldText{ statement, L":" };
+            out << L" ";
+            out << ColoredText{ InkGrade::Muted, words };
+            out << L'\n';
+            out << TextIndent{ 0.0f };
         }
 
         // A row of the grid a solver keeps beside the clues: who, what, where, and how they were
@@ -434,7 +434,10 @@ namespace TextEngine_App
             // design width, and the alignment of the line it stands on states where that width
             // sits in the box.
             out << L'\n';
-            out << ParagraphText{ TextAlign::Center, InTextIcon{ 220.0f, 24.0f, drawOrnament } };
+            out << TextAlign::Center;
+            out << InTextIcon{ 220.0f, 24.0f, drawOrnament };
+            out << L'\n';
+            out << TextAlign::Left;
             out << L'\n';
         }
 
@@ -609,41 +612,42 @@ namespace TextEngine_App
             const std::size_t start = out.plainText().size();
             const std::wstring proseFamily{ k_proseFamily };
 
+            out << TextAlign::Center;
             out << FamilyText{
                 proseFamily,
-                ParagraphText{
-                    TextAlign::Center,
-                    StyledText{ k_proseTitle, L"The Ledger of Ninety-Nine Rooms" },
-                    k_endLine,
-                    StyledText{
-                        k_proseSubTitle,
-                        ColoredText{
-                            InkGrade::Muted,
-                            L"A puzzle in the manner of Einstein's, at a length nobody asked for"
-                        }
-                    },
-                    k_endLine,
-                    InTextIcon{ 220.0f, 24.0f, drawOrnament },
-                    k_endLine
-                }
+                StyledText{ k_proseTitle, L"The Ledger of Ninety-Nine Rooms" },
+                k_endLine,
+                StyledText{
+                    k_proseSubTitle,
+                    ColoredText{
+                        InkGrade::Muted,
+                        L"A puzzle in the manner of Einstein's, at a length nobody asked for"
+                    }
+                },
+                k_endLine,
+                InTextIcon{ 220.0f, 24.0f, drawOrnament },
+                k_endLine
             };
 
             // The blank row under the introduction is set in the prose face, which is what sizes it.
+            out << TextAlign::Justified;
             out << FamilyText{
                 proseFamily,
-                ParagraphText{
-                    TextAlign::Justified,
-                    SizedText{
-                        k_proseSize,
-                        L"Seventeen people were in the house that evening, each with a trade, an object, "
-                        L"a way of passing the hour, and a room to pass it in. No two shared any of the four. "
-                        L"What follows is every remark anyone made about anyone else, numbered in the order "
-                        L"the ledger took them down rather than in any order that would help, and interrupted "
-                        L"by the grid a solver keeps beside such a thing. The clues do not contradict each "
-                        L"other. Whether they determine anything is a separate question, and one this ledger "
-                        L"declines to raise."
-                    }
+                SizedText{
+                    k_proseSize,
+                    L"Seventeen people were in the house that evening, each with a trade, an object, "
+                    L"a way of passing the hour, and a room to pass it in. No two shared any of the four. "
+                    L"What follows is every remark anyone made about anyone else, numbered in the order "
+                    L"the ledger took them down rather than in any order that would help, and interrupted "
+                    L"by the grid a solver keeps beside such a thing. The clues do not contradict each "
+                    L"other. Whether they determine anything is a separate question, and one this ledger "
+                    L"declines to raise."
                 },
+                k_endLine
+            };
+            out << TextAlign::Left;
+            out << FamilyText{
+                proseFamily,
                 k_endLine,
                 StyledText{ k_proseSection, L"What each clue is about" }
             };
@@ -702,7 +706,9 @@ namespace TextEngine_App
             };
             lists << k_endLine;
 
-            out << ParagraphText{ ParaIndent{ k_bulletIndent }, lists };
+            out << TextIndent{ k_bulletIndent };
+            out << lists;
+            out << TextIndent{ 0.0f };
             out << k_endLine;
 
             out << StyledText{ k_proseSection, L"How to read a round" };
@@ -777,11 +783,10 @@ namespace TextEngine_App
                 L"not set out here at length. The table below states the result in the form the "
                 L"ledger keeps it, which is to say by reference. Each entry names the clue that "
                 L"settles it rather than repeating what that clue already says.";
-            out << ParagraphText{
-                TextAlign::Justified,
-                FamilyText{ proseFamily, SizedText{ k_proseSize, argument } }
-            };
-
+            out << TextAlign::Justified;
+            out << FamilyText{ proseFamily, SizedText{ k_proseSize, argument } };
+            out << k_endLine;
+            out << TextAlign::Left;
             out << k_endLine;
 
             out << BoldText{ L"Room" };
@@ -825,16 +830,14 @@ namespace TextEngine_App
                 }
             };
 
-            out << ParagraphText{
-                TextAlign::Right,
-                FamilyText{
-                    proseFamily,
-                    SizedText{
-                        k_proseSize,
-                        ColoredText{
-                            InkGrade::Muted,
-                            ItalicText{ L"- as set down after the fact, and not checked since" }
-                        }
+            out << TextAlign::Right;
+            out << FamilyText{
+                proseFamily,
+                SizedText{
+                    k_proseSize,
+                    ColoredText{
+                        InkGrade::Muted,
+                        ItalicText{ L"- as set down after the fact, and not checked since" }
                     }
                 }
             };

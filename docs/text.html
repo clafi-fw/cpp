@@ -130,33 +130,30 @@
                 </div>
                 <ul>
                     <li><a href="#stream">The stream</a></li>
-                    <li><a href="#fmt">Fmt and arguments</a></li>
+                    <li><a href="#wrappers">Wrappers</a></li>
                 </ul>
             </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#styles">Styles</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#styles-framework">The framework's styles</a></li>
+                    <li><a href="#styles-sheets">Style sheets</a></li>
+                    <li><a href="#styles-own">A text's own styles</a></li>
+                </ul>
+            </li>
+            <li><div class="nav-item-wrapper"><a href="#colour">Colour</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#paragraphs">Paragraphs</a></div></li>
             <li class="has-children">
                 <div class="nav-item-wrapper">
-                    <a href="#tags">Tag Reference</a>
+                    <a href="#spacing">Spacing and Icons</a>
                     <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
                 </div>
                 <ul>
-                    <li><a href="#tags-typography">Typography</a></li>
-                    <li><a href="#tags-color">Colour</a></li>
-                    <li><a href="#tags-layout">Layout and spacing</a></li>
-                    <li><a href="#tags-icons">Icons</a></li>
-                    <li><a href="#tags-links">Links and anchors</a></li>
-                    <li><a href="#tags-document">In a document</a></li>
-                </ul>
-            </li>
-            <li class="has-children">
-                <div class="nav-item-wrapper">
-                    <a href="#examples">Worked Examples</a>
-                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
-                </div>
-                <ul>
-                    <li><a href="#ex-flex">Flexible space</a></li>
-                    <li><a href="#ex-tabto">Tabular alignment</a></li>
-                    <li><a href="#ex-icons">Bullets and inline icons</a></li>
+                    <li><a href="#spacing-objects">Spacing</a></li>
+                    <li><a href="#icons">Icons</a></li>
                 </ul>
             </li>
             <li class="has-children">
@@ -170,13 +167,34 @@
                     <li><a href="#links-editing">Links in an edited text</a></li>
                 </ul>
             </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#document">In a Document</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#document-spelling">How a text is written</a></li>
+                    <li><a href="#document-reading">Reading it back</a></li>
+                </ul>
+            </li>
+            <li class="has-children">
+                <div class="nav-item-wrapper">
+                    <a href="#examples">Worked Examples</a>
+                    <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+                </div>
+                <ul>
+                    <li><a href="#ex-flex">Flexible space</a></li>
+                    <li><a href="#ex-tabto">Tabular alignment</a></li>
+                    <li><a href="#ex-icons">Bullets and inline icons</a></li>
+                </ul>
+            </li>
             <li><div class="nav-item-wrapper"><a href="#do-dont">Do and Don't</a></div></li>
         </ul>
     </nav>
     <div class="page-content">
         <header>
             <h1>Writing ClaFi Text</h1>
-            <p>One string and a list of markers</p>
+            <p>Words in runs, each in a style of a sheet</p>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
         <main>
@@ -195,63 +213,70 @@
     .example-render .tabrow { position: relative; height: 1.6em; }
     .example-render .tabrow span { position: absolute; }
 </style>
-
 <h2 id="introduction">Introduction</h2>
 
-<p>A <code>Text</code> is a plain string and a list of markers, each marker a position and one
-formatting item. It carries no fonts, no colours and no geometry - a marker says
-<em>push bold here</em> or <em>this run is drawn in the accent</em>, and what those mean is settled
-later, by the control that draws it and the theme in effect at the time.</p>
+<p>A <code>Text</code> is its words in runs. A run is a stretch of characters in one style, with the
+link it goes to and the anchor it is, where it has them. The runs follow one another with no gap, so
+every character has exactly one style.</p>
 
-<p>That is what makes a <code>Text</code> cheap to build and safe to keep. Building one every paint
-is the normal way to use it: the shaping is cached behind the engine, and a rebuilt
-<code>Text</code> that says the same thing hits that cache.</p>
+<p>Every style is held in a sheet. A text is built over a sheet - the application's, where none is
+given - and finds a style there by its name. The sheet says what a name looks like: a family, a
+size, a weight, a slant, an ink. The theme says what an ink is when the text is drawn, so a text
+keeps its meaning through a theme change.</p>
+
+<p>A <code>Text</code> is cheap to build and safe to keep. Building one every paint is the normal way
+to use it: the shaping is cached behind the engine, and a rebuilt <code>Text</code> that says the
+same thing hits that cache.</p>
 
 <p>This manual is about what a text says: its runs, styles, colours, paragraphs and links. How a
 control holds its text, draws it and answers for it is the
 <a href="textengine.html">Working with Text in Controls</a> manual.</p>
 
 <div class="info">
-<strong>Module imports:</strong> <code>ClaFi.Core.TextEngine.Text</code> for <code>Text</code>,
-<code>ClaFi.Core.TextEngine.Types</code> for the formatting items and <code>TextStyle</code>, and
-<code>ClaFi.Core.TextEngine.Fmt</code> for the format-string syntax. Colours come from
-<code>ClaFi.Core.System.InkWell</code> - see the <a href="color.html">Colour</a> manual.
+<strong>Module imports:</strong> <code>ClaFi.Core.TextEngine.Text</code> for <code>Text</code>, the
+wrappers and <code>TextFormat</code>, <code>ClaFi.Core.TextEngine.StyleSheet</code> for
+<code>StyleSheet</code>, and <code>ClaFi.Core.TextEngine.Types</code> for <code>TextStyle</code>,
+<code>TextStyles</code>, the paragraph tags and the inline objects. <code>Ink</code>,
+<code>InkGrade</code>, <code>InkColor</code> and <code>Color</code> are declared in
+<code>ClaFi.Core.System.UiTypes</code>, and <code>ClaFi.Core.System.InkWell</code> names the inks -
+see the <a href="color.html">Colour</a> manual.
 </div>
 
 <h2 id="quickstart">Quick Start</h2>
 
-<p>Two spellings of the same thing. The stream is for text assembled from parts; the format string
-is for text whose shape is known and whose values are not.</p>
+<p>A text is written as words and wrappers. A wrapper lays a style, an ink, a link or an anchor over
+the words it holds, and ends where its braces do:</p>
 
-<pre><code><span class="cm">// The stream.</span>
-<span class="tp">Text</span> text;
-text &lt;&lt; <span class="tp">TextStyle</span>::Section &lt;&lt; <span class="st">L"Performance"</span> &lt;&lt; <span class="tp">PopTextStyle</span>{} &lt;&lt; k_endLine
-     &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted) &lt;&lt; <span class="st">L"Frames: "</span> &lt;&lt; <span class="tp">PopColor</span>{}
-     &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">accentInk</span>() &lt;&lt; frameCount;
+<pre><code><span class="tp">Text</span> text;
+text &lt;&lt; <span class="tp">StyledText</span>{ <span class="tp">TextStyles</span>::Section, <span class="st">L"Performance"</span> } &lt;&lt; k_endLine
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Frames: "</span> }
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, frameCount };
 
-<span class="cm">// The format string. Both syntaxes in one: [tag] formats, {} takes an argument.</span>
-<span class="tp">Text</span> same{ <span class="tp">Fmt</span>{
-    <span class="st">L"[section]Performance[/section]\n"</span>
-    <span class="st">L"[color muted]Frames: [/color][color accent]{}[/color]"</span>,
-    frameCount } };</code></pre>
+<span class="cm">// The same, as one expression.</span>
+<span class="tp">Text</span> same{
+    <span class="tp">StyledText</span>{ <span class="tp">TextStyles</span>::Section, <span class="st">L"Performance"</span> }, k_endLine,
+    <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Frames: "</span> },
+    <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, frameCount }
+};</code></pre>
 
 <h2 id="building">Building Text</h2>
 
 <h3 id="stream">The stream</h3>
 
-<p>Everything is streamed in with <code>operator&lt;&lt;</code>. The variadic constructor is the same
+<p>Everything is written with <code>operator&lt;&lt;</code>. The variadic constructor is the same
 sequence written as one expression, which is what makes a <code>Text</code> usable as a control
-property.</p>
+property. A sheet given first is the sheet the text is built over - see
+<a href="#styles-sheets">Style sheets</a>.</p>
 
 <p><code>operator=</code> takes any one of the same arguments and states the whole text rather than
-adding to it. Assigning one <code>Text</code> to another copies or moves it, so a text is an
-ordinary value to hold in a member or hand back from a function.</p>
+adding to it. Assigning one <code>Text</code> to another copies or moves it, its sheet with it, so a
+text is an ordinary value to hold in a member or hand back from a function.</p>
 
-<pre><code>Text caption;
-caption &lt;&lt; L"Opening ";                 // adds
-caption = L"Ready";                     // replaces
-caption = other.selectedText(range);    // moves
-caption = Text{ InkColor::Accent, name, L" saved" };   // several parts</code></pre>
+<pre><code><span class="tp">Text</span> caption;
+caption &lt;&lt; <span class="st">L"Opening "</span>;                       <span class="cm">// adds</span>
+caption = <span class="st">L"Ready"</span>;                           <span class="cm">// replaces</span>
+caption = other.<span class="fn">selectedText</span>(range);          <span class="cm">// moves</span>
+caption = <span class="tp">Text</span>{ <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, name }, <span class="st">L" saved"</span> };   <span class="cm">// several parts</span></code></pre>
 
 <p>An assignment operator takes exactly one argument, so a text built from several parts is spelt
 as a <code>Text</code> and moved in, as the last line shows.</p>
@@ -262,284 +287,507 @@ Name the type where a <code>Text</code> is built - <code>Text{ L"Ready" }</code>
 without it.</p>
 
 <table>
-<tr><th>Streamed</th><th>Effect</th></tr>
-<tr><td><code>std::wstring_view</code>, <code>const wchar_t*</code>, <code>wchar_t</code>, <code>int</code>, <code>size_t</code></td><td>Appends text. A count - a line, a column, a length - streams as the <code>size_t</code> it is held in.</td></tr>
-<tr><td><code>Ink</code>, <code>PushThemeColor{ ink }</code></td><td>Pushes a theme ink for the runs that follow.</td></tr>
-<tr><td><code>InkGrade</code></td><td>Pushes the framework's own ink at that step - <code>InkWell::textInk(grade)</code>, written as the step alone.</td></tr>
-<tr><td><code>InkColor</code></td><td>Pushes that colour at <code>Strongest</code> - <code>InkColor::Red</code> is <code>InkWell::Red</code>, written as the colour alone. Any other grade is streamed as the <code>Ink</code> it is.</td></tr>
-<tr><td><code>Color</code>, <code>PushCustomColor{ c }</code></td><td>Pushes a colour stated outright, which the theme does not touch.</td></tr>
-<tr><td><code>PopColor{}</code></td><td>Pops one colour off the stack.</td></tr>
-<tr><td><code>TextStyle</code>, <code>PopTextStyle{}</code></td><td>Pushes and pops a named style.</td></tr>
-<tr><td><code>PushFontSize{ f }</code>, <code>PopFontSize{}</code></td><td>Overrides the size within the current style.</td></tr>
-<tr><td><code>PushFontFamily{ L"..." }</code>, <code>PopFontFamily{}</code></td><td>Overrides the family.</td></tr>
-<tr><td><code>k_endLine</code></td><td>Ends the paragraph. It is the character <code>L'\n'</code>, streamed as any other <code>wchar_t</code>.</td></tr>
-<tr><td><code>TextOp::PushBold</code> &hellip; <code>PopItalic</code></td><td>Weight and slant.</td></tr>
-<tr><td><code>TextOp::PushSuperscript</code>, <code>PushSubscript</code>, <code>PopScript</code></td><td>Raises or lowers the runs that follow, taking the size down with them.</td></tr>
-<tr><td><code>TextAlign</code></td><td>Alignment of the paragraph this lands in - see <a href="#paragraphs">Paragraphs</a>.</td></tr>
-<tr><td><code>ParaIndent{ f }</code>, <code>ParaLineSpacing{ f }</code>, <code>setParaIndent(f)</code>, <code>setParaLineSpacing(f)</code></td><td>Paragraph geometry - see <a href="#paragraphs">Paragraphs</a>.</td></tr>
-<tr><td><code>Space{ w }</code>, <code>FlexSpace{}</code>, <code>TabTo{ x }</code>, <code>VSpace{ h }</code></td><td>Inline spacing objects - see <a href="#tags-layout">below</a>.</td></tr>
-<tr><td><code>InTextIcon{ ... }</code></td><td>A painted object that sits in the text flow.</td></tr>
-<tr><td><code>PushLink{ L"..." }</code>, <code>PopLink{}</code></td><td>A link to the target named, over the runs between the two - see <a href="#links">Links and Anchors</a>.</td></tr>
-<tr><td><code>PushAnchor{ L"..." }</code>, <code>PopAnchor{}</code></td><td>An anchor of that name over the runs between the two, which a link reaches with <code>#</code> and the name.</td></tr>
-<tr><td><code>const Text&amp;</code></td><td>Appends another text with its markers, offset into place.</td></tr>
+<tr><th>Written</th><th>Effect</th></tr>
+<tr><td><code>std::wstring_view</code>, <code>std::wstring</code>, <code>const wchar_t*</code>, <code>wchar_t</code>, <code>int</code>, <code>std::size_t</code></td><td>Appends words. A count - a line, a column, a length - is written as the <code>std::size_t</code> it is held in.</td></tr>
+<tr><td><code>k_endLine</code></td><td>Ends the paragraph. It is the character <code>L'\n'</code>, written as any other <code>wchar_t</code>.</td></tr>
+<tr><td><code>StyledText</code>, <code>ColoredText</code>, <code>BoldText</code> &hellip;</td><td>Words with a style, an ink, a link or an anchor laid over them - see <a href="#wrappers">Wrappers</a>.</td></tr>
+<tr><td><code>TextAlign</code>, <code>TextIndent{ f }</code>, <code>TextLineSpacing{ f }</code></td><td>The look of the paragraph being written and of those after it - see <a href="#paragraphs">Paragraphs</a>.</td></tr>
+<tr><td><code>Space{ w }</code>, <code>FlexSpace{}</code>, <code>TabTo{ x }</code>, <code>VSpace{ h }</code></td><td>Inline spacing objects - see <a href="#spacing">Spacing and Icons</a>.</td></tr>
+<tr><td><code>InTextIcon{ ... }</code></td><td>A drawn object that sits in the text flow.</td></tr>
+<tr><td><code>const Text&amp;</code></td><td>Appends another text, its runs and its paragraph looks.</td></tr>
 </table>
 
-<p>The rest of the surface is small: <code>plainText()</code>, <code>markers()</code>,
+<p>A number with a format goes through <code>std::format</code>:
+<code>ColoredText{ InkGrade::Muted, std::format(L"{:.1f} ms", elapsed) }</code>.</p>
+
+<p>The rest of the surface is small: <code>plainText()</code>, <code>styles()</code>,
 <code>empty()</code>, <code>clear()</code>, <code>hash()</code>, <code>hasFlexSpace()</code>,
-<code>anchorRange(name)</code>, and the editing calls <code>replaceText</code> and
-<code>selectedText</code> - see <a href="textengine.html#copying">Copying and Moving Text</a>.</p>
+<code>forEachRun(visit)</code>, <code>paragraphLookAt(start)</code>, <code>anchorRange(name)</code>,
+<code>linkAtCaret(pos)</code>, <code>firstLink()</code>, and the editing calls
+<code>replaceText</code>, <code>selectedText</code>, <code>restorableText</code> and
+<code>restoreText</code> - see <a href="textengine.html#copying">Copying and Moving Text</a>.</p>
 
-<h3 id="fmt">Fmt and arguments</h3>
+<p><strong>Two texts are equal when their words draw alike</strong>: over one sheet, with the same
+named styles, the same characters in the same fields and script levels, and the same links,
+anchors, objects and paragraph looks - whichever wrappers stated those, and in whatever order the
+texts were written.</p>
 
-<p><code>Fmt</code> holds a format string and a reference to each argument.
-<code>Text{ Fmt{ ... } }</code> builds a text from it; <code>text &lt;&lt; Fmt{ ... }</code> appends
-to one that exists.</p>
-
-<p>The format string carries two constructs, and the difference between them is whether they consume
-an argument:</p>
+<h3 id="wrappers">Wrappers</h3>
 
 <table>
-<tr><th>Construct</th><th>Consumes an argument</th><th>Meaning</th></tr>
-<tr><td><code>[tag]</code></td><td>No</td><td>Changes the stream state - a style, a colour, a space, an alignment.</td></tr>
-<tr><td><code>{}</code>, <code>{:.2f}</code>, <code>{:02X}</code></td><td>Yes</td><td>Formats the next argument through <code>std::vformat</code>, with the spec written inside the braces.</td></tr>
-<tr><td><code>[color {}]</code></td><td>Yes</td><td>The bridge between the two: takes a <code>Color</code> argument and pushes it.</td></tr>
-<tr><td><code>[icon {} 24,24]</code></td><td>Yes</td><td>Takes a paint callable and places it inline.</td></tr>
-<tr><td><code>\n</code></td><td>No</td><td>A literal newline in the format string is a line break, the same as <code>[n]</code>.</td></tr>
+<tr><th>Wrapper</th><th>Lays over its words</th></tr>
+<tr><td><code>StyledText{ name, ... }</code></td><td>The style of that name, found in the text's sheet - see <a href="#styles">Styles</a>.</td></tr>
+<tr><td><code>ColoredText{ ink, ... }</code></td><td>An ink: an <code>Ink</code>, an <code>InkGrade</code>, an <code>InkColor</code>, or a <code>Color</code> stated outright - see <a href="#colour">Colour</a>.</td></tr>
+<tr><td><code>BoldText{ ... }</code>, <code>ItalicText{ ... }</code></td><td>Weight and slant.</td></tr>
+<tr><td><code>SizedText{ size, ... }</code></td><td>A size in design pixels.</td></tr>
+<tr><td><code>FamilyText{ family, ... }</code></td><td>A font family by name.</td></tr>
+<tr><td><code>SuperscriptText{ ... }</code>, <code>SubscriptText{ ... }</code></td><td>A run off the baseline, at a smaller size.</td></tr>
+<tr><td><code>LinkText{ target, ... }</code></td><td>A link - see <a href="#links">Links and Anchors</a>.</td></tr>
+<tr><td><code>AnchorText{ name, ... }</code></td><td>An anchor a link reaches.</td></tr>
 </table>
 
-<p>Arguments are consumed strictly in order by whichever construct takes one, so an
-<code>[icon {}]</code> and a <code>{}</code> draw from the same queue. A construct that wants an
-argument when none is left is dropped rather than diagnosed.</p>
+<p><strong>What a wrapper holds is written first, and the wrapper is laid over it</strong> - words,
+numbers, objects, other wrappers, and a <code>Text</code> built over several statements:</p>
 
-<pre><code><span class="tp">Text</span>{ <span class="tp">Fmt</span>{
-    <span class="st">L"[icon {} 18,18][b]{}[/b] [color muted]{:.1f} ms[/color]"</span>,
-    paintDot,        <span class="cm">// 1 - the icon</span>
-    name,            <span class="cm">// 2 - the bold run</span>
-    elapsed } };     <span class="cm">// 3 - the number</span></code></pre>
+<pre><code><span class="tp">Text</span> names;
+<span class="kw">for</span> (<span class="kw">const</span> <span class="tp">Entry</span>&amp; entry : entries)
+    names &lt;&lt; entry.name &lt;&lt; k_endLine;
+caption &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, names };</code></pre>
 
-<div class="info">
-An argument's type picks its handler. Integers and floating point go through
-<code>std::vformat</code>; a <code>Color</code> prints as text under <code>{}</code> and pushes as a
-colour under <code>[color {}]</code>; anything callable with a <code>DrawIconEvent&amp;</code> is an
-icon painter. Everything else is streamed as it stands.
+<p><strong>The inner wins.</strong> A wrapper fills only the fields its words leave unstated, by
+themselves or through their style. So the family in
+<code>FamilyText{ L"Georgia", StyledText{ TextStyles::Section, title } }</code> is Section's own: the
+face goes inside the style, or into a style of the application's own based on Section - see
+<a href="#styles-sheets">Style sheets</a>. Of two named styles, one inside the other, the inner is
+the run's style, and what the outer states beyond it is copied in as the run's own fields.</p>
+
+<p><strong>A wrapper that holds no character writes nothing.</strong></p>
+
+<p>A named value is held by reference and a temporary by value, so a wrapper kept in a variable
+must not outlive the named values it was given. Written straight into a text, as above, it never
+does.</p>
+
+<p><strong>Scripts compound.</strong> A script takes the size of what it stands on down by a fixed
+factor and steps the baseline by a share of that size, so
+<code>L"2", SuperscriptText{ L"2", SuperscriptText{ L"n" } }</code> comes out as a tower of three
+sizes. The line keeps its height for a script: a raised run stays inside the ascent of the run it
+stands on, and a lowered one whose letters descend can reach below what its line was measured
+at.</p>
+
+<h2 id="styles">Styles</h2>
+
+<h3 id="styles-framework">The framework's styles</h3>
+
+<p><code>TextStyles</code> holds the names of the framework's styles. The framework's sheet holds the
+styles themselves, and every sheet reaches them where it does not restate one:</p>
+
+<table>
+<tr><th>Name</th><th>Drawn as</th></tr>
+<tr><td><code>TextStyles::Title</code></td><td>sans-serif 24, bold</td></tr>
+<tr><td><code>SubTitle</code></td><td>sans-serif 17</td></tr>
+<tr><td><code>Heading</code></td><td>sans-serif 16, semibold</td></tr>
+<tr><td><code>SubHeading</code></td><td>sans-serif 14</td></tr>
+<tr><td><code>Section</code></td><td>sans-serif 12, bold</td></tr>
+<tr><td><code>SubSection</code></td><td>sans-serif 12, italic</td></tr>
+<tr><td><code>Body</code></td><td>sans-serif 12 - the face, size, weight and slant a run and its format leave unstated</td></tr>
+<tr><td><code>SubBody</code></td><td>sans-serif 10</td></tr>
+<tr><td><code>Code</code></td><td>monospace 12</td></tr>
+</table>
+
+<p>The two families are generic - <code>GenericFamily::SansSerif</code> and
+<code>GenericFamily::Monospace</code> - and each platform resolves them to a face of its own:
+DirectWrite is handed Segoe UI and Consolas for them, and fontconfig reads both names as the aliases
+its configuration defines. A concrete family is passed through as written and stands or falls on the
+fonts installed.</p>
+
+<h3 id="styles-sheets">Style sheets</h3>
+
+<p>A <code>StyleSheet</code> holds named styles over a parent sheet. <code>find</code> answers the
+sheet's own style of a name, else its parent's, up to the framework's sheet, which is over none. A
+<code>TextStyle</code> states the fields it sets and takes the rest from the style it is based
+on:</p>
+
+<pre><code><span class="tp">StyleSheet</span> projectStyles{ &amp;<span class="tp">StyleSheet</span>::<span class="fn">application</span>() };
+projectStyles.<span class="fn">set</span>(<span class="tp">TextStyle</span>{
+    .name = <span class="st">L"Note"</span>,
+    .base = projectStyles.<span class="fn">find</span>(<span class="tp">TextStyles</span>::SubBody),
+    .ink = <span class="tp">InkWell</span>::<span class="fn">spotInk</span>(),
+});
+<span class="tp">Text</span> caption{ projectStyles, <span class="tp">StyledText</span>{ <span class="st">L"Note"</span>, <span class="st">L"Read this first"</span> } };</code></pre>
+
+<p>A style states a family, a size, a weight, a slant, an ink and script levels, each where it sets
+one. A size or a family a whole application uses is a style of its own, named where it is
+used.</p>
+
+<p><strong>The application's sheet is the one <code>AppParams::styleSheet</code> states</strong>, or
+the framework's where it states none. A text built with no sheet given is over it, so an application
+states its styles once and names them everywhere:</p>
+
+<pre><code><span class="kw">const</span> <span class="tp">StyleSheet</span>&amp; <span class="fn">appStyles</span>()
+{
+    <span class="kw">static const</span> <span class="tp">StyleSheet</span> sheet = []() {
+        <span class="tp">StyleSheet</span> built;
+        built.<span class="fn">set</span>(<span class="tp">TextStyle</span>{
+            .name = <span class="st">L"Readout"</span>,
+            .base = built.<span class="fn">find</span>(<span class="tp">TextStyles</span>::Body),
+            .fontSize = <span class="kw">11.0f</span>,
+        });
+        <span class="kw">return</span> built;
+    }();
+    <span class="kw">return</span> sheet;
+}
+
+params.styleSheet = &amp;<span class="fn">appStyles</span>();
+<span class="cm">// ... and anywhere in the application:</span>
+<span class="tp">Text</span>{ <span class="tp">StyledText</span>{ <span class="st">L"Readout"</span>, value } };</code></pre>
+
+<table>
+<tr><th>Call</th><th>Does</th></tr>
+<tr><td><code>set(style)</code></td><td>States a style under its name and answers the sheet's own. A name the sheet holds keeps its address and takes the new fields and base.</td></tr>
+<tr><td><code>find(name)</code>, <code>findOwn(name)</code></td><td>The style of that name, up the parents or the sheet's own; none where none has it.</td></tr>
+<tr><td><code>rename(name, newName)</code>, <code>remove(name)</code>, <code>moveTo(name, position)</code></td><td>Edits the list.</td></tr>
+<tr><td><code>takeStyles(other)</code></td><td>States the other's named styles over the sheet's own, each named alike keeping its address, and removes the sheet's own the other lacks.</td></tr>
+<tr><td><code>styles()</code></td><td>The named styles the sheet lists, in its order.</td></tr>
+<tr><td><code>StyleSheet::framework()</code>, <code>StyleSheet::application()</code></td><td>The framework's sheet, and the application's.</td></tr>
+</table>
+
+<p><strong>The sheet outlives every text over it</strong> and every text based on one of its styles.
+Each style stays at one address for the sheet's life. A sheet is never assigned -
+<code>takeStyles</code> states another's styles over its own - and a temporary sheet given to a
+<code>Text</code> is refused at compile time.</p>
+
+<p><strong>A name the sheet holds is the sheet's style.</strong> A style named as one up the parents
+stands in for it: everything found through the sheet takes it, and so does every base in the sheet.
+A sheet's own <code>Code</code> in the spot ink is Code in that ink for every style based on
+Code.</p>
+
+<p><strong>An edit redraws.</strong> A change to a style a sheet holds, a rename and a removal move
+<code>StyleSheet::revision()</code> on and raise <code>StylesEditedEvent</code>, and every window
+lays out again. A style added under a name nothing holds is no edit, since no text is set in it
+yet.</p>
+
+<p><strong>A removed style leaves the list and stays where it stands</strong>, so a text based on it
+draws as it did. The styles based on it are based on its base instead.</p>
+
+<p><strong>A name found nowhere</strong> sets the words in no style and raises
+<code>UnknownStyleEvent</code>, which the application logs once per name.</p>
+
+<h3 id="styles-own">A text's own styles</h3>
+
+<p>A text keeps its runs' styles in a sheet of its own, over the sheet it is built over - see
+<code>styles()</code>. Each run is set in a style named none, stating the fields the run sets over a
+base the text reaches. The text holds each look once, so two runs drawn alike share a style.</p>
+
+<p><strong>A style from elsewhere goes by its name.</strong> Where a text is put in another, pasted
+or selected, each run's base is found in the receiving text by its name, its own styles first:</p>
+
+<ul>
+<li>a name the receiving text reaches is that style, which draws the words</li>
+<li>a name it reaches none of comes as a named style of the text's own, a copy of the style based on
+its base as found the same way</li>
+</ul>
+
+<p>So a range copied out of a document set in its own styles pastes into another document in that
+document's styles of the same names, and in the copied ones where it has none.</p>
+
+<h2 id="colour">Colour</h2>
+
+<p><code>ColoredText</code> names an ink - an <code>InkColor</code> at an <code>InkGrade</code> - and
+states no tone of its own; the tones are <code>InkWell</code>'s. An ink is written as the one part
+that differs from the text ink at <code>Strongest</code>:</p>
+
+<pre><code>text &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ping "</span> }                       <span class="cm">// the text ink at a step</span>
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, <span class="st">L"24 ms"</span> }                      <span class="cm">// a colour at Strongest</span>
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkWell</span>::<span class="fn">redInk</span>(<span class="tp">InkGrade</span>::Muted), <span class="st">L" late"</span> };   <span class="cm">// anything else, as the Ink it is</span></code></pre>
+
+<p>A <code>Color</code> stated outright is drawn as it is, and the theme leaves it alone. It is right
+for art and wrong for an interface.</p>
+
+<p>An ink is also a field of a style, so a style of the application's own carries its ink to every
+run set in it.</p>
+
+<div class="warning">
+<strong>Yellow is drawn, not read.</strong> At the 4.5:1 reading threshold on a light page the whole
+warm arc collapses to brown, so no yellow is both legible and recognisable. Use
+<code>InkWell::Yellow</code> on an icon and let the text say it in words. A document still reads
+<code>yellow</code>, so that a text built from code can be written out and read back.
 </div>
 
 <h2 id="paragraphs">Paragraphs</h2>
 
-<p>A newline ends a paragraph: <code>k_endLine</code>, which is <code>L'\n'</code>, or
-<code>[n]</code> and <code>[end]</code> in a format string. Three properties belong to a paragraph
-rather than to a run of it - its alignment, its indent and its line spacing.</p>
+<p>A line end ends a paragraph: <code>k_endLine</code>, which is <code>L'\n'</code>. Three
+properties belong to a paragraph rather than to a run of it - its alignment, its indent and its line
+spacing - and each is a tag written into the text:</p>
 
 <table>
-<tr><th>Streamed</th><th>Tag</th><th>Property</th></tr>
-<tr><td><code>TextAlign::Left</code>, <code>Center</code>, <code>Right</code>, <code>Justified</code></td><td><code>[left]</code>, <code>[center]</code>, <code>[right]</code>, <code>[justified]</code></td><td>Where each line stands across the width the paragraph is placed in. Justified stretches every line but the last to that width.</td></tr>
-<tr><td><code>ParaIndent{ f }</code>, <code>setParaIndent(f)</code></td><td><code>[indent 34]</code></td><td>How far the paragraph stands in from the leading edge, its wrapped lines included.</td></tr>
-<tr><td><code>ParaLineSpacing{ f }</code>, <code>setParaLineSpacing(f)</code></td><td><code>[linespacing 1.5]</code></td><td>A factor on the height of its lines, <code>1</code> being the font's own. The text and a format carry it; the layout does not apply it yet.</td></tr>
+<tr><th>Written</th><th>Property</th></tr>
+<tr><td><code>TextAlign::Left</code>, <code>Center</code>, <code>Right</code>, <code>Justified</code></td><td>Where each line stands across the width the paragraph is placed in. Justified stretches every line but the last to that width.</td></tr>
+<tr><td><code>TextIndent{ f }</code></td><td>How far the paragraph stands in from the leading edge, its wrapped lines included.</td></tr>
+<tr><td><code>TextLineSpacing{ f }</code></td><td>A factor on the height of its lines, <code>1</code> being the font's own. The text and a format carry it, and the layouts draw every line at the font's own height whatever it states.</td></tr>
 </table>
 
-<p><strong>A paragraph property is read at the newline.</strong> Each of the three is a running
-value: a marker sets it, and a paragraph takes whatever the three hold when its newline is reached.
-So one written anywhere inside a paragraph applies to the whole of it, and it holds for every
-paragraph after until it is set again. One line set apart from the rest takes the property before
-its newline and gives it back after:</p>
+<p><strong>A tag states its field for the paragraph being written and for every paragraph after
+it</strong>, until one written later states it again:</p>
+
+<pre><code>caption &lt;&lt; <span class="tp">TextAlign</span>::Center &lt;&lt; title &lt;&lt; k_endLine
+        &lt;&lt; <span class="tp">TextAlign</span>::Left &lt;&lt; body;</code></pre>
+
+<p><strong>A tag written in the middle of a paragraph states it for the whole of that
+paragraph</strong>, and the last one written there wins. So one line set apart from the rest takes
+its tag at its start and gives it back after its line end:</p>
 
 <pre><code>out &lt;&lt; <span class="tp">TextAlign</span>::Center;
 out &lt;&lt; <span class="tp">InTextIcon</span>{ <span class="kw">220.0f</span>, <span class="kw">24.0f</span>, drawOrnament };
 out &lt;&lt; k_endLine;
 out &lt;&lt; <span class="tp">TextAlign</span>::Left;</code></pre>
 
-<p>Written before the newline, the <code>TextAlign::Left</code> would take the centring off the very
-line it was meant for.</p>
+<p>Written before the line end, the <code>TextAlign::Left</code> would take the centring off the
+very line it was meant for. A field is ended by stating its value again - <code>TextAlign::Left</code>,
+<code>TextIndent{ 0.0f }</code>.</p>
+
+<p><strong>A text written into another is written as its words and tags would be</strong>: its first
+paragraph joins the one the text has reached, and each of its paragraphs takes what it states over
+the look in effect where it lands. A paragraph of it that states nothing takes that look whole:</p>
+
+<pre><code><span class="tp">Text</span> list{ <span class="tp">TextIndent</span>{ <span class="kw">34.0f</span> }, <span class="st">L"one"</span>, k_endLine, <span class="st">L"two"</span> };
+page &lt;&lt; <span class="tp">TextAlign</span>::Center &lt;&lt; <span class="st">L"Lists"</span> &lt;&lt; k_endLine &lt;&lt; list;
+<span class="cm">// "one" and "two" stand centred and indented by 34.</span></code></pre>
+
+<p>Edits keep a paragraph's look: a line end typed into one splits it and both halves keep the look,
+and a paragraph joined to the one above takes that one's - see
+<a href="textengine.html#copying">Copying and Moving Text</a>.</p>
 
 <p>The alignment places lines inside the width the paragraph is placed in. Where that width stands
 in a control - the whole of its box, or a block the text measures - is the control's text anchor:
 see <a href="textengine.html#anchors">Text Anchors</a>. A control can state all three for every
-paragraph of its text as its <code>TextFormat</code>, and a property the text writes replaces the
-format's from the paragraph it stands in - see <a href="textengine.html#format">Text Format</a>.</p>
+paragraph of its text as its <code>TextFormat</code>, and a paragraph's own look stands over the
+format's - see <a href="textengine.html#format">Text Format</a>.</p>
 
-<h2 id="tags">Tag Reference</h2>
+<h2 id="spacing">Spacing and Icons</h2>
 
-<h3 id="tags-typography">Typography</h3>
-
-<table>
-<tr><th>Tag</th><th>Style</th><th>Drawn as</th></tr>
-<tr><td><code>[title]</code></td><td><code>TextStyle::Title</code></td><td>sans-serif 28, bold</td></tr>
-<tr><td><code>[subtitle]</code></td><td><code>SubTitle</code></td><td>sans-serif 20</td></tr>
-<tr><td><code>[heading]</code></td><td><code>Heading</code></td><td>sans-serif 18, semibold</td></tr>
-<tr><td><code>[subheading]</code></td><td><code>SubHeading</code></td><td>sans-serif 16</td></tr>
-<tr><td><code>[section]</code></td><td><code>Section</code></td><td>sans-serif 14, bold</td></tr>
-<tr><td><code>[subsection]</code></td><td><code>SubSection</code></td><td>sans-serif 14, italic</td></tr>
-<tr><td><code>[body]</code></td><td><code>Body</code></td><td>sans-serif 14 - the default</td></tr>
-<tr><td><code>[subbody]</code></td><td><code>SubBody</code></td><td>sans-serif 12</td></tr>
-<tr><td><code>[code]</code></td><td><code>Code</code></td><td>monospace 14</td></tr>
-</table>
-
-<p>Each tag is the style's <code>TextStyle</code> member in lower case, and is short for
-<code>[style title]</code> - the spelling a document writes. Either form reads.</p>
-
-<p>The two families are generic - <code>GenericFamily::sansSerif</code> and
-<code>GenericFamily::monospace</code> - and each platform resolves them to a face of its own:
-DirectWrite is handed Segoe UI and Consolas for them, fontconfig reads both names as the aliases
-its configuration defines. A concrete family named with <code>[font]</code> is passed through as
-written and stands or falls on the fonts installed.</p>
-
-<p>A style closes with its own name or with <code>[/style]</code>; either pops the style opened last.
-Inside a style, three more pairs override one property at a time:</p>
+<h3 id="spacing-objects">Spacing</h3>
 
 <table>
-<tr><th>Tag</th><th>Effect</th></tr>
-<tr><td><code>[b]</code> <code>[/b]</code>, <code>[i]</code> <code>[/i]</code></td><td>Weight and slant.</td></tr>
-<tr><td><code>[sup]</code> <code>[/sup]</code>, <code>[sub]</code> <code>[/sub]</code></td><td>A run off the baseline. Either closer ends the nearest script still open.</td></tr>
-<tr><td><code>[size 24]</code> <code>[/size]</code></td><td>Font size in design pixels.</td></tr>
-<tr><td><code>[font Consolas]</code> <code>[/font]</code></td><td>Font family by name.</td></tr>
-<tr><td><code>[n]</code>, <code>[end]</code></td><td>End the line. Interchangeable, and the same as a literal newline.</td></tr>
-<tr><td><code>[left]</code>, <code>[center]</code>, <code>[right]</code>, <code>[justified]</code></td><td>Alignment of the paragraph the tag lands in.</td></tr>
+<tr><th>Written</th><th>Effect</th></tr>
+<tr><td><code>Space{ 40.0f }</code></td><td>A fixed horizontal gap.</td></tr>
+<tr><td><code>FlexSpace{}</code>, <code>FlexSpace{ minWidth }</code></td><td>Takes the room its line has over, pushing what follows to the end of the line. On a full line it is its <code>minWidth</code>.</td></tr>
+<tr><td><code>TabTo{ 150.0f }</code></td><td>Moves to an absolute x within the block.</td></tr>
+<tr><td><code>VSpace{ 60.0f }</code></td><td>A minimum height for the row it stands in. Shorter than the natural height, it does nothing.</td></tr>
 </table>
 
-<p>A script takes the size of what it stands on down by a fixed factor and steps the baseline by a
-share of that size, so <code>[sup]</code> inside <code>[sup]</code> shrinks and steps again -
-<code>2[sup]2[sup]n[/sup][/sup]</code> comes out as a tower of three sizes. One stack holds both
-kinds, which is why <code>[/sup]</code> and <code>[/sub]</code> are one instruction: each ends the
-nearest script still open.</p>
+<p>Each stands in the text as one character of its own, <code>k_objectChar</code>, and is a run of
+its own. A flex space wraps with the word after it, so the words it holds at a line's end stand at
+the end of the next line when they wrap.</p>
 
-<p>The line is not made taller for a script. A raised run keeps inside the ascent of the run it
-stands on; a lowered one whose letters descend can reach below what its line was measured at.</p>
-
-<h3 id="tags-color">Colour</h3>
-
-<p>A colour tag names an ink - an <code>InkColor</code> at an <code>InkGrade</code> - and states no
-tone of its own; the tones are <code>InkWell</code>'s. Both are spelt as their members in lower case,
-the colour first, and either can be left out: the colour is then <code>text</code> and the grade
-<code>strongest</code>.</p>
-
-<table>
-<tr><th>Tag</th><th>Ink</th></tr>
-<tr><td><code>[color strongest]</code></td><td><code>textInk()</code> - the ink the paint chain arrived at.</td></tr>
-<tr><td><code>[color muted]</code></td><td><code>textInk(InkGrade::Muted)</code> - secondary text.</td></tr>
-<tr><td><code>[color accent]</code></td><td><code>accentInk()</code> - the colour the interface answers with.</td></tr>
-<tr><td><code>[color spot]</code></td><td><code>spotInk()</code> - the second accent, for what stands apart from the interface.</td></tr>
-<tr><td><code>[color green]</code>, <code>[color blue]</code>, <code>[color red]</code></td><td>The semantic inks of those names.</td></tr>
-<tr><td><code>[color red muted]</code></td><td>A colour at a grade. The colours are <code>text</code>, <code>accent</code>, <code>spot</code>, <code>yellow</code>, <code>green</code>, <code>blue</code>, <code>red</code>, <code>black</code> and <code>white</code>; the grades are <code>faint</code>, <code>subtle</code>, <code>muted</code>, <code>strong</code> and <code>strongest</code>.</td></tr>
-<tr><td><code>[color accent 0.45]</code></td><td>A grade between the steps, stated as its share.</td></tr>
-<tr><td><code>[color #4EC9B0]</code></td><td>A colour stated outright. The theme does not touch it.</td></tr>
-<tr><td><code>[color {}]</code></td><td>A <code>Color</code> taken from the arguments.</td></tr>
-<tr><td><code>[/color]</code></td><td>Pops the colour stack.</td></tr>
-</table>
-
-<div class="warning">
-<strong>Yellow is drawn, not read.</strong> At the 4.5:1 reading threshold on a light page the whole
-warm arc collapses to brown, so no yellow is both legible and recognisable. Use
-<code>InkWell::Yellow</code> on an icon and let the text say it in words. <code>[color yellow]</code>
-reads, so that a text built from code can be written out and read back.
-</div>
-
-<h3 id="tags-layout">Layout and spacing</h3>
-
-<table>
-<tr><th>Tag</th><th>Streamed form</th><th>Effect</th></tr>
-<tr><td><code>[space 40]</code></td><td><code>Space{ 40 }</code></td><td>A fixed horizontal gap.</td></tr>
-<tr><td><code>[flex]</code>, <code>[fill]</code>, <code>[space flex]</code></td><td><code>FlexSpace{}</code></td><td>Takes the leftover width of the line, pushing what follows to the right.</td></tr>
-<tr><td><code>[tabto 150]</code></td><td><code>TabTo{ 150 }</code></td><td>Moves to an absolute x within the block.</td></tr>
-<tr><td><code>[vspace 60]</code></td><td><code>VSpace{ 60 }</code></td><td>A minimum height for the row it stands in. Shorter than the natural height, it does nothing.</td></tr>
-<tr><td><code>[indent 34]</code></td><td><code>ParaIndent{ 34 }</code></td><td>Indents the block, wrapped lines included, until it is set again. <code>[indent 0]</code> returns.</td></tr>
-<tr><td><code>[linespacing 1.5]</code></td><td><code>ParaLineSpacing{ 1.5 }</code></td><td>Line spacing of the paragraph - see <a href="#paragraphs">Paragraphs</a>.</td></tr>
-</table>
-
-<h3 id="tags-icons">Icons</h3>
+<h3 id="icons">Icons</h3>
 
 <p>An icon in text is a <code>DrawIconFunc</code> - anything callable with a
-<code>DrawIconEvent&amp;</code> - given a box in the flow. The tag takes the painter from the
-arguments and the box from its own text:</p>
+<code>DrawIconEvent&amp;</code> - given a box in the flow:</p>
 
 <table>
 <tr><th>Written</th><th>Box</th></tr>
-<tr><td><code>[icon {}]</code></td><td>16 &times; 16, baseline at 85% of the height.</td></tr>
-<tr><td><code>[icon {} 24]</code></td><td>24 &times; 24.</td></tr>
-<tr><td><code>[icon {} 24,20]</code></td><td>Width 24, height 20.</td></tr>
-<tr><td><code>[icon {} 24,24,20]</code></td><td>Width, height, and baseline stated outright.</td></tr>
-<tr><td><code>InTextIcon{ w, h, baseline, painter, tag }</code></td><td>The streamed form, which also carries a <code>Tag</code> the painter can read back.</td></tr>
+<tr><td><code>InTextIcon{ 16.0f, painter }</code></td><td>16 &times; 16, baseline at 85% of the height.</td></tr>
+<tr><td><code>InTextIcon{ 24.0f, 20.0f, painter }</code></td><td>Width 24, height 20, baseline at 85% of it.</td></tr>
+<tr><td><code>InTextIcon{ 24.0f, 24.0f, 20.0f, painter }</code></td><td>Width, height and baseline stated outright.</td></tr>
+<tr><td><code>InTextIcon{ ..., painter, tag }</code></td><td>Any of the above with a <code>Tag</code> the painter can read back.</td></tr>
 </table>
 
-<p>The painter is handed an event that answers everything a control's paint event does about colour:
-<code>event.ink(...)</code>, <code>event.textColor()</code>, <code>event.iconRect()</code>,
-<code>event.scaleF(...)</code>. An icon of width 0 draws outside the flow without occupying it, which
-is how a bullet is made.</p>
+<p>The painter is handed an event that answers the colours a control's paint event does -
+<code>inkRgb(ink)</code>, <code>textRgb(grade)</code>, <code>accentRgb(grade)</code>,
+<code>spotRgb(grade)</code> - with <code>iconRect()</code>, <code>scaleF(...)</code> and
+<code>canvas()</code>. An icon of width 0 draws outside the flow without occupying it, which is how
+a bullet is made.</p>
 
-<h3 id="tags-links">Links and anchors</h3>
+<h2 id="links">Links and Anchors</h2>
 
-<table>
-<tr><th>Tag</th><th>Streamed form</th><th>Effect</th></tr>
-<tr><td><code>[link https://example.com]</code> <code>[/link]</code></td><td><code>PushLink{ L"https://example.com" }</code>, <code>PopLink{}</code></td><td>A link to the target, which is everything after the word <code>link</code>, spaces included.</td></tr>
-<tr><td><code>[link #clue-17]</code> <code>[/link]</code></td><td><code>PushLink{ L"#clue-17" }</code>, <code>PopLink{}</code></td><td>A link to the anchor of that name.</td></tr>
-<tr><td><code>[anchor clue-17]</code> <code>[/anchor]</code></td><td><code>PushAnchor{ L"clue-17" }</code>, <code>PopAnchor{}</code></td><td>An anchor named <code>clue-17</code>. It draws nothing.</td></tr>
-</table>
+<p>A link is a run of text that points somewhere, and an anchor is a run of text a link can point
+to. Both are fields of a run, so they travel through every edit, copy and paste the rest of the
+formatting does. What a link <em>does</em> is up to the control holding the text: a
+<code>TextBox</code> follows it, and a label draws it and nothing more - see
+<a href="textengine.html#links">Links in a TextBox</a>.</p>
 
-<p>A target is read up to the closing bracket, so one holding a <code>]</code> cannot be written in a
-format string. Stream a <code>PushLink</code> for it instead; a document and the clipboard carry it
-whole.</p>
+<h3 id="links-writing">Writing a link</h3>
 
-<h3 id="tags-document">In a document</h3>
+<pre><code><span class="tp">Text</span> text{
+    <span class="st">L"See "</span>, <span class="tp">LinkText</span>{ <span class="st">L"https://example.com"</span>, <span class="st">L"the site"</span> }, <span class="st">L" or "</span>,
+    <span class="tp">LinkText</span>{ <span class="st">L"#gallery"</span>, <span class="st">L"the long gallery"</span> }, <span class="st">L"."</span>
+};</code></pre>
 
-<p>A <code>Text</code> in a document is its plain text and one entry per marker, and each marker is
-written as the tag Fmt reads for it. Import <code>ClaFi.Core.Dom_TextSerializers</code> wherever a
-blueprint states a <code>Text</code>, and <code>Dt::Value{ L"Caption", Text{} }</code> holding
-<code>[title]Title[/title] and [color muted]note[/color]</code> writes as</p>
+<div class="example-render">
+    <div>See <span class="accent">the site</span> or <span class="accent" style="text-decoration:underline;text-decoration-skip-ink:auto;text-underline-offset:3px">the long gallery</span>.</div>
+</div>
+
+<p>The target is any string at all - a URL, a path, <code>#</code> and an anchor name, or a word the
+application answers for itself, such as <code>clafi:ledger</code>. The engine never reads it, and a
+document and the clipboard carry it whole.</p>
+
+<p><strong>A link is drawn in the accent ink</strong> where no colour is written inside it, by itself
+or through its style. A colour around the link gives way to that ink, and one inside it wins, which
+is how a link that should not look like one is written:</p>
+
+<pre><code><span class="tp">LinkText</span>{ <span class="st">L"clafi:ledger"</span>, <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Strongest, <span class="st">L"the ledger"</span> } }</code></pre>
+
+<p>A link inside another is the inner's.</p>
+
+<p>The underline belongs to the control rather than the text: the control underlines the link under
+the pointer when a click there would follow it, as the second link above shows. It stands clear of
+the ink it would cross, the way a browser's does - cut where a descender reaches through it, with a
+gap of its own thickness on either side - see
+<a href="textengine.html#hiw-underline">The link underline</a>.</p>
+
+<h3 id="links-anchors">Anchors</h3>
+
+<pre><code>text &lt;&lt; <span class="tp">AnchorText</span>{ <span class="st">L"clue-17"</span>, <span class="tp">BoldText</span>{ <span class="st">L"Clue 17."</span> } }
+     &lt;&lt; <span class="st">L" Dmitri stands two doors from whoever was counting."</span>;
+<span class="cm">// ... and anywhere in the same text:</span>
+text &lt;&lt; <span class="st">L"The blue landing is settled by "</span> &lt;&lt; <span class="tp">LinkText</span>{ <span class="st">L"#clue-17"</span>, <span class="st">L"Clue 17"</span> };</code></pre>
+
+<p>An anchor is a run rather than a point: it holds text, and a box going to it selects that text.
+It draws nothing. Where two anchors share a name the first in the text is the one reached.</p>
+
+<p><code>Text::anchorRange(name)</code> answers the range an anchor holds, or nothing where the text
+holds no anchor of that name. It walks the runs when it is asked: an anchor is looked for when a link
+to it is followed, and nothing is kept for it in between.</p>
+
+<h3 id="links-editing">Links in an edited text</h3>
+
+<p><strong>Typing at a link's end goes outside it.</strong> A character typed after a bold word is
+bold, and every other run takes in what is typed at its end the same way. A link keeps to its own
+words, because a word typed after it is not part of where it points. Typing <em>over</em> the end of
+a link is different: the text replaced was the link's, and what replaces it is too.</p>
+
+<p><strong>Two links that meet and name one target are one link.</strong> They are pointed at,
+underlined and followed whole, and what is typed where they meet goes inside. An undo that puts a
+link's last word back produces exactly such a pair, so the link it restores behaves as it did.</p>
+
+<p>An anchor grows at its end the way bold does, since what is typed there is part of what it holds.
+Deleting the whole of a link or an anchor removes it, and an undo puts it back.</p>
+
+<h2 id="document">In a Document</h2>
+
+<h3 id="document-spelling">How a text is written</h3>
+
+<p>A <code>Text</code> in a document is a section of its own styles and its pieces. Import
+<code>ClaFi.Core.Dom_TextSerializers</code> wherever a blueprint states a <code>Text</code>, and
+<code>Dt::Value{ L"Caption", Text{} }</code> reads and writes it. A text built over a sheet holding a
+style named Key,
+
+<pre><code><span class="tp">Text</span>{ doc,
+    <span class="tp">TextAlign</span>::Center, <span class="tp">StyledText</span>{ <span class="tp">TextStyles</span>::Title, <span class="st">L"Title"</span> }, k_endLine,
+    <span class="tp">TextAlign</span>::Left, <span class="st">L"Press "</span>, <span class="tp">StyledText</span>{ <span class="st">L"Key"</span>, <span class="st">L"Ctrl+C"</span> }, <span class="st">L" to copy "</span>,
+    <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"the selection"</span> }, <span class="st">L"."</span>, k_endLine,
+    <span class="tp">TextIndent</span>{ <span class="kw">12.0f</span> }, <span class="tp">LinkText</span>{ <span class="st">L"#copy"</span>, <span class="st">L"More"</span> }, <span class="tp">Space</span>{ <span class="kw">4.0f</span> } }</code></pre>
+
+<p>is written, in a document saved without its defaults, as</p>
 
 <pre><code>Caption=[
-    Markers=[
+    Styles=[
         =[
-            Tag=style title
-            At=0
-        ]
-        =[
-            Tag=/style
-            At=5
-        ]
-        =[
-            Tag=color muted
-            At=10
-        ]
-        =[
-            Tag=/color
-            At=14
+            Ink=muted
+            Name=#1
         ]
     ]
-    Text=Title and note
+    Pieces=[
+        P=[
+            Align=Center
+        ]
+        Run=[
+            =Title
+            Style=Title
+        ]
+        =""
+        |""
+        P=[
+            Align=Left
+        ]
+        ="Press "
+        Run=[
+            =Ctrl+C
+            Style=Key
+        ]
+        =" to copy "
+        Run=[
+            =the selection
+            Style=#1
+        ]
+        ="."
+        |""
+        P=[
+            Align=Left
+            Indent=12
+        ]
+        Run=[
+            =More
+            Link=#copy
+        ]
+        Space=4
+    ]
 ]</code></pre>
 
-<p><code>At</code> is the index in the plain text the marker applies from, and each child is found
-by name, in any order. A style is written as <code>style</code> and its name. An ink is written with
-its colour and its grade, each left out where it is <code>text</code> or <code>strongest</code>; the
-text ink at <code>strongest</code> is written <code>color strongest</code>. Every spelling in the
-tables above reads back, the style shorthand included.</p>
+<ul>
+<li><strong>A piece in no style and linking nowhere is one line</strong>: its words unnamed, or an
+object under its name - <code>Icon</code>, <code>Space</code>, <code>VSpace</code>,
+<code>FlexSpace</code> or <code>TabTo</code>. A line end in the words continues the value on a line
+of its own, opened by <code>|</code>.</li>
+<li><strong>A <code>Run</code> holds anything more</strong>: its words as its unnamed value, or an
+object under its name, and <code>Style</code>, <code>Link</code> and <code>Anchor</code>.</li>
+<li><strong>A <code>P</code> stands where the paragraph look changes</strong>, and states the whole
+look: <code>Align</code>, <code>Indent</code> and <code>LineSpacing</code>. The paragraphs after it
+take the same look up to the next <code>P</code>, and a <code>P</code> stating nothing ends the
+look.</li>
+<li><strong>The named styles the text carries come first</strong>, each after its base - see
+<a href="#styles-own">A text's own styles</a>. An entry states its fields:
+<code>FontFamily</code>, <code>FontSize</code>, <code>FontWeight</code>, <code>FontStyle</code>,
+<code>Ink</code> and <code>Scripts</code>. An entry stating no <code>Base</code> is based on the style
+of its own name up the reading sheet, so <code>Name=Code</code> with <code>Ink=spot</code> is this
+text's code in the spot ink.</li>
+<li><strong>A look follows them</strong>: an entry for each run style stating more than its base,
+named <code>#</code> and a number. A look is no style, and reads back as the style of the runs
+naming it.</li>
+<li><strong>An ink is an ink colour and a grade</strong>: the colour is left out where it is
+<code>text</code>, and the grade where it is <code>strongest</code> and the colour is not text -
+<code>spot</code>, <code>accent muted</code>, <code>muted</code>, <code>strongest</code>. A grade
+between the steps is written as its share, and a colour stated outright as
+<code>#FF8800</code>.</li>
+<li><strong>An icon is <code>w,h,baseline</code></strong>. Its painter is a callable and is not
+written, so it reads back at its extent and draws nothing.</li>
+</ul>
 
-<p>An icon's painter is a callable and is not written. It reads back at its stated extent and draws
-nothing.</p>
+<p>Keys inside an entry are read by name, and a writer puts them in no fixed order.</p>
+
+<p><strong>The document names the styles of the text's sheet and writes them nowhere</strong>:
+<code>Key</code> above is a style of the sheet the text is built over, and reads back where the
+reading sheet holds it. A sheet is written on its own the same way, as a section of its styles, and
+<code>ClaFi.Core.Dom_TextSerializers</code> reads and writes a <code>StyleSheet</code> and a
+<code>TextFormat</code> as well.</p>
+
+<p>JSON and XML write the same pieces in the same order - see
+<a href="dom.html#multi-type-seq">Multi-Type Sequences</a>. In XML a run's words are its element's
+text, and an unnamed piece is text between the elements:</p>
+
+<pre><code>&lt;Pieces&gt;&lt;P Align="Center"/&gt;&lt;Run Style="Title"&gt;Title&lt;/Run&gt;
+&lt;P Align="Left"/&gt;Press &lt;Run Style="Key"&gt;Ctrl+C&lt;/Run&gt; to copy ...</code></pre>
+
+<h3 id="document-reading">Reading it back</h3>
+
+<p><strong>A text is read over the reading sheet</strong>, or the application's where no scope names
+one. A <code>StyleSheet::ReadingScope</code> names it while it lives:</p>
+
+<pre><code>{
+    <span class="kw">const</span> <span class="tp">StyleSheet</span>::<span class="tp">ReadingScope</span> scope{ &amp;projectStyles };
+    caption = (settings / <span class="st">L"Caption"</span>).<span class="fn">get</span>&lt;<span class="tp">Text</span>&gt;();
+}</code></pre>
+
+<p>A name the file states is found among the text's own styles first, then in the reading sheet and
+up its parents; any other reads as words in no style. A <code>Text</code> is read when it is taken
+out of its node, by <code>get</code> or <code>getTo</code>, so the scope stands around that call and
+not only around the file's load. Scopes nest, and each is held per thread.</p>
 
 <h2 id="examples">Worked Examples</h2>
 
 <h3 id="ex-flex">Flexible space</h3>
 
-<pre><code><span class="tp">Text</span>{ <span class="tp">Fmt</span>{
-    <span class="st">L"[color muted]System[/color][flex][b]ONLINE[/b]\n"</span>
-    <span class="st">L"[color muted]Ping[/color][flex]{} ms"</span>,
-    ping } };</code></pre>
+<pre><code><span class="tp">Text</span>{
+    <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"System"</span> }, <span class="tp">FlexSpace</span>{}, <span class="tp">BoldText</span>{ <span class="st">L"Online"</span> }, k_endLine,
+    <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ping"</span> }, <span class="tp">FlexSpace</span>{}, ping, <span class="st">L" ms"</span>
+}</code></pre>
 
 <div class="example-render">
     <div class="row"><span class="quiet">System</span><span style="flex-grow:1"></span><strong>Online</strong></div>
     <div class="row"><span class="quiet">Ping</span><span style="flex-grow:1"></span><span>24 ms</span></div>
 </div>
 
-<p>Each line's flex space eats whatever that line has left over, so the right-hand column is flush
+<p>Each line's flex space takes whatever that line has left over, so the right-hand column is flush
 against the right edge and ragged against the left. That is the difference from a tab stop, and the
 reason both exist.</p>
 
 <h3 id="ex-tabto">Tabular alignment</h3>
 
-<pre><code><span class="tp">Text</span>{ <span class="tp">Fmt</span>{
-    <span class="st">L"[b]Component[/b][tabto 150][b]Status[/b][tabto 260][b]Load[/b]\n"</span>
-    <span class="st">L"Parser[tabto 150][color green]Active[/color][tabto 260]High\n"</span>
-    <span class="st">L"Renderer[tabto 150][color muted]Standby[/color][tabto 260]Low"</span> } };</code></pre>
+<pre><code><span class="tp">Text</span>{
+    <span class="tp">BoldText</span>{ <span class="st">L"Component"</span> }, <span class="tp">TabTo</span>{ <span class="kw">150.0f</span> }, <span class="tp">BoldText</span>{ <span class="st">L"Status"</span> }, <span class="tp">TabTo</span>{ <span class="kw">260.0f</span> }, <span class="tp">BoldText</span>{ <span class="st">L"Load"</span> }, k_endLine,
+    <span class="st">L"Parser"</span>, <span class="tp">TabTo</span>{ <span class="kw">150.0f</span> }, <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Green, <span class="st">L"Active"</span> }, <span class="tp">TabTo</span>{ <span class="kw">260.0f</span> }, <span class="st">L"High"</span>, k_endLine,
+    <span class="st">L"Renderer"</span>, <span class="tp">TabTo</span>{ <span class="kw">150.0f</span> }, <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Standby"</span> }, <span class="tp">TabTo</span>{ <span class="kw">260.0f</span> }, <span class="st">L"Low"</span>
+}</code></pre>
 
 <div class="example-render">
     <div class="tabrow"><span style="left:0"><strong>Component</strong></span><span style="left:150px"><strong>Status</strong></span><span style="left:260px"><strong>Load</strong></span></div>
@@ -548,98 +796,34 @@ reason both exist.</p>
 </div>
 
 <p>A tab stop is an absolute x inside the block, so every row lands on the same column whatever the
-width the block was given. Text that has already passed a stop does not go back to it.</p>
+width the block was given. Text that has already passed a stop stays where it is.</p>
 
 <p>A tab character in the text is the other kind of stop: it reaches the next multiple of four
 spaces of the font the paragraph starts in, so in a monospace font a tab is four columns.</p>
 
 <h3 id="ex-icons">Bullets and inline icons</h3>
 
-<pre><code><span class="kw">auto</span> drawBullet = [](<span class="tp">DrawIconEvent</span>&amp; event) {
+<pre><code><span class="kw">const</span> <span class="tp">DrawIconFunc</span> drawBullet = [](<span class="tp">DrawIconEvent</span>&amp; event) {
     <span class="tp">FloatPoint</span> center = event.<span class="fn">iconRect</span>().<span class="fn">center</span>();
     <span class="cm">// The icon has no width, so the centre sits on the indent - shift it into the margin.</span>
     center.x -= event.<span class="fn">scaleF</span>(<span class="kw">16.0f</span>);
     event.<span class="fn">canvas</span>().<span class="fn">fillCircle</span>(center, event.<span class="fn">scaleF</span>(<span class="kw">3.0f</span>),
-        <span class="tp">InkWell</span>::<span class="fn">accentInk</span>().<span class="fn">toColor</span>(event));
-    };
+        event.<span class="fn">accentRgb</span>(<span class="tp">InkGrade</span>::Strongest));
+};
 
-<span class="tp">Text</span>{ <span class="tp">Fmt</span>{
-    <span class="st">L"[indent 34]"</span>
-    <span class="st">L"[icon {} 0,18][b]Lambda drawables:[/b] [color muted]any callable renders into the flow.[/color]\n"</span>
-    <span class="st">L"[icon {} 0,18][b]Reusability:[/b] [color muted]pass one painter as many times as you need.[/color]"</span>
-    <span class="st">L"[indent 0]"</span>,
-    drawBullet, drawBullet } };</code></pre>
+<span class="tp">Text</span> list{ <span class="tp">TextIndent</span>{ <span class="kw">34.0f</span> } };
+list &lt;&lt; <span class="tp">InTextIcon</span>{ <span class="kw">0.0f</span>, <span class="kw">18.0f</span>, drawBullet } &lt;&lt; <span class="tp">BoldText</span>{ <span class="st">L"Lambda drawables:"</span> } &lt;&lt; <span class="st">L" "</span>
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"any callable renders into the flow."</span> } &lt;&lt; k_endLine;
+list &lt;&lt; <span class="tp">InTextIcon</span>{ <span class="kw">0.0f</span>, <span class="kw">18.0f</span>, drawBullet } &lt;&lt; <span class="tp">BoldText</span>{ <span class="st">L"Reusability:"</span> } &lt;&lt; <span class="st">L" "</span>
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"pass one painter as many times as you need."</span> };</code></pre>
 
 <div class="example-render" style="padding-left:2.5rem">
     <div><span class="accent bullet"></span><strong>Lambda drawables:</strong> <span class="quiet">any callable renders into the flow.</span></div>
     <div><span class="accent bullet"></span><strong>Reusability:</strong> <span class="quiet">pass one painter as many times as you need.</span></div>
 </div>
 
-<p>The same painter passed twice draws twice - the argument is read, not consumed destructively - so
-a list of any length costs one lambda and one argument per row.</p>
-
-<h2 id="links">Links and Anchors</h2>
-
-<p>A link is a run of text that points somewhere, and an anchor is a run of text a link can point
-to. Both are pairs of markers, the way bold is, so they travel through every edit, copy and paste
-the rest of the formatting does. What a link <em>does</em> is up to the control holding the text: a
-<code>TextBox</code> follows it, and a label draws it and nothing more - see
-<a href="textengine.html#links">Links in a TextBox</a>.</p>
-
-<h3 id="links-writing">Writing a link</h3>
-
-<pre><code><span class="tp">Text</span>{ <span class="tp">Fmt</span>{
-    <span class="st">L"See [link https://example.com]the site[/link] or "</span>
-    <span class="st">L"[link #gallery]the long gallery[/link]."</span> } };
-
-<span class="cm">// The same link, streamed.</span>
-<span class="tp">Text</span> text;
-text &lt;&lt; <span class="st">L"See "</span> &lt;&lt; <span class="tp">PushLink</span>{ <span class="st">L"https://example.com"</span> } &lt;&lt; <span class="st">L"the site"</span> &lt;&lt; <span class="tp">PopLink</span>{};</code></pre>
-
-<div class="example-render">
-    <div>See <span class="accent">the site</span> or <span class="accent" style="text-decoration:underline;text-decoration-skip-ink:auto;text-underline-offset:3px">the long gallery</span>.</div>
-</div>
-
-<p>The target is any string at all - a URL, a path, <code>#</code> and an anchor name, or a word the
-application answers for itself, such as <code>clafi:ledger</code>. The engine never reads it.</p>
-
-<p>A link is drawn in the accent ink. A colour pushed before the link opened gives way to it; one
-pushed inside the link is the link's own, which is how a link that should not look like one is
-written. The underline is not part of the text: the control underlines the link under the pointer
-when a click there would follow it, as the second link above shows, and draws nothing under it
-otherwise.</p>
-
-<p>The underline stands clear of the ink it would cross, the way a browser's does: it is cut where a
-descender reaches through it, with a gap of its own thickness on either side - see
-<a href="textengine.html#hiw-underline">The link underline</a>.</p>
-
-<h3 id="links-anchors">Anchors</h3>
-
-<pre><code><span class="st">L"[anchor clue-17][b]Clue 17.[/b][/anchor] Dmitri stands two doors from whoever was counting."</span>
-<span class="cm">// ... and anywhere in the same text:</span>
-<span class="st">L"The blue landing is settled by [link #clue-17]Clue 17[/link]."</span></code></pre>
-
-<p>An anchor is a run rather than a point: it holds text, and a box going to it selects that text.
-It draws nothing. Where two anchors share a name the first in the text is the one reached, and one
-left open runs to the end of the text.</p>
-
-<p><code>Text::anchorRange(name)</code> answers the range an anchor holds, or nothing where the text
-holds no anchor of that name. It walks the markers when it is asked: an anchor is looked for when a
-link to it is followed, and nothing is kept for it in between.</p>
-
-<h3 id="links-editing">Links in an edited text</h3>
-
-<p><strong>A link does not grow at its end.</strong> A character typed after a bold word is bold,
-and every other run takes in what is typed at its end the same way. A link is the exception,
-because a word typed after it is not part of where it points. Typing <em>over</em> the end of a link
-is different: the text replaced was the link's, and what replaces it is too.</p>
-
-<p><strong>Two links that meet and name one target are one link.</strong> They are pointed at,
-underlined and followed whole, and what is typed where they meet goes inside. An undo that puts a
-link's last word back produces exactly such a pair, so the link it restores behaves as it did.</p>
-
-<p>An anchor grows at its end the way bold does, since what is typed there is part of what it holds.
-Deleting the whole of a link or an anchor takes its markers with it, and an undo puts them back.</p>
+<p>The indent holds for both lines, since a tag stays in effect until one states it again. The same
+painter written twice draws twice, so a list of any length costs one lambda.</p>
 
 <h2 id="do-dont">Do and Don't</h2>
 
@@ -648,18 +832,19 @@ Deleting the whole of a link or an anchor takes its markers with it, and an undo
         <h4>Do</h4>
         <ul>
             <li><strong>Name inks, not colours</strong>, so a run keeps its meaning through a theme change.</li>
-            <li><strong>Use <code>[tabto]</code> for columns and <code>[flex]</code> for two ends of a line.</strong> They answer different questions.</li>
-            <li><strong>Set a paragraph property back after the newline</strong> of the line it was set for.</li>
+            <li><strong>State a look the application uses in more than one place as a style</strong> in its sheet, and name it.</li>
+            <li><strong>Use <code>TabTo</code> for columns and <code>FlexSpace</code> for two ends of a line.</strong> They answer different questions.</li>
+            <li><strong>Give a paragraph tag back after the line end</strong> of the line it was written for.</li>
             <li><strong>Give an icon a <code>Tag</code></strong> when one painter serves several rows and has to tell them apart.</li>
         </ul>
     </div>
     <div class="rule-card donts">
         <h4>Don't</h4>
         <ul>
-            <li><strong>Don't count on an unmatched tag failing loudly.</strong> An unknown <code>[tag]</code> and an <code>{}</code> with no argument left are both dropped in silence.</li>
-            <li><strong>Don't mix argument order between the two syntaxes.</strong> There is one queue, and <code>[icon {}]</code> draws from it too.</li>
-            <li><strong>Don't reach for <code>[color #RRGGBB]</code> in a control.</strong> A literal colour is right for art and wrong for interface.</li>
-            <li><strong>Don't write a link target holding <code>]</code> in a format string.</strong> The tag ends there; stream a <code>PushLink</code> instead.</li>
+            <li><strong>Don't build a text over a sheet that goes before it.</strong> A temporary is refused at compile time; a local of the function that returns the text is not.</li>
+            <li><strong>Don't wrap a style in <code>FamilyText</code> or <code>SizedText</code> to change its face.</strong> The style's own fields win; state a style based on it instead.</li>
+            <li><strong>Don't keep a wrapper in a variable</strong> past the named values it holds.</li>
+            <li><strong>Don't reach for a <code>Color</code> in a control.</strong> A literal colour is right for art and wrong for interface.</li>
         </ul>
     </div>
 </div>

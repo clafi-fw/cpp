@@ -12,6 +12,7 @@ import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Source;
 import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Dom_TextSerializers;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.System.Utils;
@@ -19,6 +20,49 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Transfer
 {
+    namespace
+    {
+        // **Written the way the document engine writes the value**, which gives it a spelling
+        // without inventing a second one for the clipboard.
+        template<typename Content>
+        [[nodiscard]] std::string bytesOf(const Content& content)
+        {
+            Dom::Value<Content> node{ nullptr, {} };
+            node.set(content);
+            const Dom::Value<Content> blank{ nullptr, {} };
+
+            std::wstringstream stream;
+            Dom::FileFormat::ClaFi format;
+            format.saveSectionToStream(*Dom::withoutDefaults(node, blank), stream);
+            return toUtf8(stream.str());
+        }
+
+        template<typename Content>
+        [[nodiscard]] Content contentOf(const std::string_view bytes)
+        {
+            Dom::Value<Content> node{ nullptr, {} };
+
+            std::wstringstream stream{ fromUtf8(bytes) };
+            Dom::FileFormat::ClaFi format;
+            format.loadSectionFromStream(node, stream);
+            return node.get();
+        }
+
+        // **A style goes by its name**, as a text's do: the one of that name the sheet reaches
+        // stands for it, and where it reaches none, a copy based on its base as found here becomes
+        // one of the sheet's own.
+        const TextStyle* carryStyle(StyleSheet& sheet, const TextStyle* style)
+        {
+            if (!style)
+                return nullptr;
+            if (const TextStyle* named = sheet.find(style->name))
+                return named;
+            TextStyle copy = *style;
+            copy.base = carryStyle(sheet, style->base);
+            return sheet.carry(copy);
+        }
+    }
+
     Format ClaFiText::format()
     {
         return Format::Custom(std::wstring{ k_name });
@@ -26,24 +70,12 @@ namespace ClaFi::Transfer
 
     std::string ClaFiText::toBytes(const Text& text)
     {
-        Dom::Value<Text> node{ nullptr, {} };
-        node.set(text);
-        const Dom::Value<Text> blank{ nullptr, {} };
-
-        std::wstringstream stream;
-        Dom::FileFormat::ClaFi format;
-        format.saveSectionToStream(*Dom::withoutDefaults(node, blank), stream);
-        return toUtf8(stream.str());
+        return bytesOf(text);
     }
 
     Text ClaFiText::fromBytes(const std::string_view bytes)
     {
-        Dom::Value<Text> node{ nullptr, {} };
-
-        std::wstringstream stream{ fromUtf8(bytes) };
-        Dom::FileFormat::ClaFi format;
-        format.loadSectionFromStream(node, stream);
-        return node.get();
+        return contentOf<Text>(bytes);
     }
 
     Format ClaFiStyleSheet::format()
@@ -53,38 +85,45 @@ namespace ClaFi::Transfer
 
     std::string ClaFiStyleSheet::toBytes(const StyleSheet& sheet)
     {
-        Dom::Value<StyleSheet> node{ nullptr, {} };
-        node.set(sheet);
-        const Dom::Value<StyleSheet> blank{ nullptr, {} };
-
-        std::wstringstream stream;
-        Dom::FileFormat::ClaFi format;
-        format.saveSectionToStream(*Dom::withoutDefaults(node, blank), stream);
-        return toUtf8(stream.str());
+        return bytesOf(sheet);
     }
 
     StyleSheet ClaFiStyleSheet::fromBytes(const std::string_view bytes)
     {
-        Dom::Value<StyleSheet> node{ nullptr, {} };
+        return contentOf<StyleSheet>(bytes);
+    }
 
-        std::wstringstream stream{ fromUtf8(bytes) };
-        Dom::FileFormat::ClaFi format;
-        format.loadSectionFromStream(node, stream);
-        return node.get();
+    Format ClaFiTextFormat::format()
+    {
+        return Format::Custom(std::wstring{ k_name });
+    }
+
+    std::string ClaFiTextFormat::toBytes(const TextFormat& textFormat)
+    {
+        return bytesOf(textFormat);
+    }
+
+    TextFormat ClaFiTextFormat::fromBytes(const std::string_view bytes)
+    {
+        return contentOf<TextFormat>(bytes);
     }
 
     // **The package holds a text over the framework's sheet**, each style it names beyond the
     // framework's one of the text's own, so nothing in it points into the sheet it was copied
-    // from, which may go first. The same styles go beside it as a sheet.
-    void addText(Source& source, const Text& text)
+    // from, which may go first. The same styles go beside it as a sheet, with the format's.
+    void addText(Source& source, const Text& text, const TextFormat* format)
     {
         Text carried{ StyleSheet::framework() };
         carried << text;
         StyleSheet styles{ &StyleSheet::framework() };
         styles.takeStyles(carried.styles());
+        if (format && !format->style().empty())
+            carryStyle(styles, text.styles().find(format->style()));
         source.add<ClaFiText>(std::move(carried));
         if (!styles.empty())
             source.add<ClaFiStyleSheet>(std::move(styles));
+        if (format && !format->empty())
+            source.add<ClaFiTextFormat>(*format);
     }
 
     // **The text is read through the carried sheet, then put in a text over the sheet stated**:
@@ -124,6 +163,7 @@ namespace ClaFi::StdActions
     {
         Transfer::registerByteSpelling<Transfer::ClaFiText>();
         Transfer::registerByteSpelling<Transfer::ClaFiStyleSheet>();
+        Transfer::registerByteSpelling<Transfer::ClaFiTextFormat>();
         Transfer::registerConversion<Transfer::ClaFiText, Transfer::PlainText>();
         Transfer::registerConversion<Transfer::PlainText, Transfer::ClaFiText>();
 

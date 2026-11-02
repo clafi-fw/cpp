@@ -14,8 +14,8 @@ namespace ClaFi::Dom
 {
     namespace
     {
-        // The keys of a text's section, of one of its own styles or a sheet's, and the names and
-        // keys of its pieces.
+        // The keys of a text's section, of one of its own styles or a sheet's, the names and keys
+        // of its pieces, and the keys of a text format's section.
         namespace Keys
         {
             constexpr std::wstring_view Styles = L"Styles";
@@ -73,6 +73,14 @@ namespace ClaFi::Dom
         };
 
         constexpr std::array k_paragraphKeys{
+            Keys::Align,
+            Keys::Indent,
+            Keys::LineSpacing,
+        };
+
+        constexpr std::array k_formatKeys{
+            Keys::Style,
+            Keys::Ink,
             Keys::Align,
             Keys::Indent,
             Keys::LineSpacing,
@@ -504,7 +512,8 @@ namespace ClaFi::Dom
             return std::nullopt;
         }
 
-        [[nodiscard]] std::optional<ParagraphLook> paragraphOf(const Section& entry)
+        // A P stating nothing ends the look in effect, and the paragraphs from there state none.
+        [[nodiscard]] ParagraphLook paragraphOf(const Section& entry)
         {
             ParagraphLook look;
             look.align = valueOf(k_aligns, valueAt(entry, Keys::Align));
@@ -513,8 +522,6 @@ namespace ClaFi::Dom
                 look.indent = value;
             if (tryStrToFloat(valueAt(entry, Keys::LineSpacing), value))
                 look.lineSpacing = value;
-            if (look.empty())
-                return std::nullopt;
             return look;
         }
 
@@ -760,5 +767,58 @@ namespace ClaFi::Dom
         styles.clear();
         for (const TextStyle* style : value.styles())
             writeStyle(static_cast<Section&>(styles.addNode()), style->name, *style);
+    }
+
+    // --- CompositeSerializer<TextFormat> ---
+
+    void CompositeSerializer<TextFormat>::defineSchema(Section& section,
+        const TextFormat& defaultValue)
+    {
+        for (const std::wstring_view key : k_formatKeys)
+            section.addValue(key, std::wstring{});
+        write(section, defaultValue);
+    }
+
+    TextFormat CompositeSerializer<TextFormat>::read(const Section& section)
+    {
+        TextFormat result;
+        readTo(section, result);
+        return result;
+    }
+
+    // **The style goes by its name**, found where the text is laid out - see TextFormat.
+    void CompositeSerializer<TextFormat>::readTo(const Section& section, TextFormat& out)
+    {
+        TextFormat result;
+        if (const std::wstring style = valueAt(section, Keys::Style); !style.empty())
+            result << std::wstring_view{ style };
+        if (const std::optional<ColorDef> ink = inkOf(valueAt(section, Keys::Ink)))
+        {
+            std::visit([&result](const auto& held) {
+                result << held;
+            }, *ink);
+        }
+        const ParagraphLook paragraph = paragraphOf(section);
+        if (paragraph.align)
+            result << *paragraph.align;
+        if (paragraph.indent)
+            result << TextIndent{ *paragraph.indent };
+        if (paragraph.lineSpacing)
+            result << TextLineSpacing{ *paragraph.lineSpacing };
+        out = std::move(result);
+    }
+
+    // Every key is emptied first, so a node written again keeps nothing of the format before.
+    void CompositeSerializer<TextFormat>::write(Section& node, const TextFormat& value)
+    {
+        for (const std::wstring_view key : k_formatKeys)
+        {
+            if (DomNodeBase* child = node.child(key))
+                child->set(std::wstring{});
+        }
+        put(node, Keys::Style, value.style());
+        if (value.fields().ink)
+            put(node, Keys::Ink, inkSpelling(*value.fields().ink));
+        writeParagraph(node, value.paragraph());
     }
 }

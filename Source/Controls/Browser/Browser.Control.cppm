@@ -28,7 +28,6 @@ import ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.Core.Foundation;
 
-import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.System.Props;
@@ -453,10 +452,9 @@ namespace ClaFi::Browser
                 // checking the calcOnly, because all the space should be available for tabs,
                 // so the
                 if (event.phase() == EventPhase::Paint)
-                    event.text << ParagraphText{
-                        TextAlign::Center,
-                        event.control().appContext().appName()
-                    };
+                    event.text
+                        << TextAlign::Center
+                        << event.control().appContext().appName();
             } }
         ) };
         StackPanel& m_titleBox{ m_title.createLeftBar<StackPanel>(

@@ -170,11 +170,11 @@ namespace ClaFi
             path << systemWords;
 
         Text result{};
-        result << VSpace{ 8.0f } << L"\n";
+        result << VSpace{ 8.0f } << L"\n" << TextIndent{ 12.0f };
         if (toDelete)
-            result << ParagraphText{ ParaIndent{ 12.0f }, LinkText{ folder, path } };
+            result << LinkText{ folder, path };
         else
-            result << ParagraphText{ ParaIndent{ 12.0f }, path };
+            result << path;
         return result;
     }
 

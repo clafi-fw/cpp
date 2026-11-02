@@ -36,8 +36,19 @@ namespace ClaFi::Transfer
         [[nodiscard]] static StyleSheet fromBytes(std::string_view bytes);
     };
 
-    // Puts a text on the source, and beside it the styles it names. See StdActions#addtext
-    export void addText(Source&, const Text&);
+    // The format of the control a text was copied from, beside the text. See StdActions
+    export struct ClaFiTextFormat
+    {
+        using Content = TextFormat;
+        static constexpr std::wstring_view k_name = L"ClaFi.TextFormat";
+
+        [[nodiscard]] static Format format();
+        [[nodiscard]] static std::string toBytes(const TextFormat&);
+        [[nodiscard]] static TextFormat fromBytes(std::string_view bytes);
+    };
+
+    // Puts a text on the source, and beside it its styles and its format. See StdActions#addtext
+    export void addText(Source&, const Text&, const TextFormat* format);
     // The text an offer holds, over the sheet given or the application's. See StdActions#taketext
     export [[nodiscard]] std::optional<Text> takeText(Offer&, const StyleSheet* sheet);
 

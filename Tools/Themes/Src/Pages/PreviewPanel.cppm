@@ -25,10 +25,7 @@ namespace Themes_App
         ) };
 
         Label& m_titleLabel{ m_stack.add<Label>(
-            Text{ ParagraphText{
-                TextAlign::Center,
-                StyledText{ TextStyles::SubTitle, L"Live preview" }
-            } },
+            Text{ TextAlign::Center, StyledText{ TextStyles::SubTitle, L"Live preview" } },
             WordWrap::No,
             HorizontalAlign::Center,
             VerticalAlign::Center,
@@ -68,7 +65,7 @@ namespace Themes_App
         FlexSpacer& m_flexSpacer2{ m_stack.add<FlexSpacer>() };
 
         Button& m_button1{ m_stack.add<Button>(
-            Text{ ParagraphText{ TextAlign::Center, L"Test Button" } }
+            Text{ TextAlign::Center, L"Test Button" }
         ) };
 
         ScopedEventConnection m_button1Click1{

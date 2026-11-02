@@ -84,6 +84,16 @@ so the Ledger pasted into an empty box keeps its title centred. Undo puts the ol
 the look TextHistory keeps beside the change (Change::startParagraphLook, handed to restoreText) -
 recorded only where the edit changed it, which only an emptied paragraph does.
 
+**Paragraph tags stream into the text.** Step 1 put paragraph properties in a wrapper,
+ParagraphText, which owned whole lines and kept two flags beside the runs: the line end it still
+owed, and whether a text began with one. Oj, 2026-11-02: "They should not be there at all. Also
+ParagraphText is not needed. Also TextAlign and other paragraph tags should stream to the Text
+directly like before - and be in effect till replaced", then "1 a; 2 a; 3 a": a tag written
+mid-paragraph states the whole paragraph; a text written into another lays its paragraph looks over
+the one in effect; a file writes P where the look changes. The look in effect is the last
+paragraph's, and a line end gives the next paragraph the same - the Enter rule - so nothing sits
+beside the runs. A caller writes its own line ends, and states a value again to end one.
+
 **Words after a line end put in take the style after the edit**, as typed words at a paragraph's
 start do, because TextHistory merges a typed run that holds a line end into one step and a redo
 replays the step whole.

@@ -4,6 +4,7 @@ import ClaFi.Tools.WhatsClip.Page;
 
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
+import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.Foundation;
 
 import ClaFi.StdLib;
@@ -17,5 +18,7 @@ namespace ClaFi::Tools::WhatsClip
         TextPreviewPage(const CreateParams&, const PickLists&);
     protected:
         void showContent(Transfer::Offer&, const Transfer::Format&) override;
+    private:
+        TextFormat m_ownFormat; // the box's, for every reading but the framework's rich text
     };
 }

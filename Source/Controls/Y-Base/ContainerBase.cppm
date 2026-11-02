@@ -244,10 +244,7 @@ namespace ClaFi::Controls
     {
         FormControlBase::adjustText(event);
         if (!m_placeHolderText.empty() && isEmpty())
-            event.text << ParagraphText{
-                TextAlign::Center,
-                ColoredText{ InkGrade::Muted, m_placeHolderText }
-            };
+            event.text << TextAlign::Center << ColoredText{ InkGrade::Muted, m_placeHolderText };
     }
 
     // Stated rather than handed to the virtual setter: the root keeps it as the item a show enters

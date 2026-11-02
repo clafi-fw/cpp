@@ -188,7 +188,7 @@
                     <button class="toggle-btn" aria-label="Toggle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
                 </div>
                 <ul>
-                    <li><a href="#hiw-baked">Markers to spans</a></li>
+                    <li><a href="#hiw-baked">Runs to spans</a></li>
                     <li><a href="#hiw-cache">The layout cache</a></li>
                     <li><a href="#hiw-cells">Paragraphs on cells</a></li>
                     <li><a href="#hiw-underline">The link underline</a></li>
@@ -238,9 +238,9 @@ a type of its own, so a control tells which one it was handed by the type alone:
 </table>
 
 <pre><code><span class="tp">Label</span>&amp; m_status{ m_strip.<span class="fn">createBody</span>&lt;<span class="tp">Label</span>&gt;(
-    <span class="tp">Text</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ready"</span> },
+    <span class="tp">Text</span>{ <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ready"</span> } },
     <span class="tp">TooltipText</span>{ <span class="st">L"What the page is showing"</span> },
-    <span class="tp">TextFormat</span>{ <span class="tp">TextStyle</span>::SubBody }
+    <span class="tp">TextFormat</span>{ <span class="tp">TextStyles</span>::SubBody }
 ) };</code></pre>
 
 <h3 id="control-text-writing">Writing it later</h3>
@@ -270,31 +270,61 @@ that <a href="#own-layout">holds its own layout</a>, goes on drawing the old wor
 
 <h3 id="copying-values">Values and ranges</h3>
 
-<p>A <code>Text</code> is a value. Assigning one copies it or moves it, markers and all, so a text
-built for a control is moved in rather than copied, and a text taken out of a control is a copy that
-owes the control nothing.</p>
+<p>A <code>Text</code> is a value. Assigning one copies it or moves it, its runs and the sheet it is
+over with it, so a text built for a control is moved in rather than copied, and a text taken out of
+a control is a copy that owes the control nothing.</p>
 
-<pre><code>m_title.<span class="fn">text</span>() = <span class="tp">Text</span>{ <span class="tp">TextStyle</span>::Heading, name };   <span class="cm">// moved in</span>
-<span class="tp">Text</span> kept = m_title.<span class="fn">text</span>();                               <span class="cm">// a copy</span></code></pre>
+<pre><code>m_title.<span class="fn">text</span>() = <span class="tp">Text</span>{ <span class="tp">StyledText</span>{ <span class="tp">TextStyles</span>::Heading, name } };   <span class="cm">// moved in</span>
+<span class="tp">Text</span> kept = m_title.<span class="fn">text</span>();                                               <span class="cm">// a copy</span></code></pre>
 
-<p><code>selectedText(range)</code> answers a range of a text as a text of its own. It states at its
-start every run the range stood inside - the style, the colour, the paragraph's properties - copies
-the range's own markers, and closes at its end whatever it left open, so it says on its own what it
-said in place. <code>replaceText(range, text)</code> puts a text into another over a range, its
-markers with it. The two are what the edit history is made of: a step keeps the text it took out,
-and an undo puts it back.</p>
+<p><code>selectedText(range)</code> answers a range of a text as a text of its own: the runs of the
+range, each in the style it had, and the looks of the paragraphs starting in it, its start and its
+end included, so a copy of whole paragraphs reads as they look. <code>replaceText(range, text)</code>
+puts a text into another over a range. The two are what the edit history is made of, through
+<code>restorableText</code> and <code>restoreText</code>: a step keeps the text it took out, and an
+undo puts it back exactly, every run in the style and every paragraph in the look it had.</p>
+
+<p><strong>Words put in take on the style where they go.</strong> What goes in is laid under that
+style the way a wrapper is laid over its words: what the words state stands, and the surroundings
+fill the rest.</p>
+
+<ul>
+<li>Replacing a range: the style, link and anchor of the first character replaced.</li>
+<li>At a caret: the style and anchor of the character before it.</li>
+<li>At a paragraph's start: the style and anchor of the character after it.</li>
+<li>A link at a caret only from inside it, where the characters on both sides carry it.</li>
+</ul>
+
+<p><strong>A paragraph keeps its look through every edit made inside it.</strong> A line end typed
+into one splits it, and both halves keep the look. A paragraph joined to the one above takes that
+one's look, and the first line of a text put in joins the paragraph it lands in the same way. A
+paragraph an edit empties takes the first look of the text put in, so a text pasted into an empty
+box, or over every word of a paragraph, starts in the look it was copied in.</p>
 
 <h3 id="copying-clipboard">The clipboard</h3>
 
-<p>A <code>TextBox</code> copies its selection as <code>ClaFiText</code> - the selected text with
-its markers - and the clipboard offers plain text out of the conversion it keeps between the two, so
-an application that has never heard of ClaFi pastes the characters. A paste takes
+<p>A <code>TextBox</code> copies its selection as up to three formats, and the clipboard offers
+plain text out of the conversion it keeps from the first, so an application that has never heard of
+ClaFi pastes the characters:</p>
+
+<table>
+<tr><th>Format</th><th>Holds</th></tr>
+<tr><td><code>ClaFiText</code></td><td>The selected text, over the framework's sheet: each style it is set in beyond the framework's comes as one of the text's own, so the copy names nothing in the sheet it was copied from.</td></tr>
+<tr><td><code>ClaFiStyleSheet</code></td><td>Those styles as a sheet, with the style the box's format names where it is beyond the framework's too. Left out where there are none.</td></tr>
+<tr><td><code>ClaFiTextFormat</code></td><td>The box's <code>TextFormat</code>. Left out where the box has none.</td></tr>
+</table>
+
+<p><code>Transfer::addText(source, text, format)</code> puts them on a source, and
+<code>Transfer::takeText(offer, sheet)</code> takes the text back over the sheet given, the
+application's where none is: a style of a name that sheet holds is the sheet's, and one it lacks
+comes as one of the text's own, so the words draw as they were copied. A paste takes
 <code>ClaFiText</code> first and plain text after it, which is the whole of what decides whether
 formatting survives a paste.</p>
 
-<p>A copy carries the text alone. A control's <code>TextFormat</code> is how the control shows its
-text rather than part of what the text says, so a range copied out of a <code>CodeBox</code> pastes
-in whatever style the box it goes into lays its text out in.</p>
+<p><strong>The format is for a preview.</strong> A viewer of the clipboard, WhatsClip among them,
+draws the copied text in it, as it was drawn where it was copied. A paste leaves it: the box pasted
+into keeps its own format, so a range copied out of a <code>CodeBox</code> pastes in whatever style
+the box it goes into lays its text out in.</p>
 
 <h2 id="events">Text Events</h2>
 
@@ -333,54 +363,62 @@ are left to what has to be composed at the moment of asking.</p>
 
 <h2 id="format">Text Format</h2>
 
-<p>A <code>TextFormat</code> is markers alone: what a control's text is laid out over. It states
-the values a text runs on from - a colour, a style, an alignment - and holds no characters. The
-engine reads it ahead of the text's own markers, and it never becomes part of the text.</p>
+<p>A <code>TextFormat</code> is what a control's text is laid out over: a style name, an ink, and a
+paragraph look. It holds no characters. The engine reads it under the text's own styles, and it never
+becomes part of the text.</p>
 
 <pre><code><span class="cm">// Built like a Text: the stream, or the same sequence as one expression.</span>
 <span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">InkGrade</span>::Muted };
-format &lt;&lt; <span class="tp">TextStyle</span>::SubBody;</code></pre>
+format &lt;&lt; <span class="tp">TextStyles</span>::SubBody;</code></pre>
 
 <h3 id="format-holds">What it holds</h3>
 
 <table>
-<tr><th>Streamed</th><th>Holds</th></tr>
-<tr><td><code>Ink</code>, <code>InkGrade</code>, <code>InkColor</code>, <code>Color</code>, <code>PushThemeColor{ ink }</code>, <code>PushCustomColor{ c }</code></td><td>The colour the text runs in, spelt as the stream spells it.</td></tr>
-<tr><td><code>TextStyle</code></td><td>The style.</td></tr>
-<tr><td><code>PushFontSize{ f }</code>, <code>PushFontFamily{ L"..." }</code></td><td>A size or a family over the style's.</td></tr>
-<tr><td><code>TextOp::PushBold</code>, <code>TextOp::PushItalic</code></td><td>Weight and slant.</td></tr>
-<tr><td><code>TextAlign</code>, <code>ParaIndent{ f }</code>, <code>ParaLineSpacing{ f }</code></td><td>Paragraph geometry, for every paragraph of the text.</td></tr>
-<tr><td><code>TextFormat</code></td><td>Each value the other format holds.</td></tr>
+<tr><th>Written</th><th>Holds</th></tr>
+<tr><td>A style name - <code>TextStyles::Code</code>, <code>L"Readout"</code></td><td>The style, found where the text is laid out: among the text's own styles and in its sheet, each time the text is laid out.</td></tr>
+<tr><td><code>Ink</code>, <code>InkGrade</code>, <code>InkColor</code>, <code>Color</code></td><td>The ink the text runs in, spelt as <code>ColoredText</code> spells it.</td></tr>
+<tr><td><code>TextAlign</code>, <code>TextIndent{ f }</code>, <code>TextLineSpacing{ f }</code></td><td>The paragraph look, for every paragraph of the text.</td></tr>
+<tr><td><code>TextFormat</code></td><td>What the other states, each field over this one's.</td></tr>
 </table>
 
-<p>Anything that puts a character in - a string, an icon, a space, a tab stop - does not compile,
-and neither does a pop, a link or an anchor. A value that only converts to one of the above is
-refused as well, so a <code>wchar_t</code> is never taken for a <code>Color</code>. A script is not
-held: how far one is raised depends on the size in force where it opens. A <code>TextOp</code>
-other than <code>PushBold</code> and <code>PushItalic</code> is refused when it is streamed.</p>
+<p><strong>A size or a family comes in a style.</strong> An application states one in its sheet and
+the format names it:</p>
 
-<p><strong>One of each kind.</strong> A value replaces what the format already holds of its kind,
-and kinds that differ combine. The values are kept in the order of their kinds rather than the order
-they were stated, so two formats that say the same thing are equal, and share a layout in the cache,
-however they were built. Bold and italic, once stated, stay stated.</p>
+<pre><code>sheet.<span class="fn">set</span>(<span class="tp">TextStyle</span>{
+    .name = <span class="st">L"Readout"</span>,
+    .base = sheet.<span class="fn">find</span>(<span class="tp">TextStyles</span>::Body),
+    .fontSize = <span class="kw">11.0f</span>,
+});
+<span class="tp">TextFormat</span>{ <span class="st">L"Readout"</span> };</code></pre>
 
-<pre><code><span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">TextOp</span>::PushBold };
+<p><strong>Values only.</strong> A character, a link or an anchor is refused at compile time, and so
+is a value that only converts to one of the above, so a <code>wchar_t</code> is never taken for a
+<code>Color</code>.</p>
+
+<p><strong>One of each kind.</strong> A value replaces what the format already holds of its kind, and
+another format replaces every field it states. Two formats that say the same thing are equal, and
+share a layout in the cache, however they were built.</p>
+
+<pre><code><span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">TextStyles</span>::Code };
 format &lt;&lt; <span class="tp">TextFormat</span>{ <span class="tp">InkColor</span>::Red, <span class="tp">TextAlign</span>::Left };
-<span class="cm">// Left, red and bold.</span></code></pre>
+<span class="cm">// Left, red, in Code.</span></code></pre>
 
 <h3 id="format-under">Under the text</h3>
 
-<p>The text's own markers stand over the format. A push the text makes is read after the format's.
-A paragraph property is read when the paragraph's newline is reached, so one the text states replaces
-the format's for the paragraph it stands in and for every paragraph after it.</p>
+<p><strong>The text's own styles stand over the format.</strong> A field is drawn from the first that
+states it: the run's style and its bases, then the format's style and its bases. A face, size,
+weight or slant neither states comes from the text's Body, and an ink from the text ink. A link's
+ink stands between the run's and the format's. A paragraph's own look stands over the format's
+the same way, and where neither states a field the paragraph is left-aligned, unindented and singly
+spaced.</p>
 
-<p><strong>The format is the floor of every stack.</strong> A pop the text holds no push for leaves
-what the format opened standing. For a text whose pushes and pops pair up, a format is the same as
-its values written at the start of the text.</p>
+<p>A style name the text reaches nowhere is reported as a wrapper's is, with
+<code>UnknownStyleEvent</code>, and the text is laid out as it would be without it.</p>
 
-<p>A format is how a control shows its text, not part of what the text says. A selection, the
-clipboard, the edit history and a document see the text alone: a range copied out of a centred box
-pastes uncentred. A control with a format and no text has no text.</p>
+<p><strong>A format is how a control shows its text</strong>, kept apart from what the text says. A
+selection, the edit history and a document see the text alone: a range copied out of a centred box
+pastes uncentred. A copy puts the box's format beside the text, for a preview to draw it in - see
+<a href="#copying-clipboard">The clipboard</a>. A control with a format and no text is blank.</p>
 
 <h3 id="format-control">On a control</h3>
 
@@ -394,7 +432,7 @@ property. Along a chain of constructors the caller's value wins for every kind i
 most derived class's, and so on down to the base. A <code>CodeBox</code> is laid out in the
 monospace style that way, and the text handed to it states no style of its own:</p>
 
-<pre><code><span class="tp">TextBox</span>{ params, <span class="tp">WordWrap</span>::No, <span class="tp">TextFormat</span>{ <span class="tp">TextStyle</span>::Code }, std::<span class="fn">forward</span>&lt;<span class="tp">Args</span>&gt;(args)... }</code></pre>
+<pre><code><span class="tp">TextBox</span>{ params, <span class="tp">WordWrap</span>::No, <span class="tp">TextFormat</span>{ <span class="tp">TextStyles</span>::Code }, std::<span class="fn">forward</span>&lt;<span class="tp">Args</span>&gt;(args)... }</code></pre>
 
 <div class="warning">
 <strong>Never call <code>setTextFormat</code> in a constructor body.</strong> The body runs after the
@@ -804,12 +842,14 @@ a view into the text the spans were baked from, and holds while that text stands
 
 <h2 id="howitworks">How It Works</h2>
 
-<h3 id="hiw-baked">Markers to spans</h3>
+<h3 id="hiw-baked">Runs to spans</h3>
 
-<p><code>BakedText::rebuild</code> walks the markers once and turns a stack-based description into
-absolute ranges: <code>ColorSpan</code>, <code>WeightSpan</code>, <code>StyleSpan</code>,
-<code>SizeSpan</code>, <code>FamilySpan</code>, <code>ParagraphStyle</code>, a <code>LinkSpan</code>
-for every link, and a <code>BakedInlineObject</code> for every icon, flex space and tab stop. That is the form the native
+<p><code>BakedText::rebuild</code> walks the runs once and resolves each field of each run, from the
+first that states it - the run's style and its bases, then the format's style and its bases, then the
+text's Body for a font field and the text ink for an ink. Equal neighbours merge, and what comes out is absolute ranges: <code>ColorSpan</code>,
+<code>WeightSpan</code>, <code>StyleSpan</code>, <code>SizeSpan</code>, <code>FamilySpan</code>,
+<code>ScriptSpan</code>, a <code>ParagraphStyle</code> per paragraph, a <code>LinkSpan</code> for
+every link, and a <code>BakedInlineObject</code> for every inline object. That is the form the native
 layout is fed.</p>
 
 <p>A colour span holds <code>ColorDef</code>, which is
@@ -819,16 +859,20 @@ it is drawn, so a theme change re-draws the same shaping rather than paying for 
 is absent for the same reason: where finished lines sit inside their box is set on a built layout,
 not shaped from.</p>
 
-<p>A format is walked first, at the start of the text. The depth of every stack is noted there and a
-pop stops at it, which is what keeps a format's values under the whole text.</p>
+<p><strong>The base font is the format's style over the text's Body</strong>, resolved once per bake.
+A text holding nothing is drawn in it and its caret is measured in it, and a layout takes from it
+whatever a paragraph's spans leave unstated.</p>
 
 <h3 id="hiw-cache">The layout cache</h3>
 
-<p>The engine keeps up to 512 layouts, keyed on a text rather than on a box: the text's hash, the
+<p>The engine keeps its layouts keyed on a text rather than on a box: the text's hash, the
 hash of the format it is laid out over, the scale factor, whether it is editable, and - for a text carrying a flex space - the event phase. A
 flex space is the one thing laid out differently for a measurement and for a paint, filling the box
 it is drawn in and contributing nothing to a size. Floats are held as their bits, because this is an
 identity question and not a numeric one.</p>
+
+<p>From 512 layouts on, the engine sweeps: it keeps what the pass under way and the pass before it
+asked for. Past 4096 it keeps the most recently used half.</p>
 
 <p>A key names a bucket, and the bucket holds one layout per width the text has been broken at.
 Lines broken at one width came out no wider than the widest of them, and every width between the two
@@ -856,13 +900,14 @@ draw the wrong words - so a hit is confirmed by comparing the <code>Text</code> 
 format against the copy the layout keeps. The cache owns the text's copy, because every caller's text is a temporary built for one paint while the layout keeps
 a pointer to the one it was given.</p>
 
-<p><code>Text::hash</code> stands in for the whole <code>Text</code>, colour markers and all. A
+<p><code>Text::hash</code> stands in for the whole <code>Text</code>, the inks of its runs and all. A
 colour is no part of a build, but it is part of what makes one <code>Text</code> a different
 <code>Text</code>, so two runs naming different inks hold a cache entry each rather than sharing a
 key and evicting one another on every alternation. For anything that changes what a build would
 produce without being part of the key - the font table above all - <code>invalidateLayouts()</code>
 drops the cache and moves <code>layoutGeneration()</code> on, and a layout held outside the cache
-compares that number against the one it was built at.</p>
+compares that number against the one it was built at. An edit to any style sheet moves it on as
+well.</p>
 
 <h3 id="hiw-cells">Paragraphs on cells</h3>
 

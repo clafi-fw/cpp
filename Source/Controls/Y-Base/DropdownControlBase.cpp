@@ -327,7 +327,7 @@ namespace ClaFi::Controls
         if (!line.plainText().empty())
             line << Space{ k_markSpacing };
         appendDropdownMark(line);
-        event.text = Text{ ParagraphText{ TextAlign::Center, line } };
+        event.text = Text{ TextAlign::Center, line };
     }
 
     void DropdownControlBase::appendDropdownMark(Text& text) const

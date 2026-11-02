@@ -138,22 +138,19 @@ namespace TextEngine_App
     {
         Text page{};
 
-        page << ParagraphText{
-            TextAlign::Center,
-            StyledText{ TextStyles::Title, L"Writing Systems" },
-            k_endLine,
-            StyledText{ TextStyles::SubTitle, L"Fifty-six of them, three characters each" },
-            k_endLine,
-            k_endLine // the blank row under the subtitle is centred with it
-        };
+        page << TextAlign::Center;
+        page << StyledText{ TextStyles::Title, L"Writing Systems" } << k_endLine;
+        page << StyledText{ TextStyles::SubTitle, L"Fifty-six of them, three characters each" };
+        page << k_endLine;
+        page << k_endLine; // the blank row under the subtitle is centred with it
+        page << TextAlign::Left;
         page << L"No family is named anywhere on this page. Every row is set in the same "
             L"style as the prose around it, so what draws each character is the platform's own "
             L"fallback and nothing the page chose - which is the question being put.";
         page << k_endLine << k_endLine;
 
         page << StyledText{ TextStyles::Heading, L"1. How to read a row" } << k_endLine;
-        page << ParagraphText{
-            ParaIndent{ 34.0f },
+        page << TextIndent{ 34.0f } << Text{
             BoldText{ L"Characters drawn" },
             L" means a face was found and had them.\n",
             BoldText{ L"Boxes" },
@@ -163,6 +160,7 @@ namespace TextEngine_App
             L" mean the same miss from a face whose .notdef is empty, which is what a "
             L"text face answers with for a script it never carried.\n"
         };
+        page << TextIndent{ 0.0f };
         page << k_endLine;
         page << L"Only the first is coverage. A box and a blank are one miss wearing different "
             L"clothes, and which of the two appears says more about the face that was reached than "
@@ -196,8 +194,7 @@ namespace TextEngine_App
 
         page << k_endLine;
         page << StyledText{ TextStyles::Heading, L"4. What the page leaves out" } << k_endLine;
-        page << ParagraphText{
-            ParaIndent{ 34.0f },
+        page << TextIndent{ 34.0f } << Text{
             BoldText{ L"Joining and reordering." },
             L" Three characters standing alone ask a face for three "
             L"glyphs. A script whose letters join, reorder or stack - Devanagari, Khmer, Myanmar, "
@@ -210,6 +207,7 @@ namespace TextEngine_App
             L" Nothing here puts two scripts in one paragraph, which is "
             L"the case the item guess is weakest at.\n"
         };
+        page << TextIndent{ 0.0f };
 
         return page;
     }

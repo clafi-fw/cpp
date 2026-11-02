@@ -464,11 +464,11 @@ namespace ClaFi::Controls
         if (!m_editProps.selRange.length)
             return;
 
-        // **The text in, and the styles it names.** Plain text is advertised out of the conversion
-        // table, so an application that has never heard of this framework pastes what it can read
-        // without this site knowing such an application exists.
+        // **The text in, the styles it names and the box's format.** Plain text is advertised out
+        // of the conversion table, so an application that has never heard of this framework
+        // pastes what it can read without this site knowing such an application exists.
         Transfer::Source source{};
-        Transfer::addText(source, text().selectedText(m_editProps.selRange));
+        Transfer::addText(source, text().selectedText(m_editProps.selRange), textFormat());
         formContext().clipboard().set(std::move(source), stamp);
     }
 

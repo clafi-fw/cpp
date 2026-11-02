@@ -79,14 +79,12 @@ namespace TextEngine_App
         // ==========================================
         // 1. **Alignment & headings**
         // ==========================================
-        text << ParagraphText{
-            TextAlign::Center,
-            StyledText{ TextStyles::Title, L"ClaFi TextEngine" },
-            k_endLine,
-            StyledText{ TextStyles::SubTitle, L"A comprehensive demonstration of all formatting features" },
-            k_endLine,
-            k_endLine // the blank row under the subtitle is centred with it
-        };
+        text << TextAlign::Center;
+        text << StyledText{ TextStyles::Title, L"ClaFi TextEngine" } << k_endLine;
+        text << StyledText{ TextStyles::SubTitle, L"A comprehensive demonstration of all formatting features" };
+        text << k_endLine;
+        text << k_endLine; // the blank row under the subtitle is centred with it
+        text << TextAlign::Left;
 
         // ==========================================
         // 2. **Text styles & typography**
@@ -157,15 +155,14 @@ namespace TextEngine_App
         // 4. **Layout & spacing**
         // ==========================================
         text << StyledText{ TextStyles::Heading, L"4. Layout, Spacing & Alignment" } << k_endLine;
-        text << ParagraphText{ TextAlign::Left, L"Left alignment." };
-        text << ParagraphText{ TextAlign::Center, L"Center alignment." };
-        text << ParagraphText{ TextAlign::Right, L"Right alignment." };
-        text << ParagraphText{
-            TextAlign::Justified,
-            L"Justified alignment spreads the text out to fill the available space, creating straight margins on both left and right edges. This typographic formatting alters the spacing between words and characters so that every line of text begins and ends at the same horizontal boundaries. In professional publishing and documentation, this layout creates a structured grid system. However, on wide displays or high-resolution monitors, short paragraphs can stretch or fail to wrap correctly, creating white space gaps known as 'rivers' throughout the block. To maintain rendering quality across wide display boundaries, the body text block requires sufficient length to fill multiple full rows.",
-            k_endLine,
-            k_endLine // the blank row after the block is justified with it
-        };
+        text << TextAlign::Left << L"Left alignment." << k_endLine;
+        text << TextAlign::Center << L"Center alignment." << k_endLine;
+        text << TextAlign::Right << L"Right alignment." << k_endLine;
+        text << TextAlign::Justified;
+        text << L"Justified alignment spreads the text out to fill the available space, creating straight margins on both left and right edges. This typographic formatting alters the spacing between words and characters so that every line of text begins and ends at the same horizontal boundaries. In professional publishing and documentation, this layout creates a structured grid system. However, on wide displays or high-resolution monitors, short paragraphs can stretch or fail to wrap correctly, creating white space gaps known as 'rivers' throughout the block. To maintain rendering quality across wide display boundaries, the body text block requires sufficient length to fill multiple full rows.";
+        text << k_endLine;
+        text << k_endLine; // the blank row after the block is justified with it
+        text << TextAlign::Left;
 
         text << L"Horizontal control:" << Space{ 40.0f } << L"40px fixed gap." << FlexSpace{};
         text << L"Flex space pushes this to the right." << k_endLine;
@@ -231,9 +228,10 @@ namespace TextEngine_App
             InkGrade::Muted,
             L"Combine layout tags with icons to define structured list hierarchies."
         } << k_endLine;
-        // The indent holds for every line of the list, the wrapped ones included.
-        text << ParagraphText{ ParaIndent{ 34.0f }, list };
-        text << k_endLine;
+        // The indent holds for every line of the list, the wrapped ones included, until it is
+        // stated again.
+        text << TextIndent{ 34.0f } << list;
+        text << TextIndent{ 0.0f } << k_endLine;
 
         // ==========================================
         // 8. **Links**

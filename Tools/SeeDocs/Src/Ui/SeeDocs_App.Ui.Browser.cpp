@@ -187,13 +187,12 @@ namespace SeeDocs_App::Ui
             return result;
         }
 
-        // A path as a paragraph of its own, in spot ink, the way SeeDocs' words quote one.
+        // A path as a paragraph of its own, indented and in spot ink, the way SeeDocs' words quote
+        // one. The indent is in effect after it until the words after it state another.
         void writePath(Text& text, const std::wstring_view path)
         {
-            text << ParagraphText{
-                ParaIndent{ k_wordsIndent },
-                ColoredText{ InkWell::spotInk(), path }
-            };
+            text << k_endLine << TextIndent{ k_wordsIndent };
+            text << ColoredText{ InkWell::spotInk(), path };
         }
 
         // The item of the list a segment names: one of its name with a page of its own, the first
@@ -2127,7 +2126,7 @@ namespace SeeDocs_App::Ui
         else
             text << L"No project open has a page at this path:";
         writePath(text, data.path());
-        text << k_endLine;
+        text << k_endLine << TextIndent{ 0.0f } << k_endLine;
         if (project)
             text << L"The tree may have been scanned again since the page was last open.";
         else

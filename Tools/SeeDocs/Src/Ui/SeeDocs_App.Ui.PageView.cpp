@@ -419,7 +419,7 @@ namespace SeeDocs_App::Ui
         if (!page.badges.empty())
             head << L"   " << StyledText{ TextStyles::SubBody, textOf(page.badges) };
         for (const Runs& line : page.titleLines)
-            head << ParagraphText{ ParaIndent{ k_basesIndent }, textOf(line) };
+            head << k_endLine << TextIndent{ k_basesIndent } << textOf(line);
         m_title.text() = head;
         const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
         m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);

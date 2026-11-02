@@ -23,6 +23,18 @@ namespace ClaFi::Tools::WhatsClip
 {
     using namespace Controls;
 
+    namespace
+    {
+        // **The styles copies carried, over the application's sheet**, which every rich text shown
+        // is built over. Built on first use and kept for the process, so a style keeps its address
+        // while any text drawn from it lives.
+        [[nodiscard]] StyleSheet& carriedStyles()
+        {
+            static StyleSheet sheet{ &StyleSheet::application() };
+            return sheet;
+        }
+    }
+
     TextPreviewPage::TextPreviewPage(const CreateParams& params, const PickLists& picks)
         :
         TextPageBase{
@@ -30,7 +42,8 @@ namespace ClaFi::Tools::WhatsClip
             picks,
             HostProps{ ScrollBars::Both },
             BodyProps{ ReadOnly::Yes, Padding{ 12.0f } }
-        }
+        },
+        m_ownFormat{ body().textFormat() ? *body().textFormat() : TextFormat{} }
     {
     }
 
@@ -39,21 +52,28 @@ namespace ClaFi::Tools::WhatsClip
     // runs, a standard text as the string it is - so the encoding pick never appears here and
     // the language is the text's own.
     //
-    // **The framework's rich text is taken the way a paste takes it**, so the styles carried
-    // beside it draw as they did where it was copied. A style of a name the application's sheet
-    // holds is that sheet's, and every other one comes as one of the text's own.
+    // **The framework's rich text draws as it did where it was copied**: over the styles carried
+    // beside it, which stand over the application's of the same name, and in the format of the
+    // control it was copied from - none where that control had none.
     void TextPreviewPage::showContent(Transfer::Offer& offer, const Transfer::Format& format)
     {
         std::optional<Text> taken;
         std::size_t carriedCount = 0;
+        TextFormat shownFormat = m_ownFormat;
         Transfer::Payload payload{};
         if (format == Transfer::ClaFiText::format())
         {
-            taken = Transfer::takeText(offer, nullptr);
             const std::optional<StyleSheet> carried =
                 Transfer::take<Transfer::ClaFiStyleSheet>(offer);
             if (carried.has_value())
+            {
                 carriedCount = carried->styles().size();
+                carriedStyles().takeStyles(carried.value());
+            }
+            taken = Transfer::takeText(offer, &carriedStyles());
+            const std::optional<TextFormat> copiedFormat =
+                Transfer::take<Transfer::ClaFiTextFormat>(offer);
+            shownFormat = copiedFormat.value_or(TextFormat{});
         }
         else
         {
@@ -85,12 +105,14 @@ namespace ClaFi::Tools::WhatsClip
 
         writeStatus(std::move(status));
 
+        // A copy keeps the sheet the text was taken over.
         Text report{};
         if (marked)
-            report << *marked;
+            report = *marked;
         else if (plain)
             report << *plain;
 
+        body().setTextFormat(shownFormat);
         showText(std::move(report));
     }
 }

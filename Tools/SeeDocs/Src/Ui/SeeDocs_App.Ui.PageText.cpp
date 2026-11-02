@@ -26,43 +26,47 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_noteBullet = L"- ";   // what a note writes an item behind
         constexpr std::wstring_view k_codeFence = L"    ";  // what a note sets a line of code in by
 
+        // Ends the line the text holds, where it holds words, so what is written next stands
+        // under them.
+        void startLine(Text& text)
+        {
+            if (!text.empty() && text.plainText().back() != k_endLine)
+                text << k_endLine;
+        }
+
         // Each line stands under what the text holds already, and the prose ends with no line end.
         void writeBlock(Text& text, const Block& block, const float indent)
         {
             switch (block.kind)
             {
                 case BlockKind::Paragraph:
-                    text << ParagraphText{ ParaIndent{ indent }, textOf(block.runs) };
+                    startLine(text);
+                    text << TextIndent{ indent } << textOf(block.runs);
                     break;
                 case BlockKind::SubHeading:
-                    text << ParagraphText{
-                        ParaIndent{ indent },
-                        StyledText{ TextStyles::Section, textOf(block.runs) }
-                    };
+                    startLine(text);
+                    text << TextIndent{ indent };
+                    text << StyledText{ TextStyles::Section, textOf(block.runs) };
                     break;
                 case BlockKind::Code:
                     for (const Runs& line : block.lines)
                     {
+                        startLine(text);
                         // A blank line of the block holds no words, so it is its line end alone.
                         if (line.empty())
                         {
                             text << k_endLine;
                             continue;
                         }
-                        text << ParagraphText{
-                            ParaIndent{ indent + k_codeIndent },
-                            StyledText{ TextStyles::Code, textOf(line) }
-                        };
+                        text << TextIndent{ indent + k_codeIndent };
+                        text << StyledText{ TextStyles::Code, textOf(line) };
                     }
                     break;
                 case BlockKind::Bullets:
                     for (const Runs& item : block.items)
                     {
-                        text << ParagraphText{
-                            ParaIndent{ indent + k_bulletIndent },
-                            k_bullet,
-                            textOf(item)
-                        };
+                        startLine(text);
+                        text << TextIndent{ indent + k_bulletIndent } << k_bullet << textOf(item);
                     }
                     break;
             }

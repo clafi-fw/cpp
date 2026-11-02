@@ -432,10 +432,7 @@ void MillSceneForm::writeMetrics()
     lines << ColoredText{ InkGrade::Muted, L"draw" } << k_endLine;
     lines << std::format(L"{:.0f} ", readings.fps);
     lines << ColoredText{ InkGrade::Muted, L"FPS\u202F", Space{ 0.0f } } << k_endLine;
-    m_metricsReadout.text() = Text{ ParagraphText{
-        TextAlign::Right,
-        StyledText{ TextStyles::Code, lines }
-    } };
+    m_metricsReadout.text() = Text{ TextAlign::Right, StyledText{ TextStyles::Code, lines } };
 }
 
 // The same window and the same sums as the FPS page - see FpsPage::paintTimeOf and

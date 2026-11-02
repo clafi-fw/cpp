@@ -239,11 +239,8 @@ event.<span class="fn">canvas</span>().<span class="fn">drawPath</span>(path, { 
 <p>Text takes the ink itself rather than a colour, so a run keeps its meaning until the layout is
 drawn:</p>
 
-<pre><code>text &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted) &lt;&lt; <span class="st">L"Ping "</span>
-     &lt;&lt; <span class="tp">PopColor</span>{} &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">accentInk</span>() &lt;&lt; <span class="st">L"24 ms"</span>;
-
-<span class="cm">// The same thing from a format string.</span>
-text &lt;&lt; <span class="tp">Fmt</span>{ <span class="st">L"[color muted]Ping [/color][color accent]{} ms[/color]"</span>, ping };</code></pre>
+<pre><code>text &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted), <span class="st">L"Ping "</span> }
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkWell</span>::<span class="fn">accentInk</span>(), ping, <span class="st">L" ms"</span> };</code></pre>
 
 <h2 id="concepts">Core Concepts</h2>
 
@@ -457,8 +454,8 @@ your own. The named colours are their accessors at <code>Strongest</code>.</p>
 <strong>Yellow is not a text colour.</strong> At the 4.5:1 reading threshold on a light page the
 whole warm arc from 40 to 120 degrees collapses to brown, so there is no colour in the yellow family
 that is both legible as text and recognisable as yellow.
-<code>[color yellow]</code> reads, so that a text built from code can be written out and read back,
-and is not an invitation.
+A document still reads <code>Ink=yellow</code>, so that a text built from code can be written out
+and read back, and that is not an invitation.
 </div>
 
 <h3 id="ref-grades">InkGrade</h3>
@@ -534,27 +531,28 @@ lossy, and a rule applied to the result is a rule applied to a rounding error.
 and by the theme in effect. Streamed in code, an ink can be written as the one part that differs
 from the text ink at <code>Strongest</code>:</p>
 
-<pre><code>text &lt;&lt; <span class="tp">InkGrade</span>::Muted &lt;&lt; <span class="st">L"Ping "</span> &lt;&lt; <span class="tp">PopColor</span>{}           <span class="cm">// the text ink at a step</span>
-     &lt;&lt; <span class="tp">InkColor</span>::Accent &lt;&lt; <span class="st">L"24 ms"</span> &lt;&lt; <span class="tp">PopColor</span>{}         <span class="cm">// a colour at Strongest</span>
-     &lt;&lt; <span class="tp">InkWell</span>::<span class="fn">redInk</span>(<span class="tp">InkGrade</span>::Muted) &lt;&lt; <span class="st">L" late"</span>;   <span class="cm">// anything else, as the Ink it is</span></code></pre>
+<pre><code>text &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ping "</span> }                       <span class="cm">// the text ink at a step</span>
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, <span class="st">L"24 ms"</span> }                      <span class="cm">// a colour at Strongest</span>
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkWell</span>::<span class="fn">redInk</span>(<span class="tp">InkGrade</span>::Muted), <span class="st">L" late"</span> };   <span class="cm">// anything else, as the Ink it is</span></code></pre>
 
-<p>A format tag names an ink by its colour and grade and states no tone of its own - the tones are
+<p>A document names an ink by its colour and grade and states no tone of its own - the tones are
 <code>InkWell</code>'s. Both are spelt as their members in lower case, the colour first, and either
-can be left out: the colour is then <code>text</code> and the grade <code>strongest</code>.</p>
+is left out where it is the text colour or <code>strongest</code>:</p>
 
 <table>
-<tr><th>Tag</th><th>Ink</th></tr>
-<tr><td><code>[color strongest]</code></td><td><code>textInk()</code></td></tr>
-<tr><td><code>[color muted]</code></td><td><code>textInk(InkGrade::Muted)</code></td></tr>
-<tr><td><code>[color accent]</code></td><td><code>accentInk()</code></td></tr>
-<tr><td><code>[color spot]</code></td><td><code>spotInk()</code></td></tr>
-<tr><td><code>[color green]</code>, <code>[color blue]</code>, <code>[color red]</code></td><td>The semantic inks of those names.</td></tr>
-<tr><td><code>[color red muted]</code></td><td><code>redInk(InkGrade::Muted)</code> - any colour at any step.</td></tr>
-<tr><td><code>[color accent 0.45]</code></td><td><code>accentInk(0.45f)</code> - a share between the steps.</td></tr>
-<tr><td><code>[color #RRGGBB]</code>, <code>[color {}]</code></td><td>A colour stated outright, which the theme does not touch.</td></tr>
+<tr><th>Written</th><th>Ink</th></tr>
+<tr><td><code>Ink=strongest</code></td><td><code>textInk()</code></td></tr>
+<tr><td><code>Ink=muted</code></td><td><code>textInk(InkGrade::Muted)</code></td></tr>
+<tr><td><code>Ink=accent</code></td><td><code>accentInk()</code></td></tr>
+<tr><td><code>Ink=spot</code></td><td><code>spotInk()</code></td></tr>
+<tr><td><code>Ink=green</code>, <code>Ink=blue</code>, <code>Ink=red</code></td><td>The semantic inks of those names.</td></tr>
+<tr><td><code>Ink=red muted</code></td><td><code>redInk(InkGrade::Muted)</code> - any colour at any step.</td></tr>
+<tr><td><code>Ink=accent 0.45</code></td><td><code>accentInk(0.45f)</code> - a share between the steps.</td></tr>
+<tr><td><code>Ink=#RRGGBB</code></td><td>A colour stated outright, which the theme does not touch.</td></tr>
 </table>
 
-<p>See the <em>TextEngine</em> manual for the rest of the format language.</p>
+<p>See the <a href="text.html#document">Writing ClaFi Text</a> manual for the rest of a text's
+spelling in a document.</p>
 
 <h3 id="ref-app-mode">The application's mode</h3>
 

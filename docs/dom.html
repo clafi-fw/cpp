@@ -364,6 +364,7 @@
                     <li><a href="#homogeneous-seq">Value Sequences</a></li>
                     <li><a href="#dynamic-seq">Section Sequences</a></li>
                     <li><a href="#tree-seq">Trees</a></li>
+                    <li><a href="#multi-type-seq">Multi-Type Sequences</a></li>
                     <li><a href="#search-seq">Search and Removal inside Sequences</a></li>
                     <li><a href="#iterating-large-values">Iterating Sequences of Large or Complex Values</a></li>
                 </ul>
@@ -564,7 +565,7 @@
             <ul>
                 <li><code>ClaFi.Core.Dom_StdSerializers</code> - <code>std::wstring</code> and the string-like types, <code>bool</code>, <code>int</code>, <code>std::size_t</code>, <code>float</code>, and every enum with <code>enumNames</code>.</li>
                 <li><code>ClaFi.Core.Dom_UiSerializers</code> - <code>Color</code>.</li>
-                <li><code>ClaFi.Core.Dom_TextSerializers</code> - <code>Text</code> and its markers.</li>
+                <li><code>ClaFi.Core.Dom_TextSerializers</code> - <code>Text</code>, <code>StyleSheet</code> and <code>TextFormat</code> - see the <a href="text.html#document">Writing ClaFi Text</a> manual.</li>
             </ul>
             <p>The module that states <code>serializedFields</code> for a struct re-exports the serializers its members need. Every file that can see the fields can then read and write the struct, with no import of its own:</p>
             <pre><code><span class="kw">export module</span> <span class="tp">MyApp.Swatch</span>;
@@ -930,6 +931,25 @@ document.<span class="fn">save</span>();
 ]</code></pre>
 
             <p>The path operator walks into the tree like into any sequence of composites. <code>(document / L"Root" / L"Items")</code> is the root's <code>Sequence&lt;TreeNode&gt;</code>, each of its children a <code>Value&lt;TreeNode&gt;</code> with an <code>Items</code> of its own, so one node can be read or set in place while the rest of the tree stands - see <a href="#iterating-large-values">Iterating Sequences of Large or Complex Values</a> for the live and the detached ways of reaching an item.</p>
+
+            <h3 id="multi-type-seq">Multi-Type Sequences</h3>
+            <p>A <code>MultiTypeSequence</code> is a list kept in the order written, its items of several kinds, each under a name. The name picks the item's blueprint, which holds what the item is before anything is stated: a value, or a section's schema. A name may repeat, and one blueprint may be the unnamed one:</p>
+            <pre><code><span class="tp">MultiTypeSequence</span>&amp; pieces = section.<span class="fn">addMultiTypeSequence</span>(<span class="st">L"Pieces"</span>);
+pieces.<span class="fn">addBlueprint</span>(<span class="st">L""</span>, std::<span class="tp">wstring</span>{});
+pieces.<span class="fn">addBlueprint</span>(<span class="st">L"Run"</span>, runSchema);
+
+<span class="cm">// Items go in by name, in order.</span>
+pieces.<span class="fn">add</span>(<span class="st">L""</span>)-&gt;<span class="fn">set</span>(std::<span class="tp">wstring</span>{ <span class="st">L"Use "</span> });
+<span class="tp">Section</span>&amp; run = <span class="kw">static_cast</span>&lt;<span class="tp">Section</span>&amp;&gt;(*pieces.<span class="fn">add</span>(<span class="st">L"Run"</span>));
+<span class="kw">for</span> (<span class="kw">const</span> <span class="tp">MultiTypeSequence</span>::<span class="tp">Item</span>&amp; item : pieces.<span class="fn">items</span>())
+    <span class="fn">read</span>(item.name, *item.node);</code></pre>
+            <p>Each format keeps the order:</p>
+            <ul>
+                <li>ClaFi: a <code>name=value</code> or <code>name=[</code> line per item, and <code>=value</code> for an unnamed one.</li>
+                <li>JSON: an array of one-member objects - <code>[ { "": "Use " }, { "Run": { ... } } ]</code>.</li>
+                <li>XML: an element per item, named as the item is. Unnamed items are the text between the elements, written with nothing added around it, and a reader takes every blank there as words.</li>
+            </ul>
+            <p>An item whose name no blueprint has is skipped with a schema error. One whose value is of another kind than its blueprint's is skipped by the ClaFi reader, with a schema error, and kept at its blueprint's value by the JSON and XML readers. A document saved without defaults writes each item as what differs from its name's blueprint, and keeps every item, since the list is read by position. A <code>Text</code> holds its pieces in one - see the <a href="text.html#document">Writing ClaFi Text</a> manual.</p>
 
             <h3 id="search-seq">Search and Removal inside Sequences</h3>
             <p>The <code>SequenceBase</code> provides safe template search operations to locate elements matching a specific nested value, and <code>NodeBase</code> allows elements to destroy themselves from their parent containers:</p>

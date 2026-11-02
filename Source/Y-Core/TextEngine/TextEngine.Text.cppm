@@ -171,34 +171,6 @@ namespace ClaFi
     template<typename... Content>
     AnchorText(std::wstring, Content&&...) -> AnchorText<Content...>;
 
-    // Words on lines of their own, each taking the property. See TextEngine-Types#paragraphtext
-    export template<typename... Content>
-    class ParagraphText
-    {
-    public:
-        using ContentTuple = std::tuple<Content...>;
-
-    public:
-        explicit ParagraphText(TextAlign, Content&&...);
-        explicit ParagraphText(ParaIndent, Content&&...);
-        explicit ParagraphText(ParaLineSpacing, Content&&...);
-
-    public:
-        [[nodiscard]] const ParagraphLook& look() const { return m_look; }
-        [[nodiscard]] const ContentTuple& content() const { return m_content; }
-
-    private:
-        ParagraphLook m_look;
-        ContentTuple m_content;
-    };
-
-    template<typename... Content>
-    ParagraphText(TextAlign, Content&&...) -> ParagraphText<Content...>;
-    template<typename... Content>
-    ParagraphText(ParaIndent, Content&&...) -> ParagraphText<Content...>;
-    template<typename... Content>
-    ParagraphText(ParaLineSpacing, Content&&...) -> ParagraphText<Content...>;
-
     // A run of a text as a document holds it, or a paragraph's look. See TextEngine-Types#textpiece
     export struct TextPiece
     {
@@ -207,7 +179,7 @@ namespace ClaFi
         std::wstring link{};
         std::wstring anchor{};
         std::optional<InlineObject> object{}; // the words then hold its one character
-        std::optional<ParagraphLook> paragraph{}; // stated by a piece holding no words
+        std::optional<ParagraphLook> paragraph{}; // stated by a piece holding no words, maybe none
     };
 
     export using TextPieces = std::vector<TextPiece>;
@@ -308,14 +280,15 @@ namespace ClaFi
         Text& operator<<(const VSpace&);
         Text& operator<<(const FlexSpace&);
         Text& operator<<(const TabTo&);
-        // Every run as it is, under whatever wrapper the text is written inside.
+        // Stated for the paragraph written and those after it. See TextEngine-Types#paragraphlook
+        Text& operator<<(TextAlign);
+        Text& operator<<(TextIndent);
+        Text& operator<<(TextLineSpacing);
+        // Every run as it is, its paragraph looks over the one in effect. See TextEngine-Types#text
         Text& operator<<(const Text&);
         // A run that holds no character writes nothing.
         template<typename... Content>
         Text& operator<<(const ScopedText<Content...>&);
-        // Lines that hold no character write nothing. The words written next start a line.
-        template<typename... Content>
-        Text& operator<<(const ParagraphText<Content...>&);
 
         [[nodiscard]] bool empty() const { return m_plainText.empty(); }
         void clear();
@@ -335,7 +308,7 @@ namespace ClaFi
         void forEachRun(Visit visit) const;
         // The look stated for the paragraph starting there, empty where it states none.
         [[nodiscard]] ParagraphLook paragraphLookAt(std::size_t paragraphStart) const;
-        // The runs and the paragraphs' looks in text order, a paragraph's look ahead of its runs.
+        // The runs in text order, a paragraph's look ahead of its runs where it changes.
         [[nodiscard]] TextPieces pieces() const;
         // The text the first anchor of that name holds, or nothing where no anchor has it.
         [[nodiscard]] std::optional<TextRange> anchorRange(std::wstring_view name) const;
@@ -373,15 +346,6 @@ namespace ClaFi
             std::size_t start{ 0 };
             ParagraphLook look{};
             bool operator==(const StatedParagraph&) const = default;
-        };
-
-        // How the text stood when a wrapper started writing into it.
-        struct WriteStart
-        {
-            std::size_t plainLength{ 0 };
-            bool lineBroken{ false }; // the wrapper ended the line it found open
-            bool startsOwnLine{ false };
-            bool endsOwnLine{ false };
         };
 
         // What words put into the text take on where they go, as indexes into its tables.
@@ -434,9 +398,11 @@ namespace ClaFi
         void appendRun(const Run&);
         void appendWords(std::wstring_view words);
         void appendObject(InlineObject);
-        void dropLastCharacter();
         void stateParagraph(std::size_t paragraphStart, const ParagraphLook&);
-        void layParagraph(std::size_t paragraphStart, const ParagraphLook& outer);
+        // The look of the paragraph at from, given to each paragraph started after it.
+        void carryLook(std::size_t from);
+        // The fields laid over the look of the paragraph the text has reached.
+        void layLastLook(const ParagraphLook& fields);
         [[nodiscard]] Runs runsOf(const Text& other, std::size_t from, std::size_t to);
         [[nodiscard]] Surroundings surroundingsOf(std::size_t start, std::size_t end) const;
         [[nodiscard]] Surroundings surroundingsAfterLineEnd(std::size_t end,
@@ -446,12 +412,7 @@ namespace ClaFi
         void edit(const TextRange&, const Text& inserted, Insertion);
         void editParagraphs(std::size_t start, std::size_t end, const Text& inserted, Insertion);
         void applyLayer(std::size_t from, std::size_t to, const TextLayer&);
-        [[nodiscard]] WriteStart openScope();
-        void closeScope(const WriteStart&, const TextLayer&);
-        [[nodiscard]] WriteStart openParagraph();
-        void closeParagraph(const WriteStart&, const ParagraphLook&);
-        void undoOpening(const WriteStart&);
-        void breakOwnLine();
+        void closeScope(std::size_t start, const TextLayer&);
         // A text holding nothing, over the sheet this one is over.
         [[nodiscard]] Text blank() const;
         void swap(Text&) noexcept;
@@ -463,8 +424,6 @@ namespace ClaFi
         Names m_names; // the links and anchors, by run.link - 1 and run.anchor - 1
         Objects m_objects; // run.object - 1
         StatedParagraphs m_paragraphs; // in text order, only those stating a look
-        bool m_startsOwnLine{ false }; // put after words, the first of these start a line
-        bool m_endsOwnLine{ false }; // the next words written start a line of their own
     };
 
 #define DERIVED_TEXT_CLASS public Text\
@@ -596,8 +555,8 @@ namespace ClaFi
         TextFormat& operator<<(InkColor); // that colour at Strongest
         TextFormat& operator<<(Color);
         TextFormat& operator<<(TextAlign);
-        TextFormat& operator<<(ParaIndent);
-        TextFormat& operator<<(ParaLineSpacing);
+        TextFormat& operator<<(TextIndent);
+        TextFormat& operator<<(TextLineSpacing);
         // What that one states, each field over this one's.
         TextFormat& operator<<(const TextFormat&);
         // Refused, a value that only converts to one of the above included - a wchar_t is no Color.
@@ -755,48 +714,13 @@ namespace ClaFi
     }
 
     template<typename... Content>
-    ParagraphText<Content...>::ParagraphText(TextAlign align, Content&&... content)
-        :
-        m_look{ .align = align },
-        m_content{ std::forward<Content>(content)... }
-    {
-    }
-
-    template<typename... Content>
-    ParagraphText<Content...>::ParagraphText(ParaIndent indent, Content&&... content)
-        :
-        m_look{ .indent = indent.indent },
-        m_content{ std::forward<Content>(content)... }
-    {
-    }
-
-    template<typename... Content>
-    ParagraphText<Content...>::ParagraphText(ParaLineSpacing spacing, Content&&... content)
-        :
-        m_look{ .lineSpacing = spacing.spacing },
-        m_content{ std::forward<Content>(content)... }
-    {
-    }
-
-    template<typename... Content>
     Text& Text::operator<<(const ScopedText<Content...>& scope)
     {
-        const WriteStart start = openScope();
+        const std::size_t start = m_plainText.size();
         std::apply([this](const auto&... content){
             ((*this << content), ...);
         }, scope.content());
         closeScope(start, scope.layer());
-        return *this;
-    }
-
-    template<typename... Content>
-    Text& Text::operator<<(const ParagraphText<Content...>& paragraph)
-    {
-        const WriteStart start = openParagraph();
-        std::apply([this](const auto&... content){
-            ((*this << content), ...);
-        }, paragraph.content());
-        closeParagraph(start, paragraph.look());
         return *this;
     }
 

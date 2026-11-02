@@ -223,10 +223,10 @@ namespace ClaFi
 
     export constexpr wchar_t k_endLine = L'\n'; // the line end - LF alone, which cuts a paragraph
 
-    // What a paragraph wrapper states: how far its lines are indented, in design units.
-    export struct ParaIndent { float indent; bool operator==(const ParaIndent&) const = default; };
-    // What a paragraph wrapper states: its line height as a share of the font's.
-    export struct ParaLineSpacing { float spacing; bool operator==(const ParaLineSpacing&) const = default; };
+    // How far a paragraph's lines are indented, in design units.
+    export struct TextIndent { float indent; bool operator==(const TextIndent&) const = default; };
+    // A paragraph's line height as a share of the font's.
+    export struct TextLineSpacing { float spacing; bool operator==(const TextLineSpacing&) const = default; };
 
     // A thing standing in a text as one character of its own. See TextEngine-Types#inlineobject
     export using InlineObject = std::variant<InTextIcon, Space, VSpace, FlexSpace, TabTo>;

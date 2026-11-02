@@ -163,14 +163,12 @@ namespace TextEngine_App
     {
         Text page{};
 
-        page << ParagraphText{
-            TextAlign::Center,
-            StyledText{ TextStyles::Title, L"Emoji" },
-            k_endLine,
-            StyledText{ TextStyles::SubTitle, L"One set of characters, one family after another" },
-            k_endLine,
-            k_endLine // the blank row under the subtitle is centred with it
-        };
+        page << TextAlign::Center;
+        page << StyledText{ TextStyles::Title, L"Emoji" } << k_endLine;
+        page << StyledText{ TextStyles::SubTitle, L"One set of characters, one family after another" };
+        page << k_endLine;
+        page << k_endLine; // the blank row under the subtitle is centred with it
+        page << TextAlign::Left;
         page << L"Nothing on this page is a picture the showcase supplies. Every mark "
             L"below is a character in the text, shaped by whatever face the platform found for it, "
             L"and what the page states is which face that was and what it could draw.";
@@ -260,8 +258,7 @@ namespace TextEngine_App
             L"accumulating one coverage mask and compositing the brush through it - so a face's "
             L"colour reaches neither.";
         page << k_endLine << k_endLine;
-        page << ParagraphText{
-            ParaIndent{ 34.0f },
+        page << TextIndent{ 34.0f } << Text{
             BoldText{ L"Layered faces" },
             L" draw their base layer alone, in the text ink. That layer is "
             L"usually the silhouette, so the emoji arrives as a solid shape.\n",
@@ -277,6 +274,7 @@ namespace TextEngine_App
             L"face drawing its emoji as hairlines covers no whole pixel at body size, so it peaks "
             L"short of full ink before the coverage curve thins what is left.\n"
         };
+        page << TextIndent{ 0.0f };
         page << k_endLine;
         page << L"Which is why section 2 is worth reading twice: a family that draws nothing is "
             L"not a family that was missed, and a family that draws a black silhouette is not a "
@@ -336,8 +334,7 @@ namespace TextEngine_App
             L"wchar_t - so walking the line below with the arrow keys is a reading of the Units "
             L"column above.";
         page << k_endLine << k_endLine;
-        page << ParagraphText{
-            ParaIndent{ 34.0f },
+        page << TextIndent{ 34.0f } << Text{
             BoldText{ L"Where wchar_t is 16 bits" },
             L" the column steps by two over a plain emoji and by "
             L"eleven over the joined family, so a press lands the position inside a surrogate "
@@ -349,6 +346,7 @@ namespace TextEngine_App
             L" a picture and typing over it is the same question asked of a range "
             L"rather than of a position.\n"
         };
+        page << TextIndent{ 0.0f };
         page << k_endLine;
         page << L"Walk this line:" << k_endLine << k_endLine;
         page << L"a 😀 b 👍🏽 c 👩‍💻 d 👨‍👩‍👧‍👦 e 🇯🇵 f" << k_endLine << k_endLine;
@@ -370,8 +368,7 @@ namespace TextEngine_App
         // -----------------------------------------------------------------
 
         page << StyledText{ TextStyles::Heading, L"7. What the page found out" } << k_endLine;
-        page << ParagraphText{
-            ParaIndent{ 34.0f },
+        page << TextIndent{ 34.0f } << Text{
             BoldText{ L"Fallback works and is invisible." },
             L" A run states a family and can be drawn by "
             L"another, with nothing in the text saying so.\n",
@@ -386,6 +383,7 @@ namespace TextEngine_App
             L"of units on each, so an offset saved on one does not name the same place on the "
             L"other.\n"
         };
+        page << TextIndent{ 0.0f };
 
         return page;
     }

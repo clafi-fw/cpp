@@ -141,8 +141,9 @@ it does not restate one:
 
     caption << StyledText{ TextStyles::Title, name };
 
-**Body draws what a run and its format leave unstated** - the Body the text's sheet finds, which is
-the framework's where no sheet restates it.
+**Body draws the face, size, weight and slant a run and its format leave unstated** - the Body the
+text's sheet finds, which is the framework's where no sheet restates it. An ink they leave
+unstated is the text ink.
 
 ## StyleSheet
 
@@ -253,7 +254,22 @@ built at invalidates its own layout.
 **How a paragraph is laid out, as far as it states**: an alignment, an indent, a line spacing.
 What it leaves out comes from the TextFormat, and then from left, no indent and single spacing.
 
-**It belongs to the whole paragraph** - see ParagraphText and Edits.
+**A TextAlign, a TextIndent or a TextLineSpacing written into a text states that field**, for the
+whole paragraph being written and for every paragraph started after it, until one written later
+states it again:
+
+    caption << TextAlign::Center << title << k_endLine
+        << TextAlign::Left << body;
+
+A tag written in the middle of a paragraph states it for the whole of that paragraph, and a field
+written there before gives way to it. Going back to the format's value is stating the value -
+`TextAlign::Left`, `TextIndent{ 0.0f }`.
+
+**A text written into another is written as its words and tags would be**: its first paragraph
+joins the one the text has reached, and each of its paragraphs takes what it states over the look
+in effect where it lands. A paragraph of it that states nothing takes that look whole.
+
+**It belongs to the whole paragraph** - see Edits.
 
 ## InlineObject
 
@@ -276,8 +292,9 @@ beyond it is copied in as the run's own fields.
 **Scripts compound.** A level moves the baseline by its share of the size it is entered at - the
 size the words take without it - and takes a share of that size for them.
 
-**A field is drawn from the first that states it**: the run's style and its bases, the TextFormat's
-style and its bases, and the text's Body. A link's ink stands between the run's and the format's -
+**A field is drawn from the first that states it**: the run's style and its bases, then the
+TextFormat's style and its bases. A face, size, weight or slant neither states comes from the
+text's Body, and an ink from the text ink. A link's ink stands between the run's and the format's -
 see Links.
 
 ## ScopedText
@@ -311,29 +328,12 @@ written: among its own styles, then in its sheet and up that sheet's parents.
 **A name found nowhere sets the words in no style** and raises UnknownStyleEvent, which the
 application logs once per name.
 
-## ParagraphText
-
-**Words on lines of their own.** Where the text holds words and does not end in a line end, the
-wrapper ends that line first. The line end after its words is written when something more is
-written, so a text that ends in one ends with no line end. A line end written right after it is
-an empty line.
-
-**Every line of the words takes the property** - a TextAlign, a ParaIndent or a ParaLineSpacing.
-Two properties are two wrappers, one inside the other, and where both state one the inner wins.
-
-**A paragraph reads its own look**, and the control's TextFormat for what it leaves out, so a
-property runs on into no paragraph after its own.
-
-**A Text that starts or ends with one keeps those words on lines of their own** wherever it is
-put.
-
-**Lines that hold no character write nothing.** A blank line is a line end of its own.
-
 ## TextPiece
 
 **A run as a document holds it**: its words, its style - named none, its own fields over a base -
-its link and its anchor, or the object it is. A piece holding no words and stating a paragraph look
-stands at that paragraph's start.
+its link and its anchor, or the object it is. A piece holding no words states the whole look of the
+paragraph it stands at the start of, and of every paragraph after it up to the next such piece -
+one stating nothing ends the look in effect.
 
 **Text::pieces and the Text it constructs from them are each other's inverse**, given with the
 text's own styles, and a document reads and writes a Text through them - see Dom. A piece may be
@@ -395,8 +395,9 @@ text is laid out. A name found nowhere is reported as a wrapper's is - see Style
 and the format fills the rest - see TextLayer. A paragraph's own look stands over the format's the
 same way.
 
-**It is presentation, kept apart from the text.** selectedText, the clipboard, the history and a
-document never see it. A control with a format and no text is blank.
+**It is presentation, kept apart from the text.** selectedText, the history and a document never
+see it. A copy puts the format of the box it was copied from beside the text, for a preview to draw
+it in - see ClaFiTextFormat. A control with a format and no text is blank.
 
 **A layout keeps a copy**, so the caller's format may change or go. An empty format and none are
 the same answer.

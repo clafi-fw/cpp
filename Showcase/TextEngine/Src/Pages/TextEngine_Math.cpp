@@ -136,10 +136,9 @@ namespace TextEngine_App
         // centred, then the blank row that parts every display block from the prose under it.
         void writeDisplay(Text& out, const Text& rows)
         {
-            out << ParagraphText{
-                TextAlign::Center,
-                FamilyText{ std::wstring{ k_mathFamily }, SizedText{ k_displaySize, rows } }
-            };
+            out << TextAlign::Center;
+            out << FamilyText{ std::wstring{ k_mathFamily }, SizedText{ k_displaySize, rows } };
+            out << TextAlign::Left;
             out << k_endLine;
         }
 
@@ -209,14 +208,11 @@ namespace TextEngine_App
     {
         Text page;
 
-        page << ParagraphText{
-            TextAlign::Center,
-            StyledText{ TextStyles::Title, L"Mathematical Notation" },
-            k_endLine,
-            StyledText{ TextStyles::SubTitle, L"Formulas written down, not drawn" },
-            k_endLine,
-            k_endLine // the blank row under the subtitle is centred with it
-        };
+        page << TextAlign::Center;
+        page << StyledText{ TextStyles::Title, L"Mathematical Notation" } << k_endLine;
+        page << StyledText{ TextStyles::SubTitle, L"Formulas written down, not drawn" } << k_endLine;
+        page << k_endLine; // the blank row under the subtitle is centred with it
+        page << TextAlign::Left;
         page << L"Every formula below is one Text. A raised run, a lowered run, a rule "
             L"drawn into the flow, a row centred against the row above it - the engine places all "
             L"of it, and none of it is a picture.";
@@ -565,8 +561,7 @@ namespace TextEngine_App
         // -----------------------------------------------------------------
 
         page << StyledText{ TextStyles::Heading, L"9. What the page states for itself" } << k_endLine;
-        page << ParagraphText{
-            ParaIndent{ 34.0f },
+        page << TextIndent{ 34.0f } << Text{
             BoldText{ L"Widths." },
             L" A rule is as wide as it is told and a bar reaches as far as it is "
             L"told. A Text is written before it has been shaped, so the page has nothing to "
@@ -581,18 +576,17 @@ namespace TextEngine_App
             L" A script does not make its line taller, which is what keeps rows of "
             L"prose evenly spaced when one of them carries an exponent.\n"
         };
+        page << TextIndent{ 0.0f };
         page << k_endLine;
         page << L"One more: the words of a Text are taken as they are written, so notation holding "
             L"square brackets and braces needs nothing said for it. The line below is written "
             L"in, braces and all:";
         page << k_endLine << k_endLine;
 
-        page << ParagraphText{
-            TextAlign::Center,
-            FamilyText{
-                std::wstring{ k_mathFamily },
-                SizedText{ k_displaySize, L"S = { x ∈ ℝ : x > 0 }" }
-            }
+        page << TextAlign::Center;
+        page << FamilyText{
+            std::wstring{ k_mathFamily },
+            SizedText{ k_displaySize, L"S = { x ∈ ℝ : x > 0 }" }
         };
 
         return page;
