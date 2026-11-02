@@ -85,6 +85,7 @@ namespace ClaFi::Tools::WhatsClip
             BodyProps{ ReadOnly::Yes, WordWrap::Yes, Padding{ 12.0f } }
         }
     {
+        setCurrentItem(body());
     }
 
     bool HandlePage::carriesHandle(const Transfer::Format& format)

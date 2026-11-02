@@ -28,7 +28,7 @@ namespace ClaFi::Controls
         using Button::Button;
     };
 
-    // A button with no surface at rest, for a toolbar.
+    // A button with no surface at rest, for a toolbar; a press moves no focus. See Controls
     export class ToolButton : public Button
     {
     public:
@@ -62,12 +62,14 @@ namespace ClaFi::Controls
     template<typename ...Args>
     ToolButton::ToolButton(const CreateParams& params, Args && ...args)
         :
-        // Stated ahead of the caller's own properties, so a tool button asked for another
-        // element or other metrics gets them: Props::get takes the last of the matching arguments.
+        // Stated ahead of the caller's own properties, so a tool button asked for another element,
+        // other metrics or a focus of its own gets them: Props::get takes the last of the matching
+        // arguments.
         Button{
             params,
             params.themeMetrics().toolButton,
             UiElement::ToolButton,
+            MouseFocus::Keep,
             std::forward<Args>(args)...
         }
     {

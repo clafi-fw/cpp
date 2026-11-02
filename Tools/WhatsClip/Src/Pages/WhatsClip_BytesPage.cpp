@@ -27,6 +27,7 @@ namespace ClaFi::Tools::WhatsClip
             BodyProps{ Padding{ 12.0f, 0.0f } }
         }
     {
+        setCurrentItem(body());
         setReadoutWidth(236.0f);
         body().onSelectionMove([this](SelectionMoveEvent&) { writeSelectionReadout(); });
     }

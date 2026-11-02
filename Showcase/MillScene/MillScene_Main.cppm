@@ -335,6 +335,7 @@ void MillSceneForm::buildScenePage(AppMenuPage& page)
         ToolButton& item = lanes.add<ToolButton>(
             Text{ theme.name },
             Tag{ index },
+            MouseFocus::Self, // an item: the press that focuses it makes it current
             ButtonViewMode::LeftIcon,
             IconSize{ k_themeIconSize, k_themeIconSize },
             // The pick wears the surface, the way the app button wears the open backstage.

@@ -145,6 +145,14 @@ see Input.
 A mouse press selects the column it lands in, and the ring is drawn there. The keys move through
 the bytes in either column.
 
+## ToolButton
+
+**A press leaves the focus where it is.** A tool button stands beside the work it acts on, so the
+focus stays in that work, and the keys still reach the button.
+
+**Tool buttons used as a list's items state MouseFocus::Self**, as TreeItem does: a focus scope
+makes current and selects only the items a mouse press focuses.
+
 ## AppButton
 
 **It needs no wiring** - it presents appMenuAction, so a click opens the AppMenu. Only the icon

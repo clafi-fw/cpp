@@ -24,9 +24,11 @@ namespace ClaFi::Tools::WhatsClip
         for (const Representation& representation : representations)
         {
             RepresentationPage& page = representation.createPage(pageControl(), picks);
+            // Reached by the keys; a press opens the page and leaves the focus where it was.
             Tab& tab = strip().addTab(
                 Text{ representation.name },
                 Padding{ 12.0f, themeMetrics().tab.padding.y },
+                MouseFocus::Keep,
                 Page{ page }
             );
             m_representations.push_back(RepresentationTab{ representation.name, &tab, &page });

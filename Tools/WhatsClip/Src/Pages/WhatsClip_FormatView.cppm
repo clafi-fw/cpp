@@ -102,5 +102,7 @@ namespace ClaFi::Tools::WhatsClip
             showOpenPage(event.previousItem);
         });
         pageControl().setColorRules(std::nullopt);
+        // A show of the view enters the open page rather than the strip above it.
+        setCurrentItem(pageControl());
     }
 }

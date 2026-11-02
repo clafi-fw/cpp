@@ -473,6 +473,7 @@
                 <tr><th>Control</th><th>NavigationReach</th><th>MouseFocus</th><th>ClickTarget</th><th>FocusScope</th></tr>
                 <tr><td>A label, a panel, decoration</td><td><code>No</code></td><td><code>Parent</code></td><td><code>Parent</code></td><td><code>No</code></td></tr>
                 <tr><td>A button, a text box, a check box, a list item</td><td><code>Yes</code></td><td><code>Self</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A <code>ToolButton</code> - reached by the keys, pressed without moving the focus</td><td><code>Yes</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A tool bar button acting on the editor beside it</td><td><code>No</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A notice's answer - reached by the keys, pressed without moving the focus</td><td><code>Yes</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A part - a slider's thumb, a check box's mark</td><td><code>No</code></td><td><code>Parent</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
@@ -512,7 +513,7 @@
                         <code>MouseFocus::Keep</code>, so pressing it leaves the focus on what it acts on - see
                         <a href="actions.html#presenter-rules">Actions</a>.</li>
                         <li>Give a button that stands beside the work and has to be reached from the keyboard
-                        <code>MouseFocus::Keep</code> alone.</li>
+                        <code>MouseFocus::Keep</code> alone. A <code>ToolButton</code> answers so already.</li>
                         <li>Make a container that keeps the item the user is on <code>FocusScope::Yes</code>,
                         with <code>NavigationReach::Yes</code> and <code>MouseFocus::Self</code>. A
                         <code>StackView</code> answers so already.</li>
@@ -526,7 +527,9 @@
                         <li>Make a container a focus scope when it stands inside one and its items belong to the
                         outer one - see <a href="#nested-containers">A Container Inside Another</a>.</li>
                         <li>Use a control answering <code>MouseFocus::Keep</code> as a list item. A focus scope
-                        makes current and selects only the items a mouse press focuses.</li>
+                        makes current and selects only the items a mouse press focuses. Tool buttons
+                        made into a list's items say <code>MouseFocus::Self</code>, as
+                        <code>TreeItem</code> does.</li>
                     </ul>
                 </div>
             </div>

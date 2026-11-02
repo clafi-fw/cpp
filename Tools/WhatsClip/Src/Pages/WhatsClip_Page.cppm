@@ -80,6 +80,10 @@ namespace ClaFi::Tools::WhatsClip
     // bars says where the point of interest stands, and is written on every move of a caret or a
     // selection. A sentence needs the strip, being a sentence; a reading that moves belongs in
     // the corner, whose width is stated so that nothing else on the page moves when it does.
+    //
+    // **A show enters the page at its body**, the control it is read in: each page names its body
+    // as its current item, so a page turned to while the focus is in the page before lands there
+    // rather than on what stands above it - see PageControl.
     export class RepresentationPage : public ScrollBox
     {
     public:
@@ -343,6 +347,7 @@ namespace ClaFi::Tools::WhatsClip
         ) },
         m_readLocale{ picks.readLocale }
     {
+        setCurrentItem(body());
         // Until a page reads bytes through it - see decode.
         m_encodingPick.setVisible(false);
         // The connections need no scope: the box and the picks are this page's own and go when

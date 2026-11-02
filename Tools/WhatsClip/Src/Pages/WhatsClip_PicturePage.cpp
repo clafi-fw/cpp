@@ -92,6 +92,7 @@ namespace ClaFi::Tools::WhatsClip
             } }
         ) }
     {
+        setCurrentItem(body());
         m_zoomSlider.setMaxPosition(k_zoomNotches);
         m_zoomSlider.setPaintTails(true);
         // The view says when its selection and its zoom move; nothing polls it. The connections

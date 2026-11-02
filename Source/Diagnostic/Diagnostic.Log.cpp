@@ -219,7 +219,8 @@ namespace ClaFi
             body().controls().front()->deleteSelf();
         }
 
-        m_itemToSelect = &body().add<ToolButton>();
+        // A row is an item: the press that focuses it makes it the one a copy takes.
+        m_itemToSelect = &body().add<ToolButton>(MouseFocus::Self);
         return *m_itemToSelect;
     }
 

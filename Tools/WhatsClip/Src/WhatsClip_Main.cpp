@@ -262,8 +262,12 @@ namespace ClaFi::Tools::WhatsClip
             [[nodiscard]] EditorMode editorMode() const override { return EditorMode::ReadOnly; }
             // The caption may carry the note; the reader takes the format name alone.
             void getEditorText(Text& text) const override { text << m_formatName; }
+            // A mouse click on the name of the tab already open.
+            [[nodiscard]] bool clickOpensEditor() const override;
+            void nestedPressDown(PressDownEvent&) override;
         private:
             std::wstring m_formatName{};
+            bool m_openBeforePress{ false };   // whether the tab was open when the press came
         };
 
         // **What is on screen against what is on the clipboard.** A tab per format ever seen,
@@ -272,6 +276,9 @@ namespace ClaFi::Tools::WhatsClip
         // keep**: it is held here and every view reads and writes it, so walking the formats reads
         // them all the same way. Above them stand the previews, made once and belonging to the
         // clipboard rather than to any one format.
+        //
+        // **A tab is reached by the keys, and a press on it moves no focus**, so the focus stays in
+        // the page being read and goes on into the page a press opens - see PageControl.
         class Viewer
         {
         public:
@@ -348,6 +355,22 @@ namespace ClaFi::Tools::WhatsClip
 
             text() = std::move(caption);
             invalidateFormAlign();
+        }
+
+        // **The open tab is the one the user is on.** A press moves no focus onto a tab, so the
+        // framework's test - the focus resting on the control before the press - never passes on
+        // one, and the tab the press found open stands in for it.
+        bool ReaderTab::clickOpensEditor() const
+        {
+            return m_openBeforePress && isTextHovered();
+        }
+
+        // Read ahead of the base, whose press opens the tab.
+        void ReaderTab::nestedPressDown(PressDownEvent& event)
+        {
+            if (event.control == this)
+                m_openBeforePress = selected();
+            WithInPlaceEdit::nestedPressDown(event);
         }
 
         Viewer::Viewer(TabbedBox& box, const PickLists& picks)
@@ -466,6 +489,7 @@ namespace ClaFi::Tools::WhatsClip
                 Padding{ k_tabPaddingX, k_tabPaddingY },
                 MinSize{ k_stripWidth, 0.0f },
                 MaxSize{ k_stripWidth, k_maxFloat },
+                MouseFocus::Keep,
                 Page{ page }
             );
             m_previewTabs.push_back(
@@ -484,6 +508,7 @@ namespace ClaFi::Tools::WhatsClip
                 Padding{ k_tabPaddingX, k_tabPaddingY },
                 MinSize{ k_stripWidth, 0.0f },
                 MaxSize{ k_stripWidth, k_maxFloat },
+                MouseFocus::Keep,
                 Page{ view }
             );
             // The reader copies this name alone; the caption may also carry the synthesized note.
@@ -671,6 +696,8 @@ namespace ClaFi::Tools::WhatsClip
         {
             body().pageControl().setBorder(Thickness::None);
             body().pageControl().setColorRules(UiElement::Page);
+            // The window opens in the page that shows, at the control it is read in.
+            setCurrentItem(body().pageControl());
         }
     }
 

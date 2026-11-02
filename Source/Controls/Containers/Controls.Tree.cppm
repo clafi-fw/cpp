@@ -215,6 +215,7 @@ namespace ClaFi::Controls
         :
         ToolButton{
             params,
+            MouseFocus::Self, // a row is an item: the press that focuses it makes it current
             HorizontalTextAnchor::Left,
             ShowSelectionOnSurface::Yes,
             Padding{ TreeRows::Inset, params.themeMetrics().button.padding.y },
