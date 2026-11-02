@@ -10,6 +10,7 @@ import ClaFi.Core.Context.ControlContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.BakedText;
 import ClaFi.Core.TextEngine.Layout;
@@ -74,10 +75,8 @@ namespace ClaFi
         // Drops every retained layout. For anything that changes what a build would produce without
         // being part of the key - the font table above all.
         void invalidateLayouts();
-        // What a layout held outside this cache tests to learn that a build made before it would
-        // come out differently now. invalidateLayouts drops the cache and moves this on, and an
-        // owner reading a number other than the one it built at invalidates its own layout.
-        [[nodiscard]] std::uint64_t layoutGeneration() const { return m_layoutGeneration; }
+        // Moves on as builds go stale. See TextEngine-Types#textengine-layoutgeneration
+        [[nodiscard]] std::uint64_t layoutGeneration();
     private:
         // Which Text, at what scale, in what state. Not the box: the width the lines are broken
         // at picks a layout inside the bucket this names rather than a bucket, and the height is
@@ -126,6 +125,8 @@ namespace ClaFi
         [[nodiscard]] TextLayout& select(const Text&, const TextFormat*, MaxSize, ScaleFactor,
             bool editable, bool wrap, EventPhase);
         void evict();
+        // Drops every retained layout once a style sheet was edited since the last look.
+        void followStyleEdits();
         static void highlightTextArea(ControlPaintContext&, const FloatRect& bounds,
             const FloatRect& textArea);
     private:
@@ -146,6 +147,7 @@ namespace ClaFi
         std::uint64_t m_useCounter{ 0 };
         std::uint64_t m_pass{ 1 }; // the pass under way, which beginPass moves on
         std::uint64_t m_layoutGeneration{ 0 };
+        std::uint64_t m_stylesRevision{ 0 }; // the style sheets' revision the cache was built at
     };
 
 
@@ -248,11 +250,19 @@ namespace ClaFi
         ++m_layoutGeneration;
     }
 
+    std::uint64_t TextEngine::layoutGeneration()
+    {
+        followStyleEdits();
+        return m_layoutGeneration;
+    }
+
     // The one place a layout is found or made. Every entry point goes through here, so each states
     // all of its inputs, editable included, and none inherits what the previous caller left.
     TextLayout& TextEngine::select(const Text& text, const TextFormat* format, MaxSize bounds,
         ScaleFactor scaleFactor, bool editable, bool wrap, EventPhase phase)
     {
+        // A key names a text's styles by address, and an edit leaves every address as it was.
+        followStyleEdits();
         LayoutKey key{
             .textHash = text.hash(),
             .formatHash = format && !format->empty() ? format->hash() : 0,
@@ -355,6 +365,15 @@ namespace ClaFi
                 ++it;
         }
         m_sweepAt = std::max(k_sweepLayouts, m_entryCount + k_sweepLayouts / 2);
+    }
+
+    void TextEngine::followStyleEdits()
+    {
+        const std::uint64_t revision = StyleSheet::revision();
+        if (revision == m_stylesRevision)
+            return;
+        m_stylesRevision = revision;
+        invalidateLayouts();
     }
 
     // The diagnostic overlay behind Diagnostic::Options::highlightTextAreas: the box the text took

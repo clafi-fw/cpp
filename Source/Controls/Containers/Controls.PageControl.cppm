@@ -2,6 +2,7 @@ export module ClaFi.Controls.PageControl;
 
 import ClaFi.Controls.Base.StackBase;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine;
 import ClaFi.Core.System.Scaler;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -44,6 +45,8 @@ namespace ClaFi::Controls
         // The scale the hidden pages were last measured at. Unset until they have been, and unset
         // again whenever the set of pages changes - see calculateChildren.
         std::optional<ScaleFactor> m_measuredScale{};
+        // The text engine's layout generation they were last measured at.
+        std::uint64_t m_measuredGeneration{ 0 };
     };
 
 
@@ -110,8 +113,9 @@ namespace ClaFi::Controls
     // **A control is calculated while it is visible**, and a page control shows one page - so the
     // pages nobody is looking at are never measured, and most of what makes this cheap is that
     // they are not. Asking for their size is asking for a layout of each, so it is asked **once**:
-    // again when a page is added or taken away, and again when the scale they were measured at
-    // is no longer the form's, and not on the passes in between.
+    // again when a page is added or taken away, again when the scale they were measured at is no
+    // longer the form's, again when the text engine's layout generation has moved - a style
+    // sheet's edit moves it - and not on the passes in between.
     //
     // The stale case that leaves: a page that grows on its own after it was measured, while it
     // is hidden and the scale holds. A page control rebuilt every time it opens - the
@@ -123,13 +127,15 @@ namespace ClaFi::Controls
             return;
 
         const ScaleFactor scale = form.scaler().factor();
-        if (m_measuredScale == scale)
+        const std::uint64_t generation = Control::textEngine().layoutGeneration();
+        if (m_measuredScale == scale && m_measuredGeneration == generation)
             return;
 
         for (const ControlPtr& page : controls())
             if (!page->visible())
                 calculateControl(*page, form);
         m_measuredScale = scale;
+        m_measuredGeneration = generation;
     }
 
     // **The box a page came to, not the floor it can be cut to.** Control::calculate keeps both:

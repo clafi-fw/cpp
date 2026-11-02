@@ -312,10 +312,13 @@ namespace ClaFi
         void replaceText(const TextRange&, const std::wstring_view = {});
         // A text put in where it goes, its runs inside the look there. See TextEngine-Types#edits
         void replaceText(const TextRange&, const Text&);
-        // A text selectedText took out put back, every run and paragraph as it was.
-        void restoreText(const TextRange&, const Text&);
+        // A text restorableText took out put back as it was. See TextEngine-Types#edits
+        void restoreText(const TextRange&, const Text&,
+            const std::optional<ParagraphLook>& startParagraphLook = std::nullopt);
         // The runs of a range and the looks of the paragraphs starting in it. See TextEngine-Types
         [[nodiscard]] Text selectedText(const TextRange&) const;
+        // The same, less a look for a paragraph starting at its start. See TextEngine-Types#edits
+        [[nodiscard]] Text restorableText(const TextRange&) const;
 
     private:
         // A stretch of characters in one look: its length, and an index into a table for the rest.
@@ -511,9 +514,10 @@ namespace ClaFi
             changed();
         }
 
-        void restoreText(const TextRange& range, const Text& taken)
+        void restoreText(const TextRange& range, const Text& taken,
+            const std::optional<ParagraphLook>& startParagraphLook = std::nullopt)
         {
-            Text::restoreText(range, taken);
+            Text::restoreText(range, taken, startParagraphLook);
             changed();
         }
 

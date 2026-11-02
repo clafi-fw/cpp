@@ -68,11 +68,21 @@ exception is a wrapper's style taken whole by a linked run with no style of its 
 style states an ink, the link's ink is written into the look in its place, and words typed at the
 link's end take it with the look.
 
-**A paragraph's look never changes through an edit inside it** - a join keeps the upper look, and a
-text put in brings looks only for the paragraphs it starts. So selectedText carries no look for the
-paragraph a range starts in, and restoring has none to put back. A look for it would have to mean
-two things: the paragraph the range stands in, and the paragraph that starts where two removals are
-joined - which is what merging forward deletes into one undo step does.
+**A paragraph's look survives an edit inside it** - a join keeps the upper look, and a text put in
+brings looks only for the paragraphs it starts. So restorableText, what TextHistory records, carries
+no look for the paragraph a range starts in, and restoring has none to put back. A look for it would
+have to mean two things: the paragraph the range stands in, and the paragraph that starts where two
+removals are joined - merging forward deletes into one undo step appends the second removal at a
+paragraph start, and Text's operator<< states a look at 0 there, over the next paragraph's.
+
+**A copy is another matter**, and selectedText carries the look of a paragraph starting at the
+range's start. Until 2026-11-02 the two were one function, and a Select All copied out of the
+TextEngine showcase lost the title's centring - WhatsClip's preview showed it on the left while the
+subtitle, the second paragraph, stayed centred. Oj, 18:35: "1 a" (selectedText for copies,
+restorableText for undo) and "2 b": a paragraph an edit empties takes the pasted text's first look,
+so the Ledger pasted into an empty box keeps its title centred. Undo puts the old look back through
+the look TextHistory keeps beside the change (Change::startParagraphLook, handed to restoreText) -
+recorded only where the edit changed it, which only an emptied paragraph does.
 
 **Words after a line end put in take the look after the edit**, as typed words at a paragraph's
 start do, because TextHistory merges a typed run that holds a line end into one step and a redo
@@ -86,6 +96,55 @@ says is copied to put the format under it.
 
 The layout compares the format it is stated next against the copy it keeps. The engine's cache keys
 on the format's hash beside the text's, and confirms a hit against the entry's copy.
+
+## StyleSheet
+
+Asked for 2026-11-02, for SeeDocs projects whose articles, footnotes and sidebars take their looks
+from a sheet the project keeps. Oj settled the shape in five answers (the project doc
+claude/style-sheets.md holds them): the reader states the sheet through a scope, a sheet may restate
+a framework name, an edit is live, a removed style is kept for the texts naming it, and a paste
+makes the styles the target lacks the text's own.
+
+**A style keeps its address.** A run names its style by address, as it does a constant, so a sheet
+holds each style through a unique_ptr and never frees one while it lives - a removed style is
+marked and kept. Assignment matches styles by name instead of replacing them, which is what lets a
+project read its sheet again over the one its open pages name. TextStyle stays a struct of views;
+the entry owns the strings and points the views at them again whenever a field is stated.
+
+**Names in a sheet behave as they do in a file.** A file states a base by name, and a reader finds
+the sheet's style of that name before the framework's. Had the sheet kept a base pointing at the
+framework's Code while it also held a Code of its own, the next read would base it on the sheet's
+instead, and a round trip would change what the style draws. So set normalises a base to the
+sheet's namesake, and a style restating a framework name takes over the bases pointing at the
+framework's. The loop check follows from that: a restatement whose own chain reaches its namesake
+would close a loop the moment it stood in for it.
+
+**One revision for every sheet.** A text does not know which sheet its styles came from, and a
+layout knows only the text's stamp and the style addresses - neither moves when a style's fields
+do. So any edit moves one number, TextEngine drops its cache when it sees it move (select and
+layoutGeneration both look), a layout held by a control rebuilds through the generation it already
+checks, and every form re-aligns on StylesEditedEvent. A sheet that knew its readers was the other
+way: it needs a registry of every text and control, for an edit that happens while a style editor
+is open.
+
+**An add is not an edit.** Reading a sheet, NamedIn, and a paste build fresh sheets, and an edit
+event there would re-shape every window for nothing. A style added cannot be named by any text yet,
+so only a change to a style already held counts. The reader adds each style after its base for
+that reason, then puts them in the file's order with moveTo, which no text draws from.
+
+**A copied text names the carried sheet's styles.** A package is written out when another
+application asks, which can be after the sheet the text was copied from has gone - a document
+closed, the application on its way out. So addText points the package's text at the copy of each
+style the package carries, and moves that sheet in so the addresses hold. NamedIn folds into a
+carried style what a file could not name: a base with no name, and a framework base that a carried
+style of the same name would stand in for once read back.
+
+**A paste reads through the carried sheet, then gives the text to the stated one.** Reading under
+the stated sheet alone would lose every name it lacks; reading under the carried one alone would
+bind names both know to the copy. So the text is read through the carried sheet, and each look is
+then rebased by name: the first style in its chain the stated sheet finds becomes the look's style,
+and the fields of the styles before it in the chain are folded into the look. A framework style is
+rebased too, so a target that restates Code gets its own Code for pasted code.
 
 ## Step names
 

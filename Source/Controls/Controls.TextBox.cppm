@@ -13,6 +13,7 @@ import ClaFi.Core.Foundation.EditHistory;
 
 import ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Layout;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine.Text;
 
@@ -101,6 +102,8 @@ namespace ClaFi::Controls
         DECLARE_WRITABLE_PROPERTY(ReadOnly, readOnly, setReadOnly, ReadOnly::No)
         // What the box shows, muted, while its text is empty.
         DECLARE_REF_PROPERTY(PlaceHolderText, placeHolderText, PlaceHolderText{})
+        // Where the style names of a pasted text are found; none is the application's sheet.
+        DECLARE_WRITABLE_PROPERTY(const StyleSheet*, styleSheet, setStyleSheet, nullptr)
     public:
         // The caret has come to rest somewhere new. See Controls
         DECLARE_EVENT(CaretMoveEvent, OnCaretMove, onCaretMove)
@@ -127,6 +130,7 @@ namespace ClaFi::Controls
         [[nodiscard]] TextRange selection() const;
 
         void setReadOnly(ReadOnly);
+        void setStyleSheet(const StyleSheet* sheet) { m_styleSheet = sheet; }
 
         // **What a box takes from the clipboard**, best first. Rich before plain: both are
         // reachable whenever either is, because the conversion between them runs in both
@@ -385,7 +389,8 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(readOnly),
-        INIT_PROPERTY(placeHolderText)
+        INIT_PROPERTY(placeHolderText),
+        INIT_PROPERTY(styleSheet)
     {
         m_caretTimer.onTick([this](TimerEvent&){
             blinkCaret();
@@ -463,11 +468,11 @@ namespace ClaFi::Controls
         if (!m_editProps.selRange.length)
             return;
 
-        // **One format in.** Plain text is advertised out of the conversion table, so an
-        // application that has never heard of this framework pastes what it can read without this
-        // site knowing such an application exists.
+        // **The text in, and the styles it names.** Plain text is advertised out of the conversion
+        // table, so an application that has never heard of this framework pastes what it can read
+        // without this site knowing such an application exists.
         Transfer::Source source{};
-        source.add<Transfer::ClaFiText>(text().selectedText(m_editProps.selRange));
+        Transfer::addText(source, text().selectedText(m_editProps.selRange));
         formContext().clipboard().set(std::move(source), stamp);
     }
 
@@ -487,7 +492,7 @@ namespace ClaFi::Controls
 
         // Walked in the order pasteFormats states. Each asks for nothing unless the clipboard can
         // answer it, so at most one of them reads.
-        std::optional<Text> pasted = Transfer::take<Transfer::ClaFiText>(*offer);
+        std::optional<Text> pasted = Transfer::takeText(*offer, m_styleSheet);
         if (!pasted.has_value())
         {
             const std::optional<std::wstring> plain = Transfer::take<Transfer::PlainText>(*offer);

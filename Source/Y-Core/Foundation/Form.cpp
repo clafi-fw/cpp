@@ -15,6 +15,7 @@ import ClaFi.Diagnostic.Log;
 import ClaFi.Diagnostic.Options;
 
 import ClaFi.Core.TextEngine;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.Core.System.Animation;
@@ -1609,6 +1610,9 @@ namespace ClaFi
             appContext.events().connect<FocusVisibilitySwitchEvent>(this,
                 &FormBase::focusVisibilitySwitched)
         },
+        m_stylesEditConnection{
+            StyleSheet::events().connect<StylesEditedEvent>(this, &FormBase::stylesEdited)
+        },
 #if CLAFI_TEXT_MOVING
         m_zAnimationSwitchConnection{
             appContext.events().connect<ZAnimationSwitchEvent>(this, &FormBase::zAnimationSwitched)
@@ -2106,6 +2110,12 @@ namespace ClaFi
     void FormBase::focusVisibilitySwitched(FocusVisibilitySwitchEvent&)
     {
         invalidateFocusedState();
+    }
+
+    // A style sheet's edit can change any text's size, and the texts drawn here are not known.
+    void FormBase::stylesEdited(StylesEditedEvent&)
+    {
+        invalidateAlign();
     }
 
     // Wherever the focus path passes through this form's root - the focus in it, or in a popup

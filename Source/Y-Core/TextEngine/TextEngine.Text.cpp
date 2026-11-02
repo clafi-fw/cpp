@@ -528,13 +528,19 @@ namespace ClaFi
         edit(range, inserted, Insertion::Nested);
     }
 
-    void Text::restoreText(const TextRange& range, const Text& taken)
+    // The look of the paragraph the range starts in goes back where it is given - the one an edit
+    // that emptied that paragraph replaced.
+    void Text::restoreText(const TextRange& range, const Text& taken,
+        const std::optional<ParagraphLook>& startParagraphLook)
     {
+        const std::size_t start = std::min(range.start, m_plainText.size());
         edit(range, taken, Insertion::Restored);
+        if (startParagraphLook.has_value())
+            stateParagraph(paragraphStartOf(start), startParagraphLook.value());
     }
 
-    // The paragraph the range starts in keeps its look whatever is put into it, so the range
-    // carries the looks of the paragraphs starting after its first character.
+    // A range starting where a paragraph starts carries that paragraph's look, so a copy of whole
+    // paragraphs reads as they look.
     Text Text::selectedText(const TextRange& range) const
     {
         Text result;
@@ -545,9 +551,21 @@ namespace ClaFi
         result.m_runs = result.runsOf(*this, start, end);
         for (const StatedParagraph& stated : m_paragraphs)
         {
-            if (stated.start > start && stated.start <= end)
+            if (stated.start >= start && stated.start <= end)
                 result.m_paragraphs.push_back({ stated.start - start, stated.look });
         }
+        return result;
+    }
+
+    // **The paragraph the range starts in keeps its look through the edit**, so what restoreText
+    // puts back holds none for it. A look at the start would also be misread once two removals
+    // are merged into one undo step: appended at a paragraph start, it would stand for the
+    // paragraph after the join.
+    Text Text::restorableText(const TextRange& range) const
+    {
+        Text result = selectedText(range);
+        if (!result.m_paragraphs.empty() && result.m_paragraphs.front().start == 0)
+            result.m_paragraphs.erase(result.m_paragraphs.begin());
         return result;
     }
 
@@ -905,11 +923,15 @@ namespace ClaFi
     // that look, so the paragraphs starting inside what goes are dropped. The paragraphs a text
     // put in starts take their own looks back where it is restored. Put in any other way, each
     // takes the look of the paragraph the edit starts in under its own, and the one holding the
-    // words that followed the edit keeps that look. See TextEngine-Types#edits
+    // words that followed the edit keeps that look. A paragraph the edit empties has nothing of
+    // its own left, and takes the first look of what is put in over its own.
+    // See TextEngine-Types#edits
     void Text::editParagraphs(std::size_t start, std::size_t end, const Text& inserted,
         Insertion insertion)
     {
         const ParagraphLook upper = paragraphLookAt(paragraphStartOf(start));
+        const bool emptied = insertion == Insertion::Nested && startsParagraph(start)
+            && (end == m_plainText.size() || m_plainText[end] == k_endLine);
         const std::size_t insertedLength = inserted.m_plainText.size();
 
         StatedParagraphs kept;
@@ -932,6 +954,9 @@ namespace ClaFi
             }
             return;
         }
+
+        if (emptied)
+            stateParagraph(start, laidUnder(inserted.paragraphLookAt(0), upper));
 
         const std::wstring& words = inserted.m_plainText;
         for (std::size_t lineEnd = words.find(k_endLine); lineEnd != std::wstring::npos;

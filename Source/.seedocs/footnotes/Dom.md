@@ -69,8 +69,8 @@ order:
 name - Icon, Space, VSpace, FlexSpace or TabTo - whose character goes without saying.
 
 **A Run holds anything more**: its words as its unnamed value, or an object under its name, and
-Style, Link and Anchor. Style names one of the text's own styles, or else one of the framework's;
-any other name reads as words in no style.
+Style, Link and Anchor. Style names one of the text's own styles, or else one of the reading
+sheet's or the framework's - see StyleSheet ReadingScope; any other name reads as words in no style.
 
 **A P states the paragraph's Align, Indent or LineSpacing** and stands where the paragraph starts.
 
@@ -88,6 +88,34 @@ Reading, an entry stating no Base is based on the style of its own name, so `Nam
 where it is strongest and the colour is not text - `spot`, `accent muted`, `muted`, `strongest`. A
 grade between the steps is written as its share, and a colour stated outright as `#FF8800`. An icon
 is `w,h,baseline` and reads back with no painter, drawing nothing.
+
+## CompositeSerializer<StyleSheet>
+
+**A style sheet is a section of its styles**, each an entry the way a text's own style is written,
+with no Scripts:
+
+    Styles=[
+        =[
+            Name=Key
+            Base=Code
+            FontWeight=Bold
+        ]
+        =[
+            Name=Code
+            FontFamily=Consolas
+        ]
+    ]
+
+**A Base names one of the sheet's styles, or else one of the framework's**, wherever in the list it
+stands - Key above is based on this sheet's Code. An entry stating no Base, or its own name, is
+based on the framework's style of that name where there is one. A Base leading back to its entry is
+dropped, and so is one naming no style.
+
+**An entry with no name, or with a name an entry above it took, is skipped.** The styles read are
+listed as the file lists them.
+
+**Read over a sheet in use**, by getTo, the sheet keeps every style the two name alike where it
+stands - see StyleSheet.
 
 ## Dt::Section
 

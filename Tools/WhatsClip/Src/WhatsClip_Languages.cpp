@@ -33,14 +33,15 @@ namespace ClaFi::Tools::WhatsClip
             return std::nullopt;
         }
 
-        // **What a format's name settles before its bytes are read.** The framework's rich text is
-        // written as ClaFi, whose strings may hold any language's source - a reading of the text
-        // would find that language instead. A format named after XML or HTML carries XML under a
-        // header no reading of the text sees past.
+        // **What a format's name settles before its bytes are read.** The framework's rich text and
+        // the style sheet beside it are written as ClaFi, whose strings may hold any language's
+        // source - a reading of the text would find that language instead. A format named after XML
+        // or HTML carries XML under a header no reading of the text sees past.
         [[nodiscard]] std::optional<Syntax::Language> namedLanguage(const LanguageList& languages,
             const std::wstring_view formatName)
         {
-            if (formatName == Transfer::ClaFiText::k_name)
+            if (formatName == Transfer::ClaFiText::k_name
+                || formatName == Transfer::ClaFiStyleSheet::k_name)
                 return listed(languages, Syntax::Languages::ClaFi.name);
 
             if (nameCarries(formatName, L"XML") || nameCarries(formatName, L"HTML"))

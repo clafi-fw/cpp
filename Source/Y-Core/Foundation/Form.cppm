@@ -12,6 +12,8 @@ import :Tooltip;
 
 import ClaFi.Core.Context.FormContext;
 
+import ClaFi.Core.TextEngine.StyleSheet;
+
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Baked;
@@ -490,6 +492,7 @@ namespace ClaFi
         void scaleSwitched(ScaleSwitchEvent&);
         void inputSwitched(InputSwitchEvent&);
         void focusVisibilitySwitched(FocusVisibilitySwitchEvent&);
+        void stylesEdited(StylesEditedEvent&);
         // The focused control's chain re-reads its state, to the root form, where that control
         // stands in this form.
         void invalidateFocusedState();
@@ -615,6 +618,7 @@ namespace ClaFi
         ScopedEventConnection m_scaleSwitchConnection;
         ScopedEventConnection m_inputSwitchConnection;
         ScopedEventConnection m_focusVisibilitySwitchConnection;
+        ScopedEventConnection m_stylesEditConnection;
 #if CLAFI_TEXT_MOVING
         ScopedEventConnection m_zAnimationSwitchConnection;
 #endif

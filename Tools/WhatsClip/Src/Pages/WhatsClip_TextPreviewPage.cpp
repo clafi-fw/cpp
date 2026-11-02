@@ -2,6 +2,8 @@ module ClaFi.Tools.WhatsClip.TextPreviewPage;
 
 import ClaFi.Tools.WhatsClip.Page;
 
+import ClaFi.StdActions.Transfer;
+
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
 import ClaFi.Controls.ScrollBox;
@@ -11,6 +13,7 @@ import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Core.Transfer.Conversion;
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Props;
@@ -34,12 +37,29 @@ namespace ClaFi::Tools::WhatsClip
     // **The words as they would be drawn**, out of whichever format the preview was read from. Both
     // readings are decoded before they arrive - the framework's own rich text as a Text with its
     // runs, a standard text as the string it is - so the encoding pick never appears here and
-    // the language is the text's own. Which of the two came is what the answer holds, not what
-    // the format was called.
+    // the language is the text's own.
+    //
+    // **The framework's rich text is taken the way a paste takes it**, so the styles carried
+    // beside it draw as they did where it was copied. This viewer states no sheet of its own, and
+    // every carried style becomes fields of the run's own over the framework's.
     void TextPreviewPage::showContent(Transfer::Offer& offer, const Transfer::Format& format)
     {
-        const Transfer::Payload payload = offer.read(format);
-        const Text* marked = std::any_cast<Text>(&payload);
+        std::optional<Text> taken;
+        std::size_t carriedCount = 0;
+        Transfer::Payload payload{};
+        if (format == Transfer::ClaFiText::format())
+        {
+            taken = Transfer::takeText(offer, nullptr);
+            const std::optional<StyleSheet> carried =
+                Transfer::take<Transfer::ClaFiStyleSheet>(offer);
+            if (carried.has_value())
+                carriedCount = carried->styles().size();
+        }
+        else
+        {
+            payload = offer.read(format);
+        }
+        const Text* marked = taken.has_value() ? &taken.value() : std::any_cast<Text>(&payload);
         const std::wstring* plain = std::any_cast<std::wstring>(&payload);
 
         Text status{};
@@ -50,6 +70,9 @@ namespace ClaFi::Tools::WhatsClip
                 ++runCount;
             });
             status << std::format(L"{} characters, {} runs", marked->plainText().size(), runCount);
+            if (carriedCount)
+                status << std::format(L", {} carried {}", carriedCount,
+                    carriedCount == 1 ? L"style" : L"styles");
         }
         else if (plain)
         {

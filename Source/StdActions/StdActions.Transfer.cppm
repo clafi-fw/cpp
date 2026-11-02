@@ -3,6 +3,9 @@ export module ClaFi.StdActions.Transfer;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Conversion;
 import ClaFi.Core.Transfer.Formats;
+import ClaFi.Core.Transfer.Offer;
+import ClaFi.Core.Transfer.Source;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.StdLib;
 
@@ -21,6 +24,22 @@ namespace ClaFi::Transfer
         [[nodiscard]] static std::string toBytes(const Text&);
         [[nodiscard]] static Text fromBytes(std::string_view bytes);
     };
+
+    // The styles a copied text names beyond the framework's, beside it on the clipboard.
+    export struct ClaFiStyleSheet
+    {
+        using Content = StyleSheet;
+        static constexpr std::wstring_view k_name = L"ClaFi.StyleSheet";
+
+        [[nodiscard]] static Format format();
+        [[nodiscard]] static std::string toBytes(const StyleSheet&);
+        [[nodiscard]] static StyleSheet fromBytes(std::string_view bytes);
+    };
+
+    // Puts a text on the source, and beside it the styles it names. See StdActions#addtext
+    export void addText(Source&, const Text&);
+    // The text an offer holds, its styles found through the sheet given. See StdActions#taketext
+    export [[nodiscard]] std::optional<Text> takeText(Offer&, const StyleSheet* sheet);
 
     // Rich down to plain is what lets a copy of one format paste into an application that has
     // never heard of ClaFi. Plain up to rich is the same text in one run of no look.

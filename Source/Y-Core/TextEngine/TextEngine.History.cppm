@@ -1,6 +1,7 @@
 export module ClaFi.Core.TextEngine.History;
 
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.Core.System.StepHistory;
 import ClaFi.Core.System.UiTypes;
@@ -61,6 +62,8 @@ namespace ClaFi
             std::size_t start{ 0 };
             Text removed{};
             Text inserted{};
+            // The look the paragraph at start had, where the edit replaced it.
+            std::optional<ParagraphLook> startParagraphLook{};
         };
 
         using Changes = std::vector<Change>;

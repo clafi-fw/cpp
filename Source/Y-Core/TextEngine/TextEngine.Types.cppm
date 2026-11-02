@@ -157,6 +157,11 @@ namespace ClaFi
             &SubBody,
             &Code,
         };
+
+        // The framework's style of that name; none where it has none.
+        [[nodiscard]] constexpr const TextStyle* named(std::wstring_view name);
+        // Whether the style is one of the framework's.
+        [[nodiscard]] constexpr bool contains(const TextStyle*);
     }
 
     // Which way off the baseline a script level takes its words.
@@ -348,6 +353,21 @@ namespace ClaFi
                 return style->*field;
         }
         return std::nullopt;
+    }
+
+    constexpr const TextStyle* TextStyles::named(std::wstring_view name)
+    {
+        for (const TextStyle* style : All)
+        {
+            if (style->name == name)
+                return style;
+        }
+        return nullptr;
+    }
+
+    constexpr bool TextStyles::contains(const TextStyle* style)
+    {
+        return std::ranges::find(All, style) != All.end();
     }
 
     constexpr bool TextLook::empty() const

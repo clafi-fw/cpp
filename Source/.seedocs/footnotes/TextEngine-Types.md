@@ -82,7 +82,7 @@ with the link it goes to and the anchor it is, where it has them. The runs follo
 no gap, so every character has one look.
 
 **A run names its look in the text's own table**, and a look names its style by address. The style
-stands outside the text, in TextStyles or among an application's constants.
+stands outside the text: in TextStyles, among an application's constants, or in a StyleSheet.
 
 **A paragraph may state a look of its own**, which every line it holds reads - see ParagraphLook.
 
@@ -93,7 +93,7 @@ were written in.
 
 **A named look, stated once and named by address.** TextStyles holds the framework's: Body, Title,
 SubTitle, Heading, SubHeading, Section, SubSection, SubBody and Code. An application states its own
-as constants:
+as constants, or keeps any number of them in a StyleSheet:
 
     constexpr TextStyle k_note{
         .name = L"Note",
@@ -106,10 +106,94 @@ based on none leaves them to whatever it is laid over.
 
 **It outlives every text and format that names it** - a constant at namespace scope or a static
 member does, and one declared inside a function does not. A style made for one call is refused at
-compile time. It never changes once named.
+compile time. A constant never changes; a sheet's style changes where the sheet is edited.
 
-**A file names a style by its name.** Reading resolves the framework's names; any other name reads
-back as words in no style.
+**A file names a style by its name.** Reading finds it in the reading sheet - see
+StyleSheet ReadingScope - and then among the framework's; any other name reads back as words in no
+style.
+
+## StyleSheet
+
+**Named styles kept at run time, any number of them.** A sheet owns its styles, and each stays at
+one address for the sheet's life, so a text names a sheet's style by address as it names a constant:
+
+    StyleSheet sheet;
+    const TextStyle* note = sheet.set(TextStyle{
+        .name = L"Note",
+        .base = &TextStyles::SubBody,
+        .ink = InkWell::spotInk(),
+    });
+    text << StyledText{ *note, L"Read this first" };
+
+**The sheet outlives every text naming its styles.** A copy has styles of its own at addresses of
+its own.
+
+**A name the sheet holds is the sheet's style.** find answers the sheet's style of a name, else the
+framework's. A style named as one of the framework's stands in for it: everything read through the
+sheet takes it, and so does every base in the sheet - `Name=Code` with an ink is the framework's
+Code in that ink, for every style based on Code. styleFor answers what the sheet sets in place of a
+framework style, the way a builder of pages takes its looks:
+
+    StyledText{ sheet.styleFor(TextStyles::Code), name }
+
+**A base is one of the framework's or one the sheet lists.** A base leading back to the style is
+refused, and so is one reaching, through another style, the framework style it stands in for.
+
+**Assigning a sheet keeps every style the two name alike where it stands**, with the other's fields,
+so a sheet read again over the one in use keeps its texts' styles. A style the other lacks is
+removed, as remove says.
+
+**An edit redraws.** A change to what a style the sheet already holds draws - its fields, its base,
+a style standing in for one that others were based on - moves StyleSheet::revision on and raises
+StylesEditedEvent, and every window lays out again. A style added is no edit: no text names it yet.
+Nor is a rename, since a text draws by address - unless the new name makes the style stand in for
+one of the framework's, which can change what it and the styles based on it draw.
+
+**A field one style lends a run set in another is copied into the run** - see TextLook - and an
+edit of the lending style does not reach that copy.
+
+**NamedIn gathers the styles a text is set in beyond the framework's**, with those they are based
+on: what a copied text carries beside it - see StdActions.
+
+## StyleSheet ReadingScope
+
+**The sheet a name read from a file is looked up in, while the scope lives:**
+
+    {
+        const StyleSheet::ReadingScope scope{ &projectStyles };
+        caption = node.get();
+    }
+
+A name is looked up in the text's own styles first, then the reading sheet, then the framework's.
+Where no scope is set, the reading sheet is the application's - AppParams::styleSheet. A scope of
+none reads through the application's sheet as well. Scopes nest, and each puts back the one it
+found. A scope is held per thread.
+
+**A Text is read when it is taken out of its node**, by get or getTo, so the scope has to stand
+around that call and not only around the file's load.
+
+## StyleSheet set
+
+**States a style under its name.** The sheet's style of that name takes the fields and the base,
+and keeps its address; a name the sheet does not list adds a style. The strings are copied in.
+
+**A style named as one of the framework's and based on none is based on that one**, which is what
+a file reads such an entry as. Nothing is answered where the name is empty or the base is refused.
+
+## StyleSheet remove
+
+**A removed style leaves the list and stays where it stands**, so a text naming it draws as it did,
+and the sheet holds it until it goes. The styles based on it are based on its base instead, and one
+named as a framework style that is left based on none is based on that one. A file written
+afterwards names it nowhere, and a text naming it reads back in whatever then holds its name: a
+style added under it, the framework's, or none.
+
+## TextEngine layoutGeneration
+
+**What a layout held outside the engine's cache checks** to learn that a build made before it would
+come out differently now. invalidateLayouts drops the cache and moves it on - for the font table
+above all - and so does an edit to any style sheet. An owner reading a number other than the one it
+built at invalidates its own layout.
 
 ## TextLook
 
@@ -216,14 +300,19 @@ rest.
 every paragraph starting inside what an edit takes out goes, and its words read the look of the
 paragraph the edit starts in. The first line of a text put in joins that paragraph the same way.
 
+**A paragraph an edit empties takes the first look of the text put in**, over its own: a text pasted
+into an empty paragraph, or over every word of one, starts in the look it was copied in. An undo
+puts the paragraph's own look back.
+
 **A line end put in splits a paragraph, and both halves keep its look.** A text put in with
 paragraph looks of its own lays each over that look.
 
-**selectedText takes the runs of the range and the looks of the paragraphs starting inside it**,
-its end included.
+**selectedText takes the runs of the range and the looks of the paragraphs starting in it**, its
+start and its end included, so a copy of whole paragraphs reads as they look.
 
-**restoreText puts such a text back as it was**, every run and paragraph in the look it had. An
-undo goes this way, so what an edit took out comes back exactly.
+**restorableText takes the same, less a look for a paragraph starting at its start**, and
+restoreText puts such a text back as it was, every run and paragraph in the look it had. An undo
+goes this way, so what an edit took out comes back exactly.
 
 ## TextFormat
 

@@ -21,6 +21,7 @@ import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.Diagnostic.Log;
@@ -37,13 +38,15 @@ namespace ClaFi
         std::wstring_view version{}; // major.minor.patch, shown on its Information page
         std::wstring_view site{}; // its own web address, shown as a link on its Information page
         UpdateSource updates{}; // where its Information page looks for a newer release
+        // The styles a name read from a file is found among where no reader states a sheet.
+        const StyleSheet* styleSheet{ nullptr };
     };
 
     export class ApplicationBase
     {
     public:
         ApplicationBase(Platform& platform, const AppParams&, BackendFactory, Dom::Dt::Section&&);
-        virtual ~ApplicationBase() = default;
+        virtual ~ApplicationBase();
         ApplicationBase(const ApplicationBase&) = delete;
     public:
         AppContext& context() { return m_context; }
@@ -171,6 +174,14 @@ namespace ClaFi
             }
         }
     {
+        // Ahead of the config, which may hold a text naming one of them.
+        StyleSheet::setApplicationSheet(appParams.styleSheet);
+    }
+
+    // The sheet the application stated may be gone already, and nothing reads through it now.
+    ApplicationBase::~ApplicationBase()
+    {
+        StyleSheet::setApplicationSheet(nullptr);
     }
 
     void ApplicationBase::saveConfig(bool evenIfNotExists)

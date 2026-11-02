@@ -85,9 +85,14 @@ namespace ClaFi
         // Both calls below clamp the range against the text, so this is the position the edit
         // actually happened at rather than the one it was asked for at.
         const std::size_t start = std::min(range.start, text.plainText().size());
-        Text removed = text.selectedText(range);
+        Text removed = text.restorableText(range);
+        // A paragraph an edit empties takes the look of what goes in, and undo puts its own back.
+        const ParagraphLook lookBefore = text.paragraphLookAt(start);
         text.replaceText(range, inserted);
         m_textSize = text.plainText().size();
+        const std::optional<ParagraphLook> replacedLook = text.paragraphLookAt(start) != lookBefore
+            ? std::optional<ParagraphLook>{ lookBefore }
+            : std::nullopt;
 
         // **An automatic edit is part of the step that caused it**, and lands where it says: the
         // indent a line break brings, the block a paste is moved to. The step is closed to its
@@ -101,6 +106,7 @@ namespace ClaFi
                 .start = start,
                 .removed = std::move(removed),
                 .inserted = inserted,
+                .startParagraphLook = replacedLook,
             });
             record.after = after.value_or(EditSelection{
                 .range = { end, 0 },
@@ -128,6 +134,7 @@ namespace ClaFi
                 .start = start,
                 .removed = std::move(removed),
                 .inserted = inserted,
+                .startParagraphLook = replacedLook,
             },
             .what = what,
             .before = before,
@@ -284,9 +291,13 @@ namespace ClaFi
     void TextHistory::revert(ControlText& text, const Record& record)
     {
         for (const Change& change : record.automatic | std::views::reverse)
-            text.restoreText({ change.start, change.inserted.plainText().size() }, change.removed);
+        {
+            text.restoreText({ change.start, change.inserted.plainText().size() }, change.removed,
+                change.startParagraphLook);
+        }
         const Change& change = record.change;
-        text.restoreText({ change.start, change.inserted.plainText().size() }, change.removed);
+        text.restoreText({ change.start, change.inserted.plainText().size() }, change.removed,
+            change.startParagraphLook);
     }
 
     void TextHistory::reapply(ControlText& text, const Record& record)
