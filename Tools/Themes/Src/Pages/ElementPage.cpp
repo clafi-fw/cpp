@@ -109,8 +109,8 @@ namespace Themes_App
         addRow(index);
         form().invalidateAlign();
         Text what{};
-        what << L"Add " << InkWell::accentInk() << L"rule " << m_rules->size() << PopColor{}
-            << L" to " << InkWell::accentInk() << m_name << PopColor{};
+        what << L"Add " << ColoredText{ InkWell::accentInk(), L"rule ", m_rules->size() };
+        what << L" to " << ColoredText{ InkWell::accentInk(), m_name };
         // Made on the new rule, whose leading cell the grid is about to select.
         rulesChanged(EditPhase::Settled, what, RuleSelection{
             .cell = RuleSelection::Cell{ .rule = index, .column = Tag{ RuleColumn::ApplyTo } },
@@ -141,13 +141,14 @@ namespace Themes_App
         std::ranges::sort(at.held, std::ranges::greater{});
         for (const std::size_t index : at.held)
             m_rules->erase(m_rules->begin() + static_cast<std::ptrdiff_t>(index));
-        Text what{};
-        what << L"Delete " << InkWell::accentInk();
+        Text rules{};
         if (at.held.size() == 1ull)
-            what << L"rule " << (at.held.front() + 1);
+            rules << L"rule " << (at.held.front() + 1);
         else
-            what << at.held.size() << L" rules";
-        what << PopColor{} << L" from " << InkWell::accentInk() << m_name << PopColor{};
+            rules << at.held.size() << L" rules";
+        Text what{};
+        what << L"Delete " << ColoredText{ InkWell::accentInk(), rules };
+        what << L" from " << ColoredText{ InkWell::accentInk(), m_name };
         rebuild();
         rulesChanged(EditPhase::Settled, what, at);
     }
@@ -160,7 +161,7 @@ namespace Themes_App
         *m_rules = *m_defaults;
         rebuild();
         Text what{};
-        what << L"Reset " << InkWell::accentInk() << m_name << PopColor{} << L" to defaults";
+        what << L"Reset " << ColoredText{ InkWell::accentInk(), m_name } << L" to defaults";
         rulesChanged(EditPhase::Settled, what, at);
     }
 
@@ -191,8 +192,7 @@ namespace Themes_App
             m_ruleRows[i]->setTag(Tag{ i });
             bindEditors(*m_ruleRows[i]);
         }
-        Text what{};
-        what << L"Move " << InkWell::accentInk();
+        Text movedRules{};
         if (event.items.size() == 1ull)
         {
             // The place is read off the rows: the grid counts its header among its children.
@@ -201,11 +201,13 @@ namespace Themes_App
                     return candidate == event.items.front();
                 });
             const std::size_t place = static_cast<std::size_t>(moved - m_ruleRows.begin());
-            what << L"rule " << (place + 1);
+            movedRules << L"rule " << (place + 1);
         }
         else
-            what << event.items.size() << L" rules";
-        what << PopColor{} << L" in " << InkWell::accentInk() << m_name << PopColor{};
+            movedRules << event.items.size() << L" rules";
+        Text what{};
+        what << L"Move " << ColoredText{ InkWell::accentInk(), movedRules };
+        what << L" in " << ColoredText{ InkWell::accentInk(), m_name };
         rulesChanged(EditPhase::Settled, what, selection());
     }
 
@@ -285,8 +287,8 @@ namespace Themes_App
     Text ElementPage::ruleStepName(const std::size_t index, const std::wstring_view column) const
     {
         Text result{};
-        result << InkWell::accentInk() << column << PopColor{} << L" change in "
-            << InkWell::accentInk() << m_name << L", rule " << (index + 1) << PopColor{};
+        result << ColoredText{ InkWell::accentInk(), column } << L" change in ";
+        result << ColoredText{ InkWell::accentInk(), m_name, L", rule ", index + 1 };
         return result;
     }
 

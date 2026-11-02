@@ -222,7 +222,7 @@ namespace ClaFi
         {
             Text shown{};
             if (!notice.title.empty())
-                shown << TextOp::PushBold << notice.title << TextOp::PopBold << L'\n';
+                shown << BoldText{ notice.title } << L'\n';
             shown << notice.message;
             setMessage(notice.icon, shown);
             for (std::size_t index = 0; index < notice.answers.size(); ++index)

@@ -54,15 +54,10 @@ namespace ClaFi::Controls
         // the strokes of the letters.
         [[nodiscard]] Text sampleCaption(const Color original)
         {
-            Text caption{};
-            caption << original;
-            caption << InTextIcon{ k_sampleSwatch, [original](DrawIconEvent& event) {
+            const InTextIcon swatch{ k_sampleSwatch, [original](DrawIconEvent& event) {
                 event.canvas().fillCircle(event.iconCenter(), event.iconWidth() / 2.0f, original);
             } };
-            caption << Space{ k_sampleGap };
-            caption << L"Original";
-            caption << PopColor{};
-            return caption;
+            return Text{ ColoredText{ original, swatch, Space{ k_sampleGap }, L"Original" } };
         }
     }
 

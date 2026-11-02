@@ -34,7 +34,6 @@ import ClaFi.Core.DomEngine_Document;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.AppTheme_Colors;
 
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
@@ -159,31 +158,23 @@ namespace ClaFi
         const bool toCreate = purpose == FolderDisplayPurpose::ToCreate;
         const bool toDelete = purpose == FolderDisplayPurpose::ToDelete;
 
+        const Text systemWords{ ColoredText{
+            InkGrade::Muted,
+            toDelete ? L"\nfrom " : L"\nin ",
+            systemPart
+        } };
+        Text path{ ColoredText{ InkWell::spotInk(), appPart } };
+        if (toCreate)
+            path << LinkText{ std::wstring{ systemPart }, systemWords };
+        else
+            path << systemWords;
+
         Text result{};
         result << VSpace{ 8.0f } << L"\n";
-        result << ParaIndent{ 12.0f };
-        
         if (toDelete)
-            result << PushLink{ folder };
-        
-        // ClaFi part
-        result << PushThemeColor{ InkWell::spotInk() };
-        result << appPart;
-        result << PopColor{};
-
-        // System part
-        if (toCreate)
-            result << PushLink{ std::wstring{ systemPart } };
-        result << InkGrade::Muted;
-        result << (toDelete ? L"\nfrom " : L"\nin ");
-        result << systemPart;
-        result << PopColor{};
-        if (toCreate)
-            result << PopLink{};
-        
-        if (toDelete)
-            result << PopLink{};
-        
+            result << ParagraphText{ ParaIndent{ 12.0f }, LinkText{ folder, path } };
+        else
+            result << ParagraphText{ ParaIndent{ 12.0f }, path };
         return result;
     }
 
@@ -291,7 +282,7 @@ namespace ClaFi
             HostProps{
                 VerticalAlign::Top,
                 ExpanderViewMode::Divider,
-                HeaderText{ TextStyle::Heading, caption }
+                HeaderText{ StyledText{ TextStyles::Heading, caption } }
             },
             BodyProps{
                 Orientation::Vertical,
@@ -535,10 +526,10 @@ namespace ClaFi
             m_gpuAcceleration.invalidateState();
         });
         m_gpuAcceleration.onAdjustTooltip([](AdjustTooltipEvent& event) {
-            event.text << Fmt{
-                L"[b]On[/b][tabto 26] The windows are drawn through the graphics card\n"
-                L"[b]Off[/b][tabto 26] They are drawn on the CPU instead"
-            };
+            event.text << BoldText{ L"On" } << TabTo{ 26.0f };
+            event.text << L" The windows are drawn through the graphics card" << k_endLine;
+            event.text << BoldText{ L"Off" } << TabTo{ 26.0f };
+            event.text << L" They are drawn on the CPU instead";
         });
         // **The section goes, not the check**: an application that named no GPU backend has
         // nothing to turn on, and the section is what draws the caption and its line.
@@ -621,7 +612,7 @@ namespace ClaFi
     void SettingsPage::writeScaleReadout()
     {
         Text reading{};
-        reading << Fmt{ L"{}%", appContext().scalePercent() };
+        reading << appContext().scalePercent() << L'%';
         m_scaleReadout.text() = std::move(reading);
         m_scaleReadout.invalidate();
     }
@@ -631,7 +622,7 @@ namespace ClaFi
     {
         const int percent = static_cast<int>(std::round(appContext().zAnimationAmount() * 100.0f));
         Text reading{};
-        reading << Fmt{ L"{}%", percent };
+        reading << percent << L'%';
         m_zAnimationReadout.text() = std::move(reading);
         m_zAnimationReadout.invalidate();
     }

@@ -73,12 +73,7 @@ namespace Themes_App
         // A glyph in the spot ink and bold, the way the operation combo boxes write theirs.
         void writeGlyph(Text& text, const std::wstring_view glyph)
         {
-            text << InkWell::spotInk()
-                << TextOp::PushBold
-                << glyph
-                << TextOp::PopBold
-                << PopColor{}
-                << L" ";
+            text << ColoredText{ InkWell::spotInk(), BoldText{ glyph } } << L" ";
         }
 
         // A value as it would be typed over the face: its mark and its number.
@@ -104,18 +99,18 @@ namespace Themes_App
         {
             if (rule.operation() == ColorRuleOp::NoChange)
             {
-                text << InkWell::textInk(InkGrade::Subtle)
-                    << TextStyle::SubBody
-                    << k_operationNames[static_cast<std::size_t>(ColorRuleOp::NoChange)]
-                    << PopTextStyle{}
-                    << PopColor{};
+                text << ColoredText{
+                    InkGrade::Subtle,
+                    StyledText{
+                        TextStyles::SubBody,
+                        k_operationNames[static_cast<std::size_t>(ColorRuleOp::NoChange)]
+                    }
+                };
                 return;
             }
             const float value = rule.value();
             writeGlyph(text, operationGlyph(rule.operation(), value));
-            text << TextStyle::Code
-                << std::format(L"{:.2f}", std::abs(value))
-                << PopTextStyle{};
+            text << StyledText{ TextStyles::Code, std::format(L"{:.2f}", std::abs(value)) };
         }
 
         // The operation's glyph on a blob in the muted spot ink, shaped as the hue popup's.
@@ -126,14 +121,12 @@ namespace Themes_App
             const Color spot = event.spotRgb(InkGrade::Muted);
             event.canvas().fillRoundedRectangle(blob, radius, radius, spot);
 
-            Text glyph;
-            glyph << k_blobGlyphStyle;
+            Text glyph{};
             writeBlobGlyph(glyph, operationGlyph(operation, 0.0f));
-            glyph << PopTextStyle{};
             Control::textEngine().drawText(
                 event.controlContext(),
                 blob,
-                glyph,
+                Text{ StyledText{ k_blobGlyphStyle, glyph } },
                 { VerticalTextAnchor::Center, HorizontalTextAnchor::Center }
             );
         }
@@ -478,9 +471,7 @@ namespace Themes_App
         
         writeGlyph(event.text, operationGlyph(m_operation, value));
 
-        event.text << TextStyle::Code
-            << std::format(L"{:.2f}", std::abs(value))
-            << PopTextStyle{};
+        event.text << StyledText{ TextStyles::Code, std::format(L"{:.2f}", std::abs(value)) };
     }
 
     void OperationItem::drawIcon(DrawIconEvent& event)

@@ -343,9 +343,7 @@ namespace ClaFi::Tools::WhatsClip
             if (!note.empty())
             {
                 caption << L"\n";
-                caption << InkGrade::Muted;
-                caption << PushFontSize{ k_tabNoteSize };
-                caption << note;
+                caption << ColoredText{ InkGrade::Muted, SizedText{ k_tabNoteSize, note } };
             }
 
             text() = std::move(caption);
@@ -614,9 +612,9 @@ namespace ClaFi::Tools::WhatsClip
     {
         return {
             .name = Text{
-            L"What",
-            InkGrade::Muted, L"s", PopColor{},
-            InkWell::spotInk(), L"Clip", PopColor{}
+                L"What",
+                ColoredText{ InkGrade::Muted, L"s" },
+                ColoredText{ InkWell::spotInk(), L"Clip" }
             },
             .publisher = L"ClaFi Framework",
             .description = Text{ L"A clipboard viewer done right." },

@@ -13,7 +13,7 @@ namespace ClaFi::Documents
     Text documentInQuestionText(const std::wstring_view subject)
     {
         Text result{};
-        result << PushThemeColor{ InkWell::spotInk() } << subject << PopColor{};
+        result << ColoredText{ InkWell::spotInk(), subject };
         return result;
     }
 

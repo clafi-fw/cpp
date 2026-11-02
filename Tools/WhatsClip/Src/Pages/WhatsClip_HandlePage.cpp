@@ -118,15 +118,9 @@ namespace ClaFi::Tools::WhatsClip
         Text reading{};
         if (answered)
         {
-            reading << TextStyle::Code;
-            reading << entry->handleType;
-            reading << L"  ";
-            reading << hexOf(value);
-            reading << PopTextStyle{};
+            reading << StyledText{ TextStyles::Code, entry->handleType, L"  ", hexOf(value) };
             reading << L"\n\n";
-            reading << InkGrade::Muted;
-            reading << k_handleNote;
-            reading << PopColor{};
+            reading << ColoredText{ InkGrade::Muted, k_handleNote };
         }
 
         body().text() = std::move(reading);

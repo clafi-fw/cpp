@@ -44,7 +44,7 @@ A project is a folder of its own, kept wherever the user chooses. SeeDocs offers
 - `Surface.cfg` - the database the scanner writes
 - `Scan.cache` - what the last scan read of each file - see [Scan cache](#scan-cache)
 - `footnotes` - the notes the pages show beside the hints
-- `Articles` - the project's own pages, one per Content item - see [Articles](#articles)
+- `articles` - the project's own pages, one per Content item - see [Articles](#articles)
 
 The sources stay where they are, in any number of folders, and are read in place.
 
@@ -464,9 +464,9 @@ ends.
 ## Articles
 
 **An article is a page of the project's own**, the one a Content item of the sidebar shows: a
-title, a lead under it, and blocks. Each is a file under the project's `Articles` folder, in a
+title, a lead under it, and blocks. Each is a file under the project's `articles` folder, in a
 folder for each category on the way - the Content item Quick start under the category Guides reads
-`Articles/Guides/Quick start.cfg`. The pages show no article yet, and nothing makes one;
+`articles/Guides/Quick start.cfg`. The pages show no article yet, and nothing makes one;
 `SeeDocs_App.Articles` reads and writes the files.
 
 An article is a list of blocks, each of one kind:
@@ -479,7 +479,7 @@ An article is a list of blocks, each of one kind:
   `Pascal`, `JSON`, `XML`, `ClaFi`, or none for plain text.
 - **Table** - the header's cells, one to a column, and the rows. A row is a cell under each column,
   or one group cell across the table.
-- **Figure** - a PNG or SVG file of the project's `Images` folder, reached from the article's file,
+- **Figure** - a PNG or SVG file of the project's `images` folder, reached from the article's file,
   and a description of what it shows for a reader who cannot see it.
 - **DoDont** - a list of what to do beside a list of what not to.
 - **Callout** - an Info or a Warning box holding paragraphs, list items and code.
@@ -1317,7 +1317,7 @@ there. A section that belongs to no declaration is found by the searches of whol
 - a value type declared under `Controls/Base`, where it reaches an application only through an
   import of the base
 
-Every project's check also lists the articles in its `Articles` folder that no Content item of
+Every project's check also lists the articles in its `articles` folder that no Content item of
 the sidebar reaches. A project reading any C++ and Delphi has those checked alone.
 
 ## Building

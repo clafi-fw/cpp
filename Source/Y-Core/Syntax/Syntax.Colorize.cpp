@@ -37,9 +37,7 @@ namespace ClaFi::Syntax
             if (!runOpen)
                 return;
             out << source.substr(plainStart, runStart - plainStart);
-            out << runInk;
-            out << source.substr(runStart, runEnd - runStart);
-            out << PopColor{};
+            out << ColoredText{ runInk, source.substr(runStart, runEnd - runStart) };
             plainStart = runEnd;
             runOpen = false;
         };

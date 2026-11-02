@@ -5,9 +5,10 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
+
+import ClaFi.StdLib;
 
 namespace TextEngine_App
 {
@@ -15,7 +16,7 @@ namespace TextEngine_App
 
     export Text buildTextEngineShowcase()
     {
-        // Arguments the format string draws from, in the order it consumes them.
+        // The values section 5 writes.
         int demoInt = 42;
         float demoFloat = 3.14159f;
         unsigned int demoHex = 255;
@@ -24,8 +25,8 @@ namespace TextEngine_App
         // An icon in the flow is any callable taking a DrawIconEvent.
         const DrawIconFunc& myIconPainter = Icons::Eye::draw;
 
-        // Yellow has no format tag: at the reading threshold on a light page the warm arc collapses
-        // to brown, so the colour is carried by a shape instead of by a run of text.
+        // Yellow is not set as a run of text: at the reading threshold on a light page the warm arc
+        // collapses to brown, so the colour is carried by a shape instead.
         auto paintWarning = [](DrawIconEvent& event){
             event.canvas().fillCircle(event.iconCenter(), event.scaleF(5.0f),
                 event.inkRgb(InkWell::Yellow));
@@ -38,123 +39,216 @@ namespace TextEngine_App
             event.canvas().fillCircle(center, event.scaleF(3.0f), event.accentRgb(InkGrade::Strongest));
             };
 
-        return Text{ Fmt{
-            // ==========================================
-            // 1. **Alignment & headings**
-            // ==========================================
-            L"[center][title]ClaFi TextEngine[/title][n]"
-            L"[subtitle]A comprehensive demonstration of all formatting features[/subtitle][n][n]"
+        // One row of the ink table: the ink's name and the colour it is drawn from.
+        struct InkRow
+        {
+            std::wstring_view name;
+            InkColor color;
+        };
 
-            // ==========================================
-            // 2. **Structural tags & typography**
-            // ==========================================
-            L"[left][heading]1. Typography & Hierarchy[/heading][n]"
-            L"[body]The engine supports predefined structural tags, such as [b]title[/b] and [b]subtitle[/b] used above, alongside:[/body][n]"
-            L"[section]Section[/section] [subsection]SubSection[/subsection] [heading]Heading[/heading] "
-            L"[subheading]SubHeading[/subheading] [body]Body[/body] [subbody]SubBody[/subbody] [code]Code[/code][n][n]"
+        // One column of the ink table: the grade, its name and the stop the column starts at.
+        struct GradeColumn
+        {
+            std::wstring_view name;
+            InkGrade grade;
+            float stop;
+        };
 
-            L"[heading]2. Inline Formatting & Fonts[/heading][n]"
-            L"[body]Standard formats include [b]Bold[/b], [i]Italic[/i], and [b][i]Bold Italic[/i][/b].[/body][n]"
-            L"[body]You can specify custom sizes like [size 24]Large[/size] or [size 10]Small[/size],[/body] "
-            L"[body]and override the font family dynamically to [font Consolas]Consolas[/font].[/body][n][n]"
+        constexpr std::array k_inkRows{
+            InkRow{ L"Text", InkColor::Text },
+            InkRow{ L"Accent", InkColor::Accent },
+            InkRow{ L"Spot", InkColor::Spot },
+            InkRow{ L"Yellow", InkColor::Yellow },
+            InkRow{ L"Green", InkColor::Green },
+            InkRow{ L"Blue", InkColor::Blue },
+            InkRow{ L"Red", InkColor::Red },
+            InkRow{ L"Black", InkColor::Black },
+            InkRow{ L"White", InkColor::White },
+        };
 
-            // ==========================================
-            // 3. **Color system**
-            // ==========================================
-            L"[heading]3. Color System[/heading][n]"
-            L"[body]Grades are steps between the surface and the ink the chain arrived at: "
-            L"[color strongest]Strongest[/color], [color strong]Strong[/color] and [color muted]Muted[/color].[/body][n]"
-            L"[body]The theme's two accents: [color accent]Accent[/color] is what the interface answers with, "
-            L"[color spot]Spot[/color] is what stands apart from it.[/body][n]"
-            L"[body]Semantic inks carry a meaning rather than emphasis: "
-            L"[color green]Success[/color], [color blue]Information[/color], [color red]Error[/color].[/body][n]"
-            L"[body]Yellow is drawn rather than read, so a shape carries it: [icon {} 14,14] warning.[/body][n]"
-            L"[body]Every color takes a grade as well: [color accent muted]Muted Accent[/color], [color red strong]Strong Red[/color].[/body][n]"
-            L"[b]Color[/b][tabto 80][b]Faint[/b][tabto 170][b]Subtle[/b][tabto 260][b]Muted[/b][tabto 350][b]Strong[/b][tabto 440][b]Strongest[/b][n]"
-            L"Text[tabto 80][color text faint]Sample[/color][tabto 170][color text subtle]Sample[/color][tabto 260][color text muted]Sample[/color][tabto 350][color text strong]Sample[/color][tabto 440][color text strongest]Sample[/color][n]"
-            L"Accent[tabto 80][color accent faint]Sample[/color][tabto 170][color accent subtle]Sample[/color][tabto 260][color accent muted]Sample[/color][tabto 350][color accent strong]Sample[/color][tabto 440][color accent strongest]Sample[/color][n]"
-            L"Spot[tabto 80][color spot faint]Sample[/color][tabto 170][color spot subtle]Sample[/color][tabto 260][color spot muted]Sample[/color][tabto 350][color spot strong]Sample[/color][tabto 440][color spot strongest]Sample[/color][n]"
-            L"Yellow[tabto 80][color yellow faint]Sample[/color][tabto 170][color yellow subtle]Sample[/color][tabto 260][color yellow muted]Sample[/color][tabto 350][color yellow strong]Sample[/color][tabto 440][color yellow strongest]Sample[/color][n]"
-            L"Green[tabto 80][color green faint]Sample[/color][tabto 170][color green subtle]Sample[/color][tabto 260][color green muted]Sample[/color][tabto 350][color green strong]Sample[/color][tabto 440][color green strongest]Sample[/color][n]"
-            L"Blue[tabto 80][color blue faint]Sample[/color][tabto 170][color blue subtle]Sample[/color][tabto 260][color blue muted]Sample[/color][tabto 350][color blue strong]Sample[/color][tabto 440][color blue strongest]Sample[/color][n]"
-            L"Red[tabto 80][color red faint]Sample[/color][tabto 170][color red subtle]Sample[/color][tabto 260][color red muted]Sample[/color][tabto 350][color red strong]Sample[/color][tabto 440][color red strongest]Sample[/color][n]"
-            L"Black[tabto 80][color black faint]Sample[/color][tabto 170][color black subtle]Sample[/color][tabto 260][color black muted]Sample[/color][tabto 350][color black strong]Sample[/color][tabto 440][color black strongest]Sample[/color][n]"
-            L"White[tabto 80][color white faint]Sample[/color][tabto 170][color white subtle]Sample[/color][tabto 260][color white muted]Sample[/color][tabto 350][color white strong]Sample[/color][tabto 440][color white strongest]Sample[/color][n][n]"
-            L"[body]A color stated outright is left alone by the theme: [color #FF0055]Hex Color[/color].[/body][n]"
-            L"[body]...and one handed in as an argument: [color {}]Injected Argument Color[/color].[/body][n][n]"
+        constexpr std::array k_gradeColumns{
+            GradeColumn{ L"Faint", InkGrade::Faint, 80.0f },
+            GradeColumn{ L"Subtle", InkGrade::Subtle, 170.0f },
+            GradeColumn{ L"Muted", InkGrade::Muted, 260.0f },
+            GradeColumn{ L"Strong", InkGrade::Strong, 350.0f },
+            GradeColumn{ L"Strongest", InkGrade::Strongest, 440.0f },
+        };
 
-            // ==========================================
-            // 4. **Layout & spacing**
-            // ==========================================
-            L"[heading]4. Layout, Spacing & Alignment[/heading][n]"
-            L"[left]Left alignment.[end]"
-            L"[center]Center alignment.[end]"
-            L"[right]Right alignment.[end]"
-            L"[justified]Justified alignment spreads the text out to fill the available space, creating straight margins on both left and right edges. This typographic formatting alters the spacing between words and characters so that every line of text begins and ends at the same horizontal boundaries. In professional publishing and documentation, this layout creates a structured grid system. However, on wide displays or high-resolution monitors, short paragraphs can stretch or fail to wrap correctly, creating white space gaps known as 'rivers' throughout the block. To maintain rendering quality across wide display boundaries, the body text block requires sufficient length to fill multiple full rows.[/justified][n][n]"
+        Text text{};
 
-            L"[left][body]Horizontal control:[space 40]40px fixed gap.[flex]Flex space pushes this to the right.[end]"
-            L"[body]The same space under its other names:[space flex]space flex,[fill]and fill.[end]"
-            L"[body]TabTo provides exact tabular layout:[/body][n]"
-            L"[b]Component[/b][tabto 150][b]Status[/b][tabto 250][b]Complexity[/b][n]"
-            L"Parser[tabto 150][color green]Active[/color][tabto 250]High[n]"
-            L"Renderer[tabto 150][color muted]Standby[/color][tabto 250]Low[n][n]"
+        // ==========================================
+        // 1. **Alignment & headings**
+        // ==========================================
+        text << ParagraphText{
+            TextAlign::Center,
+            StyledText{ TextStyles::Title, L"ClaFi TextEngine" },
+            k_endLine,
+            StyledText{ TextStyles::SubTitle, L"A comprehensive demonstration of all formatting features" },
+            k_endLine,
+            k_endLine // the blank row under the subtitle is centred with it
+        };
 
-            L"[body]The [b]vspace[/b] tag is an inline element that defines the minimum height of a row.[/body][n]"
-            L"This is a standard line of text.[n]"
-            L"This line contains a [vspace 60] tag, forcing this row height to a minimum of 60px.[n]"
-            L"If the specified vspace height is less than the natural text height, it has no effect.[n][n]"
+        // ==========================================
+        // 2. **Text styles & typography**
+        // ==========================================
+        text << StyledText{ TextStyles::Heading, L"1. Typography & Hierarchy" } << k_endLine;
+        text << L"The engine supports predefined text styles, such as " << BoldText{ L"title" };
+        text << L" and " << BoldText{ L"subtitle" } << L" used above, alongside:" << k_endLine;
+        text << StyledText{ TextStyles::Section, L"Section" } << L" ";
+        text << StyledText{ TextStyles::SubSection, L"SubSection" } << L" ";
+        text << StyledText{ TextStyles::Heading, L"Heading" } << L" ";
+        text << StyledText{ TextStyles::SubHeading, L"SubHeading" } << L" ";
+        text << StyledText{ TextStyles::Body, L"Body" } << L" ";
+        text << StyledText{ TextStyles::SubBody, L"SubBody" } << L" ";
+        text << StyledText{ TextStyles::Code, L"Code" } << k_endLine << k_endLine;
 
-            // ==========================================
-            // 5. **Variable injection**
-            // ==========================================
-            L"[heading]5. Dynamic Variable Injection[/heading][n]"
-            L"[body]Because Fmt executes over std::vformat, standard format specifiers are supported natively:[/body][n]"
-            L"Integer: {}, Float: {:.2f}, Hex: 0x{:02X}[n][n]"
+        text << StyledText{ TextStyles::Heading, L"2. Inline Formatting & Fonts" } << k_endLine;
+        text << L"Standard formats include " << BoldText{ L"Bold" } << L", " << ItalicText{ L"Italic" };
+        text << L", and " << BoldText{ ItalicText{ L"Bold Italic" } } << L"." << k_endLine;
+        text << L"You can specify custom sizes like " << SizedText{ 24.0f, L"Large" };
+        text << L" or " << SizedText{ 10.0f, L"Small" } << L", ";
+        text << L"and override the font family dynamically to " << FamilyText{ L"Consolas", L"Consolas" };
+        text << L"." << k_endLine << k_endLine;
 
-            // ==========================================
-            // 6. **In-text icons**
-            // ==========================================
-            L"[heading]6. In-Text Icons[/heading][n]"
-            L"[body]Icons align with text. Default size fallback: [icon {}].[/body][n]"
-            L"[body]Custom dimensions (W,H,B): [icon {} 24,24,20] sizes the element relative to the layout.[/body][n][n]"
+        // ==========================================
+        // 3. **Color system**
+        // ==========================================
+        text << StyledText{ TextStyles::Heading, L"3. Color System" } << k_endLine;
+        text << L"Grades are steps between the surface and the ink the chain arrived at: ";
+        text << ColoredText{ InkGrade::Strongest, L"Strongest" } << L", ";
+        text << ColoredText{ InkGrade::Strong, L"Strong" } << L" and ";
+        text << ColoredText{ InkGrade::Muted, L"Muted" } << L"." << k_endLine;
+        text << L"The theme's two accents: " << ColoredText{ InkColor::Accent, L"Accent" };
+        text << L" is what the interface answers with, " << ColoredText{ InkColor::Spot, L"Spot" };
+        text << L" is what stands apart from it." << k_endLine;
+        text << L"Semantic inks carry a meaning rather than emphasis: ";
+        text << ColoredText{ InkColor::Green, L"Success" } << L", ";
+        text << ColoredText{ InkColor::Blue, L"Information" } << L", ";
+        text << ColoredText{ InkColor::Red, L"Error" } << L"." << k_endLine;
+        text << L"Yellow is drawn rather than read, so a shape carries it: ";
+        text << InTextIcon{ 14.0f, 14.0f, paintWarning } << L" warning." << k_endLine;
+        text << L"Every color takes a grade as well: ";
+        text << ColoredText{ InkWell::accentInk(InkGrade::Muted), L"Muted Accent" } << L", ";
+        text << ColoredText{ InkWell::redInk(InkGrade::Strong), L"Strong Red" } << L"." << k_endLine;
 
-            // ==========================================
-            // 7. **Lists & custom drawing**
-            // ==========================================
-            L"[heading]7. Lists & Custom Drawing\n[/heading]"
+        text << BoldText{ L"Color" };
+        for (const GradeColumn& column : k_gradeColumns)
+            text << TabTo{ column.stop } << BoldText{ column.name };
+        text << k_endLine;
+        for (const InkRow& row : k_inkRows)
+        {
+            text << row.name;
+            for (const GradeColumn& column : k_gradeColumns)
+            {
+                Ink ink = InkWell::textInk(column.grade);
+                ink.color = row.color;
+                text << TabTo{ column.stop } << ColoredText{ ink, L"Sample" };
+            }
+            text << k_endLine;
+        }
+        text << k_endLine;
 
-            L"[indent 34]" // Push this entire block (including wrapped lines) to the right
-            L"[icon {} 0,18][b]Lambda Drawables:[/b]"  L" [color muted]Inject C++ lambdas to render arbitrary graphics directly into the text flow.[/color]\n"
-            L"[icon {} 0,18][b]Baseline Alignment:[/b]" L" [color muted]Icons and custom drawings share the baseline of the surrounding text block.[/color]\n"
-            L"[icon {} 0,18][b]Reusability:[/b]"       L" [color muted]Pass the same lambda instance multiple times to generate repeating UI elements like list bullets.[/color]\n"
-            L"[icon {} 0,18][b]Spacing Control:[/b]"   L" [color muted]Combine layout tags with icons to define structured list hierarchies.[/color]\n"
+        text << L"A color stated outright is left alone by the theme: ";
+        text << ColoredText{ Color{ 0xFF, 0x00, 0x55 }, L"Hex Color" } << L"." << k_endLine;
+        text << L"...and one held in a variable: ";
+        text << ColoredText{ injectedColor, L"Injected Argument Color" } << L"." << k_endLine << k_endLine;
 
-            L"[indent 0][n]" // Reset the indent back to normal for the following note
+        // ==========================================
+        // 4. **Layout & spacing**
+        // ==========================================
+        text << StyledText{ TextStyles::Heading, L"4. Layout, Spacing & Alignment" } << k_endLine;
+        text << ParagraphText{ TextAlign::Left, L"Left alignment." };
+        text << ParagraphText{ TextAlign::Center, L"Center alignment." };
+        text << ParagraphText{ TextAlign::Right, L"Right alignment." };
+        text << ParagraphText{
+            TextAlign::Justified,
+            L"Justified alignment spreads the text out to fill the available space, creating straight margins on both left and right edges. This typographic formatting alters the spacing between words and characters so that every line of text begins and ends at the same horizontal boundaries. In professional publishing and documentation, this layout creates a structured grid system. However, on wide displays or high-resolution monitors, short paragraphs can stretch or fail to wrap correctly, creating white space gaps known as 'rivers' throughout the block. To maintain rendering quality across wide display boundaries, the body text block requires sufficient length to fill multiple full rows.",
+            k_endLine,
+            k_endLine // the blank row after the block is justified with it
+        };
 
-            // ==========================================
-            // 8. **Links**
-            // ==========================================
-            L"[heading]8. Links[/heading][n]"
-            L"[body]A [link https://example.com]link[/link] is drawn in the accent ink and underlined under the pointer. "
-            L"A click follows it in a read-only box like this one, and a click with Ctrl held in a box the user types into.[/body][n]"
-            L"[body]The framework opens [link https://example.com]https[/link] and [link mailto:someone@example.com]mailto[/link] targets itself. "
-            L"Any other, such as [link clafi:ledger]this one[/link], goes to OnLinkClick and nowhere else.[/body][n]"
-            L"[body]Copy a link from here and paste it into the Emoji page to try it where the text can be edited.[/body][n]"
-            ,
-            // One queue serves both syntaxes, so these stand in the order the string reaches them.
-            paintWarning,       // Arg 1  - the yellow mark in section 3
-            injectedColor,      // Arg 2  - [color {}]
-            demoInt,            // Arg 3
-            demoFloat,          // Arg 4
-            demoHex,            // Arg 5
-            myIconPainter,      // Arg 6
-            myIconPainter,      // Arg 7
+        text << L"Horizontal control:" << Space{ 40.0f } << L"40px fixed gap." << FlexSpace{};
+        text << L"Flex space pushes this to the right." << k_endLine;
+        text << L"Two flex spaces in one line share what is left over:" << FlexSpace{} << L"one,";
+        text << FlexSpace{} << L"and two." << k_endLine;
+        text << L"TabTo provides exact tabular layout:" << k_endLine;
+        text << BoldText{ L"Component" } << TabTo{ 150.0f } << BoldText{ L"Status" };
+        text << TabTo{ 250.0f } << BoldText{ L"Complexity" } << k_endLine;
+        text << L"Parser" << TabTo{ 150.0f } << ColoredText{ InkColor::Green, L"Active" };
+        text << TabTo{ 250.0f } << L"High" << k_endLine;
+        text << L"Renderer" << TabTo{ 150.0f } << ColoredText{ InkGrade::Muted, L"Standby" };
+        text << TabTo{ 250.0f } << L"Low" << k_endLine << k_endLine;
 
-            // Bullets
-            drawBullet,        // Arg 8
-            drawBullet,        // Arg 9
-            drawBullet,        // Arg 10
-            drawBullet         // Arg 11
-            } };
+        text << L"A " << BoldText{ L"VSpace" };
+        text << L" is an inline element that defines the minimum height of a row." << k_endLine;
+        text << L"This is a standard line of text." << k_endLine;
+        text << L"This line contains a " << VSpace{ 60.0f };
+        text << L" VSpace, forcing this row height to a minimum of 60px." << k_endLine;
+        text << L"If the specified VSpace height is less than the natural text height, it has no effect.";
+        text << k_endLine << k_endLine;
+
+        // ==========================================
+        // 5. **Numbers**
+        // ==========================================
+        text << StyledText{ TextStyles::Heading, L"5. Numbers" } << k_endLine;
+        text << L"Numbers are written with std::format, so its format specifiers apply:" << k_endLine;
+        text << std::format(L"Integer: {}, Float: {:.2f}, Hex: 0x{:02X}", demoInt, demoFloat, demoHex);
+        text << k_endLine << k_endLine;
+
+        // ==========================================
+        // 6. **In-text icons**
+        // ==========================================
+        text << StyledText{ TextStyles::Heading, L"6. In-Text Icons" } << k_endLine;
+        text << L"Icons align with text. A width alone makes a square: ";
+        text << InTextIcon{ 16.0f, myIconPainter } << L"." << k_endLine;
+        text << L"Custom dimensions (W,H,B): " << InTextIcon{ 24.0f, 24.0f, 20.0f, myIconPainter };
+        text << L" sizes the element relative to the layout." << k_endLine << k_endLine;
+
+        // ==========================================
+        // 7. **Lists & custom drawing**
+        // ==========================================
+        text << StyledText{ TextStyles::Heading, L"7. Lists & Custom Drawing\n" };
+
+        const InTextIcon bullet{ 0.0f, 18.0f, drawBullet };
+        Text list{};
+        list << bullet << BoldText{ L"Lambda Drawables:" } << L" ";
+        list << ColoredText{
+            InkGrade::Muted,
+            L"Inject C++ lambdas to render arbitrary graphics directly into the text flow."
+        } << k_endLine;
+        list << bullet << BoldText{ L"Baseline Alignment:" } << L" ";
+        list << ColoredText{
+            InkGrade::Muted,
+            L"Icons and custom drawings share the baseline of the surrounding text block."
+        } << k_endLine;
+        list << bullet << BoldText{ L"Reusability:" } << L" ";
+        list << ColoredText{
+            InkGrade::Muted,
+            L"Pass the same lambda instance multiple times to generate repeating UI elements like list bullets."
+        } << k_endLine;
+        list << bullet << BoldText{ L"Spacing Control:" } << L" ";
+        list << ColoredText{
+            InkGrade::Muted,
+            L"Combine layout tags with icons to define structured list hierarchies."
+        } << k_endLine;
+        // The indent holds for every line of the list, the wrapped ones included.
+        text << ParagraphText{ ParaIndent{ 34.0f }, list };
+        text << k_endLine;
+
+        // ==========================================
+        // 8. **Links**
+        // ==========================================
+        text << StyledText{ TextStyles::Heading, L"8. Links" } << k_endLine;
+        text << L"A " << LinkText{ L"https://example.com", L"link" };
+        text << L" is drawn in the accent ink and underlined under the pointer. ";
+        text << L"A click follows it in a read-only box like this one, and a click with Ctrl held in a box the user types into.";
+        text << k_endLine;
+        text << L"The framework opens " << LinkText{ L"https://example.com", L"https" } << L" and ";
+        text << LinkText{ L"mailto:someone@example.com", L"mailto" } << L" targets itself. ";
+        text << L"Any other, such as " << LinkText{ L"clafi:ledger", L"this one" };
+        text << L", goes to OnLinkClick and nowhere else." << k_endLine;
+        text << L"Copy a link from here and paste it into the Emoji page to try it where the text can be edited.";
+        text << k_endLine;
+        return text;
     }
 }

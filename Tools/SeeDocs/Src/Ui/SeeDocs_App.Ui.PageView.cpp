@@ -411,22 +411,15 @@ namespace SeeDocs_App::Ui
     void PageHead::write(const Page& page)
     {
         const std::optional<RowIcon> icon = iconOf(page.kind, page.type);
-        Text head;
-        head << TextStyle::Title;
-        writeIcon(head, icon);
-        writeRuns(head, page.scope);
-        head << page.title << PopTextStyle{};
+        Text title{};
+        writeIcon(title, icon);
+        writeRuns(title, page.scope);
+        title << page.title;
+        Text head{ StyledText{ TextStyles::Title, title } };
         if (!page.badges.empty())
-        {
-            head << L"   " << TextStyle::SubBody;
-            writeRuns(head, page.badges);
-            head << PopTextStyle{};
-        }
+            head << L"   " << StyledText{ TextStyles::SubBody, textOf(page.badges) };
         for (const Runs& line : page.titleLines)
-        {
-            head << k_endLine << ParaIndent{ k_basesIndent };
-            writeRuns(head, line);
-        }
+            head << ParagraphText{ ParaIndent{ k_basesIndent }, textOf(line) };
         m_title.text() = head;
         const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
         m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
@@ -434,11 +427,10 @@ namespace SeeDocs_App::Ui
 
     void PageHead::write(const std::optional<RowIcon> icon, const std::wstring_view title)
     {
-        Text head;
-        head << TextStyle::Title;
-        writeIcon(head, icon);
-        head << title << PopTextStyle{};
-        m_title.text() = head;
+        Text words{};
+        writeIcon(words, icon);
+        words << title;
+        m_title.text() = Text{ StyledText{ TextStyles::Title, words } };
         const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
         m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
     }
@@ -788,10 +780,7 @@ namespace SeeDocs_App::Ui
     // label's tooltip - holding its body without room round it.
     Expander& PageView::addSection(const Section& section)
     {
-        HeaderText header;
-        header << TextStyle::Heading;
-        writeRuns(header, section.heading);
-        header << PopTextStyle{};
+        HeaderText header{ StyledText{ TextStyles::Heading, textOf(section.heading) } };
         Expander& expander = m_pageBox.body().add<Expander>(
             VerticalAlign::Top,
             k_expanderViewMode,
@@ -1205,8 +1194,10 @@ namespace SeeDocs_App::Ui
                     {
                         if (anchor.has_value())
                         {
-                            event.text() << PushLink{ std::wstring{ k_anchorPrefix } + *anchor }
-                                << InkColor::Spot << k_mark << PopColor{} << PopLink{};
+                            event.text() << LinkText{
+                                std::wstring{ k_anchorPrefix } + *anchor,
+                                ColoredText{ InkColor::Spot, k_mark }
+                            };
                         }
                         return;
                     }
@@ -1227,9 +1218,11 @@ namespace SeeDocs_App::Ui
                     // A qualifier stands at its cell's end, as a tree row's kind word does.
                     if (column < row.qualifiers.size() && !row.qualifiers[column].empty())
                     {
-                        event.text() << FlexSpace{ k_kindGap } << TextStyle::SubBody;
-                        writeRuns(event.text(), row.qualifiers[column]);
-                        event.text() << PopTextStyle{};
+                        event.text() << FlexSpace{ k_kindGap };
+                        event.text() << StyledText{
+                            TextStyles::SubBody,
+                            textOf(row.qualifiers[column])
+                        };
                     }
                 });
             if (row.site.has_value() && m_writer)

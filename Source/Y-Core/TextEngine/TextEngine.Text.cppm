@@ -1,7 +1,9 @@
 export module ClaFi.Core.TextEngine.Text;
 
-import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.InkWell;
+import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi
@@ -14,6 +16,178 @@ namespace ClaFi
         [[nodiscard]] bool named() const { return id != 0; }
         bool operator==(const TextStamp&) const = default;
     };
+
+    // Words between a run's opening marker and its closer. See TextEngine-Types#scopedtext
+    export template<typename... Content>
+    class ScopedText
+    {
+    public:
+        using ContentTuple = std::tuple<Content...>;
+
+    public:
+        explicit ScopedText(FormatItem opening, Content&&...);
+
+    public:
+        [[nodiscard]] const FormatItem& opening() const { return m_opening; }
+        [[nodiscard]] const ContentTuple& content() const { return m_content; }
+
+    private:
+        FormatItem m_opening;
+        ContentTuple m_content;
+    };
+
+    // Words set in one of TextStyles.
+    export template<typename... Content>
+    class StyledText : public ScopedText<Content...>
+    {
+    public:
+        explicit StyledText(const TextStyleProps& style, Content&&...);
+
+    private:
+        [[nodiscard]] static TextStyle styleOf(const TextStyleProps& style);
+    };
+
+    template<typename... Content>
+    StyledText(const TextStyleProps&, Content&&...) -> StyledText<Content...>;
+
+    // Words drawn in an ink or a colour of their own.
+    export template<typename... Content>
+    class ColoredText : public ScopedText<Content...>
+    {
+    public:
+        explicit ColoredText(Ink, Content&&...);
+        explicit ColoredText(InkGrade grade, Content&&...); // the text ink at that step
+        explicit ColoredText(InkColor color, Content&&...); // that colour at Strongest
+        explicit ColoredText(Color, Content&&...);
+
+    private:
+        [[nodiscard]] static constexpr Ink inkOf(InkColor color);
+    };
+
+    template<typename... Content>
+    ColoredText(Ink, Content&&...) -> ColoredText<Content...>;
+    template<typename... Content>
+    ColoredText(InkGrade, Content&&...) -> ColoredText<Content...>;
+    template<typename... Content>
+    ColoredText(InkColor, Content&&...) -> ColoredText<Content...>;
+    template<typename... Content>
+    ColoredText(Color, Content&&...) -> ColoredText<Content...>;
+
+    // Words set bold.
+    export template<typename... Content>
+    class BoldText : public ScopedText<Content...>
+    {
+    public:
+        explicit BoldText(Content&&...);
+    };
+
+    template<typename... Content>
+    BoldText(Content&&...) -> BoldText<Content...>;
+
+    // Words set italic.
+    export template<typename... Content>
+    class ItalicText : public ScopedText<Content...>
+    {
+    public:
+        explicit ItalicText(Content&&...);
+    };
+
+    template<typename... Content>
+    ItalicText(Content&&...) -> ItalicText<Content...>;
+
+    // Words set at a size of their own, in design units.
+    export template<typename... Content>
+    class SizedText : public ScopedText<Content...>
+    {
+    public:
+        explicit SizedText(float size, Content&&...);
+    };
+
+    template<typename... Content>
+    SizedText(float, Content&&...) -> SizedText<Content...>;
+
+    // Words set in a font family of their own, named as the platform knows it.
+    export template<typename... Content>
+    class FamilyText : public ScopedText<Content...>
+    {
+    public:
+        explicit FamilyText(std::wstring family, Content&&...);
+    };
+
+    template<typename... Content>
+    FamilyText(std::wstring, Content&&...) -> FamilyText<Content...>;
+
+    // Words raised off the baseline and set smaller.
+    export template<typename... Content>
+    class SuperscriptText : public ScopedText<Content...>
+    {
+    public:
+        explicit SuperscriptText(Content&&...);
+    };
+
+    template<typename... Content>
+    SuperscriptText(Content&&...) -> SuperscriptText<Content...>;
+
+    // Words lowered off the baseline and set smaller.
+    export template<typename... Content>
+    class SubscriptText : public ScopedText<Content...>
+    {
+    public:
+        explicit SubscriptText(Content&&...);
+    };
+
+    template<typename... Content>
+    SubscriptText(Content&&...) -> SubscriptText<Content...>;
+
+    // Words that are a link to the target they name. See TextEngine-Types#links
+    export template<typename... Content>
+    class LinkText : public ScopedText<Content...>
+    {
+    public:
+        explicit LinkText(std::wstring target, Content&&...);
+    };
+
+    template<typename... Content>
+    LinkText(std::wstring, Content&&...) -> LinkText<Content...>;
+
+    // Words a link reaches with # and the name. See TextEngine-Types#anchors
+    export template<typename... Content>
+    class AnchorText : public ScopedText<Content...>
+    {
+    public:
+        explicit AnchorText(std::wstring name, Content&&...);
+    };
+
+    template<typename... Content>
+    AnchorText(std::wstring, Content&&...) -> AnchorText<Content...>;
+
+    // Words on lines of their own, each taking the property. See TextEngine-Types#paragraphtext
+    export template<typename... Content>
+    class ParagraphText
+    {
+    public:
+        using ContentTuple = std::tuple<Content...>;
+
+    public:
+        explicit ParagraphText(TextAlign, Content&&...);
+        explicit ParagraphText(ParaIndent, Content&&...);
+        explicit ParagraphText(ParaLineSpacing, Content&&...);
+
+    public:
+        [[nodiscard]] const FormatItem& property() const { return m_property; }
+        [[nodiscard]] const ContentTuple& content() const { return m_content; }
+
+    private:
+        FormatItem m_property;
+        ContentTuple m_content;
+    };
+
+    template<typename... Content>
+    ParagraphText(TextAlign, Content&&...) -> ParagraphText<Content...>;
+    template<typename... Content>
+    ParagraphText(ParaIndent, Content&&...) -> ParagraphText<Content...>;
+    template<typename... Content>
+    ParagraphText(ParaLineSpacing, Content&&...) -> ParagraphText<Content...>;
 
     // A run of text with its styles, as the framework holds it.
     export class Text
@@ -35,7 +209,7 @@ namespace ClaFi
         // what the text holds, which is the one thing that separates this from operator<<: the
         // stream adds to a text, this states the whole of it. One argument, because an
         // assignment operator takes exactly one - several parts are a Text of their own:
-        //     caption = Text{ Ink::accent, name, L" saved" };
+        //     caption = Text{ ColoredText{ Ink::accent, name }, L" saved" };
         //
         // Constrained off Text so that copying and moving a Text stay the assignments the
         // compiler writes. Unconstrained, this is an exact match for a non-const Text lvalue
@@ -65,40 +239,18 @@ namespace ClaFi
         // unsigned reaches int and wchar_t by the same rank of conversion and neither wins - a
         // caller writing a count would be told the two are ambiguous.
         Text& operator<<(std::size_t);
-        Text& operator<<(Ink);
-        // The framework's own ink at one of the steps it draws in, written as the step alone:
-        // caption << InkGrade::Muted. A share of a caller's own names no step, so it is stated as
-        // the Ink it is.
-        Text& operator<<(InkGrade);
-        // One of the colours at Strongest, written as the colour alone: caption << InkColor::Red.
-        Text& operator<<(InkColor);
-        Text& operator<<(const PushThemeColor&);
-        Text& operator<<(const PushCustomColor&);
-        Text& operator<<(Color);
-        Text& operator<<(const PopColor&);
-        Text& operator<<(TextStyle);
-        Text& operator<<(const PopTextStyle&);
-        Text& operator<<(TextAlign);
         Text& operator<<(const InTextIcon&);
-        Text& operator<<(const ParaIndent&);
-        Text& operator<<(const ParaLineSpacing&);
         Text& operator<<(const Space&);
         Text& operator<<(const VSpace&);
         Text& operator<<(const FlexSpace&);
         Text& operator<<(const TabTo&);
-        Text& operator<<(TextOp);
-        Text& operator<<(const PushFontSize&);
-        Text& operator<<(const PopFontSize&);
-        Text& operator<<(const PushFontFamily&);
-        Text& operator<<(const PopFontFamily&);
-        Text& operator<<(const PushLink&);
-        Text& operator<<(const PopLink&);
-        Text& operator<<(const PushAnchor&);
-        Text& operator<<(const PopAnchor&);
         Text& operator<<(const Text&);
-
-        Text& setParaIndent(float indent);
-        Text& setParaLineSpacing(float spacing);
+        // A run that holds no character writes nothing.
+        template<typename... Content>
+        Text& operator<<(const ScopedText<Content...>&);
+        // Lines that hold no character write nothing. The words written next start a line.
+        template<typename... Content>
+        Text& operator<<(const ParagraphText<Content...>&);
 
         bool empty() const { return m_plainText.empty(); }
         // Nothing written into it at all, markers included. A text carrying only markers says
@@ -113,7 +265,8 @@ namespace ClaFi
         [[nodiscard]] bool hasFlexSpace() const;
 
         const std::wstring& plainText() const { return m_plainText; }
-        bool operator==(const Text& other) const = default;
+        // The words and markers, so two texts that draw alike are equal whatever was last written.
+        bool operator==(const Text&) const;
         [[nodiscard]] const Markers& markers() const { return m_markers; }
         // The text the first anchor of that name holds, or nothing where no anchor has it. A walk
         // over the markers, since an anchor is asked for when a link to it is followed and not
@@ -128,8 +281,28 @@ namespace ClaFi
         Text selectedText(const TextRange&) const;
 
     private:
+        // How the text stood when a wrapper started writing into it.
+        struct WriteStart
+        {
+            std::size_t plainLength{ 0 };
+            std::size_t markerCount{ 0 };
+            bool lineBroken{ false }; // the wrapper ended the line it found open
+            bool startsOwnLine{ false };
+            bool endsOwnLine{ false };
+        };
+
+    private:
+        [[nodiscard]] WriteStart openScope(const FormatItem& opening);
+        void closeScope(const WriteStart&);
+        [[nodiscard]] WriteStart openParagraph(const FormatItem& property);
+        void closeParagraph(const WriteStart&);
+        void breakOwnLine();
+
+    private:
         std::wstring m_plainText;
         Markers m_markers;
+        bool m_startsOwnLine{ false }; // put after words, the first of these start a line
+        bool m_endsOwnLine{ false }; // the next words written start a line of their own
     };
 
 #define DERIVED_TEXT_CLASS public Text\
@@ -223,18 +396,6 @@ namespace ClaFi
             changed();
         }
 
-        ControlText& setParaIndent(float indent)
-        {
-            Text::setParaIndent(indent);
-            return changed();
-        }
-
-        ControlText& setParaLineSpacing(float spacing)
-        {
-            Text::setParaLineSpacing(spacing);
-            return changed();
-        }
-
         [[nodiscard]] TextStamp stamp() const { return m_stamp; }
 
     private:
@@ -297,6 +458,178 @@ namespace ClaFi
 
 //-----------------------------------------------------------------------------
 
+
+    template<typename... Content>
+    ScopedText<Content...>::ScopedText(FormatItem opening, Content&&... content)
+        :
+        m_opening{ std::move(opening) },
+        m_content{ std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    StyledText<Content...>::StyledText(const TextStyleProps& style, Content&&... content)
+        :
+        ScopedText<Content...>{ PushTextStyle{ styleOf(style) }, std::forward<Content>(content)... }
+    {
+    }
+
+    // A style is written by the TextStyle it is one of.
+    template<typename... Content>
+    TextStyle StyledText<Content...>::styleOf(const TextStyleProps& style)
+    {
+        for (std::size_t index = 0; index != static_cast<std::size_t>(TextStyle::Count); ++index)
+        {
+            const TextStyle candidate = static_cast<TextStyle>(index);
+            if (&TextStyles::Of(candidate) == &style)
+                return candidate;
+        }
+        noReach("A StyledText takes one of TextStyles");
+    }
+
+    template<typename... Content>
+    ColoredText<Content...>::ColoredText(Ink ink, Content&&... content)
+        :
+        ScopedText<Content...>{ PushThemeColor{ ink }, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    ColoredText<Content...>::ColoredText(InkGrade grade, Content&&... content)
+        :
+        ScopedText<Content...>{
+            PushThemeColor{ InkWell::textInk(grade) },
+            std::forward<Content>(content)...
+        }
+    {
+    }
+
+    template<typename... Content>
+    ColoredText<Content...>::ColoredText(InkColor color, Content&&... content)
+        :
+        ScopedText<Content...>{ PushThemeColor{ inkOf(color) }, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    ColoredText<Content...>::ColoredText(Color color, Content&&... content)
+        :
+        ScopedText<Content...>{ PushCustomColor{ color }, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    constexpr Ink ColoredText<Content...>::inkOf(InkColor color)
+    {
+        Ink ink = InkWell::textInk();
+        ink.color = color;
+        return ink;
+    }
+
+    template<typename... Content>
+    BoldText<Content...>::BoldText(Content&&... content)
+        :
+        ScopedText<Content...>{ TextOp::PushBold, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    ItalicText<Content...>::ItalicText(Content&&... content)
+        :
+        ScopedText<Content...>{ TextOp::PushItalic, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    SizedText<Content...>::SizedText(float size, Content&&... content)
+        :
+        ScopedText<Content...>{ PushFontSize{ size }, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    FamilyText<Content...>::FamilyText(std::wstring family, Content&&... content)
+        :
+        ScopedText<Content...>{
+            PushFontFamily{ std::move(family) },
+            std::forward<Content>(content)...
+        }
+    {
+    }
+
+    template<typename... Content>
+    SuperscriptText<Content...>::SuperscriptText(Content&&... content)
+        :
+        ScopedText<Content...>{ TextOp::PushSuperscript, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    SubscriptText<Content...>::SubscriptText(Content&&... content)
+        :
+        ScopedText<Content...>{ TextOp::PushSubscript, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    LinkText<Content...>::LinkText(std::wstring target, Content&&... content)
+        :
+        ScopedText<Content...>{ PushLink{ std::move(target) }, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    AnchorText<Content...>::AnchorText(std::wstring name, Content&&... content)
+        :
+        ScopedText<Content...>{ PushAnchor{ std::move(name) }, std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    ParagraphText<Content...>::ParagraphText(TextAlign align, Content&&... content)
+        :
+        m_property{ align },
+        m_content{ std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    ParagraphText<Content...>::ParagraphText(ParaIndent indent, Content&&... content)
+        :
+        m_property{ indent },
+        m_content{ std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    ParagraphText<Content...>::ParagraphText(ParaLineSpacing spacing, Content&&... content)
+        :
+        m_property{ spacing },
+        m_content{ std::forward<Content>(content)... }
+    {
+    }
+
+    template<typename... Content>
+    Text& Text::operator<<(const ScopedText<Content...>& scope)
+    {
+        const WriteStart start = openScope(scope.opening());
+        std::apply([this](const auto&... content){
+            ((*this << content), ...);
+        }, scope.content());
+        closeScope(start);
+        return *this;
+    }
+
+    template<typename... Content>
+    Text& Text::operator<<(const ParagraphText<Content...>& paragraph)
+    {
+        const WriteStart start = openParagraph(paragraph.property());
+        std::apply([this](const auto&... content){
+            ((*this << content), ...);
+        }, paragraph.content());
+        closeParagraph(start);
+        return *this;
+    }
 
     template<typename... Args>
     TextFormat::TextFormat(Args&&... args)

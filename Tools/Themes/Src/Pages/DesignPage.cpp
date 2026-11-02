@@ -197,7 +197,9 @@ namespace Themes_App
         {
             // The header carries the name muted, set apart from the pages under it. It is a row
             // of its own, and its page lists those pages - built once they stand.
-            TreeNode& node = m_tree.addNode(HeaderText{ InkGrade::Muted, category.name });
+            TreeNode& node = m_tree.addNode(HeaderText{
+                ColoredText{ InkGrade::Muted, category.name }
+            });
             const std::size_t categoryIndex = addEntry(node.header(),
                 TreeEntry{ .category = &category });
             EntryIndexes members;
@@ -254,7 +256,7 @@ namespace Themes_App
             Padding{ 12.0f, 8.0f }
         ).createBody<Label>(
             VerticalTextAnchor::Center,
-            Text{ TextStyle::SubTitle, nameOf(entry) }
+            Text{ StyledText{ TextStyles::SubTitle, nameOf(entry) } }
         );
         StackPanel& rows = page.createBody<ScrollBox>(
             ScrollBars::Vertical
@@ -310,13 +312,13 @@ namespace Themes_App
     Text DesignPage::indexRowText(const TreeEntry& entry)
     {
         const std::size_t count = entry.list ? entry.list->size() : 0;
-        Text text{ nameOf(entry) };
-        text << L"  " << TextStyle::SubBody << InkGrade::Muted;
+        Text tally{};
         if (count == 0)
-            text << L"no rules";
+            tally << L"no rules";
         else
-            text << count << (count == 1 ? L" rule" : L" rules");
-        text << PopColor{} << PopTextStyle{};
+            tally << count << (count == 1 ? L" rule" : L" rules");
+        Text text{ nameOf(entry) };
+        text << L"  " << StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, tally } };
         return text;
     }
 

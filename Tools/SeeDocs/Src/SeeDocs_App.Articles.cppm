@@ -7,7 +7,7 @@ import ClaFi.Core.TextEngine.Text;
 import ClaFi.StdLib;
 
 // **An article is a page of a project's own**, which a Content item of the sidebar shows: a title,
-// a lead and blocks. Its file stands under the project's Articles folder, in a folder for each
+// a lead and blocks. Its file stands under the project's articles folder, in a folder for each
 // category on the way. See README#articles
 namespace SeeDocs_App::Articles
 {

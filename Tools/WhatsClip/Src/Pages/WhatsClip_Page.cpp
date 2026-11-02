@@ -19,7 +19,6 @@ import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Context.FormContext;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -314,7 +313,7 @@ namespace ClaFi::Tools::WhatsClip
         const TextLineColumn caret = body().caretLineColumn();
 
         Text reading{};
-        reading << Fmt{ L"Ln {}, Col {}", caret.line, caret.column };
+        reading << std::format(L"Ln {}, Col {}", caret.line, caret.column);
 
         writeReadout(std::move(reading));
     }

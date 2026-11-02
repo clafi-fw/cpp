@@ -34,8 +34,11 @@ namespace ClaFi::Tools::WhatsClip
             return;
         }
 
-        event.text << itemText(m_foundName, m_fontSize);
-        event.text << InkGrade::Muted << k_autoNote << PopColor{};
+        event.text << SizedText{
+            m_fontSize,
+            m_foundName,
+            ColoredText{ InkGrade::Muted, k_autoNote }
+        };
     }
 
     bool AutoPicker::isAuto() const
@@ -56,9 +59,6 @@ namespace ClaFi::Tools::WhatsClip
 
     Text AutoPicker::itemText(const std::wstring_view name, const float fontSize)
     {
-        Text text{};
-        text << PushFontSize{ fontSize };
-        text << name;
-        return text;
+        return Text{ SizedText{ fontSize, name } };
     }
 }

@@ -15,7 +15,6 @@ import ClaFi.Core.TextEngine.History;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.TextEngine.Fmt;
 
 import ClaFi.Core.Context.FormContext;
 

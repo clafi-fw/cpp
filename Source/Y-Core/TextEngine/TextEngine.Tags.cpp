@@ -97,7 +97,7 @@ namespace ClaFi
             GradeName{ L"strongest", InkGrade::Strongest },
         };
 
-        // A text style as "style" spells it, and as Fmt's shorthand names it alone.
+        // A text style as "style" spells it, and as its bare name reads.
         struct StyleName
         {
             std::wstring_view name{};
@@ -467,7 +467,7 @@ namespace ClaFi
                 return markerOf(plain);
         }
 
-        // Fmt's shorthand: a style opened by its name alone and closed by that name.
+        // A style opened by its name alone and closed by that name.
         if (const std::optional<TextStyle> style = styleOf(tag))
             return PushTextStyle{ *style };
         if (tag.starts_with(L'/') && styleOf(tag.substr(1)))

@@ -152,21 +152,21 @@ namespace ClaFi::Controls
         else
         {
             const std::wstring_view signature = entry.signature;
-            text() << TextStyle::Code;
+            Text code{};
             // A caret past the last parameter marks none, and the tooltip stands as it is.
             std::size_t at = parameters.bracket;
             if (argument < parameters.names.size())
             {
                 const TextRange& name = parameters.names[argument];
-                text() << signature.substr(at, name.start - at)
-                    << TextOp::PushBold << signature.substr(name.start, name.length)
-                    << TextOp::PopBold;
+                code << signature.substr(at, name.start - at);
+                code << BoldText{ signature.substr(name.start, name.length) };
                 at = name.end();
             }
-            text() << signature.substr(at) << PopTextStyle{};
+            code << signature.substr(at);
+            text() << StyledText{ TextStyles::Code, code };
         }
         if (!entry.hint.empty())
-            text() << L"\n" << InkGrade::Muted << entry.hint << PopColor{};
+            text() << L"\n" << ColoredText{ InkGrade::Muted, entry.hint };
         invalidate();
         invalidateFormAlign();
     }
@@ -818,18 +818,18 @@ namespace ClaFi::Controls
         DropListLine line{};
         const std::wstring_view name = item.name;
         if (typed)
-            line.text << InkWell::spotInk() << name.substr(0, typed) << PopColor{};
+            line.text << ColoredText{ InkWell::spotInk(), name.substr(0, typed) };
         line.text << name.substr(typed);
-        line.text << FlexSpace{ k_kindGap } << InkWell::textInk(InkGrade::Muted)
-            << Syntax::completionKindName(item.kind) << PopColor{};
+        line.text << FlexSpace{ k_kindGap };
+        line.text << ColoredText{ InkGrade::Muted, Syntax::completionKindName(item.kind) };
 
         const Syntax::CompletionEntry* entry = item.entry;
         if (!entry || (entry->signature.empty() && entry->hint.empty()))
             return line;
         const std::wstring& signature = entry->signature.empty() ? entry->name : entry->signature;
-        line.tooltip << TextStyle::Code << signature << PopTextStyle{};
+        line.tooltip << StyledText{ TextStyles::Code, signature };
         if (!entry->hint.empty())
-            line.tooltip << L"\n" << InkGrade::Muted << entry->hint << PopColor{};
+            line.tooltip << L"\n" << ColoredText{ InkGrade::Muted, entry->hint };
         return line;
     }
 
@@ -922,7 +922,7 @@ namespace ClaFi::Controls
         // One edit, undone as one: the name as typed goes, and the row's own spelling stands in
         // its place with the caret after it.
         Text what{};
-        what << L"Complete " << InkWell::accentInk() << item.name << PopColor{};
+        what << L"Complete " << ColoredText{ InkWell::accentInk(), item.name };
         m_takingCompletion = true;
         setSelection(line.start + wordStart, line.start + line.caret);
         applyEdit(ensureCaret(), Text{ written }, EditKind::Replace, what);
@@ -1146,8 +1146,8 @@ namespace ClaFi::Controls
     Text CodeBox::linesStepName(const std::wstring_view verb, const std::size_t lines)
     {
         Text result{};
-        result << verb << L' ' << InkWell::accentInk() << lines;
-        result << (lines == 1 ? L" line" : L" lines") << PopColor{};
+        result << verb << L' ';
+        result << ColoredText{ InkWell::accentInk(), lines, lines == 1 ? L" line" : L" lines" };
         return result;
     }
 

@@ -64,7 +64,7 @@ namespace ClaFi::Controls
                 const TextItem& item = m_items[i];
                 Text text;
                 if (item.text().empty())
-                    text << InkGrade::Muted << item.placeHolderText() << PopColor{};
+                    text << ColoredText{ InkGrade::Muted, item.placeHolderText() };
                 else
                     text << item.text();
                 m_listed.push_back(i);

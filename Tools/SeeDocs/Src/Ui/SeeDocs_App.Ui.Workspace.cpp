@@ -115,10 +115,10 @@ namespace SeeDocs_App::Ui
         void writeFolder(Text& text, const std::filesystem::path& folder)
         {
             text << VSpace{ 8.0f } << k_endLine;
-            text << ParaIndent{ 12.0f };
-            text << PushThemeColor{ InkWell::spotInk() };
-            text << folder.wstring();
-            text << PopColor{};
+            text << ParagraphText{
+                ParaIndent{ 12.0f },
+                ColoredText{ InkWell::spotInk(), folder.wstring() }
+            };
         }
     }
 
@@ -581,7 +581,7 @@ namespace SeeDocs_App::Ui
         Text message;
         message << L"No project is stored in this folder:";
         writeFolder(message, folder);
-        message << k_endLine << k_endLine << L"Make a new project that reads it? The project is "
+        message << k_endLine << L"Make a new project that reads it? The project is "
             L"stored in a folder of its own, wherever you choose, and the sources are left as "
             L"they are.";
 
@@ -662,7 +662,7 @@ namespace SeeDocs_App::Ui
         OpenProject& open = **found;
         Text message;
         message << L"The database could not be written to ";
-        message << PushThemeColor{ InkWell::spotInk() } << file.wstring() << PopColor{};
+        message << ColoredText{ InkWell::spotInk(), file.wstring() };
         message << L". The pages show the last scan, and the file holds the one before it.";
         open.unwritten = notices().post(Notice{
             .icon = MessageIcon::Error,

@@ -150,8 +150,9 @@ namespace ClaFi::Browser
         // Connected here rather than given to the button as a construction property: MSVC rejects
         // a this-capturing lambda in a default member initializer.
         m_closeButton.onAdjustTooltip([this](AdjustTooltipEvent& event) {
-            event.text << L"Close " << InkWell::textInk(InkGrade::Muted);
-            m_pageData->writeText(event.text);
+            Text title;
+            m_pageData->writeText(title);
+            event.text << L"Close " << ColoredText{ InkGrade::Muted, title };
             event.placement = FormPlacement::Mouse;
         });
     }
@@ -906,7 +907,7 @@ namespace ClaFi::Browser
             Text line{ pageData.displayTitle() };
             if (!visit->url.anchor().empty())
             {
-                line << InkGrade::Muted << L" - " << visit->url.anchor();
+                line << ColoredText{ InkGrade::Muted, L" - ", visit->url.anchor() };
             }
             menu.add(
                 line,

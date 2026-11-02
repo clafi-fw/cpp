@@ -8,7 +8,6 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
 import ClaFi.Core.Foundation;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Context.FormContext;
@@ -123,18 +122,20 @@ namespace ClaFi::Controls
         Text reading{};
         if (!searchText().empty())
         {
-            reading << TextStyle::SubBody;
             if (count == 0 && m_countPlace.empty())
-                reading << InkWell::redInk() << L"No results";
+            {
+                reading << StyledText{ TextStyles::SubBody, ColoredText{ InkWell::redInk(), L"No results" } };
+            }
             else
             {
-                reading << InkWell::textInk(InkGrade::Muted);
+                std::wstring counted{};
                 if (selected.has_value())
-                    reading << Fmt{ L"{} of {}", *selected + 1, count };
+                    counted = std::format(L"{} of {}", *selected + 1, count);
                 else if (!m_countPlace.empty())
-                    reading << Fmt{ L"{} {}", count, m_countPlace };
+                    counted = std::format(L"{} {}", count, m_countPlace);
                 else
-                    reading << Fmt{ L"? of {}", count };
+                    counted = std::format(L"? of {}", count);
+                reading << StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, counted } };
             }
         }
         if (reading == m_count.text())

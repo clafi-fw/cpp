@@ -9,9 +9,8 @@ The words that do not fit above a declaration.
 
 Upper case is written and either case is read. Any other string leaves the colour as it was.
 
-**This is the spelling between ClaFi consumers** - a `color #...` tag, in Fmt or in a document's
-markers, and a Color handed to Fmt's `{}`. How a user sees or copies a colour is a presenter's
-choice - see ColorSpelling.
+**This is the spelling between ClaFi consumers** - a `color #...` tag in a document's markers.
+How a user sees or copies a colour is a presenter's choice - see ColorSpelling.
 
 ## WriteDefaults
 

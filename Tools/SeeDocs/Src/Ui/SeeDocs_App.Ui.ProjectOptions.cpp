@@ -165,8 +165,8 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] TooltipText seeLinksTooltip()
         {
             TooltipText text;
-            text << L"A comment ending in " << InkColor::Spot << L"See <note>" << PopColor{}
-                << L" or " << InkColor::Spot << L"See <note>#<anchor>" << PopColor{}
+            text << L"A comment ending in " << ColoredText{ InkColor::Spot, L"See <note>" }
+                << L" or " << ColoredText{ InkColor::Spot, L"See <note>#<anchor>" }
                 << L" links that footnote, and the See is left out of the hint";
             return text;
         }
@@ -572,7 +572,7 @@ namespace SeeDocs_App::Ui
                 return;
             }
             if (isStub())
-                text << InkGrade::Muted << k_stubText;
+                text << ColoredText{ InkGrade::Muted, k_stubText };
             else
                 text << m_list.project().project.readSource(m_source).wstring();
         }

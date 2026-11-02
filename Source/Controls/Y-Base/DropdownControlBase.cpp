@@ -322,11 +322,12 @@ namespace ClaFi::Controls
         // one line rather than the label being centred and the mark hung off its end. TextAlign
         // centres the line inside the layout; centring the layout inside the strip is the part's
         // horizontal text anchor, which is the other half of it.
-        event.text << TextAlign::Center;
         adjustMainText(event);
-        if (!event.text.plainText().empty())
-            event.text << Space{ k_markSpacing };
-        appendDropdownMark(event.text);
+        Text line = event.text;
+        if (!line.plainText().empty())
+            line << Space{ k_markSpacing };
+        appendDropdownMark(line);
+        event.text = Text{ ParagraphText{ TextAlign::Center, line } };
     }
 
     void DropdownControlBase::appendDropdownMark(Text& text) const

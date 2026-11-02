@@ -48,11 +48,7 @@ namespace Themes_App
         // A word framing a rule rather than naming its parts, gray and small.
         void writeFramingWord(Text& text, const std::wstring_view word)
         {
-            text << InkGrade::Muted
-                << TextStyle::SubBody
-                << word
-                << PopTextStyle{}
-                << PopColor{};
+            text << ColoredText{ InkGrade::Muted, StyledText{ TextStyles::SubBody, word } };
         }
 
         // A set's inputs joined by a word, in brackets when asked and there is more than one.
@@ -208,9 +204,10 @@ namespace Themes_App
         if (!m_rules)
             return;
         const ColorRule& value = rule();
-        event.text << TextStyle::SubHeading
-            << itemLabel(k_channelLabels[static_cast<std::size_t>(value.output)])
-            << PopTextStyle{};
+        event.text << StyledText{
+            TextStyles::SubHeading,
+            itemLabel(k_channelLabels[static_cast<std::size_t>(value.output)])
+        };
         if (value.atRest())
         {
             if (event.phase() == EventPhase::Calculate)
@@ -218,10 +215,9 @@ namespace Themes_App
             return;
         }
         writeFramingWord(event.text, L", when");
-        event.text << L'\n'
-            << InkGrade::Strong;
-        writeCondition(event.text, value);
-        event.text << PopColor{};
+        Text condition{};
+        writeCondition(condition, value);
+        event.text << L'\n' << ColoredText{ InkGrade::Strong, condition };
     }
 
     const ColorRule& ApplyToControl::rule() const
@@ -289,7 +285,7 @@ namespace Themes_App
             VerticalAlign::Top
         );
         result.add<Label>(
-            Text{ InkGrade::Muted, header },
+            Text{ ColoredText{ InkGrade::Muted, header } },
             WordWrap::No
         );
         result.add<Spacer>(8.0f);

@@ -223,7 +223,7 @@ namespace Themes_App
         },
         m_harmonyItem{ harmonyItem }
     {
-        text() << InkWell::textInk(InkGrade::Muted) << harmonyItem.harmony().name();
+        text() << ColoredText{ InkGrade::Muted, harmonyItem.harmony().name() };
     }
 
     void ColorHarmonyItem::dropDown(Control& dropDownButton)

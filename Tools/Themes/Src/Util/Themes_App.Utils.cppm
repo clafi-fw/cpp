@@ -65,7 +65,7 @@ namespace Themes_App
     // Design side of the blob a popup tile carries, the harmony picker's icon size.
     export constexpr float k_blobSize{ 32.0f };
     // The style a glyph takes on a tile's blob, sized to the blob rather than to a line.
-    export constexpr TextStyle k_blobGlyphStyle{ TextStyle::SubTitle };
+    export constexpr const TextStyleProps& k_blobGlyphStyle{ TextStyles::SubTitle };
     // A blob's corner radius as a share of its side.
     export constexpr float k_blobCornerShare{ 0.25f };
 
@@ -90,11 +90,7 @@ namespace Themes_App
 
     void writeBlobGlyph(Text& text, std::wstring_view glyph)
     {
-        text << InkWell::surfaceInk()
-            << TextOp::PushBold
-            << glyph
-            << TextOp::PopBold
-            << PopColor{};
+        text << ColoredText{ InkWell::surfaceInk(), BoldText{ glyph } };
     }
 
     void writeColorCell(Text& tt, Color color, bool extendedMode)
@@ -105,19 +101,25 @@ namespace Themes_App
             if (extendedMode)
                 tt << L' '; // Space{ extSpace };
             else
-                tt << k_endLine << TextStyle::SubBody;
+                tt << k_endLine;
             std::wstring hexString = toHex(color.asUint() & 0xFFFFFF);
             while (hexString.size() < 6ull)
                 hexString = L'0' + hexString;
-            tt << TextStyle::SubBody << L'#' << hexString;
+            tt << StyledText{ TextStyles::SubBody, L'#', hexString };
         }
         else
         {
             tt << InTextIcon{ 1.0f, k_markH, k_markH * 0.85, nullptr, nullptr };
-            if (!extendedMode)
-                tt << k_endLine << TextStyle::SubBody;
-            tt << L' ';
-        };
+            if (extendedMode)
+            {
+                tt << L' ';
+            }
+            else
+            {
+                tt << k_endLine;
+                tt << StyledText{ TextStyles::SubBody, L' ' };
+            }
+        }
     }
 
     void drawPaletteMap(DrawIconEvent& event, const ColorHarmony& harmony, const PaletteMap& map)

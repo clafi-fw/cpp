@@ -446,12 +446,10 @@ namespace ClaFi::Diagnostic
             Control::textEngine().drawText(
                 event.controlContext(),
                 bounds,
-                Text{
+                Text{ ParagraphText{
                     TextAlign::Right,
-                    TextStyle::Code,
-                    PushFontSize{ static_cast<int>(k_axisFontSize) },
-                    static_cast<int>(value)
-                },
+                    StyledText{ TextStyles::Code, SizedText{ k_axisFontSize, static_cast<int>(value) } }
+                } },
                 { VerticalTextAnchor::Top, HorizontalTextAnchor::None }
             );
         };

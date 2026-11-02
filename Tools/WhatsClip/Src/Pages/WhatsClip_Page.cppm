@@ -35,7 +35,9 @@ namespace ClaFi::Tools::WhatsClip
     // **What a page says when the clipboard held its peace.** One sentence rather than one per
     // page: they all report a failed read in the same place, and there was never a reason for them
     // to report it in different words.
-    export auto k_noAnswer = Text{ InkGrade::Muted, L"The clipboard did not answer for this format." };
+    export auto k_noAnswer = Text{
+        ColoredText{ InkGrade::Muted, L"The clipboard did not answer for this format." }
+    };
 
     // **What the text pages pick from**: the encodings a format's bytes are read in, and the
     // languages the text is coloured in. Built by the entry point, which is where an application

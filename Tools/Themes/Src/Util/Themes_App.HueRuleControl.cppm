@@ -83,11 +83,10 @@ namespace Themes_App
     {
         if (value == ColorRuleHueOp::NoChange)
         {
-            text << InkWell::textInk(InkGrade::Subtle)
-                << TextStyle::SubBody
-                << k_hueOpNames[static_cast<std::size_t>(value)]
-                << PopTextStyle{}
-                << PopColor{};
+            text << ColoredText{
+                InkGrade::Subtle,
+                StyledText{ TextStyles::SubBody, k_hueOpNames[static_cast<std::size_t>(value)] }
+            };
             return;
         }
 
@@ -96,17 +95,12 @@ namespace Themes_App
         // See ThemePage::operationCells.
         if (onBlob)
         {
-            text << k_blobGlyphStyle;
-            writeBlobGlyph(text, hueOpGlyph(value));
-            text << PopTextStyle{};
+            Text glyph{};
+            writeBlobGlyph(glyph, hueOpGlyph(value));
+            text << StyledText{ k_blobGlyphStyle, glyph };
             return;
         }
-        text
-            << InkWell::spotInk()
-            << TextOp::PushBold
-            << hueOpGlyph(value)
-            << TextOp::PopBold
-            << PopColor{};
+        text << ColoredText{ InkWell::spotInk(), BoldText{ hueOpGlyph(value) } };
     }
 
     // A degree sign, written as a hex code so the file needs no /utf-8 flag - the spelling
@@ -628,8 +622,8 @@ namespace Themes_App
         // later value will need. 360 is the widest hue there is.
         if (phase == EventPhase::Calculate)
         {
-            text << InkWell::textInk(InkGrade::Muted) << widestHueOpName() << L": " << PopColor{}
-                << L"360 " << k_degreeSign;
+            text << ColoredText{ InkGrade::Muted, widestHueOpName(), L": " };
+            text << L"360 " << k_degreeSign;
             return;
         }
         const ColorRuleHueOp operation = m_owner.operation();
@@ -644,13 +638,10 @@ namespace Themes_App
         // The operation names the line and the hue is what the line is about, so the name is
         // written in the gray the page gives its own field labels and the value in the ordinary
         // ink - the reading order the grid's own rows are laid out in.
-        text << InkWell::textInk(InkGrade::Muted)
-            << k_hueOpNames[static_cast<std::size_t>(operation)]
-            << L": "
-            << PopColor{}
-            << static_cast<int>(std::round(m_owner.hueOf(operation) * 360.0f))
-            << L' '
-            << k_degreeSign;
+        const int degrees = static_cast<int>(std::round(m_owner.hueOf(operation) * 360.0f));
+        const std::wstring_view operationName = k_hueOpNames[static_cast<std::size_t>(operation)];
+        text << ColoredText{ InkGrade::Muted, operationName, L": " };
+        text << degrees << L' ' << k_degreeSign;
     }
 
 }

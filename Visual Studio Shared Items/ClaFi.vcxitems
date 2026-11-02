@@ -361,8 +361,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Utils.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.BakedText.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.History.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.History.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Layout.cppm" />

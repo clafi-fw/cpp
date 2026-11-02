@@ -94,9 +94,8 @@ namespace TextEngine_App
         // than as a heading each.
         constexpr float k_proseSize = 13.5f;
 
-        // How far a clue in the list is pushed in. An indent belongs to a paragraph and stands
-        // until another paragraph states a different one, so every line here states the one it
-        // wants rather than a list stating it once for the lines inside it.
+        // How far a clue in the list is pushed in. An indent belongs to the paragraph it is stated
+        // for, so every bullet line states it.
         constexpr float k_bulletIndent = 34.0f;
 
         // A bullet drawn into the indent its line stands at rather than into a width of its own.
@@ -142,10 +141,9 @@ namespace TextEngine_App
         }
 
         // The number a clue is known by, written the way the text refers to it everywhere else.
-        void writeClueNumber(Text& out, std::size_t clue)
+        [[nodiscard]] Text clueNumber(std::size_t clue)
         {
-            out << L"Clue ";
-            out << static_cast<int>(clue);
+            return Text{ L"Clue ", static_cast<int>(clue) };
         }
 
         // The name a clue's anchor goes by, which a reference to the clue links to after a #.
@@ -157,9 +155,7 @@ namespace TextEngine_App
         // A clue's number where the clue is stated, held by the anchor its references land on.
         void writeClueStatement(Text& out, std::size_t clue)
         {
-            out << PushAnchor{ clueAnchor(clue) };
-            writeClueNumber(out, clue);
-            out << PopAnchor{};
+            out << AnchorText{ clueAnchor(clue), clueNumber(clue) };
         }
 
         // A clue's number where another line refers to it: a link to where the clue is stated, or
@@ -169,12 +165,10 @@ namespace TextEngine_App
         {
             if (clue == 0 || clue > lastClue)
             {
-                writeClueNumber(out, clue);
+                out << clueNumber(clue);
                 return;
             }
-            out << PushLink{ L"#" + clueAnchor(clue) };
-            writeClueNumber(out, clue);
-            out << PopLink{};
+            out << LinkText{ L"#" + clueAnchor(clue), clueNumber(clue) };
         }
 
         // ---------------------------------------------------------------------------
@@ -183,18 +177,19 @@ namespace TextEngine_App
 
         void writeRoundHeading(Text& out, std::size_t round, std::size_t line)
         {
-            out << ParaIndent{ 0.0f };
-            out << TextStyle::Heading;
-            out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << L"Round ";
-            out << static_cast<int>(round);
-            out << L".";
-            out << static_cast<int>(line);
-            out << L" - what ";
-            out << roomFor(round + line);
-            out << L" gives away";
-            out << PopFontFamily{};
-            out << PopTextStyle{};
+            out << StyledText{
+                TextStyles::Heading,
+                FamilyText{
+                    std::wstring{ k_proseFamily },
+                    L"Round ",
+                    static_cast<int>(round),
+                    L".",
+                    static_cast<int>(line),
+                    L" - what ",
+                    roomFor(round + line),
+                    L" gives away"
+                }
+            };
             out << L'\n';
         }
 
@@ -202,152 +197,104 @@ namespace TextEngine_App
         // past a hundred of them sees sentences rather than a filled-in template.
         void writeClue(Text& out, std::size_t clue, std::size_t lastClue)
         {
-            out << ParaIndent{ 0.0f };
-            out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << PushFontSize{ k_proseSize };
-            out << TextOp::PushBold;
-            writeClueStatement(out, clue);
-            out << L".";
-            out << TextOp::PopBold;
-            out << L" ";
+            Text statement{};
+            writeClueStatement(statement, clue);
+            Text words{};
+            words << BoldText{ statement, L"." };
+            words << L" ";
 
             switch (clue % 6)
             {
                 case 0:
-                    out << L"The ";
-                    out << occupationFor(clue);
-                    out << L" who was seen carrying ";
-                    out << TextOp::PushItalic;
-                    out << L"a ";
-                    out << itemFor(clue);
-                    out << TextOp::PopItalic;
-                    out << L" cannot have been the one found ";
-                    out << InkWell::Blue;
-                    out << stateFor(clue);
-                    out << PopColor{};
-                    out << L" in ";
-                    out << roomFor(clue);
-                    out << L", because the room was locked from the side nobody could reach without passing ";
-                    out << TextOp::PushBold;
-                    out << personFor(clue + 1);
-                    out << TextOp::PopBold;
-                    out << L".";
+                    words << L"The ";
+                    words << occupationFor(clue);
+                    words << L" who was seen carrying ";
+                    words << ItalicText{ L"a ", itemFor(clue) };
+                    words << L" cannot have been the one found ";
+                    words << ColoredText{ InkWell::Blue, stateFor(clue) };
+                    words << L" in ";
+                    words << roomFor(clue);
+                    words << L", because the room was locked from the side nobody could reach without passing ";
+                    words << BoldText{ personFor(clue + 1) };
+                    words << L".";
                     break;
                 case 1:
-                    out << TextOp::PushBold;
-                    out << personFor(clue);
-                    out << TextOp::PopBold;
-                    out << L" stands exactly two doors from whoever was ";
-                    out << InkWell::Blue;
-                    out << stateFor(clue + 3);
-                    out << PopColor{};
-                    out << L", and neither of them is the ";
-                    out << occupationFor(clue + 2);
-                    out << L", who spent the whole of that hour in ";
-                    out << roomFor(clue + 5);
-                    out << L" with ";
-                    out << TextOp::PushItalic;
-                    out << L"a ";
-                    out << itemFor(clue + 1);
-                    out << TextOp::PopItalic;
-                    out << L" in plain view.";
+                    words << BoldText{ personFor(clue) };
+                    words << L" stands exactly two doors from whoever was ";
+                    words << ColoredText{ InkWell::Blue, stateFor(clue + 3) };
+                    words << L", and neither of them is the ";
+                    words << occupationFor(clue + 2);
+                    words << L", who spent the whole of that hour in ";
+                    words << roomFor(clue + 5);
+                    words << L" with ";
+                    words << ItalicText{ L"a ", itemFor(clue + 1) };
+                    words << L" in plain view.";
                     break;
                 case 2:
-                    out << L"Whoever holds ";
-                    out << TextOp::PushItalic;
-                    out << L"a ";
-                    out << itemFor(clue);
-                    out << TextOp::PopItalic;
-                    out << L" answers to neither ";
-                    out << TextOp::PushBold;
-                    out << personFor(clue + 2);
-                    out << TextOp::PopBold;
-                    out << L" nor ";
-                    out << TextOp::PushBold;
-                    out << personFor(clue + 9);
-                    out << TextOp::PopBold;
-                    out << L", and was ";
-                    out << InkWell::Blue;
-                    out << stateFor(clue + 1);
-                    out << PopColor{};
-                    out << L" at the hour ";
-                    out << roomFor(clue + 2);
-                    out << L" was swept, which the ";
-                    out << occupationFor(clue + 4);
-                    out << L" swears to.";
+                    words << L"Whoever holds ";
+                    words << ItalicText{ L"a ", itemFor(clue) };
+                    words << L" answers to neither ";
+                    words << BoldText{ personFor(clue + 2) };
+                    words << L" nor ";
+                    words << BoldText{ personFor(clue + 9) };
+                    words << L", and was ";
+                    words << ColoredText{ InkWell::Blue, stateFor(clue + 1) };
+                    words << L" at the hour ";
+                    words << roomFor(clue + 2);
+                    words << L" was swept, which the ";
+                    words << occupationFor(clue + 4);
+                    words << L" swears to.";
                     break;
                 case 3:
-                    out << L"If ";
-                    out << TextOp::PushBold;
-                    out << personFor(clue);
-                    out << TextOp::PopBold;
-                    out << L" was ";
-                    out << InkWell::Blue;
-                    out << stateFor(clue);
-                    out << PopColor{};
-                    out << L", then ";
-                    out << TextOp::PushItalic;
-                    out << L"a ";
-                    out << itemFor(clue + 3);
-                    out << TextOp::PopItalic;
-                    out << L" was left in ";
-                    out << roomFor(clue + 1);
-                    out << L" and the ";
-                    out << occupationFor(clue + 1);
-                    out << L" was not; if she was not, the same holds of ";
-                    out << roomFor(clue + 7);
-                    out << L" instead, and the ";
-                    out << occupationFor(clue + 6);
-                    out << L" says as much.";
+                    words << L"If ";
+                    words << BoldText{ personFor(clue) };
+                    words << L" was ";
+                    words << ColoredText{ InkWell::Blue, stateFor(clue) };
+                    words << L", then ";
+                    words << ItalicText{ L"a ", itemFor(clue + 3) };
+                    words << L" was left in ";
+                    words << roomFor(clue + 1);
+                    words << L" and the ";
+                    words << occupationFor(clue + 1);
+                    words << L" was not; if she was not, the same holds of ";
+                    words << roomFor(clue + 7);
+                    words << L" instead, and the ";
+                    words << occupationFor(clue + 6);
+                    words << L" says as much.";
                     break;
                 case 4:
-                    out << L"Between ";
-                    out << roomFor(clue);
-                    out << L" and ";
-                    out << roomFor(clue + 4);
-                    out << L" there is one person ";
-                    out << InkWell::Blue;
-                    out << stateFor(clue + 5);
-                    out << PopColor{};
-                    out << L" and one carrying ";
-                    out << TextOp::PushItalic;
-                    out << L"a ";
-                    out << itemFor(clue + 2);
-                    out << TextOp::PopItalic;
-                    out << L", and they are not the same person - ";
-                    out << TextOp::PushBold;
-                    out << personFor(clue + 4);
-                    out << TextOp::PopBold;
-                    out << L" was counted in both places by the ";
-                    out << occupationFor(clue + 3);
-                    out << L", which cannot stand.";
+                    words << L"Between ";
+                    words << roomFor(clue);
+                    words << L" and ";
+                    words << roomFor(clue + 4);
+                    words << L" there is one person ";
+                    words << ColoredText{ InkWell::Blue, stateFor(clue + 5) };
+                    words << L" and one carrying ";
+                    words << ItalicText{ L"a ", itemFor(clue + 2) };
+                    words << L", and they are not the same person - ";
+                    words << BoldText{ personFor(clue + 4) };
+                    words << L" was counted in both places by the ";
+                    words << occupationFor(clue + 3);
+                    words << L", which cannot stand.";
                     break;
                 default:
-                    out << L"The one who was ";
-                    out << InkWell::Blue;
-                    out << stateFor(clue);
-                    out << PopColor{};
-                    out << L" in ";
-                    out << roomFor(clue + 3);
-                    out << L" gave ";
-                    out << TextOp::PushItalic;
-                    out << L"a ";
-                    out << itemFor(clue + 5);
-                    out << TextOp::PopItalic;
-                    out << L" to ";
-                    out << TextOp::PushBold;
-                    out << personFor(clue + 6);
-                    out << TextOp::PopBold;
-                    out << L", who is not the ";
-                    out << occupationFor(clue);
-                    out << L" and never was, whatever ";
-                    writeClueReference(out, clue > 3 ? clue - 3 : clue + 3, lastClue);
-                    out << L" is taken to mean.";
+                    words << L"The one who was ";
+                    words << ColoredText{ InkWell::Blue, stateFor(clue) };
+                    words << L" in ";
+                    words << roomFor(clue + 3);
+                    words << L" gave ";
+                    words << ItalicText{ L"a ", itemFor(clue + 5) };
+                    words << L" to ";
+                    words << BoldText{ personFor(clue + 6) };
+                    words << L", who is not the ";
+                    words << occupationFor(clue);
+                    words << L" and never was, whatever ";
+                    writeClueReference(words, clue > 3 ? clue - 3 : clue + 3, lastClue);
+                    words << L" is taken to mean.";
                     break;
             }
 
-            out << PopFontSize{};
-            out << PopFontFamily{};
+            out << FamilyText{ std::wstring{ k_proseFamily }, SizedText{ k_proseSize, words } };
             out << L'\n';
         }
 
@@ -355,69 +302,69 @@ namespace TextEngine_App
         // muted. Four shapes, shorter than the prose ones and still long enough to wrap.
         void writeClueBullet(Text& out, std::size_t clue)
         {
-            out << ParaIndent{ k_bulletIndent };
-            out << InTextIcon{ 0.0f, 18.0f, drawBullet };
-            out << TextOp::PushBold;
-            writeClueStatement(out, clue);
-            out << L":";
-            out << TextOp::PopBold;
-            out << L" ";
-            out << InkWell::textInk(InkGrade::Muted);
+            Text statement{};
+            writeClueStatement(statement, clue);
+            Text words{};
 
             switch (clue % 4)
             {
                 case 0:
-                    out << L"nobody ";
-                    out << stateFor(clue);
-                    out << L" was ever in ";
-                    out << roomFor(clue);
-                    out << L" while ";
-                    out << L"a ";
-                    out << itemFor(clue + 1);
-                    out << L" was on the table, and the ";
-                    out << occupationFor(clue);
-                    out << L" was the one who set the table.";
+                    words << L"nobody ";
+                    words << stateFor(clue);
+                    words << L" was ever in ";
+                    words << roomFor(clue);
+                    words << L" while ";
+                    words << L"a ";
+                    words << itemFor(clue + 1);
+                    words << L" was on the table, and the ";
+                    words << occupationFor(clue);
+                    words << L" was the one who set the table.";
                     break;
                 case 1:
-                    out << personFor(clue);
-                    out << L" is not the ";
-                    out << occupationFor(clue + 5);
-                    out << L", and whoever is was ";
-                    out << stateFor(clue + 4);
-                    out << L" two rooms along from ";
-                    out << roomFor(clue + 6);
-                    out << L".";
+                    words << personFor(clue);
+                    words << L" is not the ";
+                    words << occupationFor(clue + 5);
+                    words << L", and whoever is was ";
+                    words << stateFor(clue + 4);
+                    words << L" two rooms along from ";
+                    words << roomFor(clue + 6);
+                    words << L".";
                     break;
                 case 2:
-                    out << L"a ";
-                    out << itemFor(clue);
-                    out << L" and ";
-                    out << L"a ";
-                    out << itemFor(clue + 4);
-                    out << L" were never in one room, and neither was in ";
-                    out << roomFor(clue + 2);
-                    out << L", which is where ";
-                    out << personFor(clue + 3);
-                    out << L" was ";
-                    out << stateFor(clue + 2);
-                    out << L".";
+                    words << L"a ";
+                    words << itemFor(clue);
+                    words << L" and ";
+                    words << L"a ";
+                    words << itemFor(clue + 4);
+                    words << L" were never in one room, and neither was in ";
+                    words << roomFor(clue + 2);
+                    words << L", which is where ";
+                    words << personFor(clue + 3);
+                    words << L" was ";
+                    words << stateFor(clue + 2);
+                    words << L".";
                     break;
                 default:
-                    out << L"the ";
-                    out << occupationFor(clue);
-                    out << L" left ";
-                    out << roomFor(clue + 8);
-                    out << L" before ";
-                    out << personFor(clue + 7);
-                    out << L" arrived, carrying ";
-                    out << L"a ";
-                    out << itemFor(clue + 3);
-                    out << L" and saying nothing at all.";
+                    words << L"the ";
+                    words << occupationFor(clue);
+                    words << L" left ";
+                    words << roomFor(clue + 8);
+                    words << L" before ";
+                    words << personFor(clue + 7);
+                    words << L" arrived, carrying ";
+                    words << L"a ";
+                    words << itemFor(clue + 3);
+                    words << L" and saying nothing at all.";
                     break;
             }
 
-            out << PopColor{};
-            out << L'\n';
+            out << ParagraphText{
+                ParaIndent{ k_bulletIndent },
+                InTextIcon{ 0.0f, 18.0f, drawBullet },
+                BoldText{ statement, L":" },
+                L" ",
+                ColoredText{ InkGrade::Muted, words }
+            };
         }
 
         // A row of the grid a solver keeps beside the clues: who, what, where, and how they were
@@ -443,91 +390,80 @@ namespace TextEngine_App
             const Ink markInk = settled ? InkWell::Green : InkWell::Red;
             const std::wstring_view mark = settled ? L"fixed" : L"open";
 
-            out << ParaIndent{ 0.0f };
+            Text source{ L"by " };
+            writeClueReference(source, clue, lastClue);
+
             out << personFor(clue);
             out << TabTo{ 95.0f };
             out << occupationFor(clue);
             out << TabTo{ 210.0f };
             out << itemFor(clue);
             out << TabTo{ 320.0f };
-            out << markInk;
-            out << mark;
-            out << PopColor{};
+            out << ColoredText{ markInk, mark };
             out << TabTo{ 365.0f };
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"by ";
-            writeClueReference(out, clue, lastClue);
-            out << PopColor{};
+            out << ColoredText{ InkGrade::Muted, source };
             out << L'\n';
         }
 
         // What the round came to, pushed to the right of the line by the flex space.
         void writeRoundTally(Text& out, std::size_t round, std::size_t clue, std::size_t lastClue)
         {
-            out << ParaIndent{ 0.0f };
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"Round ";
-            out << static_cast<int>(round);
-            out << L" leaves ";
-            out << static_cast<int>(3 + (clue % 5));
-            out << L" of the ninety-nine rooms unaccounted for";
-            out << PopColor{};
+            Text carried{ L"carried forward to " };
+            writeClueReference(carried, clue + 1, lastClue);
+
+            out << ColoredText{
+                InkGrade::Muted,
+                L"Round ",
+                static_cast<int>(round),
+                L" leaves ",
+                static_cast<int>(3 + (clue % 5)),
+                L" of the ninety-nine rooms unaccounted for"
+            };
             out << FlexSpace{};
-            out << InkWell::accentInk();
-            out << L"carried forward to ";
-            writeClueReference(out, clue + 1, lastClue);
-            out << PopColor{};
+            out << ColoredText{ InkWell::accentInk(), carried };
             out << L'\n';
 
             // The rule stands on a line of its own, and that line is centred: an icon states a
             // design width, and the alignment of the line it stands on states where that width
-            // sits in the box. The alignment goes back to the left for what follows, since a
-            // paragraph keeps the one in force when its newline is reached.
-            out << TextAlign::Center;
+            // sits in the box.
             out << L'\n';
-            out << InTextIcon{ 220.0f, 24.0f, drawOrnament };
-            out << L'\n';
-            out << TextAlign::Left;
+            out << ParagraphText{ TextAlign::Center, InTextIcon{ 220.0f, 24.0f, drawOrnament } };
             out << L'\n';
         }
 
         // An aside about the clues rather than a clue: the voice the puzzle keeps for itself.
         void writeAside(Text& out, std::size_t clue, std::size_t lastClue)
         {
-            out << ParaIndent{ 0.0f };
-            out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << PushFontSize{ k_proseSize };
-            out << InkWell::textInk(InkGrade::Muted);
-            out << TextOp::PushItalic;
+            Text words{};
 
             switch (clue % 3)
             {
                 case 0:
-                    out << L"Note: ";
-                    writeClueReference(out, clue, lastClue);
-                    out << L" is the only one so far to name two rooms and no person, which is why it is read after ";
-                    writeClueReference(out, clue > 11 ? clue - 11 : clue + 11, lastClue);
-                    out << L" and not before it.";
+                    words << L"Note: ";
+                    writeClueReference(words, clue, lastClue);
+                    words << L" is the only one so far to name two rooms and no person, which is why it is read after ";
+                    writeClueReference(words, clue > 11 ? clue - 11 : clue + 11, lastClue);
+                    words << L" and not before it.";
                     break;
                 case 1:
-                    out << L"Note: the four clues above agree about ";
-                    out << personFor(clue);
-                    out << L" and disagree about ";
-                    out << L"a ";
-                    out << itemFor(clue);
-                    out << L". The disagreement is the point of them.";
+                    words << L"Note: the four clues above agree about ";
+                    words << personFor(clue);
+                    words << L" and disagree about ";
+                    words << L"a ";
+                    words << itemFor(clue);
+                    words << L". The disagreement is the point of them.";
                     break;
                 default:
-                    out << L"Note: whoever was ";
-                    out << stateFor(clue);
-                    out << L" is named nowhere in this round, and is not meant to be.";
+                    words << L"Note: whoever was ";
+                    words << stateFor(clue);
+                    words << L" is named nowhere in this round, and is not meant to be.";
                     break;
             }
 
-            out << TextOp::PopItalic;
-            out << PopColor{};
-            out << PopFontSize{};
-            out << PopFontFamily{};
+            out << FamilyText{
+                std::wstring{ k_proseFamily },
+                SizedText{ k_proseSize, ColoredText{ InkGrade::Muted, ItalicText{ words } } }
+            };
             out << L'\n';
         }
 
@@ -653,280 +589,249 @@ namespace TextEngine_App
         // the words do, and nothing may guess it on their behalf.
         // ---------------------------------------------------------------------------
 
+        // How many lines were ended since the text stood at that length.
+        [[nodiscard]] std::size_t linesWrittenSince(const Text& out, std::size_t start)
+        {
+            const std::wstring_view written = std::wstring_view{ out.plainText() }.substr(start);
+            return static_cast<std::size_t>(std::ranges::count(written, k_endLine));
+        }
+
+
         std::size_t appendOpening(Text& out)
         {
-            std::size_t lines = 0;
-            auto endLine = [&out, &lines](){
-                out << L'\n';
-                ++lines;
-                };
+            const std::size_t start = out.plainText().size();
+            const std::wstring proseFamily{ k_proseFamily };
 
-            out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << TextAlign::Center;
-            out << TextStyle::Title;
-            out << L"The Ledger of Ninety-Nine Rooms";
-            out << PopTextStyle{};
-            endLine();
+            out << FamilyText{
+                proseFamily,
+                ParagraphText{
+                    TextAlign::Center,
+                    StyledText{ TextStyles::Title, L"The Ledger of Ninety-Nine Rooms" },
+                    k_endLine,
+                    StyledText{
+                        TextStyles::SubTitle,
+                        ColoredText{
+                            InkGrade::Muted,
+                            L"A puzzle in the manner of Einstein's, at a length nobody asked for"
+                        }
+                    },
+                    k_endLine,
+                    InTextIcon{ 220.0f, 24.0f, drawOrnament },
+                    k_endLine
+                }
+            };
 
-            out << TextStyle::SubTitle;
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"A puzzle in the manner of Einstein's, at a length nobody asked for";
-            out << PopColor{};
-            out << PopTextStyle{};
-            endLine();
-            out << InTextIcon{ 220.0f, 24.0f, drawOrnament };
-            endLine();
+            // The blank row under the introduction is set in the prose face, which is what sizes it.
+            out << FamilyText{
+                proseFamily,
+                ParagraphText{
+                    TextAlign::Justified,
+                    SizedText{
+                        k_proseSize,
+                        L"Seventeen people were in the house that evening, each with a trade, an object, "
+                        L"a way of passing the hour, and a room to pass it in. No two shared any of the four. "
+                        L"What follows is every remark anyone made about anyone else, numbered in the order "
+                        L"the ledger took them down rather than in any order that would help, and interrupted "
+                        L"by the grid a solver keeps beside such a thing. The clues do not contradict each "
+                        L"other. Whether they determine anything is a separate question, and one this ledger "
+                        L"declines to raise."
+                    }
+                },
+                k_endLine,
+                StyledText{ TextStyles::Section, L"What each clue is about" }
+            };
+            out << k_endLine;
 
-            out << TextAlign::Justified;
-            out << PushFontSize{ k_proseSize };
-            out << L"Seventeen people were in the house that evening, each with a trade, an object, "
-                L"a way of passing the hour, and a room to pass it in. No two shared any of the four. "
-                L"What follows is every remark anyone made about anyone else, numbered in the order "
-                L"the ledger took them down rather than in any order that would help, and interrupted "
-                L"by the grid a solver keeps beside such a thing. The clues do not contradict each "
-                L"other. Whether they determine anything is a separate question, and one this ledger "
-                L"declines to raise.";
-            out << PopFontSize{};
-            endLine();
+            const InTextIcon check{ 0.0f, 18.0f, drawCheck };
+            Text lists{};
+            lists << check;
+            lists << BoldText{ L"The people:" };
+            lists << L" ";
+            lists << ColoredText{
+                InkGrade::Muted,
+                L"seventeen of them, named once each in the list below and thereafter by trade "
+                L"whenever a clue can get away with it."
+            };
+            lists << k_endLine;
 
-            out << TextAlign::Left;
-            endLine();
+            lists << check;
+            lists << BoldText{ L"The trades:" };
+            lists << L" ";
+            lists << ColoredText{
+                InkGrade::Muted,
+                L"thirteen, which is fewer than the people, and the ledger has never explained it."
+            };
+            lists << k_endLine;
 
-            out << TextStyle::Section;
-            out << L"What each clue is about";
-            out << PopTextStyle{};
-            out << PopFontFamily{};
-            endLine();
+            lists << check;
+            lists << BoldText{ L"The objects:" };
+            lists << L" ";
+            lists << ColoredText{
+                InkGrade::Muted,
+                L"eleven, each of which changed hands at least twice before anyone thought to "
+                L"write any of it down."
+            };
+            lists << k_endLine;
 
-            out << ParaIndent{ k_bulletIndent };
-            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
-            out << TextOp::PushBold;
-            out << L"The people:";
-            out << TextOp::PopBold;
-            out << L" ";
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"seventeen of them, named once each in the list below and thereafter by trade "
-                L"whenever a clue can get away with it.";
-            out << PopColor{};
-            endLine();
+            lists << check;
+            lists << BoldText{ L"The states:" };
+            lists << L" ";
+            lists << ColoredText{
+                InkGrade::Muted,
+                L"seven ways of spending an hour, one of which is being asleep and therefore "
+                L"unable to confirm anything."
+            };
+            lists << k_endLine;
 
-            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
-            out << TextOp::PushBold;
-            out << L"The trades:";
-            out << TextOp::PopBold;
-            out << L" ";
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"thirteen, which is fewer than the people, and the ledger has never explained it.";
-            out << PopColor{};
-            endLine();
+            lists << check;
+            lists << BoldText{ AnchorText{ L"rooms", L"The rooms:" } };
+            lists << L" ";
+            lists << ColoredText{
+                InkGrade::Muted,
+                L"nineteen are named. The title says ninety-nine. Both are correct and the "
+                L"reconciliation is left to ",
+                LinkText{ L"#solution", L"the closing note" },
+                L"."
+            };
+            lists << k_endLine;
 
-            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
-            out << TextOp::PushBold;
-            out << L"The objects:";
-            out << TextOp::PopBold;
-            out << L" ";
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"eleven, each of which changed hands at least twice before anyone thought to "
-                L"write any of it down.";
-            out << PopColor{};
-            endLine();
+            out << ParagraphText{ ParaIndent{ k_bulletIndent }, lists };
+            out << k_endLine;
 
-            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
-            out << TextOp::PushBold;
-            out << L"The states:";
-            out << TextOp::PopBold;
-            out << L" ";
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"seven ways of spending an hour, one of which is being asleep and therefore "
-                L"unable to confirm anything.";
-            out << PopColor{};
-            endLine();
+            out << FamilyText{ proseFamily, StyledText{ TextStyles::Section, L"How to read a round" } };
+            out << k_endLine;
 
-            out << InTextIcon{ 0.0f, 18.0f, drawCheck };
-            out << TextOp::PushBold;
-            out << PushAnchor{ L"rooms" };
-            out << L"The rooms:";
-            out << PopAnchor{};
-            out << TextOp::PopBold;
-            out << L" ";
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"nineteen are named. The title says ninety-nine. Both are correct and the "
-                L"reconciliation is left to ";
-            out << PushLink{ L"#solution" };
-            out << L"the closing note";
-            out << PopLink{};
-            out << L".";
-            out << PopColor{};
-            endLine();
-
-            out << ParaIndent{ 0.0f };
-            endLine();
-
-            out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << TextStyle::Section;
-            out << L"How to read a round";
-            out << PopTextStyle{};
-            out << PopFontFamily{};
-            endLine();
-
-            out << TextOp::PushBold;
-            out << L"Column";
-            out << TextOp::PopBold;
+            out << BoldText{ L"Column" };
             out << TabTo{ 100.0f };
-            out << TextOp::PushBold;
-            out << L"What it holds";
-            out << TextOp::PopBold;
+            out << BoldText{ L"What it holds" };
             out << TabTo{ 290.0f };
-            out << TextOp::PushBold;
-            out << L"When it changes";
-            out << TextOp::PopBold;
-            endLine();
+            out << BoldText{ L"When it changes" };
+            out << k_endLine;
 
             out << L"Name";
             out << TabTo{ 100.0f };
             out << L"whoever it names outright";
             out << TabTo{ 290.0f };
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"never";
-            out << PopColor{};
-            endLine();
+            out << ColoredText{ InkGrade::Muted, L"never" };
+            out << k_endLine;
 
             out << L"Trade";
             out << TabTo{ 100.0f };
             out << L"the trade it rules out";
             out << TabTo{ 290.0f };
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"on any clue after it";
-            out << PopColor{};
-            endLine();
+            out << ColoredText{ InkGrade::Muted, L"on any clue after it" };
+            out << k_endLine;
 
             out << L"Object";
             out << TabTo{ 100.0f };
             out << L"what was carried that hour";
             out << TabTo{ 290.0f };
-            out << InkWell::textInk(InkGrade::Muted);
-            out << L"twice a round";
-            out << PopColor{};
-            endLine();
+            out << ColoredText{ InkGrade::Muted, L"twice a round" };
+            out << k_endLine;
 
-            endLine();
+            out << k_endLine;
 
-            out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << PushFontSize{ k_proseSize };
-            out << L"Clue numbers run from the first round to the last without restarting, so a "
-                L"clue late in the ledger can send you back to one near the front, and several do. "
-                L"Rounds are numbered separately, and a round's own number appears in its headings "
-                L"and in nothing else.";
-            out << PopFontSize{};
-            out << PopFontFamily{};
-            endLine();
+            out << FamilyText{
+                proseFamily,
+                SizedText{
+                    k_proseSize,
+                    L"Clue numbers run from the first round to the last without restarting, so a "
+                    L"clue late in the ledger can send you back to one near the front, and several do. "
+                    L"Rounds are numbered separately, and a round's own number appears in its headings "
+                    L"and in nothing else."
+                }
+            };
+            out << k_endLine;
 
-            endLine();
-            return lines;
+            out << k_endLine;
+            return linesWrittenSince(out, start);
         }
 
         std::size_t appendClosing(Text& out, std::size_t rounds, std::size_t clues)
         {
-            std::size_t lines = 0;
-            auto endLine = [&out, &lines](){
-                out << L'\n';
-                ++lines;
-                };
+            const std::size_t start = out.plainText().size();
+            const std::wstring proseFamily{ k_proseFamily };
 
-            out << ParaIndent{ 0.0f };
-            out << TextAlign::Left;
-            out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << TextStyle::Section;
-            out << PushAnchor{ L"solution" };
-            out << L"The solution";
-            out << PopAnchor{};
-            out << PopTextStyle{};
-            endLine();
+            out << FamilyText{
+                proseFamily,
+                StyledText{ TextStyles::Section, AnchorText{ L"solution", L"The solution" } },
+                k_endLine,
+                k_endLine
+            };
 
-            endLine();
-
-            out << TextAlign::Justified;
-            out << PushFontSize{ k_proseSize };
-            out << L"Everything needed is above. Taking the ";
-            out << static_cast<int>(clues);
-            out << L" clues of the ";
-            out << static_cast<int>(rounds);
-            out << L" rounds in the order they were written down, each one removes at least one "
+            Text argument{};
+            argument << L"Everything needed is above. Taking the ";
+            argument << static_cast<int>(clues);
+            argument << L" clues of the ";
+            argument << static_cast<int>(rounds);
+            argument << L" rounds in the order they were written down, each one removes at least one "
                 L"possibility that the one before it left standing, and no two of them remove the "
                 L"same possibility twice - which is the whole of the argument, and the reason it is "
                 L"not set out here at length. The table below states the result in the form the "
                 L"ledger keeps it, which is to say by reference. Each entry names the clue that "
                 L"settles it rather than repeating what that clue already says.";
-            out << PopFontSize{};
-            out << PopFontFamily{};
-            endLine();
+            out << ParagraphText{
+                TextAlign::Justified,
+                FamilyText{ proseFamily, SizedText{ k_proseSize, argument } }
+            };
 
-            out << TextAlign::Left;
-            endLine();
+            out << k_endLine;
 
-            out << TextOp::PushBold;
-            out << L"Room";
-            out << TextOp::PopBold;
+            out << BoldText{ L"Room" };
             out << TabTo{ 130.0f };
-            out << TextOp::PushBold;
-            out << L"Who was in it";
-            out << TextOp::PopBold;
+            out << BoldText{ L"Who was in it" };
             out << TabTo{ 285.0f };
-            out << TextOp::PushBold;
-            out << L"Carrying";
-            out << TextOp::PopBold;
+            out << BoldText{ L"Carrying" };
             out << TabTo{ 375.0f };
-            out << TextOp::PushBold;
-            out << L"Settled by";
-            out << TextOp::PopBold;
-            endLine();
+            out << BoldText{ L"Settled by" };
+            out << k_endLine;
 
             for (std::size_t row = 0; row != 5; ++row)
             {
                 const std::size_t reference = clues > (row * 7 + 11) ? clues - (row * 7 + 11) : row + 1;
+                Text unnamed{ L"unnamed by " };
+                writeClueReference(unnamed, reference, clues);
 
                 out << k_rooms[row];
                 out << TabTo{ 130.0f };
-                out << InkWell::textInk(InkGrade::Muted);
-                out << L"unnamed by ";
-                writeClueReference(out, reference, clues);
-                out << PopColor{};
+                out << ColoredText{ InkGrade::Muted, unnamed };
                 out << TabTo{ 285.0f };
-                out << InkWell::textInk(InkGrade::Muted);
-                out << L"nothing twice";
-                out << PopColor{};
+                out << ColoredText{ InkGrade::Muted, L"nothing twice" };
                 out << TabTo{ 375.0f };
                 writeClueReference(out, reference, clues);
-                endLine();
+                out << k_endLine;
             }
 
-            endLine();
+            out << k_endLine;
 
-            out << PushFontFamily{ std::wstring{ k_proseFamily } };
-            out << PushFontSize{ k_proseSize };
-            out << L"The remaining ninety-four rooms follow by the same argument and are not "
-                L"written out. The nineteen named rooms are the ones anyone entered; the other "
-                L"eighty were locked that evening, which is ";
-            out << PushLink{ L"#rooms" };
-            out << L"the reconciliation the opening promised";
-            out << PopLink{};
-            out << L" and the only fact in this ledger that nobody disputes.";
-            endLine();
+            out << FamilyText{
+                proseFamily,
+                SizedText{
+                    k_proseSize,
+                    L"The remaining ninety-four rooms follow by the same argument and are not "
+                    L"written out. The nineteen named rooms are the ones anyone entered; the other "
+                    L"eighty were locked that evening, which is ",
+                    LinkText{ L"#rooms", L"the reconciliation the opening promised" },
+                    L" and the only fact in this ledger that nobody disputes.",
+                    k_endLine,
+                    k_endLine
+                }
+            };
 
-            endLine();
-
-            out << TextAlign::Right;
-            out << InkWell::textInk(InkGrade::Muted);
-            out << TextOp::PushItalic;
-            out << L"- as set down after the fact, and not checked since";
-            out << TextOp::PopItalic;
-            out << PopColor{};
-            out << PopFontSize{};
-            out << PopFontFamily{};
-            endLine();
-
-            out << TextAlign::Left;
-            return lines;
+            out << ParagraphText{
+                TextAlign::Right,
+                FamilyText{
+                    proseFamily,
+                    SizedText{
+                        k_proseSize,
+                        ColoredText{
+                            InkGrade::Muted,
+                            ItalicText{ L"- as set down after the fact, and not checked since" }
+                        }
+                    }
+                }
+            };
+            return linesWrittenSince(out, start);
         }
     }
 

@@ -376,6 +376,11 @@ namespace ClaFi
             .bold = boldCount,
             .italic = italicCount,
         };
+        // What every paragraph starts from: a property the text states holds for its own
+        // paragraph alone.
+        const TextAlign formatAlign = currentAlign;
+        const float formatIndent = currentIndent;
+        const float formatLineSpacing = currentLineSpacing;
 
         std::size_t currentPos = 0;
         std::size_t markerIdx = 0;
@@ -397,6 +402,9 @@ namespace ClaFi
                 m_paragraphs.push_back({ {currentParagraphStart, nextNewline - currentParagraphStart}, currentAlign, currentLineSpacing, currentIndent });
                 currentParagraphStart = nextNewline + 1;
                 nextNewline = plain.find(L'\n', currentParagraphStart);
+                currentAlign = formatAlign;
+                currentIndent = formatIndent;
+                currentLineSpacing = formatLineSpacing;
             }
         }
 

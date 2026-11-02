@@ -25,7 +25,6 @@ import ClaFi.Controls.Button;
 import ClaFi.Icons.DotMark;
 
 import ClaFi.Core.Context.DrawIconEvent;
-import ClaFi.Core.TextEngine.Fmt;
 
 import ClaFi.Core.AppTheme_Colors;
 
@@ -33,6 +32,7 @@ import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
 
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Animation;
@@ -419,22 +419,23 @@ void MillSceneForm::writeMetrics()
     const WindowReadings readings = windowReadings();
 
     // TODO: the text disappears under some conditions - which ones?
-    Text words;
-    words << Fmt{
-        L"[code][right]"
-        L"[nobr]{:.0f}[color muted]x[/color]{:.0f} [color muted]pix\u202F[space 0][/color]\n"
-        L"{:.2f} [color muted]CPU\u202F[space 0][/color]\n"
-        L"{:.2f} [color muted]ms\u202F\u202F[space 0][/color]\n"
-        L"{:.0f} [color muted]draw[/color]\n"
-        L"{:.0f} [color muted]FPS\u202F[space 0][/color]\n[/nobr]"
-        ,
-        m_benchmark.dimensions().x, m_benchmark.dimensions().y,
-        cpuVal,
-        readings.drawMs,
-        readings.drawMs > 0.0 ? 1000.0 / readings.drawMs : 0.0,
-        readings.fps
-    };
-    m_metricsReadout.text() = std::move(words);
+    Text lines;
+    lines << std::format(L"{:.0f}", m_benchmark.dimensions().x);
+    lines << ColoredText{ InkGrade::Muted, L"x" };
+    lines << std::format(L"{:.0f} ", m_benchmark.dimensions().y);
+    lines << ColoredText{ InkGrade::Muted, L"pix\u202F", Space{ 0.0f } } << k_endLine;
+    lines << std::format(L"{:.2f} ", cpuVal);
+    lines << ColoredText{ InkGrade::Muted, L"CPU\u202F", Space{ 0.0f } } << k_endLine;
+    lines << std::format(L"{:.2f} ", readings.drawMs);
+    lines << ColoredText{ InkGrade::Muted, L"ms\u202F\u202F", Space{ 0.0f } } << k_endLine;
+    lines << std::format(L"{:.0f} ", readings.drawMs > 0.0 ? 1000.0 / readings.drawMs : 0.0);
+    lines << ColoredText{ InkGrade::Muted, L"draw" } << k_endLine;
+    lines << std::format(L"{:.0f} ", readings.fps);
+    lines << ColoredText{ InkGrade::Muted, L"FPS\u202F", Space{ 0.0f } } << k_endLine;
+    m_metricsReadout.text() = Text{ ParagraphText{
+        TextAlign::Right,
+        StyledText{ TextStyles::Code, lines }
+    } };
 }
 
 // The same window and the same sums as the FPS page - see FpsPage::paintTimeOf and
@@ -462,25 +463,31 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
         drawnOn = k_drawnOnGpu;
     else if (appContext().gpuAvailable())
         drawnOn = k_drawnOnCpu;
+    const InTextIcon bullet{ 18.0f, 18.0f, drawBullet };
     event.text.clear();
-    event.text << Fmt{
-        L"[section]Performance Metrics\n[/section]"
-        L"[space 16]{icon 18, 18}Resolution (pix): [color muted]Dimensions of the current scene.\n"
-        L"[color strongest][space 16]{icon 18, 18}CPU usage (%): [color muted]Single-core utilization by this specific process.\n"
-        L"[color strongest][space 16]{icon 18, 18}Time (ms): [color muted]Measured time to render the scene to a bitmap.\n"
-        L"[color strongest][space 16]{icon 18, 18}draw: [color muted]What that time alone would allow, as 1000/Time.\n"
-        L"[color strongest][space 16]{icon 18, 18}FPS: [color muted]The rate frames actually arrived at, measured from one to the next[color strongest]."
-        L"[vspace 18]\n"
-        L"[section]Note:\n[/section][color strongest]"
-        L"[space 18]{}\n"
-        L"[space 18]The gap between [size 20]draw[/size] and [size 20]FPS[/size] is everything a frame waits on\n"
-        L"[space 18]that the scene is not: the rest of the form, the copy to the screen,\n"
-        L"[space 18]and whatever pace the display server keeps.\n"
-        L"[space 18]The chart shows both - the filled area is FPS, the line over it draw.\n"
-        L"[space 18]Time, draw and FPS are read over the two seconds the chart spans.",
-        drawBullet, drawBullet, drawBullet, drawBullet, drawBullet,
-        drawnOn
+    event.text << StyledText{ TextStyles::Section, L"Performance Metrics\n" };
+    event.text << Space{ 16.0f } << bullet << L"Resolution (pix): ";
+    event.text << ColoredText{ InkGrade::Muted, L"Dimensions of the current scene.\n" };
+    event.text << Space{ 16.0f } << bullet << L"CPU usage (%): ";
+    event.text << ColoredText{ InkGrade::Muted, L"Single-core utilization by this specific process.\n" };
+    event.text << Space{ 16.0f } << bullet << L"Time (ms): ";
+    event.text << ColoredText{ InkGrade::Muted, L"Measured time to render the scene to a bitmap.\n" };
+    event.text << Space{ 16.0f } << bullet << L"draw: ";
+    event.text << ColoredText{ InkGrade::Muted, L"What that time alone would allow, as 1000/Time.\n" };
+    event.text << Space{ 16.0f } << bullet << L"FPS: ";
+    event.text << ColoredText{
+        InkGrade::Muted,
+        L"The rate frames actually arrived at, measured from one to the next"
     };
+    event.text << L"." << VSpace{ 18.0f } << k_endLine;
+    event.text << StyledText{ TextStyles::Section, L"Note:\n" };
+    event.text << Space{ 18.0f } << drawnOn << k_endLine;
+    event.text << Space{ 18.0f } << L"The gap between " << SizedText{ 20.0f, L"draw" };
+    event.text << L" and " << SizedText{ 20.0f, L"FPS" } << L" is everything a frame waits on\n";
+    event.text << Space{ 18.0f } << L"that the scene is not: the rest of the form, the copy to the screen,\n";
+    event.text << Space{ 18.0f } << L"and whatever pace the display server keeps.\n";
+    event.text << Space{ 18.0f } << L"The chart shows both - the filled area is FPS, the line over it draw.\n";
+    event.text << Space{ 18.0f } << L"Time, draw and FPS are read over the two seconds the chart spans.";
 }
 
 

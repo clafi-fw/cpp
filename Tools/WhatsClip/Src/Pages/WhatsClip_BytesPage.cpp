@@ -10,7 +10,6 @@ import ClaFi.Core.Foundation;
 
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -50,7 +49,7 @@ namespace ClaFi::Tools::WhatsClip
             if (m_bytes.empty())
                 status << k_noAnswer;
             else
-                status << Fmt{ L"{} bytes", m_bytes.size() };
+                status << std::format(L"{} bytes", m_bytes.size());
 
             writeStatus(std::move(status));
         }
@@ -75,7 +74,7 @@ namespace ClaFi::Tools::WhatsClip
                 reading << L"-";
                 reading << body().offsetText(selection.start + selection.length - 1);
                 reading << L"  ";
-                reading << Fmt{ L"{} bytes", selection.length };
+                reading << std::format(L"{} bytes", selection.length);
             }
         }
 

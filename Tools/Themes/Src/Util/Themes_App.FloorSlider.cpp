@@ -6,7 +6,6 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -54,7 +53,7 @@ namespace Themes_App
     // Every floor is spelled in the same four cells, so the text measured is the text shown.
     void FloorSlider::writeValueTooltip(Text& text, EventPhase) const
     {
-        text << TextStyle::Code << Fmt{ L"{:.2f}", position() };
+        text << StyledText{ TextStyles::Code, std::format(L"{:.2f}", position()) };
     }
 
     Color FloorSlider::sampleAt(float position, const Hsl& base) const

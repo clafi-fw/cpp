@@ -442,7 +442,7 @@ namespace SeeDocs_App::Articles
 
         // --- Places ---
 
-        // The folder the names lead to under the project's Articles folder: a category's own.
+        // The folder the names lead to under the project's articles folder: a category's own.
         [[nodiscard]] std::filesystem::path folderOf(const Project& project,
             const SidebarNames& names)
         {

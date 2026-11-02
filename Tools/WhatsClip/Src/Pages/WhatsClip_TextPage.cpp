@@ -14,7 +14,6 @@ import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Props;
@@ -95,13 +94,13 @@ namespace ClaFi::Tools::WhatsClip
     void TextPage::showHeldBack()
     {
         Text status{};
-        status << Fmt{ L"{} bytes", m_byteCount };
+        status << std::format(L"{} bytes", m_byteCount);
         writeStatus(std::move(status));
 
         Text question{};
-        question << Fmt{ L"This is not a text format: it holds {} bytes of binary data. "
+        question << std::format(L"This is not a text format: it holds {} bytes of binary data. "
             L"Reading them as text can take minutes and slow the application down. "
-            L"Read them anyway?", m_byteCount };
+            L"Read them anyway?", m_byteCount);
         m_question.setMessage(MessageIcon::Warning, question);
         showText(Text{});
     }
@@ -121,10 +120,10 @@ namespace ClaFi::Tools::WhatsClip
         if (!text)
             status << k_noAnswer;
         else if (wholeSize > k_textLimit)
-            status << Fmt{ L"{} characters, the first {} of {} {}",
-                text->size(), k_textLimit, wholeSize, unit };
+            status << std::format(L"{} characters, the first {} of {} {}",
+                text->size(), k_textLimit, wholeSize, unit);
         else
-            status << Fmt{ L"{} characters", text->size() };
+            status << std::format(L"{} characters", text->size());
 
         writeStatus(std::move(status));
 

@@ -306,8 +306,8 @@ namespace ClaFi
         }
         const bool typed = !record.change.inserted.empty();
         const Text& shown = typed ? record.change.inserted : record.change.removed;
-        text << (typed ? L"Type " : L"Delete ") << InkWell::accentInk()
-            << quotedText(shown.plainText(), k_quotedChars) << PopColor{};
+        text << (typed ? L"Type " : L"Delete ");
+        text << ColoredText{ InkWell::accentInk(), quotedText(shown.plainText(), k_quotedChars) };
     }
 
     bool TextHistory::inSync(const Text& text) const

@@ -75,6 +75,44 @@ without reading it. A copy or a move is a new text with an id of its own.
 **Every write through ControlText moves the stamp on.** A write through a `Text&` bypasses it,
 which is why TextHistory takes a ControlText.
 
+## ScopedText
+
+**The words between a run's opening marker and its closer.** StyledText, ColoredText, BoldText,
+ItalicText, SizedText, FamilyText, SuperscriptText, SubscriptText, LinkText and AnchorText are each
+one, and a text is written through them:
+
+    caption << StyledText{ TextStyles::Title, name } << L" saved "
+        << ColoredText{ InkGrade::Muted, when };
+
+**What a wrapper holds is written inside its run** - words, numbers, objects, other wrappers, a
+Text built over several statements. Where two state the same thing, the inner one wins.
+
+**A run that holds no character writes nothing**, its markers included.
+
+**A named value is held by reference and a temporary by value**, so a wrapper kept in a variable
+must not outlive the named values it was given.
+
+**A number with a format goes through std::format**:
+`ColoredText{ InkGrade::Muted, std::format(L"{:.2f}", value) }`.
+
+## ParagraphText
+
+**Words on lines of their own.** Where the text holds words and does not end in a line end, the
+wrapper ends that line first. The line end after its words is written when something more is
+written, so a text that ends in one ends with no line end. A line end written right after it is
+an empty line.
+
+**Every line of the words takes the property** - a TextAlign, a ParaIndent or a ParaLineSpacing.
+Two properties are two wrappers, one inside the other.
+
+**A paragraph reads its properties afresh**, from its own markers and otherwise from the
+control's TextFormat, so a property runs on into no paragraph after its own.
+
+**A Text that starts or ends with one keeps those words on lines of their own** wherever it is
+put.
+
+**Lines that hold no character write nothing.** A blank line is a line end of its own.
+
 ## TextFormat
 
 **It holds the values a text starts from** - a colour, a style, a size, a family, bold, italic, an
@@ -84,8 +122,8 @@ size in force where it opens, so its order among the other values would change w
 **The text's own markers override it.**
 
 - A push the text makes is read after the format's.
-- A paragraph property is read at the paragraph's newline. One the text states replaces the
-  format's for its whole paragraph and every paragraph after it.
+- A paragraph property the text states replaces the format's for its own paragraph - see
+  ParagraphText.
 - A pop the text has no push for leaves the format's value in force - the format is the floor of
   every stack. For a text whose pushes and pops pair up, the format acts as if written at index 0.
 
@@ -174,12 +212,8 @@ result to read its texts again.
 
 ## Links
 
-A link is the text between a PushLink and its PopLink. The target is whatever the push states - a
-URL, a path, or a word the application answers.
-
-**In a format string** the tags are `[link target]` and `[/link]`. The target is everything after
-`link`, spaces included, so it cannot hold `]`. A document and the clipboard carry any target
-whole.
+A link is the words of a LinkText. The target is whatever it names - a URL, a path, or a word
+the application answers. A document and the clipboard carry any target whole.
 
 **Typing at a link's end goes outside it**, where any other run takes it in. Typing over the last
 word of a link replaces part of it, and the new word belongs to the link.
@@ -187,8 +221,8 @@ word of a link replaces part of it, and the new word belongs to the link.
 **Two links that meet and name one target are one** - pointed at and underlined whole, and typing
 where they meet goes inside.
 
-**A link is drawn in the accent ink** where no colour is pushed inside it. A colour pushed before
-the link gives way to that ink, and one pushed inside it wins.
+**A link is drawn in the accent ink** where no colour is written inside it. A colour around the
+link gives way to that ink, and one inside it wins.
 
 **The underline shows on hover.** The control holding the layout names the hovered link with
 TextLayout::setHoveredLink, and the layout underlines it:
@@ -203,11 +237,11 @@ below the text there is none.
 
 ## Anchors
 
-An anchor is the text between a PushAnchor and its PopAnchor, named by the push. It draws nothing.
-A link reaches it with # and the name:
+An anchor is the words of an AnchorText, named by it. It draws nothing. A link reaches it with #
+and the name:
 
-    [anchor clue-17]Clue 17[/anchor]
-    [link #clue-17]Clue 17[/link]
+    text << AnchorText{ L"clue-17", L"Clue 17" };
+    text << LinkText{ L"#clue-17", L"Clue 17" };
 
 **A TextBox following the link selects the anchor's text** - see TextBox::goToAnchor. Of two
 anchors with one name, the first in text order is reached.

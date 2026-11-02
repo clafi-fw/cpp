@@ -195,7 +195,7 @@ namespace Themes_App
             rulesChanged(phase, what, selection());
         } }
     {
-        m_title.text() << TextStyle::SubTitle << title;
+        m_title.text() << StyledText{ TextStyles::SubTitle, title };
         m_grid.onNewItem([this](Grids::NewItemEvent&) {
             addRule();
         });

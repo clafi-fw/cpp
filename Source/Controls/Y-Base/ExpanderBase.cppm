@@ -351,7 +351,7 @@ namespace ClaFi::Controls
         if (label.empty())
             return;
         Text ellipsis = label.selectedText({ label.plainText().size() - 1, 1 });
-        ellipsis.replaceText({ 0, 1 }, Text{ InkGrade::Muted, k_ellipsis });
+        ellipsis.replaceText({ 0, 1 }, Text{ ColoredText{ InkGrade::Muted, k_ellipsis } });
         const FloatRect content{ event.controlBounds(), -event.padding() };
         FloatRect bounds = textBounds(event);
         bounds.left = content.left + m_button.boundsInParent().right + event.spacing().x;

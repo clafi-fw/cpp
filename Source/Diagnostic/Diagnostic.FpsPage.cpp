@@ -13,7 +13,6 @@ import ClaFi.Controls.Stack;
 import ClaFi.Icons.RestartIcon;
 
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
@@ -131,7 +130,7 @@ namespace ClaFi::Diagnostic
             Cell{ Tag{ Reading::Best }, this, &FpsPage::writeReading }
         },
         m_caption{ body().add<Label>(
-            Text{ TextStyle::Section, L"Window under the pointer" },
+            Text{ StyledText{ TextStyles::Section, L"Window under the pointer" } },
             OnEvent{ [](AdjustTooltipEvent& event) {
                 writeMethodTooltip(event);
             } }
@@ -395,7 +394,7 @@ namespace ClaFi::Diagnostic
                 break;
             case WindowRow::Scale:
                 if (m_facts.scalePercent > 0)
-                    text << Fmt{ L"{}%", m_facts.scalePercent };
+                    text << m_facts.scalePercent << L'%';
                 else
                     text << k_noReading;
                 break;
@@ -410,10 +409,14 @@ namespace ClaFi::Diagnostic
         const ScaledSize dimensions = m_benchmark.dimensions();
         if (dimensions.x <= 0.0f)
         {
-            text << Fmt{ L"[code]{}", k_noReading };
+            text << StyledText{ TextStyles::Code, k_noReading };
             return;
         }
-        text << Fmt{ L"[code]{:.0f} x {:.0f}[color muted] pix[/color]", dimensions.x, dimensions.y };
+        text << StyledText{
+            TextStyles::Code,
+            std::format(L"{:.0f} x {:.0f}", dimensions.x, dimensions.y),
+            ColoredText{ InkGrade::Muted, L" pix" }
+        };
     }
 
     // **The application's answer, not the target's.** One context builds every window of an
@@ -445,24 +448,21 @@ namespace ClaFi::Diagnostic
         const std::wstring_view unit = value ? spec.unit : std::wstring_view{};
         if (reading != Reading::Stats)
         {
-            event.text() << Fmt{ L"{}[color muted]{}[/color]", number, unit };
+            event.text() << number << ColoredText{ InkGrade::Muted, unit };
             return;
         }
-        event.text() << Fmt{
-            L"[size 18]{}[/size][color muted]{}[/color]\n"
-            L"[subbody][color muted]{}[/color]",
-            number, unit, spec.name
-        };
+        event.text() << SizedText{ 18.0f, number } << ColoredText{ InkGrade::Muted, unit };
+        event.text() << k_endLine;
+        event.text() << StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, spec.name } };
     }
 
     void FpsPage::writeFooter()
     {
         Text words;
-        words << Fmt{
-            L"[subbody][color muted]Measured {} frames, {} whole[/color]",
+        const std::wstring measured = std::format(L"Measured {} frames, {} whole",
             m_benchmark.frameInterval().timesNum(),
-            m_benchmark.paintTime().timesNum()
-        };
+            m_benchmark.paintTime().timesNum());
+        words << StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, measured } };
         m_footer.text() = std::move(words);
         m_footer.invalidate();
     }
@@ -492,10 +492,14 @@ namespace ClaFi::Diagnostic
 
         const Metric metric = event.row().tag().get<Metric>();
         const std::size_t sampled = metric == Metric::CpuCore ? 1 : 0;
-        event.text() << Fmt{
-            L"[section]{}\n[/section]{}\n[color muted]{}[/color]",
+        event.text() << StyledText{
+            TextStyles::Section,
             k_metricSpecs[static_cast<std::size_t>(metric)].name,
-            k_metricNotes[static_cast<std::size_t>(metric)],
+            k_endLine
+        };
+        event.text() << k_metricNotes[static_cast<std::size_t>(metric)] << k_endLine;
+        event.text() << ColoredText{
+            InkGrade::Muted,
             k_readingNotes[static_cast<std::size_t>(reading)][sampled]
         };
     }
@@ -504,27 +508,23 @@ namespace ClaFi::Diagnostic
     {
         event.placement = FormPlacement::BottomLeft;
         event.text.clear();
-        event.text << Fmt{
-            L"[section]How the readings are taken\n[/section]"
-            L"While this page shows, the window under the pointer is asked for a whole\n"
+        event.text << StyledText{ TextStyles::Section, L"How the readings are taken\n" };
+        event.text << L"While this page shows, the window under the pointer is asked for a whole\n"
             L"frame whenever the thread is idle, and a core is spent on that. A moving\n"
             L"pointer holds it off, and the paints it makes are then what Frame rate\n"
             L"counts. Over this page's own window, or over no framework window,\n"
-            L"nothing is driven and the readings stand where they were."
-        };
+            L"nothing is driven and the readings stand where they were.";
     }
 
     void FpsPage::writeChartTooltip(AdjustTooltipEvent& event)
     {
         event.placement = FormPlacement::BottomLeft;
         event.text.clear();
-        event.text << Fmt{
-            L"[section]The last two seconds\n[/section]"
-            L"The filled area is Frame rate, the line over it Draw rate. They meet\n"
+        event.text << StyledText{ TextStyles::Section, L"The last two seconds\n" };
+        event.text << L"The filled area is Frame rate, the line over it Draw rate. They meet\n"
             L"when the drawing is what limits the rate, and part when something\n"
             L"after the drawing is - the copy to the screen, or the display server's\n"
-            L"own pace."
-        };
+            L"own pace.";
     }
 
     std::optional<double> FpsPage::readingOf(const Metric metric, const Reading reading) const

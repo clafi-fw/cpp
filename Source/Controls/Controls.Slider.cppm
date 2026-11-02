@@ -321,14 +321,15 @@ namespace ClaFi::Controls
         EditableSlider::changed(event);
     }
 
-    // The alignment is a marker, so a slider writing no value still answers an empty text, and
-    // the tooltip goes on to ask the slider's parents.
+    // A slider writing no value leaves the text empty, and the tooltip goes on to ask the
+    // slider's parents.
     void Slider::adjustThumbTooltip(AdjustTooltipEvent& event)
     {
         event.placement = FormPlacement::Top;
         event.hideOnUserInput = false;
-        event.text << TextAlign::Center;
-        writeValueTooltip(event.text, event.phase);
+        Text value;
+        writeValueTooltip(value, event.phase);
+        event.text << ParagraphText{ TextAlign::Center, value };
     }
 
     void Slider::adjustButtonPaint(AdjustPaintEvent& event)

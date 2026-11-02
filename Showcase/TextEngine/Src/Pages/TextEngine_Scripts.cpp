@@ -2,7 +2,6 @@ module TextEngine_App.Scripts;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
@@ -106,10 +105,7 @@ namespace TextEngine_App
                 }
                 if (codePoint == U' ')
                     continue;
-                // Fmt holds its arguments by reference, so the value is named rather than cast
-                // into the call.
-                const std::uint32_t value = static_cast<std::uint32_t>(codePoint);
-                out << Fmt{ L"U+{:04X} ", value };
+                out << std::format(L"U+{:04X} ", static_cast<std::uint32_t>(codePoint));
             }
         }
 
@@ -119,23 +115,21 @@ namespace TextEngine_App
             out << TabTo{ k_sampleStop };
             out << row.sample;
             out << TabTo{ k_pointStop };
-            out << TextStyle::SubBody;
-            out << InkGrade::Muted;
-            writeCodePoints(out, row.sample);
-            out << PopColor{};
-            out << PopTextStyle{};
+            Text codePoints{};
+            writeCodePoints(codePoints, row.sample);
+            out << StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, codePoints } };
             out << k_endLine;
         }
 
         void writeHeader(Text& out)
         {
-            out << TextOp::PushBold;
-            out << L"Script";
-            out << TabTo{ k_sampleStop };
-            out << L"Characters";
-            out << TabTo{ k_pointStop };
-            out << L"Code points";
-            out << TextOp::PopBold;
+            out << BoldText{
+                L"Script",
+                TabTo{ k_sampleStop },
+                L"Characters",
+                TabTo{ k_pointStop },
+                L"Code points"
+            };
             out << k_endLine;
         }
     }
@@ -144,66 +138,77 @@ namespace TextEngine_App
     {
         Text page{};
 
-        page << Fmt{
-            L"[center][title]Writing Systems[/title][n]"
-            L"[subtitle]Fifty-six of them, three characters each[/subtitle][n][n]"
-            L"[left][body]No family is named anywhere on this page. Every row is set in the same "
+        page << ParagraphText{
+            TextAlign::Center,
+            StyledText{ TextStyles::Title, L"Writing Systems" },
+            k_endLine,
+            StyledText{ TextStyles::SubTitle, L"Fifty-six of them, three characters each" },
+            k_endLine,
+            k_endLine // the blank row under the subtitle is centred with it
+        };
+        page << L"No family is named anywhere on this page. Every row is set in the same "
             L"style as the prose around it, so what draws each character is the platform's own "
-            L"fallback and nothing the page chose - which is the question being put.[/body][n][n]"
-        };
+            L"fallback and nothing the page chose - which is the question being put.";
+        page << k_endLine << k_endLine;
 
-        page << Fmt{
-            L"[heading]1. How to read a row[/heading][n]"
-            L"[indent 34]"
-            L"[b]Characters drawn[/b] means a face was found and had them.[n]"
-            L"[b]Boxes[/b] mean a face was found and did not have them, so its .notdef stood in. "
-            L"Noto and DejaVu draw .notdef as a box.[n]"
-            L"[b]Blanks[/b] mean the same miss from a face whose .notdef is empty, which is what a "
-            L"text face answers with for a script it never carried.[n]"
-            L"[indent 0][n]"
-            L"[body]Only the first is coverage. A box and a blank are one miss wearing different "
+        page << StyledText{ TextStyles::Heading, L"1. How to read a row" } << k_endLine;
+        page << ParagraphText{
+            ParaIndent{ 34.0f },
+            BoldText{ L"Characters drawn" },
+            L" means a face was found and had them.\n",
+            BoldText{ L"Boxes" },
+            L" mean a face was found and did not have them, so its .notdef stood in. "
+            L"Noto and DejaVu draw .notdef as a box.\n",
+            BoldText{ L"Blanks" },
+            L" mean the same miss from a face whose .notdef is empty, which is what a "
+            L"text face answers with for a script it never carried.\n"
+        };
+        page << k_endLine;
+        page << L"Only the first is coverage. A box and a blank are one miss wearing different "
             L"clothes, and which of the two appears says more about the face that was reached than "
-            L"about the script that was asked for.[/body][n][n]"
-        };
+            L"about the script that was asked for.";
+        page << k_endLine << k_endLine;
 
-        page << Fmt{
-            L"[heading]2. The scripts[/heading][n]"
-            L"[body]Each row is a paragraph of its own. The shaper guesses a script per item, and a "
+        page << StyledText{ TextStyles::Heading, L"2. The scripts" } << k_endLine;
+        page << L"Each row is a paragraph of its own. The shaper guesses a script per item, and a "
             L"line carrying fifty-six of them would be guessed once and wrongly - so a row holds "
-            L"one script, and the guess it is asked for is one it can answer.[/body][n][n]"
-        };
+            L"one script, and the guess it is asked for is one it can answer.";
+        page << k_endLine << k_endLine;
 
         writeHeader(page);
 
         for (const ScriptRow& row : k_scripts)
             writeScriptRow(page, row);
 
-        page << Fmt{
-            L"[n][heading]3. Not claimed yet[/heading][n]"
-            L"[body]These two are laid out right to left and the engine does not do that. The "
+        page << k_endLine;
+        page << StyledText{ TextStyles::Heading, L"3. Not claimed yet" } << k_endLine;
+        page << L"These two are laid out right to left and the engine does not do that. The "
             L"shaper is handed an item and guesses its direction from the contents, so the glyphs "
             L"are chosen and joined correctly - and then the line is broken and placed left to "
             L"right over them. Both rows below are wrong on purpose, and are what bidi will be "
-            L"measured against when it arrives.[/body][n][n]"
-        };
+            L"measured against when it arrives.";
+        page << k_endLine << k_endLine;
 
         writeHeader(page);
 
         for (const ScriptRow& row : k_rightToLeft)
             writeScriptRow(page, row);
 
-        page << Fmt{
-            L"[n][heading]4. What the page leaves out[/heading][n]"
-            L"[indent 34]"
-            L"[b]Joining and reordering.[/b] Three characters standing alone ask a face for three "
+        page << k_endLine;
+        page << StyledText{ TextStyles::Heading, L"4. What the page leaves out" } << k_endLine;
+        page << ParagraphText{
+            ParaIndent{ 34.0f },
+            BoldText{ L"Joining and reordering." },
+            L" Three characters standing alone ask a face for three "
             L"glyphs. A script whose letters join, reorder or stack - Devanagari, Khmer, Myanmar, "
-            L"Tibetan - is only half asked by a row like this; coverage is not shaping.[n]"
-            L"[b]Which face answered.[/b] The page shows what was drawn, never what drew it. A row "
+            L"Tibetan - is only half asked by a row like this; coverage is not shaping.\n",
+            BoldText{ L"Which face answered." },
+            L" The page shows what was drawn, never what drew it. A row "
             L"of boxes and a row of blanks both found a face; the probe beside this showcase is "
-            L"what names it.[n]"
-            L"[b]One line per script.[/b] Nothing here puts two scripts in one paragraph, which is "
-            L"the case the item guess is weakest at.[n]"
-            L"[indent 0]"
+            L"what names it.\n",
+            BoldText{ L"One line per script." },
+            L" Nothing here puts two scripts in one paragraph, which is "
+            L"the case the item guess is weakest at.\n"
         };
 
         return page;

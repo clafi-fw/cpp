@@ -56,8 +56,12 @@ namespace ClaFi::Controls::Grids
 
     void RowNewItem::getCellText(const Column&, Text& text)
     {
-        text << InkGrade::Muted << InTextIcon{ 12.0f, 12.0f, drawMutedPlus } << L" "
-            << m_placeHolderText;
+        text << ColoredText{
+            InkGrade::Muted,
+            InTextIcon{ 12.0f, 12.0f, drawMutedPlus },
+            L" ",
+            m_placeHolderText
+        };
     }
 
     // Return and Space land here as well: the focus navigator presses the row the grid's focus

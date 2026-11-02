@@ -172,14 +172,11 @@ namespace ClaFi
     {
         Text titleText(const AppContext& context)
         {
-            Text text{ TextStyle::Title, context.appName(), PopTextStyle{} };
+            Text text{ StyledText{ TextStyles::Title, context.appName() } };
             if (!context.version().empty())
             {
                 text << FlexSpace{ k_versionGap };
-                text << InkGrade::Muted;
-                text << L"Version ";
-                text << context.version();
-                text << PopColor{};
+                text << ColoredText{ InkGrade::Muted, L"Version ", context.version() };
             }
             return text;
         }
@@ -188,56 +185,51 @@ namespace ClaFi
         // the button at the page's usual width.
         Text statusText(const UpdateCheck& updates)
         {
-            Text text{ TextStyle::SubHeading };
+            Text words{};
             switch (updates.state())
             {
                 case UpdateState::Unchecked:
                     break;
                 case UpdateState::Checking:
-                    text << L"Checking for updates\u2026";
+                    words << L"Checking for updates\u2026";
                     break;
                 case UpdateState::Latest:
-                    text << L"You're up to date";
+                    words << L"You're up to date";
                     break;
                 case UpdateState::Newer:
-                    text << PushLink{ updates.releaseAddress() };
-                    text << L"Version ";
-                    text << updates.newerVersion();
-                    text << L" is available";
-                    text << PopLink{};
+                    words << LinkText{
+                        updates.releaseAddress(),
+                        L"Version ",
+                        updates.newerVersion(),
+                        L" is available"
+                    };
                     break;
                 case UpdateState::Failed:
-                    text << L"Could not check for updates";
+                    words << L"Could not check for updates";
                     break;
             }
-            text << PopTextStyle{};
-            return text;
+            return Text{ StyledText{ TextStyles::SubHeading, words } };
         }
 
         Text lastCheckText(const UpdateCheck& updates, const std::chrono::sys_seconds now)
         {
-            Text text{ TextStyle::SubBody };
+            Text words{};
             if (updates.answeredAt())
             {
-                text << L"last check: ";
-                text << ageSpelling(updates.answeredAt().value(), now);
+                words << L"last check: ";
+                words << ageSpelling(updates.answeredAt().value(), now);
             }
-            text << PopTextStyle{};
-            return text;
+            return Text{ StyledText{ TextStyles::SubBody, words } };
         }
 
         Text aboutText(const AppContext& context)
         {
             Text text{};
-            text << InkGrade::Muted;
-            text << context.publisher();
-            text << PopColor{};
+            text << ColoredText{ InkGrade::Muted, context.publisher() };
             text << k_endLine;
             if (!context.site().empty())
             {
-                text << PushLink{ std::wstring{ context.site() } };
-                text << shownAddress(context.site());
-                text << PopLink{};
+                text << LinkText{ std::wstring{ context.site() }, shownAddress(context.site()) };
                 text << k_endLine;
             }
             text << k_endLine;
@@ -255,9 +247,7 @@ namespace ClaFi
             }
             text << L"Built with ClaFi - Clarity First the Framework";
             text << k_endLine;
-            text << PushLink{ L"https://github.com/clafi-fw/cpp" };
-            text << L"github.com/clafi-fw/cpp";
-            text << PopLink{};
+            text << LinkText{ L"https://github.com/clafi-fw/cpp", L"github.com/clafi-fw/cpp" };
             return text;
         }
 
@@ -280,9 +270,7 @@ namespace ClaFi
                     --end;
                 const std::wstring_view address = paragraph.substr(start, end - start);
                 text << paragraph.substr(pos, start - pos);
-                text << PushLink{ std::wstring{ address } };
-                text << address;
-                text << PopLink{};
+                text << LinkText{ std::wstring{ address }, address };
                 pos = end;
             }
             text << paragraph.substr(pos);

@@ -11,7 +11,6 @@ import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Core.Transfer.Conversion;
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Props;
@@ -46,12 +45,12 @@ namespace ClaFi::Tools::WhatsClip
         Text status{};
         if (marked)
         {
-            status << Fmt{ L"{} characters, {} markers",
-                marked->plainText().size(), marked->markers().size() };
+            status << std::format(L"{} characters, {} markers",
+                marked->plainText().size(), marked->markers().size());
         }
         else if (plain)
         {
-            status << Fmt{ L"{} characters", plain->size() };
+            status << std::format(L"{} characters", plain->size());
         }
         else
         {

@@ -27,7 +27,6 @@ import ClaFi.Core.Transfer.Source;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.Context.DrawIconEvent;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.AppTheme_Colors;
@@ -138,7 +137,7 @@ namespace ClaFi::Tools::WhatsClip
         if (m_picture.empty())
             status << k_noAnswer;
         else
-            status << Fmt{ L"{} \u00d7 {} pixels", m_picture.width(), m_picture.height() };
+            status << std::format(L"{} \u00d7 {} pixels", m_picture.width(), m_picture.height());
 
         writeStatus(std::move(status));
     }
@@ -147,7 +146,7 @@ namespace ClaFi::Tools::WhatsClip
     {
         Text reading{};
         if (const std::optional<IntPoint> pixel = body().selection())
-            reading << Fmt{ L"{}, {}", pixel->x, pixel->y };
+            reading << std::format(L"{}, {}", pixel->x, pixel->y);
 
         writeReadout(std::move(reading));
     }
@@ -161,7 +160,7 @@ namespace ClaFi::Tools::WhatsClip
     void PicturePage::writeZoomReadout()
     {
         Text reading{};
-        reading << Fmt{ L"{}%", static_cast<int>(std::round(body().zoom() * 100.0f)) };
+        reading << static_cast<int>(std::round(body().zoom() * 100.0f)) << L'%';
         m_zoomReadout.text() = std::move(reading);
         m_zoomReadout.invalidate();
     }
@@ -296,7 +295,7 @@ namespace ClaFi::Tools::WhatsClip
         Text text{};
         if (!color)
         {
-            text << InkGrade::Muted << L"No pixel" << PopColor{};
+            text << ColoredText{ InkGrade::Muted, L"No pixel" };
             return text;
         }
 
@@ -308,8 +307,9 @@ namespace ClaFi::Tools::WhatsClip
                 event.scaledStrokeWidth(Thickness::Thin));
         } };
         text << Space{ k_swatchGap };
-        text << TextStyle::Code;
-        appendSpelling(text, shown, m_spelling);
+        Text spelling{};
+        appendSpelling(spelling, shown, m_spelling);
+        text << StyledText{ TextStyles::Code, spelling };
         return text;
     }
 

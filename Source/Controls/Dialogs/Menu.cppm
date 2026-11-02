@@ -496,7 +496,7 @@ namespace ClaFi::Controls
         else
             event.text << Space{ k_keyGap };
 
-        event.text << InkWell::textInk(InkGrade::Muted) << shortcutText;
+        event.text << ColoredText{ InkGrade::Muted, shortcutText };
     }
 
 

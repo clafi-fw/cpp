@@ -10,7 +10,6 @@ import :SearchResult;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.TextEngine;
 import ClaFi.Core.TextEngine.Text;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Layout;
 
 import ClaFi.Diagnostic.Log;

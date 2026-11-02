@@ -3,7 +3,6 @@ module TextEngine_App.Math;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -133,32 +132,28 @@ namespace TextEngine_App
         // The arrangements they are written into
         // -----------------------------------------------------------------
 
-        // Everything a formula on a row of its own is set in. Stated as a pair, because the
-        // family, the size and the alignment all stand until they are taken back.
-        void openDisplay(Text& out)
+        // Rows standing on their own: set in the notation's family a step above the prose and
+        // centred, then the blank row that parts every display block from the prose under it.
+        void writeDisplay(Text& out, const Text& rows)
         {
-            out << TextAlign::Center;
-            out << PushFontFamily{ std::wstring{ k_mathFamily } };
-            out << PushFontSize{ k_displaySize };
+            out << ParagraphText{
+                TextAlign::Center,
+                FamilyText{ std::wstring{ k_mathFamily }, SizedText{ k_displaySize, rows } }
+            };
+            out << k_endLine;
         }
 
-        // The blank row a block is followed by is closed here as well, so every display block is
-        // parted from the prose under it by the same gap however its last row was written.
-        void closeDisplay(Text& out)
+        // Rows set as a display is, standing where the page's stops put them rather than centred.
+        void writeStoppedDisplay(Text& out, const Text& rows)
         {
-            out << PopFontSize{};
-            out << PopFontFamily{};
-            out << TextAlign::Left;
-            out << k_endLine;
+            out << FamilyText{ std::wstring{ k_mathFamily }, SizedText{ k_displaySize, rows } };
         }
 
         // Notation inside a sentence: the family the display rows are set in, at the size of the
         // prose around it.
         void writeInline(Text& out, const Text& notation)
         {
-            out << PushFontFamily{ std::wstring{ k_mathFamily } };
-            out << notation;
-            out << PopFontFamily{};
+            out << FamilyText{ std::wstring{ k_mathFamily }, notation };
         }
 
         // One row of a stack, and one row holding nothing but a rule. A stack is written out of
@@ -214,281 +209,331 @@ namespace TextEngine_App
     {
         Text page;
 
-        page << Fmt{
-            L"[center][title]Mathematical Notation[/title][n]"
-            L"[subtitle]Formulas written down, not drawn[/subtitle][n][n]"
-            L"[left][body]Every formula below is one Text. A raised run, a lowered run, a rule "
-            L"drawn into the flow, a row centred against the row above it - the engine places all "
-            L"of it, and none of it is a picture.[/body][n][n]"
+        page << ParagraphText{
+            TextAlign::Center,
+            StyledText{ TextStyles::Title, L"Mathematical Notation" },
+            k_endLine,
+            StyledText{ TextStyles::SubTitle, L"Formulas written down, not drawn" },
+            k_endLine,
+            k_endLine // the blank row under the subtitle is centred with it
         };
+        page << L"Every formula below is one Text. A raised run, a lowered run, a rule "
+            L"drawn into the flow, a row centred against the row above it - the engine places all "
+            L"of it, and none of it is a picture.";
+        page << k_endLine << k_endLine;
 
         // -----------------------------------------------------------------
         // 1. Scripts
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]1. Scripts[/heading][n]"
-            L"[body]A run is raised by the [b]sup[/b] tag and lowered by [b]sub[/b], both written "
-            L"in square brackets like every other tag. A level takes the size down and steps the "
+        page << StyledText{ TextStyles::Heading, L"1. Scripts" } << k_endLine;
+        page << L"A run is raised by " << BoldText{ L"SuperscriptText" } << L" and lowered by ";
+        page << BoldText{ L"SubscriptText" } << L". A level takes the size down and steps the "
             L"baseline by a share of the size it was entered at, so a script inside a script "
-            L"shrinks and steps again. One instruction closes either: a closing script tag ends "
-            L"the nearest script still open.[/body][n][n]"
-        };
+            L"shrinks and steps again.";
+        page << k_endLine << k_endLine;
 
-        openDisplay(page);
-        page << Fmt{
-            L"[i]a[/i][sup]2[/sup] + [i]b[/i][sup]2[/sup] = [i]c[/i][sup]2[/sup]"
-            L"[space 44][i]x[/i][sub]i[/sub][sup]2[/sup] + [i]y[/i][sub]i[/sub][sup]2[/sup]"
-            L"[space 44][i]e[/i][sup]−[i]x[/i][sup]2[/sup]/2[/sup]"
-            L"[space 44]2[sup]2[sup]2[sup][i]n[/i][/sup][/sup][/sup][n]"
+        Text scripts{};
+        scripts << ItalicText{ L"a" } << SuperscriptText{ L"2" } << L" + ";
+        scripts << ItalicText{ L"b" } << SuperscriptText{ L"2" } << L" = ";
+        scripts << ItalicText{ L"c" } << SuperscriptText{ L"2" };
+        scripts << Space{ 44.0f };
+        scripts << ItalicText{ L"x" } << SubscriptText{ L"i" } << SuperscriptText{ L"2" } << L" + ";
+        scripts << ItalicText{ L"y" } << SubscriptText{ L"i" } << SuperscriptText{ L"2" };
+        scripts << Space{ 44.0f };
+        scripts << ItalicText{ L"e" };
+        scripts << SuperscriptText{ L"−", ItalicText{ L"x" }, SuperscriptText{ L"2" }, L"/2" };
+        scripts << Space{ 44.0f };
+        scripts << L"2" << SuperscriptText{
+            L"2",
+            SuperscriptText{ L"2", SuperscriptText{ ItalicText{ L"n" } } }
         };
-        closeDisplay(page);
+        scripts << k_endLine;
+        writeDisplay(page, scripts);
 
-        page << Fmt{
-            L"[body]A subscript beside a superscript is the case that decides how a shift has to "
+        page << L"A subscript beside a superscript is the case that decides how a shift has to "
             L"travel. The two runs are the same size in the same family, and text of one format "
             L"is drawn in one piece - so the shift is carried on the drawing effect, which is "
-            L"what DirectWrite breaks a piece at.[/body][n]"
-            L"[body]A line is not made taller for a script. A raised run keeps inside the ascent "
+            L"what DirectWrite breaks a piece at.";
+        page << k_endLine;
+        page << L"A line is not made taller for a script. A raised run keeps inside the ascent "
             L"of the run it stands on; a lowered one whose letters descend can reach below what "
-            L"its line was measured at.[/body][n][n]"
-        };
+            L"its line was measured at.";
+        page << k_endLine << k_endLine;
 
         // -----------------------------------------------------------------
         // 2. Fractions
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]2. Fractions[/heading][n]"
-            L"[body]Nothing stacks on its own, so a fraction is written as three rows: the "
+        page << StyledText{ TextStyles::Heading, L"2. Fractions" } << k_endLine;
+        page << L"Nothing stacks on its own, so a fraction is written as three rows: the "
             L"numerator, a rule, and the denominator, each centred. The rule is an inline object "
             L"and is the only thing in its row, so the row is as tall as the rule and the three "
-            L"close up.[/body][n][n]"
-        };
+            L"close up.";
+        page << k_endLine << k_endLine;
 
-        openDisplay(page);
-        writeFraction(page,
-            Text{ Fmt{ L"[i]a[/i] + [i]b[/i]" } },
-            Text{ Fmt{ L"[i]c[/i] + [i]d[/i]" } },
+        Text fraction{};
+        writeFraction(fraction,
+            Text{ ItalicText{ L"a" }, L" + ", ItalicText{ L"b" } },
+            Text{ ItalicText{ L"c" }, L" + ", ItalicText{ L"d" } },
             64.0f);
-        closeDisplay(page);
+        writeDisplay(page, fraction);
 
-        page << Fmt{
-            L"[body]A fraction inside a fraction is not one holding another. It is five rows with "
+        page << L"A fraction inside a fraction is not one holding another. It is five rows with "
             L"two rules across them, and the rules are of different widths because the inner one "
-            L"reaches over less:[/body][n][n]"
-        };
+            L"reaches over less:";
+        page << k_endLine << k_endLine;
 
-        openDisplay(page);
-        writeRow(page, Text{ Fmt{ L"1" } });
-        writeRuleRow(page, 46.0f);
-        writeRow(page, Text{ Fmt{ L"1 + [i]x[/i]" } });
-        writeRuleRow(page, 64.0f);
-        writeRow(page, Text{ Fmt{ L"1 − [i]x[/i][sup]2[/sup]" } });
-        closeDisplay(page);
+        Text nestedFraction{};
+        writeRow(nestedFraction, Text{ L"1" });
+        writeRuleRow(nestedFraction, 46.0f);
+        writeRow(nestedFraction, Text{ L"1 + ", ItalicText{ L"x" } });
+        writeRuleRow(nestedFraction, 64.0f);
+        writeRow(nestedFraction, Text{ L"1 − ", ItalicText{ L"x" }, SuperscriptText{ L"2" } });
+        writeDisplay(page, nestedFraction);
 
         // -----------------------------------------------------------------
         // 3. Roots
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]3. Roots[/heading][n]"
-            L"[body]A root is two drawn pieces. The sign has a width and takes its place in the "
+        page << StyledText{ TextStyles::Heading, L"3. Roots" } << k_endLine;
+        page << L"A root is two drawn pieces. The sign has a width and takes its place in the "
             L"line; the bar has none at all and lies across the text written after it, the way a "
             L"list bullet draws into the indent it stands in rather than occupying it. How far "
             L"the bar reaches is stated by the page - a Text is written before anything has been "
-            L"shaped, so there is nothing yet to measure.[/body][n][n]"
-        };
+            L"shaped, so there is nothing yet to measure.";
+        page << k_endLine << k_endLine;
 
         // The row carrying the rule carries the left hand side as well, so a space as wide as
         // that side is written after the rule: the row is then symmetric about the rule, and
         // centring the row centres the rule under the numerator above it.
-        openDisplay(page);
-        Text quadraticTop{ Fmt{ L"−[i]b[/i] ± " } };
-        writeRoot(quadraticTop, Text{ Fmt{ L"[i]b[/i][sup]2[/sup] − 4[i]ac[/i]" } }, 76.0f);
-        writeRow(page, quadraticTop);
-        page << Fmt{ L"[i]x[/i] = " };
-        page << InTextIcon{ 132.0f, k_ruleHeight, k_ruleBaseline, drawRule };
-        page << Space{ 26.0f };
-        page << k_endLine;
-        writeRow(page, Text{ Fmt{ L"2[i]a[/i]" } });
-        closeDisplay(page);
+        Text quadratic{};
+        Text quadraticTop{ L"−", ItalicText{ L"b" }, L" ± " };
+        writeRoot(quadraticTop,
+            Text{ ItalicText{ L"b" }, SuperscriptText{ L"2" }, L" − 4", ItalicText{ L"ac" } },
+            76.0f);
+        writeRow(quadratic, quadraticTop);
+        quadratic << ItalicText{ L"x" } << L" = ";
+        quadratic << InTextIcon{ 132.0f, k_ruleHeight, k_ruleBaseline, drawRule };
+        quadratic << Space{ 26.0f };
+        quadratic << k_endLine;
+        writeRow(quadratic, Text{ L"2", ItalicText{ L"a" } });
+        writeDisplay(page, quadratic);
 
         // -----------------------------------------------------------------
         // 4. Operators that carry limits
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]4. Operators that carry limits[/heading][n]"
-            L"[body]A limit written beside its operator is a script and needs nothing "
-            L"else:[/body][n][n]"
-        };
+        page << StyledText{ TextStyles::Heading, L"4. Operators that carry limits" } << k_endLine;
+        page << L"A limit written beside its operator is a script and needs nothing else:";
+        page << k_endLine << k_endLine;
 
-        openDisplay(page);
-        page << Fmt{
-            L"[size 26]∑[/size][sub][i]i[/i]=1[/sub][sup][i]n[/i][/sup] [i]i[/i] = "
-            L"[i]n[/i]([i]n[/i] + 1) / 2"
-            L"[space 40][size 26]∫[/size][sub]0[/sub][sup]∞[/sup] [i]e[/i][sup]−[i]x[/i][/sup] "
-            L"d[i]x[/i] = 1[n]"
-        };
-        closeDisplay(page);
+        Text besideLimits{};
+        besideLimits << SizedText{ 26.0f, L"∑" };
+        besideLimits << SubscriptText{ ItalicText{ L"i" }, L"=1" };
+        besideLimits << SuperscriptText{ ItalicText{ L"n" } };
+        besideLimits << L" " << ItalicText{ L"i" } << L" = " << ItalicText{ L"n" } << L"(";
+        besideLimits << ItalicText{ L"n" } << L" + 1) / 2";
+        besideLimits << Space{ 40.0f };
+        besideLimits << SizedText{ 26.0f, L"∫" } << SubscriptText{ L"0" } << SuperscriptText{ L"∞" };
+        besideLimits << L" " << ItalicText{ L"e" } << SuperscriptText{ L"−", ItalicText{ L"x" } };
+        besideLimits << L" d" << ItalicText{ L"x" } << L" = 1";
+        besideLimits << k_endLine;
+        writeDisplay(page, besideLimits);
 
-        page << Fmt{
-            L"[body]A limit set over and under its operator is three rows again, and these rows "
+        page << L"A limit set over and under its operator is three rows again, and these rows "
             L"carry more than the stack - the operator has its summand beside it. Centring a row "
             L"would centre the whole of it, so the rows are left aligned and every column is a "
-            L"stop the page names.[/body][n][n]"
-        };
+            L"stop the page names.";
+        page << k_endLine << k_endLine;
 
-        page << PushFontFamily{ std::wstring{ k_mathFamily } };
-        page << PushFontSize{ k_displaySize };
-        page << Fmt{
-            L"[space 96][i]n[/i][n]"
-            L"[space 80][size 30]∑[/size][space 12][i]i[/i][sup]2[/sup] = "
-            L"[i]n[/i]([i]n[/i] + 1)(2[i]n[/i] + 1) / 6[n]"
-            L"[space 84][i]i[/i]=1[n][n]"
-        };
-        page << PopFontSize{};
-        page << PopFontFamily{};
+        Text stackedLimits{};
+        stackedLimits << Space{ 96.0f } << ItalicText{ L"n" } << k_endLine;
+        stackedLimits << Space{ 80.0f } << SizedText{ 30.0f, L"∑" } << Space{ 12.0f };
+        stackedLimits << ItalicText{ L"i" } << SuperscriptText{ L"2" } << L" = " << ItalicText{ L"n" };
+        stackedLimits << L"(" << ItalicText{ L"n" } << L" + 1)(2" << ItalicText{ L"n" } << L" + 1) / 6";
+        stackedLimits << k_endLine;
+        stackedLimits << Space{ 84.0f } << ItalicText{ L"i" } << L"=1" << k_endLine << k_endLine;
+        writeStoppedDisplay(page, stackedLimits);
 
         // -----------------------------------------------------------------
         // 5. Matrices and determinants
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]5. Matrices and determinants[/heading][n]"
-            L"[body]A bracket does not grow to fit what it encloses, so it is drawn one row at a "
+        page << StyledText{ TextStyles::Heading, L"5. Matrices and determinants" } << k_endLine;
+        page << L"A bracket does not grow to fit what it encloses, so it is drawn one row at a "
             L"time: a top piece, middle pieces, a bottom piece. The stem of each runs the whole "
             L"height of its box and every box is the height of its row, so the pieces meet with "
-            L"no seam. A determinant is the same construction with the arms left off.[/body][n][n]"
-        };
+            L"no seam. A determinant is the same construction with the arms left off.";
+        page << k_endLine << k_endLine;
 
-        openDisplay(page);
-        writeBracketedRow(page,
-            Text{ Fmt{ L"[i]a[/i][sub]11[/sub][tabto 62][i]a[/i][sub]12[/sub][tabto 111][i]a[/i][sub]13[/sub]" } },
+        Text matrices{};
+        writeBracketedRow(matrices,
+            Text{
+                ItalicText{ L"a" }, SubscriptText{ L"11" }, TabTo{ 62.0f },
+                ItalicText{ L"a" }, SubscriptText{ L"12" }, TabTo{ 111.0f },
+                ItalicText{ L"a" }, SubscriptText{ L"13" }
+            },
             BracketPart::Top, 139.0f);
-        writeBracketedRow(page,
-            Text{ Fmt{ L"[i]a[/i][sub]21[/sub][tabto 62][i]a[/i][sub]22[/sub][tabto 111][i]a[/i][sub]23[/sub]" } },
+        writeBracketedRow(matrices,
+            Text{
+                ItalicText{ L"a" }, SubscriptText{ L"21" }, TabTo{ 62.0f },
+                ItalicText{ L"a" }, SubscriptText{ L"22" }, TabTo{ 111.0f },
+                ItalicText{ L"a" }, SubscriptText{ L"23" }
+            },
             BracketPart::Middle, 139.0f);
-        writeBracketedRow(page,
-            Text{ Fmt{ L"[i]a[/i][sub]31[/sub][tabto 62][i]a[/i][sub]32[/sub][tabto 111][i]a[/i][sub]33[/sub]" } },
+        writeBracketedRow(matrices,
+            Text{
+                ItalicText{ L"a" }, SubscriptText{ L"31" }, TabTo{ 62.0f },
+                ItalicText{ L"a" }, SubscriptText{ L"32" }, TabTo{ 111.0f },
+                ItalicText{ L"a" }, SubscriptText{ L"33" }
+            },
             BracketPart::Bottom, 139.0f);
-        page << k_endLine;
-        writeBracketedRow(page, Text{ Fmt{ L"[i]a[/i][tabto 49][i]b[/i]" } },
+        matrices << k_endLine;
+        writeBracketedRow(matrices, Text{ ItalicText{ L"a" }, TabTo{ 49.0f }, ItalicText{ L"b" } },
             BracketPart::Middle, 65.0f);
-        writeBracketedRow(page, Text{ Fmt{ L"[i]c[/i][tabto 49][i]d[/i]" } },
+        writeBracketedRow(matrices, Text{ ItalicText{ L"c" }, TabTo{ 49.0f }, ItalicText{ L"d" } },
             BracketPart::Middle, 65.0f);
-        closeDisplay(page);
+        writeDisplay(page, matrices);
 
-        page << Fmt{
-            L"[body]The second of those is a determinant, and it comes to [b]ad − bc[/b].[/body][n][n]"
-        };
+        page << L"The second of those is a determinant, and it comes to " << BoldText{ L"ad − bc" };
+        page << L"." << k_endLine << k_endLine;
 
         // -----------------------------------------------------------------
         // 6. A definition by cases
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]6. A definition by cases[/heading][n]"
-            L"[body]The same pieces with nothing on the right, and one row carrying the name. "
+        page << StyledText{ TextStyles::Heading, L"6. A definition by cases" } << k_endLine;
+        page << L"The same pieces with nothing on the right, and one row carrying the name. "
             L"Every row stops the bracket at the same column, so a row with a name in front of it "
-            L"and a row with nothing in front of it put their piece in the same place.[/body][n][n]"
-        };
+            L"and a row with nothing in front of it put their piece in the same place.";
+        page << k_endLine << k_endLine;
 
-        page << PushFontFamily{ std::wstring{ k_mathFamily } };
-        page << PushFontSize{ k_displaySize };
-        page << TabTo{ 96.0f };
-        page << InTextIcon{ 7.0f, k_rowHeight, k_rowBaseline, bracketPiece(BracketSide::Left, BracketPart::Top) };
-        page << Fmt{ L"[space 8]+1,[space 16][i]x[/i] > 0[n]" };
-        page << Fmt{ L"sgn [i]x[/i] = " };
-        page << TabTo{ 96.0f };
-        page << InTextIcon{ 7.0f, k_rowHeight, k_rowBaseline, bracketPiece(BracketSide::Left, BracketPart::Middle) };
-        page << Fmt{ L"[space 8]0,[space 16][i]x[/i] = 0[n]" };
-        page << TabTo{ 96.0f };
-        page << InTextIcon{ 7.0f, k_rowHeight, k_rowBaseline, bracketPiece(BracketSide::Left, BracketPart::Bottom) };
-        page << Fmt{ L"[space 8]−1,[space 16][i]x[/i] < 0[n][n]" };
-        page << PopFontSize{};
-        page << PopFontFamily{};
+        Text cases{};
+        cases << TabTo{ 96.0f };
+        cases << InTextIcon{ 7.0f, k_rowHeight, k_rowBaseline, bracketPiece(BracketSide::Left, BracketPart::Top) };
+        cases << Space{ 8.0f } << L"+1," << Space{ 16.0f } << ItalicText{ L"x" } << L" > 0" << k_endLine;
+        cases << L"sgn " << ItalicText{ L"x" } << L" = ";
+        cases << TabTo{ 96.0f };
+        cases << InTextIcon{ 7.0f, k_rowHeight, k_rowBaseline, bracketPiece(BracketSide::Left, BracketPart::Middle) };
+        cases << Space{ 8.0f } << L"0," << Space{ 16.0f } << ItalicText{ L"x" } << L" = 0" << k_endLine;
+        cases << TabTo{ 96.0f };
+        cases << InTextIcon{ 7.0f, k_rowHeight, k_rowBaseline, bracketPiece(BracketSide::Left, BracketPart::Bottom) };
+        cases << Space{ 8.0f } << L"−1," << Space{ 16.0f } << ItalicText{ L"x" } << L" < 0";
+        cases << k_endLine << k_endLine;
+        writeStoppedDisplay(page, cases);
 
         // -----------------------------------------------------------------
         // 7. A page of them
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]7. A page of them[/heading][n]"
-            L"[body]Each of these is a name, a tab stop, and one line of notation - no rows, no "
-            L"drawn pieces except the roots.[/body][n][n]"
-        };
+        page << StyledText{ TextStyles::Heading, L"7. A page of them" } << k_endLine;
+        page << L"Each of these is a name, a tab stop, and one line of notation - no rows, no "
+            L"drawn pieces except the roots.";
+        page << k_endLine << k_endLine;
 
-        page << Fmt{ L"[subbody]Euler's identity[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"Euler's identity" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{ L"[i]e[/i][sup][i]i[/i]π[/sup] + 1 = 0" } });
+        writeInline(page, Text{
+            ItalicText{ L"e" }, SuperscriptText{ ItalicText{ L"i" }, L"π" }, L" + 1 = 0"
+        });
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The Gaussian integral[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The Gaussian integral" };
         page << TabTo{ 230.0f };
-        Text gaussian{ Fmt{
-            L"[size 22]∫[/size][sub]−∞[/sub][sup]∞[/sup] [i]e[/i][sup]−[i]x[/i][sup]2[/sup][/sup] "
-            L"d[i]x[/i] = " } };
-        writeRoot(gaussian, Text{ Fmt{ L"π" } }, 12.0f);
+        Text gaussian{
+            SizedText{ 22.0f, L"∫" }, SubscriptText{ L"−∞" }, SuperscriptText{ L"∞" }, L" ",
+            ItalicText{ L"e" },
+            SuperscriptText{ L"−", ItalicText{ L"x" }, SuperscriptText{ L"2" } },
+            L" d", ItalicText{ L"x" }, L" = "
+        };
+        writeRoot(gaussian, Text{ L"π" }, 12.0f);
         writeInline(page, gaussian);
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The binomial theorem[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The binomial theorem" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{
-            L"([i]x[/i] + [i]y[/i])[sup][i]n[/i][/sup] = [size 22]∑[/size][sub][i]k[/i]=0[/sub]"
-            L"[sup][i]n[/i][/sup] [i]C[/i][sub][i]n[/i],[i]k[/i][/sub] "
-            L"[i]x[/i][sup][i]k[/i][/sup] [i]y[/i][sup][i]n[/i]−[i]k[/i][/sup]" } });
+        writeInline(page, Text{
+            L"(", ItalicText{ L"x" }, L" + ", ItalicText{ L"y" }, L")",
+            SuperscriptText{ ItalicText{ L"n" } }, L" = ",
+            SizedText{ 22.0f, L"∑" },
+            SubscriptText{ ItalicText{ L"k" }, L"=0" },
+            SuperscriptText{ ItalicText{ L"n" } }, L" ",
+            ItalicText{ L"C" }, SubscriptText{ ItalicText{ L"n" }, L",", ItalicText{ L"k" } }, L" ",
+            ItalicText{ L"x" }, SuperscriptText{ ItalicText{ L"k" } }, L" ",
+            ItalicText{ L"y" }, SuperscriptText{ ItalicText{ L"n" }, L"−", ItalicText{ L"k" } }
+        });
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The Fourier transform[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The Fourier transform" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{
-            L"[i]F[/i](ξ) = [size 22]∫[/size][sub]−∞[/sub][sup]∞[/sup] [i]f[/i]([i]x[/i]) "
-            L"[i]e[/i][sup]−2π[i]ixξ[/i][/sup] d[i]x[/i]" } });
+        writeInline(page, Text{
+            ItalicText{ L"F" }, L"(ξ) = ",
+            SizedText{ 22.0f, L"∫" }, SubscriptText{ L"−∞" }, SuperscriptText{ L"∞" }, L" ",
+            ItalicText{ L"f" }, L"(", ItalicText{ L"x" }, L") ",
+            ItalicText{ L"e" }, SuperscriptText{ L"−2π", ItalicText{ L"ixξ" } },
+            L" d", ItalicText{ L"x" }
+        });
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The Schrödinger equation[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The Schrödinger equation" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{
-            L"[i]i[/i]ħ ∂ψ / ∂[i]t[/i] = [i]H[/i]ψ" } });
+        writeInline(page, Text{
+            ItalicText{ L"i" }, L"ħ ∂ψ / ∂", ItalicText{ L"t" }, L" = ", ItalicText{ L"H" }, L"ψ"
+        });
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The Stokes theorem[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The Stokes theorem" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{
-            L"[size 22]∮[/size][sub]∂Σ[/sub] [i]F[/i] · d[i]r[/i] = [size 22]∬[/size][sub]Σ[/sub] "
-            L"(∇ × [i]F[/i]) · d[i]Σ[/i]" } });
+        writeInline(page, Text{
+            SizedText{ 22.0f, L"∮" }, SubscriptText{ L"∂Σ" }, L" ",
+            ItalicText{ L"F" }, L" · d", ItalicText{ L"r" }, L" = ",
+            SizedText{ 22.0f, L"∬" }, SubscriptText{ L"Σ" },
+            L" (∇ × ", ItalicText{ L"F" }, L") · d", ItalicText{ L"Σ" }
+        });
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The Bayes rule[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The Bayes rule" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{
-            L"[i]P[/i]([i]A[/i] | [i]B[/i]) = [i]P[/i]([i]B[/i] | [i]A[/i]) [i]P[/i]([i]A[/i]) / "
-            L"[i]P[/i]([i]B[/i])" } });
+        writeInline(page, Text{
+            ItalicText{ L"P" }, L"(", ItalicText{ L"A" }, L" | ", ItalicText{ L"B" }, L") = ",
+            ItalicText{ L"P" }, L"(", ItalicText{ L"B" }, L" | ", ItalicText{ L"A" }, L") ",
+            ItalicText{ L"P" }, L"(", ItalicText{ L"A" }, L") / ",
+            ItalicText{ L"P" }, L"(", ItalicText{ L"B" }, L")"
+        });
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The Euler product[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The Euler product" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{
-            L"ζ([i]s[/i]) = [size 22]∑[/size][sub][i]n[/i]=1[/sub][sup]∞[/sup] 1 / "
-            L"[i]n[/i][sup][i]s[/i][/sup] = [size 22]∏[/size][sub][i]p[/i][/sub] "
-            L"(1 − [i]p[/i][sup]−[i]s[/i][/sup])[sup]−1[/sup]" } });
+        writeInline(page, Text{
+            L"ζ(", ItalicText{ L"s" }, L") = ",
+            SizedText{ 22.0f, L"∑" }, SubscriptText{ ItalicText{ L"n" }, L"=1" },
+            SuperscriptText{ L"∞" }, L" 1 / ", ItalicText{ L"n" }, SuperscriptText{ ItalicText{ L"s" } },
+            L" = ", SizedText{ 22.0f, L"∏" }, SubscriptText{ ItalicText{ L"p" } },
+            L" (1 − ", ItalicText{ L"p" }, SuperscriptText{ L"−", ItalicText{ L"s" } }, L")",
+            SuperscriptText{ L"−1" }
+        });
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The Cauchy-Schwarz inequality[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The Cauchy-Schwarz inequality" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{
-            L"| ⟨[i]u[/i], [i]v[/i]⟩ | ≤ ‖[i]u[/i]‖ ‖[i]v[/i]‖" } });
+        writeInline(page, Text{
+            L"| ⟨", ItalicText{ L"u" }, L", ", ItalicText{ L"v" }, L"⟩ | ≤ ‖",
+            ItalicText{ L"u" }, L"‖ ‖", ItalicText{ L"v" }, L"‖"
+        });
         page << k_endLine;
 
-        page << Fmt{ L"[subbody]The Taylor series[/subbody]" };
+        page << StyledText{ TextStyles::SubBody, L"The Taylor series" };
         page << TabTo{ 230.0f };
-        writeInline(page, Text{ Fmt{
-            L"[i]f[/i]([i]x[/i]) = [size 22]∑[/size][sub][i]n[/i]=0[/sub][sup]∞[/sup] "
-            L"[i]f[/i][sup]([i]n[/i])[/sup]([i]a[/i]) / [i]n[/i]! · "
-            L"([i]x[/i] − [i]a[/i])[sup][i]n[/i][/sup]" } });
+        writeInline(page, Text{
+            ItalicText{ L"f" }, L"(", ItalicText{ L"x" }, L") = ",
+            SizedText{ 22.0f, L"∑" }, SubscriptText{ ItalicText{ L"n" }, L"=0" },
+            SuperscriptText{ L"∞" }, L" ",
+            ItalicText{ L"f" }, SuperscriptText{ L"(", ItalicText{ L"n" }, L")" },
+            L"(", ItalicText{ L"a" }, L") / ", ItalicText{ L"n" }, L"! · (",
+            ItalicText{ L"x" }, L" − ", ItalicText{ L"a" }, L")",
+            SuperscriptText{ ItalicText{ L"n" } }
+        });
         page << k_endLine;
 
         page << k_endLine;
@@ -497,54 +542,58 @@ namespace TextEngine_App
         // 8. A derivation
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]8. A derivation[/heading][n]"
-            L"[body]Steps line up on one stop, which is what a tab stop is for: the equals signs "
-            L"stand in a column whatever is written to the left of the first one.[/body][n][n]"
-        };
+        page << StyledText{ TextStyles::Heading, L"8. A derivation" } << k_endLine;
+        page << L"Steps line up on one stop, which is what a tab stop is for: the equals signs "
+            L"stand in a column whatever is written to the left of the first one.";
+        page << k_endLine << k_endLine;
 
-        page << PushFontFamily{ std::wstring{ k_mathFamily } };
-        page << PushFontSize{ k_displaySize };
-        page << Fmt{
-            L"([i]a[/i] + [i]b[/i])[sup]2[/sup][tabto 120]= ([i]a[/i] + [i]b[/i])"
-            L"([i]a[/i] + [i]b[/i])[n]"
-            L"[tabto 120]= [i]a[/i][sup]2[/sup] + [i]ab[/i] + [i]ba[/i] + [i]b[/i][sup]2[/sup][n]"
-            L"[tabto 120]= [i]a[/i][sup]2[/sup] + 2[i]ab[/i] + [i]b[/i][sup]2[/sup][n][n]"
-        };
-        page << PopFontSize{};
-        page << PopFontFamily{};
+        Text derivation{};
+        derivation << L"(" << ItalicText{ L"a" } << L" + " << ItalicText{ L"b" } << L")";
+        derivation << SuperscriptText{ L"2" } << TabTo{ 120.0f } << L"= (";
+        derivation << ItalicText{ L"a" } << L" + " << ItalicText{ L"b" } << L")(";
+        derivation << ItalicText{ L"a" } << L" + " << ItalicText{ L"b" } << L")" << k_endLine;
+        derivation << TabTo{ 120.0f } << L"= " << ItalicText{ L"a" } << SuperscriptText{ L"2" };
+        derivation << L" + " << ItalicText{ L"ab" } << L" + " << ItalicText{ L"ba" } << L" + ";
+        derivation << ItalicText{ L"b" } << SuperscriptText{ L"2" } << k_endLine;
+        derivation << TabTo{ 120.0f } << L"= " << ItalicText{ L"a" } << SuperscriptText{ L"2" };
+        derivation << L" + 2" << ItalicText{ L"ab" } << L" + " << ItalicText{ L"b" };
+        derivation << SuperscriptText{ L"2" } << k_endLine << k_endLine;
+        writeStoppedDisplay(page, derivation);
 
         // -----------------------------------------------------------------
         // 9. What the page states for itself
         // -----------------------------------------------------------------
 
-        page << Fmt{
-            L"[heading]9. What the page states for itself[/heading][n]"
-            L"[indent 34]"
-            L"[b]Widths.[/b] A rule is as wide as it is told and a bar reaches as far as it is "
+        page << StyledText{ TextStyles::Heading, L"9. What the page states for itself" } << k_endLine;
+        page << ParagraphText{
+            ParaIndent{ 34.0f },
+            BoldText{ L"Widths." },
+            L" A rule is as wide as it is told and a bar reaches as far as it is "
             L"told. A Text is written before it has been shaped, so the page has nothing to "
-            L"measure and states the numbers.[n]"
-            L"[b]Brackets.[/b] They are drawn a row at a time and do not grow. A block of a "
-            L"different height is a different set of pieces.[n]"
-            L"[b]Rows.[/b] A stack costs whole rows, so a fraction with a bar cannot stand inside "
-            L"a sentence. Inside a sentence a fraction is written with a slash.[n]"
-            L"[b]Lines.[/b] A script does not make its line taller, which is what keeps rows of "
-            L"prose evenly spaced when one of them carries an exponent.[n]"
-            L"[indent 0][n]"
-            L"[body]One more: a format string reads a square bracket as the opening of a tag and "
-            L"a brace as the opening of an argument, so notation wanting either is written "
-            L"straight into the text instead of through a format string. The line below is "
-            L"streamed in, braces and all:[/body][n][n]"
+            L"measure and states the numbers.\n",
+            BoldText{ L"Brackets." },
+            L" They are drawn a row at a time and do not grow. A block of a "
+            L"different height is a different set of pieces.\n",
+            BoldText{ L"Rows." },
+            L" A stack costs whole rows, so a fraction with a bar cannot stand inside "
+            L"a sentence. Inside a sentence a fraction is written with a slash.\n",
+            BoldText{ L"Lines." },
+            L" A script does not make its line taller, which is what keeps rows of "
+            L"prose evenly spaced when one of them carries an exponent.\n"
         };
-
-        page << TextAlign::Center;
-        page << PushFontFamily{ std::wstring{ k_mathFamily } };
-        page << PushFontSize{ k_displaySize };
-        page << L"S = { x ∈ ℝ : x > 0 }";
         page << k_endLine;
-        page << PopFontSize{};
-        page << PopFontFamily{};
-        page << TextAlign::Left;
+        page << L"One more: the words of a Text are taken as they are written, so notation holding "
+            L"square brackets and braces needs nothing said for it. The line below is written "
+            L"in, braces and all:";
+        page << k_endLine << k_endLine;
+
+        page << ParagraphText{
+            TextAlign::Center,
+            FamilyText{
+                std::wstring{ k_mathFamily },
+                SizedText{ k_displaySize, L"S = { x ∈ ℝ : x > 0 }" }
+            }
+        };
 
         return page;
     }

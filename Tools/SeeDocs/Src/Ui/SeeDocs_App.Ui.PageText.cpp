@@ -26,44 +26,43 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_noteBullet = L"- ";   // what a note writes an item behind
         constexpr std::wstring_view k_codeFence = L"    ";  // what a note sets a line of code in by
 
-        // Starts a line under what the text holds already, so the prose ends with no line end.
-        void openLine(Text& text, bool& opened, const float indent)
-        {
-            if (opened)
-                text << k_endLine;
-            opened = true;
-            text << ParaIndent{ indent };
-        }
-
-        void writeBlock(Text& text, const Block& block, const float indent, bool& opened)
+        // Each line stands under what the text holds already, and the prose ends with no line end.
+        void writeBlock(Text& text, const Block& block, const float indent)
         {
             switch (block.kind)
             {
                 case BlockKind::Paragraph:
-                    openLine(text, opened, indent);
-                    writeRuns(text, block.runs);
+                    text << ParagraphText{ ParaIndent{ indent }, textOf(block.runs) };
                     break;
                 case BlockKind::SubHeading:
-                    openLine(text, opened, indent);
-                    text << TextStyle::Section;
-                    writeRuns(text, block.runs);
-                    text << PopTextStyle{};
+                    text << ParagraphText{
+                        ParaIndent{ indent },
+                        StyledText{ TextStyles::Section, textOf(block.runs) }
+                    };
                     break;
                 case BlockKind::Code:
                     for (const Runs& line : block.lines)
                     {
-                        openLine(text, opened, indent + k_codeIndent);
-                        text << TextStyle::Code;
-                        writeRuns(text, line);
-                        text << PopTextStyle{};
+                        // A blank line of the block holds no words, so it is its line end alone.
+                        if (line.empty())
+                        {
+                            text << k_endLine;
+                            continue;
+                        }
+                        text << ParagraphText{
+                            ParaIndent{ indent + k_codeIndent },
+                            StyledText{ TextStyles::Code, textOf(line) }
+                        };
                     }
                     break;
                 case BlockKind::Bullets:
                     for (const Runs& item : block.items)
                     {
-                        openLine(text, opened, indent + k_bulletIndent);
-                        text << k_bullet;
-                        writeRuns(text, item);
+                        text << ParagraphText{
+                            ParaIndent{ indent + k_bulletIndent },
+                            k_bullet,
+                            textOf(item)
+                        };
                     }
                     break;
             }
@@ -178,39 +177,44 @@ namespace SeeDocs_App::Ui
             }
         }
 
-        // The runs as styled, each linked run inside its link, a colour given pushed inside it.
+        // The runs as styled, each linked run inside its link, a colour given inside the link.
         void writeStyledRuns(Text& text, const Runs& runs, const std::optional<Color> color)
         {
             for (const Run& run : runs)
             {
-                const bool linked = !run.link.empty();
-                if (linked)
-                    text << PushLink{ run.link };
-                if (color)
-                    text << *color;
+                const auto writeLinked = [&text, &run](const auto& words){
+                    if (run.link.empty())
+                        text << words;
+                    else
+                        text << LinkText{ run.link, words };
+                };
+                const auto writeColored = [&writeLinked, &color](const auto& words){
+                    if (color)
+                        writeLinked(ColoredText{ *color, words });
+                    else
+                        writeLinked(words);
+                };
                 switch (run.style)
                 {
                     case RunStyle::Plain:
-                        text << run.text;
+                        writeColored(run.text);
                         break;
                     case RunStyle::Code:
-                        text << TextStyle::Code << run.text << PopTextStyle{};
+                        writeColored(StyledText{ TextStyles::Code, run.text });
                         break;
                     case RunStyle::Path:
-                        text << TextStyle::Code << InkWell::spotInk() << run.text << PopColor{}
-                            << PopTextStyle{};
+                        writeColored(StyledText{
+                            TextStyles::Code,
+                            ColoredText{ InkWell::spotInk(), run.text }
+                        });
                         break;
                     case RunStyle::Muted:
-                        text << InkGrade::Muted << run.text << PopColor{};
+                        writeColored(ColoredText{ InkGrade::Muted, run.text });
                         break;
                     case RunStyle::Bold:
-                        text << TextOp::PushBold << run.text << TextOp::PopBold;
+                        writeColored(BoldText{ run.text });
                         break;
                 }
-                if (color)
-                    text << PopColor{};
-                if (linked)
-                    text << PopLink{};
             }
         }
     }
@@ -295,9 +299,8 @@ namespace SeeDocs_App::Ui
 
     void writeBlocks(Text& text, const Blocks& blocks, const float indent)
     {
-        bool opened = !text.empty();
         for (const Block& block : blocks)
-            writeBlock(text, block, indent, opened);
+            writeBlock(text, block, indent);
     }
 
     Text textOf(const Blocks& blocks)
@@ -310,10 +313,12 @@ namespace SeeDocs_App::Ui
     void writeFootnote(Text& text, const std::wstring_view anchor, const std::wstring_view mark,
         const Runs& name, const Excerpt& excerpt)
     {
-        text << ParaIndent{ 0.0f } << PushAnchor{ std::wstring{ anchor } } << InkColor::Spot
-            << mark << PopColor{} << L" ";
-        writeRuns(text, name);
-        text << PopAnchor{};
+        text << AnchorText{
+            std::wstring{ anchor },
+            ColoredText{ InkColor::Spot, mark },
+            L" ",
+            textOf(name)
+        };
         writeBlocks(text, excerpt.blocks);
     }
 
@@ -322,19 +327,20 @@ namespace SeeDocs_App::Ui
     void writeShownAt(Text& text, const std::wstring_view anchor, const std::wstring_view mark,
         const Runs& name, const Runs& holder, const std::wstring_view holderLink)
     {
-        text << ParaIndent{ 0.0f };
         if (!name.empty())
         {
-            text << PushAnchor{ std::wstring{ anchor } } << InkColor::Spot << mark << PopColor{}
-                << L" ";
-            writeRuns(text, name);
-            text << PopAnchor{};
+            text << AnchorText{
+                std::wstring{ anchor },
+                ColoredText{ InkColor::Spot, mark },
+                L" ",
+                textOf(name)
+            };
         }
         const std::wstring_view lead = name.empty() ? L"See " : L" - see ";
-        text << InkGrade::Muted << lead << PopColor{};
+        text << ColoredText{ InkGrade::Muted, lead };
         if (holder.empty())
         {
-            text << InkGrade::Muted << L"the note above" << PopColor{};
+            text << ColoredText{ InkGrade::Muted, L"the note above" };
             return;
         }
         Runs unlinked = holder;
@@ -345,9 +351,7 @@ namespace SeeDocs_App::Ui
             writeRuns(text, unlinked);
             return;
         }
-        text << PushLink{ std::wstring{ holderLink } };
-        writeRuns(text, unlinked);
-        text << PopLink{};
+        text << LinkText{ std::wstring{ holderLink }, textOf(unlinked) };
     }
 
     // The runs are the one declaration cut round its links, and the tokens are lexed over the
@@ -361,15 +365,13 @@ namespace SeeDocs_App::Ui
         for (const Run& run : runs)
             source += run.text;
         const InkedRanges inked = inkedTokens(source, language);
-        text << TextStyle::Code;
+        Text code{};
         std::size_t at = 0;     // where the run starts in the source
         std::size_t next = 0;   // the first inked token not yet written out
         for (const Run& run : runs)
         {
             const std::size_t end = at + run.text.size();
-            const bool linked = links && !run.link.empty();
-            if (linked)
-                text << PushLink{ run.link };
+            Text words{};
             std::size_t plain = at;
             while (next < inked.size() && inked[next].start < end)
             {
@@ -377,19 +379,21 @@ namespace SeeDocs_App::Ui
                 const std::size_t start = std::max(range.start, at);
                 const std::size_t stop = std::min(range.end, end);
                 if (start > plain)
-                    text << source.substr(plain, start - plain);
-                text << range.ink << source.substr(start, stop - start) << PopColor{};
+                    words << source.substr(plain, start - plain);
+                words << ColoredText{ range.ink, source.substr(start, stop - start) };
                 plain = stop;
                 if (range.end > end)
                     break;
                 ++next;
             }
             if (plain < end)
-                text << source.substr(plain, end - plain);
-            if (linked)
-                text << PopLink{};
+                words << source.substr(plain, end - plain);
+            if (links && !run.link.empty())
+                code << LinkText{ run.link, words };
+            else
+                code << words;
             at = end;
         }
-        text << PopTextStyle{};
+        text << StyledText{ TextStyles::Code, code };
     }
 }

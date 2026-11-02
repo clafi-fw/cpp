@@ -274,13 +274,13 @@ namespace SeeDocs_App::Ui
         {
             DropListLine line;
             line.text << suggestion.name << TabTo{ k_commandColumn };
-            line.text << InkGrade::Muted << suggestion.command << PopColor{};
+            line.text << ColoredText{ InkGrade::Muted, suggestion.command };
             const bool reachesLine =
                 suggestion.command.find(k_linePlaceHolder) != std::wstring_view::npos;
             if (!reachesLine)
             {
                 line.text << FlexSpace{ k_noLineGap };
-                line.text << InkGrade::Muted << L"no line" << PopColor{};
+                line.text << ColoredText{ InkGrade::Muted, L"no line" };
             }
             if (!suggestion.note.empty())
                 line.tooltip = Text{ suggestion.note };
@@ -417,12 +417,12 @@ namespace SeeDocs_App::Ui
         switch (command.outcome())
         {
             case CommandOutcome::NotFound:
-                message << PushThemeColor{ InkWell::spotInk() } << run.program << PopColor{}
+                message << ColoredText{ InkWell::spotInk(), run.program }
                     << L" was not found. Write its full path in the " << languageName
                     << L" editor's command line, or put its folder on the PATH.";
                 break;
             case CommandOutcome::NotRunnable:
-                message << PushThemeColor{ InkWell::spotInk() } << run.program << PopColor{}
+                message << ColoredText{ InkWell::spotInk(), run.program }
                     << L" was found, and the system would not run it.";
                 break;
             case CommandOutcome::NotStarted:

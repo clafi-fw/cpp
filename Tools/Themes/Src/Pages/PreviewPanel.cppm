@@ -25,7 +25,10 @@ namespace Themes_App
         ) };
 
         Label& m_titleLabel{ m_stack.add<Label>(
-            Text{ TextAlign::Center, TextStyle::SubTitle, L"Live preview" },
+            Text{ ParagraphText{
+                TextAlign::Center,
+                StyledText{ TextStyles::SubTitle, L"Live preview" }
+            } },
             WordWrap::No,
             HorizontalAlign::Center,
             VerticalAlign::Center,
@@ -39,13 +42,23 @@ namespace Themes_App
 
         TextBox& m_textBox{ m_stack.add<TextBox>(
             Padding{ 4.0f },
+            TextFormat{ TextAlign::Center },
             Text{
-                TextAlign::Center,
-                TextStyle::SubBody, InkWell::textInk(InkGrade::Muted), L"A color is judged\n", PopColor{}, PopTextStyle{},
+                StyledText{
+                    TextStyles::SubBody,
+                    ColoredText{ InkGrade::Muted, L"A color is judged\n" }
+                },
                 L"In Context\n",
-                TextStyle::SubBody, InkWell::textInk(InkGrade::Muted), L"and never", PopColor{}, PopTextStyle{}, TextStyle::Heading, InkWell::textInk(InkGrade::Muted), L" in isolation\n", PopColor{}, PopTextStyle{},
-                TextStyle::Title, InkWell::spotInk(), L"Select", PopColor{}, PopTextStyle{}, TextStyle::SubBody, InkWell::textInk(InkGrade::Muted), L" any part of\n",
-                L"this passage to see how\n", PopColor{}, PopTextStyle{},
+                StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, L"and never" } },
+                StyledText{
+                    TextStyles::Heading,
+                    ColoredText{ InkGrade::Muted, L" in isolation\n" }
+                },
+                StyledText{ TextStyles::Title, ColoredText{ InkWell::spotInk(), L"Select" } },
+                StyledText{
+                    TextStyles::SubBody,
+                    ColoredText{ InkGrade::Muted, L" any part of\nthis passage to see how\n" }
+                },
                 L"The Theme Responds"
             }
         ) };
@@ -55,7 +68,7 @@ namespace Themes_App
         FlexSpacer& m_flexSpacer2{ m_stack.add<FlexSpacer>() };
 
         Button& m_button1{ m_stack.add<Button>(
-            Text{ TextAlign::Center, L"Test Button" }
+            Text{ ParagraphText{ TextAlign::Center, L"Test Button" } }
         ) };
 
         ScopedEventConnection m_button1Click1{

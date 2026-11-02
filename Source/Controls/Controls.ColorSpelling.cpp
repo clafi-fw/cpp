@@ -56,12 +56,12 @@ namespace ClaFi::Controls
         void appendChannel(Text& text, const Color color, const Channel channel, const bool hex)
         {
             const ColorByte value = valueOf(color, channel);
-            text << inkOf(channel);
+            Text digits;
             if (hex)
-                appendHex(text, value);
+                appendHex(digits, value);
             else
-                text << static_cast<int>(value);
-            text << PopColor{};
+                digits << static_cast<int>(value);
+            text << ColoredText{ inkOf(channel), digits };
         }
     }
 
@@ -119,7 +119,7 @@ namespace ClaFi::Controls
                 appendChannel(text, color, Channel::Blue, false);
                 break;
             case ColorSpelling::CssHex:
-                text << InkGrade::Muted << L'#' << PopColor{};
+                text << ColoredText{ InkGrade::Muted, L'#' };
                 appendChannel(text, color, Channel::Red, true);
                 appendChannel(text, color, Channel::Green, true);
                 appendChannel(text, color, Channel::Blue, true);

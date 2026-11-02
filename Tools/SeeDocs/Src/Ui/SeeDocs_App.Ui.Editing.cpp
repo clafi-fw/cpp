@@ -161,9 +161,7 @@ namespace SeeDocs_App::Ui
         }
         else
         {
-            Text place;
-            place << InkGrade::Muted << m_draft.place << PopColor{};
-            m_place->text() = place;
+            m_place->text() = Text{ ColoredText{ InkGrade::Muted, m_draft.place } };
         }
         m_shown.setVisible(false);
         m_editor->setVisible(true);
@@ -254,10 +252,10 @@ namespace SeeDocs_App::Ui
 
     void FootnoteSlot::showRefusal(const std::wstring_view reason)
     {
-        Text text;
-        text << InkWell::redInk(InkGrade::Strong) << Icons::messageText(MessageIcon::Error, reason)
-            << PopColor{};
-        m_place->text() = text;
+        m_place->text() = Text{ ColoredText{
+            InkWell::redInk(InkGrade::Strong),
+            Icons::messageText(MessageIcon::Error, reason)
+        } };
         invalidateFormAlign();
     }
 }

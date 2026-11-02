@@ -228,7 +228,7 @@ namespace ClaFi::Controls
     {
         if (text.plainText().empty() && !m_placeHolderText.empty())
         {
-            const Text shown{ InkGrade::Muted, m_placeHolderText };
+            const Text shown{ ColoredText{ InkGrade::Muted, m_placeHolderText } };
 #if CLAFI_TEXT_MOVING
             textEngine().drawText(event.controlContext(), textBounds, shown, textAnchor(), nullptr,
                 textRenderMode(), wordWrap(), textFormat());
@@ -849,18 +849,13 @@ namespace ClaFi::Controls
     }
 
     // A plain click places the caret here, and nothing else on screen says a link can be followed
-    // at all. The words above can state an indent or an alignment, which hold until a paragraph
-    // states others, so this line states its own.
+    // at all.
     void TextBox::writeFollowLine(Text& out) const
     {
         if (m_readOnly != ReadOnly::No)
             return;
         out << L'\n';
-        out << ParaIndent{ 0.0f };
-        out << TextAlign::Left;
-        out << InkGrade::Muted;
-        out << L"Ctrl+click to follow";
-        out << PopColor{};
+        out << ColoredText{ InkGrade::Muted, L"Ctrl+click to follow" };
     }
 
     FloatRect TextBox::pointedLinkLine() const

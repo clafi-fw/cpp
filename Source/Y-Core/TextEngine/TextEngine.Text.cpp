@@ -406,163 +406,110 @@ namespace ClaFi
     {
     }
 
-    Text& Text::operator<<(const std::wstring_view str) {
-        if (!str.empty()) m_plainText.append(str);
+    Text& Text::operator<<(const std::wstring_view str)
+    {
+        if (str.empty())
+            return *this;
+        breakOwnLine();
+        m_plainText.append(str);
         return *this;
     }
-    Text& Text::operator<<(const std::wstring& str) {
+
+    Text& Text::operator<<(const std::wstring& str)
+    {
         return operator<<(std::wstring_view{ str });
     }
-    Text& Text::operator<<(const wchar_t* str) {
+
+    Text& Text::operator<<(const wchar_t* str)
+    {
         return operator<<(std::wstring_view{ str });
     }
-    Text& Text::operator<<(wchar_t chr) {
-        m_plainText.append(&chr, 1); return *this;
+
+    Text& Text::operator<<(wchar_t chr)
+    {
+        breakOwnLine();
+        m_plainText.push_back(chr);
+        return *this;
     }
-    Text& Text::operator<<(int value) {
+
+    Text& Text::operator<<(int value)
+    {
         return operator<<(std::to_wstring(value));
     }
+
     Text& Text::operator<<(std::size_t value)
     {
         return operator<<(std::to_wstring(value));
     }
-    Text& Text::operator<<(Ink ink) {
-        m_markers.emplace_back(m_plainText.size(), PushThemeColor{ ink });
-        return *this;
-    }
-    Text& Text::operator<<(InkGrade grade)
+
+    Text& Text::operator<<(const InTextIcon& obj)
     {
-        return *this << InkWell::textInk(grade);
-    }
-    Text& Text::operator<<(InkColor color)
-    {
-        return *this << inkOf(color);
-    }
-    Text& Text::operator<<(const PushThemeColor& op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PushCustomColor& op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(Color color)
-    {
-        return *this << PushCustomColor{ color };
-    }
-    Text& Text::operator<<(const PopColor& op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(TextStyle op) {
-        m_markers.emplace_back(m_plainText.size(), PushTextStyle{ op });
-        return *this;
-    }
-    Text& Text::operator<<(const PopTextStyle& op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(TextAlign align) {
-        m_markers.emplace_back(m_plainText.size(), align);
-        return *this;
-    }
-    Text& Text::operator<<(const InTextIcon& obj) {
+        breakOwnLine();
         m_markers.emplace_back(m_plainText.size(), obj);
         m_plainText.push_back(L'\uFFFC');
         return *this;
     }
-    Text& Text::operator<<(const ParaIndent& obj)
+
+    Text& Text::operator<<(const Space& obj)
     {
-        m_markers.emplace_back(m_plainText.size(), obj);
-        //m_text.push_back(L'\uFFFC');
-        return *this;
-    }
-    Text& Text::operator<<(const ParaLineSpacing& obj)
-    {
-        m_markers.emplace_back(m_plainText.size(), obj);
-        return *this;
-    }
-    Text& Text::operator<<(const Space& obj) {
+        breakOwnLine();
         m_markers.emplace_back(m_plainText.size(), obj);
         m_plainText.push_back(L'\uFFFC');
         return *this;
     }
-    Text& Text::operator<<(const VSpace& obj) {
+
+    Text& Text::operator<<(const VSpace& obj)
+    {
+        breakOwnLine();
         m_markers.emplace_back(m_plainText.size(), obj);
         m_plainText.push_back(L'\uFFFC');
         return *this;
     }
-    Text& Text::operator<<(const FlexSpace& obj) {
+
+    Text& Text::operator<<(const FlexSpace& obj)
+    {
+        breakOwnLine();
         m_markers.emplace_back(m_plainText.size(), obj);
         m_plainText.push_back(L'\uFFFC');
         return *this;
     }
-    Text& Text::operator<<(const TabTo& obj) {
+
+    Text& Text::operator<<(const TabTo& obj)
+    {
+        breakOwnLine();
         m_markers.emplace_back(m_plainText.size(), obj);
         m_plainText.push_back(L'\uFFFC');
         return *this;
     }
-    Text& Text::operator<<(TextOp op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PushFontSize& op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PopFontSize& op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PushFontFamily& op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PopFontFamily& op) {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PushLink& op)
+
+    // A text whose words own their first or last line keeps them on it wherever it is put.
+    Text& Text::operator<<(const Text& other)
     {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PopLink& op)
-    {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PushAnchor& op)
-    {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const PopAnchor& op)
-    {
-        m_markers.emplace_back(m_plainText.size(), op);
-        return *this;
-    }
-    Text& Text::operator<<(const Text& other) {
         if (other.m_plainText.empty() && other.m_markers.empty())
             return *this;
-        std::size_t offset = m_plainText.size();
+        if (!other.m_plainText.empty())
+        {
+            breakOwnLine();
+            if (m_plainText.empty())
+                m_startsOwnLine = other.m_startsOwnLine;
+            else if (other.m_startsOwnLine && m_plainText.back() != k_endLine)
+                m_plainText.push_back(k_endLine);
+        }
+        const std::size_t offset = m_plainText.size();
         m_plainText.append(other.m_plainText);
         m_markers.reserve(m_markers.size() + other.m_markers.size());
-        for (const auto& marker : other.m_markers) m_markers.emplace_back(marker.first + offset, marker.second);
+        for (const Marker& marker : other.m_markers)
+            m_markers.emplace_back(marker.first + offset, marker.second);
+        if (!other.m_plainText.empty())
+            m_endsOwnLine = other.m_endsOwnLine;
         return *this;
-    }
-    Text& Text::setParaIndent(float indent)
-    {
-        return *this << ParaIndent{ indent };
-    }
-    Text& Text::setParaLineSpacing(float spacing)
-    {
-        return *this << ParaLineSpacing{ spacing };
     }
 
     void Text::clear() {
         m_plainText.clear();
         m_markers.clear();
+        m_startsOwnLine = false;
+        m_endsOwnLine = false;
     }
 
     namespace
@@ -655,6 +602,11 @@ namespace ClaFi
         }
         return false;
     }
+    bool Text::operator==(const Text& other) const
+    {
+        return m_plainText == other.m_plainText && m_markers == other.m_markers;
+    }
+
     std::optional<TextRange> Text::anchorRange(std::wstring_view name) const
     {
         // The anchor ends at the first close that finds no anchor opened after it still open.
@@ -725,6 +677,8 @@ namespace ClaFi
         return std::nullopt;
     }
     void Text::replaceText(const TextRange& range, const std::wstring_view str) {
+        m_startsOwnLine = false;
+        m_endsOwnLine = false;
         std::size_t start = std::min(range.start, m_plainText.size());
         std::size_t length = std::min(range.length, m_plainText.size() - start);
         std::size_t end = start + length;
@@ -772,6 +726,8 @@ namespace ClaFi
     }
 
     void Text::replaceText(const TextRange& range, const Text& other) {
+        m_startsOwnLine = false;
+        m_endsOwnLine = false;
         std::size_t start = std::min(range.start, m_plainText.size());
         std::size_t length = std::min(range.length, m_plainText.size() - start);
         std::size_t end = start + length;
@@ -864,6 +820,13 @@ namespace ClaFi
         bool hasIndent = false; ParaIndent lastIndent;
         bool hasSpacing = false; ParaLineSpacing lastSpacing;
 
+        // Every paragraph reads its properties afresh, so the selection inherits those of the
+        // paragraph it starts in and none stated before it.
+        const std::size_t lineEndBefore = start == 0
+            ? std::wstring::npos
+            : m_plainText.rfind(k_endLine, start - 1);
+        const std::size_t paragraphStart = lineEndBefore == std::wstring::npos ? 0 : lineEndBefore + 1;
+
         // 1. Process markers before 'start' to build the initial active state
         for (const auto& marker : m_markers) {
             if (marker.first >= start) break; // Stop at selection boundary
@@ -885,7 +848,7 @@ namespace ClaFi
                         }
                     }
                 }
-                else {
+                else if (marker.first >= paragraphStart) {
                     // Check for sticky block states
                     std::visit([&](const auto& arg) {
                         using T = std::decay_t<decltype(arg)>;
@@ -949,6 +912,113 @@ namespace ClaFi
         // into.
 
         return result;
+    }
+
+    // The line the last words own is ended first, so the run starts where its words do.
+    Text::WriteStart Text::openScope(const FormatItem& opening)
+    {
+        const bool endsOwnLine = m_endsOwnLine;
+        breakOwnLine();
+        const WriteStart start = {
+            .plainLength = m_plainText.size(),
+            .markerCount = m_markers.size(),
+            .lineBroken = endsOwnLine,
+            .startsOwnLine = m_startsOwnLine,
+            .endsOwnLine = endsOwnLine,
+        };
+        m_markers.emplace_back(m_plainText.size(), opening);
+        return start;
+    }
+
+    void Text::closeScope(const WriteStart& start)
+    {
+        if (m_plainText.size() == start.plainLength)
+        {
+            m_markers.erase(m_markers.begin() + static_cast<std::ptrdiff_t>(start.markerCount),
+                m_markers.end());
+            if (start.lineBroken)
+                m_plainText.pop_back();
+            m_startsOwnLine = start.startsOwnLine;
+            m_endsOwnLine = start.endsOwnLine;
+            return;
+        }
+        const OptionalPop closer = createMatchingPop(m_markers[start.markerCount].second);
+        if (!closer.hasValue)
+            noReach("A wrapper opened a run that no marker closes");
+        m_markers.emplace_back(m_plainText.size(), closer.value);
+    }
+
+    Text::WriteStart Text::openParagraph(const FormatItem& property)
+    {
+        const bool startsOwnLine = m_startsOwnLine;
+        const bool endsOwnLine = m_endsOwnLine;
+        const bool lineBroken = !m_plainText.empty() && m_plainText.back() != k_endLine;
+        if (lineBroken)
+            m_plainText.push_back(k_endLine);
+        if (m_plainText.empty())
+            m_startsOwnLine = true;
+        m_endsOwnLine = false;
+        const WriteStart start = {
+            .plainLength = m_plainText.size(),
+            .markerCount = m_markers.size(),
+            .lineBroken = lineBroken,
+            .startsOwnLine = startsOwnLine,
+            .endsOwnLine = endsOwnLine,
+        };
+        m_markers.emplace_back(m_plainText.size(), property);
+        return start;
+    }
+
+    // A paragraph reads its properties afresh, so the property is stated again on every line the
+    // words start, ahead of whatever the words state there themselves.
+    void Text::closeParagraph(const WriteStart& start)
+    {
+        if (m_plainText.size() == start.plainLength)
+        {
+            m_markers.erase(m_markers.begin() + static_cast<std::ptrdiff_t>(start.markerCount),
+                m_markers.end());
+            if (start.lineBroken)
+                m_plainText.pop_back();
+            m_startsOwnLine = start.startsOwnLine;
+            m_endsOwnLine = start.endsOwnLine;
+            return;
+        }
+
+        const FormatItem property = m_markers[start.markerCount].second;
+        Markers restated;
+        for (std::size_t at = start.plainLength; at + 1 < m_plainText.size(); ++at)
+        {
+            if (m_plainText[at] == k_endLine)
+                restated.emplace_back(at + 1, property);
+        }
+        if (!restated.empty())
+        {
+            const Markers::iterator words = m_markers.begin()
+                + static_cast<std::ptrdiff_t>(start.markerCount + 1);
+            Markers merged;
+            merged.reserve(static_cast<std::size_t>(m_markers.end() - words) + restated.size());
+            std::merge(restated.begin(), restated.end(),
+                std::make_move_iterator(words), std::make_move_iterator(m_markers.end()),
+                std::back_inserter(merged),
+                [](const Marker& first, const Marker& second){
+                    return first.first < second.first;
+                });
+            m_markers.erase(words, m_markers.end());
+            m_markers.insert(m_markers.end(),
+                std::make_move_iterator(merged.begin()), std::make_move_iterator(merged.end()));
+        }
+
+        m_endsOwnLine = m_plainText.back() != k_endLine;
+    }
+
+    // The line end a paragraph wrapper leaves to whatever is written after it, so a text that
+    // ends in one ends with no line end.
+    void Text::breakOwnLine()
+    {
+        if (!m_endsOwnLine)
+            return;
+        m_plainText.push_back(k_endLine);
+        m_endsOwnLine = false;
     }
 
     namespace

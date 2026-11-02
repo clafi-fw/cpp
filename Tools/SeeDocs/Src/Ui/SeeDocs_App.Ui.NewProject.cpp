@@ -248,11 +248,8 @@ namespace SeeDocs_App::Ui
     {
         const std::wstring name = typedName();
         const std::filesystem::path place = location();
-        Text text;
-        text << PushThemeColor{ InkWell::spotInk() };
-        text << (name.empty() ? place : place / name).wstring();
-        text << PopColor{};
-        m_folder.text() = text;
+        const std::wstring folder = (name.empty() ? place : place / name).wstring();
+        m_folder.text() = Text{ ColoredText{ InkWell::spotInk(), folder } };
         m_refusal.setVisible(false);
         m_folder.invalidateFormAlign();
     }
@@ -308,10 +305,10 @@ namespace SeeDocs_App::Ui
 
     void NewProjectDialog::showRefusal(const std::wstring_view reason)
     {
-        Text text;
-        text << InkWell::redInk(InkGrade::Strong) << Icons::messageText(MessageIcon::Error, reason)
-            << PopColor{};
-        m_refusal.text() = text;
+        m_refusal.text() = Text{ ColoredText{
+            InkWell::redInk(InkGrade::Strong),
+            Icons::messageText(MessageIcon::Error, reason)
+        } };
         m_refusal.setVisible(true);
         m_refusal.invalidateFormAlign();
     }

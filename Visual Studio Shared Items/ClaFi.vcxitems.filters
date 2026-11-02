@@ -1006,12 +1006,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.cppm">
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cpp">
-      <Filter>Y_Core\TextEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Fmt.cppm">
-      <Filter>Y_Core\TextEngine</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.History.cpp">
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>

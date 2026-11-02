@@ -193,13 +193,13 @@ namespace ClaFi
         // The application's own commands lead the framework's.
         for (const AppCommand& command : appCommands())
         {
-            addCommand(strip(), Text{ TextStyle::SubHeading, command.caption },
+            addCommand(strip(), Text{ StyledText{ TextStyles::SubHeading, command.caption } },
                 command.drawIcon, command.endIcon, command.run);
         }
 
         if constexpr (Diagnostic::Options::enabled)
         {
-            addCommand(strip(), Text{ TextStyle::SubHeading, L"Show diagnostic" },
+            addCommand(strip(), Text{ StyledText{ TextStyles::SubHeading, L"Show diagnostic" } },
                 Icons::GaugeIcon::draw, EndIcon::OpensWindow,
                 [](ClickEvent& event) {
                     event.closeForm();
@@ -207,7 +207,7 @@ namespace ClaFi
                 });
         }
         addCommand(strip(),
-            Text{ TextStyle::SubHeading, L"Exit ", params.appContext().appName() },
+            Text{ StyledText{ TextStyles::SubHeading, L"Exit ", params.appContext().appName() } },
             Icons::DoorIcon::draw, EndIcon::None, closeApplication);
 
         // The settings sit at the foot of the strip, whatever the commands above them come to.
@@ -234,7 +234,7 @@ namespace ClaFi
     void AppMenu::addPageTab(const std::wstring_view caption, RichControl& page, const DrawIconFunc& drawIcon)
     {
         Controls::Tab& tab = strip().addTab(
-            Text{ TextStyle::Heading, caption },
+            Text{ StyledText{ TextStyles::Heading, caption } },
             k_itemPadding,
             ButtonViewMode::LeftIcon,
             k_iconSize,

@@ -170,8 +170,8 @@ namespace Themes_App
         const ColorHarmony& harmony = m_harmonySelector.harmony(
             static_cast<std::size_t>(editColors().harmonyKind));
         Text what{};
-        what << InkWell::accentInk() << L"Harmony" << PopColor{} << L" change to "
-            << InkWell::accentInk() << harmony.name() << PopColor{};
+        what << ColoredText{ InkWell::accentInk(), L"Harmony" } << L" change to ";
+        what << ColoredText{ InkWell::accentInk(), harmony.name() };
         edited(EditPhase::Settled, what);
     }
 
@@ -224,15 +224,11 @@ namespace Themes_App
     void ThemePage::pigmentNameCell(Grids::GetCellTextEvent& event) const
     {
         const UiElement element = event.row().tag<UiElement>();
-        event.text() << TextStyle::SubHeading
-            << uiElementOf(element).name
-            << PopTextStyle{}
-            << L'\n'
-            << InkGrade::Muted
-            << TextStyle::SubBody
-            << pigmentUse(element)
-            << PopTextStyle{}
-            << PopColor{};
+        event.text() << StyledText{ TextStyles::SubHeading, uiElementOf(element).name } << L'\n';
+        event.text() << ColoredText{
+            InkGrade::Muted,
+            StyledText{ TextStyles::SubBody, pigmentUse(element) }
+        };
     }
 
     // Bound again after a restore, which writes the theme over in place: the rules keep their
@@ -272,15 +268,15 @@ namespace Themes_App
     Text ThemePage::changeStepName(const std::wstring_view what)
     {
         Text result{};
-        result << InkWell::accentInk() << what << PopColor{} << L" change";
+        result << ColoredText{ InkWell::accentInk(), what } << L" change";
         return result;
     }
 
     Text ThemePage::pigmentStepName(const UiElement element, const std::wstring_view column)
     {
         Text result{};
-        result << InkWell::accentInk() << column << PopColor{} << L" change in "
-            << InkWell::accentInk() << uiElementOf(element).name << PopColor{};
+        result << ColoredText{ InkWell::accentInk(), column } << L" change in ";
+        result << ColoredText{ InkWell::accentInk(), uiElementOf(element).name };
         return result;
     }
 

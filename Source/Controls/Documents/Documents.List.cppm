@@ -186,12 +186,12 @@ namespace ClaFi::Documents
             VerticalAlign::Top,
             Padding{ 12.0f, 4.0f },
             Spacing{ k_tileSpacing },
-            PlaceHolderText{
+            PlaceHolderText{ ColoredText{
                 InkGrade::Subtle,
                 L"No ",
                 // What the folder calls its documents, for the text an empty list shows.
                 REQUIRE_PROPERTY(DocumentsFolder*)->kind().nounPlural
-            },
+            } },
             // What a list of documents is for is picking one, so a stated selection mode is what
             // makes it more than that. Said ahead of the caller's own props, which are read after
             // these and stand in their place - see Props::get.

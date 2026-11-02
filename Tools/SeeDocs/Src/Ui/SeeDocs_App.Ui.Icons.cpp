@@ -598,8 +598,11 @@ namespace SeeDocs_App::Ui
     {
         if (type.isControl)
             return;
-        text << FlexSpace{ k_kindGap } << TextStyle::SubBody << InkGrade::Muted
-            << kindWord(type.kind) << PopColor{} << PopTextStyle{};
+        text << FlexSpace{ k_kindGap };
+        text << StyledText{
+            TextStyles::SubBody,
+            ColoredText{ InkGrade::Muted, kindWord(type.kind) }
+        };
     }
 
     void drawOpenIcon(DrawIconEvent& event)

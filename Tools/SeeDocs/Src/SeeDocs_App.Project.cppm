@@ -18,7 +18,7 @@ namespace SeeDocs_App
     // The footnotes' folder, under the project's own.
     export constexpr std::wstring_view k_footnotesFolder = L"footnotes";
     // The articles' folder, under the project's own. See README#articles
-    export constexpr std::wstring_view k_articlesFolder = L"Articles";
+    export constexpr std::wstring_view k_articlesFolder = L"articles";
 
     // What becomes of a hint edited on a page. See README
     export enum class HintEdits

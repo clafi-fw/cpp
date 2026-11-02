@@ -115,7 +115,7 @@ namespace ClaFi
             HostProps{
                 VerticalAlign::Top,
                 ExpanderViewMode::Divider,
-                HeaderText{ InkGrade::Strong, L"Built-in Themes" }
+                HeaderText{ ColoredText{ InkGrade::Strong, L"Built-in Themes" } }
             },
             BodyProps{
                 Orientation::HorizontalWrap,
@@ -130,14 +130,14 @@ namespace ClaFi
             HostProps{
                 VerticalAlign::Top,
                 ExpanderViewMode::Divider,
-                HeaderText{ InkGrade::Strong, L"Additional Themes" }
+                HeaderText{ ColoredText{ InkGrade::Strong, L"Additional Themes" } }
             },
             BodyProps{
                 Orientation::HorizontalWrap,
                 ItemSizing::Equal,
                 Padding{ 12.0f, 4.0f },
                 Spacing{ 4.0f },
-                PlaceHolderText{ InkGrade::Subtle, L"No items" }
+                PlaceHolderText{ ColoredText{ InkGrade::Subtle, L"No items" } }
             }
         ) };
         StackPanel& m_userTiles{ m_userGroup.body() };

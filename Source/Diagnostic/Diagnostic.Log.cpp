@@ -192,7 +192,7 @@ namespace ClaFi
                 if (ptr)
                 {
                     const Color color = window.controlColors.colorOf(ptr);
-                    newItem.text() << color << address << PopColor{};
+                    newItem.text() << ColoredText{ color, address };
                     const std::wstring_view label = ptr->diagnosticText();
                     if (!label.empty())
                         newItem.text() << L" (" << label << L")";

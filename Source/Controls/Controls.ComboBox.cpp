@@ -119,7 +119,7 @@ namespace ClaFi::Controls
     {
         adjustItemText(item, text, phase);
         if (text.empty() && !item.placeHolderText().empty())
-            text << InkGrade::Muted << item.placeHolderText() << PopColor{};
+            text << ColoredText{ InkGrade::Muted, item.placeHolderText() };
     }
 
     std::wstring ComboBox::valueText() const

@@ -64,7 +64,7 @@ namespace SeeDocs_App::Ui
             {
                 const std::filesystem::path& folder = project.folder;
                 Text row{ rowIcon(RowIcon::Folder), Space{ k_iconGap }, project.name };
-                row << Space{ k_nameGap } << InkGrade::Muted << folder.wstring() << PopColor{};
+                row << Space{ k_nameGap } << ColoredText{ InkGrade::Muted, folder.wstring() };
                 group.add<ToolButton>(
                     row,
                     HorizontalTextAnchor::Left,

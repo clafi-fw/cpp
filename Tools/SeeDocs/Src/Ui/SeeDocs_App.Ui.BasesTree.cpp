@@ -38,7 +38,7 @@ namespace SeeDocs_App::Ui
         // The ellipsis as a collapsed expander draws its own.
         [[nodiscard]] Text ellipsisText()
         {
-            return Text{ InkGrade::Muted, k_ellipsis };
+            return Text{ ColoredText{ InkGrade::Muted, k_ellipsis } };
         }
 
         // The page a crumb names: the link its words carry; empty for a base with no page.

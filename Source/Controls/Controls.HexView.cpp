@@ -567,16 +567,15 @@ namespace ClaFi::Controls
         static_assert(k_offsetGap == 2 && k_paneGap == 2,
             "both gaps are written below as a pair of literal spaces");
 
+        Text offset{};
+        appendHex(offset, start, m_offsetColumns);
         m_lineText.clear();
-        m_lineText << InkGrade::Muted;
-        appendHex(m_lineText, start, m_offsetColumns);
-        m_lineText << PopColor{};
+        m_lineText << ColoredText{ InkGrade::Muted, offset };
         m_lineText << L"  ";
 
         // **A byte of nothing is drawn back towards the surface**, so what the buffer carries is
         // what the eye finds first. The runs of zeroes a structure is padded with are most of
         // what a dump shows, and reading them at full strength is reading the padding.
-        bool dimmed = false;
         for (std::size_t at = start; at != end; ++at)
         {
             if (at != start)
@@ -585,20 +584,16 @@ namespace ClaFi::Controls
                 m_lineText << L' ';
 
             const unsigned char value = m_bytes[at];
-            const bool dim = value == 0;
-            if (dim != dimmed)
+            if (value == 0)
             {
-                if (dim)
-                    m_lineText << InkGrade::Subtle;
-                else
-                    m_lineText << PopColor{};
-                dimmed = dim;
+                m_lineText << ColoredText{ InkGrade::Subtle, k_digits[0], k_digits[0] };
             }
-            m_lineText << k_digits[value >> 4];
-            m_lineText << k_digits[value & 0x0f];
+            else
+            {
+                m_lineText << k_digits[value >> 4];
+                m_lineText << k_digits[value & 0x0f];
+            }
         }
-        if (dimmed)
-            m_lineText << PopColor{};
 
         // The short last line is filled out to the width of a full one, so the characters beside
         // it stand in the column every other line put them in.
@@ -610,24 +605,15 @@ namespace ClaFi::Controls
         }
         m_lineText << L"  ";
 
-        dimmed = false;
         for (std::size_t at = start; at != end; ++at)
         {
             const unsigned char value = m_bytes[at];
             const bool printable = value >= k_firstPrintable && value <= k_lastPrintable;
-            const bool dim = !printable;
-            if (dim != dimmed)
-            {
-                if (dim)
-                    m_lineText << InkGrade::Subtle;
-                else
-                    m_lineText << PopColor{};
-                dimmed = dim;
-            }
-            m_lineText << (printable ? static_cast<wchar_t>(value) : k_unprintable);
+            if (printable)
+                m_lineText << static_cast<wchar_t>(value);
+            else
+                m_lineText << ColoredText{ InkGrade::Subtle, k_unprintable };
         }
-        if (dimmed)
-            m_lineText << PopColor{};
     }
 
     void HexView::paintLine(PaintEvent& event, const FloatRect& content, const std::size_t line)

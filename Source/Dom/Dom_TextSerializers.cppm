@@ -24,7 +24,7 @@ import ClaFi.StdLib;
 //         ]
 //     ]
 //
-// A marker's Tag is the spelling Fmt reads between its brackets, and At is the index in the plain
+// A marker's Tag is its spelling in TextEngine.Tags, and At is the index in the plain
 // text it applies from. The plain text is stated as it is: a marker that puts a character in - a
 // space, an icon - has that character in the text at its index, so an index counts what the text
 // holds and nothing has to be recomputed on the way in or out. The two children come in whatever

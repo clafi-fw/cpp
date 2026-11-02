@@ -35,7 +35,6 @@ import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Syntax.Languages;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -96,7 +95,7 @@ namespace TextEngine_App
         void showCaretPosition(ScrollBox& page, TextBox& body)
         {
             CaretReadout* readout = &page.createCorner<CaretReadout>(
-                Text{ TextStyle::SubBody, L"Ln 1, Col 1" },
+                Text{ StyledText{ TextStyles::SubBody, L"Ln 1, Col 1" } },
                 MinSize{ k_caretReadoutWidth, 0.0f },
                 MaxSize{ k_caretReadoutWidth, k_maxFloat },
                 WordWrap::No,
@@ -109,10 +108,10 @@ namespace TextEngine_App
             );
             body.onCaretMove([readout](CaretMoveEvent& event){
                 const TextLineColumn caret = event.sender().caretLineColumn();
-                readout->text() = Text{
-                    TextStyle::SubBody,
-                    Fmt{ L"Ln {}, Col {}", caret.line, caret.column }
-                };
+                readout->text() = Text{ StyledText{
+                    TextStyles::SubBody,
+                    std::format(L"Ln {}, Col {}", caret.line, caret.column)
+                } };
                 // The width is stated, so a new reading moves nothing on the page: a repaint of the
                 // corner is the whole of what a caret move costs outside the box it moved in.
                 readout->invalidate();
@@ -418,20 +417,20 @@ namespace TextEngine_App
         showCaretPosition(scriptsPage, scriptsPage.body());
 
         tabs.strip().addTab(
-            Text{ PushFontFamily{ L"Gabriola" }, L"The Ledger", PopFontFamily{} },
+            Text{ FamilyText{ L"Gabriola", L"The Ledger" } },
             k_tabPadding, k_tabSize, k_tabAnchor,
             Page{ ledgerPage }
         )
         .select();
 
         tabs.strip().addTab(
-            Text{ TextStyle::Code, L"Syntax" },
+            Text{ StyledText{ TextStyles::Code, L"Syntax" } },
             k_tabPadding, k_tabSize, k_tabAnchor,
             Page{ codePage }
         );
 
         tabs.strip().addTab(
-            Text{ PushFontFamily{ L"Cambria" }, TextOp::PushItalic, L"Formulas", TextOp::PopItalic, PopFontFamily{} },
+            Text{ FamilyText{ L"Cambria", ItalicText{ L"Formulas" } } },
             k_tabPadding, k_tabSize, k_tabAnchor,
             Page{ formulasPage }
         );

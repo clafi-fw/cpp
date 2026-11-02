@@ -12,7 +12,6 @@ import ClaFi.Core.DomEngine;
 // The std::wstring serializer: without it the node's set and get read a string as a sequence.
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
-import ClaFi.Core.TextEngine.Fmt;
 import ClaFi.Core.TextEngine.Searcher;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -48,10 +47,10 @@ namespace PascalScripts_App
 
     Text ScriptPage::caretReading(const TextLineColumn caret)
     {
-        Text reading{};
-        reading << PushFontSize{ k_caretReadoutFontSize };
-        reading << Fmt{ L"Ln {}, Col {}", caret.line, caret.column };
-        return reading;
+        return Text{ SizedText{
+            k_caretReadoutFontSize,
+            std::format(L"Ln {}, Col {}", caret.line, caret.column)
+        } };
     }
 
     void ScriptPage::connectSearchActions()

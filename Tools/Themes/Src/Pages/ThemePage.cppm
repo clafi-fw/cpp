@@ -100,7 +100,7 @@ namespace Themes_App
         ) };
 
         Label& m_contentLabel{ m_options.add<Label>(
-            Text{ TextStyle::Section, L"Content" }
+            Text{ StyledText{ TextStyles::Section, L"Content" } }
         ) };
 
         // One container per set of choices: a click repaints its siblings, so the group is what
@@ -273,7 +273,7 @@ namespace Themes_App
         ) };
 
         Label& m_cppScopeLabel{ m_cppCodePage.options().add<Label>(
-            Text{ TextStyle::Section, L"Scope" }
+            Text{ StyledText{ TextStyles::Section, L"Scope" } }
         ) };
 
         StackPanel& m_cppScopeGroup{ m_cppCodePage.options().add<StackPanel>(
@@ -297,22 +297,22 @@ namespace Themes_App
         };
 
         Tab& m_cppCodeTab{ m_tabbedBox.strip().addTab(
-            Text{ TextStyle::Code, L"C++" },
+            Text{ StyledText{ TextStyles::Code, L"C++" } },
             Page{ m_cppCodePage }
         ) };
 
         Tab& m_claFiTab{ m_tabbedBox.strip().addTab(
-            Text{ TextStyle::Code, L"ClaFi" },
+            Text{ StyledText{ TextStyles::Code, L"ClaFi" } },
             Page{ m_claFiPage }
         ) };
 
         Tab& m_xmlTab{ m_tabbedBox.strip().addTab(
-            Text{ TextStyle::Code, L"XML" },
+            Text{ StyledText{ TextStyles::Code, L"XML" } },
             Page{ m_xmlPage }
         ) };
 
         Tab& m_jsonTab{ m_tabbedBox.strip().addTab(
-            Text{ TextStyle::Code, L"JSON" },
+            Text{ StyledText{ TextStyles::Code, L"JSON" } },
             Page{ m_jsonPage }
         ) };
 

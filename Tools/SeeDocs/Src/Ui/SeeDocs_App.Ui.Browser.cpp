@@ -190,9 +190,10 @@ namespace SeeDocs_App::Ui
         // A path as a paragraph of its own, in spot ink, the way SeeDocs' words quote one.
         void writePath(Text& text, const std::wstring_view path)
         {
-            text << k_endLine << ParaIndent{ k_wordsIndent };
-            text << PushThemeColor{ InkWell::spotInk() } << path << PopColor{};
-            text << ParaIndent{ 0.0f } << k_endLine;
+            text << ParagraphText{
+                ParaIndent{ k_wordsIndent },
+                ColoredText{ InkWell::spotInk(), path }
+            };
         }
 
         // The item of the list a segment names: one of its name with a page of its own, the first
@@ -2119,7 +2120,7 @@ namespace SeeDocs_App::Ui
     {
         const ShownProject* project = resolve(data).project;
         Text text;
-        text << TextStyle::Title << L"No such page" << PopTextStyle{};
+        text << StyledText{ TextStyles::Title, L"No such page" };
         text << k_endLine << k_endLine;
         if (project)
             text << project->open.project.name << L" has no page at this path:";
@@ -2349,9 +2350,11 @@ namespace SeeDocs_App::Ui
             line << (target->type ? target->type->name : target->module->shownName);
             if (!place.member.empty())
                 line << k_scope << place.member;
-            line << FlexSpace{ k_kindGap } << TextStyle::SubBody << InkGrade::Muted;
-            line << treePath(project->open.project.name, target->folder);
-            line << PopColor{} << PopTextStyle{};
+            line << FlexSpace{ k_kindGap };
+            line << StyledText{
+                TextStyles::SubBody,
+                ColoredText{ InkGrade::Muted, treePath(project->open.project.name, target->folder) }
+            };
             menu.add(
                 line,
                 MenuItem::OnDrawIcon{ [icon](DrawIconEvent& event) {
@@ -2749,20 +2752,20 @@ namespace SeeDocs_App::Ui
         else
             text << Space{ k_rowIconSize + k_iconGap };
         if (entry.type && entry.kind != NameKind::Type)
-            text << InkGrade::Muted << entry.type->name << k_scope << PopColor{};
+            text << ColoredText{ InkGrade::Muted, entry.type->name, k_scope };
         const std::wstring_view name = entry.name;
         if (hit.start.has_value() && *hit.start + hit.length <= name.size())
         {
             text << name.substr(0, *hit.start);
-            text << InkWell::spotInk() << name.substr(*hit.start, hit.length) << PopColor{};
+            text << ColoredText{ InkWell::spotInk(), name.substr(*hit.start, hit.length) };
             text << name.substr(*hit.start + hit.length);
         }
         else
         {
             text << name;
         }
-        text << FlexSpace{ k_kindGap } << TextStyle::SubBody << InkGrade::Muted;
-        text << entry.kindWord;
+        Text kind{};
+        kind << entry.kindWord;
         // A namesake's folder is written from the project's name, which names the project too.
         const std::wstring_view projectName = listed.project->open.project.name;
         if (entry.namesake)
@@ -2770,13 +2773,14 @@ namespace SeeDocs_App::Ui
             const std::wstring_view folder = entry.kind == NameKind::Folder
                 ? std::wstring_view{ entry.owner }
                 : std::wstring_view{ entry.folder };
-            text << k_separator << treePath(projectName, folder);
+            kind << k_separator << treePath(projectName, folder);
         }
         else if (namesProject)
         {
-            text << k_separator << projectName;
+            kind << k_separator << projectName;
         }
-        text << PopColor{} << PopTextStyle{};
+        text << FlexSpace{ k_kindGap };
+        text << StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, kind } };
 
         if (entry.comment && !entry.comment->text.empty())
         {
@@ -2790,7 +2794,7 @@ namespace SeeDocs_App::Ui
             place += k_sourceJoin;
             place += entry.module->shownName;
         }
-        line.tooltip << InkGrade::Muted << place << PopColor{};
+        line.tooltip << ColoredText{ InkGrade::Muted, place };
         return line;
     }
 
