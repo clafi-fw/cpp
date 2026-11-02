@@ -3,6 +3,8 @@ module ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.TextEngine.StyleSheet;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
@@ -10,8 +12,8 @@ namespace ClaFi
 {
     namespace
     {
-        // The look of a run that states nothing, which every look index 0 stands for.
-        const TextLook k_noLook{};
+        // The style of a run that states nothing, which every style index 0 stands for.
+        const TextStyle k_noStyle{};
 
         // An index of another text's table not yet looked up in this one's.
         constexpr std::uint32_t k_unmapped = std::numeric_limits<std::uint32_t>::max();
@@ -27,33 +29,64 @@ namespace ClaFi
             return ink;
         }
 
-        // One field of an inner look under an outer one. The inner keeps what it states, itself
-        // or through its style. The outer fills the rest from its own fields, and from its style
-        // where the inner keeps a style of its own - otherwise the inner takes the outer's style
-        // whole and it fills those fields itself.
-        template<typename LookValue, typename StyleValue>
-        void fillField(TextLook& result, const TextLook& inner, const TextLook& outer,
-            std::optional<LookValue> TextLook::* own, std::optional<StyleValue> TextStyle::* styled,
-            bool takesOuterStyle)
+        // The field a base states, where the style states none of its own.
+        template<typename Value>
+        void lendField(TextStyle& style, const TextStyle& base,
+            std::optional<Value> TextStyle::* field)
         {
-            if ((result.*own).has_value())
-                return;
-            if (inner.style && inner.style->stated(styled).has_value())
-                return;
-            if ((outer.*own).has_value())
-            {
-                result.*own = outer.*own;
-                return;
-            }
-            if (takesOuterStyle || !outer.style)
-                return;
-            if (const std::optional<StyleValue> value = outer.style->stated(styled))
-                result.*own = LookValue{ *value };
+            if (!(style.*field).has_value())
+                style.*field = base.*field;
         }
 
-        // An inner look laid under an outer one: the inner wins every field it states, and the
-        // outer fills the rest. See TextEngine-Types#textlook
-        [[nodiscard]] TextLook laidUnder(const TextLook& inner, const TextLook& outer,
+        // The style's base lends it its fields and script levels, and the style is based on the
+        // base's own base, drawing as it did.
+        void foldBase(TextStyle& style)
+        {
+            const TextStyle& base = *style.base;
+            lendField(style, base, &TextStyle::fontFamily);
+            lendField(style, base, &TextStyle::fontSize);
+            lendField(style, base, &TextStyle::fontWeight);
+            lendField(style, base, &TextStyle::fontStyle);
+            lendField(style, base, &TextStyle::ink);
+            style.scripts.insert(style.scripts.begin(), base.scripts.begin(), base.scripts.end());
+            style.base = base.base;
+        }
+
+        // **A base its sheet does not find by its name is folded in**: a style removed, or one
+        // standing behind another of its name, is carried by what it states rather than by a name
+        // that means another. See TextEngine-Types#text-styles
+        [[nodiscard]] TextStyle foldedIn(const TextStyle& style, const StyleSheet* from)
+        {
+            TextStyle result = style;
+            while (from && result.base && from->find(result.base->name) != result.base)
+                foldBase(result);
+            return result;
+        }
+
+        // One field of an inner style under an outer one. The inner keeps what it states, itself
+        // or through its base. The outer fills the rest from its own fields, and from its base
+        // where the inner keeps a base of its own - otherwise the inner takes the outer's base
+        // and that fills those fields itself.
+        template<typename Value>
+        void fillField(TextStyle& result, const TextStyle& inner, const TextStyle& outer,
+            std::optional<Value> TextStyle::* field, bool takesOuterBase)
+        {
+            if (inner.stated(field))
+                return;
+            if ((outer.*field).has_value())
+            {
+                result.*field = outer.*field;
+                return;
+            }
+            if (takesOuterBase || !outer.base)
+                return;
+            if (const Value* value = outer.base->stated(field))
+                result.*field = *value;
+        }
+
+        // An inner style laid under an outer one: the inner wins every field it states, and the
+        // outer fills the rest. See TextEngine-Types#textlayer
+        [[nodiscard]] TextStyle laidUnder(const TextStyle& inner, const TextStyle& outer,
             bool innerLinked)
         {
             if (outer.empty())
@@ -61,30 +94,57 @@ namespace ClaFi
             if (inner.empty() && !innerLinked)
                 return outer;
 
-            TextLook result = inner;
-            const bool takesOuterStyle = !inner.style;
-            if (takesOuterStyle)
-                result.style = outer.style;
-            fillField(result, inner, outer, &TextLook::fontFamily, &TextStyle::fontFamily,
-                takesOuterStyle);
-            fillField(result, inner, outer, &TextLook::fontSize, &TextStyle::fontSize,
-                takesOuterStyle);
-            fillField(result, inner, outer, &TextLook::fontWeight, &TextStyle::fontWeight,
-                takesOuterStyle);
-            fillField(result, inner, outer, &TextLook::fontStyle, &TextStyle::fontStyle,
-                takesOuterStyle);
+            TextStyle result = inner;
+            const bool takesOuterBase = !inner.base;
+            if (takesOuterBase)
+                result.base = outer.base;
+            fillField(result, inner, outer, &TextStyle::fontFamily, takesOuterBase);
+            fillField(result, inner, outer, &TextStyle::fontSize, takesOuterBase);
+            fillField(result, inner, outer, &TextStyle::fontWeight, takesOuterBase);
+            fillField(result, inner, outer, &TextStyle::fontStyle, takesOuterBase);
 
-            // A link inside states its ink, so an outer one does not reach the words. A style
-            // taken whole would, and the link's ink is stated against it.
+            // A link inside states its ink, so an outer one does not reach the words. A base
+            // taken would, and the link's ink is stated against it.
             if (!innerLinked)
-                fillField(result, inner, outer, &TextLook::ink, &TextStyle::ink, takesOuterStyle);
-            else if (takesOuterStyle && !result.ink && outer.style
-                && outer.style->stated(&TextStyle::ink).has_value())
+                fillField(result, inner, outer, &TextStyle::ink, takesOuterBase);
+            else if (takesOuterBase && !result.ink && outer.base
+                && outer.base->stated(&TextStyle::ink))
                 result.ink = k_linkInk;
 
-            result.scripts.insert(result.scripts.begin(), outer.scripts.begin(),
-                outer.scripts.end());
+            // The outer's levels stand outside every level of the inner's, so an inner base stating
+            // levels is folded in where the outer adds any; a base taken carries its own outermost.
+            std::vector<TextScript> levels = takesOuterBase || !outer.base
+                ? std::vector<TextScript>{}
+                : outer.base->levels();
+            levels.insert(levels.end(), outer.scripts.begin(), outer.scripts.end());
+            while (!takesOuterBase && !levels.empty() && result.base
+                && !result.base->levels().empty())
+            {
+                foldBase(result);
+            }
+            result.scripts.insert(result.scripts.begin(), levels.begin(), levels.end());
             return result;
+        }
+
+        // Whether two styles state the field alike, themselves or through their bases.
+        template<typename Value>
+        [[nodiscard]] bool statesAlike(const TextStyle& style, const TextStyle& other,
+            std::optional<Value> TextStyle::* field)
+        {
+            const Value* value = style.stated(field);
+            const Value* otherValue = other.stated(field);
+            return value && otherValue ? *value == *otherValue : value == otherValue;
+        }
+
+        // Whether two run styles draw alike over one Body: every field and script level the same.
+        [[nodiscard]] bool drawnAlike(const TextStyle& style, const TextStyle& other)
+        {
+            return statesAlike(style, other, &TextStyle::fontFamily)
+                && statesAlike(style, other, &TextStyle::fontSize)
+                && statesAlike(style, other, &TextStyle::fontWeight)
+                && statesAlike(style, other, &TextStyle::fontStyle)
+                && statesAlike(style, other, &TextStyle::ink)
+                && style.levels() == other.levels();
         }
 
         // An inner paragraph look under an outer one, the inner winning every field it states.
@@ -158,17 +218,29 @@ namespace ClaFi
                 combine(hash, *value);
         }
 
-        void combineLook(std::size_t& hash, const TextLook& look)
+        // An unstated field and a stated one hash apart, whatever the value.
+        template<typename Value>
+        void combineStated(std::size_t& hash, const TextStyle& style,
+            std::optional<Value> TextStyle::* field)
         {
-            combine(hash, reinterpret_cast<std::size_t>(look.style));
-            combine(hash, look.fontFamily);
-            combine(hash, look.fontSize);
-            combine(hash, look.fontWeight);
-            combine(hash, look.fontStyle);
-            combine(hash, static_cast<std::size_t>(look.ink.has_value()));
-            if (look.ink)
-                combineInk(hash, *look.ink);
-            for (const TextScript script : look.scripts)
+            const Value* value = style.stated(field);
+            combine(hash, static_cast<std::size_t>(value != nullptr));
+            if (value)
+                combine(hash, *value);
+        }
+
+        // What a style draws, so two styles drawing alike hash alike, whatever their bases.
+        void combineStyle(std::size_t& hash, const TextStyle& style)
+        {
+            combineStated(hash, style, &TextStyle::fontFamily);
+            combineStated(hash, style, &TextStyle::fontSize);
+            combineStated(hash, style, &TextStyle::fontWeight);
+            combineStated(hash, style, &TextStyle::fontStyle);
+            const ColorDef* ink = style.stated(&TextStyle::ink);
+            combine(hash, static_cast<std::size_t>(ink != nullptr));
+            if (ink)
+                combineInk(hash, *ink);
+            for (const TextScript script : style.levels())
                 combine(hash, static_cast<std::size_t>(script) + 1);
         }
 
@@ -205,8 +277,29 @@ namespace ClaFi
 
     // Text
 
-    // A paragraph's piece states the paragraph the text has reached, ahead of its words.
+    Text::Text()
+        :
+        m_styles{ &StyleSheet::application() }
+    {
+    }
+
+    Text::Text(const StyleSheet& sheet)
+        :
+        m_styles{ &sheet }
+    {
+    }
+
     Text::Text(TextPieces pieces)
+        :
+        Text{ std::move(pieces), StyleSheet{ &StyleSheet::application() } }
+    {
+    }
+
+    // A paragraph's piece states the paragraph the text has reached, ahead of its words. A base
+    // the styles do not reach is found among them by its name, as a style put in is.
+    Text::Text(TextPieces pieces, StyleSheet styles)
+        :
+        m_styles{ std::move(styles) }
     {
         for (const TextPiece& piece : pieces)
         {
@@ -214,14 +307,14 @@ namespace ClaFi
                 stateParagraph(paragraphStartOf(m_plainText.size()), *piece.paragraph);
 
             const Run run = {
-                .look = lookIndexOf(piece.look),
+                .style = adoptedIndexOf(piece.style, nullptr),
                 .link = nameIndexOf(piece.link),
                 .anchor = nameIndexOf(piece.anchor),
             };
             if (piece.object)
             {
                 appendObject(*piece.object);
-                m_runs.back().look = run.look;
+                m_runs.back().style = run.style;
                 m_runs.back().link = run.link;
                 m_runs.back().anchor = run.anchor;
                 continue;
@@ -306,6 +399,23 @@ namespace ClaFi
         return *this;
     }
 
+    Text& Text::operator=(const Text& other)
+    {
+        if (this != &other)
+        {
+            Text copy{ other };
+            swap(copy);
+        }
+        return *this;
+    }
+
+    Text& Text::operator=(Text&& other) noexcept
+    {
+        Text taken{ std::move(other) };
+        swap(taken);
+        return *this;
+    }
+
     // A text whose words own their first or last line keeps them on it wherever it is put. Its
     // first paragraph's look goes where it starts a paragraph, and a line it joins keeps its own.
     Text& Text::operator<<(const Text& other)
@@ -340,11 +450,13 @@ namespace ClaFi
         return *this;
     }
 
+    // The text stays over the sheet it is over, and drops the styles of its own.
     void Text::clear()
     {
+        StyleSheet styles{ m_styles.parent() };
+        m_styles.swap(styles);
         m_plainText.clear();
         m_runs.clear();
-        m_looks.clear();
         m_names.clear();
         m_objects.clear();
         m_paragraphs.clear();
@@ -359,7 +471,7 @@ namespace ClaFi
         for (const Run& run : m_runs)
         {
             combine(hash, run.length);
-            combineLook(hash, lookAt(run.look));
+            combineStyle(hash, styleAt(run.style));
             combine(hash, nameAt(run.link));
             combine(hash, static_cast<std::size_t>(run.link != 0));
             combine(hash, nameAt(run.anchor));
@@ -385,11 +497,14 @@ namespace ClaFi
         return false;
     }
 
-    // By what each run says, since two texts hold their tables in the order they were written.
+    // **By what each run draws**, since two texts hold their styles in the order they were
+    // written, and one style may be the other's own copy. Over one sheet and with the same named
+    // styles of their own, which state what the runs leave to Body and what a format names.
     bool Text::operator==(const Text& other) const
     {
-        if (m_plainText != other.m_plainText || m_runs.size() != other.m_runs.size()
-            || m_paragraphs != other.m_paragraphs)
+        if (m_styles.parent() != other.m_styles.parent() || m_plainText != other.m_plainText
+            || m_runs.size() != other.m_runs.size() || m_paragraphs != other.m_paragraphs
+            || !(m_styles == other.m_styles))
         {
             return false;
         }
@@ -399,7 +514,7 @@ namespace ClaFi
             const Run& otherRun = other.m_runs[i];
             if (run.length != otherRun.length || (run.object == 0) != (otherRun.object == 0))
                 return false;
-            if (lookAt(run.look) != other.lookAt(otherRun.look))
+            if (!drawnAlike(styleAt(run.style), other.styleAt(otherRun.style)))
                 return false;
             if (nameAt(run.link) != other.nameAt(otherRun.link)
                 || nameAt(run.anchor) != other.nameAt(otherRun.anchor))
@@ -419,7 +534,7 @@ namespace ClaFi
     }
 
     // A run a paragraph starts inside is cut there, so each paragraph's piece stands where its
-    // words begin.
+    // words begin. A base the text does not find by its name is folded into the piece.
     TextPieces Text::pieces() const
     {
         TextPieces result;
@@ -446,7 +561,7 @@ namespace ClaFi
                     : end;
                 TextPiece piece{
                     .words = m_plainText.substr(from, to - from),
-                    .look = lookAt(run.look),
+                    .style = foldedIn(styleAt(run.style), &m_styles),
                     .link = std::wstring{ nameAt(run.link) },
                     .anchor = std::wstring{ nameAt(run.anchor) },
                 };
@@ -543,7 +658,7 @@ namespace ClaFi
     // paragraphs reads as they look.
     Text Text::selectedText(const TextRange& range) const
     {
-        Text result;
+        Text result = blank();
         const std::size_t start = std::min(range.start, m_plainText.size());
         const std::size_t end = start + std::min(range.length, m_plainText.size() - start);
 
@@ -571,13 +686,13 @@ namespace ClaFi
 
     bool Text::joins(const Run& before, const Run& after)
     {
-        return !before.object && !after.object && before.look == after.look
+        return !before.object && !after.object && before.style == after.style
             && before.link == after.link && before.anchor == after.anchor;
     }
 
-    const TextLook& Text::lookAt(std::uint32_t look) const
+    const TextStyle& Text::styleAt(std::uint32_t style) const
     {
-        return look ? m_looks[look - 1] : k_noLook;
+        return style ? m_styles.at(style - 1) : k_noStyle;
     }
 
     std::wstring_view Text::nameAt(std::uint32_t name) const
@@ -585,16 +700,49 @@ namespace ClaFi
         return name ? std::wstring_view{ m_names[name - 1] } : std::wstring_view{};
     }
 
-    // A text holds a look once, so two runs in one look carry one index.
-    std::uint32_t Text::lookIndexOf(const TextLook& look)
+    // A text holds a style once, so two runs in one style carry one index.
+    std::uint32_t Text::styleIndexOf(const TextStyle& style)
     {
-        if (look.empty())
+        if (style.empty())
             return 0;
-        const Looks::const_iterator found = std::ranges::find(m_looks, look);
-        if (found != m_looks.end())
-            return static_cast<std::uint32_t>(found - m_looks.begin()) + 1;
-        m_looks.push_back(look);
-        return static_cast<std::uint32_t>(m_looks.size());
+        return static_cast<std::uint32_t>(m_styles.cache(style)) + 1;
+    }
+
+    // **A style goes by its name.** The one of that name the text reaches draws the words; where
+    // it reaches none, a copy of the style becomes one of the text's own, based on its base as
+    // found here. See TextEngine-Types#text-styles
+    const TextStyle* Text::adopted(const TextStyle* style, const StyleSheet* from)
+    {
+        if (!style)
+            return nullptr;
+        TextStyle copy = foldedIn(*style, from);
+        if (const TextStyle* named = m_styles.find(copy.name))
+            return named;
+        copy.base = adopted(copy.base, from);
+        return m_styles.carry(copy);
+    }
+
+    std::uint32_t Text::adoptedIndexOf(const TextStyle& style, const StyleSheet* from)
+    {
+        TextStyle own = foldedIn(style, from);
+        own.name.clear();
+        own.base = adopted(own.base, from);
+        return styleIndexOf(own);
+    }
+
+    // **A name the text reaches no style of is reported** and lays nothing, so the words are set
+    // as they would be without it.
+    TextStyle Text::styleOf(const TextLayer& layer) const
+    {
+        TextStyle result = layer.fields;
+        result.name.clear();
+        result.base = nullptr;
+        if (layer.style.empty())
+            return result;
+        result.base = m_styles.find(layer.style);
+        if (!result.base)
+            StyleSheet::events().emit<UnknownStyleEvent>(std::wstring_view{ layer.style });
+        return result;
     }
 
     std::uint32_t Text::nameIndexOf(std::wstring_view name)
@@ -675,7 +823,7 @@ namespace ClaFi
     }
 
     // Joins the runs from the one before first to the one at last wherever two in a row are one
-    // look, so the runs stay the fewest that say what the text says.
+    // style, so the runs stay the fewest that say what the text says.
     void Text::joinRuns(std::size_t first, std::size_t last)
     {
         const std::size_t from = first == 0 ? 0 : first - 1;
@@ -750,12 +898,12 @@ namespace ClaFi
     }
 
     // Another text's runs from one position to another, cut to that range, each index moved into
-    // this text's tables. Every look and name is looked up once, however many runs carry it.
+    // this text's tables. Every style and name is looked up once, however many runs carry it.
     Text::Runs Text::runsOf(const Text& other, std::size_t from, std::size_t to)
     {
-        IndexMap looks(other.m_looks.size() + 1, k_unmapped);
+        IndexMap styles(other.m_styles.count() + 1, k_unmapped);
         IndexMap names(other.m_names.size() + 1, k_unmapped);
-        looks[0] = 0;
+        styles[0] = 0;
         names[0] = 0;
         const auto mapName = [this, &other, &names](std::uint32_t name){
             if (names[name] == k_unmapped)
@@ -772,11 +920,11 @@ namespace ClaFi
             const std::size_t end = start + run.length;
             if (std::min(end, to) > std::max(start, from))
             {
-                if (looks[run.look] == k_unmapped)
-                    looks[run.look] = lookIndexOf(other.lookAt(run.look));
+                if (styles[run.style] == k_unmapped)
+                    styles[run.style] = adoptedIndexOf(other.styleAt(run.style), &other.m_styles);
                 Run copy = {
                     .length = std::min(end, to) - std::max(start, from),
-                    .look = looks[run.look],
+                    .style = styles[run.style],
                     .link = mapName(run.link),
                     .anchor = mapName(run.anchor),
                 };
@@ -792,8 +940,8 @@ namespace ClaFi
         return result;
     }
 
-    // Read before the edit. Words replacing others take the look, link and anchor of the first
-    // they replace. Words put in at a caret take the look and anchor of the character before it,
+    // Read before the edit. Words replacing others take the style, link and anchor of the first
+    // they replace. Words put in at a caret take the style and anchor of the character before it,
     // or of the one after at a paragraph's start, and a link only from inside it, where the
     // characters on both sides carry it.
     Text::Surroundings Text::surroundingsOf(std::size_t start, std::size_t end) const
@@ -806,7 +954,7 @@ namespace ClaFi
         {
             const Run& replaced = m_runs[placeOf(start).index];
             return {
-                .look = replaced.look,
+                .style = replaced.style,
                 .link = replaced.link,
                 .anchor = replaced.anchor,
             };
@@ -822,13 +970,13 @@ namespace ClaFi
                 link = before;
         }
         return {
-            .look = sourceRun.look,
+            .style = sourceRun.style,
             .link = link,
             .anchor = sourceRun.anchor,
         };
     }
 
-    // What follows a line end put in stands at a paragraph's start, where words take the look of
+    // What follows a line end put in stands at a paragraph's start, where words take the style of
     // the character after them: the one the edit's end reaches, or the line end itself where the
     // edit reaches the end of the text. So words put in at once come out as they would typed one
     // by one.
@@ -839,7 +987,7 @@ namespace ClaFi
             return before;
         const Run& after = m_runs[placeOf(end).index];
         return {
-            .look = after.look,
+            .style = after.style,
             .link = before.link,
             .anchor = after.anchor,
         };
@@ -849,7 +997,8 @@ namespace ClaFi
     {
         for (Run& run : runs)
         {
-            run.look = lookIndexOf(laidUnder(lookAt(run.look), lookAt(around.look), run.link != 0));
+            run.style = styleIndexOf(laidUnder(styleAt(run.style), styleAt(around.style),
+                run.link != 0));
             if (!run.link)
                 run.link = around.link;
             if (!run.anchor)
@@ -887,7 +1036,7 @@ namespace ClaFi
         const std::size_t end = start + std::min(range.length, m_plainText.size() - start);
         const std::size_t insertedLength = inserted.m_plainText.size();
 
-        // Nested, the words after the first line end put in take the look after the edit.
+        // Nested, the words after the first line end put in take the style after the edit.
         const std::size_t lineEnd = inserted.m_plainText.find(k_endLine);
         const std::size_t firstLineLength = insertion == Insertion::Nested
             && lineEnd != std::wstring::npos
@@ -972,6 +1121,7 @@ namespace ClaFi
 
     void Text::applyLayer(std::size_t from, std::size_t to, const TextLayer& layer)
     {
+        const TextStyle layered = styleOf(layer);
         const std::size_t first = splitAt(from);
         const std::size_t last = splitAt(to);
         const std::uint32_t link = nameIndexOf(layer.link);
@@ -979,8 +1129,8 @@ namespace ClaFi
         for (std::size_t i = first; i != last; ++i)
         {
             Run& run = m_runs[i];
-            if (!layer.look.empty())
-                run.look = lookIndexOf(laidUnder(lookAt(run.look), layer.look, run.link != 0));
+            if (!layered.empty())
+                run.style = styleIndexOf(laidUnder(styleAt(run.style), layered, run.link != 0));
             if (!run.link)
                 run.link = link;
             if (!run.anchor)
@@ -1067,17 +1217,37 @@ namespace ClaFi
         m_endsOwnLine = false;
     }
 
+    Text Text::blank() const
+    {
+        Text result;
+        StyleSheet styles{ m_styles.parent() };
+        result.m_styles.swap(styles);
+        return result;
+    }
+
+    void Text::swap(Text& other) noexcept
+    {
+        m_plainText.swap(other.m_plainText);
+        m_runs.swap(other.m_runs);
+        m_styles.swap(other.m_styles);
+        m_names.swap(other.m_names);
+        m_objects.swap(other.m_objects);
+        m_paragraphs.swap(other.m_paragraphs);
+        std::swap(m_startsOwnLine, other.m_startsOwnLine);
+        std::swap(m_endsOwnLine, other.m_endsOwnLine);
+    }
+
     // TextFormat
 
-    TextFormat& TextFormat::operator<<(const TextStyle& style)
+    TextFormat& TextFormat::operator<<(std::wstring_view style)
     {
-        m_look.style = &style;
+        m_style = style;
         return *this;
     }
 
     TextFormat& TextFormat::operator<<(Ink ink)
     {
-        m_look.ink = ink;
+        m_fields.ink = ink;
         return *this;
     }
 
@@ -1093,7 +1263,7 @@ namespace ClaFi
 
     TextFormat& TextFormat::operator<<(Color color)
     {
-        m_look.ink = color;
+        m_fields.ink = color;
         return *this;
     }
 
@@ -1117,27 +1287,33 @@ namespace ClaFi
 
     TextFormat& TextFormat::operator<<(const TextFormat& other)
     {
-        const TextLook& look = other.m_look;
-        if (look.style)
-            m_look.style = look.style;
-        if (look.fontFamily)
-            m_look.fontFamily = look.fontFamily;
-        if (look.fontSize)
-            m_look.fontSize = look.fontSize;
-        if (look.fontWeight)
-            m_look.fontWeight = look.fontWeight;
-        if (look.fontStyle)
-            m_look.fontStyle = look.fontStyle;
-        if (look.ink)
-            m_look.ink = look.ink;
+        if (!other.m_style.empty())
+            m_style = other.m_style;
+        const TextStyle& fields = other.m_fields;
+        if (fields.fontFamily)
+            m_fields.fontFamily = fields.fontFamily;
+        if (fields.fontSize)
+            m_fields.fontSize = fields.fontSize;
+        if (fields.fontWeight)
+            m_fields.fontWeight = fields.fontWeight;
+        if (fields.fontStyle)
+            m_fields.fontStyle = fields.fontStyle;
+        if (fields.ink)
+            m_fields.ink = fields.ink;
         m_paragraph = laidUnder(other.m_paragraph, m_paragraph);
         return *this;
+    }
+
+    bool TextFormat::empty() const
+    {
+        return m_style.empty() && m_fields.empty() && m_paragraph.empty();
     }
 
     std::size_t TextFormat::hash() const
     {
         std::size_t hash = k_fnvOffset;
-        combineLook(hash, m_look);
+        combine(hash, std::wstring_view{ m_style });
+        combineStyle(hash, m_fields);
         combineParagraph(hash, m_paragraph);
         return hash;
     }

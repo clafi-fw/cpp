@@ -131,7 +131,7 @@ namespace ClaFi::Platform::Linux
         }
 
         // What an empty paragraph is styled with: the last value stated, which is the style in
-        // force where the paragraph stands, or the body style with nothing stated.
+        // force where the paragraph stands, or the base font with nothing stated.
         template <typename Span, typename Value>
         Value lastSpanValue(const std::vector<Span>& spans, Value fallback)
         {
@@ -539,18 +539,17 @@ namespace ClaFi::Platform::Linux
 
     void HarfBuzzLayout::itemize(const BuildParams& params)
     {
-        const TextStyle& body = TextStyles::Body;
+        const BaseFont& base = params.baseFont;
 
         // An empty paragraph is one placeholder character in the style in force where it stands.
         if (params.isEmpty)
         {
-            const std::wstring family = lastSpanValue(params.families,
-                std::wstring{ *body.fontFamily });
+            const std::wstring family = lastSpanValue(params.families, base.family);
             FaceChain& chain = fontSet().chain(family,
-                lastSpanValue(params.weights, *body.fontWeight),
-                lastSpanValue(params.styles, *body.fontStyle));
+                lastSpanValue(params.weights, base.weight),
+                lastSpanValue(params.styles, base.style));
             addTextItem(params, 0, m_textLength, chain.primary(),
-                lastSpanValue(params.sizes, *body.fontSize) * m_scaleFactor);
+                lastSpanValue(params.sizes, base.size) * m_scaleFactor);
             return;
         }
 
@@ -606,12 +605,11 @@ namespace ClaFi::Platform::Linux
                 continue;
             }
 
-            const std::wstring family = findSpanValue(params.families, start,
-                std::wstring{ *body.fontFamily });
+            const std::wstring family = findSpanValue(params.families, start, base.family);
             FaceChain& chain = fontSet().chain(family,
-                findSpanValue(params.weights, start, *body.fontWeight),
-                findSpanValue(params.styles, start, *body.fontStyle));
-            const float emSize = findSpanValue(params.sizes, start, *body.fontSize) * m_scaleFactor;
+                findSpanValue(params.weights, start, base.weight),
+                findSpanValue(params.styles, start, base.style));
+            const float emSize = findSpanValue(params.sizes, start, base.size) * m_scaleFactor;
 
             // The segment is cut again wherever the face changes. A character the matched face has
             // no glyph for is set in the first face behind it that has one; whitespace, marks and
@@ -938,13 +936,12 @@ namespace ClaFi::Platform::Linux
 
     float HarfBuzzLayout::leadingSpaceAdvance(const BuildParams& params) const
     {
-        const TextStyle& body = TextStyles::Body;
-        const std::wstring family = leadingSpanValue(params.families, params.isEmpty,
-            std::wstring{ *body.fontFamily });
+        const BaseFont& base = params.baseFont;
+        const std::wstring family = leadingSpanValue(params.families, params.isEmpty, base.family);
         FaceChain& chain = fontSet().chain(family,
-            leadingSpanValue(params.weights, params.isEmpty, *body.fontWeight),
-            leadingSpanValue(params.styles, params.isEmpty, *body.fontStyle));
-        const float emSize = leadingSpanValue(params.sizes, params.isEmpty, *body.fontSize)
+            leadingSpanValue(params.weights, params.isEmpty, base.weight),
+            leadingSpanValue(params.styles, params.isEmpty, base.style));
+        const float emSize = leadingSpanValue(params.sizes, params.isEmpty, base.size)
             * m_scaleFactor;
         return chain.primary().advance(U' ', emSize);
     }

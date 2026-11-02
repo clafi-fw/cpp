@@ -19,6 +19,7 @@ import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -164,6 +165,21 @@ namespace ClaFi::Tools::WhatsClip
 
             return result;
         }
+    }
+
+    // Built on first use and kept for the process, which every text built over it lives inside.
+    const StyleSheet& RepresentationPage::styles()
+    {
+        static const StyleSheet sheet = []() {
+            StyleSheet built;
+            built.set(TextStyle{
+                .name = std::wstring{ k_readoutStyle },
+                .base = built.find(TextStyles::Body),
+                .fontSize = k_readoutFontSize,
+            });
+            return built;
+        }();
+        return sheet;
     }
 
     // **What a page answers a read with**, and where the view is sent home. What stands under the

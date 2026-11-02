@@ -1,6 +1,5 @@
 export module ClaFi.Core.TextEngine.StyleSheet;
 
-import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
 import ClaFi.StdLib;
@@ -12,11 +11,21 @@ namespace ClaFi
     {
     };
 
-    // Named styles kept at run time, any number of them. See TextEngine-Types#stylesheet
+    // Words written in code named a style no sheet the text reaches holds.
+    export class UnknownStyleEvent : public Event
+    {
+    public:
+        explicit UnknownStyleEvent(std::wstring_view name);
+        [[nodiscard]] std::wstring_view name() const { return m_name; }
+    private:
+        std::wstring m_name;
+    };
+
+    // Named styles and unnamed ones cached by value, over a parent. See TextEngine-Types#stylesheet
     export class StyleSheet
     {
     public:
-        // The styles a sheet lists, in its order.
+        // The named styles a sheet lists, in its order.
         using StyleList = std::vector<const TextStyle*>;
 
         // Where names read from a file are looked up. See TextEngine-Types#stylesheet-readingscope
@@ -32,56 +41,71 @@ namespace ClaFi
         };
 
     public:
-        StyleSheet() = default;
+        // A sheet based on the framework's.
+        StyleSheet();
+        // A sheet based on that one, or on none.
+        explicit StyleSheet(const StyleSheet* parent);
+        // Every style at the position it holds in the other, over the same parent.
         StyleSheet(const StyleSheet& other);
-        // Keeps where they stand the styles both name alike. See TextEngine-Types#stylesheet
-        StyleSheet& operator=(const StyleSheet& other);
         StyleSheet(StyleSheet&& other) noexcept = default;
-        // The same as a copy: a style here that a text may name stays where it stands.
-        StyleSheet& operator=(StyleSheet&& other);
+        // Refused: a style a text names keeps its address. See TextEngine-Types#stylesheet
+        StyleSheet& operator=(const StyleSheet&) = delete;
+        StyleSheet& operator=(StyleSheet&&) = delete;
         ~StyleSheet() = default;
 
     public:
-        // The named styles a text is set in beyond the framework's, and those they are based on.
-        [[nodiscard]] static StyleSheet NamedIn(const Text&);
-        // The sheet a style named in a file is read from: the scope's, else the application's.
-        [[nodiscard]] static const StyleSheet* reading();
-        // The style a name read from a file stands for: the reading sheet's, else the framework's.
-        [[nodiscard]] static const TextStyle* findReading(std::wstring_view name);
-        // The sheet read from where no scope states one, held by whoever states it.
+        // Body, Title, SubTitle, Heading, SubHeading, Section, SubSection, SubBody and Code.
+        [[nodiscard]] static const StyleSheet& framework();
+        // The sheet a text is built with where none is named: the application's or the framework's.
+        [[nodiscard]] static const StyleSheet& application();
+        // The application's sheet, held by whoever states it; none leaves the framework's.
         static void setApplicationSheet(const StyleSheet*);
+        // The sheet a text read from a file is built with, where a scope names one.
+        [[nodiscard]] static const StyleSheet* reading();
         // Moves on with every edit to any sheet.
         [[nodiscard]] static std::uint64_t revision();
-        // Where StylesEditedEvent is raised.
+        // Where StylesEditedEvent and UnknownStyleEvent are raised.
         [[nodiscard]] static EventDispatcher& events();
 
-        // The sheet's style of that name, else the framework's; none where neither has one.
+        [[nodiscard]] const StyleSheet* parent() const { return m_parent; }
+        // The style of that name, the sheet's own or else its parents'; none where none has it.
         [[nodiscard]] const TextStyle* find(std::wstring_view name) const;
         // The sheet's own style of that name; none where it has none.
         [[nodiscard]] const TextStyle* findOwn(std::wstring_view name) const;
-        // What the sheet sets in place of a framework style: its own of that name, or that one.
-        [[nodiscard]] const TextStyle& styleFor(const TextStyle& frameworkStyle) const;
-        // Whether the style is one of the sheet's, a removed one included.
+        // The Body found from here, which draws whatever a text leaves unstated.
+        [[nodiscard]] const TextStyle& body() const;
+        // Whether the style is one of the sheet's own, a removed one included.
         [[nodiscard]] bool holds(const TextStyle*) const;
+        // Whether the style is listed here or up the parents, where a text built here finds it.
+        [[nodiscard]] bool reaches(const TextStyle*) const;
         [[nodiscard]] StyleList styles() const;
-        [[nodiscard]] bool empty() const;
+        [[nodiscard]] bool empty() const; // whether no named style is listed
         bool operator==(const StyleSheet&) const;
+
+        // Where a style named none stating the values stands. See TextEngine-Types#stylesheet-cache
+        std::size_t cache(const TextStyle& values);
+        [[nodiscard]] std::size_t count() const; // every style held, removed and unnamed included
+        [[nodiscard]] const TextStyle& at(std::size_t position) const;
 
         // States a style, the sheet's own; none where refused. See TextEngine-Types#stylesheet-set
         const TextStyle* set(const TextStyle&);
+        // States a style and raises no edit. See TextEngine-Types#stylesheet-carry
+        const TextStyle* carry(const TextStyle&);
         // Gives a style another name; false where the name is empty or another style has it.
         bool rename(std::wstring_view name, std::wstring_view newName);
         // Takes a style off the list. See TextEngine-Types#stylesheet-remove
         bool remove(std::wstring_view name);
         // Lists a style at another place among those listed; false where none has the name.
         bool moveTo(std::wstring_view name, std::size_t position);
+        // Takes the other's named styles, each named alike here keeping its address.
+        void takeStyles(const StyleSheet& other);
+        // Exchanges what the two hold; a text based on a style follows the style.
+        void swap(StyleSheet& other) noexcept;
 
     private:
-        // A style and the strings it names, at an address that holds for the sheet's life.
+        // A style and whether it has been taken off the list, at an address that holds.
         struct Entry
         {
-            std::wstring name{};
-            std::optional<std::wstring> fontFamily{};
             TextStyle style{};
             bool removed{ false };
         };
@@ -92,16 +116,17 @@ namespace ClaFi
     private:
         [[nodiscard]] Entry* liveEntry(std::wstring_view name);
         [[nodiscard]] const Entry* liveEntry(std::wstring_view name) const;
-        // Whether a style may be a base here: one of the framework's, or one the sheet lists.
-        [[nodiscard]] bool takesAsBase(const TextStyle*) const;
+        // The parents' style of that name, which one of the sheet's own of that name restates.
+        [[nodiscard]] const TextStyle* namesakeOf(std::wstring_view name) const;
         // Whether a base would lead back to a style named as namesake, or to the style itself.
         [[nodiscard]] static bool leadsBack(const TextStyle* base, const TextStyle* style,
             const TextStyle* namesake);
-        // Bases the framework's namesake of the entry here based on the entry; true where one was.
+        const TextStyle* state(const TextStyle&, bool quiet);
+        // Bases the namesake of the entry here based on the entry; true where one was.
         bool standInFor(const Entry& entry, const TextStyle* namesake);
-        // Takes the other's styles by name; true where a style already here changed.
-        bool takeStylesOf(const StyleSheet& other);
-        // The fields of source written into the entry, which keeps its address, name and base.
+        // Takes the other's named styles by name; true where a style already here changed.
+        bool mergeFrom(const StyleSheet& other);
+        // The fields of source written into the entry, which keeps its name and its base.
         static void stateFields(Entry&, const TextStyle& source);
         static void edited();
 
@@ -109,6 +134,7 @@ namespace ClaFi
         static std::uint64_t s_revision;
         static const StyleSheet* s_applicationSheet;
         static thread_local const StyleSheet* s_scopeSheet;
+        const StyleSheet* m_parent{ nullptr };
         Entries m_entries{};
     };
 }

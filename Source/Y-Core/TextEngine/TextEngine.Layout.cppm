@@ -43,6 +43,8 @@ namespace ClaFi
             bool isEmpty;
             // Whether a line too long for availableWidth is broken or left as it is.
             bool wrap;
+            // The font where no span states one, which an empty paragraph past the last span takes.
+            BaseFont baseFont;
 
             std::vector<FamilySpan> families;
             std::vector<SizeSpan> sizes;

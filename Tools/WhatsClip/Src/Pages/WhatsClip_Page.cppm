@@ -21,6 +21,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -83,6 +84,10 @@ namespace ClaFi::Tools::WhatsClip
         template<typename... Args>
         explicit RepresentationPage(const CreateParams&, Args&&...);
 
+        // **The application's sheet over the framework's**, holding the style a reading is set in.
+        // Kept for the process, as every text built over it is.
+        [[nodiscard]] static const StyleSheet& styles();
+
         // The clipboard's answer for one format, into this page.
         void show(Transfer::Offer&, const Transfer::Format&);
     protected:
@@ -112,8 +117,8 @@ namespace ClaFi::Tools::WhatsClip
         // The size a reading is written at. Stated here so that two pages cannot disagree about
         // it, and small because the corner is a strip beside a scroll bar.
         static constexpr float k_readoutFontSize = 11.0f;
-        // The style a reading is set in: the body's, at the size above.
-        static constexpr TextStyle k_readoutStyle{ .name = L"Readout", .fontSize = k_readoutFontSize };
+        // The style a reading is set in, the body's at the size above, which styles holds.
+        static constexpr std::wstring_view k_readoutStyle = L"Readout";
     private:
         // Where the corner bars stand: made on the first call, since a panel has one right bar
         // and a page that stands nothing after the reading keeps the corner it had.

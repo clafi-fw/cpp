@@ -43,12 +43,12 @@ text without it, where the text was laid out.
 
 ## Text
 
-Runs over the plain text, each a length and four indexes: the look in the text's own table, the
+Runs over the plain text, each a length and four indexes: the style in the text's own sheet, the
 link and the anchor in its table of names, and the object. Index 0 is none in all four, so a text
-written in no look allocates no table. A table only grows - an edit that drops the last run in a
-look leaves the look in the table, and comparing and hashing read what each run says rather than
-its indexes. A run is found by walking from the nearer end; a wrapper closing walks back from the
-end of the text it is writing, so writing stays linear.
+written in no style caches none. The sheet and the names only grow - an edit that drops the last
+run in a style leaves the style cached, and comparing and hashing read what each run draws rather
+than its indexes. A run is found by walking from the nearer end; a wrapper closing walks back from
+the end of the text it is writing, so writing stays linear.
 
 Until 2026-11 a text was its plain characters and a vector of push and pop markers. It allowed an
 unclosed marker, every edit ran pair matching and annihilation over the markers, and baking walked
@@ -61,12 +61,12 @@ taken from between two red ones would come back red. So replaceText nests what g
 restoreText - which TextHistory reverts with - puts every run and paragraph back as it was. A redo
 replays replaceText in the surroundings the undo restored, so it lands where the edit did.
 
-**A link's ink is not a field of the look.** BakedText reads it between the run's ink, its own or
-its style's, and the format's, so text typed at a link's end, taking the run's look and not the
-link, does not come out in the link's ink. A wrapper's ink does not reach a linked run. The one
-exception is a wrapper's style taken whole by a linked run with no style of its own: where that
-style states an ink, the link's ink is written into the look in its place, and words typed at the
-link's end take it with the look.
+**A link's ink is not a field of the run's style.** BakedText reads it between the run's ink, its
+own or its base's, and the format's, so text typed at a link's end, taking the run's style and not
+the link, does not come out in the link's ink. A wrapper's ink does not reach a linked run. The one
+exception is a wrapper's base taken by a linked run with no base of its own: where that base states
+an ink, the link's ink is written into the run's style in its place, and words typed at the link's
+end take it with the style.
 
 **A paragraph's look survives an edit inside it** - a join keeps the upper look, and a text put in
 brings looks only for the paragraphs it starts. So restorableText, what TextHistory records, carries
@@ -84,7 +84,7 @@ so the Ledger pasted into an empty box keeps its title centred. Undo puts the ol
 the look TextHistory keeps beside the change (Change::startParagraphLook, handed to restoreText) -
 recorded only where the edit changed it, which only an emptied paragraph does.
 
-**Words after a line end put in take the look after the edit**, as typed words at a paragraph's
+**Words after a line end put in take the style after the edit**, as typed words at a paragraph's
 start do, because TextHistory merges a typed run that holds a line end into one step and a redo
 replays the step whole.
 
@@ -105,46 +105,96 @@ claude/style-sheets.md holds them): the reader states the sheet through a scope,
 a framework name, an edit is live, a removed style is kept for the texts naming it, and a paste
 makes the styles the target lacks the text's own.
 
-**A style keeps its address.** A run names its style by address, as it does a constant, so a sheet
-holds each style through a unique_ptr and never frees one while it lives - a removed style is
-marked and kept. Assignment matches styles by name instead of replacing them, which is what lets a
-project read its sheet again over the one its open pages name. TextStyle stays a struct of views;
-the entry owns the strings and points the views at them again whenever a field is stated.
+The same evening (19:40 on) Oj took the model further: "I would only keep TextStyle. And it cannot
+be constexpr then", then "I would also only keep StyleSheet. Meaning no values in runs, and no
+arrays or styles declared alone as consts. Everything in StyleSheets", and "1 b; 2 a; 3 a": each
+Text has a small sheet of its own over the sheet it was built with, where cache-by-values lands;
+the sheet is given at construction and defaults to the application's, so a wrapper carries a name
+looked up as it is written; a name written in code that nothing holds sets the words in no style
+and is logged. TextLook, the constexpr TextStyles, NamedIn, styleFor and sheet assignment went with
+that step, and so did the TextBox styleSheet property - a paste lands in the box's text, which
+knows its sheet.
+
+**A style keeps its address.** A run's style is an entry in its text's sheet, and that entry's base
+is a style somewhere up the cascade, held by address. So a sheet holds each style through a
+unique_ptr and never frees one while it lives - a removed style is marked and kept. takeStyles
+matches styles by name instead of replacing them, which is what lets a project read its sheet again
+over the one its open pages are built over. A sheet's copy constructor maps a base among the
+other's own styles to the copy at the same position, which is what a Text copy needs: its runs index
+its sheet by position.
+
+**A text's own sheet is the run table.** cache answers the position of an unnamed style stating
+those values, so two runs drawn alike share one, and a run holds that position. Named styles there
+are the ones the text carries for its words: a style put in from a text over another sheet, where
+the receiving text reaches nothing of that name. A Text is assigned by copy and swap, since a
+sheet is never assigned.
+
+**A style goes by its name between texts.** A run taken into another text keeps its fields, and
+its base is found again by name in the receiving text - its own styles first, then its sheet. Had
+a pointer been kept, a text would hold styles of a sheet it is not over, which dangle once that
+sheet goes and which a file could not name back. Two cases fold the base's fields into the run
+instead of copying by name: a base removed from its sheet, and one standing behind a namesake.
+Either way the source text's sheet no longer finds the base by its name, and copying by name would
+bind the words to the other style of that name - a removed Quote and the Quote stated after it
+would draw alike.
 
 **Names in a sheet behave as they do in a file.** A file states a base by name, and a reader finds
-the sheet's style of that name before the framework's. Had the sheet kept a base pointing at the
+the sheet's style of that name before its parents'. Had the sheet kept a base pointing at the
 framework's Code while it also held a Code of its own, the next read would base it on the sheet's
 instead, and a round trip would change what the style draws. So set normalises a base to the
-sheet's namesake, and a style restating a framework name takes over the bases pointing at the
-framework's. The loop check follows from that: a restatement whose own chain reaches its namesake
+sheet's namesake, and a style restating a parent's name takes over the bases pointing at the
+parent's. The loop check follows from that: a restatement whose own chain reaches its namesake
 would close a loop the moment it stood in for it.
 
-**One revision for every sheet.** A text does not know which sheet its styles came from, and a
-layout knows only the text's stamp and the style addresses - neither moves when a style's fields
-do. So any edit moves one number, TextEngine drops its cache when it sees it move (select and
-layoutGeneration both look), a layout held by a control rebuilds through the generation it already
-checks, and every form re-aligns on StylesEditedEvent. A sheet that knew its readers was the other
-way: it needs a registry of every text and control, for an edit that happens while a style editor
-is open.
+**One revision for every sheet.** A layout knows only the text's stamp and the style addresses -
+neither moves when a style's fields do. So any edit moves one number, TextEngine drops its cache
+when it sees it move (select and layoutGeneration both look), a layout held by a control rebuilds
+through the generation it already checks, and every form re-aligns on StylesEditedEvent. A sheet
+that knew its readers was the other way: it needs a registry of every text and control, for an
+edit that happens while a style editor is open.
 
-**An add is not an edit.** Reading a sheet, NamedIn, and a paste build fresh sheets, and an edit
-event there would re-shape every window for nothing. A style added cannot be named by any text yet,
-so only a change to a style already held counts. The reader adds each style after its base for
-that reason, then puts them in the file's order with moveTo, which no text draws from.
+**What is an edit.** A format names its style, and is resolved at every bake, so whatever changes
+the answer to a name redraws: a change to a style held, a rename, a removal, and an add under a name
+one up the parents holds where it draws otherwise. An add under a fresh name is not - no text is
+set in it, and a format naming it was reported as naming nothing. A text's own sheet and a sheet
+being read take styles through carry, which raises nothing: adoption, a text file's own styles, a
+sheet file read into a fresh sheet before takeStyles states it over the one in use. Raising there
+would re-shape every window on a paste or a read. The reader adds each style after its base, then
+puts them in the file's order with moveTo, which no text draws from.
 
-**A copied text names the carried sheet's styles.** A package is written out when another
-application asks, which can be after the sheet the text was copied from has gone - a document
-closed, the application on its way out. So addText points the package's text at the copy of each
-style the package carries, and moves that sheet in so the addresses hold. NamedIn folds into a
-carried style what a file could not name: a base with no name, and a framework base that a carried
-style of the same name would stand in for once read back.
+**Equality wants one sheet.** Two texts are equal when their words draw alike - each field
+compared as the run's chain states it - and they are over the same sheet. The sheet decides what a
+run leaves to Body and what a format's name means, so two texts over different sheets can draw
+apart while every run states the same; the layout cache confirms a hit with this equality.
 
-**A paste reads through the carried sheet, then gives the text to the stated one.** Reading under
-the stated sheet alone would lose every name it lacks; reading under the carried one alone would
-bind names both know to the copy. So the text is read through the carried sheet, and each look is
-then rebased by name: the first style in its chain the stated sheet finds becomes the look's style,
-and the fields of the styles before it in the chain are folded into the look. A framework style is
-rebased too, so a target that restates Code gets its own Code for pasted code.
+**The package's text is over the framework's sheet.** A package is written out when another
+application asks, which can be after the sheet the text was copied from has gone. addText puts the
+text into one over the framework's sheet, so every style beyond the framework's becomes one of the
+package text's own and nothing points into the source sheet. The same styles go beside it as a
+ClaFi.StyleSheet. takeText reads the text through the carried sheet and puts it into a text over
+the stated one, where each base is found by name - the stated sheet's where it has the name, the
+text's own copy where it lacks it. A sheet's restatement of a framework name is not carried, nor
+is an application's Body: the target finds those names in its own sheet, as the paste did before
+texts had sheets of their own.
+
+**A run's look in a file is #n.** Step 2 named such entries after their base (Code 1). Once a text
+had named styles of its own that went by name between texts, two files' Style 1 met by name in one
+box after two pastes, and the second paste took the first one's look (the review on 2026-11-02 found
+it). The file has to tell a look from a carried style, so a look is # and a number, which no style
+name starts with, and reads back as the run's style, named none.
+
+**Equality compares the named styles a text carries.** A text's own Body, or an own style a format
+names, draws without any run stating it, so two texts differing there are not equal - the layout
+cache confirms hits with this equality.
+
+**Script levels.** A style's own levels stand inside its base's. A wrapper laid over words whose
+base states levels would leave the base's levels outermost, so where the wrapper adds any, such a
+base is folded into the run: its fields and levels become the run's own.
+
+**The base font.** The platform layouts fell back to the framework's Body for an empty paragraph
+past the last span and for the leading font. That Body now depends on the text's sheet and format,
+so BakedText resolves it once per rebuild (BaseFont) and the layout passes it in BuildParams; an
+empty text in a box formatted as Code takes Code's size for its caret.
 
 ## Step names
 

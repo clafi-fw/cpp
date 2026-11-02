@@ -264,8 +264,11 @@ namespace SeeDocs_App::Ui
             }
         };
         text.forEachRun([&plain, &marked, &markLook](const TextRunView& run){
-            const bool bold = run.look.fontWeight == FontWeight::Bold;
-            const bool code = run.look.style == &TextStyles::Code;
+            const FontWeight* weight = run.style.stated(&TextStyle::fontWeight);
+            const bool bold = weight && *weight == FontWeight::Bold;
+            bool code = false;
+            for (const TextStyle* style = run.style.base; style && !code; style = style->base)
+                code = style->name == TextStyles::Code;
             for (std::size_t at = run.range.start; at != run.range.end(); ++at)
             {
                 const bool atBreak = plain[at] == k_endLine;

@@ -1,6 +1,7 @@
 export module ClaFi.Core.TextEngine.Text;
 
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -22,12 +23,13 @@ namespace ClaFi
     // What a wrapper lays over the words it holds. See TextEngine-Types#textlayer
     export struct TextLayer
     {
-        TextLook look{};
+        std::wstring style{}; // a name, found where the words are written
+        TextStyle fields{}; // stated over that style, itself named none and based on none
         std::wstring link{};
         std::wstring anchor{};
     };
 
-    // Words a wrapper lays a look, a link or an anchor over. See TextEngine-Types#scopedtext
+    // Words a wrapper lays a style, a link or an anchor over. See TextEngine-Types#scopedtext
     export template<typename... Content>
     class ScopedText
     {
@@ -46,19 +48,16 @@ namespace ClaFi
         ContentTuple m_content;
     };
 
-    // Words set in a named style, one of TextStyles or an application's own.
+    // Words set in the style of that name, found as written. See TextEngine-Types#styledtext
     export template<typename... Content>
     class StyledText : public ScopedText<Content...>
     {
     public:
-        // The style is named by address, so it outlives every text the words are written into.
-        explicit StyledText(const TextStyle& style, Content&&...);
-        // Refused: a style made for the call is gone before the text is drawn.
-        explicit StyledText(const TextStyle&&, Content&&...) = delete;
+        explicit StyledText(std::wstring_view style, Content&&...);
     };
 
     template<typename... Content>
-    StyledText(const TextStyle&, Content&&...) -> StyledText<Content...>;
+    StyledText(std::wstring_view, Content&&...) -> StyledText<Content...>;
 
     // Words drawn in an ink or a colour of their own.
     export template<typename... Content>
@@ -204,7 +203,7 @@ namespace ClaFi
     export struct TextPiece
     {
         std::wstring words{};
-        TextLook look{};
+        TextStyle style{}; // named none: its own fields over a style the text reaches
         std::wstring link{};
         std::wstring anchor{};
         std::optional<InlineObject> object{}; // the words then hold its one character
@@ -217,23 +216,58 @@ namespace ClaFi
     export struct TextRunView
     {
         TextRange range{};
-        const TextLook& look;
+        const TextStyle& style; // the text's own, named none
         std::wstring_view link{};
         std::wstring_view anchor{};
         const InlineObject* object{ nullptr };
     };
 
-    // Words in runs, each in a look of its own, as the framework holds them. See TextEngine-Types
+    // Whether the first of the arguments is a sheet, which a text is built over.
+    template<typename... Args>
+    [[nodiscard]] consteval bool startsWithSheet()
+    {
+        if constexpr (sizeof...(Args) == 0)
+            return false;
+        else
+            return std::same_as<std::remove_cvref_t<std::tuple_element_t<0, std::tuple<Args...>>>,
+                StyleSheet>;
+    }
+
+    // Words in runs, each in a style of the text's own, over a sheet. See TextEngine-Types#text
     export class Text
     {
     public:
-        Text() = default;
-        // Constrained off a lone Text, so that copying and moving one stay the compiler's.
+        // A text over the application's sheet.
+        Text();
+        // A text over that sheet, which outlives it. See TextEngine-Types#text
+        explicit Text(const StyleSheet& sheet);
+        // Refused: a sheet made for the call is gone before the text is drawn.
+        explicit Text(const StyleSheet&&) = delete;
+        // Constrained off a lone Text, which is copied or moved, and off a leading sheet.
         template<typename... Args>
             requires (sizeof...(Args) != 1 || !(std::derived_from<std::remove_cvref_t<Args>, Text> && ...))
+                && (!startsWithSheet<Args...>())
         explicit Text(Args&&... args) : Text{} { (*this << ... << std::forward<Args>(args)); }
+        // Words written over that sheet.
+        template<typename... Args>
+            requires (sizeof...(Args) != 0)
+        explicit Text(const StyleSheet& sheet, Args&&... args) : Text{ sheet }
+        {
+            (*this << ... << std::forward<Args>(args));
+        }
+        // Refused: a sheet made for the call is gone before the text is drawn.
+        template<typename... Args>
+        explicit Text(const StyleSheet&&, Args&&...) = delete;
         // A text stated whole, the way a document hands one back. See TextEngine-Types#textpiece
         explicit Text(TextPieces);
+        // The same over its own styles, given whole. See TextEngine-Types#textpiece
+        Text(TextPieces, StyleSheet styles);
+        Text(const Text&) = default;
+        Text(Text&&) noexcept = default;
+        // Every style of the other's own comes along, and the sheet it is over.
+        Text& operator=(const Text&);
+        Text& operator=(Text&&) noexcept;
+        ~Text() = default;
 
         // Anything the stream below takes, written as an assignment. What is assigned **replaces**
         // what the text holds, which is the one thing that separates this from operator<<: the
@@ -249,7 +283,7 @@ namespace ClaFi
         // PlaceHolderText assigned to a Text asks the same question.
         //
         // An assignment operator template is never the copy or the move assignment operator, so
-        // both of those are still implicitly declared and this stands beside them.
+        // this stands beside the two declared above.
         template<typename Arg>
             requires (!std::derived_from<std::remove_cvref_t<Arg>, Text>)
         Text& operator=(Arg&& arg)
@@ -292,7 +326,9 @@ namespace ClaFi
         [[nodiscard]] bool hasFlexSpace() const;
 
         [[nodiscard]] const std::wstring& plainText() const { return m_plainText; }
-        // The words, their looks and the paragraphs' looks, whatever was last written.
+        // The run styles and the named ones the text carries. See TextEngine-Types#text-styles
+        [[nodiscard]] const StyleSheet& styles() const { return m_styles; }
+        // Over one sheet, words drawn alike and the same paragraph looks. See TextEngine-Types#text
         bool operator==(const Text&) const;
         // Each run in order, handed to visit as a TextRunView.
         template<typename Visit>
@@ -308,9 +344,9 @@ namespace ClaFi
         // The target of the first link in the text, or nothing where it holds none.
         [[nodiscard]] std::optional<std::wstring_view> firstLink() const;
 
-        // Words put in where they go, in the look there. See TextEngine-Types#edits
+        // Words put in where they go, in the style there. See TextEngine-Types#edits
         void replaceText(const TextRange&, const std::wstring_view = {});
-        // A text put in where it goes, its runs inside the look there. See TextEngine-Types#edits
+        // A text put in where it goes, its runs inside the style there. See TextEngine-Types#edits
         void replaceText(const TextRange&, const Text&);
         // A text restorableText took out put back as it was. See TextEngine-Types#edits
         void restoreText(const TextRange&, const Text&,
@@ -321,11 +357,11 @@ namespace ClaFi
         [[nodiscard]] Text restorableText(const TextRange&) const;
 
     private:
-        // A stretch of characters in one look: its length, and an index into a table for the rest.
+        // A stretch of characters in one style: its length, and an index into a table for the rest.
         struct Run
         {
             std::size_t length{ 0 };
-            std::uint32_t look{ 0 };
+            std::uint32_t style{ 0 };
             std::uint32_t link{ 0 };
             std::uint32_t anchor{ 0 };
             std::uint32_t object{ 0 };
@@ -351,7 +387,7 @@ namespace ClaFi
         // What words put into the text take on where they go, as indexes into its tables.
         struct Surroundings
         {
-            std::uint32_t look{ 0 };
+            std::uint32_t style{ 0 };
             std::uint32_t link{ 0 };
             std::uint32_t anchor{ 0 };
         };
@@ -371,7 +407,6 @@ namespace ClaFi
         };
 
         using Runs = std::vector<Run>;
-        using Looks = std::vector<TextLook>;
         using Names = std::vector<std::wstring>;
         using Objects = std::vector<InlineObject>;
         using StatedParagraphs = std::vector<StatedParagraph>;
@@ -380,9 +415,15 @@ namespace ClaFi
 
     private:
         [[nodiscard]] static bool joins(const Run& before, const Run& after);
-        [[nodiscard]] const TextLook& lookAt(std::uint32_t look) const;
+        [[nodiscard]] const TextStyle& styleAt(std::uint32_t style) const;
         [[nodiscard]] std::wstring_view nameAt(std::uint32_t name) const;
-        [[nodiscard]] std::uint32_t lookIndexOf(const TextLook&);
+        [[nodiscard]] std::uint32_t styleIndexOf(const TextStyle&);
+        // A style from that sheet, or one unknown, found here. See TextEngine-Types#text-styles
+        [[nodiscard]] const TextStyle* adopted(const TextStyle*, const StyleSheet* from);
+        // A run style from elsewhere, its base found here.
+        [[nodiscard]] std::uint32_t adoptedIndexOf(const TextStyle&, const StyleSheet* from);
+        // The style a layer lays, its own found here by name. See TextEngine-Types#styledtext
+        [[nodiscard]] TextStyle styleOf(const TextLayer&) const;
         [[nodiscard]] std::uint32_t nameIndexOf(std::wstring_view);
         [[nodiscard]] const StatedParagraph* statedAt(std::size_t paragraphStart) const;
         [[nodiscard]] std::size_t paragraphStartOf(std::size_t pos) const;
@@ -411,11 +452,14 @@ namespace ClaFi
         void closeParagraph(const WriteStart&, const ParagraphLook&);
         void undoOpening(const WriteStart&);
         void breakOwnLine();
+        // A text holding nothing, over the sheet this one is over.
+        [[nodiscard]] Text blank() const;
+        void swap(Text&) noexcept;
 
     private:
         std::wstring m_plainText;
         Runs m_runs;
-        Looks m_looks; // run.look - 1, so a text writing no look holds no table
+        StyleSheet m_styles; // run.style - 1, over the sheet the text is built over
         Names m_names; // the links and anchors, by run.link - 1 and run.anchor - 1
         Objects m_objects; // run.object - 1
         StatedParagraphs m_paragraphs; // in text order, only those stating a look
@@ -537,7 +581,7 @@ namespace ClaFi
         TextStamp m_stamp{ ++s_lastId, 0 };
     };
 
-    // The look a text is laid out over, and its paragraphs'. See TextEngine-Types#textformat
+    // The style a text is laid out over, and its paragraphs' look. See TextEngine-Types#textformat
     export class TextFormat
     {
     public:
@@ -546,9 +590,7 @@ namespace ClaFi
         explicit TextFormat(Args&&...);
     public:
         // Each replaces what the format already states of its kind.
-        TextFormat& operator<<(const TextStyle&); // named by address, as a run names one
-        // Refused: a style made for the call is gone before the text is drawn.
-        TextFormat& operator<<(const TextStyle&&) = delete;
+        TextFormat& operator<<(std::wstring_view style); // a name, found where the text is laid out
         TextFormat& operator<<(Ink);
         TextFormat& operator<<(InkGrade); // the framework's own ink at that step
         TextFormat& operator<<(InkColor); // that colour at Strongest
@@ -560,16 +602,21 @@ namespace ClaFi
         TextFormat& operator<<(const TextFormat&);
         // Refused, a value that only converts to one of the above included - a wchar_t is no Color.
         template<typename Other>
+            requires (!std::convertible_to<const Other&, std::wstring_view>)
         TextFormat& operator<<(const Other&) = delete;
-        [[nodiscard]] bool empty() const { return m_look.empty() && m_paragraph.empty(); }
-        [[nodiscard]] const TextLook& look() const { return m_look; }
+        [[nodiscard]] bool empty() const;
+        // The name of the style, empty where the format states none.
+        [[nodiscard]] const std::wstring& style() const { return m_style; }
+        // The fields stated over the style, named none and based on none.
+        [[nodiscard]] const TextStyle& fields() const { return m_fields; }
         [[nodiscard]] const ParagraphLook& paragraph() const { return m_paragraph; }
         [[nodiscard]] std::size_t hash() const;
         // Whether this says what that one says, where none says nothing.
         [[nodiscard]] bool matches(const TextFormat*) const;
         bool operator==(const TextFormat&) const = default;
     private:
-        TextLook m_look{};
+        std::wstring m_style{};
+        TextStyle m_fields{};
         ParagraphLook m_paragraph{};
     };
 
@@ -585,9 +632,12 @@ namespace ClaFi
     }
 
     template<typename... Content>
-    StyledText<Content...>::StyledText(const TextStyle& style, Content&&... content)
+    StyledText<Content...>::StyledText(std::wstring_view style, Content&&... content)
         :
-        ScopedText<Content...>{ TextLayer{ .look{ .style = &style } }, std::forward<Content>(content)... }
+        ScopedText<Content...>{
+            TextLayer{ .style = std::wstring{ style } },
+            std::forward<Content>(content)...
+        }
     {
     }
 
@@ -622,7 +672,7 @@ namespace ClaFi
     template<typename... Content>
     TextLayer ColoredText<Content...>::layerOf(ColorDef ink)
     {
-        return TextLayer{ .look{ .ink = ink } };
+        return TextLayer{ .fields{ .ink = ink } };
     }
 
     template<typename... Content>
@@ -637,7 +687,7 @@ namespace ClaFi
     BoldText<Content...>::BoldText(Content&&... content)
         :
         ScopedText<Content...>{
-            TextLayer{ .look{ .fontWeight = FontWeight::Bold } },
+            TextLayer{ .fields{ .fontWeight = FontWeight::Bold } },
             std::forward<Content>(content)...
         }
     {
@@ -647,7 +697,7 @@ namespace ClaFi
     ItalicText<Content...>::ItalicText(Content&&... content)
         :
         ScopedText<Content...>{
-            TextLayer{ .look{ .fontStyle = FontStyle::Italic } },
+            TextLayer{ .fields{ .fontStyle = FontStyle::Italic } },
             std::forward<Content>(content)...
         }
     {
@@ -656,7 +706,7 @@ namespace ClaFi
     template<typename... Content>
     SizedText<Content...>::SizedText(float size, Content&&... content)
         :
-        ScopedText<Content...>{ TextLayer{ .look{ .fontSize = size } }, std::forward<Content>(content)... }
+        ScopedText<Content...>{ TextLayer{ .fields{ .fontSize = size } }, std::forward<Content>(content)... }
     {
     }
 
@@ -664,7 +714,7 @@ namespace ClaFi
     FamilyText<Content...>::FamilyText(std::wstring family, Content&&... content)
         :
         ScopedText<Content...>{
-            TextLayer{ .look{ .fontFamily = std::move(family) } },
+            TextLayer{ .fields{ .fontFamily = std::move(family) } },
             std::forward<Content>(content)...
         }
     {
@@ -674,7 +724,7 @@ namespace ClaFi
     SuperscriptText<Content...>::SuperscriptText(Content&&... content)
         :
         ScopedText<Content...>{
-            TextLayer{ .look{ .scripts = { TextScript::Super } } },
+            TextLayer{ .fields{ .scripts = { TextScript::Super } } },
             std::forward<Content>(content)...
         }
     {
@@ -684,7 +734,7 @@ namespace ClaFi
     SubscriptText<Content...>::SubscriptText(Content&&... content)
         :
         ScopedText<Content...>{
-            TextLayer{ .look{ .scripts = { TextScript::Sub } } },
+            TextLayer{ .fields{ .scripts = { TextScript::Sub } } },
             std::forward<Content>(content)...
         }
     {
@@ -758,7 +808,7 @@ namespace ClaFi
         {
             visit(TextRunView{
                 .range = { start, run.length },
-                .look = lookAt(run.look),
+                .style = styleAt(run.style),
                 .link = nameAt(run.link),
                 .anchor = nameAt(run.anchor),
                 .object = run.object ? &m_objects[run.object - 1] : nullptr,

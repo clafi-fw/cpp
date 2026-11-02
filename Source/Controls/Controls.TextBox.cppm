@@ -102,8 +102,6 @@ namespace ClaFi::Controls
         DECLARE_WRITABLE_PROPERTY(ReadOnly, readOnly, setReadOnly, ReadOnly::No)
         // What the box shows, muted, while its text is empty.
         DECLARE_REF_PROPERTY(PlaceHolderText, placeHolderText, PlaceHolderText{})
-        // Where the style names of a pasted text are found; none is the application's sheet.
-        DECLARE_WRITABLE_PROPERTY(const StyleSheet*, styleSheet, setStyleSheet, nullptr)
     public:
         // The caret has come to rest somewhere new. See Controls
         DECLARE_EVENT(CaretMoveEvent, OnCaretMove, onCaretMove)
@@ -130,7 +128,6 @@ namespace ClaFi::Controls
         [[nodiscard]] TextRange selection() const;
 
         void setReadOnly(ReadOnly);
-        void setStyleSheet(const StyleSheet* sheet) { m_styleSheet = sheet; }
 
         // **What a box takes from the clipboard**, best first. Rich before plain: both are
         // reachable whenever either is, because the conversion between them runs in both
@@ -389,8 +386,7 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(readOnly),
-        INIT_PROPERTY(placeHolderText),
-        INIT_PROPERTY(styleSheet)
+        INIT_PROPERTY(placeHolderText)
     {
         m_caretTimer.onTick([this](TimerEvent&){
             blinkCaret();
@@ -492,7 +488,7 @@ namespace ClaFi::Controls
 
         // Walked in the order pasteFormats states. Each asks for nothing unless the clipboard can
         // answer it, so at most one of them reads.
-        std::optional<Text> pasted = Transfer::takeText(*offer, m_styleSheet);
+        std::optional<Text> pasted = Transfer::takeText(*offer, text().styles().parent());
         if (!pasted.has_value())
         {
             const std::optional<std::wstring> plain = Transfer::take<Transfer::PlainText>(*offer);

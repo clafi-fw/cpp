@@ -62,108 +62,6 @@ namespace ClaFi
 
     export using ColorDef = std::variant<Ink, Color>;
 
-    // A named look words are set in, stating the fields it sets. See TextEngine-Types#textstyle
-    export struct TextStyle
-    {
-        std::wstring_view name{};
-        const TextStyle* base{ nullptr }; // the style this one states its fields over
-        std::optional<std::wstring_view> fontFamily{};
-        std::optional<float> fontSize{};
-        std::optional<FontWeight> fontWeight{};
-        std::optional<FontStyle> fontStyle{};
-        std::optional<ColorDef> ink{};
-
-        // What the style states for the field, itself or through a style it is based on.
-        template<typename Value>
-        [[nodiscard]] constexpr std::optional<Value> stated(std::optional<Value> TextStyle::*) const;
-    };
-
-    // The framework's styles. A text names them by address, and a file by name.
-    export namespace TextStyles
-    {
-        inline constexpr TextStyle Body{
-            .name = L"Body",
-            .fontFamily = GenericFamily::SansSerif,
-            .fontSize = 12.0f,
-            .fontWeight = FontWeight::Normal,
-            .fontStyle = FontStyle::Normal,
-        };
-        inline constexpr TextStyle Title{
-            .name = L"Title",
-            .fontFamily = GenericFamily::SansSerif,
-            .fontSize = 24.0f,
-            .fontWeight = FontWeight::Bold,
-            .fontStyle = FontStyle::Normal,
-        };
-        inline constexpr TextStyle SubTitle{
-            .name = L"SubTitle",
-            .fontFamily = GenericFamily::SansSerif,
-            .fontSize = 17.0f,
-            .fontWeight = FontWeight::Normal,
-            .fontStyle = FontStyle::Normal,
-        };
-        inline constexpr TextStyle Heading{
-            .name = L"Heading",
-            .fontFamily = GenericFamily::SansSerif,
-            .fontSize = 16.0f,
-            .fontWeight = FontWeight::SemiBold,
-            .fontStyle = FontStyle::Normal,
-        };
-        inline constexpr TextStyle SubHeading{
-            .name = L"SubHeading",
-            .fontFamily = GenericFamily::SansSerif,
-            .fontSize = 14.0f,
-            .fontWeight = FontWeight::Normal,
-            .fontStyle = FontStyle::Normal,
-        };
-        inline constexpr TextStyle Section{
-            .name = L"Section",
-            .fontFamily = GenericFamily::SansSerif,
-            .fontSize = 12.0f,
-            .fontWeight = FontWeight::Bold,
-            .fontStyle = FontStyle::Normal,
-        };
-        inline constexpr TextStyle SubSection{
-            .name = L"SubSection",
-            .fontFamily = GenericFamily::SansSerif,
-            .fontSize = 12.0f,
-            .fontWeight = FontWeight::Normal,
-            .fontStyle = FontStyle::Italic,
-        };
-        inline constexpr TextStyle SubBody{
-            .name = L"SubBody",
-            .fontFamily = GenericFamily::SansSerif,
-            .fontSize = 10.0f,
-            .fontWeight = FontWeight::Normal,
-            .fontStyle = FontStyle::Normal,
-        };
-        inline constexpr TextStyle Code{
-            .name = L"Code",
-            .fontFamily = GenericFamily::Monospace,
-            .fontSize = 12.0f,
-            .fontWeight = FontWeight::Normal,
-            .fontStyle = FontStyle::Normal,
-        };
-
-        // Every one of them, which is what a name read from a file is looked up in.
-        inline constexpr std::array<const TextStyle*, 9> All{
-            &Body,
-            &Title,
-            &SubTitle,
-            &Heading,
-            &SubHeading,
-            &Section,
-            &SubSection,
-            &SubBody,
-            &Code,
-        };
-
-        // The framework's style of that name; none where it has none.
-        [[nodiscard]] constexpr const TextStyle* named(std::wstring_view name);
-        // Whether the style is one of the framework's.
-        [[nodiscard]] constexpr bool contains(const TextStyle*);
-    }
-
     // Which way off the baseline a script level takes its words.
     export enum class TextScript
     {
@@ -171,20 +69,41 @@ namespace ClaFi
         Sub
     };
 
-    // How a run of words looks: its style, and the fields it states over it. See TextEngine-Types
-    export struct TextLook
+    // A look words are set in, named in a sheet or a text's own. See TextEngine-Types#textstyle
+    export struct TextStyle
     {
-        const TextStyle* style{ nullptr };
+        std::wstring name{}; // empty on a style cached by its values
+        const TextStyle* base{ nullptr }; // the style this one states its fields over
         std::optional<std::wstring> fontFamily{};
         std::optional<float> fontSize{};
         std::optional<FontWeight> fontWeight{};
         std::optional<FontStyle> fontStyle{};
         std::optional<ColorDef> ink{};
-        std::vector<TextScript> scripts{}; // the outermost level first
+        std::vector<TextScript> scripts{}; // the outermost level first, under its base's
 
+        // What the style states for the field, itself or through a style it is based on.
+        template<typename Value>
+        [[nodiscard]] constexpr const Value* stated(std::optional<Value> TextStyle::*) const;
+        // Every script level it states, its bases' first, so the outermost leads.
+        [[nodiscard]] constexpr std::vector<TextScript> levels() const;
+        // Whether it states nothing: no base, no field, no script level.
         [[nodiscard]] constexpr bool empty() const;
-        bool operator==(const TextLook&) const = default;
+        bool operator==(const TextStyle&) const = default;
     };
+
+    // The names of the framework's styles, which its sheet holds. See TextEngine-Types#textstyles
+    export namespace TextStyles
+    {
+        inline constexpr std::wstring_view Body = L"Body";
+        inline constexpr std::wstring_view Title = L"Title";
+        inline constexpr std::wstring_view SubTitle = L"SubTitle";
+        inline constexpr std::wstring_view Heading = L"Heading";
+        inline constexpr std::wstring_view SubHeading = L"SubHeading";
+        inline constexpr std::wstring_view Section = L"Section";
+        inline constexpr std::wstring_view SubSection = L"SubSection";
+        inline constexpr std::wstring_view SubBody = L"SubBody";
+        inline constexpr std::wstring_view Code = L"Code";
+    }
 
     // How a paragraph is aligned inside the box it is laid out in.
     export enum class TextAlign { Left, Center, Right, Justified };
@@ -345,34 +264,26 @@ namespace ClaFi
 #endif
 
     template<typename Value>
-    constexpr std::optional<Value> TextStyle::stated(std::optional<Value> TextStyle::* field) const
+    constexpr const Value* TextStyle::stated(std::optional<Value> TextStyle::* field) const
     {
         for (const TextStyle* style = this; style; style = style->base)
         {
             if ((style->*field).has_value())
-                return style->*field;
-        }
-        return std::nullopt;
-    }
-
-    constexpr const TextStyle* TextStyles::named(std::wstring_view name)
-    {
-        for (const TextStyle* style : All)
-        {
-            if (style->name == name)
-                return style;
+                return &*(style->*field);
         }
         return nullptr;
     }
 
-    constexpr bool TextStyles::contains(const TextStyle* style)
+    constexpr std::vector<TextScript> TextStyle::levels() const
     {
-        return std::ranges::find(All, style) != All.end();
+        std::vector<TextScript> result = base ? base->levels() : std::vector<TextScript>{};
+        result.insert(result.end(), scripts.begin(), scripts.end());
+        return result;
     }
 
-    constexpr bool TextLook::empty() const
+    constexpr bool TextStyle::empty() const
     {
-        return !style && !fontFamily && !fontSize && !fontWeight && !fontStyle && !ink
+        return !base && !fontFamily && !fontSize && !fontWeight && !fontStyle && !ink
             && scripts.empty();
     }
 

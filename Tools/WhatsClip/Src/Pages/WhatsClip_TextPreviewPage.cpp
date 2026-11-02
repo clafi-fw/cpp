@@ -40,8 +40,8 @@ namespace ClaFi::Tools::WhatsClip
     // the language is the text's own.
     //
     // **The framework's rich text is taken the way a paste takes it**, so the styles carried
-    // beside it draw as they did where it was copied. This viewer states no sheet of its own, and
-    // every carried style becomes fields of the run's own over the framework's.
+    // beside it draw as they did where it was copied. A style of a name the application's sheet
+    // holds is that sheet's, and every other one comes as one of the text's own.
     void TextPreviewPage::showContent(Transfer::Offer& offer, const Transfer::Format& format)
     {
         std::optional<Text> taken;

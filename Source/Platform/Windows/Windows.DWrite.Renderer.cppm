@@ -7,6 +7,7 @@ import ClaFi.Platform.Windows.Diagnostic;
 import ClaFi.Core.Context.ControlContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.Graphics.Cpu_GlyphCompositor;
@@ -51,7 +52,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
         if (g_baseFormat) return g_baseFormat;
 
-        const TextStyle& body = TextStyles::Body;
+        const TextStyle& body = StyleSheet::framework().body();
         const std::wstring family{ *body.fontFamily };
 
         checkHr(g_dwriteFactory->CreateTextFormat(

@@ -25,6 +25,15 @@ namespace ClaFi
         }
     };
 
+    // The font where no span states one. See TextEngine-Types#basefont
+    export struct BaseFont
+    {
+        std::wstring family{};
+        float size{ 0.0f };
+        FontWeight weight{ FontWeight::Normal };
+        FontStyle style{ FontStyle::Normal };
+    };
+
     export class BakedText
     {
     public:
@@ -47,6 +56,7 @@ namespace ClaFi
         // The links, in text order and not overlapping. Two that meet and name one target are one
         // span, so a link the edits split into runs is still one link to point at.
         [[nodiscard]] const std::vector<LinkSpan>& links() const { return m_links; }
+        [[nodiscard]] const BaseFont& baseFont() const { return m_baseFont; }
 
     private:
         [[nodiscard]] static BakedInlineObject bakedObjectOf(const InlineObject&);
@@ -62,5 +72,6 @@ namespace ClaFi
         std::vector<ParagraphStyle> m_paragraphs;
         std::vector<std::pair<std::size_t, BakedInlineObject>> m_inlineObjects;
         std::vector<LinkSpan> m_links;
+        BaseFont m_baseFont{};
     };
 }

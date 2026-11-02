@@ -305,7 +305,8 @@ namespace TextEngine_App
             .updates = UpdateSource{
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"TextEngine-v"
-            }
+            },
+            .styleSheet = &textEngineStyles(),
         };
     }
 

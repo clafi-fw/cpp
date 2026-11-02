@@ -38,7 +38,7 @@ namespace ClaFi
         std::wstring_view version{}; // major.minor.patch, shown on its Information page
         std::wstring_view site{}; // its own web address, shown as a link on its Information page
         UpdateSource updates{}; // where its Information page looks for a newer release
-        // The styles a name read from a file is found among where no reader states a sheet.
+        // The sheet a text is built over where none is given; none is the framework's.
         const StyleSheet* styleSheet{ nullptr };
     };
 
@@ -112,6 +112,9 @@ namespace ClaFi
         // Whether the check made at start is still to answer - its answer alone is told.
         bool m_startAnswerAwaited{ false };
         ScopedEventConnection m_updateCheckConnection{};
+        // The style names logged as found nowhere, each once.
+        std::vector<std::wstring> m_unknownStyles{};
+        ScopedEventConnection m_unknownStyleConnection{};
     };
 
     template<typename T>
@@ -215,6 +218,17 @@ namespace ClaFi
         initializeDiagnosticLog(m_context);
         for (const std::wstring& line : m_context.platform().diagnosticLines())
             diagnosticLog(line);
+        // **A style name written in code that no sheet holds is logged** the first time it is met,
+        // and the words are set in no style.
+        m_unknownStyleConnection = ScopedEventConnection{
+            StyleSheet::events().connect<UnknownStyleEvent>([this](UnknownStyleEvent& event) {
+                const std::wstring_view name = event.name();
+                if (std::ranges::find(m_unknownStyles, name) != m_unknownStyles.end())
+                    return;
+                m_unknownStyles.emplace_back(name);
+                diagnosticLog(std::format(L"no style named {}", name));
+            })
+        };
         // **Before the config is read**, so that the theme the file names is carried in by the load
         // itself rather than applied a second time after it. No window exists yet, so what the
         // node states is what the first one opens in - see AppContext::takeTheme.

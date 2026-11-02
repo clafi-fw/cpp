@@ -47,7 +47,7 @@ order:
     Caption=[
         Styles=[
             =[
-                Name=Code 1
+                Name=#1
                 Base=Code
                 Ink=spot
             ]
@@ -58,31 +58,34 @@ order:
             ]
             ="Use "
             Run=[
-                Style=Code 1
+                Style=#1
                 =replaceText
             ]
             Space=4
         ]
     ]
 
-**A piece in no look and linking nowhere is one line**: its words unnamed, or an object under its
+**A piece in no style and linking nowhere is one line**: its words unnamed, or an object under its
 name - Icon, Space, VSpace, FlexSpace or TabTo - whose character goes without saying.
 
 **A Run holds anything more**: its words as its unnamed value, or an object under its name, and
-Style, Link and Anchor. Style names one of the text's own styles, or else one of the reading
-sheet's or the framework's - see StyleSheet ReadingScope; any other name reads as words in no style.
+Style, Link and Anchor. Style names one of the text's own styles, or else one in the reading sheet
+or up its parents - see StyleSheet ReadingScope; any other name reads as words in no style.
 
 **A P states the paragraph's Align, Indent or LineSpacing** and stands where the paragraph starts.
 
 **In XML a run's words are its element's text**, and an unnamed piece is text between the elements:
 
-    <Pieces><P Align="Center"/>Use <Run Style="Code 1">replaceText</Run></Pieces>
+    <Pieces><P Align="Center"/>Use <Run Style="#1">replaceText</Run></Pieces>
 
-**The text's own styles are the looks that say more than a style's name.** Each is written once,
-named after the style it is based on and numbered - Code 1, Code 2, and Style 1 where it is based
-on none - and states its fields: FontFamily, FontSize, FontWeight, FontStyle, Ink and Scripts.
-Reading, an entry stating no Base is based on the style of its own name, so `Name=Code` with
-`Ink=spot` is this text's code in the spot ink.
+**The named styles the text carries come first** - see Text styles - each after its base. An entry
+states its fields: FontFamily, FontSize, FontWeight, FontStyle, Ink and Scripts. An entry stating no
+Base is based on the style of its own name up the reading sheet, so `Name=Code` with `Ink=spot` is
+this text's code in the spot ink.
+
+**A look follows them**: an entry for each run style stating more than its base, written once and
+named # and a number - #1, #2. A look is no style, and reads back as the style of the runs naming
+it, so texts read from two files never share a look by its name.
 
 **An ink is an ink colour and a grade**: the colour is left out where it is text, and the grade
 where it is strongest and the colour is not text - `spot`, `accent muted`, `muted`, `strongest`. A
@@ -91,8 +94,7 @@ is `w,h,baseline` and reads back with no painter, drawing nothing.
 
 ## CompositeSerializer<StyleSheet>
 
-**A style sheet is a section of its styles**, each an entry the way a text's own style is written,
-with no Scripts:
+**A style sheet is a section of its styles**, each an entry the way a text's own style is written:
 
     Styles=[
         =[
@@ -106,16 +108,16 @@ with no Scripts:
         ]
     ]
 
-**A Base names one of the sheet's styles, or else one of the framework's**, wherever in the list it
+**A Base names one of the sheet's styles, or else one up its parents**, wherever in the list it
 stands - Key above is based on this sheet's Code. An entry stating no Base, or its own name, is
-based on the framework's style of that name where there is one. A Base leading back to its entry is
-dropped, and so is one naming no style.
+based on the style of that name up the parents where there is one. A Base leading back to its entry
+is dropped, and so is one naming no style.
 
 **An entry with no name, or with a name an entry above it took, is skipped.** The styles read are
 listed as the file lists them.
 
 **Read over a sheet in use**, by getTo, the sheet keeps every style the two name alike where it
-stands - see StyleSheet.
+stands, and the parent it is over - see StyleSheet.
 
 ## Dt::Section
 

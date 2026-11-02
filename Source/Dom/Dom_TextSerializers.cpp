@@ -46,6 +46,9 @@ namespace ClaFi::Dom
             constexpr std::wstring_view LineSpacing = L"LineSpacing";
         }
 
+        // What a look's name starts with, which no style's does.
+        constexpr wchar_t k_lookMark = L'#';
+
         constexpr std::array k_styleKeys{
             Keys::Name,
             Keys::Base,
@@ -55,17 +58,6 @@ namespace ClaFi::Dom
             Keys::FontStyle,
             Keys::Ink,
             Keys::Scripts,
-        };
-
-        // A sheet's style states no script level, which only a run stands in.
-        constexpr std::array k_sheetStyleKeys{
-            Keys::Name,
-            Keys::Base,
-            Keys::FontFamily,
-            Keys::FontSize,
-            Keys::FontWeight,
-            Keys::FontStyle,
-            Keys::Ink,
         };
 
         constexpr std::array k_runKeys{
@@ -320,115 +312,68 @@ namespace ClaFi::Dom
 
         // --- Writing ---
 
-        // One of the text's own styles: a look that says more than a style's name.
-        struct OwnStyle
+        // An entry written for a run style that states more than its base: the name the file
+        // gives it, and the style, named none.
+        struct LookEntry
         {
             std::wstring name{};
-            TextLook look{};
+            TextStyle style{};
         };
 
-        using OwnStyles = std::vector<OwnStyle>;
+        using LookEntries = std::vector<LookEntry>;
 
-        // A look as a file can name it. A style with no name is no name to write, so the fields
-        // it states are written as the look's own.
-        [[nodiscard]] TextLook writtenLook(const TextLook& look)
+        // Whether a style states its base and nothing more, which a piece names without an entry.
+        [[nodiscard]] bool namesBaseOnly(const TextStyle& style)
         {
-            if (!look.style || !look.style->name.empty())
-                return look;
-
-            TextLook result = look;
-            const TextStyle& style = *look.style;
-            result.style = nullptr;
-            if (!result.fontFamily)
-            {
-                const std::optional<std::wstring_view> family = style.stated(&TextStyle::fontFamily);
-                if (family)
-                    result.fontFamily = std::wstring{ *family };
-            }
-            if (!result.fontSize)
-                result.fontSize = style.stated(&TextStyle::fontSize);
-            if (!result.fontWeight)
-                result.fontWeight = style.stated(&TextStyle::fontWeight);
-            if (!result.fontStyle)
-                result.fontStyle = style.stated(&TextStyle::fontStyle);
-            if (!result.ink)
-                result.ink = style.stated(&TextStyle::ink);
-            return result;
+            return TextStyle{ .base = style.base } == style;
         }
 
-        // Whether a look is a style named and nothing more, which a piece names without an entry.
-        [[nodiscard]] bool namesStyleOnly(const TextLook& look)
+        // Whether a name is a look's, # and a number, which names no style.
+        [[nodiscard]] bool isLookName(std::wstring_view name)
         {
-            return look.empty() || TextLook{ .style = look.style } == look;
+            return name.size() > 1 && name.front() == k_lookMark
+                && std::ranges::all_of(name.substr(1), [](wchar_t character) {
+                    return character >= L'0' && character <= L'9';
+                });
         }
 
-        // How many entries are named after one base so far.
-        struct BaseCount
+        // An entry per run style stating more than its base, each named # and a number.
+        [[nodiscard]] LookEntries lookEntriesOf(const TextPieces& pieces)
         {
-            std::wstring_view base{};
-            std::size_t count{ 0 };
-        };
-
-        // Whether a piece names a style of that name, which an entry of the text's own leaves to
-        // it: an own entry is found first, and would take the piece's words.
-        [[nodiscard]] bool namedByAPiece(const TextPieces& pieces, std::wstring_view name)
-        {
-            return std::ranges::any_of(pieces, [name](const TextPiece& piece) {
-                return piece.look.style && piece.look.style->name == name;
-            });
-        }
-
-        // An entry per look carrying more than a style's name, named after the style it is based
-        // on and numbered: Code 1, Code 2, Style 1.
-        [[nodiscard]] OwnStyles ownStylesOf(const TextPieces& pieces)
-        {
-            OwnStyles result;
-            std::vector<BaseCount> counts;
+            LookEntries result;
             for (const TextPiece& piece : pieces)
             {
-                if (piece.paragraph || namesStyleOnly(piece.look))
+                if (piece.paragraph || namesBaseOnly(piece.style))
                     continue;
-                if (std::ranges::find(result, piece.look, &OwnStyle::look) != result.end())
+                if (std::ranges::find(result, piece.style, &LookEntry::style) != result.end())
                     continue;
-
-                const std::wstring_view base = piece.look.style ? piece.look.style->name : L"Style";
-                std::vector<BaseCount>::iterator counted = std::ranges::find(counts, base,
-                    &BaseCount::base);
-                if (counted == counts.end())
-                    counted = counts.insert(counts.end(), BaseCount{ base });
-                std::wstring name;
-                do
-                {
-                    ++counted->count;
-                    name = std::wstring{ base } + L' ' + std::to_wstring(counted->count);
-                }
-                while (namedByAPiece(pieces, name));
                 result.push_back({
-                    .name = std::move(name),
-                    .look = piece.look,
+                    .name = k_lookMark + std::to_wstring(result.size() + 1),
+                    .style = piece.style,
                 });
             }
             return result;
         }
 
-        void writeStyle(Section& entry, const OwnStyle& own)
+        // A style's entry: its name, its base where that is not the style of the same name, which
+        // goes without saying, and the fields and script levels it states itself.
+        void writeStyle(Section& entry, std::wstring_view name, const TextStyle& style)
         {
-            const TextLook& look = own.look;
-            put(entry, Keys::Name, own.name);
-            if (look.style)
-                put(entry, Keys::Base, std::wstring{ look.style->name });
-            if (look.fontFamily)
-                put(entry, Keys::FontFamily, *look.fontFamily);
-            if (look.fontSize)
-                put(entry, Keys::FontSize, floatToStr(*look.fontSize));
-            if (look.fontWeight)
-                put(entry, Keys::FontWeight, std::wstring{ nameOf(k_weights, *look.fontWeight) });
-            if (look.fontStyle)
-                put(entry, Keys::FontStyle, std::wstring{ nameOf(k_fontStyles, *look.fontStyle) });
-            if (look.ink)
-                put(entry, Keys::Ink, inkSpelling(*look.ink));
+            put(entry, Keys::Name, std::wstring{ name });
+            if (style.base && style.base->name != name)
+                put(entry, Keys::Base, style.base->name);
+            if (style.fontFamily)
+                put(entry, Keys::FontFamily, *style.fontFamily);
+            if (style.fontSize)
+                put(entry, Keys::FontSize, floatToStr(*style.fontSize));
+            if (style.fontWeight)
+                put(entry, Keys::FontWeight, std::wstring{ nameOf(k_weights, *style.fontWeight) });
+            if (style.fontStyle)
+                put(entry, Keys::FontStyle, std::wstring{ nameOf(k_fontStyles, *style.fontStyle) });
+            if (style.ink)
+                put(entry, Keys::Ink, inkSpelling(*style.ink));
             std::wstring scripts;
-            for (const TextScript script : look.scripts)
+            for (const TextScript script : style.scripts)
             {
                 if (!scripts.empty())
                     scripts += L' ';
@@ -448,7 +393,7 @@ namespace ClaFi::Dom
         }
 
         // An object's run states the object, and its character goes without saying.
-        void writeRun(Section& entry, const TextPiece& piece, const OwnStyles& ownStyles)
+        void writeRun(Section& entry, const TextPiece& piece, const LookEntries& looks)
         {
             if (piece.object)
             {
@@ -460,24 +405,24 @@ namespace ClaFi::Dom
                 put(entry, Keys::Words, piece.words);
             }
 
-            if (!namesStyleOnly(piece.look))
+            if (!namesBaseOnly(piece.style))
             {
-                const OwnStyles::const_iterator own = std::ranges::find(ownStyles, piece.look,
-                    &OwnStyle::look);
-                put(entry, Keys::Style, own->name);
+                const LookEntries::const_iterator look = std::ranges::find(looks, piece.style,
+                    &LookEntry::style);
+                put(entry, Keys::Style, look->name);
             }
-            else if (piece.look.style)
+            else if (piece.style.base)
             {
-                put(entry, Keys::Style, std::wstring{ piece.look.style->name });
+                put(entry, Keys::Style, piece.style.base->name);
             }
             put(entry, Keys::Link, piece.link);
             put(entry, Keys::Anchor, piece.anchor);
         }
 
-        // **A piece in no look, linking nowhere, is one line**: its words unnamed, or an object
+        // **A piece in no style, linking nowhere, is one line**: its words unnamed, or an object
         // under its name. Anything more is a Run, and a paragraph's look a P.
         void writePiece(MultiTypeSequence& pieces, const TextPiece& piece,
-            const OwnStyles& ownStyles)
+            const LookEntries& looks)
         {
             if (piece.paragraph)
             {
@@ -485,9 +430,9 @@ namespace ClaFi::Dom
                 return;
             }
 
-            if (!piece.look.empty() || !piece.link.empty() || !piece.anchor.empty())
+            if (!piece.style.empty() || !piece.link.empty() || !piece.anchor.empty())
             {
-                writeRun(static_cast<Section&>(*pieces.add(Keys::Run)), piece, ownStyles);
+                writeRun(static_cast<Section&>(*pieces.add(Keys::Run)), piece, looks);
                 return;
             }
 
@@ -502,59 +447,32 @@ namespace ClaFi::Dom
 
         // --- Reading ---
 
-        // A style the text names: one of its own first, then the reading sheet's, then the
-        // framework's. A name none knows names no style, and the words read back in the look of
-        // none.
-        [[nodiscard]] TextLook lookNamed(std::wstring_view name, const OwnStyles& ownStyles)
-        {
-            for (const OwnStyle& own : ownStyles)
-            {
-                if (own.name == name)
-                    return own.look;
-            }
-            if (const TextStyle* style = StyleSheet::findReading(name))
-                return TextLook{ .style = style };
-            return {};
-        }
-
-        // The fields an entry states, the script levels included, written into the look.
-        void readFields(const Section& entry, TextLook& look)
+        // The fields an entry states, the script levels included, written into the style.
+        void readFields(const Section& entry, TextStyle& style)
         {
             if (const std::wstring family = valueAt(entry, Keys::FontFamily); !family.empty())
-                look.fontFamily = family;
+                style.fontFamily = family;
             float size = 0.0f;
             if (tryStrToFloat(valueAt(entry, Keys::FontSize), size))
-                look.fontSize = size;
+                style.fontSize = size;
             const std::optional<FontWeight> weight = valueOf(k_weights,
                 valueAt(entry, Keys::FontWeight));
             if (weight)
-                look.fontWeight = weight;
+                style.fontWeight = weight;
             const std::optional<FontStyle> fontStyle = valueOf(k_fontStyles,
                 valueAt(entry, Keys::FontStyle));
             if (fontStyle)
-                look.fontStyle = fontStyle;
+                style.fontStyle = fontStyle;
             if (const std::optional<ColorDef> ink = inkOf(valueAt(entry, Keys::Ink)))
-                look.ink = ink;
+                style.ink = ink;
 
             const std::wstring scripts = valueAt(entry, Keys::Scripts);
             std::wstring_view rest = scripts;
             while (!rest.empty())
             {
                 if (const std::optional<TextScript> script = valueOf(k_scripts, takeWord(rest)))
-                    look.scripts.push_back(*script);
+                    style.scripts.push_back(*script);
             }
-        }
-
-        // An entry stating no base is based on the style of its own name, so an entry named
-        // Code states what this text's code looks like beyond the reading sheet's or the
-        // framework's.
-        [[nodiscard]] OwnStyle readStyle(const Section& entry, const OwnStyles& known)
-        {
-            OwnStyle result{ .name = valueAt(entry, Keys::Name) };
-            const std::wstring base = valueAt(entry, Keys::Base);
-            result.look = lookNamed(base.empty() ? std::wstring_view{ result.name } : base, known);
-            readFields(entry, result.look);
-            return result;
         }
 
         // The object a name and its value state, or nothing for a name no object has.
@@ -600,11 +518,24 @@ namespace ClaFi::Dom
             return look;
         }
 
-        [[nodiscard]] TextPiece readRun(const Section& entry, const OwnStyles& ownStyles)
+        // The style a piece names: a look of the text's file, else a style the text reaches, else
+        // none, and the words read back in no style.
+        [[nodiscard]] TextStyle styleNamed(std::wstring_view name, const StyleSheet& styles,
+            const LookEntries& looks)
+        {
+            const LookEntries::const_iterator look = std::ranges::find(looks, name,
+                &LookEntry::name);
+            if (look != looks.end())
+                return look->style;
+            return TextStyle{ .base = styles.find(name) };
+        }
+
+        [[nodiscard]] TextPiece readRun(const Section& entry, const StyleSheet& styles,
+            const LookEntries& looks)
         {
             TextPiece piece{
                 .words = valueAt(entry, Keys::Words),
-                .look = lookNamed(valueAt(entry, Keys::Style), ownStyles),
+                .style = styleNamed(valueAt(entry, Keys::Style), styles, looks),
                 .link = valueAt(entry, Keys::Link),
                 .anchor = valueAt(entry, Keys::Anchor),
                 .object = objectOf(entry),
@@ -615,10 +546,10 @@ namespace ClaFi::Dom
         }
 
         [[nodiscard]] TextPiece readPiece(const MultiTypeSequence::Item& item,
-            const OwnStyles& ownStyles)
+            const StyleSheet& styles, const LookEntries& looks)
         {
             if (item.name == Keys::Run)
-                return readRun(static_cast<const Section&>(*item.node), ownStyles);
+                return readRun(static_cast<const Section&>(*item.node), styles, looks);
             if (item.name == Keys::Paragraph)
                 return TextPiece{ .paragraph = paragraphOf(static_cast<const Section&>(*item.node)) };
             if (item.name == Keys::Words)
@@ -641,28 +572,11 @@ namespace ClaFi::Dom
 
         // --- Style sheets ---
 
-        // A sheet's style as an entry states it, the way a text's own style is stated. A base of
-        // the style's own name is the framework's, and goes without saying.
-        [[nodiscard]] OwnStyle entryOf(const TextStyle& style)
-        {
-            const bool basedOnOwnName = style.base && TextStyles::contains(style.base)
-                && style.base->name == style.name;
-            TextLook look{ .style = basedOnOwnName ? nullptr : style.base };
-            if (style.fontFamily)
-                look.fontFamily = std::wstring{ *style.fontFamily };
-            look.fontSize = style.fontSize;
-            look.fontWeight = style.fontWeight;
-            look.fontStyle = style.fontStyle;
-            look.ink = style.ink;
-            return { .name = std::wstring{ style.name }, .look = std::move(look) };
-        }
-
-        // A style as a sheet's entry states it: its base by name, and its fields.
+        // A style as a sheet's entry states it: its name, its base by name, and its fields.
         struct StatedStyle
         {
-            std::wstring name{};
             std::wstring base{};
-            TextLook fields{};
+            TextStyle style{};
         };
 
         using StatedStyles = std::vector<StatedStyle>;
@@ -675,49 +589,85 @@ namespace ClaFi::Dom
             Added
         };
 
-        [[nodiscard]] TextStyle styleOf(const StatedStyle& stated, const TextStyle* base)
-        {
-            const TextLook& fields = stated.fields;
-            TextStyle result{ .name = stated.name, .base = base };
-            if (fields.fontFamily)
-                result.fontFamily = *fields.fontFamily;
-            result.fontSize = fields.fontSize;
-            result.fontWeight = fields.fontWeight;
-            result.fontStyle = fields.fontStyle;
-            result.ink = fields.ink;
-            return result;
-        }
-
         // **A style goes into the sheet after its base**, so every one is added and none changed,
-        // and a sheet read is no edit. A base the sheet lacks is the framework's of that name; a
-        // base leading back to the style is dropped.
+        // and carried, which is no edit. A base the file states none of is the parents' of that
+        // name, and one leading back to the style is dropped.
         const TextStyle* addStated(StyleSheet& sheet, const StatedStyles& stated,
             std::vector<Progress>& progress, std::size_t index)
         {
-            const StatedStyle& style = stated[index];
+            const StatedStyle& entry = stated[index];
+            const std::wstring& name = entry.style.name;
             if (progress[index] == Progress::Added)
-                return sheet.findOwn(style.name);
+                return sheet.findOwn(name);
             if (progress[index] == Progress::Adding)
                 return nullptr;
             progress[index] = Progress::Adding;
 
-            const TextStyle* base = nullptr;
-            if (style.base.empty() || style.base == style.name)
+            TextStyle style = entry.style;
+            if (entry.base.empty() || entry.base == name)
             {
-                base = TextStyles::named(style.name);
+                style.base = sheet.find(name);
             }
             else
             {
-                const StatedStyles::const_iterator found = std::ranges::find(stated, style.base,
-                    &StatedStyle::name);
-                base = found == stated.end()
-                    ? TextStyles::named(style.base)
+                const StatedStyles::const_iterator found = std::ranges::find_if(stated,
+                    [&entry](const StatedStyle& other) { return other.style.name == entry.base; });
+                style.base = found == stated.end()
+                    ? sheet.find(entry.base)
                     : addStated(sheet, stated, progress,
                         static_cast<std::size_t>(found - stated.begin()));
             }
-            sheet.set(styleOf(style, base));
+            sheet.carry(style);
             progress[index] = Progress::Added;
-            return sheet.findOwn(style.name);
+            return sheet.findOwn(name);
+        }
+
+        // **Every named entry goes into the sheet, each after its base, listed in the file's
+        // order.** An entry with no name, or a name an entry above it took, is skipped. Where looks
+        // are asked for, an entry named as a look is one of them, based on a style the sheet then
+        // reaches.
+        void readStyles(const SequenceBase& entries, StyleSheet& sheet, LookEntries* looks)
+        {
+            StatedStyles stated;
+            std::vector<StatedStyle> statedLooks;
+            for (std::size_t i = 0; i != entries.size(); ++i)
+            {
+                const Section& entry = static_cast<const Section&>(*entries.child(i));
+                StatedStyle style{
+                    .base = valueAt(entry, Keys::Base),
+                    .style{ .name = valueAt(entry, Keys::Name) },
+                };
+                const std::wstring& name = style.style.name;
+                if (name.empty())
+                    continue;
+                const auto namedSo = [&name](const StatedStyle& other) {
+                    return other.style.name == name;
+                };
+                if (std::ranges::any_of(stated, namedSo)
+                    || std::ranges::any_of(statedLooks, namedSo))
+                {
+                    continue;
+                }
+                readFields(entry, style.style);
+                if (looks && isLookName(name))
+                    statedLooks.push_back(std::move(style));
+                else
+                    stated.push_back(std::move(style));
+            }
+
+            std::vector<Progress> progress(stated.size(), Progress::Waiting);
+            for (std::size_t i = 0; i != stated.size(); ++i)
+                addStated(sheet, stated, progress, i);
+            for (std::size_t i = 0; i != stated.size(); ++i)
+                sheet.moveTo(stated[i].style.name, i);
+
+            for (const StatedStyle& look : statedLooks)
+            {
+                LookEntry entry{ .name = look.style.name, .style = look.style };
+                entry.style.name.clear();
+                entry.style.base = sheet.find(look.base);
+                looks->push_back(std::move(entry));
+            }
         }
     }
 
@@ -742,40 +692,41 @@ namespace ClaFi::Dom
         return result;
     }
 
+    // **A text is read over the reading sheet**, or the application's where no scope names one,
+    // its own styles and looks first and its pieces based on them or on that sheet.
     void CompositeSerializer<Text>::readTo(const Section& section, Text& out)
     {
-        OwnStyles ownStyles;
-        const SequenceBase& styles = listAt(section, Keys::Styles);
-        for (std::size_t i = 0; i != styles.size(); ++i)
-        {
-            const Section& entry = static_cast<const Section&>(*styles.child(i));
-            ownStyles.push_back(readStyle(entry, ownStyles));
-        }
+        const StyleSheet* reading = StyleSheet::reading();
+        StyleSheet styles{ reading ? reading : &StyleSheet::application() };
+        LookEntries looks;
+        readStyles(listAt(section, Keys::Styles), styles, &looks);
 
         TextPieces pieces;
         const MultiTypeSequence& stated = static_cast<const MultiTypeSequence&>(
             section / Keys::Pieces);
         for (const MultiTypeSequence::Item& item : stated.items())
-            pieces.push_back(readPiece(item, ownStyles));
-        out = Text{ std::move(pieces) };
+            pieces.push_back(readPiece(item, styles, looks));
+        out = Text{ std::move(pieces), std::move(styles) };
     }
 
+    // The text's own named styles come first, each after its base, then the looks, so a reader
+    // finds every base above the entry naming it.
     void CompositeSerializer<Text>::write(Section& node, const Text& value)
     {
-        TextPieces pieces = value.pieces();
-        for (TextPiece& piece : pieces)
-            piece.look = writtenLook(piece.look);
-        const OwnStyles ownStyles = ownStylesOf(pieces);
+        const TextPieces pieces = value.pieces();
+        const LookEntries looks = lookEntriesOf(pieces);
 
         SequenceBase& styles = listAt(node, Keys::Styles);
         styles.clear();
-        for (const OwnStyle& own : ownStyles)
-            writeStyle(static_cast<Section&>(styles.addNode()), own);
+        for (const TextStyle* style : value.styles().styles())
+            writeStyle(static_cast<Section&>(styles.addNode()), style->name, *style);
+        for (const LookEntry& look : looks)
+            writeStyle(static_cast<Section&>(styles.addNode()), look.name, look.style);
 
         MultiTypeSequence& written = static_cast<MultiTypeSequence&>(node / Keys::Pieces);
         written.clear();
         for (const TextPiece& piece : pieces)
-            writePiece(written, piece, ownStyles);
+            writePiece(written, piece, looks);
     }
 
     // --- CompositeSerializer<StyleSheet> ---
@@ -783,7 +734,7 @@ namespace ClaFi::Dom
     void CompositeSerializer<StyleSheet>::defineSchema(Section& section,
         const StyleSheet& defaultValue)
     {
-        section.addSequence(Keys::Styles, schemaOf(k_sheetStyleKeys));
+        section.addSequence(Keys::Styles, schemaOf(k_styleKeys));
         write(section, defaultValue);
     }
 
@@ -794,36 +745,13 @@ namespace ClaFi::Dom
         return result;
     }
 
-    // **Read into a sheet of its own, then assigned**, so a sheet read again over the one a text
-    // names keeps every style the two name alike where it stands. An entry with no name, or a name
-    // an entry above it took, is skipped.
+    // **Read into a sheet of its own over the same parent, then taken**, so a sheet read again
+    // over one a text is based on keeps every style the two name alike where it stands.
     void CompositeSerializer<StyleSheet>::readTo(const Section& section, StyleSheet& out)
     {
-        StatedStyles stated;
-        const SequenceBase& styles = listAt(section, Keys::Styles);
-        for (std::size_t i = 0; i != styles.size(); ++i)
-        {
-            const Section& entry = static_cast<const Section&>(*styles.child(i));
-            StatedStyle style{
-                .name = valueAt(entry, Keys::Name),
-                .base = valueAt(entry, Keys::Base),
-            };
-            if (style.name.empty())
-                continue;
-            if (std::ranges::find(stated, style.name, &StatedStyle::name) != stated.end())
-                continue;
-            readFields(entry, style.fields);
-            stated.push_back(std::move(style));
-        }
-
-        StyleSheet result;
-        std::vector<Progress> progress(stated.size(), Progress::Waiting);
-        for (std::size_t i = 0; i != stated.size(); ++i)
-            addStated(result, stated, progress, i);
-        // Added base first, then listed as the file lists them.
-        for (std::size_t i = 0; i != stated.size(); ++i)
-            result.moveTo(stated[i].name, i);
-        out = result;
+        StyleSheet result{ out.parent() };
+        readStyles(listAt(section, Keys::Styles), result, nullptr);
+        out.takeStyles(result);
     }
 
     void CompositeSerializer<StyleSheet>::write(Section& node, const StyleSheet& value)
@@ -831,6 +759,6 @@ namespace ClaFi::Dom
         SequenceBase& styles = listAt(node, Keys::Styles);
         styles.clear();
         for (const TextStyle* style : value.styles())
-            writeStyle(static_cast<Section&>(styles.addNode()), entryOf(*style));
+            writeStyle(static_cast<Section&>(styles.addNode()), style->name, *style);
     }
 }

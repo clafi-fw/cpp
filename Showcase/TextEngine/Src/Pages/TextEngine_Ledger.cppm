@@ -1,5 +1,6 @@
 export module TextEngine_App.Rich;
 
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.StdLib;
 
@@ -32,4 +33,7 @@ namespace TextEngine_App
     // At least lineCount lines, the opening and closing included, and whole rounds only - so the
     // count is a floor.
     export [[nodiscard]] Text buildRichShowcase(std::size_t lineCount);
+
+    // A sheet over the framework's holding the headings the page above sets in its prose face.
+    export [[nodiscard]] const StyleSheet& textEngineStyles();
 }

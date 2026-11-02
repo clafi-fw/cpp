@@ -623,7 +623,8 @@ namespace ClaFi::Tools::WhatsClip
             .updates = UpdateSource{
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"WhatsClip-v"
-            }
+            },
+            .styleSheet = &RepresentationPage::styles(),
         };
     }
 

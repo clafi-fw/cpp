@@ -18,7 +18,7 @@ namespace ClaFi::Transfer
         static constexpr std::wstring_view k_name = L"ClaFi.Text";
 
         [[nodiscard]] static Format format();
-        // Written the way the document engine writes a Text. That is what gives the looks a
+        // Written the way the document engine writes a Text. That is what gives the styles a
         // spelling without inventing a second one for the clipboard, and what lets two builds that
         // write a Text alike read each other.
         [[nodiscard]] static std::string toBytes(const Text&);
@@ -38,11 +38,11 @@ namespace ClaFi::Transfer
 
     // Puts a text on the source, and beside it the styles it names. See StdActions#addtext
     export void addText(Source&, const Text&);
-    // The text an offer holds, its styles found through the sheet given. See StdActions#taketext
+    // The text an offer holds, over the sheet given or the application's. See StdActions#taketext
     export [[nodiscard]] std::optional<Text> takeText(Offer&, const StyleSheet* sheet);
 
     // Rich down to plain is what lets a copy of one format paste into an application that has
-    // never heard of ClaFi. Plain up to rich is the same text in one run of no look.
+    // never heard of ClaFi. Plain up to rich is the same text in one run of no style.
     template<>
         struct FormatConversion<ClaFiText, PlainText>
     {

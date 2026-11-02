@@ -2,6 +2,7 @@ module TextEngine_App.Rich;
 
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Context.FormContext;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
@@ -95,21 +96,10 @@ namespace TextEngine_App
         constexpr float k_proseSize = 13.5f;
 
         // The framework's headings in the prose face, which a FamilyText around a style cannot set.
-        constexpr TextStyle k_proseTitle{
-            .name = L"ProseTitle",
-            .base = &TextStyles::Title,
-            .fontFamily = k_proseFamily,
-        };
-        constexpr TextStyle k_proseSubTitle{
-            .name = L"ProseSubTitle",
-            .base = &TextStyles::SubTitle,
-            .fontFamily = k_proseFamily,
-        };
-        constexpr TextStyle k_proseSection{
-            .name = L"ProseSection",
-            .base = &TextStyles::Section,
-            .fontFamily = k_proseFamily,
-        };
+        // The application's sheet holds them - see textEngineStyles.
+        constexpr std::wstring_view k_proseTitle = L"ProseTitle";
+        constexpr std::wstring_view k_proseSubTitle = L"ProseSubTitle";
+        constexpr std::wstring_view k_proseSection = L"ProseSection";
 
         // How far a clue in the list is pushed in. An indent belongs to the paragraph it is stated
         // for, so every bullet line states it.
@@ -852,9 +842,30 @@ namespace TextEngine_App
         }
     }
 
+    // Built on first use and kept for the process, which every text built over it lives inside.
+    const StyleSheet& textEngineStyles()
+    {
+        static const StyleSheet sheet = []() {
+            StyleSheet built;
+            const auto addProse = [&built](std::wstring_view name, std::wstring_view base) {
+                built.set(TextStyle{
+                    .name = std::wstring{ name },
+                    .base = built.find(base),
+                    .fontFamily = std::wstring{ k_proseFamily },
+                });
+            };
+            addProse(k_proseTitle, TextStyles::Title);
+            addProse(k_proseSubTitle, TextStyles::SubTitle);
+            addProse(k_proseSection, TextStyles::Section);
+            return built;
+        }();
+        return sheet;
+    }
+
+    // Over the sheet holding the prose styles, whatever the application's sheet is.
     Text buildRichShowcase(std::size_t lineCount)
     {
-        Text result;
+        Text result{ textEngineStyles() };
 
         const std::size_t written = appendOpening(result);
 

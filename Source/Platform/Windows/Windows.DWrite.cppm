@@ -476,12 +476,12 @@ namespace ClaFi::PlatformImplementation::Windows
 
     FontRequest leadingFont(const INativeTextLayout::BuildParams& params)
     {
-        const TextStyle& body = TextStyles::Body;
+        const BaseFont& base = params.baseFont;
         return {
-            leadingSpanValue(params.families, params.isEmpty, std::wstring{ *body.fontFamily }),
-            leadingSpanValue(params.sizes, params.isEmpty, *body.fontSize) * params.scaleFactor,
-            leadingSpanValue(params.weights, params.isEmpty, *body.fontWeight),
-            leadingSpanValue(params.styles, params.isEmpty, *body.fontStyle),
+            leadingSpanValue(params.families, params.isEmpty, base.family),
+            leadingSpanValue(params.sizes, params.isEmpty, base.size) * params.scaleFactor,
+            leadingSpanValue(params.weights, params.isEmpty, base.weight),
+            leadingSpanValue(params.styles, params.isEmpty, base.style),
         };
     }
 
@@ -520,23 +520,23 @@ namespace ClaFi::PlatformImplementation::Windows
 
         if (params.isEmpty) {
             DWRITE_TEXT_RANGE dRange{ 0, 1 };
-            const TextStyle& body = TextStyles::Body;
+            const BaseFont& base = params.baseFont;
 
             const std::wstring family = params.families.empty()
-                ? std::wstring{ *body.fontFamily }
+                ? base.family
                 : params.families.back().value;
             checkHr(m_layout->SetFontFamilyName(nativeFamilyName(family.c_str()), dRange));
 
-            const float size = params.sizes.empty() ? *body.fontSize : params.sizes.back().value;
+            const float size = params.sizes.empty() ? base.size : params.sizes.back().value;
             checkHr(m_layout->SetFontSize(size * params.scaleFactor, dRange));
 
             const FontWeight weight = params.weights.empty()
-                ? *body.fontWeight
+                ? base.weight
                 : params.weights.back().value;
             checkHr(m_layout->SetFontWeight(static_cast<DWRITE_FONT_WEIGHT>(weight), dRange));
 
             const FontStyle style = params.styles.empty()
-                ? *body.fontStyle
+                ? base.style
                 : params.styles.back().value;
             checkHr(m_layout->SetFontStyle(style == FontStyle::Italic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL, dRange));
         }

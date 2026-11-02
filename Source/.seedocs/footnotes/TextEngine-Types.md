@@ -77,97 +77,149 @@ which is why TextHistory takes a ControlText.
 
 ## Text
 
-**A text is its words in runs.** A run is a stretch of characters in one look - see TextLook -
-with the link it goes to and the anchor it is, where it has them. The runs follow one another with
-no gap, so every character has one look.
+**A text is its words in runs.** A run is a stretch of characters in one style, with the link it
+goes to and the anchor it is, where it has them. The runs follow one another with no gap, so every
+character has one style - see Text styles.
 
-**A run names its look in the text's own table**, and a look names its style by address. The style
-stands outside the text: in TextStyles, among an application's constants, or in a StyleSheet.
+**A text is built over a sheet**, the application's where none is given - see StyleSheet. A
+wrapper's style name is found there as it is written, and a format's as the text is laid out:
+
+    Text caption{ projectStyles, StyledText{ L"Note", name }, L" saved" };
+
+The sheet outlives the text. A copy, and a text assigned over another, is over the sheet of the one
+it copies.
 
 **A paragraph may state a look of its own**, which every line it holds reads - see ParagraphLook.
 
-**Two texts are equal when their words, runs and paragraphs say the same**, whatever order they
-were written in.
+**Two texts are equal when they are over one sheet, carry the same named styles, and their words
+draw alike**: the same characters in the same fields and script levels, with the same links,
+anchors, objects and paragraph looks - whichever styles state those fields, and in whatever order
+the texts were written.
+
+## Text styles
+
+**The text's own styles, in a sheet over the one the text is built over.** Each run is set in one
+of them: a style named none, stating the fields the run sets over a base the text reaches. The text
+holds a look once, so two runs drawn alike share a style.
+
+**A style from elsewhere goes by its name.** Where a text is put in another, pasted or selected,
+each run's base is found in the receiving text by its name, its own styles first:
+
+- a name the receiving text reaches is that style, which draws the words
+- a name it reaches none of comes as a named style of the text's own, a copy of the style based on
+  its base as found the same way
+
+**A base its own text does not find by its name** - a style removed from its sheet, or one
+standing behind another of its name - lends the run its fields instead, and the words draw as they
+did. Text::pieces hands such a run over the same way.
 
 ## TextStyle
 
-**A named look, stated once and named by address.** TextStyles holds the framework's: Body, Title,
-SubTitle, Heading, SubHeading, Section, SubSection, SubBody and Code. An application states its own
-as constants, or keeps any number of them in a StyleSheet:
-
-    constexpr TextStyle k_note{
-        .name = L"Note",
-        .base = &TextStyles::SubBody,
-        .ink = InkWell::spotInk(),
-    };
+**A look words are set in, held in a sheet** - see StyleSheet. A named one is a sheet's, found by
+its name. One named none is a run's style in a text's own sheet, or the fields a wrapper or a
+format states.
 
 **A style states the fields it sets**, and takes the rest from the style it is based on. A style
-based on none leaves them to whatever it is laid over.
+based on none leaves them to whatever it is laid over, and at last to the text's Body.
 
-**It outlives every text and format that names it** - a constant at namespace scope or a static
-member does, and one declared inside a function does not. A style made for one call is refused at
-compile time. A constant never changes; a sheet's style changes where the sheet is edited.
+**Its script levels stand inside its base's**, so a style based on a superscript style that states
+a subscript of its own is a subscript inside a superscript.
 
-**A file names a style by its name.** Reading finds it in the reading sheet - see
-StyleSheet ReadingScope - and then among the framework's; any other name reads back as words in no
-style.
+**A style is a value until a sheet holds it**, and set answers the sheet's own:
+
+    const TextStyle* note = sheet.set(TextStyle{
+        .name = L"Note",
+        .base = sheet.find(TextStyles::SubBody),
+        .ink = InkWell::spotInk(),
+    });
+
+## TextStyles
+
+**The names of the framework's styles**: Body, Title, SubTitle, Heading, SubHeading, Section,
+SubSection, SubBody and Code. The framework's sheet holds them, and every sheet reaches them where
+it does not restate one:
+
+    caption << StyledText{ TextStyles::Title, name };
+
+**Body draws what a run and its format leave unstated** - the Body the text's sheet finds, which is
+the framework's where no sheet restates it.
 
 ## StyleSheet
 
-**Named styles kept at run time, any number of them.** A sheet owns its styles, and each stays at
-one address for the sheet's life, so a text names a sheet's style by address as it names a constant:
+**Named styles over a parent sheet, and the styles texts cache by their values.** find answers the
+sheet's own style of a name, else its parent's, up to the framework's sheet, which holds TextStyles
+and is over none:
 
-    StyleSheet sheet;
-    const TextStyle* note = sheet.set(TextStyle{
+    StyleSheet projectStyles{ &StyleSheet::application() };
+    projectStyles.set(TextStyle{
         .name = L"Note",
-        .base = &TextStyles::SubBody,
+        .base = projectStyles.find(TextStyles::SubBody),
         .ink = InkWell::spotInk(),
     });
-    text << StyledText{ *note, L"Read this first" };
+    Text caption{ projectStyles, StyledText{ L"Note", L"Read this first" } };
 
-**The sheet outlives every text naming its styles.** A copy has styles of its own at addresses of
-its own.
+**The application's sheet is the one AppParams::styleSheet states**, or the framework's where it
+states none. A text built with no sheet given is over it.
 
-**A name the sheet holds is the sheet's style.** find answers the sheet's style of a name, else the
-framework's. A style named as one of the framework's stands in for it: everything read through the
-sheet takes it, and so does every base in the sheet - `Name=Code` with an ink is the framework's
-Code in that ink, for every style based on Code. styleFor answers what the sheet sets in place of a
-framework style, the way a builder of pages takes its looks:
+**Each style stays at one address for the sheet's life**, so a text based on it holds it. The sheet
+outlives every text over it and every text based on one of its styles. A sheet is never assigned -
+takeStyles states another's styles over its own. A copy has styles of its own, each at the position
+the other holds it.
 
-    StyledText{ sheet.styleFor(TextStyles::Code), name }
+**A name the sheet holds is the sheet's style.** A style named as one up the parents stands in for
+it: everything found through the sheet takes it, and so does every base in the sheet - `Name=Code`
+with an ink is Code in that ink, for every style based on Code.
 
-**A base is one of the framework's or one the sheet lists.** A base leading back to the style is
-refused, and so is one reaching, through another style, the framework style it stands in for.
+**A base is one the sheet lists or one up its parents.** A base leading back to the style is
+refused, and so is one reaching, through another style, the style it stands in for.
 
-**Assigning a sheet keeps every style the two name alike where it stands**, with the other's fields,
-so a sheet read again over the one in use keeps its texts' styles. A style the other lacks is
-removed, as remove says.
+**A text keeps its runs' styles in a sheet of its own** - see Text styles, StyleSheet cache and
+StyleSheet carry.
 
-**An edit redraws.** A change to what a style the sheet already holds draws - its fields, its base,
-a style standing in for one that others were based on - moves StyleSheet::revision on and raises
-StylesEditedEvent, and every window lays out again. A style added is no edit: no text names it yet.
-Nor is a rename, since a text draws by address - unless the new name makes the style stand in for
-one of the framework's, which can change what it and the styles based on it draw.
+**takeStyles keeps every style the two name alike where it stands**, with the other's fields, so a
+sheet read again over the one in use keeps its texts' styles. A style the other lacks is removed,
+as remove says.
 
-**A field one style lends a run set in another is copied into the run** - see TextLook - and an
+**An edit redraws.** It moves StyleSheet::revision on and raises StylesEditedEvent, and every
+window lays out again:
+
+- a change to a style the sheet holds - its fields, its base
+- a rename or a removal, since a format naming the style finds another from then on
+- a style added under a name one up the parents holds, where it draws otherwise than that one
+
+A style added under a name nothing holds is no edit: no text is set in it yet.
+
+**A field one style lends a run set in another is copied into the run** - see TextLayer - and an
 edit of the lending style does not reach that copy.
 
-**NamedIn gathers the styles a text is set in beyond the framework's**, with those they are based
-on: what a copied text carries beside it - see StdActions.
+**A name written in code that the text reaches no style of** sets the words in no style and raises
+UnknownStyleEvent - see StyledText. The application logs each such name once.
+
+## StyleSheet cache
+
+**The position of a style named none stating those values**, one held or one added, and at answers
+the style at a position. A name given with the values is no part of them. A cached style is not
+listed and is no edit. A position holds until takeStyles or moveTo reorders the sheet, which a
+text never does to its own.
+
+## StyleSheet carry
+
+**States a style as set does, and raises no edit**, for a sheet only one text draws from: the text
+is being written, and lays out anew whatever the sheet answers.
 
 ## StyleSheet ReadingScope
 
-**The sheet a name read from a file is looked up in, while the scope lives:**
+**The sheet a text read from a file is built over, while the scope lives:**
 
     {
         const StyleSheet::ReadingScope scope{ &projectStyles };
         caption = node.get();
     }
 
-A name is looked up in the text's own styles first, then the reading sheet, then the framework's.
-Where no scope is set, the reading sheet is the application's - AppParams::styleSheet. A scope of
-none reads through the application's sheet as well. Scopes nest, and each puts back the one it
-found. A scope is held per thread.
+A name the file states is found among the text's own styles first, then in the reading sheet and up
+its parents. Where no scope is set, the reading sheet is the application's. A scope of none reads
+over the application's sheet as well. Scopes nest, and each puts back the one it found. A scope is
+held per thread.
 
 **A Text is read when it is taken out of its node**, by get or getTo, so the scope has to stand
 around that call and not only around the file's load.
@@ -177,16 +229,17 @@ around that call and not only around the file's load.
 **States a style under its name.** The sheet's style of that name takes the fields and the base,
 and keeps its address; a name the sheet does not list adds a style. The strings are copied in.
 
-**A style named as one of the framework's and based on none is based on that one**, which is what
-a file reads such an entry as. Nothing is answered where the name is empty or the base is refused.
+**A style named as one up the parents and based on none is based on that one**, which is what a
+file reads such an entry as. Nothing is answered where the name is empty or the base is refused.
 
 ## StyleSheet remove
 
-**A removed style leaves the list and stays where it stands**, so a text naming it draws as it did,
-and the sheet holds it until it goes. The styles based on it are based on its base instead, and one
-named as a framework style that is left based on none is based on that one. A file written
-afterwards names it nowhere, and a text naming it reads back in whatever then holds its name: a
-style added under it, the framework's, or none.
+**A removed style leaves the list and stays where it stands**, so a text based on it draws as it
+did, and the sheet holds it until it goes. The styles based on it are based on its base instead,
+and one named as a style up the parents that is left based on none is based on that one.
+
+**A file written afterwards names it nowhere**, and a text based on it is written with its fields,
+as it is put in another - see Text styles.
 
 ## TextEngine layoutGeneration
 
@@ -194,25 +247,6 @@ style added under it, the framework's, or none.
 come out differently now. invalidateLayouts drops the cache and moves it on - for the font table
 above all - and so does an edit to any style sheet. An owner reading a number other than the one it
 built at invalidates its own layout.
-
-## TextLook
-
-**How a run of words looks**: the style it is set in, the fields it states over that style - a
-family, a size, a weight, a slant, an ink - and the script levels it stands in, the outermost first.
-
-**The inner wins.** A wrapper laid over words fills only the fields they leave unstated, by
-themselves or through their style. So the family in
-`FamilyText{ L"Georgia", StyledText{ TextStyles::Section, ... } }` is Section's own; the face goes
-inside the style, or into a style of the application's own based on Section.
-
-**Two named styles, one inside the other**: the inner is the run's style, and what the outer states
-beyond it is copied in as the run's own fields.
-
-**Scripts compound.** A level moves the baseline by its share of the size it is entered at - the
-size the words take without it - and takes a share of that size for them.
-
-**A field is drawn from the first that states it**: the run itself, its style, the TextFormat, the
-format's style, and Body. A link's ink stands between the run's style and the format - see Links.
 
 ## ParagraphLook
 
@@ -228,12 +262,27 @@ or a tab stop. Its character is k_objectChar, and it is a run of its own.
 
 ## TextLayer
 
-**What a wrapper lays over its words**: a look, a link target, an anchor name. Each wrapper fills
-one of them - see ScopedText.
+**What a wrapper lays over its words**: a style name, the fields it states, a link target, an
+anchor name. Each wrapper fills one of them - see ScopedText.
+
+**The inner wins.** A wrapper laid over words fills only the fields they leave unstated, by
+themselves or through their base. So the family in
+`FamilyText{ L"Georgia", StyledText{ TextStyles::Section, ... } }` is Section's own; the face goes
+inside the style, or into a style of the application's own based on Section.
+
+**Two named styles, one inside the other**: the inner is the run's base, and what the outer states
+beyond it is copied in as the run's own fields.
+
+**Scripts compound.** A level moves the baseline by its share of the size it is entered at - the
+size the words take without it - and takes a share of that size for them.
+
+**A field is drawn from the first that states it**: the run's style and its bases, the TextFormat's
+style and its bases, and the text's Body. A link's ink stands between the run's and the format's -
+see Links.
 
 ## ScopedText
 
-**Words a wrapper lays a look, a link or an anchor over.** StyledText, ColoredText, BoldText,
+**Words a wrapper lays a style, a link or an anchor over.** StyledText, ColoredText, BoldText,
 ItalicText, SizedText, FamilyText, SuperscriptText, SubscriptText, LinkText and AnchorText are each
 one, and a text is written through them:
 
@@ -242,7 +291,7 @@ one, and a text is written through them:
 
 **What a wrapper holds is written first, and the wrapper is laid over it** - words, numbers,
 objects, other wrappers, a Text built over several statements. Where two state one field, the inner
-wins - see TextLook.
+wins - see TextLayer.
 
 **A wrapper that holds no character writes nothing.**
 
@@ -251,6 +300,16 @@ must not outlive the named values it was given.
 
 **A number with a format goes through std::format**:
 `ColoredText{ InkGrade::Muted, std::format(L"{:.2f}", value) }`.
+
+## StyledText
+
+**Words set in the style of a name**, found in the text they are written into as the wrapper is
+written: among its own styles, then in its sheet and up that sheet's parents.
+
+    caption << StyledText{ L"Note", name };
+
+**A name found nowhere sets the words in no style** and raises UnknownStyleEvent, which the
+application logs once per name.
 
 ## ParagraphText
 
@@ -272,28 +331,31 @@ put.
 
 ## TextPiece
 
-**A run as a document holds it**: its words, its whole look, its link and its anchor, or the object
-it is. A piece holding no words and stating a paragraph look stands at that paragraph's start.
+**A run as a document holds it**: its words, its style - named none, its own fields over a base -
+its link and its anchor, or the object it is. A piece holding no words and stating a paragraph look
+stands at that paragraph's start.
 
-**Text::pieces and the Text it constructs from them are each other's inverse**, and a document
-reads and writes a Text through them - see Dom.
+**Text::pieces and the Text it constructs from them are each other's inverse**, given with the
+text's own styles, and a document reads and writes a Text through them - see Dom. A piece may be
+based on one of the text's own styles, so pieces hold while the text stands. A base the text
+building from them does not reach is found by its name - see Text styles.
 
 ## TextRunView
 
-**One run as Text::forEachRun hands it over**: where it stands, its look, its link, its anchor and
-its object. The views are into the text and hold while it stands unchanged.
+**One run as Text::forEachRun hands it over**: where it stands, its style, its link, its anchor
+and its object. The views are into the text and hold while it stands unchanged.
 
 ## Edits
 
-**Words put in take on the look where they go.** replaceText lays what goes in under that look the
-way a wrapper is laid over its words: what the words state stands, and the surroundings fill the
-rest.
+**Words put in take on the style where they go.** replaceText lays what goes in under that style
+the way a wrapper is laid over its words: what the words state stands, and the surroundings fill
+the rest.
 
-- Replacing a range: the look, link and anchor of the first character replaced.
-- At a caret: the look and anchor of the character before it.
-- At a paragraph's start: the look and anchor of the character after it.
+- Replacing a range: the style, link and anchor of the first character replaced.
+- At a caret: the style and anchor of the character before it.
+- At a paragraph's start: the style and anchor of the character after it.
 - A link at a caret only from inside it, where the characters on both sides carry it.
-- After a line end put in: the look and anchor of the character after the edit, as at a
+- After a line end put in: the style and anchor of the character after the edit, as at a
   paragraph's start - so words put in at once come out as they would typed one by one.
 
 **A paragraph keeps its look through every edit made inside it.** One joined to it takes that look:
@@ -311,17 +373,27 @@ paragraph looks of its own lays each over that look.
 start and its end included, so a copy of whole paragraphs reads as they look.
 
 **restorableText takes the same, less a look for a paragraph starting at its start**, and
-restoreText puts such a text back as it was, every run and paragraph in the look it had. An undo
+restoreText puts such a text back as it was, every run in the style and every paragraph in the look
+it had. An undo
 goes this way, so what an edit took out comes back exactly.
+
+## BaseFont
+
+**The format's style over the text's Body**, resolved once per bake. A text holding nothing is drawn
+in it and its caret is measured in it, and a layout takes from it whatever a paragraph's spans
+leave unstated.
 
 ## TextFormat
 
-**The look and the paragraph look a text is laid out over**: a style, an ink, an alignment, an
-indent, a line spacing.
+**The style and the paragraph look a text is laid out over**: a style name, an ink, an alignment,
+an indent, a line spacing.
 
-**The text's own looks stand over it.** A field a run states, by itself or through its style,
-wins, and the format fills the rest - see TextLook. A paragraph's own look stands over the
-format's the same way.
+**The name is found where the text's are**, among its own styles and in its sheet, each time the
+text is laid out. A name found nowhere is reported as a wrapper's is - see StyledText.
+
+**The text's own styles stand over it.** A field a run states, by itself or through its base, wins,
+and the format fills the rest - see TextLayer. A paragraph's own look stands over the format's the
+same way.
 
 **It is presentation, kept apart from the text.** selectedText, the clipboard, the history and a
 document never see it. A control with a format and no text is blank.
@@ -334,11 +406,15 @@ the same answer.
 **Each value replaces what the format states of its kind**, and another format replaces every
 field it states. Two formats saying the same thing are equal and share a cache entry.
 
-**A size or a family comes in a style.** An application states one as a constant and the format
+**A size or a family comes in a style.** An application states one in its sheet and the format
 names it:
 
-    constexpr TextStyle k_readout{ .name = L"Readout", .fontSize = 11.0f };
-    TextFormat{ k_readout };
+    sheet.set(TextStyle{
+        .name = L"Readout",
+        .base = sheet.find(TextStyles::Body),
+        .fontSize = 11.0f,
+    });
+    TextFormat{ L"Readout" };
 
 **Values only.** A character, a link or an anchor is refused at compile time.
 
