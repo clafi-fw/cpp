@@ -157,6 +157,7 @@
                     <li><a href="#stack">Stack</a></li>
                     <li><a href="#wrapping">Wrapping stacks</a></li>
                     <li><a href="#panel">Panel and its five slots</a></li>
+                    <li><a href="#splitter">Splitter</a></li>
                     <li><a href="#withbody">WithBody, HostProps, BodyProps</a></li>
                     <li><a href="#scrollbox">ScrollBox</a></li>
                     <li><a href="#others">Expander, tabs, pages</a></li>
@@ -576,9 +577,10 @@ what it holds today, and cutting it back is what leaves a strip of tabs or a run
 the room to fit into a narrower box. So the floor is a <code>MinSize</code> somebody set, here
 or below, and a tree nobody set one in can be cut to nothing.</p>
 
-<p>What reads it is whoever divides space and has less of it than was asked for - today, the
-window placement, which cuts a window to the room its side of the screen has and no further
-than this.</p>
+<p>What reads it is whoever divides space and has less of it than was asked for. The window
+placement cuts a window to the room its side of the screen has and no further than this. A
+panel with a <a href="#splitter">splitter</a> keeps the body its floor and cuts the bar no
+further than its own.</p>
 
 <div class="info">
 A <code>ScrollBox</code> states that its scrolled body gives way entirely: a box that scrolls
@@ -1060,7 +1062,8 @@ wide as <em>it</em> measured - it is the one place in a panel where a child's wi
 answer - and as tall as the middle row. The body gets what is left.</p>
 
 <p>The panel's <code>Spacing</code> is what stands between a bar and the body. A bar that
-measured nothing takes its gap with it, so an empty or hidden bar leaves no trace.</p>
+measured nothing takes its gap with it, so an empty or hidden bar leaves no trace. A bar the
+user resizes gets a <a href="#splitter">splitter</a> in that gap.</p>
 
 <div class="info">
 <strong>A child that needs a constructor argument is still built where it is declared.</strong>
@@ -1076,6 +1079,67 @@ outside, which is either <code>VerticalAlign::Fill</code> or the panel itself st
 somebody else's body slot. That is what lets a column of sections grow as sections are opened
 while the same column inside a window simply fills the window.
 </div>
+
+<h3 id="splitter">Splitter</h3>
+
+<p>A <code>Splitter</code> is the line between a bar and the body, and the pointer drags it to
+resize the bar. A double click on it fits the bar to its content. The panel makes it with
+<code>createSplitter</code>, naming the slot of the bar it stands beside:</p>
+
+<pre><code><span class="tp">StackView</span>&amp; m_tree{  <span class="fn">createLeftBar</span>&lt;<span class="tp">StackView</span>&gt;(<span class="tp">MinSize</span>{ <span class="st">180.0f</span>, <span class="st">0.0f</span> }) };
+<span class="tp">Splitter</span>&amp;  m_split{ <span class="fn">createSplitter</span>(<span class="tp">PanelSlot</span>::Left) };
+<span class="tp">ScrollBox</span>&amp; m_view{  <span class="fn">createBody</span>&lt;<span class="tp">ScrollBox</span>&gt;() };</code></pre>
+
+<p><strong>The bar comes first.</strong> A splitter is made beside a bar already in its slot, so
+as a member it is declared after the bar. <code>createSplitter</code> throws for a slot with no
+bar, for the body, and for a bar that has a splitter already. It shows and hides with its
+bar.</p>
+
+<p><strong>The line stands in the panel's spacing.</strong> The gap between the bar and the body
+is the panel's <code>Spacing</code>, and it widens to the line only where the spacing is
+thinner. A splitter added to a panel with spacing leaves the bar and the body where they
+were.</p>
+
+<p><strong>The bar keeps the metrics it was built with.</strong> The extent a drag or a fit
+states stands in for the bar's <code>PreferredSize</code> from the next pass on, and the bar's
+<code>MinSize</code> and <code>MaxSize</code> still clamp it - a <code>MaxSize</code> is where
+the drag stops. A <code>PreferredSize</code> on the bar is where it starts.</p>
+
+<p><strong>The body keeps its floor.</strong> A drag stops where the body reaches
+<a href="#minsize">what it can be cut to</a>. A panel made too small for both cuts the bar
+instead, down to the bar's own floor. The stated extent is kept, so the bar comes back to it
+as the panel grows.</p>
+
+<p><strong>Keep the split through <code>OnBarResize</code>.</strong> It is raised with the slot
+and the extent, in design units, whenever a drag or a fit settles one. Store the extent, and
+hand it back with <code>setBarExtent</code> when the view is built again.
+<code>setBarExtent</code> and <code>resetBarExtent</code> raise no event, so a restored extent
+is not stored a second time.</p>
+
+<pre><code><span class="fn">onBarResize</span>([<span class="kw">this</span>](<span class="tp">BarResizeEvent</span>&amp; event) {
+    <span class="fn">storeTreeWidth</span>(event.extent);
+});
+
+<span class="cm">// The extent kept from the last run.</span>
+<span class="fn">setBarExtent</span>(<span class="tp">PanelSlot</span>::Left, <span class="fn">storedTreeWidth</span>());</code></pre>
+
+<table>
+<tr><th>Member</th><th>Does</th></tr>
+<tr><td><code>createSplitter(slot)</code></td><td>puts a splitter between the bar in that slot and the body, and answers it</td></tr>
+<tr><td><code>barExtent(slot)</code></td><td>what the bar stands at - a side bar's width, a top or bottom bar's height - in design units</td></tr>
+<tr><td><code>setBarExtent(slot, extent)</code></td><td>states the extent the bar is laid out at from the next pass on</td></tr>
+<tr><td><code>resetBarExtent(slot)</code></td><td>drops the stated extent, so the bar is what its own metrics make it</td></tr>
+<tr><td><code>fitBarToContent(slot)</code></td><td>sizes the bar to what its content measures on the next pass, and keeps that as its extent - what a double click does</td></tr>
+<tr><td><code>OnBarResize</code></td><td>raised with the panel, the slot and the extent a drag or a fit settled</td></tr>
+</table>
+
+<p>On <code>Panel</code> the five members are public. A control built on
+<code>PanelBase</code> calls them from its own code, and <code>OnBarResize</code> is public on
+every panel.</p>
+
+<p>The splitter answers the mouse only - navigation passes over it and no key moves it. It is
+drawn in the <code>Divider</code> element's colours, and the pointer over it shows the resize
+arrow for its direction.</p>
 
 <h3 id="withbody">WithBody, HostProps and BodyProps</h3>
 
@@ -1510,6 +1574,7 @@ from. A wrapping panel in an auto-fitting window therefore stands at its
 <tr><td>follow one another in reading order</td><td><code>Stack</code>, <code>Horizontal</code> or <code>Vertical</code></td></tr>
 <tr><td>are a set that should flow to fill the room</td><td><code>Stack</code>, <code>HorizontalWrap</code> or <code>VerticalWrap</code></td></tr>
 <tr><td>frame something - a strip over a view, a bar beside it</td><td><code>Panel</code>, with the framed thing in the body</td></tr>
+<tr><td>share the room in a proportion the user moves - a tree beside a view</td><td><code>Panel</code>, with a <code>Splitter</code> beside the bar</td></tr>
 <tr><td>are one thing that may outrun its room</td><td><code>ScrollBox</code> around it</td></tr>
 <tr><td>are values that must line up across rows</td><td><code>Grid</code></td></tr>
 <tr><td>are one of several views of the same place</td><td><code>PageControl</code>, or <code>TabbedBox</code> with a strip</td></tr>
@@ -1673,8 +1738,9 @@ to be free to follow. See <a href="#t-grow">a panel that will not grow to its bo
 
 <h3 id="r-split">Two panes side by side</h3>
 
-<p>A <code>Panel</code> with one pane in a side bar and the other in the body. The side bar is
-as wide as it measured, so it is the one that states a width; the body takes what is left.</p>
+<p>A <code>Panel</code> with one pane in a side bar, the other in the body, and a splitter
+between them. The side bar is as wide as it measured, so it is the one that states a width;
+the body takes what is left.</p>
 
 <pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">StackView</span>&gt;&amp; m_nav{ <span class="fn">createLeftBar</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">StackView</span>&gt;&gt;(
     <span class="tp">HostProps</span>{
@@ -1684,6 +1750,7 @@ as wide as it measured, so it is the one that states a width; the body takes wha
     },
     <span class="tp">BodyProps</span>&lt;&gt;{}
 ) };
+<span class="tp">Splitter</span>&amp; m_split{ <span class="fn">createSplitter</span>(<span class="tp">PanelSlot</span>::Left) };
 <span class="tp">ScrollBoxWith</span>&lt;<span class="tp">CodeBox</span>&gt;&amp; m_view{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">CodeBox</span>&gt;&gt;(
     <span class="tp">HostProps</span>{ <span class="tp">ScrollBars</span>::Both },
     <span class="tp">BodyProps</span>&lt;&gt;{}
@@ -1691,6 +1758,10 @@ as wide as it measured, so it is the one that states a width; the body takes wha
 
 <p>Zero on an axis of a metric says nothing about that axis, so
 <code>MinSize{ 120.0f, 0.0f }</code> states a width floor and leaves the height alone.</p>
+
+<p>The pointer drags the line between the panes, starting from the width
+<code>PreferredSize</code> states. To bring the split back on the next run, keep the extent
+<a href="#splitter">OnBarResize</a> carries.</p>
 
 <h3 id="r-fit">A window sized by its content</h3>
 
@@ -1844,7 +1915,16 @@ against it hands back the same number.
 <p>A left or right bar is as wide as <em>it</em> measured - it is the one place in a panel
 where a child's width is its own answer, and the panel will not stretch it. State the width on
 the bar: <code>MinSize{ w, 0.0f }</code> for a floor, <code>PreferredSize{ w, 0.0f }</code>
-for a starting width, <code>FixedSize</code> to pin it.</p>
+for a starting width, <code>FixedSize</code> to pin it. A bar with a splitter is laid out at
+the extent a drag or <code>setBarExtent</code> stated, and <code>resetBarExtent</code> hands it
+back to its metrics.</p>
+
+<h4>A splitter will not move its bar</h4>
+
+<p>The drag is held in a range. The bar stays between its own floor and its
+<code>MaxSize</code>, and grows only as far as leaves the body its floor. A
+<code>FixedSize</code> on the bar pins it both ways. A <code>MinSize</code> on the body, or
+on what stands in it, is where the line stops as the bar grows.</p>
 
 <h4>A control paints nothing and has no height</h4>
 
@@ -1936,6 +2016,7 @@ reason.</li>
 <tr><td><code>panel.createTopBar&lt;T&gt;(props...)</code></td><td><code>T&amp;</code> in the Top slot</td></tr>
 <tr><td><code>panel.createLeftBar&lt;T&gt;</code>, <code>createRightBar&lt;T&gt;</code>, <code>createBottomBar&lt;T&gt;</code></td><td>the other bars</td></tr>
 <tr><td><code>panel.createBody&lt;T&gt;(props...)</code></td><td><code>T&amp;</code> in the Body slot</td></tr>
+<tr><td><code>panel.createSplitter(slot)</code></td><td><code>Splitter&amp;</code> between the bar in that slot and the body</td></tr>
 <tr><td><code>scrollBox.createCorner&lt;T&gt;(props...)</code></td><td>the square between the two bars</td></tr>
 <tr><td><code>WithBody&lt;Host, Body&gt;</code>, <code>ScrollBoxWith&lt;T&gt;</code>, <code>ExpanderWith&lt;T&gt;</code></td><td>a typed <code>body()</code>, built from <code>BodyProps</code></td></tr>
 </table>
