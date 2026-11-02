@@ -721,6 +721,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Defaults.cppm">
       <Filter>Y_Core\Dom</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-MultiTypeSequence.cppm">
+      <Filter>Y_Core\Dom</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\Dom\DomEngine-Section.cppm">
       <Filter>Y_Core\Dom</Filter>
     </ClCompile>
@@ -1000,6 +1003,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\System\System.Utils.cppm">
       <Filter>Y_Core\System</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.BakedText.cpp">
+      <Filter>Y_Core\TextEngine</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.BakedText.cppm">
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>
@@ -1028,12 +1034,6 @@
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Searcher.cppm">
-      <Filter>Y_Core\TextEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Tags.cpp">
-      <Filter>Y_Core\TextEngine</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Tags.cppm">
       <Filter>Y_Core\TextEngine</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\TextEngine\TextEngine.Text.cpp">

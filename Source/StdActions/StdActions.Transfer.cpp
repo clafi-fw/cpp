@@ -26,10 +26,11 @@ namespace ClaFi::Transfer
     {
         Dom::Value<Text> node{ nullptr, {} };
         node.set(text);
+        const Dom::Value<Text> blank{ nullptr, {} };
 
         std::wstringstream stream;
         Dom::FileFormat::ClaFi format;
-        format.saveSectionToStream(node, stream);
+        format.saveSectionToStream(*Dom::withoutDefaults(node, blank), stream);
         return toUtf8(stream.str());
     }
 

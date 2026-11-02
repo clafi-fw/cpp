@@ -9,13 +9,85 @@ The words that do not fit above a declaration.
 
 Upper case is written and either case is read. Any other string leaves the colour as it was.
 
-**This is the spelling between ClaFi consumers** - a `color #...` tag in a document's markers.
+**This is the spelling between ClaFi consumers** - an `Ink=#...` among a text's styles.
 How a user sees or copies a colour is a presenter's choice - see ColorSpelling.
 
 ## WriteDefaults
 
 **Set to No, a saved document holds only what differs from its layout.** It reads back the same,
-since a key the file leaves out keeps the layout's value.
+since a key the file leaves out keeps the layout's value. A list's items hold only what differs
+from an item nothing is stated about - a multi-type sequence's, from their name's blueprint - and
+every item stays, since a list is read by position.
+
+## MultiTypeSequence
+
+**A list kept in the order written, its items of several kinds, each under a name.** The name
+picks the item's blueprint, which holds what the item is before anything is stated: a value, or a
+section's schema. A name may repeat, and one blueprint may be the unnamed one:
+
+    MultiTypeSequence& pieces = section.addMultiTypeSequence(L"Pieces");
+    pieces.addBlueprint(L"", std::wstring{});
+    pieces.addBlueprint(L"Run", runSchema);
+
+**Each format keeps the order:**
+
+- ClaFi: a `name=value` or `name=[` line per item, and `=value` for an unnamed one.
+- JSON: an array of one-member objects - `[ { "": "Use " }, { "Run": { ... } } ]`.
+- XML: an element per item, named as the item is. Unnamed items are the text between the
+  elements, written with nothing added around it, and a reader takes every blank there as words.
+
+**An item whose name no blueprint has is skipped**, with a schema error, and so is one whose value
+is of another kind than its blueprint's.
+
+## CompositeSerializer<Text>
+
+**A text is a section of its own styles and its pieces**, the pieces a MultiTypeSequence in text
+order:
+
+    Caption=[
+        Styles=[
+            =[
+                Name=Code 1
+                Base=Code
+                Ink=spot
+            ]
+        ]
+        Pieces=[
+            P=[
+                Align=Center
+            ]
+            ="Use "
+            Run=[
+                Style=Code 1
+                =replaceText
+            ]
+            Space=4
+        ]
+    ]
+
+**A piece in no look and linking nowhere is one line**: its words unnamed, or an object under its
+name - Icon, Space, VSpace, FlexSpace or TabTo - whose character goes without saying.
+
+**A Run holds anything more**: its words as its unnamed value, or an object under its name, and
+Style, Link and Anchor. Style names one of the text's own styles, or else one of the framework's;
+any other name reads as words in no style.
+
+**A P states the paragraph's Align, Indent or LineSpacing** and stands where the paragraph starts.
+
+**In XML a run's words are its element's text**, and an unnamed piece is text between the elements:
+
+    <Pieces><P Align="Center"/>Use <Run Style="Code 1">replaceText</Run></Pieces>
+
+**The text's own styles are the looks that say more than a style's name.** Each is written once,
+named after the style it is based on and numbered - Code 1, Code 2, and Style 1 where it is based
+on none - and states its fields: FontFamily, FontSize, FontWeight, FontStyle, Ink and Scripts.
+Reading, an entry stating no Base is based on the style of its own name, so `Name=Code` with
+`Ink=spot` is this text's code in the spot ink.
+
+**An ink is an ink colour and a grade**: the colour is left out where it is text, and the grade
+where it is strongest and the colour is not text - `spot`, `accent muted`, `muted`, `strongest`. A
+grade between the steps is written as its share, and a colour stated outright as `#FF8800`. An icon
+is `w,h,baseline` and reads back with no painter, drawing nothing.
 
 ## Dt::Section
 

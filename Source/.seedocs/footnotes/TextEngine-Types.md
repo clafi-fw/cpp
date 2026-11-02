@@ -75,19 +75,92 @@ without reading it. A copy or a move is a new text with an id of its own.
 **Every write through ControlText moves the stamp on.** A write through a `Text&` bypasses it,
 which is why TextHistory takes a ControlText.
 
+## Text
+
+**A text is its words in runs.** A run is a stretch of characters in one look - see TextLook -
+with the link it goes to and the anchor it is, where it has them. The runs follow one another with
+no gap, so every character has one look.
+
+**A run names its look in the text's own table**, and a look names its style by address. The style
+stands outside the text, in TextStyles or among an application's constants.
+
+**A paragraph may state a look of its own**, which every line it holds reads - see ParagraphLook.
+
+**Two texts are equal when their words, runs and paragraphs say the same**, whatever order they
+were written in.
+
+## TextStyle
+
+**A named look, stated once and named by address.** TextStyles holds the framework's: Body, Title,
+SubTitle, Heading, SubHeading, Section, SubSection, SubBody and Code. An application states its own
+as constants:
+
+    constexpr TextStyle k_note{
+        .name = L"Note",
+        .base = &TextStyles::SubBody,
+        .ink = InkWell::spotInk(),
+    };
+
+**A style states the fields it sets**, and takes the rest from the style it is based on. A style
+based on none leaves them to whatever it is laid over.
+
+**It outlives every text and format that names it** - a constant at namespace scope or a static
+member does, and one declared inside a function does not. A style made for one call is refused at
+compile time. It never changes once named.
+
+**A file names a style by its name.** Reading resolves the framework's names; any other name reads
+back as words in no style.
+
+## TextLook
+
+**How a run of words looks**: the style it is set in, the fields it states over that style - a
+family, a size, a weight, a slant, an ink - and the script levels it stands in, the outermost first.
+
+**The inner wins.** A wrapper laid over words fills only the fields they leave unstated, by
+themselves or through their style. So the family in
+`FamilyText{ L"Georgia", StyledText{ TextStyles::Section, ... } }` is Section's own; the face goes
+inside the style, or into a style of the application's own based on Section.
+
+**Two named styles, one inside the other**: the inner is the run's style, and what the outer states
+beyond it is copied in as the run's own fields.
+
+**Scripts compound.** A level moves the baseline by its share of the size it is entered at - the
+size the words take without it - and takes a share of that size for them.
+
+**A field is drawn from the first that states it**: the run itself, its style, the TextFormat, the
+format's style, and Body. A link's ink stands between the run's style and the format - see Links.
+
+## ParagraphLook
+
+**How a paragraph is laid out, as far as it states**: an alignment, an indent, a line spacing.
+What it leaves out comes from the TextFormat, and then from left, no indent and single spacing.
+
+**It belongs to the whole paragraph** - see ParagraphText and Edits.
+
+## InlineObject
+
+**A thing standing in a text as one character**: an icon, a space, a vertical space, a flex space
+or a tab stop. Its character is k_objectChar, and it is a run of its own.
+
+## TextLayer
+
+**What a wrapper lays over its words**: a look, a link target, an anchor name. Each wrapper fills
+one of them - see ScopedText.
+
 ## ScopedText
 
-**The words between a run's opening marker and its closer.** StyledText, ColoredText, BoldText,
+**Words a wrapper lays a look, a link or an anchor over.** StyledText, ColoredText, BoldText,
 ItalicText, SizedText, FamilyText, SuperscriptText, SubscriptText, LinkText and AnchorText are each
 one, and a text is written through them:
 
     caption << StyledText{ TextStyles::Title, name } << L" saved "
         << ColoredText{ InkGrade::Muted, when };
 
-**What a wrapper holds is written inside its run** - words, numbers, objects, other wrappers, a
-Text built over several statements. Where two state the same thing, the inner one wins.
+**What a wrapper holds is written first, and the wrapper is laid over it** - words, numbers,
+objects, other wrappers, a Text built over several statements. Where two state one field, the inner
+wins - see TextLook.
 
-**A run that holds no character writes nothing**, its markers included.
+**A wrapper that holds no character writes nothing.**
 
 **A named value is held by reference and a temporary by value**, so a wrapper kept in a variable
 must not outlive the named values it was given.
@@ -103,29 +176,63 @@ written, so a text that ends in one ends with no line end. A line end written ri
 an empty line.
 
 **Every line of the words takes the property** - a TextAlign, a ParaIndent or a ParaLineSpacing.
-Two properties are two wrappers, one inside the other.
+Two properties are two wrappers, one inside the other, and where both state one the inner wins.
 
-**A paragraph reads its properties afresh**, from its own markers and otherwise from the
-control's TextFormat, so a property runs on into no paragraph after its own.
+**A paragraph reads its own look**, and the control's TextFormat for what it leaves out, so a
+property runs on into no paragraph after its own.
 
 **A Text that starts or ends with one keeps those words on lines of their own** wherever it is
 put.
 
 **Lines that hold no character write nothing.** A blank line is a line end of its own.
 
+## TextPiece
+
+**A run as a document holds it**: its words, its whole look, its link and its anchor, or the object
+it is. A piece holding no words and stating a paragraph look stands at that paragraph's start.
+
+**Text::pieces and the Text it constructs from them are each other's inverse**, and a document
+reads and writes a Text through them - see Dom.
+
+## TextRunView
+
+**One run as Text::forEachRun hands it over**: where it stands, its look, its link, its anchor and
+its object. The views are into the text and hold while it stands unchanged.
+
+## Edits
+
+**Words put in take on the look where they go.** replaceText lays what goes in under that look the
+way a wrapper is laid over its words: what the words state stands, and the surroundings fill the
+rest.
+
+- Replacing a range: the look, link and anchor of the first character replaced.
+- At a caret: the look and anchor of the character before it.
+- At a paragraph's start: the look and anchor of the character after it.
+- A link at a caret only from inside it, where the characters on both sides carry it.
+- After a line end put in: the look and anchor of the character after the edit, as at a
+  paragraph's start - so words put in at once come out as they would typed one by one.
+
+**A paragraph keeps its look through every edit made inside it.** One joined to it takes that look:
+every paragraph starting inside what an edit takes out goes, and its words read the look of the
+paragraph the edit starts in. The first line of a text put in joins that paragraph the same way.
+
+**A line end put in splits a paragraph, and both halves keep its look.** A text put in with
+paragraph looks of its own lays each over that look.
+
+**selectedText takes the runs of the range and the looks of the paragraphs starting inside it**,
+its end included.
+
+**restoreText puts such a text back as it was**, every run and paragraph in the look it had. An
+undo goes this way, so what an edit took out comes back exactly.
+
 ## TextFormat
 
-**It holds the values a text starts from** - a colour, a style, a size, a family, bold, italic, an
-alignment, an indent, a line spacing. A script is left out: how far it is raised depends on the
-size in force where it opens, so its order among the other values would change what is drawn.
+**The look and the paragraph look a text is laid out over**: a style, an ink, an alignment, an
+indent, a line spacing.
 
-**The text's own markers override it.**
-
-- A push the text makes is read after the format's.
-- A paragraph property the text states replaces the format's for its own paragraph - see
-  ParagraphText.
-- A pop the text has no push for leaves the format's value in force - the format is the floor of
-  every stack. For a text whose pushes and pops pair up, the format acts as if written at index 0.
+**The text's own looks stand over it.** A field a run states, by itself or through its style,
+wins, and the format fills the rest - see TextLook. A paragraph's own look stands over the
+format's the same way.
 
 **It is presentation, kept apart from the text.** selectedText, the clipboard, the history and a
 document never see it. A control with a format and no text is blank.
@@ -135,13 +242,16 @@ the same answer.
 
 ## TextFormat operator<<
 
-**Values are kept in the order of their kinds**, whatever order they came in. Two formats saying
-the same thing are equal and share a cache entry.
+**Each value replaces what the format states of its kind**, and another format replaces every
+field it states. Two formats saying the same thing are equal and share a cache entry.
 
-**Bold and italic stay once stated** - no later value takes them off.
+**A size or a family comes in a style.** An application states one as a constant and the format
+names it:
 
-**Values only.** A character, a pop, a link or an anchor is refused at compile time. A TextOp
-other than PushBold or PushItalic throws std::logic_error.
+    constexpr TextStyle k_readout{ .name = L"Readout", .fontSize = 11.0f };
+    TextFormat{ k_readout };
+
+**Values only.** A character, a link or an anchor is refused at compile time.
 
 ## TextEdit
 
@@ -221,8 +331,10 @@ word of a link replaces part of it, and the new word belongs to the link.
 **Two links that meet and name one target are one** - pointed at and underlined whole, and typing
 where they meet goes inside.
 
-**A link is drawn in the accent ink** where no colour is written inside it. A colour around the
-link gives way to that ink, and one inside it wins.
+**A link is drawn in the accent ink** where no colour is written inside it, by itself or through
+its style. A colour around the link gives way to that ink, and one inside it wins.
+
+**A link inside another is the inner's.**
 
 **The underline shows on hover.** The control holding the layout names the hovered link with
 TextLayout::setHoveredLink, and the layout underlines it:
@@ -248,6 +360,9 @@ anchors with one name, the first in text order is reached.
 
 **Edits treat it as a run**: an edit inside moves its end, deleting all of it removes it, an undo
 puts it back, and text typed at its end joins it.
+
+**An anchor inside another is the inner's**, so the outer is reached at the first stretch of its
+words the inner does not hold.
 
 ## MonoFontRequest
 

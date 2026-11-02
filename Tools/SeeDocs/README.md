@@ -494,23 +494,24 @@ article stores no such link.
 
 ```
 Title = Writing ClaFi Text
-Lead = [ Text = One string and a list of markers ]
+Lead = [ Pieces = [ =[ = Words in runs, each in a look of its own ] ] ]
 Blocks = [
-    =[ Kind = Heading, Anchor = paragraphs, Text = [ Text = Paragraphs ] ]
-    =[ Kind = Paragraph, Text = [
-        Text = Call form() before the paint.
-        Markers = [ =[ At = 5, Tag = style code ] =[ At = 11, Tag = /style ] ]
-    ] ]
+    =[ Kind = Heading, Anchor = paragraphs, Text = [ Pieces = [ =[ = Paragraphs ] ] ] ]
+    =[ Kind = Paragraph, Text = [ Pieces = [
+        =[ = "Call " ]
+        =[ Style = Code, = form() ]
+        =[ = " before the paint." ]
+    ] ] ]
     =[ Kind = Code, Language = C++, Code = import ClaFi.Core.Foundation; ]
     =[ Kind = Callout, Callout = Warning, Blocks = [
-        =[ Kind = ListItem, List = Numbered, Text = [ Text = Register the action ] ]
+        =[ Kind = ListItem, List = Numbered, Text = [ Pieces = [ =[ = Register the action ] ] ] ]
     ] ]
 ]
 ```
 
 **An entry states only what it has.** A key at its default is left out and reads back as that
 default: a heading at level 1, a bullet item, an Info callout, a row that is not a group, an empty
-word, a text's markers where it has none. Every cell of a row and every item of a Do list is
+word, a text's own styles where it has none. Every cell of a row and every item of a Do list is
 written, an empty one too, so that the rest keep their places. A block whose Kind no block takes,
 or one its list may not hold - a callout inside a fold - is left out on reading.
 

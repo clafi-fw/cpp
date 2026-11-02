@@ -135,12 +135,33 @@ namespace ClaFi::Dom::FileFormat
                 else
                 {
                     const bool parentIsSequence = (parent->type() == DomNodeType::Sequence);
+                    // An item of a multi-type sequence is read into its name's blueprint, the
+                    // unnamed one included. The blueprint is asked first, so an item of the wrong
+                    // kind is not added.
+                    MultiTypeSequence* parentList = parent->type() == DomNodeType::MultiTypeSequence
+                        ? static_cast<MultiTypeSequence*>(parent)
+                        : nullptr;
+                    const DomNodeBase* blueprint = parentList ? parentList->blueprint(key) : nullptr;
+                    if (parentList && !blueprint)
+                    {
+                        parent->emitSchemaError(*parent, L"Schema mismatch: No blueprint for the item's name.");
+                    }
 
                     if (opensComposite)
                     {
                         if (key.empty() && parentIsSequence)
                         {
                             targetChild = &static_cast<SequenceBase*>(parent)->addNode();
+                        }
+                        else if (parentList)
+                        {
+                            const bool composite = blueprint
+                                && blueprint->type() != DomNodeType::ScalarValue;
+                            if (blueprint && !composite)
+                            {
+                                parent->emitSchemaError(*parent, L"Schema mismatch: Key expects a composite, but '[' found.");
+                            }
+                            targetChild = composite ? parentList->add(key) : &dummy;
                         }
                         else if (parent->type() == DomNodeType::Section || parent->type() == DomNodeType::CompositeValue)
                         {
@@ -153,6 +174,7 @@ namespace ClaFi::Dom::FileFormat
                             }
                             else if (targetChild->type() != DomNodeType::Section &&
                                 targetChild->type() != DomNodeType::Sequence &&
+                                targetChild->type() != DomNodeType::MultiTypeSequence &&
                                 targetChild->type() != DomNodeType::CompositeValue)
                             {
                                 parent->emitSchemaError(*parent, L"Schema mismatch: Key expects a composite, but '[' found.");
@@ -170,6 +192,17 @@ namespace ClaFi::Dom::FileFormat
                         if (key.empty() && parentIsSequence)
                         {
                             targetChild = &static_cast<SequenceBase*>(parent)->addNode();
+                        }
+                        else if (parentList)
+                        {
+                            if (blueprint && blueprint->type() == DomNodeType::ScalarValue)
+                            {
+                                targetChild = parentList->add(key);
+                            }
+                            else if (blueprint)
+                            {
+                                parent->emitSchemaError(*parent, L"Schema mismatch: Key expects a composite, but scalar value found.");
+                            }
                         }
                         else if (parent->type() == DomNodeType::Section || parent->type() == DomNodeType::CompositeValue)
                         {
@@ -207,6 +240,10 @@ namespace ClaFi::Dom::FileFormat
                         if (targetChild->type() == DomNodeType::Sequence)
                         {
                             static_cast<SequenceBase*>(targetChild)->clear();
+                        }
+                        else if (targetChild->type() == DomNodeType::MultiTypeSequence)
+                        {
+                            static_cast<MultiTypeSequence*>(targetChild)->clear();
                         }
                         stack.push_back(targetChild);
                     }
@@ -316,6 +353,19 @@ namespace ClaFi::Dom::FileFormat
                 writeIndentLocal();
                 stream << L"\t=";
                 saveNodeRecursive(stream, *seq.child(i), indent + 1);
+            }
+            writeIndentLocal();
+            stream << L"]\n";
+        }
+        else if (node.type() == DomNodeType::MultiTypeSequence)
+        {
+            stream << L"[\n";
+            const MultiTypeSequence& list = static_cast<const MultiTypeSequence&>(node);
+            for (const MultiTypeSequence::Item& item : list.items())
+            {
+                writeIndentLocal();
+                stream << L"\t" << item.name << L"=";
+                saveNodeRecursive(stream, *item.node, indent + 1);
             }
             writeIndentLocal();
             stream << L"]\n";

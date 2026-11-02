@@ -389,8 +389,8 @@ namespace ClaFi
         Buffer text{ *this };
         EventPhase phase() const { return m_phase; }
         // A control whose own text is the whole of its answer **names** it here instead of writing
-        // it into the buffer. A name is a pointer where a copy is the plain text and every marker
-        // in it, and a measurement gathers once for every question it asks.
+        // it into the buffer. A name is a pointer where a copy is the plain text and every run in
+        // it, and a measurement gathers once for every question it asks.
         //
         // The first contribution to arrive with nothing written yet is the one that can be named.
         // Anything after it - a second contribution, or a handler streaming into `text` - puts the

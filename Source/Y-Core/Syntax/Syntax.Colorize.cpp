@@ -13,8 +13,8 @@ namespace ClaFi::Syntax
         const Inks& inks)
     {
         // A kind with no ink of its own is drawn in the text's, and a run in that ink is plain: it
-        // takes no marker pair, and most of a source file is that - the names, the punctuation and
-        // the blanks between the tokens that mean something.
+        // states no ink, and most of a source file is that - the names, the punctuation and the
+        // blanks between the tokens that mean something.
         const Ink textInk{};
 
         StateStrings strings;
@@ -27,7 +27,7 @@ namespace ClaFi::Syntax
         std::size_t plainStart = 0;
 
         // The coloured run still open, waiting for the token after it to say whether it goes on:
-        // two tokens in one ink standing side by side are one run and one marker pair.
+        // two tokens in one ink standing side by side are one run.
         std::size_t runStart = 0;
         std::size_t runEnd = 0;
         Ink runInk{};

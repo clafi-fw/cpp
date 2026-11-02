@@ -44,12 +44,7 @@ namespace ClaFi::Controls::Grids
         // pointer no layout lookup.
         [[nodiscard]] bool hasLink(const Text& text)
         {
-            for (const auto& marker : text.markers())
-            {
-                if (std::holds_alternative<PushLink>(marker.second))
-                    return true;
-            }
-            return false;
+            return text.firstLink().has_value();
         }
 
         // Scratch buffer for the per-row cell flags, kept here rather than in RowBase so that
@@ -1205,11 +1200,8 @@ namespace ClaFi::Controls::Grids
             return std::nullopt;
         Text cellText;
         doGetCellText(*column, cellText);
-        for (const Text::Marker& marker : cellText.markers())
-        {
-            if (const PushLink* link = std::get_if<PushLink>(&marker.second))
-                return LinkTarget{ column, link->target };
-        }
+        if (const std::optional<std::wstring_view> link = cellText.firstLink())
+            return LinkTarget{ column, std::wstring{ *link } };
         return std::nullopt;
     }
 

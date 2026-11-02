@@ -280,12 +280,13 @@ namespace ClaFi
         }
     }
 
+    // What an edit took out goes back as it was, every run in the look it had.
     void TextHistory::revert(ControlText& text, const Record& record)
     {
         for (const Change& change : record.automatic | std::views::reverse)
-            text.replaceText({ change.start, change.inserted.plainText().size() }, change.removed);
+            text.restoreText({ change.start, change.inserted.plainText().size() }, change.removed);
         const Change& change = record.change;
-        text.replaceText({ change.start, change.inserted.plainText().size() }, change.removed);
+        text.restoreText({ change.start, change.inserted.plainText().size() }, change.removed);
     }
 
     void TextHistory::reapply(ControlText& text, const Record& record)

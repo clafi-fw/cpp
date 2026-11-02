@@ -64,7 +64,7 @@ namespace ClaFi::Tools::WhatsClip
             MaxSize{ k_readoutWidth, k_maxFloat },
             Padding{ k_readoutPaddingX, k_readoutPaddingY },
             WordWrap::No,
-            TextFormat{ PushFontSize{ k_readoutFontSize } },
+            TextFormat{ k_readoutStyle },
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center,
             themeMetrics().button,
@@ -80,7 +80,7 @@ namespace ClaFi::Tools::WhatsClip
             MinSize{ k_zoomReadoutWidth, 0.0f },
             MaxSize{ k_zoomReadoutWidth, k_maxFloat },
             WordWrap::No,
-            TextFormat{ PushFontSize{ k_readoutFontSize } },
+            TextFormat{ k_readoutStyle },
             HorizontalTextAnchor::Right,
             VerticalTextAnchor::Center
         ) },
@@ -309,7 +309,8 @@ namespace ClaFi::Tools::WhatsClip
         text << Space{ k_swatchGap };
         Text spelling{};
         appendSpelling(spelling, shown, m_spelling);
-        text << StyledText{ TextStyles::Code, spelling };
+        // The code style states a size of its own, which would stand over the reading's.
+        text << StyledText{ TextStyles::Code, SizedText{ k_readoutFontSize, spelling } };
         return text;
     }
 

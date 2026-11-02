@@ -94,6 +94,23 @@ namespace TextEngine_App
         // than as a heading each.
         constexpr float k_proseSize = 13.5f;
 
+        // The framework's headings in the prose face, which a FamilyText around a style cannot set.
+        constexpr TextStyle k_proseTitle{
+            .name = L"ProseTitle",
+            .base = &TextStyles::Title,
+            .fontFamily = k_proseFamily,
+        };
+        constexpr TextStyle k_proseSubTitle{
+            .name = L"ProseSubTitle",
+            .base = &TextStyles::SubTitle,
+            .fontFamily = k_proseFamily,
+        };
+        constexpr TextStyle k_proseSection{
+            .name = L"ProseSection",
+            .base = &TextStyles::Section,
+            .fontFamily = k_proseFamily,
+        };
+
         // How far a clue in the list is pushed in. An indent belongs to the paragraph it is stated
         // for, so every bullet line states it.
         constexpr float k_bulletIndent = 34.0f;
@@ -606,10 +623,10 @@ namespace TextEngine_App
                 proseFamily,
                 ParagraphText{
                     TextAlign::Center,
-                    StyledText{ TextStyles::Title, L"The Ledger of Ninety-Nine Rooms" },
+                    StyledText{ k_proseTitle, L"The Ledger of Ninety-Nine Rooms" },
                     k_endLine,
                     StyledText{
-                        TextStyles::SubTitle,
+                        k_proseSubTitle,
                         ColoredText{
                             InkGrade::Muted,
                             L"A puzzle in the manner of Einstein's, at a length nobody asked for"
@@ -638,7 +655,7 @@ namespace TextEngine_App
                     }
                 },
                 k_endLine,
-                StyledText{ TextStyles::Section, L"What each clue is about" }
+                StyledText{ k_proseSection, L"What each clue is about" }
             };
             out << k_endLine;
 
@@ -698,7 +715,7 @@ namespace TextEngine_App
             out << ParagraphText{ ParaIndent{ k_bulletIndent }, lists };
             out << k_endLine;
 
-            out << FamilyText{ proseFamily, StyledText{ TextStyles::Section, L"How to read a round" } };
+            out << StyledText{ k_proseSection, L"How to read a round" };
             out << k_endLine;
 
             out << BoldText{ L"Column" };
@@ -754,7 +771,7 @@ namespace TextEngine_App
 
             out << FamilyText{
                 proseFamily,
-                StyledText{ TextStyles::Section, AnchorText{ L"solution", L"The solution" } },
+                StyledText{ k_proseSection, AnchorText{ L"solution", L"The solution" } },
                 k_endLine,
                 k_endLine
             };

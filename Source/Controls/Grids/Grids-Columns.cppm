@@ -294,11 +294,8 @@ namespace ClaFi::Controls::Grids
         Props::ifThereIs<TextFormat>([&](const TextFormat& format) {
             m_cellTextFormat << format;
             }, args...);
-        for (const Text::Marker& marker : m_cellTextFormat.markers())
-        {
-            if (const TextAlign* align = std::get_if<TextAlign>(&marker.second))
-                m_headerTextFormat << *align;
-        }
+        if (const std::optional<TextAlign> align = m_cellTextFormat.paragraph().align)
+            m_headerTextFormat << *align;
     }
 
     // ColumnCollection

@@ -51,15 +51,16 @@ namespace ClaFi::PlatformImplementation::Windows
 
         if (g_baseFormat) return g_baseFormat;
 
-        const auto& bodyProps = TextStyles::Body;
+        const TextStyle& body = TextStyles::Body;
+        const std::wstring family{ *body.fontFamily };
 
         checkHr(g_dwriteFactory->CreateTextFormat(
-            nativeFamilyName(bodyProps.family),
+            nativeFamilyName(family.c_str()),
             nullptr,
             DWRITE_FONT_WEIGHT_NORMAL,
             DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL,
-            bodyProps.size,
+            *body.fontSize,
             L"en-US",
             g_baseFormat.GetAddressOf()
         ));

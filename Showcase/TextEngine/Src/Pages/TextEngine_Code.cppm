@@ -12,7 +12,7 @@ namespace TextEngine_App
     // What makes source the interesting input is its shape rather than its meaning: a few thousand
     // short paragraphs, each carrying a handful of tokens, which is the case a whole-document
     // rebuild is worst at. The colouring is the CodeBox's, drawn over the text as it is shown, so
-    // the text itself carries no marker per token.
+    // the text itself carries no run per token.
 
     // At least lineCount lines, built by repeating one block with the repetition number worked
     // into its names so that no two paragraphs hold the same text. Whole blocks only, so the

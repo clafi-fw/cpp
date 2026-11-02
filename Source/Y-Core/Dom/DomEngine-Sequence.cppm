@@ -25,6 +25,8 @@ namespace ClaFi::Dom
         std::vector<std::unique_ptr<DomNodeBase>>& children() { return m_children; }
         void clear() { m_children.clear(); }
         virtual DomNodeBase& addNode() = 0;
+        // An item as it stands before anything is stated about it, held by no sequence.
+        [[nodiscard]] virtual std::unique_ptr<DomNodeBase> makeDefaultItem() const = 0;
         void removeChild(DomNodeBase* child) override;
 
         void assign(const DomNodeBase& source) override;
@@ -160,9 +162,14 @@ namespace ClaFi::Dom
             return add();
         }
 
+        [[nodiscard]] std::unique_ptr<DomNodeBase> makeDefaultItem() const override
+        {
+            return makeChildNode(nullptr);
+        }
+
         ChildNodeType& add()
         {
-            auto node = makeChildNode();
+            auto node = makeChildNode(this);
             auto& ref = static_cast<ChildNodeType&>(*node);
             children().push_back(std::move(node));
             return ref;
@@ -343,17 +350,17 @@ namespace ClaFi::Dom
         // add(), get() and set() all route through here, so the mapping is stated
         // once and cannot drift between them.
 
-        [[nodiscard]] std::unique_ptr<DomNodeBase> makeChildNode()
+        [[nodiscard]] std::unique_ptr<DomNodeBase> makeChildNode(DomNodeBase* parent) const
         {
             if constexpr (std::is_same_v<ItemValueT, Section>)
             {
-                auto node = std::make_unique<Section>(this);
+                auto node = std::make_unique<Section>(parent);
                 node->assign(m_defaultItemValue);
                 return node;
             }
             else if constexpr (IsScalarValue<ItemValueT> || IsCompositeValue<ItemValueT>)
             {
-                return std::make_unique<Value<ItemValueT>>(this, m_defaultItemValue);
+                return std::make_unique<Value<ItemValueT>>(parent, m_defaultItemValue);
             }
             else if constexpr (IsSequenceValue<ItemValueT>)
             {
@@ -366,7 +373,7 @@ namespace ClaFi::Dom
                     defaultInnerItemValue = *it;
                 }
 
-                return std::make_unique<Sequence<InnerItemT>>(this, defaultInnerItemValue);
+                return std::make_unique<Sequence<InnerItemT>>(parent, defaultInnerItemValue);
             }
         }
 

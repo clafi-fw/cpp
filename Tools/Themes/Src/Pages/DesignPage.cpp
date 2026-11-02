@@ -217,7 +217,7 @@ namespace Themes_App
 
     TreeItem& DesignPage::addRootItem()
     {
-        return m_tree.addItem(TextFormat{ TextStyle::SubHeading });
+        return m_tree.addItem(TextFormat{ TextStyles::SubHeading });
     }
 
     // An item is named after the page it opens.

@@ -201,7 +201,7 @@ namespace SeeDocs_App::Ui
             return;
         m_editor = &add<StackPanel>(Orientation::Vertical, Spacing{ k_editorSpacing });
         m_box = &m_editor->add<TextBox>(
-            TextFormat{ TextStyle::Code },
+            TextFormat{ TextStyles::Code },
             Padding{ k_editorPadding }
         );
         StackPanel& bar = m_editor->add<StackPanel>(Orientation::Horizontal, Spacing{ k_barSpacing });

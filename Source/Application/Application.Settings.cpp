@@ -146,7 +146,7 @@ namespace ClaFi
 #endif
 
     // **The system's part is the platform's application data root**, the floor deleteConfigFolder
-    // stops at. Each ink is pushed inside the link, which keeps the link's own ink off it.
+    // stops at. Each ink is given inside the link, which keeps the link's own ink off it.
     Text folderText(const AppContext& context, const FolderDisplayPurpose purpose)
     {
         const std::wstring folder = context.configFolder().wstring();

@@ -140,7 +140,7 @@ namespace SeeDocs_App::Articles
                 put(entry, key, std::make_unique<Dom::Value<T>>(nullptr, value));
         }
 
-        // A text as its composite writes it, less the markers where it holds none.
+        // A text as its composite writes it, less the styles where it has none of its own.
         [[nodiscard]] SectionPtr textEntry(const Text& text)
         {
             const TextValueNode stated{ nullptr, text };
@@ -150,7 +150,7 @@ namespace SeeDocs_App::Articles
 
         void putText(Dom::Section& entry, const std::wstring_view key, const Text& text)
         {
-            if (!text.plainText().empty() || !text.markers().empty())
+            if (!text.empty())
                 put(entry, key, textEntry(text));
         }
 

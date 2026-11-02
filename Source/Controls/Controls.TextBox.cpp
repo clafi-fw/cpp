@@ -827,8 +827,8 @@ namespace ClaFi::Controls
     {
         // **The paragraph, not the anchor.** An anchor holds a few words - a clue's number, a
         // heading - and what the reader wants before jumping is what stands around them. Taken
-        // with its formatting through selectedText, which closes what it opens, without the
-        // newline that ends it, and cut as every preview is.
+        // in its looks through selectedText, without the newline that ends it, and cut as every
+        // preview is.
         Text& out = event.text;
         const std::wstring_view target = m_pointedLink.target;
         const std::optional<TextRange> anchor = target.starts_with(L'#')

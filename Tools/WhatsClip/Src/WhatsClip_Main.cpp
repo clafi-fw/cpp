@@ -197,8 +197,8 @@ namespace ClaFi::Tools::WhatsClip
             std::wstring name;
         };
 
-        // **The framework's own rich text stands ahead of plain text** - the same words with their
-        // markers on. It is the one preference stated here rather than below: ClaFi.Text is
+        // **The framework's own rich text stands ahead of plain text** - the same words in their
+        // looks. It is the one preference stated here rather than below: ClaFi.Text is
         // declared above the Transfer core, so no platform spelling table can name it.
         //
         // Nothing where the clipboard cannot serve the kind at all, which is what takes its tab
@@ -223,7 +223,7 @@ namespace ClaFi::Tools::WhatsClip
 
         // **The representation registry.** A format is not one thing to look at: it has bytes, and
         // a byte string meant to be read is text. **What the clipboard is worth seeing as** - a
-        // picture, a text with its markers on - is not one format's representation but a reading of
+        // picture, a text in its looks - is not one format's representation but a reading of
         // the whole clipboard, and stands on a tab of its own above the divider; see k_previews.
         //
         // **A format whose entry is a handle has neither of the two.** Nothing travelled for it, so

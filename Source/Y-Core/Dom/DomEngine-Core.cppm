@@ -7,6 +7,7 @@ import ClaFi.StdLib;
 namespace ClaFi::Dom
 {
     export class Section;
+    export class MultiTypeSequence;
 
     // What one node of a document is.
     export enum class DomNodeType
@@ -14,7 +15,8 @@ namespace ClaFi::Dom
         ScalarValue,
         CompositeValue,
         Section,
-        Sequence
+        Sequence,
+        MultiTypeSequence
     };
 
     export struct StringViewHash

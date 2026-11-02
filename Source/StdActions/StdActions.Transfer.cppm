@@ -15,15 +15,15 @@ namespace ClaFi::Transfer
         static constexpr std::wstring_view k_name = L"ClaFi.Text";
 
         [[nodiscard]] static Format format();
-        // Written the way the document engine writes a Text. That is what gives the markers a
-        // spelling without inventing a second one for the clipboard, and what lets a build from
-        // last month read what this one wrote.
+        // Written the way the document engine writes a Text. That is what gives the looks a
+        // spelling without inventing a second one for the clipboard, and what lets two builds that
+        // write a Text alike read each other.
         [[nodiscard]] static std::string toBytes(const Text&);
         [[nodiscard]] static Text fromBytes(std::string_view bytes);
     };
 
     // Rich down to plain is what lets a copy of one format paste into an application that has
-    // never heard of ClaFi. Plain up to rich is the same text with no markers in it.
+    // never heard of ClaFi. Plain up to rich is the same text in one run of no look.
     template<>
         struct FormatConversion<ClaFiText, PlainText>
     {

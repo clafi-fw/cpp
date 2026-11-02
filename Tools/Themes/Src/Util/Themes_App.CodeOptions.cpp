@@ -16,7 +16,7 @@ namespace Themes_App::CodeOptions
     using namespace ClaFi;
 
     // **These are constructed before main**, so nothing built here may touch the platform, the
-    // theme or the text engine - none of them exists yet. A Text is a string and its markers, and
+    // theme or the text engine - none of them exists yet. A Text is a string and its runs, and
     // an EventComponent connects its handlers into a map of its own, so both are safe; anything
     // added to an action below has to answer the same question.
 

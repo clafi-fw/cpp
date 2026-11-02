@@ -33,7 +33,7 @@ namespace ClaFi::Tools::WhatsClip
 
     // **The words as they would be drawn**, out of whichever format the preview was read from. Both
     // readings are decoded before they arrive - the framework's own rich text as a Text with its
-    // markers, a standard text as the string it is - so the encoding pick never appears here and
+    // runs, a standard text as the string it is - so the encoding pick never appears here and
     // the language is the text's own. Which of the two came is what the answer holds, not what
     // the format was called.
     void TextPreviewPage::showContent(Transfer::Offer& offer, const Transfer::Format& format)
@@ -45,8 +45,11 @@ namespace ClaFi::Tools::WhatsClip
         Text status{};
         if (marked)
         {
-            status << std::format(L"{} characters, {} markers",
-                marked->plainText().size(), marked->markers().size());
+            std::size_t runCount = 0;
+            marked->forEachRun([&runCount](const TextRunView&){
+                ++runCount;
+            });
+            status << std::format(L"{} characters, {} runs", marked->plainText().size(), runCount);
         }
         else if (plain)
         {

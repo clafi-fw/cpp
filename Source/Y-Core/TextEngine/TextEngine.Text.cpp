@@ -8,8 +8,17 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // =========================================================================
-    namespace {
+    namespace
+    {
+        // The look of a run that states nothing, which every look index 0 stands for.
+        const TextLook k_noLook{};
+
+        // An index of another text's table not yet looked up in this one's.
+        constexpr std::uint32_t k_unmapped = std::numeric_limits<std::uint32_t>::max();
+
+        constexpr std::size_t k_fnvOffset = 14695981039346656037ull;
+        constexpr std::size_t k_fnvPrime = 1099511628211ull;
+
         // The ink an InkColor stands for: that colour at Strongest.
         [[nodiscard]] Ink inkOf(InkColor color)
         {
@@ -18,417 +27,237 @@ namespace ClaFi
             return ink;
         }
 
-        // Helper to categorize markers for pair matching
-        enum class MarkerCat
+        // One field of an inner look under an outer one. The inner keeps what it states, itself
+        // or through its style. The outer fills the rest from its own fields, and from its style
+        // where the inner keeps a style of its own - otherwise the inner takes the outer's style
+        // whole and it fills those fields itself.
+        template<typename LookValue, typename StyleValue>
+        void fillField(TextLook& result, const TextLook& inner, const TextLook& outer,
+            std::optional<LookValue> TextLook::* own, std::optional<StyleValue> TextStyle::* styled,
+            bool takesOuterStyle)
         {
-            None,
-            Color,
-            TextStyle,
-            FontSize,
-            FontFamily,
-            Bold,
-            Italic,
-            Script,
-            Link,
-            Anchor,
-            // How many there are, which is what a table indexed by one is sized from.
-            Count
-        };
-
-        MarkerCat getPushCategory(const FormatItem& item)
-        {
-            return std::visit([](const auto& arg) -> MarkerCat {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, PushThemeColor> || std::is_same_v<T, PushCustomColor>)
-                    return MarkerCat::Color;
-                else if constexpr (std::is_same_v<T, PushTextStyle>)
-                    return MarkerCat::TextStyle;
-                else if constexpr (std::is_same_v<T, PushFontSize>)
-                    return MarkerCat::FontSize;
-                else if constexpr (std::is_same_v<T, PushFontFamily>)
-                    return MarkerCat::FontFamily;
-                else if constexpr (std::is_same_v<T, PushLink>)
-                    return MarkerCat::Link;
-                else if constexpr (std::is_same_v<T, PushAnchor>)
-                    return MarkerCat::Anchor;
-                else if constexpr (std::is_same_v<T, TextOp>)
-                {
-                    if (arg == TextOp::PushBold)
-                        return MarkerCat::Bold;
-                    if (arg == TextOp::PushItalic)
-                        return MarkerCat::Italic;
-                    if (arg == TextOp::PushSuperscript || arg == TextOp::PushSubscript)
-                        return MarkerCat::Script;
-                    return MarkerCat::None;
-                }
-                else
-                    return MarkerCat::None;
-                }, item);
+            if ((result.*own).has_value())
+                return;
+            if (inner.style && inner.style->stated(styled).has_value())
+                return;
+            if ((outer.*own).has_value())
+            {
+                result.*own = outer.*own;
+                return;
+            }
+            if (takesOuterStyle || !outer.style)
+                return;
+            if (const std::optional<StyleValue> value = outer.style->stated(styled))
+                result.*own = LookValue{ *value };
         }
 
-        MarkerCat getPopCategory(const FormatItem& item)
+        // An inner look laid under an outer one: the inner wins every field it states, and the
+        // outer fills the rest. See TextEngine-Types#textlook
+        [[nodiscard]] TextLook laidUnder(const TextLook& inner, const TextLook& outer,
+            bool innerLinked)
         {
-            return std::visit([](const auto& arg) -> MarkerCat {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, PopColor>)
-                    return MarkerCat::Color;
-                else if constexpr (std::is_same_v<T, PopTextStyle>)
-                    return MarkerCat::TextStyle;
-                else if constexpr (std::is_same_v<T, PopFontSize>)
-                    return MarkerCat::FontSize;
-                else if constexpr (std::is_same_v<T, PopFontFamily>)
-                    return MarkerCat::FontFamily;
-                else if constexpr (std::is_same_v<T, PopLink>)
-                    return MarkerCat::Link;
-                else if constexpr (std::is_same_v<T, PopAnchor>)
-                    return MarkerCat::Anchor;
-                else if constexpr (std::is_same_v<T, TextOp>)
-                {
-                    if (arg == TextOp::PopBold)
-                        return MarkerCat::Bold;
-                    if (arg == TextOp::PopItalic)
-                        return MarkerCat::Italic;
-                    if (arg == TextOp::PopScript)
-                        return MarkerCat::Script;
-                    return MarkerCat::None;
-                }
-                else
-                    return MarkerCat::None;
-                }, item);
-        }
+            if (outer.empty())
+                return inner;
+            if (inner.empty() && !innerLinked)
+                return outer;
 
-        bool isPreservableMarker(const FormatItem& item) {
-            return getPushCategory(item) != MarkerCat::None || getPopCategory(item) != MarkerCat::None;
-        }
+            TextLook result = inner;
+            const bool takesOuterStyle = !inner.style;
+            if (takesOuterStyle)
+                result.style = outer.style;
+            fillField(result, inner, outer, &TextLook::fontFamily, &TextStyle::fontFamily,
+                takesOuterStyle);
+            fillField(result, inner, outer, &TextLook::fontSize, &TextStyle::fontSize,
+                takesOuterStyle);
+            fillField(result, inner, outer, &TextLook::fontWeight, &TextStyle::fontWeight,
+                takesOuterStyle);
+            fillField(result, inner, outer, &TextLook::fontStyle, &TextStyle::fontStyle,
+                takesOuterStyle);
 
-        // One flag per MarkerCat: which of them a text states for itself.
-        using StatedCategories = std::array<bool, static_cast<std::size_t>(MarkerCat::Count)>;
+            // A link inside states its ink, so an outer one does not reach the words. A style
+            // taken whole would, and the link's ink is stated against it.
+            if (!innerLinked)
+                fillField(result, inner, outer, &TextLook::ink, &TextStyle::ink, takesOuterStyle);
+            else if (takesOuterStyle && !result.ink && outer.style
+                && outer.style->stated(&TextStyle::ink).has_value())
+                result.ink = k_linkInk;
 
-        // The categories a text opens at its very start. Text::selectedText writes there every
-        // run the selection stood inside, so a text taken out of a document and put back names
-        // each of them, and a text that carries only what was typed names none.
-        StatedCategories categoriesStatedAtStart(
-            const std::vector<std::pair<std::size_t, FormatItem>>& markers)
-        {
-            StatedCategories stated{};
-            for (const std::pair<std::size_t, FormatItem>& marker : markers)
-            {
-                if (marker.first != 0)
-                    break;
-
-                const MarkerCat category = getPushCategory(marker.second);
-                if (category != MarkerCat::None)
-                    stated[static_cast<std::size_t>(category)] = true;
-            }
-            return stated;
-        }
-
-        // Whether a marker standing where a text is put in closes a run that text is no part of.
-        // A Pop there closes a run that opened before it, and what goes in **joins** that run -
-        // which is how a character typed at the end of a bold word comes out bold - unless it
-        // states that category for itself, and then the run closes in front of it.
-        bool closesBeforeInsertion(const FormatItem& item, const StatedCategories& statedAtStart)
-        {
-            const MarkerCat category = getPopCategory(item);
-            return category != MarkerCat::None && statedAtStart[static_cast<std::size_t>(category)];
-        }
-
-        // The target of the link the PopLink at position closes: the innermost push still open
-        // before it. Walked back from the marker, so it costs the markers before it - and it is
-        // asked only where one link closes and another opens at an insertion point.
-        const std::wstring* closedLinkTarget(const Text::Markers& markers, std::size_t position)
-        {
-            std::size_t depth = 0;
-            for (std::size_t i = position; i-- != 0;)
-            {
-                const FormatItem& item = markers[i].second;
-                if (std::holds_alternative<PopLink>(item))
-                {
-                    ++depth;
-                    continue;
-                }
-                const PushLink* push = std::get_if<PushLink>(&item);
-                if (!push)
-                    continue;
-                if (depth == 0)
-                    return &push->target;
-                --depth;
-            }
-            return nullptr;
-        }
-
-        // Whether a link closing where a text is put in, with nothing replaced, stays in front of
-        // it. A link is the one run that does not take in what is typed at its end - unless the
-        // next link marker at that index opens a link naming the target this one closes. The two
-        // read as one link, and what is typed where they meet goes inside it. An undo that puts a
-        // link's last characters back is what leaves such a pair. See TextEngine-Types#links
-        bool linkEndsBeforeInsertion(const Text::Markers& markers, std::size_t position)
-        {
-            if (!std::holds_alternative<PopLink>(markers[position].second))
-                return false;
-
-            // A link opened at this same index is empty and goes in the cleanup; it has no end to
-            // keep the text out of, and moving its close in front of its open would change which
-            // link each of them names.
-            const std::size_t index = markers[position].first;
-            std::size_t depth = 0;
-            for (std::size_t before = position; before-- != 0 && markers[before].first == index;)
-            {
-                if (std::holds_alternative<PopLink>(markers[before].second))
-                    ++depth;
-                else if (std::holds_alternative<PushLink>(markers[before].second))
-                {
-                    if (depth == 0)
-                        return false;
-                    --depth;
-                }
-            }
-
-            for (std::size_t next = position + 1;
-                next != markers.size() && markers[next].first == index; ++next)
-            {
-                const FormatItem& item = markers[next].second;
-                if (std::holds_alternative<PopLink>(item))
-                    return true;
-                if (const PushLink* push = std::get_if<PushLink>(&item))
-                {
-                    const std::wstring* closed = closedLinkTarget(markers, position);
-                    return !closed || *closed != push->target;
-                }
-            }
-            return true;
-        }
-
-        // The markers standing where a text is put in, once the ones that stay in front of it are
-        // moved ahead of the rest there: [begin, begin + staying) are written in front of what goes
-        // in, and the rest of that index behind it. Moved rather than tested in place, because the
-        // vector has to stay in text order, and each part keeps the order it was in.
-        struct Boundary
-        {
-            std::size_t begin{ 0 };
-            std::size_t staying{ 0 };
-            [[nodiscard]] bool stays(std::size_t position) const
-            {
-                return position >= begin && position < begin + staying;
-            }
-        };
-
-        // Decides each marker at index while the markers stand as they were written, since
-        // whether one stays can turn on what stands beside it.
-        template<typename Stays>
-        Boundary settleBoundary(Text::Markers& markers, std::size_t index, Stays stays)
-        {
-            Boundary result{};
-            result.begin = static_cast<std::size_t>(std::lower_bound(markers.begin(), markers.end(),
-                index, [](const Text::Marker& marker, std::size_t position){
-                    return marker.first < position;
-                }) - markers.begin());
-            std::size_t end = result.begin;
-            while (end != markers.size() && markers[end].first == index)
-                ++end;
-
-            // Empty for the common case, a character typed where no marker stands.
-            std::vector<bool> staysHere{};
-            bool ordered = true;
-            for (std::size_t i = result.begin; i != end; ++i)
-            {
-                staysHere.push_back(stays(markers, i));
-                if (staysHere.back())
-                {
-                    ordered = ordered && result.staying == i - result.begin;
-                    ++result.staying;
-                }
-            }
-            if (ordered)
-                return result;
-
-            Text::Markers moved{};
-            moved.reserve(end - result.begin);
-            for (const bool first : { true, false })
-            {
-                for (std::size_t i = result.begin; i != end; ++i)
-                {
-                    if (staysHere[i - result.begin] == first)
-                        moved.push_back(std::move(markers[i]));
-                }
-            }
-            std::move(moved.begin(), moved.end(),
-                markers.begin() + static_cast<std::ptrdiff_t>(result.begin));
+            result.scripts.insert(result.scripts.begin(), outer.scripts.begin(),
+                outer.scripts.end());
             return result;
         }
 
-        struct OptionalPop { bool hasValue{ false }; FormatItem value; };
-
-        OptionalPop createMatchingPop(const FormatItem& pushItem) {
-            OptionalPop result;
-            std::visit([&result](const auto& arg) {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, PushThemeColor> || std::is_same_v<T, PushCustomColor>) { result.hasValue = true; result.value = PopColor{}; }
-                else if constexpr (std::is_same_v<T, PushTextStyle>) { result.hasValue = true; result.value = PopTextStyle{}; }
-                else if constexpr (std::is_same_v<T, PushFontSize>) { result.hasValue = true; result.value = PopFontSize{}; }
-                else if constexpr (std::is_same_v<T, PushFontFamily>) { result.hasValue = true; result.value = PopFontFamily{}; }
-                else if constexpr (std::is_same_v<T, PushLink>)
-                {
-                    result.hasValue = true;
-                    result.value = PopLink{};
-                }
-                else if constexpr (std::is_same_v<T, PushAnchor>)
-                {
-                    result.hasValue = true;
-                    result.value = PopAnchor{};
-                }
-                else if constexpr (std::is_same_v<T, TextOp>) {
-                    if (arg == TextOp::PushBold) { result.hasValue = true; result.value = TextOp::PopBold; }
-                    else if (arg == TextOp::PushItalic) { result.hasValue = true; result.value = TextOp::PopItalic; }
-                    else if (arg == TextOp::PushSuperscript || arg == TextOp::PushSubscript) { result.hasValue = true; result.value = TextOp::PopScript; }
-                }
-                }, pushItem);
-            return result;
+        // An inner paragraph look under an outer one, the inner winning every field it states.
+        [[nodiscard]] ParagraphLook laidUnder(const ParagraphLook& inner, const ParagraphLook& outer)
+        {
+            return {
+                .align = inner.align ? inner.align : outer.align,
+                .indent = inner.indent ? inner.indent : outer.indent,
+                .lineSpacing = inner.lineSpacing ? inner.lineSpacing : outer.lineSpacing,
+            };
         }
 
-        // The working state the annihilation pass reads and writes.
-        struct AnnihilateScratch
+        void combine(std::size_t& hash, std::size_t value)
         {
-            std::array<std::vector<std::size_t>, static_cast<std::size_t>(MarkerCat::Count)> openPushes;
-            std::vector<bool> annihilated;
-        };
-
-        // Held across calls rather than built per edit, the way the rasterizer's masks are: a text
-        // of a hundred thousand markers is a hundred thousand flags, and a key press would
-        // otherwise take them from the allocator and give them back.
-        AnnihilateScratch g_annihilateScratch;
-
-        // Takes out the Push/Pop pairs that both open and close at one text index: nothing
-        // stands between them, so they change nothing. A Pop closes the **nearest** unclosed Push
-        // of its category - the stack BakedText::rebuild walks - so Push(red), Push(blue), Pop
-        // at one index leaves red in force.
-        //
-        // One pass with one stack per category finds every pair. Nothing is moved here - the
-        // pairs are only **marked**, and the caller compacts the vector once for all of them,
-        // because a group can hold a whole text's markers: Text::replaceText collapses every
-        // preservable marker inside the replaced range onto its start, so a Select All followed by
-        // a Delete puts all of them at one index.
-        //
-        // Answers how many entries it marked.
-        std::size_t annihilateGroup(const std::vector<std::pair<std::size_t, FormatItem>>& markers,
-            std::size_t from, std::size_t to)
-        {
-            for (std::vector<std::size_t>& openPushes : g_annihilateScratch.openPushes)
-                openPushes.clear();
-
-            std::size_t annihilatedCount = 0;
-            for (std::size_t i = from; i != to; ++i)
-            {
-                const MarkerCat pushCat = getPushCategory(markers[i].second);
-                if (pushCat != MarkerCat::None)
-                {
-                    g_annihilateScratch.openPushes[static_cast<std::size_t>(pushCat)].push_back(i);
-                    continue;
-                }
-
-                const MarkerCat popCat = getPopCategory(markers[i].second);
-                if (popCat == MarkerCat::None)
-                    continue;
-
-                std::vector<std::size_t>& openPushes =
-                    g_annihilateScratch.openPushes[static_cast<std::size_t>(popCat)];
-                // A Pop with nothing open closes a Push that stands earlier in the text, and
-                // that is what it goes on saying.
-                if (openPushes.empty())
-                    continue;
-
-                g_annihilateScratch.annihilated[openPushes.back()] = true;
-                g_annihilateScratch.annihilated[i] = true;
-                openPushes.pop_back();
-                annihilatedCount += 2;
-            }
-            return annihilatedCount;
+            hash ^= value;
+            hash *= k_fnvPrime;
         }
 
-        // **Markers arrive in text order**, and this does not sort them. Every route that builds a
-        // marker vector writes it that way: both replaceText overloads write what stands before
-        // the replaced range, then that range's own boundary, then the tail, and selectedText
-        // writes the inherited state at 0, the selection's markers in order, and the closers at
-        // the end. Sorting a whole text's markers to arrive back where they started is what an
-        // edit used to pay on every key press - and the group walk below checks the property for
-        // nothing, since it compares neighbouring indexes anyway.
-        //
-        // Nothing is moved unless a pair is actually taken out: a text where nothing annihilates
-        // leaves this having read the vector and written none of it.
-        void cleanupMarkers(std::vector<std::pair<std::size_t, FormatItem>>& markers)
+        void combine(std::size_t& hash, float value)
         {
-            if (markers.size() < 2)
-                return;
+            std::uint32_t bits = 0;
+            std::memcpy(&bits, &value, sizeof(float));
+            combine(hash, static_cast<std::size_t>(bits));
+        }
 
-            g_annihilateScratch.annihilated.assign(markers.size(), false);
-            std::size_t annihilatedCount = 0;
+        void combine(std::size_t& hash, std::wstring_view words)
+        {
+            for (const wchar_t character : words)
+                combine(hash, static_cast<std::size_t>(character));
+        }
 
-            std::size_t groupStart = 0;
-            while (groupStart != markers.size())
+        void combine(std::size_t& hash, FontWeight weight)
+        {
+            combine(hash, static_cast<std::size_t>(weight));
+        }
+
+        void combine(std::size_t& hash, FontStyle style)
+        {
+            combine(hash, static_cast<std::size_t>(style));
+        }
+
+        void combine(std::size_t& hash, TextAlign align)
+        {
+            combine(hash, static_cast<std::size_t>(align));
+        }
+
+        // Every field an Ink carries. A hit is confirmed against the whole Text, so a field left
+        // out here costs a rebuild rather than a wrong colour: the two inks land on one key, and
+        // each paint evicts the other. Named apart from combine, whose size_t calls would
+        // otherwise be offered ColorDef's converting constructor.
+        void combineInk(std::size_t& hash, const ColorDef& ink)
+        {
+            combine(hash, ink.index());
+            if (const Ink* themed = std::get_if<Ink>(&ink))
             {
-                std::size_t groupEnd = groupStart + 1;
-                while (groupEnd != markers.size() && markers[groupEnd].first == markers[groupStart].first)
-                    ++groupEnd;
-
-                if (groupEnd != markers.size() && markers[groupEnd].first < markers[groupStart].first)
-                    noReach("A marker vector reached cleanupMarkers out of text order");
-
-                if (groupEnd - groupStart >= 2)
-                    annihilatedCount += annihilateGroup(markers, groupStart, groupEnd);
-
-                groupStart = groupEnd;
+                combine(hash, static_cast<std::size_t>(themed->color));
+                combine(hash, themed->grade);
             }
-
-            if (!annihilatedCount)
-                return;
-
-            std::size_t write = 0;
-            for (std::size_t read = 0; read != markers.size(); ++read)
+            else
             {
-                if (g_annihilateScratch.annihilated[read])
-                    continue;
-
-                if (write != read)
-                    markers[write] = std::move(markers[read]);
-
-                ++write;
+                combine(hash, static_cast<std::size_t>(std::get<Color>(ink).asUint()));
             }
-            markers.resize(write);
+        }
+
+        // An absent value and a present one hash apart, whatever the value.
+        template<typename Value>
+        void combine(std::size_t& hash, const std::optional<Value>& value)
+        {
+            combine(hash, static_cast<std::size_t>(value.has_value()));
+            if (value)
+                combine(hash, *value);
+        }
+
+        void combineLook(std::size_t& hash, const TextLook& look)
+        {
+            combine(hash, reinterpret_cast<std::size_t>(look.style));
+            combine(hash, look.fontFamily);
+            combine(hash, look.fontSize);
+            combine(hash, look.fontWeight);
+            combine(hash, look.fontStyle);
+            combine(hash, static_cast<std::size_t>(look.ink.has_value()));
+            if (look.ink)
+                combineInk(hash, *look.ink);
+            for (const TextScript script : look.scripts)
+                combine(hash, static_cast<std::size_t>(script) + 1);
+        }
+
+        void combineParagraph(std::size_t& hash, const ParagraphLook& look)
+        {
+            combine(hash, look.align);
+            combine(hash, look.indent);
+            combine(hash, look.lineSpacing);
+        }
+
+        void combineObject(std::size_t& hash, const InlineObject& object)
+        {
+            combine(hash, object.index());
+            std::visit([&hash](const auto& held){
+                using Held = std::decay_t<decltype(held)>;
+                if constexpr (std::is_same_v<Held, InTextIcon>)
+                {
+                    combine(hash, held.designWidth);
+                    combine(hash, held.designHeight);
+                    combine(hash, held.designBaseline);
+                    combine(hash, static_cast<std::size_t>(held.tag.value));
+                }
+                else if constexpr (std::is_same_v<Held, Space>)
+                    combine(hash, held.width);
+                else if constexpr (std::is_same_v<Held, VSpace>)
+                    combine(hash, held.height);
+                else if constexpr (std::is_same_v<Held, FlexSpace>)
+                    combine(hash, held.minWidth);
+                else if constexpr (std::is_same_v<Held, TabTo>)
+                    combine(hash, held.targetX);
+            }, object);
         }
     }
-    // Implementations
-    // =========================================================================
 
-    Text::Text(std::wstring plainText, Markers markers)
-        :
-        m_plainText{ std::move(plainText) },
-        m_markers{ std::move(markers) }
+    // Text
+
+    // A paragraph's piece states the paragraph the text has reached, ahead of its words.
+    Text::Text(TextPieces pieces)
     {
+        for (const TextPiece& piece : pieces)
+        {
+            if (piece.paragraph)
+                stateParagraph(paragraphStartOf(m_plainText.size()), *piece.paragraph);
+
+            const Run run = {
+                .look = lookIndexOf(piece.look),
+                .link = nameIndexOf(piece.link),
+                .anchor = nameIndexOf(piece.anchor),
+            };
+            if (piece.object)
+            {
+                appendObject(*piece.object);
+                m_runs.back().look = run.look;
+                m_runs.back().link = run.link;
+                m_runs.back().anchor = run.anchor;
+                continue;
+            }
+            if (piece.words.empty())
+                continue;
+            m_plainText.append(piece.words);
+            Run words = run;
+            words.length = piece.words.size();
+            appendRun(words);
+        }
     }
 
-    Text& Text::operator<<(const std::wstring_view str)
+    Text& Text::operator<<(const std::wstring_view words)
     {
-        if (str.empty())
+        if (words.empty())
             return *this;
         breakOwnLine();
-        m_plainText.append(str);
+        appendWords(words);
         return *this;
     }
 
-    Text& Text::operator<<(const std::wstring& str)
+    Text& Text::operator<<(const std::wstring& words)
     {
-        return operator<<(std::wstring_view{ str });
+        return operator<<(std::wstring_view{ words });
     }
 
-    Text& Text::operator<<(const wchar_t* str)
+    Text& Text::operator<<(const wchar_t* words)
     {
-        return operator<<(std::wstring_view{ str });
+        return operator<<(std::wstring_view{ words });
     }
 
-    Text& Text::operator<<(wchar_t chr)
+    Text& Text::operator<<(wchar_t character)
     {
         breakOwnLine();
-        m_plainText.push_back(chr);
+        appendWords(std::wstring_view{ &character, 1 });
         return *this;
     }
 
@@ -442,573 +271,765 @@ namespace ClaFi
         return operator<<(std::to_wstring(value));
     }
 
-    Text& Text::operator<<(const InTextIcon& obj)
+    Text& Text::operator<<(const InTextIcon& icon)
     {
         breakOwnLine();
-        m_markers.emplace_back(m_plainText.size(), obj);
-        m_plainText.push_back(L'\uFFFC');
+        appendObject(icon);
         return *this;
     }
 
-    Text& Text::operator<<(const Space& obj)
+    Text& Text::operator<<(const Space& space)
     {
         breakOwnLine();
-        m_markers.emplace_back(m_plainText.size(), obj);
-        m_plainText.push_back(L'\uFFFC');
+        appendObject(space);
         return *this;
     }
 
-    Text& Text::operator<<(const VSpace& obj)
+    Text& Text::operator<<(const VSpace& space)
     {
         breakOwnLine();
-        m_markers.emplace_back(m_plainText.size(), obj);
-        m_plainText.push_back(L'\uFFFC');
+        appendObject(space);
         return *this;
     }
 
-    Text& Text::operator<<(const FlexSpace& obj)
+    Text& Text::operator<<(const FlexSpace& space)
     {
         breakOwnLine();
-        m_markers.emplace_back(m_plainText.size(), obj);
-        m_plainText.push_back(L'\uFFFC');
+        appendObject(space);
         return *this;
     }
 
-    Text& Text::operator<<(const TabTo& obj)
+    Text& Text::operator<<(const TabTo& tab)
     {
         breakOwnLine();
-        m_markers.emplace_back(m_plainText.size(), obj);
-        m_plainText.push_back(L'\uFFFC');
+        appendObject(tab);
         return *this;
     }
 
-    // A text whose words own their first or last line keeps them on it wherever it is put.
+    // A text whose words own their first or last line keeps them on it wherever it is put. Its
+    // first paragraph's look goes where it starts a paragraph, and a line it joins keeps its own.
     Text& Text::operator<<(const Text& other)
     {
-        if (other.m_plainText.empty() && other.m_markers.empty())
-            return *this;
-        if (!other.m_plainText.empty())
+        if (&other == this)
         {
-            breakOwnLine();
-            if (m_plainText.empty())
-                m_startsOwnLine = other.m_startsOwnLine;
-            else if (other.m_startsOwnLine && m_plainText.back() != k_endLine)
-                m_plainText.push_back(k_endLine);
+            const Text copy{ other };
+            return *this << copy;
         }
+        if (other.empty())
+            return *this;
+
+        breakOwnLine();
+        if (m_plainText.empty())
+            m_startsOwnLine = other.m_startsOwnLine;
+        else if (other.m_startsOwnLine && m_plainText.back() != k_endLine)
+            appendWords(std::wstring_view{ &k_endLine, 1 });
+
         const std::size_t offset = m_plainText.size();
+        const bool startsAParagraph = startsParagraph(offset);
+        const Runs added = runsOf(other, 0, other.m_plainText.size());
         m_plainText.append(other.m_plainText);
-        m_markers.reserve(m_markers.size() + other.m_markers.size());
-        for (const Marker& marker : other.m_markers)
-            m_markers.emplace_back(marker.first + offset, marker.second);
-        if (!other.m_plainText.empty())
-            m_endsOwnLine = other.m_endsOwnLine;
+        for (const Run& run : added)
+            appendRun(run);
+        for (const StatedParagraph& stated : other.m_paragraphs)
+        {
+            if (stated.start == 0 && !startsAParagraph)
+                continue;
+            stateParagraph(offset + stated.start, stated.look);
+        }
+        m_endsOwnLine = other.m_endsOwnLine;
         return *this;
     }
 
-    void Text::clear() {
+    void Text::clear()
+    {
         m_plainText.clear();
-        m_markers.clear();
+        m_runs.clear();
+        m_looks.clear();
+        m_names.clear();
+        m_objects.clear();
+        m_paragraphs.clear();
         m_startsOwnLine = false;
         m_endsOwnLine = false;
     }
 
-    namespace
+    std::size_t Text::hash() const
     {
-        constexpr std::size_t k_fnvOffset = 14695981039346656037ull;
-        constexpr std::size_t k_fnvPrime = 1099511628211ull;
-
-        // The markers folded into an FNV-1a hash: where each stands, its kind and what it says.
-        void combineMarkers(std::size_t& hash, const Text::Markers& markers)
-        {
-            auto combine = [&hash](std::size_t val) {
-                hash ^= val;
-                hash *= k_fnvPrime;
-            };
-
-            auto combineFloat = [&combine](float f) {
-                std::uint32_t bits;
-                std::memcpy(&bits, &f, sizeof(float));
-                combine(bits);
-            };
-
-            for (const auto& marker : markers) {
-                combine(marker.first);             // The index position
-                combine(marker.second.index());    // The std::variant type index
-
-                std::visit([&](const auto& arg) {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same_v<T, PushThemeColor>) {
-                        // Every field an Ink carries. A hit is confirmed against the whole Text, so a
-                        // field left out here costs a rebuild rather than a wrong colour: the two inks
-                        // land on one key, and each paint evicts the other.
-                        combine(static_cast<std::size_t>(arg.ink.color));
-                        combineFloat(arg.ink.grade);
-                    }
-                    else if constexpr (std::is_same_v<T, PushCustomColor>) {
-                        // The four bytes operator== compares.
-                        combine(arg.color.asUint());
-                    }
-                    else if constexpr (std::is_same_v<T, PushTextStyle>) combine(static_cast<std::size_t>(arg.style));
-                    else if constexpr (std::is_same_v<T, TextAlign>) combine(static_cast<std::size_t>(arg));
-                    else if constexpr (std::is_same_v<T, ParaIndent>) combineFloat(arg.indent);
-                    else if constexpr (std::is_same_v<T, ParaLineSpacing>) combineFloat(arg.spacing);
-                    else if constexpr (std::is_same_v<T, InTextIcon>) {
-                        combineFloat(arg.designWidth);
-                        combineFloat(arg.designHeight);
-                        combineFloat(arg.designBaseline);
-                        combine(static_cast<std::size_t>(arg.tag.value));
-                    }
-                    else if constexpr (std::is_same_v<T, Space>) combineFloat(arg.width);
-                    else if constexpr (std::is_same_v<T, VSpace>) combineFloat(arg.height);
-                    else if constexpr (std::is_same_v<T, FlexSpace>) combine(1);
-                    else if constexpr (std::is_same_v<T, TabTo>) combineFloat(arg.targetX);
-                    else if constexpr (std::is_same_v<T, TextOp>) combine(static_cast<std::size_t>(arg));
-                    else if constexpr (std::is_same_v<T, PushFontSize>) combineFloat(arg.size);
-                    else if constexpr (std::is_same_v<T, PushFontFamily>) {
-                        for (wchar_t c : arg.family) combine(c);
-                    }
-                    else if constexpr (std::is_same_v<T, PushLink>)
-                    {
-                        for (const wchar_t c : arg.target)
-                            combine(c);
-                    }
-                    else if constexpr (std::is_same_v<T, PushAnchor>)
-                    {
-                        for (const wchar_t c : arg.name)
-                            combine(c);
-                    }
-                }, marker.second);
-            }
-        }
-    }
-
-    std::size_t Text::hash() const {
-        // FNV-1a 64-bit hash
         std::size_t hash = k_fnvOffset;
-        for (wchar_t c : m_plainText)
+        combine(hash, std::wstring_view{ m_plainText });
+        for (const Run& run : m_runs)
         {
-            hash ^= c;
-            hash *= k_fnvPrime;
+            combine(hash, run.length);
+            combineLook(hash, lookAt(run.look));
+            combine(hash, nameAt(run.link));
+            combine(hash, static_cast<std::size_t>(run.link != 0));
+            combine(hash, nameAt(run.anchor));
+            combine(hash, static_cast<std::size_t>(run.anchor != 0));
+            if (run.object)
+                combineObject(hash, m_objects[run.object - 1]);
         }
-        combineMarkers(hash, m_markers);
+        for (const StatedParagraph& stated : m_paragraphs)
+        {
+            combine(hash, stated.start);
+            combineParagraph(hash, stated.look);
+        }
         return hash;
     }
+
     bool Text::hasFlexSpace() const
     {
-        for (const auto& marker : m_markers)
+        for (const Run& run : m_runs)
         {
-            if (std::holds_alternative<FlexSpace>(marker.second))
+            if (run.object && std::holds_alternative<FlexSpace>(m_objects[run.object - 1]))
                 return true;
         }
         return false;
     }
+
+    // By what each run says, since two texts hold their tables in the order they were written.
     bool Text::operator==(const Text& other) const
     {
-        return m_plainText == other.m_plainText && m_markers == other.m_markers;
+        if (m_plainText != other.m_plainText || m_runs.size() != other.m_runs.size()
+            || m_paragraphs != other.m_paragraphs)
+        {
+            return false;
+        }
+        for (std::size_t i = 0; i != m_runs.size(); ++i)
+        {
+            const Run& run = m_runs[i];
+            const Run& otherRun = other.m_runs[i];
+            if (run.length != otherRun.length || (run.object == 0) != (otherRun.object == 0))
+                return false;
+            if (lookAt(run.look) != other.lookAt(otherRun.look))
+                return false;
+            if (nameAt(run.link) != other.nameAt(otherRun.link)
+                || nameAt(run.anchor) != other.nameAt(otherRun.anchor))
+            {
+                return false;
+            }
+            if (run.object && m_objects[run.object - 1] != other.m_objects[otherRun.object - 1])
+                return false;
+        }
+        return true;
     }
 
-    std::optional<TextRange> Text::anchorRange(std::wstring_view name) const
+    ParagraphLook Text::paragraphLookAt(std::size_t paragraphStart) const
     {
-        // The anchor ends at the first close that finds no anchor opened after it still open.
-        std::size_t start = k_maxSize;
-        std::size_t depth = 0;
-        for (const Marker& marker : m_markers)
-        {
-            if (start == k_maxSize)
-            {
-                const PushAnchor* push = std::get_if<PushAnchor>(&marker.second);
-                if (push && push->name == name)
-                    start = marker.first;
-                continue;
-            }
-
-            if (std::holds_alternative<PushAnchor>(marker.second))
-            {
-                ++depth;
-                continue;
-            }
-            if (!std::holds_alternative<PopAnchor>(marker.second))
-                continue;
-            if (depth == 0)
-                return TextRange{ start, marker.first - start };
-            --depth;
-        }
-
-        if (start == k_maxSize)
-            return std::nullopt;
-        // An anchor left open holds the rest of the text.
-        return TextRange{ start, m_plainText.size() - start };
+        const StatedParagraph* stated = statedAt(paragraphStart);
+        return stated ? stated->look : ParagraphLook{};
     }
 
-    // Markers stand in text order, so the first link closed at or past the position and opened at
-    // or before it is the first the caret touches - the ending one where two meet at the caret.
-    std::optional<LinkSpan> Text::linkAtCaret(const std::size_t caretPos) const
+    // A run a paragraph starts inside is cut there, so each paragraph's piece stands where its
+    // words begin.
+    TextPieces Text::pieces() const
     {
-        std::vector<const Marker*> openLinks;
-        for (const Marker& marker : m_markers)
+        TextPieces result;
+        std::size_t nextParagraph = 0;
+        const auto stateParagraphsUpTo = [this, &result, &nextParagraph](std::size_t pos){
+            while (nextParagraph != m_paragraphs.size() && m_paragraphs[nextParagraph].start <= pos)
+            {
+                result.push_back(TextPiece{ .paragraph = m_paragraphs[nextParagraph].look });
+                ++nextParagraph;
+            }
+        };
+
+        std::size_t start = 0;
+        for (const Run& run : m_runs)
         {
-            if (marker.first > caretPos && openLinks.empty())
-                break;
-            if (std::holds_alternative<PushLink>(marker.second))
+            const std::size_t end = start + run.length;
+            std::size_t from = start;
+            while (from != end)
             {
-                openLinks.push_back(&marker);
-                continue;
+                stateParagraphsUpTo(from);
+                const std::size_t to = nextParagraph != m_paragraphs.size()
+                    && m_paragraphs[nextParagraph].start < end
+                    ? m_paragraphs[nextParagraph].start
+                    : end;
+                TextPiece piece{
+                    .words = m_plainText.substr(from, to - from),
+                    .look = lookAt(run.look),
+                    .link = std::wstring{ nameAt(run.link) },
+                    .anchor = std::wstring{ nameAt(run.anchor) },
+                };
+                if (run.object)
+                    piece.object = m_objects[run.object - 1];
+                result.push_back(std::move(piece));
+                from = to;
             }
-            if (!std::holds_alternative<PopLink>(marker.second) || openLinks.empty())
-                continue;
-            const Marker& push = *openLinks.back();
-            openLinks.pop_back();
-            if (push.first <= caretPos && caretPos <= marker.first)
-            {
-                const TextRange range = { push.first, marker.first - push.first };
-                return LinkSpan{ range, std::get<PushLink>(push.second).target };
-            }
+            start = end;
         }
-
-        // A link left open runs to the end of the text.
-        for (const Marker* push : openLinks)
-        {
-            if (push->first <= caretPos)
-            {
-                const TextRange range = { push->first, m_plainText.size() - push->first };
-                return LinkSpan{ range, std::get<PushLink>(push->second).target };
-            }
-        }
-        return std::nullopt;
-    }
-    void Text::replaceText(const TextRange& range, const std::wstring_view str) {
-        m_startsOwnLine = false;
-        m_endsOwnLine = false;
-        std::size_t start = std::min(range.start, m_plainText.size());
-        std::size_t length = std::min(range.length, m_plainText.size() - start);
-        std::size_t end = start + length;
-
-        const std::ptrdiff_t delta = static_cast<std::ptrdiff_t>(str.size()) - static_cast<std::ptrdiff_t>(length);
-
-        // A link closing where the text goes in, with nothing replaced, stays in front of it.
-        Boundary boundary{};
-        if (length == 0)
-            boundary = settleBoundary(m_markers, end, linkEndsBeforeInsertion);
-
-        // In place. A marker before the replaced range does not move, one inside it either
-        // collapses onto the range's start or goes, and one after it shifts by what the text
-        // gained or lost - and all three keep the order they were in, so the vector stays sorted.
-        // Building a second vector of the whole text to say that costs an allocation and a copy of
-        // every marker, for an edit that usually touches none of them.
-        std::size_t write = 0;
-        for (std::size_t read = 0; read != m_markers.size(); ++read)
-        {
-            std::pair<std::size_t, FormatItem>& marker = m_markers[read];
-            if (marker.first >= end && !boundary.stays(read))
-            {
-                marker.first = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(marker.first) + delta);
-            }
-            else if (marker.first >= start)
-            {
-                // Inside what went. A marker that opens or closes a run is kept and moved onto the
-                // boundary, so the cleanup below can pair it off; anything else has nothing left
-                // to apply to.
-                if (!isPreservableMarker(marker.second))
-                    continue;
-
-                marker.first = start;
-            }
-
-            if (write != read)
-                m_markers[write] = std::move(marker);
-
-            ++write;
-        }
-        m_markers.resize(write);
-
-        m_plainText.replace(start, length, str);
-        cleanupMarkers(m_markers);
-    }
-
-    void Text::replaceText(const TextRange& range, const Text& other) {
-        m_startsOwnLine = false;
-        m_endsOwnLine = false;
-        std::size_t start = std::min(range.start, m_plainText.size());
-        std::size_t length = std::min(range.length, m_plainText.size() - start);
-        std::size_t end = start + length;
-
-        const std::ptrdiff_t delta = static_cast<std::ptrdiff_t>(other.m_plainText.size())
-            - static_cast<std::ptrdiff_t>(length);
-
-        const StatedCategories statedAtStart = categoriesStatedAtStart(other.m_markers);
-
-        // The closers that stay put: one whose run the text going in states for itself, and a
-        // link's where nothing is replaced. A text whose first marker is past its start states
-        // nothing to be in front of, and a replaced range keeps its link, so with neither the
-        // boundary is not read.
-        const bool insertion = length == 0;
-        const bool statesAtStart = !other.m_markers.empty() && other.m_markers.front().first == 0;
-        const auto staysInFront = [&statedAtStart, insertion](const Markers& markers,
-            std::size_t position){
-            return closesBeforeInsertion(markers[position].second, statedAtStart)
-                || (insertion && linkEndsBeforeInsertion(markers, position));
-            };
-        Boundary boundary{};
-        if (statesAtStart || insertion)
-            boundary = settleBoundary(m_markers, end, staysInFront);
-
-        // In place, three parts in this order - what stands before the replaced range, that
-        // range's own boundary, then the tail - the first two made by moving what is already here
-        // rather than by copying a whole text's markers into a second vector. insertAt is where
-        // the tail begins once that is done, which is where the inserted text's own markers
-        // belong.
-        std::size_t write = 0;
-        std::size_t insertAt = k_maxSize;
-        for (std::size_t read = 0; read != m_markers.size(); ++read)
-        {
-            std::pair<std::size_t, FormatItem>& marker = m_markers[read];
-            // A closer that stays put is collapsed onto the range's start with the markers from
-            // inside it: it closes a run the text going in is no part of, so it belongs in front
-            // of that text rather than behind it.
-            if (marker.first >= end && !boundary.stays(read))
-            {
-                if (insertAt == k_maxSize)
-                    insertAt = write;
-
-                marker.first = static_cast<std::size_t>(static_cast<std::ptrdiff_t>(marker.first) + delta);
-            }
-            else if (marker.first >= start)
-            {
-                if (!isPreservableMarker(marker.second))
-                    continue;
-
-                marker.first = start;
-            }
-
-            if (write != read)
-                m_markers[write] = std::move(marker);
-
-            ++write;
-        }
-        m_markers.resize(write);
-        if (insertAt == k_maxSize)
-            insertAt = write;
-
-        // A typed character carries none of these, which is what makes the common edit a walk and
-        // nothing else.
-        if (!other.m_markers.empty())
-        {
-            m_markers.insert(m_markers.begin() + insertAt,
-                other.m_markers.begin(), other.m_markers.end());
-            for (std::size_t i = insertAt; i != insertAt + other.m_markers.size(); ++i)
-                m_markers[i].first += start;
-        }
-
-        m_plainText.replace(start, length, other.m_plainText);
-        cleanupMarkers(m_markers);
-    }
-
-    Text Text::selectedText(const TextRange& range) const {
-        Text result;
-        std::size_t start = std::min(range.start, m_plainText.size());
-        std::size_t length = std::min(range.length, m_plainText.size() - start);
-        std::size_t end = start + length;
-
-        if (length == 0) return result;
-
-        result.m_plainText = m_plainText.substr(start, length);
-
-        std::vector<FormatItem> activeStack;
-
-        // For non-stackable "sticky" paragraph block states
-        bool hasAlign = false; TextAlign lastAlign;
-        bool hasIndent = false; ParaIndent lastIndent;
-        bool hasSpacing = false; ParaLineSpacing lastSpacing;
-
-        // Every paragraph reads its properties afresh, so the selection inherits those of the
-        // paragraph it starts in and none stated before it.
-        const std::size_t lineEndBefore = start == 0
-            ? std::wstring::npos
-            : m_plainText.rfind(k_endLine, start - 1);
-        const std::size_t paragraphStart = lineEndBefore == std::wstring::npos ? 0 : lineEndBefore + 1;
-
-        // 1. Process markers before 'start' to build the initial active state
-        for (const auto& marker : m_markers) {
-            if (marker.first >= start) break; // Stop at selection boundary
-
-            const auto& item = marker.second;
-            MarkerCat pushCat = getPushCategory(item);
-
-            if (pushCat != MarkerCat::None) {
-                activeStack.push_back(item);
-            }
-            else {
-                MarkerCat popCat = getPopCategory(item);
-                if (popCat != MarkerCat::None) {
-                    // Find matching Push and remove it
-                    for (auto it = activeStack.rbegin(); it != activeStack.rend(); ++it) {
-                        if (getPushCategory(*it) == popCat) {
-                            activeStack.erase(std::next(it).base());
-                            break;
-                        }
-                    }
-                }
-                else if (marker.first >= paragraphStart) {
-                    // Check for sticky block states
-                    std::visit([&](const auto& arg) {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, TextAlign>) { hasAlign = true; lastAlign = arg; }
-                        else if constexpr (std::is_same_v<T, ParaIndent>) { hasIndent = true; lastIndent = arg; }
-                        else if constexpr (std::is_same_v<T, ParaLineSpacing>) { hasSpacing = true; lastSpacing = arg; }
-                        }, item);
-                }
-            }
-        }
-
-        // 2. Inject inherited active states at index 0 of the copied text
-        if (hasAlign) result.m_markers.emplace_back(0, lastAlign);
-        if (hasIndent) result.m_markers.emplace_back(0, lastIndent);
-        if (hasSpacing) result.m_markers.emplace_back(0, lastSpacing);
-
-        for (const auto& activeItem : activeStack) {
-            result.m_markers.emplace_back(0, activeItem);
-        }
-
-        // 3. Process markers strictly inside the selection
-        for (const auto& marker : m_markers) {
-            if (marker.first >= end) break;
-            if (marker.first >= start) {
-                // Copy tag adjusting its index relative to the selection start
-                result.m_markers.emplace_back(marker.first - start, marker.second);
-
-                // Maintain stack to know what remains unclosed at the end
-                const auto& item = marker.second;
-                MarkerCat pushCat = getPushCategory(item);
-                if (pushCat != MarkerCat::None) {
-                    activeStack.push_back(item);
-                }
-                else {
-                    MarkerCat popCat = getPopCategory(item);
-                    if (popCat != MarkerCat::None) {
-                        for (auto it = activeStack.rbegin(); it != activeStack.rend(); ++it) {
-                            if (getPushCategory(*it) == popCat) {
-                                activeStack.erase(std::next(it).base());
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 4. Safely close all tags left unpopped (in reverse LIFO order)
-        for (auto it = activeStack.rbegin(); it != activeStack.rend(); ++it) {
-            auto popResult = createMatchingPop(*it);
-            if (popResult.hasValue) {
-                result.m_markers.emplace_back(length, popResult.value);
-            }
-        }
-
-        // **What stands at index 0 is the state the selection inherited**, and it stays there even
-        // where the selection's own first marker closes it again. Annihilating that pair would
-        // leave the text saying nothing about a run it stood inside, and that is what replaceText
-        // reads to tell a run the text belongs to from one that closes where the text lands. The
-        // pair is two markers and goes in the cleanup replaceText runs over the text it is put
-        // into.
-
+        stateParagraphsUpTo(m_plainText.size());
         return result;
     }
 
+    // An anchor runs on through the runs that carry it, as one wrapper's words do.
+    std::optional<TextRange> Text::anchorRange(std::wstring_view name) const
+    {
+        std::size_t start = 0;
+        for (std::size_t i = 0; i != m_runs.size(); ++i)
+        {
+            if (!m_runs[i].anchor || nameAt(m_runs[i].anchor) != name)
+            {
+                start += m_runs[i].length;
+                continue;
+            }
+            std::size_t length = 0;
+            for (std::size_t j = i; j != m_runs.size() && m_runs[j].anchor == m_runs[i].anchor; ++j)
+                length += m_runs[j].length;
+            return TextRange{ start, length };
+        }
+        return std::nullopt;
+    }
+
+    // The character before the caret is asked first, so where two links meet at the caret it is
+    // the ending one.
+    std::optional<LinkSpan> Text::linkAtCaret(const std::size_t caretPos) const
+    {
+        for (const std::size_t pos : { caretPos - 1, caretPos })
+        {
+            if (pos >= m_plainText.size())
+                continue;
+            const RunPlace place = placeOf(pos);
+            const std::uint32_t link = m_runs[place.index].link;
+            if (!link)
+                continue;
+
+            std::size_t first = place.index;
+            std::size_t start = place.start;
+            while (first != 0 && m_runs[first - 1].link == link)
+            {
+                --first;
+                start -= m_runs[first].length;
+            }
+            std::size_t length = 0;
+            for (std::size_t i = first; i != m_runs.size() && m_runs[i].link == link; ++i)
+                length += m_runs[i].length;
+            return LinkSpan{ { start, length }, nameAt(link) };
+        }
+        return std::nullopt;
+    }
+
+    std::optional<std::wstring_view> Text::firstLink() const
+    {
+        for (const Run& run : m_runs)
+        {
+            if (run.link)
+                return nameAt(run.link);
+        }
+        return std::nullopt;
+    }
+
+    void Text::replaceText(const TextRange& range, const std::wstring_view words)
+    {
+        edit(range, Text{ words }, Insertion::Nested);
+    }
+
+    void Text::replaceText(const TextRange& range, const Text& inserted)
+    {
+        edit(range, inserted, Insertion::Nested);
+    }
+
+    void Text::restoreText(const TextRange& range, const Text& taken)
+    {
+        edit(range, taken, Insertion::Restored);
+    }
+
+    // The paragraph the range starts in keeps its look whatever is put into it, so the range
+    // carries the looks of the paragraphs starting after its first character.
+    Text Text::selectedText(const TextRange& range) const
+    {
+        Text result;
+        const std::size_t start = std::min(range.start, m_plainText.size());
+        const std::size_t end = start + std::min(range.length, m_plainText.size() - start);
+
+        result.m_plainText = m_plainText.substr(start, end - start);
+        result.m_runs = result.runsOf(*this, start, end);
+        for (const StatedParagraph& stated : m_paragraphs)
+        {
+            if (stated.start > start && stated.start <= end)
+                result.m_paragraphs.push_back({ stated.start - start, stated.look });
+        }
+        return result;
+    }
+
+    bool Text::joins(const Run& before, const Run& after)
+    {
+        return !before.object && !after.object && before.look == after.look
+            && before.link == after.link && before.anchor == after.anchor;
+    }
+
+    const TextLook& Text::lookAt(std::uint32_t look) const
+    {
+        return look ? m_looks[look - 1] : k_noLook;
+    }
+
+    std::wstring_view Text::nameAt(std::uint32_t name) const
+    {
+        return name ? std::wstring_view{ m_names[name - 1] } : std::wstring_view{};
+    }
+
+    // A text holds a look once, so two runs in one look carry one index.
+    std::uint32_t Text::lookIndexOf(const TextLook& look)
+    {
+        if (look.empty())
+            return 0;
+        const Looks::const_iterator found = std::ranges::find(m_looks, look);
+        if (found != m_looks.end())
+            return static_cast<std::uint32_t>(found - m_looks.begin()) + 1;
+        m_looks.push_back(look);
+        return static_cast<std::uint32_t>(m_looks.size());
+    }
+
+    std::uint32_t Text::nameIndexOf(std::wstring_view name)
+    {
+        if (name.empty())
+            return 0;
+        const Names::const_iterator found = std::ranges::find(m_names, name);
+        if (found != m_names.end())
+            return static_cast<std::uint32_t>(found - m_names.begin()) + 1;
+        m_names.emplace_back(name);
+        return static_cast<std::uint32_t>(m_names.size());
+    }
+
+    const Text::StatedParagraph* Text::statedAt(std::size_t paragraphStart) const
+    {
+        const StatedParagraphs::const_iterator found = std::ranges::lower_bound(m_paragraphs,
+            paragraphStart, std::less<>{}, &StatedParagraph::start);
+        if (found == m_paragraphs.end() || found->start != paragraphStart)
+            return nullptr;
+        return &*found;
+    }
+
+    std::size_t Text::paragraphStartOf(std::size_t pos) const
+    {
+        if (pos == 0)
+            return 0;
+        const std::size_t lineEnd = m_plainText.rfind(k_endLine, pos - 1);
+        return lineEnd == std::wstring::npos ? 0 : lineEnd + 1;
+    }
+
+    bool Text::startsParagraph(std::size_t pos) const
+    {
+        return pos == 0 || m_plainText[pos - 1] == k_endLine;
+    }
+
+    // Walked from whichever end is nearer: a wrapper reaches back from the end of the text it is
+    // writing, and a caret is anywhere. Past the last character is the end of the runs.
+    Text::RunPlace Text::placeOf(std::size_t pos) const
+    {
+        if (pos >= m_plainText.size())
+            return { m_runs.size(), m_plainText.size() };
+
+        if (pos < m_plainText.size() / 2)
+        {
+            std::size_t start = 0;
+            for (std::size_t i = 0; i != m_runs.size(); ++i)
+            {
+                if (pos < start + m_runs[i].length)
+                    return { i, start };
+                start += m_runs[i].length;
+            }
+        }
+        else
+        {
+            std::size_t start = m_plainText.size();
+            for (std::size_t i = m_runs.size(); i-- != 0;)
+            {
+                start -= m_runs[i].length;
+                if (start <= pos)
+                    return { i, start };
+            }
+        }
+        noReach("A text's runs do not cover its characters");
+    }
+
+    // The index of the run that starts at pos, cutting the run that holds it in two.
+    std::size_t Text::splitAt(std::size_t pos)
+    {
+        const RunPlace place = placeOf(pos);
+        if (place.index == m_runs.size() || place.start == pos)
+            return place.index;
+
+        Run tail = m_runs[place.index];
+        tail.length = place.start + tail.length - pos;
+        m_runs[place.index].length = pos - place.start;
+        m_runs.insert(m_runs.begin() + static_cast<std::ptrdiff_t>(place.index) + 1, tail);
+        return place.index + 1;
+    }
+
+    // Joins the runs from the one before first to the one at last wherever two in a row are one
+    // look, so the runs stay the fewest that say what the text says.
+    void Text::joinRuns(std::size_t first, std::size_t last)
+    {
+        const std::size_t from = first == 0 ? 0 : first - 1;
+        const std::size_t to = std::min(last + 1, m_runs.size());
+        if (to - from < 2)
+            return;
+
+        std::size_t write = from;
+        for (std::size_t read = from + 1; read != to; ++read)
+        {
+            if (joins(m_runs[write], m_runs[read]))
+            {
+                m_runs[write].length += m_runs[read].length;
+                continue;
+            }
+            ++write;
+            m_runs[write] = m_runs[read];
+        }
+        m_runs.erase(m_runs.begin() + static_cast<std::ptrdiff_t>(write) + 1,
+            m_runs.begin() + static_cast<std::ptrdiff_t>(to));
+    }
+
+    void Text::appendRun(const Run& run)
+    {
+        if (!m_runs.empty() && joins(m_runs.back(), run))
+            m_runs.back().length += run.length;
+        else
+            m_runs.push_back(run);
+    }
+
+    void Text::appendWords(std::wstring_view words)
+    {
+        m_plainText.append(words);
+        appendRun(Run{ .length = words.size() });
+    }
+
+    void Text::appendObject(InlineObject object)
+    {
+        m_objects.push_back(std::move(object));
+        m_plainText.push_back(k_objectChar);
+        m_runs.push_back(Run{ .length = 1, .object = static_cast<std::uint32_t>(m_objects.size()) });
+    }
+
+    void Text::dropLastCharacter()
+    {
+        m_plainText.pop_back();
+        if (--m_runs.back().length == 0)
+            m_runs.pop_back();
+    }
+
+    // A look that states nothing is no entry, which is how a paragraph's look is taken off.
+    void Text::stateParagraph(std::size_t paragraphStart, const ParagraphLook& look)
+    {
+        const StatedParagraphs::iterator found = std::ranges::lower_bound(m_paragraphs,
+            paragraphStart, std::less<>{}, &StatedParagraph::start);
+        const bool stated = found != m_paragraphs.end() && found->start == paragraphStart;
+        if (look.empty())
+        {
+            if (stated)
+                m_paragraphs.erase(found);
+            return;
+        }
+        if (stated)
+            found->look = look;
+        else
+            m_paragraphs.insert(found, StatedParagraph{ paragraphStart, look });
+    }
+
+    void Text::layParagraph(std::size_t paragraphStart, const ParagraphLook& outer)
+    {
+        stateParagraph(paragraphStart, laidUnder(paragraphLookAt(paragraphStart), outer));
+    }
+
+    // Another text's runs from one position to another, cut to that range, each index moved into
+    // this text's tables. Every look and name is looked up once, however many runs carry it.
+    Text::Runs Text::runsOf(const Text& other, std::size_t from, std::size_t to)
+    {
+        IndexMap looks(other.m_looks.size() + 1, k_unmapped);
+        IndexMap names(other.m_names.size() + 1, k_unmapped);
+        looks[0] = 0;
+        names[0] = 0;
+        const auto mapName = [this, &other, &names](std::uint32_t name){
+            if (names[name] == k_unmapped)
+                names[name] = nameIndexOf(other.nameAt(name));
+            return names[name];
+        };
+
+        Runs result;
+        std::size_t start = 0;
+        for (const Run& run : other.m_runs)
+        {
+            if (start >= to)
+                break;
+            const std::size_t end = start + run.length;
+            if (std::min(end, to) > std::max(start, from))
+            {
+                if (looks[run.look] == k_unmapped)
+                    looks[run.look] = lookIndexOf(other.lookAt(run.look));
+                Run copy = {
+                    .length = std::min(end, to) - std::max(start, from),
+                    .look = looks[run.look],
+                    .link = mapName(run.link),
+                    .anchor = mapName(run.anchor),
+                };
+                if (run.object)
+                {
+                    m_objects.push_back(other.m_objects[run.object - 1]);
+                    copy.object = static_cast<std::uint32_t>(m_objects.size());
+                }
+                result.push_back(copy);
+            }
+            start = end;
+        }
+        return result;
+    }
+
+    // Read before the edit. Words replacing others take the look, link and anchor of the first
+    // they replace. Words put in at a caret take the look and anchor of the character before it,
+    // or of the one after at a paragraph's start, and a link only from inside it, where the
+    // characters on both sides carry it.
+    Text::Surroundings Text::surroundingsOf(std::size_t start, std::size_t end) const
+    {
+        const std::size_t size = m_plainText.size();
+        if (size == 0)
+            return {};
+
+        if (end != start)
+        {
+            const Run& replaced = m_runs[placeOf(start).index];
+            return {
+                .look = replaced.look,
+                .link = replaced.link,
+                .anchor = replaced.anchor,
+            };
+        }
+
+        const bool takesAfter = start != size && (start == 0 || m_plainText[start - 1] == k_endLine);
+        const Run& sourceRun = m_runs[placeOf(takesAfter ? start : start - 1).index];
+        std::uint32_t link = 0;
+        if (start != 0 && start != size)
+        {
+            const std::uint32_t before = m_runs[placeOf(start - 1).index].link;
+            if (before && before == m_runs[placeOf(start).index].link)
+                link = before;
+        }
+        return {
+            .look = sourceRun.look,
+            .link = link,
+            .anchor = sourceRun.anchor,
+        };
+    }
+
+    // What follows a line end put in stands at a paragraph's start, where words take the look of
+    // the character after them: the one the edit's end reaches, or the line end itself where the
+    // edit reaches the end of the text. So words put in at once come out as they would typed one
+    // by one.
+    Text::Surroundings Text::surroundingsAfterLineEnd(std::size_t end,
+        const Surroundings& before) const
+    {
+        if (end == m_plainText.size())
+            return before;
+        const Run& after = m_runs[placeOf(end).index];
+        return {
+            .look = after.look,
+            .link = before.link,
+            .anchor = after.anchor,
+        };
+    }
+
+    void Text::nestRuns(std::span<Run> runs, const Surroundings& around)
+    {
+        for (Run& run : runs)
+        {
+            run.look = lookIndexOf(laidUnder(lookAt(run.look), lookAt(around.look), run.link != 0));
+            if (!run.link)
+                run.link = around.link;
+            if (!run.anchor)
+                run.anchor = around.anchor;
+        }
+    }
+
+    // An object a run no longer stands at is dropped with the run, so a table an edit grew stays
+    // the size of what the text holds.
+    void Text::dropUnusedObjects()
+    {
+        Objects kept;
+        for (Run& run : m_runs)
+        {
+            if (!run.object)
+                continue;
+            kept.push_back(std::move(m_objects[run.object - 1]));
+            run.object = static_cast<std::uint32_t>(kept.size());
+        }
+        m_objects = std::move(kept);
+    }
+
+    void Text::edit(const TextRange& range, const Text& inserted, Insertion insertion)
+    {
+        if (&inserted == this)
+        {
+            const Text copy{ inserted };
+            edit(range, copy, insertion);
+            return;
+        }
+
+        m_startsOwnLine = false;
+        m_endsOwnLine = false;
+        const std::size_t start = std::min(range.start, m_plainText.size());
+        const std::size_t end = start + std::min(range.length, m_plainText.size() - start);
+        const std::size_t insertedLength = inserted.m_plainText.size();
+
+        // Nested, the words after the first line end put in take the look after the edit.
+        const std::size_t lineEnd = inserted.m_plainText.find(k_endLine);
+        const std::size_t firstLineLength = insertion == Insertion::Nested
+            && lineEnd != std::wstring::npos
+            ? lineEnd + 1
+            : insertedLength;
+        Runs added = runsOf(inserted, 0, firstLineLength);
+        Runs following = runsOf(inserted, firstLineLength, insertedLength);
+        if (insertion == Insertion::Nested)
+        {
+            const Surroundings around = surroundingsOf(start, end);
+            nestRuns(added, around);
+            nestRuns(following, surroundingsAfterLineEnd(end, around));
+        }
+        added.insert(added.end(), following.begin(), following.end());
+        editParagraphs(start, end, inserted, insertion);
+
+        const std::size_t first = splitAt(start);
+        const std::size_t last = splitAt(end);
+        bool objectsGone = false;
+        for (std::size_t i = first; i != last; ++i)
+            objectsGone = objectsGone || m_runs[i].object != 0;
+        m_runs.erase(m_runs.begin() + static_cast<std::ptrdiff_t>(first),
+            m_runs.begin() + static_cast<std::ptrdiff_t>(last));
+        m_runs.insert(m_runs.begin() + static_cast<std::ptrdiff_t>(first), added.begin(),
+            added.end());
+        m_plainText.replace(start, end - start, inserted.m_plainText);
+        joinRuns(first, first + added.size());
+        if (objectsGone || !inserted.m_objects.empty())
+            dropUnusedObjects();
+    }
+
+    // **A paragraph keeps its look through every edit made inside it**, and one joined to it takes
+    // that look, so the paragraphs starting inside what goes are dropped. The paragraphs a text
+    // put in starts take their own looks back where it is restored. Put in any other way, each
+    // takes the look of the paragraph the edit starts in under its own, and the one holding the
+    // words that followed the edit keeps that look. See TextEngine-Types#edits
+    void Text::editParagraphs(std::size_t start, std::size_t end, const Text& inserted,
+        Insertion insertion)
+    {
+        const ParagraphLook upper = paragraphLookAt(paragraphStartOf(start));
+        const std::size_t insertedLength = inserted.m_plainText.size();
+
+        StatedParagraphs kept;
+        kept.reserve(m_paragraphs.size());
+        for (const StatedParagraph& stated : m_paragraphs)
+        {
+            if (stated.start <= start)
+                kept.push_back(stated);
+            else if (stated.start > end)
+                kept.push_back({ stated.start - (end - start) + insertedLength, stated.look });
+        }
+        m_paragraphs = std::move(kept);
+
+        if (insertion == Insertion::Restored)
+        {
+            for (const StatedParagraph& stated : inserted.m_paragraphs)
+            {
+                if (stated.start != 0)
+                    stateParagraph(start + stated.start, stated.look);
+            }
+            return;
+        }
+
+        const std::wstring& words = inserted.m_plainText;
+        for (std::size_t lineEnd = words.find(k_endLine); lineEnd != std::wstring::npos;
+            lineEnd = words.find(k_endLine, lineEnd + 1))
+        {
+            const std::size_t next = lineEnd + 1;
+            const ParagraphLook own = next == insertedLength
+                ? ParagraphLook{}
+                : inserted.paragraphLookAt(next);
+            stateParagraph(start + next, laidUnder(own, upper));
+        }
+    }
+
+    void Text::applyLayer(std::size_t from, std::size_t to, const TextLayer& layer)
+    {
+        const std::size_t first = splitAt(from);
+        const std::size_t last = splitAt(to);
+        const std::uint32_t link = nameIndexOf(layer.link);
+        const std::uint32_t anchor = nameIndexOf(layer.anchor);
+        for (std::size_t i = first; i != last; ++i)
+        {
+            Run& run = m_runs[i];
+            if (!layer.look.empty())
+                run.look = lookIndexOf(laidUnder(lookAt(run.look), layer.look, run.link != 0));
+            if (!run.link)
+                run.link = link;
+            if (!run.anchor)
+                run.anchor = anchor;
+        }
+        joinRuns(first, last);
+    }
+
     // The line the last words own is ended first, so the run starts where its words do.
-    Text::WriteStart Text::openScope(const FormatItem& opening)
+    Text::WriteStart Text::openScope()
     {
         const bool endsOwnLine = m_endsOwnLine;
         breakOwnLine();
-        const WriteStart start = {
+        return {
             .plainLength = m_plainText.size(),
-            .markerCount = m_markers.size(),
             .lineBroken = endsOwnLine,
             .startsOwnLine = m_startsOwnLine,
             .endsOwnLine = endsOwnLine,
         };
-        m_markers.emplace_back(m_plainText.size(), opening);
-        return start;
     }
 
-    void Text::closeScope(const WriteStart& start)
+    void Text::closeScope(const WriteStart& start, const TextLayer& layer)
     {
         if (m_plainText.size() == start.plainLength)
         {
-            m_markers.erase(m_markers.begin() + static_cast<std::ptrdiff_t>(start.markerCount),
-                m_markers.end());
-            if (start.lineBroken)
-                m_plainText.pop_back();
-            m_startsOwnLine = start.startsOwnLine;
-            m_endsOwnLine = start.endsOwnLine;
+            undoOpening(start);
             return;
         }
-        const OptionalPop closer = createMatchingPop(m_markers[start.markerCount].second);
-        if (!closer.hasValue)
-            noReach("A wrapper opened a run that no marker closes");
-        m_markers.emplace_back(m_plainText.size(), closer.value);
+        applyLayer(start.plainLength, m_plainText.size(), layer);
     }
 
-    Text::WriteStart Text::openParagraph(const FormatItem& property)
+    Text::WriteStart Text::openParagraph()
     {
         const bool startsOwnLine = m_startsOwnLine;
         const bool endsOwnLine = m_endsOwnLine;
         const bool lineBroken = !m_plainText.empty() && m_plainText.back() != k_endLine;
         if (lineBroken)
-            m_plainText.push_back(k_endLine);
+            appendWords(std::wstring_view{ &k_endLine, 1 });
         if (m_plainText.empty())
             m_startsOwnLine = true;
         m_endsOwnLine = false;
-        const WriteStart start = {
+        return {
             .plainLength = m_plainText.size(),
-            .markerCount = m_markers.size(),
             .lineBroken = lineBroken,
             .startsOwnLine = startsOwnLine,
             .endsOwnLine = endsOwnLine,
         };
-        m_markers.emplace_back(m_plainText.size(), property);
-        return start;
     }
 
-    // A paragraph reads its properties afresh, so the property is stated again on every line the
-    // words start, ahead of whatever the words state there themselves.
-    void Text::closeParagraph(const WriteStart& start)
+    // Every line the words start takes the look, under whatever the words state there themselves.
+    void Text::closeParagraph(const WriteStart& start, const ParagraphLook& look)
     {
         if (m_plainText.size() == start.plainLength)
         {
-            m_markers.erase(m_markers.begin() + static_cast<std::ptrdiff_t>(start.markerCount),
-                m_markers.end());
-            if (start.lineBroken)
-                m_plainText.pop_back();
-            m_startsOwnLine = start.startsOwnLine;
-            m_endsOwnLine = start.endsOwnLine;
+            undoOpening(start);
             return;
         }
 
-        const FormatItem property = m_markers[start.markerCount].second;
-        Markers restated;
+        layParagraph(start.plainLength, look);
         for (std::size_t at = start.plainLength; at + 1 < m_plainText.size(); ++at)
         {
             if (m_plainText[at] == k_endLine)
-                restated.emplace_back(at + 1, property);
+                layParagraph(at + 1, look);
         }
-        if (!restated.empty())
-        {
-            const Markers::iterator words = m_markers.begin()
-                + static_cast<std::ptrdiff_t>(start.markerCount + 1);
-            Markers merged;
-            merged.reserve(static_cast<std::size_t>(m_markers.end() - words) + restated.size());
-            std::merge(restated.begin(), restated.end(),
-                std::make_move_iterator(words), std::make_move_iterator(m_markers.end()),
-                std::back_inserter(merged),
-                [](const Marker& first, const Marker& second){
-                    return first.first < second.first;
-                });
-            m_markers.erase(words, m_markers.end());
-            m_markers.insert(m_markers.end(),
-                std::make_move_iterator(merged.begin()), std::make_move_iterator(merged.end()));
-        }
-
         m_endsOwnLine = m_plainText.back() != k_endLine;
+    }
+
+    // A wrapper that wrote nothing leaves the text as it found it.
+    void Text::undoOpening(const WriteStart& start)
+    {
+        if (start.lineBroken)
+            dropLastCharacter();
+        m_startsOwnLine = start.startsOwnLine;
+        m_endsOwnLine = start.endsOwnLine;
     }
 
     // The line end a paragraph wrapper leaves to whatever is written after it, so a text that
@@ -1017,57 +1038,21 @@ namespace ClaFi
     {
         if (!m_endsOwnLine)
             return;
-        m_plainText.push_back(k_endLine);
+        appendWords(std::wstring_view{ &k_endLine, 1 });
         m_endsOwnLine = false;
-    }
-
-    namespace
-    {
-        // The kinds a format holds one of, in the order it holds them.
-        enum class FormatKind
-        {
-            Color,
-            Style,
-            Size,
-            Family,
-            Bold,
-            Italic,
-            Align,
-            Indent,
-            LineSpacing
-        };
-
-        [[nodiscard]] FormatKind formatKindOf(const FormatItem& item)
-        {
-            return std::visit([](const auto& arg) -> FormatKind {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, PushThemeColor> || std::is_same_v<T, PushCustomColor>)
-                    return FormatKind::Color;
-                else if constexpr (std::is_same_v<T, PushTextStyle>)
-                    return FormatKind::Style;
-                else if constexpr (std::is_same_v<T, PushFontSize>)
-                    return FormatKind::Size;
-                else if constexpr (std::is_same_v<T, PushFontFamily>)
-                    return FormatKind::Family;
-                else if constexpr (std::is_same_v<T, TextOp>)
-                    return arg == TextOp::PushBold ? FormatKind::Bold : FormatKind::Italic;
-                else if constexpr (std::is_same_v<T, TextAlign>)
-                    return FormatKind::Align;
-                else if constexpr (std::is_same_v<T, ParaIndent>)
-                    return FormatKind::Indent;
-                else if constexpr (std::is_same_v<T, ParaLineSpacing>)
-                    return FormatKind::LineSpacing;
-                else
-                    noReach("a marker no text format holds");
-            }, item);
-        }
     }
 
     // TextFormat
 
+    TextFormat& TextFormat::operator<<(const TextStyle& style)
+    {
+        m_look.style = &style;
+        return *this;
+    }
+
     TextFormat& TextFormat::operator<<(Ink ink)
     {
-        place(PushThemeColor{ ink });
+        m_look.ink = ink;
         return *this;
     }
 
@@ -1083,54 +1068,57 @@ namespace ClaFi
 
     TextFormat& TextFormat::operator<<(Color color)
     {
-        place(PushCustomColor{ color });
+        m_look.ink = color;
         return *this;
     }
 
-    TextFormat& TextFormat::operator<<(TextStyle style)
+    TextFormat& TextFormat::operator<<(TextAlign align)
     {
-        place(PushTextStyle{ style });
+        m_paragraph.align = align;
         return *this;
     }
 
-    TextFormat& TextFormat::operator<<(TextOp op)
+    TextFormat& TextFormat::operator<<(ParaIndent indent)
     {
-        if (op != TextOp::PushBold && op != TextOp::PushItalic)
-            noReach("A text format takes bold and italic, and no other TextOp");
-        place(op);
+        m_paragraph.indent = indent.indent;
+        return *this;
+    }
+
+    TextFormat& TextFormat::operator<<(ParaLineSpacing spacing)
+    {
+        m_paragraph.lineSpacing = spacing.spacing;
         return *this;
     }
 
     TextFormat& TextFormat::operator<<(const TextFormat& other)
     {
-        for (const Text::Marker& marker : other.markers())
-            place(marker.second);
+        const TextLook& look = other.m_look;
+        if (look.style)
+            m_look.style = look.style;
+        if (look.fontFamily)
+            m_look.fontFamily = look.fontFamily;
+        if (look.fontSize)
+            m_look.fontSize = look.fontSize;
+        if (look.fontWeight)
+            m_look.fontWeight = look.fontWeight;
+        if (look.fontStyle)
+            m_look.fontStyle = look.fontStyle;
+        if (look.ink)
+            m_look.ink = look.ink;
+        m_paragraph = laidUnder(other.m_paragraph, m_paragraph);
         return *this;
     }
 
     std::size_t TextFormat::hash() const
     {
         std::size_t hash = k_fnvOffset;
-        combineMarkers(hash, m_markers);
+        combineLook(hash, m_look);
+        combineParagraph(hash, m_paragraph);
         return hash;
     }
 
     bool TextFormat::matches(const TextFormat* other) const
     {
         return other ? *this == *other : empty();
-    }
-
-    // In the order of the kinds rather than the order stated, so two formats saying the same
-    // thing are equal and hash alike however they were composed.
-    void TextFormat::place(FormatItem item)
-    {
-        const FormatKind kind = formatKindOf(item);
-        auto at = std::find_if(m_markers.begin(), m_markers.end(), [kind](const Text::Marker& marker){
-            return formatKindOf(marker.second) >= kind;
-        });
-        if (at != m_markers.end() && formatKindOf(at->second) == kind)
-            at->second = std::move(item);
-        else
-            m_markers.insert(at, { 0, std::move(item) });
     }
 }

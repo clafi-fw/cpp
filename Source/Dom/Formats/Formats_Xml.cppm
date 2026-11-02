@@ -19,8 +19,10 @@
 // - No attribute-value whitespace normalization. The spec requires literal
 //   tabs/newlines within an attribute value to be normalized to spaces by
 //   a conformant processor; this reader preserves them verbatim.
-// - No mixed content: an element's body is parsed as either pure text or
-//   pure nested elements, never both together.
+// - Mixed content only where words are kept: a multi-type sequence's element
+//   holds its unnamed items as text between the elements of the rest, and a
+//   section's unnamed value is its element's text. Every other body is
+//   either pure text or pure nested elements.
 // - Schema-bound, not schema-inferring: every element/attribute name is
 //   resolved against the pre-existing DOM schema via Section::child(). It
 //   cannot represent an arbitrary XML document with no corresponding
@@ -42,7 +44,16 @@ namespace ClaFi::Dom::FileFormat
         void saveSectionToStream(const Section& section, std::wostream& stream) const override;
 
     private:
-        void saveNode(std::wostream& stream, std::wstring_view tagName, const DomNodeBase& node, std::size_t indent) const;
+        // Whether an element is written on lines of its own or inside words, with no blank added.
+        enum class Placement
+        {
+            Indented,
+            Inline
+        };
+
+    private:
+        void saveNode(std::wostream& stream, std::wstring_view tagName, const DomNodeBase& node,
+            std::size_t indent, Placement placement = Placement::Indented) const;
 
         // Parses "<Name" — just enough for a parent to resolve the target
         // this element maps to — leaving `s` positioned right after the
@@ -52,6 +63,8 @@ namespace ClaFi::Dom::FileFormat
         static std::wstring parseElementName(std::wstring_view& s);
         static void parseElement(std::wstring_view& s, DomNodeBase* target);
         static void parseElementBody(std::wstring_view& s, DomNodeBase* target);
+        static void parseWordsAndElements(std::wstring_view& s, DomNodeBase* target, Section* sec,
+            MultiTypeSequence* list, ScalarValueBase* text);
 
         static void skipWs(std::wstring_view& s);
         static bool match(std::wstring_view& s, wchar_t c);
@@ -117,19 +130,31 @@ namespace ClaFi::Dom::FileFormat
         stream << L"\n";
     }
 
-    void Xml::saveNode(std::wostream& stream, std::wstring_view tagName, const DomNodeBase& node, std::size_t indent) const
+    // **Words a reader keeps to the character are written inline**: a section's unnamed value is
+    // its element's text, and a multi-type sequence that has an unnamed blueprint holds its unnamed
+    // items as text between the elements of the rest. Nothing is indented inside either, since a
+    // reader takes every blank there as part of the words.
+    void Xml::saveNode(std::wostream& stream, std::wstring_view tagName, const DomNodeBase& node,
+        std::size_t indent, Placement placement) const
     {
-        std::wstring pad = std::wstring(indent * 2, L' ');
+        const bool inlined = placement == Placement::Inline;
+        const std::wstring pad = inlined ? std::wstring{} : std::wstring(indent * 2, L' ');
+        const wchar_t* lineEnd = inlined ? L"" : L"\n";
 
         if (node.type() == DomNodeType::ScalarValue)
         {
             std::wstring raw = static_cast<const ScalarValueBase&>(node).getAsRaw();
-            stream << pad << L"<" << tagName << L">" << escapeText(raw) << L"</" << tagName << L">\n";
+            stream << pad << L"<" << tagName << L">" << escapeText(raw) << L"</" << tagName << L">" << lineEnd;
         }
         else if (node.type() == DomNodeType::Section || node.type() == DomNodeType::CompositeValue)
         {
             auto& sec = static_cast<const Section&>(node);
             auto keys = sec.getKeys();
+
+            const DomNodeBase* textChild = sec.child(L"");
+            const ScalarValueBase* text = textChild && textChild->type() == DomNodeType::ScalarValue
+                ? static_cast<const ScalarValueBase*>(textChild)
+                : nullptr;
 
             std::vector<std::wstring_view> scalarKeys;
             std::vector<std::wstring_view> compositeKeys;
@@ -137,6 +162,10 @@ namespace ClaFi::Dom::FileFormat
             for (const auto& key : keys)
             {
                 const DomNodeBase* child = sec.child(key);
+                if (key.empty() && text)
+                {
+                    continue;
+                }
                 if (k_scalarsAsAttributes && child->type() == DomNodeType::ScalarValue)
                 {
                     scalarKeys.push_back(key);
@@ -154,29 +183,59 @@ namespace ClaFi::Dom::FileFormat
                 stream << L" " << key << L"=\"" << escapeAttribute(raw) << L"\"";
             }
 
-            if (compositeKeys.empty())
+            if (compositeKeys.empty() && !text)
             {
-                stream << L"/>\n";
+                stream << L"/>" << lineEnd;
                 return;
             }
 
-            stream << L">\n";
+            if (text)
+            {
+                stream << L">" << escapeText(text->getAsRaw());
+                for (const auto& key : compositeKeys)
+                {
+                    saveNode(stream, key, *sec.child(key), 0, Placement::Inline);
+                }
+                stream << L"</" << tagName << L">" << lineEnd;
+                return;
+            }
+
+            stream << L">" << lineEnd;
             for (const auto& key : compositeKeys)
             {
-                saveNode(stream, key, *sec.child(key), indent + 1);
+                saveNode(stream, key, *sec.child(key), indent + 1, placement);
             }
-            stream << pad << L"</" << tagName << L">\n";
+            stream << pad << L"</" << tagName << L">" << lineEnd;
+        }
+        else if (node.type() == DomNodeType::MultiTypeSequence)
+        {
+            const MultiTypeSequence& list = static_cast<const MultiTypeSequence&>(node);
+            const bool holdsText = list.blueprint(L"") != nullptr;
+            const bool itemsInlined = inlined || holdsText;
+            const Placement itemPlacement = itemsInlined ? Placement::Inline : Placement::Indented;
+
+            stream << pad << L"<" << tagName << L">" << (itemsInlined ? L"" : L"\n");
+            for (const MultiTypeSequence::Item& item : list.items())
+            {
+                if (item.name.empty() && item.node->type() == DomNodeType::ScalarValue)
+                {
+                    stream << escapeText(static_cast<const ScalarValueBase&>(*item.node).getAsRaw());
+                    continue;
+                }
+                saveNode(stream, item.name, *item.node, indent + 1, itemPlacement);
+            }
+            stream << (itemsInlined ? L"" : pad) << L"</" << tagName << L">" << lineEnd;
         }
         else if (node.type() == DomNodeType::Sequence)
         {
             auto& seq = static_cast<const SequenceBase&>(node);
 
-            stream << pad << L"<" << tagName << L">\n";
+            stream << pad << L"<" << tagName << L">" << lineEnd;
             for (std::size_t i = 0; i < seq.size(); ++i)
             {
-                saveNode(stream, L"Item", *seq.child(i), indent + 1);
+                saveNode(stream, L"Item", *seq.child(i), indent + 1, placement);
             }
-            stream << pad << L"</" << tagName << L">\n";
+            stream << pad << L"</" << tagName << L">" << lineEnd;
         }
     }
 
@@ -246,7 +305,31 @@ namespace ClaFi::Dom::FileFormat
                 {
                     static_cast<SequenceBase*>(target)->clear();
                 }
+                else if (target->type() == DomNodeType::MultiTypeSequence)
+                {
+                    static_cast<MultiTypeSequence*>(target)->clear();
+                }
             }
+            return;
+        }
+
+        // A multi-type sequence, and a section with an unnamed value, are read to the character.
+        MultiTypeSequence* list = target && target->type() == DomNodeType::MultiTypeSequence
+            ? static_cast<MultiTypeSequence*>(target)
+            : nullptr;
+        DomNodeBase* unnamed = sec ? sec->child(L"") : nullptr;
+        ScalarValueBase* unnamedValue = unnamed && unnamed->type() == DomNodeType::ScalarValue
+            ? static_cast<ScalarValueBase*>(unnamed)
+            : nullptr;
+        if (list || unnamedValue)
+        {
+            parseWordsAndElements(s, target, sec, list, unnamedValue);
+            skipWs(s);
+            match(s, L'<');
+            match(s, L'/');
+            parseTagName(s);
+            skipWs(s);
+            match(s, L'>');
             return;
         }
 
@@ -344,6 +427,73 @@ namespace ClaFi::Dom::FileFormat
         parseTagName(s);
         skipWs(s);
         match(s, L'>');
+    }
+
+    // **Words and elements in the order written, nothing skipped.** A run of words is the
+    // section's unnamed value, or an unnamed item of the list where its blueprints have one; a run
+    // of blanks anywhere else is only layout.
+    void Xml::parseWordsAndElements(std::wstring_view& s, DomNodeBase* target, Section* sec,
+        MultiTypeSequence* list, ScalarValueBase* text)
+    {
+        if (list)
+        {
+            list->clear();
+        }
+        const DomNodeBase* unnamedBlueprint = list ? list->blueprint(L"") : nullptr;
+        const bool listTakesWords = unnamedBlueprint
+            && unnamedBlueprint->type() == DomNodeType::ScalarValue;
+
+        std::wstring words = std::wstring{};
+        while (!s.empty() && !(s.front() == L'<' && s.size() >= 2 && s[1] == L'/'))
+        {
+            if (s.front() != L'<')
+            {
+                std::wstring run = parseEscapedUntil(s, L'<');
+                if (text)
+                {
+                    words += run;
+                }
+                else if (listTakesWords)
+                {
+                    static_cast<ScalarValueBase*>(list->add(L""))->setFromRaw(run);
+                }
+                else if (!std::ranges::all_of(run, [](wchar_t c){
+                    return std::iswspace(c) != 0;
+                }))
+                {
+                    target->emitSchemaError(*target, L"Schema mismatch: XML words found where no unnamed value is.");
+                }
+                continue;
+            }
+
+            std::wstring childName = parseElementName(s);
+            DomNodeBase* childTarget = nullptr;
+            if (list)
+            {
+                if (list->blueprint(childName))
+                {
+                    childTarget = list->add(childName);
+                }
+                else
+                {
+                    list->emitSchemaError(*list, L"Schema mismatch: No blueprint for the item's name.");
+                }
+            }
+            else if (sec)
+            {
+                childTarget = sec->child(childName);
+                if (!childTarget)
+                {
+                    sec->emitSchemaError(*sec, L"Schema mismatch: Unknown XML element key.");
+                }
+            }
+            parseElementBody(s, childTarget);
+        }
+
+        if (text)
+        {
+            text->setFromRaw(words);
+        }
     }
 
     void Xml::skipWs(std::wstring_view& s)

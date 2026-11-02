@@ -369,7 +369,7 @@ namespace SeeDocs_App::Ui
                 params.themeMetrics().button.padding,
                 MinSize{ k_fieldWidth, 0.0f },
 
-                TextFormat{ TextStyle::Heading },
+                TextFormat{ TextStyles::Heading },
                 WordWrap::No,
                 VerticalTextAnchor::Center,
                 std::move(folderName),

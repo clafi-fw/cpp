@@ -10,7 +10,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Tools::WhatsClip
 {
-    // The clipboard read as text, with its markers on where what it was read from carries them.
+    // The clipboard read as text, in its looks where what it was read from carries them.
     export class TextPreviewPage : public TextPageBase
     {
     public:

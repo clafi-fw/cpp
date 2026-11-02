@@ -112,6 +112,8 @@ namespace ClaFi::Tools::WhatsClip
         // The size a reading is written at. Stated here so that two pages cannot disagree about
         // it, and small because the corner is a strip beside a scroll bar.
         static constexpr float k_readoutFontSize = 11.0f;
+        // The style a reading is set in: the body's, at the size above.
+        static constexpr TextStyle k_readoutStyle{ .name = L"Readout", .fontSize = k_readoutFontSize };
     private:
         // Where the corner bars stand: made on the first call, since a panel has one right bar
         // and a page that stands nothing after the reading keeps the corner it had.
@@ -138,7 +140,7 @@ namespace ClaFi::Tools::WhatsClip
             WordWrap::No,
             Padding{ 12.0f, 4.0f },
             VerticalTextAnchor::Center,
-            TextFormat{ TextStyle::SubBody }
+            TextFormat{ TextStyles::SubBody }
         ) };
         // The corner in two parts: the reading as its body, and what a page stands after it.
         Panel& m_corner;
@@ -223,7 +225,7 @@ namespace ClaFi::Tools::WhatsClip
 
     // **A representation is a line in a table**: the word on its tab, and how to make the page that
     // shows it. Some belong to every format - a format always has bytes - and some to one format
-    // alone, as the text with its markers belongs to the framework's own rich text.
+    // alone, as the text in its looks belongs to the framework's own rich text.
     //
     // The maker is a plain function pointer because nothing about a representation is
     // per-instance: the table is written once and read for every format the clipboard offers.
@@ -250,7 +252,7 @@ namespace ClaFi::Tools::WhatsClip
             MaxSize{ k_defaultReadoutWidth, k_maxFloat },
             WordWrap::No,
             Padding{ k_readoutPaddingX, 0.0f },
-            TextFormat{ PushFontSize{ k_readoutFontSize } },
+            TextFormat{ k_readoutStyle },
             // Anchored Left, which is what holds a reading still. Centred, a number gaining a
             // digit moves every character of it half a digit sideways.
             HorizontalTextAnchor::Left,
@@ -312,7 +314,7 @@ namespace ClaFi::Tools::WhatsClip
         // setting.
         m_wrapCheck{ createStripBar<CheckBox>(
             L"Wrap",
-            TextFormat{ PushFontSize{ k_readoutFontSize } },
+            TextFormat{ k_readoutStyle },
             Padding{ k_pickPaddingX, 0.0f },
             VerticalTextAnchor::Center,
             CheckBox::OnGetState{ [this](GetStateEvent& event) {

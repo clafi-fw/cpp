@@ -40,6 +40,8 @@ namespace ClaFi::Dom
         auto& addSequence(std::wstring_view key, const ValueT& defaultValue);
 
         Section& addSection(std::wstring_view key);
+        // A list of named items, each read into its name's blueprint. See Dom#multitypesequence
+        MultiTypeSequence& addMultiTypeSequence(std::wstring_view key);
 
         const DomNodeBase& operator/(std::wstring_view key) const override;
         DomNodeBase& operator/(std::wstring_view key) override;

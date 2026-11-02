@@ -18,8 +18,8 @@ namespace ClaFi
 {
     Action& appMenuAction()
     {
-        // Built on first use, which is a button's constructor. Text is a string and its markers,
-        // so nothing here needs the platform or the text engine.
+        // Built on first use, which is a button's constructor. Text is a string and its runs, so
+        // nothing here needs the platform or the text engine.
         static Action result{ Text{ L"Application menu" } };
         return result;
     }

@@ -79,11 +79,11 @@ namespace TextEngine_App
         constexpr VerticalTextAnchor k_tabAnchor{ VerticalTextAnchor::Center };
         constexpr Padding k_tabPadding{ 12.0f, 12.0f };
 
-        // How much of a case its ClaFi page states. A marker is four lines of ClaFi and a line of
-        // the ledger carries six or seven of them, so the whole of a generated page is a document
-        // of some hundred thousand lines, and the ClaFi page shapes every one of those on the
-        // first click of its tab. This many paragraphs keeps that document near the length of the
-        // code page itself; a case with no more than this is stated whole.
+        // How much of a case its ClaFi page states. A piece is three or four lines of ClaFi and a
+        // line of the ledger carries six or seven of them, so the whole of a generated page is a
+        // document of some hundred thousand lines, and the ClaFi page shapes every one of those on
+        // the first click of its tab. This many paragraphs keeps that document near the length of
+        // the code page itself; a case with no more than this is stated whole.
         constexpr std::size_t k_claFiParagraphs = 2000;
 
         constexpr float k_searchWidth = 260.0f;

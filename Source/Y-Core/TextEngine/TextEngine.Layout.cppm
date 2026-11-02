@@ -202,7 +202,7 @@ namespace ClaFi
     public:
         void setEventPhase(EventPhase);
         void setText(const Text&);
-        void setFormat(const TextFormat*); // the markers laid out ahead of the text's own, or none
+        void setFormat(const TextFormat*); // the look laid under the text's own, or none
         [[nodiscard]] const TextFormat& format() const { return m_format; }
         // Whether a text has been stated at all - a layout holding none has nothing to shape
         [[nodiscard]] bool isTextStated() const { return m_text != nullptr; }

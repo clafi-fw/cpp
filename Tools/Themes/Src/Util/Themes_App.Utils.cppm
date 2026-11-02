@@ -65,7 +65,7 @@ namespace Themes_App
     // Design side of the blob a popup tile carries, the harmony picker's icon size.
     export constexpr float k_blobSize{ 32.0f };
     // The style a glyph takes on a tile's blob, sized to the blob rather than to a line.
-    export constexpr const TextStyleProps& k_blobGlyphStyle{ TextStyles::SubTitle };
+    export constexpr const TextStyle& k_blobGlyphStyle{ TextStyles::SubTitle };
     // A blob's corner radius as a share of its side.
     export constexpr float k_blobCornerShare{ 0.25f };
 

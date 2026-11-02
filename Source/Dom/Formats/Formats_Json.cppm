@@ -119,6 +119,27 @@ namespace ClaFi::Dom::FileFormat
             writeIndentLocal();
             stream << L"}";
         }
+        else if (node.type() == DomNodeType::MultiTypeSequence)
+        {
+            // An array of one-member objects, since an object's own members keep no order.
+            stream << L"[\n";
+            const MultiTypeSequence& list = static_cast<const MultiTypeSequence&>(node);
+            const MultiTypeSequence::Items& items = list.items();
+            for (std::size_t i = 0; i < items.size(); ++i)
+            {
+                writeIndentLocal();
+                stream << L"  { " << escapeString(items[i].name) << L": ";
+                saveNode(stream, *items[i].node, indent + 2);
+                stream << L" }";
+                if (i < items.size() - 1)
+                {
+                    stream << L",";
+                }
+                stream << L"\n";
+            }
+            writeIndentLocal();
+            stream << L"]";
+        }
         else if (node.type() == DomNodeType::Sequence)
         {
             stream << L"[\n";
@@ -177,6 +198,46 @@ namespace ClaFi::Dom::FileFormat
                 skipWs(s);
             }
             match(s, L'}');
+        }
+        else if (s.front() == L'[' && target && target->type() == DomNodeType::MultiTypeSequence)
+        {
+            // Each element is an object whose members are items, in the order written.
+            s.remove_prefix(1);
+            skipWs(s);
+
+            MultiTypeSequence* list = static_cast<MultiTypeSequence*>(target);
+            list->clear();
+            while (!s.empty() && s.front() != L']')
+            {
+                if (!match(s, L'{'))
+                {
+                    list->emitSchemaError(*list, L"Schema mismatch: JSON expected an object for a named item.");
+                    parseValue(s, nullptr);
+                    match(s, L',');
+                    skipWs(s);
+                    continue;
+                }
+                skipWs(s);
+                while (!s.empty() && s.front() != L'}')
+                {
+                    std::wstring name = parseString(s);
+                    match(s, L':');
+
+                    DomNodeBase* item = list->add(name);
+                    if (!item)
+                    {
+                        list->emitSchemaError(*list, L"Schema mismatch: No blueprint for the item's name.");
+                    }
+
+                    parseValue(s, item);
+                    match(s, L',');
+                    skipWs(s);
+                }
+                match(s, L'}');
+                match(s, L',');
+                skipWs(s);
+            }
+            match(s, L']');
         }
         else if (s.front() == L'[')
         {

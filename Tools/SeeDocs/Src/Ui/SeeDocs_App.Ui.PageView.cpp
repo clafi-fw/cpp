@@ -689,7 +689,7 @@ namespace SeeDocs_App::Ui
         HintBox& box = addItemBox<HintBox>(
             m_pageBox.body(),
             ReadOnly::Yes,
-            TextFormat{ TextStyle::SubTitle },
+            TextFormat{ TextStyles::SubTitle },
             noHintText()
         );
         connectLinks(box);
@@ -1107,7 +1107,7 @@ namespace SeeDocs_App::Ui
         {
             Grids::RowExpander& groupExpander = grid.addExpander();
             ExpanderHeader& header = groupExpander.header();
-            header.setTextFormat(TextFormat{ TextStyle::SubSection });
+            header.setTextFormat(TextFormat{ TextStyles::SubSection });
             header.setVerticalTextAnchor(VerticalTextAnchor::Center);
             Text label;
             writeLabel(label, group);

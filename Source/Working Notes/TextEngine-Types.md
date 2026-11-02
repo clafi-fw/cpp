@@ -41,11 +41,48 @@ of the build, and every run is drawn the way Static asks. Nothing moves text at 
 press animation scales a control's surface and children, and PaintEvent draws every control's
 text without it, where the text was laid out.
 
+## Text
+
+Runs over the plain text, each a length and four indexes: the look in the text's own table, the
+link and the anchor in its table of names, and the object. Index 0 is none in all four, so a text
+written in no look allocates no table. A table only grows - an edit that drops the last run in a
+look leaves the look in the table, and comparing and hashing read what each run says rather than
+its indexes. A run is found by walking from the nearer end; a wrapper closing walks back from the
+end of the text it is writing, so writing stays linear.
+
+Until 2026-11 a text was its plain characters and a vector of push and pop markers. It allowed an
+unclosed marker, every edit ran pair matching and annihilation over the markers, and baking walked
+a stack per category with the format as each stack's floor. Step 1 of the move put the wrappers on
+the marker stream; step 2 put runs behind them. The project doc claude/text-runs.md holds the
+decisions.
+
+**An undo has to be exact**, and laying a text under the look where it goes is not: a plain word
+taken from between two red ones would come back red. So replaceText nests what goes in, and
+restoreText - which TextHistory reverts with - puts every run and paragraph back as it was. A redo
+replays replaceText in the surroundings the undo restored, so it lands where the edit did.
+
+**A link's ink is not a field of the look.** BakedText reads it between the run's ink, its own or
+its style's, and the format's, so text typed at a link's end, taking the run's look and not the
+link, does not come out in the link's ink. A wrapper's ink does not reach a linked run. The one
+exception is a wrapper's style taken whole by a linked run with no style of its own: where that
+style states an ink, the link's ink is written into the look in its place, and words typed at the
+link's end take it with the look.
+
+**A paragraph's look never changes through an edit inside it** - a join keeps the upper look, and a
+text put in brings looks only for the paragraphs it starts. So selectedText carries no look for the
+paragraph a range starts in, and restoring has none to put back. A look for it would have to mean
+two things: the paragraph the range stands in, and the paragraph that starts where two removals are
+joined - which is what merging forward deletes into one undo step does.
+
+**Words after a line end put in take the look after the edit**, as typed words at a paragraph's
+start do, because TextHistory merges a typed run that holds a line end into one step and a redo
+replays the step whole.
+
 ## TextFormat
 
-The layout is handed it beside the text, and BakedText::rebuild reads it ahead of the text's first
-marker - so a control's own text stays named in the gather and recognised by its stamp, and nothing
-the text says is copied to put the format in front of it.
+The layout is handed it beside the text, and BakedText::rebuild reads it under every run - so a
+control's own text stays named in the gather and recognised by its stamp, and nothing the text
+says is copied to put the format under it.
 
 The layout compares the format it is stated next against the copy it keeps. The engine's cache keys
 on the format's hash beside the text's, and confirms a hit against the entry's copy.
@@ -67,17 +104,15 @@ the purpose. It is asked on every paint while a link is hovered and kept nowhere
 or lowered run inside a link is measured where its line places it, since a layout is told about
 scripts only when it draws.
 
-Two links that meet and name one target are joined into one span by BakedText, and the markers
-are left as they stand: a later undo is recorded against them, and a pair taken out would put a
-word back into the wrong link. The ink is k_linkInk in TextEngine.BakedText, and goes into the
-theme with the other text inks.
+Two links that meet and name one target carry one name index, and BakedText spans neighbouring
+runs of one target as one link. The ink is k_linkInk in TextEngine.Text, and goes into the theme with the other
+text inks.
 
 ## Anchors
 
-**A run rather than a point**, so it rides the pair machinery every other run does: an edit
-inside it moves its end, a deletion of the whole of it takes the pair out in the cleanup, and an
-undo puts it back where it stood, as it does for a link. A point would need rules of its own for
-all three.
+**A field of the run rather than a point**, so it rides every edit a look does: an edit inside it
+moves its end, a deletion of the whole of it takes it out, and an undo puts it back where it
+stood, as it does for a link. A point would need rules of its own for all three.
 
 ## MonoFont
 

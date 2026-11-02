@@ -3,7 +3,6 @@ export module ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi
@@ -17,7 +16,18 @@ namespace ClaFi
         bool operator==(const TextStamp&) const = default;
     };
 
-    // Words between a run's opening marker and its closer. See TextEngine-Types#scopedtext
+    // The ink a link is drawn in where its words state none. See TextEngine-Types#links
+    export constexpr Ink k_linkInk = InkWell::accentInk();
+
+    // What a wrapper lays over the words it holds. See TextEngine-Types#textlayer
+    export struct TextLayer
+    {
+        TextLook look{};
+        std::wstring link{};
+        std::wstring anchor{};
+    };
+
+    // Words a wrapper lays a look, a link or an anchor over. See TextEngine-Types#scopedtext
     export template<typename... Content>
     class ScopedText
     {
@@ -25,30 +35,30 @@ namespace ClaFi
         using ContentTuple = std::tuple<Content...>;
 
     public:
-        explicit ScopedText(FormatItem opening, Content&&...);
+        explicit ScopedText(TextLayer, Content&&...);
 
     public:
-        [[nodiscard]] const FormatItem& opening() const { return m_opening; }
+        [[nodiscard]] const TextLayer& layer() const { return m_layer; }
         [[nodiscard]] const ContentTuple& content() const { return m_content; }
 
     private:
-        FormatItem m_opening;
+        TextLayer m_layer;
         ContentTuple m_content;
     };
 
-    // Words set in one of TextStyles.
+    // Words set in a named style, one of TextStyles or an application's own.
     export template<typename... Content>
     class StyledText : public ScopedText<Content...>
     {
     public:
-        explicit StyledText(const TextStyleProps& style, Content&&...);
-
-    private:
-        [[nodiscard]] static TextStyle styleOf(const TextStyleProps& style);
+        // The style is named by address, so it outlives every text the words are written into.
+        explicit StyledText(const TextStyle& style, Content&&...);
+        // Refused: a style made for the call is gone before the text is drawn.
+        explicit StyledText(const TextStyle&&, Content&&...) = delete;
     };
 
     template<typename... Content>
-    StyledText(const TextStyleProps&, Content&&...) -> StyledText<Content...>;
+    StyledText(const TextStyle&, Content&&...) -> StyledText<Content...>;
 
     // Words drawn in an ink or a colour of their own.
     export template<typename... Content>
@@ -61,6 +71,7 @@ namespace ClaFi
         explicit ColoredText(Color, Content&&...);
 
     private:
+        [[nodiscard]] static TextLayer layerOf(ColorDef ink);
         [[nodiscard]] static constexpr Ink inkOf(InkColor color);
     };
 
@@ -174,11 +185,11 @@ namespace ClaFi
         explicit ParagraphText(ParaLineSpacing, Content&&...);
 
     public:
-        [[nodiscard]] const FormatItem& property() const { return m_property; }
+        [[nodiscard]] const ParagraphLook& look() const { return m_look; }
         [[nodiscard]] const ContentTuple& content() const { return m_content; }
 
     private:
-        FormatItem m_property;
+        ParagraphLook m_look;
         ContentTuple m_content;
     };
 
@@ -189,21 +200,40 @@ namespace ClaFi
     template<typename... Content>
     ParagraphText(ParaLineSpacing, Content&&...) -> ParagraphText<Content...>;
 
-    // A run of text with its styles, as the framework holds it.
+    // A run of a text as a document holds it, or a paragraph's look. See TextEngine-Types#textpiece
+    export struct TextPiece
+    {
+        std::wstring words{};
+        TextLook look{};
+        std::wstring link{};
+        std::wstring anchor{};
+        std::optional<InlineObject> object{}; // the words then hold its one character
+        std::optional<ParagraphLook> paragraph{}; // stated by a piece holding no words
+    };
+
+    export using TextPieces = std::vector<TextPiece>;
+
+    // One run of a text as a reader walks it. See TextEngine-Types#textrunview
+    export struct TextRunView
+    {
+        TextRange range{};
+        const TextLook& look;
+        std::wstring_view link{};
+        std::wstring_view anchor{};
+        const InlineObject* object{ nullptr };
+    };
+
+    // Words in runs, each in a look of its own, as the framework holds them. See TextEngine-Types
     export class Text
     {
     public:
-        // A marker and the index in the plain text it stands at.
-        using Marker = std::pair<std::size_t, FormatItem>;
-        using Markers = std::vector<Marker>;
-
         Text() = default;
-        template<typename... Args> explicit Text(Args&&... args) : Text{} { (*this << ... << std::forward<Args>(args)); }
-        // A text stated whole, which is how a document hands one back: the plain text and the
-        // markers standing in it, taken as they are. The markers are in text order with every
-        // index inside the text, since that is what every route through a Text keeps, and a
-        // marker that puts a character in - a space, an icon - stands at that character.
-        explicit Text(std::wstring plainText, Markers markers);
+        // Constrained off a lone Text, so that copying and moving one stay the compiler's.
+        template<typename... Args>
+            requires (sizeof...(Args) != 1 || !(std::derived_from<std::remove_cvref_t<Args>, Text> && ...))
+        explicit Text(Args&&... args) : Text{} { (*this << ... << std::forward<Args>(args)); }
+        // A text stated whole, the way a document hands one back. See TextEngine-Types#textpiece
+        explicit Text(TextPieces);
 
         // Anything the stream below takes, written as an assignment. What is assigned **replaces**
         // what the text holds, which is the one thing that separates this from operator<<: the
@@ -244,6 +274,7 @@ namespace ClaFi
         Text& operator<<(const VSpace&);
         Text& operator<<(const FlexSpace&);
         Text& operator<<(const TabTo&);
+        // Every run as it is, under whatever wrapper the text is written inside.
         Text& operator<<(const Text&);
         // A run that holds no character writes nothing.
         template<typename... Content>
@@ -252,55 +283,139 @@ namespace ClaFi
         template<typename... Content>
         Text& operator<<(const ParagraphText<Content...>&);
 
-        bool empty() const { return m_plainText.empty(); }
-        // Nothing written into it at all, markers included. A text carrying only markers says
-        // nothing and is not empty, which is the difference a caller collecting contributions has
-        // to see - see AdjustTextEventBase::contribute.
-        [[nodiscard]] bool blank() const { return m_plainText.empty() && m_markers.empty(); }
+        [[nodiscard]] bool empty() const { return m_plainText.empty(); }
         void clear();
-        std::size_t hash() const;
+        [[nodiscard]] std::size_t hash() const;
         // Whether a flex space is in here, which is the one thing a paint lays out differently
         // from a calculate: it fills the box it is drawn in and contributes nothing to a size.
         // Swept when it is asked for, so a Text carries no field for it.
         [[nodiscard]] bool hasFlexSpace() const;
 
-        const std::wstring& plainText() const { return m_plainText; }
-        // The words and markers, so two texts that draw alike are equal whatever was last written.
+        [[nodiscard]] const std::wstring& plainText() const { return m_plainText; }
+        // The words, their looks and the paragraphs' looks, whatever was last written.
         bool operator==(const Text&) const;
-        [[nodiscard]] const Markers& markers() const { return m_markers; }
-        // The text the first anchor of that name holds, or nothing where no anchor has it. A walk
-        // over the markers, since an anchor is asked for when a link to it is followed and not
-        // before.
+        // Each run in order, handed to visit as a TextRunView.
+        template<typename Visit>
+        void forEachRun(Visit visit) const;
+        // The look stated for the paragraph starting there, empty where it states none.
+        [[nodiscard]] ParagraphLook paragraphLookAt(std::size_t paragraphStart) const;
+        // The runs and the paragraphs' looks in text order, a paragraph's look ahead of its runs.
+        [[nodiscard]] TextPieces pieces() const;
+        // The text the first anchor of that name holds, or nothing where no anchor has it.
         [[nodiscard]] std::optional<TextRange> anchorRange(std::wstring_view name) const;
         // The link a caret at that position stands in, its ends included; nothing off every link.
         [[nodiscard]] std::optional<LinkSpan> linkAtCaret(std::size_t caretPos) const;
+        // The target of the first link in the text, or nothing where it holds none.
+        [[nodiscard]] std::optional<std::wstring_view> firstLink() const;
 
-        // Edit support
+        // Words put in where they go, in the look there. See TextEngine-Types#edits
         void replaceText(const TextRange&, const std::wstring_view = {});
+        // A text put in where it goes, its runs inside the look there. See TextEngine-Types#edits
         void replaceText(const TextRange&, const Text&);
-        Text selectedText(const TextRange&) const;
+        // A text selectedText took out put back, every run and paragraph as it was.
+        void restoreText(const TextRange&, const Text&);
+        // The runs of a range and the looks of the paragraphs starting in it. See TextEngine-Types
+        [[nodiscard]] Text selectedText(const TextRange&) const;
 
     private:
+        // A stretch of characters in one look: its length, and an index into a table for the rest.
+        struct Run
+        {
+            std::size_t length{ 0 };
+            std::uint32_t look{ 0 };
+            std::uint32_t link{ 0 };
+            std::uint32_t anchor{ 0 };
+            std::uint32_t object{ 0 };
+        };
+
+        // The look stated for the paragraph that starts at a position.
+        struct StatedParagraph
+        {
+            std::size_t start{ 0 };
+            ParagraphLook look{};
+            bool operator==(const StatedParagraph&) const = default;
+        };
+
         // How the text stood when a wrapper started writing into it.
         struct WriteStart
         {
             std::size_t plainLength{ 0 };
-            std::size_t markerCount{ 0 };
             bool lineBroken{ false }; // the wrapper ended the line it found open
             bool startsOwnLine{ false };
             bool endsOwnLine{ false };
         };
 
+        // What words put into the text take on where they go, as indexes into its tables.
+        struct Surroundings
+        {
+            std::uint32_t look{ 0 };
+            std::uint32_t link{ 0 };
+            std::uint32_t anchor{ 0 };
+        };
+
+        // The run holding a character, and where the run starts.
+        struct RunPlace
+        {
+            std::size_t index{ 0 };
+            std::size_t start{ 0 };
+        };
+
+        // How a text put in meets the runs and paragraphs around it.
+        enum class Insertion
+        {
+            Nested,
+            Restored
+        };
+
+        using Runs = std::vector<Run>;
+        using Looks = std::vector<TextLook>;
+        using Names = std::vector<std::wstring>;
+        using Objects = std::vector<InlineObject>;
+        using StatedParagraphs = std::vector<StatedParagraph>;
+        // Where each entry of another text's table landed in this one's.
+        using IndexMap = std::vector<std::uint32_t>;
+
     private:
-        [[nodiscard]] WriteStart openScope(const FormatItem& opening);
-        void closeScope(const WriteStart&);
-        [[nodiscard]] WriteStart openParagraph(const FormatItem& property);
-        void closeParagraph(const WriteStart&);
+        [[nodiscard]] static bool joins(const Run& before, const Run& after);
+        [[nodiscard]] const TextLook& lookAt(std::uint32_t look) const;
+        [[nodiscard]] std::wstring_view nameAt(std::uint32_t name) const;
+        [[nodiscard]] std::uint32_t lookIndexOf(const TextLook&);
+        [[nodiscard]] std::uint32_t nameIndexOf(std::wstring_view);
+        [[nodiscard]] const StatedParagraph* statedAt(std::size_t paragraphStart) const;
+        [[nodiscard]] std::size_t paragraphStartOf(std::size_t pos) const;
+        [[nodiscard]] bool startsParagraph(std::size_t pos) const;
+        [[nodiscard]] RunPlace placeOf(std::size_t pos) const;
+        [[nodiscard]] std::size_t splitAt(std::size_t pos);
+        void joinRuns(std::size_t first, std::size_t last);
+        void appendRun(const Run&);
+        void appendWords(std::wstring_view words);
+        void appendObject(InlineObject);
+        void dropLastCharacter();
+        void stateParagraph(std::size_t paragraphStart, const ParagraphLook&);
+        void layParagraph(std::size_t paragraphStart, const ParagraphLook& outer);
+        [[nodiscard]] Runs runsOf(const Text& other, std::size_t from, std::size_t to);
+        [[nodiscard]] Surroundings surroundingsOf(std::size_t start, std::size_t end) const;
+        [[nodiscard]] Surroundings surroundingsAfterLineEnd(std::size_t end,
+            const Surroundings& before) const;
+        void nestRuns(std::span<Run> runs, const Surroundings&);
+        void dropUnusedObjects();
+        void edit(const TextRange&, const Text& inserted, Insertion);
+        void editParagraphs(std::size_t start, std::size_t end, const Text& inserted, Insertion);
+        void applyLayer(std::size_t from, std::size_t to, const TextLayer&);
+        [[nodiscard]] WriteStart openScope();
+        void closeScope(const WriteStart&, const TextLayer&);
+        [[nodiscard]] WriteStart openParagraph();
+        void closeParagraph(const WriteStart&, const ParagraphLook&);
+        void undoOpening(const WriteStart&);
         void breakOwnLine();
 
     private:
         std::wstring m_plainText;
-        Markers m_markers;
+        Runs m_runs;
+        Looks m_looks; // run.look - 1, so a text writing no look holds no table
+        Names m_names; // the links and anchors, by run.link - 1 and run.anchor - 1
+        Objects m_objects; // run.object - 1
+        StatedParagraphs m_paragraphs; // in text order, only those stating a look
         bool m_startsOwnLine{ false }; // put after words, the first of these start a line
         bool m_endsOwnLine{ false }; // the next words written start a line of their own
     };
@@ -396,6 +511,12 @@ namespace ClaFi
             changed();
         }
 
+        void restoreText(const TextRange& range, const Text& taken)
+        {
+            Text::restoreText(range, taken);
+            changed();
+        }
+
         [[nodiscard]] TextStamp stamp() const { return m_stamp; }
 
     private:
@@ -412,17 +533,7 @@ namespace ClaFi
         TextStamp m_stamp{ ++s_lastId, 0 };
     };
 
-    // The markers a format takes as they are - each a value the text runs on from.
-    export template<typename Item>
-    concept IsFormatState = std::same_as<Item, PushThemeColor>
-        || std::same_as<Item, PushCustomColor>
-        || std::same_as<Item, TextAlign>
-        || std::same_as<Item, ParaIndent>
-        || std::same_as<Item, ParaLineSpacing>
-        || std::same_as<Item, PushFontSize>
-        || std::same_as<Item, PushFontFamily>;
-
-    // Markers alone, laid out ahead of a text's own and under them. See TextEngine-Types#textformat
+    // The look a text is laid out over, and its paragraphs'. See TextEngine-Types#textformat
     export class TextFormat
     {
     public:
@@ -430,92 +541,84 @@ namespace ClaFi
         template<typename... Args>
         explicit TextFormat(Args&&...);
     public:
-        // Each replaces what the format already holds of its kind.
-        template<IsFormatState Item>
-        TextFormat& operator<<(const Item&);
+        // Each replaces what the format already states of its kind.
+        TextFormat& operator<<(const TextStyle&); // named by address, as a run names one
+        // Refused: a style made for the call is gone before the text is drawn.
+        TextFormat& operator<<(const TextStyle&&) = delete;
         TextFormat& operator<<(Ink);
         TextFormat& operator<<(InkGrade); // the framework's own ink at that step
         TextFormat& operator<<(InkColor); // that colour at Strongest
         TextFormat& operator<<(Color);
-        TextFormat& operator<<(TextStyle);
-        TextFormat& operator<<(TextOp); // bold or italic
+        TextFormat& operator<<(TextAlign);
+        TextFormat& operator<<(ParaIndent);
+        TextFormat& operator<<(ParaLineSpacing);
+        // What that one states, each field over this one's.
         TextFormat& operator<<(const TextFormat&);
         // Refused, a value that only converts to one of the above included - a wchar_t is no Color.
         template<typename Other>
         TextFormat& operator<<(const Other&) = delete;
-        [[nodiscard]] bool empty() const { return m_markers.empty(); }
-        [[nodiscard]] const Text::Markers& markers() const { return m_markers; }
+        [[nodiscard]] bool empty() const { return m_look.empty() && m_paragraph.empty(); }
+        [[nodiscard]] const TextLook& look() const { return m_look; }
+        [[nodiscard]] const ParagraphLook& paragraph() const { return m_paragraph; }
         [[nodiscard]] std::size_t hash() const;
         // Whether this says what that one says, where none says nothing.
         [[nodiscard]] bool matches(const TextFormat*) const;
         bool operator==(const TextFormat&) const = default;
     private:
-        void place(FormatItem);
-    private:
-        Text::Markers m_markers{}; // every one standing at 0, one of each kind in kind order
+        TextLook m_look{};
+        ParagraphLook m_paragraph{};
     };
-
 
 //-----------------------------------------------------------------------------
 
 
     template<typename... Content>
-    ScopedText<Content...>::ScopedText(FormatItem opening, Content&&... content)
+    ScopedText<Content...>::ScopedText(TextLayer layer, Content&&... content)
         :
-        m_opening{ std::move(opening) },
+        m_layer{ std::move(layer) },
         m_content{ std::forward<Content>(content)... }
     {
     }
 
     template<typename... Content>
-    StyledText<Content...>::StyledText(const TextStyleProps& style, Content&&... content)
+    StyledText<Content...>::StyledText(const TextStyle& style, Content&&... content)
         :
-        ScopedText<Content...>{ PushTextStyle{ styleOf(style) }, std::forward<Content>(content)... }
+        ScopedText<Content...>{ TextLayer{ .look{ .style = &style } }, std::forward<Content>(content)... }
     {
-    }
-
-    // A style is written by the TextStyle it is one of.
-    template<typename... Content>
-    TextStyle StyledText<Content...>::styleOf(const TextStyleProps& style)
-    {
-        for (std::size_t index = 0; index != static_cast<std::size_t>(TextStyle::Count); ++index)
-        {
-            const TextStyle candidate = static_cast<TextStyle>(index);
-            if (&TextStyles::Of(candidate) == &style)
-                return candidate;
-        }
-        noReach("A StyledText takes one of TextStyles");
     }
 
     template<typename... Content>
     ColoredText<Content...>::ColoredText(Ink ink, Content&&... content)
         :
-        ScopedText<Content...>{ PushThemeColor{ ink }, std::forward<Content>(content)... }
+        ScopedText<Content...>{ layerOf(ink), std::forward<Content>(content)... }
     {
     }
 
     template<typename... Content>
     ColoredText<Content...>::ColoredText(InkGrade grade, Content&&... content)
         :
-        ScopedText<Content...>{
-            PushThemeColor{ InkWell::textInk(grade) },
-            std::forward<Content>(content)...
-        }
+        ScopedText<Content...>{ layerOf(InkWell::textInk(grade)), std::forward<Content>(content)... }
     {
     }
 
     template<typename... Content>
     ColoredText<Content...>::ColoredText(InkColor color, Content&&... content)
         :
-        ScopedText<Content...>{ PushThemeColor{ inkOf(color) }, std::forward<Content>(content)... }
+        ScopedText<Content...>{ layerOf(inkOf(color)), std::forward<Content>(content)... }
     {
     }
 
     template<typename... Content>
     ColoredText<Content...>::ColoredText(Color color, Content&&... content)
         :
-        ScopedText<Content...>{ PushCustomColor{ color }, std::forward<Content>(content)... }
+        ScopedText<Content...>{ layerOf(color), std::forward<Content>(content)... }
     {
+    }
+
+    template<typename... Content>
+    TextLayer ColoredText<Content...>::layerOf(ColorDef ink)
+    {
+        return TextLayer{ .look{ .ink = ink } };
     }
 
     template<typename... Content>
@@ -529,21 +632,27 @@ namespace ClaFi
     template<typename... Content>
     BoldText<Content...>::BoldText(Content&&... content)
         :
-        ScopedText<Content...>{ TextOp::PushBold, std::forward<Content>(content)... }
+        ScopedText<Content...>{
+            TextLayer{ .look{ .fontWeight = FontWeight::Bold } },
+            std::forward<Content>(content)...
+        }
     {
     }
 
     template<typename... Content>
     ItalicText<Content...>::ItalicText(Content&&... content)
         :
-        ScopedText<Content...>{ TextOp::PushItalic, std::forward<Content>(content)... }
+        ScopedText<Content...>{
+            TextLayer{ .look{ .fontStyle = FontStyle::Italic } },
+            std::forward<Content>(content)...
+        }
     {
     }
 
     template<typename... Content>
     SizedText<Content...>::SizedText(float size, Content&&... content)
         :
-        ScopedText<Content...>{ PushFontSize{ size }, std::forward<Content>(content)... }
+        ScopedText<Content...>{ TextLayer{ .look{ .fontSize = size } }, std::forward<Content>(content)... }
     {
     }
 
@@ -551,7 +660,7 @@ namespace ClaFi
     FamilyText<Content...>::FamilyText(std::wstring family, Content&&... content)
         :
         ScopedText<Content...>{
-            PushFontFamily{ std::move(family) },
+            TextLayer{ .look{ .fontFamily = std::move(family) } },
             std::forward<Content>(content)...
         }
     {
@@ -560,35 +669,41 @@ namespace ClaFi
     template<typename... Content>
     SuperscriptText<Content...>::SuperscriptText(Content&&... content)
         :
-        ScopedText<Content...>{ TextOp::PushSuperscript, std::forward<Content>(content)... }
+        ScopedText<Content...>{
+            TextLayer{ .look{ .scripts = { TextScript::Super } } },
+            std::forward<Content>(content)...
+        }
     {
     }
 
     template<typename... Content>
     SubscriptText<Content...>::SubscriptText(Content&&... content)
         :
-        ScopedText<Content...>{ TextOp::PushSubscript, std::forward<Content>(content)... }
+        ScopedText<Content...>{
+            TextLayer{ .look{ .scripts = { TextScript::Sub } } },
+            std::forward<Content>(content)...
+        }
     {
     }
 
     template<typename... Content>
     LinkText<Content...>::LinkText(std::wstring target, Content&&... content)
         :
-        ScopedText<Content...>{ PushLink{ std::move(target) }, std::forward<Content>(content)... }
+        ScopedText<Content...>{ TextLayer{ .link = std::move(target) }, std::forward<Content>(content)... }
     {
     }
 
     template<typename... Content>
     AnchorText<Content...>::AnchorText(std::wstring name, Content&&... content)
         :
-        ScopedText<Content...>{ PushAnchor{ std::move(name) }, std::forward<Content>(content)... }
+        ScopedText<Content...>{ TextLayer{ .anchor = std::move(name) }, std::forward<Content>(content)... }
     {
     }
 
     template<typename... Content>
     ParagraphText<Content...>::ParagraphText(TextAlign align, Content&&... content)
         :
-        m_property{ align },
+        m_look{ .align = align },
         m_content{ std::forward<Content>(content)... }
     {
     }
@@ -596,7 +711,7 @@ namespace ClaFi
     template<typename... Content>
     ParagraphText<Content...>::ParagraphText(ParaIndent indent, Content&&... content)
         :
-        m_property{ indent },
+        m_look{ .indent = indent.indent },
         m_content{ std::forward<Content>(content)... }
     {
     }
@@ -604,7 +719,7 @@ namespace ClaFi
     template<typename... Content>
     ParagraphText<Content...>::ParagraphText(ParaLineSpacing spacing, Content&&... content)
         :
-        m_property{ spacing },
+        m_look{ .lineSpacing = spacing.spacing },
         m_content{ std::forward<Content>(content)... }
     {
     }
@@ -612,23 +727,40 @@ namespace ClaFi
     template<typename... Content>
     Text& Text::operator<<(const ScopedText<Content...>& scope)
     {
-        const WriteStart start = openScope(scope.opening());
+        const WriteStart start = openScope();
         std::apply([this](const auto&... content){
             ((*this << content), ...);
         }, scope.content());
-        closeScope(start);
+        closeScope(start, scope.layer());
         return *this;
     }
 
     template<typename... Content>
     Text& Text::operator<<(const ParagraphText<Content...>& paragraph)
     {
-        const WriteStart start = openParagraph(paragraph.property());
+        const WriteStart start = openParagraph();
         std::apply([this](const auto&... content){
             ((*this << content), ...);
         }, paragraph.content());
-        closeParagraph(start);
+        closeParagraph(start, paragraph.look());
         return *this;
+    }
+
+    template<typename Visit>
+    void Text::forEachRun(Visit visit) const
+    {
+        std::size_t start = 0;
+        for (const Run& run : m_runs)
+        {
+            visit(TextRunView{
+                .range = { start, run.length },
+                .look = lookAt(run.look),
+                .link = nameAt(run.link),
+                .anchor = nameAt(run.anchor),
+                .object = run.object ? &m_objects[run.object - 1] : nullptr,
+            });
+            start += run.length;
+        }
     }
 
     template<typename... Args>
@@ -637,13 +769,6 @@ namespace ClaFi
         TextFormat{}
     {
         (*this << ... << std::forward<Args>(args));
-    }
-
-    template<IsFormatState Item>
-    TextFormat& TextFormat::operator<<(const Item& item)
-    {
-        place(item);
-        return *this;
     }
 
 }

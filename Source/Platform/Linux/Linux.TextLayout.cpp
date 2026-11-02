@@ -539,17 +539,18 @@ namespace ClaFi::Platform::Linux
 
     void HarfBuzzLayout::itemize(const BuildParams& params)
     {
-        const TextStyleProps& body = TextStyles::Body;
+        const TextStyle& body = TextStyles::Body;
 
         // An empty paragraph is one placeholder character in the style in force where it stands.
         if (params.isEmpty)
         {
-            const std::wstring family = lastSpanValue(params.families, std::wstring{ body.family });
+            const std::wstring family = lastSpanValue(params.families,
+                std::wstring{ *body.fontFamily });
             FaceChain& chain = fontSet().chain(family,
-                lastSpanValue(params.weights, body.weight),
-                lastSpanValue(params.styles, body.style));
+                lastSpanValue(params.weights, *body.fontWeight),
+                lastSpanValue(params.styles, *body.fontStyle));
             addTextItem(params, 0, m_textLength, chain.primary(),
-                lastSpanValue(params.sizes, body.size) * m_scaleFactor);
+                lastSpanValue(params.sizes, *body.fontSize) * m_scaleFactor);
             return;
         }
 
@@ -605,11 +606,12 @@ namespace ClaFi::Platform::Linux
                 continue;
             }
 
-            const std::wstring family = findSpanValue(params.families, start, std::wstring{ body.family });
+            const std::wstring family = findSpanValue(params.families, start,
+                std::wstring{ *body.fontFamily });
             FaceChain& chain = fontSet().chain(family,
-                findSpanValue(params.weights, start, body.weight),
-                findSpanValue(params.styles, start, body.style));
-            const float emSize = findSpanValue(params.sizes, start, body.size) * m_scaleFactor;
+                findSpanValue(params.weights, start, *body.fontWeight),
+                findSpanValue(params.styles, start, *body.fontStyle));
+            const float emSize = findSpanValue(params.sizes, start, *body.fontSize) * m_scaleFactor;
 
             // The segment is cut again wherever the face changes. A character the matched face has
             // no glyph for is set in the first face behind it that has one; whitespace, marks and
@@ -936,13 +938,14 @@ namespace ClaFi::Platform::Linux
 
     float HarfBuzzLayout::leadingSpaceAdvance(const BuildParams& params) const
     {
-        const TextStyleProps& body = TextStyles::Body;
+        const TextStyle& body = TextStyles::Body;
         const std::wstring family = leadingSpanValue(params.families, params.isEmpty,
-            std::wstring{ body.family });
+            std::wstring{ *body.fontFamily });
         FaceChain& chain = fontSet().chain(family,
-            leadingSpanValue(params.weights, params.isEmpty, body.weight),
-            leadingSpanValue(params.styles, params.isEmpty, body.style));
-        const float emSize = leadingSpanValue(params.sizes, params.isEmpty, body.size) * m_scaleFactor;
+            leadingSpanValue(params.weights, params.isEmpty, *body.fontWeight),
+            leadingSpanValue(params.styles, params.isEmpty, *body.fontStyle));
+        const float emSize = leadingSpanValue(params.sizes, params.isEmpty, *body.fontSize)
+            * m_scaleFactor;
         return chain.primary().advance(U' ', emSize);
     }
 

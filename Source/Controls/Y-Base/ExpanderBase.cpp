@@ -20,12 +20,7 @@ namespace ClaFi::Controls
         // pointer no layout lookup.
         [[nodiscard]] bool hasLink(const Text& text)
         {
-            for (const auto& marker : text.markers())
-            {
-                if (std::holds_alternative<PushLink>(marker.second))
-                    return true;
-            }
-            return false;
+            return text.firstLink().has_value();
         }
     }
 
@@ -221,11 +216,8 @@ namespace ClaFi::Controls
     {
         Text buffer;
         const Text& label = adjustedText(formContext(), buffer, EventPhase::Paint);
-        for (const auto& marker : label.markers())
-        {
-            if (const PushLink* link = std::get_if<PushLink>(&marker.second))
-                return link->target;
-        }
+        if (const std::optional<std::wstring_view> link = label.firstLink())
+            return std::wstring{ *link };
         return std::nullopt;
     }
 

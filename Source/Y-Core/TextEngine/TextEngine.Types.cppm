@@ -45,69 +45,155 @@ namespace ClaFi
         bool caretVisible{ true };
     };
 
-    // The named styles a run of text can carry.
-    export enum class TextStyle : std::size_t {
-        Body = 0ull,
-        Title = 1ull,
-        SubTitle = 2ull,
-        Heading = 3ull,
-        SubHeading = 4ull,
-        Section = 5ull,
-        SubSection = 6ull,
-        SubBody = 7ull,
-        Code = 8ull,
-        Count = 9ull
-    };
-
     // How heavy a face is drawn.
     export enum class FontWeight { Light = 300, Normal = 400, SemiBold = 600, Bold = 700 };
     // Whether a face is upright or italic.
     export enum class FontStyle { Normal, Italic };
 
-    export struct TextStyleProps {
-        const wchar_t* family;
-        float size;
-        FontWeight weight;
-        FontStyle style;
-    };
-
     // The families a text style names. Generic, and each platform resolves them to a face of its
     // own - the framework does not know what the machine it runs on has installed. A concrete
-    // family written into a text - [font Consolas] - is passed through as written, and stands or
-    // falls on the fonts installed.
+    // family a text names - FamilyText{ L"Consolas", ... } - is passed through as written, and
+    // stands or falls on the fonts installed.
     export namespace GenericFamily
     {
         constexpr const wchar_t* SansSerif = L"sans-serif";
         constexpr const wchar_t* Monospace = L"monospace";
     }
 
+    export using ColorDef = std::variant<Ink, Color>;
+
+    // A named look words are set in, stating the fields it sets. See TextEngine-Types#textstyle
+    export struct TextStyle
+    {
+        std::wstring_view name{};
+        const TextStyle* base{ nullptr }; // the style this one states its fields over
+        std::optional<std::wstring_view> fontFamily{};
+        std::optional<float> fontSize{};
+        std::optional<FontWeight> fontWeight{};
+        std::optional<FontStyle> fontStyle{};
+        std::optional<ColorDef> ink{};
+
+        // What the style states for the field, itself or through a style it is based on.
+        template<typename Value>
+        [[nodiscard]] constexpr std::optional<Value> stated(std::optional<Value> TextStyle::*) const;
+    };
+
+    // The framework's styles. A text names them by address, and a file by name.
     export namespace TextStyles
     {
-        constexpr TextStyleProps Body        { GenericFamily::SansSerif, 12.0f, FontWeight::Normal, FontStyle::Normal };
-        constexpr TextStyleProps Title       { GenericFamily::SansSerif, 24.0f, FontWeight::Bold,   FontStyle::Normal };
-        constexpr TextStyleProps SubTitle    { GenericFamily::SansSerif, 17.0f, FontWeight::Normal, FontStyle::Normal };
-        constexpr TextStyleProps Heading     { GenericFamily::SansSerif, 16.0f, FontWeight::SemiBold, FontStyle::Normal };
-        constexpr TextStyleProps SubHeading  { GenericFamily::SansSerif, 14.0f, FontWeight::Normal, FontStyle::Normal };
-        constexpr TextStyleProps Section     { GenericFamily::SansSerif, 12.0f, FontWeight::Bold,   FontStyle::Normal };
-        constexpr TextStyleProps SubSection  { GenericFamily::SansSerif, 12.0f, FontWeight::Normal, FontStyle::Italic };
-        constexpr TextStyleProps SubBody     { GenericFamily::SansSerif, 10.0f, FontWeight::Normal, FontStyle::Normal };
-        constexpr TextStyleProps Code        { GenericFamily::Monospace, 12.0f, FontWeight::Normal, FontStyle::Normal };
-        const TextStyleProps& Of(TextStyle style)
-        {
-            constexpr std::array<std::reference_wrapper<const TextStyleProps>, static_cast<std::size_t>(TextStyle::Count)> array = { {
-                    Body,
-                    Title,
-                    SubTitle,
-                    Heading,
-                    SubHeading,
-                    Section,
-                    SubSection,
-                    SubBody,
-                    Code
-                } };
-            return array[static_cast<std::size_t>(style)];
+        inline constexpr TextStyle Body{
+            .name = L"Body",
+            .fontFamily = GenericFamily::SansSerif,
+            .fontSize = 12.0f,
+            .fontWeight = FontWeight::Normal,
+            .fontStyle = FontStyle::Normal,
+        };
+        inline constexpr TextStyle Title{
+            .name = L"Title",
+            .fontFamily = GenericFamily::SansSerif,
+            .fontSize = 24.0f,
+            .fontWeight = FontWeight::Bold,
+            .fontStyle = FontStyle::Normal,
+        };
+        inline constexpr TextStyle SubTitle{
+            .name = L"SubTitle",
+            .fontFamily = GenericFamily::SansSerif,
+            .fontSize = 17.0f,
+            .fontWeight = FontWeight::Normal,
+            .fontStyle = FontStyle::Normal,
+        };
+        inline constexpr TextStyle Heading{
+            .name = L"Heading",
+            .fontFamily = GenericFamily::SansSerif,
+            .fontSize = 16.0f,
+            .fontWeight = FontWeight::SemiBold,
+            .fontStyle = FontStyle::Normal,
+        };
+        inline constexpr TextStyle SubHeading{
+            .name = L"SubHeading",
+            .fontFamily = GenericFamily::SansSerif,
+            .fontSize = 14.0f,
+            .fontWeight = FontWeight::Normal,
+            .fontStyle = FontStyle::Normal,
+        };
+        inline constexpr TextStyle Section{
+            .name = L"Section",
+            .fontFamily = GenericFamily::SansSerif,
+            .fontSize = 12.0f,
+            .fontWeight = FontWeight::Bold,
+            .fontStyle = FontStyle::Normal,
+        };
+        inline constexpr TextStyle SubSection{
+            .name = L"SubSection",
+            .fontFamily = GenericFamily::SansSerif,
+            .fontSize = 12.0f,
+            .fontWeight = FontWeight::Normal,
+            .fontStyle = FontStyle::Italic,
+        };
+        inline constexpr TextStyle SubBody{
+            .name = L"SubBody",
+            .fontFamily = GenericFamily::SansSerif,
+            .fontSize = 10.0f,
+            .fontWeight = FontWeight::Normal,
+            .fontStyle = FontStyle::Normal,
+        };
+        inline constexpr TextStyle Code{
+            .name = L"Code",
+            .fontFamily = GenericFamily::Monospace,
+            .fontSize = 12.0f,
+            .fontWeight = FontWeight::Normal,
+            .fontStyle = FontStyle::Normal,
+        };
+
+        // Every one of them, which is what a name read from a file is looked up in.
+        inline constexpr std::array<const TextStyle*, 9> All{
+            &Body,
+            &Title,
+            &SubTitle,
+            &Heading,
+            &SubHeading,
+            &Section,
+            &SubSection,
+            &SubBody,
+            &Code,
         };
     }
+
+    // Which way off the baseline a script level takes its words.
+    export enum class TextScript
+    {
+        Super,
+        Sub
+    };
+
+    // How a run of words looks: its style, and the fields it states over it. See TextEngine-Types
+    export struct TextLook
+    {
+        const TextStyle* style{ nullptr };
+        std::optional<std::wstring> fontFamily{};
+        std::optional<float> fontSize{};
+        std::optional<FontWeight> fontWeight{};
+        std::optional<FontStyle> fontStyle{};
+        std::optional<ColorDef> ink{};
+        std::vector<TextScript> scripts{}; // the outermost level first
+
+        [[nodiscard]] constexpr bool empty() const;
+        bool operator==(const TextLook&) const = default;
+    };
+
+    // How a paragraph is aligned inside the box it is laid out in.
+    export enum class TextAlign { Left, Center, Right, Justified };
+
+    // How a paragraph is laid out, as far as it states. See TextEngine-Types#paragraphlook
+    export struct ParagraphLook
+    {
+        std::optional<TextAlign> align{};
+        std::optional<float> indent{};
+        std::optional<float> lineSpacing{};
+
+        [[nodiscard]] constexpr bool empty() const;
+        bool operator==(const ParagraphLook&) const = default;
+    };
 
     // What a script run comes to, as fractions of the run it stands on. A level multiplies the
     // size and moves the baseline by its share of the size that level was entered at, so a script
@@ -133,7 +219,6 @@ namespace ClaFi
         bool operator==(const TextSpan&) const = default;
     };
 
-    export using ColorDef = std::variant<Ink, Color>;
     export using ColorSpan = TextSpan<ColorDef>;
     export using WeightSpan = TextSpan<FontWeight>;
     export using StyleSpan = TextSpan<FontStyle>;
@@ -152,9 +237,6 @@ namespace ClaFi
         LinkSpan link{};
         std::size_t pos{ 0 };
     };
-
-    // How a paragraph is aligned inside the box it is laid out in.
-    export enum class TextAlign { Left, Center, Right, Justified };
 
     export struct ParagraphStyle {
         TextRange range;
@@ -217,51 +299,16 @@ namespace ClaFi
 
     export constexpr wchar_t k_endLine = L'\n'; // the line end - LF alone, which cuts a paragraph
 
-    // One instruction in a run of text: a style pushed or popped.
-    export enum class TextOp {
-        PushBold,
-        PopBold,
-        PushItalic,
-        PopItalic,
-        PushSuperscript,
-        PushSubscript,
-        PopScript // one pop for both, because one stack holds them
-    };
-
+    // What a paragraph wrapper states: how far its lines are indented, in design units.
     export struct ParaIndent { float indent; bool operator==(const ParaIndent&) const = default; };
+    // What a paragraph wrapper states: its line height as a share of the font's.
     export struct ParaLineSpacing { float spacing; bool operator==(const ParaLineSpacing&) const = default; };
-    export struct PushTextStyle { TextStyle style; bool operator==(const PushTextStyle&) const = default; };
-    export struct PopTextStyle { bool operator==(const PopTextStyle&) const = default; };
-    export struct PushFontSize { float size; bool operator==(const PushFontSize&) const = default; };
-    export struct PopFontSize { bool operator==(const PopFontSize&) const = default; };
-    export struct PushFontFamily { std::wstring family; bool operator==(const PushFontFamily&) const = default; };
-    export struct PopFontFamily { bool operator==(const PopFontFamily&) const = default; };
-    export struct PushThemeColor { Ink ink; bool operator==(const PushThemeColor&) const = default; };
-    export struct PushCustomColor { ClaFi::Color color; bool operator==(const PushCustomColor&) const = default; };
-    export struct PopColor { bool operator==(const PopColor&) const = default; };
-    // Opens a link to the target it names. See TextEngine-Types#links
-    export struct PushLink
-    {
-        std::wstring target;
-        bool operator==(const PushLink&) const = default;
-    };
-    // Closes the innermost open link.
-    export struct PopLink { bool operator==(const PopLink&) const = default; };
-    // Opens an anchor, which a link reaches with # and the name. See TextEngine-Types#anchors
-    export struct PushAnchor
-    {
-        std::wstring name;
-        bool operator==(const PushAnchor&) const = default;
-    };
-    // Closes the innermost open anchor.
-    export struct PopAnchor { bool operator==(const PopAnchor&) const = default; };
 
-    export using FormatItem = std::variant<
-        PushThemeColor, PushCustomColor, PopColor, PushTextStyle, PopTextStyle,
-        TextAlign, ParaIndent, ParaLineSpacing, InTextIcon, TextOp,
-        PushFontSize, PopFontSize, PushFontFamily, PopFontFamily,
-        Space, VSpace, FlexSpace, TabTo, PushLink, PopLink, PushAnchor, PopAnchor
-    >;
+    // A thing standing in a text as one character of its own. See TextEngine-Types#inlineobject
+    export using InlineObject = std::variant<InTextIcon, Space, VSpace, FlexSpace, TabTo>;
+
+    // The character an inline object stands at in the plain text.
+    export constexpr wchar_t k_objectChar = L'\uFFFC';
 
     export struct DrawTextResult
     {
@@ -291,6 +338,28 @@ namespace ClaFi
         Moving
     };
 #endif
+
+    template<typename Value>
+    constexpr std::optional<Value> TextStyle::stated(std::optional<Value> TextStyle::* field) const
+    {
+        for (const TextStyle* style = this; style; style = style->base)
+        {
+            if ((style->*field).has_value())
+                return style->*field;
+        }
+        return std::nullopt;
+    }
+
+    constexpr bool TextLook::empty() const
+    {
+        return !style && !fontFamily && !fontSize && !fontWeight && !fontStyle && !ink
+            && scripts.empty();
+    }
+
+    constexpr bool ParagraphLook::empty() const
+    {
+        return !align && !indent && !lineSpacing;
+    }
 
     constexpr float lineFadeSpan(float overrun, float fadeWidth)
     {

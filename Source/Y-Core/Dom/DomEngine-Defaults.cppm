@@ -1,6 +1,7 @@
 export module ClaFi.Core.DomEngine :Defaults;
 
 import :Core;
+import :MultiTypeSequence;
 import :Section;
 import :Sequence;
 import ClaFi.StdLib;
@@ -72,7 +73,67 @@ namespace ClaFi::Dom
             return true;
         }
 
+        if (node.type() == DomNodeType::MultiTypeSequence)
+        {
+            // Answered whole, as a sequence is: an item left out would move every item after it.
+            const MultiTypeSequence::Items& items =
+                static_cast<const MultiTypeSequence&>(node).items();
+            const MultiTypeSequence::Items& otherItems =
+                static_cast<const MultiTypeSequence&>(other).items();
+            if (items.size() != otherItems.size())
+                return false;
+            for (std::size_t i = 0ull; i != items.size(); ++i)
+            {
+                if (items[i].name != otherItems[i].name)
+                    return false;
+                if (!sameValue(*items[i].node, *otherItems[i].node))
+                    return false;
+            }
+            return true;
+        }
+
         return false;
+    }
+
+    // Every item stays, even one stating nothing, since a list is read back by position.
+    [[nodiscard]] std::unique_ptr<DomNodeBase> itemsWithoutDefaults(const SequenceBase& sequence)
+    {
+        std::unique_ptr<DomNodeBase> copy = sequence.clone(nullptr);
+        const std::unique_ptr<DomNodeBase> defaultItem = sequence.makeDefaultItem();
+        if (!isSectionLike(defaultItem->type()))
+            return copy;
+
+        const Section& defaults = static_cast<const Section&>(*defaultItem);
+        for (std::unique_ptr<DomNodeBase>& item : static_cast<SequenceBase&>(*copy).children())
+        {
+            if (!isSectionLike(item->type()))
+                continue;
+            std::unique_ptr<Section> stated = withoutDefaults(static_cast<const Section&>(*item),
+                defaults);
+            stated->setParent(copy.get());
+            item = std::move(stated);
+        }
+        return copy;
+    }
+
+    // Every item stays, each carrying only what differs from its name's blueprint.
+    [[nodiscard]] std::unique_ptr<DomNodeBase> itemsWithoutDefaults(const MultiTypeSequence& list)
+    {
+        std::unique_ptr<DomNodeBase> copy = list.clone(nullptr);
+        MultiTypeSequence& copiedList = static_cast<MultiTypeSequence&>(*copy);
+        copiedList.clear();
+        for (const MultiTypeSequence::Item& item : list.items())
+        {
+            const std::unique_ptr<DomNodeBase> defaultItem = list.makeDefaultItem(item.name);
+            const bool bothSections = defaultItem && isSectionLike(item.node->type())
+                && isSectionLike(defaultItem->type());
+            std::unique_ptr<DomNodeBase> stated = bothSections
+                ? withoutDefaults(static_cast<const Section&>(*item.node),
+                    static_cast<const Section&>(*defaultItem))
+                : item.node->clone(nullptr);
+            copiedList.addItem(item.name, std::move(stated));
+        }
+        return copy;
     }
 
     std::unique_ptr<Section> withoutDefaults(const Section& section, const Section& defaults)
@@ -89,6 +150,10 @@ namespace ClaFi::Dom
             if (defaultChild and isSectionLike(child.type()) and isSectionLike(defaultChild->type()))
                 copy = withoutDefaults(static_cast<const Section&>(child),
                     static_cast<const Section&>(*defaultChild));
+            else if (child.type() == DomNodeType::Sequence)
+                copy = itemsWithoutDefaults(static_cast<const SequenceBase&>(child));
+            else if (child.type() == DomNodeType::MultiTypeSequence)
+                copy = itemsWithoutDefaults(static_cast<const MultiTypeSequence&>(child));
             else
                 copy = child.clone(result.get());
 

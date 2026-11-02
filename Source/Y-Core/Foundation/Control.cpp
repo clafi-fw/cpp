@@ -477,7 +477,7 @@ namespace ClaFi
 
     void AdjustTextEventBase::contribute(const Text& contribution)
     {
-        if (!m_source && m_buffer.blank())
+        if (!m_source && m_buffer.empty())
         {
             m_source = &contribution;
             return;
@@ -490,7 +490,7 @@ namespace ClaFi
     const Text& AdjustTextEventBase::result()
     {
         // Something wrote into the buffer after a text was named, so the answer is the two of them.
-        if (m_source && !m_buffer.blank())
+        if (m_source && !m_buffer.empty())
             materialise();
 
         return m_source ? *m_source : m_buffer;
@@ -505,7 +505,7 @@ namespace ClaFi
 
         const Text& named = *m_source;
         m_source = nullptr;
-        if (m_buffer.blank())
+        if (m_buffer.empty())
         {
             m_buffer << named;
             return;

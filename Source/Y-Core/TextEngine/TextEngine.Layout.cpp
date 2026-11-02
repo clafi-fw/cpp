@@ -1878,11 +1878,11 @@ namespace ClaFi
 
         // The font a native build would read at the paragraph's first character, provided the
         // span stating each part of it reaches the paragraph's end.
-        const TextStyleProps& body = TextStyles::Body;
-        std::wstring_view family = body.family;
-        float size = body.size;
-        FontWeight weight = body.weight;
-        FontStyle style = body.style;
+        const TextStyle& body = TextStyles::Body;
+        std::wstring_view family = *body.fontFamily;
+        float size = *body.fontSize;
+        FontWeight weight = *body.fontWeight;
+        FontStyle style = *body.fontStyle;
 
         const std::vector<FamilySpan>& families = m_bakedText.families();
         switch (spanReach(families, cursors.families, pStart, pEnd))
