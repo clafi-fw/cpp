@@ -58,6 +58,8 @@ namespace ClaFi::Controls
         void setBytes(ByteView);
         [[nodiscard]] ByteView bytes() const { return m_bytes; }
         [[nodiscard]] std::size_t lineCount() const;
+        // The byte the selection runs from - the caret is the end it runs to.
+        [[nodiscard]] std::size_t anchorOffset() const { return m_anchor; }
         // The byte the caret stands on. There is always one while the view holds any bytes, so
         // what a copy acts on is never empty.
         [[nodiscard]] std::size_t caretOffset() const { return m_caret; }
@@ -65,6 +67,8 @@ namespace ClaFi::Controls
         // keeping the selection leaves where it is and dropping it brings to the caret.
         void setCaretOffset(std::size_t offset, bool keepSelection = false);
         [[nodiscard]] HexRange selection() const;
+        // Selects from one byte to the caret's, clamped to the bytes, and brings the caret in view.
+        void setSelection(std::size_t anchor, std::size_t caret);
         // The selected bytes as the digits they are drawn in, one space between them. This is
         // what a copy puts on the clipboard.
         [[nodiscard]] std::wstring selectionAsHex() const;

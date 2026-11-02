@@ -35,54 +35,101 @@ namespace
     UINT s_ansiCodePage{ CP_ACP };
     UINT s_oemCodePage{ CP_OEMCP };
 
-    // Whether every character of the code page is one byte.
-    [[nodiscard]] bool isSingleByte(const UINT codePage)
-    {
-        CPINFO info{};
-        return ::GetCPInfo(codePage, &info) && info.MaxCharSize == 1;
-    }
-
     // The block a single-byte code page reads the bytes it leaves unassigned into.
     [[nodiscard]] bool isPrivateUse(const wchar_t value)
     {
         return value >= L'\xE000' && value <= L'\xF8FF';
     }
 
-    // Bytes read in one Windows code page. What the code page cannot spell becomes its own default
-    // character; a code page not installed reads as nothing, which is itself an answer.
+    // Byte for unit: a single-byte code page spells every character in one byte, and every one it
+    // spells lies in the basic plane.
     //
     // **A byte a single-byte code page leaves unassigned reads as the replacement character**, as
     // the Encodings contract has it. Windows reads one as a private-use character - 0xFF in 1253 is
     // U+F8FB, by Microsoft's own table - which no font draws.
-    [[nodiscard]] std::wstring fromCodePage(const UINT codePage, const std::string_view bytes)
+    void readSingleByte(DecodedText& decoded, const UINT codePage, const std::string_view bytes)
     {
-        if (bytes.empty())
-            return {};
-
         const int size = static_cast<int>(bytes.size());
-        const int length = ::MultiByteToWideChar(codePage, 0, bytes.data(), size, nullptr, 0);
-        std::wstring result(static_cast<std::size_t>(length), L'\0');
-        ::MultiByteToWideChar(codePage, 0, bytes.data(), size, result.data(), length);
-        if (isSingleByte(codePage))
-            std::ranges::replace_if(result, isPrivateUse, L'\uFFFD');
+        std::wstring units(bytes.size(), L'\0');
+        const int length = ::MultiByteToWideChar(codePage, 0, bytes.data(), size, units.data(),
+            size);
+        for (int index = 0; index < length; ++index)
+        {
+            const wchar_t unit = units[static_cast<std::size_t>(index)];
+            decoded.appendUnit(isPrivateUse(unit) ? L'\uFFFD' : unit,
+                static_cast<std::size_t>(index));
+        }
+    }
+
+    // **A character at a time**: a lead byte and the byte after it are one character, any other
+    // byte is one of its own, and the code page's own table says which bytes lead. Read whole, the
+    // bytes would leave no trace of which of them each character came from.
+    void readDoubleByte(DecodedText& decoded, const UINT codePage, const std::string_view bytes)
+    {
+        std::size_t index = 0;
+        while (index != bytes.size())
+        {
+            const BYTE value = static_cast<BYTE>(bytes[index]);
+            const bool startsPair = ::IsDBCSLeadByteEx(codePage, value)
+                && index + 1 != bytes.size();
+            const std::size_t length = startsPair ? 2 : 1;
+
+            wchar_t units[2]{};
+            const int written = ::MultiByteToWideChar(codePage, 0, bytes.data() + index,
+                static_cast<int>(length), units, static_cast<int>(std::size(units)));
+            if (written <= 0)
+                decoded.appendUnit(L'\uFFFD', index);
+            for (int unitIndex = 0; unitIndex < written; ++unitIndex)
+                decoded.appendUnit(units[unitIndex], index);
+
+            index += length;
+        }
+    }
+
+    // Bytes read in one Windows code page. What the code page cannot spell becomes its own default
+    // character; a code page not installed reads as nothing, which is itself an answer.
+    //
+    // **The system's own code page can be UTF-8**, a Windows setting, and is read as such. Every
+    // other code page a locale names is single-byte or double-byte.
+    [[nodiscard]] DecodedText fromCodePage(const UINT codePage, const std::string_view bytes)
+    {
+        DecodedText result{};
+        CPINFOEXW info{};
+        if (!::GetCPInfoExW(codePage, 0, &info))
+        {
+            result.finish(0);
+            return result;
+        }
+
+        if (info.CodePage == CP_UTF8)
+            return Decode::utf8(bytes);
+
+        result.text.reserve(bytes.size());
+        result.byteStarts.reserve(bytes.size() + 1);
+        if (info.MaxCharSize == 1)
+            readSingleByte(result, info.CodePage, bytes);
+        else
+            readDoubleByte(result, info.CodePage, bytes);
+
+        result.finish(bytes.size());
         return result;
     }
 
     // One fixed code page's reading, a function of its own so the entry that names it carries no
     // state - it is picked by hand for a format known to hold text in that code page.
     template<UINT CodePage>
-    [[nodiscard]] std::wstring fromFixedCodePage(const std::string_view bytes)
+    [[nodiscard]] DecodedText fromFixedCodePage(const std::string_view bytes)
     {
         return fromCodePage(CodePage, bytes);
     }
 
     // The clipboard's ANSI and OEM readings, in the code page CF_LOCALE named.
-    [[nodiscard]] std::wstring fromAnsi(const std::string_view bytes)
+    [[nodiscard]] DecodedText fromAnsi(const std::string_view bytes)
     {
         return fromCodePage(s_ansiCodePage, bytes);
     }
 
-    [[nodiscard]] std::wstring fromOem(const std::string_view bytes)
+    [[nodiscard]] DecodedText fromOem(const std::string_view bytes)
     {
         return fromCodePage(s_oemCodePage, bytes);
     }

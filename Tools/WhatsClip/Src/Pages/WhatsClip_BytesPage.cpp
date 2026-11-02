@@ -31,6 +31,33 @@ namespace ClaFi::Tools::WhatsClip
         body().onSelectionMove([this](SelectionMoveEvent&) { writeSelectionReadout(); });
     }
 
+    // **The view's caret is a selected byte**, and alone it is a caret standing before that byte. A
+    // run is the boundaries around it, with the caret on the side it stands.
+    std::optional<ByteSelection> BytesPage::byteSelection() const
+    {
+        if (body().bytes().empty())
+            return std::nullopt;
+
+        const std::size_t anchor = body().anchorOffset();
+        const std::size_t caret = body().caretOffset();
+        if (anchor < caret)
+            return ByteSelection{ anchor, caret + 1 };
+        if (caret < anchor)
+            return ByteSelection{ anchor + 1, caret };
+
+        return ByteSelection{ caret, caret };
+    }
+
+    void BytesPage::setByteSelection(const ByteSelection& selection)
+    {
+        if (selection.anchor < selection.caret)
+            body().setSelection(selection.anchor, selection.caret - 1);
+        else if (selection.caret < selection.anchor)
+            body().setSelection(selection.anchor - 1, selection.caret);
+        else
+            body().setSelection(selection.caret, selection.caret);
+    }
+
     void BytesPage::showContent(Transfer::Offer& offer, const Transfer::Format& format)
     {
         // **The bytes as they arrived.** A format this application knows would come back from

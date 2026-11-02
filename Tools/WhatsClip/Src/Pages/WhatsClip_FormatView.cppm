@@ -55,8 +55,10 @@ namespace ClaFi::Tools::WhatsClip
         using RepresentationTabList = std::vector<RepresentationTab>;
         using PageList = std::vector<RepresentationPage*>;
     private:
-        // Reads the open page unless it has already read this clipboard.
-        void showOpenPage();
+        // Reads the open page unless it has read this clipboard, then carries the selection over.
+        void showOpenPage(const Control* leftPage);
+        // The selection on the page left, if it has read this clipboard, onto the page opened.
+        void carrySelection(const Control* leftPage, RepresentationPage& openedPage);
         // Writes what is open as the presentation to browse in - see setPreference.
         void rememberOpen();
         // Every page in this control was put there by setRepresentations, so the only thing the
@@ -95,9 +97,9 @@ namespace ClaFi::Tools::WhatsClip
     {
         // A tab picked reads what it shows. The connection needs no scope: the page control is
         // this control's own member and goes when it does.
-        pageControl().connectEvent([this](CurrentItemChangeEvent&) {
+        pageControl().connectEvent([this](CurrentItemChangeEvent& event) {
             rememberOpen();
-            showOpenPage();
+            showOpenPage(event.previousItem);
         });
         pageControl().setColorRules(std::nullopt);
     }

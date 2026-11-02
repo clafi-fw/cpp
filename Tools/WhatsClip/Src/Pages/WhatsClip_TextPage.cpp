@@ -1,6 +1,7 @@
 module ClaFi.Tools.WhatsClip.TextPage;
 
 import ClaFi.Tools.WhatsClip.Page;
+import ClaFi.Tools.WhatsClip.Encodings;
 
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.CodeBox;
@@ -23,6 +24,15 @@ namespace ClaFi::Tools::WhatsClip
 {
     using namespace Controls;
 
+    namespace
+    {
+        // The first of the two units a code point past the basic plane takes in 16 bits.
+        [[nodiscard]] bool isHighSurrogate(const wchar_t unit)
+        {
+            return unit >= 0xD800 && unit <= 0xDBFF;
+        }
+    }
+
     TextPage::TextPage(const CreateParams& params, const PickLists& picks)
         :
         TextPageBase{
@@ -38,6 +48,37 @@ namespace ClaFi::Tools::WhatsClip
             readHeldBack();
         });
         m_question.setVisible(false);
+    }
+
+    // **The anchor is the end the caret is not on**, and a bare caret stands at both.
+    std::optional<ByteSelection> TextPage::byteSelection() const
+    {
+        if (m_byteStarts.empty())
+            return std::nullopt;
+
+        const TextRange selection = body().selection();
+        const std::size_t caret = body().caretPos();
+        const std::size_t anchor = caret == selection.start ? selection.end() : selection.start;
+        return ByteSelection{ m_byteStarts[anchor], m_byteStarts[caret] };
+    }
+
+    // **Each end widens away from the other**, so a selected byte is never left out for sitting
+    // part-way into a character, and a caret stands before the character its byte is in. A boundary
+    // the text has no character for - the byte order mark, the slack, what the limit cut - lands on
+    // the nearest end of the text.
+    void TextPage::setByteSelection(const ByteSelection& selection)
+    {
+        if (m_byteStarts.empty())
+            return;
+
+        const std::size_t anchor = selection.anchor <= selection.caret
+            ? positionAtOrBefore(selection.anchor)
+            : positionAtOrAfter(selection.anchor);
+        const std::size_t caret = selection.caret <= selection.anchor
+            ? positionAtOrBefore(selection.caret)
+            : positionAtOrAfter(selection.caret);
+        body().setSelection(anchor, caret);
+        body().scrollIntoViewOnAlign();
     }
 
     // **What is on the clipboard, as text**: the format's own bytes, read in the encoding picked in
@@ -77,6 +118,7 @@ namespace ClaFi::Tools::WhatsClip
     void TextPage::showBytes()
     {
         m_question.setVisible(m_heldBack);
+        m_byteStarts.clear();
         if (m_heldBack)
         {
             showHeldBack();
@@ -113,24 +155,52 @@ namespace ClaFi::Tools::WhatsClip
         scrollToBegin();
     }
 
-    void TextPage::showReading(std::optional<std::wstring>&& text, const std::size_t wholeSize,
+    void TextPage::showReading(std::optional<DecodedText>&& reading, const std::size_t wholeSize,
         const std::wstring_view unit)
     {
         Text status{};
-        if (!text)
+        if (!reading)
             status << k_noAnswer;
         else if (wholeSize > k_textLimit)
             status << std::format(L"{} characters, the first {} of {} {}",
-                text->size(), k_textLimit, wholeSize, unit);
+                reading->text.size(), k_textLimit, wholeSize, unit);
         else
-            status << std::format(L"{} characters", text->size());
+            status << std::format(L"{} characters", reading->text.size());
 
         writeStatus(std::move(status));
 
         Text report{};
-        if (text)
-            report << *text;
+        if (reading)
+        {
+            report << reading->text;
+            m_byteStarts = std::move(reading->byteStarts);
+        }
 
         showText(std::move(report), *m_format);
+    }
+
+    // **Between the two units of a pair is no place in the text.** Both start at the pair's first
+    // byte, and the place before the pair is the one that byte names. A break put in after a NUL
+    // shares its boundary with the character after it, and the place after the break is taken.
+    std::size_t TextPage::positionAtOrBefore(const std::size_t byteBoundary) const
+    {
+        const ByteStarts::const_iterator firstPast
+            = std::ranges::upper_bound(m_byteStarts, byteBoundary);
+        if (firstPast == m_byteStarts.begin())
+            return 0;
+
+        std::size_t position = static_cast<std::size_t>(firstPast - m_byteStarts.begin()) - 1;
+        if (position != 0 && isHighSurrogate(body().text().plainText()[position - 1]))
+            --position;
+
+        return position;
+    }
+
+    std::size_t TextPage::positionAtOrAfter(const std::size_t byteBoundary) const
+    {
+        const ByteStarts::const_iterator firstAtOrPast
+            = std::ranges::lower_bound(m_byteStarts, byteBoundary);
+        const std::size_t position = static_cast<std::size_t>(firstAtOrPast - m_byteStarts.begin());
+        return std::min(position, m_byteStarts.size() - 1);
     }
 }

@@ -77,6 +77,30 @@ namespace ClaFi::Controls
     {
     }
 
+    // **Clamped**, because a position is only ever a position in some text. A host writing a new
+    // text into the box names one against the text it is writing, and the box holds that text only
+    // once the write has happened. The remembered column belongs to a run of vertical presses, and
+    // this is not one - see editModeKeyDown.
+    void TextBox::setSelection(const std::size_t otherPos, const std::size_t caretPos)
+    {
+        const std::size_t size = text().plainText().size();
+        m_editProps.targetX.reset();
+        setSelectionKeepingColumn(std::min(otherPos, size), std::min(caretPos, size));
+    }
+
+    std::size_t TextBox::caretPos() const
+    {
+        // The start of the text is where a caret that was never placed belongs - the same answer
+        // ensureCaret gives an edit made in a box nobody has clicked in yet.
+        const std::size_t pos = m_editProps.selRange.start == k_maxSize
+            ? 0
+            : m_editProps.caretPos();
+        // selRange.length holds k_maxSize while the whole text is selected, so a caret at the far
+        // end of that range names a position past the last character. The end of the text is what
+        // it stands for.
+        return std::min(pos, text().plainText().size());
+    }
+
     TextRange TextBox::selection() const
     {
         // An unplaced caret stands past the text, and a whole-text selection runs past it.
@@ -151,7 +175,6 @@ namespace ClaFi::Controls
 
         m_backPlaces.push_back(currentPlace());
         m_forwardPlaces.clear();
-        m_editProps.targetX.reset();
         setSelection(anchor->start, anchor->end());
         // The view moves last, once the selection is written - the order nestedKeyDown keeps.
         scrollLineToTop(anchor->start);
@@ -201,7 +224,6 @@ namespace ClaFi::Controls
     {
         setEditMode(EditMode::Yes);
         makeCurrentItem();
-        m_editProps.targetX.reset();
         setSelection(range.start, range.end());
         scrollIntoView();
     }
@@ -636,7 +658,7 @@ namespace ClaFi::Controls
             if (!event.modifiers.shift)
                 otherPos = caretPos;
 
-            setSelection(otherPos, caretPos);
+            setSelectionKeepingColumn(otherPos, caretPos);
 
             // Everything read out of the layout has been written back, so the view may move now.
             // A scroll changes where the caret sits on the form, and nothing below reads it.

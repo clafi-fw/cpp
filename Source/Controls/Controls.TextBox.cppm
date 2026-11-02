@@ -119,7 +119,11 @@ namespace ClaFi::Controls
         void setCaretPosFromMouse();
         // Puts the caret where a host names it, with nothing selected.
         void setCaretPos(std::size_t pos);
+        // Selects from one position to the caret's, where a host names them.
+        void setSelection(std::size_t otherPos, std::size_t caretPos);
         void selectAll();
+        // Where the caret stands, clamped to the text - the start of it where none was placed.
+        [[nodiscard]] std::size_t caretPos() const;
         // Where the caret stands, both numbers counted from one - see TextLineColumn. A caret
         // that was never placed answers the start of the text, which is where ensureCaret puts
         // one.
@@ -188,7 +192,6 @@ namespace ClaFi::Controls
         // The rect a caret standing before that position takes, in form space - what a popup
         // placed at a position in the text is placed by. Clamped to the text.
         [[nodiscard]] FloatRect caretRectInForm(std::size_t pos) const;
-        void setSelection(std::size_t otherPos, std::size_t caretPos);
         // The caret's one drawing site - the blink, the visual state and the window's focus meet.
         void paintOwnText(PaintEvent&) override;
         // The placeholder while the text is empty, and the box's own layout over it for the caret.
@@ -333,6 +336,8 @@ namespace ClaFi::Controls
         void carryPlaces(const TextEdit&);
         // Drops the history, for a change to the text the box cannot account for.
         void forgetPlaces();
+        // setSelection for a key, keeping the column a run of vertical presses remembers.
+        void setSelectionKeepingColumn(std::size_t otherPos, std::size_t caretPos);
         // Puts the caret where an undone or redone step left it.
         void applySelection(const EditSelection&);
         // Emits CaretMoveEvent. Both of the tails end here: an edit moves the caret as surely
@@ -416,16 +421,9 @@ namespace ClaFi::Controls
         }
     }
 
-    // **Clamped**, because a position is only ever a position in some text. A host writing a new
-    // text into the box names one against the text it is writing, and the box holds that text only
-    // once the write has happened.
     void TextBox::setCaretPos(const std::size_t pos)
     {
-        const std::size_t caretPos = std::min(pos, text().plainText().size());
-        // The remembered column belongs to a run of vertical presses, and this is not one - see
-        // nestedKeyDown.
-        m_editProps.targetX.reset();
-        setSelection(caretPos, caretPos);
+        setSelection(pos, pos);
     }
 
     void TextBox::selectAll()
@@ -439,17 +437,10 @@ namespace ClaFi::Controls
 
     TextLineColumn TextBox::caretLineColumn() const
     {
-        // The start of the text is where a caret that was never placed belongs - the same answer
-        // ensureCaret gives an edit made in a box nobody has clicked in yet.
-        const std::size_t caretPos = m_editProps.selRange.start == k_maxSize ? 0 : m_editProps.caretPos();
-        // selRange.length holds k_maxSize while the whole text is selected, so a caret at the far
-        // end of that range names a position past the last character. The end of the text is what
-        // it stands for.
-        const std::size_t pos = std::min(caretPos, text().plainText().size());
         // Through the synced layout, which is what carries an edit the layout has not been told
         // about yet into the paragraph offsets this reads. Asking here does the work the next
         // paint would have done and nothing more.
-        return syncedLayout(formContext(), textBoundsInControl()).lineColumnAt(pos);
+        return syncedLayout(formContext(), textBoundsInControl()).lineColumnAt(caretPos());
     }
 
     Transfer::FormatList TextBox::pasteFormats()
@@ -549,7 +540,7 @@ namespace ClaFi::Controls
         return caretRect(textBounds, { std::min(pos, text().plainText().size()), false });
     }
 
-    void TextBox::setSelection(std::size_t otherPos, std::size_t caretPos)
+    void TextBox::setSelectionKeepingColumn(std::size_t otherPos, std::size_t caretPos)
     {
         // don't touch caretOnLeft if they are equal - it remembers the user's input
         if (caretPos < otherPos)
@@ -674,7 +665,6 @@ namespace ClaFi::Controls
         std::size_t otherPos = layout.caretPos(startPos - origin).pos;
         std::size_t caretPos = layout.caretPos(currentPos - origin).pos;
         setSelection(otherPos, caretPos);
-        m_editProps.targetX.reset();
     }
 
     void TextBox::charPress(CharPressEvent& event)

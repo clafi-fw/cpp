@@ -10,6 +10,7 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
+import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
@@ -64,24 +65,46 @@ namespace ClaFi::Tools::WhatsClip
         m_readPages.push_back(page);
     }
 
-    void FormatView::showOpenPage()
+    void FormatView::showOpenPage(const Control* leftPage)
     {
         if (!m_format)
             return;
 
         RepresentationPage* page = openPage();
-        if (!page || std::ranges::find(m_readPages, page) != m_readPages.end())
+        if (!page)
             return;
 
-        // **Asked for again rather than kept**, for the reason the Viewer asks again: an offer
-        // belongs to Transfer and is freed the moment anything else reads a clipboard that has
-        // moved on, so the one show was handed is not a thing to hold on to.
-        Transfer::Offer* offer = formContext().clipboard().offer();
-        if (!offer)
-            return;
+        if (std::ranges::find(m_readPages, page) == m_readPages.end())
+        {
+            // **Asked for again rather than kept**, for the reason the Viewer asks again: an offer
+            // belongs to Transfer and is freed the moment anything else reads a clipboard that has
+            // moved on, so the one show was handed is not a thing to hold on to.
+            Transfer::Offer* offer = formContext().clipboard().offer();
+            if (!offer)
+                return;
 
-        page->show(*offer, *m_format);
-        m_readPages.push_back(page);
+            page->show(*offer, *m_format);
+            m_readPages.push_back(page);
+        }
+
+        carrySelection(leftPage, *page);
+    }
+
+    // **The selection goes where the reader goes**, so the bytes picked in one representation are
+    // the ones picked in the next. It is carried in bytes, which every representation of a format
+    // is a reading of, and only from a page that read the clipboard the opened page has just read.
+    void FormatView::carrySelection(const Control* leftPage, RepresentationPage& openedPage)
+    {
+        for (const RepresentationPage* page : m_readPages)
+        {
+            if (page != leftPage)
+                continue;
+
+            const std::optional<ByteSelection> selection = page->byteSelection();
+            if (selection)
+                openedPage.setByteSelection(*selection);
+            return;
+        }
     }
 
     // **A view offering one representation offers no choice**, so it writes none: a handle format

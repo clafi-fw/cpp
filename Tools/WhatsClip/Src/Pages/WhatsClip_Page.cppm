@@ -53,6 +53,13 @@ namespace ClaFi::Tools::WhatsClip
         void (*readLocale)(Transfer::Offer&) { nullptr };
     };
 
+    // A selection between two byte boundaries - where both are one, a caret before that byte.
+    export struct ByteSelection
+    {
+        std::size_t anchor{ 0 };
+        std::size_t caret{ 0 };
+    };
+
     // **One way of showing one format's content.** A format is not one thing to look at: it has
     // bytes, it can almost always be read as text, and some formats carry more than either says.
     //
@@ -90,6 +97,10 @@ namespace ClaFi::Tools::WhatsClip
 
         // The clipboard's answer for one format, into this page.
         void show(Transfer::Offer&, const Transfer::Format&);
+        // What is selected, as the bytes it covers - none on a page that shows no bytes.
+        [[nodiscard]] virtual std::optional<ByteSelection> byteSelection() const;
+        // Selects what covers those bytes, and brings it into view.
+        virtual void setByteSelection(const ByteSelection&) {}
     protected:
         // What this page makes of the format - see show, which sends the view home after it.
         virtual void showContent(Transfer::Offer&, const Transfer::Format&) = 0;
@@ -173,16 +184,17 @@ namespace ClaFi::Tools::WhatsClip
         // decoded from the bytes names nothing, and the text is judged by what it holds.
         void showText(Text&&, const Transfer::Format&);
         void showText(Text&&);
-        // The bytes as text, in the encoding picked. A terminated-string format - CF_TEXT and its
-        // like - is cut to its content before the pick, so the block's slack sways neither the
-        // encoding nor the text; any other is read whole and drops only the run its block is
-        // padded with. A control left in reads as a stand-in - a dot for a NUL, a small square
-        // for the rest - and a byte the encoding has no character for as a lozenge, so the text
-        // stays on cells, and a NUL ends the line where it closes a string. None where there are
-        // no bytes. **The pick stands where the page reads bytes through it**: hidden from
-        // construction, shown by the first call that has bytes, never seen on a page whose text
-        // was decoded elsewhere.
-        [[nodiscard]] std::optional<std::wstring> decode(std::string_view bytes,
+        // The bytes as text, in the encoding picked, with the byte each unit of it starts at. A
+        // terminated-string format - CF_TEXT and its like - is cut to its content before the
+        // pick, so the block's slack sways neither the encoding nor the text; any other is read
+        // whole and drops only the run its block is padded with. A control left in reads as a
+        // stand-in - a dot for a NUL, a small square for the rest - and a byte the encoding has
+        // no character for as a lozenge, so the text stays on cells, and a NUL ends the line where
+        // it closes a string, with a break that covers no byte. None where there are no bytes.
+        // **The pick stands where the page reads bytes through it**: hidden from construction,
+        // shown by the first call that has bytes, never seen on a page whose text was decoded
+        // elsewhere.
+        [[nodiscard]] std::optional<DecodedText> decode(std::string_view bytes,
             const Transfer::Format&);
         // The encoding pick has moved. A page that keeps its bytes reads them again.
         virtual void encodingPicked() {}

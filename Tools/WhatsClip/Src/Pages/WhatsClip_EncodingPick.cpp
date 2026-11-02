@@ -4,7 +4,6 @@ import ClaFi.Tools.WhatsClip.AutoPick;
 import ClaFi.Tools.WhatsClip.Encodings;
 
 import ClaFi.Core.Foundation;
-import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi::Tools::WhatsClip
@@ -24,7 +23,7 @@ namespace ClaFi::Tools::WhatsClip
         return detectEncoding(m_encodings, formatName, bytes);
     }
 
-    std::wstring EncodingPick::decode(const std::wstring_view formatName,
+    DecodedText EncodingPick::decode(const std::wstring_view formatName,
         const std::string_view bytes)
     {
         std::optional<EncodingEntry> entry = pickedEncoding();
@@ -34,7 +33,7 @@ namespace ClaFi::Tools::WhatsClip
             setFoundName(entry ? entry->name : std::wstring_view{});
         }
 
-        return entry ? entry->decode(bytes) : fromUtf8(bytes);
+        return entry ? entry->decode(bytes) : Decode::utf8(bytes);
     }
 
     AutoPicker::Names EncodingPick::namesOf(const EncodingList& encodings)

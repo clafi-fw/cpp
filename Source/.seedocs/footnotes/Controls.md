@@ -410,8 +410,8 @@ Stated once, when the list is built.
 
 ## SelectionMoveEvent
 
-Raised for a key, a mouse press, a drag, Select All and new bytes. **Ask the view what is
-selected** - HexView::selection and caretOffset.
+Raised for a key, a mouse press, a drag, Select All, setSelection and new bytes. **Ask the view
+what is selected** - HexView::selection, anchorOffset and caretOffset.
 
 **Hang a reading of the selection off this**, in a status line the host owns. A tooltip is sized
 from its first words, and user input hides it.

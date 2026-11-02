@@ -1,6 +1,5 @@
 module ClaFi.Tools.WhatsClip.Encodings;
 
-import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 
 namespace ClaFi::Tools::WhatsClip
@@ -32,10 +31,10 @@ namespace ClaFi::Tools::WhatsClip
             return true;
         }
 
-        // The bytes without the mark, where the mark is there.
-        [[nodiscard]] std::string_view withoutBom(const std::string_view bytes, const Bom bom)
+        // How many bytes the mark takes at the start - none where it is not there.
+        [[nodiscard]] std::size_t bomLength(const std::string_view bytes, const Bom bom)
         {
-            return startsWith(bytes, bom) ? bytes.substr(bom.size()) : bytes;
+            return startsWith(bytes, bom) ? bom.size() : 0;
         }
 
         [[nodiscard]] bool isSurrogate(const char32_t codePoint)
@@ -53,81 +52,102 @@ namespace ClaFi::Tools::WhatsClip
             return unit >= 0xDC00 && unit <= 0xDFFF;
         }
 
-        // A code point above the basic plane needs a surrogate pair where wchar_t is 16 bits and
-        // fits a single unit where it is 32.
-        void appendWide(std::wstring& out, const char32_t codePoint)
+        // A character's units, each starting at the character's first byte. A code point above the
+        // basic plane needs a surrogate pair where wchar_t is 16 bits and fits a single unit where
+        // it is 32.
+        void appendCharacter(DecodedText& decoded, const char32_t codePoint,
+            const std::size_t byteStart)
         {
             if constexpr (sizeof(wchar_t) == 2)
             {
                 if (codePoint >= 0x10000)
                 {
                     const char32_t offset = codePoint - 0x10000;
-                    out.push_back(static_cast<wchar_t>(0xD800 + (offset >> 10)));
-                    out.push_back(static_cast<wchar_t>(0xDC00 + (offset & 0x3FF)));
+                    decoded.appendUnit(static_cast<wchar_t>(0xD800 + (offset >> 10)), byteStart);
+                    decoded.appendUnit(static_cast<wchar_t>(0xDC00 + (offset & 0x3FF)), byteStart);
                     return;
                 }
             }
 
-            out.push_back(static_cast<wchar_t>(codePoint));
+            decoded.appendUnit(static_cast<wchar_t>(codePoint), byteStart);
         }
 
-        // Whether every sequence is one UTF-8 allows: a lead with its continuations all there,
-        // spelled no longer than it needs to be, and naming neither a surrogate nor anything
-        // past the last plane. The same rules fromUtf8 replaces by, asked rather than applied.
+        // One UTF-8 sequence: what it spells - none where it breaks a rule - and its length.
+        struct Utf8Character
+        {
+            std::optional<char32_t> codePoint{};
+            std::size_t length{ 1 };
+        };
+
+        // The UTF-8 sequence that starts at that byte.
+        [[nodiscard]] Utf8Character readUtf8Character(const std::string_view bytes,
+            const std::size_t index)
+        {
+            const unsigned char lead = byteAt(bytes, index);
+            if (lead < 0x80)
+                return { lead, 1 };
+
+            char32_t codePoint = 0;
+            std::size_t continuations = 0;
+            char32_t lowest = 0;
+            if ((lead & 0xE0) == 0xC0)
+            {
+                codePoint = lead & 0x1Fu;
+                continuations = 1;
+                lowest = 0x80;
+            }
+            else if ((lead & 0xF0) == 0xE0)
+            {
+                codePoint = lead & 0x0Fu;
+                continuations = 2;
+                lowest = 0x800;
+            }
+            else if ((lead & 0xF8) == 0xF0)
+            {
+                codePoint = lead & 0x07u;
+                continuations = 3;
+                lowest = 0x10000;
+            }
+            else
+            {
+                return { std::nullopt, 1 };
+            }
+
+            // A sequence cut short takes the continuations it had, and the byte that cut it is read
+            // again as a lead - one replacement for one broken sequence.
+            std::size_t length = 1;
+            while (length != continuations + 1)
+            {
+                if (index + length == bytes.size())
+                    return { std::nullopt, length };
+
+                const unsigned char next = byteAt(bytes, index + length);
+                if ((next & 0xC0) != 0x80)
+                    return { std::nullopt, length };
+
+                codePoint = (codePoint << 6) | (next & 0x3Fu);
+                ++length;
+            }
+
+            // Spelled no longer than it needs to be, and naming neither a surrogate nor anything
+            // past the last plane.
+            if (codePoint < lowest || codePoint > 0x10FFFF || isSurrogate(codePoint))
+                return { std::nullopt, length };
+
+            return { codePoint, length };
+        }
+
+        // Whether every sequence in the bytes is one UTF-8 allows.
         [[nodiscard]] bool isUtf8(const std::string_view bytes)
         {
             std::size_t index = 0;
             while (index != bytes.size())
             {
-                const unsigned char lead = byteAt(bytes, index);
-                if (lead < 0x80)
-                {
-                    ++index;
-                    continue;
-                }
-
-                char32_t codePoint = 0;
-                std::size_t continuations = 0;
-                char32_t lowest = 0;
-                if ((lead & 0xE0) == 0xC0)
-                {
-                    codePoint = lead & 0x1Fu;
-                    continuations = 1;
-                    lowest = 0x80;
-                }
-                else if ((lead & 0xF0) == 0xE0)
-                {
-                    codePoint = lead & 0x0Fu;
-                    continuations = 2;
-                    lowest = 0x800;
-                }
-                else if ((lead & 0xF8) == 0xF0)
-                {
-                    codePoint = lead & 0x07u;
-                    continuations = 3;
-                    lowest = 0x10000;
-                }
-                else
-                {
-                    return false;
-                }
-
-                if (index + continuations >= bytes.size())
+                const Utf8Character character = readUtf8Character(bytes, index);
+                if (!character.codePoint)
                     return false;
 
-                for (std::size_t k = 1; k <= continuations; ++k)
-                {
-                    const unsigned char next = byteAt(bytes, index + k);
-                    if ((next & 0xC0) != 0x80)
-                        return false;
-
-                    codePoint = (codePoint << 6) | (next & 0x3Fu);
-                }
-
-                if (codePoint < lowest || codePoint > 0x10FFFF || isSurrogate(codePoint))
-                    return false;
-
-                index += 1 + continuations;
+                index += character.length;
             }
 
             return true;
@@ -157,6 +177,17 @@ namespace ClaFi::Tools::WhatsClip
 
             return controlHighs * 2 > bytes.size() / 2;
         }
+    }
+
+    void DecodedText::appendUnit(const wchar_t unit, const std::size_t byteStart)
+    {
+        text.push_back(unit);
+        byteStarts.push_back(static_cast<std::uint32_t>(byteStart));
+    }
+
+    void DecodedText::finish(const std::size_t byteEnd)
+    {
+        byteStarts.push_back(static_cast<std::uint32_t>(byteEnd));
     }
 
     std::optional<EncodingEntry> detectEncoding(const EncodingList& encodings,
@@ -197,50 +228,67 @@ namespace ClaFi::Tools::WhatsClip
     {
         // A lone surrogate, and the odd byte a string of units has no room for, each become one
         // replacement character.
-        std::wstring utf16Le(const std::string_view bytes)
+        DecodedText utf16Le(const std::string_view bytes)
         {
-            const std::string_view body = withoutBom(bytes, k_utf16LeBom);
-
-            std::wstring result{};
-            result.reserve(body.size() / 2);
-            std::size_t index = 0;
-            while (index + 1 < body.size())
+            DecodedText result{};
+            result.text.reserve(bytes.size() / 2);
+            result.byteStarts.reserve(bytes.size() / 2 + 1);
+            std::size_t index = bomLength(bytes, k_utf16LeBom);
+            while (index + 1 < bytes.size())
             {
-                const char32_t unit = byteAt(body, index) | (byteAt(body, index + 1) << 8);
+                const std::size_t characterStart = index;
+                const char32_t unit = byteAt(bytes, index) | (byteAt(bytes, index + 1) << 8);
                 index += 2;
 
-                if (isHighSurrogate(unit) && index + 1 < body.size())
+                if (isHighSurrogate(unit) && index + 1 < bytes.size())
                 {
-                    const char32_t low = byteAt(body, index) | (byteAt(body, index + 1) << 8);
+                    const char32_t low = byteAt(bytes, index) | (byteAt(bytes, index + 1) << 8);
                     if (isLowSurrogate(low))
                     {
                         index += 2;
-                        appendWide(result, 0x10000 + ((unit - 0xD800) << 10) + (low - 0xDC00));
+                        appendCharacter(result,
+                            0x10000 + ((unit - 0xD800) << 10) + (low - 0xDC00),
+                            characterStart);
                         continue;
                     }
                 }
 
-                appendWide(result, isSurrogate(unit) ? k_replacement : unit);
+                appendCharacter(result, isSurrogate(unit) ? k_replacement : unit, characterStart);
             }
 
-            if (index != body.size())
-                appendWide(result, k_replacement);
+            if (index != bytes.size())
+                appendCharacter(result, k_replacement, index);
 
+            result.finish(bytes.size());
             return result;
         }
 
-        std::wstring utf8(const std::string_view bytes)
+        DecodedText utf8(const std::string_view bytes)
         {
-            return fromUtf8(withoutBom(bytes, k_utf8Bom));
+            DecodedText result{};
+            result.text.reserve(bytes.size());
+            result.byteStarts.reserve(bytes.size() + 1);
+            std::size_t index = bomLength(bytes, k_utf8Bom);
+            while (index != bytes.size())
+            {
+                const Utf8Character character = readUtf8Character(bytes, index);
+                appendCharacter(result, character.codePoint.value_or(k_replacement), index);
+                index += character.length;
+            }
+
+            result.finish(bytes.size());
+            return result;
         }
 
-        std::wstring latin1(const std::string_view bytes)
+        DecodedText latin1(const std::string_view bytes)
         {
-            std::wstring result{};
-            result.reserve(bytes.size());
+            DecodedText result{};
+            result.text.reserve(bytes.size());
+            result.byteStarts.reserve(bytes.size() + 1);
             for (std::size_t index = 0; index != bytes.size(); ++index)
-                result.push_back(static_cast<wchar_t>(byteAt(bytes, index)));
+                result.appendUnit(static_cast<wchar_t>(byteAt(bytes, index)), index);
 
+            result.finish(bytes.size());
             return result;
         }
     }

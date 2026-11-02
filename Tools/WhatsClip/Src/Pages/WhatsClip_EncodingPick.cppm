@@ -26,7 +26,7 @@ namespace ClaFi::Tools::WhatsClip
         // The bytes as text: in the encoding picked, or on Auto in the first the list claims
         // them for, whose name goes on the face. Bytes nothing claims are read as UTF-8, that
         // being what a byte string meant to be read is, and the face reads Auto.
-        [[nodiscard]] std::wstring decode(std::wstring_view formatName, std::string_view bytes);
+        [[nodiscard]] DecodedText decode(std::wstring_view formatName, std::string_view bytes);
     private:
         [[nodiscard]] static Names namesOf(const EncodingList&);
     private:

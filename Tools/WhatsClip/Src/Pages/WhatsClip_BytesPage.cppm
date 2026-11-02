@@ -22,6 +22,9 @@ namespace ClaFi::Tools::WhatsClip
     {
     public:
         explicit BytesPage(const CreateParams&);
+    public:
+        [[nodiscard]] std::optional<ByteSelection> byteSelection() const override;
+        void setByteSelection(const ByteSelection&) override;
     protected:
         void showContent(Transfer::Offer&, const Transfer::Format&) override;
     private:

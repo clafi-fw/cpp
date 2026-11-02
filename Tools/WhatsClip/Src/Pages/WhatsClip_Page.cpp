@@ -109,6 +109,14 @@ namespace ClaFi::Tools::WhatsClip
             return end == std::wstring_view::npos ? std::wstring_view{} : text.substr(0, end + 1);
         }
 
+        // The reading cut where withoutTrailingNuls cuts its text, ending where the run began.
+        void cutTrailingNuls(DecodedText& decoded)
+        {
+            const std::size_t keptLength = withoutTrailingNuls(decoded.text).size();
+            decoded.text.resize(keptLength);
+            decoded.byteStarts.resize(keptLength + 1);
+        }
+
         // A tab counts as text; a control and a replacement character - a failed reading - do not.
         [[nodiscard]] bool isStringCharacter(const wchar_t value)
         {
@@ -137,32 +145,38 @@ namespace ClaFi::Tools::WhatsClip
             return value < L' ' || (value >= L'\x7F' && value <= L'\x9F');
         }
 
-        [[nodiscard]] std::wstring withControlsMarked(const std::wstring_view text)
+        // A stand-in keeps the byte its character started at. The break after a NUL covers no
+        // byte, and starts where the character after the NUL does.
+        [[nodiscard]] DecodedText withControlsMarked(const DecodedText& decoded)
         {
-            std::wstring result{};
-            result.reserve(text.size());
+            DecodedText result{};
+            result.text.reserve(decoded.text.size());
+            result.byteStarts.reserve(decoded.byteStarts.size());
             std::size_t stringLength = 0;
-            for (const wchar_t value : text)
+            for (std::size_t unitIndex = 0; unitIndex != decoded.text.size(); ++unitIndex)
             {
+                const wchar_t value = decoded.text[unitIndex];
+                const std::size_t byteStart = decoded.byteStarts[unitIndex];
                 if (value == L'\0')
                 {
-                    result.push_back(k_nulStandIn);
+                    result.appendUnit(k_nulStandIn, byteStart);
                     if (stringLength >= k_minStringLength)
-                        result.push_back(L'\n');
+                        result.appendUnit(L'\n', decoded.byteStarts[unitIndex + 1]);
                     stringLength = 0;
                 }
                 else
                 {
                     if (isMarkedControl(value))
-                        result.push_back(k_controlStandIn);
+                        result.appendUnit(k_controlStandIn, byteStart);
                     else if (value == L'\uFFFD')
-                        result.push_back(k_noCharacterStandIn);
+                        result.appendUnit(k_noCharacterStandIn, byteStart);
                     else
-                        result.push_back(value);
+                        result.appendUnit(value, byteStart);
                     stringLength = isStringCharacter(value) ? stringLength + 1 : 0;
                 }
             }
 
+            result.finish(decoded.byteStarts.back());
             return result;
         }
     }
@@ -193,6 +207,11 @@ namespace ClaFi::Tools::WhatsClip
         const ScopedWaitCursor waitCursor{};
         showContent(offer, format);
         scrollToBegin();
+    }
+
+    std::optional<ByteSelection> RepresentationPage::byteSelection() const
+    {
+        return std::nullopt;
     }
 
     void RepresentationPage::writeStatus(Text&& value)
@@ -259,7 +278,7 @@ namespace ClaFi::Tools::WhatsClip
         placeText(std::move(value));
     }
 
-    std::optional<std::wstring> TextPageBase::decode(const std::string_view bytes,
+    std::optional<DecodedText> TextPageBase::decode(const std::string_view bytes,
         const Transfer::Format& format)
     {
         m_readText.reset();
@@ -275,12 +294,11 @@ namespace ClaFi::Tools::WhatsClip
         // keeping the ones it sets between strings.
         const std::size_t terminatorWidth = terminatorWidthOf(name);
         const std::string_view content = contentOf(bytes, terminatorWidth);
-        const std::wstring decoded = m_encodingPick.decode(name, content);
-        const std::wstring_view body = terminatorWidth != 0
-            ? std::wstring_view{ decoded }
-            : withoutTrailingNuls(decoded);
-        m_readText = std::wstring{ body };
-        return withControlsMarked(body);
+        DecodedText decoded = m_encodingPick.decode(name, content);
+        if (terminatorWidth == 0)
+            cutTrailingNuls(decoded);
+        m_readText = decoded.text;
+        return withControlsMarked(decoded);
     }
 
     bool TextPageBase::isBinary(const std::string_view bytes, const Transfer::Format& format) const
@@ -293,7 +311,7 @@ namespace ClaFi::Tools::WhatsClip
         // down by the character the cut splits.
         const std::optional<EncodingEntry> encoding = m_encodingPick.detect(name, bytes);
         const std::string_view head = bytes.substr(0, k_judgedBytes);
-        const std::wstring decoded = encoding ? encoding->decode(head) : fromUtf8(head);
+        const std::wstring decoded = encoding ? encoding->decode(head).text : fromUtf8(head);
 
         // A head holding every byte ends in the block's padding; a cut one can end in part of a
         // character, which a reading answers with replacements.

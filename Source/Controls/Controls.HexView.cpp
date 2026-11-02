@@ -78,6 +78,21 @@ namespace ClaFi::Controls
         return { first, last - first + 1 };
     }
 
+    // **Brought into view after the next pass**: a host may name a selection over bytes it has just
+    // handed over, or in a view just shown, and neither has been laid out for yet.
+    void HexView::setSelection(const std::size_t anchor, const std::size_t caret)
+    {
+        if (m_bytes.empty())
+            return;
+
+        const std::size_t last = m_bytes.size() - 1;
+        m_anchor = std::min(anchor, last);
+        m_caret = std::min(caret, last);
+        scrollIntoViewOnAlign();
+        invalidate();
+        announceSelectionMove();
+    }
+
     std::wstring HexView::selectionAsHex() const
     {
         const HexRange range = selection();
