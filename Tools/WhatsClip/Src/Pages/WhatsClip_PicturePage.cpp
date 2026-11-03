@@ -176,8 +176,8 @@ namespace ClaFi::Tools::WhatsClip
         body().setZoom(zoomOf(position));
     }
 
-    // Every spelling of the colour on the readout, the one in use marked; a line picked writes
-    // the readout again in it.
+    // Every spelling of the colour on the readout, the one in use marked and opened on; a line
+    // picked writes the readout again in it.
     void PicturePage::dropSpellings(DropdownEvent& event)
     {
         const std::optional<Color> shown = m_editedColor ? m_editedColor : body().selectedColor();
@@ -185,17 +185,17 @@ namespace ClaFi::Tools::WhatsClip
         Menu menu{ *event.control };
         for (const ColorSpelling spelling : k_spellings)
         {
-            std::wstring line{ nameOf(spelling) };
+            Text line{ nameOf(spelling) };
             if (shown)
-            {
-                line += L"    ";
-                line += spell(*shown, spelling);
-            }
+                line << L"    " << spell(*shown, spelling);
 
-            MenuItem& item = menu.add(line, [this, spelling](Control&) {
-                m_spelling = spelling;
-                writeColorReadout();
-            });
+            MenuItem& item = menu.add(
+                line,
+                MenuItem::OnClick{ [this, spelling](ClickEvent&) {
+                    m_spelling = spelling;
+                    writeColorReadout();
+                } }
+            );
             if (spelling != m_spelling)
                 continue;
 
@@ -203,6 +203,7 @@ namespace ClaFi::Tools::WhatsClip
             item.onGetState([](GetStateEvent& stateEvent) {
                 stateEvent.state.selected = true;
             });
+            item.makeCurrentItem();
         }
         menu.executeUnder(m_colorReadout);
     }
@@ -250,9 +251,12 @@ namespace ClaFi::Tools::WhatsClip
 
         Menu menu{ body() };
         menu.add(StdActions::copy);
-        MenuItem& edit = menu.add(L"Edit color", [this](Control& item) {
-            openEditor(item);
-        });
+        MenuItem& edit = menu.add(
+            L"Edit color",
+            MenuItem::OnClick{ [this](ClickEvent& clickEvent) {
+                openEditor(*clickEvent.control);
+            } }
+        );
         edit.setEndIcon(EndIcon::OpensWindow);
         if (!body().selectedColor())
         {

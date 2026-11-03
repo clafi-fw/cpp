@@ -707,14 +707,31 @@ The finer slot is drawn through the slider's paintSlot, so a ramp shows its part
 
 ## SliderSettleEvent
 
-**A drag is over.** OnChange reports every step of a drag, and this event closes it. It serves a
-listener that treats a drag as one thing, such as an undo step or a save.
+**A hold is over.** OnChange reports every step of a drag or of the edit mode's arrows, and this
+event states where they left the position. It serves a listener that treats a hold as one thing,
+such as an undo step or a save.
 
-- Raised on the release that ends a hold on the thumb or the slot, with `pressPosition` where the
-  hold began.
-- A hold that ends where it began raises nothing.
-- A key, the wheel or a setter raises OnChange alone.
+- Raised on the release that ends a hold on the thumb or the slot, and as the edit mode is accepted
+  after its arrows moved the slider. `pressPosition` is where the hold began.
+- A press while the arrows hold the position carries their hold on, and its release ends both.
+- Escape puts the position back where the mode found it. Back where the hold began, the change is
+  held too, and no settle follows.
+- A scroll button or a setter ends the arrows' hold with a change of its own.
+- A hold that ends where it began raises nothing - a drag called off among them, see SliderBase
+  pointerStrayed.
+- The wheel, a setter, or an arrow under EditModeSwitching::No raises OnChange alone.
 - A finer slider's hold counts as the slider's - see FineAdjust.
+
+## SliderBase pointerStrayed
+
+**A drag reaches only so far.** Past that the drag is called off: the position goes back where the
+pointer took it, and the thumb with it. Brought back within reach, the thumb follows the pointer
+again. A release past the reach keeps the position the drag began on, and raises no settle.
+
+- The reach is the control's rect, grown by its thickness eight times to either side and three times
+  past either end. A thickness under 17 counts as 17, scaled.
+- A press on the slot is called off the same way, back to where the position stood before it.
+- A finer slider called off puts the slider it came from back on the very value it was taken at.
 
 ## ColorSpelling
 

@@ -162,9 +162,10 @@ takes line breaks - see WithEditMode takesLineBreaks - types Return as one, so t
 alone there. The character the Return that turned the mode on leaves behind is not typing.
 
 **Accepting and rejecting are the host's**, through editModeEntered and editModeLeft. A box typed
-into keeps the text the mode opened on and puts it back on Escape, as an edit of its own; a slider
-keeps its position. A read-only box has nothing to put back: its mode is a caret mode - arrows to
-a link and Return to follow it, Return off a link or Escape to leave.
+into keeps the text the mode opened on and puts it back on Escape, as an edit of its own. A slider
+keeps its position, and its arrows reach a history as one step when the mode is accepted - see
+SliderSettleEvent. A read-only box has nothing to put back: its mode is a caret mode - arrows to a
+link and Return to follow it, Return off a link or Escape to leave.
 
 **editModeEntered is told what turned the mode on** - see EditModeEntry. A text box opened by a
 key opens with its whole text selected; a press keeps the caret it placed.

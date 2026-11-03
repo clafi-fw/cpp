@@ -946,8 +946,9 @@ namespace ClaFi::Controls::Grids
         return result;
     }
 
-    // The user is on a cell while it is the selected one and, in a view holding a selection,
-    // while its row is held as well - StackBase reads a press on anything else as a pick.
+    // The user is on a cell while it is the selected one and its row has the focus, and, in a view
+    // holding a selection, while its row is held as well - StackBase reads a press on anything else
+    // as a pick.
     void RowBase::recordPress(const KeyModifiers modifiers)
     {
         if (!Input::mouse().active())
@@ -964,7 +965,9 @@ namespace ClaFi::Controls::Grids
             && m_descriptor.selectedRow() == this
             && m_descriptor.selectedColumn() == column;
         const bool rowHeld = !multiSelect || grid.selection().contains(this);
-        const CellPressKind kind = onSelectedCell && rowHeld
+        // Input names the control the press takes the focus from until the focusing walk ends.
+        const bool rowFocused = Input::focusDelegate() == this;
+        const CellPressKind kind = onSelectedCell && rowHeld && rowFocused
             ? CellPressKind::Act
             : CellPressKind::Pick;
         m_descriptor.recordPress(*this, column, kind);

@@ -275,7 +275,11 @@ namespace ClaFi::Controls
         }
         if (steps)
         {
-            offsetPositionBySteps(steps);
+            // A mode that never ends has no accepting to wait for.
+            if (editModeSwitching() == EditModeSwitching::Yes)
+                offsetPositionHeld(steps);
+            else
+                offsetPositionBySteps(steps);
             event.handled = true;
         }
     }
@@ -288,8 +292,10 @@ namespace ClaFi::Controls
 
     void Slider::editModeLeft(const bool accepted)
     {
-        if (!accepted)
-            setPosition(m_positionAtEntry);
+        if (accepted)
+            settle();
+        else
+            restorePosition(m_positionAtEntry);
         thumb().invalidateState();
     }
 
@@ -584,12 +590,16 @@ namespace ClaFi::Controls
     }
 
     // The hold is taken before the position is passed on, so the owner's settle measures from
-    // where it stood.
+    // where it stood. A drag called off puts the owner back on that very value, which the finer
+    // range would only come near.
     void FineSlider::changed(SliderChangeEvent& event)
     {
         if (positionHeldByPointer())
             m_owner.takeProxyHold();
-        m_owner.setRelativePosition(m_span.at(relativePosition()));
+        if (pointerStrayed())
+            m_owner.returnToPressPosition();
+        else
+            m_owner.setRelativePosition(m_span.at(relativePosition()));
         Slider::changed(event);
     }
 

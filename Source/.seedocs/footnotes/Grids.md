@@ -68,8 +68,8 @@ typed, and every key the grid leaves:
 
 - A check box or a button acts on the same press.
 - A popup the control drops implicitly - a combo box's list from its main area, an in-place
-  editor - waits for a press on the cell already selected. In a `SelectionMode::Multi` grid the
-  row must be held too.
+  editor - waits for a press on the cell already selected, in a grid that has the focus. In a
+  `SelectionMode::Multi` grid the row must be held too.
 - A part whose one job is its popup, such as a dropdown strip, drops it from the picking press.
 - Ctrl or Shift in a `SelectionMode::Multi` grid make the press a selection change alone, and the
   cell refuses every popup.
@@ -80,9 +80,11 @@ The click reaches the grid as a click on the row.
 ## Editing a cell
 
 **A click on the cell the user is already on opens its editor**, as it does on a tile: the first
-click picks the cell, the next edits it. The editor opens on the release, so a press that becomes
-a drag - a carry of the row - opens nothing. F2 and Return open it from the keyboard. A cell
-holding a control is that control's, and its popup waits for the same second click.
+click picks the cell, the next edits it. The user is on the selected cell while its grid has the
+focus, so the first click into a grid that lacks the focus only focuses it. The editor opens on
+the release, so a press that becomes a drag - a carry of the row - opens nothing. F2 and Return
+open it from the keyboard. A cell holding a control is that control's, and its popup waits for the
+same second click.
 
 ## RowContainer isChildWidthGiven
 

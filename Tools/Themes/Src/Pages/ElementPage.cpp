@@ -52,7 +52,7 @@ namespace Themes_App
     }
 
     // A row's tag is its rule's place, and only a rule row stands in m_ruleRows at its own place -
-    // which is what tells one from the header or the new-item row, whose tags say nothing.
+    // which is what tells one from the header, whose tag says nothing.
     RuleSelection ElementPage::selection() const
     {
         RuleSelection result{};

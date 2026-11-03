@@ -498,12 +498,19 @@ namespace Themes_App
             LaneSize{ 3 },
             Spacing{ k_dividerPadding }
         );
-        record(tileRow.add<HueRuleItem>(*this, ColorRuleHueOp::PaletteColor1, HueItemView::Tile,
-            k_harmonyItemSize, HorizontalTextAnchor::Center, VerticalTextAnchor::Center));
-        record(tileRow.add<HueRuleItem>(*this, ColorRuleHueOp::PaletteColor2, HueItemView::Tile,
-            k_harmonyItemSize, HorizontalTextAnchor::Center, VerticalTextAnchor::Center));
-        record(tileRow.add<HueRuleItem>(*this, ColorRuleHueOp::PaletteColor3, HueItemView::Tile,
-            k_harmonyItemSize, HorizontalTextAnchor::Center, VerticalTextAnchor::Center));
+        // **The popup opens on the operation the rule names**, as the harmony picker opens on its
+        // map: the current item is where showing the popup puts the focus, and with none it goes
+        // to the first tile.
+        const auto addTile = [this, &tileRow](const ColorRuleHueOp operation) {
+            HueRuleItem& tile = tileRow.add<HueRuleItem>(*this, operation, HueItemView::Tile,
+                k_harmonyItemSize, HorizontalTextAnchor::Center, VerticalTextAnchor::Center);
+            record(tile);
+            if (m_owner.operation() == operation)
+                tile.makeCurrentItem();
+        };
+        addTile(ColorRuleHueOp::PaletteColor1);
+        addTile(ColorRuleHueOp::PaletteColor2);
+        addTile(ColorRuleHueOp::PaletteColor3);
 
         add<Controls::LabeledDivider>(
             L"Custom hue",
@@ -528,6 +535,8 @@ namespace Themes_App
             VerticalAlign::Center,
             ShowSelectionOnSurface::No
         ));
+        if (m_owner.operation() == ColorRuleHueOp::ExactValue)
+            exactMark.makeCurrentItem();
         m_slider = &sliderRow.createBody<HueSlider>(*this,
             EditedColor{ m_owner.m_exactColor },
             HslChannel::Hue,

@@ -302,6 +302,8 @@ namespace ClaFi
         // **built** with, and nothing in the framework writes it. See the definition.
         void adjustRootMetrics(AdjustMetricsEvent&) const;
         [[nodiscard]] Control* popupTarget() const { return m_popupTarget; }
+        // What held the focus when its popup came up. See Control-Foundation#control-isfocused
+        [[nodiscard]] Control* focusBeforePopup() const { return m_focusBeforePopup; }
         [[nodiscard]] FormBase* popupTargetForm();
         [[nodiscard]] FormBase& rootForm();
         FormBase* activePopup() const { return m_activePopup; }
@@ -659,6 +661,8 @@ namespace ClaFi
         // spends it once the popup has had its chance at the character.
         bool m_popupTookKey{};
         Control* m_contentFocusBeforeTopLayer{ nullptr };
+        // The control holding the focus when this form's popup came up - see updateVisibility.
+        Control* m_focusBeforePopup{ nullptr };
         // Declared after everything its controls read, so it goes down before any of it.
         std::unique_ptr<FormControlBase> m_topLayer{};
         // **The last member, and it has to stay last.** It is a form of its own that takes this

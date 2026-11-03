@@ -559,8 +559,10 @@
 
             <p><strong>The focus is on a path.</strong> <code>isFocused()</code> answers true for the delegate
             and for everything it stands in, so a panel and the window's root read focused while the focus is
-            inside them. At the root of a popup that is up, the path goes on at the control the popup was opened
-            on - at the item that control answers for - and up from there, through every popup of a stack.
+            inside them. At the root of a popup that is up, the path goes on at the control that held the focus
+            when the popup came up - at the item that control answers for - and up from there, through every
+            popup of a stack. Where nothing in that window held it, the path goes on at the control the popup
+            was opened on.
             A dialog is a window of its own and no part of its owner's path. A control asks about itself with
             <code>isFocused()</code>, <code>isHovered()</code> and
             <code>isPressed()</code>. A test for the delegate alone - the row a key applies to - compares with
@@ -633,10 +635,15 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
             <p><strong>Focused is the focus from either device.</strong> A caret, the selected-text band and a
             grid's cell ring read it, so a box focused by a mouse click keeps them while the pointer wanders. The
             colour rules read these states - see <a href="color.html">Colour</a>.</p>
-            <p><strong>A popup takes the focus and leaves the look.</strong> The control a popup was opened on
-            stays on the focus path while the focus is in the popup, so it reads focused with everything it
-            stands in: a text box keeps its caret under its own menu, and a row whose cell holds an open list
-            keeps its ring. It also reads selected while the popup is up - <code>isDroppedDown()</code>.</p>
+            <p><strong>A popup takes the focus and leaves the look.</strong> The control the focus was on stays
+            on the focus path while the focus is in the popup, so it reads focused with everything it stands in:
+            a text box keeps its caret under its own menu and under one a tool button dropped, and a row whose
+            cell holds an open list keeps its ring. A button that dropped a menu without taking the focus takes
+            none of it, and reads selected while the popup is up - <code>isDroppedDown()</code>.</p>
+            <p><strong>A popup gives the focus back where it found it.</strong> As it closes, the focus goes to
+            the control that held it when the popup came up, so a tool button pressed without taking the focus
+            leaves it on the work it was on. Where that control cannot take it back, the control the popup was
+            opened on takes it.</p>
             <p><strong>Keys stop at the popup.</strong> A key the popup leaves never reaches the control it was
             opened on - see <a href="#key-order">Who Gets a Key First</a>.</p>
             <p><strong>A key landing on a control brings up its tooltip</strong> while the keyboard drives, as

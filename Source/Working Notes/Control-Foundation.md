@@ -202,6 +202,24 @@ The popup's return of the focus to its target stays unchecked (setFocusUnchecked
 button that opened a menu is handed the focus back. Open: whether it should go where the focus was
 before the popup took it.
 
+2026-11-03, answered. Oj, once ToolButton answered MouseFocus::Keep: "the app button still grabs
+focus" - the backstage closing handed the focus to the AppButton, its target. The owner form keeps
+m_focusBeforePopup, the focus holder taken in updateVisibility after the previous popup is closed
+and before the new one moves anything, and the way down hands the focus to it with trySetFocus;
+the target, unchecked as before, stands in where it cannot take it or where no control of the owner
+held it. forgetControl clears it, and dropActivePopup clears it with the target, so a popup going
+down with its target still hands the focus to nobody.
+
+Then Oj: "if the button is MouseFocus::Keep It shouldn't take focus away even temporarily -
+currently focused item should remain in focus chain even under the active menu dropped by another
+button". Input::focusPathParent goes on at the opener's focusBeforePopup's focusDelegate, and at
+the popup target's only where none was held. Taken for every opener, not only a Keep one: a
+control that took the focus on the press is the holder anyway, and a control hosted in a grid row
+(MouseFocus::Parent) now leaves the path to the row, its list up, where it used to read focused
+for as long as the list was. updateVisibility clears focusBeforePopup together with the
+registration, after the hand-back, so the control it names stays on the path through the
+hand-back and is told nothing.
+
 2026-11-01, later. Oj, on the manual's "unless the focus is already inside it - an owner may focus a
 dialog's default button before running it": "I don't understand, how focus can be in a window that
 is yet invisible". standsShown left the window out on purpose, so setFocus on a control of a dialog
@@ -331,3 +349,27 @@ a hue slider's tooltip kept the width of 360 degrees through a drag - until 2026
 Tooltip began writing the words into the label's own text, as any host's caller does. The window
 is sized to what it shows. ParameterTooltip had carried a second Text and a adjustText override to
 replace the answer; setCall writes text() now.
+
+## EditPhase
+
+2026-11-03. Oj: "Every hue adjustment in the slider edit mode with arrows writes a ton Undo
+records. Must write only one when accepted". The arrows' steps reported Settled, as every move
+outside a pointer hold did, so each was a step of its own. A first answer added EditPhase::Pending
+for them beside Held, and accepting the mode raised one OnSettle.
+
+Then Oj asked for the scroll bar's snap-back - a drag that strays far from the bar is called off.
+A called-off drag ends where it began, and the settle raises nothing there, yet each of its Held
+steps had gone into StateHistory as an open run, which nothing then closed: the next edit would
+have joined it under the drag's name. A drag brought back to its start pixel did the same before.
+Oj chose to record on release: Held records nothing, the settle writes the one step, and Pending
+folded into Held. StateHistory keeps no run of its own; StepHistory keeps runs for the text
+history. Taking a run back out instead would have dropped the redo steps at the first move of
+every drag, called off or not.
+
+The reach is the one Chromium gives Windows scroll bars - eight thicknesses to the side, three
+past the ends - with Windows' 17-pixel bar as the least thickness. Chromium leaves snap-back off on
+Linux, as GTK and Qt do; Oj took it on every platform, since ClaFi draws its own controls, and for
+sliders as well as scroll bars.
+
+Open: Undo while the arrows hold the position walks back the step before them, and the restore
+that lands there ends the hold with the arrows' steps unrecorded.

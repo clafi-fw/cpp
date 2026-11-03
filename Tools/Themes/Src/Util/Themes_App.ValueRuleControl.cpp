@@ -356,8 +356,14 @@ namespace Themes_App
                 LaneSize{ k_tileOperations.size() },
                 Spacing{ k_spacing }
             );
+            // The popup opens on the operation the rule names - see HueRulePopup.
             for (const ColorRuleOp operation : k_tileOperations)
-                m_stateItems.push_back(&tileRow->add<OperationItem>(*this, operation));
+            {
+                OperationItem& tile = tileRow->add<OperationItem>(*this, operation);
+                m_stateItems.push_back(&tile);
+                if (m_owner.operation() == operation)
+                    tile.makeCurrentItem();
+            }
         }
 
         add<LabeledDivider>(

@@ -9,11 +9,11 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // Where an edit stands: still under the pointer, or complete. See Control-Foundation
+    // Where an edit stands: still held, or complete. See Control-Foundation
     export enum class EditPhase
     {
-        Held,    // the pointer holds the value, and every step joins the one before it
-        Settled  // the step stands on its own, or closes the run the pointer made
+        Held,    // the pointer or the edit mode holds the value, and nothing records it yet
+        Settled  // a step of its own, or the one step a hold makes as it ends
     };
 
     // What the undo list and the undo actions read of a history. See Control-Foundation
@@ -53,7 +53,7 @@ namespace ClaFi
     public:
         // Forgets every step and stands on one state, the first an undo can reach.
         void reset(const State&);
-        // Takes the state an edit left, its name and where it was made; held steps make one.
+        // Takes the state an edit left, its name and where it was made; a held edit makes none.
         void record(const State&, EditPhase, const Text& what, Place);
         [[nodiscard]] Landing undo(std::size_t steps);
         [[nodiscard]] Landing redo(std::size_t steps);
@@ -97,20 +97,13 @@ namespace ClaFi
     void StateHistory<State, Place>::record(const State& state, const EditPhase phase,
         const Text& what, Place place)
     {
-        // A held run keeps one step, the first one's name and place, and the latest state.
-        if (Step* open = m_steps.openStep())
-        {
-            open->state = state;
-            if (phase == EditPhase::Settled)
-                m_steps.closeRun();
+        if (phase == EditPhase::Held)
             return;
-        }
-
         std::optional<Step> pushedOut = m_steps.push(Step{
             .state = state,
             .what = what,
             .place = std::move(place),
-        }, phase == EditPhase::Held);
+        }, false); // a hold reports its one step as it ends, so no run is left open
         if (pushedOut.has_value())
             m_first = std::move(pushedOut->state);
     }

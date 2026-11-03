@@ -1021,9 +1021,10 @@ list, and Alt+Left in a browser goes back.</p>
 
 <p><strong>The first click picks the cell.</strong> A control that opens something over itself
 - a combo box's list, an editor typed in place - opens it only from a click on the cell that is
-already selected. The first click selects the cell and its row, and the next one opens. The
-dropdown arrow opens on the first click too, because opening the list is its one job. Picking a
-row to delete it opens nothing.</p>
+already selected, in a grid that has the focus. The first click selects the cell and its row, and
+the next one opens. On a grid without the focus, the first click on the selected cell gives the
+grid the focus, and the next one opens. The dropdown arrow opens on the first click too, because
+opening the list is its one job. Picking a row to delete it opens nothing.</p>
 
 <table>
 <tr><th>Gesture</th><th>On a cell not selected</th><th>On the selected cell</th></tr>

@@ -182,6 +182,8 @@ namespace ClaFi::Browser
     protected:
         // The room a long path is short of comes off the widest crumbs. See Browser#breadcrumbbar
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
+        // Every crumb, though a press moves no focus onto one - see StackBase::isPickable.
+        bool defaultCanFocusItem(Control&) override;
     private:
         void selectBrowserData(PageData&, Control& initiator);
         void fetchSubItems(PageData&);
@@ -209,7 +211,7 @@ namespace ClaFi::Browser
             // The base sits on ButtonBase so that a combo box can share it without being handed a
             // button's metrics, so a crumb asks for a tool button's here.
             NavigationReach::Yes,
-            MouseFocus::Self,
+            MouseFocus::Keep, // a press leaves the focus on the page, as a tool button's does
             ClickTarget::Self,
             // **The filled surface is what says which page the browser is showing**, and that is
             // the crumb's own answer to getControlState - so the selected state has to reach the
@@ -511,6 +513,14 @@ namespace ClaFi::Browser
         if (shortfall > 0.0f)
             shrinkBy(shortfall);
         StackPanel::alignContent(event, position, contentDimensions);
+    }
+
+    // **The crumbs stay the bar's items**, so the keys come back to the one they last stood on.
+    // StackBase's own answer takes only an item a press focuses, and a crumb's press leaves the
+    // focus where it was.
+    bool BreadCrumbBar::defaultCanFocusItem(Control& item)
+    {
+        return item.parent() == this;
     }
 
     void BreadCrumbBar::selectBrowserData(PageData& value, Control& initiator)

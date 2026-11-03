@@ -1476,6 +1476,8 @@ namespace ClaFi
             m_downItem = nullptr;
         if (m_contentFocusBeforeTopLayer == item)
             m_contentFocusBeforeTopLayer = nullptr;
+        if (m_focusBeforePopup == item)
+            m_focusBeforePopup = nullptr;
         std::erase(m_scrollIntoViewOnAlign, item);
         // **The popup goes with the control it is over.** A list rebuilt under an open in-place
         // editor deletes the item being edited, and a popup is placed, sized and aimed by that
@@ -1488,9 +1490,9 @@ namespace ClaFi
         // argue about. A popup refuses to close in order to keep a value the user must correct,
         // and the place that value was going has just gone.
         //
-        // The target is cleared **first**, so the way down hands the focus to nobody rather than to
-        // a control being destroyed - the popup reads it there. m_popupTargetForm carries the
-        // de-registration and is untouched by this.
+        // The target and the focus it was taken from are cleared **first**, so the way down hands
+        // the focus to nobody rather than to a control being destroyed - the popup reads both
+        // there. m_popupTargetForm carries the de-registration and is untouched by this.
         if (m_activePopup && m_activePopup->m_popupTarget == item)
             dropActivePopup();
     }
@@ -1524,15 +1526,24 @@ namespace ClaFi
             if (popupTargetForm && popupTargetForm->m_activePopup != this)
                 popupTargetForm->closeActivePopup();
 
+            // **Where the focus stays**, taken before anything here moves it: the path runs on
+            // through it while the popup is up, and the focus goes back to it as the popup goes.
+            if (popupTargetForm)
+            {
+                Control* holder = Input::focusHolder();
+                const bool inOwner = holder && &holder->form() == popupTargetForm;
+                popupTargetForm->m_focusBeforePopup = inOwner ? holder : nullptr;
+            }
+
             updatePlacement();
 
             m_window->show();
 
             // **Registered before the focus moves**, so that the path the focus moves onto
-            // already runs through the control this popup was opened on - see Control::isFocused.
+            // already runs through the control the focus is taken from - see Control::isFocused.
             // That control and everything it stands in are on the path before and after, so none
             // of them is told the focus left: a text box keeps its caret blinking for as long as
-            // the menu is up.
+            // the menu is up, its own or one a tool button dropped.
             if (popupTargetForm)
             {
                 popupTargetForm->m_activePopup = this;
@@ -1556,15 +1567,28 @@ namespace ClaFi
                 m_appContext.storeFormPlacement(m_configName, *this);
             m_window->hide();
             // **Handed back while the popup is still registered**, the way it went in: the control
-            // it was opened on is on the focus path before and after, and only the popup's own
-            // controls are told the focus left. **Unchecked**, so a target that takes no focus - a
-            // tool bar's button that opened a menu - is handed it too.
-            if (m_popupTarget)
-                m_popupTarget->setFocusUnchecked();
+            // the focus was taken from is on the focus path before and after, and only the popup's
+            // own controls are told the focus left. It is cleared only once the popup is no longer
+            // registered, which is what keeps it on the path through the hand-back.
+            //
+            // **Back where it was when the popup came up**, so a tool button pressed without taking
+            // the focus leaves it on the work it was on, and a control that opened its menu from
+            // the keys gets it back. The target stands in where that control cannot take it - or
+            // where no control of the form held it - and **unchecked**, so a target that takes no
+            // focus is handed it too.
+            Control* origin = popupTargetForm ? popupTargetForm->m_focusBeforePopup : nullptr;
+            if (!origin || !origin->trySetFocus())
+            {
+                if (m_popupTarget)
+                    m_popupTarget->setFocusUnchecked();
+            }
             if (popupTargetForm)
             {
                 if (popupTargetForm->m_activePopup == this)
+                {
                     popupTargetForm->m_activePopup = nullptr;
+                    popupTargetForm->m_focusBeforePopup = nullptr;
+                }
                 if (m_popupTarget)
                     m_popupTarget->invalidateState();
             }
@@ -2377,6 +2401,7 @@ namespace ClaFi
     {
         FormBase* popup = m_activePopup;
         popup->m_popupTarget = nullptr;
+        m_focusBeforePopup = nullptr;
         popup->close();
         m_activePopup = nullptr;
     }

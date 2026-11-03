@@ -78,18 +78,12 @@ namespace ClaFi::Dom
                 // scalar and composite ValueT — a sequence-typed field (e.g.
                 // a std::vector<T> member) needs addSequence() instead. It
                 // expects a single item as its default value, not the whole
-                // container. Same "use the first element, or a
-                // default-constructed one" pattern Sequence<T>::makeChildNode
-                // already uses for the equivalent case.
+                // container.
+                //
+                // **An item's default is its type's own.** Items are written against it and
+                // read over it, so it stays the same whatever value a node was built from.
                 using ItemT = std::ranges::range_value_t<dom_storage_t<MemberType>>;
                 const auto& container = getFieldValue(defaultValue, field);
-
-                ItemT defaultItemValue{};
-                auto it = std::begin(container);
-                if (it != std::end(container))
-                {
-                    defaultItemValue = *it;
-                }
 
                 // addSequence() only establishes the item schema (needed so
                 // a later .add() knows what type to create) — it does not
@@ -97,7 +91,7 @@ namespace ClaFi::Dom
                 // std::array<Hsl, 3> would create a correctly-typed but
                 // permanently empty sequence, saving as e.g. "Palette=[ ]"
                 // instead of its actual 3 entries.
-                auto& seq = section.addSequence(field.name, defaultItemValue);
+                auto& seq = section.addSequence(field.name, ItemT{});
                 seq.set(container);
             }
             else

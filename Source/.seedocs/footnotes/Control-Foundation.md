@@ -588,14 +588,21 @@ the item a press landed on - compares with `focusDelegate()`.
 ## Control isFocused
 
 **The focus is on a path.** It starts at Input::focusDelegate and goes up through the parents. At
-the root of a popup that is up, it goes on at what the control the popup was opened on answers for -
-its focusDelegate - and up from there, through every popup of a stack. A dialog is a window of its
-own and no part of its owner's path.
+the root of a popup that is up, it goes on at what the control that held the focus when the popup
+came up answers for - its focusDelegate - and up from there, through every popup of a stack. Where
+none of the form's controls held it, the path goes on at the control the popup was opened on. A
+dialog is a window of its own and no part of its owner's path.
 
-**So a popup takes the focus and leaves the look.** The control a popup was opened on reads focused
-with everything it stands in for as long as the focus is in the popup: a text box keeps its caret
-under its own menu, and a row whose cell holds the open list keeps its ring. It also reads selected
+**So a popup takes the focus and leaves the look.** The control the focus was on reads focused with
+everything it stands in for as long as the focus is in the popup: a text box keeps its caret under
+its own menu and under one a tool button dropped, and a row whose cell holds the open list keeps its
+ring. A button that dropped a menu without taking the focus takes none of it, and reads selected
 while the popup is up - see Control::isDroppedDown.
+
+**A popup gives the focus back where it found it.** As it closes, the focus goes to the control
+that held it when the popup came up, so a tool button pressed without taking the focus leaves it on
+the work it was on. Where that control cannot take it back, the control the popup was opened on
+takes it.
 
 **Only a control whose answer changed is told** - see Control::focusChanged. Opening a popup and
 closing it leave the chain it was opened on quiet.
@@ -726,8 +733,10 @@ The window's own shadow has a separate painter.
 
 ## EditPhase
 
-**A drag is one step.** Each `Held` change joins the step before it, and the `Settled` change raised
-as the press comes up closes it. `SliderBase::editPhase` answers it for a slider.
+**A hold is one step, made as it ends.** A `Held` change shows the value and records nothing. A drag
+ends on the release, and an edit mode's arrows end as the mode is accepted; either raises one
+`Settled` change for the whole hold. A hold that ends where it began - a drag called off, arrows
+taken back by Escape - makes no step. `SliderBase::editPhase` answers it for a slider.
 
 ## IEditHistory
 
@@ -758,8 +767,7 @@ ones and becomes the newest.
 **A StepHistory of whole copies**, for a subject small enough to copy per step and put back by one
 sync. It also holds the state before the oldest step, where undo stops.
 
-**A held run keeps one step** - the first step's name and place, and the latest state - until a
-settled step closes it.
+**A held edit makes no step**, and each settled one makes its own - see EditPhase.
 
 ## WithTextLayout
 

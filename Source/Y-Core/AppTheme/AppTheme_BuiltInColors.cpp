@@ -20,7 +20,7 @@ namespace ClaFi
             0.16653395f
         };
 
-        darkModeFloor = 0.098735f;
+        darkModeFloor = 0.11262504f;
 
         accent = ColorEffect{
             { ColorRuleHueOp::PaletteColor2 },          // H
@@ -121,7 +121,7 @@ namespace ClaFi
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.928767f }, // H
                     { ColorRuleOp::NoChange, 0.490111f },   // S
-                    { ColorRuleOp::Offset, 0.25f }          // E
+                    { ColorRuleOp::Offset, 0.10240966f }    // E
                 }
             }
         };

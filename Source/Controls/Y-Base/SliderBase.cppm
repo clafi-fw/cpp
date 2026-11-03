@@ -28,13 +28,13 @@ namespace ClaFi::Controls
         const float previousPosition;
     };
 
-    // The pointer has let go of a position it moved. See Controls
+    // The pointer let go of a position it moved, or the edit mode accepted one. See Controls
     export struct SliderSettleEvent : public Event
     {
         SliderSettleEvent(const SliderBase& slider, float newPosition, float pressPosition);
         const SliderBase& slider;
         const float newPosition;
-        const float pressPosition; // where the position stood when the pointer took hold of it
+        const float pressPosition; // where the position stood when the hold began
     };
 
     using SliderBaseClass = PanelBase;
@@ -121,6 +121,8 @@ namespace ClaFi::Controls
             void nestedPressDown(PressDownEvent&) override;
             void nestedDrag(DragEvent&) override;
         private:
+            void followPointer(const DragEvent&);
+        private:
             float m_startTop;
         };
 
@@ -149,7 +151,7 @@ namespace ClaFi::Controls
     public:
         // The position moved, once per step of a drag.
         DECLARE_EVENT(SliderChangeEvent, OnChange, onChange)
-        // The pointer has let go of a position it moved. See Controls
+        // The pointer let go of a position it moved, or the edit mode accepted one. See Controls
         DECLARE_EVENT(SliderSettleEvent, OnSettle, onSettle)
     public:
         void setScrollAxis(ScrollAxis);
@@ -177,10 +179,10 @@ namespace ClaFi::Controls
         {
             return m_thumbPressed || m_slotPressed || m_heldByProxy;
         }
-        // What a change reports to a history: held while the pointer has the position.
+        // What a change reports to a history: held while the pointer or the edit mode holds it.
         [[nodiscard]] EditPhase editPhase() const
         {
-            return positionHeldByPointer() ? EditPhase::Held : EditPhase::Settled;
+            return m_holdFrom ? EditPhase::Held : EditPhase::Settled;
         }
     protected:
         using ContainerBase::add;
@@ -200,6 +202,14 @@ namespace ClaFi::Controls
         // settle comes when it lets go - the finer slider does this for the one it came from.
         void takeProxyHold();
         void dropProxyHold();
+        void offsetPositionHeld(float steps); // the edit mode's step, held until the settle
+        // States the hold as one step: on the pointer's release, or as the edit mode is accepted.
+        void settle();
+        // The edit mode is rejected. Back where the hold began, the move records nothing.
+        void restorePosition(float position);
+        // The pointer holding the position is too far off for its drag to count. See Controls
+        [[nodiscard]] bool pointerStrayed() const { return m_pointerStrayed; }
+        void returnToPressPosition() { setPosition(m_pressPosition); }
         ScrollDirection verticalDirection() const { return viewMode() == SliderViewMode::ScrollBar ? ScrollDirection::ToEnd : ScrollDirection::ToBegin; }
         virtual ScrollInfo controlScrollInfo() const = 0;
         // Brings the position back inside a range that has just changed. It glides, so a section
@@ -230,8 +240,12 @@ namespace ClaFi::Controls
         static constexpr float k_thumbSize = 20.0f;
     private:
         void applyPosition(float value, bool triggerChange);
-        // Raises the settle where the position moved while it was held.
-        void settle();
+        // The pointer takes hold of the position where it stands, unless it holds it already.
+        void beginPointerHold();
+        [[nodiscard]] bool isPastDragReach(FloatPoint pointOnForm) const; // see pointerStrayed
+        static constexpr float k_reachAcross = 8.0f; // thicknesses a drag reaches to either side
+        static constexpr float k_reachAlong = 3.0f;  // thicknesses a drag reaches past either end
+        static constexpr float k_minReachThickness = 17.0f; // the least thickness those count
         // The travel the thumb runs along, in this control's own space.
         [[nodiscard]] FloatRect slotArea() const;
         // A point on the form in that same space.
@@ -260,7 +274,11 @@ namespace ClaFi::Controls
         // far the pointer has travelled off the bar in between.
         bool m_thumbPressed{ false };
         bool m_heldByProxy{ false }; // another slider is holding the position for this one
-        float m_pressPosition{ 0.0f }; // where the position stood when it was last taken hold of
+        float m_pressPosition{ 0.0f }; // where the pointer last took hold of the position
+        // Where the position stood when the hold now on it began - the pointer's or the keys'.
+        std::optional<float> m_holdFrom{};
+        bool m_movingInHold{ false }; // the move under way belongs to the hold, which it keeps
+        bool m_pointerStrayed{ false };
         FloatRect m_sliderArea{};
         ScrollButton& m_beginButton{ createBar<ScrollButton>(
             barSlotFor(ScrollDirection::ToBegin), ScrollDirection::ToBegin) };

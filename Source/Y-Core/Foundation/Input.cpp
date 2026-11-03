@@ -127,7 +127,9 @@ namespace ClaFi
     }
 
     // At a root the path goes on only from a popup that is up, which the form it stands on holds
-    // as its active popup - and from there at what the control it was opened on answers for. A
+    // as its active popup - and from there at what the control that held the focus when the popup
+    // came up answers for, so a button that drops a menu without taking the focus takes none of it.
+    // The control the popup was opened on stands in where none of that form's controls held it. A
     // dialog is a window of its own: its owner reads nothing through it.
     Control* Input::focusPathParent(Control& control)
     {
@@ -137,10 +139,11 @@ namespace ClaFi
         if (!form)
             return nullptr;
         FormBase* opener = form->popupTargetForm();
-        Control* target = form->popupTarget();
-        if (!opener || !target || opener->activePopup() != form)
+        if (!opener || opener->activePopup() != form)
             return nullptr;
-        return target->focusDelegate();
+        Control* origin = opener->focusBeforePopup();
+        Control* continuesAt = origin ? origin : form->popupTarget();
+        return continuesAt ? continuesAt->focusDelegate() : nullptr;
     }
 
     Control* Input::focusPathMeeting(Control* first, Control* second)

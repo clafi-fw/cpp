@@ -5,6 +5,7 @@ import Themes_App.RuleSlider;
 
 import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.LuminosityIcon;
+import ClaFi.Icons.PlusMark;
 import ClaFi.Icons.ResetIcon;
 import ClaFi.Icons.SaturationIcon;
 
@@ -129,6 +130,13 @@ namespace Themes_App
             Spacing{ 4.0f }
         ) };
 
+        ToolButton& m_addButton{ m_tools.add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            OnDrawIcon{ Icons::PlusMark::draw },
+            L"Add rule"
+        ) };
+
         ToolButton& m_resetButton{ m_tools.add<ToolButton>(
             IconSize{ 18.0f },
             ButtonViewMode::IconOnly,
@@ -176,8 +184,7 @@ namespace Themes_App
                     Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::draw }, L" Elevation" }
                 }
             },
-            Grids::Dt::Header{},
-            Grids::Dt::NewItem{ PlaceHolderText{ L"Add rule" } }
+            Grids::Dt::Header{}
         ) };
     };
 
@@ -196,6 +203,9 @@ namespace Themes_App
         } }
     {
         m_title.text() << StyledText{ TextStyles::SubTitle, title };
+        m_addButton.onClick([this](ClickEvent&) {
+            m_grid.requestNewItem();
+        });
         m_grid.onNewItem([this](Grids::NewItemEvent&) {
             addRule();
         });

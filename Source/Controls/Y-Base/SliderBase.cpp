@@ -181,8 +181,8 @@ namespace ClaFi::Controls
     {
         event.stopPropagation();
         // The pointer owns the position from here, and it takes it over at what is on screen.
+        parent()->beginPointerHold();
         parent()->m_thumbPressed = true;
-        parent()->m_pressPosition = parent()->m_position;
         parent()->stopPositionAnimation();
         if (parent()->m_axis == ScrollAxis::Vertical)
             m_startTop = top();
@@ -192,7 +192,23 @@ namespace ClaFi::Controls
         parent()->thumbPressDown();
     }
 
+    // Called off, the drag puts the position back, and the thumb is laid out from it again.
     void SliderBase::Thumb::nestedDrag(DragEvent& dp)
+    {
+        parent()->m_pointerStrayed = parent()->isPastDragReach(dp.currentPos());
+        if (parent()->m_pointerStrayed)
+        {
+            parent()->returnToPressPosition();
+            parent()->alignThumb();
+        }
+        else
+            followPointer(dp);
+        parent()->invalidate();
+        dp.lockHoveredControl();
+        dp.stopPropagation();
+    }
+
+    void SliderBase::Thumb::followPointer(const DragEvent& dp)
     {
         float delta;
         float myHeight;
@@ -250,9 +266,6 @@ namespace ClaFi::Controls
                 si.maxPos()
             ));
         }
-        parent()->invalidate();
-        dp.lockHoveredControl();
-        dp.stopPropagation();
     }
 
 #pragma endregion
@@ -334,6 +347,25 @@ namespace ClaFi::Controls
         offsetPosition(steps * stepSize());
     }
 
+    void SliderBase::offsetPositionHeld(const float steps)
+    {
+        if (!m_holdFrom)
+            m_holdFrom = m_position;
+        m_movingInHold = true;
+        offsetPositionBySteps(steps);
+        m_movingInHold = false;
+    }
+
+    // Back where the hold began, the position meets the value the history holds, so the move is
+    // held as the steps were. Anywhere else - past a drag in the mode, say - it is an edit.
+    void SliderBase::restorePosition(const float position)
+    {
+        m_movingInHold = m_holdFrom == position;
+        setPosition(position);
+        m_movingInHold = false;
+        m_holdFrom.reset();
+    }
+
     void SliderBase::paintButton(ScrollButton& btn, PaintEvent& event)
     {
         // The button's own parent, reached through the paint event, which is the only route that
@@ -364,8 +396,8 @@ namespace ClaFi::Controls
     {
         if (m_heldByProxy)
             return;
+        beginPointerHold();
         m_heldByProxy = true;
-        m_pressPosition = m_position;
     }
 
     void SliderBase::dropProxyHold()
@@ -495,10 +527,10 @@ namespace ClaFi::Controls
     void SliderBase::nestedPressDown(PressDownEvent& event)
     {
         FloatPoint pt = slotPoint(form().mouseDownPos());
-        m_slotPressed = slotArea().contains(pt);
-        if (!m_slotPressed)
+        if (!slotArea().contains(pt))
             return;
-        m_pressPosition = m_position;
+        beginPointerHold();
+        m_slotPressed = true;
 
         float clickScrollTarget = slotPosition(pt);
         if (glidesToPosition())
@@ -516,6 +548,7 @@ namespace ClaFi::Controls
         const bool held = m_slotPressed || m_thumbPressed;
         m_slotPressed = false;
         m_thumbPressed = false;
+        m_pointerStrayed = false;
         if (held)
             settle();
     }
@@ -527,7 +560,11 @@ namespace ClaFi::Controls
     {
         if (!m_slotPressed)
             return;
-        setPosition(slotPosition(slotPoint(event.currentPos())));
+        m_pointerStrayed = isPastDragReach(event.currentPos());
+        if (m_pointerStrayed)
+            returnToPressPosition();
+        else
+            setPosition(slotPosition(slotPoint(event.currentPos())));
         event.lockHoveredControl();
         event.stopPropagation();
     }
@@ -537,6 +574,10 @@ namespace ClaFi::Controls
         if (m_position == value)
             return;
 
+        // A move outside the hold ends it: a scroll button's step records the held steps with its
+        // own, and a setter - an undo landing on a step - puts a recorded value in their place.
+        if (!positionHeldByPointer() && !m_movingInHold)
+            m_holdFrom.reset();
         float prevPosition = m_position;
         m_position = value;
         controlFeedBack();
@@ -547,14 +588,46 @@ namespace ClaFi::Controls
         }
     }
 
-    // A hold that ends where it began raises nothing: no step was reported during it, so there
-    // is nothing for a listener to close.
+    // A hold that ends where it began raises nothing: the history still stands on that value.
     void SliderBase::settle()
     {
-        if (m_position == m_pressPosition)
+        if (!m_holdFrom)
             return;
-        SliderSettleEvent event{ *this, m_position, m_pressPosition };
+        const float heldFrom = *m_holdFrom;
+        m_holdFrom.reset();
+        if (m_position == heldFrom)
+            return;
+        SliderSettleEvent event{ *this, m_position, heldFrom };
         settled(event);
+    }
+
+    // A press that hands the drag on - a slot press to the thumb it brought under the pointer -
+    // is one hold, and keeps the place the first press took it from.
+    void SliderBase::beginPointerHold()
+    {
+        if (positionHeldByPointer())
+            return;
+        m_pressPosition = m_position;
+        if (!m_holdFrom)
+            m_holdFrom = m_position;
+        m_pointerStrayed = false;
+    }
+
+    // The control's rect grown by its thickness, with a floor so a thin bar reaches as far as a
+    // Windows one.
+    bool SliderBase::isPastDragReach(const FloatPoint pointOnForm) const
+    {
+        FloatRect reach = form().rectOfControl(this);
+        const bool vertical = m_axis == ScrollAxis::Vertical;
+        const float ownThickness = vertical ? reach.width() : reach.height();
+        const float thickness = std::max(ownThickness, scaler().scale(k_minReachThickness));
+        const float across = thickness * k_reachAcross;
+        const float along = thickness * k_reachAlong;
+        if (vertical)
+            reach.inflate(across, along);
+        else
+            reach.inflate(along, across);
+        return !reach.contains(pointOnForm);
     }
 
     FloatRect SliderBase::slotArea() const
