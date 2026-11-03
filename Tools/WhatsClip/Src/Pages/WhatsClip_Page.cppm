@@ -18,6 +18,7 @@ import ClaFi.Controls.TextBox;
 import ClaFi.Controls.Base.PanelBase;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Foundation;
@@ -154,7 +155,7 @@ namespace ClaFi::Tools::WhatsClip
         // end on the same header - see stripBars.
         Panel& m_strip{ m_topPanel.createBody<Panel>(
             UiElement::SectionHeader,
-            themeMetrics().page
+            MetricsSet::Page
         ) };
         Label& m_status{ m_strip.createBody<Label>(
             WordWrap::No,
@@ -312,7 +313,7 @@ namespace ClaFi::Tools::WhatsClip
             MaxSize{ k_pickWidth, k_maxFloat },
             Padding{ k_pickPaddingX, k_pickPaddingY },
             VerticalTextAnchor::Center,
-            themeMetrics().button,
+            MetricsSet::Button,
             UiElement::Button,
             ComboBox::OnChange{ [this](ComboBoxChangeEvent&) {
                 encodingPicked();
@@ -325,7 +326,7 @@ namespace ClaFi::Tools::WhatsClip
             MaxSize{ k_pickWidth, k_maxFloat },
             Padding{ k_pickPaddingX, k_pickPaddingY },
             VerticalTextAnchor::Center,
-            themeMetrics().button,
+            MetricsSet::Button,
             UiElement::Button,
             ComboBox::OnChange{ [this](ComboBoxChangeEvent&) {
                 languagePicked();

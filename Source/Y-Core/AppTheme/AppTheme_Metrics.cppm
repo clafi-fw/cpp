@@ -7,6 +7,40 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
+    // One of the sizes ControlMetrics holds, named apart from the others. See AppTheme
+    export enum class MetricsField
+    {
+        Border,
+        Band,
+        Radius,
+        Padding,
+        Spacing,
+        MinSize,
+        PreferredSize,
+        MaxSize,
+        Depth,
+        GrowIn,
+        Count
+    };
+
+    // The sizes a control was given outright, over the set it is sized by. See AppTheme
+    export class MetricsFields
+    {
+    public:
+        [[nodiscard]] constexpr bool has(MetricsField field) const
+        {
+            return (m_bits & bitOf(field)) != 0u;
+        }
+        constexpr void add(MetricsField field) { m_bits |= bitOf(field); }
+    private:
+        [[nodiscard]] static constexpr std::uint32_t bitOf(MetricsField field)
+        {
+            return 1u << static_cast<std::uint32_t>(field);
+        }
+    private:
+        std::uint32_t m_bits{ 0u };
+    };
+
     // The design metrics a control is laid out by.
     export class ControlMetrics
     {
@@ -19,9 +53,14 @@ namespace ClaFi
             minSize = value;
             maxSize = value;
         }
+        // Takes from source every size named in fields, and keeps the rest.
+        void copyFields(const ControlMetrics& source, MetricsFields fields);
+        [[nodiscard]] bool operator==(const ControlMetrics&) const = default;
     public:
         Thickness border{};
         float radius{};
+        // The width of the line along the leading edge, none at 0. See AppTheme
+        float band{};
         Padding padding{};
         Spacing spacing{};
         MinSize minSize{};
@@ -68,7 +107,29 @@ namespace ClaFi
         FloatPoint offset{};
         float spread{};
         float opacity{};
+        [[nodiscard]] bool operator==(const WindowShadow&) const = default;
     };
+
+    // A set of sizes a theme states, one for each kind of control. See AppTheme
+    export enum class MetricsSet
+    {
+        Button,
+        ToolButton,
+        DialogTitle,
+        PrimaryWindow,
+        SecondaryWindow,
+        Page,
+        CheckMark,
+        ListItem,
+        GridCell,
+        ScrollButton,
+        ScrollThumb,
+        Tab,
+        Count
+    };
+
+    export constexpr std::size_t k_metricsSetCount{ static_cast<std::size_t>(MetricsSet::Count) };
+    export using OptionalMetricsSet = std::optional<MetricsSet>;
 
     export struct ThemeMetrics
     {
@@ -122,10 +183,68 @@ namespace ClaFi
         ControlMetrics scrollButton;
         ControlMetrics scrollThumb;
         ControlMetrics tab;
+        // The set of this name.
+        [[nodiscard]] const ControlMetrics& of(MetricsSet) const;
+        [[nodiscard]] ControlMetrics& of(MetricsSet);
+        // Whether a window sized by this set casts a shadow the theme states.
+        [[nodiscard]] static constexpr bool castsShadow(MetricsSet set)
+        {
+            return set == MetricsSet::PrimaryWindow || set == MetricsSet::SecondaryWindow;
+        }
+        // The shadow a window sized by this set casts, null where castsShadow says none.
+        [[nodiscard]] const WindowShadow* shadowOf(MetricsSet) const;
+        [[nodiscard]] WindowShadow* shadowOf(MetricsSet);
+        // Puts back the sizes that follow from others. See AppTheme#thememetrics-settle
+        void settle();
+        [[nodiscard]] bool operator==(const ThemeMetrics&) const = default;
     };
+
+    // The member each set is held in, in MetricsSet order.
+    export constexpr std::array<ControlMetrics ThemeMetrics::*, k_metricsSetCount>
+        k_metricsSetMembers{
+            &ThemeMetrics::button,
+            &ThemeMetrics::toolButton,
+            &ThemeMetrics::dialogTitle,
+            &ThemeMetrics::primaryWindow,
+            &ThemeMetrics::secondaryWindow,
+            &ThemeMetrics::page,
+            &ThemeMetrics::checkMark,
+            &ThemeMetrics::listItem,
+            &ThemeMetrics::gridCell,
+            &ThemeMetrics::scrollButton,
+            &ThemeMetrics::scrollThumb,
+            &ThemeMetrics::tab
+        };
 
 
     //-------------------------------------------------------------------------
+
+
+    // ControlMetrics
+
+    void ControlMetrics::copyFields(const ControlMetrics& source, const MetricsFields fields)
+    {
+        if (fields.has(MetricsField::Border))
+            border = source.border;
+        if (fields.has(MetricsField::Band))
+            band = source.band;
+        if (fields.has(MetricsField::Radius))
+            radius = source.radius;
+        if (fields.has(MetricsField::Padding))
+            padding = source.padding;
+        if (fields.has(MetricsField::Spacing))
+            spacing = source.spacing;
+        if (fields.has(MetricsField::MinSize))
+            minSize = source.minSize;
+        if (fields.has(MetricsField::PreferredSize))
+            preferredSize = source.preferredSize;
+        if (fields.has(MetricsField::MaxSize))
+            maxSize = source.maxSize;
+        if (fields.has(MetricsField::Depth))
+            zDepthFactor = source.zDepthFactor;
+        if (fields.has(MetricsField::GrowIn))
+            surfaceGrowInScale = source.surfaceGrowInScale;
+    }
 
 
     // ScaledControlMetrics
@@ -170,7 +289,6 @@ namespace ClaFi
         // primaryWindow
         primaryWindow.border = Thickness::Thin;
         primaryWindow.radius = 8.0f;
-        primaryWindow.padding = { strokeWidth(primaryWindow.border), strokeWidth(primaryWindow.border) };
         primaryWindowShadow.blur = 24.0f;
         primaryWindowShadow.offset = { 0.0f, 6.0f };
         primaryWindowShadow.opacity = 0.4f;
@@ -192,11 +310,7 @@ namespace ClaFi
         checkMark.border = Thickness::Hairline;
         checkMark.padding = 2.33f;
         checkMark.radius = 3.0f;
-        // minSize **must** always be equal maxSize.
-        // that allows skipping the text calculating in list items
-        // and run list items calculation in parallel (only it the list item themthelves have fixed size)
         checkMark.minSize = 16.0f;
-        checkMark.maxSize = 16.0f;
         // The indicator carries the depth for the whole check box or radio button, because its host
         // does not take any - see Control::allowZAnimation. Pushing the row would move a label that
         // has no business moving, and the mark is the part that reads as the thing being pressed.
@@ -242,5 +356,42 @@ namespace ClaFi
         tab.spacing = { 4.0f, 4.0f };
         tab.radius = 4.0f;
         tab.padding = { 8.0f, 4.0f };
+
+        settle();
+    }
+
+    const ControlMetrics& ThemeMetrics::of(const MetricsSet set) const
+    {
+        return this->*k_metricsSetMembers[static_cast<std::size_t>(set)];
+    }
+
+    ControlMetrics& ThemeMetrics::of(const MetricsSet set)
+    {
+        return this->*k_metricsSetMembers[static_cast<std::size_t>(set)];
+    }
+
+    const WindowShadow* ThemeMetrics::shadowOf(const MetricsSet set) const
+    {
+        if (set == MetricsSet::PrimaryWindow)
+            return &primaryWindowShadow;
+        if (set == MetricsSet::SecondaryWindow)
+            return &secondaryWindowShadow;
+        return nullptr;
+    }
+
+    WindowShadow* ThemeMetrics::shadowOf(const MetricsSet set)
+    {
+        return const_cast<WindowShadow*>(std::as_const(*this).shadowOf(set));
+    }
+
+    void ThemeMetrics::settle()
+    {
+        const float windowBorder = strokeWidth(primaryWindow.border);
+        primaryWindow.padding = { windowBorder, windowBorder };
+        // A check mark and a scroll button are square.
+        checkMark.minSize.y = checkMark.minSize.x;
+        scrollButton.minSize.y = scrollButton.minSize.x;
+        // A list item skips measuring a check mark whose size is fixed.
+        checkMark.maxSize = MaxSize{ checkMark.minSize };
     }
 }

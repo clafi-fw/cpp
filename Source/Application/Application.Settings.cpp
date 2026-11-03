@@ -33,6 +33,7 @@ import ClaFi.Core.DomEngine_Document;
 // Dom::Value<ColorModeSetting> is complete only with the enum serializer and the names it reads.
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -353,7 +354,7 @@ namespace ClaFi
         m_themeCaption{ m_themeRow.add<RowCaption>(L"Theme:") },
         m_themePick{ m_themeRow.add<ThemePick>(
             // Its metrics too: a tool button's grow the surface in, and a button's stands at rest.
-            params.themeMetrics().button,
+            MetricsSet::Button,
             UiElement::Button,
             MaxSize{ k_themesWidth, k_maxFloat },
             VerticalTextAnchor::Center

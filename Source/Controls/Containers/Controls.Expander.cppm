@@ -9,6 +9,7 @@ import ClaFi.Controls.Button;
 import ClaFi.Controls.Base.PanelBase;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Animation;
@@ -81,7 +82,7 @@ namespace ClaFi::Controls
         :
         WithHeldHeader<PanelBase>{
             params,
-            params.themeMetrics().page,
+            MetricsSet::Page,
             expanderColorRules(UiElement::Section,
                 // What the expander draws of itself, which is what picks its colour rules.
                 READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),

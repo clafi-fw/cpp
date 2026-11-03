@@ -16,8 +16,54 @@ The fields follow Graphics::ShadowParams:
 A window casts the shadow its root states in `FormControlBase::windowShadow`, in the colour
 BakedColors::windowShadow answers.
 
-**A theme leaves a window's frame alone.** These fields are metrics, and a theme states colours
-only.
+**A theme states the shadow of each window set.** A root sized by MetricsSet::PrimaryWindow or
+MetricsSet::SecondaryWindow casts the theme's shadow for that set, and takes the new one when the
+theme's sizes switch. A root given a WindowShadow of its own keeps it.
+
+## MetricsSet
+
+**A set is the sizes of one kind of control, and a theme states every set.** A control given a set
+as a property - `MetricsSet::Button` - is sized by the theme's set of that name, and a theme switch
+hands it the new sizes.
+
+**The sizes given beside the set are the caller's.** A Padding, a MinSize or a Border stands over
+the set's value, and no switch writes it.
+
+**A ControlMetrics given whole is a block of the control's own**, not a set: every size is the
+caller's, and a switch leaves the control as it is.
+
+## MetricsField
+
+One size of ControlMetrics, named so that a set of them can say which sizes a control was given
+outright. `Depth` is `zDepthFactor` and `GrowIn` is `surfaceGrowInScale`.
+
+## MetricsFields
+
+**Every size a control's properties and setters stated.** A theme switch hands the control the
+set's new value for every size not in it - see ControlMetrics copyFields.
+
+## ControlMetrics band
+
+**The width of a line along the control's leading edge**, drawn in its stroke colour. It is apart
+from the border, which the focus ring thickens; the band keeps its width. A control made to draw a
+band reads it, and every built-in set states 0.
+
+## ThemeMetrics
+
+**A theme file states its sizes in a Metrics section**, each set under its token in k_metricsSets
+and the two window shadows beside them. A file that states none, or leaves a size out, keeps the
+built-in value.
+
+**The maximum sizes stay the built-in ones.** Every set leaves its maximum unbounded, apart from
+the check mark's, which follows its minimum - see ThemeMetrics settle.
+
+## ThemeMetrics settle
+
+**These sizes follow from others**, and a theme read from a file has them worked out again:
+
+- a primary window's padding is its border's width - the ring its content stands inside
+- a check mark's height and a scroll button's are their widths, so both are square
+- a check mark's maximum is its minimum, so its size is fixed and a list item can skip measuring it
 
 ## BakedColors windowShadow
 

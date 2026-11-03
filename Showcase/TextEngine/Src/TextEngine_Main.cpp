@@ -30,6 +30,7 @@ import ClaFi.StdActions;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.Foundation;
@@ -326,8 +327,7 @@ namespace TextEngine_App
                 FormPlacement::Default,
                 MinSize{ k_windowWidth, k_windowHeight },
                 PreferredSize{ k_windowWidth * 1.2, k_windowHeight * 1.5 },
-                application.metrics().primaryWindow,
-                application.metrics().primaryWindowShadow,
+                MetricsSet::PrimaryWindow,
                 UiElement::Section,
             },
             BodyProps{

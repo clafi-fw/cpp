@@ -12,6 +12,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.ScrollBox;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
@@ -291,7 +292,7 @@ namespace ClaFi::Controls
             //IndicatorVisibility::Hover,
             // Not a tool, so not a ToolButton - but it wears the same look, and the element and
             // the metrics are the whole of that look.
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             comboBox.m_itemsViewMode,
@@ -406,8 +407,7 @@ namespace ClaFi::Controls
         dropPopup<ComboBoxDropdown>(
             form(),
             HostProps{
-                themeMetrics().secondaryWindow,
-                themeMetrics().secondaryWindowShadow,
+                MetricsSet::SecondaryWindow,
                 UiElement::Section,
                 // **A list taller than the room it fell into scrolls.** The placement cuts the
                 // window to the room the side it took had, and the pass that follows is
@@ -497,7 +497,7 @@ namespace ClaFi::Controls
         :
         ComboBoxBaseClass{
             params,
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,

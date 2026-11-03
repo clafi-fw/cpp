@@ -50,8 +50,7 @@ namespace ClaFi::Documents
         // type - see Props::get.
         DocumentsFolder* folderProp = &folder;
         const std::unique_ptr<Form<BrowserType>> form = this->createMainForm(
-            this->metrics().primaryWindow,
-            this->metrics().primaryWindowShadow,
+            MetricsSet::PrimaryWindow,
             UiElement::Dialog,
             k_mainFormMinSize,
             k_mainFormPreferredSize,

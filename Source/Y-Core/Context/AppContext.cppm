@@ -50,6 +50,11 @@ namespace ClaFi
         ThemeSwitchKind m_kind;
     };
 
+    // The sizes the theme states have moved, and every window lays itself out again. See Context
+    export struct ThemeMetricsSwitchEvent : public Event
+    {
+    };
+
     // **The application has changed which backend its windows draw through.** See Context
     export struct BackendSwitchEvent : public Event
     {
@@ -143,7 +148,7 @@ namespace ClaFi
         // Baking is answered above the core - see connectAppThemes - so the set arrives already
         // made, every value of which has a half way, which is what the crossing rests on.
         //
-        // **Colours only**: a theme's metrics take no part, and nothing here lays anything out.
+        // **The sizes land at once** - see ThemeMetricsSwitchEvent - and the colours cross.
         //
         // The set is copied, because what it was taken from is free to be edited from under it: a
         // theme editor previewing its own work in the application states the same set on every
@@ -685,6 +690,13 @@ namespace ClaFi
         m_taken = &theme;
         m_takenLightness = colors.lightness;
         m_theme.colors = theme.colors;
+
+        // Assigned in place, so a reference into a set stays good across the switch.
+        if (m_theme.metrics != theme.metrics)
+        {
+            m_theme.metrics = theme.metrics;
+            m_events.emit<ThemeMetricsSwitchEvent>();
+        }
 
         // **An edit restates what is worn**, and while a crossing runs what is worn is not the set
         // it is heading to - so an edit arriving then is a restatement of that destination and the

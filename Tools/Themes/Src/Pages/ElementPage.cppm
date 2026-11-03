@@ -21,6 +21,7 @@ import ClaFi.Controls.StackView;
 import ClaFi.StdActions;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
@@ -162,7 +163,7 @@ namespace Themes_App
             Orientation::Vertical,
             Padding{ 12.0f }
         ).add<Grids::Dt::Grid>(
-            themeMetrics().page,
+            MetricsSet::Page,
             UiElement::Section,
             Grids::GridLines::Horizontal,
             SelectionMode::Multi,

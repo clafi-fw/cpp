@@ -7,6 +7,7 @@ import ClaFi.Browser.Application;
 import ClaFi.App.Application;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.DomEngine_Dt;
@@ -82,8 +83,7 @@ namespace SeeDocs_App::Ui
     {
         const std::unique_ptr<Form<SurfaceBrowser>> form = this->createMainForm(
             FormPlacement::Default,
-            this->metrics().primaryWindow,
-            this->metrics().primaryWindowShadow,
+            MetricsSet::PrimaryWindow,
             UiElement::ToolBar,
             Border{ Thickness::Thin },
             Padding{ 0.0f },

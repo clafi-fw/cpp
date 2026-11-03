@@ -711,7 +711,7 @@ namespace SeeDocs_App::Ui
         if (m_page.facts.empty())
             return;
         Grids::Grid& grid = m_pageBox.body().add<Grids::Grid>(
-            themeMetrics().page,
+            MetricsSet::Page,
             UiElement::Section,
             Grids::GridLines::Horizontal,
             FocusScope::No, // the page is the container; the rows are its items
@@ -909,7 +909,7 @@ namespace SeeDocs_App::Ui
     void PageView::addTable(StackPanel& body, const Table& table)
     {
         Grids::Grid& grid = body.add<Grids::Grid>(
-            themeMetrics().page,
+            MetricsSet::Page,
             UiElement::Section,
             Grids::GridLines::Horizontal,
             FocusScope::No, // the page is the container; the rows are its items

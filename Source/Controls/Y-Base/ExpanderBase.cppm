@@ -143,7 +143,7 @@ namespace ClaFi::Controls
             TextRange range;
         };
     private:
-        [[nodiscard]] static ControlMetrics metricsFor(const CreateParams&, ExpanderViewMode);
+        [[nodiscard]] static OptionalMetricsSet metricsFor(ExpanderViewMode);
         [[nodiscard]] static TextPlacement textPlacementFor(ExpanderViewMode);
         [[nodiscard]] static OptionalUiElement colorRulesFor(ExpanderViewMode);
         ExpanderButton& createChevronButton();
@@ -216,7 +216,7 @@ namespace ClaFi::Controls
             MouseFocus::Self,
             ClickTarget::Self,
             // What the expander draws of itself, which is what the header is measured by.
-            metricsFor(params, READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
+            metricsFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             Padding{ 4.0f },
             Spacing{ 4.0f },
             // The same, which is what places its text.
@@ -362,11 +362,11 @@ namespace ClaFi::Controls
 
     // The tree look's header is a tool button in metrics as in paint, being a row of the tree.
     // The other looks have no metrics of their own beyond what the expander sets on them.
-    ControlMetrics ExpanderHeader::metricsFor(const CreateParams& params, ExpanderViewMode viewMode)
+    OptionalMetricsSet ExpanderHeader::metricsFor(const ExpanderViewMode viewMode)
     {
         if (viewMode == ExpanderViewMode::TreeNode)
-            return params.themeMetrics().toolButton;
-        return {};
+            return MetricsSet::ToolButton;
+        return std::nullopt;
     }
 
     // A panel sets a Left label at its left edge, before the left bar, and a body label after the
@@ -406,9 +406,9 @@ namespace ClaFi::Controls
     ExpanderButton& ExpanderHeader::createChevronButton()
     {
         if (m_viewMode == ExpanderViewMode::Divider)
-            return createRightBar<ExpanderButton>(UiElement::Button, themeMetrics().button);
+            return createRightBar<ExpanderButton>(UiElement::Button, MetricsSet::Button);
         if (m_viewMode == ExpanderViewMode::Ellipsis)
-            return createLeftBar<ExpanderButton>(UiElement::Button, themeMetrics().button);
+            return createLeftBar<ExpanderButton>(UiElement::Button, MetricsSet::Button);
         if (m_viewMode == ExpanderViewMode::TreeNode)
             return createLeftBar<ExpanderButton>();
         return createRightBar<ExpanderButton>();

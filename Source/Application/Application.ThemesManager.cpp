@@ -9,6 +9,7 @@ import ClaFi.Dom.Formats.ClaFi;
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Dom_StdSerializers;
@@ -42,6 +43,7 @@ namespace ClaFi
     void UserTheme::loadTheme(const Dom::Value<AppTheme>& configNode, AppTheme& theme)
     {
         configNode.getTo(theme);
+        theme.metrics.settle();
     }
 
     // ThemesManager

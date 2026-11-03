@@ -280,6 +280,12 @@ baked effects - follows the enum's order.
 - `codeName` - the member generated C++ assigns an effect to.
 - `token` - the key in a theme file for the element's rules and its effect.
 
+## MetricsSetDescriptor
+
+- `name` - the label an editor shows.
+- `codeName` - the ThemeMetrics member the set is held in.
+- `token` - the key in a theme file for the set's sizes.
+
 ## appThemes
 
 **The application's one ThemesManager**, over the themes folder the publisher's applications share.

@@ -1,6 +1,7 @@
 export module ClaFi.Controls.RadioButton;
 
 import ClaFi.Controls.Base.ButtonBase;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.Foundation;
 import ClaFi.StdLib;
@@ -29,7 +30,7 @@ namespace ClaFi::Controls
             ClickTarget::Self,
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,
-            params.themeMetrics().listItem, std::forward<Args>(args)... }
+            MetricsSet::ListItem, std::forward<Args>(args)... }
     {
     }
 }

@@ -161,9 +161,7 @@ namespace ClaFi::Controls::Grids
         traverseColumns = [&](ColumnCollection& columns) {
             for (Column* column : columns)
             {
-                if (column->hasSubColumns())
-                    traverseColumns(*column->subColumns());
-                else if (Control* control = controlAtColumn(*column))
+                if (Control* control = controlAtColumn(*column))
                 {
                     const float lead = cellLead(*column).x;
                     const FloatRect cellRect = FloatRect::FromDimensions(
@@ -182,6 +180,8 @@ namespace ClaFi::Controls::Grids
                     alignControl(control, event, controlPosition, controlDimensions);
                     dimensions.y = std::max(controlDimensions.y + border, dimensions.y);
                 }
+                else if (column->hasSubColumns())
+                    traverseColumns(*column->subColumns());
             };
             };
         traverseColumns(descriptor().columns());

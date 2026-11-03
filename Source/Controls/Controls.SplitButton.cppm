@@ -7,6 +7,7 @@ export import ClaFi.Controls.Base.DropdownControlBase;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.InkWell;
@@ -92,7 +93,7 @@ namespace ClaFi::Controls
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             std::forward<Args>(args)...
         }
     {

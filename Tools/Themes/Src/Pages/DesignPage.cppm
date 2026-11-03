@@ -3,6 +3,7 @@ export module Themes_App.DesignPage;
 import Themes_App.ApplyToControl;
 import Themes_App.ElementPage;
 import Themes_App.RuleSlider;
+import Themes_App.SizesPage;
 
 import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
@@ -12,6 +13,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.Tree;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -52,8 +54,14 @@ namespace Themes_App
             shared{ &value }
         {
         }
+        constexpr CategoryEntry(MetricsSet value)
+            :
+            sizes{ value }
+        {
+        }
         OptionalUiElement element{};
         const SharedRules* shared{};
+        OptionalMetricsSet sizes{};
     };
 
     // A branch of the tree: its name, what its page goes by, and the pages under it in the order
@@ -93,8 +101,12 @@ namespace Themes_App
         [[nodiscard]] StackPanel& paletteView() { return m_paletteView; }
         // Hands every page its list of the theme's rules, its ramps' base and what to call.
         void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
+        // Hands every sizes page the theme's sizes and what to call after an edit.
+        void bindSizes(ThemeMetrics&, const OnSizesChanged&);
         // Builds every page's rows again from the rules as they stand.
         void rebuildRules();
+        // Shows every sizes page's sizes as they stand.
+        void showSizes();
     protected:
         void visibilityChanged() override;
     private:
@@ -107,9 +119,11 @@ namespace Themes_App
             OptionalUiElement element{}; // an element's own list, nothing for every other row
             const SharedRules* shared{}; // a list no one element owns, null for every other row
             const Category* category{};  // a category's node, null for every other row
+            OptionalMetricsSet sizes{};  // a set of sizes, none for every other row
             Control* item{};             // the row: an item, or a category node's header
             Control* page{};
             ElementPage* rules{};        // the page, where it shows a list of rules
+            SizesPage* sizesPage{};      // the page, where it shows a set of sizes
             const ColorRules* list{};    // the rules that page shows, from bind on
             IndexRows indexRows{};       // a category page's rows, one per page under it
         };
@@ -134,6 +148,7 @@ namespace Themes_App
 
         TreeEntries m_entries{}; // an item's tag is its place here
         const ThemeRules m_defaultRules{ ThemeColors{}.rules }; // what each page's reset puts back
+        const ThemeMetrics m_defaultMetrics{}; // what each sizes page's reset puts back
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,

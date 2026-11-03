@@ -64,40 +64,45 @@ namespace ClaFi
         void setTextFormat(const TextFormat& value) { m_textFormat = value; }
         // metrics
         const ControlMetrics& metrics() const { return m_metrics; }
-        void setMetrics(const ControlMetrics& value) { m_metrics = value; }
+        // Sizes the control by the theme's set, which a theme switch brings up to date.
+        void setMetrics(MetricsSet);
+        // Sizes the control by a block of its own, which no theme switch touches.
+        void setMetrics(const ControlMetrics&);
+        // The theme's set sizing the control, none for a block of its own. See Control-Foundation
+        [[nodiscard]] OptionalMetricsSet metricsSet() const { return m_metricsSet; }
         //
         [[nodiscard]] Padding padding() const { return m_metrics.padding; }
-        void setPadding(const Padding value) { m_metrics.padding = value; }
-        void setPadding(const float x, const float y) { m_metrics.padding = { x, y }; }
+        void setPadding(Padding);
+        void setPadding(const float x, const float y) { setPadding({ x, y }); }
         void setPadding(const float value) { setPadding({ value, value }); }
         //
         [[nodiscard]] Spacing spacing() const { return m_metrics.spacing; }
-        void setSpacing(const Spacing value) { m_metrics.spacing = value; }
+        void setSpacing(Spacing);
         void setSpacing(const float x, const float y) { setSpacing({ x, y }); }
         void setSpacing(const float value) { setSpacing({ value, value }); }
         //
         [[nodiscard]] MinSize minSize() const { return m_metrics.minSize; }
-        void setMinSize(const MinSize value) { m_metrics.minSize = value; }
+        void setMinSize(MinSize);
         void setMinSize(const float x, const float y) { setMinSize({ x, y }); }
         void setMinSize(const float value) { setMinSize({ value, value }); }
         //
         [[nodiscard]] PreferredSize preferredSize() const { return m_metrics.preferredSize; }
-        void setPreferredSize(const PreferredSize value) { m_metrics.preferredSize = value; }
-        void setPreferredWidth(const float value) { m_metrics.preferredSize.x = value; }
-        void setPreferredHeight(const float value) { m_metrics.preferredSize.y = value; }
+        void setPreferredSize(PreferredSize);
+        void setPreferredWidth(float value);
+        void setPreferredHeight(float value);
         //
         [[nodiscard]] MaxSize maxSize() const { return m_metrics.maxSize; }
-        void setMaxSize(const MaxSize value) { m_metrics.maxSize = value; }
+        void setMaxSize(MaxSize);
         //
-        void setFixedWidth(float value) { m_metrics.setFixedWidth(value); }
-        void setFixedHeight(float value) { m_metrics.setFixedHeight(value); }
-        void setFixedSize(FixedSize value) { m_metrics.setFixedSize(value); }
+        void setFixedWidth(float value);
+        void setFixedHeight(float value);
+        void setFixedSize(FixedSize);
         //
         [[nodiscard]] Thickness border() const { return m_metrics.border; }
-        void setBorder(Thickness value) { m_metrics.border = value; }
+        void setBorder(Thickness);
         //
         [[nodiscard]] float radius() const { return m_metrics.radius; }
-        void setRadius(const float value) { m_metrics.radius = value; }
+        void setRadius(float value);
         //
         [[nodiscard]] NavigationReach navigationReach() const final { return m_navigationReach; }
         void setNavigationReach(const NavigationReach value) { m_navigationReach = value; }
@@ -113,8 +118,13 @@ namespace ClaFi
         void adjustPaint(AdjustPaintEvent&) override;
         void adjustText(AdjustTextEvent&) const override;
         void nestedAdjustTooltip(AdjustTooltipEvent&) override;
+        void themeMetricsChanged() override;
     private:
-        ControlMetrics m_metrics{};
+        void takeMetricsSet(OptionalMetricsSet, const ThemeMetrics&); // none keeps what stands
+    private:
+        ControlMetrics m_metrics{}; // the set's sizes, with the stated ones over them
+        OptionalMetricsSet m_metricsSet{};
+        MetricsFields m_statedMetrics{};
         OptionalUiElement m_colorRules{};
         ControlText m_text{};
         TextFormat m_textFormat{};
@@ -138,22 +148,23 @@ namespace ClaFi
         INIT_PROPERTY(clickTarget),
         INIT_PROPERTY(focusScope)
     {
-        // The whole metric block at once, for a control handed a themed set.
-        BIND_PROPERTY_MEMBER(ControlMetrics, m_metrics);
-        BIND_PROPERTY_MEMBER(MaxSize, m_metrics.maxSize); // the largest the control may be made
-        BIND_PROPERTY_MEMBER(MinSize, m_metrics.minSize); // the smallest the control may be made
+        // A theme's set or none. Bound first, so a plain MetricsSet anywhere in the pack wins.
+        BIND_PROPERTY_ACTION(OptionalMetricsSet, takeMetricsSet(p, params.themeMetrics()));
+        // The theme's set the control is sized by. See AppTheme#metricsset
+        BIND_PROPERTY_ACTION(MetricsSet, takeMetricsSet(p, params.themeMetrics()));
+        // The whole metric block at once, the control's own.
+        BIND_PROPERTY_CALL(ControlMetrics, setMetrics);
+        BIND_PROPERTY_CALL(MaxSize, setMaxSize); // the largest the control may be made
+        BIND_PROPERTY_CALL(MinSize, setMinSize); // the smallest the control may be made
         // What the control asks for when it is free to choose.
-        BIND_PROPERTY_MEMBER(PreferredSize, m_metrics.preferredSize);
+        BIND_PROPERTY_CALL(PreferredSize, setPreferredSize);
         // Both bounds at once, pinning the control to one size.
         BIND_PROPERTY_CALL(FixedSize, setFixedSize);
         // Space kept inside the control's border, around its content.
-        BIND_PROPERTY_MEMBER(Padding, m_metrics.padding);
-        // Space kept between the control's children.
-        BIND_PROPERTY_MEMBER(Spacing, m_metrics.spacing);
-        // How heavy the control's border is.
-        BIND_PROPERTY_ACTION(Border, m_metrics.border = p.value);
-        // Corner radius of the control's box.
-        BIND_PROPERTY_ACTION(Radius, m_metrics.radius = p.value);
+        BIND_PROPERTY_CALL(Padding, setPadding);
+        BIND_PROPERTY_CALL(Spacing, setSpacing); // space kept between the control's children
+        BIND_PROPERTY_VALUE(Border, setBorder); // how heavy the control's border is
+        BIND_PROPERTY_VALUE(Radius, setRadius); // corner radius of the control's box
 
         // A rule set or none. Bound first, so a plain UiElement anywhere in the pack wins.
         BIND_PROPERTY_MEMBER(OptionalUiElement, m_colorRules);

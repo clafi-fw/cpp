@@ -1027,7 +1027,6 @@ namespace ClaFi::Controls
     {
         if (m_parameterTooltip.has_value())
             return;
-        const ThemeMetrics& metrics = themeMetrics();
         m_parameterTooltip.emplace(
             appContext(),
             // A window the pointer goes through, standing beside the list's own without taking
@@ -1037,8 +1036,7 @@ namespace ClaFi::Controls
             ClickTarget::Parent,
             UiElement::Tooltip,
             WordWrap::Yes,
-            metrics.secondaryWindow,
-            metrics.secondaryWindowShadow
+            MetricsSet::SecondaryWindow
         );
         // Sized by the signature it shows, which changes under it as the caret moves.
         m_parameterTooltip->setAutoFit(AutoFit::Yes);

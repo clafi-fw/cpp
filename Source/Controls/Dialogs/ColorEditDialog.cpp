@@ -70,8 +70,7 @@ namespace ClaFi::Controls
             owner.appContext(),
             WindowRole::Menu,
             &owner,
-            owner.themeMetrics().secondaryWindow,
-            owner.themeMetrics().secondaryWindowShadow,
+            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             // Clicked and hovered, never focused: the sliders and the answers carry the focus
             // themselves, the way a message box's text and answers do.

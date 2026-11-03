@@ -12,6 +12,7 @@ import :Tooltip;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
@@ -105,8 +106,7 @@ namespace ClaFi
             // taken from the window: the two are separate answers, and this one is the label's.
             ClickTarget::Parent,
             UiElement::Tooltip,
-            ownerForm.appContext().themeMetrics().secondaryWindow,
-            ownerForm.appContext().themeMetrics().secondaryWindowShadow
+            MetricsSet::SecondaryWindow
         }
     {
         window().setAlpha(0);

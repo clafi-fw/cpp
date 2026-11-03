@@ -14,6 +14,7 @@ import ClaFi.Icons.OpenChevron;
 import ClaFi.Icons.XMark;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.Context.FormContext;
@@ -186,7 +187,7 @@ namespace ClaFi::Controls
         // arguments.
         Panel{
             params,
-            params.themeMetrics().page,
+            MetricsSet::Page,
             UiElement::Page,
             std::forward<Args>(args)...
         },

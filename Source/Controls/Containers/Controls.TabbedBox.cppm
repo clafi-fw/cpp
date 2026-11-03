@@ -10,6 +10,7 @@ import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
 import ClaFi.Core.Foundation;
@@ -101,7 +102,7 @@ namespace ClaFi::Controls
         ) };
         PageControl& m_pageControl = createBody<PageControl>(
             UiElement::Page,
-            themeMetrics().page
+            MetricsSet::Page
         );
     };
 

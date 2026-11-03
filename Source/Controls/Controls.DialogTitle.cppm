@@ -9,6 +9,7 @@ import ClaFi.Controls.Button;
 import ClaFi.Icons.XMark;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
@@ -188,7 +189,7 @@ namespace ClaFi::Controls
         Panel{
             params,
             UiElement::DialogTitle,
-            params.themeMetrics().dialogTitle,
+            MetricsSet::DialogTitle,
             VerticalTextAnchor::Center,
             HorizontalTextAnchor::Center,
             WordWrap::No,

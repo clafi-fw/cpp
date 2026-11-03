@@ -26,6 +26,12 @@ crossing runs. `kind()` says which.
   whatever took the theme.
 - `CrossingFrame` - a window paints it at once, so every frame of the crossing is seen.
 
+## ThemeMetricsSwitchEvent
+
+Raised on `AppContext::events()` when a theme is taken whose sizes differ from the ones worn. The
+sizes land at once, with no crossing. Every form hands them to each control sized by a theme's set,
+puts its window frame and shadow in step, and lays itself out again - see RichControl metricsSet.
+
 ## BackendSwitchEvent
 
 Raised on `AppContext::events()`. It carries nothing: every window is on the same kind, and

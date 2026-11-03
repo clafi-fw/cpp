@@ -47,3 +47,23 @@ than the whole of it.
 The two tones an ink states are one colour written once for each side of the theme rather than one
 elevation the mode would orient. That pair has a real colour half way, which the elevation axis
 does not: the tones are chosen for each side rather than mirrored.
+
+## MetricsSet
+
+**Sizes joined the theme file on 2026-11-03**, for the SeeDocs article blocks: a block's look is a
+theme fact, and the looks that differ by size come out of a set's sizes. Three choices were made
+with it:
+
+- Sizes are a list of their own beside the colour elements. A control names its sizes and its
+  colours apart, as it did, so the places that read a size stayed as they were.
+- A switch reaches open windows through the set a control names and the sizes it stated. A
+  control copying its set when built would have kept the old sizes until it was built again.
+- A band width stands beside the border rather than a border weight per side, so the focus ring
+  and everything reading the border stayed as they were.
+
+**The maximum sizes stay out of the file.** Unbounded is the float's largest value, which reads
+as a forty-digit number, and the check mark's is the only maximum a set states.
+
+**A size worked out from a set and passed as a property stays as built** - tree rows, the
+Settings page's captions and SeeDocs' fields, about 35 places. Each one follows a switch only by
+stating its size again in themeMetricsChanged.

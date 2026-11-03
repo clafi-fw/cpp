@@ -199,8 +199,7 @@ namespace ClaFi::Controls
             // **Nothing on the frame but the box.** The panel is a holder, not a border: it takes
             // no inset of its own, so the box reaches every edge of the window.
             HostProps{
-                params.themeMetrics().secondaryWindow,
-                params.themeMetrics().secondaryWindowShadow,
+                MetricsSet::SecondaryWindow,
                 UiElement::Menu,
                 Padding{ 0.0f },
                 Border{ Thickness::None },
@@ -215,7 +214,7 @@ namespace ClaFi::Controls
             // what says at a glance that this is an editor and not the control it covers.
             BodyProps{
                 UiElement::Section,
-                params.themeMetrics().secondaryWindow
+                MetricsSet::SecondaryWindow
             }
         }
     {

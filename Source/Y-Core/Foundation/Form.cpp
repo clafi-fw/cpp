@@ -194,6 +194,23 @@ namespace ClaFi
         RichControl::nestedControlFocusing(event);
     }
 
+    void FormControlBase::themeMetricsChanged()
+    {
+        RichControl::themeMetricsChanged();
+        takeSetShadow(themeMetrics());
+    }
+
+    void FormControlBase::takeSetShadow(const ThemeMetrics& theme)
+    {
+        if (m_windowShadowStated)
+            return;
+        const OptionalMetricsSet set = metricsSet();
+        if (!set)
+            return;
+        if (const WindowShadow* shadow = theme.shadowOf(*set))
+            m_windowShadow = *shadow;
+    }
+
     // FormBase
 
     FormBase::FormBase(AppContext& appContext, WindowRole windowRole, FormControlBase& content, Control* popupTarget,
@@ -1621,6 +1638,10 @@ namespace ClaFi
         m_themeSwitchConnection{
             appContext.events().connect<ThemeSwitchEvent>(this, &FormBase::themeSwitched)
         },
+        m_themeMetricsSwitchConnection{
+            appContext.events().connect<ThemeMetricsSwitchEvent>(this,
+                &FormBase::themeMetricsSwitched)
+        },
         m_backendSwitchConnection{
             appContext.events().connect<BackendSwitchEvent>(this, &FormBase::backendSwitched)
         },
@@ -2101,6 +2122,24 @@ namespace ClaFi
 
         if constexpr (Diagnostic::Options::logThemeCrossing())
             logCrossingFrame(startedAt);
+    }
+
+    // **A hidden form takes the sizes too**, so that it shows in them when it is shown. The frame
+    // follows the root's window set, and the layout follows every control's.
+    void FormBase::themeMetricsSwitched(ThemeMetricsSwitchEvent&)
+    {
+        tellThemeMetricsChanged(m_content);
+        if (m_topLayer)
+            tellThemeMetricsChanged(*m_topLayer);
+        stateFrame();
+        invalidateAlign();
+    }
+
+    void FormBase::tellThemeMetricsChanged(Control& control)
+    {
+        control.themeMetricsChanged();
+        for (ControlPtr& child : control.controls())
+            tellThemeMetricsChanged(*child);
     }
 
     // **Marked here and taken at the next frame** - see stateBackend, which is where the canvas is

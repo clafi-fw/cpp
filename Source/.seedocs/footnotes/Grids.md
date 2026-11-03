@@ -62,6 +62,8 @@ typed, and every key the grid leaves:
 - Return and Space press the control where it leaves them. A check box toggles, and a combo box
   drops its list or opens its editor.
 
+**A control in a column with sub-columns spans them**, so the row leaves them empty.
+
 ### Picking
 
 **A mouse press on a control picks its cell first.** Then:

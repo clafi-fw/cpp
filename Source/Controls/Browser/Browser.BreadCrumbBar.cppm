@@ -13,7 +13,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Icons.Chevron;
 
 import ClaFi.Core.Context.DrawIconEvent;
-import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.Fit;
@@ -218,7 +218,7 @@ namespace ClaFi::Browser
             // surface. A button keeps it off by default, which is right where an indicator or
             // a dot says the same thing, and a crumb has neither.
             ShowSelectionOnSurface::Yes,
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             Padding{ 4.0f },
             // **A crumb may be narrowed to nothing.** A path longer than the bar takes the room it
             // is short of off its widest crumbs, down to this floor - see
@@ -458,10 +458,8 @@ namespace ClaFi::Browser
 
     BreadCrumbBar::BreadCrumbBar(const CreateParams& params)
         :
-        StackPanel{ params, FocusScope::Yes, NavigationReach::Yes, MouseFocus::Self }
+        StackPanel{ params, MetricsSet::Page, FocusScope::Yes, NavigationReach::Yes, MouseFocus::Self }
     {
-        const AppTheme& theme = params.theme();
-        setMetrics(theme.metrics.page);
         setPadding(8.0f, 2.0f);
         setColorRules(UiElement::Page);
         setOrientation(Orientation::Horizontal);

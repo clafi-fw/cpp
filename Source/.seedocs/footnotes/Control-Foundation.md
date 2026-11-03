@@ -192,6 +192,24 @@ see VisualStateIndex.
 or Current through adjustNestedControlVisualState re-reads that part here. A slider does so for
 its thumb, which reads hot in edit mode while the keys drive it.
 
+## Control themeMetricsChanged
+
+**Told to every control of every form when the theme's sizes switch**, before the form lays itself
+out again - see ThemeMetricsSwitchEvent. RichControl takes its set's new sizes here. A control that
+works a size of its own out of a set states it again here.
+
+## RichControl metricsSet
+
+**Named by a MetricsSet property, or by setMetrics with a set.** The control's sizes are the set's,
+with every size its properties and setters stated over them. A theme switch hands it the set's new
+sizes and keeps the stated ones.
+
+**A ControlMetrics given whole is the caller's block**: the control names no set, and a switch
+leaves its sizes as they are.
+
+**A size worked out from a set and then stated is the caller's.** A Padding built from a set's
+padding stays what it was when it was built.
+
 ## Control reveal
 
 **Opened from the host down**, so an outer body is opened ahead of one inside it. A holder says

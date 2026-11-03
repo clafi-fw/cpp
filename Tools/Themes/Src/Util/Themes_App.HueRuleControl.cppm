@@ -386,7 +386,7 @@ namespace Themes_App
         Button{ params,
             // Not a tool, so not a ToolButton - but it wears the same look, and the element and
             // the metrics are the whole of that look.
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             UiElement::ToolButton,
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,
@@ -462,8 +462,7 @@ namespace Themes_App
             FocusScope::Yes,
             NavigationReach::Yes,
             MouseFocus::Self,
-            params.themeMetrics().secondaryWindow,
-            params.themeMetrics().secondaryWindowShadow,
+            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             Padding{ k_dividerPadding },
             Spacing{ k_dividerPadding },

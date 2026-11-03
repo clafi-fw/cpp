@@ -30,7 +30,7 @@ namespace Themes_App
             HorizontalAlign::Center,
             VerticalAlign::Center,
             UiElement::SectionHeader,
-            themeMetrics().page
+            MetricsSet::Page
         ) };
 
         // Consumes every excessive height
@@ -105,7 +105,7 @@ namespace Themes_App
 
         // A button's metrics give a stroke something to be drawn at; the focus gives the states.
         RichControl& m_testee{ m_stack.add<RichControl>(
-            themeMetrics().button,
+            MetricsSet::Button,
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
@@ -114,7 +114,7 @@ namespace Themes_App
         ) };
 
         RichControl& m_bestee{ m_stack.add<RichControl>(
-            themeMetrics().button,
+            MetricsSet::Button,
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,

@@ -100,8 +100,7 @@ namespace ClaFi::Controls
             owner.appContext(),
             WindowRole::Menu, // a Dialog does not act as an active popup
             &owner,
-            owner.themeMetrics().secondaryWindow,
-            owner.themeMetrics().secondaryWindowShadow,
+            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             // Clicked and hovered, never focused. The text and the answers carry the focus
             // themselves, and the frame around them is not a focus scope.

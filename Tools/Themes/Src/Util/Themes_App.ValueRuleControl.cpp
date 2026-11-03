@@ -330,8 +330,7 @@ namespace Themes_App
             FocusScope::Yes,
             NavigationReach::Yes,
             MouseFocus::Self,
-            params.themeMetrics().secondaryWindow,
-            params.themeMetrics().secondaryWindowShadow,
+            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             Padding{ k_spacing },
             Spacing{ k_spacing },
@@ -448,7 +447,7 @@ namespace Themes_App
         const ColorRuleOp operation)
         :
         Button{ params,
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             UiElement::ToolButton,
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,

@@ -7,6 +7,7 @@ import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Divider;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.FormContext;
 
@@ -204,8 +205,7 @@ namespace ClaFi::Controls
             // Control::isDroppedDown.
             owner.appContext(), WindowRole::Menu, &owner,
             HostProps{
-                owner.themeMetrics().secondaryWindow,
-                owner.themeMetrics().secondaryWindowShadow,
+                MetricsSet::SecondaryWindow,
                 UiElement::Menu,
                 // A list longer than the screen has to be reachable, and a menu is the one
                 // window that cannot be resized to reach it - so it scrolls. The bar is there
@@ -432,7 +432,7 @@ namespace ClaFi::Controls
         :
         Button{
             params,
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             UiElement::ToolButton,
             std::forward<Args>(args)...
         }

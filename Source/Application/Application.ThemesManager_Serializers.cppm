@@ -7,6 +7,7 @@ import ClaFi.App.ThemeIcon;
 
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Palette;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.System.Serialization;
@@ -176,8 +177,81 @@ namespace ClaFi // AppTheme serializers
         );
     }
 
+    export constexpr auto enumNames(Thickness)
+    {
+        return std::array{
+            L"None",
+            L"Hairline",
+            L"Thin",
+            L"Regular",
+            L"Bold",
+            L"Heavy",
+        };
+    }
+
+    // A pair of sizes, across and down.
+    export template <std::derived_from<FloatPoint> Pair>
+        constexpr auto serializedFields(const Pair&)
+    {
+        return std::make_tuple(
+            SerializedField{ L"X", &Pair::x },
+            SerializedField{ L"Y", &Pair::y }
+        );
+    }
+
+    // The maximum stays the built-in one, which is unbounded in every set a file can name.
+    export constexpr auto serializedFields(const ControlMetrics&)
+    {
+        return std::make_tuple(
+            SerializedField{ L"Border", &ControlMetrics::border },
+            SerializedField{ L"Band", &ControlMetrics::band },
+            SerializedField{ L"Radius", &ControlMetrics::radius },
+            SerializedField{ L"Padding", &ControlMetrics::padding },
+            SerializedField{ L"Spacing", &ControlMetrics::spacing },
+            SerializedField{ L"MinSize", &ControlMetrics::minSize },
+            SerializedField{ L"PreferredSize", &ControlMetrics::preferredSize },
+            SerializedField{ L"Depth", &ControlMetrics::zDepthFactor },
+            SerializedField{ L"GrowIn", &ControlMetrics::surfaceGrowInScale }
+        );
+    }
+
+    export constexpr auto serializedFields(const WindowShadow&)
+    {
+        return std::make_tuple(
+            SerializedField{ L"Blur", &WindowShadow::blur },
+            SerializedField{ L"Offset", &WindowShadow::offset },
+            SerializedField{ L"Spread", &WindowShadow::spread },
+            SerializedField{ L"Opacity", &WindowShadow::opacity }
+        );
+    }
+
+    // Each set stands under its token, in k_metricsSets.
+    template <std::size_t I>
+    constexpr auto metricsSetField()
+    {
+        return SerializedField{ k_metricsSets[I].token, k_metricsSetMembers[I] };
+    }
+
+    template <std::size_t... I>
+    constexpr auto metricsSetFields(std::index_sequence<I...>)
+    {
+        return std::make_tuple(metricsSetField<I>()...);
+    }
+
+    export constexpr auto serializedFields(const ThemeMetrics&)
+    {
+        return std::tuple_cat(
+            metricsSetFields(std::make_index_sequence<k_metricsSetCount>{}),
+            std::make_tuple(
+                SerializedField{ L"PrimaryWindowShadow", &ThemeMetrics::primaryWindowShadow },
+                SerializedField{ L"SecondaryWindowShadow", &ThemeMetrics::secondaryWindowShadow }
+            )
+        );
+    }
+
     export constexpr auto serializedFields(const AppTheme&) {
         return std::make_tuple(
+            SerializedField{ L"Metrics", &AppTheme::metrics },
             SerializedField{ L"Colors", &AppTheme::colors }
         );
     }

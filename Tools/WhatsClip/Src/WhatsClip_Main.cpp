@@ -24,6 +24,7 @@ import ClaFi.Controls.Base.StackBase;
 import ClaFi.App.Application;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Conversion;
 import ClaFi.Core.Transfer.Offer;
@@ -675,8 +676,7 @@ namespace ClaFi::Tools::WhatsClip
                 params,
                 HostProps{ // Root Panel
                     FormPlacement::Default,
-                    params.themeMetrics().primaryWindow,
-                    params.themeMetrics().primaryWindowShadow,
+                    MetricsSet::PrimaryWindow,
 
                     UiElement::ToolBar, // Root window color, visible behind the formats bar
                     Border{ Thickness::Thin },

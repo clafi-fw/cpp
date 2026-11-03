@@ -370,6 +370,7 @@ namespace Themes_App
         m_darkModeFloorSlider.invalidate();
         bindPigmentEditors();
         m_designPage.rebuildRules();
+        m_designPage.showSizes();
     }
 
     void ThemePage::edited(const EditPhase phase, const Text& what, const RuleSelection& at)
@@ -475,6 +476,12 @@ namespace Themes_App
         m_pigmentGrid.invalidate();
         invalidatePreview();
         edited(phase, what, at);
+    }
+
+    void ThemePage::sizesChanged(const EditPhase phase, const Text& what)
+    {
+        invalidatePreview();
+        edited(phase, what);
     }
 
     bool ThemePage::confirmWritingToSource(Control& initiator) const

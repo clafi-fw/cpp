@@ -83,7 +83,7 @@ namespace ClaFi::Controls
         void nestedDrag(DragEvent&) override;
     private:
         // A tool button's metrics in a strip drawing its tabs as tool buttons, a tab's elsewhere.
-        [[nodiscard]] static const ControlMetrics& metricsIn(const CreateParams&);
+        [[nodiscard]] static MetricsSet metricsIn(const CreateParams&);
         [[nodiscard]] bool drawnAsToolButton() const;
         void tabCreated(Control* parent);
         void prepareGeometry(const PaintEvent&, float visibilityFactor, PaintEvent*& outEvent);
@@ -204,9 +204,9 @@ namespace ClaFi::Controls
     template<typename ...Args>
     Tab::Tab(const CreateParams& params, Args && ...args)
         :
-        // The tab's theme metrics go in ahead of the caller's props so that a MinSize or a
-        // Padding handed to addTab lands on top of them: RichControl binds ControlMetrics
-        // first and each individual metric prop after it, whatever order they arrive in.
+        // The tab's set goes in ahead of the caller's props so that a MinSize or a Padding
+        // handed to addTab lands on top of it: RichControl binds the set first and each single
+        // size after it, whatever order they arrive in.
         TabBaseClass{
             params,
             NavigationReach::Yes,
@@ -395,12 +395,12 @@ namespace ClaFi::Controls
         TabBaseClass::nestedDrag(event);
     }
 
-    const ControlMetrics& Tab::metricsIn(const CreateParams& params)
+    MetricsSet Tab::metricsIn(const CreateParams& params)
     {
         const TabStripBase* strip = static_cast<const TabStripBase*>(params.parent);
         if (strip && strip->tabViewMode() == TabViewMode::ToolButton)
-            return params.themeMetrics().toolButton;
-        return params.themeMetrics().tab;
+            return MetricsSet::ToolButton;
+        return MetricsSet::Tab;
     }
 
     bool Tab::drawnAsToolButton() const

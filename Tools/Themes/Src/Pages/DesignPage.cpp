@@ -4,6 +4,7 @@ import Themes_App.ApplyToControl;
 import Themes_App.Consts;
 import Themes_App.ElementPage;
 import Themes_App.RuleSlider;
+import Themes_App.SizesPage;
 
 import ClaFi.Application.ThemesManager_Elements;
 
@@ -17,6 +18,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.Tree;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -86,13 +88,43 @@ namespace Themes_App
             UiElement::Bestee
         });
 
+        constexpr auto k_sizes = std::to_array<CategoryEntry>({
+            MetricsSet::Button,
+            MetricsSet::ToolButton,
+            MetricsSet::ListItem,
+            MetricsSet::CheckMark,
+            MetricsSet::Tab,
+            MetricsSet::Page,
+            MetricsSet::GridCell,
+            MetricsSet::DialogTitle,
+            MetricsSet::PrimaryWindow,
+            MetricsSet::SecondaryWindow,
+            MetricsSet::ScrollButton,
+            MetricsSet::ScrollThumb
+        });
+
         constexpr std::array k_categories{
             Category{ L"Window roots", L"WindowRoots", k_windowRoots },
             Category{ L"Surfaces", L"Surfaces", k_surfaces },
             Category{ L"Controls", L"Controls", k_controls },
             Category{ L"Focus & Selection", L"FocusAndSelection", k_focusAndSelection },
-            Category{ L"Test subjects", L"TestSubjects", k_testSubjects }
+            Category{ L"Test subjects", L"TestSubjects", k_testSubjects },
+            Category{ L"Sizes", L"Sizes", k_sizes }
         };
+
+        using SizesTokens = std::array<std::wstring, k_metricsSetCount>;
+
+        // A sizes page's token, set apart from the element that goes by the same name.
+        [[nodiscard]] std::wstring_view sizesToken(const MetricsSet set)
+        {
+            static const SizesTokens tokens = []() {
+                SizesTokens result{};
+                for (std::size_t i = 0; i != k_metricsSetCount; ++i)
+                    result[i] = std::wstring{ L"Sizes" } + std::wstring{ k_metricsSets[i].token };
+                return result;
+            }();
+            return tokens[static_cast<std::size_t>(set)];
+        }
 
         // A text band has no stroke and casts no shadow, and only the selection re-inks its text.
         [[nodiscard]] PaintChannels elementOutputs(const UiElement element)
@@ -169,11 +201,25 @@ namespace Themes_App
         }
     }
 
+    void DesignPage::bindSizes(ThemeMetrics& metrics, const OnSizesChanged& onSizesChanged)
+    {
+        for (const TreeEntry& entry : m_entries)
+            if (entry.sizesPage)
+                entry.sizesPage->bind(metrics, m_defaultMetrics, onSizesChanged);
+    }
+
     void DesignPage::rebuildRules()
     {
         for (const TreeEntry& entry : m_entries)
             if (entry.rules)
                 entry.rules->rebuild();
+    }
+
+    void DesignPage::showSizes()
+    {
+        for (const TreeEntry& entry : m_entries)
+            if (entry.sizesPage)
+                entry.sizesPage->refresh();
     }
 
     // A hidden page is not laid out, and a scroll asked for a control the pass has not placed is
@@ -207,7 +253,8 @@ namespace Themes_App
             {
                 members.push_back(addItemEntry(node.addItem(), TreeEntry{
                     .element = entry.element,
-                    .shared = entry.shared
+                    .shared = entry.shared,
+                    .sizes = entry.sizes
                 }));
             }
             buildCategoryPage(categoryIndex, members);
@@ -232,9 +279,14 @@ namespace Themes_App
         const std::size_t index = m_entries.size();
         row.setTag(Tag{ index });
         entry.item = &row;
-        // A page of rules is made here - the palette's page stands already, and a category's is
-        // built once the pages it lists do.
-        if (!entry.page && !entry.category)
+        // A page of rules or of sizes is made here - the palette's page stands already, and a
+        // category's is built once the pages it lists do.
+        if (entry.sizes)
+        {
+            entry.sizesPage = &m_pages.add<SizesPage>(*entry.sizes);
+            entry.page = entry.sizesPage;
+        }
+        else if (!entry.page && !entry.category)
         {
             entry.rules = &m_pages.add<ElementPage>(nameOf(entry));
             entry.page = entry.rules;
@@ -308,9 +360,11 @@ namespace Themes_App
         return nullptr;
     }
 
-    // The page's name, and after it how many rules the page holds, muted.
+    // The page's name, and after it how many rules the page holds, muted. A sizes page holds none.
     Text DesignPage::indexRowText(const TreeEntry& entry)
     {
+        if (entry.sizes)
+            return Text{ nameOf(entry) };
         const std::size_t count = entry.list ? entry.list->size() : 0;
         Text tally{};
         if (count == 0)
@@ -326,6 +380,8 @@ namespace Themes_App
     {
         if (entry.element)
             return uiElementOf(*entry.element).name;
+        if (entry.sizes)
+            return metricsSetOf(*entry.sizes).name;
         if (entry.shared)
             return entry.shared->name;
         if (entry.category)
@@ -337,6 +393,8 @@ namespace Themes_App
     {
         if (entry.element)
             return uiElementOf(*entry.element).token;
+        if (entry.sizes)
+            return sizesToken(*entry.sizes);
         if (entry.shared)
             return entry.shared->token;
         if (entry.category)

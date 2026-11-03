@@ -2,6 +2,7 @@ export module ClaFi.Controls.Button;
 
 export import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Utils;
 import ClaFi.Core.System.UiTypes;
@@ -50,7 +51,7 @@ namespace ClaFi::Controls
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
-            params.themeMetrics().button,
+            MetricsSet::Button,
             UiElement::Button,
             std::forward<Args>(args)...
         }
@@ -67,7 +68,7 @@ namespace ClaFi::Controls
         // arguments.
         Button{
             params,
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             UiElement::ToolButton,
             MouseFocus::Keep,
             std::forward<Args>(args)...

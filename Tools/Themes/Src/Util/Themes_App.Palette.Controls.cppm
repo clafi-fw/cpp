@@ -114,7 +114,7 @@ namespace Themes_App
         {
             MapButton& subItem{ add<MapButton>(
                 Tag{ i },
-                params.themeMetrics().toolButton,
+                MetricsSet::ToolButton,
                 UiElement::ToolButton,
                 IndicatorVisibility::Always,
                 IndicatorStyle::Radio,
@@ -149,7 +149,7 @@ namespace Themes_App
         HarmonyItemClass{ params,
             ButtonViewMode::IconOnly,
             IconSize{ 32.f, 32.0f },
-            params.themeMetrics().button,
+            MetricsSet::Button,
             UiElement::Button,
             ShowSelectionOnSurface::Yes,
             VerticalTextAnchor::Center,
@@ -218,8 +218,7 @@ namespace Themes_App
             Padding{ 4.0f },
             Spacing{ 4.0f },
             UiElement::Menu,
-            params.themeMetrics().secondaryWindow,
-            params.themeMetrics().secondaryWindowShadow
+            MetricsSet::SecondaryWindow
         },
         m_harmonyItem{ harmonyItem }
     {

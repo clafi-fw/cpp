@@ -8,6 +8,7 @@ import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Diagnostic.Log;
 import ClaFi.Diagnostic.Options;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.Foundation;
@@ -146,7 +147,7 @@ namespace ClaFi::Controls
         // How the body asks to be scrolled, read beside its measured height.
         ScrollMetrics m_bodyScroll{};
         ScrollBar& m_vScrollBar{ createRightBar<ScrollBar>(ScrollAxis::Vertical)};
-        Panel& m_bottomBar{ createBottomBar<Panel>(UiElement::Section, themeMetrics().page) };
+        Panel& m_bottomBar{ createBottomBar<Panel>(UiElement::Section, MetricsSet::Page) };
         ScrollBar& m_hScrollBar{ m_bottomBar.createBody<ScrollBar>(ScrollAxis::Horizontal)};
         Panel& m_corner{ m_bottomBar.createRightBar<Panel>(MinSize{ k_cornerSize, 0.0f }) };
         bool m_scrolledInDragOrByWheel{};

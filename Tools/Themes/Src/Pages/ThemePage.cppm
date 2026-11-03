@@ -59,6 +59,7 @@ import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Palette;
+import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -199,6 +200,8 @@ namespace Themes_App
         void showAnchor(const Browser::ShowAnchorEvent&);
         // A rule was added on the Design page, moved or taken away.
         void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);
+        // A size was changed on the Design page, or a set of sizes reset.
+        void sizesChanged(EditPhase, const Text& what);
         // Asks whether the user is the one this button is for, and answers whether they said so.
         [[nodiscard]] bool confirmWritingToSource(Control& initiator) const;
         // Whether this page stands for one of the built-ins. They are answered from the
@@ -388,7 +391,7 @@ namespace Themes_App
 
         // Accent and Spot: the pigments a theme states itself rather than takes from its harmony.
         Grid& m_pigmentGrid{ m_paletteColumn1.add<Grid>(
-            themeMetrics().page,
+            MetricsSet::Page,
             UiElement::Section,
             Grids::GridLines::Horizontal,
             HorizontalAlign::Fill,
@@ -549,6 +552,11 @@ namespace Themes_App
             },
             [this](const EditPhase phase, const Text& what, const RuleSelection& at) {
                 rulesChanged(phase, what, at);
+            }
+        );
+        m_designPage.bindSizes(m_editTheme.metrics,
+            [this](const EditPhase phase, const Text& what) {
+                sizesChanged(phase, what);
             }
         );
         bindPigmentEditors();

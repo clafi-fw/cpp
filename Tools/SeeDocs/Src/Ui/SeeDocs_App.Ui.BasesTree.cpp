@@ -103,7 +103,7 @@ namespace SeeDocs_App::Ui
             SecondaryPartPlacement::Left,
             UiElement::Button,
             ShowSelectionOnSurface::Yes,
-            params.themeMetrics().button,
+            MetricsSet::Button,
             //Padding{ 4.0f },
             // The bar narrows its crumbs itself, so only the height is held: a button's.
             MinSize{ 0.0f, params.themeMetrics().button.minSize.y },

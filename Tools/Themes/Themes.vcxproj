@@ -233,6 +233,8 @@
     <ClCompile Include="Src\Pages\HomePage.cpp" />
     <ClCompile Include="Src\Pages\HomePage.cppm" />
     <ClCompile Include="Src\Pages\PreviewPanel.cppm" />
+    <ClCompile Include="Src\Pages\SizesPage.cpp" />
+    <ClCompile Include="Src\Pages\SizesPage.cppm" />
     <ClCompile Include="Src\Pages\ThemePage.cpp" />
     <ClCompile Include="Src\Pages\ThemePage.cppm" />
     <ClCompile Include="Src\Pages\WithPreview.cppm" />

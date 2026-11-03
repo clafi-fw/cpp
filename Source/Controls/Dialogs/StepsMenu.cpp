@@ -21,8 +21,7 @@ namespace ClaFi::Controls
         StepsMenuForm{
             // The same window as a menu: the pointer and the focus, never the activation.
             owner.appContext(), WindowRole::Menu, &owner,
-            owner.themeMetrics().secondaryWindow,
-            owner.themeMetrics().secondaryWindowShadow,
+            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             ClickTarget::Self,
             MouseFocus::Keep,

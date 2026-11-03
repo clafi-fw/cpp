@@ -30,6 +30,7 @@ import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -67,7 +68,7 @@ namespace ClaFi::Tools::WhatsClip
             TextFormat{ k_readoutStyle },
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center,
-            themeMetrics().button,
+            MetricsSet::Button,
             UiElement::Button,
             OnEvent{ [this](ClickEvent&) {
                 openEditor(m_colorReadout);

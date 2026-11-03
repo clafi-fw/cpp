@@ -154,8 +154,13 @@ namespace ClaFi
         void nestedControlDeleted(Control*) override;
         // Where this is the top layer, the form keeps the content control the focus comes from.
         void nestedControlFocusing(FocusEvent&) override;
+        void themeMetricsChanged() override;
+    private:
+        // The shadow of the window set the root is sized by, unless it was given one of its own.
+        void takeSetShadow(const ThemeMetrics&);
     private:
         FormBase& m_form;
+        bool m_windowShadowStated; // whether the root was given a WindowShadow of its own
     };
 
     export template<typename ControlClass>
@@ -490,6 +495,9 @@ namespace ClaFi
         void paintShadow(const FloatRect& dirtyRect, bool cornerPass);
         void scaleFactorChanged(ScaleFactorChangeEvent&);
         void themeSwitched(ThemeSwitchEvent&);
+        void themeMetricsSwitched(ThemeMetricsSwitchEvent&);
+        // Tells the control and every control under it that the theme's sizes have moved.
+        static void tellThemeMetricsChanged(Control&);
         void backendSwitched(BackendSwitchEvent&);
         void scaleSwitched(ScaleSwitchEvent&);
         void inputSwitched(InputSwitchEvent&);
@@ -616,6 +624,7 @@ namespace ClaFi
         Graphics::Canvas m_canvas;
         FormContext m_context;
         ScopedEventConnection m_themeSwitchConnection;
+        ScopedEventConnection m_themeMetricsSwitchConnection;
         ScopedEventConnection m_backendSwitchConnection;
         ScopedEventConnection m_scaleSwitchConnection;
         ScopedEventConnection m_inputSwitchConnection;
@@ -748,8 +757,10 @@ namespace ClaFi
         :
         RichControl{ params, std::forward<Args>(args)... },
         INIT_PROPERTY(windowShadow),
-        m_form{ params.form }
+        m_form{ params.form },
+        m_windowShadowStated{ (std::same_as<std::decay_t<Args>, WindowShadow> || ...) }
     {
+        takeSetShadow(params.themeMetrics());
     }
 
     template<ClassOfFormControl ControlClass, typename... Args>

@@ -3,6 +3,7 @@ module;
 export module ClaFi.Controls.CheckBox;
 
 import ClaFi.Controls.Base.ButtonBase;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.Foundation;
@@ -24,7 +25,7 @@ namespace ClaFi::Controls
                 NavigationReach::Yes,
                 MouseFocus::Self,
                 ClickTarget::Self,
-                params.themeMetrics().listItem,
+                MetricsSet::ListItem,
                 std::forward<Args>(args)...
             }
         {}

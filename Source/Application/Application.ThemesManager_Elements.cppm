@@ -3,7 +3,8 @@
 //
 // **What a theme is made of, stated once.** Every element a theme colours, the
 // three spellings it goes by, what it is painted on, and for the elements
-// an ink names, the ThemeColors member holding that effect.
+// an ink names, the ThemeColors member holding that effect - and every set of
+// sizes a theme states, with the three spellings it goes by.
 //
 // Four readers share it and none keeps a list of its own: the serializers
 // build their field tuples from this table, the Themes app names its pages
@@ -15,6 +16,7 @@ export module ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
@@ -223,6 +225,63 @@ namespace ClaFi
     export constexpr const UiElementDescriptor& uiElementOf(UiElement element)
     {
         return k_uiElements[static_cast<std::size_t>(element)];
+    }
+
+    // The spellings one set of sizes goes by. See Application
+    export struct MetricsSetDescriptor
+    {
+        std::wstring_view name{};
+        std::wstring_view codeName{};
+        std::wstring_view token{};
+    };
+
+    // Indexed by MetricsSet, so it and this table must stay in step.
+    export constexpr std::array<MetricsSetDescriptor, k_metricsSetCount> k_metricsSets{
+        MetricsSetDescriptor{ .name = L"Button", .codeName = L"button", .token = L"Button" },
+        MetricsSetDescriptor{
+            .name = L"Tool Button",
+            .codeName = L"toolButton",
+            .token = L"ToolButton"
+        },
+        MetricsSetDescriptor{
+            .name = L"Dialog Title",
+            .codeName = L"dialogTitle",
+            .token = L"DialogTitle"
+        },
+        MetricsSetDescriptor{
+            .name = L"Primary Window",
+            .codeName = L"primaryWindow",
+            .token = L"PrimaryWindow"
+        },
+        MetricsSetDescriptor{
+            .name = L"Secondary Window",
+            .codeName = L"secondaryWindow",
+            .token = L"SecondaryWindow"
+        },
+        MetricsSetDescriptor{ .name = L"Page", .codeName = L"page", .token = L"Page" },
+        MetricsSetDescriptor{
+            .name = L"Check Mark",
+            .codeName = L"checkMark",
+            .token = L"CheckMark"
+        },
+        MetricsSetDescriptor{ .name = L"List Item", .codeName = L"listItem", .token = L"ListItem" },
+        MetricsSetDescriptor{ .name = L"Grid Cell", .codeName = L"gridCell", .token = L"GridCell" },
+        MetricsSetDescriptor{
+            .name = L"Scroll Button",
+            .codeName = L"scrollButton",
+            .token = L"ScrollButton"
+        },
+        MetricsSetDescriptor{
+            .name = L"Scroll Thumb",
+            .codeName = L"scrollThumb",
+            .token = L"ScrollThumb"
+        },
+        MetricsSetDescriptor{ .name = L"Tab", .codeName = L"tab", .token = L"Tab" }
+    };
+
+    export constexpr const MetricsSetDescriptor& metricsSetOf(MetricsSet set)
+    {
+        return k_metricsSets[static_cast<std::size_t>(set)];
     }
 
     // A theme as the paint path reads it, in the mode it is worn in. The walk is this table, so

@@ -104,7 +104,7 @@ namespace ClaFi
         onDrawItemIcon([this](DrawItemIconEvent& event) {
             drawThemeIcon(event, entryOf(event.item()).theme->colors);
         });
-        // **Tried on, not stated.** The colours are taken directly rather than through the config
+        // **Tried on, not stated.** The theme is taken directly rather than through the config
         // node, so nothing is written for a theme the user is only looking at.
         onPreviewItem([this](PreviewItemEvent& event) {
             applyTheme(appContext(), *entryOf(event.item()).theme);

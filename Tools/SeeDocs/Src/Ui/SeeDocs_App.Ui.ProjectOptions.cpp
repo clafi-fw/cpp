@@ -22,6 +22,7 @@ import ClaFi.Icons.MessageIcons;
 import ClaFi.Icons.XMark;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -399,7 +400,7 @@ namespace SeeDocs_App::Ui
             :
             Grids::Grid{
                 params,
-                params.themeMetrics().page,
+                MetricsSet::Page,
                 FocusScope::No,
                 NavigationReach::No,
                 MouseFocus::Parent,

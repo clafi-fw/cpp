@@ -26,6 +26,7 @@ import ClaFi.Core.Transfer.Source;
 import ClaFi.Core.Transfer.Formats;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
@@ -320,8 +321,7 @@ namespace ClaFi
             appContext,
             nullptr,
             HostProps{
-                appContext.themeMetrics().primaryWindow,
-                appContext.themeMetrics().primaryWindowShadow,
+                MetricsSet::PrimaryWindow,
                 UiElement::Section,
                 // Wide enough for the FPS page's four reading columns with their units - see FpsPage. The
                 // height is the first run's; from then on the window is what the user left it.

@@ -634,8 +634,7 @@ namespace ClaFi::Controls
     FineSliderPopup::FineSliderPopup(const CreateParams& params, Slider& owner, SlotSpan span)
         :
         Panel{ params,
-            params.themeMetrics().secondaryWindow,
-            params.themeMetrics().secondaryWindowShadow,
+            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             Padding{ k_padding }
         },

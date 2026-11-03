@@ -24,6 +24,7 @@ import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
@@ -70,7 +71,7 @@ namespace SeeDocs_App::Ui
         :
         SplitButton{
             params,
-            params.themeMetrics().button,
+            MetricsSet::Button,
             UiElement::Button,
             std::forward<Args>(args)...
         },

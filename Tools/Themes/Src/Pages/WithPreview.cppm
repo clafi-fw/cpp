@@ -25,6 +25,7 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.TextEngine.Text;
@@ -122,7 +123,7 @@ namespace Themes_App
         ) };
 
         PreviewPanel& m_previewPanel{ this->template createRightBar<PreviewPanel>(
-            this->themeMetrics().page,
+            MetricsSet::Page,
             UiElement::Page
         ) };
     };

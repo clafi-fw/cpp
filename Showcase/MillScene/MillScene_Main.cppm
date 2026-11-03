@@ -27,6 +27,7 @@ import ClaFi.Icons.DotMark;
 import ClaFi.Core.Context.DrawIconEvent;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
@@ -521,8 +522,7 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
     int runMillSceneShowcase(ApplicationBase& application)
     {
         const auto form = application.createDialog<MillSceneForm>(
-            application.metrics().primaryWindow,
-            application.metrics().primaryWindowShadow,
+            MetricsSet::PrimaryWindow,
             MinSize{ k_minWindowWidth / 2.0f, k_minWindowHeight / 2.0f },
             PreferredSize{ k_minWindowWidth, k_minWindowHeight }
         );

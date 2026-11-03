@@ -149,7 +149,7 @@ namespace ClaFi::Documents
             params,
             // Not a tool, so not a ToolButton - but it wears the same look, and the element and
             // the metrics are the whole of that look.
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             IndicatorVisibility::Hover,

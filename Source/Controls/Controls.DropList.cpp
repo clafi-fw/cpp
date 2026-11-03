@@ -40,7 +40,7 @@ namespace ClaFi::Controls
         :
         Button{ params,
             // The look of a dropdown's line: no surface at rest, and the current row on its own.
-            params.themeMetrics().toolButton,
+            MetricsSet::ToolButton,
             UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             HorizontalTextAnchor::Left,
@@ -452,8 +452,7 @@ namespace ClaFi::Controls
             WindowRole::Menu,
             &m_target,
             HostProps{
-                metrics.secondaryWindow,
-                metrics.secondaryWindowShadow,
+                MetricsSet::SecondaryWindow,
                 UiElement::Section,
                 // A list taller than its room scrolls - see ComboBox::showDropdown.
                 ScrollBars::Auto,

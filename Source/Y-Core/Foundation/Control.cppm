@@ -1262,6 +1262,8 @@ namespace ClaFi
         virtual void focusChanged() {}
         // The device, the window's focus or Always show focus has moved. See Control-Foundation
         virtual void inputContextChanged() {}
+        // The theme's sizes have moved. See Control-Foundation
+        virtual void themeMetricsChanged() {}
         virtual void sizeChanged();
         void setScaledPosition(ScaledPosition);
         void setScaledSize(ScaledSize);

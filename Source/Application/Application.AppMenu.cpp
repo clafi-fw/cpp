@@ -21,6 +21,7 @@ import ClaFi.Icons.GearIcon;
 import ClaFi.Icons.InformationIcon;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
 
@@ -164,8 +165,7 @@ namespace ClaFi
         // reaches nothing.
         TabbedBox{
             params,
-            params.themeMetrics().secondaryWindow,
-            params.themeMetrics().secondaryWindowShadow,
+            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             TabsOrientation::VerticalLeft,
             // TabLineThickness{ Thickness::Bold },

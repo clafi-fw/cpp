@@ -13,6 +13,7 @@ import ClaFi.Controls.Stack;
 import ClaFi.Icons.RestartIcon;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 
@@ -138,7 +139,7 @@ namespace ClaFi::Diagnostic
         // The Value column moves for the size alone, and the words beside it cost nothing to
         // shape with it.
         m_windowGrid{ body().add<Grid>(
-            themeMetrics().page,
+            MetricsSet::Page,
             UiElement::Section,
             GridLines::Horizontal,
             OnEvent{ [this](GetCellTooltipEvent& event) {
@@ -160,7 +161,7 @@ namespace ClaFi::Diagnostic
         // The three small readings sit against the middle of the Stats cell, which is two
         // lines tall and makes every row its height.
         m_metricsGrid{ body().add<Grid>(
-            themeMetrics().page,
+            MetricsSet::Page,
             UiElement::Section,
             GridLines::Horizontal,
             OnEvent{ [this](GetCellTooltipEvent& event) {
