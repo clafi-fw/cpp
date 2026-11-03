@@ -915,7 +915,7 @@ namespace ClaFi::Graphics
     }
 
     void Canvas::fillEdgeIndicator(const RoundedRectangleParts& shape, RectSide side,
-        float thickness, Color color, float lengthFactor)
+        float thickness, Color color, Color tipColor, float lengthFactor)
     {
         if (lengthFactor <= 0.0f || thickness <= 0.0f)
             return;
@@ -1001,6 +1001,22 @@ namespace ClaFi::Graphics
             onSide(0.0f, thickness + startArcRadius));
         band.close();
 
+        // Each corner grades from where the band leaves the side to its tip. Both take their
+        // length from the larger arc, so the two corners grade alike.
+        const float gradientArcRadius = std::max(startArcRadius, endArcRadius);
+        const LinearGradient startCornerGradient = LinearGradient::Simple(
+            onSide(gradientArcRadius, 0.0f),
+            onSide(0.0f, thickness + gradientArcRadius),
+            color,
+            tipColor
+        );
+        const LinearGradient endCornerGradient = LinearGradient::Simple(
+            onSide(sideLength - gradientArcRadius, 0.0f),
+            onSide(sideLength, thickness + gradientArcRadius),
+            color,
+            tipColor
+        );
+
         const bool sideIsHorizontal = side == RectSide::Top || side == RectSide::Bottom;
         const float endInset = sideLength * (1.0f - lengthFactor) / 2.0f;
         FloatRect lengthClip = bounds;
@@ -1009,8 +1025,32 @@ namespace ClaFi::Graphics
         else
             lengthClip.inflateY(-endInset);
 
-        pushClip(lengthClip);
-        fillPath(band, color);
+        // Each corner's gradient fills its half of the band. The halves meet on a whole pixel, so
+        // neither backend paints the column between them twice or by half. A transform that
+        // scales or shifts by part of a pixel takes that pixel off the grid.
+        const FloatPoint sideMiddle = onSide(sideLength / 2.0f, 0.0f);
+        FloatRect startHalf = lengthClip;
+        FloatRect endHalf = lengthClip;
+        if (sideIsHorizontal)
+        {
+            const float splitX = std::clamp(std::floor(sideMiddle.x), lengthClip.left,
+                lengthClip.right);
+            startHalf.right = splitX;
+            endHalf.left = splitX;
+        }
+        else
+        {
+            const float splitY = std::clamp(std::floor(sideMiddle.y), lengthClip.top,
+                lengthClip.bottom);
+            startHalf.bottom = splitY;
+            endHalf.top = splitY;
+        }
+
+        pushClip(startHalf);
+        fillPath(band, startCornerGradient);
+        popClip();
+        pushClip(endHalf);
+        fillPath(band, endCornerGradient);
         popClip();
     }
 

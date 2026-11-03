@@ -100,6 +100,7 @@ namespace ClaFi::Controls
         void editModeKeyDown(KeyDownEvent&) override;
         void editModeEntered(EditModeEntry) override;   // keeps the position Escape puts back
         void editModeLeft(bool accepted) override;
+        [[nodiscard]] bool mousePressEntersEditMode() const override { return false; }
         // In edit mode the thumb is current, and hot while the keys are on it. See Controls-Base
         void adjustNestedControlVisualState(const Control&, VisualState&) const override;
         void inputContextChanged() override;   // re-reads the thumb, whose hot carries the device
@@ -120,8 +121,8 @@ namespace ClaFi::Controls
         void paintThumb(PaintEvent& pp) override;
         void paintThumbFrame(PaintEvent&) override;
         void paintSurface(PaintEvent&) override;
-        // A slider draws its slot and no outline, and the edit mode's indicator all the same.
-        void paintFrame(PaintEvent& event) override { paintEditModeIndicator(event); }
+        // A slider draws its slot and no outline; the edit mode's indicator fades out at its tips.
+        void paintFrame(PaintEvent&) override;
         void paintSlotBorder(PaintEvent&, FloatRect, float radius);
 
         virtual Color thumbColor(PaintEvent&, FloatPoint&);
@@ -462,6 +463,11 @@ namespace ClaFi::Controls
         }
 
         paintSlot(pp, slotRect, SlotSpan{});
+    }
+
+    void Slider::paintFrame(PaintEvent& event)
+    {
+        paintEditModeIndicator(event, event.indicatorRgb().withOpacity(0.0f));
     }
 
     void Slider::paintSlotBorder(PaintEvent& event, FloatRect slotRect, float radius)

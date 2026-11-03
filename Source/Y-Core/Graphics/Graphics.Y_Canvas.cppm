@@ -110,7 +110,7 @@ namespace ClaFi::Graphics
         void fadeEdge(const FloatRect& rect, const CornerRadii& radii, RectSide side, float fadeSize, Color opaqueColor);
         // A band along one side of the shape, wrapped round its corners. See Graphics-Types
         void fillEdgeIndicator(const RoundedRectangleParts& shape, RectSide side, float thickness,
-            Color, float lengthFactor = 1.0f);
+            Color, Color tipColor, float lengthFactor = 1.0f);
 
         // --- Software Rendering & Bitmap Drawing ---
         // Handing out a raw pixel buffer is an escape hatch from the canvas, so whatever the caller

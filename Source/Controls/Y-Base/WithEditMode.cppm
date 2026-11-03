@@ -59,10 +59,12 @@ namespace ClaFi::Controls
         virtual void editModeLeft(bool /*accepted*/) {}
         // Whether Return is a line break the host types, which the mode then leaves to it.
         [[nodiscard]] virtual bool takesLineBreaks() const { return false; }
+        // Whether a mouse press turns the mode on - yes where it places a caret, no where it drags.
+        [[nodiscard]] virtual bool mousePressEntersEditMode() const { return true; }
         void adjustPaint(AdjustPaintEvent&) override;
         void paintFrame(PaintEvent&) override;
-        // The mode's indicator on the left edge. A host overriding paintFrame calls it there.
-        void paintEditModeIndicator(PaintEvent&);
+        // The mode's indicator, its tips in tipColor. A host overriding paintFrame calls it there.
+        void paintEditModeIndicator(PaintEvent&, Color tipColor);
         void nestedKeyDown(KeyDownEvent&) override;
         void charPress(CharPressEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
@@ -119,20 +121,22 @@ namespace ClaFi::Controls
     void WithEditMode<HostClass>::paintFrame(PaintEvent& event)
     {
         HostClass::paintFrame(event);
-        paintEditModeIndicator(event);
+        paintEditModeIndicator(event, event.strokeRgb());
     }
 
     // As deep as an open tab's indicator: twice the border.
     template <IsControl HostClass>
-    void WithEditMode<HostClass>::paintEditModeIndicator(PaintEvent& event)
+    void WithEditMode<HostClass>::paintEditModeIndicator(PaintEvent& event, const Color tipColor)
     {
         if (m_editModeIndicatorFactor <= 0.0f)
             return;
+        const float tipOpacity = tipColor.alpha / 255.0f * m_editModeIndicatorFactor;
         event.canvas().fillEdgeIndicator(
             { .bounds = event.controlBounds(), .radii = event.cornerRadii() },
             RectSide::Bottom,
             2.0f * event.scaledStrokeWidth(ThemeMetrics::border) * m_editModeIndicatorFactor,
             event.indicatorRgb().withOpacity(m_editModeIndicatorFactor),
+            tipColor.withOpacity(tipOpacity),
             1.0f
         );
     }
@@ -193,12 +197,13 @@ namespace ClaFi::Controls
         HostClass::charPress(event);
     }
 
-    // A press is the pointer's Return.
+    // A mouse press is the pointer's Return, for a host that takes it as one.
     template <IsControl HostClass>
     void WithEditMode<HostClass>::nestedPressDown(PressDownEvent& event)
     {
         HostClass::nestedPressDown(event);
-        enterEditMode(EditModeEntry::Press);
+        if (mousePressEntersEditMode())
+            enterEditMode(EditModeEntry::Press);
     }
 
     // A menu on the control is about what the mode shows. A host that answers the request ahead

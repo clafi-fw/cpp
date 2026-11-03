@@ -181,6 +181,7 @@ namespace ClaFi::Graphics
             peakSide,
             geometry.indicatorHeight,
             colors.indicator,
+            colors.tabLine,
             colors.indicatorFactor
         );
     }

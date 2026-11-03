@@ -82,7 +82,8 @@ namespace ClaFi::Controls
             { .bounds = event.controlBounds(), .radii = event.cornerRadii() },
             RectSide::Left,
             event.scaleF(k_stripeWidth),
-            event.inkRgb(stripeInk(m_icon))
+            event.inkRgb(stripeInk(m_icon)),
+            event.strokeRgb()
         );
     }
 }

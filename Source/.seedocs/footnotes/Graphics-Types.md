@@ -110,6 +110,12 @@ corner. A square corner takes the thickness, so the band still wraps it.
 **Draw it after the outline.** The band starts at the shape's outer edge, so drawn last it covers
 the outline along that side, as a tab's indicator covers the tab line.
 
+**Round each corner the colour turns to tipColor.** Each corner grades from where the band leaves
+the side to its tip, and the tip stands in tipColor. Passed the outline's own colour, the band runs
+out into the outline; passed its own colour at no opacity, it fades out. Both corners take their
+gradient's length from the larger arc, so a corner tighter than the other stops a little short of
+tipColor at its tip.
+
 **As the thickness falls the arcs close in on the corners**, so a band whose thickness is
 animated thins away whole.
 

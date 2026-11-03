@@ -143,14 +143,19 @@ control tree.
 
 **Outside the mode the control is an item of the page it stands on.** The keys travel past it to
 the page - the arrows, Home, End, the page keys - and the mode's own look is off. Return, with no
-modifier, a press or a menu asked on the control turns the mode on; Escape and the focus leaving
-turn it off, and so does EditMode::No from code. A popup opened on the control - an edit menu, a
-link's menu - takes the focus for a while and keeps the mode up.
+modifier, a mouse press or a menu asked on the control turns the mode on; Escape and the focus
+leaving turn it off, and so does EditMode::No from code. A popup opened on the control - an edit
+menu, a link's menu - takes the focus for a while and keeps the mode up.
 
-**The mode is shown by an indicator on the control's left edge**, in place of its ring. It grows
-from the middle of the edge as the mode turns on, drawn over the frame, and the ring gives way by
-as much - see AdjustPaintEvent replaceRing. A control under EditModeSwitching::No is in the mode
-throughout and wears its ring.
+**A slider's mouse press leaves the mode off** - see WithEditMode mousePressEntersEditMode. The
+press drags the thumb, and the drag settles as one step when the button comes up. Return turns
+the mode on for the keys.
+
+**The mode is shown by an indicator along the control's bottom edge**, in place of its ring. It
+thickens and fades in as the mode turns on, drawn over the frame, and the ring gives way by as
+much - see AdjustPaintEvent replaceRing. Its tips run out into the frame's stroke, and fade out on
+a slider, which draws no frame. A control under EditModeSwitching::No is in the mode throughout
+and wears its ring.
 
 **A slider's thumb is current while the mode is on**, and hot while the keys drive it in a focused
 window - the looks of a focused control, on the part the keys move.
