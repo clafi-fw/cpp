@@ -184,7 +184,10 @@ namespace ClaFi
         ScrollButton,
         ScrollThumb,
         InfoCallout,
+        QuestionCallout,
         WarningCallout,
+        ErrorCallout,
+        OkCallout,
         Do,         // the side of a Do and Don't block that shows what to do
         Dont,       // the side that shows what not to do
         CodeBlock,
@@ -205,14 +208,37 @@ namespace ClaFi
             case UiElement::WarningCallout:
                 return Pigment::Yellow;
             case UiElement::InfoCallout:
+            case UiElement::QuestionCallout:
                 return Pigment::Blue;
+            case UiElement::OkCallout:
             case UiElement::Do:
                 return Pigment::Green;
+            case UiElement::ErrorCallout:
             case UiElement::Dont:
                 return Pigment::Red;
             default:
                 return std::nullopt;
         }
+    }
+
+    // The callout element a note of this kind wears. A note naming no kind is information.
+    export [[nodiscard]] constexpr UiElement calloutElementOf(MessageIcon kind)
+    {
+        switch (kind)
+        {
+            case MessageIcon::Question:
+                return UiElement::QuestionCallout;
+            case MessageIcon::Warning:
+                return UiElement::WarningCallout;
+            case MessageIcon::Error:
+                return UiElement::ErrorCallout;
+            case MessageIcon::Ok:
+                return UiElement::OkCallout;
+            case MessageIcon::None:
+            case MessageIcon::Information:
+                break;
+        }
+        return UiElement::InfoCallout;
     }
 
     // What a colour rule reads.
@@ -224,6 +250,7 @@ namespace ClaFi
         Selected,
         Disabled,       // the enabled factor turned over
         Current,        // the control wears a ring: a container's current item, or the keys' focus
+        Edit,           // the control is in edit mode - see Control editFactor
         WindowFocused,  // the focus of the form the control stands in
         Count
     };
@@ -264,11 +291,12 @@ namespace ClaFi
         std::uint32_t m_bits{ 0u };
     };
 
-    // Where a rule writes. A stroke starts at the control's own surface, the rest at the parent's.
+    // Where a rule writes, each channel starting from a colour of its own. See AppTheme
     export enum class PaintChannel
     {
         Surface,
         Stroke,
+        Band,   // the band a control draws along one edge. See AppTheme#controlmetrics-band
         Text,
         Shadow,
         Count
@@ -344,8 +372,8 @@ namespace ClaFi
         // palette's accent hue - the same one a button under the pointer moves toward, so an icon
         // drawn in it belongs to the family of the controls around it - and it is equally the
         // active state of every mark: a text caret, a hot link, the band a StackView draws behind a
-        // selected item, the focus ring while the user is on the control, and the indicator under
-        // an open tab. A check and a radio dot state their own on colour - see SelectionIndicator.
+        // selected item, and the focus ring while the user is on the control. A check and a radio
+        // dot state their own on colour - see SelectionIndicator.
         ColorEffect accent{};
 
         // The second accent, over the palette's third hue: what stands apart from the interface

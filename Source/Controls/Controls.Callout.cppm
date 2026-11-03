@@ -15,13 +15,6 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    // What a callout says it is, which picks its colours and its mark.
-    export enum class CalloutKind
-    {
-        Info,
-        Warning
-    };
-
     // What a callout lays out with its blocks. See Controls#calloutshape
     export enum class CalloutShape
     {
@@ -30,12 +23,6 @@ namespace ClaFi::Controls
         Plain   // the blocks alone
     };
 
-    // The element a callout of the kind wears.
-    export [[nodiscard]] constexpr UiElement calloutElementOf(CalloutKind kind)
-    {
-        return kind == CalloutKind::Warning ? UiElement::WarningCallout : UiElement::InfoCallout;
-    }
-
     // A note set apart from the prose around it, holding blocks of its own. See Controls#callout
     export class Callout : public PanelBase
     {
@@ -43,7 +30,8 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit Callout(const CreateParams&, Args&&...);
     public:
-        DECLARE_PROPERTY(CalloutKind, kind, CalloutKind::Info) // what the callout says it is
+        // What the callout says it is, which picks its colours and its mark.
+        DECLARE_PROPERTY(MessageIcon, kind, MessageIcon::Information)
         // What the callout lays out with its blocks.
         DECLARE_PROPERTY(CalloutShape, shape, CalloutShape::Marked)
     public:
@@ -52,11 +40,12 @@ namespace ClaFi::Controls
         [[nodiscard]] StackPanel& blocks() { return m_blocks; }
     protected:
         void adjustChildMetrics(AdjustMetricsEvent&) const override;
+        void paintFrame(PaintEvent&) override;
     private:
         // The mark in a bar of its own or leading the banner, as the shape says.
         void addMark();
     private:
-        static constexpr float k_markSize = 18.0f;
+        static constexpr float k_markSize = 20.0f; // a message bar's icon size
         StackPanel& m_blocks;
     };
 
@@ -71,7 +60,7 @@ namespace ClaFi::Controls
             params,
             MetricsSet::Callout,
             // The kind, read ahead of its property, picks the element the callout wears.
-            calloutElementOf(READ_PROPERTY(CalloutKind, CalloutKind::Info)),
+            calloutElementOf(READ_PROPERTY(MessageIcon, MessageIcon::Information)),
             std::forward<Args>(args)...
         },
         INIT_PROPERTY(kind),

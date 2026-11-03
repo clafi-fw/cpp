@@ -177,7 +177,7 @@ namespace ClaFi
     }
 
     // Levels of zero leave only the resting rules, so the control's own state does not reach the
-    // caret, the focus ring or a tab's indicator.
+    // caret or the focus ring.
     Color ControlPaintContext::indicatorRgb() const
     {
         Hsl result = surfaceHsl;

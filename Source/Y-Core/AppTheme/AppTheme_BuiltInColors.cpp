@@ -85,6 +85,15 @@ namespace ClaFi
                     { ColorRuleOp::Set, 0.817269f },        // S
                     { ColorRuleOp::Set, 0.65880865f }       // E
                 }
+            },
+            ColorRule{
+                .inputs{ RuleInput::Edit },
+                .output = PaintChannel::Band,
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Set, 1.0f },             // S
+                    { ColorRuleOp::Set, 0.544542f }         // E
+                }
             }
         };
 
@@ -122,6 +131,15 @@ namespace ClaFi
                     { ColorRuleHueOp::NoChange, 0.928767f }, // H
                     { ColorRuleOp::NoChange, 0.490111f },   // S
                     { ColorRuleOp::Offset, 0.10240966f }    // E
+                }
+            },
+            ColorRule{
+                .inputs{ RuleInput::Selected },
+                .output = PaintChannel::Band,
+                .effect{
+                    { ColorRuleHueOp::PaletteColor2 },      // H
+                    { ColorRuleOp::Set, 1.0f },             // S
+                    { ColorRuleOp::Set, 0.544542f }         // E
                 }
             }
         };
@@ -517,15 +535,31 @@ namespace ClaFi
         rules.of(UiElement::InfoCallout) = {
             ColorRule{
                 .effect{
-                    { ColorRuleOp::Set, 0.5f },             // S
-                    { ColorRuleOp::Offset, 0.05f }          // E
+                    { ColorRuleOp::Set, 0.12f },            // S
+                    { ColorRuleOp::Set, 0.054f }            // E
                 }
             },
             ColorRule{
-                .output = PaintChannel::Stroke,
+                .output = PaintChannel::Band,
                 .effect{
-                    { ColorRuleOp::Set, 0.8f },             // S
-                    { ColorRuleOp::Offset, 0.35f }          // E
+                    { ColorRuleOp::Set, 0.85f },            // S
+                    { ColorRuleOp::Set, 0.6f }              // E
+                }
+            }
+        };
+
+        rules.of(UiElement::QuestionCallout) = {
+            ColorRule{
+                .effect{
+                    { ColorRuleOp::Set, 0.12f },            // S
+                    { ColorRuleOp::Set, 0.054f }            // E
+                }
+            },
+            ColorRule{
+                .output = PaintChannel::Band,
+                .effect{
+                    { ColorRuleOp::Set, 0.85f },            // S
+                    { ColorRuleOp::Set, 0.6f }              // E
                 }
             }
         };
@@ -533,15 +567,47 @@ namespace ClaFi
         rules.of(UiElement::WarningCallout) = {
             ColorRule{
                 .effect{
-                    { ColorRuleOp::Set, 0.5f },             // S
-                    { ColorRuleOp::Offset, 0.05f }          // E
+                    { ColorRuleOp::Set, 0.12f },            // S
+                    { ColorRuleOp::Set, 0.054f }            // E
                 }
             },
             ColorRule{
-                .output = PaintChannel::Stroke,
+                .output = PaintChannel::Band,
                 .effect{
-                    { ColorRuleOp::Set, 0.8f },             // S
-                    { ColorRuleOp::Offset, 0.35f }          // E
+                    { ColorRuleOp::Set, 0.85f },            // S
+                    { ColorRuleOp::Set, 0.6f }              // E
+                }
+            }
+        };
+
+        rules.of(UiElement::ErrorCallout) = {
+            ColorRule{
+                .effect{
+                    { ColorRuleOp::Set, 0.12f },            // S
+                    { ColorRuleOp::Set, 0.054f }            // E
+                }
+            },
+            ColorRule{
+                .output = PaintChannel::Band,
+                .effect{
+                    { ColorRuleOp::Set, 0.85f },            // S
+                    { ColorRuleOp::Set, 0.6f }              // E
+                }
+            }
+        };
+
+        rules.of(UiElement::OkCallout) = {
+            ColorRule{
+                .effect{
+                    { ColorRuleOp::Set, 0.12f },            // S
+                    { ColorRuleOp::Set, 0.054f }            // E
+                }
+            },
+            ColorRule{
+                .output = PaintChannel::Band,
+                .effect{
+                    { ColorRuleOp::Set, 0.85f },            // S
+                    { ColorRuleOp::Set, 0.6f }              // E
                 }
             }
         };
@@ -586,7 +652,7 @@ namespace ClaFi
                 }
             },
             ColorRule{
-                .output = PaintChannel::Stroke,
+                .output = PaintChannel::Band,
                 .effect{
                     {},                                     // S
                     { ColorRuleOp::Offset, 0.12f }          // E

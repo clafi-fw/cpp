@@ -139,6 +139,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Callout.cppm">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBlock.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBlock.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CheckBox.cppm">
       <Filter>Controls</Filter>
     </ClCompile>

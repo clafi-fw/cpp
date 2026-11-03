@@ -154,6 +154,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.MessageBar.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Callout.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Callout.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBlock.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CodeBlock.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.DoDont.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.DoDont.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.SearchBox.cppm" />

@@ -109,6 +109,7 @@ namespace ClaFi // AppTheme serializers
             L"Selected",
             L"Disabled",
             L"Current",
+            L"Edit",
             L"WindowFocused"
         };
 
@@ -119,6 +120,7 @@ namespace ClaFi // AppTheme serializers
         return std::array{
             L"Surface",
             L"Stroke",
+            L"Band",
             L"Text",
             L"Shadow",
         };

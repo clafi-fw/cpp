@@ -114,7 +114,7 @@ namespace ClaFi
             AdjustMetricsEvent event{ formContext(), control, metrics };
             control.doAdjustMetrics(event);
             m_borderWidth = scaler().scaledStrokeWidth(metrics.border);
-            m_bandWidth = scaleF(metrics.band);
+            m_bandWidth = scaler().scaleBorder(metrics.band);
             m_radius = scaleF(metrics.radius);
             m_spacing = scale(metrics.spacing);
             // Metrics say how much depth this control would take; the control says whether it takes
@@ -225,6 +225,7 @@ namespace ClaFi
                 selectedFactor,
                 1.0f - m_enabledFactor,
                 factors.current(),
+                control.editFactor(),
                 m_windowFocusedFactor
             };
             const float surfaceChanged = applyColorRules(PaintChannel::Surface, surface);
@@ -273,6 +274,17 @@ namespace ClaFi
                 m_strokeRgb = stroke.toColor();
                 m_strokeRgb = disabledFormOf(m_strokeRgb, standsOn, disabledAmount());
                 m_strokeRgb.setOpacity(strokeChanged);
+            }
+
+            // Seeded the same way, and drawn only where a rule reaches: a control whose theme
+            // states no band draws none, whatever width its set gives it.
+            Hsl band = surface;
+            const float bandChanged = applyColorRules(PaintChannel::Band, band);
+            if (bandChanged > 0.0f)
+            {
+                m_bandRgb = band.toColor();
+                m_bandRgb = disabledFormOf(m_bandRgb, standsOn, disabledAmount());
+                m_bandRgb.setOpacity(bandChanged);
             }
 
             // Carried like the others, in the stroke's hue as far as no rule has named one. A
@@ -484,12 +496,18 @@ namespace ClaFi
             return;
 
         const Color color = strokeRgb();
-        if (!color.alpha)
+        const float strokeWidth = borderWidth();
+        if (!color.alpha || !strokeWidth)
             return;
-        if (const float strokeWidth = borderWidth())
-            canvas().drawPartialRoundedRectangle(shape, color, strokeWidth);
-        // After the border, over it along the side. See AppTheme#controlmetrics-band
-        canvas().fillEdgeIndicator(shape, RectSide::Left, m_bandWidth, color, color);
+
+        canvas().drawPartialRoundedRectangle(shape, color, strokeWidth);
+    }
+
+    // After the frame, which it covers along the edge.
+    void PaintEvent::paintBand(const RectSide side, const Color tipColor)
+    {
+        canvas().fillEdgeIndicator({ .bounds = controlBounds(), .radii = cornerRadii() }, side,
+            m_bandWidth, m_bandRgb, tipColor);
     }
 
     // Every event on the way to the root carries it, because which one reads it is not the

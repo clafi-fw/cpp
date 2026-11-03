@@ -789,6 +789,8 @@ namespace ClaFi
         float enabledFactor() const { return m_factors.enabled(); }
         float focusedFactor() const { return m_factors.focused(); }
         float currentFactor() const { return m_factors.current(); }
+        // How far the control is in edit mode. See Controls-Base#witheditmode
+        [[nodiscard]] virtual float editFactor() const { return 0.0f; }
         //
         void invalidateState(AnimationMode = AnimationMode::On);
         void invalidateChildrenStates();

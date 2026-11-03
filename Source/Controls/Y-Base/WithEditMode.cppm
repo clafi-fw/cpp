@@ -3,7 +3,6 @@ module;
 export module ClaFi.Controls.Base.WithEditMode;
 
 import ClaFi.Core.AppTheme_AnimationSlots;
-import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Animation;
@@ -50,6 +49,7 @@ namespace ClaFi::Controls
     public:
         void setEditMode(EditMode);
         [[nodiscard]] bool isInEditMode() const { return m_editMode == EditMode::Yes; }
+        [[nodiscard]] float editFactor() const override { return m_editModeIndicatorFactor; }
     protected:
         // The host's keys, asked in edit mode only and ahead of the mode's own answer.
         virtual void editModeKeyDown(KeyDownEvent&) {}
@@ -124,7 +124,7 @@ namespace ClaFi::Controls
         paintEditModeIndicator(event, event.strokeRgb());
     }
 
-    // As deep as an open tab's indicator: twice the border.
+    // The host's band, thickening as the mode turns on. See AppTheme#controlmetrics-band
     template <IsControl HostClass>
     void WithEditMode<HostClass>::paintEditModeIndicator(PaintEvent& event, const Color tipColor)
     {
@@ -134,8 +134,8 @@ namespace ClaFi::Controls
         event.canvas().fillEdgeIndicator(
             { .bounds = event.controlBounds(), .radii = event.cornerRadii() },
             RectSide::Bottom,
-            2.0f * event.scaledStrokeWidth(ThemeMetrics::border) * m_editModeIndicatorFactor,
-            event.indicatorRgb().withOpacity(m_editModeIndicatorFactor),
+            event.bandWidth() * m_editModeIndicatorFactor,
+            event.bandRgb(),
             tipColor.withOpacity(tipOpacity),
             1.0f
         );

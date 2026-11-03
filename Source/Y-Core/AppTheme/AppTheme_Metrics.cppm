@@ -59,7 +59,7 @@ namespace ClaFi
     public:
         Thickness border{};
         float radius{};
-        // The width of the line along the left edge, none at 0. See AppTheme
+        // The width of the band the control draws along one edge, none at 0. See AppTheme
         float band{};
         Padding padding{};
         Spacing spacing{};
@@ -128,6 +128,8 @@ namespace ClaFi
         Callout,
         DoDont,
         CodeBlock,
+        TextBox,
+        Slider,
         Count
     };
 
@@ -186,9 +188,11 @@ namespace ClaFi
         ControlMetrics scrollButton;
         ControlMetrics scrollThumb;
         ControlMetrics tab;
-        ControlMetrics callout; // spacing across beside the mark, down between the blocks
+        ControlMetrics callout; // spacing across beside the mark, down between what it holds
         ControlMetrics doDont; // spacing across between the sides, down between the items
         ControlMetrics codeBlock;
+        ControlMetrics textBox; // its band shows while the box is in edit mode
+        ControlMetrics slider; // its band shows while the slider is in edit mode
         // The set of this name.
         [[nodiscard]] const ControlMetrics& of(MetricsSet) const;
         [[nodiscard]] ControlMetrics& of(MetricsSet);
@@ -196,6 +200,15 @@ namespace ClaFi
         [[nodiscard]] static constexpr bool castsShadow(MetricsSet set)
         {
             return set == MetricsSet::PrimaryWindow || set == MetricsSet::SecondaryWindow;
+        }
+        // Whether a control sized by this set draws the band the set states. See AppTheme
+        [[nodiscard]] static constexpr bool drawsBand(MetricsSet set)
+        {
+            return set == MetricsSet::Tab
+                || set == MetricsSet::TextBox
+                || set == MetricsSet::Slider
+                || set == MetricsSet::Callout
+                || set == MetricsSet::CodeBlock;
         }
         // The shadow a window sized by this set casts, null where castsShadow says none.
         [[nodiscard]] const WindowShadow* shadowOf(MetricsSet) const;
@@ -222,7 +235,9 @@ namespace ClaFi
             &ThemeMetrics::tab,
             &ThemeMetrics::callout,
             &ThemeMetrics::doDont,
-            &ThemeMetrics::codeBlock
+            &ThemeMetrics::codeBlock,
+            &ThemeMetrics::textBox,
+            &ThemeMetrics::slider
         };
 
 
@@ -365,11 +380,14 @@ namespace ClaFi
         tab.spacing = { 4.0f, 4.0f };
         tab.radius = 4.0f;
         tab.padding = { 8.0f, 4.0f };
+        // The open tab's indicator, twice the tab line. Edit mode's band is as deep.
+        tab.band = 2.0f * strokeWidth(border);
 
         // callout
-        callout.radius = 6.0f;
-        callout.padding = { 12.0f, 10.0f };
-        callout.spacing = { 10.0f, 6.0f };
+        callout.band = 4.0f;
+        callout.radius = 4.0f;
+        callout.padding = { 16.0f, 12.0f };
+        callout.spacing = { 12.0f, 12.0f };
 
         // doDont
         doDont.radius = 6.0f;
@@ -379,6 +397,13 @@ namespace ClaFi
         // codeBlock
         codeBlock.radius = 6.0f;
         codeBlock.padding = { 12.0f, 10.0f };
+
+        // textBox
+        textBox.band = tab.band;
+
+        // slider
+        slider.band = tab.band;
+        slider.radius = listItem.radius; // rounded as a list item
 
         settle();
     }

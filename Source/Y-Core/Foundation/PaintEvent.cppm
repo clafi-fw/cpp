@@ -67,6 +67,7 @@ namespace ClaFi
         FloatRect centerRect(float x, float y) const { return m_context.centerRect(x, y); }
         FloatRect centerRect(float size) const { return m_context.centerRect(size); }
         float borderWidth() const { return m_borderWidth; }
+        float bandWidth() const { return m_bandWidth; } // the band the control's set states
         // The control's own radius, as a length. The corners it paints are cornerRadii(): a
         // corner a parent's arc reaches wears a radius concentric with the parent's, and a corner
         // the viewport cuts off is square - see inheritCornerRadii.
@@ -99,6 +100,7 @@ namespace ClaFi
         Hsl textHsl() const { return m_controlContext.textHsl; }
         Color surfaceRgb() const { return m_surfaceRgb; }
         Color strokeRgb() const { return m_strokeRgb; }
+        Color bandRgb() const { return m_bandRgb; } // its alpha is how far the band rules reach
         // The stroke this control's rules raise off another surface, its alpha how far they landed.
         [[nodiscard]] Color strokeRgbOn(Hsl surface) const;
         // What every check mark, radio mark and caret is filled with.
@@ -131,6 +133,8 @@ namespace ClaFi
         void paintChild(Control&) const;
         void defaultPaintSurface(const FloatInset& = {}); // inset in design units
         void defaultPaintFrame(const FloatInset& = {}); // inset in design units
+        // The set's band along one edge, round the corners there. See AppTheme#controlmetrics-band
+        void paintBand(RectSide, Color tipColor);
         bool overlayStage() const { return m_overlayStage; }
         const Control* overlayHost() const { return m_overlayHost; }
         // Whether this is the stage that paints the control itself. The surface, the text and
@@ -279,6 +283,7 @@ namespace ClaFi
         //
         Color m_surfaceRgb;
         Color m_strokeRgb{};
+        Color m_bandRgb{};
         Hsl m_shadowHsl{}; // the shadow channel, carried down the tree like the surface and the ink
         float m_shadowHueStated{ 0.0f }; // how far a rule has named the shadow's hue
         float m_selectedOnSurface{}; // the selection as the surface and the stroke read it

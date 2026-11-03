@@ -177,9 +177,9 @@ namespace ClaFi
             .token = L"HoverIndicator",
             .base = UiElement::Section
         },
-        // **Three things in one effect**: the theme's own emphasis, the ring on the control the
-        // user is on, and the indicator under an open tab. They are one colour on purpose - the
-        // interface says "this one" in a single ink - so they are edited as one row.
+        // **Two things in one effect**: the theme's own emphasis and the ring on the control the
+        // user is on. They are one colour on purpose - the interface says "this one" in a single
+        // ink - so they are edited as one row.
         UiElementDescriptor{
             .name = L"Accent",
             .codeName = L"accent",
@@ -206,8 +206,9 @@ namespace ClaFi
             .token = L"ScrollThumb",
             .base = UiElement::Section
         },
-        // **The blocks a page of prose holds**, each started from its seed pigment's hue - see
-        // seedPigmentOf. A band, a frame or a tint is the stroke and the surface they state.
+        // **A note set apart, one element for each kind of message** - a message bar, a notice, a
+        // callout in a page of prose - each started from its kind's pigment, as the sides of a Do
+        // and Don't block are - see seedPigmentOf. Its band is drawn in its stroke colour.
         UiElementDescriptor{
             .name = L"Info Callout",
             .codeName = L"infoCallout",
@@ -215,9 +216,27 @@ namespace ClaFi
             .base = UiElement::Section
         },
         UiElementDescriptor{
+            .name = L"Question Callout",
+            .codeName = L"questionCallout",
+            .token = L"QuestionCallout",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
             .name = L"Warning Callout",
             .codeName = L"warningCallout",
             .token = L"WarningCallout",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
+            .name = L"Error Callout",
+            .codeName = L"errorCallout",
+            .token = L"ErrorCallout",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
+            .name = L"Ok Callout",
+            .codeName = L"okCallout",
+            .token = L"OkCallout",
             .base = UiElement::Section
         },
         UiElementDescriptor{
@@ -319,7 +338,9 @@ namespace ClaFi
             .name = L"Code Block",
             .codeName = L"codeBlock",
             .token = L"CodeBlock"
-        }
+        },
+        MetricsSetDescriptor{ .name = L"Text Box", .codeName = L"textBox", .token = L"TextBox" },
+        MetricsSetDescriptor{ .name = L"Slider", .codeName = L"slider", .token = L"Slider" }
     };
 
     export constexpr const MetricsSetDescriptor& metricsSetOf(MetricsSet set)

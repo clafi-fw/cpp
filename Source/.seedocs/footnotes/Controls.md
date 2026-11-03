@@ -308,9 +308,12 @@ as in any TextBox - see LinkClickEvent.
 A band across the top of what it is about. **The page goes on while it shows** - an answer runs its
 handler, and the page hides the band once the question is settled.
 
-The icon sits in its own column, with a stripe of its colour down the left edge. The message wraps
-beside it, and the answers sit at the right end, each as wide as the widest. Only the answers take
-input.
+The icon sits in its own column, and the message wraps beside it. The answers sit at the right
+end, each as wide as the widest, and only they take input.
+
+**The bar is a callout to the theme**: it wears the Callout size set and the callout element of
+its icon - see calloutElementOf - so its surface, its band down the left edge and its padding are
+the theme's.
 
 **An answer names what the page does** - Read as text. It is a Button, and the arguments after the
 handler in addAnswer override the band's own - an icon for the caption, or MouseFocus::Keep to
@@ -809,12 +812,15 @@ the way an Expander takes its header.
 ## Callout
 
 **A callout holds blocks of its own** - paragraphs, list items, code - added to blocks() one under
-another, the set's spacing down apart. Its kind picks the element it wears, InfoCallout or
-WarningCallout, and its mark: the badge a message of that kind leads with.
+another, the set's spacing down apart. Its kind is a MessageIcon, which picks the callout element
+it wears - see calloutElementOf - and its mark: the badge a message of that kind leads with.
+
+**A MessageBar is a callout too**, in the same element and set, holding one message and its
+answers in place of blocks.
 
 **The theme states the rest.** A tint is the element's surface, a frame its border, and a band
-the set's band in the stroke colour - see ControlMetrics. The set's spacing across stands between
-the mark and the blocks.
+the set's band in the colour of the element's Band rules - see ControlMetrics band. The set's
+spacing across stands between the mark and the blocks.
 
 ## CalloutShape
 
@@ -824,6 +830,13 @@ the mark and the blocks.
 
 **The shape is the caller's, the look the theme's** - a document picks one shape for all its
 callouts, and a theme the colours and sizes every shape is drawn in.
+
+## CodeBlock
+
+**The block is the theme's and the box is the code's.** The block wears UiElement::CodeBlock and
+the Code Block size set - its tint, frame and band down the left edge - and holds a CodeBox,
+body(), with no surface of its own, which shows the code. The box is read-only until it is told
+otherwise.
 
 ## DoDont
 

@@ -4,6 +4,7 @@ import ClaFi.Controls.Base.Container;
 import ClaFi.Controls.Base.SplitButtonBase;
 import ClaFi.Controls.MessageBar;
 
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Foundation;
@@ -314,16 +315,16 @@ namespace ClaFi
             }
         }
 
-        // **Every card casts its own shadow**, coloured by the rule set it wears as a tooltip
-        // window's is, at the theme's secondary window shadow and around its corners. The cards are
-        // one design, so one painter draws them all.
+        // **Every card casts its own shadow**, coloured as a tooltip window's is, at the theme's
+        // secondary window shadow and around its corners. The cards are one design, so one painter
+        // draws them all.
         void NoticesLayer::paintChildren(PaintEvent& event)
         {
             if (!m_cards.empty())
             {
                 FormBase& owner = form();
                 const Graphics::ShadowPainter& painter = owner.shadowPainter(owner.shadowDesign(
-                    MessageBar::k_colorRules,
+                    UiElement::Tooltip,
                     owner.themeMetrics().secondaryWindowShadow,
                     m_cards.front()->metrics().radius
                 ));

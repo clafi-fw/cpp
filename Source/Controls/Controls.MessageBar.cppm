@@ -24,13 +24,11 @@ namespace ClaFi::Controls
         explicit MessageBar(const CreateParams&, Args&&...);
     public:
         [[nodiscard]] std::wstring_view diagnosticText() const override { return L"MessageBar"; }
-        // The message, beside the icon named and a stripe in that icon's colour.
+        // The message, beside the icon named, the bar wearing the callout of the icon's kind.
         void setMessage(MessageIcon, const Text& message);
         // Adds an answer after those standing, its button taking the pack after the band's own.
         template<typename Handler, typename... Args>
         Button& addAnswer(std::wstring_view caption, Handler&& onClick, Args&&... args);
-        // The rule set the band wears.
-        static constexpr UiElement k_colorRules{ UiElement::Tooltip };
     protected:
         void secondaryClicked(NestedClickEvent&) override {} // an answer acts on its own click
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
@@ -38,11 +36,7 @@ namespace ClaFi::Controls
         void adjustPaint(AdjustPaintEvent&) override;
         void paintFrame(PaintEvent&) override;
     private:
-        static constexpr float k_paddingX = 16.0f;
-        static constexpr float k_paddingY = 12.0f;
-        static constexpr float k_spacing = 12.0f; // between the icon, the message and the answers
         static constexpr float k_iconSize = 20.0f;
-        static constexpr float k_stripeWidth = 4.0f;
         static constexpr float k_answerSpacing = 8.0f;
     private:
         StackPanel& m_answers;
@@ -58,13 +52,11 @@ namespace ClaFi::Controls
         :
         SplitButtonBase{
             params,
-            MetricsSet::Page,
+            MetricsSet::Callout,
             WordWrap::Yes,
             IconSize{ k_iconSize },
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center,
-            Padding{ k_paddingX, k_paddingY },
-            Spacing{ k_spacing },
             std::forward<Args>(args)...
         },
         m_answers{ createSecondaryPart<StackPanel>(

@@ -343,7 +343,7 @@ namespace ClaFi::Controls
             }
             if (visibilityFactor)
             {
-                tabColors.indicator = event.indicatorRgb().withOpacity(factors().selected() * 0.5f + 0.5f);
+                tabColors.indicator = event.bandRgb();
                 tabColors.indicatorFactor = factors().selected();
             }
             tabColors.lineCaps = event.strokeRgb();
@@ -520,7 +520,7 @@ namespace ClaFi::Controls
         }
 
         m_profile.lineWidth = event.borderWidth();// event.scaledStrokeWidth(th.m_tabLineThickness);
-        m_profile.indicatorHeight = m_profile.lineWidth * 2.0f; //event.scaledStrokeWidth(Thickness::Heavy);
+        m_profile.indicatorHeight = event.bandWidth();
         // was in TabRenderer before:
         //const float indicatorHeight = std::min(
         //    geometry.lineWidth * 2.5f,

@@ -27,6 +27,7 @@ namespace Themes_App
             k_channelLabels{
                 L"surface",
                 L"stroke",
+                L"band",
                 L"text",
                 L"shadow"
             };
@@ -39,6 +40,7 @@ namespace Themes_App
                 L"selected",
                 L"disabled",
                 L"current",
+                L"in edit mode",
                 L"window focused"
             };
 

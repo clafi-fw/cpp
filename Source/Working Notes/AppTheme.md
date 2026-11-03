@@ -70,8 +70,10 @@ stating its size again in themeMetricsChanged.
 
 ## Blocks
 
-**The article blocks came in on 2026-11-03**: Callout, DoDont and a code block, which is a CodeBox
-wearing UiElement::CodeBlock and MetricsSet::CodeBlock. The rule they keep is that a block's
+**The article blocks came in on 2026-11-03**: Callout, DoDont and CodeBlock - a themed block
+holding a CodeBox that shows the code (Oj, 2026-11-04: "a child CodeBox on a themed block to show
+its content"; a CodeBox wearing the block's element and set was the first build, and a code()
+accessor the second, before "should be WithBody::body()"). The rule they keep is that a block's
 shape is a control property - a SeeDocs project picks it - and its colours and sizes are the
 theme's. A theme made for an export states the frames and bands; the built-in one gives tints
 alone.
@@ -81,7 +83,27 @@ alone.
   or a value.
 - The marks - the message badges, the check and the cross - are drawn in pigment inks rather than
   the element's stroke, the way MessageBar's badge is.
-- The band is drawn by defaultPaintFrame for every control, as the border is, so a code block
-  needed no class of its own. MessageBar keeps its own stripe.
+- **The band is the edge indicator the framework already drew** (Oj, 2026-11-04, showing an open
+  vertical tab, an open tab, a text box and a slider in edit mode: "these are examples of a band
+  use"). Each control draws it at its own edge, in its own colour, when its state says; the
+  theme states the width per set, and TextBox and Slider gained sets for it. Drawing it for
+  every control on the left in defaultPaintFrame was the first build, and could not hold once
+  a tab's set stated one.
+- **The band's colour is the theme's** (Oj, 2026-11-04: "Band is new item beside surface and
+  stroke, and Edit is a new input - virtual in control, not in StateFactors. Tab already has all
+  inputs needed"). Band is a PaintChannel seeded like the stroke, and Edit a RuleInput read from
+  Control::editFactor, which WithEditMode answers with its animated factor. The tab's and the
+  edit mode's bands were drawn in indicatorRgb - the accent over SelectedText's resting surface -
+  and the blocks' in their stroke. The built-in rules keep those colours: the Tab element reads
+  Selected and Any Non-Window reads Edit, both in the accent's values, and the callouts' and the
+  code block's stroke rules became their band rules. The tab's band ran from half opacity to full
+  as the tab opened; its opacity is now the rule's level, from none to full, and its length still
+  follows the open state.
+- **MessageBar is a callout** (Oj, 2026-11-04, showing a notice card: "That is what Themes call a
+  Callout"). It wears the Callout set and the element of its icon, one for each of the five
+  icons, and its stripe became the set's band. The built-in callouts are that card: a surface
+  near the tooltip's, tinted by the kind's pigment, and a 4 point band in it. A surface rule can
+  not keep the tooltip's own hue - the band's colour starts from the surface, so the kind's hue
+  has to be there.
 - Figure waits on a question about SVG: every figure in the manuals is SVG, and the framework
   decodes PNG alone.

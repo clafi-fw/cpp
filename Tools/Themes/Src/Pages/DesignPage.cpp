@@ -85,7 +85,10 @@ namespace Themes_App
 
         constexpr auto k_blocks = std::to_array<CategoryEntry>({
             UiElement::InfoCallout,
+            UiElement::QuestionCallout,
             UiElement::WarningCallout,
+            UiElement::ErrorCallout,
+            UiElement::OkCallout,
             UiElement::Do,
             UiElement::Dont,
             UiElement::CodeBlock
@@ -111,7 +114,9 @@ namespace Themes_App
             MetricsSet::ScrollThumb,
             MetricsSet::Callout,
             MetricsSet::DoDont,
-            MetricsSet::CodeBlock
+            MetricsSet::CodeBlock,
+            MetricsSet::TextBox,
+            MetricsSet::Slider
         });
 
         constexpr std::array k_categories{

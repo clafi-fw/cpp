@@ -152,10 +152,11 @@ press drags the thumb, and the drag settles as one step when the button comes up
 the mode on for the keys.
 
 **The mode is shown by an indicator along the control's bottom edge**, in place of its ring. It
-thickens and fades in as the mode turns on, drawn over the frame, and the ring gives way by as
-much - see AdjustPaintEvent replaceRing. Its tips run out into the frame's stroke, and fade out on
-a slider, which draws no frame. A control under EditModeSwitching::No is in the mode throughout
-and wears its ring.
+is the band the control's size set states, in the colour of the rules reading Edit - see
+ControlMetrics band. It thickens and fades in as the mode turns on, drawn over the frame, and the
+ring gives way by as much - see AdjustPaintEvent replaceRing. Its tips run out into the frame's
+stroke, and fade out on a slider, which draws no frame. A control under EditModeSwitching::No is
+in the mode throughout and wears its ring.
 
 **A slider's thumb is current while the mode is on**, and hot while the keys drive it in a focused
 window - the looks of a focused control, on the part the keys move.

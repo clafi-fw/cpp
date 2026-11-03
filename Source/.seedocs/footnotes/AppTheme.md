@@ -44,13 +44,25 @@ set's new value for every size not in it - see ControlMetrics copyFields.
 
 ## ControlMetrics band
 
-**The width of a line along the control's left edge**, drawn in its stroke colour. It is apart
-from the border, which the focus ring thickens; the band keeps its width. Every built-in set
-states 0.
+**The width of the band a control draws along one of its edges**, over the frame and round the
+corners there - see PaintEvent paintBand. It is apart from the border, which the focus ring
+thickens. The edge and when the band shows are the control's, the colour its Band rules' - see
+PaintChannel:
 
-**PaintEvent::defaultPaintFrame draws it**, over the border along that edge and round the two
-corners there - see Canvas fillEdgeIndicator. A control that paints its frame in its own way
-draws no band.
+- an open tab - the edge away from its page, as the tab opens
+- a text box or a slider - the bottom edge, while it is in edit mode
+- a callout, a message bar, a code block - the left edge, always
+
+**The built-in theme draws a tab's band and the edit mode's in the accent's values**, read as the
+tab is selected and as the control is in edit mode, and a block's in its element's own colour.
+
+**The Tab, Text Box and Slider sets state twice the border's width**, the Callout set 4, and
+every other set 0.
+
+## ThemeMetrics drawsBand
+
+The sets whose controls draw a band: Tab, TextBox, Slider, Callout and CodeBlock. The Themes app
+offers a Band size on their pages alone.
 
 ## ThemeMetrics
 
@@ -170,12 +182,26 @@ theme is baked.
 - Two rule lists cross rule by rule when both read the same inputs and write the same channels, in
   one order. Lists that differ in any of that take the destination's.
 
+## PaintChannel
+
+**Each channel starts from a colour of its own**, which the rules writing it then move:
+
+- Surface - the surface the control stands on, in its element's seed hue where it has one - see
+  seedPigmentOf
+- Stroke and Band - the control's own surface, as its Surface rules left it
+- Text - the ink the control inherits, in its surface's hue while no rule names one
+- Shadow - the shadow it inherits, in the stroke's hue while no rule names one
+
+**A stroke or a band shows as far as its rules reach.** A control whose rules write no Band draws
+none, whatever width its size set states - see ControlMetrics band.
+
 ## ThemeRules anyNonWindow
 
 **What every control that is not a form's root takes, whatever element it wears** - the
 counterpart of anyWindow, read in its place: after the element's own list, before the shared one.
 A control wearing no element takes it all the same. The focus ring lives here: its rules read
-Current and write the Stroke.
+Current and write the Stroke. So does the edit mode's band: its rule reads Edit and writes the
+Band.
 
 **The ring's weight is the control's current**, whatever colour the rules gave the stroke. That
 factor thickens the border toward ThemeMetrics::focusedBorder, in paint only, and holds the frame
@@ -190,6 +216,7 @@ The default rules:
 - current - the strongest ink: the keys' focus, and a container's current item under the mouse
   too, since it marks where a Shift range grows from
 - hot, and current - the accent, since hot has the window's focus in it
+- edit - the band in the accent
 
 The accent's values are written into these rules, so a theme that moves Accent edits them too.
 
@@ -209,9 +236,9 @@ seed. A control wearing the element is painted this way, and the Themes app seed
 same way.
 
 - FoundText and WarningCallout - Yellow
-- InfoCallout - Blue
-- Do - Green
-- Dont - Red
+- InfoCallout and QuestionCallout - Blue
+- OkCallout and Do - Green
+- ErrorCallout and Dont - Red
 
 Every other element answers none and keeps the hue of the surface under it.
 

@@ -18,14 +18,29 @@ namespace ClaFi::Controls
 {
     namespace
     {
-        [[nodiscard]] MessageIcon iconOf(const CalloutKind kind)
+        // What a banner calls the kind. A callout naming no kind is information.
+        [[nodiscard]] std::wstring_view nameOf(const MessageIcon kind)
         {
-            return kind == CalloutKind::Warning ? MessageIcon::Warning : MessageIcon::Information;
+            switch (kind)
+            {
+                case MessageIcon::Question:
+                    return L"Question";
+                case MessageIcon::Warning:
+                    return L"Warning";
+                case MessageIcon::Error:
+                    return L"Error";
+                case MessageIcon::Ok:
+                    return L"Ok";
+                case MessageIcon::None:
+                case MessageIcon::Information:
+                    break;
+            }
+            return L"Info";
         }
 
-        [[nodiscard]] std::wstring_view nameOf(const CalloutKind kind)
+        [[nodiscard]] MessageIcon markOf(const MessageIcon kind)
         {
-            return kind == CalloutKind::Warning ? L"Warning" : L"Info";
+            return kind == MessageIcon::None ? MessageIcon::Information : kind;
         }
     }
 
@@ -39,10 +54,18 @@ namespace ClaFi::Controls
             event.metrics.spacing.y = spacing().y;
     }
 
+    // The band runs down the left edge and round the corners there in its own colour, which the
+    // kind's element states.
+    void Callout::paintFrame(PaintEvent& event)
+    {
+        PanelBase::paintFrame(event);
+        event.paintBand(RectSide::Left, event.bandRgb());
+    }
+
     // A mark in a bar stands at the top, beside the first line of the blocks.
     void Callout::addMark()
     {
-        const DrawIconFunc drawMark = Icons::iconPainterOf(iconOf(kind()));
+        const DrawIconFunc drawMark = Icons::iconPainterOf(markOf(kind()));
         switch (shape())
         {
             case CalloutShape::Marked:
