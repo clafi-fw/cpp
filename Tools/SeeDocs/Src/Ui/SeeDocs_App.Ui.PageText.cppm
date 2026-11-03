@@ -3,13 +3,15 @@ export module SeeDocs_App.Ui.PageText;
 import SeeDocs_App.Pages;
 import SeeDocs_App.Surface;
 
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
 // **A page's words as the text SeeDocs shows**: the engine's named styles for the runs and the
-// prose, and a link carrying the name the page gave it.
+// prose, and a link carrying the name the page gave it. A text written into another is built over
+// the other's sheet.
 namespace SeeDocs_App::Ui
 {
     using namespace ClaFi;
@@ -18,14 +20,14 @@ namespace SeeDocs_App::Ui
     export void writeRuns(Text&, const Runs&);
     // The same in a colour of their own, inside each link, so the words wear it over the link ink.
     export void writeRuns(Text&, const Runs&, Color);
-    export [[nodiscard]] Text textOf(const Runs&);
+    export [[nodiscard]] Text textOf(const Runs&, const StyleSheet&);
     // The words of a text as a note writes them: bold between its marks, code between its, a
     // paragraph to a line and a blank line between two, an item behind a dash, a line of code
     // set in by four blanks.
     export [[nodiscard]] std::wstring markdownOf(const Text&);
     // The prose of a note, a paragraph per line, the whole of it set in from the margin as asked.
     export void writeBlocks(Text&, const Blocks&, float indent = 0.0f);
-    export [[nodiscard]] Text textOf(const Blocks&);
+    export [[nodiscard]] Text textOf(const Blocks&, const StyleSheet&);
     // A footnote: the mark and the name it belongs to, the two standing on the anchor a link
     // reaches the footnote by, then the prose.
     export void writeFootnote(Text&, std::wstring_view anchor, std::wstring_view mark,

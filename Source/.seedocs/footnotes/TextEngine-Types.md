@@ -167,6 +167,10 @@ outlives every text over it and every text based on one of its styles. A sheet i
 takeStyles states another's styles over its own. A copy has styles of its own, each at the position
 the other holds it.
 
+**A text over the sheet can outlive the controls that showed it**: the text engine keeps a copy of
+every text it lays out, and a tooltip fading out paints the words it was given. A sheet that would
+go while the program runs is kept until the windows that drew its texts are gone.
+
 **A name the sheet holds is the sheet's style.** A style named as one up the parents stands in for
 it: everything found through the sheet takes it, and so does every base in the sheet - `Name=Code`
 with an ink is Code in that ink, for every style based on Code.
@@ -193,8 +197,8 @@ A style added under a name nothing holds is no edit: no text is set in it yet.
 **A field one style lends a run set in another is copied into the run** - see TextLayer - and an
 edit of the lending style does not reach that copy.
 
-**A name written in code that the text reaches no style of** sets the words in no style and raises
-UnknownStyleEvent - see StyledText. The application logs each such name once.
+**A name the text reaches no style of**, written in code or read from a file, sets the words in no
+style and raises UnknownStyleEvent - see StyledText. The application logs each such name once.
 
 ## StyleSheet cache
 

@@ -10,6 +10,7 @@ import ClaFi.Core.DomEngine_Document;
 import ClaFi.Core.DomEngine_Dt;
 // The std::wstring serializer: without it a node's set reads a string as a sequence.
 import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
@@ -482,8 +483,10 @@ namespace SeeDocs_App::Articles
         return path;
     }
 
-    std::optional<Article> read(const std::filesystem::path& file)
+    // A text is read as it is taken out of its node, so the scope stands over every take.
+    std::optional<Article> read(const std::filesystem::path& file, const StyleSheet& styles)
     {
+        const StyleSheet::ReadingScope scope{ &styles };
         ArticleDocument document{ file, Dom::AutoSave::No, articleLayout() };
         if (!document.load())
             return std::nullopt;
@@ -534,10 +537,8 @@ namespace SeeDocs_App::Articles
             std::filesystem::rename(from, to, error);
     }
 
-    std::vector<std::filesystem::path> unreached(const Project& project)
+    std::vector<std::filesystem::path> files(const Project& project)
     {
-        std::vector<std::filesystem::path> reached;
-        addReached(reached, project, project.sidebar, {});
         std::vector<std::filesystem::path> result;
         std::error_code error;
         const std::filesystem::path folder = project.articlesFolder();
@@ -546,16 +547,24 @@ namespace SeeDocs_App::Articles
         for (const std::filesystem::directory_entry& entry :
             std::filesystem::recursive_directory_iterator{ folder, error })
         {
-            if (!entry.is_regular_file(error) || entry.path().extension() != k_fileExtension)
-                continue;
-            const bool isReached = std::ranges::any_of(reached,
-                [&entry, &error](const std::filesystem::path& path) {
-                    return std::filesystem::equivalent(path, entry.path(), error);
-                });
-            if (!isReached)
+            if (entry.is_regular_file(error) && entry.path().extension() == k_fileExtension)
                 result.push_back(entry.path());
         }
         std::ranges::sort(result);
+        return result;
+    }
+
+    std::vector<std::filesystem::path> unreached(const Project& project)
+    {
+        std::vector<std::filesystem::path> reached;
+        addReached(reached, project, project.sidebar, {});
+        std::vector<std::filesystem::path> result = files(project);
+        std::error_code error;
+        std::erase_if(result, [&reached, &error](const std::filesystem::path& file) {
+            return std::ranges::any_of(reached, [&file, &error](const std::filesystem::path& path) {
+                return std::filesystem::equivalent(path, file, error);
+            });
+        });
         return result;
     }
 }

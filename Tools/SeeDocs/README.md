@@ -43,6 +43,7 @@ A project is a folder of its own, kept wherever the user chooses. SeeDocs offers
 - `Project.cfg` - the project's properties, its sidebar among them
 - `Surface.cfg` - the database the scanner writes
 - `Scan.cache` - what the last scan read of each file - see [Scan cache](#scan-cache)
+- `Styles.cfg` - the styles the pages and articles are set in - see [Styles](#styles)
 - `footnotes` - the notes the pages show beside the hints
 - `articles` - the project's own pages, one per Content item - see [Articles](#articles)
 
@@ -490,21 +491,22 @@ lead. They are set in bold, italic, the code style and theme inks with their gra
 links: to an anchor (`#name`), to an article by its sidebar path, to a page outside (`https://`),
 or to the reference by a qualified name (`ClaFi::Control::form`), found when the page is shown so
 that it holds while folders move. Names in code link by the rule the footnotes follow, and the
-article stores no such link.
+article stores no such link. A style an article names is found among the text's own styles, then
+in the project's - see [Styles](#styles).
 
 ```
 Title = Writing ClaFi Text
-Lead = [ Pieces = [ =[ = Words in runs, each in a look of its own ] ] ]
+Lead = [ Pieces = [ = "Words in runs, each in a look of its own" ] ]
 Blocks = [
-    =[ Kind = Heading, Anchor = paragraphs, Text = [ Pieces = [ =[ = Paragraphs ] ] ] ]
+    =[ Kind = Heading, Anchor = paragraphs, Text = [ Pieces = [ = Paragraphs ] ] ]
     =[ Kind = Paragraph, Text = [ Pieces = [
-        =[ = "Call " ]
-        =[ Style = Code, = form() ]
-        =[ = " before the paint." ]
+        = "Call "
+        Run = [ Style = Code, = form() ]
+        = " before the paint."
     ] ] ]
     =[ Kind = Code, Language = C++, Code = import ClaFi.Core.Foundation; ]
     =[ Kind = Callout, Callout = Warning, Blocks = [
-        =[ Kind = ListItem, List = Numbered, Text = [ Pieces = [ =[ = Register the action ] ] ] ]
+        =[ Kind = ListItem, List = Numbered, Text = [ Pieces = [ = Register the action ] ] ]
     ] ]
 ]
 ```
@@ -529,6 +531,38 @@ name, nothing moves: the item reaches what stands there, and the file it reached
 for no item. Deleting an item, or making it another kind, leaves its article where it is, and an
 item given that name again reaches it. `check` lists the articles no item reaches - see
 [The checks](#the-checks).
+
+## Styles
+
+**A project's words are set in its own styles**, which `Styles.cfg` in the project's folder states
+over the framework's: Body, Title, SubTitle, Heading, SubHeading, Section, SubSection, SubBody and
+Code. An entry named as one of those restates it for the project, and an entry of another name adds
+a style its articles can name.
+
+```
+Styles = [
+    =[ Name = Body, FontFamily = Georgia ]
+    =[ Name = Code, FontFamily = Consolas ]
+    =[ Name = Note, Base = SubBody, Ink = spot ]
+]
+```
+
+**The file is read when the project opens, and again on Rescan.** It is written by hand: a project
+without one is set in the framework's styles, and a file taken away takes its styles with it on
+the next Rescan.
+
+**The styles reach everything the project shows of its own**: its home and every page under it,
+the gone page, the hints, footnotes and link previews on them, the search page of its words, and
+its rows in the tree; its articles are read over them. SeeDocs' own controls keep the framework's -
+the root page, the options and sidebar pages, buttons, menus, crumbs, tabs and the search list. Two
+open projects are each set in their own.
+
+**The pages name the framework's styles**: a title is Title, a heading Heading, a name and a
+declaration Code. The looks SeeDocs lays over them - a path in the spot ink, a muted kind word -
+are no styles, and a project restates the style under them.
+
+**A name no style holds** - a Base the file states, or a style an article names - sets what names
+it in no style, and `check` lists it - see [The checks](#the-checks).
 
 ## The window
 
@@ -592,7 +626,8 @@ The options page is titled Project options. Under the title stand:
 - **The project's name**, in heading type, in a box that renames it. Return or leaving the box keeps
   the name, Escape puts it back, and an emptied box gives the project its folder's name.
 - **The project's folder.**
-- **How long ago it was scanned**, with a Rescan button that reads the sources again.
+- **How long ago it was scanned**, with a Rescan button that reads the sources and the styles
+  again.
 
 The two pages' urls are the project's with `/.project` and `/.sidebar` after it. The scanner passes
 over names that start with a dot, so no folder can take them.
@@ -730,6 +765,7 @@ SeeDocs is a browser of the framework's own kind:
 
 - It scans the project the shown tab stands in, and every open project from the root. Its tooltip
   names the project, or says all projects.
+- It reads the project's `Styles.cfg` again - see [Styles](#styles).
 - An options page on screen is built again, so its last scan reads just now.
 
 **Every page has a url** - `/project/item/folder/module/type/method`, the project named by its
@@ -1318,8 +1354,17 @@ there. A section that belongs to no declaration is found by the searches of whol
 - a value type declared under `Controls/Base`, where it reaches an application only through an
   import of the base
 
-Every project's check also lists the articles in its `articles` folder that no Content item of
-the sidebar reaches. A project reading any C++ and Delphi has those checked alone.
+Every project's check also lists a style name its `Styles.cfg` or one of its articles states that
+no style holds, and the articles in its `articles` folder that no Content item of the sidebar
+reaches:
+
+```
+Styles.cfg: warning: no style named "Notes"
+articles/Guides/Quick start.cfg: warning: no style named "Note"
+articles/Old page.cfg: warning: no item of the sidebar reaches this article
+```
+
+A project reading any C++ and Delphi has those checked alone.
 
 ## Building
 

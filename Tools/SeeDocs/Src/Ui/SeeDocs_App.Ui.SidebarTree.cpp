@@ -13,6 +13,7 @@ import ClaFi.Controls.Base.ExpanderBase;
 
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -120,17 +121,18 @@ namespace SeeDocs_App::Ui
     // **A row is picked by a click, not by becoming current**: the arrow keys walk the rows without
     // opening a page for each one passed, and Enter opens the row they stop on.
     void SidebarTree::addProject(const ProjectId id, const std::wstring_view name,
-        const SidebarItems& sidebar, const ContentsTree& contents)
+        const SidebarItems& sidebar, const ContentsTree& contents, const StyleSheet& styles)
     {
         std::unique_ptr<ProjectRows> made = std::make_unique<ProjectRows>();
         ProjectRows& rows = *made;
         rows.id = id;
         rows.sidebar = &sidebar;
         rows.contents = &contents;
+        rows.styles = &styles;
         rows.items = flattenItems(sidebar);
         if (!m_projects.empty())
             rows.above = &addDivider(Thickness::Heavy);
-        rows.node = &addNode(projectText(name));
+        rows.node = &addNode(projectText(styles, name));
         rows.node->header().setExpanded(false);
         rows.node->header().onClick([this, id](ClickEvent&) {
             pickHome(id, PickTab::Shown);
@@ -159,7 +161,7 @@ namespace SeeDocs_App::Ui
         if (ProjectRows* rows = rowsOf(id))
         {
             ExpanderHeader& header = rows->node->header();
-            header.text() = projectText(name);
+            header.text() = projectText(*rows->styles, name);
             header.invalidateFormAlign();
         }
     }
@@ -585,7 +587,7 @@ namespace SeeDocs_App::Ui
                 itemRows.line = &holder.addDivider();
                 return;
             case SidebarKind::Content:
-                itemRows.row = &holder.addItem(itemText(sidebarItem));
+                itemRows.row = &holder.addItem(itemText(*rows.styles, sidebarItem));
                 itemRows.row->onClick(picked);
                 return;
             case SidebarKind::AllTheApis:
@@ -605,8 +607,8 @@ namespace SeeDocs_App::Ui
             case SidebarKind::Category:
                 break;
         }
-        HeaderText header;
-        header << itemText(sidebarItem);
+        HeaderText header{ *rows.styles };
+        header << itemText(*rows.styles, sidebarItem);
         itemRows.node = &holder.addNode(std::move(header));
         itemRows.node->header().setExpanded(false);
         itemRows.node->header().onClick(picked);
@@ -618,23 +620,32 @@ namespace SeeDocs_App::Ui
     {
         const ContentsRow& row = rows.contents->rows()[contents];
         MadeRow& made = rows.items[item].made[contents];
+        const StyleSheet& styles = *rows.styles;
         if (row.kind == ContentsRowKind::Folder)
         {
-            made.node = &holder.addNode(folderText(row.folder));
+            made.node = &holder.addNode(folderText(styles, row.folder));
         }
         else if (row.kind == ContentsRowKind::Type)
         {
-            made.item = &holder.addItem(rowText(*row.type));
+            made.item = &holder.addItem(rowText(styles, *row.type));
         }
         else if (row.children.empty())
         {
-            made.item = &holder.addItem(
-                Text{ rowIcon(RowIcon::Module), Space{ k_iconGap }, row.module->shownName });
+            made.item = &holder.addItem(Text{
+                styles,
+                rowIcon(RowIcon::Module),
+                Space{ k_iconGap },
+                row.module->shownName
+            });
         }
         else
         {
-            made.node = &holder.addNode(
-                HeaderText{ rowIcon(RowIcon::Module), Space{ k_iconGap }, row.module->shownName });
+            made.node = &holder.addNode(HeaderText{
+                styles,
+                rowIcon(RowIcon::Module),
+                Space{ k_iconGap },
+                row.module->shownName
+            });
         }
 
         ProjectRows* holderRows = &rows;
@@ -837,27 +848,32 @@ namespace SeeDocs_App::Ui
         return made.node->header();
     }
 
-    HeaderText SidebarTree::projectText(const std::wstring_view name)
+    HeaderText SidebarTree::projectText(const StyleSheet& styles, const std::wstring_view name)
     {
-        return HeaderText{ rowIcon(RowIcon::Project), Space{ k_iconGap }, name };
+        return HeaderText{ styles, rowIcon(RowIcon::Project), Space{ k_iconGap }, name };
     }
 
-    HeaderText SidebarTree::folderText(const std::wstring_view folder)
+    HeaderText SidebarTree::folderText(const StyleSheet& styles, const std::wstring_view folder)
     {
-        return HeaderText{ rowIcon(RowIcon::Folder), Space{ k_iconGap }, folderNameOf(folder) };
+        return HeaderText{
+            styles,
+            rowIcon(RowIcon::Folder),
+            Space{ k_iconGap },
+            folderNameOf(folder)
+        };
     }
 
     // A row leads with the mark of its kind and ends with its kind word.
-    Text SidebarTree::rowText(const Type& type)
+    Text SidebarTree::rowText(const StyleSheet& styles, const Type& type)
     {
-        Text text{ rowIcon(rowIconOf(type)), Space{ k_iconGap }, type.name };
+        Text text{ styles, rowIcon(rowIconOf(type)), Space{ k_iconGap }, type.name };
         writeRowKind(text, type);
         return text;
     }
 
-    Text SidebarTree::itemText(const SidebarItem& item)
+    Text SidebarTree::itemText(const StyleSheet& styles, const SidebarItem& item)
     {
-        Text text;
+        Text text{ styles };
         if (const std::optional<RowIcon> icon = rowIconOf(item.kind))
             text << rowIcon(*icon) << Space{ k_iconGap };
         text << item.name;

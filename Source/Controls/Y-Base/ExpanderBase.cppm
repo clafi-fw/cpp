@@ -106,7 +106,7 @@ namespace ClaFi::Controls
         [[nodiscard]] ExpanderViewMode viewMode() const { return m_viewMode; }
         // The header shows the label in every look, so a host spells the header text one way and
         // the button stays a target of its own.
-        void setHeaderText(const Text& value) { text() << value; }
+        void setHeaderText(const Text& value) { text() = value; }
         // How far the content stands in past the left padding, in design units.
         void setLead(float value);
         ExpanderButton& button() { return m_button; }

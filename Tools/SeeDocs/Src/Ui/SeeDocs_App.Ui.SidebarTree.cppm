@@ -10,6 +10,7 @@ import SeeDocs_App.Surface;
 import ClaFi.Controls.Tree;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
@@ -124,10 +125,10 @@ namespace SeeDocs_App::Ui
         // Connects a handler raised when Project options is taken from a row's menu.
         DECLARE_EVENT(TreeProjectOptionsEvent, OnTreeProjectOptions, onProjectOptions)
     public:
-        // Adds the project's node at the end of the tree, closed. The sidebar and the contents are
-        // held by reference for as long as the rows stand.
+        // Adds the project's node at the end of the tree, closed. The sidebar, the contents and the
+        // styles the rows are set in are held by reference for as long as the rows stand.
         void addProject(ProjectId, std::wstring_view name, const SidebarItems&,
-            const ContentsTree&);
+            const ContentsTree&, const StyleSheet&);
         // Builds the project's rows again over the sidebar and the contents, the nodes named open -
         // asked of the tree before they changed - open again.
         void rebuildProject(ProjectId, const SidebarItems&, const ContentsTree&, const OpenRows&);
@@ -186,6 +187,7 @@ namespace SeeDocs_App::Ui
             ProjectId id{};
             const SidebarItems* sidebar{ nullptr };
             const ContentsTree* contents{ nullptr };
+            const StyleSheet* styles{ nullptr };
             TreeDivider* above{ nullptr };   // none for the first project
             TreeNode* node{ nullptr };
             bool filled{ false };   // the node's rows are made
@@ -249,10 +251,10 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] bool holdsCurrentRow(const ProjectRows&) const;
         [[nodiscard]] static Control* rowOf(const ItemRows&);
         [[nodiscard]] static Control& rowOf(const MadeRow&);
-        [[nodiscard]] static HeaderText projectText(std::wstring_view name);
-        [[nodiscard]] static HeaderText folderText(std::wstring_view folder);
-        [[nodiscard]] static Text rowText(const Type&);
-        [[nodiscard]] static Text itemText(const SidebarItem&);
+        [[nodiscard]] static HeaderText projectText(const StyleSheet&, std::wstring_view name);
+        [[nodiscard]] static HeaderText folderText(const StyleSheet&, std::wstring_view folder);
+        [[nodiscard]] static Text rowText(const StyleSheet&, const Type&);
+        [[nodiscard]] static Text itemText(const StyleSheet&, const SidebarItem&);
     private:
         static constexpr float k_iconGap = 5.0f;   // between a row's icon and its text
 

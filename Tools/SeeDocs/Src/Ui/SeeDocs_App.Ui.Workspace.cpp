@@ -24,6 +24,7 @@ import ClaFi.Core.DomEngine_Document;
 import ClaFi.Core.DomEngine_Dt;
 // The std::wstring serializer, which is what makes the config's nodes readable as strings.
 import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
@@ -354,6 +355,7 @@ namespace SeeDocs_App::Ui
     {
         ScopedWaitCursor wait{};
         open.unwritten.withdraw();
+        readStyles(open.project, open.styles);
         open.surface = scan(open.project);
         open.notes.forgetAll();
         m_browser.rebindProject(open);
@@ -514,8 +516,9 @@ namespace SeeDocs_App::Ui
         if (!surface)
             surface = scan(project);
 
+        m_styles.push_back(std::make_unique<StyleSheet>(&StyleSheet::application()));
         m_projects.push_back(std::make_unique<OpenProject>(std::move(project),
-            std::move(*surface)));
+            std::move(*surface), *m_styles.back()));
         OpenProject& open = *m_projects.back();
         remember(open.project);
         m_browser.addProject(open, homeTab);

@@ -218,8 +218,8 @@ namespace ClaFi
         initializeDiagnosticLog(m_context);
         for (const std::wstring& line : m_context.platform().diagnosticLines())
             diagnosticLog(line);
-        // **A style name written in code that no sheet holds is logged** the first time it is met,
-        // and the words are set in no style.
+        // **A style name no sheet holds is logged** the first time it is met, written in code or
+        // read from a file, and the words are set in no style.
         m_unknownStyleConnection = ScopedEventConnection{
             StyleSheet::events().connect<UnknownStyleEvent>([this](UnknownStyleEvent& event) {
                 const std::wstring_view name = event.name();

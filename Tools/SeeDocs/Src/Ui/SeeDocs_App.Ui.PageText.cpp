@@ -6,6 +6,7 @@ import SeeDocs_App.Surface;
 import ClaFi.Core.Syntax.Languages;
 import ClaFi.Core.Syntax.Lexer;
 import ClaFi.Core.Syntax.Types;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
@@ -26,6 +27,12 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_noteBullet = L"- ";   // what a note writes an item behind
         constexpr std::wstring_view k_codeFence = L"    ";  // what a note sets a line of code in by
 
+        // The sheet the text was built over, which a text written into it is built over too.
+        [[nodiscard]] const StyleSheet& sheetOf(const Text& text)
+        {
+            return *text.styles().parent();
+        }
+
         // Ends the line the text holds, where it holds words, so what is written next stands
         // under them.
         void startLine(Text& text)
@@ -41,12 +48,13 @@ namespace SeeDocs_App::Ui
             {
                 case BlockKind::Paragraph:
                     startLine(text);
-                    text << TextIndent{ indent } << textOf(block.runs);
+                    text << TextIndent{ indent };
+                    writeRuns(text, block.runs);
                     break;
                 case BlockKind::SubHeading:
                     startLine(text);
                     text << TextIndent{ indent };
-                    text << StyledText{ TextStyles::Section, textOf(block.runs) };
+                    text << StyledText{ TextStyles::Section, textOf(block.runs, sheetOf(text)) };
                     break;
                 case BlockKind::Code:
                     for (const Runs& line : block.lines)
@@ -59,14 +67,15 @@ namespace SeeDocs_App::Ui
                             continue;
                         }
                         text << TextIndent{ indent + k_codeIndent };
-                        text << StyledText{ TextStyles::Code, textOf(line) };
+                        text << StyledText{ TextStyles::Code, textOf(line, sheetOf(text)) };
                     }
                     break;
                 case BlockKind::Bullets:
                     for (const Runs& item : block.items)
                     {
                         startLine(text);
-                        text << TextIndent{ indent + k_bulletIndent } << k_bullet << textOf(item);
+                        text << TextIndent{ indent + k_bulletIndent } << k_bullet;
+                        writeRuns(text, item);
                     }
                     break;
             }
@@ -233,9 +242,9 @@ namespace SeeDocs_App::Ui
         writeStyledRuns(text, runs, color);
     }
 
-    Text textOf(const Runs& runs)
+    Text textOf(const Runs& runs, const StyleSheet& styles)
     {
-        Text text;
+        Text text{ styles };
         writeRuns(text, runs);
         return text;
     }
@@ -290,9 +299,9 @@ namespace SeeDocs_App::Ui
             writeBlock(text, block, indent);
     }
 
-    Text textOf(const Blocks& blocks)
+    Text textOf(const Blocks& blocks, const StyleSheet& styles)
     {
-        Text text;
+        Text text{ styles };
         writeBlocks(text, blocks);
         return text;
     }
@@ -304,7 +313,7 @@ namespace SeeDocs_App::Ui
             std::wstring{ anchor },
             ColoredText{ InkColor::Spot, mark },
             L" ",
-            textOf(name)
+            textOf(name, sheetOf(text))
         };
         writeBlocks(text, excerpt.blocks);
     }
@@ -320,7 +329,7 @@ namespace SeeDocs_App::Ui
                 std::wstring{ anchor },
                 ColoredText{ InkColor::Spot, mark },
                 L" ",
-                textOf(name)
+                textOf(name, sheetOf(text))
             };
         }
         const std::wstring_view lead = name.empty() ? L"See " : L" - see ";
@@ -338,7 +347,7 @@ namespace SeeDocs_App::Ui
             writeRuns(text, unlinked);
             return;
         }
-        text << LinkText{ std::wstring{ holderLink }, textOf(unlinked) };
+        text << LinkText{ std::wstring{ holderLink }, textOf(unlinked, sheetOf(text)) };
     }
 
     // The runs are the one declaration cut round its links, and the tokens are lexed over the
@@ -352,13 +361,13 @@ namespace SeeDocs_App::Ui
         for (const Run& run : runs)
             source += run.text;
         const InkedRanges inked = inkedTokens(source, language);
-        Text code{};
+        Text code{ sheetOf(text) };
         std::size_t at = 0;     // where the run starts in the source
         std::size_t next = 0;   // the first inked token not yet written out
         for (const Run& run : runs)
         {
             const std::size_t end = at + run.text.size();
-            Text words{};
+            Text words{ sheetOf(text) };
             std::size_t plain = at;
             while (next < inked.size() && inked[next].start < end)
             {

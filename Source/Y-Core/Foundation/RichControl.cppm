@@ -161,7 +161,14 @@ namespace ClaFi
         BIND_PROPERTY_MEMBER(UiElement, m_colorRules);
 
         auto appendText = [&](const auto& p) { m_text << p; };
-        BIND_PROPERTY_ACTION(Text, appendText(p)); // the control's own text
+        // An empty text takes a Text whole, its sheet with it. See Control-Foundation#control-text
+        const auto takeText = [&](const Text& p) {
+            if (m_text.empty())
+                m_text = p;
+            else
+                m_text << p;
+        };
+        BIND_PROPERTY_ACTION(Text, takeText(p)); // the control's own text
         // What the text is laid out over. See Control-Foundation#richcontrol-textformat
         BIND_PROPERTY_ACTION(TextFormat, m_textFormat << p);
         BIND_PROPERTY_ACTION(TooltipText, m_tooltipText = p); // the control's own tooltip

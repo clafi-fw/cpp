@@ -5,11 +5,13 @@ import SeeDocs_App.Surface;
 
 import ClaFi.Dom.Formats.ClaFi;
 
+import ClaFi.Core.Dom_TextSerializers;
 import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Document;
 import ClaFi.Core.DomEngine_Dt;
 // The std::wstring serializer: without it a node's set reads a string as a sequence.
 import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.TextEngine.StyleSheet;
 
 import ClaFi.StdLib;
 
@@ -126,6 +128,11 @@ namespace SeeDocs_App
     std::filesystem::path Project::scanCachePath() const
     {
         return folder / k_scanCacheFileName;
+    }
+
+    std::filesystem::path Project::stylesPath() const
+    {
+        return folder / k_stylesFileName;
     }
 
     std::filesystem::path Project::footnotesFolder() const
@@ -299,5 +306,15 @@ namespace SeeDocs_App
         (document / Keys::EditHints).set(project.edits == HintEdits::Direct);
         (document / Keys::Sidebar).set(project.sidebar);
         document.save();
+    }
+
+    // **A missing file reads as a sheet listing nothing**, so a file taken away since the last
+    // read takes its styles with it, as one edited takes its changes.
+    void readStyles(const Project& project, StyleSheet& styles)
+    {
+        Dom::Value<StyleSheet> file{ nullptr, StyleSheet{} };
+        const Dom::FileFormat::ClaFi format{};
+        format.loadSectionFromFile(file, project.stylesPath());
+        file.getTo(styles);
     }
 }

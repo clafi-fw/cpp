@@ -11,7 +11,7 @@ namespace ClaFi
     {
     };
 
-    // Words written in code named a style no sheet the text reaches holds.
+    // A style name written in code or read from a file was found in no sheet.
     export class UnknownStyleEvent : public Event
     {
     public:

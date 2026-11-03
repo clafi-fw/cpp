@@ -42,6 +42,7 @@ import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
@@ -256,12 +257,14 @@ namespace SeeDocs_App::Ui
 
     // OpenProject
 
-    OpenProject::OpenProject(Project opened, Surface read)
+    OpenProject::OpenProject(Project opened, Surface read, StyleSheet& sheet)
         :
         project{ std::move(opened) },
+        styles{ sheet },
         surface{ std::move(read) },
         notes{ project.footnotesFolder() }
     {
+        readStyles(project, styles);
     }
 
     // ProjectShownEvent
@@ -1497,7 +1500,7 @@ namespace SeeDocs_App::Ui
     void SurfaceBrowser::addToTree(const TabTree& entry, const ShownProject& shown)
     {
         entry.tree->addProject(shown.id, shown.open.project.name, shown.open.project.sidebar,
-            shown.contentsTree);
+            shown.contentsTree, shown.open.styles);
         const Dom::Section& config = settings().tabConfig(entry.tab->id());
         const TreeEntries& states = (config / k_treeNodeName).as<TreeEntries>();
         const std::wstring folder = shown.open.project.folder.wstring();
@@ -1983,12 +1986,12 @@ namespace SeeDocs_App::Ui
         PageView& view = page.view();
         if (target.isRoot() || (target.searching && m_projects.empty()))
         {
-            view.show(rootPage());
+            view.show(rootPage(), StyleSheet::application());
             return;
         }
         if (target.searching)
         {
-            view.show(searchPageOf(target));
+            view.show(searchPageOf(target), stylesOf(target));
             return;
         }
         if (target.isGone())
@@ -1997,7 +2000,7 @@ namespace SeeDocs_App::Ui
             return;
         }
         if (std::optional<Page> built = pageOf(target))
-            view.show(std::move(*built));
+            view.show(std::move(*built), stylesOf(target));
     }
 
     // The page datas standing are the ones restored from the settings and the ones walked since;
@@ -2115,10 +2118,16 @@ namespace SeeDocs_App::Ui
             goTo(Url{ tab->pageData()->path(), anchor }, HistoryEntry::Replace);
     }
 
+    const StyleSheet& SurfaceBrowser::stylesOf(const Target& target)
+    {
+        return target.project ? target.project->open.styles : StyleSheet::application();
+    }
+
     Text SurfaceBrowser::goneWords(const PageData& data) const
     {
-        const ShownProject* project = resolve(data).project;
-        Text text;
+        const Target target = resolve(data);
+        const ShownProject* project = target.project;
+        Text text{ stylesOf(target) };
         text << StyledText{ TextStyles::Title, L"No such page" };
         text << k_endLine << k_endLine;
         if (project)

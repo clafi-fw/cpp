@@ -525,16 +525,28 @@ namespace ClaFi::Dom
             return look;
         }
 
+        // **A name a file states that no style answers to is reported**, as one written in code is,
+        // and what names it stands on no style.
+        [[nodiscard]] const TextStyle* findOrReport(const StyleSheet& sheet, std::wstring_view name)
+        {
+            const TextStyle* found = sheet.find(name);
+            if (!found)
+                StyleSheet::events().emit<UnknownStyleEvent>(name);
+            return found;
+        }
+
         // The style a piece names: a look of the text's file, else a style the text reaches, else
         // none, and the words read back in no style.
         [[nodiscard]] TextStyle styleNamed(std::wstring_view name, const StyleSheet& styles,
             const LookEntries& looks)
         {
+            if (name.empty())
+                return TextStyle{};
             const LookEntries::const_iterator look = std::ranges::find(looks, name,
                 &LookEntry::name);
             if (look != looks.end())
                 return look->style;
-            return TextStyle{ .base = styles.find(name) };
+            return TextStyle{ .base = findOrReport(styles, name) };
         }
 
         [[nodiscard]] TextPiece readRun(const Section& entry, const StyleSheet& styles,
@@ -620,7 +632,7 @@ namespace ClaFi::Dom
                 const StatedStyles::const_iterator found = std::ranges::find_if(stated,
                     [&entry](const StatedStyle& other) { return other.style.name == entry.base; });
                 style.base = found == stated.end()
-                    ? sheet.find(entry.base)
+                    ? findOrReport(sheet, entry.base)
                     : addStated(sheet, stated, progress,
                         static_cast<std::size_t>(found - stated.begin()));
             }
@@ -672,7 +684,7 @@ namespace ClaFi::Dom
             {
                 LookEntry entry{ .name = look.style.name, .style = look.style };
                 entry.style.name.clear();
-                entry.style.base = sheet.find(look.base);
+                entry.style.base = look.base.empty() ? nullptr : findOrReport(sheet, look.base);
                 looks->push_back(std::move(entry));
             }
         }

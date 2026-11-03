@@ -295,8 +295,7 @@ namespace ClaFi::Controls
             target.maxTextSize.y > 0.0f ? target.maxTextSize.y / scale + boxInset.y * 2.0f : k_maxFloat
         });
 
-        box.text().clear();
-        box.text() << source;
+        box.text() = source;
         box.selectAll();
         if (!target.typed.empty())
             box.replaceSelectedText(target.typed);

@@ -2,6 +2,7 @@ export module SeeDocs_App.Articles;
 
 import SeeDocs_App.Project;
 
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
@@ -11,6 +12,7 @@ import ClaFi.StdLib;
 // category on the way. See README#articles
 namespace SeeDocs_App::Articles
 {
+    using ClaFi::StyleSheet;
     using ClaFi::Text;
 
     export constexpr std::wstring_view k_fileExtension = L".cfg";
@@ -156,8 +158,10 @@ namespace SeeDocs_App::Articles
 
     // Where the article of the Content item the names lead to stands.
     export [[nodiscard]] std::filesystem::path pathOf(const Project&, const SidebarNames&);
-    // Reads the article in the file; nothing where there is no such file.
-    export [[nodiscard]] std::optional<Article> read(const std::filesystem::path&);
+    // Reads the article in the file, its texts over the sheet - the project's styles; nothing
+    // where there is no such file.
+    export [[nodiscard]] std::optional<Article> read(const std::filesystem::path&,
+        const StyleSheet&);
     // Writes the article to the file, making the folders on the way; false where the file could
     // not be written.
     export [[nodiscard]] bool write(const Article&, const std::filesystem::path&);
@@ -165,6 +169,8 @@ namespace SeeDocs_App::Articles
     // new names reach; nothing moves where something stands already. See README#names-and-files
     export void followRename(const Project&, const SidebarNames& before,
         const SidebarNames& after, SidebarKind);
+    // Every article in the project's folder, in path order.
+    export [[nodiscard]] std::vector<std::filesystem::path> files(const Project&);
     // The articles in the project's folder that no Content item of its sidebar reaches.
     export [[nodiscard]] std::vector<std::filesystem::path> unreached(const Project&);
 }

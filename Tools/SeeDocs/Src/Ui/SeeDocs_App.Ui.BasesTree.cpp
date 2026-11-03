@@ -16,6 +16,7 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
@@ -36,9 +37,9 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_ellipsis = L"\u2026";
 
         // The ellipsis as a collapsed expander draws its own.
-        [[nodiscard]] Text ellipsisText()
+        [[nodiscard]] Text ellipsisText(const StyleSheet& styles)
         {
-            return Text{ ColoredText{ InkGrade::Muted, k_ellipsis } };
+            return Text{ styles, ColoredText{ InkGrade::Muted, k_ellipsis } };
         }
 
         // The page a crumb names: the link its words carry; empty for a base with no page.
@@ -92,7 +93,7 @@ namespace SeeDocs_App::Ui
     // BaseCrumb
 
     BaseCrumb::BaseCrumb(const CreateParams& params, const BaseNode& node,
-        const std::optional<Color> nameColor)
+        const StyleSheet& styles, const std::optional<Color> nameColor)
         :
         DropdownControlBase{
             params,
@@ -112,6 +113,7 @@ namespace SeeDocs_App::Ui
             VerticalAlign::Center
         },
         m_node{ node },
+        m_styles{ styles },
         m_nameColor{ nameColor }
     {
     }
@@ -125,10 +127,12 @@ namespace SeeDocs_App::Ui
 
     void BaseCrumb::adjustMainText(AdjustTextEvent& event) const
     {
+        Text spelling{ m_styles };
         if (m_nameColor)
-            writeRuns(event.text, m_node.text, *m_nameColor);
+            writeRuns(spelling, m_node.text, *m_nameColor);
         else
-            writeRuns(event.text, m_node.text);
+            writeRuns(spelling, m_node.text);
+        event.text = spelling;
     }
 
     // The types standing directly on the base, the one the way up came through marked and entered
@@ -197,10 +201,11 @@ namespace SeeDocs_App::Ui
 
     // BasesTree
 
-    void BasesTree::setBases(const BaseNodes& value)
+    void BasesTree::setBases(const BaseNodes& value, const StyleSheet& styles)
     {
         clear();
         m_bases = value;
+        m_styles = &styles;
         addCrumbs(m_bases, nullptr);
     }
 
@@ -279,7 +284,7 @@ namespace SeeDocs_App::Ui
         if (m_ellipses.empty())
             return;
         const FloatPoint origin = event.contentPosition();
-        const Text ellipsis = ellipsisText();
+        const Text ellipsis = ellipsisText(*m_styles);
         for (const FloatRect& place : m_ellipses)
         {
             FloatRect bounds = place;
@@ -326,7 +331,7 @@ namespace SeeDocs_App::Ui
         Placing placing = {
             .wallX = wallX,
             .spacing = event.scaledSpacing(),
-            .ellipsisSize = measureText(event, { k_maxFloat, k_maxFloat }, ellipsisText()),
+            .ellipsisSize = measureText(event, { k_maxFloat, k_maxFloat }, ellipsisText(*m_styles)),
         };
         for (const CrumbsMap::value_type& entry : m_crumbsMap)
             placing.rowHeight = std::max(placing.rowHeight, entry.second->scaledHeight());
@@ -538,7 +543,7 @@ namespace SeeDocs_App::Ui
             std::optional<Color> nameColor;
             if (base.repeated)
                 nameColor = m_colorCodes.colorOf(base.spelling);
-            BaseCrumb& newCrumb = add<BaseCrumb>(base, nameColor);
+            BaseCrumb& newCrumb = add<BaseCrumb>(base, *m_styles, nameColor);
             m_crumbsMap.emplace(&base, &newCrumb);
             if (parentCrumb)
                 m_parentCrumbs.emplace(&newCrumb, parentCrumb);

@@ -33,6 +33,7 @@ import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
@@ -53,8 +54,9 @@ namespace SeeDocs_App::Ui
     // notes its comments reach. The workspace owns it, and the browser shows it.
     export struct OpenProject
     {
-        OpenProject(Project, Surface);
+        OpenProject(Project, Surface, StyleSheet&);
         Project project;
+        StyleSheet& styles;   // what its words are set in, which the workspace keeps
         Surface surface;
         Notes notes;   // the project's footnotes folder
         NoticeHandle unwritten{};   // the database the pages show could not be written
@@ -566,6 +568,8 @@ namespace SeeDocs_App::Ui
         void refreshPages(const ShownProject&, std::optional<Reference> show);
         // Builds the selected tab's page again, then shows the footnote waiting to be shown.
         void rebuildCurrentPage();
+        // What the target's page is set in: its project's styles, else the application's.
+        [[nodiscard]] static const StyleSheet& stylesOf(const Target&);
         [[nodiscard]] Text goneWords(const PageData&) const;
         // What a home with nothing to document says instead: why, and the folders it reads.
         static void explainEmpty(Page&, const Project&);

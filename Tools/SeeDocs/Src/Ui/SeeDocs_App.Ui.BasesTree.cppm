@@ -10,6 +10,7 @@ import ClaFi.Controls.Base.DropdownControlBase;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
@@ -48,7 +49,8 @@ namespace SeeDocs_App::Ui
     class BaseCrumb : public DropdownControlBase
     {
     public:
-        BaseCrumb(const CreateParams&, const BaseNode&, std::optional<Color> nameColor);
+        BaseCrumb(const CreateParams&, const BaseNode&, const StyleSheet&,
+            std::optional<Color> nameColor);
     public:
         DECLARE_EVENT(BaseLinkEvent, OnBaseLink, onBaseLink);
     public:
@@ -67,6 +69,7 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] DropdownMarkTurn dropdownMarkTurn() const override;
     private:
         const BaseNode& m_node;
+        const StyleSheet& m_styles;   // what the base's spelling is set in
         const std::optional<Color> m_nameColor;   // the base's code, where it stands more than once
     };
 
@@ -84,7 +87,8 @@ namespace SeeDocs_App::Ui
         // Connects a handler raised when a menu is asked for on a crumb.
         DECLARE_EVENT(BaseLinkContextPopupEvent, OnBaseLinkContextPopup, onBaseLinkContextPopup);
     public:
-        virtual void setBases(const BaseNodes&);
+        // The crumbs of the bases, their words set in the sheet's styles; the sheet outlives them.
+        virtual void setBases(const BaseNodes&, const StyleSheet&);
         virtual void clear();
     protected:
         ScaledSize calculateContent(AlignEvent&) override;
@@ -167,6 +171,7 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] BaseCrumb* crumbNearLine(float fromTopY, bool downward, float lineX);
     private:
         BaseSpan m_bases{};
+        const StyleSheet* m_styles{ &StyleSheet::application() };   // what the crumbs are set in
         CrumbsMap m_crumbsMap{};
         ParentCrumbsMap m_parentCrumbs{};   // each to the crumb it is a base of
         Lines m_links{};      // between row neighbours

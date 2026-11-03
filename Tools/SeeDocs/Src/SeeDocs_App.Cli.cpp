@@ -7,6 +7,8 @@ import SeeDocs_App.Project;
 import SeeDocs_App.Scanner;
 import SeeDocs_App.Surface;
 
+import ClaFi.Core.TextEngine.StyleSheet;
+import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
@@ -25,6 +27,8 @@ namespace SeeDocs_App
         constexpr int k_ok = 0;
         constexpr int k_failed = 1;
         constexpr int k_misused = 2;
+        constexpr std::wstring_view k_unreachedWarning =
+            L"no item of the sidebar reaches this article";
 
         constexpr std::wstring_view k_usage =
             L"SeeDocsCli - reads the design surface out of a project's sources.\n"
@@ -37,9 +41,9 @@ namespace SeeDocs_App
             L"The folder is a project's own, holding its Project.cfg; the working\n"
             L"directory when left out. A project reads the folders of sources its Project.cfg\n"
             L"names, as it says; a check of one with ReadAs = AnyCppAndDelphi covers its\n"
-            L"articles alone. A scan with --out takes any other folder too, read as ClaFi\n"
-            L"modules; one with --time prints how long each step of the scan took, then the\n"
-            L"write of the database and the read of it SeeDocs shows a scan from.\n";
+            L"styles and articles alone. A scan with --out takes any other folder too, read as\n"
+            L"ClaFi modules; one with --time prints how long each step of the scan took, then\n"
+            L"the write of the database and the read of it SeeDocs shows a scan from.\n";
 
         // The process's text goes out as UTF-8, whichever platform the console belongs to.
         void print(const std::wstring_view text)
@@ -170,22 +174,68 @@ namespace SeeDocs_App
             return k_ok;
         }
 
-        // A line for each article no item of the sidebar reaches, its path under the project's.
-        [[nodiscard]] std::wstring unreachedText(const Project& project,
-            const std::vector<std::filesystem::path>& articles)
+        // The warnings about a project's own files, its sources aside, as lines and as a count.
+        struct FileWarnings
         {
             std::wstring text;
-            for (const std::filesystem::path& article : articles)
-            {
-                text += article.lexically_relative(project.folder).generic_wstring();
-                text += L": warning: no item of the sidebar reaches this article\n";
-            }
-            return text;
+            std::size_t count{ 0 };
+        };
+
+        // The style names the read states that no style holds, each once, in the order met.
+        [[nodiscard]] std::vector<std::wstring> unknownStylesOf(const std::function<void()>& read)
+        {
+            std::vector<std::wstring> names;
+            const ScopedEventConnection listening{
+                StyleSheet::events().connect<UnknownStyleEvent>([&names](UnknownStyleEvent& event) {
+                    if (std::ranges::find(names, event.name()) == names.end())
+                        names.emplace_back(event.name());
+                })
+            };
+            read();
+            return names;
         }
 
-        // **A project reading any C++ has its articles checked alone**: what the checks ask of
-        // the sources is the routine's. The footnotes the references reach are a project's, so a
-        // folder that is none is refused.
+        // A line for the file, its path under the project's.
+        void addWarning(FileWarnings& warnings, const Project& project,
+            const std::filesystem::path& file, const std::wstring_view what)
+        {
+            warnings.text += file.lexically_relative(project.folder).generic_wstring();
+            warnings.text += L": warning: ";
+            warnings.text += what;
+            warnings.text += L"\n";
+            ++warnings.count;
+        }
+
+        // **A name no style holds** in the project's styles or in one of its articles, and an
+        // article no item of the sidebar reaches - each article's lines together, in path order.
+        // The articles are read over the project's styles.
+        [[nodiscard]] FileWarnings fileWarnings(const Project& project)
+        {
+            FileWarnings warnings;
+            const auto addUnknown = [&warnings, &project](const std::filesystem::path& file,
+                const std::vector<std::wstring>& names) {
+                for (const std::wstring& name : names)
+                    addWarning(warnings, project, file, L"no style named \"" + name + L"\"");
+            };
+            StyleSheet styles{ &StyleSheet::application() };
+            addUnknown(project.stylesPath(), unknownStylesOf([&project, &styles]() {
+                readStyles(project, styles);
+            }));
+            const std::vector<std::filesystem::path> unreached = Articles::unreached(project);
+            for (const std::filesystem::path& article : Articles::files(project))
+            {
+                addUnknown(article, unknownStylesOf([&article, &styles]() {
+                    static_cast<void>(Articles::read(article, styles));
+                }));
+                if (std::ranges::find(unreached, article) != unreached.end())
+                    addWarning(warnings, project, article, k_unreachedWarning);
+            }
+            return warnings;
+        }
+
+        // **A project reading any C++ has its styles and articles checked alone**: what the checks
+        // ask of the sources is the routine's. The footnotes the references reach are a project's,
+        // so a folder that is none is refused.
         [[nodiscard]] int check(const Options& options)
         {
             const Project project = projectOf(options.folder);
@@ -194,22 +244,22 @@ namespace SeeDocs_App
                 print(L"No project stands for " + options.folder.wstring() + L"\n");
                 return k_misused;
             }
-            const std::vector<std::filesystem::path> unreached = Articles::unreached(project);
+            const FileWarnings files = fileWarnings(project);
             if (project.mode == ScanMode::AnyCppAndDelphi)
             {
-                print(unreachedText(project, unreached));
+                print(files.text);
                 print(project.name + L" reads any C++ and Delphi, so its sources are not checked; "
-                    + std::to_wstring(unreached.size()) + L" warnings\n");
+                    + std::to_wstring(files.count) + L" warnings\n");
                 return k_ok;
             }
             const Surface surface = scanSources(project.sourceFolders(), ScanMode::ClaFiModules,
                 project.hints);
             const Report report = checkSurface(surface, project.footnotesFolder());
             print(formatReport(report, surface));
-            print(unreachedText(project, unreached));
+            print(files.text);
             print(L"\n" + std::to_wstring(classCount(surface)) + L" classes, "
                 + std::to_wstring(report.errorCount()) + L" errors, "
-                + std::to_wstring(report.warningCount() + unreached.size()) + L" warnings\n");
+                + std::to_wstring(report.warningCount() + files.count) + L" warnings\n");
             return report.errorCount() == 0 ? k_ok : k_failed;
         }
     }

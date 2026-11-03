@@ -21,6 +21,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
@@ -113,7 +114,7 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] TextBox& titleBox() const { return m_title; }
         [[nodiscard]] StackPanel& commandBar() const { return m_commands; }   // hidden at first
         [[nodiscard]] StackPanel& titleCommandBar() const { return m_titleCommands; }   // hidden at first
-        void write(const Page&);
+        void write(const Page&, const StyleSheet&);
         void write(std::optional<RowIcon>, std::wstring_view title);
         void clear();
     private:
@@ -174,8 +175,9 @@ namespace SeeDocs_App::Ui
         EventConnection onPageAnchor(F&& callback);
         // What the page writes edited words back through. A page with none shows them only.
         void setWriter(IPageWriter&);
-        // Builds the page's controls, the page kept for as long as they stand.
-        void show(Page);
+        // Builds the page's controls, their words set in the sheet's styles; the page is kept for
+        // as long as they stand, and the sheet outlives them.
+        void show(Page, const StyleSheet&);
         // Takes the page built again over the surface as it now reads. Where it has the shape of
         // the page shown - the same sections, rows and footnotes - its words go into the controls
         // standing, which keep their place; false where it has not, and nothing changes.
@@ -367,6 +369,7 @@ namespace SeeDocs_App::Ui
         static constexpr wchar_t k_ordinalMark = L'.';   // before the number of a repeated name
 
         Page m_page{};
+        const StyleSheet* m_styles{ &StyleSheet::application() };   // what the page is set in
         IPageWriter* m_writer{ nullptr };
         std::vector<Control*> m_parts{};   // what the page built, under the head and in it
         std::vector<Render> m_renders{};   // every box the page writes its words into

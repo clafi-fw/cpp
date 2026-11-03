@@ -11,6 +11,7 @@ import ClaFi.App.Application;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Timer;
@@ -54,7 +55,7 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] static ScanStamp scanned(const OpenProject&);   // when it was last scanned
         // Names the project, the folder's name for an empty one; answers the name it goes by.
         [[nodiscard]] std::wstring rename(OpenProject&, std::wstring_view name);
-        // Scans the project's sources again and shows what was read back, the tabs standing.
+        // Reads the project's styles and sources again and shows what was read, the tabs standing.
         void rescan(OpenProject&);
         // Reads the folder written as one more source and scans again; the reason where refused.
         [[nodiscard]] std::wstring addSource(OpenProject&, std::wstring_view written);
@@ -96,6 +97,7 @@ namespace SeeDocs_App::Ui
         using Names = std::vector<std::wstring>;
         // Held by pointer: the browser shows each one by reference.
         using Projects = std::vector<std::unique_ptr<OpenProject>>;
+        using StyleSheets = std::vector<std::unique_ptr<StyleSheet>>;
         // What a change of the project's properties asks for once they are written.
         enum class Reread
         {
@@ -141,6 +143,8 @@ namespace SeeDocs_App::Ui
         SurfaceBrowser& m_browser;
         // What a question or a refusal is dropped under: the browser's app button.
         Control& m_asker;
+        // Every project's styles, kept past a close: a text over them can outlive its page.
+        StyleSheets m_styles{};
         Projects m_projects{};
         FileWriter m_writer{};   // every database and scan cache the projects write
         const OpenProject* m_shown{ nullptr };   // the project the tab shown stands in

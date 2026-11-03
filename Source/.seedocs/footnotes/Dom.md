@@ -71,7 +71,8 @@ name - Icon, Space, VSpace, FlexSpace or TabTo - whose character goes without sa
 
 **A Run holds anything more**: its words as its unnamed value, or an object under its name, and
 Style, Link and Anchor. Style names one of the text's own styles, or else one in the reading sheet
-or up its parents - see StyleSheet ReadingScope; any other name reads as words in no style.
+or up its parents - see StyleSheet ReadingScope; any other name reads as words in no style and
+raises UnknownStyleEvent, as a name written in code does.
 
 **A P states the paragraph's Align, Indent and LineSpacing** and stands where the paragraph starts,
 where the look changes. The paragraphs after it take the same look up to the next P, and a P stating
@@ -114,7 +115,7 @@ is `w,h,baseline` and reads back with no painter, drawing nothing.
 **A Base names one of the sheet's styles, or else one up its parents**, wherever in the list it
 stands - Key above is based on this sheet's Code. An entry stating no Base, or its own name, is
 based on the style of that name up the parents where there is one. A Base leading back to its entry
-is dropped, and so is one naming no style.
+is dropped, and so is one naming no style, which raises UnknownStyleEvent.
 
 **An entry with no name, or with a name an entry above it took, is skipped.** The styles read are
 listed as the file lists them.

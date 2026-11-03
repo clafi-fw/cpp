@@ -12,6 +12,10 @@ stored state to an event, then let the base raise it.
 **A `ControlText`**, so every write through it moves on the stamp that each measurement and paint
 reads. See ControlText.
 
+**A Text given as a property is taken whole while the control's text holds nothing**, the sheet it
+was built over with it, so its words are set in that sheet's styles - see StyleSheet. A second Text,
+a view or a literal is written after what the text holds, in the text's own sheet.
+
 **The words are written here, when they change** - by whoever owns the control. A AdjustTextEvent
 composes around them as they are asked for: what a parent adds, a mark, an answer that differs by
 phase. A handler that computes the words themselves inside the gather pays for it at every measure

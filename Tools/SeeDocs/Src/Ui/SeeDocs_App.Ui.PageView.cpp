@@ -32,6 +32,7 @@ import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Searcher;
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.Events;
@@ -247,9 +248,9 @@ namespace SeeDocs_App::Ui
 
         // A hint the comment does not state is the box's placeholder, so typing starts on an
         // empty box.
-        [[nodiscard]] PlaceHolderText noHintText()
+        [[nodiscard]] PlaceHolderText noHintText(const StyleSheet& styles)
         {
-            PlaceHolderText text;
+            PlaceHolderText text{ styles };
             writeRuns(text, noHintRuns());
             return text;
         }
@@ -408,18 +409,18 @@ namespace SeeDocs_App::Ui
 
     // PageHead
 
-    void PageHead::write(const Page& page)
+    void PageHead::write(const Page& page, const StyleSheet& styles)
     {
         const std::optional<RowIcon> icon = iconOf(page.kind, page.type);
-        Text title{};
+        Text title{ styles };
         writeIcon(title, icon);
         writeRuns(title, page.scope);
         title << page.title;
-        Text head{ StyledText{ TextStyles::Title, title } };
+        Text head{ styles, StyledText{ TextStyles::Title, title } };
         if (!page.badges.empty())
-            head << L"   " << StyledText{ TextStyles::SubBody, textOf(page.badges) };
+            head << L"   " << StyledText{ TextStyles::SubBody, textOf(page.badges, styles) };
         for (const Runs& line : page.titleLines)
-            head << k_endLine << TextIndent{ k_basesIndent } << textOf(line);
+            head << k_endLine << TextIndent{ k_basesIndent } << textOf(line, styles);
         m_title.text() = head;
         const float titleWordsStart = icon.has_value() ? k_titleIconSize + k_iconGap : 0.0f;
         m_titleCommands.setPadding(titleWordsStart, k_titleCommandsGap);
@@ -453,10 +454,11 @@ namespace SeeDocs_App::Ui
         m_writer = &writer;
     }
 
-    void PageView::show(Page page)
+    void PageView::show(Page page, const StyleSheet& styles)
     {
         clear();
         m_page = std::move(page);
+        m_styles = &styles;
         addHead();
         addBases();
         addLead();
@@ -524,6 +526,7 @@ namespace SeeDocs_App::Ui
         clear();
         m_head.clear();
         m_page = {};
+        m_styles = &StyleSheet::application();
         m_head.setVisible(false);
         TextBox& box = addItemBox<TextBox>(m_pageBox.body(), ReadOnly::Yes, EditModeSwitching::Yes);
         box.text() = text;
@@ -652,7 +655,7 @@ namespace SeeDocs_App::Ui
     {
         m_head.setVisible(true);
         m_renders.push_back([this]() {
-            m_head.write(m_page);
+            m_head.write(m_page, *m_styles);
         });
     }
 
@@ -677,7 +680,7 @@ namespace SeeDocs_App::Ui
         // reference: a page refreshed in place takes a new set of bases, and the crumbs of the old
         // set must not outlive it.
         m_renders.push_back([this, &tree]() {
-            tree.setBases(m_page.bases);
+            tree.setBases(m_page.bases, *m_styles);
         });
     }
 
@@ -690,14 +693,14 @@ namespace SeeDocs_App::Ui
             m_pageBox.body(),
             ReadOnly::Yes,
             TextFormat{ TextStyles::SubTitle },
-            noHintText()
+            noHintText(*m_styles)
         );
         connectLinks(box);
         connectHintBox(box, m_page.leadSite);
         m_parts.push_back(&box);
         anchorItem(std::wstring{ k_leadAnchor }, {}, box);
         m_renders.push_back([this, &box]() {
-            box.showWords(textOf(m_page.lead));
+            box.showWords(textOf(m_page.lead, *m_styles));
         });
     }
 
@@ -762,7 +765,8 @@ namespace SeeDocs_App::Ui
                         event.hasContent = hasButton;
                 });
             }
-            row.onGetCellText([&fact](Grids::GetCellTextEvent& event) {
+            row.onGetCellText([this, &fact](Grids::GetCellTextEvent& event) {
+                event.text() = Text{ *m_styles };
                 const TagValue column = event.column().tag().value;
                 if (column == k_factLabel)
                     event.text() << fact.label;
@@ -780,7 +784,10 @@ namespace SeeDocs_App::Ui
     // label's tooltip - holding its body without room round it.
     Expander& PageView::addSection(const Section& section)
     {
-        HeaderText header{ StyledText{ TextStyles::Heading, textOf(section.heading) } };
+        HeaderText header{
+            *m_styles,
+            StyledText{ TextStyles::Heading, textOf(section.heading, *m_styles) }
+        };
         Expander& expander = m_pageBox.body().add<Expander>(
             VerticalAlign::Top,
             k_expanderViewMode,
@@ -879,7 +886,7 @@ namespace SeeDocs_App::Ui
     // A row leads with the mark of the type's kind where it names one, and ends with its kind word.
     Text PageView::treeRowText(const Branch& branch) const
     {
-        Text text;
+        Text text{ *m_styles };
         if (branch.type)
             text << rowIcon(rowIconOf(*branch.type)) << Space{ k_iconGap };
         writeRuns(text, branch.text);
@@ -890,7 +897,7 @@ namespace SeeDocs_App::Ui
 
     HeaderText PageView::treeHeaderText(const Branch& branch) const
     {
-        HeaderText header;
+        HeaderText header{ *m_styles };
         header << treeRowText(branch);
         return header;
     }
@@ -922,7 +929,7 @@ namespace SeeDocs_App::Ui
             Spacing{ k_footnoteGap }
         );
         if (!table.groupColumn.empty())
-            grid.columns().add(Tag{ k_groupColumn }, Text{ table.groupColumn });
+            grid.columns().add(Tag{ k_groupColumn }, Text{ *m_styles, table.groupColumn });
         const bool footnoted = hasFootnotes(table);
         const bool editable = std::ranges::any_of(table.groups, [this](const TableGroup& group) {
             return writesHints(group);
@@ -956,8 +963,8 @@ namespace SeeDocs_App::Ui
             // The last column's name stands over its cells and the marks.
             if (marksUnderHint && i == lastColumn)
             {
-                Grids::Column& parent = into->add(Tag{ k_markParentColumn }, Text{ column.name },
-                    width);
+                Grids::Column& parent = into->add(Tag{ k_markParentColumn },
+                    Text{ *m_styles, column.name }, width);
                 into = &parent.createSubColumns();
                 named = Grids::ShowInHeader::No;
             }
@@ -967,7 +974,7 @@ namespace SeeDocs_App::Ui
                 hintColumn = i;
                 editor = EditorMode::Editable;
             }
-            into->add(Tag{ i }, Text{ column.name }, width, maxLines, named, editor);
+            into->add(Tag{ i }, Text{ *m_styles, column.name }, width, maxLines, named, editor);
         }
         if (footnoted)
         {
@@ -1015,8 +1022,8 @@ namespace SeeDocs_App::Ui
         {
             TextBox& label = addItemBox<TextBox>(block, ReadOnly::Yes, EditModeSwitching::Yes);
             anchorItem(name, {}, label);
-            m_renders.push_back([&label, &section]() {
-                Text text;
+            m_renders.push_back([this, &label, &section]() {
+                Text text{ *m_styles };
                 writeSignature(text, section.heading, false, SourceLanguage::Cpp);
                 label.text() = text;
             });
@@ -1033,19 +1040,19 @@ namespace SeeDocs_App::Ui
             TextBox& code = addItemBox<TextBox>(entry, ReadOnly::Yes, EditModeSwitching::Yes);
             connectLinks(code);
             anchorItem(name, {}, code);
-            m_renders.push_back([&code, &signature]() {
-                Text text;
+            m_renders.push_back([this, &code, &signature]() {
+                Text text{ *m_styles };
                 writeSignature(text, signature.code, true, signature.language);
                 code.text() = text;
             });
             if (!signature.lead.empty() || writesHint(signature.site))
             {
-                HintBox& lead = addItemBox<HintBox>(entry, ReadOnly::Yes, noHintText());
+                HintBox& lead = addItemBox<HintBox>(entry, ReadOnly::Yes, noHintText(*m_styles));
                 connectLinks(lead);
                 connectHintBox(lead, signature.site);
                 anchorItem(name, {}, lead);
-                m_renders.push_back([&lead, &signature]() {
-                    lead.showWords(textOf(signature.lead));
+                m_renders.push_back([this, &lead, &signature]() {
+                    lead.showWords(textOf(signature.lead, *m_styles));
                 });
             }
             if (signature.excerpt.has_value())
@@ -1092,12 +1099,14 @@ namespace SeeDocs_App::Ui
                 event.hasContent = event.column().tag().value == k_groupColumn;
                 event.stopPropagation();
             });
-            span.onGetCellText([&group](Grids::GetCellTextEvent& event) {
+            span.onGetCellText([this, &group](Grids::GetCellTextEvent& event) {
+                event.text() = Text{ *m_styles };
                 writeLabel(event.text(), group);
             });
             if (!group.tooltip.empty())
             {
-                span.onGetCellTooltip([&group](Grids::GetCellTooltipEvent& event) {
+                span.onGetCellTooltip([this, &group](Grids::GetCellTooltipEvent& event) {
+                    event.text() = Text{ *m_styles };
                     writeRuns(event.text(), group.tooltip);
                 });
             }
@@ -1109,12 +1118,13 @@ namespace SeeDocs_App::Ui
             ExpanderHeader& header = groupExpander.header();
             header.setTextFormat(TextFormat{ TextStyles::SubSection });
             header.setVerticalTextAnchor(VerticalTextAnchor::Center);
-            Text label;
+            Text label{ *m_styles };
             writeLabel(label, group);
             header.setHeaderText(label);
             if (!group.tooltip.empty())
             {
-                header.onAdjustTooltip([&group](AdjustTooltipEvent& event) {
+                header.onAdjustTooltip([this, &group](AdjustTooltipEvent& event) {
+                    event.text = Text{ *m_styles };
                     writeRuns(event.text, group.tooltip);
                 });
             }
@@ -1152,20 +1162,23 @@ namespace SeeDocs_App::Ui
             anchorRow(anchorNameOf(row), rowsOwner, *target, gridRow);
             if (!row.tooltip.empty())
             {
-                gridRow.onGetCellTooltip([&row](Grids::GetCellTooltipEvent& event) {
-                    if (event.column().tag().value == 0)
-                        writeSignature(event.text(), row.tooltip, false, row.language);
+                gridRow.onGetCellTooltip([this, &row](Grids::GetCellTooltipEvent& event) {
+                    if (event.column().tag().value != 0)
+                        return;
+                    event.text() = Text{ *m_styles };
+                    writeSignature(event.text(), row.tooltip, false, row.language);
                 });
             }
             // The mark previews its footnote over the row, as a link previews its anchor.
             if (anchor.has_value())
             {
-                gridRow.onGetCellTooltip([&row](Grids::GetCellTooltipEvent& event) {
+                gridRow.onGetCellTooltip([this, &row](Grids::GetCellTooltipEvent& event) {
                     if (event.column().tag().value != k_markColumn)
                         return;
                     AdjustTooltipEvent& tooltip = event.tooltip();
                     tooltip.placement = FormPlacement::Top;
-                    tooltip.writePreview(textOf(row.excerpt->blocks));
+                    tooltip.text = Text{ *m_styles };
+                    tooltip.writePreview(textOf(row.excerpt->blocks, *m_styles));
                 });
             }
             // **A hint running over the empty cells before it** is written in the parent over
@@ -1188,7 +1201,9 @@ namespace SeeDocs_App::Ui
             // An empty hint cell that a hint can be typed in shows the placeholder.
             const TagValue placeholderColumn = writesHint(row.site) ? hintColumn : k_noColumn;
             gridRow.onGetCellText(
-                [&row, anchor, spanColumn, placeholderColumn](Grids::GetCellTextEvent& event) {
+                [this, &row, anchor, spanColumn, placeholderColumn](
+                    Grids::GetCellTextEvent& event) {
+                    event.text() = Text{ *m_styles };
                     TagValue column = event.column().tag().value;
                     if (column == k_markColumn)
                     {
@@ -1221,7 +1236,7 @@ namespace SeeDocs_App::Ui
                         event.text() << FlexSpace{ k_kindGap };
                         event.text() << StyledText{
                             TextStyles::SubBody,
-                            textOf(row.qualifiers[column])
+                            textOf(row.qualifiers[column], *m_styles)
                         };
                     }
                 });
@@ -1409,13 +1424,13 @@ namespace SeeDocs_App::Ui
 
     void PageView::connectFullValue(Grids::Row& row, const Fact& fact)
     {
-        row.onGetCellTooltip([&fact](Grids::GetCellTooltipEvent& event) {
+        row.onGetCellTooltip([this, &fact](Grids::GetCellTooltipEvent& event) {
             if (event.column().tag().value == k_factValue)
-                event.text() << fact.fullValue;
+                event.text() = Text{ *m_styles, fact.fullValue };
         });
-        row.onGetCellEditorText([&fact](Grids::GetCellEditorTextEvent& event) {
+        row.onGetCellEditorText([this, &fact](Grids::GetCellEditorTextEvent& event) {
             if (event.column().tag().value == k_factValue)
-                event.text = Text{ fact.fullValue };
+                event.text = Text{ *m_styles, fact.fullValue };
         });
     }
 
@@ -1425,9 +1440,9 @@ namespace SeeDocs_App::Ui
     void PageView::connectHintCell(Grids::Row& gridRow, const TableRow& row,
         const TagValue hintColumn)
     {
-        gridRow.onGetCellEditorText([&row, hintColumn](Grids::GetCellEditorTextEvent& event) {
+        gridRow.onGetCellEditorText([this, &row, hintColumn](Grids::GetCellEditorTextEvent& event) {
             if (event.column().tag().value == hintColumn && row.site.has_value())
-                event.text = Text{ hintSource(*row.site->comment) };
+                event.text = Text{ *m_styles, hintSource(*row.site->comment) };
         });
         gridRow.onAcceptCellText([this, &row, hintColumn](Grids::AcceptCellTextEvent& event) {
             if (event.column().tag().value != hintColumn)
@@ -1515,7 +1530,7 @@ namespace SeeDocs_App::Ui
         m_renders.push_back([this, index]() {
             const PageFootnote& entry = m_footnotes[index];
             const Excerpt& excerpt = *entry.excerpt;
-            Text text;
+            Text text{ *m_styles };
             if (excerpt.shownAt.has_value())
             {
                 const Runs name = entry.row ? entry.row->cells.front() : Runs{};
@@ -1640,7 +1655,9 @@ namespace SeeDocs_App::Ui
         box.onLinkContextPopup([this](LinkContextPopupEvent& event) {
             showLinkMenu(event.sender(), event.target, event.popup);
         });
+        // The box previews an anchor's paragraph itself, into the text the handler leaves.
         box.onGetLinkTooltip([this](GetLinkTooltipEvent& event) {
+            event.tooltip.text = Text{ *m_styles };
             writePreview(event.tooltip.text, event.target);
         });
     }
@@ -1668,6 +1685,7 @@ namespace SeeDocs_App::Ui
         const std::optional<Preview> preview = previewOf(*m_page.surface, *event.type);
         if (!preview.has_value())
             return false;
+        text = Text{ *m_styles };
         writeSignature(text, preview->code, false, preview->language);
         return true;
     }

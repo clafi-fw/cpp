@@ -125,6 +125,21 @@ and is logged. TextLook, the constexpr TextStyles, NamedIn, styleFor and sheet a
 that step, and so did the TextBox styleSheet property - a paste lands in the box's text, which
 knows its sheet.
 
+2026-11-03, with the project styles in SeeDocs: a name read from a file that no style holds is
+reported as one written in code is - the Dom reader raises UnknownStyleEvent for a piece's Style, a
+sheet entry's Base and a look's Base - so that `SeeDocsCli check` can list the names an article or
+a project's Styles.cfg states. The reader set such words in no style and said nothing before. A
+project's sheet was the first that could go while the program runs, which is where two copies of
+texts came up. The engine's layout cache holds the sheet's address and its styles': a text built
+later over a sheet at the same address passes the parent check, and the comparison then reads
+styles that are gone. A tooltip fading out paints the words it was given after its control has gone,
+and a layout generation moved on makes it shape them again. invalidateLayouts on close answered the
+first and not the second, so Oj took keeping a closed project's styles until its window goes, and
+the StyleSheet footnote says to keep such a sheet. The same review found that a control given a
+Text property appended it into its own text, over the application's sheet, which lost every style a
+project restates on tree rows, headings, column captions and in-place editors - Oj took the rule
+that an empty control text takes a Text whole (RichControl, Column, setHeaderText, InPlaceEdit).
+
 **A style keeps its address.** A run's style is an entry in its text's sheet, and that entry's base
 is a style somewhere up the cascade, held by address. So a sheet holds each style through a
 unique_ptr and never frees one while it lives - a removed style is marked and kept. takeStyles

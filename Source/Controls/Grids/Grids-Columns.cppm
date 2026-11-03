@@ -276,9 +276,12 @@ namespace ClaFi::Controls::Grids
         m_designWidth{ READ_PROPERTY(ColumnWidth, 0.0f).value },
         INIT_PROPERTY(tag)
     {
-        // Copied from Control
+        // Copied from Control: a text holding nothing takes a Text whole, its sheet with it.
         Props::ifThereIs<Text>([&](const auto& p) {
-            m_text << p;
+            if (m_text.empty())
+                m_text = p;
+            else
+                m_text << p;
             }, std::forward<Args>(args)...);
         Props::ifThereIs<std::wstring_view>([&](const auto& p) {
             m_text << p;

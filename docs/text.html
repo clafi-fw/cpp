@@ -436,6 +436,17 @@ Each style stays at one address for the sheet's life. A sheet is never assigned 
 <code>takeStyles</code> states another's styles over its own - and a temporary sheet given to a
 <code>Text</code> is refused at compile time.</p>
 
+<p><strong>A text over the sheet can outlive the controls that showed it</strong>: the text engine
+keeps a copy of every text it lays out, and a tooltip fading out paints the words it was given. A
+sheet that would go while the program runs is kept until the windows that drew its texts are
+gone.</p>
+
+<p><strong>A control given its text as a <code>Text</code> takes it whole</strong> while its own
+text holds nothing, the sheet it was built over with it, so the words are set in that sheet's
+styles. A second <code>Text</code>, a view or a literal is written after what the control holds,
+in the control text's sheet. An expander's <code>setHeaderText</code> and an in-place editor take
+their text whole the same way.</p>
+
 <p><strong>A name the sheet holds is the sheet's style.</strong> A style named as one up the parents
 stands in for it: everything found through the sheet takes it, and so does every base in the sheet.
 A sheet's own <code>Code</code> in the spot ink is Code in that ink for every style based on
@@ -759,9 +770,10 @@ one. A <code>StyleSheet::ReadingScope</code> names it while it lives:</p>
 }</code></pre>
 
 <p>A name the file states is found among the text's own styles first, then in the reading sheet and
-up its parents; any other reads as words in no style. A <code>Text</code> is read when it is taken
-out of its node, by <code>get</code> or <code>getTo</code>, so the scope stands around that call and
-not only around the file's load. Scopes nest, and each is held per thread.</p>
+up its parents; any other reads as words in no style and raises <code>UnknownStyleEvent</code>, as a
+name written in code does. A <code>Text</code> is read when it is taken out of its node, by
+<code>get</code> or <code>getTo</code>, so the scope stands around that call and not only around the
+file's load. Scopes nest, and each is held per thread.</p>
 
 <h2 id="examples">Worked Examples</h2>
 

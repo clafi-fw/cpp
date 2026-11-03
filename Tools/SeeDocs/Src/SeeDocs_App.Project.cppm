@@ -2,19 +2,22 @@ export module SeeDocs_App.Project;
 
 import SeeDocs_App.Surface;
 
+import ClaFi.Core.TextEngine.StyleSheet;
 import ClaFi.Core.System.Serialization;
 
 import ClaFi.StdLib;
 
-// **A project is a folder of its own.** Its properties, the database the scanner writes and the
-// footnotes the pages show stand in it; the sources it documents stand wherever they are - any
-// number of folders, each read as it stands. See README
+// **A project is a folder of its own.** Its properties, the database the scanner writes, the
+// styles its pages are set in and the footnotes they show stand in it; the sources it documents
+// stand wherever they are - any number of folders, each read as it stands. See README
 namespace SeeDocs_App
 {
     export constexpr std::wstring_view k_projectFileName = L"Project.cfg";
     export constexpr std::wstring_view k_databaseFileName = L"Surface.cfg";
     // What the last scan read of each file, so that the next reads only what changed.
     export constexpr std::wstring_view k_scanCacheFileName = L"Scan.cache";
+    // The styles the project's pages and articles are set in. See README#styles
+    export constexpr std::wstring_view k_stylesFileName = L"Styles.cfg";
     // The footnotes' folder, under the project's own.
     export constexpr std::wstring_view k_footnotesFolder = L"footnotes";
     // The articles' folder, under the project's own. See README#articles
@@ -104,6 +107,7 @@ namespace SeeDocs_App
 
         [[nodiscard]] std::filesystem::path databasePath() const;
         [[nodiscard]] std::filesystem::path scanCachePath() const;
+        [[nodiscard]] std::filesystem::path stylesPath() const;
         [[nodiscard]] std::filesystem::path footnotesFolder() const;
         [[nodiscard]] std::filesystem::path articlesFolder() const;
         [[nodiscard]] SourceFolders sourceFolders() const;   // the sources, each read as a folder
@@ -126,4 +130,7 @@ namespace SeeDocs_App
         std::wstring_view name);
     // Writes the project's properties into its folder.
     export void writeProject(const Project&);
+    // Reads the project's styles into the sheet, whose named styles become the file's: none where
+    // the project has no styles file. See README#styles
+    export void readStyles(const Project&, ClaFi::StyleSheet&);
 }
