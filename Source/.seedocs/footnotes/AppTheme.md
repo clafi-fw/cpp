@@ -44,9 +44,13 @@ set's new value for every size not in it - see ControlMetrics copyFields.
 
 ## ControlMetrics band
 
-**The width of a line along the control's leading edge**, drawn in its stroke colour. It is apart
-from the border, which the focus ring thickens; the band keeps its width. A control made to draw a
-band reads it, and every built-in set states 0.
+**The width of a line along the control's left edge**, drawn in its stroke colour. It is apart
+from the border, which the focus ring thickens; the band keeps its width. Every built-in set
+states 0.
+
+**PaintEvent::defaultPaintFrame draws it**, over the border along that edge and round the two
+corners there - see Canvas fillEdgeIndicator. A control that paints its frame in its own way
+draws no band.
 
 ## ThemeMetrics
 
@@ -199,8 +203,17 @@ sides stays yellow between them.
 
 ## seedPigmentOf
 
-FoundText starts from Yellow. Every other element answers none and keeps the hue of the surface
-under it. A rule naming a hue overrides the seed. The Themes app seeds its preview the same way.
+**A seeded element starts its surface from its pigment's hue** rather than the hue of the surface
+under it, and its stroke and its ink start from that surface. A rule naming a hue overrides the
+seed. A control wearing the element is painted this way, and the Themes app seeds its preview the
+same way.
+
+- FoundText and WarningCallout - Yellow
+- InfoCallout - Blue
+- Do - Green
+- Dont - Red
+
+Every other element answers none and keeps the hue of the surface under it.
 
 ## UiElement FoundText
 

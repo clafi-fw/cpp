@@ -133,6 +133,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Button.cppm">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Callout.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.Callout.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.CheckBox.cppm">
       <Filter>Controls</Filter>
     </ClCompile>
@@ -155,6 +161,12 @@
       <Filter>Controls</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.DialogTitle.cppm">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.DoDont.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.DoDont.cppm">
       <Filter>Controls</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.HistoryButton.cpp">

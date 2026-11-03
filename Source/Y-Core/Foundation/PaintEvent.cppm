@@ -252,6 +252,7 @@ namespace ClaFi
         // The ring's weight, the current less m_ringReplaced. A ring stands out of the grow-in.
         float m_focusRingFactor{ 0.0f };
         float m_borderWidth;
+        float m_bandWidth{};
         float m_radius{};
         CornerRadii m_cornerRadii{};
         ScaledSpacing m_spacing;

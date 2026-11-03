@@ -83,6 +83,14 @@ namespace Themes_App
             UiElement::FoundText
         });
 
+        constexpr auto k_blocks = std::to_array<CategoryEntry>({
+            UiElement::InfoCallout,
+            UiElement::WarningCallout,
+            UiElement::Do,
+            UiElement::Dont,
+            UiElement::CodeBlock
+        });
+
         constexpr auto k_testSubjects = std::to_array<CategoryEntry>({
             UiElement::Testee,
             UiElement::Bestee
@@ -100,7 +108,10 @@ namespace Themes_App
             MetricsSet::PrimaryWindow,
             MetricsSet::SecondaryWindow,
             MetricsSet::ScrollButton,
-            MetricsSet::ScrollThumb
+            MetricsSet::ScrollThumb,
+            MetricsSet::Callout,
+            MetricsSet::DoDont,
+            MetricsSet::CodeBlock
         });
 
         constexpr std::array k_categories{
@@ -108,6 +119,7 @@ namespace Themes_App
             Category{ L"Surfaces", L"Surfaces", k_surfaces },
             Category{ L"Controls", L"Controls", k_controls },
             Category{ L"Focus & Selection", L"FocusAndSelection", k_focusAndSelection },
+            Category{ L"Blocks", L"Blocks", k_blocks },
             Category{ L"Test subjects", L"TestSubjects", k_testSubjects },
             Category{ L"Sizes", L"Sizes", k_sizes }
         };

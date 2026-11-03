@@ -70,6 +70,8 @@ namespace ClaFi
         void setMetrics(const ControlMetrics&);
         // The theme's set sizing the control, none for a block of its own. See Control-Foundation
         [[nodiscard]] OptionalMetricsSet metricsSet() const { return m_metricsSet; }
+        // The sizes the control's properties and setters stated. See AppTheme#metricsfields
+        [[nodiscard]] MetricsFields statedMetrics() const { return m_statedMetrics; }
         //
         [[nodiscard]] Padding padding() const { return m_metrics.padding; }
         void setPadding(Padding);

@@ -67,3 +67,21 @@ as a forty-digit number, and the check mark's is the only maximum a set states.
 **A size worked out from a set and passed as a property stays as built** - tree rows, the
 Settings page's captions and SeeDocs' fields, about 35 places. Each one follows a switch only by
 stating its size again in themeMetricsChanged.
+
+## Blocks
+
+**The article blocks came in on 2026-11-03**: Callout, DoDont and a code block, which is a CodeBox
+wearing UiElement::CodeBlock and MetricsSet::CodeBlock. The rule they keep is that a block's
+shape is a control property - a SeeDocs project picks it - and its colours and sizes are the
+theme's. A theme made for an export states the frames and bands; the built-in one gives tints
+alone.
+
+- The colours start from pigments through seedPigmentOf, which PaintEvent applies to any control
+  wearing a seeded element. A rule could not name a pigment: a hue operation names a palette slot
+  or a value.
+- The marks - the message badges, the check and the cross - are drawn in pigment inks rather than
+  the element's stroke, the way MessageBar's badge is.
+- The band is drawn by defaultPaintFrame for every control, as the border is, so a code block
+  needed no class of its own. MessageBar keeps its own stripe.
+- Figure waits on a question about SVG: every figure in the manuals is SVG, and the framework
+  decodes PNG alone.

@@ -183,6 +183,11 @@ namespace ClaFi
         Spot,
         ScrollButton,
         ScrollThumb,
+        InfoCallout,
+        WarningCallout,
+        Do,         // the side of a Do and Don't block that shows what to do
+        Dont,       // the side that shows what not to do
+        CodeBlock,
         Testee,     // a test subject nothing in the framework wears
         Bestee,     // the second test subject nothing in the framework wears
         Count
@@ -194,9 +199,20 @@ namespace ClaFi
     // The pigment whose hue an element's surface starts from, if not its base's. See AppTheme
     export [[nodiscard]] constexpr std::optional<Pigment> seedPigmentOf(UiElement element)
     {
-        if (element == UiElement::FoundText)
-            return Pigment::Yellow;
-        return std::nullopt;
+        switch (element)
+        {
+            case UiElement::FoundText:
+            case UiElement::WarningCallout:
+                return Pigment::Yellow;
+            case UiElement::InfoCallout:
+                return Pigment::Blue;
+            case UiElement::Do:
+                return Pigment::Green;
+            case UiElement::Dont:
+                return Pigment::Red;
+            default:
+                return std::nullopt;
+        }
     }
 
     // What a colour rule reads.

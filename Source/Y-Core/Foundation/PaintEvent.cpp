@@ -114,6 +114,7 @@ namespace ClaFi
             AdjustMetricsEvent event{ formContext(), control, metrics };
             control.doAdjustMetrics(event);
             m_borderWidth = scaler().scaledStrokeWidth(metrics.border);
+            m_bandWidth = scaleF(metrics.band);
             m_radius = scaleF(metrics.radius);
             m_spacing = scale(metrics.spacing);
             // Metrics say how much depth this control would take; the control says whether it takes
@@ -203,6 +204,11 @@ namespace ClaFi
             // over with this control's own surface before the border is resolved.
             const Hsl standsOn{ inheritedSurfaceHsl() };
             Hsl surface{ standsOn };
+            const std::optional<Pigment> seed = m_element
+                ? seedPigmentOf(*m_element)
+                : std::nullopt;
+            if (seed)
+                surface.hue = bakedColors().pigmentHues[static_cast<std::size_t>(*seed)];
 
             // A control that keeps its selection off the surface says so to the stroke as well.
             m_selectedOnSurface = selectedEffectiveFactor;
@@ -478,11 +484,12 @@ namespace ClaFi
             return;
 
         const Color color = strokeRgb();
-        const float strokeWidth = borderWidth();
-        if (!color.alpha || !strokeWidth)
+        if (!color.alpha)
             return;
-
-        canvas().drawPartialRoundedRectangle(shape, color, strokeWidth);
+        if (const float strokeWidth = borderWidth())
+            canvas().drawPartialRoundedRectangle(shape, color, strokeWidth);
+        // After the border, over it along the side. See AppTheme#controlmetrics-band
+        canvas().fillEdgeIndicator(shape, RectSide::Left, m_bandWidth, color, color);
     }
 
     // Every event on the way to the root carries it, because which one reads it is not the

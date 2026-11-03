@@ -68,11 +68,11 @@ namespace Themes_App
     }
 
     // **A size that follows from another has no row**: a primary window's padding is its border,
-    // and a check mark and a scroll button are square, each sized by one number. The band has no
-    // row until a control draws one.
+    // and a check mark and a scroll button are square, each sized by one number.
     void SizesPage::addRows()
     {
         addBorderRow();
+        addRow(m_grid, SizeRow::Band);
         addRow(m_grid, SizeRow::Radius);
         if (m_set != MetricsSet::PrimaryWindow)
             addRow(m_grid, SizeRow::Padding);
@@ -278,6 +278,8 @@ namespace Themes_App
         WindowShadow* shadow = m_metrics->shadowOf(m_set);
         switch (size)
         {
+            case SizeRow::Band:
+                return &set.band;
             case SizeRow::Radius:
                 return &set.radius;
             case SizeRow::MinSize:
@@ -318,6 +320,7 @@ namespace Themes_App
             case SizeRow::ShadowOffset:
                 return m_metrics->shadowOf(m_set)->offset;
             case SizeRow::Border:
+            case SizeRow::Band:
             case SizeRow::Radius:
             case SizeRow::Depth:
             case SizeRow::GrowIn:
@@ -335,6 +338,8 @@ namespace Themes_App
         {
             case SizeRow::Border:
                 return L"Border";
+            case SizeRow::Band:
+                return L"Band";
             case SizeRow::Radius:
                 return L"Radius";
             case SizeRow::Padding:

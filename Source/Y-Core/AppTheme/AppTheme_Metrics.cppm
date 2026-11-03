@@ -59,7 +59,7 @@ namespace ClaFi
     public:
         Thickness border{};
         float radius{};
-        // The width of the line along the leading edge, none at 0. See AppTheme
+        // The width of the line along the left edge, none at 0. See AppTheme
         float band{};
         Padding padding{};
         Spacing spacing{};
@@ -125,6 +125,9 @@ namespace ClaFi
         ScrollButton,
         ScrollThumb,
         Tab,
+        Callout,
+        DoDont,
+        CodeBlock,
         Count
     };
 
@@ -183,6 +186,9 @@ namespace ClaFi
         ControlMetrics scrollButton;
         ControlMetrics scrollThumb;
         ControlMetrics tab;
+        ControlMetrics callout; // spacing across beside the mark, down between the blocks
+        ControlMetrics doDont; // spacing across between the sides, down between the items
+        ControlMetrics codeBlock;
         // The set of this name.
         [[nodiscard]] const ControlMetrics& of(MetricsSet) const;
         [[nodiscard]] ControlMetrics& of(MetricsSet);
@@ -213,7 +219,10 @@ namespace ClaFi
             &ThemeMetrics::gridCell,
             &ThemeMetrics::scrollButton,
             &ThemeMetrics::scrollThumb,
-            &ThemeMetrics::tab
+            &ThemeMetrics::tab,
+            &ThemeMetrics::callout,
+            &ThemeMetrics::doDont,
+            &ThemeMetrics::codeBlock
         };
 
 
@@ -356,6 +365,20 @@ namespace ClaFi
         tab.spacing = { 4.0f, 4.0f };
         tab.radius = 4.0f;
         tab.padding = { 8.0f, 4.0f };
+
+        // callout
+        callout.radius = 6.0f;
+        callout.padding = { 12.0f, 10.0f };
+        callout.spacing = { 10.0f, 6.0f };
+
+        // doDont
+        doDont.radius = 6.0f;
+        doDont.padding = { 12.0f, 10.0f };
+        doDont.spacing = { 12.0f, 4.0f };
+
+        // codeBlock
+        codeBlock.radius = 6.0f;
+        codeBlock.padding = { 12.0f, 10.0f };
 
         settle();
     }

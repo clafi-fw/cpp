@@ -513,5 +513,85 @@ namespace ClaFi
                 }
             }
         };
+
+        rules.of(UiElement::InfoCallout) = {
+            ColorRule{
+                .effect{
+                    { ColorRuleOp::Set, 0.5f },             // S
+                    { ColorRuleOp::Offset, 0.05f }          // E
+                }
+            },
+            ColorRule{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleOp::Set, 0.8f },             // S
+                    { ColorRuleOp::Offset, 0.35f }          // E
+                }
+            }
+        };
+
+        rules.of(UiElement::WarningCallout) = {
+            ColorRule{
+                .effect{
+                    { ColorRuleOp::Set, 0.5f },             // S
+                    { ColorRuleOp::Offset, 0.05f }          // E
+                }
+            },
+            ColorRule{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleOp::Set, 0.8f },             // S
+                    { ColorRuleOp::Offset, 0.35f }          // E
+                }
+            }
+        };
+
+        rules.of(UiElement::Do) = {
+            ColorRule{
+                .effect{
+                    { ColorRuleOp::Set, 0.4f },             // S
+                    { ColorRuleOp::Offset, 0.045f }         // E
+                }
+            },
+            ColorRule{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleOp::Set, 0.8f },             // S
+                    { ColorRuleOp::Offset, 0.35f }          // E
+                }
+            }
+        };
+
+        rules.of(UiElement::Dont) = {
+            ColorRule{
+                .effect{
+                    { ColorRuleOp::Set, 0.4f },             // S
+                    { ColorRuleOp::Offset, 0.045f }         // E
+                }
+            },
+            ColorRule{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    { ColorRuleOp::Set, 0.8f },             // S
+                    { ColorRuleOp::Offset, 0.35f }          // E
+                }
+            }
+        };
+
+        rules.of(UiElement::CodeBlock) = {
+            ColorRule{
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.035f }         // E
+                }
+            },
+            ColorRule{
+                .output = PaintChannel::Stroke,
+                .effect{
+                    {},                                     // S
+                    { ColorRuleOp::Offset, 0.12f }          // E
+                }
+            }
+        };
     }
 }

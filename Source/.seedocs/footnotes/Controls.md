@@ -805,3 +805,46 @@ A node shut over the current row makes its header the row either way - see Expan
 carry's events - see ItemsMoveEvent. A row or a header of a kind of the caller's own, standing on
 TreeItem or on TreeNodeHeader, is added with `std::type_identity<Kind>{}` ahead of its arguments,
 the way an Expander takes its header.
+
+## Callout
+
+**A callout holds blocks of its own** - paragraphs, list items, code - added to blocks() one under
+another, the set's spacing down apart. Its kind picks the element it wears, InfoCallout or
+WarningCallout, and its mark: the badge a message of that kind leads with.
+
+**The theme states the rest.** A tint is the element's surface, a frame its border, and a band
+the set's band in the stroke colour - see ControlMetrics. The set's spacing across stands between
+the mark and the blocks.
+
+## CalloutShape
+
+- `Marked` - the mark in a bar of its own at the left, at the top beside the first line.
+- `Banner` - a line naming the kind, its mark first, over the blocks.
+- `Plain` - the blocks alone, the kind told by the colours.
+
+**The shape is the caller's, the look the theme's** - a document picks one shape for all its
+callouts, and a theme the colours and sizes every shape is drawn in.
+
+## DoDont
+
+**Two lists, Do and Don't**, each item added to the end of its side with addItem. The do items
+come first in every shape.
+
+**Under Columns and Stacked a side wears its element and the theme's set** - Do or Dont, and the
+Do and Don't set - so its tint, frame and band are the theme's. The sides stand the set's spacing
+across apart, and the items in a side its spacing down. Under Marks the sides wear neither and
+run on as one list, every item its spacing down from the last.
+
+**Columns divide the width the block is given**, an even share to each side, so the words in a
+side wrap at its share. The spacing is read as the block is measured, so a switch of sizes
+reaches it, and a Spacing given to the block stands over it.
+
+## DoDontShape
+
+- `Columns` - the sides beside each other, sharing the width evenly, each under a heading of its
+  mark and its name, its items led by bullets.
+- `Stacked` - Do over Don't, the same way.
+- `Marks` - one list with no surfaces and no headings, each item led by its side's mark: a check
+  for Do, a cross for Don't.
+
+The marks are drawn in the Green and Red pigments, as a message's badge is drawn in its own.

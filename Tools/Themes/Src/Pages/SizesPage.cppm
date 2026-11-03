@@ -53,6 +53,7 @@ namespace Themes_App
         enum class SizeRow : TagValue
         {
             Border,
+            Band,
             Radius,
             Padding,
             Spacing,

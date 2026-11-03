@@ -206,6 +206,38 @@ namespace ClaFi
             .token = L"ScrollThumb",
             .base = UiElement::Section
         },
+        // **The blocks a page of prose holds**, each started from its seed pigment's hue - see
+        // seedPigmentOf. A band, a frame or a tint is the stroke and the surface they state.
+        UiElementDescriptor{
+            .name = L"Info Callout",
+            .codeName = L"infoCallout",
+            .token = L"InfoCallout",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
+            .name = L"Warning Callout",
+            .codeName = L"warningCallout",
+            .token = L"WarningCallout",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
+            .name = L"Do",
+            .codeName = L"doSide",
+            .token = L"Do",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
+            .name = L"Don't",
+            .codeName = L"dontSide",
+            .token = L"Dont",
+            .base = UiElement::Section
+        },
+        UiElementDescriptor{
+            .name = L"Code Block",
+            .codeName = L"codeBlock",
+            .token = L"CodeBlock",
+            .base = UiElement::Section
+        },
         // **The two test subjects.** Only the rules a theme states for them reach them: with none,
         // each paints no surface and draws its text in the ink it inherits.
         UiElementDescriptor{
@@ -276,7 +308,18 @@ namespace ClaFi
             .codeName = L"scrollThumb",
             .token = L"ScrollThumb"
         },
-        MetricsSetDescriptor{ .name = L"Tab", .codeName = L"tab", .token = L"Tab" }
+        MetricsSetDescriptor{ .name = L"Tab", .codeName = L"tab", .token = L"Tab" },
+        MetricsSetDescriptor{ .name = L"Callout", .codeName = L"callout", .token = L"Callout" },
+        MetricsSetDescriptor{
+            .name = L"Do and Don't",
+            .codeName = L"doDont",
+            .token = L"DoDont"
+        },
+        MetricsSetDescriptor{
+            .name = L"Code Block",
+            .codeName = L"codeBlock",
+            .token = L"CodeBlock"
+        }
     };
 
     export constexpr const MetricsSetDescriptor& metricsSetOf(MetricsSet set)
