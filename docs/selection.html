@@ -474,6 +474,7 @@
                 <tr><td>A label, a panel, decoration</td><td><code>No</code></td><td><code>Parent</code></td><td><code>Parent</code></td><td><code>No</code></td></tr>
                 <tr><td>A button, a text box, a check box, a list item</td><td><code>Yes</code></td><td><code>Self</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A <code>ToolButton</code> - reached by the keys, pressed without moving the focus</td><td><code>Yes</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
+                <tr><td>A <code>Tab</code> - reached by the keys, opened by a press without moving the focus</td><td><code>Yes</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A tool bar button acting on the editor beside it</td><td><code>No</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A notice's answer - reached by the keys, pressed without moving the focus</td><td><code>Yes</code></td><td><code>Keep</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
                 <tr><td>A part - a slider's thumb, a check box's mark</td><td><code>No</code></td><td><code>Parent</code></td><td><code>Self</code></td><td><code>No</code></td></tr>
@@ -529,7 +530,8 @@
                         <li>Use a control answering <code>MouseFocus::Keep</code> as a list item. A focus scope
                         makes current and selects only the items a mouse press focuses. Tool buttons
                         made into a list's items say <code>MouseFocus::Self</code>, as
-                        <code>TreeItem</code> does.</li>
+                        <code>TreeItem</code> does. A tab strip takes every tab as its item, so a
+                        <code>Tab</code> answers <code>Keep</code> and is still current once pressed.</li>
                     </ul>
                 </div>
             </div>
@@ -830,7 +832,8 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
             <h3 id="page-controls">Page Controls</h3>
             <p><strong>The focus goes with the switch.</strong> A page control holding the focus enters the page it
             turns to as a show enters it. A focus elsewhere - in the tab strip, in a sidebar - stays where it
-            is.</p>
+            is. A mouse press on a <code>Tab</code> leaves the focus where it was, so a focus in the page goes
+            on into the page the tab opens.</p>
 
             <h2 id="selection">Selection</h2>
             <p><strong><code>StackView</code> holds a selection on top of the current item</strong>, under

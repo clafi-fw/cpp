@@ -52,7 +52,7 @@ namespace ClaFi::Controls
     // would otherwise be buys it nothing.
     using TabBaseClass = SplitButtonBase;
 
-    // One tab of a strip, standing for what it opens.
+    // One tab of a strip, standing for what it opens; a press moves no focus. See Item-Containers
     export class Tab : public TabBaseClass, public IFittable
     {
     public:
@@ -210,7 +210,7 @@ namespace ClaFi::Controls
         TabBaseClass{
             params,
             NavigationReach::Yes,
-            MouseFocus::Self,
+            MouseFocus::Keep,
             ClickTarget::Self,
             metricsIn(params),
             std::forward<Args>(args)...

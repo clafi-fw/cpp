@@ -248,6 +248,16 @@ deleted after.
 or the form's scale changes. A hidden page that grows on its own at the same scale keeps the size
 it was measured at.
 
+## Tab
+
+**A press opens the tab and leaves the focus where it is.** A focus in the page goes on to the page
+the tab opens - see PageControl - and a focus anywhere else stays there. The keys still reach the
+tab.
+
+**Every tab is its strip's item, whatever MouseFocus it answers.** The strip takes each tab it holds
+as an item, and a press makes the pressed tab current. A tab that is to take the focus on a mouse
+press states MouseFocus::Self.
+
 ## TabStripBase::adjustMetrics
 
 **A Tab strip pads its outer side only**, away from the page. The open tab's line runs along the

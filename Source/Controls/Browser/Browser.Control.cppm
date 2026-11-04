@@ -143,11 +143,9 @@ namespace ClaFi::Browser
         // The close button is the tab's secondary part, so the base keeps a press on it from
         // reading as a press on the tab and routes the click to secondaryClicked().
         //
-        // It takes ToolButton's MouseFocus::Keep, and that is what keeps pressing it off the tab's
-        // selection. The focus walk in Control::setFocusByPress stops at it without focusing
-        // anything, so the strip hears of no press to select by, and the focus stays in the page,
-        // which hands it to the tab selected in its place. Answering Parent, the button would hand
-        // the press to the tab, which would select it on the way to closing it. Button's
+        // It takes ToolButton's MouseFocus::Keep. The focus walk in Control::setFocusByPress stops
+        // at it without focusing anything, so the strip hears of no press to select by, and the
+        // focus stays in the page, which hands it to the tab selected in its place. Button's
         // NavigationReach is also how the keyboard reaches the button at all.
         Button& m_closeButton = createSecondaryPart<ToolButton>(
             FixedSize{ 20.0f },
