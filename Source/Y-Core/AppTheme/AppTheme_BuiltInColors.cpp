@@ -82,8 +82,8 @@ namespace ClaFi
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
-                    { ColorRuleOp::Set, 0.817269f },        // S
-                    { ColorRuleOp::Set, 0.65880865f }       // E
+                    { ColorRuleOp::Set, 1.0f },             // S
+                    { ColorRuleOp::Set, 0.543364f }         // E
                 }
             },
             ColorRule{

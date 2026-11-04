@@ -73,6 +73,14 @@ namespace Themes_App
         std::span<const CategoryEntry> entries{};
     };
 
+    // A root of the tree: its name, what its page goes by, and the categories under it.
+    struct TreeRoot
+    {
+        std::wstring_view name{};
+        std::wstring_view token{};
+        std::span<const Category> categories{};
+    };
+
     // Where in the design an edit is made, put back beside the theme an undo restores.
     export struct DesignPlace
     {
@@ -90,7 +98,7 @@ namespace Themes_App
         // The token of the page that shows - an element's, a shared list's or a category's - or
         // nothing yet.
         [[nodiscard]] std::wstring_view pickedPage() const;
-        // Picks and shows the page a token names, and the first page for a token naming none.
+        // Picks and shows the page a token names, and the palette for a token naming none.
         void pickPage(std::wstring_view token);
         // Picks the page a place names and puts its grid's selection back, once the rows stand.
         void showPlace(const DesignPlace&);
@@ -118,26 +126,30 @@ namespace Themes_App
         {
             OptionalUiElement element{}; // an element's own list, nothing for every other row
             const SharedRules* shared{}; // a list no one element owns, null for every other row
+            const TreeRoot* root{};      // a root's row, null for every other row
             const Category* category{};  // a category's node, null for every other row
             OptionalMetricsSet sizes{};  // a set of sizes, none for every other row
-            Control* item{};             // the row: an item, or a category node's header
+            Control* item{};             // the row: an item, or a node's header
             Control* page{};
             ElementPage* rules{};        // the page, where it shows a list of rules
             SizesPage* sizesPage{};      // the page, where it shows a set of sizes
             const ColorRules* list{};    // the rules that page shows, from bind on
-            IndexRows indexRows{};       // a category page's rows, one per page under it
+            IndexRows indexRows{};       // the rows of a root's or a category's page
         };
         using TreeEntries = std::vector<TreeEntry>;
     private:
         void buildTree();
-        [[nodiscard]] TreeItem& addRootItem(); // a theme-wide page's row, a step larger
+        // Adds a root's row and page - under it the pages given, then a node per category.
+        void addRoot(const TreeRoot&, std::span<const TreeEntry> pages);
+        // Adds a category's node, its rows and its page under a root, and answers the index.
+        std::size_t addCategory(TreeNode& rootNode, const Category&);
         std::size_t addItemEntry(TreeItem&, TreeEntry); // names the item, answers the index
         std::size_t addEntry(RichControl& row, TreeEntry); // answers the entry's index
-        // Builds a category's page: the pages under it listed as rows that open them.
-        void buildCategoryPage(std::size_t category, const EntryIndexes& members);
+        // Builds a root's or a category's page - a row that opens each page or category under it.
+        void buildIndexPage(std::size_t entryIndex, const EntryIndexes& members);
         void openEntry(std::size_t index);
-        // Writes each row of a category page again, with the rule count as it stands.
-        void refreshIndex(const TreeEntry& category);
+        // Writes each row of an index page again, with the rule count as it stands.
+        void refreshIndex(const TreeEntry&);
         void showPickedPage();
         [[nodiscard]] const TreeEntry* pickedEntry() const;
         [[nodiscard]] static Text indexRowText(const TreeEntry&);

@@ -99,34 +99,67 @@ namespace Themes_App
             UiElement::Bestee
         });
 
-        constexpr auto k_sizes = std::to_array<CategoryEntry>({
-            MetricsSet::Button,
-            MetricsSet::ToolButton,
-            MetricsSet::ListItem,
-            MetricsSet::CheckMark,
-            MetricsSet::Tab,
-            MetricsSet::Page,
-            MetricsSet::GridCell,
-            MetricsSet::DialogTitle,
+        constexpr auto k_windowRootSizes = std::to_array<CategoryEntry>({
             MetricsSet::PrimaryWindow,
-            MetricsSet::SecondaryWindow,
-            MetricsSet::ScrollButton,
-            MetricsSet::ScrollThumb,
-            MetricsSet::Callout,
-            MetricsSet::DoDont,
-            MetricsSet::CodeBlock,
-            MetricsSet::TextBox,
-            MetricsSet::Slider
+            MetricsSet::SecondaryWindow
         });
 
-        constexpr std::array k_categories{
+        constexpr auto k_surfaceSizes = std::to_array<CategoryEntry>({
+            MetricsSet::Page,
+            MetricsSet::DialogTitle,
+            MetricsSet::GridCell
+        });
+
+        constexpr auto k_controlSizes = std::to_array<CategoryEntry>({
+            MetricsSet::Button,
+            MetricsSet::ToolButton,
+            MetricsSet::Tab,
+            MetricsSet::ListItem,
+            MetricsSet::CheckMark,
+            MetricsSet::TextBox,
+            MetricsSet::Slider,
+            MetricsSet::ScrollButton,
+            MetricsSet::ScrollThumb
+        });
+
+        constexpr auto k_blockSizes = std::to_array<CategoryEntry>({
+            MetricsSet::Callout,
+            MetricsSet::DoDont,
+            MetricsSet::CodeBlock
+        });
+
+        constexpr std::array k_colorCategories{
             Category{ L"Window roots", L"WindowRoots", k_windowRoots },
             Category{ L"Surfaces", L"Surfaces", k_surfaces },
             Category{ L"Controls", L"Controls", k_controls },
             Category{ L"Focus & Selection", L"FocusAndSelection", k_focusAndSelection },
             Category{ L"Blocks", L"Blocks", k_blocks },
-            Category{ L"Test subjects", L"TestSubjects", k_testSubjects },
-            Category{ L"Sizes", L"Sizes", k_sizes }
+            Category{ L"Test subjects", L"TestSubjects", k_testSubjects }
+        };
+
+        // The tokens are set apart from those of the colour categories going by the same names.
+        constexpr std::array k_metricsCategories{
+            Category{ L"Window roots", L"MetricsWindowRoots", k_windowRootSizes },
+            Category{ L"Surfaces", L"MetricsSurfaces", k_surfaceSizes },
+            Category{ L"Controls", L"MetricsControls", k_controlSizes },
+            Category{ L"Blocks", L"MetricsBlocks", k_blockSizes }
+        };
+
+        constexpr TreeRoot k_colorsRoot{
+            .name = L"Colors",
+            .token = L"Colors",
+            .categories = k_colorCategories
+        };
+
+        constexpr TreeRoot k_metricsRoot{
+            .name = L"Metrics",
+            .token = L"Metrics",
+            .categories = k_metricsCategories
+        };
+
+        constexpr TreeRoot k_textStylesRoot{
+            .name = L"Text Styles",
+            .token = L"TextStyles"
         };
 
         using SizesTokens = std::array<std::wstring, k_metricsSetCount>;
@@ -137,7 +170,7 @@ namespace Themes_App
             static const SizesTokens tokens = []() {
                 SizesTokens result{};
                 for (std::size_t i = 0; i != k_metricsSetCount; ++i)
-                    result[i] = std::wstring{ L"Sizes" } + std::wstring{ k_metricsSets[i].token };
+                    result[i] = std::wstring{ L"Metrics" } + std::wstring{ k_metricsSets[i].token };
                 return result;
             }();
             return tokens[static_cast<std::size_t>(set)];
@@ -167,9 +200,10 @@ namespace Themes_App
 
     void DesignPage::pickPage(const std::wstring_view token)
     {
-        const auto found = std::ranges::find(m_entries, token, &DesignPage::tokenOf);
-        const TreeEntry& entry = found != m_entries.end() ? *found : m_entries.front();
-        m_tree.setCurrentItem(entry.item);
+        auto found = std::ranges::find(m_entries, token, &DesignPage::tokenOf);
+        if (found == m_entries.end())
+            found = std::ranges::find(m_entries, k_paletteToken, &DesignPage::tokenOf);
+        m_tree.setCurrentItem(found->item);
         showPickedPage();
     }
 
@@ -250,38 +284,63 @@ namespace Themes_App
 
     void DesignPage::buildTree()
     {
-        addItemEntry(addRootItem(), TreeEntry{ .page = &m_palettePage });
-        addItemEntry(addRootItem(), TreeEntry{ .shared = &k_anyElement });
-        addItemEntry(addRootItem(), TreeEntry{ .shared = &k_anyWindow });
-        addItemEntry(addRootItem(), TreeEntry{ .shared = &k_anyNonWindow });
-        // Sets the theme-wide pages apart, so they read as peers of the categories.
+        const std::array themeWidePages{
+            TreeEntry{ .page = &m_palettePage },
+            TreeEntry{ .shared = &k_anyElement },
+            TreeEntry{ .shared = &k_anyWindow },
+            TreeEntry{ .shared = &k_anyNonWindow }
+        };
+        addRoot(k_colorsRoot, themeWidePages);
         m_tree.addDivider(Thickness::Heavy, Padding{ 4.0f, 6.0f });
-        for (const Category& category : k_categories)
-        {
-            // The header carries the name muted, set apart from the pages under it. It is a row
-            // of its own, and its page lists those pages - built once they stand.
-            TreeNode& node = m_tree.addNode(HeaderText{
-                ColoredText{ InkGrade::Muted, category.name }
-            });
-            const std::size_t categoryIndex = addEntry(node.header(),
-                TreeEntry{ .category = &category });
-            EntryIndexes members;
-            for (const CategoryEntry& entry : category.entries)
-            {
-                members.push_back(addItemEntry(node.addItem(), TreeEntry{
-                    .element = entry.element,
-                    .shared = entry.shared,
-                    .sizes = entry.sizes
-                }));
-            }
-            buildCategoryPage(categoryIndex, members);
-        }
-        showPickedPage();
+        addRoot(k_metricsRoot, {});
+        m_tree.addDivider(Thickness::Heavy, Padding{ 4.0f, 6.0f });
+        addRoot(k_textStylesRoot, {});
+        pickPage(k_paletteToken);
     }
 
-    TreeItem& DesignPage::addRootItem()
+    // A root's row is a step larger than the rows under it. A root holding nothing is an item: it
+    // has no rows for a node to open.
+    void DesignPage::addRoot(const TreeRoot& root, const std::span<const TreeEntry> pages)
     {
-        return m_tree.addItem(TextFormat{ TextStyles::SubHeading });
+        if (pages.empty() && root.categories.empty())
+        {
+            TreeItem& item = m_tree.addItem(TextFormat{ TextStyles::SubHeading });
+            buildIndexPage(addItemEntry(item, TreeEntry{ .root = &root }), {});
+            return;
+        }
+        TreeNode& node = m_tree.addNode(HeaderText{ root.name });
+        node.header().setTextFormat(TextFormat{ TextStyles::SubHeading });
+        const std::size_t rootIndex = addEntry(node.header(), TreeEntry{ .root = &root });
+        EntryIndexes members{};
+        for (const TreeEntry& page : pages)
+            members.push_back(addItemEntry(node.addItem(), page));
+        if (!pages.empty() && !root.categories.empty())
+            node.addDivider();
+        for (const Category& category : root.categories)
+            members.push_back(addCategory(node, category));
+        buildIndexPage(rootIndex, members);
+    }
+
+    // The header carries the name muted, set apart from the pages under it. It is a row of its
+    // own, and its page lists those pages - built once they stand.
+    std::size_t DesignPage::addCategory(TreeNode& rootNode, const Category& category)
+    {
+        TreeNode& node = rootNode.addNode(HeaderText{
+            ColoredText{ InkGrade::Muted, category.name }
+        });
+        const std::size_t categoryIndex = addEntry(node.header(),
+            TreeEntry{ .category = &category });
+        EntryIndexes members{};
+        for (const CategoryEntry& entry : category.entries)
+        {
+            members.push_back(addItemEntry(node.addItem(), TreeEntry{
+                .element = entry.element,
+                .shared = entry.shared,
+                .sizes = entry.sizes
+            }));
+        }
+        buildIndexPage(categoryIndex, members);
+        return categoryIndex;
     }
 
     // An item is named after the page it opens.
@@ -297,29 +356,26 @@ namespace Themes_App
         row.setTag(Tag{ index });
         entry.item = &row;
         // A page of rules or of sizes is made here - the palette's page stands already, and a
-        // category's is built once the pages it lists do.
+        // root's or a category's is built once the pages it lists do.
         if (entry.sizes)
         {
             entry.sizesPage = &m_pages.add<SizesPage>(*entry.sizes);
             entry.page = entry.sizesPage;
         }
-        else if (!entry.page && !entry.category)
+        else if (entry.element || entry.shared)
         {
             entry.rules = &m_pages.add<ElementPage>(nameOf(entry));
             entry.page = entry.rules;
         }
         m_entries.push_back(std::move(entry));
-        // The first item stands picked, so the body never opens empty.
-        if (!m_tree.currentItem())
-            m_tree.setCurrentItem(row);
         return index;
     }
 
-    // Titled as an element page is, with a row per page under the category. A row's text is
+    // Titled as an element page is, with a row per page or category under it. A row's text is
     // written when the page is shown, since it carries a count that edits move.
-    void DesignPage::buildCategoryPage(const std::size_t category, const EntryIndexes& members)
+    void DesignPage::buildIndexPage(const std::size_t entryIndex, const EntryIndexes& members)
     {
-        TreeEntry& entry = m_entries[category];
+        TreeEntry& entry = m_entries[entryIndex];
         Panel& page = m_pages.add<Panel>();
         page.createTopBar<Panel>(
             Padding{ 12.0f, 8.0f }
@@ -354,9 +410,9 @@ namespace Themes_App
         entry.item->setFocus();
     }
 
-    void DesignPage::refreshIndex(const TreeEntry& category)
+    void DesignPage::refreshIndex(const TreeEntry& entry)
     {
-        for (RichControl* row : category.indexRows)
+        for (RichControl* row : entry.indexRows)
             row->text() = indexRowText(m_entries[row->tag<std::size_t>()]);
     }
 
@@ -365,7 +421,7 @@ namespace Themes_App
         const TreeEntry* entry = pickedEntry();
         if (!entry)
             return;
-        if (entry->category)
+        if (entry->root || entry->category)
             refreshIndex(*entry);
         m_pages.setCurrentItem(entry->page);
     }
@@ -377,10 +433,10 @@ namespace Themes_App
         return nullptr;
     }
 
-    // The page's name, and after it how many rules the page holds, muted. A sizes page holds none.
+    // The page's name, followed for a page of rules by how many it holds, muted.
     Text DesignPage::indexRowText(const TreeEntry& entry)
     {
-        if (entry.sizes)
+        if (!entry.rules)
             return Text{ nameOf(entry) };
         const std::size_t count = entry.list ? entry.list->size() : 0;
         Text tally{};
@@ -401,6 +457,8 @@ namespace Themes_App
             return metricsSetOf(*entry.sizes).name;
         if (entry.shared)
             return entry.shared->name;
+        if (entry.root)
+            return entry.root->name;
         if (entry.category)
             return entry.category->name;
         return k_paletteTitle;
@@ -414,6 +472,8 @@ namespace Themes_App
             return sizesToken(*entry.sizes);
         if (entry.shared)
             return entry.shared->token;
+        if (entry.root)
+            return entry.root->token;
         if (entry.category)
             return entry.category->token;
         return k_paletteToken;
