@@ -128,25 +128,29 @@ namespace Themes_App
         ).add<Grids::Dt::Grid>(
             MetricsSet::Page,
             UiElement::Section,
+            HorizontalAlign::Left,
             Grids::GridLines::Horizontal,
             Grids::Dt::Columns{
                 Grids::Dt::Column{ Tag{ SizeColumn::Name },
                     Text{ L"Size" },
-                    Grids::ColumnWidthMode::Fill
+                    Grids::ColumnWidthMode::FitContent
                 },
                 Grids::Dt::Column{ Tag{ SizeColumn::Value },
                     Text{ L"Value" },
                     Grids::ColumnWidthMode::Fixed,
                     Grids::ColumnWidth{ 160.0f },
+                    TextAlign::Right,
                     EditorMode::Editable,
                     Grids::Dt::Column{ Tag{ SizeColumn::Across },
                         Text{ L"Across" },
                         Grids::ColumnWidthMode::Fill,
+                        TextAlign::Right,
                         EditorMode::Editable
                     },
                     Grids::Dt::Column{ Tag{ SizeColumn::Down },
                         Text{ L"Down" },
                         Grids::ColumnWidthMode::Fill,
+                        TextAlign::Right,
                         EditorMode::Editable
                     }
                 }

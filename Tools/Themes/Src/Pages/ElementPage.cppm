@@ -165,6 +165,7 @@ namespace Themes_App
         ).add<Grids::Dt::Grid>(
             MetricsSet::Page,
             UiElement::Section,
+            HorizontalAlign::Left,
             Grids::GridLines::Horizontal,
             SelectionMode::Multi,
             DragMode::EasyDrag,
@@ -172,17 +173,19 @@ namespace Themes_App
             Grids::Dt::Columns{
                 Grids::Dt::Column{ Tag{ RuleColumn::ApplyTo },
                     Text{ L"Apply to" },
-                    Grids::ColumnWidthMode::Fill
+                    Grids::ColumnWidthMode::FitContent
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Hue },
                     Text{ InTextIcon{ 16.0f, 16.0f, Icons::HueIcon::draw }, L" Hue" }
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Saturation },
                     Text{ InTextIcon{ 16.0f, 16.0f, Icons::SaturationIcon::draw },
-                        L" Saturation" }
+                        L" Saturation" },
+                    TextAlign::Right
                 },
                 Grids::Dt::Column{ Tag{ RuleColumn::Elevation },
-                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::draw }, L" Elevation" }
+                    Text{ InTextIcon{ 16.0f, 16.0f, Icons::LuminosityIcon::draw }, L" Elevation" },
+                    TextAlign::Right
                 }
             },
             Grids::Dt::Header{}

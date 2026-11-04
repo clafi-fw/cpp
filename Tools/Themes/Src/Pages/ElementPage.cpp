@@ -229,12 +229,14 @@ namespace Themes_App
         row.addControl<ValueRuleControl>(
             column(RuleColumn::Saturation),
             padding,
-            VerticalAlign::Fill
+            VerticalAlign::Fill,
+            HorizontalTextAnchor::Right
         );
         row.addControl<ValueRuleControl>(
             column(RuleColumn::Elevation),
             padding,
-            VerticalAlign::Fill
+            VerticalAlign::Fill,
+            HorizontalTextAnchor::Right
         );
         bindEditors(row);
         m_ruleRows.push_back(&row);
@@ -292,10 +294,12 @@ namespace Themes_App
         return result;
     }
 
+    // An edit can change how wide a cell's text is, and the columns are fitted to their cells.
     void ElementPage::rulesChanged(const EditPhase phase, const Text& what,
         const RuleSelection& at)
     {
         m_resetButton.invalidateState();
+        form().invalidateAlign();
         if (m_onRulesChanged)
             m_onRulesChanged(phase, what, at);
     }
