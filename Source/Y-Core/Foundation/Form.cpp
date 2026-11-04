@@ -1871,13 +1871,13 @@ namespace ClaFi
         return result;
     }
 
-    // **Coloured as the rule set colours a window's shadow**, at the focus this window holds: the
-    // root's rule set for the window's own, a card's own for a card standing over it.
+    // **Coloured as the rule set colours a window's shadow**, at the focus it is given: the root's
+    // rule set at its window's focus for the window's own, a card's own for a card over it.
     Graphics::ShadowPainter::Design FormBase::shadowDesign(const OptionalUiElement colorRules,
-        const WindowShadow& shadow, const float radius) const
+        const WindowShadow& shadow, const float radius, const float windowFocusedFactor) const
     {
         const Scaler& scaler = this->scaler();
-        const Color rgb = bakedColors().windowShadow(colorRules, windowFocusedFactor()).toColor();
+        const Color rgb = bakedColors().windowShadow(colorRules, windowFocusedFactor).toColor();
         const ColorByte alpha = static_cast<ColorByte>(std::lround(shadow.opacity * 255.0f));
         return {
             .shadow = {
@@ -1914,7 +1914,7 @@ namespace ClaFi
     Graphics::ShadowPainter::Design FormBase::shadowDesign() const
     {
         return shadowDesign(m_content.colorRules(), m_content.windowShadow(),
-            m_content.metrics().radius);
+            m_content.metrics().radius, windowFocusedFactor());
     }
 
     // **Whether the frames start from nothing** follows the window's answer, and the answer can

@@ -92,6 +92,12 @@
     <ClCompile Include="Src\Previews\CodeBlockPreview.cppm">
       <Filter>Src\Previews</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Previews\DialogMockup.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\DialogMockup.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Previews\DoDontPreview.cpp">
       <Filter>Src\Previews</Filter>
     </ClCompile>

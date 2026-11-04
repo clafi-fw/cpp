@@ -9,7 +9,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.MessageBar;
 import ClaFi.Controls.PageControl;
 
-import ClaFi.Icons.SideBar;
+import ClaFi.Icons.Eye;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
@@ -34,12 +34,11 @@ namespace Themes_App
         m_sizesNote.setVisible(value);
     }
 
-    // The icon is the one on the button that shows the panel. The second paragraph is indented
-    // past the icon, so every line of it stands under the name.
+    // The second paragraph is indented past the icon, so every line of it stands under the name.
     Text PreviewPanel::titleOf(const std::wstring_view whatPageShows)
     {
         Text title{
-            InTextIcon{ k_titleIconSize, k_titleIconSize, Icons::SideBar::drawRightBarIcon },
+            InTextIcon{ k_titleIconSize, k_titleIconSize, Icons::Eye::draw },
             Space{ k_titleIconGap },
             StyledText{ TextStyles::SubTitle, L"Live preview" }
         };

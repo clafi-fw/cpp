@@ -110,6 +110,12 @@ Win32, the **activated** state of a toplevel configure on Wayland. A Menu or Too
 has the focus to report - `WS_EX_NOACTIVATE` on Win32, and an `xdg_popup` has no **activated**
 state - which is why `windowFocusedFactor` answers a popup's owner's factor instead.
 
+**A paint states its own factor since 2026-11-04**, through
+`AdjustPaintEvent::setWindowFocusedFactor`, and `shadowDesign` takes the factor rather than reading
+the form's. Both came in for the Themes preview (Oj: "Show two dialogs mockups: focused and not"):
+until then every mockup in the preview panel followed the Themes window's own focus, the shadows
+under them included.
+
 ## FocusNavigator
 
 2026-10-17. The arrows and the page keys were a spatial search: every focusable control within a

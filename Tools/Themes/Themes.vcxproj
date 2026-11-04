@@ -243,6 +243,8 @@
     <ClCompile Include="Src\Previews\CalloutsPreview.cppm" />
     <ClCompile Include="Src\Previews\CodeBlockPreview.cpp" />
     <ClCompile Include="Src\Previews\CodeBlockPreview.cppm" />
+    <ClCompile Include="Src\Previews\DialogMockup.cpp" />
+    <ClCompile Include="Src\Previews\DialogMockup.cppm" />
     <ClCompile Include="Src\Previews\DoDontPreview.cpp" />
     <ClCompile Include="Src\Previews\DoDontPreview.cppm" />
     <ClCompile Include="Src\Previews\FishIcon.cpp" />

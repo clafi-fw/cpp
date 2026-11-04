@@ -728,6 +728,20 @@ What reads it:
 **A control reads the factor here while it paints**, with no subscription. Each step of the
 animation repaints the whole window, since the form cannot know which controls read it.
 
+**The root's paint takes the form's factor, and every other control takes its parent's.** A
+control that states one of its own hands it to everything inside it - see
+AdjustPaintEvent::setWindowFocusedFactor.
+
+## AdjustPaintEvent setWindowFocusedFactor
+
+**A mockup of a window states the focus that window holds**, so it paints focused or not whatever
+the focus of the window it stands in. Everything inside it takes the same factor.
+
+What follows it is what reads the factor off the paint: the colour chain and
+`RuleInput::WindowFocused`, the keys' share of a grid cell's hot state, and TextBox's caret. A
+shadow drawn for the mockup follows it when it is designed at the same factor - see
+FormBase::shadowDesign.
+
 ## AdjustPaintEvent replaceRing
 
 **The ring is drawn at the control's current less the amount.** The stroke's Current rules, the
@@ -740,11 +754,13 @@ at one pace, and no ring shows between them.
 
 ## FormBase::shadowDesign
 
-**Scaled to the form, and coloured as the rule set colours a window's shadow** at the focus this
-window holds.
+**Scaled to the form, and coloured as the rule set colours a window's shadow** at the focus it is
+given.
 
-The window's own shadow uses its root's rule set. A control over the content passes its own - the
-notices layer passes Tooltip, so a card casts a tooltip window's shadow.
+The window's own shadow uses its root's rule set and its window's focus. A control over the
+content passes its own rule set and the factor it paints at - the notices layer passes Tooltip, so
+a card casts a tooltip window's shadow. A mockup of a window passes the factor it states for that
+window.
 
 ## FormBase::shadowPainter
 

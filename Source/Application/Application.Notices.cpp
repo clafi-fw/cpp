@@ -326,7 +326,8 @@ namespace ClaFi
                 const Graphics::ShadowPainter& painter = owner.shadowPainter(owner.shadowDesign(
                     UiElement::Tooltip,
                     owner.themeMetrics().secondaryWindowShadow,
-                    m_cards.front()->metrics().radius
+                    m_cards.front()->metrics().radius,
+                    event.windowFocusedFactor()
                 ));
                 for (const NoticeCard* card : m_cards)
                 {

@@ -48,7 +48,7 @@ namespace ClaFi
         float pressedFactor() const;
         float enabledFactor() const;
         float focusedFactor() const;
-        // How far the window this control is painted in holds the focus.
+        // How far this control's window holds the focus - the form's, or the one a mockup draws.
         [[nodiscard]] float windowFocusedFactor() const { return m_windowFocusedFactor; }
 
         // TODO: move disabledBlendAmount into ColorRules, so an element states its own.
@@ -323,6 +323,8 @@ namespace ClaFi
         void setParentZAmount(float value) { m_target.m_parentZAmount = value; }
         // How much of the selected factor is the window's focus rather than the control's own.
         void setWindowSelectedAmount(float value) { m_target.m_windowSelectedAmount = value; }
+        // The window focus this control and its children paint at. See Control-Foundation
+        void setWindowFocusedFactor(float value) { m_target.m_windowFocusedFactor = value; }
         // How far an indicator of the control's own stands in for its ring. See Control-Foundation
         void replaceRing(float amount) { m_target.m_ringReplaced = amount; }
         void setDisabledBlendAmount(float value) { m_target.m_disablingStrength = value; }

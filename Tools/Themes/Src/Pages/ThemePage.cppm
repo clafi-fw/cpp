@@ -236,6 +236,7 @@ namespace Themes_App
         static constexpr TagValue k_harmonyTag = 2ull;
         // The floor slider's end. Useful floors sit far below it; at 1 a surface has no room.
         static constexpr float k_maxDarkModeFloor = 0.5f;
+        static constexpr float k_paletteWidth = 600.0f;
     private:
         OnSelectPaletteMap m_onSelectPaletteMap;
         OnHueRuleChanged m_onPigmentChanged; // what the pigment editors call, held by address
@@ -328,18 +329,17 @@ namespace Themes_App
             &m_jsonTab
         };
 
+        // As wide as it prefers, or as the page where the page is narrower.
         StackPanel& m_paletteBody{ m_designPage.paletteView().add<StackPanel>(
-            Orientation::HorizontalWrap,
-            Padding{ 8.0f, 8.0f }
-        ) };
-
-        StackPanel& m_paletteColumn1{ m_paletteBody.add<StackPanel>(
-            Orientation::Vertical
+            Orientation::Vertical,
+            Padding{ 8.0f, 8.0f },
+            PreferredSize{ k_paletteWidth, 0.0f },
+            HorizontalAlign::Left
         ) };
 
         MinSize m_laneSize{ 0.0f, 40.04 };
 
-        Panel& m_paletteAnchorLane = m_paletteColumn1.add<Panel>(
+        Panel& m_paletteAnchorLane = m_paletteBody.add<Panel>(
             m_laneSize
         );
 
@@ -367,7 +367,7 @@ namespace Themes_App
             HorizontalAlign::Fill
         ) };
 
-        Panel& m_harmonyPanel{ m_paletteColumn1.add<Panel>(
+        Panel& m_harmonyPanel{ m_paletteBody.add<Panel>(
             Text{ k_labelPush, L"Harmony:", m_labelsMargin, k_labelPop },
             TextPlacement::Top,
             VerticalAlign::Top,
@@ -387,10 +387,10 @@ namespace Themes_App
             }
         ) };
 
-        Spacer& m_pigmentsSpacer{ m_paletteColumn1.add<Spacer>(16.0f) };
+        Spacer& m_pigmentsSpacer{ m_paletteBody.add<Spacer>(16.0f) };
 
         // Accent and Spot: the pigments a theme states itself rather than takes from its harmony.
-        Grid& m_pigmentGrid{ m_paletteColumn1.add<Grid>(
+        Grid& m_pigmentGrid{ m_paletteBody.add<Grid>(
             MetricsSet::Page,
             UiElement::Section,
             Grids::GridLines::Horizontal,
@@ -416,16 +416,16 @@ namespace Themes_App
         ) };
 
         // The selected harmony's four pigments, drawn as marks in the label's own text.
-        Label& m_otherPigmentsLabel{ m_paletteColumn1.add<Label>(
+        Label& m_otherPigmentsLabel{ m_paletteBody.add<Label>(
             VerticalTextAnchor::Center,
             Padding{ 0.0f, 4.0f },
             Text{ k_labelPush, L"Other pigments:", m_labelsMargin, k_labelPop },
             TooltipText{ L"Pigments safe to use in small doses" }
         ) };
 
-        Spacer& m_floorSpacer{ m_paletteColumn1.add<Spacer>(16.0f) };
+        Spacer& m_floorSpacer{ m_paletteBody.add<Spacer>(16.0f) };
 
-        Panel& m_darkModeFloorLane{ m_paletteColumn1.add<Panel>(
+        Panel& m_darkModeFloorLane{ m_paletteBody.add<Panel>(
             m_laneSize
         ) };
 
@@ -439,10 +439,6 @@ namespace Themes_App
             Spacing{ 0.0f, 4.0f },
             HorizontalAlign::Fill
         ) };
-
-        //Controls::Separator& m_paletteSep1{ m_paletteBody.add<Controls::Separator>() };
-
-        Spacer& m_spacer1{ m_paletteBody.add<Spacer>(8.0f) };
     };
 
 

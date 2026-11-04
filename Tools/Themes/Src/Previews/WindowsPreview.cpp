@@ -1,14 +1,13 @@
 module Themes_App.WindowsPreview;
 
+import Themes_App.DialogMockup;
 import Themes_App.PreviewPageBase;
 
 import ClaFi.Controls.Menu;
-import ClaFi.Controls.Panel;
 import ClaFi.Controls.Stack;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
-import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Graphics.ShadowPainter;
 import ClaFi.Core.System.Events;
@@ -23,28 +22,35 @@ namespace Themes_App
         :
         PreviewPageBase{ params, Padding{ 20.0f }, Spacing{ 24.0f } }
     {
-        // As DialogTitle paints itself.
-        m_dialogTitle.onAdjustPaint([](AdjustPaintEvent& event) {
-            event.setWindowSelectedAmount(1.0f);
-        });
+        // A popup reads the focus of the window it opens over - here the focused dialog.
+        const auto readOwnerFocus = [this](AdjustPaintEvent& event) {
+            event.setWindowFocusedFactor(m_focusedDialog.windowFocusedFactor());
+        };
+        m_menu.onAdjustPaint(readOwnerFocus);
+        m_tooltip.onAdjustPaint(readOwnerFocus);
     }
 
     // While the panel paints, the form holds the edited theme, so the shadows are drawn in it.
     void WindowsPreview::paintChildren(PaintEvent& event)
     {
         const ThemeMetrics& metrics = themeMetrics();
-        drawWindowShadow(event, m_dialog, UiElement::Dialog, metrics.primaryWindowShadow);
-        drawWindowShadow(event, m_menu, UiElement::Menu, metrics.secondaryWindowShadow);
-        drawWindowShadow(event, m_tooltip, UiElement::Tooltip, metrics.secondaryWindowShadow);
+        drawWindowShadow(event, m_focusedDialog, UiElement::Dialog, metrics.primaryWindowShadow,
+            m_focusedDialog.windowFocusedFactor());
+        drawWindowShadow(event, m_unfocusedDialog, UiElement::Dialog, metrics.primaryWindowShadow,
+            m_unfocusedDialog.windowFocusedFactor());
+        drawWindowShadow(event, m_menu, UiElement::Menu, metrics.secondaryWindowShadow,
+            m_focusedDialog.windowFocusedFactor());
+        drawWindowShadow(event, m_tooltip, UiElement::Tooltip, metrics.secondaryWindowShadow,
+            m_focusedDialog.windowFocusedFactor());
         PreviewPageBase::paintChildren(event);
     }
 
     void WindowsPreview::drawWindowShadow(PaintEvent& event, const RichControl& mockup,
-        const UiElement element, const WindowShadow& shadow)
+        const UiElement element, const WindowShadow& shadow, const float windowFocusedFactor)
     {
         FormBase& owner = form();
         const Graphics::ShadowPainter& painter = owner.shadowPainter(
-            owner.shadowDesign(element, shadow, mockup.metrics().radius));
+            owner.shadowDesign(element, shadow, mockup.metrics().radius, windowFocusedFactor));
         const FloatRect rect = FloatRect::FromDimensions(
             event.contentPosition() + mockup.topLeft(), mockup.scaledSize());
         painter.draw(event.canvas(), rect);
@@ -57,30 +63,6 @@ namespace Themes_App
             OnEvent{ [](ClickEvent& event) {
                 event.stopPropagation();
             } }
-        );
-    }
-
-    void WindowsPreview::drawMinimizeMark(DrawIconEvent& event)
-    {
-        const FloatRect& iconRect = event.iconRect();
-        const float centerY = iconRect.centerY();
-        event.canvas().drawLine(
-            { iconRect.left, centerY },
-            { iconRect.right, centerY },
-            event.textRgb(InkGrade::Strongest),
-            event.scaleF(1.0f)
-        );
-    }
-
-    void WindowsPreview::drawMaximizeMark(DrawIconEvent& event)
-    {
-        const float radius = event.scale(2.0f);
-        event.canvas().drawRoundedRectangle(
-            event.iconRect(),
-            radius,
-            radius,
-            event.textRgb(InkGrade::Strongest),
-            event.scale(1.0f)
         );
     }
 }
