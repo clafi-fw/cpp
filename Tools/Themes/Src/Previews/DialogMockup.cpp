@@ -4,6 +4,7 @@ import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.Stack;
 
+import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.DrawIconEvent;
@@ -16,6 +17,14 @@ import ClaFi.StdLib;
 
 namespace Themes_App
 {
+    // Read off the control, which holds the theme the panel reset the paint to.
+    void standOnBareColor(AdjustPaintEvent& event)
+    {
+        const BakedColors& colors = event.control().bakedColors();
+        event.setSurfaceHsl(colors.rootSurface());
+        event.setTextHsl(colors.rootText());
+    }
+
     DialogMockup::DialogMockup(const CreateParams& params, const std::wstring_view title,
         const WindowFocus focus)
         :
@@ -43,6 +52,7 @@ namespace Themes_App
     void DialogMockup::adjustPaint(AdjustPaintEvent& event)
     {
         Panel::adjustPaint(event);
+        standOnBareColor(event);
         event.setWindowFocusedFactor(m_windowFocusedFactor);
     }
 

@@ -104,6 +104,17 @@ see Control makeCurrentItem.
 **The focus stays where it is.** To move it there, call `setFocus` on the row, then
 `StackView::setSelection` for a wider held set - a focus arriving outside the set reads as a pick.
 
+## SelectedCellChangeEvent
+
+**The grid that owns the descriptor raises it**, once the selected cell has moved to another row
+or column - by a pick, a key or `selectCell`. A press or a key that moves the cell more than once
+on its way raises it once, at the end. A SubGrid shares the descriptor and raises nothing of its
+own, so the outermost grid is the one to listen on. The cell is read from the descriptor -
+`selectedRow` and `selectedColumn`.
+
+**A row taken out of the grid takes the selected cell with it and raises nothing.** Putting the
+cell back with `selectCell` raises it.
+
 ## RowStop
 
 `control` takes the focus - an expander's header. `rect` is what a key move is scored against. An

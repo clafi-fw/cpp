@@ -1,6 +1,7 @@
 export module Themes_App.HueRuleControl;
 
 import Themes_App.Consts;
+import Themes_App.RuleText;
 import Themes_App.Utils;
 
 import ClaFi.Controls.Base.ButtonBase;
@@ -46,11 +47,6 @@ namespace Themes_App
     class HueRulePopup;
     class HueSlider;
 
-    // The saturation and luminosity every hue blob is drawn at. A rule names a hue and nothing
-    // else, so two rules carrying the same hue have to read the same whatever the theme puts
-    // around them. Both the control's face and the popup's items draw against these.
-    constexpr float k_blobSaturation{ 0.5f };
-    constexpr float k_blobLuminosity{ 0.5f };
     // The mark against a k_harmonyItemSize tile, matching the one the harmony picker's maps carry.
     constexpr MinSize k_indicatorSize{ 16.0f };
 
@@ -260,24 +256,6 @@ namespace Themes_App
 
     //----------------------------------------------------------------------------
 
-
-    // The blob a hue reads as, drawn behind the run that stands for it - a digit sits on it, and
-    // the custom hue's empty run leaves it bare. A rounded square, the shape the harmony picker
-    // gives its palette map tiles.
-    void paintHueBlob(PaintEvent& event, const FloatRect& bounds, Color color)
-    {
-        const float radius = bounds.height() * k_blobCornerShare;
-        event.canvas().fillRoundedRectangle(bounds, radius, radius, event.applyDisabledFactor(color));
-    }
-
-    // A square of the given side, centred on the run. The control's text anchors have already
-    // centred the glyph, so centring the blob on the same run puts one over the other.
-    FloatRect blobBounds(const FloatRect& textBounds, float side)
-    {
-        FloatRect result = textBounds;
-        result.inflate((side - result.width()) / 2.0f, (side - result.height()) / 2.0f);
-        return result;
-    }
 
     // HueRuleControl
 

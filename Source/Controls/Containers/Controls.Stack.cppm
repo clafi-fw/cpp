@@ -194,8 +194,8 @@ namespace ClaFi::Controls
             float largest;
         };
         // One lane of a wrapping stack as it was cut: the items on it, how far they reach along
-        // it, how thick the largest of them makes it, and whether anything on it asked for what
-        // the lane has over.
+        // it, how thick the largest of them makes it, and what on it can take what the lane has
+        // over.
         struct LaneCut
         {
             ControlSpan::iterator begin;
@@ -203,7 +203,8 @@ namespace ClaFi::Controls
             float main;
             float cross;
             std::size_t count;
-            std::size_t takers;
+            std::size_t takers;  // the items that asked for the room - see Control::fillsLane
+            std::size_t fillers; // the items that fill the way the lane runs
         };
     private:
         // **Every wrapping stack, both ways round.**
@@ -215,8 +216,9 @@ namespace ClaFi::Controls
         // How many equal shares of this size fit the length given: never more than the lane takes,
         // and never fewer than one. See Item-Containers
         [[nodiscard]] std::size_t sharesThatFit(float largest, float spacing, float limitMain) const;
-        // A lane with what the **stack** was given over what it measured divided among the items on
-        // it - or among the items that asked for it, where any did. See Item-Containers
+        // A lane with what the **stack** was given over what it measured divided among the items
+        // that asked for it, or else among the items that fill the way the lane runs. See
+        // Item-Containers
         void alignSharedLane(AlignEvent&, const LaneCut&, ScaledPosition, float laneSurplus,
             float laneCross, ScaledSize& contentDimensions);
         // One item in the part of a lane it was given.
@@ -229,11 +231,13 @@ namespace ClaFi::Controls
                 || m_orientation == Orientation::Horizontal;
         }
         // Whether this stack was told to fill the way its lanes run.
-        [[nodiscard]] bool fillsMain() const
+        [[nodiscard]] bool fillsMain() const { return fillsMain(*this); }
+        // Whether a control is told to fill the way this stack's lanes run.
+        [[nodiscard]] bool fillsMain(const Control& control) const
         {
             return lanesRunAcross()
-                ? horizontalAlign() == HorizontalAlign::Fill
-                : verticalAlign() == VerticalAlign::Fill;
+                ? control.horizontalAlign() == HorizontalAlign::Fill
+                : control.verticalAlign() == VerticalAlign::Fill;
         }
         // **Main is the way a lane runs, cross the way the lanes stack.** Every extent a wrapping
         // stack reads goes through these, which is what lets one routine serve both.
@@ -642,7 +646,7 @@ namespace ClaFi::Controls
         // measured, so running it again costs less than the vector it would take to remember - and
         // one cut cannot then disagree with the other.
         std::size_t laneCount = 0ull;
-        std::size_t fullestLane = 0ull;
+        std::size_t mostFillers = 0ull;
         float crossTotal = 0.0f;
         float longestLane = 0.0f;
         for (ControlSpan::iterator it = controls().begin(); it != controls().end(); )
@@ -653,7 +657,7 @@ namespace ClaFi::Controls
                 continue;
             crossTotal += lane.cross;
             longestLane = std::max(longestLane, lane.main);
-            fullestLane = std::max(fullestLane, lane.count);
+            mostFillers = std::max(mostFillers, lane.fillers);
             ++laneCount;
         }
 
@@ -669,11 +673,12 @@ namespace ClaFi::Controls
         // against no maximum is longer - so the length alone cannot say whether filling was asked
         // for.
         //
-        // **Divided by the item, not by the lane**: the fullest lane's count is the divisor, so
-        // every item in the stack grows by the same amount, the fullest lane comes out exactly at
-        // the length, and a short last lane stays short.
-        const float perItem = fillsMain() && fullestLane
-            ? surplus / static_cast<float>(fullestLane)
+        // **Divided by the item that fills, not by the lane**: the most fillers any lane holds is
+        // the divisor, so every filling item in the stack grows by the same amount, the lane
+        // holding the most comes out at the length, and a short last lane stays short. An item
+        // aligned to an edge takes none of it.
+        const float perItem = fillsMain() && mostFillers
+            ? surplus / static_cast<float>(mostFillers)
             : 0.0f;
         // Every lane holds perLane shares, so the length is the longest lane's - stretched to what
         // the stack was granted where it fills.
@@ -714,7 +719,7 @@ namespace ClaFi::Controls
                 const float laneRoom = surplusOver(limitMain, lane.main);
                 const float laneSurplus = lane.takers
                     ? laneRoom
-                    : std::min(laneRoom, perItem * static_cast<float>(lane.count));
+                    : std::min(laneRoom, perItem * static_cast<float>(lane.fillers));
                 alignSharedLane(event, lane, position, laneSurplus, laneCross, contentDimensions);
             }
             crossOf(position) += laneCross + crossSpacing;
@@ -726,7 +731,7 @@ namespace ClaFi::Controls
     StackPanelBase::LaneCut StackPanelBase::nextLane(ControlSpan::iterator begin, const AlignEvent& event,
         const float limitMain, const std::size_t perLane)
     {
-        LaneCut lane{ begin, begin, 0.0f, 0.0f, 0ull, 0ull };
+        LaneCut lane{ begin, begin, 0.0f, 0.0f, 0ull, 0ull, 0ull };
         const float spacingMain = mainOf(event.scaledSpacing());
         for (ControlSpan::iterator it = begin; it != controls().end(); ++it)
         {
@@ -754,6 +759,8 @@ namespace ClaFi::Controls
             ++lane.count;
             if (item.fillsLane())
                 ++lane.takers;
+            else if (fillsMain(item))
+                ++lane.fillers;
         }
         return lane;
     }
@@ -804,11 +811,10 @@ namespace ClaFi::Controls
     // and the longest instead would stretch a short lane to the length of a long one while nothing
     // at all had been granted - a last row of two spread across a lane of five.
     //
-    // **What asked for the surplus takes it all**, and where nothing asked it goes to the items in
-    // equal parts - see Control::fillsLane and FlexSpacer.
-    //
-    // **What an item does with its part is the item's to say.** One that fills takes it; one
-    // aligned to an edge keeps the size it measured and stands in it - see Control::align.
+    // **The surplus goes to what can take it.** What asked for it takes it all - see
+    // Control::fillsLane and FlexSpacer. Where nothing asked, it goes in equal parts to the items
+    // that fill the way the lane runs; an item aligned to an edge keeps the size it measured and
+    // its place, and a lane of those leaves the surplus at its end.
     void StackPanelBase::alignSharedLane(AlignEvent& event, const LaneCut& lane,
         const ScaledPosition position, const float laneSurplus, const float laneCross,
         ScaledSize& contentDimensions)
@@ -821,8 +827,7 @@ namespace ClaFi::Controls
         if (!lane.count)
             return;
 
-        // The items that asked, or every item where none did.
-        const float sharers = static_cast<float>(lane.takers ? lane.takers : lane.count);
+        const float sharers = static_cast<float>(lane.takers ? lane.takers : lane.fillers);
         const float spacingMain = mainOf(event.scaledSpacing());
         // Each share is measured from the whole rather than accumulated, so a rounding is never
         // carried into the next one and the last item ends on the edge the lane was given.
@@ -837,7 +842,8 @@ namespace ClaFi::Controls
                 continue;
             const ScaledSize size = control.scaledSize();
             float handedNext = handed;
-            if (!lane.takers || control.fillsLane())
+            const bool shares = lane.takers ? control.fillsLane() : fillsMain(control);
+            if (shares)
             {
                 ++taken;
                 handedNext = std::round(laneSurplus * static_cast<float>(taken) / sharers);

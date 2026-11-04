@@ -12,6 +12,7 @@ import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Button;
+import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
@@ -19,13 +20,18 @@ import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.Tree;
 
+import ClaFi.Icons.PlusMark;
 import ClaFi.Icons.RowIcons;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -173,14 +179,21 @@ namespace Themes_App
             { MetricsSet::CodeBlock, PreviewPage::CodeBlock }
         });
 
+        // The theme's own sets stand under the last category, listed as the theme is read.
+        constexpr std::wstring_view k_ownSetsToken{ L"OwnSets" };
+
         constexpr std::array k_colorCategories{
             Category{ L"Window roots", L"WindowRoots", k_windowRoots },
             Category{ L"Surfaces", L"Surfaces", k_surfaces },
             Category{ L"Controls", L"Controls", k_controls },
             Category{ L"Focus & Selection", L"FocusAndSelection", k_focusAndSelection },
             Category{ L"Blocks", L"Blocks", k_blocks },
-            Category{ L"Test subjects", L"TestSubjects", k_testSubjects }
+            Category{ L"Test subjects", L"TestSubjects", k_testSubjects },
+            Category{ L"Own sets", k_ownSetsToken, {} }
         };
+
+        // What a set of the theme's own is called until it is named, counted up past the first.
+        constexpr std::wstring_view k_newSetName{ L"New set" };
 
         // The tokens are set apart from those of the colour categories going by the same names.
         constexpr std::array k_metricsCategories{
@@ -221,6 +234,35 @@ namespace Themes_App
             return tokens[static_cast<std::size_t>(set)];
         }
 
+        // A row for a set of the theme's own, which opens for the set's name.
+        class OwnSetRow : public WithInPlaceEdit<TreeItem>
+        {
+        public:
+            template<typename... Args>
+            OwnSetRow(const CreateParams&, TreeView& tree, std::size_t level, Args&&...);
+        public:
+            void setSetName(const std::wstring_view value) { m_setName = value; }
+        protected:
+            // The name alone: the icon and the kind word around it are the row's, not the set's.
+            void getEditorText(Text& text) const override { text << m_setName; }
+        private:
+            std::wstring m_setName{};
+        };
+
+        template<typename... Args>
+        OwnSetRow::OwnSetRow(const CreateParams& params, TreeView& tree, const std::size_t level,
+            Args&&... args)
+            :
+            WithInPlaceEdit<TreeItem>{ params, tree, level, std::forward<Args>(args)... }
+        {
+        }
+
+        [[nodiscard]] std::wstring_view trimmed(std::wstring_view text)
+        {
+            trimLeft(text);
+            trimRight(text);
+            return text;
+        }
     }
 
     std::wstring_view DesignPage::pickedPage() const
@@ -237,11 +279,16 @@ namespace Themes_App
         return {};
     }
 
+    // A token no page goes by names a set the theme no longer states - undone, or another
+    // theme's - so it lands where that set would be listed. No token at all is the palette.
     void DesignPage::pickPage(const std::wstring_view token)
     {
         auto found = std::ranges::find(m_entries, token, &DesignPage::tokenOf);
         if (found == m_entries.end())
-            found = std::ranges::find(m_entries, k_paletteToken, &DesignPage::tokenOf);
+        {
+            const std::wstring_view fallback = token.empty() ? k_paletteToken : k_ownSetsToken;
+            found = std::ranges::find(m_entries, fallback, &DesignPage::tokenOf);
+        }
         m_tree.setCurrentItem(found->item);
         showPickedPage();
     }
@@ -263,23 +310,17 @@ namespace Themes_App
             entry->rules->select(place.selection, takeFocus);
     }
 
+    // The theme's own sets are listed once the theme is known, their pages bound as they are made.
     void DesignPage::bind(ThemeColors& colors, const OnGetElementRuleBase& ruleBase,
         const OnRulesChanged& onRulesChanged)
     {
+        m_colors = &colors;
         m_rules = &colors.rules;
-        for (TreeEntry& entry : m_entries)
-        {
-            if (!entry.rules)
-                continue;
-            const std::wstring_view set = setOf(entry);
-            const ElementRules* defaults = m_defaultRules.of(set);
-            OnGetListRuleBase listRuleBase = [ruleBase, set](const ColorRule& rule,
-                const RuleChannel channel) {
-                return ruleBase(set, rule, channel);
-            };
-            entry.rules->bind(colors.rules, set, defaults ? &defaults->rules : nullptr,
-                outputsOf(entry), colors, std::move(listRuleBase), onRulesChanged);
-        }
+        m_ruleBase = ruleBase;
+        m_onRulesChanged = onRulesChanged;
+        for (std::size_t i = 0ull; i != m_staticCount; ++i)
+            bindPage(i);
+        syncOwnSets();
     }
 
     void DesignPage::bindSizes(ThemeMetrics& metrics, const OnSizesChanged& onSizesChanged)
@@ -291,6 +332,7 @@ namespace Themes_App
 
     void DesignPage::rebuildRules()
     {
+        syncOwnSets();
         for (const TreeEntry& entry : m_entries)
             if (entry.rules)
                 entry.rules->rebuild();
@@ -326,6 +368,7 @@ namespace Themes_App
         addRoot(k_metricsRoot, {});
         m_tree.addDivider(Thickness::Heavy, Padding{ 4.0f, 6.0f });
         addRoot(k_textStylesRoot, {});
+        m_staticCount = m_entries.size();
         pickPage(k_paletteToken);
     }
 
@@ -365,6 +408,9 @@ namespace Themes_App
         writeRowText(header, categoryEntry);
         TreeNode& node = rootNode.addNode(std::move(header));
         const std::size_t categoryIndex = addEntry(node.header(), categoryEntry);
+        m_entries[categoryIndex].node = &node;
+        if (category.token == k_ownSetsToken)
+            m_ownSetsIndex = categoryIndex;
         EntryIndexes members{};
         for (const CategoryEntry& entry : category.entries)
             members.push_back(addItemEntry(node.addItem(), entryOf(entry)));
@@ -391,7 +437,7 @@ namespace Themes_App
             entry.sizesPage = &m_pages.add<SizesPage>(*entry.sizes);
             entry.page = entry.sizesPage;
         }
-        else if (entry.element || entry.named)
+        else if (entry.element || entry.named || !entry.ownSet.empty())
         {
             entry.rules = &m_pages.add<ElementPage>(nameOf(entry));
             entry.page = entry.rules;
@@ -419,33 +465,50 @@ namespace Themes_App
     }
 
     // Titled as an element page is, with a row per page or category under it. A row's text is
-    // written when the page is shown, since it carries a count that edits move.
+    // written when the page is shown, since it carries a count that edits move. The page of the
+    // theme's own sets carries the tool that adds one.
     void DesignPage::buildIndexPage(const std::size_t entryIndex, const EntryIndexes& members)
     {
         TreeEntry& entry = m_entries[entryIndex];
         Panel& page = m_pages.add<Panel>();
-        Label& title = page.createTopBar<Panel>(
+        Panel& topBar = page.createTopBar<Panel>(
             Padding{ 12.0f, 8.0f }
-        ).createBody<Label>(
+        );
+        Label& title = topBar.createBody<Label>(
             VerticalTextAnchor::Center
         );
         writePageTitle(title.text(), kindOf(entry), nameOf(entry));
-        StackPanel& rows = page.createBody<ScrollBox>(
+        if (entry.category && entry.category->token == k_ownSetsToken)
+        {
+            ToolButton& addButton = topBar.createRightBar<ToolButton>(
+                IconSize{ 18.0f },
+                ButtonViewMode::IconOnly,
+                OnDrawIcon{ Icons::PlusMark::draw },
+                L"Add set"
+            );
+            addButton.onClick([this](ClickEvent&) {
+                addSet();
+            });
+        }
+        entry.indexBody = &page.createBody<ScrollBox>(
             ScrollBars::Vertical
         ).createBody<StackPanel>(
             Orientation::Vertical,
             Padding{ 12.0f }
         );
-        for (const std::size_t member : members)
-        {
-            ToolButton& row = rows.add<ToolButton>(HorizontalTextAnchor::Left);
-            row.setTag(Tag{ member });
-            row.onClick([this, member](ClickEvent&) {
-                openEntry(member);
-            });
-            entry.indexRows.push_back(&row);
-        }
         entry.page = &page;
+        for (const std::size_t member : members)
+            addIndexRow(entry, member);
+    }
+
+    void DesignPage::addIndexRow(TreeEntry& page, const std::size_t index)
+    {
+        ToolButton& row = page.indexBody->add<ToolButton>(HorizontalTextAnchor::Left);
+        row.setTag(Tag{ index });
+        row.onClick([this, index](ClickEvent&) {
+            openEntry(index);
+        });
+        page.indexRows.push_back(&row);
     }
 
     // Opened from a category's page: the tree picks the row, and the keyboard goes with it the
@@ -532,11 +595,12 @@ namespace Themes_App
             return PageKind::Folder;
         if (entry.sizes)
             return PageKind::Sizes;
-        if (entry.element || entry.named)
+        if (entry.element || entry.named || !entry.ownSet.empty())
             return PageKind::Rules;
         return PageKind::Palette;
     }
 
+    // A set of the theme's own goes by the name the theme states it under.
     std::wstring_view DesignPage::nameOf(const TreeEntry& entry)
     {
         if (entry.element)
@@ -545,6 +609,8 @@ namespace Themes_App
             return metricsSetOf(*entry.sizes).name;
         if (entry.named)
             return entry.named->name;
+        if (!entry.ownSet.empty())
+            return entry.ownSet;
         if (entry.root)
             return entry.root->name;
         if (entry.category)
@@ -560,6 +626,8 @@ namespace Themes_App
             return sizesToken(*entry.sizes);
         if (entry.named)
             return entry.named->token;
+        if (!entry.ownSet.empty())
+            return entry.ownSet;
         if (entry.root)
             return entry.root->token;
         if (entry.category)
@@ -573,7 +641,7 @@ namespace Themes_App
             return uiElementOf(*entry.element).token;
         if (entry.named)
             return entry.named->token;
-        return {};
+        return entry.ownSet;
     }
 
     // A text band has no stroke and casts no shadow, and only the selection re-inks its text.
@@ -586,5 +654,253 @@ namespace Themes_App
         if (entry.element == UiElement::FoundText)
             return k_foundTextOutputs;
         return {};
+    }
+
+    // Only a set of the theme's own can be taken out: a framework set's page offers no Delete set.
+    void DesignPage::bindPage(const std::size_t index)
+    {
+        TreeEntry& entry = m_entries[index];
+        if (!entry.rules)
+            return;
+        const std::wstring set{ setOf(entry) };
+        const ElementRules* defaults = m_defaultRules.of(set);
+        const OnGetElementRuleBase ruleBase = m_ruleBase;
+        PageBinding binding{
+            .rules = m_rules,
+            .set = set,
+            .defaults = defaults,
+            .outputs = outputsOf(entry),
+            .colors = m_colors,
+            .ruleBase = [ruleBase, set](const ColorRule& rule, const RuleChannel channel) {
+                return ruleBase(set, rule, channel);
+            },
+            .setNames = [this]() {
+                return setNames();
+            },
+            .onRulesChanged = m_onRulesChanged,
+            .onSetsChanged = [this]() {
+                rebuildRules();
+            }
+        };
+        if (!entry.ownSet.empty())
+            binding.onDeleteSet = [this, index]() {
+                deleteSet(index);
+            };
+        entry.rules->bind(std::move(binding));
+    }
+
+    // **The rows of the theme's own sets are built again whenever the names change.** They stand
+    // at the end of the entries, after the rows the tree starts with, so the rows and the pages
+    // past that count go and the names as they stand now are listed afresh. A page showing one of
+    // them gives way to the category's first, so no page goes from under the view.
+    void DesignPage::syncOwnSets()
+    {
+        if (!m_rules)
+            return;
+        const std::vector<std::wstring> names = ownSetNames();
+        std::vector<std::wstring> shown{};
+        for (std::size_t i = m_staticCount; i < m_entries.size(); ++i)
+            shown.push_back(m_entries[i].ownSet);
+        if (names == shown)
+            return;
+
+        const TreeEntry* picked = pickedEntry();
+        const std::wstring pickedToken{ picked ? tokenOf(*picked) : std::wstring_view{} };
+        if (picked && !picked->ownSet.empty())
+            pickPage(k_ownSetsToken);
+        for (std::size_t i = m_staticCount; i < m_entries.size(); ++i)
+        {
+            m_entries[i].item->deleteSelf();
+            m_entries[i].page->deleteSelf();
+        }
+        m_entries.resize(m_staticCount);
+        for (RichControl* row : m_entries[m_ownSetsIndex].indexRows)
+            row->deleteSelf();
+        m_entries[m_ownSetsIndex].indexRows.clear();
+
+        // The entries move as rows are added, so the category is reached by its index each time.
+        TreeNode& node = *m_entries[m_ownSetsIndex].node;
+        for (const std::wstring& name : names)
+        {
+            OwnSetRow& row = node.addItem(std::type_identity<OwnSetRow>{});
+            row.setSetName(name);
+            const std::size_t index = addItemEntry(row, TreeEntry{ .ownSet = name });
+            row.onAcceptEdit([this, index](AcceptEditEvent& event) {
+                renameSet(index, event);
+            });
+            bindPage(index);
+            addIndexRow(m_entries[m_ownSetsIndex], index);
+        }
+        refreshIndex(m_entries[m_ownSetsIndex]);
+        // The page a renamed set stands on again, under its new name.
+        if (std::ranges::find(names, pickedToken) != names.end())
+            pickPage(pickedToken);
+        form().invalidateAlign();
+    }
+
+    std::vector<std::wstring> DesignPage::ownSetNames() const
+    {
+        std::vector<std::wstring> result{};
+        for (const ElementRules& set : m_rules->elements)
+        {
+            bool shown = false;
+            for (std::size_t i = 0ull; i != m_staticCount; ++i)
+                if (setOf(m_entries[i]) == set.name)
+                    shown = true;
+            if (!shown)
+                result.push_back(set.name);
+        }
+        return result;
+    }
+
+    SetNames DesignPage::setNames() const
+    {
+        SetNames result{};
+        for (const TreeEntry& entry : m_entries)
+        {
+            if (entry.rules)
+                result.push_back(SetName{
+                    .token = std::wstring{ setOf(entry) },
+                    .name = std::wstring{ nameOf(entry) }
+                });
+        }
+        return result;
+    }
+
+    bool DesignPage::namesSet(const std::wstring_view typed) const
+    {
+        for (const TreeEntry& entry : m_entries)
+        {
+            if (entry.rules && (setOf(entry) == typed || nameOf(entry) == typed))
+                return true;
+        }
+        return m_rules->of(typed) != nullptr;
+    }
+
+    // Over Any Non-Window and on a section, as most sets of the framework stand. The step is
+    // made on the new set's page, and then its row opens for the name.
+    void DesignPage::addSet()
+    {
+        std::wstring name{ k_newSetName };
+        for (std::size_t count = 2ull; namesSet(name); ++count)
+            name = std::format(L"{} {}", k_newSetName, count);
+        m_rules->add(ElementRules{
+            .name = name,
+            .base = std::wstring{ BaseElements::AnyNonWindow },
+            .standsOn = std::wstring{ uiElementOf(UiElement::Section).token }
+        });
+        rebuildRules();
+        pickPage(name);
+        Text what{};
+        what << L"Add set " << ColoredText{ InkWell::accentInk(), name };
+        setsChanged(what);
+        m_setToName = name;
+        m_nameTimer.start(MilliSeconds{ 0u });
+    }
+
+    // **Asked for on a tick**, because the click that added the set is still on the stack and
+    // the editor runs a message loop of its own. The row is found again by its name: a rebuild
+    // may have run in between and taken the row with it.
+    void DesignPage::nameAddedSet()
+    {
+        const std::wstring name = std::exchange(m_setToName, {});
+        const auto found = std::ranges::find(m_entries, name, &DesignPage::tokenOf);
+        if (found == m_entries.end() || found->ownSet.empty())
+            return;
+        // The focus, not just the current item: it is still on the button that added the set.
+        found->item->setFocus();
+        static_cast<OwnSetRow*>(found->item)->openEditor();
+    }
+
+    // A name the theme states already is refused. The editor is still over the row, and the
+    // rename builds the rows again, so it waits for the editor to go.
+    void DesignPage::renameSet(const std::size_t index, AcceptEditEvent& event)
+    {
+        const std::wstring typed{ trimmed(event.text.plainText()) };
+        const std::wstring& before = m_entries[index].ownSet;
+        if (typed == before)
+            return;
+        if (typed.empty())
+        {
+            event.refuse(L"A set needs a name.");
+            return;
+        }
+        if (namesSet(typed))
+        {
+            event.refuse(L"The theme states a set of that name already.");
+            return;
+        }
+        m_setToRename = before;
+        m_newName = typed;
+        m_renameTimer.start(MilliSeconds{ 0u });
+    }
+
+    // The name is written over wherever another set names this one as its base or what it
+    // stands on, and the step is made on the set's page under its new name.
+    void DesignPage::renamePendingSet()
+    {
+        if (InPlaceEdit::isRunning())
+        {
+            m_renameTimer.start(MilliSeconds{ 0u });
+            return;
+        }
+        const std::wstring before = std::exchange(m_setToRename, {});
+        const std::wstring after = std::exchange(m_newName, {});
+        if (!m_rules->of(before) || namesSet(after))
+            return;
+        for (ElementRules& set : m_rules->elements)
+        {
+            if (set.name == before)
+                set.name = after;
+            if (set.base == before)
+                set.base = after;
+            if (set.standsOn == before)
+                set.standsOn = after;
+        }
+        rebuildRules();
+        pickPage(after);
+        Text what{};
+        what << L"Rename set " << ColoredText{ InkWell::accentInk(), before };
+        what << L" to " << ColoredText{ InkWell::accentInk(), after };
+        setsChanged(what);
+    }
+
+    // Asked by the Delete set tool on the set's own page, which goes with the set - on a tick,
+    // outside the click.
+    void DesignPage::deleteSet(const std::size_t index)
+    {
+        m_setToDelete = m_entries[index].ownSet;
+        m_deleteTimer.start(MilliSeconds{ 0u });
+    }
+
+    // The sets naming this one as their base or what they stand on name none afterwards. The
+    // step is made on the category's page, where the set stood.
+    void DesignPage::deletePendingSet()
+    {
+        const std::wstring name = std::exchange(m_setToDelete, {});
+        if (!m_rules->of(name))
+            return;
+        pickPage(k_ownSetsToken);
+        for (ElementRules& set : m_rules->elements)
+        {
+            if (set.base == name)
+                set.base.clear();
+            if (set.standsOn == name)
+                set.standsOn.clear();
+        }
+        m_rules->remove(name);
+        rebuildRules();
+        Text what{};
+        what << L"Delete set " << ColoredText{ InkWell::accentInk(), name };
+        setsChanged(what);
+    }
+
+    void DesignPage::setsChanged(const Text& what)
+    {
+        if (const TreeEntry* entry = pickedEntry())
+            if (entry->root || entry->category)
+                refreshIndex(*entry);
+        if (m_onRulesChanged)
+            m_onRulesChanged(EditPhase::Settled, what, RuleSelection{});
     }
 }

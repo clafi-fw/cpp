@@ -125,14 +125,14 @@ A wrapping stack hands out the room it was given beyond what its lanes take.
 - **Across the lanes** - the room left once every lane is at its own thickness goes to the lanes
   in equal parts. A list in a window wider than its columns fills the window.
 - **Along the lanes** - only where the stack itself fills that way: HorizontalAlign::Fill for
-  rows, VerticalAlign::Fill for columns. What the length has over the longest lane is divided by
-  the item count of the fullest lane. Every item grows by the same amount, the fullest lane ends
-  at the length, and a short last lane stays short.
+  rows, VerticalAlign::Fill for columns. The room goes to the items that fill the same way. What
+  the length has over the longest lane is divided by the most such items any lane holds, so every
+  one of them grows by the same amount, the lane holding the most ends at the length, and a short
+  last lane stays short.
+- **An item aligned to an edge takes none of it.** It keeps the size it measured and its place in
+  the lane, and a lane of such items leaves the room at its end - the items stand packed.
 - **A lane holding an item that fills the lane** hands all its room to that item, whatever the
   stack's alignment - see Control::fillsLane and FlexSpacer. Several such items share it evenly.
-
-**An item's own alignment decides what it does with its part.** One that fills takes it; one
-aligned to an edge keeps the size it measured inside the part.
 
 ### A wrapping stack and the length it is given
 

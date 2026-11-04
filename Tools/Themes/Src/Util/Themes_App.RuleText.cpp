@@ -3,8 +3,11 @@ module Themes_App.RuleText;
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.System.InkWell;
+import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 
 import ClaFi.StdLib;
 
@@ -12,6 +15,105 @@ namespace Themes_App
 {
     namespace
     {
+        constexpr std::array<std::wstring_view, static_cast<std::size_t>(PaintChannel::Count)>
+            k_channelLabels{
+                L"surface",
+                L"stroke",
+                L"band",
+                L"text",
+                L"shadow"
+            };
+
+        constexpr std::array<std::wstring_view, static_cast<std::size_t>(RuleInput::Count)>
+            k_inputLabels{
+                L"hot",
+                L"pressed",
+                L"focused",
+                L"selected",
+                L"disabled",
+                L"current",
+                L"in edit mode",
+                L"window focused"
+            };
+
+        constexpr std::size_t k_operationCount{ static_cast<std::size_t>(ColorRuleOp::Set) + 1ull };
+
+        constexpr std::array<std::wstring_view, k_operationCount> k_operationNames{
+            L"No change",
+            L"Add offset",
+            L"Scale value",
+            L"Set exact value"
+        };
+
+        // Shaped with a line's height and no width.
+        constexpr wchar_t k_zeroWidthSpace = 0x200B;
+
+        // A word framing a rule rather than naming its parts, gray and small.
+        void writeFramingWord(Text& text, const std::wstring_view word)
+        {
+            text << ColoredText{ InkGrade::Muted, StyledText{ TextStyles::SubBody, word } };
+        }
+
+        // A set's inputs joined by a word, in brackets when asked and there is more than one.
+        void writeInputs(Text& text, const RuleInputs inputs, const std::wstring_view joiner,
+            const bool bracketed)
+        {
+            Text result{};
+            std::size_t count = 0ull;
+            for (std::size_t i = 0ull; i != k_inputLabels.size(); ++i)
+            {
+                if (!inputs.has(static_cast<RuleInput>(i)))
+                    continue;
+                if (count != 0ull)
+                    writeFramingWord(result, joiner);
+                result << k_inputLabels[i];
+                ++count;
+            }
+            if (bracketed and count > 1ull)
+                text << L'(' << result << L')';
+            else
+                text << result;
+        }
+
+        // When the rule applies: "a or b", "(a or b) and c and d".
+        void writeCondition(Text& text, const ColorRule& rule)
+        {
+            const bool joined = !rule.inputs.empty() and !rule.andInputs.empty();
+            if (!rule.inputs.empty())
+                writeInputs(text, rule.inputs, L" or ", joined);
+            if (joined)
+                writeFramingWord(text, L" and ");
+            if (!rule.andInputs.empty())
+                writeInputs(text, rule.andInputs, L" and ", false);
+        }
+
+        // The mark of an operation: bold in the spot ink on an editor, and muted on a row.
+        void writeMark(Text& text, const std::wstring_view mark, const RuleFace face)
+        {
+            if (face == RuleFace::Editor)
+                text << ColoredText{ InkWell::spotInk(), BoldText{ mark } };
+            else
+                text << ColoredText{ InkGrade::Muted, BoldText{ mark } };
+        }
+
+        // The character a value operation is marked with, an offset's taking the sign of its value.
+        [[nodiscard]] std::wstring_view operationMark(const ColorRuleOp operation,
+            const float value)
+        {
+            switch (operation)
+            {
+                case ColorRuleOp::Offset:
+                    return value < 0.0f ? L"\u2212" : L"+";
+                case ColorRuleOp::Scale:
+                    return L"\u00D7";
+                case ColorRuleOp::Set:
+                    return L"=";
+                case ColorRuleOp::NoChange:
+                    break;
+            }
+            return {};
+        }
+
         // The operation a mark names: the marks the list shows, and what a keyboard has in their
         // place.
         [[nodiscard]] std::optional<ColorRuleOp> operationOfMark(const wchar_t mark)
@@ -70,6 +172,109 @@ namespace Themes_App
             probe.setNormalizedValue(1.0f);
             return { low, probe.value(operation) };
         }
+    }
+
+    std::wstring_view channelLabel(const PaintChannel channel)
+    {
+        return k_channelLabels[static_cast<std::size_t>(channel)];
+    }
+
+    std::wstring_view inputLabel(const RuleInput input)
+    {
+        return k_inputLabels[static_cast<std::size_t>(input)];
+    }
+
+    std::wstring_view operationName(const ColorRuleOp operation)
+    {
+        return k_operationNames[static_cast<std::size_t>(operation)];
+    }
+
+    std::wstring capitalised(const std::wstring_view label)
+    {
+        std::wstring result{ label };
+        if (!result.empty())
+            result.front() = static_cast<wchar_t>(std::towupper(result.front()));
+        return result;
+    }
+
+    void writeApplyTo(Text& text, const ColorRule& rule, const RuleFace face,
+        const bool secondLineAtRest)
+    {
+        writeApplyToChannel(text, rule, face);
+        if (rule.atRest())
+        {
+            if (secondLineAtRest)
+                text << L'\n' << k_zeroWidthSpace;
+            return;
+        }
+        text << L'\n';
+        writeApplyToCondition(text, rule, face);
+    }
+
+    // The channel in the sub heading style on an editor, and in the muted ink on a row.
+    void writeApplyToChannel(Text& text, const ColorRule& rule, const RuleFace face)
+    {
+        const std::wstring channel = capitalised(channelLabel(rule.output));
+        if (face == RuleFace::Editor)
+            text << StyledText{ TextStyles::SubHeading, channel };
+        else
+            text << ColoredText{ InkGrade::Muted, StyledText{ TextStyles::SubHeading, channel } };
+        if (!rule.atRest())
+            writeFramingWord(text, L", when");
+    }
+
+    // One grade down on an editor, and in the muted ink on a row.
+    void writeApplyToCondition(Text& text, const ColorRule& rule, const RuleFace face)
+    {
+        if (rule.atRest())
+            return;
+        Text condition{};
+        writeCondition(condition, rule);
+        const InkGrade grade = face == RuleFace::Editor ? InkGrade::Strong : InkGrade::Muted;
+        text << ColoredText{ grade, condition };
+    }
+
+    void writeNoChange(Text& text, const std::wstring_view word)
+    {
+        text << ColoredText{ InkGrade::Subtle, StyledText{ TextStyles::SubBody, word } };
+    }
+
+    std::wstring_view hueMark(const ColorRuleHueOp operation)
+    {
+        constexpr std::array<std::wstring_view, 3> digits{ L"1", L"2", L"3" };
+        if (operation == ColorRuleHueOp::ExactValue)
+            return L"=";
+        if (operation >= ColorRuleHueOp::EndPalette)
+            return {};
+        return digits[static_cast<std::size_t>(operation)];
+    }
+
+    // A palette entry reads the theme's palette; an exact hue is the rule's own.
+    Color hueBlobColor(const ColorRuleHue& rule, const ThemeColors& colors)
+    {
+        const ColorRuleHueOp operation = rule.operation();
+        const float hue = operation == ColorRuleHueOp::ExactValue
+            ? rule.exactValue()
+            : colors.paletteHues[static_cast<std::size_t>(operation)];
+        const Hsl color = { hue, k_blobSaturation, k_blobLuminosity };
+        return color.toColor();
+    }
+
+    void writeValueRule(Text& text, const ColorRuleValue& rule, const RuleFace face)
+    {
+        if (rule.operation() == ColorRuleOp::NoChange)
+        {
+            writeNoChange(text, operationName(ColorRuleOp::NoChange));
+            return;
+        }
+        const float value = rule.value();
+        writeMark(text, operationMark(rule.operation(), value), face);
+        text << L' ';
+        const std::wstring number = std::format(L"{:.2f}", std::abs(value));
+        if (face == RuleFace::Editor)
+            text << StyledText{ TextStyles::Code, number };
+        else
+            text << ColoredText{ InkGrade::Muted, StyledText{ TextStyles::Code, number } };
     }
 
     // A mark and a value, the mark alone, or a value for the operation the rule stands on.

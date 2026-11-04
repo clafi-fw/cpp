@@ -68,6 +68,13 @@ Under a pixel is nothing over: the measure ceils what it answers and the align d
 `surplusOver` reads the difference as zero rather than moving every item by a fraction on a pass
 that changed nothing.
 
+**The share goes to the items that fill** (2026-11-05). Every item used to get a box of its share,
+an edge-aligned one keeping its size at the start of the box - so three framed fields in a filling
+row of the Themes app stood spread over the page, and only a FlexSpacer packed them. Oj: "Cannot a
+StackPanel just wrap left aligned items?" Now a lane counts its fillers beside its takers, the
+divisor is the most fillers any lane holds, and a lane of edge-aligned items leaves the room at its
+end. A lane with a taker is as it was.
+
 ### Lanes that line up: ItemSizing::Equal
 
 **What a wrapping stack lacked was a divisor known before the wrap**: a lane's own count is settled
@@ -214,4 +221,3 @@ Decided with Oj:
 
 Open: StackBase::defaultCanFocusItem answers no for a container that is not an ActiveContainer, so
 setCurrentItem on such a stack records nothing, and a plain stack has no entry yet.
-

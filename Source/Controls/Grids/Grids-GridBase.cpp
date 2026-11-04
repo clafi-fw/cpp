@@ -19,6 +19,14 @@ import ClaFi.StdLib;
 namespace ClaFi::Controls::Grids
 {
 
+    // SelectedCellChangeEvent
+
+    SelectedCellChangeEvent::SelectedCellChangeEvent(GridBase& grid)
+        :
+        m_grid{ grid }
+    {
+    }
+
     // GridBase
 
     void GridBase::traverseRows(const FloatRect& windowInForm, const RowVisitor& visitor)
@@ -1030,6 +1038,12 @@ namespace ClaFi::Controls::Grids
         // twice costs nothing and telling it never is unrecoverable.
         invalidateStateUp(from, this, InvalidateEvent::None);
         invalidateStateUp(to, this, InvalidateEvent::None);
+    }
+
+    void GridBase::selectedCellChanged()
+    {
+        SelectedCellChangeEvent event{ *this };
+        emitEvent(event);
     }
 
     // GridBase::FieldTable

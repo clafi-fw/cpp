@@ -184,9 +184,25 @@ namespace Themes_App
             });
         }
 
+        // The panel stands in for the application's window: what it shows is painted on a
+        // dialog's resting surface, as the application paints its own pages. A mockup of a
+        // window inside states the bare colour for itself - see standOnBareColor. The ink is
+        // stated only where the dialog's chain has a text rule at rest to move it: a stated ink
+        // names its hue, and one left alone follows the surfaces under it, as in the application.
         m_previewPanel.onAdjustPaint([this](AdjustPaintEvent& event) {
-            if (m_previewTheme)
-                event.resetTheme(*m_previewTheme, m_previewColors);
+            if (!m_previewTheme)
+                return;
+            event.resetTheme(*m_previewTheme, m_previewColors);
+            const ThemeColors& colors = m_previewTheme->colors;
+            const ColorMode mode = PreviewState::s_colorMode;
+            event.setSurfaceHsl(restingSurface(colors, UiElement::Dialog, mode));
+            const std::wstring_view dialog = uiElementOf(UiElement::Dialog).token;
+            const bool inksAtRest = std::ranges::any_of(colors.rules.resolvedRules(dialog),
+                [](const ColorRule& rule) {
+                    return rule.atRest() && rule.output == PaintChannel::Text;
+                });
+            if (inksAtRest)
+                event.setTextHsl(restingInk(colors, UiElement::Dialog, mode));
         });
         showPreview(m_nodePreview);
     }

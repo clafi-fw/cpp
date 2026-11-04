@@ -232,9 +232,7 @@ namespace ClaFi::Controls::Grids
 
     void GridDescriptor::selectedCellChanged()
     {
-        // TODO: emit the owner event.
-        //
-        // m_owner.selectedCellChanged();
+        m_owner.selectedCellChanged();
     }
 
     void GridDescriptor::forgetRow(const Control* row)

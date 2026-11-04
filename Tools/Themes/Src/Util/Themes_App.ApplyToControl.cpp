@@ -1,5 +1,6 @@
 module Themes_App.ApplyToControl;
 
+import Themes_App.RuleText;
 
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Label;
@@ -20,82 +21,6 @@ import ClaFi.StdLib;
 
 namespace Themes_App
 {
-    namespace
-    {
-        // The words a rule is read in - labels, where a theme file's names are the serializers'.
-        constexpr std::array<std::wstring_view, static_cast<std::size_t>(PaintChannel::Count)>
-            k_channelLabels{
-                L"surface",
-                L"stroke",
-                L"band",
-                L"text",
-                L"shadow"
-            };
-
-        constexpr std::array<std::wstring_view, static_cast<std::size_t>(RuleInput::Count)>
-            k_inputLabels{
-                L"hot",
-                L"pressed",
-                L"focused",
-                L"selected",
-                L"disabled",
-                L"current",
-                L"in edit mode",
-                L"window focused"
-            };
-
-        // Shaped with a line's height and no width.
-        constexpr wchar_t k_zeroWidthSpace = 0x200B;
-
-        // A word framing a rule rather than naming its parts, gray and small.
-        void writeFramingWord(Text& text, const std::wstring_view word)
-        {
-            text << ColoredText{ InkGrade::Muted, StyledText{ TextStyles::SubBody, word } };
-        }
-
-        // A set's inputs joined by a word, in brackets when asked and there is more than one.
-        void writeInputs(Text& text, const RuleInputs inputs, const std::wstring_view joiner,
-            const bool bracketed)
-        {
-            Text result{};
-            std::size_t count = 0ull;
-            for (std::size_t i = 0ull; i != k_inputLabels.size(); ++i)
-            {
-                if (!inputs.has(static_cast<RuleInput>(i)))
-                    continue;
-                if (count != 0ull)
-                    writeFramingWord(result, joiner);
-                result << k_inputLabels[i];
-                ++count;
-            }
-            if (bracketed and count > 1ull)
-                text << L'(' << result << L')';
-            else
-                text << result;
-        }
-
-        // When the rule applies: "a or b", "(a or b) and c and d".
-        void writeCondition(Text& text, const ColorRule& rule)
-        {
-            const bool joined = !rule.inputs.empty() and !rule.andInputs.empty();
-            if (!rule.inputs.empty())
-                writeInputs(text, rule.inputs, L" or ", joined);
-            if (joined)
-                writeFramingWord(text, L" and ");
-            if (!rule.andInputs.empty())
-                writeInputs(text, rule.andInputs, L" and ", false);
-        }
-
-        // A label that starts what it is shown in, with a capital.
-        [[nodiscard]] std::wstring itemLabel(const std::wstring_view label)
-        {
-            std::wstring result{ label };
-            if (!result.empty())
-                result.front() = static_cast<wchar_t>(std::towupper(result.front()));
-            return result;
-        }
-    }
-
     // The outputs as radio buttons, then each of the two input sets as a column of check boxes.
     class ApplyToPopup : public StackPanel
     {
@@ -199,27 +124,12 @@ namespace Themes_App
         dropPopup<ApplyToPopup>(form(), *this);
     }
 
-    // The channel the rule writes, and under it the states it reads, one grade down. Measured as
-    // two lines whatever the rule reads, so every row of the grid stands at one height.
+    // Measured as two lines whatever the rule reads, so every row of the grid stands at one height.
     void ApplyToControl::adjustMainText(AdjustTextEvent& event) const
     {
         if (!m_rules)
             return;
-        const ColorRule& value = rule();
-        event.text << StyledText{
-            TextStyles::SubHeading,
-            itemLabel(k_channelLabels[static_cast<std::size_t>(value.output)])
-        };
-        if (value.atRest())
-        {
-            if (event.phase() == EventPhase::Calculate)
-                event.text << L'\n' << k_zeroWidthSpace;
-            return;
-        }
-        writeFramingWord(event.text, L", when");
-        Text condition{};
-        writeCondition(condition, value);
-        event.text << L'\n' << ColoredText{ InkGrade::Strong, condition };
+        writeApplyTo(event.text, rule(), RuleFace::Editor, event.phase() == EventPhase::Calculate);
     }
 
     const ColorRule& ApplyToControl::rule() const
@@ -258,7 +168,7 @@ namespace Themes_App
         m_owner{ owner }
     {
         StackPanel& outputs = addColumn(L"Apply to");
-        for (std::size_t i = 0ull; i != k_channelLabels.size(); ++i)
+        for (std::size_t i = 0ull; i != static_cast<std::size_t>(PaintChannel::Count); ++i)
             m_items.push_back(&outputs.add<OutputItem>(*this, static_cast<PaintChannel>(i)));
         addInputColumn(L"When", &ColorRule::inputs);
         addInputColumn(L"And", &ColorRule::andInputs);
@@ -296,7 +206,7 @@ namespace Themes_App
     void ApplyToPopup::addInputColumn(const std::wstring_view header, const RuleClause clause)
     {
         StackPanel& column = addColumn(header);
-        for (std::size_t i = 0ull; i != k_inputLabels.size(); ++i)
+        for (std::size_t i = 0ull; i != static_cast<std::size_t>(RuleInput::Count); ++i)
             m_items.push_back(&column.add<InputItem>(*this, clause, static_cast<RuleInput>(i)));
     }
 
@@ -313,7 +223,7 @@ namespace Themes_App
         const PaintChannel channel)
         :
         RadioButton{ params,
-            Text{ itemLabel(k_channelLabels[static_cast<std::size_t>(channel)]) }
+            Text{ capitalised(channelLabel(channel)) }
         },
         m_popup{ popup },
         m_channel{ channel }
@@ -341,7 +251,7 @@ namespace Themes_App
         const RuleInput input)
         :
         CheckBox{ params,
-            Text{ itemLabel(k_inputLabels[static_cast<std::size_t>(input)]) }
+            Text{ capitalised(inputLabel(input)) }
         },
         m_popup{ popup },
         m_clause{ clause },

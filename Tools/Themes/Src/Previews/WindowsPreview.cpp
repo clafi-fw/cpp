@@ -22,8 +22,10 @@ namespace Themes_App
         :
         PreviewPageBase{ params, Padding{ 20.0f }, Spacing{ 24.0f } }
     {
-        // A popup reads the focus of the window it opens over - here the focused dialog.
+        // A popup is a window of its own, and reads the focus of the window it opens over - here
+        // the focused dialog.
         const auto readOwnerFocus = [this](AdjustPaintEvent& event) {
+            standOnBareColor(event);
             event.setWindowFocusedFactor(m_focusedDialog.windowFocusedFactor());
         };
         m_menu.onAdjustPaint(readOwnerFocus);

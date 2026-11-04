@@ -34,6 +34,13 @@ namespace Themes_App
     export void writeColorDot(Text&, Color);
     // A glyph on a blob: bold, in the surface ink, which reads against the blob.
     export void writeBlobGlyph(Text&, std::wstring_view glyph);
+    // The blob a hue reads as, drawn behind the run that stands for it - a digit sits on it, and
+    // the custom hue's empty run leaves it bare. A rounded square, the shape the harmony picker
+    // gives its palette map tiles.
+    export void paintHueBlob(PaintEvent&, const FloatRect& bounds, Color);
+    // A square of the given side, centred on the run. A face's text anchors have centred the
+    // glyph already, so centring the blob on the same run puts one over the other.
+    export [[nodiscard]] FloatRect blobBounds(const FloatRect& textBounds, float side);
 
     export void writeColorCell(Text&, Color, bool extendedMode = false);
     export void drawPaletteMap(DrawIconEvent&, const ColorHarmony&, const PaletteMap&);
@@ -91,6 +98,20 @@ namespace Themes_App
     void writeBlobGlyph(Text& text, std::wstring_view glyph)
     {
         text << ColoredText{ InkWell::surfaceInk(), BoldText{ glyph } };
+    }
+
+    void paintHueBlob(PaintEvent& event, const FloatRect& bounds, Color color)
+    {
+        const float radius = bounds.height() * k_blobCornerShare;
+        event.canvas().fillRoundedRectangle(bounds, radius, radius,
+            event.applyDisabledFactor(color));
+    }
+
+    FloatRect blobBounds(const FloatRect& textBounds, float side)
+    {
+        FloatRect result = textBounds;
+        result.inflate((side - result.width()) / 2.0f, (side - result.height()) / 2.0f);
+        return result;
     }
 
     void writeColorCell(Text& tt, Color color, bool extendedMode)

@@ -7,6 +7,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.MessageBar;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 
 import ClaFi.Icons.SideBar;
@@ -55,7 +56,12 @@ namespace Themes_App
 
         MessageBar& m_sizesNote{ m_head.add<MessageBar>() };
 
-        PageControl& m_pageControl{ createBody<PageControl>() };
+        // A page taller than the window scrolls, and loses the bar's width while it does.
+        ScrollBox& m_pageBox{ createBody<ScrollBox>(
+            ScrollBars::Auto
+        ) };
+
+        PageControl& m_pageControl{ m_pageBox.createBody<PageControl>() };
     };
 
 

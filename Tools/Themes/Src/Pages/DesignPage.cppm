@@ -7,6 +7,7 @@ import Themes_App.PreviewPage;
 import Themes_App.RuleSlider;
 import Themes_App.SizesPage;
 
+import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
 import ClaFi.Controls.Panel;
@@ -19,6 +20,7 @@ import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
+import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -119,7 +121,8 @@ namespace Themes_App
         void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
         // Hands every sizes page the theme's sizes and what to call after an edit.
         void bindSizes(ThemeMetrics&, const OnSizesChanged&);
-        // Builds every page's rows again from the rules as they stand.
+        // Lists the theme's own sets again and builds every page's rows from the rules as they
+        // stand.
         void rebuildRules();
         // Shows every sizes page's sizes as they stand.
         void showSizes();
@@ -134,14 +137,17 @@ namespace Themes_App
         {
             OptionalUiElement element{}; // an element's set, nothing for every other row
             const NamedSet* named{};     // a set no element names, null for every other row
+            std::wstring ownSet{};       // a set of the theme's own, empty for every other row
             const TreeRoot* root{};      // a root's row, null for every other row
             const Category* category{};  // a category's node, null for every other row
             OptionalMetricsSet sizes{};  // a set of sizes, none for every other row
             NodePreview preview{};       // a folder's is its members', where they agree
             Control* item{};             // the row: an item, or a node's header
+            TreeNode* node{};            // the node, where the row heads one
             Control* page{};
             ElementPage* rules{};        // the page, where it shows a set of rules
             SizesPage* sizesPage{};      // the page, where it shows a set of sizes
+            StackPanel* indexBody{};     // where a root's or a category's page lists its rows
             IndexRows indexRows{};       // the rows of a root's or a category's page
         };
         using TreeEntries = std::vector<TreeEntry>;
@@ -157,9 +163,31 @@ namespace Themes_App
         [[nodiscard]] NodePreview folderPreview(const EntryIndexes& members) const;
         // Builds a root's or a category's page - a row that opens each page or category under it.
         void buildIndexPage(std::size_t entryIndex, const EntryIndexes& members);
+        // Adds a row to an index page, opening the entry at the index.
+        void addIndexRow(TreeEntry& page, std::size_t index);
         void openEntry(std::size_t index);
         // Writes each row of an index page again, with the rule count as it stands.
         void refreshIndex(const TreeEntry&);
+        void bindPage(std::size_t index); // hands a page of rules its set and what to call
+        // Lists the theme's own sets under their category as they stand, a row and a page each.
+        void syncOwnSets();
+        // The names of the sets the theme states that no row of the framework's shows.
+        [[nodiscard]] std::vector<std::wstring> ownSetNames() const;
+        // Every set a row shows, as the tree names it, the framework's first.
+        [[nodiscard]] SetNames setNames() const;
+        // Whether the theme states a set the typed name would clash with, by token or by name.
+        [[nodiscard]] bool namesSet(std::wstring_view typed) const;
+        // Adds a set of the theme's own over Any Non-Window, and opens its row for its name.
+        void addSet();
+        // Opens the row of the set just added for its name, once the rows stand.
+        void nameAddedSet();
+        // Takes the name typed over a set's row, or refuses it; the rename follows on a tick.
+        void renameSet(std::size_t index, AcceptEditEvent&);
+        void renamePendingSet();
+        void deleteSet(std::size_t index); // asked on the set's own page, which goes on a tick
+        void deletePendingSet();
+        // Records a step made on the page that shows: a set added, renamed or deleted.
+        void setsChanged(const Text& what);
         void showPickedPage();
         [[nodiscard]] const TreeEntry* pickedEntry() const;
         // The row a branch lists for the entry, with the preview page the entry names.
@@ -179,9 +207,23 @@ namespace Themes_App
         static constexpr float k_rootIconSize = 16.0f; // beside a root's SubHeading words
 
         TreeEntries m_entries{}; // an item's tag is its place here
+        std::size_t m_staticCount{}; // the entries the tree starts with; the theme's own follow
+        std::size_t m_ownSetsIndex{}; // the entry of the category the theme's own sets stand in
+        ThemeColors* m_colors{}; // the theme's colours, from bind on
         ThemeRules* m_rules{}; // the theme's sets, from bind on
+        OnGetElementRuleBase m_ruleBase{}; // what every page's ramps read, from bind on
+        OnRulesChanged m_onRulesChanged{}; // what every page calls after an edit, from bind on
         const ThemeRules m_defaultRules{ ThemeColors{}.rules }; // what each page's reset puts back
         const ThemeMetrics m_defaultMetrics{}; // what each sizes page's reset puts back
+        // Each of the three waits out the event that asked - a click on the page that goes, an
+        // editor over the row that goes - and acts on the set named beside it.
+        UiTimer m_nameTimer{};
+        std::wstring m_setToName{};
+        UiTimer m_renameTimer{};
+        std::wstring m_setToRename{};
+        std::wstring m_newName{};
+        UiTimer m_deleteTimer{};
+        std::wstring m_setToDelete{};
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
@@ -220,6 +262,15 @@ namespace Themes_App
         Panel{ params, std::forward<Args>(args)... }
     {
         buildTree();
+        m_nameTimer.onTick([this](TimerEvent&) {
+            nameAddedSet();
+        });
+        m_renameTimer.onTick([this](TimerEvent&) {
+            renamePendingSet();
+        });
+        m_deleteTimer.onTick([this](TimerEvent&) {
+            deletePendingSet();
+        });
         // A show enters the picked page, past the tree.
         setCurrentItem(m_pages);
     }

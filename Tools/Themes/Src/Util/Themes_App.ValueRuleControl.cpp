@@ -20,7 +20,6 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.Events;
-import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.Core.TextEngine.Text;
@@ -32,16 +31,6 @@ namespace Themes_App
 {
     namespace
     {
-        constexpr std::size_t k_operationCount{ static_cast<std::size_t>(ColorRuleOp::Set) + 1ull };
-
-        // What each operation does, as its tooltip names it.
-        constexpr std::array<std::wstring_view, k_operationCount> k_operationNames{
-            L"No change",
-            L"Add offset",
-            L"Scale value",
-            L"Set exact value"
-        };
-
         // The operations the popup offers as tiles, in the order they read.
         constexpr std::array k_tileOperations{
             ColorRuleOp::Offset,
@@ -70,12 +59,6 @@ namespace Themes_App
             return {};
         }
 
-        // A glyph in the spot ink and bold, the way the operation combo boxes write theirs.
-        void writeGlyph(Text& text, const std::wstring_view glyph)
-        {
-            text << ColoredText{ InkWell::spotInk(), BoldText{ glyph } } << L" ";
-        }
-
         // A value as it would be typed over the face: its mark and its number.
         [[nodiscard]] std::wstring typedValue(const ColorRuleValue& rule)
         {
@@ -92,25 +75,6 @@ namespace Themes_App
                     break;
             }
             return {};
-        }
-
-        // No change in words, having no value to show, and anything else as its glyph and value.
-        void writeValueContent(Text& text, const ColorRuleValue& rule)
-        {
-            if (rule.operation() == ColorRuleOp::NoChange)
-            {
-                text << ColoredText{
-                    InkGrade::Subtle,
-                    StyledText{
-                        TextStyles::SubBody,
-                        k_operationNames[static_cast<std::size_t>(ColorRuleOp::NoChange)]
-                    }
-                };
-                return;
-            }
-            const float value = rule.value();
-            writeGlyph(text, operationGlyph(rule.operation(), value));
-            text << StyledText{ TextStyles::Code, std::format(L"{:.2f}", std::abs(value)) };
         }
 
         // The operation's glyph on a blob in the muted spot ink, shaped as the hue popup's.
@@ -230,13 +194,13 @@ namespace Themes_App
     void ValueRuleControl::adjustMainText(AdjustTextEvent& event) const
     {
         if (m_value)
-            writeValueContent(event.text, *m_value);
+            writeValueRule(event.text, *m_value, RuleFace::Editor);
     }
 
     void ValueRuleControl::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         if (m_value)
-            event.text << k_operationNames[static_cast<std::size_t>(operation())];
+            event.text << operationName(operation());
         DropdownControlBase::nestedAdjustTooltip(event);
     }
 
@@ -473,10 +437,7 @@ namespace Themes_App
     void OperationItem::adjustText(AdjustTextEvent& event) const
     {
         const float value = m_popup.owner().value().value(m_operation);
-        
-        writeGlyph(event.text, operationGlyph(m_operation, value));
-
-        event.text << StyledText{ TextStyles::Code, std::format(L"{:.2f}", std::abs(value)) };
+        writeValueRule(event.text, ColorRuleValue{ m_operation, value }, RuleFace::Editor);
     }
 
     void OperationItem::drawIcon(DrawIconEvent& event)
@@ -486,7 +447,7 @@ namespace Themes_App
 
     void OperationItem::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
-        event.text << k_operationNames[static_cast<std::size_t>(m_operation)];
+        event.text << operationName(m_operation);
         Button::nestedAdjustTooltip(event);
     }
 

@@ -28,6 +28,17 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls::Grids
 {
+    // The grid whose selected cell has moved. See Grids
+    export class SelectedCellChangeEvent : public Event
+    {
+    public:
+        explicit SelectedCellChangeEvent(GridBase&);
+    public:
+        [[nodiscard]] GridBase& grid() const { return m_grid; }
+    private:
+        GridBase& m_grid;
+    };
+
     // A grid of rows sectioned by shared columns.
     export class GridBase : public StackView
     {
@@ -54,6 +65,8 @@ namespace ClaFi::Controls::Grids
         DECLARE_EVENT(CellLinkContextPopupEvent, OnCellLinkContextPopup, onCellLinkContextPopup)
         // Raised when the new-item row asks for an item. See Grids
         DECLARE_EVENT(NewItemEvent, OnNewItem, onNewItem)
+        // The selected cell moved to another row or column. See Grids
+        DECLARE_EVENT(SelectedCellChangeEvent, OnSelectedCellChange, onSelectedCellChange)
     public:
         template<RowType Row, typename... Args>
         Row& add(Args&&... args) {
@@ -296,6 +309,7 @@ namespace ClaFi::Controls::Grids
         // the same before and after, and invalidating it would restart an animation that is
         // already where it belongs. Either row may be null, which is a path to nowhere.
         void selectedRowChanged(Control* from, Control* to);
+        void selectedCellChanged();
     private:
         static constexpr float k_edgeTolerance{ 0.5f };   // edges nearer than this are one line
         GridDescriptor& m_descriptor;

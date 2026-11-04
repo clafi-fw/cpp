@@ -140,3 +140,20 @@ alone.
 - The generator writes the sets in one `rules.elements = { ... }` statement for the built-in
   file, and `rules.add(...)` / `rules.remove(...)` statements for a theme pasted into an
   application. Write to source leaves the application's own sets out.
+
+**The Themes app edits a set's chain on its page** (the second step, the same day, from mockups
+Oj picked: "1 b; 2 a; 3 a; 4 b"). A page shows the set's own rows first, then one group per base
+of the chain, the nearest first, each headed by the base's name and how many of its rules reach
+the set; Delete on a base's row puts the rule's selector into the set's dropped list, and the row
+stays in its group struck through, with a Restore link. A rule a set between dropped is struck
+too, named, with no link. The three facts stand as lists under the title; a base is offered only
+where it would not close a circle, and so is a set to stand on, since the resting walks along
+standsOn have no guard. The sets no row of the framework's shows stand under one Own sets
+category, listed again from the theme after every change: a set the theme names is a row and a
+page there, Add set on the category's page makes one over Any Non-Window and opens its row for
+the name, and Delete set is the last tool on such a page.
+
+The inherited rows are text rows written through the writers the editors use (Themes_App.RuleText,
+which the editors' faces read as well), struck by the row's own paintCell over the measured lines.
+A rule restored, a set added, renamed or deleted and the rows a move left out of order are
+settled on a tick: the click or the in-place editor that asked stands on rows that go.
