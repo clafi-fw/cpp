@@ -31,6 +31,7 @@ import ClaFi.Controls.SearchBox;
 import ClaFi.Controls.Tree;
 
 import ClaFi.Icons.RefreshIcon;
+import ClaFi.Icons.RowIcons;
 
 import ClaFi.StdActions;
 
@@ -2758,7 +2759,7 @@ namespace SeeDocs_App::Ui
         else if (entry.kind == NameKind::Module)
             text << rowIcon(RowIcon::Module) << Space{ k_iconGap };
         else
-            text << Space{ k_rowIconSize + k_iconGap };
+            text << Space{ Icons::RowIcons::Size + k_iconGap };
         if (entry.type && entry.kind != NameKind::Type)
             text << ColoredText{ InkGrade::Muted, entry.type->name, k_scope };
         const std::wstring_view name = entry.name;

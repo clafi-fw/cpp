@@ -5,6 +5,7 @@ import SeeDocs_App.Project;
 import SeeDocs_App.Surface;
 
 import ClaFi.Icons.FolderIcon;
+import ClaFi.Icons.RowIcons;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -18,88 +19,16 @@ namespace SeeDocs_App::Ui
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;
+    using namespace ::ClaFi::Icons::RowIcons;
 
     namespace
     {
-        // Every icon is drawn on this grid and scaled to the rect it is given, stroke and all.
-        constexpr float k_grid = 14.0f;
-        constexpr float k_stroke = 1.1f;
-        constexpr float k_softFill = 0.35f; // a face tinted rather than filled
-        constexpr float k_kindGap = 12.0f;  // the least room before a row's kind word
-
         // **The menu's icons are drawn on a grid of their own**, the size the menu shows them at,
         // and in the theme's Thin stroke rather than the rows' one, which is how the framework's
         // own menu icons beside them are drawn.
         constexpr float k_menuGrid = 32.0f;
         constexpr float k_flapFill = 0.2f;   // the open folder's flap, tinted rather than filled
         constexpr float k_haloWidth = 3.2f;  // the band cleared around the spark, in strokes
-
-        // Strong ink holds the body, the accent names the kind and the spot marks the projects.
-        struct Inks
-        {
-            Color body{};
-            Color accent{};
-            Color accentSoft{};
-            Color spot{};
-            Color surface{};   // clears a band round a part that crosses another
-        };
-
-        // How one icon is drawn: the canvas, its inks and the grid's place in the control.
-        struct Drawing
-        {
-            Canvas& canvas;
-            Inks inks{};
-            Matrix3x2 transform{};
-
-            void stroke(const PixelPath& path, Color color) const
-            {
-                canvas.drawPath(path, { PathDrawLayer::Stroke(color, k_stroke) }, &transform);
-            }
-
-            void fill(const PixelPath& path, Color color) const
-            {
-                canvas.drawPath(path, { PathDrawLayer::Fill(color) }, &transform);
-            }
-        };
-
-        [[nodiscard]] Inks inksOf(const DrawIconEvent& event)
-        {
-            const Color accent = event.accentRgb(InkGrade::Strongest);
-            return {
-                event.textRgb(InkGrade::Strong),
-                accent,
-                accent.withOpacity(k_softFill),
-                event.spotRgb(InkGrade::Strongest),
-                event.surfaceRgb()
-            };
-        }
-
-        // PixelPath::drawCircle starts the path over, so a circle joining others is drawn by hand.
-        void addCircle(PixelPath& path, const FloatPoint center, const float radius)
-        {
-            const FloatPoint radii = { radius, radius };
-            const FloatPoint top = { center.x, center.y - radius };
-            const FloatPoint bottom = { center.x, center.y + radius };
-            path.moveTo(top);
-            path.arcTo(radii, 0.0f, ArcSize::Small, ArcSweep::Clockwise, bottom);
-            path.arcTo(radii, 0.0f, ArcSize::Small, ArcSweep::Clockwise, top);
-            path.close();
-        }
-
-        void addRect(PixelPath& path, const FloatRect& rect)
-        {
-            path.moveTo(rect.left, rect.top);
-            path.lineTo(rect.right, rect.top);
-            path.lineTo(rect.right, rect.bottom);
-            path.lineTo(rect.left, rect.bottom);
-            path.close();
-        }
-
-        void addLine(PixelPath& path, const FloatPoint from, const FloatPoint to)
-        {
-            path.moveTo(from);
-            path.lineTo(to);
-        }
 
         // A menu icon's grid in its rect, and the Thin stroke in grid units: the transform scales
         // the stroke with the shape.
@@ -183,12 +112,6 @@ namespace SeeDocs_App::Ui
             house.lineTo(11.0f, 12.0f);
             house.lineTo(11.0f, 6.0f);
             drawing.stroke(house, drawing.inks.body);
-        }
-
-        // The box a folder fills, and a project's.
-        [[nodiscard]] FloatRect folderBox()
-        {
-            return { 1.5f, 3.5f, 12.5f, 11.5f };
         }
 
         // The folder with its tab and the band under it lit: the root of the folders.
@@ -275,7 +198,7 @@ namespace SeeDocs_App::Ui
             fold.lineTo(8.5f, 4.5f);
             fold.lineTo(11.5f, 4.5f);
             fold.close();
-            drawing.fill(fold, drawing.inks.accentSoft);
+            drawing.fill(fold, drawing.inks.accentTint);
 
             PixelPath sheet;
             sheet.moveTo(3.0f, 1.5f);
@@ -301,7 +224,7 @@ namespace SeeDocs_App::Ui
             top.lineTo(7.0f, 7.2f);
             top.lineTo(1.7f, 4.6f);
             top.close();
-            drawing.fill(top, drawing.inks.accentSoft);
+            drawing.fill(top, drawing.inks.accentTint);
             drawing.stroke(top, drawing.inks.body);
 
             PixelPath layers;
@@ -314,13 +237,6 @@ namespace SeeDocs_App::Ui
             drawing.stroke(layers, drawing.inks.body);
         }
 
-        void drawFolder(const Drawing& drawing)
-        {
-            PixelPath folder;
-            Icons::FolderIcon::addOutline(folder, folderBox());
-            drawing.stroke(folder, drawing.inks.body);
-        }
-
         // A cube with its top face lit.
         void drawModule(const Drawing& drawing)
         {
@@ -330,7 +246,7 @@ namespace SeeDocs_App::Ui
             top.lineTo(7.0f, 7.0f);
             top.lineTo(1.6f, 4.3f);
             top.close();
-            drawing.fill(top, drawing.inks.accentSoft);
+            drawing.fill(top, drawing.inks.accentTint);
 
             PixelPath cube;
             cube.moveTo(7.0f, 1.6f);
@@ -385,7 +301,7 @@ namespace SeeDocs_App::Ui
         {
             PixelPath cell;
             addRect(cell, { 2.0f, 2.0f, 7.0f, 7.0f });
-            drawing.fill(cell, drawing.inks.accentSoft);
+            drawing.fill(cell, drawing.inks.accentTint);
 
             PixelPath cells;
             addRect(cells, { 2.0f, 2.0f, 12.0f, 12.0f });
@@ -399,7 +315,7 @@ namespace SeeDocs_App::Ui
         {
             PixelPath shared;
             addRect(shared, { 4.5f, 4.5f, 8.5f, 8.5f });
-            drawing.fill(shared, drawing.inks.accentSoft);
+            drawing.fill(shared, drawing.inks.accentTint);
 
             PixelPath views;
             addRect(views, { 1.5f, 1.5f, 8.5f, 8.5f });
@@ -473,13 +389,7 @@ namespace SeeDocs_App::Ui
 
     void drawRowIcon(DrawIconEvent& event, const RowIcon icon)
     {
-        const FloatRect& rect = event.iconRect();
-        const float scale = std::min(rect.width(), rect.height()) / k_grid;
-        const Drawing drawing = {
-            event.canvas(),
-            inksOf(event),
-            Matrix3x2::Translation(rect.topLeft()) * Matrix3x2::Scale(scale)
-        };
+        const Drawing drawing{ event };
         switch (icon)
         {
             case RowIcon::Home:
@@ -583,7 +493,7 @@ namespace SeeDocs_App::Ui
         const DrawIconFunc paint = [icon](DrawIconEvent& event) {
             drawRowIcon(event, icon);
         };
-        return InTextIcon{ k_rowIconSize, paint, Tag{ icon } };
+        return InTextIcon{ Icons::RowIcons::Size, paint, Tag{ icon } };
     }
 
     InTextIcon titleIcon(const RowIcon icon)
@@ -596,13 +506,8 @@ namespace SeeDocs_App::Ui
 
     void writeRowKind(Text& text, const Type& type)
     {
-        if (type.isControl)
-            return;
-        text << FlexSpace{ k_kindGap };
-        text << StyledText{
-            TextStyles::SubBody,
-            ColoredText{ InkGrade::Muted, kindWord(type.kind) }
-        };
+        if (!type.isControl)
+            writeKindWord(text, kindWord(type.kind));
     }
 
     void drawOpenIcon(DrawIconEvent& event)

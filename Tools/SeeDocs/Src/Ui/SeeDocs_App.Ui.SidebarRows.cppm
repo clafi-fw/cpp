@@ -6,6 +6,8 @@ import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Tree;
 import ClaFi.Controls.Base.ExpanderBase;
 
+import ClaFi.Icons.RowIcons;
+
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.UiTypes;
@@ -33,7 +35,8 @@ namespace SeeDocs_App::Ui
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void paintOwnText(PaintEvent&) override;
     private:
-        static constexpr float k_markRoom = k_rowIconSize + k_rowIconGap;   // what the mark takes
+        // What the mark takes.
+        static constexpr float k_markRoom = Icons::RowIcons::Size + k_rowIconGap;
 
         std::optional<RowIcon> m_mark{};
     };
@@ -89,7 +92,7 @@ namespace SeeDocs_App::Ui
         if (m_mark.has_value())
         {
             const FloatRect bounds = this->textBounds(event);
-            const float size = event.scaler().scale(k_rowIconSize);
+            const float size = event.scaler().scale(Icons::RowIcons::Size);
             const float left = bounds.left - event.scaler().scale(k_markRoom);
             const float top = bounds.top + (bounds.height() - size) / 2.0f;
             DrawIconEvent icon{

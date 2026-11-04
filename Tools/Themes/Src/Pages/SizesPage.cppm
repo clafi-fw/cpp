@@ -1,5 +1,7 @@
 export module Themes_App.SizesPage;
 
+import Themes_App.PageKinds;
+
 import ClaFi.Icons.ResetIcon;
 
 import ClaFi.Controls.Button;
@@ -129,7 +131,6 @@ namespace Themes_App
             MetricsSet::Page,
             UiElement::Section,
             HorizontalAlign::Left,
-            Grids::GridLines::Horizontal,
             Grids::Dt::Columns{
                 Grids::Dt::Column{ Tag{ SizeColumn::Name },
                     Text{ L"Size" },
@@ -169,9 +170,7 @@ namespace Themes_App
         Panel{ params, std::forward<Args>(args)... },
         m_set{ set }
     {
-        m_title.text() << StyledText{ TextStyles::SubTitle, setName() };
-        m_title.text() << L"  " << StyledText{ TextStyles::SubBody,
-            ColoredText{ InkGrade::Muted, L"sizes" } };
+        writePageTitle(m_title.text(), PageKind::Sizes, setName());
         addRows();
         m_resetButton.onClick([this](ClickEvent&) {
             reset();

@@ -12,6 +12,9 @@
     <Filter Include="Src\Pages">
       <UniqueIdentifier>{a02ac384-408d-4f16-9ef0-8033cf5c7aae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Src\Previews">
+      <UniqueIdentifier>{cdf6408f-bb6f-467b-8f96-3ebbb6e4759c}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Src\Util">
       <UniqueIdentifier>{67c91bc0-d9ad-4359-b945-316d93394e2b}</UniqueIdentifier>
     </Filter>
@@ -56,6 +59,9 @@
     <ClCompile Include="Src\Pages\HomePage.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Pages\PreviewPanel.cpp">
+      <Filter>Src\Pages</Filter>
+    </ClCompile>
     <ClCompile Include="Src\Pages\PreviewPanel.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
@@ -73,6 +79,90 @@
     </ClCompile>
     <ClCompile Include="Src\Pages\WithPreview.cppm">
       <Filter>Src\Pages</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\CalloutsPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\CalloutsPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\CodeBlockPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\CodeBlockPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\DoDontPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\DoDontPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\FishIcon.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\FishIcon.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\GridPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\GridPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\InputsPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\InputsPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\OverviewPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\PreviewPage.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\PreviewPageBase.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\Previews.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\Previews.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\ScrollingPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\SelectionPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\SelectionPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\SurfacesPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\SurfacesPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\TabsPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\TestSubjectsPreview.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\WaterChoice.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\WaterChoice.cppm">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\WindowsPreview.cpp">
+      <Filter>Src\Previews</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Previews\WindowsPreview.cppm">
+      <Filter>Src\Previews</Filter>
     </ClCompile>
     <ClCompile Include="Src\Util\Themes_App.ApplyToControl.cpp">
       <Filter>Src\Util</Filter>
@@ -96,6 +186,12 @@
       <Filter>Src\Util</Filter>
     </ClCompile>
     <ClCompile Include="Src\Util\Themes_App.HueRuleControl.cppm">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\Themes_App.PageKinds.cpp">
+      <Filter>Src\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Util\Themes_App.PageKinds.cppm">
       <Filter>Src\Util</Filter>
     </ClCompile>
     <ClCompile Include="Src\Util\Themes_App.Palette.Controls.cppm">

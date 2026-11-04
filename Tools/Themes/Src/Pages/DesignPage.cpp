@@ -3,6 +3,8 @@ module Themes_App.DesignPage;
 import Themes_App.ApplyToControl;
 import Themes_App.Consts;
 import Themes_App.ElementPage;
+import Themes_App.PageKinds;
+import Themes_App.PreviewPage;
 import Themes_App.RuleSlider;
 import Themes_App.SizesPage;
 
@@ -17,6 +19,8 @@ import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.Tree;
 
+import ClaFi.Icons.RowIcons;
+
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.TextEngine.Text;
@@ -27,6 +31,8 @@ import ClaFi.StdLib;
 
 namespace Themes_App
 {
+    namespace RowIcons = ::ClaFi::Icons::RowIcons;
+
     namespace
     {
         constexpr std::array k_selectedTextOutputs{ PaintChannel::Surface, PaintChannel::Text };
@@ -41,7 +47,8 @@ namespace Themes_App
         constexpr SharedRules k_anyWindow{
             .name = L"Any Window",
             .token = k_anyWindowRulesToken,
-            .rules = &ThemeRules::anyWindow
+            .rules = &ThemeRules::anyWindow,
+            .preview = PreviewPage::Windows
         };
 
         constexpr SharedRules k_anyNonWindow{
@@ -51,81 +58,81 @@ namespace Themes_App
         };
 
         constexpr auto k_windowRoots = std::to_array<CategoryEntry>({
-            UiElement::Dialog,
-            UiElement::Menu,
-            UiElement::Tooltip
+            { UiElement::Dialog, PreviewPage::Windows },
+            { UiElement::Menu, PreviewPage::Windows },
+            { UiElement::Tooltip, PreviewPage::Windows }
         });
 
         constexpr auto k_surfaces = std::to_array<CategoryEntry>({
-            UiElement::Page,
-            UiElement::Section,
-            UiElement::SectionHeader,
-            UiElement::Divider,
-            UiElement::ToolBar,
-            UiElement::DialogTitle,
-            UiElement::Grid,
-            UiElement::GridHeader,
-            UiElement::GridRow
+            { UiElement::Page, PreviewPage::Surfaces },
+            { UiElement::Section, PreviewPage::Surfaces },
+            { UiElement::SectionHeader, PreviewPage::Surfaces },
+            { UiElement::Divider, PreviewPage::Surfaces },
+            { UiElement::ToolBar, PreviewPage::Surfaces },
+            { UiElement::DialogTitle, PreviewPage::Windows },
+            { UiElement::Grid, PreviewPage::Grid },
+            { UiElement::GridHeader, PreviewPage::Grid },
+            { UiElement::GridRow, PreviewPage::Grid }
         });
 
         constexpr auto k_controls = std::to_array<CategoryEntry>({
-            UiElement::Button,
-            UiElement::ToolButton,
-            UiElement::Tab,
-            UiElement::ScrollButton,
-            UiElement::ScrollThumb
+            { UiElement::Button, PreviewPage::Inputs },
+            { UiElement::ToolButton, PreviewPage::Inputs },
+            { UiElement::Tab, PreviewPage::Tabs },
+            { UiElement::ScrollButton, PreviewPage::Scrolling },
+            { UiElement::ScrollThumb, PreviewPage::Scrolling }
         });
 
         constexpr auto k_focusAndSelection = std::to_array<CategoryEntry>({
-            UiElement::SelectionIndicator,
-            UiElement::HoverIndicator,
-            UiElement::SelectedText,
-            UiElement::FoundText
+            { UiElement::SelectionIndicator, PreviewPage::Selection },
+            { UiElement::HoverIndicator, PreviewPage::Selection },
+            { UiElement::SelectedText, PreviewPage::Selection },
+            { UiElement::FoundText, PreviewPage::Selection }
         });
 
         constexpr auto k_blocks = std::to_array<CategoryEntry>({
-            UiElement::InfoCallout,
-            UiElement::QuestionCallout,
-            UiElement::WarningCallout,
-            UiElement::ErrorCallout,
-            UiElement::OkCallout,
-            UiElement::Do,
-            UiElement::Dont,
-            UiElement::CodeBlock
+            { UiElement::InfoCallout, PreviewPage::Callouts },
+            { UiElement::QuestionCallout, PreviewPage::Callouts },
+            { UiElement::WarningCallout, PreviewPage::Callouts },
+            { UiElement::ErrorCallout, PreviewPage::Callouts },
+            { UiElement::OkCallout, PreviewPage::Callouts },
+            { UiElement::Do, PreviewPage::DoDont },
+            { UiElement::Dont, PreviewPage::DoDont },
+            { UiElement::CodeBlock, PreviewPage::CodeBlock }
         });
 
         constexpr auto k_testSubjects = std::to_array<CategoryEntry>({
-            UiElement::Testee,
-            UiElement::Bestee
+            { UiElement::Testee, PreviewPage::TestSubjects },
+            { UiElement::Bestee, PreviewPage::TestSubjects }
         });
 
         constexpr auto k_windowRootSizes = std::to_array<CategoryEntry>({
-            MetricsSet::PrimaryWindow,
-            MetricsSet::SecondaryWindow
+            { MetricsSet::PrimaryWindow, PreviewPage::Windows },
+            { MetricsSet::SecondaryWindow, PreviewPage::Windows }
         });
 
         constexpr auto k_surfaceSizes = std::to_array<CategoryEntry>({
-            MetricsSet::Page,
-            MetricsSet::DialogTitle,
-            MetricsSet::GridCell
+            { MetricsSet::Page, PreviewPage::Surfaces },
+            { MetricsSet::DialogTitle, PreviewPage::Windows },
+            { MetricsSet::GridCell, PreviewPage::Grid }
         });
 
         constexpr auto k_controlSizes = std::to_array<CategoryEntry>({
-            MetricsSet::Button,
-            MetricsSet::ToolButton,
-            MetricsSet::Tab,
-            MetricsSet::ListItem,
-            MetricsSet::CheckMark,
-            MetricsSet::TextBox,
-            MetricsSet::Slider,
-            MetricsSet::ScrollButton,
-            MetricsSet::ScrollThumb
+            { MetricsSet::Button, PreviewPage::Inputs },
+            { MetricsSet::ToolButton, PreviewPage::Inputs },
+            { MetricsSet::Tab, PreviewPage::Tabs },
+            { MetricsSet::ListItem, PreviewPage::Selection },
+            { MetricsSet::CheckMark, PreviewPage::Selection },
+            { MetricsSet::TextBox, PreviewPage::Inputs },
+            { MetricsSet::Slider, PreviewPage::Inputs },
+            { MetricsSet::ScrollButton, PreviewPage::Scrolling },
+            { MetricsSet::ScrollThumb, PreviewPage::Scrolling }
         });
 
         constexpr auto k_blockSizes = std::to_array<CategoryEntry>({
-            MetricsSet::Callout,
-            MetricsSet::DoDont,
-            MetricsSet::CodeBlock
+            { MetricsSet::Callout, PreviewPage::Callouts },
+            { MetricsSet::DoDont, PreviewPage::DoDont },
+            { MetricsSet::CodeBlock, PreviewPage::CodeBlock }
         });
 
         constexpr std::array k_colorCategories{
@@ -195,6 +202,13 @@ namespace Themes_App
     {
         if (const TreeEntry* entry = pickedEntry())
             return tokenOf(*entry);
+        return {};
+    }
+
+    NodePreview DesignPage::pickedPreview() const
+    {
+        if (const TreeEntry* entry = pickedEntry())
+            return entry->preview;
         return {};
     }
 
@@ -284,11 +298,12 @@ namespace Themes_App
 
     void DesignPage::buildTree()
     {
+        writePageTitle(m_paletteTitle.text(), PageKind::Palette, k_paletteTitle);
         const std::array themeWidePages{
             TreeEntry{ .page = &m_palettePage },
-            TreeEntry{ .shared = &k_anyElement },
-            TreeEntry{ .shared = &k_anyWindow },
-            TreeEntry{ .shared = &k_anyNonWindow }
+            entryOf(k_anyElement),
+            entryOf(k_anyWindow),
+            entryOf(k_anyNonWindow)
         };
         addRoot(k_colorsRoot, themeWidePages);
         m_tree.addDivider(Thickness::Heavy, Padding{ 4.0f, 6.0f });
@@ -302,15 +317,18 @@ namespace Themes_App
     // has no rows for a node to open.
     void DesignPage::addRoot(const TreeRoot& root, const std::span<const TreeEntry> pages)
     {
+        const TreeEntry rootEntry{ .root = &root };
         if (pages.empty() && root.categories.empty())
         {
             TreeItem& item = m_tree.addItem(TextFormat{ TextStyles::SubHeading });
-            buildIndexPage(addItemEntry(item, TreeEntry{ .root = &root }), {});
+            buildIndexPage(addItemEntry(item, rootEntry), {});
             return;
         }
-        TreeNode& node = m_tree.addNode(HeaderText{ root.name });
+        HeaderText header{};
+        writeRowText(header, rootEntry);
+        TreeNode& node = m_tree.addNode(std::move(header));
         node.header().setTextFormat(TextFormat{ TextStyles::SubHeading });
-        const std::size_t rootIndex = addEntry(node.header(), TreeEntry{ .root = &root });
+        const std::size_t rootIndex = addEntry(node.header(), rootEntry);
         EntryIndexes members{};
         for (const TreeEntry& page : pages)
             members.push_back(addItemEntry(node.addItem(), page));
@@ -318,35 +336,30 @@ namespace Themes_App
             node.addDivider();
         for (const Category& category : root.categories)
             members.push_back(addCategory(node, category));
+        m_entries[rootIndex].preview = folderPreview(members);
         buildIndexPage(rootIndex, members);
     }
 
-    // The header carries the name muted, set apart from the pages under it. It is a row of its
-    // own, and its page lists those pages - built once they stand.
+    // The header is a row of its own, and its page lists the pages under it - built once they
+    // stand.
     std::size_t DesignPage::addCategory(TreeNode& rootNode, const Category& category)
     {
-        TreeNode& node = rootNode.addNode(HeaderText{
-            ColoredText{ InkGrade::Muted, category.name }
-        });
-        const std::size_t categoryIndex = addEntry(node.header(),
-            TreeEntry{ .category = &category });
+        const TreeEntry categoryEntry{ .category = &category };
+        HeaderText header{};
+        writeRowText(header, categoryEntry);
+        TreeNode& node = rootNode.addNode(std::move(header));
+        const std::size_t categoryIndex = addEntry(node.header(), categoryEntry);
         EntryIndexes members{};
         for (const CategoryEntry& entry : category.entries)
-        {
-            members.push_back(addItemEntry(node.addItem(), TreeEntry{
-                .element = entry.element,
-                .shared = entry.shared,
-                .sizes = entry.sizes
-            }));
-        }
+            members.push_back(addItemEntry(node.addItem(), entryOf(entry)));
+        m_entries[categoryIndex].preview = folderPreview(members);
         buildIndexPage(categoryIndex, members);
         return categoryIndex;
     }
 
-    // An item is named after the page it opens.
     std::size_t DesignPage::addItemEntry(TreeItem& item, TreeEntry entry)
     {
-        item.text() << nameOf(entry);
+        writeRowText(item.text(), entry);
         return addEntry(item, std::move(entry));
     }
 
@@ -371,18 +384,36 @@ namespace Themes_App
         return index;
     }
 
+    // A folder is a set of sizes where every member is one, or a folder holding nothing else.
+    NodePreview DesignPage::folderPreview(const EntryIndexes& members) const
+    {
+        if (members.empty())
+            return {};
+        const PreviewPage firstPage = m_entries[members.front()].preview.page;
+        const bool samePage = std::ranges::all_of(members, [this, firstPage](std::size_t member) {
+            return m_entries[member].preview.page == firstPage;
+        });
+        const bool editsSizes = std::ranges::all_of(members, [this](std::size_t member) {
+            return m_entries[member].preview.editsSizes;
+        });
+        return {
+            .page = samePage ? firstPage : PreviewPage::Overview,
+            .editsSizes = editsSizes
+        };
+    }
+
     // Titled as an element page is, with a row per page or category under it. A row's text is
     // written when the page is shown, since it carries a count that edits move.
     void DesignPage::buildIndexPage(const std::size_t entryIndex, const EntryIndexes& members)
     {
         TreeEntry& entry = m_entries[entryIndex];
         Panel& page = m_pages.add<Panel>();
-        page.createTopBar<Panel>(
+        Label& title = page.createTopBar<Panel>(
             Padding{ 12.0f, 8.0f }
         ).createBody<Label>(
-            VerticalTextAnchor::Center,
-            Text{ StyledText{ TextStyles::SubTitle, nameOf(entry) } }
+            VerticalTextAnchor::Center
         );
+        writePageTitle(title.text(), kindOf(entry), nameOf(entry));
         StackPanel& rows = page.createBody<ScrollBox>(
             ScrollBars::Vertical
         ).createBody<StackPanel>(
@@ -433,20 +464,60 @@ namespace Themes_App
         return nullptr;
     }
 
-    // The page's name, followed for a page of rules by how many it holds, muted.
+    DesignPage::TreeEntry DesignPage::entryOf(const CategoryEntry& entry)
+    {
+        return {
+            .element = entry.element,
+            .shared = entry.shared,
+            .sizes = entry.sizes,
+            .preview = { .page = entry.preview, .editsSizes = entry.sizes.has_value() }
+        };
+    }
+
+    // A root's icon is a step larger, as its words are. A category's name is muted, setting it
+    // apart from the pages under it.
+    void DesignPage::writeRowText(Text& text, const TreeEntry& entry)
+    {
+        const float iconSize = entry.root ? k_rootIconSize : RowIcons::Size;
+        text << pageIcon(kindOf(entry), iconSize) << Space{ RowIcons::Gap };
+        if (entry.category)
+            text << ColoredText{ InkGrade::Muted, nameOf(entry) };
+        else
+            text << nameOf(entry);
+        const std::wstring_view kindWord = kindWordOf(kindOf(entry));
+        if (!kindWord.empty())
+            RowIcons::writeKindWord(text, kindWord);
+    }
+
+    // The page's icon and name, followed for a page of rules by how many it holds, muted.
     Text DesignPage::indexRowText(const TreeEntry& entry)
     {
+        Text text{
+            pageIcon(kindOf(entry), RowIcons::Size),
+            Space{ RowIcons::Gap },
+            nameOf(entry)
+        };
         if (!entry.rules)
-            return Text{ nameOf(entry) };
+            return text;
         const std::size_t count = entry.list ? entry.list->size() : 0;
         Text tally{};
         if (count == 0)
             tally << L"no rules";
         else
             tally << count << (count == 1 ? L" rule" : L" rules");
-        Text text{ nameOf(entry) };
         text << L"  " << StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, tally } };
         return text;
+    }
+
+    PageKind DesignPage::kindOf(const TreeEntry& entry)
+    {
+        if (entry.root || entry.category)
+            return PageKind::Folder;
+        if (entry.sizes)
+            return PageKind::Sizes;
+        if (entry.element || entry.shared)
+            return PageKind::Rules;
+        return PageKind::Palette;
     }
 
     std::wstring_view DesignPage::nameOf(const TreeEntry& entry)

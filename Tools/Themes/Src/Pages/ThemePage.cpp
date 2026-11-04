@@ -454,8 +454,10 @@ namespace Themes_App
 
     // The page the tree picked shows once the browser has taken the tab there - see showAnchor.
     // A step made by a key replaces the entry, so a walk down the tree leaves one entry behind.
+    // The preview follows every pick, the ones showAnchor makes included.
     void ThemePage::designPagePicked()
     {
+        showPreview(m_designPage.pickedPreview());
         if (m_showingAnchor)
             return;
 

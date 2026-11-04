@@ -571,6 +571,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RestartIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RowIcons.cpp">
+      <Filter>Icons</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RowIcons.cppm">
+      <Filter>Icons</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SaturationIcon.cppm">
       <Filter>Icons</Filter>
     </ClCompile>

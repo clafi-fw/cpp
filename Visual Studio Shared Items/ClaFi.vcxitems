@@ -457,6 +457,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RefreshIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\ResetIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RestartIcon.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RowIcons.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\RowIcons.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SideBar.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SaturationIcon.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\SaveIcon.cppm" />

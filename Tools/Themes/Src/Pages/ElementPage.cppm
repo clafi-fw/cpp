@@ -1,6 +1,7 @@
 export module Themes_App.ElementPage;
 
 import Themes_App.ApplyToControl;
+import Themes_App.PageKinds;
 import Themes_App.RuleSlider;
 
 import ClaFi.Icons.HueIcon;
@@ -206,7 +207,7 @@ namespace Themes_App
             rulesChanged(phase, what, selection());
         } }
     {
-        m_title.text() << StyledText{ TextStyles::SubTitle, title };
+        writePageTitle(m_title.text(), PageKind::Rules, title);
         m_addButton.onClick([this](ClickEvent&) {
             m_grid.requestNewItem();
         });

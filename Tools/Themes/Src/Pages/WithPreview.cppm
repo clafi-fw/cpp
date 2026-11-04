@@ -1,6 +1,7 @@
 export module Themes_App.WithPreview;
 
 import Themes_App.Consts;
+import Themes_App.PreviewPage;
 import Themes_App.PreviewPanel;
 
 import ClaFi.Application.ThemesManager;
@@ -65,8 +66,13 @@ namespace Themes_App
         // What a page draws from the preview mode on top of the preview itself.
         virtual void previewColorModeChanged() {}
         void invalidatePreview();
+        // Shows the page the node names, and the sizes note where the node edits sizes.
+        void showPreview(const NodePreview&);
         virtual const AppTheme* selectedTheme() { return nullptr; }
         void visibilityChanged() override;
+    private:
+        // The note stands while the node edits sizes and the application is not previewing them.
+        void refreshSizesNote();
     private:
         StackPanel& m_rightToolBar{ this->topPanel().template createRightBar<StackPanel>(
             Orientation::Horizontal,
@@ -84,6 +90,7 @@ namespace Themes_App
         // What that theme is painted from, kept beside it because the panel paints from a
         // reference the adjustment hands on.
         BakedColors m_previewColors{};
+        NodePreview m_nodePreview{}; // what the panel shows, the Overview until a node names one
 
         ToolButton& m_previewDarkButton{ m_rightToolBar.add<ToolButton>(
             ShowSelectionOnSurface::Yes,
@@ -144,6 +151,7 @@ namespace Themes_App
             invalidatePreview();
             if (!PreviewState::s_inApp)
                 applyStoredTheme(this->appContext());
+            refreshSizesNote();
             event.control->invalidateState();
         });
         m_previewInAppButton.onGetState([](GetStateEvent& event) {
@@ -180,6 +188,7 @@ namespace Themes_App
             if (m_previewTheme)
                 event.resetTheme(*m_previewTheme, m_previewColors);
         });
+        showPreview(m_nodePreview);
     }
 
     template<IsDocumentsPage PageBase>
@@ -192,6 +201,7 @@ namespace Themes_App
             .template get<ColorMode>();
         const bool previewVisible = (this->tabConfig() / L"Preview").template get<bool>();
         m_previewPanel.setVisible(previewVisible);
+        refreshSizesNote();
     }
 
     // **Every point at which what the preview shows has moved.** The theme is taken once here, so
@@ -219,6 +229,14 @@ namespace Themes_App
             m_previewPanel.invalidate();
     }
 
+    template<IsDocumentsPage PageBase>
+    void WithPreview<PageBase>::showPreview(const NodePreview& preview)
+    {
+        m_nodePreview = preview;
+        m_previewPanel.showPage(preview.page);
+        refreshSizesNote();
+    }
+
     // A page coming into view is a point at which the preview has moved: the tab before it stood
     // for another theme. The panel reads what invalidatePreview takes, so it is asked for whether
     // or not the application is previewing too - otherwise the panel keeps the theme the page
@@ -241,6 +259,13 @@ namespace Themes_App
 
         if (!PreviewState::s_inApp)
             applyStoredTheme(this->appContext());
+        refreshSizesNote();
         invalidatePreview();
+    }
+
+    template<IsDocumentsPage PageBase>
+    void WithPreview<PageBase>::refreshSizesNote()
+    {
+        m_previewPanel.setSizesNoteVisible(m_nodePreview.editsSizes && !PreviewState::s_inApp);
     }
 }

@@ -196,7 +196,7 @@ namespace Themes_App
         void storeViewState() const;
         void storeView() const;
         void restoreView();
-        void designPagePicked(); // sends the pick to the browser as this tab's anchor
+        void designPagePicked(); // shows its preview, and sends it to the browser as the anchor
         void showAnchor(const Browser::ShowAnchorEvent&);
         // A rule was added on the Design page, moved or taken away.
         void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);

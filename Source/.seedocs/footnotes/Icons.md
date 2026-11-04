@@ -41,3 +41,18 @@ give the disc a hub without one being drawn.
 ## SweepEnds::Cyclic
 
 Segments run across the seam, so the join disappears. Hue is the only cyclic channel of the three.
+
+## RowIcons
+
+**One grid for every row icon.** An icon is drawn on a square of GridSize units, and Drawing scales
+that square to the shorter side of the icon's rect, the stroke with it. A row icon keeps its
+proportions at any size, and the icons of one tree weigh the same.
+
+A row with no icon writes a Space of Size plus Gap where the icon would stand, so its words line up
+with those of the rows around it.
+
+## writeKindWord
+
+**The word stands at the row's far end** because a FlexSpace takes the room the line has over. In a
+row whose text is laid out across the row's width - a tree row, a list line - the word sits against
+the right edge. A text measured to fit its words keeps KindGap before it.
