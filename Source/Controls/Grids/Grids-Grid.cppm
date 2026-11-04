@@ -147,8 +147,12 @@ namespace ClaFi::Controls::Grids
         GridHeader::defaultGetCellText(cell, text);
     }
 
+    // A measurement answers the width the cells need as they stand, so the controls in them are
+    // measured before the columns read them; the align pass after it reads what this pass measured.
     void Grid::calculateChildren(FormBase& form)
     {
+        if (m_calculateLimit == k_maxFloat)
+            calculateCellControls(form);
         m_descriptor.calculateGrid(form.context(), 0 /*scrollBarWidthAndSpacing*/, m_calculateLimit);
         GridBase::calculateChildren(form);
     }

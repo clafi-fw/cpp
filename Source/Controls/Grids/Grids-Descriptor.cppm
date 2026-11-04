@@ -191,7 +191,8 @@ namespace ClaFi::Controls::Grids
         ColumnCollection& m_columns{ m_rootColumn.createSubColumns() };
         const ControlMetrics& m_designCellMetrics;
         ScaledCellMetrics m_scaledCellMetrics;
-        float m_lastBoundaryWidth{}; // for which the columns were calculated
+        std::optional<float> m_lastBoundaryWidth{}; // for which the columns were calculated
+        float m_neededWidth{}; // what the columns need for their cells, before a width is given
         // TODO: why does the descriptor carry scroll bar width?
         float m_scrollBarWidthAndSpacing{};
         HighlightChannel m_hoverChannel{ k_maxHoverHighlights,  AnimationSlots::Hot };

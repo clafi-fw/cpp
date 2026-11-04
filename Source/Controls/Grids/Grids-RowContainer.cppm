@@ -39,6 +39,7 @@ namespace ClaFi::Controls::Grids
         template <IsControl ControlClass, typename... Args>
         ControlClass& addOwnControl(Args&&... args);
         ControlSpan controls() override { return { m_controls }; }
+        void calculateCellControls(FormBase& form) override { calculateChildrenSequentially(form); }
         ScaledSize calculateCellContent(const FormContext&, const ScaledCellMetrics&, const Column&, float boundW) override;
         RowContainer* asRowContainer() override { return this; }
         Control* cellControl(const Column& column) override { return controlAtColumn(column); }

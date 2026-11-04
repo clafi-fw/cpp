@@ -124,8 +124,14 @@ namespace ClaFi::Controls::Grids
     ScaledSize GridBase::calculateContent(AlignEvent& event)
     {
         ScaledSize result = StackView::calculateContent(event);
-        result.x = m_descriptor.m_rootColumn.calculatedSubColumnsWidth2();
+        result.x = m_descriptor.m_neededWidth;
         return result;
+    }
+
+    void GridBase::calculateCellControls(FormBase& form)
+    {
+        for (RowBase& row : controlsAs<RowBase>())
+            row.calculateCellControls(form);
     }
 
     void GridBase::currentItemChanged(CurrentItemChangeEvent& params)

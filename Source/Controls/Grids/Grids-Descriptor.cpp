@@ -114,11 +114,13 @@ namespace ClaFi::Controls::Grids
 
         // recursively
         m_rootColumn.preCalcRows(formContext, m_owner);
+        // recursively
+        m_rootColumn.finishCalcStage1();
+        // The grid's measurement is given no width, and it answers this - the cells as they stand.
+        m_neededWidth = m_rootColumn.finalWidth();
         if (boundsW != k_maxFloat)
         {
             boundsW = std::max(0.0f, boundsW);
-            // recursively
-            m_rootColumn.finishCalcStage1();
             // before stretchStretched(...)!
             const float needToShrink = m_rootColumn.finalWidth() - boundsW;
             // recursively

@@ -181,6 +181,8 @@ namespace ClaFi::Controls::Grids
         void setHoveredColumn(const Column* value, bool initiateTooltip = true);
         //
         virtual void preCalcColumn(const FormContext& formContext, Column& column);
+        // Measures the controls in the row's cells, ahead of the columns that read their widths.
+        virtual void calculateCellControls(FormBase&) {}
 
         // The control this row shows in `column`, or nullptr when the cell is plain
         // text. A row that holds no controls leaves this alone, which is what keeps its

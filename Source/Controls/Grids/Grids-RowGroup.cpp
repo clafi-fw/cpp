@@ -198,6 +198,13 @@ namespace ClaFi::Controls::Grids
         span().preCalcColumn(formContext, column);
     }
 
+    // The span is asked as a row: as a RowContainer, its override is that class's own to call.
+    void RowGroup::calculateCellControls(FormBase& form)
+    {
+        RowGroupBase::calculateCellControls(form);
+        spanRow()->calculateCellControls(form);
+    }
+
     ScaledSize RowGroup::calculateContent(AlignEvent& event)
     {
         // Closed, the group is its span alone, which is what the base makes of a hidden body.

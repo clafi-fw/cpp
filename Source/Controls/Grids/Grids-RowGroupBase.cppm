@@ -25,6 +25,7 @@ namespace ClaFi::Controls::Grids
         ControlSpan controls() override { return { m_controls }; }
         bool hasContent(const Column&) const override { return false; }
         void preCalcColumn(const FormContext& formContext, Column& column) override;
+        void calculateCellControls(FormBase&) override;
         GridBase* subGrid() override;
         ScaledSize calculateContent(AlignEvent& event) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;

@@ -25,6 +25,12 @@ namespace ClaFi::Controls::Grids
             row.preCalcColumn(formContext, column);
     }
 
+    void RowGroupBase::calculateCellControls(FormBase& form)
+    {
+        for (RowBase& row : body().controlsAs<RowBase>())
+            row.calculateCellControls(form);
+    }
+
     GridBase* RowGroupBase::subGrid()
     {
         return &body();

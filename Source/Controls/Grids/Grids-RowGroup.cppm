@@ -76,6 +76,7 @@ namespace ClaFi::Controls::Grids
         // is why this answers for the group only.
         RowBase* spanRow() override { return &span(); }
         void preCalcColumn(const FormContext&, Column&) override;
+        void calculateCellControls(FormBase&) override;
         ScaledSize calculateContent(AlignEvent&) override;
         void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
         // The rows are read folded or open, and the group opens to show a match in them.

@@ -148,7 +148,6 @@ namespace ClaFi::Controls::Grids
     public:
         float calculatedWidth() const { return m_calculatedWidth; }
         float finalWidth() const { return m_finalWidth; }
-        float calculatedSubColumnsWidth2() const { return m_calculatedSubColumnsWidth2; }
         [[nodiscard]] float left() const { return m_left; }
         // IFittable
         FitData fitData() const override { return { m_calculatedWidth }; }
@@ -196,7 +195,6 @@ namespace ClaFi::Controls::Grids
         std::size_t m_stretchedCnt{};
         float m_stretchedWidth{};
         float m_subColumnsWidth{};
-        float m_calculatedSubColumnsWidth2{};
         float m_left{};
     };
 

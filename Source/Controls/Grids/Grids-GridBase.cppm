@@ -120,6 +120,8 @@ namespace ClaFi::Controls::Grids
         using StackView::setPadding;
 
         ScaledSize calculateContent(AlignEvent&) override;
+        // Measures the controls in every row's cells, ahead of the columns that read their widths.
+        void calculateCellControls(FormBase&);
         void currentItemChanged(CurrentItemChangeEvent&)  override;
         // A grid standing in a container drops its selected cell when the container's item leaves.
         void nestedCurrentItemChange(Control* currentItem) override;

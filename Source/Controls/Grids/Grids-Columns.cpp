@@ -139,7 +139,6 @@ namespace ClaFi::Controls::Grids
     void Column::stretchStretched(const float boundsW)
     {
         m_calculatedWidth = boundsW;
-        m_calculatedSubColumnsWidth2 = m_finalWidth;
         if (!m_subColumns)
             return;
 
@@ -246,9 +245,7 @@ namespace ClaFi::Controls::Grids
 
     void ColumnCollection::invalidateLayout() const
     {
-        // k_maxFloat, not 0: boundsW == 0 is reachable during early layout and would
-        // read back as a valid cache hit.
-        m_descriptor.m_lastBoundaryWidth = k_maxFloat;
+        m_descriptor.m_lastBoundaryWidth.reset();
     }
 
     ColumnCollection::ColumnCollection(GridDescriptor& descriptor, Column* parent) :
