@@ -95,26 +95,26 @@ namespace ClaFi::Icons::ChannelTile
             float half = size * 0.5f - margin;
             float radius = std::max(0.0f, size * k_cornerRatio - margin);
 
-            struct ArcCentre
+            struct ArcCenter
             {
                 FloatPoint at{ 0.0f, 0.0f };
                 float from{ 0.0f };
             };
 
-            std::array<ArcCentre, 4> centres = {
-                ArcCentre{ { half - radius, half - radius }, 0.0f },
-                ArcCentre{ { -half + radius, half - radius }, 0.25f },
-                ArcCentre{ { -half + radius, -half + radius }, 0.5f },
-                ArcCentre{ { half - radius, -half + radius }, 0.75f },
+            std::array<ArcCenter, 4> centers = {
+                ArcCenter{ { half - radius, half - radius }, 0.0f },
+                ArcCenter{ { -half + radius, half - radius }, 0.25f },
+                ArcCenter{ { -half + radius, -half + radius }, 0.5f },
+                ArcCenter{ { half - radius, -half + radius }, 0.75f },
             };
 
             outline.count = 0;
-            for (const ArcCentre& centre : centres)
+            for (const ArcCenter& center : centers)
             {
                 for (int step = 0; step <= k_arcSteps; ++step)
                 {
-                    float turn = centre.from + 0.25f * static_cast<float>(step) / k_arcSteps;
-                    outline.points[outline.count] = pointOn(centre.at, turn * k_2Pi, radius);
+                    float turn = center.from + 0.25f * static_cast<float>(step) / k_arcSteps;
+                    outline.points[outline.count] = pointOn(center.at, turn * k_2Pi, radius);
                     outline.cut[outline.count] = false;
                     ++outline.count;
                 }

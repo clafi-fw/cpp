@@ -48,7 +48,7 @@ namespace ClaFi::Controls::Grids
         // From above at the header, from below in the body, from a side where the line runs.
         [[nodiscard]] Control* navigationEntry(const NavigationStep&) override;
         // Down from the header goes on into the body, Up from the body back to the header.
-        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+        [[nodiscard]] Control* navigationNeighbor(const Control& child,
             const NavigationStep&) override;
         // declines selection
         void getControlState(GetStateEvent&) const override;

@@ -352,11 +352,11 @@ namespace ClaFi::Controls::Grids
     // way in the whole field - a row this stack would step to is one the field already passed
     // over. The steps a page press is made of are the navigator's own, and walk the rows like any
     // stack's.
-    Control* GridBase::navigationNeighbour(const Control& child, const NavigationStep& step)
+    Control* GridBase::navigationNeighbor(const Control& child, const NavigationStep& step)
     {
         if (step.source == NavigationSource::Key)
             return nullptr;
-        return StackView::navigationNeighbour(child, step);
+        return StackView::navigationNeighbor(child, step);
     }
 
     void GridBase::controlAdded(Control& control)

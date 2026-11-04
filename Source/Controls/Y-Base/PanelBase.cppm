@@ -144,7 +144,7 @@ namespace ClaFi::Controls
         [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
             { return &child != topBar() && &child != bottomBar(); }
         [[nodiscard]] ControlSlots navigationSlots() const override { return m_slots; }
-        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+        [[nodiscard]] Control* navigationNeighbor(const Control& child,
             const NavigationStep&) override;
         [[nodiscard]] Control* navigationEntry(const NavigationStep&) override;
     private:

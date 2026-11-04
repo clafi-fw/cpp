@@ -238,7 +238,7 @@ namespace Themes_App
         // An inner line, as where it crosses the tile's vertical centreline and how steeply it runs.
         struct Divider
         {
-            float centreY;
+            float centerY;
             float slope;
         };
 
@@ -267,7 +267,7 @@ namespace Themes_App
         float dividerEdge(const Divider& divider, float x, float halfGap, float towards)
         {
             const float normalScale = std::sqrt(1.0f + divider.slope * divider.slope);
-            return divider.centreY + divider.slope * x + towards * halfGap * normalScale;
+            return divider.centerY + divider.slope * x + towards * halfGap * normalScale;
         }
 
         // One band as a quad. It reaches past the tile on every side that is not a line, so the clip

@@ -854,8 +854,8 @@ namespace ClaFi::PlatformImplementation::Windows
             hMon = ::MonitorFromWindow(handle(), MONITOR_DEFAULTTONEAREST);
         else if (onAnchor)
         {
-            const FloatPoint centre = anchor.center();
-            const ::POINT pt{ static_cast<LONG>(centre.x), static_cast<LONG>(centre.y) };
+            const FloatPoint center = anchor.center();
+            const ::POINT pt{ static_cast<LONG>(center.x), static_cast<LONG>(center.y) };
             hMon = ::MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
         }
         else

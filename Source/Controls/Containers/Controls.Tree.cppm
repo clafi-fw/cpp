@@ -127,7 +127,7 @@ namespace ClaFi::Controls
     protected:
         void nestedKeyDown(KeyDownEvent&) override;
         // Right from the header of an open node goes to its first row.
-        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+        [[nodiscard]] Control* navigationNeighbor(const Control& child,
             const NavigationStep&) override;
     private:
         // Lays the header out the way a TreeItem is laid out, so the two texts share a column.

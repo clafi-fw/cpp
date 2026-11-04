@@ -706,17 +706,17 @@ namespace ClaFi::Graphics
         // The two branches above delegate to primitives that place the stroke inside their
         // bounds themselves. A stroked path has no inside, so this one carries the inset.
         const float halfStroke = strokeWidth * 0.5f;
-        RoundedRectangleParts centreline = parts;
-        centreline.bounds.inflate(-halfStroke);
-        if (centreline.bounds.empty())
+        RoundedRectangleParts centerline = parts;
+        centerline.bounds.inflate(-halfStroke);
+        if (centerline.bounds.empty())
             return;
         
-        centreline.radii.topLeft = (std::max)(0.0f, centreline.radii.topLeft - halfStroke);
-        centreline.radii.topRight = (std::max)(0.0f, centreline.radii.topRight - halfStroke);
-        centreline.radii.bottomRight = (std::max)(0.0f, centreline.radii.bottomRight - halfStroke);
-        centreline.radii.bottomLeft = (std::max)(0.0f, centreline.radii.bottomLeft - halfStroke);
+        centerline.radii.topLeft = (std::max)(0.0f, centerline.radii.topLeft - halfStroke);
+        centerline.radii.topRight = (std::max)(0.0f, centerline.radii.topRight - halfStroke);
+        centerline.radii.bottomRight = (std::max)(0.0f, centerline.radii.bottomRight - halfStroke);
+        centerline.radii.bottomLeft = (std::max)(0.0f, centerline.radii.bottomLeft - halfStroke);
 
-        PixelPath path = buildDrawPartialPath(centreline, halfStroke);
+        PixelPath path = buildDrawPartialPath(centerline, halfStroke);
         // Butt ends, since the builder has carried each open end out to the bounds edge already.
         drawPath(
             path,

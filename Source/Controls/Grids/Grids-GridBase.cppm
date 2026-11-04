@@ -168,7 +168,7 @@ namespace ClaFi::Controls::Grids
         void nestedClick(NestedClickEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
         // An arrow reaching here has already been walked over the field, and leaves the grid.
-        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+        [[nodiscard]] Control* navigationNeighbor(const Control& child,
             const NavigationStep&) override;
         // Puts a row added after the new-item row ahead of it, and notes it for requestNewItem.
         void controlAdded(Control&) override;

@@ -21,6 +21,7 @@ import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 import ClaFi.Controls.TextItems;
+import ClaFi.Controls.Base.StackBase;
 
 import ClaFi.StdActions;
 
@@ -401,11 +402,11 @@ namespace Themes_App
             rebuild();
             select(m_pendingSelection, TakeFocus::Yes);
         });
-        // Delete reads the held rules and the selected cell, so a move of either asks again.
+        // Delete reads the held rules and the current row, so a move of either asks again.
         m_grid.onSelectionChange([](SelectionChangeEvent&) {
             StdActions::del.invalidateState();
         });
-        m_grid.onSelectedCellChange([](Grids::SelectedCellChangeEvent&) {
+        m_grid.onCurrentItemChange([](CurrentItemChangeEvent&) {
             StdActions::del.invalidateState();
         });
         // The toolbar button and the Delete key land here alike, and the selection they act on is

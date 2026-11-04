@@ -139,12 +139,12 @@ namespace ClaFi::Controls
 
     // The header leaves Right on an open node to the tree, and the rows are where it goes - the way
     // Left from a row comes back to the header. A shut node's rows are hidden and hold no stop.
-    Control* TreeNode::navigationNeighbour(const Control& child, const NavigationStep& step)
+    Control* TreeNode::navigationNeighbor(const Control& child, const NavigationStep& step)
     {
         const bool intoRows = &child == &header() && step.direction == NavigationDirection::Right;
         if (intoRows && m_rows.holdsNavigationStop())
             return &m_rows;
-        return Expander::navigationNeighbour(child, step);
+        return Expander::navigationNeighbor(child, step);
     }
 
     void TreeNode::layOutHeader(const ControlMetrics& buttonMetrics)

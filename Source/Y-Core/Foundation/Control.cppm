@@ -1093,7 +1093,7 @@ namespace ClaFi
         // A slot may be unfilled, so an entry may be null.
         [[nodiscard]] virtual ControlSlots navigationSlots() const { return {}; }
         // The child a step from `child` lands in, null where it leaves. See Control-Foundation
-        [[nodiscard]] virtual Control* navigationNeighbour(const Control& child,
+        [[nodiscard]] virtual Control* navigationNeighbor(const Control& child,
             const NavigationStep&);
         // The child a step entering this control lands in, null where none. See Control-Foundation
         [[nodiscard]] virtual Control* navigationEntry(const NavigationStep&);

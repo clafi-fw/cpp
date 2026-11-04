@@ -215,9 +215,9 @@ namespace SeeDocs_App
                 {
                     if (declaresStorage(property.form))
                     {
-                        const bool initialised = bound.contains(property.name)
+                        const bool initialized = bound.contains(property.name)
                             || bound.contains(std::wstring{ k_memberPrefix } + property.name);
-                        if (!initialised)
+                        if (!initialized)
                         {
                             m_report.add(Level::Error, property.place,
                                 L"property " + property.name + L" has no INIT_PROPERTY");

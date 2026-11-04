@@ -514,7 +514,7 @@ namespace ClaFi::Controls
     // **The slots stand in three rows** - the top bar, the side bars with the body between them,
     // the bottom bar. A step up or down goes to the next row holding a stop, at the slot nearest
     // the line in the middle one; a step sideways runs along the middle row and leaves the others.
-    Control* PanelBase::navigationNeighbour(const Control& child, const NavigationStep& step)
+    Control* PanelBase::navigationNeighbor(const Control& child, const NavigationStep& step)
     {
         const std::optional<PanelSlot> from = slotOf(child);
         if (!from)

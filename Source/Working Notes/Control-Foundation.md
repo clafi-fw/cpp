@@ -126,7 +126,7 @@ of rects of different sizes score differently each way. Tab used the same search
 sibling.
 
 The framework has two container families and a grid, and each layout already says who its
-neighbours are, so each container answers for its own children - Control navigationNeighbour and
+neighbours are, so each container answers for its own children - Control navigationNeighbor and
 navigationEntry - and the navigator only walks up the parents. Decided with Oj:
 
 - A container with nothing current is entered by the line rule, not at its first or last item:

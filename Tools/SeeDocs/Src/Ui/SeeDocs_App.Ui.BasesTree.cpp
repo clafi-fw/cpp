@@ -54,7 +54,7 @@ namespace SeeDocs_App::Ui
         }
 
         // A line's centre where a stroke that wide covers whole pixels.
-        [[nodiscard]] float pixelCentre(const float value, const float strokeWidth)
+        [[nodiscard]] float pixelCenter(const float value, const float strokeWidth)
         {
             const bool oddWidth = static_cast<int>(strokeWidth) % 2 == 1;
             return std::floor(value) + (oddWidth ? 0.5f : 0.0f);
@@ -119,7 +119,7 @@ namespace SeeDocs_App::Ui
     }
 
     // The strip stands at the crumb's edge, inside the child inset alone.
-    float BaseCrumb::markCentreX(const FormContext& formContext) const
+    float BaseCrumb::markCenterX(const FormContext& formContext) const
     {
         const Control& strip = *secondaryPart();
         return childInset(formContext, scaledPadding()).x + strip.scaledWidth() / 2.0f;
@@ -251,8 +251,8 @@ namespace SeeDocs_App::Ui
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         const auto snapped = [origin, strokeWidth](const FloatPoint point) {
             return FloatPoint{
-                pixelCentre(origin.x + point.x, strokeWidth),
-                pixelCentre(origin.y + point.y, strokeWidth),
+                pixelCenter(origin.x + point.x, strokeWidth),
+                pixelCenter(origin.y + point.y, strokeWidth),
             };
         };
         Graphics::Canvas& canvas = event.canvas();
@@ -295,7 +295,7 @@ namespace SeeDocs_App::Ui
 
     // The lines are what Right and Left follow, as a TreeView's do, so a crumb the rows packed
     // beside another is reached from it by Up and Down only.
-    Control* BasesTree::navigationNeighbour(const Control& child, const NavigationStep& step)
+    Control* BasesTree::navigationNeighbor(const Control& child, const NavigationStep& step)
     {
         const BaseCrumb& crumb = static_cast<const BaseCrumb&>(child);
         if (step.direction == NavigationDirection::Right)
@@ -338,7 +338,7 @@ namespace SeeDocs_App::Ui
         placing.rowPitch = placing.rowHeight + placing.spacing.y;
         // Every crumb wears the same strip, so one says where a base stacked under a crumb starts.
         const BaseCrumb& firstCrumb = crumbOf(m_bases.front());
-        placing.indent = firstCrumb.markCentreX(event.formContext()) + placing.spacing.x;
+        placing.indent = firstCrumb.markCenterX(event.formContext()) + placing.spacing.x;
         placing.clearance = placing.spacing.x / 2.0f;
         m_cornerRadius = placing.spacing.x / 2.0f;
         placeDirectBases(event, placing);
@@ -375,7 +375,7 @@ namespace SeeDocs_App::Ui
         const BaseCrumb& parentCrumb = crumbOf(parent);
         const int parentRow = rowOf(placing, parentCrumb);
         const float parentRightX = parentCrumb.topLeft().x + parentCrumb.scaledWidth();
-        const float trunkX = parentCrumb.topLeft().x + parentCrumb.markCentreX(event.formContext());
+        const float trunkX = parentCrumb.topLeft().x + parentCrumb.markCenterX(event.formContext());
         const float x = trunkX + placing.spacing.x;
         Lines stubs;
         int previousRow = parentRow;
@@ -469,7 +469,7 @@ namespace SeeDocs_App::Ui
 
     void BasesTree::addLink(Placing& placing, const float fromX, const float toX, const int row)
     {
-        const float y = rowCentreY(placing, row);
+        const float y = rowCenterY(placing, row);
         m_links.push_back({ { fromX, y }, { toX, y } });
         takeSpan(placing, row, { fromX, toX });
     }
@@ -477,7 +477,7 @@ namespace SeeDocs_App::Ui
     void BasesTree::addStub(Placing& placing, Lines& stubs, const float trunkX, const int row,
         const float x)
     {
-        const float y = rowCentreY(placing, row);
+        const float y = rowCenterY(placing, row);
         stubs.push_back({ { trunkX, y }, { x, y } });
         takeSpan(placing, row, { trunkX, x });
     }
@@ -521,7 +521,7 @@ namespace SeeDocs_App::Ui
         return static_cast<int>(std::lround(crumb.topLeft().y / placing.rowPitch));
     }
 
-    float BasesTree::rowCentreY(const Placing& placing, const int row)
+    float BasesTree::rowCenterY(const Placing& placing, const int row)
     {
         return static_cast<float>(row) * placing.rowPitch + placing.rowHeight / 2.0f;
     }

@@ -57,7 +57,7 @@ namespace SeeDocs_App::Ui
         std::wstring_view diagnosticText() const override { return L"BaseCrumb"; }
         const BaseNode& node() const { return m_node; }
         // The mark's centre, from the crumb's left edge: where a line to the bases under it leaves.
-        [[nodiscard]] float markCentreX(const FormContext&) const;
+        [[nodiscard]] float markCenterX(const FormContext&) const;
     protected:
         void adjustMainText(AdjustTextEvent&) const override;
         void showDropdown(Control& initiator) override;
@@ -96,7 +96,7 @@ namespace SeeDocs_App::Ui
         void paintSurface(PaintEvent&) override;
         void paintOwnText(PaintEvent&) override;
         // Right to the crumb's first base, Left to the crumb it is a base of, Up and Down by row.
-        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+        [[nodiscard]] Control* navigationNeighbor(const Control& child,
             const NavigationStep&) override;
         // From above or below, the crumb nearest the line on the near row; from a side, the first.
         [[nodiscard]] Control* navigationEntry(const NavigationStep&) override;
@@ -161,7 +161,7 @@ namespace SeeDocs_App::Ui
         [[nodiscard]] static bool rowFree(const Placing&, int row, Span);
         static void takeSpan(Placing&, int row, Span);
         [[nodiscard]] static int rowOf(const Placing&, const BaseCrumb&);
-        [[nodiscard]] static float rowCentreY(const Placing&, int row);
+        [[nodiscard]] static float rowCenterY(const Placing&, int row);
         [[nodiscard]] BaseCrumb& crumbOf(const BaseNode&);
         [[nodiscard]] const BaseCrumb& crumbOf(const BaseNode&) const;
         void addCrumbs(BaseSpan, BaseCrumb* parentCrumb);

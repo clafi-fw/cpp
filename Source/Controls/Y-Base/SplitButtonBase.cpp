@@ -194,9 +194,9 @@ namespace ClaFi::Controls
         // A part on the left pushes every icon along by what it took, and a centred one by half.
         if (secondaryPartPlacement() == SecondaryPartPlacement::Left)
         {
-            const bool centred = viewMode() == ButtonViewMode::IconOnly
+            const bool centered = viewMode() == ButtonViewMode::IconOnly
                 || viewMode() == ButtonViewMode::TopCenterIcon;
-            result.offset(centred ? extent.x / 2.0f : extent.x, 0.0f);
+            result.offset(centered ? extent.x / 2.0f : extent.x, 0.0f);
             return result;
         }
         // A part on the right or below pulls the icon back by what it took, on the axis the

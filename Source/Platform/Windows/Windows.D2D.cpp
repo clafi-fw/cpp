@@ -679,9 +679,9 @@ namespace ClaFi::PlatformImplementation::Windows
 
         // Direct2D strokes centred on the geometry, so the rect handed to it is the centreline
         // of a stroke whose outer edge has to land on the bounds we were given.
-        FloatRect centreline = rect;
-        centreline.inflate(-strokeWidth * 0.5f);
-        m_renderTarget->DrawRectangle(reinterpret_cast<const D2D1_RECT_F&>(centreline), d2dBrush, strokeWidth);
+        FloatRect centerline = rect;
+        centerline.inflate(-strokeWidth * 0.5f);
+        m_renderTarget->DrawRectangle(reinterpret_cast<const D2D1_RECT_F&>(centerline), d2dBrush, strokeWidth);
     }
 
     void Direct2DBackend::fillRectangle(const FloatRect& rect, const Brush& brush)
@@ -715,11 +715,11 @@ namespace ClaFi::PlatformImplementation::Windows
 
         // As drawRectangle: the centreline sits half a stroke inside the bounds, and its radii
         // shrink by the same amount so the outer corner keeps the radius that was asked for.
-        FloatRect centreline = rect;
-        centreline.inflate(-strokeWidth * 0.5f);
-        float centreRadiusX = (std::max)(0.0f, radiusX - strokeWidth * 0.5f);
-        float centreRadiusY = (std::max)(0.0f, radiusY - strokeWidth * 0.5f);
-        m_renderTarget->DrawRoundedRectangle(D2D1::RoundedRect(reinterpret_cast<const D2D1_RECT_F&>(centreline), centreRadiusX, centreRadiusY), d2dBrush, strokeWidth);
+        FloatRect centerline = rect;
+        centerline.inflate(-strokeWidth * 0.5f);
+        float centerRadiusX = (std::max)(0.0f, radiusX - strokeWidth * 0.5f);
+        float centerRadiusY = (std::max)(0.0f, radiusY - strokeWidth * 0.5f);
+        m_renderTarget->DrawRoundedRectangle(D2D1::RoundedRect(reinterpret_cast<const D2D1_RECT_F&>(centerline), centerRadiusX, centerRadiusY), d2dBrush, strokeWidth);
     }
 
     void Direct2DBackend::fillRoundedRectangle(const FloatRect& rect, float radiusX, float radiusY, const Brush& brush)
@@ -762,9 +762,9 @@ namespace ClaFi::PlatformImplementation::Windows
         }
 
         // As drawRectangle: the stroke lies inside the ellipse it was given.
-        float centreRadiusX = (std::max)(0.0f, radiusX - strokeWidth * 0.5f);
-        float centreRadiusY = (std::max)(0.0f, radiusY - strokeWidth * 0.5f);
-        m_renderTarget->DrawEllipse(D2D1::Ellipse(reinterpret_cast<D2D_POINT_2F&>(center), centreRadiusX, centreRadiusY), d2dBrush, strokeWidth);
+        float centerRadiusX = (std::max)(0.0f, radiusX - strokeWidth * 0.5f);
+        float centerRadiusY = (std::max)(0.0f, radiusY - strokeWidth * 0.5f);
+        m_renderTarget->DrawEllipse(D2D1::Ellipse(reinterpret_cast<D2D_POINT_2F&>(center), centerRadiusX, centerRadiusY), d2dBrush, strokeWidth);
     }
 
     void Direct2DBackend::fillEllipse(FloatPoint center, float radiusX, float radiusY, const Brush& brush)
@@ -854,14 +854,14 @@ namespace ClaFi::PlatformImplementation::Windows
                 brush.GetAddressOf());
             return brush;
         };
-        auto radialBrush = [&](FloatPoint centre, float radius) -> ComPtr<ID2D1Brush> {
+        auto radialBrush = [&](FloatPoint center, float radius) -> ComPtr<ID2D1Brush> {
             ComPtr<ID2D1GradientStopCollection> ramp = shadowRamp(shadow, radius, radius + reach);
             ComPtr<ID2D1RadialGradientBrush> brush;
             if (ramp)
             {
                 m_renderTarget->CreateRadialGradientBrush(
                     D2D1::RadialGradientBrushProperties(
-                        reinterpret_cast<const D2D1_POINT_2F&>(centre),
+                        reinterpret_cast<const D2D1_POINT_2F&>(center),
                         D2D1::Point2F(0.0f, 0.0f),
                         radius + reach,
                         radius + reach),

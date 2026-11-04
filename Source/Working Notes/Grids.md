@@ -53,7 +53,7 @@ Two things moved with it:
   the whole field has a nearer one past the sub-grid's rows.
 - A selection scrolled out of view is read around itself, a viewport each way. The focus
   navigator once took such a key and searched around the selected row; it now hands a grid's
-  arrows back as nothing - see GridBase navigationNeighbour.
+  arrows back as nothing - see GridBase navigationNeighbor.
 
 ## GridBase nestedKeyDown Home and End
 
@@ -69,7 +69,7 @@ of the last row. The navigator enters the grid at its last child holding a stop,
 and asked it where a step from below lands; Control::navigationEntry's default answers the first
 stop in reading order whichever way the step comes, which is the header. The override states
 the layout alignContent makes: header over body. PageDown then stopped on every section header:
-the steps of a page press walk navigationNeighbour, and the default leaves the expander from its
+the steps of a page press walk navigationNeighbor, and the default leaves the expander from its
 header. The neighbour override states the same layout for a step inside.
 
 ## GridBase collectFieldIn

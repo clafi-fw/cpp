@@ -119,7 +119,7 @@ namespace ClaFi::Controls::Grids
 
     // Down from the header goes on into the body and Up from the body back to the header; every
     // other step leaves the expander.
-    Control* RowExpander::navigationNeighbour(const Control& child, const NavigationStep& step)
+    Control* RowExpander::navigationNeighbor(const Control& child, const NavigationStep& step)
     {
         if (!step.vertical())
             return nullptr;

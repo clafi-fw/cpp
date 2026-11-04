@@ -33,7 +33,7 @@ namespace Themes_App
         explicit PreviewPanel(const CreateParams&, Args&&...);
     public:
         void showPage(PreviewPage);
-        // Shows or hides the note that the sizes edited show only with Preview in application on.
+        // Shows or hides the note that this preview leaves sizes out.
         void setSizesNoteVisible(bool);
     private:
         using Pages = std::array<PreviewPageBase*, k_previewPageCount>;
@@ -83,9 +83,9 @@ namespace Themes_App
         }
     {
         m_sizesNote.setMessage(MessageIcon::Information, Text{
-            L"Sizes show with Preview in application ",
+            L"This preview shows colors only. To see sizes, turn on ",
             InTextIcon{ 16.0f, 16.0f, Icons::SideBar::drawPanelIcon },
-            L" on."
+            L" Preview in application."
         });
         m_sizesNote.hide();
     }

@@ -515,7 +515,7 @@ application's: Return and Space, Tab, the arrows, Home, End and the page keys.
 page keys move inside it, and Home and End go to its first and last stop - see FocusScope.
 
 - **An arrow** asks the focused item's parent for the child the step lands in - see
-  Control navigationNeighbour. A parent with none hands the step to its own parent, up to the
+  Control navigationNeighbor. A parent with none hands the step to its own parent, up to the
   scope. The child named is entered down to a stop - see Control navigationEntry.
 - **Tab** reads the order the containers keep their children in: the collection, or
   Control::navigationSlots where a container keeps one. Shift+Tab walks the same order back. Past
@@ -560,7 +560,7 @@ their origin - against where they were laid out, never where a hold draws them.
 order navigation reads the children in. Every child a container's navigation answers with holds
 one.
 
-## Control navigationNeighbour
+## Control navigationNeighbor
 
 **`child` is the child the focus is in, and the answer is another child**, holding a stop. Null
 hands the step to the parent. The default answers null: a control has to say how its children

@@ -1645,7 +1645,7 @@ namespace ClaFi
 
     // Only a container that states how its children are placed moves a step among them. Every
     // other control hands the step on to the one holding it.
-    Control* Control::navigationNeighbour(const Control& /*child*/, const NavigationStep&)
+    Control* Control::navigationNeighbor(const Control& /*child*/, const NavigationStep&)
     {
         return nullptr;
     }

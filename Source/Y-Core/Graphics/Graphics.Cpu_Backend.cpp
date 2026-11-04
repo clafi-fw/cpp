@@ -387,9 +387,9 @@ namespace ClaFi::Graphics::Cpu
         {
             // As Direct2D: the centreline sits half a stroke inside, its radii shrunk by as much.
             const float halfStroke = strokeWidth * 0.5f;
-            FloatRect centreline = rect;
-            centreline.inflate(-halfStroke);
-            m_scratchPath.drawRoundedRect(centreline, (std::max)(0.0f, rx - halfStroke), (std::max)(0.0f, ry - halfStroke));
+            FloatRect centerline = rect;
+            centerline.inflate(-halfStroke);
+            m_scratchPath.drawRoundedRect(centerline, (std::max)(0.0f, rx - halfStroke), (std::max)(0.0f, ry - halfStroke));
             drawPathWithBrush(m_scratchPath, brush, strokeWidth);
             return;
         }

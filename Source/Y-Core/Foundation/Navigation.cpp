@@ -143,9 +143,9 @@ namespace ClaFi
             Control* container = child->parent();
             if (!container)
                 return nullptr;
-            if (Control* neighbour = container->navigationNeighbour(*child, step))
+            if (Control* neighbor = container->navigationNeighbor(*child, step))
             {
-                if (Control* stop = enter(*neighbour, step))
+                if (Control* stop = enter(*neighbor, step))
                     return stop;
             }
             child = container;

@@ -696,7 +696,7 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
 
             <h3 id="arrows">The Arrows</h3>
             <p><strong>Each container answers for its own children.</strong> The navigator asks the focused
-            item's parent for the child a step lands in - <code>navigationNeighbour</code>. A parent with none
+            item's parent for the child a step lands in - <code>navigationNeighbor</code>. A parent with none
             hands the step to its own parent, up to the nearest focus scope. The child it names
             is entered down to a stop - <code>navigationEntry</code>.</p>
             <ul>
@@ -747,17 +747,17 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
 }</pre>
 
             <h3 id="own-container">A Container's Own Navigation</h3>
-            <p><strong><code>navigationNeighbour(child, step)</code> moves the arrows among a container's
+            <p><strong><code>navigationNeighbor(child, step)</code> moves the arrows among a container's
             children.</strong> It answers the child a step from <code>child</code> lands in, holding a stop, or
             null to hand the step to the parent. The default answers null: a control has to say how its children
             are placed before a step moves among them.</p>
 
-<pre><span class="tp">Control</span>* <span class="tp">TreeNode</span>::<span class="fn">navigationNeighbour</span>(<span class="kw">const</span> <span class="tp">Control</span>&amp; child, <span class="kw">const</span> <span class="tp">NavigationStep</span>&amp; step)
+<pre><span class="tp">Control</span>* <span class="tp">TreeNode</span>::<span class="fn">navigationNeighbor</span>(<span class="kw">const</span> <span class="tp">Control</span>&amp; child, <span class="kw">const</span> <span class="tp">NavigationStep</span>&amp; step)
 {
     <span class="kw">const bool</span> intoRows = &amp;child == &amp;<span class="fn">header</span>() &amp;&amp; step.direction == <span class="tp">NavigationDirection</span>::Right;
     <span class="kw">if</span> (intoRows &amp;&amp; m_rows.<span class="fn">holdsNavigationStop</span>())
         <span class="kw">return</span> &amp;m_rows;
-    <span class="kw">return</span> <span class="tp">Expander</span>::<span class="fn">navigationNeighbour</span>(child, step);
+    <span class="kw">return</span> <span class="tp">Expander</span>::<span class="fn">navigationNeighbor</span>(child, step);
 }</pre>
 
             <ul>
@@ -927,7 +927,7 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
                 <tr><td><code>focusDelegate()</code></td><td>The control this one answers for while it holds the focus.</td></tr>
                 <tr><td><code>currentItem()</code>, <code>takeCurrentItem(item)</code></td><td>The item a show enters at, and whether this control keeps a current item.</td></tr>
                 <tr><td><code>nestedCurrentItemChange(item)</code></td><td>A container above moved its current item out of here.</td></tr>
-                <tr><td><code>navigationNeighbour(child, step)</code></td><td>The child an arrow step lands in, or null to hand it up.</td></tr>
+                <tr><td><code>navigationNeighbor(child, step)</code></td><td>The child an arrow step lands in, or null to hand it up.</td></tr>
                 <tr><td><code>navigationEntry(step)</code></td><td>The child a step from outside lands in.</td></tr>
                 <tr><td><code>navigationSlots()</code></td><td>The reading order, where it differs from the collection.</td></tr>
             </table>

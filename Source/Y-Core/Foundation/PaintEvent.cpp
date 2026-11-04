@@ -731,18 +731,18 @@ namespace ClaFi
             // container's arc centre lies along the line through the two centres while this
             // centre is nearer the corner on both axes, and at one of the two ends otherwise.
             const float own = m_cornerRadii.get(i);
-            const float centreX = insetX + own - containerRadius;
-            const float centreY = insetY + own - containerRadius;
+            const float centerX = insetX + own - containerRadius;
+            const float centerY = insetY + own - containerRadius;
             float reach = 0.0f;
-            if (centreX <= 0.0f && centreY <= 0.0f)
+            if (centerX <= 0.0f && centerY <= 0.0f)
             {
-                reach = std::sqrt(centreX * centreX + centreY * centreY) + own;
+                reach = std::sqrt(centerX * centerX + centerY * centerY) + own;
             }
             else
             {
                 const float startX = insetX - containerRadius;
-                const float startY = centreY;
-                const float endX = centreX;
+                const float startY = centerY;
+                const float endX = centerX;
                 const float endY = insetY - containerRadius;
                 reach = std::sqrt(std::max(startX * startX + startY * startY, endX * endX + endY * endY));
             }

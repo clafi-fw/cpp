@@ -1760,10 +1760,10 @@ namespace SeeDocs_App
         {
             for (const bool under : { false, true })
             {
-                const std::size_t neighbour = codeLineBeside(lines, line, under);
-                if (neighbour == std::wstring_view::npos)
+                const std::size_t neighbor = codeLineBeside(lines, line, under);
+                if (neighbor == std::wstring_view::npos)
                     continue;
-                const std::size_t column = lines[neighbour].trailing;
+                const std::size_t column = lines[neighbor].trailing;
                 if (column != std::wstring::npos && column > code.size())
                     return std::wstring(column - code.size(), L' ');
             }

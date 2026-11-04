@@ -386,8 +386,8 @@ namespace ClaFi::Controls
     {
         if (m_selection)
         {
-            const FloatPoint centre = m_selection->toFloat() + FloatPoint{ 0.5f, 0.5f };
-            return { centre, pointInForm(centre) + m_originFraction };
+            const FloatPoint center = m_selection->toFloat() + FloatPoint{ 0.5f, 0.5f };
+            return { center, pointInForm(center) + m_originFraction };
         }
 
         FloatRect visible = visibleRectInForm();
@@ -600,11 +600,11 @@ namespace ClaFi::Controls
             return;
 
         // the device pixel the arms cross in: the middle of the selected pixel's block
-        const FloatPoint centre = pictureRect.topLeft()
+        const FloatPoint center = pictureRect.topLeft()
             + (m_selection->toFloat() + FloatPoint{ 0.5f, 0.5f }) * m_zoom;
         const IntPoint cross = {
-            static_cast<int>(std::floor(centre.x)),
-            static_cast<int>(std::floor(centre.y)),
+            static_cast<int>(std::floor(center.x)),
+            static_cast<int>(std::floor(center.y)),
         };
         const int arm = static_cast<int>(std::lround(event.scaleF(k_crosshairArm)));
         IntRect reach = { cross.x - arm, cross.y - arm, cross.x + arm + 1, cross.y + arm + 1 };
@@ -713,15 +713,15 @@ namespace ClaFi::Controls
 
     PictureView::Tap PictureView::tapAt(const int cachePos, const int limit) const
     {
-        const float centre = (static_cast<float>(cachePos) + 0.5f) / m_zoom;
+        const float center = (static_cast<float>(cachePos) + 0.5f) / m_zoom;
         if (m_zoom >= k_nearestFromZoom)
         {
-            const int at = std::clamp(static_cast<int>(std::floor(centre)), 0, limit - 1);
+            const int at = std::clamp(static_cast<int>(std::floor(center)), 0, limit - 1);
             return { at, at, 0 };
         }
 
         // between the centres of the two pixels around the sample
-        const float offset = centre - 0.5f;
+        const float offset = center - 0.5f;
         const int first = static_cast<int>(std::floor(offset));
         const int blend = static_cast<int>((offset - static_cast<float>(first)) * 256.0f);
         return {

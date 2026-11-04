@@ -133,7 +133,7 @@ namespace ClaFi::Controls
         // A column reads its items' heights off them unless one fills the lane.
         [[nodiscard]] bool isChildHeightGiven(const Control& child) const override
             { return lanesRunAcross() || child.fillsLane(); }
-        [[nodiscard]] Control* navigationNeighbour(const Control& child,
+        [[nodiscard]] Control* navigationNeighbor(const Control& child,
             const NavigationStep&) override;
         [[nodiscard]] Control* navigationEntry(const NavigationStep&) override;
         // The answer after the handlers have had it.
@@ -573,7 +573,7 @@ namespace ClaFi::Controls
     // **A step along the lanes goes to the next item in the order**, from the end of one lane on
     // to the start of the next. A step across them goes to the item of the next lane nearest the
     // line, and leaves a stack of one lane. See Item-Containers#navigation
-    Control* StackPanelBase::navigationNeighbour(const Control& child, const NavigationStep& step)
+    Control* StackPanelBase::navigationNeighbor(const Control& child, const NavigationStep& step)
     {
         const std::size_t index = navigationIndexOf(child);
         if (index == controls().size())
