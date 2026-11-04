@@ -103,7 +103,6 @@ namespace ClaFi::Controls
         virtual bool defaultCanSelectItem(Control&);
         void currentItemPicked(Control*, Control* previousItem, KeyModifiers, bool applyGesture) override;
         [[nodiscard]] bool isItemSelected(const Control&) const override;
-        void adjustNestedControlVisualState(const Control&, VisualState&) const override;
         void nestedControlDeleted(Control*) override;
         void nestedDrag(DragEvent&) override;
         void nestedPressUp(PressUpEvent&) override;

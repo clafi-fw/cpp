@@ -220,14 +220,6 @@ namespace ClaFi::Controls
         return m_selection.contains(&item);
     }
 
-    void StackView::adjustNestedControlVisualState(const Control& control, VisualState& state) const
-    {
-        StackViewBase::adjustNestedControlVisualState(control, state);
-
-        if (isMultiSelect() && currentItem() == &control)
-            state.current = true;
-    }
-
     void StackView::nestedControlDeleted(Control* item)
     {
         StackViewBase::nestedControlDeleted(item);

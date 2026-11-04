@@ -364,6 +364,7 @@ namespace ClaFi::Controls
         void hoverLeave() override;
         void currentItemChanged(CurrentItemChangeEvent&) override;
         void nestedControlDeleted(Control*) override;
+        void adjustNestedControlVisualState(const Control&, VisualState&) const override;
     private:
         void onPreviewTimer();
         // Aims the preview at an item and waits to see whether it stays there. An item already
@@ -1556,6 +1557,14 @@ namespace ClaFi::Controls
         // exists, and there is nothing else it could name.
         m_previewItem = nullptr;
         m_previewTimer.stop();
+    }
+
+    void StackViewBase::adjustNestedControlVisualState(const Control& control, VisualState& visualState) const
+    {
+        StackPanelBase::adjustNestedControlVisualState(control, visualState);
+
+        if (currentItem() == &control)
+            visualState.current = true;
     }
 
     void StackViewBase::onPreviewTimer()

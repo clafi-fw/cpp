@@ -306,7 +306,7 @@ namespace ClaFi
             if (m_focusRingFactor > 0.0f)
             {
                 const float focusedBorder = scaledStrokeWidth(ThemeMetrics::focusedBorder);
-                m_borderWidth = std::lerp(m_borderWidth, focusedBorder, m_focusRingFactor);
+                m_borderWidth = std::lerp(m_borderWidth, focusedBorder, m_focusRingFactor * focusedFactor());
             }
         }
     }
@@ -496,11 +496,10 @@ namespace ClaFi
             return;
 
         const Color color = strokeRgb();
-        const float strokeWidth = borderWidth();
-        if (!color.alpha || !strokeWidth)
+        if (!color.alpha || !m_borderWidth)
             return;
 
-        canvas().drawPartialRoundedRectangle(shape, color, strokeWidth);
+        canvas().drawPartialRoundedRectangle(shape, color, m_borderWidth);
     }
 
     // After the frame, which it covers along the edge.

@@ -125,16 +125,16 @@ namespace ClaFi
 
         rules.of(UiElement::Tab) = {
             ColorRule{
-                .inputs{ RuleInput::Hot, RuleInput::Selected },
+                .inputs{ RuleInput::Hot, RuleInput::Current },
                 .output = PaintChannel::Stroke,
                 .effect{
                     { ColorRuleHueOp::NoChange, 0.928767f }, // H
                     { ColorRuleOp::NoChange, 0.490111f },   // S
-                    { ColorRuleOp::Offset, 0.10240966f }    // E
+                    { ColorRuleOp::Offset, 0.10241f }       // E
                 }
             },
             ColorRule{
-                .inputs{ RuleInput::Selected },
+                .inputs{ RuleInput::Current },
                 .output = PaintChannel::Band,
                 .effect{
                     { ColorRuleHueOp::PaletteColor2 },      // H
