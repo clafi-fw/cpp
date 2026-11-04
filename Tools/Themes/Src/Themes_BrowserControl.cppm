@@ -62,5 +62,7 @@ namespace Themes_App
         // the .ico. The button states its own view mode and icon size; nothing here restates
         // them.
         appButton().onDrawIcon(AppIcon::drawIcon);
+        // A show enters the browser at its page, past the title bar and the crumb bar.
+        setCurrentItem(pageControl());
     }
 }

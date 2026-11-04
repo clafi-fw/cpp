@@ -454,6 +454,8 @@ namespace Themes_App
         :
         Panel{ params, Spacing{ 8.0f, 0.0f }, std::forward<Args>(args)... }
     {
+        // A show enters the page at the document, past the choices beside it.
+        setCurrentItem(m_box);
     }
 
     template<typename ...Args>
@@ -467,6 +469,8 @@ namespace Themes_App
     {
         // The page's Undo and Redo walk the theme's history, wherever the focus stands.
         setEditHistory(*this);
+        // A show enters the page at the view it shows, past the tool bar.
+        setCurrentItem(m_tabbedBox.pageControl());
 
         for (std::size_t i = 0ull; i != m_harmonySelector.count(); ++i)
             m_harmonyStack.add<ColorHarmonyItem>(

@@ -240,5 +240,7 @@ namespace Themes_App
             event.state.enabled = m_rules && *m_rules != *m_defaults;
             event.stopPropagation();
         });
+        // A show enters the page at the grid, past the title and the tools.
+        setCurrentItem(m_grid);
     }
 }

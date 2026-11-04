@@ -209,13 +209,15 @@ namespace Themes_App
     Row ThemePage::pigmentRow(const UiElement element) const
     {
         const Padding padding = themeMetrics().listItem.padding;
+        const Spacing spacing = themeMetrics().listItem.spacing;
         return Row{
             Tag{ element },
             Cell{ Tag{ PigmentColumn::Name }, this, &ThemePage::pigmentNameCell },
-            CellWith<HueRuleControl>{ Tag{ PigmentColumn::Hue }, padding, VerticalAlign::Fill },
-            CellWith<ValueRuleControl>{ Tag{ PigmentColumn::Saturation }, padding,
+            CellWith<HueRuleControl>{ Tag{ PigmentColumn::Hue }, padding, spacing,
                 VerticalAlign::Fill },
-            CellWith<ValueRuleControl>{ Tag{ PigmentColumn::Elevation }, padding,
+            CellWith<ValueRuleControl>{ Tag{ PigmentColumn::Saturation }, padding, spacing,
+                VerticalAlign::Fill },
+            CellWith<ValueRuleControl>{ Tag{ PigmentColumn::Elevation }, padding, spacing,
                 VerticalAlign::Fill }
         };
     }

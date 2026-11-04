@@ -216,25 +216,30 @@ namespace Themes_App
     {
         Grids::RowContainer& row = m_grid.addControlRow(Tag{ index });
         const Padding padding = themeMetrics().listItem.padding;
+        const Spacing spacing = themeMetrics().listItem.spacing;
         row.addControl<ApplyToControl>(
             column(RuleColumn::ApplyTo),
             padding,
+            spacing,
             VerticalAlign::Fill
         );
         row.addControl<HueRuleControl>(
             column(RuleColumn::Hue),
             padding,
+            spacing,
             VerticalAlign::Fill
         );
         row.addControl<ValueRuleControl>(
             column(RuleColumn::Saturation),
             padding,
+            spacing,
             VerticalAlign::Fill,
             HorizontalTextAnchor::Right
         );
         row.addControl<ValueRuleControl>(
             column(RuleColumn::Elevation),
             padding,
+            spacing,
             VerticalAlign::Fill,
             HorizontalTextAnchor::Right
         );

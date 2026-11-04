@@ -181,5 +181,7 @@ namespace Themes_App
             event.state.enabled = differsFromDefaults();
             event.stopPropagation();
         });
+        // A show enters the page at the grid, past the title and the reset button.
+        setCurrentItem(m_grid);
     }
 }

@@ -5,6 +5,7 @@ import Themes_App.WithPreview;
 import ClaFi.App.ThemesList;
 
 import ClaFi.Documents.HomePage;
+import ClaFi.Documents.List;
 
 // The page's box: the home page template is instantiated here, and clang wants what a template
 // body names imported where it is instantiated.
@@ -52,5 +53,8 @@ namespace Themes_App
         list().onPreview([this](PreviewEvent&) {
             invalidatePreview();
         });
+        // A show enters the page at the list, and the list starts on its first theme.
+        setCurrentItem(list());
+        list().tiles().front()->makeCurrentItem();
     }
 }

@@ -200,6 +200,8 @@ namespace Themes_App
         Panel{ params, std::forward<Args>(args)... }
     {
         buildTree();
+        // A show enters the picked page, past the tree.
+        setCurrentItem(m_pages);
     }
 
     template<typename F>
