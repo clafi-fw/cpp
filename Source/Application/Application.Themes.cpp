@@ -93,7 +93,7 @@ namespace ClaFi
     // to say, and saying it is what leaves a set with a half way in every value.
     void applyTheme(AppContext& appContext, const AppTheme& theme, ColorMode mode)
     {
-        appContext.takeTheme(theme, bake(theme.colors, mode));
+        appContext.takeTheme(theme, bake(theme.colors, mode, appContext.appElements()));
     }
 
     void applyThemePath(AppContext& appContext, const std::wstring_view path)

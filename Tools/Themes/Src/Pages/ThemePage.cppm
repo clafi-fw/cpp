@@ -209,14 +209,15 @@ namespace Themes_App
         // falls back to Save as.
         [[nodiscard]] bool isBuiltIn() const;
         //
-        [[nodiscard]] Hsl elementColor(OptionalUiElement);
-        // The ink an element's text starts from: the same nesting as elementColor, walked
-        // through text rules instead of surface ones.
-        [[nodiscard]] Hsl elementTextColor(OptionalUiElement);
-        // Black in the hue of an element's resting stroke, where its shadow starts.
-        [[nodiscard]] Hsl bareShadow(OptionalUiElement);
+        [[nodiscard]] Hsl elementColor(std::wstring_view set);
+        // The ink a set's text starts from: the same nesting as elementColor, walked through
+        // text rules instead of surface ones.
+        [[nodiscard]] Hsl elementTextColor(std::wstring_view set);
+        // Black in the hue of a set's resting stroke, where its shadow starts.
+        [[nodiscard]] Hsl bareShadow(std::wstring_view set);
         // What a value of a rule is about to change.
-        [[nodiscard]] RuleBase elementRuleBase(OptionalUiElement, const ColorRule&, RuleChannel);
+        [[nodiscard]] RuleBase elementRuleBase(std::wstring_view set, const ColorRule&,
+            RuleChannel);
         // A rule on a base, applied on every channel but the one its value ramp draws.
         [[nodiscard]] RuleBase ruleBaseOn(Hsl base, const ColorEffect&, RuleChannel, ColorMode,
             float luminosityFloor);
@@ -488,7 +489,7 @@ namespace Themes_App
         m_darkModeFloorSlider.setMaxPosition(k_maxDarkModeFloor);
         // The page's hue and saturation: the page is the surface at elevation 0.
         m_darkModeFloorSlider.bind([this]() {
-            return elementColor(UiElement::Page);
+            return elementColor(uiElementOf(UiElement::Page).token);
             });
         m_darkModeFloorSlider.connectEvent([this](SliderChangeEvent& event) {
             darkModeFloorChanged(event.slider.editPhase());
@@ -546,9 +547,9 @@ namespace Themes_App
         });
 
         m_designPage.bind(editColors(),
-            [this](const OptionalUiElement element, const ColorRule& rule,
+            [this](const std::wstring_view set, const ColorRule& rule,
                 const RuleChannel channel) {
-                return elementRuleBase(element, rule, channel);
+                return elementRuleBase(set, rule, channel);
             },
             [this](const EditPhase phase, const Text& what, const RuleSelection& at) {
                 rulesChanged(phase, what, at);

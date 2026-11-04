@@ -31,7 +31,11 @@ namespace Themes_App
             .updates = UpdateSource{
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"Themes-v"
-            }
+            },
+            .elements = k_appElements,
+            .builtInTheme = k_builtInSets,
+            // The editor of every theme, whatever a theme states for its test subjects.
+            .themesOffered = ThemesOffered::Every
         };
     }
 

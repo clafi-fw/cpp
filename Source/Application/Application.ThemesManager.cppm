@@ -7,6 +7,7 @@ import ClaFi.Documents.Folder;
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine;
@@ -48,11 +49,15 @@ namespace ClaFi
     export using UserThemePtr = std::unique_ptr<UserTheme>;
     export using UserThemeList = std::vector<UserThemePtr>;
 
-    // The themes an application can wear - the built-in, and the user's own files. See Application
+    // Reads the sets a theme file's text states into the built-in theme. See Application
+    export void addBuiltInSets(std::wstring_view themeText);
+
+    // The themes an application can wear - the built-in, and the user's own files that state
+    // every element the application names. See Application
     export class ThemesManager : public Documents::DocumentsFolder
     {
     public:
-        explicit ThemesManager(const std::filesystem::path& directory);
+        ThemesManager(const std::filesystem::path& directory, AppElementNames requiredElements);
     public:
         // The user's themes, parsed, in the folder's order - read on the first ask after the
         // folder has changed.
@@ -86,7 +91,9 @@ namespace ClaFi
     protected:
         void filesRead(const Documents::FilePaths&) override;
     private:
-        AppTheme m_defaultTheme{ defaultTheme() };
+        [[nodiscard]] bool statesEveryElement(const AppTheme&) const;
+    private:
+        const AppElementNames m_requiredElements;
         UserThemeList m_userThemes{};
     };
 }

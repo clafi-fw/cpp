@@ -46,11 +46,32 @@ namespace ClaFi
         theme.metrics.settle();
     }
 
+    // addBuiltInSets
+
+    // Read as a theme file is, over the defaults - and a list in a file is the whole list, so
+    // what comes back holds the text's sets alone. Each joins the built-in theme, replacing a set
+    // of its name.
+    void addBuiltInSets(const std::wstring_view themeText)
+    {
+        if (themeText.empty())
+            return;
+        Dom::Value<AppTheme> section{ nullptr, {} };
+        const Dom::FileFormat::ClaFi ff;
+        std::wistringstream stream{ std::wstring{ themeText } };
+        ff.loadSectionFromStream(section, stream);
+        AppTheme theme{};
+        UserTheme::loadTheme(section, theme);
+        for (ElementRules& element : theme.colors.rules.elements)
+            defaultTheme().colors.rules.add(std::move(element));
+    }
+
     // ThemesManager
 
-    ThemesManager::ThemesManager(const std::filesystem::path& directory)
+    ThemesManager::ThemesManager(const std::filesystem::path& directory,
+        const AppElementNames requiredElements)
         :
-        DocumentsFolder{ directory, k_themeKind }
+        DocumentsFolder{ directory, k_themeKind },
+        m_requiredElements{ requiredElements }
     {
     }
 
@@ -63,7 +84,7 @@ namespace ClaFi
     const AppTheme* ThemesManager::themeByName(const std::wstring_view themeName) const
     {
         if (k_defaultThemeName == themeName)
-            return &m_defaultTheme;
+            return &defaultTheme();
 
         for (const UserThemePtr& theme : m_userThemes)
             if (theme->path().filename() == themeName)
@@ -173,10 +194,23 @@ namespace ClaFi
             event.refuse(L"That name belongs to a built-in theme.");
     }
 
+    // A theme lacking an element the application names is left out: what wears that element
+    // would paint nothing under it.
     void ThemesManager::filesRead(const Documents::FilePaths& files)
     {
         m_userThemes.clear();
         for (const std::filesystem::path& file : files)
-            m_userThemes.push_back(std::make_unique<UserTheme>(file));
+        {
+            UserThemePtr theme = std::make_unique<UserTheme>(file);
+            if (statesEveryElement(theme->theme()))
+                m_userThemes.push_back(std::move(theme));
+        }
+    }
+
+    bool ThemesManager::statesEveryElement(const AppTheme& theme) const
+    {
+        return std::ranges::all_of(m_requiredElements, [&theme](const std::wstring_view name) {
+            return theme.colors.rules.of(name) != nullptr;
+        });
     }
 }

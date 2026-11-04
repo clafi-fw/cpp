@@ -64,16 +64,17 @@ namespace Themes_App
     // The colour a rule of the list is applied to, which its value ramps are drawn from.
     export using OnGetListRuleBase = std::function<RuleBase(const ColorRule&, RuleChannel)>;
 
-    // One list of rules - an element's own or the shared ones - a grid row for each rule.
+    // One set's own rules, a grid row for each.
     export class ElementPage : public Panel
     {
     public:
         template<typename... Args>
         explicit ElementPage(const CreateParams&, std::wstring_view title, Args&&...);
     public:
-        // Takes the list, its defaults, its channels, the palette, its ramps' base and edits.
-        void bind(ColorRules&, const ColorRules& defaults, PaintChannels outputs,
-            const ThemeColors&, OnGetListRuleBase, OnRulesChanged);
+        // Takes the theme's sets and the name of the one shown, its defaults - null where the
+        // built-in states none - its channels, the palette, its ramps' base and edits.
+        void bind(ThemeRules&, std::wstring_view set, const ColorRules* defaults,
+            PaintChannels outputs, const ThemeColors&, OnGetListRuleBase, OnRulesChanged);
         // Builds a row for every rule in the list, in list order.
         void rebuild();
         // What the grid holds selected, as an edit made on it is recorded.
@@ -91,6 +92,8 @@ namespace Themes_App
         };
         using RuleRows = std::vector<Grids::RowContainer*>;
     private:
+        // The set's rules, and nullptr while the theme states no set of that name.
+        [[nodiscard]] ColorRules* rules() const;
         void addRule();
         void deleteSelectedRules();
         void deletePendingRules();
@@ -104,9 +107,10 @@ namespace Themes_App
         [[nodiscard]] Text ruleStepName(std::size_t index, std::wstring_view column) const;
         void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);
     private:
-        const std::wstring m_name; // what the list is called, which every step of it starts with
-        ColorRules* m_rules{}; // the list the page shows, null until bound
-        const ColorRules* m_defaults{}; // what a reset puts back, null until bound
+        const std::wstring m_name; // what the set is called, which every step of it starts with
+        ThemeRules* m_themeRules{}; // the theme's sets, null until bound
+        std::wstring m_set{}; // the name of the set the page shows
+        const ColorRules* m_defaults{}; // what a reset puts back, null where there are none
         PaintChannels m_outputs{}; // the channels the list's rules may write
         const ThemeColors* m_colors{}; // what the hue editors read the palette from
         OnGetListRuleBase m_ruleBase{};
@@ -238,7 +242,8 @@ namespace Themes_App
         });
         // Offered only where a reset would change something.
         m_resetButton.onGetState([this](GetStateEvent& event) {
-            event.state.enabled = m_rules && *m_rules != *m_defaults;
+            const ColorRules* list = rules();
+            event.state.enabled = list && (m_defaults ? *list != *m_defaults : !list->empty());
             event.stopPropagation();
         });
         // A show enters the page at the grid, past the title and the tools.

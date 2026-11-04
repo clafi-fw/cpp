@@ -107,3 +107,36 @@ alone.
   has to be there.
 - Figure waits on a question about SVG: every figure in the manuals is SVG, and the framework
   decodes PNG alone.
+
+## ElementRules
+
+**The cascade came in on 2026-11-04**, after a round of decisions (Oj: "1 b; 2 shared base; 3;
+4 a; 5 b", then "1 a; 2 a; 3 nothing; 4 separate list", then "1 a; 2 b; 3 a; 4 b; 5 a"):
+
+- **Chains are additive.** A rule is a pipeline step, not a property, so a child's rules adjust
+  what its base's left rather than replacing them; the same selector in a child and its base is
+  two steps. Related sets got a shared base holding what they state alike - Any Button, Any
+  Indicator, Any Callout, Do and Don't - rather than one deriving from the other, since a child
+  cannot take a rule away by restating it. Dropping an inherited rule is its own list, so the
+  editor can move a greyed inherited row there and restore it.
+- **Resting rules first, then state rules, each base to element.** Pure base-first order would
+  run Any Button's Hot before Button's resting surface, and Pressed is a Scale, so the two orders
+  differ. The chosen order reproduces every colour the four keyed lists produced, except where an
+  element's own state rule meets a base's on one channel - a tab's or a tool button's stroke now
+  adjusts the ring instead of being wiped by it.
+- **Any Window is a base, not a position.** A root wearing nothing takes no rules and paints
+  nothing, by design: other window kinds are coming (full-screen overlays with no surface of
+  their own), and the gap is visible at once. Any Non-Window is no default either, which is why
+  TextBox wears a Text Box set and why the element-less interactive controls were listed for a
+  decision.
+- **The list is open.** A theme states as many sets as it likes; an application names its own
+  in AppParams and ships their built-in sets as a theme file's text, until the built-in themes
+  are refactored. The Themes app's Testee and Bestee are the first application elements.
+- **A theme file carries every set whole**, because the Dom answers a list whole. A user theme
+  no longer takes a list it omits from the built-in, and a migration script wrote every set into
+  the existing themes.
+- **The two indicators' Selected values were a bug**; the shared Any Indicator took the accent's,
+  which Hover Indicator had.
+- The generator writes the sets in one `rules.elements = { ... }` statement for the built-in
+  file, and `rules.add(...)` / `rules.remove(...)` statements for a theme pasted into an
+  application. Write to source leaves the application's own sets out.

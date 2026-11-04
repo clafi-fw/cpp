@@ -29,14 +29,36 @@ namespace Themes_App
     // The view a tab's theme page shows - see ThemePage::storeView.
     export constexpr std::wstring_view k_viewAttrName{ L"View" };
 
-    // The token the shared rules' page goes by, where an element's page goes by its element's.
-    export constexpr std::wstring_view k_sharedRulesToken{ L"Shared" };
-    // The token the Any Window page goes by.
-    export constexpr std::wstring_view k_anyWindowRulesToken{ L"AnyWindow" };
-    // The token the Any Non-Window page goes by.
-    export constexpr std::wstring_view k_anyNonWindowRulesToken{ L"AnyNonWindow" };
     // The token the Palette page goes by.
     export constexpr std::wstring_view k_paletteToken{ L"Palette" };
+
+    // **The application's own two elements** - test subjects nothing in the framework wears, for
+    // trying rules out on a bare control. Only the rules a theme states for one reach it.
+    export constexpr std::wstring_view k_testeeName{ L"Testee" };
+    export constexpr std::wstring_view k_besteeName{ L"Bestee" };
+    export constexpr std::array k_appElements{ k_testeeName, k_besteeName };
+    export constexpr UiElement k_testee{ appElement(0) };
+    export constexpr UiElement k_bestee{ appElement(1) };
+
+    // The two sets the built-in theme states for them, each with no rules of its own.
+    export constexpr std::wstring_view k_builtInSets{ LR"(@ClaFi 1.0
+@encoding utf-8
+
+Colors=[
+Rules=[
+=[
+Name=Testee
+Base=AnyNonWindow
+StandsOn=Section
+]
+=[
+Name=Bestee
+Base=AnyNonWindow
+StandsOn=Section
+]
+]
+]
+)" };
 
     // What a tab's icon is drawn from, kept in the tab's entry so that an unopened tab reads no
     // file for it - see ThemesBrowser::drawTabIcon.

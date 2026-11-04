@@ -157,7 +157,7 @@ namespace ClaFi
         mutable std::unique_ptr<ColorHarmony> m_harmony{};
     };
 
-    // Every element a theme colours. See Application
+    // Every element a framework control wears - the handle a control names its set by. See AppTheme
     export enum class UiElement : TagValue
     {
         Dialog,
@@ -175,6 +175,7 @@ namespace ClaFi
         GridRow, // every row of a grid wears it, groups and sections too. See Grids#gridrow
         Button,
         ToolButton,
+        TextBox,
         SelectedText,
         FoundText,
         SelectionIndicator,
@@ -191,34 +192,31 @@ namespace ClaFi
         Do,         // the side of a Do and Don't block that shows what to do
         Dont,       // the side that shows what not to do
         CodeBlock,
-        Testee,     // a test subject nothing in the framework wears
-        Bestee,     // the second test subject nothing in the framework wears
         Count
     };
 
     export constexpr std::size_t k_uiElementCount{ static_cast<std::size_t>(UiElement::Count) };
     export using OptionalUiElement = std::optional<UiElement>;
 
-    // The pigment whose hue an element's surface starts from, if not its base's. See AppTheme
-    export [[nodiscard]] constexpr std::optional<Pigment> seedPigmentOf(UiElement element)
+    // The names of an application's own elements, in the order it states them. See AppTheme
+    export using AppElementNames = std::span<const std::wstring_view>;
+
+    // An application's own element, by its place in the names it states. See AppTheme
+    export [[nodiscard]] constexpr UiElement appElement(std::size_t index)
     {
-        switch (element)
-        {
-            case UiElement::FoundText:
-            case UiElement::WarningCallout:
-                return Pigment::Yellow;
-            case UiElement::InfoCallout:
-            case UiElement::QuestionCallout:
-                return Pigment::Blue;
-            case UiElement::OkCallout:
-            case UiElement::Do:
-                return Pigment::Green;
-            case UiElement::ErrorCallout:
-            case UiElement::Dont:
-                return Pigment::Red;
-            default:
-                return std::nullopt;
-        }
+        return static_cast<UiElement>(k_uiElementCount + index);
+    }
+
+    // The sets the framework's own sets stand over, by the names a theme states them under.
+    export namespace BaseElements
+    {
+        constexpr std::wstring_view AnyElement{ L"AnyElement" };
+        constexpr std::wstring_view AnyWindow{ L"AnyWindow" };
+        constexpr std::wstring_view AnyNonWindow{ L"AnyNonWindow" };
+        constexpr std::wstring_view AnyButton{ L"AnyButton" };
+        constexpr std::wstring_view AnyIndicator{ L"AnyIndicator" };
+        constexpr std::wstring_view AnyCallout{ L"AnyCallout" };
+        constexpr std::wstring_view DoDont{ L"DoDont" };
     }
 
     // The callout element a note of this kind wears. A note naming no kind is information.
@@ -317,31 +315,51 @@ namespace ClaFi
 
     export using ColorRules = std::vector<ColorRule>;
 
-    // The rules a theme states: each element's own, then the window's or the non-window's, then
-    // the shared ones.
+    // What tells a rule apart from its effect: when it applies and the channel it writes.
+    export struct RuleSelector
+    {
+        RuleInputs inputs{};
+        RuleInputs andInputs{};
+        PaintChannel output{ PaintChannel::Surface };
+        [[nodiscard]] bool matches(const ColorRule&) const;
+        [[nodiscard]] bool operator==(const RuleSelector&) const = default;
+    };
+
+    export using RuleSelectors = std::vector<RuleSelector>;
+    export using OptionalPigment = std::optional<Pigment>;
+
+    // The rules one element wears, stated over its base's. See AppTheme#elementrules
+    export struct ElementRules
+    {
+        std::wstring name{};        // what a theme file and an application know the set by
+        std::wstring base{};        // the set its chain continues from, none when empty
+        std::wstring standsOn{};    // what it is painted on, the mode's bare colour when empty
+        OptionalPigment seed{};     // where its surface's hue starts, if not at its standsOn's
+        ColorRules rules{};
+        RuleSelectors dropped{};    // the inherited rules it leaves out
+        [[nodiscard]] bool operator==(const ElementRules&) const = default;
+    };
+
+    export using ElementRulesList = std::vector<ElementRules>;
+    export using ElementChain = std::vector<const ElementRules*>;
+
+    // The named sets a theme states, each found by name. See AppTheme#themerules
     export struct ThemeRules
     {
-        ColorRules shared{};
-        ColorRules anyWindow{};    // what every form's root control takes, whatever it wears
-        ColorRules anyNonWindow{}; // what every other control takes, whatever it wears - the ring's
-        std::array<ColorRules, k_uiElementCount> elements{}; // indexed by UiElement
-        [[nodiscard]] ColorRules& of(UiElement element)
-        {
-            return elements[indexOf(element)];
-        }
-        [[nodiscard]] const ColorRules& of(UiElement element) const
-        {
-            return elements[indexOf(element)];
-        }
-        // One element's list as a document field reads and writes it, by its place in the array.
-        template<std::size_t I>
-        [[nodiscard]] const ColorRules& element() const { return elements[I]; }
-        template<std::size_t I>
-        void setElement(const ColorRules& value) { elements[I] = value; }
-        [[nodiscard]] static constexpr std::size_t indexOf(UiElement element)
-        {
-            return static_cast<std::size_t>(element);
-        }
+    public:
+        // The set a name stands for, and nullptr where the theme states none.
+        [[nodiscard]] const ElementRules* of(std::wstring_view name) const;
+        [[nodiscard]] ElementRules* of(std::wstring_view name);
+        ElementRules& add(ElementRules); // appended, replacing a set of the same name
+        void remove(std::wstring_view name);
+        // A set's chain: the set first, then its base and so on up, ended where a base is stated
+        // nowhere or has been walked already.
+        [[nodiscard]] ElementChain chainOf(std::wstring_view name) const;
+        // A set's rules as the paint path applies them. See AppTheme#themerules-resolvedrules
+        [[nodiscard]] ColorRules resolvedRules(std::wstring_view name) const;
+        [[nodiscard]] bool operator==(const ThemeRules&) const = default;
+    public:
+        ElementRulesList elements{};
     };
 
     // A theme's colours. The mode they are worn in is the application's. See AppTheme
@@ -352,6 +370,9 @@ namespace ClaFi
     public:
         [[nodiscard]] Hsl rootSurface(ColorMode) const;
         [[nodiscard]] const ColorHarmony& harmony() const;
+        // The sets as a document field reads and writes them.
+        [[nodiscard]] const ElementRulesList& elementRules() const { return rules.elements; }
+        void setElementRules(const ElementRulesList& value) { rules.elements = value; }
     public:
         // The hue a harmony turns around, and the only thing about the anchor anyone chooses.
         // A palette is a set of hues and nothing else, so what a swatch or a slider ramp is
@@ -763,6 +784,87 @@ namespace ClaFi
         {
             if (has(static_cast<RuleInput>(i)))
                 result *= levels[i];
+        }
+        return result;
+    }
+
+    // RuleSelector
+
+    bool RuleSelector::matches(const ColorRule& rule) const
+    {
+        return rule.inputs == inputs
+            and rule.andInputs == andInputs
+            and rule.output == output;
+    }
+
+    // ThemeRules
+
+    const ElementRules* ThemeRules::of(const std::wstring_view name) const
+    {
+        const auto found = std::ranges::find(elements, name, &ElementRules::name);
+        return found == elements.end() ? nullptr : &*found;
+    }
+
+    ElementRules* ThemeRules::of(const std::wstring_view name)
+    {
+        const auto found = std::ranges::find(elements, name, &ElementRules::name);
+        return found == elements.end() ? nullptr : &*found;
+    }
+
+    ElementRules& ThemeRules::add(ElementRules element)
+    {
+        remove(element.name);
+        return elements.emplace_back(std::move(element));
+    }
+
+    void ThemeRules::remove(const std::wstring_view name)
+    {
+        std::erase_if(elements, [name](const ElementRules& element) {
+            return element.name == name;
+        });
+    }
+
+    ElementChain ThemeRules::chainOf(const std::wstring_view name) const
+    {
+        ElementChain result{};
+        const ElementRules* element = of(name);
+        while (element)
+        {
+            if (std::ranges::find(result, element) != result.end())
+                break;
+            result.push_back(element);
+            element = element->base.empty() ? nullptr : of(element->base);
+        }
+        return result;
+    }
+
+    // The chain's resting rules root first, then its state rules root first - a surface is
+    // established before a state modifies it. A rule a set further down the chain has dropped is
+    // left out.
+    ColorRules ThemeRules::resolvedRules(const std::wstring_view name) const
+    {
+        const ElementChain chain = chainOf(name);
+        auto isDropped = [&chain](const ColorRule& rule, const std::size_t level) {
+            for (std::size_t below = 0ull; below != level; ++below)
+            {
+                for (const RuleSelector& selector : chain[below]->dropped)
+                    if (selector.matches(rule))
+                        return true;
+            }
+            return false;
+        };
+        ColorRules result{};
+        for (const bool atRest : { true, false })
+        {
+            for (std::size_t step = 0ull; step != chain.size(); ++step)
+            {
+                const std::size_t level = chain.size() - 1ull - step;
+                for (const ColorRule& rule : chain[level]->rules)
+                {
+                    if (rule.atRest() == atRest and !isDropped(rule, level))
+                        result.push_back(rule);
+                }
+            }
         }
         return result;
     }

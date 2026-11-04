@@ -269,16 +269,42 @@ at once.
 **The notice is down before the answer runs**, so the answer may post a notice in its place, run a
 loop of its own, or close the window. An answer to a notice already down does nothing.
 
-## UiElement
-
-**The order is free.** What is indexed by an element - `k_uiElements`, a theme's element lists, the
-baked effects - follows the enum's order.
-
 ## UiElementDescriptor
 
 - `name` - the label an editor shows.
 - `codeName` - the member generated C++ assigns an effect to.
-- `token` - the key in a theme file for the element's rules and its effect.
+- `token` - the name the theme states the element's set under, and the key for its effect.
+
+## bake
+
+**Laid out by the application's elements**: the framework's tokens in UiElement order, then the
+names the application states - see elementNamesOf. Each name is answered by the set of that name
+in the theme, resolved and baked, or by nothing where the theme states none.
+
+## elementNamesOf
+
+Every name a baked set has an entry for, in the order the entries stand.
+
+## AppParams
+
+- `elements` - the application's own elements, by name. The i-th is worn as `appElement(i)`.
+- `builtInTheme` - the text of a theme file whose sets join the built-in theme at start, through
+  addBuiltInSets. An application's own sets live here, the framework's in the framework.
+- `themesOffered` - which themes the application lists: those stating a set for every element it
+  names, so nothing it wears paints nothing, or every theme. A theme editor takes every one and
+  gives a theme the sets it lacks.
+
+## addBuiltInSets
+
+The text is read as a theme file is, and each set it states joins the built-in theme, replacing a
+set of the same name. Called ahead of the first bake, which is what an application's own elements
+need.
+
+## ElementRules in a file
+
+A set is a section of the `Rules` list under `Colors`, whole: `Name`, then `Base`, `StandsOn` and
+`Seed` where stated, its own `Rules`, and its `Dropped` selectors. A list in a file is the whole
+list, so a theme states every set it has, and a set a file leaves out is one the theme lacks.
 
 ## MetricsSetDescriptor
 
@@ -337,7 +363,8 @@ theme is put on**, so it keeps up with the desktop.
 
 A DocumentsFolder of theme files: the base keeps the directory, the watch and the listeners. The
 manager adds a parsed theme for each file, read again with the directory, and the built-in,
-answered from the compiled-in colours whatever is on the disk.
+answered from the compiled-in colours whatever is on the disk. A file lacking a set for an element
+the application names is passed over: what wears that element would paint nothing under it.
 
 ## ThemesList
 

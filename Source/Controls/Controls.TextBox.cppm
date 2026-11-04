@@ -8,6 +8,7 @@ import ClaFi.Controls.Label;
 
 import ClaFi.StdActions.Transfer;
 
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
@@ -387,6 +388,7 @@ namespace ClaFi::Controls
         TextBoxBase{
             params,
             MetricsSet::TextBox,
+            UiElement::TextBox,
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,

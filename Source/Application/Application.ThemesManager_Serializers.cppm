@@ -24,6 +24,15 @@ namespace ClaFi::Dom
         [[nodiscard]] static std::wstring toWString(const RuleInputs& inputs);
         static void fromWString(std::wstring_view str, RuleInputs& inputs);
     };
+
+    // A seed is its pigment's name, and nothing where a set states none. A name no pigment goes
+    // by reads as none.
+    template <>
+    struct ScalarSerializer<OptionalPigment>
+    {
+        [[nodiscard]] static std::wstring toWString(const OptionalPigment& seed);
+        static void fromWString(std::wstring_view str, OptionalPigment& seed);
+    };
 }
 
 namespace ClaFi // AppTheme serializers
@@ -135,28 +144,30 @@ namespace ClaFi // AppTheme serializers
         );
     }
 
-    // Each element's list stands under the element's token.
-    template <std::size_t I>
-    constexpr auto elementRulesField()
-    {
-        return SerializedField{ k_uiElements[I].token, &ThemeRules::element<I>,
-            &ThemeRules::setElement<I> };
+    export constexpr auto serializedFields(const RuleSelector&) {
+        return std::make_tuple(
+            SerializedField{ L"Inputs", &RuleSelector::inputs },
+            SerializedField{ L"AndInputs", &RuleSelector::andInputs },
+            SerializedField{ L"Output", &RuleSelector::output }
+        );
     }
 
-    template <std::size_t... I>
-    constexpr auto elementRulesFields(std::index_sequence<I...>)
-    {
-        return std::make_tuple(elementRulesField<I>()...);
-    }
+    export constexpr std::array<std::wstring_view, k_pigmentsCount> k_pigmentKeys{
+        L"Yellow",
+        L"Green",
+        L"Blue",
+        L"Red"
+    };
 
-    export constexpr auto serializedFields(const ThemeRules&) {
-        return std::tuple_cat(
-            std::make_tuple(
-                SerializedField{ L"Shared", &ThemeRules::shared },
-                SerializedField{ L"AnyWindow", &ThemeRules::anyWindow },
-                SerializedField{ L"AnyNonWindow", &ThemeRules::anyNonWindow }
-            ),
-            elementRulesFields(std::make_index_sequence<k_uiElementCount>{})
+    // A set stands whole in a file, its name first. See Application#elementrules-in-a-file
+    export constexpr auto serializedFields(const ElementRules&) {
+        return std::make_tuple(
+            SerializedField{ L"Name", &ElementRules::name },
+            SerializedField{ L"Base", &ElementRules::base },
+            SerializedField{ L"StandsOn", &ElementRules::standsOn },
+            SerializedField{ L"Seed", &ElementRules::seed },
+            SerializedField{ L"Rules", &ElementRules::rules },
+            SerializedField{ L"Dropped", &ElementRules::dropped }
         );
     }
 
@@ -174,7 +185,8 @@ namespace ClaFi // AppTheme serializers
             ),
             elementFields(std::make_index_sequence<k_uiElements.size()>{}),
             std::make_tuple(
-                SerializedField{ L"Rules", &ThemeColors::rules }
+                SerializedField{ L"Rules", &ThemeColors::elementRules,
+                    &ThemeColors::setElementRules }
             )
         );
     }
@@ -313,5 +325,21 @@ namespace ClaFi::Dom
                 if (k_ruleInputKeys[i] == name)
                     inputs.add(static_cast<RuleInput>(i));
         }
+    }
+
+    std::wstring ScalarSerializer<OptionalPigment>::toWString(const OptionalPigment& seed)
+    {
+        if (!seed)
+            return {};
+        return std::wstring{ k_pigmentKeys[static_cast<std::size_t>(*seed)] };
+    }
+
+    void ScalarSerializer<OptionalPigment>::fromWString(std::wstring_view str,
+        OptionalPigment& seed)
+    {
+        seed = std::nullopt;
+        for (std::size_t i = 0ull; i != k_pigmentKeys.size(); ++i)
+            if (k_pigmentKeys[i] == str)
+                seed = static_cast<Pigment>(i);
     }
 }

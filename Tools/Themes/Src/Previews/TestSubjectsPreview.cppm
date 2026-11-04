@@ -1,5 +1,6 @@
 export module Themes_App.TestSubjectsPreview;
 
+import Themes_App.Consts;
 import Themes_App.PreviewPageBase;
 
 import ClaFi.Core.AppTheme_Colors;
@@ -30,8 +31,8 @@ namespace Themes_App
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
-            UiElement::Testee,
-            Text{ L"Testee" }
+            k_testee,
+            Text{ k_testeeName }
         ) };
 
         RichControl& m_bestee{ add<RichControl>(
@@ -39,8 +40,8 @@ namespace Themes_App
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
-            UiElement::Bestee,
-            Text{ L"Bestee" }
+            k_bestee,
+            Text{ k_besteeName }
         ) };
     };
 }

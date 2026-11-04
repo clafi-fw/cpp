@@ -38,23 +38,56 @@ namespace Themes_App
         constexpr std::array k_selectedTextOutputs{ PaintChannel::Surface, PaintChannel::Text };
         constexpr std::array k_foundTextOutputs{ PaintChannel::Surface };
 
-        constexpr SharedRules k_anyElement{
+        constexpr NamedSet k_anyElement{
             .name = L"Any Element",
-            .token = k_sharedRulesToken,
-            .rules = &ThemeRules::shared
+            .token = BaseElements::AnyElement
         };
 
-        constexpr SharedRules k_anyWindow{
+        constexpr NamedSet k_anyWindow{
             .name = L"Any Window",
-            .token = k_anyWindowRulesToken,
-            .rules = &ThemeRules::anyWindow,
+            .token = BaseElements::AnyWindow,
             .preview = PreviewPage::Windows
         };
 
-        constexpr SharedRules k_anyNonWindow{
+        constexpr NamedSet k_anyNonWindow{
             .name = L"Any Non-Window",
-            .token = k_anyNonWindowRulesToken,
-            .rules = &ThemeRules::anyNonWindow
+            .token = BaseElements::AnyNonWindow
+        };
+
+        constexpr NamedSet k_anyButton{
+            .name = L"Any Button",
+            .token = BaseElements::AnyButton,
+            .preview = PreviewPage::Inputs
+        };
+
+        constexpr NamedSet k_anyIndicator{
+            .name = L"Any Indicator",
+            .token = BaseElements::AnyIndicator,
+            .preview = PreviewPage::Selection
+        };
+
+        constexpr NamedSet k_anyCallout{
+            .name = L"Any Callout",
+            .token = BaseElements::AnyCallout,
+            .preview = PreviewPage::Callouts
+        };
+
+        constexpr NamedSet k_doDont{
+            .name = L"Do and Don't",
+            .token = BaseElements::DoDont,
+            .preview = PreviewPage::DoDont
+        };
+
+        constexpr NamedSet k_testee{
+            .name = k_testeeName,
+            .token = k_testeeName,
+            .preview = PreviewPage::TestSubjects
+        };
+
+        constexpr NamedSet k_bestee{
+            .name = k_besteeName,
+            .token = k_besteeName,
+            .preview = PreviewPage::TestSubjects
         };
 
         constexpr auto k_windowRoots = std::to_array<CategoryEntry>({
@@ -76,14 +109,17 @@ namespace Themes_App
         });
 
         constexpr auto k_controls = std::to_array<CategoryEntry>({
+            { k_anyButton },
             { UiElement::Button, PreviewPage::Inputs },
             { UiElement::ToolButton, PreviewPage::Inputs },
+            { UiElement::TextBox, PreviewPage::Inputs },
             { UiElement::Tab, PreviewPage::Tabs },
             { UiElement::ScrollButton, PreviewPage::Scrolling },
             { UiElement::ScrollThumb, PreviewPage::Scrolling }
         });
 
         constexpr auto k_focusAndSelection = std::to_array<CategoryEntry>({
+            { k_anyIndicator },
             { UiElement::SelectionIndicator, PreviewPage::Selection },
             { UiElement::HoverIndicator, PreviewPage::Selection },
             { UiElement::SelectedText, PreviewPage::Selection },
@@ -91,19 +127,21 @@ namespace Themes_App
         });
 
         constexpr auto k_blocks = std::to_array<CategoryEntry>({
+            { k_anyCallout },
             { UiElement::InfoCallout, PreviewPage::Callouts },
             { UiElement::QuestionCallout, PreviewPage::Callouts },
             { UiElement::WarningCallout, PreviewPage::Callouts },
             { UiElement::ErrorCallout, PreviewPage::Callouts },
             { UiElement::OkCallout, PreviewPage::Callouts },
+            { k_doDont },
             { UiElement::Do, PreviewPage::DoDont },
             { UiElement::Dont, PreviewPage::DoDont },
             { UiElement::CodeBlock, PreviewPage::CodeBlock }
         });
 
         constexpr auto k_testSubjects = std::to_array<CategoryEntry>({
-            { UiElement::Testee, PreviewPage::TestSubjects },
-            { UiElement::Bestee, PreviewPage::TestSubjects }
+            { k_testee },
+            { k_bestee }
         });
 
         constexpr auto k_windowRootSizes = std::to_array<CategoryEntry>({
@@ -183,19 +221,6 @@ namespace Themes_App
             return tokens[static_cast<std::size_t>(set)];
         }
 
-        // A text band has no stroke and casts no shadow, and only the selection re-inks its text.
-        [[nodiscard]] PaintChannels elementOutputs(const UiElement element)
-        {
-            switch (element)
-            {
-                case UiElement::SelectedText:
-                    return k_selectedTextOutputs;
-                case UiElement::FoundText:
-                    return k_foundTextOutputs;
-                default:
-                    return {};
-            }
-        }
     }
 
     std::wstring_view DesignPage::pickedPage() const
@@ -241,28 +266,19 @@ namespace Themes_App
     void DesignPage::bind(ThemeColors& colors, const OnGetElementRuleBase& ruleBase,
         const OnRulesChanged& onRulesChanged)
     {
-        ThemeRules& rules = colors.rules;
+        m_rules = &colors.rules;
         for (TreeEntry& entry : m_entries)
         {
             if (!entry.rules)
                 continue;
-            ColorRules& list = entry.element
-                ? rules.of(*entry.element)
-                : rules.*entry.shared->rules;
-            entry.list = &list;
-            const ColorRules& defaults = entry.element
-                ? m_defaultRules.of(*entry.element)
-                : m_defaultRules.*entry.shared->rules;
-            const PaintChannels outputs = entry.shared
-                ? entry.shared->outputs
-                : elementOutputs(*entry.element);
-            const OptionalUiElement element = entry.element;
-            OnGetListRuleBase listRuleBase = [ruleBase, element](const ColorRule& rule,
+            const std::wstring_view set = setOf(entry);
+            const ElementRules* defaults = m_defaultRules.of(set);
+            OnGetListRuleBase listRuleBase = [ruleBase, set](const ColorRule& rule,
                 const RuleChannel channel) {
-                return ruleBase(element, rule, channel);
+                return ruleBase(set, rule, channel);
             };
-            entry.rules->bind(list, defaults, outputs, colors, std::move(listRuleBase),
-                onRulesChanged);
+            entry.rules->bind(colors.rules, set, defaults ? &defaults->rules : nullptr,
+                outputsOf(entry), colors, std::move(listRuleBase), onRulesChanged);
         }
     }
 
@@ -375,7 +391,7 @@ namespace Themes_App
             entry.sizesPage = &m_pages.add<SizesPage>(*entry.sizes);
             entry.page = entry.sizesPage;
         }
-        else if (entry.element || entry.shared)
+        else if (entry.element || entry.named)
         {
             entry.rules = &m_pages.add<ElementPage>(nameOf(entry));
             entry.page = entry.rules;
@@ -468,7 +484,7 @@ namespace Themes_App
     {
         return {
             .element = entry.element,
-            .shared = entry.shared,
+            .named = entry.named,
             .sizes = entry.sizes,
             .preview = { .page = entry.preview, .editsSizes = entry.sizes.has_value() }
         };
@@ -490,7 +506,7 @@ namespace Themes_App
     }
 
     // The page's icon and name, followed for a page of rules by how many it holds, muted.
-    Text DesignPage::indexRowText(const TreeEntry& entry)
+    Text DesignPage::indexRowText(const TreeEntry& entry) const
     {
         Text text{
             pageIcon(kindOf(entry), RowIcons::Size),
@@ -499,7 +515,8 @@ namespace Themes_App
         };
         if (!entry.rules)
             return text;
-        const std::size_t count = entry.list ? entry.list->size() : 0;
+        const ElementRules* set = m_rules ? m_rules->of(setOf(entry)) : nullptr;
+        const std::size_t count = set ? set->rules.size() : 0;
         Text tally{};
         if (count == 0)
             tally << L"no rules";
@@ -515,7 +532,7 @@ namespace Themes_App
             return PageKind::Folder;
         if (entry.sizes)
             return PageKind::Sizes;
-        if (entry.element || entry.shared)
+        if (entry.element || entry.named)
             return PageKind::Rules;
         return PageKind::Palette;
     }
@@ -526,8 +543,8 @@ namespace Themes_App
             return uiElementOf(*entry.element).name;
         if (entry.sizes)
             return metricsSetOf(*entry.sizes).name;
-        if (entry.shared)
-            return entry.shared->name;
+        if (entry.named)
+            return entry.named->name;
         if (entry.root)
             return entry.root->name;
         if (entry.category)
@@ -541,12 +558,33 @@ namespace Themes_App
             return uiElementOf(*entry.element).token;
         if (entry.sizes)
             return sizesToken(*entry.sizes);
-        if (entry.shared)
-            return entry.shared->token;
+        if (entry.named)
+            return entry.named->token;
         if (entry.root)
             return entry.root->token;
         if (entry.category)
             return entry.category->token;
         return k_paletteToken;
+    }
+
+    std::wstring_view DesignPage::setOf(const TreeEntry& entry)
+    {
+        if (entry.element)
+            return uiElementOf(*entry.element).token;
+        if (entry.named)
+            return entry.named->token;
+        return {};
+    }
+
+    // A text band has no stroke and casts no shadow, and only the selection re-inks its text.
+    PaintChannels DesignPage::outputsOf(const TreeEntry& entry)
+    {
+        if (entry.named)
+            return entry.named->outputs;
+        if (entry.element == UiElement::SelectedText)
+            return k_selectedTextOutputs;
+        if (entry.element == UiElement::FoundText)
+            return k_foundTextOutputs;
+        return {};
     }
 }

@@ -69,20 +69,30 @@ namespace ClaFi
 
     export using BakedColorRules = std::vector<BakedColorRule>;
 
-    // **The rules as the paint path reads them** - each element's own, the window's and the shared.
+    // **One element as the paint path reads it** - its chain resolved into one list, the rules of
+    // its own set apart, and its seed. An element the theme states no set for holds nothing.
+    export struct BakedElementRules
+    {
+    public:
+        [[nodiscard]] bool operator==(const BakedElementRules&) const = default;
+    public:
+        BakedColorRules rules{};    // see ThemeRules resolvedRules
+        BakedColorRules ownRules{}; // the set's own, for a band raised over another element's
+        OptionalPigment seed{};
+    };
+
+    export using BakedElementsRules = std::vector<BakedElementRules>;
+
+    // **The rules as the paint path reads them**, one entry per element the application names -
+    // the framework's in UiElement order, then the application's own.
     export struct BakedRules
     {
     public:
-        [[nodiscard]] const BakedColorRules& of(UiElement element) const
-        {
-            return elements[static_cast<std::size_t>(element)];
-        }
+        // An element past the entries - of a set not yet baked - holds nothing.
+        [[nodiscard]] const BakedElementRules& of(UiElement) const;
         [[nodiscard]] bool operator==(const BakedRules&) const = default;
     public:
-        BakedColorRules shared{};
-        BakedColorRules anyWindow{};
-        BakedColorRules anyNonWindow{};
-        std::array<BakedColorRules, k_uiElementCount> elements{}; // indexed by UiElement
+        BakedElementsRules elements{};
     };
 
     export using BakedEffects = std::array<BakedEffect, k_uiElementCount>;
@@ -132,7 +142,9 @@ namespace ClaFi
     // A shadow rule's effect is baked the way bakeShadow bakes, every other one the way bake does.
     export [[nodiscard]] BakedColorRule bake(const ColorRule&, const ThemeColors&);
     export [[nodiscard]] BakedColorRules bake(const ColorRules&, const ThemeColors&);
-    export [[nodiscard]] BakedRules bake(const ThemeRules&, const ThemeColors&);
+    // One entry per name, in the names' order - the set of that name resolved, or nothing.
+    export [[nodiscard]] BakedRules bake(const ThemeRules&, const ThemeColors&,
+        std::span<const std::wstring_view> elementNames);
 
     // **Crossing a set with itself answers that set at every factor**, which is what the weighted
     // targets below are for. See AppTheme
@@ -367,14 +379,21 @@ namespace ClaFi
         return result;
     }
 
-    BakedRules bake(const ThemeRules& rules, const ThemeColors& themeColors)
+    BakedRules bake(const ThemeRules& rules, const ThemeColors& themeColors,
+        const std::span<const std::wstring_view> elementNames)
     {
         BakedRules result{};
-        result.shared = bake(rules.shared, themeColors);
-        result.anyWindow = bake(rules.anyWindow, themeColors);
-        result.anyNonWindow = bake(rules.anyNonWindow, themeColors);
-        for (std::size_t i = 0; i < result.elements.size(); ++i)
-            result.elements[i] = bake(rules.elements[i], themeColors);
+        result.elements.reserve(elementNames.size());
+        for (const std::wstring_view name : elementNames)
+        {
+            BakedElementRules& element = result.elements.emplace_back();
+            const ElementRules* stated = rules.of(name);
+            if (!stated)
+                continue;
+            element.rules = bake(rules.resolvedRules(name), themeColors);
+            element.ownRules = bake(stated->rules, themeColors);
+            element.seed = stated->seed;
+        }
         return result;
     }
 
@@ -471,16 +490,32 @@ namespace ClaFi
         return result;
     }
 
-    // Element by element, so a change to one list leaves the others crossing smoothly.
+    // Element by element, so a change to one list leaves the others crossing smoothly. Two sets
+    // laid out for different applications have no half way between them.
     BakedRules blend(const BakedRules& from, const BakedRules& to, float factor)
     {
+        if (from.elements.size() != to.elements.size())
+            return to;
         BakedRules result{};
-        result.shared = blend(from.shared, to.shared, factor);
-        result.anyWindow = blend(from.anyWindow, to.anyWindow, factor);
-        result.anyNonWindow = blend(from.anyNonWindow, to.anyNonWindow, factor);
-        for (std::size_t i = 0; i < result.elements.size(); ++i)
-            result.elements[i] = blend(from.elements[i], to.elements[i], factor);
+        result.elements.reserve(to.elements.size());
+        for (std::size_t i = 0; i < to.elements.size(); ++i)
+        {
+            result.elements.push_back({
+                .rules = blend(from.elements[i].rules, to.elements[i].rules, factor),
+                .ownRules = blend(from.elements[i].ownRules, to.elements[i].ownRules, factor),
+                .seed = to.elements[i].seed
+            });
+        }
         return result;
+    }
+
+    // BakedRules
+
+    const BakedElementRules& BakedRules::of(const UiElement element) const
+    {
+        static const BakedElementRules s_none{};
+        const std::size_t index = static_cast<std::size_t>(element);
+        return index < elements.size() ? elements[index] : s_none;
     }
 
     // BakedColors
@@ -549,28 +584,22 @@ namespace ClaFi
     }
 
     // Read at the dark end whatever the lightness - a shadow is the absence of light on both sides.
-    // The root's own rules, the window's and the shared ones, in the order PaintEvent takes - a
-    // root wearing no element takes the window's alone. A window has no state but its focus, so a
-    // rule reading only other inputs does not reach it. The shadow starts in the hue of the
-    // window's stroke, itself resolved from the root's surface, so a shadow rule naming no hue
-    // follows the stroke.
+    // The root's rules as PaintEvent applies them - a root wearing no element casts the bare
+    // shadow. A window has no state but its focus, so a rule reading only other inputs does not
+    // reach it. The shadow starts in the hue of the window's stroke, itself resolved from the
+    // root's surface, so a shadow rule naming no hue follows the stroke.
     Hsl BakedColors::windowShadow(OptionalUiElement root, float windowFocusedFactor) const
     {
-        const BakedColorRules* own = root ? &rules.of(*root) : nullptr;
-        const BakedColorRules* shared = root ? &rules.shared : nullptr;
         RuleInputLevels levels = {};
         levels[static_cast<std::size_t>(RuleInput::WindowFocused)] = windowFocusedFactor;
         auto applyRules = [&](const PaintChannel channel, Hsl& color){
+            if (!root)
+                return;
             const Lightness readIn = channel == PaintChannel::Shadow ? k_darkLightness : lightness;
-            for (const BakedColorRules* list : { own, &rules.anyWindow, shared })
+            for (const BakedColorRule& rule : rules.of(*root).rules)
             {
-                if (!list)
-                    continue;
-                for (const BakedColorRule& rule : *list)
-                {
-                    if (rule.output == channel)
-                        rule.effect.applyTo(color, rule.levelIn(levels), readIn);
-                }
+                if (rule.output == channel)
+                    rule.effect.applyTo(color, rule.levelIn(levels), readIn);
             }
         };
 

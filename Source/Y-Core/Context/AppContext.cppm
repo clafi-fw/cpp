@@ -94,12 +94,12 @@ namespace ClaFi
     public:
         AppContext(Platform&, const Text& appName, std::wstring_view publisher,
             const Text& description, std::wstring_view version, std::wstring_view site,
-            const UpdateSource& updates, const std::filesystem::path& configPath, BackendFactory,
-            Dom::Dt::Section&&);
+            const UpdateSource& updates, AppElementNames appElements,
+            const std::filesystem::path& configPath, BackendFactory, Dom::Dt::Section&&);
         AppContext(Platform&, const Text& appName, std::wstring_view publisher,
             const Text& description, std::wstring_view version, std::wstring_view site,
-            const UpdateSource& updates, const std::filesystem::path& configPath, BackendFactory,
-            const Dom::Dt::Section&);
+            const UpdateSource& updates, AppElementNames appElements,
+            const std::filesystem::path& configPath, BackendFactory, const Dom::Dt::Section&);
         ~AppContext();
         // The name as it is shown. Its plain text is what the platform and the config folder know.
         [[nodiscard]] const Text& appName() const { return m_appName; }
@@ -111,6 +111,8 @@ namespace ClaFi
         [[nodiscard]] std::wstring_view version() const { return m_version; }
         // The application's own web address - empty where it states none.
         [[nodiscard]] std::wstring_view site() const { return m_site; }
+        // The application's own elements, by name, each worn as appElement(i) - see AppParams.
+        [[nodiscard]] AppElementNames appElements() const { return m_appElements; }
         // The paragraphs the Information page shows after the description, in the order added.
         [[nodiscard]] const InformationParagraphs& information() const { return m_information; }
         // States a paragraph for the Information page - where a data file came from, say.
@@ -274,6 +276,7 @@ namespace ClaFi
         Text m_description;
         std::wstring_view m_version;
         std::wstring_view m_site;
+        AppElementNames m_appElements;
         InformationParagraphs m_information{};
         UpdateCheck m_updateCheck;
         // The GPU backend the application named, if it named one - see gpuAvailable. The CPU
@@ -351,8 +354,9 @@ namespace ClaFi
 
     AppContext::AppContext(Platform& platform, const Text& appName, const std::wstring_view publisher,
         const Text& description, const std::wstring_view version, const std::wstring_view site,
-        const UpdateSource& updates, const std::filesystem::path& configPath,
-        BackendFactory createGpuBackend, Dom::Dt::Section&& schema)
+        const UpdateSource& updates, const AppElementNames appElements,
+        const std::filesystem::path& configPath, BackendFactory createGpuBackend,
+        Dom::Dt::Section&& schema)
         :
         m_platform{ platform },
         m_appName{ appName },
@@ -360,6 +364,7 @@ namespace ClaFi
         m_description{ description },
         m_version{ version },
         m_site{ site },
+        m_appElements{ appElements },
         m_updateCheck{ updates, version },
         m_createGpuBackend{ createGpuBackend },
         m_configFolderExists{ std::filesystem::exists(configPath.parent_path()) },
@@ -382,8 +387,9 @@ namespace ClaFi
 
     AppContext::AppContext(Platform& platform, const Text& appName, const std::wstring_view publisher,
         const Text& description, const std::wstring_view version, const std::wstring_view site,
-        const UpdateSource& updates, const std::filesystem::path& configPath,
-        BackendFactory createGpuBackend, const Dom::Dt::Section& schema)
+        const UpdateSource& updates, const AppElementNames appElements,
+        const std::filesystem::path& configPath, BackendFactory createGpuBackend,
+        const Dom::Dt::Section& schema)
         :
         m_platform{ platform },
         m_appName{ appName },
@@ -391,6 +397,7 @@ namespace ClaFi
         m_description{ description },
         m_version{ version },
         m_site{ site },
+        m_appElements{ appElements },
         m_updateCheck{ updates, version },
         m_createGpuBackend{ createGpuBackend },
         m_configFolderExists{ std::filesystem::exists(configPath.parent_path()) },

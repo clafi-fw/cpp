@@ -99,20 +99,6 @@ namespace Themes_App
     // Everything a file holds, or nothing where there is no file to read.
     [[nodiscard]] std::string fileBytes(const std::filesystem::path& file);
 
-    // A list ThemeRules holds by name rather than by element, and the name generated code gives it.
-    struct NamedRules
-    {
-        std::wstring_view codeName{};
-        ColorRules ThemeRules::* rules{ nullptr };
-    };
-
-    // In ThemeRules declaration order, which is the order the block states them in.
-    constexpr std::array<NamedRules, 3ull> k_namedRules{
-        NamedRules{ .codeName = L"shared", .rules = &ThemeRules::shared },
-        NamedRules{ .codeName = L"anyWindow", .rules = &ThemeRules::anyWindow },
-        NamedRules{ .codeName = L"anyNonWindow", .rules = &ThemeRules::anyNonWindow }
-    };
-
     // The value a literal has to carry to rebuild a rule value. A rule holds its value
     // normalized, and an Offset normalizes by half a unit, which is enough to put the shortest
     // form of the value that built it out of reach: 0.1 comes back as 0.100000024. So the
@@ -161,6 +147,12 @@ namespace Themes_App
         CppCodeGenerator& colorRule(const ColorRule&, std::size_t level, std::size_t markerColumn);
         CppCodeGenerator& colorRules(const ColorRules&, std::size_t level,
             std::size_t markerColumn);
+        // The braces of one dropped selector, on the line it starts on.
+        CppCodeGenerator& ruleSelector(const RuleSelector&);
+        CppCodeGenerator& ruleSelectors(const RuleSelectors&, std::size_t level);
+        // The braces of one set, stating only what it has. level is the indent its closing brace
+        // sits at, and its rules' channel markers stand further right the deeper it sits.
+        CppCodeGenerator& elementRules(const ElementRules&, std::size_t level);
         //
         // The member a statement writes to, carrying the object name an outside block goes
         // through.
@@ -174,13 +166,11 @@ namespace Themes_App
         void floatMember(std::wstring_view name, float value, float defaultValue);
         void paletteMembers();
         void paletteHuesMember();
-        // Full states the rules from none, so there an empty list needs no statement.
-        [[nodiscard]] bool statesList(const ColorRules& value,
-            const ColorRules& defaultValue) const;
-        // One list's statement. target is what follows the object: a name or an of() call.
-        void rulesList(std::wstring_view target, const ColorRules& value,
-            const ColorRules& defaultValue);
+        // Full states every set as one list; Differences adds each set that differs from the
+        // framework's and removes each the framework has that this theme lacks.
         void themeRules();
+        void addedSets();
+        void removedSets();
         // The object an outside block writes through. A method writes through the class.
         void objectDeclaration();
         void headerComment();
@@ -192,8 +182,13 @@ namespace Themes_App
         // The column a channel marker starts at. The block is shown in a monospaced style, so
         // one column puts every marker of a rule under the one above it.
         static constexpr std::size_t k_channelColumn = 48ull;
-        // The column a rule's channel marker starts at. Its channels stand deeper than a member's.
+        // The column a rule's channel marker starts at for a rule standing one level in. A rule
+        // standing deeper takes a column further right by the same amount.
         static constexpr std::size_t k_ruleChannelColumn{ 52ull };
+        [[nodiscard]] static constexpr std::size_t ruleMarkerColumn(std::size_t ruleLevel)
+        {
+            return k_ruleChannelColumn + (ruleLevel - 1ull) * k_indentWidth;
+        }
         static constexpr std::size_t k_indentWidth = 4ull;
         static constexpr std::wstring_view k_spaces{
             L"                                                                " };
@@ -206,7 +201,7 @@ namespace Themes_App
         std::wstring m_text{};
         std::size_t m_column{ 0ull };
         bool m_statedAnyMember{ false };
-        bool m_statedAnyList{ false };
+        bool m_statedAnySet{ false };
     };
 
 }

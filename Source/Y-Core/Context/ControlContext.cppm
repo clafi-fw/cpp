@@ -76,7 +76,8 @@ namespace ClaFi
         const Searcher* searcher{ nullptr };   // what every text drawn here asks for hits
         TextRange currentMatch{};   // the current match in the text drawn next; empty for none
     private:
-        // A band's rules on one channel: each element's own list in turn, then Any element's.
+        // A band's rules on one channel: the element's chain, then the own rules of each
+        // element raised over it, so what the chains share is applied once.
         void applyBandRules(std::initializer_list<UiElement>, PaintChannel, Hsl& color,
             const RuleInputLevels&) const;
         // The surface in FoundText's seed hue, where the found band starts.
@@ -201,8 +202,7 @@ namespace ClaFi
         auto writesInk = [](const BakedColorRule& rule){
             return rule.output == PaintChannel::Text;
         };
-        return std::ranges::any_of(rules.of(UiElement::SelectedText), writesInk)
-            or std::ranges::any_of(rules.shared, writesInk);
+        return std::ranges::any_of(rules.of(UiElement::SelectedText).rules, writesInk);
     }
 
     // Seeded with its pigment's hue over the surface it is laid on, the way the Themes app shows
@@ -227,7 +227,7 @@ namespace ClaFi
     Hsl ControlPaintContext::foundSeedHsl() const
     {
         Hsl result = surfaceHsl;
-        if (const std::optional<Pigment> pigment = seedPigmentOf(UiElement::FoundText))
+        if (const OptionalPigment pigment = m_bakedColors->rules.of(UiElement::FoundText).seed)
             result.hue = m_bakedColors->pigmentHues[static_cast<std::size_t>(*pigment)];
         return result;
     }
@@ -245,9 +245,13 @@ namespace ClaFi
                     rule.effect.applyTo(color, rule.levelIn(levels), lightness);
             }
         };
+        bool first = true;
         for (const UiElement element : elements)
-            apply(rules.of(element));
-        apply(rules.shared);
+        {
+            const BakedElementRules& baked = rules.of(element);
+            apply(first ? baked.rules : baked.ownRules);
+            first = false;
+        }
     }
 
 

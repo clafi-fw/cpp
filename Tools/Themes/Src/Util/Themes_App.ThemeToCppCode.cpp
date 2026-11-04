@@ -412,44 +412,137 @@ namespace Themes_App
         m_statedAnyMember = true;
     }
 
-    bool CppCodeGenerator::statesList(const ColorRules& value,
-        const ColorRules& defaultValue) const
+    CppCodeGenerator& CppCodeGenerator::ruleSelector(const RuleSelector& selector)
     {
-        if (m_content == CodeContent::Full)
-            return !value.empty();
-        return value != defaultValue;
+        write(L"RuleSelector{ ");
+        if (!selector.inputs.empty())
+            ruleInputs(L"inputs", selector.inputs).write(L", ");
+        if (!selector.andInputs.empty())
+            ruleInputs(L"andInputs", selector.andInputs).write(L", ");
+        const std::size_t output = static_cast<std::size_t>(selector.output);
+        write(L".output = ");
+        enumValue(L"PaintChannel", enumNames(selector.output)[output]);
+        return write(L" }");
     }
 
-    void CppCodeGenerator::rulesList(std::wstring_view target, const ColorRules& value,
-        const ColorRules& defaultValue)
+    CppCodeGenerator& CppCodeGenerator::ruleSelectors(const RuleSelectors& selectors,
+        std::size_t level)
     {
-        if (!statesList(value, defaultValue))
-            return;
-        // Statements stand a blank line apart. The first one follows what opened the rules.
-        if (m_statedAnyList)
+        write(L"{").newLine();
+        for (std::size_t i = 0ull; i != selectors.size(); ++i)
+        {
+            indent(level + 1ull).ruleSelector(selectors[i]);
+            if (i + 1ull != selectors.size())
+                write(L",");
             newLine();
-        memberName(L"rules").write(L".").write(target).write(L" = ");
-        colorRules(value, 0ull, k_ruleChannelColumn);
-        closeLine();
-        m_statedAnyList = true;
-        m_statedAnyMember = true;
+        }
+        return indent(level).write(L"}");
+    }
+
+    CppCodeGenerator& CppCodeGenerator::elementRules(const ElementRules& element,
+        std::size_t level)
+    {
+        const bool statesBase = !element.base.empty();
+        const bool statesStandsOn = !element.standsOn.empty();
+        const bool statesSeed = element.seed.has_value();
+        const bool statesRules = !element.rules.empty();
+        const bool statesDropped = !element.dropped.empty();
+        std::size_t fieldsLeft = 1ull + static_cast<std::size_t>(std::ranges::count(
+            std::array{ statesBase, statesStandsOn, statesSeed, statesRules, statesDropped },
+            true));
+        write(L"ElementRules{").newLine();
+        --fieldsLeft;
+        indent(level + 1ull).write(L".name = L\"").write(element.name).write(L"\"");
+        fieldEnd(fieldsLeft);
+        if (statesBase)
+        {
+            --fieldsLeft;
+            indent(level + 1ull).write(L".base = L\"").write(element.base).write(L"\"");
+            fieldEnd(fieldsLeft);
+        }
+        if (statesStandsOn)
+        {
+            --fieldsLeft;
+            indent(level + 1ull).write(L".standsOn = L\"").write(element.standsOn).write(L"\"");
+            fieldEnd(fieldsLeft);
+        }
+        if (statesSeed)
+        {
+            --fieldsLeft;
+            const std::size_t seed = static_cast<std::size_t>(*element.seed);
+            indent(level + 1ull).write(L".seed = ").enumValue(L"Pigment", k_pigmentKeys[seed]);
+            fieldEnd(fieldsLeft);
+        }
+        if (statesRules)
+        {
+            --fieldsLeft;
+            indent(level + 1ull).write(L".rules = ");
+            colorRules(element.rules, level + 1ull, ruleMarkerColumn(level + 2ull));
+            fieldEnd(fieldsLeft);
+        }
+        if (statesDropped)
+        {
+            --fieldsLeft;
+            indent(level + 1ull).write(L".dropped = ");
+            ruleSelectors(element.dropped, level + 1ull);
+            fieldEnd(fieldsLeft);
+        }
+        return indent(level).write(L"}");
     }
 
     void CppCodeGenerator::themeRules()
     {
-        // An object built with the framework's rules is brought to none before Full states its own.
-        if (m_content == CodeContent::Full and !m_startsEmpty)
+        if (m_content == CodeContent::Differences)
         {
-            memberName(L"rules").write(L" = {}").closeLine();
+            addedSets();
+            removedSets();
+            return;
+        }
+        const ElementRulesList& elements = m_colors.rules.elements;
+        if (elements.empty())
+            return;
+        memberName(L"rules").write(L".elements = {").newLine();
+        for (std::size_t i = 0ull; i != elements.size(); ++i)
+        {
+            indent(1ull).elementRules(elements[i], 1ull);
+            if (i + 1ull != elements.size())
+                write(L",");
+            newLine();
+        }
+        write(L"}").closeLine();
+        m_statedAnyMember = true;
+    }
+
+    // Set statements stand a blank line apart. The first follows the members' own blank line.
+    void CppCodeGenerator::addedSets()
+    {
+        for (const ElementRules& element : m_colors.rules.elements)
+        {
+            const ElementRules* defaultElement = m_defaults.rules.of(element.name);
+            if (defaultElement and *defaultElement == element)
+                continue;
+            if (m_statedAnySet)
+                newLine();
+            memberName(L"rules").write(L".add(");
+            elementRules(element, 0ull);
+            write(L")").closeLine();
+            m_statedAnySet = true;
             m_statedAnyMember = true;
         }
-        for (const NamedRules& entry : k_namedRules)
-            rulesList(entry.codeName, m_colors.rules.*entry.rules, m_defaults.rules.*entry.rules);
-        for (std::size_t i = 0ull; i != k_uiElementCount; ++i)
+    }
+
+    void CppCodeGenerator::removedSets()
+    {
+        for (const ElementRules& defaultElement : m_defaults.rules.elements)
         {
-            // An element's token is spelled as its enumerator, as every name a theme file uses is.
-            const std::wstring target = std::format(L"of(UiElement::{})", k_uiElements[i].token);
-            rulesList(target, m_colors.rules.elements[i], m_defaults.rules.elements[i]);
+            if (m_colors.rules.of(defaultElement.name))
+                continue;
+            if (m_statedAnySet)
+                newLine();
+            memberName(L"rules").write(L".remove(L\"").write(defaultElement.name).write(L"\")");
+            closeLine();
+            m_statedAnySet = true;
+            m_statedAnyMember = true;
         }
     }
 

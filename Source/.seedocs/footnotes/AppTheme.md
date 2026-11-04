@@ -186,8 +186,8 @@ theme is baked.
 
 **Each channel starts from a colour of its own**, which the rules writing it then move:
 
-- Surface - the surface the control stands on, in its element's seed hue where it has one - see
-  seedPigmentOf
+- Surface - the surface the control stands on, in its element's seed hue where its set states
+  one - see ElementRules
 - Stroke and Band - the control's own surface, as its Surface rules left it
 - Text - the ink the control inherits, in its surface's hue while no rule names one
 - Shadow - the shadow it inherits, in the stroke's hue while no rule names one
@@ -195,30 +195,90 @@ theme is baked.
 **A stroke or a band shows as far as its rules reach.** A control whose rules write no Band draws
 none, whatever width its size set states - see ControlMetrics band.
 
-## ThemeRules anyNonWindow
+## UiElement
 
-**What every control that is not a form's root takes, whatever element it wears** - the
-counterpart of anyWindow, read in its place: after the element's own list, before the shared one.
-A control wearing no element takes it all the same. The focus ring lives here: its rules read
-Current and write the Stroke. So does the edit mode's band: its rule reads Edit and writes the
-Band.
+**The handle a control wears its set by.** The framework's elements are the enumerators, and an
+application's own come after them - see appElement. A control wearing none takes no rules at
+all: no surface, no stroke, no ring. The order is free: what is indexed by an element - the
+baked effects, the baked rules - follows it.
+
+## appElement
+
+**An application's own elements stand past the framework's**, one per name the application
+states in AppParams, in that order. `appElement(i)` is the handle for the i-th name, held as a
+constexpr constant by the application that stated it, and a theme reaches it through a set of that
+name. See AppElementNames.
+
+## AppElementNames
+
+The names an application states for its own elements, as AppParams carries them. They are what
+the theme is laid out by, and what a theme is asked for before it is offered: one lacking a name
+is not listed for that application.
+
+## ElementRules
+
+**One set of rules, named, standing over its base's.** A theme holds one for every element its
+controls wear, and as many more as it likes: a base the sets of a kind stand over, or an
+application's own.
+
+- `name` - what a control's handle is matched against, and what a file states the set under.
+- `base` - the set whose rules this one takes first, by name. Empty for a set standing over none.
+  The framework's sets stand over AnyElement, AnyWindow and AnyNonWindow, and over AnyButton,
+  AnyIndicator, AnyCallout and DoDont - see BaseElements.
+- `standsOn` - what the element is painted on, for the editor's preview. Empty for a window root,
+  which stands on the bare colour of the mode.
+- `seed` - the pigment the surface starts its hue from, where the hue of what it stands on is not
+  wanted: the callouts and the found-text band. A rule naming a hue overrides the seed.
+- `rules` - its own, applied over the base's as ThemeRules resolvedRules says.
+- `dropped` - the selectors of inherited rules it leaves out: a rule of any set up its chain whose
+  inputs, and-inputs and channel match one of them is not applied to this set.
+
+## RuleSelector
+
+What names a rule apart from its effect - its inputs, its and-inputs and its channel. Two rules
+with one selector are two steps on the same channel under the same conditions.
+
+## ThemeRules
+
+**The sets a theme states, found by name.** `of` answers a set or nullptr; `add` appends one,
+replacing a set of the same name; `chainOf` walks a set's bases up, stopping at a name the theme
+lacks or has walked already; `resolvedRules` is what the paint path applies.
+
+## ThemeRules resolvedRules
+
+**A base's rules apply first, and a set's own adjust what they left** - within each channel, in
+two groups: the chain's resting rules, root first, then its state rules, root first. A surface is
+established before a state modifies it, so a set's own resting rule lands before a base's Hot,
+and a set's own Hot lands after a base's. A rule a set further down the chain has dropped is
+left out.
+
+Baked, the list stands flat: PaintEvent applies a control's own rules and then the one list its
+element resolved to.
+
+## BaseElements
+
+**The sets the framework's own sets stand over**, by name:
+
+- AnyElement - every set stands over it, through one of the next two.
+- AnyWindow - what the three window roots take: the frame, the shadow. Anything wearing Dialog,
+  Menu or Tooltip takes it wherever it stands, a mockup inside a page included.
+- AnyNonWindow - what every other set takes. The focus ring lives here: its rules read Current
+  and write the Stroke. So does the edit mode's band: its rule reads Edit and writes the Band.
+- AnyButton - what Button and ToolButton share: the Selected, Hot and Pressed surfaces.
+- AnyIndicator - what the selection and hover indicators share, their on colour included.
+- AnyCallout - the five callouts' surface and band; each callout states its seed alone.
+- DoDont - the two sides of a Do and Don't block.
 
 **The ring's weight is the control's current**, whatever colour the rules gave the stroke. That
 factor thickens the border toward ThemeMetrics::focusedBorder, in paint only, and holds the frame
 out of the surface grow-in. A control drawing an indicator in the ring's place takes that share
 off - see AdjustPaintEvent replaceRing.
 
-A line drawn through `strokeRgbOn`, such as a grid cell's or a divider's, reads the lists and
+A line drawn through `strokeRgbOn`, such as a grid cell's or a divider's, reads the list and
 nothing of the weight.
 
-The default rules:
-
-- current - the strongest ink: the keys' focus, and a container's current item under the mouse
-  too, since it marks where a Shift range grows from
-- hot, and current - the accent, since hot has the window's focus in it
-- edit - the band in the accent
-
-The accent's values are written into these rules, so a theme that moves Accent edits them too.
+The accent's values are written into the ring's rules, so a theme that moves Accent edits them
+too.
 
 ## BakedColors pigmentHsl
 
@@ -228,23 +288,16 @@ theme is baked. InkWell states the tone once for each side of the theme.
 A lightness between the sides is drawn between the two tones, so a yellow that stays yellow on both
 sides stays yellow between them.
 
-## seedPigmentOf
+## BakedElementRules
 
-**A seeded element starts its surface from its pigment's hue** rather than the hue of the surface
-under it, and its stroke and its ink start from that surface. A rule naming a hue overrides the
-seed. A control wearing the element is painted this way, and the Themes app seeds its preview the
-same way.
-
-- FoundText and WarningCallout - Yellow
-- InfoCallout and QuestionCallout - Blue
-- OkCallout and Do - Green
-- ErrorCallout and Dont - Red
-
-Every other element answers none and keeps the hue of the surface under it.
+**An element as the paint path reads it**: its chain resolved into one list, the rules of its own
+set on their own, and its seed. The band resolvers raise a selection over a found band by
+applying the found band's list and then the selection's own rules, so what the two chains share
+is applied once. An element the theme states no set for holds nothing and paints nothing.
 
 ## UiElement FoundText
 
-**The band behind what a search has found**, seeded with Yellow - see seedPigmentOf.
+**The band behind what a search has found**, seeded with Yellow - see ElementRules.
 ControlPaintContext::foundTextRgb resolves it, raised by the inputs of the control drawing it, as
 the selection band is.
 

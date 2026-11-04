@@ -23,12 +23,13 @@ import ClaFi.StdLib;
 
 namespace Themes_App
 {
-    void ElementPage::bind(ColorRules& rules, const ColorRules& defaults,
-        const PaintChannels outputs, const ThemeColors& colors, OnGetListRuleBase ruleBase,
-        OnRulesChanged onRulesChanged)
+    void ElementPage::bind(ThemeRules& themeRules, const std::wstring_view set,
+        const ColorRules* defaults, const PaintChannels outputs, const ThemeColors& colors,
+        OnGetListRuleBase ruleBase, OnRulesChanged onRulesChanged)
     {
-        m_rules = &rules;
-        m_defaults = &defaults;
+        m_themeRules = &themeRules;
+        m_set = set;
+        m_defaults = defaults;
         m_outputs = outputs;
         m_colors = &colors;
         m_ruleBase = std::move(ruleBase);
@@ -43,9 +44,10 @@ namespace Themes_App
         for (Grids::RowContainer* row : m_ruleRows)
             row->deleteSelf();
         m_ruleRows.clear();
-        if (!m_rules)
+        const ColorRules* list = rules();
+        if (!list)
             return;
-        for (std::size_t i = 0ull; i != m_rules->size(); ++i)
+        for (std::size_t i = 0ull; i != list->size(); ++i)
             addRow(i);
         m_resetButton.invalidateState();
         form().invalidateAlign();
@@ -95,21 +97,33 @@ namespace Themes_App
         m_grid.setSelection(held);
     }
 
-    // A new rule is appended, so it applies after the rest of the list.
+    ColorRules* ElementPage::rules() const
+    {
+        if (!m_themeRules)
+            return nullptr;
+        ElementRules* set = m_themeRules->of(m_set);
+        return set ? &set->rules : nullptr;
+    }
+
+    // A new rule is appended, so it applies after the rest of the list. A theme stating no set
+    // of this name gets one, with no base of its own.
     void ElementPage::addRule()
     {
         const PaintChannel output = m_outputs.empty()
             ? PaintChannel::Surface
             : m_outputs.front();
-        m_rules->push_back(ColorRule{ .output = output });
+        if (!rules())
+            m_themeRules->add(ElementRules{ .name = m_set });
+        ColorRules& list = *rules();
+        list.push_back(ColorRule{ .output = output });
         // Appending may move the list, and the hue and value editors hold their rules by address.
         for (Grids::RowContainer* row : m_ruleRows)
             bindEditors(*row);
-        const std::size_t index = m_rules->size() - 1ull;
+        const std::size_t index = list.size() - 1ull;
         addRow(index);
         form().invalidateAlign();
         Text what{};
-        what << L"Add " << ColoredText{ InkWell::accentInk(), L"rule ", m_rules->size() };
+        what << L"Add " << ColoredText{ InkWell::accentInk(), L"rule ", list.size() };
         what << L" to " << ColoredText{ InkWell::accentInk(), m_name };
         // Made on the new rule, whose leading cell the grid is about to select.
         rulesChanged(EditPhase::Settled, what, RuleSelection{
@@ -139,8 +153,9 @@ namespace Themes_App
         RuleSelection at{};
         std::swap(at, m_pendingDelete);
         std::ranges::sort(at.held, std::ranges::greater{});
+        ColorRules& list = *rules();
         for (const std::size_t index : at.held)
-            m_rules->erase(m_rules->begin() + static_cast<std::ptrdiff_t>(index));
+            list.erase(list.begin() + static_cast<std::ptrdiff_t>(index));
         Text rules{};
         if (at.held.size() == 1ull)
             rules << L"rule " << (at.held.front() + 1);
@@ -158,7 +173,10 @@ namespace Themes_App
     void ElementPage::resetRules()
     {
         const RuleSelection at = selection();
-        *m_rules = *m_defaults;
+        if (m_defaults)
+            *rules() = *m_defaults;
+        else
+            rules()->clear();
         rebuild();
         Text what{};
         what << L"Reset " << ColoredText{ InkWell::accentInk(), m_name } << L" to defaults";
@@ -170,8 +188,9 @@ namespace Themes_App
     // places the rules stand at now. The step is made on the rows as they stand.
     void ElementPage::rulesMoved(const ItemsMoveEvent& event)
     {
-        ColorRules rules{};
-        rules.reserve(m_rules->size());
+        ColorRules& list = *rules();
+        ColorRules moved{};
+        moved.reserve(list.size());
         RuleRows rows{};
         rows.reserve(m_ruleRows.size());
         for (ControlPtr& control : m_grid.controls())
@@ -182,10 +201,10 @@ namespace Themes_App
                 });
             if (row == m_ruleRows.end())
                 continue;
-            rules.push_back((*m_rules)[(*row)->tag().value]);
+            moved.push_back(list[(*row)->tag().value]);
             rows.push_back(*row);
         }
-        *m_rules = std::move(rules);
+        list = std::move(moved);
         m_ruleRows = std::move(rows);
         for (std::size_t i = 0ull; i != m_ruleRows.size(); ++i)
         {
@@ -252,9 +271,10 @@ namespace Themes_App
     void ElementPage::bindEditors(Grids::RowContainer& row)
     {
         const std::size_t index = row.tag().value;
-        ColorEffect& effect = (*m_rules)[index].effect;
+        ColorRules& list = *rules();
+        ColorEffect& effect = list[index].effect;
         row.controlAtColumnAs<ApplyToControl>(column(RuleColumn::ApplyTo))
-            .bind(*m_rules, index, m_outputs, m_onCellEdit, ruleStepName(index, L"Apply to"));
+            .bind(list, index, m_outputs, m_onCellEdit, ruleStepName(index, L"Apply to"));
         row.controlAtColumnAs<HueRuleControl>(column(RuleColumn::Hue))
             .bind(effect.hue, *m_colors, m_onCellEdit, true, ruleStepName(index, L"Hue"));
         row.controlAtColumnAs<ValueRuleControl>(column(RuleColumn::Saturation)).bind(
@@ -286,7 +306,7 @@ namespace Themes_App
         if (!m_ruleBase)
             return {};
         return [this, index, channel]() {
-            return m_ruleBase((*m_rules)[index], channel);
+            return m_ruleBase((*rules())[index], channel);
         };
     }
 

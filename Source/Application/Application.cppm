@@ -30,6 +30,13 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
+    // Which themes an application is offered. See Application#appparams
+    export enum class ThemesOffered
+    {
+        StatingEveryElement, // those stating a set for every element the application names
+        Every                // every theme, whatever it states - what a theme editor takes
+    };
+
     export struct AppParams
     {
         Text name;
@@ -40,6 +47,11 @@ namespace ClaFi
         UpdateSource updates{}; // where its Information page looks for a newer release
         // The sheet a text is built over where none is given; none is the framework's.
         const StyleSheet* styleSheet{ nullptr };
+        // Its own elements, by name - the i-th worn as appElement(i). See Application#appparams
+        AppElementNames elements{};
+        // A theme file's text stating its own sets, which join the built-in theme at start.
+        std::wstring_view builtInTheme{};
+        ThemesOffered themesOffered{ ThemesOffered::StatingEveryElement };
     };
 
     export class ApplicationBase
@@ -89,6 +101,9 @@ namespace ClaFi
         void finalize();
     private:
         std::filesystem::path& initializeConfigPath(const AppParams&);
+        // The elements a theme has to state to be offered - none, for an application taking every
+        // theme.
+        [[nodiscard]] static AppElementNames requiredElementsOf(const AppParams&);
         // Tells of a newer release at start, where Check automatically is on.
         void connectUpdateNotice();
         void postUpdateNotice(); // puts the newer release up as a notice, where there is one
@@ -107,7 +122,7 @@ namespace ClaFi
         AppContext m_context;
         // Built over the path above, which initializeConfigPath has filled in by the time the
         // context is constructed.
-        ThemesManager m_themesManager{ m_themesPath };
+        ThemesManager m_themesManager;
         NoticeHandle m_updateNotice{};
         // Whether the check made at start is still to answer - its answer alone is told.
         bool m_startAnswerAwaited{ false };
@@ -161,6 +176,7 @@ namespace ClaFi
             appParams.version,
             appParams.site,
             appParams.updates,
+            appParams.elements,
             initializeConfigPath(appParams),
             createBackend,
             Section{
@@ -175,16 +191,26 @@ namespace ClaFi
                 createDiagnosticLogConfigSchema(),
                 std::forward<Section>(schema)
             }
-        }
+        },
+        m_themesManager{ m_themesPath, requiredElementsOf(appParams) }
     {
         // Ahead of the config, which may hold a text naming one of them.
         StyleSheet::setApplicationSheet(appParams.styleSheet);
+        // Ahead of the first bake, which initialize makes.
+        addBuiltInSets(appParams.builtInTheme);
     }
 
     // The sheet the application stated may be gone already, and nothing reads through it now.
     ApplicationBase::~ApplicationBase()
     {
         StyleSheet::setApplicationSheet(nullptr);
+    }
+
+    AppElementNames ApplicationBase::requiredElementsOf(const AppParams& appParams)
+    {
+        if (appParams.themesOffered == ThemesOffered::Every)
+            return {};
+        return appParams.elements;
     }
 
     void ApplicationBase::saveConfig(bool evenIfNotExists)

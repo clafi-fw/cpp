@@ -370,7 +370,7 @@ namespace ClaFi::Controls
         //
         // The border a button states at rest, which the slot has always been drawn with. The rule
         // stands in the baked set the pass carries, which outlives the paint.
-        const BakedColorRules& buttonRules = event.bakedColors().rules.of(UiElement::Button);
+        const BakedColorRules& buttonRules = event.bakedColors().rules.of(UiElement::Button).rules;
         const auto restingStroke = std::ranges::find_if(buttonRules,
             [](const BakedColorRule& rule) {
                 return rule.output == PaintChannel::Stroke and rule.atRest();

@@ -204,8 +204,8 @@ namespace ClaFi
             // over with this control's own surface before the border is resolved.
             const Hsl standsOn{ inheritedSurfaceHsl() };
             Hsl surface{ standsOn };
-            const std::optional<Pigment> seed = m_element
-                ? seedPigmentOf(*m_element)
+            const OptionalPigment seed = m_element
+                ? bakedColors().rules.of(*m_element).seed
                 : std::nullopt;
             if (seed)
                 surface.hue = bakedColors().pigmentHues[static_cast<std::size_t>(*seed)];
@@ -640,26 +640,16 @@ namespace ClaFi
         return rule.inputs.anyLevelIn(levels) * rule.andInputs.allLevelIn(levels);
     }
 
-    // The control's own rules, the element's list, then the window's or the non-window's, then
-    // the shared one. A form's root control is a window whichever element it wears, and every
-    // other control is a non-window, so one of the two lists reaches a control with no element
-    // at all.
+    // The control's own rules, then the element's - its whole chain, resolved as the theme was
+    // baked. A control wearing no element takes its own rules alone.
     float PaintEvent::applyColorRules(const PaintChannel channel, Hsl& color, float* namedHue) const
     {
-        const BakedRules& rules = bakedColors().rules;
         float changed = applyColorRules(m_ownRules, channel, color, namedHue);
         if (m_element)
         {
             changed = StateFactors::compose(changed,
-                applyColorRules(rules.of(*m_element), channel, color, namedHue));
-        }
-        changed = StateFactors::compose(changed,
-            applyColorRules(m_parentEvent ? rules.anyNonWindow : rules.anyWindow,
-                channel, color, namedHue));
-        if (m_element)
-        {
-            changed = StateFactors::compose(changed,
-                applyColorRules(rules.shared, channel, color, namedHue));
+                applyColorRules(bakedColors().rules.of(*m_element).rules, channel, color,
+                    namedHue));
         }
         return changed;
     }

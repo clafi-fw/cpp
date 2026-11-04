@@ -214,7 +214,10 @@ namespace Themes_App
         // Held rather than baked where it is read: the panel paints from a reference, and a set
         // baked into the call would be gone before the paint reached it.
         if (m_previewTheme)
-            m_previewColors = bake(m_previewTheme->colors, PreviewState::s_colorMode);
+        {
+            m_previewColors = bake(m_previewTheme->colors, PreviewState::s_colorMode,
+                this->appContext().appElements());
+        }
 
         // The tab carries the same theme in its icon.
         this->tab().invalidate();

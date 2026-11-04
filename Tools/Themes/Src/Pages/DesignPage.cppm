@@ -28,21 +28,21 @@ namespace Themes_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // The colour a rule of an element's list, or of a shared list, is applied to.
+    // The colour a rule of a set is applied to, the set named as the theme names it.
     export using OnGetElementRuleBase =
-        std::function<RuleBase(OptionalUiElement, const ColorRule&, RuleChannel)>;
+        std::function<RuleBase(std::wstring_view set, const ColorRule&, RuleChannel)>;
 
-    // A list of rules no one element owns, and what its tree item and its page go by.
-    struct SharedRules
+    // A set no framework element names - a base the sets of a kind stand over, or one of this
+    // application's own - and what its tree item and its page go by.
+    struct NamedSet
     {
         std::wstring_view name{};
         std::wstring_view token{};
-        ColorRules ThemeRules::* rules{ nullptr };
-        PaintChannels outputs{}; // the channels the list's rules may write
+        PaintChannels outputs{}; // the channels the set's rules may write
         PreviewPage preview{ PreviewPage::Overview };
     };
 
-    // A page a branch of the tree lists - rules, a shared list or sizes - and its preview page.
+    // A page a branch of the tree lists - a set of rules or a set of sizes - and its preview page.
     struct CategoryEntry
     {
         // Not explicit, so a branch lists its entries as braced pairs.
@@ -52,10 +52,10 @@ namespace Themes_App
             preview{ page }
         {
         }
-        // The list names its own preview page.
-        constexpr CategoryEntry(const SharedRules& value)
+        // The set names its own preview page.
+        constexpr CategoryEntry(const NamedSet& value)
             :
-            shared{ &value },
+            named{ &value },
             preview{ value.preview }
         {
         }
@@ -66,7 +66,7 @@ namespace Themes_App
         {
         }
         OptionalUiElement element{};
-        const SharedRules* shared{};
+        const NamedSet* named{};
         OptionalMetricsSet sizes{};
         PreviewPage preview{ PreviewPage::Overview };
     };
@@ -102,8 +102,7 @@ namespace Themes_App
         template<typename... Args>
         explicit DesignPage(const CreateParams&, Args&&...);
     public:
-        // The token of the page that shows - an element's, a shared list's or a category's - or
-        // nothing yet.
+        // The token of the page that shows - a set's or a category's - or nothing yet.
         [[nodiscard]] std::wstring_view pickedPage() const;
         // What the preview shows for the node picked - the Overview while none is.
         [[nodiscard]] NodePreview pickedPreview() const;
@@ -116,7 +115,7 @@ namespace Themes_App
         EventConnection onPagePick(F&& callback);
         // The Palette page's body, which the theme page fills.
         [[nodiscard]] StackPanel& paletteView() { return m_paletteView; }
-        // Hands every page its list of the theme's rules, its ramps' base and what to call.
+        // Hands every page its set of the theme's rules, its ramps' base and what to call.
         void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
         // Hands every sizes page the theme's sizes and what to call after an edit.
         void bindSizes(ThemeMetrics&, const OnSizesChanged&);
@@ -133,17 +132,16 @@ namespace Themes_App
         // A row of the tree and the page it opens.
         struct TreeEntry
         {
-            OptionalUiElement element{}; // an element's own list, nothing for every other row
-            const SharedRules* shared{}; // a list no one element owns, null for every other row
+            OptionalUiElement element{}; // an element's set, nothing for every other row
+            const NamedSet* named{};     // a set no element names, null for every other row
             const TreeRoot* root{};      // a root's row, null for every other row
             const Category* category{};  // a category's node, null for every other row
             OptionalMetricsSet sizes{};  // a set of sizes, none for every other row
             NodePreview preview{};       // a folder's is its members', where they agree
             Control* item{};             // the row: an item, or a node's header
             Control* page{};
-            ElementPage* rules{};        // the page, where it shows a list of rules
+            ElementPage* rules{};        // the page, where it shows a set of rules
             SizesPage* sizesPage{};      // the page, where it shows a set of sizes
-            const ColorRules* list{};    // the rules that page shows, from bind on
             IndexRows indexRows{};       // the rows of a root's or a category's page
         };
         using TreeEntries = std::vector<TreeEntry>;
@@ -168,15 +166,20 @@ namespace Themes_App
         [[nodiscard]] static TreeEntry entryOf(const CategoryEntry&);
         // Writes a tree row's text: its kind's icon, its name and its kind word.
         static void writeRowText(Text&, const TreeEntry&);
-        [[nodiscard]] static Text indexRowText(const TreeEntry&);
+        [[nodiscard]] Text indexRowText(const TreeEntry&) const;
         [[nodiscard]] static PageKind kindOf(const TreeEntry&);
         [[nodiscard]] static std::wstring_view nameOf(const TreeEntry&);
         [[nodiscard]] static std::wstring_view tokenOf(const TreeEntry&);
+        // The set a row's page shows, as the theme names it - empty for every other row.
+        [[nodiscard]] static std::wstring_view setOf(const TreeEntry&);
+        // The channels a set's rules may write - every channel where nothing says otherwise.
+        [[nodiscard]] static PaintChannels outputsOf(const TreeEntry&);
     private:
         static constexpr std::wstring_view k_paletteTitle{ L"Palette" };
         static constexpr float k_rootIconSize = 16.0f; // beside a root's SubHeading words
 
         TreeEntries m_entries{}; // an item's tag is its place here
+        ThemeRules* m_rules{}; // the theme's sets, from bind on
         const ThemeRules m_defaultRules{ ThemeColors{}.rules }; // what each page's reset puts back
         const ThemeMetrics m_defaultMetrics{}; // what each sizes page's reset puts back
 

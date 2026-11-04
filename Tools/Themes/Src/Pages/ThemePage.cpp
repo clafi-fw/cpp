@@ -287,12 +287,12 @@ namespace Themes_App
         return m_pigmentGrid.columnByTag(Tag{ tag });
     }
 
-    // On the surface the pigment's element stands on.
+    // On the surface a section stands on - the surface an accent or a spot is drawn over.
     RuleBase ThemePage::pigmentRuleBase(const UiElement element, const RuleChannel channel)
     {
         const UiElementDescriptor& descriptor = uiElementOf(element);
         return ruleBaseOn(
-            elementColor(descriptor.base),
+            elementColor(uiElementOf(UiElement::Section).token),
             editColors().*descriptor.effect,
             channel,
             previewColorMode(),
@@ -515,37 +515,37 @@ namespace Themes_App
         return ThemesManager::isReservedName(stem);
     }
 
-    Hsl ThemePage::elementColor(OptionalUiElement element)
+    Hsl ThemePage::elementColor(const std::wstring_view set)
     {
-        return restingSurface(editColors(), element, previewColorMode());
+        return restingSurface(editColors(), set, previewColorMode());
     }
 
-    Hsl ThemePage::elementTextColor(OptionalUiElement element)
+    Hsl ThemePage::elementTextColor(const std::wstring_view set)
     {
-        return restingInk(editColors(), element, previewColorMode());
+        return restingInk(editColors(), set, previewColorMode());
     }
 
-    // The seed BakedColors::windowShadow takes: a stroke starts at the element's surface and its
+    // The seed BakedColors::windowShadow takes: a stroke starts at the set's surface and its
     // resting stroke rules move it, and a shadow rule naming no hue keeps the stroke's.
-    Hsl ThemePage::bareShadow(OptionalUiElement element)
+    Hsl ThemePage::bareShadow(const std::wstring_view set)
     {
-        const Hsl stroke = restingStroke(editColors(), element, previewColorMode());
+        const Hsl stroke = restingStroke(editColors(), set, previewColorMode());
         return { stroke.hue, 0.0f, 0.0f };
     }
 
-    // What the element carries at rest, on the channel the rule writes.
-    RuleBase ThemePage::elementRuleBase(const OptionalUiElement element, const ColorRule& rule,
+    // What the set carries at rest, on the channel the rule writes.
+    RuleBase ThemePage::elementRuleBase(const std::wstring_view set, const ColorRule& rule,
         const RuleChannel channel)
     {
         const bool shadow = rule.output == PaintChannel::Shadow;
         const ColorMode mode = shadow ? ColorMode::Dark : previewColorMode();
         Hsl result{};
         if (shadow)
-            result = bareShadow(element);
+            result = bareShadow(set);
         else if (rule.output == PaintChannel::Text)
-            result = elementTextColor(element);
+            result = elementTextColor(set);
         else
-            result = elementColor(element);
+            result = elementColor(set);
 
         const float luminosityFloor = shadow ? k_noFloor : editColors().darkModeFloor;
         return ruleBaseOn(result, rule.effect, channel, mode, luminosityFloor);
@@ -626,7 +626,11 @@ namespace Themes_App
         if (!confirmWritingToSource(button))
             return;
 
-        switch (writeBuiltInColors(m_builtInColorsFile, editColors()))
+        // The application's own sets are its resource's, not the framework's.
+        ThemeColors frameworkColors = editColors();
+        for (const std::wstring_view name : k_appElements)
+            frameworkColors.rules.remove(name);
+        switch (writeBuiltInColors(m_builtInColorsFile, frameworkColors))
         {
         case SourceWrite::Written:
             ContextMessage::show(
