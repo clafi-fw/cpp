@@ -120,13 +120,15 @@ namespace ClaFi::Graphics
         const Reach reach = this->reach();
         // Along an edge the shadow is the same from the moment the nearest point of the
         // silhouette is straight across, which is past the arc and past wherever the offset and
-        // the spread have carried the silhouette; the blur is the ramp's own length inward. Every
-        // corner tile is as large as the roundest corner needs.
+        // the spread have carried the silhouette. That holds at every depth whatever the blur:
+        // the silhouette is solid and its ramp runs outward, so a pixel's shadow follows its
+        // distance to the silhouette alone. Every corner tile is as large as the roundest corner
+        // needs.
         const CornerRadii& radii = m_design.radii;
         const float radius = std::max({ radii.topLeft, radii.topRight, radii.bottomRight,
             radii.bottomLeft });
         const float carried = std::max(std::abs(shadow.offset.x), std::abs(shadow.offset.y));
-        const float corner = radius + shadow.blur + shadow.spread + carried;
+        const float corner = radius + std::abs(shadow.spread) + carried;
         return {
             static_cast<int>(std::ceil(reach.left)),
             static_cast<int>(std::ceil(reach.top)),

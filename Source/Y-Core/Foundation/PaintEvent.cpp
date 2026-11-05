@@ -524,8 +524,8 @@ namespace ClaFi
             event->m_pinnedTop = std::max(event->m_pinnedTop, value);
     }
 
-    // The shadow first and the backdrop over it: a shadow is measured from the shape's edge and
-    // reaches inward as much as out, and the backdrop is what covers the half that falls inside.
+    // The shadow first and the backdrop over it, which covers whatever of the shadow falls under
+    // the shape.
     // Both are this control's, the one holding the header: its surface and its muted ink. The
     // shadow is baked at full strength by one of the form's painters and drawn at the strength
     // the travel gives, so a lift costs one bake rather than one for each step of it.

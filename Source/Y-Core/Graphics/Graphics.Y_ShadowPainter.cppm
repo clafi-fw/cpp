@@ -54,8 +54,7 @@ namespace ClaFi::Graphics
             Bitmap tail{};
         };
         using Strips = std::unordered_map<int, Strip>;   // by the short side's length in pixels
-        // The reach on each side in whole pixels, and how far a corner tile reaches into the
-        // rectangle: past the arc, and past the ramp's inward half.
+        // The reach on each side and how far a corner tile reaches into the rectangle, in pixels.
         struct Extent
         {
             int left{ 0 };

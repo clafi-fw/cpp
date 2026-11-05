@@ -29,6 +29,15 @@ against 2 ms for a 477 px tooltip drawn from tiles. Measured with logWindowSteps
 tooltip flash - the fill stood on the chain between the window's move and its shadow. The strips
 by short side came out of that: one bake per distinct height, then tile blits.
 
+2026-11-05: the corner reach carried the blur as well, on the reading that the ramp straddles the
+silhouette's edge. castShadow draws the silhouette solid with the ramp running outward, so a
+pixel's shadow follows its distance to the silhouette and the blur takes no part in where an edge
+turns straight. Measured on a Themes app screenshot at 250%: above a dialog's top edge the shadow
+was the same along the edge from 5-7 units past the window's left edge, against a reach of 38.
+Dropping it took a primary window's corner reach from 38 units to 14 and a secondary window's
+from 21 to 9, and the depth the tiles paint under the content with it. The spread counts as a
+distance: a negative one draws the silhouette in, and the arc ends that much further along.
+
 ## GlyphCompositor
 
 Accumulating every glyph into one mask before compositing is not an optimisation: N
