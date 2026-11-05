@@ -677,7 +677,13 @@ namespace Themes_App
             .setNames = [this]() {
                 return setNames();
             },
-            .onRulesChanged = m_onRulesChanged,
+            .onRulesChanged = [this, set](const EditPhase phase, const Text& what,
+                const RuleSelection& at) {
+                if (phase == EditPhase::Settled)
+                    rebuildPagesBasedOn(set);
+                if (m_onRulesChanged)
+                    m_onRulesChanged(phase, what, at);
+            },
             .onSetsChanged = [this]() {
                 rebuildRules();
             }
@@ -687,6 +693,25 @@ namespace Themes_App
                 deleteSet(index);
             };
         entry.rules->bind(std::move(binding));
+    }
+
+    void DesignPage::rebuildPagesBasedOn(const std::wstring_view set)
+    {
+        for (const TreeEntry& entry : m_entries)
+        {
+            if (!entry.rules)
+                continue;
+            const ElementChain chain = m_rules->chainOf(setOf(entry));
+            const bool basedOnSet = std::ranges::any_of(chain | std::views::drop(1),
+                [set](const ElementRules* base) {
+                    return base->name == set;
+                });
+            if (!basedOnSet)
+                continue;
+            const RuleSelection at = entry.rules->selection();
+            entry.rules->rebuild();
+            entry.rules->select(at, TakeFocus::No);
+        }
     }
 
     // **The rows of the theme's own sets are built again whenever the names change.** They stand

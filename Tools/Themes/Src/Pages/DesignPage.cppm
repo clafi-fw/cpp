@@ -169,6 +169,8 @@ namespace Themes_App
         // Writes each row of an index page again, with the rule count as it stands.
         void refreshIndex(const TreeEntry&);
         void bindPage(std::size_t index); // hands a page of rules its set and what to call
+        // Builds again every page the set is a base of: their rows hold its rules by address.
+        void rebuildPagesBasedOn(std::wstring_view set);
         // Lists the theme's own sets under their category as they stand, a row and a page each.
         void syncOwnSets();
         // The names of the sets the theme states that no row of the framework's shows.
