@@ -556,9 +556,9 @@ namespace Themes_App
     {
         base.hue = rule.hue.actualHue(editColors(), base.hue);
         if (channel != RuleChannel::Saturation)
-            rule.saturation.applyTo(base.saturation, 1.0f, ColorMode::Dark, k_noFloor);
+            rule.saturation.applyToSaturation(base.saturation, 1.0f);
         if (channel != RuleChannel::Elevation)
-            rule.elevation.applyTo(base.luminosity, 1.0f, mode, luminosityFloor);
+            rule.elevation.applyToLuminosity(base.luminosity, 1.0f, mode, luminosityFloor);
         return { base, mode, luminosityFloor };
     }
 

@@ -64,9 +64,12 @@ namespace ClaFi
         void setOperation(ColorRuleOp);
         void setOperationAndValue(ColorRuleOp, float value);
 
-        float applyTo(float& field, float factor, ColorMode, float luminosityFloor) const;
+        float applyToSaturation(float& saturation, float factor) const;
+        float applyToLuminosity(float& luminosity, float factor, ColorMode,
+            float luminosityFloor) const;
         [[nodiscard]] bool operator==(const ColorRuleValue&) const = default;
     private:
+        [[nodiscard]] std::optional<float> movedOnAxis(float axisValue, float factor) const;
         static constexpr float toNormalizedValue(ColorRuleOp, float);
         static constexpr float fromNormalizedValue(ColorRuleOp, float);
     private:
@@ -413,6 +416,26 @@ namespace ClaFi
     // What a channel no floor reaches states, which is every saturation.
     export constexpr float k_noFloor = 0.0f;
 
+    // The share of its mode's luminosity range that elevation 0.5 lands on. See AppTheme
+    export constexpr float k_luminosityShareAtHalfElevation = 0.62f;
+
+    // The share of the luminosity range an elevation turned toward the mode lands on.
+    [[nodiscard]] constexpr float luminosityShareOf(float orientedElevation)
+    {
+        const float weightBelow = k_luminosityShareAtHalfElevation * orientedElevation;
+        const float weightAbove = (1.0f - k_luminosityShareAtHalfElevation)
+            * (1.0f - orientedElevation);
+        return weightBelow / (weightBelow + weightAbove);
+    }
+
+    // The inverse of luminosityShareOf - the same weighting with the two weights swapped.
+    [[nodiscard]] constexpr float orientedElevationOf(float luminosityShare)
+    {
+        const float weightBelow = (1.0f - k_luminosityShareAtHalfElevation) * luminosityShare;
+        const float weightAbove = k_luminosityShareAtHalfElevation * (1.0f - luminosityShare);
+        return weightBelow / (weightBelow + weightAbove);
+    }
+
     // Where a colour stands on the luminosity axis, oriented so that higher is always further from
     // the page and closer to the eye: 0 is the mode's floor and 1 its ceiling. A coordinate rather
     // than a relation - two elements at 0.6 stand at the same luminosity whatever each is drawn on.
@@ -421,15 +444,19 @@ namespace ClaFi
     // carried the theme across itself rises the other way - see PaintEvent::lightness. A channel
     // with no orientation is read at k_darkLightness.
     //
+    // Between its ends the axis bends toward white - elevation 0.5 lands
+    // k_luminosityShareAtHalfElevation of the way up the luminosity range.
+    //
     // At the dark end a surface's axis starts at its floor rather than at black, so a colour below
     // the floor has no elevation and clamps to the end it lies past. See AppTheme
     export [[nodiscard]] constexpr float elevationOf(float luminosity, Lightness lightness,
         float luminosityFloor)
     {
         const float lift = luminosityFloor * (1.0f - lightness);
-        const float unlifted = (luminosity - lift) / (1.0f - lift);
-        const float oriented = unlifted + lightness * (1.0f - 2.0f * unlifted);
-        return std::clamp(oriented, 0.0f, 1.0f);
+        const float luminosityShare = (luminosity - lift) / (1.0f - lift);
+        const float orientedElevation = orientedElevationOf(luminosityShare);
+        const float elevation = orientedElevation + lightness * (1.0f - 2.0f * orientedElevation);
+        return std::clamp(elevation, 0.0f, 1.0f);
     }
 
     export [[nodiscard]] constexpr float elevationOf(float luminosity, Lightness lightness)
@@ -452,9 +479,9 @@ namespace ClaFi
     export [[nodiscard]] constexpr float luminosityOf(float elevation, Lightness lightness,
         float luminosityFloor)
     {
-        const float oriented = elevation + lightness * (1.0f - 2.0f * elevation);
+        const float orientedElevation = elevation + lightness * (1.0f - 2.0f * elevation);
         const float lift = luminosityFloor * (1.0f - lightness);
-        return lift + oriented * (1.0f - lift);
+        return lift + luminosityShareOf(orientedElevation) * (1.0f - lift);
     }
 
     export [[nodiscard]] constexpr float luminosityOf(float elevation, Lightness lightness)
@@ -503,14 +530,40 @@ namespace ClaFi
         m_normalizedValue = toNormalizedValue(m_operation, value);
     }
 
-    // Every operation states an elevation or a move in elevations, so the field crosses to that
-    // axis, the operation happens there, and the result crosses back. The floor is the theme's,
-    // and k_noFloor for a saturation.
-    float ColorRuleValue::applyTo(float& field, float factor, ColorMode mode,
+    // A saturation's operations state saturations, so they run on the value itself.
+    float ColorRuleValue::applyToSaturation(float& saturation, float factor) const
+    {
+        const float clampedSaturation = std::clamp(saturation, 0.0f, 1.0f);
+        const std::optional<float> newSaturation = movedOnAxis(clampedSaturation, factor);
+        if (not newSaturation or saturation == *newSaturation)
+            return 0.0f;
+
+        saturation = *newSaturation;
+        return factor;
+    }
+
+    // Every operation states an elevation or a move in elevations, so the luminosity crosses to
+    // that axis, the operation happens there, and the result crosses back.
+    float ColorRuleValue::applyToLuminosity(float& luminosity, float factor, ColorMode mode,
         float luminosityFloor) const
     {
-        const float elevation = elevationOf(field, mode, luminosityFloor);
-        float newElevation = elevation;
+        const float elevation = elevationOf(luminosity, mode, luminosityFloor);
+        const std::optional<float> newElevation = movedOnAxis(elevation, factor);
+        if (not newElevation)
+            return 0.0f;
+
+        const float newLuminosity = luminosityOf(*newElevation, mode, luminosityFloor);
+        if (luminosity == newLuminosity)
+            return 0.0f; // no change due to boundary clamping or value matching
+
+        luminosity = newLuminosity;
+        return factor;
+    }
+
+    // Where the operation takes a value on its axis, or none when it moves nothing.
+    std::optional<float> ColorRuleValue::movedOnAxis(float axisValue, float factor) const
+    {
+        float newValue = axisValue;
 
         switch (m_operation)
         {
@@ -518,20 +571,20 @@ namespace ClaFi
         {
             const float addedValue = value() * factor;
             if (addedValue == 0.0f)
-                return 0.0f;
+                return std::nullopt;
 
-            newElevation = elevation + addedValue;
+            newValue = axisValue + addedValue;
             break;
         }
 
         case ColorRuleOp::Set:
         {
-            // Set states an elevation outright, so the crossing back runs whatever the
+            // Set states a place on the axis outright, so the crossing back runs whatever the
             // field reads as here. An elevation read from a colour below the floor is the
             // end it lies past rather than a place it sits, so taking a clamped 0 that meets
             // the target for a colour already at it would leave that colour at the pole.
             const float targetValue = value();
-            newElevation = elevation + (targetValue - elevation) * factor;
+            newValue = axisValue + (targetValue - axisValue) * factor;
             break;
         }
 
@@ -540,24 +593,18 @@ namespace ClaFi
             const float multiplier = value();
 
             if (factor <= 0.0f || multiplier == 1.0f)
-                return 0.0f;
+                return std::nullopt;
 
-            // Linear interpolation: elevation * multiplier when factor is 1.0f
-            newElevation = elevation * multiplier * factor + elevation * (1.0f - factor);
+            // Linear interpolation: axisValue * multiplier when factor is 1.0f
+            newValue = axisValue * multiplier * factor + axisValue * (1.0f - factor);
             break;
         }
 
         case ColorRuleOp::NoChange:
-            return 0.0f;
+            return std::nullopt;
         }
 
-        const float newValue = luminosityOf(std::clamp(newElevation, 0.0f, 1.0f), mode,
-            luminosityFloor);
-        if (field == newValue)
-            return 0.0f; // No change due to boundary clamping or value matching
-
-        field = newValue;
-        return factor;
+        return std::clamp(newValue, 0.0f, 1.0f);
     }
 
     constexpr float ColorRuleValue::toNormalizedValue(ColorRuleOp action, float value)
@@ -686,9 +733,8 @@ namespace ClaFi
             }
         }
 
-        float appliedSatFactor = saturation.applyTo(hsl.saturation, factor, ColorMode::Dark,
-            k_noFloor);
-        float appliedLumFactor = elevation.applyTo(hsl.luminosity, factor, mode,
+        float appliedSatFactor = saturation.applyToSaturation(hsl.saturation, factor);
+        float appliedLumFactor = elevation.applyToLuminosity(hsl.luminosity, factor, mode,
             themeColors.darkModeFloor);
 
         if (doMixHue)

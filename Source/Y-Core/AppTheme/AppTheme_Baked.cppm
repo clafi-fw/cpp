@@ -14,7 +14,9 @@ namespace ClaFi
     public:
         [[nodiscard]] bool changesNothing() const;
         void clear();
-        float applyTo(float& field, float factor, Lightness) const;
+        [[nodiscard]] float movedOnAxis(float axisValue, float factor) const;
+        float applyToSaturation(float& saturation, float factor) const;
+        float applyToLuminosity(float& luminosity, float factor, Lightness) const;
         [[nodiscard]] bool operator==(const BakedValue&) const = default;
     public:
         float offset{};
@@ -192,32 +194,52 @@ namespace ClaFi
         setPull = 0.0f;
     }
 
-    // The field crosses to the elevation axis once, every operation holding a weight runs there in
-    // turn, and the result crosses back. A set left at its identity is skipped, so a rule standing
-    // at rest - where one operation holds the whole weight - costs the one crossing it always did.
-    float BakedValue::applyTo(float& field, float factor, Lightness lightness) const
+    // Every operation holding a weight runs in turn, and one left at its identity is skipped.
+    float BakedValue::movedOnAxis(float axisValue, float factor) const
+    {
+        float newValue = axisValue;
+
+        if (multiplier != 1.0f)
+            newValue = newValue * multiplier * factor + newValue * (1.0f - factor);
+
+        if (offset != 0.0f)
+            newValue = newValue + offset * factor;
+
+        if (setPull > 0.0f)
+            newValue = newValue + (setTarget - newValue) * setPull * factor;
+
+        return std::clamp(newValue, 0.0f, 1.0f);
+    }
+
+    // A saturation's operations state saturations, so they run on the value itself.
+    float BakedValue::applyToSaturation(float& saturation, float factor) const
     {
         if (factor <= 0.0f or changesNothing())
             return 0.0f;
 
-        const float elevation = elevationOf(field, lightness, luminosityFloor);
-        float newElevation = elevation;
-
-        if (multiplier != 1.0f)
-            newElevation = newElevation * multiplier * factor + newElevation * (1.0f - factor);
-
-        if (offset != 0.0f)
-            newElevation = newElevation + offset * factor;
-
-        if (setPull > 0.0f)
-            newElevation = newElevation + (setTarget - newElevation) * setPull * factor;
-
-        const float newValue = luminosityOf(std::clamp(newElevation, 0.0f, 1.0f), lightness,
-            luminosityFloor);
-        if (field == newValue)
+        const float clampedSaturation = std::clamp(saturation, 0.0f, 1.0f);
+        const float newSaturation = movedOnAxis(clampedSaturation, factor);
+        if (saturation == newSaturation)
             return 0.0f;
 
-        field = newValue;
+        saturation = newSaturation;
+        return factor;
+    }
+
+    // The luminosity crosses to the elevation axis once and back, so a rule standing at rest -
+    // where one operation holds the whole weight - pays for one crossing.
+    float BakedValue::applyToLuminosity(float& luminosity, float factor, Lightness lightness) const
+    {
+        if (factor <= 0.0f or changesNothing())
+            return 0.0f;
+
+        const float elevation = elevationOf(luminosity, lightness, luminosityFloor);
+        const float newLuminosity = luminosityOf(movedOnAxis(elevation, factor), lightness,
+            luminosityFloor);
+        if (luminosity == newLuminosity)
+            return 0.0f;
+
+        luminosity = newLuminosity;
         return factor;
     }
 
@@ -275,8 +297,9 @@ namespace ClaFi
                 hsl.hue = hue.hue;
         }
 
-        float appliedSaturationFactor = saturation.applyTo(hsl.saturation, factor, k_darkLightness);
-        float appliedElevationFactor = elevation.applyTo(hsl.luminosity, factor, lightness);
+        float appliedSaturationFactor = saturation.applyToSaturation(hsl.saturation, factor);
+        float appliedElevationFactor = elevation.applyToLuminosity(hsl.luminosity, factor,
+            lightness);
 
         if (doMixHue)
         {

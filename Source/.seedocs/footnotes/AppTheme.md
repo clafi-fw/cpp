@@ -134,11 +134,32 @@ knows better states its own through AdjustPaintEvent::setLightness.
 **Contrast closes as lightness nears 0.5.** At 0.5 every elevation lands on one luminosity, so a
 crossing between the modes washes through a flat mid-tone.
 
+## k_luminosityShareAtHalfElevation
+
+**The elevation axis bends toward white between its ends.** Elevation 0 and 1 land where they would
+on a straight axis, and elevation 0.5 lands this share of the way up the luminosity range - from
+the floor in dark mode, from black in light mode. The middle of the axis is lighter in both modes.
+
+With `m` this share and `e` the elevation turned toward the mode - 0 at the darker end of the
+range - the share of the range an elevation lands on is
+
+    m e / (m e + (1 - m) (1 - e))
+
+`elevationOf` is the same weighting with `m` and `1 - m` swapped, so the two stay exact inverses.
+
+**A step near the darker end grows and one near white shrinks.** An offset moves the luminosity
+`m / (1 - m)` times its size at the darker end and `(1 - m) / m` times at white. On a dark page the
+first steps above it spread apart; on a light page they draw together.
+
+**Everything a theme states as an elevation lands on the bent axis** - Offsets, Scales and Sets
+alike, so an accent set to an elevation is lighter in both modes. Saturations keep a straight axis.
+
 ## ThemeColors darkModeFloor
 
 **At the dark end the elevation axis runs from the floor to white.** An elevation's luminosity
-becomes `floor + (1 - floor) * luminosity`. `elevationOf` stays the inverse, and each step a theme
-states shrinks by `1 - floor`.
+becomes `floor + (1 - floor) * share`, the share being the one the bent axis gives - see
+k_luminosityShareAtHalfElevation. `elevationOf` stays the inverse, and each step a theme states
+shrinks by `1 - floor`.
 
 **The floor is taken by `1 - lightness`.** Light mode keeps its axis, and a crossing between the
 modes fades the floor.
@@ -170,7 +191,8 @@ per channel. A baked channel holds all three at once:
 BakedHue is the same pair for a hue: `hue` with `setPull`. A pigment resolves to its hue as the
 theme is baked.
 
-**`applyTo` runs Scale, then Offset, then Set**, crossing to the elevation axis once and back.
+**`movedOnAxis` runs Scale, then Offset, then Set.** `applyToLuminosity` crosses to the elevation
+axis once and back around it, and `applyToSaturation` runs it on the saturation itself.
 
 ## blend
 

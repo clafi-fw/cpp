@@ -198,9 +198,9 @@ namespace Themes_App
         probe.setNormalizedValue(position);
         Hsl result = base;
         if (m_channel == RuleChannel::Saturation)
-            probe.applyTo(result.saturation, 1.0f, ColorMode::Dark, k_noFloor);
+            probe.applyToSaturation(result.saturation, 1.0f);
         else
-            probe.applyTo(result.luminosity, 1.0f, colorMode, luminosityFloor);
+            probe.applyToLuminosity(result.luminosity, 1.0f, colorMode, luminosityFloor);
         return result.toColor();
     }
 

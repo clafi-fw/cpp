@@ -21,6 +21,23 @@ path from an elevation that rises with luminosity to one that falls with it has 
 that are one to one, and 0.5 is where this family does. A crossing between two modes is a wash
 through a flat mid-tone, and it is chosen knowing that.
 
+## k_luminosityShareAtHalfElevation
+
+2026-11-05. Oj asked for the elevation to luminosity mapping to be lighter in the middle and the
+same at the ends. Two shapes were mocked up, each at a middle lift of 0.06 and 0.12, and he picked
+the bend at 0.12, with the strength a constant rather than a theme field:
+
+- The bend, `m e / (m e + (1 - m) (1 - e))`. Its inverse is the same form, so elevationOf stays
+  one division and `constexpr`. The cost is the slope at the ends - steeper at the darker end,
+  flatter at white - so the small offsets the built-in theme states near the page change.
+- The bulge, `e + k (4 e (1 - e))^2`, kept a slope of 1 at both ends and so left those offsets as
+  tuned, but had no closed-form inverse.
+
+**Saturation had to leave the elevation crossing.** Saturation channels ran through `elevationOf`
+and `luminosityOf` at dark lightness with no floor, where the straight axis made the crossing a
+pass-through. A bent axis would have bent every saturation, so ColorRuleValue and BakedValue split
+`applyTo` into `applyToSaturation` and `applyToLuminosity` over a shared `movedOnAxis`.
+
 ## ThemeColors darkModeFloor
 
 `bake` puts the floor into each elevation channel - `BakedValue::luminosityFloor` - so nothing on
