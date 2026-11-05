@@ -32,19 +32,17 @@ namespace ClaFi::Documents
         using Base::Base;
     public:
         // Builds the main form over the folder, runs it, and answers what the form answered.
-        [[nodiscard]] int run(DocumentsFolder&);
+        [[nodiscard]] int run(DocumentsFolder&, MinSize, PreferredSize);
     };
 
 
     //-----------------------------------------------------------------------------
 
-    // These are actually should be stated by the end application
-    constexpr MinSize k_mainFormMinSize{ 600.0f, 400.0f };
-    constexpr PreferredSize k_mainFormPreferredSize{ 900.0f, 600.0f };
 
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend,
         IsDocumentsBrowser BrowserType>
-    int DocumentsApplication<PlatformType, GpuBackend, BrowserType>::run(DocumentsFolder& folder)
+    int DocumentsApplication<PlatformType, GpuBackend, BrowserType>::run(DocumentsFolder& folder,
+        const MinSize minSize, const PreferredSize preferredSize)
     {
         // Handed over as the base the browser and its pages ask for: a prop is found by its exact
         // type - see Props::get.
@@ -52,8 +50,8 @@ namespace ClaFi::Documents
         const std::unique_ptr<Form<BrowserType>> form = this->createMainForm(
             MetricsSet::PrimaryWindow,
             UiElement::Dialog,
-            k_mainFormMinSize,
-            k_mainFormPreferredSize,
+            minSize,
+            preferredSize,
             folderProp
         );
         return form->execute();

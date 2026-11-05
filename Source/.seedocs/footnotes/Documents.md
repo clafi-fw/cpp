@@ -144,5 +144,5 @@ returns a path.
 ## DocumentsApplication
 
 **The application hands its folder to run**, and the browser and every page take it from their
-props. The name and the three config schemas are the application's. In the tab schema, the
-document's attribute has the document's own type.
+props. The name, the three config schemas and the main form's minimum and preferred sizes are
+the application's. In the tab schema, the document's attribute has the document's own type.

@@ -49,6 +49,10 @@ namespace Themes_App
     // What a tab's page keeps: whether its preview is shown, and the theme it is editing.
     [[nodiscard]] Dom::Dt::Section tabConfigBlueprint();
 
+    constexpr MinSize k_mainFormMinSize{ 600.0f, 400.0f };
+    // Tall enough for WindowsPreview to stand in the preview panel without a scroll bar.
+    constexpr PreferredSize k_mainFormPreferredSize{ 900.0f, 660.0f };
+
 
 //-----------------------------------------------------------------------------
 
@@ -69,6 +73,6 @@ namespace Themes_App
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
     int ThemesApplication<PlatformType, GpuBackend>::run()
     {
-        return Base::run(this->themes());
+        return Base::run(this->themes(), k_mainFormMinSize, k_mainFormPreferredSize);
     }
 }

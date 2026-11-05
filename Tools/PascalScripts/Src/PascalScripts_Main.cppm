@@ -11,6 +11,7 @@ import ClaFi.App.Application;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
@@ -56,6 +57,9 @@ namespace PascalScripts_App
     // What a tab's page keeps: the script it is editing, as it stands on screen.
     [[nodiscard]] Dom::Dt::Section tabConfigBlueprint();
 
+    constexpr MinSize k_mainFormMinSize{ 600.0f, 400.0f };
+    constexpr PreferredSize k_mainFormPreferredSize{ 900.0f, 600.0f };
+
 
 //-----------------------------------------------------------------------------
 
@@ -79,6 +83,6 @@ namespace PascalScripts_App
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
     int ScriptsApplication<PlatformType, GpuBackend>::run()
     {
-        return Base::run(m_scripts);
+        return Base::run(m_scripts, k_mainFormMinSize, k_mainFormPreferredSize);
     }
 }
