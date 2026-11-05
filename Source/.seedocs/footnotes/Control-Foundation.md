@@ -732,6 +732,33 @@ animation repaints the whole window, since the form cannot know which controls r
 control that states one of its own hands it to everything inside it - see
 AdjustPaintEvent::setWindowFocusedFactor.
 
+## Control childSurfaceBounds
+
+**A container states where a child's surface and frame stand**, in the coordinates the child's own
+topLeft is measured in. A child it states nothing for stands them on its bounds.
+
+The stated rect is seen through the container's view. The child's content is still clipped to the
+child's viewport, so the surface and the frame may reach where the content never does. The paint
+walk enters the child for that rect as well, and an invalidation of the child repaints it.
+
+ScrollBox states one for its body: the slot together with the bars beside it and below it. A top
+bar stands outside it.
+
+## PaintEvent surfaceBounds
+
+**The rect the surface and the frame are painted on** - the control's bounds, or what its parent
+states for it in Control::childSurfaceBounds. A scroll box's body paints on the slot and the bars:
+its frame runs round all of them, and its surface fills the column the bars stand in.
+
+**An edge a paintSurface or paintFrame override draws goes on this rect** - a band, an indicator -
+together with `cornerRadii()`, which are worked out on it. What the control lays out inside itself
+stays on `controlBounds()`, which the scroll carries.
+
+**A scrolled body's frame is painted last.** Its content passes under the slot's edges, the fades
+the box draws along them come next, and the box paints its bars in the frame's turn, just before
+it - see ScrollBox. A bar stands on the body's surface and turns the frame's corners where it
+reaches one.
+
 ## AdjustPaintEvent setWindowFocusedFactor
 
 **A mockup of a window states the focus that window holds**, so it paints focused or not whatever

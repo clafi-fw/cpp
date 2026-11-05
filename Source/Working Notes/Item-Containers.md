@@ -221,3 +221,17 @@ Decided with Oj:
 
 Open: StackBase::defaultCanFocusItem answers no for a container that is not an ActiveContainer, so
 setCurrentItem on such a stack records nothing, and a plain stack has no entry yet.
+
+## ContainerBase overlay pass
+
+**The second pass goes only where a listed control is.** PaintEvent stagePaintsIn is asked in the
+tree painter's visitor, before a child's event is built, so a hand-written paint order and
+traverseChildren are both held to it. Until 2026-11-05 the second pass walked every child of the
+host again: each event was built and resolved a second time and painted nothing, and a
+paintChildren override drawing content of its own drew it twice. It showed in the Themes app: the
+preview's PageControl became the held-header host for the grids on the Grid and Surfaces pages,
+which stay registered once built, and the Windows page's window shadows were then drawn a second
+time over the mockups.
+
+Not taken: dropping a page's entries while the page is hidden. It answers the one host, and leaves
+every other host walking its whole visible content twice.

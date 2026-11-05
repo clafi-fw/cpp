@@ -161,13 +161,18 @@ namespace ClaFi::Controls::Grids
     {
         const FloatRect bounds = gridEvent.controlBounds();
         const FloatRect visible = gridEvent.viewport();
+        const FloatRect surface = gridEvent.surfaceViewport();
         using CornerPoints = std::array<FloatPoint, k_cornersNum>;
         const CornerPoints ownCorners = { bounds.topLeft(), bounds.topRight(), bounds.bottomRight(), bounds.bottomLeft() };
         const CornerPoints corners = { visible.topLeft(), visible.topRight(), visible.bottomRight(), visible.bottomLeft() };
+        const CornerPoints surfaceCorners = { surface.topLeft(), surface.topRight(), surface.bottomRight(), surface.bottomLeft() };
         CornerRadii result = gridEvent.cornerRadii();
         for (std::size_t i = 0; i < k_cornersNum; ++i)
         {
-            if (!(corners[i] == ownCorners[i]))
+            // A scroll bar stands between the view's corner and the frame's.
+            if (!(corners[i] == surfaceCorners[i]))
+                result.set(i, 0.0f);
+            else if (!(corners[i] == ownCorners[i]))
                 result.set(i, std::max(result.get(i), gridEvent.radius()));
         }
         return result;

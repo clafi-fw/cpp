@@ -6,6 +6,8 @@ import :Control;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.System.UiTypes;
 
+import ClaFi.StdLib;
+
 namespace ClaFi
 {
     // TraversalContext
@@ -47,6 +49,25 @@ namespace ClaFi
         m_control.doAdjustViewport(event);
         if (event.clipIntoParent && parentContext)
             m_viewport.intersectWith(parentContext->m_viewport);
+
+        // **A parent may stand the surface and the frame on a rect of its own** - a box scrolling
+        // its body stands them round the slot and the bars. That rect is seen through the
+        // parent's view, since the viewport above holds only the content.
+        const Control* parentControl = m_control.parent();
+        const std::optional<FloatRect> statedSurface = parentControl
+            ? parentControl->childSurfaceBounds(m_control)
+            : std::nullopt;
+        if (statedSurface)
+        {
+            m_surfaceBounds = *statedSurface;
+            m_surfaceBounds.offset(parentContentPosition);
+            m_surfaceViewport = FloatRect::intersection(m_surfaceBounds, viewport);
+        }
+        else
+        {
+            m_surfaceBounds = m_controlBounds;
+            m_surfaceViewport = m_viewport;
+        }
     }
 
     TraversalContext::TraversalContext(ControlTreeWalker& owner, Control& control, const OnVisitControl& onVisitControl)
@@ -102,10 +123,22 @@ namespace ClaFi
                    m_viewport;
     }
 
+    FloatRect TraversalContext::surfaceClipRect() const
+    {
+        return systemClipRect() ?
+                   FloatRect::intersection(m_surfaceViewport, *systemClipRect())
+                   :
+                   m_surfaceViewport;
+    }
+
+    // A control is entered for its surface as well as for its bounds: a scrolled body's frame
+    // stands round the box's bars, outside the body's bounds.
     void TraversalContext::traverse()
     {
         if (m_owner.clipMode() != ClipMode::None
-            && systemClipRect() && !systemClipRect()->intersects(m_controlBounds))
+            && systemClipRect()
+            && !systemClipRect()->intersects(m_controlBounds)
+            && !systemClipRect()->intersects(m_surfaceBounds))
             return;
         if (shouldVisit())
             m_onVisitControl(*this);
@@ -162,9 +195,15 @@ namespace ClaFi
     bool TraversalContext::shouldVisit()
     {
         FloatRect localViewPort = m_viewport;
+        FloatRect localSurfaceViewport = m_surfaceViewport;
         if (float lookAhead = m_owner.lookAhead())
+        {
             localViewPort.inflate(lookAhead);
-        return m_owner.clipMode() != ClipMode::ViewportAndSystemClip || localViewPort.intersects(m_controlBounds);
+            localSurfaceViewport.inflate(lookAhead);
+        }
+        return m_owner.clipMode() != ClipMode::ViewportAndSystemClip
+            || localViewPort.intersects(m_controlBounds)
+            || localSurfaceViewport.intersects(m_surfaceBounds);
     }
 
     // ControlTreeWalker

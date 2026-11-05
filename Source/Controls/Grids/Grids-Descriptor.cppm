@@ -143,7 +143,7 @@ namespace ClaFi::Controls::Grids
         // The corners the grid's corner cells turn: what the grid paints at each corner, except
         // that a corner the scroll has cut out of view keeps at least the grid's own radius - the
         // row that turns it may still be in view, held there, and the header at the top of the
-        // view is that row.
+        // view is that row. A corner a scroll bar stands beside is square.
         [[nodiscard]] static CornerRadii cornerRadiiOf(const PaintEvent& gridEvent);
     private:
         const PaintEvent& gridPaintEvent() const { return *m_gridPaintEvent; } // use only during the paint stage

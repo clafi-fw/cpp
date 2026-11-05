@@ -43,7 +43,13 @@ namespace ClaFi
         ScaledPadding padding() const { return m_padding; }
         FloatPoint contentPosition() const { return m_contentPosition; }
         FloatRect viewport() const { return m_viewport; }
+        // Where the surface and the frame stand: the bounds, unless the parent states a rect.
+        FloatRect surfaceBounds() const { return m_surfaceBounds; }
+        // The part of the surface bounds in view.
+        FloatRect surfaceViewport() const { return m_surfaceViewport; }
         FloatRect controlClipRect() const;
+        // The surface viewport under the system clip.
+        FloatRect surfaceClipRect() const;
         void* visitorData() const { return m_visitorData; }
         void setVisitorData(void* value) { m_visitorData = value; }
         void traverse();
@@ -69,6 +75,8 @@ namespace ClaFi
         FloatRect m_controlBounds;
         ScaledPadding m_padding;
         FloatPoint m_contentPosition;
+        FloatRect m_surfaceBounds{};
+        FloatRect m_surfaceViewport{};
         void* m_visitorData{ nullptr };
     };
 

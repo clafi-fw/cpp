@@ -1110,6 +1110,9 @@ namespace ClaFi
         // the bounds alone would answer for the whole of it. The hit test asks this so it meets
         // a control where the paint drew it. See FormBase::controlAt.
         virtual void adjustChildClip(const Control&, FloatRect&) const {}
+        // Where a child's surface and frame stand, if not on its bounds. See Control-Foundation
+        [[nodiscard]] virtual std::optional<FloatRect> childSurfaceBounds(const Control&) const
+            { return std::nullopt; }
         // May narrow the box a child is handed to align in. The event is this control's own.
         virtual void adjustChildBox(const AlignEvent&, const Control&, ScaledPosition&,
             ScaledSize&) const {}
@@ -1356,7 +1359,7 @@ namespace ClaFi
         // no connection, just the vtable slot it already has.
         virtual void drawIcon(DrawIconEvent&);
         virtual void paintSurface(PaintEvent&);
-        // The outline over the surface, under the children; a form's root draws it over them.
+        // The outline over the surface, under the children - over them on a root or scrolled body.
         virtual void paintFrame(PaintEvent&);
         virtual void paintChildren(PaintEvent&);
         virtual void paintOwnText(PaintEvent&);

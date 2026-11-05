@@ -56,6 +56,10 @@ namespace ClaFi
 
         FloatRect viewport() const { return m_context.viewport(); }
         FloatRect controlBounds() const { return m_context.controlBounds(); }
+        // The rect the surface and the frame are painted on. See Control-Foundation
+        [[nodiscard]] FloatRect surfaceBounds() const { return m_context.surfaceBounds(); }
+        // The part of surfaceBounds in view, which the surface and the frame are clipped to.
+        [[nodiscard]] FloatRect surfaceViewport() const { return m_context.surfaceViewport(); }
         float left() const { return m_context.left(); }
         float top() const { return m_context.top(); }
         float right() const { return m_context.right(); }
@@ -139,8 +143,8 @@ namespace ClaFi
         const Control* overlayHost() const { return m_overlayHost; }
         // Whether this is the stage that paints the control itself. The surface, the text and
         // painted() are already held to it, so only a paintChildren override drawing content of
-        // its own has to ask: paintChildren is called in every stage, because an overlay control
-        // nested under one that paints in neither still has to be reached.
+        // its own has to ask: paintChildren is called in the overlay stage too on a control
+        // holding an overlay control, because that stage reaches the overlay control through it.
         //
         // A control that is its own overlay host needs overlayStage() as well. Its children are
         // painted twice inside one paint(), and this answer is the same for both of those passes.
@@ -198,6 +202,8 @@ namespace ClaFi
         // Whether a host further out, in its standard stage at the moment, lists this control - a
         // control that host's overlay stage is going to paint. See paint.
         [[nodiscard]] bool isListedByEnclosingHost(const Control&) const;
+        // The overlay stage paints only in a listed overlay control and the controls holding one.
+        [[nodiscard]] bool stagePaintsIn(const Control& child) const;
         // How far a rule applies on its channel: its inputs, times andInputs, and 1 at rest.
         [[nodiscard]] float inputFactor(const BakedColorRule&) const;
         // The rules on one channel, in the order they apply; how far they moved it.
@@ -260,11 +266,11 @@ namespace ClaFi
         float m_radius{};
         CornerRadii m_cornerRadii{};
         ScaledSpacing m_spacing;
-        // **A root's frame is drawn over its content.** Its children stand right inside the ring
-        // and turn its corners, so a stroke drawn under them would have its inner edge painted
-        // over along every arc. The frame waits until the content is painted, and the content is
-        // painted under the clip a corner pass hands the root, so that clip cuts what stands
-        // inside the ring and never the ring's own edge.
+        // **A root's frame is drawn over its content, and so is a scrolled body's.** A root's
+        // children stand right inside the ring and turn its corners, so a stroke drawn under them
+        // would have its inner edge painted over along every arc. The frame waits until the
+        // content is painted, and the content is painted under the clip a corner pass hands the
+        // root, so that clip cuts what stands inside the ring and never the ring's own edge.
         const Graphics::PixelPath* m_contentClip{};
         bool m_frameOverContent{};
         // Colors

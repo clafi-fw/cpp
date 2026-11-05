@@ -416,6 +416,18 @@ namespace ClaFi
         FloatRect rectOnForm = rectOfControl(control, true);
         AdjustViewportEvent event{ m_context, *control, rectOnForm };
         control->doAdjustViewport(event);
+        // **The surface a parent states for the control is repainted with it** - a scrolled body's
+        // frame runs round the box's bars, outside the slot the viewport above is narrowed to.
+        if (const Control* controlParent = control->m_parent)
+        {
+            if (const std::optional<FloatRect> surface = controlParent->childSurfaceBounds(*control))
+            {
+                FloatRect surfaceOnForm = *surface;
+                surfaceOnForm.offset(contentOriginOfControl(controlParent));
+                surfaceOnForm.intersectWith(rectOfControl(controlParent, true));
+                rectOnForm.unionWith(surfaceOnForm);
+            }
+        }
         window().invalidateRect(rectOnForm.roundedOut());
     }
 

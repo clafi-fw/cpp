@@ -55,7 +55,7 @@ namespace ClaFi::Controls
         // The surface the box's bars stand on, where the host has painted something of its own
         // behind the column they sit in - see TabbedBox::paintPageRun. Nothing in the parent
         // chain says it: the box stands on the host's surface and its bars no longer do. Empty
-        // is a box whose bars stand where the box does.
+        // is a box whose bars stand on its body's surface.
         void setBarSurface(std::optional<Hsl> value) { m_barSurface = value; }
         ScrollBar& vScrollBar() const { return m_vScrollBar; }
         [[nodiscard]] FloatRect viewPort(FormBase&) const override;
@@ -79,8 +79,13 @@ namespace ClaFi::Controls
         [[nodiscard]] ScaledSize bodyExtent() const override;
         void adjustChildViewport(AdjustViewportEvent& event) const override;
         void adjustChildClip(const Control& child, FloatRect& clip) const override;
+        // The slot and the bars beside it and below it, which the body's frame runs round.
+        [[nodiscard]] std::optional<FloatRect> childSurfaceBounds(const Control&) const override;
         void adjustChildPaint(AdjustPaintEvent&) override;
+        // Everything but the bars, which the body's frame stage paints - see paintChildFrame.
+        void paintChildren(PaintEvent&) override;
         void paintChildSurface(PaintEvent&) override;
+        void paintChildFrame(PaintEvent&) override;
         void childPainted(PaintEvent& event) override;
 
         void scrollChildIntoView(Control&, FloatRect) override;
@@ -97,6 +102,8 @@ namespace ClaFi::Controls
         using PanelBase::createBottomBar;
     private:
         [[nodiscard]] FloatRect bodySlotInForm(FloatPoint contentOriginInForm) const;
+        // Whether a body stands in the box, whose frame stage then paints the bars.
+        [[nodiscard]] bool barsPaintedByBody() const;
         // Whether the body's extent along the axis is its own, with a bar to reach what overruns.
         [[nodiscard]] bool givesWay(ScrollAxis) const;
         // One place the three visibilities are settled together: the corner is the square the
@@ -133,6 +140,8 @@ namespace ClaFi::Controls
         // scroll bar, which is outside the body. The body's own paint is the only place the rules
         // are settled into a colour.
         Color m_actualBodyColor{};
+        Hsl m_bodySurfaceHsl{}; // what the bars stand on, inside the body's frame
+        CornerRadii m_bodyCornerRadii{}; // the frame's corners, which the bars turn with
         std::optional<Hsl> m_barSurface{};
         // What the box was told to show. Both bars stand until something says otherwise, which
         // is what they do with no ScrollBars prop passed at all.
@@ -499,15 +508,61 @@ namespace ClaFi::Controls
             clip.intersectWith(bodyRect());
     }
 
+    // The content box under a top bar: the bars stand at its right and bottom edges, and with
+    // none up the slot reaches them itself.
+    std::optional<FloatRect> ScrollBox::childSurfaceBounds(const Control& child) const
+    {
+        if (&child != body())
+            return std::nullopt;
+        const FloatRect& slot = bodyRect();
+        const FloatRect& content = contentRect();
+        return FloatRect{ slot.left, slot.top, content.right, content.bottom };
+    }
+
+    // **The bars stand inside the body's frame**, on the body's surface and turning the frame's
+    // corners where they reach one. The body has painted its surface by the time they are
+    // painted, so both are this frame's. A host that paints something of its own behind the
+    // column names that surface instead.
+    //
     // The bottom bar rather than the horizontal scroll bar inside it: what stands behind a bar
     // stands behind the corner square beside it too.
     void ScrollBox::adjustChildPaint(AdjustPaintEvent& event)
     {
         PanelBase::adjustChildPaint(event);
-        if (!m_barSurface)
+        const bool isVerticalBar = &event.control() == &m_vScrollBar;
+        if (!isVerticalBar && &event.control() != &m_bottomBar)
             return;
-        if (&event.control() == &m_vScrollBar || &event.control() == &m_bottomBar)
-            event.setSurfaceHsl(*m_barSurface);
+        if (!barsPaintedByBody())
+        {
+            if (m_barSurface)
+                event.setSurfaceHsl(*m_barSurface);
+            return;
+        }
+        event.setSurfaceHsl(m_barSurface ? *m_barSurface : m_bodySurfaceHsl);
+        if (isVerticalBar)
+        {
+            event.setCornerRadius(Corner::TopRight, m_bodyCornerRadii.topRight);
+            if (!m_bottomBar.visible())
+                event.setCornerRadius(Corner::BottomRight, m_bodyCornerRadii.bottomRight);
+        }
+        else
+        {
+            event.setCornerRadius(Corner::BottomRight, m_bodyCornerRadii.bottomRight);
+            event.setCornerRadius(Corner::BottomLeft, m_bodyCornerRadii.bottomLeft);
+        }
+    }
+
+    // In the order the box holds them. With no body to paint the bars, they are painted here too.
+    void ScrollBox::paintChildren(PaintEvent& event)
+    {
+        if (!barsPaintedByBody())
+            return PanelBase::paintChildren(event);
+        for (const ControlPtr& child : controls())
+        {
+            if (child.get() == &m_vScrollBar || child.get() == &m_bottomBar)
+                continue;
+            event.paintChild(*child);
+        }
     }
 
     // The base is what paints the child - see Control::paintChildSurface - so it runs whatever
@@ -515,8 +570,26 @@ namespace ClaFi::Controls
     void ScrollBox::paintChildSurface(PaintEvent& event)
     {
         if (&event.control() == body())
+        {
             m_actualBodyColor = event.surfaceRgb().withOpacity(1.0f);
+            m_bodySurfaceHsl = event.surfaceHsl();
+        }
         PanelBase::paintChildSurface(event);
+    }
+
+    // **The bars are painted over the body's surface and content and under its frame**, which runs
+    // round them - a scrolled body's frame is drawn last. They are painted from this box's event,
+    // since they stand in this box and not in the body.
+    void ScrollBox::paintChildFrame(PaintEvent& event)
+    {
+        if (&event.control() == body())
+        {
+            m_bodyCornerRadii = event.cornerRadii();
+            const PaintEvent& boxEvent = *event.parentEvent();
+            boxEvent.paintChild(m_vScrollBar);
+            boxEvent.paintChild(m_bottomBar);
+        }
+        PanelBase::paintChildFrame(event);
     }
 
     void ScrollBox::childPainted(PaintEvent& event)
@@ -537,6 +610,17 @@ namespace ClaFi::Controls
             viewPort.top += event.pinnedTop();
             corners.topLeft = 0.0f;
             corners.topRight = 0.0f;
+        }
+        // A corner of the view a bar stands beside is not one of the frame's.
+        if (m_vScrollBar.visible())
+        {
+            corners.topRight = 0.0f;
+            corners.bottomRight = 0.0f;
+        }
+        if (m_bottomBar.visible())
+        {
+            corners.bottomRight = 0.0f;
+            corners.bottomLeft = 0.0f;
         }
         const Color baseColor = event.surfaceRgb().withOpacity(1.0f);
 
@@ -753,6 +837,12 @@ namespace ClaFi::Controls
     FloatRect ScrollBox::bodySlotInForm(FloatPoint contentOriginInForm) const
     {
         return FloatRect::FromDimensions(contentOriginInForm + bodyRect().topLeft(), bodyRect().dimensions());
+    }
+
+    bool ScrollBox::barsPaintedByBody() const
+    {
+        const Control* content = body();
+        return content && content->visible();
     }
 
     bool ScrollBox::givesWay(const ScrollAxis axis) const

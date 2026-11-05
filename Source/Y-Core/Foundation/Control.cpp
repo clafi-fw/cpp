@@ -2888,11 +2888,10 @@ namespace ClaFi
     }
 
     // **The two text flags state what the last paint of this control's own text produced**, which
-    // is why they are cleared where that paint happens rather than on every visit. A control is
-    // walked once per paint stage and paints itself in one of them - an unselected tab is walked
-    // in the standard stage and again in the overlay stage its selected sibling is drawn in - so
-    // a clear on the visit leaves the answer the drawing stage wrote wiped by the stage that
-    // drew nothing.
+    // is why they are cleared where that paint happens rather than on every visit. A control
+    // holding an overlay control is walked in both paint stages and paints itself in one of them -
+    // a tab strip is walked again in the overlay stage its selected tab is drawn in - so a clear on
+    // the visit leaves the answer the drawing stage wrote wiped by the stage that drew nothing.
     //
     // Ahead of paintOwnText rather than inside it: an override is free to draw no text at all - see
     // ButtonBase::paintOwnText in IconOnly mode - and both flags have to read false for it.

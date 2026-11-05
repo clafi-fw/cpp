@@ -131,6 +131,11 @@ namespace ClaFi
             m_surfaceGrowInScale = metrics.surfaceGrowInScale;
         }
 
+        // **A scrolled body's frame is drawn over its content**, and over the box's bars, which the
+        // box paints in the frame's turn - see ScrollBox::paintChildFrame. It runs round them all.
+        if (control.isOnScrollBox())
+            m_frameOverContent = true;
+
         // Before the adjustment, so what the control or its parent states there has the last word.
         inheritCornerRadii();
 
@@ -505,7 +510,7 @@ namespace ClaFi
     // After the frame, which it covers along the edge.
     void PaintEvent::paintBand(const RectSide side, const Color tipColor)
     {
-        canvas().fillEdgeIndicator({ .bounds = controlBounds(), .radii = cornerRadii() }, side,
+        canvas().fillEdgeIndicator({ .bounds = surfaceBounds(), .radii = cornerRadii() }, side,
             m_bandWidth, m_bandRgb, tipColor);
     }
 
@@ -621,6 +626,26 @@ namespace ClaFi
         return false;
     }
 
+    // **The overlay stage paints what its host lists**, and reaches it through the controls that
+    // hold it. Any other child would be walked for nothing: its event built and its colours
+    // resolved, and a paintChildren override drawing content of its own run over what it drew.
+    bool PaintEvent::stagePaintsIn(const Control& child) const
+    {
+        if (!m_overlayStage || !m_overlayHost)
+            return true;
+        for (const OverlayEntry& entry : m_overlayHost->overlayControls())
+        {
+            const Control* holder = static_cast<const Control*>(entry.control);
+            while (holder && holder != m_overlayHost)
+            {
+                if (holder == &child)
+                    return true;
+                holder = holder->parent();
+            }
+        }
+        return false;
+    }
+
     float PaintEvent::inputFactor(const BakedColorRule& rule) const
     {
         if (rule.atRest())
@@ -673,14 +698,14 @@ namespace ClaFi
         return changed;
     }
 
-    // **Which corners a control rounds.** Its own radius goes on the corners of its bounds, and a
-    // corner the viewport cuts off is not one of them, so it is square. Each corner is then held
-    // against the corner of its container it stands at: where this control's arc - a square
-    // corner at any inset under 0.29 of the container's radius, a rounder one at less - would
-    // reach past the container's inner arc, the corner takes the radius concentric with the
-    // container's, which is the container's radius less this control's inset. Concentric is the
-    // smallest radius that stays inside for a control standing right at the container's border,
-    // and the natural one further in. A corner that stays inside keeps its own radius.
+    // **Which corners a control rounds.** Its own radius goes on the corners of its surface bounds,
+    // and a corner the viewport cuts off is not one of them, so it is square. Each corner is then
+    // held against the corner of its container it stands at: where this control's arc - a square
+    // corner at any inset under 0.29 of the container's radius, a rounder one at less - would reach
+    // past the container's inner arc, the corner takes the radius concentric with the container's,
+    // which is the container's radius less this control's inset. Concentric is the smallest radius
+    // that stays inside for a control standing right at the container's border, and the natural one
+    // further in. A corner that stays inside keeps its own radius.
     //
     // Viewports rather than bounds, so a control the scroll has cut at the container's corner
     // takes the arc on its cut edge, and a control whose corner is scrolled out of the container's
@@ -688,8 +713,8 @@ namespace ClaFi
     // its own container reaches down through it.
     void PaintEvent::inheritCornerRadii()
     {
-        const FloatRect bounds = controlBounds();
-        const FloatRect visible = viewport();
+        const FloatRect bounds = surfaceBounds();
+        const FloatRect visible = surfaceViewport();
         using CornerPoints = std::array<FloatPoint, k_cornersNum>;
         const CornerPoints ownCorners = { bounds.topLeft(), bounds.topRight(), bounds.bottomRight(), bounds.bottomLeft() };
         const CornerPoints corners = { visible.topLeft(), visible.topRight(), visible.bottomRight(), visible.bottomLeft() };
@@ -700,7 +725,7 @@ namespace ClaFi
         if (!container)
             return;
 
-        const FloatRect containerRect = container->viewport();
+        const FloatRect containerRect = container->surfaceViewport();
         const CornerPoints containerCorners = { containerRect.topLeft(), containerRect.topRight(), containerRect.bottomRight(), containerRect.bottomLeft() };
         const float containerStroke = container->m_borderWidth;
 
@@ -752,10 +777,14 @@ namespace ClaFi
         }
     }
 
+    // **The surface and the frame are clipped to the surface viewport, the content to the
+    // viewport.** The two are one rect unless the parent states the surface - a scrolled body's
+    // frame runs round the box's bars, and its content stays in the slot.
     void PaintEvent::paint()
     {
-        FloatRect clip = m_context.controlClipRect();
-        if (clip.empty())
+        const FloatRect clip = m_context.controlClipRect();
+        const FloatRect surfaceClip = m_context.surfaceClipRect();
+        if (clip.empty() && surfaceClip.empty())
             return;
 
         Control& control = m_context.control();
@@ -790,7 +819,7 @@ namespace ClaFi
         }
 
         if (shouldClip)
-            canvas().pushClip(clip);
+            canvas().pushClip(surfaceClip);
 
         {
             // The one place the press animation is applied. It goes on after the clip, so the
@@ -823,65 +852,74 @@ namespace ClaFi
                 if (!m_frameOverContent)
                     control.doPaintFrame(*this);
             }
-            if (m_contentClip)
-                canvas().pushClip(*m_contentClip);
+            if (!clip.empty())
             {
-                // --- **Robust stage engine** ---
-                // If this control has overlays and we are not currently inside an active overlay stage,
-                // manage the standard and overlay loops directly in the paint loop.
-                bool hasOverlays = control.hasOverlayControls();
-
-
-                const Control* savedHost = m_overlayHost;
-                bool savedStage = m_overlayStage;
-
-                if (hasOverlays && !m_overlayStage)
+                const bool clipsContent = shouldClip && !(clip == surfaceClip);
+                if (clipsContent)
+                    canvas().pushClip(clip);
+                if (m_contentClip)
+                    canvas().pushClip(*m_contentClip);
                 {
-                    // 1. Run Standard Pass
-                    m_overlayHost = &control;
-                    m_overlayStage = false;
-                    control.paintChildren(*this);
-                    // 2. Run Overlay Pass
-                    m_overlayStage = true;
-                }
-                else
-                {
-                    if (isOverlayControl && m_overlayStage)
+                    // --- **Robust stage engine** ---
+                    // If this control has overlays and we are not currently inside an active
+                    // overlay stage, manage the standard and overlay loops directly in the paint
+                    // loop.
+                    bool hasOverlays = control.hasOverlayControls();
+
+
+                    const Control* savedHost = m_overlayHost;
+                    bool savedStage = m_overlayStage;
+
+                    if (hasOverlays && !m_overlayStage)
                     {
-                        m_overlayHost = nullptr;
+                        // 1. Run Standard Pass
+                        m_overlayHost = &control;
                         m_overlayStage = false;
+                        control.paintChildren(*this);
+                        // 2. Run Overlay Pass
+                        m_overlayStage = true;
                     }
+                    else
+                    {
+                        if (isOverlayControl && m_overlayStage)
+                        {
+                            m_overlayHost = nullptr;
+                            m_overlayStage = false;
+                        }
+                    }
+                    control.paintChildren(*this);
+                    m_overlayHost = savedHost;
+                    m_overlayStage = savedStage;
                 }
-                control.paintChildren(*this);
-                m_overlayHost = savedHost;
-                m_overlayStage = savedStage;
-            }
-            if (m_contentClip)
-                canvas().popClip();
-            if (m_paintsSelf)
-            {
-                control.doPaintTextInitialization();
+                if (m_contentClip)
+                    canvas().popClip();
+                if (m_paintsSelf)
+                {
+                    control.doPaintTextInitialization();
 #if CLAFI_TEXT_MOVING
-                control.paintOwnText(*this);
+                    control.paintOwnText(*this);
 #else
-                // Text stands where it was laid out: the press animation scales the surface and
-                // the children around it, and the text is drawn without it, so it never moves.
-                if (m_pressScaleApplied)
-                {
-                    const Graphics::Matrix3x2 pressed = canvas().transform();
-                    canvas().setTransform(m_unpressedTransform);
-                    control.paintOwnText(*this);
-                    canvas().setTransform(pressed);
-                }
-                else
-                {
-                    control.paintOwnText(*this);
-                }
+                    // Text stands where it was laid out: the press animation scales the surface and
+                    // the children around it, and the text is drawn without it, so it never moves.
+                    if (m_pressScaleApplied)
+                    {
+                        const Graphics::Matrix3x2 pressed = canvas().transform();
+                        canvas().setTransform(m_unpressedTransform);
+                        control.paintOwnText(*this);
+                        canvas().setTransform(pressed);
+                    }
+                    else
+                    {
+                        control.paintOwnText(*this);
+                    }
 #endif
-                control.doPainted(*this);
-                if (m_frameOverContent)
-                    control.doPaintFrame(*this);
+                    control.doPainted(*this);
+                }
+                if (clipsContent)
+                    canvas().popClip();
             }
+            if (m_paintsSelf && m_frameOverContent)
+                control.doPaintFrame(*this);
         }
 
         if (shouldClip)
@@ -890,13 +928,13 @@ namespace ClaFi
 
     PaintEvent::SurfaceShape PaintEvent::surfaceShape(const FloatInset& inset)
     {
-        // The surface is the part of the control in view, and the outline runs along the edges
-        // that are the control's own: a cut edge carries no line.
+        // The surface is the part of the surface bounds in view, and the outline runs along the
+        // edges that are the control's own: a cut edge carries no line.
 
-        FloatRect bounds = controlBounds();
+        FloatRect bounds = surfaceBounds();
         bounds.inset(scaleF(inset));
         SurfaceShape result{
-            .bounds = FloatRect::intersection(bounds, viewport()),
+            .bounds = FloatRect::intersection(bounds, surfaceViewport()),
             };
         if (result.bounds.empty())
         {
@@ -996,8 +1034,16 @@ namespace ClaFi
     {
         ControlTreeWalker treeWalker{ rootControl, TraversalMode::Manual, systemClipRect };
         treeWalker.traverse([contentClip](TraversalContext& context) {
+            const TraversalContext* parentContext = context.parent();
+            if (parentContext)
+            {
+                const PaintEvent* parentEvent =
+                    static_cast<const PaintEvent*>(parentContext->visitorData());
+                if (!parentEvent->stagePaintsIn(context.control()))
+                    return;
+            }
             PaintEvent paintEvent{ context };
-            if (!context.parent())
+            if (!parentContext)
                 paintEvent.m_contentClip = contentClip;
             paintEvent.paint();
             });

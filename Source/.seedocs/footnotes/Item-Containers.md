@@ -14,7 +14,10 @@ Both stay inside this container's clip.
 **The host need not be the parent**: it sets how far the second pass reaches. A grid lists its
 header with a container outside the grid, so the header's shadow falls on the page.
 
-Each paint walks a hosting container's children twice.
+Each paint walks a hosting container's children twice: every child in the first pass, and in the
+second only the listed controls and the children holding them. A paintChildren override on a
+control holding one is called in both passes, and draws content of its own only where PaintEvent
+overlayStage is false.
 
 ## ContainerBase currentItem
 

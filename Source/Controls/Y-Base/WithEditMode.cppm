@@ -132,7 +132,7 @@ namespace ClaFi::Controls
             return;
         const float tipOpacity = tipColor.alpha / 255.0f * m_editModeIndicatorFactor;
         event.canvas().fillEdgeIndicator(
-            { .bounds = event.controlBounds(), .radii = event.cornerRadii() },
+            { .bounds = event.surfaceBounds(), .radii = event.cornerRadii() },
             RectSide::Bottom,
             event.bandWidth() * m_editModeIndicatorFactor,
             event.bandRgb(),

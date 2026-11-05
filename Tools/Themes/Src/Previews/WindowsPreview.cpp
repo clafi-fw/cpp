@@ -35,15 +35,19 @@ namespace Themes_App
     // While the panel paints, the form holds the edited theme, so the shadows are drawn in it.
     void WindowsPreview::paintChildren(PaintEvent& event)
     {
-        const ThemeMetrics& metrics = themeMetrics();
-        drawWindowShadow(event, m_focusedDialog, UiElement::Dialog, metrics.primaryWindowShadow,
-            m_focusedDialog.windowFocusedFactor());
-        drawWindowShadow(event, m_unfocusedDialog, UiElement::Dialog, metrics.primaryWindowShadow,
-            m_unfocusedDialog.windowFocusedFactor());
-        drawWindowShadow(event, m_menu, UiElement::Menu, metrics.secondaryWindowShadow,
-            m_focusedDialog.windowFocusedFactor());
-        drawWindowShadow(event, m_tooltip, UiElement::Tooltip, metrics.secondaryWindowShadow,
-            m_focusedDialog.windowFocusedFactor());
+        // An overlay pass repaints no mockup, so a shadow drawn in it would land on top.
+        if (!event.overlayStage())
+        {
+            const ThemeMetrics& metrics = themeMetrics();
+            drawWindowShadow(event, m_focusedDialog, UiElement::Dialog,
+                metrics.primaryWindowShadow, m_focusedDialog.windowFocusedFactor());
+            drawWindowShadow(event, m_unfocusedDialog, UiElement::Dialog,
+                metrics.primaryWindowShadow, m_unfocusedDialog.windowFocusedFactor());
+            drawWindowShadow(event, m_menu, UiElement::Menu, metrics.secondaryWindowShadow,
+                m_focusedDialog.windowFocusedFactor());
+            drawWindowShadow(event, m_tooltip, UiElement::Tooltip, metrics.secondaryWindowShadow,
+                m_focusedDialog.windowFocusedFactor());
+        }
         PreviewPageBase::paintChildren(event);
     }
 
