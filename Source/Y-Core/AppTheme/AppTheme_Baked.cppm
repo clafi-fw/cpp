@@ -538,6 +538,8 @@ namespace ClaFi
             case InkColor::Green:
             case InkColor::Blue:
             case InkColor::Red:
+            case InkColor::Purple:
+            case InkColor::Orange:
             case InkColor::Black:
             case InkColor::White:
             case InkColor::Count:

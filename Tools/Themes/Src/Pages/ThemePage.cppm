@@ -416,7 +416,7 @@ namespace Themes_App
             pigmentRow(UiElement::Spot)
         ) };
 
-        // The selected harmony's four pigments, drawn as marks in the label's own text.
+        // The selected harmony's pigments, drawn as marks in the label's own text.
         Label& m_otherPigmentsLabel{ m_paletteBody.add<Label>(
             VerticalTextAnchor::Center,
             Padding{ 0.0f, 4.0f },

@@ -121,6 +121,30 @@ namespace ClaFi
             return redInk(gradeOf(grade));
         }
 
+        [[nodiscard]] constexpr Ink purpleInk(float grade)
+        {
+            Ink result = textInk(grade);
+            result.color = InkColor::Purple;
+            return result;
+        }
+
+        [[nodiscard]] constexpr Ink purpleInk(InkGrade grade = InkGrade::Strongest)
+        {
+            return purpleInk(gradeOf(grade));
+        }
+
+        [[nodiscard]] constexpr Ink orangeInk(float grade)
+        {
+            Ink result = textInk(grade);
+            result.color = InkColor::Orange;
+            return result;
+        }
+
+        [[nodiscard]] constexpr Ink orangeInk(InkGrade grade = InkGrade::Strongest)
+        {
+            return orangeInk(gradeOf(grade));
+        }
+
         // Pure black and white, the same on either side of the theme. The grade fades one toward
         // the surface the way it fades the text ink.
         [[nodiscard]] constexpr Ink blackInk(float grade)
@@ -159,6 +183,10 @@ namespace ClaFi
                     return { .dark{ 1.0f, 0.66f }, .light{ 1.0f, 0.41f } };
                 case Pigment::Red:
                     return { .dark{ 1.0f, 0.66f }, .light{ 1.0f, 0.55f } };
+                case Pigment::Purple:
+                    return { .dark{ 1.0f, 0.66f }, .light{ 1.0f, 0.50f } };
+                case Pigment::Orange:
+                    return { .dark{ 1.0f, 0.66f }, .light{ 1.0f, 0.53f } };
                 case Pigment::Count:
                     break;
             }
@@ -169,6 +197,8 @@ namespace ClaFi
         constexpr Ink Green = greenInk();
         constexpr Ink Blue = blueInk();
         constexpr Ink Red = redInk();
+        constexpr Ink Purple = purpleInk();
+        constexpr Ink Orange = orangeInk();
         constexpr Ink Black = blackInk();
         constexpr Ink White = whiteInk();
     }

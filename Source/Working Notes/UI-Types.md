@@ -13,6 +13,28 @@ IDisplayAccess of the Wayland layer, which WaylandPlatform derives from and the 
 half casts to for the display. The cast is what keeps the neutral name empty: no platform answers
 for a thing it has no notion of.
 
+## Pigment
+
+Purple and Orange joined the four on 2026-11-05. Oj first asked for six references evenly spread,
+60 degrees apart with red at 0, under the widest-gap fill. Okhsl crowds red, orange, yellow and
+green into about 120 degrees, so that set painted yellow a lime, green a teal and red a pink, and
+no turn of the six brought every name within 25 degrees of its middle. A fixed grid of twelve
+from 0 put every reference within 5 degrees of its name, but the widest-gap fill still pushed
+unclaimed pigments to their window edges - the built-in theme's red to 0 and green to 172.
+
+Oj's rule replaced the claim and the fill: the grid starts at the theme's anchor, and a pigment
+takes the grid hue nearest its reference. Every harmony colour is a multiple of 30 degrees from
+the anchor, so it stands on the grid, and a pigment takes one wherever it is the nearest point.
+The references are the middles of the names - 25, 57, 90, 148, 245 and 305 - and stand more
+than a grid step apart, so no two pigments share a hue. The three fills it retired (reference,
+widest gap, turned set), the claim windows and the tie margin went with it. A pigment now moves
+with the anchor and jumps back a step each time the anchor passes the midpoint between two grid
+hues.
+
+The built-in theme's anchor and palette hues, 240 and 60, are HSL's pure blue and pure yellow, set
+before the hue channel was Okhsl's. In Okhsl they paint a sky blue and an orange; HSL's blue and
+yellow stand at about 264 and 110 there.
+
 ## lightGradeOf
 
 Why the light side mirrors the steps rather than reading the dark side's shares as they are: equal

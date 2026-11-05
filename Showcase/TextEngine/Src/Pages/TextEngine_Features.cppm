@@ -62,6 +62,8 @@ namespace TextEngine_App
             InkRow{ L"Green", InkColor::Green },
             InkRow{ L"Blue", InkColor::Blue },
             InkRow{ L"Red", InkColor::Red },
+            InkRow{ L"Purple", InkColor::Purple },
+            InkRow{ L"Orange", InkColor::Orange },
             InkRow{ L"Black", InkColor::Black },
             InkRow{ L"White", InkColor::White },
         };

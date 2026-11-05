@@ -204,9 +204,9 @@ cannot tell the families apart at the call site:</p>
     <li><strong>Text</strong> - the ink the paint chain arrived at. All text is this colour at one
         grade or another.</li>
     <li><strong>The other pigments</strong> - <code>Yellow</code>, <code>Green</code>,
-        <code>Blue</code> and <code>Red</code>, the four meaning-carrying hues the theme supplies beside
-        accent and spot, each drawn at a tone the framework states for either side of the theme.
-        Warnings and errors are these.</li>
+        <code>Blue</code>, <code>Red</code>, <code>Purple</code> and <code>Orange</code>, the six hues
+        the theme supplies beside accent and spot, each drawn at a tone the framework states for
+        either side of the theme. Warnings and errors are these.</li>
     <li><strong>Black and white</strong> - pure, and the same on either side of the theme.</li>
     <li><strong>Accent and spot</strong> - the two pigments named for their role, each one of the
         theme's own colour effects laid over the text ink.</li>
@@ -286,11 +286,12 @@ only there.
 <h3 id="pigments">Pigments</h3>
 
 <p>A pigment is a hue the theme supplies. Two are named for their role - the accent and the spot,
-described next. The other four are named the way colours are named everywhere else:
-<code>InkColor::Yellow</code>, <code>Green</code>, <code>Blue</code> and <code>Red</code>. They
-carry meaning rather than emphasis, and are safe to use in small doses - an icon, a badge, a border.
-Each takes its hue from a region of the theme's harmony that every theme fills its own way, so it
-carries the colour its name states whatever the anchor is.</p>
+described next. The other six are named the way colours are named everywhere else:
+<code>InkColor::Yellow</code>, <code>Green</code>, <code>Blue</code>, <code>Red</code>,
+<code>Purple</code> and <code>Orange</code>. They carry meaning rather than emphasis, and are safe
+to use in small doses - an icon, a badge, a border. Each stands on the theme's grid - twelve hues
+30 degrees apart, the first at the anchor - at the grid hue nearest the middle of its name. It is
+never more than 15 degrees from that colour, and it shares the grid with every harmony colour.</p>
 
 <p>The theme supplies their hue and nothing else. How colourful the colour is and where it sits
 are the framework's to state, <strong>once for each colour mode</strong>, as a pair of
@@ -437,13 +438,14 @@ two yellows.</p>
 <tr><td><code>surfaceInk()</code></td><td>Grade 0 - flush with the surface, and so invisible on it.</td></tr>
 <tr><td><code>accentInk(InkGrade = Strongest)</code></td><td>The theme's accent effect, at that grade.</td></tr>
 <tr><td><code>spotInk(InkGrade = Strongest)</code></td><td>The theme's spot effect, at that grade.</td></tr>
-<tr><td><code>yellowInk</code>, <code>greenInk</code>, <code>blueInk</code>, <code>redInk</code> <code>(InkGrade = Strongest)</code></td><td>A semantic colour at that grade.</td></tr>
+<tr><td><code>yellowInk</code>, <code>greenInk</code>, <code>blueInk</code>, <code>redInk</code>, <code>purpleInk</code>, <code>orangeInk</code> <code>(InkGrade = Strongest)</code></td><td>A semantic colour at that grade.</td></tr>
 <tr><td><code>blackInk</code>, <code>whiteInk</code> <code>(InkGrade = Strongest)</code></td><td>Pure black or white at that grade, the same in both colour modes.</td></tr>
 <tr><td><code>pigmentTones(Pigment)</code></td><td>The tone a semantic colour is drawn at on each side of the theme.</td></tr>
 <tr><td><code>InkWell::Yellow</code></td><td>Warning. Drawn, never read - see below.</td></tr>
 <tr><td><code>InkWell::Green</code></td><td>Success, present, on.</td></tr>
 <tr><td><code>InkWell::Blue</code></td><td>Information, a link, a thing named.</td></tr>
 <tr><td><code>InkWell::Red</code></td><td>Error, destructive, off.</td></tr>
+<tr><td><code>InkWell::Purple</code>, <code>InkWell::Orange</code></td><td>A hue to tell marks apart by, with no meaning the framework gives it.</td></tr>
 <tr><td><code>InkWell::Black</code>, <code>InkWell::White</code></td><td>Pure black and white, for a mark that has to read the same under every theme.</td></tr>
 </table>
 
@@ -472,8 +474,9 @@ and read back, and that is not an invitation.
 <h3 id="ref-pigments">Pigment and InkTone</h3>
 
 <p><code>Pigment</code> is <code>Yellow</code>, <code>Green</code>, <code>Blue</code>,
-<code>Red</code> - the four other pigments, each a region of the harmony's wheel rather than a place
-in an order. Accent and spot reach the paint through the theme's effects and have no entry here.
+<code>Red</code>, <code>Purple</code>, <code>Orange</code> - the six other pigments, each placed on
+the theme's grid by where its name sits rather than by its place in the order. Accent and spot
+reach the paint through the theme's effects and have no entry here.
 <code>InkTone</code> is the pair that says how colourful and how light: the two travel together
 because a hue needs a different amount of colour to read at one luminosity than at another, so
 stating either without the other names half a colour. <code>PigmentTones</code> states one
@@ -488,15 +491,16 @@ stating either without the other names half a colour. <code>PigmentTones</code> 
 <span class="cm">// The pigment a semantic colour takes its hue from, and none for the other colours.</span>
 <span class="kw">constexpr</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">Pigment</span>&gt; <span class="fn">pigmentOf</span>(<span class="tp">InkColor</span>);</code></pre>
 
-<p>The tones the four semantic colours are drawn at, measured at the 3:1 graphics threshold against
-pages at luminosity 0.13 and 0.87:</p>
+<p>The tones the six are drawn at, as saturation / luminosity:</p>
 
 <table>
 <tr><th>Colour</th><th>Dark tone</th><th>Light tone</th></tr>
 <tr><td><code>Yellow</code></td><td>1.00 / 0.90</td><td>1.00 / 0.51</td></tr>
-<tr><td><code>Green</code></td><td>1.00 / 0.84</td><td>1.00 / 0.49</td></tr>
-<tr><td><code>Blue</code></td><td>1.00 / 0.47</td><td>1.00 / 0.41</td></tr>
-<tr><td><code>Red</code></td><td>1.00 / 0.56</td><td>1.00 / 0.55</td></tr>
+<tr><td><code>Green</code></td><td>1.00 / 0.66</td><td>1.00 / 0.49</td></tr>
+<tr><td><code>Blue</code></td><td>1.00 / 0.66</td><td>1.00 / 0.41</td></tr>
+<tr><td><code>Red</code></td><td>1.00 / 0.66</td><td>1.00 / 0.55</td></tr>
+<tr><td><code>Purple</code></td><td>1.00 / 0.66</td><td>1.00 / 0.50</td></tr>
+<tr><td><code>Orange</code></td><td>1.00 / 0.66</td><td>1.00 / 0.53</td></tr>
 </table>
 
 <p>A yellow's light tone reads as amber rather than lemon because nothing brighter clears 3:1 on a
@@ -545,7 +549,7 @@ is left out where it is the text colour or <code>strongest</code>:</p>
 <tr><td><code>Ink=muted</code></td><td><code>textInk(InkGrade::Muted)</code></td></tr>
 <tr><td><code>Ink=accent</code></td><td><code>accentInk()</code></td></tr>
 <tr><td><code>Ink=spot</code></td><td><code>spotInk()</code></td></tr>
-<tr><td><code>Ink=green</code>, <code>Ink=blue</code>, <code>Ink=red</code></td><td>The semantic inks of those names.</td></tr>
+<tr><td><code>Ink=green</code>, <code>Ink=blue</code>, <code>Ink=red</code>, <code>Ink=purple</code>, <code>Ink=orange</code></td><td>The semantic inks of those names.</td></tr>
 <tr><td><code>Ink=red muted</code></td><td><code>redInk(InkGrade::Muted)</code> - any colour at any step.</td></tr>
 <tr><td><code>Ink=accent 0.45</code></td><td><code>accentInk(0.45f)</code> - a share between the steps.</td></tr>
 <tr><td><code>Ink=#RRGGBB</code></td><td>A colour stated outright, which the theme does not touch.</td></tr>
@@ -623,9 +627,9 @@ assigned:</p>
     <td>The spot - the second accent, and the tooltip's tint.</td></tr>
 </table>
 
-<p>Separately, <code>anchorHue</code> and <code>harmonyKind</code> derive the harmony the four
-other pigments are taken from. The harmony is derived rather than stored, so a file carries the two
-inputs and not the result.</p>
+<p>Separately, <code>anchorHue</code> and <code>harmonyKind</code> derive the harmony, and
+<code>anchorHue</code> alone places the six other pigments on its grid. Both are derived rather than
+stored, so a file carries the two inputs and not the result.</p>
 
 <h3 id="color-effects">Colour effects</h3>
 

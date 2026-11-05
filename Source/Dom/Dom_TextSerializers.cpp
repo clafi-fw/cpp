@@ -135,6 +135,8 @@ namespace ClaFi::Dom
             Spelling<InkColor>{ L"green", InkColor::Green },
             Spelling<InkColor>{ L"blue", InkColor::Blue },
             Spelling<InkColor>{ L"red", InkColor::Red },
+            Spelling<InkColor>{ L"purple", InkColor::Purple },
+            Spelling<InkColor>{ L"orange", InkColor::Orange },
             Spelling<InkColor>{ L"black", InkColor::Black },
             Spelling<InkColor>{ L"white", InkColor::White },
         };

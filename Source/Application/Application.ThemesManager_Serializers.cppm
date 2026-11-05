@@ -156,7 +156,9 @@ namespace ClaFi // AppTheme serializers
         L"Yellow",
         L"Green",
         L"Blue",
-        L"Red"
+        L"Red",
+        L"Purple",
+        L"Orange"
     };
 
     // A set stands whole in a file, its name first. See Application#elementrules-in-a-file

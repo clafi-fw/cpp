@@ -203,7 +203,7 @@ namespace Themes_App
         SetNames m_names{}; // the sets as the tree names them, read as the rows are built
         TextItems m_baseItems{}; // none, then the sets the base may be
         TextItems m_standsOnItems{}; // none, then the sets the set may stand on
-        TextItems m_seedItems{}; // none, then the four pigments
+        TextItems m_seedItems{}; // none, then the pigments
         std::vector<std::wstring> m_baseTokens{}; // the set each base item stands for
         std::vector<std::wstring> m_standsOnTokens{}; // the set each stands-on item stands for
         bool m_showingFacts{ false }; // set while showFacts puts the picks on, which is no edit

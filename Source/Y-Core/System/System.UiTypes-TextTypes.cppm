@@ -31,6 +31,8 @@ namespace ClaFi{
         Green,
         Blue,
         Red,
+        Purple,
+        Orange,
         Count
     };
 
@@ -108,10 +110,12 @@ namespace ClaFi{
         Text,   // a shade of the ink the paint chain arrived at. See UI-Types
         Accent, // the hue the theme's own live states are drawn from. See UI-Types
         Spot,   // the second accent, for what stands apart from the interface. See UI-Types
-        Yellow, // the yellow pigment, at InkWell's tone. See UI-Types#yellow-green-blue-red
-        Green,  // the green pigment, at InkWell's tone. See UI-Types#yellow-green-blue-red
-        Blue,   // the blue pigment, at InkWell's tone. See UI-Types#yellow-green-blue-red
-        Red,    // the red pigment, at InkWell's tone. See UI-Types#yellow-green-blue-red
+        Yellow, // the yellow pigment. See UI-Types#yellow-green-blue-red-purple-orange
+        Green,  // the green pigment. See UI-Types#yellow-green-blue-red-purple-orange
+        Blue,   // the blue pigment. See UI-Types#yellow-green-blue-red-purple-orange
+        Red,    // the red pigment. See UI-Types#yellow-green-blue-red-purple-orange
+        Purple, // the purple pigment. See UI-Types#yellow-green-blue-red-purple-orange
+        Orange, // the orange pigment. See UI-Types#yellow-green-blue-red-purple-orange
         Black,  // pure black, the same on either side of the theme. See UI-Types#black-white
         White,  // pure white, the same on either side of the theme. See UI-Types#black-white
         Count
@@ -130,6 +134,10 @@ namespace ClaFi{
                 return Pigment::Blue;
             case InkColor::Red:
                 return Pigment::Red;
+            case InkColor::Purple:
+                return Pigment::Purple;
+            case InkColor::Orange:
+                return Pigment::Orange;
             case InkColor::Text:
             case InkColor::Accent:
             case InkColor::Spot:

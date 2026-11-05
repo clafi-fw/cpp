@@ -253,9 +253,10 @@ ColorMode** - see wornColorMode - so nothing that paints holds Auto.
 
 ## Pigment
 
-**Each pigment is a region of the hue wheel**, so it keeps the colour its name states whatever the
-theme's anchor hue. It sets the hue only. The tone comes from `InkWell::pigmentTones` for an ink,
-or from the painter for a pigment it draws directly.
+**Each pigment stands on the theme's grid** - twelve hues 30 degrees apart, the first at the
+anchor - at the grid hue nearest the middle of its name. It is never more than 15 degrees from
+that colour, and every harmony colour is on the same grid. It sets the hue only. The tone comes
+from `InkWell::pigmentTones` for an ink, or from the painter for a pigment it draws directly.
 
 ## InkTone
 
@@ -422,7 +423,7 @@ text. **Use it for what belongs with the controls around it.**
 **Spot is for what stands apart from the interface** - a brand mark, emphasised text, a tooltip's
 tint. The theme decides how sparingly it shows.
 
-## InkColor::Yellow, Green, Blue, Red
+## InkColor::Yellow, Green, Blue, Red, Purple, Orange
 
 The tone is the one `InkWell::pigmentTones` states for the painter's side of the theme. Strongest
 draws the hue at that tone, and a lower grade fades it toward the surface.
