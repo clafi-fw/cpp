@@ -156,7 +156,7 @@ namespace ClaFi::Controls
         // How the body asks to be scrolled, read beside its measured height.
         ScrollMetrics m_bodyScroll{};
         ScrollBar& m_vScrollBar{ createRightBar<ScrollBar>(ScrollAxis::Vertical)};
-        Panel& m_bottomBar{ createBottomBar<Panel>(UiElement::Section, MetricsSet::Page) };
+        Panel& m_bottomBar{ createBottomBar<Panel>(UiElement::ScrollBar) };
         ScrollBar& m_hScrollBar{ m_bottomBar.createBody<ScrollBar>(ScrollAxis::Horizontal)};
         Panel& m_corner{ m_bottomBar.createRightBar<Panel>(MinSize{ k_cornerSize, 0.0f }) };
         bool m_scrolledInDragOrByWheel{};

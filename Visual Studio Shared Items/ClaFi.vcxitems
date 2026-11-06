@@ -225,7 +225,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.D2D.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Theme.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Colors.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_BuiltInColors.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Styles.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_BuiltIn.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Baked.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Metrics.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Y-Core\AppTheme\AppTheme_Palette.cppm" />

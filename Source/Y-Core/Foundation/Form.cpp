@@ -194,23 +194,6 @@ namespace ClaFi
         RichControl::nestedControlFocusing(event);
     }
 
-    void FormControlBase::themeMetricsChanged()
-    {
-        RichControl::themeMetricsChanged();
-        takeSetShadow(themeMetrics());
-    }
-
-    void FormControlBase::takeSetShadow(const ThemeMetrics& theme)
-    {
-        if (m_windowShadowStated)
-            return;
-        const OptionalMetricsSet set = metricsSet();
-        if (!set)
-            return;
-        if (const WindowShadow* shadow = theme.shadowOf(*set))
-            m_windowShadow = *shadow;
-    }
-
     // FormBase
 
     FormBase::FormBase(AppContext& appContext, WindowRole windowRole, FormControlBase& content, Control* popupTarget,
@@ -1645,14 +1628,14 @@ namespace ClaFi
         m_canvas{ appContext.createBackend(*m_window, m_placed.size.roundOut()) },
 
         m_appContext{ appContext },
-        m_context{ appContext.platform(), appContext.theme(), appContext.bakedColors(), m_canvas,
-            *m_scaler },
+        m_context{ appContext.platform(), appContext.theme(), appContext.bakedColors(),
+            appContext.styleMetrics(), m_canvas, *m_scaler },
         m_themeSwitchConnection{
             appContext.events().connect<ThemeSwitchEvent>(this, &FormBase::themeSwitched)
         },
-        m_themeMetricsSwitchConnection{
-            appContext.events().connect<ThemeMetricsSwitchEvent>(this,
-                &FormBase::themeMetricsSwitched)
+        m_styleMetricsSwitchConnection{
+            appContext.events().connect<StyleMetricsSwitchEvent>(this,
+                &FormBase::styleMetricsSwitched)
         },
         m_backendSwitchConnection{
             appContext.events().connect<BackendSwitchEvent>(this, &FormBase::backendSwitched)
@@ -1865,7 +1848,7 @@ namespace ClaFi
     WindowFrame FormBase::designFrame() const
     {
         const ControlMetrics& metrics = m_content.metrics();
-        const WindowShadow shadow = m_content.windowShadow();
+        const WindowShadow& shadow = metrics.shadow;
         const Scaler& scaler = this->scaler();
 
         WindowFrame result{};
@@ -1925,7 +1908,7 @@ namespace ClaFi
 
     Graphics::ShadowPainter::Design FormBase::shadowDesign() const
     {
-        return shadowDesign(m_content.colorRules(), m_content.windowShadow(),
+        return shadowDesign(m_content.style(), m_content.metrics().shadow,
             m_content.metrics().radius, windowFocusedFactor());
     }
 
@@ -2137,21 +2120,21 @@ namespace ClaFi
     }
 
     // **A hidden form takes the sizes too**, so that it shows in them when it is shown. The frame
-    // follows the root's window set, and the layout follows every control's.
-    void FormBase::themeMetricsSwitched(ThemeMetricsSwitchEvent&)
+    // follows the root's style, and the layout follows every control's.
+    void FormBase::styleMetricsSwitched(StyleMetricsSwitchEvent&)
     {
-        tellThemeMetricsChanged(m_content);
+        tellStyleMetricsChanged(m_content);
         if (m_topLayer)
-            tellThemeMetricsChanged(*m_topLayer);
+            tellStyleMetricsChanged(*m_topLayer);
         stateFrame();
         invalidateAlign();
     }
 
-    void FormBase::tellThemeMetricsChanged(Control& control)
+    void FormBase::tellStyleMetricsChanged(Control& control)
     {
-        control.themeMetricsChanged();
+        control.styleMetricsChanged();
         for (ControlPtr& child : control.controls())
-            tellThemeMetricsChanged(*child);
+            tellStyleMetricsChanged(*child);
     }
 
     // **Marked here and taken at the next frame** - see stateBackend, which is where the canvas is

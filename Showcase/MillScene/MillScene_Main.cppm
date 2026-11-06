@@ -522,7 +522,7 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
     int runMillSceneShowcase(ApplicationBase& application)
     {
         const auto form = application.createDialog<MillSceneForm>(
-            MetricsSet::PrimaryWindow,
+            UiElement::Dialog,
             MinSize{ k_minWindowWidth / 2.0f, k_minWindowHeight / 2.0f },
             PreferredSize{ k_minWindowWidth, k_minWindowHeight }
         );

@@ -189,7 +189,6 @@ namespace ClaFi::Controls
         Panel{
             params,
             UiElement::DialogTitle,
-            MetricsSet::DialogTitle,
             VerticalTextAnchor::Center,
             HorizontalTextAnchor::Center,
             WordWrap::No,

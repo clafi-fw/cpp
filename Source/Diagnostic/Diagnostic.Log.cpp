@@ -321,8 +321,10 @@ namespace ClaFi
             appContext,
             nullptr,
             HostProps{
-                MetricsSet::PrimaryWindow,
                 UiElement::Section,
+                // A section coloured root in the primary window's frame.
+                Radius{ appContext.styleMetrics(UiElement::Dialog).radius },
+                appContext.styleMetrics(UiElement::Dialog).shadow,
                 // Wide enough for the FPS page's four reading columns with their units - see FpsPage. The
                 // height is the first run's; from then on the window is what the user left it.
                 PreferredSize{ 400, 600 }

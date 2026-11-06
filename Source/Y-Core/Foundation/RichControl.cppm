@@ -52,9 +52,10 @@ namespace ClaFi
         // Whether the control holds the focus for its current item. See UI-Types
         DECLARE_PROPERTY_STORAGE(FocusScope, focusScope, FocusScope::No)
     public:
-        // color
-        [[nodiscard]] OptionalUiElement colorRules() const { return m_colorRules; }
-        void setColorRules(OptionalUiElement value) { m_colorRules = value; }
+        // The style the control wears: its rules in paint, its sizes in layout. See Control-Foundation
+        [[nodiscard]] OptionalUiElement style() const { return m_style; }
+        // Wears the style, whose sizes a theme switch brings up to date; none keeps the sizes.
+        void setStyle(OptionalUiElement);
         // The control's own text, handed out live. See Control-Foundation#control-text
         ControlText& text() { return m_text; }
         const ControlText& text() const { return m_text; }
@@ -64,12 +65,8 @@ namespace ClaFi
         void setTextFormat(const TextFormat& value) { m_textFormat = value; }
         // metrics
         const ControlMetrics& metrics() const { return m_metrics; }
-        // Sizes the control by the theme's set, which a theme switch brings up to date.
-        void setMetrics(MetricsSet);
-        // Sizes the control by a block of its own, which no theme switch touches.
+        // Sizes the control by a block of its own: every size stated, so no theme switch touches it.
         void setMetrics(const ControlMetrics&);
-        // The theme's set sizing the control, none for a block of its own. See Control-Foundation
-        [[nodiscard]] OptionalMetricsSet metricsSet() const { return m_metricsSet; }
         // The sizes the control's properties and setters stated. See AppTheme#metricsfields
         [[nodiscard]] MetricsFields statedMetrics() const { return m_statedMetrics; }
         //
@@ -106,6 +103,9 @@ namespace ClaFi
         [[nodiscard]] float radius() const { return m_metrics.radius; }
         void setRadius(float value);
         //
+        [[nodiscard]] const WindowShadow& windowShadow() const { return m_metrics.shadow; }
+        void setWindowShadow(const WindowShadow&);
+        //
         [[nodiscard]] NavigationReach navigationReach() const final { return m_navigationReach; }
         void setNavigationReach(const NavigationReach value) { m_navigationReach = value; }
         [[nodiscard]] MouseFocus mouseFocus() const final { return m_mouseFocus; }
@@ -120,14 +120,14 @@ namespace ClaFi
         void adjustPaint(AdjustPaintEvent&) override;
         void adjustText(AdjustTextEvent&) const override;
         void nestedAdjustTooltip(AdjustTooltipEvent&) override;
-        void themeMetricsChanged() override;
+        void styleMetricsChanged() override;
     private:
-        void takeMetricsSet(OptionalMetricsSet, const ThemeMetrics&); // none keeps what stands
+        // Takes the style's sizes, with the stated ones kept over them.
+        void takeStyleMetrics(const ControlMetrics& resolved);
     private:
-        ControlMetrics m_metrics{}; // the set's sizes, with the stated ones over them
-        OptionalMetricsSet m_metricsSet{};
+        OptionalUiElement m_style{};
+        ControlMetrics m_metrics{}; // the style's sizes, with the stated ones over them
         MetricsFields m_statedMetrics{};
-        OptionalUiElement m_colorRules{};
         ControlText m_text{};
         TextFormat m_textFormat{};
         TooltipText m_tooltipText{};
@@ -150,10 +150,13 @@ namespace ClaFi
         INIT_PROPERTY(clickTarget),
         INIT_PROPERTY(focusScope)
     {
-        // A theme's set or none. Bound first, so a plain MetricsSet anywhere in the pack wins.
-        BIND_PROPERTY_ACTION(OptionalMetricsSet, takeMetricsSet(p, params.themeMetrics()));
-        // The theme's set the control is sized by. See AppTheme#metricsset
-        BIND_PROPERTY_ACTION(MetricsSet, takeMetricsSet(p, params.themeMetrics()));
+        // A style or none. Bound first, so a plain UiElement anywhere in the pack wins.
+        BIND_PROPERTY_MEMBER(OptionalUiElement, m_style);
+        // The style the control wears, which sizes it and paints it.
+        BIND_PROPERTY_MEMBER(UiElement, m_style);
+        // The style's sizes are the floor every size stated below lands on.
+        if (m_style)
+            takeStyleMetrics(params.styleMetrics(*m_style));
         // The whole metric block at once, the control's own.
         BIND_PROPERTY_CALL(ControlMetrics, setMetrics);
         BIND_PROPERTY_CALL(MaxSize, setMaxSize); // the largest the control may be made
@@ -167,11 +170,8 @@ namespace ClaFi
         BIND_PROPERTY_CALL(Spacing, setSpacing); // space kept between the control's children
         BIND_PROPERTY_VALUE(Border, setBorder); // how heavy the control's border is
         BIND_PROPERTY_VALUE(Radius, setRadius); // corner radius of the control's box
-
-        // A rule set or none. Bound first, so a plain UiElement anywhere in the pack wins.
-        BIND_PROPERTY_MEMBER(OptionalUiElement, m_colorRules);
-        // Which of the theme's rule sets the control paints from.
-        BIND_PROPERTY_MEMBER(UiElement, m_colorRules);
+        // The shadow the control's window casts, where the control is a window's root.
+        BIND_PROPERTY_CALL(WindowShadow, setWindowShadow);
 
         auto appendText = [&](const auto& p) { m_text << p; };
         // An empty text takes a Text whole, its sheet with it. See Control-Foundation#control-text

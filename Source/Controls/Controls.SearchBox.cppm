@@ -187,7 +187,6 @@ namespace ClaFi::Controls
         // arguments.
         Panel{
             params,
-            MetricsSet::Page,
             UiElement::Page,
             std::forward<Args>(args)...
         },

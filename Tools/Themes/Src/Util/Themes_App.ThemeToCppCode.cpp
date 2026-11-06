@@ -4,7 +4,11 @@ import ClaFi.Application.ThemesManager_Serializers;
 import ClaFi.Application.ThemesManager_Elements;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Palette;
+import ClaFi.Core.AppTheme_Styles;
+import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.System.UiTypes;
 
 import ClaFi.Core.System.Utils;
 
@@ -16,16 +20,16 @@ namespace Themes_App
 
     // themeToCppCode
 
-    std::wstring themeToCppCode(const ThemeColors& colors, CodeContent content, CodeScope scope)
+    std::wstring themeToCppCode(const AppTheme& theme, CodeContent content, CodeScope scope)
     {
-        return CppCodeGenerator{ colors, content, scope }.text();
+        return CppCodeGenerator{ theme, content, scope }.text();
     }
 
     // themeToSourceFile
 
-    std::wstring themeToSourceFile(const ThemeColors& colors)
+    std::wstring themeToSourceFile(const AppTheme& theme)
     {
-        const std::wstring text = CppCodeGenerator{ colors }.text();
+        const std::wstring text = CppCodeGenerator{ theme }.text();
         std::wstring_view statements = text;
         std::wstring result{ k_sourceFileHead };
         while (!statements.empty())
@@ -46,9 +50,9 @@ namespace Themes_App
         return result.append(k_sourceFileTail);
     }
 
-    // builtInColorsFile
+    // builtInThemeFile
 
-    std::filesystem::path builtInColorsFile()
+    std::filesystem::path builtInThemeFile()
     {
         // This file stands in the tree it was compiled from, wherever the executable was put.
         std::error_code error;
@@ -58,8 +62,8 @@ namespace Themes_App
         {
             const std::filesystem::path appThemeFolder =
                 folder / L"Source" / L"Y-Core" / L"AppTheme";
-            if (std::filesystem::exists(appThemeFolder / k_colorsModuleFileName, error))
-                return appThemeFolder / k_builtInColorsFileName;
+            if (std::filesystem::exists(appThemeFolder / k_themeModuleFileName, error))
+                return appThemeFolder / k_builtInThemeFileName;
             std::filesystem::path parent = folder.parent_path();
             // A root is its own parent.
             if (parent == folder)
@@ -69,13 +73,13 @@ namespace Themes_App
         return {};
     }
 
-    // writeBuiltInColors
+    // writeBuiltInTheme
 
-    SourceWrite writeBuiltInColors(const std::filesystem::path& file, const ThemeColors& colors)
+    SourceWrite writeBuiltInTheme(const std::filesystem::path& file, const AppTheme& theme)
     {
-        const std::string_view lineEnd = lineEndOf(file.parent_path() / k_colorsModuleFileName);
+        const std::string_view lineEnd = lineEndOf(file.parent_path() / k_themeModuleFileName);
         std::string content{};
-        for (const char c : toUtf8(themeToSourceFile(colors)))
+        for (const char c : toUtf8(themeToSourceFile(theme)))
         {
             if (c == '\n')
             {
@@ -146,19 +150,19 @@ namespace Themes_App
 
     // CppCodeGenerator
 
-    CppCodeGenerator::CppCodeGenerator(const ThemeColors& colors, CodeContent content,
+    CppCodeGenerator::CppCodeGenerator(const AppTheme& theme, CodeContent content,
         CodeScope scope)
         :
-        m_colors{ colors },
+        m_theme{ theme },
         m_content{ content },
         m_scope{ scope }
     {
         build();
     }
 
-    CppCodeGenerator::CppCodeGenerator(const ThemeColors& colors)
+    CppCodeGenerator::CppCodeGenerator(const AppTheme& theme)
         :
-        m_colors{ colors },
+        m_theme{ theme },
         m_content{ CodeContent::Full },
         m_scope{ CodeScope::ClassMethod },
         m_startsEmpty{ true }
@@ -348,9 +352,14 @@ namespace Themes_App
         return write(name);
     }
 
+    CppCodeGenerator& CppCodeGenerator::colorsMemberName(std::wstring_view name)
+    {
+        return memberName(L"colors").write(L".").write(name);
+    }
+
     CppCodeGenerator& CppCodeGenerator::openMember(std::wstring_view typeName, std::wstring_view name)
     {
-        return memberName(name).write(L" = ").write(typeName);
+        return colorsMemberName(name).write(L" = ").write(typeName);
     }
 
     bool CppCodeGenerator::statesMember(bool differs) const
@@ -364,10 +373,10 @@ namespace Themes_App
         // An element whose effect no ink names has no member of ThemeColors to state.
         if (!entry.effect)
             return;
-        if (!statesMember(m_colors.*entry.effect != m_defaults.*entry.effect))
+        if (!statesMember(m_theme.colors.*entry.effect != m_defaults.colors.*entry.effect))
             return;
         openMember(L"ColorEffect", entry.codeName);
-        colorEffect(m_colors.*entry.effect, 0ull, k_channelColumn);
+        colorEffect(m_theme.colors.*entry.effect, 0ull, k_channelColumn);
         closeLine();
         newLine();
         m_statedAnyMember = true;
@@ -377,19 +386,21 @@ namespace Themes_App
     {
         if (!statesMember(value != defaultValue))
             return;
-        memberName(name).write(L" = ").number(value);
+        colorsMemberName(name).write(L" = ").number(value);
         closeLine().newLine();
         m_statedAnyMember = true;
     }
 
     void CppCodeGenerator::paletteMembers()
     {
-        floatMember(L"anchorHue", m_colors.anchorHue, m_defaults.anchorHue);
-        if (statesMember(m_colors.harmonyKind != m_defaults.harmonyKind))
+        const ThemeColors& colors = m_theme.colors;
+        floatMember(L"anchorHue", colors.anchorHue, m_defaults.colors.anchorHue);
+        if (statesMember(colors.harmonyKind != m_defaults.colors.harmonyKind))
         {
             const std::wstring_view harmonyName =
-                enumNames(m_colors.harmonyKind)[static_cast<std::size_t>(m_colors.harmonyKind)];
-            memberName(L"harmonyKind").write(L" = ").enumValue(L"ColorHarmonyKind", harmonyName);
+                enumNames(colors.harmonyKind)[static_cast<std::size_t>(colors.harmonyKind)];
+            colorsMemberName(L"harmonyKind").write(L" = ");
+            enumValue(L"ColorHarmonyKind", harmonyName);
             closeLine().newLine();
             m_statedAnyMember = true;
         }
@@ -398,13 +409,14 @@ namespace Themes_App
 
     void CppCodeGenerator::paletteHuesMember()
     {
-        if (!statesMember(m_colors.paletteHues != m_defaults.paletteHues))
+        const ThemeColors& colors = m_theme.colors;
+        if (!statesMember(colors.paletteHues != m_defaults.colors.paletteHues))
             return;
-        memberName(L"paletteHues").write(L" = {").newLine();
-        for (std::size_t i = 0ull; i != m_colors.paletteHues.size(); ++i)
+        colorsMemberName(L"paletteHues").write(L" = {").newLine();
+        for (std::size_t i = 0ull; i != colors.paletteHues.size(); ++i)
         {
-            indent(1ull).number(m_colors.paletteHues[i]);
-            if (i + 1ull != m_colors.paletteHues.size())
+            indent(1ull).number(colors.paletteHues[i]);
+            if (i + 1ull != colors.paletteHues.size())
                 write(L",");
             newLine();
         }
@@ -439,37 +451,136 @@ namespace Themes_App
         return indent(level).write(L"}");
     }
 
-    CppCodeGenerator& CppCodeGenerator::elementRules(const ElementRules& element,
+    CppCodeGenerator& CppCodeGenerator::statedSize(const std::wstring_view designator,
+        const std::wstring_view typeName, const FloatPoint& value)
+    {
+        write(L".").write(designator).write(L" = ").write(typeName).write(L"{ ");
+        number(value.x).write(L", ").number(value.y);
+        return write(L" }");
+    }
+
+    CppCodeGenerator& CppCodeGenerator::statedSize(const std::wstring_view designator,
+        const float value)
+    {
+        return write(L".").write(designator).write(L" = ").number(value);
+    }
+
+    // The designators stand in StatedMetrics declaration order, which is what a designated
+    // initializer list has to keep.
+    CppCodeGenerator& CppCodeGenerator::statedMetrics(const StatedMetrics& metrics,
+        const std::size_t level)
+    {
+        write(L"{");
+        std::size_t stated = 0ull;
+        auto openSize = [this, level, &stated]() {
+            if (stated != 0ull)
+                write(L",");
+            ++stated;
+            newLine().indent(level + 1ull);
+        };
+        if (metrics.border)
+        {
+            openSize();
+            const std::size_t border = static_cast<std::size_t>(*metrics.border);
+            write(L".border = ").enumValue(L"Thickness", enumNames(Thickness{})[border]);
+        }
+        if (metrics.band)
+        {
+            openSize();
+            statedSize(L"band", *metrics.band);
+        }
+        if (metrics.radius)
+        {
+            openSize();
+            statedSize(L"radius", *metrics.radius);
+        }
+        if (metrics.padding)
+        {
+            openSize();
+            statedSize(L"padding", L"Padding", *metrics.padding);
+        }
+        if (metrics.spacing)
+        {
+            openSize();
+            statedSize(L"spacing", L"Spacing", *metrics.spacing);
+        }
+        if (metrics.minSize)
+        {
+            openSize();
+            statedSize(L"minSize", L"MinSize", *metrics.minSize);
+        }
+        if (metrics.preferredSize)
+        {
+            openSize();
+            statedSize(L"preferredSize", L"PreferredSize", *metrics.preferredSize);
+        }
+        if (metrics.depth)
+        {
+            openSize();
+            statedSize(L"depth", *metrics.depth);
+        }
+        if (metrics.growIn)
+        {
+            openSize();
+            statedSize(L"growIn", *metrics.growIn);
+        }
+        if (metrics.shadowBlur)
+        {
+            openSize();
+            statedSize(L"shadowBlur", *metrics.shadowBlur);
+        }
+        if (metrics.shadowOffset)
+        {
+            openSize();
+            statedSize(L"shadowOffset", L"FloatPoint", *metrics.shadowOffset);
+        }
+        if (metrics.shadowSpread)
+        {
+            openSize();
+            statedSize(L"shadowSpread", *metrics.shadowSpread);
+        }
+        if (metrics.shadowOpacity)
+        {
+            openSize();
+            statedSize(L"shadowOpacity", *metrics.shadowOpacity);
+        }
+        newLine();
+        return indent(level).write(L"}");
+    }
+
+    CppCodeGenerator& CppCodeGenerator::controlStyle(const ControlStyle& style,
         std::size_t level)
     {
-        const bool statesBase = !element.base.empty();
-        const bool statesStandsOn = !element.standsOn.empty();
-        const bool statesSeed = element.seed.has_value();
-        const bool statesRules = !element.rules.empty();
-        const bool statesDropped = !element.dropped.empty();
+        const bool statesBase = !style.base.empty();
+        const bool statesStandsOn = !style.standsOn.empty();
+        const bool statesSeed = style.seed.has_value();
+        const bool statesRules = !style.rules.empty();
+        const bool statesDropped = !style.dropped.empty();
+        const bool statesMetrics = !style.metrics.empty();
         std::size_t fieldsLeft = 1ull + static_cast<std::size_t>(std::ranges::count(
-            std::array{ statesBase, statesStandsOn, statesSeed, statesRules, statesDropped },
+            std::array{ statesBase, statesStandsOn, statesSeed, statesRules, statesDropped,
+                statesMetrics },
             true));
-        write(L"ElementRules{").newLine();
+        write(L"ControlStyle{").newLine();
         --fieldsLeft;
-        indent(level + 1ull).write(L".name = L\"").write(element.name).write(L"\"");
+        indent(level + 1ull).write(L".name = L\"").write(style.name).write(L"\"");
         fieldEnd(fieldsLeft);
         if (statesBase)
         {
             --fieldsLeft;
-            indent(level + 1ull).write(L".base = L\"").write(element.base).write(L"\"");
+            indent(level + 1ull).write(L".base = L\"").write(style.base).write(L"\"");
             fieldEnd(fieldsLeft);
         }
         if (statesStandsOn)
         {
             --fieldsLeft;
-            indent(level + 1ull).write(L".standsOn = L\"").write(element.standsOn).write(L"\"");
+            indent(level + 1ull).write(L".standsOn = L\"").write(style.standsOn).write(L"\"");
             fieldEnd(fieldsLeft);
         }
         if (statesSeed)
         {
             --fieldsLeft;
-            const std::size_t seed = static_cast<std::size_t>(*element.seed);
+            const std::size_t seed = static_cast<std::size_t>(*style.seed);
             indent(level + 1ull).write(L".seed = ").enumValue(L"Pigment", k_pigmentKeys[seed]);
             fieldEnd(fieldsLeft);
         }
@@ -477,35 +588,42 @@ namespace Themes_App
         {
             --fieldsLeft;
             indent(level + 1ull).write(L".rules = ");
-            colorRules(element.rules, level + 1ull, ruleMarkerColumn(level + 2ull));
+            colorRules(style.rules, level + 1ull, ruleMarkerColumn(level + 2ull));
             fieldEnd(fieldsLeft);
         }
         if (statesDropped)
         {
             --fieldsLeft;
             indent(level + 1ull).write(L".dropped = ");
-            ruleSelectors(element.dropped, level + 1ull);
+            ruleSelectors(style.dropped, level + 1ull);
+            fieldEnd(fieldsLeft);
+        }
+        if (statesMetrics)
+        {
+            --fieldsLeft;
+            indent(level + 1ull).write(L".metrics = ");
+            statedMetrics(style.metrics, level + 1ull);
             fieldEnd(fieldsLeft);
         }
         return indent(level).write(L"}");
     }
 
-    void CppCodeGenerator::themeRules()
+    void CppCodeGenerator::themeStyles()
     {
         if (m_content == CodeContent::Differences)
         {
-            addedSets();
-            removedSets();
+            addedStyles();
+            removedStyles();
             return;
         }
-        const ElementRulesList& elements = m_colors.rules.elements;
-        if (elements.empty())
+        const ControlStyleList& list = m_theme.styles.list;
+        if (list.empty())
             return;
-        memberName(L"rules").write(L".elements = {").newLine();
-        for (std::size_t i = 0ull; i != elements.size(); ++i)
+        memberName(L"styles").write(L".list = {").newLine();
+        for (std::size_t i = 0ull; i != list.size(); ++i)
         {
-            indent(1ull).elementRules(elements[i], 1ull);
-            if (i + 1ull != elements.size())
+            indent(1ull).controlStyle(list[i], 1ull);
+            if (i + 1ull != list.size())
                 write(L",");
             newLine();
         }
@@ -513,35 +631,35 @@ namespace Themes_App
         m_statedAnyMember = true;
     }
 
-    // Set statements stand a blank line apart. The first follows the members' own blank line.
-    void CppCodeGenerator::addedSets()
+    // Style statements stand a blank line apart. The first follows the members' own blank line.
+    void CppCodeGenerator::addedStyles()
     {
-        for (const ElementRules& element : m_colors.rules.elements)
+        for (const ControlStyle& style : m_theme.styles.list)
         {
-            const ElementRules* defaultElement = m_defaults.rules.of(element.name);
-            if (defaultElement and *defaultElement == element)
+            const ControlStyle* defaultStyle = m_defaults.styles.of(style.name);
+            if (defaultStyle and *defaultStyle == style)
                 continue;
-            if (m_statedAnySet)
+            if (m_statedAnyStyle)
                 newLine();
-            memberName(L"rules").write(L".add(");
-            elementRules(element, 0ull);
+            memberName(L"styles").write(L".add(");
+            controlStyle(style, 0ull);
             write(L")").closeLine();
-            m_statedAnySet = true;
+            m_statedAnyStyle = true;
             m_statedAnyMember = true;
         }
     }
 
-    void CppCodeGenerator::removedSets()
+    void CppCodeGenerator::removedStyles()
     {
-        for (const ElementRules& defaultElement : m_defaults.rules.elements)
+        for (const ControlStyle& defaultStyle : m_defaults.styles.list)
         {
-            if (m_colors.rules.of(defaultElement.name))
+            if (m_theme.styles.of(defaultStyle.name))
                 continue;
-            if (m_statedAnySet)
+            if (m_statedAnyStyle)
                 newLine();
-            memberName(L"rules").write(L".remove(L\"").write(defaultElement.name).write(L"\")");
+            memberName(L"styles").write(L".remove(L\"").write(defaultStyle.name).write(L"\")");
             closeLine();
-            m_statedAnySet = true;
+            m_statedAnyStyle = true;
             m_statedAnyMember = true;
         }
     }
@@ -550,7 +668,7 @@ namespace Themes_App
     {
         if (m_scope != CodeScope::OutsideClass)
             return;
-        write(L"ThemeColors ").write(k_objectName).write(L"{}");
+        write(L"AppTheme ").write(k_objectName).write(L"{}");
         closeLine().newLine();
     }
 
@@ -559,7 +677,7 @@ namespace Themes_App
         switch (m_scope)
         {
         case CodeScope::ClassMethod:
-            write(L"// This code is to be used inside a ThemeColors method").newLine();
+            write(L"// This code is to be used inside an AppTheme method").newLine();
             write(L"// to initialize a theme compiled into an application").newLine();
             break;
         case CodeScope::OutsideClass:
@@ -581,10 +699,11 @@ namespace Themes_App
             headerComment();
         objectDeclaration();
         paletteMembers();
-        floatMember(L"darkModeFloor", m_colors.darkModeFloor, m_defaults.darkModeFloor);
+        floatMember(L"darkModeFloor", m_theme.colors.darkModeFloor,
+            m_defaults.colors.darkModeFloor);
         for (std::size_t i = 0ull; i != k_uiElements.size(); ++i)
             colorMember(static_cast<UiElement>(i));
-        themeRules();
+        themeStyles();
         if (!m_statedAnyMember)
             write(L"// This theme is the framework's default").newLine();
     }

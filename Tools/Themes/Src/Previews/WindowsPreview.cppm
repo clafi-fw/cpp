@@ -35,7 +35,7 @@ namespace Themes_App
     private:
         // Draws the shadow the window a mockup stands for casts at that focus, under the mockup.
         void drawWindowShadow(PaintEvent&, const RichControl& mockup, UiElement,
-            const WindowShadow&, float windowFocusedFactor);
+            float windowFocusedFactor);
         // A menu line, which keeps the click from closing the form it stands in.
         MenuItem& addMenuLine(std::wstring_view caption);
     private:
@@ -71,7 +71,6 @@ namespace Themes_App
         StackPanel& m_menu{ add<StackPanel>(
             Orientation::Vertical,
             UiElement::Menu,
-            MetricsSet::SecondaryWindow,
             Padding{ 4.0f },
             HorizontalAlign::Left,
             ClickTarget::Self,
@@ -87,7 +86,6 @@ namespace Themes_App
 
         Label& m_tooltip{ add<Label>(
             UiElement::Tooltip,
-            MetricsSet::SecondaryWindow,
             Text{ L"Weighs the catch on the brass scale" },
             HorizontalAlign::Right,
             MaxSize{ k_tooltipWidth, k_maxFloat }

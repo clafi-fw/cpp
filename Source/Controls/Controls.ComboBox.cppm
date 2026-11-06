@@ -292,7 +292,6 @@ namespace ClaFi::Controls
             //IndicatorVisibility::Hover,
             // Not a tool, so not a ToolButton - but it wears the same look, and the element and
             // the metrics are the whole of that look.
-            MetricsSet::ToolButton,
             UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             comboBox.m_itemsViewMode,
@@ -407,8 +406,7 @@ namespace ClaFi::Controls
         dropPopup<ComboBoxDropdown>(
             form(),
             HostProps{
-                MetricsSet::SecondaryWindow,
-                UiElement::Section,
+                UiElement::Dropdown,
                 // **A list taller than the room it fell into scrolls.** The placement cuts the
                 // window to the room the side it took had, and the pass that follows is
                 // measured against that window - which is where Auto reads the overrun.
@@ -487,7 +485,7 @@ namespace ClaFi::Controls
         // An element passed in is read here or not at all - SplitButtonBase stops short of
         // RichControl.
         ComboBoxBaseClass::adjustPaint(event);
-        event.setColorRules(colorRules().value_or(UiElement::ToolButton));
+        event.setColorRules(style().value_or(UiElement::ToolButton));
     }
 
     // ComboBox
@@ -497,7 +495,7 @@ namespace ClaFi::Controls
         :
         ComboBoxBaseClass{
             params,
-            MetricsSet::ToolButton,
+            UiElement::ToolButton,
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,

@@ -1,15 +1,14 @@
 // =========================================================================
 // ClaFi.Application.ThemesManager_Elements
 //
-// **What a theme is made of, stated once.** Every element a theme colours, the
-// three spellings it goes by, what it is painted on, and for the elements
-// an ink names, the ThemeColors member holding that effect - and every set of
-// sizes a theme states, with the three spellings it goes by.
+// **What a theme is made of, stated once.** Every element a theme styles, the
+// three spellings it goes by, and for the elements an ink names, the
+// ThemeColors member holding that effect.
 //
 // Four readers share it and none keeps a list of its own: the serializers
 // build their field tuples from this table, the Themes app names its pages
 // from it, the C++ code generator names members and elements from it, and bake below
-// turns a theme into the set the paint path reads. An element added here
+// turns a theme into the colours the paint path reads. An element added here
 // reaches all four; one added anywhere else reaches none.
 // =========================================================================
 export module ClaFi.Application.ThemesManager_Elements;
@@ -18,13 +17,15 @@ import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Palette;
+import ClaFi.Core.AppTheme_Styles;
+import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
 namespace ClaFi
 {
     // What one element is: its spellings, and the effect an ink names where there is one. What
-    // it is painted on and what it stands over are the theme's to say - see ElementRules.
+    // it is painted on and what it stands over are the theme's to say - see ControlStyle.
     export struct UiElementDescriptor
     {
         std::wstring_view name{};
@@ -66,6 +67,18 @@ namespace ClaFi
             .codeName = L"sectionHeader",
             .token = L"SectionHeader"
         },
+        // A section that opens and shuts under its header, framed as a page is.
+        UiElementDescriptor{
+            .name = L"Expander",
+            .codeName = L"expander",
+            .token = L"Expander"
+        },
+        // A section holding one answer - a box, a list - at a button's corner and inset.
+        UiElementDescriptor{
+            .name = L"Field",
+            .codeName = L"field",
+            .token = L"Field"
+        },
         // A tool bar is painted on the window's content, the same thing a section stands on.
         UiElementDescriptor{
             .name = L"Tool Bar",
@@ -86,6 +99,12 @@ namespace ClaFi
             .name = L"Tooltip",
             .codeName = L"tooltip",
             .token = L"Tooltip"
+        },
+        // The list a combo box or a drop list opens under itself: a window, surfaced as a section.
+        UiElementDescriptor{
+            .name = L"Dropdown",
+            .codeName = L"dropdown",
+            .token = L"Dropdown"
         },
         // Its stroke is the line a divider row of a grid carries.
         UiElementDescriptor{
@@ -111,6 +130,12 @@ namespace ClaFi
             .codeName = L"gridRow",
             .token = L"GridRow"
         },
+        // The sizes a grid lays its cells out by; the rows paint them.
+        UiElementDescriptor{
+            .name = L"Grid Cell",
+            .codeName = L"gridCell",
+            .token = L"GridCell"
+        },
         UiElementDescriptor{
             .name = L"Button",
             .codeName = L"button",
@@ -122,11 +147,23 @@ namespace ClaFi
             .codeName = L"toolButton",
             .token = L"ToolButton"
         },
+        // The row of a check box or a radio button: the mark and its caption, as a list lays them.
+        UiElementDescriptor{
+            .name = L"List Item",
+            .codeName = L"listItem",
+            .token = L"ListItem"
+        },
         // A field the user types into, and the box a code view shows its lines in.
         UiElementDescriptor{
             .name = L"Text Box",
             .codeName = L"textBox",
             .token = L"TextBox"
+        },
+        // The track a value is dragged along; its band shows while the slider is in edit mode.
+        UiElementDescriptor{
+            .name = L"Slider",
+            .codeName = L"slider",
+            .token = L"Slider"
         },
         // The band behind selected text, and the ink drawn over it.
         UiElementDescriptor{
@@ -167,6 +204,12 @@ namespace ClaFi
             .token = L"Spot",
             .effect = &ThemeColors::spot
         },
+        // The bar a scroll box is moved by, and the strip the box stands its bars in.
+        UiElementDescriptor{
+            .name = L"Scroll Bar",
+            .codeName = L"scrollBar",
+            .token = L"ScrollBar"
+        },
         UiElementDescriptor{
             .name = L"Scroll Button",
             .codeName = L"scrollButton",
@@ -179,7 +222,7 @@ namespace ClaFi
         },
         // **A note set apart, one element for each kind of message** - a message bar, a notice, a
         // callout in a page of prose - each started from its kind's pigment, as the sides of a Do
-        // and Don't block are - see ElementRules seed. Its band is drawn in its stroke colour.
+        // and Don't block are - see ControlStyle seed. Its band is drawn in its stroke colour.
         UiElementDescriptor{
             .name = L"Info Callout",
             .codeName = L"infoCallout",
@@ -227,94 +270,26 @@ namespace ClaFi
         return k_uiElements[static_cast<std::size_t>(element)];
     }
 
-    // The spellings one set of sizes goes by. See Application
-    export struct MetricsSetDescriptor
-    {
-        std::wstring_view name{};
-        std::wstring_view codeName{};
-        std::wstring_view token{};
-    };
-
-    // Indexed by MetricsSet, so it and this table must stay in step.
-    export constexpr std::array<MetricsSetDescriptor, k_metricsSetCount> k_metricsSets{
-        MetricsSetDescriptor{ .name = L"Button", .codeName = L"button", .token = L"Button" },
-        MetricsSetDescriptor{
-            .name = L"Tool Button",
-            .codeName = L"toolButton",
-            .token = L"ToolButton"
-        },
-        MetricsSetDescriptor{
-            .name = L"Dialog Title",
-            .codeName = L"dialogTitle",
-            .token = L"DialogTitle"
-        },
-        MetricsSetDescriptor{
-            .name = L"Primary Window",
-            .codeName = L"primaryWindow",
-            .token = L"PrimaryWindow"
-        },
-        MetricsSetDescriptor{
-            .name = L"Secondary Window",
-            .codeName = L"secondaryWindow",
-            .token = L"SecondaryWindow"
-        },
-        MetricsSetDescriptor{ .name = L"Page", .codeName = L"page", .token = L"Page" },
-        MetricsSetDescriptor{
-            .name = L"Check Mark",
-            .codeName = L"checkMark",
-            .token = L"CheckMark"
-        },
-        MetricsSetDescriptor{ .name = L"List Item", .codeName = L"listItem", .token = L"ListItem" },
-        MetricsSetDescriptor{ .name = L"Grid Cell", .codeName = L"gridCell", .token = L"GridCell" },
-        MetricsSetDescriptor{
-            .name = L"Scroll Button",
-            .codeName = L"scrollButton",
-            .token = L"ScrollButton"
-        },
-        MetricsSetDescriptor{
-            .name = L"Scroll Thumb",
-            .codeName = L"scrollThumb",
-            .token = L"ScrollThumb"
-        },
-        MetricsSetDescriptor{ .name = L"Tab", .codeName = L"tab", .token = L"Tab" },
-        MetricsSetDescriptor{ .name = L"Callout", .codeName = L"callout", .token = L"Callout" },
-        MetricsSetDescriptor{
-            .name = L"Do and Don't",
-            .codeName = L"doDont",
-            .token = L"DoDont"
-        },
-        MetricsSetDescriptor{
-            .name = L"Code Block",
-            .codeName = L"codeBlock",
-            .token = L"CodeBlock"
-        },
-        MetricsSetDescriptor{ .name = L"Text Box", .codeName = L"textBox", .token = L"TextBox" },
-        MetricsSetDescriptor{ .name = L"Slider", .codeName = L"slider", .token = L"Slider" }
-    };
-
-    export constexpr const MetricsSetDescriptor& metricsSetOf(MetricsSet set)
-    {
-        return k_metricsSets[static_cast<std::size_t>(set)];
-    }
-
     // A theme as the paint path reads it, in the mode it is worn in, laid out by the framework's
     // elements and then the application's own. See Application#bake
-    export [[nodiscard]] BakedColors bake(const ThemeColors&, ColorMode, AppElementNames);
+    export [[nodiscard]] BakedColors bake(const AppTheme&, ColorMode, AppElementNames);
+    // Every style's sizes as the layout reads them, laid out the same way. See Application
+    export [[nodiscard]] StyleMetrics resolveStyleMetrics(const AppTheme&, AppElementNames);
 
     // The names every element goes by, in UiElement order: the framework's, then the
     // application's.
     export [[nodiscard]] std::vector<std::wstring_view> elementNamesOf(AppElementNames);
 
-    // A set's surface at rest, walked down from the bare colour of the mode along standsOn.
-    export [[nodiscard]] Hsl restingSurface(const ThemeColors&, std::wstring_view set, ColorMode);
-    // The ink a set's text starts from, walked down the same nesting through text rules.
-    export [[nodiscard]] Hsl restingInk(const ThemeColors&, std::wstring_view set, ColorMode);
-    // A set's stroke at rest, which starts at its resting surface.
-    export [[nodiscard]] Hsl restingStroke(const ThemeColors&, std::wstring_view set, ColorMode);
-    // The same three for an element, by the token the theme names its set with.
-    export [[nodiscard]] Hsl restingSurface(const ThemeColors&, OptionalUiElement, ColorMode);
-    export [[nodiscard]] Hsl restingInk(const ThemeColors&, OptionalUiElement, ColorMode);
-    export [[nodiscard]] Hsl restingStroke(const ThemeColors&, OptionalUiElement, ColorMode);
+    // A style's surface at rest, walked down from the bare colour of the mode along standsOn.
+    export [[nodiscard]] Hsl restingSurface(const AppTheme&, std::wstring_view style, ColorMode);
+    // The ink a style's text starts from, walked down the same nesting through text rules.
+    export [[nodiscard]] Hsl restingInk(const AppTheme&, std::wstring_view style, ColorMode);
+    // A style's stroke at rest, which starts at its resting surface.
+    export [[nodiscard]] Hsl restingStroke(const AppTheme&, std::wstring_view style, ColorMode);
+    // The same three for an element, by the token the theme names its style with.
+    export [[nodiscard]] Hsl restingSurface(const AppTheme&, OptionalUiElement, ColorMode);
+    export [[nodiscard]] Hsl restingInk(const AppTheme&, OptionalUiElement, ColorMode);
+    export [[nodiscard]] Hsl restingStroke(const AppTheme&, OptionalUiElement, ColorMode);
 
 
     //-------------------------------------------------------------------------
@@ -322,16 +297,16 @@ namespace ClaFi
 
     namespace
     {
-        // A set's resolved rules at rest on one channel. True where one of them names a hue.
-        bool applyRestingRules(Hsl& color, const ThemeColors& themeColors,
-            const std::wstring_view set, const PaintChannel channel, const ColorMode mode)
+        // A style's resolved rules at rest on one channel. True where one of them names a hue.
+        bool applyRestingRules(Hsl& color, const AppTheme& theme, const std::wstring_view style,
+            const PaintChannel channel, const ColorMode mode)
         {
             bool namesHue = false;
-            for (const ColorRule& rule : themeColors.rules.resolvedRules(set))
+            for (const ColorRule& rule : theme.styles.resolvedRules(style))
             {
                 if (!rule.atRest() or rule.output != channel)
                     continue;
-                rule.effect.applyTo(color, 1.0f, themeColors, mode);
+                rule.effect.applyTo(color, 1.0f, theme.colors, mode);
                 if (rule.effect.hue.operation() != ColorRuleHueOp::NoChange)
                     namesHue = true;
             }
@@ -340,32 +315,32 @@ namespace ClaFi
 
         // The ink of the colour mode before any rule: white at the dark end, black at the light
         // one, in the hue of the bare surface - the theme's anchor.
-        [[nodiscard]] Hsl bareInk(const ThemeColors& themeColors, const ColorMode mode)
+        [[nodiscard]] Hsl bareInk(const AppTheme& theme, const ColorMode mode)
         {
             return {
-                themeColors.rootSurface(mode).hue,
+                theme.colors.rootSurface(mode).hue,
                 0.0f,
                 mode == ColorMode::Dark ? 1.0f : 0.0f
             };
         }
 
-        // Only text rules are applied on the way: what a set is painted on is a separate chain
-        // and does not reach the ink. No set is the bare ink of the colour mode, with nothing
+        // Only text rules are applied on the way: what a style is painted on is a separate chain
+        // and does not reach the ink. No style is the bare ink of the colour mode, with nothing
         // applied - a window root's own text rule is the first thing on the chain, exactly as its
         // surface rule is the first thing on the other one. The one thing the surface lends the
         // ink is its hue, until a text rule on the way names one - the seed PaintEvent takes.
-        [[nodiscard]] Hsl walkInk(const ThemeColors& themeColors, const std::wstring_view set,
+        [[nodiscard]] Hsl walkInk(const AppTheme& theme, const std::wstring_view style,
             const ColorMode mode, bool& hueNamed)
         {
-            const ElementRules* stated = themeColors.rules.of(set);
+            const ControlStyle* stated = theme.styles.of(style);
             if (!stated)
-                return bareInk(themeColors, mode);
+                return bareInk(theme, mode);
 
             bool named = false;
-            Hsl result = walkInk(themeColors, stated->standsOn, mode, named);
+            Hsl result = walkInk(theme, stated->standsOn, mode, named);
             if (!named)
-                result.hue = restingSurface(themeColors, set, mode).hue;
-            if (applyRestingRules(result, themeColors, set, PaintChannel::Text, mode))
+                result.hue = restingSurface(theme, style, mode).hue;
+            if (applyRestingRules(result, theme, style, PaintChannel::Text, mode))
                 named = true;
             hueNamed = named;
             return result;
@@ -379,31 +354,68 @@ namespace ClaFi
                     return descriptor.effect;
             return nullptr;
         }
+
+        // **These sizes follow from others**, whatever a style states. See Application#settle
+        void settle(const UiElement element, ControlMetrics& metrics)
+        {
+            switch (element)
+            {
+                case UiElement::Dialog:
+                {
+                    const float windowBorder = strokeWidth(metrics.border);
+                    metrics.padding = { windowBorder, windowBorder };
+                    break;
+                }
+                case UiElement::SelectionIndicator:
+                case UiElement::HoverIndicator:
+                    metrics.minSize.y = metrics.minSize.x;
+                    metrics.maxSize = MaxSize{ metrics.minSize };
+                    break;
+                case UiElement::ScrollButton:
+                    metrics.minSize.y = metrics.minSize.x;
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
-    BakedColors bake(const ThemeColors& themeColors, ColorMode mode,
-        const AppElementNames appElements)
+    BakedColors bake(const AppTheme& theme, ColorMode mode, const AppElementNames appElements)
     {
         BakedColors result{};
         result.lightness = lightnessOf(mode);
-        result.anchorHue = themeColors.anchorHue;
-        result.darkModeFloor = themeColors.darkModeFloor;
+        result.anchorHue = theme.colors.anchorHue;
+        result.darkModeFloor = theme.colors.darkModeFloor;
 
         for (std::size_t i = 0; i < k_uiElements.size(); ++i)
         {
             const UiElementDescriptor& descriptor = k_uiElements[i];
             if (descriptor.effect != nullptr)
-                result.effects[i] = bake(themeColors.*descriptor.effect, themeColors);
+                result.effects[i] = bake(theme.colors.*descriptor.effect, theme.colors);
         }
 
         // The harmony answers here and nowhere after: what a pigment stands for is the theme's
         // to say, and a hue is a value two themes have a half way between.
         for (std::size_t pigment = 0ull; pigment != k_pigmentsCount; ++pigment)
         {
-            result.pigmentHues[pigment] = themeColors.harmony()
+            result.pigmentHues[pigment] = theme.colors.harmony()
                 .pigmentColor(static_cast<Pigment>(pigment)).hsl().hue;
         }
-        result.rules = bake(themeColors.rules, themeColors, elementNamesOf(appElements));
+        result.rules = bake(theme.styles, theme.colors, elementNamesOf(appElements));
+        return result;
+    }
+
+    StyleMetrics resolveStyleMetrics(const AppTheme& theme, const AppElementNames appElements)
+    {
+        const std::vector<std::wstring_view> names = elementNamesOf(appElements);
+        StyleMetrics result{};
+        result.elements.reserve(names.size());
+        for (std::size_t i = 0ull; i != names.size(); ++i)
+        {
+            ControlMetrics& metrics = result.elements.emplace_back(
+                theme.styles.resolvedMetrics(names[i]));
+            settle(static_cast<UiElement>(i), metrics);
+        }
         return result;
     }
 
@@ -417,68 +429,62 @@ namespace ClaFi
         return result;
     }
 
-    // Only resting rules are applied: nothing below the set is in a state. A set stated nowhere
-    // stands on the bare colour of the mode, as a window root does.
-    Hsl restingSurface(const ThemeColors& themeColors, const std::wstring_view set,
-        const ColorMode mode)
+    // Only resting rules are applied: nothing below the style is in a state. A style stated
+    // nowhere stands on the bare colour of the mode, as a window root does.
+    Hsl restingSurface(const AppTheme& theme, const std::wstring_view style, const ColorMode mode)
     {
-        const ElementRules* stated = themeColors.rules.of(set);
+        const ControlStyle* stated = theme.styles.of(style);
         if (!stated)
-            return themeColors.rootSurface(mode);
+            return theme.colors.rootSurface(mode);
 
-        Hsl result = restingSurface(themeColors, stated->standsOn, mode);
+        Hsl result = restingSurface(theme, stated->standsOn, mode);
         // The hue ControlPaintContext::foundTextRgb starts the band from.
         if (stated->seed)
-            result.hue = themeColors.harmony().pigmentColor(*stated->seed).hsl().hue;
-        applyRestingRules(result, themeColors, set, PaintChannel::Surface, mode);
+            result.hue = theme.colors.harmony().pigmentColor(*stated->seed).hsl().hue;
+        applyRestingRules(result, theme, style, PaintChannel::Surface, mode);
         return result;
     }
 
-    Hsl restingInk(const ThemeColors& themeColors, const std::wstring_view set,
-        const ColorMode mode)
+    Hsl restingInk(const AppTheme& theme, const std::wstring_view style, const ColorMode mode)
     {
         bool hueNamed = false;
-        return walkInk(themeColors, set, mode, hueNamed);
+        return walkInk(theme, style, mode, hueNamed);
     }
 
-    Hsl restingStroke(const ThemeColors& themeColors, const std::wstring_view set,
-        const ColorMode mode)
+    Hsl restingStroke(const AppTheme& theme, const std::wstring_view style, const ColorMode mode)
     {
-        Hsl result = restingSurface(themeColors, set, mode);
-        applyRestingRules(result, themeColors, set, PaintChannel::Stroke, mode);
+        Hsl result = restingSurface(theme, style, mode);
+        applyRestingRules(result, theme, style, PaintChannel::Stroke, mode);
         return result;
     }
 
-    // An element naming an effect rather than a set - the accent and the spot - shows that
+    // An element naming an effect rather than a style - the accent and the spot - shows that
     // effect over what it stands on.
-    Hsl restingSurface(const ThemeColors& themeColors, const OptionalUiElement element,
-        const ColorMode mode)
+    Hsl restingSurface(const AppTheme& theme, const OptionalUiElement element, const ColorMode mode)
     {
         if (!element)
-            return themeColors.rootSurface(mode);
+            return theme.colors.rootSurface(mode);
         const std::wstring_view token = uiElementOf(*element).token;
         if (const ColorEffect ThemeColors::* effect = effectOfToken(token))
         {
-            Hsl result = restingSurface(themeColors, uiElementOf(UiElement::Section).token, mode);
-            (themeColors.*effect).applyTo(result, 1.0f, themeColors, mode);
+            Hsl result = restingSurface(theme, uiElementOf(UiElement::Section).token, mode);
+            (theme.colors.*effect).applyTo(result, 1.0f, theme.colors, mode);
             return result;
         }
-        return restingSurface(themeColors, token, mode);
+        return restingSurface(theme, token, mode);
     }
 
-    Hsl restingInk(const ThemeColors& themeColors, const OptionalUiElement element,
-        const ColorMode mode)
+    Hsl restingInk(const AppTheme& theme, const OptionalUiElement element, const ColorMode mode)
     {
         if (!element)
-            return bareInk(themeColors, mode);
-        return restingInk(themeColors, uiElementOf(*element).token, mode);
+            return bareInk(theme, mode);
+        return restingInk(theme, uiElementOf(*element).token, mode);
     }
 
-    Hsl restingStroke(const ThemeColors& themeColors, const OptionalUiElement element,
-        const ColorMode mode)
+    Hsl restingStroke(const AppTheme& theme, const OptionalUiElement element, const ColorMode mode)
     {
         if (!element)
-            return themeColors.rootSurface(mode);
-        return restingStroke(themeColors, uiElementOf(*element).token, mode);
+            return theme.colors.rootSurface(mode);
+        return restingStroke(theme, uiElementOf(*element).token, mode);
     }
 }

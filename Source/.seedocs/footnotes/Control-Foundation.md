@@ -99,8 +99,9 @@ watcher follows paints from window to window.
 
 ## FormControlBase
 
-**The root's metrics, colour set and WindowShadow decide how the window looks.** The window's role
-decides none of them, and a root that leaves one out has none.
+**The root's style decides how the window looks** - its frame, its radius and the shadow it casts
+are the sizes the style resolves to, and its surface the style's rules. The window's role decides
+none of them, and a root that wears no style has none.
 
 ## Control
 
@@ -192,23 +193,27 @@ see VisualStateIndex.
 or Current through adjustNestedControlVisualState re-reads that part here. A slider does so for
 its thumb, which reads hot in edit mode while the keys drive it.
 
-## Control themeMetricsChanged
+## Control styleMetricsChanged
 
-**Told to every control of every form when the theme's sizes switch**, before the form lays itself
-out again - see ThemeMetricsSwitchEvent. RichControl takes its set's new sizes here. A control that
-works a size of its own out of a set states it again here.
+**Told to every control of every form when the styles' sizes switch**, before the form lays
+itself out again - see StyleMetricsSwitchEvent. RichControl takes its style's new sizes here. A
+control that works a size of its own out of a style states it again here.
 
-## RichControl metricsSet
+## RichControl style
 
-**Named by a MetricsSet property, or by setMetrics with a set.** The control's sizes are the set's,
-with every size its properties and setters stated over them. A theme switch hands it the set's new
-sizes and keeps the stated ones.
+**One style, worn by a UiElement property or setStyle.** Its rules are what the control paints
+from, and its sizes - see StyleMetrics - are the floor every size the control's properties and
+setters state lands on. A theme switch hands the control the style's new sizes and keeps the
+stated ones.
 
-**A ControlMetrics given whole is the caller's block**: the control names no set, and a switch
-leaves its sizes as they are.
+**A ControlMetrics given whole states every size**, so a switch leaves the control as it is.
 
-**A size worked out from a set and then stated is the caller's.** A Padding built from a set's
-padding stays what it was when it was built.
+**A size worked out from a style and then stated is the caller's.** A Padding built from
+`styleMetrics(UiElement::Button).padding` stays what it was when it was built.
+
+**The style goes in ahead of the sizes.** RichControl binds the style first and each single size
+after it, whatever order the properties arrive in, so a MinSize beside a UiElement stands over
+the style's.
 
 ## Control reveal
 
@@ -772,7 +777,7 @@ FormBase::shadowDesign.
 ## AdjustPaintEvent replaceRing
 
 **The ring is drawn at the control's current less the amount.** The stroke's Current rules, the
-border's thickening toward ThemeMetrics::focusedBorder and the frame's hold out of the grow-in all
+border's thickening toward ThemeMetrics::FocusedBorder and the frame's hold out of the grow-in all
 read that. A rule reading Current on the surface or the ink reads the whole current.
 
 **Time the amount as AnimationSlots::Current is timed**, as WithEditMode does with

@@ -49,8 +49,8 @@ namespace ClaFi
     export using UserThemePtr = std::unique_ptr<UserTheme>;
     export using UserThemeList = std::vector<UserThemePtr>;
 
-    // Reads the sets a theme file's text states into the built-in theme. See Application
-    export void addBuiltInSets(std::wstring_view themeText);
+    // Reads the styles a theme file's text states into the built-in theme. See Application
+    export void addBuiltInStyles(std::wstring_view themeText);
 
     // The themes an application can wear - the built-in, and the user's own files that state
     // every element the application names. See Application

@@ -105,8 +105,6 @@ namespace Themes_App
         class MapButton : public Button
         {
             using Button::Button;
-        protected:
-            MinSize indicatorSize(const AppTheme&) const override { return { 16.0f }; }
         };
 
         // Create Items
@@ -114,7 +112,6 @@ namespace Themes_App
         {
             MapButton& subItem{ add<MapButton>(
                 Tag{ i },
-                MetricsSet::ToolButton,
                 UiElement::ToolButton,
                 IndicatorVisibility::Always,
                 IndicatorStyle::Radio,
@@ -149,7 +146,6 @@ namespace Themes_App
         HarmonyItemClass{ params,
             ButtonViewMode::IconOnly,
             IconSize{ 32.f, 32.0f },
-            MetricsSet::Button,
             UiElement::Button,
             ShowSelectionOnSurface::Yes,
             VerticalTextAnchor::Center,
@@ -217,8 +213,7 @@ namespace Themes_App
             TextPlacement::Top,
             Padding{ 4.0f },
             Spacing{ 4.0f },
-            UiElement::Menu,
-            MetricsSet::SecondaryWindow
+            UiElement::Menu
         },
         m_harmonyItem{ harmonyItem }
     {

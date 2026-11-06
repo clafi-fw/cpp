@@ -11,6 +11,7 @@ import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.Transfer.Offer;
 import ClaFi.Core.Transfer.Formats;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.UiTypes;
@@ -27,7 +28,7 @@ namespace ClaFi::Tools::WhatsClip
             // Reached by the keys; a press opens the page and leaves the focus where it was.
             Tab& tab = strip().addTab(
                 Text{ representation.name },
-                Padding{ 12.0f, themeMetrics().tab.padding.y },
+                Padding{ 12.0f, styleMetrics(UiElement::Tab).padding.y },
                 MouseFocus::Keep,
                 Page{ page }
             );

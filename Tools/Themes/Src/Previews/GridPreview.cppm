@@ -5,7 +5,7 @@ import Themes_App.PreviewPageBase;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
 
-import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
@@ -57,7 +57,7 @@ namespace Themes_App
         });
 
         Grid& m_grid{ add<Grid>(
-            MetricsSet::Page,
+            UiElement::Grid,
             HorizontalAlign::Fill,
             Columns{
                 Column{ Tag{ FishColumn::Name }, Text{ L"Fish" }, ColumnWidthMode::Fill },

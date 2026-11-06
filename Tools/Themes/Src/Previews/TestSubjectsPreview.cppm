@@ -25,9 +25,9 @@ namespace Themes_App
     private:
         static constexpr std::wstring_view k_whatItShows{ L"Testee and Bestee" };
 
-        // A button's metrics give a stroke something to be drawn at; the focus gives the states.
+        // The subjects' styles state a button's sizes, which give a stroke something to be drawn
+        // at; the focus gives the states.
         RichControl& m_testee{ add<RichControl>(
-            MetricsSet::Button,
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
@@ -36,7 +36,6 @@ namespace Themes_App
         ) };
 
         RichControl& m_bestee{ add<RichControl>(
-            MetricsSet::Button,
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,

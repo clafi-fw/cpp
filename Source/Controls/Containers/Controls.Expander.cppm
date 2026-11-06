@@ -82,9 +82,8 @@ namespace ClaFi::Controls
         :
         WithHeldHeader<PanelBase>{
             params,
-            MetricsSet::Page,
-            expanderColorRules(UiElement::Section,
-                // What the expander draws of itself, which is what picks its colour rules.
+            expanderStyle(UiElement::Expander,
+                // What the expander draws of itself, which is what picks its style.
                 READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             std::forward<Args>(args)...
         },
@@ -101,10 +100,10 @@ namespace ClaFi::Controls
         m_header.connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
             bodyToggled(event);
         });
-        // A tree row keeps the tool button's radius it was given. The other looks turn the page's
-        // corner, less the padding that stands between the header and the page's edge.
+        // A tree row keeps the tool button's radius it was given. The other looks turn the
+        // expander's corner, less the padding that stands between the header and its edge.
         if (m_header.viewMode() != ExpanderViewMode::TreeNode)
-            m_header.setRadius(params.themeMetrics().page.radius - padding().x);
+            m_header.setRadius(params.styleMetrics(UiElement::Expander).radius - padding().x);
         holdHeader(m_header);
         Props::ifThereIs<HeaderText>([&](const auto& headerText) {
             setHeaderText(headerText);

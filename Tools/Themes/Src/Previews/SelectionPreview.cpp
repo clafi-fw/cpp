@@ -37,7 +37,6 @@ namespace Themes_App
     {
         return tiles.add<Button>(
             Text{ name },
-            MetricsSet::ToolButton,
             UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             IndicatorVisibility::Hover,

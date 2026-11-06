@@ -39,7 +39,6 @@ namespace ClaFi::Controls
         Base{
             params,
             HostProps{
-                MetricsSet::CodeBlock,
                 UiElement::CodeBlock,
                 std::forward<Args>(args)...
             },

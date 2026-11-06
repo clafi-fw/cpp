@@ -47,9 +47,6 @@ namespace Themes_App
     class HueRulePopup;
     class HueSlider;
 
-    // The mark against a k_harmonyItemSize tile, matching the one the harmony picker's maps carry.
-    constexpr MinSize k_indicatorSize{ 16.0f };
-
     // What sits on a blob. One character, because the blob is the size of one and the name it
     // stands for is in the tooltip.
     constexpr std::array<std::wstring_view, 3> k_paletteDigits{ L"1", L"2", L"3" };
@@ -191,7 +188,6 @@ namespace Themes_App
         template <typename... Args>
         HueRuleItem(const CreateParams&, HueRulePopup&, ColorRuleHueOp, HueItemView, Args&&...);
     protected:
-        [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override { return k_indicatorSize; }
         void adjustText(AdjustTextEvent&) const override;
         void nestedAdjustTooltip(AdjustTooltipEvent&) override;
         void getControlState(GetStateEvent&) const override;
@@ -364,7 +360,6 @@ namespace Themes_App
         Button{ params,
             // Not a tool, so not a ToolButton - but it wears the same look, and the element and
             // the metrics are the whole of that look.
-            MetricsSet::ToolButton,
             UiElement::ToolButton,
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,
@@ -440,7 +435,6 @@ namespace Themes_App
             FocusScope::Yes,
             NavigationReach::Yes,
             MouseFocus::Self,
-            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             Padding{ k_dividerPadding },
             Spacing{ k_dividerPadding },

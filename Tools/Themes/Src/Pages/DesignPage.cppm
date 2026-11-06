@@ -5,7 +5,6 @@ import Themes_App.ElementPage;
 import Themes_App.PageKinds;
 import Themes_App.PreviewPage;
 import Themes_App.RuleSlider;
-import Themes_App.SizesPage;
 
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
@@ -16,7 +15,8 @@ import ClaFi.Controls.Stack;
 import ClaFi.Controls.Tree;
 
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.AppTheme_Styles;
+import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
@@ -30,21 +30,21 @@ namespace Themes_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // The colour a rule of a set is applied to, the set named as the theme names it.
+    // The colour a rule of a style is applied to, the style named as the theme names it.
     export using OnGetElementRuleBase =
-        std::function<RuleBase(std::wstring_view set, const ColorRule&, RuleChannel)>;
+        std::function<RuleBase(std::wstring_view style, const ColorRule&, RuleChannel)>;
 
-    // A set no framework element names - a base the sets of a kind stand over, or one of this
+    // A style no framework element names - a base the styles of a kind stand over, or one of this
     // application's own - and what its tree item and its page go by.
-    struct NamedSet
+    struct NamedStyle
     {
         std::wstring_view name{};
         std::wstring_view token{};
-        PaintChannels outputs{}; // the channels the set's rules may write
+        PaintChannels outputs{}; // the channels the style's rules may write
         PreviewPage preview{ PreviewPage::Overview };
     };
 
-    // A page a branch of the tree lists - a set of rules or a set of sizes - and its preview page.
+    // A page a branch of the tree lists - a style - and its preview page.
     struct CategoryEntry
     {
         // Not explicit, so a branch lists its entries as braced pairs.
@@ -54,22 +54,15 @@ namespace Themes_App
             preview{ page }
         {
         }
-        // The set names its own preview page.
-        constexpr CategoryEntry(const NamedSet& value)
+        // The style names its own preview page.
+        constexpr CategoryEntry(const NamedStyle& value)
             :
             named{ &value },
             preview{ value.preview }
         {
         }
-        constexpr CategoryEntry(MetricsSet value, PreviewPage page)
-            :
-            sizes{ value },
-            preview{ page }
-        {
-        }
         OptionalUiElement element{};
-        const NamedSet* named{};
-        OptionalMetricsSet sizes{};
+        const NamedStyle* named{};
         PreviewPage preview{ PreviewPage::Overview };
     };
 
@@ -104,7 +97,7 @@ namespace Themes_App
         template<typename... Args>
         explicit DesignPage(const CreateParams&, Args&&...);
     public:
-        // The token of the page that shows - a set's or a category's - or nothing yet.
+        // The token of the page that shows - a style's or a category's - or nothing yet.
         [[nodiscard]] std::wstring_view pickedPage() const;
         // What the preview shows for the node picked - the Overview while none is.
         [[nodiscard]] NodePreview pickedPreview() const;
@@ -117,15 +110,11 @@ namespace Themes_App
         EventConnection onPagePick(F&& callback);
         // The Palette page's body, which the theme page fills.
         [[nodiscard]] StackPanel& paletteView() { return m_paletteView; }
-        // Hands every page its set of the theme's rules, its ramps' base and what to call.
-        void bind(ThemeColors&, const OnGetElementRuleBase&, const OnRulesChanged&);
-        // Hands every sizes page the theme's sizes and what to call after an edit.
-        void bindSizes(ThemeMetrics&, const OnSizesChanged&);
-        // Lists the theme's own sets again and builds every page's rows from the rules as they
+        // Hands every page its style of the theme, its ramps' base and what to call.
+        void bind(AppTheme&, const OnGetElementRuleBase&, const OnRulesChanged&);
+        // Lists the theme's own styles again and builds every page's rows from the styles as they
         // stand.
         void rebuildRules();
-        // Shows every sizes page's sizes as they stand.
-        void showSizes();
     protected:
         void visibilityChanged() override;
     private:
@@ -135,18 +124,16 @@ namespace Themes_App
         // A row of the tree and the page it opens.
         struct TreeEntry
         {
-            OptionalUiElement element{}; // an element's set, nothing for every other row
-            const NamedSet* named{};     // a set no element names, null for every other row
-            std::wstring ownSet{};       // a set of the theme's own, empty for every other row
+            OptionalUiElement element{}; // an element's style, nothing for every other row
+            const NamedStyle* named{};     // a style no element names, null for every other row
+            std::wstring ownStyle{};       // a style of the theme's own, empty for every other row
             const TreeRoot* root{};      // a root's row, null for every other row
             const Category* category{};  // a category's node, null for every other row
-            OptionalMetricsSet sizes{};  // a set of sizes, none for every other row
             NodePreview preview{};       // a folder's is its members', where they agree
             Control* item{};             // the row: an item, or a node's header
             TreeNode* node{};            // the node, where the row heads one
             Control* page{};
-            ElementPage* rules{};        // the page, where it shows a set of rules
-            SizesPage* sizesPage{};      // the page, where it shows a set of sizes
+            ElementPage* rules{};        // the page, where it shows a style
             StackPanel* indexBody{};     // where a root's or a category's page lists its rows
             IndexRows indexRows{};       // the rows of a root's or a category's page
         };
@@ -168,27 +155,27 @@ namespace Themes_App
         void openEntry(std::size_t index);
         // Writes each row of an index page again, with the rule count as it stands.
         void refreshIndex(const TreeEntry&);
-        void bindPage(std::size_t index); // hands a page of rules its set and what to call
-        // Builds again every page the set is a base of: their rows hold its rules by address.
-        void rebuildPagesBasedOn(std::wstring_view set);
-        // Lists the theme's own sets under their category as they stand, a row and a page each.
-        void syncOwnSets();
-        // The names of the sets the theme states that no row of the framework's shows.
-        [[nodiscard]] std::vector<std::wstring> ownSetNames() const;
-        // Every set a row shows, as the tree names it, the framework's first.
-        [[nodiscard]] SetNames setNames() const;
-        // Whether the theme states a set the typed name would clash with, by token or by name.
-        [[nodiscard]] bool namesSet(std::wstring_view typed) const;
-        // Adds a set of the theme's own over Any Non-Window, and opens its row for its name.
-        void addSet();
-        // Opens the row of the set just added for its name, once the rows stand.
-        void nameAddedSet();
-        // Takes the name typed over a set's row, or refuses it; the rename follows on a tick.
-        void renameSet(std::size_t index, AcceptEditEvent&);
-        void renamePendingSet();
-        void deleteSet(std::size_t index); // asked on the set's own page, which goes on a tick
-        void deletePendingSet();
-        // Records a step made on the page that shows: a set added, renamed or deleted.
+        void bindPage(std::size_t index); // hands a page its style and what to call
+        // Builds again every page the style is a base of: their rows hold its rules by address.
+        void rebuildPagesBasedOn(std::wstring_view style);
+        // Lists the theme's own styles under their category as they stand, a row and a page each.
+        void syncOwnStyles();
+        // The names of the styles the theme states that no row of the framework's shows.
+        [[nodiscard]] std::vector<std::wstring> ownStyleNames() const;
+        // Every style a row shows, as the tree names it, the framework's first.
+        [[nodiscard]] SetNames styleNames() const;
+        // Whether the theme states a style the typed name would clash with, by token or by name.
+        [[nodiscard]] bool namesStyle(std::wstring_view typed) const;
+        // Adds a style of the theme's own over Any Non-Window, and opens its row for its name.
+        void addStyle();
+        // Opens the row of the style just added for its name, once the rows stand.
+        void nameAddedStyle();
+        // Takes the name typed over a style's row, or refuses it; the rename follows on a tick.
+        void renameStyle(std::size_t index, AcceptEditEvent&);
+        void renamePendingStyle();
+        void deleteStyle(std::size_t index); // asked on the style's own page, which goes on a tick
+        void deletePendingStyle();
+        // Records a step made on the page that shows: a style added, renamed or deleted.
         void setsChanged(const Text& what);
         void showPickedPage();
         [[nodiscard]] const TreeEntry* pickedEntry() const;
@@ -200,9 +187,9 @@ namespace Themes_App
         [[nodiscard]] static PageKind kindOf(const TreeEntry&);
         [[nodiscard]] static std::wstring_view nameOf(const TreeEntry&);
         [[nodiscard]] static std::wstring_view tokenOf(const TreeEntry&);
-        // The set a row's page shows, as the theme names it - empty for every other row.
-        [[nodiscard]] static std::wstring_view setOf(const TreeEntry&);
-        // The channels a set's rules may write - every channel where nothing says otherwise.
+        // The style a row's page shows, as the theme names it - empty for every other row.
+        [[nodiscard]] static std::wstring_view styleOf(const TreeEntry&);
+        // The channels a style's rules may write - every channel where nothing says otherwise.
         [[nodiscard]] static PaintChannels outputsOf(const TreeEntry&);
     private:
         static constexpr std::wstring_view k_paletteTitle{ L"Palette" };
@@ -210,22 +197,21 @@ namespace Themes_App
 
         TreeEntries m_entries{}; // an item's tag is its place here
         std::size_t m_staticCount{}; // the entries the tree starts with; the theme's own follow
-        std::size_t m_ownSetsIndex{}; // the entry of the category the theme's own sets stand in
+        std::size_t m_ownStylesIndex{}; // the entry of the category the theme's own styles stand in
         ThemeColors* m_colors{}; // the theme's colours, from bind on
-        ThemeRules* m_rules{}; // the theme's sets, from bind on
+        ThemeStyles* m_styles{}; // the theme's styles, from bind on
         OnGetElementRuleBase m_ruleBase{}; // what every page's ramps read, from bind on
         OnRulesChanged m_onRulesChanged{}; // what every page calls after an edit, from bind on
-        const ThemeRules m_defaultRules{ ThemeColors{}.rules }; // what each page's reset puts back
-        const ThemeMetrics m_defaultMetrics{}; // what each sizes page's reset puts back
+        const ThemeStyles m_defaultStyles{ AppTheme{}.styles }; // what each page's reset puts back
         // Each of the three waits out the event that asked - a click on the page that goes, an
-        // editor over the row that goes - and acts on the set named beside it.
+        // editor over the row that goes - and acts on the style named beside it.
         UiTimer m_nameTimer{};
-        std::wstring m_setToName{};
+        std::wstring m_styleToName{};
         UiTimer m_renameTimer{};
-        std::wstring m_setToRename{};
+        std::wstring m_styleToRename{};
         std::wstring m_newName{};
         UiTimer m_deleteTimer{};
-        std::wstring m_setToDelete{};
+        std::wstring m_styleToDelete{};
 
         TreeView& m_tree{ createLeftBar<ScrollBox>(
             ScrollBars::Vertical,
@@ -265,13 +251,13 @@ namespace Themes_App
     {
         buildTree();
         m_nameTimer.onTick([this](TimerEvent&) {
-            nameAddedSet();
+            nameAddedStyle();
         });
         m_renameTimer.onTick([this](TimerEvent&) {
-            renamePendingSet();
+            renamePendingStyle();
         });
         m_deleteTimer.onTick([this](TimerEvent&) {
-            deletePendingSet();
+            deletePendingStyle();
         });
         // A show enters the picked page, past the tree.
         setCurrentItem(m_pages);

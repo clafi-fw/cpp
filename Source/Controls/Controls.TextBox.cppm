@@ -387,7 +387,6 @@ namespace ClaFi::Controls
         :
         TextBoxBase{
             params,
-            MetricsSet::TextBox,
             UiElement::TextBox,
             NavigationReach::Yes,
             MouseFocus::Self,

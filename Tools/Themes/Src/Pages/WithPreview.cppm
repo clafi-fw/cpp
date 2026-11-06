@@ -130,7 +130,6 @@ namespace Themes_App
         ) };
 
         PreviewPanel& m_previewPanel{ this->template createRightBar<PreviewPanel>(
-            MetricsSet::Page,
             UiElement::Page
         ) };
     };
@@ -193,16 +192,16 @@ namespace Themes_App
             if (!m_previewTheme)
                 return;
             event.resetTheme(*m_previewTheme, m_previewColors);
-            const ThemeColors& colors = m_previewTheme->colors;
+            const AppTheme& theme = *m_previewTheme;
             const ColorMode mode = PreviewState::s_colorMode;
-            event.setSurfaceHsl(restingSurface(colors, UiElement::Dialog, mode));
+            event.setSurfaceHsl(restingSurface(theme, UiElement::Dialog, mode));
             const std::wstring_view dialog = uiElementOf(UiElement::Dialog).token;
-            const bool inksAtRest = std::ranges::any_of(colors.rules.resolvedRules(dialog),
+            const bool inksAtRest = std::ranges::any_of(theme.styles.resolvedRules(dialog),
                 [](const ColorRule& rule) {
                     return rule.atRest() && rule.output == PaintChannel::Text;
                 });
             if (inksAtRest)
-                event.setTextHsl(restingInk(colors, UiElement::Dialog, mode));
+                event.setTextHsl(restingInk(theme, UiElement::Dialog, mode));
         });
         showPreview(m_nodePreview);
     }
@@ -227,11 +226,11 @@ namespace Themes_App
     void WithPreview<PageBase>::invalidatePreview()
     {
         m_previewTheme = selectedTheme();
-        // Held rather than baked where it is read: the panel paints from a reference, and a set
+        // Held rather than baked where it is read: the panel paints from a reference, and a theme
         // baked into the call would be gone before the paint reached it.
         if (m_previewTheme)
         {
-            m_previewColors = bake(m_previewTheme->colors, PreviewState::s_colorMode,
+            m_previewColors = bake(*m_previewTheme, PreviewState::s_colorMode,
                 this->appContext().appElements());
         }
 

@@ -540,7 +540,7 @@ namespace SeeDocs_App::Ui
     template<typename BoxClass, typename Holder, typename... Args>
     BoxClass& PageView::addItemBox(Holder& holder, Args&&... args)
     {
-        const ControlMetrics& itemMetrics = themeMetrics().listItem;
+        const ControlMetrics& itemMetrics = styleMetrics(UiElement::ListItem);
         return holder.template add<BoxClass>(
             Radius{ itemMetrics.radius },
             itemMetrics.padding,

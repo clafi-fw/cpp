@@ -6,10 +6,12 @@ import ClaFi.Application.ThemesManager_Elements;
 import ClaFi.App.ThemeIcon;
 
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Palette;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.DomEngine;
+import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.System.Serialization;
 import ClaFi.StdLib;
 import ClaFi.Core.System.UiTypes;
@@ -25,13 +27,22 @@ namespace ClaFi::Dom
         static void fromWString(std::wstring_view str, RuleInputs& inputs);
     };
 
-    // A seed is its pigment's name, and nothing where a set states none. A name no pigment goes
+    // A seed is its pigment's name, and nothing where a style states none. A name no pigment goes
     // by reads as none.
     template <>
     struct ScalarSerializer<OptionalPigment>
     {
         [[nodiscard]] static std::wstring toWString(const OptionalPigment& seed);
         static void fromWString(std::wstring_view str, OptionalPigment& seed);
+    };
+
+    // A pair of sizes is two numbers a space apart, across then down, and nothing where a style
+    // states none. Anything else reads as none.
+    template <std::derived_from<FloatPoint> Pair>
+    struct ScalarSerializer<std::optional<Pair>>
+    {
+        [[nodiscard]] static std::wstring toWString(const std::optional<Pair>& pair);
+        static void fromWString(std::wstring_view str, std::optional<Pair>& pair);
     };
 }
 
@@ -161,38 +172,6 @@ namespace ClaFi // AppTheme serializers
         L"Orange"
     };
 
-    // A set stands whole in a file, its name first. See Application#elementrules-in-a-file
-    export constexpr auto serializedFields(const ElementRules&) {
-        return std::make_tuple(
-            SerializedField{ L"Name", &ElementRules::name },
-            SerializedField{ L"Base", &ElementRules::base },
-            SerializedField{ L"StandsOn", &ElementRules::standsOn },
-            SerializedField{ L"Seed", &ElementRules::seed },
-            SerializedField{ L"Rules", &ElementRules::rules },
-            SerializedField{ L"Dropped", &ElementRules::dropped }
-        );
-    }
-
-    // The palette and the rules are stated here and the effects come from k_uiElements, in that
-    // table's order, which is ThemeColors declaration order. Field order in a document is a
-    // reading matter - a field is found by name - so the table's order is free to be the one
-    // generated C++ needs.
-    export constexpr auto serializedFields(const ThemeColors&) {
-        return std::tuple_cat(
-            std::make_tuple(
-                SerializedField{ L"Harmony", &ThemeColors::harmonyKind },
-                SerializedField{ L"AnchorHue", &ThemeColors::anchorHue },
-                SerializedField{ L"PaletteHues", &ThemeColors::paletteHues },
-                SerializedField{ L"DarkModeFloor", &ThemeColors::darkModeFloor }
-            ),
-            elementFields(std::make_index_sequence<k_uiElements.size()>{}),
-            std::make_tuple(
-                SerializedField{ L"Rules", &ThemeColors::elementRules,
-                    &ThemeColors::setElementRules }
-            )
-        );
-    }
-
     export constexpr auto enumNames(Thickness)
     {
         return std::array{
@@ -205,70 +184,58 @@ namespace ClaFi // AppTheme serializers
         };
     }
 
-    // A pair of sizes, across and down.
-    export template <std::derived_from<FloatPoint> Pair>
-        constexpr auto serializedFields(const Pair&)
+    // A style writes the sizes it states and nothing else. See Application#controlstyle-in-a-file
+    export constexpr auto serializedFields(const StatedMetrics&)
     {
         return std::make_tuple(
-            SerializedField{ L"X", &Pair::x },
-            SerializedField{ L"Y", &Pair::y }
+            SerializedField{ L"Border", &StatedMetrics::border },
+            SerializedField{ L"Band", &StatedMetrics::band },
+            SerializedField{ L"Radius", &StatedMetrics::radius },
+            SerializedField{ L"Padding", &StatedMetrics::padding },
+            SerializedField{ L"Spacing", &StatedMetrics::spacing },
+            SerializedField{ L"MinSize", &StatedMetrics::minSize },
+            SerializedField{ L"PreferredSize", &StatedMetrics::preferredSize },
+            SerializedField{ L"Depth", &StatedMetrics::depth },
+            SerializedField{ L"GrowIn", &StatedMetrics::growIn },
+            SerializedField{ L"ShadowBlur", &StatedMetrics::shadowBlur },
+            SerializedField{ L"ShadowOffset", &StatedMetrics::shadowOffset },
+            SerializedField{ L"ShadowSpread", &StatedMetrics::shadowSpread },
+            SerializedField{ L"ShadowOpacity", &StatedMetrics::shadowOpacity }
         );
     }
 
-    // The maximum stays the built-in one, which is unbounded in every set a file can name.
-    export constexpr auto serializedFields(const ControlMetrics&)
-    {
+    // A style stands whole in a file, its name first. See Application#controlstyle-in-a-file
+    export constexpr auto serializedFields(const ControlStyle&) {
         return std::make_tuple(
-            SerializedField{ L"Border", &ControlMetrics::border },
-            SerializedField{ L"Band", &ControlMetrics::band },
-            SerializedField{ L"Radius", &ControlMetrics::radius },
-            SerializedField{ L"Padding", &ControlMetrics::padding },
-            SerializedField{ L"Spacing", &ControlMetrics::spacing },
-            SerializedField{ L"MinSize", &ControlMetrics::minSize },
-            SerializedField{ L"PreferredSize", &ControlMetrics::preferredSize },
-            SerializedField{ L"Depth", &ControlMetrics::zDepthFactor },
-            SerializedField{ L"GrowIn", &ControlMetrics::surfaceGrowInScale }
+            SerializedField{ L"Name", &ControlStyle::name },
+            SerializedField{ L"Base", &ControlStyle::base },
+            SerializedField{ L"StandsOn", &ControlStyle::standsOn },
+            SerializedField{ L"Seed", &ControlStyle::seed },
+            SerializedField{ L"Rules", &ControlStyle::rules },
+            SerializedField{ L"Dropped", &ControlStyle::dropped },
+            SerializedField{ L"Metrics", &ControlStyle::metrics }
         );
     }
 
-    export constexpr auto serializedFields(const WindowShadow&)
-    {
-        return std::make_tuple(
-            SerializedField{ L"Blur", &WindowShadow::blur },
-            SerializedField{ L"Offset", &WindowShadow::offset },
-            SerializedField{ L"Spread", &WindowShadow::spread },
-            SerializedField{ L"Opacity", &WindowShadow::opacity }
-        );
-    }
-
-    // Each set stands under its token, in k_metricsSets.
-    template <std::size_t I>
-    constexpr auto metricsSetField()
-    {
-        return SerializedField{ k_metricsSets[I].token, k_metricsSetMembers[I] };
-    }
-
-    template <std::size_t... I>
-    constexpr auto metricsSetFields(std::index_sequence<I...>)
-    {
-        return std::make_tuple(metricsSetField<I>()...);
-    }
-
-    export constexpr auto serializedFields(const ThemeMetrics&)
-    {
+    // The palette is stated here and the effects come from k_uiElements, in that table's order,
+    // which is ThemeColors declaration order. Field order in a document is a reading matter - a
+    // field is found by name - so the table's order is free to be the one generated C++ needs.
+    export constexpr auto serializedFields(const ThemeColors&) {
         return std::tuple_cat(
-            metricsSetFields(std::make_index_sequence<k_metricsSetCount>{}),
             std::make_tuple(
-                SerializedField{ L"PrimaryWindowShadow", &ThemeMetrics::primaryWindowShadow },
-                SerializedField{ L"SecondaryWindowShadow", &ThemeMetrics::secondaryWindowShadow }
-            )
+                SerializedField{ L"Harmony", &ThemeColors::harmonyKind },
+                SerializedField{ L"AnchorHue", &ThemeColors::anchorHue },
+                SerializedField{ L"PaletteHues", &ThemeColors::paletteHues },
+                SerializedField{ L"DarkModeFloor", &ThemeColors::darkModeFloor }
+            ),
+            elementFields(std::make_index_sequence<k_uiElements.size()>{})
         );
     }
 
     export constexpr auto serializedFields(const AppTheme&) {
         return std::make_tuple(
-            SerializedField{ L"Metrics", &AppTheme::metrics },
-            SerializedField{ L"Colors", &AppTheme::colors }
+            SerializedField{ L"Colors", &AppTheme::colors },
+            SerializedField{ L"Styles", &AppTheme::styleList, &AppTheme::setStyleList }
         );
     }
 
@@ -343,5 +310,28 @@ namespace ClaFi::Dom
         for (std::size_t i = 0ull; i != k_pigmentKeys.size(); ++i)
             if (k_pigmentKeys[i] == str)
                 seed = static_cast<Pigment>(i);
+    }
+
+    template <std::derived_from<FloatPoint> Pair>
+    std::wstring ScalarSerializer<std::optional<Pair>>::toWString(const std::optional<Pair>& pair)
+    {
+        if (!pair)
+            return {};
+        return ScalarSerializer<float>::toWString(pair->x) + L' '
+            + ScalarSerializer<float>::toWString(pair->y);
+    }
+
+    template <std::derived_from<FloatPoint> Pair>
+    void ScalarSerializer<std::optional<Pair>>::fromWString(std::wstring_view str,
+        std::optional<Pair>& pair)
+    {
+        pair = std::nullopt;
+        const std::size_t space = str.find(L' ');
+        if (space == std::wstring_view::npos)
+            return;
+        Pair value{ 0.0f, 0.0f };
+        ScalarSerializer<float>::fromWString(str.substr(0ull, space), value.x);
+        ScalarSerializer<float>::fromWString(str.substr(space + 1ull), value.y);
+        pair = value;
     }
 }

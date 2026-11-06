@@ -161,7 +161,7 @@
                     <li><a href="#palette">The palette</a></li>
                     <li><a href="#color-effects">Colour effects</a></li>
                     <li><a href="#color-rules">Colour rules</a></li>
-                    <li><a href="#rule-lists">Where a control's rules come from</a></li>
+                    <li><a href="#rule-lists">Styles - where a control's rules come from</a></li>
                     <li><a href="#pointer-and-keys">The pointer and the keys</a></li>
                     <li><a href="#focus-ring">The focus ring</a></li>
                     <li><a href="#elements">Elements</a></li>
@@ -713,30 +713,52 @@ whichever device brought the user there - see
     }
 }</code></pre>
 
-<h3 id="rule-lists">Where a control's rules come from</h3>
+<h3 id="rule-lists">Styles - where a control's rules come from</h3>
 
-<p><code>ThemeColors::rules</code> is a <code>ThemeRules</code>: a list per element, and three lists
-that reach across elements. A control takes its lists in this order, each applied over what the one
-before it left:</p>
+<p>A theme states its rules in styles. A <code>ControlStyle</code> is one named list of rules
+with the sizes that go with it, and <code>AppTheme::styles</code> is the theme's list of them, a
+<code>ThemeStyles</code> that finds each by name through <code>of</code>. A framework style is
+named as its element is spelled - <code>Button</code>, <code>Section</code> - and a style names
+the one it continues from, so the two make a chain: the style, its base, that one's base and so
+on, up to a style that names none.</p>
 
 <table>
-<tr><th>List</th><th>Reaches</th></tr>
-<tr><td>The control's own</td><td>The control that states them through <code>AdjustPaintEvent::setOwnRules</code>.</td></tr>
-<tr><td><code>of(UiElement)</code></td><td>Every control wearing that element.</td></tr>
-<tr><td><code>anyWindow</code></td><td>A form's root control, by its position, whatever element it wears. A root that wears none takes this list all the same.</td></tr>
-<tr><td><code>anyNonWindow</code></td><td>Every other control, whatever element it wears, read where <code>anyWindow</code> is read for a root. The focus ring's rules live here - see <a href="#focus-ring">The focus ring</a>.</td></tr>
-<tr><td><code>shared</code></td><td>Every control that wears an element. The Themes app calls it Any element.</td></tr>
+<tr><th>Field</th><th>Holds</th></tr>
+<tr><td><code>name</code></td><td>What a theme file and the application know the style by.</td></tr>
+<tr><td><code>base</code></td><td>The style its chain continues from, or none.</td></tr>
+<tr><td><code>standsOn</code></td><td>The style it is painted on, as the Themes app shows it - its preview starts the surface from that style's resting surface, or from the mode's bare colour when none is named. See <a href="#elements">Elements</a>.</td></tr>
+<tr><td><code>seed</code></td><td>The pigment its surface's hue starts at, if not at what it stands on.</td></tr>
+<tr><td><code>rules</code></td><td>Its own rules.</td></tr>
+<tr><td><code>dropped</code></td><td>Selectors naming inherited rules it leaves out: each a channel, an input set and an optional second input set to match.</td></tr>
+<tr><td><code>metrics</code></td><td>The sizes it states over the ones its chain gives it - see <a href="layout.html#metrics">the Layout manual</a>.</td></tr>
 </table>
 
-<p>A control wears an element in one of two ways. A <code>RichControl</code> takes it as a property,
-beside its metric block. A control that decides for itself states it while its paint is adjusted,
-and what it states there has the last word.</p>
+<p>Rules add up along the chain. <code>ThemeStyles::resolvedRules</code> is the list a control
+ends with: the chain's resting rules root first, then its state rules root first, so a surface is
+established before a state modifies it. The same selector in a style and in its base is two
+steps, never an override; a rule a style dropped is left out of the chain above it. Sizes override
+instead: <code>resolvedMetrics</code> walks the same chain root first, and each size a style
+states replaces the one below it.</p>
+
+<p>The framework's own theme stands its styles over shared bases, and a theme may add bases of
+its own. A base is a style a control may wear like any other.</p>
+
+<table>
+<tr><th>Base</th><th>Reaches</th></tr>
+<tr><td><code>AnyElement</code></td><td>Every style - the root of every chain. The Themes app calls it Any Element.</td></tr>
+<tr><td><code>AnyWindow</code></td><td>A window's root: <code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code> and <code>Dropdown</code> stand over it, and take its frame, its shadow rules and its shadow's sizes wherever they stand. A form's root that wears no style takes nothing of it.</td></tr>
+<tr><td><code>AnyNonWindow</code></td><td>Every other framework style. The focus ring's rules live here - see <a href="#focus-ring">The focus ring</a>.</td></tr>
+<tr><td><code>AnyButton</code>, <code>AnyIndicator</code>, <code>AnyCallout</code>, <code>DoDont</code></td><td>The two buttons, the two indicators, the five callouts, and the two sides of a Do and Don't block, each group with the sizes it shares.</td></tr>
+</table>
+
+<p>A control wears one style, named by its <code>UiElement</code>, and takes the style's rules in
+paint and its sizes in layout. A <code>RichControl</code> takes the element as a property;
+<code>style()</code> reads it and <code>setStyle</code> changes it, sizes included. A control that
+decides for itself states the element while its paint is adjusted, and what it states there has
+the last word in paint.</p>
 
 <pre><code><span class="cm">// As a property.</span>
-<span class="tp">Panel</span>&amp; m_card{ m_stack.<span class="fn">add</span>&lt;<span class="tp">Panel</span>&gt;(
-    <span class="fn">themeMetrics</span>().page,
-    <span class="tp">UiElement</span>::Section
-) };
+<span class="tp">Panel</span>&amp; m_card{ m_stack.<span class="fn">add</span>&lt;<span class="tp">Panel</span>&gt;(<span class="tp">UiElement</span>::Section) };
 
 <span class="cm">// From the control's own adjustment.</span>
 <span class="kw">void</span> <span class="tp">Badge</span>::<span class="fn">adjustPaint</span>(<span class="tp">AdjustPaintEvent</span>&amp; event)
@@ -745,8 +767,11 @@ and what it states there has the last word.</p>
     event.<span class="fn">setColorRules</span>(<span class="tp">UiElement</span>::ToolButton);
 }</code></pre>
 
-<p>A control that wears no element takes its own rules and, at a form's root, the window's. Neither
-an element's list nor the shared one reaches it.</p>
+<p>A control that wears no style takes its own rules alone, at a form's root as anywhere else. An
+application names styles of its own in <code>AppParams::elements</code>, wears the i-th as
+<code>appElement(i)</code>, and ships their built-in rules as a theme file's text in
+<code>AppParams::builtInTheme</code>; a theme stating no style under a name gives the controls
+wearing it nothing.</p>
 
 <p>A control with something to say that no theme can - a tab taking on the colour of the page it
 opens - states rules of its own. They are baked rules, <code>BakedColorRule</code>, handed over as
@@ -777,9 +802,9 @@ reads: a box focused by a click keeps its band while the pointer wanders.</p>
 <h3 id="focus-ring">The focus ring</h3>
 
 <p>The ring is the control's own stroke as the rules reading <code>Current</code> leave it. The
-framework's own theme states them in <code>anyNonWindow</code> - Any Non-Window in the Themes app -
-so they reach every control that is not a window root, whatever element it wears; an element's own
-list can state a ring of its own the same way. A line a control raises through
+framework's own theme states them in <code>AnyNonWindow</code> - Any Non-Window in the Themes app -
+so they reach every style standing over it; a style can state a ring of its own the same way, or
+drop the inherited one. A line a control raises through
 <code>PaintEvent::strokeRgbOn</code> - a grid cell's, a divider row's - reads the same rules and
 nothing of the weight below.</p>
 
@@ -787,7 +812,7 @@ nothing of the weight below.</p>
 and on no item inside it; with an item to hand the ring to, the item wears it alone.</p>
 
 <p>The ring's weight is the control's <code>Current</code> factor, whatever colour the rules gave the
-stroke. The border thickens toward <code>ThemeMetrics::focusedBorder</code> by it, and a surface that
+stroke. The border thickens toward <code>ThemeMetrics::FocusedBorder</code> by it, and a surface that
 grows in as it arrives is held at full size by it, since a ring marks the control's frame and not its
 surface. Both are paint effects, and neither moves any layout.</p>
 
@@ -805,40 +830,50 @@ its accent moves the ring by editing them too.</p>
 
 <h3 id="elements">Elements</h3>
 
-<p>A <code>UiElement</code> names what a control is to the theme. Three elements open a window of
-their own, and every other stands on one - the colour a rule changes is the one its base leaves. A
-window root's surface names its hue and sets its saturation and elevation outright, since what stands
-behind a window is not the theme's to know.</p>
+<p>A <code>UiElement</code> names what a control is to the theme, and so the style it wears. Four
+elements open a window of their own, and every other stands on one - the colour a rule changes is
+the one the style it stands on leaves. A window root's surface names its hue and sets its
+saturation and elevation outright, since what stands behind a window is not the theme's to know.
+What a style stands on is what the Themes app paints its preview from; in a form, a control stands
+on whatever its parent painted.</p>
 
 <table>
 <tr><th>Element</th><th>Stands on</th><th>What wears it</th></tr>
-<tr><td><code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code></td><td>The bare colour of the mode</td><td>The root of a window of that kind: its surface, its ink, its frame's stroke and the shadow it casts.</td></tr>
+<tr><td><code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code>, <code>Dropdown</code></td><td>The bare colour of the mode</td><td>The root of a window of that kind: its surface, its ink, its frame's stroke and the shadow it casts. A combo box's list and a drop list's open as a <code>Dropdown</code>.</td></tr>
 <tr><td><code>Page</code></td><td><code>Dialog</code></td><td>A page of content.</td></tr>
 <tr><td><code>Tab</code></td><td><code>Page</code></td><td>A tab in a strip. The open tab wears its page's surface, and its line runs the length of the page.</td></tr>
 <tr><td><code>Section</code></td><td><code>Page</code></td><td>A section of a page.</td></tr>
 <tr><td><code>SectionHeader</code></td><td><code>Section</code></td><td>The strip an expander shows its title on. A grid draws a section's line from its stroke.</td></tr>
+<tr><td><code>Expander</code></td><td><code>Page</code></td><td>An expander whose view mode is <code>Section</code>: a section that opens and shuts under its header, framed as a page is.</td></tr>
+<tr><td><code>Field</code></td><td><code>Page</code></td><td>A section holding one answer - a box, a list - framed at a button's corner and inset.</td></tr>
 <tr><td><code>ToolBar</code></td><td><code>Page</code></td><td>A tool bar.</td></tr>
 <tr><td><code>DialogTitle</code></td><td><code>Dialog</code></td><td>A window's title bar. Its Selected rules follow the window's focus.</td></tr>
 <tr><td><code>Divider</code></td><td><code>Section</code></td><td>A divider. Its stroke is the line a grid's divider row carries.</td></tr>
-<tr><td><code>Grid</code></td><td><code>Section</code></td><td>A grid. Its stroke is the grid's outer border.</td></tr>
+<tr><td><code>Grid</code></td><td><code>Section</code></td><td>A grid. Its stroke is the grid's outer border, and its sizes are the grid's frame.</td></tr>
 <tr><td><code>GridHeader</code></td><td><code>Grid</code></td><td>The row of column names across the top of a grid. Its stroke is the lines between them.</td></tr>
 <tr><td><code>GridRow</code></td><td><code>Grid</code></td><td>Every row of a grid, groups and sections included. Its stroke is the lines between cells.</td></tr>
+<tr><td><code>GridCell</code></td><td><code>Grid</code></td><td>A cell of a grid: the room its content keeps.</td></tr>
 <tr><td><code>Button</code></td><td><code>Section</code></td><td>A button with a surface at rest.</td></tr>
-<tr><td><code>ToolButton</code></td><td><code>Section</code></td><td>A button whose surface arrives with the pointer - a tool bar's, a menu line, a list item. It states no surface at rest.</td></tr>
+<tr><td><code>ToolButton</code></td><td><code>Section</code></td><td>A button whose surface arrives with the pointer - a tool bar's, a menu line, a combo box's face, a split button's. It states no surface at rest.</td></tr>
+<tr><td><code>ListItem</code></td><td><code>Section</code></td><td>A check box and a radio button as a whole, so the ring is drawn around either; its sizes are the room a line of a list keeps.</td></tr>
+<tr><td><code>TextBox</code></td><td><code>Section</code></td><td>A text box.</td></tr>
+<tr><td><code>Slider</code></td><td><code>Section</code></td><td>A slider as a whole; its thumb wears <code>ScrollThumb</code>.</td></tr>
 <tr><td><code>SelectedText</code></td><td><code>Section</code></td><td>The band behind selected text, and the ink drawn over it.</td></tr>
+<tr><td><code>FoundText</code></td><td><code>Section</code></td><td>The band behind a found match, seeded yellow.</td></tr>
 <tr><td><code>SelectionIndicator</code></td><td><code>Section</code></td><td>The box of a check and the ring of a radio button, with the colour each takes when on.</td></tr>
 <tr><td><code>HoverIndicator</code></td><td><code>Section</code></td><td>The mark of a button whose <code>IndicatorVisibility</code> is <code>Hover</code>, with nothing at rest.</td></tr>
 <tr><td><code>Accent</code>, <code>Spot</code></td><td><code>Section</code></td><td>The two effects an ink names, <code>ThemeColors::accent</code> and <code>spot</code>.</td></tr>
-<tr><td><code>ScrollButton</code>, <code>ScrollThumb</code></td><td><code>Section</code></td><td>A scroll bar's buttons and its thumb.</td></tr>
-<tr><td><code>Testee</code>, <code>Bestee</code></td><td><code>Section</code></td><td>Test subjects nothing in the framework wears. Only the rules a theme states for them reach them.</td></tr>
+<tr><td><code>ScrollBar</code>, <code>ScrollButton</code>, <code>ScrollThumb</code></td><td><code>Section</code></td><td>A scroll bar as a whole, its buttons and its thumb.</td></tr>
+<tr><td><code>InfoCallout</code>, <code>QuestionCallout</code>, <code>WarningCallout</code>, <code>ErrorCallout</code>, <code>OkCallout</code></td><td><code>Section</code></td><td>A callout of that kind, each seeded with its pigment, over <code>AnyCallout</code>.</td></tr>
+<tr><td><code>Do</code>, <code>Dont</code></td><td><code>Section</code></td><td>The two sides of a Do and Don't block, over <code>DoDont</code>.</td></tr>
+<tr><td><code>CodeBlock</code></td><td><code>Section</code></td><td>A block of code.</td></tr>
 </table>
 
-<p>Whether a control carries a surface at rest is its element's to say: <code>ToolButton</code>
+<p>Whether a control carries a surface at rest is its style's to say: <code>ToolButton</code>
 states no rule at rest, so its surface exists only as far as its states carry it. How that surface
-arrives is geometry, and geometry is a metric. <code>ControlMetrics::surfaceGrowInScale</code> is the
-size it grows in from, as a fraction of the size it settles at: 0.83 in
-<code>ThemeMetrics::toolButton</code>, and 1 - a surface that fades in at full size - everywhere
-else.</p>
+arrives is geometry, and geometry is a size. <code>ControlMetrics::surfaceGrowInScale</code> is the
+size it grows in from, as a fraction of the size it settles at: 0.83 in the <code>ToolButton</code>
+style, and 1 - a surface that fades in at full size - everywhere else.</p>
 
 <h2 id="do-dont">Do and Don't</h2>
 

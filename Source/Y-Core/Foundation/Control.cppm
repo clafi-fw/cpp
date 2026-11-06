@@ -617,7 +617,8 @@ namespace ClaFi
         Control* parent;
         FormBase& form;
         const AppTheme& theme() const;
-        const ThemeMetrics& themeMetrics() const;
+        // The sizes an element's style resolves to, as the layout reads them. See Context
+        const ControlMetrics& styleMetrics(UiElement) const;
         const BakedColors& bakedColors() const;
         const AppContext& appContext() const;
     };
@@ -776,7 +777,8 @@ namespace ClaFi
         void stopAnimation(const AnimationSlot&);
         void stopAnimations();
         const AppTheme& theme() const;
-        const ThemeMetrics& themeMetrics() const;
+        // The sizes an element's style resolves to, as the layout reads them. See Context
+        const ControlMetrics& styleMetrics(UiElement) const;
         const BakedColors& bakedColors() const;
         const Scaler& scaler() const;
         //
@@ -1267,8 +1269,8 @@ namespace ClaFi
         virtual void focusChanged() {}
         // The device, the window's focus or Always show focus has moved. See Control-Foundation
         virtual void inputContextChanged() {}
-        // The theme's sizes have moved. See Control-Foundation
-        virtual void themeMetricsChanged() {}
+        // The sizes the styles resolve to have moved. See Control-Foundation
+        virtual void styleMetricsChanged() {}
         virtual void sizeChanged();
         void setScaledPosition(ScaledPosition);
         void setScaledSize(ScaledSize);

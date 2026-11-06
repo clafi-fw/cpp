@@ -38,9 +38,6 @@ namespace Themes_App
             ColorRuleOp::Set
         };
 
-        // The mark against a tile of k_harmonyItemSize, as the hue popup and the harmony picker.
-        constexpr MinSize k_indicatorSize{ 16.0f };
-
         // The character an operation is marked with, an offset's taking the sign of its value.
         [[nodiscard]] std::wstring_view operationGlyph(const ColorRuleOp operation,
             const float value)
@@ -120,7 +117,6 @@ namespace Themes_App
     public:
         OperationItem(const CreateParams&, ValueRulePopup&, ColorRuleOp);
     protected:
-        [[nodiscard]] MinSize indicatorSize(const AppTheme&) const override;
         void adjustText(AdjustTextEvent&) const override;
         void drawIcon(DrawIconEvent&) override;
         void nestedAdjustTooltip(AdjustTooltipEvent&) override;
@@ -294,7 +290,6 @@ namespace Themes_App
             FocusScope::Yes,
             NavigationReach::Yes,
             MouseFocus::Self,
-            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             Padding{ k_spacing },
             Spacing{ k_spacing },
@@ -411,7 +406,6 @@ namespace Themes_App
         const ColorRuleOp operation)
         :
         Button{ params,
-            MetricsSet::ToolButton,
             UiElement::ToolButton,
             IndicatorVisibility::Always,
             IndicatorStyle::Radio,
@@ -426,11 +420,6 @@ namespace Themes_App
         m_popup{ popup },
         m_operation{ operation }
     {
-    }
-
-    MinSize OperationItem::indicatorSize(const AppTheme&) const
-    {
-        return k_indicatorSize;
     }
 
     // The value the rule takes under this operation, sign included - the blob holds only the mark.

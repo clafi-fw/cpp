@@ -90,10 +90,13 @@ namespace ClaFi
     }
 
     // Baked here rather than in the core: what a pigment and a palette hue stand for is the theme's
-    // to say, and saying it is what leaves a set with a half way in every value.
+    // to say, and saying it is what leaves a set with a half way in every value. The sizes are
+    // resolved beside them, laid out by the same elements.
     void applyTheme(AppContext& appContext, const AppTheme& theme, ColorMode mode)
     {
-        appContext.takeTheme(theme, bake(theme.colors, mode, appContext.appElements()));
+        const AppElementNames appElements = appContext.appElements();
+        appContext.takeTheme(theme, bake(theme, mode, appElements),
+            resolveStyleMetrics(theme, appElements));
     }
 
     void applyThemePath(AppContext& appContext, const std::wstring_view path)

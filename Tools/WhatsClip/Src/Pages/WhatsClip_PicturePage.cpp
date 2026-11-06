@@ -68,7 +68,6 @@ namespace ClaFi::Tools::WhatsClip
             TextFormat{ k_readoutStyle },
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center,
-            MetricsSet::Button,
             UiElement::Button,
             OnEvent{ [this](ClickEvent&) {
                 openEditor(m_colorReadout);

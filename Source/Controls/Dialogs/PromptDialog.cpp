@@ -39,8 +39,8 @@ namespace ClaFi::Controls
         // its own over the one the question is written on, at the border and radius every other
         // input carries. The properties are set one at a time rather than through setMetrics,
         // which would take the widths the base sized the field to with it.
-        const ControlMetrics& inputMetrics = themeMetrics().button;
-        field().setColorRules(UiElement::Section);
+        const ControlMetrics& inputMetrics = styleMetrics(UiElement::Button);
+        field().setStyle(UiElement::Section);
         field().setBorder(inputMetrics.border);
         field().setRadius(inputMetrics.radius);
         field().setPadding(inputMetrics.padding);

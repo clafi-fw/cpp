@@ -205,7 +205,6 @@ namespace ClaFi::Controls
             // Control::isDroppedDown.
             owner.appContext(), WindowRole::Menu, &owner,
             HostProps{
-                MetricsSet::SecondaryWindow,
                 UiElement::Menu,
                 // A list longer than the screen has to be reachable, and a menu is the one
                 // window that cannot be resized to reach it - so it scrolls. The bar is there
@@ -432,7 +431,6 @@ namespace ClaFi::Controls
         :
         Button{
             params,
-            MetricsSet::ToolButton,
             UiElement::ToolButton,
             std::forward<Args>(args)...
         }

@@ -165,7 +165,6 @@ namespace ClaFi
         // reaches nothing.
         TabbedBox{
             params,
-            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             TabsOrientation::VerticalLeft,
             // TabLineThickness{ Thickness::Bold },

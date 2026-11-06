@@ -51,7 +51,6 @@ namespace ClaFi::Controls
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
-            MetricsSet::Button,
             UiElement::Button,
             std::forward<Args>(args)...
         }
@@ -68,7 +67,6 @@ namespace ClaFi::Controls
         // arguments.
         Button{
             params,
-            MetricsSet::ToolButton,
             UiElement::ToolButton,
             MouseFocus::Keep,
             std::forward<Args>(args)...

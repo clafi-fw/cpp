@@ -61,7 +61,7 @@ namespace Themes_App
     {
         if (const AppTheme* theme = tabTheme(tab))
         {
-            const ThemeIconColors iconColors{ theme->colors };
+            const ThemeIconColors iconColors{ *theme };
             (settings().tabEntry(tab.id()) / k_tabIconAttrName).set(iconColors);
         }
     }
@@ -94,7 +94,7 @@ namespace Themes_App
     ThemeIconColors ThemesBrowser::tabIconColors(const BrowserTab& tab)
     {
         if (const AppTheme* theme = tabTheme(tab))
-            return ThemeIconColors{ theme->colors };
+            return ThemeIconColors{ *theme };
         return (settings().tabEntry(tab.id()) / k_tabIconAttrName).get<ThemeIconColors>();
     }
 }

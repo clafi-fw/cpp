@@ -93,7 +93,7 @@ namespace ClaFi::Controls
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
-            MetricsSet::ToolButton,
+            UiElement::ToolButton,
             std::forward<Args>(args)...
         }
     {
@@ -140,7 +140,7 @@ namespace ClaFi::Controls
         // draw a single box around both halves, and the seam between them is what has to read.
         // An element passed in is read here or not at all - SplitButtonBase stops short of
         // RichControl.
-        event.setColorRules(colorRules().value_or(UiElement::ToolButton));
+        event.setColorRules(style().value_or(UiElement::ToolButton));
     }
 
     // DropdownEvent

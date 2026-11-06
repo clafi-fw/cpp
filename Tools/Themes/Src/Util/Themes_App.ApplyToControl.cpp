@@ -160,7 +160,6 @@ namespace Themes_App
             FocusScope::Yes,
             NavigationReach::Yes,
             MouseFocus::Self,
-            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             Padding{ 4.0f },
             Spacing{ 12.0f }

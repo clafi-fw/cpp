@@ -33,9 +33,8 @@ Global
 		SolutionGuid = {7C4B0E93-2A1D-4F58-9E0B-3D6A1C55B742}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{6954ed2f-785a-436b-90a8-65188080fdb3}*SharedItemsImports = 9
-		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{21d1ea28-933a-4a44-af4f-f15ba6416bcc}*SharedItemsImports = 4
+		WhatsClip_Lib.vcxitems*{21d1ea28-933a-4a44-af4f-f15ba6416bcc}*SharedItemsImports = 4
 		WhatsClipLib.vcxitems*{5aac71d2-53f9-4806-98a0-fdd54c61ecd9}*SharedItemsImports = 9
-		WhatsClipLib.vcxitems*{21d1ea28-933a-4a44-af4f-f15ba6416bcc}*SharedItemsImports = 4
+		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{6954ed2f-785a-436b-90a8-65188080fdb3}*SharedItemsImports = 9
 	EndGlobalSection
 EndGlobal

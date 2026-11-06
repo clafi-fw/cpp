@@ -40,7 +40,6 @@ namespace ClaFi::Controls
         :
         Button{ params,
             // The look of a dropdown's line: no surface at rest, and the current row on its own.
-            MetricsSet::ToolButton,
             UiElement::ToolButton,
             ShowSelectionOnSurface::Yes,
             HorizontalTextAnchor::Left,
@@ -440,20 +439,19 @@ namespace ClaFi::Controls
     {
         if (m_form.has_value())
             return;
-        const ThemeMetrics& metrics = m_target.themeMetrics();
+        const ControlMetrics& lineMetrics = m_target.styleMetrics(UiElement::ToolButton);
         // The shown lines at a tool button's least height until the rows are measured, and no
         // cap where none is stated.
         const float lines = m_options.shownLines;
         const float height = lines > 0.0f
-            ? lines * metrics.toolButton.minSize.y + 2.0f * k_padding
+            ? lines * lineMetrics.minSize.y + 2.0f * k_padding
             : k_maxFloat;
         m_form.emplace(
             m_target.appContext(),
             WindowRole::Menu,
             &m_target,
             HostProps{
-                MetricsSet::SecondaryWindow,
-                UiElement::Section,
+                UiElement::Dropdown,
                 // A list taller than its room scrolls - see ComboBox::showDropdown.
                 ScrollBars::Auto,
                 MaxSize{ k_maxFloat, height },

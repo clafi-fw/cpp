@@ -51,7 +51,6 @@ namespace Themes_App
         // Dressed as DialogTitle: a real title moves and closes the window it stands in.
         Panel& m_title{ createTopBar<Panel>(
             UiElement::DialogTitle,
-            MetricsSet::DialogTitle,
             VerticalTextAnchor::Center,
             HorizontalTextAnchor::Center,
             WordWrap::No

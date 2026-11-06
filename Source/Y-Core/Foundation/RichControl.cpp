@@ -22,15 +22,17 @@ namespace ClaFi
         return m_textFormat.empty() ? nullptr : &m_textFormat;
     }
 
-    void RichControl::setMetrics(const MetricsSet set)
+    void RichControl::setStyle(const OptionalUiElement value)
     {
-        takeMetricsSet(set, themeMetrics());
+        m_style = value;
+        if (m_style)
+            takeStyleMetrics(styleMetrics(*m_style));
     }
 
     void RichControl::setMetrics(const ControlMetrics& value)
     {
         m_metrics = value;
-        m_metricsSet.reset();
+        m_statedMetrics = MetricsFields::every();
     }
 
     void RichControl::setPadding(const Padding value)
@@ -103,6 +105,15 @@ namespace ClaFi
         m_statedMetrics.add(MetricsField::Radius);
     }
 
+    void RichControl::setWindowShadow(const WindowShadow& value)
+    {
+        m_metrics.shadow = value;
+        m_statedMetrics.add(MetricsField::ShadowBlur);
+        m_statedMetrics.add(MetricsField::ShadowOffset);
+        m_statedMetrics.add(MetricsField::ShadowSpread);
+        m_statedMetrics.add(MetricsField::ShadowOpacity);
+    }
+
     void RichControl::adjustMetrics(AdjustMetricsEvent& event) const
     {
         event.metrics = m_metrics;
@@ -110,8 +121,8 @@ namespace ClaFi
 
     void RichControl::adjustPaint(AdjustPaintEvent& event)
     {
-        if (m_colorRules)
-            event.setColorRules(*m_colorRules);
+        if (m_style)
+            event.setColorRules(*m_style);
         Control::adjustPaint(event);
     }
 
@@ -136,19 +147,17 @@ namespace ClaFi
         Control::nestedAdjustTooltip(event);
     }
 
-    void RichControl::themeMetricsChanged()
+    void RichControl::styleMetricsChanged()
     {
-        takeMetricsSet(m_metricsSet, themeMetrics());
+        if (m_style)
+            takeStyleMetrics(styleMetrics(*m_style));
     }
 
-    void RichControl::takeMetricsSet(const OptionalMetricsSet set, const ThemeMetrics& theme)
+    void RichControl::takeStyleMetrics(const ControlMetrics& resolved)
     {
-        if (!set)
-            return;
-        ControlMetrics metrics = theme.of(*set);
+        ControlMetrics metrics = resolved;
         metrics.copyFields(m_metrics, m_statedMetrics);
         m_metrics = metrics;
-        m_metricsSet = set;
     }
 
 }

@@ -107,11 +107,6 @@ namespace ClaFi::Controls
         return m_childCount ? ControlSpan{ m_children.data(), m_childCount } : RichControl::controls();
     }
 
-    MinSize ButtonBase::indicatorSize(const AppTheme& theme) const
-    {
-        return theme.metrics.checkMark.minSize;
-    }
-
     void ButtonBase::adjustChildMetrics(AdjustMetricsEvent& event) const
     {
         if (&event.control != m_indicator)
@@ -120,11 +115,15 @@ namespace ClaFi::Controls
             return;
         }
 
-        event.metrics = event.themeMetrics().checkMark;
+        // Both indicators are sized alike - see AnyIndicator.
+        event.metrics = event.styleMetrics(UiElement::SelectionIndicator);
         // A mark shown on hover has nothing at rest, so it arrives the way a tool button's
         // surface does.
         if (m_indicatorVisibility == IndicatorVisibility::Hover)
-            event.metrics.surfaceGrowInScale = event.themeMetrics().toolButton.surfaceGrowInScale;
+        {
+            event.metrics.surfaceGrowInScale =
+                event.styleMetrics(UiElement::ToolButton).surfaceGrowInScale;
+        }
         switch (m_indicatorStyle)
         {
             case IndicatorStyle::Check:
@@ -420,7 +419,8 @@ namespace ClaFi::Controls
     {
         if (m_indicator)
         {
-            float sz = form.scaler().scale(form.themeMetrics().checkMark.minSize.x);
+            const float markSize = form.styleMetrics(UiElement::SelectionIndicator).minSize.x;
+            const float sz = form.scaler().scale(markSize);
             setControlPlacement(*m_indicator, { 0, 0 }, { sz, sz });
         }
     }

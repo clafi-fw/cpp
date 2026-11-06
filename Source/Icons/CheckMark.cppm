@@ -1,6 +1,8 @@
 export module ClaFi.Icons.CheckMark;
 
 import ClaFi.Core.Context.DrawIconEvent;
+import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -161,7 +163,8 @@ namespace ClaFi::Icons::CheckMark
             return;
         }
 
-        const float markPadding = event.scaleF(event.themeMetrics().checkMark.padding.x);
+        const ControlMetrics& markMetrics = event.styleMetrics(UiElement::SelectionIndicator);
+        const float markPadding = event.scaleF(markMetrics.padding.x);
         const float markLineW = event.scaleF(1.5f);
         PixelPath markPath;
         MarkShape::buildPath(markPath, event.iconRect(), markPadding, markLineW, lineFactor);

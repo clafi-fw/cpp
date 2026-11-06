@@ -195,7 +195,7 @@ namespace SeeDocs_App::Ui
             set.add<RadioButton>(
                 caption,
                 TooltipText{ tooltip },
-                Padding{ 0.0f, set.themeMetrics().listItem.padding.y },
+                Padding{ 0.0f, set.styleMetrics(UiElement::ListItem).padding.y },
                 HorizontalAlign::Left,
                 RadioButton::OnGetState{ [isSelectedFunc, isEnabledFunc](GetStateEvent& event) {
                     event.state.selected = isSelectedFunc();
@@ -228,7 +228,7 @@ namespace SeeDocs_App::Ui
             project,
             PlaceHolderText{ project.project.folderName() }
         );
-        name.setBorder(group.themeMetrics().button.border);
+        name.setBorder(group.styleMetrics(UiElement::Button).border);
         name.showWords(Text{ project.project.name });
         group.add<Label>(
             Text{ project.project.folder.wstring() },
@@ -319,7 +319,7 @@ namespace SeeDocs_App::Ui
         hints.add<CheckBox>(
             L"Use SeeLinks syntax",
             seeLinksTooltip(),
-            Padding{ 0.0f, hints.themeMetrics().listItem.padding.y },
+            Padding{ 0.0f, hints.styleMetrics(UiElement::ListItem).padding.y },
             HorizontalAlign::Left,
             CheckBox::OnGetState{ [&project](GetStateEvent& event) {
                 event.state.selected = project.project.hints.seeLinks;
@@ -366,8 +366,8 @@ namespace SeeDocs_App::Ui
                 params,
 
                 UiElement::Section,
-                Radius{ params.themeMetrics().button.radius },
-                params.themeMetrics().button.padding,
+                Radius{ params.styleMetrics(UiElement::Button).radius },
+                params.styleMetrics(UiElement::Button).padding,
                 MinSize{ k_fieldWidth, 0.0f },
 
                 TextFormat{ TextStyles::Heading },
@@ -400,11 +400,10 @@ namespace SeeDocs_App::Ui
             :
             Grids::Grid{
                 params,
-                MetricsSet::Page,
+                UiElement::Grid,
                 FocusScope::No,
                 NavigationReach::No,
                 MouseFocus::Parent,
-                UiElement::Section,
                 Grids::GridLines::Horizontal,
                 ItemsOrder::Rearrangeable
             },
@@ -533,7 +532,7 @@ namespace SeeDocs_App::Ui
                 L"Include subfolders",
                 VerticalAlign::Center,
                 TooltipText{ L"Scans this folder recursively" },
-                themeMetrics().listItem.padding,
+                styleMetrics(UiElement::ListItem).padding,
                 CheckBox::OnGetState{ [this](GetStateEvent& event) {
                     event.state.selected = m_list.readsSubfolders(m_source);
                 } },

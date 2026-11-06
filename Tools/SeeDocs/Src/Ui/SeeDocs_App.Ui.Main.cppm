@@ -83,8 +83,10 @@ namespace SeeDocs_App::Ui
     {
         const std::unique_ptr<Form<SurfaceBrowser>> form = this->createMainForm(
             FormPlacement::Default,
-            MetricsSet::PrimaryWindow,
             UiElement::ToolBar,
+            // In the primary window's frame.
+            Radius{ this->styleMetrics(UiElement::Dialog).radius },
+            this->styleMetrics(UiElement::Dialog).shadow,
             Border{ Thickness::Thin },
             Padding{ 0.0f },
             Spacing{ 0.0f },

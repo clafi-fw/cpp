@@ -32,6 +32,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{6954ed2f-785a-436b-90a8-65188080fdb3}*SharedItemsImports = 9
-		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{848c942e-432e-4b4f-ac5d-803046d6364e}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

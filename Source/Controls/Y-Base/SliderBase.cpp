@@ -43,7 +43,7 @@ namespace ClaFi::Controls
 
     ScaledSize SliderBase::ChildItem::calculateContent(AlignEvent& event)
     {
-        float sz = event.scale(parent()->buttonSize(event.theme()));
+        const float sz = event.scale(parent()->buttonSize());
         return { sz, sz };
     }
 
@@ -694,9 +694,9 @@ namespace ClaFi::Controls
         return direction == verticalDirection() ? PanelSlot::Bottom : PanelSlot::Top;
     }
 
-    float SliderBase::calcButtonSize(const AppTheme& theme, const Scaler& scaler)
+    float SliderBase::calcButtonSize(const Scaler& scaler) const
     {
-        return scaler.scale(buttonSize(theme));
+        return scaler.scale(buttonSize());
     }
 
 }

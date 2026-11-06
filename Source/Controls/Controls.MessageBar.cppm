@@ -52,7 +52,7 @@ namespace ClaFi::Controls
         :
         SplitButtonBase{
             params,
-            MetricsSet::Callout,
+            UiElement::InfoCallout,
             WordWrap::Yes,
             IconSize{ k_iconSize },
             HorizontalTextAnchor::Left,

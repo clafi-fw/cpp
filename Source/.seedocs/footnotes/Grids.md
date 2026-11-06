@@ -7,8 +7,7 @@ The words that do not fit above a declaration.
 **The design is the grid's argument list:**
 
     Dt::Grid& m_grid{ parent.add<Dt::Grid>(
-        themeMetrics().page,
-        themeColors().section,
+        UiElement::Grid,
         Columns{ ... },
         Header{},
         Rows{ ... }) };

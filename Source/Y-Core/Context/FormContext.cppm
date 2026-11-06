@@ -8,6 +8,7 @@ export module ClaFi.Core.Context.FormContext;
 // is what it takes. Whoever owns the AppContext (FormBase) hands out access to it.
 
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
@@ -35,12 +36,13 @@ namespace ClaFi
     export class FormContext
     {
     public:
-        FormContext(const Platform&, const AppTheme&, const BakedColors&, Graphics::Canvas&,
-            const Scaler&);
+        FormContext(const Platform&, const AppTheme&, const BakedColors&, const StyleMetrics&,
+            Graphics::Canvas&, const Scaler&);
         FormContext(const FormContext&);
         //
         void setTheme(const AppTheme& value) { m_theme = &value; }
         void setBakedColors(const BakedColors& value) { m_bakedColors = &value; }
+        void setStyleMetrics(const StyleMetrics& value) { m_styleMetrics = &value; }
         // The scaler this context reads. Named rather than fixed at construction because a form
         // that is drawn at another form's scale outlives that form in one case - see
         // FormBase::detachScaler.
@@ -48,8 +50,9 @@ namespace ClaFi
         const AppTheme*& themePtrRef() { return m_theme; }
         const BakedColors*& bakedColorsPtrRef() { return m_bakedColors; }
         const AppTheme& theme() const { return *m_theme; }
-        const ThemeMetrics& themeMetrics() const { return m_theme->metrics; }
         const BakedColors& bakedColors() const { return *m_bakedColors; }
+        // The sizes an element's style resolves to, as the layout reads them. See Context
+        const ControlMetrics& styleMetrics(UiElement element) const { return m_styleMetrics->of(element); }
         //
         const Scaler& scaler() const {  return *m_scaler; }
         const Scaler& scaler() { return *m_scaler; }
@@ -70,6 +73,7 @@ namespace ClaFi
         const Platform& m_platform;
         const AppTheme* m_theme;
         const BakedColors* m_bakedColors;
+        const StyleMetrics* m_styleMetrics;
         const Scaler* m_scaler;
         Graphics::Canvas& m_canvas;
     };
@@ -83,8 +87,8 @@ namespace ClaFi
         const FormContext& formContext() const { return m_formContext; }
         //
         const AppTheme& theme() const { return m_formContext.theme(); }
-        const ThemeMetrics& themeMetrics() const { return m_formContext.themeMetrics(); }
         const BakedColors& bakedColors() const { return m_formContext.bakedColors(); }
+        const ControlMetrics& styleMetrics(UiElement element) const { return m_formContext.styleMetrics(element); }
         //
         const Scaler& scaler() const { return m_formContext.scaler(); }
         ScaleFactor scaleFactor() const { return m_formContext.scaler().factor(); }
@@ -112,8 +116,8 @@ namespace ClaFi
         const FormContext& formContext() const { return m_formContext; }
         //
         const AppTheme& theme() const { return m_formContext.theme(); }
-        const ThemeMetrics& themeMetrics() const { return m_formContext.themeMetrics(); }
         const BakedColors& bakedColors() const { return m_formContext.bakedColors(); }
+        const ControlMetrics& styleMetrics(UiElement element) const { return m_formContext.styleMetrics(element); }
         //
         const Scaler& scaler() const { return m_formContext.scaler(); }
         ScaleFactor scaleFactor() const { return m_formContext.scaler().factor(); }

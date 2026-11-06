@@ -41,7 +41,7 @@ namespace ClaFi
     void ThemeTile::drawIcon(DrawIconEvent& event)
     {
         drawThemeIconOnly(event.canvas(), event.iconRect(),
-            ThemeSampleColors{ m_linkedTheme.colors, colorModeOf(event.lightness()) }
+            ThemeSampleColors{ m_linkedTheme, colorModeOf(event.lightness()) }
             );
     }
 
@@ -49,7 +49,7 @@ namespace ClaFi
     {
         const FloatRect rect = event.controlBounds();
         drawThemeBackground(event.canvas(), rect, event.scaleF(4.0f),
-            ThemeSampleColors{ m_linkedTheme.colors, colorModeOf(event.lightness()) },
+            ThemeSampleColors{ m_linkedTheme, colorModeOf(event.lightness()) },
             event.scaledStrokeWidth(Thickness::Thin)
             );
         paintIconLayer(event);
@@ -63,7 +63,7 @@ namespace ClaFi
         DocumentTile::adjustChildPaint(event);
         if (&event.control() != indicator())
             return;
-        const ThemeSampleColors sample{ m_linkedTheme.colors, colorModeOf(event.lightness()) };
+        const ThemeSampleColors sample{ m_linkedTheme, colorModeOf(event.lightness()) };
         event.setSurfaceHsl(sample.titleHsl);
     }
 

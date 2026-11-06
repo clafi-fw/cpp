@@ -68,6 +68,32 @@ namespace ClaFi::Dom
         static void fromWString(std::wstring_view str, float& val);
     };
 
+    // Specialization for an optional scalar: the value as its own serializer writes it, and
+    // nothing where there is none.
+    template <typename T>
+        requires IsScalarValue<T>
+    struct ScalarSerializer<std::optional<T>>
+    {
+        [[nodiscard]] static std::wstring toWString(const std::optional<T>& val)
+        {
+            if (!val)
+                return {};
+            return ScalarSerializer<T>::toWString(*val);
+        }
+
+        static void fromWString(std::wstring_view str, std::optional<T>& val)
+        {
+            if (str.empty())
+            {
+                val = std::nullopt;
+                return;
+            }
+            T value{};
+            ScalarSerializer<T>::fromWString(str, value);
+            val = value;
+        }
+    };
+
     // Specialization for Enums
     template <IsSerializableEnum T>
     struct ScalarSerializer<T>

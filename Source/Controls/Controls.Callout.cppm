@@ -58,7 +58,6 @@ namespace ClaFi::Controls
         :
         PanelBase{
             params,
-            MetricsSet::Callout,
             // The kind, read ahead of its property, picks the element the callout wears.
             calloutElementOf(READ_PROPERTY(MessageIcon, MessageIcon::Information)),
             std::forward<Args>(args)...

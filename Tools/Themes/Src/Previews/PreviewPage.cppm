@@ -28,6 +28,6 @@ namespace Themes_App
     export struct NodePreview
     {
         PreviewPage page{ PreviewPage::Overview };
-        bool editsSizes{ false }; // a set of sizes, or a folder holding nothing else
+        bool editsSizes{ false }; // a style's page, or a folder holding nothing else
     };
 }

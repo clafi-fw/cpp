@@ -40,21 +40,31 @@ namespace Themes_App
     export constexpr UiElement k_testee{ appElement(0) };
     export constexpr UiElement k_bestee{ appElement(1) };
 
-    // The two sets the built-in theme states for them, each with no rules of its own.
-    export constexpr std::wstring_view k_builtInSets{ LR"(@ClaFi 1.0
+    // The two styles the built-in theme states for them, each a button in size with no rules.
+    export constexpr std::wstring_view k_builtInStyles{ LR"(@ClaFi 1.0
 @encoding utf-8
 
-Colors=[
-Rules=[
+Styles=[
 =[
 Name=Testee
 Base=AnyNonWindow
 StandsOn=Section
+Metrics=[
+Border=Thin
+Radius=4
+Padding=8 4
+MinSize=40 24
+]
 ]
 =[
 Name=Bestee
 Base=AnyNonWindow
 StandsOn=Section
+Metrics=[
+Border=Thin
+Radius=4
+Padding=8 4
+MinSize=40 24
 ]
 ]
 ]

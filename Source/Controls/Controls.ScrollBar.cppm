@@ -5,7 +5,7 @@ import ClaFi.Icons.ScrollMark;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.Core.Foundation;
@@ -25,8 +25,7 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit ScrollBar(const CreateParams& params, Args&&... args)
             :
-            SliderBase{ params, SliderViewMode::ScrollBar, Spacing{ 0.0f },
-                // UiElement::Section, looks bad in tabbed box
+            SliderBase{ params, SliderViewMode::ScrollBar, Spacing{ 0.0f }, UiElement::ScrollBar,
                 std::forward<Args>(args)... }
         {
             setClickTarget(ClickTarget::Self);
@@ -41,11 +40,11 @@ namespace ClaFi::Controls
     protected:
         ScrollInfo controlScrollInfo() const override;
         float stepSize() override { return m_stepSize; }
-        float buttonSize(const AppTheme&) override;
-        void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().scrollButton; }
+        [[nodiscard]] float buttonSize() const override;
+        void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.styleMetrics(UiElement::ScrollButton); }
         void adjustButtonPaint(AdjustPaintEvent&) override;
         [[nodiscard]] FloatInset buttonInset() const override { return {}; }
-        void adjustThumbMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().scrollThumb; }
+        void adjustThumbMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.styleMetrics(UiElement::ScrollThumb); }
         void adjustThumbPaint(AdjustPaintEvent&) override;
         void adjustPaint(AdjustPaintEvent& event) override { SliderBase::adjustPaint(event); event.setDisabledBlendAmount(0.0f); }
 
@@ -92,16 +91,12 @@ namespace ClaFi::Controls
         return m_scrollInfo;
     }
 
-    float ScrollBar::buttonSize(const AppTheme& theme)
+    float ScrollBar::buttonSize() const
     {
-        switch (axis())
-        {
-        case ScrollAxis::Vertical:
-            return theme.metrics.scrollButton.minSize.y;
-        // case ScrollAxis::horizontal:
-        default: // warn fixing
-            return theme.metrics.scrollButton.minSize.x;
-        }
+        const ControlMetrics& buttonMetrics = styleMetrics(UiElement::ScrollButton);
+        if (axis() == ScrollAxis::Vertical)
+            return buttonMetrics.minSize.y;
+        return buttonMetrics.minSize.x;
     }
 
     void ScrollBar::adjustButtonPaint(AdjustPaintEvent& event)

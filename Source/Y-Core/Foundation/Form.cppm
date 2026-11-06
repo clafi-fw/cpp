@@ -131,8 +131,6 @@ namespace ClaFi
         // and a root has none - so the root's are stopped here, where getForm still answers m_form.
         ~FormControlBase() override;
     public:
-        DECLARE_PROPERTY(WindowShadow, windowShadow, WindowShadow{}) // the shadow its window casts
-    public:
         // Where this root's text begins, measured from **this root's** top left. A form placed
         // OverText is placed so that this point lands on the text it covers, which is what puts
         // the two texts on top of each other.
@@ -154,13 +152,8 @@ namespace ClaFi
         void nestedControlDeleted(Control*) override;
         // Where this is the top layer, the form keeps the content control the focus comes from.
         void nestedControlFocusing(FocusEvent&) override;
-        void themeMetricsChanged() override;
-    private:
-        // The shadow of the window set the root is sized by, unless it was given one of its own.
-        void takeSetShadow(const ThemeMetrics&);
     private:
         FormBase& m_form;
-        bool m_windowShadowStated; // whether the root was given a WindowShadow of its own
     };
 
     export template<typename ControlClass>
@@ -215,7 +208,7 @@ namespace ClaFi
         AppContext& appContext() { return m_appContext; }
         const AppContext& appContext() const { return m_appContext; }
         const AppTheme& theme() const { return m_context.theme(); }
-        const ThemeMetrics& themeMetrics() const { return m_context.themeMetrics(); }
+        const ControlMetrics& styleMetrics(UiElement element) const { return m_context.styleMetrics(element); }
         const BakedColors& bakedColors() const { return m_context.bakedColors(); }
         // **The scale this form is drawn at**, and it is read-only from the outside: what a form
         // is drawn at is decided by the monitor it was placed on, or by the form it stands on,
@@ -495,9 +488,9 @@ namespace ClaFi
         void paintShadow(const FloatRect& dirtyRect, bool cornerPass);
         void scaleFactorChanged(ScaleFactorChangeEvent&);
         void themeSwitched(ThemeSwitchEvent&);
-        void themeMetricsSwitched(ThemeMetricsSwitchEvent&);
+        void styleMetricsSwitched(StyleMetricsSwitchEvent&);
         // Tells the control and every control under it that the theme's sizes have moved.
-        static void tellThemeMetricsChanged(Control&);
+        static void tellStyleMetricsChanged(Control&);
         void backendSwitched(BackendSwitchEvent&);
         void scaleSwitched(ScaleSwitchEvent&);
         void inputSwitched(InputSwitchEvent&);
@@ -624,7 +617,7 @@ namespace ClaFi
         Graphics::Canvas m_canvas;
         FormContext m_context;
         ScopedEventConnection m_themeSwitchConnection;
-        ScopedEventConnection m_themeMetricsSwitchConnection;
+        ScopedEventConnection m_styleMetricsSwitchConnection;
         ScopedEventConnection m_backendSwitchConnection;
         ScopedEventConnection m_scaleSwitchConnection;
         ScopedEventConnection m_inputSwitchConnection;
@@ -707,7 +700,7 @@ namespace ClaFi
         using FormBase::appContext;
         using FormBase::theme;
         using FormBase::bakedColors;
-        using FormBase::themeMetrics;
+        using FormBase::styleMetrics;
         using FormBase::scaler;
     public:
         // A form takes the focus unless it says otherwise, so the role is optional and a dialog
@@ -756,11 +749,8 @@ namespace ClaFi
     FormControlBase::FormControlBase(const CreateParams& params, Args && ...args)
         :
         RichControl{ params, std::forward<Args>(args)... },
-        INIT_PROPERTY(windowShadow),
-        m_form{ params.form },
-        m_windowShadowStated{ (std::same_as<std::decay_t<Args>, WindowShadow> || ...) }
+        m_form{ params.form }
     {
-        takeSetShadow(params.themeMetrics());
     }
 
     template<ClassOfFormControl ControlClass, typename... Args>

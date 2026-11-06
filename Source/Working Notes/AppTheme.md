@@ -9,10 +9,10 @@ colour has moved.
 
 ## ThemeColors
 
-**The built-in theme is written, not edited.** `ThemeColors()` states it, and its definition stands
-alone in `AppTheme_BuiltInColors.cpp`, which the Themes app's Write to source rewrites whole from
-the theme it has open. The declarations say what each member is and carry no values, so a theme
-change rebuilds that one file rather than everything that imports the module.
+**The built-in theme is written, not edited.** `AppTheme()` states it, colours and styles, and its
+definition stands alone in `AppTheme_BuiltIn.cpp`, which the Themes app's Write to source rewrites
+whole from the theme it has open. The declarations say what each member is and carry no values, so
+a theme change rebuilds that one file rather than everything that imports the module.
 
 ## Lightness
 
@@ -174,3 +174,43 @@ The inherited rows are text rows written through the writers the editors use (Th
 which the editors' faces read as well), struck by the row's own paintCell over the measured lines.
 A rule restored, a set added, renamed or deleted and the rows a move left out of order are
 settled on a tick: the click or the in-place editor that asked stands on rows that go.
+
+## ControlStyle
+
+**Sizes joined the colour rules on 2026-11-06.** Oj: "The reason why they were separated in the
+first place was to have one place when you can state a shared metrics for example for a secondary
+window. But with color rules cascading now that reason is not valid anymore. To say more, lack of
+metrics cascading is causing some copy-pasting there." The decisions (Oj: "1. a; Page's sizes were
+a nearest set. Combobox dropdowns, scroll bars are getting their own styles. 2. good; 3. a; 4. a;
+5. One page per set, and the set name is ControlStyle"):
+
+- **One chain for both.** A style's `metrics` is a `StatedMetrics` of optional fields, and
+  `resolvedMetrics` walks the chain root first with each stated size replacing the one below.
+  Rules add up along the chain and sizes override, because a size is a value and a rule is a step.
+- **A control wears one style**, through `UiElement`, and takes its rules in paint and its sizes
+  in layout. Where a control had named a colour element and a metrics set that did not pair, it got
+  a style of its own: Dropdown over Any Window with Section's surface rule, Expander and Field over
+  Section with the frame sizes a page carried, Scroll Bar, List Item, Grid Cell, Slider. Field is
+  the one style beyond Oj's list: the Themes app's framed facts wore Section with sizes of their
+  own.
+- **Where a pairing was not real, the sizes are stated.** The tool roots wear Tool Bar or Section
+  and state Dialog's radius and shadow as properties; the in-place editor's body states Menu's
+  sizes. An expander outside its Section mode wears nothing, as before, and so takes no inset.
+- **The shadow is a size.** `WindowShadow` moved into `ControlMetrics`, so a style states a
+  window's blur, offset, spread and opacity beside its other sizes, and `FormControlBase` reads
+  them from the content's block.
+- **A theme file writes only the sizes a style states**; a size omitted is inherited. The
+  generic `ScalarSerializer<std::optional<T>>` writes none as an empty value.
+- **The chain gave every old set a home.** Any Button carries the button sizes, Any Indicator
+  the mark's, Any Callout and Do and Don't theirs; Dialog restates its radius and shadow over Any
+  Window's; Grid carries the frame every grid had. A harness checked every element's resolved
+  block against the old sets before the sets went.
+- **The Themes app shows a style's sizes under its rules**, one grid per page, with the stating
+  style in a From column and a muted value for an inherited size; Clear puts a size back to its
+  base's. `ThemeMetrics` is a namespace of the constants no style states: the border weights, the
+  viewer distance and the press depths.
+
+`StyleMetrics` is resolved once per theme switch, one block per element in `UiElement` order and
+then the application's, and `AppContext::takeTheme` raises `StyleMetricsSwitchEvent` only when the
+table changed; `RichControl::styleMetricsChanged` takes the worn style's block again under the
+sizes the control stated.

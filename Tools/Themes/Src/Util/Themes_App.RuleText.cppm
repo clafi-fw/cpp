@@ -19,7 +19,7 @@ namespace Themes_App
     export constexpr float k_blobSaturation{ 0.5f };
     export constexpr float k_blobLuminosity{ 0.5f };
 
-    // The look a rule's words take: an editor's face, or a row the set takes from a base, muted.
+    // The look a rule's words take: an editor's face, or a row a style takes from a base, muted.
     export enum class RuleFace
     {
         Editor,

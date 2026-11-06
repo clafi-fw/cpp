@@ -208,8 +208,8 @@ namespace Themes_App
 
     Row ThemePage::pigmentRow(const UiElement element) const
     {
-        const Padding padding = themeMetrics().listItem.padding;
-        const Spacing spacing = themeMetrics().listItem.spacing;
+        const Padding padding = styleMetrics(UiElement::ListItem).padding;
+        const Spacing spacing = styleMetrics(UiElement::ListItem).spacing;
         return Row{
             Tag{ element },
             Cell{ Tag{ PigmentColumn::Name }, this, &ThemePage::pigmentNameCell },
@@ -372,7 +372,6 @@ namespace Themes_App
         m_darkModeFloorSlider.invalidate();
         bindPigmentEditors();
         m_designPage.rebuildRules();
-        m_designPage.showSizes();
     }
 
     void ThemePage::edited(const EditPhase phase, const Text& what, const RuleSelection& at)
@@ -482,16 +481,10 @@ namespace Themes_App
         edited(phase, what, at);
     }
 
-    void ThemePage::sizesChanged(const EditPhase phase, const Text& what)
-    {
-        invalidatePreview();
-        edited(phase, what);
-    }
-
     bool ThemePage::confirmWritingToSource(Control& initiator) const
     {
         Text message{};
-        message << L"This rewrites " << m_builtInColorsFile.filename().wstring()
+        message << L"This rewrites " << m_builtInThemeFile.filename().wstring()
             << L" in the framework's source tree. Are you a ClaFi developer?";
 
         MessageDialog dialog{
@@ -515,37 +508,37 @@ namespace Themes_App
         return ThemesManager::isReservedName(stem);
     }
 
-    Hsl ThemePage::elementColor(const std::wstring_view set)
+    Hsl ThemePage::elementColor(const std::wstring_view style)
     {
-        return restingSurface(editColors(), set, previewColorMode());
+        return restingSurface(m_editTheme, style, previewColorMode());
     }
 
-    Hsl ThemePage::elementTextColor(const std::wstring_view set)
+    Hsl ThemePage::elementTextColor(const std::wstring_view style)
     {
-        return restingInk(editColors(), set, previewColorMode());
+        return restingInk(m_editTheme, style, previewColorMode());
     }
 
-    // The seed BakedColors::windowShadow takes: a stroke starts at the set's surface and its
+    // The seed BakedColors::windowShadow takes: a stroke starts at the style's surface and its
     // resting stroke rules move it, and a shadow rule naming no hue keeps the stroke's.
-    Hsl ThemePage::bareShadow(const std::wstring_view set)
+    Hsl ThemePage::bareShadow(const std::wstring_view style)
     {
-        const Hsl stroke = restingStroke(editColors(), set, previewColorMode());
+        const Hsl stroke = restingStroke(m_editTheme, style, previewColorMode());
         return { stroke.hue, 0.0f, 0.0f };
     }
 
-    // What the set carries at rest, on the channel the rule writes.
-    RuleBase ThemePage::elementRuleBase(const std::wstring_view set, const ColorRule& rule,
+    // What the style carries at rest, on the channel the rule writes.
+    RuleBase ThemePage::elementRuleBase(const std::wstring_view style, const ColorRule& rule,
         const RuleChannel channel)
     {
         const bool shadow = rule.output == PaintChannel::Shadow;
         const ColorMode mode = shadow ? ColorMode::Dark : previewColorMode();
         Hsl result{};
         if (shadow)
-            result = bareShadow(set);
+            result = bareShadow(style);
         else if (rule.output == PaintChannel::Text)
-            result = elementTextColor(set);
+            result = elementTextColor(style);
         else
-            result = elementColor(set);
+            result = elementColor(style);
 
         const float luminosityFloor = shadow ? k_noFloor : editColors().darkModeFloor;
         return ruleBaseOn(result, rule.effect, channel, mode, luminosityFloor);
@@ -567,7 +560,7 @@ namespace Themes_App
         const Control* page = m_tabbedBox.pageControl().currentItem();
         if (page == &m_cppCodePage)
         {
-            showCode(themeToCppCode(editColors(), CodeOptions::content(), CodeOptions::scope()),
+            showCode(themeToCppCode(m_editTheme, CodeOptions::content(), CodeOptions::scope()),
                 m_cppCodePage.box());
             return;
         }
@@ -626,11 +619,11 @@ namespace Themes_App
         if (!confirmWritingToSource(button))
             return;
 
-        // The application's own sets are its resource's, not the framework's.
-        ThemeColors frameworkColors = editColors();
+        // The application's own styles are its resource's, not the framework's.
+        AppTheme frameworkTheme = m_editTheme;
         for (const std::wstring_view name : k_appElements)
-            frameworkColors.rules.remove(name);
-        switch (writeBuiltInColors(m_builtInColorsFile, frameworkColors))
+            frameworkTheme.styles.remove(name);
+        switch (writeBuiltInTheme(m_builtInThemeFile, frameworkTheme))
         {
         case SourceWrite::Written:
             ContextMessage::show(

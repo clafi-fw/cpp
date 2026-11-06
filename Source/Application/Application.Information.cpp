@@ -9,6 +9,7 @@ import ClaFi.Controls.Spacer;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.AppContext;
@@ -108,7 +109,7 @@ namespace ClaFi
         m_checkAutomaticallyBox = &automaticRow.add<CheckBox>(
             L"Check automatically",
             TooltipText{ L"Checks for updates on start, at most once in 24 hours" },
-            Padding{ 0.0f, themeMetrics().listItem.padding.y },
+            Padding{ 0.0f, styleMetrics(UiElement::ListItem).padding.y },
             VerticalAlign::Center
         );
         automaticRow.add<FlexSpacer>();

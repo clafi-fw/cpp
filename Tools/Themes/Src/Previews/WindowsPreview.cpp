@@ -33,30 +33,31 @@ namespace Themes_App
     }
 
     // While the panel paints, the form holds the edited theme, so the shadows are drawn in it.
+    // Each mockup wears its window's style, whose sizes carry the shadow it casts.
     void WindowsPreview::paintChildren(PaintEvent& event)
     {
         // An overlay pass repaints no mockup, so a shadow drawn in it would land on top.
         if (!event.overlayStage())
         {
-            const ThemeMetrics& metrics = themeMetrics();
             drawWindowShadow(event, m_focusedDialog, UiElement::Dialog,
-                metrics.primaryWindowShadow, m_focusedDialog.windowFocusedFactor());
-            drawWindowShadow(event, m_unfocusedDialog, UiElement::Dialog,
-                metrics.primaryWindowShadow, m_unfocusedDialog.windowFocusedFactor());
-            drawWindowShadow(event, m_menu, UiElement::Menu, metrics.secondaryWindowShadow,
                 m_focusedDialog.windowFocusedFactor());
-            drawWindowShadow(event, m_tooltip, UiElement::Tooltip, metrics.secondaryWindowShadow,
+            drawWindowShadow(event, m_unfocusedDialog, UiElement::Dialog,
+                m_unfocusedDialog.windowFocusedFactor());
+            drawWindowShadow(event, m_menu, UiElement::Menu,
+                m_focusedDialog.windowFocusedFactor());
+            drawWindowShadow(event, m_tooltip, UiElement::Tooltip,
                 m_focusedDialog.windowFocusedFactor());
         }
         PreviewPageBase::paintChildren(event);
     }
 
     void WindowsPreview::drawWindowShadow(PaintEvent& event, const RichControl& mockup,
-        const UiElement element, const WindowShadow& shadow, const float windowFocusedFactor)
+        const UiElement element, const float windowFocusedFactor)
     {
         FormBase& owner = form();
+        const ControlMetrics& metrics = mockup.metrics();
         const Graphics::ShadowPainter& painter = owner.shadowPainter(
-            owner.shadowDesign(element, shadow, mockup.metrics().radius, windowFocusedFactor));
+            owner.shadowDesign(element, metrics.shadow, metrics.radius, windowFocusedFactor));
         const FloatRect rect = FloatRect::FromDimensions(
             event.contentPosition() + mockup.topLeft(), mockup.scaledSize());
         painter.draw(event.canvas(), rect);

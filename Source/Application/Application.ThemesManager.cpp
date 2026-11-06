@@ -9,7 +9,7 @@ import ClaFi.Dom.Formats.ClaFi;
 import ClaFi.Controls.InPlaceEdit;
 
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Dom_StdSerializers;
@@ -43,15 +43,14 @@ namespace ClaFi
     void UserTheme::loadTheme(const Dom::Value<AppTheme>& configNode, AppTheme& theme)
     {
         configNode.getTo(theme);
-        theme.metrics.settle();
     }
 
-    // addBuiltInSets
+    // addBuiltInStyles
 
     // Read as a theme file is, over the defaults - and a list in a file is the whole list, so
-    // what comes back holds the text's sets alone. Each joins the built-in theme, replacing a set
-    // of its name.
-    void addBuiltInSets(const std::wstring_view themeText)
+    // what comes back holds the text's styles alone. Each joins the built-in theme, replacing a
+    // style of its name.
+    void addBuiltInStyles(const std::wstring_view themeText)
     {
         if (themeText.empty())
             return;
@@ -61,8 +60,8 @@ namespace ClaFi
         ff.loadSectionFromStream(section, stream);
         AppTheme theme{};
         UserTheme::loadTheme(section, theme);
-        for (ElementRules& element : theme.colors.rules.elements)
-            defaultTheme().colors.rules.add(std::move(element));
+        for (ControlStyle& style : theme.styles.list)
+            defaultTheme().styles.add(std::move(style));
     }
 
     // ThemesManager
@@ -181,7 +180,7 @@ namespace ClaFi
         // has read the directory yet.
         static_cast<void>(userThemes());
         if (const AppTheme* theme = themeByName(fileName))
-            drawThemeIcon(event, theme->colors);
+            drawThemeIcon(event, *theme);
     }
 
     void ThemesManager::checkNameShape(Controls::AcceptEditEvent& event,
@@ -210,7 +209,7 @@ namespace ClaFi
     bool ThemesManager::statesEveryElement(const AppTheme& theme) const
     {
         return std::ranges::all_of(m_requiredElements, [&theme](const std::wstring_view name) {
-            return theme.colors.rules.of(name) != nullptr;
+            return theme.styles.of(name) != nullptr;
         });
     }
 }

@@ -216,7 +216,8 @@ namespace ClaFi::Controls
         // collapsing above the view carries the content up with it rather than snapping it there.
         void revalidatePosition();
         virtual float stepSize() = 0;
-        virtual float buttonSize(const AppTheme&) = 0;
+        // The size of a button at either end, in design units.
+        [[nodiscard]] virtual float buttonSize() const = 0;
         void adjustNestedControlVisualState(const Control&, VisualState&) const override;
         virtual void adjustButtonMetrics(AdjustMetricsEvent&) const = 0;
         virtual void adjustButtonPaint(AdjustPaintEvent&) = 0;
@@ -256,7 +257,7 @@ namespace ClaFi::Controls
         [[nodiscard]] float slotPosition(FloatPoint point) const;
         // The bar a button of this direction belongs in.
         [[nodiscard]] PanelSlot barSlotFor(ScrollDirection) const;
-        float calcButtonSize(const AppTheme&, const Scaler& scaler);
+        [[nodiscard]] float calcButtonSize(const Scaler&) const;
     private:
         SliderViewMode m_viewMode;
         float m_position{ 0.0f };

@@ -1,6 +1,7 @@
 export module ClaFi.Core.AppTheme_Baked;
 
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -72,14 +73,14 @@ namespace ClaFi
     export using BakedColorRules = std::vector<BakedColorRule>;
 
     // **One element as the paint path reads it** - its chain resolved into one list, the rules of
-    // its own set apart, and its seed. An element the theme states no set for holds nothing.
+    // its own style apart, and its seed. An element the theme states no style for holds nothing.
     export struct BakedElementRules
     {
     public:
         [[nodiscard]] bool operator==(const BakedElementRules&) const = default;
     public:
-        BakedColorRules rules{};    // see ThemeRules resolvedRules
-        BakedColorRules ownRules{}; // the set's own, for a band raised over another element's
+        BakedColorRules rules{};    // see ThemeStyles resolvedRules
+        BakedColorRules ownRules{}; // the style's own, for a band raised over another element's
         OptionalPigment seed{};
     };
 
@@ -90,7 +91,7 @@ namespace ClaFi
     export struct BakedRules
     {
     public:
-        // An element past the entries - of a set not yet baked - holds nothing.
+        // An element past the entries - of a style not yet baked - holds nothing.
         [[nodiscard]] const BakedElementRules& of(UiElement) const;
         [[nodiscard]] bool operator==(const BakedRules&) const = default;
     public:
@@ -144,8 +145,8 @@ namespace ClaFi
     // A shadow rule's effect is baked the way bakeShadow bakes, every other one the way bake does.
     export [[nodiscard]] BakedColorRule bake(const ColorRule&, const ThemeColors&);
     export [[nodiscard]] BakedColorRules bake(const ColorRules&, const ThemeColors&);
-    // One entry per name, in the names' order - the set of that name resolved, or nothing.
-    export [[nodiscard]] BakedRules bake(const ThemeRules&, const ThemeColors&,
+    // One entry per name, in the names' order - the style of that name resolved, or nothing.
+    export [[nodiscard]] BakedRules bake(const ThemeStyles&, const ThemeColors&,
         std::span<const std::wstring_view> elementNames);
 
     // **Crossing a set with itself answers that set at every factor**, which is what the weighted
@@ -402,7 +403,7 @@ namespace ClaFi
         return result;
     }
 
-    BakedRules bake(const ThemeRules& rules, const ThemeColors& themeColors,
+    BakedRules bake(const ThemeStyles& styles, const ThemeColors& themeColors,
         const std::span<const std::wstring_view> elementNames)
     {
         BakedRules result{};
@@ -410,10 +411,10 @@ namespace ClaFi
         for (const std::wstring_view name : elementNames)
         {
             BakedElementRules& element = result.elements.emplace_back();
-            const ElementRules* stated = rules.of(name);
+            const ControlStyle* stated = styles.of(name);
             if (!stated)
                 continue;
-            element.rules = bake(rules.resolvedRules(name), themeColors);
+            element.rules = bake(styles.resolvedRules(name), themeColors);
             element.ownRules = bake(stated->rules, themeColors);
             element.seed = stated->seed;
         }

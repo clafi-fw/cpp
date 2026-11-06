@@ -109,7 +109,7 @@ namespace ClaFi::Controls
         StackPanelBase::adjustMetrics(event);
         if (statedMetrics().has(MetricsField::Spacing))
             return;
-        const Spacing setSpacing = event.themeMetrics().doDont.spacing;
+        const Spacing setSpacing = event.styleMetrics(UiElement::Do).spacing;
         switch (shape())
         {
             case DoDontShape::Columns:
@@ -130,7 +130,7 @@ namespace ClaFi::Controls
         StackPanelBase::adjustChildMetrics(event);
         if (shape() != DoDontShape::Marks)
             return;
-        event.metrics.spacing = { 0.0f, event.themeMetrics().doDont.spacing.y };
+        event.metrics.spacing = { 0.0f, event.styleMetrics(UiElement::Do).spacing.y };
     }
 
     bool DoDont::isChildWidthGiven(const Control& child) const
@@ -174,7 +174,6 @@ namespace ClaFi::Controls
             return add<StackPanel>(Orientation::Vertical);
         StackPanel& result = add<StackPanel>(
             Orientation::Vertical,
-            MetricsSet::DoDont,
             elementOf(side)
         );
         result.add<Label>(ledBy(markOf(side), Text{ BoldText{ nameOf(side) } }), WordWrap::Yes);

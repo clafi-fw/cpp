@@ -3,6 +3,7 @@ module Themes_App.ElementPage;
 import Themes_App.ApplyToControl;
 import Themes_App.Consts;
 import Themes_App.HueRuleControl;
+import Themes_App.MetricsGrid;
 import Themes_App.RuleSlider;
 import Themes_App.RuleText;
 import Themes_App.Utils;
@@ -18,7 +19,7 @@ import ClaFi.Controls.StackView;
 import ClaFi.Controls.TextItems;
 
 import ClaFi.Core.AppTheme_Colors;
-import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Foundation.EditHistory;
@@ -40,16 +41,17 @@ namespace Themes_App
         // What the Restore link on a dropped rule's row is written with.
         constexpr std::wstring_view k_restoreLink{ L"restore" };
 
-        // Who has dropped a rule a base gives the set, as its row says.
+        // Who has dropped a rule a base gives the style, as its row says.
         enum class DropState
         {
-            Kept,           // nobody: the rule reaches the set
-            DroppedHere,    // the set itself, which may take it back
-            DroppedBetween  // a set between the two, named on the row
+            Kept,           // nobody: the rule reaches the style
+            DroppedHere,    // the style itself, which may take it back
+            DroppedBetween  // a style between the two, named on the row
         };
 
-        // A rule the set takes from a base: its words in the muted ink, struck through once a
-        // set below the base has dropped it. The cells are read for measuring and painting alike.
+        // A rule the style takes from a base: its words in the muted ink, struck through once a
+        // style below the base has dropped it. The cells are read for measuring and painting
+        // alike.
         class InheritedRuleRow : public Grids::Row
         {
         public:
@@ -101,7 +103,8 @@ namespace Themes_App
         }
 
         // The rule's words, and after them on the second line of its Apply to cell who dropped
-        // it: a link that takes it back where the set did, the set's name where one between did.
+        // it: a link that takes it back where the style did, the style's name where one between
+        // did.
         void InheritedRuleRow::getCellText(const Grids::Column& column, Text& text)
         {
             if (!m_rule)
@@ -230,7 +233,7 @@ namespace Themes_App
                 event.textRgb(InkGrade::Muted), event.scaleF(1.0f));
         }
 
-        // How many of a base's rules the set takes, as the base's group is headed.
+        // How many of a base's rules the style takes, as the base's group is headed.
         void writeRuleTally(Text& text, const std::size_t kept, const std::size_t count)
         {
             Text tally{};
@@ -247,12 +250,23 @@ namespace Themes_App
     void ElementPage::bind(PageBinding binding)
     {
         m_binding = std::move(binding);
-        m_deleteSetButton.setVisible(static_cast<bool>(m_binding.onDeleteSet));
+        m_deleteStyleButton.setVisible(static_cast<bool>(m_binding.onDeleteStyle));
+        if (m_binding.styles)
+        {
+            m_metricsGrid.bind(*m_binding.styles, m_binding.style,
+                [this](const std::wstring_view token) {
+                    return nameOf(token);
+                },
+                [this](const EditPhase phase, const Text& what) {
+                    rulesChanged(phase, what, selection());
+                });
+        }
         rebuild();
     }
 
     // **The rows name rules by their place in the list**, so they are built afresh whenever a place
-    // moves. The names are read once per build: a page is built after every change to the sets.
+    // moves. The names are read once per build: a page is built after every change to the
+    // styles.
     void ElementPage::rebuild()
     {
         for (Grids::RowContainer* row : m_ruleRows)
@@ -262,9 +276,9 @@ namespace Themes_App
             group->deleteSelf();
         m_groups.clear();
         m_inheritedRows.clear();
-        if (!m_binding.rules)
+        if (!m_binding.styles)
             return;
-        m_names = m_binding.setNames ? m_binding.setNames() : SetNames{};
+        m_names = m_binding.styleNames ? m_binding.styleNames() : SetNames{};
         showFacts();
         if (const ColorRules* list = rules())
         {
@@ -272,6 +286,7 @@ namespace Themes_App
                 addRow(i);
         }
         addInheritedGroups();
+        m_metricsGrid.refresh();
         m_resetButton.invalidateState();
         form().invalidateAlign();
     }
@@ -345,6 +360,8 @@ namespace Themes_App
 
     bool ElementPage::canDelete() const
     {
+        if (m_metricsGrid.isFocused())
+            return m_metricsGrid.canClear();
         const RuleSelection at = selection();
         if (!at.held.empty())
             return true;
@@ -358,27 +375,27 @@ namespace Themes_App
         return false;
     }
 
-    ElementRules* ElementPage::set() const
+    ControlStyle* ElementPage::shownStyle() const
     {
-        return m_binding.rules ? m_binding.rules->of(m_binding.set) : nullptr;
+        return m_binding.styles ? m_binding.styles->of(m_binding.style) : nullptr;
     }
 
     ColorRules* ElementPage::rules() const
     {
-        ElementRules* stated = set();
+        ControlStyle* stated = shownStyle();
         return stated ? &stated->rules : nullptr;
     }
 
-    // Adding a set moves every set, so every page is built again before the edit goes on - this
-    // one too, whose rows then stand on the set as it is now.
-    ElementRules& ElementPage::statedSet()
+    // Adding a style moves every style, so every page is built again before the edit goes on -
+    // this one too, whose rows then stand on the style as it is now.
+    ControlStyle& ElementPage::statedStyle()
     {
-        if (ElementRules* stated = set())
+        if (ControlStyle* stated = shownStyle())
             return *stated;
-        m_binding.rules->add(ElementRules{ .name = m_binding.set });
-        if (m_binding.onSetsChanged)
-            m_binding.onSetsChanged();
-        return *set();
+        m_binding.styles->add(ControlStyle{ .name = m_binding.style });
+        if (m_binding.onStylesChanged)
+            m_binding.onStylesChanged();
+        return *shownStyle();
     }
 
     // A new rule is appended, so it applies after the rest of the list.
@@ -387,7 +404,7 @@ namespace Themes_App
         const PaintChannel output = m_binding.outputs.empty()
             ? PaintChannel::Surface
             : m_binding.outputs.front();
-        ColorRules& list = statedSet().rules;
+        ColorRules& list = statedStyle().rules;
         list.push_back(ColorRule{ .output = output });
         // Appending may move the list, and the hue and value editors hold their rules by address.
         for (Grids::RowContainer* row : m_ruleRows)
@@ -410,6 +427,11 @@ namespace Themes_App
     // names have not moved yet.
     void ElementPage::deleteSelectedRules()
     {
+        if (m_metricsGrid.isFocused())
+        {
+            m_metricsGrid.clearCurrent();
+            return;
+        }
         if (m_pendingDelete.cell || !m_pendingDelete.held.empty())
             return;
         if (!canDelete())
@@ -448,12 +470,13 @@ namespace Themes_App
     }
 
     // The button stands outside the grid, so the rows can go at once - the selection is read
-    // before they do. A set the built-in states goes back to that whole, facts and all; a set of
-    // the theme's own keeps its facts and loses its rules and what it dropped.
+    // before they do. A style the built-in states goes back to that whole, facts and sizes and
+    // all; a style of the theme's own keeps its facts and loses its rules, what it dropped and
+    // its sizes.
     void ElementPage::resetRules()
     {
         const RuleSelection at = selection();
-        ElementRules& stated = statedSet();
+        ControlStyle& stated = statedStyle();
         if (m_binding.defaults)
         {
             stated = *m_binding.defaults;
@@ -462,6 +485,7 @@ namespace Themes_App
         {
             stated.rules.clear();
             stated.dropped.clear();
+            stated.metrics = {};
         }
         rebuild();
         Text what{};
@@ -525,8 +549,8 @@ namespace Themes_App
     {
         Grids::RowContainer& row = m_grid.addControlRow(Tag{ index });
         m_grid.moveControl(row, m_ruleRows.size() + 1ull);
-        const Padding padding = themeMetrics().listItem.padding;
-        const Spacing spacing = themeMetrics().listItem.spacing;
+        const Padding padding = styleMetrics(UiElement::ListItem).padding;
+        const Spacing spacing = styleMetrics(UiElement::ListItem).spacing;
         row.addControl<ApplyToControl>(
             column(RuleColumn::ApplyTo),
             padding,
@@ -593,14 +617,14 @@ namespace Themes_App
         });
     }
 
-    // The chain is walked from the set's own base up, so the nearest base's group stands first,
-    // headed by the base's name and how many of its rules reach the set.
+    // The chain is walked from the style's own base up, so the nearest base's group stands
+    // first, headed by the base's name and how many of its rules reach the style.
     void ElementPage::addInheritedGroups()
     {
-        const ElementChain chain = m_binding.rules->chainOf(m_binding.set);
+        const StyleChain chain = m_binding.styles->chainOf(m_binding.style);
         for (std::size_t level = 1ull; level < chain.size(); ++level)
         {
-            const ElementRules& base = *chain[level];
+            const ControlStyle& base = *chain[level];
             std::size_t kept = 0ull;
             for (const ColorRule& rule : base.rules)
                 if (!droppingOf(chain, level, rule).dropped)
@@ -626,7 +650,7 @@ namespace Themes_App
         }
     }
 
-    void ElementPage::addInheritedRow(Grids::GridBase& body, const ElementChain& chain,
+    void ElementPage::addInheritedRow(Grids::GridBase& body, const StyleChain& chain,
         const std::size_t level, const std::size_t rule)
     {
         const ColorRule& inherited = chain[level]->rules[rule];
@@ -652,7 +676,7 @@ namespace Themes_App
         });
     }
 
-    ElementPage::Dropping ElementPage::droppingOf(const ElementChain& chain,
+    ElementPage::Dropping ElementPage::droppingOf(const StyleChain& chain,
         const std::size_t level, const ColorRule& rule) const
     {
         for (std::size_t below = 0ull; below != level; ++below)
@@ -668,7 +692,7 @@ namespace Themes_App
     // is left out with it. The step is made on the row, which the rebuild keeps in its place.
     void ElementPage::dropRule(const std::size_t level, const std::size_t rule)
     {
-        const ElementChain chain = m_binding.rules->chainOf(m_binding.set);
+        const StyleChain chain = m_binding.styles->chainOf(m_binding.style);
         if (level >= chain.size() || rule >= chain[level]->rules.size())
             return;
         const ColorRule& dropped = chain[level]->rules[rule];
@@ -677,7 +701,7 @@ namespace Themes_App
             .andInputs = dropped.andInputs,
             .output = dropped.output
         };
-        RuleSelectors& list = statedSet().dropped;
+        RuleSelectors& list = statedStyle().dropped;
         if (std::ranges::find(list, selector) != list.end())
             return;
         list.push_back(selector);
@@ -693,11 +717,11 @@ namespace Themes_App
     // are built again on the next tick, outside the click the row is answering.
     void ElementPage::restoreRule(const std::size_t level, const std::size_t rule)
     {
-        const ElementChain chain = m_binding.rules->chainOf(m_binding.set);
+        const StyleChain chain = m_binding.styles->chainOf(m_binding.style);
         if (level >= chain.size() || rule >= chain[level]->rules.size())
             return;
         const ColorRule& restored = chain[level]->rules[rule];
-        RuleSelectors& list = statedSet().dropped;
+        RuleSelectors& list = statedStyle().dropped;
         const std::size_t before = list.size();
         std::erase_if(list, [&restored](const RuleSelector& selector) {
             return selector.matches(restored);
@@ -714,12 +738,12 @@ namespace Themes_App
         m_rebuildTimer.start(MilliSeconds{ 0u });
     }
 
-    // The base may be any set whose chain does not reach this one, so no chain turns in a circle;
-    // what the set stands on, any set whose standing does not. The picks are put on with the
-    // handlers held off: the lists changing is no edit.
+    // The base may be any style whose chain does not reach this one, so no chain turns in a
+    // circle; what the style stands on, any style whose standing does not. The picks are put on
+    // with the handlers held off: the lists changing is no edit.
     void ElementPage::showFacts()
     {
-        const ElementRules* stated = set();
+        const ControlStyle* stated = shownStyle();
         m_showingFacts = true;
         m_baseItems.clear();
         m_baseTokens.clear();
@@ -731,11 +755,11 @@ namespace Themes_App
         m_standsOnTokens.emplace_back();
         for (const SetName& name : m_names)
         {
-            if (name.token == m_binding.set)
+            if (name.token == m_binding.style)
                 continue;
             bool reachesThis = false;
-            for (const ElementRules* link : m_binding.rules->chainOf(name.token))
-                if (link->name == m_binding.set)
+            for (const ControlStyle* link : m_binding.styles->chainOf(name.token))
+                if (link->name == m_binding.style)
                     reachesThis = true;
             if (!reachesThis)
             {
@@ -743,13 +767,14 @@ namespace Themes_App
                 m_baseTokens.push_back(name.token);
             }
             bool standsOnThis = false;
-            std::vector<const ElementRules*> walked{};
-            for (const ElementRules* step = m_binding.rules->of(name.token); step;
-                step = m_binding.rules->of(step->standsOn))
+            std::vector<const ControlStyle*> walked{};
+            for (const ControlStyle* step = m_binding.styles->of(name.token); step;
+                step = m_binding.styles->of(step->standsOn))
             {
-                if (step->name == m_binding.set || std::ranges::find(walked, step) != walked.end())
+                const bool walkedAlready = std::ranges::find(walked, step) != walked.end();
+                if (step->name == m_binding.style || walkedAlready)
                 {
-                    standsOnThis = step->name == m_binding.set;
+                    standsOnThis = step->name == m_binding.style;
                     break;
                 }
                 walked.push_back(step);
@@ -793,7 +818,7 @@ namespace Themes_App
         if (m_showingFacts || !m_basePick.itemIndex())
             return;
         const std::wstring& picked = m_baseTokens[*m_basePick.itemIndex()];
-        ElementRules& stated = statedSet();
+        ControlStyle& stated = statedStyle();
         if (stated.base == picked)
             return;
         stated.base = picked;
@@ -807,7 +832,7 @@ namespace Themes_App
         if (m_showingFacts || !m_standsOnPick.itemIndex())
             return;
         const std::wstring& picked = m_standsOnTokens[*m_standsOnPick.itemIndex()];
-        ElementRules& stated = statedSet();
+        ControlStyle& stated = statedStyle();
         if (stated.standsOn == picked)
             return;
         stated.standsOn = picked;
@@ -822,7 +847,7 @@ namespace Themes_App
         const OptionalPigment picked = item == 0ull
             ? OptionalPigment{}
             : OptionalPigment{ static_cast<Pigment>(item - 1ull) };
-        ElementRules& stated = statedSet();
+        ControlStyle& stated = statedStyle();
         if (stated.seed == picked)
             return;
         stated.seed = picked;
@@ -869,7 +894,7 @@ namespace Themes_App
         return result;
     }
 
-    Text ElementPage::inheritedRuleName(const ElementChain& chain, const std::size_t level,
+    Text ElementPage::inheritedRuleName(const StyleChain& chain, const std::size_t level,
         const std::size_t rule) const
     {
         Text result{};

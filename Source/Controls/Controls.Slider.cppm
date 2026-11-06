@@ -108,10 +108,10 @@ namespace ClaFi::Controls
         void changed(SliderChangeEvent&) override;
         void adjustThumbTooltip(AdjustTooltipEvent&) override;
         float stepSize() override { return 1.0f; }
-        float buttonSize(const AppTheme&) override { return 24.0f; }
+        [[nodiscard]] float buttonSize() const override { return 24.0f; }
 
 
-        void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.themeMetrics().toolButton; }
+        void adjustButtonMetrics(AdjustMetricsEvent& event) const override { event.metrics = event.styleMetrics(UiElement::ToolButton); }
         void adjustButtonPaint(AdjustPaintEvent&) override;
         void adjustThumbMetrics(AdjustMetricsEvent& event) const override;
         void adjustThumbPaint(AdjustPaintEvent&) override;
@@ -194,7 +194,7 @@ namespace ClaFi::Controls
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
-            MetricsSet::Slider,
+            UiElement::Slider,
             EditModeSwitching::Yes, // an item until Return; before the caller, who may say No
             std::forward<Args>(args)...
         },
@@ -346,7 +346,7 @@ namespace ClaFi::Controls
 
     void Slider::adjustThumbMetrics(AdjustMetricsEvent& event) const
     {
-        event.metrics = event.themeMetrics().button;
+        event.metrics = event.styleMetrics(UiElement::Button);
         event.metrics.minSize = event.metrics.maxSize = { k_thumbSize, k_thumbSize };
         event.metrics.radius = k_thumbSize / 2.0f;
     }
@@ -377,7 +377,7 @@ namespace ClaFi::Controls
             });
         if (restingStroke != buttonRules.end())
             event.setOwnRules({ &*restingStroke, 1 });
-        event.setBorderWidth(event.scaledStrokeWidth(ThemeMetrics::border));
+        event.setBorderWidth(event.scaledStrokeWidth(ThemeMetrics::Border));
     }
 
     void Slider::paintButtonMark(PaintEvent& event, float size, ScrollDirection scrollDirection)
@@ -634,7 +634,6 @@ namespace ClaFi::Controls
     FineSliderPopup::FineSliderPopup(const CreateParams& params, Slider& owner, SlotSpan span)
         :
         Panel{ params,
-            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             Padding{ k_padding }
         },

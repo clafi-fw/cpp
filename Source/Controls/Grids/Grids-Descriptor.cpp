@@ -1,6 +1,7 @@
 module ClaFi.Controls.Grids;
 
 import ClaFi.Core.AppTheme_AnimationSlots;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.Foundation;
@@ -69,7 +70,7 @@ namespace ClaFi::Controls::Grids
         m_owner{ owner },
         m_viewMode{ viewMode },
         m_gridLines{ gridLines },
-        m_designCellMetrics{ m_owner.themeMetrics().gridCell },
+        m_designCellMetrics{ m_owner.styleMetrics(UiElement::GridCell) },
         m_scaledCellMetrics{ m_designCellMetrics, m_owner.scaler() },
         // Cannot be a default member initialiser: capturing `this` there does not compile.
         m_onCellAnimate{ [this](AnimateParams& params) { onCellAnimated(params); } }

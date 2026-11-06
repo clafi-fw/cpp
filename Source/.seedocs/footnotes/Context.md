@@ -26,11 +26,18 @@ crossing runs. `kind()` says which.
   whatever took the theme.
 - `CrossingFrame` - a window paints it at once, so every frame of the crossing is seen.
 
-## ThemeMetricsSwitchEvent
+## StyleMetricsSwitchEvent
 
-Raised on `AppContext::events()` when a theme is taken whose sizes differ from the ones worn. The
-sizes land at once, with no crossing. Every form hands them to each control sized by a theme's set,
-puts its window frame and shadow in step, and lays itself out again - see RichControl metricsSet.
+Raised on `AppContext::events()` when a theme is taken whose styles resolve to other sizes than
+the ones worn. The sizes land at once, with no crossing. Every form hands them to each control
+wearing a style, puts its window frame and shadow in step, and lays itself out again - see
+RichControl style.
+
+## FormContext styleMetrics
+
+**The sizes an element's style resolves to**, as AppContext holds them - see StyleMetrics. A
+control, its CreateParams, a form and every control event answer the same way, so a part sized by
+another element's style reads `styleMetrics(UiElement::ScrollButton)` wherever it stands.
 
 ## BackendSwitchEvent
 

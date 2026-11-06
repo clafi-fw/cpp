@@ -1,44 +1,48 @@
 // The framework's own theme, written whole by the Themes app's Write to source.
 // An edit made here is lost at the next write.
-module ClaFi.Core.AppTheme_Colors;
+module ClaFi.Core.AppTheme_Theme;
 
+import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Palette;
+import ClaFi.Core.AppTheme_Styles;
+import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    ThemeColors::ThemeColors()
+    AppTheme::AppTheme()
     {
-        anchorHue = 0.666534f;
+        colors.anchorHue = 0.666534f;
 
-        harmonyKind = ColorHarmonyKind::Complementary;
+        colors.harmonyKind = ColorHarmonyKind::Complementary;
 
-        paletteHues = {
+        colors.paletteHues = {
             0.666534f,
             0.666534f,
             0.16653395f
         };
 
-        darkModeFloor = 0.11262504f;
+        colors.darkModeFloor = 0.11262504f;
 
-        accent = ColorEffect{
+        colors.accent = ColorEffect{
             { ColorRuleHueOp::PaletteColor2 },          // H
             { ColorRuleOp::Set, 1.0f },                 // S
             { ColorRuleOp::Set, 0.544542f }             // E
         };
 
-        spot = ColorEffect{
+        colors.spot = ColorEffect{
             { ColorRuleHueOp::PaletteColor3, 0.805479f }, // H
             { ColorRuleOp::Set, 1.0f },                 // S
             { ColorRuleOp::Set, 0.648933f }             // E
         };
 
-        rules.elements = {
-            ElementRules{
+        styles.list = {
+            ControlStyle{
                 .name = L"AnyElement"
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"AnyWindow",
                 .base = L"AnyElement",
                 .rules = {
@@ -72,9 +76,17 @@ namespace ClaFi
                             { ColorRuleOp::Set, 0.24358974f }       // E
                         }
                     }
+                },
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 6.0f,
+                    .padding = Padding{ 4.0f, 4.0f },
+                    .shadowBlur = 12.0f,
+                    .shadowOffset = FloatPoint{ 0.0f, 3.0f },
+                    .shadowOpacity = 0.35f
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"AnyNonWindow",
                 .base = L"AnyElement",
                 .standsOn = L"Section",
@@ -108,7 +120,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Dialog",
                 .base = L"AnyWindow",
                 .rules = {
@@ -119,9 +131,15 @@ namespace ClaFi
                             { ColorRuleOp::Set, 0.001878f }         // E
                         }
                     }
+                },
+                .metrics = {
+                    .radius = 8.0f,
+                    .shadowBlur = 24.0f,
+                    .shadowOffset = FloatPoint{ 0.0f, 6.0f },
+                    .shadowOpacity = 0.4f
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Page",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Dialog",
@@ -139,9 +157,14 @@ namespace ClaFi
                             { ColorRuleOp::Offset, 0.044491f }      // E
                         }
                     }
+                },
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 4.0f,
+                    .padding = Padding{ 1.0f, 1.0f }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Tab",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Page",
@@ -164,9 +187,16 @@ namespace ClaFi
                             { ColorRuleOp::Set, 0.544542f }         // E
                         }
                     }
+                },
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .band = 1.66f,
+                    .radius = 4.0f,
+                    .padding = Padding{ 8.0f, 4.0f },
+                    .spacing = Spacing{ 4.0f, 4.0f }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Section",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Page",
@@ -179,7 +209,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"SectionHeader",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -207,7 +237,27 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
+                .name = L"Expander",
+                .base = L"Section",
+                .standsOn = L"Page",
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 4.0f,
+                    .padding = Padding{ 1.0f, 1.0f }
+                }
+            },
+            ControlStyle{
+                .name = L"Field",
+                .base = L"Section",
+                .standsOn = L"Page",
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 4.0f,
+                    .padding = Padding{ 8.0f, 4.0f }
+                }
+            },
+            ControlStyle{
                 .name = L"ToolBar",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Page",
@@ -221,7 +271,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"DialogTitle",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Dialog",
@@ -257,7 +307,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Menu",
                 .base = L"AnyWindow",
                 .rules = {
@@ -270,7 +320,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Tooltip",
                 .base = L"AnyWindow",
                 .rules = {
@@ -283,7 +333,19 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
+                .name = L"Dropdown",
+                .base = L"AnyWindow",
+                .rules = {
+                    ColorRule{
+                        .effect{
+                            { ColorRuleOp::NoChange, 0.195241f },   // S
+                            { ColorRuleOp::Offset, 0.039854f }      // E
+                        }
+                    }
+                }
+            },
+            ControlStyle{
                 .name = L"Divider",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -304,7 +366,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Grid",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -316,9 +378,14 @@ namespace ClaFi
                             { ColorRuleOp::Offset, 0.120654f }      // E
                         }
                     }
+                },
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 4.0f,
+                    .padding = Padding{ 1.0f, 1.0f }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"GridHeader",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Grid",
@@ -346,7 +413,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"GridRow",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Grid",
@@ -376,7 +443,19 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
+                .name = L"GridCell",
+                .base = L"AnyNonWindow",
+                .standsOn = L"Grid",
+                .metrics = {
+                    .border = Thickness::Hairline,
+                    .radius = 4.0f,
+                    .padding = Padding{ 5.0f, 3.0f },
+                    .spacing = Spacing{ 4.0f, 4.0f },
+                    .depth = 1.0f
+                }
+            },
+            ControlStyle{
                 .name = L"AnyButton",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -403,9 +482,17 @@ namespace ClaFi
                             { ColorRuleOp::Scale, 0.9f }            // E
                         }
                     }
+                },
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 4.0f,
+                    .padding = Padding{ 8.0f, 4.0f },
+                    .spacing = Spacing{ 4.0f, 4.0f },
+                    .minSize = MinSize{ 40.0f, 24.0f },
+                    .depth = 1.0f
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Button",
                 .base = L"AnyButton",
                 .rules = {
@@ -424,7 +511,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"ToolButton",
                 .base = L"AnyButton",
                 .rules = {
@@ -436,14 +523,41 @@ namespace ClaFi
                             { ColorRuleOp::Offset, 0.037839f }      // E
                         }
                     }
+                },
+                .metrics = {
+                    .growIn = 0.83f
                 }
             },
-            ElementRules{
+            ControlStyle{
+                .name = L"ListItem",
+                .base = L"AnyNonWindow",
+                .standsOn = L"Section",
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 4.0f,
+                    .padding = Padding{ 5.0f, 3.0f },
+                    .spacing = Spacing{ 4.0f, 4.0f },
+                    .depth = 1.0f
+                }
+            },
+            ControlStyle{
                 .name = L"TextBox",
                 .base = L"AnyNonWindow",
-                .standsOn = L"Section"
+                .standsOn = L"Section",
+                .metrics = {
+                    .band = 1.66f
+                }
             },
-            ElementRules{
+            ControlStyle{
+                .name = L"Slider",
+                .base = L"AnyNonWindow",
+                .standsOn = L"Section",
+                .metrics = {
+                    .band = 1.66f,
+                    .radius = 4.0f
+                }
+            },
+            ControlStyle{
                 .name = L"SelectedText",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -464,7 +578,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"FoundText",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -478,7 +592,7 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"AnyIndicator",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -513,9 +627,16 @@ namespace ClaFi
                             { ColorRuleOp::Set, 0.0f }              // E
                         }
                     }
+                },
+                .metrics = {
+                    .border = Thickness::Hairline,
+                    .radius = 3.0f,
+                    .padding = Padding{ 2.33f, 2.33f },
+                    .minSize = MinSize{ 16.0f, 16.0f },
+                    .depth = 3.0f
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"SelectionIndicator",
                 .base = L"AnyIndicator",
                 .rules = {
@@ -528,11 +649,16 @@ namespace ClaFi
                     }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"HoverIndicator",
                 .base = L"AnyIndicator"
             },
-            ElementRules{
+            ControlStyle{
+                .name = L"ScrollBar",
+                .base = L"AnyNonWindow",
+                .standsOn = L"Section"
+            },
+            ControlStyle{
                 .name = L"ScrollButton",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -557,9 +683,13 @@ namespace ClaFi
                             { ColorRuleOp::Scale, 0.9f }            // E
                         }
                     }
+                },
+                .metrics = {
+                    .radius = 3.0f,
+                    .minSize = MinSize{ 17.0f, 17.0f }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"ScrollThumb",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -584,9 +714,12 @@ namespace ClaFi
                             { ColorRuleOp::Scale, 0.9f }            // E
                         }
                     }
+                },
+                .metrics = {
+                    .radius = 5.5f
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"AnyCallout",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -604,34 +737,40 @@ namespace ClaFi
                             { ColorRuleOp::Set, 0.6f }              // E
                         }
                     }
+                },
+                .metrics = {
+                    .band = 4.0f,
+                    .radius = 4.0f,
+                    .padding = Padding{ 16.0f, 12.0f },
+                    .spacing = Spacing{ 12.0f, 12.0f }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"InfoCallout",
                 .base = L"AnyCallout",
                 .seed = Pigment::Blue
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"QuestionCallout",
                 .base = L"AnyCallout",
                 .seed = Pigment::Blue
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"WarningCallout",
                 .base = L"AnyCallout",
                 .seed = Pigment::Yellow
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"ErrorCallout",
                 .base = L"AnyCallout",
                 .seed = Pigment::Red
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"OkCallout",
                 .base = L"AnyCallout",
                 .seed = Pigment::Green
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"DoDont",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -649,19 +788,24 @@ namespace ClaFi
                             { ColorRuleOp::Offset, 0.35f }          // E
                         }
                     }
+                },
+                .metrics = {
+                    .radius = 6.0f,
+                    .padding = Padding{ 12.0f, 10.0f },
+                    .spacing = Spacing{ 12.0f, 4.0f }
                 }
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Do",
                 .base = L"DoDont",
                 .seed = Pigment::Green
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"Dont",
                 .base = L"DoDont",
                 .seed = Pigment::Red
             },
-            ElementRules{
+            ControlStyle{
                 .name = L"CodeBlock",
                 .base = L"AnyNonWindow",
                 .standsOn = L"Section",
@@ -679,6 +823,10 @@ namespace ClaFi
                             { ColorRuleOp::Offset, 0.12f }          // E
                         }
                     }
+                },
+                .metrics = {
+                    .radius = 6.0f,
+                    .padding = Padding{ 12.0f, 10.0f }
                 }
             }
         };

@@ -197,7 +197,7 @@ namespace ClaFi::Controls
         // focused control thickens that stroke, and a strip laid across it would cover the focus
         // ring on the side it reaches. So the children begin at the widest border the control can
         // paint, and no further in.
-        float border = event.scaledStrokeWidth(ThemeMetrics::focusedBorder);
+        float border = event.scaledStrokeWidth(ThemeMetrics::FocusedBorder);
         event.inset = { border, border };
     }
 
@@ -233,7 +233,7 @@ namespace ClaFi::Controls
         // radius would leave the two curves parallel along the straight edges and then spreading
         // apart around the corner. Taking the inset off keeps the gap between them the same the
         // whole way round, which is what the eye actually reads as even.
-        event.metrics.radius = std::max(metrics().radius - strokeWidth(ThemeMetrics::focusedBorder), 0.0f);
+        event.metrics.radius = std::max(metrics().radius - strokeWidth(ThemeMetrics::FocusedBorder), 0.0f);
     }
 
     void DropdownControlBase::adjustChildPaint(AdjustPaintEvent& event)

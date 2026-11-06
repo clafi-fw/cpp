@@ -20,10 +20,14 @@ namespace ClaFi
         MaxSize,
         Depth,
         GrowIn,
+        ShadowBlur,
+        ShadowOffset,
+        ShadowSpread,
+        ShadowOpacity,
         Count
     };
 
-    // The sizes a control was given outright, over the set it is sized by. See AppTheme
+    // The sizes a control was given outright, over the style it is sized by. See AppTheme
     export class MetricsFields
     {
     public:
@@ -32,6 +36,13 @@ namespace ClaFi
             return (m_bits & bitOf(field)) != 0u;
         }
         constexpr void add(MetricsField field) { m_bits |= bitOf(field); }
+        // Every size, which is what a block given whole states.
+        [[nodiscard]] static constexpr MetricsFields every()
+        {
+            MetricsFields result{};
+            result.m_bits = (1u << static_cast<std::uint32_t>(MetricsField::Count)) - 1u;
+            return result;
+        }
     private:
         [[nodiscard]] static constexpr std::uint32_t bitOf(MetricsField field)
         {
@@ -39,6 +50,16 @@ namespace ClaFi
         }
     private:
         std::uint32_t m_bits{ 0u };
+    };
+
+    // The shadow a window casts, in logical pixels. See AppTheme
+    export struct WindowShadow
+    {
+        float blur{};
+        FloatPoint offset{};
+        float spread{};
+        float opacity{};
+        [[nodiscard]] bool operator==(const WindowShadow&) const = default;
     };
 
     // The design metrics a control is laid out by.
@@ -86,6 +107,8 @@ namespace ClaFi
         float zDepthFactor{};
         // The size the surface arrives from as it appears, a fraction of the size it settles at.
         float surfaceGrowInScale{ 1.0f };
+        // The shadow the control's window casts, where the control is a window's root. See AppTheme
+        WindowShadow shadow{};
     };
 
     export struct ScaledControlMetrics
@@ -100,52 +123,49 @@ namespace ClaFi
         ScaledSize maxSize;
     };
 
-    // The shadow a window casts, in logical pixels. See AppTheme
-    export struct WindowShadow
+    export using OptionalThickness = std::optional<Thickness>;
+    export using OptionalFloat = std::optional<float>;
+    export using OptionalPadding = std::optional<Padding>;
+    export using OptionalSpacing = std::optional<Spacing>;
+    export using OptionalMinSize = std::optional<MinSize>;
+    export using OptionalPreferredSize = std::optional<PreferredSize>;
+    export using OptionalFloatPoint = std::optional<FloatPoint>;
+
+    // The sizes a style states, each one over its base's. See AppTheme
+    export struct StatedMetrics
     {
-        float blur{};
-        FloatPoint offset{};
-        float spread{};
-        float opacity{};
-        [[nodiscard]] bool operator==(const WindowShadow&) const = default;
+    public:
+        // Puts every stated size into the metrics, and leaves the rest as they are.
+        void applyTo(ControlMetrics&) const;
+        [[nodiscard]] bool empty() const { return count() == 0ull; }
+        [[nodiscard]] std::size_t count() const; // how many sizes are stated
+        [[nodiscard]] bool operator==(const StatedMetrics&) const = default;
+    public:
+        OptionalThickness border{};
+        OptionalFloat band{};
+        OptionalFloat radius{};
+        OptionalPadding padding{};
+        OptionalSpacing spacing{};
+        OptionalMinSize minSize{};
+        OptionalPreferredSize preferredSize{};
+        OptionalFloat depth{};  // ControlMetrics zDepthFactor
+        OptionalFloat growIn{}; // ControlMetrics surfaceGrowInScale
+        OptionalFloat shadowBlur{};
+        OptionalFloatPoint shadowOffset{};
+        OptionalFloat shadowSpread{};
+        OptionalFloat shadowOpacity{};
     };
 
-    // A set of sizes a theme states, one for each kind of control. See AppTheme
-    export enum class MetricsSet
+    // The sizes every style shares. See AppTheme
+    export namespace ThemeMetrics
     {
-        Button,
-        ToolButton,
-        DialogTitle,
-        PrimaryWindow,
-        SecondaryWindow,
-        Page,
-        CheckMark,
-        ListItem,
-        GridCell,
-        ScrollButton,
-        ScrollThumb,
-        Tab,
-        Callout,
-        DoDont,
-        CodeBlock,
-        TextBox,
-        Slider,
-        Count
-    };
-
-    export constexpr std::size_t k_metricsSetCount{ static_cast<std::size_t>(MetricsSet::Count) };
-    export using OptionalMetricsSet = std::optional<MetricsSet>;
-
-    export struct ThemeMetrics
-    {
-        ThemeMetrics();
-        static constexpr Thickness border = Thickness::Thin;
+        constexpr Thickness Border = Thickness::Thin;
         // The widest stroke a control can paint: a focused one thickens its border to this.
         // Anything laid over a control's edge has to leave at least this much clear, or it covers
         // the focus ring on the side it reaches.
-        static constexpr Thickness focusedBorder = Thickness::Regular;
-        // The Z animation stated as depth. A control rests pressRestDepth into the surface, rises
-        // flush with it under the pointer or the keyboard's focus and sinks to pressHeldDepth
+        constexpr Thickness FocusedBorder = Thickness::Regular;
+        // The Z animation stated as depth. A control rests PressRestDepth into the surface, rises
+        // flush with it under the pointer or the keyboard's focus and sinks to PressHeldDepth
         // while held - the same distances for every control, so nothing on a surface travels
         // further into it than anything else does.
         //
@@ -155,90 +175,22 @@ namespace ClaFi
         // one of them from there scales the other. ControlMetrics::zDepthFactor is that scale, and
         // Control::allowZAnimation is what decides whether a control has any of this at all.
         //
-        // viewerDistance is where the eye is, in the same points. It is a stylistic choice and not
+        // ViewerDistance is where the eye is, in the same points. It is a stylistic choice and not
         // a measured one: a real viewer sits some two thousand points from the screen, and at that
         // distance a two point press projects to under a twentieth of a pixel on anything. This is
         // a far closer, far wider angle than reality, picked so the movement registers at all.
-        static constexpr float viewerDistance = 98.0f;
-        static constexpr float pressRestDepth = 2.0f;
-        static constexpr float pressHeldDepth = 3.0f;
+        constexpr float ViewerDistance = 98.0f;
+        constexpr float PressRestDepth = 2.0f;
+        constexpr float PressHeldDepth = 3.0f;
 
         // Perspective projection, and the reason a small control moves less than a large one for
         // the same push. The ratio carries no size term - one depth gives one ratio to everything -
         // so what differs between controls is not how far they travel but how much of that travel
         // reaches the screen, which is proportional to how big they are. Deriving the ratio rather
         // than authoring it is what keeps the depths comparable to each other and to a real one.
-        static constexpr float pressRestScale = viewerDistance / (viewerDistance + pressRestDepth);
-        static constexpr float pressHeldScale = viewerDistance / (viewerDistance + pressHeldDepth);
-        static constexpr float scrollBarWidth = 17.0f;
-        ControlMetrics button;
-        ControlMetrics toolButton; // a button's, with a surface that grows in as it arrives
-        ControlMetrics dialogTitle;
-        // **The frame a window wears**: border is the ring its content stands inside and radius its
-        // corners, both painted by the framework on every platform. The padding of a primary
-        // window is that ring and nothing more.
-        ControlMetrics primaryWindow;
-        ControlMetrics secondaryWindow;
-        WindowShadow primaryWindowShadow;
-        WindowShadow secondaryWindowShadow;
-        ControlMetrics page;
-        ControlMetrics checkMark;
-        ControlMetrics listItem;
-        ControlMetrics gridCell;
-        ControlMetrics scrollButton;
-        ControlMetrics scrollThumb;
-        ControlMetrics tab;
-        ControlMetrics callout; // spacing across beside the mark, down between what it holds
-        ControlMetrics doDont; // spacing across between the sides, down between the items
-        ControlMetrics codeBlock;
-        ControlMetrics textBox; // its band shows while the box is in edit mode
-        ControlMetrics slider; // its band shows while the slider is in edit mode
-        // The set of this name.
-        [[nodiscard]] const ControlMetrics& of(MetricsSet) const;
-        [[nodiscard]] ControlMetrics& of(MetricsSet);
-        // Whether a window sized by this set casts a shadow the theme states.
-        [[nodiscard]] static constexpr bool castsShadow(MetricsSet set)
-        {
-            return set == MetricsSet::PrimaryWindow || set == MetricsSet::SecondaryWindow;
-        }
-        // Whether a control sized by this set draws the band the set states. See AppTheme
-        [[nodiscard]] static constexpr bool drawsBand(MetricsSet set)
-        {
-            return set == MetricsSet::Tab
-                || set == MetricsSet::TextBox
-                || set == MetricsSet::Slider
-                || set == MetricsSet::Callout
-                || set == MetricsSet::CodeBlock;
-        }
-        // The shadow a window sized by this set casts, null where castsShadow says none.
-        [[nodiscard]] const WindowShadow* shadowOf(MetricsSet) const;
-        [[nodiscard]] WindowShadow* shadowOf(MetricsSet);
-        // Puts back the sizes that follow from others. See AppTheme#thememetrics-settle
-        void settle();
-        [[nodiscard]] bool operator==(const ThemeMetrics&) const = default;
-    };
-
-    // The member each set is held in, in MetricsSet order.
-    export constexpr std::array<ControlMetrics ThemeMetrics::*, k_metricsSetCount>
-        k_metricsSetMembers{
-            &ThemeMetrics::button,
-            &ThemeMetrics::toolButton,
-            &ThemeMetrics::dialogTitle,
-            &ThemeMetrics::primaryWindow,
-            &ThemeMetrics::secondaryWindow,
-            &ThemeMetrics::page,
-            &ThemeMetrics::checkMark,
-            &ThemeMetrics::listItem,
-            &ThemeMetrics::gridCell,
-            &ThemeMetrics::scrollButton,
-            &ThemeMetrics::scrollThumb,
-            &ThemeMetrics::tab,
-            &ThemeMetrics::callout,
-            &ThemeMetrics::doDont,
-            &ThemeMetrics::codeBlock,
-            &ThemeMetrics::textBox,
-            &ThemeMetrics::slider
-        };
+        constexpr float PressRestScale = ViewerDistance / (ViewerDistance + PressRestDepth);
+        constexpr float PressHeldScale = ViewerDistance / (ViewerDistance + PressHeldDepth);
+    }
 
 
     //-------------------------------------------------------------------------
@@ -268,6 +220,14 @@ namespace ClaFi
             zDepthFactor = source.zDepthFactor;
         if (fields.has(MetricsField::GrowIn))
             surfaceGrowInScale = source.surfaceGrowInScale;
+        if (fields.has(MetricsField::ShadowBlur))
+            shadow.blur = source.shadow.blur;
+        if (fields.has(MetricsField::ShadowOffset))
+            shadow.offset = source.shadow.offset;
+        if (fields.has(MetricsField::ShadowSpread))
+            shadow.spread = source.shadow.spread;
+        if (fields.has(MetricsField::ShadowOpacity))
+            shadow.opacity = source.shadow.opacity;
     }
 
 
@@ -283,163 +243,55 @@ namespace ClaFi
     {
     }
 
-    // ThemeMetrics
+    // StatedMetrics
 
-    ThemeMetrics::ThemeMetrics()
+    void StatedMetrics::applyTo(ControlMetrics& metrics) const
     {
-        static constexpr float btnRadius = 4.0f;
-
-        // button (also used for labels, check boxes, edits)
-        button.border = border;
-        button.radius = btnRadius;
-        button.padding = { 8.0f, 4.0f };
-        button.spacing = { 4.0f, 4.0f };
-        button.minSize = { 40.0f, 24.0f };
-        button.zDepthFactor = 1.0f;
-
-        // toolButton
-        // A tool button's colours state no surface at rest, so the only thing its surface does
-        // on the way in is arrive. Unlike the press scales this is a large number on purpose -
-        // not a nudge but where the shape comes from - and it costs nothing in paint area,
-        // because it only ever makes the surface smaller than the control.
-        toolButton = button;
-        toolButton.surfaceGrowInScale = 0.83f;
-
-        // appTitleBar
-        //appTitleBar.padding = { 4.0f, 4.0f };
-        //appTitleBar.radius = 8.0f;
-        //appTitleBar.minSize = { 100.0f, 33.0f };
-
-        // primaryWindow
-        primaryWindow.border = Thickness::Thin;
-        primaryWindow.radius = 8.0f;
-        primaryWindowShadow.blur = 24.0f;
-        primaryWindowShadow.offset = { 0.0f, 6.0f };
-        primaryWindowShadow.opacity = 0.4f;
-
-        // secondaryWindow
-        secondaryWindow.border = Thickness::Thin;
-        secondaryWindow.padding = 4.0f;
-        secondaryWindow.radius = 6.0f;
-        secondaryWindowShadow.blur = 12.0f;
-        secondaryWindowShadow.offset = { 0.0f, 3.0f };
-        secondaryWindowShadow.opacity = 0.35f;
-
-        // page
-        page.border = border;
-        page.padding = 1.0f;
-        page.radius = 4.0f;
-
-        // checkMark
-        checkMark.border = Thickness::Hairline;
-        checkMark.padding = 2.33f;
-        checkMark.radius = 3.0f;
-        checkMark.minSize = 16.0f;
-        // The indicator carries the depth for the whole check box or radio button, because its host
-        // does not take any - see Control::allowZAnimation. Pushing the row would move a label that
-        // has no business moving, and the mark is the part that reads as the thing being pressed.
-        //
-        // Exaggerated, and the only place in the theme that is. The perspective projection scales
-        // travel by how big a control is, so one depth gives a 114 point card 1.14 device pixels of
-        // hover travel and this 16 point mark 0.16 - a sixth of a pixel, which is not a movement
-        // anyone sees. Everything on a surface travelling the same distance into it is the right
-        // rule for controls that sit on that surface together; a mark that is the only moving part
-        // of its control is not competing with anything, so it is free to overstate.
-        //
-        // At 3 the mark travels 0.48 pixels rising to flush and 0.71 sinking from there to held,
-        // the same order as the card, and rests at 15.04 pixels rather than 16 - a difference
-        // visible only against a second mark that is not resting. Both ends move together: the
-        // factor cannot lift the hover without deepening the press by the same ratio.
-        checkMark.zDepthFactor = 3.0f;
-
-        // listItem (also used by check boxes and radio buttons)
-        listItem.radius = 4.0f;
-        listItem.padding = { 5.0f, 3.0f };
-        listItem.spacing = { 4.0f, 4.0f }; // as Button
-        listItem.border = border /* borderWidth needed for focus rect */;
-        listItem.zDepthFactor = 1.0f;
-
-        // gridCell
-        gridCell.radius = 4.0f;
-        gridCell.padding = { 5.0f, 3.0f };
-        gridCell.spacing = { 4.0f, 4.0f }; // as Button
-        gridCell.border = Thickness::Hairline;
-        gridCell.zDepthFactor = 1.0f;
-
-        // scrollButton
-        scrollButton.radius = 3.0f;
-        scrollButton.minSize = { scrollBarWidth, scrollBarWidth };
-
-        // scrollThumb
-        scrollThumb.radius = 5.5f;
-
-        // tab
-        tab.border = border;
-        // A tab carries an icon in the same slot a button does, so it needs the same gap between
-        // that icon and the caption.
-        tab.spacing = { 4.0f, 4.0f };
-        tab.radius = 4.0f;
-        tab.padding = { 8.0f, 4.0f };
-        // The open tab's indicator, twice the tab line. Edit mode's band is as deep.
-        tab.band = 2.0f * strokeWidth(border);
-
-        // callout
-        callout.band = 4.0f;
-        callout.radius = 4.0f;
-        callout.padding = { 16.0f, 12.0f };
-        callout.spacing = { 12.0f, 12.0f };
-
-        // doDont
-        doDont.radius = 6.0f;
-        doDont.padding = { 12.0f, 10.0f };
-        doDont.spacing = { 12.0f, 4.0f };
-
-        // codeBlock
-        codeBlock.radius = 6.0f;
-        codeBlock.padding = { 12.0f, 10.0f };
-
-        // textBox
-        textBox.band = tab.band;
-
-        // slider
-        slider.band = tab.band;
-        slider.radius = listItem.radius; // rounded as a list item
-
-        settle();
+        if (border)
+            metrics.border = *border;
+        if (band)
+            metrics.band = *band;
+        if (radius)
+            metrics.radius = *radius;
+        if (padding)
+            metrics.padding = *padding;
+        if (spacing)
+            metrics.spacing = *spacing;
+        if (minSize)
+            metrics.minSize = *minSize;
+        if (preferredSize)
+            metrics.preferredSize = *preferredSize;
+        if (depth)
+            metrics.zDepthFactor = *depth;
+        if (growIn)
+            metrics.surfaceGrowInScale = *growIn;
+        if (shadowBlur)
+            metrics.shadow.blur = *shadowBlur;
+        if (shadowOffset)
+            metrics.shadow.offset = *shadowOffset;
+        if (shadowSpread)
+            metrics.shadow.spread = *shadowSpread;
+        if (shadowOpacity)
+            metrics.shadow.opacity = *shadowOpacity;
     }
 
-    const ControlMetrics& ThemeMetrics::of(const MetricsSet set) const
+    std::size_t StatedMetrics::count() const
     {
-        return this->*k_metricsSetMembers[static_cast<std::size_t>(set)];
-    }
-
-    ControlMetrics& ThemeMetrics::of(const MetricsSet set)
-    {
-        return this->*k_metricsSetMembers[static_cast<std::size_t>(set)];
-    }
-
-    const WindowShadow* ThemeMetrics::shadowOf(const MetricsSet set) const
-    {
-        if (set == MetricsSet::PrimaryWindow)
-            return &primaryWindowShadow;
-        if (set == MetricsSet::SecondaryWindow)
-            return &secondaryWindowShadow;
-        return nullptr;
-    }
-
-    WindowShadow* ThemeMetrics::shadowOf(const MetricsSet set)
-    {
-        return const_cast<WindowShadow*>(std::as_const(*this).shadowOf(set));
-    }
-
-    void ThemeMetrics::settle()
-    {
-        const float windowBorder = strokeWidth(primaryWindow.border);
-        primaryWindow.padding = { windowBorder, windowBorder };
-        // A check mark and a scroll button are square.
-        checkMark.minSize.y = checkMark.minSize.x;
-        scrollButton.minSize.y = scrollButton.minSize.x;
-        // A list item skips measuring a check mark whose size is fixed.
-        checkMark.maxSize = MaxSize{ checkMark.minSize };
+        const std::array stated = {
+            border.has_value(),
+            band.has_value(),
+            radius.has_value(),
+            padding.has_value(),
+            spacing.has_value(),
+            minSize.has_value(),
+            preferredSize.has_value(),
+            depth.has_value(),
+            growIn.has_value(),
+            shadowBlur.has_value(),
+            shadowOffset.has_value(),
+            shadowSpread.has_value(),
+            shadowOpacity.has_value(),
+        };
+        return static_cast<std::size_t>(std::ranges::count(stated, true));
     }
 }

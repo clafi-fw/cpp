@@ -57,8 +57,8 @@ namespace Themes_App
             drawing.stroke(palette, event.textRgb(InkGrade::Muted));
         }
 
-        // A drop of paint, tinted, beside the lines of its list.
-        void drawRules(const Drawing& drawing)
+        // A drop of paint, tinted, beside the lines of a style's list.
+        void drawStyle(const Drawing& drawing)
         {
             PixelPath drop;
             drop.moveTo(4.2f, 2.2f);
@@ -76,23 +76,6 @@ namespace Themes_App
             addLine(lines, { 9.0f, 10.6f }, { 12.6f, 10.6f });
             drawing.stroke(lines, drawing.inks.body);
         }
-
-        // A box, and in the accent the lengths across and down it.
-        void drawSizes(const Drawing& drawing)
-        {
-            PixelPath box;
-            box.drawRoundedRect({ 5.0f, 5.0f, 12.5f, 12.5f }, 1.1f, 1.1f);
-            drawing.stroke(box, drawing.inks.body);
-
-            PixelPath lengths;
-            addLine(lengths, { 5.0f, 2.4f }, { 12.5f, 2.4f });
-            addLine(lengths, { 5.0f, 1.3f }, { 5.0f, 3.5f });
-            addLine(lengths, { 12.5f, 1.3f }, { 12.5f, 3.5f });
-            addLine(lengths, { 2.4f, 5.0f }, { 2.4f, 12.5f });
-            addLine(lengths, { 1.3f, 5.0f }, { 3.5f, 5.0f });
-            addLine(lengths, { 1.3f, 12.5f }, { 3.5f, 12.5f });
-            drawing.stroke(lengths, drawing.inks.accent);
-        }
     }
 
     void drawPageIcon(DrawIconEvent& event, const PageKind kind)
@@ -106,17 +89,14 @@ namespace Themes_App
             case PageKind::Folder:
                 drawFolder(drawing);
                 break;
-            case PageKind::Rules:
-                drawRules(drawing);
-                break;
-            case PageKind::Sizes:
-                drawSizes(drawing);
+            case PageKind::Style:
+                drawStyle(drawing);
                 break;
         }
     }
 
     // **The kind is the icon's tag**: the layout cache tells icons apart by size and tag alone, so
-    // a rules row and a sizes row of one name would otherwise be drawn from one layout.
+    // two kinds drawn at one size would otherwise share one layout.
     InTextIcon pageIcon(const PageKind kind, const float size)
     {
         const DrawIconFunc draw = [kind](DrawIconEvent& event) {
@@ -129,10 +109,8 @@ namespace Themes_App
     {
         switch (kind)
         {
-            case PageKind::Rules:
-                return L"rules";
-            case PageKind::Sizes:
-                return L"sizes";
+            case PageKind::Style:
+                return L"style";
             case PageKind::Palette:
             case PageKind::Folder:
                 break;

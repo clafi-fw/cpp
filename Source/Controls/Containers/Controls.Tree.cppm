@@ -7,6 +7,7 @@ import ClaFi.Controls.Divider;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
@@ -218,7 +219,7 @@ namespace ClaFi::Controls
             MouseFocus::Self, // a row is an item: the press that focuses it makes it current
             HorizontalTextAnchor::Left,
             ShowSelectionOnSurface::Yes,
-            Padding{ TreeRows::Inset, params.themeMetrics().button.padding.y },
+            Padding{ TreeRows::Inset, params.styleMetrics(UiElement::Button).padding.y },
             WordWrap::No, // a row is one line; before the caller's arguments, so a stated one wins
             std::forward<Args>(args)...
         },
@@ -276,7 +277,7 @@ namespace ClaFi::Controls
             Props::get(ItemsOrder::Fixed, std::forward<Args>(args)...)
         ) }
     {
-        layOutHeader(params.themeMetrics().button);
+        layOutHeader(params.styleMetrics(UiElement::Button));
         // Opening with no rows asks for them.
         header().connectEvent<ToggleExpandedEvent>([this](ToggleExpandedEvent& event) {
             if (event.expanded() && m_rows.controls().empty())

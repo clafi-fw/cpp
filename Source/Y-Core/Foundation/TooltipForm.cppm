@@ -105,8 +105,7 @@ namespace ClaFi
             // And the label under it is not pointed at either. Said in its own right rather than
             // taken from the window: the two are separate answers, and this one is the label's.
             ClickTarget::Parent,
-            UiElement::Tooltip,
-            MetricsSet::SecondaryWindow
+            UiElement::Tooltip
         }
     {
         window().setAlpha(0);

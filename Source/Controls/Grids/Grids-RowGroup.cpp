@@ -6,6 +6,7 @@ import :Columns;
 import ClaFi.Controls.Base.ExpanderBase;
 import ClaFi.Icons.ExpanderMark;
 import ClaFi.Core.AppTheme_AnimationSlots;
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.DrawIconEvent;
@@ -77,7 +78,7 @@ namespace ClaFi::Controls::Grids
             return;
         }
         // The mark stands in a line of text the way a check box's mark does, and at its size.
-        event.metrics = event.themeMetrics().checkMark;
+        event.metrics = event.styleMetrics(UiElement::SelectionIndicator);
     }
 
     void RowGroupSpan::alignContent(AlignEvent& event, ScaledPosition position,

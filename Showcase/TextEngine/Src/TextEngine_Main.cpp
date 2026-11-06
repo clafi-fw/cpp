@@ -327,8 +327,10 @@ namespace TextEngine_App
                 FormPlacement::Default,
                 MinSize{ k_windowWidth, k_windowHeight },
                 PreferredSize{ k_windowWidth * 1.2, k_windowHeight * 1.5 },
-                MetricsSet::PrimaryWindow,
+                // A section coloured root in the primary window's frame.
                 UiElement::Section,
+                Radius{ application.styleMetrics(UiElement::Dialog).radius },
+                application.styleMetrics(UiElement::Dialog).shadow,
             },
             BodyProps{
                 TabsOrientation::VerticalLeft,

@@ -1035,8 +1035,7 @@ namespace ClaFi::Controls
             this,
             ClickTarget::Parent,
             UiElement::Tooltip,
-            WordWrap::Yes,
-            MetricsSet::SecondaryWindow
+            WordWrap::Yes
         );
         // Sized by the signature it shows, which changes under it as the caret moves.
         m_parameterTooltip->setAutoFit(AutoFit::Yes);

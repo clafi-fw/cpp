@@ -101,8 +101,7 @@ namespace ClaFi::Controls
             m_tabViewMode
         ) };
         PageControl& m_pageControl = createBody<PageControl>(
-            UiElement::Page,
-            MetricsSet::Page
+            UiElement::Page
         );
     };
 

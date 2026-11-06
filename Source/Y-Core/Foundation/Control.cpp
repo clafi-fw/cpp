@@ -680,9 +680,9 @@ namespace ClaFi
         return form.theme();
     }
 
-    const ThemeMetrics& CreateParams::themeMetrics() const
+    const ControlMetrics& CreateParams::styleMetrics(const UiElement element) const
     {
-        return form.themeMetrics();
+        return form.styleMetrics(element);
     }
 
     const BakedColors& CreateParams::bakedColors() const
@@ -838,9 +838,9 @@ namespace ClaFi
         return form().theme();
     }
 
-    const ThemeMetrics& Control::themeMetrics() const
+    const ControlMetrics& Control::styleMetrics(const UiElement element) const
     {
-        return form().themeMetrics();
+        return form().styleMetrics(element);
     }
 
     const BakedColors& Control::bakedColors() const

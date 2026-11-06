@@ -672,25 +672,30 @@ different weights can come out the same width, and a focus ring built on one doe
 <tr><td><code>FixedSize{ x, y }</code></td><td>writes <code>MinSize</code> and <code>MaxSize</code> to one value - no size of its own</td><td><code>setFixedSize</code>, <code>setFixedWidth</code>, <code>setFixedHeight</code></td></tr>
 <tr><td><code>Border{ Thickness }</code></td><td>how heavy the control's border is, as a <a href="#strokes">grade</a> - no effect on layout</td><td><code>setBorder</code></td></tr>
 <tr><td><code>Radius{ r }</code></td><td>its corner radius - no effect on layout</td><td><code>setRadius</code></td></tr>
-<tr><td><code>ControlMetrics</code></td><td>the whole block at once, from the theme</td><td><code>setMetrics</code></td></tr>
+<tr><td><code>ControlMetrics</code></td><td>the whole block at once, every size stated</td><td><code>setMetrics</code></td></tr>
+<tr><td><code>UiElement</code></td><td>the style the control wears: its sizes from the theme, and its colour rules in paint - see the <a href="color.html#rule-lists">Colour manual</a></td><td><code>setStyle</code></td></tr>
 </table>
 
 <p>A single float fills both axes, so <code>Padding{ 8.0f }</code> is
-<code>Padding{ 8.0f, 8.0f }</code>. A themed block is passed as itself, and a single metric
-stated beside it wins whichever order the two are written in - the block is read first and the
-separate properties are laid over it. Two properties of the <em>same</em> type in one pack are
-settled by order, and the last one wins:</p>
+<code>Padding{ 8.0f, 8.0f }</code>. A style's sizes are read first, whichever order the pack is
+written in, and the sizes stated beside it are laid over them. A theme switch brings the style's
+sizes up to date and keeps every stated one. Two properties of the <em>same</em> type in one pack
+are settled by order, and the last one wins:</p>
 
 <pre><code><span class="tp">Panel</span>&amp; m_card{ m_stack.<span class="fn">add</span>&lt;<span class="tp">Panel</span>&gt;(
-    <span class="fn">themeMetrics</span>().page,      <span class="cm">// the whole metric block the theme designs for a page</span>
-    <span class="tp">UiElement</span>::Section,       <span class="cm">// the theme element it wears - see the Colour manual</span>
-    <span class="tp">Padding</span>{ <span class="st">12.0f</span> }          <span class="cm">// and this padding instead of the block's</span>
+    <span class="tp">UiElement</span>::Section,       <span class="cm">// the style it wears: the theme's sizes for a section</span>
+    <span class="tp">Padding</span>{ <span class="st">12.0f</span> }          <span class="cm">// and this padding instead of the style's</span>
 ) };</code></pre>
+
+<p>A control that takes one size from a style it does not wear - a header rounded to its page's
+radius - reads that style's block through <code>styleMetrics(UiElement)</code>, which a control,
+its <code>CreateParams</code> and its form all answer. The block is the style's sizes as the
+theme's chain resolves them; the Colour manual says how a chain is built.</p>
 
 <div class="info">
 A few controls are built on <code>Control</code> directly rather than on
 <code>RichControl</code>, because they store no appearance of their own, and none of them
-takes the metric block. <code>Spacer</code> and <code>FlexSpacer</code> take no properties at
+wears a style or takes the metric block. <code>Spacer</code> and <code>FlexSpacer</code> take no properties at
 all - their size is a constructor argument. <code>Divider</code> takes properties, and its own
 <code>Padding</code> means something different there: it shortens the drawn line without
 moving what stands either side of it. Its weight is a bare <code>Thickness</code>,
@@ -1980,14 +1985,15 @@ reason.</li>
 <tr><td><code>HorizontalTextAnchor</code></td><td><code>None</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>None</code></td></tr>
 <tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
 <tr><td><code>TextFormat</code></td><td><code>TextFormat{ ... }</code> - what the control's text is laid out over; several compose kind by kind. See the <a href="textengine.html#format">Text in Controls manual</a></td><td>none</td></tr>
-<tr><td><code>Padding</code>, <code>Spacing</code></td><td><code>{ x, y }</code> or one float</td><td>the theme block's, or zero</td></tr>
+<tr><td><code>Padding</code>, <code>Spacing</code></td><td><code>{ x, y }</code> or one float</td><td>the style's, or zero</td></tr>
 <tr><td><code>MinSize</code></td><td><code>{ x, y }</code></td><td>zero</td></tr>
 <tr><td><code>MaxSize</code></td><td><code>{ x, y }</code></td><td>no limit</td></tr>
 <tr><td><code>PreferredSize</code></td><td><code>{ x, y }</code>, zero means "content decides"</td><td>zero</td></tr>
 <tr><td><code>FixedSize</code></td><td><code>{ x, y }</code> - sets min and max together</td><td>unset</td></tr>
-<tr><td><code>Border</code></td><td><code>{ Thickness }</code></td><td><code>None</code>, or the theme block's where one was passed</td></tr>
-<tr><td><code>Radius</code></td><td><code>{ value }</code></td><td>zero, or the theme block's where one was passed</td></tr>
-<tr><td><code>ControlMetrics</code></td><td>the whole block, from <code>themeMetrics()</code></td><td>zero on every field but <code>maxSize</code></td></tr>
+<tr><td><code>Border</code></td><td><code>{ Thickness }</code></td><td><code>None</code>, or the style's where one is worn</td></tr>
+<tr><td><code>Radius</code></td><td><code>{ value }</code></td><td>zero, or the style's where one is worn</td></tr>
+<tr><td><code>ControlMetrics</code></td><td>the whole block, every size stated</td><td>zero on every field but <code>maxSize</code></td></tr>
+<tr><td><code>UiElement</code></td><td>the style worn - its sizes, then its colour rules</td><td>none</td></tr>
 </table>
 
 <h3>Container properties</h3>

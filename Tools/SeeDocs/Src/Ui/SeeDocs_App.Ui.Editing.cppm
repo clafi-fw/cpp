@@ -10,6 +10,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.TextBox;
 
+import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
@@ -144,8 +145,8 @@ namespace SeeDocs_App::Ui
         TextBox& m_shown{ add<TextBox>(
             ReadOnly::Yes,
             EditModeSwitching::Yes,
-            Radius{ themeMetrics().listItem.radius },
-            themeMetrics().listItem.padding
+            Radius{ styleMetrics(UiElement::ListItem).radius },
+            styleMetrics(UiElement::ListItem).padding
         ) };
         StackPanel* m_editor{ nullptr };
         TextBox* m_box{ nullptr };

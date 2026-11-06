@@ -310,7 +310,7 @@ namespace ClaFi
             // rules gave the stroke.
             if (m_focusRingFactor > 0.0f)
             {
-                const float focusedBorder = scaledStrokeWidth(ThemeMetrics::focusedBorder);
+                const float focusedBorder = scaledStrokeWidth(ThemeMetrics::FocusedBorder);
                 m_borderWidth = std::lerp(m_borderWidth, focusedBorder, m_focusRingFactor * focusedFactor());
             }
         }
@@ -362,12 +362,11 @@ namespace ClaFi
     {
         if (!m_zDepthFactor)
             return 1.0f;
-        const ThemeMetrics& metrics = themeMetrics();
         // Rest to full size on arrival, then in again while held. Hot is the arrival by either
         // device, so a key press travels as far as a mouse click. Taking the steps in that order
         // keeps a press on a control nothing has arrived at from growing it on its way down.
-        float result = std::lerp(metrics.pressRestScale, 1.0f, zHotFactor());
-        result = std::lerp(result, metrics.pressHeldScale, zPressedFactor());
+        float result = std::lerp(ThemeMetrics::PressRestScale, 1.0f, zHotFactor());
+        result = std::lerp(result, ThemeMetrics::PressHeldScale, zPressedFactor());
         return std::lerp(1.0f, result, m_zDepthFactor);
     }
 

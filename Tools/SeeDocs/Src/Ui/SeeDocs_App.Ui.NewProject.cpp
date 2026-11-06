@@ -66,8 +66,10 @@ namespace SeeDocs_App::Ui
             owner.appContext(),
             WindowRole::Dialog,
             owner,
-            MetricsSet::PrimaryWindow,
             UiElement::ToolBar,
+            // In the primary window's frame.
+            Radius{ owner.styleMetrics(UiElement::Dialog).radius },
+            owner.styleMetrics(UiElement::Dialog).shadow,
             ClickTarget::Self,
             MouseFocus::Keep,
             Border{ Thickness::Thin },
@@ -91,8 +93,8 @@ namespace SeeDocs_App::Ui
         // A field is drawn as an answer is: a surface of its own, at a button's radius.
         m_nameField{ m_nameGroup.add<Panel>(
             UiElement::Section,
-            Radius{ owner.themeMetrics().button.radius },
-            owner.themeMetrics().button.padding
+            Radius{ owner.styleMetrics(UiElement::Button).radius },
+            owner.styleMetrics(UiElement::Button).padding
         ) },
         m_name{ addBox<PromptBox>(m_nameField) },
         m_locationGroup{ addGroup(m_column) },
@@ -100,8 +102,8 @@ namespace SeeDocs_App::Ui
         m_locationRow{ m_locationGroup.add<Panel>(Spacing{ k_cellSpacing }) },
         m_locationField{ m_locationRow.createBody<Panel>(
             UiElement::Section,
-            Radius{ owner.themeMetrics().button.radius },
-            owner.themeMetrics().button.padding
+            Radius{ owner.styleMetrics(UiElement::Button).radius },
+            owner.styleMetrics(UiElement::Button).padding
         ) },
         // Lists from a root only: the project's place is a path from one.
         m_location{ addBox<FolderBox<PromptBox>>(m_locationField) },
@@ -138,7 +140,7 @@ namespace SeeDocs_App::Ui
         windowTitle.append(k_titleSeparator);
         windowTitle.append(appContext().appName().plainText());
         setWindowTitle(windowTitle);
-        const Thickness border = themeMetrics().button.border;
+        const Thickness border = styleMetrics(UiElement::Button).border;
         m_nameField.setBorder(border);
         m_locationField.setBorder(border);
         m_locationRow.createRightBar<Button>(

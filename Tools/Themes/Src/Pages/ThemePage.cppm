@@ -198,10 +198,8 @@ namespace Themes_App
         void restoreView();
         void designPagePicked(); // shows its preview, and sends it to the browser as the anchor
         void showAnchor(const Browser::ShowAnchorEvent&);
-        // A rule was added on the Design page, moved or taken away.
+        // A rule or a size was changed on the Design page, or a style reset.
         void rulesChanged(EditPhase, const Text& what, const RuleSelection& at);
-        // A size was changed on the Design page, or a set of sizes reset.
-        void sizesChanged(EditPhase, const Text& what);
         // Asks whether the user is the one this button is for, and answers whether they said so.
         [[nodiscard]] bool confirmWritingToSource(Control& initiator) const;
         // Whether this page stands for one of the built-ins. They are answered from the
@@ -209,14 +207,14 @@ namespace Themes_App
         // falls back to Save as.
         [[nodiscard]] bool isBuiltIn() const;
         //
-        [[nodiscard]] Hsl elementColor(std::wstring_view set);
-        // The ink a set's text starts from: the same nesting as elementColor, walked through
+        [[nodiscard]] Hsl elementColor(std::wstring_view style);
+        // The ink a style's text starts from: the same nesting as elementColor, walked through
         // text rules instead of surface ones.
-        [[nodiscard]] Hsl elementTextColor(std::wstring_view set);
-        // Black in the hue of a set's resting stroke, where its shadow starts.
-        [[nodiscard]] Hsl bareShadow(std::wstring_view set);
+        [[nodiscard]] Hsl elementTextColor(std::wstring_view style);
+        // Black in the hue of a style's resting stroke, where its shadow starts.
+        [[nodiscard]] Hsl bareShadow(std::wstring_view style);
         // What a value of a rule is about to change.
-        [[nodiscard]] RuleBase elementRuleBase(std::wstring_view set, const ColorRule&,
+        [[nodiscard]] RuleBase elementRuleBase(std::wstring_view style, const ColorRule&,
             RuleChannel);
         // A rule on a base, applied on every channel but the one its value ramp draws.
         [[nodiscard]] RuleBase ruleBaseOn(Hsl base, const ColorEffect&, RuleChannel, ColorMode,
@@ -255,7 +253,7 @@ namespace Themes_App
         // Set while showAnchor picks a design page, a pick the tab already stands on.
         bool m_showingAnchor{ false };
         // Where Write to source writes - empty where the tree it was compiled from is not there.
-        const std::filesystem::path m_builtInColorsFile{ builtInColorsFile() };
+        const std::filesystem::path m_builtInThemeFile{ builtInThemeFile() };
 
         ColorHarmonySelector m_harmonySelector{ editColors().anchorHue };
 
@@ -392,8 +390,7 @@ namespace Themes_App
 
         // Accent and Spot: the pigments a theme states itself rather than takes from its harmony.
         Grid& m_pigmentGrid{ m_paletteBody.add<Grid>(
-            MetricsSet::Page,
-            UiElement::Section,
+            UiElement::Grid,
             Grids::GridLines::Horizontal,
             HorizontalAlign::Fill,
             Columns{
@@ -520,7 +517,7 @@ namespace Themes_App
         }
 
         m_writeSourceButton.onGetState([this](GetStateEvent& event) {
-            event.state.enabled = !m_builtInColorsFile.empty();
+            event.state.enabled = !m_builtInThemeFile.empty();
             });
         m_writeSourceButton.connectEvent(this, &ThemePage::writeToSource);
 
@@ -546,18 +543,13 @@ namespace Themes_App
             showAnchor(event);
         });
 
-        m_designPage.bind(editColors(),
-            [this](const std::wstring_view set, const ColorRule& rule,
+        m_designPage.bind(m_editTheme,
+            [this](const std::wstring_view style, const ColorRule& rule,
                 const RuleChannel channel) {
-                return elementRuleBase(set, rule, channel);
+                return elementRuleBase(style, rule, channel);
             },
             [this](const EditPhase phase, const Text& what, const RuleSelection& at) {
                 rulesChanged(phase, what, at);
-            }
-        );
-        m_designPage.bindSizes(m_editTheme.metrics,
-            [this](const EditPhase phase, const Text& what) {
-                sizesChanged(phase, what);
             }
         );
         bindPigmentEditors();

@@ -102,7 +102,7 @@ namespace ClaFi
         appThemes().listeners().insert(this);
 
         onDrawItemIcon([this](DrawItemIconEvent& event) {
-            drawThemeIcon(event, entryOf(event.item()).theme->colors);
+            drawThemeIcon(event, *entryOf(event.item()).theme);
         });
         // **Tried on, not stated.** The theme is taken directly rather than through the config
         // node, so nothing is written for a theme the user is only looking at.

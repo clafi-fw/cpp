@@ -676,9 +676,10 @@ namespace ClaFi::Tools::WhatsClip
                 params,
                 HostProps{ // Root Panel
                     FormPlacement::Default,
-                    MetricsSet::PrimaryWindow,
-
                     UiElement::ToolBar, // Root window color, visible behind the formats bar
+                    // In the primary window's frame.
+                    Radius{ params.styleMetrics(UiElement::Dialog).radius },
+                    params.styleMetrics(UiElement::Dialog).shadow,
                     Border{ Thickness::Thin },
                     Padding{ 0.0f },
                     Spacing{ 0.0f },
@@ -695,7 +696,7 @@ namespace ClaFi::Tools::WhatsClip
             }
         {
             body().pageControl().setBorder(Thickness::None);
-            body().pageControl().setColorRules(UiElement::Page);
+            body().pageControl().setStyle(UiElement::Page);
             // The window opens in the page that shows, at the control it is read in.
             setCurrentItem(body().pageControl());
         }

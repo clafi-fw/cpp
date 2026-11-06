@@ -65,10 +65,10 @@
     <ClCompile Include="Src\Pages\PreviewPanel.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Pages\SizesPage.cpp">
+    <ClCompile Include="Src\Pages\MetricsGrid.cpp">
       <Filter>Src\Pages</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Pages\SizesPage.cppm">
+    <ClCompile Include="Src\Pages\MetricsGrid.cppm">
       <Filter>Src\Pages</Filter>
     </ClCompile>
     <ClCompile Include="Src\Pages\ThemePage.cpp">

@@ -13,6 +13,7 @@ import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
@@ -50,8 +51,8 @@ namespace ClaFi
         ThemeSwitchKind m_kind;
     };
 
-    // The sizes the theme states have moved, and every window lays itself out again. See Context
-    export struct ThemeMetricsSwitchEvent : public Event
+    // The styles resolve to other sizes, and every window lays itself out again. See Context
+    export struct StyleMetricsSwitchEvent : public Event
     {
     };
 
@@ -137,25 +138,27 @@ namespace ClaFi
         [[nodiscard]] AnimationController& animator() { return m_animator; }
         AppTheme& theme() { return m_theme; }
         const AppTheme& theme() const { return m_theme; }
-        ThemeMetrics& themeMetrics() { return m_theme.metrics; }
-        const ThemeMetrics& themeMetrics() const { return m_theme.metrics; }
         ThemeColors& themeColors() { return m_theme.colors; }
         const ThemeColors& themeColors() const { return m_theme.colors; }
         // **What every window is painted from.** The theme above is what a file holds and an editor
         // edits; this is what that theme becomes, and the paint path reads only this.
         const BakedColors& bakedColors() const { return m_bakedColors; }
+        // **What every window is laid out from**: the sizes each element's style resolves to.
+        const StyleMetrics& styleMetrics() const { return m_styleMetrics; }
+        const ControlMetrics& styleMetrics(UiElement element) const { return m_styleMetrics.of(element); }
         //
         // --- Switching themes ---:
         // **The application puts this theme on**, crossing to it over AnimationSlots::ThemeSwitch.
-        // Baking is answered above the core - see connectAppThemes - so the set arrives already
-        // made, every value of which has a half way, which is what the crossing rests on.
+        // Baking and resolving are answered above the core - see connectAppThemes - so the sets
+        // arrive already made, every colour of which has a half way, which is what the crossing
+        // rests on.
         //
-        // **The sizes land at once** - see ThemeMetricsSwitchEvent - and the colours cross.
+        // **The sizes land at once** - see StyleMetricsSwitchEvent - and the colours cross.
         //
-        // The set is copied, because what it was taken from is free to be edited from under it: a
-        // theme editor previewing its own work in the application states the same set on every
-        // slider step, and each one has to show.
-        void takeTheme(const AppTheme&, const BakedColors&);
+        // The sets are copied, because what they were taken from is free to be edited from under
+        // them: a theme editor previewing its own work in the application states the same set on
+        // every slider step, and each one has to show.
+        void takeTheme(const AppTheme&, const BakedColors&, const StyleMetrics&);
         // Where a form connects to be told that the theme has moved under it. Carried once per
         // frame for the length of a switch.
         [[nodiscard]] EventDispatcher& events() { return m_events; }
@@ -292,6 +295,7 @@ namespace ClaFi
         // **What every window is painted from**: part way between the two below while a crossing
         // runs, and the incoming set once it has landed.
         BakedColors m_bakedColors{};
+        StyleMetrics m_styleMetrics{}; // what every window is laid out from
         // What the crossing started from - what stood on the screen when it did, itself part
         // way between two sets where a crossing was already running - and what it heads to.
         BakedColors m_outgoingColors{};
@@ -688,7 +692,8 @@ namespace ClaFi
             or m_animator.isActive(AnimationSlots::ThemeLightness);
     }
 
-    void AppContext::takeTheme(const AppTheme& theme, const BakedColors& colors)
+    void AppContext::takeTheme(const AppTheme& theme, const BakedColors& colors,
+        const StyleMetrics& metrics)
     {
         // **The same theme at the same lightness stated again is an edit.** The lightness is not an
         // edit: it inverts everything a set states, so the same theme in the other mode is a
@@ -696,13 +701,12 @@ namespace ClaFi
         const bool edited = &theme == m_taken and colors.lightness == m_takenLightness;
         m_taken = &theme;
         m_takenLightness = colors.lightness;
-        m_theme.colors = theme.colors;
+        m_theme = theme;
 
-        // Assigned in place, so a reference into a set stays good across the switch.
-        if (m_theme.metrics != theme.metrics)
+        if (m_styleMetrics != metrics)
         {
-            m_theme.metrics = theme.metrics;
-            m_events.emit<ThemeMetricsSwitchEvent>();
+            m_styleMetrics = metrics;
+            m_events.emit<StyleMetricsSwitchEvent>();
         }
 
         // **An edit restates what is worn**, and while a crossing runs what is worn is not the set

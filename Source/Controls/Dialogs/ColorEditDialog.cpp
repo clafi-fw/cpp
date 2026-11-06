@@ -70,14 +70,13 @@ namespace ClaFi::Controls
             owner.appContext(),
             WindowRole::Menu,
             &owner,
-            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             // Clicked and hovered, never focused: the sliders and the answers carry the focus
             // themselves, the way a message box's text and answers do.
             ClickTarget::Self,
             MouseFocus::Keep,
             // The window keeps of itself exactly the border it draws, and the bars meet.
-            Padding{ strokeWidth(owner.themeMetrics().secondaryWindow.border) },
+            Padding{ strokeWidth(owner.styleMetrics(UiElement::Menu).border) },
             Spacing{ 0.0f }
         },
         m_original{ original },

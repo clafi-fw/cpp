@@ -139,8 +139,7 @@ namespace ClaFi::Diagnostic
         // The Value column moves for the size alone, and the words beside it cost nothing to
         // shape with it.
         m_windowGrid{ body().add<Grid>(
-            MetricsSet::Page,
-            UiElement::Section,
+            UiElement::Grid,
             GridLines::Horizontal,
             OnEvent{ [this](GetCellTooltipEvent& event) {
                 writeWindowTooltip(event);
@@ -161,8 +160,7 @@ namespace ClaFi::Diagnostic
         // The three small readings sit against the middle of the Stats cell, which is two
         // lines tall and makes every row its height.
         m_metricsGrid{ body().add<Grid>(
-            MetricsSet::Page,
-            UiElement::Section,
+            UiElement::Grid,
             GridLines::Horizontal,
             OnEvent{ [this](GetCellTooltipEvent& event) {
                 writeReadingTooltip(event);

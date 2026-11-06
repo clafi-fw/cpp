@@ -7,6 +7,7 @@ import ClaFi.Icons.ChannelTile;
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Palette;
+import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.TextEngine.Text;
@@ -23,7 +24,7 @@ namespace ClaFi
     export struct ThemeSampleColors
     {
         ThemeSampleColors() = default;
-        ThemeSampleColors(const ThemeColors&, ColorMode);
+        ThemeSampleColors(const AppTheme&, ColorMode);
 
         Color rootSurface{};
 
@@ -44,7 +45,7 @@ namespace ClaFi
     export struct ThemeIconColors
     {
         ThemeIconColors() = default;
-        explicit ThemeIconColors(const ThemeColors&);
+        explicit ThemeIconColors(const AppTheme&);
         [[nodiscard]] const ThemeSampleColors& sample(ColorMode) const;
         std::array<float, 3> paletteHues{};
         ThemeSampleColors darkSample{};
@@ -52,7 +53,7 @@ namespace ClaFi
     };
 
     export void drawThemeIcon(DrawIconEvent&, const ThemeIconColors&);
-    export void drawThemeIcon(DrawIconEvent&, const ThemeColors&);
+    export void drawThemeIcon(DrawIconEvent&, const AppTheme&);
     export void drawThemeBackground(Graphics::Canvas& canvas, const FloatRect& rect,
         float cornerRadius, const ThemeSampleColors& sample, float borderWidth);
     export void drawThemeIconOnly(Graphics::Canvas& canvas, const FloatRect& iconRect,
@@ -63,27 +64,28 @@ namespace ClaFi
 
     // ThemeSampleColors
 
-    ThemeSampleColors::ThemeSampleColors(const ThemeColors& colors, const ColorMode mode)
+    ThemeSampleColors::ThemeSampleColors(const AppTheme& theme, const ColorMode mode)
         :
-        rootSurface{ colors.rootSurface(mode).toColor() },
+        rootSurface{ theme.colors.rootSurface(mode).toColor() },
 
-        titleHsl{ restingSurface(colors, UiElement::DialogTitle, mode) },
+        titleHsl{ restingSurface(theme, UiElement::DialogTitle, mode) },
         title{ titleHsl.toColor() },
-        dialog{ restingSurface(colors, UiElement::Dialog, mode).toColor() },
-        toolBar{ restingSurface(colors, UiElement::ToolBar, mode).toColor() },
-        page{ restingSurface(colors, UiElement::Page, mode).toColor() },
-        section{ restingSurface(colors, UiElement::Section, mode).toColor() },
+        dialog{ restingSurface(theme, UiElement::Dialog, mode).toColor() },
+        toolBar{ restingSurface(theme, UiElement::ToolBar, mode).toColor() },
+        page{ restingSurface(theme, UiElement::Page, mode).toColor() },
+        section{ restingSurface(theme, UiElement::Section, mode).toColor() },
 
-        border{ restingStroke(colors, UiElement::Dialog, mode).toColor() }
+        border{ restingStroke(theme, UiElement::Dialog, mode).toColor() }
     {
+        const ThemeColors& colors = theme.colors;
         // The page's inks, resolved the way ControlPaintContext::inkHsl resolves them.
-        const Hsl pageInk = restingInk(colors, UiElement::Page, mode);
+        const Hsl pageInk = restingInk(theme, UiElement::Page, mode);
         constexpr float muted = gradeOf(InkGrade::Muted);
         const float grade = mode == ColorMode::Light
             ? lightGradeOf(muted, colors.darkModeFloor)
             : muted;
 
-        Hsl dialogHsl = restingSurface(colors, UiElement::Dialog, mode);
+        Hsl dialogHsl = restingSurface(theme, UiElement::Dialog, mode);
         Hsl tmpHsl = Hsl{ dialogHsl, pageInk, grade };
         mutedText = tmpHsl.toColor();
         
@@ -98,11 +100,11 @@ namespace ClaFi
 
     // ThemeIconColors
 
-    ThemeIconColors::ThemeIconColors(const ThemeColors& colors)
+    ThemeIconColors::ThemeIconColors(const AppTheme& theme)
         :
-        paletteHues{ colors.paletteHues },
-        darkSample{ colors, ColorMode::Dark },
-        lightSample{ colors, ColorMode::Light }
+        paletteHues{ theme.colors.paletteHues },
+        darkSample{ theme, ColorMode::Dark },
+        lightSample{ theme, ColorMode::Light }
     {
     }
 
@@ -200,9 +202,9 @@ namespace ClaFi
         }
     }
 
-    void drawThemeIcon(DrawIconEvent& event, const ThemeColors& colors)
+    void drawThemeIcon(DrawIconEvent& event, const AppTheme& theme)
     {
-        drawThemeIcon(event, ThemeIconColors{ colors });
+        drawThemeIcon(event, ThemeIconColors{ theme });
     }
 
     void drawThemeIcon(DrawIconEvent& event, const ThemeIconColors& colors)

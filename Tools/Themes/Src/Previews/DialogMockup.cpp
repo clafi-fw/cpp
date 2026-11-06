@@ -31,8 +31,7 @@ namespace Themes_App
         WithBody{
             params,
             HostProps{
-                UiElement::Dialog,
-                MetricsSet::PrimaryWindow
+                UiElement::Dialog
             },
             BodyProps{
                 Orientation::Vertical,

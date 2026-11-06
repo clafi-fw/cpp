@@ -100,7 +100,6 @@ namespace ClaFi::Controls
             owner.appContext(),
             WindowRole::Menu, // a Dialog does not act as an active popup
             &owner,
-            MetricsSet::SecondaryWindow,
             UiElement::Menu,
             // Clicked and hovered, never focused. The text and the answers carry the focus
             // themselves, and the frame around them is not a focus scope.
@@ -109,7 +108,7 @@ namespace ClaFi::Controls
             // The window keeps of itself exactly the border it draws, which is what the bars run
             // up to. A stroke lies inside the bounds it is drawn on, so a bar laid over that last
             // point would paint the frame out.
-            Padding{ strokeWidth(owner.themeMetrics().secondaryWindow.border) },
+            Padding{ strokeWidth(owner.styleMetrics(UiElement::Menu).border) },
             // The bars meet. A gap between them would be the window's colour showing through in
             // two lines across a face that is meant to read as three bands of one thing.
             Spacing{ 0.0f }

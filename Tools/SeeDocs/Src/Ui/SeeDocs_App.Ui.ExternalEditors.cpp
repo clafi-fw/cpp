@@ -304,13 +304,13 @@ namespace SeeDocs_App::Ui
             );
             Panel& field = row.add<Panel>(
                 UiElement::Section,
-                Radius{ row.themeMetrics().button.radius },
-                row.themeMetrics().button.padding,
+                Radius{ row.styleMetrics(UiElement::Button).radius },
+                row.styleMetrics(UiElement::Button).padding,
                 Spacing{ k_dropGap },
                 MinSize{ k_fieldWidth, 0.0f },
                 MaxSize{ k_fieldWidth, k_maxFloat }
             );
-            field.setBorder(row.themeMetrics().button.border);
+            field.setBorder(row.styleMetrics(UiElement::Button).border);
             CommandBox& box = field.createBody<CommandBox>(key, suggestions, std::move(tooltip));
             field.createRightBar<DropButton>(box);
         }

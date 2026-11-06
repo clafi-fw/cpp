@@ -1,6 +1,7 @@
 module ClaFi.Core.Context.FormContext;
 
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Baked;
 import ClaFi.Core.AppTheme_Colors;
@@ -17,11 +18,13 @@ namespace ClaFi
     // FormContext
 
     FormContext::FormContext(const Platform& platform, const AppTheme& theme,
-        const BakedColors& bakedColors, Graphics::Canvas& canvas, const Scaler& scaler)
+        const BakedColors& bakedColors, const StyleMetrics& styleMetrics, Graphics::Canvas& canvas,
+        const Scaler& scaler)
         :
         m_platform{ platform },
         m_theme{ &theme },
         m_bakedColors{ &bakedColors },
+        m_styleMetrics{ &styleMetrics },
         m_scaler{ &scaler },
         m_canvas{ canvas }
     {
@@ -32,6 +35,7 @@ namespace ClaFi
         m_platform{ other.m_platform },
         m_theme{ other.m_theme },
         m_bakedColors{ other.m_bakedColors },
+        m_styleMetrics{ other.m_styleMetrics },
         m_scaler{ other.m_scaler },
         m_canvas{ other.m_canvas }
     {

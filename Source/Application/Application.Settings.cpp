@@ -354,7 +354,6 @@ namespace ClaFi
         m_themeCaption{ m_themeRow.add<RowCaption>(L"Theme:") },
         m_themePick{ m_themeRow.add<ThemePick>(
             // Its metrics too: a tool button's grow the surface in, and a button's stands at rest.
-            MetricsSet::Button,
             UiElement::Button,
             MaxSize{ k_themesWidth, k_maxFloat },
             VerticalTextAnchor::Center
@@ -433,18 +432,18 @@ namespace ClaFi
         m_alwaysOnTop{ m_interfaceGroup.add<CheckBox>(
             L"Always on top",
             TooltipText{ L"Keep above others" },
-            Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
+            Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
         ) },
         m_alwaysShowFocus{ m_interfaceGroup.add<CheckBox>(
             L"Always show focus",
             TooltipText{ L"Ring the focused control under the mouse too" },
-            Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
+            Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
         ) },
         m_performanceSection{ m_options.addSection(L"Performance / Display") },
         m_performanceGroup{ m_performanceSection.body() },
         m_gpuAcceleration{ m_performanceGroup.add<CheckBox>(
             L"GPU acceleration",
-            Padding{ 0.0f, params.themeMetrics().listItem.padding.y }
+            Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
         ) },
         m_footer{ createBottomBar<StackPanel>(
             Orientation::Vertical,

@@ -33,7 +33,7 @@ namespace Themes_App
                 .tagPrefix = L"Themes-v"
             },
             .elements = k_appElements,
-            .builtInTheme = k_builtInSets,
+            .builtInTheme = k_builtInStyles,
             // The editor of every theme, whatever a theme states for its test subjects.
             .themesOffered = ThemesOffered::Every
         };

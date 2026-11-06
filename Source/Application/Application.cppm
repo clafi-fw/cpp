@@ -49,7 +49,7 @@ namespace ClaFi
         const StyleSheet* styleSheet{ nullptr };
         // Its own elements, by name - the i-th worn as appElement(i). See Application#appparams
         AppElementNames elements{};
-        // A theme file's text stating its own sets, which join the built-in theme at start.
+        // A theme file's text stating its own styles, which join the built-in theme at start.
         std::wstring_view builtInTheme{};
         ThemesOffered themesOffered{ ThemesOffered::StatingEveryElement };
     };
@@ -67,8 +67,8 @@ namespace ClaFi
         [[nodiscard]] const AppTheme& theme() const { return m_context.theme(); };
         [[nodiscard]] ThemeColors& themeColors() { return m_context.themeColors(); }
         [[nodiscard]] const ThemeColors& themeColors() const { return m_context.themeColors(); }
-        [[nodiscard]] ThemeMetrics& metrics() { return m_context.themeMetrics(); }
-        [[nodiscard]] const ThemeMetrics& metrics() const { return m_context.themeMetrics(); }
+        // The sizes an element's style resolves to, as the layout reads them. See Context
+        [[nodiscard]] const ControlMetrics& styleMetrics(UiElement element) const { return m_context.styleMetrics(element); }
         //
         [[nodiscard]] std::wstring_view publisher() const { return m_context.publisher(); }
         void ensureConfigFolderExists() { m_context.ensureConfigFolder(); }
@@ -197,7 +197,7 @@ namespace ClaFi
         // Ahead of the config, which may hold a text naming one of them.
         StyleSheet::setApplicationSheet(appParams.styleSheet);
         // Ahead of the first bake, which initialize makes.
-        addBuiltInSets(appParams.builtInTheme);
+        addBuiltInStyles(appParams.builtInTheme);
     }
 
     // The sheet the application stated may be gone already, and nothing reads through it now.

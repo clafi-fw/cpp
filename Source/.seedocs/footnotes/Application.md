@@ -278,8 +278,29 @@ loop of its own, or close the window. An answer to a notice already down does no
 ## bake
 
 **Laid out by the application's elements**: the framework's tokens in UiElement order, then the
-names the application states - see elementNamesOf. Each name is answered by the set of that name
-in the theme, resolved and baked, or by nothing where the theme states none.
+names the application states - see elementNamesOf. Each name is answered by the style of that
+name in the theme, resolved and baked, or by nothing where the theme states none.
+
+## resolveStyleMetrics
+
+**Every element's sizes, laid out as bake lays the rules out**: the framework's tokens in
+UiElement order, then the application's own. Each name is answered by ThemeStyles
+resolvedMetrics, settled - see settle - and an element whose style the theme lacks holds the
+defaults. Both are made beside each other as a theme is put on - see connectAppThemes - and
+AppContext takes them together.
+
+## settle
+
+**These sizes follow from others**, whatever a style states, and are worked out once the chain
+has resolved:
+
+- a Dialog's padding is its border's width - the ring its content stands inside
+- a selection or hover indicator's height and a scroll button's are their widths, so both are
+  square
+- an indicator's maximum is its minimum, so its size is fixed and a list item can skip measuring
+  it
+
+The Themes app leaves the rows these would write out of the pages they follow on.
 
 ## elementNamesOf
 
@@ -288,29 +309,27 @@ Every name a baked set has an entry for, in the order the entries stand.
 ## AppParams
 
 - `elements` - the application's own elements, by name. The i-th is worn as `appElement(i)`.
-- `builtInTheme` - the text of a theme file whose sets join the built-in theme at start, through
-  addBuiltInSets. An application's own sets live here, the framework's in the framework.
-- `themesOffered` - which themes the application lists: those stating a set for every element it
-  names, so nothing it wears paints nothing, or every theme. A theme editor takes every one and
-  gives a theme the sets it lacks.
+- `builtInTheme` - the text of a theme file whose styles join the built-in theme at start,
+  through addBuiltInStyles. An application's own styles live here, the framework's in the
+  framework.
+- `themesOffered` - which themes the application lists: those stating a style for every element
+  it names, so nothing it wears paints nothing, or every theme. A theme editor takes every one
+  and gives a theme the styles it lacks.
 
-## addBuiltInSets
+## addBuiltInStyles
 
-The text is read as a theme file is, and each set it states joins the built-in theme, replacing a
-set of the same name. Called ahead of the first bake, which is what an application's own elements
-need.
+The text is read as a theme file is, and each style it states joins the built-in theme, replacing
+a style of the same name. Called ahead of the first bake, which is what an application's own
+elements need.
 
-## ElementRules in a file
+## ControlStyle in a file
 
-A set is a section of the `Rules` list under `Colors`, whole: `Name`, then `Base`, `StandsOn` and
-`Seed` where stated, its own `Rules`, and its `Dropped` selectors. A list in a file is the whole
-list, so a theme states every set it has, and a set a file leaves out is one the theme lacks.
-
-## MetricsSetDescriptor
-
-- `name` - the label an editor shows.
-- `codeName` - the ThemeMetrics member the set is held in.
-- `token` - the key in a theme file for the set's sizes.
+A style is a section of the `Styles` list, whole: `Name`, then `Base`, `StandsOn` and `Seed`
+where stated, its own `Rules`, its `Dropped` selectors, and a `Metrics` block holding the sizes it
+states and nothing else - a size left out is left to the chain. A pair is two numbers a space
+apart, across then down (`Padding=8 4`), a border its weight's name (`Border=Thin`). A list in a
+file is the whole list, so a theme states every style it has, and a style a file leaves out is one
+the theme lacks.
 
 ## appThemes
 

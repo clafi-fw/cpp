@@ -199,7 +199,6 @@ namespace ClaFi::Controls
             // **Nothing on the frame but the box.** The panel is a holder, not a border: it takes
             // no inset of its own, so the box reaches every edge of the window.
             HostProps{
-                MetricsSet::SecondaryWindow,
                 UiElement::Menu,
                 Padding{ 0.0f },
                 Border{ Thickness::None },
@@ -208,13 +207,16 @@ namespace ClaFi::Controls
                 ClickTarget::Self,
                 MouseFocus::Keep
             },
-            // **The padding and the border are the box's.** The ring a focused text box draws sits
-            // on its own edge, so with the inset here it falls **outside** the text rather than
-            // through the selection - and that same ring is then the window's edge, which is
-            // what says at a glance that this is an editor and not the control it covers.
+            // **The padding and the border are the box's**, and they are the window's: the ring a
+            // focused text box draws sits on its own edge, so with the inset here it falls
+            // **outside** the text rather than through the selection - and that same ring is then
+            // the window's edge, which is what says at a glance that this is an editor and not the
+            // control it covers.
             BodyProps{
                 UiElement::Section,
-                MetricsSet::SecondaryWindow
+                Border{ params.styleMetrics(UiElement::Menu).border },
+                Padding{ params.styleMetrics(UiElement::Menu).padding },
+                Radius{ params.styleMetrics(UiElement::Menu).radius }
             }
         }
     {

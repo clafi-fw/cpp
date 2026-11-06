@@ -23,14 +23,14 @@ import ClaFi.Core.Context.DrawIconEvent;
 
 namespace ClaFi::Controls
 {
-    // What an expander draws of itself: a section its rules, the other looks nothing - a
-    // control that names no colour rules paints nothing in any state, which is what leaves it
+    // What an expander draws of itself: a section its style, the other looks nothing - a
+    // control that wears no style paints nothing in any state, which is what leaves it
     // standing on the surface it was put on. The header answers for its own look.
-    export [[nodiscard]] inline OptionalUiElement expanderColorRules(
-        UiElement rules, ExpanderViewMode viewMode)
+    export [[nodiscard]] inline OptionalUiElement expanderStyle(UiElement style,
+        ExpanderViewMode viewMode)
     {
         if (viewMode == ExpanderViewMode::Section)
-            return rules;
+            return style;
         return std::nullopt;
     }
 
@@ -143,9 +143,8 @@ namespace ClaFi::Controls
             TextRange range;
         };
     private:
-        [[nodiscard]] static OptionalMetricsSet metricsFor(ExpanderViewMode);
         [[nodiscard]] static TextPlacement textPlacementFor(ExpanderViewMode);
-        [[nodiscard]] static OptionalUiElement colorRulesFor(ExpanderViewMode);
+        [[nodiscard]] static OptionalUiElement styleFor(ExpanderViewMode);
         ExpanderButton& createChevronButton();
         void createDividerLine();
         void drawButton(DrawIconEvent&) const;
@@ -215,14 +214,12 @@ namespace ClaFi::Controls
             NavigationReach::Yes,
             MouseFocus::Self,
             ClickTarget::Self,
-            // What the expander draws of itself, which is what the header is measured by.
-            metricsFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
+            // What the expander draws of itself, which is what the header is sized and painted by.
+            styleFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             Padding{ 4.0f },
             Spacing{ 4.0f },
             // The same, which is what places its text.
             textPlacementFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
-            // The same, for the colour rules the header paints from.
-            colorRulesFor(READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section)),
             std::forward<Args>(args)...
         },
         m_viewMode{ READ_PROPERTY(ExpanderViewMode, ExpanderViewMode::Section) } // the same, kept
@@ -360,15 +357,6 @@ namespace ClaFi::Controls
         PanelBase::drawText(event, bounds, ellipsis);
     }
 
-    // The tree look's header is a tool button in metrics as in paint, being a row of the tree.
-    // The other looks have no metrics of their own beyond what the expander sets on them.
-    OptionalMetricsSet ExpanderHeader::metricsFor(const ExpanderViewMode viewMode)
-    {
-        if (viewMode == ExpanderViewMode::TreeNode)
-            return MetricsSet::ToolButton;
-        return std::nullopt;
-    }
-
     // A panel sets a Left label at its left edge, before the left bar, and a body label after the
     // left bar. The divider look holds its label Left to free the body slot for the line, and the
     // ellipsis look to have the button in its left bar follow the label. A section and a tree
@@ -383,7 +371,7 @@ namespace ClaFi::Controls
     // A section's header is a filled strip, and the tree look's a tool button that shows its
     // hover, its focus and its pick. A divider's header and an ellipsis's name nothing, and paint
     // only the focus ring.
-    OptionalUiElement ExpanderHeader::colorRulesFor(ExpanderViewMode viewMode)
+    OptionalUiElement ExpanderHeader::styleFor(ExpanderViewMode viewMode)
     {
         switch (viewMode)
         {
@@ -406,9 +394,9 @@ namespace ClaFi::Controls
     ExpanderButton& ExpanderHeader::createChevronButton()
     {
         if (m_viewMode == ExpanderViewMode::Divider)
-            return createRightBar<ExpanderButton>(UiElement::Button, MetricsSet::Button);
+            return createRightBar<ExpanderButton>(UiElement::Button);
         if (m_viewMode == ExpanderViewMode::Ellipsis)
-            return createLeftBar<ExpanderButton>(UiElement::Button, MetricsSet::Button);
+            return createLeftBar<ExpanderButton>(UiElement::Button);
         if (m_viewMode == ExpanderViewMode::TreeNode)
             return createLeftBar<ExpanderButton>();
         return createRightBar<ExpanderButton>();

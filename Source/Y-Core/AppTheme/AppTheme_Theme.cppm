@@ -1,17 +1,24 @@
 export module ClaFi.Core.AppTheme_Theme;
 
-import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Styles;
 
 import ClaFi.StdLib;
 
 namespace ClaFi
 {
+    // A theme: its palette, and the style every element wears. See AppTheme
     export class AppTheme
     {
     public:
-        ThemeMetrics metrics{};
+        AppTheme(); // the framework's own theme, stated in AppTheme_BuiltIn.cpp
+    public:
+        // The styles as a document field reads and writes them.
+        [[nodiscard]] const ControlStyleList& styleList() const { return styles.list; }
+        void setStyleList(const ControlStyleList& value) { styles.list = value; }
+    public:
         ThemeColors colors{};
+        ThemeStyles styles{};
     };
 
     // The roots a theme path stands under, and what parts a root from the name. See AppTheme

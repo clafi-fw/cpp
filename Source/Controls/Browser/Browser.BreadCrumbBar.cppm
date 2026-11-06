@@ -218,13 +218,13 @@ namespace ClaFi::Browser
             // surface. A button keeps it off by default, which is right where an indicator or
             // a dot says the same thing, and a crumb has neither.
             ShowSelectionOnSurface::Yes,
-            MetricsSet::ToolButton,
+            UiElement::ToolButton,
             Padding{ 4.0f },
             // **A crumb may be narrowed to nothing.** A path longer than the bar takes the room it
             // is short of off its widest crumbs, down to this floor - see
             // BreadCrumbBar::alignContent. Only the width is freed: the height stays the one
             // every button on the bar stands at.
-            MinSize{ 0.0f, params.themeMetrics().button.minSize.y },
+            MinSize{ 0.0f, params.styleMetrics(UiElement::Button).minSize.y },
             // One line, cut short where the bar narrows it.
             WordWrap::No
         }
@@ -458,10 +458,9 @@ namespace ClaFi::Browser
 
     BreadCrumbBar::BreadCrumbBar(const CreateParams& params)
         :
-        StackPanel{ params, MetricsSet::Page, FocusScope::Yes, NavigationReach::Yes, MouseFocus::Self }
+        StackPanel{ params, UiElement::Page, FocusScope::Yes, NavigationReach::Yes, MouseFocus::Self }
     {
         setPadding(8.0f, 2.0f);
-        setColorRules(UiElement::Page);
         setOrientation(Orientation::Horizontal);
     }
 

@@ -2,6 +2,12 @@
 
 The words that do not fit above a declaration.
 
+## AppTheme
+
+**A theme is its palette and the style every element wears.** `colors` holds the palette, the
+effects an ink names and the floor; `styles` holds the ControlStyle list. `AppTheme{}` is the
+framework's own theme, and a theme file is read over it.
+
 ## WindowShadow
 
 The fields follow Graphics::ShadowParams:
@@ -13,34 +19,22 @@ The fields follow Graphics::ShadowParams:
 
 **Zero opacity or zero blur is no shadow**, and the window keeps no margins for one.
 
-A window casts the shadow its root states in `FormControlBase::windowShadow`, in the colour
-BakedColors::windowShadow answers.
-
-**A theme states the shadow of each window set.** A root sized by MetricsSet::PrimaryWindow or
-MetricsSet::SecondaryWindow casts the theme's shadow for that set, and takes the new one when the
-theme's sizes switch. A root given a WindowShadow of its own keeps it.
-
-## MetricsSet
-
-**A set is the sizes of one kind of control, and a theme states every set.** A control given a set
-as a property - `MetricsSet::Button` - is sized by the theme's set of that name, and a theme switch
-hands it the new sizes.
-
-**The sizes given beside the set are the caller's.** A Padding, a MinSize or a Border stands over
-the set's value, and no switch writes it.
-
-**A ControlMetrics given whole is a block of the control's own**, not a set: every size is the
-caller's, and a switch leaves the control as it is.
+**The shadow is one of a control's sizes** - `ControlMetrics::shadow` - so a window casts the
+shadow its root's style resolves to, in the colour BakedColors::windowShadow answers. The built-in
+theme states one on Any Window and a larger one on Dialog. A root given a WindowShadow property
+keeps it through a theme switch, as it keeps any size it was given.
 
 ## MetricsField
 
 One size of ControlMetrics, named so that a set of them can say which sizes a control was given
-outright. `Depth` is `zDepthFactor` and `GrowIn` is `surfaceGrowInScale`.
+outright. `Depth` is `zDepthFactor`, `GrowIn` is `surfaceGrowInScale`, and the four `Shadow`
+fields are the shadow's.
 
 ## MetricsFields
 
 **Every size a control's properties and setters stated.** A theme switch hands the control the
-set's new value for every size not in it - see ControlMetrics copyFields.
+style's new value for every size not in it - see ControlMetrics copyFields. `every` names them
+all, which is what a ControlMetrics given whole states.
 
 ## ControlMetrics band
 
@@ -56,30 +50,120 @@ PaintChannel:
 **The built-in theme draws a tab's band and the edit mode's in the accent's values**, read as the
 tab is selected and as the control is in edit mode, and a block's in its element's own colour.
 
-**The Tab, Text Box and Slider sets state twice the border's width**, the Callout set 4, and
-every other set 0.
+**The Tab, Text Box and Slider styles state twice the border's width**, Any Callout 4, and every
+other style none.
 
-## ThemeMetrics drawsBand
+## ControlMetrics shadow
 
-The sets whose controls draw a band: Tab, TextBox, Slider, Callout and CodeBlock. The Themes app
-offers a Band size on their pages alone.
+The shadow the control's window casts, read by FormBase for a form's root and left alone on every
+other control. A style states it size by size - see StatedMetrics.
+
+## StatedMetrics
+
+**The sizes a style states, and nothing else.** Each field is an optional: one with a value is
+stated and stands over the base's, one without is left to the chain. `applyTo` writes the stated
+ones into a ControlMetrics and keeps the rest. The shadow's four numbers are stated one by one,
+like any other size.
+
+**A stated size is the style's whatever its value.** A radius of 0 stated on a style whose base
+states 4 resolves to 0; a radius left out resolves to the base's 4.
 
 ## ThemeMetrics
 
-**A theme file states its sizes in a Metrics section**, each set under its token in k_metricsSets
-and the two window shadows beside them. A file that states none, or leaves a size out, keeps the
-built-in value.
+**The sizes every style shares**, which no theme states: the border a control draws, the width a
+focus ring thickens it to, and the depths of the press animation.
 
-**The maximum sizes stay the built-in ones.** Every set leaves its maximum unbounded, apart from
-the check mark's, which follows its minimum - see ThemeMetrics settle.
+## ControlStyle
 
-## ThemeMetrics settle
+**The colour rules and the sizes one element wears, named, standing over its base's.** A theme
+holds one for every element its controls wear, and as many more as it likes: a base the styles
+of a kind stand over, or an application's own.
 
-**These sizes follow from others**, and a theme read from a file has them worked out again:
+- `name` - what a control's handle is matched against, and what a file states the style under.
+- `base` - the style whose rules and sizes this one takes first, by name. Empty for a style
+  standing over none. The framework's styles stand over AnyElement, AnyWindow and AnyNonWindow,
+  and over AnyButton, AnyIndicator, AnyCallout and DoDont - see BaseElements.
+- `standsOn` - what the element is painted on, for the editor's preview. Empty for a window root,
+  which stands on the bare colour of the mode.
+- `seed` - the pigment the surface starts its hue from, where the hue of what it stands on is not
+  wanted: the callouts and the found-text band. A rule naming a hue overrides the seed.
+- `rules` - its own, applied over the base's as ThemeStyles resolvedRules says.
+- `dropped` - the selectors of inherited rules it leaves out: a rule of any style up its chain
+  whose inputs, and-inputs and channel match one of them is not applied to this style.
+- `metrics` - the sizes it states, each over the base's - see ThemeStyles resolvedMetrics.
 
-- a primary window's padding is its border's width - the ring its content stands inside
-- a check mark's height and a scroll button's are their widths, so both are square
-- a check mark's maximum is its minimum, so its size is fixed and a list item can skip measuring it
+**One chain carries both.** A control wears one style, by its UiElement, and takes its rules in
+paint and its sizes in layout from the same chain. A control whose colours and sizes would come
+from two styles wears a style of its own: a dropdown is a window surfaced as a section, so
+Dropdown stands over Any Window and states a section's surface.
+
+## RuleSelector
+
+What names a rule apart from its effect - its inputs, its and-inputs and its channel. Two rules
+with one selector are two steps on the same channel under the same conditions.
+
+## ThemeStyles
+
+**The styles a theme states, found by name.** `of` answers a style or nullptr; `add` appends one,
+replacing a style of the same name; `chainOf` walks a style's bases up, stopping at a name the
+theme lacks or has walked already; `resolvedRules` is what the paint path applies, and
+`resolvedMetrics` what the layout reads.
+
+## ThemeStyles resolvedRules
+
+**A base's rules apply first, and a style's own adjust what they left** - within each channel, in
+two groups: the chain's resting rules, root first, then its state rules, root first. A surface is
+established before a state modifies it, so a style's own resting rule lands before a base's Hot,
+and a style's own Hot lands after a base's. A rule a style further down the chain has dropped is
+left out.
+
+Baked, the list stands flat: PaintEvent applies a control's own rules and then the one list its
+element resolved to.
+
+## ThemeStyles resolvedMetrics
+
+**A size is the nearest statement down the chain.** The chain is walked root first, each style
+writing the sizes it states over what stands - so a style's own statement wins, then its base's,
+and a size nobody states is ControlMetrics's default. There is no dropping: a style that disagrees
+with its base states the size.
+
+The sizes that follow from others are worked out after - see Application settle.
+
+## StyleMetrics
+
+**Every style's sizes as the layout reads them**, one entry per element the application names -
+the framework's in UiElement order, then the application's own, the same layout BakedRules
+has. Made by resolveStyleMetrics as a theme is put on, and read through `styleMetrics(UiElement)`
+on a control, its CreateParams, a form or an event. An element past the entries holds the
+defaults.
+
+## BaseElements
+
+**The styles the framework's own styles stand over**, by name:
+
+- AnyElement - every style stands over it, through one of the next two.
+- AnyWindow - what the window roots take: the frame, the shadow, and the secondary window's
+  sizes. Anything wearing Dialog, Menu, Tooltip or Dropdown takes it wherever it stands, a mockup
+  inside a page included; Dialog restates the primary window's radius and shadow.
+- AnyNonWindow - what every other style takes. The focus ring lives here: its rules read Current
+  and write the Stroke. So does the edit mode's band: its rule reads Edit and writes the Band.
+- AnyButton - what Button and ToolButton share: the Selected, Hot and Pressed surfaces, and a
+  button's sizes.
+- AnyIndicator - what the selection and hover indicators share, their on colour and the mark's
+  sizes included.
+- AnyCallout - the five callouts' surface, band and sizes; each callout states its seed alone.
+- DoDont - the two sides of a Do and Don't block.
+
+**The ring's weight is the control's current**, whatever colour the rules gave the stroke. That
+factor thickens the border toward ThemeMetrics::FocusedBorder, in paint only, and holds the frame
+out of the surface grow-in. A control drawing an indicator in the ring's place takes that share
+off - see AdjustPaintEvent replaceRing.
+
+A line drawn through `strokeRgbOn`, such as a grid cell's or a divider's, reads the list and
+nothing of the weight.
+
+The accent's values are written into the ring's rules, so a theme that moves Accent edits them
+too.
 
 ## BakedColors windowShadow
 
@@ -117,6 +201,8 @@ resolves a path - see ThemesManager::themeByPath and connectAppThemes.
 The config's default, and the theme an application wears when its stored path names a missing one.
 
 ## ThemeColors
+
+**The palette, the effects an ink names and the floor** - what a theme states beside its styles.
 
 **The mode belongs to the user, not to the theme.** The dark mode floor lets one design read right
 at both ends. The config keeps the mode beside the theme's path - see applyColorMode.
@@ -208,99 +294,34 @@ axis once and back around it, and `applyToSaturation` runs it on the saturation 
 
 **Each channel starts from a colour of its own**, which the rules writing it then move:
 
-- Surface - the surface the control stands on, in its element's seed hue where its set states
-  one - see ElementRules
+- Surface - the surface the control stands on, in its element's seed hue where its style
+  states one - see ControlStyle
 - Stroke and Band - the control's own surface, as its Surface rules left it
 - Text - the ink the control inherits, in its surface's hue while no rule names one
 - Shadow - the shadow it inherits, in the stroke's hue while no rule names one
 
 **A stroke or a band shows as far as its rules reach.** A control whose rules write no Band draws
-none, whatever width its size set states - see ControlMetrics band.
+none, whatever width its style states - see ControlMetrics band.
 
 ## UiElement
 
-**The handle a control wears its set by.** The framework's elements are the enumerators, and an
+**The handle a control wears its style by.** The framework's elements are the enumerators, and an
 application's own come after them - see appElement. A control wearing none takes no rules at
-all: no surface, no stroke, no ring. The order is free: what is indexed by an element - the
-baked effects, the baked rules - follows it.
+all - no surface, no stroke, no ring - and the default sizes. The order is free: what is indexed
+by an element - the baked effects, the baked rules, the resolved sizes - follows it.
 
 ## appElement
 
 **An application's own elements stand past the framework's**, one per name the application
 states in AppParams, in that order. `appElement(i)` is the handle for the i-th name, held as a
-constexpr constant by the application that stated it, and a theme reaches it through a set of that
-name. See AppElementNames.
+constexpr constant by the application that stated it, and a theme reaches it through a style of
+that name. See AppElementNames.
 
 ## AppElementNames
 
 The names an application states for its own elements, as AppParams carries them. They are what
 the theme is laid out by, and what a theme is asked for before it is offered: one lacking a name
 is not listed for that application.
-
-## ElementRules
-
-**One set of rules, named, standing over its base's.** A theme holds one for every element its
-controls wear, and as many more as it likes: a base the sets of a kind stand over, or an
-application's own.
-
-- `name` - what a control's handle is matched against, and what a file states the set under.
-- `base` - the set whose rules this one takes first, by name. Empty for a set standing over none.
-  The framework's sets stand over AnyElement, AnyWindow and AnyNonWindow, and over AnyButton,
-  AnyIndicator, AnyCallout and DoDont - see BaseElements.
-- `standsOn` - what the element is painted on, for the editor's preview. Empty for a window root,
-  which stands on the bare colour of the mode.
-- `seed` - the pigment the surface starts its hue from, where the hue of what it stands on is not
-  wanted: the callouts and the found-text band. A rule naming a hue overrides the seed.
-- `rules` - its own, applied over the base's as ThemeRules resolvedRules says.
-- `dropped` - the selectors of inherited rules it leaves out: a rule of any set up its chain whose
-  inputs, and-inputs and channel match one of them is not applied to this set.
-
-## RuleSelector
-
-What names a rule apart from its effect - its inputs, its and-inputs and its channel. Two rules
-with one selector are two steps on the same channel under the same conditions.
-
-## ThemeRules
-
-**The sets a theme states, found by name.** `of` answers a set or nullptr; `add` appends one,
-replacing a set of the same name; `chainOf` walks a set's bases up, stopping at a name the theme
-lacks or has walked already; `resolvedRules` is what the paint path applies.
-
-## ThemeRules resolvedRules
-
-**A base's rules apply first, and a set's own adjust what they left** - within each channel, in
-two groups: the chain's resting rules, root first, then its state rules, root first. A surface is
-established before a state modifies it, so a set's own resting rule lands before a base's Hot,
-and a set's own Hot lands after a base's. A rule a set further down the chain has dropped is
-left out.
-
-Baked, the list stands flat: PaintEvent applies a control's own rules and then the one list its
-element resolved to.
-
-## BaseElements
-
-**The sets the framework's own sets stand over**, by name:
-
-- AnyElement - every set stands over it, through one of the next two.
-- AnyWindow - what the three window roots take: the frame, the shadow. Anything wearing Dialog,
-  Menu or Tooltip takes it wherever it stands, a mockup inside a page included.
-- AnyNonWindow - what every other set takes. The focus ring lives here: its rules read Current
-  and write the Stroke. So does the edit mode's band: its rule reads Edit and writes the Band.
-- AnyButton - what Button and ToolButton share: the Selected, Hot and Pressed surfaces.
-- AnyIndicator - what the selection and hover indicators share, their on colour included.
-- AnyCallout - the five callouts' surface and band; each callout states its seed alone.
-- DoDont - the two sides of a Do and Don't block.
-
-**The ring's weight is the control's current**, whatever colour the rules gave the stroke. That
-factor thickens the border toward ThemeMetrics::focusedBorder, in paint only, and holds the frame
-out of the surface grow-in. A control drawing an indicator in the ring's place takes that share
-off - see AdjustPaintEvent replaceRing.
-
-A line drawn through `strokeRgbOn`, such as a grid cell's or a divider's, reads the list and
-nothing of the weight.
-
-The accent's values are written into the ring's rules, so a theme that moves Accent edits them
-too.
 
 ## BakedColors pigmentHsl
 
@@ -313,13 +334,13 @@ sides stays yellow between them.
 ## BakedElementRules
 
 **An element as the paint path reads it**: its chain resolved into one list, the rules of its own
-set on their own, and its seed. The band resolvers raise a selection over a found band by
+style on their own, and its seed. The band resolvers raise a selection over a found band by
 applying the found band's list and then the selection's own rules, so what the two chains share
 is applied once. An element the theme states no set for holds nothing and paints nothing.
 
 ## UiElement FoundText
 
-**The band behind what a search has found**, seeded with Yellow - see ElementRules.
+**The band behind what a search has found**, seeded with Yellow - see ControlStyle.
 ControlPaintContext::foundTextRgb resolves it, raised by the inputs of the control drawing it, as
 the selection band is.
 
