@@ -7,6 +7,7 @@ export import ClaFi.Controls.Base.ExpanderBase;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.Base.PanelBase;
+import ClaFi.Controls.Base.WithHeldHeader;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -20,8 +21,10 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
+    using ExpanderBaseClass = WithHeldHeader<PanelBase, ExpanderHeader>;
+
     // A panel whose body is shown or hidden by its header.
-    export class Expander : public WithHeldHeader<PanelBase>
+    export class Expander : public ExpanderBaseClass
     {
     public:
         using PanelBase::createBody;
@@ -80,7 +83,7 @@ namespace ClaFi::Controls
     template<std::derived_from<ExpanderHeader> Header, typename... Args>
     Expander::Expander(const CreateParams& params, std::type_identity<Header>, Args&&... args)
         :
-        WithHeldHeader<PanelBase>{
+        ExpanderBaseClass{
             params,
             expanderStyle(UiElement::Expander,
                 // What the expander draws of itself, which is what picks its style.
@@ -114,7 +117,7 @@ namespace ClaFi::Controls
     {
         if (isChildBody(child))
             return ChildSearch::Revealed;
-        return WithHeldHeader<PanelBase>::childSearch(child);
+        return ExpanderBaseClass::childSearch(child);
     }
 
     void Expander::revealChild(Control&)

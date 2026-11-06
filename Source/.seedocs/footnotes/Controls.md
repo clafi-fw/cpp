@@ -118,6 +118,10 @@ last step, and the page keys page through the list.
 **A sink that will not have the value calls refuse.** The editor stays open with the caret where the
 user left it.
 
+**A sink is asked only for a value that was edited.** Return or a click away on a box still holding
+the value it opened with ends the edit as Escape does, and the sink never hears of it - a value
+typed to open the editor counts as an edit, and an edit undone back to the start as none.
+
 **A sink knows its target from how it was built.** The control the editor covers may be gone by the
 time the sink runs, so the event leaves it out. `askedBy` lives inside the editor, so a sink may
 hang a window on it.

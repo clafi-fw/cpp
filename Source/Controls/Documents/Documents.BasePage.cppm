@@ -45,9 +45,12 @@ namespace ClaFi::Documents
         [[nodiscard]] Panel& topPanel() const { return m_topPanel; }
     private:
         DocumentsFolder& m_folder;
+        // The tool bar's colour, none of its sizes: the divider runs the strip's full width.
         StackPanel& m_topStack{ createTopBar<StackPanel>(
             Orientation::Vertical,
-            UiElement::ToolBar
+            UiElement::ToolBar,
+            Radius{ 0.0f },
+            Padding{ 0.0f }
         ) };
         Panel& m_topPanel{ m_topStack.add<Panel>(
             Padding{ 4.0f },

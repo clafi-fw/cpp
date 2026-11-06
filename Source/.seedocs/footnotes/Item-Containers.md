@@ -62,8 +62,10 @@ visible.
 **A container standing in a focus scope is no scope of its own.** A grid on a page that keeps the
 current item is built with FocusScope::No, NavigationReach::No and MouseFocus::Parent: its rows are
 the page's items, one selection stands on the whole page, and the arrows and the page keys travel
-over every item the page holds - see Grid. Code that picks an item calls Control::makeCurrentItem on
-it, which reaches whichever container keeps the current item.
+over every item the page holds - see Grid. A tool bar standing in one is built the same way, through
+ToolsProps - see ToolBarBox. Code that picks an item calls Control::makeCurrentItem on it, which
+reaches whichever container keeps the current item, and a set the page keeps holds the rows of every
+grid in it - see StackView.
 
 **What the current item leaves is told** - see Control nestedCurrentItemChange - so a grid the
 item has left drops its selected cell. The focus a container holds moves with its item, and the
@@ -74,6 +76,28 @@ move is told as any other - see Input focusDelegateChanged.
 **Shut over the container's current item, its header stands for the item.** A section on a page
 that keeps the current item is shut from a row inside it, and the header is what the next key
 moves on from.
+
+## ToolBar
+
+**A horizontal StackPanel wearing the ToolBar style**, its padding, spacing and radius the
+style's. It is a focus scope the arrows walk and a mouse press enters, and the buttons in it decide
+for themselves whether a press takes the focus - see ToolButton. A caller's props stand over the
+defaults, so a vertical bar is the same control.
+
+## ToolBarBox
+
+**A panel whose top bar is a ToolBar held against the top of the view** while the body scrolls
+under it, as an Expander holds its header - see WithHeldHeader. The box builds the bar; a caller
+fills it through tools() and gives the box its body. It carries no caption and no chevron: a named
+section that opens and shuts is an Expander, and a tool bar box stands in its body.
+
+**The bar's props go in a ToolsProps bundle ahead of the box's own**, and stand over the ToolBar
+defaults. A box standing in a focus scope passes FocusScope::No, NavigationReach::No and
+MouseFocus::Parent, so the bar's buttons are that scope's items rather than a scope's of their own.
+
+**An action presented in the bar is answered on the box.** Action subject walks from the presenter
+first, so a handler connected on the box claims for the bar's button and for a key pressed in the
+body alike, and a button of another box never reaches it.
 
 ## CanFocusItemEvent
 

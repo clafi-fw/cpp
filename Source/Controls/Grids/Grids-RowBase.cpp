@@ -6,8 +6,6 @@ module ClaFi.Controls.Grids;
 import :Columns;
 import :RowBase;
 
-import ClaFi.Controls.StackView;
-
 import ClaFi.Diagnostic.Log;
 
 import ClaFi.Core.System.Utils;
@@ -691,18 +689,18 @@ namespace ClaFi::Controls::Grids
         if (&event.control != this)
             return;
         // **What a grid row is selected by is the cell selection** - the row holding the selected
-        // cell, and every row that row is nested in, a group row included - and the grid's own
-        // selection where it holds several rows. Never the container's current item.
+        // cell, and every row that row is nested in, a group row included - and the set the scope
+        // the row stands in holds, where it keeps one. Never the container's current item.
         //
         // **The walk ends here**, and it has to. `Control::state()` runs leaf to root and the last
-        // writer wins; a grid is a focus scope, so `StackBase::getControlState` above
-        // answers for its items with `m_currentItem == item` and would replace this. That answer
-        // is true of the one row the user last landed on and false of every row that merely holds
-        // the cell inside it, which is exactly the set this rule exists to name.
+        // writer wins; the scope above - the grid, or the page a grid stands in - answers for its
+        // items with its current item and would replace this. That answer is true of the one row
+        // the user last landed on and false of every row that merely holds the cell inside it,
+        // which is exactly the set this rule exists to name.
         //
         // Written before the base runs, so a handler on the row still has the last word.
         event.state.selected = containsNested(m_descriptor.selectedRow())
-            or m_descriptor.owner().selection().contains(this);
+            or hold() == ItemHold::Held;
         LaneBase::getControlState(event);
         event.stopPropagation();
     }
@@ -946,16 +944,16 @@ namespace ClaFi::Controls::Grids
         return result;
     }
 
-    // The user is on a cell while it is the selected one and its row has the focus, and, in a view
-    // holding a selection, while its row is held as well - StackBase reads a press on anything else
+    // The user is on a cell while it is the selected one and its row has the focus, and, under a
+    // scope holding a set, while its row is held as well - StackBase reads a press on anything else
     // as a pick.
     void RowBase::recordPress(const KeyModifiers modifiers)
     {
         if (!Input::mouse().active())
             return;
         const Column* column = laneColumnAt(form().mouseDownPos());
-        Grid& grid = m_descriptor.owner();
-        const bool multiSelect = grid.selectionMode() == SelectionMode::Multi;
+        const ItemHold rowHold = hold();
+        const bool multiSelect = rowHold != ItemHold::NoSet;
         if (multiSelect && (modifiers.ctrl || modifiers.shift))
         {
             m_descriptor.recordPress(*this, column, CellPressKind::Select);
@@ -964,7 +962,7 @@ namespace ClaFi::Controls::Grids
         const bool onSelectedCell = column
             && m_descriptor.selectedRow() == this
             && m_descriptor.selectedColumn() == column;
-        const bool rowHeld = !multiSelect || grid.selection().contains(this);
+        const bool rowHeld = !multiSelect || rowHold == ItemHold::Held;
         // Input names the control the press takes the focus from until the focusing walk ends.
         const bool rowFocused = Input::focusDelegate() == this;
         const CellPressKind kind = onSelectedCell && rowHeld && rowFocused

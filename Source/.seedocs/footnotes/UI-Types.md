@@ -87,6 +87,21 @@ it.
 **A StackBase is what holds the focus for an item.** Any other container answering Yes bounds the
 keys alone - a Menu's frame, whose lines carry the focus themselves.
 
+## ItemHold
+
+**The scope answers for the set, as it does for the current item.** Control hold asks the focus
+scope the control stands in and nothing above it - see Control itemHold. A StackView keeping a set
+answers Held or NotHeld for any control in its scope, however deep; every other scope, and a
+StackView built with SelectionMode::None, answers NoSet.
+
+**An item the set does not let in stands under no set.** The view answers NoSet for a control its
+CanSelectItemEvent refuses, as it would for every control were it keeping no set: a press on such an
+item picks nothing into the set, so a grid row that can never be held acts on the press that would
+otherwise have to pick it first - see RowContainer.
+
+**A view standing in a scope reads the scope's set through it**, for its row's held look, for a
+press that acts on a held row, and for the set a drag carries - see StackView.
+
 ## WindowRole
 
 **The role is given where the form is created**, and sets what the window does with activation.

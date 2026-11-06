@@ -68,6 +68,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.StackView.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.TabbedBox.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.TabStrip.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.ToolBar.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.ToolBar.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.ToolBarBox.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.Tree.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.Tree.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.AppButton.cppm" />
@@ -198,6 +201,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackBase.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\StackPanelBase.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithEditMode.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithHeldHeader.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithTextLayout.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_Facade.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Dom\Dom_StdSerializers.cppm" />

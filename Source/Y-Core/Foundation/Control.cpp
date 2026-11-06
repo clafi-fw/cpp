@@ -1038,6 +1038,18 @@ namespace ClaFi
             container = container->m_parent;
     }
 
+    // The scope answers and nothing above it: the set a control may be held in is the one scope
+    // it stands in, where its current item is kept. Under no scope, nothing holds it.
+    ItemHold Control::hold() const
+    {
+        for (const Control* container = m_parent; container; container = container->m_parent)
+        {
+            if (container->focusScope() == FocusScope::Yes)
+                return container->itemHold(*this);
+        }
+        return ItemHold::NoSet;
+    }
+
     void Control::animatedClick(FormBase& form, const InputStamp stamp)
     {
         if (!canClick())

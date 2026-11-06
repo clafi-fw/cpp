@@ -853,6 +853,8 @@ namespace ClaFi
         bool trySetFocus();
         // Makes this control the current item of the container above it. The focus stays put.
         void makeCurrentItem();
+        // How the focus scope this control stands in holds it as an item. See Control-Foundation
+        [[nodiscard]] ItemHold hold() const;
         //
         // Runs the click a key asked for, which names that key rather than whatever the pointer
         // last pressed on this form.
@@ -1234,6 +1236,11 @@ namespace ClaFi
         [[nodiscard]] virtual Control* currentItem() const { return nullptr; }
         // makeCurrentItem's question: a container keeping a current item takes it and answers yes.
         [[nodiscard]] virtual bool takeCurrentItem(Control& /*item*/) { return false; }
+        // hold's question: a container keeping a set of held items answers for the items it holds.
+        [[nodiscard]] virtual ItemHold itemHold(const Control& /*item*/) const
+        {
+            return ItemHold::NoSet;
+        }
         // A container above moved its current item out of here, to currentItem (null where none).
         virtual void nestedCurrentItemChange(Control* /*currentItem*/) {}
         // Tells what the item left, from previousItem up to the first control holding currentItem.

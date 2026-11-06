@@ -24,7 +24,7 @@ namespace ClaFi::Controls
     {
         Accepted,   // the sink was offered the text and did not refuse it
         Refused,    // the sink was offered the text and would not have it
-        Cancelled   // Escape; the sink was never asked
+        Cancelled   // Escape, or nothing edited; the sink was never asked
     };
 
     // The text the user is committing, and the sink's answer to it. See Controls

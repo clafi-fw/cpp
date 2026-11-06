@@ -1,10 +1,12 @@
 export module Themes_App.MetricsGrid;
 
+import ClaFi.Controls.Button;
 import ClaFi.Controls.ComboBox;
 import ClaFi.Controls.Grids;
 import ClaFi.Controls.Grids_Dt;
-import ClaFi.Controls.Label;
-import ClaFi.Controls.Panel;
+import ClaFi.Controls.ToolBarBox;
+
+import ClaFi.StdActions;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -29,9 +31,9 @@ namespace Themes_App
     // The words a style reads by, as the tree names it, for the style a size comes from.
     export using OnGetStyleName = std::function<std::wstring_view(std::wstring_view token)>;
 
-    // One style's sizes, a row for each: the value its chain resolves to, and which style states
-    // it. See the ElementPage it stands on.
-    export class MetricsGrid : public Panel
+    // One style's sizes under their tool bar, a row for each: the value its chain resolves to, and
+    // which style states it. The bar and the grid stand in the scope of the ElementPage it is on.
+    export class MetricsGrid : public ToolBarBox
     {
     public:
         template<typename... Args>
@@ -41,13 +43,6 @@ namespace Themes_App
         void bind(ThemeStyles&, std::wstring_view style, OnGetStyleName, OnMetricsChanged);
         // Builds the rows for the style as it stands, after the theme moved under the grid.
         void refresh();
-        // Whether the cell stands on a size this style states, which Delete puts back.
-        [[nodiscard]] bool canClear() const;
-        // Puts the size under the cell back to what the chain gives, and records the step.
-        void clearCurrent();
-        // Connects a handler raised when the cell moves to another row, which Delete reads.
-        template<typename F>
-        EventConnection onCurrentRowChange(F&& callback);
     private:
         // The grid's columns, as their tags name them.
         enum class SizeColumn : TagValue
@@ -90,6 +85,10 @@ namespace Themes_App
         };
         using SizeRowEntries = std::vector<SizeRowEntry>;
     private:
+        // Whether the cell stands on a size this style states, which Delete puts back.
+        [[nodiscard]] bool canClear() const;
+        // Puts the size under the cell back to what the chain gives, and records the step.
+        void clearCurrent();
         void addRows();
         // The weights are a fixed list, so the border's is picked from them.
         void addBorderRow();
@@ -144,14 +143,21 @@ namespace Themes_App
         UiTimer m_refreshTimer{}; // builds the rows again outside the pick or the editor that asked
         std::optional<SizeRow> m_pendingRow{}; // the row the cell goes back to after the rebuild
 
-        Label& m_heading{ createTopBar<Label>(
-            Text{ StyledText{ TextStyles::SubHeading, ColoredText{ InkGrade::Muted, L"Sizes" } } },
-            Padding{ 0.0f, 4.0f }
+        // Words, icon and state come from the action; Keep leaves the focus in the grid.
+        ToolButton& m_clearButton{ tools().add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            StdActions::del,
+            NavigationReach::No,
+            MouseFocus::Keep
         ) };
 
         Grids::Dt::Grid& m_grid{ createBody<Grids::Dt::Grid>(
             UiElement::Grid,
             HorizontalAlign::Left,
+            FocusScope::No, // the page is the scope; the rows are its items
+            NavigationReach::No,
+            MouseFocus::Parent,
             Grids::Dt::Columns{
                 Grids::Dt::Column{ Tag{ SizeColumn::Name },
                     Text{ L"Size" },
@@ -192,18 +198,32 @@ namespace Themes_App
     template<typename... Args>
     MetricsGrid::MetricsGrid(const CreateParams& params, Args&&... args)
         :
-        Panel{ params, std::forward<Args>(args)... }
+        ToolBarBox{
+            params,
+            ToolsProps{
+                FocusScope::No, // the page is the scope; the bar's buttons are its items
+                NavigationReach::No,
+                MouseFocus::Parent
+            },
+            std::forward<Args>(args)...
+        }
     {
-        setCurrentItem(m_grid);
         m_refreshTimer.onTick([this](TimerEvent&) {
             refresh();
             selectRow(m_pendingRow);
         });
-    }
-
-    template<typename F>
-    EventConnection MetricsGrid::onCurrentRowChange(F&& callback)
-    {
-        return m_grid.onCurrentItemChange(std::forward<F>(callback));
+        // Delete is answered here, so the tool bar's button and the key in the grid reach one
+        // handler, and a Delete presented elsewhere on the page never lands on a size.
+        onGetActionState([this](GetActionStateEvent& event) {
+            if (&event.action == &StdActions::del)
+                event.claim({ .enabled = canClear() });
+        });
+        onActionClick([this](ActionClickEvent& event) {
+            if (&event.action == &StdActions::del)
+                clearCurrent();
+        });
+        m_grid.onSelectedCellChange([](Grids::SelectedCellChangeEvent&) {
+            StdActions::del.invalidateState();
+        });
     }
 }

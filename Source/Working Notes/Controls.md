@@ -39,6 +39,18 @@ a bar coming up is read then: one taken down would hand its strip back and ask t
 over. A bar the second reading raises finds the other one up already, so a pass measures the box
 again twice at most, and only where a bar changes.
 
+## InPlaceEditRoot offerText
+
+2026-11-06. Oj, with a recording of the Themes sizes grid: Return opened the editor on a size the
+chain gave, and a second Return with nothing typed stated that size as the style's own. Every
+ending but Escape offered the box's text, and the sizes' sink takes any value typed as the style's
+own statement, which is right for a value typed and wrong for one never touched. Decided here, in
+the editor rather than in that sink: an untouched box offers nothing, and the edit ends as Escape
+ends it, Cancelled and the sink never asked. Untouched is the box's undo depth at zero, which the
+keys that opened the editor already leave behind them, and which undoing every edit comes back to -
+chosen over comparing the text against the one handed in, which would have read a value retyped
+as the same as one never typed. A sink that wants a retyped value to count still gets it.
+
 ## SuggestionList
 
 Keys reach the list through the ordinary forward chain - the form under the editor forwards to the

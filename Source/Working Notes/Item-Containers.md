@@ -18,6 +18,43 @@ asked for it yet.
 PageControl does not need a stack alignment - that part lives in Stack - but it does need
 the current item, so that part is here.
 
+### One set over a page
+
+2026-11-06. Oj asked for the Themes element page to be a single focus scope, as a SeeDocs page is.
+A SeeDocs page is a SingleSelectionStackView, so the rule that a grid standing in a scope is no
+scope of its own had only covered the current item. The element page's rules grid held several
+rules for Delete and a drag, and a grid that is no scope cannot pick into its own set: Shift and
+Ctrl picks go through the scope's pick, so only a band would have filled it. Decided with Oj: the
+page holds the set - its body is a StackView under SelectionMode::Multi and DragMode::EasyDrag, its
+CanSelectItemEvent lets in the style's own rows alone, and the grid is given no SelectionMode. The
+other shape, the one current rule as the whole selection, was offered and not taken.
+
+The framework side is Control::hold, which asks the scope the control stands in and nothing above
+it - a Control virtual, itemHold, so no cast is needed to reach the view through a Control parent.
+The three reads a grid made of its own set go through it: the held look in RowBase::getControlState,
+the row-must-be-held check in RowBase::recordPress, and the set StackView::carriedItems carries,
+which is the scope's set cut to the stack's own children in their order. Each row asks the scope
+once per paint and once per carry; the walk is the parent chain to the scope.
+
+Also decided: the Rules and Sizes tool bars stand in the page's scope rather than as scopes of
+their own, since a ToolBar is one by default - ToolBarBox takes a ToolsProps bundle ahead of the
+box's own props and builds the bar with it. The alternative, a bar left as a nested scope with
+arrows bounded inside it and Tab in and out, was offered and not taken.
+
+One consequence of a single set over the page: moving the current item onto an item the set does
+not let in - a fact's list, Add rule, a size - is a plain pick and clears the held rules, as it
+would in any Multi view. Ctrl with the arrows moves the current item alone, and the Delete tool
+button keeps the focus, so a mouse user keeps the set.
+
+The first run (Oj, recording): a mouse click on the selected size cell never opened its editor.
+The row-must-be-held check read the page's set, which never takes a size row, so every press on
+one was a pick. An item the set does not let in now stands under no set - StackView::itemHold
+answers NoSet for a control its CanSelectItemEvent refuses - so a press on it acts as it would in
+a view keeping none. canSelectItem and defaultCanSelectItem became const for it, and the event
+names its view as const; no handler used the view. The second finding in the same recording,
+Return twice on an untouched editor stating the size, is the editor's - see the Controls working
+note.
+
 ## Stack
 
 ### One routine, read through main and cross

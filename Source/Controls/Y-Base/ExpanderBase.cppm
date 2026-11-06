@@ -170,40 +170,6 @@ namespace ClaFi::Controls
         ExpanderButton& m_button{ createChevronButton() };
     };
 
-    // **A container that holds its expander header against the top of the view** while the body it
-    // heads is scrolled under it, the way a grid holds its header row - see Control::heldHeader.
-    // The header is an overlay control whose entry goes to the host Control::heldHeaderHost names,
-    // as the grid's does: what the header draws around itself then lands on the body it is held
-    // over rather than stopping at this one's edge, and a header nested in another's body is
-    // painted in the same pass before the outer header, which is what a nested header being pushed
-    // away slides beneath. A host with no overlay list leaves this control hosting the entry
-    // itself.
-    //
-    // The header is painted here by name after the other children and skipped in every pass but
-    // its own - the TabStripBase shape - so nothing below chains to the base for it.
-    export template<IsControl Base>
-        // A panel whose header stays put while its body scrolls under it.
-        class WithHeldHeader : public Base
-    {
-    public:
-        using Base::Base;
-    protected:
-        // Takes the header this control holds, once whoever builds it has.
-        void holdHeader(ExpanderHeader&);
-        // What the header heads: the body, whose bottom edge is what pushes the header away.
-        // Null while there is none.
-        [[nodiscard]] virtual const Control* headedBody() const = 0;
-        [[nodiscard]] const Control* heldHeader() const override;
-        [[nodiscard]] FloatPoint overlayChildOffset(const Control&) const override;
-        void paintChildren(PaintEvent&) override;
-        void scrollChildIntoView(Control&, FloatRect) override;
-    private:
-        ExpanderHeader* m_heldHeader{};
-        // The container holding the overlay entry that names the header - see holdHeader. Null
-        // where none would take it, which leaves the header a plain child.
-        Control* m_headerHost{};
-    };
-
     // ExpanderHeader
 
     template<typename ...Args>
@@ -434,68 +400,6 @@ namespace ClaFi::Controls
     bool ExpanderHeader::squaresBottomCorners() const
     {
         return m_expanded && m_viewMode == ExpanderViewMode::Section;
-    }
-
-    // WithHeldHeader
-
-    template<IsControl Base>
-    void WithHeldHeader<Base>::holdHeader(ExpanderHeader& header)
-    {
-        m_heldHeader = &header;
-        m_headerHost = this->heldHeaderHost();
-        if (m_headerHost && m_headerHost->addOverlayControl(header, ClippingMode::Standard))
-            return;
-        m_headerHost = this->addOverlayControl(header, ClippingMode::Standard) ? this : nullptr;
-    }
-
-    template<IsControl Base>
-    const Control* WithHeldHeader<Base>::heldHeader() const
-    {
-        if (!m_headerHost || !m_heldHeader->visible())
-            return nullptr;
-        const Control* body = headedBody();
-        if (!body || !body->visible())
-            return nullptr;
-        return m_heldHeader;
-    }
-
-    template<IsControl Base>
-    FloatPoint WithHeldHeader<Base>::overlayChildOffset(const Control& child) const
-    {
-        if (&child != heldHeader())
-            return {};
-        return this->heldHeaderOffset(child, headedBody()->bottom());
-    }
-
-    template<IsControl Base>
-    void WithHeldHeader<Base>::paintChildren(PaintEvent& event)
-    {
-        if (!m_headerHost)
-            return Base::paintChildren(event);
-        for (ControlPtr& child : this->controls())
-        {
-            if (child.get() != m_heldHeader && child->visible())
-                event.paintChild(*child);
-        }
-        if (!event.overlayStage() || event.overlayHost() != m_headerHost || !m_heldHeader->visible())
-            return;
-        const float travel = overlayChildOffset(*m_heldHeader).y;
-        if (travel != 0.0f)
-        {
-            const FloatRect rect = FloatRect::FromDimensions(
-                event.contentPosition() + m_heldHeader->topLeft() + FloatPoint{ 0.0f, travel },
-                m_heldHeader->scaledSize());
-            event.paintHeldBackdrop(m_heldHeader->silhouette(event, rect), travel);
-        }
-        event.paintChild(*m_heldHeader);
-    }
-
-    template<IsControl Base>
-    void WithHeldHeader<Base>::scrollChildIntoView(Control& control, FloatRect controlRect)
-    {
-        if (&control != m_heldHeader)
-            controlRect.top -= this->heldHeaderStrip();
-        Base::scrollChildIntoView(control, controlRect);
     }
 
 }

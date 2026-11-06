@@ -8,6 +8,7 @@ import :RowBase;
 import :RowGroupBase;
 
 import ClaFi.Controls.Base.ExpanderBase;
+import ClaFi.Controls.Base.WithHeldHeader;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.System.Props;
@@ -33,8 +34,11 @@ namespace ClaFi::Controls::Grids
         [[nodiscard]] RectSides sidesOnGridFrame(const PaintEvent&) const;
     };
 
+    using RowExpanderBaseClass = WithHeldHeader<RowGroupBaseWith<RowExpanderHeader>,
+        RowExpanderHeader>;
+
     // A row whose header is held at the top of the view while its body scrolls under. See Grids
-    export class RowExpander : public WithHeldHeader<RowGroupBaseWith<RowExpanderHeader>>
+    export class RowExpander : public RowExpanderBaseClass
     {
     public:
         template<typename ...Args>
@@ -78,7 +82,7 @@ namespace ClaFi::Controls::Grids
     template<typename ...Args>
     RowExpander::RowExpander(const CreateParams& params, GridDescriptor& descriptor, Args && ...args)
         :
-        WithHeldHeader{ params, descriptor, std::forward<Args>(args)...}
+        RowExpanderBaseClass{ params, descriptor, std::forward<Args>(args)... }
     {
         m_controls[k_head] = std::make_unique<RowExpanderHeader>(
             CreateParams{ *this },

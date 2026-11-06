@@ -94,3 +94,14 @@ for a bar never resized): `showPage` states it or clears it as the tab's tree co
 
 The three bars are full bleed because a strip inset further than the window's border reads as a
 card floating on the window rather than as a band of it.
+
+## WithHeldHeader
+
+Moved out of ExpanderBase on 2026-11-06 and made generic over the header, so that ToolBarBox could
+hold a ToolBar. The header type is a template parameter held to IsHeldHeader rather than a virtual
+silhouette on the container: each header already states its own shape (GridHeader, ExpanderHeader,
+Tab), and the rule stays "the header supplies its silhouette".
+
+paintChildren walks the children by hand, skips the header in every pass and paints the backdrop
+and the header by name only in the pass whose host holds the entry - the TabStripBase shape - so
+the header's children never paint in a standard pass.

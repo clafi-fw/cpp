@@ -173,7 +173,7 @@ namespace ClaFi::Controls::Grids
         // Puts a row added after the new-item row ahead of it, and notes it for requestNewItem.
         void controlAdded(Control&) override;
         // The new-item row is a command rather than an item, so no selection holds it.
-        bool defaultCanSelectItem(Control&) override;
+        bool defaultCanSelectItem(const Control&) const override;
         // The header and the new-item row keep their places.
         bool defaultCanMoveItem(Control&) override;
     private:

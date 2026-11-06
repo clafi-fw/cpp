@@ -269,6 +269,11 @@ namespace ClaFi
                             { ColorRuleOp::Set, 0.052564f }         // E
                         }
                     }
+                },
+                .metrics = {
+                    .radius = 4.0f,
+                    .padding = Padding{ 4.0f, 4.0f },
+                    .spacing = Spacing{ 0.0f, 0.0f }
                 }
             },
             ControlStyle{

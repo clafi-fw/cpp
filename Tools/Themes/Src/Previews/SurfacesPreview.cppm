@@ -4,11 +4,12 @@ import Themes_App.FishIcon;
 import Themes_App.PreviewPageBase;
 
 import ClaFi.Controls.Button;
+import ClaFi.Controls.Divider;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Stack;
+import ClaFi.Controls.ToolBar;
 
-import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -21,7 +22,8 @@ namespace Themes_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // A tool bar over a heading, and two sections with their headers - one open, one shut.
+    // A tool bar over a heading, a divider, and two sections with their headers - one open, one
+    // shut.
     export class SurfacesPreview : public PreviewPageBase
     {
     public:
@@ -38,12 +40,7 @@ namespace Themes_App
             L"Page, tool bar and section surfaces, headers, dividers"
         };
 
-        StackPanel& m_toolBar{ add<StackPanel>(
-            Orientation::Horizontal,
-            UiElement::ToolBar,
-            Padding{ 4.0f },
-            Spacing{ 4.0f }
-        ) };
+        ToolBar& m_toolBar{ add<ToolBar>() };
 
         ToolButton& m_feedButton{ m_toolBar.add<ToolButton>(
             L"Feed",
@@ -63,6 +60,8 @@ namespace Themes_App
             Text{ ColoredText{ InkGrade::Muted, L"Six fish share it, and the plants keep to the "
                 L"corners." } }
         ) };
+
+        Divider& m_divider{ add<Divider>() };
 
         Section& m_orfeSection{ addSection(
             L"Golden orfe",

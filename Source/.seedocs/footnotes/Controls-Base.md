@@ -139,6 +139,24 @@ control tree.
 
 **Each props bag holds a prop type once**, since props route by type.
 
+## WithHeldHeader
+
+**The header is an overlay control** whose entry goes to the host Control::heldHeaderHost names -
+the body of the box scrolling the container, the way a grid's header row does. What the header
+draws around itself then lands on the body it is held over rather than stopping at the container's
+edge, and a header nested in another's body is painted in the same pass before the outer header,
+which is what a nested header being pushed away slides beneath. A host with no overlay list leaves
+the container hosting the entry itself.
+
+**The header states its own shape** - the IsHeldHeader concept: a silhouette taking the host's
+paint event and the header's rect, which the backdrop and the shadow of a held header are laid on -
+see PaintEvent paintHeldBackdrop. An ExpanderHeader squares its bottom corners over an open
+section; a ToolBar rounds every corner.
+
+**The container builds its header and hands it over.** holdHeader takes it once, in the
+container's constructor, and headedBody names the body whose bottom edge pushes the header away.
+Expander, Grids::RowExpander and ToolBarBox are built this way.
+
 ## WithEditMode
 
 **Outside the mode the control is an item of the page it stands on.** The keys travel past it to

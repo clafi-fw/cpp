@@ -367,7 +367,7 @@ namespace ClaFi::Controls::Grids
             moveControl(*m_newItemRow, controls().size());
     }
 
-    bool GridBase::defaultCanSelectItem(Control& value)
+    bool GridBase::defaultCanSelectItem(const Control& value) const
     {
         return &value != m_newItemRow && StackView::defaultCanSelectItem(value);
     }

@@ -64,7 +64,7 @@ namespace ClaFi::Controls
 
     // CanSelectItemEvent
 
-    CanSelectItemEvent::CanSelectItemEvent(StackView& itemsView,
+    CanSelectItemEvent::CanSelectItemEvent(const StackView& itemsView,
         const Control& item, bool canSelect)
         :
         itemsView{ itemsView },
@@ -153,7 +153,7 @@ namespace ClaFi::Controls
             doSelectionChanged();
     }
 
-    bool StackView::canSelectItem(Control* value)
+    bool StackView::canSelectItem(const Control* value) const
     {
         if (!value)
             return false;
@@ -170,7 +170,7 @@ namespace ClaFi::Controls
     // Only a view holding a set has one to add to, and what it adds are the controls the user
     // acts on - the same shape of thing the current item lands on, asked here in its own right
     // rather than through defaultCanFocusItem, because the two questions are answered apart.
-    bool StackView::defaultCanSelectItem(Control& value)
+    bool StackView::defaultCanSelectItem(const Control& value) const
     {
         return isMultiSelect() && isPickable(value);
     }
@@ -218,6 +218,18 @@ namespace ClaFi::Controls
             return StackViewBase::isItemSelected(item);
 
         return m_selection.contains(&item);
+    }
+
+    // The set reaches items in nested panels, as a range and a band do, so the answer is the same
+    // at any depth of the scope. An item the set does not let in stands under no set at all: a
+    // press on it picks nothing into the set, so it acts as it would in a view keeping none.
+    ItemHold StackView::itemHold(const Control& item) const
+    {
+        if (!isMultiSelect())
+            return ItemHold::NoSet;
+        if (m_selection.contains(&item))
+            return ItemHold::Held;
+        return canSelectItem(&item) ? ItemHold::NotHeld : ItemHold::NoSet;
     }
 
     void StackView::nestedControlDeleted(Control* item)
@@ -344,19 +356,21 @@ namespace ClaFi::Controls
         return itemAt(control);
     }
 
-    // A drag from an item is a band under EasySelect. Under EasyDrag it carries the selection the
-    // press landed in, in the order the items stand, else the one item.
+    // A drag from an item is a band under EasySelect. Under EasyDrag it carries the set the press
+    // landed in, in the order the items stand, else the one item. The set is the scope's: a view
+    // standing in a scope carries what that scope holds of its items - see Selection-Model
     std::vector<Control*> StackView::carriedItems(Control& item)
     {
-        if (!isMultiSelect())
+        const ItemHold pressedHold = item.hold();
+        if (pressedHold == ItemHold::NoSet)
             return StackViewBase::carriedItems(item);
         if (m_dragMode == DragMode::EasySelect)
             return {};
-        if (!m_selection.contains(&item))
+        if (pressedHold == ItemHold::NotHeld)
             return StackViewBase::carriedItems(item);
         std::vector<Control*> result{};
         for (ControlPtr& control : controls())
-            if (m_selection.contains(&*control) && canMoveItem(*control))
+            if (control->hold() == ItemHold::Held && canMoveItem(*control))
                 result.push_back(&*control);
         return result;
     }

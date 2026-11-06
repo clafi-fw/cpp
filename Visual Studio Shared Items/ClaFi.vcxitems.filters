@@ -1300,6 +1300,15 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.Stack.cppm">
       <Filter>Controls\Containers</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.ToolBar.cpp">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.ToolBar.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.ToolBarBox.cppm">
+      <Filter>Controls\Containers</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Containers\Controls.StackView.cpp">
       <Filter>Controls\Containers</Filter>
     </ClCompile>
@@ -1322,6 +1331,9 @@
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithEditMode.cppm">
+      <Filter>Controls\Y-Base</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithHeldHeader.cppm">
       <Filter>Controls\Y-Base</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Y-Base\WithTextLayout.cppm">

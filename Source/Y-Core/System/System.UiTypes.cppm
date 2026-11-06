@@ -81,6 +81,14 @@ namespace ClaFi
         No
     };
 
+    // How the focus scope a control stands in holds it, as one of its items. See UI-Types
+    export enum class ItemHold
+    {
+        NoSet,    // the scope keeps no set of held items
+        Held,     // the item is in the scope's set
+        NotHeld   // the set stands without the item
+    };
+
     // What the platform layer switches on - window class, styles, activation. See UI-Types
     export enum class WindowRole {
         Dialog,

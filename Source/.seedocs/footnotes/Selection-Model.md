@@ -24,6 +24,12 @@ Ranges and rubber bands reach items in nested panels too.
 
 A plain press outside the selection selects at once.
 
+**A view standing in a focus scope keeps no set of its own.** Built with FocusScope::No, it is
+given no SelectionMode: the scope above holds the set, as it holds the current item, and the view
+reads it through Control hold - the set a drag from one of its items carries, in the order the items
+stand, and the held look of a grid's row. A page holding a Multi StackView over several grids is
+one selection over all of them, and CanSelectItemEvent on the page says which items it lets in.
+
 ## StackView setSelection
 
 **The selection becomes the items CanSelectItemEvent lets in**, and the rest are dropped without
@@ -55,3 +61,5 @@ answers for controls it never makes current.
 
 canSelect arrives as the view's own answer - yes in a Multi view for an item that answers
 NavigationReach::Yes and MouseFocus::Self and is no focus scope itself.
+
+**It is also what Control hold reads**, so an item refused here stands under no set - see ItemHold.

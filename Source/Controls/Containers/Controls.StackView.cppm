@@ -61,8 +61,8 @@ namespace ClaFi::Controls
     // May this item join the selection? See Selection-Model
     export struct CanSelectItemEvent : public Event
     {
-        CanSelectItemEvent(StackView&, const Control&, bool canSelect);
-        StackView& itemsView;   // the view asking
+        CanSelectItemEvent(const StackView&, const Control&, bool canSelect);
+        const StackView& itemsView;   // the view asking
         const Control& item;    // the item the answer is about
         bool canSelect;         // the answer, as the view itself gave it before any handler saw it
     };
@@ -99,10 +99,11 @@ namespace ClaFi::Controls
         virtual void selectionChanged() {}
         // The answer after the handlers have had it; nullptr answers no, there being nothing
         // to add. defaultCanSelectItem is the answer before any handler sees it.
-        [[nodiscard]] bool canSelectItem(Control*);
-        virtual bool defaultCanSelectItem(Control&);
+        [[nodiscard]] bool canSelectItem(const Control*) const;
+        virtual bool defaultCanSelectItem(const Control&) const;
         void currentItemPicked(Control*, Control* previousItem, KeyModifiers, bool applyGesture) override;
         [[nodiscard]] bool isItemSelected(const Control&) const override;
+        [[nodiscard]] ItemHold itemHold(const Control&) const override;
         void nestedControlDeleted(Control*) override;
         void nestedDrag(DragEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
@@ -125,8 +126,7 @@ namespace ClaFi::Controls
         bool tryAddToSelection(Control* value);
         // Every item the view holds, whatever is on screen.
         void selectAll();
-        // Whether there is anything to select at all. Not const: canSelectItem emits, and a
-        // handler answers for the view as it stands.
+        // Whether there is anything to select at all, asked of a handler for the view as it stands.
         [[nodiscard]] bool hasSelectableItem();
         // The view volunteering as the subject of the commands that act on a selection. Connected
         // from the constructor, the way TextBox connects the edit actions.

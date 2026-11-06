@@ -327,6 +327,17 @@ namespace ClaFi::Controls
             return true;
         }
 
+        // **An untouched box has nothing to offer either**: it still holds the value it opened
+        // with, and a sink asked to take its own value back would read a value typed where none
+        // was. The edit ends as Escape ends it. Undone back to the start reads as untouched, and
+        // the keys that opened the editor are the first edit - see EditTarget.
+        if (!body().canUndo())
+        {
+            m_settled = true;
+            m_result = EditResult::Cancelled;
+            return true;
+        }
+
         AcceptEditEvent event{ body(), body().text() };
         m_asked = true;
         m_accept(event);

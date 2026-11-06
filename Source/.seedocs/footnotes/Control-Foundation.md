@@ -182,6 +182,18 @@ up.
 that was current up to the first one still holding the new item hears it, the item itself first. A
 grid standing in a container drops its selected cell on it - see Grid.
 
+## Control hold
+
+**The focus scope this control stands in answers**, and nothing above it - see Control itemHold.
+The set a control may be held in is the scope's, where its current item is kept too. A control
+under no scope answers ItemHold::NoSet.
+
+## Control itemHold
+
+Asked by Control hold of the focus scope the control stands in. A view keeping a set answers for
+every control in its scope - see StackView. Every other control answers NoSet, which is the
+default.
+
 ## Control inputContextChanged
 
 **Told just before the control re-reads its state** for something Hot and Current carry beyond the

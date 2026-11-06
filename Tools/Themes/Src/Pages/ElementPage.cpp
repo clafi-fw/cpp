@@ -287,6 +287,7 @@ namespace Themes_App
         }
         addInheritedGroups();
         m_metricsGrid.refresh();
+        selectFirstRule();
         m_resetButton.invalidateState();
         form().invalidateAlign();
     }
@@ -317,7 +318,7 @@ namespace Themes_App
                     result.cell->column = column->tag();
             }
         }
-        for (const Control* row : m_grid.selection())
+        for (const Control* row : m_pageBox.body().selection())
             result.held.push_back(row->tag().value);
         return result;
     }
@@ -355,13 +356,11 @@ namespace Themes_App
         for (const std::size_t index : at.held)
             if (index < m_ruleRows.size())
                 held.push_back(m_ruleRows[index]);
-        m_grid.setSelection(held);
+        m_pageBox.body().setSelection(held);
     }
 
     bool ElementPage::canDelete() const
     {
-        if (m_metricsGrid.isFocused())
-            return m_metricsGrid.canClear();
         const RuleSelection at = selection();
         if (!at.held.empty())
             return true;
@@ -427,11 +426,6 @@ namespace Themes_App
     // names have not moved yet.
     void ElementPage::deleteSelectedRules()
     {
-        if (m_metricsGrid.isFocused())
-        {
-            m_metricsGrid.clearCurrent();
-            return;
-        }
         if (m_pendingDelete.cell || !m_pendingDelete.held.empty())
             return;
         if (!canDelete())
@@ -442,7 +436,8 @@ namespace Themes_App
 
     // Own rules held go, from the last place to the first, so each erase leaves the places still
     // to go where they were. With none held, the cell on a base's rule drops that rule. The step
-    // is made on what Delete was asked on, which undo puts back held.
+    // is made on what Delete was asked on, which undo puts back held. The cell keeps its place,
+    // on the row that took it - the places it held are other rules' now, so none is held again.
     void ElementPage::deletePendingRules()
     {
         RuleSelection at{};
@@ -466,13 +461,14 @@ namespace Themes_App
         what << L"Delete " << ColoredText{ InkWell::accentInk(), rules };
         what << L" from " << ColoredText{ InkWell::accentInk(), m_name };
         rebuild();
+        select(RuleSelection{ .cell = at.cell }, TakeFocus::Yes);
         rulesChanged(EditPhase::Settled, what, at);
     }
 
     // The button stands outside the grid, so the rows can go at once - the selection is read
     // before they do. A style the built-in states goes back to that whole, facts and sizes and
     // all; a style of the theme's own keeps its facts and loses its rules, what it dropped and
-    // its sizes.
+    // its sizes. The cell keeps its place among the rows that stand after, and nothing is held.
     void ElementPage::resetRules()
     {
         const RuleSelection at = selection();
@@ -488,6 +484,7 @@ namespace Themes_App
             stated.metrics = {};
         }
         rebuild();
+        select(RuleSelection{ .cell = at.cell }, TakeFocus::Yes);
         Text what{};
         what << L"Reset " << ColoredText{ InkWell::accentInk(), m_name } << L" to defaults";
         rulesChanged(EditPhase::Settled, what, at);
@@ -579,6 +576,21 @@ namespace Themes_App
         );
         bindEditors(row);
         m_ruleRows.push_back(&row);
+    }
+
+    // The first of the style's own rules, else the first its chain gives it, at its leading cell.
+    // The focus stays where it is; a rebuild under a selection puts that selection back after this.
+    void ElementPage::selectFirstRule()
+    {
+        if (m_pageBox.body().currentItem())
+            return;
+        Grids::RowBase* row = nullptr;
+        if (!m_ruleRows.empty())
+            row = m_ruleRows.front();
+        else if (!m_inheritedRows.empty())
+            row = m_inheritedRows.front().row;
+        if (row)
+            m_grid.selectCell(*row, &column(RuleColumn::ApplyTo));
     }
 
     // A rule here is a change to a colour, so No change and every operation are offered on every
@@ -708,8 +720,10 @@ namespace Themes_App
         Text what{};
         what << L"Drop " << inheritedRuleName(chain, level, rule);
         what << L" from " << ColoredText{ InkWell::accentInk(), m_name };
+        // The dropped rule's row stays, struck through, and the cell stays on it.
         const RuleSelection at = selection();
         rebuild();
+        select(at, TakeFocus::Yes);
         rulesChanged(EditPhase::Settled, what, at);
     }
 
