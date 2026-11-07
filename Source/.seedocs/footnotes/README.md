@@ -42,4 +42,4 @@ the hint or the signature already says.
 `Controls`, `Controls-Base`, `Grids`, `Browser`, `Item-Containers` and `Selection-Model` for the
 controls; `Control-Foundation`, `Context`, `Graphics-Types`, `TextEngine-Types`, `Syntax`,
 `Transfer`, `AppTheme`, `Dom`, `Dt`, `Events`, `UI-Types` for the core; `Platform`, `Icons`,
-`Application`, `Diagnostic`, `StdActions` for the rest.
+`Application`, `Diagnostic`, `StdActions` and `PathArt` for the rest.

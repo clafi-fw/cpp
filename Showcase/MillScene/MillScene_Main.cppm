@@ -7,7 +7,9 @@ import MillScene_App.Icon;
 import ClaFi.App.Application;
 import ClaFi.App.Settings;
 
+import ClaFi.PathArt.Scenes;
 import ClaFi.PathArt.MillScene;
+import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.Themes;
 import ClaFi.PathArt.Types;
 
@@ -51,6 +53,9 @@ namespace MillScene_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
+    // The scenes stand in two lanes, the mill at the top of the first.
+    constexpr std::size_t k_sceneLaneSize{ 4 };
+
     // **The lanes the dropdown opened as.** Twenty-four themes in lanes of eight are the three
     // columns the picker had in the title bar, and the page keeps them.
     constexpr std::size_t k_themeLaneSize{ 8 };
@@ -71,6 +76,8 @@ namespace MillScene_App
     // **What the picked scene theme is kept under**, and it is kept by name: an index moves the
     // moment the list gains a theme, and a name is what a config file read by hand should show.
     export constexpr std::wstring_view k_sceneThemeNodeName{ L"SceneTheme" };
+    // What the picked scene is kept under, by name for the same reasons as the theme.
+    export constexpr std::wstring_view k_sceneNodeName{ L"Scene" };
 
     export class MillSceneForm : public Panel
     {
@@ -87,13 +94,22 @@ namespace MillScene_App
     private:
         void paintScene(PaintEvent&);
         void advanceCycleTime();
+        // The picker's scenes: the mill at 0, then the others in their order.
+        [[nodiscard]] PathArt::Scene& sceneAt(std::size_t index);
+        [[nodiscard]] std::size_t sceneCount() const;
+        void previewScene(std::size_t index);
+        void pickScene(std::size_t index);
         void applySceneColors() const;
         void previewSceneTheme(std::size_t index);
         // The application's own page of the backstage: the theme picker. See MillScene_Showcase
         void pickSceneTheme(std::size_t index);
 
         void buildScenePage(AppMenuPage&);
+        void buildScenePicker(AppMenuPage&);
+        void buildThemePicker(AppMenuPage&);
 
+        void restoreScene();
+        void storeScene();
         void restoreSceneTheme();
         void storeSceneTheme();
 
@@ -108,12 +124,20 @@ namespace MillScene_App
             appContext().appName())
         };
 
+        // The scene the user chose, and the one drawn - they differ while the pointer walks the
+        // picker. See previewScene
+        std::size_t m_pickedScene{ 0 };
+        std::size_t m_shownScene{ 0 };
         // The theme the user chose, which is not the theme the scene wears while the pointer
         // walks the picker - see previewSceneTheme.
         std::size_t m_pickedTheme{ 0 };
 
         // The backstage's Scene page, refilled every time that page is built: a pick repaints the
         // button it left as well as the one it took, and the stack is what the preview returns to.
+        SingleSelectionStackView* m_sceneLanes{ nullptr };
+        std::vector<Control*> m_sceneButtons{};
+        // Shown while the mill is the picked scene: the themes are the mill's.
+        AppMenuPage::Section* m_themeSection{ nullptr };
         SingleSelectionStackView* m_themeLanes{ nullptr };
         std::vector<Control*> m_themeButtons{};
         // The chart draws the benchmark above; it wears the scene's own colours, which is why it
@@ -121,10 +145,11 @@ namespace MillScene_App
         // When the readings last went to stderr. See traceMetrics.
         Diagnostic::TimePoint m_prevTrace{ Diagnostic::Clock::now() };
 
-        PathArt::MillScene m_scene{};
+        PathArt::MillScene m_millScene{};
+        PathArt::SceneList m_scenes{ PathArt::createScenes() };
         Diagnostic::FpsBenchmark m_benchmark{};
 
-        // Where the scene stands in its 40-second cycle, as a 0..1 ratio.
+        // Where the scene stands in its cycle, as a 0..1 ratio.
         float m_cycleTime{ 0.0f };
         Diagnostic::TimePoint m_prevRun{Diagnostic::Clock::now() };
         // The scene runs at the speed this slider names. While there is no slider it runs at 1.
@@ -138,7 +163,7 @@ namespace MillScene_App
             Padding{ 8.0f },
             Events{
                 [this](MouseMoveEvent&) {
-                    m_scene.animationTick();
+                    m_millScene.animationTick();
                 },
                 [this](PaintEvent& event) {
                     paintScene(event);
@@ -184,6 +209,7 @@ namespace MillScene_App
         // **Before anything reads the scene.** The info bar takes its colours from the theme, so
         // the stored one has to be the scene's by now.
         restoreSceneTheme();
+        restoreScene();
 
 
         connectAppPage(L"Scene", Icons::DotMark::draw, [this](AppMenuPage& page) {
@@ -200,8 +226,8 @@ namespace MillScene_App
     export [[nodiscard]] AppParams millSceneAppParams();
 
     // **What this application keeps of its own**, handed to the application beside the framework's
-    // schema and merged with it. The picked scene theme is the whole of it so far; empty is no
-    // pick yet, and the scene then stands on the theme it starts with.
+    // schema and merged with it: the picked scene and the mill's picked theme. Empty is no pick
+    // yet, and the showcase then opens on the mill in the theme it starts with.
     export [[nodiscard]] Dom::Dt::Section createMillSceneConfigSchema();
 
     /// @brief Builds the showcase into a form of the given application, runs it, and answers what
@@ -231,13 +257,13 @@ void MillSceneForm::paintScene(PaintEvent& event)
     if (isSignificantPaint)
     {
         m_benchmark.run([this, &event]() {
-            m_scene.draw(event.canvas(), event.controlBounds(), m_cycleTime);
+            sceneAt(m_shownScene).draw(event.canvas(), event.controlBounds(), m_cycleTime);
             });
         traceMetrics();
     }
     else
     {
-        m_scene.draw(event.canvas(), event.controlBounds(), m_cycleTime);
+        sceneAt(m_shownScene).draw(event.canvas(), event.controlBounds(), m_cycleTime);
     }
 
 }
@@ -248,14 +274,14 @@ void MillSceneForm::advanceCycleTime()
         return;
 
     using namespace std::chrono;
-    constexpr seconds k_cycleDuration{ 40 };
+    const seconds cycleDuration = sceneAt(m_shownScene).cycleDuration();
 
     const Diagnostic::TimePoint newRun = Diagnostic::Clock::now();
     const Diagnostic::Clock::duration sincePreviousRun = newRun - m_prevRun;
     m_prevRun = newRun;
-    // The step is a ratio of the 40 seconds a full cycle takes.
+    // The step is a ratio of the time a full cycle of the scene takes.
     const float timeSincePreviousEvent = static_cast<float>(sincePreviousRun.count())
-        / duration_cast<Diagnostic::Clock::duration>(k_cycleDuration).count();
+        / duration_cast<Diagnostic::Clock::duration>(cycleDuration).count();
 
     float speed = 1.0f;
     if (m_speedSlider)
@@ -267,23 +293,60 @@ void MillSceneForm::advanceCycleTime()
         speed = (negative ? -speed : speed);
     }
     m_cycleTime += timeSincePreviousEvent * speed;
+    m_cycleTime -= std::floor(m_cycleTime);
 
-    if (m_cycleTime > 1.0f)
-        m_cycleTime = 0.0f;
+}
 
+PathArt::Scene& MillSceneForm::sceneAt(const std::size_t index)
+{
+    if (index == 0)
+        return m_millScene;
+    return *m_scenes[index - 1];
+}
+
+std::size_t MillSceneForm::sceneCount() const
+{
+    return m_scenes.size() + 1;
+}
+
+// A different scene is a different load, so the readings start again.
+void MillSceneForm::previewScene(const std::size_t index)
+{
+    if (m_shownScene == index)
+        return;
+    m_shownScene = index;
+    m_benchmark.reset();
+}
+
+void MillSceneForm::pickScene(const std::size_t index)
+{
+    const std::size_t previous = m_pickedScene;
+    m_pickedScene = index;
+    previewScene(index);
+    storeScene();
+
+    if (m_sceneLanes)
+        m_sceneLanes->setCurrentItem(*m_sceneButtons[index]);
+    if (!m_sceneButtons.empty())
+    {
+        m_sceneButtons[previous]->invalidateState();
+        m_sceneButtons[index]->invalidateState();
+    }
+    if (m_themeSection)
+        m_themeSection->setVisible(index == 0);
 }
 
 // **The picked theme's colours, not the blend's.** This runs the moment a theme is picked, when
 // the blend still wears the one before it - and at startup, when it wears nothing at all.
 void MillSceneForm::applySceneColors() const
 {
-    const PathArt::SceneTheme& theme = m_scene.pickedTheme();
+    const PathArt::SceneTheme& theme = m_millScene.pickedTheme();
     m_fpsChart.setColors(theme.riverBottom, theme.riverWave);
 }
 
 void MillSceneForm::previewSceneTheme(std::size_t index)
 {
-    m_scene.setTheme(index);
+    m_millScene.setTheme(index);
     m_benchmark.reset();
     applySceneColors();
 }
@@ -303,7 +366,60 @@ void MillSceneForm::pickSceneTheme(std::size_t index)
 
 void MillSceneForm::buildScenePage(AppMenuPage& page)
 {
-    StackPanel& group = page.addGroup(L"Scene Theme");
+    buildScenePicker(page);
+    buildThemePicker(page);
+}
+
+// Built the way the theme picker is: the pointer previews, a pick is the current item.
+void MillSceneForm::buildScenePicker(AppMenuPage& page)
+{
+    StackPanel& group = page.addGroup(L"Scene");
+    SingleSelectionStackView& lanes = group.add<SingleSelectionStackView>(
+        Orientation::VerticalWrap,
+        LaneSize{ k_sceneLaneSize },
+        Spacing{ k_themeLaneSpacing, 0.0f },
+        VerticalAlign::Top
+    );
+
+    m_sceneLanes = &lanes;
+    lanes.setPreviewMode(PreviewMode::Hover);
+    lanes.onPreview([this](PreviewEvent& event) {
+        previewScene(event.item.tag().value);
+        });
+    lanes.onDestroy([this](DestroyEvent&) {
+        previewScene(m_pickedScene);
+        m_sceneLanes = nullptr;
+        m_sceneButtons.clear();
+        });
+
+    m_sceneButtons.clear();
+    m_sceneButtons.reserve(sceneCount());
+    for (std::size_t index = 0; index != sceneCount(); ++index)
+    {
+        ToolButton& item = lanes.add<ToolButton>(
+            Text{ sceneAt(index).name() },
+            Tag{ index },
+            MouseFocus::Self, // an item: the press that focuses it makes it current
+            ButtonViewMode::TextLabel,
+            ShowSelectionOnSurface::Yes
+        );
+        item.onGetState([this, index](GetStateEvent& event) {
+            event.state.selected = m_pickedScene == index;
+            });
+        item.onClick([this, index](ClickEvent&) {
+            pickScene(index);
+            });
+        m_sceneButtons.push_back(&item);
+    }
+    lanes.setCurrentItem(*m_sceneButtons[m_pickedScene]);
+}
+
+void MillSceneForm::buildThemePicker(AppMenuPage& page)
+{
+    AppMenuPage::Section& section = page.addSection(L"Scene Theme");
+    m_themeSection = &section;
+    section.setVisible(m_pickedScene == 0);
+    StackPanel& group = section.body();
     SingleSelectionStackView& lanes = group.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_themeLaneSize },
@@ -324,6 +440,7 @@ void MillSceneForm::buildScenePage(AppMenuPage& page)
     // window will not send.
     lanes.onDestroy([this](DestroyEvent&) {
         previewSceneTheme(m_pickedTheme);
+        m_themeSection = nullptr;
         m_themeLanes = nullptr;
         m_themeButtons.clear();
         });
@@ -362,6 +479,27 @@ void MillSceneForm::buildScenePage(AppMenuPage& page)
 
 }
 
+void MillSceneForm::restoreScene()
+{
+    const std::wstring name =
+        (appContext().config() / k_sceneNodeName).get<std::wstring>();
+    for (std::size_t index = 0; index != sceneCount(); ++index)
+    {
+        if (sceneAt(index).name() == name)
+        {
+            m_pickedScene = index;
+            m_shownScene = index;
+            return;
+        }
+    }
+}
+
+void MillSceneForm::storeScene()
+{
+    (appContext().config() / k_sceneNodeName).set(
+        std::wstring{ sceneAt(m_pickedScene).name() });
+}
+
 void MillSceneForm::restoreSceneTheme()
 {
     const std::wstring name =
@@ -374,7 +512,7 @@ void MillSceneForm::restoreSceneTheme()
     {
         if (theme.name == name)
         {
-            m_scene.setTheme(index);
+            m_millScene.setTheme(index);
             m_pickedTheme = index;
             return;
         }
@@ -385,7 +523,7 @@ void MillSceneForm::restoreSceneTheme()
 void MillSceneForm::storeSceneTheme()
 {
     (appContext().config() / k_sceneThemeNodeName).set(
-        std::wstring{ m_scene.pickedTheme().name });
+        std::wstring{ m_millScene.pickedTheme().name });
 }
 
 void MillSceneForm::traceMetrics()
@@ -500,8 +638,9 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
             .publisher = L"ClaFi Framework",
             .description = Text{
                 L"Shows the ClaFi path painter at work: "
-                L"a watermill landscape animated on a single CPU thread or through the graphics card, "
-                L"in a choice of scene themes, with its frame times charted live."
+                L"a watermill landscape in a choice of themes and seven more scenes, "
+                L"animated on a single CPU thread or through the graphics card, "
+                L"with their frame times charted live."
             },
             .version = CLAFI_APP_VERSION,
             .updates = UpdateSource{
@@ -513,7 +652,10 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
 
     Dom::Dt::Section createMillSceneConfigSchema()
     {
-        return Dom::Dt::Section{ Dom::Dt::Value{ k_sceneThemeNodeName, L"" } };
+        return Dom::Dt::Section{
+            Dom::Dt::Value{ k_sceneNodeName, L"" },
+            Dom::Dt::Value{ k_sceneThemeNodeName, L"" }
+        };
     }
 
     constexpr float k_minWindowWidth{ 640.0f };

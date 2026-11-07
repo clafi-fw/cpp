@@ -479,10 +479,29 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\StdActions\StdActions.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\StdActions\StdActions.Transfer.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\StdActions\StdActions.Transfer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\ChaseScene.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\ChaseScene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\ClockworkScene.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\ClockworkScene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\CometScene.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\CometScene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\GhostScene.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\GhostScene.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\MillScene.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\MillScene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\OrreryScene.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\OrreryScene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Scene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Scenes.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Scenes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Themes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Types.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PuppeteerScene.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PuppeteerScene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\SatelliteScene.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\SatelliteScene.cppm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Headers.h" />

@@ -6,6 +6,7 @@ import ClaFi.Core.System.Animation;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Cpu_PathPainter;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.Types;
 import ClaFi.PathArt.Themes;
 import ClaFi.Core.Graphics.Types;
@@ -20,10 +21,13 @@ namespace ClaFi::PathArt
     // The colour at a share of its own alpha.
     [[nodiscard]] Color faded(Color color, float share);
 
-    export class MillScene
+    // A watermill landscape in a choice of themes, crossfading from one to the next.
+    export class MillScene : public Scene
     {
     public:
         MillScene();
+    public:
+        [[nodiscard]] std::wstring_view name() const override { return L"Mill"; }
         std::size_t themeIndex() const { return m_themeIndex; }
         // **What the scene is painting**, which between two picks is a blend of them and not any
         // theme in the list.
@@ -35,7 +39,7 @@ namespace ClaFi::PathArt
         void animationTick();
 
         // Exact target bounds passed explicitly to anchor layout geometry
-        void draw(Canvas& canvas, const FloatRect& bounds, float t);
+        void draw(Canvas& canvas, const FloatRect& bounds, float t) override;
 
     private:
         void crossFadeToPickedTheme();
