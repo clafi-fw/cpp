@@ -47,6 +47,10 @@ namespace ClaFi::PathArt
         constexpr int k_cityOpacitySteps{ 6 };
         // How far apart the points are where a shape's edge follows the rim.
         constexpr float k_rimStep{ 2.0f * k_degree };
+        // How far a cloud's edge fades out, in scene units.
+        constexpr float k_cloudSoftness{ 20.0f };
+        // The points round a lump of cloud, enough for the finest wave along its edge.
+        constexpr int k_cloudPoints{ 32 };
 
         // A city's light where it shows this frame, and the opacity step it is drawn at.
         struct LitCity
@@ -237,17 +241,45 @@ namespace ClaFi::PathArt
                 ++placed;
             }
         }
+        // A cluster is a lump, and some carry one or two smaller lumps overlapping it.
         for (int i = 0; i != 90; ++i)
         {
             const FloatPoint lonLat = {
                 pseudoRandom(i, 81.0f) * 360.0f - 180.0f,
                 pseudoRandom(i, 82.0f) * 120.0f - 50.0f
             };
-            m_clouds.push_back({
-                .lonLat = lonLat,
-                .radius = 1.2f + 2.6f * pseudoRandom(i, 83.0f),
-                .stretch = 1.2f + 1.2f * pseudoRandom(i, 84.0f)
-            });
+            const float radius = 1.2f + 2.6f * pseudoRandom(i, 83.0f);
+            const float stretch = 1.2f + 1.2f * pseudoRandom(i, 84.0f);
+            const FloatPoint halfSize = { 0.8f * radius * (1.0f + 0.7f * stretch), 0.6f * radius };
+            const auto lumpAt = [&](int seed, FloatPoint at, FloatPoint size) {
+                return Cloud{
+                    .lonLat = at,
+                    .halfSize = size,
+                    .tilt = (pseudoRandom(seed, 95.0f) - 0.5f) * 0.5f,
+                    .phases = {
+                        k_2Pi * pseudoRandom(seed, 91.0f),
+                        k_2Pi * pseudoRandom(seed, 92.0f),
+                        k_2Pi * pseudoRandom(seed, 93.0f),
+                        k_2Pi * pseudoRandom(seed, 94.0f)
+                    },
+                    .driftPhase = static_cast<float>(i)
+                };
+            };
+            m_clouds.push_back(lumpAt(i * 3, lonLat, halfSize));
+            const float extra = pseudoRandom(i, 85.0f);
+            const int companions = extra < 0.15f ? 2 : (extra < 0.45f ? 1 : 0);
+            for (int companion = 1; companion <= companions; ++companion)
+            {
+                const int lumpSeed = i * 3 + companion;
+                const float direction = k_2Pi * pseudoRandom(lumpSeed, 86.0f);
+                const float distance = 0.35f + 0.35f * pseudoRandom(lumpSeed, 87.0f);
+                const FloatPoint offset = {
+                    std::cos(direction) * halfSize.x,
+                    std::sin(direction) * halfSize.y
+                };
+                const float scale = 0.45f + 0.35f * pseudoRandom(lumpSeed, 88.0f);
+                m_clouds.push_back(lumpAt(lumpSeed, lonLat + offset * distance, halfSize * scale));
+            }
         }
     }
 
@@ -556,10 +588,10 @@ namespace ClaFi::PathArt
         std::vector<Direction> outline;
         std::vector<FloatPoint> points;
         std::vector<std::size_t> loopEnds;
-        const auto drawOutline = [&](bool counterClockwise, const Brush& brush) {
+        const auto nearSideShape = [&](bool counterClockwise) -> std::optional<PixelPath> {
             globe.nearSideOf(outline, counterClockwise, points, loopEnds);
             if (points.empty())
-                return;
+                return std::nullopt;
             constexpr float k_far{ std::numeric_limits<float>::max() };
             FloatRect reach = { k_far, k_far, -k_far, -k_far };
             for (const FloatPoint point : points)
@@ -574,7 +606,7 @@ namespace ClaFi::PathArt
             const bool outside = reach.right < view.left || reach.left > view.right
                 || reach.bottom < view.top || reach.top > view.bottom;
             if (outside)
-                return;
+                return std::nullopt;
             PixelPath shape;
             std::size_t loopStart = 0;
             for (const std::size_t loopEnd : loopEnds)
@@ -585,7 +617,7 @@ namespace ClaFi::PathArt
                 shape.close();
                 loopStart = loopEnd;
             }
-            fillShape(frame, shape, brush);
+            return shape;
         };
 
         for (const Coastline& coastline : m_coastlines)
@@ -593,32 +625,37 @@ namespace ClaFi::PathArt
             outline.clear();
             for (const FloatPoint lonLat : coastline.lonLat)
                 outline.push_back(globe.surfaceAt(lonLat));
-            drawOutline(coastline.counterClockwise, SolidColor{ coastline.color });
+            if (const std::optional<PixelPath> shape = nearSideShape(coastline.counterClockwise))
+                fillShape(frame, *shape, SolidColor{ coastline.color });
         }
-        // Each cloud is three puffs, filled one by one: overlapping in one path, they would cut
-        // holes.
-        for (std::size_t i = 0; i != m_clouds.size(); ++i)
+
+        // **Each lump is filled on its own with a soft edge**, so lumps that overlap show brighter
+        // where they meet rather than cut holes in each other. The edge is four waves round an
+        // ellipse, set apart for each lump by where each wave starts.
+        const PathDrawLayer soft = PathDrawLayer::Shadow(SatelliteSceneColors::Cloud,
+            k_cloudSoftness * frame.unit);
+        for (const Cloud& cloud : m_clouds)
         {
-            const Cloud& cloud = m_clouds[i];
-            const float drift = 6.0f * std::sin(k_2Pi * cycleTime + static_cast<float>(i));
-            const float longitude = cloud.lonLat.x + drift;
-            for (int puff = 0; puff != 3; ++puff)
+            const float drift = 6.0f * std::sin(k_2Pi * cycleTime + cloud.driftPhase);
+            const FloatPoint center = cloud.lonLat + FloatPoint{ drift, 0.0f };
+            outline.clear();
+            for (int j = 0; j != k_cloudPoints; ++j)
             {
-                const FloatPoint puffCenter = {
-                    longitude + static_cast<float>(puff - 1) * cloud.radius * cloud.stretch * 0.7f,
-                    cloud.lonLat.y + (puff == 1 ? cloud.radius * 0.25f : 0.0f)
-                };
-                const float puffRadius = cloud.radius * (puff == 1 ? 1.0f : 0.7f);
-                outline.clear();
-                for (int j = 0; j != 12; ++j)
-                {
-                    const float angle = k_2Pi * static_cast<float>(j) / 12.0f;
-                    const FloatPoint around = { std::cos(angle) * 1.4f, std::sin(angle) * 0.6f };
-                    outline.push_back(globe.surfaceAt(puffCenter + around * puffRadius));
-                }
-                // The puff's points run counterclockwise.
-                drawOutline(true, SolidColor{ SatelliteSceneColors::Cloud });
+                const float angle = k_2Pi * static_cast<float>(j) / k_cloudPoints;
+                const std::array<float, 4>& phases = cloud.phases;
+                const float lump = 1.0f + 0.16f * std::sin(2.0f * angle + phases[0])
+                    + 0.11f * std::sin(3.0f * angle + phases[1])
+                    + 0.08f * std::sin(5.0f * angle + phases[2])
+                    + 0.06f * std::sin(9.0f * angle + phases[3]);
+                const FloatPoint around = rotated({
+                    std::cos(angle) * cloud.halfSize.x,
+                    std::sin(angle) * cloud.halfSize.y
+                }, cloud.tilt);
+                outline.push_back(globe.surfaceAt(center + around * lump));
             }
+            // The lump's points run counterclockwise.
+            if (const std::optional<PixelPath> shape = nearSideShape(true))
+                frame.canvas.drawPath(*shape, std::span{ &soft, 1 }, &frame.toCanvas);
         }
     }
 

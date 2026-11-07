@@ -295,6 +295,20 @@ Bases initialize in declaration order, so FormBase is complete - window, canvas,
 CreateParams is formed from it. Nothing about the window moves into Control, so the same class stays
 usable as a nested child.
 
+## FormBase paintPass
+
+**An ordinary pass clears only outside the root's padded rectangle** (2026-11-08). A window that
+carries alpha - every window on Windows - used to start each paint from nothing over its whole dirty
+rect. On the CPU backend that was a clear of the MillScene's scene panel every frame, under a panel
+and a scene that covered it again: 5.3% of Oj's frame in a Visual Studio profile at 3436 x 2051.
+The children cover the root's rectangle inside its padding, the rule a frame without alpha already
+rests on, so FormBase states that rectangle through IBackend::setCoveredBase and the CPU backend
+leaves it as it stands. The padding ring, the margins under the shadow and each corner square still
+start from nothing. Direct2D clears its whole rect as before, on the GPU.
+
+The rule now carries more: a translucent surface inside an alpha window, with nothing opaque under
+it, would build up over repaints where it used to be laid over a clear base each time.
+
 ## Control::contentAroundText
 
 2026-10-12. The align pass took a wrapping text's second measurement as the whole content. A

@@ -68,10 +68,29 @@ namespace ClaFi::Graphics::Cpu
         // rounded corner: the pixels outside the curve are the ones nothing draws, and they have
         // to read as absent rather than as whatever stood there two frames ago.
         //
-        // **Only the dirty rect**, because that is what this pass will paint and the clip already
-        // states it.
-        if (m_transparentBase)
+        // **Only the dirty rect, outside what the content covers**, because that is what this
+        // pass will paint and the clip already states it. The part the content covers keeps what
+        // was there, as a frame without alpha keeps all of it.
+        if (!m_transparentBase)
+            return;
+        const IntRect dirty = baseClip.bounds.roundedOut();
+        const IntRect covered = IntRect::intersection(m_coveredBase, dirty);
+        if (covered.empty())
+        {
             m_activeView.fill(k_noColor);
+            return;
+        }
+        const std::array<IntRect, 4> uncovered{ {
+            { dirty.left, dirty.top, dirty.right, covered.top },
+            { dirty.left, covered.bottom, dirty.right, dirty.bottom },
+            { dirty.left, covered.top, covered.left, covered.bottom },
+            { covered.right, covered.top, dirty.right, covered.bottom }
+        } };
+        for (const IntRect& part : uncovered)
+        {
+            if (!part.empty())
+                m_activeView.subView(part.toFloat()).fill(k_noColor);
+        }
     }
 
     void CpuBackend::endPaint(void* /* nativeContext */, const IntRect* /* dirtyRect */, Bitmap*& outData)

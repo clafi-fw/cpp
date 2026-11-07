@@ -43,6 +43,7 @@ namespace ClaFi::Graphics::Cpu
 
         void resize(IntSize) override;
         void setTransparentBase(bool value) override { m_transparentBase = value; }
+        void setCoveredBase(const IntRect& rect) override { m_coveredBase = rect; }
 
         void beginPaint(void* nativeContext, const IntRect* dirtyRect) override;
         void endPaint(void* nativeContext, const IntRect* dirtyRect, Bitmap*& outData) override;
@@ -163,6 +164,8 @@ namespace ClaFi::Graphics::Cpu
         IntSize m_size;
         // Whether each frame is cleared before it is painted - see beginPaint.
         bool m_transparentBase{ false };
+        // What a cleared frame leaves as it stands, because its content covers it.
+        IntRect m_coveredBase{};
         Bitmap m_backBuffer;
         // What the painters write into: the back buffer, or the innermost opacity layer's own
         // buffer while one is open. Every painter reaches its pixels through getActiveView, so

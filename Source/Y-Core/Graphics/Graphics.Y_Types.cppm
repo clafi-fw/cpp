@@ -503,6 +503,9 @@ namespace ClaFi::Graphics
         // cover every pixel. A window whose alpha is read by whoever shows it cannot rely on that
         // - the pixels outside a rounded corner are exactly the ones nothing covers.
         virtual void setTransparentBase(bool) {}
+        // The part of the frames to come that their content covers, which a transparent base
+        // leaves as it stands; empty, the whole of each frame starts from nothing.
+        virtual void setCoveredBase(const IntRect&) {}
         virtual void beginPaint(void* nativeContext, const IntRect* dirtyRect) = 0;
         virtual void endPaint(void* nativeContext, const IntRect* dirtyRect, Bitmap*& outData) = 0;
         virtual void* getNativeRenderTarget() const = 0;

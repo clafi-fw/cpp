@@ -1963,10 +1963,10 @@ namespace ClaFi
         return FloatRect::FromDimensions(frameOrigin(), m_content.scaledSize());
     }
 
-    // **A corner is painted twice.** A paint clears the rect it covers, and a rect reaching into a
-    // corner square clears the notch outside the arc with it - the root's own rect does, on any
-    // change of its state - while the main pass lays no shadow inside the root's rectangle. So
-    // each square the dirty rect touches is cleared, given its shadow back and painted again with
+    // **A corner is painted twice.** A rect reaching into a corner square leaves the notch outside
+    // the arc to whatever a child draws there - the root's own rect does, on any change of its
+    // state - while the main pass lays no shadow inside the root's rectangle. So each square the
+    // dirty rect touches is cleared, given its shadow back and painted again with
     // the root's content under a clip shaped like that corner of the frame - a square with its
     // outer corner rounded - so outside the arc the shadow alone stands, whatever a child draws
     // there. A primary window's children stand right inside the border ring and reach into the
@@ -2026,9 +2026,24 @@ namespace ClaFi
         }
     }
 
+    // **The children cover the root's rectangle inside its padding**, so an ordinary pass leaves
+    // the pixels there as they stand rather than clearing them first; only the padding ring and
+    // the margins start from nothing. A corner pass clears its whole square, notch included.
     void FormBase::paintPass(void* nativeContext, const IntRect& rect, const Graphics::PixelPath* contentClip,
         Graphics::Bitmap*& outData)
     {
+        if (Graphics::IBackend* backend = m_canvas.backend())
+        {
+            const FloatRect root = rootRect();
+            const ScaledPadding padding = m_content.scaledPadding();
+            const IntRect covered = {
+                static_cast<int>(std::ceil(root.left + padding.x)),
+                static_cast<int>(std::ceil(root.top + padding.y)),
+                static_cast<int>(std::floor(root.right - padding.x)),
+                static_cast<int>(std::floor(root.bottom - padding.y))
+            };
+            backend->setCoveredBase(contentClip ? IntRect{} : covered);
+        }
         m_canvas.beginPaint(nativeContext, rect);
         const FloatRect floatRect = rect.toFloat();
         paintShadow(floatRect, contentClip != nullptr);

@@ -69,11 +69,14 @@ namespace ClaFi::PathArt
             FloatPoint lonLat;
             float brightness;
         };
+        // A lump of cloud; some stand alone and some overlap another of their cluster.
         struct Cloud
         {
             FloatPoint lonLat;
-            float radius;
-            float stretch;
+            FloatPoint halfSize; // across and up, in degrees
+            float tilt; // off the line of latitude
+            std::array<float, 4> phases; // where each of the edge's waves starts
+            float driftPhase; // shared by the lumps of one cluster, which drift together
         };
     private:
         static void drawSpace(const SceneFrame&);

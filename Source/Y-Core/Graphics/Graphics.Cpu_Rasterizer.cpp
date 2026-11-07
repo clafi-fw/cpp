@@ -539,14 +539,34 @@ namespace ClaFi::Graphics::Cpu
 
             bool isStandard = (cap == StrokeCap::Round) || (!edge.isStartCap && !edge.isEndCap);
 
+            // A pixel the radius or more from the segment's line takes no glow and keeps the mask
+            // it has, so a row of a slanting edge covers only the run within that reach of where
+            // the line crosses it, as rasterizeStrokeSegment's rows do.
+            const bool slanting = edge.invDy != 0.0f;
+            const float reach = radius * edge.len * std::abs(edge.invDy);
+            const float boxLeft = static_cast<float>(startX);
+            const float boxRight = static_cast<float>(endX);
+
             for (int y = startY; y < endY; ++y)
             {
-                __m256 vPy = _mm256_set1_ps(static_cast<float>(y) + 0.5f);
-                float* maskPtr = &mask[(y - totalTop) * m_maskStride + (startX - totalLeft)];
-
-                for (int x = startX; x < endX; x += 8)
+                const float py = static_cast<float>(y) + 0.5f;
+                int runStart = startX;
+                int runEnd = endX;
+                if (slanting)
                 {
-                    __m256i vLoadMask = env.loadMask(endX - x);
+                    const float lineX = edge.p1.x + (py - edge.p1.y) * edge.dx * edge.invDy;
+                    const float runLeft = std::clamp(lineX - reach, boxLeft, boxRight);
+                    const float runRight = std::clamp(lineX + reach, boxLeft, boxRight);
+                    runStart = std::max(startX, static_cast<int>(std::floor(runLeft)) - 1);
+                    runEnd = std::min(endX, static_cast<int>(std::ceil(runRight)) + 2);
+                }
+
+                __m256 vPy = _mm256_set1_ps(py);
+                float* maskPtr = &mask[(y - totalTop) * m_maskStride + (runStart - totalLeft)];
+
+                for (int x = runStart; x < runEnd; x += 8)
+                {
+                    __m256i vLoadMask = env.loadMask(runEnd - x);
                     __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(x)), env.vSteps);
 
                     __m256 distSq = isStandard ? calcEdgeDistSq(vPx, vPy, edge) : calcStrokeEdgeDistSq(vPx, vPy, edge, cap, 0.0f);

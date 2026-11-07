@@ -82,6 +82,12 @@ calcStrokeEdgeDistSq, which MSVC keeps out of line; the same frame under clang s
 The masks it writes are the same bit for bit - checked over every scene and the mill's themes -
 and on the Puppeteer the work counted by callgrind fell to a sixth.
 
+**rasterizeGlowMask narrows its rows the same way** (2026-11-08): a pixel the radius or more from
+the line takes no glow, and the mask keeps the greater of the two. The Satellite's soft clouds - a
+Shadow layer round each lump, the reach 20 units - cost 6.8 ms a frame at 3436 x 2051 with whole
+boxes; with narrowed rows and the companion lumps added, about 4. The masks are the same bit for
+bit.
+
 ## RasterBuffers rasterizeFill
 
 **Only the groups of eight pixels near an edge work out the distance field** (2026-11-08). Every

@@ -82,6 +82,15 @@ namespace MillScene_App
     // What the picked scene is kept under, by name for the same reasons as the theme.
     export constexpr std::wstring_view k_sceneNodeName{ L"Scene" };
 
+    // The panel the scene covers whole, so its own surface is not filled under the scene.
+    class ScenePanel : public Panel
+    {
+    public:
+        using Panel::Panel;
+    protected:
+        void paintSurface(PaintEvent&) override;
+    };
+
     export class MillSceneForm : public Panel
     {
     public:
@@ -164,7 +173,7 @@ namespace MillScene_App
             VerticalAlign::Center
             ,      OnEvent{ AppIcon::drawIcon }
         ) };
-        Panel& m_scenePanel{ createBody<Panel>(
+        ScenePanel& m_scenePanel{ createBody<ScenePanel>(
             Padding{ 8.0f },
             Events{
                 [this](MouseMoveEvent&) {
@@ -242,6 +251,11 @@ namespace MillScene_App
 
 //-----------------------------------------------------------------------------
 
+
+void ScenePanel::paintSurface(PaintEvent& event)
+{
+    emitEvent(event);
+}
 
 void MillSceneForm::paintScene(PaintEvent& event)
 {
