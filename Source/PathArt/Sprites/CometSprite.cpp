@@ -44,18 +44,27 @@ namespace ClaFi::PathArt
         const FloatPoint head = pointOnCourse(pose.course, headAlong);
 
         // The dust tail follows the curve the comet came along, fanning out as it goes and
-        // growing with the comet's speed.
+        // growing with the comet's speed. It opens from the nucleus as a quarter ellipse, sampled
+        // in even steps of angle there and of length behind.
         const float speed = falling
             ? 0.5f + 1.3f * std::sqrt(passTime / fallShare)
             : 1.8f;
         const float span = 0.05f + 0.1f * speed;
-        constexpr int k_samples = 16;
+        constexpr float k_nose = 0.1f; // the share of the tail it takes to open
+        constexpr int k_noseSamples = 16;
+        constexpr int k_bodySamples = 16;
+        constexpr int k_samples = k_noseSamples + k_bodySamples;
         std::array<FloatPoint, k_samples + 1> outerEdge{};
         std::array<FloatPoint, k_samples + 1> innerEdge{};
         FloatPoint tailEnd = head;
         for (int i = 0; i <= k_samples; ++i)
         {
-            const float share = static_cast<float>(i) / k_samples;
+            const bool inNose = i < k_noseSamples;
+            const float angle = 0.25f * k_2Pi * static_cast<float>(i) / k_noseSamples;
+            const float share = inNose
+                ? k_nose * (1.0f - std::cos(angle))
+                : k_nose + (1.0f - k_nose) * static_cast<float>(i - k_noseSamples) / k_bodySamples;
+            const float opening = inNose ? std::sin(angle) : 1.0f;
             const float along = headAlong - span * share;
             const FloatPoint point = pointOnCourse(pose.course, along);
             const FloatPoint ahead = pointOnCourse(pose.course, along + 0.002f);
@@ -66,7 +75,7 @@ namespace ClaFi::PathArt
                 : FloatPoint{ 1.0f, 0.0f };
             const FloatPoint outward = { -tangent.y, tangent.x };
             const float taper = 15.0f * std::pow(1.0f - share, 1.1f) + 2.0f * share;
-            const float halfWidth = taper * unit * (0.7f + 0.3f * speed);
+            const float halfWidth = taper * unit * (0.7f + 0.3f * speed) * opening;
             const float fan = 1.0f + share * 1.6f;
             outerEdge[static_cast<std::size_t>(i)] = point + outward * (halfWidth * fan);
             innerEdge[static_cast<std::size_t>(i)] = point - outward * (halfWidth * 0.5f);

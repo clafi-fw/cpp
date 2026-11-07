@@ -187,6 +187,12 @@ The reflection draws everything above the lake a second time through a mirrored 
 which roughly doubles the sky's cost. The afterglow is drawn between the far ridge and the near
 one, so the near ridge hides the landing itself.
 
+**The dust tail opens from the nucleus** as a quarter ellipse over its first tenth (2026-11-08).
+The mockup started it at full width with a straight edge across the head, and at 3436 x 2051 Oj
+saw that edge through the coma's glow as a square butt. Rendered against it: a half circle round
+the head read as a blunt capsule, and a nose a fifth of the tail long grew a belly on the fanned
+side. Oj picked the tenth.
+
 ## SatelliteScene
 
 The globe is an orthographic projection, looked at from latitude -20 with its north turned 0.22

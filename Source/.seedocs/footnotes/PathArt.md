@@ -200,8 +200,9 @@ shooting stars cross the sky in the quiet between the passes.
 **A pass is the comet's whole visit.** It falls along its course for `fallShare` of the pass,
 lands at the course's end, and its tails fade over the next 0.08.
 
-The head gathers speed as it falls, and the dust tail grows with the speed. Sparks shed along the
-way drift down and fade over 0.3 of a pass.
+The head gathers speed as it falls, and the dust tail grows with the speed. The tail opens from
+the nucleus with a rounded front over its first tenth. Sparks shed along the way drift down and
+fade over 0.3 of a pass.
 
 ## SatelliteScene
 
