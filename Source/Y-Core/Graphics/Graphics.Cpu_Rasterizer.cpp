@@ -203,6 +203,7 @@ namespace ClaFi::Graphics::Cpu
 
     void RasterBuffers::prepareForEffect(int width, int height, bool clearMask)
     {
+        m_maskRuns.clear();
         m_maskStride = (width + 7) & ~7;
         std::size_t needed = static_cast<std::size_t>(m_maskStride) * height + 8;
         if (mask.size() < needed)
@@ -261,6 +262,41 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
+    // Marks, as a count rising at the first group and falling after the last, the groups of
+    // eight pixels from `left` that a point on row `py` within `reach` of the edge can fall in:
+    // the edge's run over the rows `reach` either side, widened by `reach`.
+    static void markNearEdge(const RenderEdge& edge, const float py, const float reach,
+        const int left, std::vector<int>& nearEdges)
+    {
+        float from = 0.0f;
+        float to = 1.0f;
+        if (edge.dy != 0.0f)
+        {
+            const float above = (py - reach - edge.p1.y) / edge.dy;
+            const float below = (py + reach - edge.p1.y) / edge.dy;
+            from = std::max(0.0f, std::min(above, below));
+            to = std::min(1.0f, std::max(above, below));
+        }
+        else if (std::abs(py - edge.p1.y) >= reach)
+        {
+            return;
+        }
+        if (from > to)
+            return;
+
+        const float fromX = edge.p1.x + from * edge.dx;
+        const float toX = edge.p1.x + to * edge.dx;
+        const int lastGroup = static_cast<int>(nearEdges.size()) - 2;
+        const int first = static_cast<int>(std::floor((std::min(fromX, toX) - reach
+            - static_cast<float>(left)) / 8.0f));
+        const int last = static_cast<int>(std::floor((std::max(fromX, toX) + reach
+            - static_cast<float>(left)) / 8.0f));
+        if (last < 0 || first > lastGroup)
+            return;
+        ++nearEdges[static_cast<std::size_t>(std::max(first, 0))];
+        --nearEdges[static_cast<std::size_t>(std::min(last, lastGroup) + 1)];
+    }
+
     void RasterBuffers::rasterizeFill(const FloatRect& bounds, float outset)
     {
         SimdEnv env;
@@ -276,6 +312,14 @@ namespace ClaFi::Graphics::Cpu
         alignas(32) __m256 crossingXInts[k_maxRowEdges];
         alignas(32) RowSdfEdge preppedEdges[k_maxRowEdges];
 
+        // **Only the pixels near an edge need the distance field.** Further than half a pixel
+        // and the outset from every edge the alpha is the winding's 0 or 1, so each row marks the
+        // groups of eight that any edge comes within reach of - a pixel more against rounding -
+        // and gives the rest the winding alone. The inside of a large shape costs a store.
+        const float reach = 1.5f + std::abs(outset);
+        const int groups = (width + 7) / 8;
+        std::vector<int> nearEdges(static_cast<std::size_t>(groups) + 1);
+
         for (int y = startY; y < endY; ++y)
         {
             float py = static_cast<float>(y) + 0.5f;
@@ -284,6 +328,7 @@ namespace ClaFi::Graphics::Cpu
 
             int numCrossing = 0;
             int numSdf = 0;
+            std::fill(nearEdges.begin(), nearEdges.end(), 0);
 
             // 1. Pre-pass: hoist every row invariant out of the horizontal loop.
             for (std::uint32_t idx : activeEdges)
@@ -311,8 +356,10 @@ namespace ClaFi::Graphics::Cpu
                     prepped.vDyDy = _mm256_set1_ps(dy * e.dy);
                     prepped.vDyScalar = _mm256_set1_ps(dy);
                     prepped.vInvLenSq = _mm256_set1_ps(e.invLenSq);
+                    markNearEdge(e, py, reach, startX, nearEdges);
                 }
             }
+            int nearCount = 0;
 
             // 2. Horizontal loop: no branches, no divisions.
             for (int xOffset = 0; xOffset < width; xOffset += 8)
@@ -328,6 +375,22 @@ namespace ClaFi::Graphics::Cpu
                         vInsideMask,
                         _mm256_castps_si256(_mm256_cmp_ps(vPx, crossingXInts[i], 30))
                     );
+                }
+
+                nearCount += nearEdges[static_cast<std::size_t>(xOffset / 8)];
+                if (nearCount == 0)
+                {
+                    const __m256 alpha = _mm256_and_ps(_mm256_castsi256_ps(vInsideMask), env.vOne);
+                    const int remaining = width - xOffset;
+                    if (remaining >= 8)
+                    {
+                        _mm256_storeu_ps(maskRow + xOffset, alpha);
+                    }
+                    else
+                    {
+                        _mm256_maskstore_ps(maskRow + xOffset, env.loadMask(remaining), alpha);
+                    }
+                    continue;
                 }
 
                 // Distance field, using the pre-broadcast row constants.
@@ -411,6 +474,11 @@ namespace ClaFi::Graphics::Cpu
                 runEnd = std::min(endX, static_cast<int>(std::ceil(runRight)) + 2);
             }
 
+            if (runStart >= runEnd)
+            {
+                continue;
+            }
+            claimMaskRun(y - totalTop, runStart, runEnd, totalLeft);
             __m256 vPy = _mm256_set1_ps(py);
             float* maskPtr = &mask[(y - totalTop) * m_maskStride + (runStart - totalLeft)];
 
@@ -429,8 +497,13 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
+    // A row starts with an empty run, and a segment reaching it clears only the columns its run
+    // adds. The columns between a row's runs are cleared with them, so the run stays one span.
     void RasterBuffers::rasterizeStrokeMask(const FloatRect& bounds, float radius, StrokeCap cap)
     {
+        const int rows = static_cast<int>(std::ceil(bounds.bottom))
+            - static_cast<int>(std::floor(bounds.top));
+        m_maskRuns.assign(static_cast<std::size_t>(std::max(rows, 0)), MaskRun{});
         for (const RenderEdge& edge : m_edgeCache)
         {
             rasterizeStrokeSegment(bounds, edge, radius, cap);
@@ -552,7 +625,6 @@ namespace ClaFi::Graphics::Cpu
         int endY = static_cast<int>(std::ceil(activeRect.bottom));
         int startX = static_cast<int>(std::floor(activeRect.left));
         int endX = static_cast<int>(std::ceil(activeRect.right));
-        int width = endX - startX;
 
         int geomTop = static_cast<int>(std::floor(surface.top()));
         int geomLeft = static_cast<int>(std::floor(surface.left()));
@@ -573,7 +645,14 @@ namespace ClaFi::Graphics::Cpu
 
         for (int y = startY; y < endY; ++y)
         {
-            float* maskRow = &mask[(y - geomTop) * m_maskStride + (startX - geomLeft)];
+            const MaskRun covered = coveredRun(y - geomTop, startX, endX);
+            const int rowLeft = covered.left;
+            const int rowWidth = covered.right - covered.left;
+            if (rowWidth <= 0)
+            {
+                continue;
+            }
+            float* maskRow = &mask[(y - geomTop) * m_maskStride + (rowLeft - geomLeft)];
             const float* clipRow = nullptr;
 
             // Zero float-to-int conversions inside the row loop [CP]
@@ -586,16 +665,17 @@ namespace ClaFi::Graphics::Cpu
                 }
             }
 
-            Color* pixelRow = surface.scanLineAbs(static_cast<float>(startX), static_cast<float>(y));
+            Color* pixelRow = surface.scanLineAbs(static_cast<float>(rowLeft),
+                static_cast<float>(y));
 
-            for (int xOffset = 0; xOffset < width; xOffset += 8)
+            for (int xOffset = 0; xOffset < rowWidth; xOffset += 8)
             {
-                __m256i vLoadMask = env.loadMask(width - xOffset);
+                __m256i vLoadMask = env.loadMask(rowWidth - xOffset);
                 __m256 maskAlpha = _mm256_maskload_ps(maskRow, vLoadMask);
 
                 if (clipRow)
                 {
-                    int clipX = (startX + xOffset) - clipLeft;
+                    int clipX = (rowLeft + xOffset) - clipLeft;
                     maskAlpha = _mm256_mul_ps(maskAlpha, _mm256_maskload_ps(const_cast<float*>(clipRow + clipX), vLoadMask));
                 }
                 else if (useClip)
@@ -685,7 +765,6 @@ namespace ClaFi::Graphics::Cpu
         int endY = static_cast<int>(std::ceil(activeRect.bottom));
         int startX = static_cast<int>(std::floor(activeRect.left));
         int endX = static_cast<int>(std::ceil(activeRect.right));
-        int width = endX - startX;
 
         int geomTop = static_cast<int>(std::floor(target.top()));
         int geomLeft = static_cast<int>(std::floor(target.left()));
@@ -706,10 +785,23 @@ namespace ClaFi::Graphics::Cpu
 
         for (int y = startY; y < endY; ++y)
         {
+            // Through the mask, a row is read only over the columns that hold coverage.
+            const MaskRun covered = maskBase
+                ? buffers.coveredRun(y - geomTop, startX, endX)
+                : MaskRun{ startX, endX };
+            const int rowLeft = covered.left;
+            const int rowWidth = covered.right - covered.left;
+            if (rowWidth <= 0)
+            {
+                continue;
+            }
             auto positionAt = rowPosition(static_cast<float>(y) + 0.5f);
 
-            Color* pixelRow = target.scanLineAbs(static_cast<float>(startX), static_cast<float>(y));
-            const float* maskRow = maskBase ? &maskBase[(y - geomTop) * maskStride + (startX - geomLeft)] : nullptr;
+            Color* pixelRow = target.scanLineAbs(static_cast<float>(rowLeft),
+                static_cast<float>(y));
+            const float* maskRow = maskBase
+                ? &maskBase[(y - geomTop) * maskStride + (rowLeft - geomLeft)]
+                : nullptr;
             const float* clipRow = nullptr;
 
             if (clipBaseRow)
@@ -721,15 +813,15 @@ namespace ClaFi::Graphics::Cpu
                 }
             }
 
-            for (int xOffset = 0; xOffset < width; xOffset += 8)
+            for (int xOffset = 0; xOffset < rowWidth; xOffset += 8)
             {
-                __m256i vLoadMask = env.loadMask(width - xOffset);
+                __m256i vLoadMask = env.loadMask(rowWidth - xOffset);
 
                 __m256 vPathAlpha = maskRow ? _mm256_maskload_ps(const_cast<float*>(maskRow), vLoadMask) : env.vOne;
 
                 if (clipRow)
                 {
-                    int clipX = (startX + xOffset) - clipLeft;
+                    int clipX = (rowLeft + xOffset) - clipLeft;
                     __m256 vClipAlpha = _mm256_maskload_ps(const_cast<float*>(clipRow + clipX), vLoadMask);
                     vPathAlpha = _mm256_mul_ps(vPathAlpha, vClipAlpha);
                 }
@@ -750,7 +842,8 @@ namespace ClaFi::Graphics::Cpu
                     continue;
                 }
 
-                __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(startX + xOffset)), env.vSteps);
+                __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(rowLeft + xOffset)),
+                    env.vSteps);
                 __m256 vT = _mm256_min_ps(env.vOne, _mm256_max_ps(env.vZero, positionAt(vPx)));
                 __m256i vTI = _mm256_cvtps_epi32(_mm256_mul_ps(vT, env.v256));
                 // A NaN position passes the float clamp and converts to INT_MIN.
@@ -919,8 +1012,18 @@ namespace ClaFi::Graphics::Cpu
             __m256 vDySq = _mm256_mul_ps(vDyNorm, vDyNorm);
             __m256 vDyQuad = _mm256_mul_ps(vDySq, vDySq);
 
-            Color* pixelRow = view.scanLineAbs(static_cast<float>(startX), static_cast<float>(y));
-            const float* maskRow = maskBase ? &maskBase[(y - geomTop) * maskStride + (startX - geomLeft)] : nullptr;
+            const MaskRun covered = maskBase
+                ? buffers.coveredRun(y - geomTop, startX, endX)
+                : MaskRun{ startX, endX };
+            if (covered.left >= covered.right)
+            {
+                continue;
+            }
+            Color* pixelRow = view.scanLineAbs(static_cast<float>(covered.left),
+                static_cast<float>(y));
+            const float* maskRow = maskBase
+                ? &maskBase[(y - geomTop) * maskStride + (covered.left - geomLeft)]
+                : nullptr;
             const float* clipRow = nullptr;
 
             if (clipBaseRow)
@@ -932,9 +1035,9 @@ namespace ClaFi::Graphics::Cpu
                 }
             }
 
-            for (int x = startX; x < endX; x += 8)
+            for (int x = covered.left; x < covered.right; x += 8)
             {
-                __m256i vLoadMask = env.loadMask(endX - x);
+                __m256i vLoadMask = env.loadMask(covered.right - x);
 
                 __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(x)), env.vSteps);
                 __m256 vDx = _mm256_mul_ps(mm256_abs_ps(_mm256_sub_ps(vPx, vLightX)), vXRatioSpread);
@@ -988,6 +1091,47 @@ namespace ClaFi::Graphics::Cpu
     const EdgeIndices& RasterBuffers::edgeIndices(int y, int topOffset)
     {
         return m_edgeBuckets[y - topOffset];
+    }
+
+    void RasterBuffers::claimMaskRun(const int row, const int left, const int right,
+        const int maskLeft)
+    {
+        if (m_maskRuns.empty())
+        {
+            return;
+        }
+        MaskRun& run = m_maskRuns[static_cast<std::size_t>(row)];
+        float* const maskRow = mask.data() + static_cast<std::ptrdiff_t>(row) * m_maskStride;
+        const auto clear = [&](int from, int to) {
+            std::fill(maskRow + (from - maskLeft), maskRow + (to - maskLeft), 0.0f);
+        };
+        if (run.left == run.right)
+        {
+            clear(left, right);
+            run = { left, right };
+            return;
+        }
+        if (left < run.left)
+        {
+            clear(left, run.left);
+            run.left = left;
+        }
+        if (right > run.right)
+        {
+            clear(run.right, right);
+            run.right = right;
+        }
+    }
+
+    RasterBuffers::MaskRun RasterBuffers::coveredRun(const int row, const int left,
+        const int right) const
+    {
+        if (m_maskRuns.empty())
+        {
+            return { left, right };
+        }
+        const MaskRun& run = m_maskRuns[static_cast<std::size_t>(row)];
+        return { std::max(left, run.left), std::min(right, run.right) };
     }
 
 }

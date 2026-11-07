@@ -82,6 +82,28 @@ calcStrokeEdgeDistSq, which MSVC keeps out of line; the same frame under clang s
 The masks it writes are the same bit for bit - checked over every scene and the mill's themes -
 and on the Puppeteer the work counted by callgrind fell to a sixth.
 
+## RasterBuffers rasterizeFill
+
+**Only the groups of eight pixels near an edge work out the distance field** (2026-11-08). Every
+pixel of a fill's box used to measure its distance to each edge active on its row. Further than
+half a pixel and the outset from every edge the alpha clamps to the winding's 0 or 1, so a row now
+marks the groups any edge comes within reach of - the edge's run over the rows that far either
+side, widened by the same, a pixel more against rounding - and the rest take the winding alone. A
+large shape's inside costs a store. The Satellite's globe clip, a disc the frame's width, fell from
+3.5 to 2 ms, its coastlines and clouds from 6 to 4; every frame came out the same bit for bit.
+
+## RasterBuffers rasterizeStrokeMask
+
+**A stroke clears and writes each row of the mask only over the columns it reaches** (2026-11-08).
+The mask used to be cleared over the stroke's whole box, and the composite after it read all of it.
+The Satellite's atmosphere is three rings the frame's width across and some 700 rows deep, the ring
+itself a narrow band of that: three box-sized clears and three box-sized reads a frame. Each row
+now starts with an empty run; a segment reaching the row clears only the columns it adds to the run,
+the gap between two runs included, so the run stays one span. compositeSolid, compositeRamp and
+compositePointGlow read a row of their own mask only over its run, and prepareForEffect drops the
+runs, so any other mask is read whole as before. The atmosphere fell from 6.4 to 3 ms; every frame
+came out the same bit for bit.
+
 ## RasterBuffers compositeRamp
 
 **Eight pixels the path and the clip leave uncovered are passed over before the gradient is

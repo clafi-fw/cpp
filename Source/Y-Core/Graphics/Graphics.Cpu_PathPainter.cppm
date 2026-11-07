@@ -422,8 +422,8 @@ namespace ClaFi::Graphics::Cpu
             }
             else if (layer.geometry.mode == PathRenderMode::Stroke)
             {
-                // Stroke accumulation requires a zero-cleared mask
-                m_rasterBuffers.prepareForEffect(bWidth, bHeight, true);
+                // Stroke accumulation clears each row of the mask over what it reaches
+                m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
                 prepareEdges(m_rasterBuffers.m_worldPoints, false);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
                 float radius = (layer.geometry.strokeWidth * scaleFactor) * 0.5f;

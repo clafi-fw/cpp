@@ -29,6 +29,7 @@ namespace ClaFi::Graphics::Cpu
         void prepareEdgeBuckets(const FloatRect& bounds, float padding = 1.0f);
         void rasterizeFill(const FloatRect& bounds, float outset);
         void rasterizeStrokeSegment(const FloatRect& totalBox, const RenderEdge& edge, float radius, StrokeCap cap);
+        // Clears and writes each row of the mask only over the columns the stroke reaches.
         void rasterizeStrokeMask(const FloatRect& bounds, float radius, StrokeCap cap);
         // `falloff` shapes the ramp from the shape's edge out to `radius`. The curve is the one
         // Graphics::falloffAt states; this computes it eight pixels at a time and so cannot call
@@ -103,8 +104,19 @@ namespace ClaFi::Graphics::Cpu
             int maskStride = 0
         );
     private:
+        // Columns of one row of the mask, `left` to `right`.
+        struct MaskRun
+        {
+            int left{};
+            int right{};
+        };
+    private:
         static FloatRect calculateEdgeBounds(const RenderEdge& edge, float radius, FloatRect bounds);
         const EdgeIndices& edgeIndices(int y, int topOffset);
+        // Clears what `left` to `right` adds to the run of `row` and takes it into the run.
+        void claimMaskRun(int row, int left, int right, int maskLeft);
+        // The columns `left` to `right` of mask row `row` that hold coverage.
+        [[nodiscard]] MaskRun coveredRun(int row, int left, int right) const;
     private:
         // The ramp carries one entry per 1/256th of the stops' 0..1 range, plus one for 1 itself,
         // so a position clamped to 0..1 and scaled by 256 indexes it.
@@ -112,6 +124,8 @@ namespace ClaFi::Graphics::Cpu
         // One bucket per scanline of the last prepareEdgeBuckets() bounds, holding the indices
         // into m_edgeCache whose padded vertical extent covers that scanline.
         std::vector<EdgeIndices> m_edgeBuckets;
+        // Each mask row's run a stroke cleared and wrote; empty while the whole mask holds coverage.
+        std::vector<MaskRun> m_maskRuns;
     };
 
     export RasterBuffers g_rasterBuffers{};
