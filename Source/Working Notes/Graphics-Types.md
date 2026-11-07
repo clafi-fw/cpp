@@ -82,6 +82,15 @@ calcStrokeEdgeDistSq, which MSVC keeps out of line; the same frame under clang s
 The masks it writes are the same bit for bit - checked over every scene and the mill's themes -
 and on the Puppeteer the work counted by callgrind fell to a sixth.
 
+## RasterBuffers compositeRamp
+
+**Eight pixels the path and the clip leave uncovered are passed over before the gradient is
+looked up** (2026-11-08). The lookup is a gather; the blend after it was skipped already, the
+gather was not. In Oj's MSVC profile of the Satellite at 3436 x 2051, compositeRamp was a third of
+the frame, most of it inside the boxes of the atmosphere's three rings - each the frame's width by
+some 700 rows, the ring a fraction of that. There the atmosphere fell from 10.5 to 6.4 ms in the
+harness, and every frame of the scenes and the mill came out the same bit for bit.
+
 ## PixelView compositeSurface
 
 **Eight pixels at a time** (2026-11-08). Taken one at a time, the pixels of a scene's kept layer

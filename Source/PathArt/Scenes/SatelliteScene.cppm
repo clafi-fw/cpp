@@ -77,6 +77,7 @@ namespace ClaFi::PathArt
         };
     private:
         static void drawSpace(const SceneFrame&);
+        static void drawOcean(const SceneFrame&);
         [[nodiscard]] static Terminator terminatorOf(const SceneFrame&, const Globe&);
         void drawSurface(const SceneFrame&, const Globe&, float cycleTime) const;
         static void drawNight(const SceneFrame&, const Globe&, const Terminator&);
@@ -90,5 +91,6 @@ namespace ClaFi::PathArt
         std::vector<City> m_cities{};
         std::vector<Cloud> m_clouds{};
         SceneLayer m_space{ drawSpace };
+        SceneLayer m_ocean{ drawOcean };
     };
 }

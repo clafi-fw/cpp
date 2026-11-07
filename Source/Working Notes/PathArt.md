@@ -107,14 +107,14 @@ valance, which hangs over the swaying curtains.
 **Measured** at 3436 x 2051 on the CPU backend, clang, frame times averaged over eight times of
 the cycle, live and with the layers kept:
 
-- Puppeteer 27 and 14 ms - the stage and the valance.
-- Ghost 29 and 17 ms - the sky, the moon, the land with the tree and the fence, the tombstones.
-- Clockwork 48 and 22 ms - the plate with its rivets and the lamp's glow; the pipes, the valve and
+- Puppeteer 27 and 13 ms - the stage and the valance.
+- Ghost 28 and 16 ms - the sky, the moon, the land with the tree and the fence, the tombstones.
+- Clockwork 46 and 20 ms - the plate with its rivets and the lamp's glow; the pipes, the valve and
   the gauge without its needle.
-- Orrery 18 and 8 ms - space and the Milky Way, and the far and the near halves of the orbits.
-- Comet 39 and 22 ms - the two ridges and the lake's water, the ridges again upside down, the
+- Orrery 18 and 9 ms - space and the Milky Way, and the far and the near halves of the orbits.
+- Comet 37 and 21 ms - the two ridges and the lake's water, the ridges again upside down, the
   lake's shade and the shore.
-- Satellite 44 and 38 ms - space.
+- Satellite 38 and 30 ms - space above the limb, and the ocean.
 
 In Oj's MSVC profile the Puppeteer's stage alone was half of its frame. Layered frames match live
 ones within two levels of a channel - the rounding of premultiplied pixels.
@@ -224,6 +224,18 @@ dipped behind twice.
 the other way inside the crossing, and when that part dips behind, the join runs the long way round
 and fills the disc outside the shape. Japan did, at Hokkaido, until its two northern corners were
 swapped.
+
+**The ocean is a layer of its own, and space stops at the limb** (2026-11-08). In Oj's MSVC profile
+the Satellite was the slowest scene; the ocean's gradient, laid through the globe's clip over the
+whole frame, took 4.5 ms of a 34 ms frame in the harness, and below the limb the kept space was
+copied only to be covered. Kept, the ocean costs 2 ms, and space reaches only the lowest point of
+the limb in the frame, a little past it for the edge's antialiasing. The night is a box over the
+frame rather than a quad far past it: its gradient holds its first stop, which is clear, before its
+start, and the quad's rasterizing cost 1.5 ms. Live frames came out the same bit for bit, layered
+ones within a level.
+
+What is left at 3436 x 2051: the atmosphere 6.4 ms, the coastlines and clouds 6, the globe's clip
+3.5 - rasterized anew every frame - the night 3.5, the kept space and ocean 5.
 
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the

@@ -145,6 +145,20 @@ namespace ClaFi::PathArt
             return inside;
         }
 
+        // Where the globe stands in a frame.
+        struct GlobeDisc
+        {
+            FloatPoint center;
+            float radius;
+        };
+
+        // The globe so large that only a cap shows, its top a little above the middle.
+        [[nodiscard]] GlobeDisc globeDiscIn(const SceneFrame& frame)
+        {
+            const float radius = 1.15f * std::max(frame.width, frame.height);
+            return { { frame.width * 0.4f, frame.height * 0.44f + radius }, radius };
+        }
+
         // The atmosphere's colour at a point of the limb, from the sunlight there.
         [[nodiscard]] Color atmosphereColor(const float sunlight)
         {
@@ -242,6 +256,7 @@ namespace ClaFi::PathArt
     void SatelliteScene::prepare(const SceneParams& params)
     {
         m_space.prepare(params);
+        m_ocean.prepare(params);
     }
 
     void SatelliteScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
@@ -250,11 +265,12 @@ namespace ClaFi::PathArt
         const float unit = frame.unit;
         const float width = frame.width;
         const float height = frame.height;
-        const float radius = 1.15f * std::max(width, height);
+        const GlobeDisc globeDisc = globeDiscIn(frame);
+        const float radius = globeDisc.radius;
         const float sunTurn = k_2Pi * cycleTime + 0.9f;
         const float sunLength = std::hypot(std::sin(sunTurn), 0.22f, std::cos(sunTurn));
         const Globe globe = {
-            .center = { width * 0.4f, height * 0.44f + radius },
+            .center = globeDisc.center,
             .radius = radius,
             .tilt = 0.22f,
             .spin = k_2Pi * 2.0f * cycleTime + 1.2f,
@@ -294,6 +310,7 @@ namespace ClaFi::PathArt
         });
         drawGlow(frame, { width, 0.0f }, 340.0f * unit,
             SatelliteSceneColors::SunGlare.withOpacity(0.16f * sunlit));
+        m_ocean.draw(frame);
 
         PixelPath disc;
         disc.drawCircle(globe.center, radius);
@@ -474,11 +491,31 @@ namespace ClaFi::PathArt
 
     // Over the small cap in view the terminator is near enough to a straight line, so it is one:
     // the line through the terminator's points on two rows of the frame.
+    // Below the lowest point of the limb in the frame the ocean covers everything, so space
+    // stops a little past it.
     void SatelliteScene::drawSpace(const SceneFrame& frame)
     {
-        fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
+        const GlobeDisc disc = globeDiscIn(frame);
+        const float farthest = std::max(disc.center.x, frame.width - disc.center.x);
+        const float limbLowest = disc.center.y
+            - std::sqrt(disc.radius * disc.radius - farthest * farthest);
+        const float bottom = std::min(frame.height, limbLowest + 2.0f * frame.unit);
+        fillBox(frame, { 0.0f, 0.0f, frame.width, bottom },
             LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height },
                 SatelliteSceneColors::SpaceTop, SatelliteSceneColors::SpaceBottom));
+    }
+
+    void SatelliteScene::drawOcean(const SceneFrame& frame)
+    {
+        const GlobeDisc disc = globeDiscIn(frame);
+        PixelPath outline;
+        outline.drawCircle(disc.center, disc.radius);
+        frame.canvas.pushClip(outline, &frame.toCanvas);
+        const float top = disc.center.y - disc.radius;
+        fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
+            LinearGradient::Simple({ 0.0f, top }, { 0.0f, top + disc.radius * 0.45f },
+            SatelliteSceneColors::OceanLimb, SatelliteSceneColors::OceanDeep));
+        frame.canvas.popClip();
     }
 
     SatelliteScene::Terminator SatelliteScene::terminatorOf(const SceneFrame& frame,
@@ -514,10 +551,6 @@ namespace ClaFi::PathArt
         const float cycleTime) const
     {
         const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
-        const float top = globe.center.y - globe.radius;
-        fillBox(frame, view,
-            LinearGradient::Simple({ 0.0f, top }, { 0.0f, top + globe.radius * 0.45f },
-            SatelliteSceneColors::OceanLimb, SatelliteSceneColors::OceanDeep));
 
         // A shape is drawn when any of it is on the near side and its outline reaches the frame.
         std::vector<Direction> outline;
@@ -590,20 +623,15 @@ namespace ClaFi::PathArt
     }
 
     // One gradient over the night side, rising from nothing just on the day side of the line.
+    // Before its start it holds its first stop, which is clear, so it covers the whole frame and
+    // leaves the day side as it is.
     void SatelliteScene::drawNight(const SceneFrame& frame, const Globe& globe,
         const Terminator& terminator)
     {
         const float soft = 0.03f * globe.radius;
         const float depth = 0.13f * globe.radius;
-        const float far = 4.0f * std::max(frame.width, frame.height);
         const FloatPoint edge = terminator.through + terminator.dayward * soft;
-        PixelPath night;
-        night.moveTo(edge - terminator.along * far);
-        night.lineTo(edge + terminator.along * far);
-        night.lineTo(edge + terminator.along * far - terminator.dayward * far);
-        night.lineTo(edge - terminator.along * far - terminator.dayward * far);
-        night.close();
-        fillShape(frame, night, LinearGradient{
+        fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height }, LinearGradient{
             .startPoint = edge,
             .endPoint = terminator.through - terminator.dayward * depth,
             .stops = {

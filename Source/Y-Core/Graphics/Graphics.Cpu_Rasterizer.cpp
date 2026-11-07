@@ -725,13 +725,6 @@ namespace ClaFi::Graphics::Cpu
             {
                 __m256i vLoadMask = env.loadMask(width - xOffset);
 
-                __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(startX + xOffset)), env.vSteps);
-                __m256 vT = _mm256_min_ps(env.vOne, _mm256_max_ps(env.vZero, positionAt(vPx)));
-                __m256i vTI = _mm256_cvtps_epi32(_mm256_mul_ps(vT, env.v256));
-                // A NaN position passes the float clamp and converts to INT_MIN.
-                vTI = _mm256_min_epi32(vRampLast, _mm256_max_epi32(env.vZeroi, vTI));
-                __m256i vSrcColors = _mm256_i32gather_epi32(reinterpret_cast<const int*>(ramp), vTI, 4);
-
                 __m256 vPathAlpha = maskRow ? _mm256_maskload_ps(const_cast<float*>(maskRow), vLoadMask) : env.vOne;
 
                 if (clipRow)
@@ -744,6 +737,25 @@ namespace ClaFi::Graphics::Cpu
                 {
                     vPathAlpha = env.vZero;
                 }
+
+                // Eight pixels the path and the clip leave uncovered take nothing, so the gradient
+                // is not looked up for them - most of a thin stroke's box.
+                if (_mm256_movemask_ps(_mm256_cmp_ps(vPathAlpha, env.vZero, _CMP_EQ_OQ)) == 0xFF)
+                {
+                    pixelRow += 8;
+                    if (maskRow)
+                    {
+                        maskRow += 8;
+                    }
+                    continue;
+                }
+
+                __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(startX + xOffset)), env.vSteps);
+                __m256 vT = _mm256_min_ps(env.vOne, _mm256_max_ps(env.vZero, positionAt(vPx)));
+                __m256i vTI = _mm256_cvtps_epi32(_mm256_mul_ps(vT, env.v256));
+                // A NaN position passes the float clamp and converts to INT_MIN.
+                vTI = _mm256_min_epi32(vRampLast, _mm256_max_epi32(env.vZeroi, vTI));
+                __m256i vSrcColors = _mm256_i32gather_epi32(reinterpret_cast<const int*>(ramp), vTI, 4);
 
                 __m256 vColorAlphaF = _mm256_cvtepi32_ps(_mm256_srli_epi32(vSrcColors, 24));
                 __m256i vWeightI = _mm256_cvtps_epi32(_mm256_mul_ps(vColorAlphaF,
