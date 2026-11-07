@@ -13,6 +13,41 @@ namespace ClaFi::PathArt
     // How far a cubic's controls stand from the corner of a quarter ellipse.
     constexpr float k_quarterEllipseControl{ 0.5523f };
 
+    namespace
+    {
+        // The brush placed the way `toCanvas` places the box it fills: moved, and scaled alike
+        // both ways.
+        [[nodiscard]] Brush brushOnCanvas(const Brush& brush, const Matrix3x2& toCanvas)
+        {
+            const float scale = toCanvas.a;
+            const auto place = [&](FloatPoint point) {
+                return FloatPoint{ point.x * scale + toCanvas.e, point.y * scale + toCanvas.f };
+            };
+            return std::visit([&](const auto& source) -> Brush {
+                using Kind = std::decay_t<decltype(source)>;
+                Kind placed = source;
+                if constexpr (std::is_same_v<Kind, LinearGradient>)
+                {
+                    placed.startPoint = place(source.startPoint);
+                    placed.endPoint = place(source.endPoint);
+                }
+                else if constexpr (std::is_same_v<Kind, RadialGradient>)
+                {
+                    placed.center = place(source.center);
+                    placed.offset = source.offset * scale;
+                    placed.radiusX = source.radiusX * scale;
+                    placed.radiusY = source.radiusY * scale;
+                }
+                else if constexpr (std::is_same_v<Kind, PointGlow>)
+                {
+                    placed.lightPos = place(source.lightPos);
+                    placed.lightSpread = source.lightSpread * scale;
+                }
+                return placed;
+            }, brush);
+        }
+    }
+
     SceneFrame SceneFrame::FromBounds(Canvas& canvas, const FloatRect& bounds)
     {
         return {
@@ -33,6 +68,36 @@ namespace ClaFi::PathArt
             .unit = unit,
             .toCanvas = toCanvas * local
         };
+    }
+
+    ScatteredShapes::ScatteredShapes(const SceneFrame& frame, const Brush& brush,
+        const float strokeWidth, const StrokeCap cap)
+        :
+        m_frame{ frame },
+        m_brush{ brush },
+        m_strokeWidth{ strokeWidth },
+        m_cap{ cap },
+        m_oneByOne{ frame.canvas.backend() == nullptr
+            || frame.canvas.backend()->type() == BackendType::Cpu }
+    {
+    }
+
+    PixelPath& ScatteredShapes::next()
+    {
+        if (m_oneByOne)
+            draw();
+        return m_path;
+    }
+
+    void ScatteredShapes::draw()
+    {
+        if (m_path.isEmpty())
+            return;
+        if (m_strokeWidth > 0.0f)
+            strokeShape(m_frame, m_path, m_brush, m_strokeWidth, m_cap);
+        else
+            fillShape(m_frame, m_path, m_brush);
+        m_path.clear();
     }
 
     float pseudoRandom(const int index, const float shift)
@@ -217,8 +282,24 @@ namespace ClaFi::PathArt
         fillShape(frame, path, brush, Matrix3x2::Translation(center) * Matrix3x2::Rotation(angle));
     }
 
+    // Under a frame that only moves and scales, the box is a rectangle fill, which the CPU backend
+    // paints without the path rasterizer and Direct2D without building a geometry.
     void fillBox(const SceneFrame& frame, const FloatRect& box, const Brush& brush)
     {
+        const Matrix3x2& toCanvas = frame.toCanvas;
+        const bool square = toCanvas.b == 0.0f && toCanvas.c == 0.0f && toCanvas.a == toCanvas.d;
+        if (square && toCanvas.a > 0.0f)
+        {
+            const float scale = toCanvas.a;
+            const FloatRect onCanvas = {
+                box.left * scale + toCanvas.e,
+                box.top * scale + toCanvas.f,
+                box.right * scale + toCanvas.e,
+                box.bottom * scale + toCanvas.f
+            };
+            frame.canvas.fillRectangle(onCanvas, brushOnCanvas(brush, toCanvas));
+            return;
+        }
         PixelPath path;
         path.moveTo(box.left, box.top);
         path.lineTo(box.right, box.top);

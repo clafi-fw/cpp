@@ -10,6 +10,15 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Graphics::Cpu
 {
+    namespace
+    {
+        // How much of the pixel starting at `pixel` lies between `from` and `to`.
+        float coverageOf(const int pixel, const float from, const float to)
+        {
+            const float start = static_cast<float>(pixel);
+            return std::clamp(std::min(start + 1.0f, to) - std::max(start, from), 0.0f, 1.0f);
+        }
+    }
 
     void RectPainter::fill(const FloatRect& rect, const Brush& brush, const Matrix3x2* brushTransform)
     {
@@ -17,6 +26,14 @@ namespace ClaFi::Graphics::Cpu
         boundary.intersectWith(m_pixelView.clippedBounds());
         if (boundary.empty())
         {
+            return;
+        }
+
+        // The two solid routes below write pixels straight, and a path clip reaches a pixel only
+        // through a coverage mask.
+        if (g_rasterBuffers.hasActiveClip && std::holds_alternative<SolidColor>(brush))
+        {
+            fillCovered(boundary.roundedOut(), rect, brush, brushTransform);
             return;
         }
 
@@ -184,14 +201,67 @@ namespace ClaFi::Graphics::Cpu
         // ====================================================================
         else
         {
-            PixelView targetView = m_pixelView.subView(boundary);
+            // The pixels the rectangle covers whole take the brush without a coverage mask. Only
+            // the rim an edge between pixels cuts goes through one, at most a pixel wide on each
+            // side, so a large fill costs about what the mask-free composite alone costs. A rim
+            // pixel filled whole would widen the rectangle by up to a pixel on that side.
+            const IntRect pixels = boundary.roundedOut();
+            const IntRect whole = {
+                std::max(pixels.left, static_cast<int>(std::ceil(rect.left))),
+                std::max(pixels.top, static_cast<int>(std::ceil(rect.top))),
+                std::min(pixels.right, static_cast<int>(std::floor(rect.right))),
+                std::min(pixels.bottom, static_cast<int>(std::floor(rect.bottom)))
+            };
+            if (whole.left >= whole.right || whole.top >= whole.bottom)
+            {
+                fillCovered(pixels, rect, brush, brushTransform);
+                return;
+            }
 
-            // This route writes every pixel and carries no coverage mask, so it reaches the shared
-            // buffers only for the entry point - a solid brush stays the no-op it has always been
-            // here, because it is handled by the fast path above.
-            float glowSpreadScale = brushTransform ? brushTransform->getScaleFactor() : 1.0f;
-            g_rasterBuffers.composite(targetView, brush, brushTransform, glowSpreadScale, false);
+            // A solid brush never reaches here: compositing one needs the mask this skips.
+            const float glowSpreadScale = brushTransform ? brushTransform->getScaleFactor() : 1.0f;
+            g_rasterBuffers.composite(m_pixelView.subView(whole.toFloat()), brush, brushTransform,
+                glowSpreadScale, false);
+            fillCovered({ pixels.left, pixels.top, pixels.right, whole.top }, rect, brush,
+                brushTransform);
+            fillCovered({ pixels.left, whole.bottom, pixels.right, pixels.bottom }, rect, brush,
+                brushTransform);
+            fillCovered({ pixels.left, whole.top, whole.left, whole.bottom }, rect, brush,
+                brushTransform);
+            fillCovered({ whole.right, whole.top, pixels.right, whole.bottom }, rect, brush,
+                brushTransform);
         }
+    }
+
+    // Every column between the first and the last lies inside the rectangle, so a row's coverage
+    // is its own share of the height, cut at the two ends by their share of the width.
+    void RectPainter::fillCovered(const IntRect& area, const FloatRect& rect, const Brush& brush,
+        const Matrix3x2* brushTransform)
+    {
+        const int width = area.right - area.left;
+        const int height = area.bottom - area.top;
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        RasterBuffers& buffers = g_rasterBuffers;
+        buffers.prepareForEffect(width, height, false);
+        const float leftCoverage = coverageOf(area.left, rect.left, rect.right);
+        const float rightCoverage = coverageOf(area.right - 1, rect.left, rect.right);
+        for (int y = area.top; y != area.bottom; ++y)
+        {
+            float* const row = buffers.mask.data()
+                + static_cast<std::ptrdiff_t>(y - area.top) * buffers.m_maskStride;
+            const float rowCoverage = coverageOf(y, rect.top, rect.bottom);
+            std::fill(row, row + width, rowCoverage);
+            row[0] = rowCoverage * leftCoverage;
+            row[width - 1] = rowCoverage * rightCoverage;
+        }
+
+        const float glowSpreadScale = brushTransform ? brushTransform->getScaleFactor() : 1.0f;
+        buffers.composite(m_pixelView.subView(area.toFloat()), brush, brushTransform,
+            glowSpreadScale);
     }
 
     void RectPainter::stroke(const FloatRect& rect, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform)

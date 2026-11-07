@@ -41,9 +41,18 @@ namespace ClaFi::PathArt
         constexpr float k_viewLatitude{ -20.0f * k_degree };
         // The pace things keep at a 40-second cycle, in this scene's 240-second one.
         constexpr float k_lively{ 6.0f };
+        // How many opacities the city lights are drawn in, one fill each on Direct2D.
         constexpr int k_cityOpacitySteps{ 6 };
         // How far apart the points are where a shape's edge follows the rim.
         constexpr float k_rimStep{ 2.0f * k_degree };
+
+        // A city's light where it shows this frame, and the opacity step it is drawn at.
+        struct LitCity
+        {
+            FloatPoint at;
+            float radius;
+            int step;
+        };
 
         // Coarse coastlines as longitude, latitude pairs.
         constexpr float k_northAmerica[]{
@@ -597,7 +606,8 @@ namespace ClaFi::PathArt
         const Terminator& terminator, const float cycleTime) const
     {
         const float unit = frame.unit;
-        std::array<PixelPath, k_cityOpacitySteps> lights{};
+        // The glows go down city by city, and the lights over all of them afterwards.
+        std::vector<LitCity> lit;
         for (const City& city : m_cities)
         {
             const Direction direction = globe.surfaceAt(city.lonLat);
@@ -622,19 +632,22 @@ namespace ClaFi::PathArt
                 static_cast<int>(opacity * k_cityOpacitySteps));
             const float radius = (0.8f + 1.3f * city.brightness) * unit
                 * (0.4f + 0.6f * direction.z);
-            addEllipse(lights[static_cast<std::size_t>(step)], point, radius, radius);
+            lit.push_back({ .at = point, .radius = radius, .step = step });
             if (city.brightness > 0.82f)
                 drawGlow(frame, point, 7.0f * unit,
                     SatelliteSceneColors::CityGlow.withOpacity(0.45f * strength));
         }
         for (int step = 0; step != k_cityOpacitySteps; ++step)
         {
-            const PixelPath& path = lights[static_cast<std::size_t>(step)];
-            if (path.isEmpty())
-                continue;
             const float opacity = (static_cast<float>(step) + 0.5f) / k_cityOpacitySteps;
             const Color light = SatelliteSceneColors::CityLight.withOpacity(opacity);
-            fillShape(frame, path, SolidColor{ light });
+            ScatteredShapes lights{ frame, SolidColor{ light } };
+            for (const LitCity& city : lit)
+            {
+                if (city.step == step)
+                    addEllipse(lights.next(), city.at, city.radius, city.radius);
+            }
+            lights.draw();
         }
     }
 

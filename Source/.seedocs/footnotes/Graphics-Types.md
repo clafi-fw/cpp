@@ -214,6 +214,10 @@ axis-aligned edges only.
 **brushTransform places the brush alone** - brush coordinates stay in the caller's space. Applied
 to the rect as well, it would move every shape twice.
 
+**A rect is filled as a path of its outline would be.** Every brush goes through the path clip
+when there is one, and an edge that falls between pixels leaves the pixels it cuts partly
+covered.
+
 ## CirclePainter
 
 The CPU backend folds the canvas transform into pivots and radii.

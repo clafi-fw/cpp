@@ -102,25 +102,27 @@ namespace ClaFi::PathArt
         // The planks run toward a point high above the stage: the floor as seen from the stalls.
         const float vanishingY = floorTop - height * 0.9f;
         const float share = (floorTop - vanishingY) / (height - vanishingY);
-        PixelPath planks;
+        ScatteredShapes planks{ frame, SolidColor{ PuppeteerColors::FloorSeam.withOpacity(0.5f) },
+            1.2f * unit, StrokeCap::Butt };
         for (int i = -18; i <= 18; ++i)
         {
             const float bottomX = centerX + static_cast<float>(i) * 54.0f * unit;
-            planks.moveTo(centerX + (bottomX - centerX) * share, floorTop);
-            planks.lineTo(bottomX, height);
+            PixelPath& plank = planks.next();
+            plank.moveTo(centerX + (bottomX - centerX) * share, floorTop);
+            plank.lineTo(bottomX, height);
         }
-        strokeShape(frame, planks, SolidColor{ PuppeteerColors::FloorSeam.withOpacity(0.5f) },
-            1.2f * unit, StrokeCap::Butt);
+        planks.draw();
 
-        PixelPath seams;
+        ScatteredShapes seams{ frame, SolidColor{ PuppeteerColors::FloorSeam.withOpacity(0.32f) },
+            unit, StrokeCap::Butt };
         for (const float depth : { 0.1f, 0.25f, 0.44f, 0.68f, 0.96f })
         {
             const float y = floorTop + (height - floorTop) * depth;
-            seams.moveTo(0.0f, y);
-            seams.lineTo(width, y);
+            PixelPath& seam = seams.next();
+            seam.moveTo(0.0f, y);
+            seam.lineTo(width, y);
         }
-        strokeShape(frame, seams, SolidColor{ PuppeteerColors::FloorSeam.withOpacity(0.32f) }, unit,
-            StrokeCap::Butt);
+        seams.draw();
         fillBox(frame, { 0.0f, floorTop - 4.0f * unit, width, floorTop + 3.0f * unit },
             SolidColor{ PuppeteerColors::FloorEdge.withOpacity(0.85f) });
     }

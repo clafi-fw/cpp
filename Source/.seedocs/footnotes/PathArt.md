@@ -42,6 +42,27 @@ returns is placed by `local` first. Stroke widths, glow spreads and gradient poi
 it are scaled with it, so a figure drawn about its own origin through `within(Translation *
 Rotation * Scale)` comes out whole.
 
+## ScatteredShapes
+
+Draws shapes in one brush - stars, rocks, rivets, blades of grass - the way the backend draws them
+fastest. Call next() for each shape and build the shape in the path it returns, then call draw()
+once at the end. A shape may be several figures, such as the petals of one flower.
+
+**On the CPU backend each shape is filled on its own.** A fill there costs in proportion to the
+area its path spans, so shapes scattered across the frame cost far more in one path than one by
+one. next() draws the shape before the one it begins.
+
+**On Direct2D the shapes gather in one path and go down in one fill at draw().** Each fill there
+builds a geometry of its own.
+
+**The shapes must stand apart.** A path is filled even-odd, so two shapes that overlap in one path
+cut a hole in each other. On Direct2D they share a path and show the hole; on the CPU backend they
+are filled apart and do not.
+
+**A kind of shape that lies over another goes down after it.** With two ScatteredShapes open at
+once, the CPU backend draws their shapes interleaved, in the order next() is called. Build the
+lower kind everywhere and call its draw() before the upper kind's first next().
+
 ## reachToward
 
 Bends a two-part limb so that its end reaches `target`, by the law of cosines.

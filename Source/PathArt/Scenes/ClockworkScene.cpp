@@ -124,19 +124,21 @@ namespace ClaFi::PathArt
             ClockworkColors::PlateLight, ClockworkColors::PlateShade));
         strokeShape(frame, plate, SolidColor{ ClockworkColors::PlateRim }, 2.0f * unit);
 
-        PixelPath rivets;
+        ScatteredShapes rivets{ frame, SolidColor{ ClockworkColors::Rivet } };
         const float rivetRadius = 3.4f * unit;
         for (float x = inset + 22.0f * unit; x < width - inset - 10.0f * unit; x += 52.0f * unit)
         {
-            addEllipse(rivets, { x, inset + 10.0f * unit }, rivetRadius, rivetRadius);
-            addEllipse(rivets, { x, height - inset - 10.0f * unit }, rivetRadius, rivetRadius);
+            addEllipse(rivets.next(), { x, inset + 10.0f * unit }, rivetRadius, rivetRadius);
+            addEllipse(rivets.next(), { x, height - inset - 10.0f * unit }, rivetRadius,
+                rivetRadius);
         }
         for (float y = inset + 62.0f * unit; y < height - inset - 40.0f * unit; y += 52.0f * unit)
         {
-            addEllipse(rivets, { inset + 10.0f * unit, y }, rivetRadius, rivetRadius);
-            addEllipse(rivets, { width - inset - 10.0f * unit, y }, rivetRadius, rivetRadius);
+            addEllipse(rivets.next(), { inset + 10.0f * unit, y }, rivetRadius, rivetRadius);
+            addEllipse(rivets.next(), { width - inset - 10.0f * unit, y }, rivetRadius,
+                rivetRadius);
         }
-        fillShape(frame, rivets, SolidColor{ ClockworkColors::Rivet });
+        rivets.draw();
         drawGlow(frame, lampAt, 420.0f * unit, ClockworkColors::Lamp.withOpacity(0.16f));
     }
 

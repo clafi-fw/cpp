@@ -15,5 +15,9 @@ namespace ClaFi::Graphics::Cpu
     public:
         void fill(const FloatRect& rect, const Brush& brush, const Matrix3x2* brushTransform = nullptr);
         void stroke(const FloatRect& rect, const Brush& brush, float borderWidth, const Matrix3x2* brushTransform = nullptr);
+    private:
+        // The brush over `area`, each pixel as much as `rect` covers it, through any path clip.
+        void fillCovered(const IntRect& area, const FloatRect& rect, const Brush&,
+            const Matrix3x2* brushTransform);
     };
 }

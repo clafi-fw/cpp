@@ -257,28 +257,30 @@ namespace ClaFi::PathArt
         const float from = frame.width * 0.44f;
         const float to = frame.width * 0.98f;
         const float spacing = 15.0f * unit;
-        PixelPath bars;
-        PixelPath rails;
-        for (const float railHeight : { 12.0f, 32.0f })
-        {
-            rails.moveTo(from, groundY(frame, from) - (4.0f + railHeight) * unit);
-            for (float x = from + spacing; x <= to; x += spacing)
-                rails.lineTo(x, groundY(frame, x) - (4.0f + railHeight) * unit);
-        }
+        ScatteredShapes bars{ frame, SolidColor{ GhostSceneColors::Fence } };
         for (float x = from; x < to; x += spacing)
         {
             const float base = groundY(frame, x) - 4.0f * unit;
-            bars.moveTo(x - 1.5f * unit, base);
-            bars.lineTo(x - 1.5f * unit, base - 40.0f * unit);
-            bars.lineTo(x - 4.0f * unit, base - 40.0f * unit);
-            bars.lineTo(x, base - 48.0f * unit);
-            bars.lineTo(x + 4.0f * unit, base - 40.0f * unit);
-            bars.lineTo(x + 1.5f * unit, base - 40.0f * unit);
-            bars.lineTo(x + 1.5f * unit, base);
-            bars.close();
+            PixelPath& bar = bars.next();
+            bar.moveTo(x - 1.5f * unit, base);
+            bar.lineTo(x - 1.5f * unit, base - 40.0f * unit);
+            bar.lineTo(x - 4.0f * unit, base - 40.0f * unit);
+            bar.lineTo(x, base - 48.0f * unit);
+            bar.lineTo(x + 4.0f * unit, base - 40.0f * unit);
+            bar.lineTo(x + 1.5f * unit, base - 40.0f * unit);
+            bar.lineTo(x + 1.5f * unit, base);
+            bar.close();
         }
-        fillShape(frame, bars, SolidColor{ GhostSceneColors::Fence });
-        strokeShape(frame, rails, SolidColor{ GhostSceneColors::Fence }, 2.5f * unit);
+        bars.draw();
+        ScatteredShapes rails{ frame, SolidColor{ GhostSceneColors::Fence }, 2.5f * unit };
+        for (const float railHeight : { 12.0f, 32.0f })
+        {
+            PixelPath& rail = rails.next();
+            rail.moveTo(from, groundY(frame, from) - (4.0f + railHeight) * unit);
+            for (float x = from + spacing; x <= to; x += spacing)
+                rail.lineTo(x, groundY(frame, x) - (4.0f + railHeight) * unit);
+        }
+        rails.draw();
     }
 
     void GhostScene::drawTombstones(const SceneFrame& frame)

@@ -53,9 +53,41 @@ them by eye.
 **The fill rule is even-odd**, on the CPU rasterizer and in Direct2D's default alike, so shapes
 that overlap inside one path cut holes in each other. Shapes that can overlap are filled one by
 one - the cloud puffs over the Earth, the pines on the lake shore, a gear's spokes. Shapes that
-stand apart share a path, since a fill per path is what costs: the stars and the city lights,
-binned into six opacities with a path each, the asteroids, the petals, the blades of grass. The
-rule is also used on purpose, for the hole in a gear's rim and in the escape wheel.
+stand apart go through ScatteredShapes: the stars and the city lights, binned into six opacities,
+the asteroids, the tufts, pebbles and flowers, the blades of grass, the rivets, the fence, the
+floor's planks and seams, the ripples. The rule is also used on purpose, for the hole in a gear's
+rim and in the escape wheel.
+
+**What a fill costs differs between the backends.** The CPU rasterizer builds a coverage mask
+over the path's bounding box, so its cost follows the area the path spans, whatever the shapes in
+it cover. Measured at 3840 x 2160: 170 dots of 1.5 units scattered across the frame took 21 ms in
+one path and 0.22 ms filled one by one; a box over the whole frame took 17 ms through the path
+rasterizer and 1.3 ms as a rectangle fill, and with a gradient 19 ms and 9.3 ms. Direct2D builds a
+geometry for every fillPath, so there the count of fills is what adds up. Direct2D was not
+measured. So ScatteredShapes fills one by one on the CPU backend and gathers into one path on
+Direct2D, and fillBox, with drawGlow through it, fills a rectangle whenever the frame only moves
+and scales.
+
+**Scattered shapes first shared a path on every backend**, on the reasoning that a fill per path
+was the cost. At 3840 x 2160 that put the Chase's front grass at 41 ms of an 88 ms frame, and
+every scene at 66 to 117 ms. With ScatteredShapes and the rectangle fills, averaged over eight
+times of the cycle (milliseconds, before and after):
+
+- Puppeteer 66 and 37, Ghost 87 and 37, Clockwork 111 and 61, Orrery 117 and 26, Comet 94 and 50,
+  Satellite 103 and 56, Chase 88 and 28.
+- At 1920 x 1080: Puppeteer 14.6 and 9.3, Ghost 21.4 and 8.3, Clockwork 24.5 and 14.4, Orrery 27.1
+  and 6.6, Comet 23.2 and 12.1, Satellite 23.1 and 12.6, Chase 20.9 and 7.0.
+
+Filled one by one, two flowers in every Chase tile and a few asteroids overlap, and the CPU
+backend now draws them whole where the shared path cut holes. Direct2D still shares the path and
+still shows those holes.
+
+**What is left is mostly what does not move.** At 3840 x 2160 the parts of a frame that are the
+same at every time of the cycle - walls, skies, plates, ridges - take about two thirds of the
+Puppeteer, Ghost, Clockwork and Comet frames and four fifths of the Orrery's: the Clockwork's
+plate alone 40 ms, the Puppeteer's stage 25 ms. Keeping them in an image (the backend's
+pushImage and drawImage) would trade those for a blit of the whole frame, which measured 6.5 to 9
+ms at that size.
 
 PixelPath::drawEllipse and drawRoundedRect start a path of their own, so addEllipse appends an
 ellipse as four cubics.

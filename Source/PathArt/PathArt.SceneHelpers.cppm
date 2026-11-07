@@ -39,6 +39,26 @@ namespace ClaFi::PathArt
         FloatPoint end;
     };
 
+    // Shapes that stand apart in one brush, drawn as the backend draws them fastest. See PathArt
+    export class ScatteredShapes
+    {
+    public:
+        // A stroke width of 0 fills the shapes.
+        ScatteredShapes(const SceneFrame&, const Brush&, float strokeWidth = 0.0f,
+            StrokeCap = StrokeCap::Round);
+    public:
+        // The path the next shape goes into; on the CPU backend the shape before it is drawn first.
+        [[nodiscard]] PixelPath& next();
+        void draw(); // what is still waiting to be drawn
+    private:
+        SceneFrame m_frame;
+        Brush m_brush;
+        float m_strokeWidth;
+        StrokeCap m_cap;
+        bool m_oneByOne;
+        PixelPath m_path;
+    };
+
     // MillScene's pseudo random numbers, 0 to 1: one index and shift always give one number.
     export [[nodiscard]] float pseudoRandom(int index, float shift = 0.0f);
     // The part of `value` past its whole number, 0 to 1 for negative values too.

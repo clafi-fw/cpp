@@ -440,27 +440,29 @@ namespace ClaFi::PathArt
             ChaseColors::GrassTop, ChaseColors::GrassFoot));
         fillBox(frame, { 0.0f, groundY + 10.0f * unit, width, groundY + 36.0f * unit },
             SolidColor{ ChaseColors::Trail });
-        PixelPath tufts;
-        PixelPath pebbles;
-        // The petals of a flower stand just apart, so one path holds them all under an even-odd
-        // fill.
-        PixelPath petals;
-        PixelPath hearts;
+        // Tufts, pebbles and flowers each go down over every tile before the next kind does, so a
+        // flower stands over a tuft whichever tile either is in.
         const float tilePeriod = periodNear(1.0f, 400.0f);
+        ScatteredShapes tufts{ frame, SolidColor{ ChaseColors::Tuft }, 2.0f * unit };
         forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
             for (int i = 0; i != 6; ++i)
             {
                 const float x = tileLeft + tileWidth * pseudoRandom(i, 121.0f);
                 const float row = pseudoRandom(i, 122.0f) < 0.5f ? 4.0f : 44.0f;
                 const float y = groundY + row * unit + pseudoRandom(i, 123.0f) * 6.0f * unit;
+                PixelPath& tuft = tufts.next();
                 for (int blade = -1; blade <= 1; ++blade)
                 {
                     const float bladeX = static_cast<float>(blade) * 4.0f;
                     const float bladeHeight = 8.0f + 3.0f * static_cast<float>(1 - std::abs(blade));
-                    tufts.moveTo(x, y);
-                    tufts.lineTo(x + bladeX * unit, y - bladeHeight * unit);
+                    tuft.moveTo(x, y);
+                    tuft.lineTo(x + bladeX * unit, y - bladeHeight * unit);
                 }
             }
+        });
+        tufts.draw();
+        ScatteredShapes pebbles{ frame, SolidColor{ ChaseColors::Pebble } };
+        forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
             for (int i = 0; i != 4; ++i)
             {
                 const FloatPoint pebble = {
@@ -468,8 +470,15 @@ namespace ClaFi::PathArt
                     groundY + (16.0f + 14.0f * pseudoRandom(i, 125.0f)) * unit
                 };
                 const float pebbleWidth = (2.5f + 2.0f * pseudoRandom(i, 126.0f)) * unit;
-                addEllipse(pebbles, pebble, pebbleWidth, 1.8f * unit);
+                addEllipse(pebbles.next(), pebble, pebbleWidth, 1.8f * unit);
             }
+        });
+        pebbles.draw();
+        // The petals of a flower stand just apart, so one shape holds them all under an even-odd
+        // fill.
+        ScatteredShapes petals{ frame, SolidColor{ ChaseColors::Petal } };
+        ScatteredShapes hearts{ frame, SolidColor{ ChaseColors::FlowerHeart } };
+        forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
             const float petalRadius = 1.75f * unit;
             for (int i = 0; i != 3; ++i)
             {
@@ -477,19 +486,19 @@ namespace ClaFi::PathArt
                     tileLeft + tileWidth * pseudoRandom(i, 127.0f),
                     groundY + (48.0f + 30.0f * pseudoRandom(i, 128.0f)) * unit
                 };
+                PixelPath& flowerPetals = petals.next();
                 for (int petal = 0; petal != 5; ++petal)
                 {
                     const float angle = k_2Pi * static_cast<float>(petal) / 5.0f;
                     const FloatPoint out = { std::cos(angle), std::sin(angle) };
-                    addEllipse(petals, flower + out * (3.0f * unit), petalRadius, petalRadius);
+                    addEllipse(flowerPetals, flower + out * (3.0f * unit), petalRadius,
+                        petalRadius);
                 }
-                addEllipse(hearts, flower, 1.8f * unit, 1.8f * unit);
+                addEllipse(hearts.next(), flower, 1.8f * unit, 1.8f * unit);
             }
         });
-        strokeShape(frame, tufts, SolidColor{ ChaseColors::Tuft }, 2.0f * unit);
-        fillShape(frame, pebbles, SolidColor{ ChaseColors::Pebble });
-        fillShape(frame, petals, SolidColor{ ChaseColors::Petal });
-        fillShape(frame, hearts, SolidColor{ ChaseColors::FlowerHeart });
+        petals.draw();
+        hearts.draw();
     }
 
     void ChaseScene::drawObstacle(const SceneFrame& frame, const int episode, const float x,
@@ -537,27 +546,31 @@ namespace ClaFi::PathArt
     {
         const float unit = frame.unit;
         const float height = frame.height;
-        PixelPath light;
-        PixelPath dark;
         const float grassPeriod = periodNear(1.35f, 520.0f);
-        forEachTile(frame, 1.35f, grassPeriod, travel, [&](float tileLeft, float tileWidth) {
-            for (int i = 0; i != 22; ++i)
-            {
-                const float slot = static_cast<float>(i) + pseudoRandom(i, 141.0f);
-                const float x = tileLeft + tileWidth * slot / 22.0f;
-                const float bladeHeight = (24.0f + 34.0f * pseudoRandom(i, 142.0f)) * unit;
-                PixelPath& blade = i % 3 == 0 ? dark : light;
-                blade.moveTo(x - 3.0f * unit, height + 2.0f * unit);
-                blade.quadTo({ x + 2.0f * unit, height - bladeHeight * 0.6f },
-                    { x + (6.0f - 12.0f * pseudoRandom(i, 143.0f)) * unit, height - bladeHeight });
-                blade.quadTo({ x + 3.0f * unit, height - bladeHeight * 0.5f },
-                    { x + 4.0f * unit, height + 2.0f * unit });
-                blade.close();
-            }
-        });
-        // One path per shade: the blades stand too far apart to overlap, which an even-odd fill
-        // would show as holes.
-        fillShape(frame, dark, SolidColor{ ChaseColors::FrontGrassDark });
-        fillShape(frame, light, SolidColor{ ChaseColors::FrontGrass });
+        // Every third blade is dark, and the dark ones go down first.
+        for (const bool dark : { true, false })
+        {
+            const Color shade = dark ? ChaseColors::FrontGrassDark : ChaseColors::FrontGrass;
+            ScatteredShapes blades{ frame, SolidColor{ shade } };
+            forEachTile(frame, 1.35f, grassPeriod, travel, [&](float tileLeft, float tileWidth) {
+                for (int i = 0; i != 22; ++i)
+                {
+                    if ((i % 3 == 0) != dark)
+                        continue;
+                    const float slot = static_cast<float>(i) + pseudoRandom(i, 141.0f);
+                    const float x = tileLeft + tileWidth * slot / 22.0f;
+                    const float bladeHeight = (24.0f + 34.0f * pseudoRandom(i, 142.0f)) * unit;
+                    PixelPath& blade = blades.next();
+                    blade.moveTo(x - 3.0f * unit, height + 2.0f * unit);
+                    blade.quadTo({ x + 2.0f * unit, height - bladeHeight * 0.6f },
+                        { x + (6.0f - 12.0f * pseudoRandom(i, 143.0f)) * unit,
+                            height - bladeHeight });
+                    blade.quadTo({ x + 3.0f * unit, height - bladeHeight * 0.5f },
+                        { x + 4.0f * unit, height + 2.0f * unit });
+                    blade.close();
+                }
+            });
+            blades.draw();
+        }
     }
 }

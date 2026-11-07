@@ -216,7 +216,8 @@ namespace ClaFi::PathArt
         fillBox(frame, lake, LinearGradient::Simple({ 0.0f, lakeY }, { 0.0f, height },
             CometSceneColors::LakeShadeTop, CometSceneColors::LakeShadeBottom));
 
-        PixelPath ripples;
+        ScatteredShapes ripples{ frame, SolidColor{ CometSceneColors::Ripple }, 1.1f * unit,
+            StrokeCap::Butt };
         for (int i = 0; i != 26; ++i)
         {
             const float depth = std::pow(pseudoRandom(i, 51.0f), 0.8f);
@@ -225,11 +226,11 @@ namespace ClaFi::PathArt
             const float laps = static_cast<float>(1 + i % 3);
             const float x = fractionalPart(pseudoRandom(i, 53.0f) + cycleTime * laps)
                 * (width + length * 2.0f) - length;
-            ripples.moveTo(x, y);
-            ripples.lineTo(x + length, y);
+            PixelPath& ripple = ripples.next();
+            ripple.moveTo(x, y);
+            ripple.lineTo(x + length, y);
         }
-        strokeShape(frame, ripples, SolidColor{ CometSceneColors::Ripple }, 1.1f * unit,
-            StrokeCap::Butt);
+        ripples.draw();
 
         // the shore, a line of pines
         fillBox(frame, { 0.0f, lakeY - 2.0f * unit, width, lakeY + 3.0f * unit },

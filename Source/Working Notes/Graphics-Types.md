@@ -51,6 +51,37 @@ snapOrigins, gridFit and subpixel antialiasing are one group rather than three i
 settings - each ties a glyph's raster to where the run sits - and they are the reason the struct
 is passed whole.
 
+## RectPainter
+
+A rect filled through RectPainter and the same rect filled as a path came out differently in
+three ways, until PathArt's fillBox began filling rects to keep scene frames off the path
+rasterizer and showed them:
+
+- **A solid colour ignored a path clip.** Both solid routes write pixels straight, and the clip
+  reaches a pixel only through a coverage mask, so Jupiter's bands spilled past the planet. Under
+  a path clip a solid rect goes through fillCovered, which builds the mask.
+- **A brush other than a solid colour filled its rim pixels whole**, so a gradient rect whose edge
+  fell between pixels grew by up to a pixel on that side - a tree trunk in the Chase. The inner
+  pixels still take the brush without a mask, and the rim, at most a pixel wide on each side, goes
+  through fillCovered.
+- **A point glow composited without a mask skipped the path clip**, which the gradients already
+  honoured without one, so the city glows spilled past the Earth's limb.
+
+After the three, the scenes match the path-filled frames to within an antialiasing step on a few
+corner pixels: RectPainter's exact area coverage against the rasterizer's.
+
+## RasterBuffers rasterizeStrokeSegment
+
+**A row of a slanting segment covers only the run near its line.** The distance used to be
+measured for every pixel of the segment's bounding box, and on a slanting segment most of that box
+lies too far from the line to change. The Puppeteer's floor - 37 planks two units wide, fanning
+toward a point above the stage - spanned 0.6 of the frame in plank boxes. A Visual Studio profile
+of the MSVC build at 3436 x 2051 put 72% of an 81 ms frame in this function and in
+calcStrokeEdgeDistSq, which MSVC keeps out of line; the same frame under clang spent 12% there.
+
+The masks it writes are the same bit for bit - checked over every scene and the mill's themes -
+and on the Puppeteer the work counted by callgrind fell to a sixth.
+
 ## ArcEllipse
 
 Both backends take the grown radii from the same conversion: the CPU backend cuts the arc into

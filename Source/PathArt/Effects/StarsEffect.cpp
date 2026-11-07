@@ -13,14 +13,20 @@ namespace ClaFi::PathArt
 
     namespace
     {
-        // How many opacities a field of dots is drawn in: one path per opacity.
+        // How many opacities a field of dots is drawn in, one fill each on Direct2D.
         constexpr int k_starOpacitySteps{ 6 };
 
-        // Each star is put in the path of the opacity it stands at, so the field is a handful of
-        // fills.
+        // Each star takes the opacity of the step it stands at.
         void drawDots(const SceneFrame& frame, const float cycleTime, const StarField& field)
         {
-            std::array<PixelPath, k_starOpacitySteps> paths{};
+            std::vector<ScatteredShapes> steps;
+            steps.reserve(k_starOpacitySteps);
+            for (int step = 0; step != k_starOpacitySteps; ++step)
+            {
+                const float strength = (static_cast<float>(step) + 0.5f) / k_starOpacitySteps;
+                steps.emplace_back(frame,
+                    SolidColor{ field.color.withOpacity(strength * 0.9f * field.opacity) });
+            }
             for (int i = 0; i != field.count; ++i)
             {
                 const float x = pseudoRandom(i, field.seed) * frame.width;
@@ -35,21 +41,14 @@ namespace ClaFi::PathArt
                     static_cast<int>(strength * k_starOpacitySteps));
                 const float radius = (0.6f + 1.3f * pseudoRandom(i, field.seed + 2.0f))
                     * frame.unit;
-                PixelPath& path = paths[static_cast<std::size_t>(step)];
+                PixelPath& path = steps[static_cast<std::size_t>(step)].next();
                 if (pseudoRandom(i, field.seed + 3.0f) > 0.9f)
                     addSparkle(path, { x, y }, radius * 2.6f * (0.6f + 0.4f * twinkle));
                 else
                     addEllipse(path, { x, y }, radius, radius);
             }
-            for (int step = 0; step != k_starOpacitySteps; ++step)
-            {
-                const PixelPath& path = paths[static_cast<std::size_t>(step)];
-                if (path.isEmpty())
-                    continue;
-                const float strength = (static_cast<float>(step) + 0.5f) / k_starOpacitySteps;
-                fillShape(frame, path,
-                    SolidColor{ field.color.withOpacity(strength * 0.9f * field.opacity) });
-            }
+            for (ScatteredShapes& stars : steps)
+                stars.draw();
         }
 
         // The stars are filled one by one: two that overlap would cut holes in each other in one
