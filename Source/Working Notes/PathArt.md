@@ -97,6 +97,35 @@ averaged over three frames: Mill 1.5 to 3.4 ms, Puppeteer 5, Ghost 4.6 to 4.9, C
 6.8, Orrery 6.5 to 6.7, Comet 4.3 to 5.7, Satellite 5.4 to 6.8, Chase 4 to 4.7. Not measured
 under Direct2D.
 
+## SceneLayer
+
+**Oj's shape** (2026-11-07): a scene prepares its still parts without a canvas, from the params,
+and keeps them itself; draw lays each one in with a line at its place in the paint order. The first
+proposal - one still image under everything that moves - could not have kept the Puppeteer's
+valance, which hangs over the swaying curtains.
+
+**Measured** at 3436 x 2051 on the CPU backend, clang, averaged over eight times of the cycle:
+the Puppeteer 30 ms live and 18 to 19 ms with the stage and the valance kept; the Clockwork 53 ms
+live and 31 to 38 ms with the plate, the pipes and the gauge kept. In Oj's MSVC profile the stage
+alone was half of the Puppeteer's frame. Layered frames match live ones within one level of a
+channel - the rounding of premultiplied pixels.
+
+**Preparing costs** about 30 ms for the Puppeteer's two layers and 55 ms for the Clockwork's
+three: a canvas the size of the scene for each, cleared, drawn on and cut down. That is why the
+showcase prepares only once two frames running were drawn at one size - a resize draws live until
+it rests.
+
+**The cut** looks for the first pixel that is not clear from each end of a row, so a covered row
+costs two pixels; an area the size of the canvas is moved out rather than copied.
+
+**Direct2D draws layers live.** Its drawPixelView copies the bitmap up to the GPU on every call,
+which a kept layer would pay on every frame. A layer kept on the GPU would need a backend call of
+its own.
+
+**Under a path clip** a layered frame differs from a live one: the kept pixels are laid in by
+compositeSurface, which knows the clip's rectangle but not its mask - the same as the mill's
+background bitmap. The showcase draws no scene under a path clip; Oj's profiles show none.
+
 ## ClockworkScene
 
 meshWith places the driven gear's phase so that the teeth past the line of centers, counted on

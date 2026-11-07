@@ -3,7 +3,9 @@ module ClaFi.PathArt.PuppeteerScene;
 import ClaFi.PathArt.AndroidSprite;
 import ClaFi.PathArt.DustMotesEffect;
 import ClaFi.PathArt.MarionetteSprite;
+import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -43,6 +45,12 @@ namespace ClaFi::PathArt
         constexpr float k_swaysPerCycle{ 16.0f };
     }
 
+    void PuppeteerScene::prepare(const SceneParams& params)
+    {
+        m_stage.prepare(params);
+        m_valance.prepare(params);
+    }
+
     void PuppeteerScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
@@ -56,7 +64,7 @@ namespace ClaFi::PathArt
         const float puppetX = centerX - 78.0f * unit * closeness + 34.0f * unit * std::sin(sway);
         const MarionettePose marionette = danceMarionette(unit, { puppetX, floorY }, sway);
 
-        drawStage(frame);
+        m_stage.draw(frame);
         const float lampX = centerX - 56.0f * unit * closeness;
         drawSpotlight(frame, lampX, puppetX, floorY);
 
@@ -79,6 +87,7 @@ namespace ClaFi::PathArt
             .color = PuppeteerColors::Dust
         });
         drawCurtains(frame, cycleTime);
+        m_valance.draw(frame);
     }
 
     void PuppeteerScene::drawStage(const SceneFrame& frame)
@@ -179,7 +188,13 @@ namespace ClaFi::PathArt
                 });
             }
         }
+    }
 
+    void PuppeteerScene::drawValance(const SceneFrame& frame)
+    {
+        const float unit = frame.unit;
+        const float width = frame.width;
+        const float height = frame.height;
         const float valanceHeight = std::max(height * 0.085f, 40.0f * unit);
         const float scallop = 64.0f * unit;
         PixelPath valance;

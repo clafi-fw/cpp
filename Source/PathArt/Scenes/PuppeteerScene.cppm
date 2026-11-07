@@ -2,6 +2,7 @@ export module ClaFi.PathArt.PuppeteerScene;
 
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
@@ -14,10 +15,15 @@ namespace ClaFi::PathArt
     {
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Puppeteer"; }
+        void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
     private:
         static void drawStage(const SceneFrame&);
         static void drawSpotlight(const SceneFrame&, float lampX, float puppetX, float floorY);
         static void drawCurtains(const SceneFrame&, float cycleTime);
+        static void drawValance(const SceneFrame&);
+    private:
+        SceneLayer m_stage{ drawStage };
+        SceneLayer m_valance{ drawValance };
     };
 }

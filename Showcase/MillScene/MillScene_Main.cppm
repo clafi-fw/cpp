@@ -34,6 +34,9 @@ import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
 
+import ClaFi.Core.Graphics.Canvas;
+import ClaFi.Core.Graphics.Types;
+
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.Foundation;
@@ -151,6 +154,8 @@ namespace MillScene_App
 
         // Where the scene stands in its cycle, as a 0..1 ratio.
         float m_cycleTime{ 0.0f };
+        // What the last frame was drawn with; the scene is prepared once two frames running agree.
+        PathArt::SceneParams m_lastSceneParams{};
         Diagnostic::TimePoint m_prevRun{Diagnostic::Clock::now() };
         // The scene runs at the speed this slider names. While there is no slider it runs at 1.
         Slider* m_speedSlider{ nullptr };
@@ -244,6 +249,18 @@ void MillSceneForm::paintScene(PaintEvent& event)
     m_benchmark.setDimensions(sceneRect.dimensions());
 
     advanceCycleTime();
+
+    // **A scene keeps its layers for the size it settles on.** While a resize changes the size
+    // from one frame to the next the scene draws everything live, and the first frame drawn at an
+    // unchanged size prepares it.
+    const PathArt::SceneParams sceneParams = {
+        .bounds = sceneRect,
+        .transform = event.canvas().transform(),
+        .backend = event.canvas().backend()->type()
+    };
+    if (sceneParams == m_lastSceneParams)
+        sceneAt(m_shownScene).prepare(sceneParams);
+    m_lastSceneParams = sceneParams;
 
     // A paint covering at least 80% of the scene is a full one, and only a full one is
     // measured: a repaint of the combo box or the slider covers a fraction of the scene and

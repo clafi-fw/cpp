@@ -82,6 +82,13 @@ calcStrokeEdgeDistSq, which MSVC keeps out of line; the same frame under clang s
 The masks it writes are the same bit for bit - checked over every scene and the mill's themes -
 and on the Puppeteer the work counted by callgrind fell to a sixth.
 
+## PixelView compositeSurface
+
+**At full opacity a run of opaque pixels is copied whole.** A scene's still background kept as
+pixels is one such run per row, and taken pixel by pixel it cost about 13 instructions a pixel
+under callgrind - a third of a layered Puppeteer frame. The runs leave the same pixels the
+pixel-by-pixel route left.
+
 ## ArcEllipse
 
 Both backends take the grown radii from the same conversion: the CPU backend cuts the arc into

@@ -32,6 +32,21 @@ two values, whatever was drawn before. MillScene keeps its theme's crossfade bet
 SceneFrame, so it keeps its proportions at any size; a narrow frame draws the figures closer
 together, or smaller, rather than cutting them.
 
+## Scene prepare
+
+Readies what the scene keeps between frames - its layers, see SceneLayer - for the params it will
+be drawn with. A scene that keeps nothing leaves it as it is.
+
+**Call it before draw, whenever there is time for it.** It costs nothing when the params have not
+changed. A frame drawn with params the scene was not prepared for comes out the same, drawn live,
+so a host may leave it out while a resize changes the size from one frame to the next. The
+MillScene showcase prepares on the first frame drawn at an unchanged size.
+
+## SceneParams
+
+What a scene's frames depend on besides the cycle time: the bounds it is drawn into, the canvas's
+transform from the bounds' coordinates to pixels, and the backend that draws them.
+
 ## SceneFrame
 
 The shorter side of the frame is 600 units, and `unit` is the pixels in one. width and height
@@ -62,6 +77,25 @@ are filled apart and do not.
 **A kind of shape that lies over another goes down after it.** With two ScatteredShapes open at
 once, the CPU backend draws their shapes interleaved, in the order next() is called. Build the
 lower kind everywhere and call its draw() before the upper kind's first next().
+
+## SceneLayer
+
+A part of a scene that does not move, drawn once into pixels and copied into every frame.
+
+- **prepare** draws the part on a canvas of its own, cut down to the pixels it covers, and keeps
+  them for the params. It does nothing when they are kept for those params already.
+- **draw** copies the kept pixels in, at the part's own place in the paint order, so a layer over
+  moving parts is drawn after them. Where the frame does not fit the params the pixels were drawn
+  for, it draws the part live.
+
+**The drawing is a function of the frame alone.** It reads no time and nothing else that changes
+from frame to frame, so the same params give the same pixels.
+
+**Only the CPU backend keeps pixels.** Direct2D copies a bitmap up to the GPU on every draw, so
+there a layer draws its part live.
+
+**A path clip does not reach the kept pixels.** They are laid in as drawBitmap lays a bitmap, which
+on the CPU backend stops at the clip's rectangle only.
 
 ## reachToward
 

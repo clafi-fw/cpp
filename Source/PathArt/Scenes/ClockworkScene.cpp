@@ -2,7 +2,9 @@ module ClaFi.PathArt.ClockworkScene;
 
 import ClaFi.PathArt.EscapementSprite;
 import ClaFi.PathArt.GearSprite;
+import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.SteamEffect;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -46,6 +48,35 @@ namespace ClaFi::PathArt
         constexpr float k_degree{ std::numbers::pi_v<float> / 180.0f };
         // Swings of the pendulum per cycle; each crossing of the middle releases one tooth.
         constexpr float k_swingsPerCycle{ 20.0f };
+        // The pressure gauge's radius, in units of the movement's size.
+        constexpr float k_gaugeRadius{ 40.0f };
+
+        // How large the movement is drawn, and the point its parts are placed about.
+        struct Movement
+        {
+            float size{};
+            FloatPoint center{};
+        };
+
+        // A narrow frame draws the movement smaller rather than cut it.
+        [[nodiscard]] Movement movementIn(const SceneFrame&);
+        // Where the pipe along the bottom turns up the right side.
+        [[nodiscard]] FloatPoint pipeElbow(const Movement&);
+        // Where the valve stands on the pipe.
+        [[nodiscard]] FloatPoint valveAt(const Movement&);
+        // The middle of the pressure gauge, on its branch of the pipe.
+        [[nodiscard]] FloatPoint gaugeCenter(const Movement&);
+        // A pipe lit across its width, from `lit` to `shaded`.
+        [[nodiscard]] LinearGradient pipeMetal(FloatPoint lit, FloatPoint shaded);
+        // The point `distance` out from the gauge's middle, `degrees` round from the right.
+        [[nodiscard]] FloatPoint onDial(FloatPoint gauge, float degrees, float distance);
+    }
+
+    void ClockworkScene::prepare(const SceneParams& params)
+    {
+        m_plate.prepare(params);
+        m_pipes.prepare(params);
+        m_gauge.prepare(params);
     }
 
     // Every gear turns a whole number of teeth and of spokes in a cycle, so the train ends the
@@ -53,11 +84,11 @@ namespace ClaFi::PathArt
     void ClockworkScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
-        // A narrow frame draws the movement smaller rather than cut it.
-        const float size = frame.unit * std::min(1.0f, (frame.width / frame.unit) / 800.0f);
-        const FloatPoint center = { frame.width * 0.5f - 20.0f * size, frame.height * 0.5f };
+        const Movement movement = movementIn(frame);
+        const float size = movement.size;
+        const FloatPoint center = movement.center;
 
-        drawPlate(frame, center - FloatPoint{ 260.0f * size, 260.0f * size });
+        m_plate.draw(frame);
 
         const float toothSize = 6.2f * size;
         const FloatPoint escapeCenter = center + FloatPoint{ -230.0f * size, -60.0f * size };
@@ -104,10 +135,21 @@ namespace ClaFi::PathArt
         drawGlow(frame, escapeCenter + FloatPoint{ 5.0f * size, 6.0f * size }, 66.0f * size,
             ClockworkColors::Shadow.withOpacity(0.5f));
         drawEscapement(frame, escapement);
-        drawPipes(frame, center, size, cycleTime);
+
+        m_pipes.draw(frame);
+        // The valve lets off steam four times a cycle, each burst a dozen puffs.
+        const FloatPoint valve = valveAt(movement);
+        drawSteam(frame, SteamBurst{
+            .vent = { valve.x, valve.y - 34.0f * size },
+            .size = size,
+            .time = fractionalPart(cycleTime * 4.0f),
+            .color = ClockworkColors::Steam
+        });
+        m_gauge.draw(frame);
+        drawGaugeNeedle(frame, cycleTime);
     }
 
-    void ClockworkScene::drawPlate(const SceneFrame& frame, const FloatPoint lampAt)
+    void ClockworkScene::drawPlate(const SceneFrame& frame)
     {
         const float unit = frame.unit;
         const float width = frame.width;
@@ -139,20 +181,21 @@ namespace ClaFi::PathArt
                 rivetRadius);
         }
         rivets.draw();
+        const Movement movement = movementIn(frame);
+        const FloatPoint lampAt = movement.center
+            - FloatPoint{ 260.0f * movement.size, 260.0f * movement.size };
         drawGlow(frame, lampAt, 420.0f * unit, ClockworkColors::Lamp.withOpacity(0.16f));
     }
 
-    void ClockworkScene::drawPipes(const SceneFrame& frame, const FloatPoint center,
-        const float size, const float cycleTime)
+    void ClockworkScene::drawPipes(const SceneFrame& frame)
     {
+        const Movement movement = movementIn(frame);
+        const float size = movement.size;
+        const FloatPoint center = movement.center;
         const float inset = 14.0f * frame.unit;
-        const float pipeY = center.y + 262.0f * size;
-        const float pipeX = center.x + 372.0f * size;
-        // A pipe is lit across its width, from `lit` to `shaded`.
-        const auto pipeMetal = [](FloatPoint lit, FloatPoint shaded) {
-            return LinearGradient::Simple(lit, shaded, ClockworkColors::PipeLight,
-                ClockworkColors::PipeShade);
-        };
+        const FloatPoint elbow = pipeElbow(movement);
+        const float pipeX = elbow.x;
+        const float pipeY = elbow.y;
         const float pipeHalf = 9.0f * size;
         drawSegment(frame, { inset, pipeY }, { pipeX, pipeY },
             pipeMetal({ 0.0f, pipeY - pipeHalf }, { 0.0f, pipeY + pipeHalf }), 2.0f * pipeHalf,
@@ -160,7 +203,6 @@ namespace ClaFi::PathArt
         drawSegment(frame, { pipeX, pipeY + pipeHalf }, { pipeX, inset },
             pipeMetal({ pipeX - pipeHalf, 0.0f }, { pipeX + pipeHalf, 0.0f }), 2.0f * pipeHalf,
             StrokeCap::Butt);
-        const FloatPoint elbow = { pipeX, pipeY };
         const FloatPoint elbowCorner = { 14.0f * size, 14.0f * size };
         fillDisc(frame, elbow, 14.0f * size, pipeMetal(elbow - elbowCorner, elbow + elbowCorner));
         const float flangeHalf = 13.0f * size;
@@ -178,8 +220,7 @@ namespace ClaFi::PathArt
             fillBox(frame, flange, flangeMetal);
         }
 
-        // The valve lets off steam four times a cycle, each burst a dozen puffs.
-        const float valveX = center.x + 130.0f * size;
+        const float valveX = valveAt(movement).x;
         const FloatRect valve = {
             valveX - 7.0f * size,
             pipeY - 26.0f * size,
@@ -191,17 +232,17 @@ namespace ClaFi::PathArt
         drawSegment(frame, { valveX - 16.0f * size, pipeY - 30.0f * size },
             { valveX + 16.0f * size, pipeY - 30.0f * size },
             SolidColor{ ClockworkColors::Valve }, 5.0f * size);
-        drawSteam(frame, SteamBurst{
-            .vent = { valveX, pipeY - 34.0f * size },
-            .size = size,
-            .time = fractionalPart(cycleTime * 4.0f),
-            .color = ClockworkColors::Steam
-        });
+    }
 
-        // the pressure gauge on its branch of the pipe
-        const FloatPoint gauge = { pipeX - 72.0f * size, center.y - 196.0f * size };
-        const float gaugeRadius = 40.0f * size;
+    // The pressure gauge on its branch of the pipe.
+    void ClockworkScene::drawGauge(const SceneFrame& frame)
+    {
+        const Movement movement = movementIn(frame);
+        const float size = movement.size;
+        const FloatPoint gauge = gaugeCenter(movement);
+        const float gaugeRadius = k_gaugeRadius * size;
         const float branchHalf = 6.0f * size;
+        const float pipeX = pipeElbow(movement).x;
         drawSegment(frame, gauge + FloatPoint{ gaugeRadius, 0.0f }, { pipeX, gauge.y },
             pipeMetal({ 0.0f, gauge.y - branchHalf }, { 0.0f, gauge.y + branchHalf }),
             2.0f * branchHalf, StrokeCap::Butt);
@@ -210,31 +251,80 @@ namespace ClaFi::PathArt
             LinearGradient::Simple(gauge - gaugeCorner, gauge + gaugeCorner,
             ClockworkColors::GaugeRimLight, ClockworkColors::BobShade));
         fillDisc(frame, gauge, gaugeRadius, SolidColor{ ClockworkColors::GaugeFace });
-        const auto onDial = [&](float degrees, float distance) {
-            const float angle = degrees * k_degree;
-            return gauge + FloatPoint{ std::cos(angle), std::sin(angle) } * distance;
-        };
         PixelPath ticks;
         for (int i = 0; i <= 10; ++i)
         {
             const float degrees = -215.0f + static_cast<float>(i) * 25.0f;
-            ticks.moveTo(onDial(degrees, gaugeRadius * (i % 5 == 0 ? 0.7f : 0.8f)));
-            ticks.lineTo(onDial(degrees, gaugeRadius * 0.9f));
+            ticks.moveTo(onDial(gauge, degrees, gaugeRadius * (i % 5 == 0 ? 0.7f : 0.8f)));
+            ticks.lineTo(onDial(gauge, degrees, gaugeRadius * 0.9f));
         }
         strokeShape(frame, ticks, SolidColor{ ClockworkColors::GaugeInk }, 1.5f * size,
             StrokeCap::Butt);
         const float redRadius = gaugeRadius * 0.86f;
         PixelPath redZone;
-        redZone.moveTo(onDial(10.0f, redRadius));
+        redZone.moveTo(onDial(gauge, 10.0f, redRadius));
         redZone.arcTo({ redRadius, redRadius }, 0.0f, ArcSize::Small, ArcSweep::Clockwise,
-            onDial(35.0f, redRadius));
+            onDial(gauge, 35.0f, redRadius));
         strokeShape(frame, redZone, SolidColor{ ClockworkColors::Pallet }, 4.0f * size,
             StrokeCap::Butt);
-        // The needle wanders three times a cycle and trembles as it goes.
+    }
+
+    // The needle wanders three times a cycle and trembles as it goes.
+    void ClockworkScene::drawGaugeNeedle(const SceneFrame& frame, const float cycleTime)
+    {
+        const Movement movement = movementIn(frame);
+        const float size = movement.size;
+        const FloatPoint gauge = gaugeCenter(movement);
+        const float gaugeRadius = k_gaugeRadius * size;
         const float wander = 40.0f * std::sin(k_2Pi * 3.0f * cycleTime);
         const float tremble = 4.0f * std::sin(k_2Pi * 31.0f * cycleTime);
-        drawSegment(frame, gauge, onDial(-120.0f + wander + tremble, gaugeRadius * 0.82f),
+        drawSegment(frame, gauge, onDial(gauge, -120.0f + wander + tremble, gaugeRadius * 0.82f),
             SolidColor{ ClockworkColors::Needle }, 2.4f * size);
         fillDisc(frame, gauge, 4.0f * size, SolidColor{ ClockworkColors::GaugeInk });
+    }
+
+    namespace
+    {
+        Movement movementIn(const SceneFrame& frame)
+        {
+            const float size = frame.unit * std::min(1.0f, (frame.width / frame.unit) / 800.0f);
+            return {
+                size,
+                { frame.width * 0.5f - 20.0f * size, frame.height * 0.5f }
+            };
+        }
+
+        FloatPoint pipeElbow(const Movement& movement)
+        {
+            return {
+                movement.center.x + 372.0f * movement.size,
+                movement.center.y + 262.0f * movement.size
+            };
+        }
+
+        FloatPoint valveAt(const Movement& movement)
+        {
+            return { movement.center.x + 130.0f * movement.size, pipeElbow(movement).y };
+        }
+
+        FloatPoint gaugeCenter(const Movement& movement)
+        {
+            return {
+                pipeElbow(movement).x - 72.0f * movement.size,
+                movement.center.y - 196.0f * movement.size
+            };
+        }
+
+        LinearGradient pipeMetal(const FloatPoint lit, const FloatPoint shaded)
+        {
+            return LinearGradient::Simple(lit, shaded, ClockworkColors::PipeLight,
+                ClockworkColors::PipeShade);
+        }
+
+        FloatPoint onDial(const FloatPoint gauge, const float degrees, const float distance)
+        {
+            const float angle = degrees * k_degree;
+            return gauge + FloatPoint{ std::cos(angle), std::sin(angle) } * distance;
+        }
     }
 }

@@ -204,28 +204,48 @@ namespace ClaFi::Graphics
             const std::uint32_t kept = (destination * uncovered + 127) / 255;
             return static_cast<ColorByte>(std::min<std::uint32_t>(source + kept, 255));
         };
+        auto compositePixel = [&](Color& destination, const Color& pixel) {
+            const std::uint32_t alpha = faded(pixel.alpha);
+            if (alpha == 0)
+                return;
+            if (alpha == 255)
+            {
+                destination = pixel;
+                return;
+            }
+            const std::uint32_t uncovered = 255 - alpha;
+            destination.red = over(faded(pixel.red), destination.red, uncovered);
+            destination.green = over(faded(pixel.green), destination.green, uncovered);
+            destination.blue = over(faded(pixel.blue), destination.blue, uncovered);
+            destination.alpha = over(alpha, destination.alpha, uncovered);
+        };
+        // **At full opacity a run of opaque pixels is copied whole**, as compositing it pixel by
+        // pixel would leave it. A still background kept as pixels is one such run per row.
+        const bool fullOpacity = scale == 256;
+        auto isOpaque = [](const Color& pixel) {
+            return pixel.alpha == 255;
+        };
 
         for (int y = area.top; y < area.bottom; ++y)
         {
             Color* destRow = scanLineAbs(static_cast<float>(area.left), static_cast<float>(y));
             const Color* srcRow = source.scanLineAbs(srcX, static_cast<float>(y - offsetY));
-            for (int x = 0; x < width; ++x)
+            int x = 0;
+            while (x < width)
             {
-                const Color& pixel = srcRow[x];
-                const std::uint32_t alpha = faded(pixel.alpha);
-                if (alpha == 0)
-                    continue;
-                Color& destination = destRow[x];
-                if (alpha == 255)
+                if (fullOpacity && isOpaque(srcRow[x]))
                 {
-                    destination = pixel;
-                    continue;
+                    const Color* runEnd = std::find_if_not(srcRow + x, srcRow + width, isOpaque);
+                    const int runLength = static_cast<int>(runEnd - (srcRow + x));
+                    std::memcpy(destRow + x, srcRow + x,
+                        static_cast<std::size_t>(runLength) * sizeof(Color));
+                    x += runLength;
                 }
-                const std::uint32_t uncovered = 255 - alpha;
-                destination.red = over(faded(pixel.red), destination.red, uncovered);
-                destination.green = over(faded(pixel.green), destination.green, uncovered);
-                destination.blue = over(faded(pixel.blue), destination.blue, uncovered);
-                destination.alpha = over(alpha, destination.alpha, uncovered);
+                else
+                {
+                    compositePixel(destRow[x], srcRow[x]);
+                    ++x;
+                }
             }
         }
     }
