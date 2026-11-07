@@ -76,6 +76,7 @@ namespace ClaFi::PathArt
             FloatPoint halfSize; // across and up, in degrees
             float tilt; // off the line of latitude
             std::array<float, 4> phases; // where each of the edge's waves starts
+            float opacity; // its share of the cloud colour's opacity
             float driftPhase; // shared by the lumps of one cluster, which drift together
         };
     private:

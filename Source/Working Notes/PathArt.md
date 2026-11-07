@@ -245,11 +245,12 @@ as lenses. Rendered against it: one lumpy outline each, streaks with smaller lum
 brighter core; then each blurred. Oj: "they have to be blurred", the softest of the blurs "the most
 natural", and "let them be lumpy and some randomly overlapping". The edge is four waves of 2, 3, 5
 and 9 round an ellipse, their starts drawn for each lump; the soft edge is the Shadow layer, the
-outline 0.8 of the size so the fade keeps the cloud about as large. Lumps are filled one by one,
-so an overlap shows brighter rather than cutting a hole under the even-odd fill. 45 percent of
-the clusters carry a companion, 15 percent two. At 3436 x 2051 on the CPU backend the clouds cost
-about 4 ms a frame more than the three ellipses did, after rasterizeGlowMask's rows were narrowed
-- see Graphics-Types.
+outline 0.8 of the size so the fade keeps the cloud about as large. Lumps are filled one by one, so
+an overlap shows brighter rather than cutting a hole under the even-odd fill. 45 percent of the
+clusters carry a companion, 15 percent two. Each lump takes 0.35 to 1.45 of the cloud colour's
+opacity, on Oj's "randomize their opacity too": some read as wisps, some as dense. At 3436 x 2051 on
+the CPU backend the clouds cost about 4 ms a frame more than the three ellipses did, after
+rasterizeGlowMask's rows were narrowed - see Graphics-Types.
 
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the

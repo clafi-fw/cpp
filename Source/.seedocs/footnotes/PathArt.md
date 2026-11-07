@@ -215,8 +215,8 @@ show their backs. The blinking and twinkling keep the pace they would have in a 
 
 The city lights come on past the terminator - see SatelliteScene Terminator - and the
 atmosphere along the limb is blue by day, orange at dusk and dark at night, by the sunlight above
-each point of it. The clouds are soft-edged lumps, some overlapping, each cluster drifting a few
-degrees back and forth.
+each point of it. The clouds are soft-edged lumps of differing opacity, some overlapping, each
+cluster drifting a few degrees back and forth.
 
 ## SatelliteScene Terminator
 

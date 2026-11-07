@@ -262,6 +262,7 @@ namespace ClaFi::PathArt
                         k_2Pi * pseudoRandom(seed, 93.0f),
                         k_2Pi * pseudoRandom(seed, 94.0f)
                     },
+                    .opacity = 0.35f + 1.1f * pseudoRandom(seed, 89.0f),
                     .driftPhase = static_cast<float>(i)
                 };
             };
@@ -632,8 +633,7 @@ namespace ClaFi::PathArt
         // **Each lump is filled on its own with a soft edge**, so lumps that overlap show brighter
         // where they meet rather than cut holes in each other. The edge is four waves round an
         // ellipse, set apart for each lump by where each wave starts.
-        const PathDrawLayer soft = PathDrawLayer::Shadow(SatelliteSceneColors::Cloud,
-            k_cloudSoftness * frame.unit);
+        const float cloudOpacity = static_cast<float>(SatelliteSceneColors::Cloud.alpha) / 255.0f;
         for (const Cloud& cloud : m_clouds)
         {
             const float drift = 6.0f * std::sin(k_2Pi * cycleTime + cloud.driftPhase);
@@ -654,8 +654,13 @@ namespace ClaFi::PathArt
                 outline.push_back(globe.surfaceAt(center + around * lump));
             }
             // The lump's points run counterclockwise.
-            if (const std::optional<PixelPath> shape = nearSideShape(true))
-                frame.canvas.drawPath(*shape, std::span{ &soft, 1 }, &frame.toCanvas);
+            const std::optional<PixelPath> shape = nearSideShape(true);
+            if (!shape)
+                continue;
+            const PathDrawLayer soft = PathDrawLayer::Shadow(
+                SatelliteSceneColors::Cloud.withOpacity(cloudOpacity * cloud.opacity),
+                k_cloudSoftness * frame.unit);
+            frame.canvas.drawPath(*shape, std::span{ &soft, 1 }, &frame.toCanvas);
         }
     }
 
