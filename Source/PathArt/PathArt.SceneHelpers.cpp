@@ -3,7 +3,6 @@ module ClaFi.PathArt.SceneHelpers;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -13,8 +12,6 @@ namespace ClaFi::PathArt
 
     // How far a cubic's controls stand from the corner of a quarter ellipse.
     constexpr float k_quarterEllipseControl{ 0.5523f };
-    // How many opacities a star field is drawn in: one path per opacity.
-    constexpr int k_starOpacitySteps{ 6 };
 
     SceneFrame SceneFrame::FromBounds(Canvas& canvas, const FloatRect& bounds)
     {
@@ -79,6 +76,20 @@ namespace ClaFi::PathArt
         return Color::blend(from, to, std::clamp(share, 0.0f, 1.0f));
     }
 
+    Color faded(Color color, const float share)
+    {
+        color.alpha = static_cast<ColorByte>(std::lround(color.alpha * share));
+        return color;
+    }
+
+    float calculateSyncRotation(const float cycleTime, const int index, const float symmetryFactor)
+    {
+        const float spinDirection = index % 2 == 0 ? 1.0f : -1.0f;
+        const float rotationsPerLoop = static_cast<float>(1 + index % 2);
+        return cycleTime * (1.0f / symmetryFactor) * spinDirection * rotationsPerLoop
+            + static_cast<float>(index);
+    }
+
     Limb reachToward(const FloatPoint root, const FloatPoint target, const float upperLength,
         const float lowerLength, const BendToward bendToward)
     {
@@ -138,6 +149,20 @@ namespace ClaFi::PathArt
             { center.x, top });
         path.cubicTo({ center.x + controlX, top }, { right, center.y - controlY },
             { right, center.y });
+        path.close();
+    }
+
+    void addSparkle(PixelPath& path, const FloatPoint center, const float radius)
+    {
+        const float inner = radius * 0.25f;
+        path.moveTo(center.x, center.y - radius);
+        path.lineTo(center.x + inner, center.y - inner);
+        path.lineTo(center.x + radius, center.y);
+        path.lineTo(center.x + inner, center.y + inner);
+        path.lineTo(center.x, center.y + radius);
+        path.lineTo(center.x - inner, center.y + inner);
+        path.lineTo(center.x - radius, center.y);
+        path.lineTo(center.x - inner, center.y - inner);
         path.close();
     }
 
@@ -231,63 +256,8 @@ namespace ClaFi::PathArt
     void drawSparkle(const SceneFrame& frame, const FloatPoint center, const float radius,
         const Color color)
     {
-        const float inner = radius * 0.25f;
         PixelPath path;
-        path.moveTo(center.x, center.y - radius);
-        path.lineTo(center.x + inner, center.y - inner);
-        path.lineTo(center.x + radius, center.y);
-        path.lineTo(center.x + inner, center.y + inner);
-        path.lineTo(center.x, center.y + radius);
-        path.lineTo(center.x - inner, center.y + inner);
-        path.lineTo(center.x - radius, center.y);
-        path.lineTo(center.x - inner, center.y - inner);
-        path.close();
+        addSparkle(path, center, radius);
         fillShape(frame, path, SolidColor{ color });
-    }
-
-    // Each star is put in the path of the opacity it stands at, so the field is a handful of fills.
-    void drawStars(const SceneFrame& frame, const float cycleTime, const StarField& field)
-    {
-        std::array<PixelPath, k_starOpacitySteps> paths{};
-        for (int i = 0; i != field.count; ++i)
-        {
-            const float x = pseudoRandom(i, field.seed) * frame.width;
-            const float y = std::lerp(field.top, field.bottom, pseudoRandom(i, field.seed + 1.0f));
-            const float speed = field.twinklesPerCycle * static_cast<float>(1 + i % 4);
-            const float wave = std::sin(k_2Pi * speed * cycleTime + static_cast<float>(i) * 1.7f);
-            const float twinkle = 0.5f + 0.5f * wave;
-            const float strength = 0.25f + 0.75f * twinkle;
-            const int step = std::min(k_starOpacitySteps - 1,
-                static_cast<int>(strength * k_starOpacitySteps));
-            const float radius = (0.6f + 1.3f * pseudoRandom(i, field.seed + 2.0f)) * frame.unit;
-            PixelPath& path = paths[static_cast<std::size_t>(step)];
-            if (pseudoRandom(i, field.seed + 3.0f) > 0.9f)
-            {
-                const float tip = radius * 2.6f * (0.6f + 0.4f * twinkle);
-                const float inner = tip * 0.25f;
-                path.moveTo(x, y - tip);
-                path.lineTo(x + inner, y - inner);
-                path.lineTo(x + tip, y);
-                path.lineTo(x + inner, y + inner);
-                path.lineTo(x, y + tip);
-                path.lineTo(x - inner, y + inner);
-                path.lineTo(x - tip, y);
-                path.lineTo(x - inner, y - inner);
-                path.close();
-            }
-            else
-            {
-                addEllipse(path, { x, y }, radius, radius);
-            }
-        }
-        for (int step = 0; step != k_starOpacitySteps; ++step)
-        {
-            const PixelPath& path = paths[static_cast<std::size_t>(step)];
-            if (path.isEmpty())
-                continue;
-            const float strength = (static_cast<float>(step) + 0.5f) / k_starOpacitySteps;
-            fillShape(frame, path,
-                SolidColor{ field.color.withOpacity(strength * 0.9f * field.opacity) });
-        }
     }
 }

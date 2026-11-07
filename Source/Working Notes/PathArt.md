@@ -14,6 +14,29 @@ pointer and puts the picked one back when the pointer leaves. The config keeps t
 in `Scene` and the theme in `SceneTheme`, so a scene added or moved in the list does not shift
 what was stored.
 
+**Scenes, sprites and effects stand in three folders** (Oj, 2026-11-07, "Make folders for scenes,
+effects, sprites"). A sprite is a figure with a pose of its own - a struct of where it stands and
+how far into its motions it is - drawn by one free function; an effect is a field or an overlay -
+stars, rain, fog, steam - drawn the same way from a struct of what it covers. What is drawn once,
+in one scene, stays in its scene: the stage, the graveyard, the plate, the lake, the globe, the
+landscapes. Module names keep the kind as a suffix and leave the folder out, as Icons does:
+`ClaFi.PathArt.WolfSprite` in `Sprites/WolfSprite.cppm`.
+
+**A sprite keeps its colours in a palette of its own**, except the mill's: the mill's figures and
+weather take their colours from the theme, passed in as a struct beside the pose, since the theme
+crossfades them. Three scenes whose palette would share a sprite's name took a `Scene` in theirs -
+`GhostSceneColors`, `CometSceneColors`, `SatelliteSceneColors`.
+
+**A sprite's idle motions run on a time the scene hands it** - blinks, twitches, flickers, each a
+whole number of times per unit of that time - so it loops in any scene that hands it a whole
+number of units a cycle. The satellite takes two: `orbitTime` turns its panels once a round, and
+`blinkTime` is the cycle time times `k_lively`.
+
+The split was checked against renders taken before it: the seven scenes at 800 x 600 and 500 x
+700, eight times each, and the mill in every theme at four times. Nothing moved by more than two
+levels of a colour channel, except the pendulum in ClockworkScene - seven levels along its edge,
+where its swing's sum now comes out in another order.
+
 **Each scene states its own cycle.** All of them run at 40 seconds except OrreryScene and
 SatelliteScene, which run at 240: the first mockups ran both at 40, and the planets and the turning
 Earth were far too quick. Slowing the whole cycle slowed the twinkling and blinking with it, so
@@ -60,7 +83,7 @@ The belt lies between Mars and Jupiter on screen and in the drawing order: the o
 the far side, the far half of the belt, the inner planets on the far side, the Sun, the inner
 planets on the near side, the near half of the belt, the outer planets on the near side.
 
-## OrreryScene shadeBall
+## shadeBall
 
 The shade is built in a frame turned so the light comes from +x, from two arcs: the half disc on
 -x, slightly larger than the ball so its antialiased rim is covered under the clip, and the half
@@ -127,5 +150,25 @@ On his back, the wolf's head turned into the ground until `headTurn` took `0.7 *
 
 ## MillScene
 
-To watch: the wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`, `sin(t * 30)` and
-`sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the cycle wraps.
+To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
+`sin(t * 30)` and `sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the
+cycle wraps. The water lily bobs one and a half times a cycle, and jumps the same way.
+
+**The mill's figures and weather are sprites and effects** like the other scenes' (Oj,
+2026-11-07, "Pull them out too"): the cow, the trees, the mill, its wheel, the reeds, the lily, the
+wolf and the gator, the rain, the lightning, the snow, the leaves, the fireflies and the dust.
+What stayed is the scenery drawn once - the sky and hills cached in a bitmap, the sun's corona, the
+clouds, the river, its foam, its reflection and its fog - still drawn through the canvas with the
+offset, as before. `faded` and `calculateSyncRotation` went to the kit, and `pseudoRand` gave way to
+pseudoRandom, which is the same sum.
+
+## StarStyle
+
+The mill drew its own stars, all sparkles, until Oj asked whether it needed stars of its own
+(2026-11-07) and picked moving them into the shared field. Sparkles keeps their look: the same
+positions from the same random numbers, a size that follows the twinkle, nothing below a fifth of
+it.
+
+**Sparkles are filled one by one**, where dots are binned by opacity: they all share one opacity,
+so binning would put every star in one path, and two that overlap would cut holes in each other
+under the even-odd rule.

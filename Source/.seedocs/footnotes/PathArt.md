@@ -16,6 +16,10 @@ round.
 **The showcase owns the clock.** It advances its cycle time by the time since the last frame over
 cycleDuration(), and wraps it back into 0 to 1. A scene keeps no time of its own.
 
+**A scene draws its figures as sprites and its weather as effects** - free functions that take a
+SceneFrame and a struct: a sprite's pose, an effect's extent. Each takes the time its motions run
+on, and comes round when that time runs a whole number of units a cycle.
+
 ## Scene draw
 
 Paints the whole of bounds, so nothing needs to be drawn under it.
@@ -47,13 +51,29 @@ Bends a two-part limb so that its end reaches `target`, by the law of cosines.
 - **Two joints answer every reach**, mirror images across the line from root to end. BendToward
   picks the one further left, further right or lower down.
 
+## calculateSyncRotation
+
+The spin of a falling flake or leaf, in turns. An even index turns clockwise by one
+`symmetryFactor`th of a turn a cycle, an odd one the other way and twice as fast, so a shape with
+that symmetry looks the same at both ends of the cycle. The index adds whole turns, which change
+nothing on screen.
+
 ## PuppeteerScene
 
 An android on a small stage works a marionette under a spotlight, between swaying curtains.
 
-The dance is 16 sways a cycle, with a step on every half sway. The control's main bar tilts with
-the sway and carries the head and hand strings; the leg bar hooked under it rocks with the step
-and lifts the knees. The puppet's arms and legs are reached from the strings with reachToward.
+The dance is 16 sways a cycle, with a step on every half sway - see danceMarionette. The android
+sways with the puppet and holds its control from the right.
+
+## danceMarionette
+
+Places the control for one moment of the dance and hangs the puppet from it.
+
+- **The main bar tilts with the sway** and carries the head and hand strings, so each tilt lifts
+  one hand.
+- **The leg bar hooked under it rocks twice a sway** and lifts each knee in turn, as the feet step.
+- **The arms and legs are reached from the strings** with reachToward; the control stands 284
+  units above the feet, over the puppet's head.
 
 ## GhostScene
 
@@ -83,10 +103,10 @@ belt three times, Mars 4, the Earth 6, Venus 8 and Mercury 12; the Moon goes rou
 times. The stars twinkle and the Sun's rays flicker at the pace they would keep in a 40-second
 cycle.
 
-Each planet is lit from the Sun - see OrreryScene shadeBall - and is drawn larger on the near
-half of its orbit. What stands beyond the Sun is drawn before it, what stands in front after it.
+Each planet is lit from the Sun - see shadeBall - and is drawn larger on the near half of its
+orbit. What stands beyond the Sun is drawn before it, what stands in front after it.
 
-## OrreryScene shadeBall
+## shadeBall
 
 Fills the part of a ball's disc that faces away from the light, inside a clip to that disc.
 
@@ -105,6 +125,14 @@ running straight back. Where it lands, the sky behind the ridge lights up and fa
 
 The lake shows everything above it upside down and dimmed, with ripples running across. Three
 shooting stars cross the sky in the quiet between the passes.
+
+## CometPose
+
+**A pass is the comet's whole visit.** It falls along its course for `fallShare` of the pass,
+lands at the course's end, and its tails fade over the next 0.08.
+
+The head gathers speed as it falls, and the dust tail grows with the speed. Sparks shed along the
+way drift down and fade over 0.3 of a pass.
 
 ## SatelliteScene
 
@@ -125,6 +153,13 @@ The line between day and night across the part of the globe in view, taken as st
 small cap the frame shows, the curve of the true terminator does not show.
 
 distanceTo() is above 0 on the day side and below it on the night side, in pixels.
+
+## drawSatellite
+
+**In the Earth's shadow the craft keeps 35 percent of its colour**, by `sunlit`. Its panels turn
+about their booms once a round of `orbitTime`, so past edge-on they show their ribbed backs, and
+the craft rocks once a round. The navigation lights blink 16 times a unit of `blinkTime`, the
+strobe 20 times, and the panels' glints sweep twice.
 
 ## ChaseScene
 

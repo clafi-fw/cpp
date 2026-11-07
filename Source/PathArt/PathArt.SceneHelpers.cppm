@@ -39,19 +39,6 @@ namespace ClaFi::PathArt
         FloatPoint end;
     };
 
-    // A field of twinkling stars across a band of the frame.
-    export struct StarField
-    {
-        int count{ 100 };
-        float top{ 0.0f };
-        float bottom{ 0.0f };
-        float seed{ 0.0f }; // picks the stars - two fields with one seed are one field
-        Color color{ 0xFFEEF0FF };
-        float opacity{ 1.0f };
-        // How often the slowest star twinkles in a cycle; a long cycle raises it to keep the pace.
-        float twinklesPerCycle{ 1.0f };
-    };
-
     // MillScene's pseudo random numbers, 0 to 1: one index and shift always give one number.
     export [[nodiscard]] float pseudoRandom(int index, float shift = 0.0f);
     // The part of `value` past its whole number, 0 to 1 for negative values too.
@@ -64,12 +51,18 @@ namespace ClaFi::PathArt
     export [[nodiscard]] FloatPoint pointBetween(FloatPoint from, FloatPoint to, float share);
     // Color::blend with the share held to 0..1.
     export [[nodiscard]] Color colorBetween(Color from, Color to, float share);
+    export [[nodiscard]] Color faded(Color, float share); // the colour at a share of its own alpha
+    // MillScene's spin in turns, which comes round with a shape's symmetry each cycle. See PathArt
+    export [[nodiscard]] float calculateSyncRotation(float cycleTime, int index,
+        float symmetryFactor);
     // A limb from `root` toward `target`, its end held within reach. See PathArt
     export [[nodiscard]] Limb reachToward(FloatPoint root, FloatPoint target, float upperLength,
         float lowerLength, BendToward);
 
     // An ellipse appended to the path, where PixelPath::drawEllipse starts a path of its own.
     export void addEllipse(PixelPath&, FloatPoint center, float radiusX, float radiusY);
+    // MillScene's four-point star appended to the path, its points `radius` from the center.
+    export void addSparkle(PixelPath&, FloatPoint center, float radius);
 
     export void fillShape(const SceneFrame&, const PixelPath&, const Brush&,
         const Matrix3x2& local = Matrix3x2::Identity());
@@ -87,5 +80,4 @@ namespace ClaFi::PathArt
         float xRatio = 1.0f);
     // MillScene's four-point star.
     export void drawSparkle(const SceneFrame&, FloatPoint center, float radius, Color);
-    export void drawStars(const SceneFrame&, float cycleTime, const StarField&);
 }

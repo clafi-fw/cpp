@@ -1,5 +1,6 @@
 export module ClaFi.PathArt.Types;
 
+import ClaFi.PathArt.SnowEffect;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -49,8 +50,6 @@ namespace ClaFi::PathArt
         static constexpr std::size_t effectsNum() { return 8; }
         void drawIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const;
     };
-
-    export void createSnowFlakePath(PixelPath& p);
 
 
     //-------------------------------------------------------------------------
@@ -126,30 +125,4 @@ namespace ClaFi::PathArt
         // 6. Pop the clip geometry to clean up the canvas stack [CP]
         canvas.popClip();
     }
-
-    // createSnowFlakePath
-
-    export void createSnowFlakePath(PixelPath& p)
-    {
-        p.clear();
-        for (int i = 0; i < 6; ++i) {
-            float angle = i * k_2Pi / 6.0f;
-            float sa = std::sin(angle), ca = std::cos(angle);
-            p.moveTo(0.0f, 0.0f); p.lineTo(12.0f * sa, 12.0f * ca);
-            float sideAngle = angle + 0.8f;
-            p.moveTo(6.0f * sa, 6.0f * ca);
-            p.lineTo(
-                6.0f * sa + 5.0f * std::sin(sideAngle),
-                6.0f * ca + 5.0f * std::cos(sideAngle)
-            );
-            sideAngle = angle - 0.8f;
-            p.moveTo(6.0f * sa, 6.0f * ca);
-            p.lineTo(
-                6.0f * sa + 5.0f * std::sin(sideAngle),
-                6.0f * ca + 5.0f * std::cos(sideAngle)
-            );
-        }
-    }
-
-
 }

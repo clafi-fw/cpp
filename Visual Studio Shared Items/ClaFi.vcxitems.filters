@@ -31,6 +31,15 @@
     <Filter Include="PathArt">
       <UniqueIdentifier>{ea10e18a-8a3c-4c7c-81cc-5bbb0ba877dd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PathArt\Effects">
+      <UniqueIdentifier>{dd12e164-8b25-4352-834f-33f94aae6067}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PathArt\Scenes">
+      <UniqueIdentifier>{738c516b-03d2-4f5a-b31e-4c88988f2aac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="PathArt\Sprites">
+      <UniqueIdentifier>{f785db18-12b3-4e2f-b722-575e914c99fe}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Platform">
       <UniqueIdentifier>{3ff8f9fa-880c-4d27-b664-9494a30de026}</UniqueIdentifier>
     </Filter>
@@ -610,55 +619,94 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Icons\XMark.cppm">
       <Filter>Icons</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\ChaseScene.cpp">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\AsteroidBeltEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\ChaseScene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\AsteroidBeltEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\ClockworkScene.cpp">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\BlowingDustEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\ClockworkScene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\BlowingDustEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\CometScene.cpp">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\DazeStarsEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\CometScene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\DazeStarsEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\GhostScene.cpp">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\DustMotesEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\GhostScene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\DustMotesEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\MillScene.cpp">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\DustPuffEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\MillScene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\DustPuffEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\OrreryScene.cpp">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\FallingLeavesEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\OrreryScene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\FallingLeavesEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Scene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\FirefliesEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\FirefliesEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\FogEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\FogEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\LightningEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\LightningEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\RainEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\RainEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\ShootingStarsEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\ShootingStarsEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SnowEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SnowEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\StarsEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\StarsEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SteamEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SteamEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cpp">
       <Filter>PathArt</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cppm">
-      <Filter>PathArt</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Scenes.cpp">
-      <Filter>PathArt</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Scenes.cppm">
       <Filter>PathArt</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Themes.cppm">
@@ -667,17 +715,188 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Types.cppm">
       <Filter>PathArt</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PuppeteerScene.cpp">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\ChaseScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PuppeteerScene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\ChaseScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\SatelliteScene.cpp">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\ClockworkScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\SatelliteScene.cppm">
-      <Filter>PathArt</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\ClockworkScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\CometScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\CometScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\GhostScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\GhostScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\MillScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\MillScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\OrreryScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\OrreryScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PathArt.Scene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PathArt.Scenes.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PathArt.Scenes.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PuppeteerScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PuppeteerScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\SatelliteScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\SatelliteScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\AndroidSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\AndroidSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BatSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BatSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CometSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CometSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CowSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CowSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\EscapementSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\EscapementSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\FirTreeSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\FirTreeSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GatorSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GatorSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GearSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GearSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GhostSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GhostSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\HareSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\HareSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\JackOLanternSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\JackOLanternSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\MarionetteSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\MarionetteSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\MillSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\MillSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\PeekingWolfSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\PeekingWolfSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\PlanetSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\PlanetSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\ReedsSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\ReedsSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SatelliteSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SatelliteSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SunSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SunSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WaterLilySprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WaterLilySprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WaterWheelSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WaterWheelSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WolfSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WolfSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows_Facade.cppm">
       <Filter>Platform</Filter>
