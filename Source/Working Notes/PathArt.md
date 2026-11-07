@@ -162,6 +162,23 @@ clouds, the river, its foam, its reflection and its fog - still drawn through th
 offset, as before. `faded` and `calculateSyncRotation` went to the kit, and `pseudoRand` gave way to
 pseudoRandom, which is the same sum.
 
+## CowColors
+
+Oj, 2026-11-07: "at night its horns illegible", then, picking light horns at night from renders
+of three ways, "limbs are suffer too". By the theme colours, the horns and the tail stood as low
+as 1.0:1 against the night skies and the legs as low as 1.1:1 against the hills. In the 13 themes
+where they turn light, they now stand at 3.5 to 13:1.
+
+**The rule compares two contrasts rather than reading how dark the backdrop is.** The renders Oj
+picked from turned the limbs light below a sky luminance; carried to every limb, that made
+Twilight's legs and Vintage Noir's horns worse, 2.4 to 1.2 and 2.5 to 1.1, where the backdrop is
+middling. Comparing the contrast of either colour never makes a limb worse, and the night themes
+come out as in those renders. Where neither stands out the limbs stay as they were: Lunar Eclipse,
+whose body and detail are one grey, and the legs in Underwater Realm and Cyberpunk Night.
+
+The backdrops are read off the theme in MillScene::draw: the sky's gradient at 0.58 of the height,
+and the front hill's at 0.38 of its own, darkened by a tenth as drawHills does.
+
 ## StarStyle
 
 The mill drew its own stars, all sparkles, until Oj asked whether it needed stars of its own

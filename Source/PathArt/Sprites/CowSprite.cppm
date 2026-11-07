@@ -13,6 +13,7 @@ namespace ClaFi::PathArt
         float cycleTime; // its tail swishes and its head bobs as it chews by it
     };
 
+    // A cow's colours, and what its limbs stand against so that they stay legible. See PathArt
     export struct CowColors
     {
         Color body;
@@ -20,6 +21,8 @@ namespace ClaFi::PathArt
         Color snout;
         Color detail; // the legs, the horns, the tail and the outlines
         Color shadow;
+        Color skyBehind; // what the horns and the tail stand against
+        Color groundBehind; // what the legs stand against
     };
 
     // A spotted cow grazing, with a soft shadow under it.

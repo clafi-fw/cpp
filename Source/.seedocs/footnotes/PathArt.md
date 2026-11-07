@@ -94,6 +94,13 @@ and of spoke spacings in a cycle, and the train stands where it started when the
 The valve lets off steam four times a cycle. The gauge's needle wanders three times a cycle and
 trembles as it goes.
 
+## CowColors
+
+**The horns, the tail and the legs keep clear of what stands behind them.** They are drawn in
+`detail`, or in `body` a shade darker where that has clearly more contrast against `skyBehind` or
+`groundBehind` - a near-black detail against a night sky turns pale. The two blend near the turn,
+so a theme crossfade carries the change smoothly.
+
 ## OrreryScene
 
 The Sun, six planets and an asteroid belt on an orbit plane tipped toward the viewer.

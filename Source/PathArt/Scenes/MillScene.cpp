@@ -108,6 +108,12 @@ namespace ClaFi::PathArt
         drawCloud(canvas, orbX + std::cos(a2) * rX, orbY + std::sin(a2) * rY,
             (0.8f + (std::sin(a2) + 1.0f) * 0.2f) * m_objectsScale);
 
+        // The cow's horns stand against the sky at 0.58 of its height, its legs against the front
+        // hill, which drawHills darkens by a tenth, at 0.38 of the hill's gradient.
+        Hsl hillTop{ m_theme.hillTop };
+        hillTop.scaleLuminosity(0.9f);
+        Hsl hillBottom{ m_theme.hillBottom };
+        hillBottom.scaleLuminosity(0.9f);
         drawCow(frame, CowPose{
             .at = { w * 0.28f, h * 0.61f },
             .size = 0.36f * m_objectsScale,
@@ -117,7 +123,9 @@ namespace ClaFi::PathArt
             .spots = m_theme.cowSpots,
             .snout = m_theme.cowSnout,
             .detail = m_theme.cowDetail,
-            .shadow = m_theme.shadow
+            .shadow = m_theme.shadow,
+            .skyBehind = colorBetween(m_theme.skyTop, m_theme.skyBottom, 0.58f),
+            .groundBehind = colorBetween(hillTop.toColor(), hillBottom.toColor(), 0.38f)
         });
 
         drawWaterWheel(frame, WaterWheelPose{
