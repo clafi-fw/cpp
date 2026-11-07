@@ -1,3 +1,5 @@
+module;
+#include <immintrin.h>
 module ClaFi.Core.Graphics.Types;
 
 import ClaFi.Core.System.UiTypes;
@@ -5,6 +7,13 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Graphics
 {
+    namespace
+    {
+        // Eight premultiplied pixels laid over eight others, each faded to scale 256ths - the
+        // arithmetic compositeSurface does for one pixel, eight at a time.
+        void compositeEight(Color* destination, const Color* source, std::uint32_t scale);
+    }
+
     //-------------------------------------------------------------------------
 
     PixelView::PixelView(const FloatRect& bounds, const FloatRect& clip, const ScanLines& scanLines)
@@ -219,34 +228,72 @@ namespace ClaFi::Graphics
             destination.blue = over(faded(pixel.blue), destination.blue, uncovered);
             destination.alpha = over(alpha, destination.alpha, uncovered);
         };
-        // **At full opacity a run of opaque pixels is copied whole**, as compositing it pixel by
-        // pixel would leave it. A still background kept as pixels is one such run per row.
-        const bool fullOpacity = scale == 256;
-        auto isOpaque = [](const Color& pixel) {
-            return pixel.alpha == 255;
-        };
 
+        // Eight pixels at a time, and the ones left over at the end of a row one at a time.
         for (int y = area.top; y < area.bottom; ++y)
         {
             Color* destRow = scanLineAbs(static_cast<float>(area.left), static_cast<float>(y));
             const Color* srcRow = source.scanLineAbs(srcX, static_cast<float>(y - offsetY));
             int x = 0;
-            while (x < width)
+            for (; x + 8 <= width; x += 8)
+                compositeEight(destRow + x, srcRow + x, scale);
+            for (; x < width; ++x)
+                compositePixel(destRow[x], srcRow[x]);
+        }
+    }
+
+    namespace
+    {
+        // **Eight clear pixels leave what is there, and eight opaque ones at full opacity replace
+        // it,** both found from the alphas alone; only a mixed eight is worked through. There every
+        // channel is widened to 16 bits: faded = channel * scale / 256, then the source over what
+        // is there as compositeSurface states it, the division by 255 done as a multiply by 0x8081
+        // and a shift of 23, exact for every value the product reaches.
+        void compositeEight(Color* destination, const Color* source, const std::uint32_t scale)
+        {
+            const __m256i alphaBits = _mm256_set1_epi32(std::bit_cast<int>(0xFF000000u));
+            const __m256i pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(source));
+            if (_mm256_testz_si256(pixels, alphaBits))
+                return;
+            __m256i* const target = reinterpret_cast<__m256i*>(destination);
+            if (scale == 256)
             {
-                if (fullOpacity && isOpaque(srcRow[x]))
+                const __m256i alphas = _mm256_and_si256(pixels, alphaBits);
+                if (_mm256_movemask_epi8(_mm256_cmpeq_epi32(alphas, alphaBits)) == -1)
                 {
-                    const Color* runEnd = std::find_if_not(srcRow + x, srcRow + width, isOpaque);
-                    const int runLength = static_cast<int>(runEnd - (srcRow + x));
-                    std::memcpy(destRow + x, srcRow + x,
-                        static_cast<std::size_t>(runLength) * sizeof(Color));
-                    x += runLength;
-                }
-                else
-                {
-                    compositePixel(destRow[x], srcRow[x]);
-                    ++x;
+                    _mm256_storeu_si256(target, pixels);
+                    return;
                 }
             }
+
+            const __m256i under = _mm256_loadu_si256(target);
+            const __m256i zero = _mm256_setzero_si256();
+            const __m256i scale16 = _mm256_set1_epi16(static_cast<short>(scale));
+            const __m256i full16 = _mm256_set1_epi16(255);
+            const __m256i rounding16 = _mm256_set1_epi16(127);
+            const __m256i reciprocal16 =
+                _mm256_set1_epi16(std::bit_cast<short>(std::uint16_t{ 0x8081 }));
+            const auto over = [&](const __m256i source16, const __m256i under16) {
+                const __m256i faded = _mm256_srli_epi16(_mm256_mullo_epi16(source16, scale16), 8);
+                const __m256i fadedAlpha = _mm256_shufflehi_epi16(
+                    _mm256_shufflelo_epi16(faded, 0xFF), 0xFF);
+                const __m256i uncovered = _mm256_sub_epi16(full16, fadedAlpha);
+                const __m256i product = _mm256_add_epi16(_mm256_mullo_epi16(under16, uncovered),
+                    rounding16);
+                const __m256i kept = _mm256_srli_epi16(
+                    _mm256_mulhi_epu16(product, reciprocal16), 7);
+                return _mm256_min_epu16(_mm256_add_epi16(faded, kept), full16);
+            };
+            const __m256i blended = _mm256_packus_epi16(
+                over(_mm256_unpacklo_epi8(pixels, zero), _mm256_unpacklo_epi8(under, zero)),
+                over(_mm256_unpackhi_epi8(pixels, zero), _mm256_unpackhi_epi8(under, zero)));
+
+            // A pixel whose alpha fades to nothing is left as it was, whatever its colour holds.
+            const __m256i scale32 = _mm256_set1_epi32(static_cast<int>(scale));
+            const __m256i fadedAlpha = _mm256_srli_epi32(
+                _mm256_mullo_epi32(_mm256_srli_epi32(pixels, 24), scale32), 8);
+            const __m256i untouched = _mm256_cmpeq_epi32(fadedAlpha, zero);
+            _mm256_storeu_si256(target, _mm256_blendv_epi8(blended, under, untouched));
         }
     }
 }

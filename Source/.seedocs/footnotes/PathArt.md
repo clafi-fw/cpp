@@ -82,14 +82,21 @@ lower kind everywhere and call its draw() before the upper kind's first next().
 
 A part of a scene that does not move, drawn once into pixels and copied into every frame.
 
-- **prepare** draws the part on a canvas of its own, cut down to the pixels it covers, and keeps
-  them for the params. It does nothing when they are kept for those params already.
+- **prepare** draws the part on a canvas of its own and keeps the pixels it covers for the params,
+  a band of 32 rows at a time, each band cut to the columns drawn in it. It does nothing when they
+  are kept for those params already.
 - **draw** copies the kept pixels in, at the part's own place in the paint order, so a layer over
   moving parts is drawn after them. Where the frame does not fit the params the pixels were drawn
   for, it draws the part live.
 
 **The drawing is a function of the frame alone.** It reads no time and nothing else that changes
 from frame to frame, so the same params give the same pixels.
+
+**A layer pays where its part costs more to draw than to copy**, and copying is cheap:
+translucent pixels are laid in eight at a time as opaque ones are, and only the bands the part
+covers are read, each from its first drawn column to its last. A part spread thin - rings, an L
+along two edges - keeps little more than its own pixels. A plain gradient costs about the same
+either way.
 
 **Only the CPU backend keeps pixels.** Direct2D copies a bitmap up to the GPU on every draw, so
 there a layer draws its part live.

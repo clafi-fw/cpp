@@ -4,7 +4,9 @@ import ClaFi.PathArt.BatSprite;
 import ClaFi.PathArt.FogEffect;
 import ClaFi.PathArt.GhostSprite;
 import ClaFi.PathArt.JackOLanternSprite;
+import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.StarsEffect;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -69,6 +71,14 @@ namespace ClaFi::PathArt
         };
     }
 
+    void GhostScene::prepare(const SceneParams& params)
+    {
+        m_sky.prepare(params);
+        m_land.prepare(params);
+        m_moon.prepare(params);
+        m_tombstones.prepare(params);
+    }
+
     void GhostScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
@@ -76,28 +86,18 @@ namespace ClaFi::PathArt
         const float width = frame.width;
         const float height = frame.height;
 
-        drawSky(frame, cycleTime);
-
-        // the far hill, the bare tree and the fence
-        PixelPath farHill;
-        farHill.moveTo(0.0f, height * 0.69f);
-        farHill.quadTo({ width * 0.3f, height * 0.6f }, { width * 0.62f, height * 0.67f });
-        farHill.quadTo({ width * 0.85f, height * 0.72f }, { width, height * 0.66f });
-        farHill.lineTo(width, height);
-        farHill.lineTo(0.0f, height);
-        farHill.close();
-        fillShape(frame, farHill, SolidColor{ GhostSceneColors::FarHill });
-        drawBareTree(frame, { width * 0.13f, height * 0.74f });
-        drawFence(frame);
-
-        PixelPath ground;
-        ground.moveTo(0.0f, height * 0.78f);
-        ground.quadTo({ width * 0.5f, height * 0.70f }, { width, height * 0.80f });
-        ground.lineTo(width, height);
-        ground.lineTo(0.0f, height);
-        ground.close();
-        fillShape(frame, ground, LinearGradient::Simple({ 0.0f, height * 0.7f }, { 0.0f, height },
-            GhostSceneColors::GroundTop, GhostSceneColors::GroundBottom));
+        m_sky.draw(frame);
+        drawStars(frame, cycleTime, StarField{
+            .count = 70,
+            .top = 0.0f,
+            .bottom = height * 0.55f,
+            .seed = 30.0f,
+            .color = GhostSceneColors::Star
+        });
+        m_moon.draw(frame);
+        drawClouds(frame, cycleTime);
+        drawBats(frame, cycleTime);
+        m_land.draw(frame);
 
         // Two figure eights a cycle, with a small bob on top.
         const float bob = 5.0f * unit * std::sin(k_2Pi * 16.0f * cycleTime);
@@ -111,7 +111,7 @@ namespace ClaFi::PathArt
         drawGlow(frame, { ghost.x, groundUnder + 10.0f * unit }, 60.0f * unit,
             GhostSceneColors::GroundGlow.withOpacity(glowOpacity), 0.35f);
 
-        drawTombstones(frame);
+        m_tombstones.draw(frame);
         const float lanternX = width * 0.63f;
         drawJackOLantern(frame, JackOLanternPose{
             .base = { lanternX, groundY(frame, lanternX) + 4.0f * unit },
@@ -145,23 +145,17 @@ namespace ClaFi::PathArt
         return frame.height * (rest * rest * 0.78f + pull * 0.70f + share * share * 0.80f);
     }
 
-    void GhostScene::drawSky(const SceneFrame& frame, const float cycleTime)
+    void GhostScene::drawSky(const SceneFrame& frame)
+    {
+        fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
+            LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height * 0.8f },
+                GhostSceneColors::SkyTop, GhostSceneColors::SkyBottom));
+    }
+
+    void GhostScene::drawMoon(const SceneFrame& frame)
     {
         const float unit = frame.unit;
-        const float width = frame.width;
-        const float height = frame.height;
-        fillBox(frame, { 0.0f, 0.0f, width, height },
-            LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, height * 0.8f },
-                GhostSceneColors::SkyTop, GhostSceneColors::SkyBottom));
-        drawStars(frame, cycleTime, StarField{
-            .count = 70,
-            .top = 0.0f,
-            .bottom = height * 0.55f,
-            .seed = 30.0f,
-            .color = GhostSceneColors::Star
-        });
-
-        const FloatPoint moon = { width * 0.74f, height * 0.22f };
+        const FloatPoint moon = { frame.width * 0.74f, frame.height * 0.22f };
         const float moonRadius = 46.0f * unit;
         drawGlow(frame, moon, 190.0f * unit, GhostSceneColors::MoonHalo.withOpacity(0.28f));
         drawGlow(frame, moon, 80.0f * unit, GhostSceneColors::MoonGlow.withOpacity(0.35f));
@@ -175,8 +169,14 @@ namespace ClaFi::PathArt
             SolidColor{ GhostSceneColors::Crater.withOpacity(0.45f) });
         fillOval(frame, moon + FloatPoint{ 4.0f * unit, -22.0f * unit }, 5.0f * unit, 4.0f * unit,
             SolidColor{ GhostSceneColors::Crater.withOpacity(0.5f) });
+    }
 
-        // clouds crossing the moon
+    // Clouds crossing the moon.
+    void GhostScene::drawClouds(const SceneFrame& frame, const float cycleTime)
+    {
+        const float unit = frame.unit;
+        const float width = frame.width;
+        const float height = frame.height;
         for (int i = 0; i != 3; ++i)
         {
             const float span = width + 520.0f * unit;
@@ -200,8 +200,14 @@ namespace ClaFi::PathArt
                 { 0.0f, y + 8.0f * unit }, GhostSceneColors::CloudTop,
                 GhostSceneColors::CloudBottom));
         }
+    }
 
-        // three bats across the moon
+    // Three bats across the moon.
+    void GhostScene::drawBats(const SceneFrame& frame, const float cycleTime)
+    {
+        const float unit = frame.unit;
+        const float width = frame.width;
+        const float height = frame.height;
         for (int i = 0; i != 3; ++i)
         {
             const float start = static_cast<float>(i) / 3.0f + 0.1f;
@@ -220,6 +226,32 @@ namespace ClaFi::PathArt
                 .flap = flap
             });
         }
+    }
+
+    // The far hill, the bare tree and the fence, and the near ground in front of them.
+    void GhostScene::drawLand(const SceneFrame& frame)
+    {
+        const float width = frame.width;
+        const float height = frame.height;
+        PixelPath farHill;
+        farHill.moveTo(0.0f, height * 0.69f);
+        farHill.quadTo({ width * 0.3f, height * 0.6f }, { width * 0.62f, height * 0.67f });
+        farHill.quadTo({ width * 0.85f, height * 0.72f }, { width, height * 0.66f });
+        farHill.lineTo(width, height);
+        farHill.lineTo(0.0f, height);
+        farHill.close();
+        fillShape(frame, farHill, SolidColor{ GhostSceneColors::FarHill });
+        drawBareTree(frame, { width * 0.13f, height * 0.74f });
+        drawFence(frame);
+
+        PixelPath ground;
+        ground.moveTo(0.0f, height * 0.78f);
+        ground.quadTo({ width * 0.5f, height * 0.70f }, { width, height * 0.80f });
+        ground.lineTo(width, height);
+        ground.lineTo(0.0f, height);
+        ground.close();
+        fillShape(frame, ground, LinearGradient::Simple({ 0.0f, height * 0.7f }, { 0.0f, height },
+            GhostSceneColors::GroundTop, GhostSceneColors::GroundBottom));
     }
 
     // Branches split twice at each fork, six forks deep; each depth is one stroke of one width.

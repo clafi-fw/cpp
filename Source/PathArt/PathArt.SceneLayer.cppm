@@ -23,9 +23,15 @@ namespace ClaFi::PathArt
         // The kept pixels where they fit the frame; the part drawn live where they do not.
         void draw(const SceneFrame&) const;
     private:
+        // A band of rows of the kept pixels, from the first column drawn in it to the last.
+        struct Band
+        {
+            Graphics::Bitmap pixels{};
+            FloatPoint at{}; // the top left on the canvas, in pixels
+        };
+    private:
         Drawing m_drawing;
-        Graphics::Bitmap m_pixels{};
-        FloatPoint m_pixelsAt{}; // the pixels' top left on the canvas, in pixels
+        std::vector<Band> m_bands{};
         Graphics::Matrix3x2 m_sceneToPixels{}; // the mapping the pixels were drawn through
         FloatPoint m_frameSize{}; // the width and height of the frame they were drawn for
         bool m_kept{ false };

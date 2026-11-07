@@ -20,11 +20,10 @@ namespace ClaFi::PathArt
     private:
         static void drawPlate(const SceneFrame&);
         static void drawPipes(const SceneFrame&);
-        static void drawGauge(const SceneFrame&);
-        static void drawGaugeNeedle(const SceneFrame&, float cycleTime);
+        static void drawSteamAndNeedle(const SceneFrame&, FloatPoint center, float size,
+            float cycleTime);
     private:
         SceneLayer m_plate{ drawPlate };
         SceneLayer m_pipes{ drawPipes };
-        SceneLayer m_gauge{ drawGauge };
     };
 }

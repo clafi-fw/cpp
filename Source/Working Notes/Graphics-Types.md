@@ -84,10 +84,18 @@ and on the Puppeteer the work counted by callgrind fell to a sixth.
 
 ## PixelView compositeSurface
 
-**At full opacity a run of opaque pixels is copied whole.** A scene's still background kept as
-pixels is one such run per row, and taken pixel by pixel it cost about 13 instructions a pixel
-under callgrind - a third of a layered Puppeteer frame. The runs leave the same pixels the
-pixel-by-pixel route left.
+**Eight pixels at a time** (2026-11-08). Taken one at a time, the pixels of a scene's kept layer
+cost about 13 instructions each under callgrind - a third of a layered Puppeteer frame. Copying a
+run of opaque pixels whole saved only the opaque ones: a translucent pixel, or a clear one inside
+the layer's cut, still went one at a time, and a translucent or sparse part cost more kept than
+drawn live. Eight clear pixels now cost a load and a test, eight opaque ones at full opacity a load,
+a compare and a store, and a mixed eight is blended in 16-bit lanes. The pixels left at the end of
+a row still take the one pixel route.
+
+**The lanes are exact.** The division by 255 is (t * 0x8081) >> 23, equal to t / 255 for every t
+up to 65535, and the rounded product reaches 65152. Four million random groups of eight, and every
+source channel against every alpha at five opacities, came out equal to the one pixel route, and the
+showcase scenes and the mill render bit for bit as before.
 
 ## ArcEllipse
 

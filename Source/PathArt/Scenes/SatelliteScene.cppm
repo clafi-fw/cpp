@@ -2,6 +2,7 @@ export module ClaFi.PathArt.SatelliteScene;
 
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
@@ -17,6 +18,7 @@ namespace ClaFi::PathArt
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Satellite"; }
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
+        void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
     private:
         // A direction from the Earth's center: x across the screen, y up it, z toward the viewer.
@@ -74,6 +76,7 @@ namespace ClaFi::PathArt
             float stretch;
         };
     private:
+        static void drawSpace(const SceneFrame&);
         [[nodiscard]] static Terminator terminatorOf(const SceneFrame&, const Globe&);
         void drawSurface(const SceneFrame&, const Globe&, float cycleTime) const;
         static void drawNight(const SceneFrame&, const Globe&, const Terminator&);
@@ -86,5 +89,6 @@ namespace ClaFi::PathArt
         std::vector<Coastline> m_coastlines{};
         std::vector<City> m_cities{};
         std::vector<Cloud> m_clouds{};
+        SceneLayer m_space{ drawSpace };
     };
 }

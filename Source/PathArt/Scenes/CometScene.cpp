@@ -1,7 +1,9 @@
 module ClaFi.PathArt.CometScene;
 
 import ClaFi.PathArt.CometSprite;
+import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.ShootingStarsEffect;
 import ClaFi.PathArt.StarsEffect;
 import ClaFi.Core.Graphics.Canvas;
@@ -47,21 +49,23 @@ namespace ClaFi::PathArt
         constexpr float k_reflectionOpacity{ 0.42f };
     }
 
+    void CometScene::prepare(const SceneParams& params)
+    {
+        m_farRidge.prepare(params);
+        m_nearRidge.prepare(params);
+        m_lakeWater.prepare(params);
+        m_mirroredFarRidge.prepare(params);
+        m_mirroredNearRidge.prepare(params);
+        m_lakeShade.prepare(params);
+        m_shore.prepare(params);
+    }
+
     void CometScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
-        const float lakeY = frame.height * k_lakeShare;
-        fillBox(frame, { 0.0f, 0.0f, frame.width, lakeY }, LinearGradient{
-            .startPoint = { 0.0f, 0.0f },
-            .endPoint = { 0.0f, lakeY },
-            .stops = {
-                { .position = 0.0f, .color = CometSceneColors::SkyTop },
-                { .position = 0.6f, .color = CometSceneColors::SkyMiddle },
-                { .position = 1.0f, .color = CometSceneColors::SkyHorizon }
-            }
-        });
-        drawAboveLake(frame, cycleTime, lakeY, false);
-        drawLake(frame, cycleTime, lakeY);
+        drawSky(frame);
+        drawAboveLake(frame, cycleTime, false);
+        drawLake(frame, cycleTime);
     }
 
     float CometScene::farRidgeY(const SceneFrame& frame, const float x)
@@ -104,11 +108,22 @@ namespace ClaFi::PathArt
         };
     }
 
-    void CometScene::drawAboveLake(const SceneFrame& frame, const float cycleTime,
-        const float lakeY, const bool reflection)
+    SceneFrame CometScene::reflectionOf(const SceneFrame& frame)
     {
+        const float lakeY = frame.height * k_lakeShare;
+        return frame.within(Matrix3x2::Translation(0.0f, lakeY * 2.0f)
+            * Matrix3x2::Scale(1.0f, -1.0f));
+    }
+
+    // The ridges are kept as layers drawn through the upright frame, the reflection's included:
+    // a layer fits the frame the scene is drawn in, not one turned over inside it.
+    void CometScene::drawAboveLake(const SceneFrame& upright, const float cycleTime,
+        const bool reflection) const
+    {
+        const SceneFrame frame = reflection ? reflectionOf(upright) : upright;
         const float unit = frame.unit;
         const float width = frame.width;
+        const float lakeY = frame.height * k_lakeShare;
         const Pass pass = passAt(frame, cycleTime);
 
         if (pass.afterglow > 0.0f)
@@ -131,15 +146,7 @@ namespace ClaFi::PathArt
             .bottom = frame.height * 0.28f,
             .color = CometSceneColors::ShootingStar
         });
-
-        PixelPath farRidge;
-        farRidge.moveTo(0.0f, lakeY);
-        for (float x = 0.0f; x <= width + 8.0f * unit; x += 8.0f * unit)
-            farRidge.lineTo(x, farRidgeY(frame, x));
-        farRidge.lineTo(width + 8.0f * unit, lakeY);
-        farRidge.close();
-        fillShape(frame, farRidge, LinearGradient::Simple({ 0.0f, frame.height * 0.35f },
-            { 0.0f, lakeY }, CometSceneColors::FarRidgeTop, CometSceneColors::FarRidgeBottom));
+        (reflection ? m_mirroredFarRidge : m_farRidge).draw(upright);
 
         // The landing lights the sky behind the near ridge, which hides the comet as it lands.
         if (pass.afterglow > 0.0f)
@@ -157,23 +164,17 @@ namespace ClaFi::PathArt
             .cycleTime = cycleTime
         });
 
-        PixelPath nearRidge;
-        PixelPath rim;
-        nearRidge.moveTo(0.0f, lakeY);
-        for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
-        {
-            nearRidge.lineTo(x, nearRidgeY(frame, x));
-            if (x == 0.0f)
-                rim.moveTo(x, nearRidgeY(frame, x));
-            else
-                rim.lineTo(x, nearRidgeY(frame, x));
-        }
-        nearRidge.lineTo(width + 6.0f * unit, lakeY);
-        nearRidge.close();
-        fillShape(frame, nearRidge, LinearGradient::Simple({ 0.0f, frame.height * 0.5f },
-            { 0.0f, lakeY }, CometSceneColors::NearRidgeTop, CometSceneColors::NearRidgeBottom));
+        (reflection ? m_mirroredNearRidge : m_nearRidge).draw(upright);
         if (pass.afterglow > 0.0f)
         {
+            PixelPath rim;
+            for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
+            {
+                if (x == 0.0f)
+                    rim.moveTo(x, nearRidgeY(frame, x));
+                else
+                    rim.lineTo(x, nearRidgeY(frame, x));
+            }
             const float rimOpacity = 0.85f * std::pow(1.0f - pass.afterglow, 1.5f);
             const Color rimLit = CometSceneColors::RidgeRim.withOpacity(rimOpacity);
             const Color rimDark = CometSceneColors::Afterglow.withOpacity(0.0f);
@@ -190,14 +191,13 @@ namespace ClaFi::PathArt
     }
 
     // The lake shows everything above it upside down and dimmed, with ripples running across.
-    void CometScene::drawLake(const SceneFrame& frame, const float cycleTime, const float lakeY)
+    void CometScene::drawLake(const SceneFrame& frame, const float cycleTime) const
     {
         const float unit = frame.unit;
         const float width = frame.width;
         const float height = frame.height;
-        const FloatRect lake = { 0.0f, lakeY, width, height };
-        fillBox(frame, lake, LinearGradient::Simple({ 0.0f, lakeY }, { 0.0f, height },
-            CometSceneColors::LakeTop, CometSceneColors::LakeBottom));
+        const float lakeY = height * k_lakeShare;
+        m_lakeWater.draw(frame);
 
         PixelPath lakeOutline;
         lakeOutline.moveTo(0.0f, lakeY);
@@ -208,13 +208,10 @@ namespace ClaFi::PathArt
         frame.canvas.pushClip(lakeOutline, &frame.toCanvas);
         {
             const ScopedCanvasOpacity dimmed{ frame.canvas, k_reflectionOpacity };
-            const SceneFrame mirrored = frame.within(Matrix3x2::Translation(0.0f, lakeY * 2.0f)
-                * Matrix3x2::Scale(1.0f, -1.0f));
-            drawAboveLake(mirrored, cycleTime, lakeY, true);
+            drawAboveLake(frame, cycleTime, true);
         }
         frame.canvas.popClip();
-        fillBox(frame, lake, LinearGradient::Simple({ 0.0f, lakeY }, { 0.0f, height },
-            CometSceneColors::LakeShadeTop, CometSceneColors::LakeShadeBottom));
+        m_lakeShade.draw(frame);
 
         ScatteredShapes ripples{ frame, SolidColor{ CometSceneColors::Ripple }, 1.1f * unit,
             StrokeCap::Butt };
@@ -231,8 +228,85 @@ namespace ClaFi::PathArt
             ripple.lineTo(x + length, y);
         }
         ripples.draw();
+        m_shore.draw(frame);
+    }
 
-        // the shore, a line of pines
+    void CometScene::drawSky(const SceneFrame& frame)
+    {
+        const float lakeY = frame.height * k_lakeShare;
+        fillBox(frame, { 0.0f, 0.0f, frame.width, lakeY }, LinearGradient{
+            .startPoint = { 0.0f, 0.0f },
+            .endPoint = { 0.0f, lakeY },
+            .stops = {
+                { .position = 0.0f, .color = CometSceneColors::SkyTop },
+                { .position = 0.6f, .color = CometSceneColors::SkyMiddle },
+                { .position = 1.0f, .color = CometSceneColors::SkyHorizon }
+            }
+        });
+    }
+
+    void CometScene::drawFarRidge(const SceneFrame& frame)
+    {
+        const float unit = frame.unit;
+        const float width = frame.width;
+        const float lakeY = frame.height * k_lakeShare;
+        PixelPath farRidge;
+        farRidge.moveTo(0.0f, lakeY);
+        for (float x = 0.0f; x <= width + 8.0f * unit; x += 8.0f * unit)
+            farRidge.lineTo(x, farRidgeY(frame, x));
+        farRidge.lineTo(width + 8.0f * unit, lakeY);
+        farRidge.close();
+        fillShape(frame, farRidge, LinearGradient::Simple({ 0.0f, frame.height * 0.35f },
+            { 0.0f, lakeY }, CometSceneColors::FarRidgeTop, CometSceneColors::FarRidgeBottom));
+    }
+
+    void CometScene::drawNearRidge(const SceneFrame& frame)
+    {
+        const float unit = frame.unit;
+        const float width = frame.width;
+        const float lakeY = frame.height * k_lakeShare;
+        PixelPath nearRidge;
+        nearRidge.moveTo(0.0f, lakeY);
+        for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
+            nearRidge.lineTo(x, nearRidgeY(frame, x));
+        nearRidge.lineTo(width + 6.0f * unit, lakeY);
+        nearRidge.close();
+        fillShape(frame, nearRidge, LinearGradient::Simple({ 0.0f, frame.height * 0.5f },
+            { 0.0f, lakeY }, CometSceneColors::NearRidgeTop, CometSceneColors::NearRidgeBottom));
+    }
+
+    void CometScene::drawMirroredFarRidge(const SceneFrame& frame)
+    {
+        drawFarRidge(reflectionOf(frame));
+    }
+
+    void CometScene::drawMirroredNearRidge(const SceneFrame& frame)
+    {
+        drawNearRidge(reflectionOf(frame));
+    }
+
+    void CometScene::drawLakeWater(const SceneFrame& frame)
+    {
+        const float lakeY = frame.height * k_lakeShare;
+        fillBox(frame, { 0.0f, lakeY, frame.width, frame.height }, LinearGradient::Simple(
+            { 0.0f, lakeY }, { 0.0f, frame.height }, CometSceneColors::LakeTop,
+            CometSceneColors::LakeBottom));
+    }
+
+    void CometScene::drawLakeShade(const SceneFrame& frame)
+    {
+        const float lakeY = frame.height * k_lakeShare;
+        fillBox(frame, { 0.0f, lakeY, frame.width, frame.height }, LinearGradient::Simple(
+            { 0.0f, lakeY }, { 0.0f, frame.height }, CometSceneColors::LakeShadeTop,
+            CometSceneColors::LakeShadeBottom));
+    }
+
+    // The shore, a line of pines.
+    void CometScene::drawShore(const SceneFrame& frame)
+    {
+        const float unit = frame.unit;
+        const float width = frame.width;
+        const float lakeY = frame.height * k_lakeShare;
         fillBox(frame, { 0.0f, lakeY - 2.0f * unit, width, lakeY + 3.0f * unit },
             SolidColor{ CometSceneColors::Shore });
         const float spacing = 11.0f * unit;

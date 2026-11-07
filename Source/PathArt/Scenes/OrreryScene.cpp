@@ -2,7 +2,9 @@ module ClaFi.PathArt.OrreryScene;
 
 import ClaFi.PathArt.AsteroidBeltEffect;
 import ClaFi.PathArt.PlanetSprite;
+import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.StarsEffect;
 import ClaFi.PathArt.SunSprite;
 import ClaFi.Core.Graphics.Canvas;
@@ -53,14 +55,32 @@ namespace ClaFi::PathArt
             float depth; // nearer the viewer above 0, beyond the Sun below it
             bool outer; // beyond the asteroid belt
         };
+
+        // Where the orbit plane lies in a frame.
+        struct OrbitPlane
+        {
+            FloatPoint center{};
+            float outerRadius{}; // the radius of the outermost orbit
+        };
+
+        // The orbit plane a little below the middle of the frame, as large as the frame holds.
+        [[nodiscard]] OrbitPlane orbitPlaneIn(const SceneFrame&);
+    }
+
+    void OrreryScene::prepare(const SceneParams& params)
+    {
+        m_space.prepare(params);
+        m_farOrbits.prepare(params);
+        m_nearOrbits.prepare(params);
     }
 
     void OrreryScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         const float unit = frame.unit;
-        const FloatPoint center = { frame.width * 0.5f, frame.height * 0.52f };
-        const float outerRadius = std::min(frame.width * 0.44f, frame.height * 0.42f / k_planeTilt);
+        const OrbitPlane plane = orbitPlaneIn(frame);
+        const FloatPoint center = plane.center;
+        const float outerRadius = plane.outerRadius;
         const float depthTilt = std::sqrt(1.0f - k_planeTilt * k_planeTilt);
 
         static constexpr std::array<Orbit, 6> k_orbits{
@@ -114,8 +134,16 @@ namespace ClaFi::PathArt
             .paleRock = OrreryColors::PaleRock
         };
 
-        drawSky(frame, cycleTime);
-        drawOrbits(frame, center, outerRadius, false);
+        m_space.draw(frame);
+        drawStars(frame, cycleTime, StarField{
+            .count = 170,
+            .top = 0.0f,
+            .bottom = frame.height,
+            .seed = 50.0f,
+            .color = OrreryColors::Star,
+            .twinklesPerCycle = k_lively
+        });
+        m_farOrbits.draw(frame);
         for (const PlacedPlanet* placed : byDepth)
         {
             if (placed->depth < 0.0f && placed->outer)
@@ -132,7 +160,7 @@ namespace ClaFi::PathArt
             .cycleTime = cycleTime,
             .flickersPerCycle = 4.0f * k_lively
         });
-        drawOrbits(frame, center, outerRadius, true);
+        m_nearOrbits.draw(frame);
         for (const PlacedPlanet* placed : byDepth)
         {
             if (placed->depth >= 0.0f && !placed->outer)
@@ -146,7 +174,7 @@ namespace ClaFi::PathArt
         }
     }
 
-    void OrreryScene::drawSky(const SceneFrame& frame, const float cycleTime)
+    void OrreryScene::drawSpace(const SceneFrame& frame)
     {
         const float width = frame.width;
         const float height = frame.height;
@@ -163,20 +191,24 @@ namespace ClaFi::PathArt
             };
             drawGlow(frame, at, 110.0f * frame.unit, OrreryColors::MilkyWay.withOpacity(0.07f));
         }
-        drawStars(frame, cycleTime, StarField{
-            .count = 170,
-            .top = 0.0f,
-            .bottom = height,
-            .seed = 50.0f,
-            .color = OrreryColors::Star,
-            .twinklesPerCycle = k_lively
-        });
+    }
+
+    void OrreryScene::drawFarOrbits(const SceneFrame& frame)
+    {
+        drawOrbits(frame, false);
+    }
+
+    void OrreryScene::drawNearOrbits(const SceneFrame& frame)
+    {
+        drawOrbits(frame, true);
     }
 
     // The far halves of the orbits go behind the Sun and the near halves over it.
-    void OrreryScene::drawOrbits(const SceneFrame& frame, const FloatPoint center,
-        const float outerRadius, const bool frontHalf)
+    void OrreryScene::drawOrbits(const SceneFrame& frame, const bool frontHalf)
     {
+        const OrbitPlane plane = orbitPlaneIn(frame);
+        const FloatPoint center = plane.center;
+        const float outerRadius = plane.outerRadius;
         PixelPath halves;
         for (const float share : { 0.2f, 0.28f, 0.37f, 0.46f, 0.76f, 0.96f })
         {
@@ -190,4 +222,14 @@ namespace ClaFi::PathArt
         strokeShape(frame, halves, SolidColor{ OrreryColors::Orbit }, frame.unit);
     }
 
+    namespace
+    {
+        OrbitPlane orbitPlaneIn(const SceneFrame& frame)
+        {
+            return {
+                .center = { frame.width * 0.5f, frame.height * 0.52f },
+                .outerRadius = std::min(frame.width * 0.44f, frame.height * 0.42f / k_planeTilt)
+            };
+        }
+    }
 }

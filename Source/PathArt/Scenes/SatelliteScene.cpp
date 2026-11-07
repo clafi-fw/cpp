@@ -1,7 +1,9 @@
 module ClaFi.PathArt.SatelliteScene;
 
 import ClaFi.PathArt.SatelliteSprite;
+import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.StarsEffect;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -237,6 +239,11 @@ namespace ClaFi::PathArt
 
     // The Earth turns twice a cycle and the Sun goes round once, so each continent passes once by
     // day and once by night. See PathArt#satellitescene
+    void SatelliteScene::prepare(const SceneParams& params)
+    {
+        m_space.prepare(params);
+    }
+
     void SatelliteScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
@@ -274,8 +281,7 @@ namespace ClaFi::PathArt
         };
         const float sunlit = smoothStep(-0.14f, 0.06f, globe.sunlightAt(under));
 
-        fillBox(frame, { 0.0f, 0.0f, width, height }, LinearGradient::Simple({ 0.0f, 0.0f },
-            { 0.0f, height }, SatelliteSceneColors::SpaceTop, SatelliteSceneColors::SpaceBottom));
+        m_space.draw(frame);
         // The stars dim a little by day and shine fully in the Earth's shadow.
         drawStars(frame, cycleTime, StarField{
             .count = 160,
@@ -468,6 +474,13 @@ namespace ClaFi::PathArt
 
     // Over the small cap in view the terminator is near enough to a straight line, so it is one:
     // the line through the terminator's points on two rows of the frame.
+    void SatelliteScene::drawSpace(const SceneFrame& frame)
+    {
+        fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
+            LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height },
+                SatelliteSceneColors::SpaceTop, SatelliteSceneColors::SpaceBottom));
+    }
+
     SatelliteScene::Terminator SatelliteScene::terminatorOf(const SceneFrame& frame,
         const Globe& globe)
     {

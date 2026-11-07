@@ -3,6 +3,7 @@ export module ClaFi.PathArt.CometScene;
 import ClaFi.PathArt.CometSprite;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
@@ -15,6 +16,7 @@ namespace ClaFi::PathArt
     {
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Comet"; }
+        void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
     private:
         // One pass of the comet: the curve it falls along and how far into the pass it is.
@@ -30,8 +32,26 @@ namespace ClaFi::PathArt
         [[nodiscard]] static float farRidgeY(const SceneFrame&, float x);
         [[nodiscard]] static float nearRidgeY(const SceneFrame&, float x);
         [[nodiscard]] static Pass passAt(const SceneFrame&, float cycleTime);
+        // The frame turned over about the lake's edge, as the lake shows what is above it.
+        [[nodiscard]] static SceneFrame reflectionOf(const SceneFrame&);
         // Everything above the lake, which the lake shows again upside down.
-        static void drawAboveLake(const SceneFrame&, float cycleTime, float lakeY, bool reflection);
-        static void drawLake(const SceneFrame&, float cycleTime, float lakeY);
+        void drawAboveLake(const SceneFrame& upright, float cycleTime, bool reflection) const;
+        void drawLake(const SceneFrame&, float cycleTime) const;
+        static void drawSky(const SceneFrame&);
+        static void drawFarRidge(const SceneFrame&);
+        static void drawNearRidge(const SceneFrame&);
+        static void drawMirroredFarRidge(const SceneFrame&);
+        static void drawMirroredNearRidge(const SceneFrame&);
+        static void drawLakeWater(const SceneFrame&);
+        static void drawLakeShade(const SceneFrame&);
+        static void drawShore(const SceneFrame&);
+    private:
+        SceneLayer m_farRidge{ drawFarRidge };
+        SceneLayer m_nearRidge{ drawNearRidge };
+        SceneLayer m_lakeWater{ drawLakeWater };
+        SceneLayer m_mirroredFarRidge{ drawMirroredFarRidge };
+        SceneLayer m_mirroredNearRidge{ drawMirroredNearRidge };
+        SceneLayer m_lakeShade{ drawLakeShade };
+        SceneLayer m_shore{ drawShore };
     };
 }

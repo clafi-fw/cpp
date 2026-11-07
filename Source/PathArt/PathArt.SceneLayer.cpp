@@ -16,6 +16,9 @@ namespace ClaFi::PathArt
 
     namespace
     {
+        // Rows kept as one band, each band cut to its own drawn columns and laid in with one blit.
+        constexpr int k_bandRows{ 32 };
+
         // The CPU rasterizer's clip as it stands, put back when this goes.
         class HeldRasterClip
         {
@@ -31,8 +34,8 @@ namespace ClaFi::PathArt
             int m_stride{ Cpu::g_rasterBuffers.m_clipStride };
         };
 
-        // The smallest rect holding every pixel of the bitmap that is not clear.
-        [[nodiscard]] IntRect drawnArea(const Bitmap&);
+        // The smallest rect holding every pixel not clear in rows `top` to `bottom` of the bitmap.
+        [[nodiscard]] IntRect drawnArea(const Bitmap&, int top, int bottom);
         // The pixels of `area` copied out of the bitmap.
         [[nodiscard]] Bitmap copied(const Bitmap&, const IntRect& area);
     }
@@ -52,7 +55,7 @@ namespace ClaFi::PathArt
         if (params.backend != BackendType::Cpu)
         {
             m_kept = false;
-            m_pixels = {};
+            m_bands.clear();
             return;
         }
 
@@ -66,7 +69,7 @@ namespace ClaFi::PathArt
         if (scene.empty())
         {
             m_kept = false;
-            m_pixels = {};
+            m_bands.clear();
             return;
         }
 
@@ -83,17 +86,17 @@ namespace ClaFi::PathArt
         Bitmap* drawn = nullptr;
         canvas.endPaint(nullptr, whole, drawn);
 
-        const IntRect area = drawnArea(*drawn);
-        if (area.empty())
-            m_pixels = {};
-        else if (area == whole)
-            m_pixels = std::move(*drawn);
-        else
-            m_pixels = copied(*drawn, area);
-        m_pixelsAt = {
-            sceneCorner.x + static_cast<float>(area.left),
-            sceneCorner.y + static_cast<float>(area.top)
-        };
+        m_bands.clear();
+        for (int top = 0; top < scene.height(); top += k_bandRows)
+        {
+            const IntRect area = drawnArea(*drawn, top, std::min(top + k_bandRows, scene.height()));
+            if (area.empty())
+                continue;
+            m_bands.push_back({
+                copied(*drawn, area),
+                sceneCorner + area.topLeft().toFloat()
+            });
+        }
         m_sceneToPixels = sceneToPixels;
         m_frameSize = frameSize;
         m_kept = true;
@@ -110,8 +113,8 @@ namespace ClaFi::PathArt
             m_drawing(frame);
             return;
         }
-        if (!m_pixels.empty())
-            frame.canvas.drawBitmap(m_pixels, m_pixelsAt);
+        for (const Band& band : m_bands)
+            frame.canvas.drawBitmap(band.pixels, band.at);
     }
 
     namespace
@@ -128,13 +131,13 @@ namespace ClaFi::PathArt
 
         // A row is searched from each end for its first pixel that is not clear, so a covered row
         // costs two pixels and only a clear one is read through.
-        IntRect drawnArea(const Bitmap& bitmap)
+        IntRect drawnArea(const Bitmap& bitmap, const int top, const int bottom)
         {
             const auto isDrawn = [](const Color& pixel) {
                 return pixel.alpha != 0;
             };
-            IntRect area = { bitmap.width(), bitmap.height(), 0, 0 };
-            for (int y = 0; y != bitmap.height(); ++y)
+            IntRect area = { bitmap.width(), bottom, 0, top };
+            for (int y = top; y != bottom; ++y)
             {
                 const Color* rowStart = bitmap.data()
                     + static_cast<std::ptrdiff_t>(y) * bitmap.stride();

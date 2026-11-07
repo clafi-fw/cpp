@@ -104,19 +104,49 @@ and keeps them itself; draw lays each one in with a line at its place in the pai
 proposal - one still image under everything that moves - could not have kept the Puppeteer's
 valance, which hangs over the swaying curtains.
 
-**Measured** at 3436 x 2051 on the CPU backend, clang, averaged over eight times of the cycle:
-the Puppeteer 30 ms live and 18 to 19 ms with the stage and the valance kept; the Clockwork 53 ms
-live and 31 to 38 ms with the plate, the pipes and the gauge kept. In Oj's MSVC profile the stage
-alone was half of the Puppeteer's frame. Layered frames match live ones within one level of a
-channel - the rounding of premultiplied pixels.
+**Measured** at 3436 x 2051 on the CPU backend, clang, frame times averaged over eight times of
+the cycle, live and with the layers kept:
 
-**Preparing costs** about 30 ms for the Puppeteer's two layers and 55 ms for the Clockwork's
-three: a canvas the size of the scene for each, cleared, drawn on and cut down. That is why the
-showcase prepares only once two frames running were drawn at one size - a resize draws live until
-it rests.
+- Puppeteer 27 and 14 ms - the stage and the valance.
+- Ghost 29 and 17 ms - the sky, the moon, the land with the tree and the fence, the tombstones.
+- Clockwork 48 and 22 ms - the plate with its rivets and the lamp's glow; the pipes, the valve and
+  the gauge without its needle.
+- Orrery 18 and 8 ms - space and the Milky Way, and the far and the near halves of the orbits.
+- Comet 39 and 22 ms - the two ridges and the lake's water, the ridges again upside down, the
+  lake's shade and the shore.
+- Satellite 44 and 38 ms - space.
 
-**The cut** looks for the first pixel that is not clear from each end of a row, so a covered row
-costs two pixels; an area the size of the canvas is moved out rather than copied.
+In Oj's MSVC profile the Puppeteer's stage alone was half of its frame. Layered frames match live
+ones within two levels of a channel - the rounding of premultiplied pixels.
+
+**Translucent and sparse parts pay since 2026-11-08.** Until then compositeSurface copied an
+opaque run whole and took every other pixel one at a time, the clear ones inside the cut included,
+and a layer was one rect round everything it drew. The Clockwork's pipes - an L along two sides,
+5.6 million pixels cut and nearly all clear - were 6.6 ms slower kept, the lake's translucent shade
+5 ms; the moon's halo, the tombstones, the shore's pines and the orbits were slower kept as well.
+compositeSurface now takes eight pixels at a time (see Graphics-Types) and a layer keeps a band of
+32 rows at a time, each cut to its own drawn columns - the pipes keep 0.6 million pixels. Each of
+these was then measured in the frame, drawn live while the rest stayed kept, against all kept: the
+orbits gain about 0.9 ms a half, the pipes 0.5 to 1.5, the lake's shade about 0.5, the moon 0.3 to
+0.45, the shore and the tombstones about 0.2 - within a single run's noise, though each drawn
+alone over and over agrees.
+
+**The Chase's sky and grass, and the Comet's sky, are drawn live**: a gradient is as quick to fill
+as to copy.
+
+**Preparing costs** 11 to 47 ms a scene - a canvas the size of the scene for each layer, cleared,
+drawn on and cut into bands; the Comet's seven layers cost the most. That is why the showcase
+prepares only once two frames running were drawn at one size: a resize draws live until it rests.
+
+**The bands** come from the first pixel that is not clear from each end of a row, so a covered row
+costs two pixels. Every band is copied out, a whole frame's too; at 32 rows a band, a frame 2051
+rows tall is 65 blits.
+
+**The Comet's reflection keeps its ridges as layers of their own,** drawn upside down through the
+upright frame: a layer fits the frame the scene is drawn in, so one prepared for the upright frame
+could not be laid into the frame turned over inside the lake. They are laid in inside the lake's
+path clip, which a layer does not see - the row along the lake's edge that the clip covers in part
+is covered by the shore after.
 
 **Direct2D draws layers live.** Its drawPixelView copies the bitmap up to the GPU on every call,
 which a kept layer would pay on every frame. A layer kept on the GPU would need a backend call of

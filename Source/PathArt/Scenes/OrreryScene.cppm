@@ -2,6 +2,7 @@ export module ClaFi.PathArt.OrreryScene;
 
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SceneLayer;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
@@ -15,13 +16,18 @@ namespace ClaFi::PathArt
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Orrery"; }
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
+        void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
     private:
-        static void drawSky(const SceneFrame&, float cycleTime);
-        static void drawOrbits(const SceneFrame&, FloatPoint center, float outerRadius,
-            bool frontHalf);
+        static void drawSpace(const SceneFrame&);
+        static void drawFarOrbits(const SceneFrame&);
+        static void drawNearOrbits(const SceneFrame&);
+        static void drawOrbits(const SceneFrame&, bool frontHalf);
     private:
         // Saturn's one orbit a cycle sets the pace of all of them.
         static constexpr std::chrono::seconds k_cycle{ 240 };
+        SceneLayer m_space{ drawSpace };
+        SceneLayer m_farOrbits{ drawFarOrbits };
+        SceneLayer m_nearOrbits{ drawNearOrbits };
     };
 }
