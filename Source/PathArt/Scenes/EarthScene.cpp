@@ -1,6 +1,6 @@
 module;
 #include <immintrin.h>
-module ClaFi.PathArt.SatelliteScene;
+module ClaFi.PathArt.EarthScene;
 
 import ClaFi.PathArt.CloudMap;
 import ClaFi.PathArt.EarthMap;
@@ -20,7 +20,7 @@ namespace ClaFi::PathArt
 {
     using namespace ::ClaFi::Graphics;
 
-    namespace SatelliteSceneColors
+    namespace EarthSceneColors
     {
         constexpr Color SpaceTop{ 0xFF02030A };
         constexpr Color SpaceBottom{ 0xFF0A1230 };
@@ -77,7 +77,7 @@ namespace ClaFi::PathArt
         constexpr float k_degree{ std::numbers::pi_v<float> / 180.0f };
         // How long the satellite takes to go round, over both poles.
         constexpr std::chrono::seconds k_orbit{ 180 };
-        // The orbits each turn of the Earth, 3 and the golden ratio. See PathArt#satellitescene
+        // The orbits each turn of the Earth, 3 and the golden ratio. See PathArt#earthscene
         constexpr double k_orbitsPerEarthTurn{ 3.0 + std::numbers::phi };
         // Where on its orbit the satellite starts, from the equator northward.
         constexpr float k_orbitStart{ 81.0f * k_degree };
@@ -141,7 +141,7 @@ namespace ClaFi::PathArt
         constexpr float k_lighterCloudShare{ 0.55f };
         // How high a height of 1 on the land's map stands, as a share of the Earth's radius.
         constexpr float k_reliefHeight{ 0.014f };
-        // A Sun lower than this lights the slopes as from this. See PathArt#satellitescene
+        // A Sun lower than this lights the slopes as from this. See PathArt#earthscene
         constexpr float k_lowestSunForRelief{ 0.25f };
         // The height the stylized look's lowest band starts at.
         constexpr float k_lowestBand{ 0.08f };
@@ -168,7 +168,7 @@ namespace ClaFi::PathArt
         // read half a level coarser, as detail that fine shimmers when the globe turns.
         constexpr float k_spanWidening{ 1.4142135f };
 
-        // A layer of cloud: what its map holds, and how it floats. See PathArt#satellitescene
+        // A layer of cloud: what its map holds, and how it floats. See PathArt#earthscene
         struct CloudLayer
         {
             CloudKind kind;
@@ -516,7 +516,7 @@ namespace ClaFi::PathArt
         }
 
         // **Where the globe stands in a frame at an altitude**: at the lowest a cap shows, and at
-        // the highest the whole globe, in the middle. See PathArt#satellitescene
+        // the highest the whole globe, in the middle. See PathArt#earthscene
         [[nodiscard]] GlobeDisc globeDiscAt(const float width, const float height,
             const float altitude)
         {
@@ -536,7 +536,7 @@ namespace ClaFi::PathArt
             {
                 fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
                     LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height },
-                        SatelliteSceneColors::SpaceTop, SatelliteSceneColors::SpaceBottom));
+                        EarthSceneColors::SpaceTop, EarthSceneColors::SpaceBottom));
                 return;
             }
             const float limbLowest = disc.center.y
@@ -544,7 +544,7 @@ namespace ClaFi::PathArt
             const float bottom = std::min(frame.height, limbLowest + 2.0f * frame.unit);
             fillBox(frame, { 0.0f, 0.0f, frame.width, bottom },
                 LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height },
-                    SatelliteSceneColors::SpaceTop, SatelliteSceneColors::SpaceBottom));
+                    EarthSceneColors::SpaceTop, EarthSceneColors::SpaceBottom));
         }
 
         void fillOcean(const SceneFrame& frame, const GlobeDisc& disc)
@@ -555,7 +555,7 @@ namespace ClaFi::PathArt
             const float top = disc.center.y - disc.radius;
             fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
                 LinearGradient::Simple({ 0.0f, top }, { 0.0f, top + disc.radius * 0.45f },
-                SatelliteSceneColors::OceanLimb, SatelliteSceneColors::OceanDeep));
+                EarthSceneColors::OceanLimb, EarthSceneColors::OceanDeep));
             frame.canvas.popClip();
         }
 
@@ -563,21 +563,21 @@ namespace ClaFi::PathArt
         [[nodiscard]] Color atmosphereColor(const float sunlight)
         {
             if (sunlight > 0.18f)
-                return SatelliteSceneColors::Day.withOpacity(0.9f);
+                return EarthSceneColors::Day.withOpacity(0.9f);
             if (sunlight > 0.0f)
             {
-                const Color tint = colorBetween(SatelliteSceneColors::Dusk,
-                    SatelliteSceneColors::Day, sunlight / 0.18f);
+                const Color tint = colorBetween(EarthSceneColors::Dusk,
+                    EarthSceneColors::Day, sunlight / 0.18f);
                 return tint.withOpacity(0.92f);
             }
             if (sunlight > -0.16f)
             {
                 const float share = 1.0f + sunlight / 0.16f;
-                const Color tint = colorBetween(SatelliteSceneColors::NightAir,
-                    SatelliteSceneColors::DuskDeep, share);
+                const Color tint = colorBetween(EarthSceneColors::NightAir,
+                    EarthSceneColors::DuskDeep, share);
                 return tint.withOpacity(std::lerp(0.3f, 0.92f, share));
             }
-            return SatelliteSceneColors::NightAir.withOpacity(0.3f);
+            return EarthSceneColors::NightAir.withOpacity(0.3f);
         }
 
         // The pixels a row's buffers hold, a whole number of the 8 one AVX2 step works on.
@@ -853,7 +853,7 @@ namespace ClaFi::PathArt
 
         // Where the points of a row fall on the layer's map, how far the ground about each spans
         // and how clear of the haze each is, from the pixel center `firstPixelX` on, `step` pixels
-        // apart. See PathArt#satellitescene
+        // apart. See PathArt#earthscene
         void projectRow(const SphereView& sphere, const float pixelY, const float firstPixelX,
             const int step, MapPoints& onMap, std::span<float> clearness)
         {
@@ -897,9 +897,9 @@ namespace ClaFi::PathArt
         [[nodiscard]] std::array<GradientStop, 3> nightStops()
         {
             return { {
-                { .position = 0.0f, .color = SatelliteSceneColors::Night.withOpacity(0.0f) },
-                { .position = 0.35f, .color = SatelliteSceneColors::NightBlue.withOpacity(0.55f) },
-                { .position = 1.0f, .color = SatelliteSceneColors::Night.withOpacity(0.9f) }
+                { .position = 0.0f, .color = EarthSceneColors::Night.withOpacity(0.0f) },
+                { .position = 0.35f, .color = EarthSceneColors::NightBlue.withOpacity(0.55f) },
+                { .position = 1.0f, .color = EarthSceneColors::Night.withOpacity(0.9f) }
             } };
         }
 
@@ -925,9 +925,9 @@ namespace ClaFi::PathArt
             const std::array<GradientStop, 3> stops = nightStops();
             const auto shaded = [](const GradientStop& stop) {
                 const float nightShare = static_cast<float>(stop.color.alpha) / 255.0f;
-                const Color moonlit = colorBetween(stop.color, SatelliteSceneColors::Moonlight,
+                const Color moonlit = colorBetween(stop.color, EarthSceneColors::Moonlight,
                     nightShare);
-                return colorBetween(SatelliteSceneColors::Cloud, moonlit, nightShare);
+                return colorBetween(EarthSceneColors::Cloud, moonlit, nightShare);
             };
             std::vector<Color> shades;
             shades.reserve(k_cloudShadeCount);
@@ -948,7 +948,7 @@ namespace ClaFi::PathArt
             const std::array<GradientStop, 3> stops = nightStops();
             const auto moonlit = [](const GradientStop& stop) {
                 const Color moonlitColor = colorBetween(stop.color,
-                    SatelliteSceneColors::Moonlight, k_moonlitShareOfNight);
+                    EarthSceneColors::Moonlight, k_moonlitShareOfNight);
                 return moonlitColor.withOpacity(static_cast<float>(stop.color.alpha) / 255.0f);
             };
             std::vector<Color> shades;
@@ -1724,7 +1724,7 @@ namespace ClaFi::PathArt
 
         [[nodiscard]] LandPalette landPalette()
         {
-            using namespace SatelliteSceneColors;
+            using namespace EarthSceneColors;
             return {
                 .grass = colorLanesOf(Grass),
                 .grassLight = colorLanesOf(GrassLight),
@@ -2117,7 +2117,7 @@ namespace ClaFi::PathArt
             const __m256 byteMax = _mm256_set1_ps(255.0f);
             const __m256 perPixel = _mm256_set1_ps(1.0f / static_cast<float>(step));
             const bool realistic = picture.look == SceneLook::Realistic;
-            const ColorLanes hazeColor = colorLanesOf(SatelliteSceneColors::Haze);
+            const ColorLanes hazeColor = colorLanesOf(EarthSceneColors::Haze);
             for (int x = 0; x < width; x += 8)
             {
                 const __m256 covered = _mm256_loadu_ps(coverage.data() + x);
@@ -2282,12 +2282,12 @@ namespace ClaFi::PathArt
                 Color color;
             };
             const std::array<Stop, 6> stops = { {
-                { 0.0f, SatelliteSceneColors::SeaShelf },
-                { 0.17f, SatelliteSceneColors::SeaSlope },
-                { 0.33f, SatelliteSceneColors::SeaRise },
-                { 0.5f, SatelliteSceneColors::SeaRidge },
-                { 0.67f, SatelliteSceneColors::OceanDeep },
-                { 1.0f, SatelliteSceneColors::SeaTrench }
+                { 0.0f, EarthSceneColors::SeaShelf },
+                { 0.17f, EarthSceneColors::SeaSlope },
+                { 0.33f, EarthSceneColors::SeaRise },
+                { 0.5f, EarthSceneColors::SeaRidge },
+                { 0.67f, EarthSceneColors::OceanDeep },
+                { 1.0f, EarthSceneColors::SeaTrench }
             } };
             std::vector<Color> shades;
             shades.reserve(k_seaShadeCount);
@@ -2310,7 +2310,7 @@ namespace ClaFi::PathArt
         // k_seaToneFade.
         [[nodiscard]] ColorLanes flatSeaColor(const SpreadLanes& depths)
         {
-            using namespace SatelliteSceneColors;
+            using namespace EarthSceneColors;
             const SoftEdge edge = softEdgeOf(_mm256_max_ps(_mm256_mul_ps(depths.change,
                 _mm256_set1_ps(k_edgeSoftening)), _mm256_set1_ps(0.5f * k_seaToneFade)));
             const auto past = [&](float depth) {
@@ -2386,7 +2386,7 @@ namespace ClaFi::PathArt
             const __m256i byteMask = _mm256_set1_epi32(0xFF);
             const __m256 rowStart = _mm256_add_ps(_mm256_set1_ps(firstPixelX), laneOffsets());
             const __m256 edgeScale = _mm256_set1_ps(std::min(radii.x, radii.y));
-            const ColorLanes hazeColor = colorLanesOf(SatelliteSceneColors::Haze);
+            const ColorLanes hazeColor = colorLanesOf(EarthSceneColors::Haze);
             const auto shadeAt = [&](__m256 depth) {
                 const __m256i shade = _mm256_i32gather_epi32(shades, _mm256_cvttps_epi32(
                     _mm256_min_ps(_mm256_max_ps(_mm256_fmadd_ps(depth, lastShade, half), zero),
@@ -2447,19 +2447,19 @@ namespace ClaFi::PathArt
 
     // The coasts take some milliseconds to build, so they are built off the paint from the start,
     // and the first frame takes them.
-    SatelliteScene::SatelliteScene()
+    EarthScene::EarthScene()
         :
         m_coastsBuilt{ std::async(std::launch::async, buildCoasts) }
     {
     }
 
-    void SatelliteScene::prepare(const SceneParams& params)
+    void EarthScene::prepare(const SceneParams& params)
     {
         m_space.prepare(params);
         m_ocean.prepare(params);
     }
 
-    void SatelliteScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
+    void EarthScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         if (m_coastsBuilt.valid())
         {
@@ -2526,13 +2526,13 @@ namespace ClaFi::PathArt
             .top = 0.0f,
             .bottom = height,
             .seed = 90.0f,
-            .color = SatelliteSceneColors::Star,
+            .color = EarthSceneColors::Star,
             .opacity = 0.65f + 0.35f * (1.0f - sunlit),
             .twinklesPerCycle = k_lively,
             .drift = { fractionOf(orbits * k_skyWidthsPerOrbit), 0.0f }
         });
         drawGlow(frame, { width, 0.0f }, 340.0f * unit,
-            SatelliteSceneColors::SunGlare.withOpacity(0.16f * sunlit));
+            EarthSceneColors::SunGlare.withOpacity(0.16f * sunlit));
         if (m_earthMap)
             drawSea(frame, globe);
         else if (altitude == 0.0f)
@@ -2548,7 +2548,7 @@ namespace ClaFi::PathArt
         if (globe.sun.z > 0.0f)
         {
             drawGlow(frame, globe.onScreen(globe.sun), 150.0f * unit * globeShare,
-                SatelliteSceneColors::SeaGlint.withOpacity(0.3f * globe.sun.z), 0.8f);
+                EarthSceneColors::SeaGlint.withOpacity(0.3f * globe.sun.z), 0.8f);
         }
         drawCityLights(frame, globe, time.cycleTime);
         frame.canvas.popClip();
@@ -2568,8 +2568,8 @@ namespace ClaFi::PathArt
     // **A drag turns the globe the way the pointer goes, as a hand turns a ball**: the ground
     // under the middle of the view moves to where the drag takes it, about the axis square to
     // both, wherever the poles stand. The turn is the orbit's among the stars, so the satellite
-    // flies on along the turned orbit. See PathArt#satellitescene
-    void SatelliteScene::dragView(const FloatPoint by, const FloatRect& bounds)
+    // flies on along the turned orbit. See PathArt#earthscene
+    void EarthScene::dragView(const FloatPoint by, const FloatRect& bounds)
     {
         // How far from the middle toward the rim a point is taken, so it never lies on the rim.
         constexpr float k_rimReach{ 0.98f };
@@ -2613,28 +2613,28 @@ namespace ClaFi::PathArt
     }
 
     // A notch away from the screen comes down, as the wheel zooms in.
-    void SatelliteScene::scrollView(const float notches)
+    void EarthScene::scrollView(const float notches)
     {
         m_view.altitude = std::clamp(m_view.altitude - notches * k_altitudePerNotch, 0.0f, 1.0f);
         m_viewTouched = true;
     }
 
     // A press holds the globe still, and its let-go starts the time it holds still for after.
-    void SatelliteScene::holdView(const bool held)
+    void EarthScene::holdView(const bool held)
     {
         m_viewHeld = held;
         m_viewTouched = true;
     }
 
     // The Earth spins about its axis, and then tips its north pole toward the viewer.
-    SatelliteScene::Direction SatelliteScene::EarthTurn::applied(const Direction onEarth) const
+    EarthScene::Direction EarthScene::EarthTurn::applied(const Direction onEarth) const
     {
         const float x = onEarth.x * spinCosine + onEarth.z * spinSine;
         const float z = onEarth.z * spinCosine - onEarth.x * spinSine;
         return { x, onEarth.y * tipCosine + z * tipSine, z * tipCosine - onEarth.y * tipSine };
     }
 
-    SatelliteScene::Rotation SatelliteScene::Rotation::About(const Direction axis,
+    EarthScene::Rotation EarthScene::Rotation::About(const Direction axis,
         const float angle)
     {
         const float cosine = std::cos(angle);
@@ -2659,7 +2659,7 @@ namespace ClaFi::PathArt
         };
     }
 
-    SatelliteScene::Direction SatelliteScene::Rotation::applied(const Direction direction) const
+    EarthScene::Direction EarthScene::Rotation::applied(const Direction direction) const
     {
         return {
             x.x * direction.x + y.x * direction.y + z.x * direction.z,
@@ -2668,13 +2668,13 @@ namespace ClaFi::PathArt
         };
     }
 
-    SatelliteScene::Rotation SatelliteScene::Rotation::after(const Rotation& first) const
+    EarthScene::Rotation EarthScene::Rotation::after(const Rotation& first) const
     {
         return { applied(first.x), applied(first.y), applied(first.z) };
     }
 
     // x keeps its way, y is set square to it, and z is square to both.
-    SatelliteScene::Rotation SatelliteScene::Rotation::orthonormal() const
+    EarthScene::Rotation EarthScene::Rotation::orthonormal() const
     {
         const auto unit = [](const Direction direction) {
             const float length = std::hypot(direction.x, direction.y, direction.z);
@@ -2701,7 +2701,7 @@ namespace ClaFi::PathArt
     // **Where the north pole stands in the view gives the tilt and the tip**; where longitude 0 on
     // the equator stands, turned back by them, gives the spin. Looking straight down the Earth's
     // axis any tilt would do, and the spin makes up for the one taken.
-    SatelliteScene::ViewAngles SatelliteScene::ViewAngles::Of(const Rotation& fromEarth)
+    EarthScene::ViewAngles EarthScene::ViewAngles::Of(const Rotation& fromEarth)
     {
         const Direction north = fromEarth.y;
         const Direction meridian = fromEarth.z;
@@ -2718,8 +2718,8 @@ namespace ClaFi::PathArt
 
     // **The view's axes follow the orbit, turned by the drags**, and the Earth turns under it about
     // its own axis; the angles the pixels are worked out by are read from where the Earth's axes
-    // then stand in the view. See PathArt#satellitescene
-    SatelliteScene::Globe SatelliteScene::Globe::OnOrbit(const FloatPoint center,
+    // then stand in the view. See PathArt#earthscene
+    EarthScene::Globe EarthScene::Globe::OnOrbit(const FloatPoint center,
         const float radius, const double orbits, const View& view)
     {
         const Rotation axes = view.orbitTurn.after(orbitAxesAt(orbits, view.altitude));
@@ -2759,7 +2759,7 @@ namespace ClaFi::PathArt
 
     // The orbit runs in the plane of y and z among the stars, about x, and the view looks back
     // from the satellite away from the horizon, less the higher it stands.
-    SatelliteScene::Rotation SatelliteScene::Globe::orbitAxesAt(const double orbits,
+    EarthScene::Rotation EarthScene::Globe::orbitAxesAt(const double orbits,
         const float altitude)
     {
         const float around = k_2Pi * fractionOf(orbits) + k_orbitStart;
@@ -2776,7 +2776,7 @@ namespace ClaFi::PathArt
     }
 
     // Unturned, longitude 0 faces the viewer and the north pole points up.
-    SatelliteScene::Direction SatelliteScene::Globe::onEarthAt(const FloatPoint lonLat)
+    EarthScene::Direction EarthScene::Globe::onEarthAt(const FloatPoint lonLat)
     {
         const float latitude = lonLat.y * k_degree;
         const float longitude = lonLat.x * k_degree;
@@ -2787,7 +2787,7 @@ namespace ClaFi::PathArt
         };
     }
 
-    SatelliteScene::EarthTurn SatelliteScene::Globe::turn() const
+    EarthScene::EarthTurn EarthScene::Globe::turn() const
     {
         return {
             .spinCosine = std::cos(spin),
@@ -2797,13 +2797,13 @@ namespace ClaFi::PathArt
         };
     }
 
-    FloatPoint SatelliteScene::Globe::onScreen(const Direction direction) const
+    FloatPoint EarthScene::Globe::onScreen(const Direction direction) const
     {
         return toScreen().transform({ direction.x, direction.y });
     }
 
     // Up the view is up the screen, turned by the tilt, and the screen's y runs down.
-    Matrix3x2 SatelliteScene::Globe::toScreen() const
+    Matrix3x2 EarthScene::Globe::toScreen() const
     {
         const float tiltCosine = std::cos(tilt);
         const float tiltSine = std::sin(tilt);
@@ -2820,7 +2820,7 @@ namespace ClaFi::PathArt
     // The outline is cut where it goes behind the Earth into stretches on the near side. Each
     // stretch is joined along the rim to the next one that comes round, the way the outline turns,
     // so the shape keeps its inside on the same hand along the rim as along its own edge.
-    void SatelliteScene::Globe::nearSideOf(const std::span<const Direction> outline,
+    void EarthScene::Globe::nearSideOf(const std::span<const Direction> outline,
         const bool counterClockwise, std::vector<FloatPoint>& points,
         std::vector<std::size_t>& loopEnds) const
     {
@@ -2941,7 +2941,7 @@ namespace ClaFi::PathArt
         }
     }
 
-    bool SatelliteScene::Globe::addNearSide(const std::span<const Direction> outline,
+    bool EarthScene::Globe::addNearSide(const std::span<const Direction> outline,
         const bool counterClockwise, const FloatRect& view, PixelPath& path) const
     {
         std::vector<FloatPoint> points;
@@ -2978,14 +2978,14 @@ namespace ClaFi::PathArt
         return true;
     }
 
-    float SatelliteScene::Globe::sunlightAt(const Direction direction) const
+    float EarthScene::Globe::sunlightAt(const Direction direction) const
     {
         return direction.x * sun.x + direction.y * sun.y + direction.z * sun.z;
     }
 
     // Until the land's map is built the towns stand anywhere on the land, then they move to where
-    // the map places them. See PathArt#satellitescene
-    SatelliteScene::BuiltCoasts SatelliteScene::buildCoasts()
+    // the map places them. See PathArt#earthscene
+    EarthScene::BuiltCoasts EarthScene::buildCoasts()
     {
         std::vector<Coastline> coastlines;
         for (LandOutline& outline : landOutlines())
@@ -3015,7 +3015,7 @@ namespace ClaFi::PathArt
     }
 
     // The towns go anywhere on the land up to 62 degrees north, the ice sheet left out.
-    std::vector<SatelliteScene::City> SatelliteScene::evenTowns(
+    std::vector<EarthScene::City> EarthScene::evenTowns(
         const std::span<const Coastline> coastlines)
     {
         std::vector<std::span<const FloatPoint>> inhabited;
@@ -3044,8 +3044,8 @@ namespace ClaFi::PathArt
     // thinning with height, in the deep desert, in the tundra and a little in the northern forest.
     // The sites over the land weigh more the nearer they are to a coast; those on the coastline
     // weigh the most. The ice sheet has none, though its coast counts. The sites are read from the
-    // map 8 at a time, as it reads 8 points at once. See PathArt#satellitescene
-    std::vector<SatelliteScene::City> SatelliteScene::townsBy(const EarthMap& map,
+    // map 8 at a time, as it reads 8 points at once. See PathArt#earthscene
+    std::vector<EarthScene::City> EarthScene::townsBy(const EarthMap& map,
         const std::span<const Coastline> coastlines)
     {
         std::vector<std::span<const FloatPoint>> outlines;
@@ -3147,18 +3147,18 @@ namespace ClaFi::PathArt
     }
 
     // The space and the ocean are kept for the lowest altitude, where the view spends its time.
-    void SatelliteScene::drawSpace(const SceneFrame& frame)
+    void EarthScene::drawSpace(const SceneFrame& frame)
     {
         fillSpace(frame, globeDiscAt(frame.width, frame.height, 0.0f));
     }
 
-    void SatelliteScene::drawOcean(const SceneFrame& frame)
+    void EarthScene::drawOcean(const SceneFrame& frame)
     {
         fillOcean(frame, globeDiscAt(frame.width, frame.height, 0.0f));
     }
 
     // The land and the ice sheet make one path each, so a sea inside the land is cut out of it.
-    void SatelliteScene::drawFlatLand(const SceneFrame& frame, const Globe& globe) const
+    void EarthScene::drawFlatLand(const SceneFrame& frame, const Globe& globe) const
     {
         const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
         const EarthTurn turn = globe.turn();
@@ -3179,7 +3179,7 @@ namespace ClaFi::PathArt
             }
             if (!inView)
                 continue;
-            const Color color = iceSheet ? SatelliteSceneColors::Snow : SatelliteSceneColors::Grass;
+            const Color color = iceSheet ? EarthSceneColors::Snow : EarthSceneColors::Grass;
             fillShape(frame, path, SolidColor{ color });
         }
     }
@@ -3188,7 +3188,7 @@ namespace ClaFi::PathArt
     // coastlines enclose as its opacity, so the coasts are drawn alike on either backend. The
     // points stand every 2nd pixel and row on a globe over 1300 pixels in radius, and every 4th
     // over 3200, where the land's map is coarser than that still.
-    void SatelliteScene::drawLand(const SceneFrame& frame, const Globe& globe)
+    void EarthScene::drawLand(const SceneFrame& frame, const Globe& globe)
     {
         if (!m_earthMap)
         {
@@ -3299,8 +3299,8 @@ namespace ClaFi::PathArt
     }
 
     // **The sea is coloured by its depth**, read from the land's map at points twice as far apart
-    // as the land's, in bands of rows spread over the cores. See PathArt#satellitescene
-    void SatelliteScene::drawSea(const SceneFrame& frame, const Globe& globe)
+    // as the land's, in bands of rows spread over the cores. See PathArt#earthscene
+    void EarthScene::drawSea(const SceneFrame& frame, const Globe& globe)
     {
         const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
         const FloatRect canvasPixels = {
@@ -3348,7 +3348,7 @@ namespace ClaFi::PathArt
 
     // **The night falls over the globe by the sunlight on it**, worked out pixel by pixel in bands
     // spread over the cores, so the terminator curves as it does at any altitude.
-    void SatelliteScene::drawNight(const SceneFrame& frame, const Globe& globe)
+    void EarthScene::drawNight(const SceneFrame& frame, const Globe& globe)
     {
         const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
         const FloatRect canvasPixels = {
@@ -3389,7 +3389,7 @@ namespace ClaFi::PathArt
     }
 
     // The lights come on a little way past the terminator and fade toward the edge of the globe.
-    void SatelliteScene::drawCityLights(const SceneFrame& frame, const Globe& globe,
+    void EarthScene::drawCityLights(const SceneFrame& frame, const Globe& globe,
         const float cycleTime) const
     {
         // The lights shrink as the globe does, a little less fast.
@@ -3425,12 +3425,12 @@ namespace ClaFi::PathArt
             lit.push_back({ .at = point, .radius = radius, .step = step });
             if (city.brightness > k_glowingBrightness)
                 drawGlow(frame, point, 7.0f * unit,
-                    SatelliteSceneColors::CityGlow.withOpacity(0.45f * strength));
+                    EarthSceneColors::CityGlow.withOpacity(0.45f * strength));
         }
         for (int step = 0; step != k_cityOpacitySteps; ++step)
         {
             const float opacity = (static_cast<float>(step) + 0.5f) / k_cityOpacitySteps;
-            const Color light = SatelliteSceneColors::CityLight.withOpacity(opacity);
+            const Color light = EarthSceneColors::CityLight.withOpacity(opacity);
             ScatteredShapes lights{ frame, SolidColor{ light } };
             for (const LitCity& city : lit)
             {
@@ -3442,8 +3442,8 @@ namespace ClaFi::PathArt
     }
 
     // **Three layers of cloud float above the ground**, each a map on a sphere of its own a little
-    // larger than the Earth's, turning about an axis of its own. See PathArt#satellitescene
-    void SatelliteScene::drawClouds(const SceneFrame& frame, const Globe& globe,
+    // larger than the Earth's, turning about an axis of its own. See PathArt#earthscene
+    void EarthScene::drawClouds(const SceneFrame& frame, const Globe& globe,
         const float cycleTime)
     {
         if (!m_cloudMaps)
@@ -3476,7 +3476,7 @@ namespace ClaFi::PathArt
         if (inView.empty())
             return;
 
-        const float cloudOpacity = static_cast<float>(SatelliteSceneColors::Cloud.alpha) / 255.0f;
+        const float cloudOpacity = static_cast<float>(EarthSceneColors::Cloud.alpha) / 255.0f;
         std::array<CloudLayerView, k_cloudLayers.size()> layers{};
         float outerRadius = 0.0f;
         for (std::size_t i = 0; i != k_cloudLayers.size(); ++i)
@@ -3530,7 +3530,7 @@ namespace ClaFi::PathArt
     }
 
     // Direct2D places a view through the canvas's transform, and the bands are in pixels.
-    void SatelliteScene::layBands(const SceneFrame& frame, const std::span<const PixelBand> bands,
+    void EarthScene::layBands(const SceneFrame& frame, const std::span<const PixelBand> bands,
         const FloatRect& cut)
     {
         std::vector<PixelView> views;
@@ -3550,7 +3550,7 @@ namespace ClaFi::PathArt
     // to the view, so one gradient along the Sun's way across the screen colours it at any
     // altitude - blue by day, orange at dusk, dark at night. Each of the three rings is a glow
     // fading from its circle out to both sides, so none of them shows an edge.
-    void SatelliteScene::drawAtmosphere(const SceneFrame& frame, const Globe& globe)
+    void EarthScene::drawAtmosphere(const SceneFrame& frame, const Globe& globe)
     {
         constexpr int k_stops = 41;
         const FloatPoint sunAcross = rotated({ globe.sun.x, globe.sun.y }, globe.tilt);
@@ -3598,7 +3598,7 @@ namespace ClaFi::PathArt
     // wheel notch until k_heldStill seconds after the last, then its motion eases back over
     // k_easeBack. A frame the view was touched before counts the time since the last frame whole;
     // after, the time is counted exactly however far apart the frames fall.
-    double SatelliteScene::stillSecondsAt(const double sceneSeconds)
+    double EarthScene::stillSecondsAt(const double sceneSeconds)
     {
         const double elapsed = m_lastFrameAt
             ? std::max(sceneSeconds - *m_lastFrameAt, 0.0)

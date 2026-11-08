@@ -23,6 +23,7 @@ import ClaFi.Controls.AppButton;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Button;
+import ClaFi.Controls.RadioButton;
 
 import ClaFi.Icons.DotMark;
 
@@ -69,6 +70,9 @@ namespace MillScene_App
         LookChoice{ PathArt::SceneLook::Stylized, L"Stylized" },
         LookChoice{ PathArt::SceneLook::Realistic, L"Realistic" }
     };
+    // The look, at its index in k_lookChoices, a scene is drawn in until the user picks one.
+    constexpr std::size_t k_defaultLook{ 1 };
+    static_assert(k_lookChoices[k_defaultLook].look == PathArt::SceneLook::Realistic);
 
     // **The lanes the dropdown opened as.** Twenty-four themes in lanes of eight are the three
     // columns the picker had in the title bar, and the page keeps them.
@@ -200,7 +204,7 @@ namespace MillScene_App
         // walks the picker - see previewSceneTheme.
         std::size_t m_pickedTheme{ 0 };
         // The look the user chose, at its index in k_lookChoices.
-        std::size_t m_pickedLook{ 0 };
+        std::size_t m_pickedLook{ k_defaultLook };
 
         // The backstage's Scene page, refilled every time that page is built: a pick repaints the
         // button it left as well as the one it took, and the stack is what the preview returns to.
@@ -765,12 +769,10 @@ void MillSceneForm::buildLookPicker(AppMenuPage& page)
     m_lookButtons.reserve(k_lookChoices.size());
     for (std::size_t index = 0; index != k_lookChoices.size(); ++index)
     {
-        ToolButton& item = lanes.add<ToolButton>(
+        RadioButton& item = lanes.add<RadioButton>(
             Text{ k_lookChoices[index].name },
             Tag{ index },
-            MouseFocus::Self, // an item: the press that focuses it makes it current
-            ButtonViewMode::TextLabel,
-            ShowSelectionOnSurface::Yes
+            Padding{ 0.0f, styleMetrics(UiElement::ListItem).padding.y }
         );
         item.onGetState([this, index](GetStateEvent& event) {
             event.state.selected = m_pickedLook == index;
@@ -843,6 +845,8 @@ void MillSceneForm::restoreLook()
             return;
         }
     }
+    // With no pick kept, the scene takes the default look, its own being Stylized.
+    previewLook(m_pickedLook);
 }
 
 void MillSceneForm::storeLook()

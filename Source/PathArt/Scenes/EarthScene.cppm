@@ -1,4 +1,4 @@
-export module ClaFi.PathArt.SatelliteScene;
+export module ClaFi.PathArt.EarthScene;
 
 import ClaFi.PathArt.CloudMap;
 import ClaFi.PathArt.EarthMap;
@@ -13,13 +13,13 @@ import ClaFi.StdLib;
 
 namespace ClaFi::PathArt
 {
-    // A satellite over a large turning Earth, through day, dusk and night. See PathArt
-    export class SatelliteScene : public Scene
+    // A large Earth turning under a satellite, through day, dusk and night. See PathArt
+    export class EarthScene : public Scene
     {
     public:
-        SatelliteScene();
+        EarthScene();
     public:
-        [[nodiscard]] std::wstring_view name() const override { return L"Satellite"; }
+        [[nodiscard]] std::wstring_view name() const override { return L"Earth"; }
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
         void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
@@ -69,7 +69,7 @@ namespace ClaFi::PathArt
             float tip;
             float spin;
 
-            // The angles of a turn from the Earth's axes to the view's. See PathArt#satellitescene
+            // The angles of a turn from the Earth's axes to the view's. See PathArt#earthscene
             [[nodiscard]] static ViewAngles Of(const Rotation& fromEarth);
         };
         // Where the view stands besides the orbit, moved by drags and the wheel.
@@ -90,7 +90,7 @@ namespace ClaFi::PathArt
             Direction sun;
             Rotation fromEarth; // where the Earth's axes stand in the view
 
-            // The Earth as seen after a number of orbits from the start. See PathArt#satellitescene
+            // The Earth as seen after a number of orbits from the start. See PathArt#earthscene
             [[nodiscard]] static Globe OnOrbit(FloatPoint center, float radius, double orbits,
                 const View&);
             // Where the view's axes stand among the stars at a point of the orbit, before any drag.
@@ -147,18 +147,18 @@ namespace ClaFi::PathArt
         [[nodiscard]] static BuiltCoasts buildCoasts();
         // Towns spread evenly over the land, until the land's map places them.
         [[nodiscard]] static std::vector<City> evenTowns(std::span<const Coastline>);
-        // Towns where the land's map makes them likely. See PathArt#satellitescene
+        // Towns where the land's map makes them likely. See PathArt#earthscene
         [[nodiscard]] static std::vector<City> townsBy(const EarthMap&,
             std::span<const Coastline>);
         static void drawSpace(const SceneFrame&);
         static void drawOcean(const SceneFrame&);
         // The land in one flat colour inside each coastline, until the land's map is built.
         void drawFlatLand(const SceneFrame&, const Globe&) const;
-        // The land worked out pixel by pixel inside the coastlines. See PathArt#satellitescene
+        // The land worked out pixel by pixel inside the coastlines. See PathArt#earthscene
         void drawLand(const SceneFrame&, const Globe&);
         // The sea coloured pixel by pixel by its depth, once the land's map is built.
         void drawSea(const SceneFrame&, const Globe&);
-        // The night worked out pixel by pixel from the sunlight. See PathArt#satellitescene
+        // The night worked out pixel by pixel from the sunlight. See PathArt#earthscene
         void drawNight(const SceneFrame&, const Globe&);
         void drawCityLights(const SceneFrame&, const Globe&, float cycleTime) const;
         void drawClouds(const SceneFrame&, const Globe&, float cycleTime);
@@ -178,12 +178,12 @@ namespace ClaFi::PathArt
         SceneLayer m_ocean{ drawOcean };
         // By pointer, as MSVC's std::future builds what it carries with no arguments first.
         std::future<std::unique_ptr<CloudMaps>> m_cloudMapsBuilt{};
-        // Built off the paint from the first frame drawn on, and kept. See PathArt#satellitescene
+        // Built off the paint from the first frame drawn on, and kept. See PathArt#earthscene
         std::unique_ptr<CloudMaps> m_cloudMaps{};
         // Kept from one frame to the next, so a frame of the same size allocates nothing.
         std::vector<PixelBand> m_cloudBands{};
         std::future<BuiltLand> m_landBuilt{};
-        // Built off the paint from the first frame drawn on, and kept. See PathArt#satellitescene
+        // Built off the paint from the first frame drawn on, and kept. See PathArt#earthscene
         std::unique_ptr<EarthMap> m_earthMap{};
         // Kept from one frame to the next, as the clouds' are.
         std::vector<PixelBand> m_landBands{};

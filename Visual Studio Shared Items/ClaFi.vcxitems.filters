@@ -754,6 +754,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\CometScene.cppm">
       <Filter>PathArt\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\EarthScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\EarthScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\GhostScene.cpp">
       <Filter>PathArt\Scenes</Filter>
     </ClCompile>
@@ -785,12 +791,6 @@
       <Filter>PathArt\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PuppeteerScene.cppm">
-      <Filter>PathArt\Scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\SatelliteScene.cpp">
-      <Filter>PathArt\Scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\SatelliteScene.cppm">
       <Filter>PathArt\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\AndroidSprite.cpp">

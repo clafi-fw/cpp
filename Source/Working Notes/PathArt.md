@@ -25,7 +25,7 @@ landscapes. Module names keep the kind as a suffix and leave the folder out, as 
 **A sprite keeps its colours in a palette of its own**, except the mill's: the mill's figures and
 weather take their colours from the theme, passed in as a struct beside the pose, since the theme
 crossfades them. Three scenes whose palette would share a sprite's name took a `Scene` in theirs -
-`GhostSceneColors`, `CometSceneColors`, `SatelliteSceneColors`.
+`GhostSceneColors`, `CometSceneColors`, `EarthSceneColors`.
 
 **A sprite's idle motions run on a time the scene hands it** - blinks, twitches, flickers, each a
 whole number of times per unit of that time - so it loops in any scene that hands it a whole
@@ -38,7 +38,7 @@ levels of a colour channel, except the pendulum in ClockworkScene - seven levels
 where its swing's sum now comes out in another order.
 
 **Each scene states its own cycle.** All of them run at 40 seconds except OrreryScene and
-SatelliteScene, which run at 240: the first mockups ran both at 40, and the planets and the turning
+EarthScene, which run at 240: the first mockups ran both at 40, and the planets and the turning
 Earth were far too quick. Slowing the whole cycle slowed the twinkling and blinking with it, so
 those two multiply their quick details by `k_lively`, 6, to keep the 40-second pace. Changing a
 scene's speed is its `k_cycle` alone - every motion is counted per cycle, so a new length changes
@@ -69,7 +69,7 @@ while"). A press held still reached the scene as nothing, so the scene could not
 Of a virtual on Scene - holdView(bool), the scene holding what it chooses - and the host freezing
 the scene's time, which would have stopped the satellite's lights and the stars' twinkle with the
 globe, Oj picked the virtual. Its parameter is unnamed in Scene, as dragView's and scrollView's are,
-for the empty body's sake; SatelliteScene names it `held`. ScenePanel calls it on a press and its
+for the empty body's sake; EarthScene names it `held`. ScenePanel calls it on a press and its
 let-go, and lets go of a scene shown away from while held.
 
 ## Scene draw
@@ -221,7 +221,10 @@ saw that edge through the coma's glow as a square butt. Rendered against it: a h
 the head read as a blunt capsule, and a nose a fifth of the tail long grew a belly on the fanned
 side. Oj picked the tenth.
 
-## SatelliteScene
+## EarthScene
+
+Called SatelliteScene, and Satellite in the showcase's picker, until 2026-11-09; the notes below
+from before then say Satellite.
 
 The globe is an orthographic projection, looked at from latitude -20 with its north turned 0.22
 radians off the vertical; its radius is 1.15 times the larger side of the frame, so only a cap
@@ -795,6 +798,13 @@ after the zoom against 0.00 from 1 to 5 s, 0.02 and 0.42 easing, 0.84 to 0.88 af
 from 0 to 3 s, 0.00 to 8 s, 0.18 and 0.75 easing, 0.93 after; a drag for 1 s and its glide, 0.00
 from 3 to 7 s after the glide stopped, 0.26 and 0.66 easing. The harness's view script gained "t0 t1
 hold" and calls holdView on its drags as the panel does.
+
+**The scene is the Earth** (Oj, 2026-11-09, "Rename Satellite to Earth, make realistic by default,
+swap settings buttons to radiobuttons"). Oj picked the rename everywhere - the shown name, the
+class, the files, the module, the project's items, the colours' namespace and the footnote's section
+- with the craft still the satellite: SatelliteSprite, drawSatellite and the satellite in the scene
+keep their names. The showcase picks Realistic when no pick is kept. Of the pickers on the Scene
+page, only the look became radio buttons; Oj: "Only Look - Scenes will turn into tiles later".
 
 ## ChaseScene
 

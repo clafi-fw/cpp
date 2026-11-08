@@ -524,6 +524,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\ClockworkScene.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\CometScene.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\CometScene.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\EarthScene.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\EarthScene.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\GhostScene.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\GhostScene.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\MillScene.cpp" />
@@ -535,8 +537,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PathArt.Scenes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PuppeteerScene.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PuppeteerScene.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\SatelliteScene.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\SatelliteScene.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\AndroidSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\AndroidSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BatSprite.cpp" />

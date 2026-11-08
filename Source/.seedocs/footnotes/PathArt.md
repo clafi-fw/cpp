@@ -11,7 +11,7 @@ by name() in the Scene group of its Scene page, and stores the one picked under 
 **A motion that comes round runs a whole number of times a cycle**, so the frame at the end of the
 cycle is the frame at its start and the loop shows no seam. A scene that needs a slow motion beside
 a fast one gives itself a longer cycle - cycleDuration(). A motion meant never to come round, such
-as the Satellite's orbit, runs on the cycles passed as well - see SceneTime.
+as the orbit in EarthScene, runs on the cycles passed as well - see SceneTime.
 
 **The showcase owns the clock.** It advances the cycle time by the time since the last frame over
 cycleDuration(), wraps it back into 0 to 1, and counts each wrap in the cycles passed. A scene
@@ -53,20 +53,21 @@ transform from the bounds' coordinates to pixels, and the backend that draws the
 
 How a scene that offers a choice of looks draws itself. Stylized is the flat drawing every scene
 has; Realistic shades what it can the way a photograph shows it. A scene answers offersLooks() true
-when the two differ for it - today the Satellite, whose clouds and land they change - and draws in
+when the two differ for it - today EarthScene, whose clouds, land and sea they change - and draws in
 the look setLook() last named from its next frame on. A scene that offers no looks keeps the value
 and draws as it always does.
 
-The MillScene showcase offers the looks in a section of its Scene page captioned with the scene's
-name, shown only while that scene is the picked one, and keeps the pick under SceneLook.
+The MillScene showcase offers the looks as radio buttons in a section of its Scene page captioned
+with the scene's name, shown only while that scene is the picked one, and keeps the pick under
+SceneLook. With no pick kept, the scene is drawn Realistic.
 
 ## Scene offersView
 
 **A scene that offers a view keeps it, as it keeps its look**, and moves it as the host hands it a
 drag - dragView(), in the coordinates of the bounds it draws into - and the wheel's notches -
 scrollView(), counted as MouseWheelEvent counts them, away from the user above 0. What the view is
-and how it moves is the scene's own: the Satellite turns its globe and climbs above it - see
-SatelliteScene. A scene that offers none leaves both as they are.
+and how it moves is the scene's own: the Earth scene turns its globe and climbs above it - see
+EarthScene. A scene that offers none leaves both as they are.
 
 **The MillScene showcase hands them on from the panel the scene covers.** A press stops what moves
 the view and holds it until it is let go - see Scene holdView. A drag let go glides on at the speed
@@ -78,7 +79,7 @@ view while the showcase runs.
 
 **A press holds the view until it is let go.** The host calls holdView(true) as a press comes down
 on the scene and holdView(false) as it is let go, so a scene can keep its own motion still while the
-viewer has the view - the Satellite holds its globe, see SatelliteScene. A drag and the wheel reach
+viewer has the view - the Earth scene holds its globe, see EarthScene. A drag and the wheel reach
 the scene as dragView() and scrollView(); a press held still reaches it only here. A scene that
 offers no view is never told.
 
@@ -360,9 +361,9 @@ The head gathers speed as it falls, and the dust tail grows with the speed. The 
 the nucleus with a rounded front over its first tenth. Sparks shed along the way drift down and
 fade over 0.3 of a pass.
 
-## SatelliteScene
+## EarthScene
 
-A satellite in orbit over a large Earth, through day, dusk and night.
+A large Earth turning under a satellite, through day, dusk and night.
 
 **The satellite goes round over both poles every 3 minutes, and its orbit never comes round.** It
 runs on the cycles passed as well as the cycle - see SceneTime. The Earth turns once under it every
