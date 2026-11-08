@@ -832,6 +832,39 @@ overlapped and showed a seam where they met.
 
 On his back, the wolf's head turned into the ground until `headTurn` took `0.7 * onBack`.
 
+**The second episode's run** (Oj, 2026-11-09: "the wolf accelerates, gets dangerously close to
+the hare, then a bit lags behind and with a great effort makes the final jump to the Hare - and in
+the middle of the air meets that nasty branch"). branchRunAt states it as eased stretches, in
+shares of the episode: closing in from 0.14 to 0.29, a snap at her tail, dropping back by 0.41,
+coming on again from 0.43, a crouch, the takeoff at 0.555 and the branch at 0.58, where the camera
+starts to stop as before. The leap is a parabola whose top would come at 0.585, so the branch meets
+him just short of it, 62 units up. Everything from the camera's stop on keeps its timing.
+
+The branch was raised to the height of his head in the leap - its end 143 to 150 units over his
+feet, where it was 68 to 74 - and lengthened, so its end stands clear of the crown. The hare passes
+under it without ducking, and the running wolf would have too. At the contact its end sits at his
+nose. Placed nearer, it showed behind his head, as if run through it.
+
+Positions are chase units, which a narrow frame scales down, while the sprites keep their size. At
+500 x 700 the wolf's closest approach overlapped the hare, so his gap to her and the branch's
+reach from him are divided by `closeness`.
+
+The hare bolts 50 units ahead as he closes in and gives 30 back as he drops back (hareBoltAt).
+In this episode her run ahead after the stop starts at 0.57 rather than 0.5, so she does not draw
+away while he is in the air. WolfPose gained `leap` for the pose in the air: the forepaws reach
+down ahead and the hind legs trail, which sprawl's legs stretched flat did not show.
+
+**The jaws in the leap** (Oj, 2026-11-09: "when he leaps he's opening his snout showing the teeth
+so big that you wonder how they were fit with the snout closed"). WolfPose gained `jawOpen`: the
+snout lifts 0.45 rad and the lower jaw drops 0.9 about the back of the mouth, the mouth between
+them is filled dark, and the teeth grow out of the gums with the opening, to a fang on each jaw
+longer than the snout is deep. Rendered three ways - fangs, a row of saw teeth, block chompers -
+and Oj picked the fangs. A first try opened the lower jaw alone, 0.95 rad, with teeth up to 16
+units: they were longer than the gap and crossed into a jumble, so the snout lifts too and the
+fangs stand at different places along the two jaws. The jaw opens from 0.558 to 0.569 of the
+episode, and the branch shuts it within 0.004 of the contact. With the jaws shut the wolf draws
+as before, pixel for pixel.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

@@ -28,7 +28,7 @@ namespace ClaFi::PathArt
         static void drawBackdrop(const SceneFrame&, float travel, float groundY);
         static void drawGround(const SceneFrame&, float travel, float groundY);
         static void drawObstacle(const SceneFrame&, int episode, float x, float groundY,
-            float footY);
+            float footY, float branchSway);
         static void drawFrontGrass(const SceneFrame&, float travel);
     };
 }

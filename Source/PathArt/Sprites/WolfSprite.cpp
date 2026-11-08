@@ -20,8 +20,39 @@ namespace ClaFi::PathArt
         constexpr Color WolfDark{ 0xFF3D434C };
         constexpr Color WolfBelly{ 0xE6B3B9C2 };
         constexpr Color Tongue{ 0xFFEF6F7F };
+        constexpr Color Mouth{ 0xFF5A1C28 };
+        constexpr Color Tooth{ 0xFFFBF6E8 };
+        constexpr Color ToothEdge{ 0xFF9C9488 };
         constexpr Color Ink{ 0xFF1B1D22 };
         constexpr Color EyeWhite{ 0xFFFFFFFF };
+    }
+
+    namespace
+    {
+        // A tooth on the edge of a jaw, in units of the wolf; `along` runs from the back of the
+        // mouth to the front.
+        struct Tooth
+        {
+            float along;
+            float length;
+            float width;
+        };
+
+        // A fang to each jaw, longer than the snout is deep, with small teeth behind it.
+        constexpr std::array<Tooth, 3> k_upperTeeth{
+            Tooth{ 0.3f, 7.0f, 4.5f },
+            Tooth{ 0.56f, 8.0f, 4.5f },
+            Tooth{ 0.88f, 19.0f, 7.5f }
+        };
+        constexpr std::array<Tooth, 3> k_lowerTeeth{
+            Tooth{ 0.3f, 6.0f, 4.5f },
+            Tooth{ 0.5f, 7.0f, 4.5f },
+            Tooth{ 0.74f, 16.0f, 7.0f }
+        };
+
+        // Teeth along a jaw's edge from `back` to `front`, grown out to `growth` of their size.
+        void drawTeeth(const SceneFrame&, FloatPoint back, FloatPoint front, bool upward,
+            std::span<const Tooth> teeth, float growth);
     }
 
     // Drawn about the middle of his body, facing right; a leg's angles are measured from straight
@@ -50,7 +81,10 @@ namespace ClaFi::PathArt
             float lower = leg.hind
                 ? upper + 0.35f + 0.5f * std::max(0.0f, -std::cos(phase))
                 : upper - 0.3f - 0.55f * std::max(0.0f, std::cos(phase));
-            // Sprawled, the legs stretch out fore and aft; on his back they twitch in the air.
+            // In a leap the forepaws reach down ahead and the hind legs trail; sprawled, the legs
+            // stretch out fore and aft; on his back they twitch in the air.
+            upper = std::lerp(upper, leg.hind ? -1.25f : 1.15f, pose.leap);
+            lower = std::lerp(lower, leg.hind ? -1.5f : 0.7f, pose.leap);
             upper = std::lerp(upper, leg.hind ? -1.45f : 1.4f, pose.sprawl);
             lower = std::lerp(lower, leg.hind ? -1.55f : 1.5f, pose.sprawl);
             const float twitch = 0.3f * std::sin(k_2Pi * 60.0f * pose.cycleTime + leg.phase * 3.0f);
@@ -69,7 +103,8 @@ namespace ClaFi::PathArt
         drawLeg(k_legs[0]);
         drawLeg(k_legs[1]);
 
-        const float swish = std::sin(pose.stride) * (1.0f - pose.sprawl - pose.onBack);
+        const float swish = std::sin(pose.stride)
+            * std::max(0.0f, 1.0f - pose.leap - pose.sprawl - pose.onBack);
         const float wag = -0.15f + 0.35f * swish + 0.4f * pose.onBack;
         const SceneFrame tail = wolf.within(Matrix3x2::Translation(-42.0f, -6.0f)
             * Matrix3x2::Rotation(wag));
@@ -119,20 +154,46 @@ namespace ClaFi::PathArt
         ears.close();
         fillShape(head, ears, SolidColor{ WolfColors::WolfShade });
         fillOval(head, { 16.0f, -8.0f }, 16.0f, 13.0f, SolidColor{ WolfColors::WolfLight });
+
+        // Opening, the snout lifts and the lower jaw drops, both about the back of the mouth.
+        const FloatPoint hinge = { 24.0f, 3.0f };
+        const auto aboutHinge = [&](float angle) {
+            return head.within(Matrix3x2::Translation(hinge) * Matrix3x2::Rotation(angle)
+                * Matrix3x2::Translation(-hinge.x, -hinge.y));
+        };
+        const float snoutAngle = -0.45f * pose.jawOpen;
+        const float jawAngle = 0.9f * pose.jawOpen;
+        const SceneFrame snoutFrame = aboutHinge(snoutAngle);
+        const SceneFrame jawFrame = aboutHinge(jawAngle);
+        if (pose.jawOpen > 0.0f)
+        {
+            // The teeth grow out of the gums as the jaws part.
+            const float growth = smoothStep(0.2f, 0.8f, pose.jawOpen);
+            PixelPath mouth;
+            mouth.moveTo(hinge - FloatPoint{ 3.0f, 0.0f });
+            mouth.lineTo(hinge + rotated(FloatPoint{ 44.0f, -1.0f } - hinge, snoutAngle));
+            mouth.lineTo(hinge + rotated(FloatPoint{ 42.0f, 2.0f } - hinge, jawAngle));
+            mouth.close();
+            fillShape(head, mouth, SolidColor{ WolfColors::Mouth });
+            drawTeeth(snoutFrame, { 25.0f, 2.8f }, { 44.0f, -1.0f }, false, k_upperTeeth, growth);
+            drawTeeth(jawFrame, { 25.0f, 3.0f }, { 42.0f, 2.0f }, true, k_lowerTeeth, growth);
+        }
         PixelPath snout;
         snout.moveTo(22.0f, -16.0f);
         snout.lineTo(44.0f, -9.0f);
         snout.quadTo({ 49.0f, -5.0f }, { 44.0f, -1.0f });
         snout.lineTo(24.0f, 3.0f);
         snout.close();
-        fillShape(head, snout, SolidColor{ WolfColors::WolfLight });
+        fillShape(snoutFrame, snout, SolidColor{ WolfColors::WolfLight });
+        // The lower jaw deepens as it drops, so it reads as a jaw under the teeth.
         PixelPath jaw;
         jaw.moveTo(24.0f, 3.0f);
         jaw.lineTo(42.0f, 2.0f);
-        jaw.lineTo(26.0f, 9.0f);
+        jaw.lineTo(42.0f - pose.jawOpen, 2.0f + 5.0f * pose.jawOpen);
+        jaw.lineTo(26.0f + 3.0f * pose.jawOpen, 9.0f + 2.0f * pose.jawOpen);
         jaw.close();
-        fillShape(head, jaw, SolidColor{ WolfColors::WolfShade });
-        const SceneFrame tongue = head.within(Matrix3x2::Translation(33.0f, 3.0f)
+        fillShape(jawFrame, jaw, SolidColor{ WolfColors::WolfShade });
+        const SceneFrame tongue = jawFrame.within(Matrix3x2::Translation(33.0f, 3.0f)
             * Matrix3x2::Rotation(pose.tongueTurn));
         PixelPath lick;
         lick.moveTo(0.0f, 0.0f);
@@ -141,7 +202,7 @@ namespace ClaFi::PathArt
         lick.quadTo({ -3.0f, 8.0f }, { 0.0f, 0.0f });
         lick.close();
         fillShape(tongue, lick, SolidColor{ WolfColors::Tongue });
-        fillOval(head, { 45.0f, -6.0f }, 3.8f, 3.2f, SolidColor{ WolfColors::Ink });
+        fillOval(snoutFrame, { 45.0f, -6.0f }, 3.8f, 3.2f, SolidColor{ WolfColors::Ink });
         if (pose.dazed > 0.5f)
         {
             PixelPath crossed;
@@ -155,6 +216,32 @@ namespace ClaFi::PathArt
         {
             fillDisc(head, { 20.0f, -12.0f }, 5.5f, SolidColor{ WolfColors::EyeWhite });
             fillDisc(head, { 22.5f, -12.0f + pose.glance }, 2.8f, SolidColor{ WolfColors::Ink });
+        }
+    }
+
+    namespace
+    {
+        // A tooth stands from a root sunk into the gum and leans its tip toward the front.
+        void drawTeeth(const SceneFrame& frame, const FloatPoint back, const FloatPoint front,
+            const bool upward, const std::span<const Tooth> teeth, const float growth)
+        {
+            const FloatPoint along = front - back;
+            const FloatPoint edge = along * (1.0f / std::hypot(along.x, along.y));
+            const FloatPoint out = FloatPoint{ -edge.y, edge.x } * (upward ? -1.0f : 1.0f);
+            for (const Tooth& tooth : teeth)
+            {
+                const FloatPoint root = back + along * tooth.along - out * 1.5f;
+                const FloatPoint half = edge * (0.5f * tooth.width * growth);
+                const float length = tooth.length * growth + 1.5f;
+                PixelPath shape;
+                shape.moveTo(root - half);
+                shape.quadTo(root - half * 0.4f + out * (0.6f * length),
+                    root + edge * (0.25f * tooth.width * growth) + out * length);
+                shape.lineTo(root + half);
+                shape.close();
+                fillShape(frame, shape, SolidColor{ WolfColors::Tooth });
+                strokeShape(frame, shape, SolidColor{ WolfColors::ToothEdge }, 0.7f);
+            }
         }
     }
 }
