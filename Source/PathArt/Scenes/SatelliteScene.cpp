@@ -74,6 +74,14 @@ namespace ClaFi::PathArt
         constexpr float k_earthTurnAtStart{ 72.0f * k_degree };
         // How far from the satellite, away from the horizon, the view looks straight down.
         constexpr float k_viewBehind{ 36.0f * k_degree };
+        // How far it looks with the whole globe in the frame, so never down the Earth's axis.
+        constexpr float k_leastViewBehind{ 1.0f * k_degree };
+        // The share of the way to the whole globe a wheel notch climbs or comes down by.
+        constexpr float k_altitudePerNotch{ 0.1f };
+        // The globe's radius at the lowest altitude, of the frame's longer side.
+        constexpr float k_lowestGlobe{ 1.15f };
+        // The globe's radius with the whole globe in the frame, of the frame's shorter side.
+        constexpr float k_wholeGlobe{ 0.4f };
         // How far round the stars the Sun stands from where the orbit crosses the equator.
         constexpr float k_sunAround{ 35.0f * k_degree };
         // How far north of the equator the Sun stands.
@@ -92,8 +100,14 @@ namespace ClaFi::PathArt
         constexpr float k_cloudHazeDepth{ 0.12f };
         // The rows of a picture worked out together on one core, and laid in as one.
         constexpr int k_bandRows{ 32 };
-        // The shades of the clouds kept along the night's gradient.
+        // The shades of the clouds kept from day to deep night.
         constexpr int k_cloudShadeCount{ 1024 };
+        // The night's premultiplied colours kept from day to deep night.
+        constexpr int k_nightShadeCount{ 256 };
+        // The sunlight at which the night starts to fall.
+        constexpr float k_duskSunlight{ 0.03f };
+        // How much less sunlight it takes from there for the night to fall whole.
+        constexpr float k_nightSunlightSpan{ 0.16f };
         // The globe's radius in pixels from which the land is worked out every 4th pixel.
         constexpr float k_coarseRadius{ 3200.0f };
         // The globe's radius in pixels from which the land is worked out every 2nd pixel.
@@ -215,6 +229,16 @@ namespace ClaFi::PathArt
         // Each layer's points along one row, in the order of k_cloudLayers.
         using CloudPoints = std::array<LayerPoints, k_cloudLayers.size()>;
 
+        // A sphere in the canvas's pixels and the Sun as the screen stands, for how deep in the
+        // night each pixel lies.
+        struct NightView
+        {
+            FloatPoint center; // in pixels
+            FloatPoint inverseRadii; // across and up, per pixel
+            FloatPoint sunAcross; // the Sun across and up the screen
+            float sunToward; // and toward the viewer
+        };
+
         // What every band of the clouds' picture is worked out from, this frame.
         struct CloudPicture
         {
@@ -225,9 +249,8 @@ namespace ClaFi::PathArt
             FloatPoint sphereRadii; // the highest layer's, across and up, in pixels
             int left; // the first column in view
             int right; // the column past the last in view
-            std::span<const Color> shades; // the clouds' colour along the night's gradient
-            FloatPoint nightPerPixel; // how far along the night's gradient a pixel moves
-            float nightAtOrigin; // how far along it the canvas's pixel 0, 0 stands
+            std::span<const Color> shades; // the clouds' colour from day to deep night
+            NightView night;
         };
 
         // How 8 pixels in a row stand between its points at a step: the point before each, the
@@ -454,11 +477,48 @@ namespace ClaFi::PathArt
             return static_cast<float>(count - std::floor(count));
         }
 
-        // The globe so large that only a cap shows, its top a little above the middle.
-        [[nodiscard]] GlobeDisc globeDiscIn(const SceneFrame& frame)
+        // **Where the globe stands in a frame at an altitude**: at the lowest a cap shows, and at
+        // the highest the whole globe, in the middle. See PathArt#satellitescene
+        [[nodiscard]] GlobeDisc globeDiscAt(const float width, const float height,
+            const float altitude)
         {
-            const float radius = 1.15f * std::max(frame.width, frame.height);
-            return { { frame.width * 0.4f, frame.height * 0.44f + radius }, radius };
+            const float lowest = k_lowestGlobe * std::max(width, height);
+            const float whole = k_wholeGlobe * std::min(width, height);
+            const float radius = lowest * std::pow(whole / lowest, altitude);
+            const float top = std::lerp(height * 0.44f, height * 0.5f - whole, altitude);
+            return { { width * std::lerp(0.4f, 0.5f, altitude), top + radius }, radius };
+        }
+
+        // Where the limb crosses both sides of the frame, the ocean covers everything below the
+        // lower crossing, so space stops a little past it.
+        void fillSpace(const SceneFrame& frame, const GlobeDisc& disc)
+        {
+            const float farthest = std::max(disc.center.x, frame.width - disc.center.x);
+            if (farthest >= disc.radius)
+            {
+                fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
+                    LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height },
+                        SatelliteSceneColors::SpaceTop, SatelliteSceneColors::SpaceBottom));
+                return;
+            }
+            const float limbLowest = disc.center.y
+                - std::sqrt(disc.radius * disc.radius - farthest * farthest);
+            const float bottom = std::min(frame.height, limbLowest + 2.0f * frame.unit);
+            fillBox(frame, { 0.0f, 0.0f, frame.width, bottom },
+                LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height },
+                    SatelliteSceneColors::SpaceTop, SatelliteSceneColors::SpaceBottom));
+        }
+
+        void fillOcean(const SceneFrame& frame, const GlobeDisc& disc)
+        {
+            PixelPath outline;
+            outline.drawCircle(disc.center, disc.radius);
+            frame.canvas.pushClip(outline, &frame.toCanvas);
+            const float top = disc.center.y - disc.radius;
+            fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
+                LinearGradient::Simple({ 0.0f, top }, { 0.0f, top + disc.radius * 0.45f },
+                SatelliteSceneColors::OceanLimb, SatelliteSceneColors::OceanDeep));
+            frame.canvas.popClip();
         }
 
         // The atmosphere's colour at a point of the limb, from the sunlight there.
@@ -492,6 +552,39 @@ namespace ClaFi::PathArt
         [[nodiscard]] __m256 laneOffsets()
         {
             return _mm256_setr_ps(0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f);
+        }
+
+        // The sphere and the Sun for the night, the Sun turned from the view's axes to the screen.
+        [[nodiscard]] NightView nightViewOf(const Matrix3x2& toPixels, const FloatPoint center,
+            const float radius, const float tilt, const float sunX, const float sunY,
+            const float sunZ)
+        {
+            return {
+                .center = toPixels.transform(center),
+                .inverseRadii = { 1.0f / (radius * toPixels.a), 1.0f / (radius * toPixels.d) },
+                .sunAcross = rotated({ sunX, sunY }, tilt),
+                .sunToward = sunZ
+            };
+        }
+
+        // **How deep in the night 8 pixels of a row lie**, 0 on the day side of the dusk and 1
+        // where the night has fallen whole, from the sunlight on the sphere under each. Past its
+        // edge the sunlight is the limb's.
+        [[nodiscard]] __m256 nightDepths(const NightView& night, const __m256 pixelX,
+            const float pixelY)
+        {
+            const __m256 across = _mm256_mul_ps(
+                _mm256_sub_ps(pixelX, _mm256_set1_ps(night.center.x)),
+                _mm256_set1_ps(night.inverseRadii.x));
+            const float up = (night.center.y - pixelY) * night.inverseRadii.y;
+            const __m256 rest = _mm256_fnmadd_ps(across, across, _mm256_set1_ps(1.0f - up * up));
+            const __m256 toward = _mm256_sqrt_ps(_mm256_max_ps(rest, _mm256_setzero_ps()));
+            const __m256 sunlight = _mm256_fmadd_ps(across, _mm256_set1_ps(night.sunAcross.x),
+                _mm256_fmadd_ps(toward, _mm256_set1_ps(night.sunToward),
+                    _mm256_set1_ps(up * night.sunAcross.y)));
+            const __m256 depth = _mm256_mul_ps(_mm256_sub_ps(_mm256_set1_ps(k_duskSunlight),
+                sunlight), _mm256_set1_ps(1.0f / k_nightSunlightSpan));
+            return _mm256_min_ps(_mm256_max_ps(depth, _mm256_setzero_ps()), _mm256_set1_ps(1.0f));
         }
 
         // 0 below edge0, 1 above edge1 and an S-curve between, in each lane.
@@ -762,26 +855,68 @@ namespace ClaFi::PathArt
                 _mm256_mul_ps(_mm256_set1_ps(1.0f - k_lighterCloudShare), denser));
         }
 
-        // The night's colour mixed into the clouds', at its own opacity, along its gradient.
-        [[nodiscard]] std::vector<Color> cloudShadesUnder(const LinearGradient& night)
+        // The night's colour from where it starts to fall, clear, to where it has fallen whole.
+        [[nodiscard]] std::array<GradientStop, 3> nightStops()
         {
-            std::vector<Color> shades;
-            shades.reserve(k_cloudShadeCount);
+            return { {
+                { .position = 0.0f, .color = SatelliteSceneColors::Night.withOpacity(0.0f) },
+                { .position = 0.35f, .color = SatelliteSceneColors::NightBlue.withOpacity(0.55f) },
+                { .position = 1.0f, .color = SatelliteSceneColors::Night.withOpacity(0.9f) }
+            } };
+        }
+
+        // The colour between the stops at a position, each stop's colour first passed through.
+        template<typename Shading>
+        [[nodiscard]] Color colorAlong(const std::array<GradientStop, 3>& stops,
+            const float position, const Shading& shaded)
+        {
+            std::size_t next = 1;
+            while (next + 1 < stops.size() && stops[next].position < position)
+                ++next;
+            const GradientStop& from = stops[next - 1];
+            const GradientStop& to = stops[next];
+            const float share = std::clamp(
+                (position - from.position) / (to.position - from.position), 0.0f, 1.0f);
+            return colorBetween(shaded(from), shaded(to), share);
+        }
+
+        // The night's colour mixed into the clouds', at its own opacity, from day to deep night.
+        [[nodiscard]] std::vector<Color> cloudShades()
+        {
+            const std::array<GradientStop, 3> stops = nightStops();
             const auto shaded = [](const GradientStop& stop) {
                 const float nightShare = static_cast<float>(stop.color.alpha) / 255.0f;
                 return colorBetween(SatelliteSceneColors::Cloud, stop.color, nightShare);
             };
-            std::size_t next = 1;
+            std::vector<Color> shades;
+            shades.reserve(k_cloudShadeCount);
             for (int i = 0; i != k_cloudShadeCount; ++i)
             {
                 const float position = static_cast<float>(i) / (k_cloudShadeCount - 1);
-                while (next + 1 < night.stops.size() && night.stops[next].position < position)
-                    ++next;
-                const GradientStop& from = night.stops[next - 1];
-                const GradientStop& to = night.stops[next];
-                const float share = std::clamp(
-                    (position - from.position) / (to.position - from.position), 0.0f, 1.0f);
-                shades.push_back(colorBetween(shaded(from), shaded(to), share));
+                shades.push_back(colorAlong(stops, position, shaded));
+            }
+            return shades;
+        }
+
+        // The night's colours from day to deep night, premultiplied as a band's pixels are.
+        [[nodiscard]] std::vector<Color> nightShades()
+        {
+            const std::array<GradientStop, 3> stops = nightStops();
+            const auto asItIs = [](const GradientStop& stop) {
+                return stop.color;
+            };
+            std::vector<Color> shades;
+            shades.reserve(k_nightShadeCount);
+            for (int i = 0; i != k_nightShadeCount; ++i)
+            {
+                const float position = static_cast<float>(i) / (k_nightShadeCount - 1);
+                const Color color = colorAlong(stops, position, asItIs);
+                const float alpha = static_cast<float>(color.alpha) / 255.0f;
+                const auto times = [&](std::uint8_t channel) {
+                    return static_cast<std::uint8_t>(std::lround(channel * alpha));
+                };
+                shades.push_back(Color{ times(color.red), times(color.green), times(color.blue),
+                    color.alpha });
             }
             return shades;
         }
@@ -895,8 +1030,8 @@ namespace ClaFi::PathArt
         // points all fall short of what a layer's look shows skip that layer, and 8 that no layer
         // covers are written clear. The last group of 8 stops at the row's end.
         void writeCloudRow(const CloudPicture& picture, const CloudPoints& upper,
-            const CloudPoints& lower, const float downShare, const float rowNight, Color* pixels,
-            const int width)
+            const CloudPoints& lower, const float downShare, const float pixelY,
+            const float firstPixelX, Color* pixels, const int width)
         {
             const int step = picture.step;
             const PointSpread spread = pointSpreadAt(step);
@@ -926,8 +1061,7 @@ namespace ClaFi::PathArt
             const __m256 one = _mm256_set1_ps(1.0f);
             const __m256 half = _mm256_set1_ps(0.5f);
             const __m256 lastShade = _mm256_set1_ps(static_cast<float>(picture.shades.size() - 1));
-            const __m256 nightPerPixel = _mm256_set1_ps(picture.nightPerPixel.x);
-            const __m256 nightStart = _mm256_set1_ps(rowNight);
+            const __m256 rowStart = _mm256_add_ps(_mm256_set1_ps(firstPixelX), laneOffsets());
             const __m256 byteMax = _mm256_set1_ps(255.0f);
             const __m256i byteMask = _mm256_set1_epi32(0xFF);
             const int* shades = reinterpret_cast<const int*>(picture.shades.data());
@@ -1000,10 +1134,10 @@ namespace ClaFi::PathArt
                     continue;
                 }
 
-                const __m256 pixel = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(x)),
-                    laneOffsets());
+                const __m256 pixelX = _mm256_add_ps(rowStart,
+                    _mm256_set1_ps(static_cast<float>(x)));
                 const __m256 alpha = _mm256_sub_ps(one, transparency);
-                const __m256 night = _mm256_fmadd_ps(pixel, nightPerPixel, nightStart);
+                const __m256 night = nightDepths(picture.night, pixelX, pixelY);
                 const __m256 shadeIndex = _mm256_min_ps(_mm256_max_ps(
                     _mm256_fmadd_ps(night, lastShade, half), _mm256_setzero_ps()), lastShade);
                 const __m256i shade = _mm256_i32gather_epi32(shades,
@@ -1048,10 +1182,6 @@ namespace ClaFi::PathArt
             const auto pixelYAt = [&](int bandRow) {
                 return static_cast<float>(top + bandRow) + 0.5f;
             };
-            const auto nightAt = [&](float pixelY) {
-                return picture.nightAtOrigin + picture.nightPerPixel.y * pixelY
-                    + picture.nightPerPixel.x * firstPixelX;
-            };
             // The last group of 8 pixels reads 8 points from the one under its first pixel.
             const std::size_t pointLength =
                 groupedLength(static_cast<int>(groupedLength(width)) / step + 8);
@@ -1086,8 +1216,95 @@ namespace ClaFi::PathArt
                     samplePoints(picture, pixelYAt(y + step), firstPixelX, onMap, lower);
                 }
                 const float downShare = static_cast<float>(pastPoints) / static_cast<float>(step);
-                writeCloudRow(picture, upper, lower, downShare,
-                    nightAt(pixelYAt(y)), pixels.pixel(0, y), width);
+                writeCloudRow(picture, upper, lower, downShare, pixelYAt(y), firstPixelX,
+                    pixels.pixel(0, y), width);
+            }
+            return { static_cast<float>(left), static_cast<float>(top) };
+        }
+
+        // What every band of the night is worked out from, this frame.
+        struct NightPicture
+        {
+            NightView night;
+            std::span<const Color> shades; // premultiplied, from day to deep night
+            float edgeSoftness; // the pixels over which the limb's edge goes from clear to whole
+            int left; // the first column in view
+            int right; // the column past the last in view
+        };
+
+        // **A band of the night, premultiplied**: 8 pixels the night has not reached are written
+        // clear, and those by the limb fade out across it, as the bands are laid in past any
+        // clip's edge. The bitmap spans the sphere's widest row in the band; answers where it
+        // stands.
+        [[nodiscard]] FloatPoint rasterizeNightBand(const NightPicture& picture, const int top,
+            const int rows, Bitmap& pixels)
+        {
+            const NightView& night = picture.night;
+            const FloatPoint radii = { 1.0f / night.inverseRadii.x, 1.0f / night.inverseRadii.y };
+            const float nearestRow = std::clamp(night.center.y, static_cast<float>(top) + 0.5f,
+                static_cast<float>(top + rows) - 0.5f);
+            const float rise = (nearestRow - night.center.y) / radii.y;
+            const float halfWidth = rise * rise < 1.0f ? radii.x * std::sqrt(1.0f - rise * rise)
+                : 0.0f;
+            const int left = std::max(picture.left,
+                static_cast<int>(std::floor(night.center.x - halfWidth)));
+            const int right = std::min(picture.right,
+                static_cast<int>(std::ceil(night.center.x + halfWidth)));
+            if (left >= right)
+            {
+                pixels.resize({});
+                return {};
+            }
+            const int width = right - left;
+            pixels.resize({ width, rows });
+            const int* shades = reinterpret_cast<const int*>(picture.shades.data());
+            const __m256 lastShade = _mm256_set1_ps(static_cast<float>(picture.shades.size() - 1));
+            const __m256 half = _mm256_set1_ps(0.5f);
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256i byteMask = _mm256_set1_epi32(0xFF);
+            const __m256 rowStart = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(left) + 0.5f),
+                laneOffsets());
+            const float leastRadius = std::min(radii.x, radii.y);
+            const __m256 edgeScale = _mm256_set1_ps(leastRadius / picture.edgeSoftness);
+            const auto faded = [&](__m256i shade, int shift, __m256 share) {
+                const __m256 channel = _mm256_cvtepi32_ps(
+                    _mm256_and_si256(_mm256_srli_epi32(shade, shift), byteMask));
+                return _mm256_slli_epi32(
+                    _mm256_cvttps_epi32(_mm256_fmadd_ps(channel, share, half)), shift);
+            };
+            for (int y = 0; y != rows; ++y)
+            {
+                const float pixelY = static_cast<float>(top + y) + 0.5f;
+                const float up = (night.center.y - pixelY) * night.inverseRadii.y;
+                Color* row = pixels.pixel(0, y);
+                for (int x = 0; x < width; x += 8)
+                {
+                    const __m256 pixelX = _mm256_add_ps(rowStart,
+                        _mm256_set1_ps(static_cast<float>(x)));
+                    const __m256 depth = nightDepths(night, pixelX, pixelY);
+                    if (_mm256_movemask_ps(_mm256_cmp_ps(depth, _mm256_setzero_ps(),
+                        _CMP_GT_OQ)) == 0)
+                    {
+                        storeEight(row, x, width, _mm256_setzero_si256());
+                        continue;
+                    }
+                    const __m256i shade = _mm256_i32gather_epi32(shades, _mm256_cvttps_epi32(
+                        _mm256_fmadd_ps(depth, lastShade, half)), 4);
+                    const __m256 across = _mm256_mul_ps(_mm256_sub_ps(pixelX,
+                        _mm256_set1_ps(night.center.x)), _mm256_set1_ps(night.inverseRadii.x));
+                    const __m256 reach = _mm256_sqrt_ps(_mm256_fmadd_ps(across, across,
+                        _mm256_set1_ps(up * up)));
+                    const __m256 inside = _mm256_min_ps(_mm256_max_ps(_mm256_fmadd_ps(
+                        _mm256_sub_ps(one, reach), edgeScale, half), _mm256_setzero_ps()), one);
+                    if (_mm256_movemask_ps(_mm256_cmp_ps(inside, one, _CMP_LT_OQ)) == 0)
+                    {
+                        storeEight(row, x, width, shade);
+                        continue;
+                    }
+                    storeEight(row, x, width, _mm256_or_si256(
+                        _mm256_or_si256(faded(shade, 0, inside), faded(shade, 8, inside)),
+                        _mm256_or_si256(faded(shade, 16, inside), faded(shade, 24, inside))));
+                }
             }
             return { static_cast<float>(left), static_cast<float>(top) };
         }
@@ -1629,9 +1846,10 @@ namespace ClaFi::PathArt
             const auto reaches = [&](__m256 edge) {
                 return _mm256_movemask_ps(_mm256_cmp_ps(reach, edge, _CMP_GT_OQ)) != 0;
             };
-            // The bands lie above the lowest, so 8 pixels below it reach none.
+            // The bands lie above the lowest, so 8 pixels below it reach none but the snow, which
+            // lies on all the land in the far south.
             const __m256 lowestBand = _mm256_set1_ps(k_lowestBand);
-            if (reaches(lowestBand))
+            if (reaches(lowestBand) || reaches(snowEdges))
             {
                 const SoftEdge bandEdge = softEdgeOf(bandSoftness);
                 const auto lay = [&](const ColorLanes& tone, float share, __m256 edge) {
@@ -1714,9 +1932,8 @@ namespace ClaFi::PathArt
                 _mm256_storeu_ps(points.green.data() + i, color.green);
                 _mm256_storeu_ps(points.blue.data() + i, color.blue);
                 _mm256_storeu_ps(points.zones.data() + i, zoneKey(cuts));
-                _mm256_storeu_ps(points.snowEdges.data() + i, _mm256_max_ps(
-                    _mm256_add_ps(snowlineAt(ground.latitudes), _mm256_set1_ps(0.03f)),
-                    _mm256_set1_ps(0.12f)));
+                _mm256_storeu_ps(points.snowEdges.data() + i,
+                    _mm256_add_ps(snowlineAt(ground.latitudes), _mm256_set1_ps(0.03f)));
                 _mm256_storeu_ps(points.light.data() + i, reliefLight(ground));
             }
         }
@@ -1996,35 +2213,57 @@ namespace ClaFi::PathArt
         const float unit = frame.unit;
         const float width = frame.width;
         const float height = frame.height;
-        const GlobeDisc globeDisc = globeDiscIn(frame);
+        const float altitude = m_view.altitude;
+        const GlobeDisc globeDisc = globeDiscAt(width, height, altitude);
         const float radius = globeDisc.radius;
         // The orbit runs on through the cycles, so it never comes round.
         const double cycles = static_cast<double>(time.cyclesPassed) + time.cycleTime;
         const double orbits = cycles * std::chrono::duration<double>{ k_cycle } / k_orbit;
-        const Globe globe = Globe::OnOrbit(globeDisc.center, radius, orbits);
+        m_shownOrbits = orbits;
+        const Globe globe = Globe::OnOrbit(globeDisc.center, radius, orbits, m_view);
 
-        // The satellite is in the Earth's shadow when the ground under it is past the terminator.
-        const float hover = 5.0f * unit * std::sin(k_2Pi * 2.0f * k_lively * time.cycleTime);
-        const FloatPoint satellite = { width * 0.66f, height * 0.27f + hover };
+        // **The satellite is in the Earth's shadow when the ground under it is past the
+        // terminator**: low down, the ground the satellite is drawn over; with the whole globe in
+        // the frame, the ground straight below it.
+        // As the view climbs the satellite draws smaller and moves to the top right, out of the
+        // way of the whole globe.
+        const float satelliteShare = std::lerp(1.0f, 0.45f, altitude);
+        const float hover = 5.0f * unit * satelliteShare
+            * std::sin(k_2Pi * 2.0f * k_lively * time.cycleTime);
+        const FloatPoint satellite = {
+            width * std::lerp(0.66f, 0.85f, altitude),
+            height * std::lerp(0.27f, 0.16f, altitude) + hover
+        };
         const FloatPoint offCenter = {
             (satellite.x - globe.center.x) / radius,
             (globe.center.y - satellite.y) / radius
         };
-        const FloatPoint fromCenter = rotated(offCenter, -globe.tilt);
-        const float underLength = std::hypot(fromCenter.x, fromCenter.y, 0.35f);
+        const FloatPoint drawnOver = rotated(offCenter, -globe.tilt);
+        const float behind = std::lerp(k_viewBehind, k_leastViewBehind, altitude);
+        const FloatPoint below = rotated({ 0.0f, std::sin(behind) }, -globe.tilt);
         const Direction under = {
-            fromCenter.x / underLength,
-            fromCenter.y / underLength,
-            0.35f / underLength
+            std::lerp(drawnOver.x, below.x, altitude),
+            std::lerp(drawnOver.y, below.y, altitude),
+            std::lerp(0.35f, std::cos(behind), altitude)
         };
-        const float sunlit = smoothStep(-0.14f, 0.06f, globe.sunlightAt(under));
+        const float underLength = std::hypot(under.x, under.y, under.z);
+        const float sunlit = smoothStep(-0.14f, 0.06f, globe.sunlightAt({
+            under.x / underLength,
+            under.y / underLength,
+            under.z / underLength
+        }));
+        // What is drawn at a fixed size on the globe shrinks with it.
+        const float globeShare = radius / globeDiscAt(width, height, 0.0f).radius;
 
-        m_space.draw(frame);
+        if (altitude == 0.0f)
+            m_space.draw(frame);
+        else
+            fillSpace(frame, globeDisc);
         // The stars dim a little by day and shine fully in the Earth's shadow.
         drawStars(frame, time.cycleTime, StarField{
-            .count = 160,
+            .count = 200,
             .top = 0.0f,
-            .bottom = height * 0.8f,
+            .bottom = height,
             .seed = 90.0f,
             .color = SatelliteSceneColors::Star,
             .opacity = 0.65f + 0.35f * (1.0f - sunlit),
@@ -2033,26 +2272,27 @@ namespace ClaFi::PathArt
         });
         drawGlow(frame, { width, 0.0f }, 340.0f * unit,
             SatelliteSceneColors::SunGlare.withOpacity(0.16f * sunlit));
-        m_ocean.draw(frame);
+        if (altitude == 0.0f)
+            m_ocean.draw(frame);
+        else
+            fillOcean(frame, globeDisc);
 
         PixelPath disc;
         disc.drawCircle(globe.center, radius);
         frame.canvas.pushClip(disc, &frame.toCanvas);
         drawLand(frame, globe);
-        const Terminator terminator = terminatorOf(frame, globe);
-        const LinearGradient night = nightOf(globe, terminator);
-        fillBox(frame, { 0.0f, 0.0f, width, height }, night);
+        drawNight(frame, globe);
         if (globe.sun.z > 0.0f)
         {
-            drawGlow(frame, globe.onScreen(globe.sun), 150.0f * unit,
+            drawGlow(frame, globe.onScreen(globe.sun), 150.0f * unit * globeShare,
                 SatelliteSceneColors::SeaGlint.withOpacity(0.3f * globe.sun.z), 0.8f);
         }
-        drawCityLights(frame, globe, terminator, time.cycleTime);
+        drawCityLights(frame, globe, time.cycleTime);
         frame.canvas.popClip();
-        drawClouds(frame, globe, night, time.cycleTime);
+        drawClouds(frame, globe, time.cycleTime);
         drawAtmosphere(frame, globe);
 
-        const float size = unit * std::min(1.0f, (width / unit) / 900.0f);
+        const float size = unit * std::min(1.0f, (width / unit) / 900.0f) * satelliteShare;
         drawSatellite(frame, SatellitePose{
             .center = satellite,
             .size = size,
@@ -2060,6 +2300,62 @@ namespace ClaFi::PathArt
             .orbitTime = fractionOf(orbits),
             .blinkTime = time.cycleTime * k_lively
         });
+    }
+
+    // **The ground under the middle of the view follows the drag**: the satellite moves along its
+    // orbit and the Earth turns under it by as much as carries that ground the drag's way, as near
+    // as the two can. Each is worked out from how far a small step of it moves that ground on the
+    // screen; a little damping keeps a drag where the Earth's turn hardly moves the ground - over
+    // a pole - from spinning it. See PathArt#satellitescene
+    void SatelliteScene::dragView(const FloatPoint by, const FloatRect& bounds)
+    {
+        const GlobeDisc disc = globeDiscAt(bounds.width(), bounds.height(), m_view.altitude);
+        const FloatPoint held = {
+            bounds.width() * 0.5f,
+            std::lerp(bounds.height() * 0.72f, disc.center.y, m_view.altitude)
+        };
+        const Globe globe = Globe::OnOrbit(disc.center, disc.radius, m_shownOrbits, m_view);
+        const FloatPoint fromCenter = rotated({
+            (held.x - disc.center.x) / disc.radius,
+            (disc.center.y - held.y) / disc.radius
+        }, -globe.tilt);
+        const float toward = std::sqrt(std::max(0.0f,
+            1.0f - fromCenter.x * fromCenter.x - fromCenter.y * fromCenter.y));
+        const Direction ground = globe.turn().undone({ fromCenter.x, fromCenter.y, toward });
+        const auto groundAt = [&](const View& view) {
+            const Globe moved = Globe::OnOrbit(disc.center, disc.radius, m_shownOrbits, view);
+            return moved.onScreen(moved.turn().applied(ground));
+        };
+        constexpr float k_step{ 0.001f };
+        const FloatPoint now = groundAt(m_view);
+        const FloatPoint byOrbit = (groundAt({
+            .alongOrbit = m_view.alongOrbit + k_step,
+            .earthTurn = m_view.earthTurn,
+            .altitude = m_view.altitude
+        }) - now) * (1.0f / k_step);
+        const FloatPoint byTurn = (groundAt({
+            .alongOrbit = m_view.alongOrbit,
+            .earthTurn = m_view.earthTurn + k_step,
+            .altitude = m_view.altitude
+        }) - now) * (1.0f / k_step);
+        // The least squares of the two steps against the drag, damped.
+        const float damping = 0.0025f * disc.radius * disc.radius;
+        const float orbitOrbit = byOrbit.x * byOrbit.x + byOrbit.y * byOrbit.y + damping;
+        const float orbitTurn = byOrbit.x * byTurn.x + byOrbit.y * byTurn.y;
+        const float turnTurn = byTurn.x * byTurn.x + byTurn.y * byTurn.y + damping;
+        const float alongDrag = byOrbit.x * by.x + byOrbit.y * by.y;
+        const float turnDrag = byTurn.x * by.x + byTurn.y * by.y;
+        const float determinant = orbitOrbit * turnTurn - orbitTurn * orbitTurn;
+        m_view.alongOrbit = std::remainder(m_view.alongOrbit
+            + (turnTurn * alongDrag - orbitTurn * turnDrag) / determinant, k_2Pi);
+        m_view.earthTurn = std::remainder(m_view.earthTurn
+            + (orbitOrbit * turnDrag - orbitTurn * alongDrag) / determinant, k_2Pi);
+    }
+
+    // A notch away from the screen comes down, as the wheel zooms in.
+    void SatelliteScene::scrollView(const float notches)
+    {
+        m_view.altitude = std::clamp(m_view.altitude - notches * k_altitudePerNotch, 0.0f, 1.0f);
     }
 
     // The Earth spins about its axis, and then tips its north pole toward the viewer.
@@ -2070,18 +2366,27 @@ namespace ClaFi::PathArt
         return { x, onEarth.y * tipCosine + z * tipSine, z * tipCosine - onEarth.y * tipSine };
     }
 
+    // The tip taken back, then the spin.
+    SatelliteScene::Direction SatelliteScene::EarthTurn::undone(const Direction seen) const
+    {
+        const float z = seen.z * tipCosine + seen.y * tipSine;
+        const float y = seen.y * tipCosine - seen.z * tipSine;
+        return { seen.x * spinCosine - z * spinSine, y, z * spinCosine + seen.x * spinSine };
+    }
+
     // **The view is turned from the Earth's axes** by the spin about the axis, then the tip of the
     // axis toward the viewer, then the tilt in the screen. See PathArt#satellitescene
     SatelliteScene::Globe SatelliteScene::Globe::OnOrbit(const FloatPoint center,
-        const float radius, const double orbits)
+        const float radius, const double orbits, const View& view)
     {
-        const float around = k_2Pi * fractionOf(orbits) + k_orbitStart;
+        const float around = k_2Pi * fractionOf(orbits) + k_orbitStart + view.alongOrbit;
         const float earthTurn = k_2Pi * fractionOf(orbits / k_orbitsPerEarthTurn)
-            + k_earthTurnAtStart;
+            + k_earthTurnAtStart + view.earthTurn;
         const float aroundCosine = std::cos(around);
         const float aroundSine = std::sin(around);
-        const float behindCosine = std::cos(k_viewBehind);
-        const float behindSine = std::sin(k_viewBehind);
+        const float behind = std::lerp(k_viewBehind, k_leastViewBehind, view.altitude);
+        const float behindCosine = std::cos(behind);
+        const float behindSine = std::sin(behind);
         // The screen's three directions among the stars: the orbit in the plane of y and z, its
         // axis along x, about which the stars stand still.
         const Direction across = { 0.0f, -aroundCosine, aroundSine };
@@ -2320,11 +2625,6 @@ namespace ClaFi::PathArt
         return direction.x * sun.x + direction.y * sun.y + direction.z * sun.z;
     }
 
-    float SatelliteScene::Terminator::distanceTo(const FloatPoint point) const
-    {
-        return (point.x - through.x) * dayward.x + (point.y - through.y) * dayward.y;
-    }
-
     // Until the land's map is built the towns stand anywhere on the land, then they move to where
     // the map places them. See PathArt#satellitescene
     SatelliteScene::BuiltCoasts SatelliteScene::buildCoasts()
@@ -2488,62 +2788,15 @@ namespace ClaFi::PathArt
         return towns;
     }
 
-    // Over the small cap in view the terminator is near enough to a straight line, so it is one:
-    // the line through the terminator's points on two rows of the frame.
-    // Below the lowest point of the limb in the frame the ocean covers everything, so space
-    // stops a little past it.
+    // The space and the ocean are kept for the lowest altitude, where the view spends its time.
     void SatelliteScene::drawSpace(const SceneFrame& frame)
     {
-        const GlobeDisc disc = globeDiscIn(frame);
-        const float farthest = std::max(disc.center.x, frame.width - disc.center.x);
-        const float limbLowest = disc.center.y
-            - std::sqrt(disc.radius * disc.radius - farthest * farthest);
-        const float bottom = std::min(frame.height, limbLowest + 2.0f * frame.unit);
-        fillBox(frame, { 0.0f, 0.0f, frame.width, bottom },
-            LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height },
-                SatelliteSceneColors::SpaceTop, SatelliteSceneColors::SpaceBottom));
+        fillSpace(frame, globeDiscAt(frame.width, frame.height, 0.0f));
     }
 
     void SatelliteScene::drawOcean(const SceneFrame& frame)
     {
-        const GlobeDisc disc = globeDiscIn(frame);
-        PixelPath outline;
-        outline.drawCircle(disc.center, disc.radius);
-        frame.canvas.pushClip(outline, &frame.toCanvas);
-        const float top = disc.center.y - disc.radius;
-        fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
-            LinearGradient::Simple({ 0.0f, top }, { 0.0f, top + disc.radius * 0.45f },
-            SatelliteSceneColors::OceanLimb, SatelliteSceneColors::OceanDeep));
-        frame.canvas.popClip();
-    }
-
-    SatelliteScene::Terminator SatelliteScene::terminatorOf(const SceneFrame& frame,
-        const Globe& globe)
-    {
-        // Turned so the Sun is on +x, the terminator is a half ellipse sun.z wide.
-        const float sunTurn = std::atan2(-globe.sun.y, globe.sun.x);
-        const auto toTurned = [&](FloatPoint point) {
-            return rotated((point - globe.center) * (1.0f / globe.radius), globe.tilt - sunTurn);
-        };
-        const auto fromTurned = [&](FloatPoint point) {
-            return globe.center + rotated(point, sunTurn - globe.tilt) * globe.radius;
-        };
-        const auto terminatorAt = [&](float row) {
-            return FloatPoint{ -globe.sun.z * std::sqrt(std::max(0.0f, 1.0f - row * row)), row };
-        };
-        const float middleX = frame.width * 0.5f;
-        const float upperRow = toTurned({ middleX, frame.height * 0.5f }).y;
-        const float lowerRow = toTurned({ middleX, frame.height * 0.9f }).y;
-        const FloatPoint upper = fromTurned(terminatorAt(upperRow));
-        const FloatPoint lower = fromTurned(terminatorAt(lowerRow));
-        FloatPoint along = lower - upper;
-        const float length = std::hypot(along.x, along.y);
-        along = length > 0.0f ? along * (1.0f / length) : FloatPoint{ 0.0f, 1.0f };
-        const FloatPoint sunward = rotated({ 1.0f, 0.0f }, sunTurn - globe.tilt);
-        FloatPoint dayward = { -along.y, along.x };
-        if (dayward.x * sunward.x + dayward.y * sunward.y < 0.0f)
-            dayward = -dayward;
-        return { .through = upper, .along = along, .dayward = dayward };
+        fillOcean(frame, globeDiscAt(frame.width, frame.height, 0.0f));
     }
 
     // The land and the ice sheet make one path each, so a sea inside the land is cut out of it.
@@ -2687,29 +2940,55 @@ namespace ClaFi::PathArt
         layBands(frame, m_landBands, canvasPixels);
     }
 
-    // One gradient over the night side, rising from nothing just on the day side of the line.
-    // Before its start it holds its first stop, which is clear, so it covers the whole frame and
-    // leaves the day side as it is.
-    LinearGradient SatelliteScene::nightOf(const Globe& globe, const Terminator& terminator)
+    // **The night falls over the globe by the sunlight on it**, worked out pixel by pixel in bands
+    // spread over the cores, so the terminator curves as it does at any altitude.
+    void SatelliteScene::drawNight(const SceneFrame& frame, const Globe& globe)
     {
-        const float soft = 0.03f * globe.radius;
-        const float depth = 0.13f * globe.radius;
-        return {
-            .startPoint = terminator.through + terminator.dayward * soft,
-            .endPoint = terminator.through - terminator.dayward * depth,
-            .stops = {
-                { .position = 0.0f, .color = SatelliteSceneColors::Night.withOpacity(0.0f) },
-                { .position = 0.35f, .color = SatelliteSceneColors::NightBlue.withOpacity(0.55f) },
-                { .position = 1.0f, .color = SatelliteSceneColors::Night.withOpacity(0.9f) }
-            }
+        const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
+        const FloatRect canvasPixels = {
+            0.0f,
+            0.0f,
+            static_cast<float>(frame.canvas.width()),
+            static_cast<float>(frame.canvas.height())
         };
+        const FloatRect sphere = toPixels.mapRect({
+            globe.center.x - globe.radius,
+            globe.center.y - globe.radius,
+            globe.center.x + globe.radius,
+            globe.center.y + globe.radius
+        });
+        const IntRect inView = FloatRect::intersection(FloatRect::intersection(
+            toPixels.mapRect({ 0.0f, 0.0f, frame.width, frame.height }), canvasPixels),
+            sphere).roundedOut();
+        if (inView.empty())
+            return;
+        static const std::vector<Color> shades = nightShades();
+        const NightPicture picture = {
+            .night = nightViewOf(toPixels, globe.center, globe.radius, globe.tilt, globe.sun.x,
+                globe.sun.y, globe.sun.z),
+            .shades = shades,
+            .edgeSoftness = 1.0f,
+            .left = inView.left,
+            .right = inView.right
+        };
+        const int bandCount = (inView.bottom - inView.top + k_bandRows - 1) / k_bandRows;
+        m_nightBands.resize(static_cast<std::size_t>(bandCount));
+        spreadOverCores(bandCount, [&](int band) {
+            const int bandTop = inView.top + band * k_bandRows;
+            const int rows = std::min(k_bandRows, inView.bottom - bandTop);
+            PixelBand& drawn = m_nightBands[static_cast<std::size_t>(band)];
+            drawn.at = rasterizeNightBand(picture, bandTop, rows, drawn.pixels);
+        });
+        layBands(frame, m_nightBands, canvasPixels);
     }
 
     // The lights come on a little way past the terminator and fade toward the edge of the globe.
     void SatelliteScene::drawCityLights(const SceneFrame& frame, const Globe& globe,
-        const Terminator& terminator, const float cycleTime) const
+        const float cycleTime) const
     {
-        const float unit = frame.unit;
+        // The lights shrink as the globe does, a little less fast.
+        const float unit = frame.unit * std::sqrt(globe.radius
+            / globeDiscAt(frame.width, frame.height, 0.0f).radius);
         const EarthTurn turn = globe.turn();
         const Matrix3x2 toScreen = globe.toScreen();
         // The glows go down city by city, and the lights over all of them afterwards.
@@ -2720,13 +2999,12 @@ namespace ClaFi::PathArt
             if (direction.z < 0.02f)
                 continue;
             const FloatPoint point = toScreen.transform({ direction.x, direction.y });
-            const float margin = 10.0f * unit;
+            const float margin = 10.0f * frame.unit;
             const bool outside = point.x < -margin || point.x > frame.width + margin
                 || point.y > frame.height + margin;
             if (outside)
                 continue;
-            const float pastLine = smoothStep(-0.01f * globe.radius, -0.07f * globe.radius,
-                terminator.distanceTo(point));
+            const float pastLine = smoothStep(-0.01f, -0.06f, globe.sunlightAt(direction));
             const float strength = pastLine * smoothStep(0.02f, 0.12f, direction.z);
             if (strength <= 0.01f)
                 continue;
@@ -2760,7 +3038,7 @@ namespace ClaFi::PathArt
     // **Three layers of cloud float above the ground**, each a map on a sphere of its own a little
     // larger than the Earth's, turning about an axis of its own. See PathArt#satellitescene
     void SatelliteScene::drawClouds(const SceneFrame& frame, const Globe& globe,
-        const LinearGradient& night, const float cycleTime)
+        const float cycleTime)
     {
         if (!m_cloudMaps)
         {
@@ -2811,13 +3089,7 @@ namespace ClaFi::PathArt
             outerRadius = std::max(outerRadius, radius);
         }
 
-        const FloatPoint nightSpan = night.endPoint - night.startPoint;
-        const float nightLengthSquared = nightSpan.x * nightSpan.x + nightSpan.y * nightSpan.y;
-        const FloatPoint originInScene = {
-            -pixelShift.x / pixelScale.x - night.startPoint.x,
-            -pixelShift.y / pixelScale.y - night.startPoint.y
-        };
-        const std::vector<Color> shades = cloudShadesUnder(night);
+        static const std::vector<Color> shades = cloudShades();
         const CloudPicture picture = {
             .layers = layers,
             .look = look(),
@@ -2828,12 +3100,8 @@ namespace ClaFi::PathArt
             .left = inView.left,
             .right = inView.right,
             .shades = shades,
-            .nightPerPixel = {
-                nightSpan.x / (pixelScale.x * nightLengthSquared),
-                nightSpan.y / (pixelScale.y * nightLengthSquared)
-            },
-            .nightAtOrigin = (originInScene.x * nightSpan.x + originInScene.y * nightSpan.y)
-                / nightLengthSquared
+            .night = nightViewOf(toPixels, globe.center, globe.radius, globe.tilt, globe.sun.x,
+                globe.sun.y, globe.sun.z)
         };
 
         const float sphereTop = picture.sphereCenter.y - picture.sphereRadii.y;
@@ -2869,28 +3137,32 @@ namespace ClaFi::PathArt
         frame.canvas.setTransform(canvasTransform);
     }
 
-    // The limb in view runs across the frame, so one gradient across the frame colours it by the
-    // sunlight above each x - blue by day, orange at dusk, dark at night. Each of the three rings
-    // is a glow fading from its circle out to both sides, so none of them shows an edge.
+    // **The sunlight on the limb rises evenly across it toward the Sun**, as the limb stands square
+    // to the view, so one gradient along the Sun's way across the screen colours it at any
+    // altitude - blue by day, orange at dusk, dark at night. Each of the three rings is a glow
+    // fading from its circle out to both sides, so none of them shows an edge.
     void SatelliteScene::drawAtmosphere(const SceneFrame& frame, const Globe& globe)
     {
-        constexpr int k_stops = 15;
-        const float from = -0.05f * frame.width;
-        const float to = 1.05f * frame.width;
+        constexpr int k_stops = 41;
+        const FloatPoint sunAcross = rotated({ globe.sun.x, globe.sun.y }, globe.tilt);
+        const float sunReach = std::hypot(sunAcross.x, sunAcross.y);
+        // The screen's y runs down.
+        const FloatPoint sunward = sunReach > 0.0001f
+            ? FloatPoint{ sunAcross.x / sunReach, -sunAcross.y / sunReach }
+            : FloatPoint{ 1.0f, 0.0f };
+        const FloatPoint from = globe.center - sunward * globe.radius;
+        const FloatPoint to = globe.center + sunward * globe.radius;
         std::array<Color, k_stops> colors{};
         for (int i = 0; i != k_stops; ++i)
         {
-            const float x = std::lerp(from, to, static_cast<float>(i) / (k_stops - 1));
-            const float across = std::clamp((x - globe.center.x) / globe.radius, -1.0f, 1.0f);
-            const float limbAngle = -globe.tilt + std::acos(across);
-            const float sunlight = std::cos(limbAngle) * globe.sun.x
-                + std::sin(limbAngle) * globe.sun.y;
-            colors[static_cast<std::size_t>(i)] = atmosphereColor(sunlight);
+            const float position = static_cast<float>(i) / (k_stops - 1);
+            colors[static_cast<std::size_t>(i)] = atmosphereColor(
+                sunReach * (2.0f * position - 1.0f));
         }
         const auto drawRing = [&](float ringRadius, float reach, float strength) {
             LinearGradient gradient{
-                .startPoint = { from, 0.0f },
-                .endPoint = { to, 0.0f },
+                .startPoint = from,
+                .endPoint = to,
                 .stops = {}
             };
             for (int i = 0; i != k_stops; ++i)

@@ -54,6 +54,15 @@ depend on the frames before it, so a still or a jump would start the orbit withi
 The showcase counts the wraps as it brings the cycle time back into 0 to 1. The other scenes' frames
 came out bit for bit the same, in both looks.
 
+**A scene moves its own view** (Oj, 2026-11-08, "Drag & Scroll (the globe)"). Asked how the drag and
+the wheel should reach a scene - virtuals on Scene with the scene keeping its view, the view passed
+into draw beside SceneTime, or the showcase talking to the Satellite alone - Oj picked the virtuals.
+Passed into draw, the view would be summed pixels and notches the scene turns into angles each
+frame, so a drag made at one altitude would mean another after a zoom; kept by the scene, each drag
+is turned into angles at the altitude it is made at. The glide and the easing of the wheel stay with
+the host, so the scene keeps no clock: ScenePanel runs both on the time between frames, which a
+paused scene still has.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.
@@ -613,6 +622,43 @@ before.
   0.98 to 1.05 with the old map under the same scene code - the land's stage, from the outlines' 25
   percent more points. Timed while the map was still building, the frames ran 0.5 ms slower: the
   first runs waited 5 s, and the map takes 3.8.
+
+**The globe drags and zooms** (2026-11-08). Oj picked grab the ground for the drag, zoom by altitude
+for the wheel, a glide then the orbit on after a let-go, and for the satellite at the top: "shrink
+and move".
+
+- A drag solves the two moves the polar orbit allows - along the orbit, and the Earth's turn under
+  it - for the ground under a point held in the view: the frame's middle at 72 percent of its height
+  low down, the globe's middle with the whole globe in view. The screen motion of a 0.001 radian
+  step of each, taken through OnOrbit, makes a 2 by 2 least-squares system, damped by (0.05 R)
+  squared. Over a pole the Earth's turn moves that ground in a circle about it, and the damping
+  keeps the drag from spinning it. With time held still the held ground moved 21 pixels a frame for
+  a drag of 20, and 10 for 10 up and down; ground nearer the horizon moves less, as the globe curves
+  away.
+- The night was one linear gradient through a straight line fitted to the terminator at two rows of
+  the frame, true enough on the small cap of the lowest view and wrong for a whole globe, where the
+  terminator is half an ellipse. It is now worked out per pixel from the sunlight on the sphere, 8
+  at a time, the bands laid in like the land's; a pixel by the limb fades over a pixel as the bands
+  pass any clip. The clouds read the same depth per pixel in place of their position along the old
+  gradient, and the city lights the sunlight on each town. At the lowest view a dusk with the Sun
+  behind the Earth turned darker toward the frame's sides, where the straight line had lit the land:
+  shown to Oj side by side, "It's alright".
+- The atmosphere was coloured by the limb point above each x across the frame. On the limb the
+  sunlight is linear in the screen's position - the limb faces square to the view - so one gradient
+  along the Sun's way across the screen colours the whole ring exactly, 41 stops from one side to
+  the other.
+- The stylized snow edge was held at no less than 0.12 and the bands passed over below 0.08. The
+  floor never mattered in the north, where the snowline stays above 0.19, but it left Antarctica's
+  low coastal ice green in the stylized look while the realistic look showed it white. The floor is
+  gone, and 8 pixels below the lowest band still get the snow where the snow edge lies under them.
+- The view leans back 36 degrees at the lowest and 1 at the highest, not 0: at 0 the view looks down
+  the Earth's axis over a pole, where the spin and the tilt of OnOrbit are undefined. Crossing a
+  pole with the whole globe in view, the largest change from one frame to the next was 0.36 against
+  0.22 on average.
+- A frame on the container at the lowest altitude: 1280 x 720 6.2 to 7.0 ms against 6.6 to 7.1
+  before, 2560 x 1440 21.5 against 21.9 to 23.1. Halfway up, 9.9 and 33 ms: more of the
+  globe in view, the land at finer steps on the smaller globe, and the space and the ocean drawn
+  live. With the whole globe in view, 7.4 and 26.
 
 ## ChaseScene
 

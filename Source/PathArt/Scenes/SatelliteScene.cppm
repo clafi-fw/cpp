@@ -24,6 +24,9 @@ namespace ClaFi::PathArt
         void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
         [[nodiscard]] bool offersLooks() const override { return true; }
+        [[nodiscard]] bool offersView() const override { return true; }
+        void dragView(FloatPoint by, const FloatRect& bounds) override;
+        void scrollView(float notches) override;
     private:
         // A direction from the Earth's center: x across the screen, y up it, z toward the viewer.
         struct Direction
@@ -42,6 +45,15 @@ namespace ClaFi::PathArt
 
             // A direction fixed to the Earth, as it stands this frame.
             [[nodiscard]] Direction applied(Direction onEarth) const;
+            // The direction fixed to the Earth that stands this way this frame.
+            [[nodiscard]] Direction undone(Direction seen) const;
+        };
+        // Where the view stands besides the orbit, moved by drags and the wheel.
+        struct View
+        {
+            float alongOrbit; // how much further round its orbit the satellite stands
+            float earthTurn; // how much further the Earth has turned
+            float altitude; // 0 at the lowest, 1 with the whole globe in the frame
         };
         // The Earth as drawn this frame: where it stands, how far it has turned, where the Sun is.
         struct Globe
@@ -54,7 +66,8 @@ namespace ClaFi::PathArt
             Direction sun;
 
             // The Earth as seen after a number of orbits from the start. See PathArt#satellitescene
-            [[nodiscard]] static Globe OnOrbit(FloatPoint center, float radius, double orbits);
+            [[nodiscard]] static Globe OnOrbit(FloatPoint center, float radius, double orbits,
+                const View&);
             // The direction to a longitude and latitude in degrees, fixed to the Earth.
             [[nodiscard]] static Direction onEarthAt(FloatPoint lonLat);
             [[nodiscard]] EarthTurn turn() const;
@@ -70,22 +83,12 @@ namespace ClaFi::PathArt
             // How much sunlight falls where the surface faces this way: above 0 by day.
             [[nodiscard]] float sunlightAt(Direction) const;
         };
-        // The line the day ends at, across the part of the globe in view. See PathArt
-        struct Terminator
-        {
-            FloatPoint through;
-            FloatPoint along;
-            FloatPoint dayward; // points away from the line into the day
-
-            // Where a point stands from the line: above 0 on the day side.
-            [[nodiscard]] float distanceTo(FloatPoint) const;
-        };
         struct Coastline
         {
             std::vector<FloatPoint> lonLat;
             std::vector<Direction> onEarth; // each point's direction, fixed to the Earth
             bool counterClockwise; // the way its points run, seen from outside the Earth
-            bool iceSheet; // Greenland's, drawn white until the land's map is built, and townless
+            bool iceSheet; // Greenland's or Antarctica's: white until the map is built, townless
         };
         struct City
         {
@@ -122,16 +125,14 @@ namespace ClaFi::PathArt
             std::span<const Coastline>);
         static void drawSpace(const SceneFrame&);
         static void drawOcean(const SceneFrame&);
-        [[nodiscard]] static Terminator terminatorOf(const SceneFrame&, const Globe&);
         // The land in one flat colour inside each coastline, until the land's map is built.
         void drawFlatLand(const SceneFrame&, const Globe&) const;
         // The land worked out pixel by pixel inside the coastlines. See PathArt#satellitescene
         void drawLand(const SceneFrame&, const Globe&);
-        [[nodiscard]] static Graphics::LinearGradient nightOf(const Globe&, const Terminator&);
-        void drawCityLights(const SceneFrame&, const Globe&, const Terminator&,
-            float cycleTime) const;
-        void drawClouds(const SceneFrame&, const Globe&, const Graphics::LinearGradient& night,
-            float cycleTime);
+        // The night worked out pixel by pixel from the sunlight. See PathArt#satellitescene
+        void drawNight(const SceneFrame&, const Globe&);
+        void drawCityLights(const SceneFrame&, const Globe&, float cycleTime) const;
+        void drawClouds(const SceneFrame&, const Globe&, float cycleTime);
         static void drawAtmosphere(const SceneFrame&, const Globe&);
         // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
@@ -155,5 +156,9 @@ namespace ClaFi::PathArt
         std::unique_ptr<EarthMap> m_earthMap{};
         // Kept from one frame to the next, as the clouds' are.
         std::vector<PixelBand> m_landBands{};
+        std::vector<PixelBand> m_nightBands{};
+        View m_view{};
+        // The orbits the last frame was drawn after, which a drag moves the view from.
+        double m_shownOrbits{};
     };
 }

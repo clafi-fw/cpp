@@ -95,13 +95,48 @@ namespace MillScene_App
     // What the look picked for the scene that offers looks is kept under, by name as well.
     export constexpr std::wstring_view k_sceneLookNodeName{ L"SceneLook" };
 
-    // The panel the scene covers whole, so its own surface is not filled under the scene.
+    // The panel the scene covers whole; a drag and the wheel over it move the scene's view.
     class ScenePanel : public Panel
     {
     public:
         using Panel::Panel;
+    public:
+        // The scene drawn this frame and its bounds; another scene stops what moves the last one.
+        void showScene(PathArt::Scene&, const FloatRect& bounds);
+        // Carries a drag let go on and brings the wheel's notches in, over the time since the last.
+        void advanceView();
     protected:
         void paintSurface(PaintEvent&) override;
+        void nestedPressDown(PressDownEvent&) override;
+        void nestedDrag(DragEvent&) override;
+        void nestedPressUp(PressUpEvent&) override;
+        void nestedMouseWheel(MouseWheelEvent&) override;
+    private:
+        // A move of the pointer in a drag, kept to tell how fast the drag went as it was let go.
+        struct DragStep
+        {
+            Diagnostic::TimePoint at;
+            FloatPoint by;
+        };
+    private:
+        [[nodiscard]] bool movesView() const;
+    private:
+        // The moves before a drag is let go that the speed it glides on at is taken from.
+        static constexpr std::chrono::milliseconds k_glideWindow{ 80 };
+        // How long a glide takes to slow to about a third of its speed, in seconds.
+        static constexpr float k_glideSlowing{ 0.35f };
+        // The speed a glide stops at, in pixels a second.
+        static constexpr float k_glideStop{ 2.0f };
+        // How long the wheel's notches take to come about two thirds of the way in, in seconds.
+        static constexpr float k_notchEasing{ 0.08f };
+        PathArt::Scene* m_scene{ nullptr };
+        FloatRect m_sceneBounds{};
+        // Where the pointer stood at the last move of a drag that moves the view.
+        std::optional<PointInForm> m_dragPos{};
+        std::vector<DragStep> m_dragSteps{};
+        FloatPoint m_glideSpeed{}; // pixels a second
+        float m_notchesToCome{};
+        Diagnostic::TimePoint m_lastAdvance{ Diagnostic::Clock::now() };
     };
 
     export class MillSceneForm : public Panel
@@ -281,9 +316,122 @@ namespace MillScene_App
 //-----------------------------------------------------------------------------
 
 
+void ScenePanel::showScene(PathArt::Scene& scene, const FloatRect& bounds)
+{
+    if (m_scene != &scene)
+    {
+        m_dragPos.reset();
+        m_dragSteps.clear();
+        m_glideSpeed = {};
+        m_notchesToCome = 0.0f;
+    }
+    m_scene = &scene;
+    m_sceneBounds = bounds;
+}
+
+// A frame that comes late, after the window was hidden, moves the view as one of a tenth of a
+// second would, so the glide does not leap.
+void ScenePanel::advanceView()
+{
+    const Diagnostic::TimePoint now = Diagnostic::Clock::now();
+    const float seconds = std::min(0.1f,
+        std::chrono::duration<float>(now - m_lastAdvance).count());
+    m_lastAdvance = now;
+    if (!movesView())
+        return;
+    if (!m_dragPos && (m_glideSpeed.x != 0.0f || m_glideSpeed.y != 0.0f))
+    {
+        m_scene->dragView(m_glideSpeed * seconds, m_sceneBounds);
+        m_glideSpeed = m_glideSpeed * std::exp(-seconds / k_glideSlowing);
+        if (std::hypot(m_glideSpeed.x, m_glideSpeed.y) < k_glideStop)
+            m_glideSpeed = {};
+    }
+    if (m_notchesToCome != 0.0f)
+    {
+        float notches = m_notchesToCome * (1.0f - std::exp(-seconds / k_notchEasing));
+        if (std::abs(m_notchesToCome - notches) < 0.002f)
+            notches = m_notchesToCome;
+        m_scene->scrollView(notches);
+        m_notchesToCome -= notches;
+    }
+}
+
 void ScenePanel::paintSurface(PaintEvent& event)
 {
     emitEvent(event);
+}
+
+// A press stops a glide, as a hand stops a spinning globe.
+void ScenePanel::nestedPressDown(PressDownEvent& event)
+{
+    Panel::nestedPressDown(event);
+    if (!movesView())
+        return;
+    m_dragPos = event.clickPos();
+    m_dragSteps.clear();
+    m_glideSpeed = {};
+}
+
+void ScenePanel::nestedDrag(DragEvent& event)
+{
+    if (!m_dragPos || !movesView())
+    {
+        Panel::nestedDrag(event);
+        return;
+    }
+    const PointInForm current = event.currentPos();
+    const FloatPoint by = { current.x - m_dragPos->x, current.y - m_dragPos->y };
+    m_dragPos = current;
+    if (by.x != 0.0f || by.y != 0.0f)
+    {
+        m_scene->dragView(by, m_sceneBounds);
+        m_dragSteps.push_back({ .at = Diagnostic::Clock::now(), .by = by });
+    }
+    event.lockHoveredControl();
+    event.stopPropagation();
+}
+
+// **The glide goes on at the speed of the drag's last moves**: those within k_glideWindow of the
+// let-go. A drag held still before it is let go leaves none, and stops where it is.
+void ScenePanel::nestedPressUp(PressUpEvent& event)
+{
+    Panel::nestedPressUp(event);
+    if (!m_dragPos)
+        return;
+    m_dragPos.reset();
+    const Diagnostic::TimePoint now = Diagnostic::Clock::now();
+    FloatPoint moved = {};
+    std::optional<Diagnostic::TimePoint> firstAt{};
+    for (const DragStep& step : m_dragSteps)
+    {
+        if (now - step.at > k_glideWindow)
+            continue;
+        moved = moved + step.by;
+        if (!firstAt)
+            firstAt = step.at;
+    }
+    m_dragSteps.clear();
+    if (!firstAt)
+        return;
+    const float seconds = std::max(std::chrono::duration<float>(now - *firstAt).count(),
+        1.0f / 120.0f);
+    m_glideSpeed = moved * (1.0f / seconds);
+}
+
+void ScenePanel::nestedMouseWheel(MouseWheelEvent& event)
+{
+    if (!movesView())
+    {
+        Panel::nestedMouseWheel(event);
+        return;
+    }
+    m_notchesToCome += event.delta;
+    event.handled = true;
+}
+
+bool ScenePanel::movesView() const
+{
+    return m_scene && m_scene->offersView();
 }
 
 void MillSceneForm::paintScene(PaintEvent& event)
@@ -292,6 +440,8 @@ void MillSceneForm::paintScene(PaintEvent& event)
     m_benchmark.setDimensions(sceneRect.dimensions());
 
     advanceCycleTime();
+    m_scenePanel.showScene(sceneAt(m_shownScene), sceneRect);
+    m_scenePanel.advanceView();
 
     // **A scene keeps its layers for the size it settles on.** While a resize changes the size
     // from one frame to the next the scene draws everything live, and the first frame drawn at an

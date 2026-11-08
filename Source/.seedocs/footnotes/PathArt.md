@@ -25,10 +25,10 @@ on, and comes round when that time runs a whole number of units a cycle.
 
 Paints the whole of bounds, so nothing needs to be drawn under it.
 
-**A frame depends on its SceneTime and bounds alone.** The showcase jumps between scenes and
-times - a hover preview, a pick, a resize - and every scene but MillScene draws the same picture
-for the same time and bounds, whatever was drawn before. MillScene keeps its theme's crossfade
-between frames.
+**A frame depends on its SceneTime, its bounds, and the look and the view the scene keeps.** The
+showcase jumps between scenes and times - a hover preview, a pick, a resize - and every scene but
+MillScene draws the same picture for the same of these, whatever was drawn before. MillScene keeps
+its theme's crossfade between frames.
 
 **Any size and any shape of bounds is drawn.** A scene lays itself out in the units of a
 SceneFrame, so it keeps its proportions at any size; a narrow frame draws the figures closer
@@ -59,6 +59,19 @@ and draws as it always does.
 
 The MillScene showcase offers the looks in a section of its Scene page captioned with the scene's
 name, shown only while that scene is the picked one, and keeps the pick under SceneLook.
+
+## Scene offersView
+
+**A scene that offers a view keeps it, as it keeps its look**, and moves it as the host hands it a
+drag - dragView(), in the coordinates of the bounds it draws into - and the wheel's notches -
+scrollView(), counted as MouseWheelEvent counts them, away from the user above 0. What the view is
+and how it moves is the scene's own: the Satellite turns its globe and climbs above it - see
+SatelliteScene. A scene that offers none leaves both as they are.
+
+**The MillScene showcase hands them on from the panel the scene covers.** A press stops what moves
+the view. A drag let go glides on at the speed of its last 80 milliseconds and slows to about a
+third of it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second.
+Another scene shown stops both. Each scene keeps its view while the showcase runs.
 
 ## SceneTime
 
@@ -343,6 +356,21 @@ straight down 36 degrees from the satellite, away from the horizon. It is turned
 own axes by the spin about the axis, then the tip of the axis toward the viewer, then the tilt in
 the screen, each worked out from the orbit.
 
+**A drag carries the ground under the middle of the view with the pointer.** Sideways it moves the
+satellite along its orbit, so the day and the night move with it; up and down it turns the Earth
+under the track. Each is worked out from how far a small step of it moves that ground on the screen,
+and the two are solved for the drag together, a little damped, so over a pole, where turning the
+Earth hardly moves the ground, a drag does not spin it. The orbit runs on from where the view is
+left.
+
+**The wheel climbs above the globe**, a tenth of the way a notch, from the lowest view to the whole
+globe in the middle of the frame. The globe's radius shrinks by the same share at each step, from
+1.15 times the frame's longer side to 0.4 times its shorter, and the view leans back from 36 degrees
+to 1, never quite down the Earth's axis. The satellite draws smaller toward the top right, out of
+the globe's way, and what is drawn on the globe at a fixed size - the sea's glint, the city lights -
+shrinks with it. The space and the ocean are kept as layers at the lowest altitude - see
+SceneLayer - and drawn live above it.
+
 **The Sun stands fixed among the stars**, and so does the orbit's plane, so each orbit passes a day
 of about two minutes and a night. In the Earth's shadow the satellite darkens and the stars
 brighten. Its panels turn once an orbit to face the Sun, so in the shadow they show their backs.
@@ -351,9 +379,12 @@ The stars drift a fifth of the frame's width each orbit - see StarField drift.
 **The cycle is 240 seconds.** The twinkling and the blinking keep the pace they would have in a
 40-second cycle.
 
-The city lights come on past the terminator - see SatelliteScene Terminator - and the atmosphere
-along the limb is blue by day, orange at dusk and dark at night, by the sunlight above each point of
-it: three rings, each fading out to both sides.
+**The night falls by the sunlight on each pixel of the globe**: it starts at a sunlight of 0.03 and
+is whole at -0.13, so the terminator curves as it does at any altitude, and the clouds take the
+night's shade the same way. The city lights come on as the sunlight falls past -0.01 and are full
+past -0.06. The atmosphere along the limb is blue by day, orange at dusk and dark at night, by the
+sunlight on the limb, which rises evenly across it toward the Sun: three rings, each fading out to
+both sides.
 
 **The towns are placed by the land's map.** Until it is built, 1500 stand anywhere on the land
 from 56 degrees south to 62 north. Then 1500 are tried at random points of the land and 5800 at
@@ -385,13 +416,13 @@ and the land in the detailed relief, its colours blended - see SceneLook.
 
 **The maps are built off the paint** the first time the scene is drawn: a fraction of a second on a
 processor with many cores. The clouds show from the first frame after, and the land is drawn flat,
-green with the ice sheets white, until its map is ready. Each frame works the clouds and the land
-out in bands of rows spread over the cores - see spreadOverCores. On a globe over 3200 pixels in
-radius - a frame about 2800 pixels wide or more - the land is worked out at every 4th pixel and row,
-over 1300 - a frame about 1130 pixels wide - at every 2nd, and below that at every pixel. The cloud
-maps' points stand twice as far apart as the land's, and so do the clouds' points. What lies between
-is blended before the look cuts the cover, the zones or the bands of height. The bands are laid in
-on all the cores as well - see Canvas drawPixelViews.
+green with the ice sheets white, until its map is ready. Each frame works the clouds, the land and
+the night out in bands of rows spread over the cores - see spreadOverCores. On a globe over 3200
+pixels in radius - a frame about 2800 pixels wide or more - the land is worked out at every 4th
+pixel and row, over 1300 - a frame about 1130 pixels wide - at every 2nd, and below that at every
+pixel. The cloud maps' points stand twice as far apart as the land's, and so do the clouds' points.
+What lies between is blended before the look cuts the cover, the zones or the bands of height. The
+bands are laid in on all the cores as well - see Canvas drawPixelViews.
 
 **Each point reads the land and the clouds as fine as the ground it stands for**, taken 1.4 times as
 wide as the points stand apart - see MapQuery. The ridges and the clouds hold still as the Earth
@@ -401,13 +432,6 @@ turns, and soften toward the limb, where each point stands for more ground.
 dryness and the cold at a zone's edge, the height at a band's, the light at a tone's, the cover at a
 cloud's. An edge stays sharp where its field changes slowly, and moves smoothly across the pixels
 where it changes fast, so it does not step from pixel to pixel as the Earth turns.
-
-## SatelliteScene Terminator
-
-The line between day and night across the part of the globe in view, taken as straight: over the
-small cap the frame shows, the curve of the true terminator does not show.
-
-distanceTo() is above 0 on the day side and below it on the night side, in pixels.
 
 ## drawSatellite
 

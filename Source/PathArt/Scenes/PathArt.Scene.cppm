@@ -51,6 +51,12 @@ namespace ClaFi::PathArt
         // The look the scene is drawn in, where it offers looks. See PathArt#scenelook
         [[nodiscard]] SceneLook look() const { return m_look; }
         void setLook(SceneLook look) { m_look = look; }
+        // Whether the scene answers a drag and the wheel by moving its view. See PathArt
+        [[nodiscard]] virtual bool offersView() const { return false; }
+        // Moves the view by a drag across bounds, in the coordinates of bounds.
+        virtual void dragView(FloatPoint, const FloatRect&) {}
+        // Moves the view by wheel notches, counted as MouseWheelEvent counts them.
+        virtual void scrollView(float) {}
     private:
         // The cycle a scene runs through unless it states its own.
         static constexpr std::chrono::seconds k_cycle{ 40 };
