@@ -25,9 +25,14 @@ namespace ClaFi::PathArt
         constexpr Color Cloud{ 0xE6FFFFFF };
         constexpr Color MountainTop{ 0xFFC4D4EA };
         constexpr Color MountainFoot{ 0xFF93AED0 };
-        constexpr Color HillTop{ 0xFF93D36F };
-        constexpr Color HillFoot{ 0xFF5FAE4F };
-        constexpr Color Trunk{ 0xFF7A5636 };
+        // The hills and their trees are greens taken 0.55 of the way to MountainFoot, so they
+        // stand back behind the trail.
+        constexpr Color HillTop{ 0xFF93BEA4 };
+        constexpr Color HillFoot{ 0xFF7BAE95 };
+        constexpr Color HillTreeTrunk{ 0xFF87868A };
+        constexpr Color HillTreeCrown{ 0xFF6C9F8D };
+        constexpr Color HillTreeCrownLight{ 0xFF74A993 };
+        constexpr Color HillTreeCrownMiddle{ 0xFF6FA38E };
         constexpr Color Crown{ 0xFF3F8F3E };
         constexpr Color CrownLight{ 0xFF4FA34A };
         constexpr Color CrownMiddle{ 0xFF45973F };
@@ -532,13 +537,13 @@ namespace ClaFi::PathArt
                 const float y = hillY(alongTile) + 6.0f * unit;
                 const float size = (0.7f + 0.4f * pseudoRandom(i, 112.0f)) * unit;
                 fillBox(frame, { x - 3.0f * size, y - 22.0f * size, x + 3.0f * size, y },
-                    SolidColor{ ChaseColors::Trunk });
+                    SolidColor{ ChaseColors::HillTreeTrunk });
                 fillDisc(frame, { x, y - 32.0f * size }, 16.0f * size,
-                    SolidColor{ ChaseColors::Crown });
+                    SolidColor{ ChaseColors::HillTreeCrown });
                 fillDisc(frame, { x - 9.0f * size, y - 25.0f * size }, 11.0f * size,
-                    SolidColor{ ChaseColors::CrownLight });
+                    SolidColor{ ChaseColors::HillTreeCrownLight });
                 fillDisc(frame, { x + 9.0f * size, y - 26.0f * size }, 12.0f * size,
-                    SolidColor{ ChaseColors::CrownMiddle });
+                    SolidColor{ ChaseColors::HillTreeCrownMiddle });
             }
         });
     }

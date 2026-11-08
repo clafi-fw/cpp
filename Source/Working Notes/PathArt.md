@@ -868,6 +868,11 @@ as before, pixel for pixel.
 The snap at his closest opens the same jaws (Oj, "The snap too"): from 0.286 of the episode they
 part on her tail, and shut from 0.297 to 0.2995, as the lunge ends.
 
+**The hills stand back** (Oj, 2026-11-09, "Make the layer before mountains duller", then C of
+three renders - greyed, hazed a third of the way, hazed past halfway): the hills and their trees
+are their greens taken 0.55 of the way to MountainFoot. Their trees have colours of their own, so
+the big tree of the second episode keeps its greens.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
