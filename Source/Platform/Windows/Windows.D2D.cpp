@@ -661,7 +661,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
         // Round, a stroke layer's default cap, which the CPU backend draws a line with.
         m_renderTarget->DrawLine(reinterpret_cast<D2D_POINT_2F&>(pt1), reinterpret_cast<D2D_POINT_2F&>(pt2), d2dBrush,
-            strokeWidth, strokeStyle(StrokeCap::Round));
+            strokeWidth, strokeStyle(StrokeCap::Round, StrokeJoin::Miter));
     }
 
     void Direct2DBackend::drawRectangle(const FloatRect& rect, const Brush& brush, float strokeWidth)
@@ -1050,7 +1050,8 @@ namespace ClaFi::PlatformImplementation::Windows
             m_renderTarget->SetTransform(nestTransform(*transform, oldTransform));
         }
 
-        m_renderTarget->DrawGeometry(d2DPath.Get(), d2DBrush, strokeWidth, strokeStyle(strokeCap));
+        m_renderTarget->DrawGeometry(d2DPath.Get(), d2DBrush, strokeWidth,
+            strokeStyle(strokeCap, StrokeJoin::Miter));
 
         // Restore target transform state
         if (transform)
@@ -1064,6 +1065,10 @@ namespace ClaFi::PlatformImplementation::Windows
     // before it. They are drawn outside in, each over the last, so what a ring is given is what
     // it has to **add** to leave its share of the ramp standing - which is what ringOpacity
     // answers.
+    //
+    // **The rings turn their corners round.** A ring is then every point within its reach of the
+    // outline, the distance the CPU backend ramps by. A mitered corner would stand past the reach,
+    // as far as ten times it at a sharp one.
     //
     // The opacity is set on the brush and put back afterwards rather than a brush being built per
     // ring: the brush cache is keyed on the whole brush and never evicts, so a glow whose colour
@@ -1087,7 +1092,7 @@ namespace ClaFi::PlatformImplementation::Windows
         const int ringCount = std::max(1, static_cast<int>(std::ceil(reach)));
         const float bandWidth = reach / static_cast<float>(ringCount);
         const FLOAT restoreOpacity = d2dBrush->GetOpacity();
-        ID2D1StrokeStyle* style = strokeStyle(layer.geometry.strokeCap);
+        ID2D1StrokeStyle* style = strokeStyle(layer.geometry.strokeCap, StrokeJoin::Round);
 
         // A solid colour carries its alpha in the brush's colour, so a ring at full opacity covers
         // that much of a pixel and no more; the shares are sized for it.
@@ -1721,29 +1726,33 @@ namespace ClaFi::PlatformImplementation::Windows
         return d2dPath;
     }
 
-    ID2D1StrokeStyle* Direct2DBackend::strokeStyle(StrokeCap strokeCap)
+    ID2D1StrokeStyle* Direct2DBackend::strokeStyle(StrokeCap strokeCap, StrokeJoin strokeJoin)
     {
-        ComPtr<ID2D1StrokeStyle>* style = &m_roundCaps;
+        CapStyles& styles = strokeJoin == StrokeJoin::Round ? m_roundJoined : m_miterJoined;
+        ComPtr<ID2D1StrokeStyle>* style = &styles.round;
         D2D1_CAP_STYLE d2dCap = D2D1_CAP_STYLE_ROUND;
         switch (strokeCap)
         {
             case StrokeCap::Round:
                 break;
             case StrokeCap::Butt:
-                style = &m_buttCaps;
+                style = &styles.butt;
                 d2dCap = D2D1_CAP_STYLE_FLAT;
                 break;
             case StrokeCap::Square:
-                style = &m_squareCaps;
+                style = &styles.square;
                 d2dCap = D2D1_CAP_STYLE_SQUARE;
                 break;
         }
 
         if (!*style)
         {
-            // Miter joins, as Direct2D strokes with no style: a partial outline's square corners
-            // are drawn by them.
-            const D2D1_STROKE_STYLE_PROPERTIES properties = D2D1::StrokeStyleProperties(d2dCap, d2dCap, d2dCap);
+            // A plain stroke takes miter joins, as Direct2D strokes with no style: a partial
+            // outline's square corners are drawn by them.
+            const D2D1_LINE_JOIN d2dJoin =
+                strokeJoin == StrokeJoin::Round ? D2D1_LINE_JOIN_ROUND : D2D1_LINE_JOIN_MITER;
+            const D2D1_STROKE_STYLE_PROPERTIES properties =
+                D2D1::StrokeStyleProperties(d2dCap, d2dCap, d2dCap, d2dJoin);
             ComPtr<ID2D1Factory> factory = getD2DFactory();
             checkHr(factory->CreateStrokeStyle(properties, nullptr, 0, style->GetAddressOf()));
         }

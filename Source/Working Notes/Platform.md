@@ -72,6 +72,16 @@ and every frame presented is a frame shown, and it is what Direct2D draws into.
 what the last frame changed is stale in it. That rect is kept and copied again with the new
 frame's own, which is the whole of what two buffers need.
 
+## Direct2DBackend strokeGlow
+
+**The rings turn their corners round** (2026-11-08). They took a plain stroke's miter joins until
+the Satellite's soft clouds - a Shadow layer round each lump, the reach 20 units - showed on
+Direct2D as blocks with straight sides wherever a lump thinned toward the limb. A ring's miter at a
+sharp corner stood past the reach, up to ten times it, and fillShadow's layer, the silhouette's
+bounds grown by the reach and a pixel, cut it along those bounds. Replayed in cairo from the
+outlines the scene drew, miter joins made the same blocks and round joins the CPU backend's soft
+edge.
+
 ## TimerManager
 
 The two hooks System.Timer declares - PlatformTimer::start and stop - are defined in its module and
