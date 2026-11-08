@@ -2302,54 +2302,50 @@ namespace ClaFi::PathArt
         });
     }
 
-    // **The ground under the middle of the view follows the drag**: the satellite moves along its
-    // orbit and the Earth turns under it by as much as carries that ground the drag's way, as near
-    // as the two can. Each is worked out from how far a small step of it moves that ground on the
-    // screen; a little damping keeps a drag where the Earth's turn hardly moves the ground - over
-    // a pole - from spinning it. See PathArt#satellitescene
+    // **A drag turns the globe the way the pointer goes, as a hand turns a ball**: the ground
+    // under the middle of the view moves to where the drag takes it, about the axis square to
+    // both, wherever the poles stand. The turn is the orbit's among the stars, so the satellite
+    // flies on along the turned orbit. See PathArt#satellitescene
     void SatelliteScene::dragView(const FloatPoint by, const FloatRect& bounds)
     {
+        // How far from the middle toward the rim a point is taken, so it never lies on the rim.
+        constexpr float k_rimReach{ 0.98f };
         const GlobeDisc disc = globeDiscAt(bounds.width(), bounds.height(), m_view.altitude);
         const FloatPoint held = {
             bounds.width() * 0.5f,
             std::lerp(bounds.height() * 0.72f, disc.center.y, m_view.altitude)
         };
-        const Globe globe = Globe::OnOrbit(disc.center, disc.radius, m_shownOrbits, m_view);
-        const FloatPoint fromCenter = rotated({
-            (held.x - disc.center.x) / disc.radius,
-            (disc.center.y - held.y) / disc.radius
-        }, -globe.tilt);
-        const float toward = std::sqrt(std::max(0.0f,
-            1.0f - fromCenter.x * fromCenter.x - fromCenter.y * fromCenter.y));
-        const Direction ground = globe.turn().undone({ fromCenter.x, fromCenter.y, toward });
-        const auto groundAt = [&](const View& view) {
-            const Globe moved = Globe::OnOrbit(disc.center, disc.radius, m_shownOrbits, view);
-            return moved.onScreen(moved.turn().applied(ground));
+        const auto onSphere = [&](const FloatPoint point) {
+            FloatPoint offset = {
+                (point.x - disc.center.x) / disc.radius,
+                (disc.center.y - point.y) / disc.radius
+            };
+            const float reach = std::hypot(offset.x, offset.y);
+            if (reach > k_rimReach)
+                offset = offset * (k_rimReach / reach);
+            return Direction{
+                offset.x,
+                offset.y,
+                std::sqrt(1.0f - offset.x * offset.x - offset.y * offset.y)
+            };
         };
-        constexpr float k_step{ 0.001f };
-        const FloatPoint now = groundAt(m_view);
-        const FloatPoint byOrbit = (groundAt({
-            .alongOrbit = m_view.alongOrbit + k_step,
-            .earthTurn = m_view.earthTurn,
-            .altitude = m_view.altitude
-        }) - now) * (1.0f / k_step);
-        const FloatPoint byTurn = (groundAt({
-            .alongOrbit = m_view.alongOrbit,
-            .earthTurn = m_view.earthTurn + k_step,
-            .altitude = m_view.altitude
-        }) - now) * (1.0f / k_step);
-        // The least squares of the two steps against the drag, damped.
-        const float damping = 0.0025f * disc.radius * disc.radius;
-        const float orbitOrbit = byOrbit.x * byOrbit.x + byOrbit.y * byOrbit.y + damping;
-        const float orbitTurn = byOrbit.x * byTurn.x + byOrbit.y * byTurn.y;
-        const float turnTurn = byTurn.x * byTurn.x + byTurn.y * byTurn.y + damping;
-        const float alongDrag = byOrbit.x * by.x + byOrbit.y * by.y;
-        const float turnDrag = byTurn.x * by.x + byTurn.y * by.y;
-        const float determinant = orbitOrbit * turnTurn - orbitTurn * orbitTurn;
-        m_view.alongOrbit = std::remainder(m_view.alongOrbit
-            + (turnTurn * alongDrag - orbitTurn * turnDrag) / determinant, k_2Pi);
-        m_view.earthTurn = std::remainder(m_view.earthTurn
-            + (orbitOrbit * turnDrag - orbitTurn * alongDrag) / determinant, k_2Pi);
+        const Direction from = onSphere(held);
+        const Direction to = onSphere(held + by);
+        const Direction square = {
+            from.y * to.z - from.z * to.y,
+            from.z * to.x - from.x * to.z,
+            from.x * to.y - from.y * to.x
+        };
+        const float squareLength = std::hypot(square.x, square.y, square.z);
+        if (squareLength < 1.0e-6f)
+            return;
+        const float angle = std::atan2(squareLength, from.x * to.x + from.y * to.y + from.z * to.z);
+        const Direction axis = Globe::orbitAxesAt(m_shownOrbits, m_view.altitude).applied({
+            square.x / squareLength,
+            square.y / squareLength,
+            square.z / squareLength
+        });
+        m_view.orbitTurn = m_view.orbitTurn.after(Rotation::About(axis, -angle)).orthonormal();
     }
 
     // A notch away from the screen comes down, as the wheel zooms in.
@@ -2366,54 +2362,144 @@ namespace ClaFi::PathArt
         return { x, onEarth.y * tipCosine + z * tipSine, z * tipCosine - onEarth.y * tipSine };
     }
 
-    // The tip taken back, then the spin.
-    SatelliteScene::Direction SatelliteScene::EarthTurn::undone(const Direction seen) const
+    SatelliteScene::Rotation SatelliteScene::Rotation::About(const Direction axis,
+        const float angle)
     {
-        const float z = seen.z * tipCosine + seen.y * tipSine;
-        const float y = seen.y * tipCosine - seen.z * tipSine;
-        return { seen.x * spinCosine - z * spinSine, y, z * spinCosine + seen.x * spinSine };
+        const float cosine = std::cos(angle);
+        const float sine = std::sin(angle);
+        const float rest = 1.0f - cosine;
+        return {
+            .x = {
+                rest * axis.x * axis.x + cosine,
+                rest * axis.x * axis.y + sine * axis.z,
+                rest * axis.x * axis.z - sine * axis.y
+            },
+            .y = {
+                rest * axis.x * axis.y - sine * axis.z,
+                rest * axis.y * axis.y + cosine,
+                rest * axis.y * axis.z + sine * axis.x
+            },
+            .z = {
+                rest * axis.x * axis.z + sine * axis.y,
+                rest * axis.y * axis.z - sine * axis.x,
+                rest * axis.z * axis.z + cosine
+            }
+        };
     }
 
-    // **The view is turned from the Earth's axes** by the spin about the axis, then the tip of the
-    // axis toward the viewer, then the tilt in the screen. See PathArt#satellitescene
+    SatelliteScene::Direction SatelliteScene::Rotation::applied(const Direction direction) const
+    {
+        return {
+            x.x * direction.x + y.x * direction.y + z.x * direction.z,
+            x.y * direction.x + y.y * direction.y + z.y * direction.z,
+            x.z * direction.x + y.z * direction.y + z.z * direction.z
+        };
+    }
+
+    SatelliteScene::Rotation SatelliteScene::Rotation::after(const Rotation& first) const
+    {
+        return { applied(first.x), applied(first.y), applied(first.z) };
+    }
+
+    // x keeps its way, y is set square to it, and z is square to both.
+    SatelliteScene::Rotation SatelliteScene::Rotation::orthonormal() const
+    {
+        const auto unit = [](const Direction direction) {
+            const float length = std::hypot(direction.x, direction.y, direction.z);
+            return Direction{ direction.x / length, direction.y / length, direction.z / length };
+        };
+        const Direction first = unit(x);
+        const float along = first.x * y.x + first.y * y.y + first.z * y.z;
+        const Direction second = unit({
+            y.x - along * first.x,
+            y.y - along * first.y,
+            y.z - along * first.z
+        });
+        return {
+            .x = first,
+            .y = second,
+            .z = {
+                first.y * second.z - first.z * second.y,
+                first.z * second.x - first.x * second.z,
+                first.x * second.y - first.y * second.x
+            }
+        };
+    }
+
+    // **Where the north pole stands in the view gives the tilt and the tip**; where longitude 0 on
+    // the equator stands, turned back by them, gives the spin. Looking straight down the Earth's
+    // axis any tilt would do, and the spin makes up for the one taken.
+    SatelliteScene::ViewAngles SatelliteScene::ViewAngles::Of(const Rotation& fromEarth)
+    {
+        const Direction north = fromEarth.y;
+        const Direction meridian = fromEarth.z;
+        const float tip = -std::asin(std::clamp(north.z, -1.0f, 1.0f));
+        const float tilt = std::atan2(-north.x, north.y);
+        const FloatPoint untilted = rotated({ meridian.x, meridian.y }, -tilt);
+        return {
+            .tilt = tilt,
+            .tip = tip,
+            .spin = std::atan2(untilted.x,
+                untilted.y * std::sin(tip) + meridian.z * std::cos(tip))
+        };
+    }
+
+    // **The view's axes follow the orbit, turned by the drags**, and the Earth turns under it about
+    // its own axis; the angles the pixels are worked out by are read from where the Earth's axes
+    // then stand in the view. See PathArt#satellitescene
     SatelliteScene::Globe SatelliteScene::Globe::OnOrbit(const FloatPoint center,
         const float radius, const double orbits, const View& view)
     {
-        const float around = k_2Pi * fractionOf(orbits) + k_orbitStart + view.alongOrbit;
+        const Rotation axes = view.orbitTurn.after(orbitAxesAt(orbits, view.altitude));
         const float earthTurn = k_2Pi * fractionOf(orbits / k_orbitsPerEarthTurn)
-            + k_earthTurnAtStart + view.earthTurn;
-        const float aroundCosine = std::cos(around);
-        const float aroundSine = std::sin(around);
-        const float behind = std::lerp(k_viewBehind, k_leastViewBehind, view.altitude);
-        const float behindCosine = std::cos(behind);
-        const float behindSine = std::sin(behind);
-        // The screen's three directions among the stars: the orbit in the plane of y and z, its
-        // axis along x, about which the stars stand still.
-        const Direction across = { 0.0f, -aroundCosine, aroundSine };
-        const Direction up = { behindCosine, behindSine * aroundSine, behindSine * aroundCosine };
-        const Direction toward = {
-            -behindSine,
-            behindCosine * aroundSine,
-            behindCosine * aroundCosine
+            + k_earthTurnAtStart;
+        const float turnCosine = std::cos(earthTurn);
+        const float turnSine = std::sin(earthTurn);
+        const auto inView = [&](const Direction& direction) {
+            const auto along = [&](const Direction& axis) {
+                return axis.x * direction.x + axis.y * direction.y + axis.z * direction.z;
+            };
+            return Direction{ along(axes.x), along(axes.y), along(axes.z) };
         };
-        const Direction sun = {
+        const Rotation fromEarth = {
+            .x = inView({ turnCosine, 0.0f, -turnSine }),
+            .y = inView({ 0.0f, 1.0f, 0.0f }),
+            .z = inView({ turnSine, 0.0f, turnCosine })
+        };
+        const ViewAngles angles = ViewAngles::Of(fromEarth);
+        const Direction sun = inView({
             std::cos(k_sunNorth) * std::sin(k_sunAround),
             std::sin(k_sunNorth),
             std::cos(k_sunNorth) * std::cos(k_sunAround)
-        };
-        const auto along = [&](const Direction& axis) {
-            return sun.x * axis.x + sun.y * axis.y + sun.z * axis.z;
-        };
-        const float tilt = std::atan2(aroundCosine, behindSine * aroundSine);
+        });
         // The Sun across and up the screen, turned back by the tilt as a direction is held.
-        const FloatPoint sunOnScreen = rotated({ along(across), along(up) }, -tilt);
+        const FloatPoint sunOnScreen = rotated({ sun.x, sun.y }, -angles.tilt);
         return {
             .center = center,
             .radius = radius,
-            .tilt = tilt,
-            .tip = -std::asin(toward.y),
-            .spin = std::atan2(behindSine, behindCosine * aroundCosine) + earthTurn,
-            .sun = { sunOnScreen.x, sunOnScreen.y, along(toward) }
+            .tilt = angles.tilt,
+            .tip = angles.tip,
+            .spin = angles.spin,
+            .sun = { sunOnScreen.x, sunOnScreen.y, sun.z },
+            .fromEarth = fromEarth
+        };
+    }
+
+    // The orbit runs in the plane of y and z among the stars, about x, and the view looks back
+    // from the satellite away from the horizon, less the higher it stands.
+    SatelliteScene::Rotation SatelliteScene::Globe::orbitAxesAt(const double orbits,
+        const float altitude)
+    {
+        const float around = k_2Pi * fractionOf(orbits) + k_orbitStart;
+        const float aroundCosine = std::cos(around);
+        const float aroundSine = std::sin(around);
+        const float behind = std::lerp(k_viewBehind, k_leastViewBehind, altitude);
+        const float behindCosine = std::cos(behind);
+        const float behindSine = std::sin(behind);
+        return {
+            .x = { 0.0f, -aroundCosine, aroundSine },
+            .y = { behindCosine, behindSine * aroundSine, behindSine * aroundCosine },
+            .z = { -behindSine, behindCosine * aroundSine, behindCosine * aroundCosine }
         };
     }
 
@@ -3077,13 +3163,16 @@ namespace ClaFi::PathArt
         {
             const CloudLayer& layer = k_cloudLayers[i];
             const float radius = globe.radius * (1.0f + layer.height);
-            const float tip = globe.tip - layer.axisTilt * k_degree;
             const float drift = layer.drift * k_degree
                 * std::sin(k_2Pi * cycleTime + layer.driftPhase);
+            // The layer's axis leans off the Earth's by a turn fixed to the Earth.
+            const ViewAngles angles = ViewAngles::Of(globe.fromEarth
+                .after(Rotation::About({ 1.0f, 0.0f, 0.0f }, layer.axisTilt * k_degree))
+                .after(Rotation::About({ 0.0f, 1.0f, 0.0f }, drift)));
             layers[i] = {
                 .map = &(*m_cloudMaps)[i],
-                .sphere = sphereViewOf(toPixels, globe.center, radius, globe.tilt, tip,
-                    globe.spin + drift),
+                .sphere = sphereViewOf(toPixels, globe.center, radius, angles.tilt, angles.tip,
+                    angles.spin),
                 .opacity = layer.opacity * cloudOpacity
             };
             outerRadius = std::max(outerRadius, radius);

@@ -45,15 +45,38 @@ namespace ClaFi::PathArt
 
             // A direction fixed to the Earth, as it stands this frame.
             [[nodiscard]] Direction applied(Direction onEarth) const;
-            // The direction fixed to the Earth that stands this way this frame.
-            [[nodiscard]] Direction undone(Direction seen) const;
+        };
+        // A rotation, as where it takes each of the three axes.
+        struct Rotation
+        {
+            Direction x;
+            Direction y;
+            Direction z;
+
+            // The rotation by `angle` about an axis of length 1, anticlockwise seen from its tip.
+            [[nodiscard]] static Rotation About(Direction axis, float angle);
+            [[nodiscard]] Direction applied(Direction) const;
+            // This rotation, turning after `first`.
+            [[nodiscard]] Rotation after(const Rotation& first) const;
+            // The axes set square and of length 1 again, as rounding wears them with each turn.
+            [[nodiscard]] Rotation orthonormal() const;
+        };
+        // The spin about the Earth's axis, its tip toward the viewer, then the tilt in the screen.
+        struct ViewAngles
+        {
+            float tilt;
+            float tip;
+            float spin;
+
+            // The angles of a turn from the Earth's axes to the view's. See PathArt#satellitescene
+            [[nodiscard]] static ViewAngles Of(const Rotation& fromEarth);
         };
         // Where the view stands besides the orbit, moved by drags and the wheel.
         struct View
         {
-            float alongOrbit; // how much further round its orbit the satellite stands
-            float earthTurn; // how much further the Earth has turned
-            float altitude; // 0 at the lowest, 1 with the whole globe in the frame
+            // How the drags have turned the orbit about the Earth, among the stars and the Sun.
+            Rotation orbitTurn{ { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
+            float altitude{}; // 0 at the lowest, 1 with the whole globe in the frame
         };
         // The Earth as drawn this frame: where it stands, how far it has turned, where the Sun is.
         struct Globe
@@ -64,10 +87,13 @@ namespace ClaFi::PathArt
             float tip; // how far the north pole leans toward the viewer
             float spin;
             Direction sun;
+            Rotation fromEarth; // where the Earth's axes stand in the view
 
             // The Earth as seen after a number of orbits from the start. See PathArt#satellitescene
             [[nodiscard]] static Globe OnOrbit(FloatPoint center, float radius, double orbits,
                 const View&);
+            // Where the view's axes stand among the stars at a point of the orbit, before any drag.
+            [[nodiscard]] static Rotation orbitAxesAt(double orbits, float altitude);
             // The direction to a longitude and latitude in degrees, fixed to the Earth.
             [[nodiscard]] static Direction onEarthAt(FloatPoint lonLat);
             [[nodiscard]] EarthTurn turn() const;

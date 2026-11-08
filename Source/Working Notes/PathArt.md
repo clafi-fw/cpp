@@ -627,14 +627,26 @@ before.
 for the wheel, a glide then the orbit on after a let-go, and for the satellite at the top: "shrink
 and move".
 
-- A drag solves the two moves the polar orbit allows - along the orbit, and the Earth's turn under
-  it - for the ground under a point held in the view: the frame's middle at 72 percent of its height
-  low down, the globe's middle with the whole globe in view. The screen motion of a 0.001 radian
-  step of each, taken through OnOrbit, makes a 2 by 2 least-squares system, damped by (0.05 R)
-  squared. Over a pole the Earth's turn moves that ground in a circle about it, and the damping
-  keeps the drag from spinning it. With time held still the held ground moved 21 pixels a frame for
-  a drag of 20, and 10 for 10 up and down; ground nearer the horizon moves less, as the globe curves
-  away.
+- The first drag solved the two moves the polar orbit allows - along the orbit, and the Earth's turn
+  under it - for the ground under a point held in the view, damped by (0.05 R) squared. Over a pole
+  the Earth's turn only spins the ground about it, and Oj: "Vertical drag from a pole refuses to
+  move that pole and only rotates the globe around. The poles shouldn't affect the drag behavior at
+  all". The drag is now a turn of the orbit as a whole, among the stars: the ground under the held
+  point - the frame's middle at 72 percent of its height low down, the globe's middle with the whole
+  globe in view - turns onto where the drag takes it, about the axis square to both, as a trackball
+  turns. The view keeps following its orbit, so the ground still flows across the screen afterwards,
+  along the turned orbit, and the Sun keeps its place among the stars. A turn of the Earth itself
+  was the other way: it would have tipped the Earth's axis toward or away from the Sun. With time
+  held still the held ground moved 20 pixels a frame for a drag of 20 and 10 for 10 at the lowest
+  view, and 4 for 4 a frame with the whole globe in view while a pole crossed the middle.
+- The view's angles were worked out from the polar orbit's own formulas; they are now read from
+  where the Earth's axes stand in the view (ViewAngles::Of), which gives the same rotation for any
+  orbit - checked in double precision against the old formulas over 2000 random views - and holds
+  looking straight down the Earth's axis, where any tilt does and the spin makes up for it. The
+  clouds leaned by an offset to that tip, which would jump there as the tilt does; each layer now
+  leans by a turn fixed to the Earth. Frames while a pole crossed the middle changed by at most 2.67
+  against 2.11 on average, and after drags, with time running on, by at most 0.21 to 0.65 in three
+  runs, under twice their means.
 - The night was one linear gradient through a straight line fitted to the terminator at two rows of
   the frame, true enough on the small cap of the lowest view and wrong for a whole globe, where the
   terminator is half an ellipse. It is now worked out per pixel from the sunlight on the sphere, 8

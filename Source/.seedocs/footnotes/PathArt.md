@@ -356,12 +356,12 @@ straight down 36 degrees from the satellite, away from the horizon. It is turned
 own axes by the spin about the axis, then the tip of the axis toward the viewer, then the tilt in
 the screen, each worked out from the orbit.
 
-**A drag carries the ground under the middle of the view with the pointer.** Sideways it moves the
-satellite along its orbit, so the day and the night move with it; up and down it turns the Earth
-under the track. Each is worked out from how far a small step of it moves that ground on the screen,
-and the two are solved for the drag together, a little damped, so over a pole, where turning the
-Earth hardly moves the ground, a drag does not spin it. The orbit runs on from where the view is
-left.
+**A drag turns the globe the way the pointer goes, as a hand turns a ball**: the ground under the
+middle of the view moves where the drag takes it, about the axis square to both, wherever the poles
+stand. The turn is the orbit's, about the Earth and among the stars, so the satellite flies on along
+the turned orbit with its track still across the screen. The Sun stands where it stood, so the day
+and the night come along with the ground. Each layer of cloud leans off the Earth's axis by a turn
+fixed to the Earth.
 
 **The wheel climbs above the globe**, a tenth of the way a notch, from the lowest view to the whole
 globe in the middle of the frame. The globe's radius shrinks by the same share at each step, from
