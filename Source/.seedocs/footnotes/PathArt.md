@@ -323,10 +323,12 @@ The city lights come on past the terminator - see SatelliteScene Terminator - an
 along the limb is blue by day, orange at dusk and dark at night, by the sunlight above each point of
 it: three rings, each fading out to both sides.
 
-**The 1200 towns are placed by the land's map.** Until it is built they stand anywhere on the land
-up to 62 degrees north. Then each is tried at a random point of the land and kept by a weight:
-highest on low ground near a coast, and thinning with height, in the deep desert, in the tundra and
-a little in the northern forest. Greenland's ice has none. The towns are the same on every run.
+**The towns are placed by the land's map.** Until it is built, 1200 stand anywhere on the land up
+to 62 degrees north. Then 1200 are tried at random points of the land and 4800 at random points of
+the coastline, a little inland, each kept by a weight: highest on low ground, and thinning with
+height, in the deep desert, in the tundra and a little in the northern forest. The towns over the
+land thin away from the coast as well. Greenland's ice has none. About one town in 28 glows. The
+towns are the same on every run.
 
 **Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks -
 see CloudKind. Each is a map on a sphere of its own, 0.6, 1.1 and 1.8 hundredths of the Earth's

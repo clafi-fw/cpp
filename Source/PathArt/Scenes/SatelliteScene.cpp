@@ -70,6 +70,8 @@ namespace ClaFi::PathArt
         constexpr float k_lively{ 6.0f };
         // How many opacities the city lights are drawn in, one fill each on Direct2D.
         constexpr int k_cityOpacitySteps{ 6 };
+        // The brightness above which a town glows: about one town in 28, some 220 of 6000.
+        constexpr float k_glowingBrightness{ 0.964f };
         // How far apart the points are where a shape's edge follows the rim.
         constexpr float k_rimStep{ 2.0f * k_degree };
         // How far a point of cloud faces the viewer when it starts fading into the haze.
@@ -252,7 +254,10 @@ namespace ClaFi::PathArt
         constexpr float k_townGridNorth{ 85.0f }; // the latitude its first row starts at
         constexpr int k_townGridColumns{ 1440 }; // round the whole circle of latitude
         constexpr int k_townGridRows{ 380 }; // down to 10 degrees south
-        constexpr int k_townCount{ 1200 };
+        constexpr float k_townSouth{ -10.0f }; // the latitudes the towns are tried between
+        constexpr float k_townNorth{ 72.0f };
+        constexpr int k_landTownCount{ 1200 }; // tried over the land
+        constexpr int k_coastlineTownCount{ 4800 }; // tried on the coastline itself
 
         // Whether an outline is Greenland's, by where the middle of its points lies.
         [[nodiscard]] bool isGreenland(const std::span<const FloatPoint> outline)
@@ -381,14 +386,44 @@ namespace ClaFi::PathArt
             return distances;
         }
 
-        // A point to try a town at, as likely anywhere from 10 degrees south to 72 north.
+        // A point to try a town at, as likely anywhere between the towns' latitudes.
         [[nodiscard]] FloatPoint townSiteAt(const int seed)
         {
             const float longitude = -180.0f + 360.0f * pseudoRandom(seed, 71.0f);
-            const float southSine = std::sin(-10.0f * k_degree);
-            const float northSine = std::sin(72.0f * k_degree);
+            const float southSine = std::sin(k_townSouth * k_degree);
+            const float northSine = std::sin(k_townNorth * k_degree);
             const float sine = std::lerp(southSine, northSine, pseudoRandom(seed, 72.0f));
             return { longitude, std::asin(sine) / k_degree };
+        }
+
+        // **A point on the coastline to try a town at**, about as likely anywhere along it, as the
+        // outlines' points stand about evenly apart. It is moved 0.03 to 0.12 degrees of arc
+        // inland, to the left of the way the outline runs, so its light stands on the land.
+        [[nodiscard]] FloatPoint coastlineSiteAt(
+            const std::span<const std::span<const FloatPoint>> outlines,
+            const std::size_t pointCount, const int seed)
+        {
+            const float picked = pseudoRandom(seed, 81.0f) * static_cast<float>(pointCount);
+            std::size_t point = std::min(pointCount - 1, static_cast<std::size_t>(picked));
+            std::size_t outlineIndex = 0;
+            while (point >= outlines[outlineIndex].size())
+            {
+                point -= outlines[outlineIndex].size();
+                ++outlineIndex;
+            }
+            const std::span<const FloatPoint> outline = outlines[outlineIndex];
+            const FloatPoint from = outline[point];
+            const FloatPoint to = outline[point + 1 == outline.size() ? 0 : point + 1];
+            // The edge in degrees of arc, a degree of longitude shortened by the latitude's cosine.
+            const float across = std::cos(from.y * k_degree);
+            const FloatPoint along = { (to.x - from.x) * across, to.y - from.y };
+            const float inland = std::lerp(0.03f, 0.12f, pseudoRandom(seed, 82.0f))
+                / std::hypot(along.x, along.y);
+            const float share = pseudoRandom(seed, 83.0f);
+            return {
+                from.x + (to.x - from.x) * share - along.y * inland / across,
+                from.y + (to.y - from.y) * share + along.x * inland
+            };
         }
 
         // Where the globe stands in a frame.
@@ -2042,11 +2077,6 @@ namespace ClaFi::PathArt
         };
     }
 
-    SatelliteScene::Direction SatelliteScene::Globe::surfaceAt(const FloatPoint lonLat) const
-    {
-        return turn().applied(onEarthAt(lonLat));
-    }
-
     FloatPoint SatelliteScene::Globe::onScreen(const Direction direction) const
     {
         return toScreen().transform({ direction.x, direction.y });
@@ -2281,39 +2311,46 @@ namespace ClaFi::PathArt
         }
         const std::vector<std::uint8_t> land = landCellsOf(inhabited);
         std::vector<City> towns;
-        for (int seed = 5001; std::ssize(towns) != k_townCount; ++seed)
+        for (int seed = 5001; std::ssize(towns) != k_landTownCount; ++seed)
         {
             const FloatPoint site = townSiteAt(seed);
             const std::optional<std::size_t> cell = townCellAt(site);
             if (site.y > 62.0f || !cell || land[*cell] == 0)
                 continue;
-            towns.push_back({ .lonLat = site, .brightness = pseudoRandom(seed, 73.0f) });
+            towns.push_back({
+                .onEarth = Globe::onEarthAt(site),
+                .brightness = pseudoRandom(seed, 73.0f)
+            });
         }
         return towns;
     }
 
-    // **Each site on land is kept by a weight the land's map gives it**: highest on low ground
-    // near a coast, and thinning with height, in the deep desert, in the tundra and a little in
-    // the northern forest. The ice sheet is left out, though its coast counts. The sites are read
-    // from the map 8 at a time, as it reads 8 points at once. See PathArt#satellitescene
+    // **Each site is kept by a weight the land's map gives it**: highest on low ground, and
+    // thinning with height, in the deep desert, in the tundra and a little in the northern forest.
+    // The sites over the land weigh more the nearer they are to a coast; those on the coastline
+    // weigh the most. The ice sheet has none, though its coast counts. The sites are read from the
+    // map 8 at a time, as it reads 8 points at once. See PathArt#satellitescene
     std::vector<SatelliteScene::City> SatelliteScene::townsBy(const EarthMap& map,
         const std::span<const Coastline> coastlines)
     {
         std::vector<std::span<const FloatPoint>> outlines;
         std::vector<std::span<const FloatPoint>> inhabited;
+        std::size_t inhabitedPointCount = 0;
         for (const Coastline& coastline : coastlines)
         {
             outlines.push_back(coastline.lonLat);
-            if (!coastline.iceSheet)
-                inhabited.push_back(coastline.lonLat);
+            if (coastline.iceSheet)
+                continue;
+            inhabited.push_back(coastline.lonLat);
+            inhabitedPointCount += coastline.lonLat.size();
         }
         const std::vector<std::uint8_t> land = landCellsOf(inhabited);
         const std::vector<float> coastDistances = coastDistancesOf(outlines);
-        // A site tried for a town, and the seed it came from.
+        // A site tried for a town, how much its nearness to a coast weighs, and its seed.
         struct Site
         {
             FloatPoint lonLat;
-            std::size_t cell;
+            float coastWeight;
             int seed;
         };
         std::array<Site, 8> sites{};
@@ -2330,51 +2367,67 @@ namespace ClaFi::PathArt
         std::array<float, 8> forest{};
         std::array<float, 8> tundra{};
         std::vector<City> towns;
-        int seed = 5001;
-        while (std::ssize(towns) != k_townCount)
-        {
-            for (std::size_t gathered = 0; gathered != sites.size(); ++seed)
+        // Tries the sites `siteAt` gives from seed `firstSeed` on, until `count` more towns stand.
+        const auto placeTowns = [&](int count, int firstSeed, const auto& siteAt) {
+            const std::size_t end = towns.size() + static_cast<std::size_t>(count);
+            int seed = firstSeed;
+            while (towns.size() != end)
             {
-                const FloatPoint site = townSiteAt(seed);
-                const std::optional<std::size_t> cell = townCellAt(site);
-                if (!cell || land[*cell] == 0)
-                    continue;
-                sites[gathered] = { .lonLat = site, .cell = *cell, .seed = seed };
-                longitudes[gathered] = site.x * k_degree;
-                latitudes[gathered] = site.y * k_degree;
-                ++gathered;
-            }
-            map.readLand(MapQuery{
-                .longitudes = longitudes,
-                .latitudes = latitudes,
-                .longitudeSpans = spans,
-                .latitudeSpans = spans
-            }, Relief::Broad, LandPoints{
-                .heights = heights,
-                .slopesEast = slopesEast,
-                .slopesNorth = slopesNorth,
-                .variation = variation,
-                .dryness = dryness,
-                .forest = forest,
-                .tundra = tundra
-            });
-            for (std::size_t i = 0; i != sites.size() && std::ssize(towns) != k_townCount; ++i)
-            {
-                const float highGround = smoothStep(0.06f, 0.3f, heights[i]);
-                const float nearCoast = std::exp(-coastDistances[sites[i].cell] / 2.5f);
-                const float weight = (1.0f - highGround)
-                    * (1.0f - 0.92f * smoothStep(0.4f, 0.8f, dryness[i]))
-                    * (1.0f - smoothStep(0.2f, 0.8f, tundra[i]))
-                    * (1.0f - 0.55f * forest[i])
-                    * (0.22f + 0.78f * nearCoast);
-                if (pseudoRandom(sites[i].seed, 74.0f) > weight)
-                    continue;
-                towns.push_back({
-                    .lonLat = sites[i].lonLat,
-                    .brightness = pseudoRandom(sites[i].seed, 73.0f)
+                for (std::size_t gathered = 0; gathered != sites.size(); ++seed)
+                {
+                    const std::optional<Site> site = siteAt(seed);
+                    if (!site)
+                        continue;
+                    sites[gathered] = *site;
+                    longitudes[gathered] = site->lonLat.x * k_degree;
+                    latitudes[gathered] = site->lonLat.y * k_degree;
+                    ++gathered;
+                }
+                map.readLand(MapQuery{
+                    .longitudes = longitudes,
+                    .latitudes = latitudes,
+                    .longitudeSpans = spans,
+                    .latitudeSpans = spans
+                }, Relief::Broad, LandPoints{
+                    .heights = heights,
+                    .slopesEast = slopesEast,
+                    .slopesNorth = slopesNorth,
+                    .variation = variation,
+                    .dryness = dryness,
+                    .forest = forest,
+                    .tundra = tundra
                 });
+                for (std::size_t i = 0; i != sites.size() && towns.size() != end; ++i)
+                {
+                    const float highGround = smoothStep(0.06f, 0.3f, heights[i]);
+                    const float weight = (1.0f - highGround)
+                        * (1.0f - 0.92f * smoothStep(0.4f, 0.8f, dryness[i]))
+                        * (1.0f - smoothStep(0.2f, 0.8f, tundra[i]))
+                        * (1.0f - 0.55f * forest[i])
+                        * sites[i].coastWeight;
+                    if (pseudoRandom(sites[i].seed, 74.0f) > weight)
+                        continue;
+                    towns.push_back({
+                        .onEarth = Globe::onEarthAt(sites[i].lonLat),
+                        .brightness = pseudoRandom(sites[i].seed, 73.0f)
+                    });
+                }
             }
-        }
+        };
+        placeTowns(k_landTownCount, 5001, [&](int seed) -> std::optional<Site> {
+            const FloatPoint lonLat = townSiteAt(seed);
+            const std::optional<std::size_t> cell = townCellAt(lonLat);
+            if (!cell || land[*cell] == 0)
+                return std::nullopt;
+            const float nearCoast = std::exp(-coastDistances[*cell] / 2.5f);
+            return Site{ .lonLat = lonLat, .coastWeight = 0.22f + 0.78f * nearCoast, .seed = seed };
+        });
+        placeTowns(k_coastlineTownCount, 90001, [&](int seed) -> std::optional<Site> {
+            const FloatPoint lonLat = coastlineSiteAt(inhabited, inhabitedPointCount, seed);
+            if (lonLat.y < k_townSouth || lonLat.y > k_townNorth)
+                return std::nullopt;
+            return Site{ .lonLat = lonLat, .coastWeight = 1.0f, .seed = seed };
+        });
         return towns;
     }
 
@@ -2600,14 +2653,16 @@ namespace ClaFi::PathArt
         const Terminator& terminator, const float cycleTime) const
     {
         const float unit = frame.unit;
+        const EarthTurn turn = globe.turn();
+        const Matrix3x2 toScreen = globe.toScreen();
         // The glows go down city by city, and the lights over all of them afterwards.
         std::vector<LitCity> lit;
         for (const City& city : m_cities)
         {
-            const Direction direction = globe.surfaceAt(city.lonLat);
+            const Direction direction = turn.applied(city.onEarth);
             if (direction.z < 0.02f)
                 continue;
-            const FloatPoint point = globe.onScreen(direction);
+            const FloatPoint point = toScreen.transform({ direction.x, direction.y });
             const float margin = 10.0f * unit;
             const bool outside = point.x < -margin || point.x > frame.width + margin
                 || point.y > frame.height + margin;
@@ -2627,7 +2682,7 @@ namespace ClaFi::PathArt
             const float radius = (0.8f + 1.3f * city.brightness) * unit
                 * (0.4f + 0.6f * direction.z);
             lit.push_back({ .at = point, .radius = radius, .step = step });
-            if (city.brightness > 0.82f)
+            if (city.brightness > k_glowingBrightness)
                 drawGlow(frame, point, 7.0f * unit,
                     SatelliteSceneColors::CityGlow.withOpacity(0.45f * strength));
         }

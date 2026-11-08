@@ -544,6 +544,28 @@ warp and grain.
   2.65 at 3436 x 2051; banded 0.48 and 1.94, against 0.47 and 1.61 with the old polygons. Whole
   frames come out about even with the old polygons on the container's 2 cores.
 
+**Most towns stand on the coastline** (2026-11-08). Oj, of the towns placed by the land map:
+"Doesn't look like there more towns density on the coastlines". Measured: land within half a degree
+of a coast held 2.2 times the average density of towns, and 2 to 3 degrees inland still the
+average. The coast weight fell off over 2.5 degrees, and nearly all of Europe lies within 3 degrees
+of a coast; with 1200 towns a view of Europe holds about 60, too few to trace a coast.
+
+- A sharper weight alone - falling off over 0.35 degrees - put half of all towns within half a
+  degree of a coast, 4.9 times the average, and still drew no coastline. 2400 or 3600 towns at that
+  weight began to. Oj: "put more towns on the exact coastline".
+- A coastline town is tried at a random point of an outline, picked by point, as the points stand
+  about 0.1 degree apart, and moved 0.03 to 0.12 degrees of arc inland: to the left of the way the
+  outline runs, which is the land for a coast and for the Caspian alike. It takes the land map's
+  weight without the coast's, from seed 90001 on; sites outside 10 south to 72 north are tried
+  again. Of the mockups - 1200 land towns plus 1200, 2400 or 4800 on the coastline, and 800 plus
+  4800 - Oj picked 1200 plus 4800.
+- With the old share of glows, 18 percent above a brightness of 0.82, the extra glows ran together
+  into blobs that hid the coast. A town glows above 0.964, about 220 of 6000, as many as before.
+- Each town keeps its direction fixed to the Earth and is turned and projected as the coasts are.
+  City lights a frame on the container, 1200 towns before against 6000 now: 2296 x 1198, 0.29 and
+  0.60 to 0.65 ms; 3436 x 2051, 0.41 and 0.94 to 1.02. Turning each town from its longitude and
+  latitude, as the mockup did, cost 0.3 ms more; the rest is drawing the lights in view.
+
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the
 Sun, so through the shadow they show their backs, which were one flat gray (Oj, 2026-11-07, "one

@@ -55,8 +55,6 @@ namespace ClaFi::PathArt
             // The direction to a longitude and latitude in degrees, fixed to the Earth.
             [[nodiscard]] static Direction onEarthAt(FloatPoint lonLat);
             [[nodiscard]] EarthTurn turn() const;
-            // The point at a longitude and latitude, in degrees.
-            [[nodiscard]] Direction surfaceAt(FloatPoint lonLat) const;
             [[nodiscard]] FloatPoint onScreen(Direction) const;
             // The map from a direction's x and y to the screen.
             [[nodiscard]] Graphics::Matrix3x2 toScreen() const;
@@ -88,7 +86,7 @@ namespace ClaFi::PathArt
         };
         struct City
         {
-            FloatPoint lonLat;
+            Direction onEarth; // where it stands, fixed to the Earth
             float brightness;
         };
         // The coastlines and the towns spread evenly over them, built together off the paint.
