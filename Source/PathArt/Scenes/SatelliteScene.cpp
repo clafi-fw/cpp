@@ -123,6 +123,10 @@ namespace ClaFi::PathArt
         constexpr float k_nightSunlightSpan{ 0.16f };
         // The moonlight's share of the night over the ground: deep in it, an eighth of the view.
         constexpr float k_moonlitShareOfNight{ 0.125f / 0.9f };
+        // How long the globe holds still after the viewer last touched the view, in seconds.
+        constexpr double k_heldStill{ 5.0 };
+        // How long its motion then takes to come back to full speed, in seconds.
+        constexpr double k_easeBack{ 2.0 };
         // The globe's radius in pixels from which the land is worked out every 4th pixel.
         constexpr float k_coarseRadius{ 3200.0f };
         // The globe's radius in pixels from which the land is worked out every 2nd pixel.
@@ -496,6 +500,19 @@ namespace ClaFi::PathArt
         [[nodiscard]] float fractionOf(const double count)
         {
             return static_cast<float>(count - std::floor(count));
+        }
+
+        // **How long the globe has stood still by `since` seconds after the viewer last touched
+        // the view**: wholly for k_heldStill, then less and less as its motion eases back to full
+        // speed over k_easeBack, by a smooth step.
+        [[nodiscard]] double stillTimeBy(const double since)
+        {
+            if (since <= k_heldStill)
+                return since;
+            if (since >= k_heldStill + k_easeBack)
+                return k_heldStill + 0.5 * k_easeBack;
+            const double eased = (since - k_heldStill) / k_easeBack;
+            return since - k_easeBack * eased * eased * eased * (1.0 - 0.5 * eased);
         }
 
         // **Where the globe stands in a frame at an altitude**: at the lowest a cap shows, and at
@@ -2457,9 +2474,12 @@ namespace ClaFi::PathArt
         const float altitude = m_view.altitude;
         const GlobeDisc globeDisc = globeDiscAt(width, height, altitude);
         const float radius = globeDisc.radius;
-        // The orbit runs on through the cycles, so it never comes round.
+        // The orbit runs on through the cycles, so it never comes round, and the globe's motion
+        // runs behind the scene's time by as long as it has stood still.
         const double cycles = static_cast<double>(time.cyclesPassed) + time.cycleTime;
-        const double orbits = cycles * std::chrono::duration<double>{ k_cycle } / k_orbit;
+        const double cycleSeconds = std::chrono::duration<double>{ k_cycle }.count();
+        const double globeCycles = cycles - stillSecondsAt(cycles * cycleSeconds) / cycleSeconds;
+        const double orbits = globeCycles * std::chrono::duration<double>{ k_cycle } / k_orbit;
         m_shownOrbits = orbits;
         const Globe globe = Globe::OnOrbit(globeDisc.center, radius, orbits, m_view);
 
@@ -2532,7 +2552,7 @@ namespace ClaFi::PathArt
         }
         drawCityLights(frame, globe, time.cycleTime);
         frame.canvas.popClip();
-        drawClouds(frame, globe, time.cycleTime);
+        drawClouds(frame, globe, fractionOf(globeCycles));
         drawAtmosphere(frame, globe);
 
         const float size = unit * std::min(1.0f, (width / unit) / 900.0f) * satelliteShare;
@@ -2589,12 +2609,21 @@ namespace ClaFi::PathArt
             square.z / squareLength
         });
         m_view.orbitTurn = m_view.orbitTurn.after(Rotation::About(axis, -angle)).orthonormal();
+        m_viewTouched = true;
     }
 
     // A notch away from the screen comes down, as the wheel zooms in.
     void SatelliteScene::scrollView(const float notches)
     {
         m_view.altitude = std::clamp(m_view.altitude - notches * k_altitudePerNotch, 0.0f, 1.0f);
+        m_viewTouched = true;
+    }
+
+    // A press holds the globe still, and its let-go starts the time it holds still for after.
+    void SatelliteScene::holdView(const bool held)
+    {
+        m_viewHeld = held;
+        m_viewTouched = true;
     }
 
     // The Earth spins about its axis, and then tips its north pole toward the viewer.
@@ -3563,6 +3592,30 @@ namespace ClaFi::PathArt
         drawRing(globe.radius * 1.012f, globe.radius * 0.02f, 0.3f);
         drawRing(globe.radius * 1.001f, std::max(globe.radius * 0.005f, 2.5f * frame.unit), 1.0f);
         drawRing(globe.radius * 0.988f, globe.radius * 0.016f, 0.34f);
+    }
+
+    // **The globe holds still while the viewer has the view**: from a press, a drag, a glide or a
+    // wheel notch until k_heldStill seconds after the last, then its motion eases back over
+    // k_easeBack. A frame the view was touched before counts the time since the last frame whole;
+    // after, the time is counted exactly however far apart the frames fall.
+    double SatelliteScene::stillSecondsAt(const double sceneSeconds)
+    {
+        const double elapsed = m_lastFrameAt
+            ? std::max(sceneSeconds - *m_lastFrameAt, 0.0)
+            : 0.0;
+        m_lastFrameAt = sceneSeconds;
+        if (m_viewHeld || m_viewTouched)
+        {
+            m_stillSeconds += elapsed;
+            m_lastTouchAt = sceneSeconds;
+            m_viewTouched = false;
+        }
+        else if (m_lastTouchAt)
+        {
+            const double since = std::max(sceneSeconds - *m_lastTouchAt, 0.0);
+            m_stillSeconds += stillTimeBy(since) - stillTimeBy(std::max(since - elapsed, 0.0));
+        }
+        return m_stillSeconds;
     }
 
 }

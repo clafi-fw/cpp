@@ -320,6 +320,8 @@ void ScenePanel::showScene(PathArt::Scene& scene, const FloatRect& bounds)
 {
     if (m_scene != &scene)
     {
+        if (m_scene && m_dragPos)
+            m_scene->holdView(false);
         m_dragPos.reset();
         m_dragSteps.clear();
         m_glideSpeed = {};
@@ -361,7 +363,7 @@ void ScenePanel::paintSurface(PaintEvent& event)
     emitEvent(event);
 }
 
-// A press stops a glide, as a hand stops a spinning globe.
+// A press stops a glide, as a hand stops a spinning globe, and holds the view until let go.
 void ScenePanel::nestedPressDown(PressDownEvent& event)
 {
     Panel::nestedPressDown(event);
@@ -370,6 +372,7 @@ void ScenePanel::nestedPressDown(PressDownEvent& event)
     m_dragPos = event.clickPos();
     m_dragSteps.clear();
     m_glideSpeed = {};
+    m_scene->holdView(true);
 }
 
 void ScenePanel::nestedDrag(DragEvent& event)
@@ -399,6 +402,7 @@ void ScenePanel::nestedPressUp(PressUpEvent& event)
     if (!m_dragPos)
         return;
     m_dragPos.reset();
+    m_scene->holdView(false);
     const Diagnostic::TimePoint now = Diagnostic::Clock::now();
     FloatPoint moved = {};
     std::optional<Diagnostic::TimePoint> firstAt{};

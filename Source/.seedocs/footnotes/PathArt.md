@@ -69,9 +69,18 @@ and how it moves is the scene's own: the Satellite turns its globe and climbs ab
 SatelliteScene. A scene that offers none leaves both as they are.
 
 **The MillScene showcase hands them on from the panel the scene covers.** A press stops what moves
-the view. A drag let go glides on at the speed of its last 80 milliseconds and slows to about a
-third of it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second.
-Another scene shown stops both. Each scene keeps its view while the showcase runs.
+the view and holds it until it is let go - see Scene holdView. A drag let go glides on at the speed
+of its last 80 milliseconds and slows to about a third of it every 0.35 seconds, and the wheel's
+notches come in over about a tenth of a second. Another scene shown stops both. Each scene keeps its
+view while the showcase runs.
+
+## Scene holdView
+
+**A press holds the view until it is let go.** The host calls holdView(true) as a press comes down
+on the scene and holdView(false) as it is let go, so a scene can keep its own motion still while the
+viewer has the view - the Satellite holds its globe, see SatelliteScene. A drag and the wheel reach
+the scene as dragView() and scrollView(); a press held still reaches it only here. A scene that
+offers no view is never told.
 
 ## SceneTime
 
@@ -381,6 +390,12 @@ to 1, never quite down the Earth's axis. The satellite draws smaller toward the 
 the globe's way, and what is drawn on the globe at a fixed size - the sea's glint, the city lights -
 shrinks with it. The space is kept as a layer at the lowest altitude - see SceneLayer - and drawn
 live above it; so is the ocean until the land's map is built.
+
+**The globe holds still while the viewer has the view**: from a press, a drag and its glide, or a
+wheel notch, until 5 seconds after the last. Then the orbit, the Earth's turn, the sky's drift and
+the clouds ease back to full speed over 2 seconds, and the globe moves on from where it was left.
+The satellite goes on hovering and blinking, and the stars and the city lights twinkling. The time
+is the scene's, so a paused scene holds the count as well.
 
 **The Sun stands fixed among the stars**, and so does the orbit's plane, so each orbit passes a day
 of about two minutes and a night. In the Earth's shadow the satellite darkens and the stars

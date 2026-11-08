@@ -63,6 +63,15 @@ is turned into angles at the altitude it is made at. The glide and the easing of
 the host, so the scene keeps no clock: ScenePanel runs both on the time between frames, which a
 paused scene still has.
 
+**A press tells the scene it holds the view** (Oj, 2026-11-09, "you press and hold, you zooming in
+and out, you dragging - means that you are in control now and the globe should not move for a
+while"). A press held still reached the scene as nothing, so the scene could not tell it was held.
+Of a virtual on Scene - holdView(bool), the scene holding what it chooses - and the host freezing
+the scene's time, which would have stopped the satellite's lights and the stars' twinkle with the
+globe, Oj picked the virtual. Its parameter is unnamed in Scene, as dragView's and scrollView's are,
+for the empty body's sake; SatelliteScene names it `held`. ScenePanel calls it on a press and its
+let-go, and lets go of a scene shown away from while held.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.
@@ -769,6 +778,23 @@ picked a tenth: the ground's share is as it was, and each stop of the night over
 toward the moonlight by 0.125 / 0.9, so deep in the night, at 0.9 of opacity, the moonlight is an
 eighth of the view. The moonlight is the colour the night clouds already take, renamed from
 MoonlitCloud to Moonlight; the clouds are unchanged, and the stylized look takes the same night.
+
+**The globe holds still while the viewer has it** (2026-11-09). Oj picked 5 seconds after the last
+touch, with the motion easing back over 2. The scene keeps how long the globe has stood still, in
+its own time, and its motion - the orbit, the Earth's turn, the sky's drift, the panels' turn, the
+clouds' drift - runs that far behind the scene's time; the hovering, the blinking and the twinkling
+run on the scene's time as before. A frame after a touch counts the time since the frame before as
+still whole. After the last touch the stillness grows by the integral of 1 less the smooth step
+between the frames, so it comes out the same however far apart the frames fall, and the motion eases
+in with no jump in place or speed. Untouched, the stillness is 0 and every frame is bit for bit the
+one before the change, which the harness confirmed at three times and for all the other scenes.
+
+Measured in the harness at 320 x 180, 30 frames a second, as the mean change of the ground's pixels
+from one frame to the next, second by second - before against now: a wheel at 0 s, 0.72 to 0.79
+after the zoom against 0.00 from 1 to 5 s, 0.02 and 0.42 easing, 0.84 to 0.88 after; a press held
+from 0 to 3 s, 0.00 to 8 s, 0.18 and 0.75 easing, 0.93 after; a drag for 1 s and its glide, 0.00
+from 3 to 7 s after the glide stopped, 0.26 and 0.66 easing. The harness's view script gained "t0 t1
+hold" and calls holdView on its drags as the panel does.
 
 ## ChaseScene
 

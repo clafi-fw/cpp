@@ -57,6 +57,8 @@ namespace ClaFi::PathArt
         virtual void dragView(FloatPoint, const FloatRect&) {}
         // Moves the view by wheel notches, counted as MouseWheelEvent counts them.
         virtual void scrollView(float) {}
+        // A press holds the view (true), or lets it go (false). See PathArt
+        virtual void holdView(bool) {}
     private:
         // The cycle a scene runs through unless it states its own.
         static constexpr std::chrono::seconds k_cycle{ 40 };

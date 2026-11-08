@@ -27,6 +27,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] bool offersView() const override { return true; }
         void dragView(FloatPoint by, const FloatRect& bounds) override;
         void scrollView(float notches) override;
+        void holdView(bool held) override;
     private:
         // A direction from the Earth's center: x across the screen, y up it, z toward the viewer.
         struct Direction
@@ -164,6 +165,8 @@ namespace ClaFi::PathArt
         static void drawAtmosphere(const SceneFrame&, const Globe&);
         // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
+        // How long the globe has stood still by a frame, while the viewer had the view.
+        [[nodiscard]] double stillSecondsAt(double sceneSeconds);
     private:
         // The twinkling, blinking and cloud drift come round each cycle; the orbit never does.
         static constexpr std::chrono::seconds k_cycle{ 240 };
@@ -189,5 +192,11 @@ namespace ClaFi::PathArt
         View m_view{};
         // The orbits the last frame was drawn after, which a drag moves the view from.
         double m_shownOrbits{};
+        bool m_viewHeld{}; // by a press
+        bool m_viewTouched{}; // held, dragged or scrolled since the last frame
+        std::optional<double> m_lastTouchAt{}; // in seconds of the scene's time
+        std::optional<double> m_lastFrameAt{}; // likewise
+        // How long the globe has stood still in all, which its motion runs that far behind.
+        double m_stillSeconds{};
     };
 }
