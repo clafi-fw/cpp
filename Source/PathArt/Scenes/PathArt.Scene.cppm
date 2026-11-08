@@ -18,6 +18,13 @@ namespace ClaFi::PathArt
         bool operator==(const SceneParams&) const = default;
     };
 
+    // How a scene that offers a choice of looks is drawn. See PathArt#scenelook
+    export enum class SceneLook
+    {
+        Stylized,   // flat shapes in a few tones
+        Realistic   // soft shading, the way a photograph shows it
+    };
+
     // A picture that moves through a cycle and starts it again without a seam. See PathArt
     export class Scene
     {
@@ -32,8 +39,14 @@ namespace ClaFi::PathArt
         virtual void prepare(const SceneParams&) {}
         // The scene at `cycleTime` of its cycle, 0 to 1, into bounds. See PathArt
         virtual void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) = 0;
+        // Whether the scene draws differently in each look, so a choice of them is worth offering.
+        [[nodiscard]] virtual bool offersLooks() const { return false; }
+        // The look the scene is drawn in, where it offers looks. See PathArt#scenelook
+        [[nodiscard]] SceneLook look() const { return m_look; }
+        void setLook(SceneLook look) { m_look = look; }
     private:
         // The cycle a scene runs through unless it states its own.
         static constexpr std::chrono::seconds k_cycle{ 40 };
+        SceneLook m_look{ SceneLook::Stylized };
     };
 }

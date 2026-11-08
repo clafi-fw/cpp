@@ -64,7 +64,12 @@ namespace ClaFi::PathArt
     // The part of `value` past its whole number, 0 to 1 for negative values too.
     export [[nodiscard]] float fractionalPart(float value);
     // 0 below edge0, 1 above edge1 and an S-curve between; edge1 below edge0 runs the other way.
-    export [[nodiscard]] float smoothStep(float edge0, float edge1, float value);
+    export [[nodiscard]] constexpr float smoothStep(const float edge0, const float edge1,
+        const float value)
+    {
+        const float share = std::clamp((value - edge0) / (edge1 - edge0), 0.0f, 1.0f);
+        return share * share * (3.0f - 2.0f * share);
+    }
     // A bell, 1 at `center`, falling to a third at `width` either side.
     export [[nodiscard]] float bump(float value, float center, float width);
     export [[nodiscard]] FloatPoint rotated(FloatPoint, float angle);
@@ -78,6 +83,8 @@ namespace ClaFi::PathArt
     // A limb from `root` toward `target`, its end held within reach. See PathArt
     export [[nodiscard]] Limb reachToward(FloatPoint root, FloatPoint target, float upperLength,
         float lowerLength, BendToward);
+    // Runs `job` for every index below `count`, spread over the processor's cores. See PathArt
+    export void spreadOverCores(int count, const std::function<void(int)>& job);
 
     // An ellipse appended to the path, where PixelPath::drawEllipse starts a path of its own.
     export void addEllipse(PixelPath&, FloatPoint center, float radiusX, float radiusY);

@@ -47,6 +47,17 @@ MillScene showcase prepares on the first frame drawn at an unchanged size.
 What a scene's frames depend on besides the cycle time: the bounds it is drawn into, the canvas's
 transform from the bounds' coordinates to pixels, and the backend that draws them.
 
+## SceneLook
+
+How a scene that offers a choice of looks draws itself. Stylized is the flat drawing every scene
+has; Realistic shades what it can the way a photograph shows it. A scene answers offersLooks() true
+when the two differ for it - today the Satellite, whose clouds they change - and draws in the look
+setLook() last named from its next frame on. A scene that offers no looks keeps the value and
+draws as it always does.
+
+The MillScene showcase offers the looks in a section of its Scene page captioned with the scene's
+name, shown only while that scene is the picked one, and keeps the pick under SceneLook.
+
 ## SceneFrame
 
 The shorter side of the frame is 600 units, and `unit` is the pixels in one. width and height
@@ -104,6 +115,28 @@ there a layer draws its part live.
 **A path clip does not reach the kept pixels.** They are laid in as drawBitmap lays a bitmap, which
 on the CPU backend stops at the clip's rectangle only.
 
+## CloudKind
+
+What a cloud map's clouds look like:
+
+- **Puffy** - heaps of cumulus, bunched into fields with clear sky between and lit unevenly inside.
+- **Patchy** - broad sheets of stratus with soft edges, curling where the noise is warped.
+- **Streaky** - thin streaks of cirrus along the circles of latitude, gathered into broad bands.
+
+## CloudMap
+
+How much cloud lies over each point of a sphere, 0 to 1, kept at 2048 points round each circle of
+latitude and 1024 from pole to pole. A map is cut from noise sampled on the sphere itself, so it
+has no seam where the longitudes meet and no pinch at the poles. The cut is set so that the share
+`cover` of its points holds cloud. One kind, seed and cover always make the same map.
+
+**A map takes about a second of processor time to build**, spread over all the cores. Build it
+off the paint.
+
+**readCover() blends the four nearest points** of the map, wrapping round the longitudes any number
+of turns either way and stopping at the poles. It works through eight points at a time with AVX2,
+and several threads may call it at once.
+
 ## reachToward
 
 Bends a two-part limb so that its end reaches `target`, by the law of cosines.
@@ -119,6 +152,13 @@ The spin of a falling flake or leaf, in turns. An even index turns clockwise by 
 `symmetryFactor`th of a turn a cycle, an odd one the other way and twice as fast, so a shape with
 that symmetry looks the same at both ends of the cycle. The index adds whole turns, which change
 nothing on screen.
+
+## spreadOverCores
+
+Runs `job` once for every index from 0 up to `count`, on as many threads as the processor has
+cores, the calling thread among them, and returns once every index has run. The threads take the
+next index as they come free, so jobs of uneven length still finish close together. `job` must be
+safe to run on several threads at once.
 
 ## PuppeteerScene
 
@@ -217,9 +257,20 @@ The city lights come on past the terminator - see SatelliteScene Terminator - an
 along the limb is blue by day, orange at dusk and dark at night, by the sunlight above each point of
 it: three rings, each fading out to both sides.
 
-**The clouds float above the ground**, a hundredth of the Earth's radius up, and fade into the haze
-as they near the limb. They are soft-edged lumps of differing opacity, some overlapping, each
-cluster drifting a few degrees back and forth, and they pass over the city lights.
+**Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks -
+see CloudKind. Each is a map on a sphere of its own, 0.6, 1.1 and 1.8 hundredths of the Earth's
+radius up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts east and
+back against the ground once a cycle, the higher layers further. The clouds fade into the haze as
+they near the limb, take the night's shade on the night side, and pass over the city lights.
+
+**The looks part at the clouds' edges**: Stylized cuts each layer's cover into two flat tones,
+Realistic shows it as it is - see SceneLook.
+
+**The maps are built off the paint** the first time the scene is drawn, and the clouds show from the
+first frame after: a fraction of a second on a processor with many cores. Each frame works the
+clouds out in bands of rows spread over the cores - see spreadOverCores - and on a globe over 3200
+pixels in radius - a frame about 2800 pixels wide or more - at every 4th pixel and row, blended
+between before the look cuts the cover.
 
 ## SatelliteScene Terminator
 

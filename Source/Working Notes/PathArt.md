@@ -235,22 +235,22 @@ start, and the quad's rasterizing cost 1.5 ms. Live frames came out the same bit
 ones within a level.
 
 After the fill and stroke changes in Graphics-Types the parts at 3436 x 2051 are the night 3.3 ms,
-the coastlines and clouds 3.7, the atmosphere 3, the kept space and ocean 4.6, the globe's clip 1.6
-- rasterized anew every frame.
+the coastlines and clouds 3.7, the atmosphere 3, the kept space and ocean 4.6, the globe's clip 1.6,
+rasterized anew every frame.
 
-**A cloud is a lump with a soft edge, and some clusters carry one or two smaller lumps overlapping
-it** (2026-11-08). Each cloud was three translucent ellipses in a row, a larger one in the middle,
-and every one of the 90 read the same - Oj: "repetitive like water molecules", the overlaps showing
-as lenses. Rendered against it: one lumpy outline each, streaks with smaller lumps, a lump with a
-brighter core; then each blurred. Oj: "they have to be blurred", the softest of the blurs "the most
-natural", and "let them be lumpy and some randomly overlapping". The edge is four waves of 2, 3, 5
-and 9 round an ellipse, their starts drawn for each lump; the soft edge is the Shadow layer, the
-outline 0.8 of the size so the fade keeps the cloud about as large. Lumps are filled one by one, so
-an overlap shows brighter rather than cutting a hole under the even-odd fill. 45 percent of the
-clusters carry a companion, 15 percent two. Each lump takes 0.35 to 1.45 of the cloud colour's
-opacity, on Oj's "randomize their opacity too": some read as wisps, some as dense. At 3436 x 2051 on
-the CPU backend the clouds cost about 4 ms a frame more than the three ellipses did, after
-rasterizeGlowMask's rows were narrowed - see Graphics-Types.
+**The clouds were lumps with soft edges, some clusters carrying one or two smaller lumps overlapping
+them** (2026-11-08), until the maps below took their place. Each cloud was three translucent
+ellipses in a row, a larger one in the middle, and every one of the 90 read the same - Oj:
+"repetitive like water molecules", the overlaps showing as lenses. Rendered against it: one lumpy
+outline each, streaks with smaller lumps, a lump with a brighter core; then each blurred. Oj: "they
+have to be blurred", the softest of the blurs "the most natural", and "let them be lumpy and some
+randomly overlapping". The edge is four waves of 2, 3, 5 and 9 round an ellipse, their starts drawn
+for each lump; the soft edge is the Shadow layer, the outline 0.8 of the size so the fade keeps the
+cloud about as large. Lumps are filled one by one, so an overlap shows brighter rather than cutting
+a hole under the even-odd fill. 45 percent of the clusters carry a companion, 15 percent two. Each
+lump takes 0.35 to 1.45 of the cloud colour's opacity, on Oj's "randomize their opacity too": some
+read as wisps, some as dense. At 3436 x 2051 on the CPU backend the clouds cost about 4 ms a frame
+more than the three ellipses did, after rasterizeGlowMask's rows were narrowed - see Graphics-Types.
 
 **The atmosphere is three glows** (2026-11-08). Its rings were three flat strokes, and Oj saw their
 edges: "There are visible sharp atmosphere edges". Rendered against them were the three rings soft,
@@ -265,7 +265,7 @@ globe's clip, they read to Oj as glued to the surface, and more realistic on a l
 Rendered at 1, 2 and 3.5 percent, Oj picked 1. The lumps lie on a sphere that much larger, cut at
 its own rim, and drawn over the night, the sea's glint and the city lights.
 
-**A lump fades into the haze as it nears the limb**: its opacity rises from nothing where its center
+**A lump faded into the haze as it neared the limb**: its opacity rose from nothing where its center
 is on the rim to whole where the center faces the viewer by 0.12. Drawn whole up to the rim, a lump
 near the limb stood in the sky with space under it, and its far side showed in the ring between the
 Earth's edge and the sphere's rim, down to sqrt(1 - 1/1.01^2) behind it - drawn as the near side of
@@ -277,11 +277,100 @@ against it, as 20 seconds of the limb: no far side, where a lump narrows into th
 and a fade toward the limb, light and strong. Oj picked the light fade, and the far side went with
 it, being behind the rim and so faded out whole.
 
-Each lump's colour is mixed with the night's stop by that stop's opacity, at the lump's own opacity,
-which leaves the pixels the night laid over the lump would; a lump wholly on one side of the night's
-gradient takes that side's colour solid, the rest a gradient. With the clouds raised and the
-atmosphere soft, a frame at 3436 x 2051 on the CPU backend went from 22.8 to 23.6 ms, measured in
-one run against the frame before either.
+Each lump's colour was mixed with the night's stop by that stop's opacity, at the lump's own
+opacity, which leaves the pixels the night laid over the lump would; a lump wholly on one side of
+the night's gradient takes that side's colour solid, the rest a gradient. With the clouds raised and
+the atmosphere soft, a frame at 3436 x 2051 on the CPU backend went from 22.8 to 23.6 ms, measured
+in one run against the frame before either.
+
+**The clouds are three layers of map** (2026-11-08). Oj asked for layers "with proper clouds bigger
+and more widespread and translucent, with layers rotation slightly differ by angles and speed, draw
+them all on top of each other", each worked "in a separate thread", and for mockups first. The
+mockups drew maps of value noise sampled on the sphere, in Python; Oj picked variant A: puffy heaps
+at 0.6 percent of the radius, a patchy sheet at 1.1 on an axis leaning 5 degrees, streaks at 1.8
+leaning -6, at 0.9, 0.55 and 0.45 of the cloud colour's opacity, with that opacity raised 2.2 times
+(0x5C to 0xCA). The recipes in CloudMap are the mockups' own, seeds 11, 21 and 31, covers 0.32,
+0.45 and 0.30, each cut at the quantile of its noise.
+
+**The layers drift back and forth rather than turn at their own speed.** The mockups turned them at
+0.985, 1.02 and 1.05 of the ground's speed, which is 1.97, 2.04 and 2.1 turns a cycle, and would
+jump at the cycle's seam. Each drifts as a sine instead, once a cycle, its amplitude 2 (speed - 1)
+radians so that it moves as fast as the mockup's at its fastest: 1.7, 2.3 and 5.7 degrees, the
+three starting at different points of the sine.
+
+**Two looks, one switch** (2026-11-08). Oj wanted the realistic look of the mockups and "more
+stylized clouds", both, switched by a setting, and picked "Two-tone" of the stylized mockups (flat,
+two-tone, soft flat): each layer shows 0.55 of its opacity where its cover passes about 0.31, and
+all of it past about 0.65. The setting was to be app-wide on the Scene page, "It has nothing to do
+with performance, it's a look"; then "the UI should clearly tell which scene have this setting,
+after a theme selection" - so the showcase shows it captioned with the scene's name, only while that
+scene is picked, where the mill's themes stand while the mill is. Scene::offersLooks lets the
+showcase find the scene without naming it; the look is a plain value on Scene, set before a frame
+rather than handed in SceneParams, so a change shows on the next frame instead of the one after a
+prepare.
+
+**The maps are built on the first draw, off the paint.** In the container (2 cores) the three take
+1.1 s; std::lerp in the value noise took 2.2, its checks for exact ends costing as much as the noise
+around them. Built in the constructor they would cost every MillScene launch that much processor
+time, the Satellite shown or not. The scene draws no clouds until they are ready. MSVC's
+std::future default-constructs the value it carries, and CloudMap has no default, so the future
+carries a unique_ptr.
+
+**Every pixel is projected back onto each layer's sphere**: the screen's tilt undone, the depth
+from the radius, the layer's axis tip undone, then longitude and latitude by two arctangents. The
+plain C++ cost 78 ns a pixel for the three layers - 34 ms of a 1600 x 900 frame on the container's
+2 cores, against 5.6 for the rest of the scene. Written for AVX2, eight pixels at a time, with the
+map's texel and its right neighbour read in one 4-byte gather (each row keeps its first texel again
+at its end), it came out within one level of the plain version. At 3436 x 2051 under a scale of 2.5
+it still took 18.7 ms on 2 cores, so from a scale of 2 the layers are worked out at every other
+pixel and row. Blending the finished alpha between those points cost 6.7 ms but left the two-tone
+edges in 2-pixel steps; blending each layer's cover and haze and cutting after keeps the edges as
+sharp as at every pixel, for 10.8 ms. Laying the 39 bands in costs 2.2 ms more, on the paint's
+thread. On the container's 2 cores the whole frame there went from 25 to 33 ms with the lumps to 36
+to 44 with the maps; the projection's part shrinks with every core a machine adds, and the lumps'
+4 ms are gone. Under Direct2D the bands are uploaded as bitmaps every frame.
+
+**Eight pixels at a time skip the layers that show nothing there** (2026-11-08). Oj saw two cores
+busy while the Satellite ran: the clouds' 20 ms of processor time a frame at 3436 x 2051, spread
+over the cores, which at 50 frames a second is a core's worth. Timed apart, the points took 8.5 ms
+of it and the pixels 12. Merging the per-pixel passes into one - each layer's cover and haze spread,
+cut and combined in registers, then shaded and written - saved nothing, the pixels' arithmetic and
+not their memory being the cost. What saved it: a pixel's cover lies between its points' covers, so
+where all the points 8 pixels blend from fall at or under the cover a look starts showing at (0.28
+stylized, 0 realistic), that layer is skipped, and 8 pixels no layer shows are written clear. Frames
+came out bit for bit as before; the pixels' part fell from 12 to about 3.5 ms stylized and 5
+realistic, the clouds from 20 to 12 ms of processor time.
+
+**The bands were worked out while the ground was drawn, for one build** (2026-11-08). Oj, after the
+skip: "the frame rate is what I after". His frame at 3436 x 2051 was 16.5 ms on the paint thread and
+48 a second, and Task Manager's two busy cores stayed busy in the Orrery while MillScene read 92
+percent of one core there - one paint thread moved between two cores, the cloud helpers being the
+thin spikes on the other 22. startClouds handed the bands to a spreadOverOtherCores before space was
+laid in, one std::async starting the helpers and waiting for them, and drawClouds waited after the
+city lights. On the container's 2 cores the frame went from 33 to 44 ms to 25 to 32. On Oj's machine
+it read 17.18 ms and 46 a second, as before, at 263 percent of a core against 142 to 170, and
+Windows counted about 800 threads more - most likely MSVC's thread pool growing under a std::async
+task that waits on others it started, not measured. The bands finish in about a millisecond on 24
+cores, so there was little to hide; the split went back to the paint thread working on the bands
+beside the helpers.
+
+**On a large globe the points stand every 4th pixel** (2026-11-08), on Oj's "If B gives less Co2
+that's welcome too". With the skip, the points were 8.5 ms and the pixels 3.5 of the 12 at every
+other pixel; at every 4th the points take about 2.5 and the clouds about 6.5 ms of processor time,
+7.5 realistic. Inland the frames match every other pixel to the eye; at the limb, where the maps are
+squeezed most, the faint high streaks in the haze over the Earth's edge break into 4-pixel steps
+("Satellite clouds - every 4th pixel.png", shown to Oj before he asked for it). Working the strip
+out at every pixel was offered, for about 3 ms more.
+
+**The step looked at the wrong scale, and the app never left 1** (2026-11-08). Oj's CPU profile of
+that build (35 s at 3436 x 2051, 250 percent): the paint thread 95 percent of a core, 24 helper
+threads together 1.15 cores, 95 percent of their samples inside rasterizeCloudBand and none
+spinning: about 25 ms of cloud work a frame, the full-resolution figure. MillScene draws in device
+pixels and states its scale through metrics, so the canvas transform the step was chosen by is 1
+there; the harness drew under a scale of 2.5, which is where every measurement of the steps came
+from. The step now follows the globe's radius in pixels, 3200 and up taking every 4th: the harness
+frames under a scale stay as they were, and the same frame drawn without one (as the app draws) went
+from 33 to 37 ms of cloud work to 4 to 7 on the container.
 
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the

@@ -1,5 +1,6 @@
 export module ClaFi.PathArt.SatelliteScene;
 
+import ClaFi.PathArt.CloudMap;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
@@ -21,6 +22,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
         void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
+        [[nodiscard]] bool offersLooks() const override { return true; }
     private:
         // A direction from the Earth's center: x across the screen, y up it, z toward the viewer.
         struct Direction
@@ -28,12 +30,6 @@ namespace ClaFi::PathArt
             float x;
             float y;
             float z;
-        };
-        // The near-side part of an outline as a path, and the box its points span.
-        struct NearSideShape
-        {
-            Graphics::PixelPath path;
-            FloatRect bounds;
         };
         // The Earth as drawn this frame: where it stands, how far it has turned, where the Sun is.
         struct Globe
@@ -53,7 +49,7 @@ namespace ClaFi::PathArt
             void nearSideOf(std::span<const Direction> outline, bool counterClockwise,
                 std::vector<FloatPoint>& points, std::vector<std::size_t>& loopEnds) const;
             // The near-side part of a closed outline as a path, none when it misses the view.
-            [[nodiscard]] std::optional<NearSideShape> nearSideShape(
+            [[nodiscard]] std::optional<Graphics::PixelPath> nearSidePath(
                 std::span<const Direction> outline, bool counterClockwise,
                 const FloatRect& view) const;
             // How much sunlight falls where the surface faces this way: above 0 by day.
@@ -80,16 +76,14 @@ namespace ClaFi::PathArt
             FloatPoint lonLat;
             float brightness;
         };
-        // A lump of cloud; some stand alone and some overlap another of their cluster.
-        struct Cloud
+        // A band of rows of the clouds' picture, and where it stands in the canvas's pixels.
+        struct CloudBand
         {
-            FloatPoint lonLat;
-            FloatPoint halfSize; // across and up, in degrees
-            float tilt; // off the line of latitude
-            std::array<float, 4> phases; // where each of the edge's waves starts
-            float opacity; // its share of the cloud colour's opacity
-            float driftPhase; // shared by the lumps of one cluster, which drift together
+            Graphics::Bitmap pixels;
+            FloatPoint at;
         };
+        // The map of each layer of cloud, in the order the layers float up from the ground.
+        using CloudMaps = std::array<CloudMap, 3>;
     private:
         static void drawSpace(const SceneFrame&);
         static void drawOcean(const SceneFrame&);
@@ -99,15 +93,20 @@ namespace ClaFi::PathArt
         void drawCityLights(const SceneFrame&, const Globe&, const Terminator&,
             float cycleTime) const;
         void drawClouds(const SceneFrame&, const Globe&, const Graphics::LinearGradient& night,
-            float cycleTime) const;
+            float cycleTime);
         static void drawAtmosphere(const SceneFrame&, const Globe&);
     private:
         // The Sun goes round once a cycle, so a cycle is one day over the satellite.
         static constexpr std::chrono::seconds k_cycle{ 240 };
         std::vector<Coastline> m_coastlines{};
         std::vector<City> m_cities{};
-        std::vector<Cloud> m_clouds{};
         SceneLayer m_space{ drawSpace };
         SceneLayer m_ocean{ drawOcean };
+        // By pointer, as MSVC's std::future builds what it carries with no arguments first.
+        std::future<std::unique_ptr<CloudMaps>> m_cloudMapsBuilt{};
+        // Built off the paint from the first frame drawn on, and kept. See PathArt#satellitescene
+        std::unique_ptr<CloudMaps> m_cloudMaps{};
+        // Kept from one frame to the next, so a frame of the same size allocates nothing.
+        std::vector<CloudBand> m_cloudBands{};
     };
 }

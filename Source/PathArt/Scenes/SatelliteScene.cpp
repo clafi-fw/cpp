@@ -1,5 +1,8 @@
+module;
+#include <immintrin.h>
 module ClaFi.PathArt.SatelliteScene;
 
+import ClaFi.PathArt.CloudMap;
 import ClaFi.PathArt.SatelliteSprite;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
@@ -24,7 +27,7 @@ namespace ClaFi::PathArt
         constexpr Color SunGlare{ 0xFFFFF1D6 };
         constexpr Color OceanLimb{ 0xFF3F8EE0 };
         constexpr Color OceanDeep{ 0xFF0C3D84 };
-        constexpr Color Cloud{ 0x5CFFFFFF };
+        constexpr Color Cloud{ 0xCAFFFFFF }; // where a layer covers the sky whole
         constexpr Color Night{ 0xFF020614 };
         constexpr Color NightBlue{ 0xFF030818 };
         constexpr Color SeaGlint{ 0xFFCFE8FF };
@@ -47,14 +50,118 @@ namespace ClaFi::PathArt
         constexpr int k_cityOpacitySteps{ 6 };
         // How far apart the points are where a shape's edge follows the rim.
         constexpr float k_rimStep{ 2.0f * k_degree };
-        // How far a cloud's edge fades out, in scene units.
-        constexpr float k_cloudSoftness{ 20.0f };
-        // How high the clouds float, as a share of the Earth's radius.
-        constexpr float k_cloudHeight{ 0.01f };
-        // How far a lump's center faces the viewer when the lump starts fading into the haze.
+        // How far a point of cloud faces the viewer when it starts fading into the haze.
         constexpr float k_cloudHazeDepth{ 0.12f };
-        // The points round a lump of cloud, enough for the finest wave along its edge.
-        constexpr int k_cloudPoints{ 32 };
+        // The rows of the clouds' picture worked out together on one core, and laid in as one.
+        constexpr int k_cloudBandRows{ 32 };
+        // The shades of the clouds kept along the night's gradient.
+        constexpr int k_cloudShadeCount{ 1024 };
+        // The globe's radius in pixels from which the clouds are worked out at every 4th pixel.
+        constexpr float k_cloudCoarseRadius{ 3200.0f };
+        // The cover the stylized look's lighter tone starts from, showing nothing below it.
+        constexpr float k_stylizedLeastCover{ 0.28f };
+
+        // A layer of cloud: what its map holds, and how it floats. See PathArt#satellitescene
+        struct CloudLayer
+        {
+            CloudKind kind;
+            std::uint32_t seed;
+            float cover; // the share of the sphere its map covers
+            float height; // above the ground, as a share of the Earth's radius
+            float axisTilt; // how far its axis leans from the Earth's, in degrees
+            float drift; // how far it drifts each way against the ground, in degrees
+            float driftPhase; // where in its drift it stands when the cycle starts
+            float opacity; // its share of the cloud colour's opacity
+        };
+
+        // Low heaps, a middle sheet and high streaks, each drifting further than the one below.
+        constexpr std::array<CloudLayer, 3> k_cloudLayers{
+            CloudLayer{
+                .kind = CloudKind::Puffy,
+                .seed = 11,
+                .cover = 0.32f,
+                .height = 0.006f,
+                .axisTilt = 0.0f,
+                .drift = 1.7f,
+                .driftPhase = 0.0f,
+                .opacity = 0.9f
+            },
+            CloudLayer{
+                .kind = CloudKind::Patchy,
+                .seed = 21,
+                .cover = 0.45f,
+                .height = 0.011f,
+                .axisTilt = 5.0f,
+                .drift = 2.3f,
+                .driftPhase = 2.1f,
+                .opacity = 0.55f
+            },
+            CloudLayer{
+                .kind = CloudKind::Streaky,
+                .seed = 31,
+                .cover = 0.30f,
+                .height = 0.018f,
+                .axisTilt = -6.0f,
+                .drift = 5.7f,
+                .driftPhase = 4.2f,
+                .opacity = 0.45f
+            }
+        };
+
+        // A layer of cloud as this frame shows it, its sphere placed by the canvas's pixels.
+        struct CloudLayerView
+        {
+            const CloudMap* map;
+            FloatPoint fromPixel; // across and up from the sphere's center, in its radii, per pixel
+            FloatPoint atOrigin; // the same at the canvas's pixel 0, 0
+            float tiltCosine;
+            float tiltSine;
+            float tipCosine; // of how far its axis tips back from the screen's up
+            float tipSine;
+            float spin;
+            float opacity; // where its map's cover is whole
+        };
+
+        // Where the points of a row fall on a layer's map.
+        struct MapPoints
+        {
+            std::vector<float> longitudes;
+            std::vector<float> latitudes;
+        };
+
+        // What a layer shows at the points of a row.
+        struct LayerPoints
+        {
+            std::vector<float> covers;
+            std::vector<float> clearness; // how clear of the haze, 0 off the sphere
+        };
+
+        // Each layer's points along one row, in the order of k_cloudLayers.
+        using CloudPoints = std::array<LayerPoints, k_cloudLayers.size()>;
+
+        // What every band of the clouds' picture is worked out from, this frame.
+        struct CloudPicture
+        {
+            std::span<const CloudLayerView> layers;
+            SceneLook look;
+            int step; // the pixels between the points the layers are worked out at, 1 or 4
+            FloatPoint sphereCenter; // the highest layer's, in pixels
+            FloatPoint sphereRadii; // the highest layer's, across and up, in pixels
+            int left; // the first column in view
+            int right; // the column past the last in view
+            std::span<const Color> shades; // the clouds' colour along the night's gradient
+            FloatPoint nightPerPixel; // how far along the night's gradient a pixel moves
+            float nightAtOrigin; // how far along it the canvas's pixel 0, 0 stands
+        };
+
+        // How 8 pixels in a row stand between its points at a step: the point before each, the
+        // point after it, and the share of the way from the one to the other.
+        struct PointSpread
+        {
+            __m256i before;
+            __m256i after;
+            __m256 shares;
+        };
 
         // A city's light where it shows this frame, and the opacity step it is drawn at.
         struct LitCity
@@ -187,6 +294,346 @@ namespace ClaFi::PathArt
             }
             return SatelliteSceneColors::NightAir.withOpacity(0.3f);
         }
+
+        // The pixels a row's buffers hold, a whole number of the 8 one AVX2 step works on.
+        [[nodiscard]] std::size_t groupedLength(const int pixels)
+        {
+            return (static_cast<std::size_t>(pixels) + 7) & ~std::size_t{ 7 };
+        }
+
+        // The pixel offsets of the 8 lanes.
+        [[nodiscard]] __m256 laneOffsets()
+        {
+            return _mm256_setr_ps(0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f);
+        }
+
+        // 0 below edge0, 1 above edge1 and an S-curve between, in each lane.
+        [[nodiscard]] __m256 smoothStep8(const float edge0, const float edge1, const __m256 value)
+        {
+            const __m256 scaled = _mm256_mul_ps(_mm256_sub_ps(value, _mm256_set1_ps(edge0)),
+                _mm256_set1_ps(1.0f / (edge1 - edge0)));
+            const __m256 share = _mm256_min_ps(_mm256_max_ps(scaled, _mm256_setzero_ps()),
+                _mm256_set1_ps(1.0f));
+            return _mm256_mul_ps(_mm256_mul_ps(share, share),
+                _mm256_fnmadd_ps(_mm256_set1_ps(2.0f), share, _mm256_set1_ps(3.0f)));
+        }
+
+        // The angle of each point x, y from the x axis, to within two millionths of a radian.
+        [[nodiscard]] __m256 quickAngle(const __m256 y, const __m256 x)
+        {
+            const __m256 signBit = _mm256_set1_ps(-0.0f);
+            const __m256 absoluteX = _mm256_andnot_ps(signBit, x);
+            const __m256 absoluteY = _mm256_andnot_ps(signBit, y);
+            const __m256 ratio = _mm256_div_ps(_mm256_min_ps(absoluteX, absoluteY),
+                _mm256_max_ps(absoluteX, absoluteY));
+            const __m256 square = _mm256_mul_ps(ratio, ratio);
+            __m256 series = _mm256_set1_ps(-0.0117212f);
+            series = _mm256_fmadd_ps(series, square, _mm256_set1_ps(0.05265332f));
+            series = _mm256_fmadd_ps(series, square, _mm256_set1_ps(-0.11643287f));
+            series = _mm256_fmadd_ps(series, square, _mm256_set1_ps(0.19354346f));
+            series = _mm256_fmadd_ps(series, square, _mm256_set1_ps(-0.33262347f));
+            series = _mm256_fmadd_ps(series, square, _mm256_set1_ps(0.99997726f));
+            __m256 angle = _mm256_mul_ps(ratio, series);
+            const __m256 steep = _mm256_cmp_ps(absoluteY, absoluteX, _CMP_GT_OQ);
+            angle = _mm256_blendv_ps(angle,
+                _mm256_sub_ps(_mm256_set1_ps(std::numbers::pi_v<float> / 2.0f), angle), steep);
+            const __m256 leftward = _mm256_cmp_ps(x, _mm256_setzero_ps(), _CMP_LT_OQ);
+            angle = _mm256_blendv_ps(angle,
+                _mm256_sub_ps(_mm256_set1_ps(std::numbers::pi_v<float>), angle), leftward);
+            return _mm256_or_ps(angle, _mm256_and_ps(y, signBit));
+        }
+
+        // Where the points of a row fall on the layer's map, and how clear of the haze each is,
+        // from the pixel center `firstPixelX` on, `step` pixels apart. See PathArt#satellitescene
+        void projectRow(const CloudLayerView& layer, const float pixelY, const float firstPixelX,
+            const int step, MapPoints& onMap, std::span<float> clearness)
+        {
+            const float up = layer.atOrigin.y + layer.fromPixel.y * pixelY;
+            const __m256 upSquared = _mm256_set1_ps(up * up);
+            const __m256 upTiltCosine = _mm256_set1_ps(up * layer.tiltCosine);
+            const __m256 upTiltSine = _mm256_set1_ps(up * layer.tiltSine);
+            const __m256 tiltCosine = _mm256_set1_ps(layer.tiltCosine);
+            const __m256 tiltSine = _mm256_set1_ps(layer.tiltSine);
+            const __m256 tipCosine = _mm256_set1_ps(layer.tipCosine);
+            const __m256 tipSine = _mm256_set1_ps(layer.tipSine);
+            const __m256 spin = _mm256_set1_ps(layer.spin);
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 acrossStart = _mm256_set1_ps(layer.atOrigin.x
+                + layer.fromPixel.x * firstPixelX);
+            const __m256 acrossPerPoint = _mm256_set1_ps(layer.fromPixel.x
+                * static_cast<float>(step));
+            for (std::size_t i = 0; i != clearness.size(); i += 8)
+            {
+                const __m256 point = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(i)),
+                    laneOffsets());
+                const __m256 across = _mm256_fmadd_ps(point, acrossPerPoint, acrossStart);
+                // Off the sphere the depth is 0, which leaves the point wholly in the haze.
+                const __m256 depthSquared = _mm256_sub_ps(one,
+                    _mm256_fmadd_ps(across, across, upSquared));
+                const __m256 z = _mm256_sqrt_ps(_mm256_max_ps(depthSquared, _mm256_setzero_ps()));
+                const __m256 x = _mm256_fmadd_ps(across, tiltCosine, upTiltSine);
+                const __m256 y = _mm256_fnmadd_ps(across, tiltSine, upTiltCosine);
+                const __m256 untippedY = _mm256_fmsub_ps(y, tipCosine, _mm256_mul_ps(z, tipSine));
+                const __m256 untippedZ = _mm256_fmadd_ps(y, tipSine, _mm256_mul_ps(z, tipCosine));
+                const __m256 aroundAxis = _mm256_sqrt_ps(
+                    _mm256_fmadd_ps(x, x, _mm256_mul_ps(untippedZ, untippedZ)));
+                _mm256_storeu_ps(onMap.longitudes.data() + i,
+                    _mm256_sub_ps(quickAngle(x, untippedZ), spin));
+                _mm256_storeu_ps(onMap.latitudes.data() + i, quickAngle(untippedY, aroundAxis));
+                _mm256_storeu_ps(clearness.data() + i, smoothStep8(0.0f, k_cloudHazeDepth, z));
+            }
+        }
+
+        // How much of the sky a map's cover hides in a look: two flat tones when stylized.
+        [[nodiscard]] __m256 coverShown(const __m256 cover, const SceneLook look)
+        {
+            if (look == SceneLook::Realistic)
+                return cover;
+            return _mm256_fmadd_ps(_mm256_set1_ps(0.55f),
+                smoothStep8(k_stylizedLeastCover, 0.34f, cover),
+                _mm256_mul_ps(_mm256_set1_ps(0.45f), smoothStep8(0.62f, 0.68f, cover)));
+        }
+
+        // The cover up to which a look shows nothing.
+        [[nodiscard]] float leastCoverShown(const SceneLook look)
+        {
+            return look == SceneLook::Realistic ? 0.0f : k_stylizedLeastCover;
+        }
+
+        // The night's colour mixed into the clouds', at its own opacity, along its gradient.
+        [[nodiscard]] std::vector<Color> cloudShadesUnder(const LinearGradient& night)
+        {
+            std::vector<Color> shades;
+            shades.reserve(k_cloudShadeCount);
+            const auto shaded = [](const GradientStop& stop) {
+                const float nightShare = static_cast<float>(stop.color.alpha) / 255.0f;
+                return colorBetween(SatelliteSceneColors::Cloud, stop.color, nightShare);
+            };
+            std::size_t next = 1;
+            for (int i = 0; i != k_cloudShadeCount; ++i)
+            {
+                const float position = static_cast<float>(i) / (k_cloudShadeCount - 1);
+                while (next + 1 < night.stops.size() && night.stops[next].position < position)
+                    ++next;
+                const GradientStop& from = night.stops[next - 1];
+                const GradientStop& to = night.stops[next];
+                const float share = std::clamp(
+                    (position - from.position) / (to.position - from.position), 0.0f, 1.0f);
+                shades.push_back(colorBetween(shaded(from), shaded(to), share));
+            }
+            return shades;
+        }
+
+        // Each layer's cover and clearness at the points of a row, `step` pixels apart.
+        void samplePoints(const CloudPicture& picture, const float pixelY, const float firstPixelX,
+            MapPoints& onMap, CloudPoints& points)
+        {
+            for (std::size_t i = 0; i != picture.layers.size(); ++i)
+            {
+                const CloudLayerView& layer = picture.layers[i];
+                projectRow(layer, pixelY, firstPixelX, picture.step, onMap, points[i].clearness);
+                layer.map->readCover(onMap.longitudes, onMap.latitudes, points[i].covers);
+            }
+        }
+
+        // The spread of 8 pixels from a point onward, at a step of 1, 2 or 4.
+        [[nodiscard]] PointSpread pointSpreadAt(const int step)
+        {
+            alignas(32) std::array<int, 8> before{};
+            alignas(32) std::array<int, 8> after{};
+            alignas(32) std::array<float, 8> shares{};
+            for (int lane = 0; lane != 8; ++lane)
+            {
+                const std::size_t index = static_cast<std::size_t>(lane);
+                before[index] = lane / step;
+                after[index] = step == 1 ? before[index] : before[index] + 1;
+                shares[index] = static_cast<float>(lane % step) / static_cast<float>(step);
+            }
+            return {
+                _mm256_load_si256(reinterpret_cast<const __m256i*>(before.data())),
+                _mm256_load_si256(reinterpret_cast<const __m256i*>(after.data())),
+                _mm256_load_ps(shares.data())
+            };
+        }
+
+        // The values of 8 pixels, `downShare` of the way from 8 points of the upper row to the
+        // lower and spread across between them, the first pixel standing on the first point.
+        [[nodiscard]] __m256 pixelsBetween(const __m256 upperPoints, const __m256 lowerPoints,
+            const __m256 downShare, const PointSpread& spread)
+        {
+            const __m256 points = _mm256_fmadd_ps(_mm256_sub_ps(lowerPoints, upperPoints),
+                downShare, upperPoints);
+            const __m256 before = _mm256_permutevar8x32_ps(points, spread.before);
+            const __m256 after = _mm256_permutevar8x32_ps(points, spread.after);
+            return _mm256_fmadd_ps(_mm256_sub_ps(after, before), spread.shares, before);
+        }
+
+        // **A row of cloud pixels, premultiplied, in one pass**: each layer's cover and haze are
+        // spread from the points the row stands between, the look cuts the cover, and the
+        // night's shade is laid at the opacity the layers leave. A pixel's cover lies between
+        // those of the points it is blended from, so 8 pixels whose points all fall short of what
+        // a layer's look shows skip that layer, and 8 that no layer covers are written clear.
+        // The last group of 8 stops at the row's end.
+        void writeCloudRow(const CloudPicture& picture, const CloudPoints& upper,
+            const CloudPoints& lower, const float downShare, const float rowNight, Color* pixels,
+            const int width)
+        {
+            const int step = picture.step;
+            const PointSpread spread = pointSpreadAt(step);
+            const __m256 down = _mm256_set1_ps(downShare);
+            const __m256 leastCover = _mm256_set1_ps(leastCoverShown(picture.look));
+            std::array<__m256, k_cloudLayers.size()> opacities{};
+            for (std::size_t i = 0; i != opacities.size(); ++i)
+                opacities[i] = _mm256_set1_ps(picture.layers[i].opacity);
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 half = _mm256_set1_ps(0.5f);
+            const __m256 lastShade = _mm256_set1_ps(static_cast<float>(picture.shades.size() - 1));
+            const __m256 nightPerPixel = _mm256_set1_ps(picture.nightPerPixel.x);
+            const __m256 nightStart = _mm256_set1_ps(rowNight);
+            const __m256 byteMax = _mm256_set1_ps(255.0f);
+            const __m256i byteMask = _mm256_set1_epi32(0xFF);
+            const int* shades = reinterpret_cast<const int*>(picture.shades.data());
+            const auto premultiplied = [&](__m256i shade, int shift, __m256 alpha) {
+                const __m256 channel = _mm256_cvtepi32_ps(
+                    _mm256_and_si256(_mm256_srli_epi32(shade, shift), byteMask));
+                return _mm256_slli_epi32(
+                    _mm256_cvttps_epi32(_mm256_fmadd_ps(channel, alpha, half)), shift);
+            };
+            for (int x = 0; x < width; x += 8)
+            {
+                const std::size_t point = static_cast<std::size_t>(x / step);
+                const auto store = [&](__m256i color) {
+                    int* out = reinterpret_cast<int*>(pixels + x);
+                    if (width - x >= 8)
+                    {
+                        _mm256_storeu_si256(reinterpret_cast<__m256i*>(out), color);
+                        return;
+                    }
+                    const __m256i inRow = _mm256_cmpgt_epi32(_mm256_set1_epi32(width - x),
+                        _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7));
+                    _mm256_maskstore_epi32(out, inRow, color);
+                };
+                __m256 transparency = one;
+                bool covered = false;
+                for (std::size_t i = 0; i != upper.size(); ++i)
+                {
+                    const __m256 upperCovers = _mm256_loadu_ps(upper[i].covers.data() + point);
+                    const __m256 lowerCovers = _mm256_loadu_ps(lower[i].covers.data() + point);
+                    const __m256 showing = _mm256_cmp_ps(
+                        _mm256_max_ps(upperCovers, lowerCovers), leastCover, _CMP_GT_OQ);
+                    if (_mm256_movemask_ps(showing) == 0)
+                        continue;
+                    covered = true;
+                    const __m256 cover = pixelsBetween(upperCovers, lowerCovers, down, spread);
+                    const __m256 clearness = pixelsBetween(
+                        _mm256_loadu_ps(upper[i].clearness.data() + point),
+                        _mm256_loadu_ps(lower[i].clearness.data() + point), down, spread);
+                    const __m256 hidden = _mm256_mul_ps(_mm256_mul_ps(opacities[i],
+                        coverShown(cover, picture.look)), clearness);
+                    transparency = _mm256_fnmadd_ps(hidden, transparency, transparency);
+                }
+                if (!covered)
+                {
+                    store(_mm256_setzero_si256());
+                    continue;
+                }
+
+                const __m256 pixel = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(x)),
+                    laneOffsets());
+                const __m256 alpha = _mm256_sub_ps(one, transparency);
+                const __m256 night = _mm256_fmadd_ps(pixel, nightPerPixel, nightStart);
+                const __m256 shadeIndex = _mm256_min_ps(_mm256_max_ps(
+                    _mm256_fmadd_ps(night, lastShade, half), _mm256_setzero_ps()), lastShade);
+                const __m256i shade = _mm256_i32gather_epi32(shades,
+                    _mm256_cvttps_epi32(shadeIndex), 4);
+                const __m256i alphaByte = _mm256_slli_epi32(
+                    _mm256_cvttps_epi32(_mm256_fmadd_ps(alpha, byteMax, half)), 24);
+                const __m256i color = _mm256_or_si256(
+                    _mm256_or_si256(premultiplied(shade, 0, alpha), premultiplied(shade, 8, alpha)),
+                    _mm256_or_si256(premultiplied(shade, 16, alpha), alphaByte));
+                store(color);
+            }
+        }
+
+        // **The band's bitmap spans the columns the highest layer covers in its widest row**; a
+        // band that misses the sphere is left empty. The points stand on the canvas's columns and
+        // rows a step apart, so neighbouring bands blend from the same points, and the cover is
+        // blended before the look cuts it, so the cut's edge stays sharp. Answers where the
+        // bitmap stands, in pixels.
+        [[nodiscard]] FloatPoint rasterizeCloudBand(const CloudPicture& picture, const int top,
+            const int rows, Bitmap& pixels)
+        {
+            const float nearestRow = std::clamp(picture.sphereCenter.y,
+                static_cast<float>(top) + 0.5f, static_cast<float>(top + rows) - 0.5f);
+            const float rise = (nearestRow - picture.sphereCenter.y) / picture.sphereRadii.y;
+            const float halfWidth = rise * rise < 1.0f
+                ? picture.sphereRadii.x * std::sqrt(1.0f - rise * rise)
+                : 0.0f;
+            const int step = picture.step;
+            const int sphereLeft = static_cast<int>(std::floor(picture.sphereCenter.x - halfWidth));
+            const int left = std::max(picture.left, sphereLeft) / step * step;
+            const int right = std::min(picture.right,
+                static_cast<int>(std::ceil(picture.sphereCenter.x + halfWidth)));
+            if (left >= right)
+            {
+                pixels.resize({});
+                return {};
+            }
+
+            const int width = right - left;
+            const float firstPixelX = static_cast<float>(left) + 0.5f;
+            pixels.resize({ width, rows });
+            const auto pixelYAt = [&](int bandRow) {
+                return static_cast<float>(top + bandRow) + 0.5f;
+            };
+            const auto nightAt = [&](float pixelY) {
+                return picture.nightAtOrigin + picture.nightPerPixel.y * pixelY
+                    + picture.nightPerPixel.x * firstPixelX;
+            };
+            // The last group of 8 pixels reads 8 points from the one under its first pixel.
+            const std::size_t pointLength =
+                groupedLength(static_cast<int>(groupedLength(width)) / step + 8);
+            MapPoints onMap = {
+                .longitudes = std::vector<float>(pointLength),
+                .latitudes = std::vector<float>(pointLength)
+            };
+            const auto pointsOfRow = [&]() {
+                CloudPoints points;
+                for (LayerPoints& layer : points)
+                {
+                    layer.covers.resize(pointLength);
+                    layer.clearness.resize(pointLength);
+                }
+                return points;
+            };
+
+            // At a step of 1 every row is a row of points, and the lower row is never read.
+            CloudPoints upper = pointsOfRow();
+            CloudPoints lower = step == 1 ? CloudPoints{} : pointsOfRow();
+            samplePoints(picture, pixelYAt(0), firstPixelX, onMap, upper);
+            if (step != 1)
+                samplePoints(picture, pixelYAt(step), firstPixelX, onMap, lower);
+            for (int y = 0; y != rows; ++y)
+            {
+                const int pastPoints = y % step;
+                if (y != 0 && pastPoints == 0)
+                {
+                    if (step == 1)
+                    {
+                        samplePoints(picture, pixelYAt(y), firstPixelX, onMap, upper);
+                    }
+                    else
+                    {
+                        std::swap(upper, lower);
+                        samplePoints(picture, pixelYAt(y + step), firstPixelX, onMap, lower);
+                    }
+                }
+                const float downShare = static_cast<float>(pastPoints) / static_cast<float>(step);
+                writeCloudRow(picture, upper, step == 1 ? upper : lower, downShare,
+                    nightAt(pixelYAt(y)), pixels.pixel(0, y), width);
+            }
+            return { static_cast<float>(left), static_cast<float>(top) };
+        }
     }
 
     // The coastlines get a point every 4 degrees so a long edge bends with the globe; the towns are
@@ -243,47 +690,6 @@ namespace ClaFi::PathArt
                     continue;
                 m_cities.push_back({ town, pseudoRandom(seed, 73.0f) });
                 ++placed;
-            }
-        }
-        // A cluster is a lump, and some carry one or two smaller lumps overlapping it.
-        for (int i = 0; i != 90; ++i)
-        {
-            const FloatPoint lonLat = {
-                pseudoRandom(i, 81.0f) * 360.0f - 180.0f,
-                pseudoRandom(i, 82.0f) * 120.0f - 50.0f
-            };
-            const float radius = 1.2f + 2.6f * pseudoRandom(i, 83.0f);
-            const float stretch = 1.2f + 1.2f * pseudoRandom(i, 84.0f);
-            const FloatPoint halfSize = { 0.8f * radius * (1.0f + 0.7f * stretch), 0.6f * radius };
-            const auto lumpAt = [&](int seed, FloatPoint at, FloatPoint size) {
-                return Cloud{
-                    .lonLat = at,
-                    .halfSize = size,
-                    .tilt = (pseudoRandom(seed, 95.0f) - 0.5f) * 0.5f,
-                    .phases = {
-                        k_2Pi * pseudoRandom(seed, 91.0f),
-                        k_2Pi * pseudoRandom(seed, 92.0f),
-                        k_2Pi * pseudoRandom(seed, 93.0f),
-                        k_2Pi * pseudoRandom(seed, 94.0f)
-                    },
-                    .opacity = 0.35f + 1.1f * pseudoRandom(seed, 89.0f),
-                    .driftPhase = static_cast<float>(i)
-                };
-            };
-            m_clouds.push_back(lumpAt(i * 3, lonLat, halfSize));
-            const float extra = pseudoRandom(i, 85.0f);
-            const int companions = extra < 0.15f ? 2 : (extra < 0.45f ? 1 : 0);
-            for (int companion = 1; companion <= companions; ++companion)
-            {
-                const int lumpSeed = i * 3 + companion;
-                const float direction = k_2Pi * pseudoRandom(lumpSeed, 86.0f);
-                const float distance = 0.35f + 0.35f * pseudoRandom(lumpSeed, 87.0f);
-                const FloatPoint offset = {
-                    std::cos(direction) * halfSize.x,
-                    std::sin(direction) * halfSize.y
-                };
-                const float scale = 0.45f + 0.35f * pseudoRandom(lumpSeed, 88.0f);
-                m_clouds.push_back(lumpAt(lumpSeed, lonLat + offset * distance, halfSize * scale));
             }
         }
     }
@@ -518,7 +924,7 @@ namespace ClaFi::PathArt
         }
     }
 
-    std::optional<SatelliteScene::NearSideShape> SatelliteScene::Globe::nearSideShape(
+    std::optional<PixelPath> SatelliteScene::Globe::nearSidePath(
         const std::span<const Direction> outline, const bool counterClockwise,
         const FloatRect& view) const
     {
@@ -552,7 +958,7 @@ namespace ClaFi::PathArt
             path.close();
             loopStart = loopEnd;
         }
-        return NearSideShape{ .path = std::move(path), .bounds = bounds };
+        return path;
     }
 
     float SatelliteScene::Globe::sunlightAt(const Direction direction) const
@@ -632,10 +1038,10 @@ namespace ClaFi::PathArt
             outline.clear();
             for (const FloatPoint lonLat : coastline.lonLat)
                 outline.push_back(globe.surfaceAt(lonLat));
-            const std::optional<NearSideShape> shape =
-                globe.nearSideShape(outline, coastline.counterClockwise, view);
-            if (shape)
-                fillShape(frame, shape->path, SolidColor{ coastline.color });
+            const std::optional<PixelPath> path =
+                globe.nearSidePath(outline, coastline.counterClockwise, view);
+            if (path)
+                fillShape(frame, *path, SolidColor{ coastline.color });
         }
     }
 
@@ -707,101 +1113,115 @@ namespace ClaFi::PathArt
         }
     }
 
-    // **The clouds float above the ground**, on a sphere a little larger than the Earth, so they
-    // shift against the ground as it turns. Each lump is filled on its own with a soft edge, so
-    // lumps that overlap show brighter where they meet rather than cut holes in each other. The
-    // edge is four waves round an ellipse, set apart for each lump by where each wave starts.
-    //
-    // **A lump fades into the haze as it nears the limb**, by how far its center faces the
-    // viewer. Seen that slantwise a lump is a thin streak sliding along the rim, and one drawn
-    // whole narrows into the rim up in the sky.
-    //
-    // **The night is mixed into each lump's colour**, at the lump's own opacity: a lump so shaded
-    // over the night leaves the pixels the night laid over the lump would. A lump wholly on one
-    // side of the night's gradient, its soft edge included, takes that side's colour solid.
+    // **Three layers of cloud float above the ground**, each a map on a sphere of its own a little
+    // larger than the Earth's, turning about an axis of its own. See PathArt#satellitescene
     void SatelliteScene::drawClouds(const SceneFrame& frame, const Globe& globe,
-        const LinearGradient& night, const float cycleTime) const
+        const LinearGradient& night, const float cycleTime)
     {
-        Globe cloudSphere = globe;
-        cloudSphere.radius *= 1.0f + k_cloudHeight;
-        const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
-        const float softness = k_cloudSoftness * frame.unit;
+        if (!m_cloudMaps)
+        {
+            if (!m_cloudMapsBuilt.valid())
+            {
+                m_cloudMapsBuilt = std::async(std::launch::async, []() {
+                    const auto mapOf = [](const CloudLayer& layer) {
+                        return CloudMap{ layer.kind, layer.seed, layer.cover };
+                    };
+                    return std::make_unique<CloudMaps>(CloudMaps{
+                        mapOf(k_cloudLayers[0]),
+                        mapOf(k_cloudLayers[1]),
+                        mapOf(k_cloudLayers[2])
+                    });
+                });
+            }
+            if (m_cloudMapsBuilt.wait_for(std::chrono::seconds{ 0 }) != std::future_status::ready)
+                return;
+            m_cloudMaps = m_cloudMapsBuilt.get();
+        }
+
+        // The scene is drawn under a scale and a move, so a pixel maps back by undoing them.
+        const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
+        const FloatPoint pixelScale = { toPixels.a, toPixels.d };
+        const FloatPoint pixelShift = { toPixels.e, toPixels.f };
+        const IntRect inView = FloatRect::intersection(
+            toPixels.mapRect({ 0.0f, 0.0f, frame.width, frame.height }),
+            frame.canvas.clipBox()).roundedOut();
+        if (inView.empty())
+            return;
+
         const float cloudOpacity = static_cast<float>(SatelliteSceneColors::Cloud.alpha) / 255.0f;
+        std::array<CloudLayerView, k_cloudLayers.size()> layers{};
+        float outerRadius = 0.0f;
+        for (std::size_t i = 0; i != k_cloudLayers.size(); ++i)
+        {
+            const CloudLayer& layer = k_cloudLayers[i];
+            const float radius = globe.radius * (1.0f + layer.height);
+            const float tip = -(k_viewLatitude + layer.axisTilt * k_degree);
+            const float drift = layer.drift * k_degree
+                * std::sin(k_2Pi * cycleTime + layer.driftPhase);
+            layers[i] = {
+                .map = &(*m_cloudMaps)[i],
+                .fromPixel = { 1.0f / (pixelScale.x * radius), -1.0f / (pixelScale.y * radius) },
+                .atOrigin = {
+                    -(pixelShift.x / pixelScale.x + globe.center.x) / radius,
+                    (globe.center.y + pixelShift.y / pixelScale.y) / radius
+                },
+                .tiltCosine = std::cos(globe.tilt),
+                .tiltSine = std::sin(globe.tilt),
+                .tipCosine = std::cos(tip),
+                .tipSine = std::sin(tip),
+                .spin = globe.spin + drift,
+                .opacity = layer.opacity * cloudOpacity
+            };
+            outerRadius = std::max(outerRadius, radius);
+        }
 
         const FloatPoint nightSpan = night.endPoint - night.startPoint;
-        const float nightLength = std::hypot(nightSpan.x, nightSpan.y);
-        // How far along the night's gradient a point stands: 0 at its start, 1 at its end.
-        const auto shareOfNight = [&](FloatPoint point) {
-            const FloatPoint offset = point - night.startPoint;
-            return (offset.x * nightSpan.x + offset.y * nightSpan.y) / (nightLength * nightLength);
+        const float nightLengthSquared = nightSpan.x * nightSpan.x + nightSpan.y * nightSpan.y;
+        const FloatPoint originInScene = {
+            -pixelShift.x / pixelScale.x - night.startPoint.x,
+            -pixelShift.y / pixelScale.y - night.startPoint.y
         };
-        const float softShare = softness / nightLength;
-
-        // Draws a lump in its shade of the night.
-        const auto drawLump = [&](const NearSideShape& shape, float opacity) {
-            const auto shaded = [&](const GradientStop& stop) {
-                const float nightShare = static_cast<float>(stop.color.alpha) / 255.0f;
-                return colorBetween(SatelliteSceneColors::Cloud, stop.color, nightShare)
-                    .withOpacity(opacity);
-            };
-            const FloatRect& bounds = shape.bounds;
-            const std::array<float, 4> cornerShares = {
-                shareOfNight({ bounds.left, bounds.top }),
-                shareOfNight({ bounds.right, bounds.top }),
-                shareOfNight({ bounds.left, bounds.bottom }),
-                shareOfNight({ bounds.right, bounds.bottom })
-            };
-            const float leastShare = *std::ranges::min_element(cornerShares) - softShare;
-            const float mostShare = *std::ranges::max_element(cornerShares) + softShare;
-            PathDrawLayer soft = PathDrawLayer::Shadow(shaded(night.stops.front()), softness);
-            if (leastShare >= 1.0f)
-            {
-                soft.brush = SolidColor{ shaded(night.stops.back()) };
-            }
-            else if (mostShare > 0.0f)
-            {
-                LinearGradient shade = {
-                    .startPoint = night.startPoint,
-                    .endPoint = night.endPoint,
-                    .stops = {}
-                };
-                for (const GradientStop& stop : night.stops)
-                    shade.stops.push_back({ .position = stop.position, .color = shaded(stop) });
-                soft.brush = std::move(shade);
-            }
-            frame.canvas.drawPath(shape.path, std::span{ &soft, 1 }, &frame.toCanvas);
+        const std::vector<Color> shades = cloudShadesUnder(night);
+        const CloudPicture picture = {
+            .layers = layers,
+            .look = look(),
+            .step = globe.radius * pixelScale.x >= k_cloudCoarseRadius ? 4 : 1,
+            .sphereCenter = toPixels.transform(globe.center),
+            .sphereRadii = { outerRadius * pixelScale.x, outerRadius * pixelScale.y },
+            .left = inView.left,
+            .right = inView.right,
+            .shades = shades,
+            .nightPerPixel = {
+                nightSpan.x / (pixelScale.x * nightLengthSquared),
+                nightSpan.y / (pixelScale.y * nightLengthSquared)
+            },
+            .nightAtOrigin = (originInScene.x * nightSpan.x + originInScene.y * nightSpan.y)
+                / nightLengthSquared
         };
 
-        std::vector<Direction> outline;
-        for (const Cloud& cloud : m_clouds)
+        const float sphereTop = picture.sphereCenter.y - picture.sphereRadii.y;
+        const int top = std::max(inView.top, static_cast<int>(std::floor(sphereTop)))
+            / picture.step * picture.step;
+        if (top >= inView.bottom)
+            return;
+        const int bandCount = (inView.bottom - top + k_cloudBandRows - 1) / k_cloudBandRows;
+        m_cloudBands.resize(static_cast<std::size_t>(bandCount));
+        spreadOverCores(bandCount, [&](int band) {
+            const int bandTop = top + band * k_cloudBandRows;
+            const int rows = std::min(k_cloudBandRows, inView.bottom - bandTop);
+            CloudBand& drawn = m_cloudBands[static_cast<std::size_t>(band)];
+            drawn.at = rasterizeCloudBand(picture, bandTop, rows, drawn.pixels);
+        });
+
+        // Direct2D places a bitmap through the canvas's transform, and the bands are in pixels.
+        const Matrix3x2 canvasTransform = frame.canvas.transform();
+        frame.canvas.resetTransform();
+        for (const CloudBand& band : m_cloudBands)
         {
-            const float drift = 6.0f * std::sin(k_2Pi * cycleTime + cloud.driftPhase);
-            const FloatPoint center = cloud.lonLat + FloatPoint{ drift, 0.0f };
-            const float clearness = smoothStep(0.0f, k_cloudHazeDepth,
-                cloudSphere.surfaceAt(center).z);
-            if (clearness <= 0.0f)
-                continue;
-            outline.clear();
-            for (int j = 0; j != k_cloudPoints; ++j)
-            {
-                const float angle = k_2Pi * static_cast<float>(j) / k_cloudPoints;
-                const std::array<float, 4>& phases = cloud.phases;
-                const float lump = 1.0f + 0.16f * std::sin(2.0f * angle + phases[0])
-                    + 0.11f * std::sin(3.0f * angle + phases[1])
-                    + 0.08f * std::sin(5.0f * angle + phases[2])
-                    + 0.06f * std::sin(9.0f * angle + phases[3]);
-                const FloatPoint around = rotated({
-                    std::cos(angle) * cloud.halfSize.x,
-                    std::sin(angle) * cloud.halfSize.y
-                }, cloud.tilt);
-                outline.push_back(cloudSphere.surfaceAt(center + around * lump));
-            }
-            // The lump's points run counterclockwise.
-            const std::optional<NearSideShape> shape =
-                cloudSphere.nearSideShape(outline, true, view);
-            if (shape)
-                drawLump(*shape, cloudOpacity * cloud.opacity * clearness);
+            if (!band.pixels.empty())
+                frame.canvas.drawBitmap(band.pixels, band.at);
         }
+        frame.canvas.setTransform(canvasTransform);
     }
 
     // The limb in view runs across the frame, so one gradient across the frame colours it by the

@@ -59,6 +59,17 @@ namespace MillScene_App
     // The scenes stand in two lanes, the mill at the top of the first.
     constexpr std::size_t k_sceneLaneSize{ 4 };
 
+    // A look the picker offers, by the name it shows and the config keeps.
+    struct LookChoice
+    {
+        PathArt::SceneLook look;
+        std::wstring_view name;
+    };
+    constexpr std::array<LookChoice, 2> k_lookChoices{
+        LookChoice{ PathArt::SceneLook::Stylized, L"Stylized" },
+        LookChoice{ PathArt::SceneLook::Realistic, L"Realistic" }
+    };
+
     // **The lanes the dropdown opened as.** Twenty-four themes in lanes of eight are the three
     // columns the picker had in the title bar, and the page keeps them.
     constexpr std::size_t k_themeLaneSize{ 8 };
@@ -81,6 +92,8 @@ namespace MillScene_App
     export constexpr std::wstring_view k_sceneThemeNodeName{ L"SceneTheme" };
     // What the picked scene is kept under, by name for the same reasons as the theme.
     export constexpr std::wstring_view k_sceneNodeName{ L"Scene" };
+    // What the look picked for the scene that offers looks is kept under, by name as well.
+    export constexpr std::wstring_view k_sceneLookNodeName{ L"SceneLook" };
 
     // The panel the scene covers whole, so its own surface is not filled under the scene.
     class ScenePanel : public Panel
@@ -115,15 +128,23 @@ namespace MillScene_App
         void previewSceneTheme(std::size_t index);
         // The application's own page of the backstage: the theme picker. See MillScene_Showcase
         void pickSceneTheme(std::size_t index);
+        // The scene the look picker serves: the first that offers looks, none where none does.
+        [[nodiscard]] std::optional<std::size_t> sceneWithLooks();
+        // Draws the scene that offers looks in the look at `index` of k_lookChoices.
+        void previewLook(std::size_t index);
+        void pickLook(std::size_t index);
 
         void buildScenePage(AppMenuPage&);
         void buildScenePicker(AppMenuPage&);
         void buildThemePicker(AppMenuPage&);
+        void buildLookPicker(AppMenuPage&);
 
         void restoreScene();
         void storeScene();
         void restoreSceneTheme();
         void storeSceneTheme();
+        void restoreLook();
+        void storeLook();
 
         void traceMetrics();
         // The readings, written ahead of every frame. See writeMetricsTooltip
@@ -143,6 +164,8 @@ namespace MillScene_App
         // The theme the user chose, which is not the theme the scene wears while the pointer
         // walks the picker - see previewSceneTheme.
         std::size_t m_pickedTheme{ 0 };
+        // The look the user chose, at its index in k_lookChoices.
+        std::size_t m_pickedLook{ 0 };
 
         // The backstage's Scene page, refilled every time that page is built: a pick repaints the
         // button it left as well as the one it took, and the stack is what the preview returns to.
@@ -152,6 +175,10 @@ namespace MillScene_App
         AppMenuPage::Section* m_themeSection{ nullptr };
         SingleSelectionStackView* m_themeLanes{ nullptr };
         std::vector<Control*> m_themeButtons{};
+        // Shown while the scene that offers looks is the picked scene: the looks are its own.
+        AppMenuPage::Section* m_lookSection{ nullptr };
+        SingleSelectionStackView* m_lookLanes{ nullptr };
+        std::vector<Control*> m_lookButtons{};
         // The chart draws the benchmark above; it wears the scene's own colours, which is why it
         // is held rather than added and forgotten.
         // When the readings last went to stderr. See traceMetrics.
@@ -224,6 +251,7 @@ namespace MillScene_App
         // the stored one has to be the scene's by now.
         restoreSceneTheme();
         restoreScene();
+        restoreLook();
 
 
         connectAppPage(L"Scene", Icons::DotMark::draw, [this](AppMenuPage& page) {
@@ -240,8 +268,9 @@ namespace MillScene_App
     export [[nodiscard]] AppParams millSceneAppParams();
 
     // **What this application keeps of its own**, handed to the application beside the framework's
-    // schema and merged with it: the picked scene and the mill's picked theme. Empty is no pick
-    // yet, and the showcase then opens on the mill in the theme it starts with.
+    // schema and merged with it: the picked scene, the mill's picked theme and the look picked for
+    // the scene that offers looks. Empty is no pick yet, and the showcase then opens on the mill in
+    // the theme it starts with, and that scene in the look it starts with.
     export [[nodiscard]] Dom::Dt::Section createMillSceneConfigSchema();
 
     /// @brief Builds the showcase into a form of the given application, runs it, and answers what
@@ -365,6 +394,8 @@ void MillSceneForm::pickScene(const std::size_t index)
     }
     if (m_themeSection)
         m_themeSection->setVisible(index == 0);
+    if (m_lookSection)
+        m_lookSection->setVisible(sceneWithLooks() == index);
 }
 
 // **The picked theme's colours, not the blend's.** This runs the moment a theme is picked, when
@@ -395,10 +426,44 @@ void MillSceneForm::pickSceneTheme(std::size_t index)
     m_themeButtons[index]->invalidateState();
 }
 
+std::optional<std::size_t> MillSceneForm::sceneWithLooks()
+{
+    for (std::size_t index = 0; index != sceneCount(); ++index)
+    {
+        if (sceneAt(index).offersLooks())
+            return index;
+    }
+    return std::nullopt;
+}
+
+// A different look is a different load, so the readings start again.
+void MillSceneForm::previewLook(const std::size_t index)
+{
+    const std::optional<std::size_t> scene = sceneWithLooks();
+    if (!scene)
+        return;
+    sceneAt(*scene).setLook(k_lookChoices[index].look);
+    m_benchmark.reset();
+}
+
+void MillSceneForm::pickLook(const std::size_t index)
+{
+    const std::size_t previous = m_pickedLook;
+    m_pickedLook = index;
+    previewLook(index);
+    storeLook();
+
+    if (m_lookLanes)
+        m_lookLanes->setCurrentItem(*m_lookButtons[index]);
+    m_lookButtons[previous]->invalidateState();
+    m_lookButtons[index]->invalidateState();
+}
+
 void MillSceneForm::buildScenePage(AppMenuPage& page)
 {
     buildScenePicker(page);
     buildThemePicker(page);
+    buildLookPicker(page);
 }
 
 // Built the way the theme picker is: the pointer previews, a pick is the current item.
@@ -510,6 +575,58 @@ void MillSceneForm::buildThemePicker(AppMenuPage& page)
 
 }
 
+// **The section is captioned with its scene's name**, being shown only while that scene is
+// picked, in the room the mill's themes leave. Built the way the theme picker is.
+void MillSceneForm::buildLookPicker(AppMenuPage& page)
+{
+    const std::optional<std::size_t> scene = sceneWithLooks();
+    if (!scene)
+        return;
+    AppMenuPage::Section& section =
+        page.addSection(std::format(L"{} Look", sceneAt(*scene).name()));
+    m_lookSection = &section;
+    section.setVisible(m_pickedScene == *scene);
+    SingleSelectionStackView& lanes = section.body().add<SingleSelectionStackView>(
+        Orientation::VerticalWrap,
+        LaneSize{ k_sceneLaneSize },
+        Spacing{ k_themeLaneSpacing, 0.0f },
+        VerticalAlign::Top
+    );
+
+    m_lookLanes = &lanes;
+    lanes.setPreviewMode(PreviewMode::Hover);
+    lanes.onPreview([this](PreviewEvent& event) {
+        previewLook(event.item.tag().value);
+    });
+    lanes.onDestroy([this](DestroyEvent&) {
+        previewLook(m_pickedLook);
+        m_lookSection = nullptr;
+        m_lookLanes = nullptr;
+        m_lookButtons.clear();
+    });
+
+    m_lookButtons.clear();
+    m_lookButtons.reserve(k_lookChoices.size());
+    for (std::size_t index = 0; index != k_lookChoices.size(); ++index)
+    {
+        ToolButton& item = lanes.add<ToolButton>(
+            Text{ k_lookChoices[index].name },
+            Tag{ index },
+            MouseFocus::Self, // an item: the press that focuses it makes it current
+            ButtonViewMode::TextLabel,
+            ShowSelectionOnSurface::Yes
+        );
+        item.onGetState([this, index](GetStateEvent& event) {
+            event.state.selected = m_pickedLook == index;
+        });
+        item.onClick([this, index](ClickEvent&) {
+            pickLook(index);
+        });
+        m_lookButtons.push_back(&item);
+    }
+    lanes.setCurrentItem(*m_lookButtons[m_pickedLook]);
+}
+
 void MillSceneForm::restoreScene()
 {
     const std::wstring name =
@@ -555,6 +672,27 @@ void MillSceneForm::storeSceneTheme()
 {
     (appContext().config() / k_sceneThemeNodeName).set(
         std::wstring{ m_millScene.pickedTheme().name });
+}
+
+void MillSceneForm::restoreLook()
+{
+    const std::wstring name =
+        (appContext().config() / k_sceneLookNodeName).get<std::wstring>();
+    for (std::size_t index = 0; index != k_lookChoices.size(); ++index)
+    {
+        if (k_lookChoices[index].name == name)
+        {
+            m_pickedLook = index;
+            previewLook(index);
+            return;
+        }
+    }
+}
+
+void MillSceneForm::storeLook()
+{
+    (appContext().config() / k_sceneLookNodeName).set(
+        std::wstring{ k_lookChoices[m_pickedLook].name });
 }
 
 void MillSceneForm::traceMetrics()
@@ -685,7 +823,8 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
     {
         return Dom::Dt::Section{
             Dom::Dt::Value{ k_sceneNodeName, L"" },
-            Dom::Dt::Value{ k_sceneThemeNodeName, L"" }
+            Dom::Dt::Value{ k_sceneThemeNodeName, L"" },
+            Dom::Dt::Value{ k_sceneLookNodeName, L"" }
         };
     }
 

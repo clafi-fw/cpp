@@ -703,6 +703,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SteamEffect.cppm">
       <Filter>PathArt\Effects</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cpp">
+      <Filter>PathArt</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cppm">
+      <Filter>PathArt</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cpp">
       <Filter>PathArt</Filter>
     </ClCompile>
