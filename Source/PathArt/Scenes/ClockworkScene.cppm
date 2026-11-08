@@ -16,7 +16,7 @@ namespace ClaFi::PathArt
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Clockwork"; }
         void prepare(const SceneParams&) override;
-        void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
+        void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
     private:
         static void drawPlate(const SceneFrame&);
         static void drawPipes(const SceneFrame&);

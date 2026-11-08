@@ -44,6 +44,16 @@ those two multiply their quick details by `k_lively`, 6, to keep the 40-second p
 scene's speed is its `k_cycle` alone - every motion is counted per cycle, so a new length changes
 the pace and never the loop.
 
+**SceneTime carries the cycles passed** (Oj, 2026-11-08). Fitted into a cycle, the Satellite's orbit
+showed every region only at 4 orbits and 3 turns of the Earth in 12 minutes, and Oj: "you have an
+infinite surface - the orbit does not have to repeat itself". A motion that never comes round needs
+time past the cycle, which a frame depending on cycleTime alone cannot hold. Of three ways -
+SceneTime in draw, a setter on Scene beside the look, the scene counting the wraps itself as the
+mockup did - Oj picked SceneTime in draw. A scene counting the wraps itself would make a frame
+depend on the frames before it, so a still or a jump would start the orbit within the first cycle.
+The showcase counts the wraps as it brings the cycle time back into 0 to 1. The other scenes' frames
+came out bit for bit the same, in both looks.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.
@@ -572,6 +582,37 @@ Sun, so through the shadow they show their backs, which were one flat gray (Oj, 
 solid gray"). The stars keep 65 percent of their night brightness by day; at 15, as a camera
 exposed for daylight would show them, they read as dull. Both were picked from renders of the
 options.
+
+**The orbit crosses the whole globe and never comes round** (2026-11-08). Oj: "change the orbit so
+it crosses various areas", then "I want antarctica and Australia and New Zeeland and India,
+everything", and picked a polar orbit with north turning, the ground flowing across the screen as
+before.
+
+- The land map, the outlines and the towns reach the south. The map runs from pole to pole, 2048
+  rows of relief, with 24 more ranges, 4 more plateaus, 17 more dry regions and a dome of ice over
+  Antarctica. The outlines are all of Natural Earth's of at least 0.4 square degrees, Antarctica's
+  with its edge along the pole, and the grain's east step is divided by the cosine of the latitude
+  held at no less than 0.1, as that outline reaches the pole. The towns are tried from 56 south, on
+  a grid to 58 south. Map: 53.4 MB against 26.7, 3.8 s against 1.9 on the container's 2 cores, about
+  7 s of processor time. Outlines: 16.5 ms against 13.
+- The orbit is modelled among the stars: the satellite at (0, sin u, cos u), the orbit's axis along
+  x, the frame's across, up and toward worked out from u and the 36 degrees the view looks back,
+  then turned into the spin, tip and tilt the per-pixel code already took. The Sun stands at 35
+  degrees round from the equator crossing and 10 north. Its direction is handed over in the untilted
+  frame; the first try handed it over in the screen's and lit the wrong side.
+- A coverage simulation over twenty regions first fitted the orbit into the cycle: 4 orbits and 3
+  turns of the Earth in 720 seconds, which slid the ground 37 degrees off the track at the equator.
+  Free of the cycle, the Earth turns once in 3 + phi orbits. Of the ratios tried, from 1/phi^2 to
+  1/(7 + 1/phi) turns of the Earth an orbit, all with small partial quotients, 1/(4 + 1/phi) showed
+  every region by day soonest - within 14 minutes, the longest wait about 27 - and slides the ground
+  12 degrees.
+- The stars drift 0.2 frame widths an orbit, against 2 in the first mockup (Oj, "The sky much
+  slower"). The cycle is back at 240 seconds and k_lively at 6.
+- A frame on the container at 1280 x 720 averages 6.2 to 7.0 ms against 6.4 to 6.9 before, at 2560 x
+  1440 25.1 to 28.2 against 27.2 to 28.7. At 160 x 90, with the map built, 1.11 to 1.22 ms against
+  0.98 to 1.05 with the old map under the same scene code - the land's stage, from the outlines' 25
+  percent more points. Timed while the map was still building, the frames ran 0.5 ms slower: the
+  first runs waited 5 s, and the map takes 3.8.
 
 ## ChaseScene
 

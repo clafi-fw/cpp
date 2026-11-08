@@ -109,16 +109,16 @@ namespace ClaFi::PathArt
     // Two 20-second episodes a cycle: the wolf trips over a log, then runs into a branch. Each
     // time the camera stops while he is down, and the hare turns round to taunt him.
     // See PathArt#chasescene
-    void ChaseScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
+    void ChaseScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         const float unit = frame.unit;
         const float width = frame.width;
         // A narrow frame draws the two closer together.
         const float closeness = std::min(1.0f, (width / unit) / 760.0f);
-        const float travel = travelAt(cycleTime);
-        const int episode = static_cast<int>(std::floor(cycleTime * k_episodesPerCycle));
-        const float episodeTime = fractionalPart(cycleTime * k_episodesPerCycle);
+        const float travel = travelAt(time.cycleTime);
+        const int episode = static_cast<int>(std::floor(time.cycleTime * k_episodesPerCycle));
+        const float episodeTime = fractionalPart(time.cycleTime * k_episodesPerCycle);
         const float groundY = frame.height * 0.78f;
         const float footY = groundY + 22.0f * unit;
         const auto toScreen = [&](float units) {
@@ -231,8 +231,8 @@ namespace ClaFi::PathArt
             .dazed = dazed,
             .headTurn = std::lerp(0.1f * std::sin(stride), 0.3f, sprawl) + headDrop,
             .tongueTurn = 0.3f + 0.4f * std::sin(stride * 2.0f) * running + 0.6f * dazed,
-            .glance = 0.6f * std::sin(k_2Pi * 3.0f * cycleTime),
-            .cycleTime = cycleTime
+            .glance = 0.6f * std::sin(k_2Pi * 3.0f * time.cycleTime),
+            .cycleTime = time.cycleTime
         };
 
         // The hare: running ahead, clearing the obstacle, sitting up to taunt, and off again.

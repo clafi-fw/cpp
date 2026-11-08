@@ -25,7 +25,14 @@ namespace ClaFi::PathArt
         Realistic   // soft shading, the way a photograph shows it
     };
 
-    // A picture that moves through a cycle and starts it again without a seam. See PathArt
+    // When a frame falls: how far into its cycle, and how many cycles came before. See PathArt
+    export struct SceneTime
+    {
+        float cycleTime{}; // 0 to 1
+        std::int64_t cyclesPassed{}; // for a motion that never comes round
+    };
+
+    // A moving picture, drawn at a time into any bounds. See PathArt
     export class Scene
     {
     public:
@@ -37,8 +44,8 @@ namespace ClaFi::PathArt
         [[nodiscard]] virtual std::chrono::seconds cycleDuration() const { return k_cycle; }
         // Readies what the scene keeps between frames for the params it is drawn with. See PathArt
         virtual void prepare(const SceneParams&) {}
-        // The scene at `cycleTime` of its cycle, 0 to 1, into bounds. See PathArt
-        virtual void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) = 0;
+        // The scene at a time, into bounds. See PathArt
+        virtual void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) = 0;
         // Whether the scene draws differently in each look, so a choice of them is worth offering.
         [[nodiscard]] virtual bool offersLooks() const { return false; }
         // The look the scene is drawn in, where it offers looks. See PathArt#scenelook

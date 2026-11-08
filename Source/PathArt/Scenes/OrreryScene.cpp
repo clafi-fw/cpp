@@ -74,7 +74,7 @@ namespace ClaFi::PathArt
         m_nearOrbits.prepare(params);
     }
 
-    void OrreryScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
+    void OrreryScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         const float unit = frame.unit;
@@ -95,7 +95,7 @@ namespace ClaFi::PathArt
         for (std::size_t i = 0; i != k_orbits.size(); ++i)
         {
             const Orbit& orbit = k_orbits[i];
-            const float angle = k_2Pi * (orbit.startTurn + orbit.orbitsPerCycle * cycleTime);
+            const float angle = k_2Pi * (orbit.startTurn + orbit.orbitsPerCycle * time.cycleTime);
             const float radius = outerRadius * orbit.radiusShare;
             const float across = std::cos(angle) * radius;
             const float toward = std::sin(angle) * radius;
@@ -111,7 +111,7 @@ namespace ClaFi::PathArt
                         .toViewer = -toward * depthTilt / radius
                     },
                     .orbitTilt = k_planeTilt,
-                    .cycleTime = cycleTime
+                    .cycleTime = time.cycleTime
                 },
                 .depth = std::sin(angle),
                 .outer = orbit.radiusShare >= 0.5f
@@ -135,7 +135,7 @@ namespace ClaFi::PathArt
         };
 
         m_space.draw(frame);
-        drawStars(frame, cycleTime, StarField{
+        drawStars(frame, time.cycleTime, StarField{
             .count = 170,
             .top = 0.0f,
             .bottom = frame.height,
@@ -149,7 +149,7 @@ namespace ClaFi::PathArt
             if (placed->depth < 0.0f && placed->outer)
                 drawPlanet(frame, placed->pose);
         }
-        drawAsteroidBelt(frame, cycleTime, belt, BeltHalf::Far);
+        drawAsteroidBelt(frame, time.cycleTime, belt, BeltHalf::Far);
         for (const PlacedPlanet* placed : byDepth)
         {
             if (placed->depth < 0.0f && !placed->outer)
@@ -157,7 +157,7 @@ namespace ClaFi::PathArt
         }
         drawSun(frame, SunPose{
             .center = center,
-            .cycleTime = cycleTime,
+            .cycleTime = time.cycleTime,
             .flickersPerCycle = 4.0f * k_lively
         });
         m_nearOrbits.draw(frame);
@@ -166,7 +166,7 @@ namespace ClaFi::PathArt
             if (placed->depth >= 0.0f && !placed->outer)
                 drawPlanet(frame, placed->pose);
         }
-        drawAsteroidBelt(frame, cycleTime, belt, BeltHalf::Near);
+        drawAsteroidBelt(frame, time.cycleTime, belt, BeltHalf::Near);
         for (const PlacedPlanet* placed : byDepth)
         {
             if (placed->depth >= 0.0f && placed->outer)

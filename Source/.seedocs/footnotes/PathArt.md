@@ -4,17 +4,18 @@ The words that do not fit above a declaration.
 
 ## Scene
 
-A scene is a picture that moves through a cycle and comes back to where it began. The MillScene
-showcase holds a list of them, offers them by name() in the Scene group of its Scene page, and
-stores the one picked under that name.
+A scene is a moving picture, drawn at a time into any bounds. Most of its motions run through a
+cycle and come back to where they began. The MillScene showcase holds a list of scenes, offers them
+by name() in the Scene group of its Scene page, and stores the one picked under that name.
 
-**Every motion in a scene runs a whole number of times a cycle**, so the frame at the end of the
+**A motion that comes round runs a whole number of times a cycle**, so the frame at the end of the
 cycle is the frame at its start and the loop shows no seam. A scene that needs a slow motion beside
-a fast one gives itself a longer cycle - cycleDuration() - rather than a motion that does not come
-round.
+a fast one gives itself a longer cycle - cycleDuration(). A motion meant never to come round, such
+as the Satellite's orbit, runs on the cycles passed as well - see SceneTime.
 
-**The showcase owns the clock.** It advances its cycle time by the time since the last frame over
-cycleDuration(), and wraps it back into 0 to 1. A scene keeps no time of its own.
+**The showcase owns the clock.** It advances the cycle time by the time since the last frame over
+cycleDuration(), wraps it back into 0 to 1, and counts each wrap in the cycles passed. A scene
+keeps no time of its own.
 
 **A scene draws its figures as sprites and its weather as effects** - free functions that take a
 SceneFrame and a struct: a sprite's pose, an effect's extent. Each takes the time its motions run
@@ -24,9 +25,10 @@ on, and comes round when that time runs a whole number of units a cycle.
 
 Paints the whole of bounds, so nothing needs to be drawn under it.
 
-**A frame depends on cycleTime and bounds alone.** The showcase jumps between scenes and times - a
-hover preview, a pick, a resize - and every scene but MillScene draws the same picture for the same
-two values, whatever was drawn before. MillScene keeps its theme's crossfade between frames.
+**A frame depends on its SceneTime and bounds alone.** The showcase jumps between scenes and
+times - a hover preview, a pick, a resize - and every scene but MillScene draws the same picture
+for the same time and bounds, whatever was drawn before. MillScene keeps its theme's crossfade
+between frames.
 
 **Any size and any shape of bounds is drawn.** A scene lays itself out in the units of a
 SceneFrame, so it keeps its proportions at any size; a narrow frame draws the figures closer
@@ -44,7 +46,7 @@ MillScene showcase prepares on the first frame drawn at an unchanged size.
 
 ## SceneParams
 
-What a scene's frames depend on besides the cycle time: the bounds it is drawn into, the canvas's
+What a scene's frames depend on besides the time: the bounds it is drawn into, the canvas's
 transform from the bounds' coordinates to pixels, and the backend that draws them.
 
 ## SceneLook
@@ -57,6 +59,15 @@ and draws as it always does.
 
 The MillScene showcase offers the looks in a section of its Scene page captioned with the scene's
 name, shown only while that scene is the picked one, and keeps the pick under SceneLook.
+
+## SceneTime
+
+**cycleTime is how far a frame falls into its cycle**, 0 to 1, and cyclesPassed counts the whole
+cycles before it since the showcase started. Run backward past the start, the count goes below 0.
+
+**A motion that comes round reads cycleTime alone.** One that never comes round reads both, as
+cyclesPassed + cycleTime cycles summed in double: a float holds the time of a long run too coarsely
+for the motion to stay smooth.
 
 ## SceneFrame
 
@@ -143,25 +154,25 @@ several threads may call it at once.
 
 ## EarthMap
 
-The land of the Earth's northern half as maps, from the equator to the pole: how high it stands and
-what covers it. The Satellite's view never reaches south of about 7 degrees north.
+The land of the whole Earth as maps, from pole to pole: how high it stands and what covers it.
 
-- **The relief** is laid in from 50 ranges - the Himalaya, the Alps, the Rockies and the rest -
-  each a line along its crest with a height and a reach, and from 8 plateaus such as Tibet and
-  Greenland's ice, over low hills everywhere. Noise cuts the ranges into ridges and makes their
-  edges wander. A height of 1 is the Himalaya's crest.
+- **The relief** is laid in from 74 ranges - the Himalaya, the Andes, the Alps, the Transantarctic
+  Mountains and the rest - each a line along its crest with a height and a reach, and from 12
+  plateaus such as Tibet, the Altiplano and Greenland's ice, over low hills everywhere and a dome of
+  ice over Antarctica. Noise cuts the ranges into ridges and makes their edges wander. A height of
+  1 is the Himalaya's crest.
 - **The broad relief** is the same relief read at no more than a seventh of its finest detail,
   which smooths it to the ranges' broad shapes.
-- **The cover** is the dryness, from 16 dry regions such as the Sahara and the Gobi with noise
-  along their edges, and the shares of northern forest and of tundra, which end along wandering
-  lines of latitude.
+- **The cover** is the dryness, from 33 dry regions such as the Sahara, the Atacama and the
+  Australian deserts with noise along their edges, and the shares of northern forest and of tundra,
+  which end along wandering lines of latitude.
 
-The relief keeps 4096 points round each circle of latitude and 1024 from the equator to the pole,
-and the cover half as many each way. Each keeps 7 coarser levels of detail as well, each half as
-fine each way as the one before, its points the average of the 2 by 2 under them: 28 MB in all. One
-build always makes the same maps.
+The relief keeps 4096 points round each circle of latitude and 2048 from pole to pole, and the
+cover half as many each way. Each keeps 7 coarser levels of detail as well, each half as fine each
+way as the one before, its points the average of the 2 by 2 under them: 53 MB in all. One build
+always makes the same maps.
 
-**Building the maps takes about 4 seconds of processor time**, spread over all the cores. Build them
+**Building the maps takes about 7 seconds of processor time**, spread over all the cores. Build them
 off the paint.
 
 **readLand() reads each point as fine as the ground it stands for** - see MapQuery. It takes the
@@ -169,9 +180,8 @@ two levels whose points lie about as far apart as that ground reaches, blends th
 points in each, then blends the two levels by how near each is. Detail finer than the points can
 hold fades out, so it does not shimmer as the view moves.
 
-The reads wrap round the longitudes any number of turns either way and hold the equator's values
-south of it. readLand() works through eight points at a time with AVX2, and several threads may
-call it at once.
+The reads wrap round the longitudes any number of turns either way and stop at the poles.
+readLand() works through eight points at a time with AVX2, and several threads may call it at once.
 
 ## MapQuery
 
@@ -192,22 +202,23 @@ caller's to choose.
 
 A coast as one closed loop, its last point joined back to the first: x is the longitude and y the
 latitude, in degrees. It runs counterclockwise round land, seen from outside the Earth or on a map
-with north up, and clockwise round a sea inside the land. Where the grain pushes a coast past the
-180th meridian, its longitudes reach a little beyond 180 degrees.
+with north up, and clockwise round a sea inside the land. Antarctica's closes along the south pole,
+from 180 degrees west to 180 east. Where the grain pushes a coast past the 180th meridian, its
+longitudes reach a little beyond 180 degrees.
 
 ## landOutlines
 
-**The coasts are Natural Earth's land at 1:110m**: the 83 outlines that reach north of 2 degrees
-south and enclose at least 0.4 square degrees, and the Caspian Sea inside them. Natural Earth is
-free vector and raster map data at naturalearthdata.com, in the public domain.
+**The coasts are Natural Earth's land at 1:110m**: the 117 outlines that enclose at least 0.4
+square degrees, Antarctica's among them, and the Caspian Sea inside them. Natural Earth is free
+vector and raster map data at naturalearthdata.com, in the public domain.
 
-**Each outline gets a point every 0.1 degree of arc**, about 27,000 in all, and each point moves by
+**Each outline gets a point every 0.1 degree of arc**, about 34,500 in all, and each point moves by
 noise fixed to where it stands on the sphere: a broad warp of up to about 0.35 degrees bends the
 coast, and a fine grain of up to about 0.22 degrees roughens it. Where Natural Earth cuts the land
 at the 180th meridian, a point two outlines share moves alike in both, so they stay joined. No coast
 folds over itself.
 
-**One call takes about 12 milliseconds of one core**, and gives the same outlines every time. Call
+**One call takes about 16 milliseconds of one core**, and gives the same outlines every time. Call
 it off the paint.
 
 ## reachToward
@@ -225,6 +236,12 @@ The spin of a falling flake or leaf, in turns. An even index turns clockwise by 
 `symmetryFactor`th of a turn a cycle, an odd one the other way and twice as fast, so a shape with
 that symmetry looks the same at both ends of the cycle. The index adds whole turns, which change
 nothing on screen.
+
+## StarField drift
+
+**A star moved out of the band comes round into it at the far side**, so a drift of whole frame
+widths and band heights draws the field as it stands at none. Keep the drift to its part past the
+whole numbers: a float holds a large drift too coarsely for the stars to move smoothly.
 
 ## PuppeteerScene
 
@@ -314,21 +331,37 @@ fade over 0.3 of a pass.
 
 A satellite in orbit over a large Earth, through day, dusk and night.
 
-**The cycle is 240 seconds.** The Earth turns twice a cycle and the Sun goes round once, so each
-continent passes once by day and once by night. The satellite goes into the Earth's shadow once a
-cycle: it darkens and the stars brighten. Its panels turn to face the Sun, so in the shadow they
-show their backs. The blinking and twinkling keep the pace they would have in a 40-second cycle.
+**The satellite goes round over both poles every 3 minutes, and its orbit never comes round.** It
+runs on the cycles passed as well as the cycle - see SceneTime. The Earth turns once under it every
+4.618 orbits, 3 and the golden ratio: about 14 minutes. That number lies far from every fraction, so
+each track runs between the earlier ones, and the tracks spread evenly over the globe. Every
+continent passes by day within the first quarter of an hour.
+
+**The frame looks across the track.** The ground flows across the screen, the horizon at the top
+lies beside the track, and north turns as the satellite passes over the poles. The view looks
+straight down 36 degrees from the satellite, away from the horizon. It is turned from the Earth's
+own axes by the spin about the axis, then the tip of the axis toward the viewer, then the tilt in
+the screen, each worked out from the orbit.
+
+**The Sun stands fixed among the stars**, and so does the orbit's plane, so each orbit passes a day
+of about two minutes and a night. In the Earth's shadow the satellite darkens and the stars
+brighten. Its panels turn once an orbit to face the Sun, so in the shadow they show their backs.
+The stars drift a fifth of the frame's width each orbit - see StarField drift.
+
+**The cycle is 240 seconds.** The twinkling and the blinking keep the pace they would have in a
+40-second cycle.
 
 The city lights come on past the terminator - see SatelliteScene Terminator - and the atmosphere
 along the limb is blue by day, orange at dusk and dark at night, by the sunlight above each point of
 it: three rings, each fading out to both sides.
 
-**The towns are placed by the land's map.** Until it is built, 1200 stand anywhere on the land up
-to 62 degrees north. Then 1200 are tried at random points of the land and 4800 at random points of
-the coastline, a little inland, each kept by a weight: highest on low ground, and thinning with
-height, in the deep desert, in the tundra and a little in the northern forest. The towns over the
-land thin away from the coast as well. Greenland's ice has none. About one town in 28 glows. The
-towns are the same on every run.
+**The towns are placed by the land's map.** Until it is built, 1500 stand anywhere on the land
+from 56 degrees south to 62 north. Then 1500 are tried at random points of the land and 5800 at
+random points of the coastline, a little inland, from 56 degrees south to 72 north, each kept by a
+weight: highest on low ground, and thinning with height, in the deep desert, in the tundra and a
+little in the northern forest. The towns over the land thin away from the coast as well. The ice
+of Greenland and Antarctica has none. About one town in 33 glows. The towns are the same on every
+run.
 
 **Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks -
 see CloudKind. Each is a map on a sphere of its own, 0.6, 1.1 and 1.8 hundredths of the Earth's
@@ -343,7 +376,7 @@ A height of 1 stands 0.014 of the Earth's radius up as drawn, about ten times th
 height, and each slope is lit by the Sun where it stands: lighter facing it, darker facing away. A
 Sun lower than about 14 degrees lights the slopes as one at 14 degrees would, so the shading deepens
 toward dusk without turning black, and it fades out across the terminator. Snow lies above a height
-that falls from the tropics toward the pole.
+that falls from the tropics toward the poles, and past 66 degrees south it covers all the land.
 
 **The looks part at the clouds' edges and in the land.** Stylized cuts each layer's cover into two
 flat tones, and the land into flat zones of green, steppe, sand, taiga and tundra with flat bands of
@@ -352,13 +385,13 @@ and the land in the detailed relief, its colours blended - see SceneLook.
 
 **The maps are built off the paint** the first time the scene is drawn: a fraction of a second on a
 processor with many cores. The clouds show from the first frame after, and the land is drawn flat,
-green with Greenland white, until its map is ready. Each frame works the clouds and the land out in
-bands of rows spread over the cores - see spreadOverCores. On a globe over 3200 pixels in radius -
-a frame about 2800 pixels wide or more - the land is worked out at every 4th pixel and row, over
-1300 - a frame about 1130 pixels wide - at every 2nd, and below that at every pixel. The cloud maps'
-points stand twice as far apart as the land's, and so do the clouds' points. What lies between is
-blended before the look cuts the cover, the zones or the bands of height. The bands are laid in on
-all the cores as well - see Canvas drawPixelViews.
+green with the ice sheets white, until its map is ready. Each frame works the clouds and the land
+out in bands of rows spread over the cores - see spreadOverCores. On a globe over 3200 pixels in
+radius - a frame about 2800 pixels wide or more - the land is worked out at every 4th pixel and row,
+over 1300 - a frame about 1130 pixels wide - at every 2nd, and below that at every pixel. The cloud
+maps' points stand twice as far apart as the land's, and so do the clouds' points. What lies between
+is blended before the look cuts the cover, the zones or the bands of height. The bands are laid in
+on all the cores as well - see Canvas drawPixelViews.
 
 **Each point reads the land and the clouds as fine as the ground it stands for**, taken 1.4 times as
 wide as the points stand apart - see MapQuery. The ridges and the clouds hold still as the Earth

@@ -16,16 +16,16 @@ namespace ClaFi::PathArt
         constexpr float k_degree{ k_pi / 180.0f };
         // The detailed relief's texels round each circle of latitude.
         constexpr int k_detailedWidth{ 4096 };
-        // The detailed relief's texels from the pole to the equator.
-        constexpr int k_detailedHeight{ 1024 };
+        // The detailed relief's texels from pole to pole.
+        constexpr int k_detailedHeight{ 2048 };
         // The heights a byte holds, 0 to this.
         constexpr float k_heightRange{ 1.2f };
         // The steepest slope a byte holds, in heights per radian, kept by its square root.
         constexpr float k_steepest{ 200.0f };
         // The land cover's texels round each circle of latitude, at its finest.
         constexpr int k_coverWidth{ 2048 };
-        // The land cover's texels from the pole to the equator, at its finest.
-        constexpr int k_coverHeight{ 512 };
+        // The land cover's texels from pole to pole, at its finest.
+        constexpr int k_coverHeight{ 1024 };
         // The levels of detail in a pyramid, as many as its offsets hold.
         constexpr int k_levels{ 8 };
         // The finest level the broad relief is read at, between the third and the fourth.
@@ -34,6 +34,8 @@ namespace ClaFi::PathArt
         constexpr float k_lacunarity{ 2.03f };
         // How much wider a range's foothills reach than its core.
         constexpr float k_footReach{ 2.6f };
+        // How high Antarctica's ice stands at its crown, rising from 68 degrees south to 82.
+        constexpr float k_antarcticIce{ 0.36f };
         // How far apart a coast's points stand once it is densified, in degrees of arc.
         constexpr float k_coastPointSpacing{ 0.1f };
         // How far the broad warp bends a coast at the noise's full swing, in degrees of arc.
@@ -189,9 +191,70 @@ namespace ClaFi::PathArt
         constexpr float k_northernAndes[]{
             -75.0f, 10.0f, -77.0f, 4.0f, -78.0f, 0.0f, -79.0f, -4.0f
         };
+        constexpr float k_guianaHighlands[]{ -64.0f, 4.0f, -61.5f, 5.0f, -59.0f, 5.5f };
+        constexpr float k_cameroonLine[]{ 9.2f, 4.2f, 10.5f, 6.0f, 12.0f, 7.0f };
+        constexpr float k_centralAndes[]{
+            -79.0f, -4.0f, -79.0f, -7.0f, -77.5f, -10.0f, -75.5f, -13.0f, -72.0f, -15.5f,
+            -69.5f, -17.5f, -68.5f, -20.0f, -68.0f, -23.0f, -68.5f, -26.0f, -69.5f, -29.0f
+        };
+        constexpr float k_southernAndes[]{
+            -69.5f, -29.0f, -70.0f, -32.0f, -70.2f, -35.0f, -71.0f, -38.0f
+        };
+        constexpr float k_patagonianAndes[]{
+            -71.0f, -38.0f, -71.5f, -41.0f, -72.0f, -44.0f, -73.0f, -47.0f, -73.3f, -50.0f,
+            -72.5f, -53.0f
+        };
+        constexpr float k_serraDoMar[]{
+            -49.0f, -27.0f, -47.0f, -24.5f, -44.5f, -22.8f, -42.0f, -21.0f, -40.5f, -19.0f
+        };
+        constexpr float k_eastAfricanRift[]{
+            35.5f, 2.5f, 36.0f, 0.0f, 37.0f, -2.5f, 35.5f, -5.0f, 34.0f, -8.0f, 34.3f, -11.0f
+        };
+        constexpr float k_albertineRift[]{
+            29.8f, 1.5f, 29.5f, -1.5f, 29.2f, -4.0f, 30.0f, -7.0f, 31.0f, -8.5f
+        };
+        constexpr float k_drakensberg[]{
+            27.0f, -31.5f, 28.5f, -30.0f, 29.5f, -29.0f, 30.5f, -27.0f, 31.0f, -24.5f
+        };
+        constexpr float k_capeFoldBelt[]{ 18.8f, -33.5f, 21.0f, -33.6f, 24.0f, -33.7f };
+        constexpr float k_angolanHighlands[]{ 14.0f, -10.5f, 15.0f, -12.5f, 15.5f, -14.5f };
+        constexpr float k_madagascarHighlands[]{
+            49.3f, -13.0f, 48.0f, -16.5f, 47.0f, -19.5f, 46.5f, -22.5f
+        };
+        constexpr float k_greatDividingRange[]{
+            145.3f, -15.0f, 145.8f, -18.0f, 147.0f, -21.0f, 148.5f, -23.5f, 150.3f, -26.5f,
+            152.0f, -29.0f, 151.0f, -32.0f, 149.5f, -35.0f, 148.0f, -36.5f, 146.0f, -37.4f,
+            143.5f, -37.6f
+        };
+        constexpr float k_macDonnell[]{ 132.0f, -23.7f, 134.0f, -23.6f, 135.5f, -23.4f };
+        constexpr float k_musgrave[]{ 129.5f, -26.1f, 131.5f, -26.2f, 133.0f, -26.0f };
+        constexpr float k_flinders[]{ 138.2f, -33.0f, 138.6f, -31.5f, 139.0f, -30.5f };
+        constexpr float k_southernAlps[]{
+            167.0f, -45.8f, 168.5f, -44.8f, 170.0f, -43.8f, 171.5f, -42.8f, 173.0f, -41.8f
+        };
+        constexpr float k_newGuineaHighlands[]{
+            135.0f, -3.8f, 137.0f, -4.0f, 139.0f, -4.5f, 141.0f, -5.0f, 143.0f, -5.6f,
+            145.0f, -6.0f, 146.5f, -7.0f, 147.8f, -8.5f
+        };
+        constexpr float k_barisan[]{
+            95.6f, 5.0f, 97.5f, 3.0f, 99.5f, 0.5f, 101.5f, -2.0f, 103.0f, -3.8f, 104.5f, -5.5f
+        };
+        constexpr float k_transantarctic[]{
+            162.0f, -72.0f, 163.5f, -76.0f, 166.0f, -79.5f, 172.0f, -83.0f, 179.0f, -84.5f
+        };
+        constexpr float k_queenMaudMountains[]{
+            -179.0f, -84.6f, -165.0f, -85.5f, -150.0f, -86.0f, -130.0f, -86.0f
+        };
+        constexpr float k_ellsworth[]{ -86.0f, -78.0f, -85.0f, -80.0f };
+        constexpr float k_antarcticPeninsula[]{
+            -57.0f, -63.5f, -61.0f, -65.0f, -64.0f, -67.5f, -66.5f, -70.0f, -70.0f, -73.0f
+        };
+        constexpr float k_javaVolcanoes[]{
+            106.2f, -6.9f, 108.0f, -7.2f, 110.2f, -7.5f, 112.5f, -7.9f, 114.2f, -8.1f
+        };
 
-        // The ranges the northern half shows, by the height of their crests and their reach.
-        constexpr std::array<Range, 50> k_ranges{
+        // The ranges, by the height of their crests and their reach.
+        constexpr std::array<Range, 74> k_ranges{
             Range{ k_himalaya, 1.0f, 1.7f },
             Range{ k_karakoram, 0.95f, 1.3f },
             Range{ k_hinduKush, 0.7f, 1.3f },
@@ -241,7 +304,31 @@ namespace ClaFi::PathArt
             Range{ k_sierraMadreOccidental, 0.3f, 1.2f },
             Range{ k_sierraMadreOriental, 0.25f, 0.9f },
             Range{ k_appalachians, 0.15f, 1.4f },
-            Range{ k_northernAndes, 0.8f, 1.6f }
+            Range{ k_northernAndes, 0.8f, 1.6f },
+            Range{ k_centralAndes, 0.72f, 1.8f },
+            Range{ k_southernAndes, 0.7f, 1.3f },
+            Range{ k_patagonianAndes, 0.35f, 1.0f },
+            Range{ k_serraDoMar, 0.14f, 1.0f },
+            Range{ k_eastAfricanRift, 0.4f, 1.6f },
+            Range{ k_albertineRift, 0.35f, 1.0f },
+            Range{ k_drakensberg, 0.32f, 1.2f },
+            Range{ k_capeFoldBelt, 0.18f, 0.6f },
+            Range{ k_angolanHighlands, 0.2f, 1.4f },
+            Range{ k_madagascarHighlands, 0.2f, 1.1f },
+            Range{ k_greatDividingRange, 0.18f, 1.3f },
+            Range{ k_macDonnell, 0.12f, 0.6f },
+            Range{ k_musgrave, 0.12f, 0.7f },
+            Range{ k_flinders, 0.1f, 0.6f },
+            Range{ k_southernAlps, 0.38f, 0.6f },
+            Range{ k_newGuineaHighlands, 0.5f, 1.2f },
+            Range{ k_barisan, 0.3f, 0.7f },
+            Range{ k_javaVolcanoes, 0.3f, 0.5f },
+            Range{ k_guianaHighlands, 0.2f, 1.5f },
+            Range{ k_cameroonLine, 0.25f, 0.8f },
+            Range{ k_transantarctic, 0.5f, 1.5f },
+            Range{ k_queenMaudMountains, 0.45f, 1.2f },
+            Range{ k_ellsworth, 0.5f, 1.0f },
+            Range{ k_antarcticPeninsula, 0.3f, 0.8f }
         };
 
         // Outlines as longitude, latitude pairs.
@@ -274,8 +361,24 @@ namespace ClaFi::PathArt
             -55.0f, 80.0f, -30.0f, 81.0f, -24.0f, 74.0f, -38.0f, 66.0f, -45.0f, 63.0f,
             -50.0f, 66.0f, -54.0f, 72.0f
         };
+        constexpr float k_altiplano[]{
+            -70.5f, -14.5f, -67.5f, -16.0f, -66.0f, -19.0f, -66.5f, -22.5f, -67.5f, -24.0f,
+            -69.0f, -22.0f, -69.5f, -19.0f, -71.0f, -16.5f
+        };
+        constexpr float k_eastAfricanPlateau[]{
+            29.5f, -1.0f, 34.0f, 1.0f, 38.0f, 0.0f, 39.0f, -4.0f, 37.5f, -9.0f, 33.0f, -11.0f,
+            30.0f, -8.0f
+        };
+        constexpr float k_southernAfricanPlateau[]{
+            16.0f, -19.0f, 24.0f, -16.0f, 32.0f, -18.0f, 32.0f, -24.0f, 30.0f, -28.0f,
+            27.0f, -30.5f, 21.0f, -31.5f, 18.5f, -29.0f, 16.5f, -24.0f
+        };
+        constexpr float k_brazilianHighlands[]{
+            -52.0f, -12.0f, -45.0f, -10.0f, -41.0f, -13.0f, -41.0f, -19.0f, -45.0f, -22.0f,
+            -50.0f, -22.0f, -53.0f, -17.0f
+        };
 
-        constexpr std::array<Plateau, 8> k_plateaus{
+        constexpr std::array<Plateau, 12> k_plateaus{
             Plateau{ k_tibet, 0.55f },
             Plateau{ k_mongolia, 0.18f },
             Plateau{ k_iran, 0.2f },
@@ -283,10 +386,14 @@ namespace ClaFi::PathArt
             Plateau{ k_greatBasin, 0.18f },
             Plateau{ k_coloradoPlateau, 0.2f },
             Plateau{ k_mexicanPlateau, 0.2f },
-            Plateau{ k_greenlandIce, 0.32f }
+            Plateau{ k_greenlandIce, 0.32f },
+            Plateau{ k_altiplano, 0.43f },
+            Plateau{ k_eastAfricanPlateau, 0.14f },
+            Plateau{ k_southernAfricanPlateau, 0.12f },
+            Plateau{ k_brazilianHighlands, 0.09f }
         };
 
-        constexpr std::array<DryRegion, 16> k_dryRegions{
+        constexpr std::array<DryRegion, 33> k_dryRegions{
             DryRegion{ 5.0f, 24.0f, 22.0f, 8.0f, 1.0f }, // the western Sahara
             DryRegion{ 22.0f, 25.0f, 12.0f, 7.0f, 1.0f }, // the Libyan desert
             DryRegion{ -8.0f, 23.0f, 10.0f, 6.0f, 1.0f }, // Mauritania
@@ -302,7 +409,24 @@ namespace ClaFi::PathArt
             DryRegion{ -116.0f, 39.0f, 5.0f, 5.0f, 0.6f }, // the Great Basin
             DryRegion{ -112.0f, 32.0f, 6.0f, 4.0f, 0.85f }, // the Sonoran desert
             DryRegion{ -104.0f, 29.0f, 4.0f, 4.0f, 0.7f }, // the Chihuahuan desert
-            DryRegion{ -103.0f, 45.0f, 6.0f, 6.0f, 0.35f } // the Great Plains
+            DryRegion{ -103.0f, 45.0f, 6.0f, 6.0f, 0.35f }, // the Great Plains
+            DryRegion{ 46.0f, 6.0f, 6.0f, 6.0f, 0.65f }, // the Horn of Africa
+            DryRegion{ -70.5f, -23.0f, 1.8f, 7.0f, 0.95f }, // the Atacama
+            DryRegion{ -67.0f, -30.0f, 3.5f, 6.0f, 0.55f }, // the Monte
+            DryRegion{ -68.5f, -45.0f, 3.5f, 6.0f, 0.6f }, // the Patagonian steppe
+            DryRegion{ -62.0f, -23.0f, 4.0f, 4.0f, 0.35f }, // the Gran Chaco
+            DryRegion{ -40.0f, -8.0f, 4.0f, 4.0f, 0.4f }, // the Caatinga
+            DryRegion{ 15.0f, -23.0f, 2.0f, 6.0f, 0.95f }, // the Namib
+            DryRegion{ 22.0f, -23.0f, 7.0f, 6.0f, 0.75f }, // the Kalahari
+            DryRegion{ 22.0f, -31.5f, 5.0f, 2.5f, 0.6f }, // the Karoo
+            DryRegion{ 44.5f, -23.0f, 1.5f, 2.0f, 0.45f }, // south-western Madagascar
+            DryRegion{ 125.0f, -24.0f, 9.0f, 6.0f, 0.95f }, // the Great Victoria and the Gibson
+            DryRegion{ 124.0f, -19.5f, 6.0f, 3.0f, 0.85f }, // the Great Sandy desert
+            DryRegion{ 133.0f, -21.0f, 5.0f, 4.0f, 0.75f }, // the Tanami
+            DryRegion{ 137.5f, -25.5f, 5.0f, 4.0f, 0.85f }, // the Simpson
+            DryRegion{ 128.0f, -31.0f, 6.0f, 2.0f, 0.7f }, // the Nullarbor
+            DryRegion{ 142.0f, -31.0f, 6.0f, 4.0f, 0.4f }, // the outback of the Murray-Darling
+            DryRegion{ -77.0f, -12.0f, 1.2f, 6.0f, 0.8f } // the coast of Peru
         };
 
         // A point in space: on the unit sphere where the noise follows the sphere.
@@ -313,7 +437,7 @@ namespace ClaFi::PathArt
             float z;
         };
 
-        // Four values for each texel of a level, row by row from the pole, before they are packed.
+        // Four values for each texel of a level, row by row from the north pole, before packing.
         struct TexelValues
         {
             int width;
@@ -383,7 +507,7 @@ namespace ClaFi::PathArt
             float longitude, float latitude);
         [[nodiscard]] bool isInside(std::span<const float> outline, float longitude,
             float latitude);
-        // The heights of the land at every texel of the detailed relief, row by row from the pole.
+        // The heights at every texel of the detailed relief, row by row from the north pole.
         [[nodiscard]] std::vector<float> landHeights();
         // A range's height over the texels its foothills reach, kept where it rises highest.
         void raiseRange(const Range&, std::uint32_t seed, std::vector<float>& heights);
@@ -689,15 +813,15 @@ namespace ClaFi::PathArt
             return inside;
         }
 
-        // Low hills everywhere first, the plateaus over them, then the ranges, each raising what
-        // it reaches to the greater of the two.
+        // Low hills everywhere and a dome of ice over Antarctica first, then the plateaus, then the
+        // ranges, each raising what it reaches to the greater of the two.
         std::vector<float> landHeights()
         {
             std::vector<float> heights(static_cast<std::size_t>(k_detailedWidth)
                 * k_detailedHeight);
             spreadOverCores(k_detailedHeight, [&](int row) {
                 const float latitude = 90.0f
-                    - (static_cast<float>(row) + 0.5f) * 90.0f / k_detailedHeight;
+                    - (static_cast<float>(row) + 0.5f) * 180.0f / k_detailedHeight;
                 float* rowHeights = heights.data()
                     + static_cast<std::size_t>(row) * k_detailedWidth;
                 for (int column = 0; column != k_detailedWidth; ++column)
@@ -708,7 +832,8 @@ namespace ClaFi::PathArt
                     const float swell = fractalNoise(onSphere, 9.0f, 5, 7u);
                     const float grain = ridgedNoise(onSphere, 80.0f, 4, 9u);
                     rowHeights[column] = 0.05f * smoothStep(-0.1f, 0.6f, swell)
-                        + 0.03f * grain * smoothStep(-0.2f, 0.4f, swell);
+                        + 0.03f * grain * smoothStep(-0.2f, 0.4f, swell)
+                        + k_antarcticIce * smoothStep(68.0f, 82.0f, -latitude);
                 }
             });
             std::uint32_t seed = 100u;
@@ -753,7 +878,7 @@ namespace ClaFi::PathArt
             spreadOverCores(lastRow - firstRow + 1, [&](int rowIndex) {
                 const int row = firstRow + rowIndex;
                 const float latitude = 90.0f
-                    - (static_cast<float>(row) + 0.5f) * 90.0f / k_detailedHeight;
+                    - (static_cast<float>(row) + 0.5f) * 180.0f / k_detailedHeight;
                 float* rowHeights = heights.data()
                     + static_cast<std::size_t>(row) * k_detailedWidth;
                 for (int unwrapped = firstColumn; unwrapped <= lastColumn; ++unwrapped)
@@ -811,7 +936,7 @@ namespace ClaFi::PathArt
             spreadOverCores(lastRow - firstRow + 1, [&](int rowIndex) {
                 const int row = firstRow + rowIndex;
                 const float latitude = 90.0f
-                    - (static_cast<float>(row) + 0.5f) * 90.0f / k_detailedHeight;
+                    - (static_cast<float>(row) + 0.5f) * 180.0f / k_detailedHeight;
                 float* rowHeights = heights.data()
                     + static_cast<std::size_t>(row) * k_detailedWidth;
                 for (int unwrapped = firstColumn; unwrapped <= lastColumn; ++unwrapped)
@@ -843,7 +968,7 @@ namespace ClaFi::PathArt
             };
             spreadOverCores(k_detailedHeight, [&](int row) {
                 const float latitude = 90.0f
-                    - (static_cast<float>(row) + 0.5f) * 90.0f / k_detailedHeight;
+                    - (static_cast<float>(row) + 0.5f) * 180.0f / k_detailedHeight;
                 const std::size_t rowStart = static_cast<std::size_t>(row) * k_detailedWidth;
                 for (int column = 0; column != k_detailedWidth; ++column)
                 {
@@ -873,7 +998,7 @@ namespace ClaFi::PathArt
             };
             spreadOverCores(k_coverHeight, [&](int row) {
                 const float latitude = 90.0f
-                    - (static_cast<float>(row) + 0.5f) * 90.0f / k_coverHeight;
+                    - (static_cast<float>(row) + 0.5f) * 180.0f / k_coverHeight;
                 const std::size_t rowStart = static_cast<std::size_t>(row) * k_coverWidth;
                 for (int column = 0; column != k_coverWidth; ++column)
                 {
@@ -908,8 +1033,8 @@ namespace ClaFi::PathArt
             return cover;
         }
 
-        // Central differences, one-sided at the pole and the equator; near the pole a degree of
-        // longitude is held at no less than a fiftieth of its length at the equator.
+        // Central differences, one-sided at the poles; near a pole a degree of longitude is held at
+        // no less than a fiftieth of its length at the equator.
         std::array<float, 2> slopesAt(const std::vector<float>& heights, const int width,
             const int height, const int column, const int row)
         {
@@ -918,7 +1043,7 @@ namespace ClaFi::PathArt
                     + static_cast<std::size_t>((atColumn + width) % width)];
             };
             const float radiansAcross = 2.0f * k_pi / static_cast<float>(width);
-            const float radiansUp = 0.5f * k_pi / static_cast<float>(height);
+            const float radiansUp = k_pi / static_cast<float>(height);
             const float latitude = 0.5f * k_pi - (static_cast<float>(row) + 0.5f) * radiansUp;
             const float circle = std::max(std::cos(latitude), 0.02f);
             const float east = (at(column + 1, row) - at(column - 1, row))
@@ -1059,7 +1184,7 @@ namespace ClaFi::PathArt
             const __m256 latitudeSpans)
         {
             const float columnsPerRadian = static_cast<float>(pyramid.width) / (2.0f * k_pi);
-            const float rowsPerRadian = static_cast<float>(pyramid.height) / (0.5f * k_pi);
+            const float rowsPerRadian = static_cast<float>(pyramid.height) / k_pi;
             return quickLog2(_mm256_max_ps(
                 _mm256_mul_ps(longitudeSpans, _mm256_set1_ps(columnsPerRadian)),
                 _mm256_mul_ps(latitudeSpans, _mm256_set1_ps(rowsPerRadian))));
@@ -1091,9 +1216,9 @@ namespace ClaFi::PathArt
         }
 
         // **Each level wraps round the longitudes** any number of turns either way, and holds its
-        // first row north of its first texel centers and its last south of its last, the
-        // equator's included. The maximum takes its second operand where the first is not a
-        // number, so every read stays inside the level.
+        // first row north of its first texel centers and its last south of its last. The maximum
+        // takes its second operand where the first is not a number, so every read stays inside
+        // the level.
         TexelCorners cornersAt(const TexelPyramid& pyramid, const __m256i level,
             const __m256 longitudes, const __m256 latitudes)
         {
@@ -1107,7 +1232,7 @@ namespace ClaFi::PathArt
             const __m256 columnsPerRadian = _mm256_mul_ps(coarseness,
                 _mm256_set1_ps(static_cast<float>(pyramid.width) / (2.0f * k_pi)));
             const __m256 rowsPerRadian = _mm256_mul_ps(coarseness,
-                _mm256_set1_ps(static_cast<float>(pyramid.height) / (0.5f * k_pi)));
+                _mm256_set1_ps(static_cast<float>(pyramid.height) / k_pi));
             const __m256 half = _mm256_set1_ps(0.5f);
             const __m256 across = _mm256_fmsub_ps(longitudes, columnsPerRadian, half);
             const __m256 down = _mm256_min_ps(_mm256_max_ps(_mm256_fmsub_ps(
@@ -1222,7 +1347,8 @@ namespace ClaFi::PathArt
 
         // The noise is read where the point stands on the sphere, so a point that two outlines
         // share at the 180th meridian moves alike in both. The move eastward is in degrees of arc,
-        // which take more degrees of longitude toward the pole.
+        // which take more degrees of longitude toward the pole; Antarctica's outline runs to the
+        // pole itself, where a degree of longitude is held at a tenth of one at the equator.
         void roughen(LandOutline& outline)
         {
             for (FloatPoint& point : outline)
@@ -1232,7 +1358,7 @@ namespace ClaFi::PathArt
                     + k_coastGrainReach * fractalNoise(onSphere, 45.0f, 3, 13u);
                 const float north = k_coastWarpReach * fractalNoise(onSphere, 5.0f, 3, 12u)
                     + k_coastGrainReach * fractalNoise(onSphere, 45.0f, 3, 14u);
-                point.x += east / std::cos(point.y * k_degree);
+                point.x += east / std::max(std::cos(point.y * k_degree), 0.1f);
                 point.y += north;
             }
         }

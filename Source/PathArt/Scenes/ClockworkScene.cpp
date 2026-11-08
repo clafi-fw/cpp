@@ -82,7 +82,7 @@ namespace ClaFi::PathArt
 
     // Every gear turns a whole number of teeth and of spokes in a cycle, so the train ends the
     // cycle where it began. See PathArt#clockworkscene
-    void ClockworkScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
+    void ClockworkScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         const Movement movement = movementIn(frame);
@@ -94,7 +94,7 @@ namespace ClaFi::PathArt
         const float toothSize = 6.2f * size;
         const FloatPoint escapeCenter = center + FloatPoint{ -230.0f * size, -60.0f * size };
         const EscapementPose escapement = escapementAt(escapeCenter, size,
-            k_swingsPerCycle * cycleTime);
+            k_swingsPerCycle * time.cycleTime);
         drawPendulum(frame, escapement);
 
         constexpr GearMetal k_brass{ Color{ 0xFFF0C766 }, Color{ 0xFF8C6223 } };
@@ -137,7 +137,7 @@ namespace ClaFi::PathArt
             ClockworkColors::Shadow.withOpacity(0.5f));
         drawEscapement(frame, escapement);
         m_pipes.draw(frame);
-        drawSteamAndNeedle(frame, center, size, cycleTime);
+        drawSteamAndNeedle(frame, center, size, time.cycleTime);
     }
 
     void ClockworkScene::drawPlate(const SceneFrame& frame)

@@ -64,14 +64,28 @@ namespace ClaFi::PathArt
     namespace
     {
         constexpr float k_degree{ std::numbers::pi_v<float> / 180.0f };
-        // The latitude the view looks straight down on, so the cap in view holds mid-latitudes.
-        constexpr float k_viewLatitude{ -20.0f * k_degree };
+        // How long the satellite takes to go round, over both poles.
+        constexpr std::chrono::seconds k_orbit{ 180 };
+        // The orbits each turn of the Earth, 3 and the golden ratio. See PathArt#satellitescene
+        constexpr double k_orbitsPerEarthTurn{ 3.0 + std::numbers::phi };
+        // Where on its orbit the satellite starts, from the equator northward.
+        constexpr float k_orbitStart{ 81.0f * k_degree };
+        // How far the Earth has turned at the start.
+        constexpr float k_earthTurnAtStart{ 72.0f * k_degree };
+        // How far from the satellite, away from the horizon, the view looks straight down.
+        constexpr float k_viewBehind{ 36.0f * k_degree };
+        // How far round the stars the Sun stands from where the orbit crosses the equator.
+        constexpr float k_sunAround{ 35.0f * k_degree };
+        // How far north of the equator the Sun stands.
+        constexpr float k_sunNorth{ 10.0f * k_degree };
+        // The frame widths the stars drift each time the satellite goes round.
+        constexpr float k_skyWidthsPerOrbit{ 0.2f };
         // The pace things keep at a 40-second cycle, in this scene's 240-second one.
         constexpr float k_lively{ 6.0f };
         // How many opacities the city lights are drawn in, one fill each on Direct2D.
         constexpr int k_cityOpacitySteps{ 6 };
-        // The brightness above which a town glows: about one town in 28, some 220 of 6000.
-        constexpr float k_glowingBrightness{ 0.964f };
+        // The brightness above which a town glows: about one town in 33, some 220 of 7300.
+        constexpr float k_glowingBrightness{ 0.97f };
         // How far apart the points are where a shape's edge follows the rim.
         constexpr float k_rimStep{ 2.0f * k_degree };
         // How far a point of cloud faces the viewer when it starts fading into the haze.
@@ -253,21 +267,22 @@ namespace ClaFi::PathArt
         constexpr float k_townCellSize{ 0.25f };
         constexpr float k_townGridNorth{ 85.0f }; // the latitude its first row starts at
         constexpr int k_townGridColumns{ 1440 }; // round the whole circle of latitude
-        constexpr int k_townGridRows{ 380 }; // down to 10 degrees south
-        constexpr float k_townSouth{ -10.0f }; // the latitudes the towns are tried between
+        constexpr int k_townGridRows{ 572 }; // down to 58 degrees south
+        constexpr float k_townSouth{ -56.0f }; // the latitudes the towns are tried between
         constexpr float k_townNorth{ 72.0f };
-        constexpr int k_landTownCount{ 1200 }; // tried over the land
-        constexpr int k_coastlineTownCount{ 4800 }; // tried on the coastline itself
+        constexpr int k_landTownCount{ 1500 }; // tried over the land
+        constexpr int k_coastlineTownCount{ 5800 }; // tried on the coastline itself
 
-        // Whether an outline is Greenland's, by where the middle of its points lies.
-        [[nodiscard]] bool isGreenland(const std::span<const FloatPoint> outline)
+        // Whether an outline lies under Greenland's or Antarctica's ice, by its points' middle.
+        [[nodiscard]] bool isIceSheet(const std::span<const FloatPoint> outline)
         {
             FloatPoint sum = { 0.0f, 0.0f };
             for (const FloatPoint point : outline)
                 sum = { sum.x + point.x, sum.y + point.y };
             const float count = static_cast<float>(outline.size());
             const FloatPoint middle = { sum.x / count, sum.y / count };
-            return middle.y > 59.0f && middle.x > -60.0f && middle.x < -30.0f;
+            const bool greenland = middle.y > 59.0f && middle.x > -60.0f && middle.x < -30.0f;
+            return greenland || middle.y < -60.0f;
         }
 
         // The towns' grid's column for a column counted past either end, round the circle.
@@ -432,6 +447,12 @@ namespace ClaFi::PathArt
             FloatPoint center;
             float radius;
         };
+
+        // The part of a count past its last whole number, taken in double to keep a long run exact.
+        [[nodiscard]] float fractionOf(const double count)
+        {
+            return static_cast<float>(count - std::floor(count));
+        }
 
         // The globe so large that only a cap shows, its top a little above the middle.
         [[nodiscard]] GlobeDisc globeDiscIn(const SceneFrame& frame)
@@ -1476,12 +1497,16 @@ namespace ClaFi::PathArt
             };
         }
 
-        // The height above which snow lies, falling from the tropics toward the pole.
+        // The height snow lies above, falling toward the poles and to the ground past 66 south.
         [[nodiscard]] __m256 snowlineAt(const __m256 latitudes)
         {
-            return _mm256_fnmadd_ps(_mm256_set1_ps(0.42f),
-                smoothStep8(28.0f * k_degree, 68.0f * k_degree, latitudes),
+            const __m256 fromEquator = _mm256_andnot_ps(_mm256_set1_ps(-0.0f), latitudes);
+            const __m256 south = _mm256_sub_ps(_mm256_setzero_ps(), latitudes);
+            const __m256 temperate = _mm256_fnmadd_ps(_mm256_set1_ps(0.42f),
+                smoothStep8(28.0f * k_degree, 68.0f * k_degree, fromEquator),
                 _mm256_set1_ps(0.58f));
+            return _mm256_fnmadd_ps(_mm256_set1_ps(0.3f),
+                smoothStep8(60.0f * k_degree, 66.0f * k_degree, south), temperate);
         }
 
         // **How bright the ground is for its slope**, against flat ground under the same Sun: above
@@ -1953,15 +1978,13 @@ namespace ClaFi::PathArt
     {
     }
 
-    // The Earth turns twice a cycle and the Sun goes round once, so each continent passes once by
-    // day and once by night. See PathArt#satellitescene
     void SatelliteScene::prepare(const SceneParams& params)
     {
         m_space.prepare(params);
         m_ocean.prepare(params);
     }
 
-    void SatelliteScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
+    void SatelliteScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         if (m_coastsBuilt.valid())
         {
@@ -1975,22 +1998,13 @@ namespace ClaFi::PathArt
         const float height = frame.height;
         const GlobeDisc globeDisc = globeDiscIn(frame);
         const float radius = globeDisc.radius;
-        const float sunTurn = k_2Pi * cycleTime + 0.9f;
-        const float sunLength = std::hypot(std::sin(sunTurn), 0.22f, std::cos(sunTurn));
-        const Globe globe = {
-            .center = globeDisc.center,
-            .radius = radius,
-            .tilt = 0.22f,
-            .spin = k_2Pi * 2.0f * cycleTime + 1.2f,
-            .sun = {
-                std::sin(sunTurn) / sunLength,
-                0.22f / sunLength,
-                std::cos(sunTurn) / sunLength
-            }
-        };
+        // The orbit runs on through the cycles, so it never comes round.
+        const double cycles = static_cast<double>(time.cyclesPassed) + time.cycleTime;
+        const double orbits = cycles * std::chrono::duration<double>{ k_cycle } / k_orbit;
+        const Globe globe = Globe::OnOrbit(globeDisc.center, radius, orbits);
 
         // The satellite is in the Earth's shadow when the ground under it is past the terminator.
-        const float hover = 5.0f * unit * std::sin(k_2Pi * 2.0f * k_lively * cycleTime);
+        const float hover = 5.0f * unit * std::sin(k_2Pi * 2.0f * k_lively * time.cycleTime);
         const FloatPoint satellite = { width * 0.66f, height * 0.27f + hover };
         const FloatPoint offCenter = {
             (satellite.x - globe.center.x) / radius,
@@ -2007,14 +2021,15 @@ namespace ClaFi::PathArt
 
         m_space.draw(frame);
         // The stars dim a little by day and shine fully in the Earth's shadow.
-        drawStars(frame, cycleTime, StarField{
+        drawStars(frame, time.cycleTime, StarField{
             .count = 160,
             .top = 0.0f,
             .bottom = height * 0.8f,
             .seed = 90.0f,
             .color = SatelliteSceneColors::Star,
             .opacity = 0.65f + 0.35f * (1.0f - sunlit),
-            .twinklesPerCycle = k_lively
+            .twinklesPerCycle = k_lively,
+            .drift = { fractionOf(orbits * k_skyWidthsPerOrbit), 0.0f }
         });
         drawGlow(frame, { width, 0.0f }, 340.0f * unit,
             SatelliteSceneColors::SunGlare.withOpacity(0.16f * sunlit));
@@ -2032,9 +2047,9 @@ namespace ClaFi::PathArt
             drawGlow(frame, globe.onScreen(globe.sun), 150.0f * unit,
                 SatelliteSceneColors::SeaGlint.withOpacity(0.3f * globe.sun.z), 0.8f);
         }
-        drawCityLights(frame, globe, terminator, cycleTime);
+        drawCityLights(frame, globe, terminator, time.cycleTime);
         frame.canvas.popClip();
-        drawClouds(frame, globe, night, cycleTime);
+        drawClouds(frame, globe, night, time.cycleTime);
         drawAtmosphere(frame, globe);
 
         const float size = unit * std::min(1.0f, (width / unit) / 900.0f);
@@ -2042,8 +2057,8 @@ namespace ClaFi::PathArt
             .center = satellite,
             .size = size,
             .sunlit = sunlit,
-            .orbitTime = cycleTime,
-            .blinkTime = cycleTime * k_lively
+            .orbitTime = fractionOf(orbits),
+            .blinkTime = time.cycleTime * k_lively
         });
     }
 
@@ -2053,6 +2068,48 @@ namespace ClaFi::PathArt
         const float x = onEarth.x * spinCosine + onEarth.z * spinSine;
         const float z = onEarth.z * spinCosine - onEarth.x * spinSine;
         return { x, onEarth.y * tipCosine + z * tipSine, z * tipCosine - onEarth.y * tipSine };
+    }
+
+    // **The view is turned from the Earth's axes** by the spin about the axis, then the tip of the
+    // axis toward the viewer, then the tilt in the screen. See PathArt#satellitescene
+    SatelliteScene::Globe SatelliteScene::Globe::OnOrbit(const FloatPoint center,
+        const float radius, const double orbits)
+    {
+        const float around = k_2Pi * fractionOf(orbits) + k_orbitStart;
+        const float earthTurn = k_2Pi * fractionOf(orbits / k_orbitsPerEarthTurn)
+            + k_earthTurnAtStart;
+        const float aroundCosine = std::cos(around);
+        const float aroundSine = std::sin(around);
+        const float behindCosine = std::cos(k_viewBehind);
+        const float behindSine = std::sin(k_viewBehind);
+        // The screen's three directions among the stars: the orbit in the plane of y and z, its
+        // axis along x, about which the stars stand still.
+        const Direction across = { 0.0f, -aroundCosine, aroundSine };
+        const Direction up = { behindCosine, behindSine * aroundSine, behindSine * aroundCosine };
+        const Direction toward = {
+            -behindSine,
+            behindCosine * aroundSine,
+            behindCosine * aroundCosine
+        };
+        const Direction sun = {
+            std::cos(k_sunNorth) * std::sin(k_sunAround),
+            std::sin(k_sunNorth),
+            std::cos(k_sunNorth) * std::cos(k_sunAround)
+        };
+        const auto along = [&](const Direction& axis) {
+            return sun.x * axis.x + sun.y * axis.y + sun.z * axis.z;
+        };
+        const float tilt = std::atan2(aroundCosine, behindSine * aroundSine);
+        // The Sun across and up the screen, turned back by the tilt as a direction is held.
+        const FloatPoint sunOnScreen = rotated({ along(across), along(up) }, -tilt);
+        return {
+            .center = center,
+            .radius = radius,
+            .tilt = tilt,
+            .tip = -std::asin(toward.y),
+            .spin = std::atan2(behindSine, behindCosine * aroundCosine) + earthTurn,
+            .sun = { sunOnScreen.x, sunOnScreen.y, along(toward) }
+        };
     }
 
     // Unturned, longitude 0 faces the viewer and the north pole points up.
@@ -2072,8 +2129,8 @@ namespace ClaFi::PathArt
         return {
             .spinCosine = std::cos(spin),
             .spinSine = std::sin(spin),
-            .tipCosine = std::cos(-k_viewLatitude),
-            .tipSine = std::sin(-k_viewLatitude)
+            .tipCosine = std::cos(tip),
+            .tipSine = std::sin(tip)
         };
     }
 
@@ -2287,7 +2344,7 @@ namespace ClaFi::PathArt
             onEarth.reserve(outline.size());
             for (const FloatPoint lonLat : outline)
                 onEarth.push_back(Globe::onEarthAt(lonLat));
-            const bool iceSheet = isGreenland(outline);
+            const bool iceSheet = isIceSheet(outline);
             coastlines.push_back({
                 .lonLat = std::move(outline),
                 .onEarth = std::move(onEarth),
@@ -2590,7 +2647,7 @@ namespace ClaFi::PathArt
             toPixels.mapRect(view), canvasPixels), landBox).roundedOut();
         if (inView.empty())
             return;
-        const float tip = -k_viewLatitude;
+        const float tip = globe.tip;
         const float radiusInPixels = globe.radius * toPixels.a;
         const int step = pointStepFor(radiusInPixels);
         const LandPicture picture = {
@@ -2742,7 +2799,7 @@ namespace ClaFi::PathArt
         {
             const CloudLayer& layer = k_cloudLayers[i];
             const float radius = globe.radius * (1.0f + layer.height);
-            const float tip = -(k_viewLatitude + layer.axisTilt * k_degree);
+            const float tip = globe.tip - layer.axisTilt * k_degree;
             const float drift = layer.drift * k_degree
                 * std::sin(k_2Pi * cycleTime + layer.driftPhase);
             layers[i] = {

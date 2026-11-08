@@ -60,12 +60,12 @@ namespace ClaFi::PathArt
         m_shore.prepare(params);
     }
 
-    void CometScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
+    void CometScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         drawSky(frame);
-        drawAboveLake(frame, cycleTime, false);
-        drawLake(frame, cycleTime);
+        drawAboveLake(frame, time.cycleTime, false);
+        drawLake(frame, time.cycleTime);
     }
 
     float CometScene::farRidgeY(const SceneFrame& frame, const float x)

@@ -51,7 +51,7 @@ namespace ClaFi::PathArt
         m_valance.prepare(params);
     }
 
-    void PuppeteerScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
+    void PuppeteerScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         const float unit = frame.unit;
@@ -59,7 +59,7 @@ namespace ClaFi::PathArt
         const float floorY = frame.height * k_floorLineShare;
         // A narrow frame draws the puppet and the android closer together.
         const float closeness = std::min(1.0f, (frame.width / unit) / 640.0f);
-        const float sway = k_2Pi * k_swaysPerCycle * cycleTime;
+        const float sway = k_2Pi * k_swaysPerCycle * time.cycleTime;
 
         const float puppetX = centerX - 78.0f * unit * closeness + 34.0f * unit * std::sin(sway);
         const MarionettePose marionette = danceMarionette(unit, { puppetX, floorY }, sway);
@@ -73,20 +73,20 @@ namespace ClaFi::PathArt
             .feet = { androidX, floorY },
             .sway = sway,
             .grip = marionette.control.center - FloatPoint{ 0.0f, 9.0f * unit },
-            .cycleTime = cycleTime
+            .cycleTime = time.cycleTime
         };
         drawAndroid(frame, android);
         drawMarionette(frame, marionette);
         drawAndroidHand(frame, android);
 
-        drawDustMotes(frame, cycleTime, DustMotes{
+        drawDustMotes(frame, time.cycleTime, DustMotes{
             .lamp = { lampX, 0.0f },
             .pool = { puppetX, floorY },
             .top = frame.height * 0.04f,
             .spread = 180.0f * unit,
             .color = PuppeteerColors::Dust
         });
-        drawCurtains(frame, cycleTime);
+        drawCurtains(frame, time.cycleTime);
         m_valance.draw(frame);
     }
 

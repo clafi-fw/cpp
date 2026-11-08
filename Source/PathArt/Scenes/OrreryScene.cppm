@@ -17,7 +17,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] std::wstring_view name() const override { return L"Orrery"; }
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
         void prepare(const SceneParams&) override;
-        void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
+        void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
     private:
         static void drawSpace(const SceneFrame&);
         static void drawFarOrbits(const SceneFrame&);

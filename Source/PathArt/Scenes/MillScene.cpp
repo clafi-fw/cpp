@@ -66,7 +66,7 @@ namespace ClaFi::PathArt
         m_animator.externalTimerTick();
     }
 
-    void MillScene::draw(Canvas& canvas, const FloatRect& bounds, const float t)
+    void MillScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         m_offset = bounds.topLeft(); // Anchored to widget's logical position
@@ -87,7 +87,7 @@ namespace ClaFi::PathArt
         // Draw pre-rendered background matching widget coordinate offset [CP]
         canvas.drawBitmap(m_background, m_offset);
 
-        drawStars(frame, t, StarField{
+        drawStars(frame, time.cycleTime, StarField{
             .style = StarStyle::Sparkles,
             .count = 120,
             .top = 0.0f,
@@ -95,13 +95,14 @@ namespace ClaFi::PathArt
             .color = m_theme.sunDisk,
             .opacity = m_theme.hasStars
         });
-        drawSunCorona(canvas, m_offset.x + m_sunPos.x, m_offset.y + m_sunPos.y, m_sunRadius, t);
+        drawSunCorona(canvas, m_offset.x + m_sunPos.x, m_offset.y + m_sunPos.y, m_sunRadius,
+            time.cycleTime);
 
         const float orbX = m_offset.x + w * 0.5f;
         const float orbY = m_offset.y + h * 0.2f;
         const float rX = w * 0.35f;
         const float rY = h * 0.04f;
-        const float a1 = 0.5f * t * k_2Pi;
+        const float a1 = 0.5f * time.cycleTime * k_2Pi;
         const float a2 = a1 + 3.1415f;
         drawCloud(canvas, orbX + std::cos(a1) * rX, orbY + std::sin(a1) * rY,
             (0.8f + (std::sin(a1) + 1.0f) * 0.2f) * m_objectsScale);
@@ -117,7 +118,7 @@ namespace ClaFi::PathArt
         drawCow(frame, CowPose{
             .at = { w * 0.28f, h * 0.61f },
             .size = 0.36f * m_objectsScale,
-            .cycleTime = t
+            .cycleTime = time.cycleTime
         }, CowColors{
             .body = m_theme.cowBody,
             .spots = m_theme.cowSpots,
@@ -131,13 +132,13 @@ namespace ClaFi::PathArt
         drawWaterWheel(frame, WaterWheelPose{
             .center = { w * 0.5f - 65.0f * mS, h * 0.85f },
             .size = m_objectsScale,
-            .turns = t * 2.0f
+            .turns = time.cycleTime * 2.0f
         }, m_theme.millWheel);
 
         const MillPose mill = {
             .base = { w * 0.5f, h * 0.85f },
             .size = mS,
-            .wingTurns = t
+            .wingTurns = time.cycleTime
         };
         const MillColors millColors = {
             .bodyTop = m_theme.millBodyTop,
@@ -151,15 +152,15 @@ namespace ClaFi::PathArt
         };
         drawMillHouse(frame, mill, millColors);
         drawWaterFoam(canvas, m_offset.x + w * 0.5f - 75.0f * mS, m_offset.y + h * 0.85f,
-            m_objectsScale, t * 1.25f);
-        drawLightning(frame, t, Lightning{
+            m_objectsScale, time.cycleTime * 1.25f);
+        drawLightning(frame, time.cycleTime, Lightning{
             .strength = m_theme.hasRain,
             .color = m_theme.sunDisk
         });
 
         // Anchors River coordinate boundaries to layout constraints instead of clipBox [CP]
         FloatRect riverBounds = bounds;
-        riverBounds.top = drawRiver(canvas, m_offset, w, h, t);
+        riverBounds.top = drawRiver(canvas, m_offset, w, h, time.cycleTime);
         const float riverTop = riverBounds.top - m_offset.y;
 
         // 1. Constrain river reflections inside riverbed
@@ -177,7 +178,7 @@ namespace ClaFi::PathArt
         drawWaterLily(frame, WaterLilyPose{
             .center = { w * 0.2f, riverTop + 40.0f * m_objectsScale },
             .size = m_objectsScale,
-            .cycleTime = t
+            .cycleTime = time.cycleTime
         }, WaterLilyColors{
             .pad = m_theme.lilyPad,
             .flower = m_theme.lilyFlower
@@ -194,12 +195,12 @@ namespace ClaFi::PathArt
         drawReeds(frame, ReedsPose{
             .base = { w * 0.3f, riverTop },
             .size = reedsScale,
-            .cycleTime = t
+            .cycleTime = time.cycleTime
         }, reedColors);
         drawReeds(frame, ReedsPose{
             .base = { w * 0.62f, riverTop },
             .size = reedsScale * 1.16f,
-            .cycleTime = t + 0.3f
+            .cycleTime = time.cycleTime + 0.3f
         }, reedColors);
 
         drawMillWings(frame, mill, millColors);
@@ -219,7 +220,7 @@ namespace ClaFi::PathArt
         drawGator(frame, GatorPose{
             .at = predator,
             .size = m_objectsScale * 0.8f,
-            .cycleTime = t,
+            .cycleTime = time.cycleTime,
             .opacity = m_theme.isAfrica
         }, GatorColors{
             .body = m_theme.wolfBody,
@@ -228,7 +229,7 @@ namespace ClaFi::PathArt
         drawPeekingWolf(frame, PeekingWolfPose{
             .at = predator,
             .size = m_objectsScale * 0.8f,
-            .cycleTime = t,
+            .cycleTime = time.cycleTime,
             .opacity = 1.0f - m_theme.isAfrica
         }, PeekingWolfColors{
             .body = m_theme.wolfBody,
@@ -237,26 +238,26 @@ namespace ClaFi::PathArt
         });
         drawFirTree(frame, { w * 0.85f, h * 0.70f }, 1.2f * m_objectsScale, treeColors);
 
-        drawRain(frame, t, Rain{
+        drawRain(frame, time.cycleTime, Rain{
             .opacity = m_theme.hasRain,
             .color = m_theme.effectColor1
         });
-        drawSnow(frame, t, Snow{
+        drawSnow(frame, time.cycleTime, Snow{
             .opacity = m_theme.hasSnow,
             .color = m_theme.effectColor1
         });
-        drawFireflies(frame, t, Fireflies{
+        drawFireflies(frame, time.cycleTime, Fireflies{
             .opacity = m_theme.hasFireflies,
             .light = m_theme.effectColor1,
             .glow = m_theme.effectColor2
         });
-        drawFallingLeaves(frame, t, FallingLeaves{
+        drawFallingLeaves(frame, time.cycleTime, FallingLeaves{
             .opacity = StateFactors::compose(m_theme.hasLeaves, m_theme.hasPetals),
             .petals = m_theme.hasPetals,
             .color1 = m_theme.effectColor1,
             .color2 = m_theme.effectColor2
         });
-        drawBlowingDust(frame, t, BlowingDust{
+        drawBlowingDust(frame, time.cycleTime, BlowingDust{
             .opacity = m_theme.hasDust,
             .color = m_theme.effectColor1
         });

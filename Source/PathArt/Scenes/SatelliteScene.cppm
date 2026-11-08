@@ -22,7 +22,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] std::wstring_view name() const override { return L"Satellite"; }
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
         void prepare(const SceneParams&) override;
-        void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
+        void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
         [[nodiscard]] bool offersLooks() const override { return true; }
     private:
         // A direction from the Earth's center: x across the screen, y up it, z toward the viewer.
@@ -49,9 +49,12 @@ namespace ClaFi::PathArt
             FloatPoint center;
             float radius;
             float tilt; // how far north is turned from straight up on the screen
+            float tip; // how far the north pole leans toward the viewer
             float spin;
             Direction sun;
 
+            // The Earth as seen after a number of orbits from the start. See PathArt#satellitescene
+            [[nodiscard]] static Globe OnOrbit(FloatPoint center, float radius, double orbits);
             // The direction to a longitude and latitude in degrees, fixed to the Earth.
             [[nodiscard]] static Direction onEarthAt(FloatPoint lonLat);
             [[nodiscard]] EarthTurn turn() const;
@@ -133,7 +136,7 @@ namespace ClaFi::PathArt
         // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
     private:
-        // The Sun goes round once a cycle, so a cycle is one day over the satellite.
+        // The twinkling, blinking and cloud drift come round each cycle; the orbit never does.
         static constexpr std::chrono::seconds k_cycle{ 240 };
         std::vector<Coastline> m_coastlines{};
         std::vector<City> m_cities{};

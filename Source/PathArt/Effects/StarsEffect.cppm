@@ -24,6 +24,8 @@ namespace ClaFi::PathArt
         float opacity{ 1.0f };
         // How often the slowest star twinkles in a cycle; a long cycle raises it to keep the pace.
         float twinklesPerCycle{ 1.0f };
+        // How far the field has moved, in frame widths right and band heights down. See PathArt
+        FloatPoint drift{};
     };
 
     export void drawStars(const SceneFrame&, float cycleTime, const StarField&);

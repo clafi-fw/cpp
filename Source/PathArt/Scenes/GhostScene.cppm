@@ -16,7 +16,7 @@ namespace ClaFi::PathArt
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Ghost"; }
         void prepare(const SceneParams&) override;
-        void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
+        void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
     private:
         // The near ground's top edge at x.
         [[nodiscard]] static float groundY(const SceneFrame&, float x);

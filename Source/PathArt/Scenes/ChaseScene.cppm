@@ -14,7 +14,7 @@ namespace ClaFi::PathArt
     {
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Chase"; }
-        void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
+        void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
     private:
         using TileDrawer = std::function<void(float tileLeft, float tileWidth)>;
     private:

@@ -16,7 +16,7 @@ namespace ClaFi::PathArt
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Puppeteer"; }
         void prepare(const SceneParams&) override;
-        void draw(Graphics::Canvas&, const FloatRect& bounds, float cycleTime) override;
+        void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
     private:
         static void drawStage(const SceneFrame&);
         static void drawSpotlight(const SceneFrame&, float lampX, float puppetX, float floorY);

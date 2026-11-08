@@ -26,13 +26,13 @@ namespace ClaFi::PathArt
         std::span<float> tundra; // the share of tundra
     };
 
-    // Texels of four bytes each, by longitude, and by latitude from the north pole to the equator,
+    // Texels of four bytes each, by longitude, and by latitude from the north pole to the south,
     // in 8 levels of detail, each half as fine each way as the one before.
     struct TexelPyramid
     {
         int width; // the finest level's texels round each circle of latitude
-        int height; // the finest level's texels from the pole to the equator
-        // Level by level, row by row from the pole, each row's first texel again past its last.
+        int height; // the finest level's texels from pole to pole
+        // Level by level, rows from the north pole, each row's first texel again past its last.
         std::vector<std::uint32_t> texels;
         std::array<int, 8> offsets; // where each level starts in the texels
     };
@@ -48,7 +48,7 @@ namespace ClaFi::PathArt
     // The outlines, kept in PathArt.EarthMap.NaturalEarth.cpp.
     [[nodiscard]] NaturalEarthLand naturalEarthLand();
 
-    // The land of the Earth's northern half: how high it stands and what covers it. See PathArt
+    // The Earth's land: how high it stands and what covers it. See PathArt
     export class EarthMap
     {
     public:

@@ -16,6 +16,16 @@ namespace ClaFi::PathArt
         // How many opacities a field of dots is drawn in, one fill each on Direct2D.
         constexpr int k_starOpacitySteps{ 6 };
 
+        // Where star `index` stands, moved by the drift and brought round into the band again.
+        [[nodiscard]] FloatPoint starAt(const SceneFrame& frame, const StarField& field,
+            const int index)
+        {
+            const float across = fractionalPart(pseudoRandom(index, field.seed) + field.drift.x);
+            const float down = fractionalPart(pseudoRandom(index, field.seed + 1.0f)
+                + field.drift.y);
+            return { across * frame.width, std::lerp(field.top, field.bottom, down) };
+        }
+
         // Each star takes the opacity of the step it stands at.
         void drawDots(const SceneFrame& frame, const float cycleTime, const StarField& field)
         {
@@ -29,9 +39,7 @@ namespace ClaFi::PathArt
             }
             for (int i = 0; i != field.count; ++i)
             {
-                const float x = pseudoRandom(i, field.seed) * frame.width;
-                const float y = std::lerp(field.top, field.bottom,
-                    pseudoRandom(i, field.seed + 1.0f));
+                const FloatPoint at = starAt(frame, field, i);
                 const float speed = field.twinklesPerCycle * static_cast<float>(1 + i % 4);
                 const float wave = std::sin(k_2Pi * speed * cycleTime
                     + static_cast<float>(i) * 1.7f);
@@ -43,9 +51,9 @@ namespace ClaFi::PathArt
                     * frame.unit;
                 PixelPath& path = steps[static_cast<std::size_t>(step)].next();
                 if (pseudoRandom(i, field.seed + 3.0f) > 0.9f)
-                    addSparkle(path, { x, y }, radius * 2.6f * (0.6f + 0.4f * twinkle));
+                    addSparkle(path, at, radius * 2.6f * (0.6f + 0.4f * twinkle));
                 else
-                    addEllipse(path, { x, y }, radius, radius);
+                    addEllipse(path, at, radius, radius);
             }
             for (ScatteredShapes& stars : steps)
                 stars.draw();
@@ -67,12 +75,8 @@ namespace ClaFi::PathArt
                 const float shown = (twinkle - 0.2f) / 0.8f;
                 const float radius = (1.0f + pseudoRandom(i, field.seed + 3.0f) * 2.0f)
                     * frame.unit * shown;
-                const FloatPoint center = {
-                    pseudoRandom(i, field.seed) * frame.width,
-                    std::lerp(field.top, field.bottom, pseudoRandom(i, field.seed + 1.0f))
-                };
                 PixelPath path;
-                addSparkle(path, center, radius);
+                addSparkle(path, starAt(frame, field, i), radius);
                 fillShape(frame, path, color);
             }
         }

@@ -79,7 +79,7 @@ namespace ClaFi::PathArt
         m_tombstones.prepare(params);
     }
 
-    void GhostScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
+    void GhostScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         const float unit = frame.unit;
@@ -87,7 +87,7 @@ namespace ClaFi::PathArt
         const float height = frame.height;
 
         m_sky.draw(frame);
-        drawStars(frame, cycleTime, StarField{
+        drawStars(frame, time.cycleTime, StarField{
             .count = 70,
             .top = 0.0f,
             .bottom = height * 0.55f,
@@ -95,15 +95,15 @@ namespace ClaFi::PathArt
             .color = GhostSceneColors::Star
         });
         m_moon.draw(frame);
-        drawClouds(frame, cycleTime);
-        drawBats(frame, cycleTime);
+        drawClouds(frame, time.cycleTime);
+        drawBats(frame, time.cycleTime);
         m_land.draw(frame);
 
         // Two figure eights a cycle, with a small bob on top.
-        const float bob = 5.0f * unit * std::sin(k_2Pi * 16.0f * cycleTime);
+        const float bob = 5.0f * unit * std::sin(k_2Pi * 16.0f * time.cycleTime);
         const FloatPoint ghost = {
-            width * 0.5f + width * 0.24f * std::sin(k_2Pi * 2.0f * cycleTime),
-            height * 0.45f + 42.0f * unit * std::sin(k_2Pi * 4.0f * cycleTime) + bob
+            width * 0.5f + width * 0.24f * std::sin(k_2Pi * 2.0f * time.cycleTime),
+            height * 0.45f + 42.0f * unit * std::sin(k_2Pi * 4.0f * time.cycleTime) + bob
         };
         const float groundUnder = groundY(frame, ghost.x);
         const float closeness = 1.0f - (groundUnder - ghost.y) / (height * 0.6f);
@@ -115,19 +115,19 @@ namespace ClaFi::PathArt
         const float lanternX = width * 0.63f;
         drawJackOLantern(frame, JackOLanternPose{
             .base = { lanternX, groundY(frame, lanternX) + 4.0f * unit },
-            .cycleTime = cycleTime
+            .cycleTime = time.cycleTime
         });
         drawGhost(frame, GhostPose{
             .center = ghost,
             .size = 1.05f * unit,
-            .heading = std::cos(k_2Pi * 2.0f * cycleTime),
-            .cycleTime = cycleTime
+            .heading = std::cos(k_2Pi * 2.0f * time.cycleTime),
+            .cycleTime = time.cycleTime
         });
 
         // two fog banks drifting in front
         for (int bank = 0; bank != 2; ++bank)
         {
-            drawFog(frame, cycleTime, FogBank{
+            drawFog(frame, time.cycleTime, FogBank{
                 .y = height * (0.83f + 0.08f * static_cast<float>(bank)),
                 .driftsPerCycle = static_cast<float>(1 + bank),
                 .start = static_cast<float>(bank) * 0.17f,

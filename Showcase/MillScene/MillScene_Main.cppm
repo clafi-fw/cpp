@@ -188,8 +188,8 @@ namespace MillScene_App
         PathArt::SceneList m_scenes{ PathArt::createScenes() };
         Diagnostic::FpsBenchmark m_benchmark{};
 
-        // Where the scene stands in its cycle, as a 0..1 ratio.
-        float m_cycleTime{ 0.0f };
+        // The time the scene is drawn at.
+        PathArt::SceneTime m_sceneTime{};
         // What the last frame was drawn with; the scene is prepared once two frames running agree.
         PathArt::SceneParams m_lastSceneParams{};
         Diagnostic::TimePoint m_prevRun{Diagnostic::Clock::now() };
@@ -317,13 +317,13 @@ void MillSceneForm::paintScene(PaintEvent& event)
     if (isSignificantPaint)
     {
         m_benchmark.run([this, &event]() {
-            sceneAt(m_shownScene).draw(event.canvas(), event.controlBounds(), m_cycleTime);
+            sceneAt(m_shownScene).draw(event.canvas(), event.controlBounds(), m_sceneTime);
             });
         traceMetrics();
     }
     else
     {
-        sceneAt(m_shownScene).draw(event.canvas(), event.controlBounds(), m_cycleTime);
+        sceneAt(m_shownScene).draw(event.canvas(), event.controlBounds(), m_sceneTime);
     }
 
 }
@@ -352,8 +352,10 @@ void MillSceneForm::advanceCycleTime()
         speed *= speed;
         speed = (negative ? -speed : speed);
     }
-    m_cycleTime += timeSincePreviousEvent * speed;
-    m_cycleTime -= std::floor(m_cycleTime);
+    m_sceneTime.cycleTime += timeSincePreviousEvent * speed;
+    const float wholeCycles = std::floor(m_sceneTime.cycleTime);
+    m_sceneTime.cyclesPassed += static_cast<std::int64_t>(wholeCycles);
+    m_sceneTime.cycleTime -= wholeCycles;
 
 }
 
