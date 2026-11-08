@@ -213,10 +213,13 @@ continent passes once by day and once by night. The satellite goes into the Eart
 cycle: it darkens and the stars brighten. Its panels turn to face the Sun, so in the shadow they
 show their backs. The blinking and twinkling keep the pace they would have in a 40-second cycle.
 
-The city lights come on past the terminator - see SatelliteScene Terminator - and the
-atmosphere along the limb is blue by day, orange at dusk and dark at night, by the sunlight above
-each point of it. The clouds are soft-edged lumps of differing opacity, some overlapping, each
-cluster drifting a few degrees back and forth.
+The city lights come on past the terminator - see SatelliteScene Terminator - and the atmosphere
+along the limb is blue by day, orange at dusk and dark at night, by the sunlight above each point of
+it: three rings, each fading out to both sides.
+
+**The clouds float above the ground**, a hundredth of the Earth's radius up, and fade into the haze
+as they near the limb. They are soft-edged lumps of differing opacity, some overlapping, each
+cluster drifting a few degrees back and forth, and they pass over the city lights.
 
 ## SatelliteScene Terminator
 

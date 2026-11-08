@@ -31,10 +31,11 @@ namespace ClaFi::Graphics::Cpu
         void rasterizeStrokeSegment(const FloatRect& totalBox, const RenderEdge& edge, float radius, StrokeCap cap);
         // Clears and writes each row of the mask only over the columns the stroke reaches.
         void rasterizeStrokeMask(const FloatRect& bounds, float radius, StrokeCap cap);
-        // `falloff` shapes the ramp from the shape's edge out to `radius`. The curve is the one
-        // Graphics::falloffAt states; this computes it eight pixels at a time and so cannot call
-        // it, which is why that function carries the note that the two move together.
+        // Clears and writes each row of the mask only over the columns the glow reaches.
         void rasterizeGlowMask(const FloatRect& bounds, float radius, StrokeCap cap, GlowFalloff falloff);
+        // The glow over the mask as it stands, each pixel keeping the greater of the two.
+        void rasterizeGlowOver(const FloatRect& bounds, float radius, StrokeCap cap,
+            GlowFalloff falloff);
     public:
         // The one way to composite a brush. A painter hands the brush and the parameters below
         // rather than visiting the Brush itself, so the compositing rules are stated once.
@@ -124,7 +125,7 @@ namespace ClaFi::Graphics::Cpu
         // One bucket per scanline of the last prepareEdgeBuckets() bounds, holding the indices
         // into m_edgeCache whose padded vertical extent covers that scanline.
         std::vector<EdgeIndices> m_edgeBuckets;
-        // Each mask row's run a stroke cleared and wrote; empty while the whole mask holds coverage.
+        // The run each mask row was cleared and written over; empty while all of it holds coverage.
         std::vector<MaskRun> m_maskRuns;
     };
 

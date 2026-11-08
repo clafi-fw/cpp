@@ -115,7 +115,7 @@ namespace ClaFi::PlatformImplementation::Windows
             ComPtr<ID2D1PathGeometry> maskGeometry;
         };
 
-        // How a stroke turns its corners: mitered for a plain stroke, rounded for a glow's rings.
+        // How a stroke turns its corners: mitered for a plain one, rounded to grow a shape.
         enum class StrokeJoin
         {
             Miter,
@@ -134,12 +134,8 @@ namespace ClaFi::PlatformImplementation::Windows
         void drawPathWithBrush(const PixelPath& path, const Brush& brush, float strokeWidth, StrokeCap,
             const Matrix3x2* transform = nullptr);
 
-        // Lays a glow down as strokes of the same geometry, widest first, each one falling inside
-        // the last. Direct2D offers no distance field, so the ramp is built out of the widths it
-        // does offer.
-        void strokeGlow(ID2D1Geometry& geometry, const PathDrawLayer& layer, const Brush& brush);
-        // The Shadow layer: the glow kept outside the silhouette, and the silhouette filled solid.
-        void fillShadow(ID2D1Geometry& silhouette, const PathDrawLayer& layer);
+        // An OuterGlow or a Shadow: the shape grown part of its reach, then blurred over the rest.
+        void drawSoftEdge(ID2D1Geometry& geometry, const PathDrawLayer& layer);
         // The ramp of a shadow from a distance `from` out to its reach, as the stops of a gradient
         // whose whole length is `extent`: full up to `from`, the falloff from there to the reach.
         [[nodiscard]] ComPtr<ID2D1GradientStopCollection> shadowRamp(const ShadowParams&, float from, float extent);

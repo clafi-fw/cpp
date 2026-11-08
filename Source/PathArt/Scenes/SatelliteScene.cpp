@@ -49,6 +49,10 @@ namespace ClaFi::PathArt
         constexpr float k_rimStep{ 2.0f * k_degree };
         // How far a cloud's edge fades out, in scene units.
         constexpr float k_cloudSoftness{ 20.0f };
+        // How high the clouds float, as a share of the Earth's radius.
+        constexpr float k_cloudHeight{ 0.01f };
+        // How far a lump's center faces the viewer when the lump starts fading into the haze.
+        constexpr float k_cloudHazeDepth{ 0.12f };
         // The points round a lump of cloud, enough for the finest wave along its edge.
         constexpr int k_cloudPoints{ 32 };
 
@@ -348,9 +352,10 @@ namespace ClaFi::PathArt
         PixelPath disc;
         disc.drawCircle(globe.center, radius);
         frame.canvas.pushClip(disc, &frame.toCanvas);
-        drawSurface(frame, globe, cycleTime);
+        drawSurface(frame, globe);
         const Terminator terminator = terminatorOf(frame, globe);
-        drawNight(frame, globe, terminator);
+        const LinearGradient night = nightOf(globe, terminator);
+        fillBox(frame, { 0.0f, 0.0f, width, height }, night);
         if (globe.sun.z > 0.0f)
         {
             drawGlow(frame, globe.onScreen(globe.sun), 150.0f * unit,
@@ -358,6 +363,7 @@ namespace ClaFi::PathArt
         }
         drawCityLights(frame, globe, terminator, cycleTime);
         frame.canvas.popClip();
+        drawClouds(frame, globe, night, cycleTime);
         drawAtmosphere(frame, globe);
 
         const float size = unit * std::min(1.0f, (width / unit) / 900.0f);
@@ -512,6 +518,43 @@ namespace ClaFi::PathArt
         }
     }
 
+    std::optional<SatelliteScene::NearSideShape> SatelliteScene::Globe::nearSideShape(
+        const std::span<const Direction> outline, const bool counterClockwise,
+        const FloatRect& view) const
+    {
+        std::vector<FloatPoint> points;
+        std::vector<std::size_t> loopEnds;
+        nearSideOf(outline, counterClockwise, points, loopEnds);
+        if (points.empty())
+            return std::nullopt;
+        constexpr float k_far{ std::numeric_limits<float>::max() };
+        FloatRect bounds = { k_far, k_far, -k_far, -k_far };
+        for (const FloatPoint point : points)
+        {
+            bounds = {
+                std::min(bounds.left, point.x),
+                std::min(bounds.top, point.y),
+                std::max(bounds.right, point.x),
+                std::max(bounds.bottom, point.y)
+            };
+        }
+        const bool outside = bounds.right < view.left || bounds.left > view.right
+            || bounds.bottom < view.top || bounds.top > view.bottom;
+        if (outside)
+            return std::nullopt;
+        PixelPath path;
+        std::size_t loopStart = 0;
+        for (const std::size_t loopEnd : loopEnds)
+        {
+            path.moveTo(points[loopStart]);
+            for (std::size_t i = loopStart + 1; i != loopEnd; ++i)
+                path.lineTo(points[i]);
+            path.close();
+            loopStart = loopEnd;
+        }
+        return NearSideShape{ .path = std::move(path), .bounds = bounds };
+    }
+
     float SatelliteScene::Globe::sunlightAt(const Direction direction) const
     {
         return direction.x * sun.x + direction.y * sun.y + direction.z * sun.z;
@@ -580,108 +623,38 @@ namespace ClaFi::PathArt
         return { .through = upper, .along = along, .dayward = dayward };
     }
 
-    void SatelliteScene::drawSurface(const SceneFrame& frame, const Globe& globe,
-        const float cycleTime) const
+    void SatelliteScene::drawSurface(const SceneFrame& frame, const Globe& globe) const
     {
         const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
-
-        // A shape is drawn when any of it is on the near side and its outline reaches the frame.
         std::vector<Direction> outline;
-        std::vector<FloatPoint> points;
-        std::vector<std::size_t> loopEnds;
-        const auto nearSideShape = [&](bool counterClockwise) -> std::optional<PixelPath> {
-            globe.nearSideOf(outline, counterClockwise, points, loopEnds);
-            if (points.empty())
-                return std::nullopt;
-            constexpr float k_far{ std::numeric_limits<float>::max() };
-            FloatRect reach = { k_far, k_far, -k_far, -k_far };
-            for (const FloatPoint point : points)
-            {
-                reach = {
-                    std::min(reach.left, point.x),
-                    std::min(reach.top, point.y),
-                    std::max(reach.right, point.x),
-                    std::max(reach.bottom, point.y)
-                };
-            }
-            const bool outside = reach.right < view.left || reach.left > view.right
-                || reach.bottom < view.top || reach.top > view.bottom;
-            if (outside)
-                return std::nullopt;
-            PixelPath shape;
-            std::size_t loopStart = 0;
-            for (const std::size_t loopEnd : loopEnds)
-            {
-                shape.moveTo(points[loopStart]);
-                for (std::size_t i = loopStart + 1; i != loopEnd; ++i)
-                    shape.lineTo(points[i]);
-                shape.close();
-                loopStart = loopEnd;
-            }
-            return shape;
-        };
-
         for (const Coastline& coastline : m_coastlines)
         {
             outline.clear();
             for (const FloatPoint lonLat : coastline.lonLat)
                 outline.push_back(globe.surfaceAt(lonLat));
-            if (const std::optional<PixelPath> shape = nearSideShape(coastline.counterClockwise))
-                fillShape(frame, *shape, SolidColor{ coastline.color });
-        }
-
-        // **Each lump is filled on its own with a soft edge**, so lumps that overlap show brighter
-        // where they meet rather than cut holes in each other. The edge is four waves round an
-        // ellipse, set apart for each lump by where each wave starts.
-        const float cloudOpacity = static_cast<float>(SatelliteSceneColors::Cloud.alpha) / 255.0f;
-        for (const Cloud& cloud : m_clouds)
-        {
-            const float drift = 6.0f * std::sin(k_2Pi * cycleTime + cloud.driftPhase);
-            const FloatPoint center = cloud.lonLat + FloatPoint{ drift, 0.0f };
-            outline.clear();
-            for (int j = 0; j != k_cloudPoints; ++j)
-            {
-                const float angle = k_2Pi * static_cast<float>(j) / k_cloudPoints;
-                const std::array<float, 4>& phases = cloud.phases;
-                const float lump = 1.0f + 0.16f * std::sin(2.0f * angle + phases[0])
-                    + 0.11f * std::sin(3.0f * angle + phases[1])
-                    + 0.08f * std::sin(5.0f * angle + phases[2])
-                    + 0.06f * std::sin(9.0f * angle + phases[3]);
-                const FloatPoint around = rotated({
-                    std::cos(angle) * cloud.halfSize.x,
-                    std::sin(angle) * cloud.halfSize.y
-                }, cloud.tilt);
-                outline.push_back(globe.surfaceAt(center + around * lump));
-            }
-            // The lump's points run counterclockwise.
-            const std::optional<PixelPath> shape = nearSideShape(true);
-            if (!shape)
-                continue;
-            const PathDrawLayer soft = PathDrawLayer::Shadow(
-                SatelliteSceneColors::Cloud.withOpacity(cloudOpacity * cloud.opacity),
-                k_cloudSoftness * frame.unit);
-            frame.canvas.drawPath(*shape, std::span{ &soft, 1 }, &frame.toCanvas);
+            const std::optional<NearSideShape> shape =
+                globe.nearSideShape(outline, coastline.counterClockwise, view);
+            if (shape)
+                fillShape(frame, shape->path, SolidColor{ coastline.color });
         }
     }
 
     // One gradient over the night side, rising from nothing just on the day side of the line.
     // Before its start it holds its first stop, which is clear, so it covers the whole frame and
     // leaves the day side as it is.
-    void SatelliteScene::drawNight(const SceneFrame& frame, const Globe& globe,
-        const Terminator& terminator)
+    LinearGradient SatelliteScene::nightOf(const Globe& globe, const Terminator& terminator)
     {
         const float soft = 0.03f * globe.radius;
         const float depth = 0.13f * globe.radius;
-        const FloatPoint edge = terminator.through + terminator.dayward * soft;
-        fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height }, LinearGradient{
-            .startPoint = edge,
+        return {
+            .startPoint = terminator.through + terminator.dayward * soft,
             .endPoint = terminator.through - terminator.dayward * depth,
             .stops = {
                 { .position = 0.0f, .color = SatelliteSceneColors::Night.withOpacity(0.0f) },
                 { .position = 0.35f, .color = SatelliteSceneColors::NightBlue.withOpacity(0.55f) },
                 { .position = 1.0f, .color = SatelliteSceneColors::Night.withOpacity(0.9f) }
             }
-        });
+        };
     }
 
     // The lights come on a little way past the terminator and fade toward the edge of the globe.
@@ -734,8 +707,106 @@ namespace ClaFi::PathArt
         }
     }
 
+    // **The clouds float above the ground**, on a sphere a little larger than the Earth, so they
+    // shift against the ground as it turns. Each lump is filled on its own with a soft edge, so
+    // lumps that overlap show brighter where they meet rather than cut holes in each other. The
+    // edge is four waves round an ellipse, set apart for each lump by where each wave starts.
+    //
+    // **A lump fades into the haze as it nears the limb**, by how far its center faces the
+    // viewer. Seen that slantwise a lump is a thin streak sliding along the rim, and one drawn
+    // whole narrows into the rim up in the sky.
+    //
+    // **The night is mixed into each lump's colour**, at the lump's own opacity: a lump so shaded
+    // over the night leaves the pixels the night laid over the lump would. A lump wholly on one
+    // side of the night's gradient, its soft edge included, takes that side's colour solid.
+    void SatelliteScene::drawClouds(const SceneFrame& frame, const Globe& globe,
+        const LinearGradient& night, const float cycleTime) const
+    {
+        Globe cloudSphere = globe;
+        cloudSphere.radius *= 1.0f + k_cloudHeight;
+        const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
+        const float softness = k_cloudSoftness * frame.unit;
+        const float cloudOpacity = static_cast<float>(SatelliteSceneColors::Cloud.alpha) / 255.0f;
+
+        const FloatPoint nightSpan = night.endPoint - night.startPoint;
+        const float nightLength = std::hypot(nightSpan.x, nightSpan.y);
+        // How far along the night's gradient a point stands: 0 at its start, 1 at its end.
+        const auto shareOfNight = [&](FloatPoint point) {
+            const FloatPoint offset = point - night.startPoint;
+            return (offset.x * nightSpan.x + offset.y * nightSpan.y) / (nightLength * nightLength);
+        };
+        const float softShare = softness / nightLength;
+
+        // Draws a lump in its shade of the night.
+        const auto drawLump = [&](const NearSideShape& shape, float opacity) {
+            const auto shaded = [&](const GradientStop& stop) {
+                const float nightShare = static_cast<float>(stop.color.alpha) / 255.0f;
+                return colorBetween(SatelliteSceneColors::Cloud, stop.color, nightShare)
+                    .withOpacity(opacity);
+            };
+            const FloatRect& bounds = shape.bounds;
+            const std::array<float, 4> cornerShares = {
+                shareOfNight({ bounds.left, bounds.top }),
+                shareOfNight({ bounds.right, bounds.top }),
+                shareOfNight({ bounds.left, bounds.bottom }),
+                shareOfNight({ bounds.right, bounds.bottom })
+            };
+            const float leastShare = *std::ranges::min_element(cornerShares) - softShare;
+            const float mostShare = *std::ranges::max_element(cornerShares) + softShare;
+            PathDrawLayer soft = PathDrawLayer::Shadow(shaded(night.stops.front()), softness);
+            if (leastShare >= 1.0f)
+            {
+                soft.brush = SolidColor{ shaded(night.stops.back()) };
+            }
+            else if (mostShare > 0.0f)
+            {
+                LinearGradient shade = {
+                    .startPoint = night.startPoint,
+                    .endPoint = night.endPoint,
+                    .stops = {}
+                };
+                for (const GradientStop& stop : night.stops)
+                    shade.stops.push_back({ .position = stop.position, .color = shaded(stop) });
+                soft.brush = std::move(shade);
+            }
+            frame.canvas.drawPath(shape.path, std::span{ &soft, 1 }, &frame.toCanvas);
+        };
+
+        std::vector<Direction> outline;
+        for (const Cloud& cloud : m_clouds)
+        {
+            const float drift = 6.0f * std::sin(k_2Pi * cycleTime + cloud.driftPhase);
+            const FloatPoint center = cloud.lonLat + FloatPoint{ drift, 0.0f };
+            const float clearness = smoothStep(0.0f, k_cloudHazeDepth,
+                cloudSphere.surfaceAt(center).z);
+            if (clearness <= 0.0f)
+                continue;
+            outline.clear();
+            for (int j = 0; j != k_cloudPoints; ++j)
+            {
+                const float angle = k_2Pi * static_cast<float>(j) / k_cloudPoints;
+                const std::array<float, 4>& phases = cloud.phases;
+                const float lump = 1.0f + 0.16f * std::sin(2.0f * angle + phases[0])
+                    + 0.11f * std::sin(3.0f * angle + phases[1])
+                    + 0.08f * std::sin(5.0f * angle + phases[2])
+                    + 0.06f * std::sin(9.0f * angle + phases[3]);
+                const FloatPoint around = rotated({
+                    std::cos(angle) * cloud.halfSize.x,
+                    std::sin(angle) * cloud.halfSize.y
+                }, cloud.tilt);
+                outline.push_back(cloudSphere.surfaceAt(center + around * lump));
+            }
+            // The lump's points run counterclockwise.
+            const std::optional<NearSideShape> shape =
+                cloudSphere.nearSideShape(outline, true, view);
+            if (shape)
+                drawLump(*shape, cloudOpacity * cloud.opacity * clearness);
+        }
+    }
+
     // The limb in view runs across the frame, so one gradient across the frame colours it by the
-    // sunlight above each x - blue by day, orange at dusk, dark at night.
+    // sunlight above each x - blue by day, orange at dusk, dark at night. Each of the three rings
+    // is a glow fading from its circle out to both sides, so none of them shows an edge.
     void SatelliteScene::drawAtmosphere(const SceneFrame& frame, const Globe& globe)
     {
         constexpr int k_stops = 15;
@@ -751,7 +822,7 @@ namespace ClaFi::PathArt
                 + std::sin(limbAngle) * globe.sun.y;
             colors[static_cast<std::size_t>(i)] = atmosphereColor(sunlight);
         }
-        const auto layer = [&](float ringRadius, float width, float strength) {
+        const auto drawRing = [&](float ringRadius, float reach, float strength) {
             LinearGradient gradient{
                 .startPoint = { from, 0.0f },
                 .endPoint = { to, 0.0f },
@@ -760,18 +831,21 @@ namespace ClaFi::PathArt
             for (int i = 0; i != k_stops; ++i)
             {
                 const Color color = colors[static_cast<std::size_t>(i)];
+                const float opacity = static_cast<float>(color.alpha) / 255.0f * strength;
                 gradient.stops.push_back({
                     .position = static_cast<float>(i) / (k_stops - 1),
-                    .color = color.withOpacity(static_cast<float>(color.alpha) / 255.0f * strength)
+                    .color = color.withOpacity(std::min(1.0f, opacity))
                 });
             }
             PixelPath ring;
             addEllipse(ring, globe.center, ringRadius, ringRadius);
-            strokeShape(frame, ring, gradient, width, StrokeCap::Butt);
+            PathDrawLayer glow = PathDrawLayer::OuterGlow({}, reach);
+            glow.brush = std::move(gradient);
+            frame.canvas.drawPath(ring, std::span{ &glow, 1 }, &frame.toCanvas);
         };
-        layer(globe.radius * 1.012f, globe.radius * 0.03f, 0.22f);
-        layer(globe.radius * 1.003f, std::max(globe.radius * 0.006f, 3.0f * frame.unit), 1.0f);
-        layer(globe.radius * 0.988f, globe.radius * 0.024f, 0.25f);
+        drawRing(globe.radius * 1.012f, globe.radius * 0.02f, 0.3f);
+        drawRing(globe.radius * 1.001f, std::max(globe.radius * 0.005f, 2.5f * frame.unit), 1.0f);
+        drawRing(globe.radius * 0.988f, globe.radius * 0.016f, 0.34f);
     }
 
 }

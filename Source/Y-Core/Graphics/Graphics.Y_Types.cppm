@@ -184,19 +184,6 @@ namespace ClaFi::Graphics
         return falloff == GlowFalloff::Smooth ? remaining * remaining : remaining;
     }
 
-    // What one ring of a stacked glow has to be given to leave `target` standing, when `laid` is
-    // already down under it and the brush covers `alpha` of a pixel at full opacity. Rings are
-    // laid outside in and each composites over the last, so a ring handed its target directly
-    // would darken what is there rather than reach it - and a translucent brush handed an opaque
-    // one's share compounds past the target the same way, since what is under it is alpha * laid.
-    export constexpr float ringOpacity(float target, float laid, float alpha = 1.0f)
-    {
-        const float under = alpha * laid;
-        if (under >= 1.0f)
-            return 0.0f;
-        return std::max(0.0f, (target - laid) / (1.0f - under));
-    }
-
     export struct PathGeometryOptions {
         PathRenderMode mode = PathRenderMode::Fill;
         float strokeWidth = 1.0f;

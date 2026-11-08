@@ -72,15 +72,32 @@ and every frame presented is a frame shown, and it is what Direct2D draws into.
 what the last frame changed is stale in it. That rect is kept and copied again with the new
 frame's own, which is the whole of what two buffers need.
 
-## Direct2DBackend strokeGlow
+## Direct2DBackend drawSoftEdge
 
-**The rings turn their corners round** (2026-11-08). They took a plain stroke's miter joins until
-the Satellite's soft clouds - a Shadow layer round each lump, the reach 20 units - showed on
-Direct2D as blocks with straight sides wherever a lump thinned toward the limb. A ring's miter at a
-sharp corner stood past the reach, up to ten times it, and fillShadow's layer, the silhouette's
-bounds grown by the reach and a pixel, cut it along those bounds. Replayed in cairo from the
-outlines the scene drew, miter joins made the same blocks and round joins the CPU backend's soft
-edge.
+**A soft edge is a blur on the GPU** (2026-11-08). OuterGlow and Shadow were built of strokes, one
+ring per pixel of reach, each composited over the last at the opacity that left the falloff's share
+standing; a Shadow kept its rings outside the silhouette with a layer whose mask was a rectangle
+round it less the silhouette, and filled the silhouette solid after.
+
+The rings took a plain stroke's miter joins until the Satellite's soft clouds - a Shadow layer round
+each lump, the reach 20 units - showed on Direct2D as blocks with straight sides wherever a lump
+thinned toward the limb. A ring's miter at a sharp corner stood past the reach, up to ten times it,
+and the layer's rectangle cut it along its sides. Replayed in cairo from the outlines the scene
+drew, miter joins made the same blocks and round joins the CPU backend's soft edge.
+
+With round joins, the raised clouds and the atmosphere's three glows, Oj's video showed the
+Satellite at 4 frames a second on Direct2D against 41 on the CPU backend, 125 ms of CPU a frame:
+some 50 lumps of about 40 rings and 160 rings of a frame-wide circle, every one tessellated on the
+CPU. The clouds near the terminator and the atmosphere also came out with bright rims and separate
+rings, since the ring opacities were sized for an opaque brush and a translucent gradient compounded
+past its share. Oj picked a blur on the GPU over the CPU's ramp drawn and uploaded, which would
+match it exactly at what the CPU backend pays, and over fewer rings.
+
+drawSoftEdge records the shape into a command list - the fill for a Shadow, and a stroke round it -
+and draws a Gaussian blur of that list. The device context's target is switched to the list and back
+with the frame's clips and layers pushed, as Firefox's DrawTargetD2D1 does. A kept image's target is
+reached through ID2D1DeviceContext; one that does not answer for it draws no soft edge. Written and
+compiled against MinGW's headers only, so the speed and the look on Direct2D are Oj's to measure.
 
 ## TimerManager
 

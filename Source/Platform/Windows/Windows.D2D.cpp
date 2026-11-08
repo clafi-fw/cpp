@@ -1,6 +1,8 @@
 module;
 #include "Windows.Headers.h"
 #include <d3d11.h>
+#include <d2d1effects.h>
+#pragma comment(lib, "dxguid.lib")
 #include "../../Y-Core/System/Switches.h"
 module ClaFi.Platform.Windows.D2D;
 
@@ -963,22 +965,25 @@ namespace ClaFi::PlatformImplementation::Windows
             {
                 drawPathWithBrush(path, layer.brush, layer.geometry.strokeWidth, layer.geometry.strokeCap, transform);
             }
-            else if (layer.geometry.mode == PathRenderMode::OuterGlow)
+            else if (layer.geometry.mode == PathRenderMode::OuterGlow
+                || layer.geometry.mode == PathRenderMode::Shadow)
             {
                 if (!m_isPainting || !m_renderTarget || path.isEmpty())
                 {
                     continue;
                 }
 
-                ComPtr<ID2D1PathGeometry> d2dPath = buildPathGeometry(path, false);
+                // A Shadow is of what the shape covers, so its figures are filled ones.
+                const bool filled = layer.geometry.mode == PathRenderMode::Shadow;
+                ComPtr<ID2D1PathGeometry> d2dPath = buildPathGeometry(path, filled);
                 if (!d2dPath)
                 {
                     continue;
                 }
 
                 // The transform goes on the target rather than on the geometry, for the reason
-                // the plain stroke states above: it is what scales the stroke widths the ramp is
-                // built out of.
+                // the plain stroke states above: it is what scales the stroke that grows the
+                // shape.
                 D2D1_MATRIX_3X2_F oldTransform;
                 m_renderTarget->GetTransform(&oldTransform);
                 if (transform)
@@ -986,36 +991,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     m_renderTarget->SetTransform(nestTransform(*transform, oldTransform));
                 }
 
-                strokeGlow(*d2dPath.Get(), layer, layer.brush);
-
-                if (transform)
-                {
-                    m_renderTarget->SetTransform(oldTransform);
-                }
-            }
-            else if (layer.geometry.mode == PathRenderMode::Shadow)
-            {
-                if (!m_isPainting || !m_renderTarget || path.isEmpty())
-                {
-                    continue;
-                }
-
-                // Filled figures: the same geometry is stroked for the ramp and filled for the
-                // silhouette.
-                ComPtr<ID2D1PathGeometry> d2dPath = buildPathGeometry(path, true);
-                if (!d2dPath)
-                {
-                    continue;
-                }
-
-                D2D1_MATRIX_3X2_F oldTransform;
-                m_renderTarget->GetTransform(&oldTransform);
-                if (transform)
-                {
-                    m_renderTarget->SetTransform(nestTransform(*transform, oldTransform));
-                }
-
-                fillShadow(*d2dPath.Get(), layer);
+                drawSoftEdge(*d2dPath.Get(), layer);
 
                 if (transform)
                 {
@@ -1060,126 +1036,71 @@ namespace ClaFi::PlatformImplementation::Windows
         }
     }
 
-    // Ring i covers the band between reach*(i-1)/n and reach*i/n. A stroke straddles the geometry
-    // it follows, so a ring reaching d outwards is 2d wide and every ring lies inside the one
-    // before it. They are drawn outside in, each over the last, so what a ring is given is what
-    // it has to **add** to leave its share of the ramp standing - which is what ringOpacity
-    // answers.
+    // **A soft edge is a blur of the shape grown part of the way out**, the blur run on the GPU.
+    // Built of strokes instead, one per pixel of reach, it had every stroke tessellated on the CPU.
     //
-    // **The rings turn their corners round.** A ring is then every point within its reach of the
-    // outline, the distance the CPU backend ramps by. A mitered corner would stand past the reach,
-    // as far as ten times it at a sharp one.
+    // A Gaussian falls along a bell where the CPU backend's ramp falls along falloffAt's curve. The
+    // shape is grown to where that curve stands at half, and the deviation is the one that falls as
+    // steeply there: the reach over slope * sqrt(2 pi), the slope being 1 for Linear and sqrt(2)
+    // for Smooth.
     //
-    // The opacity is set on the brush and put back afterwards rather than a brush being built per
-    // ring: the brush cache is keyed on the whole brush and never evicts, so a glow whose colour
-    // rides an animation would leave a new entry in it every frame.
-    void Direct2DBackend::strokeGlow(ID2D1Geometry& geometry, const PathDrawLayer& layer, const Brush& brush)
+    // The shape is recorded into a command list under the transform in force and drawn back
+    // without it, so the deviation is in the target's pixels. The fill and the stroke that grows
+    // it are recorded with copy blending: where they overlap, a translucent brush is laid once.
+    void Direct2DBackend::drawSoftEdge(ID2D1Geometry& geometry, const PathDrawLayer& layer)
     {
         const float reach = layer.geometry.strokeWidth;
         if (reach <= 0.0f)
         {
             return;
         }
-
-        ID2D1Brush* d2dBrush = getNativeBrushInternal(brush);
-        if (!d2dBrush)
-        {
-            return;
-        }
-
-        // One ring per pixel of reach. Coarser and the steps show; finer and consecutive rings
-        // land on the same pixel, paying for a stroke that changes nothing.
-        const int ringCount = std::max(1, static_cast<int>(std::ceil(reach)));
-        const float bandWidth = reach / static_cast<float>(ringCount);
-        const FLOAT restoreOpacity = d2dBrush->GetOpacity();
-        ID2D1StrokeStyle* style = strokeStyle(layer.geometry.strokeCap, StrokeJoin::Round);
-
-        // A solid colour carries its alpha in the brush's colour, so a ring at full opacity covers
-        // that much of a pixel and no more; the shares are sized for it.
-        float coverage = restoreOpacity;
-        if (const SolidColor* solid = std::get_if<SolidColor>(&brush))
-        {
-            coverage *= static_cast<float>(solid->color.alpha) / 255.0f;
-        }
-
-        float laid = 0.0f;
-        for (int i = ringCount; i > 0; --i)
-        {
-            const float inner = static_cast<float>(i - 1) / static_cast<float>(ringCount);
-            const float target = falloffAt(layer.geometry.falloff, inner);
-            const float share = ringOpacity(target, laid, coverage);
-            laid = target;
-            if (share <= 0.0f)
-            {
-                continue;
-            }
-            d2dBrush->SetOpacity(restoreOpacity * share);
-            m_renderTarget->DrawGeometry(&geometry, d2dBrush, bandWidth * static_cast<float>(i) * 2.0f, style);
-        }
-
-        d2dBrush->SetOpacity(restoreOpacity);
-    }
-
-    // **The ramp is kept outside the silhouette** by a layer whose mask is everything around it but
-    // it, and the silhouette is then filled solid. Both are rasterized aliased: the mask's edge
-    // and the fill's are then the same pixels, and what meets across them is the ramp's first
-    // step against the full colour, which is no step the eye can find. Antialiased, each side
-    // would leave the other a share of every edge pixel, and the seam would show lighter.
-    void Direct2DBackend::fillShadow(ID2D1Geometry& silhouette, const PathDrawLayer& layer)
-    {
         ID2D1Brush* d2dBrush = getNativeBrushInternal(layer.brush);
-        if (!d2dBrush)
+        ComPtr<ID2D1DeviceContext> context;
+        if (!d2dBrush || FAILED(m_renderTarget.As(&context)))
         {
             return;
         }
 
-        D2D1_RECT_F bounds{};
-        if (FAILED(silhouette.GetBounds(nullptr, &bounds)))
+        const bool smooth = layer.geometry.falloff == GlowFalloff::Smooth;
+        const float halfway = smooth ? 1.0f - 1.0f / std::numbers::sqrt2_v<float> : 0.5f;
+        const float slope = smooth ? std::numbers::sqrt2_v<float> : 1.0f;
+        D2D1_MATRIX_3X2_F transform;
+        context->GetTransform(&transform);
+        const float scale = std::sqrt(std::abs(transform._11 * transform._22
+            - transform._12 * transform._21));
+        const float deviation = reach * scale
+            / (slope * std::sqrt(2.0f * std::numbers::pi_v<float>));
+
+        ComPtr<ID2D1CommandList> shape;
+        if (FAILED(context->CreateCommandList(shape.GetAddressOf())))
         {
             return;
         }
-        // A stroke reaching the ramp's length out from the outline, and a pixel to spare.
-        const float around = layer.geometry.strokeWidth + 1.0f;
+        ComPtr<ID2D1Image> target;
+        context->GetTarget(target.GetAddressOf());
+        const D2D1_PRIMITIVE_BLEND restoreBlend = context->GetPrimitiveBlend();
+        context->SetTarget(shape.Get());
+        context->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_COPY);
+        if (layer.geometry.mode == PathRenderMode::Shadow)
+        {
+            context->FillGeometry(&geometry, d2dBrush);
+        }
+        context->DrawGeometry(&geometry, d2dBrush, 2.0f * halfway * reach,
+            strokeStyle(layer.geometry.strokeCap, StrokeJoin::Round));
+        context->SetPrimitiveBlend(restoreBlend);
+        context->SetTarget(target.Get());
 
-        ComPtr<ID2D1Factory> factory = getD2DFactory();
-        ComPtr<ID2D1RectangleGeometry> surround;
-        ComPtr<ID2D1PathGeometry> outside;
-        ComPtr<ID2D1GeometrySink> sink;
-        HRESULT hr = factory->CreateRectangleGeometry(
-            D2D1::RectF(bounds.left - around, bounds.top - around, bounds.right + around, bounds.bottom + around),
-            surround.GetAddressOf());
-        if (SUCCEEDED(hr))
-        {
-            hr = factory->CreatePathGeometry(outside.GetAddressOf());
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = outside->Open(sink.GetAddressOf());
-        }
-        if (SUCCEEDED(hr))
-        {
-            hr = surround->CombineWithGeometry(&silhouette, D2D1_COMBINE_MODE_EXCLUDE, nullptr, sink.Get());
-            const HRESULT closed = sink->Close();
-            if (SUCCEEDED(hr))
-            {
-                hr = closed;
-            }
-        }
-        if (FAILED(hr))
+        ComPtr<ID2D1Effect> blur;
+        if (FAILED(shape->Close())
+            || FAILED(context->CreateEffect(CLSID_D2D1GaussianBlur, blur.GetAddressOf())))
         {
             return;
         }
-
-        D2D1_LAYER_PARAMETERS params = D2D1::LayerParameters(D2D1::InfiniteRect(), outside.Get(),
-            D2D1_ANTIALIAS_MODE_ALIASED);
-        m_renderTarget->PushLayer(&params, nullptr);
-        strokeGlow(silhouette, layer, layer.brush);
-        m_renderTarget->PopLayer();
-
-        const D2D1_ANTIALIAS_MODE restoreMode = m_renderTarget->GetAntialiasMode();
-        m_renderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-        m_renderTarget->FillGeometry(&silhouette, d2dBrush);
-        m_renderTarget->SetAntialiasMode(restoreMode);
+        blur->SetInput(0, shape.Get());
+        blur->SetValue(D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION, deviation);
+        context->SetTransform(D2D1::IdentityMatrix());
+        context->DrawImage(blur.Get());
+        context->SetTransform(transform);
     }
 
     // Sixteen steps of the falloff, which no reach a theme states can tell from the curve; the

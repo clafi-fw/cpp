@@ -110,6 +110,16 @@ compositePointGlow read a row of their own mask only over its run, and prepareFo
 runs, so any other mask is read whole as before. The atmosphere fell from 6.4 to 3 ms; every frame
 came out the same bit for bit.
 
+## RasterBuffers rasterizeGlowMask
+
+**A glow on its own keeps runs, as a stroke does** (2026-11-08). rasterizeGlowMask opens an empty
+run for each row and hands over to rasterizeGlowOver, which claims a row's run before writing it.
+The Shadow layer, whose fill writes the whole mask first, calls rasterizeGlowOver directly and keeps
+no runs. The Satellite's atmosphere as three OuterGlow rings, each the frame's width across, cost
+7.8 ms a frame at 3436 x 2051 with the mask cleared and read whole, and 3.2 with runs - what the
+three strokes before them cost. Every frame of the scenes and the mill came out the same bit for
+bit.
+
 ## RasterBuffers compositeRamp
 
 **Eight pixels the path and the clip leave uncovered are passed over before the gradient is

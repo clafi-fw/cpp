@@ -510,7 +510,24 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
+    // As rasterizeStrokeMask: a row starts with an empty run, and a segment reaching it clears
+    // only the columns its run adds.
     void RasterBuffers::rasterizeGlowMask(const FloatRect& bounds, float radius, StrokeCap cap, GlowFalloff falloff)
+    {
+        const int rows = static_cast<int>(std::ceil(bounds.bottom))
+            - static_cast<int>(std::floor(bounds.top));
+        m_maskRuns.assign(static_cast<std::size_t>(std::max(rows, 0)), MaskRun{});
+        rasterizeGlowOver(bounds, radius, cap, falloff);
+    }
+
+    // `falloff` shapes the ramp from the shape's edge out to `radius`. The curve is the one
+    // Graphics::falloffAt states; this computes it eight pixels at a time and so cannot call it,
+    // which is why that function carries the note that the two move together.
+    //
+    // A row's run is claimed before it is written, which clears what it adds while the mask keeps
+    // runs - after rasterizeGlowMask - and does nothing while the whole mask holds coverage.
+    void RasterBuffers::rasterizeGlowOver(const FloatRect& bounds, float radius, StrokeCap cap,
+        GlowFalloff falloff)
     {
         if (radius <= 0.0f)
         {
@@ -561,6 +578,11 @@ namespace ClaFi::Graphics::Cpu
                     runEnd = std::min(endX, static_cast<int>(std::ceil(runRight)) + 2);
                 }
 
+                if (runStart >= runEnd)
+                {
+                    continue;
+                }
+                claimMaskRun(y - totalTop, runStart, runEnd, totalLeft);
                 __m256 vPy = _mm256_set1_ps(py);
                 float* maskPtr = &mask[(y - totalTop) * m_maskStride + (runStart - totalLeft)];
 

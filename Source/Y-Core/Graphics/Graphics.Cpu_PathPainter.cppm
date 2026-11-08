@@ -431,8 +431,8 @@ namespace ClaFi::Graphics::Cpu
             }
             else if (layer.geometry.mode == PathRenderMode::OuterGlow)
             {
-                // Glow accumulation requires a zero-cleared mask
-                m_rasterBuffers.prepareForEffect(bWidth, bHeight, true);
+                // Glow accumulation clears each row of the mask over what it reaches
+                m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
                 prepareEdges(m_rasterBuffers.m_worldPoints, false);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
                 float radius = layer.geometry.strokeWidth * scaleFactor;
@@ -449,7 +449,8 @@ namespace ClaFi::Graphics::Cpu
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
                 m_rasterBuffers.rasterizeFill(bounds, 0.0f);
                 float radius = layer.geometry.strokeWidth * scaleFactor;
-                m_rasterBuffers.rasterizeGlowMask(bounds, radius, StrokeCap::Round, layer.geometry.falloff);
+                m_rasterBuffers.rasterizeGlowOver(bounds, radius, StrokeCap::Round,
+                    layer.geometry.falloff);
             }
 
             // The glow's spread follows this painter's own scale factor rather than the

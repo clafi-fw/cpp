@@ -4,6 +4,7 @@ import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
 import ClaFi.Core.Graphics.Canvas;
+import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
@@ -28,6 +29,12 @@ namespace ClaFi::PathArt
             float y;
             float z;
         };
+        // The near-side part of an outline as a path, and the box its points span.
+        struct NearSideShape
+        {
+            Graphics::PixelPath path;
+            FloatRect bounds;
+        };
         // The Earth as drawn this frame: where it stands, how far it has turned, where the Sun is.
         struct Globe
         {
@@ -45,6 +52,10 @@ namespace ClaFi::PathArt
             // The near-side part of a closed outline, in loops closed along the rim.
             void nearSideOf(std::span<const Direction> outline, bool counterClockwise,
                 std::vector<FloatPoint>& points, std::vector<std::size_t>& loopEnds) const;
+            // The near-side part of a closed outline as a path, none when it misses the view.
+            [[nodiscard]] std::optional<NearSideShape> nearSideShape(
+                std::span<const Direction> outline, bool counterClockwise,
+                const FloatRect& view) const;
             // How much sunlight falls where the surface faces this way: above 0 by day.
             [[nodiscard]] float sunlightAt(Direction) const;
         };
@@ -83,9 +94,11 @@ namespace ClaFi::PathArt
         static void drawSpace(const SceneFrame&);
         static void drawOcean(const SceneFrame&);
         [[nodiscard]] static Terminator terminatorOf(const SceneFrame&, const Globe&);
-        void drawSurface(const SceneFrame&, const Globe&, float cycleTime) const;
-        static void drawNight(const SceneFrame&, const Globe&, const Terminator&);
+        void drawSurface(const SceneFrame&, const Globe&) const;
+        [[nodiscard]] static Graphics::LinearGradient nightOf(const Globe&, const Terminator&);
         void drawCityLights(const SceneFrame&, const Globe&, const Terminator&,
+            float cycleTime) const;
+        void drawClouds(const SceneFrame&, const Globe&, const Graphics::LinearGradient& night,
             float cycleTime) const;
         static void drawAtmosphere(const SceneFrame&, const Globe&);
     private:

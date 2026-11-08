@@ -252,6 +252,37 @@ opacity, on Oj's "randomize their opacity too": some read as wisps, some as dens
 the CPU backend the clouds cost about 4 ms a frame more than the three ellipses did, after
 rasterizeGlowMask's rows were narrowed - see Graphics-Types.
 
+**The atmosphere is three glows** (2026-11-08). Its rings were three flat strokes, and Oj saw their
+edges: "There are visible sharp atmosphere edges". Rendered against them were the three rings soft,
+one wide haze with a soft line, and soft hazes with the line kept sharp; Oj picked the three soft.
+Each ring is an OuterGlow with the limb's gradient as its brush, reaching 0.02, 0.005 and 0.016 of
+the radius at 0.3, 1 and 0.34 of the colour's opacity. The line is centred at 1.001 of the radius;
+at the strokes' 1.003 its glow left a dark gap between it and the ocean. With the glow's mask kept
+in runs - see Graphics-Types - the rings cost what the strokes did, about 3 ms at 3436 x 2051.
+
+**The clouds float a hundredth of the radius above the ground** (2026-11-08). Drawn on it, under the
+globe's clip, they read to Oj as glued to the surface, and more realistic on a larger radius.
+Rendered at 1, 2 and 3.5 percent, Oj picked 1. The lumps lie on a sphere that much larger, cut at
+its own rim, and drawn over the night, the sea's glint and the city lights.
+
+**A lump fades into the haze as it nears the limb**: its opacity rises from nothing where its center
+is on the rim to whole where the center faces the viewer by 0.12. Drawn whole up to the rim, a lump
+near the limb stood in the sky with space under it, and its far side showed in the ring between the
+Earth's edge and the sphere's rim, down to sqrt(1 - 1/1.01^2) behind it - drawn as the near side of
+its outline mirrored through the plane of the rim, before the ocean, whose disc hid what fell inside
+the Earth's edge. Seen that slantwise a lump is a thin streak sliding along the rim: the far part
+grew along the whole of it in half a second as the rim swept through it lengthwise, and the near
+part narrowed into the rim. Oj, from a video: "They like stretching out and back to 0". Rendered
+against it, as 20 seconds of the limb: no far side, where a lump narrows into the rim up in the sky;
+and a fade toward the limb, light and strong. Oj picked the light fade, and the far side went with
+it, being behind the rim and so faded out whole.
+
+Each lump's colour is mixed with the night's stop by that stop's opacity, at the lump's own opacity,
+which leaves the pixels the night laid over the lump would; a lump wholly on one side of the night's
+gradient takes that side's colour solid, the rest a gradient. With the clouds raised and the
+atmosphere soft, a frame at 3436 x 2051 on the CPU backend went from 22.8 to 23.6 ms, measured in
+one run against the frame before either.
+
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the
 Sun, so through the shadow they show their backs, which were one flat gray (Oj, 2026-11-07, "one

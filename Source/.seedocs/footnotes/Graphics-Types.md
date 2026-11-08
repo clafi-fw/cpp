@@ -14,6 +14,10 @@ Compiled in while CLAFI_TEXT_MOVING is 1 - see TextRenderMode.
 
 The shape drawn over the glow covers its inward half.
 
+**Direct2D draws the ramp as a blur** of the outline widened to where the falloff stands at half. It
+falls along a bell rather than the falloff's curve: a little fainter at the outline, and fading out
+a little past the reach.
+
 ## GlowFalloff::Linear
 
 **What light wants.** A lamp runs out rather than thinning out, and the eye reads the even ramp
@@ -152,6 +156,9 @@ Compiled in while CLAFI_TEXT_MOVING is 1 - see TextRenderMode.
 
 What an opaque shape casts. The shape's own area is solid, so the shadow is whole wherever the
 shape is then drawn.
+
+**Direct2D draws it as a blur** of the shape grown to where the falloff stands at half. The shape's
+edge then stands a little under full strength, and the ramp fades out a little past the reach.
 
 ## ArcEllipse
 
