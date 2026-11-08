@@ -710,6 +710,66 @@ which stays until the map is built.
   27.6 against 25.9 to 28.3, 24.5 to 24.9 against 26.1 to 27.3. The other scenes render byte for
   byte as before in both looks.
 
+**One haze for the land and the sea** (2026-11-08). Oj, with a recording of a zoom: "Why is color
+getting washed out as you zoom in?" The sea alone paled toward the limb's blue from 0.55 of the
+globe's radius out, the old gradient ocean's haze carried over into the sea's depth. Low down the
+frame shows only the globe's outer ring - the bottom of a 16:9 frame at the lowest view lies at 0.73
+of the radius, of his 2354 x 1898 frame at 0.61 - so the whole sea was about half veiled, beside
+land with no haze. At the lowest view the sea's mean colour measured (62, 126, 195) at a saturation
+of 0.68, and (34, 84, 147) at 0.78 with the haze off. Shown a haze by the air looked through on the
+sea alone, and no haze on the sea, Oj: "What I don't like is the "sea alone" part. Any applied hazes
+should base on Relief number not on a name".
+
+- The haze is one function of the air looked through past the air straight down, 1 over the facing
+  less 1, times the air left above the height, e to the minus 1.1 times it, taken as 1 / (1 + x +
+  x^2/2 + x^3/6). It veils a share x / (x + 7) toward the haze's colour, the old limb blue. The land
+  takes it per point, from the facing and the height its look draws, and spreads it with the colour;
+  the sea per pixel, at height 0. Air thinning as at a scale height of 8 km puts a third of it over
+  the Himalaya's crest at 8.8 km.
+- The clouds keep their fade at the limb by how far they face the viewer, which hides the shells'
+  rim; they take no haze colour. The gradient drawn before the map is built keeps its own haze from
+  the limb.
+- Frames at 2560 x 1440 on the container, before against now: 27.8 and 28.4 ms against 29.5 and 28.3
+  at the lowest view, 30.5 and 34.0 against 34.0 and 31.3 halfway, 35.5 and 32.5 against 31.2 and
+  31.9 with the whole globe - within the noise.
+- Greener shelf colours were rendered the same evening, from a touch of green to teal; no pick, and
+  the shelf keeps its blue.
+
+**The realistic shelves are as light as the land** (2026-11-08). With the haze no longer paling the
+sea low down, Oj, with a screenshot of a shallow bay: "Sea beside coastline is glowing like a sorrow
+eye". Measured on it, the shelf sea stood at a luma of about 130, flat, against 91 to 110 for the
+land about it and 98 for the deep sea. Of three ramps rendered over four shelf seas - a darker blue,
+a darker greenish, and one near the deep sea - Oj picked the greenish: SeaShelf 0x1E6880, SeaSlope
+0x185C8C, SeaRise 0x13508F, SeaRidge 0x0F4689, with OceanDeep and SeaTrench as they were. The
+shelf's luma is about 90. The stylized look keeps its light, map-like shelves.
+
+**The realistic grassland is a step darker** (2026-11-08). Right after the shelves, Oj, with a
+screenshot of a coast where forest gives way to grassland: "Here's the opposite, at the right half
+of the coastline the land is glowing". Measured on it, the grass by the coast stood at a luma of
+about 135 against about 85 for the sea beside it and 88 for the forest; there was no light fringe at
+the coast, only the colour. Grass was luma 128 and GrassLight 141, about as light as the old shelf
+blue. Of a step darker and darker still, near the forest, Oj picked the step: Grass 0x507B38 (luma
+109), GrassLight 0x61853F (121), Steppe 0x929355. The forest, the tundra, the sand, the rock and the
+snow are as they were.
+
+**The realistic desert is a step darker** (2026-11-09). Oj, with a screenshot of Baja California and
+its gulf: "Calm down that land". Measured on it, the desert stood at a luma of 157 to 170 against 93
+for the gulf's shallow water and about 107 for the green land; Sand was luma 169 and SandLight 194.
+Of a step darker, two steps, and two steps greyer, Oj picked the step: Sand 0xAB8D5C (luma 144),
+SandLight 0xBBA377 (165). The steppe keeps the colour it took with the grassland.
+
+**The land and the sea are moonlit at night** (2026-11-09). Oj: "brighter water and land colors at
+night". Deep in the night the ground kept a tenth of its colour under the night's near black. Shown
+a quarter of it, two fifths, and a quarter drawn toward a moonlit blue, Oj: "mock moonlight with and
+without a shares of a quarter - a quarter", read as a quarter of the ground's colour without
+moonlight and with a quarter of moonlight; then "with moonlight but darker that with a quarter", a
+sixth and an eighth of moonlight; "Darker still", the ground and the moonlight lowered together;
+"less ground", the moonlight held at an eighth and the ground at a sixth, an eighth or a tenth. Oj
+picked a tenth: the ground's share is as it was, and each stop of the night over the ground is drawn
+toward the moonlight by 0.125 / 0.9, so deep in the night, at 0.9 of opacity, the moonlight is an
+eighth of the view. The moonlight is the colour the night clouds already take, renamed from
+MoonlitCloud to Moonlight; the clouds are unchanged, and the stylized look takes the same night.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4

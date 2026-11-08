@@ -27,18 +27,19 @@ namespace ClaFi::PathArt
         constexpr Color Star{ 0xFFF0F3FF };
         constexpr Color SunGlare{ 0xFFFFF1D6 };
         constexpr Color OceanLimb{ 0xFF3F8EE0 };
+        constexpr Color Haze{ 0xFF3F8EE0 }; // what the air's haze draws the ground toward
         constexpr Color OceanDeep{ 0xFF0C3D84 }; // the abyss, 4000 to 6000 metres down
-        constexpr Color SeaShelf{ 0xFF2B8FD0 }; // over the shelf, less than 200 metres deep
-        constexpr Color SeaSlope{ 0xFF1F74BF }; // down the continental slope, 200 to 1000 metres
-        constexpr Color SeaRise{ 0xFF175FA9 }; // the rise below the slope, 1000 to 2000 metres
-        constexpr Color SeaRidge{ 0xFF114D96 }; // the ridges, 2000 to 4000 metres down
+        constexpr Color SeaShelf{ 0xFF1E6880 }; // over the shelf, less than 200 metres deep
+        constexpr Color SeaSlope{ 0xFF185C8C }; // down the continental slope, 200 to 1000 metres
+        constexpr Color SeaRise{ 0xFF13508F }; // the rise below the slope, 1000 to 2000 metres
+        constexpr Color SeaRidge{ 0xFF0F4689 }; // the ridges, 2000 to 4000 metres down
         constexpr Color SeaTrench{ 0xFF082C66 }; // the trenches, past 8000 metres
         constexpr Color FlatSeaShelf{ 0xFF4398DE }; // the stylized look's
         constexpr Color FlatSeaSlope{ 0xFF2B78C4 };
         constexpr Color FlatSeaRidge{ 0xFF1A5BA6 };
         constexpr Color FlatSeaTrench{ 0xFF082C66 };
         constexpr Color Cloud{ 0xCAFFFFFF }; // where a layer covers the sky whole
-        constexpr Color MoonlitCloud{ 0xFF46536E }; // what the night draws the clouds toward
+        constexpr Color Moonlight{ 0xFF46536E }; // the night's light on the clouds and the ground
         constexpr Color Night{ 0xFF020614 };
         constexpr Color NightBlue{ 0xFF030818 };
         constexpr Color SeaGlint{ 0xFFCFE8FF };
@@ -48,11 +49,11 @@ namespace ClaFi::PathArt
         constexpr Color Dusk{ 0xFFFF8A3D };
         constexpr Color DuskDeep{ 0xFFFF7040 };
         constexpr Color NightAir{ 0xFF1B2A5C };
-        constexpr Color Grass{ 0xFF5E9142 };
-        constexpr Color GrassLight{ 0xFF729C4A };
-        constexpr Color Steppe{ 0xFF9FA05C };
-        constexpr Color Sand{ 0xFFC9A66C };
-        constexpr Color SandLight{ 0xFFDCC08C };
+        constexpr Color Grass{ 0xFF507B38 };
+        constexpr Color GrassLight{ 0xFF61853F };
+        constexpr Color Steppe{ 0xFF929355 };
+        constexpr Color Sand{ 0xFFAB8D5C };
+        constexpr Color SandLight{ 0xFFBBA377 };
         constexpr Color Taiga{ 0xFF3B6633 };
         constexpr Color TaigaDeep{ 0xFF2F5A2E };
         constexpr Color Tundra{ 0xFF8C8E6C };
@@ -120,6 +121,8 @@ namespace ClaFi::PathArt
         constexpr float k_duskSunlight{ 0.03f };
         // How much less sunlight it takes from there for the night to fall whole.
         constexpr float k_nightSunlightSpan{ 0.16f };
+        // The moonlight's share of the night over the ground: deep in it, an eighth of the view.
+        constexpr float k_moonlitShareOfNight{ 0.125f / 0.9f };
         // The globe's radius in pixels from which the land is worked out every 4th pixel.
         constexpr float k_coarseRadius{ 3200.0f };
         // The globe's radius in pixels from which the land is worked out every 2nd pixel.
@@ -149,6 +152,10 @@ namespace ClaFi::PathArt
         constexpr float k_zoneFade{ 0.03f };
         // The depth over which a tone of the stylized sea fades in, where the depth changes slowly.
         constexpr float k_seaToneFade{ 0.02f };
+        // The air looked through, past the air straight down, that veils half of what lies behind.
+        constexpr float k_halfHazeAir{ 7.0f };
+        // How fast the air thins with height: a third of it is left over the Himalaya's crest.
+        constexpr float k_airThinning{ 1.1f };
         // How far to either side an edge cut at the pixel is softened, in what the pixel spans.
         constexpr float k_edgeSoftening{ 0.75f };
         // The least depth the ground a point stands for is worked out at, short of the rim.
@@ -901,7 +908,7 @@ namespace ClaFi::PathArt
             const std::array<GradientStop, 3> stops = nightStops();
             const auto shaded = [](const GradientStop& stop) {
                 const float nightShare = static_cast<float>(stop.color.alpha) / 255.0f;
-                const Color moonlit = colorBetween(stop.color, SatelliteSceneColors::MoonlitCloud,
+                const Color moonlit = colorBetween(stop.color, SatelliteSceneColors::Moonlight,
                     nightShare);
                 return colorBetween(SatelliteSceneColors::Cloud, moonlit, nightShare);
             };
@@ -915,19 +922,24 @@ namespace ClaFi::PathArt
             return shades;
         }
 
-        // The night's colours from day to deep night, premultiplied as a band's pixels are.
+        // **The night's colours over the land and the sea, from day to deep night**, premultiplied
+        // as a band's pixels are: each stop's colour drawn toward the moonlight, at its own
+        // opacity. Deep in the night the ground keeps a tenth of its colour, and the moonlight is
+        // an eighth.
         [[nodiscard]] std::vector<Color> nightShades()
         {
             const std::array<GradientStop, 3> stops = nightStops();
-            const auto asItIs = [](const GradientStop& stop) {
-                return stop.color;
+            const auto moonlit = [](const GradientStop& stop) {
+                const Color moonlitColor = colorBetween(stop.color,
+                    SatelliteSceneColors::Moonlight, k_moonlitShareOfNight);
+                return moonlitColor.withOpacity(static_cast<float>(stop.color.alpha) / 255.0f);
             };
             std::vector<Color> shades;
             shades.reserve(k_nightShadeCount);
             for (int i = 0; i != k_nightShadeCount; ++i)
             {
                 const float position = static_cast<float>(i) / (k_nightShadeCount - 1);
-                const Color color = colorAlong(stops, position, asItIs);
+                const Color color = colorAlong(stops, position, moonlit);
                 const float alpha = static_cast<float>(color.alpha) / 255.0f;
                 const auto times = [&](std::uint8_t channel) {
                     return static_cast<std::uint8_t>(std::lround(channel * alpha));
@@ -1418,6 +1430,7 @@ namespace ClaFi::PathArt
             std::vector<float> snowEdges; // where the stylized snow begins
             std::vector<float> zones; // which stylized zones a point lies in whole - see zoneKey
             std::vector<float> light; // how the slope is lit - see reliefLight
+            std::vector<float> haze; // how far the air veils the point - see airHazeAt
         };
 
         // What every band of the land is worked out from, this frame.
@@ -1955,6 +1968,24 @@ namespace ClaFi::PathArt
             }
         }
 
+        // **How far the air veils the ground at 8 points, 0 to 1**, by the air the view looks
+        // through to it past the air straight down, which grows as the ground turns away and thins
+        // with its height. `facing` is how far the ground faces the viewer; the sea's height is 0.
+        [[nodiscard]] __m256 airHazeAt(const __m256 facing, const __m256 heights)
+        {
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 thinning = _mm256_mul_ps(_mm256_max_ps(heights, _mm256_setzero_ps()),
+                _mm256_set1_ps(k_airThinning));
+            // The share of the air left above the height: e to the minus `thinning`, near enough.
+            const __m256 airLeft = _mm256_div_ps(one, _mm256_fmadd_ps(thinning, _mm256_fmadd_ps(
+                thinning, _mm256_fmadd_ps(thinning, _mm256_set1_ps(1.0f / 6.0f),
+                    _mm256_set1_ps(0.5f)), one), one));
+            const __m256 extraAir = _mm256_mul_ps(_mm256_sub_ps(_mm256_div_ps(one,
+                _mm256_max_ps(facing, _mm256_set1_ps(0.01f))), one), airLeft);
+            return _mm256_div_ps(extraAir, _mm256_add_ps(extraAir,
+                _mm256_set1_ps(k_halfHazeAir)));
+        }
+
         // The ground's points along a row, the land at them in the relief the look draws, and
         // what each pixel is spread from, in the groups of 8 points `needed` marks.
         void sampleGround(const LandPicture& picture, const LandPalette& palette,
@@ -1997,6 +2028,12 @@ namespace ClaFi::PathArt
                     .tundra = part(points.tundra)
                 });
                 colorPoints(picture, palette, first, end, points);
+                for (std::size_t i = first; i != end; i += 8)
+                {
+                    _mm256_storeu_ps(points.haze.data() + i, airHazeAt(
+                        _mm256_loadu_ps(points.depths.data() + i),
+                        _mm256_loadu_ps(points.heights.data() + i)));
+                }
             }
         }
 
@@ -2046,11 +2083,11 @@ namespace ClaFi::PathArt
         }
 
         // **A row of land pixels, premultiplied by the coastlines' coverage**, in one pass: each
-        // pixel's colour is spread from the four points about it, and the stylized bands are cut
-        // there. Where the points about 8 pixels lie whole in the same stylized zones, the pixels
-        // take the zones' colour from them; elsewhere the zones are cut at each pixel, so their
-        // edges do not step from point to point. 8 pixels the coastlines do not reach are written
-        // clear. The last group of 8 stops at the row's end.
+        // pixel's colour is spread from the four points about it, the stylized bands are cut there,
+        // and the air's haze is laid over it. Where the points about 8 pixels lie whole in the same
+        // stylized zones, the pixels take the zones' colour from them; elsewhere the zones are cut
+        // at each pixel, so their edges do not step from point to point. 8 pixels the coastlines do
+        // not reach are written clear. The last group of 8 stops at the row's end.
         void writeLandRow(const LandPicture& picture, const LandPalette& palette,
             const GroundPoints& upper, const GroundPoints& lower, const float downShare,
             const std::span<const float> coverage, Color* pixels, const int width)
@@ -2063,6 +2100,7 @@ namespace ClaFi::PathArt
             const __m256 byteMax = _mm256_set1_ps(255.0f);
             const __m256 perPixel = _mm256_set1_ps(1.0f / static_cast<float>(step));
             const bool realistic = picture.look == SceneLook::Realistic;
+            const ColorLanes hazeColor = colorLanesOf(SatelliteSceneColors::Haze);
             for (int x = 0; x < width; x += 8)
             {
                 const __m256 covered = _mm256_loadu_ps(coverage.data() + x);
@@ -2103,6 +2141,7 @@ namespace ClaFi::PathArt
                         spreadOf(upper.snowEdges, lower.snowEdges),
                         spreadOver(upper.light, lower.light), palette);
                 }
+                color = mixed(color, hazeColor, spreadOf(upper.haze, lower.haze));
                 // Off the sphere the land is not a number; the maximum takes 0 there.
                 const auto byteAt = [&](__m256 channel, int shift) {
                     const __m256 scaled = _mm256_fmadd_ps(_mm256_mul_ps(channel, covered),
@@ -2161,7 +2200,7 @@ namespace ClaFi::PathArt
                     &points.sunNorth, &points.depths, &points.heights, &points.slopesEast,
                     &points.slopesNorth, &points.variation, &points.dryness, &points.forest,
                     &points.tundra, &points.red, &points.green, &points.blue,
-                    &points.snowEdges, &points.zones, &points.light })
+                    &points.snowEdges, &points.zones, &points.light, &points.haze })
                 {
                     values->resize(pointLength);
                 }
@@ -2269,7 +2308,7 @@ namespace ClaFi::PathArt
 
         // **A band of the sea, premultiplied and opaque on the sphere**: the depths are read at
         // points `step` apart and spread over the pixels between, each pixel takes its colour by
-        // the look, and toward the limb the sea pales into the haze; the pixels on the limb fade
+        // the look, and the air's haze veils it as it veils the land; the pixels on the limb fade
         // out across it. The bitmap spans the sphere's widest row in the band; answers where it
         // stands.
         [[nodiscard]] FloatPoint rasterizeSeaBand(const SeaPicture& picture, const int top,
@@ -2330,7 +2369,7 @@ namespace ClaFi::PathArt
             const __m256i byteMask = _mm256_set1_epi32(0xFF);
             const __m256 rowStart = _mm256_add_ps(_mm256_set1_ps(firstPixelX), laneOffsets());
             const __m256 edgeScale = _mm256_set1_ps(std::min(radii.x, radii.y));
-            const ColorLanes limb = colorLanesOf(SatelliteSceneColors::OceanLimb);
+            const ColorLanes hazeColor = colorLanesOf(SatelliteSceneColors::Haze);
             const auto shadeAt = [&](__m256 depth) {
                 const __m256i shade = _mm256_i32gather_epi32(shades, _mm256_cvttps_epi32(
                     _mm256_min_ps(_mm256_max_ps(_mm256_fmadd_ps(depth, lastShade, half), zero),
@@ -2369,13 +2408,12 @@ namespace ClaFi::PathArt
                         _mm256_set1_ps(picture.sphereCenter.x)), _mm256_set1_ps(1.0f / radii.x));
                     const __m256 reach = _mm256_sqrt_ps(_mm256_fmadd_ps(across, across,
                         _mm256_set1_ps(up * up)));
-                    // The sea pales toward the limb from 0.55 of the radius out.
-                    const __m256 haze = _mm256_min_ps(_mm256_max_ps(_mm256_mul_ps(
-                        _mm256_sub_ps(reach, _mm256_set1_ps(0.55f)), _mm256_set1_ps(1.0f / 0.45f)),
-                        zero), one);
+                    const __m256 facing = _mm256_sqrt_ps(_mm256_max_ps(
+                        _mm256_fnmadd_ps(reach, reach, one), zero));
+                    const __m256 haze = airHazeAt(facing, zero); // the sea's surface at height 0
                     const __m256 inside = _mm256_min_ps(_mm256_max_ps(_mm256_fmadd_ps(
                         _mm256_sub_ps(one, reach), edgeScale, half), zero), one);
-                    const ColorLanes hazed = mixed(color, limb, haze);
+                    const ColorLanes hazed = mixed(color, hazeColor, haze);
                     const __m256 opacity = _mm256_mul_ps(inside, byteMax);
                     const auto byteAt = [&](__m256 channel, int shift) {
                         return _mm256_slli_epi32(_mm256_cvttps_epi32(

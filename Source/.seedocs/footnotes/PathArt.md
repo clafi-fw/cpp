@@ -391,11 +391,12 @@ The stars drift a fifth of the frame's width each orbit - see StarField drift.
 40-second cycle.
 
 **The night falls by the sunlight on each pixel of the globe**: it starts at a sunlight of 0.03 and
-is whole at -0.13, so the terminator curves as it does at any altitude, and the clouds darken by the
-same depth, toward a moonlit blue-grey. The city lights come on as the sunlight falls past -0.01 and
-are full past -0.06. The atmosphere along the limb is blue by day, orange at dusk and dark at night,
-by the sunlight on the limb, which rises evenly across it toward the Sun: three rings, each fading
-out to both sides.
+is whole at -0.13, so the terminator curves as it does at any altitude, and the land, the sea and
+the clouds darken by the same depth, toward a moonlit blue-grey. Deep in the night the land and the
+sea keep a tenth of their colour, and the moonlight is an eighth. The city lights come on as the
+sunlight falls past -0.01 and are full past -0.06. The atmosphere along the limb is blue by day,
+orange at dusk and dark at night, by the sunlight on the limb, which rises evenly across it toward
+the Sun: three rings, each fading out to both sides.
 
 **The towns are placed by the land's map.** Until it is built, 1500 stand anywhere on the land
 from 56 degrees south to 62 north. Then 1500 are tried at random points of the land and 5800 at
@@ -420,11 +421,17 @@ Sun lower than about 14 degrees lights the slopes as one at 14 degrees would, so
 toward dusk without turning black, and it fades out across the terminator. Snow lies above a height
 that falls from the tropics toward the poles, and past 66 degrees south it covers all the land.
 
-**The sea is coloured by its depth**, from the land's map - see EarthMap: light over the shelves,
-deepening down the slopes and over the ridges to the abyss, darkest in the trenches. Realistic
-shades evenly between the depths' colours; stylized cuts five flat tones. Toward the limb the sea
-pales into the haze, from 0.55 of the radius out. Until the map is built, the sea is one gradient
-from the haze at the limb to the deep blue.
+**The sea is coloured by its depth**, from the land's map - see EarthMap: greenish over the shelves,
+deepening to blue down the slopes and over the ridges to the abyss, darkest in the trenches.
+Realistic shades evenly between the depths' colours, its shelves about as light as the land beside
+them; stylized cuts five flat tones, its shelves light as on a map. Until the map is built, the sea
+is one gradient from the haze at the limb to the deep blue.
+
+**The air's haze veils the ground by the air the view looks through to it**, past the air straight
+down: none looking straight down, more as the ground turns away toward the horizon and the limb. The
+air thins with height - over the Himalaya's crest a third of it is left - so the ranges stand out of
+the haze, and the sea, at height 0, hazes as the low land beside it does. Where the view looks
+through 8 times the air straight down, half the ground's colour is veiled.
 
 **The looks part at the clouds' edges and in the land.** Stylized cuts each layer's cover into two
 flat tones, and the land into flat zones of green, steppe, sand, taiga and tundra with flat bands of
