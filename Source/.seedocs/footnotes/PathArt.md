@@ -51,9 +51,9 @@ transform from the bounds' coordinates to pixels, and the backend that draws the
 
 How a scene that offers a choice of looks draws itself. Stylized is the flat drawing every scene
 has; Realistic shades what it can the way a photograph shows it. A scene answers offersLooks() true
-when the two differ for it - today the Satellite, whose clouds they change - and draws in the look
-setLook() last named from its next frame on. A scene that offers no looks keeps the value and
-draws as it always does.
+when the two differ for it - today the Satellite, whose clouds and land they change - and draws in
+the look setLook() last named from its next frame on. A scene that offers no looks keeps the value
+and draws as it always does.
 
 The MillScene showcase offers the looks in a section of its Scene page captioned with the scene's
 name, shown only while that scene is the picked one, and keeps the pick under SceneLook.
@@ -138,6 +138,53 @@ off the paint.
 **readCover() blends the four nearest points** of the map, wrapping round the longitudes any number
 of turns either way and stopping at the poles. It works through eight points at a time with AVX2,
 and several threads may call it at once.
+
+## EarthMap
+
+The land of the Earth's northern half as maps, from the equator to the pole: how high it stands and
+what covers it. The Satellite's view never reaches south of about 7 degrees north.
+
+- **The relief** is laid in from 50 ranges - the Himalaya, the Alps, the Rockies and the rest -
+  each a line along its crest with a height and a reach, and from 8 plateaus such as Tibet and
+  Greenland's ice, over low hills everywhere. Noise cuts the ranges into ridges and makes their
+  edges wander. A height of 1 is the Himalaya's crest.
+- **The broad relief** is the same relief read at no more than a seventh of its finest detail,
+  which smooths it to the ranges' broad shapes.
+- **The cover** is the dryness, from 16 dry regions such as the Sahara and the Gobi with noise
+  along their edges, and the shares of northern forest and of tundra, which end along wandering
+  lines of latitude.
+
+The relief keeps 4096 points round each circle of latitude and 1024 from the equator to the pole,
+and the cover half as many each way. Each keeps 7 coarser levels of detail as well, each half as
+fine each way as the one before, its points the average of the 2 by 2 under them: 28 MB in all. One
+build always makes the same maps.
+
+**Building the maps takes about 4 seconds of processor time**, spread over all the cores. Build them
+off the paint.
+
+**readLand() reads each point as fine as the ground it stands for** - see LandQuery. It takes the
+two levels whose points lie about as far apart as that ground reaches, blends the four nearest
+points in each, then blends the two levels by how near each is. Detail finer than the points can
+hold fades out, so it does not shimmer as the view moves.
+
+The reads wrap round the longitudes any number of turns either way and hold the equator's values
+south of it. readLand() works through eight points at a time with AVX2, and several threads may
+call it at once.
+
+## LandQuery
+
+The four spans run in step, one value per point, and the longitudes set how many points are read.
+
+**A point's spans are how far the ground it stands for reaches**, in longitude and in latitude - for
+a point drawn as a pixel, the ground under that pixel. The greater of the two, counted in the map's
+points, picks the level of detail the land is read at. A span of 0 reads the finest.
+
+## LandPoints
+
+Each span holds a value for every point read, and must be at least as long as the query's
+longitudes.
+Heights and slopes are in the map's own units: how high a height of 1 stands as drawn is the
+caller's to choose.
 
 ## reachToward
 
@@ -258,15 +305,35 @@ radius up, turning about an axis that leans up to 6 degrees off the Earth's. Eac
 back against the ground once a cycle, the higher layers further. The clouds fade into the haze as
 they near the limb, take the night's shade on the night side, and pass over the city lights.
 
-**The looks part at the clouds' edges**: Stylized cuts each layer's cover into two flat tones,
-Realistic shows it as it is - see SceneLook.
+**The land is worked out pixel by pixel inside the coastlines**, from the land's map - see EarthMap.
+A height of 1 stands 0.014 of the Earth's radius up as drawn, about ten times the Himalaya's true
+height, and each slope is lit by the Sun where it stands: lighter facing it, darker facing away. A
+Sun lower than about 14 degrees lights the slopes as one at 14 degrees would, so the shading deepens
+toward dusk without turning black, and it fades out across the terminator. Snow lies above a height
+that falls from the tropics toward the pole.
 
-**The maps are built off the paint** the first time the scene is drawn, and the clouds show from the
-first frame after: a fraction of a second on a processor with many cores. Each frame works the
-clouds out in bands of rows spread over the cores - see spreadOverCores - and on a globe over 3200
-pixels in radius - a frame about 2800 pixels wide or more - at every 4th pixel and row, blended
-between before the look cuts the cover. The bands are laid in on all the cores as well - see
-Canvas drawPixelViews.
+**The looks part at the clouds' edges and in the land.** Stylized cuts each layer's cover into two
+flat tones, and the land into flat zones of green, steppe, sand, taiga and tundra with flat bands of
+height and one tone of slope each way, from the broad relief. Realistic shows the cover as it is,
+and the land in the detailed relief, its colours blended - see SceneLook.
+
+**The maps are built off the paint** the first time the scene is drawn: a fraction of a second on a
+processor with many cores. The clouds show from the first frame after, and the land is drawn in one
+flat colour per coastline until its map is ready. Each frame works the clouds and the land out in
+bands of rows spread over the cores - see spreadOverCores. On a globe over 3200 pixels in radius -
+a frame about 2800 pixels wide or more - both are worked out at every 4th pixel and row, and over
+1300 - a frame about 1130 pixels wide - the land at every 2nd. What lies between is blended before
+the look cuts the cover, the zones or the bands of height. The bands are laid in on all the cores as
+well - see Canvas drawPixelViews.
+
+**Each point reads the land as fine as the ground it stands for**, taken 1.4 times as wide as the
+points stand apart - see LandQuery. The ridges hold still as the Earth turns, and soften toward the
+limb, where each point stands for more ground.
+
+**Each edge the stylized look cuts in the land is softened by what its field changes over the
+pixel**: the dryness and the cold at a zone's edge, the height at a band's, the light at a tone's.
+An edge stays sharp where its field changes slowly, and moves smoothly across the pixels where it
+changes fast, so it does not step from pixel to pixel as the Earth turns.
 
 ## SatelliteScene Terminator
 

@@ -386,6 +386,91 @@ short of opaque, and the Puppeteer a row across the frame about 1 percent short;
 cover their frames whole. Leaving the fill out needs the scene to say it covers its frame, and no
 Scene says so yet.
 
+**The land is worked out per pixel** (2026-11-08). Oj: "Make land more detailed. Like mountain
+ranges". Four looks were rendered from the scene ("Satellite land - four looks.png" and two more
+sheets in Claude Output\MillScene Scenes): relief over the flat colours, relief with land cover,
+stylized terraces, and terraces with flat zones. Oj picked "B+D": the second for Realistic, the
+fourth for Stylized.
+
+- EarthMap packs four bytes a texel: height, the two slopes and the variation of the detailed
+  relief at 4096 by 1024; height and slopes of the broad relief, and dryness, forest and tundra, at
+  2048 by 512. A slope is kept as the square root of its share of the steepest, 200 per radian -
+  the steepest built is 149 - so a gentle slope keeps its grain. On the container's 2 cores the
+  maps build in 1.9 s, and readLand takes 7.3 ns a point on one core.
+- The colour is worked out at the points and spread between them. The stylized bands and tones of
+  slope are cut at each pixel from the spread height and light, so their edges stay sharp; 8 pixels
+  no band or tone reaches pass them over, and points no covered pixel reads are not worked out.
+  Working the colour out at every pixel had cost 12 ms of processor time a frame at 1600 x 900.
+- The coasts went first through a pushClip of the coastlines, the CPU clip mask read back into the
+  pixels. That took 4.5 to 5 ms of the paint thread at 3436 x 2051 - about what the flat fill it
+  replaced took - and left Direct2D to cut the bands itself. Each band now works out the
+  coastlines' coverage from the area each edge sweeps in each cell, summed along the row, as font-rs
+  does, on all the cores, and both backends lay the same pixels in. The coasts match the clip's to
+  within an antialiasing step.
+- Inside the disc's path clip, Canvas::clipBox() stands in the clip's own coordinates, not the
+  canvas's pixels: under a canvas scale the land came out cut to the scaled width. The land is cut
+  to the canvas, and the backend's clip does the rest.
+- Measured on the container, a frame: at 1600 x 900, 2.9 to 4.2 ms of processor time and 1.7 to
+  2.4 of the paint thread, against 0.7 to 1.0 for the flat fill; at 3436 x 2051, 9 to 13 ms of
+  processor time, of which the paint thread keeps about 1 to lay the bands in, against 5 for the
+  flat fill. The clouds came out bit for bit as before once the sphere's points were shared with
+  the land.
+
+**The land is read as fine as the ground a point stands for** (2026-11-08). Oj sent a recording at
+dusk, 2296 x 1198: "it shimmers. I closed my eyes on that on clouds because on atmosphere that can
+be mistaken with air turbulences but on the terrain that's no so great". The maps were read at their
+finest everywhere. The whole visible cap faces away from the viewer - its depth stays under 0.7 -
+and toward the limb the ground between two points grows as one over the depth, so the ridges and
+the slope light, which carries their finest detail, were sampled too sparsely and flickered from
+frame to frame.
+
+- EarthMap keeps both maps as pyramids of 8 levels, each averaged 2 by 2 from the values of the one
+  before and packed only then, and reads each point between its two nearest levels, the way a GPU
+  reads a mip-mapped texture. The broad relief is gone as a map of its own: it is the relief read
+  no finer than level 2.75. Against the stylized renders Oj approved, level 2.5 left Tibet spotty
+  and level 3 lost the Atlas's bands; 2.75 matched.
+- The scene works out each point's spans from the screen's two directions, turned as the points
+  are and laid along east and north, adding what the two reach. The span picks the level by the
+  greater of longitude and latitude, so north of about 60 degrees the land reads coarser along the
+  meridians than it needs to. Near the limb that costs nothing: there the latitude span is the
+  greater anyway.
+- The flicker was measured as the mean second difference over time of the dusk frames, around a
+  ridge near the limb. Read at the level the points' spacing gives, it fell from 5.6 to 2.7 with the
+  clouds hidden; half a level coarser, to 1.7; a whole level, to 1.1, but the ridges went soft. Half
+  a level was kept: the spans are taken 1.4 times as wide as the points stand apart. With the clouds
+  shown, 4.9 fell to 1.6.
+- Two reads along the longer side of each point's ground, each at the level of half that side,
+  kept a little more detail across the ridges for a fifth more of the land's time. The difference
+  did not show in the renders, and was left out.
+- Measured on the container, a frame of the land: at 1600 x 900, 3.9 ms of processor time became
+  4.8 to 5.5; at 3436 x 2051, 9.3 became 10.6. The maps take 28 MB, against 25. Building them takes
+  3.1 s on the 2 cores, of which the heights, unchanged, take 2.2; the levels add 0.1.
+
+**The stylized land's edges are cut at the pixel** (2026-11-08). Oj, after the levels of detail:
+"Great in realistic, shimmers in stylized". On the dusk frames with the clouds hidden, the same
+measure around the ridge gave 0.92 in all, 0.27 without the tones of slope, 0.87 without the bands,
+and 0.16 with the zones alone. At 3436 x 2051 the zones' edges stepped: they were cut at the points
+and spread between them, so an edge sat midway between the two points it fell between and jumped a
+whole step - 4 pixels there - as the Earth turned.
+
+- Every stylized edge is softened by k_edgeSoftening of what its field changes over the pixel - the
+  four points' change across and down, added - and no less than its fade where the field changes
+  slowly. The bands took their softness from the slope over the depth, held at 0.2, which ran short
+  toward the limb.
+- The zones are cut at the pixel only where the points about 8 pixels do not all lie whole in the
+  same zones. Each point keeps a key of the zones it lies in, -1 on an edge; comparing the three
+  colour channels instead cost 2 ms at 3436 x 2051.
+- A pixel reads the point after its own across and the row of points below, so a point is marked
+  needed from a whole step before it. At a step of 1 the row below gives the change down, and a
+  band works out one more row of points there.
+- With the edges softened the ridge measured 0.83. The measure counts every sharp edge that moves,
+  so it falls little; the frames show the zones' steps gone at 3436 x 2051.
+- Measured on the container, a frame of the stylized land: at 1600 x 900, 5.0 to 5.8 ms of
+  processor time became 6.0 to 6.6; at 3436 x 2051, 14 to 15 became 16.5 to 17.3. Realistic came
+  out bit for bit as before, at steps 1, 2 and 4.
+- The stylized clouds' two tones still step toward the limb: their cover is cut at the pixel with
+  a fixed fade, and the cloud maps are read at their finest.
+
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the
 Sun, so through the shadow they show their backs, which were one flat gray (Oj, 2026-11-07, "one

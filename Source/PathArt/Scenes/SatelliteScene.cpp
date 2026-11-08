@@ -3,6 +3,7 @@ module;
 module ClaFi.PathArt.SatelliteScene;
 
 import ClaFi.PathArt.CloudMap;
+import ClaFi.PathArt.EarthMap;
 import ClaFi.PathArt.SatelliteSprite;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
@@ -37,6 +38,27 @@ namespace ClaFi::PathArt
         constexpr Color Dusk{ 0xFFFF8A3D };
         constexpr Color DuskDeep{ 0xFFFF7040 };
         constexpr Color NightAir{ 0xFF1B2A5C };
+        constexpr Color Grass{ 0xFF5E9142 };
+        constexpr Color GrassLight{ 0xFF729C4A };
+        constexpr Color Steppe{ 0xFF9FA05C };
+        constexpr Color Sand{ 0xFFC9A66C };
+        constexpr Color SandLight{ 0xFFDCC08C };
+        constexpr Color Taiga{ 0xFF3B6633 };
+        constexpr Color TaigaDeep{ 0xFF2F5A2E };
+        constexpr Color Tundra{ 0xFF8C8E6C };
+        constexpr Color TundraMoss{ 0xFF7D8462 };
+        constexpr Color Rock{ 0xFF85765C };
+        constexpr Color RockHigh{ 0xFF9C9387 };
+        constexpr Color Snow{ 0xFFF3F6FA };
+        constexpr Color SlopeShadow{ 0xFF141C24 };
+        constexpr Color SlopeLight{ 0xFFFFF6E2 };
+        constexpr Color FlatGrass{ 0xFF66973F }; // the stylized look's
+        constexpr Color FlatSteppe{ 0xFFA6A65A };
+        constexpr Color FlatSand{ 0xFFD3B477 };
+        constexpr Color FlatTaiga{ 0xFF3F6D36 };
+        constexpr Color FlatTundra{ 0xFF8E9070 };
+        constexpr Color FlatRock{ 0xFF9A8565 };
+        constexpr Color FlatRockHigh{ 0xFFB9AE9E };
     }
 
     namespace
@@ -52,14 +74,38 @@ namespace ClaFi::PathArt
         constexpr float k_rimStep{ 2.0f * k_degree };
         // How far a point of cloud faces the viewer when it starts fading into the haze.
         constexpr float k_cloudHazeDepth{ 0.12f };
-        // The rows of the clouds' picture worked out together on one core, and laid in as one.
-        constexpr int k_cloudBandRows{ 32 };
+        // The rows of a picture worked out together on one core, and laid in as one.
+        constexpr int k_bandRows{ 32 };
         // The shades of the clouds kept along the night's gradient.
         constexpr int k_cloudShadeCount{ 1024 };
-        // The globe's radius in pixels from which the clouds are worked out at every 4th pixel.
-        constexpr float k_cloudCoarseRadius{ 3200.0f };
+        // The globe's radius in pixels from which clouds and land are worked out every 4th pixel.
+        constexpr float k_coarseRadius{ 3200.0f };
+        // The globe's radius in pixels from which the land is worked out at every 2nd pixel.
+        constexpr float k_landSecondPixelRadius{ 1300.0f };
         // The cover the stylized look's lighter tone starts from, showing nothing below it.
         constexpr float k_stylizedLeastCover{ 0.28f };
+        // How high a height of 1 on the land's map stands, as a share of the Earth's radius.
+        constexpr float k_reliefHeight{ 0.014f };
+        // A Sun lower than this lights the slopes as from this. See PathArt#satellitescene
+        constexpr float k_lowestSunForRelief{ 0.25f };
+        // The height the stylized look's lowest band starts at.
+        constexpr float k_lowestBand{ 0.08f };
+        // The light below which the stylized look shows a slope's shaded tone.
+        constexpr float k_shadedBelow{ 0.925f };
+        // The light above which it shows a slope's lit tone.
+        constexpr float k_litAbove{ 1.055f };
+        // The light over which a tone of slope fades in, where the light changes slowly.
+        constexpr float k_toneFade{ 0.05f };
+        // The dryness, forest or tundra over which a zone fades into the next, where it changes
+        // slowly.
+        constexpr float k_zoneFade{ 0.03f };
+        // How far to either side an edge cut at the pixel is softened, in what the pixel spans.
+        constexpr float k_edgeSoftening{ 0.75f };
+        // The least depth the ground a point stands for is worked out at, short of the rim.
+        constexpr float k_leastSpanDepth{ 0.02f };
+        // How much wider than the points stand apart the ground about one is taken: the land is
+        // read half a level coarser, as detail that fine shimmers when the globe turns.
+        constexpr float k_spanWidening{ 1.4142135f };
 
         // A layer of cloud: what its map holds, and how it floats. See PathArt#satellitescene
         struct CloudLayer
@@ -108,10 +154,9 @@ namespace ClaFi::PathArt
             }
         };
 
-        // A layer of cloud as this frame shows it, its sphere placed by the canvas's pixels.
-        struct CloudLayerView
+        // A sphere as this frame shows it, placed by the canvas's pixels.
+        struct SphereView
         {
-            const CloudMap* map;
             FloatPoint fromPixel; // across and up from the sphere's center, in its radii, per pixel
             FloatPoint atOrigin; // the same at the canvas's pixel 0, 0
             float tiltCosine;
@@ -119,6 +164,13 @@ namespace ClaFi::PathArt
             float tipCosine; // of how far its axis tips back from the screen's up
             float tipSine;
             float spin;
+        };
+
+        // A layer of cloud as this frame shows it.
+        struct CloudLayerView
+        {
+            const CloudMap* map;
+            SphereView sphere;
             float opacity; // where its map's cover is whole
         };
 
@@ -343,44 +395,113 @@ namespace ClaFi::PathArt
             return _mm256_or_ps(angle, _mm256_and_ps(y, signBit));
         }
 
+        // A row of a sphere's points `step` pixels apart, ready to be worked out 8 at a time.
+        struct SphereRow
+        {
+            __m256 up;
+            __m256 upSquared;
+            __m256 upTiltCosine;
+            __m256 upTiltSine;
+            __m256 tiltCosine;
+            __m256 tiltSine;
+            __m256 tipCosine;
+            __m256 tipSine;
+            __m256 acrossStart;
+            __m256 acrossPerPoint;
+        };
+
+        // 8 points of a sphere with its axis upright, in its radii: x across, y up the axis and z
+        // toward the viewer.
+        struct SphereLanes
+        {
+            __m256 across; // how far across the screen each stands from the center
+            __m256 depth; // how far each faces the viewer, 0 off the sphere
+            __m256 x;
+            __m256 y;
+            __m256 z;
+            __m256 aroundAxis; // how far each is from the axis
+        };
+
+        // A sphere at `center` with `radius` in the scene, placed by the canvas's pixels.
+        [[nodiscard]] SphereView sphereViewOf(const Matrix3x2& toPixels, const FloatPoint center,
+            const float radius, const float tilt, const float tip, const float spin)
+        {
+            const FloatPoint pixelScale = { toPixels.a, toPixels.d };
+            const FloatPoint pixelShift = { toPixels.e, toPixels.f };
+            return {
+                .fromPixel = { 1.0f / (pixelScale.x * radius), -1.0f / (pixelScale.y * radius) },
+                .atOrigin = {
+                    -(pixelShift.x / pixelScale.x + center.x) / radius,
+                    (center.y + pixelShift.y / pixelScale.y) / radius
+                },
+                .tiltCosine = std::cos(tilt),
+                .tiltSine = std::sin(tilt),
+                .tipCosine = std::cos(tip),
+                .tipSine = std::sin(tip),
+                .spin = spin
+            };
+        }
+
+        [[nodiscard]] SphereRow sphereRowAt(const SphereView& sphere, const float pixelY,
+            const float firstPixelX, const int step)
+        {
+            const float up = sphere.atOrigin.y + sphere.fromPixel.y * pixelY;
+            return {
+                .up = _mm256_set1_ps(up),
+                .upSquared = _mm256_set1_ps(up * up),
+                .upTiltCosine = _mm256_set1_ps(up * sphere.tiltCosine),
+                .upTiltSine = _mm256_set1_ps(up * sphere.tiltSine),
+                .tiltCosine = _mm256_set1_ps(sphere.tiltCosine),
+                .tiltSine = _mm256_set1_ps(sphere.tiltSine),
+                .tipCosine = _mm256_set1_ps(sphere.tipCosine),
+                .tipSine = _mm256_set1_ps(sphere.tipSine),
+                .acrossStart = _mm256_set1_ps(sphere.atOrigin.x + sphere.fromPixel.x * firstPixelX),
+                .acrossPerPoint = _mm256_set1_ps(sphere.fromPixel.x * static_cast<float>(step))
+            };
+        }
+
+        // Off the sphere the depth is 0, and the points stand where it would put them.
+        [[nodiscard]] SphereLanes sphereLanesAt(const SphereRow& row, const std::size_t firstPoint)
+        {
+            const __m256 point = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(firstPoint)),
+                laneOffsets());
+            const __m256 across = _mm256_fmadd_ps(point, row.acrossPerPoint, row.acrossStart);
+            const __m256 depthSquared = _mm256_sub_ps(_mm256_set1_ps(1.0f),
+                _mm256_fmadd_ps(across, across, row.upSquared));
+            const __m256 depth = _mm256_sqrt_ps(_mm256_max_ps(depthSquared, _mm256_setzero_ps()));
+            const __m256 x = _mm256_fmadd_ps(across, row.tiltCosine, row.upTiltSine);
+            const __m256 y = _mm256_fnmadd_ps(across, row.tiltSine, row.upTiltCosine);
+            const __m256 untippedY = _mm256_fmsub_ps(y, row.tipCosine,
+                _mm256_mul_ps(depth, row.tipSine));
+            const __m256 untippedZ = _mm256_fmadd_ps(y, row.tipSine,
+                _mm256_mul_ps(depth, row.tipCosine));
+            return {
+                .across = across,
+                .depth = depth,
+                .x = x,
+                .y = untippedY,
+                .z = untippedZ,
+                .aroundAxis = _mm256_sqrt_ps(
+                    _mm256_fmadd_ps(x, x, _mm256_mul_ps(untippedZ, untippedZ)))
+            };
+        }
+
         // Where the points of a row fall on the layer's map, and how clear of the haze each is,
         // from the pixel center `firstPixelX` on, `step` pixels apart. See PathArt#satellitescene
-        void projectRow(const CloudLayerView& layer, const float pixelY, const float firstPixelX,
+        void projectRow(const SphereView& sphere, const float pixelY, const float firstPixelX,
             const int step, MapPoints& onMap, std::span<float> clearness)
         {
-            const float up = layer.atOrigin.y + layer.fromPixel.y * pixelY;
-            const __m256 upSquared = _mm256_set1_ps(up * up);
-            const __m256 upTiltCosine = _mm256_set1_ps(up * layer.tiltCosine);
-            const __m256 upTiltSine = _mm256_set1_ps(up * layer.tiltSine);
-            const __m256 tiltCosine = _mm256_set1_ps(layer.tiltCosine);
-            const __m256 tiltSine = _mm256_set1_ps(layer.tiltSine);
-            const __m256 tipCosine = _mm256_set1_ps(layer.tipCosine);
-            const __m256 tipSine = _mm256_set1_ps(layer.tipSine);
-            const __m256 spin = _mm256_set1_ps(layer.spin);
-            const __m256 one = _mm256_set1_ps(1.0f);
-            const __m256 acrossStart = _mm256_set1_ps(layer.atOrigin.x
-                + layer.fromPixel.x * firstPixelX);
-            const __m256 acrossPerPoint = _mm256_set1_ps(layer.fromPixel.x
-                * static_cast<float>(step));
+            const SphereRow row = sphereRowAt(sphere, pixelY, firstPixelX, step);
+            const __m256 spin = _mm256_set1_ps(sphere.spin);
             for (std::size_t i = 0; i != clearness.size(); i += 8)
             {
-                const __m256 point = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(i)),
-                    laneOffsets());
-                const __m256 across = _mm256_fmadd_ps(point, acrossPerPoint, acrossStart);
                 // Off the sphere the depth is 0, which leaves the point wholly in the haze.
-                const __m256 depthSquared = _mm256_sub_ps(one,
-                    _mm256_fmadd_ps(across, across, upSquared));
-                const __m256 z = _mm256_sqrt_ps(_mm256_max_ps(depthSquared, _mm256_setzero_ps()));
-                const __m256 x = _mm256_fmadd_ps(across, tiltCosine, upTiltSine);
-                const __m256 y = _mm256_fnmadd_ps(across, tiltSine, upTiltCosine);
-                const __m256 untippedY = _mm256_fmsub_ps(y, tipCosine, _mm256_mul_ps(z, tipSine));
-                const __m256 untippedZ = _mm256_fmadd_ps(y, tipSine, _mm256_mul_ps(z, tipCosine));
-                const __m256 aroundAxis = _mm256_sqrt_ps(
-                    _mm256_fmadd_ps(x, x, _mm256_mul_ps(untippedZ, untippedZ)));
+                const SphereLanes lanes = sphereLanesAt(row, i);
                 _mm256_storeu_ps(onMap.longitudes.data() + i,
-                    _mm256_sub_ps(quickAngle(x, untippedZ), spin));
-                _mm256_storeu_ps(onMap.latitudes.data() + i, quickAngle(untippedY, aroundAxis));
-                _mm256_storeu_ps(clearness.data() + i, smoothStep8(0.0f, k_cloudHazeDepth, z));
+                    _mm256_sub_ps(quickAngle(lanes.x, lanes.z), spin));
+                _mm256_storeu_ps(onMap.latitudes.data() + i, quickAngle(lanes.y, lanes.aroundAxis));
+                _mm256_storeu_ps(clearness.data() + i, smoothStep8(0.0f, k_cloudHazeDepth,
+                    lanes.depth));
             }
         }
 
@@ -431,7 +552,8 @@ namespace ClaFi::PathArt
             for (std::size_t i = 0; i != picture.layers.size(); ++i)
             {
                 const CloudLayerView& layer = picture.layers[i];
-                projectRow(layer, pixelY, firstPixelX, picture.step, onMap, points[i].clearness);
+                projectRow(layer.sphere, pixelY, firstPixelX, picture.step, onMap,
+                    points[i].clearness);
                 layer.map->readCover(onMap.longitudes, onMap.latitudes, points[i].covers);
             }
         }
@@ -468,6 +590,20 @@ namespace ClaFi::PathArt
             return _mm256_fmadd_ps(_mm256_sub_ps(after, before), spread.shares, before);
         }
 
+        // 8 pixels of a row from column `x` on, the last group stopping at the row's end.
+        void storeEight(Color* pixels, const int x, const int width, const __m256i color)
+        {
+            int* out = reinterpret_cast<int*>(pixels + x);
+            if (width - x >= 8)
+            {
+                _mm256_storeu_si256(reinterpret_cast<__m256i*>(out), color);
+                return;
+            }
+            const __m256i inRow = _mm256_cmpgt_epi32(_mm256_set1_epi32(width - x),
+                _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7));
+            _mm256_maskstore_epi32(out, inRow, color);
+        }
+
         // **A row of cloud pixels, premultiplied, in one pass**: each layer's cover and haze are
         // spread from the points the row stands between, the look cuts the cover, and the
         // night's shade is laid at the opacity the layers leave. A pixel's cover lies between
@@ -502,17 +638,6 @@ namespace ClaFi::PathArt
             for (int x = 0; x < width; x += 8)
             {
                 const std::size_t point = static_cast<std::size_t>(x / step);
-                const auto store = [&](__m256i color) {
-                    int* out = reinterpret_cast<int*>(pixels + x);
-                    if (width - x >= 8)
-                    {
-                        _mm256_storeu_si256(reinterpret_cast<__m256i*>(out), color);
-                        return;
-                    }
-                    const __m256i inRow = _mm256_cmpgt_epi32(_mm256_set1_epi32(width - x),
-                        _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7));
-                    _mm256_maskstore_epi32(out, inRow, color);
-                };
                 __m256 transparency = one;
                 bool covered = false;
                 for (std::size_t i = 0; i != upper.size(); ++i)
@@ -534,7 +659,7 @@ namespace ClaFi::PathArt
                 }
                 if (!covered)
                 {
-                    store(_mm256_setzero_si256());
+                    storeEight(pixels, x, width, _mm256_setzero_si256());
                     continue;
                 }
 
@@ -551,7 +676,7 @@ namespace ClaFi::PathArt
                 const __m256i color = _mm256_or_si256(
                     _mm256_or_si256(premultiplied(shade, 0, alpha), premultiplied(shade, 8, alpha)),
                     _mm256_or_si256(premultiplied(shade, 16, alpha), alphaByte));
-                store(color);
+                storeEight(pixels, x, width, color);
             }
         }
 
@@ -631,6 +756,928 @@ namespace ClaFi::PathArt
                 const float downShare = static_cast<float>(pastPoints) / static_cast<float>(step);
                 writeCloudRow(picture, upper, step == 1 ? upper : lower, downShare,
                     nightAt(pixelYAt(y)), pixels.pixel(0, y), width);
+            }
+            return { static_cast<float>(left), static_cast<float>(top) };
+        }
+
+        // A straight piece of a coastline, in the canvas's pixels.
+        struct CoastEdge
+        {
+            FloatPoint from;
+            FloatPoint to;
+        };
+
+        // A direction with the Earth's axis upright: x across, y up the axis, z toward the viewer.
+        struct AxisDirection
+        {
+            float x;
+            float y;
+            float z;
+        };
+
+        // The ground's points along one row, `step` pixels apart, and the land at them.
+        struct GroundPoints
+        {
+            std::vector<float> longitudes;
+            std::vector<float> latitudes;
+            std::vector<float> longitudeSpans; // the longitudes the ground about a point spans
+            std::vector<float> latitudeSpans; // the latitudes it spans
+            std::vector<float> sunlight; // how high the Sun stands: the cosine of its angle down
+            std::vector<float> sunEast; // how far the Sun lies east along the ground
+            std::vector<float> sunNorth; // how far it lies north
+            std::vector<float> depths; // how far the ground faces the viewer
+            std::vector<float> heights;
+            std::vector<float> slopesEast;
+            std::vector<float> slopesNorth;
+            std::vector<float> variation;
+            std::vector<float> dryness;
+            std::vector<float> forest;
+            std::vector<float> tundra;
+            std::vector<float> red; // the colour at the point, or the stylized zone's
+            std::vector<float> green;
+            std::vector<float> blue;
+            std::vector<float> snowEdges; // where the stylized snow begins
+            std::vector<float> zones; // which stylized zones a point lies in whole - see zoneKey
+            std::vector<float> light; // how the slope is lit - see reliefLight
+        };
+
+        // What every band of the land is worked out from, this frame.
+        struct LandPicture
+        {
+            const EarthMap* map;
+            SphereView ground;
+            SceneLook look;
+            int step; // the pixels between the points the land is worked out at, 1, 2 or 4
+            AxisDirection sun;
+            FloatPoint sphereCenter; // in pixels
+            FloatPoint sphereRadii; // across and up, in pixels
+            int left; // the first column in view
+            int right; // the column past the last in view
+            std::span<const CoastEdge> coast; // the near side's coastlines, each loop closed
+        };
+
+        // A value at 8 pixels, and how much it changes over each pixel.
+        struct SpreadLanes
+        {
+            __m256 values;
+            __m256 change;
+        };
+
+        // How far 8 points or pixels lie past the edge of each stylized zone, 0 to 1.
+        struct ZoneCuts
+        {
+            __m256 steppe;
+            __m256 sand;
+            __m256 forest;
+            __m256 tundra;
+        };
+
+        // The points about each of 8 pixels: its own and the next, in the rows above and below it.
+        struct PointCorners
+        {
+            __m256 upperLeft;
+            __m256 upperRight;
+            __m256 lowerLeft;
+            __m256 lowerRight;
+        };
+
+        // How far 8 points' ground spans, in radians.
+        struct GroundSpans
+        {
+            __m256 longitudes;
+            __m256 latitudes;
+        };
+
+        // The land at 8 points.
+        struct GroundLanes
+        {
+            __m256 heights;
+            __m256 slopesEast;
+            __m256 slopesNorth;
+            __m256 variation;
+            __m256 dryness;
+            __m256 forest;
+            __m256 tundra;
+            __m256 latitudes;
+            __m256 sunlight;
+            __m256 sunEast;
+            __m256 sunNorth;
+            __m256 depths;
+        };
+
+        // The red, green and blue of 8 pixels, 0 to 1.
+        struct ColorLanes
+        {
+            __m256 red;
+            __m256 green;
+            __m256 blue;
+        };
+
+        // The land's colours, each ready for 8 pixels.
+        struct LandPalette
+        {
+            ColorLanes grass;
+            ColorLanes grassLight;
+            ColorLanes steppe;
+            ColorLanes sand;
+            ColorLanes sandLight;
+            ColorLanes taiga;
+            ColorLanes taigaDeep;
+            ColorLanes tundra;
+            ColorLanes tundraMoss;
+            ColorLanes rock;
+            ColorLanes rockHigh;
+            ColorLanes snow;
+            ColorLanes slopeShadow;
+            ColorLanes slopeLight;
+            ColorLanes flatGrass;
+            ColorLanes flatSteppe;
+            ColorLanes flatSand;
+            ColorLanes flatTaiga;
+            ColorLanes flatTundra;
+            ColorLanes flatRock;
+            ColorLanes flatRockHigh;
+        };
+
+        // **An edge's piece within one cell's width**, adding `winding` in all to the cells right
+        // of it: the cells it crosses take the share of each that lies right of it, and the cell
+        // past the last takes the rest. `fromX` and `toX` lie within the row's cells.
+        void sweepPiece(float* cells, const float fromX, const float toX, const float winding)
+        {
+            const float low = std::min(fromX, toX);
+            const float high = std::max(fromX, toX);
+            const float lowFloor = std::floor(low);
+            const int lowCell = static_cast<int>(lowFloor);
+            const float highCeiling = std::ceil(high);
+            const int highCell = static_cast<int>(highCeiling);
+            if (highCell <= lowCell + 1)
+            {
+                const float middle = 0.5f * (fromX + toX) - lowFloor;
+                cells[lowCell] += winding * (1.0f - middle);
+                cells[lowCell + 1] += winding * middle;
+                return;
+            }
+            const float perAcross = 1.0f / (high - low);
+            const float lowShare = low - lowFloor;
+            const float first = 0.5f * perAcross * (1.0f - lowShare) * (1.0f - lowShare);
+            const float highShare = high - highCeiling + 1.0f;
+            const float last = 0.5f * perAcross * highShare * highShare;
+            cells[lowCell] += winding * first;
+            if (highCell == lowCell + 2)
+            {
+                cells[lowCell + 1] += winding * (1.0f - first - last);
+            }
+            else
+            {
+                const float second = perAcross * (1.5f - lowShare);
+                cells[lowCell + 1] += winding * (second - first);
+                for (int cell = lowCell + 2; cell < highCell - 1; ++cell)
+                    cells[cell] += winding * perAcross;
+                const float beforeLast = second
+                    + static_cast<float>(highCell - lowCell - 3) * perAcross;
+                cells[highCell - 1] += winding * (1.0f - beforeLast - last);
+            }
+            cells[highCell] += winding * last;
+        }
+
+        // **An edge's piece across one row**, from `fromX` at its top to `toX` at its bottom. The
+        // part left of the first cell counts whole there, as the edge stands left of every cell,
+        // and the part right of `width` counts nowhere.
+        void sweepRow(float* cells, float fromX, float toX, float winding, const int width)
+        {
+            const float right = static_cast<float>(width);
+            if (std::min(fromX, toX) >= right)
+                return;
+            if (std::max(fromX, toX) <= 0.0f)
+            {
+                cells[0] += winding;
+                return;
+            }
+            // The edge runs straight down the row, so its height on either side of a column is
+            // the share of its width on that side.
+            if (std::min(fromX, toX) < 0.0f)
+            {
+                const float leftShare = -std::min(fromX, toX) / std::abs(toX - fromX);
+                cells[0] += winding * leftShare;
+                winding *= 1.0f - leftShare;
+                if (fromX < toX)
+                    fromX = 0.0f;
+                else
+                    toX = 0.0f;
+            }
+            if (std::max(fromX, toX) > right)
+            {
+                const float rightShare = (std::max(fromX, toX) - right) / std::abs(toX - fromX);
+                winding *= 1.0f - rightShare;
+                if (fromX > toX)
+                    fromX = right;
+                else
+                    toX = right;
+            }
+            sweepPiece(cells, fromX, toX, winding);
+        }
+
+        // **How much of each pixel of a band the coastlines enclose**: each edge adds the area it
+        // sweeps in each cell of every row it crosses, signed by the way it runs, and summing along
+        // the row gives the share enclosed. The shapes stand apart, so the sum's size is the
+        // coverage whichever way a shape runs. `coverage` holds the band's rows `stride` apart,
+        // each with 2 floats to spare past `width`; `coveredGroups` marks each 8 pixels of a row
+        // the coastlines reach.
+        void coverBand(const std::span<const CoastEdge> coast, const int top, const int rows,
+            const int left, const int width, const int stride, const std::span<float> coverage,
+            std::vector<std::uint8_t>& coveredGroups)
+        {
+            std::ranges::fill(coverage, 0.0f);
+            const float bandTop = static_cast<float>(top);
+            const float bandBottom = static_cast<float>(top + rows);
+            for (const CoastEdge& edge : coast)
+            {
+                const bool downward = edge.from.y < edge.to.y;
+                const FloatPoint upper = downward ? edge.from : edge.to;
+                const FloatPoint lower = downward ? edge.to : edge.from;
+                if (upper.y >= bandBottom || lower.y <= bandTop || upper.y == lower.y)
+                    continue;
+                const float winding = downward ? 1.0f : -1.0f;
+                const float acrossPerRow = (lower.x - upper.x) / (lower.y - upper.y);
+                const int firstRow = std::max(top, static_cast<int>(std::floor(upper.y)));
+                const int endRow = std::min(top + rows, static_cast<int>(std::ceil(lower.y)));
+                for (int row = firstRow; row < endRow; ++row)
+                {
+                    const float rowTop = std::max(static_cast<float>(row), upper.y);
+                    const float rowBottom = std::min(static_cast<float>(row + 1), lower.y);
+                    if (rowBottom <= rowTop)
+                        continue;
+                    const float fromX = upper.x + (rowTop - upper.y) * acrossPerRow
+                        - static_cast<float>(left);
+                    const float toX = upper.x + (rowBottom - upper.y) * acrossPerRow
+                        - static_cast<float>(left);
+                    sweepRow(coverage.data() + static_cast<std::ptrdiff_t>(row - top) * stride,
+                        fromX, toX, winding * (rowBottom - rowTop), width);
+                }
+            }
+
+            // Summed 8 cells at a time: within each half, then the lower half's last into the
+            // upper half, then what the cells before have come to. A sum short of a 512th is the
+            // drift of the adding, not land.
+            const int groupsPerRow = stride / 8;
+            coveredGroups.assign(static_cast<std::size_t>(groupsPerRow) * rows, 0);
+            const __m256 signBit = _mm256_set1_ps(-0.0f);
+            const __m256 whole = _mm256_set1_ps(1.0f);
+            const __m256 least = _mm256_set1_ps(1.0f / 512.0f);
+            for (int row = 0; row != rows; ++row)
+            {
+                float* cells = coverage.data() + static_cast<std::ptrdiff_t>(row) * stride;
+                __m256 carried = _mm256_setzero_ps();
+                for (int group = 0; group != groupsPerRow; ++group)
+                {
+                    __m256 sums = _mm256_loadu_ps(cells + group * 8);
+                    sums = _mm256_add_ps(sums, _mm256_castsi256_ps(
+                        _mm256_slli_si256(_mm256_castps_si256(sums), 4)));
+                    sums = _mm256_add_ps(sums, _mm256_castsi256_ps(
+                        _mm256_slli_si256(_mm256_castps_si256(sums), 8)));
+                    const __m256 halfLasts = _mm256_permute_ps(sums, 0xFF);
+                    sums = _mm256_add_ps(sums, _mm256_permute2f128_ps(halfLasts, halfLasts, 0x08));
+                    sums = _mm256_add_ps(sums, carried);
+                    carried = _mm256_permute2f128_ps(_mm256_permute_ps(sums, 0xFF),
+                        _mm256_permute_ps(sums, 0xFF), 0x11);
+                    const __m256 covered = _mm256_min_ps(_mm256_andnot_ps(signBit, sums), whole);
+                    const __m256 counted = _mm256_cmp_ps(covered, least, _CMP_GE_OQ);
+                    _mm256_storeu_ps(cells + group * 8, _mm256_and_ps(covered, counted));
+                    coveredGroups[static_cast<std::size_t>(row) * groupsPerRow
+                        + static_cast<std::size_t>(group)] = _mm256_movemask_ps(counted) != 0;
+                }
+            }
+        }
+
+        // **The screen's two directions are turned as the points are**, and laid along east and
+        // north at each. A span adds what the two reach, so it bounds the ground about the point,
+        // `perPoint` of the radius across and up. Near the rim the ground a point stands for runs
+        // on over the horizon, and its depth is held at k_leastSpanDepth.
+        [[nodiscard]] GroundSpans groundSpansAt(const SphereRow& row, const SphereLanes& lanes,
+            const __m256 aroundAxis, const FloatPoint perPoint)
+        {
+            const __m256 nearness = _mm256_div_ps(_mm256_set1_ps(1.0f),
+                _mm256_max_ps(lanes.depth, _mm256_set1_ps(k_leastSpanDepth)));
+            // How fast the depth falls, across the screen and up it.
+            const __m256 fallAcross = _mm256_mul_ps(lanes.across, nearness);
+            const __m256 fallUp = _mm256_mul_ps(row.up, nearness);
+            const __m256 signBit = _mm256_set1_ps(-0.0f);
+            const auto size = [&](__m256 value) {
+                return _mm256_andnot_ps(signBit, value);
+            };
+            // How far a direction, tilted to `x` and `y` with the depth falling by `fall`, reaches
+            // east, in radians of arc, and north.
+            const auto reach = [&](__m256 x, __m256 y, __m256 fall) {
+                const __m256 alongAxis = _mm256_fmadd_ps(fall, row.tipSine,
+                    _mm256_mul_ps(y, row.tipCosine));
+                const __m256 towardViewer = _mm256_fnmadd_ps(fall, row.tipCosine,
+                    _mm256_mul_ps(y, row.tipSine));
+                const __m256 east = _mm256_div_ps(_mm256_fmsub_ps(x, lanes.z,
+                    _mm256_mul_ps(towardViewer, lanes.x)), aroundAxis);
+                const __m256 north = _mm256_fmsub_ps(aroundAxis, alongAxis,
+                    _mm256_div_ps(_mm256_mul_ps(lanes.y, _mm256_fmadd_ps(x, lanes.x,
+                        _mm256_mul_ps(towardViewer, lanes.z))), aroundAxis));
+                return std::array<__m256, 2>{ size(east), size(north) };
+            };
+            const std::array<__m256, 2> acrossReach = reach(row.tiltCosine,
+                _mm256_xor_ps(row.tiltSine, signBit), fallAcross);
+            const std::array<__m256, 2> upReach = reach(row.tiltSine, row.tiltCosine, fallUp);
+            const __m256 perPointAcross = _mm256_set1_ps(perPoint.x);
+            const __m256 perPointUp = _mm256_set1_ps(perPoint.y);
+            return {
+                .longitudes = _mm256_div_ps(_mm256_fmadd_ps(acrossReach[0], perPointAcross,
+                    _mm256_mul_ps(upReach[0], perPointUp)), aroundAxis),
+                .latitudes = _mm256_fmadd_ps(acrossReach[1], perPointAcross,
+                    _mm256_mul_ps(upReach[1], perPointUp))
+            };
+        }
+
+        // Where the points `first` to `end` of a row fall on the ground and how far the ground
+        // about each spans, how the Sun stands over each and how far each faces the viewer, the
+        // row's points standing from the pixel center `firstPixelX` on.
+        void projectGroundRow(const LandPicture& picture, const float pixelY,
+            const float firstPixelX, const std::size_t first, const std::size_t end,
+            GroundPoints& points)
+        {
+            const SphereRow row = sphereRowAt(picture.ground, pixelY, firstPixelX, picture.step);
+            const __m256 spin = _mm256_set1_ps(picture.ground.spin);
+            const __m256 sunX = _mm256_set1_ps(picture.sun.x);
+            const __m256 sunY = _mm256_set1_ps(picture.sun.y);
+            const __m256 sunZ = _mm256_set1_ps(picture.sun.z);
+            const float pointSpan = k_spanWidening * static_cast<float>(picture.step);
+            const FloatPoint perPoint = {
+                std::abs(picture.ground.fromPixel.x) * pointSpan,
+                std::abs(picture.ground.fromPixel.y) * pointSpan
+            };
+            // At the pole east and north turn about the axis, and any pair of them will do.
+            const __m256 leastAroundAxis = _mm256_set1_ps(1.0e-4f);
+            for (std::size_t i = first; i != end; i += 8)
+            {
+                const SphereLanes lanes = sphereLanesAt(row, i);
+                _mm256_storeu_ps(points.longitudes.data() + i,
+                    _mm256_sub_ps(quickAngle(lanes.x, lanes.z), spin));
+                _mm256_storeu_ps(points.latitudes.data() + i,
+                    quickAngle(lanes.y, lanes.aroundAxis));
+                const __m256 aroundAxis = _mm256_max_ps(lanes.aroundAxis, leastAroundAxis);
+                const GroundSpans spans = groundSpansAt(row, lanes, aroundAxis, perPoint);
+                _mm256_storeu_ps(points.longitudeSpans.data() + i, spans.longitudes);
+                _mm256_storeu_ps(points.latitudeSpans.data() + i, spans.latitudes);
+                const __m256 sunAcross = _mm256_fmadd_ps(lanes.x, sunX,
+                    _mm256_mul_ps(lanes.z, sunZ));
+                _mm256_storeu_ps(points.sunlight.data() + i,
+                    _mm256_fmadd_ps(lanes.y, sunY, sunAcross));
+                _mm256_storeu_ps(points.sunEast.data() + i, _mm256_div_ps(
+                    _mm256_fmsub_ps(lanes.z, sunX, _mm256_mul_ps(lanes.x, sunZ)), aroundAxis));
+                _mm256_storeu_ps(points.sunNorth.data() + i, _mm256_fmsub_ps(aroundAxis, sunY,
+                    _mm256_div_ps(_mm256_mul_ps(lanes.y, sunAcross), aroundAxis)));
+                _mm256_storeu_ps(points.depths.data() + i, lanes.depth);
+            }
+        }
+
+        [[nodiscard]] ColorLanes colorLanesOf(const Color color)
+        {
+            constexpr float k_perByte{ 1.0f / 255.0f };
+            return {
+                _mm256_set1_ps(static_cast<float>(color.red) * k_perByte),
+                _mm256_set1_ps(static_cast<float>(color.green) * k_perByte),
+                _mm256_set1_ps(static_cast<float>(color.blue) * k_perByte)
+            };
+        }
+
+        [[nodiscard]] LandPalette landPalette()
+        {
+            using namespace SatelliteSceneColors;
+            return {
+                .grass = colorLanesOf(Grass),
+                .grassLight = colorLanesOf(GrassLight),
+                .steppe = colorLanesOf(Steppe),
+                .sand = colorLanesOf(Sand),
+                .sandLight = colorLanesOf(SandLight),
+                .taiga = colorLanesOf(Taiga),
+                .taigaDeep = colorLanesOf(TaigaDeep),
+                .tundra = colorLanesOf(Tundra),
+                .tundraMoss = colorLanesOf(TundraMoss),
+                .rock = colorLanesOf(Rock),
+                .rockHigh = colorLanesOf(RockHigh),
+                .snow = colorLanesOf(Snow),
+                .slopeShadow = colorLanesOf(SlopeShadow),
+                .slopeLight = colorLanesOf(SlopeLight),
+                .flatGrass = colorLanesOf(FlatGrass),
+                .flatSteppe = colorLanesOf(FlatSteppe),
+                .flatSand = colorLanesOf(FlatSand),
+                .flatTaiga = colorLanesOf(FlatTaiga),
+                .flatTundra = colorLanesOf(FlatTundra),
+                .flatRock = colorLanesOf(FlatRock),
+                .flatRockHigh = colorLanesOf(FlatRockHigh)
+            };
+        }
+
+        // `share` of the way from `from` to `to`, in each lane.
+        [[nodiscard]] ColorLanes mixed(const ColorLanes& from, const ColorLanes& to,
+            const __m256 share)
+        {
+            return {
+                _mm256_fmadd_ps(_mm256_sub_ps(to.red, from.red), share, from.red),
+                _mm256_fmadd_ps(_mm256_sub_ps(to.green, from.green), share, from.green),
+                _mm256_fmadd_ps(_mm256_sub_ps(to.blue, from.blue), share, from.blue)
+            };
+        }
+
+        // 0 below `edge` less `soft`, 1 above `edge` plus `soft` and an S-curve between.
+        [[nodiscard]] __m256 smoothStepAround(const __m256 edge, const __m256 soft,
+            const __m256 value)
+        {
+            const __m256 scaled = _mm256_div_ps(_mm256_add_ps(_mm256_sub_ps(value, edge), soft),
+                _mm256_add_ps(soft, soft));
+            const __m256 share = _mm256_min_ps(_mm256_max_ps(scaled, _mm256_setzero_ps()),
+                _mm256_set1_ps(1.0f));
+            return _mm256_mul_ps(_mm256_mul_ps(share, share),
+                _mm256_fnmadd_ps(_mm256_set1_ps(2.0f), share, _mm256_set1_ps(3.0f)));
+        }
+
+        // The height above which snow lies, falling from the tropics toward the pole.
+        [[nodiscard]] __m256 snowlineAt(const __m256 latitudes)
+        {
+            return _mm256_fnmadd_ps(_mm256_set1_ps(0.42f),
+                smoothStep8(28.0f * k_degree, 68.0f * k_degree, latitudes),
+                _mm256_set1_ps(0.58f));
+        }
+
+        // **How bright the ground is for its slope**, against flat ground under the same Sun: above
+        // 1 where it faces the Sun. Across the terminator the slopes fade to flat.
+        [[nodiscard]] __m256 reliefLight(const GroundLanes& ground)
+        {
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 rise = _mm256_set1_ps(k_reliefHeight);
+            const __m256 east = _mm256_mul_ps(ground.slopesEast, rise);
+            const __m256 north = _mm256_mul_ps(ground.slopesNorth, rise);
+            const __m256 facing = _mm256_div_ps(
+                _mm256_fmadd_ps(east, ground.sunEast, _mm256_mul_ps(north, ground.sunNorth)),
+                _mm256_max_ps(ground.sunlight, _mm256_set1_ps(k_lowestSunForRelief)));
+            const __m256 lean = _mm256_sqrt_ps(
+                _mm256_fmadd_ps(east, east, _mm256_fmadd_ps(north, north, one)));
+            const __m256 light = _mm256_div_ps(_mm256_sub_ps(one, facing), lean);
+            return _mm256_fmadd_ps(_mm256_sub_ps(light, one),
+                smoothStep8(-0.05f, 0.05f, ground.sunlight), one);
+        }
+
+        // **Realistic**: green, steppe and sand by the dryness, taiga and tundra by the cold, each
+        // patch leaning by the variation; rock above the hills, snow above the snowline, and the
+        // slopes lit and shaded by the Sun.
+        [[nodiscard]] ColorLanes realisticGround(const GroundLanes& ground,
+            const LandPalette& palette)
+        {
+            const __m256 variation = ground.variation;
+            ColorLanes color = mixed(palette.grass, palette.grassLight,
+                smoothStep8(-0.4f, 0.4f, variation));
+            color = mixed(color, palette.steppe, smoothStep8(0.22f, 0.48f, ground.dryness));
+            color = mixed(color, mixed(palette.sand, palette.sandLight,
+                smoothStep8(-0.3f, 0.5f, variation)), smoothStep8(0.5f, 0.78f, ground.dryness));
+            color = mixed(color, mixed(palette.taiga, palette.taigaDeep,
+                smoothStep8(-0.3f, 0.3f, variation)), ground.forest);
+            color = mixed(color, mixed(palette.tundra, palette.tundraMoss,
+                smoothStep8(-0.3f, 0.3f, variation)), ground.tundra);
+            color = mixed(color, mixed(palette.rock, palette.rockHigh,
+                smoothStep8(0.3f, 0.7f, ground.heights)),
+                _mm256_mul_ps(_mm256_set1_ps(0.85f), smoothStep8(0.1f, 0.42f, ground.heights)));
+            const __m256 snowEdge = _mm256_add_ps(snowlineAt(ground.latitudes),
+                _mm256_set1_ps(0.04f));
+            color = mixed(color, palette.snow, _mm256_mul_ps(_mm256_set1_ps(0.95f),
+                smoothStepAround(snowEdge, _mm256_set1_ps(0.04f), ground.heights)));
+
+            const __m256 light = reliefLight(ground);
+            const __m256 zero = _mm256_setzero_ps();
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 shaded = _mm256_min_ps(_mm256_max_ps(_mm256_sub_ps(one, light), zero),
+                one);
+            color = mixed(color, palette.slopeShadow, _mm256_mul_ps(_mm256_set1_ps(0.55f), shaded));
+            const __m256 lit = _mm256_min_ps(_mm256_max_ps(
+                _mm256_mul_ps(_mm256_set1_ps(0.45f), _mm256_sub_ps(light, one)), zero),
+                _mm256_set1_ps(0.3f));
+            return mixed(color, palette.slopeLight, lit);
+        }
+
+        // **Stylized zones**: grass, steppe and sand cut from the dryness, taiga and tundra from
+        // the cold. An edge is softened by k_edgeSoftening of what its field changes over the
+        // pixel, and no less than k_zoneFade.
+        [[nodiscard]] ZoneCuts zoneCutsOf(const SpreadLanes& dryness, const SpreadLanes& forest,
+            const SpreadLanes& tundra)
+        {
+            const __m256 softening = _mm256_set1_ps(k_edgeSoftening);
+            const __m256 leastSoftness = _mm256_set1_ps(0.5f * k_zoneFade);
+            const auto cut = [&](float edge, const SpreadLanes& field) {
+                return smoothStepAround(_mm256_set1_ps(edge), _mm256_max_ps(
+                    _mm256_mul_ps(field.change, softening), leastSoftness), field.values);
+            };
+            return {
+                .steppe = cut(0.33f, dryness),
+                .sand = cut(0.6f, dryness),
+                .forest = cut(0.5f, forest),
+                .tundra = cut(0.5f, tundra)
+            };
+        }
+
+        // The flat colour of the zones, the taiga left out of the steppe.
+        [[nodiscard]] ColorLanes zoneColor(const ZoneCuts& cuts, const LandPalette& palette)
+        {
+            ColorLanes color = mixed(palette.flatGrass, palette.flatSteppe, cuts.steppe);
+            color = mixed(color, palette.flatSand, cuts.sand);
+            color = mixed(color, palette.flatTaiga, _mm256_mul_ps(cuts.forest,
+                _mm256_sub_ps(_mm256_set1_ps(1.0f), cuts.steppe)));
+            return mixed(color, palette.flatTundra, cuts.tundra);
+        }
+
+        // **Which zones each point lies in whole**: one number for each set of them, 0 to 15,
+        // and -1 for a point on an edge, where a cut is neither 0 nor 1.
+        [[nodiscard]] __m256 zoneKey(const ZoneCuts& cuts)
+        {
+            const __m256 zero = _mm256_setzero_ps();
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const auto whole = [&](__m256 cut) {
+                return _mm256_or_ps(_mm256_cmp_ps(cut, zero, _CMP_EQ_OQ),
+                    _mm256_cmp_ps(cut, one, _CMP_EQ_OQ));
+            };
+            const __m256 inside = _mm256_and_ps(_mm256_and_ps(whole(cuts.steppe), whole(cuts.sand)),
+                _mm256_and_ps(whole(cuts.forest), whole(cuts.tundra)));
+            const __m256 key = _mm256_fmadd_ps(cuts.tundra, _mm256_set1_ps(8.0f),
+                _mm256_fmadd_ps(cuts.forest, _mm256_set1_ps(4.0f),
+                    _mm256_fmadd_ps(cuts.sand, _mm256_set1_ps(2.0f), cuts.steppe)));
+            return _mm256_blendv_ps(_mm256_set1_ps(-1.0f), key, inside);
+        }
+
+        // **Stylized bands**: flat bands cut from the broad relief over the zones, and two flat
+        // tones of slope, each cut at the pixel. An edge is softened by k_edgeSoftening of what
+        // the height or the light changes over the pixel, so it stays sharp where they change
+        // slowly and does not step from pixel to pixel where they change fast. A band or a tone
+        // none of the 8 pixels reaches is passed over, so the plains cost a compare.
+        [[nodiscard]] ColorLanes stylizedRelief(ColorLanes color, const SpreadLanes& heights,
+            const __m256 snowEdges, const SpreadLanes& light, const LandPalette& palette)
+        {
+            const __m256 softening = _mm256_set1_ps(k_edgeSoftening);
+            const __m256 bandSoftness = _mm256_max_ps(_mm256_mul_ps(heights.change, softening),
+                _mm256_set1_ps(1.0e-4f));
+            const __m256 reach = _mm256_add_ps(heights.values, bandSoftness);
+            const auto lay = [&](const ColorLanes& tone, float share, __m256 edge) {
+                if (_mm256_movemask_ps(_mm256_cmp_ps(reach, edge, _CMP_GT_OQ)) == 0)
+                    return;
+                color = mixed(color, tone, _mm256_mul_ps(_mm256_set1_ps(share),
+                    smoothStepAround(edge, bandSoftness, heights.values)));
+            };
+            lay(palette.slopeShadow, 0.13f, _mm256_set1_ps(k_lowestBand));
+            lay(palette.flatRock, 0.95f, _mm256_set1_ps(0.2f));
+            lay(palette.flatRockHigh, 0.9f, _mm256_set1_ps(0.42f));
+            lay(palette.snow, 0.97f, snowEdges);
+
+            const __m256 toneSoftness = _mm256_max_ps(_mm256_mul_ps(light.change, softening),
+                _mm256_set1_ps(0.5f * k_toneFade));
+            const __m256 shadedEdge = _mm256_set1_ps(k_shadedBelow - 0.5f * k_toneFade);
+            if (_mm256_movemask_ps(_mm256_cmp_ps(_mm256_sub_ps(light.values, toneSoftness),
+                shadedEdge, _CMP_LT_OQ)) != 0)
+            {
+                color = mixed(color, palette.slopeShadow, _mm256_mul_ps(_mm256_set1_ps(0.34f),
+                    _mm256_sub_ps(_mm256_set1_ps(1.0f),
+                        smoothStepAround(shadedEdge, toneSoftness, light.values))));
+            }
+            const __m256 litEdge = _mm256_set1_ps(k_litAbove + 0.5f * k_toneFade);
+            if (_mm256_movemask_ps(_mm256_cmp_ps(_mm256_add_ps(light.values, toneSoftness),
+                litEdge, _CMP_GT_OQ)) != 0)
+            {
+                color = mixed(color, palette.slopeLight, _mm256_mul_ps(_mm256_set1_ps(0.14f),
+                    smoothStepAround(litEdge, toneSoftness, light.values)));
+            }
+            return color;
+        }
+
+        // **The colour at each point**, whole in the realistic look; in the stylized one the
+        // zone's, with what its bands are cut by at the pixels.
+        void colorPoints(const LandPicture& picture, const LandPalette& palette,
+            const std::size_t first, const std::size_t end, GroundPoints& points)
+        {
+            const bool realistic = picture.look == SceneLook::Realistic;
+            const auto atPoints = [](__m256 values) {
+                return SpreadLanes{ .values = values, .change = _mm256_setzero_ps() };
+            };
+            for (std::size_t i = first; i != end; i += 8)
+            {
+                const auto at = [&](const std::vector<float>& values) {
+                    return _mm256_loadu_ps(values.data() + i);
+                };
+                const GroundLanes ground = {
+                    .heights = at(points.heights),
+                    .slopesEast = at(points.slopesEast),
+                    .slopesNorth = at(points.slopesNorth),
+                    .variation = at(points.variation),
+                    .dryness = at(points.dryness),
+                    .forest = at(points.forest),
+                    .tundra = at(points.tundra),
+                    .latitudes = at(points.latitudes),
+                    .sunlight = at(points.sunlight),
+                    .sunEast = at(points.sunEast),
+                    .sunNorth = at(points.sunNorth),
+                    .depths = at(points.depths)
+                };
+                if (realistic)
+                {
+                    const ColorLanes color = realisticGround(ground, palette);
+                    _mm256_storeu_ps(points.red.data() + i, color.red);
+                    _mm256_storeu_ps(points.green.data() + i, color.green);
+                    _mm256_storeu_ps(points.blue.data() + i, color.blue);
+                    continue;
+                }
+                const ZoneCuts cuts = zoneCutsOf(atPoints(ground.dryness), atPoints(ground.forest),
+                    atPoints(ground.tundra));
+                const ColorLanes color = zoneColor(cuts, palette);
+                _mm256_storeu_ps(points.red.data() + i, color.red);
+                _mm256_storeu_ps(points.green.data() + i, color.green);
+                _mm256_storeu_ps(points.blue.data() + i, color.blue);
+                _mm256_storeu_ps(points.zones.data() + i, zoneKey(cuts));
+                _mm256_storeu_ps(points.snowEdges.data() + i, _mm256_max_ps(
+                    _mm256_add_ps(snowlineAt(ground.latitudes), _mm256_set1_ps(0.03f)),
+                    _mm256_set1_ps(0.12f)));
+                _mm256_storeu_ps(points.light.data() + i, reliefLight(ground));
+            }
+        }
+
+        // The ground's points along a row, the land at them in the relief the look draws, and
+        // what each pixel is spread from, in the groups of 8 points `needed` marks.
+        void sampleGround(const LandPicture& picture, const LandPalette& palette,
+            const float pixelY, const float firstPixelX, const std::vector<bool>& needed,
+            GroundPoints& points)
+        {
+            const Relief relief = picture.look == SceneLook::Realistic
+                ? Relief::Detailed
+                : Relief::Broad;
+            std::size_t group = 0;
+            while (group != needed.size())
+            {
+                if (!needed[group])
+                {
+                    ++group;
+                    continue;
+                }
+                const std::size_t firstGroup = group;
+                while (group != needed.size() && needed[group])
+                    ++group;
+                const std::size_t first = firstGroup * 8;
+                const std::size_t end = group * 8;
+                const auto part = [&](std::vector<float>& values) {
+                    return std::span<float>{ values }.subspan(first, end - first);
+                };
+                projectGroundRow(picture, pixelY, firstPixelX, first, end, points);
+                const LandQuery query = {
+                    .longitudes = part(points.longitudes),
+                    .latitudes = part(points.latitudes),
+                    .longitudeSpans = part(points.longitudeSpans),
+                    .latitudeSpans = part(points.latitudeSpans)
+                };
+                picture.map->readLand(query, relief, {
+                    .heights = part(points.heights),
+                    .slopesEast = part(points.slopesEast),
+                    .slopesNorth = part(points.slopesNorth),
+                    .variation = part(points.variation),
+                    .dryness = part(points.dryness),
+                    .forest = part(points.forest),
+                    .tundra = part(points.tundra)
+                });
+                colorPoints(picture, palette, first, end, points);
+            }
+        }
+
+        [[nodiscard]] PointCorners cornersAround(const std::vector<float>& upper,
+            const std::vector<float>& lower, const std::size_t point, const PointSpread& spread)
+        {
+            const auto at = [&](const std::vector<float>& values, std::size_t first) {
+                return _mm256_permutevar8x32_ps(_mm256_loadu_ps(values.data() + first),
+                    spread.before);
+            };
+            return {
+                .upperLeft = at(upper, point),
+                .upperRight = at(upper, point + 1),
+                .lowerLeft = at(lower, point),
+                .lowerRight = at(lower, point + 1)
+            };
+        }
+
+        // **A value spread over 8 pixels from the points about them**, and how much it changes
+        // over each: across and down added, as much as the pixel's square spans whichever way
+        // the value runs. Where a point is not a number, the change is not either.
+        [[nodiscard]] SpreadLanes spreadWithChange(const PointCorners& corners,
+            const __m256 downShare, const PointSpread& spread, const __m256 perPixel)
+        {
+            const __m256 left = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerLeft,
+                corners.upperLeft), downShare, corners.upperLeft);
+            const __m256 right = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerRight,
+                corners.upperRight), downShare, corners.upperRight);
+            const __m256 top = _mm256_fmadd_ps(_mm256_sub_ps(corners.upperRight,
+                corners.upperLeft), spread.shares, corners.upperLeft);
+            const __m256 bottom = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerRight,
+                corners.lowerLeft), spread.shares, corners.lowerLeft);
+            const __m256 signBit = _mm256_set1_ps(-0.0f);
+            const __m256 across = _mm256_andnot_ps(signBit, _mm256_sub_ps(right, left));
+            const __m256 downward = _mm256_andnot_ps(signBit, _mm256_sub_ps(bottom, top));
+            return {
+                .values = _mm256_fmadd_ps(_mm256_sub_ps(right, left), spread.shares, left),
+                .change = _mm256_mul_ps(_mm256_add_ps(across, downward), perPixel)
+            };
+        }
+
+        // Whether the points about all 8 pixels lie whole in the same zones - see zoneKey.
+        [[nodiscard]] bool isInsideOneZone(const PointCorners& zones)
+        {
+            const __m256 first = _mm256_permutevar8x32_ps(zones.upperLeft,
+                _mm256_setzero_si256());
+            const __m256 upperSame = _mm256_and_ps(
+                _mm256_cmp_ps(zones.upperLeft, first, _CMP_EQ_OQ),
+                _mm256_cmp_ps(zones.upperRight, first, _CMP_EQ_OQ));
+            const __m256 lowerSame = _mm256_and_ps(
+                _mm256_cmp_ps(zones.lowerLeft, first, _CMP_EQ_OQ),
+                _mm256_cmp_ps(zones.lowerRight, first, _CMP_EQ_OQ));
+            const __m256 whole = _mm256_cmp_ps(first, _mm256_setzero_ps(), _CMP_GE_OQ);
+            return _mm256_movemask_ps(_mm256_and_ps(_mm256_and_ps(upperSame, lowerSame), whole))
+                == 0xFF;
+        }
+
+        // **Which groups of 8 points of a row any covered pixel reads**: a point is read by the
+        // pixels from a step before it to short of a step after, across and down, in the band.
+        // `coveredGroups` marks the band's groups of 8 pixels, `groupsPerRow` to a row.
+        void markNeededGroups(const int step, const std::span<const std::uint8_t> coveredGroups,
+            const int groupsPerRow, const int rows, const int pointRow,
+            std::vector<std::uint8_t>& anyCovered, std::vector<bool>& needed)
+        {
+            anyCovered.assign(static_cast<std::size_t>(groupsPerRow), 0);
+            const int firstRow = std::max(0, pointRow - step);
+            const int lastRow = std::min(rows - 1, pointRow + step - 1);
+            for (int row = firstRow; row <= lastRow; ++row)
+            {
+                const std::uint8_t* rowGroups = coveredGroups.data()
+                    + static_cast<std::ptrdiff_t>(row) * groupsPerRow;
+                for (std::size_t group = 0; group != anyCovered.size(); ++group)
+                    anyCovered[group] |= rowGroups[group];
+            }
+            for (std::size_t group = 0; group != needed.size(); ++group)
+            {
+                const int firstPoint = static_cast<int>(group) * 8;
+                const int from = std::max(0, (firstPoint - 1) * step) / 8;
+                const int to = std::min(groupsPerRow - 1, ((firstPoint + 8) * step - 1) / 8);
+                needed[group] = from <= to && std::any_of(anyCovered.begin() + from,
+                    anyCovered.begin() + to + 1, [](std::uint8_t covered) {
+                        return covered != 0;
+                    });
+            }
+        }
+
+        // **A row of land pixels, premultiplied by the coastlines' coverage**, in one pass: each
+        // pixel's colour is spread from the four points about it, and the stylized bands are cut
+        // there. Where the points about 8 pixels lie whole in the same stylized zones, the pixels
+        // take the zones' colour from them; elsewhere the zones are cut at each pixel, so their
+        // edges do not step from point to point. 8 pixels the coastlines do not reach are written
+        // clear. The last group of 8 stops at the row's end.
+        void writeLandRow(const LandPicture& picture, const LandPalette& palette,
+            const GroundPoints& upper, const GroundPoints& lower, const float downShare,
+            const std::span<const float> coverage, Color* pixels, const int width)
+        {
+            const int step = picture.step;
+            const PointSpread spread = pointSpreadAt(step);
+            const __m256 down = _mm256_set1_ps(downShare);
+            const __m256 zero = _mm256_setzero_ps();
+            const __m256 half = _mm256_set1_ps(0.5f);
+            const __m256 byteMax = _mm256_set1_ps(255.0f);
+            const __m256 perPixel = _mm256_set1_ps(1.0f / static_cast<float>(step));
+            const bool realistic = picture.look == SceneLook::Realistic;
+            for (int x = 0; x < width; x += 8)
+            {
+                const __m256 covered = _mm256_loadu_ps(coverage.data() + x);
+                if (_mm256_movemask_ps(_mm256_cmp_ps(covered, zero, _CMP_GT_OQ)) == 0)
+                {
+                    storeEight(pixels, x, width, _mm256_setzero_si256());
+                    continue;
+                }
+                const std::size_t point = static_cast<std::size_t>(x / step);
+                const auto spreadOf = [&](const std::vector<float>& upperValues,
+                    const std::vector<float>& lowerValues) {
+                    return pixelsBetween(_mm256_loadu_ps(upperValues.data() + point),
+                        _mm256_loadu_ps(lowerValues.data() + point), down, spread);
+                };
+                ColorLanes color = {
+                    spreadOf(upper.red, lower.red),
+                    spreadOf(upper.green, lower.green),
+                    spreadOf(upper.blue, lower.blue)
+                };
+                if (!realistic)
+                {
+                    const auto around = [&](const std::vector<float>& upperValues,
+                        const std::vector<float>& lowerValues) {
+                        return cornersAround(upperValues, lowerValues, point, spread);
+                    };
+                    const auto spreadOver = [&](const std::vector<float>& upperValues,
+                        const std::vector<float>& lowerValues) {
+                        return spreadWithChange(around(upperValues, lowerValues), down, spread,
+                            perPixel);
+                    };
+                    if (!isInsideOneZone(around(upper.zones, lower.zones)))
+                    {
+                        color = zoneColor(zoneCutsOf(spreadOver(upper.dryness, lower.dryness),
+                            spreadOver(upper.forest, lower.forest),
+                            spreadOver(upper.tundra, lower.tundra)), palette);
+                    }
+                    color = stylizedRelief(color, spreadOver(upper.heights, lower.heights),
+                        spreadOf(upper.snowEdges, lower.snowEdges),
+                        spreadOver(upper.light, lower.light), palette);
+                }
+                // Off the sphere the land is not a number; the maximum takes 0 there.
+                const auto byteAt = [&](__m256 channel, int shift) {
+                    const __m256 scaled = _mm256_fmadd_ps(_mm256_mul_ps(channel, covered),
+                        byteMax, half);
+                    return _mm256_slli_epi32(_mm256_cvttps_epi32(_mm256_max_ps(scaled, zero)),
+                        shift);
+                };
+                const __m256i alpha = _mm256_slli_epi32(
+                    _mm256_cvttps_epi32(_mm256_fmadd_ps(covered, byteMax, half)), 24);
+                storeEight(pixels, x, width, _mm256_or_si256(
+                    _mm256_or_si256(byteAt(color.blue, 0), byteAt(color.green, 8)),
+                    _mm256_or_si256(byteAt(color.red, 16), alpha)));
+            }
+        }
+
+        // **The band's bitmap spans the columns the ground covers in its widest row**, inside the
+        // view; a band that misses the sphere is left empty. The points stand on the canvas's
+        // columns and rows a step apart, so neighbouring bands blend from the same points. Answers
+        // where the bitmap stands, in pixels.
+        [[nodiscard]] FloatPoint rasterizeLandBand(const LandPicture& picture,
+            const LandPalette& palette, const int top, const int rows, Bitmap& pixels)
+        {
+            const float nearestRow = std::clamp(picture.sphereCenter.y,
+                static_cast<float>(top) + 0.5f, static_cast<float>(top + rows) - 0.5f);
+            const float rise = (nearestRow - picture.sphereCenter.y) / picture.sphereRadii.y;
+            const float halfWidth = rise * rise < 1.0f
+                ? picture.sphereRadii.x * std::sqrt(1.0f - rise * rise)
+                : 0.0f;
+            const int step = picture.step;
+            const int sphereLeft = static_cast<int>(std::floor(picture.sphereCenter.x - halfWidth));
+            const int left = std::max(picture.left, sphereLeft) / step * step;
+            const int right = std::min(picture.right,
+                static_cast<int>(std::ceil(picture.sphereCenter.x + halfWidth)));
+            if (left >= right)
+            {
+                pixels.resize({});
+                return {};
+            }
+
+            const int width = right - left;
+            const float firstPixelX = static_cast<float>(left) + 0.5f;
+            pixels.resize({ width, rows });
+            const auto pixelYAt = [&](int bandRow) {
+                return static_cast<float>(top + bandRow) + 0.5f;
+            };
+            // The last group of 8 pixels reads 8 points from the one under its first pixel.
+            const std::size_t pointLength =
+                groupedLength(static_cast<int>(groupedLength(width)) / step + 8);
+            const auto pointsOfRow = [&]() {
+                GroundPoints points;
+                for (std::vector<float>* values : {
+                    &points.longitudes, &points.latitudes, &points.longitudeSpans,
+                    &points.latitudeSpans, &points.sunlight, &points.sunEast,
+                    &points.sunNorth, &points.depths, &points.heights, &points.slopesEast,
+                    &points.slopesNorth, &points.variation, &points.dryness, &points.forest,
+                    &points.tundra, &points.red, &points.green, &points.blue,
+                    &points.snowEdges, &points.zones, &points.light })
+                {
+                    values->resize(pointLength);
+                }
+                return points;
+            };
+
+            // The band's coverage first, so only the points a covered pixel reads are worked out.
+            const int stride = static_cast<int>(groupedLength(width + 2));
+            std::vector<float> coverage(static_cast<std::size_t>(stride) * rows);
+            std::vector<std::uint8_t> coveredGroups;
+            coverBand(picture.coast, top, rows, left, width, stride, coverage, coveredGroups);
+            std::vector<std::uint8_t> anyCovered;
+            std::vector<bool> needed(pointLength / 8);
+            const auto sampleRow = [&](int pointRow, GroundPoints& points) {
+                markNeededGroups(step, coveredGroups, stride / 8, rows, pointRow, anyCovered,
+                    needed);
+                sampleGround(picture, palette, pixelYAt(pointRow), firstPixelX, needed, points);
+            };
+
+            // At a step of 1 every row is a row of points, and the row below gives the change
+            // down each pixel.
+            GroundPoints upper = pointsOfRow();
+            GroundPoints lower = pointsOfRow();
+            sampleRow(0, upper);
+            sampleRow(step, lower);
+            for (int y = 0; y != rows; ++y)
+            {
+                const int pastPoints = y % step;
+                if (y != 0 && pastPoints == 0)
+                {
+                    std::swap(upper, lower);
+                    sampleRow(y + step, lower);
+                }
+                const float downShare = static_cast<float>(pastPoints) / static_cast<float>(step);
+                writeLandRow(picture, palette, upper, lower, downShare,
+                    std::span<const float>{ coverage }.subspan(static_cast<std::size_t>(y) * stride,
+                        static_cast<std::size_t>(stride)), pixels.pixel(0, y), width);
             }
             return { static_cast<float>(left), static_cast<float>(top) };
         }
@@ -758,7 +1805,7 @@ namespace ClaFi::PathArt
         PixelPath disc;
         disc.drawCircle(globe.center, radius);
         frame.canvas.pushClip(disc, &frame.toCanvas);
-        drawSurface(frame, globe);
+        drawLand(frame, globe);
         const Terminator terminator = terminatorOf(frame, globe);
         const LinearGradient night = nightOf(globe, terminator);
         fillBox(frame, { 0.0f, 0.0f, width, height }, night);
@@ -924,15 +1971,14 @@ namespace ClaFi::PathArt
         }
     }
 
-    std::optional<PixelPath> SatelliteScene::Globe::nearSidePath(
-        const std::span<const Direction> outline, const bool counterClockwise,
-        const FloatRect& view) const
+    bool SatelliteScene::Globe::addNearSide(const std::span<const Direction> outline,
+        const bool counterClockwise, const FloatRect& view, PixelPath& path) const
     {
         std::vector<FloatPoint> points;
         std::vector<std::size_t> loopEnds;
         nearSideOf(outline, counterClockwise, points, loopEnds);
         if (points.empty())
-            return std::nullopt;
+            return false;
         constexpr float k_far{ std::numeric_limits<float>::max() };
         FloatRect bounds = { k_far, k_far, -k_far, -k_far };
         for (const FloatPoint point : points)
@@ -947,8 +1993,7 @@ namespace ClaFi::PathArt
         const bool outside = bounds.right < view.left || bounds.left > view.right
             || bounds.bottom < view.top || bounds.top > view.bottom;
         if (outside)
-            return std::nullopt;
-        PixelPath path;
+            return false;
         std::size_t loopStart = 0;
         for (const std::size_t loopEnd : loopEnds)
         {
@@ -958,7 +2003,7 @@ namespace ClaFi::PathArt
             path.close();
             loopStart = loopEnd;
         }
-        return path;
+        return true;
     }
 
     float SatelliteScene::Globe::sunlightAt(const Direction direction) const
@@ -1029,7 +2074,7 @@ namespace ClaFi::PathArt
         return { .through = upper, .along = along, .dayward = dayward };
     }
 
-    void SatelliteScene::drawSurface(const SceneFrame& frame, const Globe& globe) const
+    void SatelliteScene::drawFlatLand(const SceneFrame& frame, const Globe& globe) const
     {
         const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
         std::vector<Direction> outline;
@@ -1038,11 +2083,119 @@ namespace ClaFi::PathArt
             outline.clear();
             for (const FloatPoint lonLat : coastline.lonLat)
                 outline.push_back(globe.surfaceAt(lonLat));
-            const std::optional<PixelPath> path =
-                globe.nearSidePath(outline, coastline.counterClockwise, view);
-            if (path)
-                fillShape(frame, *path, SolidColor{ coastline.color });
+            PixelPath path;
+            if (globe.addNearSide(outline, coastline.counterClockwise, view, path))
+                fillShape(frame, path, SolidColor{ coastline.color });
         }
+    }
+
+    // **The land is worked out in bands on all the cores**, each pixel taking the share of it the
+    // coastlines enclose as its opacity, so the coasts are drawn alike on either backend. The
+    // points stand every 2nd pixel and row on a globe over 1300 pixels in radius, and every 4th
+    // over 3200, where the land's map is coarser than that still.
+    void SatelliteScene::drawLand(const SceneFrame& frame, const Globe& globe)
+    {
+        if (!m_earthMap)
+        {
+            if (!m_earthMapBuilt.valid())
+            {
+                m_earthMapBuilt = std::async(std::launch::async, []() {
+                    return std::make_unique<EarthMap>();
+                });
+            }
+            if (m_earthMapBuilt.wait_for(std::chrono::seconds{ 0 }) != std::future_status::ready)
+            {
+                drawFlatLand(frame, globe);
+                return;
+            }
+            m_earthMap = m_earthMapBuilt.get();
+        }
+
+        const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
+        std::vector<CoastEdge> coast;
+        constexpr float k_far{ std::numeric_limits<float>::max() };
+        FloatRect landBox = { k_far, k_far, -k_far, -k_far };
+        std::vector<Direction> outline;
+        std::vector<FloatPoint> points;
+        std::vector<std::size_t> loopEnds;
+        for (const Coastline& coastline : m_coastlines)
+        {
+            outline.clear();
+            for (const FloatPoint lonLat : coastline.lonLat)
+                outline.push_back(globe.surfaceAt(lonLat));
+            globe.nearSideOf(outline, coastline.counterClockwise, points, loopEnds);
+            std::size_t loopStart = 0;
+            for (const std::size_t loopEnd : loopEnds)
+            {
+                for (std::size_t i = loopStart; i != loopEnd; ++i)
+                {
+                    const std::size_t next = i + 1 == loopEnd ? loopStart : i + 1;
+                    const FloatPoint from = toPixels.transform(points[i]);
+                    coast.push_back({ from, toPixels.transform(points[next]) });
+                    landBox = {
+                        std::min(landBox.left, from.x),
+                        std::min(landBox.top, from.y),
+                        std::max(landBox.right, from.x),
+                        std::max(landBox.bottom, from.y)
+                    };
+                }
+                loopStart = loopEnd;
+            }
+        }
+        if (coast.empty())
+            return;
+        // Inside a path clip the canvas's clip box stands in the clip's own coordinates, so the
+        // land is cut to the canvas and the backend cuts it to the clip.
+        const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
+        const FloatRect canvasPixels = {
+            0.0f,
+            0.0f,
+            static_cast<float>(frame.canvas.width()),
+            static_cast<float>(frame.canvas.height())
+        };
+        const IntRect inView = FloatRect::intersection(FloatRect::intersection(
+            toPixels.mapRect(view), canvasPixels), landBox).roundedOut();
+        if (inView.empty())
+            return;
+        const float tip = -k_viewLatitude;
+        const float radiusInPixels = globe.radius * toPixels.a;
+        int step = 1;
+        if (radiusInPixels >= k_coarseRadius)
+            step = 4;
+        else if (radiusInPixels >= k_landSecondPixelRadius)
+            step = 2;
+        const LandPicture picture = {
+            .map = m_earthMap.get(),
+            .ground = sphereViewOf(toPixels, globe.center, globe.radius, globe.tilt, tip,
+                globe.spin),
+            .look = look(),
+            .step = step,
+            .sun = {
+                globe.sun.x,
+                globe.sun.y * std::cos(tip) - globe.sun.z * std::sin(tip),
+                globe.sun.y * std::sin(tip) + globe.sun.z * std::cos(tip)
+            },
+            .sphereCenter = toPixels.transform(globe.center),
+            .sphereRadii = { radiusInPixels, globe.radius * toPixels.d },
+            .left = inView.left,
+            .right = inView.right,
+            .coast = coast
+        };
+        const float sphereTop = picture.sphereCenter.y - picture.sphereRadii.y;
+        const int top = std::max(inView.top, static_cast<int>(std::floor(sphereTop)))
+            / picture.step * picture.step;
+        if (top >= inView.bottom)
+            return;
+        const LandPalette palette = landPalette();
+        const int bandCount = (inView.bottom - top + k_bandRows - 1) / k_bandRows;
+        m_landBands.resize(static_cast<std::size_t>(bandCount));
+        spreadOverCores(bandCount, [&](int band) {
+            const int bandTop = top + band * k_bandRows;
+            const int rows = std::min(k_bandRows, inView.bottom - bandTop);
+            PixelBand& drawn = m_landBands[static_cast<std::size_t>(band)];
+            drawn.at = rasterizeLandBand(picture, palette, bandTop, rows, drawn.pixels);
+        });
+        layBands(frame, m_landBands, canvasPixels);
     }
 
     // One gradient over the night side, rising from nothing just on the day side of the line.
@@ -1160,16 +2313,8 @@ namespace ClaFi::PathArt
                 * std::sin(k_2Pi * cycleTime + layer.driftPhase);
             layers[i] = {
                 .map = &(*m_cloudMaps)[i],
-                .fromPixel = { 1.0f / (pixelScale.x * radius), -1.0f / (pixelScale.y * radius) },
-                .atOrigin = {
-                    -(pixelShift.x / pixelScale.x + globe.center.x) / radius,
-                    (globe.center.y + pixelShift.y / pixelScale.y) / radius
-                },
-                .tiltCosine = std::cos(globe.tilt),
-                .tiltSine = std::sin(globe.tilt),
-                .tipCosine = std::cos(tip),
-                .tipSine = std::sin(tip),
-                .spin = globe.spin + drift,
+                .sphere = sphereViewOf(toPixels, globe.center, radius, globe.tilt, tip,
+                    globe.spin + drift),
                 .opacity = layer.opacity * cloudOpacity
             };
             outerRadius = std::max(outerRadius, radius);
@@ -1185,7 +2330,7 @@ namespace ClaFi::PathArt
         const CloudPicture picture = {
             .layers = layers,
             .look = look(),
-            .step = globe.radius * pixelScale.x >= k_cloudCoarseRadius ? 4 : 1,
+            .step = globe.radius * pixelScale.x >= k_coarseRadius ? 4 : 1,
             .sphereCenter = toPixels.transform(globe.center),
             .sphereRadii = { outerRadius * pixelScale.x, outerRadius * pixelScale.y },
             .left = inView.left,
@@ -1204,23 +2349,27 @@ namespace ClaFi::PathArt
             / picture.step * picture.step;
         if (top >= inView.bottom)
             return;
-        const int bandCount = (inView.bottom - top + k_cloudBandRows - 1) / k_cloudBandRows;
+        const int bandCount = (inView.bottom - top + k_bandRows - 1) / k_bandRows;
         m_cloudBands.resize(static_cast<std::size_t>(bandCount));
         spreadOverCores(bandCount, [&](int band) {
-            const int bandTop = top + band * k_cloudBandRows;
-            const int rows = std::min(k_cloudBandRows, inView.bottom - bandTop);
-            CloudBand& drawn = m_cloudBands[static_cast<std::size_t>(band)];
+            const int bandTop = top + band * k_bandRows;
+            const int rows = std::min(k_bandRows, inView.bottom - bandTop);
+            PixelBand& drawn = m_cloudBands[static_cast<std::size_t>(band)];
             drawn.at = rasterizeCloudBand(picture, bandTop, rows, drawn.pixels);
         });
+        layBands(frame, m_cloudBands, frame.canvas.clipBox());
+    }
 
-        // Direct2D places a view through the canvas's transform, and the bands are in pixels.
+    // Direct2D places a view through the canvas's transform, and the bands are in pixels.
+    void SatelliteScene::layBands(const SceneFrame& frame, const std::span<const PixelBand> bands,
+        const FloatRect& cut)
+    {
         std::vector<PixelView> views;
-        views.reserve(m_cloudBands.size());
-        const FloatRect canvasClip = frame.canvas.clipBox();
-        for (const CloudBand& band : m_cloudBands)
+        views.reserve(bands.size());
+        for (const PixelBand& band : bands)
         {
             if (!band.pixels.empty())
-                views.push_back(band.pixels.pixelView(band.at, canvasClip));
+                views.push_back(band.pixels.pixelView(band.at, cut));
         }
         const Matrix3x2 canvasTransform = frame.canvas.transform();
         frame.canvas.resetTransform();

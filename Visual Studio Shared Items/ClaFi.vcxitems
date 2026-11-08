@@ -509,6 +509,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SteamEffect.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.EarthMap.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.EarthMap.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneLayer.cpp" />

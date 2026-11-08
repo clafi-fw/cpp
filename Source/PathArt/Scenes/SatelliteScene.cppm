@@ -1,6 +1,7 @@
 export module ClaFi.PathArt.SatelliteScene;
 
 import ClaFi.PathArt.CloudMap;
+import ClaFi.PathArt.EarthMap;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
@@ -48,10 +49,9 @@ namespace ClaFi::PathArt
             // The near-side part of a closed outline, in loops closed along the rim.
             void nearSideOf(std::span<const Direction> outline, bool counterClockwise,
                 std::vector<FloatPoint>& points, std::vector<std::size_t>& loopEnds) const;
-            // The near-side part of a closed outline as a path, none when it misses the view.
-            [[nodiscard]] std::optional<Graphics::PixelPath> nearSidePath(
-                std::span<const Direction> outline, bool counterClockwise,
-                const FloatRect& view) const;
+            // Adds the near side of a closed outline to a path, answering whether it is in view.
+            bool addNearSide(std::span<const Direction> outline, bool counterClockwise,
+                const FloatRect& view, Graphics::PixelPath&) const;
             // How much sunlight falls where the surface faces this way: above 0 by day.
             [[nodiscard]] float sunlightAt(Direction) const;
         };
@@ -76,8 +76,8 @@ namespace ClaFi::PathArt
             FloatPoint lonLat;
             float brightness;
         };
-        // A band of rows of the clouds' picture, and where it stands in the canvas's pixels.
-        struct CloudBand
+        // A band of rows of a picture worked out by pixel, and where it stands in the canvas's.
+        struct PixelBand
         {
             Graphics::Bitmap pixels;
             FloatPoint at;
@@ -88,13 +88,18 @@ namespace ClaFi::PathArt
         static void drawSpace(const SceneFrame&);
         static void drawOcean(const SceneFrame&);
         [[nodiscard]] static Terminator terminatorOf(const SceneFrame&, const Globe&);
-        void drawSurface(const SceneFrame&, const Globe&) const;
+        // The land in one flat colour inside each coastline, until the land's map is built.
+        void drawFlatLand(const SceneFrame&, const Globe&) const;
+        // The land worked out pixel by pixel inside the coastlines. See PathArt#satellitescene
+        void drawLand(const SceneFrame&, const Globe&);
         [[nodiscard]] static Graphics::LinearGradient nightOf(const Globe&, const Terminator&);
         void drawCityLights(const SceneFrame&, const Globe&, const Terminator&,
             float cycleTime) const;
         void drawClouds(const SceneFrame&, const Globe&, const Graphics::LinearGradient& night,
             float cycleTime);
         static void drawAtmosphere(const SceneFrame&, const Globe&);
+        // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
+        static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
     private:
         // The Sun goes round once a cycle, so a cycle is one day over the satellite.
         static constexpr std::chrono::seconds k_cycle{ 240 };
@@ -107,6 +112,12 @@ namespace ClaFi::PathArt
         // Built off the paint from the first frame drawn on, and kept. See PathArt#satellitescene
         std::unique_ptr<CloudMaps> m_cloudMaps{};
         // Kept from one frame to the next, so a frame of the same size allocates nothing.
-        std::vector<CloudBand> m_cloudBands{};
+        std::vector<PixelBand> m_cloudBands{};
+        // By pointer for the same reason as the clouds' maps.
+        std::future<std::unique_ptr<EarthMap>> m_earthMapBuilt{};
+        // Built off the paint from the first frame drawn on, and kept. See PathArt#satellitescene
+        std::unique_ptr<EarthMap> m_earthMap{};
+        // Kept from one frame to the next, as the clouds' are.
+        std::vector<PixelBand> m_landBands{};
     };
 }
