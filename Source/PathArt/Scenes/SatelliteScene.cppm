@@ -155,6 +155,8 @@ namespace ClaFi::PathArt
         void drawFlatLand(const SceneFrame&, const Globe&) const;
         // The land worked out pixel by pixel inside the coastlines. See PathArt#satellitescene
         void drawLand(const SceneFrame&, const Globe&);
+        // The sea coloured pixel by pixel by its depth, once the land's map is built.
+        void drawSea(const SceneFrame&, const Globe&);
         // The night worked out pixel by pixel from the sunlight. See PathArt#satellitescene
         void drawNight(const SceneFrame&, const Globe&);
         void drawCityLights(const SceneFrame&, const Globe&, float cycleTime) const;
@@ -182,6 +184,7 @@ namespace ClaFi::PathArt
         std::unique_ptr<EarthMap> m_earthMap{};
         // Kept from one frame to the next, as the clouds' are.
         std::vector<PixelBand> m_landBands{};
+        std::vector<PixelBand> m_seaBands{};
         std::vector<PixelBand> m_nightBands{};
         View m_view{};
         // The orbits the last frame was drawn after, which a drag moves the view from.

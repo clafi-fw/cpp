@@ -167,7 +167,8 @@ several threads may call it at once.
 
 ## EarthMap
 
-The land of the whole Earth as maps, from pole to pole: how high it stands and what covers it.
+The Earth as maps, from pole to pole: how high the land stands, what covers it and how deep the sea
+is.
 
 - **The relief** is laid in from 74 ranges - the Himalaya, the Andes, the Alps, the Transantarctic
   Mountains and the rest - each a line along its crest with a height and a reach, and from 12
@@ -179,11 +180,16 @@ The land of the whole Earth as maps, from pole to pole: how high it stands and w
 - **The cover** is the dryness, from 33 dry regions such as the Sahara, the Atacama and the
   Australian deserts with noise along their edges, and the shares of northern forest and of tundra,
   which end along wandering lines of latitude.
+- **The sea's depth** comes from Natural Earth's bathymetry at 1:10m - see landOutlines: its
+  contours at 200, 1000, 2000, 4000, 6000 and 8000 metres, made coarser to the grain of the cover.
+  Each point takes the deepest contour that holds it, counted evenly from 0 at the coast to 1 past
+  8000 metres, and the levels are blurred into slopes about a degree across, so the depth rises
+  toward the coasts without steps.
 
 The relief keeps 4096 points round each circle of latitude and 2048 from pole to pole, and the
-cover half as many each way. Each keeps 7 coarser levels of detail as well, each half as fine each
-way as the one before, its points the average of the 2 by 2 under them: 53 MB in all. One build
-always makes the same maps.
+cover, the sea's depth with it, half as many each way. Each keeps 7 coarser levels of detail as
+well, each half as fine each way as the one before, its points the average of the 2 by 2 under them:
+53 MB in all. One build always makes the same maps.
 
 **Building the maps takes about 7 seconds of processor time**, spread over all the cores. Build them
 off the paint.
@@ -193,8 +199,13 @@ two levels whose points lie about as far apart as that ground reaches, blends th
 points in each, then blends the two levels by how near each is. Detail finer than the points can
 hold fades out, so it does not shimmer as the view moves.
 
-The reads wrap round the longitudes any number of turns either way and stop at the poles.
-readLand() works through eight points at a time with AVX2, and several threads may call it at once.
+**readDepths() reads the sea's depth as readLand() reads the land**, as fine as the ground each
+point stands for, from 0 at the coast to 1 in the deepest trenches. Away from the coasts the land
+reads 0, so the depth is for colouring the sea, with the land drawn over it.
+
+The reads wrap round the longitudes any number of turns either way and stop at the poles. readLand()
+and readDepths() work through eight points at a time with AVX2, and several threads may call them at
+once.
 
 ## MapQuery
 
@@ -368,8 +379,8 @@ globe in the middle of the frame. The globe's radius shrinks by the same share a
 1.15 times the frame's longer side to 0.4 times its shorter, and the view leans back from 36 degrees
 to 1, never quite down the Earth's axis. The satellite draws smaller toward the top right, out of
 the globe's way, and what is drawn on the globe at a fixed size - the sea's glint, the city lights -
-shrinks with it. The space and the ocean are kept as layers at the lowest altitude - see
-SceneLayer - and drawn live above it.
+shrinks with it. The space is kept as a layer at the lowest altitude - see SceneLayer - and drawn
+live above it; so is the ocean until the land's map is built.
 
 **The Sun stands fixed among the stars**, and so does the orbit's plane, so each orbit passes a day
 of about two minutes and a night. In the Earth's shadow the satellite darkens and the stars
@@ -409,6 +420,12 @@ Sun lower than about 14 degrees lights the slopes as one at 14 degrees would, so
 toward dusk without turning black, and it fades out across the terminator. Snow lies above a height
 that falls from the tropics toward the poles, and past 66 degrees south it covers all the land.
 
+**The sea is coloured by its depth**, from the land's map - see EarthMap: light over the shelves,
+deepening down the slopes and over the ridges to the abyss, darkest in the trenches. Realistic
+shades evenly between the depths' colours; stylized cuts five flat tones. Toward the limb the sea
+pales into the haze, from 0.55 of the radius out. Until the map is built, the sea is one gradient
+from the haze at the limb to the deep blue.
+
 **The looks part at the clouds' edges and in the land.** Stylized cuts each layer's cover into two
 flat tones, and the land into flat zones of green, steppe, sand, taiga and tundra with flat bands of
 height and one tone of slope each way, from the broad relief. Realistic shows the cover as it is,
@@ -416,22 +433,24 @@ and the land in the detailed relief, its colours blended - see SceneLook.
 
 **The maps are built off the paint** the first time the scene is drawn: a fraction of a second on a
 processor with many cores. The clouds show from the first frame after, and the land is drawn flat,
-green with the ice sheets white, until its map is ready. Each frame works the clouds, the land and
-the night out in bands of rows spread over the cores - see spreadOverCores. On a globe over 3200
-pixels in radius - a frame about 2800 pixels wide or more - the land is worked out at every 4th
+green with the ice sheets white, until its map is ready. Each frame works the clouds, the land, the
+sea and the night out in bands of rows spread over the cores - see spreadOverCores. On a globe over
+3200 pixels in radius - a frame about 2800 pixels wide or more - the land is worked out at every 4th
 pixel and row, over 1300 - a frame about 1130 pixels wide - at every 2nd, and below that at every
-pixel. The cloud maps' points stand twice as far apart as the land's, and so do the clouds' points.
-What lies between is blended before the look cuts the cover, the zones or the bands of height. The
-bands are laid in on all the cores as well - see Canvas drawPixelViews.
+pixel. The cloud maps' points stand twice as far apart as the land's, and so do the clouds' points
+and the sea's. What lies between is blended before the look cuts the cover, the zones, the bands of
+height or the sea's tones. The bands are laid in on all the cores as well -
+see Canvas drawPixelViews.
 
-**Each point reads the land and the clouds as fine as the ground it stands for**, taken 1.4 times as
-wide as the points stand apart - see MapQuery. The ridges and the clouds hold still as the Earth
-turns, and soften toward the limb, where each point stands for more ground.
+**Each point reads the land, the sea and the clouds as fine as the ground it stands for**, taken 1.4
+times as wide as the points stand apart - see MapQuery. The ridges and the clouds hold still as the
+Earth turns, and soften toward the limb, where each point stands for more ground.
 
 **Each edge the stylized look cuts is softened by what its field changes over the pixel**: the
 dryness and the cold at a zone's edge, the height at a band's, the light at a tone's, the cover at a
-cloud's. An edge stays sharp where its field changes slowly, and moves smoothly across the pixels
-where it changes fast, so it does not step from pixel to pixel as the Earth turns.
+cloud's, the depth at the sea's. An edge stays sharp where its field changes slowly, and moves
+smoothly across the pixels where it changes fast, so it does not step from pixel to pixel as the
+Earth turns.
 
 ## drawSatellite
 

@@ -514,8 +514,12 @@ namespace ClaFi::PathArt
         void raisePlateau(const Plateau&, std::uint32_t seed, std::vector<float>& heights);
         // Each texel's height, its slopes east and north, and the variation, at the finest level.
         [[nodiscard]] TexelValues reliefValues(const std::vector<float>& heights);
-        // Each texel's dryness, forest and tundra, at the finest level.
+        // Each texel's dryness, forest, tundra and the sea's depth, at the finest level.
         [[nodiscard]] TexelValues coverValues();
+        // How deep the sea is at each texel of the cover, 0 at the coast to 1 in the trenches.
+        [[nodiscard]] std::vector<float> seaDepths();
+        // Blurs the values kept `width` by `height`, `reach` texels each way at the equator.
+        void blur(std::vector<float>& values, int width, int height, int reach);
         // The slopes of heights kept `width` by `height`, east and north per radian of arc.
         [[nodiscard]] std::array<float, 2> slopesAt(const std::vector<float>& heights, int width,
             int height, int column, int row);
@@ -531,7 +535,7 @@ namespace ClaFi::PathArt
             int level, TexelPyramid&);
         // A height, two slopes and a variation packed in a texel's four bytes.
         [[nodiscard]] std::uint32_t reliefTexel(const std::array<float, 4>& values);
-        // A dryness, forest and tundra packed in a texel's first three bytes.
+        // A dryness, forest, tundra and the sea's depth packed in a texel's four bytes.
         [[nodiscard]] std::uint32_t coverTexel(const std::array<float, 4>& values);
         [[nodiscard]] std::uint32_t byteOf(float share);
         [[nodiscard]] std::uint32_t signedByteOf(float share);
@@ -555,6 +559,12 @@ namespace ClaFi::PathArt
         [[nodiscard]] LandLanes landLanesAt(const TexelPyramid& relief, const TexelPyramid& cover,
             float leastReliefLevel, __m256 longitudes, __m256 latitudes, __m256 longitudeSpans,
             __m256 latitudeSpans);
+        // Reads a query 8 points at a time; lanes past its end repeat its last point.
+        template<typename Read, typename Store>
+        void readByEight(const MapQuery&, const Read&, const Store&);
+        // The first `lanesUsed` lanes stored from point `first` on.
+        void storeLanes(__m256 lanes, std::span<float> into, std::size_t first,
+            std::size_t lanesUsed);
         // The outline with a point at least every `spacing` degrees of arc along each edge.
         [[nodiscard]] LandOutline densified(std::span<const FloatPoint> outline, float spacing);
         // Each point moved by the coast's broad warp and its fine grain.
@@ -578,53 +588,33 @@ namespace ClaFi::PathArt
         const LandPoints& points) const
     {
         const float leastReliefLevel = relief == Relief::Detailed ? 0.0f : k_broadLevel;
-        const std::size_t count = query.longitudes.size();
-        const auto store = [&](const LandLanes& lanes, std::size_t first, std::size_t lanesUsed) {
-            alignas(32) std::array<float, 8> values{};
-            const auto storeOne = [&](__m256 lane, std::span<float> into) {
-                if (lanesUsed == 8)
-                {
-                    _mm256_storeu_ps(into.data() + first, lane);
-                    return;
-                }
-                _mm256_store_ps(values.data(), lane);
-                std::copy_n(values.begin(), lanesUsed, into.begin() + first);
-            };
-            storeOne(lanes.heights, points.heights);
-            storeOne(lanes.slopesEast, points.slopesEast);
-            storeOne(lanes.slopesNorth, points.slopesNorth);
-            storeOne(lanes.variation, points.variation);
-            storeOne(lanes.dryness, points.dryness);
-            storeOne(lanes.forest, points.forest);
-            storeOne(lanes.tundra, points.tundra);
-        };
-        const auto read = [&](const std::array<const float*, 4>& from) {
-            return landLanesAt(m_relief, m_cover, leastReliefLevel, _mm256_loadu_ps(from[0]),
-                _mm256_loadu_ps(from[1]), _mm256_loadu_ps(from[2]), _mm256_loadu_ps(from[3]));
-        };
-        const std::array<std::span<const float>, 4> queried = {
-            query.longitudes, query.latitudes, query.longitudeSpans, query.latitudeSpans
-        };
-        for (std::size_t first = 0; first < count; first += 8)
-        {
-            const std::size_t lanesUsed = std::min<std::size_t>(8, count - first);
-            if (lanesUsed == 8)
-            {
-                store(read({
-                    queried[0].data() + first, queried[1].data() + first,
-                    queried[2].data() + first, queried[3].data() + first
-                }), first, 8);
-                continue;
-            }
-            std::array<std::array<float, 8>, 4> padded{};
-            for (std::size_t value = 0; value != 4; ++value)
-            {
-                for (std::size_t lane = 0; lane != 8; ++lane)
-                    padded[value][lane] = queried[value][first + std::min(lane, lanesUsed - 1)];
-            }
-            store(read({ padded[0].data(), padded[1].data(), padded[2].data(), padded[3].data() }),
-                first, lanesUsed);
-        }
+        readByEight(query, [&](__m256 longitudes, __m256 latitudes, __m256 longitudeSpans,
+            __m256 latitudeSpans) {
+            return landLanesAt(m_relief, m_cover, leastReliefLevel, longitudes, latitudes,
+                longitudeSpans, latitudeSpans);
+        }, [&](const LandLanes& lanes, std::size_t first, std::size_t lanesUsed) {
+            storeLanes(lanes.heights, points.heights, first, lanesUsed);
+            storeLanes(lanes.slopesEast, points.slopesEast, first, lanesUsed);
+            storeLanes(lanes.slopesNorth, points.slopesNorth, first, lanesUsed);
+            storeLanes(lanes.variation, points.variation, first, lanesUsed);
+            storeLanes(lanes.dryness, points.dryness, first, lanesUsed);
+            storeLanes(lanes.forest, points.forest, first, lanesUsed);
+            storeLanes(lanes.tundra, points.tundra, first, lanesUsed);
+        });
+    }
+
+    // Read as the land's cover is, its fourth byte alone.
+    void EarthMap::readDepths(const MapQuery& query, const std::span<float> depths) const
+    {
+        const __m256 perByte = _mm256_set1_ps(1.0f / 255.0f);
+        readByEight(query, [&](__m256 longitudes, __m256 latitudes, __m256 longitudeSpans,
+            __m256 latitudeSpans) {
+            const TexelBlend texels = blendAt(m_cover,
+                levelFor(m_cover, longitudeSpans, latitudeSpans), 0.0f, longitudes, latitudes);
+            return _mm256_mul_ps(blended(texels, 3, Byte::Unsigned), perByte);
+        }, [&](__m256 lanes, std::size_t first, std::size_t lanesUsed) {
+            storeLanes(lanes, depths, first, lanesUsed);
+        });
     }
 
     // **Each outline gets a point every 0.1 degree of arc**, and each point moves by noise fixed
@@ -990,6 +980,7 @@ namespace ClaFi::PathArt
 
         TexelValues coverValues()
         {
+            const std::vector<float> depths = seaDepths();
             TexelValues cover{
                 .width = k_coverWidth,
                 .height = k_coverHeight,
@@ -1025,12 +1016,145 @@ namespace ClaFi::PathArt
                     const float forest = smoothStep(47.0f, 54.0f, coldness)
                         * (1.0f - smoothStep(0.3f, 0.5f, dryness));
                     const float tundra = smoothStep(63.0f, 69.0f, coldness);
-                    cover.values[rowStart + static_cast<std::size_t>(column)] = {
-                        dryness, forest, tundra, 0.0f
-                    };
+                    const std::size_t texel = rowStart + static_cast<std::size_t>(column);
+                    cover.values[texel] = { dryness, forest, tundra, depths[texel] };
                 }
             });
             return cover;
+        }
+
+        // **Each texel takes the deepest level whose outlines hold its centre**, found by where the
+        // outlines' edges cross each row of centres, which pair up from the west. The levels count
+        // evenly from 0 to 1 whatever their metres, and are blurred into slopes about a degree
+        // across, so the depth rises toward the coasts and no contour shows as a step. The cover's
+        // columns start at longitude 0 and the contours' at 180 west, half a turn round.
+        std::vector<float> seaDepths()
+        {
+            const NaturalEarthDepths contours = naturalEarthDepths();
+            const int width = k_coverWidth;
+            const int height = k_coverHeight;
+            const float levelCount = static_cast<float>(contours.levels.size());
+            std::vector<float> depths(static_cast<std::size_t>(width) * height, 0.0f);
+            std::vector<std::vector<float>> crossings(static_cast<std::size_t>(height));
+            std::size_t ring = 0;
+            std::size_t point = 0;
+            for (std::size_t level = 0; level != contours.levels.size(); ++level)
+            {
+                for (std::vector<float>& row : crossings)
+                    row.clear();
+                for (std::uint16_t outline = 0; outline != contours.ringCounts[level]; ++outline)
+                {
+                    const std::size_t count = contours.pointCounts[ring];
+                    const auto at = [&](std::size_t index) {
+                        const std::size_t pair = 2 * (point + index % count);
+                        return FloatPoint{
+                            static_cast<float>(contours.points[pair]) / 10.0f,
+                            static_cast<float>(contours.points[pair + 1]) / 10.0f
+                        };
+                    };
+                    for (std::size_t index = 0; index != count; ++index)
+                    {
+                        const FloatPoint from = at(index);
+                        const FloatPoint to = at(index + 1);
+                        const float lower = std::min(from.y, to.y);
+                        const float upper = std::max(from.y, to.y);
+                        // The rows whose centres lie at or above the lower end and below the upper.
+                        const int firstRow = std::max(0, static_cast<int>(std::ceil(
+                            (90.0f - upper) * static_cast<float>(height) / 180.0f - 0.5f)));
+                        const int lastRow = std::min(height - 1, static_cast<int>(std::ceil(
+                            (90.0f - lower) * static_cast<float>(height) / 180.0f - 0.5f)) - 1);
+                        for (int row = firstRow; row <= lastRow; ++row)
+                        {
+                            const float latitude = 90.0f
+                                - (static_cast<float>(row) + 0.5f) * 180.0f / height;
+                            const float share = (latitude - from.y) / (to.y - from.y);
+                            crossings[static_cast<std::size_t>(row)].push_back(
+                                from.x + (to.x - from.x) * share);
+                        }
+                    }
+                    point += count;
+                    ++ring;
+                }
+                const float depth = static_cast<float>(level + 1) / levelCount;
+                spreadOverCores(height, [&](int row) {
+                    std::vector<float>& rowCrossings = crossings[static_cast<std::size_t>(row)];
+                    std::sort(rowCrossings.begin(), rowCrossings.end());
+                    const std::size_t rowStart = static_cast<std::size_t>(row) * width;
+                    for (std::size_t pair = 0; pair + 1 < rowCrossings.size(); pair += 2)
+                    {
+                        const auto columnFrom = [&](float longitude) {
+                            return static_cast<int>(std::ceil((longitude + 180.0f)
+                                * static_cast<float>(width) / 360.0f - 0.5f));
+                        };
+                        const int last = std::min(width, columnFrom(rowCrossings[pair + 1]));
+                        for (int column = std::max(0, columnFrom(rowCrossings[pair]));
+                            column < last; ++column)
+                        {
+                            const std::size_t texel = rowStart
+                                + static_cast<std::size_t>((column + width / 2) % width);
+                            depths[texel] = std::max(depths[texel], depth);
+                        }
+                    }
+                });
+            }
+            blur(depths, width, height, 2);
+            return depths;
+        }
+
+        // Three passes of a box each way come near a Gaussian. Up, the poles hold their rows.
+        // Across, the rows wrap round the longitudes and reach as far over the ground as up, so a
+        // row near a pole, whose texels narrow, takes in more of them and leaves no spokes.
+        void blur(std::vector<float>& values, const int width, const int height,
+            const int reach)
+        {
+            const std::size_t rowLength = static_cast<std::size_t>(width);
+            const float share = 1.0f / static_cast<float>(2 * reach + 1);
+            for (int pass = 0; pass != 3; ++pass)
+            {
+                spreadOverCores(height, [&](int row) {
+                    const float latitude = 0.5f * k_pi
+                        - (static_cast<float>(row) + 0.5f) * k_pi / static_cast<float>(height);
+                    const int across = std::min((width - 1) / 2, static_cast<int>(std::lround(
+                        static_cast<float>(reach) / std::max(std::cos(latitude), 0.001f))));
+                    const std::size_t rowStart = static_cast<std::size_t>(row) * rowLength;
+                    std::vector<float> line(values.begin() + static_cast<std::ptrdiff_t>(rowStart),
+                        values.begin() + static_cast<std::ptrdiff_t>(rowStart + rowLength));
+                    const auto at = [&](int column) {
+                        return static_cast<double>(
+                            line[static_cast<std::size_t>((column % width + width) % width)]);
+                    };
+                    // The box slides along the row, taking in one texel and letting one go.
+                    double sum = 0.0;
+                    for (int offset = -across; offset <= across; ++offset)
+                        sum += at(offset);
+                    const double rowShare = 1.0 / static_cast<double>(2 * across + 1);
+                    for (int column = 0; column != width; ++column)
+                    {
+                        values[rowStart + static_cast<std::size_t>(column)] =
+                            static_cast<float>(sum * rowShare);
+                        sum += at(column + across + 1) - at(column - across);
+                    }
+                });
+                spreadOverCores(width, [&](int column) {
+                    std::vector<float> line(static_cast<std::size_t>(height));
+                    for (int row = 0; row != height; ++row)
+                    {
+                        line[static_cast<std::size_t>(row)] = values[static_cast<std::size_t>(row)
+                            * rowLength + static_cast<std::size_t>(column)];
+                    }
+                    for (int row = 0; row != height; ++row)
+                    {
+                        float sum = 0.0f;
+                        for (int offset = -reach; offset <= reach; ++offset)
+                        {
+                            const int from = std::clamp(row + offset, 0, height - 1);
+                            sum += line[static_cast<std::size_t>(from)];
+                        }
+                        values[static_cast<std::size_t>(row) * rowLength
+                            + static_cast<std::size_t>(column)] = sum * share;
+                    }
+                });
+            }
         }
 
         // Central differences, one-sided at the poles; near a pole a degree of longitude is held at
@@ -1150,7 +1274,8 @@ namespace ClaFi::PathArt
 
         std::uint32_t coverTexel(const std::array<float, 4>& values)
         {
-            return byteOf(values[0]) | byteOf(values[1]) << 8 | byteOf(values[2]) << 16;
+            return byteOf(values[0]) | byteOf(values[1]) << 8 | byteOf(values[2]) << 16
+                | byteOf(values[3]) << 24;
         }
 
         std::uint32_t byteOf(const float share)
@@ -1323,6 +1448,50 @@ namespace ClaFi::PathArt
                 .forest = _mm256_mul_ps(blended(coverTexels, 1, Byte::Unsigned), perByte),
                 .tundra = _mm256_mul_ps(blended(coverTexels, 2, Byte::Unsigned), perByte)
             };
+        }
+
+        template<typename Read, typename Store>
+        void readByEight(const MapQuery& query, const Read& read, const Store& store)
+        {
+            const std::size_t count = query.longitudes.size();
+            const std::array<std::span<const float>, 4> queried = {
+                query.longitudes, query.latitudes, query.longitudeSpans, query.latitudeSpans
+            };
+            for (std::size_t first = 0; first < count; first += 8)
+            {
+                const std::size_t lanesUsed = std::min<std::size_t>(8, count - first);
+                if (lanesUsed == 8)
+                {
+                    store(read(_mm256_loadu_ps(queried[0].data() + first),
+                        _mm256_loadu_ps(queried[1].data() + first),
+                        _mm256_loadu_ps(queried[2].data() + first),
+                        _mm256_loadu_ps(queried[3].data() + first)), first, lanesUsed);
+                    continue;
+                }
+                std::array<std::array<float, 8>, 4> padded{};
+                for (std::size_t value = 0; value != 4; ++value)
+                {
+                    for (std::size_t lane = 0; lane != 8; ++lane)
+                        padded[value][lane] = queried[value][first + std::min(lane, lanesUsed - 1)];
+                }
+                store(read(_mm256_loadu_ps(padded[0].data()), _mm256_loadu_ps(padded[1].data()),
+                    _mm256_loadu_ps(padded[2].data()), _mm256_loadu_ps(padded[3].data())), first,
+                    lanesUsed);
+            }
+        }
+
+        void storeLanes(const __m256 lanes, const std::span<float> into, const std::size_t first,
+            const std::size_t lanesUsed)
+        {
+            if (lanesUsed == 8)
+            {
+                _mm256_storeu_ps(into.data() + first, lanes);
+                return;
+            }
+            alignas(32) std::array<float, 8> values{};
+            _mm256_store_ps(values.data(), lanes);
+            std::copy_n(values.begin(), lanesUsed,
+                into.begin() + static_cast<std::ptrdiff_t>(first));
         }
 
         // An edge's length shortens its degrees of longitude by the cosine of its middle latitude.

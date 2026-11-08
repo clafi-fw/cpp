@@ -48,7 +48,20 @@ namespace ClaFi::PathArt
     // The outlines, kept in PathArt.EarthMap.NaturalEarth.cpp.
     [[nodiscard]] NaturalEarthLand naturalEarthLand();
 
-    // The Earth's land: how high it stands and what covers it. See PathArt
+    // Natural Earth's contours of the sea's depth: at each level, the sea deeper than it.
+    struct NaturalEarthDepths
+    {
+        std::span<const std::uint16_t> levels; // in metres, from the shallowest
+        std::span<const std::uint16_t> ringCounts; // the outlines at each level
+        std::span<const std::uint16_t> pointCounts; // one for each outline, level by level
+        // Each point's longitude, then its latitude, in tenths of a degree.
+        std::span<const std::int16_t> points;
+    };
+
+    // The contours, kept in PathArt.EarthMap.NaturalEarth.cpp beside the land's outlines.
+    [[nodiscard]] NaturalEarthDepths naturalEarthDepths();
+
+    // The Earth's land and sea: its height, its cover and the sea's depth. See PathArt
     export class EarthMap
     {
     public:
@@ -57,10 +70,12 @@ namespace ClaFi::PathArt
     public:
         // The land at each point, as fine as the ground it stands for. See PathArt#earthmap
         void readLand(const MapQuery&, Relief, const LandPoints&) const;
+        // How deep the sea is at each point, 0 to 1, as fine as the ground. See PathArt#earthmap
+        void readDepths(const MapQuery&, std::span<float> depths) const;
     private:
         // Height, the two slopes and the variation.
         TexelPyramid m_relief{};
-        // Dryness, forest and tundra, then a byte unused.
+        // Dryness, forest, tundra and the sea's depth.
         TexelPyramid m_cover{};
     };
 

@@ -27,7 +27,16 @@ namespace ClaFi::PathArt
         constexpr Color Star{ 0xFFF0F3FF };
         constexpr Color SunGlare{ 0xFFFFF1D6 };
         constexpr Color OceanLimb{ 0xFF3F8EE0 };
-        constexpr Color OceanDeep{ 0xFF0C3D84 };
+        constexpr Color OceanDeep{ 0xFF0C3D84 }; // the abyss, 4000 to 6000 metres down
+        constexpr Color SeaShelf{ 0xFF2B8FD0 }; // over the shelf, less than 200 metres deep
+        constexpr Color SeaSlope{ 0xFF1F74BF }; // down the continental slope, 200 to 1000 metres
+        constexpr Color SeaRise{ 0xFF175FA9 }; // the rise below the slope, 1000 to 2000 metres
+        constexpr Color SeaRidge{ 0xFF114D96 }; // the ridges, 2000 to 4000 metres down
+        constexpr Color SeaTrench{ 0xFF082C66 }; // the trenches, past 8000 metres
+        constexpr Color FlatSeaShelf{ 0xFF4398DE }; // the stylized look's
+        constexpr Color FlatSeaSlope{ 0xFF2B78C4 };
+        constexpr Color FlatSeaRidge{ 0xFF1A5BA6 };
+        constexpr Color FlatSeaTrench{ 0xFF082C66 };
         constexpr Color Cloud{ 0xCAFFFFFF }; // where a layer covers the sky whole
         constexpr Color MoonlitCloud{ 0xFF46536E }; // what the night draws the clouds toward
         constexpr Color Night{ 0xFF020614 };
@@ -105,6 +114,8 @@ namespace ClaFi::PathArt
         constexpr int k_cloudShadeCount{ 1024 };
         // The night's premultiplied colours kept from day to deep night.
         constexpr int k_nightShadeCount{ 256 };
+        // The realistic sea's colours kept from the coast to the deepest trench.
+        constexpr int k_seaShadeCount{ 256 };
         // The sunlight at which the night starts to fall.
         constexpr float k_duskSunlight{ 0.03f };
         // How much less sunlight it takes from there for the night to fall whole.
@@ -136,6 +147,8 @@ namespace ClaFi::PathArt
         // The dryness, forest or tundra over which a zone fades into the next, where it changes
         // slowly.
         constexpr float k_zoneFade{ 0.03f };
+        // The depth over which a tone of the stylized sea fades in, where the depth changes slowly.
+        constexpr float k_seaToneFade{ 0.02f };
         // How far to either side an edge cut at the pixel is softened, in what the pixel spans.
         constexpr float k_edgeSoftening{ 0.75f };
         // The least depth the ground a point stands for is worked out at, short of the rim.
@@ -2189,6 +2202,192 @@ namespace ClaFi::PathArt
             }
             return { static_cast<float>(left), static_cast<float>(top) };
         }
+
+        // What every band of the sea is worked out from, this frame.
+        struct SeaPicture
+        {
+            const EarthMap* map;
+            SphereView ground;
+            SceneLook look;
+            std::span<const Color> shades; // the realistic look's, from the coast to the trenches
+            int step; // the pixels between the points the depths are read at
+            FloatPoint sphereCenter; // in pixels
+            FloatPoint sphereRadii; // across and up, in pixels
+            int left; // the first column in view
+            int right; // the column past the last in view
+        };
+
+        // The realistic sea's colour by its depth from 0 to 1, shading evenly between the levels'.
+        [[nodiscard]] std::vector<Color> seaShades()
+        {
+            struct Stop
+            {
+                float depth;
+                Color color;
+            };
+            const std::array<Stop, 6> stops = { {
+                { 0.0f, SatelliteSceneColors::SeaShelf },
+                { 0.17f, SatelliteSceneColors::SeaSlope },
+                { 0.33f, SatelliteSceneColors::SeaRise },
+                { 0.5f, SatelliteSceneColors::SeaRidge },
+                { 0.67f, SatelliteSceneColors::OceanDeep },
+                { 1.0f, SatelliteSceneColors::SeaTrench }
+            } };
+            std::vector<Color> shades;
+            shades.reserve(k_seaShadeCount);
+            for (int i = 0; i != k_seaShadeCount; ++i)
+            {
+                const float depth = static_cast<float>(i) / (k_seaShadeCount - 1);
+                std::size_t next = 1;
+                while (next + 1 < stops.size() && stops[next].depth < depth)
+                    ++next;
+                const Stop& from = stops[next - 1];
+                const Stop& to = stops[next];
+                shades.push_back(colorBetween(from.color, to.color, std::clamp(
+                    (depth - from.depth) / (to.depth - from.depth), 0.0f, 1.0f)));
+            }
+            return shades;
+        }
+
+        // **The stylized sea in five flat tones by its depth**: an edge is softened by
+        // k_edgeSoftening of what the depth changes over the pixel, and no less than half of
+        // k_seaToneFade.
+        [[nodiscard]] ColorLanes flatSeaColor(const SpreadLanes& depths)
+        {
+            using namespace SatelliteSceneColors;
+            const SoftEdge edge = softEdgeOf(_mm256_max_ps(_mm256_mul_ps(depths.change,
+                _mm256_set1_ps(k_edgeSoftening)), _mm256_set1_ps(0.5f * k_seaToneFade)));
+            const auto past = [&](float depth) {
+                return smoothStepAround(_mm256_set1_ps(depth), edge, depths.values);
+            };
+            ColorLanes color = mixed(colorLanesOf(FlatSeaShelf), colorLanesOf(FlatSeaSlope),
+                past(0.08f));
+            color = mixed(color, colorLanesOf(FlatSeaRidge), past(0.42f));
+            color = mixed(color, colorLanesOf(OceanDeep), past(0.6f));
+            return mixed(color, colorLanesOf(FlatSeaTrench), past(0.9f));
+        }
+
+        // **A band of the sea, premultiplied and opaque on the sphere**: the depths are read at
+        // points `step` apart and spread over the pixels between, each pixel takes its colour by
+        // the look, and toward the limb the sea pales into the haze; the pixels on the limb fade
+        // out across it. The bitmap spans the sphere's widest row in the band; answers where it
+        // stands.
+        [[nodiscard]] FloatPoint rasterizeSeaBand(const SeaPicture& picture, const int top,
+            const int rows, Bitmap& pixels)
+        {
+            const FloatPoint radii = picture.sphereRadii;
+            const float nearestRow = std::clamp(picture.sphereCenter.y,
+                static_cast<float>(top) + 0.5f, static_cast<float>(top + rows) - 0.5f);
+            const float rise = (nearestRow - picture.sphereCenter.y) / radii.y;
+            const float halfWidth = rise * rise < 1.0f ? radii.x * std::sqrt(1.0f - rise * rise)
+                : 0.0f;
+            const int step = picture.step;
+            const int left = std::max(picture.left,
+                static_cast<int>(std::floor(picture.sphereCenter.x - halfWidth))) / step * step;
+            const int right = std::min(picture.right,
+                static_cast<int>(std::ceil(picture.sphereCenter.x + halfWidth)));
+            if (left >= right)
+            {
+                pixels.resize({});
+                return {};
+            }
+            const int width = right - left;
+            const float firstPixelX = static_cast<float>(left) + 0.5f;
+            pixels.resize({ width, rows });
+            // The last group of 8 pixels reads 8 points from the one under its first pixel.
+            const std::size_t pointLength =
+                groupedLength(static_cast<int>(groupedLength(width)) / step + 8);
+            MapPoints onMap = {
+                .longitudes = std::vector<float>(pointLength),
+                .latitudes = std::vector<float>(pointLength),
+                .longitudeSpans = std::vector<float>(pointLength),
+                .latitudeSpans = std::vector<float>(pointLength)
+            };
+            std::vector<float> clearness(pointLength);
+            std::vector<float> upper(pointLength);
+            std::vector<float> lower(pointLength);
+            const auto depthsAt = [&](int bandRow, std::vector<float>& depths) {
+                projectRow(picture.ground, static_cast<float>(top + bandRow) + 0.5f, firstPixelX,
+                    step, onMap, clearness);
+                picture.map->readDepths({
+                    .longitudes = onMap.longitudes,
+                    .latitudes = onMap.latitudes,
+                    .longitudeSpans = onMap.longitudeSpans,
+                    .latitudeSpans = onMap.latitudeSpans
+                }, depths);
+            };
+
+            const PointSpread spread = pointSpreadAt(step);
+            const bool realistic = picture.look == SceneLook::Realistic;
+            const int* shades = reinterpret_cast<const int*>(picture.shades.data());
+            const __m256 lastShade = _mm256_set1_ps(static_cast<float>(picture.shades.size() - 1));
+            const __m256 perPixel = _mm256_set1_ps(1.0f / static_cast<float>(step));
+            const __m256 zero = _mm256_setzero_ps();
+            const __m256 half = _mm256_set1_ps(0.5f);
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 byteMax = _mm256_set1_ps(255.0f);
+            const __m256 perByte = _mm256_set1_ps(1.0f / 255.0f);
+            const __m256i byteMask = _mm256_set1_epi32(0xFF);
+            const __m256 rowStart = _mm256_add_ps(_mm256_set1_ps(firstPixelX), laneOffsets());
+            const __m256 edgeScale = _mm256_set1_ps(std::min(radii.x, radii.y));
+            const ColorLanes limb = colorLanesOf(SatelliteSceneColors::OceanLimb);
+            const auto shadeAt = [&](__m256 depth) {
+                const __m256i shade = _mm256_i32gather_epi32(shades, _mm256_cvttps_epi32(
+                    _mm256_min_ps(_mm256_max_ps(_mm256_fmadd_ps(depth, lastShade, half), zero),
+                        lastShade)), 4);
+                const auto channelOf = [&](int shift) {
+                    return _mm256_mul_ps(_mm256_cvtepi32_ps(_mm256_and_si256(
+                        _mm256_srli_epi32(shade, shift), byteMask)), perByte);
+                };
+                return ColorLanes{ channelOf(16), channelOf(8), channelOf(0) };
+            };
+            depthsAt(0, upper);
+            depthsAt(step, lower);
+            for (int y = 0; y != rows; ++y)
+            {
+                const int pastPoints = y % step;
+                if (y != 0 && pastPoints == 0)
+                {
+                    std::swap(upper, lower);
+                    depthsAt(y + step, lower);
+                }
+                const __m256 down = _mm256_set1_ps(
+                    static_cast<float>(pastPoints) / static_cast<float>(step));
+                const float pixelY = static_cast<float>(top + y) + 0.5f;
+                const float up = (picture.sphereCenter.y - pixelY) / radii.y;
+                Color* row = pixels.pixel(0, y);
+                for (int x = 0; x < width; x += 8)
+                {
+                    const std::size_t point = static_cast<std::size_t>(x / step);
+                    const ColorLanes color = realistic
+                        ? shadeAt(pixelsBetween(_mm256_loadu_ps(upper.data() + point),
+                            _mm256_loadu_ps(lower.data() + point), down, spread))
+                        : flatSeaColor(spreadWithChange(cornersAround(upper, lower, point, spread),
+                            down, spread, perPixel));
+                    const __m256 across = _mm256_mul_ps(_mm256_sub_ps(_mm256_add_ps(rowStart,
+                        _mm256_set1_ps(static_cast<float>(x))),
+                        _mm256_set1_ps(picture.sphereCenter.x)), _mm256_set1_ps(1.0f / radii.x));
+                    const __m256 reach = _mm256_sqrt_ps(_mm256_fmadd_ps(across, across,
+                        _mm256_set1_ps(up * up)));
+                    // The sea pales toward the limb from 0.55 of the radius out.
+                    const __m256 haze = _mm256_min_ps(_mm256_max_ps(_mm256_mul_ps(
+                        _mm256_sub_ps(reach, _mm256_set1_ps(0.55f)), _mm256_set1_ps(1.0f / 0.45f)),
+                        zero), one);
+                    const __m256 inside = _mm256_min_ps(_mm256_max_ps(_mm256_fmadd_ps(
+                        _mm256_sub_ps(one, reach), edgeScale, half), zero), one);
+                    const ColorLanes hazed = mixed(color, limb, haze);
+                    const __m256 opacity = _mm256_mul_ps(inside, byteMax);
+                    const auto byteAt = [&](__m256 channel, int shift) {
+                        return _mm256_slli_epi32(_mm256_cvttps_epi32(
+                            _mm256_fmadd_ps(channel, opacity, half)), shift);
+                    };
+                    storeEight(row, x, width, _mm256_or_si256(
+                        _mm256_or_si256(byteAt(hazed.blue, 0), byteAt(hazed.green, 8)),
+                        _mm256_or_si256(byteAt(hazed.red, 16), byteAt(one, 24))));
+                }
+            }
+            return { static_cast<float>(left), static_cast<float>(top) };
+        }
     }
 
     // The coasts take some milliseconds to build, so they are built off the paint from the start,
@@ -2226,9 +2425,6 @@ namespace ClaFi::PathArt
         m_shownOrbits = orbits;
         const Globe globe = Globe::OnOrbit(globeDisc.center, radius, orbits, m_view);
 
-        // **The satellite is in the Earth's shadow when the ground under it is past the
-        // terminator**: low down, the ground the satellite is drawn over; with the whole globe in
-        // the frame, the ground straight below it.
         // As the view climbs the satellite draws smaller and moves to the top right, out of the
         // way of the whole globe.
         const float satelliteShare = std::lerp(1.0f, 0.45f, altitude);
@@ -2238,6 +2434,9 @@ namespace ClaFi::PathArt
             width * std::lerp(0.66f, 0.85f, altitude),
             height * std::lerp(0.27f, 0.16f, altitude) + hover
         };
+        // **The satellite is in the Earth's shadow when the ground under it is past the
+        // terminator**: low down, the ground the satellite is drawn over; with the whole globe in
+        // the frame, the ground straight below it.
         const FloatPoint offCenter = {
             (satellite.x - globe.center.x) / radius,
             (globe.center.y - satellite.y) / radius
@@ -2276,7 +2475,9 @@ namespace ClaFi::PathArt
         });
         drawGlow(frame, { width, 0.0f }, 340.0f * unit,
             SatelliteSceneColors::SunGlare.withOpacity(0.16f * sunlit));
-        if (altitude == 0.0f)
+        if (m_earthMap)
+            drawSea(frame, globe);
+        else if (altitude == 0.0f)
             m_ocean.draw(frame);
         else
             fillOcean(frame, globeDisc);
@@ -3028,6 +3229,54 @@ namespace ClaFi::PathArt
             drawn.at = rasterizeLandBand(picture, palette, bandCoast, bandTop, rows, drawn.pixels);
         });
         layBands(frame, m_landBands, canvasPixels);
+    }
+
+    // **The sea is coloured by its depth**, read from the land's map at points twice as far apart
+    // as the land's, in bands of rows spread over the cores. See PathArt#satellitescene
+    void SatelliteScene::drawSea(const SceneFrame& frame, const Globe& globe)
+    {
+        const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
+        const FloatRect canvasPixels = {
+            0.0f,
+            0.0f,
+            static_cast<float>(frame.canvas.width()),
+            static_cast<float>(frame.canvas.height())
+        };
+        const FloatRect sphere = toPixels.mapRect({
+            globe.center.x - globe.radius,
+            globe.center.y - globe.radius,
+            globe.center.x + globe.radius,
+            globe.center.y + globe.radius
+        });
+        const IntRect inView = FloatRect::intersection(FloatRect::intersection(
+            toPixels.mapRect({ 0.0f, 0.0f, frame.width, frame.height }), canvasPixels),
+            sphere).roundedOut();
+        if (inView.empty())
+            return;
+        static const std::vector<Color> shades = seaShades();
+        const float radiusInPixels = globe.radius * toPixels.a;
+        const SeaPicture picture = {
+            .map = m_earthMap.get(),
+            .ground = sphereViewOf(toPixels, globe.center, globe.radius, globe.tilt, globe.tip,
+                globe.spin),
+            .look = look(),
+            .shades = shades,
+            .step = 2 * pointStepFor(radiusInPixels),
+            .sphereCenter = toPixels.transform(globe.center),
+            .sphereRadii = { radiusInPixels, globe.radius * toPixels.d },
+            .left = inView.left,
+            .right = inView.right
+        };
+        const int top = inView.top / picture.step * picture.step;
+        const int bandCount = (inView.bottom - top + k_bandRows - 1) / k_bandRows;
+        m_seaBands.resize(static_cast<std::size_t>(bandCount));
+        spreadOverCores(bandCount, [&](int band) {
+            const int bandTop = top + band * k_bandRows;
+            const int rows = std::min(k_bandRows, inView.bottom - bandTop);
+            PixelBand& drawn = m_seaBands[static_cast<std::size_t>(band)];
+            drawn.at = rasterizeSeaBand(picture, bandTop, rows, drawn.pixels);
+        });
+        layBands(frame, m_seaBands, canvasPixels);
     }
 
     // **The night falls over the globe by the sunlight on it**, worked out pixel by pixel in bands

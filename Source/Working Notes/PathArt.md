@@ -679,6 +679,37 @@ brightness drawn toward a blue-grey (C) - Oj picked C: each night stop's colour 
 MoonlitCloud by the night's own opacity before it is mixed into the clouds', so deep in the night a
 cloud stands at about (88, 100, 124). The picked renders and the code's match pixel for pixel.
 
+**The sea shows its depth** (2026-11-08). Oj asked for a "Depth map" and picked the ocean's depth,
+from real bathymetry. The sea had been one gradient from the haze at the limb to the deep blue,
+which stays until the map is built.
+
+- The data is Natural Earth's 1:10m bathymetry: of its twelve layers, the contours at 200, 1000,
+  2000, 4000, 6000 and 8000 metres. Each layer is unioned, simplified by 0.12 to 0.3 degrees, rid of
+  rings under 0.05 to 0.5 square degrees and rounded to tenths of a degree as int16: 1003 rings and
+  25,668 points. The data file grows from 76 KB of source to 413 KB, and the binary by about 140 KB
+  with the code. Oj kept that detail over a coarser half.
+- The levels are rasterized into the cover's 2048 by 1024 by where the rings' edges cross each row
+  of texel centres, each texel taking the deepest level that holds it, counted evenly from 0 to 1,
+  and blurred by three box passes of 5 texels. The depth rides in the cover's fourth byte, which was
+  unused, so the map's memory stays at 53.4 MB; the build takes 3.77 to 3.85 s against 3.73 to 3.83
+  on the container's 2 cores.
+- The first blur ran 2 texels each way across every row, which near a pole covers almost no ground:
+  the depth read round the pole an eighth of a degree out still varied by 15 percent of its range,
+  and an orthographic view over the Arctic showed spokes from the pole. Across, the box now reaches
+  as far over the ground as up - 2 texels over the cosine of the latitude, up to half the row -
+  sliding along the row; there it varies by 3 percent, and the spokes are gone.
+- The sea pass reads the depths at points twice as far apart as the land's and spreads them per
+  pixel. Realistic looks the colour up in 256 shades between six colours; the haze toward the limb
+  repeats the old gradient's, from 0.55 of the radius out. The stylized look cut its five tones in a
+  table as well, each edge 0.01 wide; after the mockup, the edges took the land's rule, softened by
+  k_edgeSoftening of what the depth changes over the pixel, so they do not step from pixel to pixel
+  at the whole globe. The approved realistic frames came out the same to within 1 of 255.
+- A frame at 2560 by 1440 on the container, before against now, realistic: 19.9 to 24.0 ms against
+  21.5 to 23.9 at the lowest view, 26.6 to 29.8 against 26.6 to 29.6 halfway up, 25.4 to 31.8
+  against 25.8 to 28.8 with the whole globe; stylized, 20.5 to 21.2 against 21.0 to 21.8, 24.7 to
+  27.6 against 25.9 to 28.3, 24.5 to 24.9 against 26.1 to 27.3. The other scenes render byte for
+  byte as before in both looks.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4
