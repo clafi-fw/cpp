@@ -865,6 +865,9 @@ fangs stand at different places along the two jaws. The jaw opens from 0.558 to 
 episode, and the branch shuts it within 0.004 of the contact. With the jaws shut the wolf draws
 as before, pixel for pixel.
 
+The snap at his closest opens the same jaws (Oj, "The snap too"): from 0.286 of the episode they
+part on her tail, and shut from 0.297 to 0.2995, as the lunge ends.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

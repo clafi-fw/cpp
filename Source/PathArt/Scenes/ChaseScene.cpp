@@ -726,6 +726,10 @@ namespace ClaFi::PathArt
                 * (1.0f - smoothStep(BranchChase::EffortStart - 0.01f,
                 BranchChase::EffortStart + 0.03f, episodeTime));
             const float strain = firstStrain + lastStrain;
+            // At his closest the jaws open on her tail and shut at the end of the lunge.
+            const float snapAt = BranchChase::Closest + 0.008f;
+            const float chomp = smoothStep(snapAt - 0.012f, snapAt - 0.004f, episodeTime)
+                * (1.0f - smoothStep(snapAt - 0.001f, snapAt + 0.0015f, episodeTime));
             return {
                 .x = k_wolfChasing
                     + (closestX - k_wolfChasing) * closingIn
@@ -736,10 +740,10 @@ namespace ClaFi::PathArt
                 .turn = 0.05f * strain + 0.1f * crouching - (0.32f - 0.17f * flight) * inAir,
                 .crouch = 9.0f * crouching,
                 .leap = smoothStep(takeoff, takeoff + 0.01f, episodeTime),
-                .jawOpen = smoothStep(takeoff + 0.003f, takeoff + 0.014f, episodeTime),
+                .jawOpen = chomp + smoothStep(takeoff + 0.003f, takeoff + 0.014f, episodeTime),
                 .strain = strain,
                 .weariness = weariness,
-                .snap = bump(episodeTime, BranchChase::Closest + 0.008f, 0.005f)
+                .snap = bump(episodeTime, snapAt, 0.005f)
             };
         }
     }
