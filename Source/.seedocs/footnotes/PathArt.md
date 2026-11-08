@@ -380,11 +380,11 @@ The stars drift a fifth of the frame's width each orbit - see StarField drift.
 40-second cycle.
 
 **The night falls by the sunlight on each pixel of the globe**: it starts at a sunlight of 0.03 and
-is whole at -0.13, so the terminator curves as it does at any altitude, and the clouds take the
-night's shade the same way. The city lights come on as the sunlight falls past -0.01 and are full
-past -0.06. The atmosphere along the limb is blue by day, orange at dusk and dark at night, by the
-sunlight on the limb, which rises evenly across it toward the Sun: three rings, each fading out to
-both sides.
+is whole at -0.13, so the terminator curves as it does at any altitude, and the clouds darken by the
+same depth, toward a moonlit blue-grey. The city lights come on as the sunlight falls past -0.01 and
+are full past -0.06. The atmosphere along the limb is blue by day, orange at dusk and dark at night,
+by the sunlight on the limb, which rises evenly across it toward the Sun: three rings, each fading
+out to both sides.
 
 **The towns are placed by the land's map.** Until it is built, 1500 stand anywhere on the land
 from 56 degrees south to 62 north. Then 1500 are tried at random points of the land and 5800 at
@@ -394,11 +394,11 @@ little in the northern forest. The towns over the land thin away from the coast 
 of Greenland and Antarctica has none. About one town in 33 glows. The towns are the same on every
 run.
 
-**Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks -
-see CloudKind. Each is a map on a sphere of its own, 0.6, 1.1 and 1.8 hundredths of the Earth's
-radius up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts east and
-back against the ground once a cycle, the higher layers further. The clouds fade into the haze as
-they near the limb, take the night's shade on the night side, and pass over the city lights.
+**Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks - see
+CloudKind. Each is a map on a sphere of its own, 0.6, 1.1 and 1.8 hundredths of the Earth's radius
+up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts east and back
+against the ground once a cycle, the higher layers further. The clouds fade into the haze as they
+near the limb, turn a moonlit blue-grey on the night side, and pass over the city lights.
 
 **The land is worked out pixel by pixel inside the coastlines**, from the land's map - see EarthMap.
 The coastlines are landOutlines(), built off the paint from the moment the scene is made; the first

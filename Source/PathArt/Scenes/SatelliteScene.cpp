@@ -29,6 +29,7 @@ namespace ClaFi::PathArt
         constexpr Color OceanLimb{ 0xFF3F8EE0 };
         constexpr Color OceanDeep{ 0xFF0C3D84 };
         constexpr Color Cloud{ 0xCAFFFFFF }; // where a layer covers the sky whole
+        constexpr Color MoonlitCloud{ 0xFF46536E }; // what the night draws the clouds toward
         constexpr Color Night{ 0xFF020614 };
         constexpr Color NightBlue{ 0xFF030818 };
         constexpr Color SeaGlint{ 0xFFCFE8FF };
@@ -880,13 +881,16 @@ namespace ClaFi::PathArt
             return colorBetween(shaded(from), shaded(to), share);
         }
 
-        // The night's colour mixed into the clouds', at its own opacity, from day to deep night.
+        // **The clouds' colour from day to deep night**: the night's colour, drawn toward a
+        // moonlit blue-grey as deep as it falls, mixed into the clouds' at the night's opacity.
         [[nodiscard]] std::vector<Color> cloudShades()
         {
             const std::array<GradientStop, 3> stops = nightStops();
             const auto shaded = [](const GradientStop& stop) {
                 const float nightShare = static_cast<float>(stop.color.alpha) / 255.0f;
-                return colorBetween(SatelliteSceneColors::Cloud, stop.color, nightShare);
+                const Color moonlit = colorBetween(stop.color, SatelliteSceneColors::MoonlitCloud,
+                    nightShare);
+                return colorBetween(SatelliteSceneColors::Cloud, moonlit, nightShare);
             };
             std::vector<Color> shades;
             shades.reserve(k_cloudShadeCount);

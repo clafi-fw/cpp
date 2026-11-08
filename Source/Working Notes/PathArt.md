@@ -672,6 +672,13 @@ and move".
   globe in view, the land at finer steps on the smaller globe, and the space and the ocean drawn
   live. With the whole globe in view, 7.4 and 26.
 
+**The clouds at night are moonlit** (Oj, 2026-11-08, "Make the clouds at night brighter"). Deep in
+the night they kept a tenth of their colour, the rest the night's near black, so they all but
+vanished. Of the options rendered at five views - a third of their colour (A), half (B), and A's
+brightness drawn toward a blue-grey (C) - Oj picked C: each night stop's colour is drawn toward
+MoonlitCloud by the night's own opacity before it is mixed into the clouds', so deep in the night a
+cloud stands at about (88, 100, 124). The picked renders and the code's match pixel for pixel.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4
