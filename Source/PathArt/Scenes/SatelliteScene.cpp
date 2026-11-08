@@ -247,93 +247,148 @@ namespace ClaFi::PathArt
             int step;
         };
 
-        // Coarse coastlines as longitude, latitude pairs.
-        constexpr float k_northAmerica[]{
-            -168, 66, -160, 70, -140, 70, -125, 70, -110, 73, -95, 72, -85, 70, -80, 64, -90, 58,
-            -80, 52, -65, 60, -60, 55, -56, 52, -66, 45, -70, 42, -75, 38, -76, 35, -81, 31,
-            -80, 26, -82, 25, -84, 30, -90, 29, -97, 27, -97, 22, -92, 18, -88, 15, -84, 11, -79, 9,
-            -83, 8, -86, 12, -92, 15, -96, 16, -105, 20, -106, 23, -110, 24, -112, 29, -117, 32,
-            -121, 35, -124, 40, -124, 46, -125, 50, -130, 55, -135, 58, -142, 60, -150, 60,
-            -155, 58, -160, 57, -165, 60
-        };
-        constexpr float k_southAmerica[]{
-            -79, 9, -77, 8, -72, 12, -62, 10, -52, 5, -50, 0, -44, -2, -35, -6, -35, -9, -39, -15,
-            -41, -22, -48, -26, -53, -34, -58, -38, -62, -40, -65, -45, -68, -50, -70, -54,
-            -74, -52, -74, -45, -73, -37, -71, -30, -70, -18, -76, -14, -80, -6, -81, -2, -80, 2,
-            -78, 6
-        };
-        constexpr float k_africa[]{
-            -17, 21, -16, 28, -10, 32, -6, 36, 0, 36, 10, 37, 11, 33, 20, 32, 25, 32, 32, 31,
-            35, 28, 39, 20, 43, 12, 51, 12, 47, 6, 41, -2, 40, -10, 40, -16, 35, -24, 32, -29,
-            27, -34, 20, -35, 18, -31, 14, -23, 12, -17, 13, -10, 9, -1, 9, 4, 5, 5, -4, 5, -8, 4,
-            -13, 8, -17, 14
-        };
-        constexpr float k_eurasia[]{
-            -10, 36, -9, 43, -2, 44, -5, 48, 0, 49, 5, 53, 9, 54, 10, 57, 5, 58, 5, 62, 12, 66,
-            18, 70, 25, 71, 30, 70, 40, 68, 45, 68, 55, 70, 68, 72, 80, 73, 100, 77, 115, 74,
-            130, 72, 140, 72, 160, 70, 170, 69, 180, 66, 178, 62, 165, 60, 160, 55, 156, 51,
-            150, 59, 140, 55, 138, 47, 133, 43, 129, 40, 127, 35, 121, 31, 122, 25, 115, 22,
-            108, 21, 106, 17, 109, 12, 105, 9, 100, 13, 99, 8, 103, 2, 100, 4, 98, 10, 93, 17,
-            90, 22, 85, 20, 80, 15, 77, 8, 73, 17, 70, 22, 65, 25, 57, 25, 56, 27, 51, 25, 50, 30,
-            48, 29, 43, 13, 39, 20, 35, 29, 34, 32, 36, 36, 30, 36, 27, 37, 26, 40, 23, 40, 20, 40,
-            19, 42, 15, 45, 13, 45, 16, 41, 18, 40, 16, 38, 12, 44, 8, 44, 3, 43, -1, 37, -6, 36
-        };
-        constexpr float k_australia[]{
-            114, -22, 114, -34, 118, -35, 124, -34, 131, -31, 137, -35, 140, -38, 147, -39,
-            150, -37, 153, -31, 153, -25, 146, -19, 142, -11, 141, -17, 136, -12, 130, -12,
-            126, -14, 122, -18
-        };
-        constexpr float k_greenland[]{
-            -73, 78, -60, 82, -35, 83, -20, 81, -18, 75, -22, 70, -40, 64, -44, 60, -50, 62,
-            -55, 68, -58, 74, -68, 77
-        };
-        constexpr float k_sumatra[]{ 95, 5, 98, 4, 104, -2, 106, -6, 102, -4, 98, 0 };
-        constexpr float k_borneo[]{ 109, 1, 112, 3, 117, 7, 119, 5, 118, 0, 116, -4, 110, -3 };
-        constexpr float k_newGuinea[]{ 131, -1, 138, -2, 147, -6, 150, -10, 141, -9, 137, -5 };
-        constexpr float k_japan[]{
-            130, 31, 135, 34, 140, 36, 142, 40, 145, 44, 141, 45, 140, 41, 137, 37, 132, 34
-        };
-        constexpr float k_britain[]{ -5, 50, 1, 51, 1, 53, -3, 56, -2, 58, -6, 58, -5, 55, -3, 53 };
-        constexpr float k_madagascar[]{ 44, -25, 47, -25, 50, -15, 49, -12, 44, -16 };
+        // The side of a cell of the grid the towns are placed on, in degrees.
+        constexpr float k_townCellSize{ 0.25f };
+        constexpr float k_townGridNorth{ 85.0f }; // the latitude its first row starts at
+        constexpr int k_townGridColumns{ 1440 }; // round the whole circle of latitude
+        constexpr int k_townGridRows{ 380 }; // down to 10 degrees south
+        constexpr int k_townCount{ 1200 };
 
-        struct CoastlineSource
+        // Whether an outline is Greenland's, by where the middle of its points lies.
+        [[nodiscard]] bool isGreenland(const std::span<const FloatPoint> outline)
         {
-            std::span<const float> lonLat;
-            Color color;
-            bool inhabited; // whether its towns light up at night
-        };
+            FloatPoint sum = { 0.0f, 0.0f };
+            for (const FloatPoint point : outline)
+                sum = { sum.x + point.x, sum.y + point.y };
+            const float count = static_cast<float>(outline.size());
+            const FloatPoint middle = { sum.x / count, sum.y / count };
+            return middle.y > 59.0f && middle.x > -60.0f && middle.x < -30.0f;
+        }
 
-        constexpr Color k_green{ 0xFF5C8F45 };
-        constexpr Color k_deepGreen{ 0xFF4F8A3A };
-        constexpr std::array<CoastlineSource, 12> k_coastlineSources{
-            CoastlineSource{ k_northAmerica, k_green, true },
-            CoastlineSource{ k_southAmerica, k_deepGreen, true },
-            CoastlineSource{ k_africa, Color{ 0xFFA8935A }, true },
-            CoastlineSource{ k_eurasia, Color{ 0xFF6A9446 }, true },
-            CoastlineSource{ k_australia, Color{ 0xFFB29A5C }, true },
-            CoastlineSource{ k_greenland, Color{ 0xFFE6EEF5 }, false },
-            CoastlineSource{ k_sumatra, k_deepGreen, true },
-            CoastlineSource{ k_borneo, k_deepGreen, true },
-            CoastlineSource{ k_newGuinea, k_deepGreen, true },
-            CoastlineSource{ k_japan, k_green, true },
-            CoastlineSource{ k_britain, k_green, true },
-            CoastlineSource{ k_madagascar, k_green, true }
-        };
-
-        [[nodiscard]] bool isInside(std::span<const FloatPoint> polygon, const FloatPoint point)
+        // The towns' grid's column for a column counted past either end, round the circle.
+        [[nodiscard]] std::size_t wrappedTownColumn(const int column)
         {
-            bool inside = false;
-            std::size_t previous = polygon.size() - 1;
-            for (std::size_t i = 0; i != polygon.size(); ++i)
+            return static_cast<std::size_t>((column % k_townGridColumns + k_townGridColumns)
+                % k_townGridColumns);
+        }
+
+        // The cell of the towns' grid a point of the map lies in, if the grid reaches it.
+        [[nodiscard]] std::optional<std::size_t> townCellAt(const FloatPoint lonLat)
+        {
+            const int row = static_cast<int>(
+                std::floor((k_townGridNorth - lonLat.y) / k_townCellSize));
+            if (row < 0 || row >= k_townGridRows)
+                return std::nullopt;
+            const int column = static_cast<int>(std::floor((lonLat.x + 180.0f) / k_townCellSize));
+            return static_cast<std::size_t>(row) * k_townGridColumns + wrappedTownColumn(column);
+        }
+
+        // **Which cells of the towns' grid have their middle on land**, 1 for land. Each edge marks
+        // the rows whose middle latitude it spans, half open so that a point two edges share counts
+        // once. A row's crossings, sorted, bound the land between each pair, so a sea inside the
+        // land, its outline the other way round, stays sea.
+        [[nodiscard]] std::vector<std::uint8_t> landCellsOf(
+            const std::span<const std::span<const FloatPoint>> outlines)
+        {
+            std::vector<std::vector<float>> crossings(static_cast<std::size_t>(k_townGridRows));
+            for (const std::span<const FloatPoint> outline : outlines)
             {
-                const FloatPoint a = polygon[i];
-                const FloatPoint b = polygon[previous];
-                const bool straddles = (a.y > point.y) != (b.y > point.y);
-                if (straddles && point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x)
-                    inside = !inside;
-                previous = i;
+                for (std::size_t i = 0; i != outline.size(); ++i)
+                {
+                    const FloatPoint from = outline[i];
+                    const FloatPoint to = outline[(i + 1) % outline.size()];
+                    const float lower = std::min(from.y, to.y);
+                    const float upper = std::max(from.y, to.y);
+                    const int firstRow = std::max(0, static_cast<int>(
+                        std::floor((k_townGridNorth - upper) / k_townCellSize - 0.5f)) + 1);
+                    const int lastRow = std::min(k_townGridRows - 1, static_cast<int>(
+                        std::floor((k_townGridNorth - lower) / k_townCellSize - 0.5f)));
+                    for (int row = firstRow; row <= lastRow; ++row)
+                    {
+                        const float latitude = k_townGridNorth
+                            - (static_cast<float>(row) + 0.5f) * k_townCellSize;
+                        const float share = (latitude - from.y) / (to.y - from.y);
+                        crossings[static_cast<std::size_t>(row)].push_back(
+                            from.x + (to.x - from.x) * share);
+                    }
+                }
             }
-            return inside;
+            std::vector<std::uint8_t> land(
+                static_cast<std::size_t>(k_townGridColumns) * k_townGridRows, 0);
+            for (int row = 0; row != k_townGridRows; ++row)
+            {
+                std::vector<float>& rowCrossings = crossings[static_cast<std::size_t>(row)];
+                std::ranges::sort(rowCrossings);
+                const std::size_t rowStart = static_cast<std::size_t>(row) * k_townGridColumns;
+                for (std::size_t i = 0; i + 1 < rowCrossings.size(); i += 2)
+                {
+                    const int firstColumn = static_cast<int>(
+                        std::ceil((rowCrossings[i] + 180.0f) / k_townCellSize - 0.5f));
+                    const int lastColumn = static_cast<int>(
+                        std::floor((rowCrossings[i + 1] + 180.0f) / k_townCellSize - 0.5f));
+                    for (int column = firstColumn; column <= lastColumn; ++column)
+                        land[rowStart + wrappedTownColumn(column)] = 1;
+                }
+            }
+            return land;
+        }
+
+        // **How far each cell's middle of the towns' grid stands from a coast**, in degrees of arc.
+        // The coasts' points start at 0, and two sweeps, one forward and one back, carry each
+        // cell's distance on to its neighbours, a cell's width shrinking with the latitude.
+        [[nodiscard]] std::vector<float> coastDistancesOf(
+            const std::span<const std::span<const FloatPoint>> outlines)
+        {
+            std::vector<float> distances(static_cast<std::size_t>(k_townGridColumns)
+                * k_townGridRows, std::numeric_limits<float>::max());
+            for (const std::span<const FloatPoint> outline : outlines)
+            {
+                for (const FloatPoint point : outline)
+                {
+                    if (const std::optional<std::size_t> cell = townCellAt(point))
+                        distances[*cell] = 0.0f;
+                }
+            }
+            const auto at = [&](int row, int column) -> float& {
+                return distances[static_cast<std::size_t>(row) * k_townGridColumns
+                    + wrappedTownColumn(column)];
+            };
+            for (const int direction : { 1, -1 })
+            {
+                for (int sweptRow = 0; sweptRow != k_townGridRows; ++sweptRow)
+                {
+                    const int row = direction == 1 ? sweptRow : k_townGridRows - 1 - sweptRow;
+                    const float latitude = k_townGridNorth
+                        - (static_cast<float>(row) + 0.5f) * k_townCellSize;
+                    const float across = k_townCellSize * std::cos(latitude * k_degree);
+                    const float diagonal = std::hypot(across, k_townCellSize);
+                    const int previousRow = row - direction;
+                    const bool hasPreviousRow = previousRow >= 0 && previousRow < k_townGridRows;
+                    for (int sweptColumn = 0; sweptColumn != k_townGridColumns; ++sweptColumn)
+                    {
+                        const int column = direction == 1
+                            ? sweptColumn : k_townGridColumns - 1 - sweptColumn;
+                        float& distance = at(row, column);
+                        distance = std::min(distance, at(row, column - direction) + across);
+                        if (!hasPreviousRow)
+                            continue;
+                        distance = std::min(distance, at(previousRow, column) + k_townCellSize);
+                        distance = std::min(distance, at(previousRow, column - 1) + diagonal);
+                        distance = std::min(distance, at(previousRow, column + 1) + diagonal);
+                    }
+                }
+            }
+            return distances;
+        }
+
+        // A point to try a town at, as likely anywhere from 10 degrees south to 72 north.
+        [[nodiscard]] FloatPoint townSiteAt(const int seed)
+        {
+            const float longitude = -180.0f + 360.0f * pseudoRandom(seed, 71.0f);
+            const float southSine = std::sin(-10.0f * k_degree);
+            const float northSine = std::sin(72.0f * k_degree);
+            const float sine = std::lerp(southSine, northSine, pseudoRandom(seed, 72.0f));
+            return { longitude, std::asin(sine) / k_degree };
         }
 
         // Where the globe stands in a frame.
@@ -988,6 +1043,59 @@ namespace ClaFi::PathArt
             FloatPoint to;
         };
 
+        // A coast's edges in the bands of rows they reach into, an edge in each band it reaches.
+        struct BandedCoast
+        {
+            std::vector<CoastEdge> edges; // band by band
+            std::vector<std::size_t> starts; // where each band's edges start, then the end
+        };
+
+        // The first and the last band of rows an edge reaches into.
+        struct BandRange
+        {
+            int first;
+            int last;
+        };
+
+        // The bands an edge reaches into, of `bandCount` bands from row `top` on. None when `last`
+        // comes before `first`.
+        [[nodiscard]] BandRange bandsReachedBy(const CoastEdge& edge, const int top,
+            const int bandCount)
+        {
+            const float bandHeight = static_cast<float>(k_bandRows);
+            const float upper = std::min(edge.from.y, edge.to.y) - static_cast<float>(top);
+            const float lower = std::max(edge.from.y, edge.to.y) - static_cast<float>(top);
+            return {
+                std::max(0, static_cast<int>(std::floor(upper / bandHeight))),
+                std::min(bandCount - 1, static_cast<int>(std::floor(lower / bandHeight)))
+            };
+        }
+
+        // Counted first, so each band's edges land together in one vector.
+        [[nodiscard]] BandedCoast bandedCoast(const std::span<const CoastEdge> coast,
+            const int top, const int bandCount)
+        {
+            BandedCoast banded{ .edges = {}, .starts = {} };
+            banded.starts.assign(static_cast<std::size_t>(bandCount) + 1, 0);
+            for (const CoastEdge& edge : coast)
+            {
+                const BandRange bands = bandsReachedBy(edge, top, bandCount);
+                for (int band = bands.first; band <= bands.last; ++band)
+                    ++banded.starts[static_cast<std::size_t>(band) + 1];
+            }
+            for (std::size_t band = 1; band != banded.starts.size(); ++band)
+                banded.starts[band] += banded.starts[band - 1];
+            banded.edges.resize(banded.starts.back());
+            std::vector<std::size_t> nextSlots(banded.starts.begin(), banded.starts.end() - 1);
+            for (const CoastEdge& edge : coast)
+            {
+                const BandRange bands = bandsReachedBy(edge, top, bandCount);
+                for (int band = bands.first; band <= bands.last; ++band)
+                    banded.edges[nextSlots[static_cast<std::size_t>(band)]++] = edge;
+            }
+            return banded;
+        }
+
         // A direction with the Earth's axis upright: x across, y up the axis, z toward the viewer.
         struct AxisDirection
         {
@@ -1034,7 +1142,6 @@ namespace ClaFi::PathArt
             FloatPoint sphereRadii; // across and up, in pixels
             int left; // the first column in view
             int right; // the column past the last in view
-            std::span<const CoastEdge> coast; // the near side's coastlines, each loop closed
         };
 
         // How far 8 points or pixels lie past the edge of each stylized zone, 0 to 1.
@@ -1177,10 +1284,10 @@ namespace ClaFi::PathArt
 
         // **How much of each pixel of a band the coastlines enclose**: each edge adds the area it
         // sweeps in each cell of every row it crosses, signed by the way it runs, and summing along
-        // the row gives the share enclosed. The shapes stand apart, so the sum's size is the
-        // coverage whichever way a shape runs. `coverage` holds the band's rows `stride` apart,
-        // each with 2 floats to spare past `width`; `coveredGroups` marks each 8 pixels of a row
-        // the coastlines reach.
+        // the row gives the share enclosed. The shapes stand apart, and a sea inside one runs the
+        // other way round, so the sum's size is the coverage whichever way a shape runs.
+        // `coverage` holds the band's rows `stride` apart, each with 2 floats to spare past
+        // `width`; `coveredGroups` marks each 8 pixels of a row the coastlines reach.
         void coverBand(const std::span<const CoastEdge> coast, const int top, const int rows,
             const int left, const int width, const int stride, const std::span<float> coverage,
             std::vector<std::uint8_t>& coveredGroups)
@@ -1719,10 +1826,12 @@ namespace ClaFi::PathArt
 
         // **The band's bitmap spans the columns the ground covers in its widest row**, inside the
         // view; a band that misses the sphere is left empty. The points stand on the canvas's
-        // columns and rows a step apart, so neighbouring bands blend from the same points. Answers
-        // where the bitmap stands, in pixels.
+        // columns and rows a step apart, so neighbouring bands blend from the same points. `coast`
+        // holds the edges of the near side's coastlines that reach into the band. Answers where the
+        // bitmap stands, in pixels.
         [[nodiscard]] FloatPoint rasterizeLandBand(const LandPicture& picture,
-            const LandPalette& palette, const int top, const int rows, Bitmap& pixels)
+            const LandPalette& palette, const std::span<const CoastEdge> coast, const int top,
+            const int rows, Bitmap& pixels)
         {
             const float nearestRow = std::clamp(picture.sphereCenter.y,
                 static_cast<float>(top) + 0.5f, static_cast<float>(top + rows) - 0.5f);
@@ -1769,7 +1878,7 @@ namespace ClaFi::PathArt
             const int stride = static_cast<int>(groupedLength(width + 2));
             std::vector<float> coverage(static_cast<std::size_t>(stride) * rows);
             std::vector<std::uint8_t> coveredGroups;
-            coverBand(picture.coast, top, rows, left, width, stride, coverage, coveredGroups);
+            coverBand(coast, top, rows, left, width, stride, coverage, coveredGroups);
             std::vector<std::uint8_t> anyCovered;
             std::vector<bool> needed(pointLength / 8);
             const auto sampleRow = [&](int pointRow, GroundPoints& points) {
@@ -1801,62 +1910,12 @@ namespace ClaFi::PathArt
         }
     }
 
-    // The coastlines get a point every 4 degrees so a long edge bends with the globe; the towns are
-    // scattered inside them, a fixed set for every frame.
+    // The coasts take some milliseconds to build, so they are built off the paint from the start,
+    // and the first frame takes them.
     SatelliteScene::SatelliteScene()
+        :
+        m_coastsBuilt{ std::async(std::launch::async, buildCoasts) }
     {
-        int seed = 0;
-        for (const CoastlineSource& source : k_coastlineSources)
-        {
-            std::vector<FloatPoint> corners;
-            for (std::size_t i = 0; i + 1 < source.lonLat.size(); i += 2)
-                corners.push_back({ source.lonLat[i], source.lonLat[i + 1] });
-
-            Coastline coastline{ .color = source.color, .lonLat = {}, .counterClockwise = false };
-            // The shoelace sum, above 0 when the corners run counterclockwise.
-            float twiceArea = 0.0f;
-            for (std::size_t i = 0; i != corners.size(); ++i)
-            {
-                const FloatPoint from = corners[i];
-                const FloatPoint to = corners[(i + 1) % corners.size()];
-                twiceArea += from.x * to.y - to.x * from.y;
-                const float span = std::hypot(to.x - from.x, to.y - from.y);
-                const int steps = std::max(1, static_cast<int>(std::ceil(span / 4.0f)));
-                for (int step = 0; step != steps; ++step)
-                {
-                    const float share = static_cast<float>(step) / static_cast<float>(steps);
-                    coastline.lonLat.push_back(pointBetween(from, to, share));
-                }
-            }
-            coastline.counterClockwise = twiceArea > 0.0f;
-            m_coastlines.push_back(std::move(coastline));
-
-            if (!source.inhabited)
-                continue;
-            FloatPoint low = corners.front();
-            FloatPoint high = corners.front();
-            for (const FloatPoint corner : corners)
-            {
-                low = { std::min(low.x, corner.x), std::min(low.y, corner.y) };
-                high = { std::max(high.x, corner.x), std::max(high.y, corner.y) };
-            }
-            // About one town to every 26 square degrees of the land's bounding box.
-            const float area = (high.x - low.x) * (high.y - low.y);
-            const int wanted = static_cast<int>(std::round(area / 26.0f));
-            int placed = 0;
-            for (int attempt = 0; attempt < wanted * 6 && placed < wanted; ++attempt)
-            {
-                ++seed;
-                const FloatPoint town = {
-                    std::lerp(low.x, high.x, pseudoRandom(seed, 71.0f)),
-                    std::lerp(low.y, high.y, pseudoRandom(seed, 72.0f))
-                };
-                if (town.y > 62.0f || !isInside(corners, town))
-                    continue;
-                m_cities.push_back({ town, pseudoRandom(seed, 73.0f) });
-                ++placed;
-            }
-        }
     }
 
     // The Earth turns twice a cycle and the Sun goes round once, so each continent passes once by
@@ -1869,6 +1928,12 @@ namespace ClaFi::PathArt
 
     void SatelliteScene::draw(Canvas& canvas, const FloatRect& bounds, const float cycleTime)
     {
+        if (m_coastsBuilt.valid())
+        {
+            BuiltCoasts built = m_coastsBuilt.get();
+            m_coastlines = std::move(built.coastlines);
+            m_cities = std::move(built.towns);
+        }
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         const float unit = frame.unit;
         const float width = frame.width;
@@ -1947,31 +2012,59 @@ namespace ClaFi::PathArt
         });
     }
 
-    SatelliteScene::Direction SatelliteScene::Globe::surfaceAt(const FloatPoint lonLat) const
+    // The Earth spins about its axis, and then tips its north pole toward the viewer.
+    SatelliteScene::Direction SatelliteScene::EarthTurn::applied(const Direction onEarth) const
+    {
+        const float x = onEarth.x * spinCosine + onEarth.z * spinSine;
+        const float z = onEarth.z * spinCosine - onEarth.x * spinSine;
+        return { x, onEarth.y * tipCosine + z * tipSine, z * tipCosine - onEarth.y * tipSine };
+    }
+
+    // Unturned, longitude 0 faces the viewer and the north pole points up.
+    SatelliteScene::Direction SatelliteScene::Globe::onEarthAt(const FloatPoint lonLat)
     {
         const float latitude = lonLat.y * k_degree;
-        const float longitude = lonLat.x * k_degree + spin;
-        const float x = std::cos(latitude) * std::sin(longitude);
-        const float y = std::sin(latitude);
-        const float z = std::cos(latitude) * std::cos(longitude);
-        const float tipCosine = std::cos(-k_viewLatitude);
-        const float tipSine = std::sin(-k_viewLatitude);
-        return { x, y * tipCosine + z * tipSine, -y * tipSine + z * tipCosine };
+        const float longitude = lonLat.x * k_degree;
+        return {
+            std::cos(latitude) * std::sin(longitude),
+            std::sin(latitude),
+            std::cos(latitude) * std::cos(longitude)
+        };
+    }
+
+    SatelliteScene::EarthTurn SatelliteScene::Globe::turn() const
+    {
+        return {
+            .spinCosine = std::cos(spin),
+            .spinSine = std::sin(spin),
+            .tipCosine = std::cos(-k_viewLatitude),
+            .tipSine = std::sin(-k_viewLatitude)
+        };
+    }
+
+    SatelliteScene::Direction SatelliteScene::Globe::surfaceAt(const FloatPoint lonLat) const
+    {
+        return turn().applied(onEarthAt(lonLat));
     }
 
     FloatPoint SatelliteScene::Globe::onScreen(const Direction direction) const
     {
+        return toScreen().transform({ direction.x, direction.y });
+    }
+
+    // Up the view is up the screen, turned by the tilt, and the screen's y runs down.
+    Matrix3x2 SatelliteScene::Globe::toScreen() const
+    {
         const float tiltCosine = std::cos(tilt);
         const float tiltSine = std::sin(tilt);
         return {
-            center.x + radius * (direction.x * tiltCosine - direction.y * tiltSine),
-            center.y - radius * (direction.x * tiltSine + direction.y * tiltCosine)
+            radius * tiltCosine,
+            -radius * tiltSine,
+            -radius * tiltSine,
+            -radius * tiltCosine,
+            center.x,
+            center.y
         };
-    }
-
-    FloatPoint SatelliteScene::Globe::onRim(const float angle) const
-    {
-        return onScreen({ std::cos(angle), std::sin(angle), 0.0f });
     }
 
     // The outline is cut where it goes behind the Earth into stretches on the near side. Each
@@ -1987,11 +2080,18 @@ namespace ClaFi::PathArt
         const auto isNear = [](const Direction& direction) {
             return direction.z > 0.0f;
         };
+        const auto rimAt = [](float angle) {
+            return FloatPoint{ std::cos(angle), std::sin(angle) };
+        };
+        // The point after point `i` round the closed outline.
+        const auto nextOf = [count](std::size_t i) {
+            return i + 1 == count ? 0 : i + 1;
+        };
         // The outline is followed from a point behind the Earth whose next point is in view.
         std::size_t start = count;
         for (std::size_t i = 0; i != count && start == count; ++i)
         {
-            if (!isNear(outline[i]) && isNear(outline[(i + 1) % count]))
+            if (!isNear(outline[i]) && isNear(outline[nextOf(i)]))
                 start = i;
         }
         if (start == count)
@@ -2000,7 +2100,7 @@ namespace ClaFi::PathArt
             if (count == 0 || !isNear(outline.front()))
                 return;
             for (const Direction& direction : outline)
-                points.push_back(onScreen(direction));
+                points.push_back({ direction.x, direction.y });
             loopEnds.push_back(points.size());
             return;
         }
@@ -2020,10 +2120,12 @@ namespace ClaFi::PathArt
         };
         std::vector<FloatPoint> walked;
         std::vector<Stretch> stretches;
-        for (std::size_t i = 0; i != count; ++i)
+        std::size_t at = start;
+        for (std::size_t edge = 0; edge != count; ++edge)
         {
-            const Direction& from = outline[(start + i) % count];
-            const Direction& to = outline[(start + i + 1) % count];
+            const Direction& from = outline[at];
+            at = nextOf(at);
+            const Direction& to = outline[at];
             const bool fromNear = isNear(from);
             const bool toNear = isNear(to);
             if (!fromNear && toNear)
@@ -2035,14 +2137,14 @@ namespace ClaFi::PathArt
                     .enterAngle = angle,
                     .leaveAngle = angle
                 });
-                walked.push_back(onRim(angle));
+                walked.push_back(rimAt(angle));
             }
             if (toNear)
-                walked.push_back(onScreen(to));
+                walked.push_back({ to.x, to.y });
             if (fromNear && !toNear)
             {
                 const float angle = crossingAngle(from, to);
-                walked.push_back(onRim(angle));
+                walked.push_back(rimAt(angle));
                 stretches.back().end = walked.size();
                 stretches.back().leaveAngle = angle;
             }
@@ -2081,7 +2183,7 @@ namespace ClaFi::PathArt
                 for (int step = 1; step < steps; ++step)
                 {
                     const float share = static_cast<float>(step) / static_cast<float>(steps);
-                    points.push_back(onRim(stretch.leaveAngle + sweep * share));
+                    points.push_back(rimAt(stretch.leaveAngle + sweep * share));
                 }
                 current = next;
             }
@@ -2097,10 +2199,12 @@ namespace ClaFi::PathArt
         nearSideOf(outline, counterClockwise, points, loopEnds);
         if (points.empty())
             return false;
+        const Matrix3x2 screen = toScreen();
         constexpr float k_far{ std::numeric_limits<float>::max() };
         FloatRect bounds = { k_far, k_far, -k_far, -k_far };
-        for (const FloatPoint point : points)
+        for (FloatPoint& point : points)
         {
+            point = screen.transform(point);
             bounds = {
                 std::min(bounds.left, point.x),
                 std::min(bounds.top, point.y),
@@ -2132,6 +2236,146 @@ namespace ClaFi::PathArt
     float SatelliteScene::Terminator::distanceTo(const FloatPoint point) const
     {
         return (point.x - through.x) * dayward.x + (point.y - through.y) * dayward.y;
+    }
+
+    // Until the land's map is built the towns stand anywhere on the land, then they move to where
+    // the map places them. See PathArt#satellitescene
+    SatelliteScene::BuiltCoasts SatelliteScene::buildCoasts()
+    {
+        std::vector<Coastline> coastlines;
+        for (LandOutline& outline : landOutlines())
+        {
+            // The shoelace sum, above 0 when the points run counterclockwise.
+            float twiceArea = 0.0f;
+            for (std::size_t i = 0; i != outline.size(); ++i)
+            {
+                const FloatPoint from = outline[i];
+                const FloatPoint to = outline[(i + 1) % outline.size()];
+                twiceArea += from.x * to.y - to.x * from.y;
+            }
+            std::vector<Direction> onEarth;
+            onEarth.reserve(outline.size());
+            for (const FloatPoint lonLat : outline)
+                onEarth.push_back(Globe::onEarthAt(lonLat));
+            const bool iceSheet = isGreenland(outline);
+            coastlines.push_back({
+                .lonLat = std::move(outline),
+                .onEarth = std::move(onEarth),
+                .counterClockwise = twiceArea > 0.0f,
+                .iceSheet = iceSheet
+            });
+        }
+        std::vector<City> towns = evenTowns(coastlines);
+        return { .coastlines = std::move(coastlines), .towns = std::move(towns) };
+    }
+
+    // The towns go anywhere on the land up to 62 degrees north, the ice sheet left out.
+    std::vector<SatelliteScene::City> SatelliteScene::evenTowns(
+        const std::span<const Coastline> coastlines)
+    {
+        std::vector<std::span<const FloatPoint>> inhabited;
+        for (const Coastline& coastline : coastlines)
+        {
+            if (!coastline.iceSheet)
+                inhabited.push_back(coastline.lonLat);
+        }
+        const std::vector<std::uint8_t> land = landCellsOf(inhabited);
+        std::vector<City> towns;
+        for (int seed = 5001; std::ssize(towns) != k_townCount; ++seed)
+        {
+            const FloatPoint site = townSiteAt(seed);
+            const std::optional<std::size_t> cell = townCellAt(site);
+            if (site.y > 62.0f || !cell || land[*cell] == 0)
+                continue;
+            towns.push_back({ .lonLat = site, .brightness = pseudoRandom(seed, 73.0f) });
+        }
+        return towns;
+    }
+
+    // **Each site on land is kept by a weight the land's map gives it**: highest on low ground
+    // near a coast, and thinning with height, in the deep desert, in the tundra and a little in
+    // the northern forest. The ice sheet is left out, though its coast counts. The sites are read
+    // from the map 8 at a time, as it reads 8 points at once. See PathArt#satellitescene
+    std::vector<SatelliteScene::City> SatelliteScene::townsBy(const EarthMap& map,
+        const std::span<const Coastline> coastlines)
+    {
+        std::vector<std::span<const FloatPoint>> outlines;
+        std::vector<std::span<const FloatPoint>> inhabited;
+        for (const Coastline& coastline : coastlines)
+        {
+            outlines.push_back(coastline.lonLat);
+            if (!coastline.iceSheet)
+                inhabited.push_back(coastline.lonLat);
+        }
+        const std::vector<std::uint8_t> land = landCellsOf(inhabited);
+        const std::vector<float> coastDistances = coastDistancesOf(outlines);
+        // A site tried for a town, and the seed it came from.
+        struct Site
+        {
+            FloatPoint lonLat;
+            std::size_t cell;
+            int seed;
+        };
+        std::array<Site, 8> sites{};
+        std::array<float, 8> longitudes{};
+        std::array<float, 8> latitudes{};
+        // Each site is read for the ground of half a degree about it.
+        std::array<float, 8> spans{};
+        spans.fill(0.5f * k_degree);
+        std::array<float, 8> heights{};
+        std::array<float, 8> slopesEast{};
+        std::array<float, 8> slopesNorth{};
+        std::array<float, 8> variation{};
+        std::array<float, 8> dryness{};
+        std::array<float, 8> forest{};
+        std::array<float, 8> tundra{};
+        std::vector<City> towns;
+        int seed = 5001;
+        while (std::ssize(towns) != k_townCount)
+        {
+            for (std::size_t gathered = 0; gathered != sites.size(); ++seed)
+            {
+                const FloatPoint site = townSiteAt(seed);
+                const std::optional<std::size_t> cell = townCellAt(site);
+                if (!cell || land[*cell] == 0)
+                    continue;
+                sites[gathered] = { .lonLat = site, .cell = *cell, .seed = seed };
+                longitudes[gathered] = site.x * k_degree;
+                latitudes[gathered] = site.y * k_degree;
+                ++gathered;
+            }
+            map.readLand(MapQuery{
+                .longitudes = longitudes,
+                .latitudes = latitudes,
+                .longitudeSpans = spans,
+                .latitudeSpans = spans
+            }, Relief::Broad, LandPoints{
+                .heights = heights,
+                .slopesEast = slopesEast,
+                .slopesNorth = slopesNorth,
+                .variation = variation,
+                .dryness = dryness,
+                .forest = forest,
+                .tundra = tundra
+            });
+            for (std::size_t i = 0; i != sites.size() && std::ssize(towns) != k_townCount; ++i)
+            {
+                const float highGround = smoothStep(0.06f, 0.3f, heights[i]);
+                const float nearCoast = std::exp(-coastDistances[sites[i].cell] / 2.5f);
+                const float weight = (1.0f - highGround)
+                    * (1.0f - 0.92f * smoothStep(0.4f, 0.8f, dryness[i]))
+                    * (1.0f - smoothStep(0.2f, 0.8f, tundra[i]))
+                    * (1.0f - 0.55f * forest[i])
+                    * (0.22f + 0.78f * nearCoast);
+                if (pseudoRandom(sites[i].seed, 74.0f) > weight)
+                    continue;
+                towns.push_back({
+                    .lonLat = sites[i].lonLat,
+                    .brightness = pseudoRandom(sites[i].seed, 73.0f)
+                });
+            }
+        }
+        return towns;
     }
 
     // Over the small cap in view the terminator is near enough to a straight line, so it is one:
@@ -2192,18 +2436,30 @@ namespace ClaFi::PathArt
         return { .through = upper, .along = along, .dayward = dayward };
     }
 
+    // The land and the ice sheet make one path each, so a sea inside the land is cut out of it.
     void SatelliteScene::drawFlatLand(const SceneFrame& frame, const Globe& globe) const
     {
         const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
+        const EarthTurn turn = globe.turn();
         std::vector<Direction> outline;
-        for (const Coastline& coastline : m_coastlines)
+        for (const bool iceSheet : { false, true })
         {
-            outline.clear();
-            for (const FloatPoint lonLat : coastline.lonLat)
-                outline.push_back(globe.surfaceAt(lonLat));
             PixelPath path;
-            if (globe.addNearSide(outline, coastline.counterClockwise, view, path))
-                fillShape(frame, path, SolidColor{ coastline.color });
+            bool inView = false;
+            for (const Coastline& coastline : m_coastlines)
+            {
+                if (coastline.iceSheet != iceSheet)
+                    continue;
+                outline.clear();
+                for (const Direction onEarth : coastline.onEarth)
+                    outline.push_back(turn.applied(onEarth));
+                if (globe.addNearSide(outline, coastline.counterClockwise, view, path))
+                    inView = true;
+            }
+            if (!inView)
+                continue;
+            const Color color = iceSheet ? SatelliteSceneColors::Snow : SatelliteSceneColors::Grass;
+            fillShape(frame, path, SolidColor{ color });
         }
     }
 
@@ -2215,18 +2471,22 @@ namespace ClaFi::PathArt
     {
         if (!m_earthMap)
         {
-            if (!m_earthMapBuilt.valid())
+            if (!m_landBuilt.valid())
             {
-                m_earthMapBuilt = std::async(std::launch::async, []() {
-                    return std::make_unique<EarthMap>();
+                m_landBuilt = std::async(std::launch::async, [coastlines = m_coastlines]() {
+                    std::unique_ptr<EarthMap> map = std::make_unique<EarthMap>();
+                    std::vector<City> towns = townsBy(*map, coastlines);
+                    return BuiltLand{ .map = std::move(map), .towns = std::move(towns) };
                 });
             }
-            if (m_earthMapBuilt.wait_for(std::chrono::seconds{ 0 }) != std::future_status::ready)
+            if (m_landBuilt.wait_for(std::chrono::seconds{ 0 }) != std::future_status::ready)
             {
                 drawFlatLand(frame, globe);
                 return;
             }
-            m_earthMap = m_earthMapBuilt.get();
+            BuiltLand built = m_landBuilt.get();
+            m_earthMap = std::move(built.map);
+            m_cities = std::move(built.towns);
         }
 
         const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
@@ -2236,11 +2496,13 @@ namespace ClaFi::PathArt
         std::vector<Direction> outline;
         std::vector<FloatPoint> points;
         std::vector<std::size_t> loopEnds;
+        const EarthTurn turn = globe.turn();
+        const Matrix3x2 viewToPixels = toPixels * globe.toScreen();
         for (const Coastline& coastline : m_coastlines)
         {
             outline.clear();
-            for (const FloatPoint lonLat : coastline.lonLat)
-                outline.push_back(globe.surfaceAt(lonLat));
+            for (const Direction onEarth : coastline.onEarth)
+                outline.push_back(turn.applied(onEarth));
             globe.nearSideOf(outline, coastline.counterClockwise, points, loopEnds);
             std::size_t loopStart = 0;
             for (const std::size_t loopEnd : loopEnds)
@@ -2248,8 +2510,8 @@ namespace ClaFi::PathArt
                 for (std::size_t i = loopStart; i != loopEnd; ++i)
                 {
                     const std::size_t next = i + 1 == loopEnd ? loopStart : i + 1;
-                    const FloatPoint from = toPixels.transform(points[i]);
-                    coast.push_back({ from, toPixels.transform(points[next]) });
+                    const FloatPoint from = viewToPixels.transform(points[i]);
+                    coast.push_back({ from, viewToPixels.transform(points[next]) });
                     landBox = {
                         std::min(landBox.left, from.x),
                         std::min(landBox.top, from.y),
@@ -2292,8 +2554,7 @@ namespace ClaFi::PathArt
             .sphereCenter = toPixels.transform(globe.center),
             .sphereRadii = { radiusInPixels, globe.radius * toPixels.d },
             .left = inView.left,
-            .right = inView.right,
-            .coast = coast
+            .right = inView.right
         };
         const float sphereTop = picture.sphereCenter.y - picture.sphereRadii.y;
         const int top = std::max(inView.top, static_cast<int>(std::floor(sphereTop)))
@@ -2302,12 +2563,16 @@ namespace ClaFi::PathArt
             return;
         const LandPalette palette = landPalette();
         const int bandCount = (inView.bottom - top + k_bandRows - 1) / k_bandRows;
+        const BandedCoast banded = bandedCoast(coast, top, bandCount);
         m_landBands.resize(static_cast<std::size_t>(bandCount));
         spreadOverCores(bandCount, [&](int band) {
             const int bandTop = top + band * k_bandRows;
             const int rows = std::min(k_bandRows, inView.bottom - bandTop);
+            const std::size_t start = banded.starts[static_cast<std::size_t>(band)];
+            const std::size_t end = banded.starts[static_cast<std::size_t>(band) + 1];
+            const std::span<const CoastEdge> bandCoast{ banded.edges.data() + start, end - start };
             PixelBand& drawn = m_landBands[static_cast<std::size_t>(band)];
-            drawn.at = rasterizeLandBand(picture, palette, bandTop, rows, drawn.pixels);
+            drawn.at = rasterizeLandBand(picture, palette, bandCoast, bandTop, rows, drawn.pixels);
         });
         layBands(frame, m_landBands, canvasPixels);
     }

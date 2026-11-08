@@ -3,6 +3,7 @@ module;
 module ClaFi.PathArt.EarthMap;
 
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
@@ -33,6 +34,12 @@ namespace ClaFi::PathArt
         constexpr float k_lacunarity{ 2.03f };
         // How much wider a range's foothills reach than its core.
         constexpr float k_footReach{ 2.6f };
+        // How far apart a coast's points stand once it is densified, in degrees of arc.
+        constexpr float k_coastPointSpacing{ 0.1f };
+        // How far the broad warp bends a coast at the noise's full swing, in degrees of arc.
+        constexpr float k_coastWarpReach{ 0.35f };
+        // How far the fine grain roughens a coast at the noise's full swing, in degrees of arc.
+        constexpr float k_coastGrainReach{ 0.22f };
 
         // A range of mountains along a line. See PathArt#earthmap
         struct Range
@@ -424,6 +431,10 @@ namespace ClaFi::PathArt
         [[nodiscard]] LandLanes landLanesAt(const TexelPyramid& relief, const TexelPyramid& cover,
             float leastReliefLevel, __m256 longitudes, __m256 latitudes, __m256 longitudeSpans,
             __m256 latitudeSpans);
+        // The outline with a point at least every `spacing` degrees of arc along each edge.
+        [[nodiscard]] LandOutline densified(std::span<const FloatPoint> outline, float spacing);
+        // Each point moved by the coast's broad warp and its fine grain.
+        void roughen(LandOutline&);
     }
 
     // **The relief is laid in from the ranges' spines and the plateaus' outlines**, over low hills
@@ -490,6 +501,34 @@ namespace ClaFi::PathArt
             store(read({ padded[0].data(), padded[1].data(), padded[2].data(), padded[3].data() }),
                 first, lanesUsed);
         }
+    }
+
+    // **Each outline gets a point every 0.1 degree of arc**, and each point moves by noise fixed
+    // to where it stands on the sphere: a broad warp that bends the coast, and a fine grain that
+    // roughens it. Both stay small enough that no coast folds over itself.
+    std::vector<LandOutline> landOutlines()
+    {
+        const NaturalEarthLand land = naturalEarthLand();
+        std::vector<LandOutline> outlines;
+        outlines.reserve(land.pointCounts.size());
+        std::vector<FloatPoint> corners;
+        std::size_t next = 0;
+        for (const std::uint16_t pointCount : land.pointCounts)
+        {
+            corners.clear();
+            for (std::uint16_t point = 0; point != pointCount; ++point)
+            {
+                corners.push_back({
+                    0.01f * static_cast<float>(land.points[next]),
+                    0.01f * static_cast<float>(land.points[next + 1])
+                });
+                next += 2;
+            }
+            LandOutline outline = densified(corners, k_coastPointSpacing);
+            roughen(outline);
+            outlines.push_back(std::move(outline));
+        }
+        return outlines;
     }
 
     namespace
@@ -1159,6 +1198,43 @@ namespace ClaFi::PathArt
                 .forest = _mm256_mul_ps(blended(coverTexels, 1, Byte::Unsigned), perByte),
                 .tundra = _mm256_mul_ps(blended(coverTexels, 2, Byte::Unsigned), perByte)
             };
+        }
+
+        // An edge's length shortens its degrees of longitude by the cosine of its middle latitude.
+        LandOutline densified(const std::span<const FloatPoint> outline, const float spacing)
+        {
+            LandOutline dense;
+            for (std::size_t i = 0; i != outline.size(); ++i)
+            {
+                const FloatPoint from = outline[i];
+                const FloatPoint to = outline[(i + 1) % outline.size()];
+                const float across = (to.x - from.x) * std::cos(0.5f * (from.y + to.y) * k_degree);
+                const float length = std::hypot(across, to.y - from.y);
+                const int steps = std::max(1, static_cast<int>(std::ceil(length / spacing)));
+                for (int step = 0; step != steps; ++step)
+                {
+                    const float share = static_cast<float>(step) / static_cast<float>(steps);
+                    dense.push_back(pointBetween(from, to, share));
+                }
+            }
+            return dense;
+        }
+
+        // The noise is read where the point stands on the sphere, so a point that two outlines
+        // share at the 180th meridian moves alike in both. The move eastward is in degrees of arc,
+        // which take more degrees of longitude toward the pole.
+        void roughen(LandOutline& outline)
+        {
+            for (FloatPoint& point : outline)
+            {
+                const SpacePoint onSphere = onSphereAt(point.x, point.y);
+                const float east = k_coastWarpReach * fractalNoise(onSphere, 5.0f, 3, 11u)
+                    + k_coastGrainReach * fractalNoise(onSphere, 45.0f, 3, 13u);
+                const float north = k_coastWarpReach * fractalNoise(onSphere, 5.0f, 3, 12u)
+                    + k_coastGrainReach * fractalNoise(onSphere, 45.0f, 3, 14u);
+                point.x += east / std::cos(point.y * k_degree);
+                point.y += north;
+            }
         }
     }
 }

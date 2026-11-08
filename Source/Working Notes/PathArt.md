@@ -204,10 +204,9 @@ version drew the night as five fills of different reach to soften the edge, and 
 visibly. One gradient across a straight line has no bands, and over the small cap in view the
 line stands in for the curve.
 
-The coastlines are coarse polygons, given a point every 4 degrees so a long edge bends with the
-globe. The towns are scattered inside each inhabited polygon once, in the constructor, about one to
-26 square degrees of the polygon's box and none above latitude 62. A shape is drawn only when some
-of it is on the near side and what is left of it reaches the frame.
+The coastlines are Natural Earth's land at 1:110m with a grain added, a point every 0.1 degree of
+arc - see the entry of 2026-11-08 below. A shape is drawn only when some of it is on the near side
+and what is left of it reaches the frame.
 
 **A shape across the rim is clipped there**, by Globe::nearSideOf: the outline is cut into the
 stretches in view, and each is joined along the rim to the next stretch that comes round, the way
@@ -223,7 +222,7 @@ dipped behind twice.
 **The joins rely on every coastline being a simple polygon.** A coast that crosses itself turns
 the other way inside the crossing, and when that part dips behind, the join runs the long way round
 and fills the disc outside the shape. Japan did, at Hokkaido, until its two northern corners were
-swapped.
+swapped. The grained outlines were checked: no edge crosses another within 120 points of it.
 
 **The ocean is a layer of its own, and space stops at the limb** (2026-11-08). In Oj's MSVC profile
 the Satellite was the slowest scene; the ocean's gradient, laid through the globe's clip over the
@@ -496,6 +495,54 @@ of detail and the stylized tones softened by the cover's change over the pixel.
   one division, SoftEdge.
 - Whole Satellite frames on the container, before and after: 1600 x 900, 13 to 16 ms and 10 to 12;
   2296 x 1198, 24 to 26 and 18 to 22; 3436 x 2051, 40 to 47 and 42 to 46; 800 x 600 about the same.
+
+**The coasts are Natural Earth's, with a grain, and the towns follow the land** (2026-11-08). Oj:
+"make the coastlines more jagged and curvy" and "place the towns like described", with "the cloud
+beside Italy looks more like Italy that Italy itself". The coasts were 12 hand-drawn polygons, a
+corner every 5 to 10 degrees. Of the mockups Oj picked Natural Earth's 1:110m outlines with a light
+warp and grain.
+
+- The data is Natural Earth's ne_110m_land, public domain. Kept: the outlines that reach north of 2
+  degrees south and enclose at least 0.4 square degrees - 83 of land, 3,678 points, and the Caspian
+  Sea, Natural Earth's one hole, 51. Land runs counterclockwise and the sea clockwise. The points
+  are hundredths of a degree in int16, about 15 KB, in PathArt.EarthMap.NaturalEarth.cpp, made by a
+  script outside the tree.
+- The grain is the land map's own fractal noise on the unit sphere: east and north, 0.35 times 3
+  octaves from frequency 5, seeds 11 and 12, plus 0.22 times 3 octaves from frequency 45, seeds 13
+  and 14, east divided by the cosine of the latitude. The mockup cut the loops a fold makes, where
+  an edge crosses one up to 120 points on, and found none at this strength; the code does not cut
+  them. A stronger grain would need it.
+- The Caspian is cut out wherever the land is: the coverage sums its opposite winding to 0, the flat
+  fallback puts all the land's outlines in one even-odd path, and the towns' grid counts crossings
+  even-odd across all outlines.
+- Building the coasts takes about 98 million instructions, 12 ms on one core: 84 million in
+  landOutlines, most of them in the noise, and the rest in the first towns. In the constructor that
+  held the app's start, as MillScene makes every scene at once, so the constructor starts it off the
+  paint and the first frame takes it.
+- The towns stand on a grid of quarter-degree cells from 85 degrees north to 10 south: land where a
+  row's crossings put the cell's middle inside, and each cell's distance from the coast by two
+  chamfer sweeps from the coasts' points. A site is drawn at random, as likely anywhere on the
+  sphere from 10 south to 72 north, from seed 5001 on. On land, its weight is (1 - smoothstep(0.06,
+  0.3, height)) x (1 - 0.92 smoothstep(0.4, 0.8, dryness)) x (1 - smoothstep(0.2, 0.8, tundra)) x
+  (1 - 0.55 forest) x (0.22 + 0.78 exp(-distance / 2.5 degrees)), read from the broad relief for
+  half a degree of ground, and a draw under the weight keeps it. 1200 towns take some 10,000 sites,
+  read 8 at a time, inside the land map's build. Greenland's outline is the ice sheet, known by the
+  middle of its points, and has no towns. By the weights alone it got 4 in its south, where the
+  land map's ice plateau stops at 63 north and the ground lies low below the snowline. Until the
+  map is built the towns stand anywhere on the land below 62 north, the ice sheet left out, as
+  the old polygons' did.
+- Per frame the coast went from 279 edges to about 10,500 in view. Each point keeps its direction
+  fixed to the Earth, turned by one spin and one tip worked out once a frame, and the near side's
+  points come out as directions' x and y, which one matrix takes to pixels. Turning each point from
+  its longitude and latitude, with sines and cosines per point and per projection, took 0.75 ms on
+  the paint thread; now 0.20, against 0.03 with the old polygons. Splitting it: turning 0.09 ms,
+  the near side 0.08, the edges 0.04. Skipping outlines wholly behind would spare little, as
+  Afro-Eurasia and the Americas never are. Walking the outline without a modulo per point took
+  0.23 to 0.20.
+- Each band of the land gets only the edges that reach into it, counted into one vector. Sweeping
+  every edge in every band, the coverage cost 0.92 ms of processor time a frame at 1600 x 900 and
+  2.65 at 3436 x 2051; banded 0.48 and 1.94, against 0.47 and 1.61 with the old polygons. Whole
+  frames come out about even with the old polygons on the container's 2 cores.
 
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the

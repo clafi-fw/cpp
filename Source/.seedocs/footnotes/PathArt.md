@@ -188,6 +188,28 @@ longitudes.
 Heights and slopes are in the map's own units: how high a height of 1 stands as drawn is the
 caller's to choose.
 
+## LandOutline
+
+A coast as one closed loop, its last point joined back to the first: x is the longitude and y the
+latitude, in degrees. It runs counterclockwise round land, seen from outside the Earth or on a map
+with north up, and clockwise round a sea inside the land. Where the grain pushes a coast past the
+180th meridian, its longitudes reach a little beyond 180 degrees.
+
+## landOutlines
+
+**The coasts are Natural Earth's land at 1:110m**: the 83 outlines that reach north of 2 degrees
+south and enclose at least 0.4 square degrees, and the Caspian Sea inside them. Natural Earth is
+free vector and raster map data at naturalearthdata.com, in the public domain.
+
+**Each outline gets a point every 0.1 degree of arc**, about 27,000 in all, and each point moves by
+noise fixed to where it stands on the sphere: a broad warp of up to about 0.35 degrees bends the
+coast, and a fine grain of up to about 0.22 degrees roughens it. Where Natural Earth cuts the land
+at the 180th meridian, a point two outlines share moves alike in both, so they stay joined. No coast
+folds over itself.
+
+**One call takes about 12 milliseconds of one core**, and gives the same outlines every time. Call
+it off the paint.
+
 ## reachToward
 
 Bends a two-part limb so that its end reaches `target`, by the law of cosines.
@@ -301,6 +323,11 @@ The city lights come on past the terminator - see SatelliteScene Terminator - an
 along the limb is blue by day, orange at dusk and dark at night, by the sunlight above each point of
 it: three rings, each fading out to both sides.
 
+**The 1200 towns are placed by the land's map.** Until it is built they stand anywhere on the land
+up to 62 degrees north. Then each is tried at a random point of the land and kept by a weight:
+highest on low ground near a coast, and thinning with height, in the deep desert, in the tundra and
+a little in the northern forest. Greenland's ice has none. The towns are the same on every run.
+
 **Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks -
 see CloudKind. Each is a map on a sphere of its own, 0.6, 1.1 and 1.8 hundredths of the Earth's
 radius up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts east and
@@ -308,6 +335,8 @@ back against the ground once a cycle, the higher layers further. The clouds fade
 they near the limb, take the night's shade on the night side, and pass over the city lights.
 
 **The land is worked out pixel by pixel inside the coastlines**, from the land's map - see EarthMap.
+The coastlines are landOutlines(), built off the paint from the moment the scene is made; the first
+frame waits for them if it comes sooner.
 A height of 1 stands 0.014 of the Earth's radius up as drawn, about ten times the Himalaya's true
 height, and each slope is lit by the Sun where it stands: lighter facing it, darker facing away. A
 Sun lower than about 14 degrees lights the slopes as one at 14 degrees would, so the shading deepens
@@ -320,8 +349,8 @@ height and one tone of slope each way, from the broad relief. Realistic shows th
 and the land in the detailed relief, its colours blended - see SceneLook.
 
 **The maps are built off the paint** the first time the scene is drawn: a fraction of a second on a
-processor with many cores. The clouds show from the first frame after, and the land is drawn in one
-flat colour per coastline until its map is ready. Each frame works the clouds and the land out in
+processor with many cores. The clouds show from the first frame after, and the land is drawn flat,
+green with Greenland white, until its map is ready. Each frame works the clouds and the land out in
 bands of rows spread over the cores - see spreadOverCores. On a globe over 3200 pixels in radius -
 a frame about 2800 pixels wide or more - the land is worked out at every 4th pixel and row, over
 1300 - a frame about 1130 pixels wide - at every 2nd, and below that at every pixel. The cloud maps'

@@ -1,6 +1,7 @@
 export module ClaFi.PathArt.EarthMap;
 
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
@@ -36,6 +37,17 @@ namespace ClaFi::PathArt
         std::array<int, 8> offsets; // where each level starts in the texels
     };
 
+    // Natural Earth's outlines of the land, one after another. See PathArt#landoutlines
+    struct NaturalEarthLand
+    {
+        std::span<const std::uint16_t> pointCounts; // one for each outline
+        // Each point's longitude, then its latitude, in hundredths of a degree.
+        std::span<const std::int16_t> points;
+    };
+
+    // The outlines, kept in PathArt.EarthMap.NaturalEarth.cpp.
+    [[nodiscard]] NaturalEarthLand naturalEarthLand();
+
     // The land of the Earth's northern half: how high it stands and what covers it. See PathArt
     export class EarthMap
     {
@@ -51,4 +63,10 @@ namespace ClaFi::PathArt
         // Dryness, forest and tundra, then a byte unused.
         TexelPyramid m_cover{};
     };
+
+    // A closed coast, x the longitude and y the latitude in degrees. See PathArt#landoutline
+    export using LandOutline = std::vector<FloatPoint>;
+
+    // The coasts of the land, with a grain finer than their data's. See PathArt#landoutlines
+    export [[nodiscard]] std::vector<LandOutline> landOutlines();
 }

@@ -32,6 +32,17 @@ namespace ClaFi::PathArt
             float y;
             float z;
         };
+        // How the Earth stands turned this frame, worked out once for the coasts' many points.
+        struct EarthTurn
+        {
+            float spinCosine;
+            float spinSine;
+            float tipCosine; // of the tip that leans the north pole toward the viewer
+            float tipSine;
+
+            // A direction fixed to the Earth, as it stands this frame.
+            [[nodiscard]] Direction applied(Direction onEarth) const;
+        };
         // The Earth as drawn this frame: where it stands, how far it has turned, where the Sun is.
         struct Globe
         {
@@ -41,12 +52,15 @@ namespace ClaFi::PathArt
             float spin;
             Direction sun;
 
+            // The direction to a longitude and latitude in degrees, fixed to the Earth.
+            [[nodiscard]] static Direction onEarthAt(FloatPoint lonLat);
+            [[nodiscard]] EarthTurn turn() const;
             // The point at a longitude and latitude, in degrees.
             [[nodiscard]] Direction surfaceAt(FloatPoint lonLat) const;
             [[nodiscard]] FloatPoint onScreen(Direction) const;
-            // The point on the outline at an angle, counterclockwise from across the screen.
-            [[nodiscard]] FloatPoint onRim(float angle) const;
-            // The near-side part of a closed outline, in loops closed along the rim.
+            // The map from a direction's x and y to the screen.
+            [[nodiscard]] Graphics::Matrix3x2 toScreen() const;
+            // The near side of a closed outline as directions' x and y, in loops closed at the rim.
             void nearSideOf(std::span<const Direction> outline, bool counterClockwise,
                 std::vector<FloatPoint>& points, std::vector<std::size_t>& loopEnds) const;
             // Adds the near side of a closed outline to a path, answering whether it is in view.
@@ -67,14 +81,28 @@ namespace ClaFi::PathArt
         };
         struct Coastline
         {
-            Color color;
             std::vector<FloatPoint> lonLat;
+            std::vector<Direction> onEarth; // each point's direction, fixed to the Earth
             bool counterClockwise; // the way its points run, seen from outside the Earth
+            bool iceSheet; // Greenland's, drawn white until the land's map is built, and townless
         };
         struct City
         {
             FloatPoint lonLat;
             float brightness;
+        };
+        // The coastlines and the towns spread evenly over them, built together off the paint.
+        struct BuiltCoasts
+        {
+            std::vector<Coastline> coastlines;
+            std::vector<City> towns;
+        };
+        // The land's map and the towns placed by it, built together off the paint.
+        struct BuiltLand
+        {
+            // By pointer for the same reason as the clouds' maps.
+            std::unique_ptr<EarthMap> map;
+            std::vector<City> towns;
         };
         // A band of rows of a picture worked out by pixel, and where it stands in the canvas's.
         struct PixelBand
@@ -85,6 +113,12 @@ namespace ClaFi::PathArt
         // The map of each layer of cloud, in the order the layers float up from the ground.
         using CloudMaps = std::array<CloudMap, 3>;
     private:
+        [[nodiscard]] static BuiltCoasts buildCoasts();
+        // Towns spread evenly over the land, until the land's map places them.
+        [[nodiscard]] static std::vector<City> evenTowns(std::span<const Coastline>);
+        // Towns where the land's map makes them likely. See PathArt#satellitescene
+        [[nodiscard]] static std::vector<City> townsBy(const EarthMap&,
+            std::span<const Coastline>);
         static void drawSpace(const SceneFrame&);
         static void drawOcean(const SceneFrame&);
         [[nodiscard]] static Terminator terminatorOf(const SceneFrame&, const Globe&);
@@ -105,6 +139,8 @@ namespace ClaFi::PathArt
         static constexpr std::chrono::seconds k_cycle{ 240 };
         std::vector<Coastline> m_coastlines{};
         std::vector<City> m_cities{};
+        // Started by the constructor, and taken by the first frame drawn.
+        std::future<BuiltCoasts> m_coastsBuilt{};
         SceneLayer m_space{ drawSpace };
         SceneLayer m_ocean{ drawOcean };
         // By pointer, as MSVC's std::future builds what it carries with no arguments first.
@@ -113,8 +149,7 @@ namespace ClaFi::PathArt
         std::unique_ptr<CloudMaps> m_cloudMaps{};
         // Kept from one frame to the next, so a frame of the same size allocates nothing.
         std::vector<PixelBand> m_cloudBands{};
-        // By pointer for the same reason as the clouds' maps.
-        std::future<std::unique_ptr<EarthMap>> m_earthMapBuilt{};
+        std::future<BuiltLand> m_landBuilt{};
         // Built off the paint from the first frame drawn on, and kept. See PathArt#satellitescene
         std::unique_ptr<EarthMap> m_earthMap{};
         // Kept from one frame to the next, as the clouds' are.
