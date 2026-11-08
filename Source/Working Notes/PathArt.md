@@ -806,6 +806,19 @@ class, the files, the module, the project's items, the colours' namespace and th
 keep their names. The showcase picks Realistic when no pick is kept. Of the pickers on the Scene
 page, only the look became radio buttons; Oj: "Only Look - Scenes will turn into tiles later".
 
+**The lower two layers of cloud stand higher** (Oj, 2026-11-09, "there are 3 layers of clouds -
+elevate the lowest two"). They stood 0.6 and 1.1 hundredths of the radius up, under the drawn
+Himalaya's 1.4. The globe is drawn as from far away, so a layer's height only moves it out from the
+centre by its height times the distance: raised to 1.3 and 1.55, the clouds moved about 5 pixels at
+the lowest view in 960 x 540, and fewer than a tenth of the pixels changed. Of evenly spaced (1.0,
+1.4, 1.8) and both above the ranges (1.3, 1.55), Oj picked the evenly spaced, worried that the
+artifacts the rim fade answers might come back. They do not: each layer fades by how far its own
+sphere faces the viewer, so its fade moves out with it. With the whole globe turning at full speed
+at 1280 x 720, the pixels at the rim that jumped by more than 40 from one frame to the next were
+0.055 percent on average and at most 0.119 before, and 0.055 and 0.121 raised; at 2560 x 1440 the
+rim looked the same. Shadows cast by the clouds, and letting the layers reach the rim, were offered
+as what would show the height; not taken.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4

@@ -423,7 +423,7 @@ of Greenland and Antarctica has none. About one town in 33 glows. The towns are 
 run.
 
 **Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks - see
-CloudKind. Each is a map on a sphere of its own, 0.6, 1.1 and 1.8 hundredths of the Earth's radius
+CloudKind. Each is a map on a sphere of its own, 1.0, 1.4 and 1.8 hundredths of the Earth's radius
 up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts east and back
 against the ground once a cycle, the higher layers further. The clouds fade into the haze as they
 near the limb, turn a moonlit blue-grey on the night side, and pass over the city lights.
