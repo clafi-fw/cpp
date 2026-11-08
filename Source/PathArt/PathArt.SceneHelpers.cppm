@@ -24,6 +24,15 @@ namespace ClaFi::PathArt
         [[nodiscard]] SceneFrame within(const Matrix3x2& local) const;
     };
 
+    // Where points lie on a sphere's map, and the ground each stands for. See PathArt#mapquery
+    export struct MapQuery
+    {
+        std::span<const float> longitudes; // in radians, any number of turns either way
+        std::span<const float> latitudes; // in radians
+        std::span<const float> longitudeSpans; // the longitudes a point's ground spans, in radians
+        std::span<const float> latitudeSpans; // the latitudes it spans, in radians
+    };
+
     // Which way a two-part limb bends when it can bend either way.
     export enum class BendToward
     {

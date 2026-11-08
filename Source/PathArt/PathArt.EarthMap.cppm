@@ -1,5 +1,7 @@
 export module ClaFi.PathArt.EarthMap;
 
+import ClaFi.PathArt.SceneHelpers;
+
 import ClaFi.StdLib;
 
 namespace ClaFi::PathArt
@@ -9,15 +11,6 @@ namespace ClaFi::PathArt
     {
         Detailed,   // every ridge the ground a point stands for leaves room for
         Broad       // smoothed to the ranges' broad shapes
-    };
-
-    // Where a row of points lies on the land, and the ground each stands for. See PathArt#landquery
-    export struct LandQuery
-    {
-        std::span<const float> longitudes; // in radians, any number of turns either way
-        std::span<const float> latitudes; // in radians
-        std::span<const float> longitudeSpans; // the longitudes a point's ground spans, in radians
-        std::span<const float> latitudeSpans; // the latitudes it spans, in radians
     };
 
     // The land at a row of points, one value per point in each. See PathArt#landpoints
@@ -51,7 +44,7 @@ namespace ClaFi::PathArt
         EarthMap();
     public:
         // The land at each point, as fine as the ground it stands for. See PathArt#earthmap
-        void readLand(const LandQuery&, Relief, const LandPoints&) const;
+        void readLand(const MapQuery&, Relief, const LandPoints&) const;
     private:
         // Height, the two slopes and the variation.
         TexelPyramid m_relief{};

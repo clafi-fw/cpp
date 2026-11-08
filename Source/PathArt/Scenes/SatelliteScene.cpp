@@ -78,12 +78,18 @@ namespace ClaFi::PathArt
         constexpr int k_bandRows{ 32 };
         // The shades of the clouds kept along the night's gradient.
         constexpr int k_cloudShadeCount{ 1024 };
-        // The globe's radius in pixels from which clouds and land are worked out every 4th pixel.
+        // The globe's radius in pixels from which the land is worked out every 4th pixel.
         constexpr float k_coarseRadius{ 3200.0f };
-        // The globe's radius in pixels from which the land is worked out at every 2nd pixel.
-        constexpr float k_landSecondPixelRadius{ 1300.0f };
+        // The globe's radius in pixels from which the land is worked out every 2nd pixel.
+        constexpr float k_secondPixelRadius{ 1300.0f };
         // The cover the stylized look's lighter tone starts from, showing nothing below it.
         constexpr float k_stylizedLeastCover{ 0.28f };
+        // The cover over which a stylized tone of cloud fades in, where the cover changes slowly.
+        constexpr float k_cloudToneFade{ 0.06f };
+        // The cover at which the stylized look's denser tone of cloud is halfway in.
+        constexpr float k_stylizedDenseCover{ 0.65f };
+        // How much of the sky the stylized look's lighter tone of cloud hides.
+        constexpr float k_lighterCloudShare{ 0.55f };
         // How high a height of 1 on the land's map stands, as a share of the Earth's radius.
         constexpr float k_reliefHeight{ 0.014f };
         // A Sun lower than this lights the slopes as from this. See PathArt#satellitescene
@@ -174,11 +180,13 @@ namespace ClaFi::PathArt
             float opacity; // where its map's cover is whole
         };
 
-        // Where the points of a row fall on a layer's map.
+        // Where the points of a row fall on a layer's map, and how far the ground about each spans.
         struct MapPoints
         {
             std::vector<float> longitudes;
             std::vector<float> latitudes;
+            std::vector<float> longitudeSpans;
+            std::vector<float> latitudeSpans;
         };
 
         // What a layer shows at the points of a row.
@@ -196,7 +204,7 @@ namespace ClaFi::PathArt
         {
             std::span<const CloudLayerView> layers;
             SceneLook look;
-            int step; // the pixels between the points the layers are worked out at, 1 or 4
+            int step; // the pixels between the points the layers are worked out at, 2, 4 or 8
             FloatPoint sphereCenter; // the highest layer's, in pixels
             FloatPoint sphereRadii; // the highest layer's, across and up, in pixels
             int left; // the first column in view
@@ -213,6 +221,22 @@ namespace ClaFi::PathArt
             __m256i before;
             __m256i after;
             __m256 shares;
+        };
+
+        // A value at 8 pixels, and how much it changes over each pixel.
+        struct SpreadLanes
+        {
+            __m256 values;
+            __m256 change;
+        };
+
+        // The points about each of 8 pixels: its own and the next, in the rows above and below it.
+        struct PointCorners
+        {
+            __m256 upperLeft;
+            __m256 upperRight;
+            __m256 lowerLeft;
+            __m256 lowerRight;
         };
 
         // A city's light where it shows this frame, and the opacity step it is drawn at.
@@ -370,6 +394,31 @@ namespace ClaFi::PathArt
                 _mm256_fnmadd_ps(_mm256_set1_ps(2.0f), share, _mm256_set1_ps(3.0f)));
         }
 
+        // How far an edge is softened to either side, with the reciprocal of the width it softens
+        // over, so edges that soften alike divide once.
+        struct SoftEdge
+        {
+            __m256 softness;
+            __m256 perWidth;
+        };
+
+        [[nodiscard]] SoftEdge softEdgeOf(const __m256 softness)
+        {
+            return { softness, _mm256_div_ps(_mm256_set1_ps(0.5f), softness) };
+        }
+
+        // 0 below `edge` less the softness, 1 above `edge` plus it, and an S-curve between.
+        [[nodiscard]] __m256 smoothStepAround(const __m256 edge, const SoftEdge& soft,
+            const __m256 value)
+        {
+            const __m256 scaled = _mm256_mul_ps(_mm256_add_ps(_mm256_sub_ps(value, edge),
+                soft.softness), soft.perWidth);
+            const __m256 share = _mm256_min_ps(_mm256_max_ps(scaled, _mm256_setzero_ps()),
+                _mm256_set1_ps(1.0f));
+            return _mm256_mul_ps(_mm256_mul_ps(share, share),
+                _mm256_fnmadd_ps(_mm256_set1_ps(2.0f), share, _mm256_set1_ps(3.0f)));
+        }
+
         // The angle of each point x, y from the x axis, to within two millionths of a radian.
         [[nodiscard]] __m256 quickAngle(const __m256 y, const __m256 x)
         {
@@ -420,6 +469,13 @@ namespace ClaFi::PathArt
             __m256 y;
             __m256 z;
             __m256 aroundAxis; // how far each is from the axis
+        };
+
+        // How far the ground about 8 points spans, in radians.
+        struct PointSpans
+        {
+            __m256 longitudes;
+            __m256 latitudes;
         };
 
         // A sphere at `center` with `radius` in the scene, placed by the canvas's pixels.
@@ -486,13 +542,84 @@ namespace ClaFi::PathArt
             };
         }
 
-        // Where the points of a row fall on the layer's map, and how clear of the haze each is,
-        // from the pixel center `firstPixelX` on, `step` pixels apart. See PathArt#satellitescene
+        // The pixels between the points the land is worked out at, 1, 2 or 4, by the globe's
+        // radius in pixels.
+        [[nodiscard]] int pointStepFor(const float radiusInPixels)
+        {
+            if (radiusInPixels >= k_coarseRadius)
+                return 4;
+            if (radiusInPixels >= k_secondPixelRadius)
+                return 2;
+            return 1;
+        }
+
+        // The share of the sphere's radius the ground about a point stands for, across and up, at a
+        // step: k_spanWidening times as wide as the points stand apart.
+        [[nodiscard]] FloatPoint pointSpanOf(const SphereView& sphere, const int step)
+        {
+            const float pointSpan = k_spanWidening * static_cast<float>(step);
+            return {
+                std::abs(sphere.fromPixel.x) * pointSpan,
+                std::abs(sphere.fromPixel.y) * pointSpan
+            };
+        }
+
+        // **The screen's two directions are turned as the points are**, and laid along east and
+        // north at each. A span adds what the two reach, so it bounds the ground about the point,
+        // `perPoint` of the radius across and up - see pointSpanOf. Near the rim the ground a point
+        // stands for runs on over the horizon, and its depth is held at k_leastSpanDepth. The
+        // reciprocals are good to 12 bits, ample for choosing a level of detail.
+        [[nodiscard]] PointSpans spansAt(const SphereRow& row, const SphereLanes& lanes,
+            const __m256 aroundAxis, const FloatPoint perPoint)
+        {
+            const __m256 nearness = _mm256_rcp_ps(
+                _mm256_max_ps(lanes.depth, _mm256_set1_ps(k_leastSpanDepth)));
+            const __m256 aroundInverse = _mm256_rcp_ps(aroundAxis);
+            // How fast the depth falls, across the screen and up it.
+            const __m256 fallAcross = _mm256_mul_ps(lanes.across, nearness);
+            const __m256 fallUp = _mm256_mul_ps(row.up, nearness);
+            const __m256 signBit = _mm256_set1_ps(-0.0f);
+            const auto size = [&](__m256 value) {
+                return _mm256_andnot_ps(signBit, value);
+            };
+            // How far a direction, tilted to `x` and `y` with the depth falling by `fall`, reaches
+            // east, in radians of arc, and north.
+            const auto reach = [&](__m256 x, __m256 y, __m256 fall) {
+                const __m256 alongAxis = _mm256_fmadd_ps(fall, row.tipSine,
+                    _mm256_mul_ps(y, row.tipCosine));
+                const __m256 towardViewer = _mm256_fnmadd_ps(fall, row.tipCosine,
+                    _mm256_mul_ps(y, row.tipSine));
+                const __m256 east = _mm256_mul_ps(_mm256_fmsub_ps(x, lanes.z,
+                    _mm256_mul_ps(towardViewer, lanes.x)), aroundInverse);
+                const __m256 north = _mm256_fmsub_ps(aroundAxis, alongAxis,
+                    _mm256_mul_ps(_mm256_mul_ps(lanes.y, _mm256_fmadd_ps(x, lanes.x,
+                        _mm256_mul_ps(towardViewer, lanes.z))), aroundInverse));
+                return std::array<__m256, 2>{ size(east), size(north) };
+            };
+            const std::array<__m256, 2> acrossReach = reach(row.tiltCosine,
+                _mm256_xor_ps(row.tiltSine, signBit), fallAcross);
+            const std::array<__m256, 2> upReach = reach(row.tiltSine, row.tiltCosine, fallUp);
+            const __m256 perPointAcross = _mm256_set1_ps(perPoint.x);
+            const __m256 perPointUp = _mm256_set1_ps(perPoint.y);
+            return {
+                .longitudes = _mm256_mul_ps(_mm256_fmadd_ps(acrossReach[0], perPointAcross,
+                    _mm256_mul_ps(upReach[0], perPointUp)), aroundInverse),
+                .latitudes = _mm256_fmadd_ps(acrossReach[1], perPointAcross,
+                    _mm256_mul_ps(upReach[1], perPointUp))
+            };
+        }
+
+        // Where the points of a row fall on the layer's map, how far the ground about each spans
+        // and how clear of the haze each is, from the pixel center `firstPixelX` on, `step` pixels
+        // apart. See PathArt#satellitescene
         void projectRow(const SphereView& sphere, const float pixelY, const float firstPixelX,
             const int step, MapPoints& onMap, std::span<float> clearness)
         {
             const SphereRow row = sphereRowAt(sphere, pixelY, firstPixelX, step);
             const __m256 spin = _mm256_set1_ps(sphere.spin);
+            const FloatPoint perPoint = pointSpanOf(sphere, step);
+            // At the pole east and north turn about the axis, and any pair of them will do.
+            const __m256 leastAroundAxis = _mm256_set1_ps(1.0e-4f);
             for (std::size_t i = 0; i != clearness.size(); i += 8)
             {
                 // Off the sphere the depth is 0, which leaves the point wholly in the haze.
@@ -500,25 +627,28 @@ namespace ClaFi::PathArt
                 _mm256_storeu_ps(onMap.longitudes.data() + i,
                     _mm256_sub_ps(quickAngle(lanes.x, lanes.z), spin));
                 _mm256_storeu_ps(onMap.latitudes.data() + i, quickAngle(lanes.y, lanes.aroundAxis));
+                const PointSpans spans = spansAt(row, lanes,
+                    _mm256_max_ps(lanes.aroundAxis, leastAroundAxis), perPoint);
+                _mm256_storeu_ps(onMap.longitudeSpans.data() + i, spans.longitudes);
+                _mm256_storeu_ps(onMap.latitudeSpans.data() + i, spans.latitudes);
                 _mm256_storeu_ps(clearness.data() + i, smoothStep8(0.0f, k_cloudHazeDepth,
                     lanes.depth));
             }
         }
 
-        // How much of the sky a map's cover hides in a look: two flat tones when stylized.
-        [[nodiscard]] __m256 coverShown(const __m256 cover, const SceneLook look)
+        // **How much of the sky a map's cover hides when stylized**: two flat tones, each edge
+        // softened by k_edgeSoftening of what the cover changes over the pixel, and no less than
+        // k_cloudToneFade.
+        [[nodiscard]] __m256 stylizedCoverShown(const SpreadLanes& cover)
         {
-            if (look == SceneLook::Realistic)
-                return cover;
-            return _mm256_fmadd_ps(_mm256_set1_ps(0.55f),
-                smoothStep8(k_stylizedLeastCover, 0.34f, cover),
-                _mm256_mul_ps(_mm256_set1_ps(0.45f), smoothStep8(0.62f, 0.68f, cover)));
-        }
-
-        // The cover up to which a look shows nothing.
-        [[nodiscard]] float leastCoverShown(const SceneLook look)
-        {
-            return look == SceneLook::Realistic ? 0.0f : k_stylizedLeastCover;
+            const SoftEdge soft = softEdgeOf(_mm256_max_ps(_mm256_mul_ps(cover.change,
+                _mm256_set1_ps(k_edgeSoftening)), _mm256_set1_ps(0.5f * k_cloudToneFade)));
+            const __m256 lighter = smoothStepAround(
+                _mm256_set1_ps(k_stylizedLeastCover + 0.5f * k_cloudToneFade), soft, cover.values);
+            const __m256 denser = smoothStepAround(_mm256_set1_ps(k_stylizedDenseCover), soft,
+                cover.values);
+            return _mm256_fmadd_ps(_mm256_set1_ps(k_lighterCloudShare), lighter,
+                _mm256_mul_ps(_mm256_set1_ps(1.0f - k_lighterCloudShare), denser));
         }
 
         // The night's colour mixed into the clouds', at its own opacity, along its gradient.
@@ -554,7 +684,12 @@ namespace ClaFi::PathArt
                 const CloudLayerView& layer = picture.layers[i];
                 projectRow(layer.sphere, pixelY, firstPixelX, picture.step, onMap,
                     points[i].clearness);
-                layer.map->readCover(onMap.longitudes, onMap.latitudes, points[i].covers);
+                layer.map->readCover({
+                    .longitudes = onMap.longitudes,
+                    .latitudes = onMap.latitudes,
+                    .longitudeSpans = onMap.longitudeSpans,
+                    .latitudeSpans = onMap.latitudeSpans
+                }, points[i].covers);
             }
         }
 
@@ -590,6 +725,44 @@ namespace ClaFi::PathArt
             return _mm256_fmadd_ps(_mm256_sub_ps(after, before), spread.shares, before);
         }
 
+        [[nodiscard]] PointCorners cornersAround(const std::vector<float>& upper,
+            const std::vector<float>& lower, const std::size_t point, const PointSpread& spread)
+        {
+            const auto at = [&](const std::vector<float>& values, std::size_t first) {
+                return _mm256_permutevar8x32_ps(_mm256_loadu_ps(values.data() + first),
+                    spread.before);
+            };
+            return {
+                .upperLeft = at(upper, point),
+                .upperRight = at(upper, point + 1),
+                .lowerLeft = at(lower, point),
+                .lowerRight = at(lower, point + 1)
+            };
+        }
+
+        // **A value spread over 8 pixels from the points about them**, and how much it changes
+        // over each: across and down added, as much as the pixel's square spans whichever way
+        // the value runs. Where a point is not a number, the change is not either.
+        [[nodiscard]] SpreadLanes spreadWithChange(const PointCorners& corners,
+            const __m256 downShare, const PointSpread& spread, const __m256 perPixel)
+        {
+            const __m256 left = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerLeft,
+                corners.upperLeft), downShare, corners.upperLeft);
+            const __m256 right = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerRight,
+                corners.upperRight), downShare, corners.upperRight);
+            const __m256 top = _mm256_fmadd_ps(_mm256_sub_ps(corners.upperRight,
+                corners.upperLeft), spread.shares, corners.upperLeft);
+            const __m256 bottom = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerRight,
+                corners.lowerLeft), spread.shares, corners.lowerLeft);
+            const __m256 signBit = _mm256_set1_ps(-0.0f);
+            const __m256 across = _mm256_andnot_ps(signBit, _mm256_sub_ps(right, left));
+            const __m256 downward = _mm256_andnot_ps(signBit, _mm256_sub_ps(bottom, top));
+            return {
+                .values = _mm256_fmadd_ps(_mm256_sub_ps(right, left), spread.shares, left),
+                .change = _mm256_mul_ps(_mm256_add_ps(across, downward), perPixel)
+            };
+        }
+
         // 8 pixels of a row from column `x` on, the last group stopping at the row's end.
         void storeEight(Color* pixels, const int x, const int width, const __m256i color)
         {
@@ -605,11 +778,11 @@ namespace ClaFi::PathArt
         }
 
         // **A row of cloud pixels, premultiplied, in one pass**: each layer's cover and haze are
-        // spread from the points the row stands between, the look cuts the cover, and the
-        // night's shade is laid at the opacity the layers leave. A pixel's cover lies between
-        // those of the points it is blended from, so 8 pixels whose points all fall short of what
-        // a layer's look shows skip that layer, and 8 that no layer covers are written clear.
-        // The last group of 8 stops at the row's end.
+        // spread from the points about each pixel, the look cuts the cover, and the night's shade
+        // is laid at the opacity the layers leave. A pixel's cover lies between those of its
+        // points, and a stylized edge softens no further than they differ, so 8 pixels whose
+        // points all fall short of what a layer's look shows skip that layer, and 8 that no layer
+        // covers are written clear. The last group of 8 stops at the row's end.
         void writeCloudRow(const CloudPicture& picture, const CloudPoints& upper,
             const CloudPoints& lower, const float downShare, const float rowNight, Color* pixels,
             const int width)
@@ -617,7 +790,25 @@ namespace ClaFi::PathArt
             const int step = picture.step;
             const PointSpread spread = pointSpreadAt(step);
             const __m256 down = _mm256_set1_ps(downShare);
-            const __m256 leastCover = _mm256_set1_ps(leastCoverShown(picture.look));
+            const bool realistic = picture.look == SceneLook::Realistic;
+            const __m256 perPixel = _mm256_set1_ps(1.0f / static_cast<float>(step));
+            const __m256 lighterEdge = _mm256_set1_ps(k_stylizedLeastCover
+                + 0.5f * k_cloudToneFade);
+            const __m256 denserEdge = _mm256_set1_ps(k_stylizedDenseCover);
+            const __m256 leastSoftness = _mm256_set1_ps(0.5f * k_cloudToneFade);
+            const __m256 softnessPerDifference = _mm256_mul_ps(perPixel,
+                _mm256_set1_ps(2.0f * k_edgeSoftening));
+            // The lanes of points the 8 pixels are spread from: their own points and, but at a
+            // step of 1, the next; when stylized each lane also stands for the next point after it.
+            const int pointLanes = realistic
+                ? (1 << (7 / step + (step == 1 ? 1 : 2))) - 1
+                : (1 << (7 / step + 1)) - 1;
+            const auto anyLane = [&](__m256 lanes) {
+                return (_mm256_movemask_ps(lanes) & pointLanes) != 0;
+            };
+            const auto everyLane = [&](__m256 lanes) {
+                return (_mm256_movemask_ps(lanes) & pointLanes) == pointLanes;
+            };
             std::array<__m256, k_cloudLayers.size()> opacities{};
             for (std::size_t i = 0; i != opacities.size(); ++i)
                 opacities[i] = _mm256_set1_ps(picture.layers[i].opacity);
@@ -638,23 +829,58 @@ namespace ClaFi::PathArt
             for (int x = 0; x < width; x += 8)
             {
                 const std::size_t point = static_cast<std::size_t>(x / step);
+                // **What a layer's look shows at the 8 pixels**, or nothing where none of them
+                // shows it. Each lane of points and the next point after it bound the cover of the
+                // pixels between them, and a stylized edge softens no further than twice what
+                // they differ by, so where the bounds lie inside one tone it is laid whole.
+                const auto shownBy = [&](const LayerPoints& upperLayer,
+                    const LayerPoints& lowerLayer) -> std::optional<__m256> {
+                    const __m256 upperCovers = _mm256_loadu_ps(upperLayer.covers.data() + point);
+                    const __m256 lowerCovers = _mm256_loadu_ps(lowerLayer.covers.data() + point);
+                    if (realistic)
+                    {
+                        if (!anyLane(_mm256_cmp_ps(_mm256_max_ps(upperCovers, lowerCovers),
+                            _mm256_setzero_ps(), _CMP_GT_OQ)))
+                        {
+                            return std::nullopt;
+                        }
+                        return pixelsBetween(upperCovers, lowerCovers, down, spread);
+                    }
+                    const __m256 nextUpper = _mm256_loadu_ps(upperLayer.covers.data() + point + 1);
+                    const __m256 nextLower = _mm256_loadu_ps(lowerLayer.covers.data() + point + 1);
+                    const __m256 top = _mm256_max_ps(_mm256_max_ps(upperCovers, lowerCovers),
+                        _mm256_max_ps(nextUpper, nextLower));
+                    const __m256 bottom = _mm256_min_ps(_mm256_min_ps(upperCovers, lowerCovers),
+                        _mm256_min_ps(nextUpper, nextLower));
+                    const __m256 softest = _mm256_max_ps(_mm256_mul_ps(
+                        _mm256_sub_ps(top, bottom), softnessPerDifference), leastSoftness);
+                    const __m256 highest = _mm256_add_ps(top, softest);
+                    const __m256 lowest = _mm256_sub_ps(bottom, softest);
+                    if (!anyLane(_mm256_cmp_ps(highest, lighterEdge, _CMP_GT_OQ)))
+                        return std::nullopt;
+                    if (everyLane(_mm256_cmp_ps(lowest, denserEdge, _CMP_GE_OQ)))
+                        return _mm256_set1_ps(1.0f);
+                    if (everyLane(_mm256_and_ps(_mm256_cmp_ps(lowest, lighterEdge, _CMP_GE_OQ),
+                        _mm256_cmp_ps(highest, denserEdge, _CMP_LE_OQ))))
+                    {
+                        return _mm256_set1_ps(k_lighterCloudShare);
+                    }
+                    return stylizedCoverShown(spreadWithChange(cornersAround(upperLayer.covers,
+                        lowerLayer.covers, point, spread), down, spread, perPixel));
+                };
                 __m256 transparency = one;
                 bool covered = false;
                 for (std::size_t i = 0; i != upper.size(); ++i)
                 {
-                    const __m256 upperCovers = _mm256_loadu_ps(upper[i].covers.data() + point);
-                    const __m256 lowerCovers = _mm256_loadu_ps(lower[i].covers.data() + point);
-                    const __m256 showing = _mm256_cmp_ps(
-                        _mm256_max_ps(upperCovers, lowerCovers), leastCover, _CMP_GT_OQ);
-                    if (_mm256_movemask_ps(showing) == 0)
+                    const std::optional<__m256> shown = shownBy(upper[i], lower[i]);
+                    if (!shown)
                         continue;
                     covered = true;
-                    const __m256 cover = pixelsBetween(upperCovers, lowerCovers, down, spread);
                     const __m256 clearness = pixelsBetween(
                         _mm256_loadu_ps(upper[i].clearness.data() + point),
                         _mm256_loadu_ps(lower[i].clearness.data() + point), down, spread);
-                    const __m256 hidden = _mm256_mul_ps(_mm256_mul_ps(opacities[i],
-                        coverShown(cover, picture.look)), clearness);
+                    const __m256 hidden = _mm256_mul_ps(_mm256_mul_ps(opacities[i], *shown),
+                        clearness);
                     transparency = _mm256_fnmadd_ps(hidden, transparency, transparency);
                 }
                 if (!covered)
@@ -720,7 +946,9 @@ namespace ClaFi::PathArt
                 groupedLength(static_cast<int>(groupedLength(width)) / step + 8);
             MapPoints onMap = {
                 .longitudes = std::vector<float>(pointLength),
-                .latitudes = std::vector<float>(pointLength)
+                .latitudes = std::vector<float>(pointLength),
+                .longitudeSpans = std::vector<float>(pointLength),
+                .latitudeSpans = std::vector<float>(pointLength)
             };
             const auto pointsOfRow = [&]() {
                 CloudPoints points;
@@ -732,29 +960,22 @@ namespace ClaFi::PathArt
                 return points;
             };
 
-            // At a step of 1 every row is a row of points, and the lower row is never read.
+            // At a step of 1 every row is a row of points, and the row below gives the change
+            // down each pixel.
             CloudPoints upper = pointsOfRow();
-            CloudPoints lower = step == 1 ? CloudPoints{} : pointsOfRow();
+            CloudPoints lower = pointsOfRow();
             samplePoints(picture, pixelYAt(0), firstPixelX, onMap, upper);
-            if (step != 1)
-                samplePoints(picture, pixelYAt(step), firstPixelX, onMap, lower);
+            samplePoints(picture, pixelYAt(step), firstPixelX, onMap, lower);
             for (int y = 0; y != rows; ++y)
             {
                 const int pastPoints = y % step;
                 if (y != 0 && pastPoints == 0)
                 {
-                    if (step == 1)
-                    {
-                        samplePoints(picture, pixelYAt(y), firstPixelX, onMap, upper);
-                    }
-                    else
-                    {
-                        std::swap(upper, lower);
-                        samplePoints(picture, pixelYAt(y + step), firstPixelX, onMap, lower);
-                    }
+                    std::swap(upper, lower);
+                    samplePoints(picture, pixelYAt(y + step), firstPixelX, onMap, lower);
                 }
                 const float downShare = static_cast<float>(pastPoints) / static_cast<float>(step);
-                writeCloudRow(picture, upper, step == 1 ? upper : lower, downShare,
+                writeCloudRow(picture, upper, lower, downShare,
                     nightAt(pixelYAt(y)), pixels.pixel(0, y), width);
             }
             return { static_cast<float>(left), static_cast<float>(top) };
@@ -816,13 +1037,6 @@ namespace ClaFi::PathArt
             std::span<const CoastEdge> coast; // the near side's coastlines, each loop closed
         };
 
-        // A value at 8 pixels, and how much it changes over each pixel.
-        struct SpreadLanes
-        {
-            __m256 values;
-            __m256 change;
-        };
-
         // How far 8 points or pixels lie past the edge of each stylized zone, 0 to 1.
         struct ZoneCuts
         {
@@ -830,22 +1044,6 @@ namespace ClaFi::PathArt
             __m256 sand;
             __m256 forest;
             __m256 tundra;
-        };
-
-        // The points about each of 8 pixels: its own and the next, in the rows above and below it.
-        struct PointCorners
-        {
-            __m256 upperLeft;
-            __m256 upperRight;
-            __m256 lowerLeft;
-            __m256 lowerRight;
-        };
-
-        // How far 8 points' ground spans, in radians.
-        struct GroundSpans
-        {
-            __m256 longitudes;
-            __m256 latitudes;
         };
 
         // The land at 8 points.
@@ -1049,49 +1247,6 @@ namespace ClaFi::PathArt
             }
         }
 
-        // **The screen's two directions are turned as the points are**, and laid along east and
-        // north at each. A span adds what the two reach, so it bounds the ground about the point,
-        // `perPoint` of the radius across and up. Near the rim the ground a point stands for runs
-        // on over the horizon, and its depth is held at k_leastSpanDepth.
-        [[nodiscard]] GroundSpans groundSpansAt(const SphereRow& row, const SphereLanes& lanes,
-            const __m256 aroundAxis, const FloatPoint perPoint)
-        {
-            const __m256 nearness = _mm256_div_ps(_mm256_set1_ps(1.0f),
-                _mm256_max_ps(lanes.depth, _mm256_set1_ps(k_leastSpanDepth)));
-            // How fast the depth falls, across the screen and up it.
-            const __m256 fallAcross = _mm256_mul_ps(lanes.across, nearness);
-            const __m256 fallUp = _mm256_mul_ps(row.up, nearness);
-            const __m256 signBit = _mm256_set1_ps(-0.0f);
-            const auto size = [&](__m256 value) {
-                return _mm256_andnot_ps(signBit, value);
-            };
-            // How far a direction, tilted to `x` and `y` with the depth falling by `fall`, reaches
-            // east, in radians of arc, and north.
-            const auto reach = [&](__m256 x, __m256 y, __m256 fall) {
-                const __m256 alongAxis = _mm256_fmadd_ps(fall, row.tipSine,
-                    _mm256_mul_ps(y, row.tipCosine));
-                const __m256 towardViewer = _mm256_fnmadd_ps(fall, row.tipCosine,
-                    _mm256_mul_ps(y, row.tipSine));
-                const __m256 east = _mm256_div_ps(_mm256_fmsub_ps(x, lanes.z,
-                    _mm256_mul_ps(towardViewer, lanes.x)), aroundAxis);
-                const __m256 north = _mm256_fmsub_ps(aroundAxis, alongAxis,
-                    _mm256_div_ps(_mm256_mul_ps(lanes.y, _mm256_fmadd_ps(x, lanes.x,
-                        _mm256_mul_ps(towardViewer, lanes.z))), aroundAxis));
-                return std::array<__m256, 2>{ size(east), size(north) };
-            };
-            const std::array<__m256, 2> acrossReach = reach(row.tiltCosine,
-                _mm256_xor_ps(row.tiltSine, signBit), fallAcross);
-            const std::array<__m256, 2> upReach = reach(row.tiltSine, row.tiltCosine, fallUp);
-            const __m256 perPointAcross = _mm256_set1_ps(perPoint.x);
-            const __m256 perPointUp = _mm256_set1_ps(perPoint.y);
-            return {
-                .longitudes = _mm256_div_ps(_mm256_fmadd_ps(acrossReach[0], perPointAcross,
-                    _mm256_mul_ps(upReach[0], perPointUp)), aroundAxis),
-                .latitudes = _mm256_fmadd_ps(acrossReach[1], perPointAcross,
-                    _mm256_mul_ps(upReach[1], perPointUp))
-            };
-        }
-
         // Where the points `first` to `end` of a row fall on the ground and how far the ground
         // about each spans, how the Sun stands over each and how far each faces the viewer, the
         // row's points standing from the pixel center `firstPixelX` on.
@@ -1104,11 +1259,7 @@ namespace ClaFi::PathArt
             const __m256 sunX = _mm256_set1_ps(picture.sun.x);
             const __m256 sunY = _mm256_set1_ps(picture.sun.y);
             const __m256 sunZ = _mm256_set1_ps(picture.sun.z);
-            const float pointSpan = k_spanWidening * static_cast<float>(picture.step);
-            const FloatPoint perPoint = {
-                std::abs(picture.ground.fromPixel.x) * pointSpan,
-                std::abs(picture.ground.fromPixel.y) * pointSpan
-            };
+            const FloatPoint perPoint = pointSpanOf(picture.ground, picture.step);
             // At the pole east and north turn about the axis, and any pair of them will do.
             const __m256 leastAroundAxis = _mm256_set1_ps(1.0e-4f);
             for (std::size_t i = first; i != end; i += 8)
@@ -1119,7 +1270,7 @@ namespace ClaFi::PathArt
                 _mm256_storeu_ps(points.latitudes.data() + i,
                     quickAngle(lanes.y, lanes.aroundAxis));
                 const __m256 aroundAxis = _mm256_max_ps(lanes.aroundAxis, leastAroundAxis);
-                const GroundSpans spans = groundSpansAt(row, lanes, aroundAxis, perPoint);
+                const PointSpans spans = spansAt(row, lanes, aroundAxis, perPoint);
                 _mm256_storeu_ps(points.longitudeSpans.data() + i, spans.longitudes);
                 _mm256_storeu_ps(points.latitudeSpans.data() + i, spans.latitudes);
                 const __m256 sunAcross = _mm256_fmadd_ps(lanes.x, sunX,
@@ -1183,18 +1334,6 @@ namespace ClaFi::PathArt
             };
         }
 
-        // 0 below `edge` less `soft`, 1 above `edge` plus `soft` and an S-curve between.
-        [[nodiscard]] __m256 smoothStepAround(const __m256 edge, const __m256 soft,
-            const __m256 value)
-        {
-            const __m256 scaled = _mm256_div_ps(_mm256_add_ps(_mm256_sub_ps(value, edge), soft),
-                _mm256_add_ps(soft, soft));
-            const __m256 share = _mm256_min_ps(_mm256_max_ps(scaled, _mm256_setzero_ps()),
-                _mm256_set1_ps(1.0f));
-            return _mm256_mul_ps(_mm256_mul_ps(share, share),
-                _mm256_fnmadd_ps(_mm256_set1_ps(2.0f), share, _mm256_set1_ps(3.0f)));
-        }
-
         // The height above which snow lies, falling from the tropics toward the pole.
         [[nodiscard]] __m256 snowlineAt(const __m256 latitudes)
         {
@@ -1243,7 +1382,7 @@ namespace ClaFi::PathArt
             const __m256 snowEdge = _mm256_add_ps(snowlineAt(ground.latitudes),
                 _mm256_set1_ps(0.04f));
             color = mixed(color, palette.snow, _mm256_mul_ps(_mm256_set1_ps(0.95f),
-                smoothStepAround(snowEdge, _mm256_set1_ps(0.04f), ground.heights)));
+                smoothStepAround(snowEdge, softEdgeOf(_mm256_set1_ps(0.04f)), ground.heights)));
 
             const __m256 light = reliefLight(ground);
             const __m256 zero = _mm256_setzero_ps();
@@ -1265,15 +1404,18 @@ namespace ClaFi::PathArt
         {
             const __m256 softening = _mm256_set1_ps(k_edgeSoftening);
             const __m256 leastSoftness = _mm256_set1_ps(0.5f * k_zoneFade);
-            const auto cut = [&](float edge, const SpreadLanes& field) {
-                return smoothStepAround(_mm256_set1_ps(edge), _mm256_max_ps(
-                    _mm256_mul_ps(field.change, softening), leastSoftness), field.values);
+            const auto softEdgeFor = [&](const SpreadLanes& field) {
+                return softEdgeOf(_mm256_max_ps(_mm256_mul_ps(field.change, softening),
+                    leastSoftness));
             };
+            const SoftEdge dry = softEdgeFor(dryness);
             return {
-                .steppe = cut(0.33f, dryness),
-                .sand = cut(0.6f, dryness),
-                .forest = cut(0.5f, forest),
-                .tundra = cut(0.5f, tundra)
+                .steppe = smoothStepAround(_mm256_set1_ps(0.33f), dry, dryness.values),
+                .sand = smoothStepAround(_mm256_set1_ps(0.6f), dry, dryness.values),
+                .forest = smoothStepAround(_mm256_set1_ps(0.5f), softEdgeFor(forest),
+                    forest.values),
+                .tundra = smoothStepAround(_mm256_set1_ps(0.5f), softEdgeFor(tundra),
+                    tundra.values)
             };
         }
 
@@ -1317,33 +1459,47 @@ namespace ClaFi::PathArt
             const __m256 bandSoftness = _mm256_max_ps(_mm256_mul_ps(heights.change, softening),
                 _mm256_set1_ps(1.0e-4f));
             const __m256 reach = _mm256_add_ps(heights.values, bandSoftness);
-            const auto lay = [&](const ColorLanes& tone, float share, __m256 edge) {
-                if (_mm256_movemask_ps(_mm256_cmp_ps(reach, edge, _CMP_GT_OQ)) == 0)
-                    return;
-                color = mixed(color, tone, _mm256_mul_ps(_mm256_set1_ps(share),
-                    smoothStepAround(edge, bandSoftness, heights.values)));
+            const auto reaches = [&](__m256 edge) {
+                return _mm256_movemask_ps(_mm256_cmp_ps(reach, edge, _CMP_GT_OQ)) != 0;
             };
-            lay(palette.slopeShadow, 0.13f, _mm256_set1_ps(k_lowestBand));
-            lay(palette.flatRock, 0.95f, _mm256_set1_ps(0.2f));
-            lay(palette.flatRockHigh, 0.9f, _mm256_set1_ps(0.42f));
-            lay(palette.snow, 0.97f, snowEdges);
+            // The bands lie above the lowest, so 8 pixels below it reach none.
+            const __m256 lowestBand = _mm256_set1_ps(k_lowestBand);
+            if (reaches(lowestBand))
+            {
+                const SoftEdge bandEdge = softEdgeOf(bandSoftness);
+                const auto lay = [&](const ColorLanes& tone, float share, __m256 edge) {
+                    if (!reaches(edge))
+                        return;
+                    color = mixed(color, tone, _mm256_mul_ps(_mm256_set1_ps(share),
+                        smoothStepAround(edge, bandEdge, heights.values)));
+                };
+                lay(palette.slopeShadow, 0.13f, lowestBand);
+                lay(palette.flatRock, 0.95f, _mm256_set1_ps(0.2f));
+                lay(palette.flatRockHigh, 0.9f, _mm256_set1_ps(0.42f));
+                lay(palette.snow, 0.97f, snowEdges);
+            }
 
             const __m256 toneSoftness = _mm256_max_ps(_mm256_mul_ps(light.change, softening),
                 _mm256_set1_ps(0.5f * k_toneFade));
             const __m256 shadedEdge = _mm256_set1_ps(k_shadedBelow - 0.5f * k_toneFade);
-            if (_mm256_movemask_ps(_mm256_cmp_ps(_mm256_sub_ps(light.values, toneSoftness),
-                shadedEdge, _CMP_LT_OQ)) != 0)
+            const __m256 litEdge = _mm256_set1_ps(k_litAbove + 0.5f * k_toneFade);
+            const bool shaded = _mm256_movemask_ps(_mm256_cmp_ps(
+                _mm256_sub_ps(light.values, toneSoftness), shadedEdge, _CMP_LT_OQ)) != 0;
+            const bool lit = _mm256_movemask_ps(_mm256_cmp_ps(
+                _mm256_add_ps(light.values, toneSoftness), litEdge, _CMP_GT_OQ)) != 0;
+            if (!shaded && !lit)
+                return color;
+            const SoftEdge toneEdge = softEdgeOf(toneSoftness);
+            if (shaded)
             {
                 color = mixed(color, palette.slopeShadow, _mm256_mul_ps(_mm256_set1_ps(0.34f),
                     _mm256_sub_ps(_mm256_set1_ps(1.0f),
-                        smoothStepAround(shadedEdge, toneSoftness, light.values))));
+                        smoothStepAround(shadedEdge, toneEdge, light.values))));
             }
-            const __m256 litEdge = _mm256_set1_ps(k_litAbove + 0.5f * k_toneFade);
-            if (_mm256_movemask_ps(_mm256_cmp_ps(_mm256_add_ps(light.values, toneSoftness),
-                litEdge, _CMP_GT_OQ)) != 0)
+            if (lit)
             {
                 color = mixed(color, palette.slopeLight, _mm256_mul_ps(_mm256_set1_ps(0.14f),
-                    smoothStepAround(litEdge, toneSoftness, light.values)));
+                    smoothStepAround(litEdge, toneEdge, light.values)));
             }
             return color;
         }
@@ -1424,7 +1580,7 @@ namespace ClaFi::PathArt
                     return std::span<float>{ values }.subspan(first, end - first);
                 };
                 projectGroundRow(picture, pixelY, firstPixelX, first, end, points);
-                const LandQuery query = {
+                const MapQuery query = {
                     .longitudes = part(points.longitudes),
                     .latitudes = part(points.latitudes),
                     .longitudeSpans = part(points.longitudeSpans),
@@ -1441,44 +1597,6 @@ namespace ClaFi::PathArt
                 });
                 colorPoints(picture, palette, first, end, points);
             }
-        }
-
-        [[nodiscard]] PointCorners cornersAround(const std::vector<float>& upper,
-            const std::vector<float>& lower, const std::size_t point, const PointSpread& spread)
-        {
-            const auto at = [&](const std::vector<float>& values, std::size_t first) {
-                return _mm256_permutevar8x32_ps(_mm256_loadu_ps(values.data() + first),
-                    spread.before);
-            };
-            return {
-                .upperLeft = at(upper, point),
-                .upperRight = at(upper, point + 1),
-                .lowerLeft = at(lower, point),
-                .lowerRight = at(lower, point + 1)
-            };
-        }
-
-        // **A value spread over 8 pixels from the points about them**, and how much it changes
-        // over each: across and down added, as much as the pixel's square spans whichever way
-        // the value runs. Where a point is not a number, the change is not either.
-        [[nodiscard]] SpreadLanes spreadWithChange(const PointCorners& corners,
-            const __m256 downShare, const PointSpread& spread, const __m256 perPixel)
-        {
-            const __m256 left = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerLeft,
-                corners.upperLeft), downShare, corners.upperLeft);
-            const __m256 right = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerRight,
-                corners.upperRight), downShare, corners.upperRight);
-            const __m256 top = _mm256_fmadd_ps(_mm256_sub_ps(corners.upperRight,
-                corners.upperLeft), spread.shares, corners.upperLeft);
-            const __m256 bottom = _mm256_fmadd_ps(_mm256_sub_ps(corners.lowerRight,
-                corners.lowerLeft), spread.shares, corners.lowerLeft);
-            const __m256 signBit = _mm256_set1_ps(-0.0f);
-            const __m256 across = _mm256_andnot_ps(signBit, _mm256_sub_ps(right, left));
-            const __m256 downward = _mm256_andnot_ps(signBit, _mm256_sub_ps(bottom, top));
-            return {
-                .values = _mm256_fmadd_ps(_mm256_sub_ps(right, left), spread.shares, left),
-                .change = _mm256_mul_ps(_mm256_add_ps(across, downward), perPixel)
-            };
         }
 
         // Whether the points about all 8 pixels lie whole in the same zones - see zoneKey.
@@ -2159,11 +2277,7 @@ namespace ClaFi::PathArt
             return;
         const float tip = -k_viewLatitude;
         const float radiusInPixels = globe.radius * toPixels.a;
-        int step = 1;
-        if (radiusInPixels >= k_coarseRadius)
-            step = 4;
-        else if (radiusInPixels >= k_landSecondPixelRadius)
-            step = 2;
+        const int step = pointStepFor(radiusInPixels);
         const LandPicture picture = {
             .map = m_earthMap.get(),
             .ground = sphereViewOf(toPixels, globe.center, globe.radius, globe.tilt, tip,
@@ -2330,7 +2444,8 @@ namespace ClaFi::PathArt
         const CloudPicture picture = {
             .layers = layers,
             .look = look(),
-            .step = globe.radius * pixelScale.x >= k_coarseRadius ? 4 : 1,
+            // The cloud maps' texels are twice the land's, and so are the points' steps.
+            .step = 2 * pointStepFor(globe.radius * pixelScale.x),
             .sphereCenter = toPixels.transform(globe.center),
             .sphereRadii = { outerRadius * pixelScale.x, outerRadius * pixelScale.y },
             .left = inView.left,

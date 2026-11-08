@@ -45,10 +45,13 @@ namespace ClaFi::PathArt
         [[nodiscard]] float innerShade(CloudKind, SpacePoint onSphere, std::uint32_t seed);
         // The point on the unit sphere at a longitude and latitude, in radians.
         [[nodiscard]] SpacePoint onSphereAt(float longitude, float latitude);
+        // About the base-2 logarithm of each positive value, within a hundredth.
+        [[nodiscard]] __m256 quickLog2(__m256 values);
     }
 
     // **The share covered is held exactly**: the cut is the noise's quantile for it, so a kind
-    // whose noise runs high is not cloudier for that.
+    // whose noise runs high is not cloudier for that. Each coarser level averages the 2 by 2
+    // texels under each of its own.
     CloudMap::CloudMap(const CloudKind kind, const std::uint32_t seed, const float cover)
     {
         const std::size_t texelCount = static_cast<std::size_t>(k_width) * k_height;
@@ -78,11 +81,19 @@ namespace ClaFi::PathArt
         const float cut = sorted[static_cast<std::size_t>(cutIndex)];
         const float softness = edgeSoftness(kind);
 
-        m_cover.resize(static_cast<std::size_t>(k_rowLength) * k_height + k_readPadding);
+        std::size_t texels = 0;
+        for (std::size_t level = 0; level != m_levelStarts.size(); ++level)
+        {
+            m_levelStarts[level] = static_cast<int>(texels);
+            texels += static_cast<std::size_t>((k_width >> level) + 1)
+                * static_cast<std::size_t>(k_height >> level);
+        }
+        m_cover.resize(texels + k_readPadding);
+        constexpr std::size_t k_finestRow{ k_width + 1 };
         spreadOverCores(k_height, [&](int row) {
             const float latitude = latitudeAt(row);
             const float* rowNoise = noise.data() + static_cast<std::size_t>(row) * k_width;
-            std::uint8_t* rowCover = m_cover.data() + static_cast<std::size_t>(row) * k_rowLength;
+            std::uint8_t* rowCover = m_cover.data() + static_cast<std::size_t>(row) * k_finestRow;
             for (int column = 0; column != k_width; ++column)
             {
                 const float shape = smoothStep(cut, cut + softness, rowNoise[column]);
@@ -98,33 +109,43 @@ namespace ClaFi::PathArt
             }
             rowCover[k_width] = rowCover[0];
         });
+
+        for (std::size_t level = 1; level != m_levelStarts.size(); ++level)
+        {
+            const std::size_t width = static_cast<std::size_t>(k_width >> level);
+            const std::uint8_t* finer = m_cover.data() + m_levelStarts[level - 1];
+            std::uint8_t* coarser = m_cover.data() + m_levelStarts[level];
+            spreadOverCores(k_height >> level, [&](int row) {
+                const std::uint8_t* upper = finer
+                    + 2 * static_cast<std::size_t>(row) * (2 * width + 1);
+                const std::uint8_t* lower = upper + 2 * width + 1;
+                std::uint8_t* rowCover = coarser + static_cast<std::size_t>(row) * (width + 1);
+                for (std::size_t column = 0; column != width; ++column)
+                {
+                    const int sum = upper[2 * column] + upper[2 * column + 1] + lower[2 * column]
+                        + lower[2 * column + 1];
+                    rowCover[column] = static_cast<std::uint8_t>((sum + 2) / 4);
+                }
+                rowCover[width] = rowCover[0];
+            });
+        }
     }
 
-    // **The map wraps round the longitudes** and stops at the poles, and between texel centers
-    // the cover is blended from the four nearest. Eight points at a time take one 4-byte read per
-    // row of texels: the texel and its right neighbour stand side by side in it, the last
-    // column's included. See PathArt#cloudmap
-    void CloudMap::readCover(const std::span<const float> longitudes,
-        const std::span<const float> latitudes, const std::span<float> covers) const
+    // **Eight points at a time**, each read between the two levels nearest the ground it stands
+    // for. Each level wraps round the longitudes and stops at the poles, and between texel
+    // centers the cover is blended from the four nearest: one 4-byte read per row of texels holds
+    // the texel and its right neighbour side by side, the last column's included. A last group
+    // short of eight is read from copies padded with its last point. See PathArt#cloudmap
+    void CloudMap::readCover(const MapQuery& query, const std::span<float> covers) const
     {
         constexpr float k_columnsPerRadian{ k_width / (2.0f * k_pi) };
         constexpr float k_rowsPerRadian{ k_height / k_pi };
-        const std::uint8_t* cover = m_cover.data();
-        const std::size_t count = covers.size();
-        const std::size_t groupedCount = count - count % 8;
-
-        const __m256 columnsPerRadian = _mm256_set1_ps(k_columnsPerRadian);
-        const __m256 rowsPerRadian = _mm256_set1_ps(k_rowsPerRadian);
         const __m256 half = _mm256_set1_ps(0.5f);
-        const __m256 northPole = _mm256_set1_ps(k_pi / 2.0f);
-        const __m256 lastRow = _mm256_set1_ps(static_cast<float>(k_height - 1));
-        const __m256 perByte = _mm256_set1_ps(1.0f / 255.0f);
-        const __m256i columnMask = _mm256_set1_epi32(k_width - 1);
-        const __m256i rowLength = _mm256_set1_epi32(k_rowLength);
-        const __m256i lastRowIndex = _mm256_set1_epi32(k_height - 1);
-        const __m256i oneRow = _mm256_set1_epi32(1);
+        const __m256i one = _mm256_set1_epi32(1);
         const __m256i byteMask = _mm256_set1_epi32(0xFF);
-        const int* readBase = reinterpret_cast<const int*>(cover);
+        const __m256i levelStarts = _mm256_loadu_si256(
+            reinterpret_cast<const __m256i*>(m_levelStarts.data()));
+        const int* readBase = reinterpret_cast<const int*>(m_cover.data());
         // The pair at the left column of a row: the left texel in the low byte, the right above.
         const auto blendPair = [&](__m256i pair, __m256 acrossShare) {
             const __m256 leftTexel = _mm256_cvtepi32_ps(_mm256_and_si256(pair, byteMask));
@@ -132,51 +153,89 @@ namespace ClaFi::PathArt
                 _mm256_and_si256(_mm256_srli_epi32(pair, 8), byteMask));
             return _mm256_fmadd_ps(_mm256_sub_ps(rightTexel, leftTexel), acrossShare, leftTexel);
         };
-        for (std::size_t i = 0; i != groupedCount; i += 8)
-        {
-            const __m256 across = _mm256_fmsub_ps(_mm256_loadu_ps(longitudes.data() + i),
-                columnsPerRadian, half);
-            // The maximum takes its second operand where the first is not a number, so every
-            // read stays inside the map.
+        // The maximum takes its second operand where the first is not a number, so every read
+        // stays inside its level.
+        const auto coverAt = [&](__m256i level, __m256 longitudes, __m256 latitudes) {
+            const __m256i width = _mm256_srlv_epi32(_mm256_set1_epi32(k_width), level);
+            const __m256i lastRow = _mm256_sub_epi32(
+                _mm256_srlv_epi32(_mm256_set1_epi32(k_height), level), one);
+            // Two to the minus level, its exponent laid in the bits.
+            const __m256 coarseness = _mm256_castsi256_ps(_mm256_slli_epi32(
+                _mm256_sub_epi32(_mm256_set1_epi32(127), level), 23));
+            const __m256 across = _mm256_fmsub_ps(longitudes,
+                _mm256_mul_ps(coarseness, _mm256_set1_ps(k_columnsPerRadian)), half);
             const __m256 down = _mm256_min_ps(_mm256_max_ps(_mm256_fmsub_ps(
-                _mm256_sub_ps(northPole, _mm256_loadu_ps(latitudes.data() + i)),
-                rowsPerRadian, half), _mm256_setzero_ps()), lastRow);
+                _mm256_sub_ps(_mm256_set1_ps(k_pi / 2.0f), latitudes),
+                _mm256_mul_ps(coarseness, _mm256_set1_ps(k_rowsPerRadian)), half),
+                _mm256_setzero_ps()), _mm256_cvtepi32_ps(lastRow));
             const __m256 leftColumn = _mm256_floor_ps(across);
             const __m256 topRow = _mm256_floor_ps(down);
-            const __m256 acrossShare = _mm256_sub_ps(across, leftColumn);
-            const __m256 downShare = _mm256_sub_ps(down, topRow);
-            const __m256i left = _mm256_and_si256(_mm256_cvttps_epi32(leftColumn), columnMask);
+            const __m256i left = _mm256_and_si256(_mm256_cvttps_epi32(leftColumn),
+                _mm256_sub_epi32(width, one));
             const __m256i top = _mm256_cvttps_epi32(topRow);
-            const __m256i bottom = _mm256_min_epi32(_mm256_add_epi32(top, oneRow), lastRowIndex);
-            const __m256i upperPair = _mm256_i32gather_epi32(readBase,
-                _mm256_add_epi32(_mm256_mullo_epi32(top, rowLength), left), 1);
-            const __m256i lowerPair = _mm256_i32gather_epi32(readBase,
-                _mm256_add_epi32(_mm256_mullo_epi32(bottom, rowLength), left), 1);
+            const __m256i bottom = _mm256_min_epi32(_mm256_add_epi32(top, one), lastRow);
+            const __m256i rowLength = _mm256_add_epi32(width, one);
+            const __m256i levelStart = _mm256_permutevar8x32_epi32(levelStarts, level);
+            const __m256i upperPair = _mm256_i32gather_epi32(readBase, _mm256_add_epi32(levelStart,
+                _mm256_add_epi32(_mm256_mullo_epi32(top, rowLength), left)), 1);
+            const __m256i lowerPair = _mm256_i32gather_epi32(readBase, _mm256_add_epi32(levelStart,
+                _mm256_add_epi32(_mm256_mullo_epi32(bottom, rowLength), left)), 1);
+            const __m256 acrossShare = _mm256_sub_ps(across, leftColumn);
             const __m256 upper = blendPair(upperPair, acrossShare);
             const __m256 lower = blendPair(lowerPair, acrossShare);
-            const __m256 blended = _mm256_fmadd_ps(_mm256_sub_ps(lower, upper), downShare, upper);
-            _mm256_storeu_ps(covers.data() + i, _mm256_mul_ps(blended, perByte));
-        }
-        for (std::size_t i = groupedCount; i != count; ++i)
+            return _mm256_fmadd_ps(_mm256_sub_ps(lower, upper), _mm256_sub_ps(down, topRow), upper);
+        };
+        // A point's ground spans as many texels as the greater of its two spans does.
+        const auto read = [&](const std::array<const float*, 4>& from) {
+            const __m256 longitudes = _mm256_loadu_ps(from[0]);
+            const __m256 latitudes = _mm256_loadu_ps(from[1]);
+            const __m256 level = quickLog2(_mm256_max_ps(
+                _mm256_mul_ps(_mm256_loadu_ps(from[2]), _mm256_set1_ps(k_columnsPerRadian)),
+                _mm256_mul_ps(_mm256_loadu_ps(from[3]), _mm256_set1_ps(k_rowsPerRadian))));
+            const __m256 held = _mm256_min_ps(_mm256_max_ps(level, _mm256_setzero_ps()),
+                _mm256_set1_ps(static_cast<float>(k_levels - 1)));
+            const __m256 finerLevel = _mm256_min_ps(_mm256_floor_ps(held),
+                _mm256_set1_ps(static_cast<float>(k_levels - 2)));
+            const __m256i finer = _mm256_cvttps_epi32(finerLevel);
+            const __m256 coarserShare = _mm256_sub_ps(held, finerLevel);
+            const __m256 finerCover = coverAt(finer, longitudes, latitudes);
+            if (_mm256_movemask_ps(_mm256_cmp_ps(coarserShare, _mm256_setzero_ps(),
+                _CMP_GT_OQ)) == 0)
+            {
+                return _mm256_mul_ps(finerCover, _mm256_set1_ps(1.0f / 255.0f));
+            }
+            const __m256 coarserCover = coverAt(_mm256_add_epi32(finer, one), longitudes,
+                latitudes);
+            return _mm256_mul_ps(_mm256_fmadd_ps(_mm256_sub_ps(coarserCover, finerCover),
+                coarserShare, finerCover), _mm256_set1_ps(1.0f / 255.0f));
+        };
+        const std::array<std::span<const float>, 4> queried = {
+            query.longitudes, query.latitudes, query.longitudeSpans, query.latitudeSpans
+        };
+        const std::size_t count = covers.size();
+        for (std::size_t first = 0; first < count; first += 8)
         {
-            const float across = longitudes[i] * k_columnsPerRadian - 0.5f;
-            const float down = std::clamp((k_pi / 2.0f - latitudes[i]) * k_rowsPerRadian - 0.5f,
-                0.0f, static_cast<float>(k_height - 1));
-            const float leftColumn = std::floor(across);
-            const float topRow = std::floor(down);
-            const int left = static_cast<int>(leftColumn) & (k_width - 1);
-            const int top = static_cast<int>(topRow);
-            const int bottom = std::min(top + 1, k_height - 1);
-            const std::uint8_t* upperTexels = cover
-                + static_cast<std::ptrdiff_t>(top) * k_rowLength;
-            const std::uint8_t* lowerTexels = cover
-                + static_cast<std::ptrdiff_t>(bottom) * k_rowLength;
-            const float acrossShare = across - leftColumn;
-            const float upper = std::lerp(static_cast<float>(upperTexels[left]),
-                static_cast<float>(upperTexels[left + 1]), acrossShare);
-            const float lower = std::lerp(static_cast<float>(lowerTexels[left]),
-                static_cast<float>(lowerTexels[left + 1]), acrossShare);
-            covers[i] = std::lerp(upper, lower, down - topRow) * (1.0f / 255.0f);
+            const std::size_t lanesUsed = std::min<std::size_t>(8, count - first);
+            if (lanesUsed == 8)
+            {
+                _mm256_storeu_ps(covers.data() + first, read({
+                    queried[0].data() + first, queried[1].data() + first,
+                    queried[2].data() + first, queried[3].data() + first
+                }));
+                continue;
+            }
+            std::array<std::array<float, 8>, 4> padded{};
+            for (std::size_t value = 0; value != 4; ++value)
+            {
+                for (std::size_t lane = 0; lane != 8; ++lane)
+                    padded[value][lane] = queried[value][first + std::min(lane, lanesUsed - 1)];
+            }
+            alignas(32) std::array<float, 8> paddedCovers{};
+            _mm256_store_ps(paddedCovers.data(), read({
+                padded[0].data(), padded[1].data(), padded[2].data(), padded[3].data()
+            }));
+            std::copy_n(paddedCovers.begin(), lanesUsed,
+                covers.begin() + static_cast<std::ptrdiff_t>(first));
         }
     }
 
@@ -338,6 +397,20 @@ namespace ClaFi::PathArt
                 std::sin(latitude),
                 std::cos(latitude) * std::cos(longitude)
             };
+        }
+
+        // The exponent's bits give the whole part, and a parabola through 1, 2 and the middle
+        // the rest from the mantissa. Zero comes out at -127, and every value as a number.
+        __m256 quickLog2(const __m256 values)
+        {
+            const __m256i bits = _mm256_castps_si256(values);
+            const __m256 exponent = _mm256_cvtepi32_ps(_mm256_sub_epi32(_mm256_srli_epi32(bits, 23),
+                _mm256_set1_epi32(127)));
+            const __m256 mantissa = _mm256_sub_ps(_mm256_castsi256_ps(_mm256_or_si256(
+                _mm256_and_si256(bits, _mm256_set1_epi32(0x7FFFFF)),
+                _mm256_set1_epi32(0x3F800000))), _mm256_set1_ps(1.0f));
+            return _mm256_fmadd_ps(mantissa, _mm256_fnmadd_ps(mantissa,
+                _mm256_set1_ps(0.3465557f), _mm256_set1_ps(1.3465557f)), exponent);
         }
     }
 }

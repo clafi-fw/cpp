@@ -471,6 +471,32 @@ whole step - 4 pixels there - as the Earth turned.
 - The stylized clouds' two tones still step toward the limb: their cover is cut at the pixel with
   a fixed fade, and the cloud maps are read at their finest.
 
+**The clouds are read as fine as the ground a point stands for** (2026-11-08). Oj: "Do both, I
+already know that draw rate dropped a bit (at least on GPU - both backends now show identical times,
+and GPU was faster before), and there no much of it to spare". The two were the cloud maps' levels
+of detail and the stylized tones softened by the cover's change over the pixel.
+
+- CloudMap keeps 8 levels of bytes, each averaged 2 by 2 from the one before, and readCover takes
+  the spans as readLand does. LandQuery became MapQuery in SceneHelpers, which both maps read.
+- At the steps the clouds had - every pixel below a radius of 3200, every 4th above - the cloud pass
+  cost twice as much at 800 x 600 and half again as much at 3436 x 2051. The spans cost little; the
+  second level's reads and each read's level arithmetic took the rest. The spans' six divisions
+  became two 12-bit reciprocals, which took 1.5 ms off at 3436 x 2051 and serve the land too.
+- A cloud texel is twice as wide as the land's, 8 pixels at 2296 x 1198 and 12 at 3436 x 2051, so
+  points every pixel or every 4th read the map far finer than it holds. The clouds are worked out at
+  twice the land's step: every 2nd, 4th or 8th pixel. Cloud pass, processor time a frame, before and
+  after: 800 x 600, 3.3 and 2.0 ms; 1600 x 900, 8.4 and 2.7; 2296 x 1198, 16 to 18 and 5.5; 3436 x
+  2051, 7 to 9 and 8.5 to 9.5. The clouds soften toward the limb, and at 3436 x 2051 the finest
+  wisps a little.
+- At 3436 x 2051 writing the pixels takes 6 to 7 ms of the 8.5 and working out the points 1.8.
+  Testing only the lanes of points the 8 pixels read, instead of all 8 lanes, changed little: the
+  clouds cover most of those pixels.
+- A stylized layer's 8 pixels take a whole tone without working out the change where the points
+  about them, widened by the softest edge they allow, lie inside it. Edges that soften alike share
+  one division, SoftEdge.
+- Whole Satellite frames on the container, before and after: 1600 x 900, 13 to 16 ms and 10 to 12;
+  2296 x 1198, 24 to 26 and 18 to 22; 3436 x 2051, 40 to 47 and 42 to 46; 800 x 600 about the same.
+
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the
 Sun, so through the shadow they show their backs, which were one flat gray (Oj, 2026-11-07, "one

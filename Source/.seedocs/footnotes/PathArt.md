@@ -128,16 +128,18 @@ What a cloud map's clouds look like:
 ## CloudMap
 
 How much cloud lies over each point of a sphere, 0 to 1, kept at 2048 points round each circle of
-latitude and 1024 from pole to pole. A map is cut from noise sampled on the sphere itself, so it
-has no seam where the longitudes meet and no pinch at the poles. The cut is set so that the share
-`cover` of its points holds cloud. One kind, seed and cover always make the same map.
+latitude and 1024 from pole to pole, and at 7 coarser levels of detail, each half as fine each way
+as the one before: 2.8 MB a map. A map is cut from noise sampled on the sphere itself, so it has no
+seam where the longitudes meet and no pinch at the poles. The cut is set so that the share `cover`
+of its points holds cloud. One kind, seed and cover always make the same map.
 
 **A map takes about a second of processor time to build**, spread over all the cores. Build it
 off the paint.
 
-**readCover() blends the four nearest points** of the map, wrapping round the longitudes any number
-of turns either way and stopping at the poles. It works through eight points at a time with AVX2,
-and several threads may call it at once.
+**readCover() reads each point as fine as the ground it stands for** - see MapQuery - between the
+two levels nearest it, as readLand() does. The reads wrap round the longitudes any number of turns
+either way and stop at the poles. readCover() works through eight points at a time with AVX2, and
+several threads may call it at once.
 
 ## EarthMap
 
@@ -162,7 +164,7 @@ build always makes the same maps.
 **Building the maps takes about 4 seconds of processor time**, spread over all the cores. Build them
 off the paint.
 
-**readLand() reads each point as fine as the ground it stands for** - see LandQuery. It takes the
+**readLand() reads each point as fine as the ground it stands for** - see MapQuery. It takes the
 two levels whose points lie about as far apart as that ground reaches, blends the four nearest
 points in each, then blends the two levels by how near each is. Detail finer than the points can
 hold fades out, so it does not shimmer as the view moves.
@@ -171,13 +173,13 @@ The reads wrap round the longitudes any number of turns either way and hold the 
 south of it. readLand() works through eight points at a time with AVX2, and several threads may
 call it at once.
 
-## LandQuery
+## MapQuery
 
 The four spans run in step, one value per point, and the longitudes set how many points are read.
 
 **A point's spans are how far the ground it stands for reaches**, in longitude and in latitude - for
 a point drawn as a pixel, the ground under that pixel. The greater of the two, counted in the map's
-points, picks the level of detail the land is read at. A span of 0 reads the finest.
+points, picks the level of detail the map is read at. A span of 0 reads the finest.
 
 ## LandPoints
 
@@ -321,19 +323,20 @@ and the land in the detailed relief, its colours blended - see SceneLook.
 processor with many cores. The clouds show from the first frame after, and the land is drawn in one
 flat colour per coastline until its map is ready. Each frame works the clouds and the land out in
 bands of rows spread over the cores - see spreadOverCores. On a globe over 3200 pixels in radius -
-a frame about 2800 pixels wide or more - both are worked out at every 4th pixel and row, and over
-1300 - a frame about 1130 pixels wide - the land at every 2nd. What lies between is blended before
-the look cuts the cover, the zones or the bands of height. The bands are laid in on all the cores as
-well - see Canvas drawPixelViews.
+a frame about 2800 pixels wide or more - the land is worked out at every 4th pixel and row, over
+1300 - a frame about 1130 pixels wide - at every 2nd, and below that at every pixel. The cloud maps'
+points stand twice as far apart as the land's, and so do the clouds' points. What lies between is
+blended before the look cuts the cover, the zones or the bands of height. The bands are laid in on
+all the cores as well - see Canvas drawPixelViews.
 
-**Each point reads the land as fine as the ground it stands for**, taken 1.4 times as wide as the
-points stand apart - see LandQuery. The ridges hold still as the Earth turns, and soften toward the
-limb, where each point stands for more ground.
+**Each point reads the land and the clouds as fine as the ground it stands for**, taken 1.4 times as
+wide as the points stand apart - see MapQuery. The ridges and the clouds hold still as the Earth
+turns, and soften toward the limb, where each point stands for more ground.
 
-**Each edge the stylized look cuts in the land is softened by what its field changes over the
-pixel**: the dryness and the cold at a zone's edge, the height at a band's, the light at a tone's.
-An edge stays sharp where its field changes slowly, and moves smoothly across the pixels where it
-changes fast, so it does not step from pixel to pixel as the Earth turns.
+**Each edge the stylized look cuts is softened by what its field changes over the pixel**: the
+dryness and the cold at a zone's edge, the height at a band's, the light at a tone's, the cover at a
+cloud's. An edge stays sharp where its field changes slowly, and moves smoothly across the pixels
+where it changes fast, so it does not step from pixel to pixel as the Earth turns.
 
 ## SatelliteScene Terminator
 

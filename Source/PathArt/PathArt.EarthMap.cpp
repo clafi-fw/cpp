@@ -439,7 +439,7 @@ namespace ClaFi::PathArt
     // **Eight points at a time**, each read between the two levels nearest the ground it stands
     // for: four texels at each level from the relief and from the cover. A last group short of
     // eight is read from copies padded with its last point.
-    void EarthMap::readLand(const LandQuery& query, const Relief relief,
+    void EarthMap::readLand(const MapQuery& query, const Relief relief,
         const LandPoints& points) const
     {
         const float leastReliefLevel = relief == Relief::Detailed ? 0.0f : k_broadLevel;
