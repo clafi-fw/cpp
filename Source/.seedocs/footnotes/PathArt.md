@@ -112,8 +112,10 @@ either way.
 **Only the CPU backend keeps pixels.** Direct2D copies a bitmap up to the GPU on every draw, so
 there a layer draws its part live.
 
-**A path clip does not reach the kept pixels.** They are laid in as drawBitmap lays a bitmap, which
-on the CPU backend stops at the clip's rectangle only.
+**A path clip does not reach the kept pixels.** They are laid in as drawPixelViews lays its views,
+which on the CPU backend stops at the clip's rectangle only.
+
+**The bands are laid in on all the cores at once** - see Canvas drawPixelViews.
 
 ## CloudKind
 
@@ -152,13 +154,6 @@ The spin of a falling flake or leaf, in turns. An even index turns clockwise by 
 `symmetryFactor`th of a turn a cycle, an odd one the other way and twice as fast, so a shape with
 that symmetry looks the same at both ends of the cycle. The index adds whole turns, which change
 nothing on screen.
-
-## spreadOverCores
-
-Runs `job` once for every index from 0 up to `count`, on as many threads as the processor has
-cores, the calling thread among them, and returns once every index has run. The threads take the
-next index as they come free, so jobs of uneven length still finish close together. `job` must be
-safe to run on several threads at once.
 
 ## PuppeteerScene
 
@@ -270,7 +265,8 @@ Realistic shows it as it is - see SceneLook.
 first frame after: a fraction of a second on a processor with many cores. Each frame works the
 clouds out in bands of rows spread over the cores - see spreadOverCores - and on a globe over 3200
 pixels in radius - a frame about 2800 pixels wide or more - at every 4th pixel and row, blended
-between before the look cuts the cover.
+between before the look cuts the cover. The bands are laid in on all the cores as well - see
+Canvas drawPixelViews.
 
 ## SatelliteScene Terminator
 

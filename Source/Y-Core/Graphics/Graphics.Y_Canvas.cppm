@@ -125,6 +125,8 @@ namespace ClaFi::Graphics
         void stagingDraw(const FloatRect& requestedRect, const StagingDrawFunc&);
         // Lays the view over what is there, read premultiplied and scaled by opacity.
         void drawPixelView(const PixelView& view, float opacity = 1.0f) const;
+        // Lays each view over what is there in turn, as drawPixelView does. See Graphics-Types
+        void drawPixelViews(std::span<const PixelView> views, float opacity = 1.0f) const;
         // Lays the bitmap over what is there at position. See Graphics-Types
         void drawBitmap(const Bitmap& bitmap, const FloatPoint& position,
             float opacity = 1.0f) const;

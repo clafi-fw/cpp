@@ -1213,14 +1213,18 @@ namespace ClaFi::PathArt
             drawn.at = rasterizeCloudBand(picture, bandTop, rows, drawn.pixels);
         });
 
-        // Direct2D places a bitmap through the canvas's transform, and the bands are in pixels.
-        const Matrix3x2 canvasTransform = frame.canvas.transform();
-        frame.canvas.resetTransform();
+        // Direct2D places a view through the canvas's transform, and the bands are in pixels.
+        std::vector<PixelView> views;
+        views.reserve(m_cloudBands.size());
+        const FloatRect canvasClip = frame.canvas.clipBox();
         for (const CloudBand& band : m_cloudBands)
         {
             if (!band.pixels.empty())
-                frame.canvas.drawBitmap(band.pixels, band.at);
+                views.push_back(band.pixels.pixelView(band.at, canvasClip));
         }
+        const Matrix3x2 canvasTransform = frame.canvas.transform();
+        frame.canvas.resetTransform();
+        frame.canvas.drawPixelViews(views);
         frame.canvas.setTransform(canvasTransform);
     }
 

@@ -519,6 +519,8 @@ namespace ClaFi::Graphics
         virtual void commitStagingView(const PixelView& view) = 0;
         // Lays the view over what is there, read premultiplied and scaled by opacity.
         virtual void drawPixelView(const PixelView& view, float opacity) = 0;
+        // Lays each view in turn as drawPixelView does, at one opacity. See Graphics-Types
+        virtual void drawPixelViews(std::span<const PixelView> views, float opacity);
         virtual void drawLine(FloatPoint pt1, FloatPoint pt2, const Brush& brush, float strokeWidth) = 0;
 
         virtual void drawRectangle(const FloatRect& rect, const Brush& brush, float strokeWidth) = 0;

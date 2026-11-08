@@ -83,8 +83,6 @@ namespace ClaFi::PathArt
     // A limb from `root` toward `target`, its end held within reach. See PathArt
     export [[nodiscard]] Limb reachToward(FloatPoint root, FloatPoint target, float upperLength,
         float lowerLength, BendToward);
-    // Runs `job` for every index below `count`, spread over the processor's cores. See PathArt
-    export void spreadOverCores(int count, const std::function<void(int)>& job);
 
     // An ellipse appended to the path, where PixelPath::drawEllipse starts a path of its own.
     export void addEllipse(PixelPath&, FloatPoint center, float radiusX, float radiusY);

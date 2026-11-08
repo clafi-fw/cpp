@@ -350,4 +350,15 @@ namespace ClaFi::Graphics
 
         m_currentPoint = matrix.transform(m_currentPoint);
     }
+
+    // ========================================================================
+    // Implementation: IBackend
+    // ========================================================================
+
+    // A backend with no faster way lays the views in one by one.
+    void IBackend::drawPixelViews(const std::span<const PixelView> views, const float opacity)
+    {
+        for (const PixelView& view : views)
+            drawPixelView(view, opacity);
+    }
 }

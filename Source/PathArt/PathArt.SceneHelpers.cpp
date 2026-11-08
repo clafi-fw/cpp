@@ -190,24 +190,6 @@ namespace ClaFi::PathArt
         return { joint, end };
     }
 
-    // The calling thread takes indices as well, so a count of 1 runs on it alone.
-    void spreadOverCores(const int count, const std::function<void(int)>& job)
-    {
-        std::atomic<int> nextIndex{ 0 };
-        const auto work = [&]() {
-            for (int index = nextIndex++; index < count; index = nextIndex++)
-                job(index);
-        };
-        const int cores = static_cast<int>(std::thread::hardware_concurrency());
-        const int helperCount = std::min(count, cores) - 1;
-        std::vector<std::future<void>> helpers;
-        for (int helper = 0; helper < helperCount; ++helper)
-            helpers.push_back(std::async(std::launch::async, work));
-        work();
-        for (std::future<void>& helper : helpers)
-            helper.get();
-    }
-
     void addEllipse(PixelPath& path, const FloatPoint center, const float radiusX,
         const float radiusY)
     {

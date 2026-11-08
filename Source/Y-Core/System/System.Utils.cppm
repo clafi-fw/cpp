@@ -162,6 +162,8 @@ namespace ClaFi
     // How long ago a moment was, in words - just now, 5 minutes ago, 3 days ago.
     export [[nodiscard]] std::wstring ageSpelling(std::chrono::sys_seconds moment,
         std::chrono::sys_seconds now);
+    // Runs `job` for every index below `count`, spread over the processor's cores. See UI-Types
+    export void spreadOverCores(int count, const std::function<void(int)>& job);
 
     // The one translation between the framework's text and a byte stream. wchar_t is UTF-16 on
     // Windows and UTF-32 on Linux, and both spellings arrive here as the same UTF-8, so a file

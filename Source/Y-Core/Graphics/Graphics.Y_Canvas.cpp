@@ -1079,6 +1079,12 @@ namespace ClaFi::Graphics
             m_backend->drawPixelView(view, opacity);
     }
 
+    void Canvas::drawPixelViews(const std::span<const PixelView> views, const float opacity) const
+    {
+        if (m_backend)
+            m_backend->drawPixelViews(views, opacity);
+    }
+
     void Canvas::drawBitmap(const Bitmap& bitmap, const FloatPoint& position,
         const float opacity) const
     {

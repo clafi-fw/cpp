@@ -94,6 +94,8 @@ namespace ClaFi::Graphics::Cpu
         {
             getActiveView().compositeSurface(view, view.topLeft(), opacity);
         }
+        // Spreads the rows over the cores, each laid in from every view in turn. See Graphics-Types
+        void drawPixelViews(std::span<const PixelView> views, float opacity) override;
 
         // ====================================================================
         // **Clean routing pass-throughs to re-decoupled modular painters**

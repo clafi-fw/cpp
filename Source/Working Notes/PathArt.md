@@ -372,6 +372,20 @@ from. The step now follows the globe's radius in pixels, 3200 and up taking ever
 frames under a scale stay as they were, and the same frame drawn without one (as the app draws) went
 from 33 to 37 ms of cloud work to 4 to 7 on the container.
 
+**The bands are laid in on all the cores** (2026-11-08). The same profile put 5.2 ms of the paint
+thread's frame on laying in bitmaps - 3.0 the space-and-ocean layer, 2.1 the cloud bands - against
+1.8 left for the clouds' own share, about 0.5 after the step. SceneLayer and drawClouds hand their
+bands to Canvas::drawPixelViews in one call, which the CPU backend spreads over the cores in strips
+of rows; see the Graphics-Types working note. Frames come out bit for bit as with the bands laid in
+one by one.
+
+**The form's fill under the scene stays.** The profile put 1.4 ms on MillSceneForm filling the whole
+window under the scene panel, and filling only the strips round the panel would save it - but the
+Mill draws on that fill. Drawn on a clear canvas it leaves 393,000 of a 900 x 600 frame's pixels
+short of opaque, and the Puppeteer a row across the frame about 1 percent short; the other six
+cover their frames whole. Leaving the fill out needs the scene to say it covers its frame, and no
+Scene says so yet.
+
 **In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the
 Sun, so through the shadow they show their backs, which were one flat gray (Oj, 2026-11-07, "one

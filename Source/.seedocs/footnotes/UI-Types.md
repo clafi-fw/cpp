@@ -487,3 +487,16 @@ being constructed. A default constructor of its own is fine. A string, a vector 
 would be destroyed through a garbage pointer.
 
 **Write every element before it is read.**
+
+## spreadOverCores
+
+Runs `job` once for every index from 0 up to `count`, on as many threads as the processor has
+cores, the calling thread among them, and returns once every index has run. The threads take the
+next index as they come free, so jobs of uneven length still finish close together.
+
+**`job` must be safe to run on several threads at once.** Each index runs once, on one thread.
+
+**A count of 1 runs on the calling thread alone**, and starts no thread.
+
+**Call it from outside a job.** Called inside one, every thread running the outer jobs starts
+helpers of its own, and the threads multiply.

@@ -113,8 +113,13 @@ namespace ClaFi::PathArt
             m_drawing(frame);
             return;
         }
+        // The bands stand in rows of their own, which the CPU backend lays in on several cores.
+        std::vector<PixelView> views;
+        views.reserve(m_bands.size());
+        const FloatRect canvasClip = frame.canvas.clipBox();
         for (const Band& band : m_bands)
-            frame.canvas.drawBitmap(band.pixels, band.at);
+            views.push_back(band.pixels.pixelView(band.at, canvasClip));
+        frame.canvas.drawPixelViews(views);
     }
 
     namespace

@@ -144,6 +144,26 @@ up to 65535, and the rounded product reaches 65152. Four million random groups o
 source channel against every alpha at five opacities, came out equal to the one pixel route, and the
 showcase scenes and the mill render bit for bit as before.
 
+## CpuBackend drawPixelViews
+
+**The bitmaps a scene keeps were laid in by the paint thread alone** (2026-11-08). In Oj's Visual
+Studio profile of the Satellite at 3436 x 2051 that was the largest share of the paint thread's
+frame: 3.0 ms for the space-and-ocean layer and 2.1 for the cloud bands, beside 2.8 for gradients,
+2.7 for the present and 2.4 each for the atmosphere and the coastlines.
+
+**A thread takes a strip of rows, not a view.** Threads on views would race where two views overlap,
+and lose the order a later view needs. A strip takes every view over it in turn, and
+compositeSurface reads its source and writes the target's rows and nothing else, so the result is
+the one-at-a-time one bit for bit: the Satellite at two times of its cycle came out the same as
+with the views laid in one by one.
+
+**32 rows a strip**, the height of SceneLayer's and the clouds' bands: a 2051-row frame gives 65
+strips to share out, and each is far more work than handing it to a thread. Two layers of 32-row
+bands over the whole frame, one opaque and one translucent, took 3.4 ms against 6.0 one by one at
+3436 x 2051 on the container's 2 cores, and 0.7 against 1.2 at 1600 x 900.
+
+**spreadOverCores moved to ClaFi.Core.System.Utils** for it, out of PathArt's SceneHelpers.
+
 ## ArcEllipse
 
 Both backends take the grown radii from the same conversion: the CPU backend cuts the arc into

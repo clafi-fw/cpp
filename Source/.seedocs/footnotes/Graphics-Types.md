@@ -99,6 +99,16 @@ Direct2D reads a bitmap. ShadowPainter's tiles are baked that way.
   it is.
 - Opacity scales all four channels alike.
 
+## Canvas drawPixelViews
+
+**Where two views meet, the later one lies over the earlier**, exactly as the same views handed to
+drawPixelView one at a time would lie. Each is read premultiplied, as drawBitmap reads a bitmap,
+and `opacity` goes on each alike.
+
+**Hand the views over in one call.** The CPU backend lays them in on all the cores at once, a strip
+of rows to a thread, and on two cores that nearly halves the time. Direct2D lays them in one at a
+time.
+
 ## Canvas fillEdgeIndicator
 
 **The band follows the outline along one side and round its two corners.** It is thickness deep
@@ -200,6 +210,19 @@ same bounds meet exactly.
 **The backend insets, the caller does not.** Direct2D and any stroked path centre the stroke on
 the geometry, so a backend built on one insets by half the stroke width. A caller that insets as
 well leaves half a pixel of surface outside the border.
+
+## IBackend drawPixelViews
+
+**An override gives what drawPixelView gives view by view**, in the order the views come. The
+default lays them in that way, one at a time.
+
+## CpuBackend drawPixelViews
+
+**Each strip of 32 rows is laid in by one thread**, from every view in the order given, so the order
+holds pixel by pixel and no two threads write the same pixel. Only the rows some view reaches inside
+the clip are visited, and the strips are shared out by spreadOverCores.
+
+**A path clip cuts the views at its rectangle**, as it cuts drawPixelView's.
 
 ## ScopedCanvasTransform
 

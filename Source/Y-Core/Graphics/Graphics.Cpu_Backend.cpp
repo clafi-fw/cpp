@@ -16,6 +16,11 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Graphics::Cpu
 {
+    namespace
+    {
+        // The rows one thread lays in at a time, where several views are laid in together.
+        constexpr int k_viewStripeRows{ 32 };
+    }
 
     CpuBackend::CpuBackend(IntSize size)
         :
@@ -362,6 +367,41 @@ namespace ClaFi::Graphics::Cpu
         return {};
     }
 #endif
+
+    // **A pixel is laid in from every view over it, in their order**, by the one thread that holds
+    // its rows, so the result is what drawPixelView gives view by view and no two threads write a
+    // pixel.
+    void CpuBackend::drawPixelViews(const std::span<const PixelView> views, const float opacity)
+    {
+        const PixelView target = getActiveView();
+        const FloatRect reach = target.clippedBounds();
+        float top = reach.bottom;
+        float bottom = reach.top;
+        for (const PixelView& view : views)
+        {
+            top = std::min(top, view.top());
+            bottom = std::max(bottom, view.bottom());
+        }
+        top = std::max(top, reach.top);
+        bottom = std::min(bottom, reach.bottom);
+        if (top >= bottom)
+            return;
+
+        const int firstRow = static_cast<int>(std::floor(top));
+        const int rowCount = static_cast<int>(std::ceil(bottom)) - firstRow;
+        const int stripeCount = (rowCount + k_viewStripeRows - 1) / k_viewStripeRows;
+        spreadOverCores(stripeCount, [&](int stripe) {
+            const float stripeTop = static_cast<float>(firstRow + stripe * k_viewStripeRows);
+            const PixelView rows = target.subView({
+                target.left(),
+                stripeTop,
+                target.right(),
+                stripeTop + static_cast<float>(k_viewStripeRows)
+            });
+            for (const PixelView& view : views)
+                rows.compositeSurface(view, view.topLeft(), opacity);
+        });
+    }
 
     void CpuBackend::drawLine(FloatPoint pt1, FloatPoint pt2, const Brush& brush, float strokeWidth)
     {
