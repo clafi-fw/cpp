@@ -1065,6 +1065,24 @@ of b800cba, flying and hanging, in both looks. Hanging at 300 seconds, a double 
 ground after a second as 207.8 more seconds of the Earth's turn light it, a quarter of its 831,
 for either way of turning; the clouds stand apart, as they drift on the scene's time.
 
+**The towns stand at least 0.2 degrees apart** (Oj, 2026-11-09, "Many still overlap", with a
+screenshot of the Black Sea at night, once pseudoRandom kept its whole fraction). Placed at random,
+a third of the 7300 towns had another within 0.1 degree, and about 4000 touched another four
+notches up at 3436 x 2051. Of a least spacing of 0.15, 0.2 and 0.25 degrees, in mockups of the
+scene's own towns, Oj picked 0.2, and glowing towns kept 1.5 degrees apart: 44 glows stood within a
+degree of another, and the 221 glows became 194.
+
+- A site too near a town already placed is tried again, so the counts stand. At 0.3 degrees the
+  7300 never all found room and the build never ended; 0.25 placed them. To watch: a larger
+  spacing, more towns or lighter weights can run past that, and nothing ends the loop.
+- The towns placed are kept by their cell of the towns' grid, and a site is held against the cells
+  townCellsNear gives: a row either side, and up to 3 columns either side at 72 degrees. It places
+  the same towns as holding each site against every town placed.
+- At 0.2 degrees about 700 towns still touch another four notches up, and none at the scale of
+  Oj's screenshot. With the whole globe in view about 4100 touch, as the lights shrink by the
+  square root of the globe's size; left as it is for now (Oj).
+- The towns spread evenly before the land's map is built are not spaced.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4

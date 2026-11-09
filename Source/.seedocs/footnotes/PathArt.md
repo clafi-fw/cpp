@@ -518,8 +518,10 @@ from 56 degrees south to 62 north. Then 1500 are tried at random points of the l
 random points of the coastline, a little inland, from 56 degrees south to 72 north, each kept by a
 weight: highest on low ground, and thinning with height, in the deep desert, in the tundra and a
 little in the northern forest. The towns over the land thin away from the coast as well. The ice
-of Greenland and Antarctica has none. About one town in 33 glows. The towns are the same on every
-run.
+of Greenland and Antarctica has none. No two towns stand within 0.2 degrees of each other, so their
+lights stand apart as the view comes down; with the whole globe in view they still touch. About one
+town in 38 glows, and no two glowing towns stand within 1.5 degrees: a town that would glow nearer
+is a plain light. The towns are the same on every run.
 
 **Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks - see
 CloudKind. Each is a map on a sphere of its own, 1.0, 1.4 and 1.8 hundredths of the Earth's radius

@@ -112,7 +112,7 @@ namespace ClaFi::PathArt
         constexpr float k_lively{ 6.0f };
         // How many opacities the city lights are drawn in, one fill each on Direct2D.
         constexpr int k_cityOpacitySteps{ 6 };
-        // The brightness above which a town glows: about one town in 33, some 220 of 7300.
+        // The brightness above which a town glows, unless a glow stands near: some 190 of 7300.
         constexpr float k_glowingBrightness{ 0.97f };
         // How far apart the points are where a shape's edge follows the rim.
         constexpr float k_rimStep{ 2.0f * k_degree };
@@ -348,6 +348,10 @@ namespace ClaFi::PathArt
         constexpr float k_townNorth{ 72.0f };
         constexpr int k_landTownCount{ 1500 }; // tried over the land
         constexpr int k_coastlineTownCount{ 5800 }; // tried on the coastline itself
+        // The least arc between two towns, in degrees, so their lights stand apart.
+        constexpr float k_leastTownSpacing{ 0.2f };
+        // The least arc between two glowing towns, in degrees, so their glows stand apart.
+        constexpr float k_leastGlowSpacing{ 1.5f };
 
         // Whether an outline lies under Greenland's or Antarctica's ice, by its points' middle.
         [[nodiscard]] bool isIceSheet(const std::span<const FloatPoint> outline)
@@ -368,15 +372,53 @@ namespace ClaFi::PathArt
                 % k_townGridColumns);
         }
 
+        // The towns' grid's row a latitude falls in, counted on past either end.
+        [[nodiscard]] int townRowAt(const float latitude)
+        {
+            return static_cast<int>(std::floor((k_townGridNorth - latitude) / k_townCellSize));
+        }
+
+        // The towns' grid's column a longitude falls in, counted on past either end.
+        [[nodiscard]] int townColumnAt(const float longitude)
+        {
+            return static_cast<int>(std::floor((longitude + 180.0f) / k_townCellSize));
+        }
+
         // The cell of the towns' grid a point of the map lies in, if the grid reaches it.
         [[nodiscard]] std::optional<std::size_t> townCellAt(const FloatPoint lonLat)
         {
-            const int row = static_cast<int>(
-                std::floor((k_townGridNorth - lonLat.y) / k_townCellSize));
+            const int row = townRowAt(lonLat.y);
             if (row < 0 || row >= k_townGridRows)
                 return std::nullopt;
-            const int column = static_cast<int>(std::floor((lonLat.x + 180.0f) / k_townCellSize));
-            return static_cast<std::size_t>(row) * k_townGridColumns + wrappedTownColumn(column);
+            return static_cast<std::size_t>(row) * k_townGridColumns
+                + wrappedTownColumn(townColumnAt(lonLat.x));
+        }
+
+        // **The cells of the towns' grid within `arc` degrees of a point**: the rows the arc spans
+        // either side, and the columns it spans in longitude where the farther of those rows lies,
+        // as a degree of longitude shortens toward the poles.
+        [[nodiscard]] std::vector<std::size_t> townCellsNear(const FloatPoint lonLat,
+            const float arc)
+        {
+            const int row = townRowAt(lonLat.y);
+            const int column = townColumnAt(lonLat.x);
+            const int rowsAcross = static_cast<int>(std::ceil(arc / k_townCellSize));
+            const float farthestLatitude = std::abs(lonLat.y) + arc;
+            const int columnsAcross = static_cast<int>(std::ceil(
+                arc / std::cos(farthestLatitude * k_degree) / k_townCellSize));
+            std::vector<std::size_t> cells;
+            const int firstRow = std::max(row - rowsAcross, 0);
+            const int lastRow = std::min(row + rowsAcross, k_townGridRows - 1);
+            for (int nearRow = firstRow; nearRow <= lastRow; ++nearRow)
+            {
+                for (int nearColumn = column - columnsAcross; nearColumn <= column + columnsAcross;
+                    ++nearColumn)
+                {
+                    cells.push_back(static_cast<std::size_t>(nearRow) * k_townGridColumns
+                        + wrappedTownColumn(nearColumn));
+                }
+            }
+            return cells;
         }
 
         // **Which cells of the towns' grid have their middle on land**, 1 for land. Each edge marks
@@ -3521,8 +3563,10 @@ namespace ClaFi::PathArt
     // **Each site is kept by a weight the land's map gives it**: highest on low ground, and
     // thinning with height, in the deep desert, in the tundra and a little in the northern forest.
     // The sites over the land weigh more the nearer they are to a coast; those on the coastline
-    // weigh the most. The ice sheet has none, though its coast counts. The sites are read from the
-    // map 8 at a time, as it reads 8 points at once. See PathArt#earthscene
+    // weigh the most. The ice sheet has none, though its coast counts. A site within
+    // k_leastTownSpacing of a town already placed is tried again, and a town that would glow within
+    // k_leastGlowSpacing of a glowing one is a plain light. The sites are read from the map 8 at a
+    // time, as it reads 8 points at once. See PathArt#earthscene
     std::vector<EarthScene::City> EarthScene::townsBy(const EarthMap& map,
         const std::span<const Coastline> coastlines)
     {
@@ -3560,6 +3604,33 @@ namespace ClaFi::PathArt
         std::array<float, 8> forest{};
         std::array<float, 8> tundra{};
         std::vector<City> towns;
+        // The towns placed so far by the cell of the towns' grid each stands in.
+        std::unordered_map<std::size_t, std::vector<Direction>> townsInCell;
+        std::vector<Direction> glowingTowns;
+        const float townSpacingCosine = std::cos(k_leastTownSpacing * k_degree);
+        const float glowSpacingCosine = std::cos(k_leastGlowSpacing * k_degree);
+        const auto cosineBetween = [](const Direction& first, const Direction& second) {
+            return first.x * second.x + first.y * second.y + first.z * second.z;
+        };
+        const auto standsNearTown = [&](const FloatPoint lonLat, const Direction& onEarth) {
+            for (const std::size_t cell : townCellsNear(lonLat, k_leastTownSpacing))
+            {
+                const auto placed = townsInCell.find(cell);
+                if (placed == townsInCell.end())
+                    continue;
+                for (const Direction& town : placed->second)
+                {
+                    if (cosineBetween(town, onEarth) > townSpacingCosine)
+                        return true;
+                }
+            }
+            return false;
+        };
+        const auto standsNearGlow = [&](const Direction& onEarth) {
+            return std::ranges::any_of(glowingTowns, [&](const Direction& glowingTown) {
+                return cosineBetween(glowingTown, onEarth) > glowSpacingCosine;
+            });
+        };
         // Tries the sites `siteAt` gives from seed `firstSeed` on, until `count` more towns stand.
         const auto placeTowns = [&](int count, int firstSeed, const auto& siteAt) {
             const std::size_t end = towns.size() + static_cast<std::size_t>(count);
@@ -3600,10 +3671,19 @@ namespace ClaFi::PathArt
                         * sites[i].coastWeight;
                     if (pseudoRandom(sites[i].seed, 74.0f) > weight)
                         continue;
-                    towns.push_back({
-                        .onEarth = Globe::onEarthAt(sites[i].lonLat),
-                        .brightness = pseudoRandom(sites[i].seed, 73.0f)
-                    });
+                    const Direction onEarth = Globe::onEarthAt(sites[i].lonLat);
+                    if (standsNearTown(sites[i].lonLat, onEarth))
+                        continue;
+                    float brightness = pseudoRandom(sites[i].seed, 73.0f);
+                    if (brightness > k_glowingBrightness)
+                    {
+                        if (standsNearGlow(onEarth))
+                            brightness = k_glowingBrightness;
+                        else
+                            glowingTowns.push_back(onEarth);
+                    }
+                    townsInCell[townCellAt(sites[i].lonLat).value()].push_back(onEarth);
+                    towns.push_back({ .onEarth = onEarth, .brightness = brightness });
                 }
             }
         };
