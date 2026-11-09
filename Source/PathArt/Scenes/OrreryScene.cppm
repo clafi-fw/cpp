@@ -18,6 +18,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
         void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
+        void drawIcon(Graphics::Canvas&, const FloatRect& bounds) const override;
     private:
         static void drawSpace(const SceneFrame&);
         static void drawFarOrbits(const SceneFrame&);

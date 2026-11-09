@@ -147,6 +147,27 @@ waiting out the double-click time, and the first click's toggle standing, Oj kep
 answers DoubleClickEvent on the panel itself and does not stop it, so FormBase::wnd_doubleClick
 hands the second press on to wnd_mouseDown as it does for every control that leaves it.
 
+**Every scene draws its own icon** (Oj, 2026-11-09, "Make the scene buttons big tiles with top
+icons, in rows"). Of a still of each scene, the scene's own sprite and eight new line pictograms,
+mocked up from the scene code, Oj picked the sprite. drawIcon is a pure virtual on Scene rather
+than a painter table in the showcase, because the colours a figure is drawn in - the Chase coats,
+the clockwork's metals - belong to the scene.
+
+- **Framing.** Each figure was posed in the mockup harness and its extent measured where alpha
+  passes 10 of 255. The pose is written about the centre of that extent, and SceneFrame::Spanning
+  is given its longer side, so the figure fills the shorter side of any bounds. At 48 pixels most
+  figures read as specks, so the showcase draws them in a 64-high slot.
+- **Clips.** Where the mockup's square cut a part, the code clips at bounds: the mill's reflection
+  and wing tips, the marionette's strings, the Earth's glow. The ghost's and the comet's glows
+  spill a few levels of alpha past bounds (3 to 9 of 255), unclipped.
+- **The mill wears Fresh Spring.** In the theme it is picked in - Calm Night with no pick stored -
+  the house is a dark grey that reads as nothing on a tile, and a tile is not repainted while a
+  theme is previewed. millColorsOf builds MillColors for draw and drawIcon alike.
+- **Shared colours.** The clockwork's four metals moved out of draw into the file's anonymous
+  namespace, and Saturn's colour into OrreryColors, so the icons draw with the scenes' own.
+- **Checked.** The icons match the mockup's; every scene's frames are bit-identical to before (the
+  eight scenes at eight times each, 256 x 160).
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.

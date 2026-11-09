@@ -136,6 +136,19 @@ namespace ClaFi::PathArt
         }
     }
 
+    void GhostScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
+    {
+        constexpr float k_figureSpan{ 546.0f };
+        const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
+        drawGhost(frame, GhostPose{
+            .center = FloatPoint{ frame.width * 0.5f, frame.height * 0.5f }
+                + FloatPoint{ -2.0f, -26.0f } * frame.unit,
+            .size = 3.3f * frame.unit,
+            .heading = 0.35f,
+            .cycleTime = 0.12f
+        });
+    }
+
     float GhostScene::groundY(const SceneFrame& frame, const float x)
     {
         const float share = std::clamp(x / frame.width, 0.0f, 1.0f);

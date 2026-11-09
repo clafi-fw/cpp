@@ -18,6 +18,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] std::wstring_view name() const override { return L"Comet"; }
         void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
+        void drawIcon(Graphics::Canvas&, const FloatRect& bounds) const override;
     private:
         // One pass of the comet: the curve it falls along and how far into the pass it is.
         struct Pass

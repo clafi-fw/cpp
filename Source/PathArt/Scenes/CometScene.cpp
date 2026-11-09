@@ -68,6 +68,23 @@ namespace ClaFi::PathArt
         drawLake(frame, time.cycleTime);
     }
 
+    void CometScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
+    {
+        constexpr float k_figureSpan{ 121.0f };
+        const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
+        const FloatPoint center = { frame.width * 0.5f, frame.height * 0.5f };
+        const auto at = [&frame, center](const float x, const float y) {
+            return center + FloatPoint{ x, y } * frame.unit;
+        };
+        drawComet(frame, CometPose{
+            .course = { .start = at(204.0f, -238.0f), .control = at(77.0f, -99.0f),
+                .end = at(-50.0f, 51.0f) },
+            .passTime = 0.9f,
+            .fallShare = 1.0f,
+            .cycleTime = 0.2f
+        });
+    }
+
     float CometScene::farRidgeY(const SceneFrame& frame, const float x)
     {
         const float share = x / frame.width;

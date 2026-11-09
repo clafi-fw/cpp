@@ -90,6 +90,19 @@ namespace ClaFi::PathArt
         m_valance.draw(frame);
     }
 
+    void PuppeteerScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
+    {
+        // From the feet to the top of the icon, where the strings are cut.
+        constexpr float k_figureSpan{ 580.0f };
+        const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
+        const float unit = frame.unit;
+        const FloatPoint feet = FloatPoint{ frame.width * 0.5f, frame.height * 0.5f }
+            + FloatPoint{ -15.0f, 285.0f } * unit;
+        canvas.pushClip(bounds);
+        drawMarionette(frame, danceMarionette(2.5f * unit, feet, 0.6f));
+        canvas.popClip();
+    }
+
     void PuppeteerScene::drawStage(const SceneFrame& frame)
     {
         const float unit = frame.unit;

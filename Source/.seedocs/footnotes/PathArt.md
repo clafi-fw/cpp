@@ -6,7 +6,8 @@ The words that do not fit above a declaration.
 
 A scene is a moving picture, drawn at a time into any bounds. Most of its motions run through a
 cycle and come back to where they began. The MillScene showcase holds a list of scenes, offers them
-by name() in the Scene group of its Scene page, and stores the one picked under that name.
+as tiles in the Scene group of its Scene page - drawIcon() over name() - and stores the one picked
+under that name.
 
 **A motion that comes round runs a whole number of times a cycle**, so the frame at the end of the
 cycle is the frame at its start and the loop shows no seam. A scene that needs a slow motion beside
@@ -20,6 +21,15 @@ keeps no time of its own.
 **A scene draws its figures as sprites and its weather as effects** - free functions that take a
 SceneFrame and a struct: a sprite's pose, an effect's extent. Each takes the time its motions run
 on, and comes round when that time runs a whole number of units a cycle.
+
+## Scene drawIcon
+
+**The figure fills bounds.** Its extent is framed to the shorter side and centred, so an icon of
+any size shows the whole figure with no margin. A part the square cuts - a string, a glow - is
+clipped at bounds.
+
+**One picture in every theme and look.** The figure is one of the scene's sprites in the colours
+the scene draws it in. MillScene's mill wears Fresh Spring's colours whatever theme is picked.
 
 ## Scene draw
 
@@ -161,7 +171,8 @@ for the motion to stay smooth.
 
 ## SceneFrame
 
-The shorter side of the frame is 600 units, and `unit` is the pixels in one. width and height
+The shorter side of the frame is 600 units - or the units given to Spanning() - and `unit` is the
+pixels in one. width and height
 are in pixels.
 
 **within() puts a local transform ahead of the frame's own**: what is drawn through the frame it

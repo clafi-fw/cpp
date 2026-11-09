@@ -36,6 +36,7 @@ namespace ClaFi::PathArt
 
         // Exact target bounds passed explicitly to anchor layout geometry
         void draw(Canvas& canvas, const FloatRect& bounds, SceneTime time) override;
+        void drawIcon(Canvas& canvas, const FloatRect& bounds) const override;
 
     private:
         void crossFadeToPickedTheme();

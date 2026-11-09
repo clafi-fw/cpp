@@ -59,8 +59,14 @@ namespace MillScene_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // The scenes stand in two lanes, the mill at the top of the first.
-    constexpr std::size_t k_sceneLaneSize{ 4 };
+    // The scenes stand as tiles in rows of four, the mill first.
+    constexpr std::size_t k_sceneTilesPerRow{ 4 };
+    // A tile's picture slot is wider than the figure it centres, room for a name on one line.
+    constexpr IconSize k_sceneIconSize{ 96.0f, 64.0f };
+    constexpr float k_sceneTilePadding{ 6.0f };
+    constexpr float k_sceneTileSpacing{ 8.0f };
+    // A scene's own options stand in lanes of four.
+    constexpr std::size_t k_optionLaneSize{ 4 };
 
     // A look the picker offers, by the name it shows and the config keeps.
     struct LookChoice
@@ -735,9 +741,10 @@ void MillSceneForm::buildScenePicker(AppMenuPage& page)
 {
     StackPanel& group = page.addGroup(L"Scene");
     SingleSelectionStackView& lanes = group.add<SingleSelectionStackView>(
-        Orientation::VerticalWrap,
-        LaneSize{ k_sceneLaneSize },
-        Spacing{ k_themeLaneSpacing, 0.0f },
+        Orientation::HorizontalWrap,
+        LaneSize{ k_sceneTilesPerRow },
+        ItemSizing::Equal,
+        Spacing{ k_sceneTileSpacing },
         VerticalAlign::Top
     );
 
@@ -760,9 +767,19 @@ void MillSceneForm::buildScenePicker(AppMenuPage& page)
             Text{ sceneAt(index).name() },
             Tag{ index },
             MouseFocus::Self, // an item: the press that focuses it makes it current
-            ButtonViewMode::TextLabel,
+            ButtonViewMode::TopCenterIcon,
+            k_sceneIconSize,
+            HorizontalTextAnchor::Center,
+            TextFormat{ TextAlign::Center },
+            Padding{ k_sceneTilePadding },
+            // Every tile takes the whole share of its row, so all come out the same width.
+            HorizontalAlign::Fill,
             ShowSelectionOnSurface::Yes
         );
+        // The scene is read off the button's own tag, so one painter answers for all of them.
+        item.onDrawIcon([this](DrawIconEvent& event) {
+            sceneAt(event.tag().value).drawIcon(event.canvas(), event.iconRect());
+            });
         item.onGetState([this, index](GetStateEvent& event) {
             event.state.selected = m_pickedScene == index;
             });
@@ -852,7 +869,7 @@ void MillSceneForm::buildLookPicker(AppMenuPage& page)
     section.setVisible(m_pickedScene == *scene);
     SingleSelectionStackView& lanes = section.body().add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
-        LaneSize{ k_sceneLaneSize },
+        LaneSize{ k_optionLaneSize },
         Spacing{ k_themeLaneSpacing, 0.0f },
         VerticalAlign::Top
     );
@@ -925,7 +942,7 @@ void MillSceneForm::buildChoicePicker(AppMenuPage& page, const std::size_t secti
     section.setVisible(m_pickedScene == choiceSection.sceneIndex);
     SingleSelectionStackView& lanes = section.body().add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
-        LaneSize{ k_sceneLaneSize },
+        LaneSize{ k_optionLaneSize },
         Spacing{ k_themeLaneSpacing, 0.0f },
         VerticalAlign::Top
     );

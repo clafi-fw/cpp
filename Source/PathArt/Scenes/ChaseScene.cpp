@@ -1254,6 +1254,44 @@ namespace ClaFi::PathArt
         drawFrontGrass(frame, travel);
     }
 
+    void ChaseScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
+    {
+        constexpr float k_figureSpan{ 567.0f };
+        const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
+        const float unit = frame.unit;
+        const FloatPoint center = { frame.width * 0.5f, frame.height * 0.5f };
+        drawHare(frame, HarePose{
+            .foot = center + FloatPoint{ 190.5f, 112.75f } * unit,
+            .size = 2.0f * unit,
+            .facing = 1.0f,
+            .air = 0.7f,
+            .stretch = 0.8f,
+            .bodyTurn = 0.0f,
+            .sitting = 0.0f,
+            .earTurn = 0.3f,
+            .earWiggle = 0.0f,
+            .footLift = 0.0f,
+            .holding = 0.0f,
+            .teeth = 0.0f
+        }, ChaseCoats::BrownHare);
+        drawWolf(frame, WolfPose{
+            .center = center + FloatPoint{ -89.5f, 7.75f } * unit,
+            .size = 2.3f * unit,
+            .turn = 0.0f,
+            .stride = 1.2f,
+            .leap = 0.6f,
+            .sprawl = 0.0f,
+            .onBack = 0.0f,
+            .dangle = 0.0f,
+            .dazed = 0.0f,
+            .headTurn = 0.0f,
+            .tongueTurn = 0.3f,
+            .jawOpen = 0.6f,
+            .glance = 0.0f,
+            .cycleTime = 0.0f
+        }, ChaseCoats::GreyWolf);
+    }
+
     float ChaseScene::travelAt(const float cycleTime)
     {
         const int episode = static_cast<int>(std::floor(cycleTime * k_episodesPerCycle));

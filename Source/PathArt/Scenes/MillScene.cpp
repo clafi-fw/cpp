@@ -40,6 +40,8 @@ namespace ClaFi::PathArt
             .duration{ .rise{ 555ms } },
             .easingFactor{ EasingFactor::EaseInOut }
         };
+
+        [[nodiscard]] MillColors millColorsOf(const SceneTheme&);
     }
 
     // **Always a fade in, never a cut.** The scene stands on a null theme - every colour zero and
@@ -140,16 +142,7 @@ namespace ClaFi::PathArt
             .size = mS,
             .wingTurns = time.cycleTime
         };
-        const MillColors millColors = {
-            .bodyTop = m_theme.millBodyTop,
-            .bodyBottom = m_theme.millBodyBottom,
-            .roofTop = m_theme.millRoofTop,
-            .roofBottom = m_theme.millRoofBottom,
-            .wingWood = m_theme.millWingWood,
-            .wingWoodStroke = m_theme.millWingWoodStroke,
-            .wingFabric = m_theme.millWingFabric,
-            .wingFabricStroke = m_theme.millWingFabricStroke
-        };
+        const MillColors millColors = millColorsOf(m_theme);
         drawMillHouse(frame, mill, millColors);
         drawWaterFoam(canvas, m_offset.x + w * 0.5f - 75.0f * mS, m_offset.y + h * 0.85f,
             m_objectsScale, time.cycleTime * 1.25f);
@@ -270,6 +263,27 @@ namespace ClaFi::PathArt
             .xRatio = 0.08f,
             .shape = GlowShape::Circle
         });
+    }
+
+    // In Fresh Spring's colours whatever theme is worn: an icon is one picture in every theme.
+    void MillScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
+    {
+        constexpr float k_figureSpan{ 480.0f };
+        constexpr Themes::FreshSpring k_iconTheme{};
+        const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
+        const float unit = frame.unit;
+        const MillPose mill = {
+            .base = { frame.width * 0.5f, frame.height * 0.5f + 240.0f * unit },
+            .size = 2.0f * unit,
+            .wingTurns = 0.06f
+        };
+        const MillColors millColors = millColorsOf(k_iconTheme);
+        // The house's reflection hangs below its foot, and the wing tips reach past the top.
+        canvas.pushClip(FloatRect{ bounds.left, bounds.top, bounds.right,
+            bounds.top + mill.base.y });
+        drawMillHouse(frame, mill, millColors);
+        drawMillWings(frame, mill, millColors);
+        canvas.popClip();
     }
 
     void MillScene::crossFadeToPickedTheme()
@@ -561,6 +575,23 @@ namespace ClaFi::PathArt
             PathDrawLayer::LinearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, topHsl.toColor(),
                 botHsl.toColor())
         }, &tx);
+    }
+
+    namespace
+    {
+        MillColors millColorsOf(const SceneTheme& theme)
+        {
+            return {
+                .bodyTop = theme.millBodyTop,
+                .bodyBottom = theme.millBodyBottom,
+                .roofTop = theme.millRoofTop,
+                .roofBottom = theme.millRoofBottom,
+                .wingWood = theme.millWingWood,
+                .wingWoodStroke = theme.millWingWoodStroke,
+                .wingFabric = theme.millWingFabric,
+                .wingFabricStroke = theme.millWingFabricStroke
+            };
+        }
     }
 
     //void MillScene::drawLightning(Canvas& canvas, float w, float h, FloatPoint offset, float t)

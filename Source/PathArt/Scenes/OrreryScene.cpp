@@ -27,6 +27,7 @@ namespace ClaFi::PathArt
         constexpr Color Orbit{ 0x299FB0FF };
         constexpr Color Rock{ 0xD98F8577 };
         constexpr Color PaleRock{ 0xD9C9B79C };
+        constexpr Color Saturn{ 0xFFE3C27A };
     }
 
     namespace
@@ -89,7 +90,7 @@ namespace ClaFi::PathArt
             Orbit{ Planet::Earth, 0.37f, 6.0f, 0.31f, 8.5f, Color{ 0xFF2F73D6 } },
             Orbit{ Planet::Mars, 0.46f, 4.0f, 0.83f, 6.2f, Color{ 0xFFC8613A } },
             Orbit{ Planet::Jupiter, 0.76f, 2.0f, 0.45f, 22.0f, Color{ 0xFFD9A066 } },
-            Orbit{ Planet::Saturn, 0.96f, 1.0f, 0.05f, 17.0f, Color{ 0xFFE3C27A } }
+            Orbit{ Planet::Saturn, 0.96f, 1.0f, 0.05f, 17.0f, OrreryColors::Saturn }
         };
         std::array<PlacedPlanet, 6> planets{};
         for (std::size_t i = 0; i != k_orbits.size(); ++i)
@@ -172,6 +173,21 @@ namespace ClaFi::PathArt
             if (placed->depth >= 0.0f && placed->outer)
                 drawPlanet(frame, placed->pose);
         }
+    }
+
+    void OrreryScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
+    {
+        constexpr float k_figureSpan{ 523.0f };
+        const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
+        drawPlanet(frame, PlanetPose{
+            .planet = Planet::Saturn,
+            .center = { frame.width * 0.5f, frame.height * 0.5f },
+            .radius = 115.0f * frame.unit,
+            .color = OrreryColors::Saturn,
+            .light = { -0.6f, -0.5f, 0.6f },
+            .orbitTilt = 0.3f,
+            .cycleTime = 0.1f
+        });
     }
 
     void OrreryScene::drawSpace(const SceneFrame& frame)

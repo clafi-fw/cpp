@@ -48,6 +48,10 @@ namespace ClaFi::PathArt
         constexpr float k_degree{ std::numbers::pi_v<float> / 180.0f };
         // Swings of the pendulum per cycle; each crossing of the middle releases one tooth.
         constexpr float k_swingsPerCycle{ 20.0f };
+        constexpr GearMetal k_brass{ Color{ 0xFFF0C766 }, Color{ 0xFF8C6223 } };
+        constexpr GearMetal k_brassBehind{ Color{ 0xFFC4943F }, Color{ 0xFF5E4015 } };
+        constexpr GearMetal k_copper{ Color{ 0xFFE39A6A }, Color{ 0xFF7D3B1C } };
+        constexpr GearMetal k_steel{ ClockworkColors::SteelLight, ClockworkColors::SteelShade };
 
         // How large the movement is drawn, and the point its parts are placed about.
         struct Movement
@@ -97,10 +101,6 @@ namespace ClaFi::PathArt
             k_swingsPerCycle * time.cycleTime);
         drawPendulum(frame, escapement);
 
-        constexpr GearMetal k_brass{ Color{ 0xFFF0C766 }, Color{ 0xFF8C6223 } };
-        constexpr GearMetal k_brassBehind{ Color{ 0xFFC4943F }, Color{ 0xFF5E4015 } };
-        constexpr GearMetal k_copper{ Color{ 0xFFE39A6A }, Color{ 0xFF7D3B1C } };
-        constexpr GearMetal k_steel{ ClockworkColors::SteelLight, ClockworkColors::SteelShade };
         const Gear escapeGear = {
             .teeth = 30,
             .center = escapeCenter,
@@ -138,6 +138,26 @@ namespace ClaFi::PathArt
         drawEscapement(frame, escapement);
         m_pipes.draw(frame);
         drawSteamAndNeedle(frame, center, size, time.cycleTime);
+    }
+
+    void ClockworkScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
+    {
+        constexpr float k_figureSpan{ 525.0f };
+        const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
+        const float unit = frame.unit;
+        const float toothSize = 22.0f * unit;
+        const Gear driver = {
+            .teeth = 14,
+            .center = FloatPoint{ frame.width * 0.5f, frame.height * 0.5f }
+                + FloatPoint{ -52.0f, 65.0f } * unit,
+            .phase = 0.1f,
+            .spokes = 5,
+            .metal = k_brass,
+            .pitchRadius = 175.0f * unit
+        };
+        const Gear driven = meshWith(driver, 9, -0.85f, 4, k_copper, toothSize);
+        drawGear(frame, driver, toothSize);
+        drawGear(frame, driven, toothSize);
     }
 
     void ClockworkScene::drawPlate(const SceneFrame& frame)

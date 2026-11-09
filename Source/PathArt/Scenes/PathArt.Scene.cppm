@@ -48,6 +48,8 @@ namespace ClaFi::PathArt
     public:
         // What the scene is called where it is offered to pick.
         [[nodiscard]] virtual std::wstring_view name() const = 0;
+        // The scene's own figure, filling bounds, where it is offered to pick. See PathArt
+        virtual void drawIcon(Graphics::Canvas&, const FloatRect& bounds) const = 0;
         // How long one cycle lasts at speed 1.
         [[nodiscard]] virtual std::chrono::seconds cycleDuration() const { return k_cycle; }
         // Readies what the scene keeps between frames for the params it is drawn with. See PathArt

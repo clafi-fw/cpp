@@ -4,6 +4,7 @@ module ClaFi.PathArt.EarthScene;
 
 import ClaFi.PathArt.CloudMap;
 import ClaFi.PathArt.EarthMap;
+import ClaFi.PathArt.PlanetSprite;
 import ClaFi.PathArt.SatelliteSprite;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
@@ -73,6 +74,7 @@ namespace ClaFi::PathArt
         constexpr Color FlatTundra{ 0xFF8E9070 };
         constexpr Color FlatRock{ 0xFF9A8565 };
         constexpr Color FlatRockHigh{ 0xFFB9AE9E };
+        constexpr Color IconOcean{ 0xFF2F6FB8 }; // the planet the scene's icon shows
     }
 
     namespace
@@ -2877,6 +2879,33 @@ namespace ClaFi::PathArt
             .orbitTime = fractionOf(orbits),
             .blinkTime = time.cycleTime * k_lively
         });
+    }
+
+    void EarthScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
+    {
+        constexpr float k_figureSpan{ 574.0f };
+        const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
+        const float unit = frame.unit;
+        const FloatPoint center = { frame.width * 0.5f, frame.height * 0.5f };
+        // The planet's glow is cut at the icon's edges.
+        canvas.pushClip(bounds);
+        drawPlanet(frame, PlanetPose{
+            .planet = Planet::Earth,
+            .center = center + FloatPoint{ -27.0f, 27.0f } * unit,
+            .radius = 200.0f * unit,
+            .color = EarthSceneColors::IconOcean,
+            .light = { -0.6f, -0.5f, 0.6f },
+            .orbitTilt = 0.25f,
+            .cycleTime = 0.3f
+        });
+        drawSatellite(frame, SatellitePose{
+            .center = center + FloatPoint{ 183.0f, -203.0f } * unit,
+            .size = 0.42f * unit,
+            .sunlit = 1.0f,
+            .orbitTime = 0.1f,
+            .blinkTime = 0.0f
+        });
+        canvas.popClip();
     }
 
     bool EarthScene::dragMovesViewFrom(const FloatPoint start, const FloatRect& bounds) const

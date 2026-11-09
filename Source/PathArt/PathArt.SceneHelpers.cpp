@@ -50,11 +50,16 @@ namespace ClaFi::PathArt
 
     SceneFrame SceneFrame::FromBounds(Canvas& canvas, const FloatRect& bounds)
     {
+        return Spanning(canvas, bounds, 600.0f);
+    }
+
+    SceneFrame SceneFrame::Spanning(Canvas& canvas, const FloatRect& bounds, const float units)
+    {
         return {
             .canvas = canvas,
             .width = bounds.width(),
             .height = bounds.height(),
-            .unit = std::min(bounds.width(), bounds.height()) / 600.0f,
+            .unit = std::min(bounds.width(), bounds.height()) / units,
             .toCanvas = Matrix3x2::Translation(bounds.topLeft())
         };
     }

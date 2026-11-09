@@ -20,6 +20,8 @@ namespace ClaFi::PathArt
         Matrix3x2 toCanvas; // from the scene's coordinates onto the canvas
 
         [[nodiscard]] static SceneFrame FromBounds(Canvas&, const FloatRect& bounds);
+        // A frame whose shorter side spans `units`, not 600 - an icon framed to its figure.
+        [[nodiscard]] static SceneFrame Spanning(Canvas&, const FloatRect& bounds, float units);
         // The same frame with `local` applied ahead of its own move onto the canvas.
         [[nodiscard]] SceneFrame within(const Matrix3x2& local) const;
     };
