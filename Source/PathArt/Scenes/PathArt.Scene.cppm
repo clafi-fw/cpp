@@ -67,11 +67,16 @@ namespace ClaFi::PathArt
         virtual void chooseOption(std::size_t, std::size_t) {}
         // Whether the scene answers a drag and the wheel by moving its view. See PathArt
         [[nodiscard]] virtual bool offersView() const { return false; }
+        // Whether a drag from the point, in the coordinates of bounds, moves the view. See PathArt
+        [[nodiscard]] virtual bool dragMovesViewFrom(FloatPoint, const FloatRect&) const
+        {
+            return offersView();
+        }
         // Moves the view by a drag across bounds, in the coordinates of bounds.
         virtual void dragView(FloatPoint, const FloatRect&) {}
         // Moves the view by wheel notches, counted as MouseWheelEvent counts them.
         virtual void scrollView(float) {}
-        // A press holds the view (true); letGoView is what ends the hold. See PathArt
+        // A drag holds the view (true); letGoView is what ends the hold. See PathArt
         virtual void holdView(bool) {}
         // Lets go of the view at the pointer's speed, 0 where it stood still. See PathArt
         virtual void letGoView(FloatPoint, const FloatRect&) {}

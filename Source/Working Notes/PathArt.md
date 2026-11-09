@@ -95,6 +95,27 @@ flag, Oj picked letGoView; holdView now only ever says true. ScenePanel hands ov
 glide starts at, 0 below the glide's 2 pixels a second, and lets go of a scene it shows away from
 at 0.
 
+**A drag takes hold of the view, and only from the globe** (Oj, 2026-11-09, "you can press
+anywhere and the rotation stops. And you may want press anywhere just to close a popup menu"). The
+press held the view and a still let-go hung the satellite, so every click did: one on the readings,
+which the panel's nested handlers caught, and the one that closes the backstage, which
+FormBase::wnd_mouseDown hands on to the control under the pointer once the popup is down. Read off
+the code and not seen: a single pixel of jitter in a click's last 80 ms made at least 12 pixels a
+second, a fling that re-aimed the orbit. Of the view taken once a drag leaves the click's slack,
+the same with a long press to hang, a press holding at once and giving the flight back on a click,
+and the framework keeping the press that closes a popup, Oj picked the first, adding "only presses
+on the ball itself should count, and the cursor should be set to handpoint while over the ball".
+
+- Scene::dragMovesViewFrom, a virtual answering offersView() by default; EarthScene answers for
+  the disc globeDiscAt places, the same one heldPointAt reads.
+- ScenePanel keeps a press only when it lands on the panel itself, not a control over it, and
+  where the scene says a drag moves the view. The slack is DragEvent::pastThreshold, 16 unscaled
+  pixels; the drag then starts from the press point, so the first step carries the whole slack and
+  is dated at the press - dated at the move, a slow drag past the slack let go at once would read
+  as a fling of up to 1920 pixels a second at 100%.
+- The hand comes from mouseMove asking the scene, so a wheel zoom under a still pointer leaves the
+  shape as it was until the pointer moves.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.

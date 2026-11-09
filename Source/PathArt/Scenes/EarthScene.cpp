@@ -2844,6 +2844,16 @@ namespace ClaFi::PathArt
         });
     }
 
+    bool EarthScene::dragMovesViewFrom(const FloatPoint start, const FloatRect& bounds) const
+    {
+        const GlobeDisc disc = globeDiscAt(bounds.width(), bounds.height(), m_view.altitude);
+        const FloatPoint fromCenter = {
+            start.x - bounds.left - disc.center.x,
+            start.y - bounds.top - disc.center.y
+        };
+        return std::hypot(fromCenter.x, fromCenter.y) <= disc.radius;
+    }
+
     // **A drag turns the globe the way the pointer goes, as a hand turns a ball**: the ground
     // under the middle of the view moves to where the drag takes it, about the axis square to
     // both, wherever the poles stand. On the orbit the turn is the orbit's among the stars, so
@@ -2887,7 +2897,7 @@ namespace ClaFi::PathArt
         m_viewTouched = true;
     }
 
-    // A press holds the globe still until it is let go.
+    // A drag holds the globe still until it is let go.
     void EarthScene::holdView(const bool held)
     {
         m_viewHeld = held;
@@ -4065,10 +4075,10 @@ namespace ClaFi::PathArt
         drawRing(globe.radius * 0.988f, globe.radius * 0.016f, 0.34f);
     }
 
-    // **The globe holds still while the viewer has the view**: from a press, a drag, a glide or a
-    // wheel notch until k_heldStill seconds after the last, then its motion eases back over
-    // k_easeBack. A frame the view was touched before counts the time since the last frame whole;
-    // after, the time is counted exactly however far apart the frames fall.
+    // **The globe holds still while the viewer has the view**: while a drag holds it, and until
+    // k_heldStill seconds after a wheel notch, then its motion eases back over k_easeBack. A frame
+    // the view was touched before counts the time since the last frame whole; after, the time is
+    // counted exactly however far apart the frames fall.
     double EarthScene::stillSecondsAt(const double sceneSeconds)
     {
         const double elapsed = m_lastFrameAt

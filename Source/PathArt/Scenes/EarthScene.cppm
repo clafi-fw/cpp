@@ -27,6 +27,8 @@ namespace ClaFi::PathArt
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
         [[nodiscard]] bool offersLooks() const override { return true; }
         [[nodiscard]] bool offersView() const override { return true; }
+        [[nodiscard]] bool dragMovesViewFrom(FloatPoint start,
+            const FloatRect& bounds) const override;
         void dragView(FloatPoint by, const FloatRect& bounds) override;
         void scrollView(float notches) override;
         void holdView(bool held) override;
@@ -255,7 +257,7 @@ namespace ClaFi::PathArt
         TurnDirection m_turnDirection{ TurnDirection::Eastward };
         // The turns the Earth stands ahead of its time's count, by a change of way or a restore.
         double m_earthTurnsAhead{};
-        bool m_viewHeld{}; // by a press
+        bool m_viewHeld{}; // by a drag
         bool m_viewTouched{}; // held, dragged or scrolled since the last frame
         std::optional<double> m_lastTouchAt{}; // in seconds of the scene's time
         std::optional<double> m_lastFrameAt{}; // likewise

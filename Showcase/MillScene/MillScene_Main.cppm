@@ -103,7 +103,7 @@ namespace MillScene_App
     // What the scenes keep their views and choices under, a section for each by its name.
     export constexpr std::wstring_view k_sceneViewsNodeName{ L"SceneViews" };
 
-    // The panel the scene covers whole; a drag and the wheel over it move the scene's view.
+    // The panel the scene covers whole; it hands the wheel and a drag on to the scene's view.
     class ScenePanel : public Panel
     {
     public:
@@ -113,13 +113,21 @@ namespace MillScene_App
         void showScene(PathArt::Scene&, const FloatRect& bounds);
         // Carries a drag let go on and brings the wheel's notches in, over the time since the last.
         void advanceView();
+        [[nodiscard]] CursorShape cursor() const override;
     protected:
         void paintSurface(PaintEvent&) override;
+        void mouseMove(MouseMoveEvent&) override;
         void nestedPressDown(PressDownEvent&) override;
         void nestedDrag(DragEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
         void nestedMouseWheel(MouseWheelEvent&) override;
     private:
+        // A press where a drag would move the view, kept until it is let go.
+        struct ViewPress
+        {
+            PointInForm pos;
+            Diagnostic::TimePoint at;
+        };
         // A move of the pointer in a drag, kept to tell how fast the drag went as it was let go.
         struct DragStep
         {
@@ -128,6 +136,7 @@ namespace MillScene_App
         };
     private:
         [[nodiscard]] bool movesView() const;
+        [[nodiscard]] bool dragMovesViewFrom(PointInForm) const;
     private:
         // The moves before a drag is let go that the speed it glides on at is taken from.
         static constexpr std::chrono::milliseconds k_glideWindow{ 80 };
@@ -139,6 +148,8 @@ namespace MillScene_App
         static constexpr float k_notchEasing{ 0.08f };
         PathArt::Scene* m_scene{ nullptr };
         FloatRect m_sceneBounds{};
+        std::optional<ViewPress> m_viewPress{};
+        bool m_pointerShowsHand{}; // where a drag from the pointer would move the view
         // Where the pointer stood at the last move of a drag that moves the view.
         std::optional<PointInForm> m_dragPos{};
         std::vector<DragStep> m_dragSteps{};
@@ -356,6 +367,8 @@ void ScenePanel::showScene(PathArt::Scene& scene, const FloatRect& bounds)
     {
         if (m_scene && m_dragPos)
             m_scene->letGoView({ 0.0f, 0.0f }, m_sceneBounds);
+        m_viewPress.reset();
+        m_pointerShowsHand = false;
         m_dragPos.reset();
         m_dragSteps.clear();
         m_glideSpeed = {};
@@ -392,29 +405,59 @@ void ScenePanel::advanceView()
     }
 }
 
+CursorShape ScenePanel::cursor() const
+{
+    return m_pointerShowsHand ? CursorShape::Hand : Panel::cursor();
+}
+
 void ScenePanel::paintSurface(PaintEvent& event)
 {
     emitEvent(event);
 }
 
-// A press stops a glide, as a hand stops a spinning globe, and holds the view until let go.
+void ScenePanel::mouseMove(MouseMoveEvent& event)
+{
+    Panel::mouseMove(event);
+    m_pointerShowsHand = dragMovesViewFrom(event.posOnForm);
+}
+
+// **A press is a click until the pointer leaves the slack a click is allowed**, and a click leaves
+// the scene moving as it was - the one that closes a menu over it as well. Only a press on the
+// scene itself counts, where a drag moves the view; one on a control over it is that control's.
 void ScenePanel::nestedPressDown(PressDownEvent& event)
 {
     Panel::nestedPressDown(event);
-    if (!movesView())
+    const PointInForm pressPos = event.clickPos();
+    if (event.control != this || !dragMovesViewFrom(pressPos))
         return;
-    m_dragPos = event.clickPos();
-    m_dragSteps.clear();
-    m_glideSpeed = {};
-    m_scene->holdView(true);
+    m_viewPress = ViewPress{
+        .pos = pressPos,
+        .at = Diagnostic::Clock::now()
+    };
 }
 
+// **Past the slack the drag takes hold of the view**: the glide stops, as a hand stops a spinning
+// globe, and the view moves by the whole way the pointer has gone from the press. That first step
+// is dated at the press, so a slow drag past the slack does not read as a fling.
 void ScenePanel::nestedDrag(DragEvent& event)
 {
-    if (!m_dragPos || !movesView())
+    if (!m_viewPress || !movesView())
     {
         Panel::nestedDrag(event);
         return;
+    }
+    event.lockHoveredControl();
+    event.stopPropagation();
+    Diagnostic::TimePoint stepAt = Diagnostic::Clock::now();
+    if (!m_dragPos)
+    {
+        if (!event.pastThreshold())
+            return;
+        stepAt = m_viewPress->at;
+        m_dragPos = m_viewPress->pos;
+        m_dragSteps.clear();
+        m_glideSpeed = {};
+        m_scene->holdView(true);
     }
     const PointInForm current = event.currentPos();
     const FloatPoint by = { current.x - m_dragPos->x, current.y - m_dragPos->y };
@@ -422,10 +465,8 @@ void ScenePanel::nestedDrag(DragEvent& event)
     if (by.x != 0.0f || by.y != 0.0f)
     {
         m_scene->dragView(by, m_sceneBounds);
-        m_dragSteps.push_back({ .at = Diagnostic::Clock::now(), .by = by });
+        m_dragSteps.push_back({ .at = stepAt, .by = by });
     }
-    event.lockHoveredControl();
-    event.stopPropagation();
 }
 
 // **The glide goes on at the speed of the drag's last moves**: those within k_glideWindow of the
@@ -434,6 +475,7 @@ void ScenePanel::nestedDrag(DragEvent& event)
 void ScenePanel::nestedPressUp(PressUpEvent& event)
 {
     Panel::nestedPressUp(event);
+    m_viewPress.reset();
     if (!m_dragPos)
         return;
     m_dragPos.reset();
@@ -474,6 +516,11 @@ void ScenePanel::nestedMouseWheel(MouseWheelEvent& event)
 bool ScenePanel::movesView() const
 {
     return m_scene && m_scene->offersView();
+}
+
+bool ScenePanel::dragMovesViewFrom(const PointInForm point) const
+{
+    return movesView() && m_scene->dragMovesViewFrom(point, m_sceneBounds);
 }
 
 void MillSceneForm::paintScene(PaintEvent& event)
