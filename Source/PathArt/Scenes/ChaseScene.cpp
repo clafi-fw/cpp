@@ -2448,7 +2448,7 @@ namespace ClaFi::PathArt
                 * Matrix3x2::Scale(size));
             const auto shadow = [&](float shadowWidth, float opacity) {
                 fillOval(onVerge, { 1.0f, 0.0f }, shadowWidth, 2.5f,
-                    SolidColor{ ChaseColors::Shadow.withOpacity(opacity) });
+                    SolidColor{ faded(ChaseColors::Shadow, opacity) });
             };
             switch (roadside)
             {
@@ -2725,7 +2725,7 @@ namespace ClaFi::PathArt
             if (offStalk > 0.0f)
             {
                 fillOval(onVerge, { capMoved.x + 1.0f, 0.0f }, 13.0f, 2.2f,
-                    SolidColor{ ChaseColors::Shadow.withOpacity(offStalk * offStalk) });
+                    SolidColor{ faded(ChaseColors::Shadow, offStalk * offStalk) });
             }
             const SceneFrame capFrame = onVerge.within(Matrix3x2::Translation(capMoved)
                 * Matrix3x2::Translation(0.0f, -20.0f) * Matrix3x2::Rotation(capTurn)

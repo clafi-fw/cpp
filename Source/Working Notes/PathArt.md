@@ -1524,6 +1524,14 @@ along the trail, and clearOfFar goes over them in that order, moving the place o
 place it is still within reach of. Over the first 1,000 cycles no near place stands within 500 units
 of a far one or within 700 of a stand. Frame time at 1920 x 1080 is the same within noise.
 
+Then (Oj, 22:22) "the side objects shadows are black". The shadow helper in drawRoadside and the
+toadstool cap's shadow called withOpacity on ChaseColors::Shadow, which sets a colour's alpha rather
+than scaling it, so the shadow's own 0x47 became 0xFF and the shadows of the apple, the banana peel,
+the signpost, the toadstool, the tree stump, the bird, the snail and the crow's stump were the
+shadow colour at full strength. They take faded, which scales the colour's own alpha, and match the
+shadows the hare and the wolf cast. ChaseColors::Puff, 0xB3, goes through withOpacity the same way
+for the duck's air streaks.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
