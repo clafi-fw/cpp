@@ -18,6 +18,8 @@ namespace ClaFi::PathArt
         float earTurn;
         float earWiggle;
         float footLift;
+        float holding; // 0 forepaws down, 1 raised to hold something at its chest
+        float teeth; // 0 mouth shut, 1 its two front teeth bared full length
     };
 
     export void drawHare(const SceneFrame&, const HarePose&);

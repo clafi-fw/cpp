@@ -14,6 +14,7 @@ namespace ClaFi::PathArt
     {
     public:
         [[nodiscard]] std::wstring_view name() const override { return L"Chase"; }
+        [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
     private:
         using TileDrawer = std::function<void(float tileLeft, float tileWidth)>;
@@ -28,5 +29,8 @@ namespace ClaFi::PathArt
         static void drawBackdrop(const SceneFrame&, float travel, float groundY);
         static void drawGround(const SceneFrame&, float travel, float groundY);
         static void drawFrontGrass(const SceneFrame&, float travel);
+    private:
+        // Three 20-second runs: two over obstacles, then the one into the branch.
+        static constexpr std::chrono::seconds k_cycle{ 60 };
     };
 }

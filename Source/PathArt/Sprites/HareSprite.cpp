@@ -22,6 +22,9 @@ namespace ClaFi::PathArt
         constexpr Color HareEye{ 0xFF2A1B10 };
         constexpr Color HareNose{ 0xFFD9787A };
         constexpr Color Whisker{ 0x805B3A1E };
+        constexpr Color Mouth{ 0xFF5A2A26 };
+        constexpr Color Tooth{ 0xFFFFFFFF };
+        constexpr Color ToothEdge{ 0xFFA89E94 };
     }
 
     // Drawn from the point between her feet, facing right; a negative facing mirrors her.
@@ -50,7 +53,8 @@ namespace ClaFi::PathArt
             SolidColor{ HareColors::HareTail });
 
         // The forelegs, the far one first, their angles measured from straight down.
-        const float reach = std::lerp(0.2f, -0.9f, air) + 0.4f * pose.sitting;
+        const float reach = std::lerp(std::lerp(0.2f, -0.9f, air) + 0.4f * pose.sitting, 2.4f,
+            pose.holding);
         const auto pawOf = [](FloatPoint shoulder, float angle, float length) {
             return shoulder + FloatPoint{ std::sin(angle), std::cos(angle) } * length;
         };
@@ -81,6 +85,29 @@ namespace ClaFi::PathArt
         fillDisc(hare, head + FloatPoint{ 4.8f, -4.0f }, 0.9f, SolidColor{ HareColors::EyeWhite });
         fillOval(hare, head + FloatPoint{ 14.0f, 1.5f }, 2.0f, 1.6f,
             SolidColor{ HareColors::HareNose });
+        if (pose.teeth > 0.0f)
+        {
+            // two front teeth under the nose, half a head long when bared
+            const float toothLength = 6.5f * pose.teeth;
+            fillOval(hare, head + FloatPoint{ 12.8f, 5.5f }, 3.4f, 1.0f + 1.6f * pose.teeth,
+                SolidColor{ HareColors::Mouth });
+            for (const float left : { 10.6f, 12.9f })
+            {
+                const FloatRect tooth = {
+                    head.x + left,
+                    head.y + 4.5f,
+                    head.x + left + 2.2f,
+                    head.y + 4.5f + toothLength
+                };
+                fillRoundedBox(hare, tooth, 0.7f, SolidColor{ HareColors::Tooth });
+                PixelPath edge;
+                edge.moveTo(tooth.left, tooth.top);
+                edge.lineTo(tooth.left, tooth.bottom);
+                edge.lineTo(tooth.right, tooth.bottom);
+                edge.lineTo(tooth.right, tooth.top);
+                strokeShape(hare, edge, SolidColor{ HareColors::ToothEdge }, 0.5f);
+            }
+        }
         PixelPath whiskers;
         whiskers.moveTo(head + FloatPoint{ 12.0f, 4.0f });
         whiskers.lineTo(head + FloatPoint{ 22.0f, 2.0f });

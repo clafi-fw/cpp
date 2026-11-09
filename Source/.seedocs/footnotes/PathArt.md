@@ -486,16 +486,37 @@ strobe 20 times, and the panels' glints sweep twice.
 
 A clumsy wolf chases a hare across a landscape that scrolls past and comes round again.
 
-**Two 20-second episodes a cycle.** In the first the wolf trips over what lies on the trail and
-lands on his belly. In the second he closes in and snaps at the hare's tail, drops back spent, then
-gathers himself and leaps at her with his jaws wide open. A branch meets him in the middle of the
-air, shuts his jaws and drops him onto his back. Each time the camera slows to a stop while he lies
-dazed, the hare turns round to taunt him, and the chase picks up again.
+**Three 20-second episodes a cycle**, so a cycle is a minute long. In the first two the wolf gains
+on the hare ever faster, her ears going flat, until he trips over what lies on the trail and lands
+on his belly, while she runs on to a safe distance. In the third he closes in and snaps at the
+hare's tail, drops back spent, then gathers himself and leaps at her with his jaws wide open. The
+low branch of an apple tree meets him in the middle of the air, shuts his jaws and drops him onto
+his back, and apples shaken loose fall round the trunk. Each time the camera slows to a stop while
+he lies dazed, the hare turns round to taunt him, and the chase picks up again; under the apple tree
+she hops back to a fallen apple and eats it at him, teeth bared.
 
-**The first episode's obstacle changes every cycle** - a log, an apple, a boot, a hedgehog, and
-round again - going by SceneTime cyclesPassed, so a host that does not count the cycles shows the
-log every time. The hedgehog rolls into a ball once the hare has passed over it, and walks off once
-the wolf is down.
+**What lies on the trail changes every run** - a banana peel, a boot, an apple, a hedgehog, a rubber
+duck, a ball, a patch of grass, a rake, two a cycle and round again - going by SceneTime
+cyclesPassed, so a host that does not count the cycles shows the banana peel and the boot every
+time. The peel shoots out from under his paw and spins, the boot falls over and the apple splits in
+two. The hedgehog rolls into a ball once the hare has passed over it, and walks off once the wolf is
+down. The duck goes flat under his paws, the ball rolls on a little and, while he lies dazed, a
+little way back, the grass flattens under him and springs back, and the rake's handle swings up into
+his face.
+
+**Something stands by the path in every run** and slows neither of them. It passes partway into the
+run, and early in the run to the tree, before the wolf closes in. There are twelve, one for each run
+of the four cycles the trail obstacles take: a banana peel, a signpost, a bird, an apple, a
+toadstool, a butterfly, the mill's reeds, a boulder, a frog, a daisy, a tree stump and a snail. The
+banana peel and the apple each come by earlier in the run that ends on one on the trail, and a host
+that does not count the cycles shows the first three every time.
+
+**They stir as the two go by.** The reeds and the daisy bend in the wind of their passing, and the
+wolf's wake strips the reeds' heads of their fluff and the daisy of petals. The signpost's board
+spins round and is left pointing back the way they came, the boulder, the banana peel and the apple
+bounce after each of them, and the toadstool's cap hops on its stalk, then off it to land beside it.
+The bird and the butterfly fly off, the frog hops back into the grass, and the snail draws into its
+shell until the wolf is by.
 
 **The landscape is layers at their own speeds** - clouds, mountains, hills, the ground and the
 grass in front, each a share of the camera's speed. Each layer is tiled with a period that the

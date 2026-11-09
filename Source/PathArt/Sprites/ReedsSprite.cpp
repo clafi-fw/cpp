@@ -18,7 +18,8 @@ namespace ClaFi::PathArt
         Hsl headBottom{ colors.head };
         headTop.scaleLuminosity(1.15f);
         headBottom.scaleLuminosity(0.85f);
-        for (int r = 0; r != 2; ++r)
+        const int drawings = pose.inWater ? 2 : 1;
+        for (int r = 0; r != drawings; ++r)
         {
             const float reflection = static_cast<float>(r);
             for (int i = 0; i < 3; ++i)
@@ -28,7 +29,7 @@ namespace ClaFi::PathArt
                 const float sway = std::sin((pose.cycleTime + (reflection * 0.5f)) * k_2Pi + index)
                     * 0.08f;
                 const Matrix3x2 place = Matrix3x2::Translation(x, pose.base.y)
-                    * Matrix3x2::Rotation((sway + (reflection * 0.5f)) * k_2Pi)
+                    * Matrix3x2::Rotation((sway + (reflection * 0.5f)) * k_2Pi + pose.lean)
                     * Matrix3x2::Scale(pose.size);
                 const float opacity = 1.0f - (reflection * 0.85f);
 
@@ -49,7 +50,8 @@ namespace ClaFi::PathArt
                 head.close();
                 fillShape(frame, head, LinearGradient::Simple({ 0.0f, -44.5f }, { 0.0f, -22.5f },
                     headTop.toColor().withOpacity(opacity),
-                    headBottom.toColor().withOpacity(opacity)), place);
+                    headBottom.toColor().withOpacity(opacity)),
+                    place * Matrix3x2::Scale(0.35f + 0.65f * pose.fur, 1.0f));
             }
         }
     }

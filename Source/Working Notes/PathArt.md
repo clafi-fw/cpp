@@ -885,6 +885,141 @@ whole turn for the ball - while the face shrinks into the spines about the neck.
 0.002 to 0.012 after the hare passes over it, unrolls from 0.598 to 0.61, and from 0.612 walks off
 to the left at 160 units a second (k_hedgehogWalk), its feet pattering every 9 units.
 
+Then (Oj, "a rubber duck which deflates on the wolf's impact, a ball that only rolls off a little
+after the collision") two more turns. The duck deflates from just before the trip to 0.02 after
+it: it is drawn scaled 1.2 wide and 0.38 high at the end, about where it meets the trail, its head
+drooping 0.5 rad, and three streaks of air behind it at 4 d (1 - d) of their colour. A first try
+took the streaks' strength from a bell, which never reaches 0 and left them showing at rest. The
+ball rolls k_ballRoll (40 units) in 0.05 of the episode, easing out, turned through the distance
+over its radius; the roll is folded into its place on the trail as the hedgehog's walk is.
+
+Then (Oj, "a patch of grass") a seventh: eleven blades, the back ones darker, each bending from its
+root by its own tilt plus bladeLean, more for a taller blade. Unasked, the grass reacts: it is held
+flat, 1.1 rad, for 0.012 of the episode while his legs are in it, then springs back - a cosine of
+0.02 dying away over 0.015. A first try let it go at once and it flicked back while he was still on
+it.
+
+**Two obstacle runs, then the tree** (Oj, 2026-11-09, asked for one more obstacle and picked the
+rake from four offered, then "swap the log with banana peel, then loop 2 obstacles one tree",
+confirmed as three runs a cycle). The cycle is 60 seconds (k_cycle, cycleDuration) and three
+episodes; k_branchEpisode is the last. The camera stops are k_tripStop and k_branchStop, chosen by
+the episode; travelAt adds the earlier episodes' shares and periodNear the whole cycle's, so every
+layer's period moved a little and the landscape is no longer the 40-second one. The runs before the
+tree take k_trailObstacles in turn by cyclesPassed x 2 + episode. The log, its colours and drawLog
+are gone; its dark brown stays as Bough, for the branch.
+
+The banana peel flies 70 units ahead over 0.045 of the episode, easing out, up a parabola of 60
+units and through two turns, and lands flat. The first peel had thin flaps that read as sticks; it
+is half again larger with fuller flaps. The rake turns about the back of its head: its handle rises
+1.75 rad over 0.006, drops back from 0.012 to 0.024 and bounces 0.15 rad. Drawn under the wolf, the
+handle passed behind him, so while it swings it is drawn over him. His face is ahead of the tines
+when they are trodden on, so a fixed swing crossed it for a frame; from 0.001 to 0.01 after the trip
+the swing is drawn toward the angle that lays the handle across his snout (rakeOnFace), and his head
+is knocked back 0.35 rad. At 80 units the handle stopped short of his face; it is 110.
+
+**The boot falls over, the apple trades places with it, and the tree bears apples** (Oj, 2026-11-09:
+"The boot falls on its side", then "swap the boot and apple. Make the tree an apple tree and apples
+fall when the wolf hits it"). Caught at the toe, the boot turns about the back of its heel, a
+quarter turn in 0.012 of the episode with the angle growing as the square of the time, and rocks
+back 0.12 rad; in a side view, lying on its back is the nearest to on its side. The tree carries six
+apples, the trail's apple at 0.55 of its size (k_treeApples). Four let go 0 to 0.006 after the wolf
+hits the branch (sinceHit), fall at k_appleGravity, 1200 units a second a second, with
+k_episodeSeconds turning episode shares into seconds, bounce once to a third of their landing speed
+and lie on the trail; two stay up.
+
+**The apple splits** (Oj, "The apple reacts at the wolf impact too" - the split was my pick, with a
+squash or a kick offered). From 0.001 before the trip to 0.008 after it, each half leans 0.55 rad
+out about its outer foot and slides 3 units apart; its cut, seen turning toward the viewer, is an
+ellipse that widens from a line to 5.3 units, cream, with two seeds. The stem and leaf stay on the
+right half. drawApple takes the split; the tree's apples pass 0 and draw whole, as before.
+
+**The hare takes an apple** (Oj, "The hare grabs an apple that has been dropped from the tree", then
+"showing her teeth too"). The run's next episode starts with her empty-pawed, so she eats it before
+she runs on. k_hareApple is the fallen apple nearest where she sits; restingPlace gives where it
+comes to rest, and from that the scene works out where her feet go for her forepaws to be over it.
+HareApple: she hops back from 0.688 to 0.708 (a hop of her own, the sitting let go for it), lifts it
+to her chest by 0.716 - the tree stops drawing it from 0.708 - and takes five bites 0.02 apart from
+0.73. At each bite the apple rises 11 units to her teeth and comes back smaller, its size the square
+root of what is left, and four crumbs, skin and flesh, fly from its top under k_appleGravity. A
+first try bobbed it 6 units, which stopped well short of her mouth. HarePose gained holding (the
+forepaws turned to 2.4 rad, up at the chest) and teeth (two front teeth under the nose, up to 6.5
+units long, over a dark mouth): 0.4 while she holds the apple, full at each bite. Both 0 draw her as
+before.
+
+Her place was first worked out from where the apple lay at that moment. Once the camera moved on,
+the ground carried her back toward the wolf, and her hop, which follows the ground she covers, stood
+still in mid-air (Oj: "she turns around, jumps and freezes in the air while the wolf getting really
+close, that looks strange"). The apple's place is taken while the camera stands (treeWhileStanding),
+and from 0.86 she runs on from there as before.
+
+**The wolf closes in over the trail** (Oj, "On the first runs, the distance between them keeps
+shortening until he hits an obstacle"; of two ways he picked the one where both of them show it). He
+came up 60 units by 0.5 and held there, 290 units behind her. He now runs from k_wolfChasing to
+k_wolfBehindHareAtTrip (150) behind her feet along the square of the run's share to the trip, so he
+gains ever faster, and his nose is half a hare short of her tail as his paw finds the obstacle. That
+gap is held in pixels, divided by closeness, as the branch run's closest one is.
+
+The obstacle still sits 30 units ahead of him at the trip, so she clears it later (0.532 rather than
+0.511), and he lands 70 units on from where he tripped, nearer where she sits. She starts to run on
+ahead at the trip rather than at 0.5, where her pulling away undid his last gains. His strain
+follows what he has gained - head down, eyes on her - and lets go over the first fifth of his fall.
+Her alarm rises from 0.3 to the trip and goes over the next 0.03 - ears flat, longer hops.
+
+Landing 70 units on from the trip put him 180 units short of where she sits, against 320 before (Oj:
+"the distance should restore when he tripped - she keeps moving and stops at the safe distance"). He
+now tumbles to k_wolfDownAfterTrip (-70), where he lay before: the camera keeps slowing over his
+fall, so he still goes 160 units on over the ground, and she runs on from the trip to sit where she
+did. The obstacle lies just behind his tail, and the rake's handle reaches under the tip of his
+tail.
+
+**What stands by the path** (Oj, "in the middle of the first run put a casual object on the path
+side, which does NOT slow them down. After the first tree encounter that should be an apple"). Of a
+toadstool, a signpost and a bucket he named his own - a boulder, a grass tuft ("reeds from the mill
+scene can be reused"), a larger flower, a bird that flies away - then "All four to take turns, the
+apple fits between the first tree encounter and the obstacle apple, other gaps will take other
+objects". A round of four cycles has twelve encounters, so twelve gaps; he filled the seven left
+with the toadstool, the signpost, a frog that hops off the path, a snail, a butterfly that flutters
+up, a banana peel and a tree stump, the peel as a warning ahead of the one on the trail. The order
+in k_roadside is mine: the creatures each open a run to the tree, the reeds come before the duck and
+the boulder before the ball.
+
+Each passes the middle of the frame at 0.28 of its run, or 0.12 before the branch (the wolf surges
+from 0.14). Its clock, sinceHareClose, starts as the hare comes within k_hareClose (70) and is
+worked out from where the hare runs before the trip, so it needs no state. The draw loop also takes
+the next run's thing, placed by the camera's travel to the run's end, so in a frame wide enough to
+show it early it comes in from the edge rather than appearing at the run's start; at 32:9 the tree
+run's thing comes into view at 0.95 of the run before. Reusing the mill's reeds took two fields on
+ReedsPose, lean and inWater, whose defaults draw the mill's as before. The gust follows hareX and
+wolfX, each passing leaving a wake that bends the reeds and the daisy after them.
+
+Then "the road sign may revolve around": the board turns about the post, its x scaled by the cosine
+of the turn with a floor so it stays a sliver edge-on, shaded as it turns away and plain on the
+back. Of ending as it was (three turns) or pointing back the way they came (two and a half) he
+picked the second. "the boulder may bounce": three hops, small after the hare, high after the wolf,
+small again; first timed as each passed, they were hidden behind the runners, so each comes just
+after one has cleared it.
+
+Then (Oj) "banana peel hopes like a boulder, toadstool umbrella hopes when the hare passes, when the
+wolf passes lands beside the leg, the flower sway when the wolf passes loses petals". hopAt and
+hopping are the boulder's bounce, shared with the roadside peel, its heights in units of the verge
+(the boulder's 5, 16 and 5 at its 1.35 scale); the peel gained a shadow for it. The cap hops on the
+stalk 0.34 s after the hare comes close and leaves it at 1.32 s, flying 0.45 s to lie 19 units on
+with its rim on the ground, turned 0.3 rad back. Five petals leave the daisy from 1.12 s, 0.035 s
+apart, while the wolf hides the head. They start from where they would be at a nod of 0.48, the
+height of his wake, so the step from the real nod is hidden behind him; they fall at 18 units a
+second, gathering 28 a second each second, drift 55 a second after him and land in about 1.2 s.
+
+Then "The warning apple jumps, reeds lose their fur": the apple takes hopAt like the peel. ReedsPose
+gained fur, which narrows each head to 0.35 of its width at 0, and the scene takes the reeds from 1
+to 0.35 over 1.0 to 1.3 s, while the wolf hides them. drawReedFluff tears four tufts from each head
+between 1.02 and 1.27 s, each at its own pseudoRandom time, speed (45 to 75 units a second), rise
+and size, from where the head would be at a lean of 0.5; they thin out over 1.6 s. Released at one
+time and speed, the first tufts flew in rows like strings of beads.
+
+Then "while the wolf rests the beach ball slowly rolls off". It first rolled back down the trail
+from 0.64, gathering speed until the camera carried it away; Oj: "not completely rolls off just a
+tad and stops naturally", so it rolls back 30 units over 0.64 to 0.74, eased in and out.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
