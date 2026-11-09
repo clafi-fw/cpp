@@ -873,6 +873,18 @@ three renders - greyed, hazed a third of the way, hazed past halfway): the hills
 are their greens taken 0.55 of the way to MountainFoot. Their trees have colours of their own, so
 the big tree of the second episode keeps its greens.
 
+**The first episode's obstacle** (Oj, 2026-11-09: "Cycle between a few first run obstacles - a
+log, an apple, a boot, a hedgehog", then "a hedgehog turns into a ball after the hare passes, after
+the wolf trips swiftly walks away"). k_firstRunObstacles is taken in turn by cyclesPassed, and the
+turn changes while the obstacle is off screen. Each is drawn in units about where it meets the
+trail; the log, moved into that frame, draws pixel for pixel as before. The wolf trips and the
+hare jumps the same way over all four. The hedgehog's face was first the trail's tan and vanished
+into it, and the hedgehog read small, so the face is a darker brown and the whole a third larger.
+Its outline runs over the top from left to right and, as it curls, on round under the body - a
+whole turn for the ball - while the face shrinks into the spines about the neck. It curls from
+0.002 to 0.012 after the hare passes over it, unrolls from 0.598 to 0.61, and from 0.612 walks off
+to the left at 160 units a second (k_hedgehogWalk), its feet pattering every 9 units.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

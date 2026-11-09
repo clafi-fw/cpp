@@ -486,11 +486,16 @@ strobe 20 times, and the panels' glints sweep twice.
 
 A clumsy wolf chases a hare across a landscape that scrolls past and comes round again.
 
-**Two 20-second episodes a cycle.** In the first the wolf trips over a log and lands on his belly.
-In the second he closes in and snaps at the hare's tail, drops back spent, then gathers himself and
-leaps at her with his jaws wide open. A branch meets him in the middle of the air, shuts his jaws
-and drops him onto his back. Each time the camera slows to a stop while he lies dazed, the hare
-turns round to taunt him, and the chase picks up again.
+**Two 20-second episodes a cycle.** In the first the wolf trips over what lies on the trail and
+lands on his belly. In the second he closes in and snaps at the hare's tail, drops back spent, then
+gathers himself and leaps at her with his jaws wide open. A branch meets him in the middle of the
+air, shuts his jaws and drops him onto his back. Each time the camera slows to a stop while he lies
+dazed, the hare turns round to taunt him, and the chase picks up again.
+
+**The first episode's obstacle changes every cycle** - a log, an apple, a boot, a hedgehog, and
+round again - going by SceneTime cyclesPassed, so a host that does not count the cycles shows the
+log every time. The hedgehog rolls into a ball once the hare has passed over it, and walks off once
+the wolf is down.
 
 **The landscape is layers at their own speeds** - clouds, mountains, hills, the ground and the
 grass in front, each a share of the camera's speed. Each layer is tiled with a period that the

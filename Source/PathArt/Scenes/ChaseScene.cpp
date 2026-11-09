@@ -49,6 +49,21 @@ namespace ClaFi::PathArt
         constexpr Color LogRings{ 0xFFB98A55 };
         constexpr Color Bark{ 0xFF8A5A33 };
         constexpr Color BarkShade{ 0xFF5B3A20 };
+        constexpr Color AppleLight{ 0xFFE84B3C };
+        constexpr Color AppleDark{ 0xFFA3241F };
+        constexpr Color AppleShine{ 0x99FFFFFF };
+        constexpr Color Leaf{ 0xFF4FA34A };
+        constexpr Color BootLight{ 0xFF8A6440 };
+        constexpr Color BootDark{ 0xFF5E3F25 };
+        constexpr Color BootSole{ 0xFF2F2621 };
+        constexpr Color BootPatch{ 0xFFA07A4F };
+        constexpr Color Lace{ 0xFFE8D9B5 };
+        constexpr Color SpinesDark{ 0xFF5C4630 };
+        constexpr Color SpinesLight{ 0xFF7D6146 };
+        constexpr Color HedgehogFace{ 0xFF9A7655 };
+        constexpr Color HedgehogEar{ 0xFF7A5A40 };
+        constexpr Color EyeShine{ 0xFFFFFFFF };
+        constexpr Color Ink{ 0xFF1B1D22 };
         constexpr Color Shadow{ 0x472B4A1E };
         constexpr Color Dust{ 0xFFEADBB8 };
         constexpr Color DazeStar{ 0xFFFFD34D };
@@ -121,6 +136,44 @@ namespace ClaFi::PathArt
         // His gap to the hare at his closest is held in pixels, whatever `closeness`.
         [[nodiscard]] BranchRun branchRunAt(float episodeTime, float closeness);
 
+        // What the wolf comes to grief on: the branch in the second episode, and in the first one
+        // of four, a cycle each in turn.
+        enum class Obstacle
+        {
+            Log,
+            Apple,
+            Boot,
+            Hedgehog,
+            Branch
+        };
+        constexpr std::array<Obstacle, 4> k_firstRunObstacles{
+            Obstacle::Log,
+            Obstacle::Apple,
+            Obstacle::Boot,
+            Obstacle::Hedgehog
+        };
+
+        // How what is on the trail moves at one moment.
+        struct ObstacleMotion
+        {
+            float branchSway; // units the branch's end is pushed down, up below 0
+            float curl; // 0 the hedgehog on its feet, 1 rolled into a ball
+            float steps; // radians of the hedgehog's walk
+        };
+        // The hedgehog walks off at 160 units a second, which is this many in an episode's time.
+        constexpr float k_hedgehogWalk{ 3200.0f };
+
+        // `x` is the middle of what lies on the trail, or the end of the branch.
+        void drawObstacle(const SceneFrame&, Obstacle, float x, float groundY, float footY,
+            const ObstacleMotion&);
+        // Each is drawn in units about the middle of where it meets the trail, facing the wolf.
+        void drawLog(const SceneFrame& onTrail);
+        void drawApple(const SceneFrame& onTrail);
+        void drawBoot(const SceneFrame& onTrail);
+        void drawHedgehog(const SceneFrame& onTrail, float curl, float steps);
+        void drawBranchTree(const SceneFrame&, float x, float groundY, float footY,
+            float branchSway);
+
         // One wave of a ridge: its height, how often it repeats over a tile, where it starts.
         struct Wave
         {
@@ -152,8 +205,8 @@ namespace ClaFi::PathArt
         };
     }
 
-    // Two 20-second episodes a cycle: the wolf trips over a log, then leaps into a branch. Each
-    // time the camera stops while he is down, and the hare turns round to taunt him.
+    // Two 20-second episodes a cycle: the wolf trips over something on the trail, then leaps into
+    // a branch. Each time the camera stops while he is down, and the hare turns round to taunt him.
     // See PathArt#chasescene
     void ChaseScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
@@ -184,8 +237,24 @@ namespace ClaFi::PathArt
         const float obstacleAtTrip = episode == 0
             ? k_wolfAtTrip + 30.0f
             : k_wolfAtBranch + k_branchReach / closeness;
-        const float obstacleX = obstacleAtTrip + cameraTravel(episodeTime, trip);
+        const std::int64_t firstRunObstacleCount
+            = static_cast<std::int64_t>(k_firstRunObstacles.size());
+        const std::int64_t firstRunIndex = time.cyclesPassed % firstRunObstacleCount;
+        const Obstacle obstacle = episode == 0
+            ? k_firstRunObstacles[static_cast<std::size_t>(firstRunIndex)]
+            : Obstacle::Branch;
         const float hareClears = trip - (k_hareRunning - obstacleAtTrip) / k_fullSpeedTravel;
+        // The hedgehog rolls up once the hare has passed over it, and walks off once the wolf is
+        // down, away from him.
+        const bool hedgehog = obstacle == Obstacle::Hedgehog;
+        const float curl = hedgehog
+            ? smoothStep(hareClears + 0.002f, hareClears + 0.012f, episodeTime)
+                * (1.0f - smoothStep(0.598f, 0.61f, episodeTime))
+            : 0.0f;
+        const float walkedAway = hedgehog
+            ? k_hedgehogWalk * std::max(0.0f, episodeTime - 0.612f)
+            : 0.0f;
+        const float obstacleX = obstacleAtTrip + cameraTravel(episodeTime, trip) - walkedAway;
 
         // The wolf: chasing, falling, lying dazed, getting up and running back into place.
         float wolfX = k_wolfChasing;
@@ -375,7 +444,13 @@ namespace ClaFi::PathArt
             : 0.0f;
         const float obstacleOnScreen = toScreen(obstacleX);
         if (obstacleOnScreen > -220.0f * unit && obstacleOnScreen < width + 200.0f * unit)
-            drawObstacle(frame, episode, obstacleOnScreen, groundY, footY, branchSway);
+        {
+            drawObstacle(frame, obstacle, obstacleOnScreen, groundY, footY, ObstacleMotion{
+                .branchSway = branchSway,
+                .curl = curl,
+                .steps = k_2Pi * walkedAway / 9.0f
+            });
+        }
 
         const SolidColor shadow{ ChaseColors::Shadow };
         const float wolfShadow = 46.0f * unit * (1.0f - 0.3f * std::min(1.0f, lift / 60.0f));
@@ -618,49 +693,6 @@ namespace ClaFi::PathArt
         hearts.draw();
     }
 
-    void ChaseScene::drawObstacle(const SceneFrame& frame, const int episode, const float x,
-        const float groundY, const float footY, const float branchSway)
-    {
-        const float unit = frame.unit;
-        if (episode == 0)
-        {
-            const float logTop = footY - 18.0f * unit;
-            const FloatPoint logEnd = { x + 22.0f * unit, footY - 9.0f * unit };
-            const FloatRect log = { x - 26.0f * unit, logTop, x + 26.0f * unit, footY };
-            fillRoundedBox(frame, log, 9.0f * unit, LinearGradient::Simple({ 0.0f, logTop },
-                { 0.0f, footY }, ChaseColors::LogLight, ChaseColors::LogDark));
-            fillOval(frame, logEnd, 5.0f * unit, 9.0f * unit, SolidColor{ ChaseColors::LogFace });
-            fillOval(frame, logEnd, 2.5f * unit, 4.5f * unit, SolidColor{ ChaseColors::LogRings });
-            return;
-        }
-        // A tree whose lowest branch reaches back over the trail, as high as the head of a wolf in
-        // the middle of a leap; `x` is where it ends.
-        const float trunkX = x + 125.0f * unit;
-        const float trunkLeft = trunkX - 14.0f * unit;
-        const float trunkRight = trunkX + 14.0f * unit;
-        const float endSway = branchSway * unit;
-        fillBox(frame, { trunkLeft, groundY - 180.0f * unit, trunkRight, footY + 2.0f * unit },
-            LinearGradient::Simple({ trunkLeft, 0.0f }, { trunkRight, 0.0f }, ChaseColors::Bark,
-            ChaseColors::BarkShade));
-        PixelPath branch;
-        branch.moveTo(trunkX - 10.0f * unit, footY - 124.0f * unit);
-        branch.quadTo({ x + 50.0f * unit, footY - 138.0f * unit + 0.5f * endSway },
-            { x - 6.0f * unit, footY - 150.0f * unit + endSway });
-        branch.lineTo(x - 4.0f * unit, footY - 143.0f * unit + endSway);
-        branch.quadTo({ x + 50.0f * unit, footY - 127.0f * unit + 0.5f * endSway },
-            { trunkX - 10.0f * unit, footY - 110.0f * unit });
-        branch.close();
-        fillShape(frame, branch, SolidColor{ ChaseColors::LogDark });
-        fillDisc(frame, { x + 16.0f * unit, footY - 153.0f * unit + 0.8f * endSway }, 9.0f * unit,
-            SolidColor{ ChaseColors::CrownLight });
-        fillDisc(frame, { trunkX, groundY - 196.0f * unit }, 60.0f * unit,
-            SolidColor{ ChaseColors::Crown });
-        fillDisc(frame, { trunkX - 40.0f * unit, groundY - 170.0f * unit }, 40.0f * unit,
-            SolidColor{ ChaseColors::CrownLight });
-        fillDisc(frame, { trunkX + 40.0f * unit, groundY - 172.0f * unit }, 44.0f * unit,
-            SolidColor{ ChaseColors::CrownMiddle });
-    }
-
     void ChaseScene::drawFrontGrass(const SceneFrame& frame, const float travel)
     {
         const float unit = frame.unit;
@@ -750,6 +782,193 @@ namespace ClaFi::PathArt
                 .weariness = weariness,
                 .snap = bump(episodeTime, snapAt, 0.005f)
             };
+        }
+
+        void drawObstacle(const SceneFrame& frame, const Obstacle obstacle, const float x,
+            const float groundY, const float footY, const ObstacleMotion& motion)
+        {
+            const SceneFrame onTrail = frame.within(Matrix3x2::Translation(x, footY)
+                * Matrix3x2::Scale(frame.unit));
+            switch (obstacle)
+            {
+                case Obstacle::Log:
+                    drawLog(onTrail);
+                    break;
+                case Obstacle::Apple:
+                    drawApple(onTrail);
+                    break;
+                case Obstacle::Boot:
+                    drawBoot(onTrail);
+                    break;
+                case Obstacle::Hedgehog:
+                    drawHedgehog(onTrail, motion.curl, motion.steps);
+                    break;
+                case Obstacle::Branch:
+                    drawBranchTree(frame, x, groundY, footY, motion.branchSway);
+                    break;
+            }
+        }
+
+        void drawLog(const SceneFrame& onTrail)
+        {
+            fillRoundedBox(onTrail, { -26.0f, -18.0f, 26.0f, 0.0f }, 9.0f,
+                LinearGradient::Simple({ 0.0f, -18.0f }, {}, ChaseColors::LogLight,
+                ChaseColors::LogDark));
+            fillOval(onTrail, { 22.0f, -9.0f }, 5.0f, 9.0f, SolidColor{ ChaseColors::LogFace });
+            fillOval(onTrail, { 22.0f, -9.0f }, 2.5f, 4.5f, SolidColor{ ChaseColors::LogRings });
+        }
+
+        void drawApple(const SceneFrame& onTrail)
+        {
+            PixelPath apple;
+            apple.moveTo(0.0f, -17.0f);
+            apple.cubicTo({ 6.0f, -22.0f }, { 14.0f, -18.0f }, { 12.0f, -8.0f });
+            apple.cubicTo({ 11.0f, -1.0f }, { 4.0f, 1.0f }, { 0.0f, -1.0f });
+            apple.cubicTo({ -4.0f, 1.0f }, { -11.0f, -1.0f }, { -12.0f, -8.0f });
+            apple.cubicTo({ -14.0f, -18.0f }, { -6.0f, -22.0f }, { 0.0f, -17.0f });
+            apple.close();
+            fillShape(onTrail, apple, LinearGradient::Simple({ -8.0f, -18.0f }, { 8.0f, 0.0f },
+                ChaseColors::AppleLight, ChaseColors::AppleDark));
+            fillOval(onTrail, { -6.0f, -13.0f }, 2.5f, 4.0f, SolidColor{ ChaseColors::AppleShine },
+                0.4f);
+            drawSegment(onTrail, { 0.0f, -17.0f }, { 1.5f, -24.0f },
+                SolidColor{ ChaseColors::BarkShade }, 1.8f);
+            fillOval(onTrail, { 5.5f, -22.0f }, 5.0f, 2.2f, SolidColor{ ChaseColors::Leaf }, -0.5f);
+        }
+
+        // An old boot, its toe toward the wolf.
+        void drawBoot(const SceneFrame& onTrail)
+        {
+            PixelPath leather;
+            leather.moveTo(15.0f, -3.0f);
+            leather.lineTo(15.0f, -32.0f);
+            leather.lineTo(0.0f, -32.0f);
+            leather.lineTo(0.0f, -19.0f);
+            leather.quadTo({ -6.0f, -17.0f }, { -14.0f, -14.0f });
+            leather.quadTo({ -21.0f, -12.0f }, { -21.0f, -6.0f });
+            leather.lineTo(-21.0f, -3.0f);
+            leather.close();
+            fillShape(onTrail, leather, LinearGradient::Simple({ 0.0f, -32.0f }, { 0.0f, -3.0f },
+                ChaseColors::BootLight, ChaseColors::BootDark));
+            fillBox(onTrail, { -0.5f, -33.0f, 15.5f, -29.5f }, SolidColor{ ChaseColors::BootDark });
+            fillBox(onTrail, { 7.0f, -16.0f, 12.0f, -11.0f }, SolidColor{ ChaseColors::BootPatch });
+            fillRoundedBox(onTrail, { -22.0f, -4.0f, 16.0f, 0.0f }, 1.5f,
+                SolidColor{ ChaseColors::BootSole });
+            PixelPath laces;
+            for (const float y : { -27.0f, -23.0f, -19.0f })
+            {
+                laces.moveTo(1.0f, y - 1.5f);
+                laces.lineTo(6.0f, y + 1.5f);
+                laces.moveTo(1.0f, y + 1.5f);
+                laces.lineTo(6.0f, y - 1.5f);
+            }
+            strokeShape(onTrail, laces, SolidColor{ ChaseColors::Lace }, 1.2f);
+        }
+
+        // A hedgehog crouched over its feet, its snout toward the wolf. Curling, its spines run on
+        // round under it and its face shrinks into them; walking, its feet patter and it bobs.
+        void drawHedgehog(const SceneFrame& onTrail, const float curl, const float steps)
+        {
+            constexpr int k_spineCount{ 18 };
+            const SceneFrame hedgehog = onTrail.within(Matrix3x2::Translation(0.0f,
+                -0.8f * std::abs(std::sin(steps))));
+            const FloatPoint middle = pointBetween({ 5.0f, -1.0f }, { 2.0f, -16.0f }, curl);
+            const float radiusX = std::lerp(22.0f, 16.0f, curl);
+            const float radiusY = std::lerp(25.0f, 16.0f, curl);
+            // The outline runs from the left over the top to the right, and on round under the
+            // body as it curls, a whole turn when it is a ball.
+            const float firstAngle = std::numbers::pi_v<float> * (1.0f + 0.5f * curl);
+            const float span = std::numbers::pi_v<float> * (1.0f + curl);
+            const auto onBody = [&](float share, float reach) {
+                const float angle = firstAngle - span * share;
+                return middle
+                    + FloatPoint{ radiusX * std::cos(angle), -radiusY * std::sin(angle) } * reach;
+            };
+            PixelPath spines;
+            PixelPath back;
+            for (int i = 0; i <= 2 * k_spineCount; ++i)
+            {
+                const float share = static_cast<float>(i) / static_cast<float>(2 * k_spineCount);
+                const FloatPoint spineTip = onBody(share, i % 2 == 1 ? 1.0f : 0.78f);
+                const FloatPoint backEdge = onBody(share, 0.7f);
+                if (i == 0)
+                {
+                    spines.moveTo(spineTip);
+                    back.moveTo(backEdge);
+                }
+                else
+                {
+                    spines.lineTo(spineTip);
+                    back.lineTo(backEdge);
+                }
+            }
+            spines.close();
+            back.close();
+            fillShape(hedgehog, spines, SolidColor{ ChaseColors::SpinesDark });
+            fillShape(hedgehog, back, SolidColor{ ChaseColors::SpinesLight });
+            PixelPath quills;
+            for (int i = 0; i != 7; ++i)
+            {
+                const float share = 0.15f + 0.7f * static_cast<float>(i) / 6.0f;
+                quills.moveTo(onBody(share, 0.42f));
+                quills.lineTo(onBody(share, 0.76f));
+            }
+            strokeShape(hedgehog, quills, SolidColor{ ChaseColors::SpinesDark }, 1.4f);
+            if (curl >= 1.0f)
+                return;
+
+            const float footWidth = 4.0f * (1.0f - curl);
+            const float patter = 2.5f * std::sin(steps);
+            fillOval(onTrail, { -10.0f + patter, -0.7f }, footWidth, 2.0f,
+                SolidColor{ ChaseColors::Ink });
+            fillOval(onTrail, { 13.0f - patter, -0.7f }, footWidth, 2.0f,
+                SolidColor{ ChaseColors::Ink });
+            const FloatPoint neck = { -6.0f, -8.0f };
+            const SceneFrame head = hedgehog.within(Matrix3x2::Translation(neck)
+                * Matrix3x2::Scale(1.0f - curl) * Matrix3x2::Translation(-neck.x, -neck.y));
+            fillOval(head, { -14.0f, -9.0f }, 10.5f, 8.5f, SolidColor{ ChaseColors::HedgehogFace });
+            PixelPath snout;
+            snout.moveTo(-18.0f, -14.0f);
+            snout.quadTo({ -29.0f, -10.0f }, { -34.0f, -6.5f });
+            snout.quadTo({ -29.0f, -2.5f }, { -17.0f, -2.5f });
+            snout.close();
+            fillShape(head, snout, SolidColor{ ChaseColors::HedgehogFace });
+            fillDisc(head, { -12.0f, -17.0f }, 2.6f, SolidColor{ ChaseColors::HedgehogEar });
+            fillDisc(head, { -34.0f, -6.5f }, 2.3f, SolidColor{ ChaseColors::Ink });
+            fillDisc(head, { -18.0f, -12.0f }, 2.0f, SolidColor{ ChaseColors::Ink });
+            fillDisc(head, { -17.4f, -12.6f }, 0.6f, SolidColor{ ChaseColors::EyeShine });
+        }
+
+        // A tree whose lowest branch reaches back over the trail, as high as the head of a wolf in
+        // the middle of a leap; `x` is where it ends.
+        void drawBranchTree(const SceneFrame& frame, const float x, const float groundY,
+            const float footY, const float branchSway)
+        {
+            const float unit = frame.unit;
+            const float trunkX = x + 125.0f * unit;
+            const float trunkLeft = trunkX - 14.0f * unit;
+            const float trunkRight = trunkX + 14.0f * unit;
+            const float endSway = branchSway * unit;
+            fillBox(frame, { trunkLeft, groundY - 180.0f * unit, trunkRight, footY + 2.0f * unit },
+                LinearGradient::Simple({ trunkLeft, 0.0f }, { trunkRight, 0.0f },
+                ChaseColors::Bark, ChaseColors::BarkShade));
+            PixelPath branch;
+            branch.moveTo(trunkX - 10.0f * unit, footY - 124.0f * unit);
+            branch.quadTo({ x + 50.0f * unit, footY - 138.0f * unit + 0.5f * endSway },
+                { x - 6.0f * unit, footY - 150.0f * unit + endSway });
+            branch.lineTo(x - 4.0f * unit, footY - 143.0f * unit + endSway);
+            branch.quadTo({ x + 50.0f * unit, footY - 127.0f * unit + 0.5f * endSway },
+                { trunkX - 10.0f * unit, footY - 110.0f * unit });
+            branch.close();
+            fillShape(frame, branch, SolidColor{ ChaseColors::LogDark });
+            fillDisc(frame, { x + 16.0f * unit, footY - 153.0f * unit + 0.8f * endSway },
+                9.0f * unit, SolidColor{ ChaseColors::CrownLight });
+            fillDisc(frame, { trunkX, groundY - 196.0f * unit }, 60.0f * unit,
+                SolidColor{ ChaseColors::Crown });
+            fillDisc(frame, { trunkX - 40.0f * unit, groundY - 170.0f * unit }, 40.0f * unit,
+                SolidColor{ ChaseColors::CrownLight });
+            fillDisc(frame, { trunkX + 40.0f * unit, groundY - 172.0f * unit }, 44.0f * unit,
+                SolidColor{ ChaseColors::CrownMiddle });
         }
     }
 }
