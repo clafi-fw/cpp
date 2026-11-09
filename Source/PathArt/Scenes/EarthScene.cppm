@@ -161,14 +161,15 @@ namespace ClaFi::PathArt
         // The night worked out pixel by pixel from the sunlight. See PathArt#earthscene
         void drawNight(const SceneFrame&, const Globe&);
         void drawCityLights(const SceneFrame&, const Globe&, float cycleTime) const;
-        void drawClouds(const SceneFrame&, const Globe&, float cycleTime);
+        // The clouds drift on the scene's time, so they go on drifting over a globe held still.
+        void drawClouds(const SceneFrame&, const Globe&, double sceneSeconds);
         static void drawAtmosphere(const SceneFrame&, const Globe&);
         // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
         // How long the globe has stood still by a frame, while the viewer had the view.
         [[nodiscard]] double stillSecondsAt(double sceneSeconds);
     private:
-        // The twinkling, blinking and cloud drift come round each cycle; the orbit never does.
+        // The twinkling and blinking come round each cycle; the orbit and the cloud drift never do.
         static constexpr std::chrono::seconds k_cycle{ 240 };
         std::vector<Coastline> m_coastlines{};
         std::vector<City> m_cities{};

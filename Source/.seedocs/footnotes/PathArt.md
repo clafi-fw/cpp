@@ -393,10 +393,10 @@ shrinks with it. The space is kept as a layer at the lowest altitude - see Scene
 live above it; so is the ocean until the land's map is built.
 
 **The globe holds still while the viewer has the view**: from a press, a drag and its glide, or a
-wheel notch, until 5 seconds after the last. Then the orbit, the Earth's turn, the sky's drift and
-the clouds ease back to full speed over 2 seconds, and the globe moves on from where it was left.
-The satellite goes on hovering and blinking, and the stars and the city lights twinkling. The time
-is the scene's, so a paused scene holds the count as well.
+wheel notch, until 5 seconds after the last. Then the orbit, the Earth's turn and the sky's drift
+ease back to full speed over 2 seconds, and the globe moves on from where it was left. The clouds go
+on drifting over the held globe, the satellite goes on hovering and blinking, and the stars and the
+city lights twinkling. The time is the scene's, so a paused scene holds the count as well.
 
 **The Sun stands fixed among the stars**, and so does the orbit's plane, so each orbit passes a day
 of about two minutes and a night. In the Earth's shadow the satellite darkens and the stars
@@ -424,9 +424,10 @@ run.
 
 **Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks - see
 CloudKind. Each is a map on a sphere of its own, 1.0, 1.4 and 1.8 hundredths of the Earth's radius
-up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts east and back
-against the ground once a cycle, the higher layers further. The clouds fade into the haze as they
-near the limb, turn a moonlit blue-grey on the night side, and pass over the city lights.
+up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts steadily east
+against the ground, 0.4, 0.6 and 0.9 degrees a second from the lowest up. The clouds fade into the
+haze as they near the limb, turn a moonlit blue-grey on the night side, and pass over the city
+lights.
 
 **The land is worked out pixel by pixel inside the coastlines**, from the land's map - see EarthMap.
 The coastlines are landOutlines(), built off the paint from the moment the scene is made; the first

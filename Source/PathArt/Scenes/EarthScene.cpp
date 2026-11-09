@@ -176,12 +176,11 @@ namespace ClaFi::PathArt
             float cover; // the share of the sphere its map covers
             float height; // above the ground, as a share of the Earth's radius
             float axisTilt; // how far its axis leans from the Earth's, in degrees
-            float drift; // how far it drifts each way against the ground, in degrees
-            float driftPhase; // where in its drift it stands when the cycle starts
+            float driftPerSecond; // how far it drifts east against the ground, in degrees
             float opacity; // its share of the cloud colour's opacity
         };
 
-        // Low heaps, a middle sheet and high streaks, each drifting further than the one below.
+        // Low heaps, a middle sheet and high streaks, each drifting faster than the one below.
         constexpr std::array<CloudLayer, 3> k_cloudLayers{
             CloudLayer{
                 .kind = CloudKind::Puffy,
@@ -189,8 +188,7 @@ namespace ClaFi::PathArt
                 .cover = 0.32f,
                 .height = 0.010f,
                 .axisTilt = 0.0f,
-                .drift = 1.7f,
-                .driftPhase = 0.0f,
+                .driftPerSecond = 0.4f,
                 .opacity = 0.9f
             },
             CloudLayer{
@@ -199,8 +197,7 @@ namespace ClaFi::PathArt
                 .cover = 0.45f,
                 .height = 0.014f,
                 .axisTilt = 5.0f,
-                .drift = 2.3f,
-                .driftPhase = 2.1f,
+                .driftPerSecond = 0.6f,
                 .opacity = 0.55f
             },
             CloudLayer{
@@ -209,8 +206,7 @@ namespace ClaFi::PathArt
                 .cover = 0.30f,
                 .height = 0.018f,
                 .axisTilt = -6.0f,
-                .drift = 5.7f,
-                .driftPhase = 4.2f,
+                .driftPerSecond = 0.9f,
                 .opacity = 0.45f
             }
         };
@@ -2552,7 +2548,7 @@ namespace ClaFi::PathArt
         }
         drawCityLights(frame, globe, time.cycleTime);
         frame.canvas.popClip();
-        drawClouds(frame, globe, fractionOf(globeCycles));
+        drawClouds(frame, globe, cycles * cycleSeconds);
         drawAtmosphere(frame, globe);
 
         const float size = unit * std::min(1.0f, (width / unit) / 900.0f) * satelliteShare;
@@ -3444,7 +3440,7 @@ namespace ClaFi::PathArt
     // **Three layers of cloud float above the ground**, each a map on a sphere of its own a little
     // larger than the Earth's, turning about an axis of its own. See PathArt#earthscene
     void EarthScene::drawClouds(const SceneFrame& frame, const Globe& globe,
-        const float cycleTime)
+        const double sceneSeconds)
     {
         if (!m_cloudMaps)
         {
@@ -3483,8 +3479,7 @@ namespace ClaFi::PathArt
         {
             const CloudLayer& layer = k_cloudLayers[i];
             const float radius = globe.radius * (1.0f + layer.height);
-            const float drift = layer.drift * k_degree
-                * std::sin(k_2Pi * cycleTime + layer.driftPhase);
+            const float drift = k_2Pi * fractionOf(sceneSeconds * layer.driftPerSecond / 360.0);
             // The layer's axis leans off the Earth's by a turn fixed to the Earth.
             const ViewAngles angles = ViewAngles::Of(globe.fromEarth
                 .after(Rotation::About({ 1.0f, 0.0f, 0.0f }, layer.axisTilt * k_degree))

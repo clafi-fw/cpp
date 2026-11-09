@@ -322,11 +322,12 @@ leaning -6, at 0.9, 0.55 and 0.45 of the cloud colour's opacity, with that opaci
 (0x5C to 0xCA). The recipes in CloudMap are the mockups' own, seeds 11, 21 and 31, covers 0.32,
 0.45 and 0.30, each cut at the quantile of its noise.
 
-**The layers drift back and forth rather than turn at their own speed.** The mockups turned them at
-0.985, 1.02 and 1.05 of the ground's speed, which is 1.97, 2.04 and 2.1 turns a cycle, and would
-jump at the cycle's seam. Each drifts as a sine instead, once a cycle, its amplitude 2 (speed - 1)
-radians so that it moves as fast as the mockup's at its fastest: 1.7, 2.3 and 5.7 degrees, the
-three starting at different points of the sine.
+**The layers drifted back and forth until 2026-11-09.** The mockups turned them at 0.985, 1.02 and
+1.05 of the ground's speed, which is 1.97, 2.04 and 2.1 turns a cycle, and would have jumped where
+the cycle starts over. Each drifted as a sine instead, once a cycle, its amplitude 2 (speed - 1)
+radians so that it moved as fast as the mockup's at its fastest: 1.7, 2.3 and 5.7 degrees, the three
+starting at different points of the sine. A steady drift replaced it - see the entry of 2026-11-09
+below, "The clouds drift steadily east".
 
 **Two looks, one switch** (2026-11-08). Oj wanted the realistic look of the mockups and "more
 stylized clouds", both, switched by a setting, and picked "Two-tone" of the stylized mockups (flat,
@@ -818,6 +819,33 @@ at 1280 x 720, the pixels at the rim that jumped by more than 40 from one frame 
 0.055 percent on average and at most 0.119 before, and 0.055 and 0.121 raised; at 2560 x 1440 the
 rim looked the same. Shadows cast by the clouds, and letting the layers reach the rim, were offered
 as what would show the height; not taken.
+
+**The clouds drift steadily east** (Oj, 2026-11-09, "Legible Earth clouds drifting"). The sine's
+drift was too slow to see: at most 0.04, 0.06 and 0.15 degrees a second, turning back every two
+minutes, while the ground slides under the view at about 1.7 to 2 degrees a second - 3 to 10 pixels
+a second against about 115 in a 3436-pixel-wide window. The orbit has run on through the cycles
+since SceneTime, so the drift no longer has to come round. Mockups, as 2 x 2 videos at real speed
+against the sine (low realistic, low stylized, whole globe): A steady east at 0.2, 0.3 and 0.45
+degrees a second, B twice as fast, C wind belts - west near the equator, east in the middle
+latitudes, west near the poles - each layer read twice from its map at two ages 80 seconds apart and
+faded between them, clouds shrinking out of one and growing into the other by the share of the
+cloudy area each keeps, so the belts never shear the clouds into streaks. Oj picked A, then B: 0.4,
+0.6 and 0.9 degrees a second, about a quarter to a half of the ground's own pace.
+
+Each layer turns about its own axis by `driftPerSecond` times the scene's seconds. A positive turn
+carries the map toward greater longitudes, the way the Earth turns, so the clouds go east. The angle
+is the fraction of a turn, taken in double from the seconds, as the orbit's is. Frames match the B
+mockup within 1 level at 20, 675 and 200,000 seconds in both looks; across the cycle's seam and each
+layer's whole turn the frame-to-frame change rises only where the satellite's lights blink. The cost
+is unchanged: the same turn, steady instead of a sine.
+
+**The clouds drift on while the globe is held** (Oj, 2026-11-09, "Does the drifts stops when the
+user in control - it shouldn't?"). The drift first ran on the globe's seconds - the scene's time
+less the time the globe had stood still - and stopped with the globe: in the harness, with the
+globe held after a wheel notch, fewer than 300 pixels below the satellite changed between 1 and 4
+seconds, all of them twinkling lights. It runs on the scene's time now, as the hovering and the
+blinking do, so the clouds cross the held ground. Untouched, the globe's time and the scene's are
+the same, and the frames are bit for bit B's.
 
 ## ChaseScene
 
