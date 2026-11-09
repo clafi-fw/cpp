@@ -19,8 +19,6 @@ namespace ClaFi::PathArt
     private:
         using TileDrawer = std::function<void(float tileLeft, float tileWidth)>;
     private:
-        // The camera's travel by `episodeTime` of an episode, as a share of a full-speed episode's.
-        [[nodiscard]] static float cameraShare(float episodeTime, int episode);
         [[nodiscard]] static float travelAt(float cycleTime);
         // A period that the whole cycle's travel divides, near the one wanted. See PathArt
         [[nodiscard]] static float periodNear(float parallax, float wanted);
@@ -29,6 +27,9 @@ namespace ClaFi::PathArt
         static void drawBackdrop(const SceneFrame&, float travel, float groundY);
         static void drawGround(const SceneFrame&, float travel, float groundY);
         static void drawFrontGrass(const SceneFrame&, float travel);
+        // The near edge's row, or the far edge's between its runs' own, evenly spaced. See PathArt
+        static void drawVergeRow(const SceneFrame&, SceneTime, float groundY, float closeness,
+            bool nearEdge);
     private:
         // Three 20-second runs: two over obstacles, then the one into the branch.
         static constexpr std::chrono::seconds k_cycle{ 60 };

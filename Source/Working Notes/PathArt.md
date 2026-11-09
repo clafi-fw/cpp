@@ -1284,6 +1284,203 @@ Then "while the wolf rests the beach ball slowly rolls off". It first rolled bac
 from 0.64, gathering speed until the camera carried it away; Oj: "not completely rolls off just a
 tad and stops naturally", so it rolls back 30 units over 0.64 to 0.74, eased in and out.
 
+**The near verge** (Oj, 2026-11-09: "Put on the closer side of the Chase path casual objects too, in
+different order, with mismatched period, so the combinations repeat never, or for a looong time").
+The first mockup stood the near one 100 units ahead of the far one in every run, taken from a list
+of its own by the golden ratio's fraction a run, with lists of 13 and 11 offered beside it. Oj: "Set
+mismatching distance and offset between the neighbors in far and near rows so the rows are
+independent and not aligned, use the same objects number". The near row stands at its own spacing
+along the trail: a cycle's travel (14,388 units) over 2.618, the golden ratio's square - 5,496
+units, about 1.15 runs - the first half a spacing in. Its places drift through every moment of the
+runs; in the first two cycles one stands by the boot as the wolf trips and one beside the hare where
+she sits under the tree.
+
+A near place can come by while the camera stands, while the hare runs ahead past it or while the
+wolf lies down, so the far row's clock - worked out from where the hare runs at full speed - does
+not serve it. The second mockup started the hare's part of the stirring when she came close and the
+wolf's part when he did, both found by going back over the scene's time. Oj: "there should be a
+trigger moment starting a casual object animation after which it runs only forward without pauses
+and don't track a subject". The hare's first coming close became the one trigger, and the stirring
+played on from it as in a pass at full speed. The gust is the far row's wake worked out for the two
+running by at 330 units a second, the wolf k_wolfAfterHare behind her - 0.89 s, the far row's gap in
+a run over the trail at closeness 1. The daisy's petals and the reeds' fluff still leave from
+k_nodBlown and k_leanTorn; at 1.12 s the scripted wake is 0.03 short of its height, about a unit at
+the daisy's head.
+
+The trigger is found by stepping back from now 0.05 s at a time until the place stood 1,800 units
+ahead of the middle of the frame, keeping the earliest step at which the hare went from short of it
+to close, and bisecting that step 16 times. It is the first coming close and not the last, since
+under the tree she hops back past a place to her apple and comes by it again. hareXAt is the hare's
+place taken out of draw, so the search reads the motion draw shows. It works the apple hop out in
+units where draw worked in pixels, which moves at most four pixels by one level in the branch run
+from 0.705 to 0.94; with the near row left out, every other frame is as it was (640 x 360, 1600 x
+500 and 400 x 600, four cycles). Frame time at 1920 x 1080 is the same within noise, 5.4 to 5.8 ms a
+frame either way.
+
+The near row stands 38 units below the ground line, on the grass at the trail's near edge, at 1.15
+times the far row's size. It is drawn after the wolf, the daze stars and the dust, before the front
+grass. Its frog hops toward the viewer, growing, where the far one hops away. The place along the
+trail is a double, cyclesPassed times the cycle's travel plus the cycle's own, which holds at
+100,000 cycles.
+
+Then (Oj) "wolf passing and hare passing animations should have their own trigger moments". The
+wolf's first coming close is a second trigger, found in the same pass back over time with wolfXAt,
+the wolf's place taken out of draw as hareXAt was; the far row and the runners are unchanged by it
+to the bit. RoadsideMotion carries wolfTime, the clock the wolf's part of the stirring runs on: the
+far row hands it sinceHareClose, the near row the seconds since he came close plus k_wolfAfterHare,
+so the timings in the draw functions stand as they were. The wolf's part is the boulder's, the
+peel's and the apple's second and third hops, the signpost's second turn, the toadstool's cap
+leaving the stalk, the daisy's petals, the reeds' fur and fluff and the snail coming out again. The
+near gust is two scripted wakes, each from its own trigger. Under the tree a daisy the hare passes
+as she runs on keeps its petals while the wolf lies dazed and loses them as he comes by, about six
+seconds later.
+
+**The leap's ends and the apples go round in turns** (Oj, 2026-11-09: "Suggest ideas to make the
+tree collisions vary from run to run", then "let's do your pick and my option is that sometimes he
+meets a flying bird instead of a tree"). My picks were a different tree each time, flying into the
+trunk, leaping onto the branch, and how many apples fall with one dropping off his head; his was the
+crow. LeapEnd goes round in a turn of four cycles, and treeRunOf picks it from cyclesPassed. Cycle 0
+is the low branch and four apples, the run as it was. The camera's timing is the same in every
+variant: a cycle's travel has to stay whole for periodNear's tiling, so each way down fits the
+camera's stop rather than moving it.
+
+Oj then: "Fruits stay always apples" - pear, plum, cherry and apricot trees went. On "A couple of
+apples survive always" the tree took eight apples, two of them new, and the two at the top of the
+crown never fall; of six falling out of eight, two out of six, or dropping the variant, he took six
+out of eight. Cycle 0 differs from before only by the two added apples on the crown, 117 pixels at
+640 x 360; the first two runs are the same to the bit.
+
+**Into the trunk** flattens him against it by 0.584, slides him down by 0.618 and topples him back
+onto his back by 0.645. At the trunk's foot his middle stands 66 units over his feet's line; at 48
+his hind legs went below the ground.
+
+**Over the branch** he leaps 150 units high, tops out at 0.572 and lands with his middle 30 units
+past the branch's end, where the low branch ends in the other cycles. WolfPose took `dangle`, legs
+and tail hanging straight down, for while he lies across the branch, which gives under him and
+springs back as he slips off at 0.70. Oj on the first version: "in 'over the branch' the branch is
+facing the other way" - asked which way, he picked the branch mirrored to the trunk's far side, tip
+away from him. The first mirrored version kept the tree where it stood and carried his leap 266
+units further in the same half second, past the trunk. Oj: "in over the branch the wolf jumps the
+same way, only the tree position is offset to the left so he lands on the branch". The trunk now
+stands 75 units short of where he lands, 45 before the branch's end, and trunkFromBranchEnd(LeapEnd)
+answers the trunk's place for everything that works from it - the apples, the hare's hop to hers,
+his head under the falling apple.
+
+Under that tree the hare sits about 300 units past the trunk and hops back to her apple, which lies
+78 units past it. He slips back 85 units down the branch and lies at the trunk's foot, so his tail
+stops short of her; at 40 he lay where she eats, and his tail reached into her. Taking an apple on
+the trunk's near side instead put the trunk between them, but she eats facing left, away from him.
+
+**The apple off his head** was the third AppleFall, in a turn of three cycles: the nearest apple at
+least 40 units over his head at 0.66 dropped onto it and bounced 40 units on, and the hare hopped to
+it. Taking the hare's apple there regardless had left his head above it in one leap's end, where the
+drop came out as the square root of a negative and the apple never fell. Oj (19:58): "remove the
+variant when the hare gets close to the wolf to get the apple" - after the low branch and the trunk
+the apple lay by his head and she hopped onto him to take it. With Four and Six left, a turn of two
+by cycle would tie each to a leap's end, the low branch and over the branch always four and the
+trunk always six. The fall changes instead from one turn of the leap's ends to the next, as the
+crow's start does, so eight cycles show every pairing.
+
+**The crow** stands in for the tree, flying at him 160 units a second at the height of his head. Oj:
+"The crow have two initial positions - one as you has shown, and the other one is sitting on a stump
+and getting scared by their arriving". The crow comes in every fourth cycle, so a turn of two by
+cycle would land on the same start every time; CrowStart goes by how many crows have passed instead.
+The stump is the roadside one at 1.8 times, 44 units past the branch's end on the far verge, drawn
+before the runners while the crow is drawn after the wolf. The crow sits pecking, looks up about two
+seconds before and springs up 0.4 s before his face meets it. Then the hare is about one of her
+lengths from the stump at 1920 x 1080, 1600 x 500 and 400 x 600; at 0.55 s she was still well short,
+and it went up unprovoked.
+
+**The other couple** (Oj, 20:11: "another idea - they are meeting another couple going the other
+direction and the two wolfs collide"). Asked where and how the hares pass, he took a fifth way for
+the leap to end and one hare bounding over the other. The other couple is ours turned about the
+point on the ground where the wolves meet, which holds still on the ground while the camera moves -
+the mirror of our wolf's middle is `2 * meeting - his` on screen, his pose drawn in a frame turned
+about that x. So the other pair runs at our speed and does all ours does, and nothing of theirs is
+worked out on its own. The wolves leap as at the low branch and meet where its end would be, and
+both fall as from it. The hares cross where the mirror crosses itself: haresCrossAt halves the span
+from 0.4 to the contact 20 times for when our hare reaches the meeting point, about 0.572 at 1920 x
+1080. Then both wolves are in the air, so the hares pass under them. The bounding hare rises 70
+units at the top over 0.012 shares either side, the other crouches with her ears laid back; ours
+bounds in one turn and theirs in the next.
+
+LeapEnd's turn is five cycles long, and the apple fall, the crow's start and which hare bounds
+change from one turn to the next, so the whole repeats in ten cycles; cycles 1 to 4 are the same to
+the bit as before. The two couples close at twice the running speed, so at 1920 x 1080 the other
+hare is in view 0.8 s before the wolves meet and her wolf 0.6 s; offered to slow them, Oj kept it.
+What stands by the path stirs only for our two.
+
+Then (Oj) "Give them different coats": of a black wolf with a grey hare, a brown wolf with a white
+hare and a rust wolf with a dark brown hare, he took the black and the grey. WolfSprite and
+HareSprite take their fur as a WolfCoat and a HareCoat, as ReedsSprite takes ReedColors, and
+ChaseCoats holds the grey wolf and brown hare that were the sprites' own colours beside the two new
+coats.
+
+Then (Oj, 20:29) "slightly shift other couple timings after the collide". Their poses are worked out
+again at a time of their own instead of being ours turned: draw holds the wolf's and the hare's
+moment as wolfAt(t, travelThen) and hareAt(t, travelThen, over, ...), ours called at the episode's
+time with the same arithmetic as before, so our two are the same to the bit. Their hare's time runs
+k_theirHareAhead (0.008, 0.16 s) ahead of ours, eased in from 0.59 to 0.61 while she runs on; their
+wolf's runs k_theirWolfBehind (0.012, 0.24 s) behind, eased in from 0.64 to 0.70 while he lies
+still, so no shift shows as it comes in. Their hare turns to taunt and runs off sooner, their wolf
+gets up later, and his leg twitches and daze stars go out of step with ours. Up to 0.59 every frame
+is as it was.
+
+hareXAt, wolfXAt and cameraShare left ChaseScene for the file's anonymous namespace, since they take
+the run's LeapEnd and TreeRun, which live there. With all of it, frame time at 1920 x 1080 is the
+same within noise.
+
+**Twice as much by the path** (Oj, 20:36: "place the side objects denser. Add a cow on the stump
+that success to fly away", then "sorry its a crow, my typo"). Asked how dense, he took twice on both
+edges. The near row's spacing is halved, twice the golden ratio's square of places in a cycle. The
+far edge keeps its place in each run, since the warning banana peel and apple rest on it, and gains
+a row between: three in a cycle's travel at even spacing, the first 0.81 of a spacing in. The runs'
+places sit 1,848, 6,633 and 10,362 units into a cycle of 14,388, and that share sets each
+between-place about halfway between two of them, the nearest 1,681 units off. The between row is the
+near row's machinery on the far edge - drawNearVerge became drawVergeRow with a `nearEdge` switch -
+so its stirring starts by the same search for when each of the two came close.
+
+The crow on a stump is the thirteenth object, in the near row and the between row only, so the runs'
+row stays in step with the trail obstacles. It is the leap run's crow at half the size on the
+roadside stump, pecking at it, springing up as the hare comes close and flying off ahead at 300
+units a second, climbing like the sparrow. Frame time at 1920 x 1080 is the same within noise.
+
+Oj (20:49): "twice as often was a bad idea, now there's a clutter around the tree action". The far
+between-row's third place, 13,477 units into the cycle, stood 13 units from where the camera stands
+for the tree, 13,464, so every cycle had something by the tree, and the near row often added one.
+Going back to the old density was shown first; Oj: "consider other options to clear them off of the
+trees". Of leaving the tree's stretch empty, pushing what falls in it out to its edges, doubling
+only over the trail, and the old density with the stretch kept clear, he took the first. Neither row
+has a place within k_treeStretchReach, 700 units, of the tree's standing point - wider than the half
+of a 16:9 frame, 533 units - and the check comes before the search for the two's close moments, so a
+left-out place costs nothing. Even spacing could not keep the far row's third place clear of both
+the stretch and the runs' places by more than 660 units, so it is left out rather than moved, and
+the far edge has five a cycle.
+
+Then (Oj, 20:59) "offset the closer row more"; shown the near row moved toward the viewer, he
+answered "more to the right, further from the opposite-side siblings". The rows are spaced so they
+never fall into step, so moving the whole near row along would only change which pairs stand
+together: in the first ten cycles 14 of 60 near places stood within 350 units of a far one, the
+closest 55. Instead a near place within k_nearClearOfFar, 500 units, of a far place - the runs'
+three and the between row's two, worked out per call from cameraShare - moves on to 500 units past
+it, and the tree's stretch is checked after the move. With the far places at least 1,680 units
+apart, a moved place lands clear of the next far one and of the next near one, 2,748 units on. The
+check is cheap; frame time at 1920 x 1080 is the same within noise.
+
+**The snap in the first run** (Oj, 21:16: "Make the wolf clang his teeth on the first run too one
+time"). Over the trail he is 185 units behind the hare at 0.5 and 150 at the trip, too far for his
+jaws to reach her tail, where the tree run's snap comes at 122. So in episode 0 he lunges
+k_firstRunLunge, 60 units, at k_firstRunSnap, 0.5 - a bump 0.012 wide, carried in wolfXAt so the
+stirring by the path sees it - and his jaws open and shut as at the tree run's snap, through
+chompAt, which branchRunAt now calls too with the same arithmetic. The hare's next hop rises 0.8
+higher, a bump 0.008 wide just after the snap. The second run and the tree run are the same to the
+bit.
+
+Then (Oj, 21:21) "the snail stick out its head a little earlier". It came out from 1.8 to 2.6 s of
+the wolf's part of the stirring, and at 1920 x 1080 the camera carries the near snail out of the
+left edge at about 2.3 s, so its head was barely seen. It comes out from 1.3 s, as the wolf's tail
+clears it, to 1.9 s.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

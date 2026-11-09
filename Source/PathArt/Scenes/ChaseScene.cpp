@@ -53,6 +53,10 @@ namespace ClaFi::PathArt
         constexpr Color Leaf{ 0xFF4FA34A };
         constexpr Color AppleFlesh{ 0xFFFBF1D2 };
         constexpr Color AppleSeed{ 0xFF4A2E1A };
+        constexpr Color CrowBody{ 0xFF2B2F3B };
+        constexpr Color CrowWing{ 0xFF1D2029 };
+        constexpr Color CrowWingFar{ 0xFF16181F };
+        constexpr Color CrowBeak{ 0xFF4B4D55 };
         constexpr Color BootLight{ 0xFF8A6440 };
         constexpr Color BootDark{ 0xFF5E3F25 };
         constexpr Color BootSole{ 0xFF2F2621 };
@@ -120,6 +124,39 @@ namespace ClaFi::PathArt
         constexpr Color FrontGrassDark{ 0xFF2F6E25 };
     }
 
+    // The two who run the chase, and the other couple that comes the other way.
+    namespace ChaseCoats
+    {
+        constexpr WolfCoat GreyWolf{
+            .light = Color{ 0xFF7D8592 },
+            .shade = Color{ 0xFF59606B },
+            .coat = Color{ 0xFF6C7480 },
+            .far = Color{ 0xFF4F565F },
+            .dark = Color{ 0xFF3D434C },
+            .belly = Color{ 0xE6B3B9C2 }
+        };
+        constexpr HareCoat BrownHare{
+            .light = Color{ 0xFFC9935E },
+            .fur = Color{ 0xFFB98552 },
+            .shade = Color{ 0xFFA87444 },
+            .belly = Color{ 0xE6F0DFC0 }
+        };
+        constexpr WolfCoat BlackWolf{
+            .light = Color{ 0xFF4C4F57 },
+            .shade = Color{ 0xFF35383F },
+            .coat = Color{ 0xFF40434A },
+            .far = Color{ 0xFF2C2E34 },
+            .dark = Color{ 0xFF1F2126 },
+            .belly = Color{ 0xE68A8E96 }
+        };
+        constexpr HareCoat GreyHare{
+            .light = Color{ 0xFFB2B1AA },
+            .fur = Color{ 0xFF9F9E97 },
+            .shade = Color{ 0xFF8C8B84 },
+            .belly = Color{ 0xE6EFEDE6 }
+        };
+    }
+
     namespace
     {
         // Units the camera covers in an episode at full speed.
@@ -136,15 +173,27 @@ namespace ClaFi::PathArt
         };
         constexpr CameraStop k_tripStop{ 0.55f, 0.07f };
         constexpr CameraStop k_branchStop{ 0.58f, 0.02f };
+        // The camera's travel by `episodeTime` of an episode, as a share of a full-speed episode's.
+        [[nodiscard]] float cameraShare(float episodeTime, int episode);
+        // When the wolf comes to rest from his fall.
+        constexpr float k_fallEnd{ 0.62f };
         // The camera stands from the stop to here, then speeds up again until k_cameraRunning.
         constexpr float k_cameraWaiting{ 0.82f };
         constexpr float k_cameraRunning{ 0.9f };
+        // The trail runs this many units below the ground line, and the wolf is drawn at this many
+        // pixels to the frame's unit.
+        constexpr float k_trailBelowGround{ 22.0f };
+        constexpr float k_wolfScale{ 0.95f };
         // Where the wolf and the hare run, in units from the middle of the frame.
         constexpr float k_wolfChasing{ -200.0f };
         constexpr float k_hareRunning{ 150.0f };
         // The wolf's middle behind the hare's feet as he trips, his nose half a hare short of her
         // tail.
         constexpr float k_wolfBehindHareAtTrip{ 150.0f };
+        // In the first run of a cycle he lunges this many units at the hare's tail once, this
+        // share of the run in, and snaps his jaws shut on nothing.
+        constexpr float k_firstRunLunge{ 60.0f };
+        constexpr float k_firstRunSnap{ 0.5f };
         // Where he lies after a trip, a safe distance short of where the hare sits up.
         constexpr float k_wolfDownAfterTrip{ -70.0f };
 
@@ -169,6 +218,73 @@ namespace ClaFi::PathArt
         constexpr float k_leapHeight{ 64.0f };
         // From the wolf's middle to the end of the branch as it meets his face.
         constexpr float k_branchReach{ 66.0f };
+        // From the branch's end to the trunk's middle and to its near side, in units of the frame.
+        constexpr float k_trunkFromBranchEnd{ 125.0f };
+        constexpr float k_trunkHalfWidth{ 14.0f };
+        // Over the branch he leaps this high, tops out this soon and lands this far past the
+        // branch's end, where that tree's trunk stands this far back and its branch reaches on.
+        constexpr float k_leapHeightOverBranch{ 150.0f };
+        constexpr float k_leapTopOverBranch{ 0.572f };
+        constexpr float k_wolfPastBranchEnd{ 30.0f };
+        constexpr float k_wolfPastTrunk{ 75.0f };
+        // The crow's stump stands this far past the branch's end, the roadside stump at this
+        // size, and the crow takes off from it this many seconds before his face meets it.
+        constexpr float k_crowStumpFromBranchEnd{ 44.0f };
+        constexpr float k_crowStumpSize{ 1.8f };
+        constexpr float k_crowTakeoff{ -0.4f };
+
+        // How the wolf's leap at the hare ends in the branch run, a different way each cycle.
+        enum class LeapEnd
+        {
+            Branch, // the low branch meets his face
+            Trunk, // he flies into the trunk, slides down it and topples onto his back
+            OverBranch, // he leaps too high, lands on the branch past the trunk and slips off it
+            Crow, // no tree stands there, and a crow flying the other way meets his face
+            OtherWolf // another couple runs the other way, and the two wolves meet face to face
+        };
+        // What the tree lets fall as he hits it; the hare's apple falls every time, and the two at
+        // the top of the crown never do.
+        enum class AppleFall
+        {
+            Four, // the four nearest the trail
+            Six // all but the top two
+        };
+        // Where the crow is as the two come: flying at them, or sitting on a stump by the trail
+        // until they frighten it up into his leap.
+        enum class CrowStart
+        {
+            Flying,
+            OnStump
+        };
+        // The branch run of a cycle. How the leap ends goes round in a turn five cycles long, and
+        // what falls, the crow's start and which hare leaps change from one turn to the next.
+        struct TreeRun
+        {
+            LeapEnd leapEnd;
+            AppleFall appleFall;
+            CrowStart crowStart;
+            bool ourHareLeaps; // meeting the other couple, ours bounds over their hare, not under
+        };
+        constexpr std::array<LeapEnd, 5> k_leapEnds{
+            LeapEnd::Branch,
+            LeapEnd::Trunk,
+            LeapEnd::OverBranch,
+            LeapEnd::Crow,
+            LeapEnd::OtherWolf
+        };
+        constexpr std::array<AppleFall, 2> k_appleFalls{
+            AppleFall::Four,
+            AppleFall::Six
+        };
+        constexpr std::array<CrowStart, 2> k_crowStarts{
+            CrowStart::Flying,
+            CrowStart::OnStump
+        };
+        [[nodiscard]] TreeRun treeRunOf(std::int64_t cyclesPassed);
+        // From the branch's end to the trunk's middle of the run's tree, in units of the frame.
+        [[nodiscard]] float trunkFromBranchEnd(LeapEnd);
+        // Whether an apple tree stands where the leap ends.
+        [[nodiscard]] bool treeStands(LeapEnd);
 
         // How the wolf runs at the hare in the branch run, up to the branch.
         struct BranchRun
@@ -187,7 +303,45 @@ namespace ClaFi::PathArt
         // Units the hare runs ahead of k_hareRunning, bolting from the wolf in the branch run.
         [[nodiscard]] float hareBoltAt(float episodeTime);
         // His gap to the hare at his closest is held in pixels, whatever `closeness`.
-        [[nodiscard]] BranchRun branchRunAt(float episodeTime, float closeness);
+        [[nodiscard]] BranchRun branchRunAt(float episodeTime, float closeness, LeapEnd);
+        // His jaws open as he lunges at her tail and shut at the end of the lunge, at `snapAt`.
+        [[nodiscard]] float chompAt(float episodeTime, float snapAt);
+        // Where the branch's end is as the wolf's leap ends, in units from the middle of the frame;
+        // for the crow, where it meets him.
+        [[nodiscard]] float branchEndAtContact(float closeness, LeapEnd);
+
+        // The wolf from where his leap ends in the branch run: down, lying dazed, up and back.
+        struct TreeFall
+        {
+            float x; // units from the middle of the frame
+            float lift;
+            float turn;
+            float leap;
+            float jawOpen;
+            float sprawl;
+            float onBack;
+            float dangle;
+            float dazed;
+            float running;
+            float branchWeight; // units his weight bends the branch's end down
+        };
+        [[nodiscard]] TreeFall treeFallAt(float episodeTime, float closeness, LeapEnd);
+        // When he comes to rest on his back in the branch run.
+        [[nodiscard]] float treeRestAt(LeapEnd);
+        // Where the hare and the wolf run by `episodeTime` of an episode, in units from the middle
+        // of the frame.
+        [[nodiscard]] float hareXAt(int episode, float episodeTime, float closeness,
+            const TreeRun&);
+        [[nodiscard]] float wolfXAt(int episode, float episodeTime, float closeness, LeapEnd);
+        // The other couple are ours turned about the point on the ground where the wolves meet, so
+        // the two hares cross there at one moment, when this many shares of the run have passed.
+        [[nodiscard]] float haresCrossAt(float closeness, const TreeRun&);
+        // For this many shares of the run either side of it, one hare bounds over the other.
+        constexpr float k_haresPassing{ 0.012f };
+        // Once the wolves are down, the other couple's hare runs this many shares of the run ahead
+        // of ours and their wolf this many behind.
+        constexpr float k_theirHareAhead{ 0.008f };
+        constexpr float k_theirWolfBehind{ 0.012f };
 
         // What the wolf comes to grief on: the branch in the last run of a cycle, and in each run
         // before it the next of the others in turn.
@@ -228,7 +382,8 @@ namespace ClaFi::PathArt
             Bird,
             Butterfly,
             Frog,
-            Snail
+            Snail,
+            CrowOnStump // a crow on a tree stump, which gets away before they reach it
         };
         // One for each run of the four cycles the trail obstacles take; the banana peel and the
         // apple come by earlier in the run that ends on one on the trail.
@@ -250,8 +405,67 @@ namespace ClaFi::PathArt
         // the wolf closes in.
         constexpr float k_roadsidePasses{ 0.28f };
         constexpr float k_roadsidePassesBeforeBranch{ 0.12f };
-        // What stands by the path stirs as the hare comes within this many units of it.
-        constexpr float k_hareClose{ 70.0f };
+        // What stands by the path stirs as each of the two comes within this many units of it.
+        constexpr float k_stirringReach{ 70.0f };
+        // Which edge of the trail something by the path stands on.
+        enum class Verge
+        {
+            Far,
+            Near
+        };
+        // The near verge's own order, one at each of its places along the trail in turn.
+        constexpr std::array<Roadside, 13> k_nearRoadside{
+            Roadside::Snail,
+            Roadside::Boulder,
+            Roadside::Daisy,
+            Roadside::Frog,
+            Roadside::CrowOnStump,
+            Roadside::Signpost,
+            Roadside::Apple,
+            Roadside::Butterfly,
+            Roadside::TreeStump,
+            Roadside::BananaPeel,
+            Roadside::Reeds,
+            Roadside::Bird,
+            Roadside::Toadstool
+        };
+        // The near verge has twice the golden ratio's square of places in a cycle's travel against
+        // the far verge's six, so the two never fall into step.
+        constexpr double k_nearRoadsidesPerCycle{ 5.23606797749979 };
+        constexpr double k_nearRoadsideOffset{ 0.5 }; // of a spacing, from the start of the trail
+        // The far verge's places between those of its runs, in an order of their own: three in a
+        // cycle's travel, the first this share of a spacing from the start of the trail, so that
+        // each falls about halfway between two of the runs' places.
+        constexpr std::array<Roadside, 13> k_farBetweenRoadside{
+            Roadside::Daisy,
+            Roadside::CrowOnStump,
+            Roadside::Boulder,
+            Roadside::Toadstool,
+            Roadside::Snail,
+            Roadside::Signpost,
+            Roadside::Reeds,
+            Roadside::Frog,
+            Roadside::Butterfly,
+            Roadside::TreeStump,
+            Roadside::Apple,
+            Roadside::Bird,
+            Roadside::BananaPeel
+        };
+        constexpr double k_farBetweenPerCycle{ 3.0 };
+        constexpr double k_farBetweenOffset{ 0.81 };
+        // Neither row has a place within this many units of where the camera stands in the run to
+        // the tree, so nothing by the path crowds what happens there.
+        constexpr double k_treeStretchReach{ 700.0 };
+        // A near place that would stand within this many units of one on the far verge moves on
+        // to stand this far past it.
+        constexpr double k_nearClearOfFar{ 500.0 };
+        // Units below the ground line each verge is, and the near one's size against the far's.
+        constexpr float k_farVergeDrop{ 10.0f };
+        constexpr float k_nearVergeDrop{ 38.0f };
+        constexpr float k_nearVergeSize{ 1.15f };
+        // Seconds after the hare that the wolf comes as close to the far verge's thing in a run
+        // over the trail, which the timing of his part of the stirring is stated against.
+        constexpr float k_wolfAfterHare{ 0.89f };
 
         // How what is on the trail moves at one moment.
         struct ObstacleMotion
@@ -268,29 +482,34 @@ namespace ClaFi::PathArt
             float bootTip; // radians the boot has tipped over, away from the wolf
             float sinceHit; // shares of the episode since the wolf hit the branch, below 0 before
             float appleSplit; // 0 the apple whole, 1 in two halves lying apart
+            float crownShake; // units the tree's crown is shaken sideways, flown into
             bool hareHasApple; // the hare has taken her apple off the ground
+            TreeRun treeRun; // the branch run's leap end, apple fall and crow start
         };
         // The hedgehog walks off at 160 units a second, which is this many in an episode's time.
         constexpr float k_hedgehogWalk{ 3200.0f };
         constexpr float k_episodeSeconds{ 20.0f };
 
         // An apple on the tree, in units from the foot of its trunk; one that falls lets go that
-        // long after the wolf hits the branch, and drifts that far as it lands.
+        // long after the wolf hits the tree, and drifts that far as it lands.
         struct TreeApple
         {
             FloatPoint onCrown;
-            bool falls;
+            bool amongFour; // falls in AppleFall::Four
+            bool amongSix; // falls in AppleFall::Six
             float lettingGo;
             float drift;
             float landing; // units below the ground line, where the trail is
         };
-        constexpr std::array<TreeApple, 6> k_treeApples{
-            TreeApple{ { -58.0f, -158.0f }, true, 0.0f, -14.0f, 18.0f },
-            TreeApple{ { -22.0f, -214.0f }, false, 0.0f, 0.0f, 0.0f },
-            TreeApple{ { 18.0f, -232.0f }, false, 0.0f, 0.0f, 0.0f },
-            TreeApple{ { 30.0f, -188.0f }, true, 0.003f, 10.0f, 22.0f },
-            TreeApple{ { 62.0f, -150.0f }, true, 0.006f, 16.0f, 15.0f },
-            TreeApple{ { -10.0f, -160.0f }, true, 0.0015f, -6.0f, 26.0f }
+        constexpr std::array<TreeApple, 8> k_treeApples{
+            TreeApple{ { -58.0f, -158.0f }, true, true, 0.0f, -14.0f, 18.0f },
+            TreeApple{ { -22.0f, -214.0f }, false, false, 0.0f, 0.0f, 0.0f },
+            TreeApple{ { 18.0f, -232.0f }, false, false, 0.0f, 0.0f, 0.0f },
+            TreeApple{ { 30.0f, -188.0f }, true, true, 0.003f, 10.0f, 22.0f },
+            TreeApple{ { 62.0f, -150.0f }, true, true, 0.006f, 16.0f, 15.0f },
+            TreeApple{ { -10.0f, -160.0f }, true, true, 0.0015f, -6.0f, 26.0f },
+            TreeApple{ { -46.0f, -196.0f }, false, true, 0.0045f, 8.0f, 20.0f },
+            TreeApple{ { 74.0f, -182.0f }, false, true, 0.0075f, -10.0f, 26.0f }
         };
         // Units a second a falling apple gathers each second.
         constexpr float k_appleGravity{ 1200.0f };
@@ -333,16 +552,29 @@ namespace ClaFi::PathArt
         // Lying tines up, its head toward the wolf; its handle swings up about the head.
         void drawRake(const SceneFrame& onTrail, float swing);
         void drawBranchTree(const SceneFrame&, float x, float groundY, float footY,
-            float branchSway, float sinceHit, bool hareHasApple);
+            const ObstacleMotion&);
+        // `x` is where it meets the wolf's face.
+        void drawCrow(const SceneFrame&, float x, float groundY, float footY, float sinceHit,
+            CrowStart);
+        // Folded, its wings lie along its back and `flap` is not used.
+        void drawCrowBody(const SceneFrame& crow, float flap, bool dazed, bool folded);
+        // The stump the crow sits on, on the far verge under where it meets his face.
+        void drawCrowStump(const SceneFrame&, float x, float groundY);
         // How what stands by the path moves as the two run past it.
         struct RoadsideMotion
         {
             float gust; // radians the wind of their passing bends reeds and the daisy after them
-            float sinceHareClose; // seconds since the hare came within k_hareClose, below 0 before
-            float seconds; // into the run, for the bird's pecking and the butterfly's resting wings
+            // Seconds since the hare came within k_stirringReach, below 0 before.
+            float sinceHareClose;
+            // sinceHareClose as it would read with the wolf k_wolfAfterHare behind her.
+            float wolfTime;
+            float seconds; // a running clock, for the bird's pecking and the butterfly's wings
         };
-        // `x` is its middle, where it stands on the far edge of the trail.
-        void drawRoadside(const SceneFrame&, Roadside, float x, float groundY,
+        // The wind behind each of them as they pass bends it after them, the wolf's more; `x` is
+        // where it stands, in units from the middle of the frame like the two.
+        [[nodiscard]] float wakeGust(float x, float hareX, float wolfX);
+        // `x` is its middle, where it stands on that edge of the trail.
+        void drawRoadside(const SceneFrame&, Roadside, Verge, float x, float groundY,
             const RoadsideMotion&);
         // How the boulder and the banana peel jump in the wake of each of them.
         struct Hop
@@ -351,20 +583,21 @@ namespace ClaFi::PathArt
             float tilt; // radians
             float squash; // 0 to 1, as it lands
         };
-        [[nodiscard]] Hop hopAt(float sinceHareClose);
+        [[nodiscard]] Hop hopAt(const RoadsideMotion&);
         // Something that hops, drawn about the middle of its foot.
         [[nodiscard]] SceneFrame hopping(const SceneFrame& onVerge, const Hop&);
         void drawBoulder(const SceneFrame& onVerge, const Hop&);
-        void drawDaisy(const SceneFrame& onVerge, float gust, float sinceHareClose);
-        void drawSignpost(const SceneFrame& onVerge, float sinceHareClose);
-        void drawToadstool(const SceneFrame& onVerge, float sinceHareClose);
+        void drawDaisy(const SceneFrame& onVerge, const RoadsideMotion&);
+        void drawSignpost(const SceneFrame& onVerge, const RoadsideMotion&);
+        void drawToadstool(const SceneFrame& onVerge, const RoadsideMotion&);
         // The fluff the wolf's wake tears from the reeds' heads, drawn in the reeds' units.
-        void drawReedFluff(const SceneFrame& onVerge, float sinceHareClose);
+        void drawReedFluff(const SceneFrame& onVerge, float wolfTime);
         void drawTreeStump(const SceneFrame& onVerge);
         void drawBird(const SceneFrame& onVerge, float seconds, float sinceHareClose);
+        void drawStumpCrow(const SceneFrame& onVerge, float seconds, float sinceHareClose);
         void drawButterfly(const SceneFrame& onVerge, float seconds, float sinceHareClose);
-        void drawFrog(const SceneFrame& onVerge, float sinceHareClose);
-        void drawSnail(const SceneFrame& onVerge, float sinceHareClose);
+        void drawFrog(const SceneFrame& onVerge, float sinceHareClose, Verge);
+        void drawSnail(const SceneFrame& onVerge, const RoadsideMotion&);
 
         // One wave of a ridge: its height, how often it repeats over a tile, where it starts.
         struct Wave
@@ -411,8 +644,12 @@ namespace ClaFi::PathArt
         const int episode = static_cast<int>(std::floor(time.cycleTime * k_episodesPerCycle));
         const float episodeTime = fractionalPart(time.cycleTime * k_episodesPerCycle);
         const bool branchRun = episode == k_branchEpisode;
+        const TreeRun treeRun = treeRunOf(time.cyclesPassed);
+        const LeapEnd leapEnd = treeRun.leapEnd;
+        // The hare has an apple to eat at him unless the crow met him instead of a tree.
+        const bool appleRun = branchRun && treeStands(leapEnd);
         const float groundY = frame.height * 0.78f;
-        const float footY = groundY + 22.0f * unit;
+        const float footY = groundY + k_trailBelowGround * unit;
         const auto toScreen = [&](float units) {
             return width * 0.5f + units * unit * closeness;
         };
@@ -429,7 +666,7 @@ namespace ClaFi::PathArt
         const float trip = branchRun ? k_branchStop.start : k_tripStop.start;
         const float wolfAtTrip = k_hareRunning - k_wolfBehindHareAtTrip / closeness;
         const float obstacleAtTrip = branchRun
-            ? k_wolfAtBranch + k_branchReach / closeness
+            ? branchEndAtContact(closeness, leapEnd)
             : wolfAtTrip + 30.0f;
         const std::int64_t trailObstacleCount
             = static_cast<std::int64_t>(k_trailObstacles.size());
@@ -505,195 +742,173 @@ namespace ClaFi::PathArt
                 : 1.1f * std::exp(-sinceLetGo / 0.015f) * std::cos(k_2Pi * sinceLetGo / 0.02f);
         }
 
-        // The wolf: chasing, falling, lying dazed, getting up and running back into place.
-        float wolfX = k_wolfChasing;
-        float lift = 0.0f;
-        float turn = 0.0f;
-        float crouch = 0.0f;
-        float leap = 0.0f;
-        float jawOpen = 0.0f;
-        float sprawl = 0.0f;
-        float onBack = 0.0f;
-        float dazed = 0.0f;
-        float running = 1.0f;
-        float strain = 0.0f;
-        float weariness = 0.0f;
-        float snap = 0.0f;
-        const float fallEnd = 0.62f;
-        const float lyingX = branchRun
-            ? k_wolfAtBranch - cameraTravel(trip, fallEnd) - 18.0f
-            : k_wolfDownAfterTrip;
-        if (episodeTime < trip)
+        // The wolf at `t` of the episode, with the camera having covered `travelThen`: chasing,
+        // falling, lying dazed, getting up and running back into place.
+        struct WolfMoment
         {
-            if (!branchRun)
+            float x; // units from the middle of the frame
+            float lift;
+            float dazed;
+            float branchWeight;
+            WolfPose pose;
+        };
+        const float wolfSize = k_wolfScale * unit;
+        const auto wolfAt = [&](float t, float travelThen) {
+            const float wolfX = wolfXAt(episode, t, closeness, leapEnd);
+            float lift = 0.0f;
+            float turn = 0.0f;
+            float crouch = 0.0f;
+            float leap = 0.0f;
+            float jawOpen = 0.0f;
+            float sprawl = 0.0f;
+            float onBack = 0.0f;
+            float dangle = 0.0f;
+            float dazed = 0.0f;
+            float running = 1.0f;
+            float strain = 0.0f;
+            float weariness = 0.0f;
+            float snap = 0.0f;
+            float branchWeight = 0.0f;
+            if (t < trip)
             {
-                // gaining on the hare ever faster and pressing harder, until the obstacle stops him
-                const float towardTrip = episodeTime / trip;
-                const float gained = towardTrip * towardTrip;
-                wolfX = std::lerp(k_wolfChasing, wolfAtTrip, gained);
-                strain = gained;
+                if (!branchRun)
+                {
+                    // gaining on the hare ever faster and pressing harder, until the obstacle stops
+                    // him; in the first run he snaps at her once on the way
+                    const float towardTrip = t / trip;
+                    strain = towardTrip * towardTrip;
+                    if (episode == 0)
+                    {
+                        snap = bump(t, k_firstRunSnap, 0.005f);
+                        jawOpen = chompAt(t, k_firstRunSnap);
+                    }
+                }
+                else
+                {
+                    const BranchRun run = branchRunAt(t, closeness, leapEnd);
+                    lift = run.lift;
+                    turn = run.turn;
+                    crouch = run.crouch;
+                    leap = run.leap;
+                    jawOpen = run.jawOpen;
+                    running = 1.0f - run.leap;
+                    strain = run.strain;
+                    weariness = run.weariness;
+                    snap = run.snap;
+                }
             }
-            else
+            else if (branchRun)
             {
-                const BranchRun run = branchRunAt(episodeTime, closeness);
-                wolfX = run.x;
-                lift = run.lift;
-                turn = run.turn;
-                crouch = run.crouch;
-                leap = run.leap;
-                jawOpen = run.jawOpen;
-                running = 1.0f - run.leap;
-                strain = run.strain;
-                weariness = run.weariness;
-                snap = run.snap;
+                const TreeFall fall = treeFallAt(t, closeness, leapEnd);
+                lift = fall.lift;
+                turn = fall.turn;
+                leap = fall.leap;
+                jawOpen = fall.jawOpen;
+                sprawl = fall.sprawl;
+                onBack = fall.onBack;
+                dangle = fall.dangle;
+                dazed = fall.dazed;
+                running = fall.running;
+                branchWeight = fall.branchWeight;
             }
-        }
-        else if (episodeTime < fallEnd)
-        {
-            const float fall = (episodeTime - trip) / (fallEnd - trip);
-            if (!branchRun)
+            else if (t < k_fallEnd)
             {
                 // over the obstacle, head over heels, and flat on his belly, stopped short while
                 // the hare runs on
-                wolfX = std::lerp(wolfAtTrip, lyingX, smoothStep(0.0f, 1.0f, fall));
+                const float fall = (t - trip) / (k_fallEnd - trip);
                 strain = 1.0f - smoothStep(0.0f, 0.2f, fall);
                 turn = k_2Pi * smoothStep(0.05f, 0.9f, fall);
                 lift = 60.0f * std::sin(std::numbers::pi_v<float> * std::min(1.0f, fall * 1.1f));
                 sprawl = smoothStep(0.75f, 1.0f, fall);
                 running = 1.0f - smoothStep(0.0f, 0.4f, fall);
             }
-            else
+            else if (t < k_cameraWaiting)
             {
-                // stopped dead in the air by the branch, a moment hung on it, then down onto his
-                // back
-                const BranchRun atBranch = branchRunAt(trip, closeness);
-                const float dropping = std::clamp((fall - 0.2f) / 0.8f, 0.0f, 1.0f);
-                wolfX = k_wolfAtBranch - cameraTravel(trip, episodeTime)
-                    - 18.0f * smoothStep(0.0f, 0.5f, fall);
-                lift = atBranch.lift * (1.0f - dropping * dropping);
-                turn = std::lerp(atBranch.turn, -std::numbers::pi_v<float>,
-                    smoothStep(0.2f, 0.95f, fall));
-                leap = 1.0f - smoothStep(0.2f, 0.6f, fall);
-                // the branch shuts his jaws for him
-                jawOpen = 1.0f - smoothStep(0.0f, 0.1f, fall);
-                onBack = smoothStep(0.45f, 1.0f, fall);
+                sprawl = 1.0f;
                 dazed = 1.0f;
                 running = 0.0f;
             }
-        }
-        else if (episodeTime < k_cameraWaiting)
-        {
-            wolfX = lyingX;
-            // He comes down from the branch hard enough to bounce once.
-            if (branchRun)
+            else if (t < 0.86f)
             {
-                const float bounce = std::min(1.0f, (episodeTime - fallEnd) / 0.016f);
-                lift = 7.0f * std::sin(std::numbers::pi_v<float> * bounce);
-            }
-            turn = branchRun ? -std::numbers::pi_v<float> : 0.0f;
-            sprawl = branchRun ? 0.0f : 1.0f;
-            onBack = branchRun ? 1.0f : 0.0f;
-            dazed = 1.0f;
-            running = 0.0f;
-        }
-        else if (episodeTime < 0.86f)
-        {
-            const float rise = (episodeTime - k_cameraWaiting) / (0.86f - k_cameraWaiting);
-            wolfX = lyingX;
-            if (!branchRun)
-            {
+                const float rise = (t - k_cameraWaiting) / (0.86f - k_cameraWaiting);
                 sprawl = 1.0f - smoothStep(0.0f, 1.0f, rise);
                 lift = 16.0f * std::sin(std::numbers::pi_v<float> * rise);
+                dazed = 1.0f - rise;
+                running = smoothStep(0.5f, 1.0f, rise);
             }
-            else
-            {
-                turn = -std::numbers::pi_v<float> * (1.0f - smoothStep(0.0f, 1.0f, rise));
-                onBack = 1.0f - smoothStep(0.0f, 0.6f, rise);
-                lift = 40.0f * std::sin(std::numbers::pi_v<float> * rise);
-            }
-            dazed = 1.0f - rise;
-            running = smoothStep(0.5f, 1.0f, rise);
-        }
-        else
-        {
-            wolfX = std::lerp(lyingX, k_wolfChasing, smoothStep(0.86f, 1.0f, episodeTime));
-        }
-        // The gallop follows the ground the wolf covers, so his feet keep pace with it.
-        const float stride = k_2Pi * (travel + wolfX) / periodNear(1.0f, 150.0f);
-        const float bob = (4.0f + 3.0f * weariness) * std::abs(std::sin(stride)) * running;
-        const float wolfSize = 0.95f * unit;
-        const float standingHeight = 52.0f - 34.0f * sprawl - 30.0f * onBack - crouch;
-        const FloatPoint wolf = {
-            toScreen(wolfX + 8.0f * snap),
-            footY - (standingHeight + lift + bob) * wolfSize
+            // The gallop follows the ground the wolf covers, so his feet keep pace with it.
+            const float stride = k_2Pi * (travelThen + wolfX) / periodNear(1.0f, 150.0f);
+            const float bob = (4.0f + 3.0f * weariness) * std::abs(std::sin(stride)) * running;
+            const float standingHeight = 52.0f - 34.0f * sprawl - 30.0f * onBack - crouch;
+            const FloatPoint wolf = {
+                toScreen(wolfX + 8.0f * snap),
+                footY - (standingHeight + lift + bob) * wolfSize
+            };
+            const bool bonked = branchRun && leapEnd != LeapEnd::OverBranch && t > trip
+                && t < trip + 0.012f;
+            // On his back the head drops toward the ground rather than into it; what he meets in
+            // the air and the rake's handle knock it back; hung over the branch, it hangs.
+            const float headDrop = 0.7f * onBack + (bonked ? -0.3f : 0.0f) - 0.35f * rakeOnFace
+                + 0.6f * dangle;
+            // Pressing on, he lowers his head; worn out, it hangs; in the air it reaches for the
+            // hare.
+            const float headReach = 0.1f * strain + 0.15f * weariness + 0.3f * snap - 0.12f * leap;
+            const float tongueSwing = (0.4f + 0.4f * weariness) * std::sin(stride * 2.0f) * running;
+            const float eyesOnHare = std::max(strain, leap);
+            const float cycleThen = time.cycleTime + (t - episodeTime) / k_episodesPerCycle;
+            return WolfMoment{
+                .x = wolfX,
+                .lift = lift,
+                .dazed = dazed,
+                .branchWeight = branchWeight,
+                .pose = WolfPose{
+                    .center = wolf,
+                    .size = wolfSize,
+                    .turn = turn + 0.07f * std::sin(stride) * running,
+                    .stride = stride,
+                    .leap = leap,
+                    .sprawl = sprawl,
+                    .onBack = onBack,
+                    .dangle = dangle,
+                    .dazed = dazed,
+                    .headTurn = std::lerp(0.1f * std::sin(stride), 0.3f, sprawl) + headDrop
+                        + headReach,
+                    .tongueTurn = 0.3f + tongueSwing + 0.6f * dazed + 0.5f * std::max(strain, leap),
+                    .jawOpen = jawOpen,
+                    .glance = 0.6f * std::sin(k_2Pi * 3.0f * cycleThen) * (1.0f - eyesOnHare),
+                    .cycleTime = cycleThen
+                }
+            };
         };
-        const bool bonked = branchRun && episodeTime > trip && episodeTime < trip + 0.012f;
-        // On his back the head drops toward the ground rather than into it; the branch and the
-        // rake's handle knock it back.
-        const float headDrop = 0.7f * onBack + (bonked ? -0.3f : 0.0f) - 0.35f * rakeOnFace;
-        // Pressing on, he lowers his head; worn out, it hangs; in the air it reaches for the hare.
-        const float headReach = 0.1f * strain + 0.15f * weariness + 0.3f * snap - 0.12f * leap;
-        const float tongueSwing = (0.4f + 0.4f * weariness) * std::sin(stride * 2.0f) * running;
-        const float eyesOnHare = std::max(strain, leap);
-        const WolfPose wolfPose = {
-            .center = wolf,
-            .size = wolfSize,
-            .turn = turn + 0.07f * std::sin(stride) * running,
-            .stride = stride,
-            .leap = leap,
-            .sprawl = sprawl,
-            .onBack = onBack,
-            .dazed = dazed,
-            .headTurn = std::lerp(0.1f * std::sin(stride), 0.3f, sprawl) + headDrop + headReach,
-            .tongueTurn = 0.3f + tongueSwing + 0.6f * dazed + 0.5f * std::max(strain, leap),
-            .jawOpen = jawOpen,
-            .glance = 0.6f * std::sin(k_2Pi * 3.0f * time.cycleTime) * (1.0f - eyesOnHare),
-            .cycleTime = time.cycleTime
-        };
+        const WolfMoment ourWolf = wolfAt(episodeTime, travel);
+        const float wolfX = ourWolf.x;
+        const float lift = ourWolf.lift;
+        const float dazed = ourWolf.dazed;
+        const float branchWeight = ourWolf.branchWeight;
+        const WolfPose& wolfPose = ourWolf.pose;
+        const FloatPoint wolf = wolfPose.center;
 
-        // The hare: running ahead, clearing the obstacle, sitting up to taunt, and off again. Over
-        // the trail her ears go flat as the wolf closes in; in the branch run she bolts as he comes
-        // close and eases off as he drops back.
-        float bolt = 0.0f;
-        float alarm = 0.0f;
-        if (branchRun)
-        {
-            bolt = hareBoltAt(episodeTime);
-            alarm = std::max(smoothStep(0.23f, 0.27f, episodeTime)
-                * (1.0f - smoothStep(0.36f, 0.44f, episodeTime)),
-                bump(episodeTime, BranchChase::Takeoff + 0.012f, 0.012f));
-        }
-        else
-        {
-            alarm = smoothStep(0.3f, trip, episodeTime)
-                * (1.0f - smoothStep(trip, trip + 0.03f, episodeTime));
-        }
-        const float runningAhead = smoothStep(branchRun ? 0.57f : trip, 0.66f, episodeTime);
-        const float hareSitsAt = k_hareRunning + bolt + 100.0f * runningAhead;
         // In the branch run she hops back to the fallen apple until her forepaws are over it,
         // picks it up and eats it in bites, crumbs flying, while the wolf lies dazed.
-        float hareAtApple = 0.0f;
         float appleHop = 0.0f;
         float holding = 0.0f;
         float appleLeft = 1.0f;
         FloatPoint appleOnGround = {};
-        if (branchRun)
+        if (appleRun)
         {
             // Where the apple lies while the camera stands; taken as the camera moves on, it would
             // carry her back with the ground.
             const FloatPoint restingMiddle = restingPlace(k_treeApples[k_hareApple]);
             const float treeWhileStanding = obstacleAtTrip
                 + cameraTravel(HareApple::HopStart, trip);
-            const float trunkOnScreen = toScreen(treeWhileStanding) + 125.0f * unit;
+            const float trunkOnScreen = toScreen(treeWhileStanding)
+                + trunkFromBranchEnd(leapEnd) * unit;
             appleOnGround = {
                 trunkOnScreen + restingMiddle.x * unit,
                 groundY + restingMiddle.y * unit
             };
-            const float pawsOverApple = (appleOnGround.x + 24.0f * unit - width * 0.5f)
-                / (unit * closeness);
             const float hopping = std::clamp((episodeTime - HareApple::HopStart)
                 / (HareApple::HopEnd - HareApple::HopStart), 0.0f, 1.0f);
-            hareAtApple = (pawsOverApple - hareSitsAt) * smoothStep(0.0f, 1.0f, hopping);
             appleHop = std::sin(std::numbers::pi_v<float> * hopping);
             const float lastBite = HareApple::FirstBite
                 + HareApple::BiteGap * static_cast<float>(HareApple::BiteCount - 1);
@@ -709,7 +924,7 @@ namespace ClaFi::PathArt
         }
         // Her front teeth show while she holds the apple and come out full at each bite.
         float hareTeeth = 0.4f * holding;
-        if (branchRun)
+        if (appleRun)
         {
             for (int bite = 0; bite != HareApple::BiteCount; ++bite)
             {
@@ -718,44 +933,113 @@ namespace ClaFi::PathArt
                 hareTeeth = std::max(hareTeeth, bump(episodeTime, biteAt, 0.004f));
             }
         }
-        const float hareX = k_hareRunning + (hareSitsAt + hareAtApple - k_hareRunning)
-            * (1.0f - smoothStep(0.86f, 1.0f, episodeTime));
-        const float sitting = smoothStep(0.62f, 0.66f, episodeTime)
-            * (1.0f - smoothStep(0.83f, 0.86f, episodeTime)) * (1.0f - appleHop);
-        const float turnedRound = smoothStep(0.66f, 0.69f, episodeTime)
-            * (1.0f - smoothStep(0.82f, 0.85f, episodeTime));
-        const float facing = 1.0f - 2.0f * turnedRound;
-        const float hop = k_2Pi * (travel + hareX) / periodNear(1.0f, 180.0f);
-        const float hopScale = branchRun
-            ? 1.0f + 0.45f * alarm
-            : 1.0f + 0.45f * alarm + 1.7f * bump(episodeTime, hareClears, 0.012f);
-        const float air = appleHop > 0.0f
-            ? appleHop
-            : std::max(0.0f, std::sin(hop)) * (1.0f - sitting);
-        const float hareSize = unit;
-        const float squash = std::max(0.0f, -std::sin(hop)) * (1.0f - sitting);
-        const float hareOnScreen = toScreen(hareX);
-        const float hareLift = air * 30.0f * hopScale * hareSize;
-        const HarePose harePose = {
-            .foot = { hareOnScreen, footY - hareLift },
-            .size = hareSize,
-            .facing = std::abs(facing) < 0.08f ? (facing < 0.0f ? -0.08f : 0.08f) : facing,
-            .air = air,
-            .stretch = 1.0f + (0.16f + 0.08f * alarm) * air - 0.08f * squash,
-            .bodyTurn = std::lerp(-0.12f * air, -0.85f, sitting),
-            .sitting = sitting,
-            .earTurn = std::lerp(-1.3f + 0.25f * air - 0.35f * alarm, -0.15f, sitting),
-            .earWiggle = sitting * 0.22f * std::sin(k_2Pi * 24.0f * episodeTime),
-            .footLift = sitting * 7.0f * std::max(0.0f, std::sin(k_2Pi * 36.0f * episodeTime)),
-            .holding = holding,
-            .teeth = hareTeeth
+        // The hare at `t` of the episode, with the camera having covered `travelThen`: running
+        // ahead, clearing the obstacle, sitting up to taunt, and off again. `over` is 1 for the
+        // hare bounding over the other couple's, -1 for the one ducking under her.
+        struct HareMoment
+        {
+            float x; // units from the middle of the frame
+            HarePose pose;
         };
+        const float hareSize = unit;
+        const bool otherCouple = branchRun && leapEnd == LeapEnd::OtherWolf;
+        const auto hareAt = [&](float t, float travelThen, float over, float appleHopThen,
+            float holdingThen, float teethThen) {
+            // Over the trail her ears go flat as the wolf closes in; in the branch run she bolts as
+            // he comes close and eases off as he drops back.
+            float alarm = 0.0f;
+            if (branchRun)
+            {
+                alarm = std::max(smoothStep(0.23f, 0.27f, t)
+                    * (1.0f - smoothStep(0.36f, 0.44f, t)),
+                    bump(t, BranchChase::Takeoff + 0.012f, 0.012f));
+            }
+            else
+            {
+                alarm = smoothStep(0.3f, trip, t)
+                    * (1.0f - smoothStep(trip, trip + 0.03f, t));
+            }
+            const float hareX = hareXAt(episode, t, closeness, treeRun);
+            const float sitting = smoothStep(0.62f, 0.66f, t)
+                * (1.0f - smoothStep(0.83f, 0.86f, t)) * (1.0f - appleHopThen);
+            const float turnedRound = smoothStep(0.66f, 0.69f, t)
+                * (1.0f - smoothStep(0.82f, 0.85f, t));
+            const float facing = 1.0f - 2.0f * turnedRound;
+            const float hop = k_2Pi * (travelThen + hareX) / periodNear(1.0f, 180.0f);
+            // over the trail she clears the obstacle high, and in the first run jumps at his snap
+            const float startled = episode == 0 ? bump(t, k_firstRunSnap + 0.004f, 0.008f) : 0.0f;
+            const float hopScale = branchRun
+                ? 1.0f + 0.45f * alarm
+                : 1.0f + 0.45f * alarm + 1.7f * bump(t, hareClears, 0.012f) + 0.8f * startled;
+            const float air = appleHopThen > 0.0f
+                ? appleHopThen
+                : std::max(0.0f, std::sin(hop)) * (1.0f - sitting);
+            const float squash = std::max(0.0f, -std::sin(hop)) * (1.0f - sitting);
+            const float hareLift = air * 30.0f * hopScale * hareSize;
+            // Where another couple runs the other way, the two hares cross as the wolves leap; one
+            // bounds high over the other, which ducks with its ears laid back.
+            float bounding = 0.0f;
+            if (otherCouple)
+            {
+                const float passing = (t - haresCrossAt(closeness, treeRun)) / k_haresPassing;
+                bounding = std::abs(passing) < 1.0f
+                    ? std::cos(0.5f * std::numbers::pi_v<float> * passing)
+                    : 0.0f;
+            }
+            const float leaping = std::max(0.0f, over) * bounding;
+            const float ducking = std::max(0.0f, -over) * bounding;
+            const float poseAir = std::max(air * (1.0f - ducking), leaping);
+            const float footLift = hareLift * (1.0f - leaping) * (1.0f - ducking)
+                + 70.0f * leaping * hareSize;
+            return HareMoment{
+                .x = hareX,
+                .pose = HarePose{
+                    .foot = { toScreen(hareX), footY - footLift },
+                    .size = hareSize,
+                    .facing = std::abs(facing) < 0.08f ? (facing < 0.0f ? -0.08f : 0.08f) : facing,
+                    .air = poseAir,
+                    .stretch = 1.0f + (0.16f + 0.08f * alarm) * poseAir - 0.08f * squash
+                        - 0.12f * ducking,
+                    .bodyTurn = std::lerp(-0.12f * poseAir, -0.85f, sitting),
+                    .sitting = sitting,
+                    .earTurn = std::lerp(-1.3f + 0.25f * poseAir - 0.35f * alarm, -0.15f, sitting)
+                        - 0.4f * ducking,
+                    .earWiggle = sitting * 0.22f * std::sin(k_2Pi * 24.0f * t),
+                    .footLift = sitting * 7.0f * std::max(0.0f, std::sin(k_2Pi * 36.0f * t)),
+                    .holding = holdingThen,
+                    .teeth = teethThen
+                }
+            };
+        };
+        const float ourOver = treeRun.ourHareLeaps ? 1.0f : -1.0f;
+        const HareMoment ourHare = hareAt(episodeTime, travel, ourOver, appleHop, holding,
+            hareTeeth);
+        const float hareX = ourHare.x;
+        const HarePose& harePose = ourHare.pose;
+        const float hareOnScreen = harePose.foot.x;
 
-        // The branch springs up where his head hit it and shakes itself still.
+        // The branch springs up where his head hit it and shakes itself still; under him it bends
+        // and springs back as he slides off. Flown into, the tree shakes its crown.
         const float sinceBonk = episodeTime - trip;
-        const float branchSway = branchRun && sinceBonk > 0.0f
-            ? -10.0f * std::exp(-sinceBonk / 0.025f) * std::sin(k_2Pi * sinceBonk / 0.0125f)
-            : 0.0f;
+        float branchSway = 0.0f;
+        float crownShake = 0.0f;
+        if (branchRun && sinceBonk > 0.0f)
+        {
+            if (leapEnd == LeapEnd::Branch)
+            {
+                branchSway = -10.0f * std::exp(-sinceBonk / 0.025f)
+                    * std::sin(k_2Pi * sinceBonk / 0.0125f);
+            }
+            else if (leapEnd == LeapEnd::OverBranch)
+            {
+                branchSway = branchWeight;
+            }
+            else if (leapEnd == LeapEnd::Trunk)
+            {
+                crownShake = 5.0f * std::exp(-sinceBonk / 0.03f)
+                    * std::sin(k_2Pi * sinceBonk / 0.015f);
+            }
+        }
         const float obstacleOnScreen = toScreen(obstacleX);
         const bool obstacleShown = obstacleOnScreen > -220.0f * unit
             && obstacleOnScreen < width + 200.0f * unit;
@@ -781,11 +1065,15 @@ namespace ClaFi::PathArt
             .bootTip = bootTip,
             .sinceHit = sinceBonk,
             .appleSplit = appleSplit,
-            .hareHasApple = branchRun && episodeTime >= HareApple::HopEnd
+            .crownShake = crownShake,
+            .hareHasApple = appleRun && episodeTime >= HareApple::HopEnd,
+            .treeRun = treeRun
         };
-        // A swinging rake goes over the wolf, so its handle is seen to catch him.
-        const bool obstacleOverWolf = rakeSwing > 0.0f;
-        // What stands by the path in this run, and the next run's as it comes into a wide frame.
+        // A swinging rake goes over the wolf, so its handle is seen to catch him, and the crow
+        // tumbles off his face in front of him.
+        const bool obstacleOverWolf = rakeSwing > 0.0f || (branchRun && leapEnd == LeapEnd::Crow);
+        // What stands by the far edge of the path in this run, and the next run's as it comes into
+        // a wide frame.
         const std::int64_t runsPerCycle = static_cast<std::int64_t>(k_episodesPerCycle);
         const std::int64_t roadsideCount = static_cast<std::int64_t>(k_roadside.size());
         for (int ahead = 0; ahead != 2; ++ahead)
@@ -799,32 +1087,65 @@ namespace ClaFi::PathArt
                 : cameraTravel(episodeTime, 1.0f) + passes * k_fullSpeedTravel;
             const float roadsideOnScreen = toScreen(roadsideX);
             const float runTime = episodeTime - static_cast<float>(ahead);
-            const float hareCloseAt = passes - (k_hareRunning + k_hareClose) / k_fullSpeedTravel;
+            const float hareCloseAt = passes
+                - (k_hareRunning + k_stirringReach) / k_fullSpeedTravel;
             const float sinceHareClose = (runTime - hareCloseAt) * k_episodeSeconds;
-            const bool flies = roadside == Roadside::Bird || roadside == Roadside::Butterfly;
+            const bool flies = roadside == Roadside::Bird || roadside == Roadside::Butterfly
+                || roadside == Roadside::CrowOnStump;
             const bool inView = roadsideOnScreen > -80.0f * unit
                 && roadsideOnScreen < width + 80.0f * unit;
             if (!inView && !(flies && sinceHareClose > 0.0f && sinceHareClose < 3.0f))
                 continue;
-            // the wind behind each of them as they pass bends it after them, the wolf's more
-            const auto wake = [&](float runnerX, float strength) {
-                const float behind = (runnerX - roadsideX - 15.0f) / 35.0f;
-                return strength * std::exp(-behind * behind);
-            };
-            drawRoadside(frame, roadside, roadsideOnScreen, groundY, RoadsideMotion{
-                .gust = wake(hareX, 0.35f) + wake(wolfX, 0.5f),
+            drawRoadside(frame, roadside, Verge::Far, roadsideOnScreen, groundY, RoadsideMotion{
+                .gust = wakeGust(roadsideX, hareX, wolfX),
                 .sinceHareClose = sinceHareClose,
+                .wolfTime = sinceHareClose,
                 .seconds = runTime * k_episodeSeconds
             });
+        }
+        drawVergeRow(frame, time, groundY, closeness, false);
+        if (obstacleShown && branchRun && leapEnd == LeapEnd::Crow
+            && treeRun.crowStart == CrowStart::OnStump)
+        {
+            drawCrowStump(frame, obstacleOnScreen, groundY);
         }
         if (obstacleShown && !obstacleOverWolf)
             drawObstacle(frame, obstacle, obstacleOnScreen, groundY, footY, obstacleMotion);
 
+        // The other couple are ours turned about where the wolves meet, drawn while near the
+        // frame. Once the wolves are down they keep a time of their own: their hare runs a little
+        // ahead of ours, their wolf a little behind.
+        const auto theirX = [&](float ours) {
+            return 2.0f * obstacleOnScreen - ours;
+        };
+        const float theirHareTime = episodeTime
+            + k_theirHareAhead * smoothStep(0.59f, 0.61f, episodeTime);
+        const float theirWolfTime = episodeTime
+            - k_theirWolfBehind * smoothStep(0.64f, 0.70f, episodeTime);
+        HarePose theirHare = hareAt(theirHareTime,
+            travel + cameraTravel(episodeTime, theirHareTime), -ourOver, 0.0f, 0.0f, 0.0f).pose;
+        theirHare.foot.x = theirX(theirHare.foot.x);
+        theirHare.facing = -theirHare.facing;
+        const WolfMoment theirWolf = wolfAt(theirWolfTime,
+            travel + cameraTravel(episodeTime, theirWolfTime));
+        const float theirWolfX = theirX(theirWolf.pose.center.x);
+        const SceneFrame theirWolfFrame = frame.within(Matrix3x2::Translation(theirWolfX
+            + theirWolf.pose.center.x, 0.0f) * Matrix3x2::Scale(-1.0f, 1.0f));
+        const bool theyAreShown = otherCouple && theirHare.foot.x < width + 120.0f * unit
+            && theirWolfX > -120.0f * unit;
         const SolidColor shadow{ ChaseColors::Shadow };
         const float wolfShadow = 46.0f * unit * (1.0f - 0.3f * std::min(1.0f, lift / 60.0f));
         fillOval(frame, { wolf.x, footY + 2.0f * unit }, wolfShadow, 5.0f * unit, shadow);
-        const float hareShadow = 26.0f * unit * (1.0f - 0.3f * air);
+        const float hareShadow = 26.0f * unit * (1.0f - 0.3f * harePose.air);
         fillOval(frame, { hareOnScreen, footY + 2.0f * unit }, hareShadow, 4.0f * unit, shadow);
+        if (theyAreShown)
+        {
+            fillOval(frame, { theirWolfX, footY + 2.0f * unit },
+                46.0f * unit * (1.0f - 0.3f * std::min(1.0f, theirWolf.lift / 60.0f)),
+                5.0f * unit, shadow);
+            fillOval(frame, { theirHare.foot.x, footY + 2.0f * unit },
+                26.0f * unit * (1.0f - 0.3f * theirHare.air), 4.0f * unit, shadow);
+        }
         // dust kicked up behind him as he leaps
         const float sinceTakeoff = episodeTime - BranchChase::Takeoff;
         if (branchRun && sinceTakeoff > 0.0f && sinceTakeoff < 0.04f)
@@ -836,8 +1157,18 @@ namespace ClaFi::PathArt
                 .settle = sinceTakeoff / 0.04f,
                 .color = ChaseColors::Dust
             });
+            if (theyAreShown)
+            {
+                drawDustPuff(theirWolfFrame, DustPuff{
+                    .ground = { toScreen(takeoffX), footY },
+                    .settle = sinceTakeoff / 0.04f,
+                    .color = ChaseColors::Dust
+                });
+            }
         }
-        drawHare(frame, harePose);
+        drawHare(frame, harePose, ChaseCoats::BrownHare);
+        if (theyAreShown)
+            drawHare(frame, theirHare, ChaseCoats::GreyHare);
         // Lifted from where it lay to her chest, the apple bobs up to her mouth at each bite and
         // comes back a bite smaller; crumbs of skin and flesh fly from its top.
         float toMouth = 0.0f;
@@ -858,7 +1189,7 @@ namespace ClaFi::PathArt
                 * Matrix3x2::Scale(heldScale) * Matrix3x2::Translation(0.0f, k_appleMiddle)),
                 0.0f);
         }
-        if (branchRun)
+        if (appleRun)
         {
             const FloatPoint appleTop = heldMiddle + FloatPoint{ 0.0f, -6.0f * unit };
             for (int bite = 0; bite != HareApple::BiteCount; ++bite)
@@ -885,53 +1216,42 @@ namespace ClaFi::PathArt
                 }
             }
         }
-        drawWolf(frame, wolfPose);
+        drawWolf(frame, wolfPose, ChaseCoats::GreyWolf);
+        if (theyAreShown)
+            drawWolf(theirWolfFrame, theirWolf.pose, ChaseCoats::BlackWolf);
         if (obstacleShown && obstacleOverWolf)
             drawObstacle(frame, obstacle, obstacleOnScreen, groundY, footY, obstacleMotion);
 
         // dust where he lands, and stars round his head while he is down
-        const float landing = branchRun ? fallEnd - 0.003f : 0.6f;
+        const float landing = branchRun ? treeRestAt(leapEnd) - 0.003f : 0.6f;
         if (episodeTime > landing && episodeTime < landing + 0.12f)
         {
-            drawDustPuff(frame, DustPuff{
+            const DustPuff dust = {
                 .ground = { wolf.x, footY },
                 .settle = (episodeTime - landing) / 0.12f,
                 .color = ChaseColors::Dust
-            });
+            };
+            drawDustPuff(frame, dust);
+            if (theyAreShown)
+                drawDustPuff(theirWolfFrame, dust);
         }
-        if (dazed > 0.0f)
-        {
-            const FloatPoint head = wolf
-                + rotated({ 54.0f * wolfSize, -24.0f * wolfSize }, wolfPose.turn);
-            drawDazeStars(frame, DazeStars{
-                .center = { head.x, std::min(head.y, wolf.y) - 26.0f * unit },
-                .turns = 12.0f * episodeTime,
-                .color = ChaseColors::DazeStar.withOpacity(dazed)
+        const auto drawStars = [&](const SceneFrame& onFrame, const WolfMoment& moment, float t) {
+            if (moment.dazed <= 0.0f)
+                return;
+            const WolfPose& pose = moment.pose;
+            const FloatPoint head = pose.center
+                + rotated({ 54.0f * wolfSize, -24.0f * wolfSize }, pose.turn);
+            drawDazeStars(onFrame, DazeStars{
+                .center = { head.x, std::min(head.y, pose.center.y) - 26.0f * unit },
+                .turns = 12.0f * t,
+                .color = ChaseColors::DazeStar.withOpacity(moment.dazed)
             });
-        }
+        };
+        drawStars(frame, ourWolf, episodeTime);
+        if (theyAreShown)
+            drawStars(theirWolfFrame, theirWolf, theirWolfTime);
+        drawVergeRow(frame, time, groundY, closeness, true);
         drawFrontGrass(frame, travel);
-    }
-
-    float ChaseScene::cameraShare(const float episodeTime, const int episode)
-    {
-        const CameraStop stop = episode == k_branchEpisode ? k_branchStop : k_tripStop;
-        if (episodeTime <= stop.start)
-            return episodeTime;
-        if (episodeTime <= stop.start + stop.duration)
-        {
-            const float slowing = episodeTime - stop.start;
-            return stop.start + slowing - slowing * slowing / (2.0f * stop.duration);
-        }
-        const float standing = stop.start + stop.duration * 0.5f;
-        if (episodeTime <= k_cameraWaiting)
-            return standing;
-        const float gathering = k_cameraRunning - k_cameraWaiting;
-        if (episodeTime <= k_cameraRunning)
-        {
-            const float speeding = episodeTime - k_cameraWaiting;
-            return standing + speeding * speeding / (2.0f * gathering);
-        }
-        return standing + gathering * 0.5f + (episodeTime - k_cameraRunning);
     }
 
     float ChaseScene::travelAt(const float cycleTime)
@@ -1147,8 +1467,239 @@ namespace ClaFi::PathArt
         }
     }
 
+    // A row's places lie along the whole trail, a cycle's travel shared out evenly between them: on
+    // the near verge k_nearRoadsidesPerCycle, so one comes by at any moment of a run, and on the
+    // far verge k_farBetweenPerCycle between the runs' own. A near place keeps clear of the far
+    // verge's, and those that would stand by the tree are left out. The hare's part of the stirring
+    // starts the first time she comes close and the wolf's part the first time he does, each found
+    // by going back over the scene's time; each part then plays through as if that one had run by
+    // at full speed.
+    void ChaseScene::drawVergeRow(const SceneFrame& frame, const SceneTime time,
+        const float groundY, const float closeness, const bool nearEdge)
+    {
+        const float unit = frame.unit;
+        const float width = frame.width;
+        constexpr double k_secondsPerCycle = static_cast<double>(k_cycle.count());
+        // The search for the two coming close steps back this far at a time, from now to when the
+        // place was this many units ahead of the middle of the frame.
+        constexpr double k_searchStep = 0.05 / k_secondsPerCycle;
+        constexpr double k_searchFrom = 1800.0;
+        constexpr int k_searchSteps = 1200;
+        constexpr int k_bisections = 16;
+        // The bird and the butterfly fly on for this long, and the bird this many units, so one
+        // that sat behind the frame can fly into it.
+        constexpr float k_flightSeconds = 3.0f;
+        constexpr float k_flightReach = 1300.0f;
+        // The units a second the two go by at, at full speed.
+        constexpr float k_passingSpeed = k_fullSpeedTravel / k_episodeSeconds;
+
+        double cycleTravel = 0.0;
+        for (int episode = 0; episode != static_cast<int>(k_episodesPerCycle); ++episode)
+            cycleTravel += static_cast<double>(cameraShare(1.0f, episode) * k_fullSpeedTravel);
+        const auto cameraAt = [&](double cycles) {
+            const double cyclesBefore = std::floor(cycles);
+            return cyclesBefore * cycleTravel
+                + static_cast<double>(travelAt(static_cast<float>(cycles - cyclesBefore)));
+        };
+        // Whether each of the two is within k_stirringReach of the place at `cycles`.
+        struct Closeness
+        {
+            bool hare;
+            bool wolf;
+        };
+        const auto closenessAt = [&](double place, double cycles) {
+            const float cycleTime = static_cast<float>(cycles - std::floor(cycles));
+            const int episode = static_cast<int>(std::floor(cycleTime * k_episodesPerCycle));
+            const float episodeTime = fractionalPart(cycleTime * k_episodesPerCycle);
+            const TreeRun run = treeRunOf(static_cast<std::int64_t>(std::floor(cycles)));
+            const double closeFrom = place - cameraAt(cycles)
+                - static_cast<double>(k_stirringReach);
+            return Closeness{
+                static_cast<double>(hareXAt(episode, episodeTime, closeness, run)) >= closeFrom,
+                static_cast<double>(wolfXAt(episode, episodeTime, closeness, run.leapEnd))
+                    >= closeFrom
+            };
+        };
+        const double now = static_cast<double>(time.cyclesPassed)
+            + static_cast<double>(time.cycleTime);
+        // The first moment each came close; the hare can come close twice, hopping back past it
+        // to her apple, and so can the wolf, falling back off the branch.
+        struct CloseMoments
+        {
+            std::optional<double> hare;
+            std::optional<double> wolf;
+        };
+        const auto closeMomentsAt = [&](double place) {
+            const auto firstClose = [&](double shortAt, double closeAt, bool Closeness::* runner) {
+                for (int bisection = 0; bisection != k_bisections; ++bisection)
+                {
+                    const double middle = 0.5 * (shortAt + closeAt);
+                    if (closenessAt(place, middle).*runner)
+                        closeAt = middle;
+                    else
+                        shortAt = middle;
+                }
+                return closeAt;
+            };
+            CloseMoments moments = {};
+            double laterCycles = now;
+            Closeness closenessLater = closenessAt(place, now);
+            for (int step = 1; step <= k_searchSteps; ++step)
+            {
+                const double cycles = now - k_searchStep * static_cast<double>(step);
+                if (place - cameraAt(cycles) >= k_searchFrom)
+                    break;
+                const Closeness closenessThen = closenessAt(place, cycles);
+                if (!closenessThen.hare && closenessLater.hare)
+                    moments.hare = firstClose(cycles, laterCycles, &Closeness::hare);
+                if (!closenessThen.wolf && closenessLater.wolf)
+                    moments.wolf = firstClose(cycles, laterCycles, &Closeness::wolf);
+                laterCycles = cycles;
+                closenessLater = closenessThen;
+            }
+            return moments;
+        };
+        const auto secondsSince = [&](const std::optional<double>& moment) {
+            return moment ? static_cast<float>((now - *moment) * k_secondsPerCycle) : -1.0f;
+        };
+        // Where one of the two would be against the place, running by at full speed since it came
+        // close; one that has not come close blows no wind.
+        const auto runningBy = [&](const std::optional<double>& moment) {
+            return moment
+                ? secondsSince(moment) * k_passingSpeed - k_stirringReach
+                : -static_cast<float>(k_searchFrom);
+        };
+
+        const std::span<const Roadside> roadsides = nearEdge
+            ? std::span<const Roadside>{ k_nearRoadside }
+            : std::span<const Roadside>{ k_farBetweenRoadside };
+        const double perCycle = nearEdge ? k_nearRoadsidesPerCycle : k_farBetweenPerCycle;
+        const double offset = nearEdge ? k_nearRoadsideOffset : k_farBetweenOffset;
+        const double cameraNow = cameraAt(now);
+        const double treeStand = static_cast<double>(travelAt(
+            (static_cast<float>(k_branchEpisode) + k_cameraWaiting) / k_episodesPerCycle));
+        const double spacing = cycleTravel / perCycle;
+        const auto intoCycle = [&](double place) {
+            return place - std::floor(place / cycleTravel) * cycleTravel;
+        };
+        const auto byTheTree = [&](double place) {
+            const double fromTree = std::abs(intoCycle(place) - treeStand);
+            return std::min(fromTree, cycleTravel - fromTree) < k_treeStretchReach;
+        };
+        // The far verge's places within a cycle's travel, its runs' own and those between.
+        std::array<double, 6> farPlaces = {};
+        std::size_t farCount = 0;
+        double runStart = 0.0;
+        for (int episode = 0; episode != static_cast<int>(k_episodesPerCycle); ++episode)
+        {
+            const float passes = episode == k_branchEpisode
+                ? k_roadsidePassesBeforeBranch
+                : k_roadsidePasses;
+            farPlaces[farCount++] = runStart
+                + static_cast<double>(cameraShare(passes, episode) * k_fullSpeedTravel);
+            runStart += static_cast<double>(cameraShare(1.0f, episode) * k_fullSpeedTravel);
+        }
+        const double betweenSpacing = cycleTravel / k_farBetweenPerCycle;
+        for (int between = 0; between != static_cast<int>(k_farBetweenPerCycle); ++between)
+        {
+            const double betweenPlace = (static_cast<double>(between) + k_farBetweenOffset)
+                * betweenSpacing;
+            if (!byTheTree(betweenPlace))
+                farPlaces[farCount++] = betweenPlace;
+        }
+        const auto clearOfFar = [&](double place) {
+            const double cycleStart = place - intoCycle(place);
+            for (std::size_t far = 0; far != farCount; ++far)
+            {
+                for (const double turn : { -cycleTravel, 0.0, cycleTravel })
+                {
+                    const double farPlace = cycleStart + turn + farPlaces[far];
+                    if (std::abs(place - farPlace) < k_nearClearOfFar)
+                        return farPlace + k_nearClearOfFar;
+                }
+            }
+            return place;
+        };
+        const float halfSpan = width * 0.5f / (unit * closeness);
+        const float margin = 80.0f * (nearEdge ? k_nearVergeSize : 1.0f);
+        const double firstPlace = cameraNow
+            - static_cast<double>(halfSpan + margin + k_flightReach);
+        const double lastPlace = cameraNow + static_cast<double>(halfSpan + margin);
+        const std::int64_t firstIndex = static_cast<std::int64_t>(std::ceil(firstPlace / spacing
+            - offset));
+        const std::int64_t lastIndex = static_cast<std::int64_t>(std::floor(lastPlace / spacing
+            - offset));
+        const std::int64_t count = static_cast<std::int64_t>(roadsides.size());
+        for (std::int64_t index = firstIndex; index <= lastIndex; ++index)
+        {
+            const double evenPlace = (static_cast<double>(index) + offset) * spacing;
+            const double place = nearEdge ? clearOfFar(evenPlace) : evenPlace;
+            if (byTheTree(place))
+                continue;
+            const float onScreen = width * 0.5f
+                + static_cast<float>(place - cameraNow) * unit * closeness;
+            const std::int64_t inTurn = (index % count + count) % count;
+            const Roadside roadside = roadsides[static_cast<std::size_t>(inTurn)];
+            const CloseMoments moments = closeMomentsAt(place);
+            const float sinceHareClose = secondsSince(moments.hare);
+            const bool flies = roadside == Roadside::Bird || roadside == Roadside::Butterfly
+                || roadside == Roadside::CrowOnStump;
+            const bool inView = onScreen > -margin * unit && onScreen < width + margin * unit;
+            if (!inView && !(flies && sinceHareClose > 0.0f && sinceHareClose < k_flightSeconds))
+                continue;
+            drawRoadside(frame, roadside, nearEdge ? Verge::Near : Verge::Far, onScreen, groundY,
+                RoadsideMotion{
+                    .gust = wakeGust(0.0f, runningBy(moments.hare), runningBy(moments.wolf)),
+                    .sinceHareClose = sinceHareClose,
+                    .wolfTime = moments.wolf
+                        ? secondsSince(moments.wolf) + k_wolfAfterHare
+                        : -1.0f,
+                    .seconds = static_cast<float>(std::fmod(now * k_secondsPerCycle, 30.0))
+                });
+        }
+    }
+
     namespace
     {
+        float cameraShare(const float episodeTime, const int episode)
+        {
+            const CameraStop stop = episode == k_branchEpisode ? k_branchStop : k_tripStop;
+            if (episodeTime <= stop.start)
+                return episodeTime;
+            if (episodeTime <= stop.start + stop.duration)
+            {
+                const float slowing = episodeTime - stop.start;
+                return stop.start + slowing - slowing * slowing / (2.0f * stop.duration);
+            }
+            const float standing = stop.start + stop.duration * 0.5f;
+            if (episodeTime <= k_cameraWaiting)
+                return standing;
+            const float gathering = k_cameraRunning - k_cameraWaiting;
+            if (episodeTime <= k_cameraRunning)
+            {
+                const float speeding = episodeTime - k_cameraWaiting;
+                return standing + speeding * speeding / (2.0f * gathering);
+            }
+            return standing + gathering * 0.5f + (episodeTime - k_cameraRunning);
+        }
+
+        TreeRun treeRunOf(const std::int64_t cyclesPassed)
+        {
+            const auto inTurn = [](std::int64_t passed, std::size_t count) {
+                const std::int64_t turns = static_cast<std::int64_t>(count);
+                return static_cast<std::size_t>((passed % turns + turns) % turns);
+            };
+            const std::int64_t turnsPassed = (cyclesPassed
+                - static_cast<std::int64_t>(inTurn(cyclesPassed, k_leapEnds.size())))
+                / static_cast<std::int64_t>(k_leapEnds.size());
+            return {
+                .leapEnd = k_leapEnds[inTurn(cyclesPassed, k_leapEnds.size())],
+                .appleFall = k_appleFalls[inTurn(turnsPassed, k_appleFalls.size())],
+                .crowStart = k_crowStarts[inTurn(turnsPassed, k_crowStarts.size())],
+                .ourHareLeaps = inTurn(turnsPassed, 2) == 0
+            };
+        }
+
         float hareBoltAt(const float episodeTime)
         {
             return 50.0f * smoothStep(0.24f, 0.31f, episodeTime)
@@ -1157,7 +1708,8 @@ namespace ClaFi::PathArt
 
         // Each stretch of the run is eased in and out; the leap is a throw whose top would come
         // just past the branch.
-        BranchRun branchRunAt(const float episodeTime, const float closeness)
+        BranchRun branchRunAt(const float episodeTime, const float closeness,
+            const LeapEnd leapEnd)
         {
             const float contact = k_branchStop.start;
             const float closestX = k_hareRunning + hareBoltAt(BranchChase::Closest)
@@ -1169,8 +1721,16 @@ namespace ClaFi::PathArt
                 BranchChase::DroppedBack, episodeTime);
             const float comingOn = smoothStep(BranchChase::EffortStart, takeoff, episodeTime);
             const float flight = std::max(0.0f, (episodeTime - takeoff) / (contact - takeoff));
-            const float fromTop = (episodeTime - BranchChase::LeapTop)
-                / (BranchChase::LeapTop - takeoff);
+            // Over the branch he leaps higher and tops out sooner, coming down onto it with his
+            // nose tipping down.
+            const bool overBranch = leapEnd == LeapEnd::OverBranch;
+            const float leapTop = overBranch ? k_leapTopOverBranch : BranchChase::LeapTop;
+            const float leapHeight = overBranch ? k_leapHeightOverBranch : k_leapHeight;
+            const float wolfAtContact = overBranch
+                ? k_wolfAtBranch + (k_branchReach + k_wolfPastBranchEnd) / closeness
+                : k_wolfAtBranch;
+            const float nosingDown = overBranch ? 0.5f : 0.17f;
+            const float fromTop = (episodeTime - leapTop) / (leapTop - takeoff);
             const float inAir = smoothStep(takeoff, takeoff + 0.006f, episodeTime);
             const float crouching = smoothStep(BranchChase::CrouchStart, takeoff, episodeTime)
                 * (1.0f - smoothStep(takeoff, takeoff + 0.005f, episodeTime));
@@ -1187,16 +1747,15 @@ namespace ClaFi::PathArt
             const float strain = firstStrain + lastStrain;
             // At his closest the jaws open on her tail and shut at the end of the lunge.
             const float snapAt = BranchChase::Closest + 0.008f;
-            const float chomp = smoothStep(snapAt - 0.012f, snapAt - 0.004f, episodeTime)
-                * (1.0f - smoothStep(snapAt - 0.001f, snapAt + 0.0015f, episodeTime));
+            const float chomp = chompAt(episodeTime, snapAt);
             return {
                 .x = k_wolfChasing
                     + (closestX - k_wolfChasing) * closingIn
                     - (closestX - k_wolfDroppedBack) * droppingBack
                     + (k_wolfAtTakeoff - k_wolfDroppedBack) * comingOn
-                    + (k_wolfAtBranch - k_wolfAtTakeoff) * flight,
-                .lift = episodeTime > takeoff ? k_leapHeight * (1.0f - fromTop * fromTop) : 0.0f,
-                .turn = 0.05f * strain + 0.1f * crouching - (0.32f - 0.17f * flight) * inAir,
+                    + (wolfAtContact - k_wolfAtTakeoff) * flight,
+                .lift = episodeTime > takeoff ? leapHeight * (1.0f - fromTop * fromTop) : 0.0f,
+                .turn = 0.05f * strain + 0.1f * crouching - (0.32f - nosingDown * flight) * inAir,
                 .crouch = 9.0f * crouching,
                 .leap = smoothStep(takeoff, takeoff + 0.01f, episodeTime),
                 .jawOpen = chomp + smoothStep(takeoff + 0.003f, takeoff + 0.014f, episodeTime),
@@ -1204,6 +1763,296 @@ namespace ClaFi::PathArt
                 .weariness = weariness,
                 .snap = bump(episodeTime, snapAt, 0.005f)
             };
+        }
+
+        float chompAt(const float episodeTime, const float snapAt)
+        {
+            return smoothStep(snapAt - 0.012f, snapAt - 0.004f, episodeTime)
+                * (1.0f - smoothStep(snapAt - 0.001f, snapAt + 0.0015f, episodeTime));
+        }
+
+        bool treeStands(const LeapEnd leapEnd)
+        {
+            return leapEnd != LeapEnd::Crow && leapEnd != LeapEnd::OtherWolf;
+        }
+
+        float trunkFromBranchEnd(const LeapEnd leapEnd)
+        {
+            return leapEnd == LeapEnd::OverBranch
+                ? k_wolfPastBranchEnd - k_wolfPastTrunk
+                : k_trunkFromBranchEnd;
+        }
+
+        // Flown into, the trunk's near side stands where the branch's end would.
+        float branchEndAtContact(const float closeness, const LeapEnd leapEnd)
+        {
+            const float trunkSide = leapEnd == LeapEnd::Trunk
+                ? k_trunkFromBranchEnd - k_trunkHalfWidth
+                : 0.0f;
+            return k_wolfAtBranch + (k_branchReach - trunkSide) / closeness;
+        }
+
+        // From the leap's end to where he lies, each way down is its own; the bounce as he lands,
+        // the getting up and the running back into place are the same for all.
+        TreeFall treeFallAt(const float episodeTime, const float closeness, const LeapEnd leapEnd)
+        {
+            const float pi = std::numbers::pi_v<float>;
+            const float contact = k_branchStop.start;
+            const float restAt = treeRestAt(leapEnd);
+            const auto travelSinceContact = [&](float to) {
+                return (cameraShare(to, k_branchEpisode) - cameraShare(contact, k_branchEpisode))
+                    * k_fullSpeedTravel;
+            };
+            const BranchRun atContact = branchRunAt(contact, closeness, leapEnd);
+            // His middle as the leap ends, where he lies, and how his pose comes down to it.
+            float lyingX = 0.0f;
+            TreeFall fall = {
+                .x = 0.0f,
+                .lift = 0.0f,
+                .turn = 0.0f,
+                .leap = 0.0f,
+                .jawOpen = 0.0f,
+                .sprawl = 0.0f,
+                .onBack = 0.0f,
+                .dangle = 0.0f,
+                .dazed = 1.0f,
+                .running = 0.0f,
+                .branchWeight = 0.0f
+            };
+            switch (leapEnd)
+            {
+                case LeapEnd::Branch:
+                case LeapEnd::Crow:
+                case LeapEnd::OtherWolf:
+                {
+                    // stopped dead in the air, a moment hung there, then down onto his back
+                    lyingX = k_wolfAtBranch - travelSinceContact(restAt) - 18.0f;
+                    if (episodeTime < restAt)
+                    {
+                        const float down = (episodeTime - contact) / (restAt - contact);
+                        const float dropping = std::clamp((down - 0.2f) / 0.8f, 0.0f, 1.0f);
+                        fall.x = k_wolfAtBranch - travelSinceContact(episodeTime)
+                            - 18.0f * smoothStep(0.0f, 0.5f, down);
+                        fall.lift = atContact.lift * (1.0f - dropping * dropping);
+                        fall.turn = std::lerp(atContact.turn, -pi, smoothStep(0.2f, 0.95f, down));
+                        fall.leap = 1.0f - smoothStep(0.2f, 0.6f, down);
+                        // what he meets shuts his jaws for him
+                        fall.jawOpen = 1.0f - smoothStep(0.0f, 0.1f, down);
+                        fall.onBack = smoothStep(0.45f, 1.0f, down);
+                        return fall;
+                    }
+                    break;
+                }
+                case LeapEnd::Trunk:
+                {
+                    // Flat against the trunk, belly first and nose up, he slides down it, then
+                    // topples back off it onto his back.
+                    constexpr float k_flattened = 0.584f;
+                    constexpr float k_slidDown = 0.618f;
+                    constexpr float k_bellyDepth = 17.0f;
+                    constexpr float k_toppleBack = 40.0f;
+                    // his middle's height over his feet's line, in his units, at the foot of the
+                    // trunk, and lying
+                    constexpr float k_atTrunkFoot = 66.0f;
+                    constexpr float k_lyingHeight = 22.0f;
+                    const float againstTrunk = k_wolfAtBranch
+                        + (k_branchReach - k_bellyDepth) / closeness;
+                    lyingX = againstTrunk - k_toppleBack / closeness - travelSinceContact(restAt);
+                    if (episodeTime < restAt)
+                    {
+                        const float flattening = smoothStep(contact, k_flattened, episodeTime);
+                        const float sliding = std::clamp((episodeTime - k_flattened)
+                            / (k_slidDown - k_flattened), 0.0f, 1.0f);
+                        const float toppling = smoothStep(k_slidDown, restAt, episodeTime);
+                        fall.sprawl = flattening * (1.0f - toppling);
+                        fall.onBack = toppling;
+                        fall.leap = 1.0f - flattening;
+                        fall.turn = std::lerp(std::lerp(atContact.turn, -0.5f * pi, flattening),
+                            -pi, toppling);
+                        fall.x = std::lerp(std::lerp(k_wolfAtBranch, againstTrunk, flattening),
+                            againstTrunk - k_toppleBack / closeness, toppling)
+                            - travelSinceContact(episodeTime);
+                        // his middle held where the leap had it, then sliding down ever faster,
+                        // then tipping back with a small hop
+                        const float atContactHeight = 52.0f + atContact.lift;
+                        const float height = toppling > 0.0f
+                            ? std::lerp(k_atTrunkFoot, k_lyingHeight, toppling)
+                                + 10.0f * std::sin(pi * toppling)
+                            : std::lerp(atContactHeight, k_atTrunkFoot, sliding * sliding);
+                        const float standing = 52.0f - 34.0f * fall.sprawl - 30.0f * fall.onBack;
+                        fall.lift = height - standing;
+                        return fall;
+                    }
+                    break;
+                }
+                case LeapEnd::OverBranch:
+                {
+                    // Across the branch, legs and tail hanging, he sways with it until he slips
+                    // back down it and drops onto his back at the foot of the trunk.
+                    constexpr float k_slipping = 0.70f;
+                    constexpr float k_slipBack = 85.0f;
+                    constexpr float k_lyingHeight = 22.0f;
+                    const float onBranch = k_wolfAtBranch
+                        + (k_branchReach + k_wolfPastBranchEnd) / closeness;
+                    lyingX = onBranch - k_slipBack / closeness - travelSinceContact(restAt);
+                    const float sinceLanding = episodeTime - contact;
+                    // the branch gives under him and swings, then springs back as he goes
+                    const float weight = 9.0f * smoothStep(0.0f, 0.006f, sinceLanding)
+                        + 4.0f * std::exp(-sinceLanding / 0.02f)
+                            * std::sin(k_2Pi * sinceLanding / 0.018f);
+                    const float sinceSlip = episodeTime - k_slipping;
+                    const float release = sinceSlip > 0.0f
+                        ? -6.0f * std::exp(-sinceSlip / 0.02f)
+                            * std::sin(k_2Pi * sinceSlip / 0.014f)
+                        : 0.0f;
+                    fall.branchWeight = episodeTime < k_slipping ? weight : release;
+                    if (episodeTime < restAt)
+                    {
+                        const float slipping = std::clamp((episodeTime - k_slipping)
+                            / (restAt - k_slipping), 0.0f, 1.0f);
+                        const float settling = smoothStep(0.0f, 0.006f, sinceLanding);
+                        const float sway = 0.1f * std::exp(-sinceLanding / 0.04f)
+                            * std::sin(k_2Pi * sinceLanding / 0.03f);
+                        fall.leap = 1.0f - settling;
+                        fall.jawOpen = atContact.jawOpen * (1.0f - settling);
+                        fall.dangle = settling * (1.0f - smoothStep(0.0f, 0.5f, slipping));
+                        fall.onBack = smoothStep(0.2f, 1.0f, slipping);
+                        fall.turn = std::lerp(std::lerp(atContact.turn, 0.12f, settling) + sway,
+                            -pi, smoothStep(0.0f, 0.9f, slipping));
+                        fall.x = onBranch
+                            - k_slipBack / closeness * smoothStep(0.0f, 0.6f, slipping)
+                            - travelSinceContact(episodeTime);
+                        const float onBranchHeight = 52.0f + atContact.lift - 0.8f * weight;
+                        const float height = std::lerp(onBranchHeight, k_lyingHeight,
+                            slipping * slipping);
+                        const float standing = 52.0f - 30.0f * fall.onBack;
+                        fall.lift = height - standing;
+                        return fall;
+                    }
+                    break;
+                }
+            }
+            // He comes down hard enough to bounce once, lies dazed on his back, gets up and runs
+            // back into place.
+            if (episodeTime < k_cameraWaiting)
+            {
+                const float bounce = std::min(1.0f, (episodeTime - restAt) / 0.016f);
+                fall.x = lyingX;
+                fall.lift = 7.0f * std::sin(pi * bounce);
+                fall.turn = -pi;
+                fall.onBack = 1.0f;
+                return fall;
+            }
+            if (episodeTime < 0.86f)
+            {
+                const float rise = (episodeTime - k_cameraWaiting) / (0.86f - k_cameraWaiting);
+                fall.x = lyingX;
+                fall.turn = -pi * (1.0f - smoothStep(0.0f, 1.0f, rise));
+                fall.onBack = 1.0f - smoothStep(0.0f, 0.6f, rise);
+                fall.lift = 40.0f * std::sin(pi * rise);
+                fall.dazed = 1.0f - rise;
+                fall.running = smoothStep(0.5f, 1.0f, rise);
+                return fall;
+            }
+            fall.x = std::lerp(lyingX, k_wolfChasing, smoothStep(0.86f, 1.0f, episodeTime));
+            fall.dazed = 0.0f;
+            fall.running = 1.0f;
+            return fall;
+        }
+
+        float treeRestAt(const LeapEnd leapEnd)
+        {
+            switch (leapEnd)
+            {
+                case LeapEnd::Trunk:
+                    return 0.645f;
+                case LeapEnd::OverBranch:
+                    return 0.74f;
+                case LeapEnd::Branch:
+                case LeapEnd::Crow:
+                case LeapEnd::OtherWolf:
+                    break;
+            }
+            return k_fallEnd;
+        }
+
+        // Under the tree she hops back until her forepaws, 24 units ahead of her, are over her
+        // apple; after the crow there is none, and she only sits and taunts.
+        float hareXAt(const int episode, const float episodeTime, const float closeness,
+            const TreeRun& treeRun)
+        {
+            const bool branchRun = episode == k_branchEpisode;
+            const float trip = branchRun ? k_branchStop.start : k_tripStop.start;
+            const float bolt = branchRun ? hareBoltAt(episodeTime) : 0.0f;
+            const float runningAhead = smoothStep(branchRun ? 0.57f : trip, 0.66f, episodeTime);
+            const float hareSitsAt = k_hareRunning + bolt + 100.0f * runningAhead;
+            float hareAtApple = 0.0f;
+            if (branchRun && treeStands(treeRun.leapEnd))
+            {
+                const float branchEndAtTrip = branchEndAtContact(closeness, treeRun.leapEnd);
+                const float travelSinceTrip = (cameraShare(HareApple::HopStart, episode)
+                    - cameraShare(trip, episode)) * k_fullSpeedTravel;
+                const float appleFromTrunk = restingPlace(k_treeApples[k_hareApple]).x;
+                const float pawsOverApple = branchEndAtTrip - travelSinceTrip
+                    + (trunkFromBranchEnd(treeRun.leapEnd) + appleFromTrunk + 24.0f) / closeness;
+                const float hopping = std::clamp((episodeTime - HareApple::HopStart)
+                    / (HareApple::HopEnd - HareApple::HopStart), 0.0f, 1.0f);
+                hareAtApple = (pawsOverApple - hareSitsAt) * smoothStep(0.0f, 1.0f, hopping);
+            }
+            return k_hareRunning + (hareSitsAt + hareAtApple - k_hareRunning)
+                * (1.0f - smoothStep(0.86f, 1.0f, episodeTime));
+        }
+
+        // He gains on her, falls over what is on the trail or from where his leap ends, lies dazed
+        // and runs back into place.
+        float wolfXAt(const int episode, const float episodeTime, const float closeness,
+            const LeapEnd leapEnd)
+        {
+            if (episode == k_branchEpisode)
+            {
+                return episodeTime < k_branchStop.start
+                    ? branchRunAt(episodeTime, closeness, leapEnd).x
+                    : treeFallAt(episodeTime, closeness, leapEnd).x;
+            }
+            const float trip = k_tripStop.start;
+            const float wolfAtTrip = k_hareRunning - k_wolfBehindHareAtTrip / closeness;
+            if (episodeTime < trip)
+            {
+                const float towardTrip = episodeTime / trip;
+                const float lunge = episode == 0
+                    ? k_firstRunLunge * bump(episodeTime, k_firstRunSnap, 0.012f)
+                    : 0.0f;
+                return std::lerp(k_wolfChasing, wolfAtTrip, towardTrip * towardTrip) + lunge;
+            }
+            if (episodeTime < k_fallEnd)
+            {
+                const float fall = (episodeTime - trip) / (k_fallEnd - trip);
+                return std::lerp(wolfAtTrip, k_wolfDownAfterTrip, smoothStep(0.0f, 1.0f, fall));
+            }
+            if (episodeTime < 0.86f)
+                return k_wolfDownAfterTrip;
+            return std::lerp(k_wolfDownAfterTrip, k_wolfChasing,
+                smoothStep(0.86f, 1.0f, episodeTime));
+        }
+
+        float haresCrossAt(const float closeness, const TreeRun& treeRun)
+        {
+            const float contact = k_branchStop.start;
+            const float meetingAtContact = branchEndAtContact(closeness, treeRun.leapEnd);
+            float before = 0.4f;
+            float after = contact;
+            for (int halving = 0; halving != 20; ++halving)
+            {
+                const float middle = 0.5f * (before + after);
+                const float meeting = meetingAtContact
+                    + (cameraShare(contact, k_branchEpisode) - cameraShare(middle, k_branchEpisode))
+                        * k_fullSpeedTravel;
+                if (hareXAt(k_branchEpisode, middle, closeness, treeRun) < meeting)
+                    before = middle;
+                else
+                    after = middle;
+            }
+            return 0.5f * (before + after);
         }
 
         void drawObstacle(const SceneFrame& frame, const Obstacle obstacle, const float x,
@@ -1238,8 +2087,15 @@ namespace ClaFi::PathArt
                     drawRake(onTrail, motion.rakeSwing);
                     break;
                 case Obstacle::Branch:
-                    drawBranchTree(frame, x, groundY, footY, motion.branchSway, motion.sinceHit,
-                        motion.hareHasApple);
+                    if (motion.treeRun.leapEnd == LeapEnd::Crow)
+                    {
+                        drawCrow(frame, x, groundY, footY, motion.sinceHit,
+                            motion.treeRun.crowStart);
+                    }
+                    else if (treeStands(motion.treeRun.leapEnd))
+                    {
+                        drawBranchTree(frame, x, groundY, footY, motion);
+                    }
                     break;
             }
         }
@@ -1526,13 +2382,24 @@ namespace ClaFi::PathArt
                 -0.5f);
         }
 
-        void drawRoadside(const SceneFrame& frame, const Roadside roadside, const float x,
-            const float groundY, const RoadsideMotion& motion)
+        float wakeGust(const float x, const float hareX, const float wolfX)
         {
-            const float unit = frame.unit;
-            const float vergeY = groundY + 10.0f * unit;
+            const auto wake = [&](float runnerX, float strength) {
+                const float behind = (runnerX - x - 15.0f) / 35.0f;
+                return strength * std::exp(-behind * behind);
+            };
+            return wake(hareX, 0.35f) + wake(wolfX, 0.5f);
+        }
+
+        void drawRoadside(const SceneFrame& frame, const Roadside roadside, const Verge verge,
+            const float x, const float groundY, const RoadsideMotion& motion)
+        {
+            const bool nearVerge = verge == Verge::Near;
+            const float size = (nearVerge ? k_nearVergeSize : 1.0f) * frame.unit;
+            const float vergeY = groundY
+                + (nearVerge ? k_nearVergeDrop : k_farVergeDrop) * frame.unit;
             const SceneFrame onVerge = frame.within(Matrix3x2::Translation(x, vergeY)
-                * Matrix3x2::Scale(unit));
+                * Matrix3x2::Scale(size));
             const auto shadow = [&](float shadowWidth, float opacity) {
                 fillOval(onVerge, { 1.0f, 0.0f }, shadowWidth, 2.5f,
                     SolidColor{ ChaseColors::Shadow.withOpacity(opacity) });
@@ -1541,45 +2408,45 @@ namespace ClaFi::PathArt
             {
                 case Roadside::Apple:
                 {
-                    const Hop hop = hopAt(motion.sinceHareClose);
+                    const Hop hop = hopAt(motion);
                     shadow(10.0f * (1.0f - hop.lift / 54.0f), 1.0f);
                     drawApple(hopping(onVerge, hop).within(Matrix3x2::Scale(0.8f)), 0.0f);
                     break;
                 }
                 case Roadside::BananaPeel:
                 {
-                    const Hop hop = hopAt(motion.sinceHareClose);
+                    const Hop hop = hopAt(motion);
                     shadow(14.0f * (1.0f - hop.lift / 54.0f), 1.0f);
                     drawBananaPeel(hopping(onVerge, hop), 0.0f, 0.0f);
                     break;
                 }
                 case Roadside::Boulder:
-                    drawBoulder(onVerge, hopAt(motion.sinceHareClose));
+                    drawBoulder(onVerge, hopAt(motion));
                     break;
                 case Roadside::Daisy:
-                    drawDaisy(onVerge, motion.gust, motion.sinceHareClose);
+                    drawDaisy(onVerge, motion);
                     break;
                 case Roadside::Reeds:
                 {
-                    const float reedsSize = 0.9f * unit;
+                    const float reedsSize = 0.9f * size;
                     drawReeds(frame, ReedsPose{
                         .base = { x - 12.0f * reedsSize, vergeY },
                         .size = reedsSize,
                         .cycleTime = -1.0f / k_2Pi, // their own sway fans them evenly
                         .lean = motion.gust,
-                        .fur = 1.0f - 0.65f * smoothStep(1.0f, 1.3f, motion.sinceHareClose),
+                        .fur = 1.0f - 0.65f * smoothStep(1.0f, 1.3f, motion.wolfTime),
                         .inWater = false
                     }, ReedColors{ .stem = ChaseColors::ReedStem, .head = ChaseColors::ReedHead });
-                    drawReedFluff(onVerge, motion.sinceHareClose);
+                    drawReedFluff(onVerge, motion.wolfTime);
                     break;
                 }
                 case Roadside::Signpost:
                     shadow(7.0f, 1.0f);
-                    drawSignpost(onVerge, motion.sinceHareClose);
+                    drawSignpost(onVerge, motion);
                     break;
                 case Roadside::Toadstool:
                     shadow(12.0f, 1.0f);
-                    drawToadstool(onVerge, motion.sinceHareClose);
+                    drawToadstool(onVerge, motion);
                     break;
                 case Roadside::TreeStump:
                     shadow(19.0f, 1.0f);
@@ -1595,17 +2462,22 @@ namespace ClaFi::PathArt
                         motion.sinceHareClose);
                     break;
                 case Roadside::Frog:
-                    drawFrog(onVerge.within(Matrix3x2::Scale(1.2f)), motion.sinceHareClose);
+                    drawFrog(onVerge.within(Matrix3x2::Scale(1.2f)), motion.sinceHareClose, verge);
                     break;
                 case Roadside::Snail:
                     shadow(12.0f, 1.0f);
-                    drawSnail(onVerge, motion.sinceHareClose);
+                    drawSnail(onVerge, motion);
+                    break;
+                case Roadside::CrowOnStump:
+                    shadow(19.0f, 1.0f);
+                    drawTreeStump(onVerge);
+                    drawStumpCrow(onVerge, motion.seconds, motion.sinceHareClose);
                     break;
             }
         }
 
         // Once just after the hare is by, higher just after the wolf is, then once more.
-        Hop hopAt(const float sinceHareClose)
+        Hop hopAt(const RoadsideMotion& motion)
         {
             struct Bounce
             {
@@ -1613,16 +2485,20 @@ namespace ClaFi::PathArt
                 float seconds;
                 float height;
                 float tilt;
+                bool afterWolf;
             };
             constexpr std::array<Bounce, 3> k_bounces{
-                Bounce{ 0.34f, 0.22f, 6.75f, -0.06f },
-                Bounce{ 1.32f, 0.38f, 21.6f, 0.14f },
-                Bounce{ 1.7f, 0.22f, 6.75f, -0.05f }
+                Bounce{ 0.34f, 0.22f, 6.75f, -0.06f, false },
+                Bounce{ 1.32f, 0.38f, 21.6f, 0.14f, true },
+                Bounce{ 1.7f, 0.22f, 6.75f, -0.05f, true }
             };
             Hop hop = {};
             for (const Bounce& bounce : k_bounces)
             {
-                const float inAir = (sinceHareClose - bounce.start) / bounce.seconds;
+                const float bounceClock = bounce.afterWolf
+                    ? motion.wolfTime
+                    : motion.sinceHareClose;
+                const float inAir = (bounceClock - bounce.start) / bounce.seconds;
                 if (inAir > 0.0f && inAir < 1.0f)
                 {
                     const float arc = std::sin(std::numbers::pi_v<float> * inAir);
@@ -1630,7 +2506,7 @@ namespace ClaFi::PathArt
                     hop.tilt = bounce.tilt * arc;
                 }
                 hop.squash = std::max(hop.squash, (bounce.height / 21.6f)
-                    * bump(sinceHareClose, bounce.start + bounce.seconds + 0.03f, 0.05f));
+                    * bump(bounceClock, bounce.start + bounce.seconds + 0.03f, 0.05f));
             }
             return hop;
         }
@@ -1679,7 +2555,7 @@ namespace ClaFi::PathArt
 
         // Three times the size of the daisies in the grass, nodding in the gust. The wolf's wake
         // blows five petals off, which flutter down after him and lie where they land.
-        void drawDaisy(const SceneFrame& onVerge, const float gust, const float sinceHareClose)
+        void drawDaisy(const SceneFrame& onVerge, const RoadsideMotion& motion)
         {
             constexpr std::array<int, 5> k_blownOff{ 0, 3, 5, 8, 10 };
             // the nod at the height of the wolf's wake, when he hides the head
@@ -1688,7 +2564,7 @@ namespace ClaFi::PathArt
             // a blown petal falls at 18 units a second, gathering 28 units a second each second
             constexpr float k_fallSpeed = 18.0f;
             constexpr float k_fallGathering = 14.0f;
-            const float nod = 0.08f + 0.8f * gust;
+            const float nod = 0.08f + 0.8f * motion.gust;
             const FloatPoint head = { 42.0f * std::sin(nod), -42.0f * std::cos(nod) };
             PixelPath stem;
             stem.moveTo(0.0f, 0.5f);
@@ -1711,7 +2587,7 @@ namespace ClaFi::PathArt
                 const FloatPoint out = { std::cos(angle), std::sin(angle) };
                 const auto blown = std::ranges::find(k_blownOff, petal);
                 const float order = static_cast<float>(std::distance(k_blownOff.begin(), blown));
-                const float flying = sinceHareClose - (k_blownAt + 0.035f * order);
+                const float flying = motion.wolfTime - (k_blownAt + 0.035f * order);
                 if (blown == k_blownOff.end() || flying < 0.0f)
                 {
                     fillOval(bloom, out * 6.5f, 4.2f, 1.9f, petalColor, angle);
@@ -1742,15 +2618,16 @@ namespace ClaFi::PathArt
         // about the post, the wolf's one and a half times more, so it is left pointing back the
         // way they came. Turning, it is seen edge-on a quarter of the way round and from the back
         // halfway.
-        void drawSignpost(const SceneFrame& onVerge, const float sinceHareClose)
+        void drawSignpost(const SceneFrame& onVerge, const RoadsideMotion& motion)
         {
             drawSegment(onVerge, { 0.0f, 0.0f }, { 0.0f, -44.0f }, SolidColor{ ChaseColors::Bark },
                 4.0f);
-            const auto turned = [&](float from, float seconds) {
-                const float left = 1.0f - std::clamp((sinceHareClose - from) / seconds, 0.0f, 1.0f);
+            const auto turned = [&](float clock, float from, float seconds) {
+                const float left = 1.0f - std::clamp((clock - from) / seconds, 0.0f, 1.0f);
                 return 1.0f - left * left * left;
             };
-            const float revolved = k_2Pi * (turned(0.15f, 0.8f) + 1.5f * turned(1.0f, 1.4f));
+            const float revolved = k_2Pi * (turned(motion.sinceHareClose, 0.15f, 0.8f)
+                + 1.5f * turned(motion.wolfTime, 1.0f, 1.4f));
             const float facing = std::cos(revolved);
             const float across = std::copysign(std::max(std::abs(facing), 0.06f), facing);
             const SceneFrame boardFrame = onVerge.within(Matrix3x2::Scale(across, 1.0f));
@@ -1778,7 +2655,7 @@ namespace ClaFi::PathArt
 
         // Its cap hops on the stalk after the hare goes by, and off it after the wolf, landing on
         // the ground beside the stalk.
-        void drawToadstool(const SceneFrame& onVerge, const float sinceHareClose)
+        void drawToadstool(const SceneFrame& onVerge, const RoadsideMotion& motion)
         {
             PixelPath stalk;
             stalk.moveTo(-4.0f, 0.0f);
@@ -1789,9 +2666,9 @@ namespace ClaFi::PathArt
             fillShape(onVerge, stalk, LinearGradient::Simple({ -4.0f, 0.0f }, { 4.0f, 0.0f },
                 ChaseColors::Stalk, ChaseColors::StalkShade));
             const float pi = std::numbers::pi_v<float>;
-            const float onStalk = std::clamp((sinceHareClose - 0.34f) / 0.24f, 0.0f, 1.0f);
-            const float offStalk = std::clamp((sinceHareClose - 1.32f) / 0.45f, 0.0f, 1.0f);
-            const float settling = std::clamp((sinceHareClose - 1.77f) / 0.15f, 0.0f, 1.0f);
+            const float onStalk = std::clamp((motion.sinceHareClose - 0.34f) / 0.24f, 0.0f, 1.0f);
+            const float offStalk = std::clamp((motion.wolfTime - 1.32f) / 0.45f, 0.0f, 1.0f);
+            const float settling = std::clamp((motion.wolfTime - 1.77f) / 0.15f, 0.0f, 1.0f);
             // on the ground the cap's rim, 14 units up on the stalk, is at the ground
             const FloatPoint capMoved = {
                 19.0f * offStalk,
@@ -1825,7 +2702,7 @@ namespace ClaFi::PathArt
         // Four tufts from each head, torn off while the wolf hides the reeds, from where they would
         // be at a lean of 0.5, the height of his wake. They are carried after him, rising and then
         // sinking, and thin out to nothing.
-        void drawReedFluff(const SceneFrame& onVerge, const float sinceHareClose)
+        void drawReedFluff(const SceneFrame& onVerge, const float wolfTime)
         {
             constexpr float k_reedsSize = 0.9f;
             constexpr float k_leanTorn = 0.5f;
@@ -1840,8 +2717,7 @@ namespace ClaFi::PathArt
                 {
                     const int seed = 4 * reed + tuft;
                     const float order = static_cast<float>(seed);
-                    const float seconds = sinceHareClose
-                        - (1.02f + 0.25f * pseudoRandom(seed, 131.0f));
+                    const float seconds = wolfTime - (1.02f + 0.25f * pseudoRandom(seed, 131.0f));
                     if (seconds < 0.0f || seconds > k_lifeSeconds)
                         continue;
                     const float alongHead = -33.5f + 4.5f * (static_cast<float>(tuft) - 1.5f);
@@ -1948,6 +2824,50 @@ namespace ClaFi::PathArt
                 std::max(0.8f, 0.5f * std::abs(span)), wing, -0.3f);
         }
 
+        // A crow sitting on the stump, pecking at it now and then; taking fright as the hare comes,
+        // it springs up and labours off ahead of them, its legs hanging a moment.
+        void drawStumpCrow(const SceneFrame& onVerge, const float seconds,
+            const float sinceHareClose)
+        {
+            constexpr float k_size = 0.5f;
+            const FloatPoint perch = { -1.0f, -20.0f - 13.0f * k_size };
+            const float flying = std::max(0.0f, sinceHareClose);
+            const bool sitting = sinceHareClose <= 0.0f;
+            const FloatPoint middle = perch + FloatPoint{
+                300.0f * flying,
+                -(90.0f * flying + 200.0f * flying * flying)
+            };
+            const float pecking = sitting
+                ? std::pow(std::max(0.0f, std::sin(k_2Pi * 0.7f * seconds)), 8.0f)
+                : 0.0f;
+            const float turn = sitting
+                ? 0.3f - 0.45f * pecking
+                : 0.4f - 0.25f * std::min(1.0f, flying * 2.0f);
+            const float legsOut = sitting ? 1.0f : 1.0f - smoothStep(0.0f, 0.2f, flying);
+            // facing right, the way the two run, so drawn turned over
+            const auto onCrow = [&](FloatPoint local) {
+                const FloatPoint turned = rotated(local, turn);
+                return middle + FloatPoint{ -turned.x, turned.y } * k_size;
+            };
+            if (legsOut > 0.0f)
+            {
+                for (const float hipX : { -2.0f, 3.0f })
+                {
+                    const FloatPoint hip = onCrow({ hipX, 6.0f });
+                    const FloatPoint foot = sitting
+                        ? FloatPoint{ hip.x + 0.5f, -20.0f }
+                        : hip + FloatPoint{ -1.0f, 3.0f };
+                    const SolidColor leg{ ChaseColors::CrowBeak };
+                    drawSegment(onVerge, hip, foot, leg, 0.7f);
+                    drawSegment(onVerge, foot, foot + FloatPoint{ 2.0f, 0.3f }, leg, 0.55f);
+                    drawSegment(onVerge, foot, foot + FloatPoint{ -1.0f, 0.3f }, leg, 0.55f);
+                }
+            }
+            drawCrowBody(onVerge.within(Matrix3x2::Translation(middle)
+                * Matrix3x2::Scale(-k_size, k_size) * Matrix3x2::Rotation(turn)),
+                std::sin(k_2Pi * 7.0f * flying + 0.5f * std::numbers::pi_v<float>), false, sitting);
+        }
+
         // Resting on a tuft, it opens and closes its wings; taking fright, it flutters up and
         // drifts off ahead of them.
         void drawButterfly(const SceneFrame& onVerge, const float seconds,
@@ -2003,33 +2923,40 @@ namespace ClaFi::PathArt
             }
         }
 
-        // Sitting by the path; taking fright, it hops twice back into the grass, smaller each
-        // time as it goes.
-        void drawFrog(const SceneFrame& onVerge, const float sinceHareClose)
+        // Sitting by the path; taking fright, it hops twice back into the grass - from the far
+        // verge away, smaller each time, from the near one toward the viewer, larger.
+        void drawFrog(const SceneFrame& onVerge, const float sinceHareClose, const Verge verge)
         {
             struct Spot
             {
                 FloatPoint at;
                 float size;
             };
-            constexpr std::array<Spot, 3> k_spots{
+            using Spots = std::array<Spot, 3>;
+            constexpr Spots k_farSpots{
                 Spot{ { 0.0f, 0.0f }, 1.0f },
                 Spot{ { 14.0f, -7.0f }, 0.78f },
                 Spot{ { 24.0f, -13.0f }, 0.6f }
             };
+            constexpr Spots k_nearSpots{
+                Spot{ { 0.0f, 0.0f }, 1.0f },
+                Spot{ { 14.0f, 7.0f }, 1.15f },
+                Spot{ { 26.0f, 15.0f }, 1.3f }
+            };
+            const Spots& spots = verge == Verge::Near ? k_nearSpots : k_farSpots;
             constexpr float k_hopSeconds = 0.25f;
-            Spot spot = k_spots.back();
+            Spot spot = spots.back();
             float stretch = 0.0f;
             float lift = 0.0f;
-            for (std::size_t hop = 0; hop + 1 != k_spots.size(); ++hop)
+            for (std::size_t hop = 0; hop + 1 != spots.size(); ++hop)
             {
                 const float takeoff = 0.05f + 0.32f * static_cast<float>(hop);
                 const float progress = (sinceHareClose - takeoff) / k_hopSeconds;
                 if (progress >= 1.0f)
                     continue;
                 const float hopping = std::max(0.0f, progress);
-                const Spot& from = k_spots[hop];
-                const Spot& to = k_spots[hop + 1];
+                const Spot& from = spots[hop];
+                const Spot& to = spots[hop + 1];
                 spot = {
                     from.at + (to.at - from.at) * hopping,
                     std::lerp(from.size, to.size, hopping)
@@ -2065,10 +2992,10 @@ namespace ClaFi::PathArt
         }
 
         // Out of its shell, it draws in as the hare comes, and out again once the wolf is by.
-        void drawSnail(const SceneFrame& onVerge, const float sinceHareClose)
+        void drawSnail(const SceneFrame& onVerge, const RoadsideMotion& motion)
         {
-            const float drawnIn = smoothStep(0.0f, 0.15f, sinceHareClose)
-                * (1.0f - smoothStep(1.8f, 2.6f, sinceHareClose));
+            const float drawnIn = smoothStep(0.0f, 0.15f, motion.sinceHareClose)
+                * (1.0f - smoothStep(1.3f, 1.9f, motion.wolfTime));
             const float out = 1.0f - drawnIn;
             const SolidColor body{ ChaseColors::SnailBody };
             fillOval(onVerge, { std::lerp(-1.0f, 2.0f, out), -2.0f }, std::lerp(6.0f, 12.0f, out),
@@ -2168,67 +3095,88 @@ namespace ClaFi::PathArt
         }
 
         // A tree whose lowest branch reaches back over the trail, as high as the head of a wolf in
-        // the middle of a leap; `x` is where it ends.
+        // the middle of a leap; `x` is where it ends. The tree he flies into has no low branch, and
+        // on the one he leaps onto it reaches on from the trunk's far side instead.
         void drawBranchTree(const SceneFrame& frame, const float x, const float groundY,
-            const float footY, const float branchSway, const float sinceHit,
-            const bool hareHasApple)
+            const float footY, const ObstacleMotion& motion)
         {
+            const TreeRun& treeRun = motion.treeRun;
             const float unit = frame.unit;
-            const float trunkX = x + 125.0f * unit;
-            const float trunkLeft = trunkX - 14.0f * unit;
-            const float trunkRight = trunkX + 14.0f * unit;
-            const float endSway = branchSway * unit;
+            const float trunkX = x + trunkFromBranchEnd(treeRun.leapEnd) * unit;
+            const float trunkLeft = trunkX - k_trunkHalfWidth * unit;
+            const float trunkRight = trunkX + k_trunkHalfWidth * unit;
+            const float endSway = motion.branchSway * unit;
             fillBox(frame, { trunkLeft, groundY - 180.0f * unit, trunkRight, footY + 2.0f * unit },
                 LinearGradient::Simple({ trunkLeft, 0.0f }, { trunkRight, 0.0f },
                 ChaseColors::Bark, ChaseColors::BarkShade));
-            PixelPath branch;
-            branch.moveTo(trunkX - 10.0f * unit, footY - 124.0f * unit);
-            branch.quadTo({ x + 50.0f * unit, footY - 138.0f * unit + 0.5f * endSway },
-                { x - 6.0f * unit, footY - 150.0f * unit + endSway });
-            branch.lineTo(x - 4.0f * unit, footY - 143.0f * unit + endSway);
-            branch.quadTo({ x + 50.0f * unit, footY - 127.0f * unit + 0.5f * endSway },
-                { trunkX - 10.0f * unit, footY - 110.0f * unit });
-            branch.close();
-            fillShape(frame, branch, SolidColor{ ChaseColors::Bough });
-            fillDisc(frame, { x + 16.0f * unit, footY - 153.0f * unit + 0.8f * endSway },
-                9.0f * unit, SolidColor{ ChaseColors::CrownLight });
-            fillDisc(frame, { trunkX, groundY - 196.0f * unit }, 60.0f * unit,
+            if (treeRun.leapEnd != LeapEnd::Trunk)
+            {
+                // laid out reaching back to `x`, then over the branch turned about the trunk to
+                // reach on
+                const float branchTrunkX = x + k_trunkFromBranchEnd * unit;
+                const SceneFrame onBranch = treeRun.leapEnd == LeapEnd::OverBranch
+                    ? frame.within(Matrix3x2::Translation(trunkX + branchTrunkX, 0.0f)
+                        * Matrix3x2::Scale(-1.0f, 1.0f))
+                    : frame;
+                PixelPath branch;
+                branch.moveTo(branchTrunkX - 10.0f * unit, footY - 124.0f * unit);
+                branch.quadTo({ x + 50.0f * unit, footY - 138.0f * unit + 0.5f * endSway },
+                    { x - 6.0f * unit, footY - 150.0f * unit + endSway });
+                branch.lineTo(x - 4.0f * unit, footY - 143.0f * unit + endSway);
+                branch.quadTo({ x + 50.0f * unit, footY - 127.0f * unit + 0.5f * endSway },
+                    { branchTrunkX - 10.0f * unit, footY - 110.0f * unit });
+                branch.close();
+                fillShape(onBranch, branch, SolidColor{ ChaseColors::Bough });
+                fillDisc(onBranch, { x + 16.0f * unit, footY - 153.0f * unit + 0.8f * endSway },
+                    9.0f * unit, SolidColor{ ChaseColors::CrownLight });
+            }
+            const float shake = motion.crownShake * unit;
+            fillDisc(frame, { trunkX + shake, groundY - 196.0f * unit }, 60.0f * unit,
                 SolidColor{ ChaseColors::Crown });
-            fillDisc(frame, { trunkX - 40.0f * unit, groundY - 170.0f * unit }, 40.0f * unit,
-                SolidColor{ ChaseColors::CrownLight });
-            fillDisc(frame, { trunkX + 40.0f * unit, groundY - 172.0f * unit }, 44.0f * unit,
-                SolidColor{ ChaseColors::CrownMiddle });
+            fillDisc(frame, { trunkX - 40.0f * unit + shake, groundY - 170.0f * unit },
+                40.0f * unit, SolidColor{ ChaseColors::CrownLight });
+            fillDisc(frame, { trunkX + 40.0f * unit + shake, groundY - 172.0f * unit },
+                44.0f * unit, SolidColor{ ChaseColors::CrownMiddle });
 
             // Shaken loose, an apple falls, bounces a third as high as its speed allows and lies
             // where it lands.
+            const AppleFall appleFall = treeRun.appleFall;
             for (std::size_t index = 0; index != k_treeApples.size(); ++index)
             {
-                if (hareHasApple && index == k_hareApple)
+                if (motion.hareHasApple && index == k_hareApple)
                     continue;
                 const TreeApple& apple = k_treeApples[index];
-                FloatPoint middle = apple.onCrown;
+                const bool falls = (appleFall == AppleFall::Four && apple.amongFour)
+                    || (appleFall == AppleFall::Six && apple.amongSix);
+                FloatPoint middle = apple.onCrown + FloatPoint{ motion.crownShake, 0.0f };
                 float spin = 0.0f;
-                const float seconds = (sinceHit - apple.lettingGo) * k_episodeSeconds;
-                if (apple.falls && seconds > 0.0f)
+                if (falls)
                 {
-                    const float ground = restingPlace(apple).y;
-                    const float drop = ground - apple.onCrown.y;
-                    const float fallSeconds = std::sqrt(2.0f * drop / k_appleGravity);
-                    const float bounceSpeed = 0.3f * k_appleGravity * fallSeconds;
-                    const float bounceSeconds = 2.0f * bounceSpeed / k_appleGravity;
-                    if (seconds < fallSeconds)
+                    const float seconds = (motion.sinceHit - apple.lettingGo) * k_episodeSeconds;
+                    if (seconds > 0.0f)
                     {
-                        middle.y += 0.5f * k_appleGravity * seconds * seconds;
+                        middle = apple.onCrown;
+                        const float ground = restingPlace(apple).y;
+                        const float drop = ground - apple.onCrown.y;
+                        const float fallSeconds = std::sqrt(2.0f * drop / k_appleGravity);
+                        const float bounceSpeed = 0.3f * k_appleGravity * fallSeconds;
+                        const float bounceSeconds = 2.0f * bounceSpeed / k_appleGravity;
+                        if (seconds < fallSeconds)
+                        {
+                            middle.y += 0.5f * k_appleGravity * seconds * seconds;
+                        }
+                        else
+                        {
+                            const float sinceLanding = std::min(seconds - fallSeconds,
+                                bounceSeconds);
+                            middle.y = ground - bounceSpeed * sinceLanding
+                                + 0.5f * k_appleGravity * sinceLanding * sinceLanding;
+                        }
+                        const float moving = std::min(1.0f, seconds
+                            / (fallSeconds + bounceSeconds));
+                        middle.x += apple.drift * moving;
+                        spin = 2.5f * moving * (apple.drift < 0.0f ? -1.0f : 1.0f);
                     }
-                    else
-                    {
-                        const float sinceLanding = std::min(seconds - fallSeconds, bounceSeconds);
-                        middle.y = ground - bounceSpeed * sinceLanding
-                            + 0.5f * k_appleGravity * sinceLanding * sinceLanding;
-                    }
-                    const float moving = std::min(1.0f, seconds / (fallSeconds + bounceSeconds));
-                    middle.x += apple.drift * moving;
-                    spin = 2.5f * moving * (apple.drift < 0.0f ? -1.0f : 1.0f);
                 }
                 const FloatPoint onScreen = {
                     trunkX + middle.x * unit,
@@ -2243,6 +3191,218 @@ namespace ClaFi::PathArt
         FloatPoint restingPlace(const TreeApple& apple)
         {
             return { apple.onCrown.x + apple.drift, apple.landing - k_appleMiddle * k_appleScale };
+        }
+
+        // A crow, side on and facing left, flapping, about the middle of its body; its wings beat
+        // up over its back and down under its belly.
+        void drawCrowBody(const SceneFrame& crow, const float flap, const bool dazed,
+            const bool folded)
+        {
+            const auto drawWing = [&](float lean, const Color& color) {
+                const FloatPoint shoulder = { 0.0f, -4.0f };
+                const FloatPoint tip = shoulder + FloatPoint{ 16.0f, -26.0f * lean };
+                PixelPath wing;
+                wing.moveTo(shoulder + FloatPoint{ -6.0f, 0.0f });
+                wing.quadTo(shoulder + FloatPoint{ 2.0f, -16.0f * lean }, tip);
+                wing.lineTo(tip + FloatPoint{ 7.0f, 4.0f * lean });
+                wing.quadTo(shoulder + FloatPoint{ 14.0f, -4.0f * lean },
+                    shoulder + FloatPoint{ 10.0f, 2.0f });
+                wing.close();
+                fillShape(crow, wing, SolidColor{ color });
+            };
+            if (!folded)
+                drawWing(0.75f * flap + 0.2f, ChaseColors::CrowWingFar);
+            PixelPath tail;
+            tail.moveTo(12.0f, -3.0f);
+            tail.lineTo(30.0f, -8.0f);
+            tail.lineTo(32.0f, 2.0f);
+            tail.lineTo(13.0f, 4.0f);
+            tail.close();
+            fillShape(crow, tail, SolidColor{ ChaseColors::CrowWing });
+            fillOval(crow, { 2.0f, 0.0f }, 15.0f, 8.5f, SolidColor{ ChaseColors::CrowBody },
+                -0.05f);
+            fillDisc(crow, { -13.0f, -4.0f }, 7.0f, SolidColor{ ChaseColors::CrowBody });
+            PixelPath beak;
+            beak.moveTo(-18.0f, -7.0f);
+            beak.lineTo(-29.0f, -3.5f);
+            beak.lineTo(-18.0f, -1.0f);
+            beak.close();
+            fillShape(crow, beak, SolidColor{ ChaseColors::CrowBeak });
+            if (dazed)
+            {
+                PixelPath crossed;
+                crossed.moveTo(-16.0f, -8.0f);
+                crossed.lineTo(-12.0f, -4.0f);
+                crossed.moveTo(-12.0f, -8.0f);
+                crossed.lineTo(-16.0f, -4.0f);
+                strokeShape(crow, crossed, SolidColor{ ChaseColors::EyeShine }, 1.2f);
+            }
+            else
+            {
+                fillDisc(crow, { -14.0f, -6.0f }, 2.0f, SolidColor{ ChaseColors::EyeShine });
+                fillDisc(crow, { -14.6f, -6.0f }, 1.1f, SolidColor{ ChaseColors::Ink });
+            }
+            if (folded)
+            {
+                // tucked along its back, the tips lying over the tail
+                PixelPath wing;
+                wing.moveTo(-7.0f, -6.0f);
+                wing.quadTo({ 8.0f, -11.0f }, { 25.0f, -4.0f });
+                wing.quadTo({ 10.0f, 3.0f }, { -5.0f, 0.0f });
+                wing.close();
+                fillShape(crow, wing, SolidColor{ ChaseColors::CrowWing });
+            }
+            else
+            {
+                drawWing(flap, ChaseColors::CrowWing);
+            }
+        }
+
+        void drawCrowStump(const SceneFrame& frame, const float x, const float groundY)
+        {
+            const SceneFrame onVerge = frame.within(Matrix3x2::Translation(
+                x + k_crowStumpFromBranchEnd * frame.unit, groundY + k_farVergeDrop * frame.unit)
+                * Matrix3x2::Scale(k_crowStumpSize * frame.unit));
+            fillOval(onVerge, { 1.0f, 0.0f }, 19.0f, 2.5f, SolidColor{ ChaseColors::Shadow });
+            drawTreeStump(onVerge);
+        }
+
+        // Flying, it comes in from ahead at the height of his head, 160 units a second over the
+        // ground. On its stump it sits pecking, looks up as the two come and flaps up into his
+        // leap. Meeting his face, it tumbles back with feathers flying, then flaps off up and away,
+        // shaken; the feathers drift down round him and lie where they land.
+        void drawCrow(const SceneFrame& frame, const float x, const float groundY,
+            const float footY, const float sinceHit, const CrowStart crowStart)
+        {
+            constexpr float k_flightSpeed = 160.0f;
+            constexpr float k_tumbleSeconds = 0.5f;
+            constexpr int k_featherCount = 7;
+            const float pi = std::numbers::pi_v<float>;
+            const float unit = frame.unit;
+            const float seconds = sinceHit * k_episodeSeconds;
+            const FloatPoint contact = { x + 22.0f * unit, footY - 146.0f * unit };
+            const float wingBeats = 5.0f;
+            FloatPoint middle = contact;
+            float turn = 0.0f;
+            float facing = 1.0f;
+            float flap = std::sin(k_2Pi * wingBeats * seconds);
+            bool dazed = false;
+            bool folded = false;
+            // its legs, out while it stands and as it takes off, and the stump top under its feet
+            float legsOut = 0.0f;
+            float stumpTop = 0.0f;
+            if (seconds < 0.0f && crowStart == CrowStart::Flying)
+            {
+                middle.x -= k_flightSpeed * seconds * unit;
+                middle.y += 3.0f * std::sin(k_2Pi * wingBeats * seconds + 1.0f) * unit;
+            }
+            else if (seconds < 0.0f)
+            {
+                stumpTop = groundY + (k_farVergeDrop - 20.0f * k_crowStumpSize) * unit;
+                const FloatPoint perch = {
+                    x + (k_crowStumpFromBranchEnd - 3.0f) * unit,
+                    stumpTop - 13.0f * unit
+                };
+                const float rising = std::clamp(1.0f - seconds / k_crowTakeoff, 0.0f, 1.0f);
+                if (rising <= 0.0f)
+                {
+                    // a peck at the stump now and then, until it looks up at the two coming
+                    const float pecking = std::pow(std::max(0.0f, std::sin(k_2Pi * 0.7f * seconds)),
+                        8.0f) * (1.0f - smoothStep(-2.2f, -1.6f, seconds));
+                    const float crouch = smoothStep(k_crowTakeoff - 0.14f, k_crowTakeoff - 0.02f,
+                        seconds);
+                    middle = perch + FloatPoint{ 0.0f, 3.0f * crouch } * unit;
+                    turn = 0.3f - 0.45f * pecking + 0.15f * smoothStep(-2.2f, -1.6f, seconds)
+                        - 0.3f * crouch;
+                    folded = true;
+                    legsOut = 1.0f;
+                }
+                else
+                {
+                    // up off the stump fast, and slowing as it climbs, its legs left hanging
+                    const float climbing = 1.0f - (1.0f - rising) * (1.0f - rising);
+                    middle = FloatPoint{
+                        std::lerp(perch.x, contact.x, rising),
+                        std::lerp(perch.y, contact.y, climbing)
+                    };
+                    turn = 0.35f - 0.25f * rising;
+                    flap = std::sin(k_2Pi * 8.0f * (seconds - k_crowTakeoff) + 0.5f * pi);
+                    legsOut = 1.0f - smoothStep(0.0f, 0.3f, rising);
+                }
+            }
+            else if (seconds < k_tumbleSeconds)
+            {
+                // knocked back and over, wings flung about
+                const float tumbling = seconds / k_tumbleSeconds;
+                middle += FloatPoint{ 50.0f * tumbling, 30.0f * tumbling * tumbling } * unit;
+                turn = -1.6f * k_2Pi * (1.0f - (1.0f - tumbling) * (1.0f - tumbling));
+                flap = std::sin(k_2Pi * 3.0f * seconds);
+                dazed = true;
+            }
+            else
+            {
+                // off up and away the way it came, wobbling
+                const float away = seconds - k_tumbleSeconds;
+                middle += FloatPoint{ 50.0f + 190.0f * away, 30.0f - 110.0f * away
+                    + 6.0f * std::sin(k_2Pi * 2.0f * away) } * unit;
+                turn = 0.25f * std::sin(k_2Pi * 1.5f * away) - 0.2f;
+                facing = -1.0f;
+                flap = std::sin(k_2Pi * 7.0f * away);
+                dazed = away < 1.0f;
+            }
+            if (legsOut > 0.0f)
+            {
+                for (const float hipX : { -2.0f, 3.0f })
+                {
+                    const FloatPoint hip = middle + rotated(FloatPoint{ hipX, 6.0f }, turn) * unit;
+                    const FloatPoint hanging = hip + FloatPoint{ 2.0f, 6.0f } * unit;
+                    const FloatPoint standing = { hip.x - 1.0f * unit, stumpTop - 1.0f * unit };
+                    const FloatPoint foot = folded ? standing : pointBetween(hip, hanging, legsOut);
+                    const SolidColor leg{ ChaseColors::CrowBeak };
+                    drawSegment(frame, hip, foot, leg, 1.4f * unit);
+                    drawSegment(frame, foot, foot + FloatPoint{ -4.0f, 0.5f } * unit, leg,
+                        1.1f * unit);
+                    drawSegment(frame, foot, foot + FloatPoint{ 2.0f, 0.5f } * unit, leg,
+                        1.1f * unit);
+                }
+            }
+            const float onScreenRight = frame.width + 60.0f * unit;
+            if (middle.x < onScreenRight && middle.y > -60.0f * unit)
+            {
+                drawCrowBody(frame.within(Matrix3x2::Translation(middle)
+                    * Matrix3x2::Rotation(turn) * Matrix3x2::Scale(facing * unit, unit)), flap,
+                    dazed, folded);
+            }
+            if (seconds <= 0.0f)
+                return;
+            // Each feather drifts down at its own pace, swinging from side to side, and lies flat
+            // on the trail once it reaches it.
+            for (int feather = 0; feather != k_featherCount; ++feather)
+            {
+                const float order = static_cast<float>(feather);
+                const float outward = -0.5f * pi + 2.6f * (pseudoRandom(feather, 171.0f) - 0.5f);
+                const float burst = 40.0f + 50.0f * pseudoRandom(feather, 172.0f);
+                const float sinking = 22.0f + 14.0f * pseudoRandom(feather, 173.0f);
+                const float landing = groundY + (12.0f + 18.0f * pseudoRandom(feather, 174.0f))
+                    * unit;
+                const float spread = std::min(seconds, 0.4f);
+                FloatPoint at = contact + FloatPoint{
+                    std::cos(outward) * burst * (spread - 0.5f * spread * spread / 0.4f),
+                    std::sin(outward) * burst * (spread - 0.5f * spread * spread / 0.4f)
+                        + sinking * seconds
+                } * unit;
+                const float swing = std::sin(k_2Pi * 0.9f * seconds + order);
+                at.x += 9.0f * swing * unit;
+                const bool landed = at.y >= landing;
+                at.y = std::min(at.y, landing);
+                const float lie = landed ? 0.1f * order - 0.3f : 0.5f * swing + order;
+                fillOval(frame, at, 8.0f * unit, 2.4f * unit,
+                    SolidColor{ feather % 2 == 0 ? ChaseColors::CrowBody : ChaseColors::CrowWing },
+                    lie);
+                drawSegment(frame, at - rotated(FloatPoint{ 9.5f, 0.0f }, lie) * unit,
+                    at + rotated(FloatPoint{ 6.0f, 0.0f }, lie) * unit,
+                    SolidColor{ ChaseColors::CrowBeak }, 0.7f * unit);
+            }
         }
     }
 }

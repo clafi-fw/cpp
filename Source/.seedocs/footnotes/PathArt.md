@@ -595,12 +595,34 @@ A clumsy wolf chases a hare across a landscape that scrolls past and comes round
 
 **Three 20-second episodes a cycle**, so a cycle is a minute long. In the first two the wolf gains
 on the hare ever faster, her ears going flat, until he trips over what lies on the trail and lands
-on his belly, while she runs on to a safe distance. In the third he closes in and snaps at the
-hare's tail, drops back spent, then gathers himself and leaps at her with his jaws wide open. The
-low branch of an apple tree meets him in the middle of the air, shuts his jaws and drops him onto
-his back, and apples shaken loose fall round the trunk. Each time the camera slows to a stop while
-he lies dazed, the hare turns round to taunt him, and the chase picks up again; under the apple tree
-she hops back to a fallen apple and eats it at him, teeth bared.
+on his belly, while she runs on to a safe distance. In the first he lunges at her tail once on the
+way and snaps his jaws shut on nothing, and she jumps. In the third he closes in and snaps at the
+hare's tail, drops back spent, then gathers himself and leaps at her with his jaws wide open, and an
+apple tree, a crow or another wolf ends the leap. Each time the camera slows to a stop while he lies
+dazed, the hare turns round to taunt him, and the chase picks up again; under the apple tree she
+hops back to a fallen apple and eats it at him, teeth bared.
+
+**How the leap ends changes every cycle**, in a turn five cycles long:
+
+- the tree's low branch meets him in the middle of the air, shuts his jaws and drops him onto his
+  back
+- he flies into the trunk, slides down it and topples back onto his back
+- the tree stands further back than in the other cycles, its branch reaching on from the far side of
+  the trunk; he leaps too high, comes down across the branch, slips back down it and drops onto his
+  back at the trunk's foot
+- a crow meets his face where the tree would stand, tumbles back and flies off shaken, its feathers
+  drifting down round him; one time it flies at him, the next it sits on a stump by the trail until
+  the hare's arrival frightens it up into his leap
+- another couple, a black wolf and a grey hare, runs the other way, doing as the two do; the hares
+  cross just before the wolves' leaps end, one bounding over the other - ours one time, theirs the
+  next - and the wolves meet face to face in the air and drop side by side onto their backs, each
+  hare taunting from her side. From then on the other couple keeps a time of its own: their hare a
+  little ahead of ours, their wolf a little behind.
+
+**What the tree lets fall changes from one turn of five cycles to the next** - the four apples
+nearest the trail, or all but the two at the top of the crown, which stay every time. The crow's
+start and which hare bounds over the other change with it. All of it goes by SceneTime cyclesPassed,
+so a host that does not count the cycles shows the low branch and four apples every time.
 
 **What lies on the trail changes every run** - a banana peel, a boot, an apple, a hedgehog, a rubber
 duck, a ball, a patch of grass, a rake, two a cycle and round again - going by SceneTime
@@ -612,22 +634,61 @@ little way back, the grass flattens under him and springs back, and the rake's h
 his face.
 
 **Something stands by the path in every run** and slows neither of them. It passes partway into the
-run, and early in the run to the tree, before the wolf closes in. There are twelve, one for each run
-of the four cycles the trail obstacles take: a banana peel, a signpost, a bird, an apple, a
-toadstool, a butterfly, the mill's reeds, a boulder, a frog, a daisy, a tree stump and a snail. The
-banana peel and the apple each come by earlier in the run that ends on one on the trail, and a host
-that does not count the cycles shows the first three every time.
+run, and early in the third, before the wolf closes in. There are twelve, one for each run of the
+four cycles the trail obstacles take: a banana peel, a signpost, a bird, an apple, a toadstool, a
+butterfly, the mill's reeds, a boulder, a frog, a daisy, a tree stump and a snail. The banana peel
+and the apple each come by earlier in the run that ends on one on the trail, and a host that does
+not count the cycles shows the first three every time.
+
+**More stands on the far edge between the runs' own**, one about halfway between each two, three in
+a cycle's travel. They are the twelve and a crow on a tree stump, in an order of their own that
+comes round every thirteen cycles - a daisy, the crow on its stump, a boulder, a toadstool, a snail,
+a signpost, the reeds, a frog, a butterfly, a tree stump, an apple, a bird and a banana peel - see
+ChaseScene drawVergeRow.
 
 **They stir as the two go by.** The reeds and the daisy bend in the wind of their passing, and the
 wolf's wake strips the reeds' heads of their fluff and the daisy of petals. The signpost's board
 spins round and is left pointing back the way they came, the boulder, the banana peel and the apple
 bounce after each of them, and the toadstool's cap hops on its stalk, then off it to land beside it.
-The bird and the butterfly fly off, the frog hops back into the grass, and the snail draws into its
-shell until the wolf is by.
+The bird, the butterfly and the crow on the stump fly off, the frog hops back into the grass, and
+the snail draws into its shell until the wolf is by.
+
+**Something stands on the near edge of the trail too**, in front of the two and a little larger: the
+same thirteen in an order of their own - a snail, a boulder, a daisy, a frog, the crow on its stump,
+a signpost, an apple, a butterfly, a tree stump, a banana peel, the reeds, a bird and a toadstool.
+They stand at a spacing of their own along the trail rather than one to a run, so they never fall
+into step with the far edge or with the runs, and one can come by at any moment, while the camera
+stands too - see ChaseScene drawVergeRow. The near frog hops toward the viewer.
 
 **The landscape is layers at their own speeds** - clouds, mountains, hills, the ground and the
 grass in front, each a share of the camera's speed. Each layer is tiled with a period that the
 cycle's travel divides - see ChaseScene periodNear - so it ends the cycle where it began.
+
+## ChaseScene drawVergeRow
+
+**A cycle's travel holds twice the golden ratio's square of near places**, against the far edge's
+six, the first of them half a spacing from the start of the trail. No whole number of cycles holds a
+whole number of places, so the near row never comes round to the moments of the runs it stood at
+before. The far edge's row between the runs' places holds three to a cycle's travel, so it keeps to
+the same places among the runs every cycle. Both go by SceneTime cyclesPassed: a host that does not
+count the cycles shows the same places every cycle, and they jump where the cycle comes round.
+
+**The tree's stretch stays clear.** Neither row has a place within 700 units of where the camera
+stands in the run to the tree, so nothing by the path stands among the tree, the crow or the other
+couple while the two are down; a frame wider than 16:9 can show one at its edges then. On the far
+edge that leaves out one of the three places a cycle, so it has five in all.
+
+**The near row keeps clear of the far one.** A near place that would stand within 500 units of a
+place on the far edge moves on to stand 500 units past it, so the two edges never show a pair side
+by side. The near places still never fall into step with the far ones or the runs; only the ones
+that come close move.
+
+**The hare and the wolf each start their part of the stirring** - the first time each comes within
+reach of it, whatever the camera is doing. Each part then plays straight through, as it would with
+that one running by at full speed: the bend in the wind of the hare's passing and the hops and turns
+after her, then the wind of the wolf's passing and the hops, turns, petals and fluff that follow
+him. A place the wolf reaches long after the hare - while he lies dazed - keeps his part until he
+comes.
 
 ## ChaseScene periodNear
 

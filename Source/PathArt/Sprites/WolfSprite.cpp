@@ -13,12 +13,6 @@ namespace ClaFi::PathArt
 
     namespace WolfColors
     {
-        constexpr Color WolfLight{ 0xFF7D8592 };
-        constexpr Color WolfShade{ 0xFF59606B };
-        constexpr Color WolfCoat{ 0xFF6C7480 };
-        constexpr Color WolfFar{ 0xFF4F565F };
-        constexpr Color WolfDark{ 0xFF3D434C };
-        constexpr Color WolfBelly{ 0xE6B3B9C2 };
         constexpr Color Tongue{ 0xFFEF6F7F };
         constexpr Color Mouth{ 0xFF5A1C28 };
         constexpr Color Tooth{ 0xFFFBF6E8 };
@@ -57,7 +51,7 @@ namespace ClaFi::PathArt
 
     // Drawn about the middle of his body, facing right; a leg's angles are measured from straight
     // down.
-    void drawWolf(const SceneFrame& frame, const WolfPose& pose)
+    void drawWolf(const SceneFrame& frame, const WolfPose& pose, const WolfCoat& coat)
     {
         const SceneFrame wolf = frame.within(Matrix3x2::Translation(pose.center)
             * Matrix3x2::Rotation(pose.turn) * Matrix3x2::Scale(pose.size));
@@ -90,14 +84,17 @@ namespace ClaFi::PathArt
             const float twitch = 0.3f * std::sin(k_2Pi * 60.0f * pose.cycleTime + leg.phase * 3.0f);
             upper = std::lerp(upper, twitch, pose.onBack);
             lower = std::lerp(lower, twitch + 0.5f, pose.onBack);
+            // Hanging, each leg falls straight down from its hip, fore and hind a little apart.
+            upper = std::lerp(upper, leg.hind ? -0.12f : 0.12f, pose.dangle);
+            lower = std::lerp(lower, leg.hind ? -0.05f : 0.05f, pose.dangle);
             const FloatPoint thigh = FloatPoint{ std::sin(upper), std::cos(upper) } * 22.0f;
             const FloatPoint shin = FloatPoint{ std::sin(lower), std::cos(lower) } * 22.0f;
             const FloatPoint knee = leg.hip + thigh;
             const FloatPoint paw = knee + shin;
-            const SolidColor coat{ leg.far ? WolfColors::WolfFar : WolfColors::WolfCoat };
-            drawSegment(wolf, leg.hip, knee, coat, 9.0f);
-            drawSegment(wolf, knee, paw, coat, 7.0f);
-            const SolidColor pad{ leg.far ? WolfColors::WolfDark : WolfColors::WolfFar };
+            const SolidColor fur{ leg.far ? coat.far : coat.coat };
+            drawSegment(wolf, leg.hip, knee, fur, 9.0f);
+            drawSegment(wolf, knee, paw, fur, 7.0f);
+            const SolidColor pad{ leg.far ? coat.dark : coat.far };
             fillOval(wolf, paw + FloatPoint{ 2.0f, 1.0f }, 6.5f, 3.6f, pad, -lower * 0.3f);
         };
         drawLeg(k_legs[0]);
@@ -105,7 +102,7 @@ namespace ClaFi::PathArt
 
         const float swish = std::sin(pose.stride)
             * std::max(0.0f, 1.0f - pose.leap - pose.sprawl - pose.onBack);
-        const float wag = -0.15f + 0.35f * swish + 0.4f * pose.onBack;
+        const float wag = -0.15f + 0.35f * swish + 0.4f * pose.onBack - 1.1f * pose.dangle;
         const SceneFrame tail = wolf.within(Matrix3x2::Translation(-42.0f, -6.0f)
             * Matrix3x2::Rotation(wag));
         PixelPath brush;
@@ -113,13 +110,13 @@ namespace ClaFi::PathArt
         brush.quadTo({ -22.0f, -20.0f }, { -42.0f, -10.0f });
         brush.quadTo({ -30.0f, 3.0f }, { 0.0f, 6.0f });
         brush.close();
-        fillShape(tail, brush, SolidColor{ WolfColors::WolfCoat });
+        fillShape(tail, brush, SolidColor{ coat.coat });
         PixelPath tip;
         tip.moveTo(-30.0f, -15.0f);
         tip.quadTo({ -38.0f, -15.0f }, { -42.0f, -10.0f });
         tip.quadTo({ -37.0f, -5.0f }, { -31.0f, -4.0f });
         tip.close();
-        fillShape(tail, tip, SolidColor{ WolfColors::WolfDark });
+        fillShape(tail, tip, SolidColor{ coat.dark });
 
         PixelPath body;
         body.moveTo(-40.0f, -6.0f);
@@ -129,13 +126,13 @@ namespace ClaFi::PathArt
         body.cubicTo({ -46.0f, 10.0f }, { -48.0f, -2.0f }, { -40.0f, -6.0f });
         body.close();
         fillShape(wolf, body, LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
-            WolfColors::WolfLight, WolfColors::WolfShade));
+            coat.light, coat.shade));
         PixelPath belly;
         belly.moveTo(-26.0f, 12.0f);
         belly.cubicTo({ -10.0f, 20.0f }, { 16.0f, 20.0f }, { 32.0f, 12.0f });
         belly.cubicTo({ 20.0f, 10.0f }, { -10.0f, 8.0f }, { -26.0f, 12.0f });
         belly.close();
-        fillShape(wolf, belly, SolidColor{ WolfColors::WolfBelly });
+        fillShape(wolf, belly, SolidColor{ coat.belly });
         drawLeg(k_legs[2]);
         drawLeg(k_legs[3]);
 
@@ -146,14 +143,14 @@ namespace ClaFi::PathArt
         ears.lineTo(2.0f, -38.0f);
         ears.lineTo(14.0f, -24.0f);
         ears.close();
-        fillShape(head, ears, SolidColor{ WolfColors::WolfShade });
+        fillShape(head, ears, SolidColor{ coat.shade });
         ears.clear();
         ears.moveTo(12.0f, -22.0f);
         ears.lineTo(14.0f, -40.0f);
         ears.lineTo(22.0f, -21.0f);
         ears.close();
-        fillShape(head, ears, SolidColor{ WolfColors::WolfShade });
-        fillOval(head, { 16.0f, -8.0f }, 16.0f, 13.0f, SolidColor{ WolfColors::WolfLight });
+        fillShape(head, ears, SolidColor{ coat.shade });
+        fillOval(head, { 16.0f, -8.0f }, 16.0f, 13.0f, SolidColor{ coat.light });
 
         // Opening, the snout lifts and the lower jaw drops, both about the back of the mouth.
         const FloatPoint hinge = { 24.0f, 3.0f };
@@ -184,7 +181,7 @@ namespace ClaFi::PathArt
         snout.quadTo({ 49.0f, -5.0f }, { 44.0f, -1.0f });
         snout.lineTo(24.0f, 3.0f);
         snout.close();
-        fillShape(snoutFrame, snout, SolidColor{ WolfColors::WolfLight });
+        fillShape(snoutFrame, snout, SolidColor{ coat.light });
         // The lower jaw deepens as it drops, so it reads as a jaw under the teeth.
         PixelPath jaw;
         jaw.moveTo(24.0f, 3.0f);
@@ -192,7 +189,7 @@ namespace ClaFi::PathArt
         jaw.lineTo(42.0f - pose.jawOpen, 2.0f + 5.0f * pose.jawOpen);
         jaw.lineTo(26.0f + 3.0f * pose.jawOpen, 9.0f + 2.0f * pose.jawOpen);
         jaw.close();
-        fillShape(jawFrame, jaw, SolidColor{ WolfColors::WolfShade });
+        fillShape(jawFrame, jaw, SolidColor{ coat.shade });
         const SceneFrame tongue = jawFrame.within(Matrix3x2::Translation(33.0f, 3.0f)
             * Matrix3x2::Rotation(pose.tongueTurn));
         PixelPath lick;

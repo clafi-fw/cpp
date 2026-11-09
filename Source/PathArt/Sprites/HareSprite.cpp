@@ -13,10 +13,6 @@ namespace ClaFi::PathArt
     namespace HareColors
     {
         constexpr Color EyeWhite{ 0xFFFFFFFF };
-        constexpr Color HareLight{ 0xFFC9935E };
-        constexpr Color Hare{ 0xFFB98552 };
-        constexpr Color HareShade{ 0xFFA87444 };
-        constexpr Color HareBelly{ 0xE6F0DFC0 };
         constexpr Color HareTail{ 0xFFFFFFFF };
         constexpr Color EarInside{ 0xFFF2A7A0 };
         constexpr Color HareEye{ 0xFF2A1B10 };
@@ -28,27 +24,27 @@ namespace ClaFi::PathArt
     }
 
     // Drawn from the point between her feet, facing right; a negative facing mirrors her.
-    void drawHare(const SceneFrame& frame, const HarePose& pose)
+    void drawHare(const SceneFrame& frame, const HarePose& pose, const HareCoat& coat)
     {
         const SceneFrame hare = frame.within(Matrix3x2::Translation(pose.foot)
             * Matrix3x2::Scale(pose.size * pose.facing, pose.size));
         const float air = pose.air;
 
-        fillOval(hare, { -12.0f, -12.0f }, 14.0f, 10.0f, SolidColor{ HareColors::HareShade },
+        fillOval(hare, { -12.0f, -12.0f }, 14.0f, 10.0f, SolidColor{ coat.shade },
             -0.3f);
         const FloatPoint hindFoot = {
             std::lerp(-14.0f, -30.0f, air) + 8.0f,
             std::lerp(-2.0f, -8.0f, air) - pose.footLift
         };
-        fillOval(hare, hindFoot, 15.0f, 4.5f, SolidColor{ HareColors::HareShade },
+        fillOval(hare, hindFoot, 15.0f, 4.5f, SolidColor{ coat.shade },
             std::lerp(0.0f, -0.4f, air));
 
         const SceneFrame body = hare.within(Matrix3x2::Translation(-4.0f, -22.0f)
             * Matrix3x2::Rotation(pose.bodyTurn)
             * Matrix3x2::Scale(pose.stretch, 1.0f / pose.stretch));
         fillOval(body, {}, 26.0f, 15.0f, LinearGradient::Simple({ 0.0f, -15.0f }, { 0.0f, 15.0f },
-            HareColors::HareLight, HareColors::HareShade));
-        fillOval(body, { 8.0f, 8.0f }, 14.0f, 6.0f, SolidColor{ HareColors::HareBelly });
+            coat.light, coat.shade));
+        fillOval(body, { 8.0f, 8.0f }, 14.0f, 6.0f, SolidColor{ coat.belly });
         fillDisc(hare, { -29.0f + pose.sitting * 8.0f, -26.0f - pose.sitting * 4.0f }, 7.0f,
             SolidColor{ HareColors::HareTail });
 
@@ -59,9 +55,9 @@ namespace ClaFi::PathArt
             return shoulder + FloatPoint{ std::sin(angle), std::cos(angle) } * length;
         };
         drawSegment(hare, { 14.0f, -14.0f }, pawOf({ 14.0f, -14.0f }, reach, 15.0f),
-            SolidColor{ HareColors::HareShade }, 5.0f);
+            SolidColor{ coat.shade }, 5.0f);
         drawSegment(hare, { 18.0f, -14.0f }, pawOf({ 18.0f, -14.0f }, reach + 0.3f, 14.0f),
-            SolidColor{ HareColors::Hare }, 5.0f);
+            SolidColor{ coat.fur }, 5.0f);
 
         const FloatPoint head = {
             std::lerp(24.0f, 12.0f, pose.sitting),
@@ -75,12 +71,12 @@ namespace ClaFi::PathArt
             const SceneFrame ear = hare.within(Matrix3x2::Translation(earRoot)
                 * Matrix3x2::Rotation(earTurn));
             fillOval(ear, { 0.0f, -17.0f }, 5.5f, 18.0f,
-                SolidColor{ near ? HareColors::Hare : HareColors::HareShade });
+                SolidColor{ near ? coat.fur : coat.shade });
             fillOval(ear, { 0.0f, -17.0f }, 2.6f, 13.0f, SolidColor{ HareColors::EarInside });
         }
-        fillDisc(hare, head, 12.0f, SolidColor{ HareColors::HareLight });
+        fillDisc(hare, head, 12.0f, SolidColor{ coat.light });
         fillOval(hare, head + FloatPoint{ 9.0f, 3.0f }, 6.0f, 5.0f,
-            SolidColor{ HareColors::HareLight });
+            SolidColor{ coat.light });
         fillDisc(hare, head + FloatPoint{ 4.0f, -3.0f }, 2.8f, SolidColor{ HareColors::HareEye });
         fillDisc(hare, head + FloatPoint{ 4.8f, -4.0f }, 0.9f, SolidColor{ HareColors::EyeWhite });
         fillOval(hare, head + FloatPoint{ 14.0f, 1.5f }, 2.0f, 1.6f,

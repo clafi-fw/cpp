@@ -22,5 +22,14 @@ namespace ClaFi::PathArt
         float teeth; // 0 mouth shut, 1 its two front teeth bared full length
     };
 
-    export void drawHare(const SceneFrame&, const HarePose&);
+    // The colours of a hare's fur.
+    export struct HareCoat
+    {
+        Color light; // its head, and its back
+        Color fur; // its near foreleg and ear
+        Color shade; // its haunch, hind foot, far foreleg and ear, and its flank
+        Color belly;
+    };
+
+    export void drawHare(const SceneFrame&, const HarePose&, const HareCoat&);
 }
