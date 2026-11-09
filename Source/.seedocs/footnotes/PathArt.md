@@ -9,6 +9,10 @@ cycle and come back to where they began. The MillScene showcase holds a list of 
 as tiles in the Scene group of its Scene page - drawIcon() over name() - and stores the one picked
 under that name. A scene it takes up fades in over a still of the frame before it.
 
+**Under the tiles, Scene Options shows the picked scene's page**: the mill's themes, a scene's
+look and choices, or a line saying the scene has none. The pages share one room as large as the
+largest of them, so a pick never asks the menu for more.
+
 **A motion that comes round runs a whole number of times a cycle**, so the frame at the end of the
 cycle is the frame at its start and the loop shows no seam. A scene that needs a slow motion beside
 a fast one gives itself a longer cycle - cycleDuration(). A motion meant never to come round, such
@@ -67,9 +71,8 @@ when the two differ for it - today EarthScene, whose clouds, land and sea they c
 the look setLook() last named from its next frame on. A scene that offers no looks keeps the value
 and draws as it always does.
 
-The MillScene showcase offers the looks as radio buttons in a section of its Scene page captioned
-with the scene's name, shown only while that scene is the picked one, and keeps the pick under
-SceneLook. With no pick kept, the scene is drawn Realistic.
+The MillScene showcase offers the looks as radio buttons captioned Look on the scene's page of
+Scene Options, and keeps the pick under SceneLook. With no pick kept, the scene is drawn Realistic.
 
 ## Scene offersView
 
@@ -131,9 +134,9 @@ back. The Earth scene takes a double click to move the day on - see EarthScene.
 ## SceneChoice
 
 **A scene states what else it lets the viewer pick, beside its look**: each choice has a name and
-its options' names, and the host shows each as a section of radio buttons captioned with the
-scene's name and the choice's - the Earth's turn shows as Earth Turn, Eastward and Westward. The
-names are shown as they are written, and they are also what the scene keeps its pick under.
+its options' names, and the host shows each as radio buttons captioned with the choice's name, on
+the scene's page of options - the Earth's turn shows as Turn, Eastward and Westward. The names are
+shown as they are written, and they are also what the scene keeps its pick under.
 
 ## Scene choices
 

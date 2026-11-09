@@ -8,11 +8,10 @@ Scene was cut out of MillScene when the showcase gained more pictures than the m
 derives from it, named Mill, and the seven others come from createScenes(). The showcase holds the
 mill as a member, since its theme picker drives it, and the others in a list after it.
 
-The theme picker belongs to the mill alone. The Scene Theme section of the Scene page is shown
-only while the mill is picked; a hover preview over the Scene group shows the scene under the
-pointer and puts the picked one back when the pointer leaves. The config keeps the scene by name
-in `Scene` and the theme in `SceneTheme`, so a scene added or moved in the list does not shift
-what was stored.
+The theme picker belongs to the mill alone and stands on the mill's page of Scene Options; a
+hover preview over the Scene group shows the scene under the pointer and puts the picked one back
+when the pointer leaves. The config keeps the scene by name in `Scene` and the theme in
+`SceneTheme`, so a scene added or moved in the list does not shift what was stored.
 
 **Scenes, sprites and effects stand in three folders** (Oj, 2026-11-07, "Make folders for scenes,
 effects, sprites"). A sprite is a figure with a pose of its own - a struct of where it stands and
@@ -85,7 +84,7 @@ showcase restores in its constructor and stores on the form's close, as BrowserC
 Earth's turn, labelled Eastward and Westward). Of choices on Scene kept by the scene in its view's
 section, the same choices kept by the showcase under a section of its own, and a turn property on
 EarthScene alone that the showcase would name, Oj picked the first. SceneChoice is a name and a span
-of option names; the host builds a section per choice the way it builds the look's, previews an
+of option names; the host builds a picker per choice the way it builds the look's, previews an
 option on hover and puts the pick back, and never stores it: the scene writes it in storeView.
 
 **The let-go is a call of its own** (Oj, 2026-11-09, "The decision is made when the user releases
@@ -202,6 +201,26 @@ time is a share of the shown scene's cycle.
   opacity layer, untried with the scenes. drawSoftEdge needs its target to be an
   ID2D1DeviceContext, so a still of the Earth may come out without its atmosphere's glow if the
   image's target is not one.
+
+**A scene's options stand on a page of their own** (Oj, 2026-11-09, "if MillScene started with
+another theme and then select Mill, its the theme list below is trimmed"). The Scene page held a
+section for the mill's themes, one for the Earth's look and one per choice, each hidden while its
+scene was not the picked one. A hidden control is not measured, and the menu is placed around what
+its pages measure as it opens and keeps that window (AutoFit::No), so a menu opened on another
+scene had no room for the themes and cut them when the mill was picked. Of three ways - the
+options as pages of a PageControl sized for the largest, the menu placed again around its content
+on every change, and the application's pages in a scroll box as Settings is - Oj picked the first.
+Then the shape: one section, Scene Options, holding the page control; a page per scene with no
+sections inside; a placeholder where a scene has nothing to set.
+
+- **The room is the largest page's** - the mill's themes - whichever scene is picked, so a pick
+  never changes what the menu needs. Under the Earth and the scenes with no options it stands
+  partly empty.
+- **Each picker is a column**: its caption in strong ink over its options - Theme, Look, Turn. The
+  section captions carried the scene's name; a page shows only while its scene is picked, so the
+  captions leave it out.
+- **Compiled under clang only**, not run as the app. The arrow keys from the tiles into a picker
+  pass through the page control there.
 
 ## Scene draw
 

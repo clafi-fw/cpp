@@ -20,6 +20,7 @@ import ClaFi.Diagnostic.FpsChart;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.DialogTitle;
 import ClaFi.Controls.Stack;
+import ClaFi.Controls.PageControl;
 import ClaFi.Controls.AppButton;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Slider;
@@ -68,6 +69,8 @@ namespace MillScene_App
     constexpr float k_sceneTileSpacing{ 8.0f };
     // A scene's own options stand in lanes of four.
     constexpr std::size_t k_optionLaneSize{ 4 };
+    constexpr float k_pickerCaptionSpacing{ 4.0f }; // between a picker's caption and its options
+    constexpr float k_pickerSpacing{ 12.0f }; // between the pickers on one scene's page of options
     // A scene taken up fades in over the one before it, as long as the mill's theme crossfade.
     constexpr float k_sceneFadeSeconds{ 0.555f };
     constexpr int k_outgoingSceneImage{ 0 }; // the kept image the scene being left fades out of
@@ -175,13 +178,12 @@ namespace MillScene_App
             double drawMs{ 0.0 };
             double fps{ 0.0 };
         };
-        // A choice a scene offers, as its section of the Scene page shows it.
-        struct ChoiceSection
+        // A choice a scene offers, as its picker on the scene's page of options shows it.
+        struct ChoicePicker
         {
             std::size_t sceneIndex{};
             std::size_t choiceIndex{}; // among the scene's choices
             std::size_t pickedOption{}; // at its index among the choice's options
-            AppMenuPage::Section* section{ nullptr };
             SingleSelectionStackView* lanes{ nullptr };
             std::vector<Control*> buttons{};
         };
@@ -204,17 +206,23 @@ namespace MillScene_App
         // Draws the scene that offers looks in the look at `index` of k_lookChoices.
         void previewLook(std::size_t index);
         void pickLook(std::size_t index);
-        // Takes an option in the choice a section of m_choiceSections shows, while it is hovered.
-        void previewOption(std::size_t sectionIndex, std::size_t option);
-        void pickOption(std::size_t sectionIndex, std::size_t option);
+        // Takes an option in the choice a picker of m_choicePickers shows, while it is hovered.
+        void previewOption(std::size_t pickerIndex, std::size_t option);
+        void pickOption(std::size_t pickerIndex, std::size_t option);
+        // Whether a scene's page of options holds a picker: the mill's themes, a look, a choice.
+        [[nodiscard]] bool sceneOffersOptions(std::size_t index);
 
         void buildScenePage(AppMenuPage&);
         void buildScenePicker(AppMenuPage&);
-        void buildThemePicker(AppMenuPage&);
-        void buildLookPicker(AppMenuPage&);
-        // A section for every choice of every scene. See buildChoicePicker
-        void buildChoicePickers(AppMenuPage&);
-        void buildChoicePicker(AppMenuPage&, std::size_t sectionIndex);
+        // A page of options for every scene under one caption, the picked scene's page showing.
+        void buildSceneOptions(AppMenuPage&);
+        void buildThemePicker();
+        void buildLookPicker();
+        void buildChoicePickers();
+        void buildChoicePicker(std::size_t pickerIndex);
+        // Adds a column to a scene's page of options: the caption, with room for options under it.
+        [[nodiscard]] static StackPanel& addPickerColumn(StackPanel& optionsPage,
+            std::wstring_view caption);
 
         void restoreScene();
         void storeScene();
@@ -252,16 +260,14 @@ namespace MillScene_App
         // button it left as well as the one it took, and the stack is what the preview returns to.
         SingleSelectionStackView* m_sceneLanes{ nullptr };
         std::vector<Control*> m_sceneButtons{};
-        // Shown while the mill is the picked scene: the themes are the mill's.
-        AppMenuPage::Section* m_themeSection{ nullptr };
+        // Holds a page of options for each scene and shows the picked scene's.
+        PageControl* m_sceneOptionsControl{ nullptr };
+        std::vector<StackPanel*> m_sceneOptionPages{}; // at each scene's index
         SingleSelectionStackView* m_themeLanes{ nullptr };
         std::vector<Control*> m_themeButtons{};
-        // Shown while the scene that offers looks is the picked scene: the looks are its own.
-        AppMenuPage::Section* m_lookSection{ nullptr };
         SingleSelectionStackView* m_lookLanes{ nullptr };
         std::vector<Control*> m_lookButtons{};
-        // Each shown while its scene is the picked scene: the choices are its own.
-        std::vector<ChoiceSection> m_choiceSections{};
+        std::vector<ChoicePicker> m_choicePickers{};
         // The chart draws the benchmark above; it wears the scene's own colours, which is why it
         // is held rather than added and forgotten.
         // When the readings last went to stderr. See traceMetrics.
@@ -697,15 +703,8 @@ void MillSceneForm::pickScene(const std::size_t index)
         m_sceneButtons[previous]->invalidateState();
         m_sceneButtons[index]->invalidateState();
     }
-    if (m_themeSection)
-        m_themeSection->setVisible(index == 0);
-    if (m_lookSection)
-        m_lookSection->setVisible(sceneWithLooks() == index);
-    for (const ChoiceSection& choiceSection : m_choiceSections)
-    {
-        if (choiceSection.section)
-            choiceSection.section->setVisible(choiceSection.sceneIndex == index);
-    }
+    if (m_sceneOptionsControl)
+        m_sceneOptionsControl->setCurrentItem(*m_sceneOptionPages[index]);
 }
 
 // **The picked theme's colours, not the blend's.** This runs the moment a theme is picked, when
@@ -769,31 +768,36 @@ void MillSceneForm::pickLook(const std::size_t index)
     m_lookButtons[index]->invalidateState();
 }
 
-void MillSceneForm::previewOption(const std::size_t sectionIndex, const std::size_t option)
+void MillSceneForm::previewOption(const std::size_t pickerIndex, const std::size_t option)
 {
-    const ChoiceSection& choiceSection = m_choiceSections[sectionIndex];
-    sceneAt(choiceSection.sceneIndex).chooseOption(choiceSection.choiceIndex, option);
+    const ChoicePicker& choicePicker = m_choicePickers[pickerIndex];
+    sceneAt(choicePicker.sceneIndex).chooseOption(choicePicker.choiceIndex, option);
 }
 
-void MillSceneForm::pickOption(const std::size_t sectionIndex, const std::size_t option)
+void MillSceneForm::pickOption(const std::size_t pickerIndex, const std::size_t option)
 {
-    ChoiceSection& choiceSection = m_choiceSections[sectionIndex];
-    const std::size_t previous = choiceSection.pickedOption;
-    choiceSection.pickedOption = option;
-    previewOption(sectionIndex, option);
+    ChoicePicker& choicePicker = m_choicePickers[pickerIndex];
+    const std::size_t previous = choicePicker.pickedOption;
+    choicePicker.pickedOption = option;
+    previewOption(pickerIndex, option);
 
-    if (choiceSection.lanes)
-        choiceSection.lanes->setCurrentItem(*choiceSection.buttons[option]);
-    choiceSection.buttons[previous]->invalidateState();
-    choiceSection.buttons[option]->invalidateState();
+    if (choicePicker.lanes)
+        choicePicker.lanes->setCurrentItem(*choicePicker.buttons[option]);
+    choicePicker.buttons[previous]->invalidateState();
+    choicePicker.buttons[option]->invalidateState();
+}
+
+bool MillSceneForm::sceneOffersOptions(const std::size_t index)
+{
+    return index == 0
+        || sceneWithLooks() == index
+        || !sceneAt(index).choices().empty();
 }
 
 void MillSceneForm::buildScenePage(AppMenuPage& page)
 {
     buildScenePicker(page);
-    buildThemePicker(page);
-    buildLookPicker(page);
-    buildChoicePickers(page);
+    buildSceneOptions(page);
 }
 
 // Built the way the theme picker is: the pointer previews, a pick is the current item.
@@ -851,13 +855,50 @@ void MillSceneForm::buildScenePicker(AppMenuPage& page)
     lanes.setCurrentItem(*m_sceneButtons[m_pickedScene]);
 }
 
-void MillSceneForm::buildThemePicker(AppMenuPage& page)
+// **As large as the largest page**, whichever page shows - see PageSizing::WidestPage. The menu
+// keeps the window it was placed in as it opened, so a page larger than the one shown then would
+// be cut to that window.
+void MillSceneForm::buildSceneOptions(AppMenuPage& page)
 {
-    AppMenuPage::Section& section = page.addSection(L"Scene Theme");
-    m_themeSection = &section;
-    section.setVisible(m_pickedScene == 0);
-    StackPanel& group = section.body();
-    SingleSelectionStackView& lanes = group.add<SingleSelectionStackView>(
+    PageControl& optionsControl = page.addGroup(L"Scene Options").add<PageControl>();
+    optionsControl.setPageSizing(PageSizing::WidestPage);
+    m_sceneOptionsControl = &optionsControl;
+    optionsControl.onDestroy([this](DestroyEvent&) {
+        m_sceneOptionsControl = nullptr;
+        m_sceneOptionPages.clear();
+    });
+
+    m_sceneOptionPages.clear();
+    m_sceneOptionPages.reserve(sceneCount());
+    for (std::size_t index = 0; index != sceneCount(); ++index)
+    {
+        StackPanel& optionsPage = optionsControl.add<StackPanel>(
+            Orientation::Vertical,
+            Spacing{ k_pickerSpacing }
+        );
+        m_sceneOptionPages.push_back(&optionsPage);
+    }
+
+    buildThemePicker();
+    buildLookPicker();
+    buildChoicePickers();
+    for (std::size_t index = 0; index != sceneCount(); ++index)
+    {
+        if (!sceneOffersOptions(index))
+        {
+            m_sceneOptionPages[index]->add<Label>(
+                Text{ std::format(L"{} has no options", sceneAt(index).name()) },
+                TextFormat{ InkGrade::Muted }
+            );
+        }
+    }
+    optionsControl.setCurrentItem(*m_sceneOptionPages[m_pickedScene]);
+}
+
+void MillSceneForm::buildThemePicker()
+{
+    StackPanel& column = addPickerColumn(*m_sceneOptionPages[0], L"Theme");
+    SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_themeLaneSize },
         Spacing{ k_themeLaneSpacing, 0.0f },
@@ -877,7 +918,6 @@ void MillSceneForm::buildThemePicker(AppMenuPage& page)
     // window will not send.
     lanes.onDestroy([this](DestroyEvent&) {
         previewSceneTheme(m_pickedTheme);
-        m_themeSection = nullptr;
         m_themeLanes = nullptr;
         m_themeButtons.clear();
         });
@@ -916,18 +956,14 @@ void MillSceneForm::buildThemePicker(AppMenuPage& page)
 
 }
 
-// **The section is captioned with its scene's name**, being shown only while that scene is
-// picked, in the room the mill's themes leave. Built the way the theme picker is.
-void MillSceneForm::buildLookPicker(AppMenuPage& page)
+// Built the way the theme picker is.
+void MillSceneForm::buildLookPicker()
 {
     const std::optional<std::size_t> scene = sceneWithLooks();
     if (!scene)
         return;
-    AppMenuPage::Section& section =
-        page.addSection(std::format(L"{} Look", sceneAt(*scene).name()));
-    m_lookSection = &section;
-    section.setVisible(m_pickedScene == *scene);
-    SingleSelectionStackView& lanes = section.body().add<SingleSelectionStackView>(
+    StackPanel& column = addPickerColumn(*m_sceneOptionPages[*scene], L"Look");
+    SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_optionLaneSize },
         Spacing{ k_themeLaneSpacing, 0.0f },
@@ -941,7 +977,6 @@ void MillSceneForm::buildLookPicker(AppMenuPage& page)
     });
     lanes.onDestroy([this](DestroyEvent&) {
         previewLook(m_pickedLook);
-        m_lookSection = nullptr;
         m_lookLanes = nullptr;
         m_lookButtons.clear();
     });
@@ -966,61 +1001,56 @@ void MillSceneForm::buildLookPicker(AppMenuPage& page)
     lanes.setCurrentItem(*m_lookButtons[m_pickedLook]);
 }
 
-// The sections are listed whole before any is built, so the handlers' indices stay valid.
-void MillSceneForm::buildChoicePickers(AppMenuPage& page)
+// The pickers are listed whole before any is built, so the handlers' indices stay valid.
+void MillSceneForm::buildChoicePickers()
 {
-    m_choiceSections.clear();
+    m_choicePickers.clear();
     for (std::size_t sceneIndex = 0; sceneIndex != sceneCount(); ++sceneIndex)
     {
         const PathArt::Scene& scene = sceneAt(sceneIndex);
         for (std::size_t choiceIndex = 0; choiceIndex != scene.choices().size(); ++choiceIndex)
         {
-            m_choiceSections.push_back(ChoiceSection{
+            m_choicePickers.push_back(ChoicePicker{
                 .sceneIndex = sceneIndex,
                 .choiceIndex = choiceIndex,
                 .pickedOption = scene.chosenOption(choiceIndex),
-                .section = nullptr,
                 .lanes = nullptr,
                 .buttons = {}
             });
         }
     }
-    for (std::size_t sectionIndex = 0; sectionIndex != m_choiceSections.size(); ++sectionIndex)
-        buildChoicePicker(page, sectionIndex);
+    for (std::size_t pickerIndex = 0; pickerIndex != m_choicePickers.size(); ++pickerIndex)
+        buildChoicePicker(pickerIndex);
 }
 
-// **Captioned with its scene's name and the choice's**, shown only while that scene is picked.
-// Built the way the look picker is.
-void MillSceneForm::buildChoicePicker(AppMenuPage& page, const std::size_t sectionIndex)
+// **Captioned with the choice's name**, on its scene's page. Built the way the look picker is.
+void MillSceneForm::buildChoicePicker(const std::size_t pickerIndex)
 {
-    ChoiceSection& choiceSection = m_choiceSections[sectionIndex];
-    const PathArt::Scene& scene = sceneAt(choiceSection.sceneIndex);
-    const PathArt::SceneChoice& choice = scene.choices()[choiceSection.choiceIndex];
-    AppMenuPage::Section& section =
-        page.addSection(std::format(L"{} {}", scene.name(), choice.name));
-    choiceSection.section = &section;
-    section.setVisible(m_pickedScene == choiceSection.sceneIndex);
-    SingleSelectionStackView& lanes = section.body().add<SingleSelectionStackView>(
+    ChoicePicker& choicePicker = m_choicePickers[pickerIndex];
+    const PathArt::Scene& scene = sceneAt(choicePicker.sceneIndex);
+    const PathArt::SceneChoice& choice = scene.choices()[choicePicker.choiceIndex];
+    StackPanel& column =
+        addPickerColumn(*m_sceneOptionPages[choicePicker.sceneIndex], choice.name);
+    SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_optionLaneSize },
         Spacing{ k_themeLaneSpacing, 0.0f },
         VerticalAlign::Top
     );
 
-    choiceSection.lanes = &lanes;
+    choicePicker.lanes = &lanes;
     lanes.setPreviewMode(PreviewMode::Hover);
-    lanes.onPreview([this, sectionIndex](PreviewEvent& event) {
-        previewOption(sectionIndex, event.item.tag().value);
+    lanes.onPreview([this, pickerIndex](PreviewEvent& event) {
+        previewOption(pickerIndex, event.item.tag().value);
     });
-    lanes.onDestroy([this, sectionIndex](DestroyEvent&) {
-        ChoiceSection& destroyedSection = m_choiceSections[sectionIndex];
-        previewOption(sectionIndex, destroyedSection.pickedOption);
-        destroyedSection.section = nullptr;
-        destroyedSection.lanes = nullptr;
-        destroyedSection.buttons.clear();
+    lanes.onDestroy([this, pickerIndex](DestroyEvent&) {
+        ChoicePicker& destroyedPicker = m_choicePickers[pickerIndex];
+        previewOption(pickerIndex, destroyedPicker.pickedOption);
+        destroyedPicker.lanes = nullptr;
+        destroyedPicker.buttons.clear();
     });
 
-    choiceSection.buttons.reserve(choice.options.size());
+    choicePicker.buttons.reserve(choice.options.size());
     for (std::size_t option = 0; option != choice.options.size(); ++option)
     {
         RadioButton& item = lanes.add<RadioButton>(
@@ -1028,15 +1058,29 @@ void MillSceneForm::buildChoicePicker(AppMenuPage& page, const std::size_t secti
             Tag{ option },
             Padding{ 0.0f, styleMetrics(UiElement::ListItem).padding.y }
         );
-        item.onGetState([this, sectionIndex, option](GetStateEvent& event) {
-            event.state.selected = m_choiceSections[sectionIndex].pickedOption == option;
+        item.onGetState([this, pickerIndex, option](GetStateEvent& event) {
+            event.state.selected = m_choicePickers[pickerIndex].pickedOption == option;
         });
-        item.onClick([this, sectionIndex, option](ClickEvent&) {
-            pickOption(sectionIndex, option);
+        item.onClick([this, pickerIndex, option](ClickEvent&) {
+            pickOption(pickerIndex, option);
         });
-        choiceSection.buttons.push_back(&item);
+        choicePicker.buttons.push_back(&item);
     }
-    lanes.setCurrentItem(*choiceSection.buttons[choiceSection.pickedOption]);
+    lanes.setCurrentItem(*choicePicker.buttons[choicePicker.pickedOption]);
+}
+
+StackPanel& MillSceneForm::addPickerColumn(StackPanel& optionsPage,
+    const std::wstring_view caption)
+{
+    StackPanel& column = optionsPage.add<StackPanel>(
+        Orientation::Vertical,
+        Spacing{ k_pickerCaptionSpacing }
+    );
+    column.add<Label>(
+        Text{ caption },
+        TextFormat{ InkGrade::Strong }
+    );
+    return column;
 }
 
 void MillSceneForm::restoreScene()
