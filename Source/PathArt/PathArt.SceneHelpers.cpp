@@ -100,11 +100,12 @@ namespace ClaFi::PathArt
         m_path.clear();
     }
 
+    // The sine and its multiple are in double: a float past 32768 steps by 1/256.
     float pseudoRandom(const int index, const float shift)
     {
-        const float value = std::abs(std::sin(static_cast<float>(index) * 12.9898f + shift))
-            * 43758.5453f;
-        return std::fmod(value, 1.0f);
+        const float angle = static_cast<float>(index) * 12.9898f + shift;
+        const double value = std::abs(std::sin(static_cast<double>(angle))) * 43758.5453;
+        return static_cast<float>(std::fmod(value, 1.0));
     }
 
     float fractionalPart(const float value)

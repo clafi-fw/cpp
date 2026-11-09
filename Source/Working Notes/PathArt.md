@@ -251,6 +251,28 @@ its own.
 compositeSurface, which knows the clip's rectangle but not its mask - the same as the mill's
 background bitmap. The showcase draws no scene under a path clip; Oj's profiles show none.
 
+## pseudoRandom
+
+**The sine and its multiple are taken in double** (Oj, 2026-11-09, "The distribution algorithm has
+a flaw - it may put many lights into one spot", with a screenshot of a cluster of city lights).
+Taken in float, `|sin| x 43758.5453` keeps 8 bits of the fraction above 32768 and 9 above 16384:
+65 percent of the draws fell on a multiple of 1/256, and 20,000 draws gave 2290 distinct values.
+Where one draw picks one of many, the picks bunched:
+
+- A coastline town picks one of the 30,689 edges of the outlines it may stand on. 5800 towns stood
+  on 1192 edges, up to 28 on one edge 0.1 degree long - the clusters of lights. In double they
+  stand on 5215 edges, at most 4 to one.
+- 65 percent of the land towns stood on 256 meridians 1.4 degrees apart.
+
+The angle is still summed in float, so each draw moves by about the float's step: 0.0012 on
+average and 0.0048 at most, over indexes to 100,000 and shifts to 99. About 1 draw in 430 lay
+within that step of 1 and now falls just above 0, or the other way round, so in every scene a star
+or a tuft here and there stands elsewhere. The town numbers come from a replica of the coastline
+sites over the outlines without their grain and before the land map's weights.
+
+To watch: the cast to float rounds a fraction within 2^-25 of 1 up to 1.0, about 3 draws in 10^8.
+Nothing guards it.
+
 ## ClockworkScene
 
 meshWith places the driven gear's phase so that the teeth past the line of centers, counted on
