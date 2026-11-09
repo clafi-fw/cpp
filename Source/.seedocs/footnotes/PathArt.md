@@ -651,9 +651,9 @@ butterfly, the mill's reeds, a boulder, a frog, a daisy, a tree stump and a snai
 and the apple each come by earlier in the run that ends on one on the trail, and a host that does
 not count the cycles shows the first three every time.
 
-**More stands on the far edge between the runs' own**, one about halfway between each two, three in
-a cycle's travel. They are the twelve and a crow on a tree stump, in an order of their own that
-comes round every thirteen cycles - a daisy, the crow on its stump, a boulder, a toadstool, a snail,
+**More stands on the far edge between the runs' own**, one about where each run starts, three in a
+cycle's travel. They are the twelve and a crow on a tree stump, in an order of their own that comes
+round every thirteen cycles - a daisy, the crow on its stump, a boulder, a toadstool, a snail,
 a signpost, the reeds, a frog, a butterfly, a tree stump, an apple, a bird and a banana peel - see
 ChaseScene drawVergeRow.
 
@@ -684,15 +684,14 @@ before. The far edge's row between the runs' places holds three to a cycle's tra
 the same places among the runs every cycle. Both go by SceneTime cyclesPassed: a host that does not
 count the cycles shows the same places every cycle, and they jump where the cycle comes round.
 
-**The tree's stretch stays clear.** Neither row has a place within 700 units of where the camera
-stands in the run to the tree, so nothing by the path stands among the tree, the crow or the other
-couple while the two are down; a frame wider than 16:9 can show one at its edges then. On the far
-edge that leaves out one of the three places a cycle, so it has five in all.
+**The stretch where the wolf comes down stays clear.** Neither row has a place within 700 units of
+where the camera stands in a run, so nothing by the path stands by what he trips over, the tree, the
+crow or the other couple while he is down; a frame wider than 16:9 can show one at its edges then.
 
 **The near row keeps clear of the far one.** A near place that would stand within 500 units of a
-place on the far edge moves on to stand 500 units past it, so the two edges never show a pair side
-by side. The near places still never fall into step with the far ones or the runs; only the ones
-that come close move.
+place on the far edge moves on to stand 500 units past it, and on past each next far place it would
+stand as close to, so the two edges never show a pair side by side. The near places still never fall
+into step with the far ones or the runs; only the ones that come close move.
 
 **The hare and the wolf each start their part of the stirring** - the first time each comes within
 reach of it, whatever the camera is doing. Each part then plays straight through, as it would with

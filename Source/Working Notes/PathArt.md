@@ -1502,6 +1502,28 @@ the wolf's part of the stirring, and at 1920 x 1080 the camera carries the near 
 left edge at about 2.3 s, so its head was barely seen. It comes out from 1.3 s, as the wolf's tail
 clears it, to 1.9 s.
 
+**The trips kept clear** (Oj, 22:03: "Clear the side objects off the collision stretch", then 22:13:
+"by the 'collision stretch' i mean the wolf's tripping site"). The between row's places, 3,885 and
+8,681 units into a cycle, stood 24 and 35 units from where the camera stands at the two trips, 3,861
+and 8,646, so in every cycle the wolf came down beside one of them in both trail runs. Its third
+place stood by the tree and was already left out. The clear stretch now reaches round the camera's
+stand in each of the three runs: k_treeStretchReach became k_collisionStretchReach, still 700 units,
+and drawVergeRow takes each run's stand from cameraShare at k_cameraWaiting.
+
+Left at 0.81, the between row would have lost all three places, so it moved. Two places were shown:
+A, about where each run starts, and B, just before the trip's stretch - an offset of 0.63, 830 to
+870 units short of a stand, going by about 1.5 s before the trip, while its stirring could still be
+playing as he falls. Oj took A. k_farBetweenOffset is 0, so the places stand 0, 4,796 and 9,592
+units into a cycle, 924 to 946 units past a stand. The nearest of the runs' places is the tree run's
+own, at 10,362, 770 units off. The far edge has six a cycle again. The near row loses 1.24 places a
+cycle to the stretches, against 0.51 before, and keeps 4.0.
+
+The in-between place and the tree run's own stand 770 units apart, under twice k_nearClearOfFar, so
+a near place moved past the one could land within 500 units of the next. The far places are sorted
+along the trail, and clearOfFar goes over them in that order, moving the place on past each far
+place it is still within reach of. Over the first 1,000 cycles no near place stands within 500 units
+of a far one or within 700 of a stand. Frame time at 1920 x 1080 is the same within noise.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

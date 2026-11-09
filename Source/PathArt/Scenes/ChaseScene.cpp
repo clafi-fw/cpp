@@ -434,8 +434,8 @@ namespace ClaFi::PathArt
         constexpr double k_nearRoadsidesPerCycle{ 5.23606797749979 };
         constexpr double k_nearRoadsideOffset{ 0.5 }; // of a spacing, from the start of the trail
         // The far verge's places between those of its runs, in an order of their own: three in a
-        // cycle's travel, the first this share of a spacing from the start of the trail, so that
-        // each falls about halfway between two of the runs' places.
+        // cycle's travel, the first this share of a spacing from the start of the trail, which sets
+        // one about where each run starts.
         constexpr std::array<Roadside, 13> k_farBetweenRoadside{
             Roadside::Daisy,
             Roadside::CrowOnStump,
@@ -452,10 +452,10 @@ namespace ClaFi::PathArt
             Roadside::BananaPeel
         };
         constexpr double k_farBetweenPerCycle{ 3.0 };
-        constexpr double k_farBetweenOffset{ 0.81 };
-        // Neither row has a place within this many units of where the camera stands in the run to
-        // the tree, so nothing by the path crowds what happens there.
-        constexpr double k_treeStretchReach{ 700.0 };
+        constexpr double k_farBetweenOffset{ 0.0 };
+        // Neither row has a place within this many units of where the camera stands in a run, so
+        // nothing by the path crowds what the wolf runs into there.
+        constexpr double k_collisionStretchReach{ 700.0 };
         // A near place that would stand within this many units of one on the far verge moves on
         // to stand this far past it.
         constexpr double k_nearClearOfFar{ 500.0 };
@@ -1508,10 +1508,10 @@ namespace ClaFi::PathArt
     // A row's places lie along the whole trail, a cycle's travel shared out evenly between them: on
     // the near verge k_nearRoadsidesPerCycle, so one comes by at any moment of a run, and on the
     // far verge k_farBetweenPerCycle between the runs' own. A near place keeps clear of the far
-    // verge's, and those that would stand by the tree are left out. The hare's part of the stirring
-    // starts the first time she comes close and the wolf's part the first time he does, each found
-    // by going back over the scene's time; each part then plays through as if that one had run by
-    // at full speed.
+    // verge's, and those that would stand where the wolf comes down are left out. The hare's part
+    // of the stirring starts the first time she comes close and the wolf's part the first time he
+    // does, each found by going back over the scene's time; each part then plays through as if
+    // that one had run by at full speed.
     void ChaseScene::drawVergeRow(const SceneFrame& frame, const SceneTime time,
         const float groundY, const float closeness, const bool nearEdge)
     {
@@ -1614,17 +1614,13 @@ namespace ClaFi::PathArt
         const double perCycle = nearEdge ? k_nearRoadsidesPerCycle : k_farBetweenPerCycle;
         const double offset = nearEdge ? k_nearRoadsideOffset : k_farBetweenOffset;
         const double cameraNow = cameraAt(now);
-        const double treeStand = static_cast<double>(travelAt(
-            (static_cast<float>(k_branchEpisode) + k_cameraWaiting) / k_episodesPerCycle));
         const double spacing = cycleTravel / perCycle;
         const auto intoCycle = [&](double place) {
             return place - std::floor(place / cycleTravel) * cycleTravel;
         };
-        const auto byTheTree = [&](double place) {
-            const double fromTree = std::abs(intoCycle(place) - treeStand);
-            return std::min(fromTree, cycleTravel - fromTree) < k_treeStretchReach;
-        };
-        // The far verge's places within a cycle's travel, its runs' own and those between.
+        // Where the camera stands in each run while the wolf is down, and the far verge's places
+        // within a cycle's travel, its runs' own and those between.
+        std::array<double, 3> stands = {};
         std::array<double, 6> farPlaces = {};
         std::size_t farCount = 0;
         double runStart = 0.0;
@@ -1635,25 +1631,37 @@ namespace ClaFi::PathArt
                 : k_roadsidePasses;
             farPlaces[farCount++] = runStart
                 + static_cast<double>(cameraShare(passes, episode) * k_fullSpeedTravel);
+            stands[static_cast<std::size_t>(episode)] = runStart
+                + static_cast<double>(cameraShare(k_cameraWaiting, episode) * k_fullSpeedTravel);
             runStart += static_cast<double>(cameraShare(1.0f, episode) * k_fullSpeedTravel);
         }
+        const auto byACollision = [&](double place) {
+            const double intoTrail = intoCycle(place);
+            return std::ranges::any_of(stands, [&](double stand) {
+                const double fromStand = std::abs(intoTrail - stand);
+                return std::min(fromStand, cycleTravel - fromStand) < k_collisionStretchReach;
+            });
+        };
         const double betweenSpacing = cycleTravel / k_farBetweenPerCycle;
         for (int between = 0; between != static_cast<int>(k_farBetweenPerCycle); ++between)
         {
             const double betweenPlace = (static_cast<double>(between) + k_farBetweenOffset)
                 * betweenSpacing;
-            if (!byTheTree(betweenPlace))
+            if (!byACollision(betweenPlace))
                 farPlaces[farCount++] = betweenPlace;
         }
+        // In order along the trail, so a near place moved past one far place is checked against
+        // the next.
+        std::ranges::sort(std::span{ farPlaces }.first(farCount));
         const auto clearOfFar = [&](double place) {
             const double cycleStart = place - intoCycle(place);
-            for (std::size_t far = 0; far != farCount; ++far)
+            for (const double turn : { -cycleTravel, 0.0, cycleTravel })
             {
-                for (const double turn : { -cycleTravel, 0.0, cycleTravel })
+                for (std::size_t far = 0; far != farCount; ++far)
                 {
                     const double farPlace = cycleStart + turn + farPlaces[far];
                     if (std::abs(place - farPlace) < k_nearClearOfFar)
-                        return farPlace + k_nearClearOfFar;
+                        place = farPlace + k_nearClearOfFar;
                 }
             }
             return place;
@@ -1672,7 +1680,7 @@ namespace ClaFi::PathArt
         {
             const double evenPlace = (static_cast<double>(index) + offset) * spacing;
             const double place = nearEdge ? clearOfFar(evenPlace) : evenPlace;
-            if (byTheTree(place))
+            if (byACollision(place))
                 continue;
             const float onScreen = width * 0.5f
                 + static_cast<float>(place - cameraNow) * unit * closeness;
