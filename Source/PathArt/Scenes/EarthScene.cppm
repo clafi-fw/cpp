@@ -142,9 +142,10 @@ namespace ClaFi::PathArt
             [[nodiscard]] FloatPoint onScreen(Direction) const;
             // The map from a direction's x and y to the screen.
             [[nodiscard]] Graphics::Matrix3x2 toScreen() const;
-            // The near side of a closed outline as directions' x and y, in loops closed at the rim.
+            // A closed outline's near side as directions' x and y, in loops closed at `rimRadius`.
             void nearSideOf(std::span<const Direction> outline, bool counterClockwise,
-                std::vector<FloatPoint>& points, std::vector<std::size_t>& loopEnds) const;
+                float rimRadius, std::vector<FloatPoint>& points,
+                std::vector<std::size_t>& loopEnds) const;
             // Adds the near side of a closed outline to a path, answering whether it is in view.
             bool addNearSide(std::span<const Direction> outline, bool counterClockwise,
                 const FloatRect& view, Graphics::PixelPath&) const;

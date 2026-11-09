@@ -528,6 +528,11 @@ see Canvas drawPixelViews.
 times as wide as the points stand apart - see MapQuery. The ridges and the clouds hold still as the
 Earth turns, and soften toward the limb, where each point stands for more ground.
 
+**The realistic coast is blurred as much as the land is**, by a Gaussian whose spread is half the
+distance between the land's points: a pixel where they stand every 2nd pixel. A coast is then as
+sharp as the land's sharpest edges. The stylized look cuts its coast at the pixel, as it cuts its
+zones and bands.
+
 **Each edge the stylized look cuts is softened by what its field changes over the pixel**: the
 dryness and the cold at a zone's edge, the height at a band's, the light at a tone's, the cover at a
 cloud's, the depth at the sea's. An edge stays sharp where its field changes slowly, and moves

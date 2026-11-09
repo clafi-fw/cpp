@@ -170,6 +170,8 @@ namespace ClaFi::PathArt
         // How much wider than the points stand apart the ground about one is taken: the land is
         // read half a level coarser, as detail that fine shimmers when the globe turns.
         constexpr float k_spanWidening{ 1.4142135f };
+        // The realistic coast's blur per pixel between the land's points. See PathArt#earthscene
+        constexpr float k_coastBlurPerStep{ 0.5f };
 
         // The ways the Earth may turn, in the order of TurnDirection.
         constexpr std::array<std::wstring_view, 2> k_turnOptions{ L"Eastward", L"Westward" };
@@ -1405,29 +1407,32 @@ namespace ClaFi::PathArt
             int last;
         };
 
-        // The bands an edge reaches into, of `bandCount` bands from row `top` on. None when `last`
-        // comes before `first`.
+        // The bands an edge reaches into, of `bandCount` bands from row `top` on, each taken
+        // `rowsBeyond` rows taller above and below. None when `last` comes before `first`.
         [[nodiscard]] BandRange bandsReachedBy(const CoastEdge& edge, const int top,
-            const int bandCount)
+            const int bandCount, const int rowsBeyond)
         {
             const float bandHeight = static_cast<float>(k_bandRows);
-            const float upper = std::min(edge.from.y, edge.to.y) - static_cast<float>(top);
-            const float lower = std::max(edge.from.y, edge.to.y) - static_cast<float>(top);
+            const float upper = std::min(edge.from.y, edge.to.y) - static_cast<float>(top)
+                - static_cast<float>(rowsBeyond);
+            const float lower = std::max(edge.from.y, edge.to.y) - static_cast<float>(top)
+                + static_cast<float>(rowsBeyond);
             return {
                 std::max(0, static_cast<int>(std::floor(upper / bandHeight))),
                 std::min(bandCount - 1, static_cast<int>(std::floor(lower / bandHeight)))
             };
         }
 
-        // Counted first, so each band's edges land together in one vector.
+        // Counted first, so each band's edges land together in one vector. A band takes the edges
+        // of `rowsBeyond` rows above and below it too.
         [[nodiscard]] BandedCoast bandedCoast(const std::span<const CoastEdge> coast,
-            const int top, const int bandCount)
+            const int top, const int bandCount, const int rowsBeyond)
         {
             BandedCoast banded{ .edges = {}, .starts = {} };
             banded.starts.assign(static_cast<std::size_t>(bandCount) + 1, 0);
             for (const CoastEdge& edge : coast)
             {
-                const BandRange bands = bandsReachedBy(edge, top, bandCount);
+                const BandRange bands = bandsReachedBy(edge, top, bandCount, rowsBeyond);
                 for (int band = bands.first; band <= bands.last; ++band)
                     ++banded.starts[static_cast<std::size_t>(band) + 1];
             }
@@ -1437,7 +1442,7 @@ namespace ClaFi::PathArt
             std::vector<std::size_t> nextSlots(banded.starts.begin(), banded.starts.end() - 1);
             for (const CoastEdge& edge : coast)
             {
-                const BandRange bands = bandsReachedBy(edge, top, bandCount);
+                const BandRange bands = bandsReachedBy(edge, top, bandCount, rowsBeyond);
                 for (int band = bands.first; band <= bands.last; ++band)
                     banded.edges[nextSlots[static_cast<std::size_t>(band)]++] = edge;
             }
@@ -1491,6 +1496,7 @@ namespace ClaFi::PathArt
             FloatPoint sphereRadii; // across and up, in pixels
             int left; // the first column in view
             int right; // the column past the last in view
+            float coastBlur; // the spread of the coast's Gaussian blur in pixels; 0 for none
         };
 
         // How far 8 points or pixels lie past the edge of each stylized zone, 0 to 1.
@@ -1631,15 +1637,59 @@ namespace ClaFi::PathArt
             sweepPiece(cells, fromX, toX, winding);
         }
 
+        // What a group of 8 pixels in a row of coverage holds.
+        enum class GroupCover : std::uint8_t
+        {
+            Clear,
+            Whole,
+            Partly
+        };
+
+        // What 8 pixels of coverage hold, a pixel short of whole by the adding's drift being whole.
+        [[nodiscard]] GroupCover groupCoverOf(const __m256 cells)
+        {
+            const __m256 clear = _mm256_cmp_ps(cells, _mm256_setzero_ps(), _CMP_EQ_OQ);
+            if (_mm256_movemask_ps(clear) == 0xFF)
+                return GroupCover::Clear;
+            const __m256 whole = _mm256_cmp_ps(cells, _mm256_set1_ps(1.0f - 1.0f / 512.0f),
+                _CMP_GE_OQ);
+            if (_mm256_movemask_ps(whole) == 0xFF)
+                return GroupCover::Whole;
+            return GroupCover::Partly;
+        }
+
+        // The covers of 32 groups from `covers` on, a byte each.
+        [[nodiscard]] __m256i coversAt(const GroupCover* covers)
+        {
+            return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(covers));
+        }
+
+        // **The groups a blur has to work out**, of the 32 from `covers` on, as a byte mask: those
+        // partly covered, and those whose cover differs from that of any of the `count` groups
+        // `step` apart after them. The rest are clear or whole, as is all they are blurred with.
+        [[nodiscard]] __m256i unevenGroups(const GroupCover* covers, const std::ptrdiff_t step,
+            const int count)
+        {
+            const __m256i first = coversAt(covers);
+            __m256i uneven = _mm256_cmpeq_epi8(first,
+                _mm256_set1_epi8(static_cast<char>(GroupCover::Partly)));
+            for (int next = 1; next <= count; ++next)
+            {
+                const __m256i same = _mm256_cmpeq_epi8(first, coversAt(covers + next * step));
+                uneven = _mm256_or_si256(uneven, _mm256_xor_si256(same, _mm256_set1_epi8(-1)));
+            }
+            return uneven;
+        }
+
         // **How much of each pixel of a band the coastlines enclose**: each edge adds the area it
         // sweeps in each cell of every row it crosses, signed by the way it runs, and summing along
         // the row gives the share enclosed. The shapes stand apart, and a sea inside one runs the
         // other way round, so the sum's size is the coverage whichever way a shape runs.
         // `coverage` holds the band's rows `stride` apart, each with 2 floats to spare past
-        // `width`; `coveredGroups` marks each 8 pixels of a row the coastlines reach.
+        // `width`; `groupCovers` holds what each 8 pixels of a row hold.
         void coverBand(const std::span<const CoastEdge> coast, const int top, const int rows,
             const int left, const int width, const int stride, const std::span<float> coverage,
-            std::vector<std::uint8_t>& coveredGroups)
+            std::vector<GroupCover>& groupCovers)
         {
             std::ranges::fill(coverage, 0.0f);
             const float bandTop = static_cast<float>(top);
@@ -1674,7 +1724,7 @@ namespace ClaFi::PathArt
             // upper half, then what the cells before have come to. A sum short of a 512th is the
             // drift of the adding, not land.
             const int groupsPerRow = stride / 8;
-            coveredGroups.assign(static_cast<std::size_t>(groupsPerRow) * rows, 0);
+            groupCovers.assign(static_cast<std::size_t>(groupsPerRow) * rows, GroupCover::Clear);
             const __m256 signBit = _mm256_set1_ps(-0.0f);
             const __m256 whole = _mm256_set1_ps(1.0f);
             const __m256 least = _mm256_set1_ps(1.0f / 512.0f);
@@ -1695,10 +1745,194 @@ namespace ClaFi::PathArt
                     carried = _mm256_permute2f128_ps(_mm256_permute_ps(sums, 0xFF),
                         _mm256_permute_ps(sums, 0xFF), 0x11);
                     const __m256 covered = _mm256_min_ps(_mm256_andnot_ps(signBit, sums), whole);
-                    const __m256 counted = _mm256_cmp_ps(covered, least, _CMP_GE_OQ);
-                    _mm256_storeu_ps(cells + group * 8, _mm256_and_ps(covered, counted));
-                    coveredGroups[static_cast<std::size_t>(row) * groupsPerRow
-                        + static_cast<std::size_t>(group)] = _mm256_movemask_ps(counted) != 0;
+                    const __m256 counted = _mm256_and_ps(covered,
+                        _mm256_cmp_ps(covered, least, _CMP_GE_OQ));
+                    _mm256_storeu_ps(cells + group * 8, counted);
+                    groupCovers[static_cast<std::size_t>(row) * groupsPerRow
+                        + static_cast<std::size_t>(group)] = groupCoverOf(counted);
+                }
+            }
+        }
+
+        // The pixels a Gaussian blur of a spread reaches to either side.
+        [[nodiscard]] int blurReachOf(const float spread)
+        {
+            return static_cast<int>(std::ceil(3.0f * spread));
+        }
+
+        // A Gaussian's weights from `-reach` to `reach` pixels, summing to 1.
+        [[nodiscard]] std::vector<float> gaussianWeights(const float spread, const int reach)
+        {
+            std::vector<float> weights;
+            weights.reserve(static_cast<std::size_t>(2 * reach + 1));
+            float sum = 0.0f;
+            for (int offset = -reach; offset <= reach; ++offset)
+            {
+                const float distance = static_cast<float>(offset) / spread;
+                weights.push_back(std::exp(-0.5f * distance * distance));
+                sum += weights.back();
+            }
+            for (float& weight : weights)
+                weight /= sum;
+            return weights;
+        }
+
+        // **The coast is blurred as much as the land is**: the coverage of the band and of the
+        // blur's reach beyond it on every side, blurred across and then down by a Gaussian of
+        // `picture.coastBlur`. Only the groups unevenGroups finds are worked out, so the blur
+        // costs by the length of the coast. The loops along the rim are closed past the sphere, so
+        // the blur leaves the limb whole, and the limb is cut here by the sphere's own coverage,
+        // as the sea's is. Fills `coverage` and `groupCovers` as coverBand does.
+        void coverBlurredBand(const LandPicture& picture, const std::span<const CoastEdge> coast,
+            const int top, const int rows, const int left, const int width, const int stride,
+            const std::span<float> coverage, std::vector<GroupCover>& groupCovers)
+        {
+            const int reach = blurReachOf(picture.coastBlur);
+            const std::vector<float> weights = gaussianWeights(picture.coastBlur, reach);
+            const int wideRows = rows + 2 * reach;
+            const int wideWidth = width + 2 * reach;
+            const int wideStride = static_cast<int>(groupedLength(wideWidth + 2));
+            const std::size_t wideLength = static_cast<std::size_t>(wideStride)
+                * static_cast<std::size_t>(wideRows);
+            // The blur across reads up to 8 floats past the last row.
+            NoAllocFloatVector wide(wideLength + 8);
+            std::vector<GroupCover> wideCovers;
+            coverBand(coast, top - reach, wideRows, left - reach, wideWidth, wideStride,
+                std::span<float>{ wide.data(), wideLength }, wideCovers);
+            // The masks read 32 groups and the blur's reach past the last row.
+            wideCovers.resize(wideCovers.size() + 40, GroupCover::Clear);
+            const int wideGroupsPerRow = wideStride / 8;
+            const int groupCount = (width + 7) / 8;
+            const int groupsPerRow = stride / 8;
+            const __m256i partlyBytes = _mm256_set1_epi8(static_cast<char>(GroupCover::Partly));
+            const __m256i wholeBytes = _mm256_set1_epi8(static_cast<char>(GroupCover::Whole));
+
+            // **Across**, for the band's columns: an even group takes the cover its blur reads,
+            // and an uneven one holds its blurred values.
+            const int groupsReadPast = (7 + 2 * reach) / 8;
+            const std::size_t blurredStride = static_cast<std::size_t>(stride);
+            NoAllocFloatVector blurredAcross(blurredStride * static_cast<std::size_t>(wideRows));
+            std::vector<GroupCover> blurredCovers(
+                static_cast<std::size_t>(groupsPerRow) * static_cast<std::size_t>(wideRows) + 40);
+            for (int y = 0; y != wideRows; ++y)
+            {
+                const float* wideRow = wide.data() + static_cast<std::ptrdiff_t>(y) * wideStride;
+                const GroupCover* wideRowCovers = wideCovers.data()
+                    + static_cast<std::ptrdiff_t>(y) * wideGroupsPerRow;
+                float* blurredRow = blurredAcross.data()
+                    + static_cast<std::ptrdiff_t>(y) * stride;
+                GroupCover* blurredRowCovers = blurredCovers.data()
+                    + static_cast<std::ptrdiff_t>(y) * groupsPerRow;
+                for (int first = 0; first < groupCount; first += 32)
+                {
+                    const __m256i uneven = unevenGroups(wideRowCovers + first, 1, groupsReadPast);
+                    _mm256_storeu_si256(reinterpret_cast<__m256i*>(blurredRowCovers + first),
+                        _mm256_blendv_epi8(coversAt(wideRowCovers + first), partlyBytes, uneven));
+                    auto unevenBits = static_cast<std::uint32_t>(_mm256_movemask_epi8(uneven));
+                    for (; unevenBits != 0; unevenBits &= unevenBits - 1)
+                    {
+                        const int x = 8 * (first + std::countr_zero(unevenBits));
+                        if (x >= width)
+                            break;
+                        __m256 sum = _mm256_setzero_ps();
+                        for (std::size_t tap = 0; tap != weights.size(); ++tap)
+                        {
+                            sum = _mm256_fmadd_ps(_mm256_set1_ps(weights[tap]),
+                                _mm256_loadu_ps(wideRow + x + tap), sum);
+                        }
+                        _mm256_storeu_ps(blurredRow + x, sum);
+                    }
+                }
+            }
+
+            // **Down**, for the band's rows: a whole group adds its weight and a clear one nothing,
+            // and the sphere cuts what lies outside the pixels it covers whole.
+            std::ranges::fill(coverage, 0.0f);
+            groupCovers.assign(static_cast<std::size_t>(groupsPerRow)
+                * static_cast<std::size_t>(rows), GroupCover::Clear);
+            const FloatPoint radii = picture.sphereRadii;
+            const float edgeScale = std::min(radii.x, radii.y);
+            // How far from the sphere's center a pixel's center may lie for it to be covered whole.
+            const float wholeReach = 1.0f - 0.5f / edgeScale;
+            const __m256 zero = _mm256_setzero_ps();
+            const __m256 half = _mm256_set1_ps(0.5f);
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 least = _mm256_set1_ps(1.0f / 512.0f);
+            const __m256 rowStart = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(left) + 0.5f),
+                laneOffsets());
+            for (int y = 0; y != rows; ++y)
+            {
+                float* cells = coverage.data() + static_cast<std::ptrdiff_t>(y) * stride;
+                const float up = (picture.sphereCenter.y - (static_cast<float>(top + y) + 0.5f))
+                    / radii.y;
+                const float wholeSquare = wholeReach * wholeReach - up * up;
+                const float wholeHalfWidth = wholeSquare > 0.0f
+                    ? radii.x * std::sqrt(wholeSquare)
+                    : -1.0f;
+                const float wholeLeft = picture.sphereCenter.x - wholeHalfWidth;
+                const float wholeRight = picture.sphereCenter.x + wholeHalfWidth;
+                const GroupCover* rowCovers = blurredCovers.data()
+                    + static_cast<std::ptrdiff_t>(y) * groupsPerRow;
+                for (int first = 0; first < groupCount; first += 32)
+                {
+                    const __m256i uneven = unevenGroups(rowCovers + first, groupsPerRow,
+                        2 * reach);
+                    const __m256i evenWhole = _mm256_andnot_si256(uneven,
+                        _mm256_cmpeq_epi8(coversAt(rowCovers + first), wholeBytes));
+                    const auto unevenBits = static_cast<std::uint32_t>(
+                        _mm256_movemask_epi8(uneven));
+                    auto coveredBits = static_cast<std::uint32_t>(
+                        _mm256_movemask_epi8(_mm256_or_si256(uneven, evenWhole)));
+                    for (; coveredBits != 0; coveredBits &= coveredBits - 1)
+                    {
+                        const int bit = std::countr_zero(coveredBits);
+                        const int x = 8 * (first + bit);
+                        if (x >= width)
+                            break;
+                        __m256 sum = one;
+                        if (((unevenBits >> bit) & 1) != 0)
+                        {
+                            sum = _mm256_setzero_ps();
+                            for (std::size_t tap = 0; tap != weights.size(); ++tap)
+                            {
+                                const std::size_t row = static_cast<std::size_t>(y) + tap;
+                                const std::size_t group = row
+                                    * static_cast<std::size_t>(groupsPerRow)
+                                    + static_cast<std::size_t>(first + bit);
+                                if (blurredCovers[group] == GroupCover::Whole)
+                                {
+                                    sum = _mm256_add_ps(sum, _mm256_set1_ps(weights[tap]));
+                                }
+                                else if (blurredCovers[group] == GroupCover::Partly)
+                                {
+                                    sum = _mm256_fmadd_ps(_mm256_set1_ps(weights[tap]),
+                                        _mm256_loadu_ps(blurredAcross.data()
+                                            + row * blurredStride
+                                            + static_cast<std::size_t>(x)), sum);
+                                }
+                            }
+                        }
+                        const float firstCenter = static_cast<float>(left + x) + 0.5f;
+                        if (firstCenter < wholeLeft || firstCenter + 7.0f > wholeRight)
+                        {
+                            const __m256 across = _mm256_mul_ps(_mm256_sub_ps(_mm256_add_ps(
+                                rowStart, _mm256_set1_ps(static_cast<float>(x))),
+                                _mm256_set1_ps(picture.sphereCenter.x)),
+                                _mm256_set1_ps(1.0f / radii.x));
+                            const __m256 reachOnSphere = _mm256_sqrt_ps(_mm256_fmadd_ps(across,
+                                across, _mm256_set1_ps(up * up)));
+                            const __m256 onSphere = _mm256_min_ps(_mm256_max_ps(_mm256_fmadd_ps(
+                                _mm256_sub_ps(one, reachOnSphere), _mm256_set1_ps(edgeScale),
+                                half), zero), one);
+                            sum = _mm256_mul_ps(sum, onSphere);
+                        }
+                        const __m256 covered = _mm256_min_ps(sum, one);
+                        const __m256 counted = _mm256_and_ps(covered,
+                            _mm256_cmp_ps(covered, least, _CMP_GE_OQ));
+                        _mm256_storeu_ps(cells + x, counted);
+                        groupCovers[static_cast<std::size_t>(y * groupsPerRow + first + bit)]
+                            = groupCoverOf(counted);
+                    }
                 }
             }
         }
@@ -2101,8 +2335,8 @@ namespace ClaFi::PathArt
 
         // **Which groups of 8 points of a row any covered pixel reads**: a point is read by the
         // pixels from a step before it to short of a step after, across and down, in the band.
-        // `coveredGroups` marks the band's groups of 8 pixels, `groupsPerRow` to a row.
-        void markNeededGroups(const int step, const std::span<const std::uint8_t> coveredGroups,
+        // `groupCovers` holds what the band's groups of 8 pixels hold, `groupsPerRow` to a row.
+        void markNeededGroups(const int step, const std::span<const GroupCover> groupCovers,
             const int groupsPerRow, const int rows, const int pointRow,
             std::vector<std::uint8_t>& anyCovered, std::vector<bool>& needed)
         {
@@ -2111,10 +2345,10 @@ namespace ClaFi::PathArt
             const int lastRow = std::min(rows - 1, pointRow + step - 1);
             for (int row = firstRow; row <= lastRow; ++row)
             {
-                const std::uint8_t* rowGroups = coveredGroups.data()
+                const GroupCover* rowCovers = groupCovers.data()
                     + static_cast<std::ptrdiff_t>(row) * groupsPerRow;
                 for (std::size_t group = 0; group != anyCovered.size(); ++group)
-                    anyCovered[group] |= rowGroups[group];
+                    anyCovered[group] |= rowCovers[group] != GroupCover::Clear;
             }
             for (std::size_t group = 0; group != needed.size(); ++group)
             {
@@ -2256,12 +2490,20 @@ namespace ClaFi::PathArt
             // The band's coverage first, so only the points a covered pixel reads are worked out.
             const int stride = static_cast<int>(groupedLength(width + 2));
             std::vector<float> coverage(static_cast<std::size_t>(stride) * rows);
-            std::vector<std::uint8_t> coveredGroups;
-            coverBand(coast, top, rows, left, width, stride, coverage, coveredGroups);
+            std::vector<GroupCover> groupCovers;
+            if (picture.coastBlur > 0.0f)
+            {
+                coverBlurredBand(picture, coast, top, rows, left, width, stride, coverage,
+                    groupCovers);
+            }
+            else
+            {
+                coverBand(coast, top, rows, left, width, stride, coverage, groupCovers);
+            }
             std::vector<std::uint8_t> anyCovered;
             std::vector<bool> needed(pointLength / 8);
             const auto sampleRow = [&](int pointRow, GroundPoints& points) {
-                markNeededGroups(step, coveredGroups, stride / 8, rows, pointRow, anyCovered,
+                markNeededGroups(step, groupCovers, stride / 8, rows, pointRow, anyCovered,
                     needed);
                 sampleGround(picture, palette, pixelYAt(pointRow), firstPixelX, needed, points);
             };
@@ -3041,7 +3283,7 @@ namespace ClaFi::PathArt
     // stretch is joined along the rim to the next one that comes round, the way the outline turns,
     // so the shape keeps its inside on the same hand along the rim as along its own edge.
     void EarthScene::Globe::nearSideOf(const std::span<const Direction> outline,
-        const bool counterClockwise, std::vector<FloatPoint>& points,
+        const bool counterClockwise, const float rimRadius, std::vector<FloatPoint>& points,
         std::vector<std::size_t>& loopEnds) const
     {
         points.clear();
@@ -3050,8 +3292,8 @@ namespace ClaFi::PathArt
         const auto isNear = [](const Direction& direction) {
             return direction.z > 0.0f;
         };
-        const auto rimAt = [](float angle) {
-            return FloatPoint{ std::cos(angle), std::sin(angle) };
+        const auto rimAt = [rimRadius](float angle) {
+            return FloatPoint{ rimRadius * std::cos(angle), rimRadius * std::sin(angle) };
         };
         // The point after point `i` round the closed outline.
         const auto nextOf = [count](std::size_t i) {
@@ -3166,7 +3408,7 @@ namespace ClaFi::PathArt
     {
         std::vector<FloatPoint> points;
         std::vector<std::size_t> loopEnds;
-        nearSideOf(outline, counterClockwise, points, loopEnds);
+        nearSideOf(outline, counterClockwise, 1.0f, points, loopEnds);
         if (points.empty())
             return false;
         const Matrix3x2 screen = toScreen();
@@ -3431,6 +3673,17 @@ namespace ClaFi::PathArt
         }
 
         const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
+        const float radiusInPixels = globe.radius * toPixels.a;
+        const int step = pointStepFor(radiusInPixels);
+        // **The realistic coast is blurred as much as the land is**, and its loops along the rim
+        // are closed past the sphere, far enough for the blur to leave the limb whole.
+        const float coastBlur = look() == SceneLook::Realistic
+            ? k_coastBlurPerStep * static_cast<float>(step)
+            : 0.0f;
+        const int blurReach = blurReachOf(coastBlur);
+        const float rimRadius = coastBlur > 0.0f
+            ? 1.0f + static_cast<float>(blurReach + 1) / radiusInPixels
+            : 1.0f;
         std::vector<CoastEdge> coast;
         constexpr float k_far{ std::numeric_limits<float>::max() };
         FloatRect landBox = { k_far, k_far, -k_far, -k_far };
@@ -3444,7 +3697,7 @@ namespace ClaFi::PathArt
             outline.clear();
             for (const Direction onEarth : coastline.onEarth)
                 outline.push_back(turn.applied(onEarth));
-            globe.nearSideOf(outline, coastline.counterClockwise, points, loopEnds);
+            globe.nearSideOf(outline, coastline.counterClockwise, rimRadius, points, loopEnds);
             std::size_t loopStart = 0;
             for (const std::size_t loopEnd : loopEnds)
             {
@@ -3479,8 +3732,6 @@ namespace ClaFi::PathArt
         if (inView.empty())
             return;
         const float tip = globe.tip;
-        const float radiusInPixels = globe.radius * toPixels.a;
-        const int step = pointStepFor(radiusInPixels);
         const LandPicture picture = {
             .map = m_earthMap.get(),
             .ground = sphereViewOf(toPixels, globe.center, globe.radius, globe.tilt, tip,
@@ -3495,7 +3746,8 @@ namespace ClaFi::PathArt
             .sphereCenter = toPixels.transform(globe.center),
             .sphereRadii = { radiusInPixels, globe.radius * toPixels.d },
             .left = inView.left,
-            .right = inView.right
+            .right = inView.right,
+            .coastBlur = coastBlur
         };
         const float sphereTop = picture.sphereCenter.y - picture.sphereRadii.y;
         const int top = std::max(inView.top, static_cast<int>(std::floor(sphereTop)))
@@ -3504,7 +3756,7 @@ namespace ClaFi::PathArt
             return;
         const LandPalette palette = landPalette();
         const int bandCount = (inView.bottom - top + k_bandRows - 1) / k_bandRows;
-        const BandedCoast banded = bandedCoast(coast, top, bandCount);
+        const BandedCoast banded = bandedCoast(coast, top, bandCount, blurReach);
         m_landBands.resize(static_cast<std::size_t>(bandCount));
         spreadOverCores(bandCount, [&](int band) {
             const int bandTop = top + band * k_bandRows;

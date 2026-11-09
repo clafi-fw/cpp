@@ -942,6 +942,40 @@ the frame. Flung at 300 pixels a second in eight directions, the ground at the h
 run flung at 900 seconds, switched westward at 1800, and then hung or flung again at 2700 and stored
 at 3600 restores within 1 and 2 levels.
 
+**The realistic coast is blurred as much as the land is** (Oj, 2026-11-09, "I got what's wrong with
+the coast lines. That's not the colors at all. They are too sharp. The terrain itself has lower
+resolution and is blurred, but the coastlines are razor-blade sharp"). Each edge was measured as
+its contrast over its steepest slope along its normal, on frames of 2296 x 1198 without clouds; on
+the same probe an unblurred edge of 1 pixel reads 1.4, and a Gaussian blur of spread 1 pixel reads
+2.7, of 2 pixels 5.2. The coast read 1.5 to 1.7 at every altitude. The land's own steps read 2.5 to
+3.8 at their sharpest tenth and 3.7 to 4.7 at their middle four notches up, 2.2 to 3.5 and 3.4 to
+5.2 at the lowest, and 1.6 to 1.8 and 1.9 to 2.4 with the whole globe in view. The land is worked
+out at points a step apart and read 1.4 steps wide, which blurs it by about a step over the square
+root of 2; the coast was cut at the pixel. Mockups blurred the coast by half a step, 0.71 and a
+whole step; Oj picked half a step, for the realistic look alone. The stylized look cuts its zones at
+the pixel, and a soft coast stood alone among them.
+
+- **The coverage is worked out for the band and the blur's reach beyond it** - 3 spreads, rounded
+  up - on every side, each band taking the edges of that many rows above and below, and is then
+  blurred across and down. Against one Gaussian over the whole frame's coverage it is within 0.84
+  of a level away from the limb and the frame's edges, so the bands leave no seams.
+- **Only the groups of 8 pixels the blur changes are worked out.** coverBand reports each group as
+  clear, whole or partly covered, and a group whose blur reads only groups of one clear or whole
+  cover takes that cover; unevenGroups finds the rest 32 groups at a time from the covers' bytes.
+  Blurring every group cost 8 ms of processor time a frame at 3436 x 2051 on the container, against
+  3 for the coverage unblurred; this costs 3.5.
+- **The loops along the rim are closed past the sphere**, the blur's reach and a pixel out, and the
+  limb is cut by the sphere's own coverage, as the sea's is. Closed at the rim, the blur would fade
+  the land into the sea along the limb. The first mockup closed them past it without the cut, and
+  the land showed haze-blue past the night side's limb.
+- Measured on the container (2 cores), the land bands' processor time a frame: at 3436 x 2051, 22 to
+  26 ms became 29 to 30 four notches up and 17.7 became 22.1 at the lowest; at 2296 x 1198, 10.9
+  became 12.9. Besides the blur itself, the land's points are worked out past the coast as far as
+  the blur reaches.
+- The frames match the picked mockup within 11 levels, on pixels of the limb where a coast crosses
+  it; the stylized look is bit for bit as before. The measured coast now reads 2.9 to 3.2 below the
+  whole globe and 2.2 to 2.5 with it in view.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4
