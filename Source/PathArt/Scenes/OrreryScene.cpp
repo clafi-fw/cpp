@@ -199,6 +199,14 @@ namespace ClaFi::PathArt
         });
     }
 
+    SceneReadoutColors OrreryScene::readoutColors() const
+    {
+        return {
+            .field = OrreryColors::SpaceTop,
+            .series = OrreryColors::Orbit
+        };
+    }
+
     std::span<const std::wstring_view> OrreryScene::switches() const
     {
         return k_switches;

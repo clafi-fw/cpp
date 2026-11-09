@@ -739,7 +739,7 @@ namespace ClaFi::PathArt
         {
             bladeLean = sinceLetGo < 0.0f
                 ? 1.1f * smoothStep(0.0f, 0.004f, sinceTrip)
-                : 1.1f * std::exp(-sinceLetGo / 0.015f) * std::cos(k_2Pi * sinceLetGo / 0.02f);
+                : 1.1f * std::exp(-sinceLetGo / 0.0375f) * std::cos(k_2Pi * sinceLetGo / 0.02f);
         }
 
         // The wolf at `t` of the episode, with the camera having covered `travelThen`: chasing,
@@ -1290,6 +1290,15 @@ namespace ClaFi::PathArt
             .glance = 0.0f,
             .cycleTime = 0.0f
         }, ChaseCoats::GreyWolf);
+    }
+
+    SceneReadoutColors ChaseScene::readoutColors() const
+    {
+        return {
+            .field = ChaseColors::CrowBody,
+            .series = ChaseColors::SunGlow,
+            .ink = ChaseColors::CrowBody
+        };
     }
 
     float ChaseScene::travelAt(const float cycleTime)

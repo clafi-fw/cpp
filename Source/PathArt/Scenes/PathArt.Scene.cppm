@@ -33,6 +33,14 @@ namespace ClaFi::PathArt
         std::span<const std::wstring_view> options;
     };
 
+    // What a host's readout over a scene is drawn in: its chart and its text. See PathArt
+    export struct SceneReadoutColors
+    {
+        Color field; // under the chart's curve, drawn faint
+        Color series; // the chart's curve
+        Color ink{ 0xFFEBEBEB }; // the text, light unless the scene states a darker one
+    };
+
     // A gesture a scene answers and what it does there, as the host's hints show it. See PathArt
     export struct SceneGesture
     {
@@ -57,6 +65,8 @@ namespace ClaFi::PathArt
         [[nodiscard]] virtual std::wstring_view name() const = 0;
         // The scene's own figure, filling bounds, where it is offered to pick. See PathArt
         virtual void drawIcon(Graphics::Canvas&, const FloatRect& bounds) const = 0;
+        // The colours a readout over the scene is drawn in. See PathArt
+        [[nodiscard]] virtual SceneReadoutColors readoutColors() const = 0;
         // How long one cycle lasts at speed 1.
         [[nodiscard]] virtual std::chrono::seconds cycleDuration() const { return k_cycle; }
         // Readies what the scene keeps between frames for the params it is drawn with. See PathArt

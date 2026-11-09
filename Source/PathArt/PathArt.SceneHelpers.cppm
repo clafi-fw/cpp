@@ -88,6 +88,8 @@ namespace ClaFi::PathArt
     // Color::blend with the share held to 0..1.
     export [[nodiscard]] Color colorBetween(Color from, Color to, float share);
     export [[nodiscard]] Color faded(Color, float share); // the colour at a share of its own alpha
+    // The WCAG contrast ratio of two colours, 1 for two alike to 21 for black on white.
+    export [[nodiscard]] float contrastBetween(Color one, Color other);
     // MillScene's spin in turns, which comes round with a shape's symmetry each cycle. See PathArt
     export [[nodiscard]] float calculateSyncRotation(float cycleTime, int index,
         float symmetryFactor);

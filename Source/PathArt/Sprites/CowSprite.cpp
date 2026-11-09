@@ -13,24 +13,6 @@ namespace ClaFi::PathArt
 
     namespace
     {
-        // The WCAG contrast ratio of two colours, 1 for two alike to 21 for black on white.
-        [[nodiscard]] float contrastBetween(const Color one, const Color other)
-        {
-            const auto luminance = [](Color color) {
-                const auto linear = [](ColorByte channel) {
-                    const float value = static_cast<float>(channel) / 255.0f;
-                    return value <= 0.03928f
-                        ? value / 12.92f
-                        : std::pow((value + 0.055f) / 1.055f, 2.4f);
-                };
-                return 0.2126f * linear(color.red) + 0.7152f * linear(color.green)
-                    + 0.0722f * linear(color.blue);
-            };
-            const float lighter = std::max(luminance(one), luminance(other));
-            const float darker = std::min(luminance(one), luminance(other));
-            return (lighter + 0.05f) / (darker + 0.05f);
-        }
-
         // The detail colour, or the body's a shade darker where that has three tenths more contrast
         // against `backdrop`. From a tenth more the two blend, so a theme crossfade carries it.
         [[nodiscard]] Color limbColorOn(const CowColors& colors, const Color backdrop)

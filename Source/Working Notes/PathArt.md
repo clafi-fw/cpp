@@ -241,6 +241,22 @@ box has no hover preview: a click turns the switch, and the readings start again
 its one switch in a view section of its own under OrbitsShown - a name without the space, unchecked
 whether the config's names may hold one - and draws its orbit layers only while it is on.
 
+**Each scene states its readout colours** (Oj, 2026-11-10, "Each scene states its own redout
+colors"). Mockups first: each scene with its readout over the top right, against Calm Night's river
+pair that every scene wore, and two pairs from its own palette - a dark field and a light series,
+after the mill's pattern - with a second sheet asking whether the text belongs with them, the app's
+light ink being unreadable over the Chase sky and the mill's day themes. Oj: "A with the text", then
+B for the Comet ("less sticking out"). SceneReadoutColors carries the ink as well, light by default;
+the Chase states CrowBody. The mill keeps its theme's river and takes the light ink or riverBottom
+at half by the contrast against skyTop - contrastBetween moved from the cow into SceneHelpers for
+it. The showcase writes the units and the chart's readings at two thirds of the ink, which needed
+ChartAxisColor on FpsChart.
+
+**A double click picks and closes the menu** (Oj, 2026-11-10, "double click on a theme or a scene
+closes the menu"), on the scene tiles and the mill's themes. The first click of the double click
+makes the pick, so the handler only closes: DoubleClickEvent::closeForm closes the menu and stops
+the event, which keeps the form from taking the second press as another click.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.
@@ -1254,8 +1270,9 @@ over its radius; the roll is folded into its place on the trail as the hedgehog'
 Then (Oj, "a patch of grass") a seventh: eleven blades, the back ones darker, each bending from its
 root by its own tilt plus bladeLean, more for a taller blade. Unasked, the grass reacts: it is held
 flat, 1.1 rad, for 0.012 of the episode while his legs are in it, then springs back - a cosine of
-0.02 dying away over 0.015. A first try let it go at once and it flicked back while he was still on
-it.
+0.02 dying away over 0.0375, about 0.75 s. A first try let it go at once and it flicked back while
+he was still on it. It died away over 0.015, about 0.3 s, until Oj asked that it rock "more for a
+while" (2026-11-10) and picked 0.75 s from 0.3, 0.75 and 1.5 s mocked up.
 
 **Two obstacle runs, then the tree** (Oj, 2026-11-09, asked for one more obstacle and picked the
 rake from four offered, then "swap the log with banana peel, then loop 2 obstacles one tree",

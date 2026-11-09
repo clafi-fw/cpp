@@ -149,6 +149,14 @@ namespace ClaFi::PathArt
         });
     }
 
+    SceneReadoutColors GhostScene::readoutColors() const
+    {
+        return {
+            .field = GhostSceneColors::SkyTop,
+            .series = GhostSceneColors::Fog
+        };
+    }
+
     float GhostScene::groundY(const SceneFrame& frame, const float x)
     {
         const float share = std::clamp(x / frame.width, 0.0f, 1.0f);

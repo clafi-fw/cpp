@@ -103,6 +103,14 @@ namespace ClaFi::PathArt
         canvas.popClip();
     }
 
+    SceneReadoutColors PuppeteerScene::readoutColors() const
+    {
+        return {
+            .field = PuppeteerColors::WallBottom,
+            .series = PuppeteerColors::SpotlightPool
+        };
+    }
+
     void PuppeteerScene::drawStage(const SceneFrame& frame)
     {
         const float unit = frame.unit;

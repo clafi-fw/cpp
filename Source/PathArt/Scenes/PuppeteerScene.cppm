@@ -18,6 +18,7 @@ namespace ClaFi::PathArt
         void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
         void drawIcon(Graphics::Canvas&, const FloatRect& bounds) const override;
+        [[nodiscard]] SceneReadoutColors readoutColors() const override;
     private:
         static void drawStage(const SceneFrame&);
         static void drawSpotlight(const SceneFrame&, float lampX, float puppetX, float floorY);

@@ -85,6 +85,14 @@ namespace ClaFi::PathArt
         });
     }
 
+    SceneReadoutColors CometScene::readoutColors() const
+    {
+        return {
+            .field = CometSceneColors::NearRidgeBottom,
+            .series = CometSceneColors::Ripple
+        };
+    }
+
     float CometScene::farRidgeY(const SceneFrame& frame, const float x)
     {
         const float share = x / frame.width;

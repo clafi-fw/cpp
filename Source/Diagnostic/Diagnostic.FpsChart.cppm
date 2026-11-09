@@ -41,6 +41,12 @@ namespace ClaFi::Diagnostic
         Color value{};
     };
 
+    /// @brief The colour the axis's readings are written in.
+    export struct ChartAxisColor
+    {
+        Color value{};
+    };
+
     // The frame rate over the last two seconds, drawn against an axis that names it. See Diagnostic
     export class FpsChart : public Control
     {
@@ -48,7 +54,7 @@ namespace ClaFi::Diagnostic
         template <typename... Args>
         FpsChart(const CreateParams&, const FpsBenchmark&, Args&&...);
     public:
-        void setColors(Color field, Color series);
+        void setColors(Color field, Color series, Color axis);
     protected:
         void paintSurface(PaintEvent&) override;
         ScaledSize calculateContent(AlignEvent&) override;
@@ -112,6 +118,7 @@ namespace ClaFi::Diagnostic
         // The colours stated, or none - see the class note.
         std::optional<ChartFieldColor> m_fieldColor;
         std::optional<ChartSeriesColor> m_seriesColor;
+        std::optional<ChartAxisColor> m_axisColor;
         // The top of the axis, easing towards the value the current buckets ask for. Zero means no
         // frame has been painted yet, and the first one snaps the axis to its value instead of
         // easing up from nothing.
@@ -138,12 +145,14 @@ namespace ClaFi::Diagnostic
         // The field's colour where a caller states it; the theme's otherwise.
         BIND_PROPERTY_MEMBER(ChartFieldColor, m_fieldColor);
         BIND_PROPERTY_MEMBER(ChartSeriesColor, m_seriesColor); // the curve's colour, the same way
+        BIND_PROPERTY_MEMBER(ChartAxisColor, m_axisColor); // the readings' ink, the same way
     }
 
-    void FpsChart::setColors(Color field, Color series)
+    void FpsChart::setColors(Color field, Color series, Color axis)
     {
         m_fieldColor = ChartFieldColor{ field };
         m_seriesColor = ChartSeriesColor{ series };
+        m_axisColor = ChartAxisColor{ axis };
         invalidate();
     }
 
@@ -443,13 +452,16 @@ namespace ClaFi::Diagnostic
                 plot.left - event.scale(k_axisLabelMargin),
                 topY + labelHeight + event.scale(k_axisLabelSpacing)
             };
+            const StyledText reading{
+                TextStyles::Code,
+                SizedText{ k_axisFontSize, static_cast<int>(value) }
+            };
             Control::textEngine().drawText(
                 event.controlContext(),
                 bounds,
-                Text{
-                    TextAlign::Right,
-                    StyledText{ TextStyles::Code, SizedText{ k_axisFontSize, static_cast<int>(value) } }
-                },
+                m_axisColor
+                    ? Text{ TextAlign::Right, ColoredText{ m_axisColor->value, reading } }
+                    : Text{ TextAlign::Right, reading },
                 { VerticalTextAnchor::Top, HorizontalTextAnchor::None }
             );
         };

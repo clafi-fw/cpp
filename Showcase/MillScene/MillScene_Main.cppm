@@ -68,6 +68,8 @@ namespace MillScene_App
     constexpr IconSize k_sceneIconSize{ 96.0f, 64.0f };
     constexpr float k_sceneTilePadding{ 6.0f };
     constexpr float k_sceneTileSpacing{ 8.0f };
+    // The units and the chart's readings are written at this share of the readout's ink.
+    constexpr float k_mutedInkOpacity{ 0.67f };
     // A scene's own options stand in lanes of four.
     constexpr std::size_t k_optionLaneSize{ 4 };
     constexpr float k_pickerCaptionSpacing{ 4.0f }; // between a picker's caption and its options
@@ -198,7 +200,9 @@ namespace MillScene_App
         [[nodiscard]] std::size_t sceneCount() const;
         void previewScene(std::size_t index);
         void pickScene(std::size_t index);
-        void applySceneColors() const;
+        // The readout's colours and the chart's, as the shown scene states them.
+        void applySceneColors();
+        [[nodiscard]] Color mutedReadoutInk() const;
         void previewSceneTheme(std::size_t index);
         // The application's own page of the backstage: the theme picker. See MillScene_Showcase
         void pickSceneTheme(std::size_t index);
@@ -257,6 +261,7 @@ namespace MillScene_App
         std::size_t m_sceneToShow{ 0 };
         // The scene the frames draw; it takes up m_sceneToShow on the next full paint.
         std::size_t m_shownScene{ 0 };
+        PathArt::SceneReadoutColors m_readoutColors{}; // the shown scene's
         // The theme the user chose, which is not the theme the scene wears while the pointer
         // walks the picker - see previewSceneTheme.
         std::size_t m_pickedTheme{ 0 };
@@ -574,6 +579,7 @@ void MillSceneForm::paintScene(PaintEvent& event)
     {
         keepShownScene(event);
         m_shownScene = m_sceneToShow;
+        applySceneColors();
     }
     advanceSceneFade();
 
@@ -721,12 +727,16 @@ void MillSceneForm::pickScene(const std::size_t index)
         m_sceneOptionsControl->setCurrentItem(*m_sceneOptionPages[index]);
 }
 
-// **The picked theme's colours, not the blend's.** This runs the moment a theme is picked, when
-// the blend still wears the one before it - and at startup, when it wears nothing at all.
-void MillSceneForm::applySceneColors() const
+// Asked again when another scene is shown, and when the mill's theme is picked or tried on.
+void MillSceneForm::applySceneColors()
 {
-    const PathArt::SceneTheme& theme = m_millScene.pickedTheme();
-    m_fpsChart.setColors(theme.riverBottom, theme.riverWave);
+    m_readoutColors = sceneAt(m_shownScene).readoutColors();
+    m_fpsChart.setColors(m_readoutColors.field, m_readoutColors.series, mutedReadoutInk());
+}
+
+Color MillSceneForm::mutedReadoutInk() const
+{
+    return m_readoutColors.ink.withOpacity(k_mutedInkOpacity);
 }
 
 void MillSceneForm::previewSceneTheme(std::size_t index)
@@ -865,6 +875,10 @@ void MillSceneForm::buildScenePicker(AppMenuPage& page)
         item.onClick([this, index](ClickEvent&) {
             pickScene(index);
             });
+        // **A pick and done.** The double click's first click has made the pick.
+        item.onDoubleClick([](DoubleClickEvent& event) {
+            event.closeForm();
+            });
         m_sceneButtons.push_back(&item);
     }
     lanes.setCurrentItem(*m_sceneButtons[m_pickedScene]);
@@ -972,6 +986,10 @@ void MillSceneForm::buildThemePicker()
             });
         item.onClick([this, index](ClickEvent&) {
             pickSceneTheme(index);
+            });
+        // A pick and done, as on a scene tile.
+        item.onDoubleClick([](DoubleClickEvent& event) {
+            event.closeForm();
             });
         m_themeButtons.push_back(&item);
         ++index;
@@ -1273,19 +1291,22 @@ void MillSceneForm::writeMetrics()
     const WindowReadings readings = windowReadings();
 
     // TODO: the text disappears under some conditions - which ones?
+    const Color ink = m_readoutColors.ink;
+    const Color muted = mutedReadoutInk();
     Text lines;
-    lines << std::format(L"{:.0f}", m_benchmark.dimensions().x);
-    lines << ColoredText{ InkGrade::Muted, L"x" };
-    lines << std::format(L"{:.0f} ", m_benchmark.dimensions().y);
-    lines << ColoredText{ InkGrade::Muted, L"pix\u202F", Space{ 0.0f } } << k_endLine;
-    lines << std::format(L"{:.2f} ", cpuVal);
-    lines << ColoredText{ InkGrade::Muted, L"CPU\u202F", Space{ 0.0f } } << k_endLine;
-    lines << std::format(L"{:.2f} ", readings.drawMs);
-    lines << ColoredText{ InkGrade::Muted, L"ms\u202F\u202F", Space{ 0.0f } } << k_endLine;
-    lines << std::format(L"{:.0f} ", readings.drawMs > 0.0 ? 1000.0 / readings.drawMs : 0.0);
-    lines << ColoredText{ InkGrade::Muted, L"draw" } << k_endLine;
-    lines << std::format(L"{:.0f} ", readings.fps);
-    lines << ColoredText{ InkGrade::Muted, L"FPS\u202F", Space{ 0.0f } } << k_endLine;
+    lines << ColoredText{ ink, std::format(L"{:.0f}", m_benchmark.dimensions().x) };
+    lines << ColoredText{ muted, L"x" };
+    lines << ColoredText{ ink, std::format(L"{:.0f} ", m_benchmark.dimensions().y) };
+    lines << ColoredText{ muted, L"pix\u202F", Space{ 0.0f } } << k_endLine;
+    lines << ColoredText{ ink, std::format(L"{:.2f} ", cpuVal) };
+    lines << ColoredText{ muted, L"CPU\u202F", Space{ 0.0f } } << k_endLine;
+    lines << ColoredText{ ink, std::format(L"{:.2f} ", readings.drawMs) };
+    lines << ColoredText{ muted, L"ms\u202F\u202F", Space{ 0.0f } } << k_endLine;
+    lines << ColoredText{ ink,
+        std::format(L"{:.0f} ", readings.drawMs > 0.0 ? 1000.0 / readings.drawMs : 0.0) };
+    lines << ColoredText{ muted, L"draw" } << k_endLine;
+    lines << ColoredText{ ink, std::format(L"{:.0f} ", readings.fps) };
+    lines << ColoredText{ muted, L"FPS\u202F", Space{ 0.0f } } << k_endLine;
     m_metricsReadout.text() = Text{ TextAlign::Right, StyledText{ TextStyles::Code, lines } };
 }
 

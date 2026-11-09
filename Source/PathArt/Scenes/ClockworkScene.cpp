@@ -160,6 +160,14 @@ namespace ClaFi::PathArt
         drawGear(frame, driven, toothSize);
     }
 
+    SceneReadoutColors ClockworkScene::readoutColors() const
+    {
+        return {
+            .field = ClockworkColors::Shadow,
+            .series = ClockworkColors::Lamp
+        };
+    }
+
     void ClockworkScene::drawPlate(const SceneFrame& frame)
     {
         const float unit = frame.unit;

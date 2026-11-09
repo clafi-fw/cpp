@@ -7,7 +7,8 @@ The words that do not fit above a declaration.
 A scene is a moving picture, drawn at a time into any bounds. Most of its motions run through a
 cycle and come back to where they began. The MillScene showcase holds a list of scenes, offers them
 as tiles in the Scene group of its Scene page - drawIcon() over name() - and stores the one picked
-under that name. A scene it takes up fades in over a still of the frame before it.
+under that name. A double click on a tile, or on one of the mill's themes, picks it and closes the
+menu. A scene it takes up fades in over a still of the frame before it.
 
 **Under the tiles, a section named after the picked scene shows its page of options** - Mill
 Options, Earth Options: the mill's themes, a scene's look and choices, or a line saying the scene
@@ -35,6 +36,20 @@ clipped at bounds.
 
 **One picture in every theme and look.** The figure is one of the scene's sprites in the colours
 the scene draws it in. MillScene's mill wears Fresh Spring's colours whatever theme is picked.
+
+## SceneReadoutColors
+
+**What a host's readout over the scene is drawn in**: the field and the series of its chart, and the
+ink its text is written in - light unless the scene states a darker one for a light sky. The host
+draws the field faint and the series near full, whatever alpha the colours carry, and writes the
+units and the chart's readings in the ink at a lesser opacity.
+
+## Scene readoutColors
+
+**Each scene states its own**, taken from its palette: a dark tone for the field and a light accent
+for the series. The MillScene showcase asks the shown scene whenever another scene is shown. The
+mill answers with its picked theme's river - riverBottom and riverWave - and the light ink or
+riverBottom at half, whichever stands out more against skyTop.
 
 ## Scene draw
 
@@ -667,8 +682,8 @@ cyclesPassed, so a host that does not count the cycles shows the banana peel and
 time. The peel shoots out from under his paw and spins, the boot falls over and the apple splits in
 two. The hedgehog rolls into a ball once the hare has passed over it, and walks off once the wolf is
 down. The duck goes flat under his paws, the ball rolls on a little and, while he lies dazed, a
-little way back, the grass flattens under him and springs back, and the rake's handle swings up into
-his face.
+little way back, the grass flattens under him and springs back, rocking for most of a second, and
+the rake's handle swings up into his face.
 
 **Something stands by the path in every run** and slows neither of them. It passes partway into the
 run, and early in the third, before the wolf closes in. There are twelve, one for each run of the

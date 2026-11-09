@@ -17,6 +17,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
         void drawIcon(Graphics::Canvas&, const FloatRect& bounds) const override;
+        [[nodiscard]] SceneReadoutColors readoutColors() const override;
     private:
         using TileDrawer = std::function<void(float tileLeft, float tileWidth)>;
     private:

@@ -2908,6 +2908,14 @@ namespace ClaFi::PathArt
         canvas.popClip();
     }
 
+    SceneReadoutColors EarthScene::readoutColors() const
+    {
+        return {
+            .field = EarthSceneColors::SpaceTop,
+            .series = EarthSceneColors::Day
+        };
+    }
+
     bool EarthScene::dragMovesViewFrom(const FloatPoint start, const FloatRect& bounds) const
     {
         const GlobeDisc disc = globeDiscAt(bounds.width(), bounds.height(), m_view.altitude);

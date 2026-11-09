@@ -286,6 +286,22 @@ namespace ClaFi::PathArt
         canvas.popClip();
     }
 
+    // **The picked theme's colours, not the blend's**: a host asks the moment a theme is picked,
+    // while the blend still wears the one before it. The ink is the light one or the river's ground
+    // at half, whichever stands out more against the top of the sky.
+    SceneReadoutColors MillScene::readoutColors() const
+    {
+        const SceneTheme& theme = pickedTheme();
+        SceneReadoutColors colors = {
+            .field = theme.riverBottom,
+            .series = theme.riverWave
+        };
+        const Color darkInk = colorBetween(theme.riverBottom, Color{ 0xFF000000 }, 0.5f);
+        if (contrastBetween(darkInk, theme.skyTop) > contrastBetween(colors.ink, theme.skyTop))
+            colors.ink = darkInk;
+        return colors;
+    }
+
     void MillScene::crossFadeToPickedTheme()
     {
         m_prevTheme = m_theme;
