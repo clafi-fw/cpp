@@ -76,10 +76,12 @@ namespace ClaFi::PathArt
         virtual void dragView(FloatPoint, const FloatRect&) {}
         // Moves the view by wheel notches, counted as MouseWheelEvent counts them.
         virtual void scrollView(float) {}
-        // A drag holds the view (true); letGoView is what ends the hold. See PathArt
+        // A press holds the view (true); letGoView or clickView ends the hold. See PathArt
         virtual void holdView(bool) {}
         // Lets go of the view at the pointer's speed, 0 where it stood still. See PathArt
         virtual void letGoView(FloatPoint, const FloatRect&) {}
+        // Lets go of the view after a click, by default as a still let-go. See PathArt
+        virtual void clickView(const FloatRect& bounds) { letGoView({ 0.0f, 0.0f }, bounds); }
         // Writes the view as the viewer left it into its own section. See PathArt#scene-storeview
         virtual void storeView(Dom::Section&) const {}
         // Takes the view back from the scene's section, as storeView wrote it or as it starts.

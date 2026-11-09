@@ -69,13 +69,12 @@ scrollView(), counted as MouseWheelEvent counts them, away from the user above 0
 and how it moves is the scene's own: the Earth scene turns its globe and climbs above it - see
 EarthScene. A scene that offers none leaves both as they are.
 
-**The MillScene showcase hands them on from the panel the scene covers.** A press on the scene
-where a drag moves the view - see Scene dragMovesViewFrom - is a click until the pointer leaves the
-slack a click is allowed (DragEvent pastThreshold), and a click leaves the scene moving as it was,
-the one that closes a menu over the scene among them. Past the slack the drag stops a glide and
-holds the view until it is let go - see Scene holdView and Scene letGoView - and the view moves by
-the whole way the pointer went from the press. A press on a control over the scene, such as the
-readings beside it, is that control's. The pointer shows a hand wherever a drag moves the view.
+**The MillScene showcase hands them on from the panel the scene covers.** A press on the scene where
+a drag moves the view - see Scene dragMovesViewFrom - stops a glide and holds the view until it is
+let go - see Scene holdView and Scene letGoView. Let go before the pointer leaves the slack a click
+is allowed (DragEvent pastThreshold), the press is a click - see Scene clickView. A press anywhere
+else leaves the scene moving as it was, and one on a control over the scene, such as the readings
+beside it, is that control's. The pointer shows a hand wherever a drag moves the view.
 
 **A drag let go glides on** at the speed of its last 80 milliseconds and slows to about a third of
 it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second. Another
@@ -90,11 +89,11 @@ The Earth scene names its globe, and leaves the space round it - see EarthScene.
 
 ## Scene holdView
 
-**A drag holds the view until it is let go.** The host calls holdView(true) as a press on the
-scene becomes a drag and letGoView() as it is let go, so a scene can keep its own motion still
-while the viewer has the view - the Earth scene holds its globe, see EarthScene. The drag and the
-wheel reach the scene as dragView() and scrollView(). A press let go before it became a drag is a
-click, and the scene is not told of it, nor is a scene that offers no view.
+**A press holds the view until it is let go.** The host calls holdView(true) as a press comes down
+where a drag moves the view - see Scene dragMovesViewFrom - and letGoView() or clickView() as it is
+let go, so a scene can keep its own motion still while the viewer has the view - the Earth scene
+holds its globe, see EarthScene. A drag and the wheel reach the scene as dragView() and
+scrollView(); a press held still reaches it only here. A scene that offers no view is never told.
 
 ## Scene letGoView
 
@@ -102,6 +101,13 @@ click, and the scene is not told of it, nor is a scene that offers no view.
 into, and 0 where the pointer stood still or moved too slowly for a glide. The host then glides on
 at that speed through dragView(), so whatever the scene does with the speed comes on top of the
 glide. The Earth scene takes it to choose how the satellite flies on - see EarthScene.
+
+## Scene clickView
+
+**A click lets go of the view as a still let-go does, unless the scene answers it otherwise.** The
+host calls clickView() in place of letGoView() for a press let go inside the slack a click is
+allowed, so a tremble of the pointer in a click reaches the scene as a click and not as a speed. The
+Earth scene takes a click to stop the satellite or set it flying again - see EarthScene.
 
 ## SceneChoice
 
@@ -445,6 +451,10 @@ way the pointer went, from the picture as it stands, at the orbit's own pace; th
 across the screen at that angle, with the horizon still at the top. The orbits and the sky's drift
 stand still while it hangs, and the Earth's turn goes on.
 
+**A click stops the satellite or sets it flying again** - see Scene clickView. A flying satellite
+hangs as a still let-go hangs it; a hanging one flies on along the track it flew before it hung,
+from the picture as it stands, at the orbit's own pace.
+
 **The wheel climbs above the globe**, a tenth of the way a notch, from the lowest view to the whole
 globe in the middle of the frame. The globe's radius shrinks by the same share at each step, from
 1.15 times the frame's longer side to 0.4 times its shorter, and the view leans back from 36 degrees
@@ -464,11 +474,10 @@ and HangingCamera, each as an axis and an angle in degrees: AxisX, AxisY, AxisZ 
 SceneChoice. Picked either way, the Earth carries on from where it stands and turns on the other
 way; the orbit, the Sun and the clouds' drift against the ground stay as they are.
 
-**The globe holds still while the viewer has the view**: while a drag holds it, and for 5
-seconds after a wheel notch, after which the orbit, the Earth's turn and the sky's drift ease back
-to full speed over 2 seconds. A let-go moves the globe on at once. The clouds go on drifting over
-the held globe, the satellite goes on hovering and blinking, and the stars and the city lights
-twinkling. The time is the scene's, so a paused scene holds the count as well.
+**The globe holds still while a press holds the view**, and a let-go moves it on at once. The
+wheel leaves the satellite flying as it flew. The clouds go on drifting over the held globe, the
+satellite goes on hovering and blinking, and the stars and the city lights twinkling. The time is
+the scene's, so a paused scene holds the count as well.
 
 **The Sun stands fixed among the stars**, and so does the orbit's plane, so each orbit passes a day
 of about two minutes and a night. In the Earth's shadow the satellite darkens and the stars

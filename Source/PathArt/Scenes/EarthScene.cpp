@@ -126,10 +126,6 @@ namespace ClaFi::PathArt
         constexpr float k_nightSunlightSpan{ 0.16f };
         // The moonlight's share of the night over the ground: deep in it, an eighth of the view.
         constexpr float k_moonlitShareOfNight{ 0.125f / 0.9f };
-        // How long the globe holds still after the viewer last touched the view, in seconds.
-        constexpr double k_heldStill{ 5.0 };
-        // How long its motion then takes to come back to full speed, in seconds.
-        constexpr double k_easeBack{ 2.0 };
         // The globe's radius in pixels from which the land is worked out every 4th pixel.
         constexpr float k_coarseRadius{ 3200.0f };
         // The globe's radius in pixels from which the land is worked out every 2nd pixel.
@@ -531,19 +527,6 @@ namespace ClaFi::PathArt
         [[nodiscard]] float fractionOf(const double count)
         {
             return static_cast<float>(count - std::floor(count));
-        }
-
-        // **How long the globe has stood still by `since` seconds after the viewer last touched
-        // the view**: wholly for k_heldStill, then less and less as its motion eases back to full
-        // speed over k_easeBack, by a smooth step.
-        [[nodiscard]] double stillTimeBy(const double since)
-        {
-            if (since <= k_heldStill)
-                return since;
-            if (since >= k_heldStill + k_easeBack)
-                return k_heldStill + 0.5 * k_easeBack;
-            const double eased = (since - k_heldStill) / k_easeBack;
-            return since - k_easeBack * eased * eased * eased * (1.0 - 0.5 * eased);
         }
 
         // **Where the globe stands in a frame at an altitude**: at the lowest a cap shows, and at
@@ -2894,14 +2877,12 @@ namespace ClaFi::PathArt
     void EarthScene::scrollView(const float notches)
     {
         m_view.altitude = std::clamp(m_view.altitude - notches * k_altitudePerNotch, 0.0f, 1.0f);
-        m_viewTouched = true;
     }
 
-    // A drag holds the globe still until it is let go.
+    // A press holds the globe still until it is let go.
     void EarthScene::holdView(const bool held)
     {
         m_viewHeld = held;
-        m_viewTouched = true;
     }
 
     // **The let-go decides how the satellite flies on**, and the globe moves on at once. Let go
@@ -2911,25 +2892,25 @@ namespace ClaFi::PathArt
     void EarthScene::letGoView(const FloatPoint speed, const FloatRect& bounds)
     {
         m_viewHeld = false;
-        m_viewTouched = false;
-        m_lastTouchAt.reset();
-        const double earthTurns = earthTurnsAt(m_shownTimeInOrbits);
-        const Rotation camera = cameraAt(m_shownOrbits, earthTurns);
         if (speed.x == 0.0f && speed.y == 0.0f)
         {
-            const Rotation lean = Rotation::About({ 1.0f, 0.0f, 0.0f },
-                viewBehindAt(m_view.altitude));
-            m_view.hangingCamera = Globe::earthAxesAt(earthTurns).inverse().after(camera)
-                .after(lean.inverse()).orthonormal();
-            m_view.hanging = true;
-            m_view.orbitsAhead = m_shownOrbits;
+            hangSatellite();
             return;
         }
-        m_view.trackAngle = trackAngleFor(speed, bounds);
-        m_view.orbitTurn = camera.after(Globe::orbitAxesAt(m_shownOrbits, m_view.altitude,
-            m_view.trackAngle).inverse()).orthonormal();
-        m_view.hanging = false;
-        m_view.orbitsAhead = m_shownOrbits - m_shownTimeInOrbits;
+        flySatelliteOn(trackAngleFor(speed, bounds));
+    }
+
+    // **A click stops the satellite or sets it flying again**: a flying one hangs as a still let-go
+    // hangs it, and a hanging one flies on along the track it flew before it hung.
+    void EarthScene::clickView(const FloatRect&)
+    {
+        m_viewHeld = false;
+        if (!m_view.hanging)
+        {
+            hangSatellite();
+            return;
+        }
+        flySatelliteOn(m_view.trackAngle);
     }
 
     std::span<const SceneChoice> EarthScene::choices() const
@@ -4075,27 +4056,16 @@ namespace ClaFi::PathArt
         drawRing(globe.radius * 0.988f, globe.radius * 0.016f, 0.34f);
     }
 
-    // **The globe holds still while the viewer has the view**: while a drag holds it, and until
-    // k_heldStill seconds after a wheel notch, then its motion eases back over k_easeBack. A frame
-    // the view was touched before counts the time since the last frame whole; after, the time is
-    // counted exactly however far apart the frames fall.
+    // **The globe holds still while a press holds the view**: a frame drawn while it is held counts
+    // the time since the last frame as still, and a let-go moves the globe on at once.
     double EarthScene::stillSecondsAt(const double sceneSeconds)
     {
         const double elapsed = m_lastFrameAt
             ? std::max(sceneSeconds - *m_lastFrameAt, 0.0)
             : 0.0;
         m_lastFrameAt = sceneSeconds;
-        if (m_viewHeld || m_viewTouched)
-        {
+        if (m_viewHeld)
             m_stillSeconds += elapsed;
-            m_lastTouchAt = sceneSeconds;
-            m_viewTouched = false;
-        }
-        else if (m_lastTouchAt)
-        {
-            const double since = std::max(sceneSeconds - *m_lastTouchAt, 0.0);
-            m_stillSeconds += stillTimeBy(since) - stillTimeBy(std::max(since - elapsed, 0.0));
-        }
         return m_stillSeconds;
     }
 
@@ -4202,6 +4172,30 @@ namespace ClaFi::PathArt
         const float taken = alongWayAt(first) >= alongWayAt(second) ? first : second;
         // Kept between a half turn either way, which is how the config shows it.
         return std::remainder(taken, k_2Pi);
+    }
+
+    // The ground stands in the view from here on, and only the day and the night move over it.
+    void EarthScene::hangSatellite()
+    {
+        const double earthTurns = earthTurnsAt(m_shownTimeInOrbits);
+        const Rotation camera = cameraAt(m_shownOrbits, earthTurns);
+        const Rotation lean = Rotation::About({ 1.0f, 0.0f, 0.0f }, viewBehindAt(m_view.altitude));
+        m_view.hangingCamera = Globe::earthAxesAt(earthTurns).inverse().after(camera)
+            .after(lean.inverse()).orthonormal();
+        m_view.hanging = true;
+        m_view.orbitsAhead = m_shownOrbits;
+    }
+
+    // **The orbit is laid on the picture as it stands**, read before the new angle turns the view,
+    // so the next frame is the last one and the satellite flies on from it at the orbit's own pace.
+    void EarthScene::flySatelliteOn(const float trackAngle)
+    {
+        const Rotation camera = cameraAt(m_shownOrbits, earthTurnsAt(m_shownTimeInOrbits));
+        m_view.trackAngle = trackAngle;
+        m_view.orbitTurn = camera.after(Globe::orbitAxesAt(m_shownOrbits, m_view.altitude,
+            trackAngle).inverse()).orthonormal();
+        m_view.hanging = false;
+        m_view.orbitsAhead = m_shownOrbits - m_shownTimeInOrbits;
     }
 
     Dom::Dt::Section EarthScene::rotationSchema(const std::wstring_view key,

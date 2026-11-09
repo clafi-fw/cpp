@@ -116,6 +116,29 @@ on the ball itself should count, and the cursor should be set to handpoint while
 - The hand comes from mouseMove asking the scene, so a wheel zoom under a still pointer leaves the
   shape as it was until the pointer moves.
 
+**The wheel leaves the flight alone** (Oj, 2026-11-09, "also the wheel should not anymore stop the
+fly - and that is the last code that uses the 5-seconds resume timer"). The wheel was the one touch
+left that held the globe for k_heldStill and eased it back over k_easeBack, a let-go having reset
+both. They went with it, as did stillTimeBy, m_viewTouched and m_lastTouchAt: stillSecondsAt counts
+only the frames drawn while a drag holds the view, so every frame away from a drag is bit for bit
+what it was.
+
+**A press on the globe holds it at once** (Oj, 2026-11-09, "with a handpoint indication and limited
+click area, click may stop without a threshhold"). The slack went, and ViewPress with it: a press
+where the scene says a drag moves the view holds the view as it comes down, and a still let-go hangs
+the satellite, a click included. The jitter fling read off the code - one pixel in a click's last
+80 ms reading as at least 12 pixels a second - applies again to a click on the globe; named to Oj,
+not guarded.
+
+**A still click toggles the flight** (Oj, 2026-11-09, "make a still click to toggle the movement").
+Of clickView() on Scene, a clicked flag on letGoView, and the host toggling through a query on the
+scene and a resumeView(), Oj picked clickView. Its default lets go still, so a scene that offers a
+view and takes no clicks goes on as it was. Still is the framework's click slack,
+DragEvent::pastThreshold: a press let go before any drag event past it is a click whatever its last
+moves read, which also answers the jitter fling above. EarthScene's let-go is split into
+hangSatellite and flySatelliteOn(trackAngle); a click flies a hanging satellite on at the track
+angle kept from before it hung, laid on the picture as it stands exactly as a fling lays its own.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.

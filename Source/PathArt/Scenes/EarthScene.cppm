@@ -33,6 +33,7 @@ namespace ClaFi::PathArt
         void scrollView(float notches) override;
         void holdView(bool held) override;
         void letGoView(FloatPoint speed, const FloatRect& bounds) override;
+        void clickView(const FloatRect&) override;
         [[nodiscard]] std::span<const SceneChoice> choices() const override;
         [[nodiscard]] std::size_t chosenOption(std::size_t choice) const override;
         void chooseOption(std::size_t choice, std::size_t option) override;
@@ -210,7 +211,7 @@ namespace ClaFi::PathArt
         static void drawAtmosphere(const SceneFrame&, const Globe&);
         // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
-        // How long the globe has stood still by a frame, while the viewer had the view.
+        // How long the globe has stood still by a frame, while a press held the view.
         [[nodiscard]] double stillSecondsAt(double sceneSeconds);
         // How many turns the Earth has made by the globe's time, counted in orbits.
         [[nodiscard]] double earthTurnsAt(double timeInOrbits) const;
@@ -220,6 +221,10 @@ namespace ClaFi::PathArt
         [[nodiscard]] Direction heldPointAt(FloatPoint offset, const FloatRect& bounds) const;
         // The track angle that carries the ground under the held point the way `speed` goes.
         [[nodiscard]] float trackAngleFor(FloatPoint speed, const FloatRect& bounds) const;
+        // Hangs the satellite over the ground in the view the last frame showed.
+        void hangSatellite();
+        // Flies the satellite on at `trackAngle`, its orbit laid on the view the last frame showed.
+        void flySatelliteOn(float trackAngle);
         // A rotation's config section under `key`: an axis and an angle in degrees, `start`'s.
         [[nodiscard]] static Dom::Dt::Section rotationSchema(std::wstring_view key,
             const Rotation& start);
@@ -257,10 +262,8 @@ namespace ClaFi::PathArt
         TurnDirection m_turnDirection{ TurnDirection::Eastward };
         // The turns the Earth stands ahead of its time's count, by a change of way or a restore.
         double m_earthTurnsAhead{};
-        bool m_viewHeld{}; // by a drag
-        bool m_viewTouched{}; // held, dragged or scrolled since the last frame
-        std::optional<double> m_lastTouchAt{}; // in seconds of the scene's time
-        std::optional<double> m_lastFrameAt{}; // likewise
+        bool m_viewHeld{}; // by a press
+        std::optional<double> m_lastFrameAt{}; // in seconds of the scene's time
         // How long the globe has stood still in all, which its motion runs that far behind.
         double m_stillSeconds{};
     };
