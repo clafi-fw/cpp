@@ -168,6 +168,41 @@ the clockwork's metals - belong to the scene.
 - **Checked.** The icons match the mockup's; every scene's frames are bit-identical to before (the
   eight scenes at eight times each, 256 x 160).
 
+**A scene taken up fades in over a still of the one before** (Oj, 2026-11-09, "Scenes crossfade?",
+then "A"). Of three ways - the scene left kept as a still and faded out over the new one drawn
+live, both scenes drawn live through the fade, and a fade out and back in - Oj picked the first.
+Both live would draw two scenes a frame for the length of the fade, about 40 to 60 ms at 4K on the
+CPU backend for the Earth and the clockwork, and each scene would need a clock of its own: the cycle
+time is a share of the shown scene's cycle.
+
+- **The still is the frame on the screen.** On the first full paint after the picker asks for
+  another scene, MillSceneForm::keepShownScene draws the panel's frame again into kept image 0: the
+  form's surface, then the shown scene at the time that frame was drawn at. The surface goes in
+  because the mill leaves parts of its frame open and draws on it. In the harness the still matches
+  the frame on the screen bit for bit on the CPU backend, for every scene in createScenes - the
+  Earth with its maps built.
+- **Mid-fade the still is the blend.** A switch while a fade runs lays the scene fading in over the
+  still kept before, through an opacity layer at the share it has reached, so one image is enough
+  and the screen does not jump: within 1 level in the harness, Puppeteer to Chase broken off 0.43 of
+  the way for Ghost. A resize empties the kept images, and the scene is then drawn whole.
+- **Only on a full paint**, by the 80% test the readings use. A still drawn in a partial paint would
+  leave the rest of the panel to change at once; until a full paint comes, the scene being left
+  goes on being drawn.
+- **The switch frame is the still alone.** The scene taken up is not drawn under it, and its layers
+  are prepared in that frame (9 to 47 ms at 4K). The fade's clock starts once the frame is drawn, so
+  that time is a frame held on the still rather than a jump into the fade.
+- **The share is worked out from the clock at each paint**: smoothStep over 555 ms, the length of
+  the mill's theme crossfade. An AnimationController moves its value on its own timer between
+  paints too, so a still drawn mid-fade came out a frame ahead of the screen - 14 levels in the
+  harness.
+- **Cost.** One kept image the size of the window for the window's life (28 MB at 3436 x 2051 on
+  the CPU backend); one more draw of the scene left on the switch frame; a full-frame blend a frame
+  through the fade.
+- **Unchecked on Direct2D.** The still and the fade run through the backend's kept image and
+  opacity layer, untried with the scenes. drawSoftEdge needs its target to be an
+  ID2D1DeviceContext, so a still of the Earth may come out without its atmosphere's glow if the
+  image's target is not one.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.

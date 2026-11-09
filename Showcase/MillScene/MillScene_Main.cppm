@@ -10,6 +10,7 @@ import ClaFi.App.Settings;
 import ClaFi.PathArt.Scenes;
 import ClaFi.PathArt.MillScene;
 import ClaFi.PathArt.Scene;
+import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.Themes;
 import ClaFi.PathArt.Types;
 
@@ -67,6 +68,9 @@ namespace MillScene_App
     constexpr float k_sceneTileSpacing{ 8.0f };
     // A scene's own options stand in lanes of four.
     constexpr std::size_t k_optionLaneSize{ 4 };
+    // A scene taken up fades in over the one before it, as long as the mill's theme crossfade.
+    constexpr float k_sceneFadeSeconds{ 0.555f };
+    constexpr int k_outgoingSceneImage{ 0 }; // the kept image the scene being left fades out of
 
     // A look the picker offers, by the name it shows and the config keeps.
     struct LookChoice
@@ -183,6 +187,8 @@ namespace MillScene_App
         };
     private:
         void paintScene(PaintEvent&);
+        void keepShownScene(PaintEvent&);
+        void advanceSceneFade();
         void advanceCycleTime();
         // The picker's scenes: the mill at 0, then the others in their order.
         [[nodiscard]] PathArt::Scene& sceneAt(std::size_t index);
@@ -231,9 +237,10 @@ namespace MillScene_App
             appContext().appName())
         };
 
-        // The scene the user chose, and the one drawn - they differ while the pointer walks the
-        // picker. See previewScene
-        std::size_t m_pickedScene{ 0 };
+        std::size_t m_pickedScene{ 0 }; // the scene the user chose
+        // The scene to show: the picked one, or the one the pointer rests on in the picker.
+        std::size_t m_sceneToShow{ 0 };
+        // The scene the frames draw; it takes up m_sceneToShow on the next full paint.
         std::size_t m_shownScene{ 0 };
         // The theme the user chose, which is not the theme the scene wears while the pointer
         // walks the picker - see previewSceneTheme.
@@ -268,6 +275,10 @@ namespace MillScene_App
         PathArt::SceneTime m_sceneTime{};
         // What the last frame was drawn with; the scene is prepared once two frames running agree.
         PathArt::SceneParams m_lastSceneParams{};
+        // How much of the frame is the shown scene; the kept picture of the one before is the rest.
+        float m_shownSceneShare{ 1.0f };
+        // When the shown scene began to fade in; empty once it covers the frame.
+        std::optional<Diagnostic::TimePoint> m_sceneFadeStart{};
         Diagnostic::TimePoint m_prevRun{Diagnostic::Clock::now() };
         // The scene runs at the speed this slider names. While there is no slider it runs at 1.
         Slider* m_speedSlider{ nullptr };
@@ -529,8 +540,28 @@ bool ScenePanel::dragMovesViewFrom(const PointInForm point) const
 
 void MillSceneForm::paintScene(PaintEvent& event)
 {
+    Graphics::Canvas& canvas = event.canvas();
     const FloatRect& sceneRect = event.controlBounds();
     m_benchmark.setDimensions(sceneRect.dimensions());
+
+    // A paint covering at least 80% of the scene is a full one, and only a full one is
+    // measured: a repaint of the combo box or the slider covers a fraction of the scene and
+    // would read as a spike. The 80% leaves room for the off-screen clipping a maximized
+    // window brings.
+    const IntRect& clipRect = canvas.clipBox().toInt();
+    const double clipArea = static_cast<double>(clipRect.width()) * clipRect.height();
+    const double sceneArea = static_cast<double>(sceneRect.width()) * sceneRect.height();
+    const bool isSignificantPaint = (clipArea / sceneArea) > 0.8;
+
+    // **A scene is taken up on a full paint only.** The picture it fades in over is drawn in that
+    // paint, and a picture of a part of the panel would leave the rest to change at once.
+    const bool switchesScene = isSignificantPaint && m_shownScene != m_sceneToShow;
+    if (switchesScene)
+    {
+        keepShownScene(event);
+        m_shownScene = m_sceneToShow;
+    }
+    advanceSceneFade();
 
     advanceCycleTime();
     m_scenePanel.showScene(sceneAt(m_shownScene), sceneRect);
@@ -541,21 +572,23 @@ void MillSceneForm::paintScene(PaintEvent& event)
     // unchanged size prepares it.
     const PathArt::SceneParams sceneParams = {
         .bounds = sceneRect,
-        .transform = event.canvas().transform(),
-        .backend = event.canvas().backend()->type()
+        .transform = canvas.transform(),
+        .backend = canvas.backend()->type()
     };
     if (sceneParams == m_lastSceneParams)
         sceneAt(m_shownScene).prepare(sceneParams);
     m_lastSceneParams = sceneParams;
 
-    // A paint covering at least 80% of the scene is a full one, and only a full one is
-    // measured: a repaint of the combo box or the slider covers a fraction of the scene and
-    // would read as a spike. The 80% leaves room for the off-screen clipping a maximized
-    // window brings.
-    const IntRect& clipRect = event.canvas().clipBox().toInt();
-    const double clipArea = static_cast<double>(clipRect.width()) * clipRect.height();
-    const double sceneArea = static_cast<double>(sceneRect.width()) * sceneRect.height();
-    const bool isSignificantPaint = (clipArea / sceneArea) > 0.8;
+    // **The fade starts once this frame is drawn.** The frame is the kept picture whole, so the
+    // scene taken up is not drawn under it, and the time the frame takes - the picture and the
+    // new scene's layers - is not taken out of the fade.
+    if (switchesScene)
+    {
+        canvas.drawImage(k_outgoingSceneImage, 1.0f);
+        m_shownSceneShare = 0.0f;
+        m_sceneFadeStart = Diagnostic::Clock::now();
+        return;
+    }
 
     if (isSignificantPaint)
     {
@@ -566,9 +599,36 @@ void MillSceneForm::paintScene(PaintEvent& event)
     }
     else
     {
-        sceneAt(m_shownScene).draw(event.canvas(), event.controlBounds(), m_sceneTime);
+        sceneAt(m_shownScene).draw(canvas, sceneRect, m_sceneTime);
     }
+    if (m_shownSceneShare < 1.0f)
+        canvas.drawImage(k_outgoingSceneImage, 1.0f - m_shownSceneShare);
+}
 
+// **The picture kept is the frame the panel shows**, drawn again at the time that frame was drawn
+// at. The form's surface goes under it: the mill leaves parts of its frame open and draws on that
+// surface. Mid-fade the frame is a blend, so the shown scene is laid over the picture kept before
+// at the share it has reached - or whole, where a resize has emptied the kept images.
+void MillSceneForm::keepShownScene(PaintEvent& event)
+{
+    Graphics::Canvas& canvas = event.canvas();
+    const float shownSceneShare =
+        canvas.hasImage(k_outgoingSceneImage) ? m_shownSceneShare : 1.0f;
+    const Graphics::ScopedCanvasImage picture{ canvas, k_outgoingSceneImage };
+    const Graphics::ScopedCanvasOpacity layer{ canvas, shownSceneShare };
+    canvas.fillRectangle(event.controlBounds(), event.parentEvent()->surfaceRgb());
+    sceneAt(m_shownScene).draw(canvas, event.controlBounds(), m_sceneTime);
+}
+
+void MillSceneForm::advanceSceneFade()
+{
+    if (!m_sceneFadeStart)
+        return;
+    const float seconds =
+        std::chrono::duration<float>(Diagnostic::Clock::now() - *m_sceneFadeStart).count();
+    m_shownSceneShare = PathArt::smoothStep(0.0f, k_sceneFadeSeconds, seconds);
+    if (m_shownSceneShare >= 1.0f)
+        m_sceneFadeStart.reset();
 }
 
 void MillSceneForm::advanceCycleTime()
@@ -617,9 +677,9 @@ std::size_t MillSceneForm::sceneCount() const
 // A different scene is a different load, so the readings start again.
 void MillSceneForm::previewScene(const std::size_t index)
 {
-    if (m_shownScene == index)
+    if (m_sceneToShow == index)
         return;
-    m_shownScene = index;
+    m_sceneToShow = index;
     m_benchmark.reset();
 }
 
@@ -988,6 +1048,7 @@ void MillSceneForm::restoreScene()
         if (sceneAt(index).name() == name)
         {
             m_pickedScene = index;
+            m_sceneToShow = index;
             m_shownScene = index;
             return;
         }

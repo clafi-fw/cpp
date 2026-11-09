@@ -7,7 +7,7 @@ The words that do not fit above a declaration.
 A scene is a moving picture, drawn at a time into any bounds. Most of its motions run through a
 cycle and come back to where they began. The MillScene showcase holds a list of scenes, offers them
 as tiles in the Scene group of its Scene page - drawIcon() over name() - and stores the one picked
-under that name.
+under that name. A scene it takes up fades in over a still of the frame before it.
 
 **A motion that comes round runs a whole number of times a cycle**, so the frame at the end of the
 cycle is the frame at its start and the loop shows no seam. A scene that needs a slow motion beside
