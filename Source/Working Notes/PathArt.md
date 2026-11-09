@@ -72,6 +72,29 @@ globe, Oj picked the virtual. Its parameter is unnamed in Scene, as dragView's a
 for the empty body's sake; EarthScene names it `held`. ScenePanel calls it on a press and its
 let-go, and lets go of a scene shown away from while held.
 
+**A scene keeps its view in a config section of its own** (Oj, 2026-11-09, "Remember zoom, position
+and orbit"). Of one line of named values passed as text, a config section the scene reads and
+writes, and a struct of numbers on Scene, Oj picked the section. The config is read with its schema
+as the application is built, before the form makes any scene, so a virtual viewSchema() had no
+scene to ask; of a static per scene gathered by createSceneViewsSchema(), the scenes made before
+the application and handed to it, and a throwaway scene list (start-up waiting about 15 ms for the
+Earth's coastlines as it went), Oj picked the static. storeView and restoreView are virtuals; the
+showcase restores in its constructor and stores on the form's close, as BrowserControl does.
+
+**A scene states its own choices** (Oj, 2026-11-09, "Add a direction selector to the options"; the
+Earth's turn, labelled Eastward and Westward). Of choices on Scene kept by the scene in its view's
+section, the same choices kept by the showcase under a section of its own, and a turn property on
+EarthScene alone that the showcase would name, Oj picked the first. SceneChoice is a name and a span
+of option names; the host builds a section per choice the way it builds the look's, previews an
+option on hover and puts the pick back, and never stores it: the scene writes it in storeView.
+
+**The let-go is a call of its own** (Oj, 2026-11-09, "The decision is made when the user releases
+the mouse button"). The scene needs the pointer's speed at the release, which only the host knows.
+Of letGoView(speed, bounds) in place of holdView(false), and holdView taking the speed beside the
+flag, Oj picked letGoView; holdView now only ever says true. ScenePanel hands over the speed its
+glide starts at, 0 below the glide's 2 pixels a second, and lets go of a scene it shows away from
+at 0.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.
@@ -846,6 +869,78 @@ globe held after a wheel notch, fewer than 300 pixels below the satellite change
 seconds, all of them twinkling lights. It runs on the scene's time now, as the hovering and the
 blinking do, so the clouds cross the held ground. Untouched, the globe's time and the scene's are
 the same, and the frames are bit for bit B's.
+
+**The view starts four notches up, and is kept across runs** (Oj, 2026-11-09, with a screenshot at
+3836 x 1971: "Make this zoom default. Remember zoom, position and orbit"). The screenshot's limb,
+fitted as a circle through 29 points, stands at centre 1700, 2850 with radius 2261, against 1688,
+2814 and 2215 at altitude 0.4 - the atmosphere's glow widens the fitted one - and the satellite's
+place, 0.73 and 0.21 of the frame, is 0.4's within its hover; View::altitude starts there.
+
+What is kept: the altitude, View::orbitTurn as an axis and an angle in degrees, read through the
+rotation's quaternion, and the orbits of the last frame. Restoring moves View::orbitsAhead by the
+stored orbits less the last frame's - none drawn yet, the start's 0 - and the orbit, the Earth's
+turn, the sky's drift and the panels' turn all run from the orbits. The clouds' drift and the
+twinkling run on the scene's time, which starts over. Dom keeps no double, so Orbits is a float,
+written to 6 decimals: about a quarter of a thousandth of an orbit at 2000 orbits, some 100 hours
+flown.
+
+Measured in the harness through a config file in the showcase's format: a scene dragged and zoomed
+at the start and drawn to 3600 seconds - the clouds' three layers and the 240-second cycle all come
+round there - stored, read back into a fresh scene drawn at 0, at 960 x 540: 4,102 pixels differ,
+by at most 2. At 3436 x 2051 on 2 cores the default view draws in 49-50 ms against 31-33 at the
+lowest: below a globe radius of 3200 pixels the land and the clouds are worked out at every 2nd
+pixel rather than every 4th, and the space is drawn live.
+
+**The Earth turns either way** (Oj, 2026-11-09, the Turn choice, Eastward or Westward). The Earth's
+turns were the orbits over 3 + phi; they are now m_earthTurnsAhead plus or minus that, by the way it
+turns. A change of way moves m_earthTurnsAhead so the turns at the last frame's orbits are the same
+either way, so the Earth turns on from where it stood, with no jump. The turns no longer follow from
+the orbits alone, so the view keeps them as EarthTurns beside Turn, and restoring moves
+m_earthTurnsAhead so the stored orbits give the stored turns. Eastward with nothing stored, the
+turns are the orbits' quotient exactly, and the frames are bit for bit those before (three times,
+both looks). Switched westward at 10 seconds into a run at the whole globe, the step from one frame
+to the next stays at 0.17 through the switch and the frames then part from the eastward run's
+steadily; through a config file, a run switched at 1800 seconds and stored at 3600 restores within
+2 levels, 3,597 pixels.
+
+**The let-go decides how the satellite flies on** (Oj, 2026-11-09, "Remember which way the
+satellite is flying. The decision is made when the user releases the mouse button. if the globe is
+still at that moment hang the satellite still over the selected point - only day and night will
+change. if the globe was moving - change the orbit and continue move in that direction"). Of the
+picture rolling so the new track runs across it, and the track running the way the fling went, Oj
+picked the second; of the fling's pace and the orbit's, the orbit's; of the 5-second hold after the
+release and deciding at once, at once - the wheel keeps its hold.
+
+- **The track angle** turns the view about the vertical under it, in the leaning view's own axes
+  (0, sin b, cos b), b the lean back: orbitAxesAt takes it after the lean, so the horizon stays at
+  the top. At 0 the rotation is exactly the identity, and the frames are bit for bit those before.
+- **A fling re-anchors the orbit on the picture as it stands**: orbitTurn becomes the view's axes
+  times the inverse of orbitAxesAt at the shown orbits and the new angle, so the next frame is the
+  one before, and the satellite flies on from it. The angle is solved, not searched: the held
+  point's motion across the view is the orbit's part, which turns with the angle (a cos + b sin of
+  two motions worked out at 0 and a quarter turn), plus the Earth's turn's part, which does not;
+  the angle at which the sum lies along the pointer's way is the root of a cos + b sin + c = 0 with
+  the larger motion along it.
+- **Hanging, the view turns with the Earth**: the view's axes are the Earth's turned axes times
+  hangingCamera times the lean, so where the Earth's axes stand in the view does not change, and the
+  Sun moves across it. A drag while hanging turns hangingCamera by the drag's turn carried through
+  the lean.
+- **The orbits stand still while it hangs**, with the sky's drift and the panels' turn, so the
+  Earth's turns could no longer be read off the orbits: they are now the globe's time, counted in
+  orbits, over 3 + phi, which is the same number as before while nothing has hung (the frames are
+  bit for bit those before).
+- **Drags no longer touch the view**, as the host's glide reaches the scene as drags after the
+  let-go and would have held the globe 5 seconds; a press holds it through holdView, and the wheel
+  still touches.
+
+Measured in the harness at 960 x 540, from the default view: let go still at 30 seconds, an ice
+crop by the held point moved at most 0.11 pixels over the next 57 seconds while the night crossed
+the frame. Flung at 300 pixels a second in eight directions, the ground at the held point moved at
+0.1, 45.3, 90.8, 134.7, -179.9, -135.6, -90.2 and -42.9 degrees against 0, 45, 90, 135, 180, -135,
+-90 and -45, measured half a second after the release. Dragged while hanging by (60, -30) and
+(-50, 40) pixels, the ground there moved (60.5, -31.1) and (-49.4, 39.5). Through a config file a
+run flung at 900 seconds, switched westward at 1800, and then hung or flung again at 2700 and stored
+at 3600 restores within 1 and 2 levels.
 
 ## ChaseScene
 

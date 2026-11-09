@@ -34,6 +34,8 @@ import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
+import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.DomEngine;
 
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -98,6 +100,8 @@ namespace MillScene_App
     export constexpr std::wstring_view k_sceneNodeName{ L"Scene" };
     // What the look picked for the scene that offers looks is kept under, by name as well.
     export constexpr std::wstring_view k_sceneLookNodeName{ L"SceneLook" };
+    // What the scenes keep their views and choices under, a section for each by its name.
+    export constexpr std::wstring_view k_sceneViewsNodeName{ L"SceneViews" };
 
     // The panel the scene covers whole; a drag and the wheel over it move the scene's view.
     class ScenePanel : public Panel
@@ -155,6 +159,16 @@ namespace MillScene_App
             double drawMs{ 0.0 };
             double fps{ 0.0 };
         };
+        // A choice a scene offers, as its section of the Scene page shows it.
+        struct ChoiceSection
+        {
+            std::size_t sceneIndex{};
+            std::size_t choiceIndex{}; // among the scene's choices
+            std::size_t pickedOption{}; // at its index among the choice's options
+            AppMenuPage::Section* section{ nullptr };
+            SingleSelectionStackView* lanes{ nullptr };
+            std::vector<Control*> buttons{};
+        };
     private:
         void paintScene(PaintEvent&);
         void advanceCycleTime();
@@ -172,11 +186,17 @@ namespace MillScene_App
         // Draws the scene that offers looks in the look at `index` of k_lookChoices.
         void previewLook(std::size_t index);
         void pickLook(std::size_t index);
+        // Takes an option in the choice a section of m_choiceSections shows, while it is hovered.
+        void previewOption(std::size_t sectionIndex, std::size_t option);
+        void pickOption(std::size_t sectionIndex, std::size_t option);
 
         void buildScenePage(AppMenuPage&);
         void buildScenePicker(AppMenuPage&);
         void buildThemePicker(AppMenuPage&);
         void buildLookPicker(AppMenuPage&);
+        // A section for every choice of every scene. See buildChoicePicker
+        void buildChoicePickers(AppMenuPage&);
+        void buildChoicePicker(AppMenuPage&, std::size_t sectionIndex);
 
         void restoreScene();
         void storeScene();
@@ -184,6 +204,9 @@ namespace MillScene_App
         void storeSceneTheme();
         void restoreLook();
         void storeLook();
+        // Each scene that keeps its view takes it back from its section of SceneViews.
+        void restoreSceneViews();
+        void storeSceneViews();
 
         void traceMetrics();
         // The readings, written ahead of every frame. See writeMetricsTooltip
@@ -218,6 +241,8 @@ namespace MillScene_App
         AppMenuPage::Section* m_lookSection{ nullptr };
         SingleSelectionStackView* m_lookLanes{ nullptr };
         std::vector<Control*> m_lookButtons{};
+        // Each shown while its scene is the picked scene: the choices are its own.
+        std::vector<ChoiceSection> m_choiceSections{};
         // The chart draws the benchmark above; it wears the scene's own colours, which is why it
         // is held rather than added and forgotten.
         // When the readings last went to stderr. See traceMetrics.
@@ -291,6 +316,11 @@ namespace MillScene_App
         restoreSceneTheme();
         restoreScene();
         restoreLook();
+        restoreSceneViews();
+        // Written as the window closes, while every scene still stands.
+        form().onClose([this](FormCloseEvent&) {
+            storeSceneViews();
+        });
 
 
         connectAppPage(L"Scene", Icons::DotMark::draw, [this](AppMenuPage& page) {
@@ -325,7 +355,7 @@ void ScenePanel::showScene(PathArt::Scene& scene, const FloatRect& bounds)
     if (m_scene != &scene)
     {
         if (m_scene && m_dragPos)
-            m_scene->holdView(false);
+            m_scene->letGoView({ 0.0f, 0.0f }, m_sceneBounds);
         m_dragPos.reset();
         m_dragSteps.clear();
         m_glideSpeed = {};
@@ -399,14 +429,14 @@ void ScenePanel::nestedDrag(DragEvent& event)
 }
 
 // **The glide goes on at the speed of the drag's last moves**: those within k_glideWindow of the
-// let-go. A drag held still before it is let go leaves none, and stops where it is.
+// let-go. A drag held still before it is let go leaves none, and stops where it is. The scene is
+// let go at the speed the glide starts at, 0 where there is none.
 void ScenePanel::nestedPressUp(PressUpEvent& event)
 {
     Panel::nestedPressUp(event);
     if (!m_dragPos)
         return;
     m_dragPos.reset();
-    m_scene->holdView(false);
     const Diagnostic::TimePoint now = Diagnostic::Clock::now();
     FloatPoint moved = {};
     std::optional<Diagnostic::TimePoint> firstAt{};
@@ -419,11 +449,15 @@ void ScenePanel::nestedPressUp(PressUpEvent& event)
             firstAt = step.at;
     }
     m_dragSteps.clear();
-    if (!firstAt)
-        return;
-    const float seconds = std::max(std::chrono::duration<float>(now - *firstAt).count(),
-        1.0f / 120.0f);
-    m_glideSpeed = moved * (1.0f / seconds);
+    if (firstAt)
+    {
+        const float seconds = std::max(std::chrono::duration<float>(now - *firstAt).count(),
+            1.0f / 120.0f);
+        m_glideSpeed = moved * (1.0f / seconds);
+    }
+    if (std::hypot(m_glideSpeed.x, m_glideSpeed.y) < k_glideStop)
+        m_glideSpeed = {};
+    m_scene->letGoView(m_glideSpeed, m_sceneBounds);
 }
 
 void ScenePanel::nestedMouseWheel(MouseWheelEvent& event)
@@ -556,6 +590,11 @@ void MillSceneForm::pickScene(const std::size_t index)
         m_themeSection->setVisible(index == 0);
     if (m_lookSection)
         m_lookSection->setVisible(sceneWithLooks() == index);
+    for (const ChoiceSection& choiceSection : m_choiceSections)
+    {
+        if (choiceSection.section)
+            choiceSection.section->setVisible(choiceSection.sceneIndex == index);
+    }
 }
 
 // **The picked theme's colours, not the blend's.** This runs the moment a theme is picked, when
@@ -619,11 +658,31 @@ void MillSceneForm::pickLook(const std::size_t index)
     m_lookButtons[index]->invalidateState();
 }
 
+void MillSceneForm::previewOption(const std::size_t sectionIndex, const std::size_t option)
+{
+    const ChoiceSection& choiceSection = m_choiceSections[sectionIndex];
+    sceneAt(choiceSection.sceneIndex).chooseOption(choiceSection.choiceIndex, option);
+}
+
+void MillSceneForm::pickOption(const std::size_t sectionIndex, const std::size_t option)
+{
+    ChoiceSection& choiceSection = m_choiceSections[sectionIndex];
+    const std::size_t previous = choiceSection.pickedOption;
+    choiceSection.pickedOption = option;
+    previewOption(sectionIndex, option);
+
+    if (choiceSection.lanes)
+        choiceSection.lanes->setCurrentItem(*choiceSection.buttons[option]);
+    choiceSection.buttons[previous]->invalidateState();
+    choiceSection.buttons[option]->invalidateState();
+}
+
 void MillSceneForm::buildScenePage(AppMenuPage& page)
 {
     buildScenePicker(page);
     buildThemePicker(page);
     buildLookPicker(page);
+    buildChoicePickers(page);
 }
 
 // Built the way the theme picker is: the pointer previews, a pick is the current item.
@@ -785,6 +844,79 @@ void MillSceneForm::buildLookPicker(AppMenuPage& page)
     lanes.setCurrentItem(*m_lookButtons[m_pickedLook]);
 }
 
+// The sections are listed whole before any is built, so the handlers' indices stay valid.
+void MillSceneForm::buildChoicePickers(AppMenuPage& page)
+{
+    m_choiceSections.clear();
+    for (std::size_t sceneIndex = 0; sceneIndex != sceneCount(); ++sceneIndex)
+    {
+        const PathArt::Scene& scene = sceneAt(sceneIndex);
+        for (std::size_t choiceIndex = 0; choiceIndex != scene.choices().size(); ++choiceIndex)
+        {
+            m_choiceSections.push_back(ChoiceSection{
+                .sceneIndex = sceneIndex,
+                .choiceIndex = choiceIndex,
+                .pickedOption = scene.chosenOption(choiceIndex),
+                .section = nullptr,
+                .lanes = nullptr,
+                .buttons = {}
+            });
+        }
+    }
+    for (std::size_t sectionIndex = 0; sectionIndex != m_choiceSections.size(); ++sectionIndex)
+        buildChoicePicker(page, sectionIndex);
+}
+
+// **Captioned with its scene's name and the choice's**, shown only while that scene is picked.
+// Built the way the look picker is.
+void MillSceneForm::buildChoicePicker(AppMenuPage& page, const std::size_t sectionIndex)
+{
+    ChoiceSection& choiceSection = m_choiceSections[sectionIndex];
+    const PathArt::Scene& scene = sceneAt(choiceSection.sceneIndex);
+    const PathArt::SceneChoice& choice = scene.choices()[choiceSection.choiceIndex];
+    AppMenuPage::Section& section =
+        page.addSection(std::format(L"{} {}", scene.name(), choice.name));
+    choiceSection.section = &section;
+    section.setVisible(m_pickedScene == choiceSection.sceneIndex);
+    SingleSelectionStackView& lanes = section.body().add<SingleSelectionStackView>(
+        Orientation::VerticalWrap,
+        LaneSize{ k_sceneLaneSize },
+        Spacing{ k_themeLaneSpacing, 0.0f },
+        VerticalAlign::Top
+    );
+
+    choiceSection.lanes = &lanes;
+    lanes.setPreviewMode(PreviewMode::Hover);
+    lanes.onPreview([this, sectionIndex](PreviewEvent& event) {
+        previewOption(sectionIndex, event.item.tag().value);
+    });
+    lanes.onDestroy([this, sectionIndex](DestroyEvent&) {
+        ChoiceSection& destroyedSection = m_choiceSections[sectionIndex];
+        previewOption(sectionIndex, destroyedSection.pickedOption);
+        destroyedSection.section = nullptr;
+        destroyedSection.lanes = nullptr;
+        destroyedSection.buttons.clear();
+    });
+
+    choiceSection.buttons.reserve(choice.options.size());
+    for (std::size_t option = 0; option != choice.options.size(); ++option)
+    {
+        RadioButton& item = lanes.add<RadioButton>(
+            Text{ choice.options[option] },
+            Tag{ option },
+            Padding{ 0.0f, styleMetrics(UiElement::ListItem).padding.y }
+        );
+        item.onGetState([this, sectionIndex, option](GetStateEvent& event) {
+            event.state.selected = m_choiceSections[sectionIndex].pickedOption == option;
+        });
+        item.onClick([this, sectionIndex, option](ClickEvent&) {
+            pickOption(sectionIndex, option);
+        });
+        choiceSection.buttons.push_back(&item);
+    }
+    lanes.setCurrentItem(*choiceSection.buttons[choiceSection.pickedOption]);
+}
+
 void MillSceneForm::restoreScene()
 {
     const std::wstring name =
@@ -853,6 +985,29 @@ void MillSceneForm::storeLook()
 {
     (appContext().config() / k_sceneLookNodeName).set(
         std::wstring{ k_lookChoices[m_pickedLook].name });
+}
+
+// A scene with no section under its name keeps no view.
+void MillSceneForm::restoreSceneViews()
+{
+    const Dom::Section& views = appContext().config().childSection(k_sceneViewsNodeName);
+    for (std::size_t index = 0; index != sceneCount(); ++index)
+    {
+        PathArt::Scene& scene = sceneAt(index);
+        if (views.child(scene.name()) != nullptr)
+            scene.restoreView(views.childSection(scene.name()));
+    }
+}
+
+void MillSceneForm::storeSceneViews()
+{
+    Dom::Section& views = appContext().config().childSection(k_sceneViewsNodeName);
+    for (std::size_t index = 0; index != sceneCount(); ++index)
+    {
+        const PathArt::Scene& scene = sceneAt(index);
+        if (views.child(scene.name()) != nullptr)
+            scene.storeView(views.childSection(scene.name()));
+    }
 }
 
 void MillSceneForm::traceMetrics()
@@ -984,7 +1139,8 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
         return Dom::Dt::Section{
             Dom::Dt::Value{ k_sceneNodeName, L"" },
             Dom::Dt::Value{ k_sceneThemeNodeName, L"" },
-            Dom::Dt::Value{ k_sceneLookNodeName, L"" }
+            Dom::Dt::Value{ k_sceneLookNodeName, L"" },
+            Dom::Dt::Section{ k_sceneViewsNodeName, PathArt::createSceneViewsSchema() }
         };
     }
 

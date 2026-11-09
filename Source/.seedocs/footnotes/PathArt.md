@@ -70,18 +70,57 @@ and how it moves is the scene's own: the Earth scene turns its globe and climbs 
 EarthScene. A scene that offers none leaves both as they are.
 
 **The MillScene showcase hands them on from the panel the scene covers.** A press stops what moves
-the view and holds it until it is let go - see Scene holdView. A drag let go glides on at the speed
-of its last 80 milliseconds and slows to about a third of it every 0.35 seconds, and the wheel's
-notches come in over about a tenth of a second. Another scene shown stops both. Each scene keeps its
-view while the showcase runs.
+the view and holds it until it is let go - see Scene holdView and Scene letGoView. A drag let go
+glides on at the speed of its last 80 milliseconds and slows to about a third of it every 0.35
+seconds, and the wheel's notches come in over about a tenth of a second. Another scene shown stops
+both, and lets go of the view it leaves. Each scene keeps its view while the showcase runs.
 
 ## Scene holdView
 
 **A press holds the view until it is let go.** The host calls holdView(true) as a press comes down
-on the scene and holdView(false) as it is let go, so a scene can keep its own motion still while the
+on the scene and letGoView() as it is let go, so a scene can keep its own motion still while the
 viewer has the view - the Earth scene holds its globe, see EarthScene. A drag and the wheel reach
 the scene as dragView() and scrollView(); a press held still reaches it only here. A scene that
 offers no view is never told.
+
+## Scene letGoView
+
+**The let-go carries the pointer's speed**, in pixels a second across the bounds the scene draws
+into, and 0 where the pointer stood still or moved too slowly for a glide. The host then glides on
+at that speed through dragView(), so whatever the scene does with the speed comes on top of the
+glide. The Earth scene takes it to choose how the satellite flies on - see EarthScene.
+
+## SceneChoice
+
+**A scene states what else it lets the viewer pick, beside its look**: each choice has a name and
+its options' names, and the host shows each as a section of radio buttons captioned with the
+scene's name and the choice's - the Earth's turn shows as Earth Turn, Eastward and Westward. The
+names are shown as they are written, and they are also what the scene keeps its pick under.
+
+## Scene choices
+
+**The host asks for the choices and leaves the picks to the scene.** It reads chosenOption() to
+show what is picked and calls chooseOption() when an option is picked or hovered over, putting the
+pick back when the hover leaves. The scene keeps its picks with its view - see Scene storeView -
+and an index past the choices it states is a mistake it may refuse.
+
+## Scene storeView
+
+**A scene that keeps its view across runs writes it into a config section of its own.** The host
+keeps a section per scene under the scene's name(), and hands it over as its window closes;
+restoreView takes the view back from it as the scene is made. What the section holds is the
+scene's to say: a static viewSchema() states it, and createSceneViewsSchema() gathers those for the
+host's config schema - see EarthScene. A scene with no section keeps no view and is never asked.
+
+**A section never written holds its schema's defaults**, so a schema states the view the scene
+starts with, and restoring it changes nothing. The section holds the scene's choices as well, each
+under its own name.
+
+## createSceneViewsSchema
+
+**A keyless section**, so each scene's own section stands straight in the section the host puts
+this one under: the showcase keeps it as SceneViews, so the Earth's altitude is SceneViews, Earth,
+Altitude. A scene that keeps its view is gathered here, as it is listed in createScenes().
 
 ## SceneTime
 
@@ -380,9 +419,17 @@ the screen, each worked out from the orbit.
 **A drag turns the globe the way the pointer goes, as a hand turns a ball**: the ground under the
 middle of the view moves where the drag takes it, about the axis square to both, wherever the poles
 stand. The turn is the orbit's, about the Earth and among the stars, so the satellite flies on along
-the turned orbit with its track still across the screen. The Sun stands where it stood, so the day
-and the night come along with the ground. Each layer of cloud leans off the Earth's axis by a turn
-fixed to the Earth.
+the turned orbit with its track still running the way it ran across the screen; while the satellite
+hangs, the turn moves the point it hangs over. The Sun stands where it stood, so the day and the
+night come along with the ground. Each layer of cloud leans off the Earth's axis by a turn fixed to
+the Earth.
+
+**The let-go decides how the satellite flies on** - see Scene letGoView. Let go still, a click
+included, it hangs over the ground in view: the ground stands, and only the day and the night move
+on, with the clouds' drift. Let go moving, it takes the orbit that carries the ground under the
+middle of the view on the way the pointer went, from the picture as it stands, at the orbit's own
+pace; the track then runs across the screen at that angle, with the horizon still at the top. The
+orbits and the sky's drift stand still while it hangs, and the Earth's turn goes on.
 
 **The wheel climbs above the globe**, a tenth of the way a notch, from the lowest view to the whole
 globe in the middle of the frame. The globe's radius shrinks by the same share at each step, from
@@ -390,13 +437,24 @@ globe in the middle of the frame. The globe's radius shrinks by the same share a
 to 1, never quite down the Earth's axis. The satellite draws smaller toward the top right, out of
 the globe's way, and what is drawn on the globe at a fixed size - the sea's glint, the city lights -
 shrinks with it. The space is kept as a layer at the lowest altitude - see SceneLayer - and drawn
-live above it; so is the ocean until the land's map is built.
+live above it; so is the ocean until the land's map is built. The view starts four notches up.
 
-**The globe holds still while the viewer has the view**: from a press, a drag and its glide, or a
-wheel notch, until 5 seconds after the last. Then the orbit, the Earth's turn and the sky's drift
-ease back to full speed over 2 seconds, and the globe moves on from where it was left. The clouds go
-on drifting over the held globe, the satellite goes on hovering and blinking, and the stars and the
-city lights twinkling. The time is the scene's, so a paused scene holds the count as well.
+**The view is kept across runs** - see Scene storeView: the altitude, the orbit as the drags have
+turned it and the angle its track runs at, the orbits flown, which say where the satellite is and
+how far the sky has drifted, whether it hangs and where, the Earth's turns and the way it turns. The
+globe flies on, or hangs on, from where it was left; the clouds' drift and the twinkling start over.
+The section holds Altitude, Orbits, EarthTurns, Turn, TrackAngle in degrees, Hanging, and OrbitTurn
+and HangingCamera, each as an axis and an angle in degrees: AxisX, AxisY, AxisZ and Degrees.
+
+**The Earth turns eastward, as the real one does, or westward** - the scene's one choice, Turn, see
+SceneChoice. Picked either way, the Earth carries on from where it stands and turns on the other
+way; the orbit, the Sun and the clouds' drift against the ground stay as they are.
+
+**The globe holds still while the viewer has the view**: while a press holds it, and for 5
+seconds after a wheel notch, after which the orbit, the Earth's turn and the sky's drift ease back
+to full speed over 2 seconds. A let-go moves the globe on at once. The clouds go on drifting over
+the held globe, the satellite goes on hovering and blinking, and the stars and the city lights
+twinkling. The time is the scene's, so a paused scene holds the count as well.
 
 **The Sun stands fixed among the stars**, and so does the orbit's plane, so each orbit passes a day
 of about two minutes and a night. In the Earth's shadow the satellite darkens and the stars

@@ -5,6 +5,8 @@ import ClaFi.PathArt.EarthMap;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
+import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -19,7 +21,7 @@ namespace ClaFi::PathArt
     public:
         EarthScene();
     public:
-        [[nodiscard]] std::wstring_view name() const override { return L"Earth"; }
+        [[nodiscard]] std::wstring_view name() const override { return k_name; }
         [[nodiscard]] std::chrono::seconds cycleDuration() const override { return k_cycle; }
         void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
@@ -28,6 +30,14 @@ namespace ClaFi::PathArt
         void dragView(FloatPoint by, const FloatRect& bounds) override;
         void scrollView(float notches) override;
         void holdView(bool held) override;
+        void letGoView(FloatPoint speed, const FloatRect& bounds) override;
+        [[nodiscard]] std::span<const SceneChoice> choices() const override;
+        [[nodiscard]] std::size_t chosenOption(std::size_t choice) const override;
+        void chooseOption(std::size_t choice, std::size_t option) override;
+        void storeView(Dom::Section& view) const override;
+        void restoreView(const Dom::Section& view) override;
+        // The config section the view is kept in, under the scene's name. See PathArt#earthscene
+        [[nodiscard]] static Dom::Dt::Section viewSchema();
     private:
         // A direction from the Earth's center: x across the screen, y up it, z toward the viewer.
         struct Direction
@@ -47,6 +57,12 @@ namespace ClaFi::PathArt
             // A direction fixed to the Earth, as it stands this frame.
             [[nodiscard]] Direction applied(Direction onEarth) const;
         };
+        // A turn by `angle` about an axis of length 1, anticlockwise seen from its tip.
+        struct AxisTurn
+        {
+            Direction axis;
+            float angle;
+        };
         // A rotation, as where it takes each of the three axes.
         struct Rotation
         {
@@ -61,6 +77,16 @@ namespace ClaFi::PathArt
             [[nodiscard]] Rotation after(const Rotation& first) const;
             // The axes set square and of length 1 again, as rounding wears them with each turn.
             [[nodiscard]] Rotation orthonormal() const;
+            // The axis and the angle About would take to make this rotation.
+            [[nodiscard]] AxisTurn axisTurn() const;
+            // The rotation that undoes this one.
+            [[nodiscard]] Rotation inverse() const;
+        };
+        // Which way the Earth turns under the orbit, at its index among the Turn choice's options.
+        enum class TurnDirection
+        {
+            Eastward,   // as the real one does
+            Westward
         };
         // The spin about the Earth's axis, its tip toward the viewer, then the tilt in the screen.
         struct ViewAngles
@@ -77,7 +103,19 @@ namespace ClaFi::PathArt
         {
             // How the drags have turned the orbit about the Earth, among the stars and the Sun.
             Rotation orbitTurn{ { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
-            float altitude{}; // 0 at the lowest, 1 with the whole globe in the frame
+            float altitude{ 0.4f }; // 0 at the lowest, 1 with the whole globe in the frame
+            // The orbits the satellite stands at beyond those the globe's time makes; all, hanging.
+            double orbitsAhead{};
+            // How far the view is turned about the vertical from the track running across it.
+            float trackAngle{};
+            // Whether the satellite hangs over one point of the ground rather than orbiting.
+            bool hanging{};
+            // Where the view stands on the Earth while it hangs, before it leans back.
+            Rotation hangingCamera{
+                { 1.0f, 0.0f, 0.0f },
+                { 0.0f, 1.0f, 0.0f },
+                { 0.0f, 0.0f, 1.0f }
+            };
         };
         // The Earth as drawn this frame: where it stands, how far it has turned, where the Sun is.
         struct Globe
@@ -90,11 +128,14 @@ namespace ClaFi::PathArt
             Direction sun;
             Rotation fromEarth; // where the Earth's axes stand in the view
 
-            // The Earth as seen after a number of orbits from the start. See PathArt#earthscene
-            [[nodiscard]] static Globe OnOrbit(FloatPoint center, float radius, double orbits,
-                const View&);
+            // The Earth as the view's axes see it, turned a number of times. See PathArt#earthscene
+            [[nodiscard]] static Globe FromCamera(FloatPoint center, float radius,
+                const Rotation& camera, double earthTurns);
             // Where the view's axes stand among the stars at a point of the orbit, before any drag.
-            [[nodiscard]] static Rotation orbitAxesAt(double orbits, float altitude);
+            [[nodiscard]] static Rotation orbitAxesAt(double orbits, float altitude,
+                float trackAngle);
+            // Where the Earth's axes stand among the stars after a number of turns.
+            [[nodiscard]] static Rotation earthAxesAt(double earthTurns);
             // The direction to a longitude and latitude in degrees, fixed to the Earth.
             [[nodiscard]] static Direction onEarthAt(FloatPoint lonLat);
             [[nodiscard]] EarthTurn turn() const;
@@ -168,9 +209,25 @@ namespace ClaFi::PathArt
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
         // How long the globe has stood still by a frame, while the viewer had the view.
         [[nodiscard]] double stillSecondsAt(double sceneSeconds);
+        // How many turns the Earth has made by the globe's time, counted in orbits.
+        [[nodiscard]] double earthTurnsAt(double timeInOrbits) const;
+        // Where the view's axes stand among the stars: on the orbit, or hanging over the ground.
+        [[nodiscard]] Rotation cameraAt(double orbits, double earthTurns) const;
+        // The globe under the view's held point moved by `offset`, as a direction in the view.
+        [[nodiscard]] Direction heldPointAt(FloatPoint offset, const FloatRect& bounds) const;
+        // The track angle that carries the ground under the held point the way `speed` goes.
+        [[nodiscard]] float trackAngleFor(FloatPoint speed, const FloatRect& bounds) const;
+        // A rotation's config section under `key`: an axis and an angle in degrees, `start`'s.
+        [[nodiscard]] static Dom::Dt::Section rotationSchema(std::wstring_view key,
+            const Rotation& start);
+        static void storeRotation(Dom::Section& section, const Rotation& rotation);
+        // The rotation a section holds, or `fallback` where its axis has no length.
+        [[nodiscard]] static Rotation restoredRotation(const Dom::Section& section,
+            const Rotation& fallback);
     private:
         // The twinkling and blinking come round each cycle; the orbit and the cloud drift never do.
         static constexpr std::chrono::seconds k_cycle{ 240 };
+        static constexpr std::wstring_view k_name{ L"Earth" };
         std::vector<Coastline> m_coastlines{};
         std::vector<City> m_cities{};
         // Started by the constructor, and taken by the first frame drawn.
@@ -193,6 +250,10 @@ namespace ClaFi::PathArt
         View m_view{};
         // The orbits the last frame was drawn after, which a drag moves the view from.
         double m_shownOrbits{};
+        double m_shownTimeInOrbits{}; // the globe's time of the last frame, counted in orbits
+        TurnDirection m_turnDirection{ TurnDirection::Eastward };
+        // The turns the Earth stands ahead of its time's count, by a change of way or a restore.
+        double m_earthTurnsAhead{};
         bool m_viewHeld{}; // by a press
         bool m_viewTouched{}; // held, dragged or scrolled since the last frame
         std::optional<double> m_lastTouchAt{}; // in seconds of the scene's time

@@ -1,5 +1,6 @@
 export module ClaFi.PathArt.Scene;
 
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -23,6 +24,13 @@ namespace ClaFi::PathArt
     {
         Stylized,   // flat shapes in a few tones
         Realistic   // soft shading, the way a photograph shows it
+    };
+
+    // A choice a scene offers beside its look: its name and its options' names. See PathArt
+    export struct SceneChoice
+    {
+        std::wstring_view name;
+        std::span<const std::wstring_view> options;
     };
 
     // When a frame falls: how far into its cycle, and how many cycles came before. See PathArt
@@ -51,14 +59,26 @@ namespace ClaFi::PathArt
         // The look the scene is drawn in, where it offers looks. See PathArt#scenelook
         [[nodiscard]] SceneLook look() const { return m_look; }
         void setLook(SceneLook look) { m_look = look; }
+        // The choices the scene offers beside its look, none unless it states them. See PathArt
+        [[nodiscard]] virtual std::span<const SceneChoice> choices() const { return {}; }
+        // The option taken in a choice, both at their indices.
+        [[nodiscard]] virtual std::size_t chosenOption(std::size_t) const { return 0; }
+        // Takes an option in a choice, both at their indices.
+        virtual void chooseOption(std::size_t, std::size_t) {}
         // Whether the scene answers a drag and the wheel by moving its view. See PathArt
         [[nodiscard]] virtual bool offersView() const { return false; }
         // Moves the view by a drag across bounds, in the coordinates of bounds.
         virtual void dragView(FloatPoint, const FloatRect&) {}
         // Moves the view by wheel notches, counted as MouseWheelEvent counts them.
         virtual void scrollView(float) {}
-        // A press holds the view (true), or lets it go (false). See PathArt
+        // A press holds the view (true); letGoView is what ends the hold. See PathArt
         virtual void holdView(bool) {}
+        // Lets go of the view at the pointer's speed, 0 where it stood still. See PathArt
+        virtual void letGoView(FloatPoint, const FloatRect&) {}
+        // Writes the view as the viewer left it into its own section. See PathArt#scene-storeview
+        virtual void storeView(Dom::Section&) const {}
+        // Takes the view back from the scene's section, as storeView wrote it or as it starts.
+        virtual void restoreView(const Dom::Section&) {}
     private:
         // The cycle a scene runs through unless it states its own.
         static constexpr std::chrono::seconds k_cycle{ 40 };

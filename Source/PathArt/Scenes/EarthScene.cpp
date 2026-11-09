@@ -9,6 +9,9 @@ import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.StarsEffect;
+import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -167,6 +170,30 @@ namespace ClaFi::PathArt
         // How much wider than the points stand apart the ground about one is taken: the land is
         // read half a level coarser, as detail that fine shimmers when the globe turns.
         constexpr float k_spanWidening{ 1.4142135f };
+
+        // The ways the Earth may turn, in the order of TurnDirection.
+        constexpr std::array<std::wstring_view, 2> k_turnOptions{ L"Eastward", L"Westward" };
+        // What the scene offers beside its look.
+        constexpr std::array<SceneChoice, 1> k_choices{
+            SceneChoice{ L"Turn", k_turnOptions }
+        };
+        constexpr std::size_t k_turnChoice{ 0 }; // its index in k_choices
+
+        // The names the view is kept under in the config; a choice is kept under its own name.
+        namespace ViewNodes
+        {
+            constexpr std::wstring_view Altitude = L"Altitude";
+            constexpr std::wstring_view Orbits = L"Orbits";
+            constexpr std::wstring_view EarthTurns = L"EarthTurns";
+            constexpr std::wstring_view TrackAngle = L"TrackAngle";
+            constexpr std::wstring_view Hanging = L"Hanging";
+            constexpr std::wstring_view HangingCamera = L"HangingCamera";
+            constexpr std::wstring_view OrbitTurn = L"OrbitTurn";
+            constexpr std::wstring_view AxisX = L"AxisX";
+            constexpr std::wstring_view AxisY = L"AxisY";
+            constexpr std::wstring_view AxisZ = L"AxisZ";
+            constexpr std::wstring_view Degrees = L"Degrees";
+        }
 
         // A layer of cloud: what its map holds, and how it floats. See PathArt#earthscene
         struct CloudLayer
@@ -491,6 +518,12 @@ namespace ClaFi::PathArt
             FloatPoint center;
             float radius;
         };
+
+        // How far the view leans back from looking straight down, at an altitude.
+        [[nodiscard]] float viewBehindAt(const float altitude)
+        {
+            return std::lerp(k_viewBehind, k_leastViewBehind, altitude);
+        }
 
         // The part of a count past its last whole number, taken in double to keep a long run exact.
         [[nodiscard]] float fractionOf(const double count)
@@ -2475,9 +2508,17 @@ namespace ClaFi::PathArt
         const double cycles = static_cast<double>(time.cyclesPassed) + time.cycleTime;
         const double cycleSeconds = std::chrono::duration<double>{ k_cycle }.count();
         const double globeCycles = cycles - stillSecondsAt(cycles * cycleSeconds) / cycleSeconds;
-        const double orbits = globeCycles * std::chrono::duration<double>{ k_cycle } / k_orbit;
+        // **A hanging satellite flies no orbit**: its orbits stand still while the Earth turns on.
+        const double timeInOrbits = globeCycles * std::chrono::duration<double>{ k_cycle }
+            / k_orbit;
+        const double orbits = m_view.hanging
+            ? m_view.orbitsAhead
+            : m_view.orbitsAhead + timeInOrbits;
         m_shownOrbits = orbits;
-        const Globe globe = Globe::OnOrbit(globeDisc.center, radius, orbits, m_view);
+        m_shownTimeInOrbits = timeInOrbits;
+        const double earthTurns = earthTurnsAt(timeInOrbits);
+        const Globe globe = Globe::FromCamera(globeDisc.center, radius,
+            cameraAt(orbits, earthTurns), earthTurns);
 
         // As the view climbs the satellite draws smaller and moves to the top right, out of the
         // way of the whole globe.
@@ -2496,7 +2537,7 @@ namespace ClaFi::PathArt
             (globe.center.y - satellite.y) / radius
         };
         const FloatPoint drawnOver = rotated(offCenter, -globe.tilt);
-        const float behind = std::lerp(k_viewBehind, k_leastViewBehind, altitude);
+        const float behind = viewBehindAt(altitude);
         const FloatPoint below = rotated({ 0.0f, std::sin(behind) }, -globe.tilt);
         const Direction under = {
             std::lerp(drawnOver.x, below.x, altitude),
@@ -2563,33 +2604,13 @@ namespace ClaFi::PathArt
 
     // **A drag turns the globe the way the pointer goes, as a hand turns a ball**: the ground
     // under the middle of the view moves to where the drag takes it, about the axis square to
-    // both, wherever the poles stand. The turn is the orbit's among the stars, so the satellite
-    // flies on along the turned orbit. See PathArt#earthscene
+    // both, wherever the poles stand. On the orbit the turn is the orbit's among the stars, so
+    // the satellite flies on along the turned orbit; hanging, it is the view's over the Earth.
+    // See PathArt#earthscene
     void EarthScene::dragView(const FloatPoint by, const FloatRect& bounds)
     {
-        // How far from the middle toward the rim a point is taken, so it never lies on the rim.
-        constexpr float k_rimReach{ 0.98f };
-        const GlobeDisc disc = globeDiscAt(bounds.width(), bounds.height(), m_view.altitude);
-        const FloatPoint held = {
-            bounds.width() * 0.5f,
-            std::lerp(bounds.height() * 0.72f, disc.center.y, m_view.altitude)
-        };
-        const auto onSphere = [&](const FloatPoint point) {
-            FloatPoint offset = {
-                (point.x - disc.center.x) / disc.radius,
-                (disc.center.y - point.y) / disc.radius
-            };
-            const float reach = std::hypot(offset.x, offset.y);
-            if (reach > k_rimReach)
-                offset = offset * (k_rimReach / reach);
-            return Direction{
-                offset.x,
-                offset.y,
-                std::sqrt(1.0f - offset.x * offset.x - offset.y * offset.y)
-            };
-        };
-        const Direction from = onSphere(held);
-        const Direction to = onSphere(held + by);
+        const Direction from = heldPointAt({ 0.0f, 0.0f }, bounds);
+        const Direction to = heldPointAt(by, bounds);
         const Direction square = {
             from.y * to.z - from.z * to.y,
             from.z * to.x - from.x * to.z,
@@ -2599,13 +2620,22 @@ namespace ClaFi::PathArt
         if (squareLength < 1.0e-6f)
             return;
         const float angle = std::atan2(squareLength, from.x * to.x + from.y * to.y + from.z * to.z);
-        const Direction axis = Globe::orbitAxesAt(m_shownOrbits, m_view.altitude).applied({
+        const Direction axisInView = {
             square.x / squareLength,
             square.y / squareLength,
             square.z / squareLength
-        });
+        };
+        if (m_view.hanging)
+        {
+            const Rotation lean = Rotation::About({ 1.0f, 0.0f, 0.0f },
+                viewBehindAt(m_view.altitude));
+            m_view.hangingCamera = m_view.hangingCamera
+                .after(Rotation::About(lean.applied(axisInView), -angle)).orthonormal();
+            return;
+        }
+        const Direction axis = Globe::orbitAxesAt(m_shownOrbits, m_view.altitude,
+            m_view.trackAngle).applied(axisInView);
         m_view.orbitTurn = m_view.orbitTurn.after(Rotation::About(axis, -angle)).orthonormal();
-        m_viewTouched = true;
     }
 
     // A notch away from the screen comes down, as the wheel zooms in.
@@ -2615,11 +2645,120 @@ namespace ClaFi::PathArt
         m_viewTouched = true;
     }
 
-    // A press holds the globe still, and its let-go starts the time it holds still for after.
+    // A press holds the globe still until it is let go.
     void EarthScene::holdView(const bool held)
     {
         m_viewHeld = held;
         m_viewTouched = true;
+    }
+
+    // **The let-go decides how the satellite flies on**, and the globe moves on at once. Let go
+    // still, it hangs over the ground in the view, and only the day and the night move on. Let go
+    // moving, it takes the orbit that carries the ground on the way the pointer went, from where
+    // the view stands, at the orbit's own pace. See PathArt#earthscene
+    void EarthScene::letGoView(const FloatPoint speed, const FloatRect& bounds)
+    {
+        m_viewHeld = false;
+        m_viewTouched = false;
+        m_lastTouchAt.reset();
+        const double earthTurns = earthTurnsAt(m_shownTimeInOrbits);
+        const Rotation camera = cameraAt(m_shownOrbits, earthTurns);
+        if (speed.x == 0.0f && speed.y == 0.0f)
+        {
+            const Rotation lean = Rotation::About({ 1.0f, 0.0f, 0.0f },
+                viewBehindAt(m_view.altitude));
+            m_view.hangingCamera = Globe::earthAxesAt(earthTurns).inverse().after(camera)
+                .after(lean.inverse()).orthonormal();
+            m_view.hanging = true;
+            m_view.orbitsAhead = m_shownOrbits;
+            return;
+        }
+        m_view.trackAngle = trackAngleFor(speed, bounds);
+        m_view.orbitTurn = camera.after(Globe::orbitAxesAt(m_shownOrbits, m_view.altitude,
+            m_view.trackAngle).inverse()).orthonormal();
+        m_view.hanging = false;
+        m_view.orbitsAhead = m_shownOrbits - m_shownTimeInOrbits;
+    }
+
+    std::span<const SceneChoice> EarthScene::choices() const
+    {
+        return k_choices;
+    }
+
+    std::size_t EarthScene::chosenOption(const std::size_t choice) const
+    {
+        if (choice != k_turnChoice)
+            noReach("EarthScene offers no such choice");
+        return static_cast<std::size_t>(m_turnDirection);
+    }
+
+    // **The Earth carries on from where it stands**: its turns at the last frame's orbits are the
+    // same either way, and it turns on from there.
+    void EarthScene::chooseOption(const std::size_t choice, const std::size_t option)
+    {
+        if (choice != k_turnChoice || option >= k_turnOptions.size())
+            noReach("EarthScene offers no such choice or option");
+        const double turnsShown = earthTurnsAt(m_shownTimeInOrbits);
+        m_turnDirection = static_cast<TurnDirection>(option);
+        m_earthTurnsAhead += turnsShown - earthTurnsAt(m_shownTimeInOrbits);
+    }
+
+    // The orbits and the Earth's turns are those of the last frame, which the viewer last saw.
+    void EarthScene::storeView(Dom::Section& view) const
+    {
+        (view / ViewNodes::Altitude).set(m_view.altitude);
+        (view / ViewNodes::Orbits).set(static_cast<float>(m_shownOrbits));
+        (view / ViewNodes::EarthTurns).set(static_cast<float>(earthTurnsAt(m_shownTimeInOrbits)));
+        (view / k_choices[k_turnChoice].name).set(
+            std::wstring{ k_turnOptions[static_cast<std::size_t>(m_turnDirection)] });
+        storeRotation(view.childSection(ViewNodes::OrbitTurn), m_view.orbitTurn);
+        (view / ViewNodes::TrackAngle).set(m_view.trackAngle / k_degree);
+        (view / ViewNodes::Hanging).set(m_view.hanging);
+        storeRotation(view.childSection(ViewNodes::HangingCamera), m_view.hangingCamera);
+    }
+
+    // **The stored orbits and turns take the place of the last frame's**, and the globe flies on
+    // from them as the scene's time goes on. A way of turning the scene does not know is left as
+    // it stands.
+    void EarthScene::restoreView(const Dom::Section& view)
+    {
+        const std::wstring turn = (view / k_choices[k_turnChoice].name).get<std::wstring>();
+        for (std::size_t option = 0; option != k_turnOptions.size(); ++option)
+        {
+            if (k_turnOptions[option] == turn)
+                m_turnDirection = static_cast<TurnDirection>(option);
+        }
+        m_view.altitude = std::clamp((view / ViewNodes::Altitude).get<float>(), 0.0f, 1.0f);
+        m_view.orbitTurn = restoredRotation(view.childSection(ViewNodes::OrbitTurn),
+            m_view.orbitTurn);
+        m_view.trackAngle = (view / ViewNodes::TrackAngle).get<float>() * k_degree;
+        m_view.hanging = (view / ViewNodes::Hanging).get<bool>();
+        m_view.hangingCamera = restoredRotation(view.childSection(ViewNodes::HangingCamera),
+            m_view.hangingCamera);
+        const double storedOrbits = (view / ViewNodes::Orbits).get<float>();
+        m_view.orbitsAhead = m_view.hanging
+            ? storedOrbits
+            : storedOrbits - m_shownTimeInOrbits;
+        m_shownOrbits = storedOrbits;
+        const double storedEarthTurns = (view / ViewNodes::EarthTurns).get<float>();
+        m_earthTurnsAhead += storedEarthTurns - earthTurnsAt(m_shownTimeInOrbits);
+    }
+
+    // A view as the scene starts is what a config with none restores.
+    Dom::Dt::Section EarthScene::viewSchema()
+    {
+        const View startingView{};
+        return Dom::Dt::Section{
+            k_name,
+            Dom::Dt::Value{ ViewNodes::Altitude, startingView.altitude },
+            Dom::Dt::Value{ ViewNodes::Orbits, 0.0f },
+            Dom::Dt::Value{ ViewNodes::EarthTurns, 0.0f },
+            Dom::Dt::Value{ k_choices[k_turnChoice].name, k_turnOptions[0] },
+            rotationSchema(ViewNodes::OrbitTurn, startingView.orbitTurn),
+            Dom::Dt::Value{ ViewNodes::TrackAngle, startingView.trackAngle },
+            Dom::Dt::Value{ ViewNodes::Hanging, startingView.hanging },
+            rotationSchema(ViewNodes::HangingCamera, startingView.hangingCamera)
+        };
     }
 
     // The Earth spins about its axis, and then tips its north pole toward the viewer.
@@ -2694,6 +2833,78 @@ namespace ClaFi::PathArt
         };
     }
 
+    // **Read through the rotation's quaternion**, worked out from its largest part so that no
+    // division comes near 0. A rotation by nothing answers the y axis and no angle.
+    EarthScene::AxisTurn EarthScene::Rotation::axisTurn() const
+    {
+        struct Quaternion
+        {
+            float w;
+            float x;
+            float y;
+            float z;
+        };
+        const float trace = x.x + y.y + z.z;
+        Quaternion quaternion = { 1.0f, 0.0f, 0.0f, 0.0f };
+        if (trace > 0.0f)
+        {
+            const float scale = 2.0f * std::sqrt(1.0f + trace);
+            quaternion = {
+                0.25f * scale,
+                (y.z - z.y) / scale,
+                (z.x - x.z) / scale,
+                (x.y - y.x) / scale
+            };
+        }
+        else if (x.x >= y.y && x.x >= z.z)
+        {
+            const float scale = 2.0f * std::sqrt(1.0f + x.x - y.y - z.z);
+            quaternion = {
+                (y.z - z.y) / scale,
+                0.25f * scale,
+                (y.x + x.y) / scale,
+                (z.x + x.z) / scale
+            };
+        }
+        else if (y.y >= z.z)
+        {
+            const float scale = 2.0f * std::sqrt(1.0f + y.y - x.x - z.z);
+            quaternion = {
+                (z.x - x.z) / scale,
+                (y.x + x.y) / scale,
+                0.25f * scale,
+                (z.y + y.z) / scale
+            };
+        }
+        else
+        {
+            const float scale = 2.0f * std::sqrt(1.0f + z.z - x.x - y.y);
+            quaternion = {
+                (x.y - y.x) / scale,
+                (z.x + x.z) / scale,
+                (z.y + y.z) / scale,
+                0.25f * scale
+            };
+        }
+        const float halfSine = std::hypot(quaternion.x, quaternion.y, quaternion.z);
+        if (halfSine < 1.0e-7f)
+            return { .axis = { 0.0f, 1.0f, 0.0f }, .angle = 0.0f };
+        return {
+            .axis = { quaternion.x / halfSine, quaternion.y / halfSine, quaternion.z / halfSine },
+            .angle = 2.0f * std::atan2(halfSine, quaternion.w)
+        };
+    }
+
+    // A rotation is undone by its transpose.
+    EarthScene::Rotation EarthScene::Rotation::inverse() const
+    {
+        return {
+            .x = { x.x, y.x, z.x },
+            .y = { x.y, y.y, z.y },
+            .z = { x.z, y.z, z.z }
+        };
+    }
+
     // **Where the north pole stands in the view gives the tilt and the tip**; where longitude 0 on
     // the equator stands, turned back by them, gives the spin. Looking straight down the Earth's
     // axis any tilt would do, and the spin makes up for the one taken.
@@ -2712,27 +2923,23 @@ namespace ClaFi::PathArt
         };
     }
 
-    // **The view's axes follow the orbit, turned by the drags**, and the Earth turns under it about
-    // its own axis; the angles the pixels are worked out by are read from where the Earth's axes
-    // then stand in the view. See PathArt#earthscene
-    EarthScene::Globe EarthScene::Globe::OnOrbit(const FloatPoint center,
-        const float radius, const double orbits, const View& view)
+    // **The Earth turns among the stars about its own axis, and the view's axes see it**; the
+    // angles the pixels are worked out by are read from where the Earth's axes then stand in the
+    // view. See PathArt#earthscene
+    EarthScene::Globe EarthScene::Globe::FromCamera(const FloatPoint center, const float radius,
+        const Rotation& camera, const double earthTurns)
     {
-        const Rotation axes = view.orbitTurn.after(orbitAxesAt(orbits, view.altitude));
-        const float earthTurn = k_2Pi * fractionOf(orbits / k_orbitsPerEarthTurn)
-            + k_earthTurnAtStart;
-        const float turnCosine = std::cos(earthTurn);
-        const float turnSine = std::sin(earthTurn);
         const auto inView = [&](const Direction& direction) {
             const auto along = [&](const Direction& axis) {
                 return axis.x * direction.x + axis.y * direction.y + axis.z * direction.z;
             };
-            return Direction{ along(axes.x), along(axes.y), along(axes.z) };
+            return Direction{ along(camera.x), along(camera.y), along(camera.z) };
         };
+        const Rotation earthAxes = earthAxesAt(earthTurns);
         const Rotation fromEarth = {
-            .x = inView({ turnCosine, 0.0f, -turnSine }),
-            .y = inView({ 0.0f, 1.0f, 0.0f }),
-            .z = inView({ turnSine, 0.0f, turnCosine })
+            .x = inView(earthAxes.x),
+            .y = inView(earthAxes.y),
+            .z = inView(earthAxes.z)
         };
         const ViewAngles angles = ViewAngles::Of(fromEarth);
         const Direction sun = inView({
@@ -2753,21 +2960,38 @@ namespace ClaFi::PathArt
         };
     }
 
-    // The orbit runs in the plane of y and z among the stars, about x, and the view looks back
-    // from the satellite away from the horizon, less the higher it stands.
+    // **The orbit runs in the plane of y and z among the stars, about x**, and the view looks back
+    // from the satellite away from the horizon, less the higher it stands. At a track angle of 0
+    // the track runs across the view; the angle turns the view about the vertical under it, and
+    // the horizon stays at the top.
     EarthScene::Rotation EarthScene::Globe::orbitAxesAt(const double orbits,
-        const float altitude)
+        const float altitude, const float trackAngle)
     {
         const float around = k_2Pi * fractionOf(orbits) + k_orbitStart;
         const float aroundCosine = std::cos(around);
         const float aroundSine = std::sin(around);
-        const float behind = std::lerp(k_viewBehind, k_leastViewBehind, altitude);
+        const float behind = viewBehindAt(altitude);
         const float behindCosine = std::cos(behind);
         const float behindSine = std::sin(behind);
-        return {
+        const Rotation acrossTrack = {
             .x = { 0.0f, -aroundCosine, aroundSine },
             .y = { behindCosine, behindSine * aroundSine, behindSine * aroundCosine },
             .z = { -behindSine, behindCosine * aroundSine, behindCosine * aroundCosine }
+        };
+        // The vertical as the leaning view stands.
+        const Direction vertical = { 0.0f, behindSine, behindCosine };
+        return acrossTrack.after(Rotation::About(vertical, trackAngle));
+    }
+
+    EarthScene::Rotation EarthScene::Globe::earthAxesAt(const double earthTurns)
+    {
+        const float earthTurn = k_2Pi * fractionOf(earthTurns) + k_earthTurnAtStart;
+        const float turnCosine = std::cos(earthTurn);
+        const float turnSine = std::sin(earthTurn);
+        return {
+            .x = { turnCosine, 0.0f, -turnSine },
+            .y = { 0.0f, 1.0f, 0.0f },
+            .z = { turnSine, 0.0f, turnCosine }
         };
     }
 
@@ -3611,6 +3835,152 @@ namespace ClaFi::PathArt
             m_stillSeconds += stillTimeBy(since) - stillTimeBy(std::max(since - elapsed, 0.0));
         }
         return m_stillSeconds;
+    }
+
+    double EarthScene::earthTurnsAt(const double timeInOrbits) const
+    {
+        const double turnsByTime = timeInOrbits / k_orbitsPerEarthTurn;
+        return m_turnDirection == TurnDirection::Eastward
+            ? m_earthTurnsAhead + turnsByTime
+            : m_earthTurnsAhead - turnsByTime;
+    }
+
+    // Hanging, the view turns with the Earth, and leans back as it would on the orbit.
+    EarthScene::Rotation EarthScene::cameraAt(const double orbits, const double earthTurns) const
+    {
+        if (!m_view.hanging)
+        {
+            return m_view.orbitTurn.after(Globe::orbitAxesAt(orbits, m_view.altitude,
+                m_view.trackAngle));
+        }
+        const Rotation lean = Rotation::About({ 1.0f, 0.0f, 0.0f }, viewBehindAt(m_view.altitude));
+        return Globe::earthAxesAt(earthTurns).after(m_view.hangingCamera).after(lean);
+    }
+
+    // The held point is the middle of the view across it, low in the frame at the lowest view and
+    // at the globe's middle with the whole globe in it.
+    EarthScene::Direction EarthScene::heldPointAt(const FloatPoint offset,
+        const FloatRect& bounds) const
+    {
+        // How far from the middle toward the rim a point is taken, so it never lies on the rim.
+        constexpr float k_rimReach{ 0.98f };
+        const GlobeDisc disc = globeDiscAt(bounds.width(), bounds.height(), m_view.altitude);
+        const FloatPoint point = {
+            bounds.width() * 0.5f + offset.x,
+            std::lerp(bounds.height() * 0.72f, disc.center.y, m_view.altitude) + offset.y
+        };
+        FloatPoint onDisc = {
+            (point.x - disc.center.x) / disc.radius,
+            (disc.center.y - point.y) / disc.radius
+        };
+        const float reach = std::hypot(onDisc.x, onDisc.y);
+        if (reach > k_rimReach)
+            onDisc = onDisc * (k_rimReach / reach);
+        return {
+            onDisc.x,
+            onDisc.y,
+            std::sqrt(1.0f - onDisc.x * onDisc.x - onDisc.y * onDisc.y)
+        };
+    }
+
+    // **The ground under the held point moves by the orbit and by the Earth's turn.** The orbit's
+    // part turns with the track angle and the Earth's does not, so the angle taken is the one at
+    // which the two add up to a motion along `speed`. See PathArt#earthscene
+    float EarthScene::trackAngleFor(const FloatPoint speed, const FloatRect& bounds) const
+    {
+        const auto cross = [](const Direction& first, const Direction& second) {
+            return Direction{
+                first.y * second.z - first.z * second.y,
+                first.z * second.x - first.x * second.z,
+                first.x * second.y - first.y * second.x
+            };
+        };
+        const auto across = [](const FloatPoint first, const FloatPoint second) {
+            return first.x * second.y - first.y * second.x;
+        };
+        const Direction held = heldPointAt({ 0.0f, 0.0f }, bounds);
+        const float behind = viewBehindAt(m_view.altitude);
+        // The orbit's axis as the view sees it at a track angle of 0, and the vertical it turns
+        // about at another.
+        const Direction orbitAxis = { 0.0f, std::cos(behind), -std::sin(behind) };
+        const Direction vertical = { 0.0f, std::sin(behind), std::cos(behind) };
+        // How the held point moves across the view for each radian the satellite flies, with the
+        // orbit's axis at a track angle of 0 and at a quarter turn.
+        const Direction byOrbit = cross(orbitAxis, held);
+        const Direction byQuarterTurnedOrbit = cross(cross(vertical, orbitAxis), held);
+        const FloatPoint atNoAngle = { byOrbit.x, byOrbit.y };
+        const FloatPoint atQuarterTurn = { -byQuarterTurnedOrbit.x, -byQuarterTurnedOrbit.y };
+        // And for the Earth's turn over the same while, about its axis as the view sees it.
+        const Rotation camera = cameraAt(m_shownOrbits, earthTurnsAt(m_shownTimeInOrbits));
+        const Direction earthAxis = { camera.x.y, camera.y.y, camera.z.y };
+        const float turnsPerOrbit = static_cast<float>(1.0 / k_orbitsPerEarthTurn)
+            * (m_turnDirection == TurnDirection::Eastward ? 1.0f : -1.0f);
+        const Direction byTurn = cross(earthAxis, held);
+        const FloatPoint byEarth = { byTurn.x * turnsPerOrbit, byTurn.y * turnsPerOrbit };
+        // The way the pointer went, up the view.
+        const FloatPoint way = { speed.x, -speed.y };
+        // The angles at which the motion lies along the way solve a cos + b sin + c = 0.
+        const float cosineShare = across(atNoAngle, way);
+        const float sineShare = across(atQuarterTurn, way);
+        const float steadyShare = across(byEarth, way);
+        const float middle = std::atan2(sineShare, cosineShare);
+        const float spread = std::acos(std::clamp(
+            -steadyShare / std::hypot(cosineShare, sineShare), -1.0f, 1.0f));
+        const auto alongWayAt = [&](const float trackAngle) {
+            const float cosine = std::cos(trackAngle);
+            const float sine = std::sin(trackAngle);
+            const FloatPoint motion = {
+                atNoAngle.x * cosine + atQuarterTurn.x * sine + byEarth.x,
+                atNoAngle.y * cosine + atQuarterTurn.y * sine + byEarth.y
+            };
+            return motion.x * way.x + motion.y * way.y;
+        };
+        const float first = middle + spread;
+        const float second = middle - spread;
+        const float taken = alongWayAt(first) >= alongWayAt(second) ? first : second;
+        // Kept between a half turn either way, which is how the config shows it.
+        return std::remainder(taken, k_2Pi);
+    }
+
+    Dom::Dt::Section EarthScene::rotationSchema(const std::wstring_view key,
+        const Rotation& start)
+    {
+        const AxisTurn turn = start.axisTurn();
+        return Dom::Dt::Section{
+            key,
+            Dom::Dt::Value{ ViewNodes::AxisX, turn.axis.x },
+            Dom::Dt::Value{ ViewNodes::AxisY, turn.axis.y },
+            Dom::Dt::Value{ ViewNodes::AxisZ, turn.axis.z },
+            Dom::Dt::Value{ ViewNodes::Degrees, turn.angle / k_degree }
+        };
+    }
+
+    void EarthScene::storeRotation(Dom::Section& section, const Rotation& rotation)
+    {
+        const AxisTurn turn = rotation.axisTurn();
+        (section / ViewNodes::AxisX).set(turn.axis.x);
+        (section / ViewNodes::AxisY).set(turn.axis.y);
+        (section / ViewNodes::AxisZ).set(turn.axis.z);
+        (section / ViewNodes::Degrees).set(turn.angle / k_degree);
+    }
+
+    EarthScene::Rotation EarthScene::restoredRotation(const Dom::Section& section,
+        const Rotation& fallback)
+    {
+        const Direction axis = {
+            (section / ViewNodes::AxisX).get<float>(),
+            (section / ViewNodes::AxisY).get<float>(),
+            (section / ViewNodes::AxisZ).get<float>()
+        };
+        const float axisLength = std::hypot(axis.x, axis.y, axis.z);
+        if (axisLength == 0.0f)
+            return fallback;
+        const Direction unitAxis = {
+            axis.x / axisLength,
+            axis.y / axisLength,
+            axis.z / axisLength
+        };
+        return Rotation::About(unitAxis, (section / ViewNodes::Degrees).get<float>() * k_degree);
     }
 
 }
