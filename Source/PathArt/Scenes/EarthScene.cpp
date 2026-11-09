@@ -100,6 +100,12 @@ namespace ClaFi::PathArt
         constexpr float k_sunAround{ 35.0f * k_degree };
         // How far north of the equator the Sun stands.
         constexpr float k_sunNorth{ 10.0f * k_degree };
+        // How much of a day a double click moves the light on by.
+        constexpr double k_dayPerDoubleClick{ 0.25 };
+        // The seconds the Sun takes to glide two thirds of the way a double click moves it.
+        constexpr double k_sunGliding{ 0.25 };
+        // How near the Sun has to glide before it is drawn where it was moved, in turns.
+        constexpr double k_sunGlideEnd{ 0.0005 };
         // The frame widths the stars drift each time the satellite goes round.
         constexpr float k_skyWidthsPerOrbit{ 0.2f };
         // The pace things keep at a 40-second cycle, in this scene's 240-second one.
@@ -183,6 +189,7 @@ namespace ClaFi::PathArt
             constexpr std::wstring_view Altitude = L"Altitude";
             constexpr std::wstring_view Orbits = L"Orbits";
             constexpr std::wstring_view EarthTurns = L"EarthTurns";
+            constexpr std::wstring_view SunTurns = L"SunTurns";
             constexpr std::wstring_view TrackAngle = L"TrackAngle";
             constexpr std::wstring_view Hanging = L"Hanging";
             constexpr std::wstring_view HangingCamera = L"HangingCamera";
@@ -2732,7 +2739,10 @@ namespace ClaFi::PathArt
         // runs behind the scene's time by as long as it has stood still.
         const double cycles = static_cast<double>(time.cyclesPassed) + time.cycleTime;
         const double cycleSeconds = std::chrono::duration<double>{ k_cycle }.count();
-        const double globeCycles = cycles - stillSecondsAt(cycles * cycleSeconds) / cycleSeconds;
+        const double sceneSeconds = cycles * cycleSeconds;
+        const double frameSeconds = secondsSinceLastFrame(sceneSeconds);
+        const double globeCycles = cycles - stillSecondsAfter(frameSeconds) / cycleSeconds;
+        moveShownSun(frameSeconds);
         // **A hanging satellite flies no orbit**: its orbits stand still while the Earth turns on.
         const double timeInOrbits = globeCycles * std::chrono::duration<double>{ k_cycle }
             / k_orbit;
@@ -2743,7 +2753,7 @@ namespace ClaFi::PathArt
         m_shownTimeInOrbits = timeInOrbits;
         const double earthTurns = earthTurnsAt(timeInOrbits);
         const Globe globe = Globe::FromCamera(globeDisc.center, radius,
-            cameraAt(orbits, earthTurns), earthTurns);
+            cameraAt(orbits, earthTurns), earthTurns, m_shownSunTurns);
 
         // As the view climbs the satellite draws smaller and moves to the top right, out of the
         // way of the whole globe.
@@ -2814,7 +2824,7 @@ namespace ClaFi::PathArt
         }
         drawCityLights(frame, globe, time.cycleTime);
         frame.canvas.popClip();
-        drawClouds(frame, globe, cycles * cycleSeconds);
+        drawClouds(frame, globe, sceneSeconds);
         drawAtmosphere(frame, globe);
 
         const float size = unit * std::min(1.0f, (width / unit) / 900.0f) * satelliteShare;
@@ -2913,6 +2923,16 @@ namespace ClaFi::PathArt
         flySatelliteOn(m_view.trackAngle);
     }
 
+    // **A double click moves the day on by a quarter**: the Sun goes back round the Earth's axis as
+    // far as a quarter turn of the Earth carries the ground on, so the light moves over the ground
+    // as the hours move it, whichever way the Earth turns. See PathArt#earthscene
+    void EarthScene::doubleClickView(const FloatRect&)
+    {
+        m_sunTurns += m_turnDirection == TurnDirection::Eastward
+            ? -k_dayPerDoubleClick
+            : k_dayPerDoubleClick;
+    }
+
     std::span<const SceneChoice> EarthScene::choices() const
     {
         return k_choices;
@@ -2942,6 +2962,7 @@ namespace ClaFi::PathArt
         (view / ViewNodes::Altitude).set(m_view.altitude);
         (view / ViewNodes::Orbits).set(static_cast<float>(m_shownOrbits));
         (view / ViewNodes::EarthTurns).set(static_cast<float>(earthTurnsAt(m_shownTimeInOrbits)));
+        (view / ViewNodes::SunTurns).set(fractionOf(m_sunTurns));
         (view / k_choices[k_turnChoice].name).set(
             std::wstring{ k_turnOptions[static_cast<std::size_t>(m_turnDirection)] });
         storeRotation(view.childSection(ViewNodes::OrbitTurn), m_view.orbitTurn);
@@ -2975,6 +2996,8 @@ namespace ClaFi::PathArt
         m_shownOrbits = storedOrbits;
         const double storedEarthTurns = (view / ViewNodes::EarthTurns).get<float>();
         m_earthTurnsAhead += storedEarthTurns - earthTurnsAt(m_shownTimeInOrbits);
+        m_sunTurns = (view / ViewNodes::SunTurns).get<float>();
+        m_shownSunTurns = m_sunTurns;
     }
 
     // A view as the scene starts is what a config with none restores.
@@ -2986,6 +3009,7 @@ namespace ClaFi::PathArt
             Dom::Dt::Value{ ViewNodes::Altitude, startingView.altitude },
             Dom::Dt::Value{ ViewNodes::Orbits, 0.0f },
             Dom::Dt::Value{ ViewNodes::EarthTurns, 0.0f },
+            Dom::Dt::Value{ ViewNodes::SunTurns, 0.0f },
             Dom::Dt::Value{ k_choices[k_turnChoice].name, k_turnOptions[0] },
             rotationSchema(ViewNodes::OrbitTurn, startingView.orbitTurn),
             Dom::Dt::Value{ ViewNodes::TrackAngle, startingView.trackAngle },
@@ -3158,9 +3182,9 @@ namespace ClaFi::PathArt
 
     // **The Earth turns among the stars about its own axis, and the view's axes see it**; the
     // angles the pixels are worked out by are read from where the Earth's axes then stand in the
-    // view. See PathArt#earthscene
+    // view. The Sun turns about the same axis. See PathArt#earthscene
     EarthScene::Globe EarthScene::Globe::FromCamera(const FloatPoint center, const float radius,
-        const Rotation& camera, const double earthTurns)
+        const Rotation& camera, const double earthTurns, const double sunTurns)
     {
         const auto inView = [&](const Direction& direction) {
             const auto along = [&](const Direction& axis) {
@@ -3175,10 +3199,11 @@ namespace ClaFi::PathArt
             .z = inView(earthAxes.z)
         };
         const ViewAngles angles = ViewAngles::Of(fromEarth);
+        const float sunAround = k_sunAround + k_2Pi * fractionOf(sunTurns);
         const Direction sun = inView({
-            std::cos(k_sunNorth) * std::sin(k_sunAround),
+            std::cos(k_sunNorth) * std::sin(sunAround),
             std::sin(k_sunNorth),
-            std::cos(k_sunNorth) * std::cos(k_sunAround)
+            std::cos(k_sunNorth) * std::cos(sunAround)
         });
         // The Sun across and up the screen, turned back by the tilt as a direction is held.
         const FloatPoint sunOnScreen = rotated({ sun.x, sun.y }, -angles.tilt);
@@ -4056,17 +4081,33 @@ namespace ClaFi::PathArt
         drawRing(globe.radius * 0.988f, globe.radius * 0.016f, 0.34f);
     }
 
-    // **The globe holds still while a press holds the view**: a frame drawn while it is held counts
-    // the time since the last frame as still, and a let-go moves the globe on at once.
-    double EarthScene::stillSecondsAt(const double sceneSeconds)
+    double EarthScene::secondsSinceLastFrame(const double sceneSeconds)
     {
         const double elapsed = m_lastFrameAt
             ? std::max(sceneSeconds - *m_lastFrameAt, 0.0)
             : 0.0;
         m_lastFrameAt = sceneSeconds;
+        return elapsed;
+    }
+
+    // **The globe holds still while a press holds the view**: a frame drawn while it is held counts
+    // the time since the last frame as still, and a let-go moves the globe on at once.
+    double EarthScene::stillSecondsAfter(const double frameSeconds)
+    {
         if (m_viewHeld)
-            m_stillSeconds += elapsed;
+            m_stillSeconds += frameSeconds;
         return m_stillSeconds;
+    }
+
+    // **The Sun glides as the wheel's notches come in**: most of the way at first, slowing as it
+    // nears, and drawn where it was moved once it is that near. The time is the scene's.
+    void EarthScene::moveShownSun(const double frameSeconds)
+    {
+        const double toCome = m_sunTurns - m_shownSunTurns;
+        const double step = toCome * (1.0 - std::exp(-frameSeconds / k_sunGliding));
+        m_shownSunTurns = std::abs(toCome - step) < k_sunGlideEnd
+            ? m_sunTurns
+            : m_shownSunTurns + step;
     }
 
     double EarthScene::earthTurnsAt(const double timeInOrbits) const

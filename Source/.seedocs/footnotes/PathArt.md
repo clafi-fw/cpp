@@ -72,9 +72,10 @@ EarthScene. A scene that offers none leaves both as they are.
 **The MillScene showcase hands them on from the panel the scene covers.** A press on the scene where
 a drag moves the view - see Scene dragMovesViewFrom - stops a glide and holds the view until it is
 let go - see Scene holdView and Scene letGoView. Let go before the pointer leaves the slack a click
-is allowed (DragEvent pastThreshold), the press is a click - see Scene clickView. A press anywhere
-else leaves the scene moving as it was, and one on a control over the scene, such as the readings
-beside it, is that control's. The pointer shows a hand wherever a drag moves the view.
+is allowed (DragEvent pastThreshold), the press is a click - see Scene clickView - and a double
+click there is the scene's as well - see Scene doubleClickView. A press anywhere else leaves the
+scene moving as it was, and one on a control over the scene, such as the readings beside it, is
+that control's. The pointer shows a hand wherever a drag moves the view.
 
 **A drag let go glides on** at the speed of its last 80 milliseconds and slows to about a third of
 it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second. Another
@@ -108,6 +109,14 @@ glide. The Earth scene takes it to choose how the satellite flies on - see Earth
 host calls clickView() in place of letGoView() for a press let go inside the slack a click is
 allowed, so a tremble of the pointer in a click reaches the scene as a click and not as a speed. The
 Earth scene takes a click to stop the satellite or set it flying again - see EarthScene.
+
+## Scene doubleClickView
+
+**A double click where a drag moves the view reaches the scene after its first click.** The host
+calls doubleClickView() as the second press comes down, once the first has been let go as a click -
+see Scene clickView. The second press then goes on as a press: it holds the view, and a still
+let-go of it is a click again, so a scene that toggles something on a click sees it toggled and
+back. The Earth scene takes a double click to move the day on - see EarthScene.
 
 ## SceneChoice
 
@@ -455,6 +464,13 @@ stand still while it hangs, and the Earth's turn goes on.
 hangs as a still let-go hangs it; a hanging one flies on along the track it flew before it hung,
 from the picture as it stands, at the orbit's own pace.
 
+**A double click moves the day on by a quarter** - see Scene doubleClickView. The Sun goes back
+round the Earth's axis as far as a quarter turn of the Earth carries the ground on, so noon turns to
+dusk, dusk to midnight, midnight to dawn and dawn to noon wherever the view stands, whichever way
+the Earth turns. The light glides there in about a second of the scene's time. The ground, the
+orbit and the stars stay where they are. The double click's own two clicks stop the satellite and
+set it flying again, or the other way round.
+
 **The wheel climbs above the globe**, a tenth of the way a notch, from the lowest view to the whole
 globe in the middle of the frame. The globe's radius shrinks by the same share at each step, from
 1.15 times the frame's longer side to 0.4 times its shorter, and the view leans back from 36 degrees
@@ -465,10 +481,11 @@ live above it; so is the ocean until the land's map is built. The view starts fo
 
 **The view is kept across runs** - see Scene storeView: the altitude, the orbit as the drags have
 turned it and the angle its track runs at, the orbits flown, which say where the satellite is and
-how far the sky has drifted, whether it hangs and where, the Earth's turns and the way it turns. The
-globe flies on, or hangs on, from where it was left; the clouds' drift and the twinkling start over.
-The section holds Altitude, Orbits, EarthTurns, Turn, TrackAngle in degrees, Hanging, and OrbitTurn
-and HangingCamera, each as an axis and an angle in degrees: AxisX, AxisY, AxisZ and Degrees.
+how far the sky has drifted, whether it hangs and where, the Earth's turns and the way it turns, and
+the Sun's turns round the Earth's axis. The globe flies on, or hangs on, from where it was left; the
+clouds' drift and the twinkling start over. The section holds Altitude, Orbits, EarthTurns,
+SunTurns, Turn, TrackAngle in degrees, Hanging, and OrbitTurn and HangingCamera, each as an axis
+and an angle in degrees: AxisX, AxisY, AxisZ and Degrees.
 
 **The Earth turns eastward, as the real one does, or westward** - the scene's one choice, Turn, see
 SceneChoice. Picked either way, the Earth carries on from where it stands and turns on the other
@@ -479,8 +496,9 @@ wheel leaves the satellite flying as it flew. The clouds go on drifting over the
 satellite goes on hovering and blinking, and the stars and the city lights twinkling. The time is
 the scene's, so a paused scene holds the count as well.
 
-**The Sun stands fixed among the stars**, and so does the orbit's plane, so each orbit passes a day
-of about two minutes and a night. In the Earth's shadow the satellite darkens and the stars
+**The Sun stands still among the stars until a double click moves it**, and so does the orbit's
+plane, so each orbit passes a day and a night: a day of about two minutes as the scene starts, and
+longer or shorter as the Sun moves round. In the Earth's shadow the satellite darkens and the stars
 brighten. Its panels turn once an orbit to face the Sun, so in the shadow they show their backs.
 The stars drift a fifth of the frame's width each orbit - see StarField drift.
 

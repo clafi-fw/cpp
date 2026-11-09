@@ -34,6 +34,7 @@ namespace ClaFi::PathArt
         void holdView(bool held) override;
         void letGoView(FloatPoint speed, const FloatRect& bounds) override;
         void clickView(const FloatRect&) override;
+        void doubleClickView(const FloatRect&) override;
         [[nodiscard]] std::span<const SceneChoice> choices() const override;
         [[nodiscard]] std::size_t chosenOption(std::size_t choice) const override;
         void chooseOption(std::size_t choice, std::size_t option) override;
@@ -131,9 +132,9 @@ namespace ClaFi::PathArt
             Direction sun;
             Rotation fromEarth; // where the Earth's axes stand in the view
 
-            // The Earth as the view's axes see it, turned a number of times. See PathArt#earthscene
+            // The turned Earth and Sun as the view's axes see them. See PathArt#earthscene
             [[nodiscard]] static Globe FromCamera(FloatPoint center, float radius,
-                const Rotation& camera, double earthTurns);
+                const Rotation& camera, double earthTurns, double sunTurns);
             // Where the view's axes stand among the stars at a point of the orbit, before any drag.
             [[nodiscard]] static Rotation orbitAxesAt(double orbits, float altitude,
                 float trackAngle);
@@ -211,8 +212,12 @@ namespace ClaFi::PathArt
         static void drawAtmosphere(const SceneFrame&, const Globe&);
         // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
+        // The scene's seconds since the last frame, 0 for the first.
+        [[nodiscard]] double secondsSinceLastFrame(double sceneSeconds);
         // How long the globe has stood still by a frame, while a press held the view.
-        [[nodiscard]] double stillSecondsAt(double sceneSeconds);
+        [[nodiscard]] double stillSecondsAfter(double frameSeconds);
+        // Glides the Sun as drawn toward where the double clicks have moved it.
+        void moveShownSun(double frameSeconds);
         // How many turns the Earth has made by the globe's time, counted in orbits.
         [[nodiscard]] double earthTurnsAt(double timeInOrbits) const;
         // Where the view's axes stand among the stars: on the orbit, or hanging over the ground.
@@ -266,5 +271,8 @@ namespace ClaFi::PathArt
         std::optional<double> m_lastFrameAt{}; // in seconds of the scene's time
         // How long the globe has stood still in all, which its motion runs that far behind.
         double m_stillSeconds{};
+        // How far round the Earth's axis the double clicks have moved the Sun, in turns.
+        double m_sunTurns{};
+        double m_shownSunTurns{}; // where the last frame drew the Sun, gliding toward m_sunTurns
     };
 }

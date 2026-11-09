@@ -82,6 +82,8 @@ namespace ClaFi::PathArt
         virtual void letGoView(FloatPoint, const FloatRect&) {}
         // Lets go of the view after a click, by default as a still let-go. See PathArt
         virtual void clickView(const FloatRect& bounds) { letGoView({ 0.0f, 0.0f }, bounds); }
+        // A double click where a drag moves the view, after its first click. See PathArt
+        virtual void doubleClickView(const FloatRect&) {}
         // Writes the view as the viewer left it into its own section. See PathArt#scene-storeview
         virtual void storeView(Dom::Section&) const {}
         // Takes the view back from the scene's section, as storeView wrote it or as it starts.

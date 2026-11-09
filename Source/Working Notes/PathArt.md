@@ -139,6 +139,14 @@ moves read, which also answers the jitter fling above. EarthScene's let-go is sp
 hangSatellite and flySatelliteOn(trackAngle); a click flies a hanging satellite on at the track
 angle kept from before it hung, laid on the picture as it stands exactly as a fling lays its own.
 
+**A double click is the scene's too** (Oj, 2026-11-09, "double click to advance day/night cycle").
+Of doubleClickView() beside clickView and an advanceDay() named for what it does, which the host
+would map the double click to, Oj picked doubleClickView. A double click's first click toggles the
+flight, and its second press, let go still, toggles it back; of keeping that, a single click
+waiting out the double-click time, and the first click's toggle standing, Oj kept it. ScenePanel
+answers DoubleClickEvent on the panel itself and does not stop it, so FormBase::wnd_doubleClick
+hands the second press on to wnd_mouseDown as it does for every control that leaves it.
+
 ## Scene draw
 
 Every scene was first built as an animated HTML page on a 2D canvas, reviewed, and then ported.
@@ -1041,6 +1049,21 @@ the pixel, and a soft coast stood alone among them.
 - The frames match the picked mockup within 11 levels, on pixels of the limb where a coast crosses
   it; the stylized look is bit for bit as before. The measured coast now reads 2.9 to 3.2 below the
   whole globe and 2.2 to 2.5 with it in view.
+
+**A double click moves the Sun a quarter of the way round** (Oj, 2026-11-09, "double click to
+advance day/night cycle"). Of moving the Sun round the Earth's axis and moving the time on, Oj
+picked the Sun, as the time would carry a flying satellite over other ground; of half a day swept,
+a quarter swept and half a day at once, a quarter swept. The Sun stands at k_sunAround plus its
+turns, and the Earth's turn moves a point fixed to it the same way round, so the Sun goes back a
+quarter for an eastward Earth and on a quarter for a westward one. The glide is the wheel's: two
+thirds of the way in 0.25 seconds of the scene's time, and drawn at the end once within 0.0005
+turns of it. stillSecondsAt was split into secondsSinceLastFrame and stillSecondsAfter, so the hold
+and the glide read one frame time.
+
+Checked in the container harness, at 960 x 540: frames without a double click are bit for bit those
+of b800cba, flying and hanging, in both looks. Hanging at 300 seconds, a double click lights the
+ground after a second as 207.8 more seconds of the Earth's turn light it, a quarter of its 831,
+for either way of turning; the clouds stand apart, as they drift on the scene's time.
 
 ## ChaseScene
 

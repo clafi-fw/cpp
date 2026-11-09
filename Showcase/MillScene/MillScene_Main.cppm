@@ -120,6 +120,7 @@ namespace MillScene_App
         void nestedPressDown(PressDownEvent&) override;
         void nestedDrag(DragEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
+        void doubleClick(DoubleClickEvent&) override;
         void nestedMouseWheel(MouseWheelEvent&) override;
     private:
         // A move of the pointer in a drag, kept to tell how fast the drag went as it was let go.
@@ -488,6 +489,15 @@ void ScenePanel::nestedPressUp(PressUpEvent& event)
     if (std::hypot(m_glideSpeed.x, m_glideSpeed.y) < k_glideStop)
         m_glideSpeed = {};
     m_scene->letGoView(m_glideSpeed, m_sceneBounds);
+}
+
+// **A double click where a drag moves the view is the scene's too**, after its first click. The
+// press it ends goes on as a press, so it holds the view and is let go as any press is.
+void ScenePanel::doubleClick(DoubleClickEvent& event)
+{
+    Panel::doubleClick(event);
+    if (dragMovesViewFrom(event.clickPos()))
+        m_scene->doubleClickView(m_sceneBounds);
 }
 
 void ScenePanel::nestedMouseWheel(MouseWheelEvent& event)
