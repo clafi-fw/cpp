@@ -7,6 +7,9 @@ import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.StarsEffect;
 import ClaFi.PathArt.SunSprite;
+import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -38,6 +41,10 @@ namespace ClaFi::PathArt
         constexpr float k_lively{ 6.0f };
         constexpr float k_beltOrbitsPerCycle{ 3.0f };
         constexpr int k_asteroidCount{ 280 };
+        // What the scene offers to turn on and off.
+        constexpr std::array<std::wstring_view, 1> k_switches{ L"Show orbits" };
+        constexpr std::size_t k_orbitsSwitch{ 0 }; // its index in k_switches
+        constexpr std::wstring_view k_orbitsShownNode{ L"OrbitsShown" }; // the config's name for it
 
         struct Orbit
         {
@@ -144,7 +151,8 @@ namespace ClaFi::PathArt
             .color = OrreryColors::Star,
             .twinklesPerCycle = k_lively
         });
-        m_farOrbits.draw(frame);
+        if (m_orbitsShown)
+            m_farOrbits.draw(frame);
         for (const PlacedPlanet* placed : byDepth)
         {
             if (placed->depth < 0.0f && placed->outer)
@@ -161,7 +169,8 @@ namespace ClaFi::PathArt
             .cycleTime = time.cycleTime,
             .flickersPerCycle = 4.0f * k_lively
         });
-        m_nearOrbits.draw(frame);
+        if (m_orbitsShown)
+            m_nearOrbits.draw(frame);
         for (const PlacedPlanet* placed : byDepth)
         {
             if (placed->depth >= 0.0f && !placed->outer)
@@ -188,6 +197,44 @@ namespace ClaFi::PathArt
             .orbitTilt = 0.3f,
             .cycleTime = 0.1f
         });
+    }
+
+    std::span<const std::wstring_view> OrreryScene::switches() const
+    {
+        return k_switches;
+    }
+
+    bool OrreryScene::isSwitchOn(const std::size_t index) const
+    {
+        if (index != k_orbitsSwitch)
+            noReach("OrreryScene offers no such switch");
+        return m_orbitsShown;
+    }
+
+    void OrreryScene::setSwitch(const std::size_t index, const bool on)
+    {
+        if (index != k_orbitsSwitch)
+            noReach("OrreryScene offers no such switch");
+        m_orbitsShown = on;
+    }
+
+    void OrreryScene::storeView(Dom::Section& view) const
+    {
+        (view / k_orbitsShownNode).set(m_orbitsShown);
+    }
+
+    void OrreryScene::restoreView(const Dom::Section& view)
+    {
+        m_orbitsShown = (view / k_orbitsShownNode).get<bool>();
+    }
+
+    // The orbits show as the scene starts.
+    Dom::Dt::Section OrreryScene::viewSchema()
+    {
+        return Dom::Dt::Section{
+            k_name,
+            Dom::Dt::Value{ k_orbitsShownNode, true }
+        };
     }
 
     void OrreryScene::drawSpace(const SceneFrame& frame)

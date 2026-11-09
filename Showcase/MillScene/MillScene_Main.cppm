@@ -26,6 +26,7 @@ import ClaFi.Controls.Label;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.RadioButton;
+import ClaFi.Controls.CheckBox;
 
 import ClaFi.Icons.DotMark;
 
@@ -209,19 +210,25 @@ namespace MillScene_App
         // Takes an option in the choice a picker of m_choicePickers shows, while it is hovered.
         void previewOption(std::size_t pickerIndex, std::size_t option);
         void pickOption(std::size_t pickerIndex, std::size_t option);
-        // Whether a scene's page of options holds a picker: the mill's themes, a look, a choice.
+        // Whether a scene's page holds an option: the mill's themes, a look, a choice, a switch.
         [[nodiscard]] bool sceneOffersOptions(std::size_t index);
 
         void buildScenePage(AppMenuPage&);
         void buildScenePicker(AppMenuPage&);
-        // A page of options for every scene under one caption, the picked scene's page showing.
+        // A page of options for every scene in one section, the picked scene's page showing.
         void buildSceneOptions(AppMenuPage&);
+        // What that section is captioned with while the scene at `index` is the picked one.
+        [[nodiscard]] std::wstring sceneOptionsCaption(std::size_t index);
         void buildThemePicker();
         void buildLookPicker();
         void buildChoicePickers();
         void buildChoicePicker(std::size_t pickerIndex);
-        // Adds a column to a scene's page of options: the caption, with room for options under it.
-        [[nodiscard]] static StackPanel& addPickerColumn(StackPanel& optionsPage,
+        // The switches the scene at `index` offers, a check box each, under its pickers.
+        void buildSwitchBoxes(std::size_t index);
+        // The gestures the scene at `index` answers, captioned Controls, under its options.
+        void buildGestureHints(std::size_t index);
+        // Adds a column to a scene's page of options: the caption, with room under it.
+        [[nodiscard]] static StackPanel& addCaptionedColumn(StackPanel& optionsPage,
             std::wstring_view caption);
 
         void restoreScene();
@@ -260,6 +267,7 @@ namespace MillScene_App
         // button it left as well as the one it took, and the stack is what the preview returns to.
         SingleSelectionStackView* m_sceneLanes{ nullptr };
         std::vector<Control*> m_sceneButtons{};
+        AppMenuPage::Section* m_sceneOptionsSection{ nullptr }; // named after the picked scene
         // Holds a page of options for each scene and shows the picked scene's.
         PageControl* m_sceneOptionsControl{ nullptr };
         std::vector<StackPanel*> m_sceneOptionPages{}; // at each scene's index
@@ -703,6 +711,12 @@ void MillSceneForm::pickScene(const std::size_t index)
         m_sceneButtons[previous]->invalidateState();
         m_sceneButtons[index]->invalidateState();
     }
+    if (m_sceneOptionsSection)
+    {
+        // In the heading style AppMenuPage::addSection gives a section's caption.
+        m_sceneOptionsSection->setHeaderText(
+            Text{ StyledText{ TextStyles::Heading, sceneOptionsCaption(index) } });
+    }
     if (m_sceneOptionsControl)
         m_sceneOptionsControl->setCurrentItem(*m_sceneOptionPages[index]);
 }
@@ -791,7 +805,8 @@ bool MillSceneForm::sceneOffersOptions(const std::size_t index)
 {
     return index == 0
         || sceneWithLooks() == index
-        || !sceneAt(index).choices().empty();
+        || !sceneAt(index).choices().empty()
+        || !sceneAt(index).switches().empty();
 }
 
 void MillSceneForm::buildScenePage(AppMenuPage& page)
@@ -860,13 +875,16 @@ void MillSceneForm::buildScenePicker(AppMenuPage& page)
 // be cut to that window.
 void MillSceneForm::buildSceneOptions(AppMenuPage& page)
 {
-    PageControl& optionsControl = page.addGroup(L"Scene Options").add<PageControl>();
-    optionsControl.setPageSizing(PageSizing::WidestPage);
-    m_sceneOptionsControl = &optionsControl;
-    optionsControl.onDestroy([this](DestroyEvent&) {
+    AppMenuPage::Section& section = page.addSection(sceneOptionsCaption(m_pickedScene));
+    m_sceneOptionsSection = &section;
+    section.onDestroy([this](DestroyEvent&) {
+        m_sceneOptionsSection = nullptr;
         m_sceneOptionsControl = nullptr;
         m_sceneOptionPages.clear();
     });
+    PageControl& optionsControl = section.body().add<PageControl>();
+    optionsControl.setPageSizing(PageSizing::WidestPage);
+    m_sceneOptionsControl = &optionsControl;
 
     m_sceneOptionPages.clear();
     m_sceneOptionPages.reserve(sceneCount());
@@ -884,20 +902,27 @@ void MillSceneForm::buildSceneOptions(AppMenuPage& page)
     buildChoicePickers();
     for (std::size_t index = 0; index != sceneCount(); ++index)
     {
+        buildSwitchBoxes(index);
         if (!sceneOffersOptions(index))
         {
             m_sceneOptionPages[index]->add<Label>(
-                Text{ std::format(L"{} has no options", sceneAt(index).name()) },
+                Text{ L"This scene has no options" },
                 TextFormat{ InkGrade::Muted }
             );
         }
+        buildGestureHints(index);
     }
     optionsControl.setCurrentItem(*m_sceneOptionPages[m_pickedScene]);
 }
 
+std::wstring MillSceneForm::sceneOptionsCaption(const std::size_t index)
+{
+    return std::format(L"{} Options", sceneAt(index).name());
+}
+
 void MillSceneForm::buildThemePicker()
 {
-    StackPanel& column = addPickerColumn(*m_sceneOptionPages[0], L"Theme");
+    StackPanel& column = addCaptionedColumn(*m_sceneOptionPages[0], L"Theme");
     SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_themeLaneSize },
@@ -962,7 +987,7 @@ void MillSceneForm::buildLookPicker()
     const std::optional<std::size_t> scene = sceneWithLooks();
     if (!scene)
         return;
-    StackPanel& column = addPickerColumn(*m_sceneOptionPages[*scene], L"Look");
+    StackPanel& column = addCaptionedColumn(*m_sceneOptionPages[*scene], L"Look");
     SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_optionLaneSize },
@@ -1030,7 +1055,7 @@ void MillSceneForm::buildChoicePicker(const std::size_t pickerIndex)
     const PathArt::Scene& scene = sceneAt(choicePicker.sceneIndex);
     const PathArt::SceneChoice& choice = scene.choices()[choicePicker.choiceIndex];
     StackPanel& column =
-        addPickerColumn(*m_sceneOptionPages[choicePicker.sceneIndex], choice.name);
+        addCaptionedColumn(*m_sceneOptionPages[choicePicker.sceneIndex], choice.name);
     SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_optionLaneSize },
@@ -1069,7 +1094,45 @@ void MillSceneForm::buildChoicePicker(const std::size_t pickerIndex)
     lanes.setCurrentItem(*choicePicker.buttons[choicePicker.pickedOption]);
 }
 
-StackPanel& MillSceneForm::addPickerColumn(StackPanel& optionsPage,
+// A switch is read from the scene and turned on a click; the scene keeps it with its view.
+void MillSceneForm::buildSwitchBoxes(const std::size_t index)
+{
+    PathArt::Scene& scene = sceneAt(index);
+    const std::span<const std::wstring_view> switchNames = scene.switches();
+    for (std::size_t switchIndex = 0; switchIndex != switchNames.size(); ++switchIndex)
+    {
+        CheckBox& box = m_sceneOptionPages[index]->add<CheckBox>(
+            Text{ switchNames[switchIndex] },
+            Padding{ 0.0f, styleMetrics(UiElement::ListItem).padding.y }
+        );
+        box.onGetState([&scene, switchIndex](GetStateEvent& event) {
+            event.state.selected = scene.isSwitchOn(switchIndex);
+        });
+        // A different picture is a different load, so the readings start again.
+        box.onClick([this, &scene, switchIndex](ClickEvent& event) {
+            scene.setSwitch(switchIndex, !scene.isSwitchOn(switchIndex));
+            m_benchmark.reset();
+            event.control->invalidateState();
+        });
+    }
+}
+
+void MillSceneForm::buildGestureHints(const std::size_t index)
+{
+    const std::span<const PathArt::SceneGesture> gestures = sceneAt(index).gestures();
+    if (gestures.empty())
+        return;
+    Text hints = {};
+    for (std::size_t line = 0; line != gestures.size(); ++line)
+    {
+        if (line != 0)
+            hints << L'\n';
+        hints << BoldText{ gestures[line].name } << L' ' << gestures[line].effect;
+    }
+    addCaptionedColumn(*m_sceneOptionPages[index], L"Controls").add<Label>(std::move(hints));
+}
+
+StackPanel& MillSceneForm::addCaptionedColumn(StackPanel& optionsPage,
     const std::wstring_view caption)
 {
     StackPanel& column = optionsPage.add<StackPanel>(

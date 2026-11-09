@@ -8,7 +8,7 @@ Scene was cut out of MillScene when the showcase gained more pictures than the m
 derives from it, named Mill, and the seven others come from createScenes(). The showcase holds the
 mill as a member, since its theme picker drives it, and the others in a list after it.
 
-The theme picker belongs to the mill alone and stands on the mill's page of Scene Options; a
+The theme picker belongs to the mill alone and stands on the mill's page of options; a
 hover preview over the Scene group shows the scene under the pointer and puts the picked one back
 when the pointer leaves. The config keeps the scene by name in `Scene` and the theme in
 `SceneTheme`, so a scene added or moved in the list does not shift what was stored.
@@ -219,8 +219,27 @@ sections inside; a placeholder where a scene has nothing to set.
 - **Each picker is a column**: its caption in strong ink over its options - Theme, Look, Turn. The
   section captions carried the scene's name; a page shows only while its scene is picked, so the
   captions leave it out.
+- **The section names the picked scene** (Oj, "Make Scene Options header name the scene"): Mill
+  Options, Earth Options, rewritten on every pick in the heading style AppMenuPage::addSection
+  gives a caption. The placeholder then says only "This scene has no options".
 - **Compiled under clang only**, not run as the app. The arrow keys from the tiles into a picker
   pass through the page control there.
+
+**The Earth's Turn gave way to hints of its gestures** (Oj, 2026-11-10, "Remove the Earth Turn
+option. Add controls hints label instead"). Asked where the hints are written - stated by the
+scene, as its choices are, or kept as the showcase's own text - Oj picked the scene: SceneGesture
+is a name and an effect, and gestures() lists them. Asked whether SceneChoice goes with the Turn,
+Oj kept it, with no scene stating a choice. The Earth turns eastward only, and a Turn value an
+older config holds is no longer read. The showcase writes the hints a line each under a Controls
+caption, the name in bold.
+
+**A scene states its switches** (Oj, 2026-11-10, "orrery Show orbits option"). Asked whether the
+option is a check box, which needed an on-off kind on Scene, or an Orbits choice of Shown and
+Hidden through SceneChoice, Oj picked the check box. switches() names them, isSwitchOn() and
+setSwitch() read and turn one by index, as chosenOption() and chooseOption() do a choice's. A check
+box has no hover preview: a click turns the switch, and the readings start again. The Orrery keeps
+its one switch in a view section of its own under OrbitsShown - a name without the space, unchecked
+whether the config's names may hold one - and draws its orbit layers only while it is on.
 
 ## Scene draw
 

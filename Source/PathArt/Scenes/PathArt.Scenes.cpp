@@ -31,6 +31,7 @@ namespace ClaFi::PathArt
     Dom::Dt::Section createSceneViewsSchema()
     {
         Dom::Dt::Section views{};
+        views.children.push_back(std::make_unique<Dom::Dt::Section>(OrreryScene::viewSchema()));
         views.children.push_back(std::make_unique<Dom::Dt::Section>(EarthScene::viewSchema()));
         return views;
     }

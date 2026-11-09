@@ -177,15 +177,15 @@ namespace ClaFi::PathArt
         // The realistic coast's blur per pixel between the land's points. See PathArt#earthscene
         constexpr float k_coastBlurPerStep{ 0.5f };
 
-        // The ways the Earth may turn, in the order of TurnDirection.
-        constexpr std::array<std::wstring_view, 2> k_turnOptions{ L"Eastward", L"Westward" };
-        // What the scene offers beside its look.
-        constexpr std::array<SceneChoice, 1> k_choices{
-            SceneChoice{ L"Turn", k_turnOptions }
+        // What the viewer may do to the scene, as the host's hints show it.
+        constexpr std::array<SceneGesture, 4> k_gestures{
+            SceneGesture{ L"Click", L"to stop and resume" },
+            SceneGesture{ L"Double click", L"to advance time" },
+            SceneGesture{ L"Drag", L"to choose position" },
+            SceneGesture{ L"Drag and fling", L"to make an orbit" }
         };
-        constexpr std::size_t k_turnChoice{ 0 }; // its index in k_choices
 
-        // The names the view is kept under in the config; a choice is kept under its own name.
+        // The names the view is kept under in the config.
         namespace ViewNodes
         {
             constexpr std::wstring_view Altitude = L"Altitude";
@@ -2996,35 +2996,15 @@ namespace ClaFi::PathArt
 
     // **A double click moves the day on by a quarter**: the Sun goes back round the Earth's axis as
     // far as a quarter turn of the Earth carries the ground on, so the light moves over the ground
-    // as the hours move it, whichever way the Earth turns. See PathArt#earthscene
+    // as the hours move it. See PathArt#earthscene
     void EarthScene::doubleClickView(const FloatRect&)
     {
-        m_sunTurns += m_turnDirection == TurnDirection::Eastward
-            ? -k_dayPerDoubleClick
-            : k_dayPerDoubleClick;
+        m_sunTurns -= k_dayPerDoubleClick;
     }
 
-    std::span<const SceneChoice> EarthScene::choices() const
+    std::span<const SceneGesture> EarthScene::gestures() const
     {
-        return k_choices;
-    }
-
-    std::size_t EarthScene::chosenOption(const std::size_t choice) const
-    {
-        if (choice != k_turnChoice)
-            noReach("EarthScene offers no such choice");
-        return static_cast<std::size_t>(m_turnDirection);
-    }
-
-    // **The Earth carries on from where it stands**: its turns at the last frame's orbits are the
-    // same either way, and it turns on from there.
-    void EarthScene::chooseOption(const std::size_t choice, const std::size_t option)
-    {
-        if (choice != k_turnChoice || option >= k_turnOptions.size())
-            noReach("EarthScene offers no such choice or option");
-        const double turnsShown = earthTurnsAt(m_shownTimeInOrbits);
-        m_turnDirection = static_cast<TurnDirection>(option);
-        m_earthTurnsAhead += turnsShown - earthTurnsAt(m_shownTimeInOrbits);
+        return k_gestures;
     }
 
     // The orbits and the Earth's turns are those of the last frame, which the viewer last saw.
@@ -3034,8 +3014,6 @@ namespace ClaFi::PathArt
         (view / ViewNodes::Orbits).set(static_cast<float>(m_shownOrbits));
         (view / ViewNodes::EarthTurns).set(static_cast<float>(earthTurnsAt(m_shownTimeInOrbits)));
         (view / ViewNodes::SunTurns).set(fractionOf(m_sunTurns));
-        (view / k_choices[k_turnChoice].name).set(
-            std::wstring{ k_turnOptions[static_cast<std::size_t>(m_turnDirection)] });
         storeRotation(view.childSection(ViewNodes::OrbitTurn), m_view.orbitTurn);
         (view / ViewNodes::TrackAngle).set(m_view.trackAngle / k_degree);
         (view / ViewNodes::Hanging).set(m_view.hanging);
@@ -3043,16 +3021,9 @@ namespace ClaFi::PathArt
     }
 
     // **The stored orbits and turns take the place of the last frame's**, and the globe flies on
-    // from them as the scene's time goes on. A way of turning the scene does not know is left as
-    // it stands.
+    // from them as the scene's time goes on.
     void EarthScene::restoreView(const Dom::Section& view)
     {
-        const std::wstring turn = (view / k_choices[k_turnChoice].name).get<std::wstring>();
-        for (std::size_t option = 0; option != k_turnOptions.size(); ++option)
-        {
-            if (k_turnOptions[option] == turn)
-                m_turnDirection = static_cast<TurnDirection>(option);
-        }
         m_view.altitude = std::clamp((view / ViewNodes::Altitude).get<float>(), 0.0f, 1.0f);
         m_view.orbitTurn = restoredRotation(view.childSection(ViewNodes::OrbitTurn),
             m_view.orbitTurn);
@@ -3081,7 +3052,6 @@ namespace ClaFi::PathArt
             Dom::Dt::Value{ ViewNodes::Orbits, 0.0f },
             Dom::Dt::Value{ ViewNodes::EarthTurns, 0.0f },
             Dom::Dt::Value{ ViewNodes::SunTurns, 0.0f },
-            Dom::Dt::Value{ k_choices[k_turnChoice].name, k_turnOptions[0] },
             rotationSchema(ViewNodes::OrbitTurn, startingView.orbitTurn),
             Dom::Dt::Value{ ViewNodes::TrackAngle, startingView.trackAngle },
             Dom::Dt::Value{ ViewNodes::Hanging, startingView.hanging },
@@ -4222,9 +4192,7 @@ namespace ClaFi::PathArt
     double EarthScene::earthTurnsAt(const double timeInOrbits) const
     {
         const double turnsByTime = timeInOrbits / k_orbitsPerEarthTurn;
-        return m_turnDirection == TurnDirection::Eastward
-            ? m_earthTurnsAhead + turnsByTime
-            : m_earthTurnsAhead - turnsByTime;
+        return m_earthTurnsAhead + turnsByTime;
     }
 
     // Hanging, the view turns with the Earth, and leans back as it would on the orbit.
@@ -4295,8 +4263,7 @@ namespace ClaFi::PathArt
         // And for the Earth's turn over the same while, about its axis as the view sees it.
         const Rotation camera = cameraAt(m_shownOrbits, earthTurnsAt(m_shownTimeInOrbits));
         const Direction earthAxis = { camera.x.y, camera.y.y, camera.z.y };
-        const float turnsPerOrbit = static_cast<float>(1.0 / k_orbitsPerEarthTurn)
-            * (m_turnDirection == TurnDirection::Eastward ? 1.0f : -1.0f);
+        const float turnsPerOrbit = static_cast<float>(1.0 / k_orbitsPerEarthTurn);
         const Direction byTurn = cross(earthAxis, held);
         const FloatPoint byEarth = { byTurn.x * turnsPerOrbit, byTurn.y * turnsPerOrbit };
         // The way the pointer went, up the view.

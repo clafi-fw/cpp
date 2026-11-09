@@ -33,6 +33,13 @@ namespace ClaFi::PathArt
         std::span<const std::wstring_view> options;
     };
 
+    // A gesture a scene answers and what it does there, as the host's hints show it. See PathArt
+    export struct SceneGesture
+    {
+        std::wstring_view name; // what the viewer does, as "Drag"
+        std::wstring_view effect; // what it does to the scene, as "to choose position"
+    };
+
     // When a frame falls: how far into its cycle, and how many cycles came before. See PathArt
     export struct SceneTime
     {
@@ -67,6 +74,14 @@ namespace ClaFi::PathArt
         [[nodiscard]] virtual std::size_t chosenOption(std::size_t) const { return 0; }
         // Takes an option in a choice, both at their indices.
         virtual void chooseOption(std::size_t, std::size_t) {}
+        // The on-off settings the scene offers by name, none unless it states them. See PathArt
+        [[nodiscard]] virtual std::span<const std::wstring_view> switches() const { return {}; }
+        // Whether a switch, at its index, is on.
+        [[nodiscard]] virtual bool isSwitchOn(std::size_t) const { return false; }
+        // Turns a switch, at its index, on or off.
+        virtual void setSwitch(std::size_t, bool) {}
+        // The gestures the scene answers, as hints for the viewer, none unless it states them.
+        [[nodiscard]] virtual std::span<const SceneGesture> gestures() const { return {}; }
         // Whether the scene answers a drag and the wheel by moving its view. See PathArt
         [[nodiscard]] virtual bool offersView() const { return false; }
         // Whether a drag from the point, in the coordinates of bounds, moves the view. See PathArt

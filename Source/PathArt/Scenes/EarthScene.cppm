@@ -36,9 +36,7 @@ namespace ClaFi::PathArt
         void letGoView(FloatPoint speed, const FloatRect& bounds) override;
         void clickView(const FloatRect&) override;
         void doubleClickView(const FloatRect&) override;
-        [[nodiscard]] std::span<const SceneChoice> choices() const override;
-        [[nodiscard]] std::size_t chosenOption(std::size_t choice) const override;
-        void chooseOption(std::size_t choice, std::size_t option) override;
+        [[nodiscard]] std::span<const SceneGesture> gestures() const override;
         void storeView(Dom::Section& view) const override;
         void restoreView(const Dom::Section& view) override;
         // The config section the view is kept in, under the scene's name. See PathArt#earthscene
@@ -86,12 +84,6 @@ namespace ClaFi::PathArt
             [[nodiscard]] AxisTurn axisTurn() const;
             // The rotation that undoes this one.
             [[nodiscard]] Rotation inverse() const;
-        };
-        // Which way the Earth turns under the orbit, at its index among the Turn choice's options.
-        enum class TurnDirection
-        {
-            Eastward,   // as the real one does
-            Westward
         };
         // The spin about the Earth's axis, its tip toward the viewer, then the tilt in the screen.
         struct ViewAngles
@@ -265,8 +257,7 @@ namespace ClaFi::PathArt
         // The orbits the last frame was drawn after, which a drag moves the view from.
         double m_shownOrbits{};
         double m_shownTimeInOrbits{}; // the globe's time of the last frame, counted in orbits
-        TurnDirection m_turnDirection{ TurnDirection::Eastward };
-        // The turns the Earth stands ahead of its time's count, by a change of way or a restore.
+        // The turns the Earth stands ahead of its time's count, by a restore.
         double m_earthTurnsAhead{};
         bool m_viewHeld{}; // by a press
         std::optional<double> m_lastFrameAt{}; // in seconds of the scene's time

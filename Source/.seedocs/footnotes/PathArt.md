@@ -9,9 +9,10 @@ cycle and come back to where they began. The MillScene showcase holds a list of 
 as tiles in the Scene group of its Scene page - drawIcon() over name() - and stores the one picked
 under that name. A scene it takes up fades in over a still of the frame before it.
 
-**Under the tiles, Scene Options shows the picked scene's page**: the mill's themes, a scene's
-look and choices, or a line saying the scene has none. The pages share one room as large as the
-largest of them, so a pick never asks the menu for more.
+**Under the tiles, a section named after the picked scene shows its page of options** - Mill
+Options, Earth Options: the mill's themes, a scene's look and choices, or a line saying the scene
+has none. The pages share one room as large as the largest of them, so a pick never asks the menu
+for more.
 
 **A motion that comes round runs a whole number of times a cycle**, so the frame at the end of the
 cycle is the frame at its start and the loop shows no seam. A scene that needs a slow motion beside
@@ -72,7 +73,7 @@ the look setLook() last named from its next frame on. A scene that offers no loo
 and draws as it always does.
 
 The MillScene showcase offers the looks as radio buttons captioned Look on the scene's page of
-Scene Options, and keeps the pick under SceneLook. With no pick kept, the scene is drawn Realistic.
+options, and keeps the pick under SceneLook. With no pick kept, the scene is drawn Realistic.
 
 ## Scene offersView
 
@@ -135,8 +136,8 @@ back. The Earth scene takes a double click to move the day on - see EarthScene.
 
 **A scene states what else it lets the viewer pick, beside its look**: each choice has a name and
 its options' names, and the host shows each as radio buttons captioned with the choice's name, on
-the scene's page of options - the Earth's turn shows as Turn, Eastward and Westward. The names are
-shown as they are written, and they are also what the scene keeps its pick under.
+the scene's page of options. The names are shown as they are written, and they are also what the
+scene keeps its pick under.
 
 ## Scene choices
 
@@ -144,6 +145,26 @@ shown as they are written, and they are also what the scene keeps its pick under
 show what is picked and calls chooseOption() when an option is picked or hovered over, putting the
 pick back when the hover leaves. The scene keeps its picks with its view - see Scene storeView -
 and an index past the choices it states is a mistake it may refuse.
+
+## Scene switches
+
+**A scene states the on-off settings it offers by name**, and the host shows each as a check box
+with that name on the scene's page of options, under its pickers. The host reads isSwitchOn() to
+show the box and calls setSwitch() on a click. The scene keeps its switches with its view - see
+Scene storeView - and an index past the switches it states is a mistake it may refuse.
+
+## SceneGesture
+
+**A scene states the gestures it answers, for the viewer to read**: each has a name and its effect,
+and the host writes them a line each, the name in bold and the effect after it. The MillScene
+showcase shows them captioned Controls on the scene's page of options, under its pickers.
+
+## Scene gestures
+
+**What the scene states is what it answers.** The host only shows the hints; the gestures reach the
+scene through the view calls - see Scene offersView. The Earth's read: **Click** to stop and
+resume, **Double click** to advance time, **Drag** to choose position, **Drag and fling** to make
+an orbit.
 
 ## Scene storeView
 
@@ -155,7 +176,7 @@ host's config schema - see EarthScene. A scene with no section keeps no view and
 
 **A section never written holds its schema's defaults**, so a schema states the view the scene
 starts with, and restoring it changes nothing. The section holds the scene's choices as well, each
-under its own name.
+under its own name, and its switches, under names of the scene's own.
 
 ## createSceneViewsSchema
 
@@ -413,6 +434,9 @@ cycle.
 Each planet is lit from the Sun - see shadeBall - and is drawn larger on the near half of its
 orbit. What stands beyond the Sun is drawn before it, what stands in front after it.
 
+**The orbits can be hidden** - the scene's one switch, Show orbits, see Scene switches. The scene
+keeps it in its own config section as OrbitsShown, on as the scene starts.
+
 ## shadeBall
 
 Fills the part of a ball's disc that faces away from the light, inside a clip to that disc.
@@ -480,10 +504,10 @@ from the picture as it stands, at the orbit's own pace.
 
 **A double click moves the day on by a quarter** - see Scene doubleClickView. The Sun goes back
 round the Earth's axis as far as a quarter turn of the Earth carries the ground on, so noon turns to
-dusk, dusk to midnight, midnight to dawn and dawn to noon wherever the view stands, whichever way
-the Earth turns. The light glides there in about a second of the scene's time. The ground, the
-orbit and the stars stay where they are. The double click's own two clicks stop the satellite and
-set it flying again, or the other way round.
+dusk, dusk to midnight, midnight to dawn and dawn to noon wherever the view stands. The light glides
+there in about a second of the scene's time. The ground, the orbit and the stars stay where they
+are. The double click's own two clicks stop the satellite and set it flying again, or the other way
+round.
 
 **The wheel climbs above the globe**, a tenth of the way a notch, from the lowest view to the whole
 globe in the middle of the frame. The globe's radius shrinks by the same share at each step, from
@@ -495,15 +519,14 @@ live above it; so is the ocean until the land's map is built. The view starts fo
 
 **The view is kept across runs** - see Scene storeView: the altitude, the orbit as the drags have
 turned it and the angle its track runs at, the orbits flown, which say where the satellite is and
-how far the sky has drifted, whether it hangs and where, the Earth's turns and the way it turns, and
-the Sun's turns round the Earth's axis. The globe flies on, or hangs on, from where it was left; the
-clouds' drift and the twinkling start over. The section holds Altitude, Orbits, EarthTurns,
-SunTurns, Turn, TrackAngle in degrees, Hanging, and OrbitTurn and HangingCamera, each as an axis
-and an angle in degrees: AxisX, AxisY, AxisZ and Degrees.
+how far the sky has drifted, whether it hangs and where, the Earth's turns, and the Sun's turns
+round the Earth's axis. The globe flies on, or hangs on, from where it was left; the clouds' drift
+and the twinkling start over. The section holds Altitude, Orbits, EarthTurns, SunTurns,
+TrackAngle in degrees, Hanging, and OrbitTurn and HangingCamera, each as an axis and an angle in
+degrees: AxisX, AxisY, AxisZ and Degrees.
 
-**The Earth turns eastward, as the real one does, or westward** - the scene's one choice, Turn, see
-SceneChoice. Picked either way, the Earth carries on from where it stands and turns on the other
-way; the orbit, the Sun and the clouds' drift against the ground stay as they are.
+**The Earth turns eastward, as the real one does.** The scene states its gestures as hints - see
+Scene gestures.
 
 **The globe holds still while a press holds the view**, and a let-go moves it on at once. The
 wheel leaves the satellite flying as it flew. The clouds go on drifting over the held globe, the
