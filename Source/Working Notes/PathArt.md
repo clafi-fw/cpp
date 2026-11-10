@@ -1622,6 +1622,76 @@ shadow colour at full strength. They take faded, which scales the colour's own a
 shadows the hare and the wolf cast. ChaseColors::Puff, 0xB3, goes through withOpacity the same way
 for the duck's air streaks.
 
+**The mill's themes** (Oj, 2026-11-10 01:18: "I can easily see how Chase and Mill can share themes",
+01:26: "1. shared" - one pick for both). Whether the figures should take the theme's light was left
+to mockups: Chase in five themes, its world from the theme, the figures once in daylight colours and
+once darkened as far as the meadow is darker than in daylight. Oj: "They both seem OK to me".
+Daylight was recommended and taken: in the theme's light Cyberpunk Night turned the hare red and the
+wolf purple, and Calm Night made both dark silhouettes.
+
+ChaseColors' world colours became ChaseWorldColors, rebuilt every frame from the worn theme by
+worldColorsOf, with k_daylightWorld the old values. The trail by a per-channel ratio came out purple
+at night and pink on snow, so it is scaled by brightness instead: the square root of the meadow's
+brightness over daylight's grassTop, held between 0.25 and 1.15, then 0.35 toward the meadow. The
+mockup measured against Fresh Spring's hillTop. Several themes' shadow colour is opaque black, so
+the Chase keeps its own 0x47.
+
+Bark, leaves and stems are the world's on the tree a run ends at, on the meadow and on the daisy,
+and daylight on the tree stump, its sprout, the signpost and the apple, which are objects. The stars
+twinkle and the weather comes round twice a cycle: a whole number keeps the loop seamless, and 30
+seconds is nearer the mill's 40 than the Chase's 60. The readout's CrowBody and SunGlow, picked that
+night, gave way to the theme's river, as the mill's.
+
+**Fireflies** (Oj, 14:20: "Fireflies don't suit, unless they are in background and moving with
+camera"). They flew over the whole frame, in front of the runners. A mockup showed two places: A,
+over the far hills at 0.6 size, moving with the hills at 0.35 of the trail's speed, and B, over the
+meadow behind the trail at full size, moving with the trail. Oj, 14:24: "A is better - less
+distracting". Fireflies gained an area and a size for it; drawWeather leaves the fireflies to the
+scene, which places them with firefliesOf. The Chase draws them in tiles of the hills' period: a
+swarm moved across a frame-wide area by a drift would not have come round at the end of the cycle,
+as the frame's width does not divide the hills' travel.
+
+Then (Oj, 14:35) "fade the fireflies": their light and glow stand back toward the mountains' foot as
+the hills do, keeping their own alpha.
+
+**Theme tables** (Oj, 2026-11-10 14:48: "themes should be merged into a simple color tables, with
+all lacking colors added, and primary and secondary objects color carefully chosen to match the
+theme and have enough contrast"). Picked: figures and props, each with its own colours per theme;
+named fields. Contrast was picked as 3:1 and 2:1 luminance ratios, then (15:03) "use color
+difference": the daylight Chase separates by hue - the brown hare stood 1.07:1 against the far
+hills, the grey wolf 1.48:1 - and the ratios turned the daylight wolf charcoal and the daisies grey.
+The thresholds, 0.15 and 0.10 in OKLab, sit just above the daylight wolf's 0.117 and hare's 0.123.
+
+The tables were written by a generator (Claude Output\MillScene Scenes\Chase Themes\generator): the
+world as worldColorsOf derived it, with the trail and pebbles washed out as far as the theme lacks
+colour (Vintage Noir's trail was brown); each object lit by the theme (linear light times the root
+of the theme sky's luminance against daylight's, at least 0.3), its chroma scaled by the theme's own
+colourfulness and by the light, tinted 0.3 of the sky's shift from daylight, capped at 0.08; then
+one lightness shift for the whole object, the smallest that reaches its threshold against its
+backgrounds, each key colour kept between 0.55 of its daylight lightness and 0.3 above it. Without
+the lower bound the grey wolf went black in Winter Night and Twilight. Backgrounds: the meadow and
+the far hills for the runners, the mountains for the wolves too (Oj, 15:18: "in Cyberpunk Night the
+wolf's ears are lost against the mountains"); the trail for what lies on it; the meadow, grass and
+far hills for the verge; hills, mountains and sky for what flies. The trail behind the runners
+forced near-white figures at night and was left out.
+
+Short where the theme leaves no room: Winter Night's black wolf at 0.07, between dark mountains and
+lighter hills; Underwater Realm's grey wolf at 0.149; Desert Dusk's hares at 0.11.
+
+The mill's cow, mill and peeking wolf were measured on renders: each drawn once in magenta for its
+outline, every pixel just outside it paired with the nearest one inside, and the 15th percentile of
+their colour difference taken. 37 of them moved, among them a grey cow in Winter Frost, Golden Hour
+and Paper Sketch where the white one stood on light ground, a lighter mill in the night themes, and
+Lunar Eclipse's peeking wolf, which was the tree's own colour. Vintage Noir's mill stays at 0.055,
+grey on grey.
+
+Then (Oj, 15:57) "Yellow objects, like banana and rubber duck should keep read as yellow, the apple
+core and beach ball be lighter at night". At night the peel and the duck had gone olive and brown,
+the ball and the apple's flesh dull grey. The peel, the duck, the ball's yellow and the flowers'
+hearts take at least 0.8 of the light, keep their chroma whatever the light and take half the sky's
+tint; the ball takes at least 0.65 and the apple's flesh 0.7. Vintage Noir has no colour to keep, so
+its yellows are light greys.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
@@ -1635,6 +1705,22 @@ What stayed is the scenery drawn once - the sky and hills cached in a bitmap, th
 clouds, the river, its foam, its reflection and its fog - still drawn through the canvas with the
 offset, as before. `faded` and `calculateSyncRotation` went to the kit, and `pseudoRand` gave way to
 pseudoRandom, which is the same sum.
+
+**The theme moved out to ThemeBlend** (Oj, 2026-11-10: "I can easily see how Chase and Mill can
+share themes", then "1. shared" and "go"). The pick, the crossfade and animationTick went into
+ThemeBlend for ChaseScene to use as well, readoutColors into readoutColorsOf, and the weather block
+into drawWeather. The background bitmap is redrawn when wornVersion() moves. Renders of Fresh
+Spring, Calm Night, Winter Frost, Golden Hour and Cyberpunk Night came out the same to the bit
+before and after.
+
+The crossfade's step reads its target from a member, m_crossFadeTarget, as MillScene's did through
+m_nextTheme. AnimationController::start leaves an animation already heading to the same end value
+alone, with the step it had, so a step that captured its target would go on toward the first of two
+quick picks. A first cut captured it, and the renders differed.
+
+The mill draws its fireflies just before drawWeather, where they came between the snow and the
+leaves. No theme has fireflies beside other weather, so only a crossfade between a theme with
+fireflies and one with rain or snow draws them in another order.
 
 ## CowColors
 

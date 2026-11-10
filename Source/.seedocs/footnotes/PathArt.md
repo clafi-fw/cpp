@@ -7,13 +7,12 @@ The words that do not fit above a declaration.
 A scene is a moving picture, drawn at a time into any bounds. Most of its motions run through a
 cycle and come back to where they began. The MillScene showcase holds a list of scenes, offers them
 as tiles in the Scene group of its Scene page - drawIcon() over name() - and stores the one picked
-under that name. A double click on a tile, or on one of the mill's themes, picks it and closes the
-menu. A scene it takes up fades in over a still of the frame before it.
+under that name. A double click on a tile, or on a theme, picks it and closes the menu. A scene it
+takes up fades in over a still of the frame before it.
 
 **Under the tiles, a section named after the picked scene shows its page of options** - Mill
-Options, Earth Options: the mill's themes, a scene's look and choices, or a line saying the scene
-has none. The pages share one room as large as the largest of them, so a pick never asks the menu
-for more.
+Options, Earth Options: the themes, a scene's look and choices, or a line saying the scene has none.
+The pages share one room as large as the largest of them, so a pick never asks the menu for more.
 
 **A motion that comes round runs a whole number of times a cycle**, so the frame at the end of the
 cycle is the frame at its start and the loop shows no seam. A scene that needs a slow motion beside
@@ -34,8 +33,9 @@ on, and comes round when that time runs a whole number of units a cycle.
 any size shows the whole figure with no margin. A part the square cuts - a string, a glow - is
 clipped at bounds.
 
-**One picture in every theme and look.** The figure is one of the scene's sprites in the colours
-the scene draws it in. MillScene's mill wears Fresh Spring's colours whatever theme is picked.
+**One picture in every theme and look.** The figure is one of the scene's sprites in the colours the
+scene draws it in. MillScene's mill wears Fresh Spring's colours whatever theme is picked, and
+ChaseScene's wolf and hare their own daylight coats.
 
 ## SceneReadoutColors
 
@@ -47,18 +47,26 @@ units and the chart's readings in the ink at a lesser opacity.
 ## Scene readoutColors
 
 **Each scene states its own**, taken from its palette: a dark tone for the field and a light accent
-for the series. The MillScene showcase asks the shown scene whenever another scene is shown. The
-mill answers with its picked theme's river - riverBottom and riverWave - and the light ink or
-riverBottom at half, whichever stands out more against skyTop.
+for the series. The MillScene showcase asks the shown scene whenever another scene is shown, and
+whenever a theme is picked or tried on. A scene that offers themes answers with its picked theme's -
+see readoutColorsOf.
+
+## readoutColorsOf
+
+**The theme's river**: riverBottom for the field and riverWave for the series. The ink is the light
+one, or riverBottom at half toward black where that stands out more against skyTop.
+
+**Taken from the picked theme, not the blend.** The host asks as the pick lands, before the
+crossfade has moved, and keeps the answer until it asks again - see ThemeBlend.
 
 ## Scene draw
 
 Paints the whole of bounds, so nothing needs to be drawn under it.
 
 **A frame depends on its SceneTime, its bounds, and the look and the view the scene keeps.** The
-showcase jumps between scenes and times - a hover preview, a pick, a resize - and every scene but
-MillScene draws the same picture for the same of these, whatever was drawn before. MillScene keeps
-its theme's crossfade between frames.
+showcase jumps between scenes and times - a hover preview, a pick, a resize - and a scene draws
+the same picture for the same of these, whatever was drawn before. A scene that offers themes also
+keeps its theme's crossfade between frames - see ThemeBlend.
 
 **Any size and any shape of bounds is drawn.** A scene lays itself out in the units of a
 SceneFrame, so it keeps its proportions at any size; a narrow frame draws the figures closer
@@ -89,6 +97,69 @@ and draws as it always does.
 
 The MillScene showcase offers the looks as radio buttons captioned Look on the scene's page of
 options, and keeps the pick under SceneLook. With no pick kept, the scene is drawn Realistic.
+
+## Scene offersThemes
+
+**A scene that offers themes is drawn in the themes of Themes::allThemes**, and crossfades to the
+one setTheme() last named - see ThemeBlend. MillScene and ChaseScene offer them. A scene that offers
+none ignores the call.
+
+**One pick for every scene that offers themes.** The MillScene showcase shows the theme picker on
+the page of options of each of them, every picker showing the one pick, and a pick or a hover
+crossfades them all. It keeps the pick under SceneTheme, by the theme's name. With no pick kept,
+they open in the first theme of the list, Calm Night.
+
+**Between the timer's ticks**, the showcase moves the shown scene's crossfade on at every move of
+the pointer over it, through animationTick().
+
+## SceneTheme
+
+**One table of colours for every scene that offers themes**, and the effects that come with them.
+The fields up to effectColor2 are the mill's, and the sky, the sun, the clouds, the meadow - hillTop
+and hillBottom - and the trees serve ChaseScene as well; ChaseTheme holds what only the Chase draws.
+Every theme fills every field.
+
+**Figures and props stand apart from what is behind them by colour, not only by brightness.** In
+OKLab their colour difference from the background is at least 0.15 for the runners, the cow and the
+mill, and 0.10 for every prop, where the theme leaves room for it - about as far apart as the
+daylight scenes already draw them.
+
+**A crossfade blends every colour field one by one** - see ThemeBlend. They stand in a row from
+skyTop to the end of `chase`, and colorsNum() counts them.
+
+## ChaseTheme
+
+The Chase's own colours in a theme: the mountains, the far hills with their trees and fireflies, the
+shades of the tree a branch run ends at, the trail and the grass, the four runners' coats, and every
+prop.
+
+**Each object's colours are its daylight ones in the theme's light.** They are dimmed and tinted as
+the theme's sky is to daylight's, washed out as far as the theme has no colour, and then all moved
+lighter or darker together - only as far as its contrast needs, keeping to its daylight character.
+
+- A wolf's head and ears stand against the mountains; a hare stays below the far hills' top.
+- The other couple's black wolf stays darker than ours.
+- A coat's tongue, mouth, teeth, tail, inner ears and nose rise with the fur where it is lifted and
+  never darken with it, so a white tail stays white by day.
+- Yellow things - the banana peel, the rubber duck, the ball's yellow, the flowers' hearts - keep
+  their colour at night and stay light, as a dark yellow reads as olive. The ball and the apple's
+  flesh stay lighter at night too.
+
+## ThemeBlend
+
+**What a scene that offers themes is drawn in.** pick() names a theme by its index in
+Themes::allThemes, and worn() crossfades to it over 555 milliseconds, eased in and out, colours and
+effects alike. A pick made during a crossfade starts the next one from where the blend stands.
+
+**worn() is for drawing, picked() for the rest** - the theme's name, and colours that are read once
+rather than every frame. worn() takes the picked theme's name at the pick.
+
+**Always a fade in.** worn() starts as a null theme - every colour zero and every effect off - and
+the first theme fades in out of it. A pick made before the first frame, as a host restoring a config
+makes, fades in that theme instead.
+
+**wornVersion() moves on with every step of the crossfade**, so a scene that keeps something drawn
+in the theme knows to draw it again - MillScene keeps its sky and hills in a bitmap.
 
 ## Scene offersView
 
@@ -387,6 +458,14 @@ The spin of a falling flake or leaf, in turns. An even index turns clockwise by 
 `symmetryFactor`th of a turn a cycle, an odd one the other way and twice as fast, so a shape with
 that symmetry looks the same at both ends of the cycle. The index adds whole turns, which change
 nothing on screen.
+
+## Fireflies
+
+Each firefly has a place in the area, wanders up to 50 units across and 30 up and down from it, and
+glows 15 units round - all scaled by `size`.
+
+**A firefly strays past the area** by up to 65 units times `size`. An area drawn in tiles along a
+moving layer reaches past the frame by that much, or a firefly pops in at the edge.
 
 ## StarField drift
 
@@ -715,6 +794,15 @@ stands too - see ChaseScene drawVergeRow. The near frog hops toward the viewer.
 **The landscape is layers at their own speeds** - clouds, mountains, hills, the ground and the
 grass in front, each a share of the camera's speed. Each layer is tiled with a period that the
 cycle's travel divides - see ChaseScene periodNear - so it ends the cycle where it began.
+
+**Everything is drawn in the theme the scene is given** - see Scene offersThemes. The sky, the sun
+or the moon, the clouds, the meadow and the tree a branch run ends at are the theme's shared
+colours; the rest is the theme's ChaseTheme.
+
+- The theme's fireflies keep to the far hills, smaller, and move with them.
+- The theme's stars come out over the sky, and its rain, snow, falling leaves or petals and dust
+  fall over the whole frame, coming round twice a cycle.
+- The icon keeps the wolf and the hare in their daylight coats.
 
 ## ChaseScene drawVergeRow
 

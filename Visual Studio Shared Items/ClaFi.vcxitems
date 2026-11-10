@@ -507,6 +507,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\StarsEffect.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SteamEffect.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SteamEffect.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\WeatherEffect.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\WeatherEffect.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.EarthMap.cpp" />
@@ -516,6 +518,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneLayer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneLayer.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.ThemeBlend.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.ThemeBlend.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Themes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Types.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\ChaseScene.cpp" />

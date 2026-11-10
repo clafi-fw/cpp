@@ -1,6 +1,8 @@
 export module ClaFi.PathArt.Types;
 
+import ClaFi.PathArt.HareSprite;
 import ClaFi.PathArt.SnowEffect;
+import ClaFi.PathArt.WolfSprite;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -10,6 +12,111 @@ import ClaFi.Core.Graphics.Canvas;
 namespace ClaFi::PathArt
 {
     using namespace Graphics;
+
+    // The Chase's own colours in a theme, beside the sky, meadow and trees it shares. See PathArt
+    export struct ChaseTheme
+    {
+        Color mountainTop{};
+        Color mountainFoot{};
+        Color farHillTop{}; // the far hills, standing back toward the mountains
+        Color farHillFoot{};
+        Color farTreeTrunk{}; // the trees on the far hills
+        Color farTreeCrown{};
+        Color farTreeCrownLight{};
+        Color farTreeCrownMiddle{};
+        Color farFireflyLight{}; // the fireflies over the far hills
+        Color farFireflyGlow{};
+        Color crownLight{}; // the branch run's tree, beside treeLeavesBase
+        Color crownMiddle{};
+        Color treeBarkShade{}; // beside treeTrunk
+        Color treeBough{};
+        Color trail{};
+        Color pebble{};
+        Color tuft{};
+        Color bladeDark{}; // the patch of grass on the trail
+        Color bladeMiddle{};
+        Color bladeLight{};
+        Color flowerStem{};
+        Color daisyLeaf{};
+        Color reedStem{};
+        Color frontGrass{};
+        Color frontGrassDark{};
+        Color shadow{}; // what the figures and props cast
+        WolfCoat greyWolf{}; // ours
+        HareCoat brownHare{};
+        WolfCoat blackWolf{}; // the other couple's
+        HareCoat greyHare{};
+        Color petal{}; // a daisy's, and the meadow's flowers
+        Color flowerHeart{};
+        Color bough{}; // the signpost and the stump, in wood
+        Color bark{};
+        Color barkShade{};
+        Color appleLight{}; // the apple
+        Color appleDark{};
+        Color leaf{}; // the apple's, and the stump's sprout
+        Color appleFlesh{};
+        Color appleSeed{};
+        Color crowBody{}; // the crow
+        Color crowWing{};
+        Color crowWingFar{};
+        Color crowBeak{};
+        Color bootLight{}; // the boot
+        Color bootDark{};
+        Color bootSole{};
+        Color bootPatch{};
+        Color lace{};
+        Color spinesDark{}; // the hedgehog
+        Color spinesLight{};
+        Color hedgehogFace{};
+        Color hedgehogEar{};
+        Color duckLight{}; // the rubber duck
+        Color duckShade{};
+        Color duckBeak{};
+        Color duckBeakShade{};
+        Color ballRed{}; // the ball
+        Color ballWhite{};
+        Color ballBlue{};
+        Color ballYellow{};
+        Color peel{}; // the banana peel
+        Color peelShade{};
+        Color peelInside{};
+        Color peelTip{};
+        Color rakeHandle{}; // the rake
+        Color rakeHandleShade{};
+        Color rakeMetal{};
+        Color capLight{}; // the toadstool
+        Color capDark{};
+        Color capSpot{};
+        Color stalk{}; // the toadstool's
+        Color stalkShade{};
+        Color board{};
+        Color boardShade{};
+        Color stumpTop{}; // the tree stump
+        Color stumpRing{};
+        Color stumpSprout{};
+        Color frogLight{}; // the frog
+        Color frogDark{};
+        Color frogBelly{};
+        Color shellLight{}; // the snail's
+        Color shellDark{};
+        Color shellLine{};
+        Color snailBody{};
+        Color wing{}; // the butterfly's
+        Color wingEdge{};
+        Color stoneLight{}; // the boulder
+        Color stoneDark{};
+        Color stoneCrack{};
+        Color reedHead{};
+        Color fluff{};
+        Color birdBody{}; // the bird by the trail
+        Color birdBelly{};
+        Color birdWing{};
+        Color birdBeak{};
+        Color dust{}; // kicked up where the wolf lands
+    public:
+        // How many colours it holds, in a row with nothing between them.
+        static constexpr std::size_t colorsNum() { return sizeof(ChaseTheme) / sizeof(Color); }
+    };
 
     export struct SceneTheme
     {
@@ -27,6 +134,7 @@ namespace ClaFi::PathArt
 
         Color effectColor1{ 255, 255, 255 }; // 39
         Color effectColor2{ 255, 255, 255 }; // 40
+        ChaseTheme chase{};
         // make sure to update colorsNum() when adding new colors
 
         // Effect toggles
@@ -44,7 +152,7 @@ namespace ClaFi::PathArt
         Color* asArray() { return &skyTop; }
         const Color* asArray() const { return &skyTop; }
         const void* colorsEnd() const { return &hasRain; }
-        static constexpr std::size_t colorsNum() { return 40; }
+        static constexpr std::size_t colorsNum() { return 40 + ChaseTheme::colorsNum(); }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
         static constexpr std::size_t effectsNum() { return 8; }

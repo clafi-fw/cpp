@@ -74,7 +74,7 @@ namespace MillScene_App
     constexpr std::size_t k_optionLaneSize{ 4 };
     constexpr float k_pickerCaptionSpacing{ 4.0f }; // between a picker's caption and its options
     constexpr float k_pickerSpacing{ 12.0f }; // between the pickers on one scene's page of options
-    // A scene taken up fades in over the one before it, as long as the mill's theme crossfade.
+    // A scene taken up fades in over the one before it, as long as a theme's crossfade.
     constexpr float k_sceneFadeSeconds{ 0.555f };
     constexpr int k_outgoingSceneImage{ 0 }; // the kept image the scene being left fades out of
 
@@ -190,6 +190,13 @@ namespace MillScene_App
             SingleSelectionStackView* lanes{ nullptr };
             std::vector<Control*> buttons{};
         };
+        // A theme picker on the page of a scene that offers themes; all of them show one pick.
+        struct ThemePicker
+        {
+            std::size_t sceneIndex{};
+            SingleSelectionStackView* lanes{ nullptr };
+            std::vector<Control*> buttons{};
+        };
     private:
         void paintScene(PaintEvent&);
         void keepShownScene(PaintEvent&);
@@ -203,8 +210,10 @@ namespace MillScene_App
         // The readout's colours and the chart's, as the shown scene states them.
         void applySceneColors();
         [[nodiscard]] Color mutedReadoutInk() const;
+        // Every scene that offers themes crossfades to the theme at `index` of allThemes.
+        void dressScenes(std::size_t index);
         void previewSceneTheme(std::size_t index);
-        // The application's own page of the backstage: the theme picker. See MillScene_Showcase
+        // One pick for every scene that offers themes, which the picker on each one's page shows.
         void pickSceneTheme(std::size_t index);
         // The scene the look picker serves: the first that offers looks, none where none does.
         [[nodiscard]] std::optional<std::size_t> sceneWithLooks();
@@ -214,7 +223,7 @@ namespace MillScene_App
         // Takes an option in the choice a picker of m_choicePickers shows, while it is hovered.
         void previewOption(std::size_t pickerIndex, std::size_t option);
         void pickOption(std::size_t pickerIndex, std::size_t option);
-        // Whether a scene's page holds an option: the mill's themes, a look, a choice, a switch.
+        // Whether a scene's page holds an option: themes, a look, a choice, a switch.
         [[nodiscard]] bool sceneOffersOptions(std::size_t index);
 
         void buildScenePage(AppMenuPage&);
@@ -223,7 +232,9 @@ namespace MillScene_App
         void buildSceneOptions(AppMenuPage&);
         // What that section is captioned with while the scene at `index` is the picked one.
         [[nodiscard]] std::wstring sceneOptionsCaption(std::size_t index);
-        void buildThemePicker();
+        // A theme picker on the page of each scene that offers themes.
+        void buildThemePickers();
+        void buildThemePicker(std::size_t pickerIndex);
         void buildLookPicker();
         void buildChoicePickers();
         void buildChoicePicker(std::size_t pickerIndex);
@@ -276,8 +287,7 @@ namespace MillScene_App
         // Holds a page of options for each scene and shows the picked scene's.
         PageControl* m_sceneOptionsControl{ nullptr };
         std::vector<StackPanel*> m_sceneOptionPages{}; // at each scene's index
-        SingleSelectionStackView* m_themeLanes{ nullptr };
-        std::vector<Control*> m_themeButtons{};
+        std::vector<ThemePicker> m_themePickers{};
         SingleSelectionStackView* m_lookLanes{ nullptr };
         std::vector<Control*> m_lookButtons{};
         std::vector<ChoicePicker> m_choicePickers{};
@@ -310,7 +320,7 @@ namespace MillScene_App
             Padding{ 8.0f },
             Events{
                 [this](MouseMoveEvent&) {
-                    m_millScene.animationTick();
+                    sceneAt(m_shownScene).animationTick();
                 },
                 [this](PaintEvent& event) {
                     paintScene(event);
@@ -379,9 +389,10 @@ namespace MillScene_App
     export [[nodiscard]] AppParams millSceneAppParams();
 
     // **What this application keeps of its own**, handed to the application beside the framework's
-    // schema and merged with it: the picked scene, the mill's picked theme and the look picked for
-    // the scene that offers looks. Empty is no pick yet, and the showcase then opens on the mill in
-    // the theme it starts with, and that scene in the look it starts with.
+    // schema and merged with it: the picked scene, the theme picked for the scenes that offer
+    // themes and the look picked for the scene that offers looks. Empty is no pick yet, and the
+    // showcase then opens on the mill in the theme it starts with, and that scene in the look it
+    // starts with.
     export [[nodiscard]] Dom::Dt::Section createMillSceneConfigSchema();
 
     /// @brief Builds the showcase into a form of the given application, runs it, and answers what
@@ -727,7 +738,7 @@ void MillSceneForm::pickScene(const std::size_t index)
         m_sceneOptionsControl->setCurrentItem(*m_sceneOptionPages[index]);
 }
 
-// Asked again when another scene is shown, and when the mill's theme is picked or tried on.
+// Asked again when another scene is shown, and when a theme is picked or tried on.
 void MillSceneForm::applySceneColors()
 {
     m_readoutColors = sceneAt(m_shownScene).readoutColors();
@@ -739,24 +750,40 @@ Color MillSceneForm::mutedReadoutInk() const
     return m_readoutColors.ink.withOpacity(k_mutedInkOpacity);
 }
 
-void MillSceneForm::previewSceneTheme(std::size_t index)
+void MillSceneForm::dressScenes(const std::size_t index)
 {
-    m_millScene.setTheme(index);
+    for (std::size_t sceneIndex = 0; sceneIndex != sceneCount(); ++sceneIndex)
+    {
+        PathArt::Scene& scene = sceneAt(sceneIndex);
+        if (scene.offersThemes())
+            scene.setTheme(index);
+    }
+}
+
+void MillSceneForm::previewSceneTheme(const std::size_t index)
+{
+    dressScenes(index);
     m_benchmark.reset();
     applySceneColors();
 }
 
-void MillSceneForm::pickSceneTheme(std::size_t index)
+void MillSceneForm::pickSceneTheme(const std::size_t index)
 {
     const std::size_t previous = m_pickedTheme;
     m_pickedTheme = index;
     previewSceneTheme(index);
     storeSceneTheme();
 
-    if (m_themeLanes)
-        m_themeLanes->setCurrentItem(*m_themeButtons[index]);
-    m_themeButtons[previous]->invalidateState();
-    m_themeButtons[index]->invalidateState();
+    for (const ThemePicker& themePicker : m_themePickers)
+    {
+        if (themePicker.lanes)
+            themePicker.lanes->setCurrentItem(*themePicker.buttons[index]);
+        if (!themePicker.buttons.empty())
+        {
+            themePicker.buttons[previous]->invalidateState();
+            themePicker.buttons[index]->invalidateState();
+        }
+    }
 }
 
 std::optional<std::size_t> MillSceneForm::sceneWithLooks()
@@ -813,7 +840,7 @@ void MillSceneForm::pickOption(const std::size_t pickerIndex, const std::size_t 
 
 bool MillSceneForm::sceneOffersOptions(const std::size_t index)
 {
-    return index == 0
+    return sceneAt(index).offersThemes()
         || sceneWithLooks() == index
         || !sceneAt(index).choices().empty()
         || !sceneAt(index).switches().empty();
@@ -911,7 +938,7 @@ void MillSceneForm::buildSceneOptions(AppMenuPage& page)
         m_sceneOptionPages.push_back(&optionsPage);
     }
 
-    buildThemePicker();
+    buildThemePickers();
     buildLookPicker();
     buildChoicePickers();
     for (std::size_t index = 0; index != sceneCount(); ++index)
@@ -934,9 +961,23 @@ std::wstring MillSceneForm::sceneOptionsCaption(const std::size_t index)
     return std::format(L"{} Options", sceneAt(index).name());
 }
 
-void MillSceneForm::buildThemePicker()
+// The pickers are listed whole before any is built, as the choice pickers are.
+void MillSceneForm::buildThemePickers()
 {
-    StackPanel& column = addCaptionedColumn(*m_sceneOptionPages[0], L"Theme");
+    m_themePickers.clear();
+    for (std::size_t sceneIndex = 0; sceneIndex != sceneCount(); ++sceneIndex)
+    {
+        if (sceneAt(sceneIndex).offersThemes())
+            m_themePickers.push_back(ThemePicker{ .sceneIndex = sceneIndex });
+    }
+    for (std::size_t pickerIndex = 0; pickerIndex != m_themePickers.size(); ++pickerIndex)
+        buildThemePicker(pickerIndex);
+}
+
+void MillSceneForm::buildThemePicker(const std::size_t pickerIndex)
+{
+    ThemePicker& themePicker = m_themePickers[pickerIndex];
+    StackPanel& column = addCaptionedColumn(*m_sceneOptionPages[themePicker.sceneIndex], L"Theme");
     SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
         LaneSize{ k_themeLaneSize },
@@ -944,7 +985,7 @@ void MillSceneForm::buildThemePicker()
         VerticalAlign::Top
     );
 
-    m_themeLanes = &lanes;
+    themePicker.lanes = &lanes;
     // **What the pointer is on, which is not what the user has chosen.** A stack previewing what
     // it is hovered over goes back to its **current item** when the pointer leaves it, so the
     // pick is made that item below and the scene finds its own way home - see PreviewEvent.
@@ -955,14 +996,14 @@ void MillSceneForm::buildThemePicker()
     // The popup takes the page with it when it closes, and the pointer may never have left
     // the stack - so the scene is put back here rather than waiting for a leave that a closed
     // window will not send.
-    lanes.onDestroy([this](DestroyEvent&) {
+    lanes.onDestroy([this, pickerIndex](DestroyEvent&) {
         previewSceneTheme(m_pickedTheme);
-        m_themeLanes = nullptr;
-        m_themeButtons.clear();
+        ThemePicker& destroyedPicker = m_themePickers[pickerIndex];
+        destroyedPicker.lanes = nullptr;
+        destroyedPicker.buttons.clear();
         });
 
-    m_themeButtons.clear();
-    m_themeButtons.reserve(PathArt::Themes::allThemes.size());
+    themePicker.buttons.reserve(PathArt::Themes::allThemes.size());
     std::size_t index = 0;
     for (const PathArt::SceneTheme& theme : PathArt::Themes::allThemes)
     {
@@ -991,11 +1032,11 @@ void MillSceneForm::buildThemePicker()
         item.onDoubleClick([](DoubleClickEvent& event) {
             event.closeForm();
             });
-        m_themeButtons.push_back(&item);
+        themePicker.buttons.push_back(&item);
         ++index;
     }
     // What a stack stands on is its current item, and that is where a preview returns.
-    lanes.setCurrentItem(*m_themeButtons[m_pickedTheme]);
+    lanes.setCurrentItem(*themePicker.buttons[m_pickedTheme]);
 
 }
 
@@ -1198,7 +1239,7 @@ void MillSceneForm::restoreSceneTheme()
     {
         if (theme.name == name)
         {
-            m_millScene.setTheme(index);
+            dressScenes(index);
             m_pickedTheme = index;
             return;
         }
@@ -1209,7 +1250,7 @@ void MillSceneForm::restoreSceneTheme()
 void MillSceneForm::storeSceneTheme()
 {
     (appContext().config() / k_sceneThemeNodeName).set(
-        std::wstring{ m_millScene.pickedTheme().name });
+        std::wstring{ PathArt::Themes::allThemes[m_pickedTheme].name });
 }
 
 void MillSceneForm::restoreLook()

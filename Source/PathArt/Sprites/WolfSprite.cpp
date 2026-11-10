@@ -13,10 +13,6 @@ namespace ClaFi::PathArt
 
     namespace WolfColors
     {
-        constexpr Color Tongue{ 0xFFEF6F7F };
-        constexpr Color Mouth{ 0xFF5A1C28 };
-        constexpr Color Tooth{ 0xFFFBF6E8 };
-        constexpr Color ToothEdge{ 0xFF9C9488 };
         constexpr Color Ink{ 0xFF1B1D22 };
         constexpr Color EyeWhite{ 0xFFFFFFFF };
     }
@@ -45,8 +41,8 @@ namespace ClaFi::PathArt
         };
 
         // Teeth along a jaw's edge from `back` to `front`, grown out to `growth` of their size.
-        void drawTeeth(const SceneFrame&, FloatPoint back, FloatPoint front, bool upward,
-            std::span<const Tooth> teeth, float growth);
+        void drawTeeth(const SceneFrame&, const WolfCoat&, FloatPoint back, FloatPoint front,
+            bool upward, std::span<const Tooth> teeth, float growth);
     }
 
     // Drawn about the middle of his body, facing right; a leg's angles are measured from straight
@@ -171,9 +167,10 @@ namespace ClaFi::PathArt
             mouth.lineTo(hinge + rotated(FloatPoint{ 44.0f, -1.0f } - hinge, snoutAngle));
             mouth.lineTo(hinge + rotated(FloatPoint{ 42.0f, 2.0f } - hinge, jawAngle));
             mouth.close();
-            fillShape(head, mouth, SolidColor{ WolfColors::Mouth });
-            drawTeeth(snoutFrame, { 25.0f, 2.8f }, { 44.0f, -1.0f }, false, k_upperTeeth, growth);
-            drawTeeth(jawFrame, { 25.0f, 3.0f }, { 42.0f, 2.0f }, true, k_lowerTeeth, growth);
+            fillShape(head, mouth, SolidColor{ coat.mouth });
+            drawTeeth(snoutFrame, coat, { 25.0f, 2.8f }, { 44.0f, -1.0f }, false, k_upperTeeth,
+                growth);
+            drawTeeth(jawFrame, coat, { 25.0f, 3.0f }, { 42.0f, 2.0f }, true, k_lowerTeeth, growth);
         }
         PixelPath snout;
         snout.moveTo(22.0f, -16.0f);
@@ -198,7 +195,7 @@ namespace ClaFi::PathArt
         lick.quadTo({ -1.0f, 21.0f }, { -4.0f, 16.0f });
         lick.quadTo({ -3.0f, 8.0f }, { 0.0f, 0.0f });
         lick.close();
-        fillShape(tongue, lick, SolidColor{ WolfColors::Tongue });
+        fillShape(tongue, lick, SolidColor{ coat.tongue });
         fillOval(snoutFrame, { 45.0f, -6.0f }, 3.8f, 3.2f, SolidColor{ WolfColors::Ink });
         if (pose.dazed > 0.5f)
         {
@@ -219,8 +216,9 @@ namespace ClaFi::PathArt
     namespace
     {
         // A tooth stands from a root sunk into the gum and leans its tip toward the front.
-        void drawTeeth(const SceneFrame& frame, const FloatPoint back, const FloatPoint front,
-            const bool upward, const std::span<const Tooth> teeth, const float growth)
+        void drawTeeth(const SceneFrame& frame, const WolfCoat& coat, const FloatPoint back,
+            const FloatPoint front, const bool upward, const std::span<const Tooth> teeth,
+            const float growth)
         {
             const FloatPoint along = front - back;
             const FloatPoint edge = along * (1.0f / std::hypot(along.x, along.y));
@@ -236,8 +234,8 @@ namespace ClaFi::PathArt
                     root + edge * (0.25f * tooth.width * growth) + out * length);
                 shape.lineTo(root + half);
                 shape.close();
-                fillShape(frame, shape, SolidColor{ WolfColors::Tooth });
-                strokeShape(frame, shape, SolidColor{ WolfColors::ToothEdge }, 0.7f);
+                fillShape(frame, shape, SolidColor{ coat.tooth });
+                strokeShape(frame, shape, SolidColor{ coat.toothEdge }, 0.7f);
             }
         }
     }

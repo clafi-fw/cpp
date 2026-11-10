@@ -78,6 +78,12 @@ namespace ClaFi::PathArt
         // The look the scene is drawn in, where it offers looks. See PathArt#scenelook
         [[nodiscard]] SceneLook look() const { return m_look; }
         void setLook(SceneLook look) { m_look = look; }
+        // Whether the scene is drawn in the themes of Themes::allThemes. See PathArt
+        [[nodiscard]] virtual bool offersThemes() const { return false; }
+        // Crossfades to the theme at an index of Themes::allThemes, where the scene offers themes.
+        virtual void setTheme(std::size_t) {}
+        // Moves a crossfade on between the timer's ticks, where the scene runs one.
+        virtual void animationTick() {}
         // The choices the scene offers beside its look, none unless it states them. See PathArt
         [[nodiscard]] virtual std::span<const SceneChoice> choices() const { return {}; }
         // The option taken in a choice, both at their indices.

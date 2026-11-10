@@ -1,27 +1,25 @@
 module ClaFi.PathArt.MillScene;
 
-import ClaFi.PathArt.BlowingDustEffect;
 import ClaFi.PathArt.CowSprite;
-import ClaFi.PathArt.FallingLeavesEffect;
-import ClaFi.PathArt.FirTreeSprite;
 import ClaFi.PathArt.FirefliesEffect;
+import ClaFi.PathArt.FirTreeSprite;
 import ClaFi.PathArt.GatorSprite;
 import ClaFi.PathArt.LightningEffect;
 import ClaFi.PathArt.MillSprite;
 import ClaFi.PathArt.PeekingWolfSprite;
-import ClaFi.PathArt.RainEffect;
 import ClaFi.PathArt.ReedsSprite;
 import ClaFi.PathArt.SceneHelpers;
-import ClaFi.PathArt.SnowEffect;
 import ClaFi.PathArt.StarsEffect;
+import ClaFi.PathArt.ThemeBlend;
+import ClaFi.PathArt.Themes;
 import ClaFi.PathArt.Types;
 import ClaFi.PathArt.WaterLilySprite;
 import ClaFi.PathArt.WaterWheelSprite;
+import ClaFi.PathArt.WeatherEffect;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Cpu_PathPainter;
 import ClaFi.Core.Graphics.Cpu_Rasterizer;
 import ClaFi.Core.Graphics.Types;
-import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
@@ -32,40 +30,10 @@ namespace ClaFi::PathArt
     using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;
     using namespace ::ClaFi::Graphics::Cpu;
-    using namespace std::chrono_literals;
 
     namespace
     {
-        AnimationSlot g_switchThemeSlot{
-            .duration{ .rise{ 555ms } },
-            .easingFactor{ EasingFactor::EaseInOut }
-        };
-
         [[nodiscard]] MillColors millColorsOf(const SceneTheme&);
-    }
-
-    // **Always a fade in, never a cut.** The scene stands on a null theme - every colour zero and
-    // every effect off - until this, so the first theme rises out of nothing the way every later
-    // one crossfades out of the one before it. A scene restored from a config fades into the
-    // stored theme rather than into the first of the list: the pick lands before the first paint,
-    // and a crossfade restarted from a blend is still one movement.
-    MillScene::MillScene()
-    {
-        crossFadeToPickedTheme();
-    }
-
-    void MillScene::setTheme(const std::size_t index)
-    {
-        if (m_themeIndex == index)
-            return;
-
-        m_themeIndex = index;
-        crossFadeToPickedTheme();
-    }
-
-    void MillScene::animationTick()
-    {
-        m_animator.externalTimerTick();
     }
 
     void MillScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
@@ -80,9 +48,11 @@ namespace ClaFi::PathArt
         const float mS = m_objectsScale;
 
         const ScaledSize newBackgroundDimensions = bounds.dimensions();
-        if (m_backgroundDimensions != newBackgroundDimensions)
+        if (m_backgroundDimensions != newBackgroundDimensions
+            || m_backgroundThemeVersion != m_themes.wornVersion())
         {
             m_backgroundDimensions = newBackgroundDimensions;
+            m_backgroundThemeVersion = m_themes.wornVersion();
             prepareBackground(w, h);
         }
 
@@ -94,8 +64,8 @@ namespace ClaFi::PathArt
             .count = 120,
             .top = 0.0f,
             .bottom = h * 0.65f,
-            .color = m_theme.sunDisk,
-            .opacity = m_theme.hasStars
+            .color = theme().sunDisk,
+            .opacity = theme().hasStars
         });
         drawSunCorona(canvas, m_offset.x + m_sunPos.x, m_offset.y + m_sunPos.y, m_sunRadius,
             time.cycleTime);
@@ -113,21 +83,21 @@ namespace ClaFi::PathArt
 
         // The cow's horns stand against the sky at 0.58 of its height, its legs against the front
         // hill, which drawHills darkens by a tenth, at 0.38 of the hill's gradient.
-        Hsl hillTop{ m_theme.hillTop };
+        Hsl hillTop{ theme().hillTop };
         hillTop.scaleLuminosity(0.9f);
-        Hsl hillBottom{ m_theme.hillBottom };
+        Hsl hillBottom{ theme().hillBottom };
         hillBottom.scaleLuminosity(0.9f);
         drawCow(frame, CowPose{
             .at = { w * 0.28f, h * 0.61f },
             .size = 0.36f * m_objectsScale,
             .cycleTime = time.cycleTime
         }, CowColors{
-            .body = m_theme.cowBody,
-            .spots = m_theme.cowSpots,
-            .snout = m_theme.cowSnout,
-            .detail = m_theme.cowDetail,
-            .shadow = m_theme.shadow,
-            .skyBehind = colorBetween(m_theme.skyTop, m_theme.skyBottom, 0.58f),
+            .body = theme().cowBody,
+            .spots = theme().cowSpots,
+            .snout = theme().cowSnout,
+            .detail = theme().cowDetail,
+            .shadow = theme().shadow,
+            .skyBehind = colorBetween(theme().skyTop, theme().skyBottom, 0.58f),
             .groundBehind = colorBetween(hillTop.toColor(), hillBottom.toColor(), 0.38f)
         });
 
@@ -135,20 +105,20 @@ namespace ClaFi::PathArt
             .center = { w * 0.5f - 65.0f * mS, h * 0.85f },
             .size = m_objectsScale,
             .turns = time.cycleTime * 2.0f
-        }, m_theme.millWheel);
+        }, theme().millWheel);
 
         const MillPose mill = {
             .base = { w * 0.5f, h * 0.85f },
             .size = mS,
             .wingTurns = time.cycleTime
         };
-        const MillColors millColors = millColorsOf(m_theme);
+        const MillColors millColors = millColorsOf(theme());
         drawMillHouse(frame, mill, millColors);
         drawWaterFoam(canvas, m_offset.x + w * 0.5f - 75.0f * mS, m_offset.y + h * 0.85f,
             m_objectsScale, time.cycleTime * 1.25f);
         drawLightning(frame, time.cycleTime, Lightning{
-            .strength = m_theme.hasRain,
-            .color = m_theme.sunDisk
+            .strength = theme().hasRain,
+            .color = theme().sunDisk
         });
 
         // Anchors River coordinate boundaries to layout constraints instead of clipBox [CP]
@@ -162,7 +132,7 @@ namespace ClaFi::PathArt
         const FloatPoint reflectPos = { m_offset.x + m_sunPos.x, riverBounds.center().y };
         canvas.fillRectangle(riverBounds, PointGlow{
             .lightPos = reflectPos,
-            .lightColor = faded(m_theme.sunGlow, 0.2f),
+            .lightColor = faded(theme().sunGlow, 0.2f),
             .lightSpread = 66.0f * m_objectsScale,
             .xRatio = 1.3f,
             .shape = GlowShape::Circle
@@ -173,8 +143,8 @@ namespace ClaFi::PathArt
             .size = m_objectsScale,
             .cycleTime = time.cycleTime
         }, WaterLilyColors{
-            .pad = m_theme.lilyPad,
-            .flower = m_theme.lilyFlower
+            .pad = theme().lilyPad,
+            .flower = theme().lilyFlower
         });
 
         // 2. Pop River Clip
@@ -182,8 +152,8 @@ namespace ClaFi::PathArt
 
         const float reedsScale = m_objectsScale * 1.33f;
         const ReedColors reedColors = {
-            .stem = m_theme.reedStem,
-            .head = m_theme.reedHead
+            .stem = theme().reedStem,
+            .head = theme().reedHead
         };
         drawReeds(frame, ReedsPose{
             .base = { w * 0.3f, riverTop },
@@ -199,9 +169,9 @@ namespace ClaFi::PathArt
         drawMillWings(frame, mill, millColors);
 
         const FirTreeColors treeColors = {
-            .trunk = m_theme.treeTrunk,
-            .leaves = m_theme.treeLeavesBase,
-            .shadow = m_theme.shadow
+            .trunk = theme().treeTrunk,
+            .leaves = theme().treeLeavesBase,
+            .shadow = theme().shadow
         };
         drawFirTree(frame, { w * 0.15f, h * 0.75f }, 0.8f * m_objectsScale, treeColors);
         // The predator behind the far tree: a gator in the African themes, a wolf elsewhere,
@@ -214,51 +184,32 @@ namespace ClaFi::PathArt
             .at = predator,
             .size = m_objectsScale * 0.8f,
             .cycleTime = time.cycleTime,
-            .opacity = m_theme.isAfrica
+            .opacity = theme().isAfrica
         }, GatorColors{
-            .body = m_theme.wolfBody,
-            .eye = m_theme.wolfEye
+            .body = theme().wolfBody,
+            .eye = theme().wolfEye
         });
         drawPeekingWolf(frame, PeekingWolfPose{
             .at = predator,
             .size = m_objectsScale * 0.8f,
             .cycleTime = time.cycleTime,
-            .opacity = 1.0f - m_theme.isAfrica
+            .opacity = 1.0f - theme().isAfrica
         }, PeekingWolfColors{
-            .body = m_theme.wolfBody,
-            .ear = m_theme.wolfEar,
-            .eye = m_theme.wolfEye
+            .body = theme().wolfBody,
+            .ear = theme().wolfEar,
+            .eye = theme().wolfEye
         });
         drawFirTree(frame, { w * 0.85f, h * 0.70f }, 1.2f * m_objectsScale, treeColors);
 
-        drawRain(frame, time.cycleTime, Rain{
-            .opacity = m_theme.hasRain,
-            .color = m_theme.effectColor1
-        });
-        drawSnow(frame, time.cycleTime, Snow{
-            .opacity = m_theme.hasSnow,
-            .color = m_theme.effectColor1
-        });
-        drawFireflies(frame, time.cycleTime, Fireflies{
-            .opacity = m_theme.hasFireflies,
-            .light = m_theme.effectColor1,
-            .glow = m_theme.effectColor2
-        });
-        drawFallingLeaves(frame, time.cycleTime, FallingLeaves{
-            .opacity = StateFactors::compose(m_theme.hasLeaves, m_theme.hasPetals),
-            .petals = m_theme.hasPetals,
-            .color1 = m_theme.effectColor1,
-            .color2 = m_theme.effectColor2
-        });
-        drawBlowingDust(frame, time.cycleTime, BlowingDust{
-            .opacity = m_theme.hasDust,
-            .color = m_theme.effectColor1
-        });
+        Fireflies fireflies = firefliesOf(theme());
+        fireflies.area = { 0.0f, h * 0.4f, w, h * 0.8f };
+        drawFireflies(frame, time.cycleTime, fireflies);
+        drawWeather(frame, time.cycleTime, theme());
 
         // river fog
         canvas.fillRectangle(bounds, PointGlow{
             .lightPos = riverBounds.topCenter() + FloatPoint{ 0.0f, 20.0f * m_objectsScale },
-            .lightColor = faded(m_theme.cloud, 0.33f),
+            .lightColor = faded(theme().cloud, 0.33f),
             .lightSpread = 60.0f * m_objectsScale,
             .xRatio = 0.08f,
             .shape = GlowShape::Circle
@@ -287,45 +238,10 @@ namespace ClaFi::PathArt
     }
 
     // **The picked theme's colours, not the blend's**: a host asks the moment a theme is picked,
-    // while the blend still wears the one before it. The ink is the light one or the river's ground
-    // at half, whichever stands out more against the top of the sky.
+    // while the blend still wears the one before it.
     SceneReadoutColors MillScene::readoutColors() const
     {
-        const SceneTheme& theme = pickedTheme();
-        SceneReadoutColors colors = {
-            .field = theme.riverBottom,
-            .series = theme.riverWave
-        };
-        const Color darkInk = colorBetween(theme.riverBottom, Color{ 0xFF000000 }, 0.5f);
-        if (contrastBetween(darkInk, theme.skyTop) > contrastBetween(colors.ink, theme.skyTop))
-            colors.ink = darkInk;
-        return colors;
-    }
-
-    void MillScene::crossFadeToPickedTheme()
-    {
-        m_prevTheme = m_theme;
-        m_nextTheme = &pickedTheme();
-        // The name is the destination's at once, like the index: what crossfades below is the
-        // colours, and a blend answering the name it came from tells its caller the wrong theme.
-        m_theme.name = m_nextTheme->name;
-        m_animator.start(this, g_switchThemeSlot, 0.0f, 1.0f, [this](AnimateParams& params) {
-            for (std::size_t i = 0; i != SceneTheme::colorsNum(); ++i)
-            {
-                m_theme.asArray()[i] = Color{
-                    m_prevTheme.asArray()[i],
-                    m_nextTheme->asArray()[i],
-                    params.value
-                };
-            }
-            for (std::size_t i = 0; i != SceneTheme::effectsNum(); ++i)
-            {
-                const float v1 = m_prevTheme.effectsArray()[i];
-                const float v2 = m_nextTheme->effectsArray()[i];
-                m_theme.effectsArray()[i] = v1 * (1.0f - params.value) + v2 * params.value;
-            }
-            m_backgroundDimensions = {}; // to rebuild background
-        });
+        return readoutColorsOf(pickedTheme());
     }
 
     void MillScene::prepareBackground(const float w, const float h)
@@ -353,11 +269,11 @@ namespace ClaFi::PathArt
         path.lineTo(0.0f, h);
         path.close();
         p.drawPath(path, {
-            PathDrawLayer::LinearGradient({ 0.0f, 0.0f }, { 0.0f, h }, m_theme.skyTop,
-                m_theme.skyBottom),
+            PathDrawLayer::LinearGradient({ 0.0f, 0.0f }, { 0.0f, h }, theme().skyTop,
+                theme().skyBottom),
             PathDrawLayer::PointGlow({
                 .lightPos = m_sunPos,
-                .lightColor = m_theme.sunGlow,
+                .lightColor = theme().sunGlow,
                 .lightSpread = 166.0f * m_objectsScale,
                 .xRatio = 0.5f,
                 .shape = GlowShape::Circle
@@ -366,7 +282,7 @@ namespace ClaFi::PathArt
 
         // Sun Disk / Crescent
         path.clear();
-        const float s = m_theme.hasStars;
+        const float s = theme().hasStars;
         const Matrix3x2 sunTx = Matrix3x2::Translation(m_sunPos)
             * Matrix3x2::Rotation((s * 0.1f) * k_2Pi);
 
@@ -390,8 +306,8 @@ namespace ClaFi::PathArt
         path.close();
 
         p.drawPath(path, {
-            PathDrawLayer::Fill(m_theme.sunDisk),
-            PathDrawLayer::Stroke(m_theme.sunStroke, 2.0f)
+            PathDrawLayer::Fill(theme().sunDisk),
+            PathDrawLayer::Stroke(theme().sunStroke, 2.0f)
         }, &sunTx);
 
         // Hills
@@ -415,7 +331,7 @@ namespace ClaFi::PathArt
             const float ox = index * 15.0f + std::sin(t * 10.0f + index) * 5.0f;
             path.moveTo(ox - 10.0f, 0.0f);
             path.quadTo({ ox, -10.0f }, { ox + 10.0f, 0.0f });
-            canvas.fillPath(path, SolidColor{ m_theme.foam }, &tx);
+            canvas.fillPath(path, SolidColor{ theme().foam }, &tx);
         }
     }
 
@@ -440,7 +356,7 @@ namespace ClaFi::PathArt
             path.lineTo(rW, -rB);
             path.lineTo(0.0f, -dL);
             path.close();
-            const Color ray = i % 2 == 0 ? m_theme.sunCorona1 : m_theme.sunCorona2;
+            const Color ray = i % 2 == 0 ? theme().sunCorona1 : theme().sunCorona2;
             canvas.fillPath(path, SolidColor{ ray }, &tx);
         }
     }
@@ -468,7 +384,7 @@ namespace ClaFi::PathArt
     //                path,
     //                {
     //                    PathDrawLayer::Fill(0xffff00ff)
-    //                    //PathDrawLayer::OuterGlow(m_theme.cloud, 10.0f * s)
+    //                    //PathDrawLayer::OuterGlow(theme().cloud, 10.0f * s)
     //                },
     //                &tx
     //            );
@@ -486,8 +402,8 @@ namespace ClaFi::PathArt
     //    {
     //            PixelPathPainter p{ view };
     //            p.drawPath(path, {
-    //                PathDrawLayer::Fill(m_theme.cloud),
-    //                PathDrawLayer::OuterGlow(m_theme.cloud, glowRadius)
+    //                PathDrawLayer::Fill(theme().cloud),
+    //                PathDrawLayer::OuterGlow(theme().cloud, glowRadius)
     //                }, tx);
 
     //    });
@@ -512,8 +428,8 @@ namespace ClaFi::PathArt
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::Fill(m_theme.cloud),
-                PathDrawLayer::OuterGlow(m_theme.cloud, 10.0f)
+                PathDrawLayer::Fill(theme().cloud),
+                PathDrawLayer::OuterGlow(theme().cloud, 10.0f)
             },
             &tx
         );
@@ -536,8 +452,8 @@ namespace ClaFi::PathArt
             LinearGradient::Simple(
                 { w * 0.5f, rT },
                 { w * 0.5f, h },
-                m_theme.riverTop.withOpacity(0.8f),
-                m_theme.riverBottom.withOpacity(0.8f)
+                theme().riverTop.withOpacity(0.8f),
+                theme().riverBottom.withOpacity(0.8f)
             ),
             &tx
         );
@@ -555,7 +471,7 @@ namespace ClaFi::PathArt
             path.moveTo({ xS - wS, yO });
             path.quadTo({ xS, yO - 5.0f * m_objectsScale }, { xS + wS, yO });
             path.close();
-            canvas.drawPath(path, SolidColor{ m_theme.riverWave }, 1.5f * m_objectsScale, &tx);
+            canvas.drawPath(path, SolidColor{ theme().riverWave }, 1.5f * m_objectsScale, &tx);
         }
         return rT + off.y;
     }
@@ -572,8 +488,8 @@ namespace ClaFi::PathArt
         path.lineTo(0.0f, h);
         path.close();
         p.drawPath(path, {
-            PathDrawLayer::LinearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, m_theme.hillTop,
-                m_theme.hillBottom)
+            PathDrawLayer::LinearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, theme().hillTop,
+                theme().hillBottom)
         }, &tx);
 
         path.clear();
@@ -583,9 +499,9 @@ namespace ClaFi::PathArt
         path.lineTo(0.0f, h);
         path.close();
 
-        Hsl topHsl{ m_theme.hillTop };
+        Hsl topHsl{ theme().hillTop };
         topHsl.scaleLuminosity(0.9f);
-        Hsl botHsl{ m_theme.hillBottom };
+        Hsl botHsl{ theme().hillBottom };
         botHsl.scaleLuminosity(0.9f);
         p.drawPath(path, {
             PathDrawLayer::LinearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, topHsl.toColor(),
@@ -612,7 +528,7 @@ namespace ClaFi::PathArt
 
     //void MillScene::drawLightning(Canvas& canvas, float w, float h, FloatPoint offset, float t)
     //{
-    //    if (m_theme.hasRain <= 0.001f) return;
+    //    if (theme().hasRain <= 0.001f) return;
     //    float strikePhase = t * 3.0f;
     //    float flashT = std::fmod(strikePhase, 1.0f);
     //    if (flashT > 0.15f) return;
@@ -625,12 +541,12 @@ namespace ClaFi::PathArt
     //    PixelPath path;
 
     //    // Soft sky flash (Fills the entire screen)
-    //    float opacityFill = m_theme.hasRain * flicker * fade * 0.15f;
+    //    float opacityFill = theme().hasRain * flicker * fade * 0.15f;
     //    path.moveTo(0.0f, 0.0f); path.lineTo(w, 0.0f); path.lineTo(w, h); path.lineTo(0.0f, h); path.close();
-    //    canvas.fillPath(path, SolidColor{ m_theme.sunDisk.withOpacity(opacityFill) }, &tx);
+    //    canvas.fillPath(path, SolidColor{ theme().sunDisk.withOpacity(opacityFill) }, &tx);
 
     //    // Lightning bolt path generation
-    //    float opacityBolt = m_theme.hasRain * flicker * fade;
+    //    float opacityBolt = theme().hasRain * flicker * fade;
     //    path.clear();
     //    float lx = w * (0.3f + 0.4f * pseudoRand(1, seed));
     //    float ly = 0.0f;
@@ -660,8 +576,8 @@ namespace ClaFi::PathArt
 
     //            PixelPathPainter p{ view };
     //            p.drawPath(path, {
-    //                PathDrawLayer::Stroke(m_theme.sunDisk, 3.0f * m_objectsScale),
-    //                PathDrawLayer::OuterGlow(m_theme.sunDisk, 20.0f * m_objectsScale)
+    //                PathDrawLayer::Stroke(theme().sunDisk, 3.0f * m_objectsScale),
+    //                PathDrawLayer::OuterGlow(theme().sunDisk, 20.0f * m_objectsScale)
     //                }, tx);
 
     //            canvas.drawPixelView(view);

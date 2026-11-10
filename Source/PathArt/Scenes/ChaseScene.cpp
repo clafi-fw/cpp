@@ -2,9 +2,14 @@ module ClaFi.PathArt.ChaseScene;
 
 import ClaFi.PathArt.DazeStarsEffect;
 import ClaFi.PathArt.DustPuffEffect;
+import ClaFi.PathArt.FirefliesEffect;
 import ClaFi.PathArt.HareSprite;
 import ClaFi.PathArt.ReedsSprite;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.StarsEffect;
+import ClaFi.PathArt.ThemeBlend;
+import ClaFi.PathArt.Types;
+import ClaFi.PathArt.WeatherEffect;
 import ClaFi.PathArt.WolfSprite;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -19,112 +24,15 @@ namespace ClaFi::PathArt
 
     namespace ChaseColors
     {
-        constexpr Color SkyTop{ 0xFF78C3F4 };
-        constexpr Color SkyHorizon{ 0xFFE6F7FF };
-        constexpr Color SunGlow{ 0xFFFFF7D1 };
-        constexpr Color Sun{ 0xFFFFF6CC };
-        constexpr Color Cloud{ 0xE6FFFFFF };
-        constexpr Color MountainTop{ 0xFFC4D4EA };
-        constexpr Color MountainFoot{ 0xFF93AED0 };
-        // The hills and their trees are greens taken 0.55 of the way to MountainFoot, so they
-        // stand back behind the trail.
-        constexpr Color HillTop{ 0xFF93BEA4 };
-        constexpr Color HillFoot{ 0xFF7BAE95 };
-        constexpr Color HillTreeTrunk{ 0xFF87868A };
-        constexpr Color HillTreeCrown{ 0xFF6C9F8D };
-        constexpr Color HillTreeCrownLight{ 0xFF74A993 };
-        constexpr Color HillTreeCrownMiddle{ 0xFF6FA38E };
-        constexpr Color Crown{ 0xFF3F8F3E };
-        constexpr Color CrownLight{ 0xFF4FA34A };
-        constexpr Color CrownMiddle{ 0xFF45973F };
-        constexpr Color GrassTop{ 0xFF77C24F };
-        constexpr Color GrassFoot{ 0xFF4C9638 };
-        constexpr Color Trail{ 0xE6D8B67A };
-        constexpr Color Tuft{ 0xFF3F8A33 };
-        constexpr Color Pebble{ 0xFFB8935A };
-        constexpr Color Petal{ 0xFFFFFFFF };
-        constexpr Color FlowerHeart{ 0xFFFFD34D };
-        constexpr Color Bough{ 0xFF6B4426 };
-        constexpr Color Bark{ 0xFF8A5A33 };
-        constexpr Color BarkShade{ 0xFF5B3A20 };
-        constexpr Color AppleLight{ 0xFFE84B3C };
-        constexpr Color AppleDark{ 0xFFA3241F };
         constexpr Color Shine{ 0x99FFFFFF };
-        constexpr Color Leaf{ 0xFF4FA34A };
-        constexpr Color AppleFlesh{ 0xFFFBF1D2 };
-        constexpr Color AppleSeed{ 0xFF4A2E1A };
-        constexpr Color CrowBody{ 0xFF2B2F3B };
-        constexpr Color CrowWing{ 0xFF1D2029 };
-        constexpr Color CrowWingFar{ 0xFF16181F };
-        constexpr Color CrowBeak{ 0xFF4B4D55 };
-        constexpr Color BootLight{ 0xFF8A6440 };
-        constexpr Color BootDark{ 0xFF5E3F25 };
-        constexpr Color BootSole{ 0xFF2F2621 };
-        constexpr Color BootPatch{ 0xFFA07A4F };
-        constexpr Color Lace{ 0xFFE8D9B5 };
-        constexpr Color SpinesDark{ 0xFF5C4630 };
-        constexpr Color SpinesLight{ 0xFF7D6146 };
-        constexpr Color HedgehogFace{ 0xFF9A7655 };
-        constexpr Color HedgehogEar{ 0xFF7A5A40 };
         constexpr Color EyeShine{ 0xFFFFFFFF };
-        constexpr Color DuckLight{ 0xFFFFDC4A };
-        constexpr Color DuckShade{ 0xFFE8AE1C };
-        constexpr Color DuckBeak{ 0xFFF28C1E };
-        constexpr Color DuckBeakShade{ 0xFFC9661A };
         constexpr Color Puff{ 0xB3FFFFFF };
-        constexpr Color BallRed{ 0xFFE84B3C };
-        constexpr Color BallWhite{ 0xFFF8F6F0 };
-        constexpr Color BallBlue{ 0xFF3B7FD9 };
-        constexpr Color BallYellow{ 0xFFFFD43B };
         constexpr Color BallEdge{ 0x40000000 };
-        constexpr Color BladeDark{ 0xFF2F7A2A };
-        constexpr Color BladeMiddle{ 0xFF3F9234 };
-        constexpr Color BladeLight{ 0xFF58AE3F };
-        constexpr Color Peel{ 0xFFF4D03F };
-        constexpr Color PeelShade{ 0xFFD9AE22 };
-        constexpr Color PeelInside{ 0xFFFFF3C4 };
-        constexpr Color PeelTip{ 0xFF5E4220 };
-        constexpr Color RakeHandle{ 0xFFB07A45 };
-        constexpr Color RakeHandleShade{ 0xFF8A5A30 };
-        constexpr Color RakeMetal{ 0xFF6E747C };
-        constexpr Color CapLight{ 0xFFE5483C };
-        constexpr Color CapDark{ 0xFFA8261F };
-        constexpr Color CapSpot{ 0xFFFAF4E6 };
-        constexpr Color Stalk{ 0xFFF2E8D2 };
-        constexpr Color StalkShade{ 0xFFD2C2A0 };
-        constexpr Color Board{ 0xFFC08A55 };
-        constexpr Color BoardShade{ 0xFF8A5A33 };
-        constexpr Color StumpTop{ 0xFFD9B98A };
-        constexpr Color StumpRing{ 0xFFB08A5A };
-        constexpr Color FrogLight{ 0xFF8CC63F };
-        constexpr Color FrogDark{ 0xFF4E8A2A };
-        constexpr Color FrogBelly{ 0xFFE6EDB0 };
-        constexpr Color ShellLight{ 0xFFD08A45 };
-        constexpr Color ShellDark{ 0xFF8E4F22 };
-        constexpr Color ShellLine{ 0xFF6B3A18 };
-        constexpr Color SnailBody{ 0xFFC9B79A };
-        constexpr Color Wing{ 0xFFF5A03A };
-        constexpr Color WingEdge{ 0xFF3B2A1F };
-        constexpr Color StoneLight{ 0xFFB4B2AA };
-        constexpr Color StoneDark{ 0xFF76756E };
-        constexpr Color StoneCrack{ 0xFF5C5B55 };
-        constexpr Color ReedStem{ 0xFF4F8A36 };
-        constexpr Color ReedHead{ 0xFF7A5230 };
-        constexpr Color Fluff{ 0xFFF2E9D8 };
-        constexpr Color FlowerStem{ 0xFF3F8A33 };
-        constexpr Color BirdBody{ 0xFF8B6A49 };
-        constexpr Color BirdBelly{ 0xFFEADBC0 };
-        constexpr Color BirdWing{ 0xFF664A31 };
-        constexpr Color BirdBeak{ 0xFFE5A23A };
         constexpr Color Ink{ 0xFF1B1D22 };
-        constexpr Color Shadow{ 0x472B4A1E };
-        constexpr Color Dust{ 0xFFEADBB8 };
         constexpr Color DazeStar{ 0xFFFFD34D };
-        constexpr Color FrontGrass{ 0xFF3A7D2C };
-        constexpr Color FrontGrassDark{ 0xFF2F6E25 };
     }
 
-    // The two who run the chase, and the other couple that comes the other way.
+    // The two who run the chase in daylight, as the icon draws them in every theme.
     namespace ChaseCoats
     {
         constexpr WolfCoat GreyWolf{
@@ -133,32 +41,32 @@ namespace ClaFi::PathArt
             .coat = Color{ 0xFF6C7480 },
             .far = Color{ 0xFF4F565F },
             .dark = Color{ 0xFF3D434C },
-            .belly = Color{ 0xE6B3B9C2 }
+            .belly = Color{ 0xE6B3B9C2 },
+            .tongue = Color{ 0xFFEF6F7F },
+            .mouth = Color{ 0xFF5A1C28 },
+            .tooth = Color{ 0xFFFBF6E8 },
+            .toothEdge = Color{ 0xFF9C9488 }
         };
         constexpr HareCoat BrownHare{
             .light = Color{ 0xFFC9935E },
             .fur = Color{ 0xFFB98552 },
             .shade = Color{ 0xFFA87444 },
-            .belly = Color{ 0xE6F0DFC0 }
-        };
-        constexpr WolfCoat BlackWolf{
-            .light = Color{ 0xFF4C4F57 },
-            .shade = Color{ 0xFF35383F },
-            .coat = Color{ 0xFF40434A },
-            .far = Color{ 0xFF2C2E34 },
-            .dark = Color{ 0xFF1F2126 },
-            .belly = Color{ 0xE68A8E96 }
-        };
-        constexpr HareCoat GreyHare{
-            .light = Color{ 0xFFB2B1AA },
-            .fur = Color{ 0xFF9F9E97 },
-            .shade = Color{ 0xFF8C8B84 },
-            .belly = Color{ 0xE6EFEDE6 }
+            .belly = Color{ 0xE6F0DFC0 },
+            .tail = Color{ 0xFFFFFFFF },
+            .earInside = Color{ 0xFFF2A7A0 },
+            .nose = Color{ 0xFFD9787A },
+            .whisker = Color{ 0x805B3A1E },
+            .mouth = Color{ 0xFF5A2A26 },
+            .tooth = Color{ 0xFFFFFFFF },
+            .toothEdge = Color{ 0xFFA89E94 }
         };
     }
 
     namespace
     {
+        // The theme's stars twinkle and its weather comes round twice a cycle, every 30 seconds,
+        // near the mill's 40.
+        constexpr float k_lively{ 2.0f };
         // Units the camera covers in an episode at full speed.
         constexpr float k_fullSpeedTravel{ 6600.0f };
         constexpr float k_episodesPerCycle{ 3.0f };
@@ -537,29 +445,30 @@ namespace ClaFi::PathArt
         constexpr float k_ballRoll{ 40.0f };
 
         // `x` is the middle of what lies on the trail, or the end of the branch.
-        void drawObstacle(const SceneFrame&, Obstacle, float x, float groundY, float footY,
-            const ObstacleMotion&);
+        void drawObstacle(const SceneFrame&, const SceneTheme&, Obstacle, float x, float groundY,
+            float footY, const ObstacleMotion&);
         // Each is drawn in units about the middle of where it meets the trail, facing the wolf.
-        void drawBananaPeel(const SceneFrame& onTrail, float lift, float spin);
+        void drawBananaPeel(const SceneFrame& onTrail, const ChaseTheme&, float lift, float spin);
         // Splitting, its halves lean apart and turn their flesh toward the viewer.
-        void drawApple(const SceneFrame& onTrail, float split);
+        void drawApple(const SceneFrame& onTrail, const ChaseTheme&, float split);
         // Tipping, it turns about the back of its heel.
-        void drawBoot(const SceneFrame& onTrail, float tip);
-        void drawHedgehog(const SceneFrame& onTrail, float curl, float steps);
-        void drawRubberDuck(const SceneFrame& onTrail, float deflation);
-        void drawBall(const SceneFrame& onTrail, float rollAngle);
-        void drawGrassPatch(const SceneFrame& onTrail, float bladeLean);
+        void drawBoot(const SceneFrame& onTrail, const ChaseTheme&, float tip);
+        void drawHedgehog(const SceneFrame& onTrail, const ChaseTheme&, float curl, float steps);
+        void drawRubberDuck(const SceneFrame& onTrail, const ChaseTheme&, float deflation);
+        void drawBall(const SceneFrame& onTrail, const ChaseTheme&, float rollAngle);
+        void drawGrassPatch(const SceneFrame& onTrail, const ChaseTheme&, float bladeLean);
         // Lying tines up, its head toward the wolf; its handle swings up about the head.
-        void drawRake(const SceneFrame& onTrail, float swing);
-        void drawBranchTree(const SceneFrame&, float x, float groundY, float footY,
-            const ObstacleMotion&);
+        void drawRake(const SceneFrame& onTrail, const ChaseTheme&, float swing);
+        void drawBranchTree(const SceneFrame&, const SceneTheme&, float x, float groundY,
+            float footY, const ObstacleMotion&);
         // `x` is where it meets the wolf's face.
-        void drawCrow(const SceneFrame&, float x, float groundY, float footY, float sinceHit,
-            CrowStart);
+        void drawCrow(const SceneFrame&, const ChaseTheme&, float x, float groundY, float footY,
+            float sinceHit, CrowStart);
         // Folded, its wings lie along its back and `flap` is not used.
-        void drawCrowBody(const SceneFrame& crow, float flap, bool dazed, bool folded);
+        void drawCrowBody(const SceneFrame& crow, const ChaseTheme&, float flap, bool dazed,
+            bool folded);
         // The stump the crow sits on, on the far verge under where it meets his face.
-        void drawCrowStump(const SceneFrame&, float x, float groundY);
+        void drawCrowStump(const SceneFrame&, const ChaseTheme&, float x, float groundY);
         // How what stands by the path moves as the two run past it.
         struct RoadsideMotion
         {
@@ -574,8 +483,8 @@ namespace ClaFi::PathArt
         // where it stands, in units from the middle of the frame like the two.
         [[nodiscard]] float wakeGust(float x, float hareX, float wolfX);
         // `x` is its middle, where it stands on that edge of the trail.
-        void drawRoadside(const SceneFrame&, Roadside, Verge, float x, float groundY,
-            const RoadsideMotion&);
+        void drawRoadside(const SceneFrame&, const ChaseTheme&, Roadside, Verge, float x,
+            float groundY, const RoadsideMotion&);
         // How the boulder and the banana peel jump in the wake of each of them.
         struct Hop
         {
@@ -586,18 +495,21 @@ namespace ClaFi::PathArt
         [[nodiscard]] Hop hopAt(const RoadsideMotion&);
         // Something that hops, drawn about the middle of its foot.
         [[nodiscard]] SceneFrame hopping(const SceneFrame& onVerge, const Hop&);
-        void drawBoulder(const SceneFrame& onVerge, const Hop&);
-        void drawDaisy(const SceneFrame& onVerge, const RoadsideMotion&);
-        void drawSignpost(const SceneFrame& onVerge, const RoadsideMotion&);
-        void drawToadstool(const SceneFrame& onVerge, const RoadsideMotion&);
+        void drawBoulder(const SceneFrame& onVerge, const ChaseTheme&, const Hop&);
+        void drawDaisy(const SceneFrame& onVerge, const ChaseTheme&, const RoadsideMotion&);
+        void drawSignpost(const SceneFrame& onVerge, const ChaseTheme&, const RoadsideMotion&);
+        void drawToadstool(const SceneFrame& onVerge, const ChaseTheme&, const RoadsideMotion&);
         // The fluff the wolf's wake tears from the reeds' heads, drawn in the reeds' units.
-        void drawReedFluff(const SceneFrame& onVerge, float wolfTime);
-        void drawTreeStump(const SceneFrame& onVerge);
-        void drawBird(const SceneFrame& onVerge, float seconds, float sinceHareClose);
-        void drawStumpCrow(const SceneFrame& onVerge, float seconds, float sinceHareClose);
-        void drawButterfly(const SceneFrame& onVerge, float seconds, float sinceHareClose);
-        void drawFrog(const SceneFrame& onVerge, float sinceHareClose, Verge);
-        void drawSnail(const SceneFrame& onVerge, const RoadsideMotion&);
+        void drawReedFluff(const SceneFrame& onVerge, const ChaseTheme&, float wolfTime);
+        void drawTreeStump(const SceneFrame& onVerge, const ChaseTheme&);
+        void drawBird(const SceneFrame& onVerge, const ChaseTheme&, float seconds,
+            float sinceHareClose);
+        void drawStumpCrow(const SceneFrame& onVerge, const ChaseTheme&, float seconds,
+            float sinceHareClose);
+        void drawButterfly(const SceneFrame& onVerge, const ChaseTheme&, float seconds,
+            float sinceHareClose);
+        void drawFrog(const SceneFrame& onVerge, const ChaseTheme&, float sinceHareClose, Verge);
+        void drawSnail(const SceneFrame& onVerge, const ChaseTheme&, const RoadsideMotion&);
 
         // One wave of a ridge: its height, how often it repeats over a tile, where it starts.
         struct Wave
@@ -636,6 +548,7 @@ namespace ClaFi::PathArt
     void ChaseScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
+        const SceneTheme& theme = m_themes.worn();
         const float unit = frame.unit;
         const float width = frame.width;
         // A narrow frame draws the two closer together.
@@ -658,8 +571,8 @@ namespace ClaFi::PathArt
             return (cameraShare(to, episode) - cameraShare(from, episode)) * k_fullSpeedTravel;
         };
 
-        drawBackdrop(frame, travel, groundY);
-        drawGround(frame, travel, groundY);
+        drawBackdrop(frame, theme, time.cycleTime, travel, groundY);
+        drawGround(frame, theme, travel, groundY);
 
         // The obstacle reaches the wolf as the camera starts to stop. His gap to the hare and the
         // branch's reach are held in pixels, so they hold in a narrow frame too.
@@ -1096,21 +1009,22 @@ namespace ClaFi::PathArt
                 && roadsideOnScreen < width + 80.0f * unit;
             if (!inView && !(flies && sinceHareClose > 0.0f && sinceHareClose < 3.0f))
                 continue;
-            drawRoadside(frame, roadside, Verge::Far, roadsideOnScreen, groundY, RoadsideMotion{
+            drawRoadside(frame, theme.chase, roadside, Verge::Far, roadsideOnScreen, groundY,
+                RoadsideMotion{
                 .gust = wakeGust(roadsideX, hareX, wolfX),
                 .sinceHareClose = sinceHareClose,
                 .wolfTime = sinceHareClose,
                 .seconds = runTime * k_episodeSeconds
             });
         }
-        drawVergeRow(frame, time, groundY, closeness, false);
+        drawVergeRow(frame, theme.chase, time, groundY, closeness, false);
         if (obstacleShown && branchRun && leapEnd == LeapEnd::Crow
             && treeRun.crowStart == CrowStart::OnStump)
         {
-            drawCrowStump(frame, obstacleOnScreen, groundY);
+            drawCrowStump(frame, theme.chase, obstacleOnScreen, groundY);
         }
         if (obstacleShown && !obstacleOverWolf)
-            drawObstacle(frame, obstacle, obstacleOnScreen, groundY, footY, obstacleMotion);
+            drawObstacle(frame, theme, obstacle, obstacleOnScreen, groundY, footY, obstacleMotion);
 
         // The other couple are ours turned about where the wolves meet, drawn while near the
         // frame. Once the wolves are down they keep a time of their own: their hare runs a little
@@ -1133,7 +1047,7 @@ namespace ClaFi::PathArt
             + theirWolf.pose.center.x, 0.0f) * Matrix3x2::Scale(-1.0f, 1.0f));
         const bool theyAreShown = otherCouple && theirHare.foot.x < width + 120.0f * unit
             && theirWolfX > -120.0f * unit;
-        const SolidColor shadow{ ChaseColors::Shadow };
+        const SolidColor shadow{ theme.chase.shadow };
         const float wolfShadow = 46.0f * unit * (1.0f - 0.3f * std::min(1.0f, lift / 60.0f));
         fillOval(frame, { wolf.x, footY + 2.0f * unit }, wolfShadow, 5.0f * unit, shadow);
         const float hareShadow = 26.0f * unit * (1.0f - 0.3f * harePose.air);
@@ -1155,20 +1069,20 @@ namespace ClaFi::PathArt
             drawDustPuff(frame, DustPuff{
                 .ground = { toScreen(takeoffX), footY },
                 .settle = sinceTakeoff / 0.04f,
-                .color = ChaseColors::Dust
+                .color = theme.chase.dust
             });
             if (theyAreShown)
             {
                 drawDustPuff(theirWolfFrame, DustPuff{
                     .ground = { toScreen(takeoffX), footY },
                     .settle = sinceTakeoff / 0.04f,
-                    .color = ChaseColors::Dust
+                    .color = theme.chase.dust
                 });
             }
         }
-        drawHare(frame, harePose, ChaseCoats::BrownHare);
+        drawHare(frame, harePose, theme.chase.brownHare);
         if (theyAreShown)
-            drawHare(frame, theirHare, ChaseCoats::GreyHare);
+            drawHare(frame, theirHare, theme.chase.greyHare);
         // Lifted from where it lay to her chest, the apple bobs up to her mouth at each bite and
         // comes back a bite smaller; crumbs of skin and flesh fly from its top.
         float toMouth = 0.0f;
@@ -1187,7 +1101,7 @@ namespace ClaFi::PathArt
             const float heldScale = k_appleScale * std::sqrt(appleLeft) * unit;
             drawApple(frame.within(Matrix3x2::Translation(heldMiddle)
                 * Matrix3x2::Scale(heldScale) * Matrix3x2::Translation(0.0f, k_appleMiddle)),
-                0.0f);
+                theme.chase, 0.0f);
         }
         if (appleRun)
         {
@@ -1209,18 +1123,18 @@ namespace ClaFi::PathArt
                     const FloatPoint at = appleTop + (speed * seconds
                         + FloatPoint{ 0.0f, 0.5f * k_appleGravity * seconds * seconds }) * unit;
                     const Color crumbColor = crumb % 2 == 0
-                        ? ChaseColors::AppleLight
-                        : ChaseColors::AppleFlesh;
+                        ? theme.chase.appleLight
+                        : theme.chase.appleFlesh;
                     fillDisc(frame, at, 1.8f * unit,
                         SolidColor{ crumbColor.withOpacity(1.0f - seconds / 0.3f) });
                 }
             }
         }
-        drawWolf(frame, wolfPose, ChaseCoats::GreyWolf);
+        drawWolf(frame, wolfPose, theme.chase.greyWolf);
         if (theyAreShown)
-            drawWolf(theirWolfFrame, theirWolf.pose, ChaseCoats::BlackWolf);
+            drawWolf(theirWolfFrame, theirWolf.pose, theme.chase.blackWolf);
         if (obstacleShown && obstacleOverWolf)
-            drawObstacle(frame, obstacle, obstacleOnScreen, groundY, footY, obstacleMotion);
+            drawObstacle(frame, theme, obstacle, obstacleOnScreen, groundY, footY, obstacleMotion);
 
         // dust where he lands, and stars round his head while he is down
         const float landing = branchRun ? treeRestAt(leapEnd) - 0.003f : 0.6f;
@@ -1229,7 +1143,7 @@ namespace ClaFi::PathArt
             const DustPuff dust = {
                 .ground = { wolf.x, footY },
                 .settle = (episodeTime - landing) / 0.12f,
-                .color = ChaseColors::Dust
+                .color = theme.chase.dust
             };
             drawDustPuff(frame, dust);
             if (theyAreShown)
@@ -1250,8 +1164,9 @@ namespace ClaFi::PathArt
         drawStars(frame, ourWolf, episodeTime);
         if (theyAreShown)
             drawStars(theirWolfFrame, theirWolf, theirWolfTime);
-        drawVergeRow(frame, time, groundY, closeness, true);
-        drawFrontGrass(frame, travel);
+        drawVergeRow(frame, theme.chase, time, groundY, closeness, true);
+        drawFrontGrass(frame, theme.chase, travel);
+        drawWeather(frame, fractionalPart(time.cycleTime * k_lively), theme);
     }
 
     void ChaseScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
@@ -1292,13 +1207,10 @@ namespace ClaFi::PathArt
         }, ChaseCoats::GreyWolf);
     }
 
+    // **The picked theme's colours, not the blend's** - see readoutColorsOf.
     SceneReadoutColors ChaseScene::readoutColors() const
     {
-        return {
-            .field = ChaseColors::CrowBody,
-            .series = ChaseColors::SunGlow,
-            .ink = ChaseColors::CrowBody
-        };
+        return readoutColorsOf(m_themes.picked());
     }
 
     float ChaseScene::travelAt(const float cycleTime)
@@ -1333,16 +1245,26 @@ namespace ClaFi::PathArt
     }
 
     // Each layer moves at its own share of the camera's speed: far ones slow, near ones fast.
-    void ChaseScene::drawBackdrop(const SceneFrame& frame, const float travel, const float groundY)
+    void ChaseScene::drawBackdrop(const SceneFrame& frame, const SceneTheme& theme,
+        const float cycleTime, const float travel, const float groundY)
     {
         const float unit = frame.unit;
         const float width = frame.width;
         const float height = frame.height;
         fillBox(frame, { 0.0f, 0.0f, width, groundY }, LinearGradient::Simple({ 0.0f, 0.0f },
-            { 0.0f, groundY }, ChaseColors::SkyTop, ChaseColors::SkyHorizon));
+            { 0.0f, groundY }, theme.skyTop, theme.skyBottom));
+        drawStars(frame, cycleTime, StarField{
+            .style = StarStyle::Sparkles,
+            .count = 120,
+            .top = 0.0f,
+            .bottom = groundY,
+            .color = theme.sunDisk,
+            .opacity = theme.hasStars,
+            .twinklesPerCycle = k_lively
+        });
         const FloatPoint sun = { width * 0.84f, height * 0.14f };
-        drawGlow(frame, sun, 130.0f * unit, ChaseColors::SunGlow.withOpacity(0.65f));
-        fillDisc(frame, sun, 24.0f * unit, SolidColor{ ChaseColors::Sun });
+        drawGlow(frame, sun, 130.0f * unit, theme.sunGlow.withOpacity(0.65f));
+        fillDisc(frame, sun, 24.0f * unit, SolidColor{ theme.sunDisk });
 
         const float cloudPeriod = periodNear(0.05f, 820.0f);
         forEachTile(frame, 0.05f, cloudPeriod, travel, [&](float tileLeft, float tileWidth) {
@@ -1360,7 +1282,7 @@ namespace ClaFi::PathArt
                 cloud.quadTo({ x, y - 60.0f * size }, { x + 20.0f * size, y - 20.0f * size });
                 cloud.quadTo({ x + 40.0f * size, y - 40.0f * size }, { x + 60.0f * size, y });
                 cloud.close();
-                fillShape(frame, cloud, SolidColor{ ChaseColors::Cloud });
+                fillShape(frame, cloud, SolidColor{ theme.cloud });
             }
         });
 
@@ -1377,7 +1299,7 @@ namespace ClaFi::PathArt
         mountains.lineTo(width + 6.0f * unit, groundY);
         mountains.close();
         fillShape(frame, mountains, LinearGradient::Simple({ 0.0f, height * 0.35f },
-            { 0.0f, groundY }, ChaseColors::MountainTop, ChaseColors::MountainFoot));
+            { 0.0f, groundY }, theme.chase.mountainTop, theme.chase.mountainFoot));
 
         const float hillPeriod = periodNear(0.35f, 1150.0f);
         const auto hillY = [&](float x) {
@@ -1390,7 +1312,7 @@ namespace ClaFi::PathArt
         hills.lineTo(width + 6.0f * unit, groundY + 2.0f * unit);
         hills.close();
         fillShape(frame, hills, LinearGradient::Simple({ 0.0f, height * 0.62f }, { 0.0f, groundY },
-            ChaseColors::HillTop, ChaseColors::HillFoot));
+            theme.chase.farHillTop, theme.chase.farHillFoot));
         forEachTile(frame, 0.35f, hillPeriod, travel, [&](float tileLeft, float) {
             for (int i = 0; i != 4; ++i)
             {
@@ -1401,30 +1323,42 @@ namespace ClaFi::PathArt
                 const float y = hillY(alongTile) + 6.0f * unit;
                 const float size = (0.7f + 0.4f * pseudoRandom(i, 112.0f)) * unit;
                 fillBox(frame, { x - 3.0f * size, y - 22.0f * size, x + 3.0f * size, y },
-                    SolidColor{ ChaseColors::HillTreeTrunk });
+                    SolidColor{ theme.chase.farTreeTrunk });
                 fillDisc(frame, { x, y - 32.0f * size }, 16.0f * size,
-                    SolidColor{ ChaseColors::HillTreeCrown });
+                    SolidColor{ theme.chase.farTreeCrown });
                 fillDisc(frame, { x - 9.0f * size, y - 25.0f * size }, 11.0f * size,
-                    SolidColor{ ChaseColors::HillTreeCrownLight });
+                    SolidColor{ theme.chase.farTreeCrownLight });
                 fillDisc(frame, { x + 9.0f * size, y - 26.0f * size }, 12.0f * size,
-                    SolidColor{ ChaseColors::HillTreeCrownMiddle });
+                    SolidColor{ theme.chase.farTreeCrownMiddle });
             }
+        });
+        // **The fireflies keep to the far hills**, moving with them, smaller and faded.
+        Fireflies fireflies = firefliesOf(theme);
+        fireflies.light = theme.chase.farFireflyLight;
+        fireflies.glow = theme.chase.farFireflyGlow;
+        fireflies.count = 22;
+        fireflies.size = 0.6f;
+        forEachTile(frame, 0.35f, hillPeriod, travel, [&](float tileLeft, float tileWidth) {
+            fireflies.area = { tileLeft, groundY - 90.0f * unit, tileLeft + tileWidth,
+                groundY - 20.0f * unit };
+            drawFireflies(frame, fractionalPart(cycleTime * k_lively), fireflies);
         });
     }
 
-    void ChaseScene::drawGround(const SceneFrame& frame, const float travel, const float groundY)
+    void ChaseScene::drawGround(const SceneFrame& frame, const SceneTheme& theme,
+        const float travel, const float groundY)
     {
         const float unit = frame.unit;
         const float width = frame.width;
         const FloatRect grass = { 0.0f, groundY, width, frame.height };
         fillBox(frame, grass, LinearGradient::Simple({ 0.0f, groundY }, { 0.0f, frame.height },
-            ChaseColors::GrassTop, ChaseColors::GrassFoot));
+            theme.hillTop, theme.hillBottom));
         fillBox(frame, { 0.0f, groundY + 10.0f * unit, width, groundY + 36.0f * unit },
-            SolidColor{ ChaseColors::Trail });
+            SolidColor{ theme.chase.trail });
         // Tufts, pebbles and flowers each go down over every tile before the next kind does, so a
         // flower stands over a tuft whichever tile either is in.
         const float tilePeriod = periodNear(1.0f, 400.0f);
-        ScatteredShapes tufts{ frame, SolidColor{ ChaseColors::Tuft }, 2.0f * unit };
+        ScatteredShapes tufts{ frame, SolidColor{ theme.chase.tuft }, 2.0f * unit };
         forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
             for (int i = 0; i != 6; ++i)
             {
@@ -1442,7 +1376,7 @@ namespace ClaFi::PathArt
             }
         });
         tufts.draw();
-        ScatteredShapes pebbles{ frame, SolidColor{ ChaseColors::Pebble } };
+        ScatteredShapes pebbles{ frame, SolidColor{ theme.chase.pebble } };
         forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
             for (int i = 0; i != 4; ++i)
             {
@@ -1457,8 +1391,8 @@ namespace ClaFi::PathArt
         pebbles.draw();
         // The petals of a flower stand just apart, so one shape holds them all under an even-odd
         // fill.
-        ScatteredShapes petals{ frame, SolidColor{ ChaseColors::Petal } };
-        ScatteredShapes hearts{ frame, SolidColor{ ChaseColors::FlowerHeart } };
+        ScatteredShapes petals{ frame, SolidColor{ theme.chase.petal } };
+        ScatteredShapes hearts{ frame, SolidColor{ theme.chase.flowerHeart } };
         forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
             const float petalRadius = 1.75f * unit;
             for (int i = 0; i != 3; ++i)
@@ -1482,7 +1416,8 @@ namespace ClaFi::PathArt
         hearts.draw();
     }
 
-    void ChaseScene::drawFrontGrass(const SceneFrame& frame, const float travel)
+    void ChaseScene::drawFrontGrass(const SceneFrame& frame, const ChaseTheme& chase,
+        const float travel)
     {
         const float unit = frame.unit;
         const float height = frame.height;
@@ -1490,7 +1425,7 @@ namespace ClaFi::PathArt
         // Every third blade is dark, and the dark ones go down first.
         for (const bool dark : { true, false })
         {
-            const Color shade = dark ? ChaseColors::FrontGrassDark : ChaseColors::FrontGrass;
+            const Color shade = dark ? chase.frontGrassDark : chase.frontGrass;
             ScatteredShapes blades{ frame, SolidColor{ shade } };
             forEachTile(frame, 1.35f, grassPeriod, travel, [&](float tileLeft, float tileWidth) {
                 for (int i = 0; i != 22; ++i)
@@ -1521,8 +1456,8 @@ namespace ClaFi::PathArt
     // of the stirring starts the first time she comes close and the wolf's part the first time he
     // does, each found by going back over the scene's time; each part then plays through as if
     // that one had run by at full speed.
-    void ChaseScene::drawVergeRow(const SceneFrame& frame, const SceneTime time,
-        const float groundY, const float closeness, const bool nearEdge)
+    void ChaseScene::drawVergeRow(const SceneFrame& frame, const ChaseTheme& chase,
+        const SceneTime time, const float groundY, const float closeness, const bool nearEdge)
     {
         const float unit = frame.unit;
         const float width = frame.width;
@@ -1702,8 +1637,8 @@ namespace ClaFi::PathArt
             const bool inView = onScreen > -margin * unit && onScreen < width + margin * unit;
             if (!inView && !(flies && sinceHareClose > 0.0f && sinceHareClose < k_flightSeconds))
                 continue;
-            drawRoadside(frame, roadside, nearEdge ? Verge::Near : Verge::Far, onScreen, groundY,
-                RoadsideMotion{
+            drawRoadside(frame, chase, roadside, nearEdge ? Verge::Near : Verge::Far, onScreen,
+                groundY, RoadsideMotion{
                     .gust = wakeGust(0.0f, runningBy(moments.hare), runningBy(moments.wolf)),
                     .sinceHareClose = sinceHareClose,
                     .wolfTime = moments.wolf
@@ -2110,53 +2045,54 @@ namespace ClaFi::PathArt
             return 0.5f * (before + after);
         }
 
-        void drawObstacle(const SceneFrame& frame, const Obstacle obstacle, const float x,
-            const float groundY, const float footY, const ObstacleMotion& motion)
+        void drawObstacle(const SceneFrame& frame, const SceneTheme& theme, const Obstacle obstacle,
+            const float x, const float groundY, const float footY, const ObstacleMotion& motion)
         {
             const SceneFrame onTrail = frame.within(Matrix3x2::Translation(x, footY)
                 * Matrix3x2::Scale(frame.unit));
             switch (obstacle)
             {
                 case Obstacle::BananaPeel:
-                    drawBananaPeel(onTrail, motion.peelLift, motion.peelSpin);
+                    drawBananaPeel(onTrail, theme.chase, motion.peelLift, motion.peelSpin);
                     break;
                 case Obstacle::Apple:
-                    drawApple(onTrail, motion.appleSplit);
+                    drawApple(onTrail, theme.chase, motion.appleSplit);
                     break;
                 case Obstacle::Boot:
-                    drawBoot(onTrail, motion.bootTip);
+                    drawBoot(onTrail, theme.chase, motion.bootTip);
                     break;
                 case Obstacle::Hedgehog:
-                    drawHedgehog(onTrail, motion.curl, motion.steps);
+                    drawHedgehog(onTrail, theme.chase, motion.curl, motion.steps);
                     break;
                 case Obstacle::RubberDuck:
-                    drawRubberDuck(onTrail, motion.deflation);
+                    drawRubberDuck(onTrail, theme.chase, motion.deflation);
                     break;
                 case Obstacle::Ball:
-                    drawBall(onTrail, motion.rollAngle);
+                    drawBall(onTrail, theme.chase, motion.rollAngle);
                     break;
                 case Obstacle::GrassPatch:
-                    drawGrassPatch(onTrail, motion.bladeLean);
+                    drawGrassPatch(onTrail, theme.chase, motion.bladeLean);
                     break;
                 case Obstacle::Rake:
-                    drawRake(onTrail, motion.rakeSwing);
+                    drawRake(onTrail, theme.chase, motion.rakeSwing);
                     break;
                 case Obstacle::Branch:
                     if (motion.treeRun.leapEnd == LeapEnd::Crow)
                     {
-                        drawCrow(frame, x, groundY, footY, motion.sinceHit,
+                        drawCrow(frame, theme.chase, x, groundY, footY, motion.sinceHit,
                             motion.treeRun.crowStart);
                     }
                     else if (treeStands(motion.treeRun.leapEnd))
                     {
-                        drawBranchTree(frame, x, groundY, footY, motion);
+                        drawBranchTree(frame, theme, x, groundY, footY, motion);
                     }
                     break;
             }
         }
 
         // A peel of three flaps splayed on the trail, turning about its middle as it flies.
-        void drawBananaPeel(const SceneFrame& onTrail, const float lift, const float spin)
+        void drawBananaPeel(const SceneFrame& onTrail, const ChaseTheme& chase, const float lift,
+            const float spin)
         {
             const FloatPoint middle = { 0.0f, -7.0f };
             const SceneFrame peel = onTrail.within(Matrix3x2::Translation(middle.x,
@@ -2170,28 +2106,28 @@ namespace ClaFi::PathArt
                 flap.quadTo(root + along * 0.5f + across, tip);
                 flap.quadTo(root + along * 0.5f - across * 0.3f, root);
                 flap.close();
-                fillShape(peel, flap, SolidColor{ ChaseColors::Peel });
+                fillShape(peel, flap, SolidColor{ chase.peel });
                 PixelPath inside;
                 inside.moveTo(root);
                 inside.quadTo(root + along * 0.5f + across * 0.4f, root + along * 0.85f);
                 inside.quadTo(root + along * 0.5f - across * 0.1f, root);
                 inside.close();
-                fillShape(peel, inside, SolidColor{ ChaseColors::PeelInside });
-                fillDisc(peel, tip, 1.8f, SolidColor{ ChaseColors::PeelTip });
+                fillShape(peel, inside, SolidColor{ chase.peelInside });
+                fillDisc(peel, tip, 1.8f, SolidColor{ chase.peelTip });
             };
             drawFlap({ 1.5f, -10.0f }, { 14.0f, -1.5f }, 0.55f);
             drawFlap({ -1.5f, -10.0f }, { -20.0f, -2.0f }, -0.55f);
             fillRoundedBox(peel, { -4.0f, -15.0f, 4.0f, -4.0f }, 3.5f,
-                SolidColor{ ChaseColors::PeelShade });
+                SolidColor{ chase.peelShade });
             drawFlap({ 0.0f, -9.0f }, { 4.0f, 0.0f }, 0.5f);
             drawSegment(peel, { 0.0f, -14.0f }, { 2.0f, -19.0f },
-                SolidColor{ ChaseColors::PeelTip }, 2.6f);
+                SolidColor{ chase.peelTip }, 2.6f);
         }
 
-        void drawApple(const SceneFrame& onTrail, const float split)
+        void drawApple(const SceneFrame& onTrail, const ChaseTheme& chase, const float split)
         {
             const LinearGradient skin = LinearGradient::Simple({ -8.0f, -18.0f }, { 8.0f, 0.0f },
-                ChaseColors::AppleLight, ChaseColors::AppleDark);
+                chase.appleLight, chase.appleDark);
             const FloatPoint stemTop = { 0.0f, -17.0f };
             if (split <= 0.0f)
             {
@@ -2206,8 +2142,8 @@ namespace ClaFi::PathArt
                 fillOval(onTrail, { -6.0f, -13.0f }, 2.5f, 4.0f, SolidColor{ ChaseColors::Shine },
                     0.4f);
                 drawSegment(onTrail, stemTop, { 1.5f, -24.0f },
-                    SolidColor{ ChaseColors::BarkShade }, 1.8f);
-                fillOval(onTrail, { 5.5f, -22.0f }, 5.0f, 2.2f, SolidColor{ ChaseColors::Leaf },
+                    SolidColor{ chase.barkShade }, 1.8f);
+                fillOval(onTrail, { 5.5f, -22.0f }, 5.0f, 2.2f, SolidColor{ chase.leaf },
                     -0.5f);
                 return;
             }
@@ -2229,24 +2165,24 @@ namespace ClaFi::PathArt
                 fillShape(half, skinHalf, skin);
                 const float faceWidth = 0.3f + 5.0f * split;
                 const FloatPoint faceMiddle = { (0.5f + 5.0f * split) * side, -9.0f };
-                fillOval(half, faceMiddle, faceWidth, 7.2f, SolidColor{ ChaseColors::AppleFlesh });
+                fillOval(half, faceMiddle, faceWidth, 7.2f, SolidColor{ chase.appleFlesh });
                 for (const float seedY : { -11.0f, -7.5f })
                 {
                     fillOval(half, { faceMiddle.x, seedY }, 0.8f * split, 1.4f * split,
-                        SolidColor{ ChaseColors::AppleSeed });
+                        SolidColor{ chase.appleSeed });
                 }
                 if (side > 0.0f)
                 {
                     drawSegment(half, stemTop, { 1.5f, -24.0f },
-                        SolidColor{ ChaseColors::BarkShade }, 1.8f);
-                    fillOval(half, { 5.5f, -22.0f }, 5.0f, 2.2f, SolidColor{ ChaseColors::Leaf },
+                        SolidColor{ chase.barkShade }, 1.8f);
+                    fillOval(half, { 5.5f, -22.0f }, 5.0f, 2.2f, SolidColor{ chase.leaf },
                         -0.5f);
                 }
             }
         }
 
         // An old boot, its toe toward the wolf.
-        void drawBoot(const SceneFrame& onTrail, const float tip)
+        void drawBoot(const SceneFrame& onTrail, const ChaseTheme& chase, const float tip)
         {
             const FloatPoint heel = { 16.0f, 0.0f };
             const SceneFrame boot = onTrail.within(Matrix3x2::Translation(heel)
@@ -2261,11 +2197,11 @@ namespace ClaFi::PathArt
             leather.lineTo(-21.0f, -3.0f);
             leather.close();
             fillShape(boot, leather, LinearGradient::Simple({ 0.0f, -32.0f }, { 0.0f, -3.0f },
-                ChaseColors::BootLight, ChaseColors::BootDark));
-            fillBox(boot, { -0.5f, -33.0f, 15.5f, -29.5f }, SolidColor{ ChaseColors::BootDark });
-            fillBox(boot, { 7.0f, -16.0f, 12.0f, -11.0f }, SolidColor{ ChaseColors::BootPatch });
+                chase.bootLight, chase.bootDark));
+            fillBox(boot, { -0.5f, -33.0f, 15.5f, -29.5f }, SolidColor{ chase.bootDark });
+            fillBox(boot, { 7.0f, -16.0f, 12.0f, -11.0f }, SolidColor{ chase.bootPatch });
             fillRoundedBox(boot, { -22.0f, -4.0f, 16.0f, 0.0f }, 1.5f,
-                SolidColor{ ChaseColors::BootSole });
+                SolidColor{ chase.bootSole });
             PixelPath laces;
             for (const float y : { -27.0f, -23.0f, -19.0f })
             {
@@ -2274,12 +2210,13 @@ namespace ClaFi::PathArt
                 laces.moveTo(1.0f, y + 1.5f);
                 laces.lineTo(6.0f, y - 1.5f);
             }
-            strokeShape(boot, laces, SolidColor{ ChaseColors::Lace }, 1.2f);
+            strokeShape(boot, laces, SolidColor{ chase.lace }, 1.2f);
         }
 
         // A hedgehog crouched over its feet, its snout toward the wolf. Curling, its spines run on
         // round under it and its face shrinks into them; walking, its feet patter and it bobs.
-        void drawHedgehog(const SceneFrame& onTrail, const float curl, const float steps)
+        void drawHedgehog(const SceneFrame& onTrail, const ChaseTheme& chase, const float curl,
+            const float steps)
         {
             constexpr int k_spineCount{ 18 };
             const SceneFrame hedgehog = onTrail.within(Matrix3x2::Translation(0.0f,
@@ -2316,8 +2253,8 @@ namespace ClaFi::PathArt
             }
             spines.close();
             back.close();
-            fillShape(hedgehog, spines, SolidColor{ ChaseColors::SpinesDark });
-            fillShape(hedgehog, back, SolidColor{ ChaseColors::SpinesLight });
+            fillShape(hedgehog, spines, SolidColor{ chase.spinesDark });
+            fillShape(hedgehog, back, SolidColor{ chase.spinesLight });
             PixelPath quills;
             for (int i = 0; i != 7; ++i)
             {
@@ -2325,7 +2262,7 @@ namespace ClaFi::PathArt
                 quills.moveTo(onBody(share, 0.42f));
                 quills.lineTo(onBody(share, 0.76f));
             }
-            strokeShape(hedgehog, quills, SolidColor{ ChaseColors::SpinesDark }, 1.4f);
+            strokeShape(hedgehog, quills, SolidColor{ chase.spinesDark }, 1.4f);
             if (curl >= 1.0f)
                 return;
 
@@ -2338,14 +2275,14 @@ namespace ClaFi::PathArt
             const FloatPoint neck = { -6.0f, -8.0f };
             const SceneFrame head = hedgehog.within(Matrix3x2::Translation(neck)
                 * Matrix3x2::Scale(1.0f - curl) * Matrix3x2::Translation(-neck.x, -neck.y));
-            fillOval(head, { -14.0f, -9.0f }, 10.5f, 8.5f, SolidColor{ ChaseColors::HedgehogFace });
+            fillOval(head, { -14.0f, -9.0f }, 10.5f, 8.5f, SolidColor{ chase.hedgehogFace });
             PixelPath snout;
             snout.moveTo(-18.0f, -14.0f);
             snout.quadTo({ -29.0f, -10.0f }, { -34.0f, -6.5f });
             snout.quadTo({ -29.0f, -2.5f }, { -17.0f, -2.5f });
             snout.close();
-            fillShape(head, snout, SolidColor{ ChaseColors::HedgehogFace });
-            fillDisc(head, { -12.0f, -17.0f }, 2.6f, SolidColor{ ChaseColors::HedgehogEar });
+            fillShape(head, snout, SolidColor{ chase.hedgehogFace });
+            fillDisc(head, { -12.0f, -17.0f }, 2.6f, SolidColor{ chase.hedgehogEar });
             fillDisc(head, { -34.0f, -6.5f }, 2.3f, SolidColor{ ChaseColors::Ink });
             fillDisc(head, { -18.0f, -12.0f }, 2.0f, SolidColor{ ChaseColors::Ink });
             fillDisc(head, { -17.4f, -12.6f }, 0.6f, SolidColor{ ChaseColors::EyeShine });
@@ -2353,7 +2290,8 @@ namespace ClaFi::PathArt
 
         // A rubber duck, its beak toward the wolf. Deflating, it sinks flat and spreads, its head
         // droops and the air puffs out behind it.
-        void drawRubberDuck(const SceneFrame& onTrail, const float deflation)
+        void drawRubberDuck(const SceneFrame& onTrail, const ChaseTheme& chase,
+            const float deflation)
         {
             const SceneFrame duck = onTrail.within(Matrix3x2::Scale(1.0f + 0.2f * deflation,
                 1.0f - 0.62f * deflation));
@@ -2366,26 +2304,26 @@ namespace ClaFi::PathArt
             body.quadTo({ -4.0f, -13.0f }, { -14.0f, -10.0f });
             body.close();
             fillShape(duck, body, LinearGradient::Simple({ 0.0f, -18.0f }, {},
-                ChaseColors::DuckLight, ChaseColors::DuckShade));
-            fillOval(duck, { 4.0f, -8.0f }, 7.0f, 3.5f, SolidColor{ ChaseColors::DuckShade },
+                chase.duckLight, chase.duckShade));
+            fillOval(duck, { 4.0f, -8.0f }, 7.0f, 3.5f, SolidColor{ chase.duckShade },
                 -0.3f);
             const FloatPoint neck = { -7.0f, -13.0f };
             const SceneFrame head = duck.within(Matrix3x2::Translation(neck)
                 * Matrix3x2::Rotation(-0.5f * deflation)
                 * Matrix3x2::Translation(-neck.x, -neck.y));
-            fillDisc(head, { -8.0f, -21.0f }, 8.0f, SolidColor{ ChaseColors::DuckLight });
+            fillDisc(head, { -8.0f, -21.0f }, 8.0f, SolidColor{ chase.duckLight });
             PixelPath beak;
             beak.moveTo(-14.0f, -22.0f);
             beak.quadTo({ -21.0f, -23.0f }, { -24.0f, -19.0f });
             beak.quadTo({ -20.0f, -17.0f }, { -14.0f, -18.0f });
             beak.close();
-            fillShape(head, beak, SolidColor{ ChaseColors::DuckBeak });
+            fillShape(head, beak, SolidColor{ chase.duckBeak });
             PixelPath lowerBeak;
             lowerBeak.moveTo(-14.0f, -18.0f);
             lowerBeak.quadTo({ -19.0f, -17.5f }, { -22.0f, -18.0f });
             lowerBeak.quadTo({ -19.0f, -15.5f }, { -14.0f, -16.0f });
             lowerBeak.close();
-            fillShape(head, lowerBeak, SolidColor{ ChaseColors::DuckBeakShade });
+            fillShape(head, lowerBeak, SolidColor{ chase.duckBeakShade });
             fillDisc(head, { -10.0f, -23.0f }, 1.7f, SolidColor{ ChaseColors::Ink });
             fillDisc(head, { -9.5f, -23.5f }, 0.5f, SolidColor{ ChaseColors::EyeShine });
             // the air leaving it, strongest halfway down and gone once it is flat
@@ -2404,19 +2342,19 @@ namespace ClaFi::PathArt
         }
 
         // A beach ball of six panels, which turn as it rolls.
-        void drawBall(const SceneFrame& onTrail, const float rollAngle)
+        void drawBall(const SceneFrame& onTrail, const ChaseTheme& chase, const float rollAngle)
         {
-            constexpr std::array<Color, 6> k_panels{
-                ChaseColors::BallRed,
-                ChaseColors::BallWhite,
-                ChaseColors::BallBlue,
-                ChaseColors::BallWhite,
-                ChaseColors::BallYellow,
-                ChaseColors::BallWhite
+            const std::array<Color, 6> panels{
+                chase.ballRed,
+                chase.ballWhite,
+                chase.ballBlue,
+                chase.ballWhite,
+                chase.ballYellow,
+                chase.ballWhite
             };
             const SceneFrame ball = onTrail.within(Matrix3x2::Translation(0.0f, -k_ballRadius)
                 * Matrix3x2::Rotation(rollAngle));
-            for (std::size_t panel = 0; panel != k_panels.size(); ++panel)
+            for (std::size_t panel = 0; panel != panels.size(); ++panel)
             {
                 const float firstAngle = k_2Pi * static_cast<float>(panel) / 6.0f;
                 PixelPath wedge;
@@ -2427,9 +2365,9 @@ namespace ClaFi::PathArt
                     wedge.lineTo(k_ballRadius * std::cos(angle), k_ballRadius * std::sin(angle));
                 }
                 wedge.close();
-                fillShape(ball, wedge, SolidColor{ k_panels[panel] });
+                fillShape(ball, wedge, SolidColor{ panels[panel] });
             }
-            fillDisc(ball, {}, 3.0f, SolidColor{ ChaseColors::BallWhite });
+            fillDisc(ball, {}, 3.0f, SolidColor{ chase.ballWhite });
             PixelPath rim;
             addEllipse(rim, {}, k_ballRadius, k_ballRadius);
             strokeShape(ball, rim, SolidColor{ ChaseColors::BallEdge }, 1.0f);
@@ -2446,8 +2384,8 @@ namespace ClaFi::PathArt
             return wake(hareX, 0.35f) + wake(wolfX, 0.5f);
         }
 
-        void drawRoadside(const SceneFrame& frame, const Roadside roadside, const Verge verge,
-            const float x, const float groundY, const RoadsideMotion& motion)
+        void drawRoadside(const SceneFrame& frame, const ChaseTheme& chase, const Roadside roadside,
+            const Verge verge, const float x, const float groundY, const RoadsideMotion& motion)
         {
             const bool nearVerge = verge == Verge::Near;
             const float size = (nearVerge ? k_nearVergeSize : 1.0f) * frame.unit;
@@ -2457,7 +2395,7 @@ namespace ClaFi::PathArt
                 * Matrix3x2::Scale(size));
             const auto shadow = [&](float shadowWidth, float opacity) {
                 fillOval(onVerge, { 1.0f, 0.0f }, shadowWidth, 2.5f,
-                    SolidColor{ faded(ChaseColors::Shadow, opacity) });
+                    SolidColor{ faded(chase.shadow, opacity) });
             };
             switch (roadside)
             {
@@ -2465,21 +2403,21 @@ namespace ClaFi::PathArt
                 {
                     const Hop hop = hopAt(motion);
                     shadow(10.0f * (1.0f - hop.lift / 54.0f), 1.0f);
-                    drawApple(hopping(onVerge, hop).within(Matrix3x2::Scale(0.8f)), 0.0f);
+                    drawApple(hopping(onVerge, hop).within(Matrix3x2::Scale(0.8f)), chase, 0.0f);
                     break;
                 }
                 case Roadside::BananaPeel:
                 {
                     const Hop hop = hopAt(motion);
                     shadow(14.0f * (1.0f - hop.lift / 54.0f), 1.0f);
-                    drawBananaPeel(hopping(onVerge, hop), 0.0f, 0.0f);
+                    drawBananaPeel(hopping(onVerge, hop), chase, 0.0f, 0.0f);
                     break;
                 }
                 case Roadside::Boulder:
-                    drawBoulder(onVerge, hopAt(motion));
+                    drawBoulder(onVerge, chase, hopAt(motion));
                     break;
                 case Roadside::Daisy:
-                    drawDaisy(onVerge, motion);
+                    drawDaisy(onVerge, chase, motion);
                     break;
                 case Roadside::Reeds:
                 {
@@ -2491,42 +2429,43 @@ namespace ClaFi::PathArt
                         .lean = motion.gust,
                         .fur = 1.0f - 0.65f * smoothStep(1.0f, 1.3f, motion.wolfTime),
                         .inWater = false
-                    }, ReedColors{ .stem = ChaseColors::ReedStem, .head = ChaseColors::ReedHead });
-                    drawReedFluff(onVerge, motion.wolfTime);
+                    }, ReedColors{ .stem = chase.reedStem, .head = chase.reedHead });
+                    drawReedFluff(onVerge, chase, motion.wolfTime);
                     break;
                 }
                 case Roadside::Signpost:
                     shadow(7.0f, 1.0f);
-                    drawSignpost(onVerge, motion);
+                    drawSignpost(onVerge, chase, motion);
                     break;
                 case Roadside::Toadstool:
                     shadow(12.0f, 1.0f);
-                    drawToadstool(onVerge, motion);
+                    drawToadstool(onVerge, chase, motion);
                     break;
                 case Roadside::TreeStump:
                     shadow(19.0f, 1.0f);
-                    drawTreeStump(onVerge);
+                    drawTreeStump(onVerge, chase);
                     break;
                 case Roadside::Bird:
                     shadow(10.0f, std::clamp(1.0f - 2.0f * motion.sinceHareClose, 0.0f, 1.0f));
-                    drawBird(onVerge.within(Matrix3x2::Scale(1.5f)), motion.seconds,
+                    drawBird(onVerge.within(Matrix3x2::Scale(1.5f)), chase, motion.seconds,
                         motion.sinceHareClose);
                     break;
                 case Roadside::Butterfly:
-                    drawButterfly(onVerge.within(Matrix3x2::Scale(1.3f)), motion.seconds,
+                    drawButterfly(onVerge.within(Matrix3x2::Scale(1.3f)), chase, motion.seconds,
                         motion.sinceHareClose);
                     break;
                 case Roadside::Frog:
-                    drawFrog(onVerge.within(Matrix3x2::Scale(1.2f)), motion.sinceHareClose, verge);
+                    drawFrog(onVerge.within(Matrix3x2::Scale(1.2f)), chase,
+                        motion.sinceHareClose, verge);
                     break;
                 case Roadside::Snail:
                     shadow(12.0f, 1.0f);
-                    drawSnail(onVerge, motion);
+                    drawSnail(onVerge, chase, motion);
                     break;
                 case Roadside::CrowOnStump:
                     shadow(19.0f, 1.0f);
-                    drawTreeStump(onVerge);
-                    drawStumpCrow(onVerge, motion.seconds, motion.sinceHareClose);
+                    drawTreeStump(onVerge, chase);
+                    drawStumpCrow(onVerge, chase, motion.seconds, motion.sinceHareClose);
                     break;
             }
         }
@@ -2573,12 +2512,12 @@ namespace ClaFi::PathArt
                 1.0f - 0.1f * hop.squash));
         }
 
-        void drawBoulder(const SceneFrame& onVerge, const Hop& hop)
+        void drawBoulder(const SceneFrame& onVerge, const ChaseTheme& chase, const Hop& hop)
         {
             constexpr float k_size = 1.35f;
             const SceneFrame ground = onVerge.within(Matrix3x2::Scale(k_size));
             fillOval(ground, { 1.0f, 0.0f }, 17.5f * (1.0f - hop.lift / 54.0f), 1.9f,
-                SolidColor{ ChaseColors::Shadow });
+                SolidColor{ chase.shadow });
             const SceneFrame stone = hopping(onVerge, hop).within(Matrix3x2::Scale(k_size));
             PixelPath rock;
             rock.moveTo(-17.0f, 0.0f);
@@ -2587,7 +2526,7 @@ namespace ClaFi::PathArt
             rock.cubicTo({ 20.0f, -3.0f }, { 18.0f, 0.5f }, { 14.0f, 0.5f });
             rock.close();
             fillShape(stone, rock, LinearGradient::Simple({ -8.0f, -21.0f }, { 10.0f, 0.0f },
-                ChaseColors::StoneLight, ChaseColors::StoneDark));
+                chase.stoneLight, chase.stoneDark));
             fillOval(stone, { -5.0f, -17.0f }, 6.5f, 2.6f, SolidColor{ ChaseColors::Shine },
                 -0.25f);
             PixelPath crack;
@@ -2595,7 +2534,7 @@ namespace ClaFi::PathArt
             crack.lineTo(8.0f, -10.0f);
             crack.lineTo(6.0f, -6.0f);
             crack.lineTo(8.5f, -2.5f);
-            strokeShape(stone, crack, SolidColor{ ChaseColors::StoneCrack }, 1.0f);
+            strokeShape(stone, crack, SolidColor{ chase.stoneCrack }, 1.0f);
             for (const float tuftX : { -15.0f, 15.0f })
             {
                 for (int blade = -1; blade <= 1; ++blade)
@@ -2603,14 +2542,15 @@ namespace ClaFi::PathArt
                     const float bladeX = static_cast<float>(blade) * 3.0f;
                     const float bladeHeight = 7.0f + 2.0f * static_cast<float>(1 - std::abs(blade));
                     drawSegment(ground, { tuftX, 0.5f }, { tuftX + bladeX, -bladeHeight },
-                        SolidColor{ ChaseColors::Tuft }, 1.6f);
+                        SolidColor{ chase.tuft }, 1.6f);
                 }
             }
         }
 
         // Three times the size of the daisies in the grass, nodding in the gust. The wolf's wake
         // blows five petals off, which flutter down after him and lie where they land.
-        void drawDaisy(const SceneFrame& onVerge, const RoadsideMotion& motion)
+        void drawDaisy(const SceneFrame& onVerge, const ChaseTheme& chase,
+            const RoadsideMotion& motion)
         {
             constexpr std::array<int, 5> k_blownOff{ 0, 3, 5, 8, 10 };
             // the nod at the height of the wolf's wake, when he hides the head
@@ -2624,14 +2564,13 @@ namespace ClaFi::PathArt
             PixelPath stem;
             stem.moveTo(0.0f, 0.5f);
             stem.quadTo({ 0.0f, -22.0f }, head);
-            strokeShape(onVerge, stem, SolidColor{ ChaseColors::FlowerStem }, 1.8f);
-            fillOval(onVerge, { -5.0f, -12.0f }, 6.0f, 2.2f, SolidColor{ ChaseColors::Leaf },
-                0.5f);
+            strokeShape(onVerge, stem, SolidColor{ chase.flowerStem }, 1.8f);
+            fillOval(onVerge, { -5.0f, -12.0f }, 6.0f, 2.2f, SolidColor{ chase.daisyLeaf }, 0.5f);
             fillOval(onVerge, { 5.0f + 6.0f * nod, -19.0f }, 6.0f, 2.2f,
-                SolidColor{ ChaseColors::Leaf }, nod - 0.5f);
+                SolidColor{ chase.daisyLeaf }, nod - 0.5f);
             const SceneFrame bloom = onVerge.within(Matrix3x2::Translation(head)
                 * Matrix3x2::Rotation(nod));
-            const SolidColor petalColor{ ChaseColors::Petal };
+            const SolidColor petalColor{ chase.petal };
             const FloatPoint headBlown = {
                 42.0f * std::sin(k_nodBlown),
                 -42.0f * std::cos(k_nodBlown)
@@ -2666,16 +2605,17 @@ namespace ClaFi::PathArt
                 fillOval(onVerge, at, 4.2f, 1.9f * std::max(0.3f, flutter), petalColor,
                     landed ? 0.15f * order - 0.3f : spin);
             }
-            fillDisc(bloom, {}, 3.8f, SolidColor{ ChaseColors::FlowerHeart });
+            fillDisc(bloom, {}, 3.8f, SolidColor{ chase.flowerHeart });
         }
 
         // A post with a board pointing the way they run. The hare's rush turns the board once
         // about the post, the wolf's one and a half times more, so it is left pointing back the
         // way they came. Turning, it is seen edge-on a quarter of the way round and from the back
         // halfway.
-        void drawSignpost(const SceneFrame& onVerge, const RoadsideMotion& motion)
+        void drawSignpost(const SceneFrame& onVerge, const ChaseTheme& chase,
+            const RoadsideMotion& motion)
         {
-            drawSegment(onVerge, { 0.0f, 0.0f }, { 0.0f, -44.0f }, SolidColor{ ChaseColors::Bark },
+            drawSegment(onVerge, { 0.0f, 0.0f }, { 0.0f, -44.0f }, SolidColor{ chase.bark },
                 4.0f);
             const auto turned = [&](float clock, float from, float seconds) {
                 const float left = 1.0f - std::clamp((clock - from) / seconds, 0.0f, 1.0f);
@@ -2693,16 +2633,16 @@ namespace ClaFi::PathArt
             board.lineTo(16.0f, -30.0f);
             board.lineTo(-12.0f, -30.0f);
             board.close();
-            fillShape(boardFrame, board, SolidColor{ ChaseColors::Board });
+            fillShape(boardFrame, board, SolidColor{ chase.board });
             const float edgeOn = 1.0f - std::abs(facing);
-            const SolidColor shade{ ChaseColors::BoardShade.withOpacity(0.7f * edgeOn) };
+            const SolidColor shade{ chase.boardShade.withOpacity(0.7f * edgeOn) };
             fillShape(boardFrame, board, shade);
-            strokeShape(boardFrame, board, SolidColor{ ChaseColors::Bough }, 1.0f);
+            strokeShape(boardFrame, board, SolidColor{ chase.bough }, 1.0f);
             // the writing is on the face that looks out at the path
             const float writing = smoothStep(0.3f, 0.6f, facing);
             if (writing > 0.0f)
             {
-                const SolidColor ink{ ChaseColors::Bough.withOpacity(writing) };
+                const SolidColor ink{ chase.bough.withOpacity(writing) };
                 drawSegment(boardFrame, { -8.0f, -36.5f }, { 9.0f, -36.5f }, ink, 1.2f);
                 drawSegment(boardFrame, { -8.0f, -33.5f }, { 4.0f, -33.5f }, ink, 1.2f);
             }
@@ -2710,7 +2650,8 @@ namespace ClaFi::PathArt
 
         // Its cap hops on the stalk after the hare goes by, and off it after the wolf, landing on
         // the ground beside the stalk.
-        void drawToadstool(const SceneFrame& onVerge, const RoadsideMotion& motion)
+        void drawToadstool(const SceneFrame& onVerge, const ChaseTheme& chase,
+            const RoadsideMotion& motion)
         {
             PixelPath stalk;
             stalk.moveTo(-4.0f, 0.0f);
@@ -2719,7 +2660,7 @@ namespace ClaFi::PathArt
             stalk.cubicTo({ 3.5f, -12.0f }, { 3.0f, -6.0f }, { 4.0f, 0.0f });
             stalk.close();
             fillShape(onVerge, stalk, LinearGradient::Simple({ -4.0f, 0.0f }, { 4.0f, 0.0f },
-                ChaseColors::Stalk, ChaseColors::StalkShade));
+                chase.stalk, chase.stalkShade));
             const float pi = std::numbers::pi_v<float>;
             const float onStalk = std::clamp((motion.sinceHareClose - 0.34f) / 0.24f, 0.0f, 1.0f);
             const float offStalk = std::clamp((motion.wolfTime - 1.32f) / 0.45f, 0.0f, 1.0f);
@@ -2734,7 +2675,7 @@ namespace ClaFi::PathArt
             if (offStalk > 0.0f)
             {
                 fillOval(onVerge, { capMoved.x + 1.0f, 0.0f }, 13.0f, 2.2f,
-                    SolidColor{ faded(ChaseColors::Shadow, offStalk * offStalk) });
+                    SolidColor{ faded(chase.shadow, offStalk * offStalk) });
             }
             const SceneFrame capFrame = onVerge.within(Matrix3x2::Translation(capMoved)
                 * Matrix3x2::Translation(0.0f, -20.0f) * Matrix3x2::Rotation(capTurn)
@@ -2745,8 +2686,8 @@ namespace ClaFi::PathArt
             cap.cubicTo({ 9.0f, -11.5f }, { -9.0f, -11.5f }, { -15.0f, -14.0f });
             cap.close();
             fillShape(capFrame, cap, LinearGradient::Simple({ -6.0f, -28.0f }, { 6.0f, -12.0f },
-                ChaseColors::CapLight, ChaseColors::CapDark));
-            const SolidColor spot{ ChaseColors::CapSpot };
+                chase.capLight, chase.capDark));
+            const SolidColor spot{ chase.capSpot };
             fillOval(capFrame, { -8.0f, -20.0f }, 2.6f, 2.0f, spot);
             fillOval(capFrame, { 0.0f, -24.5f }, 2.2f, 1.6f, spot);
             fillOval(capFrame, { 7.5f, -20.0f }, 2.4f, 1.9f, spot);
@@ -2757,7 +2698,7 @@ namespace ClaFi::PathArt
         // Four tufts from each head, torn off while the wolf hides the reeds, from where they would
         // be at a lean of 0.5, the height of his wake. They are carried after him, rising and then
         // sinking, and thin out to nothing.
-        void drawReedFluff(const SceneFrame& onVerge, const float wolfTime)
+        void drawReedFluff(const SceneFrame& onVerge, const ChaseTheme& chase, const float wolfTime)
         {
             constexpr float k_reedsSize = 0.9f;
             constexpr float k_leanTorn = 0.5f;
@@ -2786,7 +2727,7 @@ namespace ClaFi::PathArt
                         -rise * seconds + 8.0f * seconds * seconds
                     };
                     const float radius = 1.2f + 0.8f * pseudoRandom(seed, 135.0f) + 0.8f * seconds;
-                    const SolidColor fluff{ ChaseColors::Fluff.withOpacity(1.0f
+                    const SolidColor fluff{ chase.fluff.withOpacity(1.0f
                         - seconds / k_lifeSeconds) };
                     fillDisc(onVerge, at, radius, fluff);
                     fillDisc(onVerge, at + FloatPoint{ 0.8f, -0.4f } * radius, 0.7f * radius,
@@ -2798,7 +2739,7 @@ namespace ClaFi::PathArt
         }
 
         // A sawn-off stump, its rings showing and a shoot growing from its edge.
-        void drawTreeStump(const SceneFrame& onVerge)
+        void drawTreeStump(const SceneFrame& onVerge, const ChaseTheme& chase)
         {
             PixelPath trunk;
             trunk.moveTo(-16.0f, 0.5f);
@@ -2809,27 +2750,28 @@ namespace ClaFi::PathArt
             trunk.quadTo({ 11.0f, -1.0f }, { 16.0f, 0.5f });
             trunk.close();
             fillShape(onVerge, trunk, LinearGradient::Simple({ -11.0f, 0.0f }, { 11.0f, 0.0f },
-                ChaseColors::Bark, ChaseColors::BarkShade));
+                chase.bark, chase.barkShade));
             for (const float grooveX : { -6.0f, -0.5f, 5.0f })
             {
                 drawSegment(onVerge, { grooveX, -3.0f }, { grooveX + 0.5f, -18.0f },
-                    SolidColor{ ChaseColors::BarkShade }, 1.0f);
+                    SolidColor{ chase.barkShade }, 1.0f);
             }
-            fillOval(onVerge, { 0.0f, -20.0f }, 11.0f, 3.2f, SolidColor{ ChaseColors::StumpTop });
+            fillOval(onVerge, { 0.0f, -20.0f }, 11.0f, 3.2f, SolidColor{ chase.stumpTop });
             PixelPath rings;
             addEllipse(rings, { 0.0f, -20.0f }, 7.5f, 2.1f);
             addEllipse(rings, { 0.0f, -20.0f }, 4.0f, 1.1f);
-            strokeShape(onVerge, rings, SolidColor{ ChaseColors::StumpRing }, 0.7f);
-            fillDisc(onVerge, { 0.3f, -20.0f }, 0.8f, SolidColor{ ChaseColors::StumpRing });
+            strokeShape(onVerge, rings, SolidColor{ chase.stumpRing }, 0.7f);
+            fillDisc(onVerge, { 0.3f, -20.0f }, 0.8f, SolidColor{ chase.stumpRing });
             drawSegment(onVerge, { 8.0f, -21.0f }, { 10.5f, -28.0f },
-                SolidColor{ ChaseColors::FlowerStem }, 1.0f);
-            fillOval(onVerge, { 12.5f, -28.5f }, 3.0f, 1.4f, SolidColor{ ChaseColors::Leaf },
+                SolidColor{ chase.stumpSprout }, 1.0f);
+            fillOval(onVerge, { 12.5f, -28.5f }, 3.0f, 1.4f, SolidColor{ chase.leaf },
                 -0.4f);
         }
 
         // A sparrow pecking at the verge; taking fright, it climbs away ahead of them, its wing
         // beating up over its back and down under its belly.
-        void drawBird(const SceneFrame& onVerge, const float seconds, const float sinceHareClose)
+        void drawBird(const SceneFrame& onVerge, const ChaseTheme& chase, const float seconds,
+            const float sinceHareClose)
         {
             const float flying = std::max(0.0f, sinceHareClose);
             const FloatPoint away = {
@@ -2839,14 +2781,14 @@ namespace ClaFi::PathArt
             const float climb = -0.35f * std::min(1.0f, flying * 6.0f);
             const SceneFrame bird = onVerge.within(Matrix3x2::Translation(away)
                 * Matrix3x2::Translation(0.0f, -4.0f) * Matrix3x2::Rotation(climb));
-            const SolidColor body{ ChaseColors::BirdBody };
-            const SolidColor wing{ ChaseColors::BirdWing };
+            const SolidColor body{ chase.birdBody };
+            const SolidColor wing{ chase.birdWing };
             const float headDown = sinceHareClose > 0.0f
                 ? 0.0f
                 : bump(fractionalPart(seconds / 0.6f), 0.5f, 0.15f);
             if (sinceHareClose <= 0.0f)
             {
-                const SolidColor legs{ ChaseColors::BirdBeak };
+                const SolidColor legs{ chase.birdBeak };
                 drawSegment(onVerge, { -0.5f, -5.0f }, { -1.0f, 0.0f }, legs, 0.8f);
                 drawSegment(onVerge, { 1.5f, -5.0f }, { 1.5f, 0.0f }, legs, 0.8f);
             }
@@ -2857,7 +2799,7 @@ namespace ClaFi::PathArt
             tail.close();
             fillShape(bird, tail, wing);
             fillOval(bird, { 0.0f, -4.0f }, 7.0f, 4.8f, body, -0.15f);
-            fillOval(bird, { 1.5f, -2.5f }, 4.5f, 2.8f, SolidColor{ ChaseColors::BirdBelly });
+            fillOval(bird, { 1.5f, -2.5f }, 4.5f, 2.8f, SolidColor{ chase.birdBelly });
             const FloatPoint headMiddle = { 6.0f + 2.0f * headDown, -9.0f + 5.0f * headDown };
             fillDisc(bird, headMiddle, 3.6f, body);
             fillDisc(bird, headMiddle + FloatPoint{ 1.2f, -0.6f }, 0.9f,
@@ -2867,7 +2809,7 @@ namespace ClaFi::PathArt
             beak.lineTo(headMiddle + FloatPoint{ 6.4f, 0.4f + 1.5f * headDown });
             beak.lineTo(headMiddle + FloatPoint{ 3.2f, 0.9f });
             beak.close();
-            fillShape(bird, beak, SolidColor{ ChaseColors::BirdBeak });
+            fillShape(bird, beak, SolidColor{ chase.birdBeak });
             if (sinceHareClose <= 0.0f)
             {
                 fillOval(bird, { -1.5f, -5.0f }, 5.0f, 2.6f, wing, -0.25f);
@@ -2881,7 +2823,7 @@ namespace ClaFi::PathArt
 
         // A crow sitting on the stump, pecking at it now and then; taking fright as the hare comes,
         // it springs up and labours off ahead of them, its legs hanging a moment.
-        void drawStumpCrow(const SceneFrame& onVerge, const float seconds,
+        void drawStumpCrow(const SceneFrame& onVerge, const ChaseTheme& chase, const float seconds,
             const float sinceHareClose)
         {
             constexpr float k_size = 0.5f;
@@ -2912,20 +2854,20 @@ namespace ClaFi::PathArt
                     const FloatPoint foot = sitting
                         ? FloatPoint{ hip.x + 0.5f, -20.0f }
                         : hip + FloatPoint{ -1.0f, 3.0f };
-                    const SolidColor leg{ ChaseColors::CrowBeak };
+                    const SolidColor leg{ chase.crowBeak };
                     drawSegment(onVerge, hip, foot, leg, 0.7f);
                     drawSegment(onVerge, foot, foot + FloatPoint{ 2.0f, 0.3f }, leg, 0.55f);
                     drawSegment(onVerge, foot, foot + FloatPoint{ -1.0f, 0.3f }, leg, 0.55f);
                 }
             }
             drawCrowBody(onVerge.within(Matrix3x2::Translation(middle)
-                * Matrix3x2::Scale(-k_size, k_size) * Matrix3x2::Rotation(turn)),
+                * Matrix3x2::Scale(-k_size, k_size) * Matrix3x2::Rotation(turn)), chase,
                 std::sin(k_2Pi * 7.0f * flying + 0.5f * std::numbers::pi_v<float>), false, sitting);
         }
 
         // Resting on a tuft, it opens and closes its wings; taking fright, it flutters up and
         // drifts off ahead of them.
-        void drawButterfly(const SceneFrame& onVerge, const float seconds,
+        void drawButterfly(const SceneFrame& onVerge, const ChaseTheme& chase, const float seconds,
             const float sinceHareClose)
         {
             for (int blade = -1; blade <= 1; ++blade)
@@ -2933,7 +2875,7 @@ namespace ClaFi::PathArt
                 const float bladeX = static_cast<float>(blade);
                 drawSegment(onVerge, { 1.5f * bladeX, 0.5f },
                     { 3.5f * bladeX, -7.0f - 2.0f * (1.0f - std::abs(bladeX)) },
-                    SolidColor{ ChaseColors::Tuft }, 1.4f);
+                    SolidColor{ chase.tuft }, 1.4f);
             }
             const float flying = std::max(0.0f, sinceHareClose);
             const FloatPoint away = {
@@ -2945,7 +2887,7 @@ namespace ClaFi::PathArt
                 : 0.55f + 0.45f * std::cos(k_2Pi * 0.7f * seconds);
             const SceneFrame body = onVerge.within(Matrix3x2::Translation(FloatPoint{ 0.0f, -9.0f }
                 + away) * Matrix3x2::Rotation(0.15f * std::sin(k_2Pi * 1.3f * flying)));
-            const SolidColor edge{ ChaseColors::WingEdge };
+            const SolidColor edge{ chase.wingEdge };
             for (const float side : { -1.0f, 1.0f })
             {
                 const SceneFrame wings = body.within(Matrix3x2::Scale(side * (0.2f + 0.8f * open),
@@ -2962,11 +2904,11 @@ namespace ClaFi::PathArt
                 hindwing.close();
                 for (const PixelPath* wing : { &hindwing, &forewing })
                 {
-                    fillShape(wings, *wing, SolidColor{ ChaseColors::Wing });
+                    fillShape(wings, *wing, SolidColor{ chase.wing });
                     strokeShape(wings, *wing, edge, 0.7f);
                 }
                 fillOval(wings, { 8.0f, -12.3f }, 2.3f, 1.5f, edge, -0.4f);
-                fillDisc(wings, { 8.3f, -12.4f }, 0.6f, SolidColor{ ChaseColors::Petal });
+                fillDisc(wings, { 8.3f, -12.4f }, 0.6f, SolidColor{ chase.petal });
             }
             fillOval(body, { 0.0f, -5.5f }, 1.1f, 5.0f, edge);
             fillDisc(body, { 0.0f, -11.2f }, 1.3f, edge);
@@ -2980,7 +2922,8 @@ namespace ClaFi::PathArt
 
         // Sitting by the path; taking fright, it hops twice back into the grass - from the far
         // verge away, smaller each time, from the near one toward the viewer, larger.
-        void drawFrog(const SceneFrame& onVerge, const float sinceHareClose, const Verge verge)
+        void drawFrog(const SceneFrame& onVerge, const ChaseTheme& chase,
+            const float sinceHareClose, const Verge verge)
         {
             struct Spot
             {
@@ -3021,12 +2964,12 @@ namespace ClaFi::PathArt
                 break;
             }
             fillOval(onVerge, spot.at + FloatPoint{ 1.0f, 0.0f }, 9.0f * spot.size,
-                2.2f * spot.size, SolidColor{ ChaseColors::Shadow });
+                2.2f * spot.size, SolidColor{ chase.shadow });
             const SceneFrame frog = onVerge.within(Matrix3x2::Translation(spot.at.x,
                 spot.at.y - lift) * Matrix3x2::Scale(spot.size)
                 * Matrix3x2::Translation(0.0f, -6.0f) * Matrix3x2::Rotation(-0.45f * stretch)
                 * Matrix3x2::Translation(0.0f, 6.0f));
-            const SolidColor dark{ ChaseColors::FrogDark };
+            const SolidColor dark{ chase.frogDark };
             const FloatPoint hindFoot = FloatPoint{ -2.0f, -0.3f }
                 + (FloatPoint{ -15.0f, 3.0f } - FloatPoint{ -2.0f, -0.3f }) * stretch;
             const FloatPoint foreFoot = FloatPoint{ 7.5f, 0.0f }
@@ -3034,25 +2977,26 @@ namespace ClaFi::PathArt
             drawSegment(frog, { -5.0f, -5.0f }, hindFoot, dark, 2.6f);
             fillOval(frog, hindFoot, 3.5f, 1.1f, dark);
             fillOval(frog, { -5.0f, -4.5f }, 5.5f, 4.2f * (1.0f - 0.4f * stretch), dark, -0.3f);
-            fillOval(frog, { 1.0f, -8.0f }, 8.5f, 6.2f, SolidColor{ ChaseColors::FrogLight },
+            fillOval(frog, { 1.0f, -8.0f }, 8.5f, 6.2f, SolidColor{ chase.frogLight },
                 -0.4f);
-            fillOval(frog, { 4.0f, -5.5f }, 4.5f, 2.6f, SolidColor{ ChaseColors::FrogBelly },
+            fillOval(frog, { 4.0f, -5.5f }, 4.5f, 2.6f, SolidColor{ chase.frogBelly },
                 -0.4f);
             drawSegment(frog, { 5.0f, -5.0f }, foreFoot, dark, 2.0f);
             fillOval(frog, foreFoot + FloatPoint{ 0.8f, 0.0f }, 2.2f, 0.9f, dark);
-            fillDisc(frog, { 5.5f, -13.0f }, 3.2f, SolidColor{ ChaseColors::FrogLight });
+            fillDisc(frog, { 5.5f, -13.0f }, 3.2f, SolidColor{ chase.frogLight });
             fillDisc(frog, { 6.0f, -13.5f }, 2.2f, SolidColor{ ChaseColors::EyeShine });
             fillDisc(frog, { 6.7f, -13.4f }, 1.1f, SolidColor{ ChaseColors::Ink });
             drawSegment(frog, { 6.5f, -9.5f }, { 10.5f, -10.8f }, dark, 0.7f);
         }
 
         // Out of its shell, it draws in as the hare comes, and out again once the wolf is by.
-        void drawSnail(const SceneFrame& onVerge, const RoadsideMotion& motion)
+        void drawSnail(const SceneFrame& onVerge, const ChaseTheme& chase,
+            const RoadsideMotion& motion)
         {
             const float drawnIn = smoothStep(0.0f, 0.15f, motion.sinceHareClose)
                 * (1.0f - smoothStep(1.3f, 1.9f, motion.wolfTime));
             const float out = 1.0f - drawnIn;
-            const SolidColor body{ ChaseColors::SnailBody };
+            const SolidColor body{ chase.snailBody };
             fillOval(onVerge, { std::lerp(-1.0f, 2.0f, out), -2.0f }, std::lerp(6.0f, 12.0f, out),
                 std::lerp(1.8f, 2.6f, out), body);
             if (out > 0.05f)
@@ -3064,13 +3008,13 @@ namespace ClaFi::PathArt
                     const FloatPoint root = head + FloatPoint{ stalkX, -2.5f * out };
                     const FloatPoint eye = root + FloatPoint{ 1.2f * stalkX + 1.0f, -6.0f } * out;
                     drawSegment(onVerge, root, eye, body, 0.9f);
-                    fillDisc(onVerge, eye, 0.9f * out, SolidColor{ ChaseColors::ShellLine });
+                    fillDisc(onVerge, eye, 0.9f * out, SolidColor{ chase.shellLine });
                 }
             }
             const FloatPoint shellMiddle = { -2.0f, -9.0f + 1.2f * drawnIn };
             fillDisc(onVerge, shellMiddle, 8.0f, LinearGradient::Simple(shellMiddle
                 + FloatPoint{ -5.0f, -6.0f }, shellMiddle + FloatPoint{ 5.0f, 6.0f },
-                ChaseColors::ShellLight, ChaseColors::ShellDark));
+                chase.shellLight, chase.shellDark));
             PixelPath spiral;
             for (int step = 0; step <= 40; ++step)
             {
@@ -3083,12 +3027,13 @@ namespace ClaFi::PathArt
                 else
                     spiral.lineTo(point);
             }
-            strokeShape(onVerge, spiral, SolidColor{ ChaseColors::ShellLine }, 1.0f);
+            strokeShape(onVerge, spiral, SolidColor{ chase.shellLine }, 1.0f);
         }
 
         // A clump of tall grass on the trail, the back blades darker. Each blade bends from its
         // root, its tip leaning furthest.
-        void drawGrassPatch(const SceneFrame& onTrail, const float bladeLean)
+        void drawGrassPatch(const SceneFrame& onTrail, const ChaseTheme& chase,
+            const float bladeLean)
         {
             struct Blade
             {
@@ -3097,20 +3042,20 @@ namespace ClaFi::PathArt
                 float tilt;
                 Color color;
             };
-            constexpr std::array<Blade, 11> k_blades{
-                Blade{ -12.0f, 22.0f, -0.35f, ChaseColors::BladeDark },
-                Blade{ -4.0f, 30.0f, -0.1f, ChaseColors::BladeDark },
-                Blade{ 5.0f, 27.0f, 0.15f, ChaseColors::BladeDark },
-                Blade{ 13.0f, 21.0f, 0.4f, ChaseColors::BladeDark },
-                Blade{ -15.0f, 17.0f, -0.55f, ChaseColors::BladeMiddle },
-                Blade{ -8.0f, 25.0f, -0.25f, ChaseColors::BladeMiddle },
-                Blade{ 1.0f, 33.0f, 0.0f, ChaseColors::BladeMiddle },
-                Blade{ 9.0f, 26.0f, 0.25f, ChaseColors::BladeMiddle },
-                Blade{ -10.0f, 18.0f, -0.4f, ChaseColors::BladeLight },
-                Blade{ -1.0f, 23.0f, -0.05f, ChaseColors::BladeLight },
-                Blade{ 7.0f, 19.0f, 0.3f, ChaseColors::BladeLight }
+            const std::array<Blade, 11> blades{
+                Blade{ -12.0f, 22.0f, -0.35f, chase.bladeDark },
+                Blade{ -4.0f, 30.0f, -0.1f, chase.bladeDark },
+                Blade{ 5.0f, 27.0f, 0.15f, chase.bladeDark },
+                Blade{ 13.0f, 21.0f, 0.4f, chase.bladeDark },
+                Blade{ -15.0f, 17.0f, -0.55f, chase.bladeMiddle },
+                Blade{ -8.0f, 25.0f, -0.25f, chase.bladeMiddle },
+                Blade{ 1.0f, 33.0f, 0.0f, chase.bladeMiddle },
+                Blade{ 9.0f, 26.0f, 0.25f, chase.bladeMiddle },
+                Blade{ -10.0f, 18.0f, -0.4f, chase.bladeLight },
+                Blade{ -1.0f, 23.0f, -0.05f, chase.bladeLight },
+                Blade{ 7.0f, 19.0f, 0.3f, chase.bladeLight }
             };
-            for (const Blade& blade : k_blades)
+            for (const Blade& blade : blades)
             {
                 // the taller a blade, the further the wolf bends it
                 const float lean = blade.tilt + bladeLean * (0.7f + blade.height / 100.0f);
@@ -3129,14 +3074,14 @@ namespace ClaFi::PathArt
             }
         }
 
-        void drawRake(const SceneFrame& onTrail, const float swing)
+        void drawRake(const SceneFrame& onTrail, const ChaseTheme& chase, const float swing)
         {
             const FloatPoint pivot = { -4.0f, -2.0f };
             const SceneFrame rake = onTrail.within(Matrix3x2::Translation(pivot)
                 * Matrix3x2::Rotation(-swing) * Matrix3x2::Translation(-pivot.x, -pivot.y));
             fillRoundedBox(rake, { -4.0f, -4.0f, 106.0f, -1.0f }, 1.5f,
-                LinearGradient::Simple({ 0.0f, -4.0f }, { 0.0f, -1.0f }, ChaseColors::RakeHandle,
-                ChaseColors::RakeHandleShade));
+                LinearGradient::Simple({ 0.0f, -4.0f }, { 0.0f, -1.0f }, chase.rakeHandle,
+                chase.rakeHandleShade));
             PixelPath tines;
             for (int tine = 0; tine != 6; ++tine)
             {
@@ -3144,16 +3089,16 @@ namespace ClaFi::PathArt
                 tines.moveTo(x, -3.0f);
                 tines.lineTo(x - 0.6f, -10.0f);
             }
-            strokeShape(rake, tines, SolidColor{ ChaseColors::RakeMetal }, 1.3f);
+            strokeShape(rake, tines, SolidColor{ chase.rakeMetal }, 1.3f);
             fillRoundedBox(rake, { -13.0f, -4.5f, -1.0f, -1.5f }, 1.0f,
-                SolidColor{ ChaseColors::RakeMetal });
+                SolidColor{ chase.rakeMetal });
         }
 
         // A tree whose lowest branch reaches back over the trail, as high as the head of a wolf in
         // the middle of a leap; `x` is where it ends. The tree he flies into has no low branch, and
         // on the one he leaps onto it reaches on from the trunk's far side instead.
-        void drawBranchTree(const SceneFrame& frame, const float x, const float groundY,
-            const float footY, const ObstacleMotion& motion)
+        void drawBranchTree(const SceneFrame& frame, const SceneTheme& theme, const float x,
+            const float groundY, const float footY, const ObstacleMotion& motion)
         {
             const TreeRun& treeRun = motion.treeRun;
             const float unit = frame.unit;
@@ -3163,7 +3108,7 @@ namespace ClaFi::PathArt
             const float endSway = motion.branchSway * unit;
             fillBox(frame, { trunkLeft, groundY - 180.0f * unit, trunkRight, footY + 2.0f * unit },
                 LinearGradient::Simple({ trunkLeft, 0.0f }, { trunkRight, 0.0f },
-                ChaseColors::Bark, ChaseColors::BarkShade));
+                theme.treeTrunk, theme.chase.treeBarkShade));
             if (treeRun.leapEnd != LeapEnd::Trunk)
             {
                 // laid out reaching back to `x`, then over the branch turned about the trunk to
@@ -3181,17 +3126,17 @@ namespace ClaFi::PathArt
                 branch.quadTo({ x + 50.0f * unit, footY - 127.0f * unit + 0.5f * endSway },
                     { branchTrunkX - 10.0f * unit, footY - 110.0f * unit });
                 branch.close();
-                fillShape(onBranch, branch, SolidColor{ ChaseColors::Bough });
+                fillShape(onBranch, branch, SolidColor{ theme.chase.treeBough });
                 fillDisc(onBranch, { x + 16.0f * unit, footY - 153.0f * unit + 0.8f * endSway },
-                    9.0f * unit, SolidColor{ ChaseColors::CrownLight });
+                    9.0f * unit, SolidColor{ theme.chase.crownLight });
             }
             const float shake = motion.crownShake * unit;
             fillDisc(frame, { trunkX + shake, groundY - 196.0f * unit }, 60.0f * unit,
-                SolidColor{ ChaseColors::Crown });
+                SolidColor{ theme.treeLeavesBase });
             fillDisc(frame, { trunkX - 40.0f * unit + shake, groundY - 170.0f * unit },
-                40.0f * unit, SolidColor{ ChaseColors::CrownLight });
+                40.0f * unit, SolidColor{ theme.chase.crownLight });
             fillDisc(frame, { trunkX + 40.0f * unit + shake, groundY - 172.0f * unit },
-                44.0f * unit, SolidColor{ ChaseColors::CrownMiddle });
+                44.0f * unit, SolidColor{ theme.chase.crownMiddle });
 
             // Shaken loose, an apple falls, bounces a third as high as its speed allows and lies
             // where it lands.
@@ -3239,7 +3184,7 @@ namespace ClaFi::PathArt
                 };
                 drawApple(frame.within(Matrix3x2::Translation(onScreen)
                     * Matrix3x2::Rotation(spin) * Matrix3x2::Scale(k_appleScale * unit)
-                    * Matrix3x2::Translation(0.0f, k_appleMiddle)), 0.0f);
+                    * Matrix3x2::Translation(0.0f, k_appleMiddle)), theme.chase, 0.0f);
             }
         }
 
@@ -3250,8 +3195,8 @@ namespace ClaFi::PathArt
 
         // A crow, side on and facing left, flapping, about the middle of its body; its wings beat
         // up over its back and down under its belly.
-        void drawCrowBody(const SceneFrame& crow, const float flap, const bool dazed,
-            const bool folded)
+        void drawCrowBody(const SceneFrame& crow, const ChaseTheme& chase, const float flap,
+            const bool dazed, const bool folded)
         {
             const auto drawWing = [&](float lean, const Color& color) {
                 const FloatPoint shoulder = { 0.0f, -4.0f };
@@ -3266,23 +3211,23 @@ namespace ClaFi::PathArt
                 fillShape(crow, wing, SolidColor{ color });
             };
             if (!folded)
-                drawWing(0.75f * flap + 0.2f, ChaseColors::CrowWingFar);
+                drawWing(0.75f * flap + 0.2f, chase.crowWingFar);
             PixelPath tail;
             tail.moveTo(12.0f, -3.0f);
             tail.lineTo(30.0f, -8.0f);
             tail.lineTo(32.0f, 2.0f);
             tail.lineTo(13.0f, 4.0f);
             tail.close();
-            fillShape(crow, tail, SolidColor{ ChaseColors::CrowWing });
-            fillOval(crow, { 2.0f, 0.0f }, 15.0f, 8.5f, SolidColor{ ChaseColors::CrowBody },
+            fillShape(crow, tail, SolidColor{ chase.crowWing });
+            fillOval(crow, { 2.0f, 0.0f }, 15.0f, 8.5f, SolidColor{ chase.crowBody },
                 -0.05f);
-            fillDisc(crow, { -13.0f, -4.0f }, 7.0f, SolidColor{ ChaseColors::CrowBody });
+            fillDisc(crow, { -13.0f, -4.0f }, 7.0f, SolidColor{ chase.crowBody });
             PixelPath beak;
             beak.moveTo(-18.0f, -7.0f);
             beak.lineTo(-29.0f, -3.5f);
             beak.lineTo(-18.0f, -1.0f);
             beak.close();
-            fillShape(crow, beak, SolidColor{ ChaseColors::CrowBeak });
+            fillShape(crow, beak, SolidColor{ chase.crowBeak });
             if (dazed)
             {
                 PixelPath crossed;
@@ -3305,29 +3250,30 @@ namespace ClaFi::PathArt
                 wing.quadTo({ 8.0f, -11.0f }, { 25.0f, -4.0f });
                 wing.quadTo({ 10.0f, 3.0f }, { -5.0f, 0.0f });
                 wing.close();
-                fillShape(crow, wing, SolidColor{ ChaseColors::CrowWing });
+                fillShape(crow, wing, SolidColor{ chase.crowWing });
             }
             else
             {
-                drawWing(flap, ChaseColors::CrowWing);
+                drawWing(flap, chase.crowWing);
             }
         }
 
-        void drawCrowStump(const SceneFrame& frame, const float x, const float groundY)
+        void drawCrowStump(const SceneFrame& frame, const ChaseTheme& chase, const float x,
+            const float groundY)
         {
             const SceneFrame onVerge = frame.within(Matrix3x2::Translation(
                 x + k_crowStumpFromBranchEnd * frame.unit, groundY + k_farVergeDrop * frame.unit)
                 * Matrix3x2::Scale(k_crowStumpSize * frame.unit));
-            fillOval(onVerge, { 1.0f, 0.0f }, 19.0f, 2.5f, SolidColor{ ChaseColors::Shadow });
-            drawTreeStump(onVerge);
+            fillOval(onVerge, { 1.0f, 0.0f }, 19.0f, 2.5f, SolidColor{ chase.shadow });
+            drawTreeStump(onVerge, chase);
         }
 
         // Flying, it comes in from ahead at the height of his head, 160 units a second over the
         // ground. On its stump it sits pecking, looks up as the two come and flaps up into his
         // leap. Meeting his face, it tumbles back with feathers flying, then flaps off up and away,
         // shaken; the feathers drift down round him and lie where they land.
-        void drawCrow(const SceneFrame& frame, const float x, const float groundY,
-            const float footY, const float sinceHit, const CrowStart crowStart)
+        void drawCrow(const SceneFrame& frame, const ChaseTheme& chase, const float x,
+            const float groundY, const float footY, const float sinceHit, const CrowStart crowStart)
         {
             constexpr float k_flightSpeed = 160.0f;
             constexpr float k_tumbleSeconds = 0.5f;
@@ -3413,7 +3359,7 @@ namespace ClaFi::PathArt
                     const FloatPoint hanging = hip + FloatPoint{ 2.0f, 6.0f } * unit;
                     const FloatPoint standing = { hip.x - 1.0f * unit, stumpTop - 1.0f * unit };
                     const FloatPoint foot = folded ? standing : pointBetween(hip, hanging, legsOut);
-                    const SolidColor leg{ ChaseColors::CrowBeak };
+                    const SolidColor leg{ chase.crowBeak };
                     drawSegment(frame, hip, foot, leg, 1.4f * unit);
                     drawSegment(frame, foot, foot + FloatPoint{ -4.0f, 0.5f } * unit, leg,
                         1.1f * unit);
@@ -3425,8 +3371,8 @@ namespace ClaFi::PathArt
             if (middle.x < onScreenRight && middle.y > -60.0f * unit)
             {
                 drawCrowBody(frame.within(Matrix3x2::Translation(middle)
-                    * Matrix3x2::Rotation(turn) * Matrix3x2::Scale(facing * unit, unit)), flap,
-                    dazed, folded);
+                    * Matrix3x2::Rotation(turn) * Matrix3x2::Scale(facing * unit, unit)), chase,
+                    flap, dazed, folded);
             }
             if (seconds <= 0.0f)
                 return;
@@ -3452,11 +3398,11 @@ namespace ClaFi::PathArt
                 at.y = std::min(at.y, landing);
                 const float lie = landed ? 0.1f * order - 0.3f : 0.5f * swing + order;
                 fillOval(frame, at, 8.0f * unit, 2.4f * unit,
-                    SolidColor{ feather % 2 == 0 ? ChaseColors::CrowBody : ChaseColors::CrowWing },
+                    SolidColor{ feather % 2 == 0 ? chase.crowBody : chase.crowWing },
                     lie);
                 drawSegment(frame, at - rotated(FloatPoint{ 9.5f, 0.0f }, lie) * unit,
                     at + rotated(FloatPoint{ 6.0f, 0.0f }, lie) * unit,
-                    SolidColor{ ChaseColors::CrowBeak }, 0.7f * unit);
+                    SolidColor{ chase.crowBeak }, 0.7f * unit);
             }
         }
     }

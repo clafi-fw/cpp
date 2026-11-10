@@ -24,7 +24,7 @@ namespace ClaFi::PathArt
         float cycleTime; // the time its legs twitch by while it lies on its back
     };
 
-    // The colours of a wolf's fur.
+    // The colours of a wolf: its fur, and its mouth with its tongue and teeth.
     export struct WolfCoat
     {
         Color light; // its head and snout, and its back
@@ -33,6 +33,10 @@ namespace ClaFi::PathArt
         Color far; // its far legs, and the pads of the near ones
         Color dark; // its tail's tip, and the pads of the far legs
         Color belly;
+        Color tongue;
+        Color mouth; // inside it, open
+        Color tooth;
+        Color toothEdge;
     };
 
     // A wolf running to the right, in the coat given.

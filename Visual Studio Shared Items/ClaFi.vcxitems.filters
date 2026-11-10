@@ -703,6 +703,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SteamEffect.cppm">
       <Filter>PathArt\Effects</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\WeatherEffect.cpp">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\WeatherEffect.cppm">
+      <Filter>PathArt\Effects</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cpp">
       <Filter>PathArt</Filter>
     </ClCompile>
@@ -728,6 +734,12 @@
       <Filter>PathArt</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneLayer.cppm">
+      <Filter>PathArt</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.ThemeBlend.cpp">
+      <Filter>PathArt</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.ThemeBlend.cppm">
       <Filter>PathArt</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Themes.cppm">
