@@ -16,38 +16,27 @@ namespace ClaFi::PathArt
     // The Chase's own colours in a theme, beside the sky, meadow and trees it shares. See PathArt
     export struct ChaseTheme
     {
-        Color mountainTop{};
+        Color mountainTop{}; // the mountains' clear colours, which the scene hazes
         Color mountainFoot{};
-        Color farHillTop{}; // the far hills, standing back toward the mountains
-        Color farHillFoot{};
-        Color farTreeTrunk{}; // the trees on the far hills
-        Color farTreeCrown{};
-        Color farTreeCrownLight{};
-        Color farTreeCrownMiddle{};
-        Color farFireflyLight{}; // the fireflies over the far hills
-        Color farFireflyGlow{};
         Color crownLight{}; // the branch run's tree, beside treeLeavesBase
         Color crownMiddle{};
         Color treeBarkShade{}; // beside treeTrunk
         Color treeBough{};
         Color trail{};
         Color pebble{};
-        Color tuft{};
+        Color grass{}; // the flowers' stems, the tufts and the foreground grass
         Color bladeDark{}; // the patch of grass on the trail
         Color bladeMiddle{};
         Color bladeLight{};
-        Color flowerStem{};
         Color daisyLeaf{};
         Color reedStem{};
-        Color frontGrass{};
-        Color frontGrassDark{};
+        Color frontGrassDark{}; // every third blade of the foreground grass
         Color shadow{}; // what the figures and props cast
         WolfCoat greyWolf{}; // ours
         HareCoat brownHare{};
         WolfCoat blackWolf{}; // the other couple's
         HareCoat greyHare{};
-        Color petal{}; // a daisy's, and the meadow's flowers
-        Color flowerHeart{};
+        Color flowerHeart{}; // a daisy's, and the meadow's flowers'
         Color bough{}; // the signpost and the stump, in wood
         Color bark{};
         Color barkShade{};
@@ -134,6 +123,7 @@ namespace ClaFi::PathArt
 
         Color effectColor1{ 255, 255, 255 }; // 39
         Color effectColor2{ 255, 255, 255 }; // 40
+        Color petal1, petal2, petal3; // 41, a flower wears one, falling petals the first two
         ChaseTheme chase{};
         // make sure to update colorsNum() when adding new colors
 
@@ -152,7 +142,7 @@ namespace ClaFi::PathArt
         Color* asArray() { return &skyTop; }
         const Color* asArray() const { return &skyTop; }
         const void* colorsEnd() const { return &hasRain; }
-        static constexpr std::size_t colorsNum() { return 40 + ChaseTheme::colorsNum(); }
+        static constexpr std::size_t colorsNum() { return 43 + ChaseTheme::colorsNum(); }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
         static constexpr std::size_t effectsNum() { return 8; }

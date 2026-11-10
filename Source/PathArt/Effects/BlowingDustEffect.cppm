@@ -5,7 +5,7 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::PathArt
 {
-    // Streaks of dust blown across the whole frame, three widths of it a cycle.
+    // Streaks of dust blown leftward across the whole frame, three widths of it a cycle.
     export struct BlowingDust
     {
         float opacity{ 1.0f };

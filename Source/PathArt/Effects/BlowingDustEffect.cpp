@@ -21,12 +21,12 @@ namespace ClaFi::PathArt
         const SolidColor streak{ dust.color.withOpacity(dust.opacity) };
         for (int i = 0; i < dust.count; ++i)
         {
-            const float x = std::fmod(pseudoRandom(i) * w + cycleTime * w * 3.0f, w);
+            const float x = w - std::fmod(pseudoRandom(i) * w + cycleTime * w * 3.0f, w);
             const float y = pseudoRandom(i, 7.0f) * h;
             PixelPath path;
             path.moveTo(x, y);
-            path.lineTo(x + 10.0f * unit, y + 2.0f * unit);
-            strokeShape(frame, path, streak, 1.0f);
+            path.lineTo(x - 10.0f * unit, y + 2.0f * unit);
+            strokeShape(frame, path, streak, unit);
         }
     }
 }

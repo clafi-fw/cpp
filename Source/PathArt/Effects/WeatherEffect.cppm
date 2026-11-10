@@ -18,6 +18,8 @@ namespace ClaFi::PathArt
         float opacity{ 1.0f }; // the whole weather's, lower in the distance
         Color color1{}; // the drops, the flakes, the dust and half the leaves
         Color color2{}; // the other half of the leaves
+        Color petal1{}; // half the petals
+        Color petal2{}; // the other half of the petals
     };
 
     // The weather over the frame.

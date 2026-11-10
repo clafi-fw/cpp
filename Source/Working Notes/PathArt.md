@@ -13,6 +13,15 @@ hover preview over the Scene group shows the scene under the pointer and puts th
 when the pointer leaves. The config keeps the scene by name in `Scene` and the theme in
 `SceneTheme`, so a scene added or moved in the list does not shift what was stored.
 
+The list runs Puppeteer, Ghost, Clockwork, Chase, Comet, Earth, Orrery: the Chase and the Orrery
+changed places (Oj, 2026-11-10, "Swap Orrery and Chase"), and createSceneViewsSchema follows the
+list, the Earth's view before the Orrery's.
+
+The theme list runs from Fresh Spring through the day themes to the night ones, Calm Night last
+(Oj, 2026-11-10, "Reverse the scenes theme list, make the Fresh Spring default"). Fresh Spring is
+the default by being first: ThemeBlend and the showcase both start at index 0. A stored pick is
+found by name, so it still opens in the theme it names.
+
 **Scenes, sprites and effects stand in three folders** (Oj, 2026-11-07, "Make folders for scenes,
 effects, sprites"). A sprite is a figure with a pose of its own - a struct of where it stands and
 how far into its motions it is - drawn by one free function; an effect is a field or an overlay -
@@ -1707,6 +1716,262 @@ snow) to 0.28 (Vintage Noir's dust); 0.6 was tried as well. The mill is the same
 Then (Oj, 16:23) "go" on 0.6, which puts the difference at 0.067 (Arctic Dawn's snow) to 0.37
 (Vintage Noir's dust).
 
+Then (Oj, 16:28) "the big flower petals and the apples should stay brighter at night". At night the
+daisy's petals had gone mid grey and the apples maroon. The petals take at least 0.8 of the light,
+as their hearts do, and the whole apple - skin, seeds and leaf - 0.7, as its flesh does. The petal
+colour is shared with the meadow's little flowers and the butterfly's wing spots, and the leaf with
+the stump's sprout, so those rise too. In the night themes the petals go from 0.67 to 0.93
+lightness and the apple's skin from 0.41 to 0.56; themes in full daylight are unchanged. Vintage
+Noir's apple lifts to 0.63 to stand off its grey trail.
+
+Then (Oj, 16:39) "On toxic waste make petals green, and on Cyberpunk and neon make them some toxic
+colors". From mockups of three or four options each (Oj, 16:58: "C C A"): Toxic Waste's petals are
+a glowing mint, 9CFFC4; Cyberpunk Night's an acid yellow, E6FF1A, with the hearts darkened to an
+amber, D4972D, that the petals would otherwise swallow; Neon City Night's an electric cyan, 00FFF0.
+The generator sets them outright after the lighting. The meadow's little flowers and the
+butterfly's wing spots wear them too. Each stands at least 0.34 from its meadow.
+
+Then (Oj, 17:07) "On Cyberpunk Night make them magenta, and on Underwater Realm cyan". Cyberpunk
+Night's petals are FF00FF, its sun's magenta, and its hearts the lit yellow again; Underwater
+Realm's are 00FFFF, the colour of its bubbles, 0.22 from its teal meadow.
+
+Then (Oj, 17:10) "Are the two flowers on the lawn supposed to grow together?" They were not: of the
+three flowers in each meadow tile, the first two fell 6 units apart, under a flower's 9.5 across,
+and every tile repeated the pair. Each flower now keeps to the middle three fifths of its own third
+of the tile, so any two stand at least 53 units apart, across tiles too. The pebbles and tufts
+never met (61 and 23 units at the closest).
+
+Then (Oj, 17:17) "the same treatment on the same themes to the red objects - toadstools and apples -
+red but more toxic". From mockups of a neon red, a hot crimson and a lava red (Oj, 17:21: "C B A
+B"): Toxic Waste's caps and apples are lava red, FF3D14 shaded B4290C; Cyberpunk Night's and
+Underwater Realm's hot crimson, FF1460 shaded B30B41; Neon City Night's neon red, FF1F3D shaded
+B31228. Each shade is its red 0.15 darker with 0.85 of the chroma, as daylight's apple is. The
+spots, stalks, flesh, seeds and leaf keep their lit colours. The apples stand at least 0.31 from
+the trail, the toadstools 0.36 from the verge.
+
+Then (Oj, 17:28) "In the magic forest, twilight, lunar eclipse and cherry blossom rose to purple
+petals", and from mockups (Oj, 17:38) "Lunar Eclipce C, others lighter tones", then (17:47)
+"Twilight D, then make the other themes vary them too in the next step - and they are can be merged
+with effect petals; Magic forest D, lighter; Cherry Blossom - take the effect petals". A theme now
+has three petal colours, petal1 to petal3, beside effectColor2 rather than in ChaseTheme, shared
+by the Chase's flowers and the falling petals; ChaseTheme lost its petal. The flowers wear them by
+turns - the meadow's three in a tile one each, the daisies and the butterfly's spots by their
+place along the verge or their run (petalOf). The falling petals blend from the effect colours to
+petal1 and petal2 as far as the theme has petals, so Cherry Blossom's are its old effect colours
+and the mill draws the same to the byte. The meadow's petals now all go down before the hearts:
+with three shapes a flower's petals waited for the next tile and covered its heart's edge.
+
+Twilight: FCABC4, E69EE8, BC9AFA. Magic Forest: FDC4D5, EDB6EE, C8B0F9 (0.05 lighter, 0.75 of
+the chroma). Cherry Blossom: its effect colours FFC8DC and FF96B4 and FFAFC8 between them. Lunar
+Eclipse: A15CFF in all three. Every other theme wears one colour three times until the next step.
+
+Then the next step, from a proposal for the other 21 themes (Oj, 18:06: "lunar eclipse - duller;
+cyberpank - different vivid colors; winter frost - lighter; others are OK"; 18:09: "Midnight -
+darker petals, lighter stems"). A theme left with one petal colour now wears it and two neighbours:
+a coloured petal (chroma at least 0.06) its hue turned 25 degrees either way; a white one a blushed
+pink and a lilac, 0.05 of chroma as far as the theme has colour, no lighter than 0.91, and where
+either is lost on the meadow (under 0.10) the first of cream and pale blue that stands off it -
+Winter Night takes cream for the lilac, Arctic Dawn pale blue for the pink; Vintage Noir two greys,
+0.10 and 0.05 darker. Lunar Eclipse's are the proposal's at 0.6 of the chroma, 0.03 lighter: A07EDC,
+7E8DD8, BC73C3. Cyberpunk Night: FF00FF, 39FF14, E6FF1A. Winter Frost: FED1AD, E9DBA6, B0ECBC -
+lighter only with warmth, as a light grey, pink or lilac sinks into its snow (0.03 to 0.07 from it).
+Midnight: its proposal 0.18 darker with 1.3 of the chroma, B4ABAF, C993A1, AB96C6; its stem and
+daisy leaf 0.18 lighter, 2C422B and 2E462F, 0.15 from its meadow, where they stood at 0.04 and 0.02.
+
+Then (Oj, 18:16) "share the stems with the bushes and foreground grass, in midnight even darker
+petals", and (18:17) "by bushes i mean the ones on the lawn" - the tufts. ChaseTheme's tuft,
+flowerStem and frontGrass are now one field, grass. The stems and tufts already wore the same colour
+in every theme but Midnight, whose lighter stems had left its tufts and front grass near black; the
+front grass was 0.05 darker, and now takes the stems' green, its dark third blade lifted by as much
+to keep its step. Midnight's grass is the stems' 2C422B, and its petals 0.15 darker again with 1.15
+of the chroma: 877D81, 9D6374, 7F679C.
+
+Then (Oj, 18:26) "On the vintage noire make the apples red". Its apple skin is daylight's, E24F41
+shaded 9E2924, the one colour in the theme - on the tree, on the verges and on the trail, and the
+crumbs the hare bites off. The flesh, seeds and leaf stay grey. 0.21 and 0.17 from its grey trail.
+
+Then (Oj, 18:30) "Make the small flowers blend into the lawn". The lawn's little flowers, petals and
+hearts, are mixed half way to the lawn's colour at the middle of the band they grow in (63 units
+below the ground line, on the hillTop to hillBottom gradient the lawn is filled with), and stay
+opaque, so a heart over its petals shows no ring; the batching by colour stays. 0.7 was tried as
+well: at night it all but hid them.
+
+Then (Oj, 18:43) "Let's experiment - a theme states clear colors - hills, trees, mountains. The haze
+color is SkyBottom - SkyBottom is a 100 haze. The scene applies the haze to a layer based on the
+distance to that layer - less to the hills, more to the mountains." Rendered in scratch first: an
+exponential haze by distance (1 - e^(-kd), d = 1/parallax - 1) at two strengths; Oj took the
+stronger for the hills (0.43) and less for the mountains; d / (d + 2.46) gives 0.43 and 0.75 on one
+curve, and Oj took 0.75. Taking 0.75 of haze back out of today's mountains asks for black or clipped
+blues - their feet are darker than that much haze allows - so each theme's clear mountain colour is
+a rock (8C8CA0 over 5C5F78) in the theme's light, in the hue of its old mountains at 1.5 times their
+chroma up to 0.12; Oj picked that ("B") over the haze taken out in OKLab ("A").
+
+ChaseTheme lost farHillTop, farHillFoot, farTreeTrunk, farTreeCrown, farTreeCrownLight,
+farTreeCrownMiddle, farFireflyLight and farFireflyGlow; mountainTop and mountainFoot are the clear
+colours. ChaseScene hazed(theme, clear, parallax) draws the mountains (0.12), the far hills from the
+meadow's hillTop and hillBottom, their trees from treeTrunk, treeLeavesBase, crownLight and
+crownMiddle, and the fireflies from the effect colours (0.35). The generator measures the runners
+and props against the hills and mountains as they are now drawn: the hazed hills are lighter than
+the old ones, which stood toward the dark mountain foot, so where a runner had been lifted to stand
+off dark hills it now goes the smaller way, darker - Twilight's, Underwater Realm's, Steampunk's and
+Cherry Blossom's grey wolf and hare, as they are by day; keeping them light instead would have paled
+Fresh Spring's brown hare. Winter Night's runners fall short of 0.15 (0.12, 0.13, 0.15) against its
+pale hazed snow; Steampunk's grey wolf stands at 0.10.
+
+Then (Oj, 19:27) "blend the foreground grass into the bottom lawn". Three ways rendered: every blade
+at half the lawn's colour (A), the roots in the lawn (B), and the roots in the lawn with the tips at
+half (C). Oj took B (19:33). Each blade is filled with one vertical gradient, from its own colour at
+the height of the tallest tip (58 units above the frame's bottom) to the lawn's hillBottom at the
+bottom, so a shorter blade starts part way down it. drawFrontGrass takes the SceneTheme for
+hillBottom. A 3840 x 2160 frame on the CPU path costs the same as with solid blades (1.72 against
+1.73 seconds for 18 frames).
+
+In the same message (Oj, 19:33): "on toxic waste the stem color needs tuning". Its grass, 0B240D,
+stood 0.02 to 0.05 from its lawn, so the stems, the tufts and the foreground grass all but vanished.
+Three greens rendered near the hue of its lime fireflies, each with its daisy leaf 0.08 lighter as
+daylight's is: a dim toxic green 26541C, a toxic green 367C14 and an acid lime 5AA925. Oj took the
+dim one ("A", 19:39): 26541C, 0.12 to 0.20 from the lawn, with leaves 386D35. The dark third blade
+is 214F17, the same green at the theme's own step, 0.017 darker. The generator's lift would have
+kept the old blade's low chroma and turned it grey at that lightness, so it leaves a dark blade
+alone where the theme sets it.
+
+Then (Oj, 19:46) "On unrealistic themes, the objects like stump, signpost, crow, butterfly should
+gain the theme's vibe". Seven themes were taken as unrealistic: Cyberpunk Night, Neon City Night,
+Toxic Waste, Underwater Realm, Magic Forest, Midnight Fantasy and Steampunk Adventure. Lunar
+Eclipse, Vintage Noir and Paper Sketch were offered and left as they are (20:08); the four themes
+out of allThemes were not asked about. The generator's vibes.py gives each of the seven a palette
+of slots - wood, woodTop, board, life, stone, crack, crow, beak, wing, bird, shell, reed, spines,
+boot, metal and the rest - and maps each plain prop's field to one, with the field whose daylight
+colour stands for the slot. A field takes its slot's hue and chroma, its own daylight step of
+lightness from that key, and chroma in proportion to its daylight chroma against the key's (0.6 to
+1.3). The contrast solve then runs on these colours instead of the lit daylight ones, bounded 0.25
+below and 0.3 above them. The yellows, the ball, the toadstools, the apples' skins and the petals
+keep their own rules.
+
+Two palettes were tuned after the first render. Underwater Realm's driftwood (3F7480) and bird
+needed lifting, which paled the coral sign, so both went darker (1F4048, 1A5A90). Steampunk's
+walnut was pushed near black against its rust meadow, so its wood is an aged oak (A07A50) and its
+reeds copper. Oj took all seven (20:08), with two changes. Cyberpunk Night's rake tines were lost
+in cyan, so they are magenta. Neon City Night's sign is "dark fill and bright outline and letters":
+its board is 101018 and its outline and writing (bough) 00FFF0, through two slots a palette may
+add, ink and handle, which otherwise fall back to the wood. Its rake's handle is a light B0ACD8,
+0.34 from the trail where it stood near 0.10. A board a step lighter (16141F) fell short against
+the asphalt meadow and lifted the whole group by 0.22.
+
+Then (Oj, 20:25) "On neon city make stems brighter than surface". Its grass, 1B2421 at L 0.25, was
+darker than its asphalt lawn, which runs from 333333 to 1C1C1C (L 0.32 to 0.23). It is now 357339,
+the hue of its trees (32CD32) at L 0.50 and 0.11 chroma, 0.21 to 0.29 from the lawn. Its daisy leaf
+is 478D53, 0.08 lighter as daylight's is, and its dark third blade 306E34, the theme's own step of
+0.017 darker. L 0.46 and 0.55 were the steps either side.
+
+Then (Oj, 20:36) "replace the Cherry Blossom acid green with light gray, make the path light rose
+grayish pink, calm the vivid blue sky". The sky and the meadow are the theme's shared fields, so the
+Mill's sky and hills change with the Chase's. skyTop 1E90FF and skyBottom 6495ED became a calm
+88AED9 and C8DEF1 (chroma 0.19 down to 0.075); hillTop 7CFC00 and hillBottom 556B2F a light grey
+D8D9DE and B3B4BB. The trail is E6D3B5BB, a light rose grey, and the pebbles A99196. Grey plants
+(A) and sage plants (B) were rendered; Oj took B (20:43): the stems, tufts and foreground grass
+718F76, the dark third blade 638068, the grass patch 5D7A62, 718F76 and 89A88E, the daisy leaf
+88A88E, the reed stems 718F76, and the Mill's lily pad 89A88E. The calmer, lighter sky raises the
+theme's light from 0.65 to 0.90, so the runners and props stand nearer their daylight colours.
+Two fall short against the grey: the palest petal, FFC8DC, stands 0.07 from the meadow, and the
+Mill's white cow 0.11 from the hills, against 0.10 and 0.15; the cow had stood at 0.29.
+
+Then (Oj, 20:47) "Make the lawn-hills darker, add just a bit of green". hillTop is A3AFA0 and
+hillBottom 7E8A7C: L 0.74 and 0.62 where they stood at 0.885 and 0.77, with 0.025 of chroma at a
+green hue (140). The plants went down by the same 0.145 so they keep their step from the meadow:
+the grass 48644D, the dark third blade 3B5640, the grass patch 35513A, 48644D and 5E7C63, the daisy
+leaf 5D7C63, the reed stems 48644D; the Mill's lily pad stays 89A88E. The trail stays E6D3B5BB,
+0.08 from the meadow's top. The palest petal now stands 0.17 from it and the Mill's cow 0.26, so
+neither falls short.
+
+Then (Oj, 21:02) "remove color from vintage noire stems". The world's greens come from the world
+dump and were never washed out by the theme's saturation as the trail is, so Vintage Noir's plants
+kept a faint green (chroma about 0.02 to 0.03). They are now the grey of the same lightness: the
+grass 353535, the dark third blade 2E2E2E, the daisy leaf 404040 and the grass patch 2D2D2D,
+373737 and 444444. Its mountains (0.026) and crown (0.012) keep their faint tint, as nothing asked
+about them; the props were already grey.
+
+Then (Oj, 21:07) "make trees foliage darker on vintage noire". Its foliage stood near its meadow
+(5A5A5A, L 0.47, against hillTop 505050, L 0.43). treeLeavesBase, the shared field the Mill's trees
+and the Chase's crowns are drawn from, is 323232, and the Chase's crownLight and crownMiddle 404040
+and 373737: each 0.15 darker, and the crowns lose their faint tint. The far hills' trees are these
+hazed, so they darken too. The Mill's peeking wolf, 1E1E1E, now stands 0.08 from the foliage it
+hides behind, where it stood 0.23 from the old; mill_fix was not run again.
+
+Then (Oj, 21:16) "That can be mitigated by making the hills lighter and the wolf darker - with a
+darker wolf it will be pure vintage black and white vibe". hillTop is 9A9A9A and hillBottom
+6A6A6A, where they stood at 505050 and 282828; the Mill's wolf is 0A0A0A with ears of 000000, where
+it was 1E1E1E and 141414. The wolf now stands 0.17 from the foliage, the trees 0.37 from the hills'
+top and the cow 0.27. The hills' top is lighter than the sky's foot (787878), so the ridge reads
+against it; 8A8A8A would have stood 0.06 from it. The mill's roof, lifted for the dark hills,
+stands 0.09 from the light ones. The same two fields are the Chase's meadow, so its lawn is light
+too, and the generator's smallest shift turns its grey wolf dark (3E3E3E) and its hares light
+(E1E1E1, E7E7E7) to stand off it; the other couple's black wolf stays darker than ours.
+
+Then (Oj, 21:37) "flowers are invisible on snow - make tham all white. Also white-icy butterfly".
+The snow themes are the three with snow falling: Winter Frost, Winter Night and Arctic Dawn. Their
+petals are all FFFFFF - Winter Frost's peach, cream and mint stood 0.03 to 0.07 from its snow and
+read no better than white - and ONE_PETAL keeps the generator from varying a lone white into a
+blush and a lilac. The butterfly's wing is EAF6FF and its edge, body and wing tips 5E8FBF: the edge
+is what carries it, as the wing stands 0.03 to 0.05 from Winter Frost's and Arctic Dawn's light
+sky. Winter Frost's flowers measure 0.03 from its meadow; the daisy shows against the sky and by
+its heart and stem.
+
+Then (Oj, 21:41) "also grey icy path". The three snow themes' trails are a cool grey (chroma 0.02,
+hue 245) in WORLD_EDITS, set before the props are measured against them, about 0.10 from the snow
+where the trail is drawn: Winter Frost E6C6D2DD, Arctic Dawn E6A1ACB7 and Winter Night E695A0AA,
+with pebbles 0.15 darker (97A2AD, 747F89, 68737D). The beige trails they replace stood 0.03 to
+0.09 from the snow. The rubber duck and the banana peel moved a little to keep their contrast with
+the grey.
+
+Then (Oj, 21:45) "swap the primary hare with the secondary one", and (21:48) "I mean on the winter
+theme". Swapping them in every theme was built first - ChaseScene drawing greyHare for our couple,
+the icon in daylight's grey coat, the coats reordered couple by couple - and dropped at the second
+message. In Winter Frost alone the generator trades the two solved hare coats (SWAP_HARES): our
+hare runs grey (A8A39E) and theirs brown (BE936E), each with the contrast it was solved to, as both
+are measured against the same backgrounds. The fields keep their names, so in that theme brownHare
+holds the grey coat; the alternative, naming the coats by couple, would have changed ChaseTheme
+for one theme's sake.
+
+Then (Oj, 21:58) "Make the wind blow the opposite way, and check the dust visibility". The rain
+leans down to the left and the blown dust ran to the right; the dust now runs to the left, so the
+two agree, its streaks mirrored to trail behind it. Its streaks were stroked 1 pixel wide whatever
+the frame's size, so on a 3840-pixel screen they were hairlines; they are a unit wide now, as the
+rain's drops are 1.5. Against its sky's middle Sahara Heat's white dust stands 0.24 away, Vintage
+Noir's 0.57, Steampunk's rusty orange CC9966 only 0.09 - 0.06 in the Chase, where the weather is
+drawn at 0.6. Steampunk's effectColor1 is now FFF2DC, a warm steam white, 0.24 from the middle of
+its sky, 0.10 from its pale foot and 0.52 from its rust hills; it is used only for the dust.
+
+Then (Oj, 22:06) "Fade the dust effect on Mill". MillScene draws the theme's dust at half its
+strength; the rest of its weather stays whole, and the Chase's weather keeps its 0.6.
+
+Then (Oj, 22:12) "To make Chase more replayable, either start from a new position each time, or
+from the previous one". Everything that varies in the Chase - the leap's end, what the tree drops,
+the crow's start, what lies on the trail and stands by it - goes by cyclesPassed, and the showcase's
+clock starts at cycle 0 each run, so every run opened on the same cycle. The scene now keeps the
+cycle after the last one it drew in its view section (NextCycle), as the Earth keeps its orbits,
+and adds it to the host's cycles. A random start was the other way; it needs nothing kept, but it
+can open on a cycle just seen, where carrying on walks through the whole sequence before any cycle
+comes back. A run starts at the beginning of its cycle, not partway into the one it was left in.
+
+Then (Oj, 22:25) "the rainy themes lost lightning?" - only in the Chase, which never had it: the
+Mill draws its lightning itself, apart from drawWeather, so the Chase took the rain and not the
+storm when it took the themes. Oj (22:27) "You shall": drawBackdrop draws drawLightning over the
+sky down to the ground line, after the clouds and before the mountains, so the bolt comes down
+behind them and the flash lights the sky alone. It runs on the effects' time, as the weather does,
+so a rainy theme strikes six times a minute, a strike flickering for 1.5 seconds; the Mill's strike
+three times in its 40 seconds. The bolt is in the theme's sunDisk, as in the Mill: Stormy Night's
+pale blue, Toxic Waste's acid green.
+
+**The crow's eyes** (Oj, 2026-11-10: "The crow after bumping to the wolf gets big eyes"). The crow
+wore an X in place of its eye for the half second of its tumble and the second it flaps off shaken.
+Three readings were shown beside it: both eyes wide for the whole of that, wide with the X drawn
+inside them as it flies off, and the X through the tumble with the eyes going wide as it gets away.
+Oj took the first. crowEyesWideAt pops the eyes past full size in 0.08 s and settles them by 0.2 s,
+each a white disc on a rim of ink with a pinpoint pupil, the far one coming out from behind the head
+as they widen; they shrink back to size over the 0.3 s around the end of the shaking. The frames
+before the hit, after the shaking and the stump start are unchanged; the X is drawn nowhere.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
@@ -1753,6 +2018,19 @@ whose body and detail are one grey, and the legs in Underwater Realm and Cyberpu
 
 The backdrops are read off the theme in MillScene::draw: the sky's gradient at 0.58 of the height,
 and the front hill's at 0.38 of its own, darkened by a tenth as drawHills does.
+
+Then (Oj, 2026-11-10, 21:23, on a screenshot of Winter Frost) "Make the left hill lighter and the
+winter cow white". The front hill was the back hill with its Hsl luminosity scaled by 0.9. Hsl is
+Okhsl, whose saturation is relative to the gamut at that lightness, so scaling the lightness of a
+near white keeps a high saturation and the chroma grows as the gamut widens: Winter Frost's F0F5FF
+hill came out a light blue, L 0.80 and chroma 0.054 against the back hill's 0.90 and 0.027.
+Three rules were rendered in six themes: the luminosity scaled by 0.95, a tenth of the way to
+black, and a twentieth of the way to black. Oj took the twentieth (21:30), so frontHillColor is
+colorBetween(color, black, 0.05) in drawHills and in the cow's groundBehind alike; Winter Frost's
+front hill is now C3D0E1, L 0.85 and chroma 0.028. In the same message, "and the white cow on
+golden hour": mill_fix had darkened both cows to stand 0.15 from the sky and hills (Winter Frost's
+by 0.28 to A4A4A4, Golden Hour's by 0.235 to B2A9A0), and the generator's theme_edits.py now
+restores their own colours after it: FFFFFF with C8C8DC spots, and FFF5EB with 5A3C28 spots.
 
 ## StarStyle
 

@@ -4,6 +4,7 @@ import ClaFi.PathArt.DazeStarsEffect;
 import ClaFi.PathArt.DustPuffEffect;
 import ClaFi.PathArt.FirefliesEffect;
 import ClaFi.PathArt.HareSprite;
+import ClaFi.PathArt.LightningEffect;
 import ClaFi.PathArt.ReedsSprite;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.StarsEffect;
@@ -11,6 +12,9 @@ import ClaFi.PathArt.ThemeBlend;
 import ClaFi.PathArt.Types;
 import ClaFi.PathArt.WeatherEffect;
 import ClaFi.PathArt.WolfSprite;
+import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -67,6 +71,10 @@ namespace ClaFi::PathArt
         // The theme's stars twinkle and its weather comes round twice a cycle, every 30 seconds,
         // near the mill's 40.
         constexpr float k_lively{ 2.0f };
+        // Distance beyond the trail, in the trail's own, at which a layer is half skyBottom.
+        constexpr float k_halfHaze{ 2.46f };
+        // A layer moving at `parallax` of the camera's speed, seen through the haze. See PathArt
+        [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax);
         // Units the camera covers in an episode at full speed.
         constexpr float k_fullSpeedTravel{ 6600.0f };
         constexpr float k_episodesPerCycle{ 3.0f };
@@ -140,6 +148,12 @@ namespace ClaFi::PathArt
         constexpr float k_crowStumpFromBranchEnd{ 44.0f };
         constexpr float k_crowStumpSize{ 1.8f };
         constexpr float k_crowTakeoff{ -0.4f };
+        // Met, the crow's eyes pop wide - past full size in k_crowEyesPop seconds, settled by
+        // k_crowEyesSettled - and come back to size as the k_crowShaken seconds of its shaking end.
+        constexpr float k_crowEyesPop{ 0.08f };
+        constexpr float k_crowEyesPopOver{ 0.35f };
+        constexpr float k_crowEyesSettled{ 0.2f };
+        constexpr float k_crowShaken{ 1.0f };
 
         // How the wolf's leap at the hare ends in the branch run, a different way each cycle.
         enum class LeapEnd
@@ -464,8 +478,10 @@ namespace ClaFi::PathArt
         // `x` is where it meets the wolf's face.
         void drawCrow(const SceneFrame&, const ChaseTheme&, float x, float groundY, float footY,
             float sinceHit, CrowStart);
-        // Folded, its wings lie along its back and `flap` is not used.
-        void drawCrowBody(const SceneFrame& crow, const ChaseTheme&, float flap, bool dazed,
+        // How wide the crow's eyes are `seconds` after his face met it: popping, then settling.
+        [[nodiscard]] float crowEyesWideAt(float seconds);
+        // Folded, its wings lie along its back and `flap` is not used; `eyesWide` is 1 when wide.
+        void drawCrowBody(const SceneFrame& crow, const ChaseTheme&, float flap, float eyesWide,
             bool folded);
         // The stump the crow sits on, on the far verge under where it meets his face.
         void drawCrowStump(const SceneFrame&, const ChaseTheme&, float x, float groundY);
@@ -482,9 +498,11 @@ namespace ClaFi::PathArt
         // The wind behind each of them as they pass bends it after them, the wolf's more; `x` is
         // where it stands, in units from the middle of the frame like the two.
         [[nodiscard]] float wakeGust(float x, float hareX, float wolfX);
-        // `x` is its middle, where it stands on that edge of the trail.
+        // The theme's three petal colours by turns, for the flowers along a row.
+        [[nodiscard]] Color petalOf(const SceneTheme&, std::int64_t index);
+        // `x` is its middle on that edge of the trail, `petal` a daisy's or the butterfly's spots.
         void drawRoadside(const SceneFrame&, const ChaseTheme&, Roadside, Verge, float x,
-            float groundY, const RoadsideMotion&);
+            float groundY, Color petal, const RoadsideMotion&);
         // How the boulder and the banana peel jump in the wake of each of them.
         struct Hop
         {
@@ -496,7 +514,8 @@ namespace ClaFi::PathArt
         // Something that hops, drawn about the middle of its foot.
         [[nodiscard]] SceneFrame hopping(const SceneFrame& onVerge, const Hop&);
         void drawBoulder(const SceneFrame& onVerge, const ChaseTheme&, const Hop&);
-        void drawDaisy(const SceneFrame& onVerge, const ChaseTheme&, const RoadsideMotion&);
+        void drawDaisy(const SceneFrame& onVerge, const ChaseTheme&, Color petalColor,
+            const RoadsideMotion&);
         void drawSignpost(const SceneFrame& onVerge, const ChaseTheme&, const RoadsideMotion&);
         void drawToadstool(const SceneFrame& onVerge, const ChaseTheme&, const RoadsideMotion&);
         // The fluff the wolf's wake tears from the reeds' heads, drawn in the reeds' units.
@@ -506,7 +525,7 @@ namespace ClaFi::PathArt
             float sinceHareClose);
         void drawStumpCrow(const SceneFrame& onVerge, const ChaseTheme&, float seconds,
             float sinceHareClose);
-        void drawButterfly(const SceneFrame& onVerge, const ChaseTheme&, float seconds,
+        void drawButterfly(const SceneFrame& onVerge, const ChaseTheme&, Color spots, float seconds,
             float sinceHareClose);
         void drawFrog(const SceneFrame& onVerge, const ChaseTheme&, float sinceHareClose, Verge);
         void drawSnail(const SceneFrame& onVerge, const ChaseTheme&, const RoadsideMotion&);
@@ -545,8 +564,10 @@ namespace ClaFi::PathArt
     // Three 20-second episodes a cycle: twice the wolf trips over something on the trail, then he
     // leaps into a branch. Each time the camera stops while he is down, and the hare taunts him.
     // See PathArt#chasescene
-    void ChaseScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
+    void ChaseScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime hostTime)
     {
+        const SceneTime time = { hostTime.cycleTime, hostTime.cyclesPassed + m_cyclesAhead };
+        m_nextCycle = time.cyclesPassed + 1;
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         const SceneTheme& theme = m_themes.worn();
         const float unit = frame.unit;
@@ -1010,14 +1031,14 @@ namespace ClaFi::PathArt
             if (!inView && !(flies && sinceHareClose > 0.0f && sinceHareClose < 3.0f))
                 continue;
             drawRoadside(frame, theme.chase, roadside, Verge::Far, roadsideOnScreen, groundY,
-                RoadsideMotion{
+                petalOf(theme, run), RoadsideMotion{
                 .gust = wakeGust(roadsideX, hareX, wolfX),
                 .sinceHareClose = sinceHareClose,
                 .wolfTime = sinceHareClose,
                 .seconds = runTime * k_episodeSeconds
             });
         }
-        drawVergeRow(frame, theme.chase, time, groundY, closeness, false);
+        drawVergeRow(frame, theme, time, groundY, closeness, false);
         if (obstacleShown && branchRun && leapEnd == LeapEnd::Crow
             && treeRun.crowStart == CrowStart::OnStump)
         {
@@ -1164,8 +1185,8 @@ namespace ClaFi::PathArt
         drawStars(frame, ourWolf, episodeTime);
         if (theyAreShown)
             drawStars(theirWolfFrame, theirWolf, theirWolfTime);
-        drawVergeRow(frame, theme.chase, time, groundY, closeness, true);
-        drawFrontGrass(frame, theme.chase, travel);
+        drawVergeRow(frame, theme, time, groundY, closeness, true);
+        drawFrontGrass(frame, theme, travel);
     }
 
     void ChaseScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
@@ -1210,6 +1231,26 @@ namespace ClaFi::PathArt
     SceneReadoutColors ChaseScene::readoutColors() const
     {
         return readoutColorsOf(m_themes.picked());
+    }
+
+    void ChaseScene::storeView(Dom::Section& view) const
+    {
+        (view / k_nextCycleNode).set(static_cast<int>(m_nextCycle));
+    }
+
+    void ChaseScene::restoreView(const Dom::Section& view)
+    {
+        m_cyclesAhead = (view / k_nextCycleNode).get<int>();
+        m_nextCycle = m_cyclesAhead;
+    }
+
+    // A first run starts at the first cycle.
+    Dom::Dt::Section ChaseScene::viewSchema()
+    {
+        return Dom::Dt::Section{
+            k_name,
+            Dom::Dt::Value{ k_nextCycleNode, 0 }
+        };
     }
 
     float ChaseScene::travelAt(const float cycleTime)
@@ -1285,6 +1326,15 @@ namespace ClaFi::PathArt
             }
         });
 
+        // A rainy theme's lightning strikes behind the mountains and lights the sky.
+        const float effectsTime = fractionalPart(cycleTime * k_lively);
+        SceneFrame aboveGround = frame;
+        aboveGround.height = groundY;
+        drawLightning(aboveGround, effectsTime, Lightning{
+            .strength = theme.hasRain,
+            .color = theme.sunDisk
+        });
+
         // The ridges are one path across the frame each, so no seam shows where two tiles meet.
         const float mountainPeriod = periodNear(0.12f, 1700.0f);
         PixelPath mountains;
@@ -1298,7 +1348,8 @@ namespace ClaFi::PathArt
         mountains.lineTo(width + 6.0f * unit, groundY);
         mountains.close();
         fillShape(frame, mountains, LinearGradient::Simple({ 0.0f, height * 0.35f },
-            { 0.0f, groundY }, theme.chase.mountainTop, theme.chase.mountainFoot));
+            { 0.0f, groundY }, hazed(theme, theme.chase.mountainTop, 0.12f),
+            hazed(theme, theme.chase.mountainFoot, 0.12f)));
 
         const float hillPeriod = periodNear(0.35f, 1150.0f);
         const auto hillY = [&](float x) {
@@ -1311,7 +1362,11 @@ namespace ClaFi::PathArt
         hills.lineTo(width + 6.0f * unit, groundY + 2.0f * unit);
         hills.close();
         fillShape(frame, hills, LinearGradient::Simple({ 0.0f, height * 0.62f }, { 0.0f, groundY },
-            theme.chase.farHillTop, theme.chase.farHillFoot));
+            hazed(theme, theme.hillTop, 0.35f), hazed(theme, theme.hillBottom, 0.35f)));
+        const SolidColor trunk{ hazed(theme, theme.treeTrunk, 0.35f) };
+        const SolidColor crown{ hazed(theme, theme.treeLeavesBase, 0.35f) };
+        const SolidColor crownLight{ hazed(theme, theme.chase.crownLight, 0.35f) };
+        const SolidColor crownMiddle{ hazed(theme, theme.chase.crownMiddle, 0.35f) };
         forEachTile(frame, 0.35f, hillPeriod, travel, [&](float tileLeft, float) {
             for (int i = 0; i != 4; ++i)
             {
@@ -1321,25 +1376,20 @@ namespace ClaFi::PathArt
                 const float x = tileLeft + alongTile * unit;
                 const float y = hillY(alongTile) + 6.0f * unit;
                 const float size = (0.7f + 0.4f * pseudoRandom(i, 112.0f)) * unit;
-                fillBox(frame, { x - 3.0f * size, y - 22.0f * size, x + 3.0f * size, y },
-                    SolidColor{ theme.chase.farTreeTrunk });
-                fillDisc(frame, { x, y - 32.0f * size }, 16.0f * size,
-                    SolidColor{ theme.chase.farTreeCrown });
-                fillDisc(frame, { x - 9.0f * size, y - 25.0f * size }, 11.0f * size,
-                    SolidColor{ theme.chase.farTreeCrownLight });
-                fillDisc(frame, { x + 9.0f * size, y - 26.0f * size }, 12.0f * size,
-                    SolidColor{ theme.chase.farTreeCrownMiddle });
+                fillBox(frame, { x - 3.0f * size, y - 22.0f * size, x + 3.0f * size, y }, trunk);
+                fillDisc(frame, { x, y - 32.0f * size }, 16.0f * size, crown);
+                fillDisc(frame, { x - 9.0f * size, y - 25.0f * size }, 11.0f * size, crownLight);
+                fillDisc(frame, { x + 9.0f * size, y - 26.0f * size }, 12.0f * size, crownMiddle);
             }
         });
         // **The theme's fireflies and weather keep to the far hills' layer**, smaller and fainter
-        // for the distance, and move with the hills. The fireflies are faded toward the mountains
-        // as the hills are. The weather falls against the sky as well, so it is drawn fainter
-        // instead. It fills each tile down to the ground line.
+        // for the distance, and move with the hills. The fireflies are hazed as the hills are. The
+        // weather falls against the sky as well, so it is drawn fainter instead. It fills each tile
+        // down to the ground line.
         const float farSize = 0.6f;
-        const float effectsTime = fractionalPart(cycleTime * k_lively);
         Fireflies fireflies = firefliesOf(theme);
-        fireflies.light = theme.chase.farFireflyLight;
-        fireflies.glow = theme.chase.farFireflyGlow;
+        fireflies.light = hazed(theme, fireflies.light, 0.35f);
+        fireflies.glow = hazed(theme, fireflies.glow, 0.35f);
         fireflies.count = 22;
         fireflies.size = farSize;
         Weather weather = weatherOf(theme);
@@ -1369,7 +1419,7 @@ namespace ClaFi::PathArt
         // Tufts, pebbles and flowers each go down over every tile before the next kind does, so a
         // flower stands over a tuft whichever tile either is in.
         const float tilePeriod = periodNear(1.0f, 400.0f);
-        ScatteredShapes tufts{ frame, SolidColor{ theme.chase.tuft }, 2.0f * unit };
+        ScatteredShapes tufts{ frame, SolidColor{ theme.chase.grass }, 2.0f * unit };
         forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
             for (int i = 0; i != 6; ++i)
             {
@@ -1401,18 +1451,34 @@ namespace ClaFi::PathArt
         });
         pebbles.draw();
         // The petals of a flower stand just apart, so one shape holds them all under an even-odd
-        // fill.
-        ScatteredShapes petals{ frame, SolidColor{ theme.chase.petal } };
-        ScatteredShapes hearts{ frame, SolidColor{ theme.chase.flowerHeart } };
+        // fill. The three flowers of a tile wear the theme's three petal colours, and every
+        // flower's petals go down before the hearts. They take half the lawn's colour where they
+        // grow, so they lie in the lawn rather than on it.
+        const Color lawn = colorBetween(theme.hillTop, theme.hillBottom,
+            63.0f * unit / (frame.height - groundY));
+        const auto inLawn = [&](Color color) {
+            return SolidColor{ colorBetween(color, lawn, 0.5f) };
+        };
+        const auto flowerAt = [&](float tileLeft, float tileWidth, int i) {
+            // each keeps to its own third of the tile, so no two grow into one
+            const float across = (static_cast<float>(i) + 0.2f
+                + 0.6f * pseudoRandom(i, 127.0f)) / 3.0f;
+            return FloatPoint{
+                tileLeft + tileWidth * across,
+                groundY + (48.0f + 30.0f * pseudoRandom(i, 128.0f)) * unit
+            };
+        };
+        ScatteredShapes petals[] = {
+            ScatteredShapes{ frame, inLawn(theme.petal1) },
+            ScatteredShapes{ frame, inLawn(theme.petal2) },
+            ScatteredShapes{ frame, inLawn(theme.petal3) }
+        };
         forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
             const float petalRadius = 1.75f * unit;
             for (int i = 0; i != 3; ++i)
             {
-                const FloatPoint flower = {
-                    tileLeft + tileWidth * pseudoRandom(i, 127.0f),
-                    groundY + (48.0f + 30.0f * pseudoRandom(i, 128.0f)) * unit
-                };
-                PixelPath& flowerPetals = petals.next();
+                const FloatPoint flower = flowerAt(tileLeft, tileWidth, i);
+                PixelPath& flowerPetals = petals[i].next();
                 for (int petal = 0; petal != 5; ++petal)
                 {
                     const float angle = k_2Pi * static_cast<float>(petal) / 5.0f;
@@ -1420,24 +1486,35 @@ namespace ClaFi::PathArt
                     addEllipse(flowerPetals, flower + out * (3.0f * unit), petalRadius,
                         petalRadius);
                 }
-                addEllipse(hearts.next(), flower, 1.8f * unit, 1.8f * unit);
             }
         });
-        petals.draw();
+        for (ScatteredShapes& shapes : petals)
+            shapes.draw();
+        ScatteredShapes hearts{ frame, inLawn(theme.chase.flowerHeart) };
+        forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
+            for (int i = 0; i != 3; ++i)
+            {
+                addEllipse(hearts.next(), flowerAt(tileLeft, tileWidth, i), 1.8f * unit,
+                    1.8f * unit);
+            }
+        });
         hearts.draw();
     }
 
-    void ChaseScene::drawFrontGrass(const SceneFrame& frame, const ChaseTheme& chase,
+    void ChaseScene::drawFrontGrass(const SceneFrame& frame, const SceneTheme& theme,
         const float travel)
     {
         const float unit = frame.unit;
         const float height = frame.height;
         const float grassPeriod = periodNear(1.35f, 520.0f);
-        // Every third blade is dark, and the dark ones go down first.
+        const FloatPoint tallestTip = { 0.0f, height - (24.0f + 34.0f) * unit };
+        // Every third blade is dark, and the dark ones go down first. A blade's root wears the
+        // lawn's colour at the frame's bottom, so it grows out of the lawn.
         for (const bool dark : { true, false })
         {
-            const Color shade = dark ? chase.frontGrassDark : chase.frontGrass;
-            ScatteredShapes blades{ frame, SolidColor{ shade } };
+            const Color shade = dark ? theme.chase.frontGrassDark : theme.chase.grass;
+            ScatteredShapes blades{ frame, LinearGradient::Simple(tallestTip, { 0.0f, height },
+                shade, theme.hillBottom) };
             forEachTile(frame, 1.35f, grassPeriod, travel, [&](float tileLeft, float tileWidth) {
                 for (int i = 0; i != 22; ++i)
                 {
@@ -1467,7 +1544,7 @@ namespace ClaFi::PathArt
     // of the stirring starts the first time she comes close and the wolf's part the first time he
     // does, each found by going back over the scene's time; each part then plays through as if
     // that one had run by at full speed.
-    void ChaseScene::drawVergeRow(const SceneFrame& frame, const ChaseTheme& chase,
+    void ChaseScene::drawVergeRow(const SceneFrame& frame, const SceneTheme& theme,
         const SceneTime time, const float groundY, const float closeness, const bool nearEdge)
     {
         const float unit = frame.unit;
@@ -1648,8 +1725,8 @@ namespace ClaFi::PathArt
             const bool inView = onScreen > -margin * unit && onScreen < width + margin * unit;
             if (!inView && !(flies && sinceHareClose > 0.0f && sinceHareClose < k_flightSeconds))
                 continue;
-            drawRoadside(frame, chase, roadside, nearEdge ? Verge::Near : Verge::Far, onScreen,
-                groundY, RoadsideMotion{
+            drawRoadside(frame, theme.chase, roadside, nearEdge ? Verge::Near : Verge::Far,
+                onScreen, groundY, petalOf(theme, index), RoadsideMotion{
                     .gust = wakeGust(0.0f, runningBy(moments.hare), runningBy(moments.wolf)),
                     .sinceHareClose = sinceHareClose,
                     .wolfTime = moments.wolf
@@ -2386,6 +2463,12 @@ namespace ClaFi::PathArt
                 -0.5f);
         }
 
+        Color hazed(const SceneTheme& theme, const Color clear, const float parallax)
+        {
+            const float distance = 1.0f / parallax - 1.0f;
+            return colorBetween(clear, theme.skyBottom, distance / (distance + k_halfHaze));
+        }
+
         float wakeGust(const float x, const float hareX, const float wolfX)
         {
             const auto wake = [&](float runnerX, float strength) {
@@ -2395,8 +2478,15 @@ namespace ClaFi::PathArt
             return wake(hareX, 0.35f) + wake(wolfX, 0.5f);
         }
 
+        Color petalOf(const SceneTheme& theme, const std::int64_t index)
+        {
+            const Color petals[] = { theme.petal1, theme.petal2, theme.petal3 };
+            return petals[(index % 3 + 3) % 3];
+        }
+
         void drawRoadside(const SceneFrame& frame, const ChaseTheme& chase, const Roadside roadside,
-            const Verge verge, const float x, const float groundY, const RoadsideMotion& motion)
+            const Verge verge, const float x, const float groundY, const Color petal,
+            const RoadsideMotion& motion)
         {
             const bool nearVerge = verge == Verge::Near;
             const float size = (nearVerge ? k_nearVergeSize : 1.0f) * frame.unit;
@@ -2428,7 +2518,7 @@ namespace ClaFi::PathArt
                     drawBoulder(onVerge, chase, hopAt(motion));
                     break;
                 case Roadside::Daisy:
-                    drawDaisy(onVerge, chase, motion);
+                    drawDaisy(onVerge, chase, petal, motion);
                     break;
                 case Roadside::Reeds:
                 {
@@ -2462,8 +2552,8 @@ namespace ClaFi::PathArt
                         motion.sinceHareClose);
                     break;
                 case Roadside::Butterfly:
-                    drawButterfly(onVerge.within(Matrix3x2::Scale(1.3f)), chase, motion.seconds,
-                        motion.sinceHareClose);
+                    drawButterfly(onVerge.within(Matrix3x2::Scale(1.3f)), chase, petal,
+                        motion.seconds, motion.sinceHareClose);
                     break;
                 case Roadside::Frog:
                     drawFrog(onVerge.within(Matrix3x2::Scale(1.2f)), chase,
@@ -2553,14 +2643,14 @@ namespace ClaFi::PathArt
                     const float bladeX = static_cast<float>(blade) * 3.0f;
                     const float bladeHeight = 7.0f + 2.0f * static_cast<float>(1 - std::abs(blade));
                     drawSegment(ground, { tuftX, 0.5f }, { tuftX + bladeX, -bladeHeight },
-                        SolidColor{ chase.tuft }, 1.6f);
+                        SolidColor{ chase.grass }, 1.6f);
                 }
             }
         }
 
         // Three times the size of the daisies in the grass, nodding in the gust. The wolf's wake
         // blows five petals off, which flutter down after him and lie where they land.
-        void drawDaisy(const SceneFrame& onVerge, const ChaseTheme& chase,
+        void drawDaisy(const SceneFrame& onVerge, const ChaseTheme& chase, const Color petalColor,
             const RoadsideMotion& motion)
         {
             constexpr std::array<int, 5> k_blownOff{ 0, 3, 5, 8, 10 };
@@ -2575,13 +2665,13 @@ namespace ClaFi::PathArt
             PixelPath stem;
             stem.moveTo(0.0f, 0.5f);
             stem.quadTo({ 0.0f, -22.0f }, head);
-            strokeShape(onVerge, stem, SolidColor{ chase.flowerStem }, 1.8f);
+            strokeShape(onVerge, stem, SolidColor{ chase.grass }, 1.8f);
             fillOval(onVerge, { -5.0f, -12.0f }, 6.0f, 2.2f, SolidColor{ chase.daisyLeaf }, 0.5f);
             fillOval(onVerge, { 5.0f + 6.0f * nod, -19.0f }, 6.0f, 2.2f,
                 SolidColor{ chase.daisyLeaf }, nod - 0.5f);
             const SceneFrame bloom = onVerge.within(Matrix3x2::Translation(head)
                 * Matrix3x2::Rotation(nod));
-            const SolidColor petalColor{ chase.petal };
+            const SolidColor petalFill{ petalColor };
             const FloatPoint headBlown = {
                 42.0f * std::sin(k_nodBlown),
                 -42.0f * std::cos(k_nodBlown)
@@ -2595,7 +2685,7 @@ namespace ClaFi::PathArt
                 const float flying = motion.wolfTime - (k_blownAt + 0.035f * order);
                 if (blown == k_blownOff.end() || flying < 0.0f)
                 {
-                    fillOval(bloom, out * 6.5f, 4.2f, 1.9f, petalColor, angle);
+                    fillOval(bloom, out * 6.5f, 4.2f, 1.9f, petalFill, angle);
                     continue;
                 }
                 // carried after the wolf and fluttering down, it lies flat once it reaches the
@@ -2613,7 +2703,7 @@ namespace ClaFi::PathArt
                 const float spin = angle + k_nodBlown + 4.0f * seconds;
                 const float flutter = landed ? 0.55f : std::abs(std::cos(k_2Pi * 1.5f * seconds
                     + order));
-                fillOval(onVerge, at, 4.2f, 1.9f * std::max(0.3f, flutter), petalColor,
+                fillOval(onVerge, at, 4.2f, 1.9f * std::max(0.3f, flutter), petalFill,
                     landed ? 0.15f * order - 0.3f : spin);
             }
             fillDisc(bloom, {}, 3.8f, SolidColor{ chase.flowerHeart });
@@ -2873,20 +2963,20 @@ namespace ClaFi::PathArt
             }
             drawCrowBody(onVerge.within(Matrix3x2::Translation(middle)
                 * Matrix3x2::Scale(-k_size, k_size) * Matrix3x2::Rotation(turn)), chase,
-                std::sin(k_2Pi * 7.0f * flying + 0.5f * std::numbers::pi_v<float>), false, sitting);
+                std::sin(k_2Pi * 7.0f * flying + 0.5f * std::numbers::pi_v<float>), 0.0f, sitting);
         }
 
         // Resting on a tuft, it opens and closes its wings; taking fright, it flutters up and
         // drifts off ahead of them.
-        void drawButterfly(const SceneFrame& onVerge, const ChaseTheme& chase, const float seconds,
-            const float sinceHareClose)
+        void drawButterfly(const SceneFrame& onVerge, const ChaseTheme& chase, const Color spots,
+            const float seconds, const float sinceHareClose)
         {
             for (int blade = -1; blade <= 1; ++blade)
             {
                 const float bladeX = static_cast<float>(blade);
                 drawSegment(onVerge, { 1.5f * bladeX, 0.5f },
                     { 3.5f * bladeX, -7.0f - 2.0f * (1.0f - std::abs(bladeX)) },
-                    SolidColor{ chase.tuft }, 1.4f);
+                    SolidColor{ chase.grass }, 1.4f);
             }
             const float flying = std::max(0.0f, sinceHareClose);
             const FloatPoint away = {
@@ -2919,7 +3009,7 @@ namespace ClaFi::PathArt
                     strokeShape(wings, *wing, edge, 0.7f);
                 }
                 fillOval(wings, { 8.0f, -12.3f }, 2.3f, 1.5f, edge, -0.4f);
-                fillDisc(wings, { 8.3f, -12.4f }, 0.6f, SolidColor{ chase.petal });
+                fillDisc(wings, { 8.3f, -12.4f }, 0.6f, SolidColor{ spots });
             }
             fillOval(body, { 0.0f, -5.5f }, 1.1f, 5.0f, edge);
             fillDisc(body, { 0.0f, -11.2f }, 1.3f, edge);
@@ -3204,10 +3294,18 @@ namespace ClaFi::PathArt
             return { apple.onCrown.x + apple.drift, apple.landing - k_appleMiddle * k_appleScale };
         }
 
+        float crowEyesWideAt(const float seconds)
+        {
+            if (seconds < k_crowEyesPop)
+                return (1.0f + k_crowEyesPopOver) * seconds / k_crowEyesPop;
+            const float settling = (seconds - k_crowEyesPop) / (k_crowEyesSettled - k_crowEyesPop);
+            return 1.0f + k_crowEyesPopOver * std::max(0.0f, 1.0f - settling);
+        }
+
         // A crow, side on and facing left, flapping, about the middle of its body; its wings beat
         // up over its back and down under its belly.
         void drawCrowBody(const SceneFrame& crow, const ChaseTheme& chase, const float flap,
-            const bool dazed, const bool folded)
+            const float eyesWide, const bool folded)
         {
             const auto drawWing = [&](float lean, const Color& color) {
                 const FloatPoint shoulder = { 0.0f, -4.0f };
@@ -3239,14 +3337,24 @@ namespace ClaFi::PathArt
             beak.lineTo(-18.0f, -1.0f);
             beak.close();
             fillShape(crow, beak, SolidColor{ chase.crowBeak });
-            if (dazed)
+            if (eyesWide > 0.0f)
             {
-                PixelPath crossed;
-                crossed.moveTo(-16.0f, -8.0f);
-                crossed.lineTo(-12.0f, -4.0f);
-                crossed.moveTo(-12.0f, -8.0f);
-                crossed.lineTo(-16.0f, -4.0f);
-                strokeShape(crow, crossed, SolidColor{ ChaseColors::EyeShine }, 1.2f);
+                // Both eyes, each a white disc on a rim of ink with a pinpoint pupil, bulging a
+                // little past the head; the far one comes out from behind it as they widen.
+                const SolidColor white{ ChaseColors::EyeShine };
+                const SolidColor ink{ ChaseColors::Ink };
+                const auto drawEye = [&](FloatPoint middle, float radius, FloatPoint pupilOffset) {
+                    fillDisc(crow, middle, radius + 0.6f, ink);
+                    fillDisc(crow, middle, radius, white);
+                    fillDisc(crow, middle + pupilOffset, 1.1f - 0.25f * eyesWide, ink);
+                };
+                if (eyesWide > 0.25f)
+                {
+                    drawEye({ -9.6f + 0.6f * eyesWide, -6.2f - 0.8f * eyesWide },
+                        2.0f + 1.5f * eyesWide, { -0.3f * eyesWide, 0.4f * eyesWide });
+                }
+                drawEye({ -14.0f - 0.7f * eyesWide, -6.0f - 0.7f * eyesWide },
+                    2.0f + 2.5f * eyesWide, { -0.6f * eyesWide, 0.3f * eyesWide });
             }
             else
             {
@@ -3281,8 +3389,9 @@ namespace ClaFi::PathArt
 
         // Flying, it comes in from ahead at the height of his head, 160 units a second over the
         // ground. On its stump it sits pecking, looks up as the two come and flaps up into his
-        // leap. Meeting his face, it tumbles back with feathers flying, then flaps off up and away,
-        // shaken; the feathers drift down round him and lie where they land.
+        // leap. Meeting his face, it tumbles back with feathers flying and its eyes popped wide,
+        // then flaps off up and away, shaken, its eyes settling as the shaking ends; the feathers
+        // drift down round him and lie where they land.
         void drawCrow(const SceneFrame& frame, const ChaseTheme& chase, const float x,
             const float groundY, const float footY, const float sinceHit, const CrowStart crowStart)
         {
@@ -3298,7 +3407,7 @@ namespace ClaFi::PathArt
             float turn = 0.0f;
             float facing = 1.0f;
             float flap = std::sin(k_2Pi * wingBeats * seconds);
-            bool dazed = false;
+            float eyesWide = 0.0f;
             bool folded = false;
             // its legs, out while it stands and as it takes off, and the stump top under its feet
             float legsOut = 0.0f;
@@ -3349,7 +3458,7 @@ namespace ClaFi::PathArt
                 middle += FloatPoint{ 50.0f * tumbling, 30.0f * tumbling * tumbling } * unit;
                 turn = -1.6f * k_2Pi * (1.0f - (1.0f - tumbling) * (1.0f - tumbling));
                 flap = std::sin(k_2Pi * 3.0f * seconds);
-                dazed = true;
+                eyesWide = crowEyesWideAt(seconds);
             }
             else
             {
@@ -3360,7 +3469,7 @@ namespace ClaFi::PathArt
                 turn = 0.25f * std::sin(k_2Pi * 1.5f * away) - 0.2f;
                 facing = -1.0f;
                 flap = std::sin(k_2Pi * 7.0f * away);
-                dazed = away < 1.0f;
+                eyesWide = 1.0f - smoothStep(k_crowShaken - 0.15f, k_crowShaken + 0.15f, away);
             }
             if (legsOut > 0.0f)
             {
@@ -3383,7 +3492,7 @@ namespace ClaFi::PathArt
             {
                 drawCrowBody(frame.within(Matrix3x2::Translation(middle)
                     * Matrix3x2::Rotation(turn) * Matrix3x2::Scale(facing * unit, unit)), chase,
-                    flap, dazed, folded);
+                    flap, eyesWide, folded);
             }
             if (seconds <= 0.0f)
                 return;

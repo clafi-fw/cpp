@@ -20,10 +20,10 @@ namespace ClaFi::PathArt
         scenes.push_back(std::make_unique<PuppeteerScene>());
         scenes.push_back(std::make_unique<GhostScene>());
         scenes.push_back(std::make_unique<ClockworkScene>());
-        scenes.push_back(std::make_unique<OrreryScene>());
+        scenes.push_back(std::make_unique<ChaseScene>());
         scenes.push_back(std::make_unique<CometScene>());
         scenes.push_back(std::make_unique<EarthScene>());
-        scenes.push_back(std::make_unique<ChaseScene>());
+        scenes.push_back(std::make_unique<OrreryScene>());
         return scenes;
     }
 
@@ -31,8 +31,9 @@ namespace ClaFi::PathArt
     Dom::Dt::Section createSceneViewsSchema()
     {
         Dom::Dt::Section views{};
-        views.children.push_back(std::make_unique<Dom::Dt::Section>(OrreryScene::viewSchema()));
+        views.children.push_back(std::make_unique<Dom::Dt::Section>(ChaseScene::viewSchema()));
         views.children.push_back(std::make_unique<Dom::Dt::Section>(EarthScene::viewSchema()));
+        views.children.push_back(std::make_unique<Dom::Dt::Section>(OrreryScene::viewSchema()));
         return views;
     }
 }

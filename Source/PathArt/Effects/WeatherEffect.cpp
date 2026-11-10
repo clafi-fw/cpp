@@ -26,8 +26,8 @@ namespace ClaFi::PathArt
         drawFallingLeaves(frame, cycleTime, FallingLeaves{
             .opacity = StateFactors::compose(weather.leaves, weather.petals) * weather.opacity,
             .petals = weather.petals,
-            .color1 = weather.color1,
-            .color2 = weather.color2
+            .color1 = colorBetween(weather.color1, weather.petal1, weather.petals),
+            .color2 = colorBetween(weather.color2, weather.petal2, weather.petals)
         });
         drawBlowingDust(frame, cycleTime, BlowingDust{
             .opacity = weather.dust * weather.opacity,
@@ -44,7 +44,9 @@ namespace ClaFi::PathArt
             .petals = theme.hasPetals,
             .dust = theme.hasDust,
             .color1 = theme.effectColor1,
-            .color2 = theme.effectColor2
+            .color2 = theme.effectColor2,
+            .petal1 = theme.petal1,
+            .petal2 = theme.petal2
         };
     }
 

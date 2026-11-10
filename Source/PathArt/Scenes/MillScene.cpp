@@ -34,6 +34,8 @@ namespace ClaFi::PathArt
     namespace
     {
         [[nodiscard]] MillColors millColorsOf(const SceneTheme&);
+        // The front hill's colour for one of the back hill's: darker, and no more colourful.
+        [[nodiscard]] Color frontHillColor(Color backHillColor);
     }
 
     void MillScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
@@ -82,11 +84,7 @@ namespace ClaFi::PathArt
             (0.8f + (std::sin(a2) + 1.0f) * 0.2f) * m_objectsScale);
 
         // The cow's horns stand against the sky at 0.58 of its height, its legs against the front
-        // hill, which drawHills darkens by a tenth, at 0.38 of the hill's gradient.
-        Hsl hillTop{ theme().hillTop };
-        hillTop.scaleLuminosity(0.9f);
-        Hsl hillBottom{ theme().hillBottom };
-        hillBottom.scaleLuminosity(0.9f);
+        // hill at 0.38 of the hill's gradient.
         drawCow(frame, CowPose{
             .at = { w * 0.28f, h * 0.61f },
             .size = 0.36f * m_objectsScale,
@@ -98,7 +96,8 @@ namespace ClaFi::PathArt
             .detail = theme().cowDetail,
             .shadow = theme().shadow,
             .skyBehind = colorBetween(theme().skyTop, theme().skyBottom, 0.58f),
-            .groundBehind = colorBetween(hillTop.toColor(), hillBottom.toColor(), 0.38f)
+            .groundBehind = colorBetween(frontHillColor(theme().hillTop),
+                frontHillColor(theme().hillBottom), 0.38f)
         });
 
         drawWaterWheel(frame, WaterWheelPose{
@@ -204,7 +203,9 @@ namespace ClaFi::PathArt
         Fireflies fireflies = firefliesOf(theme());
         fireflies.area = { 0.0f, h * 0.4f, w, h * 0.8f };
         drawFireflies(frame, time.cycleTime, fireflies);
-        drawWeather(frame, time.cycleTime, weatherOf(theme()));
+        Weather weather = weatherOf(theme());
+        weather.dust *= 0.5f; // faded, as it blows across the whole picture
+        drawWeather(frame, time.cycleTime, weather);
 
         // river fog
         canvas.fillRectangle(bounds, PointGlow{
@@ -499,13 +500,9 @@ namespace ClaFi::PathArt
         path.lineTo(0.0f, h);
         path.close();
 
-        Hsl topHsl{ theme().hillTop };
-        topHsl.scaleLuminosity(0.9f);
-        Hsl botHsl{ theme().hillBottom };
-        botHsl.scaleLuminosity(0.9f);
         p.drawPath(path, {
-            PathDrawLayer::LinearGradient({ 0.0f, h * 0.4f }, { 0.0f, h }, topHsl.toColor(),
-                botHsl.toColor())
+            PathDrawLayer::LinearGradient({ 0.0f, h * 0.4f }, { 0.0f, h },
+                frontHillColor(theme().hillTop), frontHillColor(theme().hillBottom))
         }, &tx);
     }
 
@@ -523,6 +520,11 @@ namespace ClaFi::PathArt
                 .wingFabric = theme.millWingFabric,
                 .wingFabricStroke = theme.millWingFabricStroke
             };
+        }
+
+        Color frontHillColor(const Color backHillColor)
+        {
+            return colorBetween(backHillColor, Color{ 0xFF000000 }, 0.05f);
         }
     }
 

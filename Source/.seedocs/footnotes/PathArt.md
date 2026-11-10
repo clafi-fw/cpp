@@ -107,7 +107,7 @@ none ignores the call.
 **One pick for every scene that offers themes.** The MillScene showcase shows the theme picker on
 the page of options of each of them, every picker showing the one pick, and a pick or a hover
 crossfades them all. It keeps the pick under SceneTheme, by the theme's name. With no pick kept,
-they open in the first theme of the list, Calm Night.
+they open in the first theme of the list, Fresh Spring.
 
 **Between the timer's ticks**, the showcase moves the shown scene's crossfade on at every move of
 the pointer over it, through animationTick().
@@ -119,31 +119,69 @@ The fields up to effectColor2 are the mill's, and the sky, the sun, the clouds, 
 and hillBottom - and the trees serve ChaseScene as well; ChaseTheme holds what only the Chase draws.
 Every theme fills every field.
 
+**petal1 to petal3 are the flowers' petals**, shared by every flower the Chase draws - each wears
+one, by turns - and by the falling petals, which wear the first two in place of the effect colours.
+
 **Figures and props stand apart from what is behind them by colour, not only by brightness.** In
 OKLab their colour difference from the background is at least 0.15 for the runners, the cow and the
 mill, and 0.10 for every prop, where the theme leaves room for it - about as far apart as the
-daylight scenes already draw them.
+daylight scenes already draw them. Golden Hour's and Winter Frost's cows keep their white.
 
 **A crossfade blends every colour field one by one** - see ThemeBlend. They stand in a row from
 skyTop to the end of `chase`, and colorsNum() counts them.
 
 ## ChaseTheme
 
-The Chase's own colours in a theme: the mountains, the far hills with their trees and fireflies, the
-shades of the tree a branch run ends at, the trail and the grass, the four runners' coats, and every
-prop.
+The Chase's own colours in a theme: the mountains' clear colours, which the scene hazes as it does
+the far hills, their trees and fireflies - see ChaseScene hazed - the shades of the tree a branch
+run ends at, the trail and the grass, the four runners' coats, and every prop.
 
 **Each object's colours are its daylight ones in the theme's light.** They are dimmed and tinted as
 the theme's sky is to daylight's, washed out as far as the theme has no colour, and then all moved
 lighter or darker together - only as far as its contrast needs, keeping to its daylight character.
 
-- A wolf's head and ears stand against the mountains; a hare stays below the far hills' top.
+- A wolf's head and ears stand against the mountains; a hare stays below the far hills' top. Both
+  are measured as they are drawn, hazed.
+- A mountain's clear colour is a rock in the theme's light, in the hue its mountains had before the
+  haze.
 - The other couple's black wolf stays darker than ours.
+- In Winter Frost the couples trade hares: ours is grey and theirs brown, so its brownHare holds
+  the grey coat and its greyHare the brown.
 - A coat's tongue, mouth, teeth, tail, inner ears and nose rise with the fur where it is lifted and
   never darken with it, so a white tail stays white by day.
 - Yellow things - the banana peel, the rubber duck, the ball's yellow, the flowers' hearts - keep
-  their colour at night and stay light, as a dark yellow reads as olive. The ball and the apple's
-  flesh stay lighter at night too.
+  their colour at night and stay light, as a dark yellow reads as olive. The ball, the flowers'
+  petals and the whole apple stay lighter at night too.
+- Every theme's petals come in three colours. A white petal is joined by a blushed pink and a
+  lilac, or by cream or pale blue where one of those is lost on the meadow; a coloured petal by its
+  hue turned a little either way. Some themes choose their own: Twilight's run from a light rose to
+  lavender, Magic Forest's lighter still, Cherry Blossom's are its falling petals' pinks, Lunar
+  Eclipse's dull purples, Cyberpunk Night's magenta, neon green and acid yellow, and Midnight's
+  are darker. On snow - Winter Frost, Winter Night and Arctic Dawn - every flower is white, the
+  butterfly white with an icy blue edge, and the trail an icy grey.
+- The toxic and neon themes and Underwater Realm give the toadstool caps and the apples toxic reds:
+  a lava red in Toxic Waste, a hot crimson in Cyberpunk Night and Underwater Realm, a neon red in
+  Neon City Night. Vintage Noir's apples are the one red in its grey, daylight's.
+- One green serves the flowers' stems, the tufts on the lawn and the foreground grass, whose every
+  third blade is a shade darker. Midnight's, Toxic Waste's and Neon City Night's are lighter, with
+  their daisy leaves, to show against their dark meadows; Toxic Waste's is a dim toxic green, and
+  Neon City Night's the green of its trees, muted. Cherry Blossom's plants are a dark sage, on a
+  grey-green meadow by a rose-grey trail. Vintage Noir's plants are grey, as the rest of it is.
+
+**The themes not of this world dress the plain things in their own colours** instead of daylight's:
+the stump, the signpost, the crow, the butterfly, the bird, the frog, the snail, the boulder, the
+reeds, the boot, the hedgehog, the rake and the leaves. Each keeps the steps of light and shade it
+has by day.
+
+- Cyberpunk Night: violet chrome, with magenta, cyan, neon green and acid yellow.
+- Neon City Night: asphalt, with cyan, hot pink, magenta and yellow. Its signpost is a neon sign,
+  dark with a bright outline and writing, and its rake's handle is light.
+- Toxic Waste: rotten olive and slime, with lime, a hazard yellow sign and a hazmat yellow boot.
+- Underwater Realm: driftwood and deep blue, with coral, gold and cyan; the hedgehog is a sea
+  urchin.
+- Magic Forest: plum wood and amethyst, with pink, lilac and fairy green.
+- Midnight Fantasy: moonlit blue-grey and indigo, with pale lilac, mint and pale gold.
+- Steampunk Adventure: aged oak, iron and leather, with brass, copper and verdigris.
 
 ## ThemeBlend
 
@@ -741,9 +779,10 @@ hops back to a fallen apple and eats it at him, teeth bared.
 - the tree stands further back than in the other cycles, its branch reaching on from the far side of
   the trunk; he leaps too high, comes down across the branch, slips back down it and drops onto his
   back at the trunk's foot
-- a crow meets his face where the tree would stand, tumbles back and flies off shaken, its feathers
-  drifting down round him; one time it flies at him, the next it sits on a stump by the trail until
-  the hare's arrival frightens it up into his leap
+- a crow meets his face where the tree would stand, tumbles back with its eyes popped wide and flies
+  off shaken, its eyes settling as the shaking ends and its feathers drifting down round him; one
+  time it flies at him, the next it sits on a stump by the trail until the hare's arrival frightens
+  it up into his leap
 - another couple, a black wolf and a grey hare, runs the other way, doing as the two do; the hares
   cross just before the wolves' leaps end, one bounding over the other - ours one time, theirs the
   next - and the wolves meet face to face in the air and drop side by side onto their backs, each
@@ -791,6 +830,11 @@ They stand at a spacing of their own along the trail rather than one to a run, s
 into step with the far edge or with the runs, and one can come by at any moment, while the camera
 stands too - see ChaseScene drawVergeRow. The near frog hops toward the viewer.
 
+**The story runs on from one run of the scene to the next** - see Scene storeView. The scene keeps
+the cycle after the last one it drew, and the next run starts on it, with the host's cycles counted
+on from there, so each run opens where the last one stopped instead of on the first cycle. The
+section holds NextCycle.
+
 **The landscape is layers at their own speeds** - clouds, mountains, hills, the ground and the
 grass in front, each a share of the camera's speed. Each layer is tiled with a period that the
 cycle's travel divides - see ChaseScene periodNear - so it ends the cycle where it began.
@@ -800,10 +844,15 @@ or the moon, the clouds, the meadow and the tree a branch run ends at are the th
 colours; the rest is the theme's ChaseTheme.
 
 - The theme's fireflies and its rain, snow, falling leaves or petals and dust keep to the far hills'
-  layer: behind the trail and the runners, smaller, moving with the hills. The fireflies are faded
-  toward the mountains as the hills are. The weather falls against the sky as well, so it is drawn
-  at 0.6 of its strength instead.
+  layer: behind the trail and the runners, smaller, moving with the hills. The fireflies are hazed
+  as the hills are. The weather falls against the sky as well, so it is drawn at 0.6 of its strength
+  instead.
+- A rainy theme's lightning strikes behind the mountains, three times each time the weather comes
+  round, and its flash lights the sky above the ground line.
 - The theme's stars come out over the sky. Stars, fireflies and weather come round twice a cycle.
+- The little flowers in the lawn take half the lawn's colour, so they lie in it rather than on it.
+- The foreground grass grows out of the lawn: a blade's root wears the lawn's colour at the bottom
+  of the frame, and its tip the theme's grass.
 - The icon keeps the wolf and the hare in their daylight coats.
 
 ## ChaseScene drawVergeRow
@@ -830,6 +879,20 @@ that one running by at full speed: the bend in the wind of the hare's passing an
 after her, then the wind of the wolf's passing and the hops, turns, petals and fluff that follow
 him. A place the wolf reaches long after the hare - while he lies dazed - keeps his part until he
 comes.
+
+## ChaseScene hazed
+
+**Distance is haze.** A layer's clear colours are taken toward skyBottom, the sky at the horizon,
+as far as its distance goes. The distance is read off the layer's share of the camera's speed: a
+layer moving at a third of it stands three times as far as the trail. The haze is the distance
+beyond the trail over that distance plus k_halfHaze, so a layer 2.46 times the trail's distance
+beyond it is half skyBottom: the far hills, at 0.35 of the camera's speed, take 0.43 of it, the
+mountains, at 0.12, take 0.75.
+
+- The far hills are the meadow's own hillTop and hillBottom, their trees the tree's own colours and
+  the fireflies over them the theme's effect colours, all hazed alike. The mountains are
+  ChaseTheme's mountainTop and mountainFoot.
+- The weather keeps to the hills' layer but is not hazed - see the ChaseScene section.
 
 ## ChaseScene periodNear
 
