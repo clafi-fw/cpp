@@ -134,6 +134,7 @@ namespace ClaFi
                 },
                 .metrics = {
                     .radius = 8.0f,
+                    .padding = Padding{ 0.0f, 0.0f },
                     .shadowBlur = 24.0f,
                     .shadowOffset = FloatPoint{ 0.0f, 6.0f },
                     .shadowOpacity = 0.4f

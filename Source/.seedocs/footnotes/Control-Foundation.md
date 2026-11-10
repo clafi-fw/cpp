@@ -801,10 +801,10 @@ at one pace, and no ring shows between them.
 **Scaled to the form, and coloured as the rule set colours a window's shadow** at the focus it is
 given.
 
-The window's own shadow uses its root's rule set and its window's focus. A control over the
-content passes its own rule set and the factor it paints at - the notices layer passes Tooltip, so
-a card casts a tooltip window's shadow. A mockup of a window passes the factor it states for that
-window.
+The window's own shadow uses its root's rule set and its window's focus, and is cast around the
+border drawn around the root. A control over the content passes its own rule set and the factor it
+paints at - the notices layer passes Tooltip, so a card casts a tooltip window's shadow. A mockup
+of a window passes the factor it states for that window.
 
 ## FormBase::shadowPainter
 

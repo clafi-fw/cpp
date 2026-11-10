@@ -75,8 +75,8 @@ namespace ClaFi::Controls
             // themselves, the way a message box's text and answers do.
             ClickTarget::Self,
             MouseFocus::Keep,
-            // The window keeps of itself exactly the border it draws, and the bars meet.
-            Padding{ strokeWidth(owner.styleMetrics(UiElement::Menu).border) },
+            // The bars run up to the border, which the window draws around this root, and meet.
+            Padding{ 0.0f },
             Spacing{ 0.0f }
         },
         m_original{ original },

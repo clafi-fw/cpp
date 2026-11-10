@@ -102,16 +102,15 @@ namespace Themes_App
         changed(what);
     }
 
-    // **A size that follows from another has no row**: a primary window's padding is its border,
-    // and an indicator and a scroll button are square, each sized by one number. A shadow is a
-    // window's, so its rows stand where the chain reaches Any Window.
+    // **A size that follows from another has no row**: an indicator and a scroll button are
+    // square, each sized by one number. A shadow is a window's, so its rows stand where the chain
+    // reaches Any Window.
     void MetricsGrid::addRows()
     {
         addBorderRow();
         addRow(m_grid, SizeRow::Band);
         addRow(m_grid, SizeRow::Radius);
-        if (!paddingFollowsBorder())
-            addRow(m_grid, SizeRow::Padding);
+        addRow(m_grid, SizeRow::Padding);
         addRow(m_grid, SizeRow::Spacing);
         addRow(m_grid, SizeRow::MinSize);
         if (!hasSingleSize())
@@ -619,11 +618,6 @@ namespace Themes_App
         return isStyle(m_style, UiElement::SelectionIndicator)
             || isStyle(m_style, UiElement::HoverIndicator)
             || isStyle(m_style, UiElement::ScrollButton);
-    }
-
-    bool MetricsGrid::paddingFollowsBorder() const
-    {
-        return isStyle(m_style, UiElement::Dialog);
     }
 
     bool MetricsGrid::isPair(const SizeRow size) const

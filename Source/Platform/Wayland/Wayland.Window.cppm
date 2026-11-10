@@ -769,6 +769,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         result.radius = m_buffers.hasAlphaChannel() ? m_frameDesign.radius : 0.0f;
         if (m_maximized || m_fullscreen || m_tiled || isLayerRole())
             result.radius = 0.0f;
+        // The border stands in the margins, so a window that has none shows none.
+        result.border = margins.empty() ? 0 : m_frameDesign.border;
         return result;
     }
 

@@ -500,6 +500,10 @@ namespace ClaFi
 
         // The corners the window wears: the root's own, or none where the platform squares them.
         event.metrics.radius = m_frame.radius / factor;
+
+        // The border is the window's, drawn around the root rather than inside it - see
+        // paintBorder.
+        event.metrics.border = Thickness::None;
     }
 
     FormBase* FormBase::popupTargetForm()
@@ -1853,17 +1857,27 @@ namespace ClaFi
 
         WindowFrame result{};
         result.radius = scaler.scaleF(metrics.radius);
+        result.border = borderWidth();
 
-        // The margins are the painter's reach, read after stateFrame has handed it the design.
+        // **The margins hold the border, and the shadow past it** - the painter's reach, read after
+        // stateFrame has handed it the design.
+        const int border = result.border;
+        result.margins = { border, border, border, border };
         if (shadow.opacity > 0.0f && shadow.blur > 0.0f)
         {
             const Graphics::ShadowPainter::Reach reach = m_shadowPainter.reach();
-            result.margins.left = static_cast<int>(std::ceil(reach.left));
-            result.margins.top = static_cast<int>(std::ceil(reach.top));
-            result.margins.right = static_cast<int>(std::ceil(reach.right));
-            result.margins.bottom = static_cast<int>(std::ceil(reach.bottom));
+            result.margins.left += static_cast<int>(std::ceil(reach.left));
+            result.margins.top += static_cast<int>(std::ceil(reach.top));
+            result.margins.right += static_cast<int>(std::ceil(reach.right));
+            result.margins.bottom += static_cast<int>(std::ceil(reach.bottom));
         }
         return result;
+    }
+
+    // Whole pixels, as a stroke is drawn.
+    int FormBase::borderWidth() const
+    {
+        return static_cast<int>(scaler().scaledStrokeWidth(m_content.metrics().border));
     }
 
     // **Coloured as the rule set colours a window's shadow**, at the focus it is given: the root's
@@ -1906,15 +1920,21 @@ namespace ClaFi
         return *m_shadowPainters.front();
     }
 
+    // **Cast around the border**, whose corners are concentric with the root's - the border of a
+    // square root is square.
     Graphics::ShadowPainter::Design FormBase::shadowDesign() const
     {
-        return shadowDesign(m_content.style(), m_content.metrics().shadow,
-            m_content.metrics().radius, windowFocusedFactor());
+        const float radius = m_content.metrics().radius;
+        const float borderRadius = radius > 0.0f
+            ? radius + static_cast<float>(borderWidth()) / scaler().factor()
+            : 0.0f;
+        return shadowDesign(m_content.style(), m_content.metrics().shadow, borderRadius,
+            windowFocusedFactor());
     }
 
     // **Whether the frames start from nothing** follows the window's answer, and the answer can
-    // change with the design: a window is composited once it has a corner to round or a shadow to
-    // cast.
+    // change with the design: a window is composited once it has a corner to round, or a border or
+    // a shadow to draw around it.
     void FormBase::stateFrame()
     {
         m_shadowPainter.setDesign(shadowDesign());
@@ -1963,16 +1983,20 @@ namespace ClaFi
         return FloatRect::FromDimensions(frameOrigin(), m_content.scaledSize());
     }
 
+    FloatRect FormBase::borderRect() const
+    {
+        return rootRect().inflated(static_cast<float>(m_frame.border));
+    }
+
     // **A corner is painted twice.** A rect reaching into a corner square leaves the notch outside
     // the arc to whatever a child draws there - the root's own rect does, on any change of its
-    // state - while the main pass lays no shadow inside the root's rectangle. So each square the
-    // dirty rect touches is cleared, given its shadow back and painted again with
-    // the root's content under a clip shaped like that corner of the frame - a square with its
-    // outer corner rounded - so outside the arc the shadow alone stands, whatever a child draws
-    // there. A primary window's children stand right inside the border ring and reach into the
-    // squares; a popup's padding keeps its children inside the arc, and it pays the pass for the
-    // notch alone. The ring is drawn over the content and outside the clip, so its own edge is not
-    // cut by the clip's. The clip is that small on purpose: a path clip costs a mask the size of
+    // state - while the main pass lays no shadow inside the border's rectangle. So each square the
+    // dirty rect touches is cleared, given its shadow back and painted again: the root's content
+    // under a clip shaped like the root's corner - a square with its outer corner rounded - and
+    // the border over it, outside the clip. Outside the border's arc the shadow alone stands,
+    // whatever a child draws there. The squares stand at the border's corners, its arcs concentric
+    // with the root's. A popup's padding keeps its children inside the arc, and it pays the pass
+    // for the notch alone. The clip is that small on purpose: a path clip costs a mask the size of
     // its bounds, and a mask the size of the window would be paid on every resize.
     void FormBase::paintWindow(void* nativeContext, const IntRect& dirtyRect, Graphics::Bitmap*& outData)
     {
@@ -1981,9 +2005,10 @@ namespace ClaFi
             return;
 
         const float radius = m_frame.radius;
-        const FloatRect windowRect = rootRect();
-        const IntRect bounds = windowRect.roundedOut();
-        const int side = static_cast<int>(std::ceil(radius)) + 1;
+        const FloatRect root = rootRect();
+        const IntRect bounds = borderRect().roundedOut();
+        const float borderRadius = radius + static_cast<float>(m_frame.border);
+        const int side = static_cast<int>(std::ceil(borderRadius)) + 1;
         struct Corner
         {
             FloatPoint point;
@@ -1991,13 +2016,13 @@ namespace ClaFi
             IntRect square;
         };
         const std::array<Corner, 4> corners{ {
-            { windowRect.topLeft(), { 1.0f, 1.0f },
+            { root.topLeft(), { 1.0f, 1.0f },
                 { bounds.left, bounds.top, bounds.left + side, bounds.top + side } },
-            { windowRect.topRight(), { -1.0f, 1.0f },
+            { root.topRight(), { -1.0f, 1.0f },
                 { bounds.right - side, bounds.top, bounds.right, bounds.top + side } },
-            { windowRect.bottomRight(), { -1.0f, -1.0f },
+            { root.bottomRight(), { -1.0f, -1.0f },
                 { bounds.right - side, bounds.bottom - side, bounds.right, bounds.bottom } },
-            { windowRect.bottomLeft(), { 1.0f, -1.0f },
+            { root.bottomLeft(), { 1.0f, -1.0f },
                 { bounds.left, bounds.bottom - side, bounds.left + side, bounds.bottom } }
         } };
 
@@ -2048,23 +2073,24 @@ namespace ClaFi
         const FloatRect floatRect = rect.toFloat();
         paintShadow(floatRect, contentClip != nullptr);
         paintContent(floatRect, contentClip);
+        paintBorder();
         m_canvas.endPaint(nativeContext, rect, outData);
     }
 
-    // **The shadow lives in the margins and in the corner notches.** The children cover the root's
-    // rectangle, notches included, so a paint lays the shadow only on the parts of its rect outside
-    // the rectangle, a strip at a time. A paint inside the rectangle lays none, and that is every
-    // paint but a resize. The corner pass is the exception: it clears its square and paints only
-    // inside the arc, so it lays the shadow over the square first, and the notch outside the arc
-    // is shadow again. The shadow is cast around the whole silhouette, corners included, which is
-    // why it goes on before any clip.
+    // **The shadow lives in the margins and in the corner notches.** The children and the border
+    // cover the border's rectangle, notches included, so a paint lays the shadow only on the parts
+    // of its rect outside the rectangle, a strip at a time. A paint inside the rectangle lays none,
+    // and that is every paint but a resize. The corner pass is the exception: it clears its square
+    // and paints only inside the arc, so it lays the shadow over the square first, and the notch
+    // outside the arc is shadow again. The shadow is cast around the whole silhouette, corners
+    // included, which is why it goes on before any clip.
     void FormBase::paintShadow(const FloatRect& dirtyRect, bool cornerPass)
     {
         if (m_frame.margins.empty())
             return;
         // On whole pixels, where the painter places its tiles, so two parts meet on a pixel edge
         // rather than both painting the row a fractional edge falls in.
-        const FloatRect windowRect = rootRect().rounded().toFloat();
+        const FloatRect windowRect = borderRect().rounded().toFloat();
         // The painter skips the tiles the clip does not reach and reads the clip off the canvas,
         // whose own stack stands at the whole surface until a part is pushed.
         auto paintPart = [&](const FloatRect& part) {
@@ -2081,6 +2107,26 @@ namespace ClaFi
         }
         for (const FloatRect& part : partsOutside(dirtyRect, windowRect))
             paintPart(part);
+    }
+
+    // **The border stands around the root, in the margins**, so a window that has none - one
+    // filling the screen - shows no border. It is coloured as the root's rule set colours a
+    // window's stroke at its focus, and drawn over the shadow, which is cast around its outer edge.
+    void FormBase::paintBorder()
+    {
+        if (m_frame.border <= 0)
+            return;
+        const Color color = bakedColors().windowStroke(m_content.style(), windowFocusedFactor());
+        if (!color.alpha)
+            return;
+        const float width = static_cast<float>(m_frame.border);
+        // Concentric with the root's corners.
+        const float radius = m_frame.radius > 0.0f ? m_frame.radius + width : 0.0f;
+        const RoundedRectangleParts shape{
+            .bounds = borderRect(),
+            .radii = CornerRadii::Uniform(radius)
+        };
+        m_canvas.drawPartialRoundedRectangle(shape, color, width);
     }
 
     void FormBase::scaleFactorChanged(ScaleFactorChangeEvent& event)

@@ -48,6 +48,16 @@ namespace Themes_App
         });
     }
 
+    // **A window draws its border around its root**, and a mockup draws it inside its own bounds,
+    // so the content stands in by the border's width on top of the padding a root has.
+    void DialogMockup::adjustMetrics(AdjustMetricsEvent& event) const
+    {
+        Panel::adjustMetrics(event);
+        const float border = strokeWidth(event.metrics.border);
+        event.metrics.padding.x += border;
+        event.metrics.padding.y += border;
+    }
+
     void DialogMockup::adjustPaint(AdjustPaintEvent& event)
     {
         Panel::adjustPaint(event);

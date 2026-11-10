@@ -676,13 +676,13 @@ namespace ClaFi::Tools::WhatsClip
                 params,
                 HostProps{ // Root Panel
                     FormPlacement::Default,
-                    UiElement::ToolBar, // Root window color, visible behind the formats bar
+                    UiElement::Dialog, // Root window color, visible behind the formats bar
                     // In the primary window's frame.
-                    Radius{ params.styleMetrics(UiElement::Dialog).radius },
-                    params.styleMetrics(UiElement::Dialog).shadow,
-                    Border{ Thickness::Thin },
+                    // Radius{ params.styleMetrics(UiElement::Dialog).radius },
+                    // params.styleMetrics(UiElement::Dialog).shadow,
+                    // Border{ Thickness::Thin },
                     Padding{ 0.0f },
-                    Spacing{ 0.0f },
+                    // Spacing{ 0.0f },
                     MinSize{ 422.0f, 280.0f },
                     
                     // Width tuned to ensure the HexView on Bytes doesn't show horizontal scroll + a small slack for Linux

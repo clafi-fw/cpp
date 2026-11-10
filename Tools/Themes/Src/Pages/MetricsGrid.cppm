@@ -125,8 +125,6 @@ namespace Themes_App
         [[nodiscard]] bool castsShadow() const;
         // Whether the style is square and sized by one number - an indicator, a scroll button.
         [[nodiscard]] bool hasSingleSize() const;
-        // Whether the style's padding follows its border, as a primary window's does.
-        [[nodiscard]] bool paddingFollowsBorder() const;
         // Whether a row holds two numbers, across and down, rather than one.
         [[nodiscard]] bool isPair(SizeRow) const;
         [[nodiscard]] bool hasCell(SizeRow, const Grids::Column&) const;

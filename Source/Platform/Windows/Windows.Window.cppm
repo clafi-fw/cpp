@@ -145,8 +145,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // **The frame this window applies**, in real pixels: the design, less the corners when
         // snapped; when maximized, only how far the window hangs past the work area.
         [[nodiscard]] WindowFrame appliedFrame() const;
-        // **How far the window rect reaches past the geometry** on each side: k_resizeGrab scaled,
-        // held within the margins, only on a window the user sizes, and none while snapped.
+        // The window rect past the geometry: the border, or the resize grab on a user-sized window.
         [[nodiscard]] FrameMargins ring() const;
         // **Where the window rect's top left stands in the form's surface.** The surface is the
         // geometry and its margins; the window is the geometry and its ring; the two share the
@@ -185,7 +184,9 @@ namespace ClaFi::PlatformImplementation::Windows
     private:
         // The ring an ordinary window wears - what a normal rect reaches past its geometry by.
         [[nodiscard]] FrameMargins normalRing() const;
-        [[nodiscard]] FrameMargins ringWithin(const FrameMargins& margins) const;
+        // How far an ordinary window's rect reaches past its geometry, before the margins cap it.
+        [[nodiscard]] int ringReach() const;
+        [[nodiscard]] static FrameMargins ringWithin(const FrameMargins& margins, int reach);
     private:
         static HWND getFocusedWnd() { return s_focusedWnd; }
         static void setFocusedWnd(const HWND);
@@ -625,18 +626,21 @@ namespace ClaFi::PlatformImplementation::Windows
             return result;
         }
         result.margins = m_frameDesign.margins;
+        result.border = m_frameDesign.border;
         if (isArranged())
             return result;
         result.radius = m_frameDesign.radius;
         return result;
     }
 
-    // A snapped window is exactly the rect it was snapped to, and its shadow lies outside it.
+    // **A snapped window is exactly the rect it was snapped to**: its border stands inside that
+    // rect, and its shadow outside it.
     FrameMargins Window::ring() const
     {
+        const FrameMargins margins = appliedFrame().margins;
         if (isArranged())
-            return {};
-        return ringWithin(appliedFrame().margins);
+            return ringWithin(margins, m_frameDesign.border);
+        return ringWithin(margins, ringReach());
     }
 
     IntPoint Window::surfaceOrigin() const
@@ -668,19 +672,27 @@ namespace ClaFi::PlatformImplementation::Windows
 
     FrameMargins Window::normalRing() const
     {
-        return ringWithin(m_frameDesign.margins);
+        return ringWithin(m_frameDesign.margins, ringReach());
     }
 
-    FrameMargins Window::ringWithin(const FrameMargins& margins) const
+    // **The border is drawn by the window itself**, just past the geometry, so the window rect
+    // holds it whatever the role. A window the user sizes reaches as far as the grab its edges
+    // are taken by, where that is further.
+    int Window::ringReach() const
     {
         if (!userSized())
-            return {};
+            return m_frameDesign.border;
         const int grab = static_cast<int>(std::lround(k_resizeGrab * m_scaleFactor));
+        return std::max(m_frameDesign.border, grab);
+    }
+
+    FrameMargins Window::ringWithin(const FrameMargins& margins, const int reach)
+    {
         return {
-            std::min(margins.left, grab),
-            std::min(margins.top, grab),
-            std::min(margins.right, grab),
-            std::min(margins.bottom, grab)
+            std::min(margins.left, reach),
+            std::min(margins.top, reach),
+            std::min(margins.right, reach),
+            std::min(margins.bottom, reach)
         };
     }
 

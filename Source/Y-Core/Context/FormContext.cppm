@@ -170,12 +170,13 @@ namespace ClaFi
         [[nodiscard]] bool operator==(const FrameMargins&) const = default;
     };
 
-    // The frame a window wears, in real pixels: margins, overhang and corner radius. See Context
+    // The frame a window wears, in real pixels: margins, overhang, radius and border. See Context
     export struct WindowFrame
     {
         FrameMargins margins{}; // the room the surface keeps around the window
         FrameMargins overhang{}; // the part of the window the system places past the screen
         float radius{};
+        int border{}; // the width of the border drawn around the window, inside the margins
         [[nodiscard]] bool operator==(const WindowFrame&) const = default;
     };
 

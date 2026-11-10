@@ -294,7 +294,6 @@ AppContext takes them together.
 **These sizes follow from others**, whatever a style states, and are worked out once the chain
 has resolved:
 
-- a Dialog's padding is its border's width - the ring its content stands inside
 - a selection or hover indicator's height and a scroll button's are their widths, so both are
   square
 - an indicator's maximum is its minimum, so its size is fixed and a list item can skip measuring

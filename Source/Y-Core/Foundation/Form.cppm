@@ -467,6 +467,8 @@ namespace ClaFi
         // The frame this form asks for: the root's, at the scale the form is drawn at. Stated to
         // the window whenever either changes; the window answers through wnd_resize.
         [[nodiscard]] WindowFrame designFrame() const;
+        // The border the root states, in whole real pixels - the window draws it around the root.
+        [[nodiscard]] int borderWidth() const;
         // The shadow the root states, at the scale the form is drawn at.
         [[nodiscard]] Graphics::ShadowPainter::Design shadowDesign() const;
         void stateFrame();
@@ -477,15 +479,16 @@ namespace ClaFi
         // What the root is laid out into: the window, cut to what the content measured on a form
         // sized by its content - a grant past that is the platform's rounding.
         [[nodiscard]] ScaledSize contentExtent() const;
-        // Where the root stands in the surface, which is what the shadow is cast around.
-        [[nodiscard]] FloatRect rootRect() const;
+        [[nodiscard]] FloatRect rootRect() const; // where the root stands in the surface
+        // The root's rect grown by the border drawn around it, which the shadow is cast around.
+        [[nodiscard]] FloatRect borderRect() const;
         // Everything one wnd_paint paints: the dirty rect, and the corner squares it touches
         // painted again under a clip - see the definition.
         void paintWindow(void* nativeContext, const IntRect& dirtyRect, Graphics::Bitmap*&);
-        // One paint into a rect of the surface. Where a clip path is given, the root's content is
-        // painted under it; the shadow and the root's own ring are not.
+        // One paint into a rect of the surface, the root's content under the clip path if given.
         void paintPass(void* nativeContext, const IntRect& rect, const Graphics::PixelPath* contentClip, Graphics::Bitmap*&);
         void paintShadow(const FloatRect& dirtyRect, bool cornerPass);
+        void paintBorder();
         void scaleFactorChanged(ScaleFactorChangeEvent&);
         void themeSwitched(ThemeSwitchEvent&);
         void styleMetricsSwitched(StyleMetricsSwitchEvent&);

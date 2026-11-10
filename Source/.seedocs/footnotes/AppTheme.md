@@ -144,7 +144,7 @@ defaults.
 - AnyElement - every style stands over it, through one of the next two.
 - AnyWindow - what the window roots take: the frame, the shadow, and the secondary window's
   sizes. Anything wearing Dialog, Menu, Tooltip or Dropdown takes it wherever it stands, a mockup
-  inside a page included; Dialog restates the primary window's radius and shadow.
+  inside a page included; Dialog restates the primary window's radius, padding and shadow.
 - AnyNonWindow - what every other style takes. The focus ring lives here: its rules read Current
   and write the Stroke. So does the edit mode's band: its rule reads Edit and writes the Band.
 - AnyButton - what Button and ToolButton share: the Selected, Hot and Pressed surfaces, and a

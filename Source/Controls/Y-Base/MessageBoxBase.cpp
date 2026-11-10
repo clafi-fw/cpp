@@ -105,10 +105,8 @@ namespace ClaFi::Controls
             // themselves, and the frame around them is not a focus scope.
             ClickTarget::Self,
             MouseFocus::Keep,
-            // The window keeps of itself exactly the border it draws, which is what the bars run
-            // up to. A stroke lies inside the bounds it is drawn on, so a bar laid over that last
-            // point would paint the frame out.
-            Padding{ strokeWidth(owner.styleMetrics(UiElement::Menu).border) },
+            // The bars run up to the border, which the window draws around this root.
+            Padding{ 0.0f },
             // The bars meet. A gap between them would be the window's colour showing through in
             // two lines across a face that is meant to read as three bands of one thing.
             Spacing{ 0.0f }

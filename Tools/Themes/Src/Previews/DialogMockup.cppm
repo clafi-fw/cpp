@@ -39,6 +39,7 @@ namespace Themes_App
     public:
         [[nodiscard]] float windowFocusedFactor() const { return m_windowFocusedFactor; }
     protected:
+        void adjustMetrics(AdjustMetricsEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;
     private:
         static void drawMinimizeMark(DrawIconEvent&);

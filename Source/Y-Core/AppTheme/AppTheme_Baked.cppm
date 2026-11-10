@@ -116,6 +116,8 @@ namespace ClaFi
         [[nodiscard]] Hsl rootText() const;
         // Black at the anchor hue, where the shadow channel starts at a form root.
         [[nodiscard]] Hsl bareShadow() const;
+        // The colour a window root's border is drawn in, its alpha how far the stroke rules reach.
+        [[nodiscard]] Color windowStroke(OptionalUiElement root, float windowFocusedFactor) const;
         // The colour a window root casts its shadow in, before any opacity.
         [[nodiscard]] Hsl windowShadow(OptionalUiElement root, float windowFocusedFactor) const;
     public:
@@ -609,32 +611,54 @@ namespace ClaFi
         return { rootSurface().hue, 0.0f, 0.0f };
     }
 
-    // Read at the dark end whatever the lightness - a shadow is the absence of light on both sides.
-    // The root's rules as PaintEvent applies them - a root wearing no element casts the bare
-    // shadow. A window has no state but its focus, so a rule reading only other inputs does not
-    // reach it. The shadow starts in the hue of the window's stroke, itself resolved from the
-    // root's surface, so a shadow rule naming no hue follows the stroke.
-    Hsl BakedColors::windowShadow(OptionalUiElement root, float windowFocusedFactor) const
+    // **A window root's rules on one channel**, as PaintEvent applies them, answering how far they
+    // moved the colour. A window has no state but its focus, so a rule reading only other inputs
+    // does not reach it, and a root wearing no element is left as it is. A shadow is read at the
+    // dark end whatever the lightness - it is the absence of light on both sides.
+    static float applyWindowRules(const BakedColors& colors, const OptionalUiElement root,
+        const float windowFocusedFactor, const PaintChannel channel, Hsl& color)
     {
+        if (!root)
+            return 0.0f;
         RuleInputLevels levels = {};
         levels[static_cast<std::size_t>(RuleInput::WindowFocused)] = windowFocusedFactor;
-        auto applyRules = [&](const PaintChannel channel, Hsl& color){
-            if (!root)
-                return;
-            const Lightness readIn = channel == PaintChannel::Shadow ? k_darkLightness : lightness;
-            for (const BakedColorRule& rule : rules.of(*root).rules)
-            {
-                if (rule.output == channel)
-                    rule.effect.applyTo(color, rule.levelIn(levels), readIn);
-            }
-        };
+        const Lightness readIn = channel == PaintChannel::Shadow
+            ? k_darkLightness
+            : colors.lightness;
+        float changed = 0.0f;
+        for (const BakedColorRule& rule : colors.rules.of(*root).rules)
+        {
+            if (rule.output != channel)
+                continue;
+            const float ruleChanged = rule.effect.applyTo(color, rule.levelIn(levels), readIn);
+            changed = StateFactors::compose(changed, ruleChanged);
+        }
+        return changed;
+    }
 
+    // Seeded from the root's surface, as PaintEvent seeds a control's stroke from its own.
+    Color BakedColors::windowStroke(OptionalUiElement root, float windowFocusedFactor) const
+    {
         Hsl stroke = rootSurface();
-        applyRules(PaintChannel::Surface, stroke);
-        applyRules(PaintChannel::Stroke, stroke);
+        applyWindowRules(*this, root, windowFocusedFactor, PaintChannel::Surface, stroke);
+        const float strokeChanged =
+            applyWindowRules(*this, root, windowFocusedFactor, PaintChannel::Stroke, stroke);
+        Color result = stroke.toColor();
+        result.setOpacity(strokeChanged);
+        return result;
+    }
+
+    // **The shadow starts in the hue of the window's stroke**, itself resolved from the root's
+    // surface, so a shadow rule naming no hue follows the stroke. A root wearing no element casts
+    // the bare shadow.
+    Hsl BakedColors::windowShadow(OptionalUiElement root, float windowFocusedFactor) const
+    {
+        Hsl stroke = rootSurface();
+        applyWindowRules(*this, root, windowFocusedFactor, PaintChannel::Surface, stroke);
+        applyWindowRules(*this, root, windowFocusedFactor, PaintChannel::Stroke, stroke);
 
         Hsl result = { stroke.hue, 0.0f, 0.0f };
-        applyRules(PaintChannel::Shadow, result);
+        applyWindowRules(*this, root, windowFocusedFactor, PaintChannel::Shadow, result);
         return result;
     }
 

@@ -360,12 +360,6 @@ namespace ClaFi
         {
             switch (element)
             {
-                case UiElement::Dialog:
-                {
-                    const float windowBorder = strokeWidth(metrics.border);
-                    metrics.padding = { windowBorder, windowBorder };
-                    break;
-                }
                 case UiElement::SelectionIndicator:
                 case UiElement::HoverIndicator:
                     metrics.minSize.y = metrics.minSize.x;

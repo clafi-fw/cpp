@@ -842,10 +842,12 @@ namespace ClaFi
             if (reachesMargins)
                 logStep(std::format(L"{} content", static_cast<const void*>(handle())));
         }
-        const FrameMargins margins = appliedFrame().margins;
+        const WindowFrame frame = appliedFrame();
+        const FrameMargins& margins = frame.margins;
         if (!m_shadow || !reachesMargins || margins.empty())
             return;
 
+        // Cast around the border, which stands just past the geometry.
         const IntSize surface = surfaceSize(area.dimensions());
         const FloatRect geometry = {
             static_cast<float>(margins.left),
@@ -853,8 +855,9 @@ namespace ClaFi
             static_cast<float>(surface.x - margins.right),
             static_cast<float>(surface.y - margins.bottom)
         };
+        const FloatRect bordered = geometry.inflated(static_cast<float>(frame.border));
         const IntPoint position{ m_statedBounds.left - origin.x, m_statedBounds.top - origin.y };
-        m_shadow->fill(m_form.wnd_shadowPainter(), surface, geometry, area, position, m_alpha);
+        m_shadow->fill(m_form.wnd_shadowPainter(), surface, bordered, area, position, m_alpha);
         if constexpr (Diagnostic::Options::logWindowSteps())
             logStep(std::format(L"{} shadow", static_cast<const void*>(handle())));
     }

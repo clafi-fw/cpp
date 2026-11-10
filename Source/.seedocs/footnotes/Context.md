@@ -4,8 +4,9 @@ The words that do not fit above a declaration.
 
 ## FrameMargins
 
-WindowFrame holds two: the `margins` around the window, where the shadow is drawn and the pointer
-falls through, and the `overhang` the system places past the screen.
+WindowFrame holds two: the `margins` around the window, where the border and the shadow are drawn
+and the pointer falls through past the border, and the `overhang` the system places past the
+screen.
 
 ## PlacedWindow
 
@@ -111,11 +112,17 @@ cancels a carry this way whichever control holds the focus.
 **The form states the design through IPlatformWindow::setFrame**, and the platform answers with
 what it applies in IForm::wnd_resize.
 
-- Maximized, fullscreen or docked - no margins, no corners.
+- Maximized, fullscreen or docked - no margins, no corners, no border.
 - Snapped or tiled - margins, no corners.
 - A platform that cannot composite a frame - no corners.
 
-The border is the root's own, painted with its content.
+**The border is drawn around the root**, in the margins, which hold it and the shadow past it. The
+root's padding is its own and stands inside the border. A window with no margins shows no border:
+a maximized window's root meets the edges of the screen. The shadow is cast around the border's
+outer edge, whose corners are concentric with the root's.
+
+**Win32 keeps the border inside the window rect**, so a snapped window's border stands inside the
+rect it was snapped to. A tiled Wayland window's border stands just outside its tile.
 
 **The overhang is the platform's alone.** Win32 sizes a maximized window past the screen by its
 resize borders, and the overhang says by how much. The form takes it off, so FormBase::geometry is
