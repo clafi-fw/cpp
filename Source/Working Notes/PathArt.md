@@ -1692,6 +1692,21 @@ hearts take at least 0.8 of the light, keep their chroma whatever the light and 
 tint; the ball takes at least 0.65 and the apple's flesh 0.7. Vintage Noir has no colour to keep, so
 its yellows are light greys.
 
+Then (Oj, 16:04) "move other effects onto the hills layer". The rain, snow, leaves or petals and
+dust fell over the whole frame, in front of the runners. They are drawn now with the fireflies, in
+each tile of the far hills, at 0.6 size, falling from the top of the frame to the ground line, which
+the meadow then covers. Faded toward the mountains like the fireflies, the snow and rain vanished
+against the sky, so they keep the theme's effect colours. drawWeather takes a Weather - the five
+strengths and two colours - which weatherOf reads from a theme; the mill draws weatherOf(theme()) as
+before, the same to the byte.
+
+Then (Oj, 16:13) "fade too". Weather gained an opacity over its five strengths, 1 unless set; the
+Chase sets 0.45, the share of their colour the hills keep, so the weather fades against the sky and
+the hills alike. Its colour difference from what is behind it now runs from 0.05 (Arctic Dawn's
+snow) to 0.28 (Vintage Noir's dust); 0.6 was tried as well. The mill is the same to the byte.
+Then (Oj, 16:23) "go" on 0.6, which puts the difference at 0.067 (Arctic Dawn's snow) to 0.37
+(Vintage Noir's dust).
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

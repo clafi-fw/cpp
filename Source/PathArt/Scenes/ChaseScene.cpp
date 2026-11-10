@@ -1166,7 +1166,6 @@ namespace ClaFi::PathArt
             drawStars(theirWolfFrame, theirWolf, theirWolfTime);
         drawVergeRow(frame, theme.chase, time, groundY, closeness, true);
         drawFrontGrass(frame, theme.chase, travel);
-        drawWeather(frame, fractionalPart(time.cycleTime * k_lively), theme);
     }
 
     void ChaseScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
@@ -1332,16 +1331,28 @@ namespace ClaFi::PathArt
                     SolidColor{ theme.chase.farTreeCrownMiddle });
             }
         });
-        // **The fireflies keep to the far hills**, moving with them, smaller and faded.
+        // **The theme's fireflies and weather keep to the far hills' layer**, smaller and fainter
+        // for the distance, and move with the hills. The fireflies are faded toward the mountains
+        // as the hills are. The weather falls against the sky as well, so it is drawn fainter
+        // instead. It fills each tile down to the ground line.
+        const float farSize = 0.6f;
+        const float effectsTime = fractionalPart(cycleTime * k_lively);
         Fireflies fireflies = firefliesOf(theme);
         fireflies.light = theme.chase.farFireflyLight;
         fireflies.glow = theme.chase.farFireflyGlow;
         fireflies.count = 22;
-        fireflies.size = 0.6f;
+        fireflies.size = farSize;
+        Weather weather = weatherOf(theme);
+        weather.opacity = 0.6f;
         forEachTile(frame, 0.35f, hillPeriod, travel, [&](float tileLeft, float tileWidth) {
             fireflies.area = { tileLeft, groundY - 90.0f * unit, tileLeft + tileWidth,
                 groundY - 20.0f * unit };
-            drawFireflies(frame, fractionalPart(cycleTime * k_lively), fireflies);
+            drawFireflies(frame, effectsTime, fireflies);
+            SceneFrame overHills = frame.within(Matrix3x2::Translation(tileLeft, 0.0f));
+            overHills.width = tileWidth;
+            overHills.height = groundY;
+            overHills.unit = unit * farSize;
+            drawWeather(overHills, effectsTime, weather);
         });
     }
 

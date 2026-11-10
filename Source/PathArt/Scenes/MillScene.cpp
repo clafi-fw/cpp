@@ -204,7 +204,7 @@ namespace ClaFi::PathArt
         Fireflies fireflies = firefliesOf(theme());
         fireflies.area = { 0.0f, h * 0.4f, w, h * 0.8f };
         drawFireflies(frame, time.cycleTime, fireflies);
-        drawWeather(frame, time.cycleTime, theme());
+        drawWeather(frame, time.cycleTime, weatherOf(theme()));
 
         // river fog
         canvas.fillRectangle(bounds, PointGlow{

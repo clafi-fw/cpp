@@ -799,9 +799,11 @@ cycle's travel divides - see ChaseScene periodNear - so it ends the cycle where 
 or the moon, the clouds, the meadow and the tree a branch run ends at are the theme's shared
 colours; the rest is the theme's ChaseTheme.
 
-- The theme's fireflies keep to the far hills, smaller, and move with them.
-- The theme's stars come out over the sky, and its rain, snow, falling leaves or petals and dust
-  fall over the whole frame, coming round twice a cycle.
+- The theme's fireflies and its rain, snow, falling leaves or petals and dust keep to the far hills'
+  layer: behind the trail and the runners, smaller, moving with the hills. The fireflies are faded
+  toward the mountains as the hills are. The weather falls against the sky as well, so it is drawn
+  at 0.6 of its strength instead.
+- The theme's stars come out over the sky. Stars, fireflies and weather come round twice a cycle.
 - The icon keeps the wolf and the hare in their daylight coats.
 
 ## ChaseScene drawVergeRow
