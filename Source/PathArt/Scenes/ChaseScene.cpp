@@ -389,13 +389,22 @@ namespace ClaFi::PathArt
         // over the trail, which the timing of his part of the stirring is stated against.
         constexpr float k_wolfAfterHare{ 0.89f };
 
+        // How the rubber duck stands at one moment.
+        struct DuckMotion
+        {
+            float deflation{ 0.0f }; // 0 full of air, 1 flat, below 0 swelling past full
+            float airOut{ 0.0f }; // opacity of the air puffing out of it
+            float legs{ 0.0f }; // share of its legs' length grown, past 1 as they pop out
+            float strides{ 0.0f }; // radians of its walk, 0 standing
+        };
+
         // How what is on the trail moves at one moment.
         struct ObstacleMotion
         {
             float branchSway; // units the branch's end is pushed down, up below 0
             float curl; // 0 the hedgehog on its feet, 1 rolled into a ball
             float steps; // radians of the hedgehog's walk
-            float deflation; // 0 the duck full of air, 1 flat
+            DuckMotion duck;
             float rollAngle; // radians the ball has turned through
             float bladeLean; // radians the grass leans forward from where it stands
             float peelLift; // units the banana peel is in the air
@@ -411,6 +420,15 @@ namespace ClaFi::PathArt
         // The hedgehog walks off at 160 units a second, which is this many in an episode's time.
         constexpr float k_hedgehogWalk{ 3200.0f };
         constexpr float k_episodeSeconds{ 20.0f };
+        // When the duck, flat since the trip, fills up again, grows legs and sets off.
+        constexpr float k_duckRefills{ 0.65f };
+        constexpr float k_duckGrowsLegs{ 0.668f };
+        constexpr float k_duckSetsOff{ 0.678f };
+        // It walks off away from the wolf at 240 units a second, which is this many in an
+        // episode's time, on legs this long, covering this many units in a step of each foot.
+        constexpr float k_duckWalk{ 4800.0f };
+        constexpr float k_duckLegLength{ 11.0f };
+        constexpr float k_duckStride{ 26.0f };
 
         // An apple on the tree, in units from the foot of its trunk; one that falls lets go that
         // long after the wolf hits the tree, and drifts that far as it lands.
@@ -468,7 +486,7 @@ namespace ClaFi::PathArt
         // Tipping, it turns about the back of its heel.
         void drawBoot(const SceneFrame& onTrail, const ChaseTheme&, float tip);
         void drawHedgehog(const SceneFrame& onTrail, const ChaseTheme&, float curl, float steps);
-        void drawRubberDuck(const SceneFrame& onTrail, const ChaseTheme&, float deflation);
+        void drawRubberDuck(const SceneFrame& onTrail, const ChaseTheme&, const DuckMotion&);
         void drawBall(const SceneFrame& onTrail, const ChaseTheme&, float rollAngle);
         void drawGrassPatch(const SceneFrame& onTrail, const ChaseTheme&, float bladeLean);
         // Lying tines up, its head toward the wolf; its handle swings up about the head.
@@ -623,10 +641,39 @@ namespace ClaFi::PathArt
         const float appleSplit = obstacle == Obstacle::Apple
             ? smoothStep(trip - 0.001f, trip + 0.008f, episodeTime)
             : 0.0f;
-        // The duck goes flat under the wolf's paws, and the ball rolls on a little, slowing.
-        const float deflation = obstacle == Obstacle::RubberDuck
-            ? smoothStep(trip - 0.002f, trip + 0.02f, episodeTime)
-            : 0.0f;
+        // The duck goes flat under the wolf's paws. Once he is down it fills up again, swelling a
+        // little past full, its legs pop out, and it walks off the way the hedgehog does, faster.
+        DuckMotion duckMotion = {};
+        float duckWalked = 0.0f;
+        if (obstacle == Obstacle::RubberDuck)
+        {
+            const float flattened = smoothStep(trip - 0.002f, trip + 0.02f, episodeTime);
+            const float refill = std::clamp((episodeTime - k_duckRefills) / 0.015f, 0.0f, 1.0f);
+            const float emptyLeft = (1.0f - refill) * (1.0f - refill) * (1.0f - refill);
+            const float growing = std::clamp((episodeTime - k_duckGrowsLegs) / 0.008f, 0.0f,
+                1.0f);
+            const float growingLeft = 1.0f - growing;
+            // a back ease out, which takes the legs a tenth past their length before they settle
+            constexpr float k_legsOvershoot{ 1.70158f };
+            // up to speed a tenth of a second after it sets off
+            constexpr float k_upToSpeed{ 0.005f };
+            const float sinceSetOff = episodeTime - k_duckSetsOff;
+            if (sinceSetOff > k_upToSpeed)
+                duckWalked = k_duckWalk * (sinceSetOff - 0.5f * k_upToSpeed);
+            else if (sinceSetOff > 0.0f)
+                duckWalked = 0.5f * k_duckWalk * sinceSetOff * sinceSetOff / k_upToSpeed;
+            duckMotion = {
+                .deflation = flattened * emptyLeft
+                    - 0.2f * std::sin(std::numbers::pi_v<float> * refill) * refill * refill,
+                .airOut = 4.0f * flattened * (1.0f - flattened),
+                .legs = growing > 0.0f
+                    ? 1.0f - (k_legsOvershoot + 1.0f) * growingLeft * growingLeft * growingLeft
+                        + k_legsOvershoot * growingLeft * growingLeft
+                    : 0.0f,
+                .strides = k_2Pi * duckWalked / k_duckStride
+            };
+        }
+        // The ball rolls on a little, slowing.
         const float rolling = obstacle == Obstacle::Ball
             ? std::clamp((episodeTime - trip) / 0.05f, 0.0f, 1.0f)
             : 0.0f;
@@ -641,7 +688,7 @@ namespace ClaFi::PathArt
             : 0.0f;
         const float peelAhead = 70.0f * (1.0f - (1.0f - peelFlight) * (1.0f - peelFlight));
         const float obstacleX = obstacleAtTrip + cameraTravel(episodeTime, trip) - walkedAway
-            + rolledOff - rolledAway + peelAhead;
+            - duckWalked + rolledOff - rolledAway + peelAhead;
         // The grass goes flat under him while his legs are in it, then springs back, swinging past
         // upright and settling.
         const float sinceTrip = episodeTime - trip;
@@ -990,7 +1037,7 @@ namespace ClaFi::PathArt
             .branchSway = branchSway,
             .curl = curl,
             .steps = k_2Pi * walkedAway / 9.0f,
-            .deflation = deflation,
+            .duck = duckMotion,
             .rollAngle = (rolledOff - rolledAway) / k_ballRadius,
             .bladeLean = bladeLean,
             .peelLift = 240.0f * peelFlight * (1.0f - peelFlight),
@@ -2153,7 +2200,7 @@ namespace ClaFi::PathArt
                     drawHedgehog(onTrail, theme.chase, motion.curl, motion.steps);
                     break;
                 case Obstacle::RubberDuck:
-                    drawRubberDuck(onTrail, theme.chase, motion.deflation);
+                    drawRubberDuck(onTrail, theme.chase, motion.duck);
                     break;
                 case Obstacle::Ball:
                     drawBall(onTrail, theme.chase, motion.rollAngle);
@@ -2377,12 +2424,46 @@ namespace ClaFi::PathArt
         }
 
         // A rubber duck, its beak toward the wolf. Deflating, it sinks flat and spreads, its head
-        // droops and the air puffs out behind it.
+        // droops and the air puffs out behind it. On legs it stands up off the trail, and walking
+        // it rocks from foot to foot.
         void drawRubberDuck(const SceneFrame& onTrail, const ChaseTheme& chase,
-            const float deflation)
+            const DuckMotion& motion)
         {
-            const SceneFrame duck = onTrail.within(Matrix3x2::Scale(1.0f + 0.2f * deflation,
-                1.0f - 0.62f * deflation));
+            const float deflation = motion.deflation;
+            const float widthScale = 1.0f + 0.2f * deflation;
+            const float heightScale = 1.0f - 0.62f * deflation;
+            const bool walking = motion.strides > 0.0f;
+            // lowest as one foot takes over from the other
+            const float dip = walking ? 1.4f * (1.0f - std::abs(std::cos(motion.strides))) : 0.0f;
+            const float rockAngle = walking ? 0.08f * std::sin(motion.strides) : 0.0f;
+            const FloatPoint rockPivot = { 3.0f, 0.0f };
+            const Matrix3x2 onLegs = Matrix3x2::Translation(0.0f,
+                    dip - k_duckLegLength * motion.legs)
+                * Matrix3x2::Translation(rockPivot) * Matrix3x2::Rotation(rockAngle)
+                * Matrix3x2::Translation(-rockPivot.x, -rockPivot.y);
+            const SceneFrame duck = onTrail.within(onLegs
+                * Matrix3x2::Scale(widthScale, heightScale));
+            // a leg from the hip to a webbed foot, which swings forward lifted and comes back down
+            const auto drawLeg = [&](const float hipX, const float phase, const Color color) {
+                const FloatPoint hip = onLegs.transform({ hipX * widthScale, -2.0f * heightScale });
+                const float stepAngle = motion.strides + phase;
+                const float footSwing = walking ? 6.5f * std::sin(stepAngle) : 0.0f;
+                const float footLift = walking ? 3.5f * std::max(0.0f, -std::cos(stepAngle)) : 0.0f;
+                const FloatPoint foot = { hipX * widthScale + footSwing, -footLift };
+                drawSegment(onTrail, hip, foot + FloatPoint{ 0.0f, -1.2f }, SolidColor{ color },
+                    1.8f);
+                PixelPath web;
+                web.moveTo(1.4f, -0.3f);
+                web.lineTo(-5.6f, -1.9f);
+                web.quadTo({ -4.6f, -0.9f }, { -6.4f, -0.3f });
+                web.quadTo({ -4.6f, 0.2f }, { -5.6f, 1.3f });
+                web.close();
+                fillShape(onTrail, web, SolidColor{ color }, Matrix3x2::Translation(foot)
+                    * Matrix3x2::Rotation(-0.12f * footLift)
+                    * Matrix3x2::Scale(std::min(1.0f, motion.legs)));
+            };
+            if (motion.legs > 0.0f)
+                drawLeg(7.0f, std::numbers::pi_v<float>, chase.duckBeakShade);
             PixelPath body;
             body.moveTo(-14.0f, -10.0f);
             body.cubicTo({ -15.0f, -2.0f }, { -7.0f, 0.0f }, { 2.0f, 0.0f });
@@ -2414,9 +2495,10 @@ namespace ClaFi::PathArt
             fillShape(head, lowerBeak, SolidColor{ chase.duckBeakShade });
             fillDisc(head, { -10.0f, -23.0f }, 1.7f, SolidColor{ ChaseColors::Ink });
             fillDisc(head, { -9.5f, -23.5f }, 0.5f, SolidColor{ ChaseColors::EyeShine });
+            if (motion.legs > 0.0f)
+                drawLeg(-1.0f, 0.0f, chase.duckBeak);
             // the air leaving it, strongest halfway down and gone once it is flat
-            const float puff = 4.0f * deflation * (1.0f - deflation);
-            if (puff > 0.0f)
+            if (motion.airOut > 0.0f)
             {
                 PixelPath streaks;
                 for (const float slope : { -0.5f, 0.0f, 0.5f })
@@ -2424,8 +2506,8 @@ namespace ClaFi::PathArt
                     streaks.moveTo(22.0f, -10.0f + 6.0f * slope);
                     streaks.lineTo(30.0f, -10.0f + 14.0f * slope);
                 }
-                strokeShape(onTrail, streaks, SolidColor{ ChaseColors::Puff.withOpacity(puff) },
-                    1.6f);
+                strokeShape(onTrail, streaks,
+                    SolidColor{ ChaseColors::Puff.withOpacity(motion.airOut) }, 1.6f);
             }
         }
 

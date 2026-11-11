@@ -2048,6 +2048,21 @@ each a white disc on a rim of ink with a pinpoint pupil, the far one coming out 
 as they widen; they shrink back to size over the 0.3 s around the end of the shaking. The frames
 before the hit, after the shaking and the stump start are unchanged; the X is drawn nowhere.
 
+**The duck walks off** (Oj, 2026-11-11: "shortly after the duck gets inflated it grows legs and
+swiftly walks away"). The duck only ever went flat, so two readings were shown: it fills up again
+and then grows legs, or it grows legs flat and leaves that way. Oj took the first, with the duck
+lying flat about half a second longer than shown. Its refill moved from 0.624 to 0.65
+(k_duckRefills), 0.6 s after the wolf comes to rest. A first try at 0.6 had it fill while he was
+still tumbling. It fills over 0.015, the air rushing in at first and swelling it a little past full.
+Its legs pop out from 0.668 over 0.008, a back ease out that takes them a tenth past their length.
+From 0.678 it walks off to the left at 240 units a second (k_duckWalk), up to speed in a tenth of a
+second - faster than the hedgehog's 160. Each leg is a stroke from a hip under the body to a webbed
+foot, in the beak's colours, the far one in the shade and behind the body. A foot swings 6.5 units
+either way and is lifted 3.5 as it comes forward, which matches a stride of 26 units (k_duckStride)
+in a frame wide enough for closeness 1. The body dips 1.4 units as the feet change over and rocks
+0.08 rad. The air streaks come from DuckMotion airOut, which the flattening alone sets, so the
+refill shows none. Frames before the refill are unchanged.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

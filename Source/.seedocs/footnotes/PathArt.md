@@ -818,9 +818,10 @@ duck, a ball, a patch of grass, a rake, two a cycle and round again - going by S
 cyclesPassed, so a host that does not count the cycles shows the banana peel and the boot every
 time. The peel shoots out from under his paw and spins, the boot falls over and the apple splits in
 two. The hedgehog rolls into a ball once the hare has passed over it, and walks off once the wolf is
-down. The duck goes flat under his paws, the ball rolls on a little and, while he lies dazed, a
-little way back, the grass flattens under him and springs back, rocking for most of a second, and
-the rake's handle swings up into his face.
+down. The duck goes flat under his paws and, a little after he is down, fills up again, grows legs
+and walks off away from him. The ball rolls on a little and, while he lies dazed, a little way back.
+The grass flattens under him and springs back, rocking for most of a second, and the rake's handle
+swings up into his face.
 
 **Something stands by the path in every run** and slows neither of them. It passes partway into the
 run, and early in the third, before the wolf closes in. There are twelve, one for each run of the
