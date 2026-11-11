@@ -96,6 +96,29 @@ state in the time it takes to draw the line. The two are brought into step toget
 textTaken: an ordinary edit re-reads the lines from the one it reached until a line starts in
 the state it already had, and a whole text stated anew is read from its start.
 
+## MenuItem
+
+**A line shows its command's selection** (2026-11-11, found by the MillScene showcase's theme
+list). MenuItem took ButtonBase's ShowSelectionOnSurface::No, so the line of a command answering
+selected drew like every other line, and the picked theme could not be told in the list. No menu
+had shown a selected command before: the Themes app presents its selected commands as radio
+buttons. A group's line reads as selected while its list is up - Control's visual state counts a
+dropped-down control as selected - so it keeps that surface while the pointer is in the list.
+
+## MenuListBuilder
+
+**The builder is the menu's, not the action's** (2026-11-11, for the MillScene showcase's theme
+picker in a list beside its Theme line). An Action lives in ClaFi.Core.Foundation and cannot name a
+Menu, so a list of controls could not ride an action the way its items do. A group line made from a
+builder carries no action: its words and icon come as a line's from add do, and it is enabled as
+any button is. Menu::openGroup asks every group line for its list the same way - a line made from
+an action builds it from the action's items.
+
+**Left asks the navigator first.** Menu::nestedKeyDown closed a list on Left before the navigator
+saw the key, which was right for a column of lines and wrong for the picker's lanes, where Left
+moves to the lane before. It now runs the navigator and closes the list only where the focus
+stayed put.
+
 ## CompletionList
 
 The reading is compared with the last before any row is rebuilt, so typing in a routine's body

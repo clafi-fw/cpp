@@ -272,9 +272,9 @@ namespace ClaFi
         }
 
         // Nothing claimed, and the action has no opinion of its own. It is available if there
-        // is anything at all to run: an action that carries its work and says nothing about
-        // when is available whenever nothing else answers for it.
-        return { .enabled = hasEventListeners<ActionClickEvent>() };
+        // is anything at all to run or open: an action that carries its work or a list of
+        // commands, and says nothing about when, is available whenever nothing else answers.
+        return { .enabled = hasEventListeners<ActionClickEvent>() || opensList() };
     }
 
     Action::EntryControls Action::entryControls(FormBase& form, Control* presenter)

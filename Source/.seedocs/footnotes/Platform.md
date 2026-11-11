@@ -74,6 +74,9 @@ callback runs on the UI thread.
 A thread waits out the delays and raises an eventfd, which the display's loop polls through a
 PollSource. The timers fire on the UI thread.
 
+**A timer's handler may run a loop of its own**, as a menu opening a list on a rest of the pointer
+does. The timers due with it fire in that loop, as they would in the outer one.
+
 ## PollSource
 
 The constructor adds the descriptor to the display's loop, with the dispatcher to call when it is

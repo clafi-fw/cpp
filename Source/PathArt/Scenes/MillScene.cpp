@@ -217,11 +217,11 @@ namespace ClaFi::PathArt
         });
     }
 
-    // In Fresh Spring's colours whatever theme is worn: an icon is one picture in every theme.
+    // In Clear Day's colours whatever theme is worn: an icon is one picture in every theme.
     void MillScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
     {
         constexpr float k_figureSpan{ 480.0f };
-        constexpr Themes::FreshSpring k_iconTheme{};
+        constexpr Themes::ClearDay k_iconTheme{};
         const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
         const float unit = frame.unit;
         const MillPose mill = {

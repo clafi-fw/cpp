@@ -18,9 +18,13 @@ namespace ClaFi::PathArt
     {
         Color mountainTop{}; // the mountains' clear colours, which the scene hazes
         Color mountainFoot{};
-        Color crownLight{}; // the branch run's tree, beside treeLeavesBase
+        Color crownLight{}; // the far hills' trees, beside treeLeavesBase
         Color crownMiddle{};
-        Color treeBarkShade{}; // beside treeTrunk
+        Color treeCrown{}; // the branch run's tree
+        Color treeCrownLight{};
+        Color treeCrownMiddle{};
+        Color treeBark{};
+        Color treeBarkShade{};
         Color treeBough{};
         Color trail{};
         Color pebble{};

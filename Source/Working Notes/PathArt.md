@@ -17,10 +17,11 @@ The list runs Puppeteer, Ghost, Clockwork, Chase, Comet, Earth, Orrery: the Chas
 changed places (Oj, 2026-11-10, "Swap Orrery and Chase"), and createSceneViewsSchema follows the
 list, the Earth's view before the Orrery's.
 
-The theme list runs from Fresh Spring through the day themes to the night ones, Calm Night last
-(Oj, 2026-11-10, "Reverse the scenes theme list, make the Fresh Spring default"). Fresh Spring is
-the default by being first: ThemeBlend and the showcase both start at index 0. A stored pick is
-found by name, so it still opens in the theme it names.
+The theme list runs from Clear Day through the day themes to the night ones, Calm Night last
+(Oj, 2026-11-10, "Reverse the scenes theme list, make the Fresh Spring default"; Fresh Spring was
+renamed Clear Day on 2026-11-11). Clear Day is the default by being first: ThemeBlend and the
+showcase both start at index 0. A stored pick is found by name, so it still opens in the theme it
+names.
 
 **Scenes, sprites and effects stand in three folders** (Oj, 2026-11-07, "Make folders for scenes,
 effects, sprites"). A sprite is a figure with a pose of its own - a struct of where it stands and
@@ -180,6 +181,33 @@ that is hidden while fullscreen - and whose menu drops from its owner's rect rat
 pointer. Under sway that key raised nothing at all: XKB_KEY_Menu arrives as a key down, and
 nothing on Wayland turns it into wnd_contextMenu.
 
+**The themes are in the scene's context menu as well** (Oj, 2026-11-11, "switching the scene
+themes from the context menu"). Of a Theme line opening the themes in a list beside it and the 24
+as lines of the menu itself, Oj picked the line. Asked whether the menu opens in a window too or
+only in fullscreen, he picked both, so a window has a context menu now, holding the Theme line.
+
+**The list is the page's theme picker** (Oj, 06:47, "ideally reuse the layout, preview is a must").
+The first delivery listed the themes as 24 actions, one line each, with no preview: an action
+hears no hover. Of the picker's lanes standing in the menu itself and standing beside the Theme
+line, Oj kept the line, which took framework API: a group line whose list the caller builds
+(Menu::addGroup with a MenuListBuilder), a control of the caller's standing in a menu
+(Menu::addControl) and a way for it to close the menus behind it (Menu::closeOnCommand).
+
+- **One builder for both pickers.** buildThemeLanes builds the lanes into a column and keeps them
+  in a ThemePicker - one per themed scene's page of options, and m_menuThemePicker for the menu's.
+  The preview, the return to the pick and the double click come with it; in the menu each button's
+  click also closes the menus.
+- **Running it showed three gaps in the framework**, each fixed where it was:
+  - The Theme line, as an action with no click handler, was disabled - see the Action section of
+    the Control-Foundation working note. The line is no longer an action, and the fix stands.
+  - A selected command's line drew like the rest - see the MenuItem section of the Controls one.
+    Unused here now, and kept on Oj's word.
+  - About half the lists opened by a rest of the pointer froze the window until they closed, plain
+    lines as well as the picker, which defeated the preview - see the TimerManager (Linux) section
+    of the Platform working note.
+- **Left in the lanes moves left**, and closes the list from the first lane: Menu::nestedKeyDown
+  closed a list on Left before the navigator saw the key.
+
 **Every scene draws its own icon** (Oj, 2026-11-09, "Make the scene buttons big tiles with top
 icons, in rows"). Of a still of each scene, the scene's own sprite and eight new line pictograms,
 mocked up from the scene code, Oj picked the sprite. drawIcon is a pure virtual on Scene rather
@@ -193,7 +221,7 @@ the clockwork's metals - belong to the scene.
 - **Clips.** Where the mockup's square cut a part, the code clips at bounds: the mill's reflection
   and wing tips, the marionette's strings, the Earth's glow. The ghost's and the comet's glows
   spill a few levels of alpha past bounds (3 to 9 of 255), unclipped.
-- **The mill wears Fresh Spring.** In the theme it is picked in - Calm Night with no pick stored -
+- **The mill wears Clear Day.** In the theme it is picked in - Calm Night with no pick stored -
   the house is a dark grey that reads as nothing on a tile, and a tile is not repainted while a
   theme is previewed. millColorsOf builds MillColors for draw and drawIcon alike.
 - **Shared colours.** The clockwork's four metals moved out of draw into the file's anonymous
@@ -2062,6 +2090,107 @@ either way and is lifted 3.5 as it comes forward, which matches a stride of 26 u
 in a frame wide enough for closeness 1. The body dips 1.4 units as the feet change over and rocks
 0.08 rad. The air streaks come from DuckMotion airOut, which the flattening alone sets, so the
 refill shows none. Frames before the refill are unchanged.
+
+**Summer Sunset's figures lighter** (Oj, 2026-11-11: "Make the wolf, hare, butterfly, tree lighter,
+apple, ball more vibrant"). Two readings were shown. In A the four were 0.08 L lighter and the apple
+and ball went halfway to daylight's colours. In B they were 0.14 lighter and the apple and ball took
+daylight's colours. Oj took B for the wolf, the tree and the apples, and A for the ball and the
+butterfly. His pick left the hare out, and it took B with the wolf. Chroma follows L, so the browns
+and greens keep their colour. The coat details rise with the fur; the near-white teeth and tail stay
+as they were. The solver had set the wolf and hare exactly 0.15 from the meadow, which is why they
+were dark. Lifted, they stand 0.10 and 0.11 from it, and only a near-white wolf would stand 0.15 off
+it again on the light side. The apples stand 0.19 from the trail and the ball 0.145, where both
+stood at 0.10. treeLeavesBase and treeTrunk are the Mill's pines as well, so those lighten too, and
+the far hills' trees are the crown hazed. The generator holds the change as OVERRIDES 'SummerSunset'
+and THEME_EDITS for the two shared fields.
+
+**Midnight Fantasy's boot, toadstool and crow** (Oj, 2026-11-11). Oj asked to check every theme for
+figures and props that read dark or dull: "Even on the night themes - they are well lit always". A
+proposal relit every theme's objects from Fresh Spring's colours. Oj took three objects from it, all
+in Midnight Fantasy: "boot, mushroom and crow - and the crow not all the way, just to reveal
+details". The boot keeps its palette's blue at daylight's lightness (646795, 404266, 24253D). The
+crow went first to L 0.34 from its 0.15, which showed its wings but left it as dark as the hills;
+then (Oj, "Make the crow lighter so it's visible on the hills and sky") to 0.49 for the body and
+0.42 and 0.38 for the wings (585C87, 454972, 3B3E67), in the palette's navy. That stands at least
+0.12 from the night sky (L 0.22) and the hills behind it (0.28 to 0.30). The generator holds these
+as OVERRIDES 'MidnightFantasy'. Nothing else of the proposal is applied.
+
+Then (Oj, 15:19) "Midnight Fantasy: darker purpleish wolf, calmer frog". Our wolf's coat is 0.15
+darker and a purple of chroma 0.06 at hue 300 (light 807399, coat 74678D), where it was a near grey
+at 0.025; its belly is A197B5. It stands 0.12 from the meadow and 0.19 to 0.23 from the hills and
+mountains, where it stood 0.25 and more. The other couple's black wolf is 0.15 darker too (light
+5A5462), to stay 0.12 below ours; it stands 0.05 from the meadow and 0.10 to 0.15 from the hills and
+mountains. The frog keeps its mint at about half the colour (light 93C8B8, dark 689285, belly
+E4F4F0), chroma 0.06 where it was 0.12.
+
+Then (Oj, 15:30) "calmer mushroom - mushroom shouldn't be more vivid than the apple". The toadstool
+had taken daylight's red (E1474D, L 0.62, chroma 0.19), brighter and stronger than Midnight
+Fantasy's own apple (BF4648, L 0.56, chroma 0.156). Its cap is B14E4D (L 0.55, chroma 0.13) over
+7E2F31, just below the apple on both counts, and its spots and stalk are 0.08 down from white
+(DED6D6, D5CAC3, B5A692), so the cap does not glow.
+
+**Gaps fixed in the other themes** (Oj, 2026-11-11: "Now regen others, with not 'as by day' but to
+fix gaps"). A second proposal keeps every colour as its theme has it, except an object with a gap. A
+key colour below L 0.40 and 0.10 under Fresh Spring's reads as black; it is lifted toward Fresh
+Spring's lightness, no further than its background allows. An object whose colour is what it is -
+toadstool, ball, duck, peel, butterfly, frog, apple - is brought from under 60 % of Fresh Spring's
+chroma to 70 %. Anything short of its contrast target is lifted until it reaches it. A toadstool's
+cap or a ball's red is never more vivid than the theme's apple. Oj takes the proposal theme by
+theme.
+
+Toxic Waste ("+tuft obstacle (toxic green)"): the ball's colours are back, and the crow is lifted
+from L 0.22 to 0.48 (56624F, wings 465140 and 3C4835), where it stood 0.01 from the sky. The tuft on
+the trail wears the theme's toxic green (blades 3B9119, 4CB325, 5ED731); its blades were near black.
+Steampunk ("+mushroom +apples"): the boot is a step lighter (6E4736). The apples are at 70 % of
+daylight's red (C86553 over 8E4133) and the toadstool's cap just below them (C06556 over 874134);
+both were at under half the red. The generator holds these as OVERRIDES 'ToxicWaste' and
+'SteampunkAdventure'.
+
+**Everything else well lit** (Oj, 2026-11-11: "Everything else as in Chase well lit, go!"). Every
+theme but Fresh Spring, Vintage Noir, Midnight Fantasy, Toxic Waste and Steampunk takes the first
+proposal, as its sheets showed it. A figure or prop starts from Fresh Spring's colour, tinted toward
+the theme's sky, at full colour except in Paper Sketch. It then takes the smallest shift that
+reaches its contrast target, never more than 0.10 darker; the black wolf stays 0.12 below ours, and
+the coat details rise with the fur. The vibe themes' colours keep their hue at no less than
+daylight's lightness. The OVERRIDES stay as they are - the snow, the toxic reds, Summer Sunset's
+picks - and so do the petals. 19 themes and 1,872 colours change.
+
+The tree a branch run ends at was drawn from the shared treeLeavesBase and treeTrunk, which are also
+the Mill's trees, and from crownLight and crownMiddle, which are also the far hills' trees. Lighting
+it there would have lit those too. ChaseTheme gains treeCrown, treeCrownLight, treeCrownMiddle and
+treeBark beside treeBarkShade and treeBough, and drawBranchTree reads those six. Each theme's new
+fields start as its old tree. In the 19 they take the proposal's lit tree: daylight's green and
+brown in the theme's tint, unless the theme's own is lighter, as blossom, frost and autumn are. A
+theme that sets its greens keeps their hue, and Summer Sunset keeps its picked tree. The patch of
+grass on the trail is lit the same way.
+
+Short of the targets afterwards: the black wolves at night (0.08 to 0.14), Summer Sunset's wolf,
+High Noon's brown hare (0.13) and frog (0.10). Where a mid-tone meadow left only a lift, figures
+went very light: Underwater Realm's wolf and grey hare near white, Twilight's wolf, High Noon's frog
+a pale lime. At night the black wolves are a mid grey.
+
+Then (Oj, 16:32) "calm the fresh spring green". Three shares of the colour were shown: 80 %, 65 %
+and half. Oj asked for a pick and took 80 % ("apply A"). It takes the acid edge off and still reads
+as spring; 65 % turned sage, and half came close to Cherry Blossom's grey-green. Every green of
+Fresh Spring keeps its lightness and hue at 80 % of its chroma: the meadow (hillTop 8AD77A,
+hillBottom 519C4F), the trees (treeLeavesBase 448C47, with the far hills' and the branch run's
+crowns), the reeds and lily pads, the grass, the tufts' blades, the daisy and apple leaves and the
+stump's sprout. The meadow and the trees are the Mill's too, so its hills and pines calm with them.
+The trail, the frog and the props are unchanged. The runners stand 0.27 to 0.36 from the calmer
+meadow, the frog 0.17. The generator holds it as THEME_EDITS and OVERRIDES 'FreshSpring'.
+
+Then Oj asked for a name, free to take any of the three shares with it, and took the pick whole
+("And conveniently Fresh Spring is a default theme. Do both"): 65 %, named Clear Day. At 65 % the
+green is a calm daylight green rather than spring's, and the name says so. Every green listed above
+is at 65 % of its chroma, lightness and hue kept: the meadow (hillTop 95D389, hillBottom 5E995C),
+treeLeavesBase 518952, the reeds 6D8857 and lily pads 71AC79, and the Chase's crowns, grass,
+blades, leaves and sprout. The runners and the frog stand within 0.02 of where they stood at 80 %.
+
+**The theme is ClearDay, named "Clear Day".** The struct, its `.name`, the allThemes entry and the
+mill icon's k_iconTheme carry the new name. A pick stored as "Fresh Spring" is not found by name,
+so the showcase opens in the first theme, which is this one: the stored pick lands where it was
+without a shim. The icon reads only the mill's own colours, which the calmer greens leave alone.
+The generator holds it as THEME_EDITS and OVERRIDES 'ClearDay', and its theme orders name ClearDay.
 
 ## MillScene
 

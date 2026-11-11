@@ -82,22 +82,31 @@ namespace ClaFi::Controls
 
     export class Menu;
 
+    // What makes the list a group line opens, handed the list to add to. See Controls
+    export using MenuListBuilder = std::function<void(Menu& list)>;
+
     // A line for a command that holds commands: a press opens them beside it, as a list of their
     // own, and the menu stays up. See Controls
     export class MenuGroupItem : public MenuItem
     {
+        friend class Menu;
     public:
+        // The line of a command holding commands, whose list holds the command's items.
         template<typename... Args>
         MenuGroupItem(const CreateParams&, Menu&, Action&, Args&&...);
+        // A line built from what it is given, whose list the builder makes.
+        template<typename... Args>
+        MenuGroupItem(const CreateParams&, Menu&, MenuListBuilder, Args&&...);
     public:
-        [[nodiscard]] Action& action() const { return m_action; }
         std::wstring_view diagnosticText() const override { return L"MenuGroupItem"; }
     protected:
         void click(ClickEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;   // Right opens the list
     private:
+        void buildList(Menu& list) const { m_buildList(list); }
+    private:
         Menu& m_menu;
-        Action& m_action;
+        MenuListBuilder m_buildList;
     };
 
     // A popup list of commands, owned by the control it was opened from. See Controls
@@ -125,6 +134,8 @@ namespace ClaFi::Controls
         /// Stands the menu beside a line of another menu, as the list of the command the line
         /// holds, and runs it. Left closes it; a command run in it closes the menu it stands beside.
         int executeBeside(const Control& line);
+        // A caller's control ran its command: this menu closes, and every menu it stands beside.
+        void closeOnCommand(ClickEvent&);
     protected:
         void nestedClick(NestedClickEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
@@ -138,6 +149,12 @@ namespace ClaFi::Controls
         MenuItem& add(Args&&...);
         // A line that opens the command's list beside it. See Controls
         MenuGroupItem& addGroup(Action&);
+        // A line built from what it is given, opening the list the builder makes. See Controls
+        template<typename... Args>
+        MenuGroupItem& addGroup(MenuListBuilder, Args&&...);
+        // A control of the caller's own, standing in the menu as a line does. See Controls
+        template<typename ControlType, typename... Args>
+        ControlType& addControl(Args&&...);
     private:
         // One place for what every line shares: the separator waiting on it, the count that says
         // the menu has something in it, and the rest the pointer is timed on.
@@ -323,17 +340,30 @@ namespace ClaFi::Controls
         return BaseMenuForm::execute();
     }
 
+    void Menu::closeOnCommand(ClickEvent& event)
+    {
+        m_commandRan = true;
+        close();
+        event.stopPropagation();
+    }
+
     void Menu::nestedClick(NestedClickEvent& nestedClickEvent)
     {
         Form<ScrollBoxWith<StackPanel>>::nestedClick(nestedClickEvent);
         Platform::beep();
     }
 
+    // **Left moves inside the list first**, among controls of the caller's that stand side by
+    // side, and closes it where the focus has nowhere to go that way.
     void Menu::nestedKeyDown(KeyDownEvent& event)
     {
         if (m_isList && event.key == Keys::Left && event.modifiers.empty())
         {
-            close();
+            const Control* focusedItem = Input::focusDelegate();
+            FocusNavigator focusNavigator{ *this };
+            focusNavigator.formKeyDown(event);
+            if (Input::focusDelegate() == focusedItem)
+                close();
             event.handled = true;
             return;
         }
@@ -351,7 +381,7 @@ namespace ClaFi::Controls
         {
             m_pendingGroup = nullptr;
             Menu list{ *next };
-            list.addActions(next->action().items());
+            next->buildList(list);
             list.executeBeside(*next);
             if (list.m_commandRan)
             {
@@ -403,6 +433,21 @@ namespace ClaFi::Controls
                 m_commandRan = true;
         });
         return item;
+    }
+
+    template<typename... Args>
+    MenuGroupItem& Menu::addGroup(MenuListBuilder buildList, Args&&... args)
+    {
+        MenuGroupItem& item = place<MenuGroupItem>(*this, std::move(buildList),
+            std::forward<Args>(args)...);
+        m_groups.push_back(&item);
+        return item;
+    }
+
+    template<typename ControlType, typename... Args>
+    ControlType& Menu::addControl(Args&&... args)
+    {
+        return place<ControlType>(std::forward<Args>(args)...);
     }
 
     template<typename Item, typename... Args>
@@ -463,6 +508,8 @@ namespace ClaFi::Controls
             // An item writes the command's name and its key into its own line - see adjustText -
             // so an action attached here says nothing further in a tooltip.
             PresenterRole::Line,
+            // A selected command's line, and a group's while its list is up, wear the selection.
+            ShowSelectionOnSurface::Yes,
             std::forward<Args>(args)...
         }
     {
@@ -516,7 +563,23 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         },
         m_menu{ menu },
-        m_action{ action }
+        m_buildList{ [&action](Menu& list) {
+            list.addActions(action.items());
+        } }
+    {
+    }
+
+    template<typename... Args>
+    MenuGroupItem::MenuGroupItem(const CreateParams& params, Menu& menu,
+        MenuListBuilder buildList, Args&&... args)
+        :
+        MenuItem{
+            params,
+            EndIcon::OpensList,
+            std::forward<Args>(args)...
+        },
+        m_menu{ menu },
+        m_buildList{ std::move(buildList) }
     {
     }
 

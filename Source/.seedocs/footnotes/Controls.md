@@ -78,17 +78,42 @@ menu stays closed, unless setPlaceHolderText gave it a placeholder to show.
 
 **A command holding commands is a line with its list beside it** - a MenuGroupItem, which addActions
 adds for an Action whose items are set. The list opens when the pointer rests on the line, on its
-press, and on Right; it closes when the pointer rests on another line, on Left, and on Escape. A
-command run in the list closes every menu it stands beside, and a list holds lines of its own the
-same way.
+press, and on Right; it closes when the pointer rests on another line, on Escape, and on Left where
+the focus has nowhere to go that way. A command run in the list closes every menu it stands
+beside, and a list holds lines of its own the same way.
+
+**A group line can open a list of the caller's making** - addGroup with a MenuListBuilder, the line
+built from what it is given as a line from add is. The builder is handed the list each time it
+opens, and fills it with lines, groups and controls of its own - see Menu addControl.
+
+**A line wears its command's selection on its surface** - a picked option in a list of them - and
+a group's line wears it while its list is up.
 
 **The menu is the focus scope its lines stand in.** Home and End go to its first and last stop -
 the strip's first command where it has one - and the page keys page through the list.
 
+## Menu addControl
+
+**A control of the caller's own stands in the menu as a line does**: under a separator waiting for
+it, and closing the list up beside another line when the pointer rests on it. Its click is its
+own. One that runs a command closes the menu with closeOnCommand, as a line's click does.
+
+## Menu closeOnCommand
+
+**The menu closes, and every menu it stands beside closes after it**, as when a command runs from a
+line. The click stops there.
+
+## MenuListBuilder
+
+Called each time the group line opens its list, with the list to put the lines in. The list is
+built anew every time and goes when it closes, so whatever the builder keeps of it - a control's
+address - is good until then.
+
 ## MenuGroupItem
 
 **Shown the command and left to open it**: the action is attached in the Opener role, so the press
-opens the list and runs nothing.
+opens the list and runs nothing. A line given a MenuListBuilder carries no action, and its press
+opens the list the builder makes.
 
 ## HistoryButton
 

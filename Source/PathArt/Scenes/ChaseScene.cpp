@@ -3291,7 +3291,7 @@ namespace ClaFi::PathArt
             const float endSway = motion.branchSway * unit;
             fillBox(frame, { trunkLeft, groundY - 180.0f * unit, trunkRight, footY + 2.0f * unit },
                 LinearGradient::Simple({ trunkLeft, 0.0f }, { trunkRight, 0.0f },
-                theme.treeTrunk, theme.chase.treeBarkShade));
+                theme.chase.treeBark, theme.chase.treeBarkShade));
             if (treeRun.leapEnd != LeapEnd::Trunk)
             {
                 // laid out reaching back to `x`, then over the branch turned about the trunk to
@@ -3311,15 +3311,15 @@ namespace ClaFi::PathArt
                 branch.close();
                 fillShape(onBranch, branch, SolidColor{ theme.chase.treeBough });
                 fillDisc(onBranch, { x + 16.0f * unit, footY - 153.0f * unit + 0.8f * endSway },
-                    9.0f * unit, SolidColor{ theme.chase.crownLight });
+                    9.0f * unit, SolidColor{ theme.chase.treeCrownLight });
             }
             const float shake = motion.crownShake * unit;
             fillDisc(frame, { trunkX + shake, groundY - 196.0f * unit }, 60.0f * unit,
-                SolidColor{ theme.treeLeavesBase });
+                SolidColor{ theme.chase.treeCrown });
             fillDisc(frame, { trunkX - 40.0f * unit + shake, groundY - 170.0f * unit },
-                40.0f * unit, SolidColor{ theme.chase.crownLight });
+                40.0f * unit, SolidColor{ theme.chase.treeCrownLight });
             fillDisc(frame, { trunkX + 40.0f * unit + shake, groundY - 172.0f * unit },
-                44.0f * unit, SolidColor{ theme.chase.crownMiddle });
+                44.0f * unit, SolidColor{ theme.chase.treeCrownMiddle });
 
             // Shaken loose, an apple falls, bounces a third as high as its speed allows and lies
             // where it lands.

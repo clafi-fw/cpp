@@ -378,18 +378,29 @@ namespace ClaFi
         //
         // The whole subtree is asked, since hiding a container hides what is in it without any
         // of it being told. The same way down as a deletion: the target is cleared and nothing is
-        // offered. The focus a closing popup hands back to its target cannot go to a hidden
-        // control, so it goes to the nearest one over it that can take it - the tree a folded row
-        // stands in, the strip a hidden tab stands in - rather than to nobody, which left the
-        // keyboard with nowhere to go until the next click.
-        if (!m_activePopup || !control.containsNested(m_activePopup->m_popupTarget))
+        // offered.
+        const bool popupDropped = m_activePopup
+            && control.containsNested(m_activePopup->m_popupTarget);
+        if (popupDropped)
+            dropActivePopup();
+
+        // **The focus is only ever on something on screen**, so the focus a hidden control holds
+        // leaves it - MillScene hiding its title bar for fullscreen under a focused button is the
+        // case that showed it. It goes to the nearest control over the hidden one that can take
+        // it - the tree a folded row stands in, the strip a hidden tab stands in - and so does the
+        // focus a dropped popup hands back, which cannot go to its hidden target. Where nothing
+        // over it can, the focus the hidden control holds goes to nobody, and the next key starts
+        // at the root.
+        const bool focusHidden = control.containsNested(Input::focusHolder());
+        if (!popupDropped && !focusHidden)
             return;
-        dropActivePopup();
         for (Control* over = control.parent(); over; over = over->parent())
         {
             if (over->trySetFocus())
                 return;
         }
+        if (focusHidden)
+            Input::setFocusHolder(nullptr);
     }
 
     void FormBase::invalidateControl(const Control* control) const

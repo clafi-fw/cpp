@@ -75,6 +75,7 @@ owns at most one, and setTopLayer replaces it.
 - Tab reaches it after the root's last stop - see FocusNavigator.
 - The focus goes back to the root when the control holding it in the layer is hidden: to the
   control in the root it came from, or where showing the form puts it when that control is gone.
+  Where neither takes it, it goes as from any hidden control - see Control setVisible.
 - A control in it that should leave the focus alone on a mouse press says MouseFocus::Keep, and
   NavigationReach::No where the keys should not reach it either.
 
@@ -181,6 +182,15 @@ Scrolling the control into view is the caller's - see scrollIntoView.
 **setFocus where the control can take the focus, and nothing where it cannot.** It answers which.
 It suits a control named some time before the call, which may have been hidden or disabled since -
 a focus handed back to where it came from, a match in a section shut since it was found.
+
+## Control setVisible
+
+**A hidden control holds no focus.** Hiding the control that holds the focus, or anything it
+stands in, hands the focus to the nearest control over the hidden one that can take it, and to
+nobody where none can - the next key then starts at the form's root. A control in the top layer
+hands it back first - see FormBase::topLayer. Showing the control again gives it no focus.
+
+**A popup standing on a hidden control closes**, as one standing on a deleted control does.
 
 ## Control setFocusByKey
 
@@ -455,7 +465,7 @@ upwards from each of these, then of the action itself:
 - the control a popup form was opened on;
 - the form's current item.
 
-With no claim, the action is enabled while it has an OnClick handler.
+With no claim, the action is enabled while it has an OnClick handler or a list of commands.
 
 ## Action
 

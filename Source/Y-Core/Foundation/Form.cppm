@@ -287,9 +287,7 @@ namespace ClaFi
         // scroll has to say it, because moving the content by its top invalidates the paint and
         // nothing more - see ScrollBox::clientScrolled.
         void contentMoved(const Control&) const;
-        // A control has been hidden, and a popup standing on it or on anything inside it goes
-        // down with it, the way forgetControl takes one down with a deleted control; the focus
-        // goes to the nearest control over the hidden one that can take it.
+        // A control has been hidden: the focus leaves it, and a popup standing on it closes.
         void controlHidden(const Control&);
         void invalidateControl(const Control*) const;
         void invalidateRect(const FloatRect& value) const { m_window->invalidateRect(value); }

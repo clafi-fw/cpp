@@ -57,6 +57,21 @@ The two hooks System.Timer declares are defined in Linux.Timer.cpp and reach it 
 TimerManager::standing, the same pointer and the same rule as the Windows TimerManager: none
 standing is a broken order, and unreachable.
 
+**Fired timers are taken one at a time** (2026-11-11, found by the MillScene showcase's theme list
+under sway). dispatchPending took every fired timer off the shared list before firing the first.
+A menu's hover timer opens a list beside a line by running the list's loop inside its handler, so
+the timers taken with it - MillScene's repaint timer among them - waited for that loop to end: the
+loop slept in poll with the eventfd drained, and the window stood still until the list closed.
+- **Measured.** Opened by a rest of the pointer, the list froze the window in 2 of 6 tries with
+  the picker in it and 2 of 6 with three plain lines; opened by a press, 0 of 8. With the fix, 0 of
+  12 by a rest of the pointer. A frozen process sat in poll_schedule_timeout at 0% CPU.
+- **Now** takeFiredTimer takes the first and writes the eventfd while others are left, so the
+  inner loop wakes for them. It also leaves cancel() able to reach a timer an earlier handler of
+  the same batch destroyed; taken whole, that timer would have been fired after it was gone (read
+  off the code, not seen).
+- Win32 is not changed: each timer arrives there as its own WM_TIMER, which a loop run inside a
+  handler dispatches like any other message. Not run.
+
 ## PollSource
 
 WaylandPlatform declares one per manager after the display and the manager it polls for, so the

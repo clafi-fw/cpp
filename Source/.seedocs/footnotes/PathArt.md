@@ -34,7 +34,7 @@ any size shows the whole figure with no margin. A part the square cuts - a strin
 clipped at bounds.
 
 **One picture in every theme and look.** The figure is one of the scene's sprites in the colours the
-scene draws it in. MillScene's mill wears Fresh Spring's colours whatever theme is picked, and
+scene draws it in. MillScene's mill wears Clear Day's colours whatever theme is picked, and
 ChaseScene's wolf and hare their own daylight coats.
 
 ## SceneReadoutColors
@@ -107,7 +107,10 @@ none ignores the call.
 **One pick for every scene that offers themes.** The MillScene showcase shows the theme picker on
 the page of options of each of them, every picker showing the one pick, and a pick or a hover
 crossfades them all. It keeps the pick under SceneTheme, by the theme's name. With no pick kept,
-they open in the first theme of the list, Fresh Spring.
+they open in the first theme of the list, Clear Day.
+
+**The scene's context menu picks it too**, from the picker its Theme line opens - see Scene
+offersView.
 
 **Between the timer's ticks**, the showcase moves the shown scene's crossfade on at every move of
 the pointer over it, through animationTick().
@@ -126,6 +129,7 @@ one, by turns - and by the falling petals, which wear the first two in place of 
 OKLab their colour difference from the background is at least 0.15 for the runners, the cow and the
 mill, and 0.10 for every prop, where the theme leaves room for it - about as far apart as the
 daylight scenes already draw them. Golden Hour's and Winter Frost's cows keep their white.
+Summer Sunset's wolf and hare are drawn lighter and stand about 0.10 from its meadow.
 
 **A crossfade blends every colour field one by one** - see ThemeBlend. They stand in a row from
 skyTop to the end of `chase`, and colorsNum() counts them.
@@ -133,12 +137,18 @@ skyTop to the end of `chase`, and colorsNum() counts them.
 ## ChaseTheme
 
 The Chase's own colours in a theme: the mountains' clear colours, which the scene hazes as it does
-the far hills, their trees and fireflies - see ChaseScene hazed - the shades of the tree a branch
-run ends at, the trail and the grass, the four runners' coats, and every prop.
+the far hills, their trees and fireflies - see ChaseScene hazed - the tree a branch run ends at, the
+trail and the grass, the four runners' coats, and every prop.
 
-**Each object's colours are its daylight ones in the theme's light.** They are dimmed and tinted as
-the theme's sky is to daylight's, washed out as far as the theme has no colour, and then all moved
-lighter or darker together - only as far as its contrast needs, keeping to its daylight character.
+**Figures and props are well lit, at night as by day.** They start from Clear Day's colours,
+tinted a little toward the theme's sky, and keep their colour - except in Paper Sketch, whose look
+is a lack of it. Each object then moves lighter, or at most 0.10 darker, only as far as its contrast
+needs. Midnight Fantasy, Toxic Waste and Steampunk keep their objects in the theme's own light, with
+the ones that read too dark or dull lifted one by one. Vintage Noir's greys are set by hand.
+
+**The tree a branch run ends at has colours of its own** - treeCrown to treeBough - lit as the props
+are. It stands out at night, while the far hills' trees and the Mill's keep the theme's light; those
+are drawn from treeLeavesBase, treeTrunk, crownLight and crownMiddle.
 
 - A wolf's head and ears stand against the mountains; a hare stays below the far hills' top. Both
   are measured as they are drawn, hazed.
@@ -219,8 +229,12 @@ that control's. The pointer shows a hand wherever a drag moves the view.
 the scene answers that it took nothing, and on the readings over the scene, the showcase enters
 fullscreen or leaves it.
 
-**A right click on the fullscreen showcase opens a menu holding Exit full screen**, on the scene
-and on the readings over it alike. In a window the scene has no context menu.
+**A right click on the showcase opens the scene's context menu**, on the scene and on the readings
+over it alike. On a scene that offers themes, its Theme line wears the picked theme's swatch and
+opens the theme picker of the scene's page of options beside it: the pointer resting on a theme
+crossfades the scenes to it, and leaving the picker or closing the menu brings back the pick. A
+click picks a theme and closes the menu. In fullscreen the menu ends on Exit full screen. In a
+window a scene that offers no themes has no context menu.
 
 **A drag let go glides on** at the speed of its last 80 milliseconds and slows to about a third of
 it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second. Another

@@ -85,6 +85,12 @@ Connecting only inserts into the dispatcher this control has already contributed
 part being unbuilt does not matter, and nothing asks the control what it is until its first state
 query.
 
+**A command holding commands is available while nothing claims it** (2026-11-11, found by the
+MillScene showcase's Theme line, the first group line in an application). Action::resolve fell
+back to whether the action had an OnClick handler. A group action has none - its line is an
+Opener and opens the list itself - so the line came out disabled: greyed, and opening nothing on a
+rest of the pointer, a press or Right. opensList() joins the fallback.
+
 ## Tooltip
 
 **One per form, built with it.** The window a tooltip shows in stands over the window whose control
@@ -243,6 +249,26 @@ makeCurrentItem without checking that only scopes answered it.
 
 Not taken: keeping the pre-show focus and documenting it. A dialog built and never shown left the
 focus in it until it died, and then nowhere.
+
+## Control setVisible
+
+2026-11-11. Oj: "Buttons on a hidden title bar in full screen can be focused and clicked with
+keyboard". A button on MillScene's title bar held the focus, and a double click on the scene
+entered fullscreen, which hides the bar. setVisible(false) took the bar out of the layout and
+closed a popup standing on it, and left Input::focusHolder on the button. Navigation never enters a
+hidden control from outside - holdsNavigationStop tests visible() - but a walk that starts inside
+one moves among its children, which are visible themselves, and Return and Space click the holder.
+
+Decided with Oj: FormBase::controlHidden moves the focus out of a hidden control, to the nearest
+control over it that can take it - the walk the popup case already had - and to nobody where none
+can. Over a title bar nothing takes it, so the focus goes to nobody and formKeyDown starts the next
+walk at the root. Run last, the rule also takes the focus off a hidden top layer control when
+focusEntryPoint finds no stop.
+
+Weighed and not taken: focusEntryPoint where nothing over the control takes the focus, as the top
+layer rule falls back to - it puts a ring on the form's first stop, somewhere the user was not. And
+testing visibility in the navigator and in the Return and Space branch, which leaves the focus
+resting on a control off screen with isFocused() answering yes for it.
 
 ## Control isFocused
 

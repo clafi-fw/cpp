@@ -39,6 +39,8 @@ namespace ClaFi::PlatformImplementation::Linux
     private:
         void threadLoop();
         void cancelInternal(UiTimer*);
+        // The first timer waiting to fire, taken off the list, or null where none waits.
+        [[nodiscard]] UiTimer* takeFiredTimer();
     private:
         inline static TimerManager* s_standing{ nullptr };
         int m_eventFd{ -1 };
@@ -123,22 +125,17 @@ namespace ClaFi::PlatformImplementation::Linux
         }
     }
 
+    // **One at a time, each taken just before it fires.** A handler may run a loop of its own -
+    // a menu opening a list beside a line - and the timers still waiting are on the shared list,
+    // where that loop's dispatch fires them. Taken whole up front, they would wait for the inner
+    // loop to end: the window's repaint timer among them, and the window would stand still.
     void TimerManager::dispatchPending()
     {
         std::uint64_t counter = 0;
         ::read(m_eventFd, &counter, sizeof(counter));
 
-        std::vector<UiTimer*> localFired;
-        {
-            std::lock_guard<std::mutex> lock{ m_firedMutex };
-            localFired = std::move(m_firedTimers);
-            m_firedTimers.clear();
-        }
-
-        for (UiTimer* timer : localFired)
-        {
+        while (UiTimer* timer = takeFiredTimer())
             timer->fire();
-        }
     }
 
     void TimerManager::threadLoop()
@@ -188,5 +185,21 @@ namespace ClaFi::PlatformImplementation::Linux
         {
             m_timers.erase(it);
         }
+    }
+
+    // **What is left stays signalled**, so a loop the next handler runs wakes for it.
+    UiTimer* TimerManager::takeFiredTimer()
+    {
+        std::lock_guard<std::mutex> lock{ m_firedMutex };
+        if (m_firedTimers.empty())
+            return nullptr;
+        UiTimer* timer = m_firedTimers.front();
+        m_firedTimers.erase(m_firedTimers.begin());
+        if (!m_firedTimers.empty())
+        {
+            std::uint64_t counter = 1;
+            ::write(m_eventFd, &counter, sizeof(counter));
+        }
+        return timer;
     }
 }
