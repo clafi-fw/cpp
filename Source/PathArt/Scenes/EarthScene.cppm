@@ -153,7 +153,7 @@ namespace ClaFi::PathArt
         struct Coastline
         {
             std::vector<FloatPoint> lonLat;
-            std::vector<Direction> onEarth; // each point's direction, fixed to the Earth
+            std::vector<Direction> onEarth; // the outline on the sphere, fixed to the Earth
             bool counterClockwise; // the way its points run, seen from outside the Earth
             bool iceSheet; // Greenland's or Antarctica's: white until the map is built, townless
         };
@@ -187,6 +187,9 @@ namespace ClaFi::PathArt
         struct GlobePicture;
     private:
         [[nodiscard]] static BuiltCoasts buildCoasts();
+        // An outline's points on the sphere, less a stretch that runs out and back over itself.
+        [[nodiscard]] static std::vector<Direction> outlineOnEarth(
+            std::span<const FloatPoint> lonLat);
         // Towns spread evenly over the land, until the land's map places them.
         [[nodiscard]] static std::vector<City> evenTowns(std::span<const Coastline>);
         // Towns where the land's map makes them likely. See PathArt#earthscene

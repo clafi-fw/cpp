@@ -118,6 +118,8 @@ namespace ClaFi::PathArt
         constexpr float k_glowingBrightness{ 0.97f };
         // How far apart the points are where a shape's edge follows the rim.
         constexpr float k_rimStep{ 2.0f * k_degree };
+        // How far two directions to one point may differ by rounding, in each axis.
+        constexpr float k_samePointTolerance{ 1.0e-6f };
         // How far a point of cloud faces the viewer when it starts fading into the haze.
         constexpr float k_cloudHazeDepth{ 0.12f };
         // The rows of a picture worked out together on one core, and laid in as one.
@@ -3860,10 +3862,7 @@ namespace ClaFi::PathArt
                 const FloatPoint to = outline[(i + 1) % outline.size()];
                 twiceArea += from.x * to.y - to.x * from.y;
             }
-            std::vector<Direction> onEarth;
-            onEarth.reserve(outline.size());
-            for (const FloatPoint lonLat : outline)
-                onEarth.push_back(Globe::onEarthAt(lonLat));
+            std::vector<Direction> onEarth = outlineOnEarth(outline);
             const bool iceSheet = isIceSheet(outline);
             coastlines.push_back({
                 .lonLat = std::move(outline),
@@ -3874,6 +3873,40 @@ namespace ClaFi::PathArt
         }
         std::vector<City> towns = evenTowns(coastlines);
         return { .coastlines = std::move(coastlines), .towns = std::move(towns) };
+    }
+
+    // **A stretch of the outline that runs out and back over itself is left out**: on the sphere
+    // its legs are one path, crossing the rim twice at one angle, and nearSideOf orders the
+    // crossings round the rim by their angles.
+    std::vector<EarthScene::Direction> EarthScene::outlineOnEarth(
+        const std::span<const FloatPoint> lonLat)
+    {
+        std::vector<Direction> outline;
+        outline.reserve(lonLat.size());
+        for (const FloatPoint point : lonLat)
+            outline.push_back(Globe::onEarthAt(point));
+        const auto samePoint = [](const Direction& first, const Direction& second) {
+            return std::abs(first.x - second.x) <= k_samePointTolerance
+                && std::abs(first.y - second.y) <= k_samePointTolerance
+                && std::abs(first.z - second.z) <= k_samePointTolerance;
+        };
+        for (std::size_t i = 0; i + 1 < outline.size(); ++i)
+        {
+            if (!samePoint(outline[i], outline[i + 1]))
+                continue;
+            // Walked outward from the turn while the two legs' points coincide.
+            std::size_t wayOutIndex = i;
+            std::size_t wayBackIndex = i + 1;
+            while (wayOutIndex > 0 && wayBackIndex + 1 < outline.size()
+                && samePoint(outline[wayOutIndex - 1], outline[wayBackIndex + 1]))
+            {
+                --wayOutIndex;
+                ++wayBackIndex;
+            }
+            outline.erase(outline.begin() + static_cast<std::ptrdiff_t>(wayOutIndex + 1),
+                outline.begin() + static_cast<std::ptrdiff_t>(wayBackIndex + 1));
+        }
+        return outline;
     }
 
     // The towns go anywhere on the land up to 62 degrees north, the ice sheet left out.

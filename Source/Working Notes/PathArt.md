@@ -524,6 +524,29 @@ the other way inside the crossing, and when that part dips behind, the join runs
 and fills the disc outside the shape. Japan did, at Hokkaido, until its two northern corners were
 swapped. The grained outlines were checked: no edge crosses another within 120 points of it.
 
+**Antarctica's legs to the pole are left out on the sphere** (Oj, 2026-11-11, "antarctica is
+glitching", with a recording of a slow drag near the South Pole). Its outline closes along the map's
+edge, so it runs down the 180th meridian to the pole and back up beside itself; after the grain the
+54 points of each leg stand within 2.4e-8 of the other's, one path on the sphere. When the rim
+crosses that path, its two crossings stand at one angle, and which of them the walk round the rim
+takes first follows the rounding. With the pole in view, the stretch over the pole joined itself,
+and its loop closed with a chord across the rim's arc, so the ice between the two dropped out. A
+drag moves the rounding from frame to frame: in the recording the strip of ice along the limb, left
+of the peninsula, went for single frames (129, 132 and 191 of 268) and the rest of the globe moved
+smoothly. outlineOnEarth leaves out every stretch that runs out and back over itself. Antarctica's
+is the only one, 107 of its 2543 points; its lonLat stays whole for the towns' grid and the coast
+distances.
+
+- Measured with a probe on the container: EarthScene's own nearSideOf on the grained outlines,
+  through a hook in a copy of the scene, its loops summed as coverBand sums them, against the
+  outline's inside in longitude and latitude, 100 x 100 samples over the disc. Views turned so the
+  rim runs through the legs: before, 46 of 300 off by more than 20 samples, worst 73; turned on by
+  60 steps of 2e-5 radians each, 8 of 70 views flipped between right and wrong from step to step and
+  2 were wrong at every step. After, the worst of the 300 is 0 samples and none of the 70 flips.
+  Over 300 random views the worst went from 21 to 0.
+- Not rendered in the scene: the frames of a drag over the pole were not reproduced here.
+- Probe and patch in Claude Output\Antarctica Rim.
+
 **The ocean is a layer of its own, and space stops at the limb** (2026-11-08). In Oj's MSVC profile
 the Satellite was the slowest scene; the ocean's gradient, laid through the globe's clip over the
 whole frame, took 4.5 ms of a 34 ms frame in the harness, and below the limb the kept space was
