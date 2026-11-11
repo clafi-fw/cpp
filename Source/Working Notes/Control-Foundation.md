@@ -325,7 +325,8 @@ answer and the offered box; the guard stands, since `contentAroundText` leaves t
 ## Edge reach
 
 **A pointer pushed against a maximized window's edge meets what stands k_edgeReach in** - eight
-design pixels. FormBase::searchPoint moves a point that close to the edge to that depth before
+design pixels, and a fullscreen window's edge is met the same way since 2026-11-11.
+FormBase::searchPoint moves a point that close to the edge to that depth before
 the search, so a press against the top lands on a tab on the title and one in the corner on the
 close button, rather than on the root's border ring or the band above the tabs.
 

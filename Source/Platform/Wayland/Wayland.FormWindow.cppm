@@ -40,6 +40,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         void keyReleased() override;
         void resized(IntSize, const WindowFrame&) override;
         void focusChanged(bool focused) override;
+        void fullscreenChanged() override;
         void scaleChanged() override;
         void paint() override;
     private:
@@ -50,8 +51,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] int takeClickCount(IntPoint, std::uint32_t time);
         // **Which edge or corner this point sizes the window from**, as an xdg_toplevel resize
         // edge, or zero for a point that sizes nothing. Only a window the user is allowed to size
-        // has any: a menu and a tooltip are whatever their content came to, and a maximized window
-        // is what the compositor holds it to.
+        // has any: a menu and a tooltip are whatever their content came to, and a maximized or
+        // fullscreen window is what the compositor holds it to.
         [[nodiscard]] std::uint32_t borderResizeEdges(IntPoint);
         // A length stated at 100%, in the real pixels this window is drawn in.
         [[nodiscard]] int scaledLength(int length) const
@@ -265,6 +266,11 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_form.wnd_focusChanged();
     }
 
+    void FormWindow::fullscreenChanged()
+    {
+        m_form.wnd_fullscreenChanged();
+    }
+
     void FormWindow::scaleChanged()
     {
         // The form re-measures everything it holds against the new scale. It is told in percent
@@ -385,11 +391,11 @@ namespace ClaFi::PlatformImplementation::Wayland
     std::uint32_t FormWindow::borderResizeEdges(IntPoint pt)
     {
         // A layer surface is sized by the compositor between its anchors, and has no edge the
-        // user may take hold of. Nor has a window its content sizes, nor a maximized one: the
-        // compositor refuses to size it, so a press handed over from its edge would go nowhere,
-        // and the edge belongs to the controls standing there - see Edge reach in
+        // user may take hold of. Nor has a window its content sizes, nor a maximized or fullscreen
+        // one: the compositor refuses to size it, so a press handed over from its edge would go
+        // nowhere, and the edge belongs to the controls standing there - see Edge reach in
         // Control-Foundation.
-        if (!userSized() || isLayerRole() || isMaximized())
+        if (!userSized() || isLayerRole() || isMaximized() || isFullscreen())
             return XDG_TOPLEVEL_RESIZE_EDGE_NONE;
 
         const IntSize size = m_buffers.size();

@@ -51,6 +51,22 @@ state - DefWindowProc would raise it only over a caption it measures, and a wind
 client area has none by that measure; Wayland sends xdg_toplevel.show_window_menu with the point in
 surface coordinates.
 
+## IPlatformWindow setFullscreen
+
+2026-11-11, asked for as "MillScene fullscreen mode". The framework had maximize, restore and
+minimize; Wayland read the fullscreen state a compositor set and nothing asked for it.
+
+Spelled as setAlwaysOnTop and isAlwaysOnTop are, and declared after them. `fullscreen()` beside
+`maximize()` was not taken: `restore()` would then have two meanings, and unset_fullscreen and
+unset_maximized are two requests.
+
+**The form is told by a call of its own**, IForm::wnd_fullscreenChanged, and not through
+wnd_resize. A window maximized on an output with no panel can go fullscreen at the size and the
+frame it already has, and wnd_resize returns at once on a resize that moved nothing.
+
+Oj's picks: the config keeps no fullscreen state ("4 a"), so storeFormPlacement stores the
+placement fullscreen was entered from on both platforms.
+
 ## AppContext::connectUpdateCheck
 
 The call is made while the context is built, before the config is read; the stored answer arrives

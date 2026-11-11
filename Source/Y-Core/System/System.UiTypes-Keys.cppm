@@ -30,5 +30,6 @@ namespace ClaFi
         constexpr KeyCode F3 = 0x72;
         constexpr KeyCode F4 = 0x73;
         constexpr KeyCode F5 = 0x74;
+        constexpr KeyCode F11 = 0x7a;
     }
 }

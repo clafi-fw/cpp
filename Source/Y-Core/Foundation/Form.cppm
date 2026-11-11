@@ -78,6 +78,13 @@ namespace ClaFi
         using EventOf<FormBase>::EventOf;
     };
 
+    // The form's window has entered or left fullscreen. See Control-Foundation
+    export class FormFullscreenChangeEvent : public EventOf<FormBase>
+    {
+    public:
+        using EventOf<FormBase>::EventOf;
+    };
+
     // The form's content is laid out and nothing asked for another pass. See Control-Foundation
     export class FormAlignedEvent : public EventOf<FormBase>
     {
@@ -186,6 +193,7 @@ namespace ClaFi
         DECLARE_EVENT(FormClosingEvent, OnClosing, onClosing)
         DECLARE_EVENT(FormFocusChangeEvent, OnFocusChange, onFocusChange)
         DECLARE_EVENT(FormPositionChangeEvent, OnPositionChange, onPositionChange)
+        DECLARE_EVENT(FormFullscreenChangeEvent, OnFullscreenChange, onFullscreenChange)
         DECLARE_EVENT(FormAlignedEvent, OnAligned, onAligned)
     public:
         // A form has no dispatcher of its own. Its root control is the other half of the same
@@ -354,6 +362,9 @@ namespace ClaFi
         void minimize() { m_window->minimize(); }
         [[nodiscard]] bool isMaximized() { return m_window->isMaximized(); }
         [[nodiscard]] bool isMinimized() { return m_window->isMinimized(); }
+        // Asks for the whole screen, or for the placement left for it. See Control-Foundation
+        void setFullscreen(bool value) { m_window->setFullscreen(value); }
+        [[nodiscard]] bool isFullscreen() const { return m_window->isFullscreen(); }
         // Held above the other windows. Stored with the placement where the platform can set it.
         [[nodiscard]] bool canSetAlwaysOnTop() const { return m_window->canSetAlwaysOnTop(); }
         [[nodiscard]] bool isAlwaysOnTop() const { return m_window->isAlwaysOnTop(); }
@@ -417,6 +428,7 @@ namespace ClaFi
         const Graphics::ShadowPainter& wnd_shadowPainter() const override;
         void wnd_posChanged() override;
         void wnd_focusChanged() override;
+        void wnd_fullscreenChanged() override;
         void wnd_minimize() override;
         void wnd_maximize() override;
         void wnd_restore() override;
@@ -533,7 +545,7 @@ namespace ClaFi
         void dropActivePopup();
         SearchControlResult controlAt(Control&, PointInControl, FloatRect clipRect);
         SearchControlResult controlAt(PointInForm);
-        // Where the search meets the pointer - a maximized window's edge is met further in.
+        // Where the search meets the pointer: held in from a maximized or fullscreen window's edge.
         [[nodiscard]] PointInForm searchPoint(PointInForm) const;
     private:
         // How many designs shadowPainter keeps baked.

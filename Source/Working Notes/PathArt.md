@@ -155,6 +155,17 @@ waiting out the double-click time, and the first click's toggle standing, Oj kep
 answers DoubleClickEvent on the panel itself and does not stop it, so FormBase::wnd_doubleClick
 hands the second press on to wnd_mouseDown as it does for every control that leaves it.
 
+**doubleClickView answers whether the scene took the double click** (Oj, 2026-11-11, "Double click
+which a scene has not handled", for the showcase's fullscreen). The default answers false and the
+Earth answers true. ScenePanel asks only where a drag moves the view, as before, and enters or
+leaves fullscreen on a double click nothing took.
+
+**The panel hears the double click as it bubbles** (Oj, 2026-11-11, "It fails to catch double
+click under(and on) the readout"). ScenePanel::doubleClick was raised only for a double click on
+the panel itself. One on the readout, the chart or the bar holding them has that control for
+its receiver, there being no ClickTarget::Self above it. nestedDoubleClick passes through the
+panel from all of them, and the scene is still asked only where the panel itself was clicked.
+
 **Every scene draws its own icon** (Oj, 2026-11-09, "Make the scene buttons big tiles with top
 icons, in rows"). Of a still of each scene, the scene's own sprite and eight new line pictograms,
 mocked up from the scene code, Oj picked the sprite. drawIcon is a pure virtual on Scene rather

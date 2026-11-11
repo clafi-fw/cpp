@@ -97,6 +97,27 @@ watcher follows paints from window to window.
 
 **Raised only while something is connected** - a form nobody watches reads no clock.
 
+## FormFullscreenChangeEvent
+
+`sender()` is the form. **Raised when its window has entered or left fullscreen**, with
+`isFullscreen()` already answering the state the window is in.
+
+**Follow the event, not the request.** A compositor may refuse a request, and may put the window
+fullscreen itself. A form that shows and hides its bars in a handler is right in every case.
+
+**The handler runs before the first frame in the new state**, so what it hides or shows is in
+that frame.
+
+## FormBase setFullscreen
+
+**Asks the window for its whole screen, or for the placement it left** - see IPlatformWindow
+setFullscreen for what each platform answers. A fullscreen window wears no frame: its root has
+no margins, corners or border - see WindowFrame.
+
+**What stands on the screen is the form's own.** A title bar stays unless the form hides it. The
+MillScene showcase hides its title bar on FormFullscreenChangeEvent, and leaves fullscreen on the
+key that entered it, on Escape, and on a double click its scene does not take.
+
 ## FormControlBase
 
 **The root's style decides how the window looks** - its frame, its radius and the shadow it casts

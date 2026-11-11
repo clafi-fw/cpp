@@ -180,6 +180,51 @@ middle of every run, and a font resolved once makes each glyph after that an arr
 add_toplevel carries no timing rule, and a name the session does not know turns restore_toplevel
 into exactly that request.
 
+## Window setFullscreen
+
+2026-11-11. The Win32 half is written without a Windows build here; Oj builds and runs it.
+Its calls are compiled against the mingw-w64 headers in a stand-in file, which checks the
+spelling of the calls and nothing of what they do. The Wayland half compiles under clang 20 and
+was run under sway.
+
+**First version, 04:30: shown normal at the monitor's rect.** A maximized window was taken out
+of that state on the way in, by SetWindowPlacement with SW_SHOWNORMAL, and the kept placement
+handed back on the way out. Two readings stood behind it, neither a measurement: ReactOS's
+IntSetWindowPlacement moves a window still maximized with SWP_NOSIZE, and Blender's task T86859
+reports a window made fullscreen from maximized stopping short of the taskbar until WS_MAXIMIZE
+was cleared.
+
+**What Oj's two recordings showed, 04:45** (3840 x 2160, taskbar on top, read frame by frame at
+30 a second):
+- Back to maximized went through the restored rect: two frames of the fullscreen picture's corner
+  in the restored window, a frame of the restored window laid out, then the system's own
+  maximize animation.
+- From a normal window, one frame of the windowed picture, title bar and all, in the top left of
+  the screen: the window stood at the monitor's rect before its new frame was shown.
+- Back to a normal window, one frame of the fullscreen picture's corner in the window, in one of
+  two tries.
+
+**Second version: the state is kept and only the rect moves.** It is what Chromium's
+fullscreen_handler.cc does - the styles off, one SetWindowPos to the monitor's rect, the styles
+and the saved window rect back - and the system has no state change to animate. The Blender
+report is about maximizing a window already maximized through SetWindowPlacement, which this
+does not do.
+
+**The frame is made before the move**, through FormWindow::stateBounds, the way a placement
+makes it: the form is told, laid out and painted for the next rect, the presenter shows that
+frame, and SetWindowPos follows. For a maximized rect not yet taken, appliedFrame measures the
+overhang on statedBounds, which is the same rect as the window's own at every other time.
+
+**Entering goes to HWND_TOP**, as the recipe of The Old New Thing (2010-04-12) does; Chromium
+keeps the z-order and tells the shell through ITaskbarList2::MarkFullscreenWindow instead. If a
+taskbar is ever seen over the fullscreen window, that call is the next thing to try.
+
+Left as it is, none of it seen:
+- WM_DPICHANGED on a fullscreen window still takes the rect the system suggests.
+- A display or work area change does not refit the window, and the rect kept for the way out
+  is the one from before it.
+- A minimized fullscreen window that was maximized is restored by the system's own rule.
+
 ## DisplayManager::awaitSessionId
 
 Waiting is a roundtrip, and a roundtrip dispatches every event that has arrived, at a moment - a

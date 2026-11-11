@@ -211,9 +211,13 @@ EarthScene. A scene that offers none leaves both as they are.
 a drag moves the view - see Scene dragMovesViewFrom - stops a glide and holds the view until it is
 let go - see Scene holdView and Scene letGoView. Let go before the pointer leaves the slack a click
 is allowed (DragEvent pastThreshold), the press is a click - see Scene clickView - and a double
-click there is the scene's as well - see Scene doubleClickView. A press anywhere else leaves the
+click there is the scene's first - see Scene doubleClickView. A press anywhere else leaves the
 scene moving as it was, and one on a control over the scene, such as the readings beside it, is
 that control's. The pointer shows a hand wherever a drag moves the view.
+
+**A double click the scene leaves is the window's.** Where a drag does not move the view, where
+the scene answers that it took nothing, and on the readings over the scene, the showcase enters
+fullscreen or leaves it.
 
 **A drag let go glides on** at the speed of its last 80 milliseconds and slows to about a third of
 it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second. Another
@@ -255,6 +259,9 @@ calls doubleClickView() as the second press comes down, once the first has been 
 see Scene clickView. The second press then goes on as a press: it holds the view, and a still
 let-go of it is a click again, so a scene that toggles something on a click sees it toggled and
 back. The Earth scene takes a double click to move the day on - see EarthScene.
+
+**The scene answers whether it took the double click.** True keeps it the scene's. False, which
+is what a scene that overrides nothing answers, hands it to the host - see Scene offersView.
 
 ## SceneChoice
 

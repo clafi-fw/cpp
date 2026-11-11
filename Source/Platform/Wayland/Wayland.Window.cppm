@@ -123,6 +123,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] bool canSetAlwaysOnTop() const override { return false; }
         [[nodiscard]] bool isAlwaysOnTop() const override { return false; }
         void setAlwaysOnTop(bool) override {}
+        // Asked of the compositor; the state is the next configure's, as with maximize.
+        void setFullscreen(bool value) override;
+        [[nodiscard]] bool isFullscreen() const override { return m_fullscreen; }
         // **The name this toplevel restores by** in the application's session. Stated before the
         // first placement, which makes the toplevel and names it - see createToplevel.
         void setSessionName(std::string_view value) { m_sessionName = value; }
@@ -183,6 +186,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         virtual void keyReleased() {}
         virtual void resized(IntSize, const WindowFrame&) {}
         virtual void focusChanged(bool focused) {}
+        virtual void fullscreenChanged() {}
         virtual void scaleChanged() {}
         // The compositor has been asked to close this window. Taking it at its word is the
         // default; a form with unsaved work is what would refuse.
@@ -893,6 +897,21 @@ namespace ClaFi::PlatformImplementation::Wayland
         // A bare commit on an unmapped surface asks for it to be mapped - see show.
         if (m_configured && !m_unmapped && m_visible)
             ::wl_surface_commit(m_surface);
+    }
+
+    // **No output is named**, so the compositor takes the one the window stands on. A window with
+    // no toplevel role - one not placed yet, a layer surface - has nothing to ask it of.
+    void Window::setFullscreen(const bool value)
+    {
+        if (traceEnabled())
+            std::fprintf(stderr, "[wayland] ask     %p %s\n", static_cast<void*>(this),
+                value ? "set_fullscreen" : "unset_fullscreen");
+        if (!m_toplevel)
+            return;
+        if (value)
+            ::xdg_toplevel_set_fullscreen(m_toplevel, nullptr);
+        else
+            ::xdg_toplevel_unset_fullscreen(m_toplevel);
     }
 
     // **Added, not restored, and mapped this whole time.** A session opened while this window stood
@@ -1701,6 +1720,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         const bool firstConfigure = !m_configured;
         const bool scaleWasChanged = m_pendingScale120 != m_scale120;
         const bool focusWasChanged = m_pendingActivated != m_activated;
+        const bool fullscreenWasChanged = m_pendingFullscreen != m_fullscreen;
         const WindowFrame frameBefore = appliedFrame();
         const IntSize sizeBefore = m_size;
 
@@ -1763,6 +1783,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             scaleChanged();
         if (focusWasChanged)
             focusChanged(m_activated);
+        if (fullscreenWasChanged)
+            fullscreenChanged();
         // **A move takes effect at the commit after its acknowledgement**, and a reposition that
         // kept the size leaves nothing above this line a reason to paint - so the popup would
         // stand where the configure before this one put it. See onPopupRepositioned.

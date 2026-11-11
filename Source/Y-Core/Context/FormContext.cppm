@@ -219,6 +219,7 @@ namespace ClaFi
         [[nodiscard]] virtual const Graphics::ShadowPainter& wnd_shadowPainter() const = 0;
         virtual void wnd_posChanged() = 0;
         virtual void wnd_focusChanged() = 0;
+        virtual void wnd_fullscreenChanged() = 0; // the window has entered or left fullscreen
         virtual void wnd_minimize() = 0;
         virtual void wnd_maximize() = 0;
         virtual void wnd_restore() = 0;
@@ -336,6 +337,9 @@ namespace ClaFi
         [[nodiscard]] virtual bool canSetAlwaysOnTop() const = 0;
         [[nodiscard]] virtual bool isAlwaysOnTop() const = 0;
         virtual void setAlwaysOnTop(bool) = 0;
+        // Asks for the window's whole screen, or for the placement it left. See Context
+        virtual void setFullscreen(bool) = 0;
+        [[nodiscard]] virtual bool isFullscreen() const = 0;
     };
 
     // A backend answers to one of two contracts, and the contract is what the core knows about - not

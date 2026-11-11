@@ -3339,9 +3339,10 @@ namespace ClaFi::PathArt
     // **A double click moves the day on by a quarter**: the Sun goes back round the Earth's axis as
     // far as a quarter turn of the Earth carries the ground on, so the light moves over the ground
     // as the hours move it. See PathArt#earthscene
-    void EarthScene::doubleClickView(const FloatRect&)
+    bool EarthScene::doubleClickView(const FloatRect&)
     {
         m_sunTurns -= k_dayPerDoubleClick;
+        return true;
     }
 
     std::span<const SceneGesture> EarthScene::gestures() const

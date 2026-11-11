@@ -36,7 +36,7 @@ namespace ClaFi::PathArt
         void holdView(bool held) override;
         void letGoView(FloatPoint speed, const FloatRect& bounds) override;
         void clickView(const FloatRect&) override;
-        void doubleClickView(const FloatRect&) override;
+        [[nodiscard]] bool doubleClickView(const FloatRect&) override;
         [[nodiscard]] std::span<const SceneGesture> gestures() const override;
         void storeView(Dom::Section& view) const override;
         void restoreView(const Dom::Section& view) override;

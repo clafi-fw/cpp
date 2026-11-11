@@ -1459,6 +1459,12 @@ namespace ClaFi
         closeActivePopup();
     }
 
+    void FormBase::wnd_fullscreenChanged()
+    {
+        FormFullscreenChangeEvent event{ *this };
+        emitEvent(event);
+    }
+
     void FormBase::wnd_minimize()
     {
     }
@@ -2589,12 +2595,12 @@ namespace ClaFi
         return controlAt(m_content, searched, m_content.boundsInParent());
     }
 
-    // **A pointer pushed against a maximized window's edge meets what stands k_edgeReach in.** A
-    // point outside the window is left where it is, so a drag carried past the edge keeps its
-    // course.
+    // **A pointer pushed against the edge of a maximized or fullscreen window meets what stands
+    // k_edgeReach in.** A point outside the window is left where it is, so a drag carried past the
+    // edge keeps its course.
     PointInForm FormBase::searchPoint(PointInForm pt) const
     {
-        if (!window().isMaximized())
+        if (!window().isMaximized() && !window().isFullscreen())
             return pt;
         const FloatRect area = geometry();
         if (!area.contains(pt))

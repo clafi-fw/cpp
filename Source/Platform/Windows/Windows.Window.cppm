@@ -143,7 +143,8 @@ namespace ClaFi::PlatformImplementation::Windows
         void setFrame(const WindowFrame& value) override { m_frameDesign = value; }
         [[nodiscard]] const WindowFrame& frameDesign() const { return m_frameDesign; }
         // **The frame this window applies**, in real pixels: the design, less the corners when
-        // snapped; when maximized, only how far the window hangs past the work area.
+        // snapped; when maximized, only how far the window hangs past the work area; fullscreen,
+        // none.
         [[nodiscard]] WindowFrame appliedFrame() const;
         // The window rect past the geometry: the border, or the resize grab on a user-sized window.
         [[nodiscard]] FrameMargins ring() const;
@@ -162,6 +163,9 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] bool canSetAlwaysOnTop() const override { return true; }
         [[nodiscard]] bool isAlwaysOnTop() const override;
         void setAlwaysOnTop(bool value) override;
+        // The monitor's whole rect, or back to the rect kept on the way in. See Platform
+        void setFullscreen(bool value) override;
+        [[nodiscard]] bool isFullscreen() const override { return m_fullscreenReturn.has_value(); }
         // <---- IFormWindow
         // **The placement a config remembered**, taken instead of the default by every placement
         // until the window is shown, and shown maximized and held on top where it says so.
@@ -178,15 +182,27 @@ namespace ClaFi::PlatformImplementation::Windows
         [[nodiscard]] virtual IntRect statedBounds() const { return bounds(); }
         void wndProc(WinApiMsg& msg) override;
         virtual void focusChanged() {}
+        // The fullscreen state has changed, and the window takes this rect next.
+        virtual void fullscreenChanged(const IntRect&) {}
         [[nodiscard]] float scaleFactor() const { return m_scaleFactor; }
         void setScaleFactor(float value) { m_scaleFactor = value; }
         [[nodiscard]] bool isArranged() const;
+    private:
+        // Where a fullscreen window comes back to, and what a config keeps of it meanwhile.
+        struct FullscreenReturn
+        {
+            IntRect bounds{};
+            ::WINDOWPLACEMENT placement{};
+        };
     private:
         // The ring an ordinary window wears - what a normal rect reaches past its geometry by.
         [[nodiscard]] FrameMargins normalRing() const;
         // How far an ordinary window's rect reaches past its geometry, before the margins cap it.
         [[nodiscard]] int ringReach() const;
         [[nodiscard]] static FrameMargins ringWithin(const FrameMargins& margins, int reach);
+        // Writes the caption and sizing styles a dialog wears now; answers whether any changed.
+        bool writeDialogStyles();
+        void stateFrameChange(); // has the system read the styles again, moving and sizing nothing
     private:
         static HWND getFocusedWnd() { return s_focusedWnd; }
         static void setFocusedWnd(const HWND);
@@ -210,6 +226,7 @@ namespace ClaFi::PlatformImplementation::Windows
         IntRect m_placedBounds{};
         bool m_standsAbove{ false };   // where the last placement stood it - see standsAbove
         std::optional<NormalPlacement> m_normalPlacement{};
+        std::optional<FullscreenReturn> m_fullscreenReturn{}; // held while the window is fullscreen
     };
 
     // **A message-only window**, never shown; its messages go to the sink it is given. See Platform
@@ -584,45 +601,42 @@ namespace ClaFi::PlatformImplementation::Windows
         if (m_Role != WindowRole::Dialog || rangeOpen == m_userSized)
             return;
         m_userSized = rangeOpen;
-        constexpr DWORD k_sizingStyles = WS_SIZEBOX | WS_MAXIMIZEBOX;
-        const DWORD style = ::GetWindowLongW(handle(), GWL_STYLE);
-        const DWORD stated = rangeOpen ? style | k_sizingStyles : style & ~k_sizingStyles;
-        ::SetWindowLongW(handle(), GWL_STYLE, static_cast<LONG>(stated));
-        // The system reads the styles again on a frame change. The frame is the framework's own,
-        // so the change moves and sizes nothing.
-        ::SetWindowPos(handle(), nullptr, 0, 0, 0, 0,
-            SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+        if (writeDialogStyles())
+            stateFrameChange();
     }
 
-    // **The part of a window past its monitor's work area.** A maximized window is sized to the
-    // work area plus its resize borders and keeps all of it as client area - see WM_NCCALCSIZE in
-    // FormWindow - and what lands on a taskbar is covered by it, so the work area is what the
+    // **The part of a window rect past its monitor's work area.** A maximized window is sized to
+    // the work area plus its resize borders and keeps all of it as client area - see WM_NCCALCSIZE
+    // in FormWindow - and what lands on a taskbar is covered by it, so the work area is what the
     // screen shows.
-    [[nodiscard]] static FrameMargins overhangPastWorkArea(HWND hwnd)
+    [[nodiscard]] static FrameMargins overhangPastWorkArea(const IntRect& windowRect)
     {
-        ::RECT windowRect{};
-        if (!::GetWindowRect(hwnd, &windowRect))
-            return {};
-        const ::HMONITOR hMon = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        const ::HMONITOR hMon = ::MonitorFromRect(
+            reinterpret_cast<const ::RECT*>(&windowRect), MONITOR_DEFAULTTONEAREST);
         ::MONITORINFO monInfo{};
         monInfo.cbSize = sizeof ::MONITORINFO;
         if (!::GetMonitorInfoW(hMon, &monInfo))
             return {};
-        const ::RECT& work = monInfo.rcWork;
+        const IntRect& work = reinterpret_cast<const IntRect&>(monInfo.rcWork);
         return {
-            std::max(0, static_cast<int>(work.left - windowRect.left)),
-            std::max(0, static_cast<int>(work.top - windowRect.top)),
-            std::max(0, static_cast<int>(windowRect.right - work.right)),
-            std::max(0, static_cast<int>(windowRect.bottom - work.bottom))
+            std::max(0, work.left - windowRect.left),
+            std::max(0, work.top - windowRect.top),
+            std::max(0, windowRect.right - work.right),
+            std::max(0, windowRect.bottom - work.bottom)
         };
     }
 
     WindowFrame Window::appliedFrame() const
     {
         WindowFrame result{};
+        // The monitor's own rect: nothing around the window, and nothing of it past the screen.
+        if (isFullscreen())
+            return result;
+        // Measured on the rect the surface is laid out for, which a maximized window coming
+        // back from fullscreen has not taken yet - see statedBounds.
         if (::IsZoomed(handle()))
         {
-            result.overhang = overhangPastWorkArea(handle());
+            result.overhang = overhangPastWorkArea(statedBounds());
             return result;
         }
         result.margins = m_frameDesign.margins;
@@ -694,6 +708,36 @@ namespace ClaFi::PlatformImplementation::Windows
             std::min(margins.right, reach),
             std::min(margins.bottom, reach)
         };
+    }
+
+    // **A fullscreen dialog wears neither the caption nor the sizing frame**, as a borderless
+    // window does, so the system has nothing to move, size or snap it by. In a window the caption
+    // stands, and the sizing frame with it while the user sizes it.
+    bool Window::writeDialogStyles()
+    {
+        constexpr DWORD k_captionStyles = WS_CAPTION;
+        constexpr DWORD k_sizingStyles = WS_SIZEBOX | WS_MAXIMIZEBOX;
+        DWORD worn = 0;
+        if (!isFullscreen())
+        {
+            worn = k_captionStyles;
+            if (m_userSized)
+                worn |= k_sizingStyles;
+        }
+        const DWORD style = ::GetWindowLongW(handle(), GWL_STYLE);
+        const DWORD written = (style & ~(k_captionStyles | k_sizingStyles)) | worn;
+        if (written == style)
+            return false;
+        ::SetWindowLongW(handle(), GWL_STYLE, static_cast<LONG>(written));
+        return true;
+    }
+
+    // The system reads the styles again on a frame change. The frame is the framework's own, so
+    // the change moves and sizes nothing.
+    void Window::stateFrameChange()
+    {
+        ::SetWindowPos(handle(), nullptr, 0, 0, 0, 0,
+            SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
     }
 
     // **Never larger than the room it may stand in. ClampTo moves** a rect inside its boundary and
@@ -998,8 +1042,9 @@ namespace ClaFi::PlatformImplementation::Windows
         auto enable = [menu](UINT command, bool enabled) {
             ::EnableMenuItem(menu, command, MF_BYCOMMAND | (enabled ? MF_ENABLED : MF_GRAYED));
         };
-        enable(SC_RESTORE, zoomed || iconic);
-        enable(SC_MOVE, !zoomed && !iconic);
+        const bool fullscreen = isFullscreen();
+        enable(SC_RESTORE, (zoomed && !fullscreen) || iconic);
+        enable(SC_MOVE, !zoomed && !iconic && !fullscreen);
         enable(SC_SIZE, (style & WS_SIZEBOX) != 0 && !zoomed && !iconic);
         enable(SC_MINIMIZE, (style & WS_MINIMIZEBOX) != 0 && !iconic);
         enable(SC_MAXIMIZE, (style & WS_MAXIMIZEBOX) != 0 && !zoomed);
@@ -1054,15 +1099,62 @@ namespace ClaFi::PlatformImplementation::Windows
             SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
     }
 
+    // **The window keeps the state it has, maximized or not, and only its rect changes**: its
+    // monitor's whole rect on the way in, the rect it stood at on the way out. One move each way,
+    // with the styles read again in it, so the system shows no state change of its own between.
+    // What is laid out and shown for the next rect is made before the move - see
+    // fullscreenChanged.
+    void Window::setFullscreen(const bool value)
+    {
+        if (m_Role != WindowRole::Dialog || value == isFullscreen())
+            return;
+
+        IntRect nextBounds{};
+        if (value)
+        {
+            // A window not shown stands on no monitor yet, and its first placement is to come.
+            if (!::IsWindowVisible(handle()))
+                return;
+            FullscreenReturn standing{ .bounds = bounds() };
+            standing.placement.length = sizeof ::WINDOWPLACEMENT;
+            ::MONITORINFO monInfo{};
+            monInfo.cbSize = sizeof ::MONITORINFO;
+            const ::HMONITOR hMon = ::MonitorFromWindow(handle(), MONITOR_DEFAULTTONEAREST);
+            if (!::GetWindowPlacement(handle(), &standing.placement)
+                || !::GetMonitorInfoW(hMon, &monInfo))
+            {
+                return;
+            }
+            m_fullscreenReturn = standing;
+            nextBounds = reinterpret_cast<const IntRect&>(monInfo.rcMonitor);
+        }
+        else
+        {
+            nextBounds = m_fullscreenReturn->bounds;
+            m_fullscreenReturn.reset();
+        }
+
+        writeDialogStyles();
+        fullscreenChanged(nextBounds);
+        // Entering brings the window to the top of the z-order, where a fullscreen one stands.
+        const UINT zOrderFlags = value ? 0 : SWP_NOZORDER;
+        ::SetWindowPos(handle(), HWND_TOP, nextBounds.left, nextBounds.top, nextBounds.width(),
+            nextBounds.height(), SWP_NOOWNERZORDER | SWP_FRAMECHANGED | zOrderFlags);
+    }
+
     // **The normal rect is in workspace coordinates** and reaches past the geometry by the ring an
     // ordinary window wears - both taken off here, so what is answered is what setBounds takes
-    // back. A minimized window that was maximized is maximized; on top is read off the style.
+    // back. A minimized window that was maximized is maximized; on top is read off the style. A
+    // fullscreen window answers with the placement it comes back to.
     NormalPlacement Window::normalPlacement() const
     {
         ::WINDOWPLACEMENT pl;
         memzero(pl);
         pl.length = sizeof ::WINDOWPLACEMENT;
-        ::GetWindowPlacement(handle(), &pl);
+        if (m_fullscreenReturn)
+            pl = m_fullscreenReturn->placement;
+        else
+            ::GetWindowPlacement(handle(), &pl);
 
         IntRect geometry = reinterpret_cast<const IntRect&>(pl.rcNormalPosition);
         const IntPoint workspace = workspaceOffset(handle(), geometry);

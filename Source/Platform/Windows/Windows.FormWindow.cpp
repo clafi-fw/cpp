@@ -139,8 +139,9 @@ namespace ClaFi
     LRESULT FormWindow::getBorderSizingHitTest(IntPoint mp)
     {
         LRESULT result = HTCLIENT;
-        // A dialog its content sizes has no edges to take: they belong to the controls there.
-        if (userSized() || WindowRole::Menu == role())
+        // A dialog its content sizes has no edges to take, and neither has a fullscreen one: they
+        // belong to the controls there.
+        if ((userSized() && !isFullscreen()) || WindowRole::Menu == role())
         {
             const int inside = ::GetSystemMetrics(SM_CXFRAME) * 2;
             const int corner = inside * 4;
@@ -216,6 +217,22 @@ namespace ClaFi
             break;
 
         case WM_SYSCOMMAND:
+            // **A fullscreen window is placed by setFullscreen alone.** The system's own menu
+            // still offers to move it, and a command that would move or size a shown window is
+            // not passed on. A minimized one is still restored.
+            if (isFullscreen() && !::IsIconic(handle()))
+            {
+                switch (msg.wParam & 0xFFF0)
+                {
+                case SC_MOVE:
+                case SC_SIZE:
+                case SC_MAXIMIZE:
+                case SC_RESTORE:
+                    msg.result = 0;
+                    msg.handled = true;
+                    return;
+                }
+            }
             // The low four bits belong to the system, so the command is what is left of wParam
             // above them. A maximize from a double-click on the caption carries something in
             // them; one sent from our own code does not.
@@ -681,6 +698,16 @@ namespace ClaFi
     void FormWindow::focusChanged()
     {
         m_form.wnd_focusChanged();
+    }
+
+    // **The form is told first, and its frame for the next rect is shown before the window takes
+    // that rect** - see stateBounds. A window moved first is composed at the new rect with the
+    // picture it had: the windowed one in a corner of the screen, or a corner of the fullscreen
+    // one in the window.
+    void FormWindow::fullscreenChanged(const IntRect& nextBounds)
+    {
+        m_form.wnd_fullscreenChanged();
+        stateBounds(nextBounds);
     }
 
     bool FormWindow::isSystemHitTest(WPARAM value)

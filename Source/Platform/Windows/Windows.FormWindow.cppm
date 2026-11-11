@@ -35,6 +35,7 @@ namespace ClaFi::PlatformImplementation::Windows
         LRESULT getBorderSizingHitTest(IntPoint mp);
         void wndProc(WinApiMsg& msg) override;
         virtual void focusChanged() override;
+        void fullscreenChanged(const IntRect& nextBounds) override;
     private:
         static bool isSystemHitTest(WPARAM);
         static bool isFrameHitTest(WPARAM);

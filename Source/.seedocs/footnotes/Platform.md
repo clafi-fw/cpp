@@ -264,6 +264,26 @@ coordinates, without the ring the window reaches past its geometry.
 grown to the content's minimum, and SetWindowPlacement pulls a rect wholly off screen onto a
 monitor. The first show applies `maximized` and `alwaysOnTop`, and the window forgets the placement.
 
+**A fullscreen window answers the placement it comes back to** - see Window setFullscreen.
+
+## Window setFullscreen
+
+**On Win32 a fullscreen window keeps the state it has, maximized or not, and stands on its
+monitor's whole rect.** Entering keeps the rect the window stands at, takes off the caption and
+the sizing styles, and moves the window to the monitor's rect. Leaving puts the styles back and
+moves it to the rect kept. The system sees one move each way and no change of state.
+
+**The frame for the next rect is shown before the window takes it.** The form is told the state,
+laid out and painted for that rect, and the window is moved after - as a placement does it.
+
+- The monitor is the one the window stands on.
+- The system's commands to move, size, maximize and restore the window are not passed on while
+  it is fullscreen. A minimized fullscreen window is still restored.
+
+**On Wayland the request is xdg_toplevel's** set_fullscreen and unset_fullscreen, with no output
+named, so the compositor takes the output the window is on. The state is the configure's, as
+with maximize.
+
 ## RememberedPlacement
 
 **What a config keeps of a form on Wayland.** The size is in surface pixels, so screens at 175% and

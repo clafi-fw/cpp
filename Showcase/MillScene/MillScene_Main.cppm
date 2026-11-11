@@ -5,6 +5,7 @@ export module MillScene_App.Main;
 import MillScene_App.Icon;
 
 import ClaFi.App.Application;
+import ClaFi.App.AppMenu;
 import ClaFi.App.Settings;
 
 import ClaFi.PathArt.Scenes;
@@ -119,6 +120,9 @@ namespace MillScene_App
     // What the scenes keep their views and choices under, a section for each by its name.
     export constexpr std::wstring_view k_sceneViewsNodeName{ L"SceneViews" };
 
+    // Enters fullscreen from a window, and leaves it for the placement the window had.
+    void toggleFullscreen(FormBase&);
+
     // The panel the scene covers whole; it hands the wheel and a drag on to the scene's view.
     class ScenePanel : public Panel
     {
@@ -136,7 +140,7 @@ namespace MillScene_App
         void nestedPressDown(PressDownEvent&) override;
         void nestedDrag(DragEvent&) override;
         void nestedPressUp(PressUpEvent&) override;
-        void doubleClick(DoubleClickEvent&) override;
+        void nestedDoubleClick(NestedDoubleClickEvent&) override;
         void nestedMouseWheel(MouseWheelEvent&) override;
     private:
         // A move of the pointer in a drag, kept to tell how fast the drag went as it was let go.
@@ -262,6 +266,11 @@ namespace MillScene_App
         [[nodiscard]] WindowReadings windowReadings() const;
         void writeMetricsTooltip(AdjustTooltipEvent&);
 
+        // F11, Escape and the app menu's command, and the bars following the state they bring.
+        void connectFullscreen();
+        // Shows the title bar and the strip under the scene in a window, and neither fullscreen.
+        void followFullscreen();
+
     private:
         DialogTitle& m_titleBar{ createTopBar<DialogTitle>(
             appContext().appName())
@@ -378,6 +387,7 @@ namespace MillScene_App
         connectAppPage(L"Scene", Icons::DotMark::draw, [this](AppMenuPage& page) {
             buildScenePage(page);
             });
+        connectFullscreen();
         applySceneColors();
 
         // The readout has its lines before the first layout, so the first frame moves nothing.
@@ -402,6 +412,11 @@ namespace MillScene_App
 
 //-----------------------------------------------------------------------------
 
+
+void toggleFullscreen(FormBase& form)
+{
+    form.setFullscreen(!form.isFullscreen());
+}
 
 void ScenePanel::showScene(PathArt::Scene& scene, const FloatRect& bounds)
 {
@@ -538,13 +553,18 @@ void ScenePanel::nestedPressUp(PressUpEvent& event)
     m_scene->letGoView(m_glideSpeed, m_sceneBounds);
 }
 
-// **A double click where a drag moves the view is the scene's too**, after its first click. The
-// press it ends goes on as a press, so it holds the view and is let go as any press is.
-void ScenePanel::doubleClick(DoubleClickEvent& event)
+// **A double click on the panel where a drag moves the view is the scene's first**, after its
+// first click. The press it ends goes on as a press, so it holds the view and is let go as any
+// press is. One the scene leaves, and one on the readings over the scene, enters fullscreen or
+// leaves it, and the press ends with it: the layout it would go on into is another by then.
+void ScenePanel::nestedDoubleClick(NestedDoubleClickEvent& event)
 {
-    Panel::doubleClick(event);
-    if (dragMovesViewFrom(event.clickPos()))
-        m_scene->doubleClickView(m_sceneBounds);
+    Panel::nestedDoubleClick(event);
+    const bool onPanel = &event.clickedControl == this;
+    if (onPanel && dragMovesViewFrom(event.clickPos()) && m_scene->doubleClickView(m_sceneBounds))
+        return;
+    toggleFullscreen(form());
+    event.stopPropagation();
 }
 
 void ScenePanel::nestedMouseWheel(MouseWheelEvent& event)
@@ -1401,6 +1421,48 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
     event.text << Space{ 18.0f } << L"and whatever pace the display server keeps.\n";
     event.text << Space{ 18.0f } << L"The chart shows both - the filled area is FPS, the line over it draw.\n";
     event.text << Space{ 18.0f } << L"Time, draw and FPS are read over the two seconds the chart spans.";
+}
+
+// **The bars follow the state and not the request**: a compositor may put the window fullscreen
+// itself, or refuse to. Escape's action is enabled in fullscreen alone, and the key goes on
+// to whatever else answers it in a window.
+void MillSceneForm::connectFullscreen()
+{
+    form().onFullscreenChange([this](FormFullscreenChangeEvent&) {
+        followFullscreen();
+    });
+
+    Actions& formActions = form().actions();
+    formActions.add(
+        Text{ L"Full screen" },
+        Shortcut{ Keys::F11 },
+        Action::OnClick{ [](ActionClickEvent& event) {
+            toggleFullscreen(event.form);
+        } }
+    );
+    formActions.add(
+        Text{ L"Leave full screen" },
+        Shortcut{ Keys::Escape },
+        Action::OnGetState{ [this](GetActionStateEvent& event) {
+            event.claim({ .enabled = form().isFullscreen() });
+        } },
+        Action::OnClick{ [](ActionClickEvent& event) {
+            event.form.setFullscreen(false);
+        } }
+    );
+
+    connectAppCommand(L"Enter full screen", Icons::DotMark::draw, EndIcon::None,
+        [](ClickEvent& event) {
+            event.closeForm();
+            event.form.rootForm().setFullscreen(true);
+        });
+}
+
+void MillSceneForm::followFullscreen()
+{
+    const bool inWindow = !form().isFullscreen();
+    m_titleBar.setVisible(inWindow);
+    m_bottomSpacer.setVisible(inWindow);
 }
 
 

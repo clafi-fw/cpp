@@ -301,6 +301,29 @@ claimed, with that press's stamp.
 **The commands are the system's.** One chosen arrives as WM_SYSCOMMAND on Win32 and as configures
 on Wayland, so a Close goes through wnd_closeRequested.
 
+## IPlatformWindow setFullscreen
+
+**A request, and the state is the answer.** `setFullscreen(true)` asks for the whole of the screen
+the window stands on, and `setFullscreen(false)` for the placement it left - its size and place,
+and maximized where it was. `isFullscreen()` reads what the window is, and
+IForm::wnd_fullscreenChanged says when that changes - see FormFullscreenChangeEvent.
+
+- Win32 - the state changes inside the call.
+- Wayland - the compositor decides. The state changes with a later configure, a request may be
+  refused, and the compositor may enter or leave fullscreen on the user's own word.
+
+**A shown dialog takes it.** A menu and a tooltip stay as they are, and so does a window that is
+not shown yet.
+
+**The window wears no frame while it is fullscreen** - see WindowFrame - and the system moves,
+sizes and snaps nothing of it. `isMaximized()` then answers for the state under the fullscreen
+one - what the window comes back to on Win32, the compositor's own state on Wayland - so
+`isFullscreen()` is the one to read first.
+
+**The config keeps the placement fullscreen was entered from**, and no fullscreen state - see
+Platform::storeFormPlacement. An application closed fullscreen opens in a window, unless a
+compositor restores the state from its own session record.
+
 ## AppContext updateCheck
 
 Built from AppParams::updates and the version, and alive as long as the context, so an answer
