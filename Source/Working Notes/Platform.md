@@ -225,6 +225,47 @@ Left as it is, none of it seen:
   is the one from before it.
 - A minimized fullscreen window that was maximized is restored by the system's own rule.
 
+## Window setScreenHeldOn
+
+2026-11-11, asked for as "Preventing the platform's screensaver while MillScene in focus". The
+Win32 half is written without a Windows build here, as setFullscreen was: its calls compile
+against the mingw-w64 headers, and what they do to a screensaver is not measured. The Wayland
+half was run under sway 1.9.
+
+**Win32 holds by a display-required request and answers no SC_SCREENSAVE.** Two readings stand
+behind that, and no measurement on Windows:
+- Microsoft's page for SetThreadExecutionState says of it: "This function does not stop the
+  screen saver from executing."
+- SDL's history says the state does stop one on a current Windows. A revision of
+  SDL_windowsevents.c copyrighted 1997-2010 already answers SC_SCREENSAVE and SC_MONITORPOWER
+  with 0. The later commit "Implement SuspendScreenSaver for Win32" reports the screensaver still
+  starting over windowed applications, and adds SetThreadExecutionState with ES_CONTINUOUS and
+  ES_DISPLAY_REQUIRED as the fix. Mozilla's bug 1193610 found that state not enough on XP and
+  Vista only.
+
+If a screensaver is seen starting over a focused MillScene, answering SC_SCREENSAVE in
+FormWindow's WM_SYSCOMMAND is the next thing to try. It is said not to hold where a policy
+protects the screensaver with a password - quoted from Microsoft's WM_SYSCOMMAND page on the
+nesdev forum and on VLC's list; the page itself was not read here.
+
+**A request of the window's own, not the thread's state.** SetThreadExecutionState is one state
+for the whole thread, so a second window letting go would take the first one's hold with it. A
+power request is the system's to count, one per handle, and PowerRequestDisplayRequired is the
+same ask as ES_DISPLAY_REQUIRED.
+
+**On Wayland the inhibitor is no surface state**, so making and destroying it waits for no
+commit. Measured under sway 1.9 with swayidle set to 3 seconds:
+- MillScene focused for 8 seconds: no idle, and sway's tree shows inhibit_idle on the view.
+- Another client focused beside it, MillScene still shown: the inhibitor is destroyed on the
+  configure that takes the focus away, and idle came 3 seconds later.
+- MillScene focused again: the inhibitor is made, sway resumes from idle at once, and 7 seconds
+  pass with no idle.
+- The app menu opened and closed, fullscreen entered and left: the same inhibitor throughout.
+
+KWin, Mutter and sway offer the global and Weston does not, by wayland.app's table on this date.
+The protocol lets a compositor drop an inhibitor whose surface is not seen. The form's rule is
+the narrower one, so that never shows.
+
 ## DisplayManager::awaitSessionId
 
 Waiting is a roundtrip, and a roundtrip dispatches every event that has arrived, at a moment - a

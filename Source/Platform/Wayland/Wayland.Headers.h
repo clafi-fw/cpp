@@ -25,6 +25,9 @@
 #include <xdg-activation-v1-client-protocol.h>
 // **A window's opacity is the compositor's to apply**, as a multiplier on the surface.
 #include <alpha-modifier-v1-client-protocol.h>
+// **Whether the screen idles is the compositor's.** A client holds it off with an inhibitor on a
+// surface, for as long as the compositor counts that surface as seen.
+#include <idle-inhibit-unstable-v1-client-protocol.h>
 // **Another client parents a window of its own by a handle** - the portal's file chooser among
 // them. The compositor names a toplevel by one while the client keeps it exported.
 #include <xdg-foreign-unstable-v2-client-protocol.h>

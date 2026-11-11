@@ -324,6 +324,19 @@ one - what the window comes back to on Win32, the compositor's own state on Wayl
 Platform::storeFormPlacement. An application closed fullscreen opens in a window, unless a
 compositor restores the state from its own session record.
 
+## IPlatformWindow setScreenHeldOn
+
+**While it is set, the system's idle state is held off**: no screensaver starts, and the display
+is not dimmed or turned off for want of input. `setScreenHeldOn(false)` lets it go. It is a switch
+with no rule of its own - FormBase setKeepsScreenOn turns it with the window's focus.
+
+- Win32 - a power request the window owns, asking for the display. `powercfg /requests` lists it
+  while it is set.
+- Wayland - an idle inhibitor on the window's surface. The compositor honours it while it counts
+  the surface as seen, and a compositor without the idle-inhibit global holds nothing.
+
+**The hold goes with the window**, whatever the switch said last.
+
 ## AppContext updateCheck
 
 Built from AppParams::updates and the version, and alive as long as the context, so an answer

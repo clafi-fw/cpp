@@ -28,6 +28,7 @@ import ClaFi.Controls.Slider;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.CheckBox;
+import ClaFi.Controls.Menu;
 
 import ClaFi.Icons.DotMark;
 
@@ -266,10 +267,12 @@ namespace MillScene_App
         [[nodiscard]] WindowReadings windowReadings() const;
         void writeMetricsTooltip(AdjustTooltipEvent&);
 
-        // F11, Escape and the app menu's command, and the bars following the state they bring.
+        // F11, Escape, the two menus' commands, and the bars following the state they bring.
         void connectFullscreen();
         // Shows the title bar and the strip under the scene in a window, and neither fullscreen.
         void followFullscreen();
+        // The context menu of a fullscreen window: the command that exits. A window has none.
+        void showFullscreenMenu(ContextPopupEvent&, Action& exitFullscreen);
 
     private:
         DialogTitle& m_titleBar{ createTopBar<DialogTitle>(
@@ -388,6 +391,7 @@ namespace MillScene_App
             buildScenePage(page);
             });
         connectFullscreen();
+        form().setKeepsScreenOn(true);
         applySceneColors();
 
         // The readout has its lines before the first layout, so the first frame moves nothing.
@@ -1440,16 +1444,20 @@ void MillSceneForm::connectFullscreen()
             toggleFullscreen(event.form);
         } }
     );
-    formActions.add(
-        Text{ L"Leave full screen" },
+    Action& exitFullscreen = formActions.add(
+        Text{ L"Exit full screen" },
         Shortcut{ Keys::Escape },
         Action::OnGetState{ [this](GetActionStateEvent& event) {
             event.claim({ .enabled = form().isFullscreen() });
         } },
-        Action::OnClick{ [](ActionClickEvent& event) {
-            event.form.setFullscreen(false);
+        // The form is named here: run from a menu line, the event's form is the menu.
+        Action::OnClick{ [this](ActionClickEvent&) {
+            form().setFullscreen(false);
         } }
     );
+    m_scenePanel.onContextPopup([this, &exitFullscreen](ContextPopupEvent& event) {
+        showFullscreenMenu(event, exitFullscreen);
+    });
 
     connectAppCommand(L"Enter full screen", Icons::DotMark::draw, EndIcon::None,
         [](ClickEvent& event) {
@@ -1463,6 +1471,19 @@ void MillSceneForm::followFullscreen()
     const bool inWindow = !form().isFullscreen();
     m_titleBar.setVisible(inWindow);
     m_bottomSpacer.setVisible(inWindow);
+}
+
+// **A fullscreen window shows no bar to leave it by**, so the scene's context menu holds the
+// command. In a window the scene has none.
+void MillSceneForm::showFullscreenMenu(ContextPopupEvent& event, Action& exitFullscreen)
+{
+    if (!form().isFullscreen())
+        return;
+
+    event.stopPropagation();
+    Menu menu{ m_scenePanel };
+    menu.add(exitFullscreen);
+    menu.execute();
 }
 
 

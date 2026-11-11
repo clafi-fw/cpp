@@ -295,6 +295,20 @@ Bases initialize in declaration order, so FormBase is complete - window, canvas,
 CreateParams is formed from it. Nothing about the window moves into Control, so the same class stays
 usable as a nested child.
 
+## FormBase setKeepsScreenOn
+
+2026-11-11, asked for as "Preventing the platform's screensaver while MillScene in focus".
+
+**The focus rule is the form's, and the platform window gets a switch.** It was offered to Oj the
+other way round first: a plain switch on the form, turned by MillScene from the form's focus
+event. His answer was a question - why should MillScene care about the form's focus event if it
+is the form's property, and not turn it on in the constructor. A form relaying its own focus back
+to itself through the application is a roundabout. A switch left on would also hold always on
+Win32 and only while seen on Wayland; the rule here makes the two the same.
+
+stateScreenHold runs from the setter and from wnd_focusChanged. It reads the window's own focus
+and not isWindowFocused, which a popup's form answers for the window it stands on.
+
 ## FormBase paintPass
 
 **An ordinary pass clears only outside the root's padded rectangle** (2026-11-08). A window that

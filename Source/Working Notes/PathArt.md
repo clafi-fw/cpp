@@ -166,6 +166,20 @@ the panel itself. One on the readout, the chart or the bar holding them has that
 its receiver, there being no ClickTarget::Self above it. nestedDoubleClick passes through the
 panel from all of them, and the scene is still asked only where the panel itself was clicked.
 
+**The way out is in the scene's context menu** (Oj, 2026-11-11, "Exit full screen in context
+menu"). The menu's one line is the form's Escape action, so the line carries the key. It is
+raised from the scene panel's ContextPopupEvent, which a right click on the readout or the chart
+bubbles through as well, and only while fullscreen.
+
+The action's click names MillSceneForm's own form. Action::connectPresenter invokes with the
+click's form, which for a menu line is the menu's, and a menu's window takes no fullscreen.
+
+It was connected on the root first and narrowed to the scene panel. On the root it would also
+answer the keyboard's menu key, whose walk starts from the focus - left on a title bar control
+that is hidden while fullscreen - and whose menu drops from its owner's rect rather than from a
+pointer. Under sway that key raised nothing at all: XKB_KEY_Menu arrives as a key down, and
+nothing on Wayland turns it into wnd_contextMenu.
+
 **Every scene draws its own icon** (Oj, 2026-11-09, "Make the scene buttons big tiles with top
 icons, in rows"). Of a still of each scene, the scene's own sprite and eight new line pictograms,
 mocked up from the scene code, Oj picked the sprite. drawIcon is a pure virtual on Scene rather

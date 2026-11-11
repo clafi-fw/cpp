@@ -666,6 +666,12 @@ namespace ClaFi
         // mouseTick(true);
     }
 
+    void FormBase::setKeepsScreenOn(const bool value)
+    {
+        m_keepsScreenOn = value;
+        stateScreenHold();
+    }
+
     void FormBase::setWindowTitle(const std::wstring_view value)
     {
         m_windowTitle = value;
@@ -1450,6 +1456,7 @@ namespace ClaFi
     void FormBase::wnd_focusChanged()
     {
         stateWindowFocus();
+        stateScreenHold();
         FormFocusChangeEvent event{ *this };
         emitEvent(event);
 
@@ -2453,6 +2460,11 @@ namespace ClaFi
                 m_shadowPainter.setDesign(shadowDesign());
                 invalidate();
             });
+    }
+
+    void FormBase::stateScreenHold()
+    {
+        m_window->setScreenHeldOn(m_keepsScreenOn && m_window->isFocused());
     }
 
     void FormBase::followPopupTarget2()

@@ -83,7 +83,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             std::string_view name;
             bool offered{ false };
         };
-        using OptionalGlobals = std::array<OptionalGlobal, 10>;
+        using OptionalGlobals = std::array<OptionalGlobal, 11>;
     public:
         // **Connects, or throws.** A client started outside a session has nothing to draw into, and
         // the error names what was looked for - the value of WAYLAND_DISPLAY.
@@ -192,6 +192,11 @@ namespace ClaFi::PlatformImplementation::Wayland
         [[nodiscard]] wp_viewporter* viewporter() const { return m_viewporter; }
         // Null where the compositor applies no opacity.
         [[nodiscard]] wp_alpha_modifier_v1* alphaModifier() const { return m_alphaModifier; }
+        // Null where the compositor lets no client hold the screen on.
+        [[nodiscard]] zwp_idle_inhibit_manager_v1* idleInhibitManager() const
+        {
+            return m_idleInhibitManager;
+        }
         //
         // **The pointer image, by name.** The compositor draws it from its own theme at its own
         // size, which is the only way a cursor on Wayland is ever the right size on every screen; a
@@ -396,6 +401,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         wp_viewporter* m_viewporter{ nullptr };
         wp_fractional_scale_manager_v1* m_fractionalScaleManager{ nullptr };
         wp_alpha_modifier_v1* m_alphaModifier{ nullptr };
+        zwp_idle_inhibit_manager_v1* m_idleInhibitManager{ nullptr };
         wp_cursor_shape_manager_v1* m_cursorShapeManager{ nullptr };
         wl_pointer* m_pointer{ nullptr };
         // The pointer's shape device. Made with the pointer and released with it.
@@ -534,6 +540,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         constexpr std::uint32_t Viewporter = 1;
         constexpr std::uint32_t FractionalScaleManager = 1;
         constexpr std::uint32_t AlphaModifier = 1;
+        constexpr std::uint32_t IdleInhibitManager = 1;
         // 1 carries the whole of the selection: a source naming its MIME types, an offer listing
         // them, and set_selection against an input serial. 3 adds the drag-and-drop actions, whose
         // events would arrive on listener slots this layer does not fill, so it is not asked for
@@ -619,6 +626,8 @@ namespace ClaFi::PlatformImplementation::Wayland
             ::wl_seat_destroy(m_seat);
         if (m_cursorShapeManager)
             ::wp_cursor_shape_manager_v1_destroy(m_cursorShapeManager);
+        if (m_idleInhibitManager)
+            ::zwp_idle_inhibit_manager_v1_destroy(m_idleInhibitManager);
         if (m_alphaModifier)
             ::wp_alpha_modifier_v1_destroy(m_alphaModifier);
         if (m_fractionalScaleManager)
@@ -991,12 +1000,13 @@ namespace ClaFi::PlatformImplementation::Wayland
                 m_seat ? ::wl_seat_get_version(m_seat) : 0);
         std::fprintf(stderr,
             "[wayland] outputs %zu  viewporter=%p fractional=%p alpha-modifier=%p cursor-shape=%p "
-            "layer-shell=%p\n",
+            "layer-shell=%p idle-inhibit=%p\n",
             m_outputs.size(), static_cast<const void*>(m_viewporter),
             static_cast<const void*>(m_fractionalScaleManager),
             static_cast<const void*>(m_alphaModifier),
             static_cast<const void*>(m_cursorShapeManager),
-            static_cast<const void*>(m_layerShell));
+            static_cast<const void*>(m_layerShell),
+            static_cast<const void*>(m_idleInhibitManager));
         std::fprintf(stderr,
             "[wayland] data-control manager=%p  session manager=%p  activation=%p  exporter=%p  "
             "app id=%s\n",
@@ -1020,6 +1030,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             { ::wp_fractional_scale_manager_v1_interface.name,
                 m_fractionalScaleManager != nullptr },
             { ::wp_alpha_modifier_v1_interface.name, m_alphaModifier != nullptr },
+            { ::zwp_idle_inhibit_manager_v1_interface.name, m_idleInhibitManager != nullptr },
             { ::wp_cursor_shape_manager_v1_interface.name, m_cursorShapeManager != nullptr },
             { ::zxdg_decoration_manager_v1_interface.name, m_decorationManager != nullptr },
             { ::zwlr_layer_shell_v1_interface.name, m_layerShell != nullptr },
@@ -1109,6 +1120,13 @@ namespace ClaFi::PlatformImplementation::Wayland
             m_alphaModifier = static_cast<wp_alpha_modifier_v1*>(
                 ::wl_registry_bind(registry, name, &::wp_alpha_modifier_v1_interface,
                     std::min(version, InterfaceVersion::AlphaModifier)));
+            return;
+        }
+        if (interfaceName == ::zwp_idle_inhibit_manager_v1_interface.name)
+        {
+            m_idleInhibitManager = static_cast<zwp_idle_inhibit_manager_v1*>(
+                ::wl_registry_bind(registry, name, &::zwp_idle_inhibit_manager_v1_interface,
+                    std::min(version, InterfaceVersion::IdleInhibitManager)));
             return;
         }
         if (interfaceName == ::wp_cursor_shape_manager_v1_interface.name)

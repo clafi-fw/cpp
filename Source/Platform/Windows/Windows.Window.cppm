@@ -166,6 +166,8 @@ namespace ClaFi::PlatformImplementation::Windows
         // The monitor's whole rect, or back to the rect kept on the way in. See Platform
         void setFullscreen(bool value) override;
         [[nodiscard]] bool isFullscreen() const override { return m_fullscreenReturn.has_value(); }
+        // A display-required power request of the window's own, set or cleared. See Platform
+        void setScreenHeldOn(bool value) override;
         // <---- IFormWindow
         // **The placement a config remembered**, taken instead of the default by every placement
         // until the window is shown, and shown maximized and held on top where it says so.
@@ -227,6 +229,8 @@ namespace ClaFi::PlatformImplementation::Windows
         bool m_standsAbove{ false };   // where the last placement stood it - see standsAbove
         std::optional<NormalPlacement> m_normalPlacement{};
         std::optional<FullscreenReturn> m_fullscreenReturn{}; // held while the window is fullscreen
+        HANDLE m_displayRequest{};   // the power request, made at the first hold
+        bool m_screenHeldOn{ false };
     };
 
     // **A message-only window**, never shown; its messages go to the sink it is given. See Platform
@@ -475,6 +479,9 @@ namespace ClaFi::PlatformImplementation::Windows
 
     Window::~Window()
     {
+        if (m_displayRequest)
+            ::CloseHandle(m_displayRequest);
+
         if (!m_createdHandle)
             return;
 
@@ -1140,6 +1147,31 @@ namespace ClaFi::PlatformImplementation::Windows
         const UINT zOrderFlags = value ? 0 : SWP_NOZORDER;
         ::SetWindowPos(handle(), HWND_TOP, nextBounds.left, nextBounds.top, nextBounds.width(),
             nextBounds.height(), SWP_NOOWNERZORDER | SWP_FRAMECHANGED | zOrderFlags);
+    }
+
+    void Window::setScreenHeldOn(const bool value)
+    {
+        if (value == m_screenHeldOn)
+            return;
+
+        if (!m_displayRequest)
+        {
+            wchar_t reason[] = L"A focused window keeps the screen on";
+            ::REASON_CONTEXT context{};
+            context.Version = POWER_REQUEST_CONTEXT_VERSION;
+            context.Flags = POWER_REQUEST_CONTEXT_SIMPLE_STRING;
+            context.Reason.SimpleReasonString = reason;
+            const HANDLE request = ::PowerCreateRequest(&context);
+            if (!request || request == INVALID_HANDLE_VALUE)
+                return;
+            m_displayRequest = request;
+        }
+
+        const BOOL stated = value
+            ? ::PowerSetRequest(m_displayRequest, PowerRequestDisplayRequired)
+            : ::PowerClearRequest(m_displayRequest, PowerRequestDisplayRequired);
+        if (stated)
+            m_screenHeldOn = value;
     }
 
     // **The normal rect is in workspace coordinates** and reaches past the geometry by the ring an

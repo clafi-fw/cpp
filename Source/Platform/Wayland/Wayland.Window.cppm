@@ -126,6 +126,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         // Asked of the compositor; the state is the next configure's, as with maximize.
         void setFullscreen(bool value) override;
         [[nodiscard]] bool isFullscreen() const override { return m_fullscreen; }
+        // An idle inhibitor on the surface, made or destroyed. See Platform
+        void setScreenHeldOn(bool value) override;
         // **The name this toplevel restores by** in the application's session. Stated before the
         // first placement, which makes the toplevel and names it - see createToplevel.
         void setSessionName(std::string_view value) { m_sessionName = value; }
@@ -314,6 +316,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         wp_fractional_scale_v1* m_fractionalScale{ nullptr };
         // Null where the compositor offers no multiplier and the frame carries the opacity.
         wp_alpha_modifier_surface_v1* m_alphaModifier{ nullptr };
+        zwp_idle_inhibitor_v1* m_idleInhibitor{ nullptr };   // stands while the screen is held on
         // **Outstanding while a frame is owed.** The compositor answers it when this surface is
         // about to be drawn, which is the only moment another frame is worth producing. Painting on
         // any other schedule draws frames that are overwritten before a screen refresh reaches
@@ -587,6 +590,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         // **Destroyed innermost first.** Each of these was made from the one below it, and a
         // compositor is entitled to treat a parent destroyed before its child as a protocol
         // error rather than as tidying up.
+        if (m_idleInhibitor)
+            ::zwp_idle_inhibitor_v1_destroy(m_idleInhibitor);
         if (m_alphaModifier)
             ::wp_alpha_modifier_surface_v1_destroy(m_alphaModifier);
         if (m_fractionalScale)
@@ -610,6 +615,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         if (m_surface)
             ::wl_surface_destroy(m_surface);
 
+        m_idleInhibitor = nullptr;
         m_alphaModifier = nullptr;
         m_fractionalScale = nullptr;
         m_viewport = nullptr;
@@ -912,6 +918,24 @@ namespace ClaFi::PlatformImplementation::Wayland
             ::xdg_toplevel_set_fullscreen(m_toplevel, nullptr);
         else
             ::xdg_toplevel_unset_fullscreen(m_toplevel);
+    }
+
+    void Window::setScreenHeldOn(const bool value)
+    {
+        zwp_idle_inhibit_manager_v1* manager = m_display.idleInhibitManager();
+        if (!manager || !m_surface || value == (m_idleInhibitor != nullptr))
+            return;
+
+        if (traceEnabled())
+            std::fprintf(stderr, "[wayland] ask     %p %s\n", static_cast<void*>(this),
+                value ? "create_inhibitor" : "destroy the inhibitor");
+        if (value)
+        {
+            m_idleInhibitor = ::zwp_idle_inhibit_manager_v1_create_inhibitor(manager, m_surface);
+            return;
+        }
+        ::zwp_idle_inhibitor_v1_destroy(m_idleInhibitor);
+        m_idleInhibitor = nullptr;
     }
 
     // **Added, not restored, and mapped this whole time.** A session opened while this window stood

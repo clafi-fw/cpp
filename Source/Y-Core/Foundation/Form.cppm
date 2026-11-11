@@ -365,6 +365,9 @@ namespace ClaFi
         // Asks for the whole screen, or for the placement left for it. See Control-Foundation
         void setFullscreen(bool value) { m_window->setFullscreen(value); }
         [[nodiscard]] bool isFullscreen() const { return m_window->isFullscreen(); }
+        // Keeps the screen on while the form's window has the focus. See Control-Foundation
+        void setKeepsScreenOn(bool value);
+        [[nodiscard]] bool keepsScreenOn() const { return m_keepsScreenOn; }
         // Held above the other windows. Stored with the placement where the platform can set it.
         [[nodiscard]] bool canSetAlwaysOnTop() const { return m_window->canSetAlwaysOnTop(); }
         [[nodiscard]] bool isAlwaysOnTop() const { return m_window->isAlwaysOnTop(); }
@@ -536,6 +539,7 @@ namespace ClaFi
         // Which scaler this form is drawn at from now on - see the definition.
         void stateScaler(Scaler&);
         void stateWindowFocus();
+        void stateScreenHold(); // tells the window whether the screen is held on now
         // Whether this form has taken a scale of its own while still standing on another form -
         // see holdScale.
         [[nodiscard]] bool holdingScale() const
@@ -619,6 +623,7 @@ namespace ClaFi
         ScaledSize m_statedMaxSize{ -1.0f, -1.0f };
         AutoFit m_autoFit{ AutoFit::No };
         bool m_visible{};
+        bool m_keepsScreenOn{};
         float m_windowFocusedFactor{ 0.0f };
         // The form is where the application context stops being carried down. FormContext below it
         // holds only the theme, so that the TextEngine and everything above it stay clear of the

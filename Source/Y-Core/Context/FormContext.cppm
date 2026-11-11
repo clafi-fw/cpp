@@ -340,6 +340,8 @@ namespace ClaFi
         // Asks for the window's whole screen, or for the placement it left. See Context
         virtual void setFullscreen(bool) = 0;
         [[nodiscard]] virtual bool isFullscreen() const = 0;
+        // Keeps the screensaver from starting and the display from turning off. See Context
+        virtual void setScreenHeldOn(bool) = 0;
     };
 
     // A backend answers to one of two contracts, and the contract is what the core knows about - not

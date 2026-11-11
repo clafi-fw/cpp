@@ -116,7 +116,21 @@ no margins, corners or border - see WindowFrame.
 
 **What stands on the screen is the form's own.** A title bar stays unless the form hides it. The
 MillScene showcase hides its title bar on FormFullscreenChangeEvent, and leaves fullscreen on the
-key that entered it, on Escape, and on a double click its scene does not take.
+key that entered it, on Escape, on a double click its scene does not take, and on the command
+the scene's context menu holds while fullscreen.
+
+## FormBase setKeepsScreenOn
+
+**The screen stays on while the form's window has the focus.** No screensaver starts, and the
+display is not dimmed or turned off for want of input - see IPlatformWindow setScreenHeldOn for
+what each platform holds. The form takes the hold when its window takes the focus and lets it go
+when the focus leaves, so a window standing behind another application holds nothing.
+
+**Stated once, at any time.** A form that sets it in its constructor holds from the first focus,
+as the MillScene showcase does.
+
+- A menu or a tooltip of the form takes no window focus, and the hold stands under it.
+- A dialog the form opens takes the focus, and the hold is let go until the focus is back.
 
 ## FormControlBase
 

@@ -67,6 +67,14 @@ frame it already has, and wnd_resize returns at once on a resize that moved noth
 Oj's picks: the config keeps no fullscreen state ("4 a"), so storeFormPlacement stores the
 placement fullscreen was entered from on both platforms.
 
+## IPlatformWindow setScreenHeldOn
+
+2026-11-11. **A switch and no getter**: FormBase keeps what was asked, and nothing else reads it.
+Named for what is held, the screen on. The screensaver, the dimming and the display turning off
+hang on one idle state on Wayland and cannot be held apart there.
+
+What stands behind each platform's half is in the Platform note, under Window setScreenHeldOn.
+
 ## AppContext::connectUpdateCheck
 
 The call is made while the context is built, before the config is read; the stored answer arrives

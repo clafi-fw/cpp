@@ -284,6 +284,16 @@ laid out and painted for that rect, and the window is moved after - as a placeme
 named, so the compositor takes the output the window is on. The state is the configure's, as
 with maximize.
 
+## Window setScreenHeldOn
+
+**On Win32 the window owns one power request.** The first hold makes it with PowerCreateRequest,
+and it is closed with the window. Holding sets PowerRequestDisplayRequired on it, and letting go
+clears it. The request states its reason in words, which `powercfg /requests` shows.
+
+**On Wayland the hold is a zwp_idle_inhibitor_v1 on the window's surface**, made by the hold and
+destroyed by letting go. DisplayManager binds zwp_idle_inhibit_manager_v1 where the compositor
+offers it, and the call does nothing where it does not.
+
 ## RememberedPlacement
 
 **What a config keeps of a form on Wayland.** The size is in surface pixels, so screens at 175% and

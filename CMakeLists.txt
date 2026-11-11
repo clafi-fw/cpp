@@ -306,6 +306,11 @@ if(CLAFI_PLATFORM STREQUAL "wayland")
     clafi_wayland_protocol(
         "${WAYLAND_PROTOCOLS_DIR}/staging/alpha-modifier/alpha-modifier-v1.xml"
         alpha-modifier-v1)
+    # **The screen held on**, by an inhibitor on the window's surface - see Window::setScreenHeldOn.
+    # Every wayland-protocols accepted above carries it.
+    clafi_wayland_protocol(
+        "${WAYLAND_PROTOCOLS_DIR}/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml"
+        idle-inhibit-unstable-v1)
     # **A window named to another client**, which parents a dialog of its own by the handle - the
     # portal's file chooser, see ExportedToplevel. Every wayland-protocols accepted above carries
     # it.

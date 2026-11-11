@@ -219,6 +219,9 @@ that control's. The pointer shows a hand wherever a drag moves the view.
 the scene answers that it took nothing, and on the readings over the scene, the showcase enters
 fullscreen or leaves it.
 
+**A right click on the fullscreen showcase opens a menu holding Exit full screen**, on the scene
+and on the readings over it alike. In a window the scene has no context menu.
+
 **A drag let go glides on** at the speed of its last 80 milliseconds and slows to about a third of
 it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second. Another
 scene shown stops both, and lets go of the view it leaves. Each scene keeps its view while the
