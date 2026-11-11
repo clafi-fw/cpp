@@ -2215,6 +2215,310 @@ so the showcase opens in the first theme, which is this one: the stored pick lan
 without a shim. The icon reads only the mill's own colours, which the calmer greens leave alone.
 The generator holds it as THEME_EDITS and OVERRIDES 'ClearDay', and its theme orders name ClearDay.
 
+**Steampunk's stump in dark walnut** (Oj, 2026-11-11: "Make the stump bark in steampunk darker
+much"). The bark is 483013 over 2A1904, L 0.33 and 0.23, where it stood at 0.69 and 0.56. A
+walnut at the verge's own lightness (0.45) would melt into it, so the bark goes below it: 0.13 from
+the rust verge on its lit side and 0.23 on its shaded side. The sawn top (D8B888) stands out pale
+against it. The signpost's post and the apples' stems take bark and barkShade too, and go dark with
+the stump, the apples on the branch run's tree included. The rest of the theme's wood stays aged
+oak. The generator holds it as OVERRIDES 'SteampunkAdventure'.
+
+Then (Oj, 21:30) "Make the other tree trunks this color". Every Steampunk trunk is the stump's
+walnut. treeTrunk is 483013: the Mill's pines, and the Chase's far hills' trees, hazed there. The
+branch run's tree is treeBark 483013 over treeBarkShade 2A1904, and its bough 342008, a third of the
+way from the shade to the bark as its red one stood. The Mill's trunks stand 0.13 from the hills'
+top, where the red stood at 0.09. The generator holds treeTrunk in THEME_EDITS and the branch run's
+tree in OVERRIDES 'SteampunkAdventure'.
+
+**The daze stars wear a thin grey outline** (Oj, 2026-11-11: "the yellow stars when the wolf is
+unconscious are not enough pronounced against the far mountains"). By day the hazed mountains and
+hills behind the stars stand at L 0.69 to 0.80, close to the stars' own 0.88, and Sahara Heat's sky
+is yellow as well. Each star is stroked in DazeStarEdge (83868C, L 0.62), 1.4 units wide under its
+fill, so 0.7 units show. The outline takes the fill's opacity and fades with the daze. Oj took the
+thin outline ("thin") over one at 2.4 units, an amber one, and larger stars in a deeper gold, which
+were still lost on Sahara Heat. Its first colour was Ink (1B1D22), the X eyes' near black; asked
+for lighter twice, Oj took D, the lightest grey that still parts the stars from Sahara Heat's sky.
+A paler grey (9C9EA5) was mostly lost by day, and the palest (B4B7BE) left the stars nearly as
+they were without an outline.
+
+**Lunar Eclipse's stumps and tuft** (Oj, 2026-11-11: "Give the stumps in lunar eclipse the trunks
+color, make the obstacle grass tuft gray", then "grayer, darker trunks and stump"). The stump's bark
+is the branch run tree's trunk, and both are a grey brown: 493B34 over 291F1B, with the branch
+342823. The trunk stood at 7D4B33 over 542F23 and the stump at a redder 8B5641 over 5C372D. The
+grey brown is 0.10 darker with 30 % of the colour, the middle of three steps shown. The signpost's
+post and the apples' stems share bark and barkShade and move with it.
+
+The patch of grass on the trail is a grey with a hint of green (Oj: "give the tuft a hint of green,
+and use the same color for the tree foliage"): its blades keep their lightness at chroma 0.035 and
+the greens' hue (144), 697A68, 80927F and 9DAF9B. The branch run tree's crown wears the same grey
+green at its own three lightnesses: treeCrown 6D7F6C, treeCrownLight 7F917E, treeCrownMiddle
+748673. The generator writes well_lit.json after OVERRIDES, so these picks are in Lunar Eclipse's
+entry there.
+
+**Twilight's tuft and foliage** (Oj, 2026-11-11: "On twilight the tuft and foliage
+grayish-purpleish-greenish"). A green and a purple lie nearly opposite each other, so a mix of the
+two passes through grey toward teal. Four grey tints were shown instead, each at chroma 0.04 and
+each tone's own lightness: hue 160, 200, 240 and 280. Oj took the first, a grey green that the
+purple light around it tints: the tuft's blades 617C6D, 789484 and 94B1A1, the branch run tree's
+crown 658171, 769382 and 6C8878. They are in Twilight's entry of well_lit.json.
+
+**Steampunk's rake in walnut** (Oj, 2026-11-11: "dark the rake in steampunk"). The handle is the
+stump's and the trunks' walnut, 483013 over 2A1904, and the tines a dark brass, 58441C. They were a
+light tan (E9B47A over C2925C) and brass (C9A04A), which stood pale against the hazed mountains when
+the rake swings up. The trail sits near L 0.54, so a darker rake has to go well below it to read;
+the walnut stands at 0.33. Where the handle crosses Steampunk's dark wolf it shows less. Two more
+steps were shown beside it, lighter (5F482E) and darker (2E2113). The generator holds it as
+OVERRIDES 'SteampunkAdventure'.
+
+**Winter Night's stump and tuft** (Oj, 2026-11-11: "Winter night grayer stump, icy white tuft").
+The whole stump keeps its lightness at 30 % of its colour: bark 716259 over 4A3F39, the sawn top
+C5BBAF, the rings 998D82. The middle of three steps shown, half and a tenth of the colour beside
+it. The signpost's post and the apples' stems take bark and barkShade, so they grey too. The patch
+of grass on the trail is icy white with a hint of green ("a hint of green to the tuft"), at the
+greens' hue (144) and chroma 0.035 to 0.016 from its darkest blade to its lightest: B7CAB6, D3E3D3
+and EFF8EE, 0.12 to 0.27 lighter than the grey trail. Its first white took the butterfly's blue
+(B1C8D9, D0E1ED, EEF6FD). Both picks are in Winter Night's entry of well_lit.json.
+
+**Midnight's tree and stumps darker** (Oj, 2026-11-11: "In midnight darker trunks, stumps and
+foliage"). The branch run tree and the stump had been lit as by day, and stood out of the near
+black night. Each of their colours is 0.18 darker, with its colour shrinking with its lightness:
+the trunk 3D2310 over 190B04, the branch 251307, the crown 1F541E, 296627 and 235B20, the stump's
+bark 492D1B over 211209, its top 998064 and rings 70563B. The middle of three steps shown, 0.10
+and 0.26 beside it. The signpost's post and the apples' stems take the stump's bark and go dark
+with it. The far trees were near black already. The picks are in Midnight's entry of
+well_lit.json.
+
+Then (Oj, 23:04) "On stormy and calm nights darker stumps, trunks and foliage". The two themes held
+the same tree and stump colours, and both take Midnight's step, 0.18 darker: the trunk 3D240F over
+190B04, the branch 241306, the crown 1F541D, 276725 and 225C1E, the stump's bark 492E1A over
+201208, its top 988163 and rings 70563A. Their far trees, a dark grey and teal, are unchanged. The
+picks are in both themes' entries of well_lit.json.
+
+**Every trunk is the stumps' bark** (Oj, 2026-11-11: "Now all the trunks can reuse the stumps
+colors, the trunk color retires"; asked which, all of them, with the branch in the darker tone).
+SceneTheme loses treeTrunk, and ChaseTheme loses treeBark, treeBarkShade and treeBough. The branch
+run's tree is drawn in bark over barkShade, with its branch in barkShade. The far hills' trees take
+bark, hazed, and the Mill's pines read chase.bark. SceneTheme holds 42 colours before `chase`. The
+bark stays in ChaseTheme beside the stump, so the Mill takes its trunks from the Chase's colours.
+Where a theme dresses its stumps in its vibe, its trees follow: Magic Forest's trunks are purple,
+Neon City's slate, Cyberpunk's violet, Underwater's teal and Midnight Fantasy's blue. High Noon and
+Arctic Dawn lose their red trunks, and Midnight's and Lunar Eclipse's near black far trees show
+their bark. The generator no longer names the four fields - chase_fields, OVERRIDES, THEME_EDITS and
+well_lit.json - and write_themes.py drops the treeTrunk lines of the base it starts from.
+
+Calm and Stormy Night then took back their old trunk colour (Oj: "on calm and stormy nights take
+before colors", then "the one from before trunk"): their bark is the grey 3C3232 that treeTrunk
+held, over 1C1616, a step as far down as their tree's shade stood. Their far trees and the Mill's
+pines look as before, and their apple tree, stumps and signpost post are a dark grey. One bark can
+hold only one of their two old colours; the other was the tree's brown, 3D240F over 190B04.
+
+Twilight and Midnight took theirs back the same way ("take these two too"). Twilight's bark is the
+mauve grey 503C46 over 2D2027, Midnight's the near black 140F1E over 010102, each over a shade a
+step as far down as its tree's stood. In Midnight the stump is a silhouette whose pale top reads.
+
+**Trunks are drawn as stumps** (Oj, 2026-11-11: "reuse stump drawing code for trunks - a stump is a
+trunk with a slice added"). TrunkSprite's drawTrunk is the stump's body - its flared roots, its bark
+shading across and its grooves - drawn at the stump's 11 units either side and scaled to the half
+width asked for. drawTreeStump is drawTrunk at 11 by 20 and the slice: the sawn top, the rings and
+the sprout. The branch run's tree, the far hills' trees and the Mill's pines draw their trunks with
+it; FirTreeColors gains trunkShade for the pines. Shown first with the stump's grooves at full
+strength, they read too busy on the pines, and Oj asked for them "either without the grooves or with
+barely seen", then "even less visible grooves on the whole trunks". Then (23:44) "if they be a curvy
+fill pattern they may be pleasant to look": straight grooves read as ruled on, which was the reason
+to hide them. Shown wavy lines, fissures, wavy lines broken into segments in three or four lanes,
+and those with their x varied, Oj asked for a pick and took E: three lanes of wavy segments, 10 to
+20 units long with gaps of 2.5 to 6, each one S-curve, nudged up to 2.5 off its lane. They are
+barkShade at 30 % of its alpha on every trunk, so drawTrunk takes no strength. pseudoRandom seeds
+them by lane and segment, never by place, so a trunk's grooves hold still as it scrolls.
+
+**Clear Day's land darker** (Oj, 2026-11-12: "Clear Day: overall darker land"). The meadow and hills
+(hillTop 76B36A, hillBottom 407B3F), the trail (9FA957), the pebbles (8A9241) and the grass (41773F,
+its dark blades 396637) are each 0.10 darker in lightness, their colour kept; the middle of three
+steps shown, 0.05 and 0.15 beside it. hillTop and hillBottom are the Mill's hills as well, and the
+far hills are hazed from them. The runners stand closer to the meadow: the wolf 0.16 and 0.26 where
+it stood at 0.24 and 0.35, the hare 0.13 and 0.14 where it stood at 0.17 and 0.21. The tuft on the
+trail stands 0.16, 0.09 and 0.06 from it with its dark, middle and light blades. The generator holds
+the meadow in THEME_EDITS, the trail and pebbles in WORLD_EDITS and the grass in OVERRIDES
+'ClearDay'.
+
+Then (Oj, 00:09) "darker sky": skyBottom 94CFDE and, after "darker skytop" (00:12), skyTop 3789BC,
+each the middle of three steps with its colour kept - the foot 0.10 darker in lightness, the top
+0.20, so the sky deepens toward the zenith. The sky is the Mill's as well, and the Chase hazes its
+mountains, far hills and their trees toward it, so they darken with it. THEME_EDITS 'ClearDay' holds
+both.
+
+Then (Oj, 00:14) "lighter bottom sky, darker mountains". The mountains were hazed 0.75 toward
+skyBottom, so a lighter skyBottom lightened them more than darker clear colours could darken them:
+at the middle step the drawn mountains came out lighter than before, and even near black ones only
+0.03 darker. Two drawing changes were shown - the mountain tops hazed toward the sky at their own
+height, or a weaker haze - and Oj took the weaker ("+weaker haze"). The mountains take
+k_mountainHaze, 0.6 of skyBottom, in every theme, where their distance would give 0.75; the far
+hills keep the haze of their distance. Clear Day's skyBottom is AAE6F5, 0.07 lighter, and its
+mountains 34779D and 00487C, 0.10 darker. With the weaker haze the mountains stand nearer the grey
+wolves in a few themes: measured against the middle of the mountains, our wolf is 0.13 in Clear Day,
+0.12 in High Noon and 0.14 in Vintage Noir, and the black wolf 0.14 in Underwater Realm and 0.10 in
+Winter Night. The generator hazes the mountains it measures at MOUNTAIN_HAZE, 0.6, and holds Clear
+Day's in THEME_EDITS and OVERRIDES.
+
+Then (Oj, 00:28) "gray reddish path": Clear Day's trail is B69A93 and its pebbles 9F847D, each at
+its own lightness with chroma 0.035 at hue 35, where they were a yellow olive. The middle of three
+tints shown, 0.02 and 0.05 beside it. WORLD_EDITS 'ClearDay' holds them.
+
+Then (Oj, 00:35) "Darker lawn and hills in High Noon": High Noon's hillTop is 4F7000 and its
+hillBottom 70CD71, each 0.10 darker in lightness with its chroma and hue kept, the middle of three
+steps. They are the meadow the runners cross, the Chase's far hills under their haze and the Mill's
+hills. The grass, dark already at 386516, stays. Against the darker meadow the grey wolf's light and
+shade are 0.19 and 0.16 off it, where they were 0.17 and 0.21, and the brown hare's 0.19 and 0.16,
+where they were 0.13 and 0.12. THEME_EDITS 'HighNoon' holds both.
+
+Then (Oj, 00:42) "Darker paper sketch lawn": Paper Sketch's hillTop is 829582 and its hillBottom
+6E826E, each 0.10 darker in lightness with its chroma and hue kept, the middle of three steps. The
+far hills are hazed from the same two colours and the Mill's hills are drawn with them, so both
+darken with the lawn. The runners stand against the far hills: measured on the drawn frame, the grey
+wolf's light and shade are 0.15 and 0.27 off them, where they were 0.20 and 0.33, and the brown
+hare's light and fur 0.14 and 0.19, where they were 0.20 and 0.24. THEME_EDITS 'PaperSketch' holds
+both.
+
+Then (Oj, 00:53) "Paper sketch: darker sky top, a bit more vivid apples, duck and ball", and (00:54)
+"a bit darker wolf", shown together in three steps, the middle one put in. The sky top is D4CFC1,
+0.10 darker in lightness and darker than the sky's foot, so the sky deepens toward the zenith. The
+apples, the duck and the ball's red, blue and yellow keep their lightness and hue at 1.4 times their
+chroma; the ball's white stays. The grey wolf's light, shade, coat, far side, dark and belly are
+each 0.08 darker - its light 69696A - which sets it 0.22 off the far hills, where it was 0.15.
+THEME_EDITS 'PaperSketch' holds the sky top, well_lit.json the props and the wolf.
+
+Then (Oj, 01:02) "More vivid apples, banana, duck, darker rake", in Paper Sketch: the apples, the
+banana's peel and its shade and the duck at 1.6 times the chroma they had, lightness and hue kept -
+the apple D35F49, the peel EDD795, the duck F6DB74 - and the rake's handle, its shade and its metal
+0.10 darker, the handle 786552. The middle of three steps; the ball keeps the red it shared with the
+apple, BA7263. well_lit.json holds them.
+
+Then (Oj, 01:07) "Darker land in magic forest", read as Clear Day's land was: the lawn and hills
+(hillTop 006D00, hillBottom 70CD71 - the far hills and the Mill's hills with them), the trail
+5F702D, the pebbles 4F5F1B, the grass 004600 and its dark blades 003B00, each 0.10 darker in
+lightness with its chroma and hue kept as far as the gamut allows, the middle of three steps.
+Measured on the drawn frame, the brown hare's light is 0.15 off the far hills, where it was 0.19,
+and on the darker trail the hare's light is 0.21 off it, where it was 0.14, and the grey wolf's
+shade 0.14, where it was 0.19. THEME_EDITS, WORLD_EDITS and OVERRIDES 'MagicForest' hold them.
+
+Then (Oj, 01:14) "darker bottom hills, lighter (than the lawn) path": Magic Forest's hillBottom is
+50AD52, 0.10 darker again, so the lawn runs from L 0.53 under the trail to 0.65 at the frame's foot,
+and the trail is A4B873, at L 0.75 with its chroma and hue kept, lighter than any of the lawn; the
+pebbles 92A562 keep their step below it. The middle of three pairs (the foot 0.05, 0.10 or 0.15
+darker with the trail at 0.72, 0.75 or 0.78). On the light trail the brown hare is 0.12 off it and
+0.14 off the far hills, short of 0.15; the grey wolf is 0.18 off the trail.
+
+Then (Oj, 01:21) "Magic forest: darker rake": its handle 915FAA, the handle's shade 6E4184 and its
+metal A891D7, each 0.10 darker in lightness with its chroma and hue kept, the middle of three steps.
+well_lit.json holds them. Then (01:25) "Darker metal": the metal is 6C5697, 0.20 darker again, at L
+0.50 between the handle (0.57) and its shade (0.46); the middle of 0.10, 0.20 and 0.30.
+
+Then (Oj, 01:28) "Tuft with colors of hedgehog": Magic Forest's trail tuft takes the hedgehog's own
+colours - its dark blades the dark spines 7B6CAD, its middle blades the light spines 9A88D8 and its
+light blades the ear D0B9C9. Shown beside the spines alone (a tone between them for the middle
+blades) and the spines with the face F2D8EA. Against the light trail the blades stand 0.25, 0.22 and
+0.16 off it. well_lit.json holds them.
+
+Then (Oj, 01:33) "make the bunny pink": Magic Forest's running hare, the brownHare, is pink - its
+light CC809E, fur BD7290, shade AB627F and belly F2D1DD, each at its own lightness, at hue 355 with
+chroma 0.10 (the belly 0.04); the middle of 0.07, 0.10 and 0.13. Its ears' insides, nose, mouth,
+whiskers and tail stay. The pink stands 0.19 off the far hills and the trail, where the brown stood
+0.14 and 0.12. well_lit.json holds it.
+
+Then (Oj, 01:38) "For the mill wings frame use the stump and its groove color - mill wings frame may
+go": SceneTheme's millWingWood and millWingWoodStroke are retired, and the Mill draws its wing
+frames in the stumps' bark, outlined in barkShade - the colour the grooves are drawn in, at full
+strength. Every theme's Mill changes; the Chase does not. The SceneTheme position comments move down
+two from millWingFabric on, and colorsNum() is 40 + ChaseTheme::colorsNum(). The most visible
+changes: Steampunk's white frames turn its dark brown, Vintage Noir's and Midnight's turn near
+black, and the vibe themes' frames take their wood - Magic Forest purple, Neon City and Cyberpunk
+their slate and violet.
+
+Then (Oj, 01:49) "On summer sunset make the bark darker": bark 75441D and barkShade 48260C, each
+0.10 darker in lightness with its chroma and hue kept, the middle of three steps - its stumps, every
+trunk, the signpost's post and the Mill's pines and wing frames with them. well_lit.json holds them.
+
+Then (Oj, 01:56), with a painting of a golden autumn afternoon - a white cow by a river, a wooden
+windmill and water wheel, golden hills and amber trees under a blue sky with golden clouds: "That's
+a true warm orange fall". Warm Orange Fall was a dusk theme - a brown sky over near-black green
+hills and a near-black mill - and is repainted after the picture, from colours sampled off it. The
+sky runs from a soft blue AFC4CE to gold F0C484, with peach clouds and a pale sun. The lawn and
+hills are golden, D59631 over A86A1E; the mountains are drawn the picture's lavender grey (clear
+colours 3C74FC and 2860E8, hazed); the trees are amber, BB7A26 with D99B30 and A5651F; the river a
+pale blue grey; the mill weathered wood, a grey brown house under a brown roof, with canvas sails;
+the bark a grey brown 7A6450; the reeds and the foreground grass golden brown; the falling leaves
+amber.
+
+The figures and props were lit for the dark land, so they take Golden Hour's, which are lit for a
+golden day, with three changes measured on the drawn frame: the grey wolf 0.08 darker (light
+6C6C6E), off the lavender mountains by 0.17; the brown hare a deeper red brown (light 915E40), off
+the golden far hills by 0.17; the grey hare 0.10 darker. The trail is Golden Hour's sandy D2C272,
+which its props were measured on. A bluer sky (88AAC4 over EECC94) was tried and set aside for the
+warmer one; it is on the sheet. THEME_EDITS 'WarmOrangeFall' holds the SceneTheme fields and
+well_lit.json every Chase colour.
+
+Then (Oj, 02:13) "For the blades outline use the groove. If after that there are no other uses, drop
+the field": the Mill's sails are outlined in barkShade, and millWingFabricStroke, read nowhere else,
+is retired. The position comments after millWingFabric move down one more, and colorsNum() is 39 +
+ChaseTheme::colorsNum(). Every theme's Mill changes a little; the Chase does not.
+
+Then (Oj, 02:21) "On Cherry Blossom make the path light gray": the trail is CDCED0, a neutral grey
+at L 0.85, where it was a pink D3B5BB at 0.80, and the pebbles A6A7AA keep their step below it; the
+middle of 0.80, 0.85 and 0.90. The runners stand further off it (the grey wolf 0.25, the hare 0.24,
+from 0.20 and 0.19). WORLD_EDITS 'CherryBlossom' holds them.
+
+Then (Oj, 02:35) "In Clear Day, make mountains warmer": the mountains' clear colours turn from blue
+to mauve, 895C93 over 612C6C - each at its own lightness, hue 320, chroma 1.1 times - and the haze
+toward the pale cyan skyBottom draws them a lavender. Shown beside a lavender (hue 290) and a rose
+(hue 20), which the haze greys out. The grey wolf stays about 0.10 from them, as it was; the hare
+0.14. Then (02:42) "C, less color": the rose at half its chroma, 886565 over 603A3A, which the haze
+draws a soft grey (90A4AD); the middle of 0.75, 0.5 and 0.25 of it. The grey wolf stays 0.10 from
+the mountains, the hare's light 0.11. OVERRIDES 'ClearDay' holds them.
+
+Then (Oj, 02:48) "On Clear Day make the sun glow white": sunGlow is white FFFFFF at its alpha 64,
+where it was a yellow FFF078 - the Chase's glow round the sun, and in the Mill the sky's glow and
+the sun's light on the river. Shown beside an ivory FFF9E8 and a stronger white at alpha 96.
+THEME_EDITS 'ClearDay' holds it.
+
+Then (Oj, 02:58) "Lets try to adorn the Sun with an outer glow", and of three mockups "A", then
+(03:03) "B": the Chase's sun disc is drawn with an OuterGlow layer under its fill, in sunDisk at
+0.75 opacity, reaching 18 units round its 24-unit radius - a soft ring inside the wide sunGlow, in
+every theme (the moon of the night themes too). A (10 units, 0.9) was a tight bright rim, C (30
+units, 0.6) a wide faint corona. The Mill's sun, which has its rays, is unchanged.
+
+Then (Oj, 03:07) "Make sure sunCorona1 and sunCorona2 are equally visible": the Mill draws 16 rays
+round its sun, the even ones in sunCorona1 and the odd ones in sunCorona2, and in most themes one
+set all but vanished - Golden Hour's second set stood 0.014 off the sky (OKLab dE, median over the
+ray as drawn) against the first's 0.055, Winter Night's and Midnight's 0.034 against 0.17 and 0.19,
+Sahara Heat's the other way round. Measured with each set drawn alone over the sky drawn without
+rays, each theme's pair now meets at the mean of the two, mostly by alpha with the colour kept;
+where full alpha fell short, the colour moved away from the sky in lightness - one set in each of
+High Noon, Cherry Blossom, Sahara Heat, Arctic Dawn, Steampunk, Magic Forest, Neon City (its deep
+pink FF1493 now a light pink FFC3FF), Cyberpunk Night, Underwater Realm, Lunar Eclipse, Twilight and
+Midnight Fantasy. Arctic Dawn's second and Underwater Realm's second could not reach the mean, so
+the first set meets them. Every pair is within 8 % of each other. Shown beside meeting at the weaker
+(A) and at the stronger (C, which the gamut cannot reach in several themes). The four themes outside
+allThemes are untouched. theme_edits.py's SUN_RAYS holds the pairs.
+
+Then (Oj, 03:22) "In the Cyberpunk night make the Tuft magenta": the trail tuft's blades are BB1CB5,
+D640CF and F762EF, each at its own lightness, hue 330, chroma 0.24 - the middle of 0.16, 0.24 and
+the gamut's edge (about 0.30). They stand 0.30 to 0.35 off the trail. well_lit.json holds them.
+
+Then (Oj, 03:27), with a screenshot of Golden Hour's Mill: "Those rays are invisible". Equal, the
+pairs had met at the mean of two faint sets in a dozen themes - Golden Hour, Sahara Heat, Warm
+Orange Fall and Paper Sketch at about 0.035, Winter Frost 0.04, Summer Sunset 0.045. Both sets of
+every theme under 0.11 are lifted to it, alpha first; a ray already at full alpha moves its
+lightness whichever way reaches 0.11 sooner - lighter where the sky allows, darker where a light ray
+over a light sky cannot get lighter (Golden Hour's second set an amber D7A139, Warm Orange Fall's
+D59F57, Steampunk's and Magic Forest's a khaki grey). Shown beside floors of 0.08 and 0.14. Twelve
+themes change; every pair stays within 10 % of each other. The footnote states the floor.
+
+Then (Oj, 03:46) "make the stump thump as they pass", and of three mockups "C": the roadside tree
+stump bounces as the boulder, the banana peel and the apple do - hopAt's three hops, small after the
+hare, high after the wolf, small again - drawn through hopping, its shadow shrinking as it lifts. A
+(a squash with a lift of 0.15) and B (0.4 of the lift, half the tilt) were the quieter readings. The
+crow's stump stays still.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

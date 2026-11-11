@@ -122,6 +122,10 @@ The fields up to effectColor2 are the mill's, and the sky, the sun, the clouds, 
 and hillBottom - and the trees serve ChaseScene as well; ChaseTheme holds what only the Chase draws.
 Every theme fills every field.
 
+**sunCorona1 and sunCorona2 are the Mill's sun rays**, which alternate round its sun. A theme keeps
+the two equally visible against the sky behind them, and visible at all: at least 0.11 apart from it
+in OKLab, so neither set fades.
+
 **petal1 to petal3 are the flowers' petals**, shared by every flower the Chase draws - each wears
 one, by turns - and by the falling petals, which wear the first two in place of the effect colours.
 
@@ -146,9 +150,14 @@ is a lack of it. Each object then moves lighter, or at most 0.10 darker, only as
 needs. Midnight Fantasy, Toxic Waste and Steampunk keep their objects in the theme's own light, with
 the ones that read too dark or dull lifted one by one. Vintage Noir's greys are set by hand.
 
-**The tree a branch run ends at has colours of its own** - treeCrown to treeBough - lit as the props
-are. It stands out at night, while the far hills' trees and the Mill's keep the theme's light; those
-are drawn from treeLeavesBase, treeTrunk, crownLight and crownMiddle.
+**The tree a branch run ends at has a crown of its own** - treeCrown, treeCrownLight and
+treeCrownMiddle - lit as the props are. The far hills' crowns and the Mill's keep the theme's light;
+they are drawn from treeLeavesBase, crownLight and crownMiddle.
+
+**Every trunk is the stumps' bark.** The branch run's tree is drawn in bark over barkShade, with its
+branch in barkShade. The far hills' trees take bark, hazed with them, and the Mill's pines take it
+too, from `chase`. Each is drawn as a stump without its slice - see drawTrunk. The Mill's wing
+frames are bark too, and the frames and the sails are outlined in barkShade.
 
 - A wolf's head and ears stand against the mountains; a hare stays below the far hills' top. Both
   are measured as they are drawn, hazed.
@@ -791,6 +800,15 @@ about their booms once a round of `orbitTime`, so past edge-on they show their r
 the craft rocks once a round. The navigation lights blink 16 times a unit of `blinkTime`, the
 strobe 20 times, and the panels' glints sweep twice.
 
+## drawTrunk
+
+**A trunk is a stump without its slice.** It is drawn to the stump's measures, 11 units either side
+of its middle, and scaled from them by `halfWidth`: its roots flare out over the ground, and its
+bark shades from `bark` on the left to `barkShade` on the right. Faint grooves run up it to `height`
+in three lanes, each lane a run of short wavy segments nudged off its line. A trunk's grooves are
+the same every time it is drawn, so they hold still as it scrolls. The Chase's stumps, its trees
+near and far, and the Mill's pines are all drawn with it.
+
 ## ChaseScene
 
 A clumsy wolf chases a hare across a landscape that scrolls past and comes round again.
@@ -852,10 +870,10 @@ ChaseScene drawVergeRow.
 
 **They stir as the two go by.** The reeds and the daisy bend in the wind of their passing, and the
 wolf's wake strips the reeds' heads of their fluff and the daisy of petals. The signpost's board
-spins round and is left pointing back the way they came, the boulder, the banana peel and the apple
-bounce after each of them, and the toadstool's cap hops on its stalk, then off it to land beside it.
-The bird, the butterfly and the crow on the stump fly off, the frog hops back into the grass, and
-the snail draws into its shell until the wolf is by.
+spins round and is left pointing back the way they came, the boulder, the tree stump, the banana
+peel and the apple bounce after each of them, and the toadstool's cap hops on its stalk, then off it
+to land beside it. The bird, the butterfly and the crow on the stump fly off, the frog hops back
+into the grass, and the snail draws into its shell until the wolf is by.
 
 **Something stands on the near edge of the trail too**, in front of the two and a little larger: the
 same thirteen in an order of their own - a snail, a boulder, a daisy, a frog, the crow on its stump,
@@ -916,12 +934,12 @@ comes.
 
 ## ChaseScene hazed
 
-**Distance is haze.** A layer's clear colours are taken toward skyBottom, the sky at the horizon,
-as far as its distance goes. The distance is read off the layer's share of the camera's speed: a
-layer moving at a third of it stands three times as far as the trail. The haze is the distance
-beyond the trail over that distance plus k_halfHaze, so a layer 2.46 times the trail's distance
-beyond it is half skyBottom: the far hills, at 0.35 of the camera's speed, take 0.43 of it, the
-mountains, at 0.12, take 0.75.
+**Distance is haze.** A layer's clear colours are taken toward skyBottom, the sky at the horizon, as
+far as its distance goes. The distance is read off the layer's share of the camera's speed: a layer
+moving at a third of it stands three times as far as the trail. The haze is the distance beyond the
+trail over that distance plus k_halfHaze, so a layer 2.46 times the trail's distance beyond it is
+half skyBottom: the far hills, at 0.35 of the camera's speed, take 0.43 of it. The mountains, at
+0.12, would take 0.75; they take k_mountainHaze, 0.6, so their own rock shows through.
 
 - The far hills are the meadow's own hillTop and hillBottom, their trees the tree's own colours and
   the fireflies over them the theme's effect colours, all hazed alike. The mountains are

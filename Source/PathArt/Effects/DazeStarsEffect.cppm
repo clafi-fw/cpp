@@ -11,6 +11,7 @@ namespace ClaFi::PathArt
         FloatPoint center; // the middle of their circle
         float turns; // how far round they have gone, in turns
         Color color{ 0xFFFFD34D };
+        Color outline{ 0xFF83868C };
     };
 
     export void drawDazeStars(const SceneFrame&, const DazeStars&);

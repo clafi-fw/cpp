@@ -9,6 +9,7 @@ import ClaFi.PathArt.ReedsSprite;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.StarsEffect;
 import ClaFi.PathArt.ThemeBlend;
+import ClaFi.PathArt.TrunkSprite;
 import ClaFi.PathArt.Types;
 import ClaFi.PathArt.WeatherEffect;
 import ClaFi.PathArt.WolfSprite;
@@ -34,6 +35,7 @@ namespace ClaFi::PathArt
         constexpr Color BallEdge{ 0x40000000 };
         constexpr Color Ink{ 0xFF1B1D22 };
         constexpr Color DazeStar{ 0xFFFFD34D };
+        constexpr Color DazeStarEdge{ 0xFF83868C };
     }
 
     // The two who run the chase in daylight, as the icon draws them in every theme.
@@ -73,6 +75,8 @@ namespace ClaFi::PathArt
         constexpr float k_lively{ 2.0f };
         // Distance beyond the trail, in the trail's own, at which a layer is half skyBottom.
         constexpr float k_halfHaze{ 2.46f };
+        // The mountains' share of skyBottom, less than their distance gives, so their rock shows.
+        constexpr float k_mountainHaze{ 0.6f };
         // A layer moving at `parallax` of the camera's speed, seen through the haze. See PathArt
         [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax);
         // Units the camera covers in an episode at full speed.
@@ -1226,7 +1230,8 @@ namespace ClaFi::PathArt
             drawDazeStars(onFrame, DazeStars{
                 .center = { head.x, std::min(head.y, pose.center.y) - 26.0f * unit },
                 .turns = 12.0f * t,
-                .color = ChaseColors::DazeStar.withOpacity(moment.dazed)
+                .color = ChaseColors::DazeStar.withOpacity(moment.dazed),
+                .outline = ChaseColors::DazeStarEdge.withOpacity(moment.dazed)
             });
         };
         drawStars(frame, ourWolf, episodeTime);
@@ -1351,7 +1356,12 @@ namespace ClaFi::PathArt
         });
         const FloatPoint sun = { width * 0.84f, height * 0.14f };
         drawGlow(frame, sun, 130.0f * unit, theme.sunGlow.withOpacity(0.65f));
-        fillDisc(frame, sun, 24.0f * unit, SolidColor{ theme.sunDisk });
+        PixelPath sunDisc;
+        sunDisc.drawCircle(sun, 24.0f * unit);
+        const PathDrawLayer sunRim = PathDrawLayer::OuterGlow(theme.sunDisk.withOpacity(0.75f),
+            18.0f * unit);
+        frame.canvas.drawPath(sunDisc, { sunRim, PathDrawLayer::Fill(theme.sunDisk) },
+            &frame.toCanvas);
 
         const float cloudPeriod = periodNear(0.05f, 820.0f);
         forEachTile(frame, 0.05f, cloudPeriod, travel, [&](float tileLeft, float tileWidth) {
@@ -1395,8 +1405,9 @@ namespace ClaFi::PathArt
         mountains.lineTo(width + 6.0f * unit, groundY);
         mountains.close();
         fillShape(frame, mountains, LinearGradient::Simple({ 0.0f, height * 0.35f },
-            { 0.0f, groundY }, hazed(theme, theme.chase.mountainTop, 0.12f),
-            hazed(theme, theme.chase.mountainFoot, 0.12f)));
+            { 0.0f, groundY },
+            colorBetween(theme.chase.mountainTop, theme.skyBottom, k_mountainHaze),
+            colorBetween(theme.chase.mountainFoot, theme.skyBottom, k_mountainHaze)));
 
         const float hillPeriod = periodNear(0.35f, 1150.0f);
         const auto hillY = [&](float x) {
@@ -1410,7 +1421,8 @@ namespace ClaFi::PathArt
         hills.close();
         fillShape(frame, hills, LinearGradient::Simple({ 0.0f, height * 0.62f }, { 0.0f, groundY },
             hazed(theme, theme.hillTop, 0.35f), hazed(theme, theme.hillBottom, 0.35f)));
-        const SolidColor trunk{ hazed(theme, theme.treeTrunk, 0.35f) };
+        const Color bark = hazed(theme, theme.chase.bark, 0.35f);
+        const Color barkShade = hazed(theme, theme.chase.barkShade, 0.35f);
         const SolidColor crown{ hazed(theme, theme.treeLeavesBase, 0.35f) };
         const SolidColor crownLight{ hazed(theme, theme.chase.crownLight, 0.35f) };
         const SolidColor crownMiddle{ hazed(theme, theme.chase.crownMiddle, 0.35f) };
@@ -1423,7 +1435,7 @@ namespace ClaFi::PathArt
                 const float x = tileLeft + alongTile * unit;
                 const float y = hillY(alongTile) + 6.0f * unit;
                 const float size = (0.7f + 0.4f * pseudoRandom(i, 112.0f)) * unit;
-                fillBox(frame, { x - 3.0f * size, y - 22.0f * size, x + 3.0f * size, y }, trunk);
+                drawTrunk(frame, { x, y }, 3.0f * size, 22.0f * size, bark, barkShade);
                 fillDisc(frame, { x, y - 32.0f * size }, 16.0f * size, crown);
                 fillDisc(frame, { x - 9.0f * size, y - 25.0f * size }, 11.0f * size, crownLight);
                 fillDisc(frame, { x + 9.0f * size, y - 26.0f * size }, 12.0f * size, crownMiddle);
@@ -2625,9 +2637,12 @@ namespace ClaFi::PathArt
                     drawToadstool(onVerge, chase, motion);
                     break;
                 case Roadside::TreeStump:
-                    shadow(19.0f, 1.0f);
-                    drawTreeStump(onVerge, chase);
+                {
+                    const Hop hop = hopAt(motion);
+                    shadow(19.0f * (1.0f - hop.lift / 54.0f), 1.0f);
+                    drawTreeStump(hopping(onVerge, hop), chase);
                     break;
+                }
                 case Roadside::Bird:
                     shadow(10.0f, std::clamp(1.0f - 2.0f * motion.sinceHareClose, 0.0f, 1.0f));
                     drawBird(onVerge.within(Matrix3x2::Scale(1.5f)), chase, motion.seconds,
@@ -2924,21 +2939,7 @@ namespace ClaFi::PathArt
         // A sawn-off stump, its rings showing and a shoot growing from its edge.
         void drawTreeStump(const SceneFrame& onVerge, const ChaseTheme& chase)
         {
-            PixelPath trunk;
-            trunk.moveTo(-16.0f, 0.5f);
-            trunk.quadTo({ -11.0f, -1.0f }, { -11.0f, -6.0f });
-            trunk.lineTo(-11.0f, -20.0f);
-            trunk.lineTo(11.0f, -20.0f);
-            trunk.lineTo(11.0f, -6.0f);
-            trunk.quadTo({ 11.0f, -1.0f }, { 16.0f, 0.5f });
-            trunk.close();
-            fillShape(onVerge, trunk, LinearGradient::Simple({ -11.0f, 0.0f }, { 11.0f, 0.0f },
-                chase.bark, chase.barkShade));
-            for (const float grooveX : { -6.0f, -0.5f, 5.0f })
-            {
-                drawSegment(onVerge, { grooveX, -3.0f }, { grooveX + 0.5f, -18.0f },
-                    SolidColor{ chase.barkShade }, 1.0f);
-            }
+            drawTrunk(onVerge, {}, 11.0f, 20.0f, chase.bark, chase.barkShade);
             fillOval(onVerge, { 0.0f, -20.0f }, 11.0f, 3.2f, SolidColor{ chase.stumpTop });
             PixelPath rings;
             addEllipse(rings, { 0.0f, -20.0f }, 7.5f, 2.1f);
@@ -3286,12 +3287,10 @@ namespace ClaFi::PathArt
             const TreeRun& treeRun = motion.treeRun;
             const float unit = frame.unit;
             const float trunkX = x + trunkFromBranchEnd(treeRun.leapEnd) * unit;
-            const float trunkLeft = trunkX - k_trunkHalfWidth * unit;
-            const float trunkRight = trunkX + k_trunkHalfWidth * unit;
             const float endSway = motion.branchSway * unit;
-            fillBox(frame, { trunkLeft, groundY - 180.0f * unit, trunkRight, footY + 2.0f * unit },
-                LinearGradient::Simple({ trunkLeft, 0.0f }, { trunkRight, 0.0f },
-                theme.chase.treeBark, theme.chase.treeBarkShade));
+            const float trunkFoot = footY + 2.0f * unit;
+            drawTrunk(frame, { trunkX, trunkFoot }, k_trunkHalfWidth * unit,
+                trunkFoot - (groundY - 180.0f * unit), theme.chase.bark, theme.chase.barkShade);
             if (treeRun.leapEnd != LeapEnd::Trunk)
             {
                 // laid out reaching back to `x`, then over the branch turned about the trunk to
@@ -3309,7 +3308,7 @@ namespace ClaFi::PathArt
                 branch.quadTo({ x + 50.0f * unit, footY - 127.0f * unit + 0.5f * endSway },
                     { branchTrunkX - 10.0f * unit, footY - 110.0f * unit });
                 branch.close();
-                fillShape(onBranch, branch, SolidColor{ theme.chase.treeBough });
+                fillShape(onBranch, branch, SolidColor{ theme.chase.barkShade });
                 fillDisc(onBranch, { x + 16.0f * unit, footY - 153.0f * unit + 0.8f * endSway },
                     9.0f * unit, SolidColor{ theme.chase.treeCrownLight });
             }

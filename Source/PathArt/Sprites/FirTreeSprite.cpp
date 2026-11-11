@@ -1,6 +1,7 @@
 module ClaFi.PathArt.FirTreeSprite;
 
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.TrunkSprite;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 
@@ -16,14 +17,9 @@ namespace ClaFi::PathArt
         drawGlow(frame, base, 24.0f * size, faded(colors.shadow, 0.3f), 0.5f);
         const Matrix3x2 tx = Matrix3x2::Translation(base) * Matrix3x2::Scale(size);
 
-        PixelPath path;
-        path.moveTo(-10.0f, 0.0f);
-        path.lineTo(10.0f, 0.0f);
-        path.lineTo(10.0f, -30.0f);
-        path.lineTo(-10.0f, -30.0f);
-        path.close();
-        fillShape(frame, path, SolidColor{ colors.trunk }, tx);
+        drawTrunk(frame.within(tx), {}, 10.0f, 30.0f, colors.trunk, colors.trunkShade);
 
+        PixelPath path;
         Hsl hsl{ colors.leaves };
         const float satK = 0.9f;
         const float lumK = 1.0f + std::min(0.16f, (0.95f - hsl.luminosity) * 0.5f);

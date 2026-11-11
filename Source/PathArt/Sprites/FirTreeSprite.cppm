@@ -8,6 +8,7 @@ namespace ClaFi::PathArt
     export struct FirTreeColors
     {
         Color trunk;
+        Color trunkShade;
         Color leaves; // the bottom tier; each tier above is lighter and less saturated
         Color shadow;
     };

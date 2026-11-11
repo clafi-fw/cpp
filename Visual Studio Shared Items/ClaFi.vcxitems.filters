@@ -913,6 +913,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SunSprite.cppm">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\TrunkSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\TrunkSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WaterLilySprite.cpp">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>

@@ -23,9 +23,6 @@ namespace ClaFi::PathArt
         Color treeCrown{}; // the branch run's tree
         Color treeCrownLight{};
         Color treeCrownMiddle{};
-        Color treeBark{};
-        Color treeBarkShade{};
-        Color treeBough{};
         Color trail{};
         Color pebble{};
         Color grass{}; // the flowers' stems, the tufts and the foreground grass
@@ -41,7 +38,7 @@ namespace ClaFi::PathArt
         WolfCoat blackWolf{}; // the other couple's
         HareCoat greyHare{};
         Color flowerHeart{}; // a daisy's, and the meadow's flowers'
-        Color bough{}; // the signpost and the stump, in wood
+        Color bough{}; // the signpost, the stumps, every trunk and the Mill's wing frames, in wood
         Color bark{};
         Color barkShade{};
         Color appleLight{}; // the apple
@@ -120,14 +117,14 @@ namespace ClaFi::PathArt
         Color hillTop, hillBottom; // 9
         Color riverTop, riverBottom, riverWave, riverReflect, foam; // 11
         Color millBodyTop, millBodyBottom, millRoofTop, millRoofBottom; // 16,
-        Color millWingWood, millWingWoodStroke, millWingFabric, millWingFabricStroke, millWheel; // 20
-        Color treeTrunk, treeLeavesBase, reedStem, reedHead, lilyPad, lilyFlower, shadow; // 25
-        Color cowBody, cowSpots, cowSnout, cowDetail; // 32
-        Color wolfBody, wolfEar, wolfEye; // 36
+        Color millWingFabric, millWheel; // 20
+        Color treeLeavesBase, reedStem, reedHead, lilyPad, lilyFlower, shadow; // 22
+        Color cowBody, cowSpots, cowSnout, cowDetail; // 28
+        Color wolfBody, wolfEar, wolfEye; // 32
 
-        Color effectColor1{ 255, 255, 255 }; // 39
-        Color effectColor2{ 255, 255, 255 }; // 40
-        Color petal1, petal2, petal3; // 41, a flower wears one, falling petals the first two
+        Color effectColor1{ 255, 255, 255 }; // 35
+        Color effectColor2{ 255, 255, 255 }; // 36
+        Color petal1, petal2, petal3; // 37, a flower wears one, falling petals the first two
         ChaseTheme chase{};
         // make sure to update colorsNum() when adding new colors
 
@@ -146,7 +143,7 @@ namespace ClaFi::PathArt
         Color* asArray() { return &skyTop; }
         const Color* asArray() const { return &skyTop; }
         const void* colorsEnd() const { return &hasRain; }
-        static constexpr std::size_t colorsNum() { return 43 + ChaseTheme::colorsNum(); }
+        static constexpr std::size_t colorsNum() { return 39 + ChaseTheme::colorsNum(); }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
         static constexpr std::size_t effectsNum() { return 8; }

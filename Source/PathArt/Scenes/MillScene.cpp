@@ -168,7 +168,8 @@ namespace ClaFi::PathArt
         drawMillWings(frame, mill, millColors);
 
         const FirTreeColors treeColors = {
-            .trunk = theme().treeTrunk,
+            .trunk = theme().chase.bark,
+            .trunkShade = theme().chase.barkShade,
             .leaves = theme().treeLeavesBase,
             .shadow = theme().shadow
         };
@@ -515,10 +516,10 @@ namespace ClaFi::PathArt
                 .bodyBottom = theme.millBodyBottom,
                 .roofTop = theme.millRoofTop,
                 .roofBottom = theme.millRoofBottom,
-                .wingWood = theme.millWingWood,
-                .wingWoodStroke = theme.millWingWoodStroke,
+                .wingWood = theme.chase.bark,
+                .wingWoodStroke = theme.chase.barkShade,
                 .wingFabric = theme.millWingFabric,
-                .wingFabricStroke = theme.millWingFabricStroke
+                .wingFabricStroke = theme.chase.barkShade
             };
         }
 
