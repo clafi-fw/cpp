@@ -678,9 +678,10 @@ The stars drift a fifth of the frame's width each orbit - see StarField drift.
 is whole at -0.13, so the terminator curves as it does at any altitude, and the land, the sea and
 the clouds darken by the same depth, toward a moonlit blue-grey. Deep in the night the land and the
 sea keep a tenth of their colour, and the moonlight is an eighth. The city lights come on as the
-sunlight falls past -0.01 and are full past -0.06. The atmosphere along the limb is blue by day,
-orange at dusk and dark at night, by the sunlight on the limb, which rises evenly across it toward
-the Sun: three rings, each fading out to both sides.
+sunlight falls past -0.01 and are full past -0.06. A town's light is a round dot at any size, laying
+the light its area holds, and a glowing town's glow fades evenly to its edge. The atmosphere along
+the limb is blue by day, orange at dusk and dark at night, by the sunlight on the limb, which rises
+evenly across it toward the Sun: three rings, each fading out to both sides.
 
 **The towns are placed by the land's map.** Until it is built, 1500 stand anywhere on the land
 from 56 degrees south to 62 north. Then 1500 are tried at random points of the land and 5800 at
@@ -727,14 +728,22 @@ and the land in the detailed relief, its colours blended - see SceneLook.
 
 **The maps are built off the paint** the first time the scene is drawn: a fraction of a second on a
 processor with many cores. The clouds show from the first frame after, and the land is drawn flat,
-green with the ice sheets white, until its map is ready. Each frame works the clouds, the land, the
-sea and the night out in bands of rows spread over the cores - see spreadOverCores. On a globe over
-3200 pixels in radius - a frame about 2800 pixels wide or more - the land is worked out at every 4th
-pixel and row, over 1300 - a frame about 1130 pixels wide - at every 2nd, and below that at every
-pixel. The cloud maps' points stand twice as far apart as the land's, and so do the clouds' points
-and the sea's. What lies between is blended before the look cuts the cover, the zones, the bands of
-height or the sea's tones. The bands are laid in on all the cores as well -
-see Canvas drawPixelViews.
+green with the ice sheets white, until its map is ready.
+
+**The globe is one picture a frame**, from its sea up to its air: the sea, the land, the night, the
+Sun's glint, the towns' lights, the clouds and the atmosphere. The picture is worked out in bands
+of rows spread over the cores - see spreadOverCores - and each band lays its layers one over the
+other. A backend is handed the globe's pixels once a frame: Direct2D uploads them once, and the CPU
+backend lays them in on all the cores - see Canvas drawPixelViews. Both backends show the same
+pixels. Until the land's map is built the picture holds neither the sea nor the land, and lies over
+the flat ocean and the flat land.
+
+**The points stand apart by the globe's size.** On a globe over 3200 pixels in radius - a frame
+about 2800 pixels wide or more - the land is worked out at every 4th pixel and row, over 1300 - a
+frame about 1130 pixels wide - at every 2nd, and below that at every pixel. The cloud maps' points
+stand twice as far apart as the land's, and so do the clouds' points and the sea's. What lies
+between is blended before the look cuts the cover, the zones, the bands of height or the sea's
+tones.
 
 **Each point reads the land, the sea and the clouds as fine as the ground it stands for**, taken 1.4
 times as wide as the points stand apart - see MapQuery. The ridges and the clouds hold still as the

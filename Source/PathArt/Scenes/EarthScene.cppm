@@ -183,6 +183,8 @@ namespace ClaFi::PathArt
         };
         // The map of each layer of cloud, in the order the layers float up from the ground.
         using CloudMaps = std::array<CloudMap, 3>;
+        // What a frame's picture of the globe is worked out from, layer by layer.
+        struct GlobePicture;
     private:
         [[nodiscard]] static BuiltCoasts buildCoasts();
         // Towns spread evenly over the land, until the land's map places them.
@@ -194,16 +196,23 @@ namespace ClaFi::PathArt
         static void drawOcean(const SceneFrame&);
         // The land in one flat colour inside each coastline, until the land's map is built.
         void drawFlatLand(const SceneFrame&, const Globe&) const;
-        // The land worked out pixel by pixel inside the coastlines. See PathArt#earthscene
-        void drawLand(const SceneFrame&, const Globe&);
-        // The sea coloured pixel by pixel by its depth, once the land's map is built.
-        void drawSea(const SceneFrame&, const Globe&);
-        // The night worked out pixel by pixel from the sunlight. See PathArt#earthscene
-        void drawNight(const SceneFrame&, const Globe&);
-        void drawCityLights(const SceneFrame&, const Globe&, float cycleTime) const;
+        // Starts the land's map and the clouds' maps building, and takes each once it is built.
+        void takeBuiltMaps();
+        // The globe from its sea up to its air, as one picture a frame. See PathArt#earthscene
+        void drawGlobe(const SceneFrame&, const Globe&, float cycleTime, double sceneSeconds);
+        // The sea coloured by its depth, once the land's map is built.
+        void addSea(GlobePicture&, const Globe&) const;
+        // The land inside the coastlines, once its map is built. See PathArt#earthscene
+        void addLand(GlobePicture&, const Globe&) const;
+        // The night, from the sunlight on the globe. See PathArt#earthscene
+        void addNight(GlobePicture&, const Globe&) const;
+        // The Sun's glint on the ground and the towns' lights past the terminator.
+        void addLights(GlobePicture&, const SceneFrame&, const Globe&, float cycleTime) const;
         // The clouds drift on the scene's time, so they go on drifting over a globe held still.
-        void drawClouds(const SceneFrame&, const Globe&, double sceneSeconds);
-        static void drawAtmosphere(const SceneFrame&, const Globe&);
+        void addClouds(GlobePicture&, const Globe&, double sceneSeconds) const;
+        // One band of the picture, each layer laid over those below it; `layerPixels` is its own.
+        static void rasterizeGlobeBand(const GlobePicture&, int band, PixelBand&,
+            Graphics::Bitmap& layerPixels);
         // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
         // The scene's seconds since the last frame, 0 for the first.
@@ -245,15 +254,12 @@ namespace ClaFi::PathArt
         std::future<std::unique_ptr<CloudMaps>> m_cloudMapsBuilt{};
         // Built off the paint from the first frame drawn on, and kept. See PathArt#earthscene
         std::unique_ptr<CloudMaps> m_cloudMaps{};
-        // Kept from one frame to the next, so a frame of the same size allocates nothing.
-        std::vector<PixelBand> m_cloudBands{};
         std::future<BuiltLand> m_landBuilt{};
         // Built off the paint from the first frame drawn on, and kept. See PathArt#earthscene
         std::unique_ptr<EarthMap> m_earthMap{};
-        // Kept from one frame to the next, as the clouds' are.
-        std::vector<PixelBand> m_landBands{};
-        std::vector<PixelBand> m_seaBands{};
-        std::vector<PixelBand> m_nightBands{};
+        // Kept from one frame to the next, so a frame of the same size allocates nothing.
+        std::vector<PixelBand> m_globeBands{};
+        std::vector<Graphics::Bitmap> m_layerPixels{}; // each band's layer while it is worked out
         View m_view{};
         // The orbits the last frame was drawn after, which a drag moves the view from.
         double m_shownOrbits{};

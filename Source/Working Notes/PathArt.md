@@ -1202,6 +1202,57 @@ degree of another, and the 221 glows became 194.
   square root of the globe's size; left as it is for now (Oj).
 - The towns spread evenly before the land's map is built are not spaced.
 
+**The globe is one picture a frame** (Oj, 2026-11-11, "Earth performance is not great", with a
+CPU profile of the Direct2D backend at bc12a5c). The profile put the paint thread at 93 % of a core
+and about 43 frames a second, 22 ms a frame: 8.2 ms uploading the sea's, the land's, the night's and
+the clouds' bands (CopyFromMemory, four fifths of it in the display driver), about 7 in the
+atmosphere's three soft edges at 2.2 each, 2 in the city lights and 4.1 with the night side in
+view - 1.4 of it a radial brush made for each glowing town - and 2.6 in its own share of the bands.
+The 24 helper threads stood at 7 % each. Of one picture, the two largest costs alone and the
+backend alone, Oj picked one picture, delivered with a sheet.
+
+- **Direct2D puts a soft edge's blur off until the next flush**, so the profile shows two of the
+  three under the next ring's SetTarget and the third under EndDraw, on one call path inside
+  d2d1.dll; drawAtmosphere alone reads 4.9 of the 7 ms. What a blur's 2.2 ms go on inside Direct2D
+  was not seen, as its symbols could not be loaded.
+- **The night's bands were uploaded whole on the day side too**, as each spans the sphere whatever
+  it holds.
+- **Each band takes its layers in turn**: a layer's rows are worked out into the band's spare
+  bitmap by the rasterizers as they stood, and laid over the band's by compositeSurface. Clearing
+  the band and laying the four layers over it costs 8 of 75 ms of processor time a frame at
+  3436 x 2051 on the container, the lights 0.13 and the atmosphere 1.7.
+- **The bands start a whole number of 8 pixels down the canvas**, the most any layer's points stand
+  apart, so a layer's rows in a band start on its own points' rows. A band keeps the rows from the
+  frame's first on and the columns its outline covers within the frame, so nothing is drawn past
+  the frame. Drawn apart, a layer's first row and column reached up to a step past it.
+- **The disc's clip is not needed.** The land ends at the limb on its own: the stylized coast's
+  loops are closed along the rim, inside the circle, and the realistic coast is cut by the sphere's
+  coverage. The glows and the lights are cut by heldByDisc, the limb's own coverage.
+- **A town's light is a true disc.** Through the path rasterizer a small dot was a polygon, a
+  diamond at the smallest, as a quarter circle flattens to a chord or two at half a pixel's
+  tolerance, where Direct2D filled circles. A disc softened over a pixel at its edge lays its area
+  and a twelfth of a pixel over, so areaShareOf scales its opacity to the light its area holds.
+- **The atmosphere's shades are the gradient the CPU backend made of the 41 stops**: 257 shades,
+  each between its two stops, at each ring's strength. A pixel's nearness to a ring is measured
+  from the circle itself, where the path rasterizer measured from the circle's chords, up to half
+  a pixel inside it. Direct2D's blur gave each ring a bell where this gives it the even ramp.
+- **Until the land's map is built** the ocean and the flat land are drawn as paths, the land under
+  a clip of its own, and the picture - the night, the lights, the clouds, the air - lies over them.
+- Measured on the container (2 cores, CPU backend, median of 20 frames): at 3436 x 2051, four
+  notches up 60 to 67 ms became 49 to 57, at the lowest 40.5 became 32.4 to 34.7, with the whole
+  globe 65 to 67 became 52 to 53; at 1600 x 900, 21.1 to 22.3 became 17.7 to 20.1. Direct2D was
+  not built or timed here. By the profile's parts a frame there is estimated at about 8 ms of the
+  paint thread: one upload at 2.7, the bands at about 3, the rest 2.
+- Against bc12a5c on the CPU backend: space is bit for bit the same, and the ground within 2 levels
+  by day; the towns' dots differ along their edges, as discs differ from polygons; the limb is
+  within 41 levels below the whole globe and 58 with it in view, a level on average, where the
+  chords stood off the circle. Frames under an inset and a scale of 1.37 differ the same way
+  inside the frame. Two runs give the same frames bit for bit.
+- Sheet "Earth one picture - before and after.png" in Claude Output\MillScene Scenes\Earth Speed.
+- To watch: the ocean's layer is still prepared once the land's map is built, and on the CPU
+  backend keeps its pixels unused. A paint of a part of the scene works the whole picture out, as
+  the picture is cut to the canvas and not to its clip box.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4

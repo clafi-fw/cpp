@@ -122,8 +122,15 @@ namespace ClaFi::PathArt
         constexpr float k_cloudHazeDepth{ 0.12f };
         // The rows of a picture worked out together on one core, and laid in as one.
         constexpr int k_bandRows{ 32 };
+        // The most pixels between a layer's points; a band starts a whole number of them down.
+        constexpr int k_coarsestPointStep{ 8 };
+        static_assert(k_bandRows % k_coarsestPointStep == 0);
         // The shades of the clouds kept from day to deep night.
         constexpr int k_cloudShadeCount{ 1024 };
+        // The points across the Earth the air's colour is worked out at, shaded evenly between.
+        constexpr int k_airStopCount{ 41 };
+        // The shades of the air kept across the Earth, from its dark limb to its sunlit one.
+        constexpr int k_airShadeCount{ 257 };
         // The night's premultiplied colours kept from day to deep night.
         constexpr int k_nightShadeCount{ 256 };
         // The realistic sea's colours kept from the coast to the deepest trench.
@@ -304,6 +311,8 @@ namespace ClaFi::PathArt
             FloatPoint sphereRadii; // the highest layer's, across and up, in pixels
             int left; // the first column in view
             int right; // the column past the last in view
+            int top; // the first row in view, a whole number of steps down the canvas
+            int bottom; // the row past the last in view
             std::span<const Color> shades; // the clouds' colour from day to deep night
             NightView night;
         };
@@ -331,14 +340,6 @@ namespace ClaFi::PathArt
             __m256 upperRight;
             __m256 lowerLeft;
             __m256 lowerRight;
-        };
-
-        // A city's light where it shows this frame, and the opacity step it is drawn at.
-        struct LitCity
-        {
-            FloatPoint at;
-            float radius;
-            int step;
         };
 
         // The side of a cell of the grid the towns are placed on, in degrees.
@@ -1341,11 +1342,13 @@ namespace ClaFi::PathArt
             float edgeSoftness; // the pixels over which the limb's edge goes from clear to whole
             int left; // the first column in view
             int right; // the column past the last in view
+            int top; // the first row in view
+            int bottom; // the row past the last in view
         };
 
         // **A band of the night, premultiplied**: 8 pixels the night has not reached are written
-        // clear, and those by the limb fade out across it, as the bands are laid in past any
-        // clip's edge. The bitmap spans the sphere's widest row in the band; answers where it
+        // clear, and those by the limb fade out across it, as nothing else cuts the night to the
+        // Earth's disc. The bitmap spans the sphere's widest row in the band; answers where it
         // stands.
         [[nodiscard]] FloatPoint rasterizeNightBand(const NightPicture& picture, const int top,
             const int rows, Bitmap& pixels)
@@ -1420,68 +1423,86 @@ namespace ClaFi::PathArt
             return { static_cast<float>(left), static_cast<float>(top) };
         }
 
-        // A straight piece of a coastline, in the canvas's pixels.
-        struct CoastEdge
+        // The rows an item reaches from and to, in the canvas's pixels.
+        struct RowReach
         {
-            FloatPoint from;
-            FloatPoint to;
+            float upper;
+            float lower;
         };
 
-        // A coast's edges in the bands of rows they reach into, an edge in each band it reaches.
-        struct BandedCoast
+        // Items in the bands of rows they reach into, an item in each band it reaches.
+        template<typename Item>
+        struct Banded
         {
-            std::vector<CoastEdge> edges; // band by band
-            std::vector<std::size_t> starts; // where each band's edges start, then the end
+            std::vector<Item> items; // band by band
+            std::vector<std::size_t> starts; // where each band's items start, then the end
         };
 
-        // The first and the last band of rows an edge reaches into.
+        // The first and the last band of rows an item reaches into.
         struct BandRange
         {
             int first;
             int last;
         };
 
-        // The bands an edge reaches into, of `bandCount` bands from row `top` on, each taken
-        // `rowsBeyond` rows taller above and below. None when `last` comes before `first`.
-        [[nodiscard]] BandRange bandsReachedBy(const CoastEdge& edge, const int top,
-            const int bandCount, const int rowsBeyond)
+        // The bands a reach falls into, of `bandCount` bands from row `top` on. None when `last`
+        // comes before `first`.
+        [[nodiscard]] BandRange bandsReachedBy(const RowReach reach, const int top,
+            const int bandCount)
         {
             const float bandHeight = static_cast<float>(k_bandRows);
-            const float upper = std::min(edge.from.y, edge.to.y) - static_cast<float>(top)
-                - static_cast<float>(rowsBeyond);
-            const float lower = std::max(edge.from.y, edge.to.y) - static_cast<float>(top)
-                + static_cast<float>(rowsBeyond);
+            const float firstRow = static_cast<float>(top);
             return {
-                std::max(0, static_cast<int>(std::floor(upper / bandHeight))),
-                std::min(bandCount - 1, static_cast<int>(std::floor(lower / bandHeight)))
+                std::max(0, static_cast<int>(std::floor((reach.upper - firstRow) / bandHeight))),
+                std::min(bandCount - 1,
+                    static_cast<int>(std::floor((reach.lower - firstRow) / bandHeight)))
             };
         }
 
-        // Counted first, so each band's edges land together in one vector. A band takes the edges
-        // of `rowsBeyond` rows above and below it too.
-        [[nodiscard]] BandedCoast bandedCoast(const std::span<const CoastEdge> coast,
-            const int top, const int bandCount, const int rowsBeyond)
+        // Counted first, so each band's items land together in one vector.
+        template<typename Item, std::invocable<const Item&> ReachOf>
+        [[nodiscard]] Banded<Item> bandedBy(const std::span<const Item> items, const int top,
+            const int bandCount, const ReachOf& reachOf)
         {
-            BandedCoast banded{ .edges = {}, .starts = {} };
+            Banded<Item> banded{ .items = {}, .starts = {} };
             banded.starts.assign(static_cast<std::size_t>(bandCount) + 1, 0);
-            for (const CoastEdge& edge : coast)
+            for (const Item& item : items)
             {
-                const BandRange bands = bandsReachedBy(edge, top, bandCount, rowsBeyond);
+                const BandRange bands = bandsReachedBy(reachOf(item), top, bandCount);
                 for (int band = bands.first; band <= bands.last; ++band)
                     ++banded.starts[static_cast<std::size_t>(band) + 1];
             }
             for (std::size_t band = 1; band != banded.starts.size(); ++band)
                 banded.starts[band] += banded.starts[band - 1];
-            banded.edges.resize(banded.starts.back());
+            banded.items.resize(banded.starts.back());
             std::vector<std::size_t> nextSlots(banded.starts.begin(), banded.starts.end() - 1);
-            for (const CoastEdge& edge : coast)
+            for (const Item& item : items)
             {
-                const BandRange bands = bandsReachedBy(edge, top, bandCount, rowsBeyond);
+                const BandRange bands = bandsReachedBy(reachOf(item), top, bandCount);
                 for (int band = bands.first; band <= bands.last; ++band)
-                    banded.edges[nextSlots[static_cast<std::size_t>(band)]++] = edge;
+                    banded.items[nextSlots[static_cast<std::size_t>(band)]++] = item;
             }
             return banded;
         }
+
+        // The items of one band, none where nothing was banded.
+        template<typename Item>
+        [[nodiscard]] std::span<const Item> itemsInBand(const Banded<Item>& banded,
+            const int band)
+        {
+            if (banded.starts.empty())
+                return {};
+            const std::size_t start = banded.starts[static_cast<std::size_t>(band)];
+            const std::size_t end = banded.starts[static_cast<std::size_t>(band) + 1];
+            return { banded.items.data() + start, end - start };
+        }
+
+        // A straight piece of a coastline, in the canvas's pixels.
+        struct CoastEdge
+        {
+            FloatPoint from;
+            FloatPoint to;
+        };
 
         // A direction with the Earth's axis upright: x across, y up the axis, z toward the viewer.
         struct AxisDirection
@@ -1530,6 +1551,8 @@ namespace ClaFi::PathArt
             FloatPoint sphereRadii; // across and up, in pixels
             int left; // the first column in view
             int right; // the column past the last in view
+            int top; // the first row in view, a whole number of steps down the canvas
+            int bottom; // the row past the last in view
             float coastBlur; // the spread of the coast's Gaussian blur in pixels; 0 for none
         };
 
@@ -2576,6 +2599,8 @@ namespace ClaFi::PathArt
             FloatPoint sphereRadii; // across and up, in pixels
             int left; // the first column in view
             int right; // the column past the last in view
+            int top; // the first row in view, a whole number of steps down the canvas
+            int bottom; // the row past the last in view
         };
 
         // The realistic sea's colour by its depth from 0 to 1, shading evenly between the levels'.
@@ -2748,7 +2773,327 @@ namespace ClaFi::PathArt
             }
             return { static_cast<float>(left), static_cast<float>(top) };
         }
+
+        // A circle in the canvas's pixels.
+        struct PixelDisc
+        {
+            FloatPoint center;
+            float radius;
+        };
+
+        // **How much of each of 8 pixels of a row a disc holds**: all of a pixel inside it, none
+        // of one outside, and of a pixel its edge crosses the share the edge leaves inside.
+        [[nodiscard]] __m256 heldByDisc(const PixelDisc& disc, const __m256 pixelX,
+            const float pixelY)
+        {
+            const __m256 across = _mm256_sub_ps(pixelX, _mm256_set1_ps(disc.center.x));
+            const float down = pixelY - disc.center.y;
+            const __m256 fromCenter = _mm256_sqrt_ps(_mm256_fmadd_ps(across, across,
+                _mm256_set1_ps(down * down)));
+            return _mm256_min_ps(_mm256_max_ps(_mm256_sub_ps(
+                _mm256_set1_ps(disc.radius + 0.5f), fromCenter), _mm256_setzero_ps()),
+                _mm256_set1_ps(1.0f));
+        }
+
+        // **A colour laid over 8 premultiplied pixels** of a row from column `x` on, over each by
+        // its own share; the last group stops at the row's end.
+        void layEight(Color* pixels, const int x, const int width, const ColorLanes& color,
+            const __m256 shares)
+        {
+            int* const group = reinterpret_cast<int*>(pixels + x);
+            const __m256i inRow = _mm256_cmpgt_epi32(_mm256_set1_epi32(width - x),
+                _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7));
+            const __m256i under = _mm256_maskload_epi32(group, inRow);
+            const __m256 laid = _mm256_mul_ps(shares, _mm256_set1_ps(255.0f));
+            const __m256 kept = _mm256_sub_ps(_mm256_set1_ps(1.0f), shares);
+            const __m256i byteMask = _mm256_set1_epi32(0xFF);
+            const auto byteAt = [&](__m256 channel, int shift) {
+                const __m256 underneath = _mm256_cvtepi32_ps(_mm256_and_si256(
+                    _mm256_srli_epi32(under, shift), byteMask));
+                return _mm256_slli_epi32(_mm256_cvttps_epi32(_mm256_fmadd_ps(channel, laid,
+                    _mm256_fmadd_ps(underneath, kept, _mm256_set1_ps(0.5f)))), shift);
+            };
+            _mm256_maskstore_epi32(group, inRow, _mm256_or_si256(
+                _mm256_or_si256(byteAt(color.blue, 0), byteAt(color.green, 8)),
+                _mm256_or_si256(byteAt(color.red, 16), byteAt(_mm256_set1_ps(1.0f), 24))));
+        }
+
+        // **A colour laid over the pixels of a box that fall in a band**, 8 at a time, each by the
+        // share `sharesAt` gives it from the pixels' middles across and the row's down the canvas.
+        // The band's first row is `top` and its first column `left`.
+        template<std::invocable<__m256, float> SharesAt>
+        void layWithin(const FloatRect& box, const Color color, const int top, const int left,
+            Bitmap& band, const SharesAt& sharesAt)
+        {
+            const int firstRow = std::max(top, static_cast<int>(std::floor(box.top)));
+            const int endRow = std::min(top + band.height(),
+                static_cast<int>(std::ceil(box.bottom)));
+            const int firstColumn = std::max(left, static_cast<int>(std::floor(box.left)));
+            const int endColumn = std::min(left + band.width(),
+                static_cast<int>(std::ceil(box.right)));
+            const ColorLanes lanes = colorLanesOf(color);
+            for (int row = firstRow; row < endRow; ++row)
+            {
+                const float pixelY = static_cast<float>(row) + 0.5f;
+                Color* const pixels = band.pixel(0, row - top);
+                for (int column = firstColumn; column < endColumn; column += 8)
+                {
+                    const __m256 pixelX = _mm256_add_ps(
+                        _mm256_set1_ps(static_cast<float>(column) + 0.5f), laneOffsets());
+                    layEight(pixels, column - left, endColumn - left, lanes,
+                        sharesAt(pixelX, pixelY));
+                }
+            }
+        }
+
+        // A glow on the globe in the canvas's pixels: its colour whole at the middle, fading
+        // evenly to nothing at its spread.
+        struct SurfaceGlow
+        {
+            FloatPoint center;
+            FloatPoint spread; // across and down
+            Color color;
+        };
+
+        // A town's light in the canvas's pixels.
+        struct TownLight
+        {
+            PixelDisc dot;
+            float opacity;
+        };
+
+        // A glow laid over the rows of a band it reaches, cut to the Earth's disc.
+        void layGlow(const SurfaceGlow& glow, const PixelDisc& earth, const int top,
+            const int left, Bitmap& band)
+        {
+            const FloatRect box = {
+                glow.center.x - glow.spread.x,
+                glow.center.y - glow.spread.y,
+                glow.center.x + glow.spread.x,
+                glow.center.y + glow.spread.y
+            };
+            const __m256 whole = _mm256_set1_ps(static_cast<float>(glow.color.alpha) / 255.0f);
+            layWithin(box, glow.color, top, left, band, [&](__m256 pixelX, float pixelY) {
+                const __m256 across = _mm256_mul_ps(
+                    _mm256_sub_ps(pixelX, _mm256_set1_ps(glow.center.x)),
+                    _mm256_set1_ps(1.0f / glow.spread.x));
+                const float down = (pixelY - glow.center.y) / glow.spread.y;
+                const __m256 fromMiddle = _mm256_sqrt_ps(_mm256_fmadd_ps(across, across,
+                    _mm256_set1_ps(down * down)));
+                const __m256 strength = _mm256_max_ps(_mm256_setzero_ps(),
+                    _mm256_sub_ps(_mm256_set1_ps(1.0f), fromMiddle));
+                return _mm256_mul_ps(_mm256_mul_ps(strength, whole),
+                    heldByDisc(earth, pixelX, pixelY));
+            });
+        }
+
+        // **The share of a dot's opacity that lays no more light than its area holds**: softened
+        // over a pixel at its edge, a disc lays its area and a twelfth of a pixel over, and one
+        // under half a pixel in radius more than that.
+        [[nodiscard]] float areaShareOf(const float dotRadius)
+        {
+            const float area = dotRadius * dotRadius;
+            if (dotRadius >= 0.5f)
+                return area / (area + 1.0f / 12.0f);
+            const float reach = dotRadius + 0.5f;
+            return 3.0f * area / (reach * reach * reach);
+        }
+
+        // A town's light laid over the rows of a band it reaches, cut to the Earth's disc.
+        void layLight(const TownLight& light, const PixelDisc& earth, const int top,
+            const int left, Bitmap& band)
+        {
+            const float reach = light.dot.radius + 0.5f;
+            const FloatRect box = {
+                light.dot.center.x - reach,
+                light.dot.center.y - reach,
+                light.dot.center.x + reach,
+                light.dot.center.y + reach
+            };
+            const __m256 opacity = _mm256_set1_ps(light.opacity * areaShareOf(light.dot.radius));
+            layWithin(box, EarthSceneColors::CityLight, top, left, band,
+                [&](__m256 pixelX, float pixelY) {
+                    return _mm256_mul_ps(_mm256_mul_ps(heldByDisc(light.dot, pixelX, pixelY),
+                        opacity), heldByDisc(earth, pixelX, pixelY));
+                });
+        }
+
+        // A ring of the atmosphere in the canvas's pixels: a glow fading evenly from its circle to
+        // `reach` on either side.
+        struct AirRing
+        {
+            float radius;
+            float reach;
+            float strength; // the share of the air's own opacity the ring has on its circle
+        };
+
+        // The air's colour across the Earth from its dark limb to its sunlit one, at one ring's
+        // strength.
+        using AirShades = std::array<Color, k_airShadeCount>;
+
+        // What every band of the atmosphere is worked out from, this frame.
+        struct AtmospherePicture
+        {
+            PixelDisc earth;
+            FloatPoint sunward; // the way to the Sun across the screen, of length 1
+            std::array<AirRing, 3> rings; // in the order they are laid
+            std::array<AirShades, 3> shades; // each ring's
+        };
+
+        // **The sunlight on the limb rises evenly across it toward the Sun**, as the limb stands
+        // square to the view, so shades kept along the Sun's way across the screen colour it at
+        // any altitude - blue by day, orange at dusk, dark at night. Each of the three rings fades
+        // from its circle out to both sides, so none of them shows an edge. `unit` is a scene unit
+        // in pixels, and `sunAcross` the Sun across and up the screen.
+        [[nodiscard]] AtmospherePicture atmosphereOf(const PixelDisc& earth, const float unit,
+            const FloatPoint sunAcross)
+        {
+            const float sunReach = std::hypot(sunAcross.x, sunAcross.y);
+            AtmospherePicture atmosphere = {
+                .earth = earth,
+                // The screen's y runs down.
+                .sunward = sunReach > 0.0001f
+                    ? FloatPoint{ sunAcross.x / sunReach, -sunAcross.y / sunReach }
+                    : FloatPoint{ 1.0f, 0.0f },
+                .rings = { {
+                    { earth.radius * 1.012f, earth.radius * 0.02f, 0.3f },
+                    { earth.radius * 1.001f, std::max(earth.radius * 0.005f, 2.5f * unit), 1.0f },
+                    { earth.radius * 0.988f, earth.radius * 0.016f, 0.34f }
+                } },
+                .shades = {}
+            };
+            std::array<Color, k_airStopCount> stops{};
+            for (int stop = 0; stop != k_airStopCount; ++stop)
+            {
+                const float position = static_cast<float>(stop) / (k_airStopCount - 1);
+                stops[static_cast<std::size_t>(stop)] = atmosphereColor(
+                    sunReach * (2.0f * position - 1.0f));
+            }
+            for (std::size_t ring = 0; ring != atmosphere.rings.size(); ++ring)
+            {
+                const float strength = atmosphere.rings[ring].strength;
+                const auto ringStop = [&](int stop) {
+                    const Color color = stops[static_cast<std::size_t>(stop)];
+                    const float opacity = static_cast<float>(color.alpha) / 255.0f * strength;
+                    return color.withOpacity(std::min(1.0f, opacity));
+                };
+                for (int shade = 0; shade != k_airShadeCount; ++shade)
+                {
+                    const float stopsAlong = static_cast<float>(shade) / (k_airShadeCount - 1)
+                        * (k_airStopCount - 1);
+                    const int stopBefore = std::min(k_airStopCount - 2,
+                        static_cast<int>(stopsAlong));
+                    atmosphere.shades[ring][static_cast<std::size_t>(shade)] = colorBetween(
+                        ringStop(stopBefore), ringStop(stopBefore + 1),
+                        stopsAlong - static_cast<float>(stopBefore));
+                }
+            }
+            return atmosphere;
+        }
+
+        // **The atmosphere laid over a band**: a pixel within a ring's reach of its circle takes
+        // the air's shade there by how near the circle it stands. A row crosses the rings in one
+        // run, or in two with the Earth between them.
+        void layAtmosphere(const AtmospherePicture& picture, const int top, const int left,
+            Bitmap& band)
+        {
+            float innermost = std::numeric_limits<float>::max();
+            float outermost = 0.0f;
+            for (const AirRing& ring : picture.rings)
+            {
+                innermost = std::min(innermost, ring.radius - ring.reach);
+                outermost = std::max(outermost, ring.radius + ring.reach);
+            }
+            const FloatPoint center = picture.earth.center;
+            const __m256 perDiameter = _mm256_set1_ps(0.5f / picture.earth.radius);
+            const __m256 lastShade = _mm256_set1_ps(static_cast<float>(k_airShadeCount - 1));
+            const __m256 zero = _mm256_setzero_ps();
+            const __m256 half = _mm256_set1_ps(0.5f);
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 perByte = _mm256_set1_ps(1.0f / 255.0f);
+            const __m256i byteMask = _mm256_set1_epi32(0xFF);
+            const __m256 unsigned31 = _mm256_castsi256_ps(_mm256_set1_epi32(0x7FFFFFFF));
+            for (int y = 0; y != band.height(); ++y)
+            {
+                const float down = static_cast<float>(top + y) + 0.5f - center.y;
+                if (std::abs(down) >= outermost)
+                    continue;
+                Color* const pixels = band.pixel(0, y);
+                const __m256 sunwardDown = _mm256_set1_ps(down * picture.sunward.y);
+                const auto layRun = [&](float fromX, float toX) {
+                    const int firstColumn = std::max(left, static_cast<int>(std::floor(fromX)));
+                    const int endColumn = std::min(left + band.width(),
+                        static_cast<int>(std::ceil(toX)));
+                    for (int column = firstColumn; column < endColumn; column += 8)
+                    {
+                        const __m256 across = _mm256_add_ps(_mm256_set1_ps(
+                            static_cast<float>(column) + 0.5f - center.x), laneOffsets());
+                        const __m256 fromCenter = _mm256_sqrt_ps(_mm256_fmadd_ps(across, across,
+                            _mm256_set1_ps(down * down)));
+                        const __m256 towardSun = _mm256_fmadd_ps(_mm256_fmadd_ps(across,
+                            _mm256_set1_ps(picture.sunward.x), sunwardDown), perDiameter, half);
+                        const __m256i shadeIndex = _mm256_cvtps_epi32(_mm256_mul_ps(
+                            _mm256_min_ps(_mm256_max_ps(towardSun, zero), one), lastShade));
+                        for (std::size_t ring = 0; ring != picture.rings.size(); ++ring)
+                        {
+                            const AirRing& airRing = picture.rings[ring];
+                            const __m256 fromCircle = _mm256_and_ps(unsigned31,
+                                _mm256_sub_ps(fromCenter, _mm256_set1_ps(airRing.radius)));
+                            const __m256 nearness = _mm256_max_ps(zero, _mm256_fnmadd_ps(
+                                fromCircle, _mm256_set1_ps(1.0f / airRing.reach), one));
+                            if (_mm256_movemask_ps(_mm256_cmp_ps(nearness, zero, _CMP_GT_OQ)) == 0)
+                                continue;
+                            const __m256i shade = _mm256_i32gather_epi32(reinterpret_cast<
+                                const int*>(picture.shades[ring].data()), shadeIndex, 4);
+                            const auto channelOf = [&](int shift) {
+                                return _mm256_mul_ps(_mm256_cvtepi32_ps(_mm256_and_si256(
+                                    _mm256_srli_epi32(shade, shift), byteMask)), perByte);
+                            };
+                            layEight(pixels, column - left, endColumn - left,
+                                { channelOf(16), channelOf(8), channelOf(0) },
+                                _mm256_mul_ps(channelOf(24), nearness));
+                        }
+                    }
+                };
+                const float outerHalf = std::sqrt(outermost * outermost - down * down);
+                const float innerHalf = std::abs(down) < innermost
+                    ? std::sqrt(innermost * innermost - down * down)
+                    : 0.0f;
+                // The runs part once the Earth between them is wider than a group of pixels.
+                if (innerHalf > 8.0f)
+                {
+                    layRun(center.x - outerHalf, center.x - innerHalf);
+                    layRun(center.x + innerHalf, center.x + outerHalf);
+                }
+                else
+                {
+                    layRun(center.x - outerHalf, center.x + outerHalf);
+                }
+            }
+        }
     }
+
+    // What a frame's picture of the globe is worked out from, layer by layer.
+    struct EarthScene::GlobePicture
+    {
+        Matrix3x2 toPixels; // from the scene's coordinates to the canvas's pixels
+        FloatRect inCanvas; // the frame's part of the canvas, in pixels
+        PixelDisc earth;
+        PixelDisc outline; // holds every layer: the highest clouds and the air's outermost ring
+        int top; // the first band's first row
+        int bottom; // the row past the last band's last
+        int bandCount;
+        AtmospherePicture atmosphere;
+        std::optional<SeaPicture> sea{};
+        std::optional<LandPicture> land{};
+        LandPalette landPalette{};
+        Banded<CoastEdge> coast{};
+        std::optional<NightPicture> night{};
+        Banded<SurfaceGlow> glows{}; // the Sun's glint first, then the glowing towns'
+        Banded<TownLight> townLights{}; // the faintest first
+        std::array<CloudLayerView, k_cloudLayers.size()> cloudLayers{};
+        std::optional<CloudPicture> clouds{}; // its layers are cloudLayers
+    };
 
     // The coasts take some milliseconds to build, so they are built off the paint from the start,
     // and the first frame takes them.
@@ -2829,8 +3174,6 @@ namespace ClaFi::PathArt
             under.y / underLength,
             under.z / underLength
         }));
-        // What is drawn at a fixed size on the globe shrinks with it.
-        const float globeShare = radius / globeDiscAt(width, height, 0.0f).radius;
 
         if (altitude == 0.0f)
             m_space.draw(frame);
@@ -2849,27 +3192,18 @@ namespace ClaFi::PathArt
         });
         drawGlow(frame, { width, 0.0f }, 340.0f * unit,
             EarthSceneColors::SunGlare.withOpacity(0.16f * sunlit));
-        if (m_earthMap)
-            drawSea(frame, globe);
-        else if (altitude == 0.0f)
-            m_ocean.draw(frame);
-        else
-            fillOcean(frame, globeDisc);
-
-        PixelPath disc;
-        disc.drawCircle(globe.center, radius);
-        frame.canvas.pushClip(disc, &frame.toCanvas);
-        drawLand(frame, globe);
-        drawNight(frame, globe);
-        if (globe.sun.z > 0.0f)
+        takeBuiltMaps();
+        // Until the land's map is built the picture holds neither the sea nor the land, and lies
+        // over an ocean of one gradient and a land of one flat colour.
+        if (!m_earthMap)
         {
-            drawGlow(frame, globe.onScreen(globe.sun), 150.0f * unit * globeShare,
-                EarthSceneColors::SeaGlint.withOpacity(0.3f * globe.sun.z), 0.8f);
+            if (altitude == 0.0f)
+                m_ocean.draw(frame);
+            else
+                fillOcean(frame, globeDisc);
+            drawFlatLand(frame, globe);
         }
-        drawCityLights(frame, globe, time.cycleTime);
-        frame.canvas.popClip();
-        drawClouds(frame, globe, sceneSeconds);
-        drawAtmosphere(frame, globe);
+        drawGlobe(frame, globe, time.cycleTime, sceneSeconds);
 
         const float size = unit * std::min(1.0f, (width / unit) / 900.0f) * satelliteShare;
         drawSatellite(frame, SatellitePose{
@@ -3722,11 +4056,15 @@ namespace ClaFi::PathArt
         fillOcean(frame, globeDiscAt(frame.width, frame.height, 0.0f));
     }
 
-    // The land and the ice sheet make one path each, so a sea inside the land is cut out of it.
+    // The land and the ice sheet make one path each, so a sea inside the land is cut out of it,
+    // and both are cut to the globe's disc.
     void EarthScene::drawFlatLand(const SceneFrame& frame, const Globe& globe) const
     {
         const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
         const EarthTurn turn = globe.turn();
+        PixelPath disc;
+        disc.drawCircle(globe.center, globe.radius);
+        frame.canvas.pushClip(disc, &frame.toCanvas);
         std::vector<Direction> outline;
         for (const bool iceSheet : { false, true })
         {
@@ -3747,13 +4085,10 @@ namespace ClaFi::PathArt
             const Color color = iceSheet ? EarthSceneColors::Snow : EarthSceneColors::Grass;
             fillShape(frame, path, SolidColor{ color });
         }
+        frame.canvas.popClip();
     }
 
-    // **The land is worked out in bands on all the cores**, each pixel taking the share of it the
-    // coastlines enclose as its opacity, so the coasts are drawn alike on either backend. The
-    // points stand every 2nd pixel and row on a globe over 1300 pixels in radius, and every 4th
-    // over 3200, where the land's map is coarser than that still.
-    void EarthScene::drawLand(const SceneFrame& frame, const Globe& globe)
+    void EarthScene::takeBuiltMaps()
     {
         if (!m_earthMap)
         {
@@ -3765,17 +4100,139 @@ namespace ClaFi::PathArt
                     return BuiltLand{ .map = std::move(map), .towns = std::move(towns) };
                 });
             }
-            if (m_landBuilt.wait_for(std::chrono::seconds{ 0 }) != std::future_status::ready)
+            if (m_landBuilt.wait_for(std::chrono::seconds{ 0 }) == std::future_status::ready)
             {
-                drawFlatLand(frame, globe);
-                return;
+                BuiltLand built = m_landBuilt.get();
+                m_earthMap = std::move(built.map);
+                m_cities = std::move(built.towns);
             }
-            BuiltLand built = m_landBuilt.get();
-            m_earthMap = std::move(built.map);
-            m_cities = std::move(built.towns);
         }
+        if (!m_cloudMaps)
+        {
+            if (!m_cloudMapsBuilt.valid())
+            {
+                m_cloudMapsBuilt = std::async(std::launch::async, []() {
+                    const auto mapOf = [](const CloudLayer& layer) {
+                        return CloudMap{ layer.kind, layer.seed, layer.cover };
+                    };
+                    return std::make_unique<CloudMaps>(CloudMaps{
+                        mapOf(k_cloudLayers[0]),
+                        mapOf(k_cloudLayers[1]),
+                        mapOf(k_cloudLayers[2])
+                    });
+                });
+            }
+            if (m_cloudMapsBuilt.wait_for(std::chrono::seconds{ 0 }) == std::future_status::ready)
+                m_cloudMaps = m_cloudMapsBuilt.get();
+        }
+    }
 
+    // **The globe is one picture a frame**, worked out in bands of rows on all the cores: each
+    // band takes the layers from the sea up to the air and lays one over the other, so either
+    // backend is handed the globe's pixels once. See PathArt#earthscene
+    void EarthScene::drawGlobe(const SceneFrame& frame, const Globe& globe,
+        const float cycleTime, const double sceneSeconds)
+    {
+        // The scene is drawn under a scale and a move, so a pixel maps back by undoing them.
         const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
+        // The picture is cut to the canvas, and the backend cuts it to any clip.
+        const FloatRect canvasPixels = {
+            0.0f,
+            0.0f,
+            static_cast<float>(frame.canvas.width()),
+            static_cast<float>(frame.canvas.height())
+        };
+        const FloatRect inCanvas = FloatRect::intersection(
+            toPixels.mapRect({ 0.0f, 0.0f, frame.width, frame.height }), canvasPixels);
+        const IntRect view = inCanvas.roundedOut();
+        if (view.empty())
+            return;
+        const PixelDisc earth = { toPixels.transform(globe.center), globe.radius * toPixels.a };
+        const AtmospherePicture atmosphere = atmosphereOf(earth, frame.unit * toPixels.a,
+            rotated({ globe.sun.x, globe.sun.y }, globe.tilt));
+        float outermost = 0.0f;
+        for (const CloudLayer& layer : k_cloudLayers)
+            outermost = std::max(outermost, earth.radius * (1.0f + layer.height));
+        for (const AirRing& ring : atmosphere.rings)
+            outermost = std::max(outermost, ring.radius + ring.reach);
+        const PixelDisc outline = { earth.center, outermost + 1.0f };
+        const int top = std::max(view.top,
+            static_cast<int>(std::floor(outline.center.y - outline.radius)))
+            / k_coarsestPointStep * k_coarsestPointStep;
+        const int bottom = std::min(view.bottom,
+            static_cast<int>(std::ceil(outline.center.y + outline.radius)));
+        if (top >= bottom)
+            return;
+        GlobePicture picture{
+            .toPixels = toPixels,
+            .inCanvas = inCanvas,
+            .earth = earth,
+            .outline = outline,
+            .top = top,
+            .bottom = bottom,
+            .bandCount = (bottom - top + k_bandRows - 1) / k_bandRows,
+            .atmosphere = atmosphere
+        };
+        if (m_earthMap)
+        {
+            addSea(picture, globe);
+            addLand(picture, globe);
+        }
+        addNight(picture, globe);
+        addLights(picture, frame, globe, cycleTime);
+        if (m_cloudMaps)
+            addClouds(picture, globe, sceneSeconds);
+
+        const std::size_t bandCount = static_cast<std::size_t>(picture.bandCount);
+        m_globeBands.resize(bandCount);
+        m_layerPixels.resize(bandCount);
+        spreadOverCores(picture.bandCount, [&](int band) {
+            const std::size_t index = static_cast<std::size_t>(band);
+            rasterizeGlobeBand(picture, band, m_globeBands[index], m_layerPixels[index]);
+        });
+        layBands(frame, m_globeBands, canvasPixels);
+    }
+
+    // **The sea is coloured by its depth**, read from the land's map at points twice as far apart
+    // as the land's. See PathArt#earthscene
+    void EarthScene::addSea(GlobePicture& picture, const Globe& globe) const
+    {
+        const Matrix3x2& toPixels = picture.toPixels;
+        const FloatRect sphere = toPixels.mapRect({
+            globe.center.x - globe.radius,
+            globe.center.y - globe.radius,
+            globe.center.x + globe.radius,
+            globe.center.y + globe.radius
+        });
+        const IntRect inView = FloatRect::intersection(picture.inCanvas, sphere).roundedOut();
+        if (inView.empty())
+            return;
+        static const std::vector<Color> shades = seaShades();
+        const float radiusInPixels = globe.radius * toPixels.a;
+        const int step = 2 * pointStepFor(radiusInPixels);
+        picture.sea = SeaPicture{
+            .map = m_earthMap.get(),
+            .ground = sphereViewOf(toPixels, globe.center, globe.radius, globe.tilt, globe.tip,
+                globe.spin),
+            .look = look(),
+            .shades = shades,
+            .step = step,
+            .sphereCenter = toPixels.transform(globe.center),
+            .sphereRadii = { radiusInPixels, globe.radius * toPixels.d },
+            .left = inView.left,
+            .right = inView.right,
+            .top = inView.top / step * step,
+            .bottom = inView.bottom
+        };
+    }
+
+    // **Each pixel of the land takes the share of it the coastlines enclose as its opacity**, so
+    // the coasts are drawn alike on either backend. The points stand every 2nd pixel and row on a
+    // globe over 1300 pixels in radius, and every 4th over 3200, where the land's map is coarser
+    // than that still.
+    void EarthScene::addLand(GlobePicture& picture, const Globe& globe) const
+    {
+        const Matrix3x2& toPixels = picture.toPixels;
         const float radiusInPixels = globe.radius * toPixels.a;
         const int step = pointStepFor(radiusInPixels);
         // **The realistic coast is blurred as much as the land is**, and its loops along the rim
@@ -3821,21 +4278,18 @@ namespace ClaFi::PathArt
         }
         if (coast.empty())
             return;
-        // Inside a path clip the canvas's clip box stands in the clip's own coordinates, so the
-        // land is cut to the canvas and the backend cuts it to the clip.
-        const FloatRect view = { 0.0f, 0.0f, frame.width, frame.height };
-        const FloatRect canvasPixels = {
-            0.0f,
-            0.0f,
-            static_cast<float>(frame.canvas.width()),
-            static_cast<float>(frame.canvas.height())
-        };
-        const IntRect inView = FloatRect::intersection(FloatRect::intersection(
-            toPixels.mapRect(view), canvasPixels), landBox).roundedOut();
+        const IntRect inView = FloatRect::intersection(picture.inCanvas, landBox).roundedOut();
         if (inView.empty())
             return;
         const float tip = globe.tip;
-        const LandPicture picture = {
+        const FloatPoint sphereCenter = toPixels.transform(globe.center);
+        const FloatPoint sphereRadii = { radiusInPixels, globe.radius * toPixels.d };
+        const float sphereTop = sphereCenter.y - sphereRadii.y;
+        const int top = std::max(inView.top, static_cast<int>(std::floor(sphereTop)))
+            / step * step;
+        if (top >= inView.bottom)
+            return;
+        picture.land = LandPicture{
             .map = m_earthMap.get(),
             .ground = sphereViewOf(toPixels, globe.center, globe.radius, globe.tilt, tip,
                 globe.spin),
@@ -3846,134 +4300,78 @@ namespace ClaFi::PathArt
                 globe.sun.y * std::cos(tip) - globe.sun.z * std::sin(tip),
                 globe.sun.y * std::sin(tip) + globe.sun.z * std::cos(tip)
             },
-            .sphereCenter = toPixels.transform(globe.center),
-            .sphereRadii = { radiusInPixels, globe.radius * toPixels.d },
+            .sphereCenter = sphereCenter,
+            .sphereRadii = sphereRadii,
             .left = inView.left,
             .right = inView.right,
+            .top = top,
+            .bottom = inView.bottom,
             .coastBlur = coastBlur
         };
-        const float sphereTop = picture.sphereCenter.y - picture.sphereRadii.y;
-        const int top = std::max(inView.top, static_cast<int>(std::floor(sphereTop)))
-            / picture.step * picture.step;
-        if (top >= inView.bottom)
-            return;
-        const LandPalette palette = landPalette();
-        const int bandCount = (inView.bottom - top + k_bandRows - 1) / k_bandRows;
-        const BandedCoast banded = bandedCoast(coast, top, bandCount, blurReach);
-        m_landBands.resize(static_cast<std::size_t>(bandCount));
-        spreadOverCores(bandCount, [&](int band) {
-            const int bandTop = top + band * k_bandRows;
-            const int rows = std::min(k_bandRows, inView.bottom - bandTop);
-            const std::size_t start = banded.starts[static_cast<std::size_t>(band)];
-            const std::size_t end = banded.starts[static_cast<std::size_t>(band) + 1];
-            const std::span<const CoastEdge> bandCoast{ banded.edges.data() + start, end - start };
-            PixelBand& drawn = m_landBands[static_cast<std::size_t>(band)];
-            drawn.at = rasterizeLandBand(picture, palette, bandCoast, bandTop, rows, drawn.pixels);
-        });
-        layBands(frame, m_landBands, canvasPixels);
+        picture.landPalette = landPalette();
+        // A band takes the edges of the rows the blur reaches above and below it too.
+        const float rowsBeyond = static_cast<float>(blurReach);
+        picture.coast = bandedBy(std::span<const CoastEdge>{ coast }, picture.top,
+            picture.bandCount, [&](const CoastEdge& edge) {
+                return RowReach{
+                    std::min(edge.from.y, edge.to.y) - rowsBeyond,
+                    std::max(edge.from.y, edge.to.y) + rowsBeyond
+                };
+            });
     }
 
-    // **The sea is coloured by its depth**, read from the land's map at points twice as far apart
-    // as the land's, in bands of rows spread over the cores. See PathArt#earthscene
-    void EarthScene::drawSea(const SceneFrame& frame, const Globe& globe)
+    // **The night falls over the globe by the sunlight on it**, worked out pixel by pixel, so the
+    // terminator curves as it does at any altitude.
+    void EarthScene::addNight(GlobePicture& picture, const Globe& globe) const
     {
-        const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
-        const FloatRect canvasPixels = {
-            0.0f,
-            0.0f,
-            static_cast<float>(frame.canvas.width()),
-            static_cast<float>(frame.canvas.height())
-        };
+        const Matrix3x2& toPixels = picture.toPixels;
         const FloatRect sphere = toPixels.mapRect({
             globe.center.x - globe.radius,
             globe.center.y - globe.radius,
             globe.center.x + globe.radius,
             globe.center.y + globe.radius
         });
-        const IntRect inView = FloatRect::intersection(FloatRect::intersection(
-            toPixels.mapRect({ 0.0f, 0.0f, frame.width, frame.height }), canvasPixels),
-            sphere).roundedOut();
-        if (inView.empty())
-            return;
-        static const std::vector<Color> shades = seaShades();
-        const float radiusInPixels = globe.radius * toPixels.a;
-        const SeaPicture picture = {
-            .map = m_earthMap.get(),
-            .ground = sphereViewOf(toPixels, globe.center, globe.radius, globe.tilt, globe.tip,
-                globe.spin),
-            .look = look(),
-            .shades = shades,
-            .step = 2 * pointStepFor(radiusInPixels),
-            .sphereCenter = toPixels.transform(globe.center),
-            .sphereRadii = { radiusInPixels, globe.radius * toPixels.d },
-            .left = inView.left,
-            .right = inView.right
-        };
-        const int top = inView.top / picture.step * picture.step;
-        const int bandCount = (inView.bottom - top + k_bandRows - 1) / k_bandRows;
-        m_seaBands.resize(static_cast<std::size_t>(bandCount));
-        spreadOverCores(bandCount, [&](int band) {
-            const int bandTop = top + band * k_bandRows;
-            const int rows = std::min(k_bandRows, inView.bottom - bandTop);
-            PixelBand& drawn = m_seaBands[static_cast<std::size_t>(band)];
-            drawn.at = rasterizeSeaBand(picture, bandTop, rows, drawn.pixels);
-        });
-        layBands(frame, m_seaBands, canvasPixels);
-    }
-
-    // **The night falls over the globe by the sunlight on it**, worked out pixel by pixel in bands
-    // spread over the cores, so the terminator curves as it does at any altitude.
-    void EarthScene::drawNight(const SceneFrame& frame, const Globe& globe)
-    {
-        const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
-        const FloatRect canvasPixels = {
-            0.0f,
-            0.0f,
-            static_cast<float>(frame.canvas.width()),
-            static_cast<float>(frame.canvas.height())
-        };
-        const FloatRect sphere = toPixels.mapRect({
-            globe.center.x - globe.radius,
-            globe.center.y - globe.radius,
-            globe.center.x + globe.radius,
-            globe.center.y + globe.radius
-        });
-        const IntRect inView = FloatRect::intersection(FloatRect::intersection(
-            toPixels.mapRect({ 0.0f, 0.0f, frame.width, frame.height }), canvasPixels),
-            sphere).roundedOut();
+        const IntRect inView = FloatRect::intersection(picture.inCanvas, sphere).roundedOut();
         if (inView.empty())
             return;
         static const std::vector<Color> shades = nightShades();
-        const NightPicture picture = {
+        picture.night = NightPicture{
             .night = nightViewOf(toPixels, globe.center, globe.radius, globe.tilt, globe.sun.x,
                 globe.sun.y, globe.sun.z),
             .shades = shades,
             .edgeSoftness = 1.0f,
             .left = inView.left,
-            .right = inView.right
+            .right = inView.right,
+            .top = inView.top,
+            .bottom = inView.bottom
         };
-        const int bandCount = (inView.bottom - inView.top + k_bandRows - 1) / k_bandRows;
-        m_nightBands.resize(static_cast<std::size_t>(bandCount));
-        spreadOverCores(bandCount, [&](int band) {
-            const int bandTop = inView.top + band * k_bandRows;
-            const int rows = std::min(k_bandRows, inView.bottom - bandTop);
-            PixelBand& drawn = m_nightBands[static_cast<std::size_t>(band)];
-            drawn.at = rasterizeNightBand(picture, bandTop, rows, drawn.pixels);
-        });
-        layBands(frame, m_nightBands, canvasPixels);
     }
 
-    // The lights come on a little way past the terminator and fade toward the edge of the globe.
-    void EarthScene::drawCityLights(const SceneFrame& frame, const Globe& globe,
-        const float cycleTime) const
+    // The Sun glints off the ground it stands over. The towns' lights come on a little way past
+    // the terminator and fade toward the edge of the globe, and the brightest towns glow.
+    void EarthScene::addLights(GlobePicture& picture, const SceneFrame& frame,
+        const Globe& globe, const float cycleTime) const
     {
+        const Matrix3x2& toPixels = picture.toPixels;
+        const float scale = toPixels.a;
+        // What is drawn at a fixed size on the globe shrinks with it.
+        const float globeShare = globe.radius
+            / globeDiscAt(frame.width, frame.height, 0.0f).radius;
+        std::vector<SurfaceGlow> glows;
+        if (globe.sun.z > 0.0f)
+        {
+            const float spread = 150.0f * frame.unit * globeShare * scale;
+            glows.push_back({
+                .center = toPixels.transform(globe.onScreen(globe.sun)),
+                .spread = { spread / 0.8f, spread },
+                .color = EarthSceneColors::SeaGlint.withOpacity(0.3f * globe.sun.z)
+            });
+        }
         // The lights shrink as the globe does, a little less fast.
-        const float unit = frame.unit * std::sqrt(globe.radius
-            / globeDiscAt(frame.width, frame.height, 0.0f).radius);
+        const float unit = frame.unit * std::sqrt(globeShare);
         const EarthTurn turn = globe.turn();
         const Matrix3x2 toScreen = globe.toScreen();
-        // The glows go down city by city, and the lights over all of them afterwards.
-        std::vector<LitCity> lit;
+        std::vector<TownLight> lights;
         for (const City& city : m_cities)
         {
             const Direction direction = turn.applied(city.onEarth);
@@ -3993,66 +4391,48 @@ namespace ClaFi::PathArt
             const float wave = std::sin(k_2Pi * 3.0f * k_lively * cycleTime + phase);
             const float shimmer = 0.65f + 0.35f * wave;
             const float opacity = strength * shimmer;
+            // The lights take one of a few opacities, the middle of the step each falls in.
             const int step = std::min(k_cityOpacitySteps - 1,
                 static_cast<int>(opacity * k_cityOpacitySteps));
             const float radius = (0.8f + 1.3f * city.brightness) * unit
                 * (0.4f + 0.6f * direction.z);
-            lit.push_back({ .at = point, .radius = radius, .step = step });
+            const FloatPoint center = toPixels.transform(point);
+            lights.push_back({
+                .dot = { center, radius * scale },
+                .opacity = (static_cast<float>(step) + 0.5f) / k_cityOpacitySteps
+            });
             if (city.brightness > k_glowingBrightness)
-                drawGlow(frame, point, 7.0f * unit,
-                    EarthSceneColors::CityGlow.withOpacity(0.45f * strength));
-        }
-        for (int step = 0; step != k_cityOpacitySteps; ++step)
-        {
-            const float opacity = (static_cast<float>(step) + 0.5f) / k_cityOpacitySteps;
-            const Color light = EarthSceneColors::CityLight.withOpacity(opacity);
-            ScatteredShapes lights{ frame, SolidColor{ light } };
-            for (const LitCity& city : lit)
             {
-                if (city.step == step)
-                    addEllipse(lights.next(), city.at, city.radius, city.radius);
+                const float spread = 7.0f * unit * scale;
+                glows.push_back({
+                    .center = center,
+                    .spread = { spread, spread },
+                    .color = EarthSceneColors::CityGlow.withOpacity(0.45f * strength)
+                });
             }
-            lights.draw();
         }
+        // The glows go down one by one, and the lights over all of them, the faintest first.
+        std::ranges::stable_sort(lights, {}, &TownLight::opacity);
+        picture.glows = bandedBy(std::span<const SurfaceGlow>{ glows }, picture.top,
+            picture.bandCount, [](const SurfaceGlow& glow) {
+                return RowReach{ glow.center.y - glow.spread.y, glow.center.y + glow.spread.y };
+            });
+        picture.townLights = bandedBy(std::span<const TownLight>{ lights }, picture.top,
+            picture.bandCount, [](const TownLight& light) {
+                const float reach = light.dot.radius + 0.5f;
+                return RowReach{ light.dot.center.y - reach, light.dot.center.y + reach };
+            });
     }
 
     // **Three layers of cloud float above the ground**, each a map on a sphere of its own a little
     // larger than the Earth's, turning about an axis of its own. See PathArt#earthscene
-    void EarthScene::drawClouds(const SceneFrame& frame, const Globe& globe,
-        const double sceneSeconds)
+    void EarthScene::addClouds(GlobePicture& picture, const Globe& globe,
+        const double sceneSeconds) const
     {
-        if (!m_cloudMaps)
-        {
-            if (!m_cloudMapsBuilt.valid())
-            {
-                m_cloudMapsBuilt = std::async(std::launch::async, []() {
-                    const auto mapOf = [](const CloudLayer& layer) {
-                        return CloudMap{ layer.kind, layer.seed, layer.cover };
-                    };
-                    return std::make_unique<CloudMaps>(CloudMaps{
-                        mapOf(k_cloudLayers[0]),
-                        mapOf(k_cloudLayers[1]),
-                        mapOf(k_cloudLayers[2])
-                    });
-                });
-            }
-            if (m_cloudMapsBuilt.wait_for(std::chrono::seconds{ 0 }) != std::future_status::ready)
-                return;
-            m_cloudMaps = m_cloudMapsBuilt.get();
-        }
-
-        // The scene is drawn under a scale and a move, so a pixel maps back by undoing them.
-        const Matrix3x2 toPixels = frame.canvas.transform() * frame.toCanvas;
+        const Matrix3x2& toPixels = picture.toPixels;
         const FloatPoint pixelScale = { toPixels.a, toPixels.d };
-        const FloatPoint pixelShift = { toPixels.e, toPixels.f };
-        const IntRect inView = FloatRect::intersection(
-            toPixels.mapRect({ 0.0f, 0.0f, frame.width, frame.height }),
-            frame.canvas.clipBox()).roundedOut();
-        if (inView.empty())
-            return;
-
+        const IntRect inView = picture.inCanvas.roundedOut();
         const float cloudOpacity = static_cast<float>(EarthSceneColors::Cloud.alpha) / 255.0f;
-        std::array<CloudLayerView, k_cloudLayers.size()> layers{};
         float outerRadius = 0.0f;
         for (std::size_t i = 0; i != k_cloudLayers.size(); ++i)
         {
@@ -4063,7 +4443,7 @@ namespace ClaFi::PathArt
             const ViewAngles angles = ViewAngles::Of(globe.fromEarth
                 .after(Rotation::About({ 1.0f, 0.0f, 0.0f }, layer.axisTilt * k_degree))
                 .after(Rotation::About({ 0.0f, 1.0f, 0.0f }, drift)));
-            layers[i] = {
+            picture.cloudLayers[i] = {
                 .map = &(*m_cloudMaps)[i],
                 .sphere = sphereViewOf(toPixels, globe.center, radius, angles.tilt, angles.tip,
                     angles.spin),
@@ -4072,35 +4452,107 @@ namespace ClaFi::PathArt
             outerRadius = std::max(outerRadius, radius);
         }
 
+        // The cloud maps' texels are twice the land's, and so are the points' steps.
+        const int step = 2 * pointStepFor(globe.radius * pixelScale.x);
+        const FloatPoint sphereCenter = toPixels.transform(globe.center);
+        const FloatPoint sphereRadii = { outerRadius * pixelScale.x, outerRadius * pixelScale.y };
+        const float sphereTop = sphereCenter.y - sphereRadii.y;
+        const int top = std::max(inView.top, static_cast<int>(std::floor(sphereTop)))
+            / step * step;
+        if (top >= inView.bottom)
+            return;
         static const std::vector<Color> shades = cloudShades();
-        const CloudPicture picture = {
-            .layers = layers,
+        picture.clouds = CloudPicture{
+            .layers = picture.cloudLayers,
             .look = look(),
-            // The cloud maps' texels are twice the land's, and so are the points' steps.
-            .step = 2 * pointStepFor(globe.radius * pixelScale.x),
-            .sphereCenter = toPixels.transform(globe.center),
-            .sphereRadii = { outerRadius * pixelScale.x, outerRadius * pixelScale.y },
+            .step = step,
+            .sphereCenter = sphereCenter,
+            .sphereRadii = sphereRadii,
             .left = inView.left,
             .right = inView.right,
+            .top = top,
+            .bottom = inView.bottom,
             .shades = shades,
             .night = nightViewOf(toPixels, globe.center, globe.radius, globe.tilt, globe.sun.x,
                 globe.sun.y, globe.sun.z)
         };
+    }
 
-        const float sphereTop = picture.sphereCenter.y - picture.sphereRadii.y;
-        const int top = std::max(inView.top, static_cast<int>(std::floor(sphereTop)))
-            / picture.step * picture.step;
-        if (top >= inView.bottom)
+    // **A band of the globe's picture, premultiplied**: each layer with rows in the band is worked
+    // out on its own and laid over those below - the sea, the land, the night, the glows and the
+    // towns' lights, the clouds, the air. The band spans the columns the picture's outline covers
+    // in its widest row, and one that misses the outline is left empty.
+    void EarthScene::rasterizeGlobeBand(const GlobePicture& picture, const int band,
+        PixelBand& drawn, Bitmap& layerPixels)
+    {
+        // The band's rows start a whole number of the points' steps down, and the frame may start
+        // below that, so the band keeps the rows from the frame's first on.
+        const IntRect inCanvas = picture.inCanvas.roundedOut();
+        const int bandTop = picture.top + band * k_bandRows;
+        const int top = std::max(bandTop, inCanvas.top);
+        const int bottom = std::min(bandTop + k_bandRows, picture.bottom);
+        const PixelDisc& outline = picture.outline;
+        const float nearestRow = std::clamp(outline.center.y, static_cast<float>(top) + 0.5f,
+            static_cast<float>(bottom) - 0.5f);
+        const float rise = nearestRow - outline.center.y;
+        const float halfWidth = std::abs(rise) < outline.radius
+            ? std::sqrt(outline.radius * outline.radius - rise * rise)
+            : 0.0f;
+        const int left = std::max(inCanvas.left,
+            static_cast<int>(std::floor(outline.center.x - halfWidth)));
+        const int right = std::min(inCanvas.right,
+            static_cast<int>(std::ceil(outline.center.x + halfWidth)));
+        if (left >= right || top >= bottom)
+        {
+            drawn.pixels.resize({});
             return;
-        const int bandCount = (inView.bottom - top + k_bandRows - 1) / k_bandRows;
-        m_cloudBands.resize(static_cast<std::size_t>(bandCount));
-        spreadOverCores(bandCount, [&](int band) {
-            const int bandTop = top + band * k_bandRows;
-            const int rows = std::min(k_bandRows, inView.bottom - bandTop);
-            PixelBand& drawn = m_cloudBands[static_cast<std::size_t>(band)];
-            drawn.at = rasterizeCloudBand(picture, bandTop, rows, drawn.pixels);
-        });
-        layBands(frame, m_cloudBands, frame.canvas.clipBox());
+        }
+        drawn.pixels.resize({ right - left, bottom - top });
+        drawn.at = { static_cast<float>(left), static_cast<float>(top) };
+        const PixelView bandView = drawn.pixels.pixelView(drawn.at);
+        bandView.fill(Color{ 0, 0, 0, 0 });
+
+        // A layer's rows within the band, worked out into `layerPixels` and laid over the band's.
+        const auto layOver = [&](int layerTop, int layerBottom,
+            const std::invocable<int, int> auto& rasterizeRows) {
+            const int firstRow = std::max(bandTop, layerTop);
+            const int endRow = std::min(bottom, layerBottom);
+            if (firstRow >= endRow)
+                return;
+            const FloatPoint at = rasterizeRows(firstRow, endRow - firstRow);
+            if (!layerPixels.empty())
+                bandView.compositeSurface(layerPixels.pixelView(at), at, 1.0f);
+        };
+        if (picture.sea)
+        {
+            layOver(picture.sea->top, picture.sea->bottom, [&](int firstRow, int rowCount) {
+                return rasterizeSeaBand(*picture.sea, firstRow, rowCount, layerPixels);
+            });
+        }
+        if (picture.land)
+        {
+            layOver(picture.land->top, picture.land->bottom, [&](int firstRow, int rowCount) {
+                return rasterizeLandBand(*picture.land, picture.landPalette,
+                    itemsInBand(picture.coast, band), firstRow, rowCount, layerPixels);
+            });
+        }
+        if (picture.night)
+        {
+            layOver(picture.night->top, picture.night->bottom, [&](int firstRow, int rowCount) {
+                return rasterizeNightBand(*picture.night, firstRow, rowCount, layerPixels);
+            });
+        }
+        for (const SurfaceGlow& glow : itemsInBand(picture.glows, band))
+            layGlow(glow, picture.earth, top, left, drawn.pixels);
+        for (const TownLight& light : itemsInBand(picture.townLights, band))
+            layLight(light, picture.earth, top, left, drawn.pixels);
+        if (picture.clouds)
+        {
+            layOver(picture.clouds->top, picture.clouds->bottom, [&](int firstRow, int rowCount) {
+                return rasterizeCloudBand(*picture.clouds, firstRow, rowCount, layerPixels);
+            });
+        }
+        layAtmosphere(picture.atmosphere, top, left, drawn.pixels);
     }
 
     // Direct2D places a view through the canvas's transform, and the bands are in pixels.
@@ -4118,54 +4570,6 @@ namespace ClaFi::PathArt
         frame.canvas.resetTransform();
         frame.canvas.drawPixelViews(views);
         frame.canvas.setTransform(canvasTransform);
-    }
-
-    // **The sunlight on the limb rises evenly across it toward the Sun**, as the limb stands square
-    // to the view, so one gradient along the Sun's way across the screen colours it at any
-    // altitude - blue by day, orange at dusk, dark at night. Each of the three rings is a glow
-    // fading from its circle out to both sides, so none of them shows an edge.
-    void EarthScene::drawAtmosphere(const SceneFrame& frame, const Globe& globe)
-    {
-        constexpr int k_stops = 41;
-        const FloatPoint sunAcross = rotated({ globe.sun.x, globe.sun.y }, globe.tilt);
-        const float sunReach = std::hypot(sunAcross.x, sunAcross.y);
-        // The screen's y runs down.
-        const FloatPoint sunward = sunReach > 0.0001f
-            ? FloatPoint{ sunAcross.x / sunReach, -sunAcross.y / sunReach }
-            : FloatPoint{ 1.0f, 0.0f };
-        const FloatPoint from = globe.center - sunward * globe.radius;
-        const FloatPoint to = globe.center + sunward * globe.radius;
-        std::array<Color, k_stops> colors{};
-        for (int i = 0; i != k_stops; ++i)
-        {
-            const float position = static_cast<float>(i) / (k_stops - 1);
-            colors[static_cast<std::size_t>(i)] = atmosphereColor(
-                sunReach * (2.0f * position - 1.0f));
-        }
-        const auto drawRing = [&](float ringRadius, float reach, float strength) {
-            LinearGradient gradient{
-                .startPoint = from,
-                .endPoint = to,
-                .stops = {}
-            };
-            for (int i = 0; i != k_stops; ++i)
-            {
-                const Color color = colors[static_cast<std::size_t>(i)];
-                const float opacity = static_cast<float>(color.alpha) / 255.0f * strength;
-                gradient.stops.push_back({
-                    .position = static_cast<float>(i) / (k_stops - 1),
-                    .color = color.withOpacity(std::min(1.0f, opacity))
-                });
-            }
-            PixelPath ring;
-            addEllipse(ring, globe.center, ringRadius, ringRadius);
-            PathDrawLayer glow = PathDrawLayer::OuterGlow({}, reach);
-            glow.brush = std::move(gradient);
-            frame.canvas.drawPath(ring, std::span{ &glow, 1 }, &frame.toCanvas);
-        };
-        drawRing(globe.radius * 1.012f, globe.radius * 0.02f, 0.3f);
-        drawRing(globe.radius * 1.001f, std::max(globe.radius * 0.005f, 2.5f * frame.unit), 1.0f);
-        drawRing(globe.radius * 0.988f, globe.radius * 0.016f, 0.34f);
     }
 
     double EarthScene::secondsSinceLastFrame(const double sceneSeconds)
