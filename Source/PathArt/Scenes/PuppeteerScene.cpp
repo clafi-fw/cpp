@@ -3,6 +3,7 @@ module ClaFi.PathArt.PuppeteerScene;
 import ClaFi.PathArt.AccordionAct;
 import ClaFi.PathArt.AcrobaticsAct;
 import ClaFi.PathArt.BallBalanceAct;
+import ClaFi.PathArt.BalletAct;
 import ClaFi.PathArt.DrumAct;
 import ClaFi.PathArt.DustMotesEffect;
 import ClaFi.PathArt.GatorAct;
@@ -102,6 +103,7 @@ namespace ClaFi::PathArt
         m_acts.push_back(std::make_unique<BallBalanceAct>());
         m_acts.push_back(std::make_unique<GatorAct>());
         m_acts.push_back(std::make_unique<DrumAct>());
+        m_acts.push_back(std::make_unique<BalletAct>());
         m_acts.push_back(std::make_unique<KettlebellAct>());
         m_acts.push_back(std::make_unique<WolfHoopAct>());
         m_acts.push_back(std::make_unique<StringsCutAct>());

@@ -2,6 +2,7 @@ module ClaFi.PathArt.AndroidSprite;
 
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.TopHatSprite;
+import ClaFi.PathArt.TutuSprite;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 
@@ -34,6 +35,9 @@ namespace ClaFi::PathArt
         constexpr Color AntennaOff{ 0xFF7A2A2A };
         constexpr Color AntennaGlow{ 0xFFFF4D4D };
         constexpr Color Hand{ 0xFFA9B3BD };
+        constexpr Color Satin{ 0xFFF4C0CF };
+        constexpr Color SatinShine{ 0x80FFFFFF };
+        constexpr Color Ribbon{ 0xFFF39BB6 };
         constexpr std::array<Color, 3> ChestLights{ Color{ 0xFF5EF0FF }, Color{ 0xFFFFD166 },
             Color{ 0xFFFF6B8B } };
     }
@@ -49,6 +53,7 @@ namespace ClaFi::PathArt
 
         // How far a turn may squeeze the figure, so it never folds to nothing.
         constexpr float k_thinnestFacing{ 0.03f };
+        constexpr int k_pinkLight{ 2 };
 
         [[nodiscard]] float sideSign(AudienceSide);
         [[nodiscard]] float drawnFacing(const AndroidPose&);
@@ -62,6 +67,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] FloatPoint upperToBody(const AndroidPose&, FloatPoint upperPoint);
 
         void drawLegs(const SceneFrame& body, const AndroidPose&);
+        void drawPointeRibbons(const SceneFrame& body, const Limb& leg);
         void drawTorso(const SceneFrame& upper, const AndroidPose&);
         void drawHead(const SceneFrame& upper, const AndroidPose&);
         void drawForearm(const SceneFrame& upper, const AndroidPose&, AudienceSide);
@@ -165,6 +171,13 @@ namespace ClaFi::PathArt
         drawLegs(body, pose);
         fillRoundedBox(body, { -30.0f, -13.0f, 30.0f, 13.0f }, 8.0f,
             SolidColor{ AndroidColors::Pelvis });
+        // A tutu looks the same from every side, so it keeps its width as the figure turns.
+        if (pose.wearsTutu)
+        {
+            const SceneFrame hips = frame.within(Matrix3x2::Translation(pose.pelvis)
+                * Matrix3x2::Rotation(pose.tilt) * Matrix3x2::Scale(frame.unit));
+            drawTutu(hips, pose.tutuTurn);
+        }
         const SceneFrame upper = androidUpperFrame(frame, pose);
         drawTorso(upper, pose);
         drawHead(upper, pose);
@@ -251,7 +264,9 @@ namespace ClaFi::PathArt
         {
             const SolidColor limb{ AndroidColors::Limb };
             const SolidColor joint{ AndroidColors::Joint };
-            const SolidColor foot{ AndroidColors::Foot };
+            const SolidColor foot = pose.wearsPointeShoes
+                ? SolidColor{ AndroidColors::Satin }
+                : SolidColor{ AndroidColors::Foot };
             for (const AudienceSide which : { AudienceSide::Left, AudienceSide::Right })
             {
                 const float sign = sideSign(which);
@@ -272,11 +287,38 @@ namespace ClaFi::PathArt
                 drawSegment(body, hip, leg.joint, limb, 16.0f);
                 drawSegment(body, leg.joint, leg.end, limb, 16.0f);
                 fillDisc(body, leg.joint, 9.0f, joint);
+                if (pose.wearsPointeShoes)
+                    drawPointeRibbons(body, leg);
                 const SceneFrame sole = body.within(Matrix3x2::Translation(leg.end)
                     * Matrix3x2::Rotation(side.footTurn));
                 const float toeSide = which == AudienceSide::Left ? -19.0f : -13.0f;
                 fillRoundedBox(sole, { toeSide, -3.0f, toeSide + 32.0f, 14.0f }, 6.0f, foot);
+                if (pose.wearsPointeShoes)
+                {
+                    drawSegment(sole, { toeSide + 4.0f, 1.0f }, { toeSide + 28.0f, 1.0f },
+                        SolidColor{ AndroidColors::SatinShine }, 1.6f);
+                }
             }
+        }
+
+        // Two crossings low on the shin, each a pair of strokes across it.
+        void drawPointeRibbons(const SceneFrame& body, const Limb& leg)
+        {
+            const FloatPoint shin = leg.end - leg.joint;
+            const FloatPoint along = shin * (1.0f / std::hypot(shin.x, shin.y));
+            const FloatPoint across = { -along.y, along.x };
+            PixelPath ribbons;
+            for (const float share : { 0.68f, 0.84f })
+            {
+                const FloatPoint crossing = leg.joint + shin * share;
+                for (const float slant : { -5.0f, 5.0f })
+                {
+                    const FloatPoint halfStroke = across * 8.0f + along * slant;
+                    ribbons.moveTo(crossing - halfStroke);
+                    ribbons.lineTo(crossing + halfStroke);
+                }
+            }
+            strokeShape(body, ribbons, SolidColor{ AndroidColors::Ribbon }, 2.4f);
         }
 
         // From behind, the chest panel gives way to three vents.
@@ -308,7 +350,8 @@ namespace ClaFi::PathArt
                     const FloatPoint light = { static_cast<float>(i - 1) * 13.0f, -69.0f };
                     const Color color = AndroidColors::ChestLights[static_cast<std::size_t>(i)];
                     const bool lit = pose.lights == ChestLights::All
-                        || (pose.lights == ChestLights::Chase && i == chasing);
+                        || (pose.lights == ChestLights::Chase && i == chasing)
+                        || (pose.lights == ChestLights::Pink && i == k_pinkLight);
                     if (lit)
                         drawGlow(upper, light, 12.0f, color.withOpacity(0.6f));
                     fillDisc(upper, light, 4.2f,

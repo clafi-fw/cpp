@@ -636,10 +636,10 @@ whole numbers: a float holds a large drift too coarsely for the stars to move sm
 An android puts on a show on a small stage, under a spotlight between red drapes. A curtain of
 the drapes' cloth closes between its acts.
 
-**Thirteen acts of ten seconds each, four to a cycle**, follow one another across the cycles, so
-the show comes round every 130 seconds: PuppetShowAct, RobotDanceAct, JugglingAct, AccordionAct,
-AcrobaticsAct, TopHatAct, GuitarAct, BallBalanceAct, GatorAct, DrumAct, KettlebellAct,
-WolfHoopAct and StringsCutAct. The instruments come every third act.
+**Fourteen acts of ten seconds each, four to a cycle**, follow one another across the cycles, so
+the show comes round every 140 seconds: PuppetShowAct, RobotDanceAct, JugglingAct, AccordionAct,
+AcrobaticsAct, TopHatAct, GuitarAct, BallBalanceAct, GatorAct, DrumAct, BalletAct,
+KettlebellAct, WolfHoopAct and StringsCutAct. The instruments come every third act.
 
 **The curtain is shut for 0.6 seconds across each change of act**, and runs for 0.75 seconds
 either side of that, so the next act is in place before it parts - see PuppeteerScene
@@ -741,6 +741,24 @@ head is out at 5.6, the jaws snap at 6.02, and it wipes its brow and takes the t
 **The head goes between two calls**: drawGator draws the gator but its upper jaw, the android
 comes next, and drawGatorUpperJaw puts the jaw and its teeth over the head.
 
+## BalletAct
+
+The android dances in a classical tutu and pointe shoes, its pink chest light alone lit. In
+seconds:
+
+- **To 2.1** it stands in fifth position, then rises onto pointe as its arms go up through first
+  to fifth, rounded over its head.
+- **To 3.1** a bourree to the left, its feet trembling on their points, its arms opening to
+  second.
+- **To 3.5** down off pointe into a plie in fourth, ready to turn.
+- **To 5.4** three pirouettes on the right pointe, the left foot drawn up to the right knee.
+- **To 7.1** a penche: upright on the left pointe, it tips to the left as the right leg rises
+  straight out to the right.
+- **To 8.45** a grand jete to the right, the legs flung apart a little below level, so they show
+  beneath the tutu.
+- **Then** the reverence: the knees bent, one foot behind, the arms opened low and the head
+  bowed, while the chest lights flash.
+
 ## KettlebellAct
 
 In seconds:
@@ -797,6 +815,10 @@ A pose places the pelvis in the frame and gives everything else relative to it.
 - **`forearmOnTop`** leaves a forearm and hand to drawAndroidForearm, drawn after what the hand
   holds, so the hand closes over it.
 - **`wearsHat`** puts a top hat on at a slant, the antenna through its crown.
+- **`wearsTutu`** puts a classical tutu round the hips, drawn between the pelvis and the torso -
+  see drawTutu. It keeps its width as the figure turns, and `tutuTurn` turns its pleats, so a
+  spin shows on it.
+- **`wearsPointeShoes`** dresses the feet in pink satin, the ribbons crossed over the shins.
 - **`cycleTime`** drives the blink and the chest lights' chase; `eyeOpening`, `lights` and
   `antenna` set them by hand.
 

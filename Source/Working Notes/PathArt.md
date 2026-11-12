@@ -488,6 +488,14 @@ drops; before the landing they match within 1 level.
 - The kettlebell's landing dust is the mockup's ten puffs thrown out either side. A first cut drew
   DustPuffEffect, the Chase's, which puts six puffs in a row under what lands.
 
+**The ballet** came next, from Oj's "dances ballet in a ballerina skirt". The mockup offered a
+classical tutu, a stiff disc at the hips, and a romantic one, a soft bell to mid-calf; Oj took the
+classical one and the place after the drum ("Classical, order is OK"). The tutu lies between the
+pelvis and the torso in the paint order, so the android wears it as it wears the hat: AndroidPose
+took wearsTutu, tutuTurn and wearsPointeShoes, and ChestLights took Pink for the ballet's one
+light. In the grand jete the legs go out 11 to 15 degrees below level: flung out level, they hid
+behind the disc, and the leap read as a sit.
+
 **Checked** in the clang harness: every act's frames against the mockup's at the same times at
 3:2; every act at 16:9, 4:3 and 600 x 900; kept frames against live ones through the jolt. Unbuilt
 under MSVC.

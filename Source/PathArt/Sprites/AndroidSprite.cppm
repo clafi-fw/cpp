@@ -31,7 +31,8 @@ namespace ClaFi::PathArt
     {
         Chase,  // one at a time, chasing the beat by the cycle time
         All,
-        None
+        None,
+        Pink    // the pink one alone, on the right
     };
 
     // How the light on the tip of the antenna shows.
@@ -84,6 +85,9 @@ namespace ClaFi::PathArt
         ChestLights lights{ ChestLights::Chase };
         AntennaLight antenna{ AntennaLight::Blinking };
         bool wearsHat{ false }; // a top hat at a slant, the antenna through its crown
+        bool wearsTutu{ false }; // a classical tutu round the hips
+        float tutuTurn{ 0.0f }; // how far the tutu's pleats have turned as it spins, in radians
+        bool wearsPointeShoes{ false }; // pink satin, their ribbons crossed over the shins
         float cycleTime{ 0.0f }; // the time its eyes blink and its lights chase by
 
         [[nodiscard]] AndroidSide& side(AudienceSide);
