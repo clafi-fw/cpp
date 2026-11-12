@@ -2814,6 +2814,154 @@ near range's. The ranges' hand-set 0.7 and 0.63 are gone; each range is a 13-sto
 stop its clear colour at that height hazed at that height. The hills, their trees and the fireflies
 stay hazed as at the ground line - their tops would only move from 0.25 to about 0.24.
 
+Then (Oj, 23:58, from two defaults at 23:23) every theme's clear mountain colours are one neutral
+rock in the theme's light: 8E8E8E and 616161 - the old rock's lightness without its blue - through
+the generator's light rule, darker and tinted as the sky lights them, so night themes sit at its
+floor, a dark grey. The other default shown took each theme's mountains from before the haze
+experiment back out through the new haze; it ran out of range where those were lighter than today's
+skyTop (Clear Day, Paper Sketch), brought Warm Orange Fall back rust against its painting, and sank
+the night ranges into the sky. Clear Day's own picks and Warm Orange Fall's painted blue are
+replaced with the rest; a theme's own pick comes after, against the haze as it now is. All 28
+themes, the four unlisted ones too.
+
+Then (Oj, 00:15) "reconsidering the layers distances together with 0.25 const - they sit too tight,
+and their distances were chosen by judging the haze which was all wrong back then. So, spread them
+out to give the mountains the vastness they deserve, judge the look - they all would washed out by
+sky, so adjust the clear weather const, repeat until satisfaction". A layer's tile fitted to one
+cycle's travel, p times 14388 units, so a slower range squeezed its ridges into spikes - the far
+range at 0.07 already drew 1007 of the 2000 it asked for. The ranges now scroll by the camera's
+whole journey over every cycle passed and repeat over their own period, today's drawn 1727 and 1007;
+the hills and the clouds keep the per-cycle fit, which their speed affords.
+
+Tuning it in mockups (Clear Day, then eight themes): with the ranges far, haze follows a point's
+height on the screen more than its distance, and the far range, drawn taller, came out clearer than
+the near one at the peaks whenever the air thinned quickly; the far range stays paler at every
+height once the air thins over 16 frame heights or more. The haze curve a x / (a x + 1 - a) was the
+old fit; the air's own law, 1 - (1 - a)^x for x stretches of the trail-to-hills air, opens the gap
+between nearly clear hills and pale far mountains. Kept at 0.35, the hills (asked by Oj at 00:43
+why) had kept a distance chosen under the wrong haze too, and went back with the rest. Of three sets
+in motion Oj took H2 (00:53): the hills at 0.2 of the camera's speed, the near range at 0.05, the
+far at 0.02, clear air 0.10 and the air thinning to 1/e every 24 frame heights. In clear air the
+hills' top takes 0.10, the near range runs 0.39 to 0.36 from foot to peaks, the far range 0.72 to
+0.55. The hills' tile now repeats every 959 units, 1259 before.
+
+Then (Oj, 01:47) the tufts, the first of step 4's three passes: the tufts, which need no mountains,
+then the mountains, then the figures. The tufts stand in two rows, 7 and 47 units below the ground
+line, and each row is measured against the meadow's gradient where it stands. Nine themes stood
+closer than 0.10 OKLab dE: Clear Day 0.01, Stormy and Calm Night 0.02, Midnight Fantasy 0.03, Winter
+Night, Underwater Realm, Twilight and Paper Sketch about 0.06, Summer Sunset 0.08. Each was shown
+lighter and darker, by the least change in L that reaches 0.10. The darker side carried the figures'
+limit of 0.10 darker, which left Clear Day no darker option; Oj asked what kept it from the darkest
+strip, and the limit was the figures' rule, not the tufts'. Oj took darker past it for Clear Day
+(01:46), 0.125 down in L, 41773F to 1C531C, and then darker for the other eight, down in L by 0.02
+for Summer Sunset, 0.04 Paper Sketch, 0.045 Twilight, 0.05 Underwater Realm, 0.06 Winter Night,
+0.075 Midnight Fantasy and 0.095 Stormy and Calm Night, which reaches 001B10, near black. The
+foreground's dark blades take the same change in L, so they keep their step below the grass.
+
+Then (Oj, 01:57) "Tufts are not fixed in Cyberpunk night". Its tufts, 0091A3, stood 0.13 from the
+lawn in OKLab dE, almost all of it hue - teal on blue - and only 0.05 and 0.02 in lightness. A tuft
+is a few strokes two units wide, and at that size the eye reads lightness, so a hue difference does
+not show it. Measured by lightness alone, Cyberpunk Night is the one theme far short; six of the
+nine just darkened stand 0.09 to 0.10. Of darker (157583, L -0.085) and lighter (50C0D3, L +0.15) Oj
+took darker (02:05): lightness 0.13 and 0.10 from the two rows, the foreground's dark blades 1E8184
+to 076769 with it. The six were left as they are.
+
+Then (Oj, 02:30 to 07:48) the mountains, step 4's second pass. By day the near range behind a
+runner's head stood at L 0.52 to 0.65, inside the runners' band, and the haze kept it at 0.31 or
+more even with black rock, so only lighter could clear them; at night it stood at 0.27 to 0.34,
+below every runner but the black wolf. Two ways were shown: A, the whole rock lighter by day and
+darker at night, and B, only the foot; Claude recommended B. Oj (06:44): "The highest tops do get
+more sun light, so they are supposed to be lighter. There are no means in the code to achieve that
+other than putting lighter precomputed values in the theme's tops. That's the main reason why there
+are two fields in the first place." B defeats that, and the far range with darkened tops looks flat.
+So A, moved only as far as brings the near range at a head to the lightness B reached. And the top
+colour stands for sunlight, which grows with absolute height: "the theme's top is the top of the
+highest range and not of the each one, and a nearer range (which is not so tall) should take only
+its own share of that color gradient". Each range had its gradient start at its own line, 0.25 and
+0.38 of the frame's height; both now start at k_mountainTopShare, 0.25.
+
+A then drew the near range's peaks paler than the far range's in Clear Day, High Noon and Magic
+Forest. The shared gradient made the near peaks only about 0.01 darker, top and foot being 0.10 to
+0.15 apart in L. The cause was the haze: it went toward skyTop, and there the rock was now lighter
+than skyTop - Clear Day's 0.87 to 1.00 against 0.60 - so the haze darkened it, the far range most.
+Oj (07:16): "the culprit here is the haze so the fix belong there. Taking the skytop was only a
+guess which came out wrong. Moderately moving the haze anchor toward the skybottom will probably
+give better result". Shown at 0.25, 0.5 and 0.75 of the way to skyBottom; the near peaks stop being
+paler in every theme from 0.7. Oj (07:48): "Haze target should lay below 0.5 because haze are still
+supposed to give some blue. I guess 0.33 is a good spot." That is k_hazeSkyBottomShare.
+
+At 0.33 each theme's rock moves until the near range at a wolf's head takes B's lightness: lighter
+by day (Clear Day +0.355, High Noon and Magic Forest +0.37), darker at night (Winter Night -0.22);
+Toxic Waste and Lunar Eclipse keep theirs. Underwater Realm cannot get there, a lighter air raising
+how dark its range can be, and goes as dark as the rock goes, -0.30. The near peaks still stand
+paler than the far in Clear Day (0.81 against 0.79), High Noon (0.82, 0.80), Magic Forest (0.83,
+0.81), Vintage Noir (0.55, 0.51) and five night themes by 0.01 to 0.02. Against the range 23 runner
+groups stay short of 0.15 for the figures' pass, mostly hares from 0.109 to 0.149; Underwater
+Realm's black wolf stands at 0.117. The four themes outside allThemes keep their mountains.
+
+Then (Oj, 08:06) "We are still tuning mountains. Now the themes with issues will be hand tuned to
+achieve more overall balanced look. Make the Clear Day mountains darker and bluer". Shown darker by
+0.05 to 0.20 in L and bluer by 0.02 to 0.06 of chroma toward skyTop's hue; Claude picked L -0.15,
+blue 0.06. Oj (08:25): "but the layers are indistinguishable?" Where the near ridge stands against
+the far range both points are at one height, so with one gradient they share their clear colour and
+only the haze parts them - by as much as the rock differs from the air's colour, Clear Day's 73A3BB
+(L 0.69). Darker and bluer took the rock onto that colour: the ranges stood 0.003 apart, 0.048
+before. Turning the hue toward green at L -0.15 parted them only from a clearly green rock (hue 140,
+chroma 0.08 for 0.031); Oj (08:44): "Not great. Let's stay on L -0.40 with blue 0.04" - 5F7583 at
+the top, 384C59 at the foot, past the air on the dark side. The ranges stand 0.061 apart; our wolf
+stands 0.03 from the near range behind his head and the hares 0.14 and 0.05, for the figures' pass.
+
+Then (Oj, 08:47) "make the tops lighter": mountainTop shown lighter by 0.05 to 0.25, the foot kept.
+Claude held +0.15 so the far peaks would stay off the sky; Oj (08:51): "Nothing is wrong with tops
+disappearing into the sky". A lighter top brings the upper slopes nearer the air's colour, so the
+limit is the near range's tallest ridges against the far range behind them: 0.030 at +0.25, 0.024 at
++0.30. Clear Day's top is AAC2D1, +0.25.
+
+Then (Oj, 09:03) "Still this one, which have turned from a Clear Day into a foggy morning. Make the
+skytop brighter along with the mountains". Today's skyTop hue, 240, holds only 0.135 of chroma in
+sRGB at its lightness, so the more vivid skies turned it to hue 250 or 255; Claude picked hue 250 at
+L 0.65, 0B92F8, with the mountains 0.03 bluer, 98C5E2 / 254E67, and Oj agreed (09:21). Part of the
+morning came from skyBottom, a warm cream the haze takes a third of; shown from warm to cool at its
+lightness, Oj took cool 0.04 (09:29): C1E0F0. The ranges stand 0.043 apart at the near range's
+tallest ridges; our wolf 0.08 from the near range behind his head, the hares 0.18 and 0.10. skyTop
+and skyBottom are the theme's own, so Clear Day's Mill scene takes the new sky too.
+
+Then (Oj, 09:36) "Increase the lawn flowers and foreground grass opacity". The flowers took half the
+lawn's colour and a front blade's root all of hillBottom; shown at 35 and 70 per cent, 20 and 40,
+and none. The flowers answer at once; the blades hardly do, their own greens being near the lawn's
+bottom - Clear Day's grass stands 0.04 off it in lightness even fully opaque, so a blade that is to
+read needs a darker green, not more opacity. Oj (09:39): "B, for both; for all themes": the flowers
+take a fifth of the lawn's colour, a blade's root 0.4 of hillBottom.
+
+Then (Oj, 09:39 to 10:41) Clear Day's figures. Every prop stood clear; our wolf stood 0.084 from the
+near range behind his head (light 0.51 against 0.56), the hares 0.131 and 0.102, and the black wolf
+only 0.09 below ours. Shown: A, our wolf 0.09 darker with the black wolf 0.12 darker still; B, our
+wolf 0.31 lighter, a silver wolf. Oj (09:52) "The wolf's body is gradient?" - the body alone, light
+along the back to shade at the flank - and (10:08) "what if ears and low jaw switch to dark, tail to
+light, and only light make lighter": light 0.19 lighter, 91A1AF, puts his head 0.16 from the range
+and the dark ears 0.29 (C). Oj (10:13) "May be draw the head and tail with gradient too?" A gradient
+from a light above the backgrounds' lightness (0.53 to 0.57 behind him) to a shade below it crosses
+that lightness somewhere, and there stands only by hue, about 0.07; on the head the stripe falls at
+the eye. Oj (10:32): "I think the head can be made of one piece" - the head's oval and the snout as
+one outline under one gradient, the snout still lifting about the hinge. Oj (10:41) took D2: head
+and tail light to coat, top to bottom; ears and lower jaw dark. The sprite change is every wolf's in
+every theme; the lighter light and the hares (brown 0.05 and grey 0.155 lighter, details only
+rising) are Clear Day's.
+
+Then (Oj, 10:54) "That wolf requires the other animals to match, at least the hare and hedgehog. BTW
+the hedgehog's head is the same shape" - an oval and a snout, as the wolf's was. A first mock gave
+the hare's and the hedgehog's heads a gradient only; Oj (11:02): "I see only the color difference.
+by 'requires to match' I mean than now a 3D wolf is chasing a flat paper hare". So every part is lit
+from above: the hare's body, haunch and hind foot, forelegs and ears darken downward, at most to her
+shade a quarter of the way to black; her head and muzzle take one gradient, light to shade, and her
+white tail greys toward its underside. The hedgehog's spines and back darken from the top of its
+spines to the ground, and its face and snout take one gradient, each a quarter of the way to black
+at the bottom. Shown soft (25 per cent) and strong (45); Oj (11:07) "Soft, soft". fillOval reads its
+brush about the oval's own middle, so the hare's muzzle and the hedgehog's face are paths, filled in
+the frame's coordinates like the head they join. In Clear Day the hare's darkest parts stand about
+0.10 to 0.12 from the lawn and hills - her underside, below the light and shade the figures are
+measured by.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

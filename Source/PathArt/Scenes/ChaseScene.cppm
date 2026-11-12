@@ -40,7 +40,7 @@ namespace ClaFi::PathArt
         // The sky with the theme's stars, the sun, the clouds, the mountains, the far hills and the
         // theme's fireflies over them.
         static void drawBackdrop(const SceneFrame&, const SceneTheme&, float cycleTime,
-            float travel, float groundY);
+            float travel, double journey, float groundY);
         static void drawGround(const SceneFrame&, const SceneTheme&, float travel, float groundY);
         static void drawFrontGrass(const SceneFrame&, const SceneTheme&, float travel);
         // The near edge's row, or the far edge's between its runs' own, evenly spaced. See PathArt

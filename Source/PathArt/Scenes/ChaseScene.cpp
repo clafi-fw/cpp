@@ -62,10 +62,12 @@ namespace ClaFi::PathArt
         // The theme's stars twinkle and its weather comes round twice a cycle, every 30 seconds,
         // near the mill's 40.
         constexpr float k_lively{ 2.0f };
-        // The far hills' share of the camera's speed, at which a layer takes the theme's airHaze.
-        constexpr float k_referenceParallax{ 0.35f };
+        // The far hills' share of the camera's speed; a layer this far takes the theme's airHaze.
+        constexpr float k_hillParallax{ 0.2f };
         // Frame heights, as seen at the trail's distance, over which the air thins to 1/e.
-        constexpr float k_airScaleHeight{ 4.0f };
+        constexpr float k_airScaleHeight{ 24.0f };
+        // skyBottom's share in the air's colour, which the haze takes a layer toward.
+        constexpr float k_hazeSkyBottomShare{ 0.33f };
         // A layer moving at `parallax` of the camera's speed, seen through the haze. See PathArt
         [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax,
             float aboveGround = 0.0f);
@@ -90,6 +92,8 @@ namespace ClaFi::PathArt
         constexpr CameraStop k_branchStop{ 0.58f, 0.02f };
         // The camera's travel by `episodeTime` of an episode, as a share of a full-speed episode's.
         [[nodiscard]] float cameraShare(float episodeTime, int episode);
+        // Units the camera covers in a whole cycle.
+        [[nodiscard]] double travelPerCycle();
         // When the wolf comes to rest from his fall.
         constexpr float k_fallEnd{ 0.62f };
         // The camera stands from the stop to here, then speeds up again until k_cameraRunning.
@@ -581,32 +585,31 @@ namespace ClaFi::PathArt
         struct MountainRange
         {
             float parallax; // its share of the camera's speed
-            float wantedPeriod; // units its tile's period is fitted near
+            float period; // units its ridges repeat over
             float heightScale; // of the waves' amplitudes
             float phaseShift; // added to every wave's phase, so its peaks fall elsewhere
             float baseShare; // the ridges' middle line, as a share of the frame's height
             float baseLift; // units the middle line stands above that share
-            float gradientTopShare; // where its colours start, as a share of the height
         };
+        // Where mountainTop sits, as a share of the frame's height, above every range's peaks.
+        constexpr float k_mountainTopShare{ 0.25f };
         // The steps a range's haze is drawn in, from its gradient's top down to the ground line.
         constexpr std::size_t k_mountainHazeSteps{ 12 };
         constexpr MountainRange k_farRange{
-            .parallax = 0.07f,
-            .wantedPeriod = 2000.0f,
+            .parallax = 0.02f,
+            .period = 1007.0f,
             .heightScale = 1.15f,
             .phaseShift = 1.0f,
             .baseShare = 0.6f,
-            .baseLift = 40.0f,
-            .gradientTopShare = 0.25f
+            .baseLift = 40.0f
         };
         constexpr MountainRange k_nearRange{
-            .parallax = 0.12f,
-            .wantedPeriod = 1500.0f,
+            .parallax = 0.05f,
+            .period = 1727.0f,
             .heightScale = 0.7f,
             .phaseShift = 2.3f,
             .baseShare = 0.625f,
-            .baseLift = 0.0f,
-            .gradientTopShare = 0.38f
+            .baseLift = 0.0f
         };
     }
 
@@ -624,6 +627,8 @@ namespace ClaFi::PathArt
         // A narrow frame draws the two closer together.
         const float closeness = std::min(1.0f, (width / unit) / 760.0f);
         const float travel = travelAt(time.cycleTime);
+        const double journey = static_cast<double>(time.cyclesPassed) * travelPerCycle()
+            + static_cast<double>(travel);
         const int episode = static_cast<int>(std::floor(time.cycleTime * k_episodesPerCycle));
         const float episodeTime = fractionalPart(time.cycleTime * k_episodesPerCycle);
         const bool branchRun = episode == k_branchEpisode;
@@ -641,7 +646,7 @@ namespace ClaFi::PathArt
             return (cameraShare(to, episode) - cameraShare(from, episode)) * k_fullSpeedTravel;
         };
 
-        drawBackdrop(frame, theme, time.cycleTime, travel, groundY);
+        drawBackdrop(frame, theme, time.cycleTime, travel, journey, groundY);
         drawGround(frame, theme, travel, groundY);
 
         // The obstacle reaches the wolf as the camera starts to stop. His gap to the hare and the
@@ -1365,7 +1370,7 @@ namespace ClaFi::PathArt
 
     // Each layer moves at its own share of the camera's speed: far ones slow, near ones fast.
     void ChaseScene::drawBackdrop(const SceneFrame& frame, const SceneTheme& theme,
-        const float cycleTime, const float travel, const float groundY)
+        const float cycleTime, const float travel, const double journey, const float groundY)
     {
         const float unit = frame.unit;
         const float width = frame.width;
@@ -1427,19 +1432,20 @@ namespace ClaFi::PathArt
                 wave.amplitude *= range.heightScale;
                 wave.phase += range.phaseShift;
             }
-            const float period = periodNear(range.parallax, range.wantedPeriod);
+            // A range moves less than one period a cycle, so it scrolls by the whole journey.
+            const float shift = static_cast<float>(std::fmod(
+                static_cast<double>(range.parallax) * journey, static_cast<double>(range.period)));
             const float baseY = height * range.baseShare - range.baseLift * unit;
             PixelPath ridges;
             ridges.moveTo(0.0f, groundY);
             for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
             {
-                const float ridge = ridgeHeight(period, x / unit + range.parallax * travel,
-                    waves);
+                const float ridge = ridgeHeight(range.period, x / unit + shift, waves);
                 ridges.lineTo(x, baseY - ridge * unit);
             }
             ridges.lineTo(width + 6.0f * unit, groundY);
             ridges.close();
-            const float gradientTop = height * range.gradientTopShare;
+            const float gradientTop = height * k_mountainTopShare;
             LinearGradient rock{
                 .startPoint = { 0.0f, gradientTop },
                 .endPoint = { 0.0f, groundY },
@@ -1461,7 +1467,7 @@ namespace ClaFi::PathArt
         drawMountains(k_farRange);
         drawMountains(k_nearRange);
 
-        const float hillPeriod = periodNear(0.35f, 1150.0f);
+        const float hillPeriod = periodNear(k_hillParallax, 1150.0f);
         const float hillMiddleY = height * 0.70f;
         const auto hillY = [&](float x) {
             return hillMiddleY - ridgeHeight(hillPeriod, x, k_hillWaves) * unit;
@@ -1469,16 +1475,16 @@ namespace ClaFi::PathArt
         PixelPath hills;
         hills.moveTo(0.0f, groundY + 2.0f * unit);
         for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
-            hills.lineTo(x, hillY(x / unit + 0.35f * travel));
+            hills.lineTo(x, hillY(x / unit + k_hillParallax * travel));
         hills.lineTo(width + 6.0f * unit, groundY + 2.0f * unit);
         hills.close();
         fillShape(frame, hills, meadowGradient(frame, theme));
-        const Color bark = hazed(theme, theme.chase.bark, 0.35f);
-        const Color barkShade = hazed(theme, theme.chase.barkShade, 0.35f);
-        const SolidColor crown{ hazed(theme, theme.treeLeavesBase, 0.35f) };
-        const SolidColor crownLight{ hazed(theme, theme.chase.crownLight, 0.35f) };
-        const SolidColor crownMiddle{ hazed(theme, theme.chase.crownMiddle, 0.35f) };
-        forEachTile(frame, 0.35f, hillPeriod, travel, [&](float tileLeft, float) {
+        const Color bark = hazed(theme, theme.chase.bark, k_hillParallax);
+        const Color barkShade = hazed(theme, theme.chase.barkShade, k_hillParallax);
+        const SolidColor crown{ hazed(theme, theme.treeLeavesBase, k_hillParallax) };
+        const SolidColor crownLight{ hazed(theme, theme.chase.crownLight, k_hillParallax) };
+        const SolidColor crownMiddle{ hazed(theme, theme.chase.crownMiddle, k_hillParallax) };
+        forEachTile(frame, k_hillParallax, hillPeriod, travel, [&](float tileLeft, float) {
             for (int i = 0; i != 4; ++i)
             {
                 const float jitter = 0.06f * pseudoRandom(i, 111.0f);
@@ -1499,17 +1505,17 @@ namespace ClaFi::PathArt
         // down to the ground line.
         const float farSize = 0.6f;
         Fireflies fireflies = firefliesOf(theme);
-        fireflies.light = hazed(theme, fireflies.light, 0.35f);
-        fireflies.glow = hazed(theme, fireflies.glow, 0.35f);
+        fireflies.light = hazed(theme, fireflies.light, k_hillParallax);
+        fireflies.glow = hazed(theme, fireflies.glow, k_hillParallax);
         fireflies.count = 22;
         fireflies.size = farSize;
         Weather weather = weatherOf(theme);
         weather.opacity = 0.6f;
-        forEachTile(frame, 0.35f, hillPeriod, travel, [&](float tileLeft, float tileWidth) {
-            fireflies.area = { tileLeft, groundY - 90.0f * unit, tileLeft + tileWidth,
+        forEachTile(frame, k_hillParallax, hillPeriod, travel, [&](float left, float tileWidth) {
+            fireflies.area = { left, groundY - 90.0f * unit, left + tileWidth,
                 groundY - 20.0f * unit };
             drawFireflies(frame, effectsTime, fireflies);
-            SceneFrame overHills = frame.within(Matrix3x2::Translation(tileLeft, 0.0f));
+            SceneFrame overHills = frame.within(Matrix3x2::Translation(left, 0.0f));
             overHills.width = tileWidth;
             overHills.height = groundY;
             overHills.unit = unit * farSize;
@@ -1562,11 +1568,11 @@ namespace ClaFi::PathArt
         pebbles.draw();
         // The petals of a flower stand just apart, so one shape holds them all under an even-odd
         // fill. The three flowers of a tile wear the theme's three petal colours, and every
-        // flower's petals go down before the hearts. They take half the lawn's colour where they
-        // grow, so they lie in the lawn rather than on it.
+        // flower's petals go down before the hearts. They take a fifth of the lawn's colour where
+        // they grow, so they lie in the lawn rather than on it.
         const Color lawn = meadowAt(frame, theme, groundY + 63.0f * unit);
         const auto inLawn = [&](Color color) {
-            return SolidColor{ colorBetween(color, lawn, 0.5f) };
+            return SolidColor{ colorBetween(color, lawn, 0.2f) };
         };
         const auto flowerAt = [&](float tileLeft, float tileWidth, int i) {
             // each keeps to its own third of the tile, so no two grow into one
@@ -1617,13 +1623,14 @@ namespace ClaFi::PathArt
         const float height = frame.height;
         const float grassPeriod = periodNear(1.35f, 520.0f);
         const FloatPoint tallestTip = { 0.0f, height - (24.0f + 34.0f) * unit };
-        // Every third blade is dark, and the dark ones go down first. A blade's root wears the
-        // lawn's colour at the frame's bottom, so it grows out of the lawn.
+        // Every third blade is dark, and the dark ones go down first. A blade's root takes 0.4 of
+        // the lawn's colour at the frame's bottom, so it grows out of the lawn.
         for (const bool dark : { true, false })
         {
             const Color shade = dark ? theme.chase.frontGrassDark : theme.chase.grass;
+            const Color root = colorBetween(shade, theme.hillBottom, 0.4f);
             ScatteredShapes blades{ frame, LinearGradient::Simple(tallestTip, { 0.0f, height },
-                shade, theme.hillBottom) };
+                shade, root) };
             forEachTile(frame, 1.35f, grassPeriod, travel, [&](float tileLeft, float tileWidth) {
                 for (int i = 0; i != 22; ++i)
                 {
@@ -1672,9 +1679,7 @@ namespace ClaFi::PathArt
         // The units a second the two go by at, at full speed.
         constexpr float k_passingSpeed = k_fullSpeedTravel / k_episodeSeconds;
 
-        double cycleTravel = 0.0;
-        for (int episode = 0; episode != static_cast<int>(k_episodesPerCycle); ++episode)
-            cycleTravel += static_cast<double>(cameraShare(1.0f, episode) * k_fullSpeedTravel);
+        const double cycleTravel = travelPerCycle();
         const auto cameraAt = [&](double cycles) {
             const double cyclesBefore = std::floor(cycles);
             return cyclesBefore * cycleTravel
@@ -1868,6 +1873,14 @@ namespace ClaFi::PathArt
                 return standing + speeding * speeding / (2.0f * gathering);
             }
             return standing + gathering * 0.5f + (episodeTime - k_cameraRunning);
+        }
+
+        double travelPerCycle()
+        {
+            double travel = 0.0;
+            for (int episode = 0; episode != static_cast<int>(k_episodesPerCycle); ++episode)
+                travel += static_cast<double>(cameraShare(1.0f, episode) * k_fullSpeedTravel);
+            return travel;
         }
 
         TreeRun treeRunOf(const std::int64_t cyclesPassed)
@@ -2416,6 +2429,8 @@ namespace ClaFi::PathArt
             const float steps)
         {
             constexpr int k_spineCount{ 18 };
+            // the share of the way to black its colours go where the light reaches it least
+            constexpr float k_unlitShare{ 0.25f };
             const SceneFrame hedgehog = onTrail.within(Matrix3x2::Translation(0.0f,
                 -0.8f * std::abs(std::sin(steps))));
             const FloatPoint middle = pointBetween({ 5.0f, -1.0f }, { 2.0f, -16.0f }, curl);
@@ -2450,8 +2465,15 @@ namespace ClaFi::PathArt
             }
             spines.close();
             back.close();
-            fillShape(hedgehog, spines, SolidColor{ chase.spinesDark });
-            fillShape(hedgehog, back, SolidColor{ chase.spinesLight });
+            // Lit from above like the wolf, it darkens from the top of its spines to the ground.
+            const Color black = Color{ 0xFF000000 };
+            const auto litFromAbove = [&](Color upper) {
+                return LinearGradient::Simple({ 0.0f, middle.y - radiusY },
+                    { 0.0f, middle.y + radiusY * curl }, upper,
+                    colorBetween(upper, black, k_unlitShare));
+            };
+            fillShape(hedgehog, spines, litFromAbove(chase.spinesDark));
+            fillShape(hedgehog, back, litFromAbove(chase.spinesLight));
             PixelPath quills;
             for (int i = 0; i != 7; ++i)
             {
@@ -2472,13 +2494,19 @@ namespace ClaFi::PathArt
             const FloatPoint neck = { -6.0f, -8.0f };
             const SceneFrame head = hedgehog.within(Matrix3x2::Translation(neck)
                 * Matrix3x2::Scale(1.0f - curl) * Matrix3x2::Translation(-neck.x, -neck.y));
-            fillOval(head, { -14.0f, -9.0f }, 10.5f, 8.5f, SolidColor{ chase.hedgehogFace });
+            // The face and snout take one gradient, so they read as one piece.
+            const LinearGradient faceLight = LinearGradient::Simple({ 0.0f, -17.5f },
+                { 0.0f, -0.5f }, chase.hedgehogFace,
+                colorBetween(chase.hedgehogFace, black, k_unlitShare));
+            PixelPath face;
+            face.drawEllipse({ -14.0f, -9.0f }, 10.5f, 8.5f);
+            fillShape(head, face, faceLight);
             PixelPath snout;
             snout.moveTo(-18.0f, -14.0f);
             snout.quadTo({ -29.0f, -10.0f }, { -34.0f, -6.5f });
             snout.quadTo({ -29.0f, -2.5f }, { -17.0f, -2.5f });
             snout.close();
-            fillShape(head, snout, SolidColor{ chase.hedgehogFace });
+            fillShape(head, snout, faceLight);
             fillDisc(head, { -12.0f, -17.0f }, 2.6f, SolidColor{ chase.hedgehogEar });
             fillDisc(head, { -34.0f, -6.5f }, 2.3f, SolidColor{ ChaseColors::Ink });
             fillDisc(head, { -18.0f, -12.0f }, 2.0f, SolidColor{ ChaseColors::Ink });
@@ -2617,22 +2645,22 @@ namespace ClaFi::PathArt
                 const float thinning = aboveGround / k_airScaleHeight;
                 air = (std::exp(-thinning) - std::exp(-thinning * distance)) / thinning;
             }
-            const float referenceAirs = air / (1.0f / k_referenceParallax - 1.0f);
-            const float thickness = theme.airHaze * referenceAirs;
-            return colorBetween(clear, theme.skyTop,
-                thickness / (thickness + 1.0f - theme.airHaze));
+            const float hillSpans = air / (1.0f / k_hillParallax - 1.0f);
+            const Color haze = colorBetween(theme.skyTop, theme.skyBottom, k_hazeSkyBottomShare);
+            return colorBetween(clear, haze, 1.0f - std::pow(1.0f - theme.airHaze, hillSpans));
         }
 
         LinearGradient meadowGradient(const SceneFrame& frame, const SceneTheme& theme)
         {
             return LinearGradient::Simple({ 0.0f, frame.height * k_meadowTopShare },
-                { 0.0f, frame.height }, hazed(theme, theme.hillTop, 0.35f), theme.hillBottom);
+                { 0.0f, frame.height }, hazed(theme, theme.hillTop, k_hillParallax),
+                theme.hillBottom);
         }
 
         Color meadowAt(const SceneFrame& frame, const SceneTheme& theme, const float y)
         {
             const float top = frame.height * k_meadowTopShare;
-            return colorBetween(hazed(theme, theme.hillTop, 0.35f), theme.hillBottom,
+            return colorBetween(hazed(theme, theme.hillTop, k_hillParallax), theme.hillBottom,
                 (y - top) / (frame.height - top));
         }
 

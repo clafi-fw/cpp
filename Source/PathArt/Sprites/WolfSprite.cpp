@@ -46,6 +46,8 @@ namespace ClaFi::PathArt
         // Teeth along a jaw's edge from `back` to `front`, grown out to `growth` of their size.
         void drawTeeth(const SceneFrame&, const WolfCoat&, FloatPoint back, FloatPoint front,
             bool upward, std::span<const Tooth> teeth, float growth);
+        // The head and snout as one outline, the snout lifted `snoutAngle` about `hinge`.
+        [[nodiscard]] PixelPath headOutline(FloatPoint hinge, float snoutAngle);
     }
 
     // Drawn about the middle of his body, facing right; a leg's angles are measured from straight
@@ -114,7 +116,8 @@ namespace ClaFi::PathArt
         brush.quadTo({ -22.0f, -20.0f }, { -42.0f, -10.0f });
         brush.quadTo({ -30.0f, 3.0f }, { 0.0f, 6.0f });
         brush.close();
-        fillShape(tail, brush, SolidColor{ coat.coat });
+        fillShape(tail, brush, LinearGradient::Simple({ 0.0f, -14.0f }, { 0.0f, 6.0f },
+            coat.light, coat.coat));
         PixelPath tip;
         tip.moveTo(-30.0f, -15.0f);
         tip.quadTo({ -38.0f, -15.0f }, { -42.0f, -10.0f });
@@ -147,14 +150,13 @@ namespace ClaFi::PathArt
         ears.lineTo(2.0f, -38.0f);
         ears.lineTo(14.0f, -24.0f);
         ears.close();
-        fillShape(head, ears, SolidColor{ coat.shade });
+        fillShape(head, ears, SolidColor{ coat.dark });
         ears.clear();
         ears.moveTo(12.0f, -22.0f);
         ears.lineTo(14.0f, -40.0f);
         ears.lineTo(22.0f, -21.0f);
         ears.close();
-        fillShape(head, ears, SolidColor{ coat.shade });
-        fillOval(head, { 16.0f, -8.0f }, 16.0f, 13.0f, SolidColor{ coat.light });
+        fillShape(head, ears, SolidColor{ coat.dark });
 
         // Opening, the snout lifts and the lower jaw drops, both about the back of the mouth.
         const FloatPoint hinge = { 24.0f, 3.0f };
@@ -166,6 +168,9 @@ namespace ClaFi::PathArt
         const float jawAngle = 0.9f * pose.jawOpen;
         const SceneFrame snoutFrame = aboutHinge(snoutAngle);
         const SceneFrame jawFrame = aboutHinge(jawAngle);
+        // Lit from above like the body, the head and snout take one gradient as one shape.
+        fillShape(head, headOutline(hinge, snoutAngle), LinearGradient::Simple({ 0.0f, -21.0f },
+            { 0.0f, 5.0f }, coat.light, coat.coat));
         if (pose.jawOpen > 0.0f)
         {
             // The teeth grow out of the gums as the jaws part.
@@ -180,13 +185,6 @@ namespace ClaFi::PathArt
                 growth);
             drawTeeth(jawFrame, coat, { 25.0f, 3.0f }, { 42.0f, 2.0f }, true, k_lowerTeeth, growth);
         }
-        PixelPath snout;
-        snout.moveTo(22.0f, -16.0f);
-        snout.lineTo(44.0f, -9.0f);
-        snout.quadTo({ 49.0f, -5.0f }, { 44.0f, -1.0f });
-        snout.lineTo(24.0f, 3.0f);
-        snout.close();
-        fillShape(snoutFrame, snout, SolidColor{ coat.light });
         // The lower jaw deepens as it drops, so it reads as a jaw under the teeth.
         PixelPath jaw;
         jaw.moveTo(24.0f, 3.0f);
@@ -194,7 +192,7 @@ namespace ClaFi::PathArt
         jaw.lineTo(42.0f - pose.jawOpen, 2.0f + 5.0f * pose.jawOpen);
         jaw.lineTo(26.0f + 3.0f * pose.jawOpen, 9.0f + 2.0f * pose.jawOpen);
         jaw.close();
-        fillShape(jawFrame, jaw, SolidColor{ coat.shade });
+        fillShape(jawFrame, jaw, SolidColor{ coat.dark });
         const SceneFrame tongue = jawFrame.within(Matrix3x2::Translation(33.0f, 3.0f)
             * Matrix3x2::Rotation(pose.tongueTurn));
         PixelPath lick;
@@ -245,6 +243,37 @@ namespace ClaFi::PathArt
                 fillShape(frame, shape, SolidColor{ coat.tooth });
                 strokeShape(frame, shape, SolidColor{ coat.toothEdge }, 0.7f);
             }
+        }
+
+        // The oval's arc runs round the back of the head between the snout's two edges.
+        PixelPath headOutline(const FloatPoint hinge, const float snoutAngle)
+        {
+            const FloatPoint center = { 16.0f, -8.0f };
+            const float radiusX = 16.0f;
+            const float radiusY = 13.0f;
+            const float topEdgeAngle = -0.4159f; // where the snout's top edge leaves the oval
+            const float lowerEdgeAngle = 0.9847f; // where its lower edge leaves it
+            const float sweep = k_2Pi - (lowerEdgeAngle - topEdgeAngle);
+            const int steps = 48;
+            const auto lifted = [&](FloatPoint point) {
+                return hinge + rotated(point - hinge, snoutAngle);
+            };
+            PixelPath outline;
+            for (int step = 0; step <= steps; ++step)
+            {
+                const float angle = topEdgeAngle
+                    - sweep * static_cast<float>(step) / static_cast<float>(steps);
+                const FloatPoint point = center
+                    + FloatPoint{ radiusX * std::cos(angle), radiusY * std::sin(angle) };
+                if (step == 0)
+                    outline.moveTo(point);
+                else
+                    outline.lineTo(point);
+            }
+            outline.lineTo(lifted({ 44.0f, -1.0f }));
+            outline.quadTo(lifted({ 49.0f, -5.0f }), lifted({ 44.0f, -9.0f }));
+            outline.close();
+            return outline;
         }
     }
 }

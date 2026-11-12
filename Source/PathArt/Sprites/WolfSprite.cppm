@@ -28,11 +28,11 @@ namespace ClaFi::PathArt
     // The colours of a wolf: its fur, and its mouth with its tongue and teeth.
     export struct WolfCoat
     {
-        Color light; // its head and snout, and its back
-        Color shade; // its ears and lower jaw, and its flank
-        Color coat; // its near legs and its tail
+        Color light; // its head, back and tail where the light falls on them
+        Color shade; // its flank
+        Color coat; // its near legs, and its head and tail underneath
         Color far; // its far legs, and the pads of the near ones
-        Color dark; // its tail's tip, and the pads of the far legs
+        Color dark; // its ears, lower jaw and tail's tip, and the pads of the far legs
         Color belly;
         Color tongue;
         Color mouth; // inside it, open

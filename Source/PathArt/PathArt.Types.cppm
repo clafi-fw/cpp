@@ -138,7 +138,7 @@ namespace ClaFi::PathArt
         // Predator toggle
         float isAfrica = false;
         float hasStars = false;
-        float airHaze = 0.25f; // skyTop's share at a scene's reference distance, from 0 to 1
+        float airHaze = 0.10f; // the air's share at a scene's reference distance, from 0 to 1
         // make sure to update effectsNum() when adding new effects
     public:
         Color* asArray() { return &skyTop; }

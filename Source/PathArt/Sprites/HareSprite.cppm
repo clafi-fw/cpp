@@ -25,9 +25,9 @@ namespace ClaFi::PathArt
     // The colours of a hare: its fur and tail, its ears inside, its nose and its mouth.
     export struct HareCoat
     {
-        Color light; // its head, and its back
-        Color fur; // its near foreleg and ear
-        Color shade; // its haunch, hind foot, far foreleg and ear, and its flank
+        Color light; // its head, back and near ear, where the light falls on them
+        Color fur; // its near foreleg at the shoulder
+        Color shade; // its haunch, hind foot, far foreleg and ear, and every part's underside
         Color belly;
         Color tail;
         Color earInside;
