@@ -20,8 +20,8 @@ namespace ClaFi::PathArt
     public:
         // Keeps the part's pixels for the params, unless they are kept for them already.
         void prepare(const SceneParams&);
-        // The kept pixels where they fit the frame; the part drawn live where they do not.
-        void draw(const SceneFrame&) const;
+        // The kept pixels where they fit the frame, moved by `shift`; else drawn live. See PathArt
+        void draw(const SceneFrame&, FloatPoint shift = {}) const;
     private:
         // A band of rows of the kept pixels, from the first column drawn in it to the last.
         struct Band

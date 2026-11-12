@@ -12,6 +12,7 @@ namespace ClaFi::PathArt
         FloatPoint neck;
         FloatPoint head;
         float lean;
+        float headTilt{ 0.0f }; // the head's tilt beyond the lean, as a limp puppet's droops
         FloatPoint shoulderLeft;
         FloatPoint shoulderRight;
         FloatPoint hipLeft;
@@ -42,6 +43,14 @@ namespace ClaFi::PathArt
 
     // The marionette dancing, `sway` radians into the dance, its feet about `feet`. See PathArt
     export [[nodiscard]] MarionettePose danceMarionette(float unit, FloatPoint feet, float sway);
+    // The marionette hung limp by its control from `hook`, swung `swing` radians. See PathArt
+    export [[nodiscard]] MarionettePose hangMarionette(float unit, FloatPoint hook, float swing);
     // The strings, the control and the puppet hanging from it.
     export void drawMarionette(const SceneFrame&, const MarionettePose&);
+    // The strings alone, at a share of their own opacity.
+    export void drawMarionetteStrings(const SceneFrame&, const MarionettePose&, float opacity);
+    // The control alone, at a share of its opacity.
+    export void drawMarionetteControl(const SceneFrame&, const MarionetteControl&, float opacity);
+    // The puppet alone, without its strings or control.
+    export void drawMarionetteFigure(const SceneFrame&, const MarionetteJoints&);
 }

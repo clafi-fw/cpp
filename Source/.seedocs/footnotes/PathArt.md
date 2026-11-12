@@ -410,6 +410,15 @@ which on the CPU backend stops at the clip's rectangle only.
 
 **The bands are laid in on all the cores at once** - see Canvas drawPixelViews.
 
+## SceneLayer draw
+
+**`shift` moves the layer**, in the frame's units. The kept pixels move by the nearest whole number
+of pixels, so they lay in as sharp as they were kept; drawn live, the part moves by `shift`
+exactly.
+
+**A shifted layer uncovers a strip** at each edge it moves away from. The caller fills the strip,
+as the Puppeteer fills it in the wall's and the floor's colours when the stage shakes.
+
 ## CloudKind
 
 What a cloud map's clouds look like:
@@ -624,10 +633,175 @@ whole numbers: a float holds a large drift too coarsely for the stars to move sm
 
 ## PuppeteerScene
 
-An android on a small stage works a marionette under a spotlight, between swaying curtains.
+An android puts on a show on a small stage, under a spotlight between red drapes. A curtain of
+the drapes' cloth closes between its acts.
 
-The dance is 16 sways a cycle, with a step on every half sway - see danceMarionette. The android
-sways with the puppet and holds its control from the right.
+**Thirteen acts of ten seconds each, four to a cycle**, follow one another across the cycles, so
+the show comes round every 130 seconds: PuppetShowAct, RobotDanceAct, JugglingAct, AccordionAct,
+AcrobaticsAct, TopHatAct, GuitarAct, BallBalanceAct, GatorAct, DrumAct, KettlebellAct,
+WolfHoopAct and StringsCutAct. The instruments come every third act.
+
+**The curtain is shut for 0.6 seconds across each change of act**, and runs for 0.75 seconds
+either side of that, so the next act is in place before it parts - see PuppeteerScene
+drawCurtain.
+
+**The marionette hangs on a stand** inside the left drapes through every act it takes no part in,
+swinging a little, 12 times a cycle - see hangMarionette. The stand is part of the stage.
+
+**An act's jolt shakes the stage.** From the moment the act's joltAge passes 0, the stage and all
+on it shake by up to 7 units, dying away in about half a second. The drapes and the hanging
+marionette swing on for about two seconds. The curtain and the valance hang from above and keep
+still. The strips the shaken stage uncovers at the top and the bottom are filled in the wall's and
+the floor's colours.
+
+## PuppeteerScene drawCurtain
+
+Each half of the curtain is 14 folds wide. The two halves run out from behind the side drapes and
+meet 5 units past the middle of the frame.
+
+- **Moving, a half's hem trails its top**, by how fast it runs, so the cloth swings as it is
+  drawn.
+- **Shut, a warm glow rests on it.**
+- **Its folds stir** twice a cycle.
+
+## ActStage
+
+The stage as PuppeteerScene lays it out in the frame, handed to every act it poses.
+
+**`closeness` is 1 in a frame at least 640 units wide**, and the width over 640 in a narrower one.
+An act multiplies its distances across the stage by it, so its figures stay between the drapes.
+
+## PuppeteerAct
+
+PuppeteerScene poses an act, reads where the spotlight falls and whether something has jolted the
+stage, and then draws it into the frame the jolt shakes.
+
+- **pose keeps all that draw needs**, from `actTime` - 0 to k_actSeconds - and the scene's time;
+  draw reads nothing else.
+- **usesMarionette** is true in the acts that play with the marionette. In the rest the scene
+  hangs it on its stand.
+- **joltAge** counts the seconds since something landed hard enough to shake the stage, and is
+  below 0 before that - see PuppeteerScene.
+
+## danceSway
+
+**The marionette dances 16 sways a cycle by the scene's time**, with a step on every half sway -
+see danceMarionette. Read from the scene's time rather than the act's, the dance keeps one beat
+through every act it plays in.
+
+## PuppetShowAct
+
+The android stands to the right of the dancing marionette and works its control from above, its
+arm reaching up and over. It bobs on every step and watches the puppet.
+
+## RobotDanceAct
+
+A beat is 0.625 seconds, four to a sway, and the android steps from side to side on them.
+
+- **Beats 0 to 8**: robot poses, one a beat - elbows up and down in turn, hands together, a point
+  to each side.
+- **Beats 8 to 12**: a wave runs along its arms from the left hand to the right.
+- **Beats 12 to 14**: it spins, its feet turning with it.
+- **The rest**: the ta-da, its arms in a V.
+
+## JugglingAct
+
+**A cascade of three balls**: a throw every 0.42 seconds from each hand in turn, 235 units high,
+and every ball rests 0.3 seconds in a hand. A hand catches out wide and throws from near the
+middle, and each ball changes hands with every throw. The android's eyes follow the highest ball.
+
+## AcrobaticsAct
+
+In seconds:
+
+- **To 0.9** it stands in a star, feet apart and arms in a V.
+- **To 2.4** a side somersault: a crouch, a tucked turn high in the air, a landing in a crouch.
+- **To 3.9** the star again, then over onto its head, travelling 70 units to the left.
+- **To 7.0** a headspin on the antenna, three turns with the hands off the floor, sparks flying.
+- **To 7.9** down onto its feet, 70 units further left, then the ta-da.
+
+restAndroidOnFloor keeps it on the boards while it is upside down.
+
+## BallBalanceAct
+
+The android stands on a circus ball 54 units in radius, its arms out. The ball rolls 150 units
+either way, times `closeness`, once in 6.6 seconds, and comes to rest in the middle by 8.4; then
+the android lifts one leg. It leans the way the ball rolls and wobbles to keep its balance, its
+feet flat on the ball's top.
+
+**The roll stops at the marionette's stand.** In a narrow frame its reach shrinks, so that the
+ball at its furthest left comes up to the stand's hook and no further.
+
+## GatorAct
+
+In seconds: the gator gapes from 1.3. The android kneels and leans in from 2.3 until its head is in
+the mouth, one hand on the snout. From 3.9 it lets go with both hands while the jaw trembles. Its
+head is out at 5.6, the jaws snap at 6.02, and it wipes its brow and takes the ta-da.
+
+**The head goes between two calls**: drawGator draws the gator but its upper jaw, the android
+comes next, and drawGatorUpperJaw puts the jaw and its teeth over the head.
+
+## KettlebellAct
+
+In seconds:
+
+- **From 1** a squat to the handle; from 1.6 a strain.
+- **From 3** the bell flipped up to the chest; from 4 a dip and a press overhead.
+- **From 4.7** the bell held overhead, trembling, steam puffing from the android's ears.
+- **At 6.45** the android lets go and hops back; the bell falls forward, turns back onto its base
+  and lands.
+
+**The landing is the act's jolt** - see PuppeteerAct joltAge. Cracks run across the boards, dust
+flies out either side, and the android is thrown off its feet, looks at the bell and flexes.
+
+## WolfHoopAct
+
+The wolf is the Chase's, in WolfCoats Grey. In seconds: he waits by the stand panting to 1.4,
+then runs, leaps clean through the hoop and runs off past the android. At 4.2 he comes back in from
+the right, hops too low, catches the rim and goes over onto his back. He lies dazed under circling
+stars and is up again by 8.6. The android holds the hoop out at its side, sends him, cheers,
+holds its head, and takes the ta-da anyway.
+
+**He runs in front of the android**, and through the hoop between its two halves.
+
+## StringsCutAct
+
+The puppet show's finale, in a top hat. In seconds:
+
+- **From 1.2** the wand is raised, and from 1.6 waved round.
+- **At 2.15** sparkles fly to the control, and from 2.4 they run down the strings.
+- **By 3** the strings have faded, and the control goes up in sparkles.
+- **Then** the marionette dances on alone in a glow, rises and twirls, while the wand beats time.
+- **From 8.3** the ta-da.
+
+## AndroidBody
+
+The android's measures in units, x to the audience's right and y down, from the middle of its
+pelvis as it stands upright. A place on its left mirrors the right one's by its x. An AndroidPose
+gives its hands and feet in the same units.
+
+## AndroidPose
+
+A pose places the pelvis in the frame and gives everything else relative to it.
+
+- **`tilt`** turns the whole figure about the pelvis; pi stands it on its head.
+- **The feet** are ankles in units about the pelvis, or knees while it kneels, and the legs bend
+  to reach them. plantAndroidFeet sets them from points of the frame.
+- **The hands** are in units about the pelvis in the frame of the upper body, which leans by
+  `bend` at AndroidBody Waist, so a hand on the chest goes with the chest as it leans.
+- **A limb stretches to a hand or foot beyond its reach.** Within reach, an elbow or a knee bends
+  out to its own side, and an elbow set to ElbowBend Down bends down.
+- **`facing`** narrows the figure as it turns and shows its back below 0: vents on the chest and a
+  plate over the face. At its narrowest it keeps 0.03 of its width, so a turn passes through a
+  sliver.
+- **`forearmOnTop`** leaves a forearm and hand to drawAndroidForearm, drawn after what the hand
+  holds, so the hand closes over it.
+- **`wearsHat`** puts a top hat on at a slant, the antenna through its crown.
+- **`cycleTime`** drives the blink and the chest lights' chase; `eyeOpening`, `lights` and
+  `antenna` set them by hand.
+
+restAndroidOnFloor moves the pelvis until the lowest of its soles, palms and antenna tip touches the
+floor line.
 
 ## danceMarionette
 
@@ -638,6 +812,26 @@ Places the control for one moment of the dance and hangs the puppet from it.
 - **The leg bar hooked under it rocks twice a sway** and lifts each knee in turn, as the feet step.
 - **The arms and legs are reached from the strings** with reachToward; the control stands 284
   units above the feet, over the puppet's head.
+
+## hangMarionette
+
+The marionette on its stand between its acts. Its control hangs by the middle from `hook`, tilted,
+and the puppet hangs limp 232 units below, its head drooping. `swing` turns the puppet about the
+control and throws its limbs the same way.
+
+## drawTopHat
+
+**What the hat holds goes between two calls.** drawTopHat draws the crown, the band and the brim,
+the inside showing when the hat is upside down. Then come the head that wears it or the rabbit
+coming out of it, and then drawTopHatBrimLip, which draws the near half of the brim's rim over
+them.
+
+## gatorUpperJawToFrame
+
+The upper jaw turns up by `gape` about the back of the mouth, on a head that turns up by
+`headLift` about the neck. A point of the jaw, given in the gator's units as the jaw lies shut, is
+carried through both turns and placed in the frame at the gator's size. A hand resting on the snout
+is placed this way, so it rides up with the jaw.
 
 ## GhostScene
 

@@ -102,23 +102,28 @@ namespace ClaFi::PathArt
         m_kept = true;
     }
 
-    void SceneLayer::draw(const SceneFrame& frame) const
+    // The kept pixels move by whole pixels, so a shift lays them in as sharp as they were kept.
+    void SceneLayer::draw(const SceneFrame& frame, const FloatPoint shift) const
     {
+        const Matrix3x2 frameToPixels = frame.canvas.transform() * frame.toCanvas;
         const bool fits = m_kept
             && frame.canvas.backend()->type() == BackendType::Cpu
-            && frame.canvas.transform() * frame.toCanvas == m_sceneToPixels
+            && frameToPixels == m_sceneToPixels
             && FloatPoint{ frame.width, frame.height } == m_frameSize;
         if (!fits)
         {
-            m_drawing(frame);
+            const bool shifted = shift.x != 0.0f || shift.y != 0.0f;
+            m_drawing(shifted ? frame.within(Matrix3x2::Translation(shift)) : frame);
             return;
         }
+        const FloatPoint pixelShift = frameToPixels.transformVector(shift);
+        const FloatPoint wholeShift = { std::round(pixelShift.x), std::round(pixelShift.y) };
         // The bands stand in rows of their own, which the CPU backend lays in on several cores.
         std::vector<PixelView> views;
         views.reserve(m_bands.size());
         const FloatRect canvasClip = frame.canvas.clipBox();
         for (const Band& band : m_bands)
-            views.push_back(band.pixels.pixelView(band.at, canvasClip));
+            views.push_back(band.pixels.pixelView(band.at + wholeShift, canvasClip));
         frame.canvas.drawPixelViews(views);
     }
 

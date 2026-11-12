@@ -3,7 +3,7 @@ module ClaFi.PathArt.MillScene;
 import ClaFi.PathArt.CowSprite;
 import ClaFi.PathArt.FirefliesEffect;
 import ClaFi.PathArt.FirTreeSprite;
-import ClaFi.PathArt.GatorSprite;
+import ClaFi.PathArt.GatorHeadSprite;
 import ClaFi.PathArt.LightningEffect;
 import ClaFi.PathArt.MillSprite;
 import ClaFi.PathArt.PeekingWolfSprite;
@@ -180,12 +180,12 @@ namespace ClaFi::PathArt
             w * 0.85f - 29.0f * m_objectsScale,
             h * 0.70f - 24.0f * m_objectsScale
         };
-        drawGator(frame, GatorPose{
+        drawGatorHead(frame, GatorHeadPose{
             .at = predator,
             .size = m_objectsScale * 0.8f,
             .cycleTime = time.cycleTime,
             .opacity = theme().isAfrica
-        }, GatorColors{
+        }, GatorHeadColors{
             .body = theme().wolfBody,
             .eye = theme().wolfEye
         });

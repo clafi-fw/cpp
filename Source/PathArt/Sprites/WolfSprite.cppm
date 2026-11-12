@@ -39,6 +39,23 @@ namespace ClaFi::PathArt
         Color toothEdge;
     };
 
+    // Coats a wolf is drawn in, wherever it appears.
+    export namespace WolfCoats
+    {
+        constexpr WolfCoat Grey{
+            .light = Color{ 0xFF7D8592 },
+            .shade = Color{ 0xFF59606B },
+            .coat = Color{ 0xFF6C7480 },
+            .far = Color{ 0xFF4F565F },
+            .dark = Color{ 0xFF3D434C },
+            .belly = Color{ 0xE6B3B9C2 },
+            .tongue = Color{ 0xFFEF6F7F },
+            .mouth = Color{ 0xFF5A1C28 },
+            .tooth = Color{ 0xFFFBF6E8 },
+            .toothEdge = Color{ 0xFF9C9488 }
+        };
+    }
+
     // A wolf running to the right, in the coat given.
     export void drawWolf(const SceneFrame&, const WolfPose&, const WolfCoat&);
 }

@@ -423,6 +423,8 @@ could not be laid into the frame turned over inside the lake. They are laid in i
 path clip, which a layer does not see - the row along the lake's edge that the clip covers in part
 is covered by the shore after.
 
+**draw takes a shift** for the Puppeteer's jolt - see PuppeteerScene below.
+
 **Direct2D draws layers live.** Its drawPixelView copies the bitmap up to the GPU on every call,
 which a kept layer would pay on every frame. A layer kept on the GPU would need a backend call of
 its own.
@@ -452,6 +454,43 @@ sites over the outlines without their grain and before the land map's weights.
 
 To watch: the cast to float rounds a fraction within 2^-25 of 1 up to 1.0, about 3 draws in 10^8.
 Nothing guards it.
+
+## PuppeteerScene
+
+**The acts** began with Oj's "the curtain periodically close for a moment, and when it open again
+the android is in a new pose making a new trick". They were drawn in an HTML mockup first and
+ported number for number. Oj's picks on the mockup:
+
+- The strings cut performed in a top hat with a wave of the wand, not a snap of the fingers.
+- The marionette waiting on a stand, and the curtain shut for 0.6 seconds.
+- More acts: all three instruments, "the more the better", each an act of its own between the
+  others; the head in the gator's mouth; the wolf through a hoop; and a kettlebell "with a shaking
+  floor when it dropped".
+- "The current order is all right" took the mockup's order.
+
+**The code's shape was Oj's pick**: a module per act under Scenes/Puppeteer on a PuppeteerAct base,
+the props as sprites and effects - TopHatSprite, RabbitSprite, a whole GatorSprite,
+MusicNotesEffect, SparkleBurstEffect. The mill's gator head was renamed GatorHeadSprite, so the
+whole gator could take GatorSprite. The wolf is WolfSprite as the Chase draws it, its coat moved
+into WolfCoats for both scenes to share.
+
+**The jolt shifts the kept stage**, Oj's pick over drawing the stage live while it shakes.
+SceneLayer draw took a shift, rounded to whole pixels where the pixels are kept. Through the shake,
+kept and live frames differ by up to 77 levels along sharp edges - the part of a pixel the rounding
+drops; before the landing they match within 1 level.
+
+**Where the port differs from the mockup:**
+
+- The mockup aimed the android's head at a point of the gator's mouth that left out the neck's
+  offset of 30 units. The port takes the offset in, and the head sits deeper in the mouth.
+- The ball's roll stops at the marionette's stand. At 600 units across the mockup rolled the ball
+  and its rider half behind the left drapes.
+- The kettlebell's landing dust is the mockup's ten puffs thrown out either side. A first cut drew
+  DustPuffEffect, the Chase's, which puts six puffs in a row under what lands.
+
+**Checked** in the clang harness: every act's frames against the mockup's at the same times at
+3:2; every act at 16:9, 4:3 and 600 x 900; kept frames against live ones through the jolt. Unbuilt
+under MSVC.
 
 ## ClockworkScene
 

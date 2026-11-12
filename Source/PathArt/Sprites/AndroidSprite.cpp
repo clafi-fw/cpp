@@ -1,6 +1,7 @@
 module ClaFi.PathArt.AndroidSprite;
 
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.TopHatSprite;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 
@@ -15,6 +16,9 @@ namespace ClaFi::PathArt
         constexpr Color MetalLight{ 0xFFEEF2F5 };
         constexpr Color MetalShade{ 0xFF97A3AF };
         constexpr Color MetalEdge{ 0xFF3B4450 };
+        constexpr Color BackLight{ 0xFFC9D1D8 };
+        constexpr Color BackShade{ 0xFF7D8995 };
+        constexpr Color Vent{ 0xFF5D6874 };
         constexpr Color Limb{ 0xFF8793A0 };
         constexpr Color Joint{ 0xFF4B5563 };
         constexpr Color Foot{ 0xFF5B6573 };
@@ -36,175 +40,377 @@ namespace ClaFi::PathArt
 
     namespace
     {
-        // The left arm, from its shoulder to the hand on the grip.
-        struct HoldingArm
-        {
-            FloatPoint shoulder;
-            Limb limb;
+        // The hat sits on the skull at a slant, in the head's units.
+        constexpr TopHatPose k_wornHat{
+            .brim = { 6.0f, -52.0f },
+            .turn = 0.14f,
+            .size = 0.92f
         };
 
-        // How far the body dips: down on each step, two steps a sway. The feet keep still.
-        [[nodiscard]] float bobAt(const float unit, const float sway)
-        {
-            return -2.5f * unit * std::abs(std::sin(2.0f * sway));
-        }
+        // How far a turn may squeeze the figure, so it never folds to nothing.
+        constexpr float k_thinnestFacing{ 0.03f };
 
-        [[nodiscard]] HoldingArm holdingArmOf(const float unit, const AndroidPose& pose)
+        [[nodiscard]] float sideSign(AudienceSide);
+        [[nodiscard]] float drawnFacing(const AndroidPose&);
+        // The figure's frame in units about the pelvis.
+        [[nodiscard]] SceneFrame bodyFrameOf(const SceneFrame&, const AndroidPose&);
+        // A two-part limb that stretches rather than stops short of its end.
+        [[nodiscard]] Limb stretchToward(FloatPoint root, FloatPoint target, float upperLength,
+            float lowerLength, BendToward);
+        [[nodiscard]] Limb armOf(const AndroidPose&, AudienceSide);
+        [[nodiscard]] FloatPoint bodyToUpper(const AndroidPose&, FloatPoint bodyPoint);
+        [[nodiscard]] FloatPoint upperToBody(const AndroidPose&, FloatPoint upperPoint);
+
+        void drawLegs(const SceneFrame& body, const AndroidPose&);
+        void drawTorso(const SceneFrame& upper, const AndroidPose&);
+        void drawHead(const SceneFrame& upper, const AndroidPose&);
+        void drawForearm(const SceneFrame& upper, const AndroidPose&, AudienceSide);
+    }
+
+    // AndroidPose
+
+    AndroidSide& AndroidPose::side(const AudienceSide which)
+    {
+        return which == AudienceSide::Left ? left : right;
+    }
+
+    const AndroidSide& AndroidPose::side(const AudienceSide which) const
+    {
+        return which == AudienceSide::Left ? left : right;
+    }
+
+    AndroidPose standingAndroid(const SceneFrame& frame, const FloatPoint floorPoint,
+        const float cycleTime, const float dip, const float stance)
+    {
+        const float unit = frame.unit;
+        AndroidPose pose{
+            .pelvis = { floorPoint.x, floorPoint.y - (AndroidBody::StandingHeight - dip) * unit },
+            .left = { .hand = { -44.0f, -19.0f } },
+            .right = { .hand = { 44.0f, -19.0f } },
+            .cycleTime = cycleTime
+        };
+        const float ankleY = floorPoint.y - AndroidBody::AnkleHeight * unit;
+        plantAndroidFeet(frame, pose, { floorPoint.x - stance * unit, ankleY },
+            { floorPoint.x + stance * unit, ankleY });
+        return pose;
+    }
+
+    FloatPoint androidBodyToFrame(const SceneFrame& frame, const AndroidPose& pose,
+        const FloatPoint bodyPoint)
+    {
+        const float unit = frame.unit;
+        const FloatPoint scaled = { bodyPoint.x * drawnFacing(pose) * unit, bodyPoint.y * unit };
+        return pose.pelvis + rotated(scaled, pose.tilt);
+    }
+
+    FloatPoint androidFrameToBody(const SceneFrame& frame, const AndroidPose& pose,
+        const FloatPoint framePoint)
+    {
+        const float unit = frame.unit;
+        const FloatPoint scaled = rotated(framePoint - pose.pelvis, -pose.tilt);
+        return { scaled.x / (drawnFacing(pose) * unit), scaled.y / unit };
+    }
+
+    FloatPoint androidUpperToFrame(const SceneFrame& frame, const AndroidPose& pose,
+        const FloatPoint upperPoint)
+    {
+        return androidBodyToFrame(frame, pose, upperToBody(pose, upperPoint));
+    }
+
+    FloatPoint androidFrameToUpper(const SceneFrame& frame, const AndroidPose& pose,
+        const FloatPoint framePoint)
+    {
+        return bodyToUpper(pose, androidFrameToBody(frame, pose, framePoint));
+    }
+
+    SceneFrame androidUpperFrame(const SceneFrame& frame, const AndroidPose& pose)
+    {
+        return bodyFrameOf(frame, pose).within(Matrix3x2::Translation(0.0f, AndroidBody::Waist)
+            * Matrix3x2::Rotation(pose.bend) * Matrix3x2::Translation(0.0f, -AndroidBody::Waist));
+    }
+
+    void plantAndroidFeet(const SceneFrame& frame, AndroidPose& pose, const FloatPoint leftAnkle,
+        const FloatPoint rightAnkle)
+    {
+        pose.left.foot = androidFrameToBody(frame, pose, leftAnkle);
+        pose.right.foot = androidFrameToBody(frame, pose, rightAnkle);
+    }
+
+    // A hand reaches the floor by the edge of its palm, a foot by its sole either side of the
+    // ankle.
+    void restAndroidOnFloor(const SceneFrame& frame, AndroidPose& pose, const float floorY)
+    {
+        constexpr float k_soleHalf{ 16.0f };
+        constexpr float k_palmRadius{ 9.0f };
+        const float facing = drawnFacing(pose);
+        float lowest = -std::numeric_limits<float>::max();
+        const auto reachDown = [&](FloatPoint bodyPoint, float radius) {
+            const FloatPoint turned = rotated({ bodyPoint.x * facing, bodyPoint.y }, pose.tilt);
+            lowest = std::max(lowest, turned.y + radius);
+        };
+        for (const AndroidSide* side : { &pose.left, &pose.right })
         {
-            const FloatPoint shoulder = {
-                pose.feet.x - 47.0f * unit,
-                pose.feet.y - 218.0f * unit + bobAt(unit, pose.sway)
-            };
-            return {
-                .shoulder = shoulder,
-                .limb = reachToward(shoulder, pose.grip, 87.0f * unit, 87.0f * unit,
-                    BendToward::Down)
-            };
+            const float soleY = side->foot.y + AndroidBody::AnkleHeight;
+            reachDown({ side->foot.x - k_soleHalf, soleY }, 0.0f);
+            reachDown({ side->foot.x + k_soleHalf, soleY }, 0.0f);
+            reachDown(upperToBody(pose, side->hand), k_palmRadius);
         }
+        reachDown(upperToBody(pose, AndroidBody::AntennaTip), 0.0f);
+        pose.pelvis.y = floorY - lowest * frame.unit;
     }
 
     void drawAndroid(const SceneFrame& frame, const AndroidPose& pose)
     {
-        const float unit = frame.unit;
-        const float androidX = pose.feet.x;
-        const float floorY = pose.feet.y;
-        const float sway = pose.sway;
-        const float cycleTime = pose.cycleTime;
-        const float bob = bobAt(unit, sway);
-        // Places on the body, in units from its middle and from the floor; only the feet keep
-        // still.
-        const auto bodyX = [&](float units) {
-            return androidX + units * unit;
-        };
-        const auto bodyY = [&](float units) {
-            return floorY + units * unit + bob;
-        };
-        const auto footY = [&](float units) {
-            return floorY + units * unit;
-        };
-        const SolidColor limb{ AndroidColors::Limb };
-        const SolidColor joint{ AndroidColors::Joint };
-
-        // legs and feet
-        drawSegment(frame, { bodyX(-17.0f), bodyY(-108.0f) }, { bodyX(-19.0f), footY(-14.0f) },
-            limb, 16.0f * unit);
-        drawSegment(frame, { bodyX(17.0f), bodyY(-108.0f) }, { bodyX(19.0f), footY(-14.0f) }, limb,
-            16.0f * unit);
-        fillDisc(frame, { bodyX(-18.0f), footY(-60.0f) + bob * 0.5f }, 9.0f * unit, joint);
-        fillDisc(frame, { bodyX(18.0f), footY(-60.0f) + bob * 0.5f }, 9.0f * unit, joint);
-        const SolidColor foot{ AndroidColors::Foot };
-        fillRoundedBox(frame, { bodyX(-38.0f), footY(-17.0f), bodyX(-6.0f), floorY }, 6.0f * unit,
-            foot);
-        fillRoundedBox(frame, { bodyX(6.0f), footY(-17.0f), bodyX(38.0f), floorY }, 6.0f * unit,
-            foot);
-
-        // pelvis, torso and the chest panel
-        fillRoundedBox(frame, { bodyX(-30.0f), bodyY(-130.0f), bodyX(30.0f), bodyY(-104.0f) },
-            8.0f * unit, SolidColor{ AndroidColors::Pelvis });
-        PixelPath torso;
-        const FloatRect torsoBox = { bodyX(-42.0f), bodyY(-234.0f), bodyX(42.0f), bodyY(-126.0f) };
-        torso.drawRoundedRect(torsoBox, 18.0f * unit, 18.0f * unit);
-        fillShape(frame, torso, LinearGradient::Simple({ bodyX(-40.0f), bodyY(-232.0f) },
-            { bodyX(40.0f), bodyY(-120.0f) }, AndroidColors::MetalLight,
-            AndroidColors::MetalShade));
-        strokeShape(frame, torso, SolidColor{ AndroidColors::MetalEdge }, 1.6f * unit);
-        fillRoundedBox(frame, { bodyX(-24.0f), bodyY(-206.0f), bodyX(24.0f), bodyY(-166.0f) },
-            7.0f * unit, SolidColor{ AndroidColors::Panel });
-        // The chest lights chase the beat, one lit at a time.
-        const int litLight = static_cast<int>(fractionalPart(cycleTime * 32.0f) * 3.0f);
-        for (int i = 0; i != 3; ++i)
+        const SceneFrame body = bodyFrameOf(frame, pose);
+        drawLegs(body, pose);
+        fillRoundedBox(body, { -30.0f, -13.0f, 30.0f, 13.0f }, 8.0f,
+            SolidColor{ AndroidColors::Pelvis });
+        const SceneFrame upper = androidUpperFrame(frame, pose);
+        drawTorso(upper, pose);
+        drawHead(upper, pose);
+        for (const AudienceSide which : { AudienceSide::Left, AudienceSide::Right })
         {
-            const FloatPoint light = { bodyX(static_cast<float>(i - 1) * 13.0f), bodyY(-186.0f) };
-            const Color color = AndroidColors::ChestLights[static_cast<std::size_t>(i)];
-            const bool lit = i == litLight;
-            if (lit)
-                drawGlow(frame, light, 12.0f * unit, color.withOpacity(0.6f));
-            fillDisc(frame, light, 4.2f * unit,
-                SolidColor{ color.withOpacity(lit ? 1.0f : 0.28f) });
-        }
-
-        // neck and the head, turned toward the puppet
-        fillBox(frame, { bodyX(-8.0f), bodyY(-250.0f), bodyX(8.0f), bodyY(-232.0f) },
-            SolidColor{ AndroidColors::Neck });
-        const SceneFrame head = frame.within(Matrix3x2::Translation(androidX, bodyY(-246.0f))
-            * Matrix3x2::Rotation(-0.1f + 0.06f * std::sin(sway)));
-        fillDisc(head, { -38.0f * unit, -28.0f * unit }, 8.0f * unit, joint);
-        fillDisc(head, { 38.0f * unit, -28.0f * unit }, 8.0f * unit, joint);
-        PixelPath skull;
-        skull.drawRoundedRect(FloatRect{ -36.0f * unit, -58.0f * unit, 36.0f * unit, 0.0f },
-            22.0f * unit, 22.0f * unit);
-        fillShape(head, skull, LinearGradient::Simple({ -30.0f * unit, -58.0f * unit },
-            { 30.0f * unit, 0.0f }, AndroidColors::HeadLight, AndroidColors::HeadShade));
-        strokeShape(head, skull, SolidColor{ AndroidColors::MetalEdge }, 1.6f * unit);
-        fillRoundedBox(head, { -28.0f * unit, -46.0f * unit, 28.0f * unit, -21.0f * unit },
-            10.0f * unit, SolidColor{ AndroidColors::Visor });
-        const float blink = fractionalPart(cycleTime * 4.0f + 0.2f) > 0.975f ? 0.15f : 1.0f;
-        const float look = -5.0f * unit + 2.0f * unit * std::sin(sway);
-        const float eyeY = -34.0f * unit;
-        const float eyeHeight = 12.0f * unit * blink;
-        for (const float eyeLeft : { -19.0f, 5.0f })
-        {
-            const float left = eyeLeft * unit + look;
-            drawGlow(head, { left + 7.0f * unit, eyeY }, 13.0f * unit,
-                AndroidColors::EyeGlow.withOpacity(0.35f));
-            const FloatRect eye = {
-                left,
-                eyeY - eyeHeight * 0.5f,
-                left + 14.0f * unit,
-                eyeY + eyeHeight * 0.5f
+            const FloatPoint shoulder = {
+                sideSign(which) * AndroidBody::RightShoulder.x,
+                AndroidBody::RightShoulder.y
             };
-            fillRoundedBox(head, eye, 4.0f * unit * blink, SolidColor{ AndroidColors::Eye });
+            const Limb arm = armOf(pose, which);
+            drawSegment(upper, shoulder, arm.joint, SolidColor{ AndroidColors::Limb }, 13.0f);
+            if (!pose.side(which).forearmOnTop)
+                drawForearm(upper, pose, which);
+            fillDisc(upper, shoulder, 11.0f, SolidColor{ AndroidColors::Joint });
         }
-        PixelPath grille;
-        for (int i = 0; i != 3; ++i)
-        {
-            const float x = static_cast<float>(-9 + i * 9) * unit;
-            grille.moveTo(x, -12.0f * unit);
-            grille.lineTo(x, -6.0f * unit);
-        }
-        strokeShape(head, grille, SolidColor{ AndroidColors::Neck }, 2.4f * unit);
-        drawSegment(head, { 0.0f, -58.0f * unit }, { 0.0f, -78.0f * unit },
-            SolidColor{ AndroidColors::Neck }, 3.0f * unit);
-        const bool antennaLit = fractionalPart(cycleTime * 16.0f) < 0.5f;
-        if (antennaLit)
-            drawGlow(head, { 0.0f, -83.0f * unit }, 14.0f * unit,
-                AndroidColors::AntennaGlow.withOpacity(0.6f));
-        fillDisc(head, { 0.0f, -83.0f * unit }, 5.0f * unit,
-            SolidColor{ antennaLit ? AndroidColors::AntennaOn : AndroidColors::AntennaOff });
-
-        // the right arm, its hand on the hip
-        const FloatPoint shoulder = { bodyX(47.0f), bodyY(-218.0f) };
-        const FloatPoint elbow = { bodyX(80.0f), bodyY(-172.0f) };
-        const FloatPoint hand = { bodyX(44.0f), bodyY(-136.0f) };
-        drawSegment(frame, shoulder, elbow, limb, 13.0f * unit);
-        drawSegment(frame, elbow, hand, limb, 12.0f * unit);
-        fillDisc(frame, elbow, 7.5f * unit, joint);
-        fillDisc(frame, hand, 9.0f * unit, SolidColor{ AndroidColors::Hand });
-        fillDisc(frame, shoulder, 11.0f * unit, joint);
-
-        // the left arm's upper part, behind what the hand holds
-        const HoldingArm arm = holdingArmOf(unit, pose);
-        drawSegment(frame, arm.shoulder, arm.limb.joint, limb, 13.0f * unit);
-        fillDisc(frame, arm.shoulder, 11.0f * unit, joint);
     }
 
-    void drawAndroidHand(const SceneFrame& frame, const AndroidPose& pose)
+    void drawAndroidForearm(const SceneFrame& frame, const AndroidPose& pose,
+        const AudienceSide which)
     {
-        const float unit = frame.unit;
-        const HoldingArm arm = holdingArmOf(unit, pose);
-        drawSegment(frame, arm.limb.joint, arm.limb.end, SolidColor{ AndroidColors::Limb },
-            12.0f * unit);
-        fillDisc(frame, arm.limb.joint, 7.5f * unit, SolidColor{ AndroidColors::Joint });
-        const FloatPoint grip = pose.grip;
-        const FloatRect hand = {
-            grip.x - 10.0f * unit,
-            grip.y - 6.0f * unit,
-            grip.x + 10.0f * unit,
-            grip.y + 10.0f * unit
-        };
-        PixelPath handPath;
-        handPath.drawRoundedRect(hand, 6.0f * unit, 6.0f * unit);
-        fillShape(frame, handPath, SolidColor{ AndroidColors::Hand });
-        strokeShape(frame, handPath, SolidColor{ AndroidColors::MetalEdge }, 1.2f * unit);
+        drawForearm(androidUpperFrame(frame, pose), pose, which);
+    }
+
+    namespace
+    {
+        float sideSign(const AudienceSide which)
+        {
+            return which == AudienceSide::Left ? -1.0f : 1.0f;
+        }
+
+        float drawnFacing(const AndroidPose& pose)
+        {
+            const float sign = pose.facing < 0.0f ? -1.0f : 1.0f;
+            return sign * std::max(k_thinnestFacing, std::abs(pose.facing));
+        }
+
+        SceneFrame bodyFrameOf(const SceneFrame& frame, const AndroidPose& pose)
+        {
+            return frame.within(Matrix3x2::Translation(pose.pelvis)
+                * Matrix3x2::Rotation(pose.tilt)
+                * Matrix3x2::Scale(drawnFacing(pose) * frame.unit, frame.unit));
+        }
+
+        Limb stretchToward(const FloatPoint root, const FloatPoint target, const float upperLength,
+            const float lowerLength, const BendToward bendToward)
+        {
+            const FloatPoint toTarget = target - root;
+            const float distance = std::hypot(toTarget.x, toTarget.y);
+            const float growth = std::max(1.0f, distance / ((upperLength + lowerLength) * 0.998f));
+            return reachToward(root, target, upperLength * growth, lowerLength * growth,
+                bendToward);
+        }
+
+        Limb armOf(const AndroidPose& pose, const AudienceSide which)
+        {
+            const AndroidSide& side = pose.side(which);
+            const FloatPoint shoulder = {
+                sideSign(which) * AndroidBody::RightShoulder.x,
+                AndroidBody::RightShoulder.y
+            };
+            BendToward bend = which == AudienceSide::Left ? BendToward::Left : BendToward::Right;
+            if (side.elbow == ElbowBend::Down)
+                bend = BendToward::Down;
+            return stretchToward(shoulder, side.hand, side.upperArm, side.forearm, bend);
+        }
+
+        FloatPoint bodyToUpper(const AndroidPose& pose, const FloatPoint bodyPoint)
+        {
+            const FloatPoint unbent = rotated({ bodyPoint.x, bodyPoint.y - AndroidBody::Waist },
+                -pose.bend);
+            return { unbent.x, unbent.y + AndroidBody::Waist };
+        }
+
+        FloatPoint upperToBody(const AndroidPose& pose, const FloatPoint upperPoint)
+        {
+            const FloatPoint bent = rotated({ upperPoint.x, upperPoint.y - AndroidBody::Waist },
+                pose.bend);
+            return { bent.x, bent.y + AndroidBody::Waist };
+        }
+
+        // Kneeling, a thigh comes down to its knee on the floor and the shin lies behind it,
+        // seen end on.
+        void drawLegs(const SceneFrame& body, const AndroidPose& pose)
+        {
+            const SolidColor limb{ AndroidColors::Limb };
+            const SolidColor joint{ AndroidColors::Joint };
+            const SolidColor foot{ AndroidColors::Foot };
+            for (const AudienceSide which : { AudienceSide::Left, AudienceSide::Right })
+            {
+                const float sign = sideSign(which);
+                const AndroidSide& side = pose.side(which);
+                const FloatPoint hip = { sign * AndroidBody::RightHip.x, AndroidBody::RightHip.y };
+                if (pose.kneeling)
+                {
+                    const FloatPoint knee = side.foot;
+                    fillOval(body, knee + FloatPoint{ sign * 2.0f, 4.0f }, 12.0f, 8.0f, foot);
+                    drawSegment(body, hip, knee, limb, 16.0f);
+                    fillDisc(body, knee, 9.0f, joint);
+                    continue;
+                }
+                const BendToward outward = which == AudienceSide::Left
+                    ? BendToward::Left
+                    : BendToward::Right;
+                const Limb leg = stretchToward(hip, side.foot, 47.0f, 47.0f, outward);
+                drawSegment(body, hip, leg.joint, limb, 16.0f);
+                drawSegment(body, leg.joint, leg.end, limb, 16.0f);
+                fillDisc(body, leg.joint, 9.0f, joint);
+                const SceneFrame sole = body.within(Matrix3x2::Translation(leg.end)
+                    * Matrix3x2::Rotation(side.footTurn));
+                const float toeSide = which == AudienceSide::Left ? -19.0f : -13.0f;
+                fillRoundedBox(sole, { toeSide, -3.0f, toeSide + 32.0f, 14.0f }, 6.0f, foot);
+            }
+        }
+
+        // From behind, the chest panel gives way to three vents.
+        void drawTorso(const SceneFrame& upper, const AndroidPose& pose)
+        {
+            const bool fromBehind = pose.facing < 0.0f;
+            PixelPath torso;
+            torso.drawRoundedRect(FloatRect{ -42.0f, -117.0f, 42.0f, -9.0f }, 18.0f, 18.0f);
+            fillShape(upper, torso, LinearGradient::Simple({ -40.0f, -115.0f }, { 40.0f, -3.0f },
+                fromBehind ? AndroidColors::BackLight : AndroidColors::MetalLight,
+                fromBehind ? AndroidColors::BackShade : AndroidColors::MetalShade));
+            strokeShape(upper, torso, SolidColor{ AndroidColors::MetalEdge }, 1.6f);
+            if (fromBehind)
+            {
+                for (int i = 0; i != 3; ++i)
+                {
+                    const float top = -92.0f + static_cast<float>(i) * 13.0f;
+                    fillRoundedBox(upper, { -20.0f, top, 20.0f, top + 6.0f }, 3.0f,
+                        SolidColor{ AndroidColors::Vent });
+                }
+            }
+            else
+            {
+                fillRoundedBox(upper, { -24.0f, -89.0f, 24.0f, -49.0f }, 7.0f,
+                    SolidColor{ AndroidColors::Panel });
+                const int chasing = static_cast<int>(fractionalPart(pose.cycleTime * 32.0f) * 3.0f);
+                for (int i = 0; i != 3; ++i)
+                {
+                    const FloatPoint light = { static_cast<float>(i - 1) * 13.0f, -69.0f };
+                    const Color color = AndroidColors::ChestLights[static_cast<std::size_t>(i)];
+                    const bool lit = pose.lights == ChestLights::All
+                        || (pose.lights == ChestLights::Chase && i == chasing);
+                    if (lit)
+                        drawGlow(upper, light, 12.0f, color.withOpacity(0.6f));
+                    fillDisc(upper, light, 4.2f,
+                        SolidColor{ color.withOpacity(lit ? 1.0f : 0.28f) });
+                }
+            }
+            fillBox(upper, { -8.0f, -133.0f, 8.0f, -115.0f }, SolidColor{ AndroidColors::Neck });
+        }
+
+        // From behind, the visor gives way to a plate with two bolts.
+        void drawHead(const SceneFrame& upper, const AndroidPose& pose)
+        {
+            const bool fromBehind = pose.facing < 0.0f;
+            const SceneFrame head = upper.within(Matrix3x2::Translation(AndroidBody::Neck)
+                * Matrix3x2::Rotation(pose.headTurn));
+            const SolidColor joint{ AndroidColors::Joint };
+            fillDisc(head, { -38.0f, -28.0f }, 8.0f, joint);
+            fillDisc(head, { 38.0f, -28.0f }, 8.0f, joint);
+            PixelPath skull;
+            skull.drawRoundedRect(FloatRect{ -36.0f, -58.0f, 36.0f, 0.0f }, 22.0f, 22.0f);
+            fillShape(head, skull, LinearGradient::Simple({ -30.0f, -58.0f }, { 30.0f, 0.0f },
+                fromBehind ? AndroidColors::BackLight : AndroidColors::HeadLight,
+                AndroidColors::HeadShade));
+            strokeShape(head, skull, SolidColor{ AndroidColors::MetalEdge }, 1.6f);
+            if (fromBehind)
+            {
+                fillRoundedBox(head, { -22.0f, -44.0f, 22.0f, -20.0f }, 9.0f,
+                    SolidColor{ AndroidColors::HeadShade.withOpacity(0.7f) });
+                fillDisc(head, { -14.0f, -32.0f }, 2.2f, SolidColor{ AndroidColors::Vent });
+                fillDisc(head, { 14.0f, -32.0f }, 2.2f, SolidColor{ AndroidColors::Vent });
+            }
+            else
+            {
+                fillRoundedBox(head, { -28.0f, -46.0f, 28.0f, -21.0f }, 10.0f,
+                    SolidColor{ AndroidColors::Visor });
+                const float blink = fractionalPart(pose.cycleTime * 4.0f + 0.2f) > 0.975f
+                    ? 0.15f
+                    : 1.0f;
+                const float opening = std::min(pose.eyeOpening, blink);
+                const float eyeY = -34.0f;
+                const float eyeHeight = 12.0f * opening;
+                for (const float eyeLeft : { -19.0f, 5.0f })
+                {
+                    const float left = eyeLeft + pose.look;
+                    drawGlow(head, { left + 7.0f, eyeY }, 13.0f,
+                        AndroidColors::EyeGlow.withOpacity(0.35f));
+                    const FloatRect eye = {
+                        left,
+                        eyeY - eyeHeight * 0.5f,
+                        left + 14.0f,
+                        eyeY + eyeHeight * 0.5f
+                    };
+                    fillRoundedBox(head, eye, 4.0f * opening, SolidColor{ AndroidColors::Eye });
+                }
+                PixelPath grille;
+                for (int i = 0; i != 3; ++i)
+                {
+                    const float x = static_cast<float>(-9 + i * 9);
+                    grille.moveTo(x, -12.0f);
+                    grille.lineTo(x, -6.0f);
+                }
+                strokeShape(head, grille, SolidColor{ AndroidColors::Neck }, 2.4f);
+            }
+
+            const bool antennaLit = pose.antenna == AntennaLight::On
+                || (pose.antenna == AntennaLight::Blinking
+                    && fractionalPart(pose.cycleTime * 16.0f) < 0.5f);
+            // Through the hat, a shorter stalk stands on the crown, in the hat's units.
+            const SceneFrame antennaFrame = pose.wearsHat ? topHatFrame(head, k_wornHat) : head;
+            const float antennaFoot = pose.wearsHat ? -56.0f : -58.0f;
+            const float stalkTop = pose.wearsHat ? -68.0f : -78.0f;
+            const float ballY = stalkTop - 5.0f;
+            if (pose.wearsHat)
+            {
+                drawTopHat(head, k_wornHat);
+                drawTopHatBrimLip(head, k_wornHat);
+            }
+            drawSegment(antennaFrame, { 0.0f, antennaFoot }, { 0.0f, stalkTop },
+                SolidColor{ AndroidColors::Neck }, 3.0f);
+            if (antennaLit)
+                drawGlow(antennaFrame, { 0.0f, ballY }, 14.0f,
+                    AndroidColors::AntennaGlow.withOpacity(0.6f));
+            fillDisc(antennaFrame, { 0.0f, ballY }, 5.0f,
+                SolidColor{ antennaLit ? AndroidColors::AntennaOn : AndroidColors::AntennaOff });
+        }
+
+        void drawForearm(const SceneFrame& upper, const AndroidPose& pose,
+            const AudienceSide which)
+        {
+            const Limb arm = armOf(pose, which);
+            drawSegment(upper, arm.joint, arm.end, SolidColor{ AndroidColors::Limb }, 12.0f);
+            fillDisc(upper, arm.joint, 7.5f, SolidColor{ AndroidColors::Joint });
+            if (pose.side(which).handShape == HandShape::Fist)
+            {
+                PixelPath fist;
+                fist.drawRoundedRect(FloatRect{ arm.end.x - 10.0f, arm.end.y - 6.0f,
+                    arm.end.x + 10.0f, arm.end.y + 10.0f }, 6.0f, 6.0f);
+                fillShape(upper, fist, SolidColor{ AndroidColors::Hand });
+                strokeShape(upper, fist, SolidColor{ AndroidColors::MetalEdge }, 1.2f);
+                return;
+            }
+            fillDisc(upper, arm.end, 9.0f, SolidColor{ AndroidColors::Hand });
+        }
     }
 }
