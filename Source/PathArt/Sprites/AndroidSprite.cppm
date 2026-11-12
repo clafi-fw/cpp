@@ -76,6 +76,7 @@ namespace ClaFi::PathArt
         float tilt{ 0.0f }; // the whole figure's turn about the pelvis, in radians
         float facing{ 1.0f }; // 1 facing the audience, -1 its back to them, between as it turns
         float bend{ 0.0f }; // the upper body's lean at the waist, in radians
+        float bow{ 0.0f }; // 0 upright to 1 bowed to the audience, the upper body shortened
         bool kneeling{ false };
         AndroidSide left{};
         AndroidSide right{};

@@ -40,6 +40,9 @@ namespace ClaFi::PathArt
             Tooth{ 0.74f, 16.0f, 7.0f }
         };
 
+        // A happy tail sweeps 180 times a cycle, so it comes round with the cycle.
+        constexpr float k_wagsPerCycle{ 180.0f };
+
         // Teeth along a jaw's edge from `back` to `front`, grown out to `growth` of their size.
         void drawTeeth(const SceneFrame&, const WolfCoat&, FloatPoint back, FloatPoint front,
             bool upward, std::span<const Tooth> teeth, float growth);
@@ -98,9 +101,14 @@ namespace ClaFi::PathArt
 
         const float swish = std::sin(pose.stride)
             * std::max(0.0f, 1.0f - pose.leap - pose.sprawl - pose.onBack);
-        const float wag = -0.15f + 0.35f * swish + 0.4f * pose.onBack - 1.1f * pose.dangle;
+        // Wagging, the tail sweeps from side to side; seen side on, it looks shortest as it
+        // passes the middle, pointing at the audience.
+        const float restingTurn = -0.15f + 0.35f * swish + 0.4f * pose.onBack - 1.1f * pose.dangle;
+        const float wagAngle = k_2Pi * k_wagsPerCycle * pose.cycleTime;
+        const float tailTurn = std::lerp(restingTurn, 0.8f + 0.32f * std::sin(wagAngle), pose.wag);
+        const float tailLength = 1.0f - 0.32f * pose.wag * std::abs(std::cos(wagAngle));
         const SceneFrame tail = wolf.within(Matrix3x2::Translation(-42.0f, -6.0f)
-            * Matrix3x2::Rotation(wag));
+            * Matrix3x2::Rotation(tailTurn) * Matrix3x2::Scale(tailLength, 1.0f));
         PixelPath brush;
         brush.moveTo(0.0f, -5.0f);
         brush.quadTo({ -22.0f, -20.0f }, { -42.0f, -10.0f });

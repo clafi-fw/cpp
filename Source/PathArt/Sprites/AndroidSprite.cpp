@@ -57,6 +57,8 @@ namespace ClaFi::PathArt
 
         [[nodiscard]] float sideSign(AudienceSide);
         [[nodiscard]] float drawnFacing(const AndroidPose&);
+        // Bowing toward the audience, the upper body keeps this share of its height.
+        [[nodiscard]] float upperHeightShare(const AndroidPose&);
         // The figure's frame in units about the pelvis.
         [[nodiscard]] SceneFrame bodyFrameOf(const SceneFrame&, const AndroidPose&);
         // A two-part limb that stretches rather than stops short of its end.
@@ -132,7 +134,8 @@ namespace ClaFi::PathArt
     SceneFrame androidUpperFrame(const SceneFrame& frame, const AndroidPose& pose)
     {
         return bodyFrameOf(frame, pose).within(Matrix3x2::Translation(0.0f, AndroidBody::Waist)
-            * Matrix3x2::Rotation(pose.bend) * Matrix3x2::Translation(0.0f, -AndroidBody::Waist));
+            * Matrix3x2::Rotation(pose.bend) * Matrix3x2::Scale(1.0f, upperHeightShare(pose))
+            * Matrix3x2::Translation(0.0f, -AndroidBody::Waist));
     }
 
     void plantAndroidFeet(const SceneFrame& frame, AndroidPose& pose, const FloatPoint leftAnkle,
@@ -214,6 +217,11 @@ namespace ClaFi::PathArt
             return sign * std::max(k_thinnestFacing, std::abs(pose.facing));
         }
 
+        float upperHeightShare(const AndroidPose& pose)
+        {
+            return 1.0f - 0.3f * pose.bow;
+        }
+
         SceneFrame bodyFrameOf(const SceneFrame& frame, const AndroidPose& pose)
         {
             return frame.within(Matrix3x2::Translation(pose.pelvis)
@@ -248,13 +256,16 @@ namespace ClaFi::PathArt
         {
             const FloatPoint unbent = rotated({ bodyPoint.x, bodyPoint.y - AndroidBody::Waist },
                 -pose.bend);
-            return { unbent.x, unbent.y + AndroidBody::Waist };
+            return { unbent.x, unbent.y / upperHeightShare(pose) + AndroidBody::Waist };
         }
 
         FloatPoint upperToBody(const AndroidPose& pose, const FloatPoint upperPoint)
         {
-            const FloatPoint bent = rotated({ upperPoint.x, upperPoint.y - AndroidBody::Waist },
-                pose.bend);
+            const FloatPoint shortened = {
+                upperPoint.x,
+                (upperPoint.y - AndroidBody::Waist) * upperHeightShare(pose),
+            };
+            const FloatPoint bent = rotated(shortened, pose.bend);
             return { bent.x, bent.y + AndroidBody::Waist };
         }
 
@@ -365,7 +376,9 @@ namespace ClaFi::PathArt
         void drawHead(const SceneFrame& upper, const AndroidPose& pose)
         {
             const bool fromBehind = pose.facing < 0.0f;
+            // The head keeps its shape as the upper body shortens in a bow.
             const SceneFrame head = upper.within(Matrix3x2::Translation(AndroidBody::Neck)
+                * Matrix3x2::Scale(1.0f, 1.0f / upperHeightShare(pose))
                 * Matrix3x2::Rotation(pose.headTurn));
             const SolidColor joint{ AndroidColors::Joint };
             fillDisc(head, { -38.0f, -28.0f }, 8.0f, joint);
@@ -385,13 +398,15 @@ namespace ClaFi::PathArt
             }
             else
             {
-                fillRoundedBox(head, { -28.0f, -46.0f, 28.0f, -21.0f }, 10.0f,
+                // bowing, the face goes down and the eyes look at the floor
+                const float faceDrop = 6.0f * pose.bow;
+                fillRoundedBox(head, { -28.0f, -46.0f + faceDrop, 28.0f, -21.0f + faceDrop }, 10.0f,
                     SolidColor{ AndroidColors::Visor });
                 const float blink = fractionalPart(pose.cycleTime * 4.0f + 0.2f) > 0.975f
                     ? 0.15f
                     : 1.0f;
-                const float opening = std::min(pose.eyeOpening, blink);
-                const float eyeY = -34.0f;
+                const float opening = std::min({ pose.eyeOpening, blink, 1.0f - 0.55f * pose.bow });
+                const float eyeY = -34.0f + 1.4f * faceDrop;
                 const float eyeHeight = 12.0f * opening;
                 for (const float eyeLeft : { -19.0f, 5.0f })
                 {
@@ -410,8 +425,8 @@ namespace ClaFi::PathArt
                 for (int i = 0; i != 3; ++i)
                 {
                     const float x = static_cast<float>(-9 + i * 9);
-                    grille.moveTo(x, -12.0f);
-                    grille.lineTo(x, -6.0f);
+                    grille.moveTo(x, -12.0f + faceDrop);
+                    grille.lineTo(x, -6.0f + 0.6f * faceDrop);
                 }
                 strokeShape(head, grille, SolidColor{ AndroidColors::Neck }, 2.4f);
             }

@@ -21,7 +21,8 @@ namespace ClaFi::PathArt
         float tongueTurn;
         float jawOpen; // 0 shut, 1 gaping, its teeth out
         float glance; // how far its eye looks down
-        float cycleTime; // the time its legs twitch by while it lies on its back
+        float cycleTime; // the time its legs twitch by on its back, and its tail wags by
+        float wag{ 0.0f }; // 0 still to 1 held high and wagging fast, as a happy dog's tail
     };
 
     // The colours of a wolf: its fur, and its mouth with its tongue and teeth.

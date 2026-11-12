@@ -45,6 +45,9 @@ namespace ClaFi::PathArt
     export [[nodiscard]] MarionettePose danceMarionette(float unit, FloatPoint feet, float sway);
     // The marionette hung limp by its control from `hook`, swung `swing` radians. See PathArt
     export [[nodiscard]] MarionettePose hangMarionette(float unit, FloatPoint hook, float swing);
+    // The marionette on its own feet at `feet`, its strings gone, `time` seconds in. See PathArt
+    export [[nodiscard]] MarionetteJoints standingMarionette(float unit, FloatPoint feet,
+        float curtsy, float wave, float time);
     // The strings, the control and the puppet hanging from it.
     export void drawMarionette(const SceneFrame&, const MarionettePose&);
     // The strings alone, at a share of their own opacity.

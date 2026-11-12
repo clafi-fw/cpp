@@ -3,6 +3,7 @@ module ClaFi.PathArt.MarionetteSprite;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -126,6 +127,45 @@ namespace ClaFi::PathArt
             .joints = puppet,
             .control = control
         };
+    }
+
+    // It sways a little as it stands. A curtsy bends its knees, the left foot behind, spreads
+    // its arms low and drops its head; a wave lifts its right arm and waves it.
+    MarionetteJoints standingMarionette(const float unit, const FloatPoint feet, const float curtsy,
+        const float wave, const float time)
+    {
+        MarionetteJoints puppet{};
+        puppet.lean = 0.05f * std::sin(k_2Pi * time / 2.2f) * (1.0f - curtsy);
+        puppet.headTilt = 0.3f * curtsy;
+        puppet.pelvis = { feet.x, feet.y - (50.0f - 12.0f * curtsy) * unit };
+        puppet.neck = puppet.pelvis + rotated({ 0.0f, -40.0f * unit }, puppet.lean);
+        puppet.head = puppet.neck
+            + rotated({ 0.0f, (-17.0f + 4.0f * curtsy) * unit }, puppet.lean * 1.6f);
+        puppet.shoulderLeft = puppet.neck + rotated({ -14.0f * unit, 5.0f * unit }, puppet.lean);
+        puppet.shoulderRight = puppet.neck + rotated({ 14.0f * unit, 5.0f * unit }, puppet.lean);
+        puppet.hipLeft = puppet.pelvis + rotated({ -8.0f * unit, 0.0f }, puppet.lean * 0.5f);
+        puppet.hipRight = puppet.pelvis + rotated({ 8.0f * unit, 0.0f }, puppet.lean * 0.5f);
+        puppet.legLeft = reachToward(puppet.hipLeft,
+            { feet.x - 9.0f * unit, feet.y - 3.0f * unit * curtsy }, 27.0f * unit, 27.0f * unit,
+            BendToward::Left);
+        puppet.legRight = reachToward(puppet.hipRight, { feet.x + 12.0f * unit, feet.y },
+            27.0f * unit, 27.0f * unit, BendToward::Right);
+
+        // where each hand reaches from its shoulder, in units: hanging, spread low in a curtsy,
+        // or the right one up, waving
+        const FloatPoint leftHanging = { -3.0f, 36.0f };
+        const FloatPoint rightHanging = { 3.0f, 36.0f };
+        const FloatPoint waving = { 16.0f + 7.0f * std::sin(k_2Pi * time * 2.2f), -30.0f };
+        const FloatPoint leftReach = pointBetween(
+            pointBetween(leftHanging, { -30.0f, 22.0f }, curtsy), leftHanging, wave);
+        const FloatPoint rightReach = pointBetween(
+            pointBetween(rightHanging, { 30.0f, 22.0f }, curtsy), waving, wave);
+        puppet.armLeft = reachToward(puppet.shoulderLeft, puppet.shoulderLeft + leftReach * unit,
+            19.0f * unit, 19.0f * unit, BendToward::Left);
+        puppet.armRight = reachToward(puppet.shoulderRight,
+            puppet.shoulderRight + rightReach * unit, 19.0f * unit, 19.0f * unit,
+            BendToward::Right);
+        return puppet;
     }
 
     void drawMarionette(const SceneFrame& frame, const MarionettePose& pose)

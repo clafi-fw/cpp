@@ -496,6 +496,16 @@ took wearsTutu, tutuTurn and wearsPointeShoes, and ChestLights took Pink for the
 light. In the grand jete the legs go out 11 to 15 degrees below level: flung out level, they hid
 behind the disc, and the leap read as a sit.
 
+**The curtain call** closes the show, from Oj's "all the artists giving nods while bouquets are
+tossing at the stage", and on the mockup "The wolf's waving its tail like a happy puppy". The
+cast is the gator from the left wings, the marionette freed of its strings as Strings cut leaves
+it, the android doffing the top hat for the rabbit, and the wolf facing them. A bow seen from the
+front is the upper body shortened by 30 percent with the face dropped, so AndroidPose took bow.
+WolfPose took wag, which sweeps the tail 180 times a cycle and shortens it as it passes the
+middle. MarionetteSprite took standingMarionette. The wolf's jaw stays nearly shut, at 0.18:
+opened as wide as in the hoop act, his teeth showed and he looked about to bite. Each bouquet's
+thrower and the height of its arc came from the mockup's random numbers, written into the table.
+
 **Checked** in the clang harness: every act's frames against the mockup's at the same times at
 3:2; every act at 16:9, 4:3 and 600 x 900; kept frames against live ones through the jolt. Unbuilt
 under MSVC.

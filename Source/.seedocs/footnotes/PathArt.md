@@ -636,10 +636,11 @@ whole numbers: a float holds a large drift too coarsely for the stars to move sm
 An android puts on a show on a small stage, under a spotlight between red drapes. A curtain of
 the drapes' cloth closes between its acts.
 
-**Fourteen acts of ten seconds each, four to a cycle**, follow one another across the cycles, so
-the show comes round every 140 seconds: PuppetShowAct, RobotDanceAct, JugglingAct, AccordionAct,
+**Fifteen acts of ten seconds each, four to a cycle**, follow one another across the cycles, so
+the show comes round every 150 seconds: PuppetShowAct, RobotDanceAct, JugglingAct, AccordionAct,
 AcrobaticsAct, TopHatAct, GuitarAct, BallBalanceAct, GatorAct, DrumAct, BalletAct,
-KettlebellAct, WolfHoopAct and StringsCutAct. The instruments come every third act.
+KettlebellAct, WolfHoopAct, StringsCutAct and CurtainCallAct. The instruments come every third
+act.
 
 **The curtain is shut for 0.6 seconds across each change of act**, and runs for 0.75 seconds
 either side of that, so the next act is in place before it parts - see PuppeteerScene
@@ -792,6 +793,24 @@ The puppet show's finale, in a top hat. In seconds:
 - **Then** the marionette dances on alone in a glow, rises and twirls, while the wand beats time.
 - **From 8.3** the ta-da.
 
+## CurtainCallAct
+
+The whole cast takes its bows in a row across the stage, while bouquets fly in from the audience.
+
+- **The gator** pokes in from the left wings, its tail offstage, grinning and nodding.
+- **The marionette** stands on its own feet, its strings gone - see standingMarionette. It
+  curtsies, waves and curtsies again.
+- **The android** stands in the middle in its top hat. From 1.15 seconds it lifts the hat off and
+  sweeps it down to its side with a bow, the hat turning over, and at 2.45 the rabbit pops out of
+  it. It waves from 3.2, catches a bouquet at 7.15 and holds it up from 7.75.
+- **The wolf** stands on the right facing the rest, wagging his tail like a happy puppy, panting
+  and nodding, an eye on the rabbit.
+
+**From 8.3 the whole cast bows together**, as the android's chest lights flash.
+
+**Nine bouquets land in front of the cast** through the act. Each is thrown from below the front
+of the stage, turns over in the air along its arc, bounces once and lies where it fell.
+
 ## AndroidBody
 
 The android's measures in units, x to the audience's right and y down, from the middle of its
@@ -819,6 +838,8 @@ A pose places the pelvis in the frame and gives everything else relative to it.
   see drawTutu. It keeps its width as the figure turns, and `tutuTurn` turns its pleats, so a
   spin shows on it.
 - **`wearsPointeShoes`** dresses the feet in pink satin, the ribbons crossed over the shins.
+- **`bow`** bows the android to the audience: the upper body shortens as it tips toward them,
+  and the face goes down, the eyes on the floor. The head keeps its shape.
 - **`cycleTime`** drives the blink and the chest lights' chase; `eyeOpening`, `lights` and
   `antenna` set them by hand.
 
@@ -840,6 +861,16 @@ Places the control for one moment of the dance and hangs the puppet from it.
 The marionette on its stand between its acts. Its control hangs by the middle from `hook`, tilted,
 and the puppet hangs limp 232 units below, its head drooping. `swing` turns the puppet about the
 control and throws its limbs the same way.
+
+## standingMarionette
+
+The marionette stands about `feet` with no strings or control, swaying a little by `time`.
+
+- **`curtsy`**, 0 to 1, bends its knees with the left foot behind, spreads its arms low and drops
+  its head.
+- **`wave`**, 0 to 1, lifts its right arm and waves it.
+
+Draw it with drawMarionetteFigure.
 
 ## drawTopHat
 

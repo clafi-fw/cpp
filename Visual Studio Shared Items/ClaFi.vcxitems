@@ -553,6 +553,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\BallBalanceAct.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\BalletAct.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\BalletAct.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\CurtainCallAct.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\CurtainCallAct.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\DrumAct.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\DrumAct.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\GatorAct.cpp" />
@@ -581,6 +583,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\AndroidSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BatSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BatSprite.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BouquetSprite.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BouquetSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CometSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CometSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CowSprite.cpp" />

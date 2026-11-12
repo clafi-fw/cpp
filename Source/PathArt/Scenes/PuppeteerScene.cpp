@@ -4,6 +4,7 @@ import ClaFi.PathArt.AccordionAct;
 import ClaFi.PathArt.AcrobaticsAct;
 import ClaFi.PathArt.BallBalanceAct;
 import ClaFi.PathArt.BalletAct;
+import ClaFi.PathArt.CurtainCallAct;
 import ClaFi.PathArt.DrumAct;
 import ClaFi.PathArt.DustMotesEffect;
 import ClaFi.PathArt.GatorAct;
@@ -107,6 +108,7 @@ namespace ClaFi::PathArt
         m_acts.push_back(std::make_unique<KettlebellAct>());
         m_acts.push_back(std::make_unique<WolfHoopAct>());
         m_acts.push_back(std::make_unique<StringsCutAct>());
+        m_acts.push_back(std::make_unique<CurtainCallAct>());
     }
 
     void PuppeteerScene::prepare(const SceneParams& params)
