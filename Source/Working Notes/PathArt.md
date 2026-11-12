@@ -2552,6 +2552,39 @@ come down 30 units with their shape kept and a little more sky shows between the
 down instead - 1.0, 0.85 and 0.7 of their height against 1.15 - turned the range into a wall, the
 big and flat look the two ranges were made against, and was not offered.
 
+Then (Oj, 05:20) "Warm clear day sky bottom": skyBottom AAE6F5, a cyan at L 0.89, turned to hue 75
+at the same lightness - B of chroma 0.025, 0.045 and 0.065, ECD7BA, a warm cream. Everything hazed
+toward it follows: the mountains go a pinkish beige, the far hills a yellower green, and the sky's
+middle a greyer blue where the gradient crosses from skyTop. A wolf's head stands 0.12 off the near
+range, where it stood 0.10. The hare comes nearer the warmer far hills, 0.09 where it was 0.12. The
+Mill's rays barely move, being high in the sky, and stay about 0.18 off it.
+
+Then (Oj, 05:26) "In High Noon too": skyBottom ADD8E6, a light blue at L 0.86, turned to hue 75 at
+the same lightness - B of chroma 0.025, 0.045 and 0.065, E2CCB0. High Noon's mountains are blue, so
+hazed toward the cream they go a grey; the far hills go a yellower green. A wolf's head stands 0.10
+off the near range, where it stood 0.11, and the hare 0.08 off the far hills, where it stood 0.10.
+The Mill's rays stay about 0.39 off the sky.
+
+Then (Oj, 05:38) "take for lunar eclipse bark and groove colors from its water wheel": bark is the
+wheel's spokes, millWheel 5E807F, and barkShade its rim, millWheel taken 0.2 toward black as
+drawWaterWheel blends it - 4B6665. A teal grey where a dark brown stood (493B34 over 291F1B). With
+them go the stumps, the branch run's tree and its branch, the far hills' trunks, the signpost's
+post, the apples' stems, the Mill's pines and its wing frames. The signpost's board keeps bough.
+well_lit.json holds them.
+
+Then (Oj, 05:47) "use that color for the frog, butterfly, bird, mushroom leg, reeds heads": the
+roadside's frog, butterfly, bird, toadstool stalk and reed heads take the bark, 5E807F, where each
+was lit, and the groove, 4B6665, where each was shaded - frogLight and frogDark, wing and wingEdge,
+birdBody and birdWing, stalk and stalkShade; reedHead, one colour, the bark. The frog's and the
+bird's bellies, the bird's beak and the toadstool's cap keep theirs. The bird and the frog stand
+0.15 off the hills behind them, the reed heads 0.24. The Mill's reeds keep the theme's own reedHead.
+well_lit.json holds them.
+
+Then (Oj, 05:50) "the butterfly and toadstool leg lighter", and of +0.05, +0.10 and +0.15 "C": wing
+and stalk 8AAEAD, wingEdge and stalkShade 769291 - the bark and the groove 0.15 lighter, chroma and
+hue kept. The butterfly stands 0.28 off the hills behind it, where it stood 0.15. The frog, the bird
+and the reed heads keep the bark itself.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
