@@ -138,6 +138,19 @@ Summer Sunset's wolf and hare are drawn lighter and stand about 0.10 from its me
 **A crossfade blends every colour field one by one** - see ThemeBlend. They stand in a row from
 skyTop to the end of `chase`, and colorsNum() counts them.
 
+## SceneTheme airHaze
+
+**How thick the theme's air is, from 0 to 1.** It is the share of skyTop a layer takes at the
+scene's reference distance - in ChaseScene, the far hills'. Nearer layers take less of it, farther
+ones more.
+
+- 0 is no air: every layer keeps its own colours.
+- 0.25, the default, is clear weather.
+- Rain, snow, dust and fog take more.
+- 1 turns every layer the scene hazes into skyTop.
+
+A crossfade blends it with the effects.
+
 ## ChaseTheme
 
 The Chase's own colours in a theme: the mountains' clear colours, which the scene hazes as it does
@@ -1233,6 +1246,8 @@ colours; the rest is the theme's ChaseTheme.
 - The little flowers in the lawn take half the lawn's colour, so they lie in it rather than on it.
 - The foreground grass grows out of the lawn: a blade's root wears the lawn's colour at the bottom
   of the frame, and its tip the theme's grass.
+- The far hills grow out of the lawn: their foot wears the lawn's colour at the ground line, and
+  they turn to their own hazed colours by their middle line.
 - The icon keeps the wolf and the hare in their daylight coats.
 
 ## ChaseScene drawVergeRow
@@ -1262,20 +1277,23 @@ comes.
 
 ## ChaseScene hazed
 
-**Distance is haze.** A layer's clear colours are taken toward skyBottom, the sky at the horizon, as
-far as its distance goes. The distance is read off the layer's share of the camera's speed: a layer
-moving at a third of it stands three times as far as the trail. The haze is the distance beyond the
-trail over that distance plus k_halfHaze, so a layer 2.46 times the trail's distance beyond it is
-half skyBottom: the far hills, at 0.35 of the camera's speed, take 0.43 of it.
+**Distance is haze.** A layer's clear colours are taken toward skyTop, the colour of the air, as far
+as its distance goes. The distance is read off the layer's share of the camera's speed: a layer
+moving at a third of it stands three times as far as the trail.
 
-**The mountains are two ranges, each hazed less than its distance gives**, so its own rock shows
-through. k_farRange, at 0.07 of the camera's speed, would take 0.84 and takes 0.7; k_nearRange, at
-0.12, would take 0.75 and takes 0.63. Both are k_mountainWaves, the far range scaled taller and the
-near one lower, each shifted in phase.
+**The far hills take the theme's airHaze.** A layer x times their distance beyond the trail takes
+a x / (a x + 1 - a) of skyTop, where a is airHaze. In clear air, 0.25, a layer twice as far as the
+hills takes 0.4. The far hills move at k_referenceParallax, 0.35 of the camera's speed.
 
-- The far hills are the meadow's own hillTop and hillBottom, their trees the tree's own colours and
-  the fireflies over them the theme's effect colours, all hazed alike. Both mountain ranges are
-  ChaseTheme's mountainTop and mountainFoot.
+**The mountains are two ranges, each with a share of skyTop of its own**: k_farRange, at 0.07 of
+the camera's speed, takes 0.7, and k_nearRange, at 0.12, takes 0.63, whatever the theme's airHaze.
+Both are k_mountainWaves, the far range scaled taller and the near one lower, each shifted in
+phase.
+
+- The far hills are the meadow's own hillTop and hillBottom, hazed down to their middle line - see
+  the ChaseScene section for their foot. Their trees are the tree's own colours and the fireflies
+  over them the theme's effect colours, both hazed. Both mountain ranges are ChaseTheme's
+  mountainTop and mountainFoot.
 - The weather keeps to the hills' layer but is not hazed - see the ChaseScene section.
 
 ## ChaseScene periodNear

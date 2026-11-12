@@ -138,6 +138,7 @@ namespace ClaFi::PathArt
         // Predator toggle
         float isAfrica = false;
         float hasStars = false;
+        float airHaze = 0.25f; // skyTop's share at a scene's reference distance, from 0 to 1
         // make sure to update effectsNum() when adding new effects
     public:
         Color* asArray() { return &skyTop; }
@@ -146,7 +147,7 @@ namespace ClaFi::PathArt
         static constexpr std::size_t colorsNum() { return 39 + ChaseTheme::colorsNum(); }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
-        static constexpr std::size_t effectsNum() { return 8; }
+        static constexpr std::size_t effectsNum() { return 9; }
         void drawIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const;
     };
 

@@ -2711,6 +2711,81 @@ and stalk 8AAEAD, wingEdge and stalkShade 769291 - the bark and the groove 0.15 
 hue kept. The butterfly stands 0.28 off the hills behind it, where it stood 0.15. The frog, the bird
 and the reed heads keep the bark itself.
 
+Then (Oj, 13:04) "let's try to seamlessly connect the lawn and the hills by starting the hills from
+the lawn's color". The far hills ran from hazed hillTop at 0.62 of the height to hazed hillBottom at
+the ground line, where the lawn starts in its own hillTop, so a seam ran along the strip above the
+trail - strongest in Winter Night, Cyberpunk Night, Magic Forest and High Noon (OKLab 0.39, 0.38,
+0.32 and 0.30 apart). The hills' foot now wears the lawn's hillTop, clear. Three reaches were shown
+on all 24 themes, and B went in: the lawn's colour climbs to hazed hillTop at 0.62 of the height (A,
+the whole hill), to hazed hillBottom at the hills' middle line, 0.70 (B), or to hazed hillBottom 20
+units above the ground (C). A turns the hills into the lawn's colour - Winter Night's snow,
+Cyberpunk Night's cyan - and leaves Winter Night's wolf 0.04 off them; C reads as a band along the
+foot. Against the hills at a wolf's head (50 units up) and a hare's (35), B takes Clear Day's wolf
+from 0.15 to 0.12, Paper Sketch's hare from 0.15 to 0.11 and Summer Sunset's from 0.13 to 0.10, and
+lifts Winter Night's wolf from 0.09 to 0.17.
+
+Then (Oj, 13:38) "Make the Clear Day's lawn darker": hillTop 76B36A -> 58944C (L 0.71 -> 0.61) and
+hillBottom 407B3F -> 225E23 (L 0.53 -> 0.43), chroma and hue kept - B of 0.05, 0.10 and 0.15
+darker. The far hills' foot and the Mill's hills darken with them. The grass is the theme's own
+41773F, so the tufts on the lawn stand 0.09 and 0.03 off it (OKLab, the near row and the far row),
+where they stood 0.18 and 0.13. The wolf stands 0.13 off the lawn, the hare 0.13.
+
+Then (Oj, 13:46) "Make the clear day's mountains and path less red": mountainTop, mountainFoot, the
+trail and the pebbles keep their OKLab lightness and hue, with 2/3, 1/3 or none of their chroma
+left - B put in: the mountains 886565 / 603A3A -> 786C6C / 4F4242, the trail E6B69A93 -> E6A89F9C,
+the pebbles 9F847D -> 928986. The mountains are hazed toward skyBottom ECD7BA, a warm cream, so
+even grey clear colours are drawn a beige; that warmth is the sky's. A wolf's head stands 0.15 off
+the mountains, a hare's ears 0.08, where they stood 0.07.
+
+Then (Oj, 13:52) "Make the wolf darker": the grey wolf's light, shade, coat, far, dark and belly
+keep their OKLab chroma and hue, 0.05, 0.10 or 0.15 darker - B put in: light 778593 -> 5A6875,
+shade 54606D -> 394551, coat 667481 -> 4A5864, far 4A5661 -> 303B45, dark 38434E -> 1F2934, belly
+E6ADB9C3 -> E68E9AA4. The tongue, the mouth and the teeth keep theirs. The wolf stands 0.24 off
+the mountains, 0.15 off the far hills, 0.16 off the lawn and 0.19 off the trail, where it stood
+0.15, 0.09, 0.13 and 0.10. The other couple's black wolf stays darker, but only 0.09 off ours by
+the light and 0.05 by the shade, where it stood 0.19 and 0.15; C makes the two alike.
+
+Then (Oj, 14:30) "I was wrong about the air haze. The correct way is to apply skyTop and not
+skyBottom": the mountains, the far hills, their trees and the fireflies are taken toward skyTop at
+the shares they had - k_halfHaze and the two ranges' 0.7 and 0.63 stay. By day the mountains turn
+the blue of the sky overhead, High Noon's a vivid one, and stand off the paler horizon; at night
+they darken into the sky's top and show as faint outlines against its lower part. The runners were
+solved against the skyBottom haze and keep their colours, so some now stand close to the layers
+behind them (OKLab, analytic: the grey wolf against the near range's middle and against the far
+hills' middle line, the brown hare against the hills). The night themes all gain.
+- Clear Day's wolf 0.24 -> 0.06 and 0.15 -> 0.07.
+- Vintage Noir's wolf 0.15 -> 0.01 and 0.18 -> 0.06.
+- Magic Forest's wolf against the hills 0.20 -> 0.06.
+- Summer Sunset's wolf 0.22 -> 0.10 and 0.11 -> 0.05, its hare 0.12 -> 0.10.
+- Steampunk's wolf against the hills 0.23 -> 0.10.
+- Cherry Blossom's wolf 0.18 -> 0.10 and 0.15 -> 0.08.
+- Winter Frost's wolf against the mountains 0.18 -> 0.10, Arctic Dawn's 0.22 -> 0.13.
+- High Noon's wolf 0.13 -> 0.12 and 0.23 -> 0.13.
+- Sahara Heat's hare 0.15 -> 0.08, Golden Hour's 0.15 -> 0.11, Paper Sketch's 0.14 -> 0.11.
+
+The generator hazes toward skyTop too; its runners are not re-solved.
+
+Then (Oj, 20:28) the haze stays a blend toward skyTop: air takes away an object's colour, all of it
+and the blue the most, and adds its own blue, so a lit object turns bluer and a glowing one
+redder; skyTop is mostly blue by day and near black at night, and a theme that is not of this world
+states its own air with it. (20:52) Every number set by hand for the haze was judged against
+skyBottom and is to be picked again: the hills' strength, the two ranges' shares and every theme's
+clear mountain colours. The order taken: the hills' strength first, with the mountains in one
+neutral rock; then the mountains by a rule, the air thinning with height; then the clear mountain
+colours; then the figures measured again. Haze mockups show whole frames with the lawn and a near
+tree (Oj, 21:22).
+
+Then (Oj, 21:50) "0.25 is a most realistic match for a clear weather. Larger values may fit better
+with rainy/snowy/dusty/foggy environments - it's a weather thing, and a scene may want to use a
+larger value for a better main action separation so it's not a hardcoded const", and (22:09) on a
+0 to 1 range, "where 0 means no haze at all (the air is not exist), and 1 means nothing is
+visible, everything turns to sky top". SceneTheme::airHaze is that value, 0.25 by default and in
+every theme for now, blended with the effects. It is the share at the scene's reference distance,
+the far hills' in the Chase, and a layer x times that distance takes a x / (a x + 1 - a): the curve
+k_halfHaze drew, now half skyTop at 3 hill distances in clear air rather than 1.3. The mountains
+keep their 0.7 and 0.63 until their rule is picked; by distance alone clear air gives them 0.70
+and 0.57. The weather themes' airHaze is picked after the mountains.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

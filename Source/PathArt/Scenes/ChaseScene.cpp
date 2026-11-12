@@ -62,8 +62,8 @@ namespace ClaFi::PathArt
         // The theme's stars twinkle and its weather comes round twice a cycle, every 30 seconds,
         // near the mill's 40.
         constexpr float k_lively{ 2.0f };
-        // Distance beyond the trail, in the trail's own, at which a layer is half skyBottom.
-        constexpr float k_halfHaze{ 2.46f };
+        // The far hills' share of the camera's speed, at which a layer takes the theme's airHaze.
+        constexpr float k_referenceParallax{ 0.35f };
         // A layer moving at `parallax` of the camera's speed, seen through the haze. See PathArt
         [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax);
         // Units the camera covers in an episode at full speed.
@@ -579,7 +579,7 @@ namespace ClaFi::PathArt
             float baseShare; // the ridges' middle line, as a share of the frame's height
             float baseLift; // units the middle line stands above that share
             float gradientTopShare; // where its colours start, as a share of the height
-            float haze; // its share of skyBottom, less than its distance gives, so rock shows
+            float haze; // its share of skyTop, whatever the theme's airHaze
         };
         constexpr MountainRange k_farRange{
             .parallax = 0.07f,
@@ -1434,15 +1434,16 @@ namespace ClaFi::PathArt
             ridges.close();
             fillShape(frame, ridges, LinearGradient::Simple(
                 { 0.0f, height * range.gradientTopShare }, { 0.0f, groundY },
-                colorBetween(theme.chase.mountainTop, theme.skyBottom, range.haze),
-                colorBetween(theme.chase.mountainFoot, theme.skyBottom, range.haze)));
+                colorBetween(theme.chase.mountainTop, theme.skyTop, range.haze),
+                colorBetween(theme.chase.mountainFoot, theme.skyTop, range.haze)));
         };
         drawMountains(k_farRange);
         drawMountains(k_nearRange);
 
         const float hillPeriod = periodNear(0.35f, 1150.0f);
+        const float hillMiddleY = height * 0.70f;
         const auto hillY = [&](float x) {
-            return height * 0.70f - ridgeHeight(hillPeriod, x, k_hillWaves) * unit;
+            return hillMiddleY - ridgeHeight(hillPeriod, x, k_hillWaves) * unit;
         };
         PixelPath hills;
         hills.moveTo(0.0f, groundY + 2.0f * unit);
@@ -1450,8 +1451,21 @@ namespace ClaFi::PathArt
             hills.lineTo(x, hillY(x / unit + 0.35f * travel));
         hills.lineTo(width + 6.0f * unit, groundY + 2.0f * unit);
         hills.close();
-        fillShape(frame, hills, LinearGradient::Simple({ 0.0f, height * 0.62f }, { 0.0f, groundY },
-            hazed(theme, theme.hillTop, 0.35f), hazed(theme, theme.hillBottom, 0.35f)));
+        const float hillGradientTop = height * 0.62f;
+        const float hillMiddlePosition = (hillMiddleY - hillGradientTop)
+            / (groundY - hillGradientTop);
+        const Color hazedHillTop = hazed(theme, theme.hillTop, 0.35f);
+        const Color hazedHillBottom = hazed(theme, theme.hillBottom, 0.35f);
+        // The hills' foot is the lawn's colour at the ground line, so no seam shows between them.
+        fillShape(frame, hills, LinearGradient{
+            .startPoint = { 0.0f, hillGradientTop },
+            .endPoint = { 0.0f, groundY },
+            .stops = {
+                { .position = 0.0f, .color = hazedHillTop },
+                { .position = hillMiddlePosition, .color = hazedHillBottom },
+                { .position = 1.0f, .color = theme.hillTop }
+            }
+        });
         const Color bark = hazed(theme, theme.chase.bark, 0.35f);
         const Color barkShade = hazed(theme, theme.chase.barkShade, 0.35f);
         const SolidColor crown{ hazed(theme, theme.treeLeavesBase, 0.35f) };
@@ -2590,8 +2604,9 @@ namespace ClaFi::PathArt
 
         Color hazed(const SceneTheme& theme, const Color clear, const float parallax)
         {
-            const float distance = 1.0f / parallax - 1.0f;
-            return colorBetween(clear, theme.skyBottom, distance / (distance + k_halfHaze));
+            const float beyondTrail = 1.0f / parallax - 1.0f;
+            const float air = theme.airHaze * beyondTrail / (1.0f / k_referenceParallax - 1.0f);
+            return colorBetween(clear, theme.skyTop, air / (air + 1.0f - theme.airHaze));
         }
 
         float wakeGust(const float x, const float hareX, const float wolfX)
