@@ -2519,6 +2519,39 @@ hare, high after the wolf, small again - drawn through hopping, its shadow shrin
 (a squash with a lift of 0.15) and B (0.4 of the lift, half the tilt) were the quieter readings. The
 crow's stump stays still.
 
+Then (Oj, 03:54) "The far mountains are big and flat. Suggestion: distribute them into two layers",
+then "let's move one new layer closer that the old one and the other one further" and "two new
+instead of the old one". Of the first mockups: "a but the far mockups looks jaggy compared to the
+serene old ones" - they gave each range waves of its own. Rebuilt from the old range's
+k_mountainWaves and seen in motion, "raise it along a", and of those, "1". The one range at 0.12 of
+the camera's speed, hazed 0.6, is two MountainRange: k_farRange at 0.07, period near 2000, the waves
+1.15 times as tall and 1.0 on in phase, its middle line 70 units above 0.6 of the height, hazed 0.7;
+k_nearRange at 0.18, period near 1500, 0.7 as tall and 2.3 on in phase, its middle line at 0.625 of
+the height, hazed 0.55. The near range is drawn over the far one. A near haze under 0.55 lets Warm
+Orange Fall's blue clear colours through. A wolf's head stands against the near range, a little
+closer to it by day: Clear Day 0.11 to 0.09, High Noon 0.13 to 0.11, Vintage Noir 0.14 to 0.13. The
+generator measures against 0.55.
+
+Then (Oj, 04:55) "On Summer Sunset make the rakes darker": rakeHandle, rakeHandleShade and rakeMetal
+0.10 darker in OKLab, chroma and hue kept - B of -0.05, -0.10 and -0.15. The handle is A26A36 (L
+0.67 to 0.57), its shade 7D4B21, the metal 63656D (L 0.61 to 0.51). The metal stands 0.12 off the
+drawn trail (82886F), where it stood 0.05. The handle, lighter than the trail before, sits just
+under its lightness now and stands 0.09 off it on its orange, where it stood 0.10; C would have
+taken it to 0.13. well_lit.json holds them.
+
+Then (Oj, 05:04) "move the near mountains further away": shown in motion at 0.16, 0.14 and 0.12 of
+the camera's speed, each hazed at the share of its distance the near range had taken (0.85 of it) -
+0.58, 0.60 and 0.63. At 05:11 "C and short down the far ones": k_nearRange is at 0.12, as far as the
+one range before the two, hazed 0.63 where its distance gives 0.75. Its shape is kept, its period
+fitted near 1500 at the new speed. A wolf's head stands up to 0.04 clearer against the paler range
+by day; at night the contrast moves by 0.02 at most. The generator measures against 0.63.
+
+Then (Oj, 05:17), of the far range lowered by 30, 60 or 90 units and shown in motion, "A":
+k_farRange's middle line stands 40 units above 0.6 of the height, where it stood 70, so its peaks
+come down 30 units with their shape kept and a little more sky shows between them. Scaling its waves
+down instead - 1.0, 0.85 and 0.7 of their height against 1.15 - turned the range into a wall, the
+big and flat look the two ranges were made against, and was not offered.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

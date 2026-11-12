@@ -75,8 +75,6 @@ namespace ClaFi::PathArt
         constexpr float k_lively{ 2.0f };
         // Distance beyond the trail, in the trail's own, at which a layer is half skyBottom.
         constexpr float k_halfHaze{ 2.46f };
-        // The mountains' share of skyBottom, less than their distance gives, so their rock shows.
-        constexpr float k_mountainHaze{ 0.6f };
         // A layer moving at `parallax` of the camera's speed, seen through the haze. See PathArt
         [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax);
         // Units the camera covers in an episode at full speed.
@@ -580,6 +578,39 @@ namespace ClaFi::PathArt
             Wave{ 22.0f, 1.0f, 0.3f },
             Wave{ 14.0f, 3.0f, 1.1f },
             Wave{ 6.0f, 5.0f, 2.4f }
+        };
+
+        // One range of the mountains: k_mountainWaves scaled and shifted, at its own distance.
+        struct MountainRange
+        {
+            float parallax; // its share of the camera's speed
+            float wantedPeriod; // units its tile's period is fitted near
+            float heightScale; // of the waves' amplitudes
+            float phaseShift; // added to every wave's phase, so its peaks fall elsewhere
+            float baseShare; // the ridges' middle line, as a share of the frame's height
+            float baseLift; // units the middle line stands above that share
+            float gradientTopShare; // where its colours start, as a share of the height
+            float haze; // its share of skyBottom, less than its distance gives, so rock shows
+        };
+        constexpr MountainRange k_farRange{
+            .parallax = 0.07f,
+            .wantedPeriod = 2000.0f,
+            .heightScale = 1.15f,
+            .phaseShift = 1.0f,
+            .baseShare = 0.6f,
+            .baseLift = 40.0f,
+            .gradientTopShare = 0.25f,
+            .haze = 0.7f
+        };
+        constexpr MountainRange k_nearRange{
+            .parallax = 0.12f,
+            .wantedPeriod = 1500.0f,
+            .heightScale = 0.7f,
+            .phaseShift = 2.3f,
+            .baseShare = 0.625f,
+            .baseLift = 0.0f,
+            .gradientTopShare = 0.38f,
+            .haze = 0.63f
         };
     }
 
@@ -1393,21 +1424,32 @@ namespace ClaFi::PathArt
         });
 
         // The ridges are one path across the frame each, so no seam shows where two tiles meet.
-        const float mountainPeriod = periodNear(0.12f, 1700.0f);
-        PixelPath mountains;
-        mountains.moveTo(0.0f, groundY);
-        for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
-        {
-            const float ridge = ridgeHeight(mountainPeriod, x / unit + 0.12f * travel,
-                k_mountainWaves);
-            mountains.lineTo(x, height * 0.6f - ridge * unit - 40.0f * unit);
-        }
-        mountains.lineTo(width + 6.0f * unit, groundY);
-        mountains.close();
-        fillShape(frame, mountains, LinearGradient::Simple({ 0.0f, height * 0.35f },
-            { 0.0f, groundY },
-            colorBetween(theme.chase.mountainTop, theme.skyBottom, k_mountainHaze),
-            colorBetween(theme.chase.mountainFoot, theme.skyBottom, k_mountainHaze)));
+        const auto drawMountains = [&](const MountainRange& range) {
+            std::array<Wave, k_mountainWaves.size()> waves = k_mountainWaves;
+            for (Wave& wave : waves)
+            {
+                wave.amplitude *= range.heightScale;
+                wave.phase += range.phaseShift;
+            }
+            const float period = periodNear(range.parallax, range.wantedPeriod);
+            const float baseY = height * range.baseShare - range.baseLift * unit;
+            PixelPath ridges;
+            ridges.moveTo(0.0f, groundY);
+            for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
+            {
+                const float ridge = ridgeHeight(period, x / unit + range.parallax * travel,
+                    waves);
+                ridges.lineTo(x, baseY - ridge * unit);
+            }
+            ridges.lineTo(width + 6.0f * unit, groundY);
+            ridges.close();
+            fillShape(frame, ridges, LinearGradient::Simple(
+                { 0.0f, height * range.gradientTopShare }, { 0.0f, groundY },
+                colorBetween(theme.chase.mountainTop, theme.skyBottom, range.haze),
+                colorBetween(theme.chase.mountainFoot, theme.skyBottom, range.haze)));
+        };
+        drawMountains(k_farRange);
+        drawMountains(k_nearRange);
 
         const float hillPeriod = periodNear(0.35f, 1150.0f);
         const auto hillY = [&](float x) {

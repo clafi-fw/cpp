@@ -887,9 +887,9 @@ the cycle after the last one it drew, and the next run starts on it, with the ho
 on from there, so each run opens where the last one stopped instead of on the first cycle. The
 section holds NextCycle.
 
-**The landscape is layers at their own speeds** - clouds, mountains, hills, the ground and the
-grass in front, each a share of the camera's speed. Each layer is tiled with a period that the
-cycle's travel divides - see ChaseScene periodNear - so it ends the cycle where it began.
+**The landscape is layers at their own speeds** - clouds, two ranges of mountains, hills, the ground
+and the grass in front, each a share of the camera's speed. Each layer is tiled with a period that
+the cycle's travel divides - see ChaseScene periodNear - so it ends the cycle where it began.
 
 **Everything is drawn in the theme the scene is given** - see Scene offersThemes. The sky, the sun
 or the moon, the clouds, the meadow and the tree a branch run ends at are the theme's shared
@@ -938,11 +938,15 @@ comes.
 far as its distance goes. The distance is read off the layer's share of the camera's speed: a layer
 moving at a third of it stands three times as far as the trail. The haze is the distance beyond the
 trail over that distance plus k_halfHaze, so a layer 2.46 times the trail's distance beyond it is
-half skyBottom: the far hills, at 0.35 of the camera's speed, take 0.43 of it. The mountains, at
-0.12, would take 0.75; they take k_mountainHaze, 0.6, so their own rock shows through.
+half skyBottom: the far hills, at 0.35 of the camera's speed, take 0.43 of it.
+
+**The mountains are two ranges, each hazed less than its distance gives**, so its own rock shows
+through. k_farRange, at 0.07 of the camera's speed, would take 0.84 and takes 0.7; k_nearRange, at
+0.12, would take 0.75 and takes 0.63. Both are k_mountainWaves, the far range scaled taller and the
+near one lower, each shifted in phase.
 
 - The far hills are the meadow's own hillTop and hillBottom, their trees the tree's own colours and
-  the fireflies over them the theme's effect colours, all hazed alike. The mountains are
+  the fireflies over them the theme's effect colours, all hazed alike. Both mountain ranges are
   ChaseTheme's mountainTop and mountainFoot.
 - The weather keeps to the hills' layer but is not hazed - see the ChaseScene section.
 
