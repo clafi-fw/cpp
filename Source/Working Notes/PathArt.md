@@ -2802,6 +2802,18 @@ Winter Night (0.20 -> 0.05), Underwater Realm (0.15 -> 0.06), Stormy and Calm Ni
 and Midnight Fantasy (0.08 -> 0.03); clearer in High Noon, Magic Forest and Lunar Eclipse. The
 figures are measured again in step 4.
 
+Then (Oj, 23:12, from four columns at 22:56) the mountains are hazed by height. The air thins with
+height, so a point above the ground line takes the air beyond the trail along its line of sight:
+from the eye at the ground line to a point dy frame heights up on a layer at D trail distances, the
+integral from 1 to D of e^(-dy s / H) ds, which is (e^(-dy / H) - e^(-dy D / H)) / (dy / H) and the
+distance less one at the ground line, so hazed() keeps its answer there. Shown with the mountains in
+one neutral rock: by distance alone, and H 4, 2 and 1 frame heights; Oj took 4 (k_airScaleHeight).
+In clear air the near range runs 0.57 to about 0.49 from foot to peaks and the far range 0.70 to
+about 0.52; at H 2 and below the far range's peaks, being drawn taller, came out clearer than the
+near range's. The ranges' hand-set 0.7 and 0.63 are gone; each range is a 13-stop gradient, every
+stop its clear colour at that height hazed at that height. The hills, their trees and the fireflies
+stay hazed as at the ground line - their tops would only move from 0.25 to about 0.24.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

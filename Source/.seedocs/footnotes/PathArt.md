@@ -140,9 +140,9 @@ skyTop to the end of `chase`, and colorsNum() counts them.
 
 ## SceneTheme airHaze
 
-**How thick the theme's air is, from 0 to 1.** It is the share of skyTop a layer takes at the
-scene's reference distance - in ChaseScene, the far hills'. Nearer layers take less of it, farther
-ones more.
+**How thick the theme's air is, from 0 to 1.** It is the share of skyTop a layer takes at the ground
+line at the scene's reference distance - in ChaseScene, the far hills'. Nearer layers take less of
+it, farther ones more.
 
 - 0 is no air: every layer keeps its own colours.
 - 0.25, the default, is clear weather.
@@ -153,9 +153,9 @@ A crossfade blends it with the effects.
 
 ## ChaseTheme
 
-The Chase's own colours in a theme: the mountains' clear colours, which the scene hazes as it does
-the far hills, their trees and fireflies - see ChaseScene hazed - the tree a branch run ends at, the
-trail and the grass, the four runners' coats, and every prop.
+The Chase's own colours in a theme: the mountains' clear colours, which the scene hazes - see
+ChaseScene hazed - the tree a branch run ends at, the trail and the grass, the four runners' coats,
+and every prop.
 
 **Figures and props are well lit, at night as by day.** They start from Clear Day's colours,
 tinted a little toward the theme's sky, and keep their colour - except in Paper Sketch, whose look
@@ -1284,14 +1284,21 @@ moving at a third of it stands three times as far as the trail.
 trail takes a x / (a x + 1 - a) of skyTop, where a is airHaze. In clear air, 0.25, a layer twice as
 far as the hills takes 0.4. The far hills move at k_referenceParallax, 0.35 of the camera's speed.
 
-**The mountains are two ranges, each with a share of skyTop of its own**: k_farRange, at 0.07 of
-the camera's speed, takes 0.7, and k_nearRange, at 0.12, takes 0.63, whatever the theme's airHaze.
-Both are k_mountainWaves, the far range scaled taller and the near one lower, each shifted in
-phase.
+**The air thins with height.** A point above the ground line is seen along a line rising through
+ever thinner air, so it takes the air beyond the trail along that line in place of its distance, and
+less haze than a point at the ground line as far away. The air thins to 1/e every k_airScaleHeight
+frame heights, as seen at the trail's distance.
+
+**The mountains are hazed by height**, in k_mountainHazeSteps steps from the top of their gradient
+to the ground line, so their feet take their distance's share and their peaks less. In clear air the
+near range, at 0.12 of the camera's speed, runs from 0.57 at its foot to about 0.49 at its peaks,
+and the far range, at 0.07, from 0.70 to about 0.52. Both are k_mountainWaves, the far range scaled
+taller and the near one lower, each shifted in phase.
 
 - The far hills are part of the meadow, whose top colour alone is hazed - see ChaseScene
   meadowGradient. Their trees are the tree's own colours and the fireflies over them the theme's
-  effect colours, both hazed. Both mountain ranges are ChaseTheme's mountainTop and mountainFoot.
+  effect colours, both hazed as at the ground line. Both mountain ranges are ChaseTheme's
+  mountainTop and mountainFoot.
 - The weather keeps to the hills' layer but is not hazed - see the ChaseScene section.
 
 ## ChaseScene meadowGradient

@@ -64,8 +64,11 @@ namespace ClaFi::PathArt
         constexpr float k_lively{ 2.0f };
         // The far hills' share of the camera's speed, at which a layer takes the theme's airHaze.
         constexpr float k_referenceParallax{ 0.35f };
+        // Frame heights, as seen at the trail's distance, over which the air thins to 1/e.
+        constexpr float k_airScaleHeight{ 4.0f };
         // A layer moving at `parallax` of the camera's speed, seen through the haze. See PathArt
-        [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax);
+        [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax,
+            float aboveGround = 0.0f);
         // The share of the frame's height where the meadow's gradient starts, above the far hills.
         constexpr float k_meadowTopShare{ 0.62f };
         // The far hills and the lawn as one gradient, so no seam shows between them. See PathArt
@@ -584,8 +587,9 @@ namespace ClaFi::PathArt
             float baseShare; // the ridges' middle line, as a share of the frame's height
             float baseLift; // units the middle line stands above that share
             float gradientTopShare; // where its colours start, as a share of the height
-            float haze; // its share of skyTop, whatever the theme's airHaze
         };
+        // The steps a range's haze is drawn in, from its gradient's top down to the ground line.
+        constexpr std::size_t k_mountainHazeSteps{ 12 };
         constexpr MountainRange k_farRange{
             .parallax = 0.07f,
             .wantedPeriod = 2000.0f,
@@ -593,8 +597,7 @@ namespace ClaFi::PathArt
             .phaseShift = 1.0f,
             .baseShare = 0.6f,
             .baseLift = 40.0f,
-            .gradientTopShare = 0.25f,
-            .haze = 0.7f
+            .gradientTopShare = 0.25f
         };
         constexpr MountainRange k_nearRange{
             .parallax = 0.12f,
@@ -603,8 +606,7 @@ namespace ClaFi::PathArt
             .phaseShift = 2.3f,
             .baseShare = 0.625f,
             .baseLift = 0.0f,
-            .gradientTopShare = 0.38f,
-            .haze = 0.63f
+            .gradientTopShare = 0.38f
         };
     }
 
@@ -1437,10 +1439,24 @@ namespace ClaFi::PathArt
             }
             ridges.lineTo(width + 6.0f * unit, groundY);
             ridges.close();
-            fillShape(frame, ridges, LinearGradient::Simple(
-                { 0.0f, height * range.gradientTopShare }, { 0.0f, groundY },
-                colorBetween(theme.chase.mountainTop, theme.skyTop, range.haze),
-                colorBetween(theme.chase.mountainFoot, theme.skyTop, range.haze)));
+            const float gradientTop = height * range.gradientTopShare;
+            LinearGradient rock{
+                .startPoint = { 0.0f, gradientTop },
+                .endPoint = { 0.0f, groundY },
+                .stops = {}
+            };
+            rock.stops.reserve(k_mountainHazeSteps + 1);
+            for (std::size_t step = 0; step <= k_mountainHazeSteps; ++step)
+            {
+                const float position = static_cast<float>(step)
+                    / static_cast<float>(k_mountainHazeSteps);
+                const float aboveGround = (1.0f - position) * (groundY - gradientTop) / height;
+                const Color clear = colorBetween(theme.chase.mountainTop,
+                    theme.chase.mountainFoot, position);
+                rock.stops.push_back({ .position = position,
+                    .color = hazed(theme, clear, range.parallax, aboveGround) });
+            }
+            fillShape(frame, ridges, rock);
         };
         drawMountains(k_farRange);
         drawMountains(k_nearRange);
@@ -2591,11 +2607,20 @@ namespace ClaFi::PathArt
                 -0.5f);
         }
 
-        Color hazed(const SceneTheme& theme, const Color clear, const float parallax)
+        Color hazed(const SceneTheme& theme, const Color clear, const float parallax,
+            const float aboveGround)
         {
-            const float beyondTrail = 1.0f / parallax - 1.0f;
-            const float air = theme.airHaze * beyondTrail / (1.0f / k_referenceParallax - 1.0f);
-            return colorBetween(clear, theme.skyTop, air / (air + 1.0f - theme.airHaze));
+            const float distance = 1.0f / parallax;
+            float air = distance - 1.0f;
+            if (aboveGround > 0.0f)
+            {
+                const float thinning = aboveGround / k_airScaleHeight;
+                air = (std::exp(-thinning) - std::exp(-thinning * distance)) / thinning;
+            }
+            const float referenceAirs = air / (1.0f / k_referenceParallax - 1.0f);
+            const float thickness = theme.airHaze * referenceAirs;
+            return colorBetween(clear, theme.skyTop,
+                thickness / (thickness + 1.0f - theme.airHaze));
         }
 
         LinearGradient meadowGradient(const SceneFrame& frame, const SceneTheme& theme)
