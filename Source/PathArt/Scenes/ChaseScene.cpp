@@ -66,6 +66,11 @@ namespace ClaFi::PathArt
         constexpr float k_referenceParallax{ 0.35f };
         // A layer moving at `parallax` of the camera's speed, seen through the haze. See PathArt
         [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax);
+        // The share of the frame's height where the meadow's gradient starts, above the far hills.
+        constexpr float k_meadowTopShare{ 0.62f };
+        // The far hills and the lawn as one gradient, so no seam shows between them. See PathArt
+        [[nodiscard]] LinearGradient meadowGradient(const SceneFrame&, const SceneTheme&);
+        [[nodiscard]] Color meadowAt(const SceneFrame&, const SceneTheme&, float y);
         // Units the camera covers in an episode at full speed.
         constexpr float k_fullSpeedTravel{ 6600.0f };
         constexpr float k_episodesPerCycle{ 3.0f };
@@ -1451,21 +1456,7 @@ namespace ClaFi::PathArt
             hills.lineTo(x, hillY(x / unit + 0.35f * travel));
         hills.lineTo(width + 6.0f * unit, groundY + 2.0f * unit);
         hills.close();
-        const float hillGradientTop = height * 0.62f;
-        const float hillMiddlePosition = (hillMiddleY - hillGradientTop)
-            / (groundY - hillGradientTop);
-        const Color hazedHillTop = hazed(theme, theme.hillTop, 0.35f);
-        const Color hazedHillBottom = hazed(theme, theme.hillBottom, 0.35f);
-        // The hills' foot is the lawn's colour at the ground line, so no seam shows between them.
-        fillShape(frame, hills, LinearGradient{
-            .startPoint = { 0.0f, hillGradientTop },
-            .endPoint = { 0.0f, groundY },
-            .stops = {
-                { .position = 0.0f, .color = hazedHillTop },
-                { .position = hillMiddlePosition, .color = hazedHillBottom },
-                { .position = 1.0f, .color = theme.hillTop }
-            }
-        });
+        fillShape(frame, hills, meadowGradient(frame, theme));
         const Color bark = hazed(theme, theme.chase.bark, 0.35f);
         const Color barkShade = hazed(theme, theme.chase.barkShade, 0.35f);
         const SolidColor crown{ hazed(theme, theme.treeLeavesBase, 0.35f) };
@@ -1516,8 +1507,7 @@ namespace ClaFi::PathArt
         const float unit = frame.unit;
         const float width = frame.width;
         const FloatRect grass = { 0.0f, groundY, width, frame.height };
-        fillBox(frame, grass, LinearGradient::Simple({ 0.0f, groundY }, { 0.0f, frame.height },
-            theme.hillTop, theme.hillBottom));
+        fillBox(frame, grass, meadowGradient(frame, theme));
         fillBox(frame, { 0.0f, groundY + 10.0f * unit, width, groundY + 36.0f * unit },
             SolidColor{ theme.chase.trail });
         // Tufts, pebbles and flowers each go down over every tile before the next kind does, so a
@@ -1558,8 +1548,7 @@ namespace ClaFi::PathArt
         // fill. The three flowers of a tile wear the theme's three petal colours, and every
         // flower's petals go down before the hearts. They take half the lawn's colour where they
         // grow, so they lie in the lawn rather than on it.
-        const Color lawn = colorBetween(theme.hillTop, theme.hillBottom,
-            63.0f * unit / (frame.height - groundY));
+        const Color lawn = meadowAt(frame, theme, groundY + 63.0f * unit);
         const auto inLawn = [&](Color color) {
             return SolidColor{ colorBetween(color, lawn, 0.5f) };
         };
@@ -2607,6 +2596,19 @@ namespace ClaFi::PathArt
             const float beyondTrail = 1.0f / parallax - 1.0f;
             const float air = theme.airHaze * beyondTrail / (1.0f / k_referenceParallax - 1.0f);
             return colorBetween(clear, theme.skyTop, air / (air + 1.0f - theme.airHaze));
+        }
+
+        LinearGradient meadowGradient(const SceneFrame& frame, const SceneTheme& theme)
+        {
+            return LinearGradient::Simple({ 0.0f, frame.height * k_meadowTopShare },
+                { 0.0f, frame.height }, hazed(theme, theme.hillTop, 0.35f), theme.hillBottom);
+        }
+
+        Color meadowAt(const SceneFrame& frame, const SceneTheme& theme, const float y)
+        {
+            const float top = frame.height * k_meadowTopShare;
+            return colorBetween(hazed(theme, theme.hillTop, 0.35f), theme.hillBottom,
+                (y - top) / (frame.height - top));
         }
 
         float wakeGust(const float x, const float hareX, const float wolfX)

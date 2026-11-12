@@ -1246,8 +1246,7 @@ colours; the rest is the theme's ChaseTheme.
 - The little flowers in the lawn take half the lawn's colour, so they lie in it rather than on it.
 - The foreground grass grows out of the lawn: a blade's root wears the lawn's colour at the bottom
   of the frame, and its tip the theme's grass.
-- The far hills grow out of the lawn: their foot wears the lawn's colour at the ground line, and
-  they turn to their own hazed colours by their middle line.
+- The far hills and the lawn are one meadow - see ChaseScene meadowGradient.
 - The icon keeps the wolf and the hare in their daylight coats.
 
 ## ChaseScene drawVergeRow
@@ -1281,20 +1280,26 @@ comes.
 as its distance goes. The distance is read off the layer's share of the camera's speed: a layer
 moving at a third of it stands three times as far as the trail.
 
-**The far hills take the theme's airHaze.** A layer x times their distance beyond the trail takes
-a x / (a x + 1 - a) of skyTop, where a is airHaze. In clear air, 0.25, a layer twice as far as the
-hills takes 0.4. The far hills move at k_referenceParallax, 0.35 of the camera's speed.
+**A layer as far as the far hills takes the theme's airHaze.** One x times their distance beyond the
+trail takes a x / (a x + 1 - a) of skyTop, where a is airHaze. In clear air, 0.25, a layer twice as
+far as the hills takes 0.4. The far hills move at k_referenceParallax, 0.35 of the camera's speed.
 
 **The mountains are two ranges, each with a share of skyTop of its own**: k_farRange, at 0.07 of
 the camera's speed, takes 0.7, and k_nearRange, at 0.12, takes 0.63, whatever the theme's airHaze.
 Both are k_mountainWaves, the far range scaled taller and the near one lower, each shifted in
 phase.
 
-- The far hills are the meadow's own hillTop and hillBottom, hazed down to their middle line - see
-  the ChaseScene section for their foot. Their trees are the tree's own colours and the fireflies
-  over them the theme's effect colours, both hazed. Both mountain ranges are ChaseTheme's
-  mountainTop and mountainFoot.
+- The far hills are part of the meadow, whose top colour alone is hazed - see ChaseScene
+  meadowGradient. Their trees are the tree's own colours and the fireflies over them the theme's
+  effect colours, both hazed. Both mountain ranges are ChaseTheme's mountainTop and mountainFoot.
 - The weather keeps to the hills' layer but is not hazed - see the ChaseScene section.
+
+## ChaseScene meadowGradient
+
+**The far hills and the lawn are one meadow**, filled with one gradient, so no seam shows where
+the hills meet the lawn. It runs from the theme's hillTop, hazed as the far hills are, at
+k_meadowTopShare of the frame's height - above the hills' highest tops - to its clear hillBottom at
+the frame's bottom. Only the top colour is hazed.
 
 ## ChaseScene periodNear
 

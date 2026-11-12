@@ -2786,6 +2786,22 @@ k_halfHaze drew, now half skyTop at 3 hill distances in clear air rather than 1.
 keep their 0.7 and 0.63 until their rule is picked; by distance alone clear air gives them 0.70
 and 0.57. The weather themes' airHaze is picked after the mountains.
 
+Then (Oj, 22:46) "there is a distracting stripe on the hills because of how they are drawn. Let's
+make lawn's and hills ground one continuous gradient. Take the theme's hills bottom, the hills top,
+and apply haze only to the top - then use the same gradient (with the same vertical reference
+points) for the lawn and the hills both." The hills ran from hazed hillTop down to hazed hillBottom
+at their middle line and back to the clear hillTop at the ground line, where the lawn started its
+own hillTop to hillBottom: the dark middle was the stripe. meadowGradient now fills both, from
+hillTop hazed as the far hills are at 0.62 of the height - the hills' old gradient top - to the
+clear hillBottom at the frame's bottom - the lawn's old one; meadowAt gives the flowers' lawn colour
+on it. The foreground grass's roots keep hillBottom, the gradient's own bottom. The lawn at the
+ground line now stands 0.42 of the way down that gradient where it was the clear hillTop, so it
+moves by 0.01 to 0.20 (OKLab; Winter Night and Cyberpunk Night 0.20, High Noon and Underwater Realm
+0.13-0.14), and the tufts on it, the theme's grass, with it - lost in Clear Day (0.08 -> 0.01),
+Winter Night (0.20 -> 0.05), Underwater Realm (0.15 -> 0.06), Stormy and Calm Night (0.07 -> 0.02)
+and Midnight Fantasy (0.08 -> 0.03); clearer in High Noon, Magic Forest and Lunar Eclipse. The
+figures are measured again in step 4.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
