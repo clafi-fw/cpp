@@ -724,6 +724,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.EarthMap.NaturalEarth.cpp">
       <Filter>PathArt</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.NightLights.cpp">
+      <Filter>PathArt</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.NightLights.cppm">
+      <Filter>PathArt</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cpp">
       <Filter>PathArt</Filter>
     </ClCompile>

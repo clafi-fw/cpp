@@ -1569,9 +1569,19 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& exitFullscre
 
     constexpr float k_minWindowWidth{ 640.0f };
     constexpr float k_minWindowHeight{ 480.0f };
+    // Said of the Earth scene, so it is not taken for a map.
+    constexpr std::wstring_view k_earthSceneIsArt{
+        L"The Earth scene is a piece of art and does not claim to be accurate."
+    };
+    // Natural Earth's own credit, for the Earth scene's coastlines and sea depths.
+    constexpr std::wstring_view k_naturalEarthCredit{
+        L"Made with Natural Earth. Free vector and raster map data @ https://naturalearthdata.com."
+    };
 
     int runMillSceneShowcase(ApplicationBase& application)
     {
+        application.context().addInformation(k_earthSceneIsArt);
+        application.context().addInformation(k_naturalEarthCredit);
         const auto form = application.createDialog<MillSceneForm>(
             UiElement::Dialog,
             MinSize{ k_minWindowWidth / 2.0f, k_minWindowHeight / 2.0f },

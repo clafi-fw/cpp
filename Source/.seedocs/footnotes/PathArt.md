@@ -514,6 +514,84 @@ folds over itself.
 **One call takes about 16 milliseconds of one core**, and gives the same outlines every time. Call
 it off the paint.
 
+## LightTown
+
+A town the lights gather about - see NightLights. **Its size sets how much gathers about it**: the
+light at its middle, how many rays and spokes it sends out and how far they reach, the villages
+about it, and how far it raises the chance of villages over the land around it.
+
+## LightQuery
+
+The four spans run in step, one value per point, and the longitudes set how many points are read.
+
+**A point's footprint is the ground it spans**, in radians of arc - for a point drawn as a pixel,
+the ground under that pixel. It sets the size of the cells the tiny lights stand in, and how wide
+the glow gathers its light.
+
+**The darkness switches the lights on**, from 0 by day to 1 deep in the night. A point at 0 reads 0,
+and 8 points at 0 together are passed over, so a caller sets 0 wherever it wants no light: by day,
+over the water, past the limb.
+
+## NightLights
+
+The towns' lights at night, as countless tiny lights gathered into sprawls: thick in the towns,
+running along the coasts and out into the land, scattered in villages between, and never over the
+water.
+
+**The lights are built from the towns and the land**:
+
+- Each town is a star - a blot of light at its middle, and rays wandering out over the land, fading
+  along their length - with a few villages about it.
+- The towns of size 0.1 or more send out spokes, the larger the more and the longer. A town near
+  the coast sends its first along the coast, a little inland; the rest wander inland, turning aside
+  from the water, and the largest towns' spokes fork.
+- Each town sends a corridor to the two others nearest it within 1.6 degrees, where the land joins
+  them.
+- Villages stand over the land from 56 degrees south to 72 north, by the chance the land's map
+  gives a town there, and more of them near the towns.
+- Noise clumps the light, and thins it between the clumps.
+
+Every point of the light that lies over the water holds none. `inhabited` holds the outlines whose
+land may hold lights, as landOutlines() gives them, so an outline left out holds none. One set of
+towns, outlines and map always makes the same lights.
+
+**The light is kept as the light a pixel of its ground gathers**, the same at any altitude, at 8192
+points round each circle of latitude from 85 degrees north to about 61 south, and at 8 coarser
+levels of detail, each half as fine each way as the one before. The points are kept a byte each, in
+tiles of 16 by 16, and a tile with no light is kept once: about 6 MB.
+
+**Building the lights takes about a second of one core.** Build them off the paint.
+
+**The reads work through eight points at a time with AVX2**, and several threads may call them at
+once. They wrap round the longitudes any number of turns either way.
+
+## NightLights readLights
+
+The light the tiny lights lay on each point, from 0 up.
+
+**Each light stands at a spot fixed to the ground**, in a cell of its own. A cell holds a light by
+the chance its ground's light gives it, and the light's brightness is drawn so a few stand out far
+brighter than the rest; where the ground's light would fill every cell more than once, the cell's
+light is that much brighter. Each light lays a tent one pixel in radius, so a pixel gathers on
+average the light kept for its ground at any altitude, and the lights hold still as the Earth turns.
+
+**The cells grow with the ground a pixel spans**, doubling in size from level to level. Each point
+reads the two levels whose cells stand nearest 2 pixels across, and the coarser takes over across
+the middle of each doubling, so no light pops in or out at once as the view climbs or comes down.
+
+**The lights switch on one by one as the darkness rises**, each at a darkness drawn for it, and
+brighten over the next 0.12 of it. The densest lights switch on while the darkness rises to 0.35,
+the sparsest over the whole of its rise.
+
+## NightLights readGlow
+
+The glow over the ground about each point: the light kept for the ground about 6 pixels across
+around it, read between the two levels nearest that, at 0.12 of its strength and as strong as the
+darkness.
+
+**The glow changes slowly from point to point**, so a caller may read it at points a few pixels
+apart and spread it between them, as EarthScene does at every 4th pixel and row.
+
 ## reachToward
 
 Bends a two-part limb so that its end reaches `target`, by the law of cosines.
@@ -678,9 +756,9 @@ round.
 globe in the middle of the frame. The globe's radius shrinks by the same share at each step, from
 1.15 times the frame's longer side to 0.4 times its shorter, and the view leans back from 36 degrees
 to 1, never quite down the Earth's axis. The satellite draws smaller toward the top right, out of
-the globe's way, and what is drawn on the globe at a fixed size - the sea's glint, the city lights -
-shrinks with it. The space is kept as a layer at the lowest altitude - see SceneLayer - and drawn
-live above it; so is the ocean until the land's map is built. The view starts four notches up.
+the globe's way, and the sea's glint, drawn on the globe at a fixed size, shrinks with it. The space
+is kept as a layer at the lowest altitude - see SceneLayer - and drawn live above it; so is the
+ocean until the land's map is built. The view starts four notches up.
 
 **The view is kept across runs** - see Scene storeView: the altitude, the orbit as the drags have
 turned it and the angle its track runs at, the orbits flown, which say where the satellite is and
@@ -695,7 +773,7 @@ Scene gestures.
 
 **The globe holds still while a press holds the view**, and a let-go moves it on at once. The
 wheel leaves the satellite flying as it flew. The clouds go on drifting over the held globe, the
-satellite goes on hovering and blinking, and the stars and the city lights twinkling. The time is
+satellite goes on hovering and blinking, and the stars twinkling. The time is
 the scene's, so a paused scene holds the count as well.
 
 **The Sun stands still among the stars until a double click moves it**, and so does the orbit's
@@ -710,27 +788,29 @@ The stars drift a fifth of the frame's width each orbit - see StarField drift.
 **The night falls by the sunlight on each pixel of the globe**: it starts at a sunlight of 0.03 and
 is whole at -0.13, so the terminator curves as it does at any altitude, and the land, the sea and
 the clouds darken by the same depth, toward a moonlit blue-grey. Deep in the night the land and the
-sea keep a tenth of their colour, and the moonlight is an eighth. The city lights come on as the
-sunlight falls past -0.01 and are full past -0.06. A town's light is a round dot at any size, laying
-the light its area holds, and a glowing town's glow fades evenly to its edge. The atmosphere along
-the limb is blue by day, orange at dusk and dark at night, by the sunlight on the limb, which rises
-evenly across it toward the Sun: three rings, each fading out to both sides.
+sea keep a tenth of their colour, and the moonlight is an eighth. The towns' lights switch on one by
+one as the sunlight falls from -0.01 to -0.08, the densest first. The atmosphere along the limb is
+blue by day, orange at dusk and dark at night, by the sunlight on the limb, which rises evenly
+across it toward the Sun: three rings, each fading out to both sides.
 
-**The towns are placed by the land's map.** Until it is built, 1500 stand anywhere on the land
-from 56 degrees south to 62 north. Then 1500 are tried at random points of the land and 5800 at
+**The towns' lights are countless tiny lights gathered into sprawls** - see NightLights. Each
+pixel reads the lights on the ground under it where the land covers it, and they whiten where they
+crowd. Their glow is read at every 4th pixel and row and spread between, and spills a little past
+the coast. Both fade toward the limb.
+
+**The towns are placed by the land's map.** 1500 are tried at random points of the land and 5800 at
 random points of the coastline, a little inland, from 56 degrees south to 72 north, each kept by a
 weight: highest on low ground, and thinning with height, in the deep desert, in the tundra and a
 little in the northern forest. The towns over the land thin away from the coast as well. The ice
 of Greenland and Antarctica has none. No two towns stand within 0.2 degrees of each other, so their
-lights stand apart as the view comes down; with the whole globe in view they still touch. About one
-town in 38 glows, and no two glowing towns stand within 1.5 degrees: a town that would glow nearer
-is a plain light. The towns are the same on every run.
+sprawls stand apart. A town's size is a draw squared, so few are large - see LightTown. The towns
+are the same on every run.
 
 **Three layers of cloud float above the ground**: low heaps, a middle sheet and high streaks - see
 CloudKind. Each is a map on a sphere of its own, 1.0, 1.4 and 1.8 hundredths of the Earth's radius
 up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts steadily east
 against the ground, 0.4, 0.6 and 0.9 degrees a second from the lowest up. The clouds fade into the
-haze as they near the limb, turn a moonlit blue-grey on the night side, and pass over the city
+haze as they near the limb, turn a moonlit blue-grey on the night side, and pass over the towns'
 lights.
 
 **The land is worked out pixel by pixel inside the coastlines**, from the land's map - see EarthMap.
@@ -761,7 +841,8 @@ and the land in the detailed relief, its colours blended - see SceneLook.
 
 **The maps are built off the paint** the first time the scene is drawn: a fraction of a second on a
 processor with many cores. The clouds show from the first frame after, and the land is drawn flat,
-green with the ice sheets white, until its map is ready.
+green with the ice sheets white, until its map is ready. The towns' lights are built from the land's
+map, and show from the first frame after both are ready.
 
 **The globe is one picture a frame**, from its sea up to its air: the sea, the land, the night, the
 Sun's glint, the towns' lights, the clouds and the atmosphere. The picture is worked out in bands

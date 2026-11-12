@@ -2,6 +2,7 @@ export module ClaFi.PathArt.EarthScene;
 
 import ClaFi.PathArt.CloudMap;
 import ClaFi.PathArt.EarthMap;
+import ClaFi.PathArt.NightLights;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
@@ -157,23 +158,12 @@ namespace ClaFi::PathArt
             bool counterClockwise; // the way its points run, seen from outside the Earth
             bool iceSheet; // Greenland's or Antarctica's: white until the map is built, townless
         };
-        struct City
-        {
-            Direction onEarth; // where it stands, fixed to the Earth
-            float brightness;
-        };
-        // The coastlines and the towns spread evenly over them, built together off the paint.
-        struct BuiltCoasts
-        {
-            std::vector<Coastline> coastlines;
-            std::vector<City> towns;
-        };
-        // The land's map and the towns placed by it, built together off the paint.
+        // The land's map and the towns' lights placed by it, built together off the paint.
         struct BuiltLand
         {
             // By pointer for the same reason as the clouds' maps.
             std::unique_ptr<EarthMap> map;
-            std::vector<City> towns;
+            std::unique_ptr<NightLights> lights;
         };
         // A band of rows of a picture worked out by pixel, and where it stands in the canvas's.
         struct PixelBand
@@ -186,14 +176,12 @@ namespace ClaFi::PathArt
         // What a frame's picture of the globe is worked out from, layer by layer.
         struct GlobePicture;
     private:
-        [[nodiscard]] static BuiltCoasts buildCoasts();
+        [[nodiscard]] static std::vector<Coastline> buildCoasts();
         // An outline's points on the sphere, less a stretch that runs out and back over itself.
         [[nodiscard]] static std::vector<Direction> outlineOnEarth(
             std::span<const FloatPoint> lonLat);
-        // Towns spread evenly over the land, until the land's map places them.
-        [[nodiscard]] static std::vector<City> evenTowns(std::span<const Coastline>);
         // Towns where the land's map makes them likely. See PathArt#earthscene
-        [[nodiscard]] static std::vector<City> townsBy(const EarthMap&,
+        [[nodiscard]] static std::vector<LightTown> townsBy(const EarthMap&,
             std::span<const Coastline>);
         static void drawSpace(const SceneFrame&);
         static void drawOcean(const SceneFrame&);
@@ -202,20 +190,22 @@ namespace ClaFi::PathArt
         // Starts the land's map and the clouds' maps building, and takes each once it is built.
         void takeBuiltMaps();
         // The globe from its sea up to its air, as one picture a frame. See PathArt#earthscene
-        void drawGlobe(const SceneFrame&, const Globe&, float cycleTime, double sceneSeconds);
+        void drawGlobe(const SceneFrame&, const Globe&, double sceneSeconds);
         // The sea coloured by its depth, once the land's map is built.
         void addSea(GlobePicture&, const Globe&) const;
         // The land inside the coastlines, once its map is built. See PathArt#earthscene
         void addLand(GlobePicture&, const Globe&) const;
         // The night, from the sunlight on the globe. See PathArt#earthscene
         void addNight(GlobePicture&, const Globe&) const;
-        // The Sun's glint on the ground and the towns' lights past the terminator.
-        void addLights(GlobePicture&, const SceneFrame&, const Globe&, float cycleTime) const;
+        // The Sun's glint on the ground it stands over.
+        static void addGlint(GlobePicture&, const SceneFrame&, const Globe&);
+        // The towns' lights past the terminator, once they are built. See PathArt#nightlights
+        void addNightLights(GlobePicture&, const Globe&) const;
         // The clouds drift on the scene's time, so they go on drifting over a globe held still.
         void addClouds(GlobePicture&, const Globe&, double sceneSeconds) const;
-        // One band of the picture, each layer laid over those below it; `layerPixels` is its own.
+        // One band of the picture, each layer over those below it; the buffers passed are its own.
         static void rasterizeGlobeBand(const GlobePicture&, int band, PixelBand&,
-            Graphics::Bitmap& layerPixels);
+            Graphics::Bitmap& layerPixels, std::vector<std::uint8_t>& landCover);
         // Lays the bands in at the canvas's pixels, whatever its transform, cut to `cut` there.
         static void layBands(const SceneFrame&, std::span<const PixelBand>, const FloatRect& cut);
         // The scene's seconds since the last frame, 0 for the first.
@@ -248,9 +238,8 @@ namespace ClaFi::PathArt
         static constexpr std::chrono::seconds k_cycle{ 240 };
         static constexpr std::wstring_view k_name{ L"Earth" };
         std::vector<Coastline> m_coastlines{};
-        std::vector<City> m_cities{};
         // Started by the constructor, and taken by the first frame drawn.
-        std::future<BuiltCoasts> m_coastsBuilt{};
+        std::future<std::vector<Coastline>> m_coastsBuilt{};
         SceneLayer m_space{ drawSpace };
         SceneLayer m_ocean{ drawOcean };
         // By pointer, as MSVC's std::future builds what it carries with no arguments first.
@@ -260,9 +249,12 @@ namespace ClaFi::PathArt
         std::future<BuiltLand> m_landBuilt{};
         // Built off the paint from the first frame drawn on, and kept. See PathArt#earthscene
         std::unique_ptr<EarthMap> m_earthMap{};
+        // Built with the land's map, and kept. See PathArt#nightlights
+        std::unique_ptr<NightLights> m_nightLights{};
         // Kept from one frame to the next, so a frame of the same size allocates nothing.
         std::vector<PixelBand> m_globeBands{};
         std::vector<Graphics::Bitmap> m_layerPixels{}; // each band's layer while it is worked out
+        std::vector<std::vector<std::uint8_t>> m_landCovers{}; // each band's land, for its lights
         View m_view{};
         // The orbits the last frame was drawn after, which a drag moves the view from.
         double m_shownOrbits{};

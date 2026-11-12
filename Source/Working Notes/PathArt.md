@@ -1329,6 +1329,75 @@ backend alone, Oj picked one picture, delivered with a sheet.
   backend keeps its pixels unused. A paint of a part of the scene works the whole picture out, as
   the picture is cut to the canvas and not to its clip box.
 
+**The towns' lights are tiny lights gathered into sprawls** (Oj, 2026-11-12, "The Night Sprawls -
+they are sleep at day and shine at night. They are love coastlines but hate water. They are
+spreading their glowing tentacles along the coast lines and into the land but never into the water.
+They are vary in size and tentacles number."). A first round of mockups drew each town's arms as
+vector tentacles, beaded or glowing, along the coast and inland. Oj: "Those don't look natural to
+me", with two night photographs from orbit, and "They are made of billions tiny lights clenching
+together, but straightforward processing such amount is unreal, so shortcuts yet have to be
+invented". Of a second round, tiny lights scattered per pixel from a map of light, Oj: "That looks
+great to me". He picked the lights switching on one by one at dusk, the densest first, and the tiny
+lights in both looks in place of the towns' dots.
+
+- **Each pixel scatters its lights out of a map of light.** NightLights keeps the light a pixel of
+  each piece of ground gathers, and each pixel reads it through cells fixed to the Earth, about 2
+  pixels across, at the two levels nearest that, each cell holding a light by the chance the map
+  gives it. The cost goes by the pixels in view, whatever number of lights the ground stands for,
+  and the lights hold still as the ground moves.
+- **The map keeps the light per pixel**, so a pixel's mean light holds at any altitude and the level
+  of the cells only sets how finely it is scattered. A cell's chance is that light times the cell's
+  area in pixels, over a tent's volume and a light's mean brightness; past a chance of 1 the light
+  grows brighter instead.
+- **The build is the mockup's**: the 7300 towns of townsBy as stars - a blot at the middle and 2 +
+  18 size rays - with villages about them, the first round's arms as spokes, corridors to the two
+  nearest towns within 1.6 degrees, about 127,000 villages over the land by the map's town weight
+  and the towns' nearness squared, noise clumping it at 0.4, 0.15 and 0.06 degrees, and the land
+  grid cutting it at the water. A town's size is its draw squared, and the glowing towns and
+  k_leastGlowSpacing went: the glow is the map's light gathered from its coarser levels. HashRandom
+  stands in for the standard engines and distributions, so every compiler builds the same lights.
+- **The map is kept in bytes in sparse tiles.** The mockup's floats, 9000 by 3625 with their levels,
+  came to about 130 MB. A byte holds the cube root of the light's share of k_brightestLight, which
+  keeps the faint rural light in fine steps, and the 16 by 16 tiles with no light share one. The map
+  takes about 6 MB. At a k_brightestLight of 8 the cores clipped and the glow came out weaker than
+  the mockup's; at 64 a view of Europe matched the mockup's mean within a percent, 36.71 against
+  36.94.
+- **The lights come on between a sunlight of -0.01 and -0.08**, where the dots came on by -0.06, so
+  the switching on one by one spreads over more of the dusk.
+- **What a frame costs**, against c772ab4 on the container: 2 cores, the CPU backend, the median of
+  40 frames, two runs each. The towns' dots took about a millisecond, so the rest is the lights'.
+- At 3436 x 2051: Europe four notches up at midnight 47.1 ms became 79.7, the US Northeast at the
+  lowest view 32.8 became 52.2, the whole globe with its night half in view 50.4 became 63.7, and
+  Europe at noon 47.0 became 51.8. At 2560 x 1440 the same views went from 24.7 to 39.5, 18.9 to
+  33.9, 27.6 to 32.8 and 24.0 to 28.4.
+- Of the 33 ms more over Europe at 3436 x 2051, the tiny lights take about 24, working out the
+  ground under each pixel and laying the colours about 6, and the glow about 2. By day each row is
+  still worked out to find where the night falls, which is the 5 ms at noon.
+- **The first build in the tree took 97 ms over that view of Europe.** It came down to 80 by reading
+  the glow at every 4th pixel and row from its own query, reading the lights only where the land
+  covers a pixel and the night has fallen, letting the coarser cells take over across the middle 0.4
+  of each octave rather than all of it, drawing three hashes a cell where it drew five - two 16-bit
+  draws and a byte out of one - with no division in a cell, passing over 8 pixels with no light in
+  the texels about them, and keeping the land's cover in bytes and only while the lights are drawn.
+  What one level alone saves goes by the altitude: over that view most groups of 8 pixels still read
+  both.
+- To watch: a pixel at night on land reads 4 cells at one level or two, so the cost goes by the lit
+  land in view. Reading each cell once for all the pixels it reaches would pay only where the cells
+  stand wider than about 2 pixels; with smaller cells, and rows of pixels slanting across them, the
+  cells about 8 pixels outnumber their 32 reads.
+- Known: at the 180th meridian the cells' columns wrap at a whole count of cells, so the column
+  there is narrower, a seam too fine to see. The lights show once the land's map and the lights are
+  built, and the flat land drawn before holds none. The lights do not twinkle. The towns' sizes are
+  random draws, not populations, so the largest sprawls stand anywhere.
+
+**MillScene's Information page credits Natural Earth** (Oj, 2026-11-12, "Add that to the MillScene
+information page, with a link and their wording"), the one outside source of the Earth scene: its
+coastlines and its sea's depths. The paragraph is Natural Earth's own suggested credit, added
+through AppContext::addInformation. The page links an address written from https:// alone, so the
+site reads https://naturalearthdata.com where Natural Earth's wording has naturalearthdata.com.
+Above it the page says the Earth scene is a piece of art and does not claim to be accurate (Oj,
+"Also add that the Earth scene is a piece of art and doesn't pretend to be any accurate").
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4

@@ -514,6 +514,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.EarthMap.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.EarthMap.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.EarthMap.NaturalEarth.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.NightLights.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.NightLights.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneHelpers.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.SceneLayer.cpp" />
