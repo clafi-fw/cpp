@@ -4910,7 +4910,7 @@ namespace ClaFi::PathArt::Themes {
     export struct UnderwaterRealm : SceneTheme {
         constexpr UnderwaterRealm() : SceneTheme{
             .name = L"Underwater Realm",
-            .skyTop = 0xFF000080,           // Dark blue top (ocean depth)
+            .skyTop = 0xFF03279A,           // Dark blue top (ocean depth)
             .skyBottom = 0xFF0066CC,        // Light blue horizon (closer to surface)
             .sunDisk = 0xFFFFD700,          // Sun core — golden (light through water)
             .sunStroke = 0xFFFFF566,        // Sun stroke — light yellow
@@ -4959,21 +4959,21 @@ namespace ClaFi::PathArt::Themes {
                 .treeCrownMiddle = 0xFF23BBAB,
                 .trail = 0xE68DAC84,
                 .pebble = 0xFF7A9671,
-                .grass = 0xFF0F6E5F,
+                .grass = 0xFF00322A,
                 .bladeDark = 0xFF1F8A4B,
                 .bladeMiddle = 0xFF31A558,
                 .bladeLight = 0xFF4CC567,
-                .reedStem = 0xFF157E73,
-                .frontGrassDark = 0xFF04614C,
+                .reedStem = 0xFF00403A,
+                .frontGrassDark = 0xFF00261C,
                 .shadow = 0x47000033,
                 .ourWolf = {
-                    .light = 0xFFCFE1FE,
-                    .shade = 0xFFA6B8D7,
-                    .coat = 0xFFBACEED,
-                    .far = 0xFF9BACC9,
-                    .dark = 0xFF8697B3,
-                    .belly = 0xE6FEFFFF,
-                    .tongue = 0xFFFFFAFB,
+                    .light = 0xFFA0B1CC,
+                    .shade = 0xFF798AA7,
+                    .coat = 0xFF8C9FBC,
+                    .far = 0xFF6E7E9A,
+                    .dark = 0xFF26334B,
+                    .belly = 0xE6CDCECE,
+                    .tongue = 0xFFE97181,
                     .mouth = 0xFFAE708A,
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFEFF2F8
@@ -5090,7 +5090,8 @@ namespace ClaFi::PathArt::Themes {
             .hasSnow = false,
             .hasPetals = false,
             .hasDust = false,
-            .isAfrica = false
+            .isAfrica = false,
+            .airHaze = 0.30f
         } {
         }
     };

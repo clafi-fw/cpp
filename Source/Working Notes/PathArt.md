@@ -3196,6 +3196,34 @@ the head and tail underneath. Every wolf drawWolf draws takes it - the Chase's i
 icon's and the Puppeteer's. Where `coat` stood far above `unlit`, as in Clear Day, Cherry Blossom
 and Paper Sketch, the far legs and pads go near black.
 
+Then (Oj, 17:54) "Underwater Realm: the wolf's too light, the mountains are too dark, the stems too
+ethereal". The lighting pass had lifted ourWolf near white, light CFE1FE (L 0.90), 0.29 to 0.31 off
+the teal hills and lawn behind him. Shown the whole coat 0.10, 0.15 and 0.20 darker; Oj (00:04) took
+the 0.15 step "with even darker tips and red tongue". Shown the tips (`dark` - the ears, lower jaw
+and tail tip) 0.10, 0.20 and 0.30 below that, and the tongue, near white FFFAFB, in daylight's
+E97181, a clear red D33A3C and the theme's crimson FF1460. Oj (00:07) "R1", taken with the tips at
+the middle step: light A0B1CC, shade 798AA7, coat 8C9FBC, far 6E7E9A, dark 26334B, belly E6CDCECE,
+tongue E97181. His light stands 0.16 off the hills and the lawn.
+
+Then the stems, teal on its teal land: grass 0F6E5F (L 0.48) on a lawn of L 0.58 to 0.60, the reed
+stems 157E73 on hills near 0.63. Shown them 0.10 and 0.20 darker and in a kelp olive; Oj (00:12)
+"Stems S2", 0.20 darker: grass 00322A, frontGrassDark 00261C, chase.reedStem 00403A, about 0.30
+below the lawn.
+
+Then the mountains. Oj (00:12): "mountains should come with air thickening - and as it is water the
+thickness is match greater that the normal air". Shown .airHaze 0.30, 0.50 and 0.70 over the rock as
+it was: the near range from L 0.19 to 0.29, 0.33 and 0.34, the far one to 0.33 and on, the two
+merging into one silhouette past about 0.4. Oj (00:16) "Between A1 and A2 with lighter tops": at
+0.40 the near range, 20 trail-distances away, is about 90 percent water from foot to peak, and the
+air thins with height over 24 frame heights, so even a top of L 0.66 lifted the peaks 0.02. Oj
+(00:18) "If that's so back to 0.3": .airHaze 0.30, the ranges 0.29 and 0.33, 0.05 apart. At 0.30 a
+lighter rock top still shows little - L 0.79 lifts the near peaks 0.05.
+
+Then (Oj, 00:25) "leave the tops as they are, slightly enlight the top water", and (00:28) "U2":
+skyTop 000080 to 03279A, 0.08 lighter, its hue and colour kept. The water's haze is two parts skyTop
+to one of skyBottom, so the ranges lighten with it, to 0.35 and 0.39, 0.05 apart. The Mill's sky is
+the same field and lightens too.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
