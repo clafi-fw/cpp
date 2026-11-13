@@ -3016,6 +3016,26 @@ darker. A and B darkened theirWolf's whole coat 0.045, C 0.17. Oj (13:13) took A
 0.06 off it and theirHare's 0.04, where the range is behind them; most of a shade sits low, against
 the land. ourWolf's light is 0.30 above theirWolf's.
 
+Then (Oj, 13:34) "Summer Sunset: mountains separation, washed out grass, the wolf's low contrast".
+Its rock, C3BDBD over 95908F (L 0.80 and 0.66), stood close to its air, A4B4D4 (0.77), so the ranges
+met only 0.02 to 0.03 apart. Shown A, grey with the foot darker; B, rock in the sunset's rose; C,
+dusk violet. Its land, 497E55 over 3B6645, had chroma 0.086 and 0.072, about two thirds of Clear
+Day's; shown 1.4 and 1.7 times as vivid, and 1.5 times and 15 degrees warmer (G3). Oj (13:38):
+"Mountains: A; I like G3, but by grass I meant stems". mountainFoot 585453, mountainTop C3BDBD kept,
+the ranges now 0.05 to 0.08 apart; hillTop 4D802B and hillBottom 3E6824, which the Mill's Summer
+Sunset shares.
+
+The stems are the one green - grass, with frontGrassDark and the reed stems. The old blue-green,
+205331, turned teal-grey on the warmer lawn. Shown in G3's green, 235502, and 0.06 and 0.12 darker;
+Oj (13:41) took 0.12: grass 113100 (L 0.28), frontGrassDark 0F2800, reedStem 30593A to 183800.
+
+Against the new land and range, behind ourWolf at 0.52 to 0.60, his light (0.56) stood 0.04 off them
+and his shade 0.15; ourHare's light 0.08. Shown A, his light alone lighter; A+, ourHare's light too;
+C, his whole coat 0.125 darker and theirWolf 0.07 darker still. Oj (13:44) took A+: ourWolf.light
+76747B to B0ADB5 (+0.19) and ourHare.light 946E4F to C39B7B (+0.15), both now 0.15 off; ourHare's
+shade stays 0.13 off the lawn strip. The rake handle stands 0.09 off the trail, short of 0.10; it
+stays as it is.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

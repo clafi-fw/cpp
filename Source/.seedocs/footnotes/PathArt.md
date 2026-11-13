@@ -162,9 +162,9 @@ rock where the most sunlight falls, at the top of the highest range, and mountai
 the ground line - see ChaseScene hazed. Every theme starts them from one neutral rock, 8E8E8E at the
 top and 616161 at the foot, darkened and tinted as its sky lights it. It then lightens both alike by
 day, or darkens them at night, to set the near range, hazed, apart from the runners' heads. Clear
-Day's and High Noon's are set by hand: Clear Day's darker and bluer, High Noon's a sunlit white over
-a dark grey foot. Where the two ranges meet, rock darker than the air leaves the near range the
-darker one. The haze gives them the theme's air.
+Day's, High Noon's and Summer Sunset's are set by hand: Clear Day's darker and bluer, the other two
+with their tops kept over a dark grey foot. Where the two ranges meet, rock darker than the air
+leaves the near range the darker one. The haze gives them the theme's air.
 
 **Figures and props are well lit, at night as by day.** They start from Clear Day's colours,
 tinted a little toward the theme's sky, and keep their colour - except in Paper Sketch, whose look
