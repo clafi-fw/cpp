@@ -3036,6 +3036,14 @@ C, his whole coat 0.125 darker and theirWolf 0.07 darker still. Oj (13:44) took 
 shade stays 0.13 off the lawn strip. The rake handle stands 0.09 off the trail, short of 0.10; it
 stays as it is.
 
+Then (Oj, 13:50) "Sahara heat: increase air thickness, make the stems darker". Every theme had the
+default airHaze, 0.10; Sahara's air is a strong orange, FFA621. Thicker air pulls both ranges toward
+it, so they part less where they meet: 0.04 to 0.05 at 0.10, 0.03 to 0.04 at 0.20, 0.02 at 0.30 and
+0.01 at 0.45, where the far range nearly vanishes. Its stems, 6E804D at L 0.57, stood close to the
+sand; shown 0.10, 0.17 and 0.24 darker, the dark blades and the reed stems moved with them. Oj
+(13:53) took 0.20 and 0.17: airHaze 0.20, the first theme to state its own; grass 3F4F1D (L 0.40),
+frontGrassDark 304113, reedStem 8A8051 to 594F21.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

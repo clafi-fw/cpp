@@ -1179,12 +1179,12 @@ namespace ClaFi::PathArt::Themes {
                 .treeCrownMiddle = 0xFF987E3D,
                 .trail = 0xE6DAB97B,
                 .pebble = 0xFFC4A166,
-                .grass = 0xFF6E804D,
+                .grass = 0xFF3F4F1D,
                 .bladeDark = 0xFF458814,
                 .bladeMiddle = 0xFF55A321,
                 .bladeLight = 0xFF6DC32F,
-                .reedStem = 0xFF8A8051,
-                .frontGrassDark = 0xFF5D7142,
+                .reedStem = 0xFF594F21,
+                .frontGrassDark = 0xFF304113,
                 .shadow = 0x47502800,
                 .ourWolf = {
                     .light = 0xFF818385,
@@ -1309,7 +1309,8 @@ namespace ClaFi::PathArt::Themes {
             .hasSnow = false,
             .hasPetals = false,
             .hasDust = true,
-            .isAfrica = true
+            .isAfrica = true,
+            .airHaze = 0.20f
         } {
         }
     };
