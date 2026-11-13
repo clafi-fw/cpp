@@ -3224,6 +3224,18 @@ skyTop 000080 to 03279A, 0.08 lighter, its hue and colour kept. The water's haze
 to one of skyBottom, so the ranges lighten with it, to 0.35 and 0.39, 0.05 apart. The Mill's sky is
 the same field and lightens too.
 
+Then (Oj, 00:33) "Lunar Eclipse: darker wolf's legs, daze stars matching the sky ones". Its sky
+stars are drawn in its sunDisk, the eclipsed moon's light pink FF99CC, so its dazeStar is FF99CC in
+place of the yellow FFD34D; the grey outline stays, and parts them from the dark hills.
+
+Its legs: since the near legs take the body's own gradient, they go darker only with the body's
+underside. Shown the flank 0.08 and 0.15 darker (this theme), and the legs darkening on past the
+body's foot to the paws (every wolf); Oj (00:40) "A1 with purpleish coat" - the flank 0.08 darker,
+and the fur, a faint blue-violet (hue 284, chroma 0.04), turned to the theme's purple, hue 304 like
+its horizon, moon rim and glow, at its own lightness. Oj (00:42) "P2", chroma 0.075: light B7A1D4,
+shade 786493, coat A58FC1, far 84709F, dark 705C8A, belly E6EADCFF. The legs end at L 0.44 where
+they were 0.50. theirWolf stays grey.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
