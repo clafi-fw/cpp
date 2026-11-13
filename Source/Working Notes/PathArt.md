@@ -3132,6 +3132,33 @@ meet high, right of the middle. Shown top 203500 (near 0.03-0.04 darker), 294300
 345200 (0.01-0.03); Oj (15:15) took 294300: `.airHaze = 0.20f`, mountainTop 294300, mountainFoot
 020400.
 
+Then (Oj, 15:20) "Steampunk: grayer hills, rusty foliage, brighter toadstool and apples red", and
+(15:22) "and thicker air". The rock 7D7774 / 55504D already sat below the air, so the ranges stand
+0.05-0.06 apart at air 0.10 and 0.20, 0.035 at 0.30 and 0.01 at 0.45. Shown each on its own sheet:
+air 0.20 / 0.30 / 0.45; the hills 7B4630 / 6B3B31 at 0.6, 0.35 and 0.15 of their colour, lightness
+and hue kept; the crowns rust brown, red rust and a lighter orange rust; the cap C06556 / 874134
+three steps lighter and more vivid; the apples C86553 / 8E4133 as a tomato red, a crimson and a pure
+red. Oj (15:28) "air 0.20, G2, R3, T2 and A1": `.airHaze = 0.20f` after `.isAfrica = false`, hillTop
+64514A, hillBottom 574642, treeLeavesBase and treeCrown A35C18, crownMiddle and treeCrownMiddle
+AB6019, crownLight and treeCrownLight B76920, capLight / capDark F66752 / B9412D, appleLight /
+appleDark E6443D / A12623. The hills and treeLeavesBase are SceneTheme fields, so the Mill's
+Steampunk land and trees turn with them. The toxic reds bullet in the footnote named Vintage Noir's
+apples daylight's red, left over from before its deep red; it now says its apples, cap and tongues
+share that red.
+
+Then (Oj, 15:33) "take the leaf color for foliage": the crowns in chase.leaf's verdigris 458A77, the
+stump's and the apples' leaf. Shown V1 the leaf as the crowns' base with the same steps up as
+before, V2 the leaf as their middle tone, and the other reading, the leaves in the crowns' rust; Oj
+(15:34) "yes, that one, less saturated" - V1 at 0.75, 0.55 and 0.35 of its chroma; Oj (15:35) "S2":
+treeLeavesBase and treeCrown 618479, crownMiddle and treeCrownMiddle 668A7E, crownLight and
+treeCrownLight 6E9488. The leaf itself stays 458A77, a little more coloured than the crowns.
+
+Then (Oj, 15:38) "Take the brown ground color for dust": the blown dust, effectColor1, a warm steam
+white FFF2DC. Shown the brown the hills had, 7B4630, the ground now 64514A, and the trail 7D6D5D; Oj
+(15:42) took 7B4630, its line comment "Rust brown (the blown dust)". Any brown draws the specks
+darker than the grey sky, fainter than the white ones. effectColor1 is a SceneTheme field, so the
+Mill's Steampunk dust turns brown too; chase.dust, the puffs where the wolf lands, stays CCC0AF.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

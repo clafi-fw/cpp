@@ -202,7 +202,8 @@ frames are bark too, and the frames and the sails are outlined in barkShade.
   butterfly white with an icy blue edge, and the trail an icy grey.
 - The toxic and neon themes and Underwater Realm give the toadstool caps and the apples toxic reds:
   a lava red in Toxic Waste, a hot crimson in Cyberpunk Night and Underwater Realm, a neon red in
-  Neon City Night. Vintage Noir's apples are the one red in its grey, daylight's.
+  Neon City Night. Vintage Noir's apples, its toadstool's cap and its wolves' tongues share the one
+  deep red in its grey.
 - One green serves the flowers' stems, the big daisy's leaves, the tufts on the lawn and the
   foreground grass, whose every third blade is a shade darker. Midnight's, Toxic Waste's and Neon
   City Night's are lighter, to show against their dark meadows; Toxic Waste's is a dim toxic green,

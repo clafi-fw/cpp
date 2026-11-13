@@ -4541,8 +4541,8 @@ namespace ClaFi::PathArt::Themes {
             .sunCorona2 = 0xFFC4C49F,       // Second layer of corona — almost white
             .sunGlow = 0xFFFFFBF0,          // Glow around sun — almost white
             .cloud = 0xCCCCCCCC,            // Clouds — gray, industrial
-            .hillTop = 0xFF7B4630,          // Hilltops — dark brown (soil, coal)
-            .hillBottom = 0xFF6B3B31,       // Lower parts of hills — brown-red (mines)
+            .hillTop = 0xFF64514A,          // Hilltops - grey-brown (soil, coal)
+            .hillBottom = 0xFF574642,       // Lower parts of hills - dark grey-brown (mines)
             .riverTop = 0xFF666666,         // Top part of water — gray (polluted river)
             .riverBottom = 0xFF333333,      // River depths — black (murky water)
             .riverWave = 0xFF8B4513,        // Waves — brown (mud, silt)
@@ -4554,7 +4554,7 @@ namespace ClaFi::PathArt::Themes {
             .millRoofBottom = 0xFFD05142,   // Lower part of roof — dark red (soot marks)
             .millWingFabric = 0xFFA5A0F7,   // Fabric on blades — lilac (dust, grease)
             .millWheel = 0xFF678888,        // Mill wheel — dark gray (rust, grease)
-            .treeLeavesBase = 0xFF377537,   // Leaves base — dark green (rare greenery)
+            .treeLeavesBase = 0xFF618479,   // Leaves base - grey verdigris
             .reedStem = 0xFF8B4513,         // Reed stem — brown-orange
             .reedHead = 0xFFC19A6B,         // Reed head — light brown
             .lilyPad = 0xFF349434,          // Lily pad — bright green (islands of life)
@@ -4567,7 +4567,7 @@ namespace ClaFi::PathArt::Themes {
             .wolfBody = 0xFF432E19,         // Wolf body — dark gray (metallic tint)
             .wolfEar = 0xFF606060,          // Ears — gray (with mechanical inserts)
             .wolfEye = 0xFFFFA07A,          // Eyes — glowing peach (mechanical implants)
-            .effectColor1 = 0xFFFFF2DC,     // Warm steam white (the blown dust)
+            .effectColor1 = 0xFF7B4630,     // Rust brown (the blown dust)
             .effectColor2 = 0xFFCC9966,     // Effect: puffs of steam and smoke periodically released; rare sparks
             .petal1 = 0xFFECE6E2,
             .petal2 = 0xFFF1D6D6,
@@ -4575,11 +4575,11 @@ namespace ClaFi::PathArt::Themes {
             .chase = {
                 .mountainTop = 0xFF7D7774,
                 .mountainFoot = 0xFF55504D,
-                .crownLight = 0xFF458541,
-                .crownMiddle = 0xFF3C7B38,
-                .treeCrown = 0xFF377537,
-                .treeCrownLight = 0xFF458541,
-                .treeCrownMiddle = 0xFF3C7B38,
+                .crownLight = 0xFF6E9488,
+                .crownMiddle = 0xFF668A7E,
+                .treeCrown = 0xFF618479,
+                .treeCrownLight = 0xFF6E9488,
+                .treeCrownMiddle = 0xFF668A7E,
                 .trail = 0xE67D6D5D,
                 .pebble = 0xFF6F5E4F,
                 .grass = 0xFF41321F,
@@ -4643,8 +4643,8 @@ namespace ClaFi::PathArt::Themes {
                 .bough = 0xFFA07A50,
                 .bark = 0xFF483013,
                 .barkShade = 0xFF2A1904,
-                .appleLight = 0xFFC86553,
-                .appleDark = 0xFF8E4133,
+                .appleLight = 0xFFE6443D,
+                .appleDark = 0xFFA12623,
                 .leaf = 0xFF458A77,
                 .appleFlesh = 0xFFECE2D2,
                 .appleSeed = 0xFF45362B,
@@ -4676,8 +4676,8 @@ namespace ClaFi::PathArt::Themes {
                 .rakeHandle = 0xFF483013,
                 .rakeHandleShade = 0xFF2A1904,
                 .rakeMetal = 0xFF58441C,
-                .capLight = 0xFFC06556,
-                .capDark = 0xFF874134,
+                .capLight = 0xFFF66752,
+                .capDark = 0xFFB9412D,
                 .capSpot = 0xFFFFFFFF,
                 .stalk = 0xFFFFF8F1,
                 .stalkShade = 0xFFE2D5C4,
@@ -4713,7 +4713,8 @@ namespace ClaFi::PathArt::Themes {
             .hasSnow = false,
             .hasPetals = false,
             .hasDust = true,
-            .isAfrica = false
+            .isAfrica = false,
+            .airHaze = 0.20f
         } {
         }
     };
