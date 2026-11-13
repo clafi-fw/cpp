@@ -102,6 +102,7 @@ namespace ClaFi::PathArt
         Color birdWing{};
         Color birdBeak{};
         Color dust{}; // kicked up where the wolf lands
+        Color dazeStar{}; // the stars circling a dazed wolf's head
     public:
         // How many colours it holds, in a row with nothing between them.
         static constexpr std::size_t colorsNum() { return sizeof(ChaseTheme) / sizeof(Color); }

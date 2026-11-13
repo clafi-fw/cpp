@@ -3088,6 +3088,36 @@ drawWolf's body runs from the light to `unlit`, the shade a quarter of the way t
 Day's ourWolf, whose light alone was lifted, 0.38. Every wolf drawWolf draws takes it - the Chase's
 in every theme, the icon's and the Puppeteer's.
 
+Then (Oj, 14:38) "Vintage Noire: remove color from the daze stars, thicken the air and if that
+didn't flip the mountains darken them". Its sky runs from near black to mid grey, so its air is a
+dark grey, 424242 (L 0.38), and its rock, 9E9E9E over 7D7D7D, lighter than it: the near range stood
+0.07 lighter than the far one. Thicker air only shrinks that (0.015 at 0.45); the rock has to go
+darker than the air. Shown A, air 0.20 and rock 383838 over 1B1B1B; B, air 0.20 and rock 292929 over
+0D0D0D; C, air 0.30 with B's rock - the near range 0.03, 0.05 and 0.03 the darker one. Oj (14:44)
+"C; a new field": airHaze 0.30, mountainTop 292929, mountainFoot 0D0D0D.
+
+The daze stars were ChaseScene's constant DazeStar, FFD34D, in every theme. Shown: a new ChaseTheme
+field, or the rubber duck's colour, which is grey in Vintage Noir. Oj took the field:
+ChaseTheme.dazeStar, after dust, FFFFD34D in every theme and C9C9C9 in Vintage Noir; ChaseColors
+keeps DazeStarEdge, a grey. The footnote names the stars among ChaseTheme's colours and among the
+yellow things. Vintage Noir's dark wolves now stand against near black mountains: ourWolf, light
+3E3E3E, about 0.02 to 0.06 off the near range.
+
+Then (Oj, 14:49) "Darker wolf and its tong, darker rake, darker apple, colored red on the toadstool
+cap (the same color as the apple)". Shown a step and two steps darker, the cap in the apple's red in
+both and theirWolf darkened with ourWolf to stay below him; Oj (14:52) "1 throughout except the red
+- even darker", and of three reds past the second step took R1. ourWolf light / shade / coat / far /
+dark 3E3E3E / 282828 / 343434 / 222222 / 161616 to 2F2F2F / 1A1A1A / 252525 / 141414 / 090909, his
+tongue 606060 to 454545; theirWolf 202020 / 121212 / 191919 / 0C0C0C / 060606 to 171717 / 090909 /
+101010 / 050505 / 020202; the rake 525252 / 3D3D3D / 454545 to 3D3D3D / 292929 / 303030; the apple
+E24F41 / 9E2924 and the cap 515151 / 373737 to 980002 / 4E0002, the cap's spots kept light grey. The
+wolves' lights stand 0.11 apart, a step under the 0.12 the scene keeps elsewhere.
+
+Then (Oj, 14:56) "Red tongue". Shown both tongues in the apple's red 980002, both in its dark red
+4E0002, and ours in the first with theirs in the second; Oj (14:59) took the first: ourWolf's tongue
+454545 and theirWolf's 606060 to 980002, so the theme's one red is the apple, the toadstool's cap
+and the wolves' tongues.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

@@ -155,22 +155,24 @@ A crossfade blends it with the effects.
 
 The Chase's own colours in a theme: the mountains' clear colours, which the scene hazes - see
 ChaseScene hazed - the tree a branch run ends at, the trail and the grass, the four runners' coats,
-and every prop.
+every prop and the stars circling a dazed wolf's head.
 
 **The mountains' clear colours are rock in the theme's light, before any haze.** mountainTop is the
 rock where the most sunlight falls, at the top of the highest range, and mountainFoot the rock at
 the ground line - see ChaseScene hazed. Every theme starts them from one neutral rock, 8E8E8E at the
 top and 616161 at the foot, darkened and tinted as its sky lights it. It then lightens both alike by
 day, or darkens them at night, to set the near range, hazed, apart from the runners' heads. Clear
-Day's, High Noon's and Summer Sunset's are set by hand: Clear Day's darker and bluer, the other two
-with their tops kept over a dark grey foot. Where the two ranges meet, rock darker than the air
-leaves the near range the darker one. The haze gives them the theme's air.
+Day's, High Noon's, Summer Sunset's and Vintage Noir's are set by hand: Clear Day's darker and
+bluer, High Noon's and Summer Sunset's with their tops kept over a dark grey foot, Vintage Noir's
+near black under its dark air. Where the two ranges meet, rock darker than the air leaves the near
+range the darker one. The haze gives them the theme's air.
 
-**Figures and props are well lit, at night as by day.** They start from Clear Day's colours,
-tinted a little toward the theme's sky, and keep their colour - except in Paper Sketch, whose look
-is a lack of it. Each object then moves lighter, or at most 0.10 darker, only as far as its contrast
+**Figures and props are well lit, at night as by day.** They start from Clear Day's colours, tinted
+a little toward the theme's sky, and keep their colour - except in Paper Sketch, whose look is a
+lack of it. Each object then moves lighter, or at most 0.10 darker, only as far as its contrast
 needs. Midnight Fantasy, Toxic Waste and Steampunk keep their objects in the theme's own light, with
-the ones that read too dark or dull lifted one by one. Vintage Noir's greys are set by hand.
+the ones that read too dark or dull lifted one by one. Vintage Noir's greys are set by hand, with
+one deep red for its apple, its toadstool's cap and the wolves' tongues.
 
 **The tree a branch run ends at has a crown of its own** - treeCrown, treeCrownLight and
 treeCrownMiddle - lit as the props are. The far hills' crowns and the Mill's keep the theme's light;
@@ -187,9 +189,9 @@ frames are bark too, and the frames and the sails are outlined in barkShade.
 - theirWolf stays darker than ourWolf.
 - A coat's tongue, mouth, teeth, tail, inner ears and nose rise with the fur where it is lifted and
   never darken with it, so a white tail stays white by day.
-- Yellow things - the banana peel, the rubber duck, the ball's yellow, the flowers' hearts - keep
-  their colour at night and stay light, as a dark yellow reads as olive. The ball, the flowers'
-  petals and the whole apple stay lighter at night too.
+- Yellow things - the banana peel, the rubber duck, the ball's yellow, the flowers' hearts, the daze
+  stars - keep their colour at night and stay light, as a dark yellow reads as olive. The ball, the
+  flowers' petals and the whole apple stay lighter at night too.
 - Every theme's petals come in three colours. A white petal is joined by a blushed pink and a
   lilac, or by cream or pale blue where one of those is lost on the meadow; a coloured petal by its
   hue turned a little either way. Some themes choose their own: Twilight's run from a light rose to

@@ -34,7 +34,6 @@ namespace ClaFi::PathArt
         constexpr Color Puff{ 0xB3FFFFFF };
         constexpr Color BallEdge{ 0x40000000 };
         constexpr Color Ink{ 0xFF1B1D22 };
-        constexpr Color DazeStar{ 0xFFFFD34D };
         constexpr Color DazeStarEdge{ 0xFF83868C };
     }
 
@@ -1262,7 +1261,7 @@ namespace ClaFi::PathArt
             drawDazeStars(onFrame, DazeStars{
                 .center = { head.x, std::min(head.y, pose.center.y) - 26.0f * unit },
                 .turns = 12.0f * t,
-                .color = ChaseColors::DazeStar.withOpacity(moment.dazed),
+                .color = theme.chase.dazeStar.withOpacity(moment.dazed),
                 .outline = ChaseColors::DazeStarEdge.withOpacity(moment.dazed)
             });
         };

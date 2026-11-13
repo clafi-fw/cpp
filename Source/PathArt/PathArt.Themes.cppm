@@ -179,7 +179,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE3DAC2,
                 .birdWing = 0xFF614B34,
                 .birdBeak = 0xFFDFA342,
-                .dust = 0xFFE3DABA
+                .dust = 0xFFE3DABA,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -366,7 +367,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFDBDBCF,
                 .birdWing = 0xFF5B4D40,
                 .birdBeak = 0xFFD9A556,
-                .dust = 0xFFCAC6B5
+                .dust = 0xFFCAC6B5,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -553,7 +555,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE6D9C2,
                 .birdWing = 0xFF634A34,
                 .birdBeak = 0xFFE1A242,
-                .dust = 0xFFDFD0B5
+                .dust = 0xFFDFD0B5,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -740,7 +743,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFEFD7B2,
                 .birdWing = 0xFF6A4723,
                 .birdBeak = 0xFFE99E19,
-                .dust = 0xFFF3D5A6
+                .dust = 0xFFF3D5A6,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -927,7 +931,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFEBD7BD,
                 .birdWing = 0xFF67482F,
                 .birdBeak = 0xFFE69F39,
-                .dust = 0xFFDACEBD
+                .dust = 0xFFDACEBD,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -1114,7 +1119,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFEFD7B2,
                 .birdWing = 0xFF6A4723,
                 .birdBeak = 0xFFE99E19,
-                .dust = 0xFFF3D5A6
+                .dust = 0xFFF3D5A6,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -1301,7 +1307,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFEED7B1,
                 .birdWing = 0xFF694821,
                 .birdBeak = 0xFFE89F14,
-                .dust = 0xFFE9CE9F
+                .dust = 0xFFE9CE9F,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -1489,7 +1496,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE9D7C4,
                 .birdWing = 0xFF654936,
                 .birdBeak = 0xFFE3A045,
-                .dust = 0xFF8A7D73
+                .dust = 0xFF8A7D73,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -1677,7 +1685,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE8D8C2,
                 .birdWing = 0xFF644934,
                 .birdBeak = 0xFFE3A142,
-                .dust = 0xFF887E73
+                .dust = 0xFF887E73,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -1865,7 +1874,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE8D8C2,
                 .birdWing = 0xFF644934,
                 .birdBeak = 0xFFE3A142,
-                .dust = 0xFF887E73
+                .dust = 0xFF887E73,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = true,
             .hasFireflies = false,
@@ -2053,7 +2063,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFFDEAE1,
                 .birdWing = 0xFF78574D,
                 .birdBeak = 0xFFF9B266,
-                .dust = 0xFFAB9791
+                .dust = 0xFFAB9791,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true, // Effect: slowly falling glowing particles (magical sparks or rare meteors)
@@ -2241,7 +2252,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE1D9CD,
                 .birdWing = 0xFF594D42,
                 .birdBeak = 0xFFC4AB8C,
-                .dust = 0xFFE5DBCB
+                .dust = 0xFFE5DBCB,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -2428,7 +2440,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE7D9C0,
                 .birdWing = 0xFF644A32,
                 .birdBeak = 0xFFE2A13F,
-                .dust = 0xFFE5D6BD
+                .dust = 0xFFE5D6BD,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -2616,7 +2629,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE9D7C2,
                 .birdWing = 0xFF654934,
                 .birdBeak = 0xFFE4A042,
-                .dust = 0xFF897E73
+                .dust = 0xFF897E73,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -2804,7 +2818,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFC7F79F,
                 .birdWing = 0xFF37451B,
                 .birdBeak = 0xFFB4FF64,
-                .dust = 0xFF898061
+                .dust = 0xFF898061,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = true,
             .hasFireflies = false,
@@ -2861,8 +2876,8 @@ namespace ClaFi::PathArt::Themes {
             .petal2 = 0xFFC6C6C6,
             .petal3 = 0xFFD7D7D7,
             .chase = {
-                .mountainTop = 0xFF9E9E9E,
-                .mountainFoot = 0xFF7D7D7D,
+                .mountainTop = 0xFF292929,
+                .mountainFoot = 0xFF0D0D0D,
                 .crownLight = 0xFF404040,
                 .crownMiddle = 0xFF373737,
                 .treeCrown = 0xFF323232,
@@ -2878,13 +2893,13 @@ namespace ClaFi::PathArt::Themes {
                 .frontGrassDark = 0xFF2E2E2E,
                 .shadow = 0x47000000,
                 .ourWolf = {
-                    .light = 0xFF3E3E3E,
-                    .shade = 0xFF282828,
-                    .coat = 0xFF343434,
-                    .far = 0xFF222222,
-                    .dark = 0xFF161616,
+                    .light = 0xFF2F2F2F,
+                    .shade = 0xFF1A1A1A,
+                    .coat = 0xFF252525,
+                    .far = 0xFF141414,
+                    .dark = 0xFF090909,
                     .belly = 0xE65F5F5F,
-                    .tongue = 0xFF606060,
+                    .tongue = 0xFF980002,
                     .mouth = 0xFF1D1D1D,
                     .tooth = 0xFF999999,
                     .toothEdge = 0xFF5B5B5B
@@ -2903,13 +2918,13 @@ namespace ClaFi::PathArt::Themes {
                     .toothEdge = 0xFFE1E1E1
                 },
                 .theirWolf = {
-                    .light = 0xFF202020,
-                    .shade = 0xFF121212,
-                    .coat = 0xFF191919,
-                    .far = 0xFF0C0C0C,
-                    .dark = 0xFF060606,
+                    .light = 0xFF171717,
+                    .shade = 0xFF090909,
+                    .coat = 0xFF101010,
+                    .far = 0xFF050505,
+                    .dark = 0xFF020202,
                     .belly = 0xE6474747,
-                    .tongue = 0xFF606060,
+                    .tongue = 0xFF980002,
                     .mouth = 0xFF1D1D1D,
                     .tooth = 0xFF999999,
                     .toothEdge = 0xFF5B5B5B
@@ -2931,8 +2946,8 @@ namespace ClaFi::PathArt::Themes {
                 .bough = 0xFF262626,
                 .bark = 0xFF353535,
                 .barkShade = 0xFF1F1F1F,
-                .appleLight = 0xFFE24F41,
-                .appleDark = 0xFF9E2924,
+                .appleLight = 0xFF980002,
+                .appleDark = 0xFF4E0002,
                 .leaf = 0xFF949494,
                 .appleFlesh = 0xFFEDEDED,
                 .appleSeed = 0xFF444444,
@@ -2961,11 +2976,11 @@ namespace ClaFi::PathArt::Themes {
                 .peelShade = 0xFFA2A2A2,
                 .peelInside = 0xFFDCDCDC,
                 .peelTip = 0xFF414141,
-                .rakeHandle = 0xFF525252,
-                .rakeHandleShade = 0xFF3D3D3D,
-                .rakeMetal = 0xFF454545,
-                .capLight = 0xFF515151,
-                .capDark = 0xFF373737,
+                .rakeHandle = 0xFF3D3D3D,
+                .rakeHandleShade = 0xFF292929,
+                .rakeMetal = 0xFF303030,
+                .capLight = 0xFF980002,
+                .capDark = 0xFF4E0002,
                 .capSpot = 0xFF989898,
                 .stalk = 0xFF909090,
                 .stalkShade = 0xFF787878,
@@ -2992,7 +3007,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFF888888,
                 .birdWing = 0xFF2F2F2F,
                 .birdBeak = 0xFF6C6C6C,
-                .dust = 0xFF888888
+                .dust = 0xFF888888,
+                .dazeStar = 0xFFC9C9C9
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -3000,7 +3016,8 @@ namespace ClaFi::PathArt::Themes {
             .hasSnow = false,
             .hasPetals = false,
             .hasDust = true, // wind effect
-            .isAfrica = false
+            .isAfrica = false,
+            .airHaze = 0.30f
         } {
         }
     };
@@ -3179,7 +3196,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFFFF0FF,
                 .birdWing = 0xFF403F7B,
                 .birdBeak = 0xFFE8C890,
-                .dust = 0xFF897D79
+                .dust = 0xFF897D79,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -3367,7 +3385,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFECDABF,
                 .birdWing = 0xFF674A31,
                 .birdBeak = 0xFFE3A348,
-                .dust = 0xFFECDAB8
+                .dust = 0xFFECDAB8,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -3554,7 +3573,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFF9FF0FF,
                 .birdWing = 0xFF5932A1,
                 .birdBeak = 0xFFE6FF1A,
-                .dust = 0xFF8C7B7B
+                .dust = 0xFF8C7B7B,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -3742,7 +3762,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFEBD5CB,
                 .birdWing = 0xFF4B6665,
                 .birdBeak = 0xFFE59E52,
-                .dust = 0xFF8D7B79
+                .dust = 0xFF8D7B79,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -3930,7 +3951,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE0E0B7,
                 .birdWing = 0xFF5F4E28,
                 .birdBeak = 0xFFDEA724,
-                .dust = 0xFFE0E0AF
+                .dust = 0xFFE0E0AF,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -4117,7 +4139,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFE2DAC0,
                 .birdWing = 0xFF614B32,
                 .birdBeak = 0xFFDFA33F,
-                .dust = 0xFFE9DBB7
+                .dust = 0xFFE9DBB7,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -4304,7 +4327,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFC3A78E,
                 .birdWing = 0xFF55341D,
                 .birdBeak = 0xFFB87B32,
-                .dust = 0xFFC3A789
+                .dust = 0xFFC3A789,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -4491,7 +4515,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFFFE6F2,
                 .birdWing = 0xFF6B54A6,
                 .birdBeak = 0xFFFFA07A,
-                .dust = 0xFFDBC2B4
+                .dust = 0xFFDBC2B4,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -4678,7 +4703,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFDCCBB0,
                 .birdWing = 0xFF3D4956,
                 .birdBeak = 0xFFC9A04A,
-                .dust = 0xFFCCC0AF
+                .dust = 0xFFCCC0AF,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = false,
@@ -4865,7 +4891,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFDDBEAF,
                 .birdWing = 0xFF623C2F,
                 .birdBeak = 0xFFD38C45,
-                .dust = 0xFFDDBEA9
+                .dust = 0xFFDDBEA9,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -5052,7 +5079,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFF3FCFF,
                 .birdWing = 0xFF386A98,
                 .birdBeak = 0xFFFEF5CE,
-                .dust = 0xFF817F81
+                .dust = 0xFF817F81,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
@@ -5239,7 +5267,8 @@ namespace ClaFi::PathArt::Themes {
                 .birdBelly = 0xFFFFC6F1,
                 .birdWing = 0xFF4E418F,
                 .birdBeak = 0xFFFFFF00,
-                .dust = 0xFF8A7C7D
+                .dust = 0xFF8A7C7D,
+                .dazeStar = 0xFFFFD34D
             },
             .hasRain = false,
             .hasFireflies = true,
