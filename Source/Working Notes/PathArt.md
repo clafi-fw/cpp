@@ -3159,6 +3159,31 @@ white FFF2DC. Shown the brown the hills had, 7B4630, the ground now 64514A, and 
 darker than the grey sky, fainter than the white ones. effectColor1 is a SceneTheme field, so the
 Mill's Steampunk dust turns brown too; chase.dust, the puffs where the wolf lands, stays CCC0AF.
 
+Then (Oj, 15:44) "Magic Forest: the same treatment as High Noon". Its land ran 006D00 (L 0.46) at
+the top to 50AD52 (0.67) at the bottom, and its rock FEF0FF / CEC1CF (0.97 / 0.83) above the violet
+air 9E92F2 (0.71) left the near range 0.04-0.05 lighter at the edge. Shown the land with each end's
+lightness swapped and hue kept, which with two near equal hues swaps the greens, with the stems as
+they are, 0.07 and 0.13 darker; then on that land the top kept over a foot of 5E505F, 433543 or a
+violet 3F3355. Oj (15:49) "B, M2": hillTop 53AD4E, hillBottom 006D12, the stems kept (0.34 against a
+bottom of 0.46), mountainFoot 433543; the near range 0.03-0.07 the darker one. The land is
+SceneTheme's, so the Mill's Magic Forest turns too. Line comments "Hilltops - light green (sunlit
+canopy)" and "Lower parts of hills - dark green (dense forest)".
+
+Then (Oj, 15:51) "Less saturated green", with the figures still to pick. Shown the land, the trees
+and the stems together at 0.75, 0.55 and 0.40 of their colour, lightness and hue kept, as Clear
+Day's were; the trail, the leaves and the frog keep theirs. Oj (15:56) "G2": hillTop 76A372,
+hillBottom 3B653A, treeLeavesBase 52824F, crownLight 5F945B, crownMiddle 568853, treeCrown 5E855E,
+treeCrownLight 6C986C, treeCrownMiddle 638C62, grass 234121, frontGrassDark 1D361B, chase.reedStem
+395C37. The Mill's lily pad, 32CD32, keeps its colour.
+
+Then the figures, measured again on the duller land: ourWolf's light 0.08 off, theirWolf's 0.12,
+theirHare's 0.09, ourHare clear. Shown A each light alone lighter with theirWolf a step darker, B
+whole coats lighter, C whole coats darker; Oj (16:01) "A": ourWolf.light 80809B to A3A3BF,
+theirHare.light 8F8890 to ABA3AC, theirWolf light / shade / coat / far / dark / belly 4F4B60 /
+373448 / 423F53 / 2F2A3D / 221D2E / E68C899F to 464256 / 2E2B3F / 393649 / 262134 / 1A1525 /
+E6827F94. Every light stands 0.15 off; ourWolf's shade 0.07 and theirHare's 0.06 where the near
+range is behind them, as in High Noon.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
