@@ -19,6 +19,9 @@ namespace ClaFi::PathArt
 
     namespace
     {
+        // The share of the way to black his shade goes where the light reaches him least.
+        constexpr float k_unlitShare{ 0.25f };
+
         // A tooth on the edge of a jaw, in units of the wolf; `along` runs from the back of the
         // mouth to the front.
         struct Tooth
@@ -132,8 +135,9 @@ namespace ClaFi::PathArt
         body.cubicTo({ 10.0f, 22.0f }, { -20.0f, 20.0f }, { -34.0f, 14.0f });
         body.cubicTo({ -46.0f, 10.0f }, { -48.0f, -2.0f }, { -40.0f, -6.0f });
         body.close();
+        const Color unlit = colorBetween(coat.shade, Color{ 0xFF000000 }, k_unlitShare);
         fillShape(wolf, body, LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
-            coat.light, coat.shade));
+            coat.light, unlit));
         PixelPath belly;
         belly.moveTo(-26.0f, 12.0f);
         belly.cubicTo({ -10.0f, 20.0f }, { 16.0f, 20.0f }, { 32.0f, 12.0f });

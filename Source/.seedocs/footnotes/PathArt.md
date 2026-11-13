@@ -185,7 +185,6 @@ frames are bark too, and the frames and the sails are outlined in barkShade.
   are measured as they are drawn, hazed.
 - A mountain's clear colours keep the tint of the theme's light; only their lightness moves.
 - theirWolf stays darker than ourWolf.
-- In Winter Frost the couples trade hares: ourHare is grey and theirHare brown.
 - A coat's tongue, mouth, teeth, tail, inner ears and nose rise with the fur where it is lifted and
   never darken with it, so a white tail stays white by day.
 - Yellow things - the banana peel, the rubber duck, the ball's yellow, the flowers' hearts - keep

@@ -2326,10 +2326,10 @@ namespace ClaFi::PathArt::Themes {
                     .toothEdge = 0xFF9A9388
                 },
                 .ourHare = {
-                    .light = 0xFF8B8B85,
-                    .fur = 0xFF797973,
-                    .shade = 0xFF676761,
-                    .belly = 0xE6C5C4BE,
+                    .light = 0xFFEEB785,
+                    .fur = 0xFFDDA978,
+                    .shade = 0xFFCC976A,
+                    .belly = 0xE6FFFFFE,
                     .tail = 0xFFFDFDFD,
                     .earInside = 0xFFEFA5A0,
                     .nose = 0xFFD6777A,
@@ -2351,10 +2351,10 @@ namespace ClaFi::PathArt::Themes {
                     .toothEdge = 0xFF9A9388
                 },
                 .theirHare = {
-                    .light = 0xFFC38E5D,
-                    .fur = 0xFFB38151,
-                    .shade = 0xFFA27043,
-                    .belly = 0xE6EAD9BD,
+                    .light = 0xFFEAEAE3,
+                    .fur = 0xFFD6D6CF,
+                    .shade = 0xFFC2C2BB,
+                    .belly = 0xE6FFFFFF,
                     .tail = 0xFFFDFDFD,
                     .earInside = 0xFFEFA5A0,
                     .nose = 0xFFD6777A,
@@ -2369,7 +2369,7 @@ namespace ClaFi::PathArt::Themes {
                 .barkShade = 0xFF5A3922,
                 .appleLight = 0xFFE54C3F,
                 .appleDark = 0xFFA02522,
-                .leaf = 0xFF4EA14C,
+                .leaf = 0xFF97724D,
                 .appleFlesh = 0xFFF8EFD2,
                 .appleSeed = 0xFF492E1B,
                 .crowBody = 0xFF2B2E3C,
@@ -2409,10 +2409,10 @@ namespace ClaFi::PathArt::Themes {
                 .boardShade = 0xFF885935,
                 .stumpTop = 0xFFD7B78B,
                 .stumpRing = 0xFFAD885C,
-                .stumpSprout = 0xFF3E8936,
-                .frogLight = 0xFF679E07,
-                .frogDark = 0xFF30630F,
-                .frogBelly = 0xFFBCC48B,
+                .stumpSprout = 0xFF614731,
+                .frogLight = 0xFF78C5D7,
+                .frogDark = 0xFF307A9D,
+                .frogBelly = 0xFFE1F2F8,
                 .shellLight = 0xFFCD8947,
                 .shellDark = 0xFF8C4E24,
                 .shellLine = 0xFF6A391B,
@@ -2436,7 +2436,8 @@ namespace ClaFi::PathArt::Themes {
             .hasSnow = true,
             .hasPetals = false,
             .hasDust = false,
-            .isAfrica = false
+            .isAfrica = false,
+            .airHaze = 0.30f
         } {
         }
     };

@@ -3044,6 +3044,50 @@ sand; shown 0.10, 0.17 and 0.24 darker, the dark blades and the reed stems moved
 (13:53) took 0.20 and 0.17: airHaze 0.20, the first theme to state its own; grass 3F4F1D (L 0.40),
 frontGrassDark 304113, reedStem 8A8051 to 594F21.
 
+Then (Oj, 14:02) "the figures are fine, the next is Winter Frost: increase air thickness" - Sahara
+Heat's runners and props, which the model put a little short, stay. Winter Frost's air is a pale
+frosty blue, B0CBE9 (L 0.83), its rock a slightly warm grey, DBD7D7 over ABA6A6 (0.88 and 0.73). Its
+ranges met 0.02 to 0.03 apart at 0.10 and 0.20, 0.01 to 0.02 at 0.30 and almost none at 0.45, where
+they are one blue wall. Oj (14:05) took 0.30: the mountains take the frosty blue, and the two ranges
+nearly merge.
+
+Then (Oj, 14:08) "Make the frog icy" - Winter Frost's frog, a bright green, 679E07 over 30630F with
+an olive belly. The snow behind him stands at L 0.87 to 0.91, so a pale ice frog at 0.86 stood only
+0.04 off it. Shown A, ice blue; B, frosted mint; C, glacier blue - 0.11, 0.11 and 0.21 off the snow.
+Oj (14:10) took A: frogLight 78C5D7, frogDark 307A9D, frogBelly E1F2F8.
+
+Then (Oj, 14:12) "The leaf on the stump" - Winter Frost's, still summer green: leaf 4EA14C on a
+shoot of stumpSprout 3E8936. The apple's leaf is the same field. Shown A, ice as the frog; B,
+frosted mint; C, a withered brown leaf, which stands 0.30 off the snow where the icy ones stand
+0.11. Oj (14:16) took C: leaf 97724D, stumpSprout 614731 - the apple's leaf is brown too.
+
+Then (Oj, 14:18) "whiter hare" - Winter Frost's ourHare, a grey hare there (light 8B8B85, L 0.63).
+Lifting the details with the fur, by the generator's rule, turned the inner ears and the nose white,
+so the mocks lift the light, fur, shade and belly alone. Shown 0.12, 0.20 and 0.30 lighter, her
+light 0.15, 0.07 and 0.04 off the snow. Oj (14:20) took 0.30: light EAEAE3, fur D6D6CF, shade
+C2C2BB, belly E6FFFFFF, a cream-white winter hare whose underside, darkening toward the ground, and
+warm white on the blue-white snow hold her together. The footnote's Winter Frost bullet says so.
+
+Then (Oj, 14:22) "lighter their hare" - Winter Frost's theirHare, the brown one, light C38E5D (L
+0.69). Her fur alone shown 0.07, 0.13 and 0.19 lighter; her warm colour keeps her light 0.11 to 0.12
+off the snow in all three, her shade 0.16, 0.12 and 0.11. Oj (14:23) took 0.13: light EEB785, fur
+DDA978, shade CC976A, belly E6FFFFFE, a light winter tan.
+
+Then (Oj, 14:25) "swap hares" - Winter Frost's couples had traded hares, ours grey and theirs brown,
+since the generator's SWAP_HARES. They trade back: ourHare is the light tan, EEB785, and theirHare
+the white winter hare, EAEAE3, all eleven fields exchanged (the details were the same in both).
+SWAP_HARES is empty, well_lit.json holds the coats as they stand, and the footnote bullet about
+Winter Frost's hares is gone, the theme no longer being an exception.
+
+Then (Oj, 14:27) "level the wolf's and hare's depth": the wolf's body ran from his light to his
+shade, the hare's from her light to a quarter of the way from her shade to black, so in Winter Frost
+the wolves' bodies darkened 0.13 and 0.09 top to bottom and the hares' 0.24 and 0.28. Shown A, the
+wolves to the hares' quarter; B, all at an eighth; C, the hares to their shade. Oj (14:33) took A:
+drawWolf's body runs from the light to `unlit`, the shade a quarter of the way to black
+(WolfSprite's k_unlitShare, as the hare's). Winter Frost's wolves now darken 0.21 and 0.14; Clear
+Day's ourWolf, whose light alone was lifted, 0.38. Every wolf drawWolf draws takes it - the Chase's
+in every theme, the icon's and the Puppeteer's.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
