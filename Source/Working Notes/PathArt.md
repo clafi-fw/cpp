@@ -3118,6 +3118,20 @@ Then (Oj, 14:56) "Red tongue". Shown both tongues in the apple's red 980002, bot
 454545 and theirWolf's 606060 to 980002, so the theme's one red is the apple, the toadstool's cap
 and the wolves' tongues.
 
+Then (Oj, 15:04) "Toxic waste: thicken air, green and flip the mountains". The sky 0A1E0A to 285028
+makes the air 142E14 (L 0.27), and the olive rock 535142 / 383628 (0.43 / 0.33) above it left the
+near range 0.02-0.03 lighter at the edge. Even black rock parts the ranges by about 0.04 at air 0.20
+and 0.03 at 0.30. Shown A air 0.20 with a deep green rock in the sky's hue 052106 / 000700 (near
+0.03 darker), B air 0.20 with a yellow-green 162800 / 020400 (0.03-0.04), C air 0.30 with A's rock
+(0.02), D air 0.30 with B's (0.02-0.03); Oj (15:09) "C": `.airHaze = 0.30f` after `.hasStars =
+false`, mountainTop 052106, mountainFoot 000700. The runners stand 0.21 or more off the near range.
+
+Then (Oj, 15:13) "B with lighter tops": B's air 0.20 and foot 020400, with the top lifted. A lighter
+top shows on the far peaks, which the thinning air hazes least, and merges the ranges where they
+meet high, right of the middle. Shown top 203500 (near 0.03-0.04 darker), 294300 (0.02-0.03) and
+345200 (0.01-0.03); Oj (15:15) took 294300: `.airHaze = 0.20f`, mountainTop 294300, mountainFoot
+020400.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

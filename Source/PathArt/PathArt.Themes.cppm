@@ -2687,8 +2687,8 @@ namespace ClaFi::PathArt::Themes {
             .petal2 = 0xFFC7F79F,
             .petal3 = 0xFF88FEEB,
             .chase = {
-                .mountainTop = 0xFF535142,
-                .mountainFoot = 0xFF383628,
+                .mountainTop = 0xFF294300,
+                .mountainFoot = 0xFF020400,
                 .crownLight = 0xFF3E723B,
                 .crownMiddle = 0xFF366933,
                 .treeCrown = 0xFF326432,
@@ -2828,7 +2828,8 @@ namespace ClaFi::PathArt::Themes {
             .hasPetals = false,
             .hasDust = false,
             .isAfrica = false,
-            .hasStars = false
+            .hasStars = false,
+            .airHaze = 0.20f
         } {
         }
     };
