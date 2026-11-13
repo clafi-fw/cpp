@@ -3270,6 +3270,39 @@ step from a near leg to a far one. `far` is drawn nowhere itself; with `coat` it
 Every wolf drawWolf draws takes it. Where a theme's tips are lighter than its legs, as in Lunar
 Eclipse (705C8A over legs at 5A4B6E), the near paws are lighter than the legs.
 
+Then (Oj, 02:06) "make the magic forest hare much much lighter": its ourHare, the pink one, lifted
+0.12, 0.20 and 0.28 in light, fur and shade at its own hue and chroma, the belly as far as L 0.97.
+Oj (02:08) "L2", 0.20 lighter: light FFC9DC, fur FFB1CF, shade EE9FBC, belly E6FFF1F6. Her light
+stands 0.29 to 0.32 off the green behind her, where it was 0.17 to 0.19; her ear inside (F2A2AC) and
+nose now sit darker than her fur.
+
+Then (Oj, 02:24) "In toxic waste make the wolf greener, his tips a bit darker, hare much lighter":
+shown his fur toward the theme's lime (hue 137) at chroma 0.04, 0.07 and 0.10 at its own lightness,
+his tips 0.05, 0.10 and 0.15 darker, and the hare 0.12, 0.20 and 0.28 lighter in her brown. Oj
+(02:28) "The wolf 2, the hare 3 - fix its tail and add a green hint": the wolf light 89A87D, shade
+708E64, coat 7E9C72, far 68865D, dark 405C35, belly E6B7C6B0. The hare's tail, a grey A6A493 darker
+than her new fur, went to a near-white cream, and her fur, belly and tail were moved part of the way
+toward the green; Oj (02:29) "G2", a quarter of the way: light C7BE8B, fur BCB482, shade B1A877,
+belly E6E9EEC2, tail ECF7DA.
+
+Then (Oj, 02:31) "Steampunk: darker hedgehog coat": its spines, a light steel grey 6E6E76 over
+8C8C96, shown 0.08, 0.15 and 0.22 darker at their own hue; the face and ears kept. Oj (02:34) "H2":
+spinesDark 44444C, spinesLight 60606A. On the trail (7D6D5D) the dark spines stand 0.16 off and the
+light ones 0.07, where they were 0.04 and 0.11.
+
+Then (Oj, 02:37) "Twilight: much much lighter hare": its plum-rose hare shown 0.12, 0.20 and 0.28
+lighter at its own hue and chroma. Oj (02:38) "The latest, and to Magic Forest too": both hares at
+the third step, 0.28 above where each started - Twilight light FFEFF7, fur FFD9ED, shade FCBEE0,
+belly E6FFF0F8; Magic Forest light FFF0F5, fur FFDAE7, shade FFBED6, belly E6FFF1F6 (its 02:08 step
+was 0.20). Near white with a blush of their pink, they stand 0.44 to 0.46 off Twilight's land; their
+belly patches all but merge with their bodies. Oj (02:42) "Take to twilight L2 hare, keep the magic
+forest's L3": Twilight's hare at the second step instead, light FFC6E6, fur F4B6D7, shade E1A4C6,
+belly E6FFF0F8, 0.37 to 0.39 off its land.
+
+Then (Oj, 02:45) "Take the midnight reeds stems from the other stems": Midnight's chase.reedStem, a
+near-black 031504 that vanished into its dark hills, takes its grass, 2C422B, the colour of its
+tufts and daisy stems. The Mill's reed stem, SceneTheme.reedStem, keeps its own.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
