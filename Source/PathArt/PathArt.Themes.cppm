@@ -61,11 +61,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF4F834F,
                 .bladeMiddle = 0xFF629D60,
                 .bladeLight = 0xFF7BBC74,
-                .daisyLeaf = 0xFF72B076,
                 .reedStem = 0xFF66955F,
                 .frontGrassDark = 0xFF164315,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF91A1AF,
                     .shade = 0xFF394551,
                     .coat = 0xFF4A5864,
@@ -77,7 +76,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF4F5E9,
                     .toothEdge = 0xFF96948A
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFD09F6E,
                     .fur = 0xFFC09262,
                     .shade = 0xFFAF8154,
@@ -90,7 +89,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFB2AEA5
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF474F59,
                     .shade = 0xFF303841,
                     .coat = 0xFF3B434C,
@@ -102,7 +101,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF4F5E9,
                     .toothEdge = 0xFF96948A
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFB7BCB7,
                     .fur = 0xFFA4A9A4,
                     .shade = 0xFF909690,
@@ -141,10 +140,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE4AD22,
                 .duckBeak = 0xFFEE8C23,
                 .duckBeakShade = 0xFFC6661E,
-                .ballRed = 0xFFE24F41,
-                .ballWhite = 0xFFF1F5F1,
-                .ballBlue = 0xFF327ED9,
-                .ballYellow = 0xFFFBD33F,
+                .ballPanel1 = 0xFFE24F41,
+                .ballPanel2 = 0xFF327ED9,
+                .ballPanel3 = 0xFFFBD33F,
+                .ballBase = 0xFFF1F5F1,
                 .peel = 0xFFF8D74D,
                 .peelShade = 0xFFDDB533,
                 .peelInside = 0xFFFEF9DF,
@@ -204,8 +203,8 @@ namespace ClaFi::PathArt::Themes {
             .sunCorona2 = 0xFEFFFAA5,
             .sunGlow = 0xFFFFFBF0,
             .cloud = 0xCCFAFAFA,
-            .hillTop = 0xFF4F7000,
-            .hillBottom = 0xFF70CD71,
+            .hillTop = 0xFF9EC365,
+            .hillBottom = 0xFF0E781B,
             .riverTop = 0xFF00BFFF,
             .riverBottom = 0xFF1E90FF,
             .riverWave = 0xBBFFFFFE,
@@ -237,7 +236,7 @@ namespace ClaFi::PathArt::Themes {
             .petal3 = 0xFFD5D6FC,
             .chase = {
                 .mountainTop = 0xFFF1F1F6,
-                .mountainFoot = 0xFFC4C4C8,
+                .mountainFoot = 0xFF3A3A3D,
                 .crownLight = 0xFF2B9E29,
                 .crownMiddle = 0xFF259223,
                 .treeCrown = 0xFF0D9147,
@@ -245,16 +244,15 @@ namespace ClaFi::PathArt::Themes {
                 .treeCrownMiddle = 0xFF139948,
                 .trail = 0xE69E9750,
                 .pebble = 0xFF8C843E,
-                .grass = 0xFF386516,
+                .grass = 0xFF1D3F00,
                 .bladeDark = 0xFF158B45,
                 .bladeMiddle = 0xFF29A652,
                 .bladeLight = 0xFF46C661,
-                .daisyLeaf = 0xFF477721,
                 .reedStem = 0xFF476518,
-                .frontGrassDark = 0xFF32591A,
+                .frontGrassDark = 0xFF153400,
                 .shadow = 0x47000000,
-                .greyWolf = {
-                    .light = 0xFF6E849C,
+                .ourWolf = {
+                    .light = 0xFF869CB5,
                     .shade = 0xFF4B5F75,
                     .coat = 0xFF5D738A,
                     .far = 0xFF415569,
@@ -265,8 +263,8 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFECF6F5,
                     .toothEdge = 0xFF8F9595
                 },
-                .brownHare = {
-                    .light = 0xFFAF8763,
+                .ourHare = {
+                    .light = 0xFFCAA17C,
                     .fur = 0xFF9F7B57,
                     .shade = 0xFF8E6A49,
                     .belly = 0xE6D3D1C0,
@@ -278,20 +276,20 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFBFDFF,
                     .toothEdge = 0xFF9B9FA1
                 },
-                .blackWolf = {
-                    .light = 0xFF405063,
-                    .shade = 0xFF29384A,
-                    .coat = 0xFF344455,
-                    .far = 0xFF222E3F,
-                    .dark = 0xFF152130,
-                    .belly = 0xE67D8FA2,
+                .theirWolf = {
+                    .light = 0xFF344456,
+                    .shade = 0xFF1E2D3E,
+                    .coat = 0xFF293849,
+                    .far = 0xFF172333,
+                    .dark = 0xFF0B1625,
+                    .belly = 0xE6708294,
                     .tongue = 0xFFE4748D,
                     .mouth = 0xFF522034,
                     .tooth = 0xFFECF6F5,
                     .toothEdge = 0xFF8F9595
                 },
-                .greyHare = {
-                    .light = 0xFF869398,
+                .theirHare = {
+                    .light = 0xFFA0ADB2,
                     .fur = 0xFF748186,
                     .shade = 0xFF626F73,
                     .belly = 0xE6C0CDD2,
@@ -329,10 +327,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE1AE34,
                 .duckBeak = 0xFFEB8E33,
                 .duckBeakShade = 0xFFC3682B,
-                .ballRed = 0xFFDD5450,
-                .ballWhite = 0xFFE9F6FD,
-                .ballBlue = 0xFF227DE3,
-                .ballYellow = 0xFFF7D44D,
+                .ballPanel1 = 0xFFDD5450,
+                .ballPanel2 = 0xFF227DE3,
+                .ballPanel3 = 0xFFF7D44D,
+                .ballBase = 0xFFE9F6FD,
                 .peel = 0xFFF4D859,
                 .peelShade = 0xFFDAB641,
                 .peelInside = 0xFFFAFAE5,
@@ -437,11 +435,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF607D64,
                 .bladeMiddle = 0xFF77957C,
                 .bladeLight = 0xFF93B398,
-                .daisyLeaf = 0xFF5D7C63,
                 .reedStem = 0xFF48644D,
                 .frontGrassDark = 0xFF3B5640,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF747E8D,
                     .shade = 0xFF515967,
                     .coat = 0xFF636D7B,
@@ -453,7 +450,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF7F4E9,
                     .toothEdge = 0xFF99938A
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFAA7849,
                     .fur = 0xFF9B6B3D,
                     .shade = 0xFF8A5B2F,
@@ -466,7 +463,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFCFDFF,
                     .toothEdge = 0xFFA59D96
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF4A4E59,
                     .shade = 0xFF333741,
                     .coat = 0xFF3E424C,
@@ -478,7 +475,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF7F4E9,
                     .toothEdge = 0xFF99938A
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF7C7E7A,
                     .fur = 0xFF6B6C68,
                     .shade = 0xFF595A56,
@@ -517,10 +514,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE5AC22,
                 .duckBeak = 0xFFEF8B23,
                 .duckBeakShade = 0xFFC7651E,
-                .ballRed = 0xFFE44D41,
-                .ballWhite = 0xFFF4F4F1,
-                .ballBlue = 0xFF397DD9,
-                .ballYellow = 0xFFFCD23F,
+                .ballPanel1 = 0xFFE44D41,
+                .ballPanel2 = 0xFF397DD9,
+                .ballPanel3 = 0xFFFCD23F,
+                .ballBase = 0xFFF4F4F1,
                 .peel = 0xFFF9D64D,
                 .peelShade = 0xFFDEB433,
                 .peelInside = 0xFFFFF8E1,
@@ -625,11 +622,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF488717,
                 .bladeMiddle = 0xFF58A224,
                 .bladeLight = 0xFF6FC232,
-                .daisyLeaf = 0xFF77A854,
                 .reedStem = 0xFF778E3D,
                 .frontGrassDark = 0xFF527E37,
                 .shadow = 0x47321E00,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF838385,
                     .shade = 0xFF5F5E60,
                     .coat = 0xFF727274,
@@ -641,7 +637,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEF2DE,
                     .toothEdge = 0xFFA1917B
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFB57836,
                     .fur = 0xFFA56B29,
                     .shade = 0xFF945B18,
@@ -654,7 +650,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFCFA,
                     .toothEdge = 0xFFAD9B87
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF524D4D,
                     .shade = 0xFF3A3635,
                     .coat = 0xFF454140,
@@ -666,7 +662,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEF2DE,
                     .toothEdge = 0xFFA1917B
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8E8574,
                     .fur = 0xFF7C7363,
                     .shade = 0xFF6A6151,
@@ -705,10 +701,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE6AE31,
                 .duckBeak = 0xFFEE8F2E,
                 .duckBeakShade = 0xFFCC6402,
-                .ballRed = 0xFFEA4528,
-                .ballWhite = 0xFFFEF2E1,
-                .ballBlue = 0xFF477ECD,
-                .ballYellow = 0xFFFDD24A,
+                .ballPanel1 = 0xFFEA4528,
+                .ballPanel2 = 0xFF477ECD,
+                .ballPanel3 = 0xFFFDD24A,
+                .ballBase = 0xFFFEF2E1,
                 .peel = 0xFFFDDD6F,
                 .peelShade = 0xFFE9B926,
                 .peelInside = 0xFFFFFFFD,
@@ -813,11 +809,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF4F825D,
                 .bladeMiddle = 0xFF629C70,
                 .bladeLight = 0xFF7DBA88,
-                .daisyLeaf = 0xFF306A4F,
                 .reedStem = 0xFF30593A,
                 .frontGrassDark = 0xFF1D4929,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF76747B,
                     .shade = 0xFF545158,
                     .coat = 0xFF65646A,
@@ -829,7 +824,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFDF2E4,
                     .toothEdge = 0xFFBFB6AF
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFF946E4F,
                     .fur = 0xFF876142,
                     .shade = 0xFF785133,
@@ -842,7 +837,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFCAC0BA
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF45444C,
                     .shade = 0xFF2E2D35,
                     .coat = 0xFF39383F,
@@ -854,7 +849,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFDF2E4,
                     .toothEdge = 0xFF9E9186
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFEEE8E1,
                     .fur = 0xFFDAD4CD,
                     .shade = 0xFFC6C0B9,
@@ -893,10 +888,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE7AB18,
                 .duckBeak = 0xFFF18A1B,
                 .duckBeakShade = 0xFFC96418,
-                .ballRed = 0xFFCB5F51,
-                .ballWhite = 0xFFFAF2EC,
-                .ballBlue = 0xFF4D7CBD,
-                .ballYellow = 0xFFEECF6E,
+                .ballPanel1 = 0xFFCB5F51,
+                .ballPanel2 = 0xFF4D7CBD,
+                .ballPanel3 = 0xFFEECF6E,
+                .ballBase = 0xFFFAF2EC,
                 .peel = 0xFFFCD548,
                 .peelShade = 0xFFE1B32D,
                 .peelInside = 0xFFFFF8E6,
@@ -1001,11 +996,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF7A5018,
                 .bladeMiddle = 0xFF9A6A20,
                 .bladeLight = 0xFFB88028,
-                .daisyLeaf = 0xFF7E7A2E,
                 .reedStem = 0xFF8A6A30,
                 .frontGrassDark = 0xFF5E4614,
                 .shadow = 0x47321E00,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF6C6C6E,
                     .shade = 0xFF49484A,
                     .coat = 0xFF5B5B5D,
@@ -1017,7 +1011,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEF2DE,
                     .toothEdge = 0xFFA1917B
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFF915E40,
                     .fur = 0xFF835134,
                     .shade = 0xFF724225,
@@ -1030,7 +1024,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFCFA,
                     .toothEdge = 0xFFAD9B87
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF524D4D,
                     .shade = 0xFF3A3635,
                     .coat = 0xFF454140,
@@ -1042,7 +1036,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEF2DE,
                     .toothEdge = 0xFFA1917B
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF706857,
                     .fur = 0xFF5F5747,
                     .shade = 0xFF4E4636,
@@ -1081,10 +1075,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE6AE31,
                 .duckBeak = 0xFFEE8F2E,
                 .duckBeakShade = 0xFFCC6402,
-                .ballRed = 0xFFEA4528,
-                .ballWhite = 0xFFFEF2E1,
-                .ballBlue = 0xFF477ECD,
-                .ballYellow = 0xFFFDD24A,
+                .ballPanel1 = 0xFFEA4528,
+                .ballPanel2 = 0xFF477ECD,
+                .ballPanel3 = 0xFFFDD24A,
+                .ballBase = 0xFFFEF2E1,
                 .peel = 0xFFFDDD6F,
                 .peelShade = 0xFFE9B926,
                 .peelInside = 0xFFFFFFFD,
@@ -1189,11 +1183,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF458814,
                 .bladeMiddle = 0xFF55A321,
                 .bladeLight = 0xFF6DC32F,
-                .daisyLeaf = 0xFF8A976F,
                 .reedStem = 0xFF8A8051,
                 .frontGrassDark = 0xFF5D7142,
                 .shadow = 0x47502800,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF818385,
                     .shade = 0xFF5E5F5F,
                     .coat = 0xFF707273,
@@ -1205,7 +1198,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEF3DB,
                     .toothEdge = 0xFFA0927A
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFAC712C,
                     .fur = 0xFF9C651E,
                     .shade = 0xFF8B5409,
@@ -1218,7 +1211,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFDF9,
                     .toothEdge = 0xFFAC9C86
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF504E4C,
                     .shade = 0xFF393735,
                     .coat = 0xFF44423F,
@@ -1230,7 +1223,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEF3DB,
                     .toothEdge = 0xFFA0927A
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8B8472,
                     .fur = 0xFF797260,
                     .shade = 0xFF67604F,
@@ -1269,10 +1262,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE4AD2E,
                 .duckBeak = 0xFFEB8E2B,
                 .duckBeakShade = 0xFFC46820,
-                .ballRed = 0xFFE94726,
-                .ballWhite = 0xFFFCF3E0,
-                .ballBlue = 0xFF447FCC,
-                .ballYellow = 0xFFFCD249,
+                .ballPanel1 = 0xFFE94726,
+                .ballPanel2 = 0xFF447FCC,
+                .ballPanel3 = 0xFFFCD249,
+                .ballBase = 0xFFFCF3E0,
                 .peel = 0xFFFDD539,
                 .peelShade = 0xFFE2B316,
                 .peelInside = 0xFFFFF8E4,
@@ -1377,11 +1370,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF3B8838,
                 .bladeMiddle = 0xFF4BA344,
                 .bladeLight = 0xFF63C352,
-                .daisyLeaf = 0xFF2E462F,
                 .reedStem = 0xFF031504,
                 .frontGrassDark = 0xFF2C3F2B,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF7D8394,
                     .shade = 0xFF5A5E6E,
                     .coat = 0xFF6C7282,
@@ -1393,7 +1385,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFAF2EB,
                     .toothEdge = 0xFF9B928C
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC48D61,
                     .fur = 0xFFB48055,
                     .shade = 0xFFA36F47,
@@ -1406,7 +1398,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEFCFF,
                     .toothEdge = 0xFFA79C98
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF5E5F6D,
                     .shade = 0xFF464754,
                     .coat = 0xFF52525F,
@@ -1418,7 +1410,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFB0A69F
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8C8A89,
                     .fur = 0xFF7A7876,
                     .shade = 0xFF686664,
@@ -1457,10 +1449,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE6AC25,
                 .duckBeak = 0xFFF08A26,
                 .duckBeakShade = 0xFFC86420,
-                .ballRed = 0xFFE54A43,
-                .ballWhite = 0xFFF7F2F3,
-                .ballBlue = 0xFF3F7CDA,
-                .ballYellow = 0xFFFDD241,
+                .ballPanel1 = 0xFFE54A43,
+                .ballPanel2 = 0xFF3F7CDA,
+                .ballPanel3 = 0xFFFDD241,
+                .ballBase = 0xFFF7F2F3,
                 .peel = 0xFFFBD64F,
                 .peelShade = 0xFFDFB435,
                 .peelInside = 0xFFFFF8E7,
@@ -1566,11 +1558,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF3A8935,
                 .bladeMiddle = 0xFF49A441,
                 .bladeLight = 0xFF61C44F,
-                .daisyLeaf = 0xFF1A3B38,
                 .reedStem = 0xFF1A3229,
                 .frontGrassDark = 0xFF01160B,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF858C9C,
                     .shade = 0xFF616775,
                     .coat = 0xFF747B8A,
@@ -1582,7 +1573,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFEFB,
                     .toothEdge = 0xFFA49B93
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC48E5F,
                     .fur = 0xFFB48153,
                     .shade = 0xFFA37045,
@@ -1595,7 +1586,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEFCFF,
                     .toothEdge = 0xFFA79C96
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF666874,
                     .shade = 0xFF4D505B,
                     .coat = 0xFF595B66,
@@ -1607,7 +1598,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFB8B0A7
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8D8C88,
                     .fur = 0xFF7B7A76,
                     .shade = 0xFF696864,
@@ -1646,10 +1637,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE6AC22,
                 .duckBeak = 0xFFF08B23,
                 .duckBeakShade = 0xFFC8651E,
-                .ballRed = 0xFFE54B41,
-                .ballWhite = 0xFFF6F3F1,
-                .ballBlue = 0xFF3D7CD9,
-                .ballYellow = 0xFFFDD23F,
+                .ballPanel1 = 0xFFE54B41,
+                .ballPanel2 = 0xFF3D7CD9,
+                .ballPanel3 = 0xFFFDD23F,
+                .ballBase = 0xFFF6F3F1,
                 .peel = 0xFFFAD64D,
                 .peelShade = 0xFFDFB433,
                 .peelInside = 0xFFFFF8E4,
@@ -1755,11 +1746,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF3A8935,
                 .bladeMiddle = 0xFF49A441,
                 .bladeLight = 0xFF61C44F,
-                .daisyLeaf = 0xFF1A3B38,
                 .reedStem = 0xFF1A3229,
                 .frontGrassDark = 0xFF01160B,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF858C9C,
                     .shade = 0xFF616775,
                     .coat = 0xFF747B8A,
@@ -1771,7 +1761,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFEFB,
                     .toothEdge = 0xFFA49B93
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC48E5F,
                     .fur = 0xFFB48153,
                     .shade = 0xFFA37045,
@@ -1784,7 +1774,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEFCFF,
                     .toothEdge = 0xFFA79C96
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF666874,
                     .shade = 0xFF4D505B,
                     .coat = 0xFF595B66,
@@ -1796,7 +1786,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFB8B0A7
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8D8C88,
                     .fur = 0xFF7B7A76,
                     .shade = 0xFF696864,
@@ -1835,10 +1825,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE6AC22,
                 .duckBeak = 0xFFF08B23,
                 .duckBeakShade = 0xFFC8651E,
-                .ballRed = 0xFFE54B41,
-                .ballWhite = 0xFFF6F3F1,
-                .ballBlue = 0xFF3D7CD9,
-                .ballYellow = 0xFFFDD23F,
+                .ballPanel1 = 0xFFE54B41,
+                .ballPanel2 = 0xFF3D7CD9,
+                .ballPanel3 = 0xFFFDD23F,
+                .ballBase = 0xFFF6F3F1,
                 .peel = 0xFFFAD64D,
                 .peelShade = 0xFFDFB433,
                 .peelInside = 0xFFFFF8E4,
@@ -1944,11 +1934,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF617C6D,
                 .bladeMiddle = 0xFF789484,
                 .bladeLight = 0xFF94B1A1,
-                .daisyLeaf = 0xFF426582,
                 .reedStem = 0xFF42555F,
                 .frontGrassDark = 0xFF23403D,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFFC6C8E5,
                     .shade = 0xFFA0A0BB,
                     .coat = 0xFFB4B5D1,
@@ -1960,7 +1949,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFE7D8DC
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFDDA17F,
                     .fur = 0xFFCD9473,
                     .shade = 0xFFBB8265,
@@ -1973,7 +1962,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFC0AFB5
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF403C51,
                     .shade = 0xFF2A2639,
                     .coat = 0xFF343144,
@@ -1985,7 +1974,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFDF0F3,
                     .toothEdge = 0xFF9E9093
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFCDC6CE,
                     .fur = 0xFFBAB2BB,
                     .shade = 0xFFA69FA7,
@@ -2024,10 +2013,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE7AB31,
                 .duckBeak = 0xFFF18931,
                 .duckBeakShade = 0xFFC86329,
-                .ballRed = 0xFFE7464E,
-                .ballWhite = 0xFFFAF0FB,
-                .ballBlue = 0xFF4578E1,
-                .ballYellow = 0xFFFED14B,
+                .ballPanel1 = 0xFFE7464E,
+                .ballPanel2 = 0xFF4578E1,
+                .ballPanel3 = 0xFFFED14B,
+                .ballBase = 0xFFFAF0FB,
                 .peel = 0xFFFCD557,
                 .peelShade = 0xFFE0B33F,
                 .peelInside = 0xFFFFF7EB,
@@ -2129,15 +2118,14 @@ namespace ClaFi::PathArt::Themes {
                 .treeCrownMiddle = 0xFF718866,
                 .trail = 0xE6BBB6A7,
                 .pebble = 0xFFA5A092,
-                .grass = 0xFF49745B,
+                .grass = 0xFF325D45,
                 .bladeDark = 0xFF677C5D,
                 .bladeMiddle = 0xFF7D9572,
                 .bladeLight = 0xFF98B38A,
-                .daisyLeaf = 0xFF699794,
-                .reedStem = 0xFF69806C,
-                .frontGrassDark = 0xFF3F654A,
+                .reedStem = 0xFF526955,
+                .frontGrassDark = 0xFF294F35,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF69696A,
                     .shade = 0xFF464646,
                     .coat = 0xFF585859,
@@ -2149,7 +2137,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF8F3EB,
                     .toothEdge = 0xFF98938C
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFF917D6A,
                     .fur = 0xFF83705E,
                     .shade = 0xFF73604F,
@@ -2162,7 +2150,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFCF9,
                     .toothEdge = 0xFFA39D97
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF4F4E4E,
                     .shade = 0xFF383736,
                     .coat = 0xFF434241,
@@ -2174,7 +2162,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF8F3EB,
                     .toothEdge = 0xFF98938C
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF82807A,
                     .fur = 0xFF716E68,
                     .shade = 0xFF5F5C57,
@@ -2213,10 +2201,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFDDAF54,
                 .duckBeak = 0xFFE1934D,
                 .duckBeakShade = 0xFFBA6E3A,
-                .ballRed = 0xFFBA7263,
-                .ballWhite = 0xFFF7F3ED,
-                .ballBlue = 0xFF667FA4,
-                .ballYellow = 0xFFEAD599,
+                .ballPanel1 = 0xFFBA7263,
+                .ballPanel2 = 0xFF667FA4,
+                .ballPanel3 = 0xFFEAD599,
+                .ballBase = 0xFFF7F3ED,
                 .peel = 0xFFEDD795,
                 .peelShade = 0xFFCFB87B,
                 .peelInside = 0xFFFCF8ED,
@@ -2224,8 +2212,8 @@ namespace ClaFi::PathArt::Themes {
                 .rakeHandle = 0xFF786552,
                 .rakeHandleShade = 0xFF574637,
                 .rakeMetal = 0xFF565656,
-                .capLight = 0xFFAB776C,
-                .capDark = 0xFF7B5047,
+                .capLight = 0xFFB96F60,
+                .capDark = 0xFF88483B,
                 .capSpot = 0xFFF6F1E9,
                 .stalk = 0xFFECE6DB,
                 .stalkShade = 0xFFC9C1B2,
@@ -2321,11 +2309,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF5E9986,
                 .bladeMiddle = 0xFF7EB8A6,
                 .bladeLight = 0xFFB0DBC9,
-                .daisyLeaf = 0xFF9ECDEC,
                 .reedStem = 0xFF9EAEAC,
                 .frontGrassDark = 0xFF6D9A86,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF7B8491,
                     .shade = 0xFF585F6C,
                     .coat = 0xFF6A737F,
@@ -2337,7 +2324,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF8F4E7,
                     .toothEdge = 0xFF9A9388
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFF8B8B85,
                     .fur = 0xFF797973,
                     .shade = 0xFF676761,
@@ -2350,7 +2337,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFDFDFD,
                     .toothEdge = 0xFFA69D94
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF4B4E58,
                     .shade = 0xFF343740,
                     .coat = 0xFF3F424B,
@@ -2362,7 +2349,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF8F4E7,
                     .toothEdge = 0xFF9A9388
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFC38E5D,
                     .fur = 0xFFB38151,
                     .shade = 0xFFA27043,
@@ -2401,10 +2388,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE6AC1F,
                 .duckBeak = 0xFFF08B20,
                 .duckBeakShade = 0xFFC7651C,
-                .ballRed = 0xFFE54C3F,
-                .ballWhite = 0xFFF5F4EF,
-                .ballBlue = 0xFF3B7DD8,
-                .ballYellow = 0xFFFDD23D,
+                .ballPanel1 = 0xFFE54C3F,
+                .ballPanel2 = 0xFF3B7DD8,
+                .ballPanel3 = 0xFFFDD23D,
+                .ballBase = 0xFFF5F4EF,
                 .peel = 0xFFFAD64B,
                 .peelShade = 0xFFDFB431,
                 .peelInside = 0xFFFFF8E3,
@@ -2509,11 +2496,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFFB7CAB6,
                 .bladeMiddle = 0xFFD3E3D3,
                 .bladeLight = 0xFFEFF8EE,
-                .daisyLeaf = 0xFF77A8D5,
                 .reedStem = 0xFF778E9B,
                 .frontGrassDark = 0xFF426C66,
                 .shadow = 0x47000014,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFFA3A9BA,
                     .shade = 0xFF7E8292,
                     .coat = 0xFF9197A7,
@@ -2525,7 +2511,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFC3B8B0
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC58D5F,
                     .fur = 0xFFB58053,
                     .shade = 0xFFA46F45,
@@ -2538,7 +2524,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFCFE,
                     .toothEdge = 0xFFA89C96
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF43444F,
                     .shade = 0xFF2D2D38,
                     .coat = 0xFF373842,
@@ -2550,7 +2536,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFBF2E9,
                     .toothEdge = 0xFF9C928A
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFACA8A5,
                     .fur = 0xFF999692,
                     .shade = 0xFF868380,
@@ -2589,10 +2575,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE7AC22,
                 .duckBeak = 0xFFF08A23,
                 .duckBeakShade = 0xFFC8641E,
-                .ballRed = 0xFFE64941,
-                .ballWhite = 0xFFF8F2F1,
-                .ballBlue = 0xFF3F7CD9,
-                .ballYellow = 0xFFFED23F,
+                .ballPanel1 = 0xFFE64941,
+                .ballPanel2 = 0xFF3F7CD9,
+                .ballPanel3 = 0xFFFED23F,
+                .ballBase = 0xFFF8F2F1,
                 .peel = 0xFFFBD64D,
                 .peelShade = 0xFFE0B433,
                 .peelInside = 0xFFFFF8E6,
@@ -2698,11 +2684,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF3B9119,
                 .bladeMiddle = 0xFF4CB325,
                 .bladeLight = 0xFF5ED731,
-                .daisyLeaf = 0xFF386D35,
                 .reedStem = 0xFF0D240E,
                 .frontGrassDark = 0xFF214F17,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF9D9E94,
                     .shade = 0xFF83857A,
                     .coat = 0xFF919388,
@@ -2714,7 +2699,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF0EBD2,
                     .toothEdge = 0xFFAFA992
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFF7D633C,
                     .fur = 0xFF735A34,
                     .shade = 0xFF69502B,
@@ -2727,7 +2712,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFA6A493,
                     .toothEdge = 0xFF6E6854
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF79786D,
                     .shade = 0xFF68685C,
                     .coat = 0xFF707064,
@@ -2739,7 +2724,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF0EBD2,
                     .toothEdge = 0xFFAFA992
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF726F5C,
                     .fur = 0xFF666351,
                     .shade = 0xFF5A5745,
@@ -2778,10 +2763,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFD09F23,
                 .duckBeak = 0xFFD78220,
                 .duckBeakShade = 0xFFB25F17,
-                .ballRed = 0xFFBC4318,
-                .ballWhite = 0xFFD1CCB2,
-                .ballBlue = 0xFF316BA5,
-                .ballYellow = 0xFFE8C023,
+                .ballPanel1 = 0xFFBC4318,
+                .ballPanel2 = 0xFF316BA5,
+                .ballPanel3 = 0xFFE8C023,
+                .ballBase = 0xFFD1CCB2,
                 .peel = 0xFFDFBC1D,
                 .peelShade = 0xFFC39E25,
                 .peelInside = 0xFFE9DCA8,
@@ -2887,11 +2872,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF2D2D2D,
                 .bladeMiddle = 0xFF373737,
                 .bladeLight = 0xFF444444,
-                .daisyLeaf = 0xFF404040,
                 .reedStem = 0xFF353936,
                 .frontGrassDark = 0xFF2E2E2E,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF3E3E3E,
                     .shade = 0xFF282828,
                     .coat = 0xFF343434,
@@ -2903,7 +2887,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFF999999,
                     .toothEdge = 0xFF5B5B5B
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFE1E1E1,
                     .fur = 0xFFD6D6D6,
                     .shade = 0xFFC9C9C9,
@@ -2916,7 +2900,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFE1E1E1
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF202020,
                     .shade = 0xFF121212,
                     .coat = 0xFF191919,
@@ -2928,7 +2912,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFF999999,
                     .toothEdge = 0xFF5B5B5B
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFE7E7E7,
                     .fur = 0xFFD9D9D9,
                     .shade = 0xFFCACACA,
@@ -2967,10 +2951,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFA7A7A7,
                 .duckBeak = 0xFF999999,
                 .duckBeakShade = 0xFF787878,
-                .ballRed = 0xFF565656,
-                .ballWhite = 0xFFADADAD,
-                .ballBlue = 0xFF4E4E4E,
-                .ballYellow = 0xFFA6A6A6,
+                .ballPanel1 = 0xFF565656,
+                .ballPanel2 = 0xFF4E4E4E,
+                .ballPanel3 = 0xFFA6A6A6,
+                .ballBase = 0xFFADADAD,
                 .peel = 0xFFBEBEBE,
                 .peelShade = 0xFFA2A2A2,
                 .peelInside = 0xFFDCDCDC,
@@ -3075,11 +3059,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF12322A,
                 .bladeMiddle = 0xFF193B34,
                 .bladeLight = 0xFF23473F,
-                .daisyLeaf = 0xFF1F424A,
                 .reedStem = 0xFF1F3836,
                 .frontGrassDark = 0xFF041F18,
                 .shadow = 0x47000022,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF807399,
                     .shade = 0xFF675A7F,
                     .coat = 0xFF74678D,
@@ -3091,7 +3074,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFCF2F8,
                     .toothEdge = 0xFFBBB0B6
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFF97796E,
                     .fur = 0xFF8D7066,
                     .shade = 0xFF82655C,
@@ -3104,7 +3087,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFC2BAC6,
                     .toothEdge = 0xFF887D84
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF5A5462,
                     .shade = 0xFF494451,
                     .coat = 0xFF514C5A,
@@ -3116,7 +3099,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFCF2F8,
                     .toothEdge = 0xFFBBB0B6
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8D868E,
                     .fur = 0xFF817A82,
                     .shade = 0xFF756D75,
@@ -3155,10 +3138,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFD49C29,
                 .duckBeak = 0xFFDD7D28,
                 .duckBeakShade = 0xFFB75A22,
-                .ballRed = 0xFFB74547,
-                .ballWhite = 0xFFD1C8D0,
-                .ballBlue = 0xFF4265AF,
-                .ballYellow = 0xFFE9BF40,
+                .ballPanel1 = 0xFFB74547,
+                .ballPanel2 = 0xFF4265AF,
+                .ballPanel3 = 0xFFE9BF40,
+                .ballBase = 0xFFD1C8D0,
                 .peel = 0xFFDFBB43,
                 .peelShade = 0xFFC69C2C,
                 .peelInside = 0xFFE9DBB6,
@@ -3264,11 +3247,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF429043,
                 .bladeMiddle = 0xFF58AC53,
                 .bladeLight = 0xFF7BCE64,
-                .daisyLeaf = 0xFF6FC176,
                 .reedStem = 0xFF6FA356,
                 .frontGrassDark = 0xFF4F8F48,
                 .shadow = 0x47B0BEC5,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF82848D,
                     .shade = 0xFF5D5F67,
                     .coat = 0xFF71737B,
@@ -3280,7 +3262,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFF5E6,
                     .toothEdge = 0xFF9F9386
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC89362,
                     .fur = 0xFFB88556,
                     .shade = 0xFFA77448,
@@ -3293,7 +3275,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFAB9D92
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF504E53,
                     .shade = 0xFF39373B,
                     .coat = 0xFF444246,
@@ -3305,7 +3287,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFF5E6,
                     .toothEdge = 0xFF9F9386
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFB6B0A7,
                     .fur = 0xFFA39D94,
                     .shade = 0xFF908A81,
@@ -3344,10 +3326,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFF5BF50,
                 .duckBeak = 0xFFFDA04B,
                 .duckBeakShade = 0xFFD4793D,
-                .ballRed = 0xFFE15442,
-                .ballWhite = 0xFFFCF5ED,
-                .ballBlue = 0xFF4B80CC,
-                .ballYellow = 0xFFFCD456,
+                .ballPanel1 = 0xFFE15442,
+                .ballPanel2 = 0xFF4B80CC,
+                .ballPanel3 = 0xFFFCD456,
+                .ballBase = 0xFFFCF5ED,
                 .peel = 0xFFFDEEBB,
                 .peelShade = 0xFFF3CA5D,
                 .peelInside = 0xFFFFFFFD,
@@ -3452,11 +3434,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFFBB1CB5,
                 .bladeMiddle = 0xFFD640CF,
                 .bladeLight = 0xFFF762EF,
-                .daisyLeaf = 0xFF00ABEC,
                 .reedStem = 0xFF0091AC,
                 .frontGrassDark = 0xFF076769,
                 .shadow = 0x47000022,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF7A7C97,
                     .shade = 0xFF575871,
                     .coat = 0xFF696B85,
@@ -3468,7 +3449,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFCF0F4,
                     .toothEdge = 0xFF9D9094
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC58C6B,
                     .fur = 0xFFB57F5F,
                     .shade = 0xFFA46E51,
@@ -3481,7 +3462,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEFCFF,
                     .toothEdge = 0xFFA99AA0
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF5C596F,
                     .shade = 0xFF444156,
                     .coat = 0xFF4F4C62,
@@ -3493,7 +3474,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFAC9FA3
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8E8891,
                     .fur = 0xFF7C767E,
                     .shade = 0xFF6A646C,
@@ -3532,10 +3513,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE7AB33,
                 .duckBeak = 0xFFF08A32,
                 .duckBeakShade = 0xFFC8642A,
-                .ballRed = 0xFFE6474F,
-                .ballWhite = 0xFFF9F0FC,
-                .ballBlue = 0xFF4478E1,
-                .ballYellow = 0xFFFED14C,
+                .ballPanel1 = 0xFFE6474F,
+                .ballPanel2 = 0xFF4478E1,
+                .ballPanel3 = 0xFFFED14C,
+                .ballBase = 0xFFF9F0FC,
                 .peel = 0xFFFBD558,
                 .peelShade = 0xFFE0B340,
                 .peelInside = 0xFFFEF7EB,
@@ -3641,11 +3622,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF697A68,
                 .bladeMiddle = 0xFF80927F,
                 .bladeLight = 0xFF9DAF9B,
-                .daisyLeaf = 0xFF222B30,
                 .reedStem = 0xFF222423,
                 .frontGrassDark = 0xFF17201B,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFFA9AAC5,
                     .shade = 0xFF83839D,
                     .coat = 0xFF9798B2,
@@ -3657,7 +3637,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFC9B9BD
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC68B6A,
                     .fur = 0xFFB67E5E,
                     .shade = 0xFFA56D50,
@@ -3670,7 +3650,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEFCFF,
                     .toothEdge = 0xFFAA999F
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF88849B,
                     .shade = 0xFF6E6A81,
                     .coat = 0xFF7B778D,
@@ -3682,7 +3662,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFDECED1
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFAEA6AE,
                     .fur = 0xFF9B939B,
                     .shade = 0xFF888188,
@@ -3721,10 +3701,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE7AB31,
                 .duckBeak = 0xFFF18930,
                 .duckBeakShade = 0xFFC96329,
-                .ballRed = 0xFFE7464D,
-                .ballWhite = 0xFFFAF0FA,
-                .ballBlue = 0xFF4678E0,
-                .ballYellow = 0xFFFFD14A,
+                .ballPanel1 = 0xFFE7464D,
+                .ballPanel2 = 0xFF4678E0,
+                .ballPanel3 = 0xFFFFD14A,
+                .ballBase = 0xFFFAF0FA,
                 .peel = 0xFFFCD557,
                 .peelShade = 0xFFE0B33E,
                 .peelInside = 0xFFFFF7EB,
@@ -3830,11 +3810,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF00A000,
                 .bladeMiddle = 0xFF00BF00,
                 .bladeLight = 0xFF00E400,
-                .daisyLeaf = 0xFF00D500,
                 .reedStem = 0xFF00B500,
                 .frontGrassDark = 0xFF239F1F,
                 .shadow = 0x47333333,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF738A8B,
                     .shade = 0xFF4F6464,
                     .coat = 0xFF627879,
@@ -3846,7 +3825,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF1FBE0,
                     .toothEdge = 0xFF939980
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC29853,
                     .fur = 0xFFB28A47,
                     .shade = 0xFFA17938,
@@ -3859,7 +3838,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFF9FA38C
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF435351,
                     .shade = 0xFF2C3C39,
                     .coat = 0xFF374744,
@@ -3871,7 +3850,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF1FBE0,
                     .toothEdge = 0xFF939980
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFA8B6A2,
                     .fur = 0xFF95A38F,
                     .shade = 0xFF838F7C,
@@ -3910,10 +3889,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE0B234,
                 .duckBeak = 0xFFEF8F07,
                 .duckBeakShade = 0xFFC66909,
-                .ballRed = 0xFFE2542E,
-                .ballWhite = 0xFFEEFBE8,
-                .ballBlue = 0xFF1C84D3,
-                .ballYellow = 0xFFFBD62E,
+                .ballPanel1 = 0xFFE2542E,
+                .ballPanel2 = 0xFF1C84D3,
+                .ballPanel3 = 0xFFFBD62E,
+                .ballBase = 0xFFEEFBE8,
                 .peel = 0xFFF0D233,
                 .peelShade = 0xFFD5B00C,
                 .peelInside = 0xFFFAF5BF,
@@ -4018,11 +3997,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF2D8A33,
                 .bladeMiddle = 0xFF3EA53E,
                 .bladeLight = 0xFF57C54C,
-                .daisyLeaf = 0xFF8AA595,
                 .reedStem = 0xFF8A8C6D,
                 .frontGrassDark = 0xFF5E7C56,
                 .shadow = 0x47808080,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF768592,
                     .shade = 0xFF53606C,
                     .coat = 0xFF657480,
@@ -4034,7 +4012,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF3F5E7,
                     .toothEdge = 0xFF959488
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFBC8D5A,
                     .fur = 0xFFAC804E,
                     .shade = 0xFF9B6F40,
@@ -4047,7 +4025,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF8FFFD,
                     .toothEdge = 0xFFA19E94
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF464F58,
                     .shade = 0xFF2F3840,
                     .coat = 0xFF3A434B,
@@ -4059,7 +4037,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF3F5E7,
                     .toothEdge = 0xFF959488
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF868C86,
                     .fur = 0xFF747A74,
                     .shade = 0xFF626862,
@@ -4098,10 +4076,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE4AD1F,
                 .duckBeak = 0xFFEE8C20,
                 .duckBeakShade = 0xFFC6661C,
-                .ballRed = 0xFFE2503F,
-                .ballWhite = 0xFFF0F5EF,
-                .ballBlue = 0xFF307FD8,
-                .ballYellow = 0xFFFBD33D,
+                .ballPanel1 = 0xFFE2503F,
+                .ballPanel2 = 0xFF307FD8,
+                .ballPanel3 = 0xFFFBD33D,
+                .ballBase = 0xFFF0F5EF,
                 .peel = 0xFFF8D74B,
                 .peelShade = 0xFFDDB531,
                 .peelInside = 0xFFFEF9DE,
@@ -4206,11 +4184,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF52714A,
                 .bladeMiddle = 0xFF6E875B,
                 .bladeLight = 0xFF9AA16F,
-                .daisyLeaf = 0xFF8A9782,
                 .reedStem = 0xFF8A805F,
                 .frontGrassDark = 0xFF5D714C,
                 .shadow = 0x47696969,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF665B5D,
                     .shade = 0xFF493E3F,
                     .coat = 0xFF594E4F,
@@ -4222,7 +4199,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFD3BDAC,
                     .toothEdge = 0xFF856F60
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFF7B4A1F,
                     .fur = 0xFF6E3F15,
                     .shade = 0xFF613307,
@@ -4235,7 +4212,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFD7C4BC,
                     .toothEdge = 0xFF8F776A
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF463938,
                     .shade = 0xFF332625,
                     .coat = 0xFF3C2F2E,
@@ -4247,7 +4224,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFD3BDAC,
                     .toothEdge = 0xFF856F60
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF69584D,
                     .fur = 0xFF5A4A3F,
                     .shade = 0xFF4C3C31,
@@ -4286,10 +4263,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE1A20C,
                 .duckBeak = 0xFFE98211,
                 .duckBeakShade = 0xFFC35F10,
-                .ballRed = 0xFFBE3F2C,
-                .ballWhite = 0xFFDBC7BB,
-                .ballBlue = 0xFF4D679E,
-                .ballYellow = 0xFFEEBD20,
+                .ballPanel1 = 0xFFBE3F2C,
+                .ballPanel2 = 0xFF4D679E,
+                .ballPanel3 = 0xFFEEBD20,
+                .ballBase = 0xFFDBC7BB,
                 .peel = 0xFFF9CF45,
                 .peelShade = 0xFFE0AF2D,
                 .peelInside = 0xFFFEF0D1,
@@ -4394,11 +4371,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF7B6CAD,
                 .bladeMiddle = 0xFF9A88D8,
                 .bladeLight = 0xFFD0B9C9,
-                .daisyLeaf = 0xFF177520,
                 .reedStem = 0xFF176317,
                 .frontGrassDark = 0xFF003B00,
                 .shadow = 0x47333333,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF80809B,
                     .shade = 0xFF5C5C75,
                     .coat = 0xFF6E7089,
@@ -4410,7 +4386,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFDF0F3,
                     .toothEdge = 0xFF9E9093
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFCC809E,
                     .fur = 0xFFBD7290,
                     .shade = 0xFFAB627F,
@@ -4423,7 +4399,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFEFCFF,
                     .toothEdge = 0xFFAA999F
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF4F4B60,
                     .shade = 0xFF373448,
                     .coat = 0xFF423F53,
@@ -4435,7 +4411,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFDF0F3,
                     .toothEdge = 0xFF9E9093
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8F8890,
                     .fur = 0xFF7D767D,
                     .shade = 0xFF6A646B,
@@ -4474,10 +4450,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE7AB31,
                 .duckBeak = 0xFFF18930,
                 .duckBeakShade = 0xFFC86329,
-                .ballRed = 0xFFE7464E,
-                .ballWhite = 0xFFFAF0FB,
-                .ballBlue = 0xFF4578E1,
-                .ballYellow = 0xFFFED14B,
+                .ballPanel1 = 0xFFE7464E,
+                .ballPanel2 = 0xFF4578E1,
+                .ballPanel3 = 0xFFFED14B,
+                .ballBase = 0xFFFAF0FB,
                 .peel = 0xFFFCD557,
                 .peelShade = 0xFFE0B33F,
                 .peelInside = 0xFFFFF7EB,
@@ -4582,11 +4558,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF302C19,
                 .bladeMiddle = 0xFF41351F,
                 .bladeLight = 0xFF5A3F26,
-                .daisyLeaf = 0xFF513B2D,
                 .reedStem = 0xFF513221,
                 .frontGrassDark = 0xFF352D1B,
                 .shadow = 0x47333333,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF464445,
                     .shade = 0xFF292627,
                     .coat = 0xFF383637,
@@ -4598,7 +4573,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFE0D7CE,
                     .toothEdge = 0xFF8A8179
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFE9CDB4,
                     .fur = 0xFFDBBFA8,
                     .shade = 0xFFCBAF99,
@@ -4611,7 +4586,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFDBD1C8
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF292525,
                     .shade = 0xFF161312,
                     .coat = 0xFF1F1B1B,
@@ -4623,7 +4598,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFE0D7CE,
                     .toothEdge = 0xFF8A8179
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFDED8D1,
                     .fur = 0xFFCCC6BF,
                     .shade = 0xFFBAB4AD,
@@ -4662,10 +4637,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFBEA371,
                 .duckBeak = 0xFFBD8E68,
                 .duckBeakShade = 0xFF9A6C51,
-                .ballRed = 0xFFB37366,
-                .ballWhite = 0xFFEDE6E0,
-                .ballBlue = 0xFF6B7E9C,
-                .ballYellow = 0xFFE6D198,
+                .ballPanel1 = 0xFFB37366,
+                .ballPanel2 = 0xFF6B7E9C,
+                .ballPanel3 = 0xFFE6D198,
+                .ballBase = 0xFFEDE6E0,
                 .peel = 0xFFCFBE87,
                 .peelShade = 0xFFB5A06F,
                 .peelInside = 0xFFE4DBC5,
@@ -4770,11 +4745,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF38954C,
                 .bladeMiddle = 0xFF4CB25E,
                 .bladeLight = 0xFF6AD572,
-                .daisyLeaf = 0xFF5FC786,
                 .reedStem = 0xFF5FA961,
                 .frontGrassDark = 0xFF479450,
                 .shadow = 0x47333333,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF7D7182,
                     .shade = 0xFF5B505F,
                     .coat = 0xFF6D6272,
@@ -4786,7 +4760,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFEED6D2,
                     .toothEdge = 0xFF977E7B
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFBB7E5C,
                     .fur = 0xFFAC7151,
                     .shade = 0xFF9D6244,
@@ -4799,7 +4773,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF3DEE5,
                     .toothEdge = 0xFFA28786
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF4F414D,
                     .shade = 0xFF392C37,
                     .coat = 0xFF443641,
@@ -4811,7 +4785,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFEED6D2,
                     .toothEdge = 0xFF977E7B
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFAC9899,
                     .fur = 0xFF9A8788,
                     .shade = 0xFF897677,
@@ -4850,10 +4824,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFC38C22,
                 .duckBeak = 0xFFC96F20,
                 .duckBeakShade = 0xFFA44D17,
-                .ballRed = 0xFFD13F3F,
-                .ballWhite = 0xFFECD6D8,
-                .ballBlue = 0xFF516DBB,
-                .ballYellow = 0xFFEDBD36,
+                .ballPanel1 = 0xFFD13F3F,
+                .ballPanel2 = 0xFF516DBB,
+                .ballPanel3 = 0xFFEDBD36,
+                .ballBase = 0xFFECD6D8,
                 .peel = 0xFFDEB433,
                 .peelShade = 0xFFC59617,
                 .peelInside = 0xFFE9D4AD,
@@ -4958,11 +4932,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF1F8A4B,
                 .bladeMiddle = 0xFF31A558,
                 .bladeLight = 0xFF4CC567,
-                .daisyLeaf = 0xFF15959E,
                 .reedStem = 0xFF157E73,
                 .frontGrassDark = 0xFF04614C,
                 .shadow = 0x47000033,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFFCFE1FE,
                     .shade = 0xFFA6B8D7,
                     .coat = 0xFFBACEED,
@@ -4974,7 +4947,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFEFF2F8
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFBC9172,
                     .fur = 0xFFAC8466,
                     .shade = 0xFF9B7358,
@@ -4987,7 +4960,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFCFDFF,
                     .toothEdge = 0xFF9D9EA6
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF38435B,
                     .shade = 0xFF222D42,
                     .coat = 0xFF2D374E,
@@ -4999,7 +4972,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFEFF5FA,
                     .toothEdge = 0xFF91949A
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFFDDE7F3,
                     .fur = 0xFFC9D3DF,
                     .shade = 0xFFB5BFCB,
@@ -5038,10 +5011,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE2AE3A,
                 .duckBeak = 0xFFEC8D38,
                 .duckBeakShade = 0xFFC46730,
-                .ballRed = 0xFFDF5156,
-                .ballWhite = 0xFFEEF4FE,
-                .ballBlue = 0xFF2C7BE7,
-                .ballYellow = 0xFFF8D452,
+                .ballPanel1 = 0xFFDF5156,
+                .ballPanel2 = 0xFF2C7BE7,
+                .ballPanel3 = 0xFFF8D452,
+                .ballBase = 0xFFEEF4FE,
                 .peel = 0xFFF5D75E,
                 .peelShade = 0xFFDBB646,
                 .peelInside = 0xFFFBF9E8,
@@ -5146,11 +5119,10 @@ namespace ClaFi::PathArt::Themes {
                 .bladeDark = 0xFF398846,
                 .bladeMiddle = 0xFF48A353,
                 .bladeLight = 0xFF61C362,
-                .daisyLeaf = 0xFF478D53,
                 .reedStem = 0xFF222423,
                 .frontGrassDark = 0xFF306E34,
                 .shadow = 0x47000000,
-                .greyWolf = {
+                .ourWolf = {
                     .light = 0xFF7C819E,
                     .shade = 0xFF595C77,
                     .coat = 0xFF6B708C,
@@ -5162,7 +5134,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFF9F1F6,
                     .toothEdge = 0xFF9A9196
                 },
-                .brownHare = {
+                .ourHare = {
                     .light = 0xFFC38D6E,
                     .fur = 0xFFB38062,
                     .shade = 0xFFA26F54,
@@ -5175,7 +5147,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFDFCFF,
                     .toothEdge = 0xFFA69AA2
                 },
-                .blackWolf = {
+                .theirWolf = {
                     .light = 0xFF5D5D76,
                     .shade = 0xFF45465C,
                     .coat = 0xFF515168,
@@ -5187,7 +5159,7 @@ namespace ClaFi::PathArt::Themes {
                     .tooth = 0xFFFFFFFF,
                     .toothEdge = 0xFFAFA4AA
                 },
-                .greyHare = {
+                .theirHare = {
                     .light = 0xFF8C8993,
                     .fur = 0xFF7A7780,
                     .shade = 0xFF67656E,
@@ -5226,10 +5198,10 @@ namespace ClaFi::PathArt::Themes {
                 .duckShade = 0xFFE6AC35,
                 .duckBeak = 0xFFEF8A34,
                 .duckBeakShade = 0xFFC7642C,
-                .ballRed = 0xFFE44951,
-                .ballWhite = 0xFFF6F1FE,
-                .ballBlue = 0xFF4079E3,
-                .ballYellow = 0xFFFDD24E,
+                .ballPanel1 = 0xFFE44951,
+                .ballPanel2 = 0xFF4079E3,
+                .ballPanel3 = 0xFFFDD24E,
+                .ballBase = 0xFFF6F1FE,
                 .peel = 0xFFFAD65A,
                 .peelShade = 0xFFDFB442,
                 .peelInside = 0xFFFFF7E9,

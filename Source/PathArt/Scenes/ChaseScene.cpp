@@ -1184,9 +1184,9 @@ namespace ClaFi::PathArt
                 });
             }
         }
-        drawHare(frame, harePose, theme.chase.brownHare);
+        drawHare(frame, harePose, theme.chase.ourHare);
         if (theyAreShown)
-            drawHare(frame, theirHare, theme.chase.greyHare);
+            drawHare(frame, theirHare, theme.chase.theirHare);
         // Lifted from where it lay to her chest, the apple bobs up to her mouth at each bite and
         // comes back a bite smaller; crumbs of skin and flesh fly from its top.
         float toMouth = 0.0f;
@@ -1234,9 +1234,9 @@ namespace ClaFi::PathArt
                 }
             }
         }
-        drawWolf(frame, wolfPose, theme.chase.greyWolf);
+        drawWolf(frame, wolfPose, theme.chase.ourWolf);
         if (theyAreShown)
-            drawWolf(theirWolfFrame, theirWolf.pose, theme.chase.blackWolf);
+            drawWolf(theirWolfFrame, theirWolf.pose, theme.chase.theirWolf);
         if (obstacleShown && obstacleOverWolf)
             drawObstacle(frame, theme, obstacle, obstacleOnScreen, groundY, footY, obstacleMotion);
 
@@ -2605,12 +2605,12 @@ namespace ClaFi::PathArt
         void drawBall(const SceneFrame& onTrail, const ChaseTheme& chase, const float rollAngle)
         {
             const std::array<Color, 6> panels{
-                chase.ballRed,
-                chase.ballWhite,
-                chase.ballBlue,
-                chase.ballWhite,
-                chase.ballYellow,
-                chase.ballWhite
+                chase.ballPanel1,
+                chase.ballBase,
+                chase.ballPanel2,
+                chase.ballBase,
+                chase.ballPanel3,
+                chase.ballBase
             };
             const SceneFrame ball = onTrail.within(Matrix3x2::Translation(0.0f, -k_ballRadius)
                 * Matrix3x2::Rotation(rollAngle));
@@ -2627,7 +2627,7 @@ namespace ClaFi::PathArt
                 wedge.close();
                 fillShape(ball, wedge, SolidColor{ panels[panel] });
             }
-            fillDisc(ball, {}, 3.0f, SolidColor{ chase.ballWhite });
+            fillDisc(ball, {}, 3.0f, SolidColor{ chase.ballBase });
             PixelPath rim;
             addEllipse(rim, {}, k_ballRadius, k_ballRadius);
             strokeShape(ball, rim, SolidColor{ ChaseColors::BallEdge }, 1.0f);
@@ -2864,9 +2864,9 @@ namespace ClaFi::PathArt
             stem.moveTo(0.0f, 0.5f);
             stem.quadTo({ 0.0f, -22.0f }, head);
             strokeShape(onVerge, stem, SolidColor{ chase.grass }, 1.8f);
-            fillOval(onVerge, { -5.0f, -12.0f }, 6.0f, 2.2f, SolidColor{ chase.daisyLeaf }, 0.5f);
+            fillOval(onVerge, { -5.0f, -12.0f }, 6.0f, 2.2f, SolidColor{ chase.grass }, 0.5f);
             fillOval(onVerge, { 5.0f + 6.0f * nod, -19.0f }, 6.0f, 2.2f,
-                SolidColor{ chase.daisyLeaf }, nod - 0.5f);
+                SolidColor{ chase.grass }, nod - 0.5f);
             const SceneFrame bloom = onVerge.within(Matrix3x2::Translation(head)
                 * Matrix3x2::Rotation(nod));
             const SolidColor petalFill{ petalColor };

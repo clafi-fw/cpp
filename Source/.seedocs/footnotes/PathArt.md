@@ -162,7 +162,9 @@ rock where the most sunlight falls, at the top of the highest range, and mountai
 the ground line - see ChaseScene hazed. Every theme starts them from one neutral rock, 8E8E8E at the
 top and 616161 at the foot, darkened and tinted as its sky lights it. It then lightens both alike by
 day, or darkens them at night, to set the near range, hazed, apart from the runners' heads. Clear
-Day's are set by hand, darker and bluer. The haze gives them the theme's air.
+Day's and High Noon's are set by hand: Clear Day's darker and bluer, High Noon's a sunlit white over
+a dark grey foot. Where the two ranges meet, rock darker than the air leaves the near range the
+darker one. The haze gives them the theme's air.
 
 **Figures and props are well lit, at night as by day.** They start from Clear Day's colours,
 tinted a little toward the theme's sky, and keep their colour - except in Paper Sketch, whose look
@@ -182,9 +184,8 @@ frames are bark too, and the frames and the sails are outlined in barkShade.
 - A wolf's head and ears stand against the mountains; a hare stays below the far hills' top. Both
   are measured as they are drawn, hazed.
 - A mountain's clear colours keep the tint of the theme's light; only their lightness moves.
-- The other couple's black wolf stays darker than ours.
-- In Winter Frost the couples trade hares: ours is grey and theirs brown, so its brownHare holds
-  the grey coat and its greyHare the brown.
+- theirWolf stays darker than ourWolf.
+- In Winter Frost the couples trade hares: ourHare is grey and theirHare brown.
 - A coat's tongue, mouth, teeth, tail, inner ears and nose rise with the fur where it is lifted and
   never darken with it, so a white tail stays white by day.
 - Yellow things - the banana peel, the rubber duck, the ball's yellow, the flowers' hearts - keep
@@ -200,10 +201,10 @@ frames are bark too, and the frames and the sails are outlined in barkShade.
 - The toxic and neon themes and Underwater Realm give the toadstool caps and the apples toxic reds:
   a lava red in Toxic Waste, a hot crimson in Cyberpunk Night and Underwater Realm, a neon red in
   Neon City Night. Vintage Noir's apples are the one red in its grey, daylight's.
-- One green serves the flowers' stems, the tufts on the lawn and the foreground grass, whose every
-  third blade is a shade darker. Midnight's, Toxic Waste's and Neon City Night's are lighter, with
-  their daisy leaves, to show against their dark meadows; Toxic Waste's is a dim toxic green, and
-  Neon City Night's the green of its trees, muted. Cherry Blossom's plants are a dark sage, on a
+- One green serves the flowers' stems, the big daisy's leaves, the tufts on the lawn and the
+  foreground grass, whose every third blade is a shade darker. Midnight's, Toxic Waste's and Neon
+  City Night's are lighter, to show against their dark meadows; Toxic Waste's is a dim toxic green,
+  and Neon City Night's the green of its trees, muted. Cherry Blossom's plants are a dark sage, on a
   grey-green meadow by a rose-grey trail. Vintage Noir's plants are grey, as the rest of it is.
 
 **The themes not of this world dress the plain things in their own colours** instead of daylight's:

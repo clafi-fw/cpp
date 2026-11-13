@@ -2962,6 +2962,60 @@ the frame's coordinates like the head they join. In Clear Day the hare's darkest
 0.10 to 0.12 from the lawn and hills - her underside, below the light and shade the figures are
 measured by.
 
+Then (Oj, 11:23 to 11:37) Paper Sketch: "The animals read well and don't need changes. The stems and
+toadstool look washed out. Make stems darker, toadstool a step more vivid. Remove the big flower
+leaves own color and use the stem's (the last one for all themes)". Oj took A: the green and the
+reed stems 0.08 darker in OKLab L (grass 49745B to 325D45, reedStem 69806C to 526955), the
+toadstool's cap 0.03 more chroma at the same lightness (capLight AB776C to B96F60, capDark 7B5047 to
+88483B). The foreground's dark blades move with the green to keep their step below it
+(frontGrassDark 3F654A to 294F35), which mock A left where they were. In every theme the big daisy's
+leaves take the green, and ChaseTheme.daisyLeaf is gone.
+
+Then (Oj, 11:52) "High Noon is a strange theme with a glowing hills bottom that reads negative.
+Let's try to reverse that". Its land ran from hillTop 4F7000 (L 0.50) at the hills to hillBottom
+70CD71 (L 0.77) at the frame's bottom, lighter downward, as Magic Forest's and Lunar Eclipse's still
+do. Shown: A, the two swapped; B, the lightnesses mirrored with each end's hue kept; C, one green
+over a gentler range. Oj (11:58) "B it is, and darker grass": hillTop 9EC365, a sunlit yellow-green
+at 0.77, over hillBottom 0E781B, a deep green at 0.50. The two are SceneTheme's, so the Mill's High
+Noon turns with them. The runners stand as they did, the grey wolf's light 0.16 to 0.17 off the land
+and the brown hare's 0.13 to 0.17.
+
+The lawn's bottom then fell to 0.50, near the foreground blades' own 0.46, and they vanished. Shown
+0.07, 0.13 and 0.19 darker, the dark blades keeping their step; Oj (12:31) took 0.13: grass 386516
+to 1D3F00 (L 0.33), frontGrassDark 32591A to 153400 (L 0.29), the chroma clipped toward olive. The
+lawn stands at 0.56 behind the tallest tips and 0.50 at the bottom, the tufts' rows at 0.63 and
+0.59.
+
+Then (Oj, 12:35) "Now to fix the mountains flip": High Noon's rock, F1F1F6 over C4C4C8 (L 0.96 and
+0.82), is lighter than its air, 5FA4E5 (0.70). The far range takes about twice the near one's share
+of the air, so it came out the darker one, the near range 0.04 to 0.05 lighter where they meet.
+Shown three rocks darker than the air: A, Clear Day's slate blue; B, the sunlit top kept over a dark
+grey foot; C, a warm stone. Oj (12:41) took B: mountainFoot 3A3A3D, mountainTop F1F1F6 kept. The
+near range is now 0.04 to 0.07 the darker one. Where it shows behind the runners it stands at 0.52,
+and the grey wolf stands 0.08 and 0.05 off it (light and shade), the grey hare 0.14 and 0.04, the
+black wolf 0.10 and 0.19, the brown hare 0.18 and 0.12 - the figures' step to come.
+
+Then (Oj, 12:48) "First rename these fields. The theme should not use color names for the fields."
+ChaseTheme's coats are ourWolf, ourHare, theirWolf and theirHare, where they were greyWolf,
+brownHare, blackWolf and greyHare - Oj's pick, matching ChaseScene's theirWolf and theirHare. The
+ball's ballRed, ballBlue and ballYellow are ballPanel1 to ballPanel3, numbered as SceneTheme's
+petals are, and ballWhite is ballBase, declared after the panels. The footnote's Winter Frost bullet
+no longer needs to warn that brownHare holds a grey coat. Every theme renders the same bytes as
+before at four times of the cycle, and undoing the renames gives back the old files exactly.
+ChaseCoats::GreyWolf and ChaseCoats::BrownHare in ChaseScene are the icon's fixed coats, not theme
+fields, and keep their names. The generator's keys follow the fields.
+
+Then (Oj, 13:02) "mock the figures": against High Noon's dark near range ourWolf stood 0.07 and 0.06
+off it (light and shade), ourHare 0.13 and 0.13, theirWolf 0.11 and 0.20, theirHare 0.13 and 0.04;
+the props all stood clear. Shown at the meeting and with ourWolf running: A, each light alone
+lighter, as in Clear Day; B, whole coats lighter, a silver wolf and pale hares; C, whole coats
+darker. A and B darkened theirWolf's whole coat 0.045, C 0.17. Oj (13:13) took A: ourWolf.light
+6E849C to 869CB5, ourHare.light AF8763 to CAA17C and theirHare.light 869398 to A0ADB2, each about
+0.08 lighter, and theirWolf's light, shade, coat, far, dark and belly 0.045 darker (light 405063 to
+344456). Every light now stands 0.15 off the range and theirWolf's shade 0.24. ourWolf's shade stays
+0.06 off it and theirHare's 0.04, where the range is behind them; most of a shade sits low, against
+the land. ourWolf's light is 0.30 above theirWolf's.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

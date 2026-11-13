@@ -25,18 +25,17 @@ namespace ClaFi::PathArt
         Color treeCrownMiddle{};
         Color trail{};
         Color pebble{};
-        Color grass{}; // the flowers' stems, the tufts and the foreground grass
+        Color grass{}; // the flowers' stems and leaves, the tufts and the foreground grass
         Color bladeDark{}; // the patch of grass on the trail
         Color bladeMiddle{};
         Color bladeLight{};
-        Color daisyLeaf{};
         Color reedStem{};
         Color frontGrassDark{}; // every third blade of the foreground grass
         Color shadow{}; // what the figures and props cast
-        WolfCoat greyWolf{}; // ours
-        HareCoat brownHare{};
-        WolfCoat blackWolf{}; // the other couple's
-        HareCoat greyHare{};
+        WolfCoat ourWolf{}; // the couple the scene follows
+        HareCoat ourHare{};
+        WolfCoat theirWolf{}; // the couple running the other way
+        HareCoat theirHare{};
         Color flowerHeart{}; // a daisy's, and the meadow's flowers'
         Color bough{}; // the signpost, the stumps, every trunk and the Mill's wing frames, in wood
         Color bark{};
@@ -63,10 +62,10 @@ namespace ClaFi::PathArt
         Color duckShade{};
         Color duckBeak{};
         Color duckBeakShade{};
-        Color ballRed{}; // the ball
-        Color ballWhite{};
-        Color ballBlue{};
-        Color ballYellow{};
+        Color ballPanel1{}; // the ball's three coloured panels, each followed by one in ballBase
+        Color ballPanel2{};
+        Color ballPanel3{};
+        Color ballBase{}; // the ball between its coloured panels and in its middle
         Color peel{}; // the banana peel
         Color peelShade{};
         Color peelInside{};
