@@ -3184,6 +3184,18 @@ theirHare.light 8F8890 to ABA3AC, theirWolf light / shade / coat / far / dark / 
 E6827F94. Every light stands 0.15 off; ourWolf's shade 0.07 and theirHare's 0.06 where the near
 range is behind them, as in High Noon.
 
+Then (Oj, 23:37) "his legs is whiter than body", and (23:47) "When you know the both body colors you
+can get the exact match". Since 14:27 the body runs from the light to `unlit`, but the near legs
+kept the flat `coat`, which sits between the light and the shade, so in every theme they stood 0.06
+to 0.18 lighter than the body where they leave it (Underwater Realm 0.18, Twilight 0.16, Vintage
+Noir 0.06). drawWolf now draws the near legs in the body's own gradient, `bodyGradient`, in the same
+coordinates: where a leg crosses the body's edge the two are one colour, and below the body's foot
+the leg holds `unlit`. The far legs and every pad keep their steps from `coat` - `relit` scales
+`far` and `dark` channel by channel by the ratio that takes `coat` to `unlit`. `coat` still draws
+the head and tail underneath. Every wolf drawWolf draws takes it - the Chase's in every theme, the
+icon's and the Puppeteer's. Where `coat` stood far above `unlit`, as in Clear Day, Cherry Blossom
+and Paper Sketch, the far legs and pads go near black.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,

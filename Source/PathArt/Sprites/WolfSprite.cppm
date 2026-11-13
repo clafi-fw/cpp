@@ -30,7 +30,7 @@ namespace ClaFi::PathArt
     {
         Color light; // its head, back and tail where the light falls on them
         Color shade; // its flank
-        Color coat; // its near legs, and its head and tail underneath
+        Color coat; // its head and tail underneath; `far` and `dark` are drawn relative to it
         Color far; // its far legs, and the pads of the near ones
         Color dark; // its ears, lower jaw and tail's tip, and the pads of the far legs
         Color belly;

@@ -51,6 +51,8 @@ namespace ClaFi::PathArt
             bool upward, std::span<const Tooth> teeth, float growth);
         // The head and snout as one outline, the snout lifted `snoutAngle` about `hinge`.
         [[nodiscard]] PixelPath headOutline(FloatPoint hinge, float snoutAngle);
+        // `colour` scaled channel by channel by the ratio that takes `from` to `to`.
+        [[nodiscard]] Color relit(Color colour, Color from, Color to);
     }
 
     // Drawn about the middle of his body, facing right; a leg's angles are measured from straight
@@ -59,6 +61,10 @@ namespace ClaFi::PathArt
     {
         const SceneFrame wolf = frame.within(Matrix3x2::Translation(pose.center)
             * Matrix3x2::Rotation(pose.turn) * Matrix3x2::Scale(pose.size));
+        const Color unlit = colorBetween(coat.shade, Color{ 0xFF000000 }, k_unlitShare);
+        // The near legs are drawn in it too, so a leg leaves the body in the body's own colour.
+        const Brush bodyGradient = LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
+            coat.light, unlit);
 
         struct Leg
         {
@@ -95,10 +101,12 @@ namespace ClaFi::PathArt
             const FloatPoint shin = FloatPoint{ std::sin(lower), std::cos(lower) } * 22.0f;
             const FloatPoint knee = leg.hip + thigh;
             const FloatPoint paw = knee + shin;
-            const SolidColor fur{ leg.far ? coat.far : coat.coat };
+            const Brush fur = leg.far
+                ? Brush{ SolidColor{ relit(coat.far, coat.coat, unlit) } }
+                : bodyGradient;
             drawSegment(wolf, leg.hip, knee, fur, 9.0f);
             drawSegment(wolf, knee, paw, fur, 7.0f);
-            const SolidColor pad{ leg.far ? coat.dark : coat.far };
+            const SolidColor pad{ relit(leg.far ? coat.dark : coat.far, coat.coat, unlit) };
             fillOval(wolf, paw + FloatPoint{ 2.0f, 1.0f }, 6.5f, 3.6f, pad, -lower * 0.3f);
         };
         drawLeg(k_legs[0]);
@@ -135,9 +143,7 @@ namespace ClaFi::PathArt
         body.cubicTo({ 10.0f, 22.0f }, { -20.0f, 20.0f }, { -34.0f, 14.0f });
         body.cubicTo({ -46.0f, 10.0f }, { -48.0f, -2.0f }, { -40.0f, -6.0f });
         body.close();
-        const Color unlit = colorBetween(coat.shade, Color{ 0xFF000000 }, k_unlitShare);
-        fillShape(wolf, body, LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
-            coat.light, unlit));
+        fillShape(wolf, body, bodyGradient);
         PixelPath belly;
         belly.moveTo(-26.0f, 12.0f);
         belly.cubicTo({ -10.0f, 20.0f }, { 16.0f, 20.0f }, { 32.0f, 12.0f });
@@ -278,6 +284,23 @@ namespace ClaFi::PathArt
             outline.quadTo(lifted({ 49.0f, -5.0f }), lifted({ 44.0f, -9.0f }));
             outline.close();
             return outline;
+        }
+
+        Color relit(const Color colour, const Color from, const Color to)
+        {
+            const auto channel = [](const ColorByte value, const ColorByte fromValue,
+                const ColorByte toValue) {
+                if (fromValue == 0)
+                    return value;
+                const int scaled = (value * toValue + fromValue / 2) / fromValue;
+                return static_cast<ColorByte>(std::min(scaled, 255));
+            };
+            return Color{
+                channel(colour.red, from.red, to.red),
+                channel(colour.green, from.green, to.green),
+                channel(colour.blue, from.blue, to.blue),
+                colour.alpha
+            };
         }
     }
 }
