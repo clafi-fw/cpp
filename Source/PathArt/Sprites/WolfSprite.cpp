@@ -65,6 +65,9 @@ namespace ClaFi::PathArt
         // The near legs are drawn in it too, so a leg leaves the body in the body's own colour.
         const Brush bodyGradient = LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
             coat.light, unlit);
+        // The far legs stand a step below the near ones, the step that takes coat to far.
+        const Brush farLegGradient = LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
+            relit(coat.light, coat.coat, coat.far), relit(unlit, coat.coat, coat.far));
 
         struct Leg
         {
@@ -101,12 +104,10 @@ namespace ClaFi::PathArt
             const FloatPoint shin = FloatPoint{ std::sin(lower), std::cos(lower) } * 22.0f;
             const FloatPoint knee = leg.hip + thigh;
             const FloatPoint paw = knee + shin;
-            const Brush fur = leg.far
-                ? Brush{ SolidColor{ relit(coat.far, coat.coat, unlit) } }
-                : bodyGradient;
+            const Brush& fur = leg.far ? farLegGradient : bodyGradient;
             drawSegment(wolf, leg.hip, knee, fur, 9.0f);
             drawSegment(wolf, knee, paw, fur, 7.0f);
-            const SolidColor pad{ relit(leg.far ? coat.dark : coat.far, coat.coat, unlit) };
+            const SolidColor pad{ leg.far ? relit(coat.dark, coat.coat, coat.far) : coat.dark };
             fillOval(wolf, paw + FloatPoint{ 2.0f, 1.0f }, 6.5f, 3.6f, pad, -lower * 0.3f);
         };
         drawLeg(k_legs[0]);

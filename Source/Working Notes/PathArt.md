@@ -3236,6 +3236,40 @@ its horizon, moon rim and glow, at its own lightness. Oj (00:42) "P2", chroma 0.
 shade 786493, coat A58FC1, far 84709F, dark 705C8A, belly E6EADCFF. The legs end at L 0.44 where
 they were 0.50. theirWolf stays grey.
 
+Then (Oj, 00:45) "Move the hare to the purple-ish zone": ourHare's brown (hue about 50) turned to
+the purple range at its own lightness and colour, light, fur, shade and belly; its ear inside, nose,
+tail and whiskers kept. Shown hue 304 (the wolf's), 325 and 345; Oj (00:47) "H3", the plum-rose
+furthest from the wolf: light C185A7, fur B27898, shade A06888, belly E6ECD3E0. theirHare stays
+grey.
+
+Then (Oj, 00:56) "Put those characters into Twilight": Twilight's ourWolf and ourHare take Lunar
+Eclipse's whole coats, the purple wolf and the plum-rose hare, every field. On Twilight's blue-grey
+land his light stands 0.22 to 0.25 off what is behind him and hers 0.18 to 0.21; his flank is 0.07
+from the lawn by lightness and parts from it by hue.
+
+Then (Oj, 01:25) "Darker the wolf's tips, purple hint to the ball and the frog": shown the tips
+(dark) 0.10, 0.20 and 0.30 darker, and the ball's and frog's colours moved 0.20, 0.35 and 0.50 of
+the way toward the theme's purple (chroma 0.12 at hue 304) at their own lightness. Oj (01:27, 01:28)
+"2", "1" - the tips at the second step, the hint at the first: dark 39264F; ballPanel1 D85669,
+ballPanel2 5876D9, ballPanel3 F8D085, ballBase FCEDFF; frogLight 76975A, frogDark 415D3F, frogBelly
+C2BDAE. Lunar Eclipse keeps its tips at 705C8A.
+
+Then (Oj, 01:30) "darker stems, lighter trunks": shown the stems (grass, frontGrassDark,
+chase.reedStem) 0.08, 0.15 and 0.22 darker and the bark and its groove 0.10, 0.20 and 0.30 lighter,
+hue kept. Oj (01:35) "1": grass 143438, frontGrassDark 0E2B29, chase.reedStem 2D3F49; bark 6C5761,
+barkShade 473940. The bark is shared, so the stumps, the branch run's tree, the far hills' trunks,
+the signpost's post and the apples' stems lighten with it, and in the Mill its pines and sail
+frames.
+
+Then (Oj, 01:43) "the far paws are far too darker", after asking where the paws and far legs come
+from: the far paws were `dark`, the tips' colour, re-lit, so Twilight's darker tips took them near
+black. Oj (01:48) "take the tip color for the near paw. for the far leg and paw take a step below of
+the corresponding near leg colors": a near paw is `dark` itself; a far leg is the body's gradient
+and a far paw is `dark`, each scaled by the step that takes `coat` to `far` (relit), the theme's own
+step from a near leg to a far one. `far` is drawn nowhere itself; with `coat` it sets that step.
+Every wolf drawWolf draws takes it. Where a theme's tips are lighter than its legs, as in Lunar
+Eclipse (705C8A over legs at 5A4B6E), the near paws are lighter than the legs.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
