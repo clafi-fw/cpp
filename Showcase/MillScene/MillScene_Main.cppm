@@ -197,8 +197,8 @@ namespace MillScene_App
             SingleSelectionStackView* lanes{ nullptr };
             std::vector<Control*> buttons{};
         };
-        // A theme picker's lanes and buttons while they stand; all the pickers show one pick.
-        struct ThemePicker
+        // A picker's lanes and buttons while they stand; the pickers of one choice show one pick.
+        struct PickerLanes
         {
             SingleSelectionStackView* lanes{ nullptr };
             std::vector<Control*> buttons{};
@@ -221,8 +221,8 @@ namespace MillScene_App
         void previewSceneTheme(std::size_t index);
         // One pick for every scene that offers themes, which every theme picker shows.
         void pickSceneTheme(std::size_t index);
-        // A picker's current item and buttons, moved from the theme at `previous` to the pick.
-        void showThemePick(const ThemePicker&, std::size_t previous);
+        // A picker's current item and buttons, moved from the item at `previous` to `picked`.
+        void showPick(const PickerLanes&, std::size_t previous, std::size_t picked);
         // The scene the look picker serves: the first that offers looks, none where none does.
         [[nodiscard]] std::optional<std::size_t> sceneWithLooks();
         // Draws the scene that offers looks in the look at `index` of k_lookChoices.
@@ -236,6 +236,8 @@ namespace MillScene_App
 
         void buildScenePage(AppMenuPage&);
         void buildScenePicker(AppMenuPage&);
+        // The scene tiles in `column`, the pointer previewing the scene it rests on.
+        void buildSceneLanes(StackPanel& column, PickerLanes&);
         // A page of options for every scene in one section, the picked scene's page showing.
         void buildSceneOptions(AppMenuPage&);
         // What that section is captioned with while the scene at `index` is the picked one.
@@ -243,7 +245,7 @@ namespace MillScene_App
         // A theme picker on the page of each scene that offers themes.
         void buildThemePickers();
         // Three lanes of eight theme buttons in `column`, the pointer previewing what it rests on.
-        void buildThemeLanes(StackPanel& column, ThemePicker&);
+        void buildThemeLanes(StackPanel& column, PickerLanes&);
         void buildLookPicker();
         void buildChoicePickers();
         void buildChoicePicker(std::size_t pickerIndex);
@@ -271,14 +273,16 @@ namespace MillScene_App
         [[nodiscard]] WindowReadings windowReadings() const;
         void writeMetricsTooltip(AdjustTooltipEvent&);
 
-        // The ways in and out of full screen, the bars following; answers the command that exits.
+        // The ways in and out of full screen, the bars following; answers the full-screen toggle.
         [[nodiscard]] Action& connectFullscreen();
         // Shows the title bar and the strip under the scene in a window, and neither fullscreen.
         void followFullscreen();
+        // The list of the Scene line on the scene's context menu: a scene picker.
+        void buildSceneList(Menu& list);
         // The list of the Theme line on the scene's context menu: a theme picker.
         void buildThemeList(Menu& list);
-        // The themes where the scene offers them, and in full screen the command that exits.
-        void showSceneMenu(ContextPopupEvent&, Action& exitFullscreen);
+        // The scenes, the themes where the scene offers them, and the full-screen toggle.
+        void showSceneMenu(ContextPopupEvent&, Action& fullscreenToggle);
 
     private:
         DialogTitle& m_titleBar{ createTopBar<DialogTitle>(
@@ -299,14 +303,14 @@ namespace MillScene_App
 
         // The backstage's Scene page, refilled every time that page is built: a pick repaints the
         // button it left as well as the one it took, and the stack is what the preview returns to.
-        SingleSelectionStackView* m_sceneLanes{ nullptr };
-        std::vector<Control*> m_sceneButtons{};
+        PickerLanes m_pageScenePicker{};
+        PickerLanes m_menuScenePicker{}; // the one in the scene's context menu, while it is up
         AppMenuPage::Section* m_sceneOptionsSection{ nullptr }; // named after the picked scene
         // Holds a page of options for each scene and shows the picked scene's.
         PageControl* m_sceneOptionsControl{ nullptr };
         std::vector<StackPanel*> m_sceneOptionPages{}; // at each scene's index
-        std::vector<ThemePicker> m_themePickers{};
-        ThemePicker m_menuThemePicker{}; // the one in the scene's context menu, while it is up
+        std::vector<PickerLanes> m_themePickers{};
+        PickerLanes m_menuThemePicker{}; // the one in the scene's context menu, while it is up
         SingleSelectionStackView* m_lookLanes{ nullptr };
         std::vector<Control*> m_lookButtons{};
         std::vector<ChoicePicker> m_choicePickers{};
@@ -397,9 +401,9 @@ namespace MillScene_App
         connectAppPage(L"Scene", Icons::DotMark::draw, [this](AppMenuPage& page) {
             buildScenePage(page);
             });
-        Action& exitFullscreen = connectFullscreen();
-        m_scenePanel.onContextPopup([this, &exitFullscreen](ContextPopupEvent& event) {
-            showSceneMenu(event, exitFullscreen);
+        Action& fullscreenToggle = connectFullscreen();
+        m_scenePanel.onContextPopup([this, &fullscreenToggle](ContextPopupEvent& event) {
+            showSceneMenu(event, fullscreenToggle);
         });
         form().setKeepsScreenOn(true);
         applySceneColors();
@@ -762,13 +766,8 @@ void MillSceneForm::pickScene(const std::size_t index)
     previewScene(index);
     storeScene();
 
-    if (m_sceneLanes)
-        m_sceneLanes->setCurrentItem(*m_sceneButtons[index]);
-    if (!m_sceneButtons.empty())
-    {
-        m_sceneButtons[previous]->invalidateState();
-        m_sceneButtons[index]->invalidateState();
-    }
+    showPick(m_pageScenePicker, previous, index);
+    showPick(m_menuScenePicker, previous, index);
     if (m_sceneOptionsSection)
     {
         // In the heading style AppMenuPage::addSection gives a section's caption.
@@ -815,19 +814,20 @@ void MillSceneForm::pickSceneTheme(const std::size_t index)
     previewSceneTheme(index);
     storeSceneTheme();
 
-    for (const ThemePicker& themePicker : m_themePickers)
-        showThemePick(themePicker, previous);
-    showThemePick(m_menuThemePicker, previous);
+    for (const PickerLanes& themePicker : m_themePickers)
+        showPick(themePicker, previous, index);
+    showPick(m_menuThemePicker, previous, index);
 }
 
-void MillSceneForm::showThemePick(const ThemePicker& themePicker, const std::size_t previous)
+void MillSceneForm::showPick(const PickerLanes& picker, const std::size_t previous,
+    const std::size_t picked)
 {
-    if (themePicker.lanes)
-        themePicker.lanes->setCurrentItem(*themePicker.buttons[m_pickedTheme]);
-    if (!themePicker.buttons.empty())
+    if (picker.lanes)
+        picker.lanes->setCurrentItem(*picker.buttons[picked]);
+    if (!picker.buttons.empty())
     {
-        themePicker.buttons[previous]->invalidateState();
-        themePicker.buttons[m_pickedTheme]->invalidateState();
+        picker.buttons[previous]->invalidateState();
+        picker.buttons[picked]->invalidateState();
     }
 }
 
@@ -897,11 +897,16 @@ void MillSceneForm::buildScenePage(AppMenuPage& page)
     buildSceneOptions(page);
 }
 
-// Built the way the theme picker is: the pointer previews, a pick is the current item.
 void MillSceneForm::buildScenePicker(AppMenuPage& page)
 {
     StackPanel& group = page.addGroup(L"Scene");
-    SingleSelectionStackView& lanes = group.add<SingleSelectionStackView>(
+    buildSceneLanes(group, m_pageScenePicker);
+}
+
+// Built the way the theme picker is: the pointer previews, a pick is the current item.
+void MillSceneForm::buildSceneLanes(StackPanel& column, PickerLanes& scenePicker)
+{
+    SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::HorizontalWrap,
         LaneSize{ k_sceneTilesPerRow },
         ItemSizing::Equal,
@@ -909,19 +914,19 @@ void MillSceneForm::buildScenePicker(AppMenuPage& page)
         VerticalAlign::Top
     );
 
-    m_sceneLanes = &lanes;
+    scenePicker.lanes = &lanes;
     lanes.setPreviewMode(PreviewMode::Hover);
     lanes.onPreview([this](PreviewEvent& event) {
         previewScene(event.item.tag().value);
         });
-    lanes.onDestroy([this](DestroyEvent&) {
+    lanes.onDestroy([this, &scenePicker](DestroyEvent&) {
         previewScene(m_pickedScene);
-        m_sceneLanes = nullptr;
-        m_sceneButtons.clear();
+        scenePicker.lanes = nullptr;
+        scenePicker.buttons.clear();
         });
 
-    m_sceneButtons.clear();
-    m_sceneButtons.reserve(sceneCount());
+    scenePicker.buttons.clear();
+    scenePicker.buttons.reserve(sceneCount());
     for (std::size_t index = 0; index != sceneCount(); ++index)
     {
         ToolButton& item = lanes.add<ToolButton>(
@@ -951,9 +956,9 @@ void MillSceneForm::buildScenePicker(AppMenuPage& page)
         item.onDoubleClick([](DoubleClickEvent& event) {
             event.closeForm();
             });
-        m_sceneButtons.push_back(&item);
+        scenePicker.buttons.push_back(&item);
     }
-    lanes.setCurrentItem(*m_sceneButtons[m_pickedScene]);
+    lanes.setCurrentItem(*scenePicker.buttons[m_pickedScene]);
 }
 
 // **As large as the largest page**, whichever page shows - see PageSizing::WidestPage. The menu
@@ -1022,7 +1027,7 @@ void MillSceneForm::buildThemePickers()
         buildThemeLanes(*columns[pickerIndex], m_themePickers[pickerIndex]);
 }
 
-void MillSceneForm::buildThemeLanes(StackPanel& column, ThemePicker& themePicker)
+void MillSceneForm::buildThemeLanes(StackPanel& column, PickerLanes& themePicker)
 {
     SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
@@ -1456,14 +1461,18 @@ Action& MillSceneForm::connectFullscreen()
     });
 
     Actions& formActions = form().actions();
-    formActions.add(
+    Action& fullscreenToggle = formActions.add(
         Text{ L"Full screen" },
         Shortcut{ Keys::F11 },
-        Action::OnClick{ [](ActionClickEvent& event) {
-            toggleFullscreen(event.form);
+        Action::OnGetState{ [this](GetActionStateEvent& event) {
+            event.claim({ .selected = form().isFullscreen() });
+        } },
+        // The form is named here: run from a menu line, the event's form is the menu.
+        Action::OnClick{ [this](ActionClickEvent&) {
+            toggleFullscreen(form());
         } }
     );
-    Action& exitFullscreen = formActions.add(
+    formActions.add(
         Text{ L"Exit full screen" },
         Shortcut{ Keys::Escape },
         Action::OnGetState{ [this](GetActionStateEvent& event) {
@@ -1480,7 +1489,7 @@ Action& MillSceneForm::connectFullscreen()
             event.closeForm();
             event.form.rootForm().setFullscreen(true);
         });
-    return exitFullscreen;
+    return fullscreenToggle;
 }
 
 void MillSceneForm::followFullscreen()
@@ -1491,6 +1500,19 @@ void MillSceneForm::followFullscreen()
 }
 
 // **A click picks and closes the menus**, as a command run from a line of theirs does.
+void MillSceneForm::buildSceneList(Menu& list)
+{
+    StackPanel& column = list.addControl<StackPanel>(Orientation::Vertical);
+    buildSceneLanes(column, m_menuScenePicker);
+    for (Control* button : m_menuScenePicker.buttons)
+    {
+        button->onClick([&list](ClickEvent& event) {
+            list.closeOnCommand(event);
+        });
+    }
+}
+
+// Picks and closes the way the scene list does.
 void MillSceneForm::buildThemeList(Menu& list)
 {
     StackPanel& column = list.addControl<StackPanel>(Orientation::Vertical);
@@ -1503,18 +1525,22 @@ void MillSceneForm::buildThemeList(Menu& list)
     }
 }
 
-// **A fullscreen window shows no bar to leave it by**, so there the menu holds the command that
-// exits. In a window a scene that offers no themes has no menu.
-void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& exitFullscreen)
+// **A fullscreen window shows no bar to leave it by**, so the menu holds the full-screen toggle.
+// It holds it in a window too, where the line shows the way in.
+void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenToggle)
 {
-    const bool themesOffered = sceneAt(m_shownScene).offersThemes();
-    const bool fullscreen = form().isFullscreen();
-    if (!themesOffered && !fullscreen)
-        return;
-
     event.stopPropagation();
     Menu menu{ m_scenePanel };
-    if (themesOffered)
+    menu.addGroup(
+        [this](Menu& list) {
+            buildSceneList(list);
+        },
+        Text{ L"Scene" },
+        OnEvent{ [this](DrawIconEvent& iconEvent) {
+            sceneAt(m_pickedScene).drawIcon(iconEvent.canvas(), iconEvent.iconRect());
+        } }
+    );
+    if (sceneAt(m_shownScene).offersThemes())
     {
         menu.addGroup(
             [this](Menu& list) {
@@ -1526,11 +1552,8 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& exitFullscre
             } }
         );
     }
-    if (fullscreen)
-    {
-        menu.addSeparator();
-        menu.add(exitFullscreen);
-    }
+    menu.addSeparator();
+    menu.add(fullscreenToggle);
     menu.execute();
 }
 

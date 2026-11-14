@@ -208,6 +208,22 @@ line, Oj kept the line, which took framework API: a group line whose list the ca
 - **Left in the lanes moves left**, and closes the list from the first lane: Menu::nestedKeyDown
   closed a list on Left before the navigator saw the key.
 
+**The scenes are in the scene's context menu as well, and Full screen stands for Exit full screen**
+(Oj, 2026-11-14, "Add to context menu: Toggle full screen (instead of exit), Scene selector (before
+the theme)"). The Scene line comes first and opens the Scene page's tile lanes beside it, with the
+preview, the return to the pick and the double click; in the menu each tile's click also closes the
+menus, as the theme buttons' does. Its icon is the picked scene's own, drawn by Scene::drawIcon into
+the line's icon rect.
+
+- **One builder for both scene pickers.** buildSceneLanes builds the tiles into a column for the
+  page (m_pageScenePicker) and the menu (m_menuScenePicker). ThemePicker became PickerLanes, held by
+  the scene pickers and the theme pickers alike, and showThemePick became showPick, which moves
+  either kind's current item from `previous` to `picked`.
+- **The last line is the F11 action**, whose state is selected while fullscreen and whose click
+  names MillSceneForm's form, as Escape's does: from a menu line the click's form is the menu's.
+  Escape keeps leaving fullscreen from the keyboard, and is on no menu.
+- **Every scene has a context menu now**, in a window as well, the Scene line being on all of them.
+
 **Every scene draws its own icon** (Oj, 2026-11-09, "Make the scene buttons big tiles with top
 icons, in rows"). Of a still of each scene, the scene's own sprite and eight new line pictograms,
 mocked up from the scene code, Oj picked the sprite. drawIcon is a pure virtual on Scene rather

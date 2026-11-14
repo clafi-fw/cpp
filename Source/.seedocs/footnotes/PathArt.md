@@ -262,11 +262,12 @@ the scene answers that it took nothing, and on the readings over the scene, the 
 fullscreen or leaves it.
 
 **A right click on the showcase opens the scene's context menu**, on the scene and on the readings
-over it alike. On a scene that offers themes, its Theme line wears the picked theme's swatch and
-opens the theme picker of the scene's page of options beside it: the pointer resting on a theme
-crossfades the scenes to it, and leaving the picker or closing the menu brings back the pick. A
-click picks a theme and closes the menu. In fullscreen the menu ends on Exit full screen. In a
-window a scene that offers no themes has no context menu.
+over it alike. Its Scene line wears the picked scene's icon and opens the scene picker of the Scene
+page beside it. On a scene that offers themes, the Theme line under it wears the picked theme's
+swatch and opens the theme picker of the scene's page of options. The pointer resting on a scene or
+a theme crossfades to it, and leaving the picker or closing the menu brings back the pick. A click
+picks and closes the menu. The menu ends on Full screen, the F11 toggle, its line selected while
+fullscreen.
 
 **A drag let go glides on** at the speed of its last 80 milliseconds and slows to about a third of
 it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second. Another
