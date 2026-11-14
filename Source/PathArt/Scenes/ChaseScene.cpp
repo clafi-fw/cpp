@@ -1,5 +1,6 @@
 module ClaFi.PathArt.ChaseScene;
 
+import ClaFi.PathArt.Air;
 import ClaFi.PathArt.DazeStarsEffect;
 import ClaFi.PathArt.DustPuffEffect;
 import ClaFi.PathArt.FirefliesEffect;
@@ -62,14 +63,7 @@ namespace ClaFi::PathArt
         // near the mill's 40.
         constexpr float k_lively{ 2.0f };
         // The far hills' share of the camera's speed; a layer this far takes the theme's airHaze.
-        constexpr float k_hillParallax{ 0.2f };
-        // Frame heights, as seen at the trail's distance, over which the air thins to 1/e.
-        constexpr float k_airScaleHeight{ 24.0f };
-        // skyBottom's share in the air's colour, which the haze takes a layer toward.
-        constexpr float k_hazeSkyBottomShare{ 0.33f };
-        // A layer moving at `parallax` of the camera's speed, seen through the haze. See PathArt
-        [[nodiscard]] Color hazed(const SceneTheme&, Color clear, float parallax,
-            float aboveGround = 0.0f);
+        constexpr float k_hillParallax{ k_hazeReferenceParallax };
         // The share of the frame's height where the meadow's gradient starts, above the far hills.
         constexpr float k_meadowTopShare{ 0.62f };
         // The far hills and the lawn as one gradient, so no seam shows between them. See PathArt
@@ -2675,21 +2669,6 @@ namespace ClaFi::PathArt
             strokeShape(ball, rim, SolidColor{ ChaseColors::BallEdge }, 1.0f);
             fillOval(onTrail, { -5.0f, -19.0f }, 4.0f, 2.5f, SolidColor{ ChaseColors::Shine },
                 -0.5f);
-        }
-
-        Color hazed(const SceneTheme& theme, const Color clear, const float parallax,
-            const float aboveGround)
-        {
-            const float distance = 1.0f / parallax;
-            float air = distance - 1.0f;
-            if (aboveGround > 0.0f)
-            {
-                const float thinning = aboveGround / k_airScaleHeight;
-                air = (std::exp(-thinning) - std::exp(-thinning * distance)) / thinning;
-            }
-            const float hillSpans = air / (1.0f / k_hillParallax - 1.0f);
-            const Color haze = colorBetween(theme.skyTop, theme.skyBottom, k_hazeSkyBottomShare);
-            return colorBetween(clear, haze, 1.0f - std::pow(1.0f - theme.airHaze, hillSpans));
         }
 
         LinearGradient meadowGradient(const SceneFrame& frame, const SceneTheme& theme)

@@ -3500,6 +3500,30 @@ trail's layer brings a share of the weather back over the runners, where all of 
 
 ## MillScene
 
+**Land and water redrawn** (Oj, 2026-11-14: "The Mill scene now is the most boring and cheap"). An
+animated mockup, "Mill Rework", showed depth, a winding river with reflections, a redrawn mill, a
+near bank and a two-cycle story, each on a switch. Oj: "I like", then picked the mockup's peaks
+over the Chase's wave ridges, a new theme field for the windows' night light, the gator surfacing
+in the pond, and building it step by step: land and water, reflections, the mill, the trees and
+figures, the life. This is step 1.
+
+- hazed went from ChaseScene's anonymous namespace to ClaFi.PathArt.Air, with
+  k_hazeReferenceParallax for the Chase's k_hillParallax as the reference. The Chase's frames came
+  out the same to the bit in Clear Day, Warm Orange Fall and Steampunk at four moments each.
+- The valley floor's parallax runs (y - 0.542 h) / (0.80 h - 0.542 h), so the far hills' foot at
+  0.56 h stands at 0.07. The mockup hazed the far hills at 0.36 and the floor's far edge at 0.32 in
+  clear air; through hazed they take about 0.29.
+- The old single bitmap became two, m_sky and m_land, so the stars, the sun's rays and the clouds
+  fall behind the mountains. Both are drawn through a private CPU canvas, which lets the land use
+  the kit's SceneFrame helpers; the raster clip is held across it as before.
+- ReedsSprite at the near bank's size swung like poles - it turns each reed about its foot by
+  0.08 of a turn - so the bank's cattails are the scene's own, as the mockup drew them. The Chase's
+  reeds are unchanged.
+- Still from before, moved to the mockup's places until their steps: the sun, the orbiting clouds,
+  the mill house, sails and wheel, the cow, the firs, the peeking wolf and gator, the lily.
+- 7.5 ms a frame at 1920 x 1080 in the container's clang build (the Chase 7 ms there), 48 ms for a
+  frame that draws both bitmaps again - every frame of a theme crossfade.
+
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
 `sin(t * 30)` and `sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the
 cycle wraps. The water lily bobs one and a half times a cycle, and jumps the same way.

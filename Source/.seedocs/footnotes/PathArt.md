@@ -141,8 +141,8 @@ skyTop to the end of `chase`, and colorsNum() counts them.
 ## SceneTheme airHaze
 
 **How thick the theme's air is, from 0 to 1.** It is the share of the air's colour a layer takes at
-the ground line at the scene's reference distance - in ChaseScene, the far hills'; see ChaseScene
-hazed for the air's colour. Nearer layers take less of it, farther ones more.
+the ground line at the scene's reference distance - in ChaseScene, the far hills'; see hazed for
+the air's colour. Nearer layers take less of it, farther ones more.
 
 - 0 is no air: every layer keeps its own colours.
 - 0.10, the default, is clear weather.
@@ -154,12 +154,13 @@ A crossfade blends it with the effects.
 ## ChaseTheme
 
 The Chase's own colours in a theme: the mountains' clear colours, which the scene hazes - see
-ChaseScene hazed - the tree a branch run ends at, the trail and the grass, the four runners' coats,
-every prop and the stars circling a dazed wolf's head.
+hazed - the tree a branch run ends at, the trail and the grass, the four runners' coats, every prop
+and the stars circling a dazed wolf's head. MillScene takes its mountains, its far hills' trees and
+its grass from here too.
 
 **The mountains' clear colours are rock in the theme's light, before any haze.** mountainTop is the
 rock where the most sunlight falls, at the top of the highest range, and mountainFoot the rock at
-the ground line - see ChaseScene hazed. Every theme starts them from one neutral rock, 8E8E8E at the
+the ground line - see hazed. Every theme starts them from one neutral rock, 8E8E8E at the
 top and 616161 at the foot, darkened and tinted as its sky lights it. It then lightens both alike by
 day, or darkens them at night, to set the near range, hazed, apart from the runners' heads. Clear
 Day's, High Noon's, Summer Sunset's, Vintage Noir's, Toxic Waste's and Magic Forest's are set by
@@ -239,7 +240,7 @@ the first theme fades in out of it. A pick made before the first frame, as a hos
 makes, fades in that theme instead.
 
 **wornVersion() moves on with every step of the crossfade**, so a scene that keeps something drawn
-in the theme knows to draw it again - MillScene keeps its sky and hills in a bitmap.
+in the theme knows to draw it again - MillScene keeps its sky and its land in bitmaps.
 
 ## Scene offersView
 
@@ -442,6 +443,28 @@ exactly.
 
 **A shifted layer uncovers a strip** at each edge it moves away from. The caller fills the strip,
 as Bot Talent fills it in the wall's and the floor's colours when the stage shakes.
+
+## hazed
+
+**Distance is haze.** A layer's clear colours are taken toward the air's colour, as far as its
+distance goes. The distance is read off the layer's parallax - its share of a passing camera's
+speed: a layer at a third of it stands three times as far as one at 1. ChaseScene's trail moves at
+1; MillScene gives each of its layers the parallax it would have, the mill's foot being 1.
+
+**The air's colour is the sky's top, a third of the way to its bottom.** Haze takes a layer's own
+colour away and puts the air's in its place: by day mostly the sky's blue with some of the horizon's
+light, at night near black.
+
+**A layer at k_hazeReferenceParallax, 0.2, takes the theme's airHaze.** Every stretch of air as long
+as the one from parallax 1 to that layer takes airHaze of what is left, so a layer x such stretches
+beyond parallax 1 takes 1 - (1 - a)^x of the air's colour, where a is airHaze. In clear air, 0.10, a
+layer twice as far beyond as the reference takes 0.19. ChaseScene's far hills stand at the
+reference.
+
+**The air thins with height.** A point above the ground line is seen along a line rising through
+ever thinner air, so it takes the air along that line in place of its distance, and less haze than a
+point at the ground line as far away. The air thins to 1/e every 24 frame heights, as seen at
+parallax 1.
 
 ## CloudKind
 
@@ -1019,6 +1042,24 @@ and of spoke spacings in a cycle, and the train stands where it started when the
 The valve lets off steam four times a cycle. The gauge's needle wanders three times a cycle and
 trembles as it goes.
 
+## MillScene
+
+A watermill on a pond, in a valley under two ranges of mountains.
+
+**Depth is drawn through hazed.** Each layer takes the parallax it would have: the mountains the
+Chase's 0.02 and 0.05, so a theme's mountain colours read alike in both scenes, the far hills 0.07,
+and the valley floor row by row, from the far hills' parallax at their foot to 1 at the mill's foot
+and more toward the viewer. A knoll keeps 0.4 at its top. What stands on the land is drawn at the
+size its row's parallax gives.
+
+**The sky and the land are kept as two bitmaps**, drawn again when the bounds' size changes or the
+worn theme moves on - see ThemeBlend. The stars, the sun's rays and the clouds pass between the two,
+so the land hides their lower part. The light on the water, the cow, the predator and the fir it
+peeks from behind, the mill, the lily, the near bank's grass, cattails and daisies, the fireflies
+and the weather are drawn every frame.
+
+**The house is clipped at the water line**, so the sprite's own reflection stays out of the pond.
+
 ## CowColors
 
 **The horns, the tail and the legs keep clear of what stands behind them.** They are drawn in
@@ -1399,26 +1440,7 @@ the scenery, so it is drawn fainter with the distance rather than hazed.
 
 The theme's fireflies keep to the far hills' layer, and its lightning strikes behind the mountains.
 
-## ChaseScene hazed
-
-**Distance is haze.** A layer's clear colours are taken toward the air's colour, as far as its
-distance goes. The distance is read off the layer's share of the camera's speed: a layer moving at a
-third of it stands three times as far as the trail.
-
-**The air's colour is the sky's top, k_hazeSkyBottomShare of the way to its bottom.** Haze takes a
-layer's own colour away and puts the air's in its place: by day mostly the sky's blue with some of
-the horizon's light, at night near black.
-
-**A layer as far as the far hills takes the theme's airHaze.** Every stretch of air as long as the
-one from the trail to the far hills takes airHaze of what is left, so a layer x such stretches
-beyond the trail takes 1 - (1 - a)^x of the air's colour, where a is airHaze. In clear air, 0.10, a
-layer twice as far beyond the trail as the hills takes 0.19. The far hills move at k_hillParallax,
-0.2 of the camera's speed.
-
-**The air thins with height.** A point above the ground line is seen along a line rising through
-ever thinner air, so it takes the air beyond the trail along that line in place of its distance, and
-less haze than a point at the ground line as far away. The air thins to 1/e every k_airScaleHeight
-frame heights, as seen at the trail's distance.
+## ChaseScene drawBackdrop
 
 **The mountains are hazed by height**, in k_mountainHazeSteps steps from the top of their gradient
 to the ground line, so their feet take their distance's share and their peaks less. In clear air the

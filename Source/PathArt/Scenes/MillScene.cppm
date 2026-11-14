@@ -4,7 +4,6 @@ import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.ThemeBlend;
 import ClaFi.PathArt.Types;
 import ClaFi.Core.Graphics.Canvas;
-import ClaFi.Core.Graphics.Cpu_PathPainter;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 
@@ -14,9 +13,8 @@ namespace ClaFi::PathArt
 {
     using namespace ::ClaFi;
     using namespace ::ClaFi::Graphics;
-    using namespace ::ClaFi::Graphics::Cpu;
 
-    // A watermill landscape in a choice of themes, crossfading from one to the next.
+    // A watermill by a pond in a valley, in a choice of themes. See PathArt
     export class MillScene : public Scene
     {
     public:
@@ -37,24 +35,22 @@ namespace ClaFi::PathArt
         [[nodiscard]] SceneReadoutColors readoutColors() const override;
 
     private:
-        void prepareBackground(float w, float h);
+        // Draws m_sky and m_land for the bounds' size in the worn theme.
+        void keepStillLayers(const FloatRect& bounds);
 
         // Render Helpers (Dynamic elements render directly via Canvas&)
         void drawWaterFoam(Canvas& canvas, float x, float y, float mS, float t) const;
         void drawSunCorona(Canvas& canvas, float x, float y, float r, float t);
         void drawCloud(Canvas& canvas, float x, float y, float s);
-        float drawRiver(Canvas& canvas, FloatPoint off, float w, float h, float t);
-
-        // Background Static Helper (Accepts PixelPathPainter for offline bitmap caching)
-        void drawHills(PixelPathPainter& p, FloatPoint off, float w, float h);
     private:
         ThemeBlend m_themes{};
-        Bitmap m_background{};
-        ScaledSize m_backgroundDimensions{};
-        std::uint64_t m_backgroundThemeVersion{}; // the worn theme the background was drawn in
-        FloatPoint m_sunPos;
-        float m_sunRadius;
-        FloatPoint m_offset;
-        float m_objectsScale;
+        Bitmap m_sky{}; // the sky and the sun's disc
+        Bitmap m_land{}; // the mountains, the valley, the river and what stands still on them
+        ScaledSize m_stillLayersSize{};
+        std::uint64_t m_stillLayersThemeVersion{}; // the worn theme the layers were drawn in
+        FloatPoint m_sunPos{};
+        float m_sunRadius{};
+        FloatPoint m_offset{};
+        float m_objectsScale{};
     };
 }

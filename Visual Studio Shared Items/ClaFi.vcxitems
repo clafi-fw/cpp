@@ -513,6 +513,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\SteamEffect.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\WeatherEffect.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Effects\WeatherEffect.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Air.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Air.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.CloudMap.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.EarthMap.cpp" />
