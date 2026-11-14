@@ -164,10 +164,10 @@ namespace ClaFi::PathArt
             StreamPoint{ { 0.38f, 0.672f }, 0.0f }
         };
 
-        // The river from its source down to the pond.
+        // The river from where it comes out at the far hills' foot down to the pond.
         constexpr std::array<StreamPoint, 7> k_upstream{
-            StreamPoint{ { 0.405f, 0.5625f }, 0.003f },
-            StreamPoint{ { 0.388f, 0.574f }, 0.007f },
+            StreamPoint{ { 0.41f, 0.5605f }, 0.0f },
+            StreamPoint{ { 0.39f, 0.572f }, 0.006f },
             StreamPoint{ { 0.36f, 0.59f }, 0.013f },
             StreamPoint{ { 0.322f, 0.613f }, 0.021f },
             StreamPoint{ { 0.292f, 0.643f }, 0.03f },
@@ -219,14 +219,14 @@ namespace ClaFi::PathArt
             StandingTree{ { 0.79f, 0.785f }, 0.9f },
             StandingTree{ { 0.045f, 0.812f }, 1.0f }
         };
-        // The fir the predator peeks from behind.
-        constexpr StandingTree k_wolfFir{ { 0.865f, 0.80f }, 1.05f };
         constexpr std::array<StandingTree, 2> k_broadleaves{
             StandingTree{ { 0.205f, 0.672f }, 2.2f },
             StandingTree{ { 0.58f, 0.70f }, 2.0f }
         };
         constexpr FloatPoint k_cowFootShare{ 0.445f, 0.718f };
         constexpr float k_cowSize{ 0.55f };
+        // The fir the predator peeks from behind, across the field a little behind the cow's line.
+        constexpr StandingTree k_wolfFir{ { 0.884f, k_cowFootShare.y - 0.018f }, 1.05f };
         constexpr FloatPoint k_lilyShare{ 0.31f, 0.915f };
         constexpr float k_lilySize{ 0.62f };
         constexpr std::array<Cattail, 9> k_cattails{
@@ -287,7 +287,6 @@ namespace ClaFi::PathArt
         void drawFir(const SceneFrame&, const SceneTheme&, const StandingTree&);
         void drawBroadleaf(const SceneFrame&, const SceneTheme&, const StandingTree&);
         void drawRiverBed(const SceneFrame&, const SceneTheme&);
-        void drawSourceRise(const SceneFrame&, const SceneTheme&);
         void drawBridge(const SceneFrame&, const SceneTheme&);
         void drawWaterLight(const SceneFrame&, const SceneTheme&, float sunX, float cycleTime);
         void drawNearBank(const SceneFrame&, const SceneTheme&, float cycleTime);
@@ -347,25 +346,6 @@ namespace ClaFi::PathArt
             .shape = GlowShape::Circle
         });
 
-        const FloatPoint cowFoot = pointAt(frame, k_cowFootShare);
-        const float cowSize = k_cowSize * sizeAt(frame, cowFoot.y);
-        const Color meadowBehindCow = hazed(theme(), landAt(frame, theme(), cowFoot.y),
-            parallaxAt(frame, cowFoot.y));
-        // The cow's whole figure stands against the meadow.
-        drawCow(frame, CowPose{
-            .at = { cowFoot.x, cowFoot.y - 40.0f * cowSize },
-            .size = cowSize,
-            .cycleTime = cycleTime
-        }, CowColors{
-            .body = theme().cowBody,
-            .spots = theme().cowSpots,
-            .snout = theme().cowSnout,
-            .detail = theme().cowDetail,
-            .shadow = theme().shadow,
-            .skyBehind = meadowBehindCow,
-            .groundBehind = meadowBehindCow
-        });
-
         // The predator behind the fir on the right: a gator in the African themes, a wolf
         // elsewhere, crossfading between them.
         const FloatPoint wolfFirFoot = pointAt(frame, k_wolfFir.footShare);
@@ -395,6 +375,25 @@ namespace ClaFi::PathArt
             .eye = theme().wolfEye
         });
         drawFir(frame, theme(), k_wolfFir);
+
+        const FloatPoint cowFoot = pointAt(frame, k_cowFootShare);
+        const float cowSize = k_cowSize * sizeAt(frame, cowFoot.y);
+        const Color meadowBehindCow = hazed(theme(), landAt(frame, theme(), cowFoot.y),
+            parallaxAt(frame, cowFoot.y));
+        // The cow's whole figure stands against the meadow.
+        drawCow(frame, CowPose{
+            .at = { cowFoot.x, cowFoot.y - 40.0f * cowSize },
+            .size = cowSize,
+            .cycleTime = cycleTime
+        }, CowColors{
+            .body = theme().cowBody,
+            .spots = theme().cowSpots,
+            .snout = theme().cowSnout,
+            .detail = theme().cowDetail,
+            .shadow = theme().shadow,
+            .skyBehind = meadowBehindCow,
+            .groundBehind = meadowBehindCow
+        });
 
         const FloatPoint millFoot = pointAt(frame, k_millFootShare);
         const float millSize = k_millSize * mS;
@@ -515,7 +514,6 @@ namespace ClaFi::PathArt
             for (const StandingTree& tree : k_broadleaves)
                 drawBroadleaf(frame, theme(), tree);
             drawRiverBed(frame, theme());
-            drawSourceRise(frame, theme());
             drawBridge(frame, theme());
             for (const StandingTree& tree : std::span{ k_stillFirs }.last(3))
                 drawFir(frame, theme(), tree);
@@ -1033,22 +1031,6 @@ namespace ClaFi::PathArt
                         .color = colorBetween(theme.riverBottom, theme.skyTop, 0.15f) }
                 }
             });
-        }
-
-        void drawSourceRise(const SceneFrame& frame, const SceneTheme& theme)
-        {
-            const float h = frame.height;
-            const float w = frame.width;
-            const float foot = h * 0.574f;
-            PixelPath rise;
-            rise.moveTo(0.33f * w, foot + 6.0f);
-            rise.cubicTo({ 0.37f * w, 0.566f * h }, { 0.41f * w, 0.561f * h },
-                { 0.47f * w, 0.566f * h });
-            rise.cubicTo({ 0.50f * w, 0.569f * h }, { 0.52f * w, foot },
-                { 0.54f * w, foot + 4.0f });
-            rise.close();
-            fillShape(frame, rise, SolidColor{ hazed(theme, landAt(frame, theme, h * 0.585f),
-                parallaxAt(frame, foot)) });
         }
 
         // An arched footbridge of planks with a rail on posts.

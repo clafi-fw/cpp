@@ -3524,6 +3524,20 @@ figures, the life. This is step 1.
 - 7.5 ms a frame at 1920 x 1080 in the container's clang build (the Chase 7 ms there), 48 ms for a
   frame that draws both bitmaps again - every frame of a theme crossfade.
 
+Then (Oj, 12:42) "I think this piece of land is not supposed to block the river": a low rise drawn
+over the river's far end to hide its source read as a strip of land lying across it, its one flat
+colour off the floor's hazed rows and the river's tip showing beyond it. The rise is gone, and the
+river starts as a point at the far hills' foot.
+
+Then (Oj, 12:50) "The predator with his tree should be further away in the field, where he can
+actually watch the cow. In the current position he can't because the mill's blocking his view."
+Shown A in the field right of the cow, B by the river bend, C across the river at the woods' edge;
+Oj (12:58) marked his own spot on the mockup instead, up the field on the right. His fir moved from
+0.865 / 0.80 to 0.884 / 0.636, where the mill stands nearer than the line between him and the cow,
+and the far predator and his fir are drawn before the cow. Then (13:00-13:01) "Closer", "On the
+line with the cow": the fir's foot takes the cow's row, k_cowFootShare.y, at 0.884 across the field.
+Then (13:04) "just a bit further": 0.018 of the frame's height behind her row.
+
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
 `sin(t * 30)` and `sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the
 cycle wraps. The water lily bobs one and a half times a cycle, and jumps the same way.
