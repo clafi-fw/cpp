@@ -1,23 +1,23 @@
 module ClaFi.PathArt.MillScene;
 
 import ClaFi.PathArt.Air;
-import ClaFi.PathArt.CowSprite;
+import ClaFi.PathArt.BroadleafTreeSprite;
 import ClaFi.PathArt.FirefliesEffect;
-import ClaFi.PathArt.FirTreeSprite;
 import ClaFi.PathArt.GatorHeadSprite;
 import ClaFi.PathArt.LightningEffect;
-import ClaFi.PathArt.MillSprite;
-import ClaFi.PathArt.PeekingWolfSprite;
+import ClaFi.PathArt.PosedCowSprite;
+import ClaFi.PathArt.TimberMillSprite;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.SpruceSprite;
 import ClaFi.PathArt.StarsEffect;
 import ClaFi.PathArt.ThemeBlend;
 import ClaFi.PathArt.Themes;
 import ClaFi.PathArt.TrunkSprite;
 import ClaFi.PathArt.Types;
 import ClaFi.PathArt.WaterLilySprite;
-import ClaFi.PathArt.WaterWheelSprite;
 import ClaFi.PathArt.WaterReflection;
 import ClaFi.PathArt.WeatherEffect;
+import ClaFi.PathArt.WolfHeadSprite;
 import ClaFi.Core.Graphics.Cpu.Canvas;
 import ClaFi.Core.Graphics.Cpu_Rasterizer;
 import ClaFi.Core.Graphics.Canvas;
@@ -64,6 +64,37 @@ namespace ClaFi::PathArt
         {
             FloatPoint footShare;
             float size; // of the tree at the mill's distance, in units of the frame
+        };
+
+        // A stretch of the story, from one of its seconds to another.
+        struct Stretch
+        {
+            float from;
+            float until;
+        };
+
+        // A fish leaping out of the pond and back in.
+        struct FishJump
+        {
+            float at; // the story's second it leaves the water
+            FloatPoint share; // where, in shares of the frame
+        };
+
+        // How the cow stands at a moment of the story, and the rings its drinking spreads.
+        struct CowMoment
+        {
+            PosedCowPose pose;
+            std::optional<float> ripplesAge; // seconds since its muzzle last broke the water
+        };
+
+        // What a duck wears.
+        struct DuckColors
+        {
+            Color body;
+            Color wing;
+            Color beak;
+            Color eye;
+            Color wake;
         };
 
         // A run of grass blades along the near bank.
@@ -214,7 +245,6 @@ namespace ClaFi::PathArt
         constexpr float k_nearRippleReach{ 4.0f };
         constexpr float k_reflectionOpacity{ 0.42f };
 
-        constexpr float k_firSize{ 1.2f };
         // Back to front, behind the broadleaf trees.
         constexpr std::array<StandingTree, 2> k_knollFirs{
             StandingTree{ { 0.09f, 0.655f }, 0.8f },
@@ -227,13 +257,34 @@ namespace ClaFi::PathArt
             StandingTree{ { 0.045f, 0.812f }, 1.0f }
         };
         constexpr std::array<StandingTree, 2> k_broadleaves{
-            StandingTree{ { 0.205f, 0.672f }, 2.2f },
-            StandingTree{ { 0.58f, 0.70f }, 2.0f }
+            StandingTree{ { 0.205f, 0.672f }, 0.95f },
+            StandingTree{ { 0.58f, 0.70f }, 0.85f }
         };
         constexpr FloatPoint k_cowFootShare{ 0.445f, 0.718f };
-        constexpr float k_cowSize{ 0.55f };
+        constexpr float k_cowSize{ 0.74f };
+        // The grazing cow's motions, each a whole number of times a cycle.
+        constexpr float k_cowNods{ 19.0f };
+        constexpr float k_cowChews{ 64.0f };
+        constexpr float k_cowSwishes{ 15.0f };
         // The fir the predator peeks from behind, across the field a little behind the cow's line.
         constexpr StandingTree k_wolfFir{ { 0.884f, k_cowFootShare.y - 0.018f }, 1.05f };
+        // The story's length in its own seconds, two cycles of 40.
+        constexpr float k_storySeconds{ 80.0f };
+        // When the wolf looks out from behind his fir: while the cow drinks, and again later.
+        constexpr std::array<Stretch, 2> k_wolfLooksOut{ {
+            { 28.0f, 40.0f },
+            { 64.0f, 71.0f }
+        } };
+        constexpr float k_wolfSlide{ 1.5f }; // the seconds he takes to slide out or back
+        // Where the cow walks to drink, beside the stream below the bridge.
+        constexpr FloatPoint k_cowDrinkShare{ 0.362f, 0.705f };
+        constexpr Stretch k_ducksSwim{ 4.0f, 60.0f };
+        constexpr Stretch k_birdsFly{ 22.0f, 48.0f };
+        constexpr std::array<FishJump, 2> k_fishJumps{ {
+            { 14.0f, { 0.56f, 0.86f } },
+            { 58.0f, { 0.42f, 0.81f } }
+        } };
+        constexpr float k_wolfBlinks{ 28.0f }; // a cycle, his eyes shut for the last 0.15 of each
         constexpr FloatPoint k_lilyShare{ 0.31f, 0.915f };
         constexpr float k_lilySize{ 0.62f };
         constexpr std::array<Cattail, 9> k_cattails{
@@ -260,7 +311,16 @@ namespace ClaFi::PathArt
             BankFlower{ 0.9f, 30.0f, 2 }
         };
 
-        [[nodiscard]] MillColors millColorsOf(const SceneTheme&);
+        [[nodiscard]] TimberMillColors millColorsOf(const SceneTheme&);
+        // Where the mill stands in the frame, its wings turning once a cycle and its wheel twice.
+        [[nodiscard]] TimberMillPose millPoseOf(const SceneFrame&, float cycleTime);
+        // Seconds into the scene's story, which runs over two cycles.
+        [[nodiscard]] float storyAt(SceneTime);
+        // How far the wolf has slid out from behind his fir, from 0 hidden to 1 out.
+        [[nodiscard]] float wolfOutAt(float story);
+        // The cow's day: grazing, a walk to the stream, a drink, the walk back, and a look up.
+        [[nodiscard]] CowMoment cowAt(const SceneFrame&, float story, float cycleTime);
+        [[nodiscard]] PosedCowColors cowColorsOf(const SceneTheme&);
         // The near bank's colour for the land's: darker, and no more colourful.
         [[nodiscard]] Color nearBankColor(Color landColor);
         // The parallax of the valley floor at `y`, the mill's foot being 1.
@@ -299,8 +359,21 @@ namespace ClaFi::PathArt
         void drawBridge(const SceneFrame&, const SceneTheme&);
         // What still stands mirrored in the water: the mountains, the far hills, the bridge, the
         // firs by the shore and the mill's house.
-        void drawStillReflections(const SceneFrame&, const SceneTheme&, const MillColors&);
-        void drawMovingReflections(const SceneFrame&, const SceneTheme&, float cycleTime);
+        void drawStillReflections(const SceneFrame&, const SceneTheme&, const TimberMillColors&);
+        void drawMovingReflections(const SceneFrame&, const SceneTheme&, float cycleTime,
+            const CowMoment&);
+        // Rings spreading on the water from `center`, `age` seconds after something broke it.
+        void drawRings(const SceneFrame&, FloatPoint center, float age, float size, Color wave);
+        // Five birds in a V, crossing the sky from right to left.
+        void drawFlock(const SceneFrame&, const SceneTheme&, float story);
+        // A duck swimming right, its head bobbing by `paddle`, from -1 to 1.
+        void drawDuck(const SceneFrame&, FloatPoint at, float size, float paddle,
+            const DuckColors&);
+        // A mother duck and three ducklings crossing the pond.
+        void drawDucks(const SceneFrame&, const SceneTheme&, float story);
+        void drawFishJumps(const SceneFrame&, const SceneTheme&, float story);
+        // A butterfly over the near bank by day, its path coming round once a story.
+        void drawButterfly(const SceneFrame&, const SceneTheme&, float story);
         void drawWaterLight(const SceneFrame&, const SceneTheme&, float sunX, float cycleTime);
         void drawNearBank(const SceneFrame&, const SceneTheme&, float cycleTime);
     }
@@ -314,7 +387,6 @@ namespace ClaFi::PathArt
         m_objectsScale = std::min(h, w) / 600.0f;
         m_sunPos = { w * 0.75f, h * 0.15f };
         m_sunRadius = 35.0f * m_objectsScale;
-        const float mS = m_objectsScale;
         const float cycleTime = time.cycleTime;
 
         if (m_stillLayersSize != bounds.dimensions()
@@ -348,11 +420,14 @@ namespace ClaFi::PathArt
             (0.8f + (std::sin(a2) + 1.0f) * 0.2f) * m_objectsScale);
 
         canvas.drawBitmap(m_land, m_offset);
-        const MillColors millColors = millColorsOf(theme());
+        const float story = storyAt(time);
+        drawFlock(frame, theme(), story);
+        const CowMoment cow = cowAt(frame, story, cycleTime);
+        const TimberMillColors millColors = millColorsOf(theme());
         m_reflection.draw(frame, riverOutline(frame), [&](const SceneFrame& mirror) {
             drawStillReflections(mirror, theme(), millColors);
         }, [&](const SceneFrame& mirror) {
-            drawMovingReflections(mirror, theme(), cycleTime);
+            drawMovingReflections(mirror, theme(), cycleTime, cow);
         }, Ripples{
             .top = h * k_horizonShare,
             .farReach = k_farRippleReach,
@@ -362,6 +437,14 @@ namespace ClaFi::PathArt
         });
         drawBridge(frame, theme());
         drawWaterLight(frame, theme(), m_sunPos.x, cycleTime);
+        if (cow.ripplesAge)
+        {
+            const FloatPoint muzzle = {
+                cow.pose.foot.x + cow.pose.facing * 70.0f * cow.pose.size,
+                cow.pose.foot.y + 2.0f * cow.pose.size
+            };
+            drawRings(frame, muzzle, *cow.ripplesAge, cow.pose.size * 1.1f, theme().riverWave);
+        }
 
         // river fog along the pond's far shore
         canvas.fillRectangle(bounds, PointGlow{
@@ -375,82 +458,48 @@ namespace ClaFi::PathArt
         // The predator behind the fir on the right: a gator in the African themes, a wolf
         // elsewhere, crossfading between them.
         const FloatPoint wolfFirFoot = pointAt(frame, k_wolfFir.footShare);
-        const float wolfFirSize = k_firSize * k_wolfFir.size * sizeAt(frame, wolfFirFoot.y);
-        const FloatPoint predator = {
-            wolfFirFoot.x - 24.2f * wolfFirSize,
-            wolfFirFoot.y - 20.0f * wolfFirSize
-        };
-        const float predatorSize = wolfFirSize * 0.667f;
+        const float wolfFirUnit = sizeAt(frame, wolfFirFoot.y);
         drawGatorHead(frame, GatorHeadPose{
-            .at = predator,
-            .size = predatorSize,
+            .at = { wolfFirFoot.x - 30.5f * wolfFirUnit, wolfFirFoot.y - 25.2f * wolfFirUnit },
+            .size = 0.84f * wolfFirUnit,
             .cycleTime = cycleTime,
             .opacity = theme().isAfrica
         }, GatorHeadColors{
             .body = theme().wolfBody,
             .eye = theme().wolfEye
         });
-        drawPeekingWolf(frame, PeekingWolfPose{
-            .at = predator,
-            .size = predatorSize,
-            .cycleTime = cycleTime,
+        const float wolfSize = 1.35f * wolfFirUnit;
+        drawWolfHead(frame, WolfHeadPose{
+            .at = {
+                wolfFirFoot.x - 8.0f * wolfFirUnit - wolfOutAt(story) * 20.0f * wolfSize,
+                wolfFirFoot.y - 36.0f * wolfFirUnit
+            },
+            .size = wolfSize,
+            .eyesOpen = fractionalPart(cycleTime * k_wolfBlinks) < 0.85f,
             .opacity = 1.0f - theme().isAfrica
-        }, PeekingWolfColors{
-            .body = theme().wolfBody,
-            .ear = theme().wolfEar,
-            .eye = theme().wolfEye
+        }, WolfHeadColors{
+            .head = theme().wolfBody,
+            .ears = theme().wolfEar,
+            .eyes = theme().wolfEye
         });
         drawFir(frame, theme(), k_wolfFir);
 
-        const FloatPoint cowFoot = pointAt(frame, k_cowFootShare);
-        const float cowSize = k_cowSize * sizeAt(frame, cowFoot.y);
-        const Color meadowBehindCow = hazed(theme(), landAt(frame, theme(), cowFoot.y),
-            parallaxAt(frame, cowFoot.y));
-        // The cow's whole figure stands against the meadow.
-        drawCow(frame, CowPose{
-            .at = { cowFoot.x, cowFoot.y - 40.0f * cowSize },
-            .size = cowSize,
-            .cycleTime = cycleTime
-        }, CowColors{
-            .body = theme().cowBody,
-            .spots = theme().cowSpots,
-            .snout = theme().cowSnout,
-            .detail = theme().cowDetail,
-            .shadow = theme().shadow,
-            .skyBehind = meadowBehindCow,
-            .groundBehind = meadowBehindCow
-        });
+        drawPosedCow(frame, cow.pose, cowColorsOf(theme()));
 
-        const FloatPoint millFoot = pointAt(frame, k_millFootShare);
-        const float millSize = k_millSize * mS;
-        const MillPose mill = {
-            .base = millFoot,
-            .size = millSize,
-            .wingTurns = cycleTime
-        };
-        const FloatPoint wheelCenter = { millFoot.x - 65.0f * millSize, millFoot.y };
-        drawWaterWheel(frame, WaterWheelPose{
-            .center = wheelCenter,
-            .size = millSize,
-            .turns = cycleTime * 2.0f
-        }, theme().millWheel);
-        // The river covers the wheel's lower half.
-        const float waterLine = m_offset.y + millFoot.y;
-        canvas.pushClip(FloatRect{ bounds.left, waterLine, bounds.right, bounds.bottom });
-        fillDisc(frame, wheelCenter, 44.0f * millSize,
-            SolidColor{ theme().riverTop.withOpacity(0.6f) });
-        canvas.popClip();
-        // The house's reflection, which the sprite draws below its foot, is left out.
-        canvas.pushClip(FloatRect{ bounds.left, bounds.top, bounds.right, waterLine });
-        drawMillHouse(frame, mill, millColors);
-        canvas.popClip();
-        drawWaterFoam(canvas, m_offset.x + millFoot.x - 75.0f * millSize, waterLine, millSize,
-            cycleTime * 1.25f);
+        const TimberMillPose mill = millPoseOf(frame, cycleTime);
+        fillOval(frame, { mill.base.x + 40.0f * mill.size, mill.base.y + 2.0f * mill.size },
+            90.0f * mill.size, 6.0f * mill.size, SolidColor{ faded(theme().chase.shadow, 0.8f) });
+        drawTimberMillSmoke(frame, mill, millColors);
+        drawTimberMillHouse(frame, mill, millColors);
+        drawTimberMillWheel(frame, mill, millColors);
+        drawTimberMillWater(frame, mill, millColors);
         drawLightning(frame, cycleTime, Lightning{
             .strength = theme().hasRain,
             .color = theme().sunDisk
         });
-        drawMillWings(frame, mill, millColors);
+        drawTimberMillWings(frame, mill, millColors);
+        drawFishJumps(frame, theme(), story);
+        drawDucks(frame, theme(), story);
 
         const FloatPoint lily = pointAt(frame, k_lilyShare);
         drawWaterLily(frame, WaterLilyPose{
@@ -462,6 +511,7 @@ namespace ClaFi::PathArt
             .flower = theme().lilyFlower
         });
         drawNearBank(frame, theme(), cycleTime);
+        drawButterfly(frame, theme(), story);
 
         Fireflies fireflies = firefliesOf(theme());
         fireflies.area = { 0.0f, h * 0.6f, w, h * 0.88f };
@@ -478,17 +528,21 @@ namespace ClaFi::PathArt
         constexpr Themes::ClearDay k_iconTheme{};
         const SceneFrame frame = SceneFrame::Spanning(canvas, bounds, k_figureSpan);
         const float unit = frame.unit;
-        const MillPose mill = {
-            .base = { frame.width * 0.5f, frame.height * 0.5f + 240.0f * unit },
-            .size = 2.0f * unit,
-            .wingTurns = 0.06f
+        // The figure runs from the wheel's far rim to the wings' tips, 264 by 241 units.
+        const TimberMillPose mill = {
+            .base = { frame.width * 0.5f + 12.0f * unit, frame.height * 0.5f + 204.0f * unit },
+            .size = 1.7f * unit,
+            .wingTurns = 0.06f,
+            .wheelTurns = 0.0f,
+            .cycleTime = 0.0f
         };
-        const MillColors millColors = millColorsOf(k_iconTheme);
-        // The house's reflection hangs below its foot, and the wing tips reach past the top.
+        const TimberMillColors millColors = millColorsOf(k_iconTheme);
+        // The wheel's foot, which the river covers in the scene, ends at the house's foot.
         canvas.pushClip(FloatRect{ bounds.left, bounds.top, bounds.right,
             bounds.top + mill.base.y });
-        drawMillHouse(frame, mill, millColors);
-        drawMillWings(frame, mill, millColors);
+        drawTimberMillHouse(frame, mill, millColors);
+        drawTimberMillWheel(frame, mill, millColors);
+        drawTimberMillWings(frame, mill, millColors);
         canvas.popClip();
     }
 
@@ -551,21 +605,6 @@ namespace ClaFi::PathArt
         g_rasterBuffers.m_clipStride = heldClipStride;
     }
 
-    void MillScene::drawWaterFoam(Canvas& canvas, const float x, const float y, const float mS,
-        const float t) const
-    {
-        const Matrix3x2 tx = Matrix3x2::Translation(x, y) * Matrix3x2::Scale(mS);
-        for (int i = -2; i <= 2; ++i)
-        {
-            const float index = static_cast<float>(i);
-            PixelPath path;
-            const float ox = index * 15.0f + std::sin(t * 10.0f + index) * 5.0f;
-            path.moveTo(ox - 10.0f, 0.0f);
-            path.quadTo({ ox, -10.0f }, { ox + 10.0f, 0.0f });
-            canvas.fillPath(path, SolidColor{ theme().foam }, &tx);
-        }
-    }
-
     void MillScene::drawSunCorona(Canvas& canvas, const float x, const float y, const float r,
         const float t)
     {
@@ -617,17 +656,168 @@ namespace ClaFi::PathArt
 
     namespace
     {
-        MillColors millColorsOf(const SceneTheme& theme)
+        TimberMillColors millColorsOf(const SceneTheme& theme)
         {
+            const Color black{ 0xFF000000 };
             return {
                 .bodyTop = theme.millBodyTop,
                 .bodyBottom = theme.millBodyBottom,
                 .roofTop = theme.millRoofTop,
                 .roofBottom = theme.millRoofBottom,
-                .wingWood = theme.chase.bark,
-                .wingWoodStroke = theme.chase.barkShade,
+                .timber = theme.chase.bough.fullyOpaque(),
+                .bark = theme.chase.bark,
+                .barkShade = theme.chase.barkShade,
+                .stoneLight = theme.chase.stoneLight,
+                .stoneDark = theme.chase.stoneDark,
+                .stoneCrack = theme.chase.stoneCrack,
+                .sunlight = theme.sunDisk,
+                .glass = colorBetween(theme.skyBottom.fullyOpaque(), black, 0.45f),
+                .lamp = theme.windowLight,
+                .shadow = theme.chase.shadow,
                 .wingFabric = theme.millWingFabric,
-                .wingFabricStroke = theme.chase.barkShade
+                .wheel = theme.millWheel,
+                .water = colorBetween(theme.riverTop.fullyOpaque(), theme.foam.fullyOpaque(),
+                    0.45f),
+                .river = theme.riverTop,
+                .foam = theme.foam,
+                .smoke = colorBetween(theme.cloud, theme.skyBottom.fullyOpaque(), 0.25f)
+            };
+        }
+
+        TimberMillPose millPoseOf(const SceneFrame& frame, const float cycleTime)
+        {
+            return {
+                .base = pointAt(frame, k_millFootShare),
+                .size = k_millSize * frame.unit,
+                .wingTurns = cycleTime,
+                .wheelTurns = cycleTime * 2.0f,
+                .cycleTime = cycleTime
+            };
+        }
+
+        float storyAt(const SceneTime time)
+        {
+            const float storyCycle = static_cast<float>(time.cyclesPassed & 1);
+            return (storyCycle + time.cycleTime) * k_storySeconds * 0.5f;
+        }
+
+        float wolfOutAt(const float story)
+        {
+            float out = 0.0f;
+            for (const Stretch& look : k_wolfLooksOut)
+            {
+                out = std::max(out, smoothStep(look.from, look.from + k_wolfSlide, story)
+                    - smoothStep(look.until - k_wolfSlide, look.until, story));
+            }
+            return out;
+        }
+
+        CowMoment cowAt(const SceneFrame& frame, const float story, const float cycleTime)
+        {
+            const float grazingHead = 1.15f + 0.06f * std::sin(cycleTime * k_cowNods * k_2Pi);
+            const float chew = 2.0f * std::abs(std::sin(cycleTime * k_cowChews
+                * std::numbers::pi_v<float>));
+            float walked = 0.0f; // from where it grazes, 0, to where it drinks, 1
+            float facing = -1.0f;
+            float head = grazingHead;
+            float jaw = 0.0f;
+            std::optional<float> stride{};
+            if (story < 16.0f)
+            {
+                jaw = chew;
+            }
+            else if (story < 18.0f)
+            {
+                head = grazingHead + (0.05f - grazingHead) * smoothStep(16.0f, 18.0f, story);
+                jaw = chew;
+            }
+            else if (story < 26.0f)
+            {
+                walked = (story - 18.0f) / 8.0f;
+                head = 0.1f;
+                stride = (story - 18.0f) * 0.9f;
+            }
+            else if (story < 28.0f)
+            {
+                walked = 1.0f;
+                head = 0.1f + 1.25f * smoothStep(26.0f, 28.0f, story);
+            }
+            else if (story < 40.0f)
+            {
+                walked = 1.0f;
+                head = 1.35f + 0.03f * std::sin(story * 4.0f);
+            }
+            else if (story < 42.0f)
+            {
+                walked = 1.0f;
+                head = 1.35f - 1.25f * smoothStep(40.0f, 42.0f, story);
+            }
+            else if (story < 43.0f)
+            {
+                walked = 1.0f;
+                facing = -1.0f + 2.0f * smoothStep(42.0f, 43.0f, story);
+                head = 0.1f;
+            }
+            else if (story < 51.0f)
+            {
+                walked = 1.0f - (story - 43.0f) / 8.0f;
+                facing = 1.0f;
+                head = 0.1f;
+                stride = (story - 43.0f) * 0.9f;
+            }
+            else if (story < 52.0f)
+            {
+                facing = 1.0f - 2.0f * smoothStep(51.0f, 52.0f, story);
+                head = 0.1f;
+            }
+            else if (story < 54.0f)
+            {
+                head = 0.1f + (grazingHead - 0.1f) * smoothStep(52.0f, 54.0f, story);
+                jaw = chew;
+            }
+            else
+            {
+                // It looks up from the grass while the wolf looks out the second time.
+                const float lookingUp = smoothStep(64.0f, 65.0f, story)
+                    - smoothStep(68.0f, 69.0f, story);
+                head = grazingHead * (1.0f - lookingUp);
+                jaw = chew;
+            }
+
+            // A ripple each 2.6 seconds from 28 to 40, the last left to spread for 3.5.
+            std::optional<float> ripplesAge{};
+            const float sinceDrinking = story - 28.0f;
+            if (sinceDrinking >= 0.0f)
+            {
+                const float lastRipple = std::floor(std::min(sinceDrinking, 11.99f) / 2.6f) * 2.6f;
+                if (sinceDrinking - lastRipple < 3.5f)
+                    ripplesAge = sinceDrinking - lastRipple;
+            }
+
+            const FloatPoint foot = pointAt(frame, pointBetween(k_cowFootShare, k_cowDrinkShare,
+                walked));
+            return {
+                .pose = {
+                    .foot = foot,
+                    .size = k_cowSize * sizeAt(frame, foot.y),
+                    .facing = facing,
+                    .headDrop = head,
+                    .stride = stride,
+                    .chew = jaw,
+                    .tailSwing = 0.25f * std::sin(cycleTime * k_cowSwishes * k_2Pi)
+                },
+                .ripplesAge = ripplesAge
+            };
+        }
+
+        PosedCowColors cowColorsOf(const SceneTheme& theme)
+        {
+            return {
+                .body = theme.cowBody,
+                .spots = theme.cowSpots,
+                .snout = theme.cowSnout,
+                .detail = theme.cowDetail,
+                .shadow = theme.chase.shadow
             };
         }
 
@@ -1014,31 +1204,35 @@ namespace ClaFi::PathArt
         {
             const FloatPoint foot = pointAt(frame, tree.footShare);
             const float parallax = parallaxAt(frame, foot.y);
-            drawFirTree(frame, foot, k_firSize * tree.size * sizeAt(frame, foot.y), FirTreeColors{
+            const Color needles = theme.treeLeavesBase.fullyOpaque();
+            const Color sunlit = colorBetween(needles, theme.chase.crownLight.fullyOpaque(), 0.7f);
+            const Color shaded = colorBetween(needles, Color{ 0xFF000000 }, 0.28f);
+            drawSpruce(frame, foot, tree.size * sizeAt(frame, foot.y), SpruceColors{
+                .needles = hazed(theme, needles, parallax),
+                .sunlit = hazed(theme, sunlit, parallax),
+                .shaded = hazed(theme, shaded, parallax),
                 .trunk = hazed(theme, theme.chase.bark, parallax),
                 .trunkShade = hazed(theme, theme.chase.barkShade, parallax),
-                .leaves = hazed(theme, theme.treeLeavesBase, parallax),
-                .shadow = theme.shadow
+                .shadow = theme.chase.shadow
             });
         }
 
-        // The Chase's far hill tree, standing nearer.
         void drawBroadleaf(const SceneFrame& frame, const SceneTheme& theme,
             const StandingTree& tree)
         {
             const FloatPoint foot = pointAt(frame, tree.footShare);
             const float parallax = parallaxAt(frame, foot.y);
-            const float size = tree.size * sizeAt(frame, foot.y);
-            drawGlow(frame, foot, 20.0f * size, faded(theme.shadow, 0.3f), 0.5f);
-            const Color bark = hazed(theme, theme.chase.bark, parallax);
-            const Color barkShade = hazed(theme, theme.chase.barkShade, parallax);
-            drawTrunk(frame, foot, 3.0f * size, 22.0f * size, bark, barkShade);
-            fillDisc(frame, { foot.x, foot.y - 32.0f * size }, 16.0f * size,
-                SolidColor{ hazed(theme, theme.treeLeavesBase, parallax) });
-            fillDisc(frame, { foot.x - 9.0f * size, foot.y - 25.0f * size }, 11.0f * size,
-                SolidColor{ hazed(theme, theme.chase.crownLight, parallax) });
-            fillDisc(frame, { foot.x + 9.0f * size, foot.y - 26.0f * size }, 12.0f * size,
-                SolidColor{ hazed(theme, theme.chase.crownMiddle, parallax) });
+            const Color crown = theme.treeLeavesBase.fullyOpaque();
+            const Color crownShade = colorBetween(crown, Color{ 0xFF000000 }, 0.25f);
+            drawBroadleafTree(frame, foot, tree.size * sizeAt(frame, foot.y), BroadleafTreeColors{
+                .crown = hazed(theme, crown, parallax),
+                .crownMiddle = hazed(theme, theme.chase.crownMiddle.fullyOpaque(), parallax),
+                .crownLight = hazed(theme, theme.chase.crownLight.fullyOpaque(), parallax),
+                .crownShade = faded(hazed(theme, crownShade, parallax), 0.6f),
+                .trunk = hazed(theme, theme.chase.bark, parallax),
+                .trunkShade = hazed(theme, theme.chase.barkShade, parallax),
+                .shadow = theme.chase.shadow
+            });
         }
 
         // The water shows the sky's light near the horizon and its own deep colour close by.
@@ -1113,7 +1307,7 @@ namespace ClaFi::PathArt
         // Each mirrored about the line where it meets the ground or the water. The house is kept to
         // the rows below its foot, where its reflection lies.
         void drawStillReflections(const SceneFrame& frame, const SceneTheme& theme,
-            const MillColors& millColors)
+            const TimberMillColors& millColors)
         {
             const SceneFrame aboutHorizon = mirroredAbout(frame, frame.height * k_horizonShare);
             drawMountains(aboutHorizon, theme, k_farRange);
@@ -1130,36 +1324,210 @@ namespace ClaFi::PathArt
                 drawFir(mirroredAbout(frame, foot), theme, tree);
             }
 
-            const FloatPoint millFoot = pointAt(frame, k_millFootShare);
-            frame.canvas.pushClip(frame.toCanvas.mapRect({ 0.0f, millFoot.y, frame.width,
+            const TimberMillPose mill = millPoseOf(frame, 0.0f);
+            frame.canvas.pushClip(frame.toCanvas.mapRect({ 0.0f, mill.base.y, frame.width,
                 frame.height }));
-            drawMillHouse(mirroredAbout(frame, millFoot.y), MillPose{
-                .base = millFoot,
-                .size = k_millSize * frame.unit,
-                .wingTurns = 0.0f
-            }, millColors);
+            drawTimberMillHouse(mirroredAbout(frame, mill.base.y), mill, millColors);
             frame.canvas.popClip();
         }
 
         void drawMovingReflections(const SceneFrame& frame, const SceneTheme& theme,
-            const float cycleTime)
+            const float cycleTime, const CowMoment& cow)
         {
-            const FloatPoint millFoot = pointAt(frame, k_millFootShare);
-            const float millSize = k_millSize * frame.unit;
-            const SceneFrame aboutMillFoot = mirroredAbout(frame, millFoot.y);
-            frame.canvas.pushClip(frame.toCanvas.mapRect({ 0.0f, millFoot.y, frame.width,
+            const TimberMillPose mill = millPoseOf(frame, cycleTime);
+            const TimberMillColors millColors = millColorsOf(theme);
+            const SceneFrame aboutMillFoot = mirroredAbout(frame, mill.base.y);
+            frame.canvas.pushClip(frame.toCanvas.mapRect({ 0.0f, mill.base.y, frame.width,
                 frame.height }));
-            drawWaterWheel(aboutMillFoot, WaterWheelPose{
-                .center = { millFoot.x - 65.0f * millSize, millFoot.y },
-                .size = millSize,
-                .turns = cycleTime * 2.0f
-            }, theme.millWheel);
-            drawMillWings(aboutMillFoot, MillPose{
-                .base = millFoot,
-                .size = millSize,
-                .wingTurns = cycleTime
-            }, millColorsOf(theme));
+            drawTimberMillWheel(aboutMillFoot, mill, millColors);
+            drawTimberMillWings(aboutMillFoot, mill, millColors);
             frame.canvas.popClip();
+            // Mirrored about its feet, the cow shows where the water reaches its reflection.
+            drawPosedCow(mirroredAbout(frame, cow.pose.foot.y), cow.pose, cowColorsOf(theme));
+        }
+
+        void drawRings(const SceneFrame& frame, const FloatPoint center, const float age,
+            const float size, const Color wave)
+        {
+            constexpr int k_rings{ 3 };
+            constexpr float k_ringLife{ 2.6f };
+            for (int k = 0; k != k_rings; ++k)
+            {
+                const float ringAge = age - static_cast<float>(k) * 0.45f;
+                if (ringAge <= 0.0f || ringAge > k_ringLife)
+                    continue;
+                const float radius = (6.0f + ringAge * 22.0f) * size;
+                PixelPath ring;
+                ring.drawEllipse(center, radius, radius * 0.3f);
+                strokeShape(frame, ring, SolidColor{ faded(wave, (1.0f - ringAge / k_ringLife)
+                    * 0.9f) }, 1.4f * size);
+            }
+        }
+
+        void drawFlock(const SceneFrame& frame, const SceneTheme& theme, const float story)
+        {
+            constexpr std::array<FloatPoint, 5> k_places{ {
+                { 0.0f, 0.0f },
+                { 22.0f, -10.0f },
+                { 22.0f, 10.0f },
+                { 44.0f, -20.0f },
+                { 44.0f, 20.0f }
+            } };
+            const float flown = (story - k_birdsFly.from) / (k_birdsFly.until - k_birdsFly.from);
+            if (flown < 0.0f || flown > 1.0f)
+                return;
+            const float unit = frame.unit;
+            const FloatPoint leader = pointAt(frame, pointBetween({ 1.05f, 0.24f },
+                { -0.08f, 0.2f }, flown));
+            const float span = 7.0f * unit;
+            PixelPath birds;
+            for (std::size_t i = 0; i != k_places.size(); ++i)
+            {
+                const float flap = std::sin(story * 9.0f + static_cast<float>(i) * 1.3f);
+                const FloatPoint at = {
+                    leader.x + k_places[i].x * unit,
+                    leader.y + k_places[i].y * unit * 0.6f
+                };
+                birds.moveTo(at.x - span, at.y - flap * span * 0.5f);
+                birds.quadTo({ at.x - span * 0.4f, at.y - span * 0.2f }, at);
+                birds.quadTo({ at.x + span * 0.4f, at.y - span * 0.2f },
+                    { at.x + span, at.y - flap * span * 0.5f });
+            }
+            strokeShape(frame, birds, SolidColor{ theme.chase.crowBody }, 1.76f * unit);
+        }
+
+        void drawDuck(const SceneFrame& frame, const FloatPoint at, const float size,
+            const float paddle, const DuckColors& colors)
+        {
+            const SceneFrame duck = frame.within(Matrix3x2::Translation(at)
+                * Matrix3x2::Scale(size));
+            PixelPath shape;
+            shape.moveTo(14.0f, 2.0f);
+            shape.lineTo(-30.0f, -2.0f);
+            shape.moveTo(14.0f, 2.0f);
+            shape.lineTo(-30.0f, 7.0f);
+            strokeShape(duck, shape, SolidColor{ faded(colors.wake, 0.7f) }, 1.2f);
+
+            shape.clear();
+            shape.moveTo(-16.0f, -2.0f);
+            shape.cubicTo({ -18.0f, -12.0f }, { 2.0f, -14.0f }, { 10.0f, -8.0f });
+            shape.cubicTo({ 16.0f, -4.0f }, { 14.0f, 2.0f }, { 8.0f, 2.0f });
+            shape.lineTo(-14.0f, 2.0f);
+            shape.close();
+            fillShape(duck, shape, SolidColor{ colors.body });
+            fillOval(duck, { -3.0f, -6.0f }, 9.0f, 4.0f, SolidColor{ colors.wing }, -0.15f);
+            fillDisc(duck, { 10.0f, -14.0f + paddle * 0.6f }, 6.0f, SolidColor{ colors.body });
+            shape.clear();
+            shape.moveTo(15.0f, -14.0f);
+            shape.lineTo(22.0f, -12.5f);
+            shape.lineTo(15.0f, -11.0f);
+            shape.close();
+            fillShape(duck, shape, SolidColor{ colors.beak });
+            fillDisc(duck, { 12.0f, -15.5f }, 1.1f, SolidColor{ colors.eye });
+        }
+
+        void drawDucks(const SceneFrame& frame, const SceneTheme& theme, const float story)
+        {
+            constexpr std::array<float, 4> k_behind{ 0.0f, -46.0f, -80.0f, -112.0f };
+            const float swum = (story - k_ducksSwim.from) / (k_ducksSwim.until - k_ducksSwim.from);
+            if (swum < 0.0f || swum > 1.0f)
+                return;
+            const float size = sizeAt(frame, frame.height * 0.89f) * 0.62f;
+            const DuckColors mother = {
+                .body = theme.chase.birdBody.fullyOpaque(),
+                .wing = theme.chase.birdWing.fullyOpaque(),
+                .beak = theme.chase.duckBeak,
+                .eye = theme.cowDetail,
+                .wake = theme.riverWave
+            };
+            const DuckColors duckling = {
+                .body = theme.chase.duckLight.fullyOpaque(),
+                .wing = theme.chase.duckShade.fullyOpaque(),
+                .beak = theme.chase.duckBeak,
+                .eye = theme.cowDetail,
+                .wake = theme.riverWave
+            };
+            for (std::size_t i = 0; i != k_behind.size(); ++i)
+            {
+                const float index = static_cast<float>(i);
+                const float x = frame.width * (-0.06f + 1.12f * swum) + k_behind[i] * size;
+                const FloatPoint at = {
+                    x,
+                    frame.height * (0.885f + 0.012f * std::sin(x / frame.width * 5.0f))
+                        + 0.67f * frame.unit * std::sin(story * 2.0f + index)
+                };
+                const float paddle = std::sin(story * 3.0f + index);
+                if (i == 0)
+                    drawDuck(frame, at, size, paddle, mother);
+                else
+                    drawDuck(frame, at, size * 0.62f, paddle, duckling);
+            }
+        }
+
+        void drawFishJumps(const SceneFrame& frame, const SceneTheme& theme, const float story)
+        {
+            const Color scales = colorBetween(theme.chase.stoneLight.fullyOpaque(),
+                theme.riverTop.fullyOpaque(), 0.3f);
+            for (const FishJump& jump : k_fishJumps)
+            {
+                const float age = story - jump.at;
+                if (age < 0.0f || age > 4.0f)
+                    continue;
+                const FloatPoint at = pointAt(frame, jump.share);
+                const float size = sizeAt(frame, at.y) * 0.7f;
+                drawRings(frame, { at.x - 26.0f * size, at.y }, age, size, theme.riverWave);
+                drawRings(frame, { at.x + 26.0f * size, at.y }, age - 1.0f, size, theme.riverWave);
+                if (age >= 1.0f)
+                    continue;
+                const FloatPoint arc = {
+                    at.x + (-26.0f + 52.0f * age) * size,
+                    at.y - std::sin(age * std::numbers::pi_v<float>) * 34.0f * size
+                };
+                const SceneFrame fish = frame.within(Matrix3x2::Translation(arc)
+                    * Matrix3x2::Rotation(-0.9f + 1.8f * age) * Matrix3x2::Scale(size));
+                fillOval(fish, {}, 11.0f, 4.0f, SolidColor{ scales });
+                PixelPath tail;
+                tail.moveTo(-9.0f, 0.0f);
+                tail.lineTo(-17.0f, -5.0f);
+                tail.lineTo(-17.0f, 5.0f);
+                tail.close();
+                fillShape(fish, tail, SolidColor{ scales });
+            }
+        }
+
+        void drawButterfly(const SceneFrame& frame, const SceneTheme& theme, const float story)
+        {
+            const float daylight = 1.0f - theme.hasStars;
+            if (daylight <= 0.0f)
+                return;
+            const float turn = story / k_storySeconds * k_2Pi;
+            const FloatPoint at = {
+                frame.width * (0.12f + 0.07f * std::sin(turn * 5.0f)
+                    + 0.01f * std::sin(turn * 17.0f)),
+                frame.height * (0.82f + 0.035f * std::sin(turn * 7.0f)
+                    + 0.008f * std::cos(turn * 24.0f))
+            };
+            const float open = std::abs(std::sin(turn * 178.0f));
+            const SceneFrame butterfly = frame.within(Matrix3x2::Translation(at)
+                * Matrix3x2::Scale(1.3f * frame.unit));
+            const SolidColor wing{ faded(theme.chase.wing, daylight) };
+            const SolidColor edge{ faded(theme.chase.wingEdge, daylight) };
+            for (const float side : { -1.0f, 1.0f })
+            {
+                PixelPath shape;
+                addEllipse(shape, {}, 4.5f * open + 0.5f, 4.0f);
+                const Matrix3x2 upper = Matrix3x2::Translation(side * 4.0f * open, -3.0f)
+                    * Matrix3x2::Rotation(side * 0.4f);
+                fillShape(butterfly, shape, wing, upper);
+                strokeShape(butterfly, shape, edge, 0.8f, StrokeCap::Round, upper);
+                shape.clear();
+                addEllipse(shape, {}, 3.0f * open + 0.4f, 2.6f);
+                const Matrix3x2 lower = Matrix3x2::Translation(side * 3.0f * open, 2.0f)
+                    * Matrix3x2::Rotation(-side * 0.4f);
+                fillShape(butterfly, shape, wing, lower);
+                strokeShape(butterfly, shape, edge, 0.8f, StrokeCap::Round, lower);
+            }
+            fillBox(butterfly, { -0.6f, -5.0f, 0.6f, 4.0f }, edge);
         }
 
         // Glints drifting with the current, and under the sun its glitter on the pond.

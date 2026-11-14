@@ -34,7 +34,9 @@ namespace ClaFi::Graphics
         void pushImage(int index);
         void popImage();
         void drawImage(int index, float opacity);
+        void drawImagePart(int index, const IntRect& part, IntPoint offset, float opacity);
         [[nodiscard]] bool hasImage(int index) const;
+        void clearImage(int index);
         FloatRect clipBox() const;
 
         int width() const;

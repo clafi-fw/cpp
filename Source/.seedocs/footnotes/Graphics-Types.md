@@ -216,6 +216,21 @@ well leaves half a pixel of surface outside the border.
 **An override gives what drawPixelView gives view by view**, in the order the views come. The
 default lays them in that way, one at a time.
 
+## IBackend drawImagePart
+
+**The part is in the surface's own pixels**, whatever transform the caller carries, as drawImage
+lays a whole image, and it lands texel for texel: `offset` moves it by whole pixels.
+
+**It is laid over what is there**, read premultiplied and scaled by opacity, as drawPixelView lays a
+view - where drawImage mixes a whole image in. A path clip cuts it on both backends.
+
+**Draw from an image outside any push of it.** An image is not read while it is being drawn into.
+
+## IBackend clearImage
+
+**Clear an image outside any push of it, or while it is the one being drawn into.** Direct2D clears
+a target only inside a draw of its own, so an image pushed beneath another cannot be cleared.
+
 ## CpuBackend drawPixelViews
 
 **Each strip of 32 rows is laid in by one thread**, from every view in the order given, so the order

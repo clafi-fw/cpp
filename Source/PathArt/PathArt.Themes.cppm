@@ -1364,6 +1364,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFF877D81,
             .petal2 = 0xFF9D6374,
             .petal3 = 0xFF7F679C,
+            .windowLight = 0xFFFFD68C,
             .chase = {
                 .mountainTop = 0xFF474044,
                 .mountainFoot = 0xFF2D2629,
@@ -1553,6 +1554,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFFEBE5E7,
             .petal2 = 0xFFFAD0D9,
             .petal3 = 0xFFDFD3F3,
+            .windowLight = 0xFFFFD68C,
             .chase = {
                 .mountainTop = 0xFF4B4647,
                 .mountainFoot = 0xFF302C2D,
@@ -1742,6 +1744,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFFEBE5E7,
             .petal2 = 0xFFFAD0D9,
             .petal3 = 0xFFDFD3F3,
+            .windowLight = 0xFFFFB45A,
             .chase = {
                 .mountainTop = 0xFF4B4647,
                 .mountainFoot = 0xFF302C2D,
@@ -1931,6 +1934,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFFFCABC4,
             .petal2 = 0xFFE69EE8,
             .petal3 = 0xFFBC9AFA,
+            .windowLight = 0x99FFDCB4,
             .chase = {
                 .mountainTop = 0xFF948895,
                 .mountainFoot = 0xFF706471,
@@ -2497,6 +2501,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFFFFFFFF,
             .petal2 = 0xFFFFFFFF,
             .petal3 = 0xFFFFFFFF,
+            .windowLight = 0xFFFFA65A,
             .chase = {
                 .mountainTop = 0xFF1D1819,
                 .mountainFoot = 0xFF060404,
@@ -2686,6 +2691,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFF9CFFC4,
             .petal2 = 0xFFC7F79F,
             .petal3 = 0xFF88FEEB,
+            .windowLight = 0xFFB4FF64,
             .chase = {
                 .mountainTop = 0xFF294300,
                 .mountainFoot = 0xFF020400,
@@ -2876,6 +2882,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFFE7E7E7,
             .petal2 = 0xFFC6C6C6,
             .petal3 = 0xFFD7D7D7,
+            .windowLight = 0xFFF0F0DC,
             .chase = {
                 .mountainTop = 0xFF292929,
                 .mountainFoot = 0xFF0D0D0D,
@@ -3065,6 +3072,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFFECE4F0,
             .petal2 = 0xFFFDCFE1,
             .petal3 = 0xFFE0D2FD,
+            .windowLight = 0xFFE8C8FF,
             .chase = {
                 .mountainTop = 0xFF48424B,
                 .mountainFoot = 0xFF2D2830,
@@ -3442,6 +3450,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFFFF00FF,
             .petal2 = 0xFF39FF14,
             .petal3 = 0xFFE6FF1A,
+            .windowLight = 0xFF00FFFF,
             .chase = {
                 .mountainTop = 0xFF3E3440,
                 .mountainFoot = 0xFF241B26,
@@ -3631,6 +3640,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFFA07EDC,
             .petal2 = 0xFF7E8DD8,
             .petal3 = 0xFFBC73C3,
+            .windowLight = 0xFFFF8C66,
             .chase = {
                 .mountainTop = 0xFF584C58,
                 .mountainFoot = 0xFF3C313C,
@@ -4949,6 +4959,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFF00FFFF,
             .petal2 = 0xFF70FDD1,
             .petal3 = 0xFFAEEBFE,
+            .windowLight = 0xFFFFD700,
             .chase = {
                 .mountainTop = 0xFF050711,
                 .mountainFoot = 0xFF000001,
@@ -5138,6 +5149,7 @@ namespace ClaFi::PathArt::Themes {
             .petal1 = 0xFF00FFF0,
             .petal2 = 0xFF69FEBE,
             .petal3 = 0xFF9BEDFF,
+            .windowLight = 0xFFFFFF66,
             .chase = {
                 .mountainTop = 0xFF3C3542,
                 .mountainFoot = 0xFF221C28,

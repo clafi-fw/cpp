@@ -40,7 +40,6 @@ namespace ClaFi::PathArt
         void keepStillLayers(const FloatRect& bounds);
 
         // Render Helpers (Dynamic elements render directly via Canvas&)
-        void drawWaterFoam(Canvas& canvas, float x, float y, float mS, float t) const;
         void drawSunCorona(Canvas& canvas, float x, float y, float r, float t);
         void drawCloud(Canvas& canvas, float x, float y, float s);
     private:

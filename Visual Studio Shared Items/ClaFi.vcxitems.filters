@@ -952,6 +952,18 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BouquetSprite.cppm">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BroadleafTreeSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BroadleafTreeSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BucketWheelSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BucketWheelSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CometSprite.cpp">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
@@ -1036,6 +1048,12 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\PlanetSprite.cppm">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\PosedCowSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\PosedCowSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\RabbitSprite.cpp">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
@@ -1054,10 +1072,22 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SatelliteSprite.cppm">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SpruceSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SpruceSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SunSprite.cpp">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\SunSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\TimberMillSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\TimberMillSprite.cppm">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\TopHatSprite.cpp">
@@ -1088,6 +1118,12 @@
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WaterWheelSprite.cppm">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WolfHeadSprite.cpp">
+      <Filter>PathArt\Sprites</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WolfHeadSprite.cppm">
       <Filter>PathArt\Sprites</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WolfSprite.cpp">

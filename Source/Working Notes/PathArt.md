@@ -3561,6 +3561,112 @@ Then (Oj, 13:32) "This fir is pointless": the fir on the right knoll stood behin
 only its tip showed, a sliver beside the roof. It is gone and the right knoll is bare. The still
 firs are two lists, k_knollFirs behind the broadleaf trees and k_shoreFirs, which the pond mirrors.
 
+**The mill** (step 3, Oj 13:36 "step 3 is the mill itself"). MillSprite redrawn as the mockup drew
+it, in the mockup's units: a timber framed house on a stone plinth with its right side in view, a
+planked roof plane, a chimney and barge boards; a bucket wheel; a trough pouring onto the wheel's
+left side, drops, spray and foam; the chimney's smoke; lattice wings. Five functions, drawn in that
+order: drawMillSmoke, drawMillHouse, drawMillWheel, drawMillWater, drawMillWings.
+
+- MillPose gains wheelTurns and cycleTime; size is pixels per unit of a mill whose front wall is
+  112 units wide, the mockup's. The hub stands at 126.
+- MillColors holds 20 colours, which millColorsOf takes from the theme: the Chase's bough for the
+  timber, bark and barkShade for the door, the stones for the plinth and chimney, sunDisk for the
+  sunlit wall and spokes, skyBottom 0.45 toward black for unlit glass, windowLight for the lamp,
+  riverTop and foam mixed for the poured water, cloud toward skyBottom for the smoke.
+- The wings' wood is bough, as in the mockup, where it was bark. Lunar Eclipse's bark is the teal
+  of its wheel (Oj, 05:38, "the Mill's pines and its wing frames"), so its wing frames turn brown.
+- WaterWheelSprite redrawn the same way: two rims, eight spokes, eighteen buckets, a far rim
+  behind, and its own WaterWheelColors. The mill places it, so the scene does not know where the
+  wheel stands.
+- The sprite draws no upside-down copy of the house any more, so the scene's clip at the water line
+  is gone, and so is MillScene::drawWaterFoam. The ground shadow under the house is the scene's.
+- The mockup's rates in seconds became whole counts a cycle near them: the smoke rises 4 times and
+  sways 6, drops fall 64, spray leaps 36, foam bobs 57 and swells 45.
+- The eaves' shadow is the Chase's shadow at 1.4 of its alpha, held to opaque in the sprite; every
+  theme's is 0x47 now.
+- SceneTheme::windowLight: a colour after petal3, so colorsNum() is 40 plus the Chase's. Themes
+  with no lamp leave it out. Oj (13:51) "B everything" from "Mill window light - options.png": each
+  theme its own lamp - Midnight and Calm Night FFD68C, Stormy Night FFB45A, Twilight FFDCB4 at 0x99,
+  Winter Night FFA65A, Midnight Fantasy E8C8FF, Cyberpunk Night 00FFFF, Lunar Eclipse FF8C66, Neon
+  City Night FFFF66 - and lamps in three dark themes with no stars: Toxic Waste B4FF64, Underwater
+  Realm FFD700, Vintage Noir F0F0DC.
+- drawIcon draws the house, the wheel and the wings at 1.7 units, the figure 264 by 241 units.
+- At 1920 x 1080 in the container: 10 to 13.5 ms a frame (9.5 to 13 before), 57 to 68 ms for the
+  first.
+
+The mockup's theme table carried 16 of its 28 themes with comments and digit separators left in
+their values, so those themes could not draw; cleaned, it draws all 28 (version 6).
+
+Then (Oj, 14:01) "water distortion only on CPU?" - yes: off the CPU the pond was a still mirror.
+Timed in the container, the CPU row pass costs 3 ms a frame at 1920 x 1080 and 13 ms at 3840 x
+2160, and on Direct2D it would add a 14 MB upload a frame; Oj's display is 3840 x 2160 at 120 Hz.
+Of three ways - let the CPU pass run on Direct2D, make it cheaper first, or lay the rows from kept
+images on the GPU - Oj (14:12) took the third: "I'd go with C too".
+
+- IBackend::drawImagePart(index, part, offset, opacity) and clearImage(index), on both backends
+  and on Canvas. drawImage mixes a whole image in; a part is composited, premultiplied, as
+  drawPixelView lays a view, because a reflection is content laid over the water.
+  CpuBackend::compositeImageThroughClip is blendImageThroughClip's twin for it.
+- A PixelView's subView reaches to the end of its allocation, so the first cut composited every row
+  below each strip, over and over; the part's view states its own size.
+- WaterReflection draws in one of two ways: drawRows, the CPU's, unchanged bit for bit, and
+  drawStrips for every other backend. rippleAt is the one formula both take. Kept images 6 and 7.
+  A strip is a run of rows with one shift and one opacity in 256ths: 471 at 1920 x 1080.
+- Checked by forcing drawStrips on the CPU backend in the container: against drawRows the mean
+  difference over the water is 0.2 of 255, the rest a half pixel of phase at the water's top - the
+  strips count rows from 604.8, the row pass from 604. Direct2D's two functions are not built or
+  run here.
+
+Then (Oj, 14:44) "Step 4 is next but keep the old sprites", and (14:47) "The old mill should come
+back too": MillSprite and WaterWheelSprite are back as they were, and the step 3 drawings stand
+beside them under names of their own - TimberMillSprite (TimberMillPose, TimberMillColors,
+drawTimberMillSmoke, -House, -Wheel, -Water and -Wings) and BucketWheelSprite (BucketWheelPose,
+BucketWheelColors, drawBucketWheel). The old modules export MillPose, MillColors and
+drawWaterWheel, so the new ones could not keep those names. FirTreeSprite, CowSprite and
+PeekingWolfSprite stay as well; MillScene draws with none of the five old modules.
+
+**The figures** (step 4). Four new sprites after the mockup, in its units:
+
+- SpruceSprite: five drooping tiers, 154 units tall, each lit on the right and shaded on the left
+  by a wedge clipped to the tier. The knoll firs, the shore firs - still mirrored - and the wolf's.
+- BroadleafTreeSprite: nine clumps in the crown's three tones on a tapered trunk, 129 units tall.
+  The two broadleaf trees take it at 0.95 and 0.85, where the scene drew three discs.
+- PosedCowSprite: PosedCowPose carries facing (-1 to 1, the cow mirrored), headDrop, an optional
+  stride in turns, chew and tailSwing, so step 5's walk, drink and turn are poses of it. Grazing,
+  the head drops 1.15 radians and nods 19 times a cycle, the jaw chews 64 times and the tail
+  swishes 15; size 0.74. PosedCowColors has no skyBehind or groundBehind: the mockup's legs are
+  the body's colour, the far pair a shade darker, whatever stands behind them.
+- WolfHeadSprite: the head looking left, its eyes glowing. The scene slides it 20 units out from
+  behind his fir from 0.1 to 0.35 and from 0.6 to 0.85 of each cycle, taking 0.0375 of a cycle
+  each way, and he blinks 28 times a cycle, his eyes shut for the last 0.15 of each.
+- The firs stand still, kept in the land layer as step 1 placed them; the mockup sways them.
+- In the African themes GatorHeadSprite stays at the wolf fir's foot until step 5 puts the gator
+  in the pond.
+- 10.2 ms a frame at 1920 x 1080 in the container (10 to 13.5 before), 75 ms for the first.
+
+**Life** (step 5, Oj 14:56 "Go on with the step 5"). The mockup's story, in its own seconds: 80 of
+them over two cycles, the second half when cyclesPassed is odd (storyAt). Every motion that runs
+through the whole story comes round a whole number of times in it or in a cycle.
+
+- The cow (cowAt): grazes, lifts its head at 16, walks to the stream below the bridge from 18 to
+  26 (k_cowDrinkShare 0.362 / 0.705), drinks from 28 to 40, turns at 42, walks back from 43 to 51,
+  turns at 51 and grazes from 54, looking up from 64 to 69 while the wolf looks out. Rings spread
+  from its muzzle every 2.6 seconds while it drinks, the last left to spread for 3.5 so they do not
+  vanish at 40.
+- The cow is mirrored about its feet every frame, in the moving part of the reflection; the water
+  shows it where it reaches. The mockup mirrored it only while it drank, which drops the reflection
+  at once when it lifts its head.
+- The wolf looks out from 28 to 40, while the cow drinks, and from 64 to 71, sliding 1.5 seconds
+  each way.
+- Five birds in a V cross the sky from right to left from 22 to 48 (crowBody); a mother duck and
+  three ducklings swim across the pond from 4 to 60 (birdBody and birdWing, duckLight and
+  duckShade); a fish leaps at 14 and at 58 with rings where it goes out and comes back; by day a
+  butterfly wanders over the near bank, faded by hasStars, its path coming round once a story.
+- They are drawn in the mockup's order: the birds over the land, the rings after the water's
+  light, the fish and the ducks after the mill, the butterfly after the near bank.
+- Frames at 1920 x 1080 in the container: 10 to 14 ms while the ducks, the birds and the walking
+  cow are all out.
+
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
 `sin(t * 30)` and `sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the
 cycle wraps. The water lily bobs one and a half times a cycle, and jumps the same way.

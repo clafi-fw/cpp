@@ -483,7 +483,12 @@ namespace ClaFi::Graphics
         virtual void pushImage(int index) = 0;
         virtual void popImage() = 0;
         virtual void drawImage(int index, float opacity) = 0;
+        // A part of the image laid over the surface, moved by `offset`. See Graphics-Types
+        virtual void drawImagePart(int index, const IntRect& part, IntPoint offset,
+            float opacity) = 0;
         [[nodiscard]] virtual bool hasImage(int index) const = 0;
+        // The image emptied to transparent, and built first if the store holds none of this size.
+        virtual void clearImage(int index) = 0;
 
         // **Whether a frame starts from nothing.** Off by default: a frame otherwise keeps whatever
         // the last one left, which costs nothing and is invisible for as long as the children

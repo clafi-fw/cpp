@@ -349,6 +349,42 @@ namespace ClaFi::Graphics::Cpu
         m_activeView.blendSurface(source, source.topLeft(), opacity);
     }
 
+    // Composited where drawImage blends: a part is content laid into the frame, as a view is by
+    // drawPixelView, and what it does not cover has to show what is under it.
+    void CpuBackend::drawImagePart(int index, const IntRect& part, IntPoint offset, float opacity)
+    {
+        if (!hasImage(index))
+        {
+            return;
+        }
+
+        IntRect owned = part;
+        if (!owned.intersectWith({ 0, 0, m_size.x, m_size.y }))
+        {
+            return;
+        }
+
+        // A sub view reaches to the end of its allocation, so the part's own size is stated.
+        const PixelView from = m_images[static_cast<std::size_t>(index)]->pixelView()
+            .subView(owned.toFloat());
+        const PixelView source{ owned.toFloat(), owned.toFloat(), {
+            .data = from.data(),
+            .stride = from.stride(),
+            .columns = owned.width(),
+            .rows = owned.height()
+        } };
+        if (g_rasterBuffers.hasActiveClip && g_rasterBuffers.activeClipMaskPtr)
+        {
+            compositeImageThroughClip(source, offset, opacity);
+            return;
+        }
+        const FloatPoint destination = {
+            source.left() + static_cast<float>(offset.x),
+            source.top() + static_cast<float>(offset.y)
+        };
+        m_activeView.compositeSurface(source, destination, opacity);
+    }
+
     bool CpuBackend::hasImage(int index) const
     {
         if (index < 0 || static_cast<std::size_t>(index) >= m_images.size())
@@ -358,6 +394,14 @@ namespace ClaFi::Graphics::Cpu
 
         const Bitmap& stored = *m_images[static_cast<std::size_t>(index)];
         return stored.width() == m_size.x && stored.height() == m_size.y;
+    }
+
+    void CpuBackend::clearImage(int index)
+    {
+        if (Bitmap* stored = image(index))
+        {
+            stored->pixelView().fill(Color{});
+        }
     }
 
 #if CLAFI_TEXT_MOVING
@@ -614,6 +658,58 @@ namespace ClaFi::Graphics::Cpu
                 const float coverage = inClip ? clipRow[x - clipLeft] : 0.0f;
                 const int mix = static_cast<int>(amount * coverage * 256.0f);
                 destRow[x - area.left].blend_fixed(srcRow[x - area.left], mix);
+            }
+        }
+    }
+
+    void CpuBackend::compositeImageThroughClip(const PixelView& source, IntPoint offset,
+        float opacity) const
+    {
+        IntRect area = source.ownedPixels();
+        area.offset(offset.x, offset.y);
+        if (!area.intersectWith(m_activeView.ownedPixels()))
+            return;
+        if (!area.intersectWith(m_activeView.clippedBounds().roundedOut()))
+            return;
+
+        const RasterBuffers& buffers = g_rasterBuffers;
+        const int clipLeft = static_cast<int>(std::floor(buffers.clipBox.left));
+        const int clipTop = static_cast<int>(std::floor(buffers.clipBox.top));
+        const int clipRight = static_cast<int>(std::ceil(buffers.clipBox.right));
+        const int clipBottom = static_cast<int>(std::ceil(buffers.clipBox.bottom));
+        const float amount = std::clamp(opacity, 0.0f, 1.0f);
+        // Source over, premultiplied, as compositeSurface lays a pixel: the source scaled by the
+        // amount and the clip's coverage, and what was there kept by what it leaves uncovered.
+        const auto over = [](const std::uint32_t laid, const ColorByte kept,
+            const std::uint32_t uncovered) {
+            const std::uint32_t left = (kept * uncovered + 127) / 255;
+            return static_cast<ColorByte>(std::min<std::uint32_t>(laid + left, 255));
+        };
+
+        for (int y = area.top; y < area.bottom; ++y)
+        {
+            if (y < clipTop || y >= clipBottom)
+                continue;
+            Color* destRow = m_activeView.scanLineAbs(static_cast<float>(area.left),
+                static_cast<float>(y));
+            const Color* srcRow = source.scanLineAbs(static_cast<float>(area.left - offset.x),
+                static_cast<float>(y - offset.y));
+            const float* clipRow = buffers.activeClipMaskPtr
+                + static_cast<std::ptrdiff_t>(y - clipTop) * buffers.m_clipStride;
+            for (int x = std::max(area.left, clipLeft); x < std::min(area.right, clipRight); ++x)
+            {
+                const std::uint32_t scale = static_cast<std::uint32_t>(
+                    amount * clipRow[x - clipLeft] * 256.0f);
+                const Color& pixel = srcRow[x - area.left];
+                const std::uint32_t alpha = (pixel.alpha * scale) >> 8;
+                if (alpha == 0)
+                    continue;
+                Color& destination = destRow[x - area.left];
+                const std::uint32_t uncovered = 255 - alpha;
+                destination.red = over((pixel.red * scale) >> 8, destination.red, uncovered);
+                destination.green = over((pixel.green * scale) >> 8, destination.green, uncovered);
+                destination.blue = over((pixel.blue * scale) >> 8, destination.blue, uncovered);
+                destination.alpha = over(alpha, destination.alpha, uncovered);
             }
         }
     }

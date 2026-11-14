@@ -24,6 +24,25 @@ namespace ClaFi::PathArt
         constexpr float k_shadingTurns{ 9.0f };
         // The share of the reflection's opacity the shading takes off its darkest rows.
         constexpr float k_shadingDepth{ 0.18f };
+        // The surface's kept images off the CPU: the still part, and each frame's whole mirror.
+        constexpr int k_stillImage{ 6 };
+        constexpr int k_mirrorImage{ 7 };
+
+        // How the ripples move and shade one row.
+        struct RowRipple
+        {
+            float shift; // sideways, in the frame's pixels
+            float opacity;
+        };
+
+        // A run of the surface's rows laid into the water with one shift and one opacity.
+        struct Strip
+        {
+            int top;
+            int bottom;
+            int shift;
+            int opacity; // in 256ths
+        };
 
         // The CPU rasterizer's clip as it stands, put back when this goes.
         class HeldRasterClip
@@ -42,6 +61,13 @@ namespace ClaFi::PathArt
 
         // The frame's rows from `top` down, on a canvas whose top row is that row.
         [[nodiscard]] SceneFrame bandFrame(Canvas&, const SceneFrame&, float top);
+        // The row at `y` of a band of water from `top` to `bottom`, all in the frame's pixels.
+        [[nodiscard]] RowRipple rippleAt(const Ripples&, float y, float top, float bottom,
+            float unit);
+        // The parts drawn as they are, clipped to the water and faded, with no ripples.
+        void drawStillMirror(const SceneFrame&, const PixelPath& water,
+            const WaterReflection::Drawing& still, const WaterReflection::Drawing& moving,
+            float opacity);
     }
 
     // WaterReflection
@@ -50,23 +76,28 @@ namespace ClaFi::PathArt
 
     WaterReflection::~WaterReflection() = default;
 
-    // **On the CPU backend the rows ripple.** Elsewhere the parts are drawn live, clipped to the
-    // water and faded, and the water lies still under them.
+    void WaterReflection::forget()
+    {
+        m_kept = false;
+        m_stillImageKept = false;
+    }
+
     void WaterReflection::draw(const SceneFrame& frame, const PixelPath& water,
         const Drawing& still, const Drawing& moving, const Ripples& ripples)
     {
-        Canvas& canvas = frame.canvas;
-        if (canvas.backend() == nullptr || canvas.backend()->type() != BackendType::Cpu)
-        {
-            canvas.pushClip(water, &frame.toCanvas);
-            canvas.pushOpacity(ripples.opacity);
-            still(frame);
-            moving(frame);
-            canvas.popOpacity();
-            canvas.popClip();
+        const IBackend* backend = frame.canvas.backend();
+        if (backend == nullptr)
             return;
-        }
+        if (backend->type() == BackendType::Cpu)
+            drawRows(frame, water, still, moving, ripples);
+        else
+            drawStrips(frame, water, still, moving, ripples);
+    }
 
+    void WaterReflection::drawRows(const SceneFrame& frame, const PixelPath& water,
+        const Drawing& still, const Drawing& moving, const Ripples& ripples)
+    {
+        Canvas& canvas = frame.canvas;
         const float top = std::floor(ripples.top);
         const IntSize size = {
             static_cast<int>(std::ceil(frame.width)),
@@ -87,8 +118,7 @@ namespace ClaFi::PathArt
             m_mirrorCanvas->endPaint(nullptr, whole, mirrored);
         }
 
-        const float unit = frame.unit;
-        const float phase = ripples.cycleTime * k_2Pi;
+        const float bottom = top + static_cast<float>(size.y);
         const Color* source = mirrored->data();
         Color* target = m_rippled.data();
         for (int row = 0; row != size.y; ++row)
@@ -96,19 +126,11 @@ namespace ClaFi::PathArt
             const ColumnSpan span = m_waterSpans[static_cast<std::size_t>(row)];
             if (span.first > span.last)
                 continue;
-            const float nearness = static_cast<float>(row) / static_cast<float>(size.y);
-            const float rowInUnits = (top + static_cast<float>(row)) / unit;
-            const float reachInUnits = ripples.farReach
-                + (ripples.nearReach - ripples.farReach) * nearness;
-            const float reach = reachInUnits * unit;
-            const float wave = std::sin(rowInUnits * 0.81f / (0.4f + nearness)
-                + phase * k_firstWaveTurns)
-                + k_secondWaveShare * std::sin(rowInUnits * 2.34f - phase * k_secondWaveTurns);
-            const int shift = static_cast<int>(std::lround(reach * wave));
-            const float shading = 1.0f - k_shadingDepth * 0.5f * (1.0f + std::sin(
-                rowInUnits * 1.62f / (0.3f + nearness) + phase * k_shadingTurns));
+            const RowRipple ripple = rippleAt(ripples, top + static_cast<float>(row), top, bottom,
+                frame.unit);
+            const int shift = static_cast<int>(std::lround(ripple.shift));
             const std::uint32_t rowOpacity = static_cast<std::uint32_t>(
-                std::clamp(ripples.opacity * shading, 0.0f, 1.0f) * 256.0f);
+                std::clamp(ripple.opacity, 0.0f, 1.0f) * 256.0f);
 
             const std::size_t rowStart = static_cast<std::size_t>(row)
                 * static_cast<std::size_t>(size.x);
@@ -132,6 +154,72 @@ namespace ClaFi::PathArt
             }
         }
         canvas.drawBitmap(m_rippled, frame.toCanvas.transform({ 0.0f, top }));
+    }
+
+
+    // **The still part is drawn once into its image**, and each frame's mirror is that image with
+    // the moving parts over it. A backend that cannot build the images draws the still mirror.
+    void WaterReflection::drawStrips(const SceneFrame& frame, const PixelPath& water,
+        const Drawing& still, const Drawing& moving, const Ripples& ripples)
+    {
+        Canvas& canvas = frame.canvas;
+        if (!m_stillImageKept || !canvas.hasImage(k_stillImage))
+        {
+            canvas.clearImage(k_stillImage);
+            m_stillImageKept = canvas.hasImage(k_stillImage);
+            if (m_stillImageKept)
+            {
+                const ScopedCanvasImage into{ canvas, k_stillImage };
+                still(frame);
+            }
+        }
+        canvas.clearImage(k_mirrorImage);
+        if (!m_stillImageKept || !canvas.hasImage(k_mirrorImage))
+        {
+            drawStillMirror(frame, water, still, moving, ripples.opacity);
+            return;
+        }
+        {
+            const ScopedCanvasImage into{ canvas, k_mirrorImage };
+            canvas.drawImage(k_stillImage, 1.0f);
+            moving(frame);
+        }
+
+        // Rows are the surface's, so the ripples are as fine as its pixels at any scale.
+        const Matrix3x2 toSurface = canvas.transform() * frame.toCanvas;
+        const float surfacePerFrame = toSurface.getScaleFactor();
+        const FloatPoint bandTopLeft = toSurface.transform({ 0.0f, ripples.top });
+        const FloatPoint bandBottomRight = toSurface.transform({ frame.width, frame.height });
+        const int left = static_cast<int>(std::floor(bandTopLeft.x));
+        const int right = static_cast<int>(std::ceil(bandBottomRight.x));
+        const int firstRow = static_cast<int>(std::floor(bandTopLeft.y));
+        const int endRow = static_cast<int>(std::ceil(bandBottomRight.y));
+        const auto lay = [&](const Strip& strip) {
+            if (strip.bottom <= strip.top || strip.opacity <= 0)
+                return;
+            canvas.drawImagePart(k_mirrorImage, { left, strip.top, right, strip.bottom },
+                { strip.shift, 0 }, static_cast<float>(strip.opacity) / 256.0f);
+        };
+
+        canvas.pushClip(water, &frame.toCanvas);
+        Strip pending = { firstRow, firstRow, 0, 0 };
+        for (int row = firstRow; row < endRow; ++row)
+        {
+            const float y = ripples.top
+                + (static_cast<float>(row) - bandTopLeft.y) / surfacePerFrame;
+            const RowRipple ripple = rippleAt(ripples, y, ripples.top, frame.height, frame.unit);
+            const int shift = static_cast<int>(std::lround(ripple.shift * surfacePerFrame));
+            const int opacity = static_cast<int>(std::clamp(ripple.opacity, 0.0f, 1.0f) * 256.0f);
+            if (shift == pending.shift && opacity == pending.opacity)
+            {
+                pending.bottom = row + 1;
+                continue;
+            }
+            lay(pending);
+            pending = { row, row + 1, shift, opacity };
+        }
+        lay(pending);
+        canvas.popClip();
     }
 
     // The water's coverage is drawn as white on clear, and its alpha read per pixel.
@@ -208,6 +296,38 @@ namespace ClaFi::PathArt
                 .unit = frame.unit,
                 .toCanvas = Matrix3x2::Translation(0.0f, -top)
             };
+        }
+
+        RowRipple rippleAt(const Ripples& ripples, const float y, const float top,
+            const float bottom, const float unit)
+        {
+            const float phase = ripples.cycleTime * k_2Pi;
+            const float nearness = (y - top) / (bottom - top);
+            const float rowInUnits = y / unit;
+            const float reachInUnits = ripples.farReach
+                + (ripples.nearReach - ripples.farReach) * nearness;
+            const float wave = std::sin(rowInUnits * 0.81f / (0.4f + nearness)
+                + phase * k_firstWaveTurns)
+                + k_secondWaveShare * std::sin(rowInUnits * 2.34f - phase * k_secondWaveTurns);
+            const float shading = 1.0f - k_shadingDepth * 0.5f * (1.0f + std::sin(
+                rowInUnits * 1.62f / (0.3f + nearness) + phase * k_shadingTurns));
+            return {
+                .shift = reachInUnits * unit * wave,
+                .opacity = ripples.opacity * shading
+            };
+        }
+
+        void drawStillMirror(const SceneFrame& frame, const PixelPath& water,
+            const WaterReflection::Drawing& still, const WaterReflection::Drawing& moving,
+            const float opacity)
+        {
+            Canvas& canvas = frame.canvas;
+            canvas.pushClip(water, &frame.toCanvas);
+            canvas.pushOpacity(opacity);
+            still(frame);
+            moving(frame);
+            canvas.popOpacity();
+            canvas.popClip();
         }
     }
 }

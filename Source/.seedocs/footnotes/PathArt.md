@@ -120,7 +120,11 @@ the pointer over it, through animationTick().
 **One table of colours for every scene that offers themes**, and the effects that come with them.
 The fields up to effectColor2 are the mill's, and the sky, the sun, the clouds, the meadow - hillTop
 and hillBottom - and the trees serve ChaseScene as well; ChaseTheme holds what only the Chase draws.
-Every theme fills every field.
+Every theme fills every field but windowLight.
+
+**windowLight is the lamp behind the mill's windows**, as strong as its opacity. A theme with no
+lamp lit leaves it out, so it stays transparent and the windows show their dark glass; a crossfade
+toward a theme with a lamp lights it by degrees.
 
 **sunCorona1 and sunCorona2 are the Mill's sun rays**, which alternate round its sun. A theme keeps
 the two equally visible against the sky behind them, and visible at all: at least 0.11 apart from it
@@ -472,19 +476,34 @@ parallax 1.
 The scene draws the parts itself, each upside down about the line where it meets the ground or the
 water; the reflection does not turn them.
 
-**The still parts are kept.** On the CPU backend what `still` draws is kept as pixels, with the
-water's coverage, until the frame's size or the water's top row changes or forget() is called -
-MillScene calls it when it draws its land again. `moving` is drawn over them every frame.
+**The still parts are kept.** What `still` draws is kept until forget() is called - MillScene
+calls it when it draws its land again - or until what holds it goes: on the CPU backend a bitmap
+of the reflection's own, kept with the water's coverage for one frame size and one top row; on any
+other backend a kept image of the surface's, which a resize or a lost device empties. `moving` is
+drawn over them every frame.
+
+**A surface carries one reflection at a time.** Off the CPU it draws into the surface's kept images
+6 and 7, so a second reflection on the same surface would draw into the same two.
 
 ## WaterReflection draw
 
-**On the CPU backend the rows ripple.** Each row is shifted sideways by two waves, by farReach at
-the water's top row growing to nearReach at the frame's bottom, and shaded a little darker in
-bands; then it is cut to the water's coverage and faded to the ripples' opacity. The waves run a
-whole number of times a cycle, so a cycle ends where it began.
+**Each row is shifted sideways by two waves**, by farReach at the water's top row growing to
+nearReach at the frame's bottom, and shaded a little darker in bands, then faded to the ripples'
+opacity and cut to the water. The waves run a whole number of times a cycle, so a cycle ends where
+it began. Both ways below take each row's shift and shade from one formula.
 
-**On Direct2D the parts are drawn live**, clipped to the water and faded, and the water lies still
-under them.
+**On the CPU backend the rows are shifted in memory.** The mirror is drawn on a canvas of the
+reflection's own, each row moved and scaled by its shade and by the water's coverage, and the band
+goes in with one drawBitmap.
+
+**On every other backend the rows are laid from kept images** - see IBackend drawImagePart. Image 6
+holds the still part. Each frame image 7 is cleared and given image 6 and the moving parts, and then
+laid into the water under a clip to it, one drawImagePart for each run of the surface's rows that
+shares a shift and an opacity. The rows are the surface's own, so the ripples are as fine as its
+pixels at any scale, and the pixels stay on the backend's side.
+
+**Where a backend cannot build the images**, the parts are drawn live, clipped to the water and
+faded, and the water lies still under them.
 
 ## CloudKind
 
@@ -1079,12 +1098,18 @@ the predator and the fir he peeks from behind, the mill, the lily, the near bank
 and daisies, the fireflies and the weather are drawn every frame.
 
 **The pond mirrors what stands by it** - see WaterReflection. The mountains, the far hills, the
-bridge, the firs by the shore and the mill's house are kept; the wheel and the sails are drawn
+bridge, the firs by the shore and the mill's house are kept; the wheel and the wings are drawn
 every frame. The bridge stands over the water, so it is drawn after the reflection rather than kept
-with the land.
+with the land. The smoke and the water the trough pours are left out of the mirror.
 
-**The house is clipped at the water line**, so the sprite's own upside-down copy stays out of the
-pond, and its reflection comes from the house drawn mirrored.
+**The mill is drawn in five parts** - the smoke, the house, the wheel, the water, the wings - in
+that order, so the house stands in front of its smoke and the wings in front of everything. The
+smoke, the falling water and the foam come round a whole number of times a cycle, so nothing jumps
+when the cycle wraps.
+
+**Its story runs over two cycles.** The cow walks to the stream to drink and back, the ducks
+cross the pond, the birds the sky, the wolf looks out twice; a frame whose SceneTime has an odd
+cyclesPassed shows the second half. A host that counts no cycles shows the first half only.
 
 ## CowColors
 

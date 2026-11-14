@@ -58,7 +58,9 @@ namespace ClaFi::Graphics::Cpu
         void pushImage(int index) override;
         void popImage() override;
         void drawImage(int index, float opacity) override;
+        void drawImagePart(int index, const IntRect& part, IntPoint offset, float opacity) override;
         [[nodiscard]] bool hasImage(int index) const override;
+        void clearImage(int index) override;
 
         void* getNativeRenderTarget() const override { return nullptr; }
         void* getNativeBrush(const Brush&) override { return nullptr; }
@@ -152,6 +154,9 @@ namespace ClaFi::Graphics::Cpu
         void updateActiveView();
         // drawImage under a path clip: the image mixed in by the clip's coverage, pixel by pixel.
         void blendImageThroughClip(const PixelView& source, float opacity) const;
+        // drawImagePart under a path clip: the part laid over by the clip's coverage.
+        void compositeImageThroughClip(const PixelView& source, IntPoint offset,
+            float opacity) const;
 
         [[nodiscard]] PixelView getActiveView() const { return m_activeView; }
 

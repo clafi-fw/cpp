@@ -39,7 +39,9 @@ namespace ClaFi::PlatformImplementation::Windows
         void pushImage(int index) override;
         void popImage() override;
         void drawImage(int index, float opacity) override;
+        void drawImagePart(int index, const IntRect& part, IntPoint offset, float opacity) override;
         [[nodiscard]] bool hasImage(int index) const override;
+        void clearImage(int index) override;
         void setTransparentBase(bool value) override { m_transparentBase = value; }
         void beginPaint(void* nativeContext, const IntRect* dirtyRect) override;
         void endPaint(void* nativeContext, const IntRect* dirtyRect, Bitmap*&) override;

@@ -125,6 +125,7 @@ namespace ClaFi::PathArt
         Color effectColor1{ 255, 255, 255 }; // 35
         Color effectColor2{ 255, 255, 255 }; // 36
         Color petal1, petal2, petal3; // 37, a flower wears one, falling petals the first two
+        Color windowLight; // 40, the lamp behind the mill's windows, as strong as its opacity
         ChaseTheme chase{};
         // make sure to update colorsNum() when adding new colors
 
@@ -144,7 +145,7 @@ namespace ClaFi::PathArt
         Color* asArray() { return &skyTop; }
         const Color* asArray() const { return &skyTop; }
         const void* colorsEnd() const { return &hasRain; }
-        static constexpr std::size_t colorsNum() { return 39 + ChaseTheme::colorsNum(); }
+        static constexpr std::size_t colorsNum() { return 40 + ChaseTheme::colorsNum(); }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
         static constexpr std::size_t effectsNum() { return 9; }

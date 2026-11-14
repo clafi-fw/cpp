@@ -454,9 +454,21 @@ namespace ClaFi::Graphics
             m_backend->drawImage(index, opacity);
     }
 
+    void Canvas::drawImagePart(int index, const IntRect& part, IntPoint offset, float opacity)
+    {
+        if (m_backend)
+            m_backend->drawImagePart(index, part, offset, opacity);
+    }
+
     bool Canvas::hasImage(int index) const
     {
         return m_backend && m_backend->hasImage(index);
+    }
+
+    void Canvas::clearImage(int index)
+    {
+        if (m_backend)
+            m_backend->clearImage(index);
     }
 
     FloatRect Canvas::clipBox() const

@@ -352,6 +352,46 @@ namespace ClaFi::PlatformImplementation::Windows
         m_renderTarget->SetTransform(oldTransform);
     }
 
+    // Laid as drawImage lays a whole image: on the surface's own pixels whatever transform the
+    // caller carries, and texel for texel.
+    void Direct2DBackend::drawImagePart(int index, const IntRect& part, IntPoint offset,
+        float opacity)
+    {
+        if (!m_isPainting || !m_renderTarget || !hasImage(index))
+        {
+            return;
+        }
+
+        ComPtr<ID2D1Bitmap> bitmap;
+        if (FAILED(m_images[static_cast<std::size_t>(index)]->GetBitmap(bitmap.GetAddressOf())))
+        {
+            return;
+        }
+
+        const D2D1_SIZE_U size = bitmap->GetPixelSize();
+        const IntRect whole = { 0, 0, static_cast<int>(size.width), static_cast<int>(size.height) };
+        IntRect owned = part;
+        if (!owned.intersectWith(whole))
+        {
+            return;
+        }
+
+        D2D1_MATRIX_3X2_F oldTransform;
+        m_renderTarget->GetTransform(&oldTransform);
+        m_renderTarget->SetTransform(D2D1::IdentityMatrix());
+
+        const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(owned.left),
+            static_cast<float>(owned.top), static_cast<float>(owned.right),
+            static_cast<float>(owned.bottom));
+        const D2D1_RECT_F destination = D2D1::RectF(source.left + static_cast<float>(offset.x),
+            source.top + static_cast<float>(offset.y), source.right + static_cast<float>(offset.x),
+            source.bottom + static_cast<float>(offset.y));
+        m_renderTarget->DrawBitmap(bitmap.Get(), &destination, opacity,
+            D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR, &source);
+
+        m_renderTarget->SetTransform(oldTransform);
+    }
+
     bool Direct2DBackend::hasImage(int index) const
     {
         if (!m_deviceContext || !m_targetBitmap || index < 0 || static_cast<std::size_t>(index) >= m_images.size())
@@ -368,6 +408,32 @@ namespace ClaFi::PlatformImplementation::Windows
         D2D1_SIZE_F held = stored->GetSize();
         D2D1_SIZE_F surface = m_deviceContext->GetSize();
         return held.width == surface.width && held.height == surface.height;
+    }
+
+    // A target clears only inside a draw of its own: the image being drawn into is cleared where
+    // it stands, and any other is opened for the clear alone.
+    void Direct2DBackend::clearImage(int index)
+    {
+        if (!m_isPainting || !m_renderTarget)
+        {
+            return;
+        }
+
+        ID2D1BitmapRenderTarget* target = image(index);
+        if (!target)
+        {
+            return;
+        }
+
+        const D2D1_COLOR_F transparent = D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f);
+        if (target == m_renderTarget.Get())
+        {
+            target->Clear(transparent);
+            return;
+        }
+        target->BeginDraw();
+        target->Clear(transparent);
+        target->EndDraw();
     }
 
     // **The frame's dirty rect stands as a clip** for the whole frame, as it does on the CPU

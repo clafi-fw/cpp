@@ -34,7 +34,7 @@ namespace ClaFi::PathArt
         ~WaterReflection();
     public:
         // Drops the kept pixels, for a scene whose still parts or water have changed.
-        void forget() { m_kept = false; }
+        void forget();
         // `still` is drawn once and kept, `moving` every frame. See PathArt
         void draw(const SceneFrame&, const PixelPath& water, const Drawing& still,
             const Drawing& moving, const Ripples&);
@@ -47,6 +47,12 @@ namespace ClaFi::PathArt
             int last;
         };
     private:
+        // The CPU backend's way: the mirror on a canvas of its own, its rows shifted in memory.
+        void drawRows(const SceneFrame&, const PixelPath& water, const Drawing& still,
+            const Drawing& moving, const Ripples&);
+        // Every other backend's: the mirror in kept images, laid into the water strip by strip.
+        void drawStrips(const SceneFrame&, const PixelPath& water, const Drawing& still,
+            const Drawing& moving, const Ripples&);
         void keep(const SceneFrame&, const PixelPath& water, const Drawing& still, float top);
     private:
         std::unique_ptr<Canvas> m_mirrorCanvas{}; // where each frame's reflection is drawn
@@ -57,5 +63,6 @@ namespace ClaFi::PathArt
         IntSize m_keptSize{};
         float m_keptTop{};
         bool m_kept{ false };
+        bool m_stillImageKept{ false }; // whether the surface's still image holds `still`
     };
 }
