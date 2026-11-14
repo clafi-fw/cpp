@@ -6,6 +6,8 @@ import ClaFi.PathArt.MarionetteSprite;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SparkleBurstEffect;
+import ClaFi.PathArt.TopHatSprite;
+import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -30,10 +32,16 @@ namespace ClaFi::PathArt
         constexpr FloatPoint k_wandUp{ 70.0f, -176.0f };
         constexpr float k_downAngle{ k_pi * 0.42f };
         constexpr float k_upAngle{ -k_pi * 0.62f };
-        // When the wand is raised for each wave: the first takes the strings, the second the stand.
-        constexpr std::array<float, 2> k_waves{ 1.2f, 3.6f };
+        // When the wand is raised for each wave: for the strings, the stand, the android itself.
+        constexpr std::array<float, 3> k_waves{ 1.2f, 3.6f, 7.0f };
         // Where the left hand opens toward the stand while the wand is waved at it.
         constexpr FloatPoint k_leftHandTowardStand{ -128.0f, -150.0f };
+        // Where the left hand rests on the chest while the wand is waved for the last time.
+        constexpr FloatPoint k_leftHandOnChest{ -24.0f, -82.0f };
+        constexpr float k_vanishAt{ 8.25f }; // the puff of smoke the android goes in
+        constexpr float k_vanishSeconds{ 0.1f }; // its fade under the smoke, before its hat drops
+        constexpr float k_hatGravity{ 1700.0f }; // in units a second, each second
+        constexpr float k_hatBrimDepth{ 7.0f }; // the brim below its middle, in the hat's units
 
         // The right hand and the wand's angle.
         struct WandHold
@@ -79,16 +87,14 @@ namespace ClaFi::PathArt
         }
 
         // The wand waved at the strings, beating time, waved at the stand, beating time again,
-        // then up for the ta-da.
+        // then waved for the last time.
         [[nodiscard]] WandHold wandAt(const float actTime)
         {
             WandHold hold = wavedFrom({ k_wandDown, k_downAngle }, k_waves[0], actTime);
             hold = heldBetween(hold, beatingTimeAt(actTime), smoothStep(3.0f, 3.4f, actTime));
             hold = wavedFrom(hold, k_waves[1], actTime);
-            hold = heldBetween(hold, beatingTimeAt(actTime),
-                smoothStep(4.8f, 5.2f, actTime) * (1.0f - smoothStep(8.3f, 8.7f, actTime)));
-            return heldBetween(hold, { ActHands::RightRaised, -k_pi * 0.4f },
-                smoothStep(8.3f, 8.8f, actTime));
+            hold = heldBetween(hold, beatingTimeAt(actTime), smoothStep(4.8f, 5.2f, actTime));
+            return wavedFrom(hold, k_waves[2], actTime);
         }
 
         [[nodiscard]] FloatPoint tipOf(const WandHold& hold)
@@ -113,13 +119,49 @@ namespace ClaFi::PathArt
                 drawSparkle(frame, at, 6.0f * unit, faded(color, 1.0f - share * 0.3f));
             }
         }
+
+        // Soft clouds of smoke up a column from `from` to `to`, spreading and rising with age.
+        struct SmokeColumn
+        {
+            FloatPoint from;
+            FloatPoint to;
+            int clouds;
+            float age; // seconds since the puff
+            float density; // 0 to 1
+            float scale; // the clouds' size and reach, 1 for a stand's height
+            float seed;
+        };
+
+        void drawSmoke(const SceneFrame& frame, const SmokeColumn& smoke)
+        {
+            const float unit = frame.unit;
+            const float last = static_cast<float>(smoke.clouds) - 0.4f;
+            for (int cloud = 0; cloud != smoke.clouds; ++cloud)
+            {
+                const FloatPoint middle = pointBetween(smoke.from, smoke.to,
+                    (static_cast<float>(cloud) + 0.4f) / last);
+                for (int i = 0; i != 5; ++i)
+                {
+                    const float angle = k_2Pi * (static_cast<float>(i)
+                        + pseudoRandom(cloud * 5 + i, smoke.seed)) / 5.0f;
+                    const float reach = (6.0f + 26.0f * std::sqrt(smoke.age)) * smoke.scale * unit;
+                    const FloatPoint at = middle + FloatPoint{
+                        std::cos(angle) * reach * 1.3f,
+                        std::sin(angle) * reach * 0.8f - 18.0f * unit * smoke.age * smoke.scale
+                    };
+                    drawGlow(frame, at, (30.0f + 22.0f * smoke.age) * smoke.scale * unit,
+                        StringsCutActColors::Smoke.withOpacity(0.6f * smoke.density));
+                }
+            }
+        }
     }
 
     // Seconds: the wand raised from 1.2 and waved round from 1.6; sparkles fly to the control at
     // 2.15 and run down the strings from 2.4; the strings fade by 3 and the control goes up in
     // sparkles; the wand beats time while the marionette dances; raised again from 3.6 and waved
     // round from 4; sparkles fly to the stand at 4.55 and it goes from 5; the wand beats time
-    // again while the marionette rises and twirls; the ta-da from 8.3.
+    // again while the marionette rises and twirls; still from 6.8, the android waves the wand
+    // over itself from 7, sparkles spiral up round it from 7.8, and it goes at 8.25.
     void StringsCutAct::pose(const ActStage& stage, const float actTime, const SceneTime time)
     {
         const SceneFrame& frame = stage.frame;
@@ -132,28 +174,30 @@ namespace ClaFi::PathArt
         m_twirl = std::cos(k_2Pi * smoothStep(0.0f, 1.0f, (actTime - 5.85f) / 1.0f));
         m_stand = marionetteStandOf(stage);
 
-        // the head and the left hand turn to the stand while the wand is waved at it
+        // the head and the left hand turn to the stand while the wand is waved at it; for the
+        // last wave the android stands still, facing the audience, its hand on its chest
         const float towardStand = smoothStep(3.5f, 3.9f, actTime)
             * (1.0f - smoothStep(5.2f, 5.6f, actTime));
-        const float bob = -2.5f * std::abs(std::sin(2.0f * sway));
+        const float still = smoothStep(6.8f, 7.2f, actTime);
+        const float bob = -2.5f * std::abs(std::sin(2.0f * sway)) * (1.0f - still);
         m_android = standingAndroid(frame, { puppeteerX(stage), stage.floorY }, time.cycleTime,
             bob);
-        m_android.wearsHat = true;
-        m_android.headTurn = -0.1f + 0.06f * std::sin(sway) - 0.1f * towardStand;
-        m_android.look = -5.0f + 2.0f * std::sin(sway) - 4.0f * towardStand;
+        m_android.wearsHat = actTime < k_vanishAt;
+        m_android.headTurn = (-0.1f + 0.06f * std::sin(sway) - 0.1f * towardStand)
+            * (1.0f - still);
+        m_android.look = (-5.0f + 2.0f * std::sin(sway) - 4.0f * towardStand) * (1.0f - still);
 
         const WandHold wand = wandAt(actTime);
         m_wandTip = tipOf(wand);
 
         // the left hand works the control, lets go and opens toward the marionette
         const float freed = smoothStep(2.7f, 3.2f, actTime);
-        const float tada = smoothStep(8.3f, 8.8f, actTime);
         const FloatPoint grip = androidFrameToUpper(frame, m_android,
             m_marionette.control.center - FloatPoint{ 0.0f, 9.0f * unit });
         FloatPoint leftHand = pointBetween(grip,
             { -108.0f, -64.0f + 10.0f * std::sin(k_2Pi * actTime / 1.25f) }, freed);
         leftHand = pointBetween(leftHand, k_leftHandTowardStand, towardStand);
-        leftHand = pointBetween(leftHand, { -150.0f, -118.0f }, tada);
+        leftHand = pointBetween(leftHand, k_leftHandOnChest, still);
         AndroidSide& left = m_android.left;
         left.hand = leftHand;
         left.upperArm = std::lerp(87.0f, 57.0f, freed);
@@ -164,8 +208,8 @@ namespace ClaFi::PathArt
         m_android.right.hand = wand.hand;
         m_android.right.handShape = HandShape::Fist;
         m_android.right.forearmOnTop = true;
-        if (actTime > 8.8f)
-            m_android.lights = flashingLights(actTime);
+        m_wornHat = androidWornHat(frame, m_android);
+        m_floorY = stage.floorY;
         m_actTime = actTime;
     }
 
@@ -186,7 +230,16 @@ namespace ClaFi::PathArt
         const float controlLeft = 1.0f - smoothStep(2.7f, 3.2f, actTime);
         const float magic = smoothStep(2.6f, 3.3f, actTime);
 
-        drawAndroid(frame, m_android);
+        // the android fades under the smoke as it thickens, its hat drawn on its own from then
+        const float androidShown = 1.0f - smoothStep(k_vanishAt, k_vanishAt + k_vanishSeconds,
+            actTime);
+        if (androidShown > 0.0f)
+        {
+            std::optional<ScopedCanvasOpacity> fading;
+            if (androidShown < 1.0f)
+                fading.emplace(frame.canvas, androidShown);
+            drawAndroid(frame, m_android);
+        }
         if (magic > 0.0f)
             drawGlow(frame, puppet.pelvis - FloatPoint{ 0.0f, 18.0f * unit }, 82.0f * unit,
                 MagicColors::Cyan.withOpacity(
@@ -201,13 +254,19 @@ namespace ClaFi::PathArt
         if (m_android.left.forearmOnTop)
             drawAndroidForearm(frame, m_android, AudienceSide::Left);
         const FloatPoint tip = androidUpperToFrame(frame, m_android, m_wandTip);
-        drawWand(frame, androidUpperToFrame(frame, m_android, m_android.right.hand), tip);
-        drawAndroidForearm(frame, m_android, AudienceSide::Right);
+        if (androidShown > 0.0f)
+        {
+            std::optional<ScopedCanvasOpacity> fading;
+            if (androidShown < 1.0f)
+                fading.emplace(frame.canvas, androidShown);
+            drawWand(frame, androidUpperToFrame(frame, m_android, m_android.right.hand), tip);
+            drawAndroidForearm(frame, m_android, AudienceSide::Right);
+        }
 
         // the trail behind the circling wand, at each wave
         for (const float wave : k_waves)
         {
-            if (actTime <= wave + 0.3f || actTime >= wave + 1.3f)
+            if (actTime <= wave + 0.3f || actTime >= std::min(wave + 1.3f, k_vanishAt))
                 continue;
             for (int i = 0; i != 7; ++i)
             {
@@ -249,27 +308,15 @@ namespace ClaFi::PathArt
         drawSparkleFlight(frame, tip, armMiddle, (actTime - 4.55f) / 0.5f, 70.0f);
         const float smokeAge = actTime - 5.0f;
         if (smokeAge > 0.0f && smokeAge < 1.0f)
-        {
-            const float density = std::min(1.0f, smokeAge * 10.0f) * (1.0f - smokeAge)
-                * (1.0f - smokeAge);
-            for (int cloud = 0; cloud != 4; ++cloud)
-            {
-                const FloatPoint middle = pointBetween(stand.foot, armMiddle,
-                    (static_cast<float>(cloud) + 0.4f) / 3.6f);
-                for (int i = 0; i != 5; ++i)
-                {
-                    const float angle = k_2Pi * (static_cast<float>(i)
-                        + pseudoRandom(cloud * 5 + i, 13.0f)) / 5.0f;
-                    const float reach = (6.0f + 26.0f * std::sqrt(smokeAge)) * unit;
-                    const FloatPoint at = middle + FloatPoint{
-                        std::cos(angle) * reach * 1.3f,
-                        std::sin(angle) * reach * 0.8f - 18.0f * unit * smokeAge
-                    };
-                    drawGlow(frame, at, (30.0f + 22.0f * smokeAge) * unit,
-                        StringsCutActColors::Smoke.withOpacity(0.6f * density));
-                }
-            }
-        }
+            drawSmoke(frame, SmokeColumn{
+                .from = stand.foot,
+                .to = armMiddle,
+                .clouds = 4,
+                .age = smokeAge,
+                .density = std::min(1.0f, smokeAge * 10.0f) * (1.0f - smokeAge) * (1.0f - smokeAge),
+                .scale = 1.0f,
+                .seed = 13.0f
+            });
         drawSparkleBurst(frame, SparkleBurst{
             .center = pointBetween(stand.foot, armMiddle, 0.55f),
             .age = (actTime - 5.0f) / 0.8f,
@@ -292,7 +339,7 @@ namespace ClaFi::PathArt
                 drawSparkle(frame, at, 4.0f * unit * std::sin(k_pi * life), faded(color, magic));
             }
         }
-        if (actTime > 3.4f)
+        if (actTime > 3.4f && actTime < k_vanishAt)
         {
             for (int i = 0; i != 4; ++i)
             {
@@ -302,6 +349,69 @@ namespace ClaFi::PathArt
                 const Color color = i % 2 == 1 ? MagicColors::Gold : MagicColors::White;
                 drawSparkle(frame, at, 4.0f * unit * (1.0f - life), faded(color, 1.0f - life));
             }
+        }
+        // the android's own going: sparkles spiral up round it, it goes in a puff of smoke that
+        // hangs on to the curtain, and its hat drops to the floor and rocks still
+        const FloatPoint feet = { m_android.pelvis.x, m_floorY };
+        const float spiralShare = (actTime - 7.8f) / (k_vanishAt - 7.8f);
+        if (spiralShare > 0.0f && spiralShare < 1.0f)
+        {
+            for (int i = 0; i != 10; ++i)
+            {
+                const float order = static_cast<float>(i) / 10.0f;
+                const float rise = std::clamp(spiralShare * 1.4f - order * 0.4f, 0.0f, 1.0f);
+                const float angle = k_2Pi * order + actTime * 9.0f;
+                const FloatPoint at = feet + FloatPoint{
+                    std::cos(angle) * (62.0f - 20.0f * rise),
+                    -20.0f - 300.0f * rise
+                } * unit;
+                const Color color = i % 2 == 1 ? MagicColors::Cyan : MagicColors::Gold;
+                drawSparkle(frame, at, 5.0f * unit * std::sin(k_pi * rise), color);
+            }
+        }
+        const float puffAge = actTime - k_vanishAt;
+        if (puffAge > 0.0f)
+        {
+            drawSmoke(frame, SmokeColumn{
+                .from = feet - FloatPoint{ 0.0f, 10.0f * unit },
+                .to = feet - FloatPoint{ 0.0f, 320.0f * unit },
+                .clouds = 5,
+                .age = puffAge + 0.3f,
+                .density = std::min(1.0f, puffAge * 16.0f)
+                    * (1.0f - 0.45f * smoothStep(0.0f, 1.6f, puffAge)),
+                .scale = 1.5f,
+                .seed = 29.0f
+            });
+            drawSparkleBurst(frame, SparkleBurst{
+                .center = feet - FloatPoint{ 0.0f, 190.0f * unit },
+                .age = puffAge / 0.9f,
+                .count = 16,
+                .seed = 97.0f,
+                .size = 1.8f,
+                .colors = { MagicColors::Gold, MagicColors::Cyan, MagicColors::White }
+            });
+        }
+        if (actTime >= k_vanishAt)
+        {
+            const float hatAge = std::max(0.0f, actTime - (k_vanishAt + k_vanishSeconds));
+            TopHatPose hat = m_wornHat;
+            const float landingY = m_floorY - k_hatBrimDepth * hat.size;
+            const float gravity = k_hatGravity * unit;
+            const float fallSeconds = std::sqrt(2.0f * (landingY - m_wornHat.brim.y) / gravity);
+            if (hatAge < fallSeconds)
+            {
+                hat.brim.y += 0.5f * gravity * hatAge * hatAge;
+                hat.turn = std::lerp(m_wornHat.turn, -0.18f, hatAge / fallSeconds);
+            }
+            else
+            {
+                const float landed = hatAge - fallSeconds;
+                const float hop = landed < 0.24f ? std::sin(k_pi * landed / 0.24f) : 0.0f;
+                hat.brim.y = landingY - 10.0f * unit * hop;
+                hat.turn = -0.18f * std::exp(-landed / 0.15f) * std::cos(k_2Pi * landed / 0.3f);
+            }
+            drawTopHat(frame, hat);
+            drawTopHatBrimLip(frame, hat);
         }
     }
 }

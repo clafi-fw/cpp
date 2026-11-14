@@ -568,6 +568,76 @@ its circle ends, which moves the hand by those 16 units until the beat takes it 
 delivered code equal to the mock Oj saw in 245 frames, Strings cut and the curtain call every tenth
 of a second among them. Unbuilt under MSVC.
 
+**The guitar and the drum became one act** (Oj, 2026-11-14, "Merge playing guitar and drums into
+one - a drums set with a pedal"): a one-man band, the guitar in the hands and the bass drum under
+the foot. It took the guitar's place, sixth, and the show, one act shorter, comes round in 140
+seconds. On the first mock the bare hand struck the cymbal; Oj had the android keep a stick behind
+its ear for it ("He stores a stick to hit the cymbal behind his ear"), and then show only a short
+end of it ("Only a short tip is out initially"). The snare at the waist, the stick twirl and the
+roll went with DrumAct.
+
+**The bass drum lies on its side** so its pedal shows. Seen from the front, the drum would hide the
+beater and the foot on the board. The android's left ankle stands on the footboard 14 units from its
+hinge, its sole turned along the board, and the kit stands 92 units to the left, where the leg
+reaches the board with its knee clear of the beater.
+
+**AndroidSprite took androidHeadToUpper** for the stick to follow the head as it turns. drawHead
+places the head through the same matrix, so the head draws as it did.
+
+**Checked** in the clang harness: the act equal to the mock Oj approved, and the thirteen other acts
+equal to cdac6e4 at the same act times and the same time of the cycle. Unbuilt under MSVC.
+
+**The android goes in a puff of its own** (Oj, 2026-11-14, "Third wave and he disappears himself
+with a puff, hat drops to the floor, smoke is still there when the curtain closes"). The third wave
+took the ta-da's place. The android stands still from 6.8 seconds, so its hat's place on the head is
+fixed when it drops. It fades under the smoke over a tenth of a second rather than going at once:
+gone in one frame, its head and the raised wand stood out of the column as it thickened. From the
+puff the hat is the act's own, placed by androidWornHat, and falls from rest at 1700 units a second
+each second - about 0.6 seconds from the head to the floor. The stand's smoke and the android's are
+one drawSmoke, the stand's frames unchanged.
+
+**Checked** in the clang harness: the act equal to the mock Oj approved; every other act, and
+Strings cut before 6.85 seconds, equal to the build before it. Unbuilt under MSVC.
+
+**Four androids dance the little swans** (Oj, 2026-11-14, "a team of the same model is performing
+Swan Lake in tutus with almost synchronous moves"). Oj placed it after Strings cut, without the
+stand, and had the tutus differ a little; TutuSprite took TutuLook for it, and AndroidPose tutuLook.
+The hands are joined at the middle between two dancers' pelvises, so a dancer running late drags no
+hand away from its neighbor. The scene hangs the marionette only while the stand is there, so it
+hangs on nothing here.
+
+**The act ends dancing**, Oj's call after three endings: down on both knees with a bow ("The last
+pose is not great"); a fold over a leg stretched along the floor, dropped before he saw it - at this
+spacing each head and leg landed on the next dancer; and one knee down with the hands joined or the
+arms raised ("lets drop the finale, they just continue dancing"). The endings needed each leg to
+kneel on its own; that went with them, and AndroidPose kneeling is as it was.
+
+**Checked** in the clang harness: the act equal to the mock Oj approved; every other act equal to
+the build before it at the same time of the cycle. Unbuilt under MSVC.
+
+**A ball gets away and the android stops it with its leg** (Oj, 2026-11-14, "One ball is trying to
+escape, but he is able to catch it with his leg"). The first mock raised the right leg out to the
+side and caught the ball on the shin against the turned-up foot, about 35 units past the right hand.
+Oj asked for the lunge, which lets the ball get further, then for the android to balance through the
+pause ("during the dramatic pause he is balancing not freezes"). Two other leg shapes were tried in
+stills: the knee out with the shin upright, where the ball on the toes looked stuck to the shin; and
+the ball in the crook of a slanting shin, where the foot read as part of the shin.
+
+**The trick comes late in the act**, from throw 18 at 5.04 seconds (Oj, "shift the escaping ball
+forward", which he meant as later in the act). The android has the cyan ball back in hand at 8.52
+and juggles on into the curtain. The wild throw must leave the left hand, since the held balls
+restart on schedule only after an even throw.
+
+**The other two balls are held through the lunge.** The cascade places a ball in flight about the
+upper body, so a ball thrown while the body moved 62 units would have travelled with it. Which ball
+each hand holds is chosen so the restart keeps the schedule: the kick stands for the wild ball's
+throw 24, the right hand throws its ball as throw 25 and the left as throw 26. The wild ball itself
+is placed in the frame, each of its flights at the cascade's gravity between the poses at its two
+ends.
+
+**Checked** in the clang harness: the act equal to the mock Oj approved; before 5.04 and after 8.52
+seconds equal to the build before the trick, and every other act too. Unbuilt under MSVC.
+
 ## ClockworkScene
 
 meshWith places the driven gear's phase so that the teeth past the line of centers, counted on

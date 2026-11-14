@@ -660,19 +660,19 @@ whole numbers: a float holds a large drift too coarsely for the stars to move sm
 An android puts on a show on a small stage, under a spotlight between red drapes. A curtain of
 the drapes' cloth closes between its acts.
 
-**Fifteen acts of ten seconds each, four to a cycle**, follow one another across the cycles, so
-the show comes round every 150 seconds: PuppetShowAct, RobotDanceAct, JugglingAct, AccordionAct,
-AcrobaticsAct, TopHatAct, GuitarAct, BallBalanceAct, GatorAct, DrumAct, BalletAct,
-KettlebellAct, WolfHoopAct, StringsCutAct and CurtainCallAct. The instruments come every third
-act.
+**Fifteen acts of ten seconds each, four to a cycle**, follow one another across the cycles, so the
+show comes round every 150 seconds: PuppetShowAct, RobotDanceAct, JugglingAct, AccordionAct,
+AcrobaticsAct, TopHatAct, OneManBandAct, BallBalanceAct, GatorAct, BalletAct, KettlebellAct,
+WolfHoopAct, StringsCutAct, SwanLakeAct and CurtainCallAct. The accordion and the one-man band come
+three acts apart.
 
 **The curtain is shut for 0.6 seconds across each change of act**, and runs for 0.75 seconds
 either side of that, so the next act is in place before it parts - see BotTalentScene
 drawCurtain.
 
-**The marionette hangs on a stand** inside the left drapes through every act it takes no part in,
-swinging a little, 12 times a cycle - see hangMarionette. Each act says how the stand stands - see
-StandPose.
+**The marionette hangs on a stand** inside the left drapes through every act it takes no part in
+while the stand is there, swinging a little, 12 times a cycle - see hangMarionette. Each act says
+how the stand stands - see StandPose.
 
 **An act's jolt shakes the stage.** From the moment the act's joltAge passes 0, the stage and all
 on it shake by up to 7 units, dying away in about half a second. The drapes and the hanging
@@ -716,7 +716,7 @@ stage, and then draws it into the frame the jolt shakes.
 - **usesMarionette** is true in the acts that play with the marionette. In the rest the scene
   hangs it on its stand.
 - **standPose** is whole and upright in most acts. StringsCutAct takes the stand away in a puff of
-  smoke, and CurtainCallAct has it back, bowing - see StandPose.
+  smoke, SwanLakeAct dances on without it, and CurtainCallAct has it back, bowing - see StandPose.
 - **joltAge** counts the seconds since something landed hard enough to shake the stage, and is
   below 0 before that - see BotTalentScene.
 
@@ -756,6 +756,19 @@ A beat is 0.625 seconds, four to a sway, and the android steps from side to side
 and every ball rests 0.3 seconds in a hand. A hand catches out wide and throws from near the
 middle, and each ball changes hands with every throw. The android's eyes follow the highest ball.
 
+**One throw goes too far**, and the android stops the ball with its leg. In seconds:
+
+- **At 5.04** the cyan ball leaves the left hand, as high as any throw, toward a point 146 units
+  right of the android.
+- **From 5.16** each hand keeps the next ball it catches and holds it out for balance.
+- **From 5.58** the android lunges right: the left knee bends, and the right leg goes out nearly
+  straight, its heel on the floor and its toes up.
+- **At 6.09** the ball lands on the shin and rolls down to rest against the toes. The android
+  balances it there, the body teetering and the arms answering, its eyes on the ball.
+- **At 7.56** the leg kicks the ball up to the right hand, and the android rises back to its place.
+- **From 7.98** the hands throw their balls again in turn, and the cyan ball lands in the right hand
+  at 8.52, so the cascade goes on by its usual order.
+
 ## AcrobaticsAct
 
 In seconds:
@@ -767,6 +780,24 @@ In seconds:
 - **To 7.9** down onto its feet, 70 units further left, then the ta-da.
 
 restAndroidOnFloor keeps it on the boards while it is upside down.
+
+## OneManBandAct
+
+The android strums a guitar and keeps the beat on a drum set with its foot. The set stands to its
+left: a bass drum lying on its side with a pedal at its batter head, a tom on top, and a crash
+cymbal on a stand behind. In seconds:
+
+- **To 7.8** four chords, a bar of 1.25 seconds each. A kick every 0.625 seconds to 7.5: the foot
+  presses the footboard, the beater swings onto the head, and the head flashes.
+- **From 6.6** the guitar's neck goes up.
+- **From 7.5** a fill on the bass drum, a kick every 0.3125 seconds.
+- **From 7.8** the strumming hand reaches for the drumstick behind the left ear, where only a short
+  end shows. It draws the stick out at 8 and raises it over the cymbal.
+- **At 8.44** the stick strikes the cymbal with the last kick.
+- **From 8.6** the ta-da, the stick held up.
+
+**The stick stays behind the head until it points away from it**, so it never crosses the face as it
+comes out.
 
 ## BallBalanceAct
 
@@ -840,7 +871,29 @@ The puppet show's finale, in a top hat. In seconds:
   turned to the stand. At 4.55 sparkles fly over to it.
 - **From 5** the stand goes in a puff of smoke, and is gone by 5.25.
 - **Then** the wand beats time again, while the marionette rises and twirls.
-- **From 8.3** the ta-da.
+- **From 6.8** the android stands still, facing the audience, its left hand on its chest. From 7 the
+  wand is raised a third time and waved round.
+- **From 7.8** sparkles spiral up round the android.
+- **At 8.25** it goes in a puff of smoke, fading out inside it in a tenth of a second. Its top hat
+  hangs in the air a moment, drops to the floor, hops and rocks still. The smoke is still there as
+  the curtain closes.
+
+## SwanLakeAct
+
+Four androids of the one model dance the little swans from Swan Lake, in a line, their arms crossed
+in front and each hand holding a neighbor's. Their tutus differ a little - see TutuLook. Each dances
+a few hundredths of a second ahead of or behind the music, so they keep almost together, and one
+turns its head the wrong way once. In seconds:
+
+- **From 1** on pointe, a step a beat, the feet lifting in turn to the other shin, as the line
+  travels right. The heads turn sharply every two beats.
+- **From 4.75** two echappes, each a beat out to second in a plie and a beat back to fifth on
+  pointe.
+- **From 6** a bourree back to the left, the heads turning again.
+- **From 8.1** the steps again, on into the curtain.
+
+**The marionette and its stand are gone**: StringsCutAct, just before, took the stand away in a puff
+of smoke.
 
 ## CurtainCallAct
 
@@ -885,9 +938,10 @@ A pose places the pelvis in the frame and gives everything else relative to it.
 - **`forearmOnTop`** leaves a forearm and hand to drawAndroidForearm, drawn after what the hand
   holds, so the hand closes over it.
 - **`wearsHat`** puts a top hat on at a slant, the antenna through its crown.
-- **`wearsTutu`** puts a classical tutu round the hips, drawn between the pelvis and the torso -
-  see drawTutu. It keeps its width as the figure turns, and `tutuTurn` turns its pleats, so a
-  spin shows on it.
+- **`wearsTutu`** puts a classical tutu round the hips, drawn between the pelvis and the torso - see
+  drawTutu. It keeps its width as the figure turns, and `tutuTurn` turns its pleats, so a spin shows
+  on it. `tutuLook` sets one tutu a little apart from another of the same cut - its shade, its size,
+  how it sits on the hips.
 - **`wearsPointeShoes`** dresses the feet in pink satin, the ribbons crossed over the shins.
 - **`bow`** bows the android to the audience: the upper body shortens as it tips toward them,
   and the face goes down, the eyes on the floor. The head keeps its shape.
@@ -896,6 +950,15 @@ A pose places the pelvis in the frame and gives everything else relative to it.
 
 restAndroidOnFloor moves the pelvis until the lowest of its soles, palms and antenna tip touches the
 floor line.
+
+## androidWornHat
+
+The top hat the android wears, as a TopHatPose in the frame: the middle of its brim, its turn and
+its size, as AndroidPose wearsHat draws it. An act that takes the hat off the head starts it from
+here and draws it itself, with wearsHat false.
+
+**The pose follows the head as it turns and bends.** A figure turning away squeezes the hat it wears
+across, which a pose cannot carry, so the pose is exact for a figure facing the audience.
 
 ## danceMarionette
 

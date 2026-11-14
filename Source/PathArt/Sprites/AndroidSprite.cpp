@@ -59,6 +59,8 @@ namespace ClaFi::PathArt
         [[nodiscard]] float drawnFacing(const AndroidPose&);
         // Bowing toward the audience, the upper body keeps this share of its height.
         [[nodiscard]] float upperHeightShare(const AndroidPose&);
+        // The head's place on the upper body: about the neck, turned, its shape kept in a bow.
+        [[nodiscard]] Matrix3x2 headToUpper(const AndroidPose&);
         // The figure's frame in units about the pelvis.
         [[nodiscard]] SceneFrame bodyFrameOf(const SceneFrame&, const AndroidPose&);
         // A two-part limb that stretches rather than stops short of its end.
@@ -138,6 +140,29 @@ namespace ClaFi::PathArt
             * Matrix3x2::Translation(0.0f, -AndroidBody::Waist));
     }
 
+    FloatPoint androidHeadToUpper(const AndroidPose& pose, const FloatPoint headPoint)
+    {
+        return headToUpper(pose).transform(headPoint);
+    }
+
+    // The brim's middle and a point one unit along it, carried from the head into the frame,
+    // give the hat's place, turn and size there.
+    TopHatPose androidWornHat(const SceneFrame& frame, const AndroidPose& pose)
+    {
+        const FloatPoint brim = k_wornHat.brim;
+        const FloatPoint along = brim + rotated({ 1.0f, 0.0f }, k_wornHat.turn);
+        const FloatPoint brimInFrame = androidUpperToFrame(frame, pose,
+            androidHeadToUpper(pose, brim));
+        const FloatPoint alongInFrame = androidUpperToFrame(frame, pose,
+            androidHeadToUpper(pose, along));
+        const FloatPoint unitAlong = alongInFrame - brimInFrame;
+        return {
+            .brim = brimInFrame,
+            .turn = std::atan2(unitAlong.y, unitAlong.x),
+            .size = k_wornHat.size * std::hypot(unitAlong.x, unitAlong.y)
+        };
+    }
+
     void plantAndroidFeet(const SceneFrame& frame, AndroidPose& pose, const FloatPoint leftAnkle,
         const FloatPoint rightAnkle)
     {
@@ -179,7 +204,7 @@ namespace ClaFi::PathArt
         {
             const SceneFrame hips = frame.within(Matrix3x2::Translation(pose.pelvis)
                 * Matrix3x2::Rotation(pose.tilt) * Matrix3x2::Scale(frame.unit));
-            drawTutu(hips, pose.tutuTurn);
+            drawTutu(hips, pose.tutuTurn, pose.tutuLook);
         }
         const SceneFrame upper = androidUpperFrame(frame, pose);
         drawTorso(upper, pose);
@@ -220,6 +245,13 @@ namespace ClaFi::PathArt
         float upperHeightShare(const AndroidPose& pose)
         {
             return 1.0f - 0.3f * pose.bow;
+        }
+
+        Matrix3x2 headToUpper(const AndroidPose& pose)
+        {
+            return Matrix3x2::Translation(AndroidBody::Neck)
+                * Matrix3x2::Scale(1.0f, 1.0f / upperHeightShare(pose))
+                * Matrix3x2::Rotation(pose.headTurn);
         }
 
         SceneFrame bodyFrameOf(const SceneFrame& frame, const AndroidPose& pose)
@@ -376,10 +408,7 @@ namespace ClaFi::PathArt
         void drawHead(const SceneFrame& upper, const AndroidPose& pose)
         {
             const bool fromBehind = pose.facing < 0.0f;
-            // The head keeps its shape as the upper body shortens in a bow.
-            const SceneFrame head = upper.within(Matrix3x2::Translation(AndroidBody::Neck)
-                * Matrix3x2::Scale(1.0f, 1.0f / upperHeightShare(pose))
-                * Matrix3x2::Rotation(pose.headTurn));
+            const SceneFrame head = upper.within(headToUpper(pose));
             const SolidColor joint{ AndroidColors::Joint };
             fillDisc(head, { -38.0f, -28.0f }, 8.0f, joint);
             fillDisc(head, { 38.0f, -28.0f }, 8.0f, joint);

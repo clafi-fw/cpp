@@ -10,7 +10,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::PathArt
 {
-    // The android juggles three balls in a cascade, its eyes on the highest. See PathArt
+    // The android juggles three balls and stops one that gets away with its leg. See PathArt
     export class JugglingAct : public BotTalentAct
     {
     public:

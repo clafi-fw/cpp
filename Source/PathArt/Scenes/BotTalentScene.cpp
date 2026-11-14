@@ -7,19 +7,19 @@ import ClaFi.PathArt.BallBalanceAct;
 import ClaFi.PathArt.BalletAct;
 import ClaFi.PathArt.BotTalentAct;
 import ClaFi.PathArt.CurtainCallAct;
-import ClaFi.PathArt.DrumAct;
 import ClaFi.PathArt.DustMotesEffect;
 import ClaFi.PathArt.GatorAct;
-import ClaFi.PathArt.GuitarAct;
 import ClaFi.PathArt.JugglingAct;
 import ClaFi.PathArt.KettlebellAct;
 import ClaFi.PathArt.MarionetteSprite;
+import ClaFi.PathArt.OneManBandAct;
 import ClaFi.PathArt.PuppetShowAct;
 import ClaFi.PathArt.RobotDanceAct;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.StringsCutAct;
+import ClaFi.PathArt.SwanLakeAct;
 import ClaFi.PathArt.TopHatAct;
 import ClaFi.PathArt.WolfHoopAct;
 import ClaFi.Core.Graphics.Canvas;
@@ -88,14 +88,14 @@ namespace ClaFi::PathArt
         m_acts.push_back(std::make_unique<AccordionAct>());
         m_acts.push_back(std::make_unique<AcrobaticsAct>());
         m_acts.push_back(std::make_unique<TopHatAct>());
-        m_acts.push_back(std::make_unique<GuitarAct>());
+        m_acts.push_back(std::make_unique<OneManBandAct>());
         m_acts.push_back(std::make_unique<BallBalanceAct>());
         m_acts.push_back(std::make_unique<GatorAct>());
-        m_acts.push_back(std::make_unique<DrumAct>());
         m_acts.push_back(std::make_unique<BalletAct>());
         m_acts.push_back(std::make_unique<KettlebellAct>());
         m_acts.push_back(std::make_unique<WolfHoopAct>());
         m_acts.push_back(std::make_unique<StringsCutAct>());
+        m_acts.push_back(std::make_unique<SwanLakeAct>());
         m_acts.push_back(std::make_unique<CurtainCallAct>());
     }
 
@@ -152,11 +152,14 @@ namespace ClaFi::PathArt
 
         m_stage.draw(frame, shake);
         const MarionetteStand stand = marionetteStandOf(stage);
-        drawMarionetteStand(shaken, stand, act.standPose());
+        const StandPose standPose = act.standPose();
+        drawMarionetteStand(shaken, stand, standPose);
         const float lampX = stage.centerX - 56.0f * unit * stage.closeness;
         const float spotlightX = act.spotlightX();
         drawSpotlight(shaken, lampX, spotlightX, floorY);
-        if (!act.usesMarionette())
+        // the marionette hangs on its stand through the acts it takes no part in, while the
+        // stand is there
+        if (!act.usesMarionette() && standPose.shown > 0.0f)
         {
             const float hangingSwing = 0.3f * swing
                 + 0.035f * std::sin(k_2Pi * k_hangingSwingsPerCycle * time.cycleTime);

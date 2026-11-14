@@ -805,22 +805,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\CurtainCallAct.cppm">
       <Filter>PathArt\Scenes\BotTalent</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\DrumAct.cpp">
-      <Filter>PathArt\Scenes\BotTalent</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\DrumAct.cppm">
-      <Filter>PathArt\Scenes\BotTalent</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\GatorAct.cpp">
       <Filter>PathArt\Scenes\BotTalent</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\GatorAct.cppm">
-      <Filter>PathArt\Scenes\BotTalent</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\GuitarAct.cpp">
-      <Filter>PathArt\Scenes\BotTalent</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\GuitarAct.cppm">
       <Filter>PathArt\Scenes\BotTalent</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\JugglingAct.cpp">
@@ -833,6 +821,12 @@
       <Filter>PathArt\Scenes\BotTalent</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\KettlebellAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\OneManBandAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\OneManBandAct.cppm">
       <Filter>PathArt\Scenes\BotTalent</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\PuppetShowAct.cpp">
@@ -851,6 +845,12 @@
       <Filter>PathArt\Scenes\BotTalent</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\StringsCutAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\SwanLakeAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\SwanLakeAct.cppm">
       <Filter>PathArt\Scenes\BotTalent</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\TopHatAct.cpp">

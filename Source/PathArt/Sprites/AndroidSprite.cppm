@@ -1,6 +1,8 @@
 export module ClaFi.PathArt.AndroidSprite;
 
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.TopHatSprite;
+import ClaFi.PathArt.TutuSprite;
 import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::PathArt
@@ -88,6 +90,7 @@ namespace ClaFi::PathArt
         bool wearsHat{ false }; // a top hat at a slant, the antenna through its crown
         bool wearsTutu{ false }; // a classical tutu round the hips
         float tutuTurn{ 0.0f }; // how far the tutu's pleats have turned as it spins, in radians
+        TutuLook tutuLook{}; // how its tutu differs from another of the same cut
         bool wearsPointeShoes{ false }; // pink satin, their ribbons crossed over the shins
         float cycleTime{ 0.0f }; // the time its eyes blink and its lights chase by
 
@@ -110,6 +113,10 @@ namespace ClaFi::PathArt
         FloatPoint framePoint);
     // The frame of the upper body in units, for what the hands hold.
     export [[nodiscard]] SceneFrame androidUpperFrame(const SceneFrame&, const AndroidPose&);
+    // A point of the head in units about the neck, turned with the head, in the upper body's units.
+    export [[nodiscard]] FloatPoint androidHeadToUpper(const AndroidPose&, FloatPoint headPoint);
+    // The top hat as the android wears it, placed in the frame. See PathArt
+    export [[nodiscard]] TopHatPose androidWornHat(const SceneFrame&, const AndroidPose&);
     // Sets the feet to stand with their ankles on two points of the frame.
     export void plantAndroidFeet(const SceneFrame&, AndroidPose&, FloatPoint leftAnkle,
         FloatPoint rightAnkle);

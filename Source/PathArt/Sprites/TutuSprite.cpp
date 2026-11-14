@@ -33,14 +33,29 @@ namespace ClaFi::PathArt
         constexpr float k_topDepth{ 13.0f };
         constexpr int k_frillCount{ 36 };
         constexpr int k_pleatCount{ 20 };
+
+        // A colour of the tutu leaned toward its look's tint, keeping its own alpha.
+        [[nodiscard]] Color tinted(const Color color, const TutuLook& look)
+        {
+            if (look.tintShare <= 0.0f)
+                return color;
+            Color toward = look.tint;
+            toward.alpha = color.alpha;
+            return colorBetween(color, toward, look.tintShare);
+        }
     }
 
     // A disc of stiff tulle seen a little from above: a shaded lower layer, a frilled rim, and
     // a top layer lit from above with pleats running out to its edge; over it all, the waistband
     // with a bow at the front.
-    void drawTutu(const SceneFrame& hips, const float turn)
+    void drawTutu(const SceneFrame& hips, const float turn, const TutuLook& look)
     {
-        fillOval(hips, { 0.0f, k_topY + 7.0f }, 76.0f, 16.0f, SolidColor{ TutuColors::Shade });
+        const SceneFrame tutu = hips.within(Matrix3x2::Rotation(look.tilt)
+            * Matrix3x2::Scale(look.size));
+        const auto solid = [&](const Color color) {
+            return SolidColor{ tinted(color, look) };
+        };
+        fillOval(tutu, { 0.0f, k_topY + 7.0f }, 76.0f, 16.0f, solid(TutuColors::Shade));
         // Neighbouring frills overlap, so each is filled on its own.
         for (int i = 0; i != k_frillCount; ++i)
         {
@@ -49,13 +64,14 @@ namespace ClaFi::PathArt
                 75.0f * std::cos(angle),
                 k_topY + 4.0f + 15.0f * std::sin(angle),
             };
-            fillDisc(hips, at, 4.5f,
-                SolidColor{ i % 2 == 1 ? TutuColors::Frill : TutuColors::FrillShade });
+            fillDisc(tutu, at, 4.5f,
+                solid(i % 2 == 1 ? TutuColors::Frill : TutuColors::FrillShade));
         }
         PixelPath top;
         addEllipse(top, { 0.0f, k_topY }, k_topRadius, k_topDepth);
-        fillShape(hips, top, LinearGradient::Simple({ 0.0f, k_topY - k_topDepth },
-            { 0.0f, k_topY + k_topDepth }, TutuColors::Top, TutuColors::TopShade));
+        fillShape(tutu, top, LinearGradient::Simple({ 0.0f, k_topY - k_topDepth },
+            { 0.0f, k_topY + k_topDepth }, tinted(TutuColors::Top, look),
+            tinted(TutuColors::TopShade, look)));
         PixelPath pleats;
         for (int i = 0; i != k_pleatCount; ++i)
         {
@@ -64,10 +80,10 @@ namespace ClaFi::PathArt
             pleats.moveTo(30.0f * toward.x, k_topY + 5.5f * toward.y);
             pleats.lineTo(69.0f * toward.x, k_topY + 12.6f * toward.y);
         }
-        strokeShape(hips, pleats, SolidColor{ TutuColors::Pleat }, 1.0f);
-        strokeShape(hips, top, SolidColor{ TutuColors::Rim }, 1.2f);
+        strokeShape(tutu, pleats, solid(TutuColors::Pleat), 1.0f);
+        strokeShape(tutu, top, solid(TutuColors::Rim), 1.2f);
 
-        fillRoundedBox(hips, { -32.0f, -9.0f, 32.0f, 2.0f }, 5.0f, SolidColor{ TutuColors::Band });
+        fillRoundedBox(tutu, { -32.0f, -9.0f, 32.0f, 2.0f }, 5.0f, solid(TutuColors::Band));
         PixelPath bow;
         for (const float side : { -1.0f, 1.0f })
         {
@@ -76,7 +92,7 @@ namespace ClaFi::PathArt
             bow.lineTo(side * 10.0f, 2.0f);
             bow.close();
         }
-        fillShape(hips, bow, SolidColor{ TutuColors::Bow });
-        fillDisc(hips, { 0.0f, -3.5f }, 2.8f, SolidColor{ TutuColors::BowKnot });
+        fillShape(tutu, bow, solid(TutuColors::Bow));
+        fillDisc(tutu, { 0.0f, -3.5f }, 2.8f, solid(TutuColors::BowKnot));
     }
 }
