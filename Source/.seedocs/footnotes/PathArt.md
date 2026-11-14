@@ -30,8 +30,8 @@ on, and comes round when that time runs a whole number of units a cycle.
 ## Scene drawIcon
 
 **The figure fills bounds.** Its extent is framed to the shorter side and centred, so an icon of
-any size shows the whole figure with no margin. A part the square cuts - a string, a glow - is
-clipped at bounds.
+any size shows the figure with no margin. A part the square cuts - a wing tip, a glow, the android
+below its waist - is clipped at bounds.
 
 **One picture in every theme and look.** The figure is one of the scene's sprites in the colours the
 scene draws it in. MillScene's mill wears Clear Day's colours whatever theme is picked, and
@@ -266,8 +266,8 @@ over it alike. Its Scene line wears the picked scene's icon and opens the scene 
 page beside it. On a scene that offers themes, the Theme line under it wears the picked theme's
 swatch and opens the theme picker of the scene's page of options. The pointer resting on a scene or
 a theme crossfades to it, and leaving the picker or closing the menu brings back the pick. A click
-picks and closes the menu. The menu ends on Full screen, the F11 toggle, its line selected while
-fullscreen.
+picks and closes the menu. Full screen follows, the F11 toggle, its line selected while fullscreen,
+and the menu ends on the application's Exit.
 
 **A drag let go glides on** at the speed of its last 80 milliseconds and slows to about a third of
 it every 0.35 seconds, and the wheel's notches come in over about a tenth of a second. Another
@@ -441,7 +441,7 @@ of pixels, so they lay in as sharp as they were kept; drawn live, the part moves
 exactly.
 
 **A shifted layer uncovers a strip** at each edge it moves away from. The caller fills the strip,
-as the Puppeteer fills it in the wall's and the floor's colours when the stage shakes.
+as Bot Talent fills it in the wall's and the floor's colours when the stage shakes.
 
 ## CloudKind
 
@@ -655,7 +655,7 @@ moving layer reaches past the frame by that much, or a firefly pops in at the ed
 widths and band heights draws the field as it stands at none. Keep the drift to its part past the
 whole numbers: a float holds a large drift too coarsely for the stars to move smoothly.
 
-## PuppeteerScene
+## BotTalentScene
 
 An android puts on a show on a small stage, under a spotlight between red drapes. A curtain of
 the drapes' cloth closes between its acts.
@@ -667,7 +667,7 @@ KettlebellAct, WolfHoopAct, StringsCutAct and CurtainCallAct. The instruments co
 act.
 
 **The curtain is shut for 0.6 seconds across each change of act**, and runs for 0.75 seconds
-either side of that, so the next act is in place before it parts - see PuppeteerScene
+either side of that, so the next act is in place before it parts - see BotTalentScene
 drawCurtain.
 
 **The marionette hangs on a stand** inside the left drapes through every act it takes no part in,
@@ -679,7 +679,7 @@ marionette swing on for about two seconds. The curtain and the valance hang from
 still. The strips the shaken stage uncovers at the top and the bottom are filled in the wall's and
 the floor's colours.
 
-## PuppeteerScene drawCurtain
+## BotTalentScene drawCurtain
 
 Each half of the curtain is 14 folds wide. The two halves run out from behind the side drapes and
 meet 5 units past the middle of the frame.
@@ -691,14 +691,14 @@ meet 5 units past the middle of the frame.
 
 ## ActStage
 
-The stage as PuppeteerScene lays it out in the frame, handed to every act it poses.
+The stage as BotTalentScene lays it out in the frame, handed to every act it poses.
 
 **`closeness` is 1 in a frame at least 640 units wide**, and the width over 640 in a narrower one.
 An act multiplies its distances across the stage by it, so its figures stay between the drapes.
 
-## PuppeteerAct
+## BotTalentAct
 
-PuppeteerScene poses an act, reads where the spotlight falls and whether something has jolted the
+BotTalentScene poses an act, reads where the spotlight falls and whether something has jolted the
 stage, and then draws it into the frame the jolt shakes.
 
 - **pose keeps all that draw needs**, from `actTime` - 0 to k_actSeconds - and the scene's time;
@@ -706,7 +706,7 @@ stage, and then draws it into the frame the jolt shakes.
 - **usesMarionette** is true in the acts that play with the marionette. In the rest the scene
   hangs it on its stand.
 - **joltAge** counts the seconds since something landed hard enough to shake the stage, and is
-  below 0 before that - see PuppeteerScene.
+  below 0 before that - see BotTalentScene.
 
 ## danceSway
 
@@ -794,7 +794,7 @@ In seconds:
 - **At 6.45** the android lets go and hops back; the bell falls forward, turns back onto its base
   and lands.
 
-**The landing is the act's jolt** - see PuppeteerAct joltAge. Cracks run across the boards, dust
+**The landing is the act's jolt** - see BotTalentAct joltAge. Cracks run across the boards, dust
 flies out either side, and the android is thrown off its feet, looks at the bell and flexes.
 
 ## WolfHoopAct

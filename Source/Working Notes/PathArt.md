@@ -13,9 +13,10 @@ hover preview over the Scene group shows the scene under the pointer and puts th
 when the pointer leaves. The config keeps the scene by name in `Scene` and the theme in
 `SceneTheme`, so a scene added or moved in the list does not shift what was stored.
 
-The list runs Puppeteer, Ghost, Clockwork, Chase, Comet, Earth, Orrery: the Chase and the Orrery
-changed places (Oj, 2026-11-10, "Swap Orrery and Chase"), and createSceneViewsSchema follows the
-list, the Earth's view before the Orrery's.
+The list runs Chase, Bot Talent, Ghost, Clockwork, Comet, Earth, Orrery: the Chase and the Orrery
+changed places (Oj, 2026-11-10, "Swap Orrery and Chase"), and the Chase went to the head (Oj,
+2026-11-14, "Put the Chase before the Bot Talent"). createSceneViewsSchema follows the list, the
+Chase's view first and the Earth's before the Orrery's.
 
 The theme list runs from Clear Day through the day themes to the night ones, Calm Night last
 (Oj, 2026-11-10, "Reverse the scenes theme list, make the Fresh Spring default"; Fresh Spring was
@@ -219,10 +220,17 @@ the line's icon rect.
   page (m_pageScenePicker) and the menu (m_menuScenePicker). ThemePicker became PickerLanes, held by
   the scene pickers and the theme pickers alike, and showThemePick became showPick, which moves
   either kind's current item from `previous` to `picked`.
-- **The last line is the F11 action**, whose state is selected while fullscreen and whose click
+- **Full screen is the F11 action**, whose state is selected while fullscreen and whose click
   names MillSceneForm's form, as Escape's does: from a menu line the click's form is the menu's.
   Escape keeps leaving fullscreen from the keyboard, and is on no menu.
 - **Every scene has a context menu now**, in a window as well, the Scene line being on all of them.
+
+**Exit is in the scene's context menu** (Oj, 2026-11-14, "Add an Exit application command to the
+context menu"). It is the app menu's Exit - "Exit" and the application's name, beside the same
+door - standing last, under a separator of its own. A fullscreen window has no close button, and
+this is the way out the pointer reaches there. The click closes the menu and then asks
+MillSceneForm's form to close, as closeApplication in AppMenu does with the root form: from a menu
+line the click's form is the menu's. requestClose leaves the window up where readyToClose says no.
 
 **Every scene draws its own icon** (Oj, 2026-11-09, "Make the scene buttons big tiles with top
 icons, in rows"). Of a still of each scene, the scene's own sprite and eight new line pictograms,
@@ -235,8 +243,8 @@ the clockwork's metals - belong to the scene.
   is given its longer side, so the figure fills the shorter side of any bounds. At 48 pixels most
   figures read as specks, so the showcase draws them in a 64-high slot.
 - **Clips.** Where the mockup's square cut a part, the code clips at bounds: the mill's reflection
-  and wing tips, the marionette's strings, the Earth's glow. The ghost's and the comet's glows
-  spill a few levels of alpha past bounds (3 to 9 of 255), unclipped.
+  and wing tips, Bot Talent's android below its waist, the Earth's glow. The ghost's and the
+  comet's glows spill a few levels of alpha past bounds (3 to 9 of 255), unclipped.
 - **The mill wears Clear Day.** In the theme it is picked in - Calm Night with no pick stored -
   the house is a dark grey that reads as nothing on a tile, and a tile is not repainted while a
   theme is previewed. millColorsOf builds MillColors for draw and drawIcon alike.
@@ -260,8 +268,8 @@ time is a share of the shown scene's cycle.
   Earth with its maps built.
 - **Mid-fade the still is the blend.** A switch while a fade runs lays the scene fading in over the
   still kept before, through an opacity layer at the share it has reached, so one image is enough
-  and the screen does not jump: within 1 level in the harness, Puppeteer to Chase broken off 0.43 of
-  the way for Ghost. A resize empties the kept images, and the scene is then drawn whole.
+  and the screen does not jump: within 1 level in the harness, Bot Talent to Chase broken off 0.43
+  of the way for Ghost. A resize empties the kept images, and the scene is then drawn whole.
 - **Only on a full paint**, by the 80% test the readings use. A still drawn in a partial paint would
   leave the rest of the panel to change at once; until a full paint comes, the scene being left
   goes on being drawn.
@@ -364,9 +372,9 @@ was the cost. At 3840 x 2160 that put the Chase's front grass at 41 ms of an 88 
 every scene at 66 to 117 ms. With ScatteredShapes and the rectangle fills, averaged over eight
 times of the cycle (milliseconds, before and after):
 
-- Puppeteer 66 and 37, Ghost 87 and 37, Clockwork 111 and 61, Orrery 117 and 26, Comet 94 and 50,
+- Bot Talent 66 and 37, Ghost 87 and 37, Clockwork 111 and 61, Orrery 117 and 26, Comet 94 and 50,
   Satellite 103 and 56, Chase 88 and 28.
-- At 1920 x 1080: Puppeteer 14.6 and 9.3, Ghost 21.4 and 8.3, Clockwork 24.5 and 14.4, Orrery 27.1
+- At 1920 x 1080: Bot Talent 14.6 and 9.3, Ghost 21.4 and 8.3, Clockwork 24.5 and 14.4, Orrery 27.1
   and 6.6, Comet 23.2 and 12.1, Satellite 23.1 and 12.6, Chase 20.9 and 7.0.
 
 Filled one by one, two flowers in every Chase tile and a few asteroids overlap, and the CPU
@@ -375,8 +383,8 @@ still shows those holes.
 
 **What is left is mostly what does not move.** At 3840 x 2160 the parts of a frame that are the
 same at every time of the cycle - walls, skies, plates, ridges - take about two thirds of the
-Puppeteer, Ghost, Clockwork and Comet frames and four fifths of the Orrery's: the Clockwork's
-plate alone 40 ms, the Puppeteer's stage 25 ms. Keeping them in an image (the backend's
+Bot Talent, Ghost, Clockwork and Comet frames and four fifths of the Orrery's: the Clockwork's
+plate alone 40 ms, Bot Talent's stage 25 ms. Keeping them in an image (the backend's
 pushImage and drawImage) would trade those for a blit of the whole frame, which measured 6.5 to 9
 ms at that size.
 
@@ -384,7 +392,7 @@ PixelPath::drawEllipse and drawRoundedRect start a path of their own, so addElli
 ellipse as four cubics.
 
 **Draw times**, CPU backend, clang Release, one thread, 800 x 600 (the Satellite at 800 x 450),
-averaged over three frames: Mill 1.5 to 3.4 ms, Puppeteer 5, Ghost 4.6 to 4.9, Clockwork 6.2 to
+averaged over three frames: Mill 1.5 to 3.4 ms, Bot Talent 5, Ghost 4.6 to 4.9, Clockwork 6.2 to
 6.8, Orrery 6.5 to 6.7, Comet 4.3 to 5.7, Satellite 5.4 to 6.8, Chase 4 to 4.7. Not measured
 under Direct2D.
 
@@ -392,13 +400,13 @@ under Direct2D.
 
 **Oj's shape** (2026-11-07): a scene prepares its still parts without a canvas, from the params,
 and keeps them itself; draw lays each one in with a line at its place in the paint order. The first
-proposal - one still image under everything that moves - could not have kept the Puppeteer's
+proposal - one still image under everything that moves - could not have kept Bot Talent's
 valance, which hangs over the swaying curtains.
 
 **Measured** at 3436 x 2051 on the CPU backend, clang, frame times averaged over eight times of
 the cycle, live and with the layers kept:
 
-- Puppeteer 24 and 13 ms - the stage and the valance.
+- Bot Talent 24 and 13 ms - the stage and the valance.
 - Ghost 24 and 15 ms - the sky, the moon, the land with the tree and the fence, the tombstones.
 - Clockwork 41 and 17 ms - the plate with its rivets and the lamp's glow; the pipes, the valve and
   the gauge without its needle.
@@ -407,7 +415,7 @@ the cycle, live and with the layers kept:
   lake's shade and the shore.
 - Satellite 29 and 22 ms - space above the limb, and the ocean.
 
-In Oj's MSVC profile the Puppeteer's stage alone was half of its frame. Layered frames match live
+In Oj's MSVC profile Bot Talent's stage alone was half of its frame. Layered frames match live
 ones within two levels of a channel - the rounding of premultiplied pixels.
 
 **Translucent and sparse parts pay since 2026-11-08.** Until then compositeSurface copied an
@@ -439,7 +447,7 @@ could not be laid into the frame turned over inside the lake. They are laid in i
 path clip, which a layer does not see - the row along the lake's edge that the clip covers in part
 is covered by the shore after.
 
-**draw takes a shift** for the Puppeteer's jolt - see PuppeteerScene below.
+**draw takes a shift** for Bot Talent's jolt - see BotTalentScene below.
 
 **Direct2D draws layers live.** Its drawPixelView copies the bitmap up to the GPU on every call,
 which a kept layer would pay on every frame. A layer kept on the GPU would need a backend call of
@@ -471,7 +479,20 @@ sites over the outlines without their grain and before the land map's weights.
 To watch: the cast to float rounds a fraction within 2^-25 of 1 up to 1.0, about 3 draws in 10^8.
 Nothing guards it.
 
-## PuppeteerScene
+## BotTalentScene
+
+**Named Bot Talent** (Oj, 2026-11-14, "Rename the Puppeteer to Bot Talent"). The name reached the
+classes, the modules and the folder: BotTalentScene, BotTalentAct, BotTalentColors and
+Scenes/BotTalent. puppeteerX and PuppetShowAct kept theirs - the android works the marionette
+there, and is its puppeteer. A pick stored as "Puppeteer" is not found by name, so the showcase
+opens on the mill.
+
+**The icon is the android from the waist up, in the ta-da V** (Oj, 2026-11-14). Of a ta-da, a hat
+trick and a guitar standing whole and a portrait from the waist up, mocked up from the scene code,
+Oj took the portrait. Its first gesture, one arm raised straight, read as a salute; of four others
+he picked both arms up. Standing whole, the android is tall and narrow: it read small in the
+96 x 64 slot and as a speck on the menu line's 16. From the waist up the face, the hat and the
+lights stay large at both. The marionette it replaces read as strings and specks at either size.
 
 **The acts** began with Oj's "the curtain periodically close for a moment, and when it open again
 the android is in a new pose making a new trick". They were drawn in an HTML mockup first and
@@ -484,7 +505,7 @@ ported number for number. Oj's picks on the mockup:
   floor when it dropped".
 - "The current order is all right" took the mockup's order.
 
-**The code's shape was Oj's pick**: a module per act under Scenes/Puppeteer on a PuppeteerAct base,
+**The code's shape was Oj's pick**: a module per act under Scenes/BotTalent on a BotTalentAct base,
 the props as sprites and effects - TopHatSprite, RabbitSprite, a whole GatorSprite,
 MusicNotesEffect, SparkleBurstEffect. The mill's gator head was renamed GatorHeadSprite, so the
 whole gator could take GatorSprite. The wolf is WolfSprite as the Chase draws it, its coat moved
@@ -778,7 +799,7 @@ one by one.
 **The form's fill under the scene stays.** The profile put 1.4 ms on MillSceneForm filling the whole
 window under the scene panel, and filling only the strips round the panel would save it - but the
 Mill draws on that fill. Drawn on a clear canvas it leaves 393,000 of a 900 x 600 frame's pixels
-short of opaque, and the Puppeteer a row across the frame about 1 percent short; the other six
+short of opaque, and Bot Talent a row across the frame about 1 percent short; the other six
 cover their frames whole. Leaving the fill out needs the scene to say it covers its frame, and no
 Scene says so yet.
 
@@ -3102,7 +3123,7 @@ wolves to the hares' quarter; B, all at an eighth; C, the hares to their shade. 
 drawWolf's body runs from the light to `unlit`, the shade a quarter of the way to black
 (WolfSprite's k_unlitShare, as the hare's). Winter Frost's wolves now darken 0.21 and 0.14; Clear
 Day's ourWolf, whose light alone was lifted, 0.38. Every wolf drawWolf draws takes it - the Chase's
-in every theme, the icon's and the Puppeteer's.
+in every theme, the icon's and Bot Talent's.
 
 Then (Oj, 14:38) "Vintage Noire: remove color from the daze stars, thicken the air and if that
 didn't flip the mountains darken them". Its sky runs from near black to mid grey, so its air is a
@@ -3209,7 +3230,7 @@ coordinates: where a leg crosses the body's edge the two are one colour, and bel
 the leg holds `unlit`. The far legs and every pad keep their steps from `coat` - `relit` scales
 `far` and `dark` channel by channel by the ratio that takes `coat` to `unlit`. `coat` still draws
 the head and tail underneath. Every wolf drawWolf draws takes it - the Chase's in every theme, the
-icon's and the Puppeteer's. Where `coat` stood far above `unlit`, as in Clear Day, Cherry Blossom
+icon's and Bot Talent's. Where `coat` stood far above `unlit`, as in Clear Day, Cherry Blossom
 and Paper Sketch, the far legs and pads go near black.
 
 Then (Oj, 17:54) "Underwater Realm: the wolf's too light, the mountains are too dark, the stems too

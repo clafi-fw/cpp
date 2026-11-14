@@ -30,6 +30,7 @@ import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Menu;
 
+import ClaFi.Icons.DoorIcon;
 import ClaFi.Icons.DotMark;
 
 import ClaFi.Core.Context.DrawIconEvent;
@@ -1525,8 +1526,8 @@ void MillSceneForm::buildThemeList(Menu& list)
     }
 }
 
-// **A fullscreen window shows no bar to leave it by**, so the menu holds the full-screen toggle.
-// It holds it in a window too, where the line shows the way in.
+// **A fullscreen window shows no bar to leave it by**, so the menu holds the full-screen toggle
+// and the application's Exit. It holds both in a window too, where the toggle shows the way in.
 void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenToggle)
 {
     event.stopPropagation();
@@ -1554,6 +1555,16 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
     }
     menu.addSeparator();
     menu.add(fullscreenToggle);
+    menu.addSeparator();
+    menu.add(
+        Text{ L"Exit ", appContext().appName() },
+        MenuItem::OnDrawIcon{ Icons::DoorIcon::draw },
+        // The menu closes ahead of the window, as the app menu's Exit does.
+        MenuItem::OnClick{ [this](ClickEvent& event) {
+            event.closeForm();
+            form().requestClose();
+        } }
+    );
     menu.execute();
 }
 

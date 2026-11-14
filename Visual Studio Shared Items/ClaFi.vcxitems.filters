@@ -37,7 +37,7 @@
     <Filter Include="PathArt\Scenes">
       <UniqueIdentifier>{738c516b-03d2-4f5a-b31e-4c88988f2aac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="PathArt\Scenes\Puppeteer">
+    <Filter Include="PathArt\Scenes\BotTalent">
       <UniqueIdentifier>{437aec35-862f-4113-85cd-6663228a9823}</UniqueIdentifier>
     </Filter>
     <Filter Include="PathArt\Sprites">
@@ -769,6 +769,108 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Types.cppm">
       <Filter>PathArt</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\AccordionAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\AccordionAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\AcrobaticsAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\AcrobaticsAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\BallBalanceAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\BallBalanceAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\BalletAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\BalletAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\BotTalentAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\BotTalentAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\CurtainCallAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\CurtainCallAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\DrumAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\DrumAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\GatorAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\GatorAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\GuitarAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\GuitarAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\JugglingAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\JugglingAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\KettlebellAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\KettlebellAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\PuppetShowAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\PuppetShowAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\RobotDanceAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\RobotDanceAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\StringsCutAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\StringsCutAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\TopHatAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\TopHatAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\WolfHoopAct.cpp">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\WolfHoopAct.cppm">
+      <Filter>PathArt\Scenes\BotTalent</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalentScene.cpp">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalentScene.cppm">
+      <Filter>PathArt\Scenes</Filter>
+    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\ChaseScene.cpp">
       <Filter>PathArt\Scenes</Filter>
     </ClCompile>
@@ -818,108 +920,6 @@
       <Filter>PathArt\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PathArt.Scenes.cppm">
-      <Filter>PathArt\Scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\AccordionAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\AccordionAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\AcrobaticsAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\AcrobaticsAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\BallBalanceAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\BallBalanceAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\BalletAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\BalletAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\CurtainCallAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\CurtainCallAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\DrumAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\DrumAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\GatorAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\GatorAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\GuitarAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\GuitarAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\JugglingAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\JugglingAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\KettlebellAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\KettlebellAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\PuppeteerAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\PuppeteerAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\PuppetShowAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\PuppetShowAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\RobotDanceAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\RobotDanceAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\StringsCutAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\StringsCutAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\TopHatAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\TopHatAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\WolfHoopAct.cpp">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\Puppeteer\WolfHoopAct.cppm">
-      <Filter>PathArt\Scenes\Puppeteer</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PuppeteerScene.cpp">
-      <Filter>PathArt\Scenes</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\PuppeteerScene.cppm">
       <Filter>PathArt\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\AndroidSprite.cpp">

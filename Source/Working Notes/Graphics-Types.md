@@ -74,13 +74,13 @@ corner pixels: RectPainter's exact area coverage against the rasterizer's.
 
 **A row of a slanting segment covers only the run near its line.** The distance used to be
 measured for every pixel of the segment's bounding box, and on a slanting segment most of that box
-lies too far from the line to change. The Puppeteer's floor - 37 planks two units wide, fanning
+lies too far from the line to change. Bot Talent's floor - 37 planks two units wide, fanning
 toward a point above the stage - spanned 0.6 of the frame in plank boxes. A Visual Studio profile
 of the MSVC build at 3436 x 2051 put 72% of an 81 ms frame in this function and in
 calcStrokeEdgeDistSq, which MSVC keeps out of line; the same frame under clang spent 12% there.
 
 The masks it writes are the same bit for bit - checked over every scene and the mill's themes -
-and on the Puppeteer the work counted by callgrind fell to a sixth.
+and on Bot Talent the work counted by callgrind fell to a sixth.
 
 **rasterizeGlowMask narrows its rows the same way** (2026-11-08): a pixel the radius or more from
 the line takes no glow, and the mask keeps the greater of the two. The Satellite's soft clouds - a
@@ -132,7 +132,7 @@ harness, and every frame of the scenes and the mill came out the same bit for bi
 ## PixelView compositeSurface
 
 **Eight pixels at a time** (2026-11-08). Taken one at a time, the pixels of a scene's kept layer
-cost about 13 instructions each under callgrind - a third of a layered Puppeteer frame. Copying a
+cost about 13 instructions each under callgrind - a third of a layered Bot Talent frame. Copying a
 run of opaque pixels whole saved only the opaque ones: a translucent pixel, or a clear one inside
 the layer's cut, still went one at a time, and a translucent or sparse part cost more kept than
 drawn live. Eight clear pixels now cost a load and a test, eight opaque ones at full opacity a load,

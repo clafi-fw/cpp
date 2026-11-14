@@ -1,12 +1,12 @@
 module ClaFi.PathArt.Scenes;
 
+import ClaFi.PathArt.BotTalentScene;
 import ClaFi.PathArt.ChaseScene;
 import ClaFi.PathArt.ClockworkScene;
 import ClaFi.PathArt.CometScene;
 import ClaFi.PathArt.EarthScene;
 import ClaFi.PathArt.GhostScene;
 import ClaFi.PathArt.OrreryScene;
-import ClaFi.PathArt.PuppeteerScene;
 import ClaFi.PathArt.Scene;
 import ClaFi.Core.DomEngine_Dt;
 
@@ -17,10 +17,10 @@ namespace ClaFi::PathArt
     SceneList createScenes()
     {
         SceneList scenes;
-        scenes.push_back(std::make_unique<PuppeteerScene>());
+        scenes.push_back(std::make_unique<ChaseScene>());
+        scenes.push_back(std::make_unique<BotTalentScene>());
         scenes.push_back(std::make_unique<GhostScene>());
         scenes.push_back(std::make_unique<ClockworkScene>());
-        scenes.push_back(std::make_unique<ChaseScene>());
         scenes.push_back(std::make_unique<CometScene>());
         scenes.push_back(std::make_unique<EarthScene>());
         scenes.push_back(std::make_unique<OrreryScene>());
