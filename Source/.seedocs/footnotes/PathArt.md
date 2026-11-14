@@ -711,6 +711,10 @@ glows 15 units round - all scaled by `size`.
 **A firefly strays past the area** by up to 65 units times `size`. An area drawn in tiles along a
 moving layer reaches past the frame by that much, or a firefly pops in at the edge.
 
+**Swarms drawn together take different seeds.** With one seed, the k-th firefly of each stands at
+the same share across its area and wanders and blinks in step with the others' k-th; seeds 10 apart
+keep them apart.
+
 ## StarField drift
 
 **A star moved out of the band comes round into it at the far side**, so a drift of whole frame
@@ -1110,6 +1114,14 @@ when the cycle wraps.
 **Its story runs over two cycles.** The cow walks to the stream to drink and back, the ducks
 cross the pond, the birds the sky, the wolf looks out twice; a frame whose SceneTime has an odd
 cyclesPassed shows the second half. A host that counts no cycles shows the first half only.
+
+**The weather and the fireflies are spread over four depths** - the far hills, the field, the mill
+and the near bank. Each depth's share is drawn over its scenery and stops at its bottom row; the
+farther it lies, the smaller and fainter its pieces, and the slower they fall on the screen. The
+lightning comes down behind the land, and its flash lights the sky alone.
+
+**The wind blows toward the right**, the way the mill's smoke drifts. Each layer's weather is drawn
+in a mirrored frame, so the rain leans and the dust blows that way.
 
 ## CowColors
 

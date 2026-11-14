@@ -14,6 +14,7 @@ namespace ClaFi::PathArt
         int count{ 20 };
         FloatRect area{}; // where the places lie
         float size{ 1.0f }; // of a firefly and its wandering, below 1 for a swarm further off
+        float seed{ 0.0f }; // shifts where the fireflies are and when each blinks
     };
 
     export void drawFireflies(const SceneFrame&, float cycleTime, const Fireflies&);

@@ -87,6 +87,18 @@ namespace ClaFi::PathArt
             std::optional<float> ripplesAge; // seconds since its muzzle last broke the water
         };
 
+        // One of the depths the theme's weather and fireflies are shared out over.
+        struct EffectLayer
+        {
+            float bottomShare; // the row its weather falls down to, in shares of the frame
+            float density; // its pieces to the area, 1 being the usual count over the frame
+            float size; // of its pieces, against what falls by the mill
+            float opacity; // of its weather
+            float firefliesTopShare; // the band its fireflies wander in, in shares of the frame
+            float firefliesBottomShare;
+            int fireflies;
+        };
+
         // What a duck wears.
         struct DuckColors
         {
@@ -268,6 +280,15 @@ namespace ClaFi::PathArt
         constexpr float k_cowSwishes{ 15.0f };
         // The fir the predator peeks from behind, across the field a little behind the cow's line.
         constexpr StandingTree k_wolfFir{ { 0.884f, k_cowFootShare.y - 0.018f }, 1.05f };
+        // Far to near: the far hills, the field, the mill, the near bank. See PathArt#millscene
+        constexpr std::array<EffectLayer, 4> k_effectLayers{ {
+            { k_horizonShare, 0.4f, 0.5f, 0.6f, 0.5f, 0.555f, 10 },
+            { 0.73f, 0.3f, 0.75f, 0.75f, 0.58f, 0.72f, 8 },
+            { 0.87f, 0.3f, 1.0f, 0.9f, 0.74f, 0.86f, 6 },
+            { 1.0f, 0.4f, 1.3f, 1.0f, 0.86f, 0.97f, 4 }
+        } };
+        // More than the 7 an effect reads past its own seed, so no two layers share a place.
+        constexpr float k_effectSeedStep{ 10.0f };
         // The story's length in its own seconds, two cycles of 40.
         constexpr float k_storySeconds{ 80.0f };
         // When the wolf looks out from behind his fir: while the cow drinks, and again later.
@@ -374,6 +395,9 @@ namespace ClaFi::PathArt
         void drawFishJumps(const SceneFrame&, const SceneTheme&, float story);
         // A butterfly over the near bank by day, its path coming round once a story.
         void drawButterfly(const SceneFrame&, const SceneTheme&, float story);
+        // The fireflies and the weather of one of k_effectLayers.
+        void drawEffectLayer(const SceneFrame&, const SceneTheme&, float cycleTime,
+            std::size_t layerIndex);
         void drawWaterLight(const SceneFrame&, const SceneTheme&, float sunX, float cycleTime);
         void drawNearBank(const SceneFrame&, const SceneTheme&, float cycleTime);
     }
@@ -418,10 +442,18 @@ namespace ClaFi::PathArt
             (0.8f + (std::sin(a1) + 1.0f) * 0.2f) * m_objectsScale);
         drawCloud(canvas, orbX + std::cos(a2) * rX, orbY + std::sin(a2) * rY,
             (0.8f + (std::sin(a2) + 1.0f) * 0.2f) * m_objectsScale);
+        // The bolt comes down behind the land, and the flash lights the sky alone.
+        SceneFrame sky = frame;
+        sky.height = h * k_horizonShare;
+        drawLightning(sky, cycleTime, Lightning{
+            .strength = theme().hasRain,
+            .color = theme().sunDisk
+        });
 
         canvas.drawBitmap(m_land, m_offset);
         const float story = storyAt(time);
         drawFlock(frame, theme(), story);
+        drawEffectLayer(frame, theme(), cycleTime, 0);
         const CowMoment cow = cowAt(frame, story, cycleTime);
         const TimberMillColors millColors = millColorsOf(theme());
         m_reflection.draw(frame, riverOutline(frame), [&](const SceneFrame& mirror) {
@@ -485,6 +517,7 @@ namespace ClaFi::PathArt
         drawFir(frame, theme(), k_wolfFir);
 
         drawPosedCow(frame, cow.pose, cowColorsOf(theme()));
+        drawEffectLayer(frame, theme(), cycleTime, 1);
 
         const TimberMillPose mill = millPoseOf(frame, cycleTime);
         fillOval(frame, { mill.base.x + 40.0f * mill.size, mill.base.y + 2.0f * mill.size },
@@ -493,13 +526,10 @@ namespace ClaFi::PathArt
         drawTimberMillHouse(frame, mill, millColors);
         drawTimberMillWheel(frame, mill, millColors);
         drawTimberMillWater(frame, mill, millColors);
-        drawLightning(frame, cycleTime, Lightning{
-            .strength = theme().hasRain,
-            .color = theme().sunDisk
-        });
         drawTimberMillWings(frame, mill, millColors);
         drawFishJumps(frame, theme(), story);
         drawDucks(frame, theme(), story);
+        drawEffectLayer(frame, theme(), cycleTime, 2);
 
         const FloatPoint lily = pointAt(frame, k_lilyShare);
         drawWaterLily(frame, WaterLilyPose{
@@ -513,12 +543,7 @@ namespace ClaFi::PathArt
         drawNearBank(frame, theme(), cycleTime);
         drawButterfly(frame, theme(), story);
 
-        Fireflies fireflies = firefliesOf(theme());
-        fireflies.area = { 0.0f, h * 0.6f, w, h * 0.88f };
-        drawFireflies(frame, cycleTime, fireflies);
-        Weather weather = weatherOf(theme());
-        weather.dust *= 0.5f; // faded, as it blows across the whole picture
-        drawWeather(frame, cycleTime, weather);
+        drawEffectLayer(frame, theme(), cycleTime, 3);
     }
 
     // In Clear Day's colours whatever theme is worn: an icon is one picture in every theme.
@@ -1240,9 +1265,6 @@ namespace ClaFi::PathArt
         {
             const float groundY = frame.height * k_horizonShare;
             const PixelPath river = riverOutline(frame);
-            const Color bank = colorBetween(landAt(frame, theme, frame.height * 0.8f),
-                Color{ 0xFF000000 }, 0.3f);
-            strokeShape(frame, river, SolidColor{ faded(bank, 0.55f) }, 2.4f * frame.unit);
             const Color farWater = colorBetween(theme.riverTop, theme.skyBottom, 0.55f);
             fillShape(frame, river, LinearGradient{
                 .startPoint = { 0.0f, groundY },
@@ -1528,6 +1550,39 @@ namespace ClaFi::PathArt
                 strokeShape(butterfly, shape, edge, 0.8f, StrokeCap::Round, lower);
             }
             fillBox(butterfly, { -0.6f, -5.0f, 0.6f, 4.0f }, edge);
+        }
+
+        // A layer's weather falls in a frame as tall as its bottom row, so it stops there, and at
+        // a pace that makes it fall as many of its own sizes a second as the mill's does.
+        void drawEffectLayer(const SceneFrame& frame, const SceneTheme& theme,
+            const float cycleTime, const std::size_t layerIndex)
+        {
+            const EffectLayer& layer = k_effectLayers[layerIndex];
+            const float seed = k_effectSeedStep * static_cast<float>(layerIndex);
+            Fireflies fireflies = firefliesOf(theme);
+            fireflies.count = layer.fireflies;
+            fireflies.size = layer.size;
+            fireflies.seed = seed;
+            fireflies.area = { 0.0f, frame.height * layer.firefliesTopShare, frame.width,
+                frame.height * layer.firefliesBottomShare };
+            const float parallax = parallaxAt(frame, fireflies.area.bottom);
+            fireflies.light = hazed(theme, fireflies.light, parallax);
+            fireflies.glow = hazed(theme, fireflies.glow, parallax);
+            drawFireflies(frame, cycleTime, fireflies);
+
+            Weather weather = weatherOf(theme);
+            weather.dust *= 0.5f; // faded, as it blows across the whole picture
+            weather.opacity = layer.opacity;
+            weather.density = layer.density * layer.bottomShare;
+            weather.fallPace = layer.size / layer.bottomShare;
+            weather.windPace = layer.size;
+            weather.seed = seed;
+            // Mirrored, so the weather blows toward the right, the way the mill's smoke drifts.
+            SceneFrame over = frame.within(Matrix3x2::Translation(frame.width, 0.0f)
+                * Matrix3x2::Scale(-1.0f, 1.0f));
+            over.height = frame.height * layer.bottomShare;
+            over.unit = frame.unit * layer.size;
+            drawWeather(over, cycleTime, weather);
         }
 
         // Glints drifting with the current, and under the sun its glitter on the pond.

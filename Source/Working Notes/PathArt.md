@@ -3667,6 +3667,38 @@ through the whole story comes round a whole number of times in it or in a cycle.
 - Frames at 1920 x 1080 in the container: 10 to 14 ms while the ducks, the birds and the walking
   cow are all out.
 
+Then (Oj, 15:36) "remove the river's outline": the river bed's stroke, a line of the land's colour
+0.3 toward black at 0.55 round the whole river, is gone. The near bank keeps its wet edge.
+
+Then (Oj, 15:43) "Spread effects by layers": the weather and the fireflies are shared out over four
+depths, the way the Chase layers its weather, each drawn over its own scenery.
+- Far hills (bottom at the horizon, after the birds), the field (bottom 0.73, after the cow), the
+  mill (bottom 0.87, after the ducks) and the near bank (to the frame's foot, last).
+- A layer's weather falls in a frame whose height is its bottom row, so it stops there, with the
+  frame's unit scaled by its size; fallPace = size / bottomShare keeps it falling as many of its own
+  sizes a second as the mill's layer, so nearer pieces fall faster on the screen.
+- Sizes 0.5, 0.75, 1, 1.3; opacities 0.6, 0.75, 0.9, 1; densities 0.4, 0.3, 0.3, 0.4 to the area
+  (times bottomShare, as the frame is shorter); seeds 10 apart, past the 7 an effect reads from its
+  own seed. A first try at the share of one count left the near bank too sparse.
+- Fireflies 10, 8, 6, 4 in bands from 0.5 to 0.97 of the height, hazed by the parallax at each
+  band's foot.
+- The lightning moved from between the mill's water and its wings to after the clouds, on a frame as
+  tall as the horizon: the bolt comes down behind the land and the flash lights the sky alone.
+
+Then (Oj, 15:54) "Fireflies on the different levels blinks together": drawFireflies took no seed, so
+firefly k of every layer had the same x share, the same wander and the same blink - columns of up to
+four lighting at once. Fireflies gained `seed` (Oj picked it over offsetting each layer's time in
+MillScene, which would have left the columns), read as the shift of both pseudoRandom calls and
+added to each firefly's phase; at 0 the Chase is bit-identical (checked on all 24 themes). The
+Mill's layers pass the same seed as their weather.
+
+Then (Oj, 16:01) "Swap the wind direction in Mill only": the weather blew toward the left - the rain
+leaning that way, the dust blown that way - while the mill's smoke drifts toward the right.
+drawEffectLayer now draws each layer's weather in the frame mirrored about its middle
+(Translation(width, 0) * Scale(-1, 1)), so nothing in the effects changes and the Chase keeps its
+wind. The snow and the leaves sway with no drift, so for them only the places change. The fireflies
+are not mirrored.
+
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
 `sin(t * 30)` and `sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the
 cycle wraps. The water lily bobs one and a half times a cycle, and jumps the same way.

@@ -22,12 +22,12 @@ namespace ClaFi::PathArt
         const float unit = frame.unit * fireflies.size;
         for (int i = 0; i < fireflies.count; ++i)
         {
-            const float index = static_cast<float>(i);
-            const float xBase = area.left + pseudoRandom(i) * area.width();
-            const float yBase = area.top + pseudoRandom(i, 5.0f) * area.height();
-            const float dx = std::sin(t * k_2Pi * 1.0f + index) * 50.0f * unit;
-            const float dy = std::cos(t * k_2Pi * 1.0f + index * 0.7f) * 30.0f * unit;
-            const float flicker = (std::sin(t * k_2Pi * 2.0f + index) + 1.0f) * 0.5f;
+            const float phase = static_cast<float>(i) + fireflies.seed;
+            const float xBase = area.left + pseudoRandom(i, fireflies.seed) * area.width();
+            const float yBase = area.top + pseudoRandom(i, fireflies.seed + 5.0f) * area.height();
+            const float dx = std::sin(t * k_2Pi * 1.0f + phase) * 50.0f * unit;
+            const float dy = std::cos(t * k_2Pi * 1.0f + phase * 0.7f) * 30.0f * unit;
+            const float flicker = (std::sin(t * k_2Pi * 2.0f + phase) + 1.0f) * 0.5f;
             if (flicker > 0.4f)
             {
                 const FloatPoint pos = { xBase + dx, yBase + dy };
