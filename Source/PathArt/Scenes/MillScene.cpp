@@ -215,11 +215,13 @@ namespace ClaFi::PathArt
         constexpr float k_reflectionOpacity{ 0.42f };
 
         constexpr float k_firSize{ 1.2f };
-        // Back to front; each stands still, so the land keeps it.
-        constexpr std::array<StandingTree, 6> k_stillFirs{
+        // Back to front, behind the broadleaf trees.
+        constexpr std::array<StandingTree, 2> k_knollFirs{
             StandingTree{ { 0.09f, 0.655f }, 0.8f },
-            StandingTree{ { 0.155f, 0.665f }, 0.9f },
-            StandingTree{ { 0.70f, 0.64f }, 0.9f },
+            StandingTree{ { 0.155f, 0.665f }, 0.9f }
+        };
+        // Back to front, in front of the river bed; the pond mirrors them.
+        constexpr std::array<StandingTree, 3> k_shoreFirs{
             StandingTree{ { 0.118f, 0.778f }, 0.85f },
             StandingTree{ { 0.79f, 0.785f }, 0.9f },
             StandingTree{ { 0.045f, 0.812f }, 1.0f }
@@ -532,12 +534,12 @@ namespace ClaFi::PathArt
             drawValley(frame, theme());
             drawMeadow(frame, theme());
             drawFootpath(frame, theme());
-            for (const StandingTree& tree : std::span{ k_stillFirs }.first(3))
+            for (const StandingTree& tree : k_knollFirs)
                 drawFir(frame, theme(), tree);
             for (const StandingTree& tree : k_broadleaves)
                 drawBroadleaf(frame, theme(), tree);
             drawRiverBed(frame, theme());
-            for (const StandingTree& tree : std::span{ k_stillFirs }.last(3))
+            for (const StandingTree& tree : k_shoreFirs)
                 drawFir(frame, theme(), tree);
         });
 
@@ -1122,7 +1124,7 @@ namespace ClaFi::PathArt
             const float bridgeSize = k_bridgeSize * sizeAt(frame, bridgeFoot.y);
             const float bridgeDeck = bridgeFoot.y + 6.0f * bridgeSize;
             drawBridge(mirroredAbout(frame, bridgeDeck), theme);
-            for (const StandingTree& tree : std::span{ k_stillFirs }.last(3))
+            for (const StandingTree& tree : k_shoreFirs)
             {
                 const float foot = frame.height * tree.footShare.y;
                 drawFir(mirroredAbout(frame, foot), theme, tree);

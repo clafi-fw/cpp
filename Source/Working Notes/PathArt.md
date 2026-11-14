@@ -3557,6 +3557,10 @@ SceneLayer's and ShadowPainter's).
 - At 1920 x 1080 in the container: 9.5 to 13 ms a frame (7.5 before), and 76 ms for a frame that
   keeps the layers and the reflection again (48 before).
 
+Then (Oj, 13:32) "This fir is pointless": the fir on the right knoll stood behind the mill, and
+only its tip showed, a sliver beside the roof. It is gone and the right knoll is bare. The still
+firs are two lists, k_knollFirs behind the broadleaf trees and k_shoreFirs, which the pond mirrors.
+
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
 `sin(t * 30)` and `sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the
 cycle wraps. The water lily bobs one and a half times a cycle, and jumps the same way.
