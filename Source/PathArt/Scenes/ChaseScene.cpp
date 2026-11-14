@@ -1,9 +1,11 @@
 module ClaFi.PathArt.ChaseScene;
 
 import ClaFi.PathArt.Air;
+import ClaFi.PathArt.CelestialSprite;
 import ClaFi.PathArt.DazeStarsEffect;
 import ClaFi.PathArt.DustPuffEffect;
 import ClaFi.PathArt.FirefliesEffect;
+import ClaFi.PathArt.GrassPatchSprite;
 import ClaFi.PathArt.HareSprite;
 import ClaFi.PathArt.LightningEffect;
 import ClaFi.PathArt.ReedsSprite;
@@ -484,7 +486,6 @@ namespace ClaFi::PathArt
         void drawHedgehog(const SceneFrame& onTrail, const ChaseTheme&, float curl, float steps);
         void drawRubberDuck(const SceneFrame& onTrail, const ChaseTheme&, const DuckMotion&);
         void drawBall(const SceneFrame& onTrail, const ChaseTheme&, float rollAngle);
-        void drawGrassPatch(const SceneFrame& onTrail, const ChaseTheme&, float bladeLean);
         // Lying tines up, its head toward the wolf; its handle swings up about the head.
         void drawRake(const SceneFrame& onTrail, const ChaseTheme&, float swing);
         void drawBranchTree(const SceneFrame&, const SceneTheme&, float x, float groundY,
@@ -1405,13 +1406,9 @@ namespace ClaFi::PathArt
             .twinklesPerCycle = k_lively
         });
         const FloatPoint sun = { width * 0.84f, height * 0.14f };
-        drawGlow(frame, sun, 130.0f * unit, theme.sunGlow.withOpacity(0.65f));
-        PixelPath sunDisc;
-        sunDisc.drawCircle(sun, 24.0f * unit);
-        const PathDrawLayer sunRim = PathDrawLayer::OuterGlow(theme.sunDisk.withOpacity(0.75f),
-            18.0f * unit);
-        frame.canvas.drawPath(sunDisc, { sunRim, PathDrawLayer::Fill(theme.sunDisk) },
-            &frame.toCanvas);
+        drawCelestialGlow(frame, sun, theme.sunGlow);
+        drawCelestial(frame, CelestialPose{ .center = sun, .night = theme.hasStars },
+            theme.sunDisk);
 
         const float cloudPeriod = periodNear(0.05f, 820.0f);
         forEachTile(frame, 0.05f, cloudPeriod, travel, [&](float tileLeft, float tileWidth) {
@@ -2317,7 +2314,11 @@ namespace ClaFi::PathArt
                     drawBall(onTrail, theme.chase, motion.rollAngle);
                     break;
                 case Obstacle::GrassPatch:
-                    drawGrassPatch(onTrail, theme.chase, motion.bladeLean);
+                    drawGrassPatch(onTrail, {
+                        .dark = theme.chase.bladeDark,
+                        .middle = theme.chase.bladeMiddle,
+                        .light = theme.chase.bladeLight
+                    }, motion.bladeLean);
                     break;
                 case Obstacle::Rake:
                     drawRake(onTrail, theme.chase, motion.rakeSwing);
@@ -3334,50 +3335,6 @@ namespace ClaFi::PathArt
                     spiral.lineTo(point);
             }
             strokeShape(onVerge, spiral, SolidColor{ chase.shellLine }, 1.0f);
-        }
-
-        // A clump of tall grass on the trail, the back blades darker. Each blade bends from its
-        // root, its tip leaning furthest.
-        void drawGrassPatch(const SceneFrame& onTrail, const ChaseTheme& chase,
-            const float bladeLean)
-        {
-            struct Blade
-            {
-                float root;
-                float height;
-                float tilt;
-                Color color;
-            };
-            const std::array<Blade, 11> blades{
-                Blade{ -12.0f, 22.0f, -0.35f, chase.bladeDark },
-                Blade{ -4.0f, 30.0f, -0.1f, chase.bladeDark },
-                Blade{ 5.0f, 27.0f, 0.15f, chase.bladeDark },
-                Blade{ 13.0f, 21.0f, 0.4f, chase.bladeDark },
-                Blade{ -15.0f, 17.0f, -0.55f, chase.bladeMiddle },
-                Blade{ -8.0f, 25.0f, -0.25f, chase.bladeMiddle },
-                Blade{ 1.0f, 33.0f, 0.0f, chase.bladeMiddle },
-                Blade{ 9.0f, 26.0f, 0.25f, chase.bladeMiddle },
-                Blade{ -10.0f, 18.0f, -0.4f, chase.bladeLight },
-                Blade{ -1.0f, 23.0f, -0.05f, chase.bladeLight },
-                Blade{ 7.0f, 19.0f, 0.3f, chase.bladeLight }
-            };
-            for (const Blade& blade : blades)
-            {
-                // the taller a blade, the further the wolf bends it
-                const float lean = blade.tilt + bladeLean * (0.7f + blade.height / 100.0f);
-                const FloatPoint up = { std::sin(lean), -std::cos(lean) };
-                const FloatPoint halfway = { std::sin(0.5f * lean), -std::cos(0.5f * lean) };
-                const FloatPoint root = { blade.root, 1.0f };
-                const FloatPoint tip = root + up * blade.height;
-                PixelPath shape;
-                shape.moveTo(root - FloatPoint{ 2.2f, 0.0f });
-                shape.quadTo(root + halfway * (0.6f * blade.height) - FloatPoint{ 0.6f, 0.0f },
-                    tip);
-                shape.quadTo(root + halfway * (0.55f * blade.height) + FloatPoint{ 1.2f, 0.0f },
-                    root + FloatPoint{ 2.2f, 0.0f });
-                shape.close();
-                fillShape(onTrail, shape, SolidColor{ blade.color });
-            }
         }
 
         void drawRake(const SceneFrame& onTrail, const ChaseTheme& chase, const float swing)

@@ -18,7 +18,7 @@ namespace ClaFi::PathArt
         const float w = frame.width;
         const float h = frame.height;
         const float unit = frame.unit;
-        const SolidColor streak{ dust.color.withOpacity(dust.opacity) };
+        const SolidColor streak{ faded(dust.color, dust.opacity) };
         const float widthsPerCycle = std::max(1.0f, std::round(3.0f * dust.pace));
         for (int i = 0; i < dust.count; ++i)
         {
@@ -27,7 +27,7 @@ namespace ClaFi::PathArt
             const float y = pseudoRandom(i, dust.seed + 7.0f) * h;
             PixelPath path;
             path.moveTo(x, y);
-            path.lineTo(x - 10.0f * unit, y + 2.0f * unit);
+            path.lineTo(x - 2.5f * unit, y + 0.5f * unit);
             strokeShape(frame, path, streak, unit);
         }
     }

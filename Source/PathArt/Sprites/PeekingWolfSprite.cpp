@@ -27,8 +27,8 @@ namespace ClaFi::PathArt
 
         // Hind Leg
         {
-            const Matrix3x2 legTx = Matrix3x2::Translation(x + s * 25.0f, y - s * 26.0f)
-                * Matrix3x2::Scale(s * 0.66f);
+            const Matrix3x2 legTx = Matrix3x2::Translation(pose.hip.x - s * 19.8f,
+                pose.hip.y - s * 24.42f) * Matrix3x2::Scale(s * 0.66f);
             PixelPath path;
             path.moveTo(30.0f, 37.0f + breath * s);
             path.lineTo(65.0f, 52.0f + breath * s * 0.5f);
@@ -38,7 +38,7 @@ namespace ClaFi::PathArt
         }
 
         // Ears
-        const float earT = std::sin(t * 50.0f) > 0.95f ? 0.2f : 0.0f;
+        const float earT = pose.earTurn;
         const SolidColor ear{ colors.ear.withOpacity(opacity) };
         PixelPath earPath;
         earPath.moveTo(-8.0f, 0.0f);
@@ -70,8 +70,7 @@ namespace ClaFi::PathArt
             fillShape(frame, path, body, headTx);
         }
 
-        const float blink = (std::sin(t * 12.0f) > 0.8f) ? 0.0f : 1.0f;
-        if (blink > 0.0f)
+        if (pose.eyesOpen)
         {
             const Matrix3x2 eyeTx = Matrix3x2::Translation(x, y + breath + s * 4.0f)
                 * Matrix3x2::Scale(s * 1.25f);
@@ -81,6 +80,11 @@ namespace ClaFi::PathArt
             const float yShift = 8.0f;
             const float eyeTop = 10.0f;
             const float eyeBottom = 12.0f;
+            // each eye's glow about the middle of its triangle
+            const SceneFrame eyeFrame = frame.within(eyeTx);
+            const Color glow = faded(colors.eye, 0.55f * opacity);
+            drawGlow(eyeFrame, { xShift - (2.0f * eyeEnd + eyeBegin) / 3.0f, eyeTop }, 6.5f, glow);
+            drawGlow(eyeFrame, { xShift + (2.0f * eyeBegin + eyeEnd) / 3.0f, eyeTop }, 6.5f, glow);
             PixelPath path;
             path.moveTo(xShift - eyeEnd, yShift);
             path.lineTo(xShift - eyeBegin, eyeTop);

@@ -10,7 +10,7 @@ namespace ClaFi::PathArt
     {
         float opacity{ 1.0f };
         Color color{ 0xFFFFFFFF };
-        int count{ 50 };
+        int count{ 200 };
         float pace{ 1.0f }; // times the usual speed, rounded to whole widths a cycle
         float seed{ 0.0f }; // shifts where the streaks are, so two sets over one frame differ
     };

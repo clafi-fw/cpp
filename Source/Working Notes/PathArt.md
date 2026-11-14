@@ -1583,6 +1583,25 @@ site reads https://naturalearthdata.com where Natural Earth's wording has natura
 Above it the page says the Earth scene is a piece of art and does not claim to be accurate (Oj,
 "Also add that the Earth scene is a piece of art and doesn't pretend to be any accurate").
 
+**The night lies by the ground under it** (Oj, 2026-11-15, after the Mill's near layer took a shade
+weaker for lighter tones: "btw there's the same issue in Earth with the night Antarctica"; asked
+whether the clouds should follow, "they should - but they already have their own routine, and the
+overall strength may increase - the previous value was chosen so to not dark antarctica so much").
+The night's shades were laid over the ground as they were, so Antarctica's ice kept a tenth of its
+white, as dark land did, and went grey. rasterizeNightBand reads the band's ground under each pixel,
+the sea and the land as laid so far, and nightOverGround weighs the night's opacity by the ground's
+luma, from k_nightOverBlack, 1.16, of its own over black to k_nightOverWhite, 0.82, over white,
+never past whole. Deep in the night, at 0.9, black ground is hidden whole, the realistic sea at a
+luma of about 0.2 keeps 2 percent of its colour, the green land at 0.34 keeps 6, and the ice at 0.97
+about a quarter, as light as the moonlit clouds over it. Over a pixel the ground covers in part, the
+night keeps that much more of its own opacity. The clouds keep cloudShades, and the towns' lights,
+which give light, are laid after the night as before.
+
+A sheet of the ice keeping a quarter, a third and a half at deep night, in both looks: Oj picked a
+quarter. In the container's harness at 1920 x 1080 the frames cost the same within the noise of two
+cores: the whole globe with Antarctica at night about 16 ms, the lowest view at night about 30. A
+whole-globe view, 6 notches up, shows Antarctica half in the night at 90 seconds.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4
@@ -3498,6 +3517,92 @@ the trail layer's rain falls 16, 20 or 23 frame heights a cycle against the hill
 trail's layer brings a share of the weather back over the runners, where all of it fell before
 "move other effects onto the hills layer".
 
+Then (Oj, 2026-11-15 13:11) "Reduce the dust particle length 2 times, increase count 2 times", for
+both scenes. A BlowingDust streak runs 5 units back and 1 down, where it ran 10 and 2, and a set
+holds 100 streaks, where it held 50, so each layer's share of them doubles too. Sahara Heat, Vintage
+Noir and Steampunk blow dust in both scenes; Desert Dusk sets hasDust too and is left out of
+allThemes.
+
+Then (Oj, 13:17) "one more round - repeat the same": a streak runs 2.5 units back and 0.5 down, and
+a set holds 200. Stroked a unit wide with round caps, a streak is a short dash now. At 1920 by 1080
+on the CPU backend a Sahara Heat frame takes about 0.5 ms more in the Mill and 0.2 ms more in the
+Chase, near the noise of the measurement.
+
+Then (Oj, 13:22) "Make Vintage dust dark, and Sahara's brown", and from sheets of three shades each,
+"B - dark brown" and "A - black". The dust takes its colour from the theme's effectColor1, which
+neither theme draws anything else with: Sahara Heat's is 6B4226, where it was white, and Vintage
+Noir's 44000000, where it was 44FFFFFF. The alpha byte does not reach the dust - withOpacity
+replaces it with the scene's dust opacity - so Vintage Noir's 44 is kept as it was.
+
+Then (Oj, 13:28) "Sahara: brown": Sahara Heat's effectColor1 is 8B5A2B, the sheet's A.
+
+Then (Oj, 13:33) "rain droplets: 4 times shorter, 4 times count", in both scenes as with the dust. A
+drop runs 6.25 units, where it ran 25, still stroked 1.5 units wide, and a set holds 400 drops,
+where it held 100, so each layer's share of them is four times as many. Stormy Night and Toxic Waste
+rain. At 1920 by 1080 on the CPU backend a Stormy Night frame takes about 0.5 ms more in the Mill
+and 0.2 ms more in the Chase, near the noise of the measurement.
+
+Then (Oj, 13:37) "Make 2 times longer, keep the count": a drop runs 12.5 units, 400 a set.
+
+Then (Oj, 13:44) "Make the birds dark dark green", of Toxic Waste's flock, and (13:45) "They must
+have their own color". The flock drew in the Chase's crowBody; SceneTheme has a flock colour of its
+own after windowLight, the 41st, so colorsNum() is 41 + ChaseTheme::colorsNum(). Every theme sets
+it, to its crowBody but Toxic Waste, whose flock is 071505, the darkest of three greens shown. The
+other 23 themes draw the same to the byte in both scenes; a crossfade blends flock with the rest.
+
+Then (Oj, 13:54) "on vintage noire make the mommy duck dark, the fish dark, the water jet visible",
+and from a sheet of three each, "The fish: A; the water: B (and the fix the sprinkles too); mama
+duck: B with the light wing and the white eye". Asked how to wire them: "make foam much lighter -
+it's lacking contrast too, for the others make fields"; then (14:05) "the wheel is also invisible".
+The mother duck wore the Chase's birdBody and birdWing with the cowDetail eye; the fish was
+stoneLight a step of 0.3 in Okhsl lightness off the water's, darker over light water and lighter
+over dark (k_fishContrast); the trough poured riverTop 0.45 of the way to foam. SceneTheme has
+motherDuckBody, motherDuckWing, motherDuckEye, fish and troughWater after flock, 42 to 46, so
+colorsNum() is 46 + ChaseTheme::colorsNum(), and every theme states what it drew before, worked out
+by the old rules; the rule and k_fishContrast are gone. Vintage Noir's duck is 161616 with an A7A7A7
+wing, the ducklings' shade, and a white eye; its fish 1A1A1A; its trough water white; its foam
+C8FFFFFF, where it was 96B4B4B4, which whitens the drops, the steam, the foam at the wheel's foot,
+the rings and the wakes; its millWheel 404040, where it was 747474. The other 23 themes draw the
+same to the byte in both scenes, and Vintage Noir's Chase too.
+
+Then (Oj, 14:18) "Make the roof darker, the timber lighter", of Vintage Noir, and from a sheet of
+three each, "the timber slightly darker, less than A; the roof: B". The roof is 4A4A4A over 2C2C2C,
+where it was 7E7E7E over 555555. The mill's timber was the Chase's bough, which also draws the
+footbridge and the signpost's frame and writing; in Vintage Noir the writing on its 535353 board
+would have gone at 505050. SceneTheme has millTimber after troughWater, the 47th, so colorsNum() is
+47 + ChaseTheme::colorsNum(); every theme sets it to its bough, Vintage Noir to 505050, a step
+darker than the sheet's A. The footbridge and the signpost keep bough. The other 23 themes draw the
+same to the byte in both scenes.
+
+Then (Oj, 14:26) "so, the dust opacity field is redundant because it replaces the color's alpha?" -
+the other way round: withOpacity replaced the colour's alpha with the effect's opacity, so the
+theme's alpha was dropped. Five themes carried one that did nothing: Stormy Night's rain 78, Toxic
+Waste's B4, Winter Frost's and Winter Night's snow DC, Vintage Noir's dust 44. Oj (14:29) picked
+making the alpha count: the dust, the rain, the snow, the leaves and petals and the fireflies' light
+are drawn with faded(colour, opacity), the colour's alpha times the opacity, as the fireflies' glow
+already was, and those five effectColor1 alphas are FF, so nothing fades. faded rounds where
+withOpacity cut, so in the frames checked the ten themes with rain, snow, leaves, petals or dust
+moved by at most 2 levels in a byte; the rest, the fireflies' themes among them, are the same to the
+byte.
+
+Then (Oj, 14:34) "Darker the vintage timber": Vintage Noir's millTimber is 303030, the darkest of
+three shown, where it was 505050.
+
+Then (Oj, 14:43, a Golden Hour screenshot) "Make the sprouts darker". Shown: the meadow's tufts at
+0.85, 0.7 and 0.55 of their Okhsl lightness; Oj "show the whole scene", then "I don't see the
+sprouts on the near bank getting darker" - the near bank's blades, grass and frontGrassDark, went
+with them in the next sheet - and "A". As with High Noon's sprouts, the step is in the theme: Golden
+Hour's grass is 4F782F, frontGrassDark 446A2D, bladeMiddle 4A881E and bladeDark 3C7212, each at 0.85
+of its lightness (5F8E3A, 527E37, 58A224, 488717 before). The tuft the cow grazes and the Chase's
+grass darken with them.
+
+Then (Oj, 15:00) "Is the mill and the bridge on the same layer?" - no: the bridge stands at 0.652 of
+the frame's height, in the field, drawn before the field's weather, and the mill at 0.80, after it;
+and the bridge was drawn in its clear bough while the trees and tufts beside it are hazed. Oj
+(15:02) "haze it to match": drawBridge takes its wood, its shade and its rail's light through hazed
+at the parallax of its foot's row, as drawFir and drawBroadleaf do, and its mirror in the pond with
+it.
+
 ## MillScene
 
 **Land and water redrawn** (Oj, 2026-11-14: "The Mill scene now is the most boring and cheap"). An
@@ -3699,9 +3804,716 @@ drawEffectLayer now draws each layer's weather in the frame mirrored about its m
 wind. The snow and the leaves sway with no drift, so for them only the places change. The fireflies
 are not mirrored.
 
-To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
-`sin(t * 30)` and `sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the
-cycle wraps. The water lily bobs one and a half times a cycle, and jumps the same way.
+Then (Oj, 16:04) "Ducks lack reflection": the ducks are mirrored in the moving reflections, after
+the cow, each about its own waterline; their wakes lie on the water and are left out. To share one
+placement between the pond and its mirror, drawDucks split into ducksAt (a SwimmingDuck {at, size,
+paddle} each, std::nullopt outside 4 to 60), duckColorsOf, drawDuckWake and drawDuck, computed once
+in draw() like the cow. A duck's drawing moved up 2 of its units so its waterline is its origin, and
+ducksAt kept the old row for that origin, so the ducks sit 2 of their units higher.
+
+Then (Oj, 22:59) "Move the Sun to the left half": m_sunPos is at 0.25 of the width, mirroring the
+0.75 it stood at, still 0.15 down. The sky's glow, the disc or the moon, its rays and the glitter on
+the pond follow it; the clouds' orbit passes both places. The trees and the mill stay lit on their
+right.
+
+Then (Oj, 23:03) "More to the right": 0.35 of the width, picked as the middle of 0.3, 0.35 and 0.4
+rendered side by side.
+
+Then (Oj, 23:15) "The new wolf blinking pattern and losing the twitching ear is a regression
+comparing to the old one": the wolf blinked 28 times a cycle, his eyes shut 0.21 s each, and his
+ears never moved. The old peeking wolf shut his eyes while sin(cycleTime * 12) > 0.8 - about 4.3 s
+every 21 s - and turned an ear 0.2 of a turn while sin(cycleTime * 50) > 0.95 - half a second every
+5 s. The Mill runs that rhythm on story seconds, so it comes round whole numbers of times a story:
+the eyes shut from 10.5 to 14.5 s of every 20, and the front ear turns 0.6 rad toward the nape for
+the first 0.5 s of every 5. WolfHeadPose gained frontEarTurn, about the middle of the ear's foot;
+the back ear stands behind the fir's branches, where a flick would not show. In the first look the
+eyes shut from 30.5 to 34.5 and the ear flicks at 30 and 35; in the second the ear flicks at 65 and
+70, and the eyes shut only as he slides back.
+
+Then (Oj, 23:32) "Rotate the ear CCW so a twitch points it up, and turn eyes 180 degree", and
+(23:37) "initially the ear should point forward, and CW twitch points it UP - like on the old wolf":
+frontEarTurn is clockwise from upright. The front ear rests 0.6 rad counterclockwise, pointing
+forward, and the flick turns it clockwise to upright. Each eye is its triangle turned half a turn
+about its middle, the point toward the nape.
+
+Then (Oj, 23:51) "In some ways a new mill is a regression. It has nice details but overall it's a
+mess. Put the two together, we're making a good one out of them". Mocked up as A (the old house's
+shape with the new trim and a light timber frame), B (the new house with the old sails) and C (A
+without the timber frame and the sail lattice), beside the old and the new; (Oj, 00:08) "Take C, new
+sails, remove the gutter support. Frame the door as the windows". TimberMillSprite now draws:
+- the house flat to the viewer as the old one stood: a wall 116 wide and 84 tall over a stone plinth
+  124 wide and 16 tall, the roof a triangle from 74 either side at -98 up to -160, with tile lines
+  and barge boards, and the eaves' shadow on the wall;
+- no timber frame and no side wall; the chimney behind the roof's right slope, the smoke rising from
+  its top at (37, -174);
+- two windows either side of the middle at -80 and an arched door in the middle, the door framed in
+  timber 2.6 wide as the windows are;
+- the new wings unchanged, on their hub at -126;
+- the bucket wheel at (-84, -12), 42 to the rim (drawBucketWheel at 42 / 46), behind the house, with
+  the trough coming from behind the wall's left side and no post under it; the spray is gone, six
+  foam heaps churn at the wheel's foot, and the river over the foot stops at the plinth's corner.
+
+**The wheel is clipped to what the house leaves in view** - left of the wall above the plinth, left
+of the plinth below. The house covers it in the scene anyway, but a reflection draws the moving
+wheel after the kept house, and unclipped the wheel's mirror lay over the house's. MillScene draws
+the wheel before the house, in the scene and the icon; the mill's ground shadow is 80 wide, 10 right
+of the middle. The icon's figure is 249 by 243 units, its base 14 units right of the middle. A 1080p
+frame takes 6.5 ms here, against 6.8 before.
+
+Then (Oj, 00:40) "Outline the bricks foundation with a mortar line, remove the roof stripes": the
+plinth's joints run round its four edges too, inset by half their width so the line lies on the
+stone, and the roof is its gradient alone under the barge boards.
+
+Then (Oj, 00:47) "The mill body is a round tower", as the old mill's gradient across its body made
+it read. Every height round the tower is a ring stated at its front: onRing(frontY, radius, share)
+lifts a point by k_ringDrop (0.1) of the radius times 1 - sqrt(1 - share^2), and addRing lays a
+ring's front into a path in 32 lines.
+- the wall and the plinth are shaded by roundShading, a horizontal gradient dark at the left, lit at
+  three quarters across and a little darker at the right edge;
+- the plinth runs between the rings at 0 and -16, 124 across; its mortar is three rings (its top and
+  bottom edges half a joint in, and the course at -8) and its two side edges, and its joints stand
+  an equal turn apart, 11 bricks across the front half, a course half a brick off the other;
+- the roof is a cone from the apex at -160 down to the eave's ring, 74 out with its front at -92,
+  the eave's rim stroked dark 4 wide; the eave's shadow on the wall is the same ring 5 lower, as far
+  across as the wall;
+- the windows are 18 wide, foreshortened by the tower's turn, at 32.5 either side; the door stays in
+  the middle;
+- the wheel's clip steps in at the plinth's side height, 22.2 up.
+
+Then (Oj, 01:09) "Remove the waves and the near bank outline. Offset the sun reflection to the left
+and continue it up to the bridge, shrinking the far sparkles. Move the water lily to the vertical
+center. Add some cat tails to the other bank":
+- the glints drifting with the current are gone, and so is nearnessAt, which only they and the
+  glitter used; the near bank has no wet edge stroked along its top;
+- the glitter runs on a line from 0.05 of the width left of the sun, at 0.98 of the height, to just
+  under the bridge's foot. Each of 80 sparkles takes a share along it, pow(r, 0.7) so fewer lie far
+  off; its spread either side is (2 + 80 along^2) units, its reach (1.5 + 12.5 along) and its
+  thickness (0.5 + 1.9 along), so the far ones are specks in the stream;
+- the lily stands at 0.82, halfway between the stream's mouth and the near bank at its side, and is
+  drawn after the mill and before the fish and the ducks, which pass nearer;
+- six cattails stand at the far shore's edge, three between the cow and the wheel (0.497 to 0.528)
+  and three past the shore fir (0.862 to 0.903), at 0.7 of the size their row gives, 2 of their
+  units into the water, swaying as the near ones do and mirrored in the moving reflections.
+  drawCattail is the near bank's cattail drawing at a scale; farShoreAt and nearBankTopAt read
+  rowAlong.
+- the footnote's order of the mill's parts was the merge's leftover - the wheel goes before the
+  house - and is put right.
+
+Then (Oj, 01:18) "Put the lily close to the near bank at the point where the bank line is at its
+lowest", and (01:19) "Transform the lily to lay flat on the water surface": the near bank's smooth
+line dips lowest at 0.487 of the width, 0.976 of the height. MillScene draws the lily in its frame
+squashed to k_lilyFlatness (0.35) of its height about the lily's middle, the rings' ratio on the
+water being 0.3, so the pad and the flower lie on the water and the bob shrinks with them. It stands
+at (0.487, 0.958), where the flattened pad, 22 units round and bobbing 3 either way, keeps about 2
+units clear of the bank at its lowest. Nearer than the ducks again, it is drawn after them, just
+before the near bank.
+
+Then (Oj, 01:25) "use one of the flowers colors for the lily and foliage for the pad": the pad is
+treeLeavesBase, the trees' foliage, and the flower petal2, the pinkish one of the three the near
+bank's daisies wear. Nothing reads lilyPad and lilyFlower now. Cherry Blossom's foliage is its pink
+blossom, so its pad is pink under a deeper pink flower; Warm Orange Fall's pad is autumn orange.
+
+Then (Oj, 01:34) "clip the water mill to keep only the above the water part": the wheel's clip,
+beside the house, stops at the foot's row as well, and the drops running down its left side stop
+there too. The river drawn over the wheel's foot at 0.62 is gone with what it covered, and
+TimberMillColors::river with it; the moving reflection mirrors the part above the water alone, as it
+clips below the foot anyway.
+
+Then (Oj, 01:37) "use the water reflection distortion row shift for the water sun sparkles":
+WaterReflection exports rippleShiftAt(ripples, frame, y), the shift rippleAt gives the row, with the
+water's top and the frame's bottom as drawStrips takes them. MillScene builds its Ripples once,
+hands them to the reflection and to drawWaterLight, and each sparkle moves by its row's shift.
+Frames before and after differ only on the sparkles' path.
+
+Then (Oj, 01:43) "The sparkles use the sun shine color that's already there and not their own": they
+are drawn in sunGlow, the colour the sky's glow round the sun takes, at its own opacity as
+riverReflect's was. Midnight's riverReflect was black at 0.24, so its sparkles hardly showed; in
+sunGlow they are its moonlight blue. Nothing reads riverReflect now.
+
+Then (Oj, 01:46) "distort their shape too": a sparkle is one path of slices, one for each pixel row
+it covers, cut at the rows' edges, each moved by rippleShiftAt at its row's middle, so its edges
+break as the reflection's rows do. A sparkle whose twinkle is at or under 0 is skipped, as it drew
+nothing.
+
+Then (Oj, 01:49) "For the duck water trail use the foam color": DuckColors::wake is the theme's
+foam, at the 0.7 drawDuckWake gives it, where it was riverWave; the rings the cow and the fish leave
+keep riverWave.
+
+Then (Oj, 01:51) "and for the concentric waves": the rings the cow's muzzle and the jumping fish
+spread are drawn in foam too. riverWave is left to the scene's readout, its series ink.
+
+Then (Oj, 01:54) "Add the glow around the sun reflection area. Reduce a sparkle length, increase the
+amount": seven glows lie along the sparkles' path under them, in sunGlow at 0.3, each (6 + 40 along)
+units high and over twice as wide (xRatio 0.45), so the light lies flat on the water and widens as
+it comes near; they keep still while the sparkles ripple. The sparkles reach (1 + 7 along) units
+either side, from (1.5 + 12.5 along), and there are 150 of them, from 80.
+
+Then (Oj, 01:59) "reduce a sparkle height": a sparkle is (0.4 + 1.1 along) units high, from (0.5 +
+1.9 along) - about 2.7 pixels at the near end at 1080p, from 4.3.
+
+Then (Oj, 02:03) "Move the sun to match the reflection": the sun stands at 0.3 of the width, over
+the near end of its path, which starts under it rather than 0.05 to its left; the path stays where
+it was, and frames before and after match below the horizon to the pixel.
+
+Then (Oj, 02:13, with a shot of the far hills' trees in Cherry Blossom) "The distribution is far
+from perfect. That's for the sparkles too": a pseudoRandom share for each tree and sparkle fell in
+clumps and left gaps. spreadShare(index, count, seed) gives each its own stretch of 0 to 1 and a
+place within it, up to 0.4 of the stretch off its middle. The far hills' trees take their x from it;
+a sparkle takes its share along the path from it, and its share across from the golden ratio's
+turns, i * 0.618034 plus up to 0.08 of jitter, so the ones next to each other along the path stand
+apart across it.
+
+Then (Oj, 02:19) "Now the far trees form a straight sine-like line. Split into groves": spread
+evenly along the hills and each a little down from their top, the trees traced the hills' line. They
+stand in seven groves now, spread along the hills by spreadShare, each 0.04 to 0.07 of the width
+across, 0.014 to 0.024 of the height down the slope, with 8 to 14 trees. A grove's trees fill its
+oval as sunflower seeds fill a disc - the t-th at sqrt((t + 0.5) / count) out and t golden angles
+round, the grove's start turned and each tree's nudged a little - and all the trees are drawn far to
+near. A first try that set each tree further down the nearer it stood to its grove's middle drew
+every grove as an arc.
+
+Then (Oj, 02:28, with a shot of the scene in Cherry Blossom: green boxes over four stretches of the
+hills, red crosses over the groves at the frame's sides): the groves stand in the four boxes - 0.185
+to 0.288 of the width, 0.321 to 0.401, 0.431 to 0.608 and 0.748 to 0.894 - each filling its stretch
+across, with 220 trees to a frame's width, so 23, 18, 39 and 32. The two groves by the mill, left
+unmarked in the shot, went with the crossed ones. A grove reaches 0.025 to 0.035 of the height
+down its hill, and never past 0.7 of the hill's height above the horizon: the hills by the bridge
+are low, and further down the right knoll hides the trees' feet. A try that went deeper set a row
+of trees on the horizon where the hill was too low, and the knoll cut the right grove's lower trees
+in half.
+
+Then (Oj, 02:50) "The far trees may use a simplest rectangle for the trunk": a far tree's trunk is a
+box in bark, 6 by 22 of its size units, standing on its foot. drawTrunk's flared foot, bark to
+barkShade gradient and grooves were a pixel or two across at this size; at 3840 by 1975 the trees
+read the same, and only 3,700 pixels change. MillScene no longer imports TrunkSprite.
+
+Then (Oj, 03:01) "Reduce density": 150 trees to a frame's width, from 220, so the four groves hold
+15, 12, 27 and 22. They keep their stretches and their depth down the slope; the sunflower layout
+spreads the fewer trees over the same oval.
+
+Then (Oj, 03:03, with a shot of the scene in Clear Day at 3840 by 1975: red crosses over the three
+cattails on the far shore past the fir and over the bottom edge at 0.27 of the width, green arrows
+at the pond's left shore and low on the near bank at the left): the three cattails stand on the
+pond's left shore, at 0.168, 0.186 and 0.204 of the width, with the heights and sways they had. The
+cattails across the pond are two rows, k_leftShoreCattails on k_leftShore and k_farShoreCattails on
+k_farShore, and drawShoreCattails walks each on its own line; farShoreAt had no caller left and is
+gone. The cross at the bottom edge was the third daisy, 52 units under the near bank's top at 0.27,
+which put it under the frame's bottom at 16:9 and wider. It stands at 0.087, 56 units down, where
+the arrow points; it keeps its place in k_bankFlowers, so the other daisies keep their petal angles
+and sways.
+
+Then (Oj, 03:23) "lower the gutter so the water jet actually reach the wheel. Move the overlapped
+tree off", and (03:25) "no, their too close. lift back the gutter and extend the jet": the trough
+keeps its mouth at (-86, -78); the jet ended 14 units under it at the mouth's left, about 8 units
+over the buckets' tips (45.7 from the axle). It falls 26 units now, bending from the mouth's left to
+16 units out, and its foot lands a unit or two into the buckets at the wheel's upper left, where the
+drops start; it thins from 5 units to 4 on the way. Lowering the trough 8 units to meet the wheel
+left a unit between its underside and the buckets, too close.
+
+The broadleaf standing behind the wheel and the trough, at 0.58 of the width, stands at 0.53, on the
+same row (0.70) and at the same size. Of the spots tried - 0.47, behind the grazing cow; 0.515 a row
+further off and smaller; 0.40 above the cow - it is the nearest that nothing covers: over a whole
+story at 960 by 494, sampled every half second, the sails, the wheel and the cow never cross it, and
+only a far-shore cattail's head sways over the edge of its shadow.
+
+Then (Oj, 03:28) "add some steam forming where water hits the wheel": eight puffs in the foam colour
+rise from where the pour lands, (-14, 25.5) from the trough's mouth, which the pour's foot is now
+drawn round. Each rises 16 units over its life, grows from 2 units across to 8 and fades in fast and
+out slowly, at 0.4 at most; it leans by sin(index * 2.4), from 2 units against the wind to 14 with
+it, so most drift right with the smoke. They rise 16 times a cycle, a whole number, so nothing jumps
+when the cycle wraps. Drawn after the pour and before the drops, and left out of the mirror with the
+pour.
+
+Then (Oj, 03:34) "return simpler sails and the roof stripes": the sails are the merge mockup's C
+ones again - a cloth from (4, -40) to (30, -115) in wingFabric at 0.72, its outer edge a 2-unit rod
+in timber at 0.85, a stock 120 long tapering from 7 units to 6 with its left 2.2 units in
+timberShade, and a hub of 9 units round a 4-unit one - in place of the lattice sails with their bars
+and gradient cloth. The hub stays at 126. The roof's tile rows are back as rings round the cone,
+every 8 units down its front from -150 to -102, each as wide as the cone at that height, in
+roofShade at 0.45, 1 unit wide - the triangle roof's straight rows, bent to the round tower. The
+footnote's line that the Mill's wing frames were bark, outlined in barkShade, was stale since the
+merge: its timber is bough, and nothing is outlined.
+
+Then (Oj, 03:41, with a shot of the cow drinking in Clear Day: her muzzle and its rings on the
+grass) "The cow is drinking the greenery. Fix that by moving her close to the camera overall - that
+way she'll always have a nice reflection": she grazed at (0.445, 0.718) and drank at (0.362, 0.705),
+beside the river below the bridge, where the river's east bank ran about 0.03 of the width short of
+her muzzle. She grazes at (0.458, 0.751) and drinks at (0.375, 0.747) now, along the pond's far
+shore: drinking, she stands a few pixels above the shore by the river's mouth, facing left, where
+the shore rises toward the river, so her muzzle and its rings lie on the water; grazing, she stands
+0.02 of the height above the shore, so her muzzle stays on the grass, about 6 pixels short of the
+water at 4:3, where her head reaches furthest. Her feet are a share of the height above the water
+either way, so her reflection shows under her the whole story. Nearer, she is drawn about a fifth
+larger. Checked drinking at 2560 by 1080, 1600 by 1200 and 3840 by 1975. The wolf's fir took its row
+from hers, 0.018 behind; it keeps its row, 0.70, as a number of its own.
+
+Then (Oj, 03:47) "Increase the sun glow on Clear Day, decrease sparkles opacity for all themes":
+Clear Day's sunGlow is 0xA0FFFFFF, from 0x64FFFFFF - 0.63 of white round the sun where it was 0.39.
+The Chase sets that colour's opacity to 0.65 itself (withOpacity), so its frames stay the same to
+the byte; in the Mill the glow on the sky, the glow along the sun's path on the water and the
+glitter all take the theme's opacity, so on Clear Day all three grow by 1.6. A glitter is
+k_glitterOpacity, 0.5, of the sun's glow at its brightest now: half what it was in every theme, and
+0.8 of it on Clear Day, where the glow grew.
+
+Then (Oj, 03:53) "move the cow a bit further. give her a tuft to munch on - there's one in the
+chase": she grazes at (0.458, 0.742), from 0.751 - 0.029 of the height above the shore where it was
+0.02, a little smaller, her muzzle further from the water and her reflection still showing her back.
+She drinks where she did; further off, her muzzle would not reach the water. drawCowTuft draws three
+blades from one root as the Chase's tufts are drawn, the middle 20.5 of her units high and the outer
+two 16, 5.5 out at the tips and 2.4 wide, in the Chase's grass hazed for its row, rooted 58 of her
+units ahead of where she stands to graze and 6 nearer, so the blades rise into her muzzle when her
+head is down. It is drawn after her and stays when she walks off to drink.
+
+Then (Oj, 03:56) "The large one, from the obstacles props": the cow's tuft is the Chase's grass
+patch, the trail obstacle the wolf trips through - eleven curved blades in three rows, bladeDark at
+the back, bladeMiddle, bladeLight in front, 33 units tall. drawGrassPatch moved out of
+ChaseScene.cpp into a sprite module of its own, ClaFi.PathArt.GrassPatchSprite, taking
+GrassPatchColors { dark, middle, light } where it took the ChaseTheme, so the Mill can haze the
+three for its row; the Chase hands it the theme's three blades and draws as it did, the same to the
+byte over eight cycles a second apart and at the patch's run at 960 by 540. In the Mill the patch is
+rooted where the three blades were, 0.8 of the cow's units to its unit (k_cowTuftSize), so it stands
+about 26 of her units tall round her muzzle, unbent. The project's shared items list the two files
+under PathArt\Sprites. In Calm Night the theme's blades are a bright green against the dark field,
+as on the Chase's trail.
+
+Then (Oj, 04:07) "Make the Paper sketch glow visible, darken sky top and river for that": Paper
+Sketch's sunGlow was 0x28B4AA96, a pencil grey darker than its paper sky, so the glow only shaded
+the sky round the sun a little, and the light on the water - its glows and glitter take the same
+colour - was lost on the pale river. Darkening the sky top and the river alone left the glow unseen
+and took the Mill sun's rays with it, their grey being the sky's then; Oj picked the option that
+also turns the glow paper white. Paper Sketch now has skyTop 0xFFA8A293 (from 0xFFD4CFC1), riverTop
+0xFF8798A2 and riverBottom 0xFF73848E (from 0xFFB4C8D2 and 0xFFA0B4BE), and sunGlow 0x80FFFFFF. The
+theme is shared: the Chase's Paper Sketch sky is darker at the top and its sun's grey halo is a
+white glow; the haze over both scenes' mountains, which mixes skyTop in, is a little darker; the
+readout's field, riverBottom, is darker, and its ink stays the dark one.
+
+Then (Oj, 04:15) "and the smaller tufts you may reuse instead of the grass dents": the meadow's 900
+short strokes, each leaning a quarter of its length to the right, are tufts as the Chase's lawn
+draws them - three blades from one root, the outer two 8 high and 4 out, the middle 11 - scaled so
+the middle blade is as tall as the stroke was, (1.5 + 5 depth) units times 0.6 to 1.2. They keep the
+strokes' places, colours, opacity and width (k_meadowTufts, from k_meadowBlades).
+
+Then (Oj, 04:20, with a shot of Clear Day at 3840 by 1975) "Only vast amount of them is not
+visible": most tufts were too faint to see - 0.35 to 0.7 opaque, down to 0.6 pixels wide and 1.5
+units tall at the horizon. Of three tries (the sheet Mill tuft visibility.png) the strongest went
+in: 1200 tufts, from 900, 0.85 opaque at the horizon to 1 at the bottom, (2.5 + 7.5 depth) units
+tall times 0.6 to 1.2, from (1.5 + 5 depth), and at least 1 pixel wide, 1.8 units at the bottom. In
+Calm Night the theme's greens make them bright against the dark field.
+
+Then (Oj, 04:32, with a shot of Calm Night at 3840 by 2160) "On calm and stormy nights small tufts
+shouldn't shine": the meadow's tufts take the Chase's grass and its trail patch's bladeMiddle and
+bladeDark, and the night themes keep the day's bright greens in the two blades - lit on the Chase's
+trail, shining on a dark field. By night a tuft is the field's own colour at its band, landAt, a
+shade darker - 0.2, 0.3 and 0.4 of the way to black for the three kinds - mixed in by hasStars, so
+all nine themes with stars take it: Midnight shone as Calm and Stormy Night did, and Cyberpunk
+Night's meadow tufts, magenta from its trail patch, are its blue field darker. Day themes draw as
+they did, to the byte. The cow's grass patch keeps the blades' colours.
+
+Then (Oj, 04:36) "and the cat tails should not too. try to use reeds colors from chase for all
+themes": the cattails, on the near bank and across the pond and in the water, take the Chase's reed
+colours, theme.chase.reedStem and reedHead, where they took the scene's reedStem and reedHead; by
+night those are a dark green stem in a dark field and a brown head. The light down a head is the
+head's own colour at 1.25 of its luminosity, at 0.8, as the Chase's reeds light their heads' tops,
+where it was the head a quarter of the way to the sun's disk - by night the moon, which lit it.
+Nothing reads the scene's reedStem and reedHead now.
+
+Then (Oj, 04:41) "for winter use the gray ones there and there": Winter Frost's Chase reeds take the
+grey ones the Mill's cattails wore in it, stem 0xFF64788C and head 0xFF465A6E, where they were a
+light grey stem, 0xFF9EAEAC, and a brown head, 0xFF785132; both scenes read them, so the Chase's
+roadside reeds and the Mill's cattails are grey-blue in it now. The well-lit generator's
+well_lit.json in Claude Output holds them too - WinterFrost ReedHead and a world.reedStem of its
+own, as Warm Orange Fall has - so a run keeps them; the file before is
+well_lit.before_winter_grey_reeds.json. Winter Night keeps its grey stem and brown head.
+
+Then (Oj, 04:49) "Icier, closer to the other grass, and the other grass closer to them": in OKLab
+the reeds stood at hue 249, a slate blue, and Winter Frost's grass - its tufts, front grass and the
+three blades - at 165 to 179, a teal green. Each moved 25 degrees toward the other: the reeds to 224
+and 0.1 lighter (stem 0xFF769AA8 at L 0.66, head 0xFF537886 at 0.55), the grass to 190 to 205 with
+0.85 of its chroma and its lightness kept (grass 0xFF81ABB0, frontGrassDark 0xFF6C9895, bladeDark
+0xFF5F9697, bladeMiddle 0xFF80B5B7, bladeLight 0xFFB0D9D7). Both scenes read them; well_lit.json
+holds all seven for Winter Frost, the file before as well_lit.before_winter_icy.json.
+
+Then (Oj, 04:53) "whiter near bank land": the near bank is hillBottom, 0.05 toward black, darkening
+0.18 more to the frame's bottom - in Winter Frost a grey blue under a white field. On snow it is now
+hillBottom 0.7 of the way to hillTop, the snow on the hills, by hasSnow, then darkened as before:
+Winter Frost's bank is nearly white, Winter Night's the moonlit field's blue, and Arctic Dawn's,
+whose hills are sand, is the sand where it was grey. Themes without snow draw as they did.
+
+Then (Oj, 04:55) "Night plants too": Winter Night's plants go the way Winter Frost's went. Its reeds
+had a grey-blue stem, hue 233, and a brown head, hue 55; both are hue 224 now with a little more
+chroma, the stem at its lightness (0xFF70909D) and the head 0.11 below it, as in Winter Frost
+(0xFF537886 there, 0xFF4D6E7B here). Its grass and front grass, already near the frost's hue, move
+up to 207 and 196 with 0.9 of their chroma (0xFF527B81, 0xFF456B6B), and its three frosty blades
+turn from a green white, hue 144, to an icy one, hue 200 (0xFFADCACC, 0xFFCCE3E4, 0xFFEAF8F9). Both
+scenes read them; well_lit.json holds all seven for Winter Night, the file before as
+well_lit.before_winter_night_icy.json.
+
+Then (Oj, 05:02) "use the other color for lily - one of the outer flowers": the lily's flower took
+petal2, the pink daisy's colour. Of the other two daisies' colours Oj picked petal3, lilac in Clear
+Day and Calm Night, over petal1, the near white (the sheet Mill lily flower options.png). In Cherry
+Blossom the pad is the theme's pink tree leaves, and petal3, a paler pink, shows little on it;
+petal2 was the only one that stood out there.
+
+Then (Oj, 05:08) "return the previous brown to reeds tails for the winter themes, keep icy stems":
+the reeds' heads in Winter Frost and Winter Night are their brown again, 0xFF785132 and 0xFF795034,
+on the icy stems, 0xFF769AA8 and 0xFF70909D, in both scenes; well_lit.json's two ReedHead entries
+with them, the file before as well_lit.before_winter_brown_heads.json.
+
+Then (Oj, 05:11, with a shot of Golden Hour at 3840 by 1975) "Make the near stems much darker": the
+Chase's reed stems are drawn the size of the Chase's reeds, and the near bank's cattails, the
+scene's largest plants, showed them pale - a yellow green in Golden Hour. drawCattail takes a
+darkness, the share of the way to black its stem and its leaves go (the leaf in shade goes 0.25
+further, as before); the near bank's nine are k_nearCattailDarkness, 0.5, of the way, and the
+cattails across the pond and their reflections keep the Chase's colour. Every theme takes it: Winter
+Frost's and Winter Night's icy stems are a dark slate on the near bank.
+
+Then (Oj, 05:18) "I meant the near grass which invisible but darker near tails are welcome too - it
+gives depth, only with lesser strength and the heads should dim along": the near bank's grass took
+the Chase's grass and frontGrassDark as they were, and where they are as light as the bank - Golden
+Hour's grass at Oklab lightness 0.59 on a bank at about 0.6 - the blades could not be told from it.
+Both shades now go down together, in Okhsl lightness, until the lighter is k_nearGrassContrast,
+0.14, below the bank's top colour; where they are darker than that already - Summer Sunset, High
+Noon - they are as they were. The near cattails are 0.3 of the way to black, from 0.5, and their
+heads go the same way with them, the light down a head lit from the dimmed head.
+
+Then (Oj, 05:26) "Lower the windows, outline the chimney with mortar": the windows' middles are at
+-68, from -80, so their tops stand 10 units under the eave's shadow where they touched it. The
+chimney's stack and its cap are outlined in mortar as the plinth is, half a joint in from each edge,
+in stoneCrack at 0.6 and k_jointWidth wide; k_jointWidth, 0.9, is the sprite's own constant now, the
+plinth's and the chimney's, where the plinth kept it to itself. The cone covers the stack's foot and
+the line along it.
+
+Then (Oj, 05:30) "Fix the fish contrast, move nearer to the center": a fish was the Chase's light
+stone a third of the way to riverTop, about the water's own lightness in the day themes, so in Clear
+Day it could not be seen on the water. Its colour keeps that hue and takes a lightness
+k_fishContrast, 0.3, below the water's - riverTop and riverBottom halfway - in Okhsl lightness, or
+0.3 above it where the water is darker than 0.5, as by night and in Cherry Blossom. The two jumps
+leave the water at (0.53, 0.88) and (0.46, 0.85), from (0.56, 0.86) and (0.42, 0.81), nearer the
+pond's middle.
+
+Then (Oj, 05:37 and 05:40, with a shot of the Chase in Golden Hour) "which color the flower stems
+use?" - the Chase's grass, which the near bank's lowered grass no longer matched - and "On the same
+theme, the chase gras and flower stem looks OK": the Chase's lawn is the hills' top colour giving
+way to their foot's down to the frame's bottom, so its rows are lighter than the Mill's near bank
+was, which was the foot's colour 0.05 darker, going 0.18 darker still to the bottom; on it the
+Chase's grass was the bank's own lightness. The near bank is coloured as the Chase's lawn is at
+those rows now: k_nearBankTopShare, 0.63, of the way from hillTop to hillBottom at its top,
+hillBottom at the frame's bottom, and on snow both 0.7 of the way back to hillTop. Its grass and the
+daisies' stems are the Chase's grass and frontGrassDark as they are, and k_nearGrassContrast and
+nearBankColor are gone.
+
+Then (Oj, 05:50) "That's a good intention, but poor implementation. How to use layers for depth: the
+darkening rule is associated with the layer, and applies to every object on that layer, except...
+except the objects that emit their own light". The darker bank of step 1 came from the mockup,
+hillBottom 0.04 to 0.22 of the way to black, a shade on the ground alone, so the grass drawn on it
+lost its contrast, and the grass and the near cattails were then darkened each by a rule of their
+own. The near layer has one rule now, nearLayerColor, and everything drawn on it takes it: the
+bank's ground, its grass, its cattails' stems and heads, its daisies' stems, petals and hearts, and
+the butterfly over it. The fireflies give light and are drawn as they were; the weather falling over
+the near bank is left as it is. drawCattail takes the colours it draws in, CattailColors, and
+k_nearCattailDarkness is gone.
+
+A sheet of one flat share for the layer, 0.15, 0.25 and 0.35 of the way to black, drew Oj's answer
+"I like how the steams getting darker, and don't like how the snow getting gray - the transform
+should be weaker for lighter tones". A colour goes k_nearLayerShade, 0.6, times its darkness - one
+less its Okhsl lightness - of the way to black: a mid tone at lightness 0.5 goes 0.3, as the near
+cattails did; a snow white at 0.95 goes 0.03 and stays white; a dark tone at 0.25 goes 0.45.
+Darkening toward black keeps a near white's colour as faint as it is, where lowering its Okhsl
+lightness would grow it, as the front hill showed on 2026-11-10. Asked whether snow should be kept
+out of the rule, Oj did not answer; snow takes the rule like everything else, and the weighting
+keeps it white.
+
+Then (Oj, 06:38, with a shot of Summer Sunset) "In this theme the stems are too dark now": Summer
+Sunset's grass and reed stems are near black already, 0xFF113100 and 0xFF183800 at Okhsl lightness
+0.18 and 0.20, so the darkness weighting took them 0.49 and 0.48 of the way to black, the most of
+any tone; the night themes' banks, at about 0.2, went as far. A colour goes k_nearLayerShade, 0.6,
+times its lightness or its darkness, whichever is less: mid tones go the most, 0.3 at 0.5, and every
+tone from 0.5 up goes as it did, so Golden Hour's stems and the snow are as they were. Summer
+Sunset's grass goes 0.11 and its stems 0.12, its bank 0.25, Clear Day's grass 0.18, and Calm Night's
+bank 0.12 where it went 0.48.
+
+Then (Oj, 06:47) "That's not what I meant - they are too dark initially, and that because they were
+hand tuned for the near bank without a general darkening rule", and "I put "In this theme" there for
+a reason": Summer Sunset's grass, dark blades and reed stems were taken 0.12 darker in Oklab L by
+hand in the Chase on 2026-11-13, 0xFF235502, 0xFF214A00 and 0xFF335A19 becoming 0xFF113100,
+0xFF0F2800 and 0xFF183800, so the near layer's shade fell on a darkness laid in already. A sheet of
+that darkening half undone and undone, in the Mill and the Chase, drew "the near layer gets too much
+dark, let's fix that first", and the weighting of mid tones above is undone: the shade goes by
+darkness again.
+
+A sheet of the near layer at 0.6, 0.45, 0.35 and 0.25 in six themes: Oj took 0.25, noticeably darker
+already where the sheet called it barely darker - Golden Hour's bank at Oklab L 0.61 against the
+meadow's 0.67 behind it. k_nearLayerShade is 0.25: a mid tone goes 0.125 of the way to black, Summer
+Sunset's grass at Okhsl lightness 0.18 goes 0.2. On snow the bank stays lighter than the meadow,
+Winter Frost's at 0.92 against 0.80, as its snow lies 0.7 of the way to the hills' top and the shade
+all but passes near white by; asked whether it should start from the meadow's snow at its row, Oj
+kept it whiter.
+
+Then the sheet of Summer Sunset's darkening at 0.25, kept, half undone and undone, in the Mill and
+the Chase: Oj (07:29) "Half undone". Its grass is 0xFF114400, its dark blades 0xFF113A00 and its
+reed stems 0xFF234903, 0.06 darker in Oklab L than before 2026-11-13 where they were 0.12, chroma
+and hue kept. The Chase has no layer shade, so its front grass, lawn tufts and verge stems in Summer
+Sunset are 0.06 lighter. The generator's OVERRIDES hold them, generate.py's earlier state kept as
+generate.before_sunset_half_stems.py.
+
+Then (Oj, 10:21) "drop the "lesser light tones darkening" part from the near layer rule": every
+colour on the near layer goes k_nearLayerShade, 0.25, of the way to black, whatever its lightness. A
+mid tone goes twice as far as it did, 0.25 where it went 0.125, and near whites go as far as
+anything: the snow on the bank and the daisies' petals turn grey. Winter Frost's bank comes down
+from Oklab L 0.91 to 0.74, darker than the meadow behind it where it was lighter, Winter Night's
+from 0.71 to 0.61, Golden Hour's from 0.58 to 0.52 and Clear Day's from 0.38 to 0.36.
+
+Then (Oj, 10:26) "return back with lesser white tones lessering": a sheet of the darkness rule with
+a floor, a colour going 0.25 times its darkness and never less than 0.0625, 0.125 or 0.19, drew "I
+figured out what i don't like with simple darkening - it not just darkens, it reduces saturation.
+Why is that?". Blending toward black scales the red, green and blue alike, so the hue and the HSV
+saturation hold, but in Oklab the chroma falls in step with the lightness, about 0.19 of it at 0.25:
+Clear Day's grass 0.103 to 0.082. Okhsl saturation, which measures chroma against what the hue holds
+at that lightness, holds for dark greens (0.94 to 0.92) and falls for light colours, which find more
+room as they darken: a daisy's heart 0.92 to 0.75, a pale blue snow 0.48 to 0.11, the snow going
+grey.
+
+Sheets of the blend against Okhsl lightness lowered with its saturation kept (pale tints turn
+bright: cyan, violet and pink petals, blue snow), against Oklab lightness lowered with its chroma
+kept (greens deep, whites pale), then of Oj's "Okhsl lightness and saturation both lowered by the
+same factor" and of half the chroma drop, the last over the whole scene, drew "put in okhsl
+saturation with lightness lowering". A colour on the near layer keeps 0.75 of its Okhsl lightness
+and 0.75 of its Okhsl saturation, k_nearLayerShade being the share it loses, and its hue and alpha.
+The lightness comes out as the blend's, near enough. Clear Day's bank goes to Okhsl saturation 0.69
+and Oklab chroma 0.068, where the blend left 0.90 and 0.088. Near whites keep much of their tint, as
+Okhsl gives a near white's faint tint a high saturation: a petal of 0xFFF9FEFF stands at saturation
+1.00 with chroma 0.005, and Winter Frost's snowy bank takes chroma 0.058, a light blue, where the
+blend left 0.017. The frame takes no longer to draw.
+
+**High Noon's mill is sun-bleached** (Oj, 2026-11-15, with a shot of High Noon's mill, "Calm the mil
+colors"; from a sheet of its own colours calmed, sun-bleached ones and Clear Day's, "I like B, where
+did the roof strips go?"). Its walls were sienna over saddle brown, its roof dark red and firebrick,
+its sails a slate blue at 0x88 and its wheel a dark slate grey, named web colours. They are a pale
+wood, millBodyTop C39A72 over millBodyBottom 8C6849, a faded terracotta roof, a cream canvas,
+millWingFabric CCEAE3D4, and a weathered wooden wheel, millWheel 6E5A48.
+
+The roof's tile rows are drawn in roofShade, millRoofBottom taken 0.18 darker at 0.45, as drawRoof
+takes millRoofTop for the lit side of its round shading and millRoofBottom for the dark side. High
+Noon had them the other way round, 8B0000 over B22222, so the rows were about the roof's own colour
+and vanished, and B on the sheet copied that order. millRoofTop is A45C4B and millRoofBottom 7A3E32
+now, the roof lit on the right as on the other mills, and the rows show. Cherry Blossom's roof
+stands the same way round, 8B0000 over CD5C5C, and its rows are lost too. The fields' names say top
+and bottom, where the sprite reads them as lit and dark.
+
+Then (Oj, 11:26, with a shot of the Mill in High Noon) "make the dark near field sprouts lighter":
+High Noon's grass and frontGrassDark, 1D3F00 and 153400, were taken 0.13 darker in Oklab L on
+2026-11-14 to stand off the Chase's lawn, and the Mill's near layer darkens them again, so its
+blades stood at 0.28 on a bank at 0.41. A sheet of them half and all the way back, and a step past,
+in the Mill and in the Chase, as the two share them; Oj took half back: grass 2A520A and
+frontGrassDark 23460C (0.39 and 0.35), the Oklab midpoints of the two. The Mill's blades stand at
+0.33, and the Chase's front grass is 0.065 lighter, still clear of its lawn. The generator's
+OVERRIDES hold them, generate.py's earlier state kept as generate.before_highnoon_half_grass.py.
+
+Then (Oj, 11:36, with a shot of Cherry Blossom's mill) "calm the mill": it had sienna over saddle
+brown walls, as High Noon had, under a roof of 8B0000 over CD5C5C, lit on the left and its tile rows
+lost, lavender sails at 0x88 and a dark slate wheel. From a sheet of its own colours calmed, High
+Noon's mill and a pale stone one, Oj took the pale stone: millBodyTop D8CABD over millBodyBottom
+A0928A, a dusty rose roof lit on the right, millRoofTop C08A88 and millRoofBottom 845655, so its
+rows show, a white canvas, millWingFabric CCF3F1F4, and a grey weathered wheel, millWheel 7A6E66.
+THEME_EDITS 'CherryBlossom' holds them, theme_edits.py's earlier state kept as
+theme_edits.before_cherry_mill.py.
+
+**The mill's tower is a barrel** (Oj, 2026-11-15, "give the mill body a barrel shape"; from a sheet
+of it 4, 8 and 12 units narrower at its top and foot, "6 bulgier in the middle"). Its radius is
+k_wallReach, 58, at its top under the roof and at its foot on the plinth, as it was, and
+k_wallBulge, 6, more at its middle, halfway between k_wallTop and the plinth's top, along a
+parabola: wallReachAt. The wall is filled as wallOutline, its sides drawn by addWallSide in
+k_ringSteps steps, and shaded across its middle's 128 units. At 64 it stands 2 past the plinth.
+
+The wheel is kept to what the house leaves in view by a clip whose edge follows the barrel's left
+side down to the plinth, where it was the straight k_wallReach. The eave's shadow is the full ring
+clipped to wallOutline, where it was cut at the wall's share of the eave's reach. The frame takes no
+longer to draw.
+
+**The cow's legs are rounded rectangles** (Oj, 2026-11-15, "Make the cow's legs rounded rectangles";
+from a sheet of corners 2, 3.5 and 4.75 round, the tops tucked under the body, "B, the other caps
+too"). A leg is 9.5 units wide from top to sole, where it narrowed from 11 at the hip to 8, and its
+corners are 3.5 round at both ends. Its top stands 5 above the hip, so a near leg, drawn over the
+body, shows its rounded top on the belly, and a far leg's is hidden behind the body. The hoof is the
+leg's foot below 26, the same rounded shape clipped and filled in the hoof's colour, where it was a
+square box.
+
+Then (Oj, 12:00) "C, all caps, and move the body a little up away from the legs"; from a sheet of
+the body 2, 4 and 6 units up, "A - 2 up". Both ends of a leg are fully round, k_endRound being the
+leg's half width. The body, its spots and udder, and the tail stand k_bodyLift, 2, higher over the
+legs, which keep their hips and soles. The neck rises with them as the head comes up, k_bodyLift
+times one less the smooth step of the head's drop from k_headUp, 0.1, to k_headGrazing, 1.15, so at
+a drop of 0.1 it meets the lifted body and from 1.15, grazing and drinking, it stays where it was
+and the muzzle still reaches the grass and the water.
+
+Then (Oj, 12:10) "round her neck slice": the neck was a quadrilateral, 24 tall at its root inside
+the body and 19 at its end inside the head, and its corner at the shoulder stood up past the body's
+outline as a point once the head dropped. Rounding its corners at the head and at the back left
+dents in the outline, and so did rounding the shoulder corner while she looks ahead, when it lines
+up with her back; from a sheet of that corner 5, 8 and 11 round once the head drops, Oj answered
+"give the neck const thickness (remove widening), make the neck shorter towards the head and as
+rounded as edges allow". A sheet of the neck 3, 6 and 9 shorter, its root sliding down the chest so
+the muzzle still reached the ground, drew "the head doesn't move - the gap grows", the shoulder's
+dip growing as the root slid, and then "head stays, gap stays": the neck keeps its length.
+
+The neck runs from k_neckRoot, -8, to k_neckEnd, 16, where the head hangs, k_neckHalfThickness, 10,
+either side of its axis all along. Its corner at the shoulder rounds off by the half thickness, as
+far as its edges allow, over the first k_shoulderRounds, 0.4 radians, of the head's drop past
+k_headUp, so looking ahead it is square and meets the back, and from a drop of 0.5 on it is round.
+Under her throat the neck's level lower edge meets the chest at an angle while she walks, where the
+widening filled it.
+
+Then (Oj, 12:30) "try without a neck with the head disjointed", (12:32) "round the head where the
+neck should be", and from a sheet of the head's back rounded out 5, 8 and 11, "C - half circle". The
+neck is gone. The head hangs from a hinge at the body's front, k_headReach, 16, ahead of it, turned
+by the head's drop, the hinge rising with the body as the head comes up and staying down for the
+muzzle to reach, as the neck's root did. The back of the head is a half circle 11 round across its
+22 units, an arc where it was a straight cut. Looking ahead it touches her shoulder, and with her
+head down it hangs at her chest with a sliver between.
+
+Then (Oj, 12:40) "Make her wage her tail all the way up to her back and back": the tail turns about
+its root at the top of her rump, from hanging down, round behind her and over the top, to along her
+back, k_tailSweep, 4.45 radians, and back. PosedCowPose tailSwing keeps its range, -0.25 hanging
+down to 0.25 lying along her back, where it swished the tail's tip 6 units either way; the Mill
+drives it as before, 0.25 times the sine of k_cowSwishes, 15 a cycle, so a wag up and down takes 2.7
+seconds. The tail's shape, its bow and its tuft turn with it as one, and it is drawn after the body,
+so it lies over her back at the top of a wag, where it was drawn behind the body.
+
+Then (Oj, 12:47) "slowly, with changing curvature so only the tip reaches", and from a sheet of the
+tip landing close behind the root, a hand along her back and far along it, "C - low wide arch", with
+a wag of 8 seconds. The tail is an arc 35 units long from its root, drawn as one cubic. Its root's
+angle and its bend ease from k_tailHanging, 0.6 radians behind straight down and bending 0.75
+forward, to k_tailOnBack, 3.613 and 1.654, where the tip lands about 30 units along her back with
+the tuft resting on it. The root's angle follows the raise and the bend follows its square, so the
+tail swings out behind her nearly straight and curls over only near the top. The tuft points the way
+the tip does. k_cowSwishes is 5 a cycle, so a wag up and down takes 8 seconds. tailSwing keeps its
+range, -0.25 hanging down to 0.25 arched over her back with the tip on it.
+
+Then (Oj, 13:05) "Restore the normal waging". PosedCowSprite and the Mill stand as they did before
+12:40: the tail hangs from its root and swishes its tip 6 units either way, drawn with the far legs
+behind the body, at k_cowSwishes, 15 a cycle, so a wag takes 2.7 seconds. tailSwing's comment reads
+"-0.25 to 0.25" again.
+
+**The sun and the moon as the Chase draws them** (Oj, 07:37, "Remove the sun corona and changing
+into a crescent shape. Draw the celestials with the same code and closer glow the chase uses. Though
+the moon may borrow some craters of ghost"). The Mill drew 16 rays turning round its sun, a disc 35
+units in radius outlined in sunStroke that closed into a crescent as hasStars rose, and the sky's
+PointGlow 166 units wide at sunGlow's own opacity. The Chase drew a disc 24 units in radius in
+sunDisk, an OuterGlow rim of it 18 units wide at 0.75, and a glow 130 units wide at sunGlow taken to
+0.65. That is CelestialSprite's drawCelestial now, and both scenes call it; the Mill's sun stands
+where it stood, at (0.3, 0.15) of the frame, in the kept sky. By night the disc is the moon and
+shows the Ghost scene's three craters at its size, 24 over 46, a fifth of the way to black from the
+disc at the Ghost's opacities times hasStars, so the Chase's moon shows them too. drawSunCorona and
+m_sunRadius are gone; sunStroke, sunCorona1 and sunCorona2 are drawn by no scene. The Chase's frames
+by day are the same to the byte, Clear Day, Golden Hour, Summer Sunset and High Noon checked; by
+night only the moon's disc differs.
+
+Then (Oj, 07:49) "but keep the outer glow shape", and (07:50) "or use the same ellipse in chase
+too": the Mill's glow lay twice as wide as it was tall, a PointGlow of xRatio 0.5. drawCelestial's
+glow is that ellipse, k_glowWidening 2, 130 units high and 260 wide about the disc, in both scenes;
+the Chase's glow, round until now, widens along the horizon with it.
+
+Then (Oj, 07:54) "Lover the sun to the glow touch the mountain tops": the glow, 130 units high,
+fades to nothing at its edge, so its edge meets the tallest peak under it, the far range's at 0.38
+of the width reaching up to 0.39 of the height, with the sun at 0.19 of the height, where nothing of
+it shows on the peaks yet. A sheet of the sun at 0.19, 0.22 and 0.25: Oj took 0.25, where the glow
+seen meets the peaks, clearest at night. The sun stands at (0.3, 0.25) of the frame.
+
+Then (Oj, 07:59) "As I see the glow is drawn behind the scene. That is not how it was before - that
+glow should lit everything it reaches": the glow lay in the kept sky, behind the land. Laid over
+everything last, it covered the sun's disc as well and drew it toward sunGlow at 0.65 - Summer
+Sunset's sun went peach, Cyberpunk's pink - and src-over can't undo that; the clouds and the birds
+pass in front of the disc, so the disc can't be drawn over the glow either. CelestialSprite splits
+the glow out, drawCelestialGlow beside drawCelestial; the Chase calls both, glow first, as it did,
+and stays the same to the byte. The Mill keeps the glow and the disc in the kept sky, lays the glow
+again last over landOutline, all below the higher of the two ridges, so the mountains it reaches are
+lit as the sky behind them is, and lights each cloud by celestialGlowAt its middle, the cloud's
+colour drawn toward sunGlow by that share. A cloud clipped to its own outline and lit by the glow
+over it left its soft rim unlit, a dark edge in Cyberpunk. The ridge shows no seam. drawCloud takes
+its place and its colour; cloudOutline holds the shape. A frame at 1920 x 1080 costs the same within
+the container's noise, perhaps half a millisecond more.
+
+Then (Oj, 08:15) "Return the previous predator shape - I can not unsee a pig in the new one. Keep
+eyes glow": the wolf is PeekingWolfSprite again, the old Mill's - a snout of five corners, an ear
+out to each side and a hind leg - at its old size, 0.84 of a unit at the fir's distance as the gator
+is. Its pose takes eyesOpen and earTurn from the scene in place of its own sin(cycleTime * 12) and
+sin(cycleTime * 50), so the Mill's blink, 10.5 to 14.5 s of every 20, and its ear flick, 0.2 of a
+turn for the first 0.5 s of every 5, run on as they did, and neither jumps when the cycle wraps; it
+still breathes twice a cycle. Each eye has the glow the new head's had, drawGlow 6.5 units about the
+middle of its triangle at 0.55 of the eye colour. headOut moves the head, ears and eyes left of the
+hind leg, so the head slides out from behind the fir, 45 units at the fir's distance, while the leg
+shows past the fir's right side all along. Tucked in, the head stands 52.5 units above the fir's
+foot behind its two lowest tiers, every corner of it covered. WolfHeadSprite is drawn by no scene.
+
+Then (Oj, 08:33) "reduce the horizontal movement so he doesn't look like a cheshire cat from the
+wonderland, make a part of him be always visible, hide the hind limb end behind the fir": the head
+slid 45 units, from wholly hidden to wholly out, and the leg's paw stuck out past the fir's right
+side between its tiers. The head slides k_wolfSlideReach, 18 units at the fir's distance, from 24 to
+42 units left of the fir's foot, so tucked in it still shows its left ear and eye past the two
+lowest tiers. PeekingWolfPose places the hind leg by hip, where it starts, in place of headOut; the
+Mill keeps it 8 units left of the fir's foot and 54 up, where it reaches no further than the fir's
+lowest tier covers, 25 units right and 16 down.
+
+Then (Oj, 08:44) "he is supposed to peek from under the crown - make him smaller, the fir bigger and
+put him there", and to the sheet of three sizes (08:53, with a shot of the old Mill, the wolf's head
+under the old fir's lowest tier and his raised ear beside its slope) "his raised ear should be out
+from the leaves". The spruce's lowest tier hangs 18 units above its foot, its drooping points 12, so
+under it there was room for a head about a third of the old one, and the raised ear went into the
+needles. drawSpruce takes crownRise, units its tiers stand higher on a longer trunk, 0 by default,
+and StandingTree carries it. The wolf's fir is 1.25 where it was 1.05, its crown 6 units higher, its
+lowest branches 24 units above the foot. The wolf is k_wolfSize, 0.7 of a unit at the fir's distance
+where he was 0.84: the top of his head stands a unit below the lowest branches, his chin 2 units
+over the ground, and his head slides 8 of the fir's units, from 26 to 34 left of the trunk, where
+the ear he raises, 20 of his units above his head and 23 to the left, stands outside the lowest
+tier's slope. His hip is 5 fir units left of the trunk and 25 above the lowest branches, inside the
+needles. The gator stays where it was.
+
+Then (Oj, 09:05) "a smaller fir, a lower head - so part of the neck tells where his body is (above
+the head, behind the crown), part of the hind leg visible on the other side and the old swaying":
+the wolf's fir is 1.0, smaller than the first 1.05, its crown 20 units up on its trunk, and the wolf
+0.65 of a unit, so his head hangs 12 of the fir's units below the branches above it. PeekingWolfPose
+carries shoulders, and the sprite draws a neck 11 of his units wide from the top of his head up to
+them before his ears and snout; the Mill puts them 20 fir units left of the trunk and 52 up, behind
+the needles, so the neck shows rising from his head into the crown. His head stands 34 fir units
+left of the trunk, its top 25.5 up, so the ear he raises clears the lowest tier's end. His hip is 4
+fir units right of the trunk and 35 up, behind it, and his leg reaches down past its right side
+under the crown. The head no longer slides out: k_wolfLooksOut, k_wolfSlide, k_wolfSlideReach and
+wolfOutAt are gone, and he keeps the old sprite's sway, his head, ears and leg rising and falling
+twice a cycle. He blinks and flicks his ear as before.
+
+Then (Oj, 09:25) "drop that tiny itsy neck and look at this", with the old Mill and a circle between
+the head and the trunk, under the crown, on "the area that perceives as his neck and gives a hint to
+where his body is": the top of his head is always hidden, the ear is out, the joint of ear and head
+is behind the leaves, and the trunk is short, so his chin can go below its foot and he creeps in the
+tree's shadow, his glowing eyes and twitching ear giving him away. The neck, PeekingWolfPose
+shoulders and crownRise are gone, and the wolf's fir is a plain spruce at 1.0. The wolf is 0.8 of a
+unit again, his size against a fir this big in the old picture; at 0.65 his right ear stays behind
+the droop of the lowest tier between his head and the trunk. His head stands 23 fir units left of
+the trunk and 17.5 up, so the top of it is behind that tier at both ends of his breath, his chin is
+8.5 units below the foot, in the fir's shadow, and his right ear shows under the tier toward the
+trunk, where Oj circled. His left ear rests 0.06 of a turn up (k_wolfEarLift), so it sticks out past
+the tier's end instead of lying along its lower edge, with its root behind the needles; the flick
+takes it up through their slope. His hip is 4 fir units right of the trunk and 16 up, behind it, and
+his leg shows right of the trunk under the crown.
+
+To watch: his breath moves him 3 pixels either way at any size, 1.4 fir units at 3840 by 1975, and
+the margins above are set for that. In a window half as wide the same 3 pixels are twice the units,
+and the top corner of his head and the root of his ear can show under the tier as he breathes.
+
+Then (Oj, 09:54) "Only the shadow edge crosses his face", and on the options for putting him in the
+fir's shade: "That's one time figure, that's designed to be used in only one place - under the fir.
+There's no need to shadow him in code - the colors can be adjusted right in the theme fields". The
+fir's shadow goes under the predator now. SpruceSprite exports drawSpruceShadow, which drawSpruce
+calls first and which draws nothing for a clear colour; the Mill lays the wolf's fir's shadow with
+drawFirShadow before the gator and the wolf, and draws the fir over it with castsShadow false. Every
+theme's wolfBody and wolfEar are what that shadow (chase.shadow) made of them, blended as
+Color::blend does, so all of him looks as the part inside the shadow looked, and his eyes keep their
+light. Vintage Noir's ear and Neon Jungle's body come out the same. The gator in Sahara Heat wears
+wolfBody too and lies on the same shadow. The Chase came out the same to the byte in three themes.
+
+To watch: the gator and the cow move with `sin(t * 15)` and `sin(t * 30)`, which are not whole turns
+of a 0 to 1 cycle, so they jump when the cycle wraps. The water lily bobs one and a half times a
+cycle, and jumps the same way.
 
 **The mill's figures and weather are sprites and effects** like the other scenes' (Oj,
 2026-11-07, "Pull them out too"): the cow, the trees, the mill, its wheel, the reeds, the lily, the

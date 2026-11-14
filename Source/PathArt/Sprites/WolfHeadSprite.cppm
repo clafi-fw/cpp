@@ -11,6 +11,7 @@ namespace ClaFi::PathArt
         FloatPoint at; // the middle of its head, a little below its eyes
         float size; // pixels per unit of the head, which is 55 units from nose to nape
         bool eyesOpen;
+        float frontEarTurn; // radians it is turned clockwise from upright
         float opacity;
     };
 

@@ -149,6 +149,10 @@ namespace ClaFi::PathArt
         constexpr float k_whitestShare{ 0.7f };
         // The moonlight's share of the night over the ground: deep in it, an eighth of the view.
         constexpr float k_moonlitShareOfNight{ 0.125f / 0.9f };
+        // The night's opacity over black ground, as a share of its shades' own.
+        constexpr float k_nightOverBlack{ 1.16f };
+        // The night's opacity over white ground, as a share of its shades' own: ice shows through.
+        constexpr float k_nightOverWhite{ 0.82f };
         // The globe's radius in pixels from which the land is worked out every 4th pixel.
         constexpr float k_coarseRadius{ 3200.0f };
         // The globe's radius in pixels from which the land is worked out every 2nd pixel.
@@ -1015,8 +1019,8 @@ namespace ClaFi::PathArt
 
         // **The night's colours over the land and the sea, from day to deep night**, premultiplied
         // as a band's pixels are: each stop's colour drawn toward the moonlight, at its own
-        // opacity. Deep in the night the ground keeps a tenth of its colour, and the moonlight is
-        // an eighth.
+        // opacity. Deep in the night they hide nine tenths of the ground before nightOverGround
+        // weighs them by it, and the moonlight is an eighth.
         [[nodiscard]] std::vector<Color> nightShades()
         {
             const std::array<GradientStop, 3> stops = nightStops();
@@ -1141,6 +1145,66 @@ namespace ClaFi::PathArt
             const __m256i inRow = _mm256_cmpgt_epi32(_mm256_set1_epi32(width - x),
                 _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7));
             _mm256_maskstore_epi32(out, inRow, color);
+        }
+
+        // The 8 pixels of `ground`, standing at `groundAt`, from the canvas's `column` in its
+        // `row`; those outside it come clear.
+        [[nodiscard]] __m256i groundEight(const Bitmap& ground, const FloatPoint groundAt,
+            const int column, const int row)
+        {
+            const int y = row - static_cast<int>(groundAt.y);
+            const int x = column - static_cast<int>(groundAt.x);
+            if (y < 0 || y >= ground.height() || x + 8 <= 0 || x >= ground.width())
+                return _mm256_setzero_si256();
+            const int* pixels = reinterpret_cast<const int*>(ground.data()
+                + static_cast<std::ptrdiff_t>(y) * ground.stride());
+            if (x >= 0 && x + 8 <= ground.width())
+                return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pixels + x));
+            std::array<int, 8> lanes{};
+            for (int lane = 0; lane != 8; ++lane)
+            {
+                if (x + lane >= 0 && x + lane < ground.width())
+                    lanes[static_cast<std::size_t>(lane)] = pixels[x + lane];
+            }
+            return _mm256_loadu_si256(reinterpret_cast<const __m256i*>(lanes.data()));
+        }
+
+        // **8 pixels of the night, premultiplied, as thick as the ground under them lets it
+        // fall**: from k_nightOverBlack of the night's opacity to k_nightOverWhite by the ground's
+        // luma, and never past whole. Over a pixel the ground covers in part, the night keeps that
+        // much more of its own opacity.
+        [[nodiscard]] __m256i nightOverGround(const __m256i night, const __m256i ground)
+        {
+            const __m256i byteMask = _mm256_set1_epi32(0xFF);
+            const __m256 one = _mm256_set1_ps(1.0f);
+            const __m256 half = _mm256_set1_ps(0.5f);
+            const auto channel = [&](const __m256i pixels, const int shift) {
+                return _mm256_cvtepi32_ps(
+                    _mm256_and_si256(_mm256_srli_epi32(pixels, shift), byteMask));
+            };
+            const __m256 groundAlpha = channel(ground, 24);
+            const __m256 weighted = _mm256_fmadd_ps(channel(ground, 16), _mm256_set1_ps(0.2126f),
+                _mm256_fmadd_ps(channel(ground, 8), _mm256_set1_ps(0.7152f),
+                    _mm256_mul_ps(channel(ground, 0), _mm256_set1_ps(0.0722f))));
+            const __m256 luma = _mm256_min_ps(
+                _mm256_div_ps(weighted, _mm256_max_ps(groundAlpha, one)), one);
+            const __m256 share = _mm256_fmadd_ps(luma,
+                _mm256_set1_ps(k_nightOverWhite - k_nightOverBlack),
+                _mm256_set1_ps(k_nightOverBlack));
+            const __m256 cover = _mm256_mul_ps(groundAlpha, _mm256_set1_ps(1.0f / 255.0f));
+            const __m256 coveredShare = _mm256_fmadd_ps(_mm256_sub_ps(share, one), cover, one);
+            const __m256 nightAlpha = channel(night, 24);
+            const __m256 alpha = _mm256_min_ps(_mm256_mul_ps(nightAlpha, coveredShare),
+                _mm256_set1_ps(255.0f));
+            const __m256 scale = _mm256_div_ps(alpha, _mm256_max_ps(nightAlpha, one));
+            const auto scaled = [&](const int shift) {
+                return _mm256_slli_epi32(_mm256_cvttps_epi32(
+                    _mm256_fmadd_ps(channel(night, shift), scale, half)), shift);
+            };
+            const __m256i alphaByte = _mm256_slli_epi32(
+                _mm256_cvttps_epi32(_mm256_add_ps(alpha, half)), 24);
+            return _mm256_or_si256(_mm256_or_si256(scaled(0), scaled(8)),
+                _mm256_or_si256(scaled(16), alphaByte));
         }
 
         // **A row of cloud pixels, premultiplied, in one pass**: each layer's cover and haze are
@@ -1354,12 +1418,13 @@ namespace ClaFi::PathArt
             int bottom; // the row past the last in view
         };
 
-        // **A band of the night, premultiplied**: 8 pixels the night has not reached are written
-        // clear, and those by the limb fade out across it, as nothing else cuts the night to the
-        // Earth's disc. The bitmap spans the sphere's widest row in the band; answers where it
-        // stands.
+        // **A band of the night, premultiplied, over the `ground` standing at `groundAt`**: 8
+        // pixels the night has not reached are written clear, those by the limb fade out across
+        // it, as nothing else cuts the night to the Earth's disc, and each is as thick as the
+        // ground under it lets it fall. The bitmap spans the sphere's widest row in the band;
+        // answers where it stands.
         [[nodiscard]] FloatPoint rasterizeNightBand(const NightPicture& picture, const int top,
-            const int rows, Bitmap& pixels)
+            const int rows, const Bitmap& ground, const FloatPoint groundAt, Bitmap& pixels)
         {
             const NightView& night = picture.night;
             const FloatPoint radii = { 1.0f / night.inverseRadii.x, 1.0f / night.inverseRadii.y };
@@ -1418,14 +1483,16 @@ namespace ClaFi::PathArt
                         _mm256_set1_ps(up * up)));
                     const __m256 inside = _mm256_min_ps(_mm256_max_ps(_mm256_fmadd_ps(
                         _mm256_sub_ps(one, reach), edgeScale, half), _mm256_setzero_ps()), one);
+                    const __m256i under = groundEight(ground, groundAt, left + x, top + y);
                     if (_mm256_movemask_ps(_mm256_cmp_ps(inside, one, _CMP_LT_OQ)) == 0)
                     {
-                        storeEight(row, x, width, shade);
+                        storeEight(row, x, width, nightOverGround(shade, under));
                         continue;
                     }
-                    storeEight(row, x, width, _mm256_or_si256(
+                    storeEight(row, x, width, nightOverGround(_mm256_or_si256(
                         _mm256_or_si256(faded(shade, 0, inside), faded(shade, 8, inside)),
-                        _mm256_or_si256(faded(shade, 16, inside), faded(shade, 24, inside))));
+                        _mm256_or_si256(faded(shade, 16, inside), faded(shade, 24, inside))),
+                        under));
                 }
             }
             return { static_cast<float>(left), static_cast<float>(top) };
@@ -4685,7 +4752,8 @@ namespace ClaFi::PathArt
         if (picture.night)
         {
             layOver(picture.night->top, picture.night->bottom, [&](int firstRow, int rowCount) {
-                return rasterizeNightBand(*picture.night, firstRow, rowCount, layerPixels);
+                return rasterizeNightBand(*picture.night, firstRow, rowCount, drawn.pixels,
+                    drawn.at, layerPixels);
             });
         }
         if (picture.glint)

@@ -33,7 +33,7 @@ namespace ClaFi::PathArt
                 const FloatPoint pos = { xBase + dx, yBase + dy };
                 drawGlow(frame, pos, 15.0f * unit, faded(fireflies.glow, 0.5f * opacity));
                 fillDisc(frame, pos, 3.5f * unit,
-                    SolidColor{ fireflies.light.withOpacity(opacity) });
+                    SolidColor{ faded(fireflies.light, opacity) });
             }
         }
     }

@@ -42,7 +42,7 @@ namespace ClaFi::PathArt
             const Matrix3x2 tx = Matrix3x2::Translation(xBase + drift, y)
                 * Matrix3x2::Rotation(calculateSyncRotation(t, i, 2.0f) * k_2Pi)
                 * Matrix3x2::Scale(s - leaves.petals * 0.5f);
-            fillShape(frame, leaf, SolidColor{ color.withOpacity(opacity) }, tx);
+            fillShape(frame, leaf, SolidColor{ faded(color, opacity) }, tx);
         }
     }
 }

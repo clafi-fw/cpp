@@ -40,17 +40,15 @@ namespace ClaFi::PathArt
         void keepStillLayers(const FloatRect& bounds);
 
         // Render Helpers (Dynamic elements render directly via Canvas&)
-        void drawSunCorona(Canvas& canvas, float x, float y, float r, float t);
-        void drawCloud(Canvas& canvas, float x, float y, float s);
+        void drawCloud(Canvas& canvas, const Matrix3x2& place, Color color);
     private:
         ThemeBlend m_themes{};
         WaterReflection m_reflection{}; // what the pond mirrors
-        Bitmap m_sky{}; // the sky and the sun's disc
+        Bitmap m_sky{}; // the sky and the sun or the moon
         Bitmap m_land{}; // the mountains, the valley, the river and what stands still on them
         ScaledSize m_stillLayersSize{};
         std::uint64_t m_stillLayersThemeVersion{}; // the worn theme the layers were drawn in
         FloatPoint m_sunPos{};
-        float m_sunRadius{};
         FloatPoint m_offset{};
         float m_objectsScale{};
     };

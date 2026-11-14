@@ -32,15 +32,19 @@ namespace ClaFi::PathArt
 
         const SolidColor ears{ faded(colors.ears, pose.opacity) };
         shape.clear();
-        shape.moveTo(-4.0f, -10.0f);
-        shape.lineTo(0.0f, -28.0f);
-        shape.lineTo(8.0f, -12.0f);
-        shape.close();
         shape.moveTo(6.0f, -12.0f);
         shape.lineTo(14.0f, -27.0f);
         shape.lineTo(18.0f, -8.0f);
         shape.close();
         fillShape(head, shape, ears);
+        const SceneFrame frontEar = head.within(Matrix3x2::Translation(2.0f, -11.0f)
+            * Matrix3x2::Rotation(pose.frontEarTurn));
+        shape.clear();
+        shape.moveTo(-6.0f, 1.0f);
+        shape.lineTo(-2.0f, -17.0f);
+        shape.lineTo(6.0f, -1.0f);
+        shape.close();
+        fillShape(frontEar, shape, ears);
         fillDisc(head, { -30.0f, 3.5f }, 2.6f, ears);
 
         if (!pose.eyesOpen)
@@ -52,9 +56,9 @@ namespace ClaFi::PathArt
         {
             drawGlow(head, { x, k_eyeY }, 9.0f, faded(colors.eyes, 0.55f * pose.opacity));
             shape.clear();
-            shape.moveTo(x - 4.0f, k_eyeY + 1.0f);
-            shape.lineTo(x + 3.0f, k_eyeY - 1.5f);
-            shape.lineTo(x + 2.5f, k_eyeY + 2.0f);
+            shape.moveTo(x + 5.0f, k_eyeY);
+            shape.lineTo(x - 2.0f, k_eyeY + 2.5f);
+            shape.lineTo(x - 1.5f, k_eyeY - 1.0f);
             shape.close();
             fillShape(head, shape, eyes);
         }

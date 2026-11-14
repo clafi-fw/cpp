@@ -21,7 +21,7 @@ namespace ClaFi::PathArt
         const float tilt = 0.15f;
         const float s = std::sin(tilt);
         const float c = std::cos(tilt);
-        const SolidColor drop{ rain.color.withOpacity(rain.opacity * 0.5f) };
+        const SolidColor drop{ faded(rain.color, rain.opacity * 0.5f) };
         for (int i = 0; i < rain.count; ++i)
         {
             const float x = pseudoRandom(i, rain.seed) * w;
@@ -29,7 +29,7 @@ namespace ClaFi::PathArt
                 std::round(static_cast<float>(4 + (i % 3)) * rain.pace));
             const float y = std::fmod(pseudoRandom(i, rain.seed + 2.0f) * h
                 + cycleTime * (loopCount * h), h);
-            const float len = 25.0f * frame.unit;
+            const float len = 12.5f * frame.unit;
             PixelPath path;
             path.moveTo(x, y);
             path.lineTo(x - len * s, y + len * c);

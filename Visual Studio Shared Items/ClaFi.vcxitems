@@ -593,6 +593,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BroadleafTreeSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BucketWheelSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\BucketWheelSprite.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CelestialSprite.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CelestialSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CometSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CometSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\CowSprite.cpp" />
@@ -609,6 +611,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GearSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GhostSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GhostSprite.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GrassPatchSprite.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\GrassPatchSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\HareSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\HareSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\JackOLanternSprite.cpp" />

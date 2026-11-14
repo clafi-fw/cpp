@@ -21,6 +21,9 @@ namespace ClaFi::PathArt
         float opacity; // how much of the water's colour the reflection covers
     };
 
+    // How far the ripples move row `y` of the frame sideways, in its pixels. See PathArt
+    export [[nodiscard]] float rippleShiftAt(const Ripples&, const SceneFrame&, float y);
+
     // What a scene shows mirrored in its water, laid into the water in rippling rows. See PathArt
     export class WaterReflection
     {

@@ -126,9 +126,23 @@ Every theme fills every field but windowLight.
 lamp lit leaves it out, so it stays transparent and the windows show their dark glass; a crossfade
 toward a theme with a lamp lights it by degrees.
 
-**sunCorona1 and sunCorona2 are the Mill's sun rays**, which alternate round its sun. A theme keeps
-the two equally visible against the sky behind them, and visible at all: at least 0.11 apart from it
-in OKLab, so neither set fades.
+**effectColor1 and effectColor2 colour the weather, and their alpha is a strength.** Rain, snow and
+dust wear effectColor1; leaves wear the two by turns, and petals petal1 and petal2; a firefly is
+effectColor1 in a glow of effectColor2. Each is drawn at its colour's alpha times the opacity the
+scene gives it.
+
+**flock is the birds flying across the mill's sky**, a colour of their own beside the Chase's crow.
+
+**motherDuckBody, motherDuckWing and motherDuckEye dress the duck leading the ducklings**, who wear
+the rubber duck's duckLight and duckShade from ChaseTheme.
+
+**fish is the fish leaping from the pond, and troughWater what the trough pours onto the wheel.**
+The drops running down the wheel, the steam where the pour lands, the foam at the wheel's foot, the
+rings and the ducks' wakes are foam.
+
+**The sun and the moon take sunDisk and sunGlow** - see drawCelestial and drawCelestialGlow: a disc
+in a rim of its own light, and a glow twice as wide as it is tall; the moon shows three craters as
+the night falls by hasStars. sunStroke, sunCorona1 and sunCorona2 go unused.
 
 **petal1 to petal3 are the flowers' petals**, shared by every flower the Chase draws - each wears
 one, by turns - and by the falling petals, which wear the first two in place of the effect colours.
@@ -186,8 +200,9 @@ they are drawn from treeLeavesBase, crownLight and crownMiddle.
 
 **Every trunk is the stumps' bark.** The branch run's tree is drawn in bark over barkShade, with its
 branch in barkShade. The far hills' trees take bark, hazed with them, and the Mill's pines take it
-too, from `chase`. Each is drawn as a stump without its slice - see drawTrunk. The Mill's wing
-frames are bark too, and the frames and the sails are outlined in barkShade.
+too, from `chase`. Each is drawn as a stump without its slice - see drawTrunk. The Mill's timber -
+its sails' stocks, the hub, the wheel's axle, the trough and the window and door frames - is
+millTimber; its footbridge is bough, as the Chase's signpost is.
 
 - A wolf's head and ears stand against the mountains; a hare stays below the far hills' top. Both
   are measured as they are drawn, hazed.
@@ -504,6 +519,12 @@ pixels at any scale, and the pixels stay on the backend's side.
 
 **Where a backend cannot build the images**, the parts are drawn live, clipped to the water and
 faded, and the water lies still under them.
+
+## rippleShiftAt
+
+**The shift WaterReflection draw gives row y**, from the same formula, for what a scene lays on the
+water itself to move with the mirrored rows - the Mill's sun sparkles, say. Hand it the Ripples the
+reflection is drawn with, and y in the frame's pixels.
 
 ## CloudKind
 
@@ -1093,26 +1114,31 @@ A watermill on a pond, in a valley under two ranges of mountains.
 Chase's 0.02 and 0.05, so a theme's mountain colours read alike in both scenes, the far hills 0.07,
 and the valley floor row by row, from the far hills' parallax at their foot to 1 at the mill's foot
 and more toward the viewer. A knoll keeps 0.4 at its top. What stands on the land is drawn at the
-size its row's parallax gives.
+size its row's parallax gives. The near bank lies in shade, and everything on it but the fireflies'
+light keeps three quarters of its Okhsl lightness and saturation, its snow included.
 
 **The sky and the land are kept as two bitmaps**, drawn again when the bounds' size changes or the
-worn theme moves on - see ThemeBlend. The stars, the sun's rays and the clouds pass between the two,
-so the land hides their lower part. The reflection, the bridge, the light on the water, the cow,
-the predator and the fir he peeks from behind, the mill, the lily, the near bank's grass, cattails
-and daisies, the fireflies and the weather are drawn every frame.
+worn theme moves on - see ThemeBlend. The stars and the clouds pass between the two, so the land
+hides their lower part. The reflection, the bridge, the light on the water, the cow and the tuft she
+grazes, the predator and the fir he peeks from behind, the cattails across the pond, the mill, the
+lily, the near bank's grass, cattails and daisies, the fireflies and the weather are drawn every
+frame. The sun's glow lies over the land as over the sky, so the mountains it reaches are lit, and
+each cloud takes as much of it as falls on its middle; the sun's disc keeps its own colour.
 
 **The pond mirrors what stands by it** - see WaterReflection. The mountains, the far hills, the
-bridge, the firs by the shore and the mill's house are kept; the wheel and the wings are drawn
-every frame. The bridge stands over the water, so it is drawn after the reflection rather than kept
-with the land. The smoke and the water the trough pours are left out of the mirror.
+bridge, the firs by the shore and the mill's house are kept; the wheel, the wings, the cow, the
+cattails across the pond and the ducks are drawn every frame, each mirrored about the line where it
+meets the ground or the water. The bridge stands over the water, so it is drawn after the reflection
+rather than kept with the land. The smoke, the water the trough pours and the steam where it lands
+are left out of the mirror.
 
-**The mill is drawn in five parts** - the smoke, the house, the wheel, the water, the wings - in
-that order, so the house stands in front of its smoke and the wings in front of everything. The
-smoke, the falling water and the foam come round a whole number of times a cycle, so nothing jumps
-when the cycle wraps.
+**The mill is drawn in five parts** - the smoke, the wheel, the house, the water, the wings - in
+that order, so the house stands in front of its smoke and its wheel, and the wings in front of
+everything. The smoke, the falling water, its steam and the foam come round a whole number of times
+a cycle, so nothing jumps when the cycle wraps.
 
-**Its story runs over two cycles.** The cow walks to the stream to drink and back, the ducks
-cross the pond, the birds the sky, the wolf looks out twice; a frame whose SceneTime has an odd
+**Its story runs over two cycles.** The cow walks along the pond's far shore to drink at the river's
+mouth and back, the ducks cross the pond and the birds the sky; a frame whose SceneTime has an odd
 cyclesPassed shows the second half. A host that counts no cycles shows the first half only.
 
 **The weather and the fireflies are spread over four depths** - the far hills, the field, the mill
@@ -1252,11 +1278,13 @@ The stars drift a fifth of the frame's width each orbit - see StarField drift.
 
 **The night falls by the sunlight on each pixel of the globe**: it starts at a sunlight of 0.03 and
 is whole at -0.13, so the terminator curves as it does at any altitude, and the land, the sea and
-the clouds darken by the same depth, toward a moonlit blue-grey. Deep in the night the land and the
-sea keep a tenth of their colour, and the moonlight is an eighth. The towns' lights switch on one by
-one as the sunlight falls from -0.01 to -0.08, the densest first. The atmosphere along the limb is
-blue by day, orange at dusk and dark at night, by the sunlight on the limb, which rises evenly
-across it toward the Sun: three rings, each fading out to both sides.
+the clouds darken by the same depth, toward a moonlit blue-grey. The night lies thicker over darker
+ground and thinner over lighter, by the ground's luma: deep in it, black ground is hidden whole and
+white ground keeps a quarter of its colour, so ice shows through as the moonlit clouds do. The
+moonlight is an eighth. The towns' lights switch on one by one as the sunlight falls from -0.01 to
+-0.08, the densest first. The atmosphere along the limb is blue by day, orange at dusk and dark at
+night, by the sunlight on the limb, which rises evenly across it toward the Sun: three rings, each
+fading out to both sides.
 
 **The towns' lights are countless tiny lights gathered into sprawls** - see NightLights. Each
 pixel reads the lights on the ground under it where the land covers it, and they whiten where they

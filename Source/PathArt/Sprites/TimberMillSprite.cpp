@@ -21,18 +21,30 @@ namespace ClaFi::PathArt
         };
 
         constexpr Color k_black{ 0xFF000000 };
-        constexpr FloatPoint k_wheelCenter{ -84.0f, -24.0f };
-        constexpr float k_wheelRadius{ 46.0f };
+        constexpr FloatPoint k_wheelCenter{ -84.0f, -12.0f };
+        constexpr float k_wheelRadius{ 42.0f };
+        constexpr float k_bucketWheelRadius{ 46.0f }; // the rim drawBucketWheel draws at size 1
         constexpr float k_hubHeight{ 126.0f };
+        constexpr float k_wallReach{ 58.0f }; // the tower's radius at its top and its foot
+        constexpr float k_wallBulge{ 6.0f }; // how much more its radius is at its middle
+        constexpr float k_wallTop{ -100.0f }; // under the roof
+        constexpr float k_plinthReach{ 62.0f };
+        constexpr float k_plinthTop{ -16.0f }; // at the front, as every height round the tower
+        // A ring round the tower drops this share of its radius at its front, seen from above.
+        constexpr float k_ringDrop{ 0.1f };
+        constexpr int k_ringSteps{ 32 };
+        constexpr float k_jointWidth{ 0.9f }; // the mortar's, round the plinth and the chimney
         constexpr std::array<FloatPoint, 2> k_windowMiddles{ {
-            { -29.0f, -75.0f },
-            { 80.0f, -74.0f }
+            { -32.5f, -68.0f },
+            { 32.5f, -68.0f }
         } };
+        constexpr FloatPoint k_chimneyTop{ 37.0f, -174.0f };
+        constexpr FloatPoint k_troughMouth{ -86.0f, -78.0f };
         // How many times a cycle the smoke's and the water's motions come round.
         constexpr float k_smokeRises{ 4.0f };
         constexpr float k_smokeSways{ 6.0f };
         constexpr float k_dropFalls{ 64.0f };
-        constexpr float k_sprayLeaps{ 36.0f };
+        constexpr float k_steamRises{ 16.0f };
         constexpr float k_foamBobs{ 57.0f };
         constexpr float k_foamSwells{ 45.0f };
 
@@ -41,18 +53,31 @@ namespace ClaFi::PathArt
         [[nodiscard]] PixelPath polygon(std::initializer_list<FloatPoint> corners);
         [[nodiscard]] PixelPath segments(std::initializer_list<Segment> lines);
         [[nodiscard]] Color darker(Color, float share);
-        // The walls and the plinth under them, the timber frame and the door.
+        // The point at `share` across the front of a ring round the tower, from -1 left to 1 right.
+        [[nodiscard]] FloatPoint onRing(float frontY, float radius, float share);
+        // A ring's front from one share to another, joined to the path or as a figure of its own.
+        void addRing(PixelPath&, float frontY, float radius, float fromShare, float toShare,
+            bool joined);
+        // The tower's radius at a height: a barrel's, k_wallBulge more at its middle.
+        [[nodiscard]] float wallReachAt(float frontY);
+        // The tower's side from one height to another, `side` -1 for its left and 1 for its right.
+        void addWallSide(PixelPath&, float side, float fromY, float toY);
+        // The tower's outline from its foot to under the roof.
+        [[nodiscard]] PixelPath wallOutline();
+        // Light from the right on a round surface from `left` to `right` across.
+        [[nodiscard]] LinearGradient roundShading(float left, float right, Color lit, Color dark);
+        // The round wall, the plinth under it, and the door framed as the windows are.
         void drawHouseFront(const SceneFrame& house, const TimberMillColors&);
         // The glass is the lamp's colour as far as its opacity goes, and the lamp glows around.
         void drawHouseWindows(const SceneFrame& house, const TimberMillColors&);
-        // The eaves' shadow, the roof's right plane, the chimney and the gable's barge boards.
+        // The chimney behind the cone, its tile rows, its eave, and the eave's shadow on the wall.
         void drawRoof(const SceneFrame& house, const TimberMillColors&);
     }
 
     void drawTimberMillSmoke(const SceneFrame& frame, const TimberMillPose& pose,
         const TimberMillColors& colors)
     {
-        constexpr int k_puffs{ 16 };
+        constexpr int k_puffs{ 14 };
         const SceneFrame mill = millFrame(frame, pose);
         for (int i = 0; i != k_puffs; ++i)
         {
@@ -61,11 +86,11 @@ namespace ClaFi::PathArt
                 + index / static_cast<float>(k_puffs));
             const float sway = std::sin(pose.cycleTime * k_smokeSways * k_2Pi + index * 2.0f);
             const FloatPoint center = {
-                72.0f + rise * 80.0f + sway * 5.0f * rise,
-                -184.0f - rise * 90.0f - std::sin(rise * 3.0f) * 6.0f
+                k_chimneyTop.x + rise * 70.0f + sway * 5.0f * rise,
+                k_chimneyTop.y - rise * 80.0f - std::sin(rise * 3.0f) * 6.0f
             };
-            const float opacity = 0.32f * (1.0f - rise) * std::min(1.0f, rise * 10.0f);
-            fillDisc(mill, center, 4.0f + rise * 20.0f, SolidColor{ faded(colors.smoke, opacity) });
+            const float opacity = 0.3f * (1.0f - rise) * std::min(1.0f, rise * 10.0f);
+            fillDisc(mill, center, 3.5f + rise * 17.0f, SolidColor{ faded(colors.smoke, opacity) });
         }
     }
 
@@ -78,12 +103,35 @@ namespace ClaFi::PathArt
         drawRoof(house, colors);
     }
 
+    // The house stands in front of the wheel, and a reflection shows the wheel after the house, so
+    // the wheel is kept to what the house leaves in view, and to above the water.
     void drawTimberMillWheel(const SceneFrame& frame, const TimberMillPose& pose,
         const TimberMillColors& colors)
     {
-        drawBucketWheel(millFrame(frame, pose), BucketWheelPose{
+        constexpr float k_far{ 400.0f };
+        const SceneFrame mill = millFrame(frame, pose);
+        const float plinthSideTop = onRing(k_plinthTop, k_plinthReach, -1.0f).y;
+        PixelPath beside;
+        beside.moveTo(-k_far, -k_far);
+        beside.lineTo(-wallReachAt(k_wallTop), -k_far);
+        addWallSide(beside, -1.0f, k_wallTop, plinthSideTop);
+        beside.lineTo(-k_plinthReach, plinthSideTop);
+        beside.lineTo(-k_plinthReach, 0.0f);
+        beside.lineTo(-k_far, 0.0f);
+        beside.close();
+        const Matrix3x2 millToCanvas = mill.toCanvas;
+        frame.canvas.pushClip(beside, &millToCanvas);
+
+        const FloatPoint mouth = k_troughMouth;
+        fillShape(mill, polygon({ { -50.0f, mouth.y }, { mouth.x, mouth.y + 2.0f },
+            { mouth.x, mouth.y + 9.0f }, { -50.0f, mouth.y + 7.0f } }),
+            SolidColor{ colors.timber });
+        fillShape(mill, polygon({ { -50.0f, mouth.y + 7.0f }, { mouth.x, mouth.y + 9.0f },
+            { mouth.x, mouth.y + 12.0f }, { -50.0f, mouth.y + 10.0f } }),
+            SolidColor{ darker(colors.timber, 0.35f) });
+        drawBucketWheel(mill, BucketWheelPose{
             .center = k_wheelCenter,
-            .size = 1.0f,
+            .size = k_wheelRadius / k_bucketWheelRadius,
             .turns = pose.wheelTurns
         }, BucketWheelColors{
             .wood = colors.wheel,
@@ -91,32 +139,46 @@ namespace ClaFi::PathArt
             .hub = colors.barkShade,
             .axle = colors.timber
         });
+        frame.canvas.popClip();
     }
 
     void drawTimberMillWater(const SceneFrame& frame, const TimberMillPose& pose,
         const TimberMillColors& colors)
     {
         constexpr int k_drops{ 9 };
-        constexpr int k_spray{ 14 };
-        constexpr int k_foamHeaps{ 7 };
+        constexpr int k_steamPuffs{ 8 };
+        constexpr int k_foamHeaps{ 6 };
         const SceneFrame mill = millFrame(frame, pose);
         const float turn = pose.cycleTime * k_2Pi;
-
-        fillShape(mill, polygon({ { -40.0f, -82.0f }, { -86.0f, -80.0f }, { -86.0f, -73.0f },
-            { -40.0f, -75.0f } }), SolidColor{ colors.timber });
-        fillShape(mill, polygon({ { -40.0f, -75.0f }, { -86.0f, -73.0f }, { -86.0f, -70.0f },
-            { -40.0f, -72.0f } }), SolidColor{ darker(colors.timber, 0.35f) });
-        fillBox(mill, { -66.0f, -72.0f, -62.0f, -42.0f }, SolidColor{ colors.timber });
+        const FloatPoint mouth = k_troughMouth;
+        const FloatPoint landing = { mouth.x - 14.0f, mouth.y + 25.5f }; // in the wheel's buckets
 
         PixelPath pour;
-        pour.moveTo(-86.0f, -78.0f);
-        pour.quadTo({ -95.0f, -77.0f }, { -99.0f, -67.0f });
-        pour.lineTo(-95.0f, -66.0f);
-        pour.quadTo({ -92.0f, -73.0f }, { -86.0f, -73.0f });
+        pour.moveTo(mouth.x, mouth.y + 3.0f);
+        pour.quadTo({ mouth.x - 13.0f, mouth.y + 4.0f }, { landing.x - 2.0f, landing.y - 0.5f });
+        pour.lineTo(landing.x + 2.0f, landing.y + 0.5f);
+        pour.quadTo({ mouth.x - 9.0f, mouth.y + 9.0f }, { mouth.x, mouth.y + 8.0f });
         pour.close();
         fillShape(mill, pour, SolidColor{ faded(colors.water, 0.8f) });
 
-        // Drops running down the wheel's left side, where the water pushes it round.
+        // Steam rising where the pour lands, most of it leaning away with the wind.
+        for (int i = 0; i != k_steamPuffs; ++i)
+        {
+            const float index = static_cast<float>(i);
+            const float rise = fractionalPart(pose.cycleTime * k_steamRises
+                + index / static_cast<float>(k_steamPuffs));
+            const float lean = std::sin(index * 2.4f);
+            const FloatPoint center = {
+                landing.x + rise * (6.0f + 8.0f * lean),
+                landing.y - rise * 16.0f
+            };
+            const float opacity = 0.4f * (1.0f - rise) * std::min(1.0f, rise * 8.0f);
+            fillDisc(mill, center, 2.0f + rise * 6.0f, SolidColor{ faded(colors.foam, opacity) });
+        }
+
+        // Drops running down the wheel's left side, where the water pushes it, to the river.
+        frame.canvas.pushClip(mill.toCanvas.mapRect({ k_wheelCenter.x - 2.0f * k_wheelRadius,
+            k_troughMouth.y, k_wheelCenter.x, 0.0f }));
         for (int i = 0; i != k_drops; ++i)
         {
             const float index = static_cast<float>(i);
@@ -131,34 +193,18 @@ namespace ClaFi::PathArt
             drawSegment(mill, top, { top.x - 1.0f, top.y + 7.0f },
                 SolidColor{ faded(colors.foam, 0.81f * (1.0f - fall * 0.6f)) }, 1.6f);
         }
-        for (int i = 0; i != k_spray; ++i)
-        {
-            const float leap = fractionalPart(pose.cycleTime * k_sprayLeaps
-                + pseudoRandom(i, 61.0f));
-            const float height = 6.0f + pseudoRandom(i, 63.0f) * 10.0f;
-            const FloatPoint center = {
-                k_wheelCenter.x - 40.0f + pseudoRandom(i, 62.0f) * 60.0f + leap * 6.0f,
-                -2.0f - std::sin(leap * std::numbers::pi_v<float>) * height
-            };
-            fillDisc(mill, center, 2.0f + pseudoRandom(i, 64.0f) * 3.0f,
-                SolidColor{ faded(colors.foam, 0.9f * (1.0f - leap)) });
-        }
-
-        // The river over the wheel's foot, which shows through it.
-        frame.canvas.pushClip(mill.toCanvas.mapRect({ k_wheelCenter.x - 70.0f, 0.0f,
-            k_wheelCenter.x + 70.0f, 40.0f }));
-        fillDisc(mill, k_wheelCenter, k_wheelRadius + 8.0f,
-            SolidColor{ faded(colors.river, 0.62f) });
         frame.canvas.popClip();
+
+        const float foamStep = 2.0f * k_wheelRadius / static_cast<float>(k_foamHeaps - 1);
         PixelPath foam;
         for (int i = 0; i != k_foamHeaps; ++i)
         {
             const float index = static_cast<float>(i);
-            const float x = k_wheelCenter.x - 48.0f + index * 15.0f
+            const float x = k_wheelCenter.x - k_wheelRadius + index * foamStep
                 + std::sin(turn * k_foamBobs + index) * 3.0f;
-            const float crest = -6.0f - 2.0f * std::sin(turn * k_foamSwells + index * 2.0f);
-            foam.moveTo(x - 9.0f, 1.0f);
-            foam.quadTo({ x, crest }, { x + 9.0f, 1.0f });
+            const float crest = -5.0f - 2.0f * std::sin(turn * k_foamSwells + index * 2.0f);
+            foam.moveTo(x - 8.0f, 1.0f);
+            foam.quadTo({ x, crest }, { x + 8.0f, 1.0f });
             foam.close();
         }
         fillShape(mill, foam, SolidColor{ faded(colors.foam, 0.9f) });
@@ -168,45 +214,29 @@ namespace ClaFi::PathArt
         const TimberMillColors& colors)
     {
         constexpr int k_wings{ 4 };
-        constexpr float k_stockLength{ 124.0f };
+        constexpr float k_stockLength{ 120.0f };
         const SceneFrame hub = millFrame(frame, pose).within(
             Matrix3x2::Translation(0.0f, -k_hubHeight));
         const Color timberShade = darker(colors.timber, 0.35f);
-        const Color fabricShade = colorBetween(colors.wingFabric, colors.barkShade, 0.12f);
 
-        PixelPath cloth = polygon({ { 5.0f, -40.0f }, { 31.0f, -44.0f }, { 31.0f, -121.0f },
-            { 5.0f, -117.0f } });
-        PixelPath bars;
-        for (float reach = 49.0f; reach <= 112.0f; reach += 9.0f)
-        {
-            bars.moveTo(5.0f, -reach);
-            bars.lineTo(31.0f, -reach - 4.0f * (reach - 40.0f) / 76.0f);
-        }
-        const PixelPath bareBars = segments({
-            { { 4.0f, -28.0f }, { 31.0f, -28.5f } },
-            { { 4.0f, -34.0f }, { 31.0f, -34.5f } }
-        });
-        const PixelPath stock = polygon({ { -4.0f, 0.0f }, { 4.0f, 0.0f }, { 3.0f, -k_stockLength },
-            { -3.0f, -k_stockLength } });
+        const PixelPath cloth = polygon({ { 4.0f, -40.0f }, { 30.0f, -45.0f }, { 30.0f, -115.0f },
+            { 4.0f, -110.0f } });
+        const PixelPath stock = polygon({ { -3.5f, 0.0f }, { 3.5f, 0.0f },
+            { 3.0f, -k_stockLength }, { -3.0f, -k_stockLength } });
 
         for (int i = 0; i != k_wings; ++i)
         {
             const float turns = pose.wingTurns
                 + static_cast<float>(i) / static_cast<float>(k_wings);
             const SceneFrame wing = hub.within(Matrix3x2::Rotation(turns * k_2Pi));
-            fillShape(wing, cloth, LinearGradient::Simple({ 5.0f, 0.0f }, { 31.0f, 0.0f },
-                faded(colors.wingFabric, 0.92f), faded(fabricShade, 0.92f)));
-            strokeShape(wing, bars, SolidColor{ faded(timberShade, 0.28f) }, 1.1f,
-                StrokeCap::Butt);
-            strokeShape(wing, bareBars, SolidColor{ faded(colors.timber, 0.9f) }, 1.6f,
-                StrokeCap::Butt);
-            drawSegment(wing, { 31.0f, -28.0f }, { 31.0f, -122.0f }, SolidColor{ colors.timber },
-                2.6f, StrokeCap::Butt);
+            fillShape(wing, cloth, SolidColor{ faded(colors.wingFabric, 0.72f) });
+            drawSegment(wing, { 30.0f, -45.0f }, { 30.0f, -115.0f },
+                SolidColor{ faded(colors.timber, 0.85f) }, 2.0f, StrokeCap::Butt);
             fillShape(wing, stock, SolidColor{ colors.timber });
-            fillBox(wing, { -4.0f, -k_stockLength, -1.5f, 0.0f }, SolidColor{ timberShade });
+            fillBox(wing, { -3.5f, -k_stockLength, -1.3f, 0.0f }, SolidColor{ timberShade });
         }
-        fillDisc(hub, {}, 10.0f, SolidColor{ colors.timber });
-        fillDisc(hub, {}, 4.5f, SolidColor{ timberShade });
+        fillDisc(hub, {}, 9.0f, SolidColor{ colors.timber });
+        fillDisc(hub, {}, 4.0f, SolidColor{ timberShade });
     }
 
     namespace
@@ -246,133 +276,207 @@ namespace ClaFi::PathArt
             return colorBetween(color.fullyOpaque(), k_black, share);
         }
 
+        FloatPoint onRing(const float frontY, const float radius, const float share)
+        {
+            const float rise = 1.0f - std::sqrt(std::max(0.0f, 1.0f - share * share));
+            return { radius * share, frontY - radius * k_ringDrop * rise };
+        }
+
+        void addRing(PixelPath& path, const float frontY, const float radius,
+            const float fromShare, const float toShare, const bool joined)
+        {
+            for (int i = 0; i <= k_ringSteps; ++i)
+            {
+                const float along = static_cast<float>(i) / static_cast<float>(k_ringSteps);
+                const FloatPoint point = onRing(frontY, radius,
+                    fromShare + (toShare - fromShare) * along);
+                if (i == 0 && !joined)
+                    path.moveTo(point);
+                else
+                    path.lineTo(point);
+            }
+        }
+
+        float wallReachAt(const float frontY)
+        {
+            const float middleY = (k_wallTop + k_plinthTop) * 0.5f;
+            const float fromMiddle = (frontY - middleY) / (k_plinthTop - middleY);
+            return k_wallReach + k_wallBulge * (1.0f - fromMiddle * fromMiddle);
+        }
+
+        void addWallSide(PixelPath& path, const float side, const float fromY, const float toY)
+        {
+            for (int i = 0; i <= k_ringSteps; ++i)
+            {
+                const float along = static_cast<float>(i) / static_cast<float>(k_ringSteps);
+                const float frontY = fromY + (toY - fromY) * along;
+                path.lineTo(side * wallReachAt(frontY), frontY);
+            }
+        }
+
+        PixelPath wallOutline()
+        {
+            PixelPath wall;
+            wall.moveTo(-wallReachAt(k_plinthTop), k_plinthTop);
+            addWallSide(wall, -1.0f, k_plinthTop, k_wallTop);
+            addWallSide(wall, 1.0f, k_wallTop, k_plinthTop);
+            wall.close();
+            return wall;
+        }
+
+        LinearGradient roundShading(const float left, const float right, const Color lit,
+            const Color dark)
+        {
+            return {
+                .startPoint = { left, 0.0f },
+                .endPoint = { right, 0.0f },
+                .stops = {
+                    { .position = 0.0f, .color = dark },
+                    { .position = 0.45f, .color = colorBetween(dark, lit, 0.6f) },
+                    { .position = 0.75f, .color = lit },
+                    { .position = 1.0f, .color = colorBetween(lit, dark, 0.35f) }
+                }
+            };
+        }
+
         void drawHouseFront(const SceneFrame& house, const TimberMillColors& colors)
         {
-            fillShape(house, polygon({ { 56.0f, -18.0f }, { 108.0f, -32.0f }, { 108.0f, -108.0f },
-                { 56.0f, -100.0f } }), LinearGradient::Simple({ 56.0f, -100.0f },
-                { 108.0f, -30.0f }, colorBetween(colors.bodyTop, colors.sunlight, 0.12f),
-                colors.bodyTop));
+            const float middleReach = k_wallReach + k_wallBulge;
+            fillShape(house, wallOutline(),
+                roundShading(-middleReach, middleReach, colors.bodyTop, colors.bodyBottom));
 
-            fillShape(house, polygon({ { 60.0f, 0.0f }, { 112.0f, -14.0f }, { 112.0f, -32.0f },
-                { 60.0f, -18.0f } }), SolidColor{ colors.stoneLight });
-            fillBox(house, { -62.0f, -18.0f, 62.0f, 0.0f },
-                SolidColor{ colorBetween(colors.stoneLight, colors.stoneDark, 0.55f) });
-            PixelPath joints = segments({
-                { { -62.0f, -9.0f }, { 62.0f, -9.0f } },
-                { { 60.0f, 0.0f }, { 112.0f, -14.0f } },
-                { { 60.0f, -9.0f }, { 112.0f, -23.0f } }
-            });
-            for (int i = 0; i != 8; ++i)
+            PixelPath plinth;
+            addRing(plinth, k_plinthTop, k_plinthReach, -1.0f, 1.0f, false);
+            addRing(plinth, 0.0f, k_plinthReach, 1.0f, -1.0f, true);
+            plinth.close();
+            fillShape(house, plinth, roundShading(-k_plinthReach, k_plinthReach,
+                colorBetween(colors.stoneLight, colors.stoneDark, 0.35f),
+                colorBetween(colors.stoneLight, colors.stoneDark, 0.75f)));
+
+            constexpr float k_course{ -8.0f };
+            constexpr int k_bricks{ 11 }; // across the front half of a course
+            // Half a joint in from each edge, so the mortar round the plinth lies on its stone.
+            constexpr float k_edge{ k_jointWidth * 0.5f };
+            const float edgeReach = k_plinthReach - k_edge;
+            PixelPath joints;
+            for (const float frontY : { k_plinthTop + k_edge, k_course, -k_edge })
+                addRing(joints, frontY, edgeReach, -1.0f, 1.0f, false);
+            for (const float side : { -1.0f, 1.0f })
             {
-                const float x = -54.0f + static_cast<float>(i) * 16.0f;
-                joints.moveTo(x, -18.0f);
-                joints.lineTo(x, -9.0f);
-                joints.moveTo(x + 8.0f, -9.0f);
-                joints.lineTo(x + 8.0f, 0.0f);
+                joints.moveTo(onRing(k_plinthTop + k_edge, edgeReach, side));
+                joints.lineTo(onRing(-k_edge, edgeReach, side));
             }
-            strokeShape(house, joints, SolidColor{ faded(colors.stoneCrack, 0.7f) }, 0.9f,
+            // Joints an equal turn apart round the tower, a course's half a brick off the other's.
+            const float brickTurn = std::numbers::pi_v<float> / static_cast<float>(k_bricks);
+            for (int i = 1; i != 2 * k_bricks; ++i)
+            {
+                const float share = std::sin(-std::numbers::pi_v<float> * 0.5f
+                    + brickTurn * 0.5f * static_cast<float>(i));
+                const bool upper = i % 2 == 0;
+                joints.moveTo(onRing(upper ? k_plinthTop : k_course, k_plinthReach, share));
+                joints.lineTo(onRing(upper ? k_course : 0.0f, k_plinthReach, share));
+            }
+            strokeShape(house, joints, SolidColor{ faded(colors.stoneCrack, 0.6f) }, k_jointWidth,
                 StrokeCap::Butt);
 
-            fillBox(house, { -56.0f, -100.0f, 56.0f, -18.0f }, LinearGradient::Simple(
-                { 40.0f, -100.0f }, { -40.0f, -20.0f }, colors.bodyTop, colors.bodyBottom));
-            fillShape(house, polygon({ { -56.0f, -100.0f }, { 0.0f, -148.0f },
-                { 56.0f, -100.0f } }), LinearGradient::Simple({ 30.0f, -148.0f },
-                { -30.0f, -100.0f }, colors.bodyTop,
-                colorBetween(colors.bodyTop, colors.bodyBottom, 0.5f)));
-
-            const SolidColor timber{ colors.timber };
-            strokeShape(house, segments({
-                { { -53.0f, -18.0f }, { -53.0f, -100.0f } },
-                { { 53.0f, -18.0f }, { 53.0f, -100.0f } },
-                { { -56.0f, -100.0f }, { 56.0f, -100.0f } },
-                { { -56.0f, -60.0f }, { 56.0f, -60.0f } }
-            }), timber, 6.0f, StrokeCap::Butt);
-            strokeShape(house, segments({
-                { { -53.0f, -62.0f }, { -30.0f, -98.0f } },
-                { { 53.0f, -62.0f }, { 30.0f, -98.0f } },
-                { { 82.0f, -25.0f }, { 82.0f, -104.0f } },
-                { { 56.0f, -100.0f }, { 108.0f, -108.0f } },
-                { { 56.0f, -60.0f }, { 108.0f, -69.0f } }
-            }), timber, 4.0f, StrokeCap::Butt);
-
-            PixelPath door;
-            door.moveTo(6.0f, -18.0f);
-            door.lineTo(6.0f, -46.0f);
-            door.quadTo({ 18.0f, -58.0f }, { 30.0f, -46.0f });
-            door.lineTo(30.0f, -18.0f);
+            PixelPath doorway;
+            doorway.moveTo(-12.0f, k_plinthTop);
+            doorway.lineTo(-12.0f, -38.0f);
+            doorway.quadTo({ 0.0f, -50.0f }, { 12.0f, -38.0f });
+            doorway.lineTo(12.0f, k_plinthTop);
+            PixelPath door = doorway;
             door.close();
             fillShape(house, door, SolidColor{ colors.bark });
             strokeShape(house, segments({
-                { { 12.0f, -18.0f }, { 12.0f, -50.0f } },
-                { { 18.0f, -18.0f }, { 18.0f, -50.0f } },
-                { { 24.0f, -18.0f }, { 24.0f, -50.0f } }
+                { { -6.0f, k_plinthTop }, { -6.0f, -42.0f } },
+                { { 0.0f, k_plinthTop }, { 0.0f, -42.0f } },
+                { { 6.0f, k_plinthTop }, { 6.0f, -42.0f } }
             }), SolidColor{ colors.barkShade }, 1.2f, StrokeCap::Butt);
-            fillDisc(house, { 25.0f, -32.0f }, 1.6f, SolidColor{ colors.stoneLight });
+            fillDisc(house, { 7.0f, -31.0f }, 1.5f, SolidColor{ colors.stoneLight });
+            strokeShape(house, doorway, SolidColor{ colors.timber }, 2.6f, StrokeCap::Butt);
         }
 
         void drawHouseWindows(const SceneFrame& house, const TimberMillColors& colors)
         {
+            constexpr float k_halfWidth{ 9.0f }; // foreshortened by the tower's turn
+            constexpr float k_halfHeight{ 10.0f };
             const float lampShare = static_cast<float>(colors.lamp.alpha) / 255.0f;
             const SolidColor glass{ colorBetween(colors.glass, colors.lamp.fullyOpaque(),
                 lampShare) };
             const SolidColor timber{ colors.timber };
-            const PixelPath front = polygon({ { -40.0f, -84.0f }, { -18.0f, -84.0f },
-                { -18.0f, -66.0f }, { -40.0f, -66.0f } });
-            const PixelPath side = polygon({ { 68.0f, -82.0f }, { 92.0f, -88.0f },
-                { 92.0f, -66.0f }, { 68.0f, -61.0f } });
-            for (const PixelPath* window : { &front, &side })
-            {
-                fillShape(house, *window, glass);
-                strokeShape(house, *window, timber, 2.4f);
-            }
-            strokeShape(house, segments({
-                { { -29.0f, -84.0f }, { -29.0f, -66.0f } },
-                { { -40.0f, -75.0f }, { -18.0f, -75.0f } },
-                { { 80.0f, -85.0f }, { 80.0f, -63.5f } }
-            }), timber, 1.6f);
             for (const FloatPoint middle : k_windowMiddles)
-                drawGlow(house, middle, 40.0f, faded(colors.lamp, 0.35f));
+            {
+                const FloatRect pane = {
+                    middle.x - k_halfWidth,
+                    middle.y - k_halfHeight,
+                    middle.x + k_halfWidth,
+                    middle.y + k_halfHeight
+                };
+                fillBox(house, pane, glass);
+                strokeShape(house, polygon({ { pane.left, pane.top }, { pane.right, pane.top },
+                    { pane.right, pane.bottom }, { pane.left, pane.bottom } }), timber, 2.6f);
+                strokeShape(house, segments({
+                    { { middle.x, pane.top }, { middle.x, pane.bottom } },
+                    { { pane.left, middle.y }, { pane.right, middle.y } }
+                }), timber, 1.5f, StrokeCap::Butt);
+            }
+            for (const FloatPoint middle : k_windowMiddles)
+                drawGlow(house, middle, 36.0f, faded(colors.lamp, 0.35f));
         }
 
         void drawRoof(const SceneFrame& house, const TimberMillColors& colors)
         {
-            constexpr int k_planks{ 8 };
-            constexpr FloatPoint k_frontRidge{ 0.0f, -158.0f };
-            constexpr FloatPoint k_backRidge{ 52.0f, -167.0f };
-            constexpr FloatPoint k_backEave{ 120.0f, -104.0f };
-            constexpr FloatPoint k_frontEave{ 68.0f, -94.0f };
-            const float eaveShadowShare = std::min(1.4f, 255.0f / colors.shadow.alpha);
+            constexpr FloatPoint k_apex{ 0.0f, -160.0f };
+            constexpr float k_eaveFront{ -92.0f };
+            constexpr float k_eaveReach{ 74.0f };
+            constexpr float k_eaveShadow{ 5.0f };
+            const Color roofShade = darker(colors.roofBottom, 0.18f);
 
-            fillShape(house, polygon({ { 56.0f, -100.0f }, { 108.0f, -108.0f },
-                { 108.0f, -100.0f }, { 56.0f, -93.0f } }),
-                SolidColor{ faded(colors.shadow, eaveShadowShare) });
-            fillShape(house, polygon({ k_frontRidge, k_backRidge, k_backEave, k_frontEave }),
-                LinearGradient::Simple({ 20.0f, -165.0f }, { 90.0f, -96.0f }, colors.roofTop,
-                colors.roofBottom));
-            PixelPath seams;
-            for (int i = 1; i != k_planks; ++i)
-            {
-                const float share = static_cast<float>(i) / static_cast<float>(k_planks);
-                seams.moveTo(pointBetween(k_frontRidge, k_frontEave, share));
-                seams.lineTo(pointBetween(k_backRidge, k_backEave, share));
-            }
-            strokeShape(house, seams, SolidColor{ faded(darker(colors.roofBottom, 0.25f), 0.55f) },
-                1.1f, StrokeCap::Butt);
-
-            fillShape(house, polygon({ { 66.0f, -150.0f }, { 66.0f, -176.0f }, { 78.0f, -178.0f },
-                { 78.0f, -144.0f } }),
+            const FloatRect stack = { 30.0f, -168.0f, 43.0f, -118.0f };
+            const FloatRect cap = { 28.0f, -172.0f, 45.0f, -167.0f };
+            fillBox(house, stack,
                 SolidColor{ colorBetween(colors.stoneLight, colors.stoneDark, 0.3f) });
-            fillShape(house, polygon({ { 64.0f, -176.0f }, { 80.0f, -179.0f }, { 80.0f, -183.0f },
-                { 64.0f, -180.0f } }), SolidColor{ colors.stoneDark });
+            fillBox(house, cap, SolidColor{ colors.stoneDark });
+            // Half a joint in from each edge, as round the plinth.
+            const float edge = k_jointWidth * 0.5f;
+            PixelPath mortar;
+            for (const FloatRect& box : { stack, cap })
+            {
+                mortar.moveTo(box.left + edge, box.top + edge);
+                mortar.lineTo(box.right - edge, box.top + edge);
+                mortar.lineTo(box.right - edge, box.bottom - edge);
+                mortar.lineTo(box.left + edge, box.bottom - edge);
+                mortar.close();
+            }
+            strokeShape(house, mortar, SolidColor{ faded(colors.stoneCrack, 0.6f) }, k_jointWidth);
 
-            fillShape(house, polygon({ { -72.0f, -91.0f }, { 0.0f, -162.0f }, { 72.0f, -91.0f },
-                { 66.0f, -87.0f }, { 0.0f, -151.0f }, { -66.0f, -87.0f } }),
-                SolidColor{ darker(colors.roofBottom, 0.15f) });
-            drawSegment(house, k_frontRidge, k_backRidge,
-                SolidColor{ darker(colors.roofBottom, 0.3f) }, 3.0f);
-            fillShape(house, polygon({ { -60.0f, -94.0f }, { 0.0f, -149.0f }, { 60.0f, -94.0f },
-                { 52.0f, -94.0f }, { 0.0f, -141.0f }, { -52.0f, -94.0f } }),
-                SolidColor{ faded(colors.shadow, 0.9f) });
+            PixelPath eave;
+            addRing(eave, k_eaveFront, k_eaveReach, -1.0f, 1.0f, false);
+            PixelPath cone = eave;
+            cone.lineTo(k_apex);
+            cone.close();
+
+            // The shadow is the eave's ring moved down, on the wall.
+            PixelPath shadow;
+            addRing(shadow, k_eaveFront, k_eaveReach, -1.0f, 1.0f, false);
+            addRing(shadow, k_eaveFront + k_eaveShadow, k_eaveReach, 1.0f, -1.0f, true);
+            shadow.close();
+            const Matrix3x2 houseToCanvas = house.toCanvas;
+            house.canvas.pushClip(wallOutline(), &houseToCanvas);
+            fillShape(house, shadow, SolidColor{ faded(colors.shadow, 0.8f) });
+            house.canvas.popClip();
+
+            fillShape(house, cone, roundShading(-k_eaveReach, k_eaveReach, colors.roofTop,
+                colors.roofBottom));
+            PixelPath tiles;
+            for (float frontY = -150.0f; frontY < k_eaveFront - 4.0f; frontY += 8.0f)
+            {
+                const float downShare = (frontY - k_apex.y) / (k_eaveFront - k_apex.y);
+                addRing(tiles, frontY, k_eaveReach * downShare, -1.0f, 1.0f, false);
+            }
+            strokeShape(house, tiles, SolidColor{ faded(roofShade, 0.45f) }, 1.0f,
+                StrokeCap::Butt);
+            strokeShape(house, eave, SolidColor{ roofShade }, 4.0f);
         }
     }
 }

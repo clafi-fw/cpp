@@ -70,6 +70,11 @@ namespace ClaFi::PathArt
             float opacity);
     }
 
+    float rippleShiftAt(const Ripples& ripples, const SceneFrame& frame, const float y)
+    {
+        return rippleAt(ripples, y, ripples.top, frame.height, frame.unit).shift;
+    }
+
     // WaterReflection
 
     WaterReflection::WaterReflection() = default;

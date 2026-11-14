@@ -13,12 +13,17 @@ namespace ClaFi::PathArt
 
     namespace
     {
-        // A leg hanging from the body at `hip`, swung by `swing` radians, with its hoof.
+        constexpr float k_bodyLift{ 2.0f }; // how far the body stands up off the legs' round tops
+        constexpr float k_headUp{ 0.1f }; // the head drop, in radians, of a cow looking ahead
+        constexpr float k_headGrazing{ 1.15f };
+        constexpr float k_headReach{ 16.0f }; // how far ahead of its hinge the head hangs
+
+        // A leg hanging from the body at `hip`, swung by `swing` radians, its round foot the hoof.
         void drawLeg(const SceneFrame& cow, FloatPoint hip, float swing, Color leg, Color hoof);
     }
 
     // Drawn far to near: the far legs and the tail, the body and its spots, the near legs, and
-    // the head on its neck. A cow facing left is the same cow mirrored.
+    // the head apart in front. A cow facing left is the same cow mirrored.
     void drawPosedCow(const SceneFrame& frame, const PosedCowPose& pose,
         const PosedCowColors& colors)
     {
@@ -35,15 +40,17 @@ namespace ClaFi::PathArt
         drawLeg(cow, { -34.0f, hipY }, -legSwing, far, colors.detail);
         drawLeg(cow, { 26.0f, hipY }, legSwing, far, colors.detail);
 
+        const float bodyRise = bob + k_bodyLift;
         const float tailTip = -55.0f + pose.tailSwing * 24.0f;
         PixelPath tail;
-        tail.moveTo(-48.0f, -58.0f - bob);
-        tail.quadTo({ -58.0f + pose.tailSwing * 10.0f, -44.0f }, { tailTip, -24.0f });
+        tail.moveTo(-48.0f, -58.0f - bodyRise);
+        tail.quadTo({ -58.0f + pose.tailSwing * 10.0f, -44.0f - k_bodyLift },
+            { tailTip, -24.0f - k_bodyLift });
         strokeShape(cow, tail, SolidColor{ far }, 2.6f);
-        fillOval(cow, { tailTip, -22.0f }, 3.0f, 6.0f, SolidColor{ colors.detail },
+        fillOval(cow, { tailTip, -22.0f - k_bodyLift }, 3.0f, 6.0f, SolidColor{ colors.detail },
             pose.tailSwing);
 
-        const SceneFrame body = cow.within(Matrix3x2::Translation(0.0f, -bob));
+        const SceneFrame body = cow.within(Matrix3x2::Translation(0.0f, -bodyRise));
         PixelPath outline;
         outline.moveTo(-50.0f, -58.0f);
         outline.cubicTo({ -30.0f, -66.0f }, { 10.0f, -60.0f }, { 34.0f, -63.0f });
@@ -73,22 +80,19 @@ namespace ClaFi::PathArt
         drawLeg(cow, { -40.0f, hipY }, legSwing, colors.body, colors.detail);
         drawLeg(cow, { 32.0f, hipY }, -legSwing, colors.body, colors.detail);
 
-        const SceneFrame neck = cow.within(Matrix3x2::Translation(40.0f, -52.0f - bob)
+        // The head hangs apart from the body; its hinge rises with the body as the head comes up,
+        // and stays down so the muzzle reaches.
+        const float hingeLift = k_bodyLift
+            * (1.0f - smoothStep(k_headUp, k_headGrazing, pose.headDrop));
+        const SceneFrame hinge = cow.within(Matrix3x2::Translation(40.0f, -52.0f - bob - hingeLift)
             * Matrix3x2::Rotation(pose.headDrop));
+        const SceneFrame head = hinge.within(Matrix3x2::Translation(k_headReach, 0.0f));
         PixelPath shape;
-        shape.moveTo(-8.0f, -10.0f);
-        shape.lineTo(14.0f, -9.0f);
-        shape.lineTo(16.0f, 10.0f);
-        shape.lineTo(-6.0f, 14.0f);
-        shape.close();
-        fillShape(neck, shape, SolidColor{ colors.body });
-
-        const SceneFrame head = neck.within(Matrix3x2::Translation(16.0f, 0.0f));
-        shape.clear();
         shape.moveTo(-2.0f, -12.0f);
         shape.cubicTo({ 14.0f, -14.0f }, { 26.0f, -8.0f }, { 30.0f, 2.0f });
         shape.lineTo(30.0f, 10.0f + pose.chew);
         shape.cubicTo({ 20.0f, 14.0f }, { 6.0f, 12.0f }, { -2.0f, 10.0f });
+        shape.arcTo({ 11.0f, 11.0f }, 0.0f, ArcSize::Small, ArcSweep::Clockwise, { -2.0f, -12.0f });
         shape.close();
         fillShape(head, shape, SolidColor{ colors.body });
         fillOval(head, { 29.0f, 5.0f + pose.chew * 0.5f }, 8.0f, 7.5f,
@@ -111,14 +115,25 @@ namespace ClaFi::PathArt
         {
             const SceneFrame hanging = cow.within(Matrix3x2::Translation(hip)
                 * Matrix3x2::Rotation(swing));
+            constexpr float k_halfWidth{ 4.75f };
+            constexpr float k_endRound{ k_halfWidth }; // both ends round
+            constexpr float k_top{ -5.0f }; // above the hip, so a near leg's top shows on the belly
+            constexpr float k_hoofTop{ 26.0f };
+            constexpr float k_sole{ 31.0f };
             PixelPath shape;
-            shape.moveTo(-5.5f, 0.0f);
-            shape.lineTo(5.5f, 0.0f);
-            shape.lineTo(4.0f, 27.0f);
-            shape.lineTo(-4.0f, 27.0f);
-            shape.close();
+            shape.drawRoundedRect({ -k_halfWidth, k_top, k_halfWidth, k_sole }, k_endRound,
+                k_endRound);
             fillShape(hanging, shape, SolidColor{ leg });
-            fillBox(hanging, { -4.5f, 26.0f, 4.5f, 31.0f }, SolidColor{ hoof });
+            PixelPath foot;
+            foot.moveTo(-k_halfWidth, k_hoofTop);
+            foot.lineTo(k_halfWidth, k_hoofTop);
+            foot.lineTo(k_halfWidth, k_sole);
+            foot.lineTo(-k_halfWidth, k_sole);
+            foot.close();
+            const Matrix3x2 legToCanvas = hanging.toCanvas;
+            hanging.canvas.pushClip(foot, &legToCanvas);
+            fillShape(hanging, shape, SolidColor{ hoof });
+            hanging.canvas.popClip();
         }
     }
 }

@@ -20,7 +20,7 @@ namespace ClaFi::PathArt
         const SceneFrame tree = frame.within(Matrix3x2::Translation(foot)
             * Matrix3x2::Scale(size));
 
-        fillOval(tree, { 4.0f, 0.0f }, 40.0f, 7.0f, SolidColor{ colors.shadow });
+        drawSpruceShadow(frame, foot, size, colors.shadow);
         fillBox(tree, { -6.0f, -26.0f, 6.0f, 0.0f }, SolidColor{ colors.trunk });
         fillBox(tree, { -6.0f, -26.0f, -1.0f, 0.0f }, SolidColor{ colors.trunkShade });
 
@@ -63,5 +63,15 @@ namespace ClaFi::PathArt
             fillShape(tree, wedge, shaded);
             frame.canvas.popClip();
         }
+    }
+
+    void drawSpruceShadow(const SceneFrame& frame, const FloatPoint foot, const float size,
+        const Color shadow)
+    {
+        if (shadow.alpha == 0)
+            return;
+        const SceneFrame tree = frame.within(Matrix3x2::Translation(foot)
+            * Matrix3x2::Scale(size));
+        fillOval(tree, { 4.0f, 0.0f }, 40.0f, 7.0f, SolidColor{ shadow });
     }
 }

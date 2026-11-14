@@ -26,7 +26,7 @@ namespace ClaFi::PathArt
         Color trail{};
         Color pebble{};
         Color grass{}; // the flowers' stems and leaves, the tufts and the foreground grass
-        Color bladeDark{}; // the patch of grass on the trail
+        Color bladeDark{}; // the patch of grass on the trail, and the tuft the Mill's cow grazes
         Color bladeMiddle{};
         Color bladeLight{};
         Color reedStem{};
@@ -37,7 +37,7 @@ namespace ClaFi::PathArt
         WolfCoat theirWolf{}; // the couple running the other way
         HareCoat theirHare{};
         Color flowerHeart{}; // a daisy's, and the meadow's flowers'
-        Color bough{}; // the signpost, the stumps, every trunk and the Mill's wing frames, in wood
+        Color bough{}; // the signpost and the Mill's footbridge, in wood
         Color bark{};
         Color barkShade{};
         Color appleLight{}; // the apple
@@ -126,6 +126,11 @@ namespace ClaFi::PathArt
         Color effectColor2{ 255, 255, 255 }; // 36
         Color petal1, petal2, petal3; // 37, a flower wears one, falling petals the first two
         Color windowLight; // 40, the lamp behind the mill's windows, as strong as its opacity
+        Color flock; // 41, the birds flying over the mill
+        Color motherDuckBody, motherDuckWing, motherDuckEye; // 42, the duck leading the ducklings
+        Color fish; // 45, the fish leaping from the pond
+        Color troughWater; // 46, what the trough pours onto the wheel
+        Color millTimber; // 47, the mill's frames, sail stocks, hub and trough, in wood
         ChaseTheme chase{};
         // make sure to update colorsNum() when adding new colors
 
@@ -145,7 +150,7 @@ namespace ClaFi::PathArt
         Color* asArray() { return &skyTop; }
         const Color* asArray() const { return &skyTop; }
         const void* colorsEnd() const { return &hasRain; }
-        static constexpr std::size_t colorsNum() { return 40 + ChaseTheme::colorsNum(); }
+        static constexpr std::size_t colorsNum() { return 47 + ChaseTheme::colorsNum(); }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
         static constexpr std::size_t effectsNum() { return 9; }
