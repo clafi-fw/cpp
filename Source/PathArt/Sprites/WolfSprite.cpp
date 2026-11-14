@@ -68,6 +68,9 @@ namespace ClaFi::PathArt
         // The far legs stand a step below the near ones, the step that takes coat to far.
         const Brush farLegGradient = LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
             relit(coat.light, coat.coat, coat.far), relit(unlit, coat.coat, coat.far));
+        // A near paw stands that step below the tips, and a far paw that step below a near one.
+        const Color nearPad = relit(coat.tips, coat.coat, coat.far);
+        const Color farPad = relit(nearPad, coat.coat, coat.far);
 
         struct Leg
         {
@@ -107,7 +110,7 @@ namespace ClaFi::PathArt
             const Brush& fur = leg.far ? farLegGradient : bodyGradient;
             drawSegment(wolf, leg.hip, knee, fur, 9.0f);
             drawSegment(wolf, knee, paw, fur, 7.0f);
-            const SolidColor pad{ leg.far ? relit(coat.dark, coat.coat, coat.far) : coat.dark };
+            const SolidColor pad{ leg.far ? farPad : nearPad };
             fillOval(wolf, paw + FloatPoint{ 2.0f, 1.0f }, 6.5f, 3.6f, pad, -lower * 0.3f);
         };
         drawLeg(k_legs[0]);
@@ -135,7 +138,7 @@ namespace ClaFi::PathArt
         tip.quadTo({ -38.0f, -15.0f }, { -42.0f, -10.0f });
         tip.quadTo({ -37.0f, -5.0f }, { -31.0f, -4.0f });
         tip.close();
-        fillShape(tail, tip, SolidColor{ coat.dark });
+        fillShape(tail, tip, SolidColor{ coat.tips });
 
         PixelPath body;
         body.moveTo(-40.0f, -6.0f);
@@ -161,13 +164,13 @@ namespace ClaFi::PathArt
         ears.lineTo(2.0f, -38.0f);
         ears.lineTo(14.0f, -24.0f);
         ears.close();
-        fillShape(head, ears, SolidColor{ coat.dark });
+        fillShape(head, ears, SolidColor{ coat.tips });
         ears.clear();
         ears.moveTo(12.0f, -22.0f);
         ears.lineTo(14.0f, -40.0f);
         ears.lineTo(22.0f, -21.0f);
         ears.close();
-        fillShape(head, ears, SolidColor{ coat.dark });
+        fillShape(head, ears, SolidColor{ coat.tips });
 
         // Opening, the snout lifts and the lower jaw drops, both about the back of the mouth.
         const FloatPoint hinge = { 24.0f, 3.0f };
@@ -203,7 +206,7 @@ namespace ClaFi::PathArt
         jaw.lineTo(42.0f - pose.jawOpen, 2.0f + 5.0f * pose.jawOpen);
         jaw.lineTo(26.0f + 3.0f * pose.jawOpen, 9.0f + 2.0f * pose.jawOpen);
         jaw.close();
-        fillShape(jawFrame, jaw, SolidColor{ coat.dark });
+        fillShape(jawFrame, jaw, SolidColor{ coat.tips });
         const SceneFrame tongue = jawFrame.within(Matrix3x2::Translation(33.0f, 3.0f)
             * Matrix3x2::Rotation(pose.tongueTurn));
         PixelPath lick;

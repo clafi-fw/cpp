@@ -31,8 +31,8 @@ namespace ClaFi::PathArt
         Color light; // its head, back and tail where the light falls on them
         Color shade; // its flank
         Color coat; // its head and tail underneath
-        Color far; // with coat, the step the far legs and pads stand below the near ones
-        Color dark; // its ears, lower jaw and tail's tip, and the pads of the near legs
+        Color far; // with coat, the step far legs stand below near ones, and paws below the tips
+        Color tips; // its ears, lower jaw and tail's tip
         Color belly;
         Color tongue;
         Color mouth; // inside it, open
@@ -48,7 +48,7 @@ namespace ClaFi::PathArt
             .shade = Color{ 0xFF59606B },
             .coat = Color{ 0xFF6C7480 },
             .far = Color{ 0xFF4F565F },
-            .dark = Color{ 0xFF3D434C },
+            .tips = Color{ 0xFF3D434C },
             .belly = Color{ 0xE6B3B9C2 },
             .tongue = Color{ 0xFFEF6F7F },
             .mouth = Color{ 0xFF5A1C28 },

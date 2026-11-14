@@ -606,7 +606,7 @@ namespace ClaFi::PathArt
             .parallax = 0.05f,
             .period = 1727.0f,
             .heightScale = 0.7f,
-            .phaseShift = 2.3f,
+            .phaseShift = 3.5f,
             .baseShare = 0.625f,
             .baseLift = 0.0f
         };

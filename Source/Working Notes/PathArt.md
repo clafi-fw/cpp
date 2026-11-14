@@ -3340,6 +3340,48 @@ Then (Oj, 02:45) "Take the midnight reeds stems from the other stems": Midnight'
 near-black 031504 that vanished into its dark hills, takes its grass, 2C422B, the colour of its
 tufts and daisy stems. The Mill's reed stem, SceneTheme.reedStem, keeps its own.
 
+Then (Oj, 04:16, on a Clear Day screenshot) "Don't like this elephant shaped hill": the near
+range's flat-topped hump, a smaller bump beside it and the long slope after them - a back, a head
+and a trunk. It is one stretch of the ridge and comes back about every two and a half cycles. Shown
+A its phase shift 3.5, B and C its ridges narrowed to a 1150 period with shifts 3.5 and 0.6. Oj
+(04:29) "A": k_nearRange.phaseShift 2.3 -> 3.5; the hump is one summit now, its width kept.
+
+Then (Oj, 04:35, on a Clear Day screenshot) "Make flatter": our wolf's body ran 0.38 from light
+to unlit, where most themes' wolves and the hares run about 0.21 - the 10:08 lift had taken light
+alone 0.19 up. Shown, each to 0.21: A light kept and the rest lifted, a pale wolf; B both ends to
+the middle; C the rest kept and light lowered. Oj (04:45) "C": light 91A1AF -> 5F6D7B. Measured
+against the frame without him over 15 moments, his back stands as far off the land as before
+(median 0.14) and his legs keep their 0.28; his light now stands only 0.10 above the black wolf's.
+High Noon, Summer Sunset and Magic Forest, their light lifted the same way, still run 0.29 to 0.39.
+
+Then (Oj, 04:49) "High Noon and Summer Sunset the same". Summer Sunset: light B0ADB5 -> 79777E,
+his body 0.39 deep -> 0.21; his back off the land falls from a median 0.16 to 0.13 over 15 moments
+(least 0.09 -> 0.07, against the grey range). High Noon held: there the same step takes his back
+to 0.03-0.04 off its slate near range at three of the 15 moments, which is what its light was lifted
+for.
+
+Then (Oj, 04:57) "keep light and tips, lift rest" for High Noon: shade 4B5F75 -> 687D94, coat
+5D738A -> 7B91A9, far 415569 -> 5D7287 and belly E6A4B8CD -> E6C4D9EE, each 0.10 up in L, chroma and
+hue kept; light 869CB5 and the tips 304256 stay. His body 0.29 deep -> 0.21; his back off the land a
+median 0.155, least 0.059 (was 0.164, 0.063), his legs 0.28 at the median, least 0.14. And "rename
+dark to tips": WolfCoat::dark is WolfCoat::tips - ears, lower jaw, the tail's tip and the near
+paws - in the sprite, WolfCoats::Grey and every theme.
+
+Then (Oj, 05:02) "The same in Magic Forest", as High Noon: shade 5C5C75 -> 8787A2, coat 6E7089 ->
+9B9DB7, far 525269 -> 7D7D96, belly E6B6B4CC -> E6E6E4FD, each 0.15 up in L; light A3A3BF and the
+tips 403F55 stay. His body 0.33 deep -> 0.21; his back off the land a median 0.139, least 0.098 (was
+0.125, 0.086), his legs 0.17, least 0.13 (was 0.22, 0.16). Lowering his light instead would have
+taken his back to 0.04 off the violet range.
+
+Then (Oj, 05:11) "Darker the wolf's tips" in the five night themes and Neon City Night. Their
+tips sat level with the body's foot. Shown 0.10, 0.20 and 0.30 darker; the ears stand against a dark
+range or sky, so a darker tip crosses it and the ears vanish on the way (0.03-0.09 at 0.10 and
+0.20). Oj (05:19) "Keep the tips, mock the paws a step darker": the paws leave the tips and take
+their own colour - a near paw the coat-to-far step below the tips, a far paw that step below a near
+one. The step is 0.03-0.075 in L; most themes' paws now stand 0.08-0.09 below the leg's foot,
+Midnight Fantasy's 0.03 and Lunar Eclipse's level with it. Oj (05:23) "That works, make a rule".
+Every wolf drawWolf draws.
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
