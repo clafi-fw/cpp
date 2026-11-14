@@ -13,6 +13,8 @@ namespace ClaFi::PathArt
         Color color1{ 0xFFFFFFFF };
         Color color2{ 0xFFFFFFFF };
         int count{ 30 };
+        float pace{ 1.0f }; // times the usual speed, rounded to whole falls a cycle
+        float seed{ 0.0f }; // shifts where the leaves are, so two sets over one frame differ
     };
 
     export void drawFallingLeaves(const SceneFrame&, float cycleTime, const FallingLeaves&);

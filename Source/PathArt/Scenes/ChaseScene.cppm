@@ -41,6 +41,9 @@ namespace ClaFi::PathArt
         // theme's fireflies over them.
         static void drawBackdrop(const SceneFrame&, const SceneTheme&, float cycleTime,
             float travel, double journey, float groundY);
+        // One layer of the theme's weather, from the frame's top down to `bottom`. See PathArt
+        static void drawWeatherLayer(const SceneFrame&, const SceneTheme&, float cycleTime,
+            float travel, std::size_t layerIndex, float groundY, float bottom);
         static void drawGround(const SceneFrame&, const SceneTheme&, float travel, float groundY);
         static void drawFrontGrass(const SceneFrame&, const SceneTheme&, float travel);
         // The near edge's row, or the far edge's between its runs' own, evenly spaced. See PathArt

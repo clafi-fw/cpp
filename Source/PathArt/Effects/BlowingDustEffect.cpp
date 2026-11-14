@@ -19,10 +19,12 @@ namespace ClaFi::PathArt
         const float h = frame.height;
         const float unit = frame.unit;
         const SolidColor streak{ dust.color.withOpacity(dust.opacity) };
+        const float widthsPerCycle = std::max(1.0f, std::round(3.0f * dust.pace));
         for (int i = 0; i < dust.count; ++i)
         {
-            const float x = w - std::fmod(pseudoRandom(i) * w + cycleTime * w * 3.0f, w);
-            const float y = pseudoRandom(i, 7.0f) * h;
+            const float x = w - std::fmod(pseudoRandom(i, dust.seed) * w
+                + cycleTime * w * widthsPerCycle, w);
+            const float y = pseudoRandom(i, dust.seed + 7.0f) * h;
             PixelPath path;
             path.moveTo(x, y);
             path.lineTo(x - 10.0f * unit, y + 2.0f * unit);

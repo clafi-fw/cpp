@@ -610,6 +610,29 @@ namespace ClaFi::PathArt
             .baseShare = 0.625f,
             .baseLift = 0.0f
         };
+
+        // The share of its size on the trail that a thing on the far hills is drawn at.
+        constexpr float k_hillSize{ 0.6f };
+        // One of the depths the theme's weather is shared out over.
+        struct WeatherLayer
+        {
+            float parallax{}; // its share of the camera's speed
+            float share{}; // its share of the weather's drops, flakes, leaves and streaks
+        };
+        // From the far hills to the trail.
+        constexpr std::array<WeatherLayer, 4> k_weatherLayers{
+            WeatherLayer{ k_hillParallax, 0.4f },
+            WeatherLayer{ 0.4f, 0.28f },
+            WeatherLayer{ 0.7f, 0.2f },
+            WeatherLayer{ 1.0f, 0.12f }
+        };
+        constexpr std::size_t k_trailWeatherLayer{ k_weatherLayers.size() - 1 };
+        constexpr float k_hillWeatherOpacity{ 0.6f }; // the weather's strength on the far hills
+        constexpr float k_trailWeatherOpacity{ 0.85f }; // the weather's strength on the trail
+        // Units a weather layer's tiles repeat near, before periodNear fits them to the cycle.
+        constexpr float k_weatherWantedPeriod{ 1000.0f };
+        // More than the 7 an effect reads past its own seed, so no two layers share a place.
+        constexpr float k_weatherSeedStep{ 10.0f };
     }
 
     // Three 20-second episodes a cycle: twice the wolf trips over something on the trail, then he
@@ -1268,6 +1291,8 @@ namespace ClaFi::PathArt
         drawStars(frame, ourWolf, episodeTime);
         if (theyAreShown)
             drawStars(theirWolfFrame, theirWolf, theirWolfTime);
+        drawWeatherLayer(frame, theme, time.cycleTime, travel, k_trailWeatherLayer, groundY,
+            frame.height);
         drawVergeRow(frame, theme, time, groundY, closeness, true);
         drawFrontGrass(frame, theme, travel);
     }
@@ -1498,27 +1523,45 @@ namespace ClaFi::PathArt
                 fillDisc(frame, { x + 9.0f * size, y - 26.0f * size }, 12.0f * size, crownMiddle);
             }
         });
-        // **The theme's fireflies and weather keep to the far hills' layer**, smaller and fainter
-        // for the distance, and move with the hills. The fireflies are hazed as the hills are. The
-        // weather falls against the sky as well, so it is drawn fainter instead. It fills each tile
-        // down to the ground line.
-        const float farSize = 0.6f;
+        // **The theme's fireflies keep to the far hills' layer**, smaller for the distance, hazed
+        // as the hills are, and moving with them.
         Fireflies fireflies = firefliesOf(theme);
         fireflies.light = hazed(theme, fireflies.light, k_hillParallax);
         fireflies.glow = hazed(theme, fireflies.glow, k_hillParallax);
         fireflies.count = 22;
-        fireflies.size = farSize;
-        Weather weather = weatherOf(theme);
-        weather.opacity = 0.6f;
+        fireflies.size = k_hillSize;
         forEachTile(frame, k_hillParallax, hillPeriod, travel, [&](float left, float tileWidth) {
             fireflies.area = { left, groundY - 90.0f * unit, left + tileWidth,
                 groundY - 20.0f * unit };
             drawFireflies(frame, effectsTime, fireflies);
-            SceneFrame overHills = frame.within(Matrix3x2::Translation(left, 0.0f));
-            overHills.width = tileWidth;
-            overHills.height = groundY;
-            overHills.unit = unit * farSize;
-            drawWeather(overHills, effectsTime, weather);
+        });
+        for (std::size_t layerIndex = 0; layerIndex != k_trailWeatherLayer; ++layerIndex)
+            drawWeatherLayer(frame, theme, cycleTime, travel, layerIndex, groundY, groundY);
+    }
+
+    void ChaseScene::drawWeatherLayer(const SceneFrame& frame, const SceneTheme& theme,
+        const float cycleTime, const float travel, const std::size_t layerIndex,
+        const float groundY, const float bottom)
+    {
+        const WeatherLayer& layer = k_weatherLayers[layerIndex];
+        const float hillLayerPeriod = periodNear(k_hillParallax, k_weatherWantedPeriod);
+        const float period = periodNear(layer.parallax, k_weatherWantedPeriod);
+        const float timesFasterThanHills = layer.parallax / k_hillParallax;
+        const float nearness = (layer.parallax - k_hillParallax) / (1.0f - k_hillParallax);
+        Weather weather = weatherOf(theme);
+        weather.opacity = std::lerp(k_hillWeatherOpacity, k_trailWeatherOpacity, nearness);
+        weather.density = layer.share * (period / hillLayerPeriod) * (bottom / groundY);
+        weather.fallPace = timesFasterThanHills * groundY / bottom;
+        weather.windPace = timesFasterThanHills * hillLayerPeriod / period;
+        weather.seed = k_weatherSeedStep * static_cast<float>(layerIndex);
+        const float layerUnit = frame.unit * std::lerp(k_hillSize, 1.0f, nearness);
+        const float effectsTime = fractionalPart(cycleTime * k_lively);
+        forEachTile(frame, layer.parallax, period, travel, [&](float left, float tileWidth) {
+            SceneFrame overLayer = frame.within(Matrix3x2::Translation(left, 0.0f));
+            overLayer.width = tileWidth;
+            overLayer.height = bottom;
+            overLayer.unit = layerUnit;
+            drawWeather(overLayer, effectsTime, weather);
         });
     }
 

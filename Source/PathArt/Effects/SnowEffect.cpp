@@ -36,7 +36,7 @@ namespace ClaFi::PathArt
         }
     }
 
-    // Each flake falls the frame's height once or twice a cycle, swaying as it goes.
+    // Each flake falls the frame's height once or twice a cycle at pace 1, swaying as it goes.
     void drawSnow(const SceneFrame& frame, const float cycleTime, const Snow& snow)
     {
         if (snow.opacity <= 0.001f)
@@ -52,11 +52,13 @@ namespace ClaFi::PathArt
         for (int i = 0; i < snow.count; ++i)
         {
             const float index = static_cast<float>(i);
-            const float xBase = pseudoRandom(i) * w;
+            const float xBase = pseudoRandom(i, snow.seed) * w;
             const float drift = std::sin(t * k_2Pi * 1.0f + index) * 30.0f * unit;
-            const float loopCount = static_cast<float>(1 + (i % 2));
-            const float y = std::fmod(pseudoRandom(i, 3.0f) * h + t * (loopCount * h), h);
-            const float s = (0.3f + pseudoRandom(i, 5.0f) * 0.3f) * unit;
+            const float loopCount = std::max(1.0f,
+                std::round(static_cast<float>(1 + (i % 2)) * snow.pace));
+            const float y = std::fmod(pseudoRandom(i, snow.seed + 3.0f) * h
+                + t * (loopCount * h), h);
+            const float s = (0.3f + pseudoRandom(i, snow.seed + 5.0f) * 0.3f) * unit;
             const Matrix3x2 transform = Matrix3x2::Translation({ xBase + drift, y })
                 * Matrix3x2::Scale(s)
                 * Matrix3x2::Rotation(calculateSyncRotation(t, i, 6.0f) * k_2Pi);

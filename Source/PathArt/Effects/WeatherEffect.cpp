@@ -15,23 +15,38 @@ namespace ClaFi::PathArt
 {
     void drawWeather(const SceneFrame& frame, const float cycleTime, const Weather& weather)
     {
+        const auto countOf = [&](int usualCount) {
+            return static_cast<int>(std::round(static_cast<float>(usualCount) * weather.density));
+        };
         drawRain(frame, cycleTime, Rain{
             .opacity = weather.rain * weather.opacity,
-            .color = weather.color1
+            .color = weather.color1,
+            .count = countOf(Rain{}.count),
+            .pace = weather.fallPace,
+            .seed = weather.seed
         });
         drawSnow(frame, cycleTime, Snow{
             .opacity = weather.snow * weather.opacity,
-            .color = weather.color1
+            .color = weather.color1,
+            .count = countOf(Snow{}.count),
+            .pace = weather.fallPace,
+            .seed = weather.seed
         });
         drawFallingLeaves(frame, cycleTime, FallingLeaves{
             .opacity = StateFactors::compose(weather.leaves, weather.petals) * weather.opacity,
             .petals = weather.petals,
             .color1 = colorBetween(weather.color1, weather.petal1, weather.petals),
-            .color2 = colorBetween(weather.color2, weather.petal2, weather.petals)
+            .color2 = colorBetween(weather.color2, weather.petal2, weather.petals),
+            .count = countOf(FallingLeaves{}.count),
+            .pace = weather.fallPace,
+            .seed = weather.seed
         });
         drawBlowingDust(frame, cycleTime, BlowingDust{
             .opacity = weather.dust * weather.opacity,
-            .color = weather.color1
+            .color = weather.color1,
+            .count = countOf(BlowingDust{}.count),
+            .pace = weather.windPace,
+            .seed = weather.seed
         });
     }
 

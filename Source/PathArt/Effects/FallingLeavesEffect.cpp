@@ -11,7 +11,7 @@ namespace ClaFi::PathArt
 {
     using namespace ::ClaFi::Graphics;
 
-    // Each leaf falls the frame's height two or three times a cycle, swaying as it goes.
+    // Each leaf falls the frame's height two or three times a cycle at pace 1, swaying as it goes.
     void drawFallingLeaves(const SceneFrame& frame, const float cycleTime,
         const FallingLeaves& leaves)
     {
@@ -32,9 +32,11 @@ namespace ClaFi::PathArt
         const float s = unit * 0.65f;
         for (int i = 0; i < leaves.count; ++i)
         {
-            const float xBase = pseudoRandom(i) * w;
-            const float loopCount = static_cast<float>(2 + (i % 2));
-            const float y = std::fmod(pseudoRandom(i, 4.0f) * h + t * (loopCount * h), h);
+            const float xBase = pseudoRandom(i, leaves.seed) * w;
+            const float loopCount = std::max(1.0f,
+                std::round(static_cast<float>(2 + (i % 2)) * leaves.pace));
+            const float y = std::fmod(pseudoRandom(i, leaves.seed + 4.0f) * h
+                + t * (loopCount * h), h);
             const float drift = std::sin(t * k_2Pi * 1.0f + static_cast<float>(i)) * 60.0f * unit;
             const Color color = i % 2 == 0 ? leaves.color1 : leaves.color2;
             const Matrix3x2 tx = Matrix3x2::Translation(xBase + drift, y)

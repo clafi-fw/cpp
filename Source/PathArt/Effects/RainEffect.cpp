@@ -10,7 +10,7 @@ namespace ClaFi::PathArt
 {
     using namespace ::ClaFi::Graphics;
 
-    // Each drop falls the frame's height four to six times a cycle.
+    // Each drop falls the frame's height four to six times a cycle at pace 1.
     void drawRain(const SceneFrame& frame, const float cycleTime, const Rain& rain)
     {
         if (rain.opacity <= 0.001f)
@@ -24,9 +24,11 @@ namespace ClaFi::PathArt
         const SolidColor drop{ rain.color.withOpacity(rain.opacity * 0.5f) };
         for (int i = 0; i < rain.count; ++i)
         {
-            const float x = pseudoRandom(i) * w;
-            const float loopCount = static_cast<float>(4 + (i % 3));
-            const float y = std::fmod(pseudoRandom(i, 2.0f) * h + cycleTime * (loopCount * h), h);
+            const float x = pseudoRandom(i, rain.seed) * w;
+            const float loopCount = std::max(1.0f,
+                std::round(static_cast<float>(4 + (i % 3)) * rain.pace));
+            const float y = std::fmod(pseudoRandom(i, rain.seed + 2.0f) * h
+                + cycleTime * (loopCount * h), h);
             const float len = 25.0f * frame.unit;
             PixelPath path;
             path.moveTo(x, y);

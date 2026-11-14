@@ -16,6 +16,10 @@ namespace ClaFi::PathArt
         float petals{}; // the leaves falling as petals
         float dust{};
         float opacity{ 1.0f }; // the whole weather's, lower in the distance
+        float density{ 1.0f }; // the share of each effect's usual count drawn
+        float fallPace{ 1.0f }; // the pace the rain, snow, leaves and petals fall at
+        float windPace{ 1.0f }; // the pace the dust is blown at
+        float seed{ 0.0f }; // shifts where every effect's pieces are
         Color color1{}; // the drops, the flakes, the dust and half the leaves
         Color color2{}; // the other half of the leaves
         Color petal1{}; // half the petals

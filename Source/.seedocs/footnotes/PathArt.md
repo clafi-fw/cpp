@@ -1337,10 +1337,10 @@ the cycle's travel divides - see ChaseScene periodNear - so it ends the cycle wh
 or the moon, the clouds, the meadow and the tree a branch run ends at are the theme's shared
 colours; the rest is the theme's ChaseTheme.
 
-- The theme's fireflies and its rain, snow, falling leaves or petals and dust keep to the far hills'
-  layer: behind the trail and the runners, smaller, moving with the hills. The fireflies are hazed
-  as the hills are. The weather falls against the sky as well, so it is drawn at 0.6 of its strength
-  instead.
+- The theme's fireflies keep to the far hills' layer: behind the trail and the runners, smaller,
+  moving with the hills, and hazed as the hills are.
+- The theme's rain, snow, falling leaves or petals and dust are shared out over four layers, from
+  the far hills to the trail - see ChaseScene drawWeatherLayer.
 - A rainy theme's lightning strikes behind the mountains, three times each time the weather comes
   round, and its flash lights the sky above the ground line.
 - The theme's stars come out over the sky. Stars, fireflies and weather come round twice a cycle.
@@ -1375,6 +1375,29 @@ that one running by at full speed: the bend in the wind of the hare's passing an
 after her, then the wind of the wolf's passing and the hops, turns, petals and fluff that follow
 him. A place the wolf reaches long after the hare - while he lies dazed - keeps his part until he
 comes.
+
+## ChaseScene drawWeatherLayer
+
+**The theme's weather is shared out over four layers**, at 0.2, 0.4, 0.7 and the whole of the
+camera's speed: the far hills', two between, and the trail's. They hold 0.4, 0.28, 0.2 and 0.12 of
+its drops, flakes, leaves and streaks, each share spread evenly over the area its layer covers.
+
+**One wind blows the dust and one speed of falling brings the rest down.** A layer's weather moves
+as many times faster than the far hills' as the layer itself does, so the trail's falls and blows
+five times as fast as the hills'. Each layer's pace is rounded so its weather comes round a whole
+number of times a cycle, and the cycle ends where it began.
+
+**A nearer layer is drawn larger and stronger** - 0.6 of the size and strength on the far hills,
+the whole size and 0.85 of the strength on the trail. The weather falls against the sky as well as
+the scenery, so it is drawn fainter with the distance rather than hazed.
+
+**Each layer is drawn over its own scenery.**
+- The far hills' layer is drawn over the hills, and the two between follow it. All three stand
+  behind the ground and reach down to the ground line.
+- The trail's layer is drawn over the trail, the runners and their daze stars, and under the near
+  verge and the front grass. It reaches the bottom of the frame.
+
+The theme's fireflies keep to the far hills' layer, and its lightning strikes behind the mountains.
 
 ## ChaseScene hazed
 
@@ -1412,7 +1435,7 @@ the far range, taller, reaches nearer to mountainTop, and the near range only it
   meadowGradient. Their trees are the tree's own colours and the fireflies over them the theme's
   effect colours, both hazed as at the ground line. Both mountain ranges are ChaseTheme's
   mountainTop and mountainFoot.
-- The weather keeps to the hills' layer but is not hazed - see the ChaseScene section.
+- The weather is drawn fainter with the distance instead of hazed - see ChaseScene drawWeatherLayer.
 
 ## ChaseScene meadowGradient
 

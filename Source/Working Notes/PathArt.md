@@ -3473,6 +3473,31 @@ one. The step is 0.03-0.075 in L; most themes' paws now stand 0.08-0.09 below th
 Midnight Fantasy's 0.03 and Lunar Eclipse's level with it. Oj (05:23) "That works, make a rule".
 Every wolf drawWolf draws.
 
+Then (Oj, 2026-11-14 08:59) "when the camera accelerates the wind in the hills blowing the opposite
+way slows down while it should be speeding up". The dust was drawn with the rest of the weather in
+the far hills' tiles. Measured over the speed-up after a trip, it went from 96 to 162 units a second
+on screen - its own 96 and the hills' 0.2 of the camera's 330 - while the trail under it went from 0
+to 330, so against the ground it slowed, stood and then drifted back. Oj (09:41) "It's a perception
+playing tricks with me. Because the foreground moves very fast, the dust on the background seems
+frozen despite actually moving faster."
+
+Then (09:42) "Let's try to distribute the dust particles between layers". Shown: four layers at
+0.2, 0.4, 0.7 and 1.0 of the camera's speed with one wind for all, at today's wind (the far layer as
+before) and at a third less. Oj (09:50) "A; every layer effect should be over that layer", and
+(09:57) "Over the runners, down to the layer's bottom - which for the runners is the scene's bottom,
+not their feet"; the trail's layer behind the runners was the other place shown. Then (10:06) "And
+the same split to the rain and snow effects. The fireflies stay on the hills and the lightning stays
+on the most distant layer", and the leaves and petals too. Shown: every layer falling at today's
+speed on screen, or one speed of falling for all with nearer layers falling faster; Oj (10:13) "A",
+the latter.
+
+The effects gained a pace and a seed, and Weather a density, a pace for falling, one for the wind
+and a seed, which drawWeather hands on; the mill draws the defaults and is the same to the byte, as
+is every Chase theme without weather. A pace is rounded piece by piece to whole loops a cycle, so
+the trail layer's rain falls 16, 20 or 23 frame heights a cycle against the hills' 4, 5 or 6. The
+trail's layer brings a share of the weather back over the runners, where all of it fell before
+"move other effects onto the hills layer".
+
 ## MillScene
 
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
