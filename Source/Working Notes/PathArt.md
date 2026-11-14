@@ -3538,6 +3538,25 @@ and the far predator and his fir are drawn before the cow. Then (13:00-13:01) "C
 line with the cow": the fir's foot takes the cow's row, k_cowFootShare.y, at 0.884 across the field.
 Then (13:04) "just a bit further": 0.018 of the frame's height behind her row.
 
+**Reflections** (step 2, Oj 13:14 "The next step"). WaterReflection, a kit class beside
+SceneLayer. CpuBackend::drawPixelViews clips a view to rectangles only, and Direct2D uploads a view
+into its shared bitmap, so the water's shape cannot come from a path clip on the composite: the
+reflection is cut to the water's coverage in its own row pass, with each row's first and last
+covered column kept so the pass skips the land. The pass reads the mirrored band, shifts the row,
+scales the four premultiplied channels by opacity x shading x coverage, and the band goes in with
+one drawBitmap. The mirror canvas is kept and reused; it is the third HeldRasterClip copy (with
+SceneLayer's and ShadowPainter's).
+
+- Kept: the mountains and far hills about the horizon, the bridge about its deck, the three firs
+  by the shore about their feet, the house about its foot and clipped below it. Every frame: the
+  wheel and the sails, clipped the same way. The mirrored sails' hub falls below the frame at
+  16:9, so only the lower tips show.
+- The ripples are the mockup's waves in units of the frame - two sines of the row, 13 and 21 turns
+  a cycle, a 0.4 to 4 unit reach - and its banded shading, 9 turns, at 0.42.
+- The bridge left the land bitmap: kept there, the reflection drew over its deck.
+- At 1920 x 1080 in the container: 9.5 to 13 ms a frame (7.5 before), and 76 ms for a frame that
+  keeps the layers and the reflection again (48 before).
+
 To watch: the peeking wolf, the gator and the cow move with `sin(t * 12)`, `sin(t * 15)`,
 `sin(t * 30)` and `sin(t * 50)`, which are not whole turns of a 0 to 1 cycle, so they jump when the
 cycle wraps. The water lily bobs one and a half times a cycle, and jumps the same way.

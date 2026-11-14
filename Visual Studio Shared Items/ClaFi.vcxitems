@@ -530,6 +530,8 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.ThemeBlend.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Themes.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Types.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.WaterReflection.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.WaterReflection.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\AccordionAct.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\AccordionAct.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Scenes\BotTalent\AcrobaticsAct.cpp" />

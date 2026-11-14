@@ -16,6 +16,7 @@ import ClaFi.PathArt.TrunkSprite;
 import ClaFi.PathArt.Types;
 import ClaFi.PathArt.WaterLilySprite;
 import ClaFi.PathArt.WaterWheelSprite;
+import ClaFi.PathArt.WaterReflection;
 import ClaFi.PathArt.WeatherEffect;
 import ClaFi.Core.Graphics.Cpu.Canvas;
 import ClaFi.Core.Graphics.Cpu_Rasterizer;
@@ -208,6 +209,10 @@ namespace ClaFi::PathArt
         };
         constexpr FloatPoint k_bridgeFootShare{ 0.287f, 0.652f };
         constexpr float k_bridgeSize{ 1.63f };
+        // How the pond breaks what it mirrors, in units of the frame, and how much it shows.
+        constexpr float k_farRippleReach{ 0.4f };
+        constexpr float k_nearRippleReach{ 4.0f };
+        constexpr float k_reflectionOpacity{ 0.42f };
 
         constexpr float k_firSize{ 1.2f };
         // Back to front; each stands still, so the land keeps it.
@@ -266,6 +271,8 @@ namespace ClaFi::PathArt
         [[nodiscard]] LinearGradient landGradient(const SceneFrame&, const SceneTheme&, float top,
             float parallax);
         [[nodiscard]] FloatPoint pointAt(const SceneFrame&, FloatPoint share);
+        // The frame upside down about row `groundY`, as still water shows what stands there.
+        [[nodiscard]] SceneFrame mirroredAbout(const SceneFrame&, float groundY);
         // A closed curve through the points, appended to the path.
         void addSmoothLoop(PixelPath&, std::span<const FloatPoint> points);
         // The left and right edges of a stream, in pixels, walking down it.
@@ -288,6 +295,10 @@ namespace ClaFi::PathArt
         void drawBroadleaf(const SceneFrame&, const SceneTheme&, const StandingTree&);
         void drawRiverBed(const SceneFrame&, const SceneTheme&);
         void drawBridge(const SceneFrame&, const SceneTheme&);
+        // What still stands mirrored in the water: the mountains, the far hills, the bridge, the
+        // firs by the shore and the mill's house.
+        void drawStillReflections(const SceneFrame&, const SceneTheme&, const MillColors&);
+        void drawMovingReflections(const SceneFrame&, const SceneTheme&, float cycleTime);
         void drawWaterLight(const SceneFrame&, const SceneTheme&, float sunX, float cycleTime);
         void drawNearBank(const SceneFrame&, const SceneTheme&, float cycleTime);
     }
@@ -335,6 +346,19 @@ namespace ClaFi::PathArt
             (0.8f + (std::sin(a2) + 1.0f) * 0.2f) * m_objectsScale);
 
         canvas.drawBitmap(m_land, m_offset);
+        const MillColors millColors = millColorsOf(theme());
+        m_reflection.draw(frame, riverOutline(frame), [&](const SceneFrame& mirror) {
+            drawStillReflections(mirror, theme(), millColors);
+        }, [&](const SceneFrame& mirror) {
+            drawMovingReflections(mirror, theme(), cycleTime);
+        }, Ripples{
+            .top = h * k_horizonShare,
+            .farReach = k_farRippleReach,
+            .nearReach = k_nearRippleReach,
+            .cycleTime = cycleTime,
+            .opacity = k_reflectionOpacity
+        });
+        drawBridge(frame, theme());
         drawWaterLight(frame, theme(), m_sunPos.x, cycleTime);
 
         // river fog along the pond's far shore
@@ -416,7 +440,6 @@ namespace ClaFi::PathArt
         canvas.popClip();
         // The house's reflection, which the sprite draws below its foot, is left out.
         canvas.pushClip(FloatRect{ bounds.left, bounds.top, bounds.right, waterLine });
-        const MillColors millColors = millColorsOf(theme());
         drawMillHouse(frame, mill, millColors);
         canvas.popClip();
         drawWaterFoam(canvas, m_offset.x + millFoot.x - 75.0f * millSize, waterLine, millSize,
@@ -514,10 +537,11 @@ namespace ClaFi::PathArt
             for (const StandingTree& tree : k_broadleaves)
                 drawBroadleaf(frame, theme(), tree);
             drawRiverBed(frame, theme());
-            drawBridge(frame, theme());
             for (const StandingTree& tree : std::span{ k_stillFirs }.last(3))
                 drawFir(frame, theme(), tree);
         });
+
+        m_reflection.forget();
 
         g_rasterBuffers.hasActiveClip = heldClipActive;
         g_rasterBuffers.activeClipMaskPtr = heldClipMask;
@@ -653,6 +677,12 @@ namespace ClaFi::PathArt
         FloatPoint pointAt(const SceneFrame& frame, const FloatPoint share)
         {
             return { frame.width * share.x, frame.height * share.y };
+        }
+
+        SceneFrame mirroredAbout(const SceneFrame& frame, const float groundY)
+        {
+            return frame.within(Matrix3x2::Translation(0.0f, 2.0f * groundY)
+                * Matrix3x2::Scale(1.0f, -1.0f));
         }
 
         // Catmull-Rom through the points, each span a cubic.
@@ -1076,6 +1106,58 @@ namespace ClaFi::PathArt
             railShade.moveTo(-55.0f, -8.0f);
             railShade.quadTo({ 0.0f, -38.0f }, { 55.0f, -8.0f });
             strokeShape(frame, railShade, SolidColor{ woodShade }, 1.6f, StrokeCap::Round, place);
+        }
+
+        // Each mirrored about the line where it meets the ground or the water. The house is kept to
+        // the rows below its foot, where its reflection lies.
+        void drawStillReflections(const SceneFrame& frame, const SceneTheme& theme,
+            const MillColors& millColors)
+        {
+            const SceneFrame aboutHorizon = mirroredAbout(frame, frame.height * k_horizonShare);
+            drawMountains(aboutHorizon, theme, k_farRange);
+            drawMountains(aboutHorizon, theme, k_nearRange);
+            drawFarHills(aboutHorizon, theme);
+
+            const FloatPoint bridgeFoot = pointAt(frame, k_bridgeFootShare);
+            const float bridgeSize = k_bridgeSize * sizeAt(frame, bridgeFoot.y);
+            const float bridgeDeck = bridgeFoot.y + 6.0f * bridgeSize;
+            drawBridge(mirroredAbout(frame, bridgeDeck), theme);
+            for (const StandingTree& tree : std::span{ k_stillFirs }.last(3))
+            {
+                const float foot = frame.height * tree.footShare.y;
+                drawFir(mirroredAbout(frame, foot), theme, tree);
+            }
+
+            const FloatPoint millFoot = pointAt(frame, k_millFootShare);
+            frame.canvas.pushClip(frame.toCanvas.mapRect({ 0.0f, millFoot.y, frame.width,
+                frame.height }));
+            drawMillHouse(mirroredAbout(frame, millFoot.y), MillPose{
+                .base = millFoot,
+                .size = k_millSize * frame.unit,
+                .wingTurns = 0.0f
+            }, millColors);
+            frame.canvas.popClip();
+        }
+
+        void drawMovingReflections(const SceneFrame& frame, const SceneTheme& theme,
+            const float cycleTime)
+        {
+            const FloatPoint millFoot = pointAt(frame, k_millFootShare);
+            const float millSize = k_millSize * frame.unit;
+            const SceneFrame aboutMillFoot = mirroredAbout(frame, millFoot.y);
+            frame.canvas.pushClip(frame.toCanvas.mapRect({ 0.0f, millFoot.y, frame.width,
+                frame.height }));
+            drawWaterWheel(aboutMillFoot, WaterWheelPose{
+                .center = { millFoot.x - 65.0f * millSize, millFoot.y },
+                .size = millSize,
+                .turns = cycleTime * 2.0f
+            }, theme.millWheel);
+            drawMillWings(aboutMillFoot, MillPose{
+                .base = millFoot,
+                .size = millSize,
+                .wingTurns = cycleTime
+            }, millColorsOf(theme));
+            frame.canvas.popClip();
         }
 
         // Glints drifting with the current, and under the sun its glitter on the pond.

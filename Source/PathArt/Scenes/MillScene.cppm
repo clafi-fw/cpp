@@ -3,6 +3,7 @@ export module ClaFi.PathArt.MillScene;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.ThemeBlend;
 import ClaFi.PathArt.Types;
+import ClaFi.PathArt.WaterReflection;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -44,6 +45,7 @@ namespace ClaFi::PathArt
         void drawCloud(Canvas& canvas, float x, float y, float s);
     private:
         ThemeBlend m_themes{};
+        WaterReflection m_reflection{}; // what the pond mirrors
         Bitmap m_sky{}; // the sky and the sun's disc
         Bitmap m_land{}; // the mountains, the valley, the river and what stands still on them
         ScaledSize m_stillLayersSize{};

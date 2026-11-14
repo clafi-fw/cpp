@@ -466,6 +466,26 @@ ever thinner air, so it takes the air along that line in place of its distance, 
 point at the ground line as far away. The air thins to 1/e every 24 frame heights, as seen at
 parallax 1.
 
+## WaterReflection
+
+**What a scene shows mirrored in its water**, laid into the water's shape and broken by ripples.
+The scene draws the parts itself, each upside down about the line where it meets the ground or the
+water; the reflection does not turn them.
+
+**The still parts are kept.** On the CPU backend what `still` draws is kept as pixels, with the
+water's coverage, until the frame's size or the water's top row changes or forget() is called -
+MillScene calls it when it draws its land again. `moving` is drawn over them every frame.
+
+## WaterReflection draw
+
+**On the CPU backend the rows ripple.** Each row is shifted sideways by two waves, by farReach at
+the water's top row growing to nearReach at the frame's bottom, and shaded a little darker in
+bands; then it is cut to the water's coverage and faded to the ripples' opacity. The waves run a
+whole number of times a cycle, so a cycle ends where it began.
+
+**On Direct2D the parts are drawn live**, clipped to the water and faded, and the water lies still
+under them.
+
 ## CloudKind
 
 What a cloud map's clouds look like:
@@ -1054,11 +1074,17 @@ size its row's parallax gives.
 
 **The sky and the land are kept as two bitmaps**, drawn again when the bounds' size changes or the
 worn theme moves on - see ThemeBlend. The stars, the sun's rays and the clouds pass between the two,
-so the land hides their lower part. The light on the water, the cow, the predator and the fir it
-peeks from behind, the mill, the lily, the near bank's grass, cattails and daisies, the fireflies
-and the weather are drawn every frame.
+so the land hides their lower part. The reflection, the bridge, the light on the water, the cow,
+the predator and the fir he peeks from behind, the mill, the lily, the near bank's grass, cattails
+and daisies, the fireflies and the weather are drawn every frame.
 
-**The house is clipped at the water line**, so the sprite's own reflection stays out of the pond.
+**The pond mirrors what stands by it** - see WaterReflection. The mountains, the far hills, the
+bridge, the firs by the shore and the mill's house are kept; the wheel and the sails are drawn
+every frame. The bridge stands over the water, so it is drawn after the reflection rather than kept
+with the land.
+
+**The house is clipped at the water line**, so the sprite's own upside-down copy stays out of the
+pond, and its reflection comes from the house drawn mirrored.
 
 ## CowColors
 
