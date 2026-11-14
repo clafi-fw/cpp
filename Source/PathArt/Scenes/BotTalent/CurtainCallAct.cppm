@@ -20,6 +20,7 @@ namespace ClaFi::PathArt
         void pose(const ActStage&, float actTime, SceneTime time) override;
         [[nodiscard]] float spotlightX() const override { return m_android.pelvis.x; }
         [[nodiscard]] bool usesMarionette() const override { return true; }
+        [[nodiscard]] StandPose standPose() const override { return { .bow = m_standBow }; }
         void draw(const SceneFrame&) const override;
     private:
         AndroidPose m_android{};
@@ -31,6 +32,7 @@ namespace ClaFi::PathArt
         GatorPose m_gator{};
         MarionetteJoints m_marionette{};
         WolfPose m_wolf{};
+        float m_standBow{ 0.0f };
         float m_actTime{ 0.0f };
         float m_middleX{ 0.0f };
         float m_floorY{ 0.0f };

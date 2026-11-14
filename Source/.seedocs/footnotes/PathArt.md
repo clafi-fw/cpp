@@ -671,7 +671,8 @@ either side of that, so the next act is in place before it parts - see BotTalent
 drawCurtain.
 
 **The marionette hangs on a stand** inside the left drapes through every act it takes no part in,
-swinging a little, 12 times a cycle - see hangMarionette. The stand is part of the stage.
+swinging a little, 12 times a cycle - see hangMarionette. Each act says how the stand stands - see
+StandPose.
 
 **An act's jolt shakes the stage.** From the moment the act's joltAge passes 0, the stage and all
 on it shake by up to 7 units, dying away in about half a second. The drapes and the hanging
@@ -696,6 +697,15 @@ The stage as BotTalentScene lays it out in the frame, handed to every act it pos
 **`closeness` is 1 in a frame at least 640 units wide**, and the width over 640 in a narrower one.
 An act multiplies its distances across the stage by it, so its figures stay between the drapes.
 
+## StandPose
+
+How the marionette's stand stands in an act, as BotTalentAct standPose answers it. BotTalentScene
+draws the stand by it on every frame, over the stage and under the spotlight.
+
+- **`shown`** fades the stand as one image, so where its parts overlap they do not show through one
+  another.
+- **`bow`** bends it toward the middle of the stage - see drawMarionetteStand.
+
 ## BotTalentAct
 
 BotTalentScene poses an act, reads where the spotlight falls and whether something has jolted the
@@ -705,6 +715,8 @@ stage, and then draws it into the frame the jolt shakes.
   draw reads nothing else.
 - **usesMarionette** is true in the acts that play with the marionette. In the rest the scene
   hangs it on its stand.
+- **standPose** is whole and upright in most acts. StringsCutAct takes the stand away in a puff of
+  smoke, and CurtainCallAct has it back, bowing - see StandPose.
 - **joltAge** counts the seconds since something landed hard enough to shake the stage, and is
   below 0 before that - see BotTalentScene.
 
@@ -713,6 +725,15 @@ stage, and then draws it into the frame the jolt shakes.
 **The marionette dances 16 sways a cycle by the scene's time**, with a step on every half sway -
 see danceMarionette. Read from the scene's time rather than the act's, the dance keeps one beat
 through every act it plays in.
+
+## drawMarionetteStand
+
+A pole on a round foot, an arm out to the right at its top, and a gold hook under the arm's end,
+where hangMarionette hangs the control.
+
+**A bow bends the pole above about a third of its height.** The bend is an arc of the pole's own
+length, turning up to 0.9 radians at a bow of 1, so the top comes forward and down. The arm and the
+hook turn with the top, and the arm dips like a head.
 
 ## PuppetShowAct
 
@@ -813,14 +834,20 @@ The puppet show's finale, in a top hat. In seconds:
 
 - **From 1.2** the wand is raised, and from 1.6 waved round.
 - **At 2.15** sparkles fly to the control, and from 2.4 they run down the strings.
-- **By 3** the strings have faded, and the control goes up in sparkles.
-- **Then** the marionette dances on alone in a glow, rises and twirls, while the wand beats time.
+- **By 3** the strings have faded, and the control goes up in sparkles. The marionette dances on
+  alone in a glow, while the wand beats time.
+- **From 3.6** the wand is raised again and waved round from 4, the android's head and left hand
+  turned to the stand. At 4.55 sparkles fly over to it.
+- **From 5** the stand goes in a puff of smoke, and is gone by 5.25.
+- **Then** the wand beats time again, while the marionette rises and twirls.
 - **From 8.3** the ta-da.
 
 ## CurtainCallAct
 
 The whole cast takes its bows in a row across the stage, while bouquets fly in from the audience.
 
+- **The stand** stands empty inside the left drapes, back from the smoke StringsCutAct took it in.
+  It nods at 2.4 seconds and bows on its own at 5.4 - see drawMarionetteStand.
 - **The gator** pokes in from the left wings, its tail offstage, grinning and nodding.
 - **The marionette** stands on its own feet, its strings gone - see standingMarionette. It
   curtsies, waves and curtsies again.

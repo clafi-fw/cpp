@@ -200,6 +200,10 @@ namespace ClaFi::PathArt
             .lid = fractionalPart(actTime / 3.3f) > 0.96f ? 1.0f : 0.0f
         };
 
+        // the stand, back from the smoke: a little nod, a bow of its own, the bow with the rest
+        m_standBow = std::max({ 0.5f * nodAt(actTime, 2.4f, 3.2f), nodAt(actTime, 5.4f, 6.3f),
+            together });
+
         // the marionette on its own feet: a curtsy with the bow, a wave, two more curtsies
         const float curtsy = std::max({ nodAt(actTime, 2.0f, 2.9f), nodAt(actTime, 6.0f, 6.8f),
             together });

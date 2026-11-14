@@ -547,6 +547,27 @@ thrower and the height of its arc came from the mockup's random numbers, written
 3:2; every act at 16:9, 4:3 and 600 x 900; kept frames against live ones through the jolt. Unbuilt
 under MSVC.
 
+**The stand goes in a puff of smoke** (Oj, 2026-11-14, "second magic wave and the stand disappeares
+too"). In Strings cut the android waves the wand a second time, at the stand, once the strings have
+gone. Of three ways out, mocked up from the scene code - fading as the strings did, a puff of smoke,
+a wipe from the top down - Oj took the smoke. Asked whether the stand stays gone through the curtain
+call, he had it back, bowing with the cast. The bow bends the pole into an arc rather than
+shortening it as the android's does: a pole has no face to drop, and seen from the side the arm dips
+like a head.
+
+**The stand left the kept stage layer** for it. A kept part cannot be taken away by one act and bent
+by another, so the stand is drawn live, right after the layer, by the act's StandPose. Through the
+kettlebell's jolt it now moves with the live parts, by the shift exactly, where the floor moves by
+whole pixels - up to 67 levels apart on its edges.
+
+**The first wave dropped the hand in one frame.** Its circle ended a turn and a half in, at the top,
+16 units above where it started, and the offset was cut off at 2.4 seconds. A wave now holds where
+its circle ends, which moves the hand by those 16 units until the beat takes it at 3.
+
+**Checked** in the clang harness: the other acts unchanged but for one pixel by one level; the
+delivered code equal to the mock Oj saw in 245 frames, Strings cut and the curtain call every tenth
+of a second among them. Unbuilt under MSVC.
+
 ## ClockworkScene
 
 meshWith places the driven gear's phase so that the teeth past the line of centers, counted on

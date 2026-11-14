@@ -50,9 +50,6 @@ namespace ClaFi::PathArt
         constexpr Color ValanceTop{ 0xFF9A1D33 };
         constexpr Color ValanceBottom{ 0xFF6A1022 };
         constexpr Color Gold{ 0xFFD9A845 };
-        constexpr Color StandWood{ 0xFF6E4526 };
-        constexpr Color StandArm{ 0xFF8A5A33 };
-        constexpr Color StandFoot{ 0xFF4A2C16 };
     }
 
     namespace
@@ -72,16 +69,6 @@ namespace ClaFi::PathArt
         [[nodiscard]] float drapeWidthOf(const SceneFrame& frame)
         {
             return std::max(frame.width * 0.11f, 62.0f * frame.unit);
-        }
-
-        // The hook of the marionette's stand, just inside the left drapes.
-        [[nodiscard]] FloatPoint standHookOf(const SceneFrame& frame)
-        {
-            const float unit = frame.unit;
-            return {
-                drapeWidthOf(frame) + 80.0f * unit,
-                frame.height * k_floorLineShare - 304.0f * unit
-            };
         }
 
         // 0 open to 1 shut, from how far the act is from its start or its end.
@@ -164,6 +151,8 @@ namespace ClaFi::PathArt
             : frame;
 
         m_stage.draw(frame, shake);
+        const MarionetteStand stand = marionetteStandOf(stage);
+        drawMarionetteStand(shaken, stand, act.standPose());
         const float lampX = stage.centerX - 56.0f * unit * stage.closeness;
         const float spotlightX = act.spotlightX();
         drawSpotlight(shaken, lampX, spotlightX, floorY);
@@ -171,7 +160,7 @@ namespace ClaFi::PathArt
         {
             const float hangingSwing = 0.3f * swing
                 + 0.035f * std::sin(k_2Pi * k_hangingSwingsPerCycle * time.cycleTime);
-            drawMarionette(shaken, hangMarionette(unit, standHookOf(frame), hangingSwing));
+            drawMarionette(shaken, hangMarionette(unit, stand.hook, hangingSwing));
         }
         act.draw(shaken);
         drawDustMotes(shaken, time.cycleTime, DustMotes{
@@ -217,7 +206,6 @@ namespace ClaFi::PathArt
         };
     }
 
-    // The stand the marionette hangs on between its acts is kept with the stage.
     void BotTalentScene::drawStage(const SceneFrame& frame)
     {
         const float unit = frame.unit;
@@ -262,20 +250,6 @@ namespace ClaFi::PathArt
         seams.draw();
         fillBox(frame, { 0.0f, floorTop - 4.0f * unit, width, floorTop + 3.0f * unit },
             SolidColor{ BotTalentColors::FloorEdge.withOpacity(0.85f) });
-
-        // the stand: a pole on a round foot, an arm out to the right, a hook under its end
-        const FloatPoint hook = standHookOf(frame);
-        const float poleX = hook.x - 34.0f * unit;
-        const float armY = hook.y - 18.0f * unit;
-        const float floorY = height * k_floorLineShare;
-        fillOval(frame, { poleX, floorY + unit }, 24.0f * unit, 5.0f * unit,
-            SolidColor{ BotTalentColors::StandFoot });
-        drawSegment(frame, { poleX, floorY }, { poleX, armY },
-            SolidColor{ BotTalentColors::StandWood }, 6.0f * unit, StrokeCap::Butt);
-        drawSegment(frame, { poleX - 4.0f * unit, armY }, { hook.x + 5.0f * unit, armY },
-            SolidColor{ BotTalentColors::StandArm }, 6.0f * unit);
-        drawSegment(frame, { hook.x, armY + 2.0f * unit }, { hook.x, hook.y - 4.0f * unit },
-            SolidColor{ BotTalentColors::Gold }, 2.0f * unit);
     }
 
     void BotTalentScene::drawSpotlight(const SceneFrame& frame, const float lampX,

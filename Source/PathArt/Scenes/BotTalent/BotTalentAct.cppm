@@ -20,6 +20,13 @@ namespace ClaFi::PathArt
         float drapeWidth; // the side drapes' reach in from each edge
     };
 
+    // How the marionette's stand stands in an act. See PathArt
+    export struct StandPose
+    {
+        float shown{ 1.0f }; // from 1 all of it to 0 none
+        float bow{ 0.0f }; // from 0 upright to 1 bowed as low as it goes
+    };
+
     // One of Bot Talent's acts: posed at a time into it, then drawn. See PathArt
     export class BotTalentAct
     {
@@ -32,6 +39,8 @@ namespace ClaFi::PathArt
         [[nodiscard]] virtual float spotlightX() const = 0;
         // Whether the marionette plays in the act, rather than hanging on its stand.
         [[nodiscard]] virtual bool usesMarionette() const { return false; }
+        // How the marionette's stand stands, whole and upright unless the act says otherwise.
+        [[nodiscard]] virtual StandPose standPose() const { return {}; }
         // Seconds since something landed hard enough to jolt the stage, below 0 if nothing has.
         [[nodiscard]] virtual float joltAge() const { return -1.0f; }
         // Draws the act as it was last posed.
@@ -55,6 +64,14 @@ namespace ClaFi::PathArt
         constexpr FloatPoint RightRaised{ 101.0f, -195.0f };
     }
 
+    // The stand the marionette hangs on between its acts, just inside the left drapes.
+    export struct MarionetteStand
+    {
+        FloatPoint foot; // where the pole meets the floor
+        FloatPoint top; // the pole's top, where the arm runs out to the right
+        FloatPoint hook; // the end of the hook under the arm, where the control hangs
+    };
+
     // The marionette's dance, in radians of its sway, at a time of the scene. See PathArt
     export [[nodiscard]] float danceSway(SceneTime);
     // Where the dancing marionette's feet are across the frame, `sway` radians into its dance.
@@ -65,4 +82,8 @@ namespace ClaFi::PathArt
     export [[nodiscard]] ChestLights flashingLights(float actTime);
     // A magician's wand from the hand that holds it to its white tip.
     export void drawWand(const SceneFrame&, FloatPoint hand, FloatPoint tip);
+    // Where the marionette's stand stands on the stage.
+    export [[nodiscard]] MarionetteStand marionetteStandOf(const ActStage&);
+    // The marionette's stand as it stands in an act. See PathArt
+    export void drawMarionetteStand(const SceneFrame&, const MarionetteStand&, const StandPose&);
 }
