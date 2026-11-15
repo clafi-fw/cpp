@@ -106,9 +106,16 @@ namespace ClaFi::PathArt
     void SceneLayer::draw(const SceneFrame& frame, const FloatPoint shift) const
     {
         const Matrix3x2 frameToPixels = frame.canvas.transform() * frame.toCanvas;
+        // The frame may stand whole pixels away from the one kept, on this canvas or another.
+        const FloatPoint offset = {
+            frameToPixels.e - m_sceneToPixels.e,
+            frameToPixels.f - m_sceneToPixels.f
+        };
         const bool fits = m_kept
             && frame.canvas.backend()->type() == BackendType::Cpu
-            && frameToPixels == m_sceneToPixels
+            && frameToPixels.a == m_sceneToPixels.a && frameToPixels.b == m_sceneToPixels.b
+            && frameToPixels.c == m_sceneToPixels.c && frameToPixels.d == m_sceneToPixels.d
+            && offset.x == std::round(offset.x) && offset.y == std::round(offset.y)
             && FloatPoint{ frame.width, frame.height } == m_frameSize;
         if (!fits)
         {
@@ -117,7 +124,10 @@ namespace ClaFi::PathArt
             return;
         }
         const FloatPoint pixelShift = frameToPixels.transformVector(shift);
-        const FloatPoint wholeShift = { std::round(pixelShift.x), std::round(pixelShift.y) };
+        const FloatPoint wholeShift = {
+            std::round(pixelShift.x) + offset.x,
+            std::round(pixelShift.y) + offset.y
+        };
         // The bands stand in rows of their own, which the CPU backend lays in on several cores.
         std::vector<PixelView> views;
         views.reserve(m_bands.size());

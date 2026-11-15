@@ -447,6 +447,9 @@ could not be laid into the frame turned over inside the lake. They are laid in i
 path clip, which a layer does not see - the row along the lake's edge that the clip covers in part
 is covered by the shore after.
 
+Since 2026-11-15 a layer also fits a frame moved by whole pixels from the one it was kept for, on
+any CPU canvas, and the Comet's lake mirrors through WaterReflection - see CometScene below.
+
 **draw takes a shift** for Bot Talent's jolt - see BotTalentScene below.
 
 **Direct2D draws layers live.** Its drawPixelView copies the bitmap up to the GPU on every call,
@@ -674,6 +677,35 @@ The mockup started it at full width with a straight edge across the head, and at
 saw that edge through the coma's glow as a square butt. Rendered against it: a half circle round
 the head read as a blunt capsule, and a nose a fifth of the tail long grew a belly on the fanned
 side. Oj picked the tenth.
+
+Then (Oj, 2026-11-15 15:09) "Use water reflections in Comet". The lake mirrors through
+WaterReflection with the Mill's ripples - 0.4 units of reach at its top row, 4 at its nearest - and
+the 0.42 it was dimmed by. Nothing of it can be the kept still part: in the upright sky the stars
+and the landing's flash lie behind the far ridge and the comet and its glow between the two ridges,
+and a still part is drawn under all that moves. So the Comet passes an empty `still`, and
+WaterReflection takes an empty one as nothing to keep: the CPU way draws no still bitmap, and off
+the CPU the surface's image 6 is left alone. That matters in the showcase, which draws every scene
+on one surface: had the Comet filled image 6, the Mill, coming back, would have found it kept and
+laid in the Comet's.
+
+The ridges in the mirror stay kept layers. SceneLayer draw fits a frame that differs from the params
+by whole pixels across and down, on any CPU canvas, so the layers prepared upside down for the
+upright frame lay into WaterReflection's own canvas, whose frame stands the lake's top row up.
+
+At 3840 x 1975 in the container the Comet's frame went from about 15.4 ms to 20.4 with the
+reflection; drawRows' loop over the rows alone was 5.6 ms of it, and the Mill's 4.75. The loop
+scaled each channel apart and divided by 255 at every pixel. It now looks the scale up in a table of
+the row's 256 coverages and scales blue with red and green with alpha in one multiply each, with the
+columns whose source lies inside the band in a loop of their own: 1.5 ms for the Comet's rows, 1.56
+for the Mill's, the Mill the same to the byte. The Comet's frame is about 16.4 ms. The lake reaches
+both sides of the frame, and a row moved sideways left the columns it moved off unmirrored, a ragged
+dark edge; those columns repeat the band's side pixel now. The Mill's pond never meets the frame's
+side with a row moved, and its frames are unchanged. Off the CPU the strips leave that edge as
+before - not looked at on Direct2D.
+
+Then (Oj, 15:33) "the forest doesn't reflect": the shore's pines were drawn after the lake and never
+in its mirror. They are mirrored as the ridges are, a kept layer drawn upside down - m_mirroredShore
+- laid in last, since they stand nearest. The frame costs no more that the container can tell.
 
 ## EarthScene
 

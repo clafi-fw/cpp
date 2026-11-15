@@ -6,6 +6,7 @@ import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.ShootingStarsEffect;
 import ClaFi.PathArt.StarsEffect;
+import ClaFi.PathArt.WaterReflection;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -47,6 +48,9 @@ namespace ClaFi::PathArt
         // Where the lake begins, as a share of the frame's height.
         constexpr float k_lakeShare{ 0.72f };
         constexpr float k_reflectionOpacity{ 0.42f };
+        // How far the ripples move the lake's top row and its nearest, in units of the frame.
+        constexpr float k_farRippleReach{ 0.4f };
+        constexpr float k_nearRippleReach{ 4.0f };
     }
 
     void CometScene::prepare(const SceneParams& params)
@@ -58,6 +62,7 @@ namespace ClaFi::PathArt
         m_mirroredNearRidge.prepare(params);
         m_lakeShade.prepare(params);
         m_shore.prepare(params);
+        m_mirroredShore.prepare(params);
     }
 
     void CometScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
@@ -141,7 +146,7 @@ namespace ClaFi::PathArt
     }
 
     // The ridges are kept as layers drawn through the upright frame, the reflection's included:
-    // a layer fits the frame the scene is drawn in, not one turned over inside it.
+    // a layer fits a frame moved by whole pixels from the one it was kept for, not one turned over.
     void CometScene::drawAboveLake(const SceneFrame& upright, const float cycleTime,
         const bool reflection) const
     {
@@ -216,7 +221,8 @@ namespace ClaFi::PathArt
     }
 
     // The lake shows everything above it upside down and dimmed, with ripples running across.
-    void CometScene::drawLake(const SceneFrame& frame, const float cycleTime) const
+    // Nothing in the mirror is kept still: the stars twinkle in front of the far ridge.
+    void CometScene::drawLake(const SceneFrame& frame, const float cycleTime)
     {
         const float unit = frame.unit;
         const float width = frame.width;
@@ -230,12 +236,18 @@ namespace ClaFi::PathArt
         lakeOutline.lineTo(width, height);
         lakeOutline.lineTo(0.0f, height);
         lakeOutline.close();
-        frame.canvas.pushClip(lakeOutline, &frame.toCanvas);
-        {
-            const ScopedCanvasOpacity dimmed{ frame.canvas, k_reflectionOpacity };
-            drawAboveLake(frame, cycleTime, true);
-        }
-        frame.canvas.popClip();
+        const Ripples mirrorRipples = {
+            .top = lakeY,
+            .farReach = k_farRippleReach,
+            .nearReach = k_nearRippleReach,
+            .cycleTime = cycleTime,
+            .opacity = k_reflectionOpacity
+        };
+        // The pines stand nearest, so their reflection is laid in last.
+        m_reflection.draw(frame, lakeOutline, {}, [&](const SceneFrame& mirror) {
+            drawAboveLake(mirror, cycleTime, true);
+            m_mirroredShore.draw(mirror);
+        }, mirrorRipples);
         m_lakeShade.draw(frame);
 
         ScatteredShapes ripples{ frame, SolidColor{ CometSceneColors::Ripple }, 1.1f * unit,
@@ -351,5 +363,10 @@ namespace ClaFi::PathArt
             pine.close();
             fillShape(frame, pine, SolidColor{ CometSceneColors::Shore });
         }
+    }
+
+    void CometScene::drawMirroredShore(const SceneFrame& frame)
+    {
+        drawShore(reflectionOf(frame));
     }
 }

@@ -4,6 +4,7 @@ import ClaFi.PathArt.CometSprite;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
+import ClaFi.PathArt.WaterReflection;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
@@ -38,7 +39,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] static SceneFrame reflectionOf(const SceneFrame&);
         // Everything above the lake, which the lake shows again upside down.
         void drawAboveLake(const SceneFrame& upright, float cycleTime, bool reflection) const;
-        void drawLake(const SceneFrame&, float cycleTime) const;
+        void drawLake(const SceneFrame&, float cycleTime);
         static void drawSky(const SceneFrame&);
         static void drawFarRidge(const SceneFrame&);
         static void drawNearRidge(const SceneFrame&);
@@ -47,6 +48,7 @@ namespace ClaFi::PathArt
         static void drawLakeWater(const SceneFrame&);
         static void drawLakeShade(const SceneFrame&);
         static void drawShore(const SceneFrame&);
+        static void drawMirroredShore(const SceneFrame&);
     private:
         SceneLayer m_farRidge{ drawFarRidge };
         SceneLayer m_nearRidge{ drawNearRidge };
@@ -55,5 +57,7 @@ namespace ClaFi::PathArt
         SceneLayer m_mirroredNearRidge{ drawMirroredNearRidge };
         SceneLayer m_lakeShade{ drawLakeShade };
         SceneLayer m_shore{ drawShore };
+        SceneLayer m_mirroredShore{ drawMirroredShore };
+        WaterReflection m_reflection{}; // what the lake mirrors
     };
 }

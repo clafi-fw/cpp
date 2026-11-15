@@ -118,7 +118,8 @@ namespace ClaFi::PathArt
             const HeldRasterClip heldClip{};
             const IntRect whole = { 0, 0, size.x, size.y };
             m_mirrorCanvas->beginPaint(nullptr, whole);
-            m_mirrorCanvas->drawBitmap(m_still, {});
+            if (still)
+                m_mirrorCanvas->drawBitmap(m_still, {});
             moving(bandFrame(*m_mirrorCanvas, frame, top));
             m_mirrorCanvas->endPaint(nullptr, whole, mirrored);
         }
@@ -126,6 +127,7 @@ namespace ClaFi::PathArt
         const float bottom = top + static_cast<float>(size.y);
         const Color* source = mirrored->data();
         Color* target = m_rippled.data();
+        std::array<std::uint32_t, 256> scaleOfCoverage{}; // in 256ths, worked out once a row
         for (int row = 0; row != size.y; ++row)
         {
             const ColumnSpan span = m_waterSpans[static_cast<std::size_t>(row)];
@@ -136,27 +138,32 @@ namespace ClaFi::PathArt
             const int shift = static_cast<int>(std::lround(ripple.shift));
             const std::uint32_t rowOpacity = static_cast<std::uint32_t>(
                 std::clamp(ripple.opacity, 0.0f, 1.0f) * 256.0f);
+            for (std::uint32_t coverage = 0; coverage != scaleOfCoverage.size(); ++coverage)
+                scaleOfCoverage[coverage] = rowOpacity * coverage / 255;
 
             const std::size_t rowStart = static_cast<std::size_t>(row)
                 * static_cast<std::size_t>(size.x);
-            // Premultiplied, so a faded pixel has all four channels scaled alike.
-            for (int x = span.first; x <= span.last; ++x)
-            {
-                const std::size_t index = rowStart + static_cast<std::size_t>(x);
-                const int sourceX = x - shift;
-                Color& faded = target[index];
-                if (sourceX < 0 || sourceX >= size.x)
-                {
-                    faded = Color{ 0x00000000 };
-                    continue;
-                }
-                faded = source[rowStart + static_cast<std::size_t>(sourceX)];
-                const std::uint32_t scale = rowOpacity * m_waterCoverage[index] / 255;
-                faded.blue = static_cast<ColorByte>((faded.blue * scale) >> 8);
-                faded.green = static_cast<ColorByte>((faded.green * scale) >> 8);
-                faded.red = static_cast<ColorByte>((faded.red * scale) >> 8);
-                faded.alpha = static_cast<ColorByte>((faded.alpha * scale) >> 8);
-            }
+            const Color* sourceRow = source + rowStart;
+            Color* targetRow = target + rowStart;
+            const std::uint8_t* coverageRow = m_waterCoverage.data() + rowStart;
+            // Premultiplied, so all four channels scale alike: blue with red, green with alpha.
+            const auto scaled = [&](const Color color, const std::uint8_t coverage) {
+                const std::uint32_t pixel = std::bit_cast<std::uint32_t>(color);
+                const std::uint32_t scale = scaleOfCoverage[coverage];
+                const std::uint32_t blueRed = (((pixel & 0x00FF00FFu) * scale) >> 8) & 0x00FF00FFu;
+                const std::uint32_t greenAlpha = (((pixel >> 8) & 0x00FF00FFu) * scale)
+                    & 0xFF00FF00u;
+                return std::bit_cast<Color>(blueRed | greenAlpha);
+            };
+            // A column whose source lies past the band's side repeats that side's pixel.
+            const int firstInside = std::max(span.first, shift);
+            const int lastInside = std::min(span.last, size.x - 1 + shift);
+            for (int x = span.first; x <= span.last && x < firstInside; ++x)
+                targetRow[x] = scaled(sourceRow[0], coverageRow[x]);
+            for (int x = firstInside; x <= lastInside; ++x)
+                targetRow[x] = scaled(sourceRow[x - shift], coverageRow[x]);
+            for (int x = std::max(span.first, lastInside + 1); x <= span.last; ++x)
+                targetRow[x] = scaled(sourceRow[size.x - 1], coverageRow[x]);
         }
         canvas.drawBitmap(m_rippled, frame.toCanvas.transform({ 0.0f, top }));
     }
@@ -164,11 +171,13 @@ namespace ClaFi::PathArt
 
     // **The still part is drawn once into its image**, and each frame's mirror is that image with
     // the moving parts over it. A backend that cannot build the images draws the still mirror.
+    // With no still part the still image is left alone, for a reflection that has one.
     void WaterReflection::drawStrips(const SceneFrame& frame, const PixelPath& water,
         const Drawing& still, const Drawing& moving, const Ripples& ripples)
     {
         Canvas& canvas = frame.canvas;
-        if (!m_stillImageKept || !canvas.hasImage(k_stillImage))
+        const bool hasStill = static_cast<bool>(still);
+        if (hasStill && (!m_stillImageKept || !canvas.hasImage(k_stillImage)))
         {
             canvas.clearImage(k_stillImage);
             m_stillImageKept = canvas.hasImage(k_stillImage);
@@ -179,14 +188,15 @@ namespace ClaFi::PathArt
             }
         }
         canvas.clearImage(k_mirrorImage);
-        if (!m_stillImageKept || !canvas.hasImage(k_mirrorImage))
+        if ((hasStill && !m_stillImageKept) || !canvas.hasImage(k_mirrorImage))
         {
             drawStillMirror(frame, water, still, moving, ripples.opacity);
             return;
         }
         {
             const ScopedCanvasImage into{ canvas, k_mirrorImage };
-            canvas.drawImage(k_stillImage, 1.0f);
+            if (hasStill)
+                canvas.drawImage(k_stillImage, 1.0f);
             moving(frame);
         }
 
@@ -269,7 +279,8 @@ namespace ClaFi::PathArt
         }
 
         m_mirrorCanvas->beginPaint(nullptr, whole);
-        still(band);
+        if (still)
+            still(band);
         m_mirrorCanvas->endPaint(nullptr, whole, drawn);
         m_still = *drawn;
         m_rippled = Bitmap{ size };
@@ -329,7 +340,8 @@ namespace ClaFi::PathArt
             Canvas& canvas = frame.canvas;
             canvas.pushClip(water, &frame.toCanvas);
             canvas.pushOpacity(opacity);
-            still(frame);
+            if (still)
+                still(frame);
             moving(frame);
             canvas.popOpacity();
             canvas.popClip();

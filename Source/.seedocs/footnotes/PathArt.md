@@ -460,6 +460,10 @@ which on the CPU backend stops at the clip's rectangle only.
 of pixels, so they lay in as sharp as they were kept; drawn live, the part moves by `shift`
 exactly.
 
+**A frame fits the kept pixels** where it maps to pixels as the params do, or differs from that only
+by a whole number of pixels across and down - on the same CPU canvas or another, as
+WaterReflection's own. Where it does not, the part is drawn live.
+
 **A shifted layer uncovers a strip** at each edge it moves away from. The caller fills the strip,
 as Bot Talent fills it in the wall's and the floor's colours when the stage shakes.
 
@@ -497,8 +501,11 @@ of the reflection's own, kept with the water's coverage for one frame size and o
 other backend a kept image of the surface's, which a resize or a lost device empties. `moving` is
 drawn over them every frame.
 
-**A surface carries one reflection at a time.** Off the CPU it draws into the surface's kept images
-6 and 7, so a second reflection on the same surface would draw into the same two.
+**A surface keeps one reflection's still part at a time.** Off the CPU the still part lives in the
+surface's kept image 6 and each frame's mirror in image 7, so a second reflection with a still part
+on the same surface would draw over the first's. A reflection with nothing still passes an empty
+`still` and leaves image 6 alone - the Comet's lake does, so the Mill's kept mirror lives through a
+visit to it.
 
 ## WaterReflection draw
 
@@ -509,7 +516,8 @@ it began. Both ways below take each row's shift and shade from one formula.
 
 **On the CPU backend the rows are shifted in memory.** The mirror is drawn on a canvas of the
 reflection's own, each row moved and scaled by its shade and by the water's coverage, and the band
-goes in with one drawBitmap.
+goes in with one drawBitmap. A row moved past the band's side repeats that side's pixel there, so
+water that reaches the frame's edge stays mirrored to it.
 
 **On every other backend the rows are laid from kept images** - see IBackend drawImagePart. Image 6
 holds the still part. Each frame image 7 is cleared and given image 6 and the moving parts, and then
@@ -1188,8 +1196,11 @@ right, then from the right onto a peak on the left.
 behind the near ridge, its dust tail fanning out along the curve it came by and its ion tail
 running straight back. Where it lands, the sky behind the ridge lights up and fades.
 
-The lake shows everything above it upside down and dimmed, with ripples running across. Three
-shooting stars cross the sky in the quiet between the passes.
+**The lake mirrors everything above it** - see WaterReflection - dimmed, its rows rippling, with
+streaks of light running across. The whole mirror is drawn every frame: the stars twinkle in front
+of the far ridge, so nothing in it can be kept as a still part.
+
+Three shooting stars cross the sky in the quiet between the passes.
 
 ## CometPose
 

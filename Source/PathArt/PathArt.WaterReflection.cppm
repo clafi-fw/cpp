@@ -38,7 +38,7 @@ namespace ClaFi::PathArt
     public:
         // Drops the kept pixels, for a scene whose still parts or water have changed.
         void forget();
-        // `still` is drawn once and kept, `moving` every frame. See PathArt
+        // `still` is drawn once and kept, `moving` every frame; `still` may be empty. See PathArt
         void draw(const SceneFrame&, const PixelPath& water, const Drawing& still,
             const Drawing& moving, const Ripples&);
     private:
