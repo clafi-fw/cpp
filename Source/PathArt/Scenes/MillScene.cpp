@@ -753,11 +753,11 @@ namespace ClaFi::PathArt
         {
             const Color black{ 0xFF000000 };
             return {
-                .bodyTop = theme.millBodyTop,
-                .bodyBottom = theme.millBodyBottom,
-                .roofTop = theme.millRoofTop,
-                .roofBottom = theme.millRoofBottom,
-                .timber = theme.millTimber,
+                .bodyTop = theme.mill.bodyTop,
+                .bodyBottom = theme.mill.bodyBottom,
+                .roofTop = theme.mill.roofTop,
+                .roofBottom = theme.mill.roofBottom,
+                .timber = theme.mill.timber,
                 .bark = theme.chase.bark,
                 .barkShade = theme.chase.barkShade,
                 .stoneLight = theme.chase.stoneLight,
@@ -765,11 +765,11 @@ namespace ClaFi::PathArt
                 .stoneCrack = theme.chase.stoneCrack,
                 .sunlight = theme.sunDisk,
                 .glass = colorBetween(theme.skyBottom.fullyOpaque(), black, 0.45f),
-                .lamp = theme.windowLight,
+                .lamp = theme.mill.windowLight,
                 .shadow = theme.chase.shadow,
-                .wingFabric = theme.millWingFabric,
-                .wheel = theme.millWheel,
-                .water = theme.troughWater,
+                .wingFabric = theme.mill.wingFabric,
+                .wheel = theme.mill.wheel,
+                .water = theme.mill.troughWater,
                 .foam = theme.foam,
                 .smoke = colorBetween(theme.cloud, theme.skyBottom.fullyOpaque(), 0.25f)
             };

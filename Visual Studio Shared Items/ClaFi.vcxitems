@@ -653,6 +653,34 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WolfHeadSprite.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WolfSprite.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Sprites\WolfSprite.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.ArcticDawn.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.CalmNight.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.CherryBlossom.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.ClearDay.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.CyberpunkNight.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.DesertDusk.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.GoldenHour.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.HighNoon.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.LunarEclipse.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.MagicForest.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.Midnight.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.MidnightFantasy.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.NeonCityNight.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.NeonJungle.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.PaperSketch.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.PastelDream.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.Retro80s.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.SaharaHeat.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.SteampunkAdventure.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.StormyNight.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.SummerSunset.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.ToxicWaste.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.Twilight.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.UnderwaterRealm.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.VintageNoir.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.WarmOrangeFall.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.WinterFrost.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.WinterNight.cppm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\Source\Platform\Windows\Windows.Headers.h" />

@@ -108,6 +108,23 @@ namespace ClaFi::PathArt
         static constexpr std::size_t colorsNum() { return sizeof(ChaseTheme) / sizeof(Color); }
     };
 
+    // The colours of the mill and the parts fixed to it, which nothing else in a theme wears.
+    export struct MillTheme
+    {
+        Color bodyTop{};
+        Color bodyBottom{};
+        Color roofTop{};
+        Color roofBottom{};
+        Color timber{}; // the frames, the wings' stocks and hub, the trough and the wheel's axle
+        Color windowLight{}; // the lamp behind the windows, as strong as its opacity
+        Color wingFabric{};
+        Color wheel{};
+        Color troughWater{}; // what the trough pours onto the wheel
+    public:
+        // How many colours it holds, in a row with nothing between them.
+        static constexpr std::size_t colorsNum() { return sizeof(MillTheme) / sizeof(Color); }
+    };
+
     export struct SceneTheme
     {
         std::wstring_view name;
@@ -116,21 +133,17 @@ namespace ClaFi::PathArt
         Color cloud; // 8
         Color hillTop, hillBottom; // 9
         Color riverTop, riverBottom, riverWave, riverReflect, foam; // 11
-        Color millBodyTop, millBodyBottom, millRoofTop, millRoofBottom; // 16,
-        Color millWingFabric, millWheel; // 20
-        Color treeLeavesBase, reedStem, reedHead, lilyPad, lilyFlower, shadow; // 22
-        Color cowBody, cowSpots, cowSnout, cowDetail; // 28
-        Color wolfBody, wolfEar, wolfEye; // 32
+        Color treeLeavesBase, reedStem, reedHead, lilyPad, lilyFlower, shadow; // 16
+        Color cowBody, cowSpots, cowSnout, cowDetail; // 22
+        Color wolfBody, wolfEar, wolfEye; // 26
 
-        Color effectColor1{ 255, 255, 255 }; // 35
-        Color effectColor2{ 255, 255, 255 }; // 36
-        Color petal1, petal2, petal3; // 37, a flower wears one, falling petals the first two
-        Color windowLight; // 40, the lamp behind the mill's windows, as strong as its opacity
-        Color flock; // 41, the birds flying over the mill
-        Color motherDuckBody, motherDuckWing, motherDuckEye; // 42, the duck leading the ducklings
-        Color fish; // 45, the fish leaping from the pond
-        Color troughWater; // 46, what the trough pours onto the wheel
-        Color millTimber; // 47, the mill's frames, sail stocks, hub and trough, in wood
+        Color effectColor1{ 255, 255, 255 }; // 29
+        Color effectColor2{ 255, 255, 255 }; // 30
+        Color petal1, petal2, petal3; // 31, a flower wears one, falling petals the first two
+        Color flock; // 34, the birds flying over the mill
+        Color motherDuckBody, motherDuckWing, motherDuckEye; // 35, the duck leading the ducklings
+        Color fish; // 38, the fish leaping from the pond
+        MillTheme mill{};
         ChaseTheme chase{};
         // make sure to update colorsNum() when adding new colors
 
@@ -150,7 +163,10 @@ namespace ClaFi::PathArt
         Color* asArray() { return &skyTop; }
         const Color* asArray() const { return &skyTop; }
         const void* colorsEnd() const { return &hasRain; }
-        static constexpr std::size_t colorsNum() { return 47 + ChaseTheme::colorsNum(); }
+        static constexpr std::size_t colorsNum()
+        {
+            return 38 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
+        }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
         static constexpr std::size_t effectsNum() { return 9; }

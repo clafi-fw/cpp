@@ -118,13 +118,9 @@ the pointer over it, through animationTick().
 ## SceneTheme
 
 **One table of colours for every scene that offers themes**, and the effects that come with them.
-The fields up to effectColor2 are the mill's, and the sky, the sun, the clouds, the meadow - hillTop
-and hillBottom - and the trees serve ChaseScene as well; ChaseTheme holds what only the Chase draws.
-Every theme fills every field but windowLight.
-
-**windowLight is the lamp behind the mill's windows**, as strong as its opacity. A theme with no
-lamp lit leaves it out, so it stays transparent and the windows show their dark glass; a crossfade
-toward a theme with a lamp lights it by degrees.
+The fields up to effectColor2 are the Mill's, and the sky, the sun, the clouds, the meadow - hillTop
+and hillBottom - and the trees serve ChaseScene as well. MillTheme holds what only the mill wears,
+and ChaseTheme what only the Chase draws. Every theme fills every field.
 
 **effectColor1 and effectColor2 colour the weather, and their alpha is a strength.** Rain, snow and
 dust wear effectColor1; leaves wear the two by turns, and petals petal1 and petal2; a firefly is
@@ -136,9 +132,7 @@ scene gives it.
 **motherDuckBody, motherDuckWing and motherDuckEye dress the duck leading the ducklings**, who wear
 the rubber duck's duckLight and duckShade from ChaseTheme.
 
-**fish is the fish leaping from the pond, and troughWater what the trough pours onto the wheel.**
-The drops running down the wheel, the steam where the pour lands, the foam at the wheel's foot, the
-rings and the ducks' wakes are foam.
+**fish is the fish leaping from the pond.**
 
 **The sun and the moon take sunDisk and sunGlow** - see drawCelestial and drawCelestialGlow: a disc
 in a rim of its own light, and a glow twice as wide as it is tall; the moon shows three craters as
@@ -168,6 +162,24 @@ the air's colour. Nearer layers take less of it, farther ones more.
 - 1 turns every layer the scene hazes into the air's colour.
 
 A crossfade blends it with the effects.
+
+## MillTheme
+
+**The colours only the mill wears**: its walls, its roof, its timber, the lamp behind its windows,
+its wings' cloth, the water wheel and what the trough pours. Its plinth, its chimney and its door
+take ChaseTheme's stone and bark, which the Chase's boulder and trunks wear too. Every theme fills
+every field but windowLight.
+
+**timber is the mill's wood**: the window and door frames, the wings' stocks and hub, the wheel's
+axle and the trough.
+
+**windowLight is the lamp behind the mill's windows**, as strong as its opacity. A theme with no
+lamp lit leaves it out, so it stays transparent and the windows show their dark glass; a crossfade
+toward a theme with a lamp lights it by degrees.
+
+**troughWater is what the trough pours onto the wheel.** The drops running down the wheel, the steam
+where the pour lands, the foam at the wheel's foot, the rings and the ducks' wakes are SceneTheme's
+foam.
 
 ## ChaseTheme
 
@@ -200,9 +212,8 @@ they are drawn from treeLeavesBase, crownLight and crownMiddle.
 
 **Every trunk is the stumps' bark.** The branch run's tree is drawn in bark over barkShade, with its
 branch in barkShade. The far hills' trees take bark, hazed with them, and the Mill's pines take it
-too, from `chase`. Each is drawn as a stump without its slice - see drawTrunk. The Mill's timber -
-its sails' stocks, the hub, the wheel's axle, the trough and the window and door frames - is
-millTimber; its footbridge is bough, as the Chase's signpost is.
+too, from `chase`. Each is drawn as a stump without its slice - see drawTrunk. The Mill's
+footbridge is bough, as the Chase's signpost is; the mill's own timber is in MillTheme.
 
 - A wolf's head and ears stand against the mountains; a hare stays below the far hills' top. Both
   are measured as they are drawn, hazed.

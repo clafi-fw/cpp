@@ -3643,6 +3643,32 @@ and the bridge was drawn in its clear bough while the trees and tufts beside it 
 at the parallax of its foot's row, as drawFir and drawBroadleaf do, and its mirror in the pond with
 it.
 
+Then (Oj, 2026-11-16 01:09), having asked what the chimney, the foundation and the bridge are drawn
+with and whether millTimber is worn outside the mill: "Move millXXX fields used for the mill body
+and attached parts into the new struct. Finish moving themes into their files". Asked about
+windowLight and troughWater, worn by nothing but the mill as well, he picked moving them too.
+MillTheme holds bodyTop, bodyBottom, roofTop, roofBottom, timber, windowLight, wingFabric, wheel and
+troughWater, in TimberMillColors' order, and SceneTheme carries it as `mill`, just before `chase`,
+so the colours still stand in one row from skyTop to the end of `chase`: colorsNum() is 38 +
+MillTheme::colorsNum() + ChaseTheme::colorsNum(), 172 as before. The plinth, the chimney and the
+door stay on the Chase's stone and bark, and the footbridge on bough, which the Chase draws too.
+
+Oj had moved Clear Day and High Noon into partitions of ClaFi.PathArt.Themes, one file each under
+Themes/, PathArt.Themes.<Name>.cppm, and given Clear Day new mill colours on the way. The other 26
+followed, among them the four allThemes leaves out - Pastel Dream, Neon Jungle, Desert Dusk and
+Retro 80s - as every interface partition has to be exported by the primary interface.
+PathArt.Themes.cppm keeps the export imports, in allThemes' order with those four after them, then
+allThemes and getTheme. In every theme the mill's colours moved into a `.mill` block before
+`.chase`, each line keeping its comment; the blank lines Oj had put around them in Clear Day and
+High Noon went with them, and High Noon's file lost a line of four spaces after the namespace's
+brace. In the shared items the 28 files stand together after PathArt\Sprites, Clear Day's and High
+Noon's moved there from where Visual Studio had put them, and the filters have a PathArt\Themes
+folder.
+
+A dump of every colour of all 28 themes by name, with the span from asArray() to colorsEnd(), came
+out the same before and after, and the Mill, the Chase and the Comet the same to the byte in the 24
+listed themes.
+
 ## MillScene
 
 **Land and water redrawn** (Oj, 2026-11-14: "The Mill scene now is the most boring and cheap"). An
