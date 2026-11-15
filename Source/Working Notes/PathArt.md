@@ -1634,6 +1634,14 @@ quarter. In the container's harness at 1920 x 1080 the frames cost the same with
 cores: the whole globe with Antarctica at night about 16 ms, the lowest view at night about 30. A
 whole-globe view, 6 notches up, shows Antarctica half in the night at 90 seconds.
 
+Then (Oj, 15:41) "Make the Earth night darker". Shown, in both looks, the moonlight dimmed to 0.75,
+0.55 and 0.4 of its Okhsl lightness with the deep night at 0.92, 0.94 and 0.96 of opacity; Oj picked
+the darkest. Moonlight is 1A202E, where it was 46536E, and the night's last stop 0.96, where it was
+0.9. k_moonlitShareOfNight keeps 0.125 / 0.9, so deep in the night the moonlight is 0.13 of the
+view, of a dimmer colour; the clouds, drawn toward the moonlight by the night's opacity, go to a
+dark blue-grey; ice, under k_nightOverWhite's 0.82 of 0.96, keeps a fifth of its white, where it
+kept a quarter. The towns' lights are laid after the night and keep their strength.
+
 ## ChaseScene
 
 **The camera stops differently in the two episodes**: over 1.4 seconds after the log, within 0.4

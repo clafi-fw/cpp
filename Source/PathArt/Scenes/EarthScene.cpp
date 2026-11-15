@@ -44,7 +44,7 @@ namespace ClaFi::PathArt
         constexpr Color FlatSeaRidge{ 0xFF1A5BA6 };
         constexpr Color FlatSeaTrench{ 0xFF082C66 };
         constexpr Color Cloud{ 0xCAFFFFFF }; // where a layer covers the sky whole
-        constexpr Color Moonlight{ 0xFF46536E }; // the night's light on the clouds and the ground
+        constexpr Color Moonlight{ 0xFF1A202E }; // the night's light on the clouds and the ground
         constexpr Color Night{ 0xFF020614 };
         constexpr Color NightBlue{ 0xFF030818 };
         constexpr Color SeaGlint{ 0xFFCFE8FF };
@@ -147,7 +147,7 @@ namespace ClaFi::PathArt
         constexpr float k_whitestLight{ 4.0f };
         // How white the lights get, as a share of CityCore.
         constexpr float k_whitestShare{ 0.7f };
-        // The moonlight's share of the night over the ground: deep in it, an eighth of the view.
+        // The moonlight's share of the night over the ground: deep in it, 0.13 of the view.
         constexpr float k_moonlitShareOfNight{ 0.125f / 0.9f };
         // The night's opacity over black ground, as a share of its shades' own.
         constexpr float k_nightOverBlack{ 1.16f };
@@ -977,7 +977,7 @@ namespace ClaFi::PathArt
             return { {
                 { .position = 0.0f, .color = EarthSceneColors::Night.withOpacity(0.0f) },
                 { .position = 0.35f, .color = EarthSceneColors::NightBlue.withOpacity(0.55f) },
-                { .position = 1.0f, .color = EarthSceneColors::Night.withOpacity(0.9f) }
+                { .position = 1.0f, .color = EarthSceneColors::Night.withOpacity(0.96f) }
             } };
         }
 
@@ -1019,8 +1019,8 @@ namespace ClaFi::PathArt
 
         // **The night's colours over the land and the sea, from day to deep night**, premultiplied
         // as a band's pixels are: each stop's colour drawn toward the moonlight, at its own
-        // opacity. Deep in the night they hide nine tenths of the ground before nightOverGround
-        // weighs them by it, and the moonlight is an eighth.
+        // opacity. Deep in the night they hide 0.96 of the ground before nightOverGround weighs
+        // them by it, and the moonlight is 0.13 of the view.
         [[nodiscard]] std::vector<Color> nightShades()
         {
             const std::array<GradientStop, 3> stops = nightStops();

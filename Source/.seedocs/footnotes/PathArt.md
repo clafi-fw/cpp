@@ -1289,13 +1289,13 @@ The stars drift a fifth of the frame's width each orbit - see StarField drift.
 
 **The night falls by the sunlight on each pixel of the globe**: it starts at a sunlight of 0.03 and
 is whole at -0.13, so the terminator curves as it does at any altitude, and the land, the sea and
-the clouds darken by the same depth, toward a moonlit blue-grey. The night lies thicker over darker
+the clouds darken by the same depth, toward a dim moonlit blue. The night lies thicker over darker
 ground and thinner over lighter, by the ground's luma: deep in it, black ground is hidden whole and
-white ground keeps a quarter of its colour, so ice shows through as the moonlit clouds do. The
-moonlight is an eighth. The towns' lights switch on one by one as the sunlight falls from -0.01 to
--0.08, the densest first. The atmosphere along the limb is blue by day, orange at dusk and dark at
-night, by the sunlight on the limb, which rises evenly across it toward the Sun: three rings, each
-fading out to both sides.
+white ground keeps a fifth of its colour, so ice shows through as the moonlit clouds do. The
+moonlight is 0.13 of the view. The towns' lights switch on one by one as the sunlight falls from
+-0.01 to -0.08, the densest first. The atmosphere along the limb is blue by day, orange at dusk and
+dark at night, by the sunlight on the limb, which rises evenly across it toward the Sun: three
+rings, each fading out to both sides.
 
 **The towns' lights are countless tiny lights gathered into sprawls** - see NightLights. Each
 pixel reads the lights on the ground under it where the land covers it, and they whiten where they
