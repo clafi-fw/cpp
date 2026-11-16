@@ -4580,6 +4580,21 @@ wolfBody too and lies on the same shadow. The Chase came out the same to the byt
 Then (Oj, 2026-11-16) "Remove the peeking wolf's ear color - it has one coat color". SceneTheme
 carries no wolfEar and PeekingWolfColors no ear: both ears are drawn in wolfBody.
 
+Then (Oj, 2026-11-16) "Can you extend the river up to the mountains, with a left turn?" Of three
+courses Oj picked B: k_upstream climbs from 0.39 / 0.572 up the far hills' dip to a bend at 0.414
+and hooks left to 0.393 / 0.5472, on the hills' crest under the mountains. The bend pinches:
+streamEdges sets each edge point square to the chord between its neighbours, and at a bend tighter
+than the river is wide the inner edge's points cross into a sharp corner while the outer edge rounds
+wide. Widening the upper reach, then the bend alone, kept the pinch; a round bend of five points on
+a 9-pixel arc evened it out. Oj (14:15) "Keep B. Mask the sharp protrusion with cat tails and tall
+grass", then (14:24) "More to left, don't clog the water".
+
+drawBendReedBed stands 34 blades and three cattails on the land inside the bend, over that land's
+sharp tip, hazed for their distance and 1.25 times the size things are there. It sways, and is drawn
+each frame after the shore cattails: in m_land the reflections laid over the river each frame would
+cover the blades and heads that stand over the water. Its spread is in shares of the frame's width,
+as the river's is, so it keeps to that land at 2560 by 1080 and 1280 by 1024 as well.
+
 To watch: the gator and the cow move with `sin(t * 15)` and `sin(t * 30)`, which are not whole turns
 of a 0 to 1 cycle, so they jump when the cycle wraps. The water lily bobs one and a half times a
 cycle, and jumps the same way.
