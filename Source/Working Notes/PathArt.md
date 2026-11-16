@@ -4595,6 +4595,17 @@ each frame after the shore cattails: in m_land the reflections laid over the riv
 cover the blades and heads that stand over the water. Its spread is in shares of the frame's width,
 as the river's is, so it keeps to that land at 2560 by 1080 and 1280 by 1024 as well.
 
+Then (Oj, 14:38) four marks for swamp patches on a 3840 by 1975 frame: each end of the bridge and
+either bank of the reach above it. The bend's bed is one of five in k_reedBeds, drawn by
+drawReedBeds; a bed's seed sets its blades and its sway apart, and every other bed has its cattails
+flipped. The two at the bridge are 0.55 of the size at their distance, where at full size they hid
+most of the bridge's ends. Then (14:44) "The placement's right, lack of reflections is not":
+drawMovingReflections draws the beds mirrored about their lowest roots, as it does the shore
+cattails about their feet. The reflection is cut to the water, so the near bank's bed shows none,
+and the bridge's beds showed strips at the water's edges. Then (14:51) the bridge's right bed moved
+from 0.3227 to 0.3148 of the width, still over the bridge's end, its left side at the water's edge
+and its reflection under the bridge.
+
 To watch: the gator and the cow move with `sin(t * 15)` and `sin(t * 30)`, which are not whole turns
 of a 0 to 1 cycle, so they jump when the cycle wraps. The water lily bobs one and a half times a
 cycle, and jumps the same way.

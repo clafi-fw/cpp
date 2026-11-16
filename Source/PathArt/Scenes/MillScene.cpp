@@ -145,12 +145,23 @@ namespace ClaFi::PathArt
             float swayPhase;
         };
 
-        // A cattail in the reed bed at the river's far bend.
+        // A cattail in a reed bed.
         struct ReedBedCattail
         {
-            float offsetShare; // of the frame's width, right of the bed's middle
+            float offset; // in its bed's half widths, right of the bed's middle
             float height; // in units at its distance
             float swayPhase;
+        };
+
+        // Tall grass and the cattails of k_reedBedCattails on a bank of the river.
+        struct ReedBed
+        {
+            FloatPoint share; // its middle at its roots
+            float scale; // against the size of things at its distance
+            float halfWidthShare; // of the frame's width
+            int bladeCount;
+            float seed; // sets its blades apart from another bed's, and its sway
+            bool cattailsFlipped; // its cattails stand mirrored across its middle
         };
 
         // A cattail's stem, which its leaves take, and its head.
@@ -390,16 +401,17 @@ namespace ClaFi::PathArt
         };
         // The cattails across the pond against the near bank's, for being further off.
         constexpr float k_shoreCattailScale{ 0.7f };
-        // The reed bed's middle at its roots, on the land inside the river's far bend.
-        constexpr FloatPoint k_bendReedBedShare{ 0.4097f, 0.5552f };
-        // The reed bed against the size of things at its distance, so it hides that land's tip.
-        constexpr float k_bendReedBedScale{ 1.25f };
-        constexpr int k_bendReedBladeCount{ 34 };
-        constexpr float k_bendReedBedHalfWidthShare{ 0.0025f }; // of the frame's width
-        constexpr std::array<ReedBedCattail, 3> k_bendCattails{
-            ReedBedCattail{ -0.0011f, 78.0f, 0.0f },
-            ReedBedCattail{ 0.00036f, 92.0f, 1.3f },
-            ReedBedCattail{ 0.0016f, 70.0f, 2.6f }
+        constexpr std::array<ReedBed, 5> k_reedBeds{
+            ReedBed{ { 0.4097f, 0.5552f }, 1.25f, 0.0025f, 34, 0.0f, false }, // the far bend's tip
+            ReedBed{ { 0.251f, 0.6724f }, 0.55f, 0.012f, 40, 1.0f, true }, // the bridge's left end
+            ReedBed{ { 0.3148f, 0.6714f }, 0.55f, 0.012f, 40, 2.0f, false }, // its right end
+            ReedBed{ { 0.337f, 0.5843f }, 1.0f, 0.0065f, 34, 3.0f, true }, // the reach's far bank
+            ReedBed{ { 0.3765f, 0.5985f }, 1.0f, 0.0083f, 34, 4.0f, false } // the reach's near bank
+        };
+        constexpr std::array<ReedBedCattail, 3> k_reedBedCattails{
+            ReedBedCattail{ -0.44f, 78.0f, 0.0f },
+            ReedBedCattail{ 0.144f, 92.0f, 1.3f },
+            ReedBedCattail{ 0.64f, 70.0f, 2.6f }
         };
         constexpr std::array<BladeRun, 2> k_bladeRuns{
             BladeRun{ -0.02f, 0.36f, 120, 131.0f },
@@ -502,8 +514,10 @@ namespace ClaFi::PathArt
         // The cattails across the pond, each mirrored about its foot when `mirrored`.
         void drawShoreCattails(const SceneFrame&, const SceneTheme&, float cycleTime,
             bool mirrored);
-        // Tall grass and cattails on the land inside the river's far bend, hazed for its distance.
-        void drawBendReedBed(const SceneFrame&, const SceneTheme&, float cycleTime);
+        // The reed beds on the river's banks, each mirrored about its roots when `mirrored`.
+        void drawReedBeds(const SceneFrame&, const SceneTheme&, float cycleTime, bool mirrored);
+        void drawReedBed(const SceneFrame&, const SceneTheme&, const ReedBed&, float cycleTime,
+            bool mirrored);
     }
 
     void MillScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
@@ -636,7 +650,7 @@ namespace ClaFi::PathArt
         drawEffectLayer(frame, theme(), cycleTime, 1);
 
         drawShoreCattails(frame, theme(), cycleTime, false);
-        drawBendReedBed(frame, theme(), cycleTime);
+        drawReedBeds(frame, theme(), cycleTime, false);
         const TimberMillPose mill = millPoseOf(frame, cycleTime);
         fillOval(frame, { mill.base.x + 10.0f * mill.size, mill.base.y + 2.0f * mill.size },
             80.0f * mill.size, 6.0f * mill.size, SolidColor{ theme().shadow.faded(0.8f) });
@@ -1567,6 +1581,7 @@ namespace ClaFi::PathArt
             // Mirrored about its feet, the cow shows where the water reaches its reflection.
             drawPosedCow(mirroredAbout(frame, cow.pose.foot.y), cow.pose, cowColorsOf(theme));
             drawShoreCattails(frame, theme, cycleTime, true);
+            drawReedBeds(frame, theme, cycleTime, true);
             if (!ducks)
                 return;
             for (std::size_t i = 0; i != ducks->size(); ++i)
@@ -1985,28 +2000,40 @@ namespace ClaFi::PathArt
             drawRow(k_farShoreCattails, k_farShore);
         }
 
-        void drawBendReedBed(const SceneFrame& frame, const SceneTheme& theme,
-            const float cycleTime)
+        void drawReedBeds(const SceneFrame& frame, const SceneTheme& theme, const float cycleTime,
+            const bool mirrored)
         {
-            const FloatPoint middle = pointAt(frame, k_bendReedBedShare);
+            for (const ReedBed& bed : k_reedBeds)
+                drawReedBed(frame, theme, bed, cycleTime, mirrored);
+        }
+
+        void drawReedBed(const SceneFrame& frame, const SceneTheme& theme, const ReedBed& bed,
+            const float cycleTime, const bool mirrored)
+        {
+            const FloatPoint middle = pointAt(frame, bed.share);
             const float parallax = parallaxAt(frame, middle.y);
-            const float scale = k_bendReedBedScale * sizeAt(frame, middle.y);
+            const float scale = bed.scale * sizeAt(frame, middle.y);
+            const float halfWidth = bed.halfWidthShare * frame.width;
+            const float rootsDepth = 6.0f * scale; // how far under its middle a blade's roots go
+            // Mirrored about its lowest roots, where the water meets it.
+            const SceneFrame drawing = mirrored ? mirroredAbout(frame, middle.y + rootsDepth)
+                : frame;
             const float swayPhase = cycleTime * k_2Pi * 8.0f;
-            ScatteredShapes lightBlades{ frame,
+            ScatteredShapes lightBlades{ drawing,
                 SolidColor{ hazed(theme, theme.grassBlade.light, parallax) } };
-            ScatteredShapes darkBlades{ frame,
+            ScatteredShapes darkBlades{ drawing,
                 SolidColor{ hazed(theme, theme.grassBlade.dark, parallax) } };
-            for (int i = 0; i != k_bendReedBladeCount; ++i)
+            for (int i = 0; i != bed.bladeCount; ++i)
             {
                 // From -1 at the bed's left end to 1 at its right.
-                const float across = pseudoRandom(i, 61.0f) * 2.0f - 1.0f;
-                const float x = middle.x + across * k_bendReedBedHalfWidthShare * frame.width;
-                const float y = middle.y + pseudoRandom(i, 62.0f) * 6.0f * scale;
+                const float across = pseudoRandom(i, 61.0f + bed.seed) * 2.0f - 1.0f;
+                const float x = middle.x + across * halfWidth;
+                const float y = middle.y + pseudoRandom(i, 62.0f + bed.seed) * rootsDepth;
                 // The blades lower toward the bed's ends and lean out over them.
-                const float height = (34.0f + 34.0f * pseudoRandom(i, 63.0f))
+                const float height = (34.0f + 34.0f * pseudoRandom(i, 63.0f + bed.seed))
                     * (1.0f - 0.35f * std::abs(across)) * scale;
-                const float lean = (across * 14.0f + (pseudoRandom(i, 64.0f) - 0.5f) * 10.0f)
-                    * scale;
+                const float lean = (across * 14.0f
+                    + (pseudoRandom(i, 64.0f + bed.seed) - 0.5f) * 10.0f) * scale;
                 const float sway = std::sin(swayPhase + static_cast<float>(i)) * 3.0f * scale;
                 const float tipX = x + lean + sway;
                 PixelPath& blade = i % 3 == 0 ? darkBlades.next() : lightBlades.next();
@@ -2021,14 +2048,16 @@ namespace ClaFi::PathArt
                 hazed(theme, theme.reedStem, parallax),
                 hazed(theme, theme.reedHead, parallax)
             };
-            for (const ReedBedCattail& cattail : k_bendCattails)
+            const float cattailSide = bed.cattailsFlipped ? -1.0f : 1.0f;
+            for (const ReedBedCattail& cattail : k_reedBedCattails)
             {
-                const float sway = std::sin(cycleTime * k_2Pi * 7.0f + cattail.swayPhase);
+                const float sway = std::sin(cycleTime * k_2Pi * 7.0f + cattail.swayPhase
+                    + bed.seed);
                 const FloatPoint foot = {
-                    middle.x + cattail.offsetShare * frame.width,
+                    middle.x + cattailSide * cattail.offset * halfWidth,
                     middle.y + 3.0f * scale
                 };
-                drawCattail(frame, cattailColors, foot, scale, cattail.height, sway);
+                drawCattail(drawing, cattailColors, foot, scale, cattail.height, sway);
             }
             lightBlades.draw();
         }
