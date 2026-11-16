@@ -4669,3 +4669,8 @@ grass, the reeds, the stones and the shadow together, the flowers' heart by the 
 butterfly's wings after them, and the duck colours after the mother duck. duckBeakShade, which only
 the rubber duck wears, came along so the duck's colours stay together. The Chase's helpers that draw
 with them take the SceneTheme and keep a `chase` reference for the Chase's own colours.
+
+Then (Oj, 13:30) "drop the night swap": by night the Mill's meadow tufts turned into the meadow's
+own colour a shade darker, which left them dim marks where the Chase's lawn tufts shine. They keep
+the blades' shades by night too, hazed and faded by depth band, and each theme's grass is already
+set to show on its own meadow.

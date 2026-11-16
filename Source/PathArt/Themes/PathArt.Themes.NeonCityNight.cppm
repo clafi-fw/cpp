@@ -36,7 +36,7 @@ namespace ClaFi::PathArt::Themes
                 .middle = 0xFF48A353,
                 .light = 0xFF61C362
             },
-            .reedStem = 0xFF222423,
+            .reedStem = 0xFF357339,
             .reedHead = 0xFFFF00FF,
             .stoneLight = 0xFFAFADC9,
             .stoneDark = 0xFF72708A,

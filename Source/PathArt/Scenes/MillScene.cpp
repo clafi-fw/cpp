@@ -1326,17 +1326,11 @@ namespace ClaFi::PathArt
                 const float bandMiddle = bandTop + bandDepth * 0.5f;
                 const float nearness = (bandMiddle - groundY) / (frame.height - groundY);
                 const float parallax = parallaxAt(frame, bandMiddle);
-                // By night a tuft is the field a shade darker, so the day's greens do not shine.
-                const Color land = landAt(frame, theme, bandMiddle);
                 for (std::size_t kind = 0; kind != tuftColors.size(); ++kind)
                 {
-                    const Color nightColor = colorBetween(land, Color{ 0xFF000000 },
-                        0.2f + 0.1f * static_cast<float>(kind));
-                    const Color tuftColor = colorBetween(tuftColors[kind], nightColor,
-                        theme.hasStars);
+                    const Color tuftColor = hazed(theme, tuftColors[kind], parallax);
                     const float tuftAlphaShare = 0.85f + 0.15f * nearness;
-                    ScatteredShapes tufts{ frame,
-                        SolidColor{ hazed(theme, tuftColor, parallax).faded(tuftAlphaShare) },
+                    ScatteredShapes tufts{ frame, SolidColor{ tuftColor.faded(tuftAlphaShare) },
                         std::max(1.0f, 1.8f * nearness * frame.unit) };
                     for (int i = static_cast<int>(kind); i < k_meadowTufts; i += 3)
                     {
