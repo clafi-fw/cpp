@@ -49,7 +49,7 @@ namespace ClaFi::PathArt::Themes
             .wolfBody = 0xFF503D2B,
             .wolfEye = 0xFFFFFF00,
             .effectColor1 = 0xFF8B5A2B,
-            .effectColor2 = 0xFFFFFFFF,
+            .effectColor2 = 0xFFF9F4F0,
             .petal1 = 0xFFFEF1E2,
             .petal2 = 0xFFFCD7D3,
             .petal3 = 0xFFEAD6ED,

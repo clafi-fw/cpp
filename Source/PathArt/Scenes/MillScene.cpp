@@ -357,7 +357,7 @@ namespace ClaFi::PathArt
             { 0.87f, 0.3f, 1.0f, 0.9f, 0.74f, 0.86f, 6 },
             { 1.0f, 0.4f, 1.3f, 1.0f, 0.86f, 0.97f, 4 }
         } };
-        // More than the 7 an effect reads past its own seed, so no two layers share a place.
+        // More than the 9 an effect reads past its own seed, so no two layers share a place.
         constexpr float k_effectSeedStep{ 10.0f };
         // The story's length in its own seconds, two cycles of 40.
         constexpr float k_storySeconds{ 80.0f };

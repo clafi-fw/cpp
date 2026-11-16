@@ -49,7 +49,7 @@ namespace ClaFi::PathArt::Themes
             .wolfBody = 0xFF3E2F20,         // Wolf body — dark gray (metallic tint)
             .wolfEye = 0xFFFFA07A,          // Eyes — glowing peach (mechanical implants)
             .effectColor1 = 0xFF7B4630,     // Rust brown (the blown dust)
-            .effectColor2 = 0xFFCC9966,     // Effect: puffs of steam and smoke periodically released; rare sparks
+            .effectColor2 = 0xFFF9F4F2,
             .petal1 = 0xFFECE6E2,
             .petal2 = 0xFFF1D6D6,
             .petal3 = 0xFFE0D6E4,

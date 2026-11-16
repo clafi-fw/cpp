@@ -614,19 +614,20 @@ namespace ClaFi::PathArt
             float parallax{}; // its share of the camera's speed
             float share{}; // its share of the weather's drops, flakes, leaves and streaks
         };
-        // From the far hills to the trail.
+        // From behind the trail to the front grass, equally dense at their sizes.
         constexpr std::array<WeatherLayer, 4> k_weatherLayers{
-            WeatherLayer{ k_hillParallax, 0.4f },
-            WeatherLayer{ 0.4f, 0.28f },
-            WeatherLayer{ 0.7f, 0.2f },
-            WeatherLayer{ 1.0f, 0.12f }
+            WeatherLayer{ 0.4f, 0.4f },
+            WeatherLayer{ 0.7f, 0.27f },
+            WeatherLayer{ 1.0f, 0.19f },
+            WeatherLayer{ 1.35f, 0.14f }
         };
-        constexpr std::size_t k_trailWeatherLayer{ k_weatherLayers.size() - 1 };
-        constexpr float k_hillWeatherOpacity{ 0.6f }; // the weather's strength on the far hills
+        constexpr std::size_t k_frontWeatherLayer{ k_weatherLayers.size() - 1 };
+        constexpr std::size_t k_trailWeatherLayer{ k_frontWeatherLayer - 1 };
+        constexpr float k_hillWeatherOpacity{ 0.6f }; // the weather's strength at the hills' depth
         constexpr float k_trailWeatherOpacity{ 0.85f }; // the weather's strength on the trail
         // Units a weather layer's tiles repeat near, before periodNear fits them to the cycle.
         constexpr float k_weatherWantedPeriod{ 1000.0f };
-        // More than the 7 an effect reads past its own seed, so no two layers share a place.
+        // More than the 9 an effect reads past its own seed, so no two layers share a place.
         constexpr float k_weatherSeedStep{ 10.0f };
     }
 
@@ -1290,6 +1291,8 @@ namespace ClaFi::PathArt
             frame.height);
         drawVergeRow(frame, theme, time, groundY, closeness, true);
         drawFrontGrass(frame, theme, travel);
+        drawWeatherLayer(frame, theme, time.cycleTime, travel, k_frontWeatherLayer, groundY,
+            frame.height);
     }
 
     void ChaseScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const

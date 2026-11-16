@@ -123,10 +123,10 @@ its grass, the trees, the reeds, the stones, the flowers - and what else the Mil
 its cow, its wolf, its birds, its ducks and its fish. MillTheme holds what only the mill wears, and
 ChaseTheme what only the Chase draws. Every theme fills every field.
 
-**effectColor1 and effectColor2 colour the weather, and their alpha is a strength.** Rain, snow and
-dust wear effectColor1; leaves wear the two by turns, and petals petal1 and petal2; a firefly is
-effectColor1 in a glow of effectColor2. Each is drawn at its colour's alpha times the opacity the
-scene gives it.
+**effectColor1 and effectColor2 colour the weather, and their alpha is a strength.** Rain and snow
+wear effectColor1; leaves wear the two by turns, and petals petal1 and petal2; a streak of dust
+takes a colour at random between the two; a firefly is effectColor1 in a glow of effectColor2. Each
+is drawn at its colour's alpha times the opacity the scene gives it.
 
 **flock is the birds flying across the mill's sky**, a colour of their own beside the Chase's crow.
 
@@ -1495,7 +1495,7 @@ colours; the rest is the theme's ChaseTheme.
 - The theme's fireflies keep to the far hills' layer: behind the trail and the runners, smaller,
   moving with the hills, and hazed as the hills are.
 - The theme's rain, snow, falling leaves or petals and dust are shared out over four layers, from
-  the far hills to the trail - see ChaseScene drawWeatherLayer.
+  between the far hills and the trail to the front grass - see ChaseScene drawWeatherLayer.
 - A rainy theme's lightning strikes behind the mountains, three times each time the weather comes
   round, and its flash lights the sky above the ground line.
 - The theme's stars come out over the sky. Stars, fireflies and weather come round twice a cycle.
@@ -1533,26 +1533,34 @@ comes.
 
 ## ChaseScene drawWeatherLayer
 
-**The theme's weather is shared out over four layers**, at 0.2, 0.4, 0.7 and the whole of the
-camera's speed: the far hills', two between, and the trail's. They hold 0.4, 0.28, 0.2 and 0.12 of
-its drops, flakes, leaves and streaks, each share spread evenly over the area its layer covers.
+**The theme's weather is shared out over four layers**, at 0.4, 0.7, the whole and 1.35 of the
+camera's speed: two between the far hills and the trail, the trail's, and the front grass's. They
+hold 0.4, 0.27, 0.19 and 0.14 of its drops, flakes, leaves and streaks, each share spread evenly
+over the area its layer covers.
 
-**One wind blows the dust and one speed of falling brings the rest down.** A layer's weather moves
-as many times faster than the far hills' as the layer itself does, so the trail's falls and blows
-five times as fast as the hills'. Each layer's pace is rounded so its weather comes round a whole
-number of times a cycle, and the cycle ends where it began.
+**One wind blows the dust and one speed of falling brings the rest down.** A layer's weather falls
+and blows in step with its share of the camera's speed, so the trail's moves two and a half times as
+fast as the layer's at 0.4. Each layer's pace is rounded so its weather comes round a whole number
+of times a cycle, and the cycle ends where it began.
 
-**A nearer layer is drawn larger and stronger** - 0.6 of the size and strength on the far hills,
-the whole size and 0.85 of the strength on the trail. The weather falls against the sky as well as
-the scenery, so it is drawn fainter with the distance rather than hazed.
+**A nearer layer is drawn larger and stronger.** Size and strength grow from 0.6 of each at the far
+hills' depth to the whole size and 0.85 of the strength on the trail, and on at the same rate: the
+front grass's layer is drawn at 1.18 of the size and 0.96 of the strength. The weather falls against
+the sky as well as the scenery, so it is drawn fainter with the distance rather than hazed.
+
+**The shares keep the weather equally dense at every depth.** A layer's share times the square of
+the size it draws at is the same for all four, so a farther layer's smaller pieces stand as thick as
+a nearer one's. A layer added or moved takes its share by that rule.
 
 **Each layer is drawn over its own scenery.**
-- The far hills' layer is drawn over the hills, and the two between follow it. All three stand
-  behind the ground and reach down to the ground line.
+- The two layers between are drawn over the far hills. They stand behind the ground and reach down
+  to the ground line.
 - The trail's layer is drawn over the trail, the runners and their daze stars, and under the near
   verge and the front grass. It reaches the bottom of the frame.
+- The front grass's layer is drawn over the front grass, nearest the camera, down to the bottom of
+  the frame.
 
-The theme's fireflies keep to the far hills' layer, and its lightning strikes behind the mountains.
+The theme's fireflies keep to the far hills, and its lightning strikes behind the mountains.
 
 ## ChaseScene drawBackdrop
 

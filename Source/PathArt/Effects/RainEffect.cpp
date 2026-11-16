@@ -21,7 +21,7 @@ namespace ClaFi::PathArt
         const float tilt = 0.15f;
         const float s = std::sin(tilt);
         const float c = std::cos(tilt);
-        const SolidColor drop{ rain.color.faded(rain.opacity * 0.5f) };
+        const SolidColor drop{ rain.color.faded(rain.opacity * 0.25f) };
         for (int i = 0; i < rain.count; ++i)
         {
             const float x = pseudoRandom(i, rain.seed) * w;

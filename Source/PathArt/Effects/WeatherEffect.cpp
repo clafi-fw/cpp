@@ -43,7 +43,8 @@ namespace ClaFi::PathArt
         });
         drawBlowingDust(frame, cycleTime, BlowingDust{
             .opacity = weather.dust * weather.opacity,
-            .color = weather.color1,
+            .color1 = weather.color1,
+            .color2 = weather.color2,
             .count = countOf(BlowingDust{}.count),
             .pace = weather.windPace,
             .seed = weather.seed

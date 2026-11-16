@@ -3669,6 +3669,28 @@ A dump of every colour of all 28 themes by name, with the span from asArray() to
 out the same before and after, and the Mill, the Chase and the Comet the same to the byte in the 24
 listed themes.
 
+Then (Oj, 2026-11-16 18:14) "why is chase dust much less visible?", and (18:15) "especially the
+black one here", of Vintage Noir's two-tone dust. Against the mill, both at 1920 by 988: the Chase's
+Vintage Noir sky is 434343 to 484848 where the mill's is 616161 to 696969, under dust of 303030;
+0.68 of its streaks went to the layers at 0.2 and 0.4, drawn at 0.6 and 0.7 of the size, 9 pixels
+a streak against the mill's 14; and three of its four layers stop at the ground line. It draws the
+dust stronger than the mill, 0.6 to 0.85 against 0.3 to 0.5. Then (18:26) "but there's a layer
+closer to the camera in the Chase with the tall grass": the front grass, at 1.35 of the camera's
+speed, held no weather. A fifth layer over it, adding 0.12 or 0.25, was shown; then (18:29) "Move
+the most far one to front, it's not visible anyway", shown with the far layer's 0.4 moved as it is
+or cut to 0.25, and over the rain, snow, leaves and petals, and Oj (18:33) "moves as it is, all the
+weather". k_weatherLayers runs 0.4, 0.7, 1.0 and 1.35, holding 0.28, 0.2, 0.12 and 0.4, and the
+front grass's layer, k_frontWeatherLayer, is drawn after drawFrontGrass, down to the frame's
+bottom. Size and strength run on past the trail by the same lerps, to 1.18 and 0.96 there. Each
+layer's seed is its index's, so the three that stayed draw their weather in new places.
+
+Then (18:36) "why the layers shares are not equal?", and (18:37) "to keep the density equal. That
+must stay". A share times the square of its layer's size stood at 0.144, 0.137, 0.145 and 0.12 from
+the far hills to the trail, and the far layer's 0.4 moved to the front grass made the front's 0.55.
+Shown: the front at 0.1 with the other three kept, 0.7 of the weather, or all four re-spread at one
+density over the whole count; Oj (18:42) "B". The layers hold 0.4, 0.27, 0.19 and 0.14, each near
+0.194 in share times size squared, 1.4 times as dense as the layers stood before.
+
 ## MillScene
 
 **Land and water redrawn** (Oj, 2026-11-14: "The Mill scene now is the most boring and cheap"). An
@@ -4727,6 +4749,39 @@ lines break with the reflections around them at their own colour and strength. d
 frame's Ripples for it. That is 10 to 20 clipped strokes a duck each frame: nothing to speak of on
 the CPU backend, and not measured under Direct2D, where each is an axis-aligned clip. Oj saw it
 animated (17:25, "this is right").
+
+Then (17:30) "Make rain droplets more translucent". Of drops at half, 35%, a quarter and 18% of the
+colour's alpha times the rain's opacity, in Stormy Night and Toxic Waste, the two themes with rain,
+Oj (17:32) took a quarter: drawRain fills them at rain.opacity * 0.25, where it was 0.5. The Chase's
+rain is the same drops.
+
+Then (17:38) "Make the dust flow more chaotic". Every streak drifted the same three widths a cycle
+on a level line. drawBlowingDust gives each mote a whole number of widths a cycle, two to five, a
+gust that pushes it on and holds it back along its way, 10 to 40 units at 4 to 10 turns a cycle, and
+an eddy that lifts and drops it, 4 to 18 units at 5 to 14 turns; whole turns keep the cycle closed.
+A gust is held to k_gustHold, 0.8 of the mote's own drift, so no mote turns back. Each streak lies
+along the way its mote moves, from 0.4 to 2 times its 2.5 units as the mote goes slower or faster
+than its drift. That cut was first only mocked up; Oj (17:43, 17:44) "There's no change", "No change
+in the tree", and a stronger one went in - gusts of 20 to 60 units at 8 to 20 turns, eddies of 12 to
+42 at 15 to 40, one to five widths - then (17:47) "Less chaotic", one between, and (17:49) "The
+first version seems all right, but that was not in the tree": the first stands. Sahara Heat, Desert
+Dusk, Steampunk Adventure and Vintage Noir blow dust, in both scenes.
+
+Then (17:56) "dust effect uses 3 colors: from the very dark (the current one) to the very light".
+A middle tone halfway in Oklab between effectColor1 and a light end was mocked, with the light end
+in cream, near white or sand. It would have needed an effectColor3, which shifts every colour after
+it, and Oj (18:03) dropped it: "no middle tone then - only dark and light". Of the light ends again
+and effectColor2 as it was, Oj (18:07) took near white in all three - Oklab L 0.97 at 8% of the
+dust's chroma, in its hue: Sahara Heat F9F4F0, Steampunk Adventure F9F4F2, Vintage Noir F5F5F5.
+effectColor2 holds it, which none of the three drew anything with; Steampunk Adventure's comment on
+it, steam puffs, went. BlowingDust takes color1 and color2 as FallingLeaves does, every other streak
+in each, and drawWeather hands it the theme's two effect colours, so the Chase's dust is the same.
+Desert Dusk's two are one gold, and its dust stays one colour.
+
+Then (18:48) "Let's try randomize color from 1 to 2". Each streak at a random point between the two
+was shown, blended straight or in even steps of Oklab lightness; Oj (19:00) "A". drawBlowingDust
+gives a streak colorBetween(color1, color2) at pseudoRandom(i, seed + 9), so an effect reads 9 past
+its own seed, and the layer seed steps, 10 in both scenes, still keep the layers apart.
 
 To watch: the gator and the cow move with `sin(t * 15)` and `sin(t * 30)`, which are not whole turns
 of a 0 to 1 cycle, so they jump when the cycle wraps. The water lily bobs one and a half times a
