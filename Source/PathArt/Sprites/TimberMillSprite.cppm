@@ -33,8 +33,7 @@ namespace ClaFi::PathArt
         Color shadow; // under the eaves
         Color wingFabric;
         Color wheel;
-        Color water; // what the trough pours
-        Color foam;
+        Color foam; // what the trough pours, its drops and steam, and the foam under the wheel
         Color smoke;
     };
 

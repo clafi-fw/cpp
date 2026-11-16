@@ -4598,13 +4598,117 @@ as the river's is, so it keeps to that land at 2560 by 1080 and 1280 by 1024 as 
 Then (Oj, 14:38) four marks for swamp patches on a 3840 by 1975 frame: each end of the bridge and
 either bank of the reach above it. The bend's bed is one of five in k_reedBeds, drawn by
 drawReedBeds; a bed's seed sets its blades and its sway apart, and every other bed has its cattails
-flipped. The two at the bridge are 0.55 of the size at their distance, where at full size they hid
-most of the bridge's ends. Then (14:44) "The placement's right, lack of reflections is not":
+flipped. The two at the bridge are 0.55 of the size at their distance, a little under the pond's
+shore cattails at 0.7. Then (14:44) "The placement's right, lack of reflections is not":
 drawMovingReflections draws the beds mirrored about their lowest roots, as it does the shore
 cattails about their feet. The reflection is cut to the water, so the near bank's bed shows none,
 and the bridge's beds showed strips at the water's edges. Then (14:51) the bridge's right bed moved
 from 0.3227 to 0.3148 of the width, still over the bridge's end, its left side at the water's edge
 and its reflection under the bridge.
+
+Then (Oj, 15:02) "remove the water trough field, take the calculated sprinkles color". MillTheme has
+no troughWater and TimberMillColors no water: the trough pours foam at 0.81 of its opacity, the
+drops' at the top of their run down the wheel, both through k_waterOpacity in drawTimberMillWater,
+where it poured troughWater at 0.8. Only the pour's pixels change, in all 24 themes. colorsNum() is
+161: 54 at the root, 8 in MillTheme, 99 in ChaseTheme.
+
+Then (Oj, 15:18) "High Noon: Make the river darker and murkier": from a sheet of three steps, each
+darker, duller and turned further from sky blue toward teal, Oj took the first, A. riverTop is
+208EA8 over riverBottom 055F89, where they were 00BFFF over 1E90FF: Oklab L 0.60 and 0.46 where they
+stood at 0.76 and 0.65, chroma 0.10 where it was 0.15 and 0.19.
+
+Then (Oj, 15:24) "Summer sunset: make the river darker": from a sheet of three steps in Oklab L
+alone, 0.10, 0.18 and 0.27, with hue and chroma kept, Oj took the middle one, B. riverTop is 617589
+over riverBottom 4A5B6B, where they were 96ABC1 over 7D8FA1: L 0.55 and 0.46 where they stood at
+0.73 and 0.64.
+
+Then (Oj, 15:29) "Paper sketch: make the river darker": from the same three steps, 0.10, 0.18 and
+0.27 in Oklab L with hue and chroma kept, Oj took B. riverTop is 53636C over riverBottom 41505A,
+where they were 8798A2 over 73848E: L 0.49 and 0.42 where they stood at 0.67 and 0.60. The sun's
+glow still shows on the water.
+
+Then (Oj, 15:34) "Golden hour: mock darker and or matching the sky variations": a sheet of its blue
+darker, the sky's amber, the amber darker, amber far over deep blue near, and a dark slate the sky
+tints; then the slate at five lightnesses, and four steps from the river as it is to the lightest
+slate, 77889B over 4B596C. Oj (15:46) "Keep it": Golden Hour's river stays 508CB4 over 326482.
+
+Then (15:46) "Twilight: make the river darker": from three steps in Oklab L alone, 0.07, 0.13 and
+0.19, smaller than the day themes' as the river was already dark, Oj took A. riverTop is 344677 over
+riverBottom 172546, where they were 465A8C over 28375A: L 0.40 and 0.27 where they stood at 0.47 and
+0.34.
+
+Then (15:50) "warm orange fall: make the river darker": from three steps in Oklab L alone, 0.10,
+0.18 and 0.27, Oj took B. riverTop is 697D88 over riverBottom 2E424D, where they were 9FB4C0 over
+5F7480: L 0.58 and 0.37 where they stood at 0.76 and 0.55.
+
+Then (15:54) "Cherry blossom: make the river lighter". Its riverTop, a navy 002166, stood far below
+its riverBottom, a steel blue 4682B4, so the three steps lifted the top more than the bottom in
+Oklab L - 0.10 and 0.06, 0.18 and 0.10, 0.27 and 0.14 - with hue and chroma kept. Oj took B:
+riverTop 2E559E over riverBottom 64A1D5, L 0.46 and 0.69 where they stood at 0.28 and 0.59.
+
+Then (15:56) "B, mock sun colors": a sheet of its gold sun, FFD700 in a white glow, as a butter
+yellow, a blossom pink, a peach and a white disc in a gold glow; then the butter disc, and then the
+gold one, each in three yellower glows, FFF8D2, FFF8BE and FFF8A9. Oj (16:05) "Keep it": the sun
+stays as it was.
+
+Then (16:05) "Magic Forest: Darker river": from three steps in Oklab L alone, 0.10, 0.18 and 0.27,
+Oj took A. riverTop is 6885BA over riverBottom 4868A3, where they were 86A4DB over 6486C3: L 0.62
+and 0.52 where they stood at 0.72 and 0.62.
+
+Then (16:08) "Magic forest: whiter sails": from three steps lighter and less tinted, kept faintly
+lilac with the sky - AEAECA, CBCBE1 and E6E6F4 - Oj took B. wingFabric is CBCBE1, where it was
+7E7DA0: Oklab L 0.85 and chroma 0.03 where it stood at 0.60 and 0.05.
+
+Then (16:11) "Arctic Dawn: darker river": from three steps in Oklab L alone, 0.10, 0.18 and 0.27, Oj
+took A. riverTop is 8EB8C5 over riverBottom 8A8A8A, where they were ADD8E6 over A9A9A9: L 0.76 and
+0.63 where they stood at 0.86 and 0.73.
+
+Then (16:13) "less vivid pines". The firs wear treeLeavesBase and crownLight, which the round trees,
+the far hills' trees, the lily pad and the Chase's trees wear too, with crownMiddle. From the three
+taken to 70%, a half and a third of their Oklab chroma, and a fourth darker at 55%, Oj (16:15) took
+C, a third: treeLeavesBase 9FBFB2, crownLight B9DACE and crownMiddle A8C9B9, where they were 66CDAA,
+7FE9C8 and 6FD8AB, at the same lightness and hue.
+
+Then (16:15) "mock suns": a calm peach, a pale gold, a rose dawn in a pink-white glow and an ice
+white in a cool glow. Oj (16:19) took B: sunDisk FCE5BB, the pale gold, where it was a salmon
+FFA07A; sunGlow stays FFFFFA. sunDisk also lights the stars, the lightning and the mill's spokes.
+
+Then (16:19) "mock the house": its own colours calmed, weathered pale wood under a slate roof, a
+Nordic red under a snowy one, and a whitewash under a dark slate. Its roof stood lit side dark,
+roofTop 808080 under roofBottom C0C0C0, so the tile rows vanished, as High Noon's and Cherry
+Blossom's had; every option had it lit on the right. Oj (16:35) "4", read as D, the whitewash, which
+went in; then (16:37) "4 is C": he counts a sheet's rows with the colours as they stand first, so
+his 4 is C, the Nordic red. bodyTop 9A4C40 over bodyBottom 70362D, roofTop E4EAEE over roofBottom
+ACB6BE and timber D4D9DC, a pale trim that the window and door frames and the wings' stocks and hub
+wear too, where they were 8B4513 over 696969, 808080 over C0C0C0 and 674528. The comments on those
+lines and on sunDisk, which named the old colours, are gone.
+
+Then (16:35) "mock the sails", shown on the whitewash and again on the red: its blue calmed, a white
+canvas, a pale slate after the roof, and Clear Day's cream canvas at 0xCC. Oj (16:40) took C, the
+slate: wingFabric B9C6D0, where it was a powder blue B0E0E6, and the line's comment with it.
+
+Then (16:41) "twilight: mock the house and the bridge": its plum calmed, a dusk slate and a
+weathered grey wood, the bridge in the mill's timber in each. Oj (16:48) took A, the plum calmed:
+bodyTop 695361 over bodyBottom 43323D, roofTop 432D40 over roofBottom 2A1828, and timber and bough
+5B403B, where they were 664A5C over 3E2B38, 492440 over 2A1125 and 6C4134. bough also draws the
+Chase's signpost.
+
+Then (16:52) "Clear day: mock rivers": its murky teal one and two steps lighter, a clearer blue
+halfway to the first river, a green pond, and the first river, 46B4DC over 286DA0. Oj (16:55) took
+5, the green pond: riverTop 2B7068 over riverBottom 023538, where they were 0E5257 over 011920 -
+Oklab L 0.50 and 0.30 at hues 185 and 200, where they stood at 0.40 and 0.20 at 203 and 219.
+
+Then (16:59) "where the peeking wolf's light make him dark": wolfBody stood light in Arctic Dawn
+9F9F8F, Cyberpunk Night 00B8C1 and Underwater Realm 2EA1A4, and at a mid grey in Lunar Eclipse
+494949. Oj (17:05) "cyberpunk leave him be; underwater, arctic dawn and eclipse: make him surface
+color just a step darker than the fir shadow". The ground under the wolf's fir, as its shadow
+darkens it, measured from renders: B6B4A5, 0A6979 and 363636. From one and two steps of 0.05 Oklab L
+below it, Oj (17:07) took one in each: wolfBody A6A496 in Arctic Dawn, 005B6A in Underwater Realm
+and 292929 in Lunar Eclipse. Arctic Dawn's shadow lies on pale snow, so its wolf came out a shade
+lighter than he stood.
+
+Then (17:08) "Arctic Dawn 3": two steps below its shadow, wolfBody 979587, a shade darker than he
+stood at 9F9F8F.
 
 To watch: the gator and the cow move with `sin(t * 15)` and `sin(t * 30)`, which are not whole turns
 of a 0 to 1 cycle, so they jump when the cycle wraps. The water lily bobs one and a half times a

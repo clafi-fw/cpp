@@ -148,6 +148,7 @@ namespace ClaFi::PathArt
         constexpr int k_drops{ 9 };
         constexpr int k_steamPuffs{ 8 };
         constexpr int k_foamHeaps{ 6 };
+        constexpr float k_waterOpacity{ 0.81f }; // of the foam, the pour's and a drop's at its top
         const SceneFrame mill = millFrame(frame, pose);
         const float turn = pose.cycleTime * k_2Pi;
         const FloatPoint mouth = k_troughMouth;
@@ -159,7 +160,7 @@ namespace ClaFi::PathArt
         pour.lineTo(landing.x + 2.0f, landing.y + 0.5f);
         pour.quadTo({ mouth.x - 9.0f, mouth.y + 9.0f }, { mouth.x, mouth.y + 8.0f });
         pour.close();
-        fillShape(mill, pour, SolidColor{ colors.water.faded(0.8f) });
+        fillShape(mill, pour, SolidColor{ colors.foam.faded(k_waterOpacity) });
 
         // Steam rising where the pour lands, most of it leaning away with the wind.
         for (int i = 0; i != k_steamPuffs; ++i)
@@ -191,7 +192,7 @@ namespace ClaFi::PathArt
                 k_wheelCenter.y + std::sin(angle) * reach
             };
             drawSegment(mill, top, { top.x - 1.0f, top.y + 7.0f },
-                SolidColor{ colors.foam.faded(0.81f * (1.0f - fall * 0.6f)) }, 1.6f);
+                SolidColor{ colors.foam.faded(k_waterOpacity * (1.0f - fall * 0.6f)) }, 1.6f);
         }
         frame.canvas.popClip();
 

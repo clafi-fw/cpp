@@ -16,8 +16,8 @@ namespace ClaFi::PathArt::Themes
             .mountainFoot = 0xFF9E9B9C,
             .hillTop = 0xFFA3AFA0,       // Grey green (hill top)
             .hillBottom = 0xFF7E8A7C,    // Darker grey green (hill base)
-            .riverTop = 0xFF002166,      // Deep blue (river top)
-            .riverBottom = 0xFF4682B4,   // Lighter blue (river bottom)
+            .riverTop = 0xFF2E559E,      // Deep blue (river top)
+            .riverBottom = 0xFF64A1D5,   // Lighter blue (river bottom)
             .riverWave = 0xFFFFC8DC,     // Same as Effect1
             .foam = 0xBBFFFFFE,          // White foam
             .treeLeavesBase = 0xFFF8BBD0, // Light pink (tree leaves base — cherry blossom style)
@@ -72,8 +72,7 @@ namespace ClaFi::PathArt::Themes
                 .roofBottom = 0xFF845655, // deep dusty rose (shaded roof side)
                 .timber = 0xFF603C22,
                 .wingFabric = 0xCCF3F1F4, // white canvas (fabric of wing)
-                .wheel = 0xFF7A6E66,     // grey weathered wood (mill wheel)
-                .troughWater = 0xFF7284AA
+                .wheel = 0xFF7A6E66      // grey weathered wood (mill wheel)
             },
             .chase = {
                 .treeCrown = 0xFFF8BBD0,

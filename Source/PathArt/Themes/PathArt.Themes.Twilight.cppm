@@ -16,8 +16,8 @@ namespace ClaFi::PathArt::Themes
             .mountainFoot = 0xFF706471,
             .hillTop = 0xFF64788C,
             .hillBottom = 0xFF3C506E,
-            .riverTop = 0xFF465A8C,
-            .riverBottom = 0xFF28375A,
+            .riverTop = 0xFF344677,
+            .riverBottom = 0xFF172546,
             .riverWave = 0xB4C8D2FF,
             .foam = 0xB4B4BEE6,
             .treeLeavesBase = 0xFF5A6E82,
@@ -25,7 +25,7 @@ namespace ClaFi::PathArt::Themes
             .crownMiddle = 0xFF627483,
             .bark = 0xFF6C5761,
             .barkShade = 0xFF473940,
-            .bough = 0xFF6C4134,
+            .bough = 0xFF5B403B,
             .trail = 0xE6978C72,
             .grassBlade = {
                 .light = 0xFF143438,
@@ -66,15 +66,14 @@ namespace ClaFi::PathArt::Themes
             .duckBeakShade = 0xFFC86329,
             .fish = 0xFF9393A7,
             .mill = {
-                .bodyTop = 0xFF664A5C,
-                .bodyBottom = 0xFF3E2B38,
-                .roofTop = 0xFF492440,
-                .roofBottom = 0xFF2A1125,
-                .timber = 0xFF6C4134,
+                .bodyTop = 0xFF695361,
+                .bodyBottom = 0xFF43323D,
+                .roofTop = 0xFF432D40,
+                .roofBottom = 0xFF2A1828,
+                .timber = 0xFF5B403B,
                 .windowLight = 0x99FFDCB4,
                 .wingFabric = 0xFFB2A9C5,
-                .wheel = 0xFF402D53,
-                .troughWater = 0xFF7786B4
+                .wheel = 0xFF402D53
             },
             .chase = {
                 .treeCrown = 0xFF658171,

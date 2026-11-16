@@ -101,7 +101,6 @@ namespace ClaFi::PathArt
         Color windowLight{}; // the lamp behind the windows, as strong as its opacity
         Color wingFabric{};
         Color wheel{};
-        Color troughWater{}; // what the trough pours onto the wheel
     public:
         // How many colours it holds, in a row with nothing between them.
         static constexpr std::size_t colorsNum() { return sizeof(MillTheme) / sizeof(Color); }

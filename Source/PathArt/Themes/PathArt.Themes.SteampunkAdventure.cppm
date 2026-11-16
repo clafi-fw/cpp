@@ -72,8 +72,7 @@ namespace ClaFi::PathArt::Themes
                 .roofBottom = 0xFFD05142,   // Lower part of roof — dark red (soot marks)
                 .timber = 0xFFA07A50,
                 .wingFabric = 0xFFA5A0F7,   // Fabric on blades — lilac (dust, grease)
-                .wheel = 0xFF678888,        // Mill wheel — dark gray (rust, grease)
-                .troughWater = 0xFF939393
+                .wheel = 0xFF678888         // Mill wheel — dark gray (rust, grease)
             },
             .chase = {
                 .treeCrown = 0xFF618479,

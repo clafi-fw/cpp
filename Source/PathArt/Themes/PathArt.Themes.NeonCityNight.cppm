@@ -73,8 +73,7 @@ namespace ClaFi::PathArt::Themes
                 .timber = 0xFF00FFF0,
                 .windowLight = 0xFFFFFF66,
                 .wingFabric = 0xFF00FF00,   // Fabric on blades — bright neon green
-                .wheel = 0xFF2F4F4F,        // Mill wheel — dark gray (metal)
-                .troughWater = 0xFF7272B8
+                .wheel = 0xFF2F4F4F         // Mill wheel — dark gray (metal)
             },
             .chase = {
                 .treeCrown = 0xFF32CD32,

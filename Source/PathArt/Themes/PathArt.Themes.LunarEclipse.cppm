@@ -46,7 +46,7 @@ namespace ClaFi::PathArt::Themes
             .cowSpots = 0xFF333333,         // Cow spots — black
             .cowSnout = 0xFF996666,         // Snout — gray-brown
             .cowDetail = 0xFF666666,        // Details (nostrils, eyes) — dark gray
-            .wolfBody = 0xFF494949,         // Wolf body — black
+            .wolfBody = 0xFF292929,         // Wolf body — black
             .wolfEye = 0xFFFF9999,          // Eyes — glowing pink
             .effectColor1 = 0xFF9966CC,     // Purple-pink, like the glow of an eclipsed moon
             .effectColor2 = 0xFF9966CC,     // Effect: slowly falling glowing particles
@@ -73,8 +73,7 @@ namespace ClaFi::PathArt::Themes
                 .timber = 0xFF6C4034,
                 .windowLight = 0xFFFF8C66,
                 .wingFabric = 0xFFCC9EFE,   // Fabric on blades — dark purple
-                .wheel = 0xFF5E807F,        // Mill wheel — dark gray
-                .troughWater = 0xFF8E8EFF
+                .wheel = 0xFF5E807F         // Mill wheel — dark gray
             },
             .chase = {
                 .treeCrown = 0xFF6D7F6C,

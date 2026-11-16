@@ -16,8 +16,8 @@ namespace ClaFi::PathArt::Themes
             .mountainFoot = 0xFF80776C,
             .hillTop = 0xFFD59631,
             .hillBottom = 0xFFA86A1E,
-            .riverTop = 0xFF9FB4C0,
-            .riverBottom = 0xFF5F7480,
+            .riverTop = 0xFF697D88,
+            .riverBottom = 0xFF2E424D,
             .riverWave = 0x78FFF2D8,
             .foam = 0x96F2EADA,
             .treeLeavesBase = 0xFFBB7A26,
@@ -72,8 +72,7 @@ namespace ClaFi::PathArt::Themes
                 .roofBottom = 0xFF6A4C30,
                 .timber = 0xFF5E4A38,
                 .wingFabric = 0x99E8D2A8,
-                .wheel = 0xFF3A342A,
-                .troughWater = 0xFFC4CCCB
+                .wheel = 0xFF3A342A
             },
             .chase = {
                 .treeCrown = 0xFFA5651F,

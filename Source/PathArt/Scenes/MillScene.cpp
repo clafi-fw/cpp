@@ -807,7 +807,6 @@ namespace ClaFi::PathArt
                 .shadow = theme.shadow,
                 .wingFabric = theme.mill.wingFabric,
                 .wheel = theme.mill.wheel,
-                .water = theme.mill.troughWater,
                 .foam = theme.foam,
                 .smoke = colorBetween(theme.cloud, theme.skyBottom.fullyOpaque(), 0.25f)
             };

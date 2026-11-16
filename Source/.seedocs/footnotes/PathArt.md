@@ -183,9 +183,9 @@ A crossfade blends it with the effects.
 ## MillTheme
 
 **The colours only the mill wears**: its walls, its roof, its timber, the lamp behind its windows,
-its wings' cloth, the water wheel and what the trough pours. Its plinth, its chimney and its door
-take SceneTheme's stone and bark, which the Chase's boulder and trunks wear too. Every theme fills
-every field but windowLight.
+its wings' cloth and the water wheel. Its plinth, its chimney and its door take SceneTheme's stone
+and bark, which the Chase's boulder and trunks wear too. Every theme fills every field but
+windowLight.
 
 **timber is the mill's wood**: the window and door frames, the wings' stocks and hub, the wheel's
 axle and the trough.
@@ -194,9 +194,9 @@ axle and the trough.
 lamp lit leaves it out, so it stays transparent and the windows show their dark glass; a crossfade
 toward a theme with a lamp lights it by degrees.
 
-**troughWater is what the trough pours onto the wheel.** The drops running down the wheel, the steam
-where the pour lands, the foam at the wheel's foot, the rings and the ducks' wakes are SceneTheme's
-foam.
+**The water the trough pours is SceneTheme's foam**, at the opacity of the drops running down the
+wheel as they start. The drops, the steam where the pour lands, the foam at the wheel's foot, the
+rings and the ducks' wakes are foam too.
 
 ## ChaseTheme
 

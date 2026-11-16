@@ -16,8 +16,8 @@ namespace ClaFi::PathArt::Themes
             .mountainFoot = 0xFF433543,
             .hillTop = 0xFF7CA179,          // Hilltops - light green (sunlit canopy)
             .hillBottom = 0xFF416340,       // Lower parts of hills - dark green (dense forest)
-            .riverTop = 0xFF86A4DB,         // Top part of water — blue (clear forest river)
-            .riverBottom = 0xFF6486C3,      // River depths — dark blue (mysterious depth)
+            .riverTop = 0xFF6885BA,         // Top part of water — blue (clear forest river)
+            .riverBottom = 0xFF4868A3,      // River depths — dark blue (mysterious depth)
             .riverWave = 0xFF7C77C2,        // Waves — lilac (magical reflection)
             .foam = 0xBBFFFFFE,             // Foam — almost white
             .treeLeavesBase = 0xFF5A7F58,   // Leaves base - muted green (dense foliage)
@@ -71,9 +71,8 @@ namespace ClaFi::PathArt::Themes
                 .roofTop = 0xFF4E2E24,
                 .roofBottom = 0xFF6C483B,
                 .timber = 0xFF564B5D,
-                .wingFabric = 0xFF7E7DA0,
-                .wheel = 0xFF2F4F4F,        // Mill wheel — dark gray (rusty)
-                .troughWater = 0xFFA5BEEC
+                .wingFabric = 0xFFCBCBE1,
+                .wheel = 0xFF2F4F4F         // Mill wheel — dark gray (rusty)
             },
             .chase = {
                 .treeCrown = 0xFF5E855E,

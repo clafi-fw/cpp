@@ -46,7 +46,7 @@ namespace ClaFi::PathArt::Themes
             .cowSpots = 0xFF5F9EA0,         // Cow spots — turquoise (corals)
             .cowSnout = 0xFFCD853F,         // Snout — light brown (natural color)
             .cowDetail = 0xFF8B4513,        // Details (nostrils, eyes) — brown
-            .wolfBody = 0xFF2EA1A4,         // Wolf body — turquoise (underwater coloration)
+            .wolfBody = 0xFF005B6A,         // Wolf body — turquoise (underwater coloration)
             .wolfEye = 0xFFFFFF00,          // Eyes — bright yellow (glowing in the dark water)
             .effectColor1 = 0xFF00FFFF,     // Cyan (aquamarine)
             .effectColor2 = 0xFF00FFFF,     // Effect: slowly rising air bubbles reflecting light; rare glowing plankton
@@ -73,8 +73,7 @@ namespace ClaFi::PathArt::Themes
                 .timber = 0xFF24454D,
                 .windowLight = 0xFFFFD700,
                 .wingFabric = 0xFF539294,   // Fabric on blades — turquoise (algae)
-                .wheel = 0xFF244444,        // Mill wheel — dark gray (rust underwater)
-                .troughWater = 0xFF72E4E5
+                .wheel = 0xFF244444         // Mill wheel — dark gray (rust underwater)
             },
             .chase = {
                 .treeCrown = 0xFF20B2AA,
