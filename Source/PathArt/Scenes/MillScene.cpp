@@ -128,6 +128,15 @@ namespace ClaFi::PathArt
         // The mother first, then her three ducklings.
         using DuckFamily = std::array<SwimmingDuck, 4>;
 
+        // Where a duck keeps behind the mother, and how it falls back and catches up about there.
+        struct DuckPlace
+        {
+            float behind; // in the mother's units
+            float drift; // in the mother's units, either way
+            float driftPace; // radians a second of the story
+            float driftPhase;
+        };
+
         // A run of grass blades along the near bank.
         struct BladeRun
         {
@@ -355,6 +364,15 @@ namespace ClaFi::PathArt
         // Where the cow walks to drink, on the pond's far shore by the river's mouth.
         constexpr FloatPoint k_cowDrinkShare{ 0.375f, 0.747f };
         constexpr Stretch k_ducksSwim{ 4.0f, 60.0f };
+        // The last duckling drifts the most, and keeps back far enough to miss the one ahead.
+        constexpr std::array<DuckPlace, 4> k_duckPlaces{
+            DuckPlace{ 0.0f, 0.0f, 0.0f, 0.0f },
+            DuckPlace{ -46.0f, 5.0f, 0.85f, 0.5f },
+            DuckPlace{ -84.0f, 7.0f, 0.65f, 2.6f },
+            DuckPlace{ -130.0f, 14.0f, 0.5f, 4.4f }
+        };
+        constexpr float k_motherSway{ 0.67f }; // in units, either way across her course
+        constexpr float k_ducklingSway{ 2.4f }; // in units, either way across its course
         constexpr Stretch k_birdsFly{ 22.0f, 48.0f };
         constexpr std::array<FishJump, 2> k_fishJumps{ {
             { 14.0f, { 0.53f, 0.88f } },
@@ -495,10 +513,11 @@ namespace ClaFi::PathArt
         void drawFlock(const SceneFrame&, const SceneTheme&, float story);
         // A duck swimming right, above its waterline.
         void drawDuck(const SceneFrame&, const SwimmingDuck&, const DuckColors&);
-        // The lines a duck leaves on the water behind it.
-        void drawDuckWake(const SceneFrame&, const SwimmingDuck&, const DuckColors&);
+        // The lines a duck leaves on the water behind it, broken by the ripples as reflections are.
+        void drawDuckWake(const SceneFrame&, const SwimmingDuck&, const DuckColors&,
+            const Ripples&);
         void drawDucks(const SceneFrame&, const SceneTheme&,
-            const std::optional<DuckFamily>& ducks);
+            const std::optional<DuckFamily>& ducks, const Ripples&);
         void drawFishJumps(const SceneFrame&, const SceneTheme&, float story);
         // A butterfly over the near bank by day, its path coming round once a story.
         void drawButterfly(const SceneFrame&, const SceneTheme&, float story);
@@ -668,7 +687,7 @@ namespace ClaFi::PathArt
             .shape = GlowShape::Circle
         });
         drawFishJumps(frame, theme(), story);
-        drawDucks(frame, theme(), ducks);
+        drawDucks(frame, theme(), ducks, ripples);
         drawEffectLayer(frame, theme(), cycleTime, 2);
 
         const FloatPoint lily = pointAt(frame, k_lilyShare);
@@ -954,7 +973,6 @@ namespace ClaFi::PathArt
 
         std::optional<DuckFamily> ducksAt(const SceneFrame& frame, const float story)
         {
-            constexpr std::array<float, 4> k_behind{ 0.0f, -46.0f, -80.0f, -112.0f };
             const float swum = (story - k_ducksSwim.from) / (k_ducksSwim.until - k_ducksSwim.from);
             if (swum < 0.0f || swum > 1.0f)
                 return std::nullopt;
@@ -963,12 +981,16 @@ namespace ClaFi::PathArt
             for (std::size_t i = 0; i != ducks.size(); ++i)
             {
                 const float index = static_cast<float>(i);
-                const float x = frame.width * (-0.06f + 1.12f * swum) + k_behind[i] * motherSize;
+                const DuckPlace& place = k_duckPlaces[i];
+                const float behind = place.behind
+                    + place.drift * std::sin(story * place.driftPace + place.driftPhase);
+                const float x = frame.width * (-0.06f + 1.12f * swum) + behind * motherSize;
+                const float sway = i == 0 ? k_motherSway : k_ducklingSway;
                 ducks[i] = {
                     .at = {
                         x,
                         frame.height * (0.885f + 0.012f * std::sin(x / frame.width * 5.0f))
-                            + 0.67f * frame.unit * std::sin(story * 2.0f + index)
+                            + sway * frame.unit * std::sin(story * 2.0f + index)
                     },
                     .size = i == 0 ? motherSize : motherSize * 0.62f,
                     .paddle = std::sin(story * 3.0f + index)
@@ -1663,20 +1685,33 @@ namespace ClaFi::PathArt
         }
 
         void drawDuckWake(const SceneFrame& frame, const SwimmingDuck& duck,
-            const DuckColors& colors)
+            const DuckColors& colors, const Ripples& ripples)
         {
-            const SceneFrame water = frame.within(Matrix3x2::Translation(duck.at)
-                * Matrix3x2::Scale(duck.size));
+            constexpr float k_wakeWidth{ 1.2f };
             PixelPath wake;
             wake.moveTo(14.0f, 0.0f);
             wake.lineTo(-30.0f, -4.0f);
             wake.moveTo(14.0f, 0.0f);
             wake.lineTo(-30.0f, 5.0f);
-            strokeShape(water, wake, SolidColor{ colors.wake.faded(0.7f) }, 1.2f);
+            const SolidColor paint{ colors.wake.faded(0.7f) };
+            const float margin = k_wakeWidth * duck.size;
+            const float top = std::floor(duck.at.y - 4.0f * duck.size - margin);
+            const float bottom = duck.at.y + 5.0f * duck.size + margin;
+            // A row at a time, clipped to it and moved as the ripples move that row.
+            for (float row = top; row < bottom; row += 1.0f)
+            {
+                const float shift = rippleShiftAt(ripples, frame, row + 0.5f);
+                const SceneFrame water = frame.within(Matrix3x2::Translation(duck.at.x + shift,
+                    duck.at.y) * Matrix3x2::Scale(duck.size));
+                frame.canvas.pushClip(frame.toCanvas.mapRect({ 0.0f, row, frame.width,
+                    row + 1.0f }));
+                strokeShape(water, wake, paint, k_wakeWidth);
+                frame.canvas.popClip();
+            }
         }
 
         void drawDucks(const SceneFrame& frame, const SceneTheme& theme,
-            const std::optional<DuckFamily>& ducks)
+            const std::optional<DuckFamily>& ducks, const Ripples& ripples)
         {
             if (!ducks)
                 return;
@@ -1684,7 +1719,7 @@ namespace ClaFi::PathArt
             {
                 const SwimmingDuck& duck = (*ducks)[i];
                 const DuckColors colors = duckColorsOf(theme, i);
-                drawDuckWake(frame, duck, colors);
+                drawDuckWake(frame, duck, colors, ripples);
                 drawDuck(frame, duck, colors);
             }
         }

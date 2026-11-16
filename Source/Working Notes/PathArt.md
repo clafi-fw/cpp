@@ -4710,6 +4710,24 @@ lighter than he stood.
 Then (17:08) "Arctic Dawn 3": two steps below its shadow, wolfBody 979587, a shade darker than he
 stood at 9F9F8F.
 
+Then (Oj, 17:14) "baby ducks sway right and left - increase range, make them also vary distance from
+each other (accelerate and slow), especially the last one". A duckling sways k_ducklingSway, 2.4
+units either way across its course, where every duck swayed 0.67, which the mother keeps as
+k_motherSway. k_duckPlaces gives each duck its place behind the mother and a drift about it, a sine
+of its own pace and phase: 5, 7 and 14 of her units either way, at 0.85, 0.65 and 0.5 radians a
+second of the story. The last duckling's place went from 112 to 130 behind and the middle one's from
+80 to 84, so at their closest the gaps keep 26 and 25 units, about a duckling's length; the last
+one's gap runs out to 66. A drift is never faster than 7 of her units a second, and the family swims
+25 in a 16:9 frame and at least 14 in a frame of any shape, so no duckling swims backward. Oj saw 20
+seconds of the crossing as an animation (17:18, "this is right").
+
+Then (17:22) "make their trails distort like other reflections". drawDuckWake draws a wake a pixel
+row at a time, clipped to the row and moved by rippleShiftAt there, as the sun's glitter is, so the
+lines break with the reflections around them at their own colour and strength. drawDucks takes the
+frame's Ripples for it. That is 10 to 20 clipped strokes a duck each frame: nothing to speak of on
+the CPU backend, and not measured under Direct2D, where each is an axis-aligned clip. Oj saw it
+animated (17:25, "this is right").
+
 To watch: the gator and the cow move with `sin(t * 15)` and `sin(t * 30)`, which are not whole turns
 of a 0 to 1 cycle, so they jump when the cycle wraps. The water lily bobs one and a half times a
 cycle, and jumps the same way.
