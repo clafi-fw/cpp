@@ -90,7 +90,7 @@ namespace ClaFi::PathArt
                 k_chimneyTop.y - rise * 80.0f - std::sin(rise * 3.0f) * 6.0f
             };
             const float opacity = 0.3f * (1.0f - rise) * std::min(1.0f, rise * 10.0f);
-            fillDisc(mill, center, 3.5f + rise * 17.0f, SolidColor{ faded(colors.smoke, opacity) });
+            fillDisc(mill, center, 3.5f + rise * 17.0f, SolidColor{ colors.smoke.faded(opacity) });
         }
     }
 
@@ -159,7 +159,7 @@ namespace ClaFi::PathArt
         pour.lineTo(landing.x + 2.0f, landing.y + 0.5f);
         pour.quadTo({ mouth.x - 9.0f, mouth.y + 9.0f }, { mouth.x, mouth.y + 8.0f });
         pour.close();
-        fillShape(mill, pour, SolidColor{ faded(colors.water, 0.8f) });
+        fillShape(mill, pour, SolidColor{ colors.water.faded(0.8f) });
 
         // Steam rising where the pour lands, most of it leaning away with the wind.
         for (int i = 0; i != k_steamPuffs; ++i)
@@ -173,7 +173,7 @@ namespace ClaFi::PathArt
                 landing.y - rise * 16.0f
             };
             const float opacity = 0.4f * (1.0f - rise) * std::min(1.0f, rise * 8.0f);
-            fillDisc(mill, center, 2.0f + rise * 6.0f, SolidColor{ faded(colors.foam, opacity) });
+            fillDisc(mill, center, 2.0f + rise * 6.0f, SolidColor{ colors.foam.faded(opacity) });
         }
 
         // Drops running down the wheel's left side, where the water pushes it, to the river.
@@ -191,7 +191,7 @@ namespace ClaFi::PathArt
                 k_wheelCenter.y + std::sin(angle) * reach
             };
             drawSegment(mill, top, { top.x - 1.0f, top.y + 7.0f },
-                SolidColor{ faded(colors.foam, 0.81f * (1.0f - fall * 0.6f)) }, 1.6f);
+                SolidColor{ colors.foam.faded(0.81f * (1.0f - fall * 0.6f)) }, 1.6f);
         }
         frame.canvas.popClip();
 
@@ -207,7 +207,7 @@ namespace ClaFi::PathArt
             foam.quadTo({ x, crest }, { x + 8.0f, 1.0f });
             foam.close();
         }
-        fillShape(mill, foam, SolidColor{ faded(colors.foam, 0.9f) });
+        fillShape(mill, foam, SolidColor{ colors.foam.faded(0.9f) });
     }
 
     void drawTimberMillWings(const SceneFrame& frame, const TimberMillPose& pose,
@@ -229,9 +229,9 @@ namespace ClaFi::PathArt
             const float turns = pose.wingTurns
                 + static_cast<float>(i) / static_cast<float>(k_wings);
             const SceneFrame wing = hub.within(Matrix3x2::Rotation(turns * k_2Pi));
-            fillShape(wing, cloth, SolidColor{ faded(colors.wingFabric, 0.72f) });
+            fillShape(wing, cloth, SolidColor{ colors.wingFabric.faded(0.72f) });
             drawSegment(wing, { 30.0f, -45.0f }, { 30.0f, -115.0f },
-                SolidColor{ faded(colors.timber, 0.85f) }, 2.0f, StrokeCap::Butt);
+                SolidColor{ colors.timber.faded(0.85f) }, 2.0f, StrokeCap::Butt);
             fillShape(wing, stock, SolidColor{ colors.timber });
             fillBox(wing, { -3.5f, -k_stockLength, -1.3f, 0.0f }, SolidColor{ timberShade });
         }
@@ -376,7 +376,7 @@ namespace ClaFi::PathArt
                 joints.moveTo(onRing(upper ? k_plinthTop : k_course, k_plinthReach, share));
                 joints.lineTo(onRing(upper ? k_course : 0.0f, k_plinthReach, share));
             }
-            strokeShape(house, joints, SolidColor{ faded(colors.stoneCrack, 0.6f) }, k_jointWidth,
+            strokeShape(house, joints, SolidColor{ colors.stoneCrack.faded(0.6f) }, k_jointWidth,
                 StrokeCap::Butt);
 
             PixelPath doorway;
@@ -421,7 +421,7 @@ namespace ClaFi::PathArt
                 }), timber, 1.5f, StrokeCap::Butt);
             }
             for (const FloatPoint middle : k_windowMiddles)
-                drawGlow(house, middle, 36.0f, faded(colors.lamp, 0.35f));
+                drawGlow(house, middle, 36.0f, colors.lamp.faded(0.35f));
         }
 
         void drawRoof(const SceneFrame& house, const TimberMillColors& colors)
@@ -448,7 +448,7 @@ namespace ClaFi::PathArt
                 mortar.lineTo(box.left + edge, box.bottom - edge);
                 mortar.close();
             }
-            strokeShape(house, mortar, SolidColor{ faded(colors.stoneCrack, 0.6f) }, k_jointWidth);
+            strokeShape(house, mortar, SolidColor{ colors.stoneCrack.faded(0.6f) }, k_jointWidth);
 
             PixelPath eave;
             addRing(eave, k_eaveFront, k_eaveReach, -1.0f, 1.0f, false);
@@ -463,7 +463,7 @@ namespace ClaFi::PathArt
             shadow.close();
             const Matrix3x2 houseToCanvas = house.toCanvas;
             house.canvas.pushClip(wallOutline(), &houseToCanvas);
-            fillShape(house, shadow, SolidColor{ faded(colors.shadow, 0.8f) });
+            fillShape(house, shadow, SolidColor{ colors.shadow.faded(0.8f) });
             house.canvas.popClip();
 
             fillShape(house, cone, roundShading(-k_eaveReach, k_eaveReach, colors.roofTop,
@@ -474,7 +474,7 @@ namespace ClaFi::PathArt
                 const float downShare = (frontY - k_apex.y) / (k_eaveFront - k_apex.y);
                 addRing(tiles, frontY, k_eaveReach * downShare, -1.0f, 1.0f, false);
             }
-            strokeShape(house, tiles, SolidColor{ faded(roofShade, 0.45f) }, 1.0f,
+            strokeShape(house, tiles, SolidColor{ roofShade.faded(0.45f) }, 1.0f,
                 StrokeCap::Butt);
             strokeShape(house, eave, SolidColor{ roofShade }, 4.0f);
         }

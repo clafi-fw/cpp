@@ -194,7 +194,7 @@ namespace ClaFi::PathArt
                 ? AcrobaticsColors::SparkGold
                 : AcrobaticsColors::SparkRed;
             drawSparkle(frame, at, 5.0f * unit * (1.0f - life),
-                faded(color, (1.0f - life) * m_sparks));
+                color.faded((1.0f - life) * m_sparks));
         }
     }
 }

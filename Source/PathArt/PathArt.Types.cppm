@@ -1,5 +1,6 @@
 export module ClaFi.PathArt.Types;
 
+import ClaFi.PathArt.GrassPatchSprite;
 import ClaFi.PathArt.HareSprite;
 import ClaFi.PathArt.SnowEffect;
 import ClaFi.PathArt.WolfSprite;
@@ -13,33 +14,24 @@ namespace ClaFi::PathArt
 {
     using namespace Graphics;
 
-    // The Chase's own colours in a theme, beside the sky, meadow and trees it shares. See PathArt
+    // The two shades grass blades and tufts are drawn in.
+    export struct GrassBladeColors
+    {
+        Color light{};
+        Color dark{};
+    };
+
+    // The Chase's own colours in a theme, beside the scenery it shares with the Mill. See PathArt
     export struct ChaseTheme
     {
-        Color mountainTop{}; // the mountains' clear colours, which the scene hazes
-        Color mountainFoot{};
-        Color crownLight{}; // the far hills' trees, beside treeLeavesBase
-        Color crownMiddle{};
         Color treeCrown{}; // the branch run's tree
         Color treeCrownLight{};
         Color treeCrownMiddle{};
-        Color trail{};
         Color pebble{};
-        Color grass{}; // the flowers' stems and leaves, the tufts and the foreground grass
-        Color bladeDark{}; // the patch of grass on the trail, and the tuft the Mill's cow grazes
-        Color bladeMiddle{};
-        Color bladeLight{};
-        Color reedStem{};
-        Color frontGrassDark{}; // every third blade of the foreground grass
-        Color shadow{}; // what the figures and props cast
         WolfCoat ourWolf{}; // the couple the scene follows
         HareCoat ourHare{};
         WolfCoat theirWolf{}; // the couple running the other way
         HareCoat theirHare{};
-        Color flowerHeart{}; // a daisy's, and the meadow's flowers'
-        Color bough{}; // the signpost and the Mill's footbridge, in wood
-        Color bark{};
-        Color barkShade{};
         Color appleLight{}; // the apple
         Color appleDark{};
         Color leaf{}; // the apple's, and the stump's sprout
@@ -58,10 +50,6 @@ namespace ClaFi::PathArt
         Color spinesLight{};
         Color hedgehogFace{};
         Color hedgehogEar{};
-        Color duckLight{}; // the rubber duck
-        Color duckShade{};
-        Color duckBeak{};
-        Color duckBeakShade{};
         Color ballPanel1{}; // the ball's three coloured panels, each followed by one in ballBase
         Color ballPanel2{};
         Color ballPanel3{};
@@ -90,13 +78,7 @@ namespace ClaFi::PathArt
         Color shellDark{};
         Color shellLine{};
         Color snailBody{};
-        Color wing{}; // the butterfly's
-        Color wingEdge{};
-        Color stoneLight{}; // the boulder
-        Color stoneDark{};
-        Color stoneCrack{};
-        Color reedHead{};
-        Color fluff{};
+        Color fluff{}; // what the wolf's wake tears from the reeds' heads
         Color birdBody{}; // the bird by the trail
         Color birdBelly{};
         Color birdWing{};
@@ -129,20 +111,32 @@ namespace ClaFi::PathArt
     {
         std::wstring_view name;
         Color skyTop, skyBottom; // 1
-        Color sunDisk, sunStroke, sunCorona1, sunCorona2, sunGlow; // 3
-        Color cloud; // 8
-        Color hillTop, hillBottom; // 9
-        Color riverTop, riverBottom, riverWave, riverReflect, foam; // 11
-        Color treeLeavesBase, reedStem, reedHead, lilyPad, lilyFlower, shadow; // 16
-        Color cowBody, cowSpots, cowSnout, cowDetail; // 22
-        Color wolfBody, wolfEar, wolfEye; // 26
+        Color sunDisk, sunGlow; // 3
+        Color cloud; // 5
+        Color mountainTop, mountainFoot; // 6, the mountains' clear colours, which the scenes haze
+        Color hillTop, hillBottom; // 8
+        Color riverTop, riverBottom, riverWave, foam; // 10
+        Color treeLeavesBase, crownLight, crownMiddle; // 14, the crowns are the far hills' trees
+        Color bark, barkShade; // 17, every trunk, and the mill's door
+        Color bough; // 19, the signpost and the Mill's footbridge, in wood
+        Color trail; // 20
+        GrassBladeColors grassBlade; // 21, blades and tufts, and the flowers' stems and leaves
+        GrassPatchColors grassPatch; // 23, the lit patch on the trail, and the Mill cow's tuft
+        Color reedStem, reedHead; // 26
+        Color stoneLight, stoneDark, stoneCrack; // 28, the boulder, the mill's plinth and chimney
+        Color shadow; // 31, what the figures and props cast
+        Color cowBody, cowSpots, cowSnout, cowDetail; // 32
+        Color wolfBody, wolfEye; // 36
 
-        Color effectColor1{ 255, 255, 255 }; // 29
-        Color effectColor2{ 255, 255, 255 }; // 30
-        Color petal1, petal2, petal3; // 31, a flower wears one, falling petals the first two
-        Color flock; // 34, the birds flying over the mill
-        Color motherDuckBody, motherDuckWing, motherDuckEye; // 35, the duck leading the ducklings
-        Color fish; // 38, the fish leaping from the pond
+        Color effectColor1{ 255, 255, 255 }; // 38
+        Color effectColor2{ 255, 255, 255 }; // 39
+        Color petal1, petal2, petal3; // 40, a flower wears one, falling petals the first two
+        Color flowerHeart; // 43, a daisy's, and the meadow's flowers'
+        Color wing, wingEdge; // 44, the butterfly's
+        Color flock; // 46, the birds flying over the mill
+        Color motherDuckBody, motherDuckWing, motherDuckEye; // 47, the duck leading the ducklings
+        Color duckLight, duckShade, duckBeak, duckBeakShade; // 50, ducklings and the rubber duck
+        Color fish; // 54, the fish leaping from the pond
         MillTheme mill{};
         ChaseTheme chase{};
         // make sure to update colorsNum() when adding new colors
@@ -165,7 +159,7 @@ namespace ClaFi::PathArt
         const void* colorsEnd() const { return &hasRain; }
         static constexpr std::size_t colorsNum()
         {
-            return 38 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
+            return 54 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
         }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }

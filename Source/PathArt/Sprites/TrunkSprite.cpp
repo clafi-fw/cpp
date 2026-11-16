@@ -28,7 +28,7 @@ namespace ClaFi::PathArt
         fillShape(onFoot, trunk, LinearGradient::Simple({ -11.0f, 0.0f }, { 11.0f, 0.0f }, bark,
             barkShade));
         // Seeded by lane and segment, never by place, so a trunk's grooves hold as it scrolls.
-        const SolidColor groove{ faded(barkShade, 0.3f) };
+        const SolidColor groove{ barkShade.faded(0.3f) };
         int laneIndex = 0;
         for (const float laneX : { -6.0f, -0.5f, 5.0f })
         {

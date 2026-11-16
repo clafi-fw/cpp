@@ -55,7 +55,7 @@ namespace ClaFi::PathArt
                 pose.center.y + each.middle.y * unit,
             };
             fillOval(frame, middle, each.radii.x * unit, each.radii.y * unit,
-                SolidColor{ faded(crater, each.opacity * pose.night) });
+                SolidColor{ crater.faded(each.opacity * pose.night) });
         }
     }
 

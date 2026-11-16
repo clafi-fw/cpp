@@ -158,7 +158,7 @@ namespace ClaFi::PathArt
                 const FloatPoint at = ear
                     + FloatPoint{ side * (6.0f + 26.0f * share), -(4.0f + 34.0f * share) } * unit;
                 fillDisc(frame, at, (4.0f + 9.0f * share) * unit,
-                    SolidColor{ faded(KettlebellColors::Steam, 1.0f - share) });
+                    SolidColor{ KettlebellColors::Steam.faded(1.0f - share) });
             }
         }
 
@@ -175,7 +175,7 @@ namespace ClaFi::PathArt
                 const float rise = (4.0f + 22.0f * settle * pseudoRandom(i, 98.0f)) * unit;
                 fillDisc(frame, { landed.x + side * reach, landed.y - rise },
                     (6.0f + 14.0f * settle) * unit,
-                    SolidColor{ faded(KettlebellColors::Dust, 1.0f - settle) });
+                    SolidColor{ KettlebellColors::Dust.faded(1.0f - settle) });
             }
         }
 
@@ -305,7 +305,7 @@ namespace ClaFi::PathArt
             const float near = std::clamp(1.0f - (m_restY - m_bell.y) / (300.0f * unit), 0.3f,
                 1.0f);
             fillOval(frame, { m_bell.x, m_floorY + unit }, 30.0f * unit * near, 5.0f * unit * near,
-                SolidColor{ faded(KettlebellColors::Shadow, near) });
+                SolidColor{ KettlebellColors::Shadow.faded(near) });
         }
         drawAndroid(frame, m_android);
         drawKettlebell(frame.within(Matrix3x2::Translation(m_bell) * Matrix3x2::Rotation(m_bellTurn)

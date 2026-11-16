@@ -564,15 +564,6 @@ namespace ClaFi::PathArt
             drawRings(frame, muzzle, *cow.ripplesAge, cow.pose.size * 1.1f, theme().foam);
         }
 
-        // river fog along the pond's far shore
-        canvas.fillRectangle(bounds, PointGlow{
-            .lightPos = pointAt(frame, { 0.6f, 0.795f }) + m_offset,
-            .lightColor = faded(theme().cloud, 0.33f),
-            .lightSpread = 60.0f * m_objectsScale,
-            .xRatio = 0.08f,
-            .shape = GlowShape::Circle
-        });
-
         // The predator behind the fir on the right: a gator in the African themes, a wolf
         // elsewhere, crossfading between them. He lies on the fir's shadow, so its edge stays off
         // his face, and his theme colours are already shaded.
@@ -611,7 +602,6 @@ namespace ClaFi::PathArt
             .opacity = 1.0f - theme().isAfrica
         }, PeekingWolfColors{
             .body = theme().wolfBody,
-            .ear = theme().wolfEar,
             .eye = theme().wolfEye
         });
         drawFir(frame, theme(), k_wolfFir, false); // its shadow is under him already
@@ -623,12 +613,20 @@ namespace ClaFi::PathArt
         drawShoreCattails(frame, theme(), cycleTime, false);
         const TimberMillPose mill = millPoseOf(frame, cycleTime);
         fillOval(frame, { mill.base.x + 10.0f * mill.size, mill.base.y + 2.0f * mill.size },
-            80.0f * mill.size, 6.0f * mill.size, SolidColor{ faded(theme().chase.shadow, 0.8f) });
+            80.0f * mill.size, 6.0f * mill.size, SolidColor{ theme().shadow.faded(0.8f) });
         drawTimberMillSmoke(frame, mill, millColors);
         drawTimberMillWheel(frame, mill, millColors);
         drawTimberMillHouse(frame, mill, millColors);
         drawTimberMillWater(frame, mill, millColors);
         drawTimberMillWings(frame, mill, millColors);
+        // The river's fog along the far shore veils the far banks and all that stands on them.
+        canvas.fillRectangle(bounds, PointGlow{
+            .lightPos = pointAt(frame, { 0.6f, 0.795f }) + m_offset,
+            .lightColor = theme().cloud.withOpacity(0.33f),
+            .lightSpread = 60.0f * m_objectsScale,
+            .xRatio = 0.08f,
+            .shape = GlowShape::Circle
+        });
         drawFishJumps(frame, theme(), story);
         drawDucks(frame, theme(), ducks);
         drawEffectLayer(frame, theme(), cycleTime, 2);
@@ -758,15 +756,15 @@ namespace ClaFi::PathArt
                 .roofTop = theme.mill.roofTop,
                 .roofBottom = theme.mill.roofBottom,
                 .timber = theme.mill.timber,
-                .bark = theme.chase.bark,
-                .barkShade = theme.chase.barkShade,
-                .stoneLight = theme.chase.stoneLight,
-                .stoneDark = theme.chase.stoneDark,
-                .stoneCrack = theme.chase.stoneCrack,
+                .bark = theme.bark,
+                .barkShade = theme.barkShade,
+                .stoneLight = theme.stoneLight,
+                .stoneDark = theme.stoneDark,
+                .stoneCrack = theme.stoneCrack,
                 .sunlight = theme.sunDisk,
                 .glass = colorBetween(theme.skyBottom.fullyOpaque(), black, 0.45f),
                 .lamp = theme.mill.windowLight,
-                .shadow = theme.chase.shadow,
+                .shadow = theme.shadow,
                 .wingFabric = theme.mill.wingFabric,
                 .wheel = theme.mill.wheel,
                 .water = theme.mill.troughWater,
@@ -897,7 +895,7 @@ namespace ClaFi::PathArt
                 .spots = theme.cowSpots,
                 .snout = theme.cowSnout,
                 .detail = theme.cowDetail,
-                .shadow = theme.chase.shadow
+                .shadow = theme.shadow
             };
         }
 
@@ -909,9 +907,9 @@ namespace ClaFi::PathArt
             const float parallax = parallaxAt(frame, root.y);
             drawGrassPatch(frame.within(Matrix3x2::Translation(root)
                 * Matrix3x2::Scale(k_cowTuftSize * size)), {
-                .dark = hazed(theme, theme.chase.bladeDark, parallax),
-                .middle = hazed(theme, theme.chase.bladeMiddle, parallax),
-                .light = hazed(theme, theme.chase.bladeLight, parallax)
+                .dark = hazed(theme, theme.grassPatch.dark, parallax),
+                .middle = hazed(theme, theme.grassPatch.middle, parallax),
+                .light = hazed(theme, theme.grassPatch.light, parallax)
             }, 0.0f);
         }
 
@@ -947,15 +945,15 @@ namespace ClaFi::PathArt
                 return {
                     .body = theme.motherDuckBody,
                     .wing = theme.motherDuckWing,
-                    .beak = theme.chase.duckBeak,
+                    .beak = theme.duckBeak,
                     .eye = theme.motherDuckEye,
                     .wake = theme.foam
                 };
             }
             return {
-                .body = theme.chase.duckLight.fullyOpaque(),
-                .wing = theme.chase.duckShade.fullyOpaque(),
-                .beak = theme.chase.duckBeak,
+                .body = theme.duckLight.fullyOpaque(),
+                .wing = theme.duckShade.fullyOpaque(),
+                .beak = theme.duckBeak,
                 .eye = theme.cowDetail,
                 .wake = theme.foam
             };
@@ -1211,8 +1209,8 @@ namespace ClaFi::PathArt
                     / static_cast<float>(k_mountainHazeSteps);
                 const float aboveGround = (1.0f - position) * (groundY - gradientTop)
                     / frame.height;
-                const Color clear = colorBetween(theme.chase.mountainTop,
-                    theme.chase.mountainFoot, position);
+                const Color clear = colorBetween(theme.mountainTop,
+                    theme.mountainFoot, position);
                 rock.stops.push_back({ .position = position,
                     .color = hazed(theme, clear, range.parallax, aboveGround) });
             }
@@ -1235,12 +1233,12 @@ namespace ClaFi::PathArt
                 hazed(theme, landAt(frame, theme, groundY), k_farHillsParallax)));
 
             // crowns as the Chase's far hills draw them, smaller for the distance, on plain trunks
-            const SolidColor bark{ hazed(theme, theme.chase.bark, k_farHillsParallax) };
+            const SolidColor bark{ hazed(theme, theme.bark, k_farHillsParallax) };
             const SolidColor crown{ hazed(theme, theme.treeLeavesBase, k_farHillsParallax) };
             const SolidColor crownLight{
-                hazed(theme, theme.chase.crownLight, k_farHillsParallax) };
+                hazed(theme, theme.crownLight, k_farHillsParallax) };
             const SolidColor crownMiddle{
-                hazed(theme, theme.chase.crownMiddle, k_farHillsParallax) };
+                hazed(theme, theme.crownMiddle, k_farHillsParallax) };
             struct FarTree
             {
                 FloatPoint foot;
@@ -1316,8 +1314,9 @@ namespace ClaFi::PathArt
         void drawMeadow(const SceneFrame& frame, const SceneTheme& theme)
         {
             const float groundY = frame.height * k_horizonShare;
-            const std::array<Color, 3> tuftColors{ theme.chase.grass, theme.chase.bladeMiddle,
-                theme.chase.bladeDark };
+            // One tuft in three wears the blades' dark, as one near-bank blade in three does.
+            const std::array<Color, 3> tuftColors{ theme.grassBlade.dark,
+                theme.grassBlade.light, theme.grassBlade.light };
             const std::array<Color, 3> petals{ theme.petal1, theme.petal2, theme.petal3 };
             const float bandDepth = (frame.height - groundY)
                 / static_cast<float>(k_meadowDepthBands);
@@ -1335,9 +1334,9 @@ namespace ClaFi::PathArt
                         0.2f + 0.1f * static_cast<float>(kind));
                     const Color tuftColor = colorBetween(tuftColors[kind], nightColor,
                         theme.hasStars);
+                    const float tuftAlphaShare = 0.85f + 0.15f * nearness;
                     ScatteredShapes tufts{ frame,
-                        SolidColor{ faded(hazed(theme, tuftColor, parallax),
-                            0.85f + 0.15f * nearness) },
+                        SolidColor{ hazed(theme, tuftColor, parallax).faded(tuftAlphaShare) },
                         std::max(1.0f, 1.8f * nearness * frame.unit) };
                     for (int i = static_cast<int>(kind); i < k_meadowTufts; i += 3)
                     {
@@ -1362,8 +1361,9 @@ namespace ClaFi::PathArt
                     }
                     tufts.draw();
 
-                    ScatteredShapes specks{ frame, SolidColor{ faded(hazed(theme, petals[kind],
-                        parallax), 0.35f + 0.5f * nearness) } };
+                    const float speckAlphaShare = 0.35f + 0.5f * nearness;
+                    ScatteredShapes specks{ frame,
+                        SolidColor{ hazed(theme, petals[kind], parallax).faded(speckAlphaShare) } };
                     for (int i = static_cast<int>(kind); i < k_meadowFlowers; i += 3)
                     {
                         const float y = groundY + 30.0f + (frame.height * 0.8f - groundY - 30.0f)
@@ -1390,7 +1390,7 @@ namespace ClaFi::PathArt
             addSmoothLoop(path, left);
             fillShape(frame, path, LinearGradient::Simple(
                 { 0.0f, frame.height * 0.572f }, { 0.0f, frame.height * 0.68f },
-                hazed(theme, theme.chase.trail, k_knollParallax), theme.chase.trail));
+                hazed(theme, theme.trail, k_knollParallax), theme.trail));
         }
 
         void drawFir(const SceneFrame& frame, const SceneTheme& theme, const StandingTree& tree,
@@ -1399,15 +1399,15 @@ namespace ClaFi::PathArt
             const FloatPoint foot = pointAt(frame, tree.footShare);
             const float parallax = parallaxAt(frame, foot.y);
             const Color needles = theme.treeLeavesBase.fullyOpaque();
-            const Color sunlit = colorBetween(needles, theme.chase.crownLight.fullyOpaque(), 0.7f);
+            const Color sunlit = colorBetween(needles, theme.crownLight.fullyOpaque(), 0.7f);
             const Color shaded = colorBetween(needles, Color{ 0xFF000000 }, 0.28f);
             drawSpruce(frame, foot, tree.size * sizeAt(frame, foot.y), SpruceColors{
                 .needles = hazed(theme, needles, parallax),
                 .sunlit = hazed(theme, sunlit, parallax),
                 .shaded = hazed(theme, shaded, parallax),
-                .trunk = hazed(theme, theme.chase.bark, parallax),
-                .trunkShade = hazed(theme, theme.chase.barkShade, parallax),
-                .shadow = castsShadow ? theme.chase.shadow : Color{}
+                .trunk = hazed(theme, theme.bark, parallax),
+                .trunkShade = hazed(theme, theme.barkShade, parallax),
+                .shadow = castsShadow ? theme.shadow : Color{}
             });
         }
 
@@ -1415,7 +1415,7 @@ namespace ClaFi::PathArt
             const StandingTree& tree)
         {
             const FloatPoint foot = pointAt(frame, tree.footShare);
-            drawSpruceShadow(frame, foot, tree.size * sizeAt(frame, foot.y), theme.chase.shadow);
+            drawSpruceShadow(frame, foot, tree.size * sizeAt(frame, foot.y), theme.shadow);
         }
 
         void drawBroadleaf(const SceneFrame& frame, const SceneTheme& theme,
@@ -1427,12 +1427,12 @@ namespace ClaFi::PathArt
             const Color crownShade = colorBetween(crown, Color{ 0xFF000000 }, 0.25f);
             drawBroadleafTree(frame, foot, tree.size * sizeAt(frame, foot.y), BroadleafTreeColors{
                 .crown = hazed(theme, crown, parallax),
-                .crownMiddle = hazed(theme, theme.chase.crownMiddle.fullyOpaque(), parallax),
-                .crownLight = hazed(theme, theme.chase.crownLight.fullyOpaque(), parallax),
-                .crownShade = faded(hazed(theme, crownShade, parallax), 0.6f),
-                .trunk = hazed(theme, theme.chase.bark, parallax),
-                .trunkShade = hazed(theme, theme.chase.barkShade, parallax),
-                .shadow = theme.chase.shadow
+                .crownMiddle = hazed(theme, theme.crownMiddle.fullyOpaque(), parallax),
+                .crownLight = hazed(theme, theme.crownLight.fullyOpaque(), parallax),
+                .crownShade = hazed(theme, crownShade, parallax).faded(0.6f),
+                .trunk = hazed(theme, theme.bark, parallax),
+                .trunkShade = hazed(theme, theme.barkShade, parallax),
+                .shadow = theme.shadow
             });
         }
 
@@ -1464,7 +1464,7 @@ namespace ClaFi::PathArt
             const float size = k_bridgeSize * sizeAt(frame, foot.y);
             const Matrix3x2 place = Matrix3x2::Translation(foot) * Matrix3x2::Scale(size);
             const float parallax = parallaxAt(frame, foot.y);
-            const Color clearWood = theme.chase.bough;
+            const Color clearWood = theme.bough;
             const Color wood = hazed(theme, clearWood, parallax);
             const Color woodShade = hazed(theme,
                 colorBetween(clearWood, Color{ 0xFF000000 }, 0.35f), parallax);
@@ -1569,7 +1569,7 @@ namespace ClaFi::PathArt
                 const float radius = (6.0f + ringAge * 22.0f) * size;
                 PixelPath ring;
                 ring.drawEllipse(center, radius, radius * 0.3f);
-                strokeShape(frame, ring, SolidColor{ faded(wave, (1.0f - ringAge / k_ringLife)
+                strokeShape(frame, ring, SolidColor{ wave.faded((1.0f - ringAge / k_ringLife)
                     * 0.9f) }, 1.4f * size);
             }
         }
@@ -1638,7 +1638,7 @@ namespace ClaFi::PathArt
             wake.lineTo(-30.0f, -4.0f);
             wake.moveTo(14.0f, 0.0f);
             wake.lineTo(-30.0f, 5.0f);
-            strokeShape(water, wake, SolidColor{ faded(colors.wake, 0.7f) }, 1.2f);
+            strokeShape(water, wake, SolidColor{ colors.wake.faded(0.7f) }, 1.2f);
         }
 
         void drawDucks(const SceneFrame& frame, const SceneTheme& theme,
@@ -1700,8 +1700,8 @@ namespace ClaFi::PathArt
             const float open = std::abs(std::sin(turn * 178.0f));
             const SceneFrame butterfly = frame.within(Matrix3x2::Translation(at)
                 * Matrix3x2::Scale(1.3f * frame.unit));
-            const SolidColor wing{ faded(nearLayerColor(theme.chase.wing), daylight) };
-            const SolidColor edge{ faded(nearLayerColor(theme.chase.wingEdge), daylight) };
+            const SolidColor wing{ nearLayerColor(theme.wing).faded(daylight) };
+            const SolidColor edge{ nearLayerColor(theme.wingEdge).faded(daylight) };
             for (const float side : { -1.0f, 1.0f })
             {
                 PixelPath shape;
@@ -1772,7 +1772,7 @@ namespace ClaFi::PathArt
             {
                 const float along = (static_cast<float>(i) + 0.5f) / static_cast<float>(k_glows);
                 drawGlow(frame, pointBetween(far, near, along), (6.0f + 40.0f * along) * unit,
-                    faded(theme.sunGlow, 0.3f), 0.45f);
+                    theme.sunGlow.faded(0.3f), 0.45f);
             }
             for (int i = 0; i != k_glitters; ++i)
             {
@@ -1804,8 +1804,8 @@ namespace ClaFi::PathArt
                     sparkle.lineTo(x - reach + shift, sliceBottom);
                     sparkle.close();
                 }
-                fillShape(frame, sparkle, SolidColor{ faded(theme.sunGlow,
-                    k_glitterOpacity * std::min(1.0f, twinkle * 1.4f)) });
+                fillShape(frame, sparkle, SolidColor{ theme.sunGlow.faded(k_glitterOpacity
+                    * std::min(1.0f, twinkle * 1.4f)) });
             }
             frame.canvas.popClip();
         }
@@ -1832,8 +1832,8 @@ namespace ClaFi::PathArt
             fillShape(frame, bank, LinearGradient::Simple({ 0.0f, h * 0.86f }, { 0.0f, h },
                 bankTop, bankBottom));
 
-            const Color grass = nearLayerColor(theme.chase.grass);
-            const Color darkGrass = nearLayerColor(theme.chase.frontGrassDark);
+            const Color grass = nearLayerColor(theme.grassBlade.light);
+            const Color darkGrass = nearLayerColor(theme.grassBlade.dark);
             const float swayPhase = cycleTime * k_2Pi * 8.0f;
             for (const BladeRun& run : k_bladeRuns)
             {
@@ -1862,8 +1862,8 @@ namespace ClaFi::PathArt
             }
 
             const CattailColors cattailColors = {
-                nearLayerColor(theme.chase.reedStem),
-                nearLayerColor(theme.chase.reedHead),
+                nearLayerColor(theme.reedStem),
+                nearLayerColor(theme.reedHead),
             };
             for (const Cattail& cattail : k_cattails)
             {
@@ -1878,7 +1878,7 @@ namespace ClaFi::PathArt
                 nearLayerColor(theme.petal2),
                 nearLayerColor(theme.petal3)
             };
-            const Color flowerHeart = nearLayerColor(theme.chase.flowerHeart);
+            const Color flowerHeart = nearLayerColor(theme.flowerHeart);
             for (std::size_t i = 0; i != k_bankFlowers.size(); ++i)
             {
                 const BankFlower& flower = k_bankFlowers[i];
@@ -1910,7 +1910,7 @@ namespace ClaFi::PathArt
             // The head's own colour lit, as the Chase lights its reeds' heads, never the sun's.
             Hsl litHead{ head };
             litHead.scaleLuminosity(1.25f);
-            const Color headLight = faded(litHead.toColor(), 0.8f);
+            const Color headLight = litHead.toColor().faded(0.8f);
             const float x = foot.x;
             const float y = foot.y;
             const float tall = height * scale;
@@ -1947,7 +1947,7 @@ namespace ClaFi::PathArt
         void drawShoreCattails(const SceneFrame& frame, const SceneTheme& theme,
             const float cycleTime, const bool mirrored)
         {
-            const CattailColors colors = { theme.chase.reedStem, theme.chase.reedHead };
+            const CattailColors colors = { theme.reedStem, theme.reedHead };
             const auto drawRow = [&](const std::span<const Cattail> cattails,
                 const std::span<const FloatPoint> shore) {
                 for (const Cattail& cattail : cattails)

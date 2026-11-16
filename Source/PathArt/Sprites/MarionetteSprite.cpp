@@ -195,7 +195,7 @@ namespace ClaFi::PathArt
         strings.lineTo(puppet.legLeft.joint);
         strings.moveTo(control.kneeEndRight);
         strings.lineTo(puppet.legRight.joint);
-        strokeShape(frame, strings, SolidColor{ faded(MarionetteColors::String, opacity) },
+        strokeShape(frame, strings, SolidColor{ MarionetteColors::String.faded(opacity) },
             frame.unit, StrokeCap::Butt);
     }
 
@@ -206,7 +206,7 @@ namespace ClaFi::PathArt
             return;
         const float unit = frame.unit;
         const auto inOpacity = [&](Color color) {
-            return SolidColor{ faded(color, opacity) };
+            return SolidColor{ color.faded(opacity) };
         };
         drawSegment(frame, control.center, control.legBarCenter,
             inOpacity(MarionetteColors::BarPeg), 3.0f * unit);

@@ -31,7 +31,7 @@ namespace ClaFi::PathArt
                 burst.center.y + std::sin(angle) * reach - 10.0f * age * unit,
             };
             const Color color = burst.colors[static_cast<std::size_t>(i) % burst.colors.size()];
-            drawSparkle(frame, at, radius, faded(color, 1.0f - age * age));
+            drawSparkle(frame, at, radius, color.faded(1.0f - age * age));
         }
     }
 }

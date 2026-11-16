@@ -115,6 +115,7 @@ namespace ClaFi
             result.alpha = static_cast<ColorByte>(255 * opacity);
             return result;
         }
+        [[nodiscard]] Color faded(float share) const; // this colour at a share of its own alpha
         //ColorAsUint toGdiColor() const {
         //  return static_cast<ColorAsUint>((red | (static_cast<uint16_t>(green) << 8)) | (static_cast<uint16_t>(blue) << 16));
         //}

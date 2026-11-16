@@ -39,7 +39,6 @@ namespace ClaFi::PathArt
 
         // Ears
         const float earT = pose.earTurn;
-        const SolidColor ear{ colors.ear.withOpacity(opacity) };
         PixelPath earPath;
         earPath.moveTo(-8.0f, 0.0f);
         earPath.lineTo(8.0f, 0.0f);
@@ -48,12 +47,12 @@ namespace ClaFi::PathArt
         {
             const Matrix3x2 earTx1 = Matrix3x2::Translation(x - 8.0f * s, y + breath)
                 * Matrix3x2::Rotation((-0.3f + earT) * k_2Pi) * Matrix3x2::Scale(s * 1.25f);
-            fillShape(frame, earPath, ear, earTx1);
+            fillShape(frame, earPath, body, earTx1);
         }
         {
             const Matrix3x2 earTx2 = Matrix3x2::Translation(x + 8.0f * s, y + 5.0f * s + breath)
                 * Matrix3x2::Rotation(0.25f * k_2Pi) * Matrix3x2::Scale(s * 1.25f);
-            fillShape(frame, earPath, ear, earTx2);
+            fillShape(frame, earPath, body, earTx2);
         }
 
         // Snout
@@ -82,7 +81,7 @@ namespace ClaFi::PathArt
             const float eyeBottom = 12.0f;
             // each eye's glow about the middle of its triangle
             const SceneFrame eyeFrame = frame.within(eyeTx);
-            const Color glow = faded(colors.eye, 0.55f * opacity);
+            const Color glow = colors.eye.faded(0.55f * opacity);
             drawGlow(eyeFrame, { xShift - (2.0f * eyeEnd + eyeBegin) / 3.0f, eyeTop }, 6.5f, glow);
             drawGlow(eyeFrame, { xShift + (2.0f * eyeBegin + eyeEnd) / 3.0f, eyeTop }, 6.5f, glow);
             PixelPath path;

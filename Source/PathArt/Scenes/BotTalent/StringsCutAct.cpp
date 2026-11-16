@@ -116,7 +116,7 @@ namespace ClaFi::PathArt
                 const FloatPoint at = pointBetween(tip, target, share)
                     - FloatPoint{ 0.0f, arcHeight * unit * std::sin(k_pi * share) };
                 const Color color = i % 2 == 1 ? MagicColors::Gold : MagicColors::White;
-                drawSparkle(frame, at, 6.0f * unit, faded(color, 1.0f - share * 0.3f));
+                drawSparkle(frame, at, 6.0f * unit, color.faded(1.0f - share * 0.3f));
             }
         }
 
@@ -275,7 +275,7 @@ namespace ClaFi::PathArt
                     tipOf(wandAt(actTime - behind)));
                 const Color color = i % 2 == 1 ? MagicColors::Cyan : MagicColors::Gold;
                 drawSparkle(frame, at, (6.0f - static_cast<float>(i) * 0.7f) * unit,
-                    faded(color, 1.0f - static_cast<float>(i) / 8.0f));
+                    color.faded(1.0f - static_cast<float>(i) / 8.0f));
             }
         }
         // sparkles flying across to the control, then glinting down every string
@@ -293,7 +293,7 @@ namespace ClaFi::PathArt
             } };
             for (const std::array<FloatPoint, 2>& string : strings)
                 drawSparkle(frame, pointBetween(string[0], string[1], glint), 6.0f * unit,
-                    faded(MagicColors::White, 1.0f - 0.4f * glint));
+                    MagicColors::White.faded(1.0f - 0.4f * glint));
         }
         drawSparkleBurst(frame, SparkleBurst{
             .center = control.center,
@@ -336,7 +336,7 @@ namespace ClaFi::PathArt
                 const FloatPoint at = puppet.pelvis
                     + FloatPoint{ std::cos(angle) * 46.0f, 30.0f - 110.0f * life } * unit;
                 const Color color = i % 2 == 1 ? MagicColors::Cyan : MagicColors::Gold;
-                drawSparkle(frame, at, 4.0f * unit * std::sin(k_pi * life), faded(color, magic));
+                drawSparkle(frame, at, 4.0f * unit * std::sin(k_pi * life), color.faded(magic));
             }
         }
         if (actTime > 3.4f && actTime < k_vanishAt)
@@ -347,7 +347,7 @@ namespace ClaFi::PathArt
                 const FloatPoint at = tip
                     + FloatPoint{ (pseudoRandom(i, 71.0f) - 0.5f) * 14.0f, 22.0f * life } * unit;
                 const Color color = i % 2 == 1 ? MagicColors::Gold : MagicColors::White;
-                drawSparkle(frame, at, 4.0f * unit * (1.0f - life), faded(color, 1.0f - life));
+                drawSparkle(frame, at, 4.0f * unit * (1.0f - life), color.faded(1.0f - life));
             }
         }
         // the android's own going: sparkles spiral up round it, it goes in a puff of smoke that

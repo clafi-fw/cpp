@@ -20,7 +20,6 @@ namespace ClaFi::PathArt
     export struct PeekingWolfColors
     {
         Color body;
-        Color ear;
         Color eye; // and the glow round the eyes
     };
 

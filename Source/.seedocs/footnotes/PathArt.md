@@ -118,9 +118,10 @@ the pointer over it, through animationTick().
 ## SceneTheme
 
 **One table of colours for every scene that offers themes**, and the effects that come with them.
-The fields up to effectColor2 are the Mill's, and the sky, the sun, the clouds, the meadow - hillTop
-and hillBottom - and the trees serve ChaseScene as well. MillTheme holds what only the mill wears,
-and ChaseTheme what only the Chase draws. Every theme fills every field.
+Its own fields hold the scenery both scenes share - the sky, the sun, the mountains, the meadow and
+its grass, the trees, the reeds, the stones, the flowers - and what else the Mill draws: its river,
+its cow, its wolf, its birds, its ducks and its fish. MillTheme holds what only the mill wears, and
+ChaseTheme what only the Chase draws. Every theme fills every field.
 
 **effectColor1 and effectColor2 colour the weather, and their alpha is a strength.** Rain, snow and
 dust wear effectColor1; leaves wear the two by turns, and petals petal1 and petal2; a firefly is
@@ -130,13 +131,29 @@ scene gives it.
 **flock is the birds flying across the mill's sky**, a colour of their own beside the Chase's crow.
 
 **motherDuckBody, motherDuckWing and motherDuckEye dress the duck leading the ducklings**, who wear
-the rubber duck's duckLight and duckShade from ChaseTheme.
+duckLight, duckShade and duckBeak, as the Chase's rubber duck does.
 
 **fish is the fish leaping from the pond.**
 
 **The sun and the moon take sunDisk and sunGlow** - see drawCelestial and drawCelestialGlow: a disc
 in a rim of its own light, and a glow twice as wide as it is tall; the moon shows three craters as
-the night falls by hasStars. sunStroke, sunCorona1 and sunCorona2 go unused.
+the night falls by hasStars.
+
+**The mountains' clear colours are rock in the theme's light, before any haze.** mountainTop is the
+rock where the most sunlight falls, at the top of the highest range, and mountainFoot the rock at
+the ground line - see hazed. Every theme starts them from one neutral rock, 8E8E8E at the
+top and 616161 at the foot, darkened and tinted as its sky lights it. It then lightens both alike by
+day, or darkens them at night, to set the near range, hazed, apart from the runners' heads. Clear
+Day's, High Noon's, Summer Sunset's, Vintage Noir's, Toxic Waste's and Magic Forest's are set by
+hand: Clear Day's darker and bluer, High Noon's and Summer Sunset's with their tops kept over a dark
+grey foot, Magic Forest's over a dark grey-violet one, Vintage Noir's near black under its dark air,
+Toxic Waste's a dark yellow-green top over a near black foot. Where the two ranges meet, rock darker
+than the air leaves the near range the darker one. The haze gives them the theme's air.
+
+**Every trunk is the stumps' bark.** The branch run's tree is drawn in bark over barkShade, with its
+branch in barkShade. The far hills' trees take bark, hazed with them, and the Mill's pines take it
+too. Each is drawn as a stump without its slice - see drawTrunk. The Mill's
+footbridge is bough, as the Chase's signpost is; the mill's own timber is in MillTheme.
 
 **petal1 to petal3 are the flowers' petals**, shared by every flower the Chase draws - each wears
 one, by turns - and by the falling petals, which wear the first two in place of the effect colours.
@@ -167,7 +184,7 @@ A crossfade blends it with the effects.
 
 **The colours only the mill wears**: its walls, its roof, its timber, the lamp behind its windows,
 its wings' cloth, the water wheel and what the trough pours. Its plinth, its chimney and its door
-take ChaseTheme's stone and bark, which the Chase's boulder and trunks wear too. Every theme fills
+take SceneTheme's stone and bark, which the Chase's boulder and trunks wear too. Every theme fills
 every field but windowLight.
 
 **timber is the mill's wood**: the window and door frames, the wings' stocks and hub, the wheel's
@@ -183,21 +200,9 @@ foam.
 
 ## ChaseTheme
 
-The Chase's own colours in a theme: the mountains' clear colours, which the scene hazes - see
-hazed - the tree a branch run ends at, the trail and the grass, the four runners' coats, every prop
-and the stars circling a dazed wolf's head. MillScene takes its mountains, its far hills' trees and
-its grass from here too.
-
-**The mountains' clear colours are rock in the theme's light, before any haze.** mountainTop is the
-rock where the most sunlight falls, at the top of the highest range, and mountainFoot the rock at
-the ground line - see hazed. Every theme starts them from one neutral rock, 8E8E8E at the
-top and 616161 at the foot, darkened and tinted as its sky lights it. It then lightens both alike by
-day, or darkens them at night, to set the near range, hazed, apart from the runners' heads. Clear
-Day's, High Noon's, Summer Sunset's, Vintage Noir's, Toxic Waste's and Magic Forest's are set by
-hand: Clear Day's darker and bluer, High Noon's and Summer Sunset's with their tops kept over a dark
-grey foot, Magic Forest's over a dark grey-violet one, Vintage Noir's near black under its dark air,
-Toxic Waste's a dark yellow-green top over a near black foot. Where the two ranges meet, rock darker
-than the air leaves the near range the darker one. The haze gives them the theme's air.
+The Chase's own colours in a theme: the tree a branch run ends at, the pebbles, the four runners'
+coats, most of its props and the stars circling a dazed wolf's head. The scenery it shares with the
+Mill is SceneTheme's.
 
 **Figures and props are well lit, at night as by day.** They start from Clear Day's colours, tinted
 a little toward the theme's sky, and keep their colour - except in Paper Sketch, whose look is a
@@ -209,11 +214,6 @@ one deep red for its apple, its toadstool's cap and the wolves' tongues.
 **The tree a branch run ends at has a crown of its own** - treeCrown, treeCrownLight and
 treeCrownMiddle - lit as the props are. The far hills' crowns and the Mill's keep the theme's light;
 they are drawn from treeLeavesBase, crownLight and crownMiddle.
-
-**Every trunk is the stumps' bark.** The branch run's tree is drawn in bark over barkShade, with its
-branch in barkShade. The far hills' trees take bark, hazed with them, and the Mill's pines take it
-too, from `chase`. Each is drawn as a stump without its slice - see drawTrunk. The Mill's
-footbridge is bough, as the Chase's signpost is; the mill's own timber is in MillTheme.
 
 - A wolf's head and ears stand against the mountains; a hare stays below the far hills' top. Both
   are measured as they are drawn, hazed.
@@ -235,8 +235,9 @@ footbridge is bough, as the Chase's signpost is; the mill's own timber is in Mil
   a lava red in Toxic Waste, a hot crimson in Cyberpunk Night and Underwater Realm, a neon red in
   Neon City Night. Vintage Noir's apples, its toadstool's cap and its wolves' tongues share the one
   deep red in its grey.
-- One green serves the flowers' stems, the big daisy's leaves, the tufts on the lawn and the
-  foreground grass, whose every third blade is a shade darker. Midnight's, Toxic Waste's and Neon
+- One green, grassBlade's light, serves the flowers' stems, the big daisy's leaves, the tufts on
+  the lawn and the grass blades; every third blade, and every third tuft in the Mill's meadow,
+  wears its dark, a shade darker. Midnight's, Toxic Waste's and Neon
   City Night's are lighter, to show against their dark meadows; Toxic Waste's is a dim toxic green,
   and Neon City Night's the green of its trees, muted. Cherry Blossom's plants are a dark sage, on a
   grey-green meadow by a rose-grey trail. Vintage Noir's plants are grey, as the rest of it is.

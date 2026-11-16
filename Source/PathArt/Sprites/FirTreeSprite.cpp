@@ -14,7 +14,7 @@ namespace ClaFi::PathArt
     void drawFirTree(const SceneFrame& frame, const FloatPoint base, const float size,
         const FirTreeColors& colors)
     {
-        drawGlow(frame, base, 24.0f * size, faded(colors.shadow, 0.3f), 0.5f);
+        drawGlow(frame, base, 24.0f * size, colors.shadow.faded(0.3f), 0.5f);
         const Matrix3x2 tx = Matrix3x2::Translation(base) * Matrix3x2::Scale(size);
 
         drawTrunk(frame.within(tx), {}, 10.0f, 30.0f, colors.trunk, colors.trunkShade);

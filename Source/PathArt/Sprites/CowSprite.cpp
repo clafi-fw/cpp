@@ -30,7 +30,7 @@ namespace ClaFi::PathArt
         const float y = pose.at.y;
         const float s = pose.size;
         const float t = pose.cycleTime;
-        drawGlow(frame, { x, y + 50.0f * s }, 40.0f * s, faded(colors.shadow, 0.3f), 0.5f);
+        drawGlow(frame, { x, y + 50.0f * s }, 40.0f * s, colors.shadow.faded(0.3f), 0.5f);
 
         const SolidColor detail{ colors.detail };
         const SolidColor skyLimb{ limbColorOn(colors, colors.skyBehind) };

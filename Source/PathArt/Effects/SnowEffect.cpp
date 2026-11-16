@@ -48,7 +48,7 @@ namespace ClaFi::PathArt
         const float unit = frame.unit;
         PixelPath flake;
         createSnowFlakePath(flake);
-        const SolidColor color{ faded(snow.color, snow.opacity) };
+        const SolidColor color{ snow.color.faded(snow.opacity) };
         for (int i = 0; i < snow.count; ++i)
         {
             const float index = static_cast<float>(i);

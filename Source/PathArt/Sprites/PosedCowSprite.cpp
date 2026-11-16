@@ -36,7 +36,7 @@ namespace ClaFi::PathArt
         const float legSwing = pose.stride ? std::sin(stepAngle) * 0.32f : 0.0f;
         const float hipY = -30.0f - bob;
 
-        fillOval(cow, { -2.0f, 1.0f }, 52.0f, 6.0f, SolidColor{ faded(colors.shadow, 0.9f) });
+        fillOval(cow, { -2.0f, 1.0f }, 52.0f, 6.0f, SolidColor{ colors.shadow.faded(0.9f) });
         drawLeg(cow, { -34.0f, hipY }, -legSwing, far, colors.detail);
         drawLeg(cow, { 26.0f, hipY }, legSwing, far, colors.detail);
 

@@ -31,9 +31,9 @@ namespace ClaFi::PathArt
             if (flicker > 0.4f)
             {
                 const FloatPoint pos = { xBase + dx, yBase + dy };
-                drawGlow(frame, pos, 15.0f * unit, faded(fireflies.glow, 0.5f * opacity));
+                drawGlow(frame, pos, 15.0f * unit, fireflies.glow.faded(0.5f * opacity));
                 fillDisc(frame, pos, 3.5f * unit,
-                    SolidColor{ faded(fireflies.light, opacity) });
+                    SolidColor{ fireflies.light.faded(opacity) });
             }
         }
     }

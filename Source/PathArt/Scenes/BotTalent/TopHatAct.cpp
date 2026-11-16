@@ -195,7 +195,7 @@ namespace ClaFi::PathArt
                     26.0f * unit * life
                 };
                 const Color color = i % 2 == 1 ? MagicColors::Gold : MagicColors::White;
-                drawSparkle(frame, at, 4.5f * unit * (1.0f - life), faded(color, 1.0f - life));
+                drawSparkle(frame, at, 4.5f * unit * (1.0f - life), color.faded(1.0f - life));
             }
         }
     }

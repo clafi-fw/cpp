@@ -421,6 +421,13 @@ namespace ClaFi
         blend(c2, k2);
     }
 
+    Color Color::faded(const float share) const
+    {
+        Color result = *this;
+        result.alpha = static_cast<ColorByte>(std::lround(alpha * share));
+        return result;
+    }
+
     Hsl::Hsl(float hue, float saturation, float luminosity)
         :
         hue{ hue },

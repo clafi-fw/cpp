@@ -28,9 +28,9 @@ namespace ClaFi::PathArt
         shape.quadTo({ -18.0f, 10.0f }, { -28.0f, 8.0f });
         shape.quadTo({ -33.0f, 6.0f }, { -31.0f, 3.0f });
         shape.close();
-        fillShape(head, shape, SolidColor{ faded(colors.head.fullyOpaque(), pose.opacity) });
+        fillShape(head, shape, SolidColor{ colors.head.fullyOpaque().faded(pose.opacity) });
 
-        const SolidColor ears{ faded(colors.ears, pose.opacity) };
+        const SolidColor ears{ colors.ears.faded(pose.opacity) };
         shape.clear();
         shape.moveTo(6.0f, -12.0f);
         shape.lineTo(14.0f, -27.0f);
@@ -51,10 +51,10 @@ namespace ClaFi::PathArt
             return;
         constexpr std::array<float, 2> k_eyeXs{ -11.0f, 1.0f };
         constexpr float k_eyeY{ -5.0f };
-        const SolidColor eyes{ faded(colors.eyes, pose.opacity) };
+        const SolidColor eyes{ colors.eyes.faded(pose.opacity) };
         for (const float x : k_eyeXs)
         {
-            drawGlow(head, { x, k_eyeY }, 9.0f, faded(colors.eyes, 0.55f * pose.opacity));
+            drawGlow(head, { x, k_eyeY }, 9.0f, colors.eyes.faded(0.55f * pose.opacity));
             shape.clear();
             shape.moveTo(x + 5.0f, k_eyeY);
             shape.lineTo(x - 2.0f, k_eyeY + 2.5f);

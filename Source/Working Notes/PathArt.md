@@ -4577,6 +4577,9 @@ Color::blend does, so all of him looks as the part inside the shadow looked, and
 light. Vintage Noir's ear and Neon Jungle's body come out the same. The gator in Sahara Heat wears
 wolfBody too and lies on the same shadow. The Chase came out the same to the byte in three themes.
 
+Then (Oj, 2026-11-16) "Remove the peeking wolf's ear color - it has one coat color". SceneTheme
+carries no wolfEar and PeekingWolfColors no ear: both ears are drawn in wolfBody.
+
 To watch: the gator and the cow move with `sin(t * 15)` and `sin(t * 30)`, which are not whole turns
 of a 0 to 1 cycle, so they jump when the cycle wraps. The water lily bobs one and a half times a
 cycle, and jumps the same way.
@@ -4645,3 +4648,24 @@ it.
 **Sparkles are filled one by one**, where dots are binned by opacity: they all share one opacity,
 so binning would put every star in one path, and two that overlap would cut holes in each other
 under the even-odd rule.
+
+## ChaseTheme
+
+The grass is two fields, each named for what it is (Oj, 2026-11-16: "It's all grass, so grassTuft,
+grassBlade, grassPatch are better names"). grassBlade holds the light and the dark shade of grass
+blades and tufts. A tuft always matches one of the blades, so it has no field of its own, and the
+blades are not tied to the near bank - "nobody bans you from using the same blades anywhere".
+
+grassPatch holds the three shades of the patch on the Chase's trail. It is an obstacle lying on the
+path and well lit even at night, a highlighted patch rather than a regular one, and it suits the
+Mill cow's tuft too. The Mill's meadow tufts wore two of its shades, which Oj called a wrong move;
+they wear the blades' shades, one tuft in three the dark, as one near-bank blade in three does.
+
+Then (Oj, 12:43) "remove dead fields and move the shared fields under the root". SceneTheme drops
+the nine fields no scene read - sunStroke, sunCorona1, sunCorona2, riverReflect, lilyPad, lilyFlower
+and its own reedStem, reedHead and shadow - and takes from ChaseTheme every field the Mill draws
+with, each beside its kin: the mountains by the hills, the crowns and the bark by the leaves, the
+grass, the reeds, the stones and the shadow together, the flowers' heart by the petals, the
+butterfly's wings after them, and the duck colours after the mother duck. duckBeakShade, which only
+the rubber duck wears, came along so the duck's colours stay together. The Chase's helpers that draw
+with them take the SceneTheme and keep a `chase` reference for the Chase's own colours.

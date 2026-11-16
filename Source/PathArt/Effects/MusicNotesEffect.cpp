@@ -69,7 +69,7 @@ namespace ClaFi::PathArt
             const float size = unit * (1.3f + 0.5f * pseudoRandom(i, seed + 3.0f));
             const Color color = k_noteColors[static_cast<std::size_t>(i % 3)];
             drawNote(frame.within(Matrix3x2::Translation(at) * Matrix3x2::Scale(size)),
-                faded(color, opacity), i % 3 == 1);
+                color.faded(opacity), i % 3 == 1);
         }
     }
 }

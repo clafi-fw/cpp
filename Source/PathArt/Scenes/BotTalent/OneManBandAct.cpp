@@ -394,7 +394,7 @@ namespace ClaFi::PathArt
                 lines.moveTo(across, -108.0f);
                 lines.lineTo(across + 4.0f, -120.0f);
             }
-            strokeShape(kit, lines, SolidColor{ faded(DrumColors::Ring, m_kicked) }, 1.6f);
+            strokeShape(kit, lines, SolidColor{ DrumColors::Ring.faded(m_kicked) }, 1.6f);
         }
         if (m_crashAge >= 0.0f)
             drawSparkleBurst(frame, SparkleBurst{

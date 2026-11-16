@@ -96,3 +96,10 @@ answers are per control.
 ApplicationBase::createDialog's comment said the root was offered ActiveContainer. The code never
 passed it - true since the first release - and the comment now says the root answers for itself.
 Open: whether createDialog should offer FocusScope::Yes after all.
+
+## Color faded
+
+The colour at a share of its own alpha, where withOpacity replaces the alpha outright. It was a
+free function in PathArt's SceneHelpers until Oj had it moved here (2026-11-16, "Move faded to
+the Color"), its calls rewritten as colour.faded(share). The Mill's river fog takes the cloud's
+colour at withOpacity(0.33f) instead, so its strength no longer rides on the cloud's own alpha.

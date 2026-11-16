@@ -25,8 +25,8 @@ namespace ClaFi::PathArt
         fillBox(tree, { -6.0f, -26.0f, -1.0f, 0.0f }, SolidColor{ colors.trunkShade });
 
         const SolidColor needles{ colors.needles };
-        const SolidColor sunlit{ faded(colors.sunlit, 0.75f) };
-        const SolidColor shaded{ faded(colors.shaded, 0.8f) };
+        const SolidColor sunlit{ colors.sunlit.faded(0.75f) };
+        const SolidColor shaded{ colors.shaded.faded(0.8f) };
         const Matrix3x2 toCanvas = tree.toCanvas;
         for (int i = 0; i != k_tiers; ++i)
         {

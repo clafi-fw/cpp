@@ -141,12 +141,6 @@ namespace ClaFi::PathArt
         return Color::blend(from, to, std::clamp(share, 0.0f, 1.0f));
     }
 
-    Color faded(Color color, const float share)
-    {
-        color.alpha = static_cast<ColorByte>(std::lround(color.alpha * share));
-        return color;
-    }
-
     float contrastBetween(const Color one, const Color other)
     {
         const auto luminance = [](Color color) {

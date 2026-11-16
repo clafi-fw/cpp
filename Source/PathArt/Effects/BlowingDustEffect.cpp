@@ -18,7 +18,7 @@ namespace ClaFi::PathArt
         const float w = frame.width;
         const float h = frame.height;
         const float unit = frame.unit;
-        const SolidColor streak{ faded(dust.color, dust.opacity) };
+        const SolidColor streak{ dust.color.faded(dust.opacity) };
         const float widthsPerCycle = std::max(1.0f, std::round(3.0f * dust.pace));
         for (int i = 0; i < dust.count; ++i)
         {
