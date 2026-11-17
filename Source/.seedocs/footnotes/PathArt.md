@@ -1643,11 +1643,11 @@ over a 1400-unit period, and it is filled down to the ground line behind the mea
 the theme's bark under one to three crowns of the layer's foliage; the crowns of a tree overlap and
 run the same way round, so one path fills them as one - see ScatteredShapes. Five more trees to a
 4900-unit strip stand taller, the same bark and crowns. Fourteen short hedges to a 5800-unit strip
-lie on the slope below the crest, each 42 to 78 units long, each wearing the same hedge colour the
-meadow's do, hazed at this layer's distance - the air alone parts a piece from the band, which is
-why a far hedge is a veiled thing and never a dark band laid on it. A piece lies level, or at a
-slight tilt of its own, so it does not follow the crest's line: its height below the crest changes
-from piece to piece and along each one.
+lie on the slope below the crest, each 42 to 78 units long, each wearing the theme's hedge colour,
+hazed at this layer's distance - the air alone parts a piece from the band, which is why a far hedge
+is a veiled thing and never a dark band laid on it. A piece lies level, or at a slight tilt of its
+own, so it does not follow the crest's line: its height below the crest changes from piece to piece
+and along each one.
 
 **The layer's foliage is mixed in clear air and then hazed.** The crowns take the theme's
 treeLeavesBase shaded 0.3 of the way to hillBottom, the hedges the theme's hedge colour, already
@@ -1673,14 +1673,13 @@ down the slope, not the hill's contour: it is laid from its start height with a 
 of its own, and pushed down only where the crest falls into it, keeping 6 units below the crest and
 12 above the trail.
 
-**A hedge's colour is settled in clear air, once for the theme.** It starts from the trees' crown
-mixed 0.55 of the way to hillBottom, and is turned away from the clear hill - darker where the land
-is light, lighter only where a dark hedge could not clear the floor - until it stands
-k_hedgeContrast, 1.45, against that clear ground. The layer's air is then applied to it as to
-everything else at that distance, so the haze, not the hedge, decides what the distance makes of it.
-Its humps rise and fall by about half its 16 to 24 units, with a taller clump now and then, and a
-stretch closes on a rounded shoulder at each end, so no cut edge shows and the length reads as a
-hedge rather than a band.
+**A hedge wears the theme's own hedge colour**, not one worked out from its hills: a colour that has
+to read on a high-contrast theme and vanish into a washed-out one cannot be derived, so each theme
+states it, as it states every other colour. The layer's air is then applied to it as to everything
+else at that distance, so the haze, not the hedge, decides what the distance makes of it. Its humps
+rise and fall by about half its 16 to 24 units, with a taller clump now and then, and a stretch
+closes on a rounded shoulder at each end, so no cut edge shows and the length reads as a hedge rather
+than a band.
 
 ## ChaseScene meadowGradient
 

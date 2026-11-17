@@ -223,10 +223,11 @@ the same from either.</p>
 
 <div class="info">
 <strong>Module imports:</strong> the canvas and its scoped guards are in
-<code>ClaFi.Core.Graphics.Canvas</code>. Brushes, <code>PixelPath</code>, <code>PathDrawLayer</code>,
-<code>Matrix3x2</code>, <code>ShadowParams</code>, <code>Bitmap</code>, <code>PixelView</code> and
-<code>IBackend</code> are in <code>ClaFi.Core.Graphics.Types</code>. <code>Color</code>,
-<code>FloatRect</code> and <code>RoundedRectangleParts</code> come with
+<code>ClaFi.Core.Graphics.Canvas</code>. Brushes, <code>PixelPath</code>, <code>FillRule</code>,
+<code>PathDrawLayer</code>, <code>Matrix3x2</code>, <code>ShadowParams</code>, <code>Bitmap</code>,
+<code>PixelView</code> and <code>IBackend</code> are in
+<code>ClaFi.Core.Graphics.Types</code>. <code>Color</code>, <code>FloatRect</code> and
+<code>RoundedRectangleParts</code> come with
 <code>ClaFi.Core.System.UiTypes</code>. The CPU backend is <code>ClaFi.Core.Graphics.Cpu.Canvas</code>
 and the Direct2D one <code>ClaFi.Platform.Windows.D2D</code>; a caller drawing in a paint handler
 imports neither.
@@ -485,6 +486,11 @@ draws nothing. Three helpers build a whole figure and start a fresh path to do i
 half its own side.
 <code>addRoundedPolygon</code> appends a polygon with its corners rounded, keeping what the path
 already holds.</p>
+
+<p><strong>A path carries the rule every fill of it follows.</strong> It is
+<code>FillRule::Nonzero</code>, SVG's initial rule, until <code>setFillRule</code> changes it;
+<code>fillRule()</code> answers what it holds. <code>clear()</code> returns it to <code>Nonzero</code>,
+a cleared path being a new path.</p>
 
 <p><strong>A curve is drawn to within half a pixel of itself.</strong> A path keeps its curves as
 curves, and each backend turns them into what it rasterizes: Direct2D tessellates them itself, and
@@ -1118,7 +1124,9 @@ is one pixel.</p>
 <tr><td><code>close()</code></td><td>The segment back to the figure's start. A segment after it starts a new figure there.</td></tr>
 <tr><td><code>addRoundedPolygon(points, radius)</code></td><td>A closed polygon with its corners rounded, each cut back by the radius or half its shorter edge.</td></tr>
 <tr><td><code>drawRoundedRect(w, h, r)</code>, <code>drawRoundedRect(rect, rx, ry)</code>, <code>drawCircle(center, r)</code>, <code>drawEllipse(center, rx, ry)</code></td><td>A whole figure of lines and arcs, in a path cleared first. The first rectangle is centred on the origin; the second is SVG's <code>rect</code>, each radius cut to half its own side.</td></tr>
-<tr><td><code>transform(m)</code>, <code>clear()</code></td><td>Every point moved through a matrix; nothing.</td></tr>
+<tr><td><code>transform(m)</code></td><td>Every point moved through a matrix.</td></tr>
+<tr><td><code>clear()</code></td><td>Empties the path and returns its fill rule to <code>Nonzero</code>.</td></tr>
+<tr><td><code>setFillRule(rule)</code>, <code>fillRule()</code></td><td>The rule every fill of the path follows, <code>Nonzero</code> or <code>EvenOdd</code>. A new path is <code>Nonzero</code>.</td></tr>
 </table>
 
 <h3 id="ref-matrix">Matrix3x2</h3>

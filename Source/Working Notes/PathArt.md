@@ -5014,18 +5014,23 @@ slope rather than painted along the ground line.
 against the ground they stand on, the hedge colour came out at 1.01 to 1.33 of contrast in 22 of the
 24 themes - pastel, night and neon alike, where 1.0 is no contrast at all.
 
-**Contrast is settled in clear air, once for the object** (Oj: "you don't measure contrast on
+**Contrast was settled in clear air, once for the object** (Oj: "you don't measure contrast on
 layers. You measure contrast and calculate a contrast color one time for objects and not for
-layers, with clear air, and then allow haze to do its job"). The first attempts measured the
+layers, with clear air, and then allow haze to do its job"). The attempts before that measured the
 rendered hedge against the hazed ground of each layer and pushed it until that number cleared a
-floor: on the meadow's hills it worked, and on Lunar Eclipse it turned a far hedge near black on the
-pale band - the air overruled by a number. The colour is now decided once per theme, in clear air:
-the leaves mixed 0.55 of the way to hillBottom, turned away from the clear hill - toward black
-wherever the land allows a dark hedge, toward white only where a dark one could not clear the floor,
-in steps of 0.05 - until it stands k_hedgeContrast, 1.45, against that clear ground. Both layers
-then take it as it is and let hazed() veil it at their own distance: the meadow's hedges at 0.2, the
-far pieces at 0.06. The far crowns are made the same way, the leaves shaded 0.3 in clear air and
-hazed after. What the distance does to the contrast is the distance's business, not the colour's.
+floor - on the meadow's hills it worked, and on Lunar Eclipse it turned a far hedge near black on the
+pale band.
+
+**No formula gets it right on every theme** (Oj: "Now they're vanished on other themes. You can't get
+them right on every theme with a simple formula"). Each round of it fixed one theme and broke
+another: the black-and-white pole turned Lunar Eclipse's hedges to the hardest contrast a soft theme
+had, and the gentler pole left other themes flat. A hedge has to read on a high-contrast picture and
+vanish into a washed-out one, which no colour derived from the hills can do. So the hedge is a theme
+colour now, `SceneTheme::hedge`, stated beside the rest in each of the 24 themes; the scenes only
+haze it, at 0.2 for the meadow and 0.06 for the far pieces, and the far crowns stay the leaves
+shaded 0.3 in clear air and hazed after. The measuring script and the floor went with the formula.
+
+**The crowns of one clump first shared a ScatteredShapes path**, and since the fill was even-odd,
 
 **The crowns of one clump first shared a ScatteredShapes path**, and since the fill was even-odd,
 Direct2D cut a hole where two crowns overlapped - the CPU backend fills them apart and showed none

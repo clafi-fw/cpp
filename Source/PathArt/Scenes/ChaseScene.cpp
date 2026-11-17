@@ -1454,25 +1454,9 @@ namespace ClaFi::PathArt
             return static_cast<float>(wrapped < 0.0 ? wrapped + period : wrapped);
         }
 
-        // **A hedge's contrast is decided in clear air, once for the theme**, not measured on
-        // each layer: its colour is the theme's leaves shaded toward hillBottom, turned away
-        // from the clear hill until it stands the floor. The air then does to it whatever it
-        // does to the rest of that layer. See PathArt
-        constexpr float k_hedgeContrast{ 1.45f };
-
-        [[nodiscard]] Color hedgeInClearAir(const SceneTheme& theme)
-        {
-            Color hedge = colorBetween(theme.treeLeavesBase, theme.hillBottom, 0.55f);
-            const Color ground = colorBetween(theme.hillTop, theme.hillBottom, 0.15f);
-            // A hedge is dark foliage where the land allows it: the black is tried first, and
-            // only a ground too dark for a dark hedge turns it light. See PathArt
-            const Color turn = contrastBetween(ground, Color{ 0xFF000000 }) >= k_hedgeContrast
-                ? Color{ 0xFF000000 } : Color{ 0xFFFFFFFF };
-            for (int push = 0; push != 40
-                && contrastBetween(hedge, ground) < k_hedgeContrast; ++push)
-                hedge = colorBetween(hedge, turn, 0.05f).fullyOpaque();
-            return hedge;
-        }
+        // **A hedge's colour is the theme's own**, as art direction and not a formula: each theme
+        // states it, and the scenes only haze it at the layer's distance. A formula cannot know
+        // that one theme is a wash and another a high-contrast picture. See PathArt
 
         // A cloud's top: lobes of their own widths, each a rounded peak, over a flat base. A
         // valley between two lobes stays above the base, so the lobes read as one mass.
@@ -1682,7 +1666,7 @@ namespace ClaFi::PathArt
         const Color wood = hazed(theme,
             colorBetween(theme.treeLeavesBase, theme.hillBottom, 0.3f), k_foothillParallax);
         const Color farBark = hazed(theme, theme.bark, k_foothillParallax);
-        const Color farHedgeBase = hazed(theme, hedgeInClearAir(theme), k_foothillParallax);
+        const Color farHedgeBase = hazed(theme, theme.hedge, k_foothillParallax);
         const auto drawFarHedge = [&](const float from, const float to, const int seed) {
             const float drop = (4.0f + 6.0f * pseudoRandom(seed, 246.0f)) * unit;
             // **It does not trace the crest at all.** A piece lies level on the far slope, or at
@@ -1977,10 +1961,9 @@ namespace ClaFi::PathArt
             }
         };
         // **The hedges stand behind the trees**, lower on the slope, so a crown or a trunk hides
-        // the run where the two meet and no hedge crosses one in the air. The hedge's colour is
-        // settled in clear air, then veiled by the air of this layer. See PathArt
-        const Color hedgeColor = hazed(theme, hedgeInClearAir(theme), k_hillParallax)
-            .fullyOpaque();
+        // the run where the two meet and no hedge crosses one in the air. The theme states the
+        // hedge's colour; the air of this layer veils it. See PathArt
+        const Color hedgeColor = hazed(theme, theme.hedge, k_hillParallax).fullyOpaque();
         forEachTile(frame, k_hillParallax, k_hillsideStrip, journey,
             [&](const float tileLeft, const float tileWidth) {
                 for (int run = 0; run != k_hedgeRuns; ++run)

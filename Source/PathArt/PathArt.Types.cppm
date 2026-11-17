@@ -136,6 +136,7 @@ namespace ClaFi::PathArt
         Color motherDuckBody, motherDuckWing, motherDuckEye; // 47, the duck leading the ducklings
         Color duckLight, duckShade, duckBeak, duckBeakShade; // 50, ducklings and the rubber duck
         Color fish; // 54, the fish leaping from the pond
+        Color hedge; // 55, the hedge rows, hazed by each layer's distance
         MillTheme mill{};
         ChaseTheme chase{};
         // make sure to update colorsNum() when adding new colors
@@ -158,7 +159,7 @@ namespace ClaFi::PathArt
         const void* colorsEnd() const { return &hasRain; }
         static constexpr std::size_t colorsNum()
         {
-            return 54 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
+            return 55 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
         }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }

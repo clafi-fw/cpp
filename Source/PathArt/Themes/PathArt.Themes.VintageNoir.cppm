@@ -65,6 +65,7 @@ namespace ClaFi::PathArt::Themes
             .duckBeak = 0xFF999999,
             .duckBeakShade = 0xFF787878,
             .fish = 0xFF1A1A1A,
+            .hedge = 0xFF5A5A5A,
             .mill = {
                 .bodyTop = 0xFF6A6A6A,
                 .bodyBottom = 0xFF4B4B4B,

@@ -65,6 +65,7 @@ namespace ClaFi::PathArt::Themes
             .duckBeak = 0xFFC96F20,
             .duckBeakShade = 0xFFA44D17,
             .fish = 0xFF3A5764,
+            .hedge = 0xFF6E2E6E,
             .mill = {
                 .bodyTop = 0xFF7A2F02,      // Top part of mill body — brown (wooden texture)
                 .bodyBottom = 0xFF5E2901,   // Lower part of body — dark brown

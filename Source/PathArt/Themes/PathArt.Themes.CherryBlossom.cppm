@@ -65,6 +65,7 @@ namespace ClaFi::PathArt::Themes
             .duckBeak = 0xFFEF8B23,
             .duckBeakShade = 0xFFC7651E,
             .fish = 0xFF959EAE,
+            .hedge = 0xFF909188,
             .mill = {
                 .bodyTop = 0xFFD8CABD,   // pale stone (top mill body)
                 .bodyBottom = 0xFFA0928A, // grey stone (bottom mill body)
