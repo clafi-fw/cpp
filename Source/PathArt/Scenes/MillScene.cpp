@@ -363,7 +363,8 @@ namespace ClaFi::PathArt
         constexpr float k_storySeconds{ 80.0f };
         // Where the cow walks to drink, on the pond's far shore by the river's mouth.
         constexpr FloatPoint k_cowDrinkShare{ 0.375f, 0.747f };
-        constexpr Stretch k_ducksSwim{ 4.0f, 60.0f };
+        // From 40 s on past the story's end, to 16 s into the next.
+        constexpr Stretch k_ducksSwim{ 40.0f, 96.0f };
         // The last duckling drifts the most, and keeps back far enough to miss the one ahead.
         constexpr std::array<DuckPlace, 4> k_duckPlaces{
             DuckPlace{ 0.0f, 0.0f, 0.0f, 0.0f },
@@ -373,7 +374,7 @@ namespace ClaFi::PathArt
         };
         constexpr float k_motherSway{ 0.67f }; // in units, either way across her course
         constexpr float k_ducklingSway{ 2.4f }; // in units, either way across its course
-        constexpr Stretch k_birdsFly{ 22.0f, 48.0f };
+        constexpr Stretch k_birdsFly{ 46.0f, 72.0f };
         constexpr std::array<FishJump, 2> k_fishJumps{ {
             { 14.0f, { 0.53f, 0.88f } },
             { 58.0f, { 0.46f, 0.85f } }
@@ -449,7 +450,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] TimberMillPose millPoseOf(const SceneFrame&, float cycleTime);
         // Seconds into the scene's story, which runs over two cycles.
         [[nodiscard]] float storyAt(SceneTime);
-        // The cow's day: grazing, a walk to the water, a drink, the walk back, and a look up.
+        // The cow's day: a walk to the water, a drink, the walk back, grazing, and a look up.
         [[nodiscard]] CowMoment cowAt(const SceneFrame&, float story, float cycleTime);
         [[nodiscard]] PosedCowColors cowColorsOf(const SceneTheme&);
         // The tuft the cow munches, under her muzzle where she grazes: the Chase's grass patch.
@@ -858,71 +859,67 @@ namespace ClaFi::PathArt
             float head = grazingHead;
             float jaw = 0.0f;
             std::optional<float> stride{};
-            if (story < 16.0f)
+            if (story < 2.0f)
             {
+                head = grazingHead + (0.05f - grazingHead) * smoothStep(0.0f, 2.0f, story);
                 jaw = chew;
             }
-            else if (story < 18.0f)
+            else if (story < 10.0f)
             {
-                head = grazingHead + (0.05f - grazingHead) * smoothStep(16.0f, 18.0f, story);
-                jaw = chew;
-            }
-            else if (story < 26.0f)
-            {
-                walked = (story - 18.0f) / 8.0f;
+                walked = (story - 2.0f) / 8.0f;
                 head = 0.1f;
-                stride = (story - 18.0f) * 0.9f;
+                stride = (story - 2.0f) * 0.9f;
             }
-            else if (story < 28.0f)
+            else if (story < 12.0f)
             {
                 walked = 1.0f;
-                head = 0.1f + 1.25f * smoothStep(26.0f, 28.0f, story);
+                head = 0.1f + 1.25f * smoothStep(10.0f, 12.0f, story);
             }
-            else if (story < 40.0f)
+            else if (story < 24.0f)
             {
                 walked = 1.0f;
                 head = 1.35f + 0.03f * std::sin(story * 4.0f);
             }
-            else if (story < 42.0f)
+            else if (story < 26.0f)
             {
                 walked = 1.0f;
-                head = 1.35f - 1.25f * smoothStep(40.0f, 42.0f, story);
+                head = 1.35f - 1.25f * smoothStep(24.0f, 26.0f, story);
             }
-            else if (story < 43.0f)
+            else if (story < 27.0f)
             {
                 walked = 1.0f;
-                facing = -1.0f + 2.0f * smoothStep(42.0f, 43.0f, story);
+                facing = -1.0f + 2.0f * smoothStep(26.0f, 27.0f, story);
                 head = 0.1f;
             }
-            else if (story < 51.0f)
+            else if (story < 35.0f)
             {
-                walked = 1.0f - (story - 43.0f) / 8.0f;
+                walked = 1.0f - (story - 27.0f) / 8.0f;
                 facing = 1.0f;
                 head = 0.1f;
-                stride = (story - 43.0f) * 0.9f;
+                stride = (story - 27.0f) * 0.9f;
             }
-            else if (story < 52.0f)
+            else if (story < 36.0f)
             {
-                facing = 1.0f - 2.0f * smoothStep(51.0f, 52.0f, story);
+                facing = 1.0f - 2.0f * smoothStep(35.0f, 36.0f, story);
                 head = 0.1f;
             }
-            else if (story < 54.0f)
+            else if (story < 38.0f)
             {
-                head = 0.1f + (grazingHead - 0.1f) * smoothStep(52.0f, 54.0f, story);
+                head = 0.1f + (grazingHead - 0.1f) * smoothStep(36.0f, 38.0f, story);
                 jaw = chew;
             }
             else
             {
-                // It looks up from the grass while the wolf looks out the second time.
-                const float lookingUp = smoothStep(64.0f, 65.0f, story)
-                    - smoothStep(68.0f, 69.0f, story);
+                // It looks up from the grass as the birds come over.
+                const float lookingUp = smoothStep(48.0f, 49.0f, story)
+                    - smoothStep(52.0f, 53.0f, story);
                 head = grazingHead * (1.0f - lookingUp);
                 jaw = chew;
             }
 
-            // A ripple each 2.6 seconds from 28 to 40, the last left to spread for 3.5.
+            // A ripple each 2.6 seconds from 12 to 24, the last left to spread for 3.5.
             std::optional<float> ripplesAge{};
-            const float sinceDrinking = story - 28.0f;
+            const float sinceDrinking = story - 12.0f;
             if (sinceDrinking >= 0.0f)
             {
                 const float lastRipple = std::floor(std::min(sinceDrinking, 11.99f) / 2.6f) * 2.6f;
@@ -973,8 +970,11 @@ namespace ClaFi::PathArt
 
         std::optional<DuckFamily> ducksAt(const SceneFrame& frame, const float story)
         {
-            const float swum = (story - k_ducksSwim.from) / (k_ducksSwim.until - k_ducksSwim.from);
-            if (swum < 0.0f || swum > 1.0f)
+            // Counted on past the story's end, where the ducks are still swimming.
+            const float swimming = std::fmod(story - k_ducksSwim.from + k_storySeconds,
+                k_storySeconds);
+            const float swum = swimming / (k_ducksSwim.until - k_ducksSwim.from);
+            if (swum > 1.0f)
                 return std::nullopt;
             const float motherSize = sizeAt(frame, frame.height * 0.89f) * 0.62f;
             DuckFamily ducks{};
@@ -983,17 +983,17 @@ namespace ClaFi::PathArt
                 const float index = static_cast<float>(i);
                 const DuckPlace& place = k_duckPlaces[i];
                 const float behind = place.behind
-                    + place.drift * std::sin(story * place.driftPace + place.driftPhase);
+                    + place.drift * std::sin(swimming * place.driftPace + place.driftPhase);
                 const float x = frame.width * (-0.06f + 1.12f * swum) + behind * motherSize;
                 const float sway = i == 0 ? k_motherSway : k_ducklingSway;
                 ducks[i] = {
                     .at = {
                         x,
                         frame.height * (0.885f + 0.012f * std::sin(x / frame.width * 5.0f))
-                            + sway * frame.unit * std::sin(story * 2.0f + index)
+                            + sway * frame.unit * std::sin(swimming * 2.0f + index)
                     },
                     .size = i == 0 ? motherSize : motherSize * 0.62f,
-                    .paddle = std::sin(story * 3.0f + index)
+                    .paddle = std::sin(swimming * 3.0f + index)
                 };
             }
             return ducks;

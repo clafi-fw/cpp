@@ -4783,6 +4783,19 @@ was shown, blended straight or in even steps of Oklab lightness; Oj (19:00) "A".
 gives a streak colorBetween(color1, color2) at pseudoRandom(i, seed + 9), so an effect reads 9 past
 its own seed, and the layer seed steps, 10 in both scenes, still keep the layers apart.
 
+Then (Oj, 2026-11-17 03:21) "the ducks cruise, the birds crossing the sky, and the cow going to
+drink all happens at the same time". The ducks swam from 4 to 60 s of the story, the birds flew from
+22 to 48, and the cow was away at the water from 16 to 54, so all three were under way from 22 to
+48. End to end they take 120 s of the story's 80. Shown on a timeline: the same speeds with the cow
+first and the birds over the ducks, a story of three cycles with one at a time, or the ducks a third
+quicker; Oj (03:31) "A". The cow sets off at 0 - its head up by 2, at the water by 10, drinking from
+12 to 24, back from 27 to 35 and grazing from 38 - and looks up from 48 to 53 as the birds come
+over. The ducks swim from 40 on past the story's end to 16, k_ducksSwim 40 to 96, and the birds fly
+from 46 to 72. ducksAt times the ducks' drift, sway and paddling from when they set off, since the
+story wraps under them; the ducklings keep their least gaps of 41, 26 and 25 units. The fish still
+jump at 14 and 58. The last two ducklings are still at the frame's right edge when the cruise ends,
+and go from sight there, as they did at 60.
+
 To watch: the gator and the cow move with `sin(t * 15)` and `sin(t * 30)`, which are not whole turns
 of a 0 to 1 cycle, so they jump when the cycle wraps. The water lily bobs one and a half times a
 cycle, and jumps the same way.
