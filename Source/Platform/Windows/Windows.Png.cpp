@@ -85,4 +85,74 @@ namespace ClaFi::Graphics
 
         return result;
     }
+
+    // **Through the PNG encoder alone**, as decodePng goes through its decoder: the pixels are
+    // handed over as straight BGRA, which is what Bitmap holds, and the file is written over
+    // memory rather than to a path.
+    std::optional<std::string> encodePng(const Bitmap& bitmap)
+    {
+        const int width = bitmap.width();
+        const int height = bitmap.height();
+        if (width <= 0 || height <= 0)
+            return std::nullopt;
+        if (width > static_cast<int>(k_maxSide) || height > static_cast<int>(k_maxSide))
+            return std::nullopt;
+        if (static_cast<std::size_t>(width) * static_cast<std::size_t>(height) > k_maxPixels)
+            return std::nullopt;
+
+        ComPtr<IWICImagingFactory> factory;
+        if (FAILED(::CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
+            IID_PPV_ARGS(&factory))))
+        {
+            return std::nullopt;
+        }
+
+        ComPtr<IStream> stream;
+        if (FAILED(::CreateStreamOnHGlobal(nullptr, TRUE, &stream)))
+            return std::nullopt;
+
+        ComPtr<IWICBitmapEncoder> encoder;
+        if (FAILED(factory->CreateEncoder(GUID_ContainerFormatPng, nullptr, &encoder)))
+            return std::nullopt;
+        if (FAILED(encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache)))
+            return std::nullopt;
+
+        ComPtr<IWICBitmapFrameEncode> frame;
+        if (FAILED(encoder->CreateNewFrame(&frame, nullptr)))
+            return std::nullopt;
+        if (FAILED(frame->Initialize(nullptr)))
+            return std::nullopt;
+        if (FAILED(frame->SetSize(static_cast<UINT>(width), static_cast<UINT>(height))))
+            return std::nullopt;
+
+        WICPixelFormatGUID format = GUID_WICPixelFormat32bppBGRA;
+        if (FAILED(frame->SetPixelFormat(&format)))
+            return std::nullopt;
+
+        const UINT stride = static_cast<UINT>(width * static_cast<int>(sizeof(Color)));
+        const UINT size = stride * static_cast<UINT>(height);
+        Color* pixels = const_cast<Color*>(bitmap.data());
+        if (FAILED(frame->WritePixels(static_cast<UINT>(height), stride, size,
+            reinterpret_cast<BYTE*>(pixels))))
+        {
+            return std::nullopt;
+        }
+        if (FAILED(frame->Commit()) || FAILED(encoder->Commit()))
+            return std::nullopt;
+
+        STATSTG stats{};
+        if (FAILED(stream->Stat(&stats, STATFLAG_NONAME)))
+            return std::nullopt;
+        std::string bytes(static_cast<std::size_t>(stats.cbSize.QuadPart), '\0');
+        LARGE_INTEGER start{};
+        if (FAILED(stream->Seek(start, STREAM_SEEK_SET, nullptr)))
+            return std::nullopt;
+        ULONG read = 0;
+        if (FAILED(stream->Read(bytes.data(), static_cast<ULONG>(bytes.size()), &read)))
+            return std::nullopt;
+        if (read != bytes.size())
+            return std::nullopt;
+
+        return bytes;
+    }
 }

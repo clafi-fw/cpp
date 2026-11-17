@@ -7,6 +7,8 @@
 //         -DCMAKE_CXX_COMPILER=clang++-22 -DCMAKE_CXX_FLAGS=-stdlib=libc++
 //   cmake --build build
 //   ./build/MillScene
+//
+// A render draws through the CPU backend and opens no window at all, so it needs no compositor.
 
 import MillScene_App.Main;
 
@@ -14,10 +16,35 @@ import ClaFi.App.Application;
 import ClaFi.Platform.Wayland;
 
 import ClaFi.Core.Foundation;
+import ClaFi.Core.System.Utils;
 
-int main()
+import ClaFi.StdLib;
+
+int main(int argumentCount, char** argumentList)
 {
     using namespace ClaFi;
+
+    // The arguments arrive as bytes; the showcase reads them as the text they stand for.
+    std::vector<std::wstring> owned{};
+    for (int index = 1; index < argumentCount; ++index)
+        owned.push_back(fromUtf8(argumentList[index]));
+    std::vector<std::wstring_view> arguments{};
+    for (const std::wstring& text : owned)
+        arguments.emplace_back(text);
+
+    std::wstring error{};
+    const std::optional<MillScene_App::LaunchOptions> options =
+        MillScene_App::parseLaunchOptions(arguments, error);
+    if (!options)
+    {
+        MillScene_App::reportLaunchError(error);
+        return 2;
+    }
+    if (options->help)
+    {
+        MillScene_App::reportLaunchUsage();
+        return 0;
+    }
 
     WaylandApplication app{
         WaylandPlatform::Params{},
@@ -25,5 +52,5 @@ int main()
         MillScene_App::createMillSceneConfigSchema()
     };
 
-    return MillScene_App::runMillSceneShowcase(app);
+    return MillScene_App::runMillSceneShowcase(app, *options);
 }

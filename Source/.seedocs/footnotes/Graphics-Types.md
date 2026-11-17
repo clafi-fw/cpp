@@ -291,3 +291,9 @@ past the size a bitmap can be. A reader that wants to show something shows the b
 
 Reads any depth, colour type and interlace. A picture larger than decodeDib accepts answers
 nothing as well.
+
+## encodePng
+
+Writes a bitmap as a PNG of the same size, its pixels straight alpha as `Bitmap` holds them, and
+answers the file's bytes: the picture is encoded over memory rather than to a path, so the caller
+writes the file. A bitmap past the size decodePng accepts answers nothing as well.

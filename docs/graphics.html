@@ -972,8 +972,9 @@ what it drew is gone and has to be drawn again.
 <h3 id="pixels">Pixels</h3>
 
 <p>A <code>Bitmap</code> is a block of pixels the caller owns, and <code>drawBitmap(bitmap,
-position)</code> draws it as it is. <code>decodePng</code> reads one out of a PNG file's bytes, from
-<code>ClaFi.Core.Graphics.Png</code>, and <code>decodeDib</code> and <code>decodeBmpFile</code> out of a
+position)</code> draws it as it is. <code>decodePng</code> reads one out of a PNG file's bytes and
+<code>encodePng</code> writes one back as bytes, both from <code>ClaFi.Core.Graphics.Png</code>, and
+<code>decodeDib</code> and <code>decodeBmpFile</code> out of a
 bitmap's, from <code>ClaFi.Core.Graphics.Dib</code>. A
 <code>PixelView</code> is a window onto such a block - its bounds, its clip and its scan lines - and
 <code>drawPixelView</code> draws one.</p>

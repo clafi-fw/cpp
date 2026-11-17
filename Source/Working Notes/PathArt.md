@@ -4824,6 +4824,16 @@ The mill draws its fireflies just before drawWeather, where they came between th
 leaves. No theme has fireflies beside other weather, so only a crossfade between a theme with
 fireflies and one with rain or snow draws them in another order.
 
+**The cow's tuft gives under her muzzle** (Oj, 2026-11-17, "the cow's munching the grass and the
+grass won't even move"). It stood unbent through the whole story: drawGrassPatch took 0.0 for its
+lean since the tuft went in, so the Chase's blades bent under the wolf and the Mill's under nothing.
+Her jaw drives it now. As she shuts it on a bite the tips swing k_cowTuftPull, 0.4 radians, toward
+her muzzle, and as it opens they spring back to k_cowTuftHeld, 0.35 of the full pull. The lean is
+read from her pose and not from the story, so the blades cannot disagree with her: it needs her head
+past 0.9 radians of drop, and her standing within k_cowTuftReach, 60 of her units, of where she
+grazes. That leaves the tuft still while she walks, and while she drinks with her head down at the
+water, and it eases in as she lowers her head at 36.
+
 ## CowColors
 
 Oj, 2026-11-07: "at night its horns illegible", then, picking light horns at night from renders

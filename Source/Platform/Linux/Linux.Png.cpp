@@ -48,6 +48,17 @@ namespace ClaFi::Graphics
         void ignoreWarning(png_structp, png_const_charp)
         {
         }
+
+        // A file's bytes, gathered as the encoder writes them.
+        void writeTo(png_structp png, png_bytep bytes, png_size_t length)
+        {
+            std::string* gathered = static_cast<std::string*>(::png_get_io_ptr(png));
+            gathered->append(reinterpret_cast<const char*>(bytes), length);
+        }
+
+        void flushThence(png_structp)
+        {
+        }
     }
 
     // **Libpng reports an error by longjmp**, so everything the landing has to free is made before
@@ -134,5 +145,58 @@ namespace ClaFi::Graphics
         ::png_read_end(png, nullptr);
         ::png_destroy_read_struct(&png, &info, nullptr);
         return result;
+    }
+
+    // **Encoded over memory, not a path**, and in Bitmap's own order: the rows go in BGRA and
+    // png_set_bgr turns them into the file's RGBA. The longjmp landing holds the same rule as the
+    // decoder's - what owns anything is made before setjmp.
+    std::optional<std::string> encodePng(const Bitmap& bitmap)
+    {
+        const int width = bitmap.width();
+        const int height = bitmap.height();
+        if (width <= 0 || height <= 0)
+            return std::nullopt;
+        if (width > static_cast<int>(k_maxSide) || height > static_cast<int>(k_maxSide))
+            return std::nullopt;
+        if (static_cast<std::size_t>(width) * static_cast<std::size_t>(height) > k_maxPixels)
+            return std::nullopt;
+
+        png_structp png = ::png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, &abandon,
+            &ignoreWarning);
+        if (!png)
+            return std::nullopt;
+        png_infop info = ::png_create_info_struct(png);
+        if (!info)
+        {
+            ::png_destroy_write_struct(&png, nullptr);
+            return std::nullopt;
+        }
+
+        std::string bytes{};
+        std::vector<png_bytep> rows{};
+        if (setjmp(png_jmpbuf(png)))
+        {
+            ::png_destroy_write_struct(&png, &info);
+            return std::nullopt;
+        }
+
+        ::png_set_write_fn(png, &bytes, &writeTo, &flushThence);
+        ::png_set_bgr(png);
+        ::png_set_IHDR(png, info, static_cast<png_uint_32>(width),
+            static_cast<png_uint_32>(height), 8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+            PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+        ::png_write_info(png, info);
+
+        rows.resize(static_cast<std::size_t>(height));
+        for (int y = 0; y != height; ++y)
+        {
+            Color* row = const_cast<Color*>(bitmap.data()
+                + static_cast<std::ptrdiff_t>(y) * bitmap.stride());
+            rows[static_cast<std::size_t>(y)] = reinterpret_cast<png_bytep>(row);
+        }
+        ::png_write_image(png, rows.data());
+        ::png_write_end(png, nullptr);
+        ::png_destroy_write_struct(&png, &info);
+        return bytes;
     }
 }

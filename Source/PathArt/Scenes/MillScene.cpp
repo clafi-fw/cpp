@@ -348,6 +348,13 @@ namespace ClaFi::PathArt
         constexpr float k_cowNods{ 19.0f };
         constexpr float k_cowChews{ 64.0f };
         constexpr float k_cowSwishes{ 15.0f };
+        // How far the tuft's tips swing toward her muzzle as she takes a bite, and the share of
+        // that swing kept while her jaw is open.
+        constexpr float k_cowTuftPull{ 0.4f };
+        constexpr float k_cowTuftHeld{ 0.35f };
+        // How far across the frame, in her units, she stands from her grazing place before her
+        // muzzle stops reaching the tuft.
+        constexpr float k_cowTuftReach{ 60.0f };
         // The fir the predator peeks from behind, across the field.
         constexpr StandingTree k_wolfFir{ { 0.884f, 0.70f }, 1.0f };
         // Far to near: the far hills, the field, the mill, the near bank. See PathArt#millscene
@@ -454,7 +461,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] CowMoment cowAt(const SceneFrame&, float story, float cycleTime);
         [[nodiscard]] PosedCowColors cowColorsOf(const SceneTheme&);
         // The tuft the cow munches, under her muzzle where she grazes: the Chase's grass patch.
-        void drawCowTuft(const SceneFrame&, const SceneTheme&);
+        void drawCowTuft(const SceneFrame&, const SceneTheme&, const PosedCowPose&);
         // A mother duck and three ducklings crossing the pond, while they are out.
         [[nodiscard]] std::optional<DuckFamily> ducksAt(const SceneFrame&, float story);
         // The mother's colours for index 0, a duckling's for the rest.
@@ -666,7 +673,7 @@ namespace ClaFi::PathArt
         drawFir(frame, theme(), k_wolfFir, false); // its shadow is under him already
 
         drawPosedCow(frame, cow.pose, cowColorsOf(theme()));
-        drawCowTuft(frame, theme());
+        drawCowTuft(frame, theme(), cow.pose);
         drawEffectLayer(frame, theme(), cycleTime, 1);
 
         drawShoreCattails(frame, theme(), cycleTime, false);
@@ -954,18 +961,26 @@ namespace ClaFi::PathArt
             };
         }
 
-        void drawCowTuft(const SceneFrame& frame, const SceneTheme& theme)
+        void drawCowTuft(const SceneFrame& frame, const SceneTheme& theme, const PosedCowPose& pose)
         {
             const FloatPoint foot = pointAt(frame, k_cowFootShare);
             const float size = k_cowSize * sizeAt(frame, foot.y);
             const FloatPoint root = { foot.x - 58.0f * size, foot.y + 6.0f * size };
             const float parallax = parallaxAt(frame, root.y);
+            // The blades give only where her muzzle is: she stands at them with her head in the
+            // grass, and the tips swing toward it as her jaw shuts on a bite and spring back as
+            // it opens.
+            const float standing = smoothStep(k_cowTuftReach, 0.0f,
+                std::abs(pose.foot.x - foot.x) / pose.size);
+            const float muzzleInTuft = standing * smoothStep(0.9f, 1.1f, pose.headDrop);
+            const float pullShare = k_cowTuftHeld
+                + (1.0f - k_cowTuftHeld) * (1.0f - 0.5f * pose.chew);
             drawGrassPatch(frame.within(Matrix3x2::Translation(root)
                 * Matrix3x2::Scale(k_cowTuftSize * size)), {
                 .dark = hazed(theme, theme.grassPatch.dark, parallax),
                 .middle = hazed(theme, theme.grassPatch.middle, parallax),
                 .light = hazed(theme, theme.grassPatch.light, parallax)
-            }, 0.0f);
+            }, k_cowTuftPull * muzzleInTuft * pullShare);
         }
 
         std::optional<DuckFamily> ducksAt(const SceneFrame& frame, const float story)
