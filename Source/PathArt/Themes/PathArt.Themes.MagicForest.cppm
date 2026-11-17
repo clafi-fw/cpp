@@ -57,9 +57,9 @@ namespace ClaFi::PathArt::Themes
             .wing = 0xFFD69DB2,
             .wingEdge = 0xFF423C77,
             .flock = 0xFF2F274F,
-            .motherDuckBody = 0xFF8B7CBC,
-            .motherDuckWing = 0xFF695B92,
-            .motherDuckEye = 0xFF946042,
+            .motherDuckBody = 0xFFE3A7C0, // rose, which this theme already wears
+            .motherDuckWing = 0xFFB3748F,
+            .motherDuckEye = 0xFF2A1A20,
             .duckLight = 0xFFF2DB91,
             .duckShade = 0xFFD6B06F,
             .duckBeak = 0xFFD89768,

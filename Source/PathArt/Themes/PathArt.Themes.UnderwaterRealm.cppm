@@ -57,9 +57,9 @@ namespace ClaFi::PathArt::Themes
             .wing = 0xFFFFD700,
             .wingEdge = 0xFF102E52,
             .flock = 0xFF112F53,
-            .motherDuckBody = 0xFF508DC6,
-            .motherDuckWing = 0xFF386A98,
-            .motherDuckEye = 0xFF8B4513,
+            .motherDuckBody = 0xFFE8C98F, // sea sand, warm against the turquoise
+            .motherDuckWing = 0xFFA97C4A,
+            .motherDuckEye = 0xFF14232E,
             .duckLight = 0xFFF7DB5E,
             .duckShade = 0xFFE2AE3A,
             .duckBeak = 0xFFEC8D38,
