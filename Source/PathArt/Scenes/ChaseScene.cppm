@@ -35,17 +35,28 @@ namespace ClaFi::PathArt
         [[nodiscard]] static float travelAt(float cycleTime);
         // A period that the whole cycle's travel divides, near the one wanted. See PathArt
         [[nodiscard]] static float periodNear(float parallax, float wanted);
-        static void forEachTile(const SceneFrame&, float parallax, float period, float travel,
+        // Every tile of a layer that lies within the frame. See PathArt
+        static void forEachTile(const SceneFrame&, float parallax, float period, double journey,
             const TileDrawer&);
-        // The sky with the theme's stars, the sun, the clouds, the mountains, the far hills and the
-        // theme's fireflies over them.
+        // The clouds and the flocks crossing the sky, each at its own distance. See PathArt
+        static void drawClouds(const SceneFrame&, const SceneTheme&, double journey);
+        static void drawSkyFlocks(const SceneFrame&, const SceneTheme&, double journey);
+        // The pale hills behind the meadow's, their crest wooded. See PathArt
+        static void drawFoothills(const SceneFrame&, const SceneTheme&, double journey,
+            float groundY);
+        // The trees, coppices and hedges standing on the meadow's hills. See PathArt
+        static void drawHillside(const SceneFrame&, const SceneTheme&, double journey,
+            float groundY, float hillPeriod, float hillShift);
+        // The sky with the theme's stars, sun, clouds and flocks, the mountains, the pale hills
+        // beyond the meadow's, the trees and hedges on the meadow's hills, and the theme's
+        // fireflies.
         static void drawBackdrop(const SceneFrame&, const SceneTheme&, float cycleTime,
-            float travel, double journey, float groundY);
+            double journey, float groundY);
         // One layer of the theme's weather, from the frame's top down to `bottom`. See PathArt
         static void drawWeatherLayer(const SceneFrame&, const SceneTheme&, float cycleTime,
-            float travel, std::size_t layerIndex, float groundY, float bottom);
-        static void drawGround(const SceneFrame&, const SceneTheme&, float travel, float groundY);
-        static void drawFrontGrass(const SceneFrame&, const SceneTheme&, float travel);
+            double journey, std::size_t layerIndex, float groundY, float bottom);
+        static void drawGround(const SceneFrame&, const SceneTheme&, double journey, float groundY);
+        static void drawFrontGrass(const SceneFrame&, const SceneTheme&, double journey);
         // The near edge's row, or the far edge's between its runs' own, evenly spaced. See PathArt
         static void drawVergeRow(const SceneFrame&, const SceneTheme&, SceneTime, float groundY,
             float closeness, bool nearEdge);

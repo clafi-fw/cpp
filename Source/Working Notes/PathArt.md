@@ -4900,3 +4900,73 @@ Then (Oj, 13:30) "drop the night swap": by night the Mill's meadow tufts turned 
 own colour a shade darker, which left them dim marks where the Chase's lawn tufts shine. They keep
 the blades' shades by night too, hazed and faded by depth band, and each theme's grass is already
 set to show on its own meadow.
+
+## The Chase's backdrop
+
+Oj (2026-11-17, 12:36): "The Chase's backdrops are either too empty and boring or repetitive and
+boring". The scene had two clouds and four trees to a tile, the tile fitted to the cycle's travel,
+so the same two and the same four came round every 18 to 25 seconds; the sky above the mountains and
+the meadow below them stood bare. More of the same shapes would have clone-stamped them faster, so
+the change went the other way: more kinds, fewer copies, and a longer road before any of it returns.
+
+**Everything now scrolls by the journey.** forEachTile takes the journey - the camera's whole travel
+- rather than the cycle's travel, so no layer jumps when the cycle comes round. A period that the
+cycle's travel divides still brings a layer round with the cycle, so the ground, the grass and the
+weather are unchanged, and the mountain ranges already went by the journey. The sky, the pale hills
+and the hillside cover take strips longer than any frame and than a cycle's travel, so a frame never
+shows two copies of one and none of them comes round within a cycle.
+
+**The sky keeps three depths** (drawClouds). High wisps at 0.018 of the camera's speed over a
+4300-unit strip; ten heaps of cloud at 0.045 over 3400; and a low bank of small cloud at 0.03 over
+3600, which the mountain peaks stand in front of and which fills the bare band between the heaps and
+the mountains. A cloud's outline is three to five lobes, each with a share of the width and a peak
+of its own, and the valley between two of them stays above the base: the first attempt's equal
+scallops read as combs. A cloud takes 50 to 100 per cent of the theme's cloud colour, a wisp 30,
+and a low cloud 35 to 65.
+
+**The birds** (drawSkyFlocks) are the Mill's flock colour brought over: three flocks to a 5600-unit
+strip at 0.08 of the camera's speed, each three to five birds, each a pair of short strokes a
+shallow V apart.
+
+**The pale ridge behind the meadow** (drawFoothills) is the second hill band, at 0.11. Three
+attempts went before it: at 0.645 its crest stood above the meadow's across the whole frame and
+read as a flat pale field; with 5200-unit waves it had no shape to read at all; the shape that
+stands sits at 0.665 over a 1400-unit period, so it shows through the meadow's dips and hides
+behind its crests. Its colour is hillTop hazed and taken 0.3 of the way to skyBottom, which parts
+it from both the mountains and the meadow. Its woods stand on a strip of their own, 5200 units, so
+a crest's shape and the wood on it never come round together.
+
+**The meadow's hills carry several kinds of tree** (drawHillside): a round tree, a broadleaf, a
+poplar, a fir, a coppice of three trees and a bush, 44 stands along a 6400-unit strip. A stand
+lower on the slope stands nearer and draws larger. The first version put every tree on the crest at
+one size, which is what made the old row of four read as a stamp.
+
+**A coppice drew its trees one after another**, each with its trunk and then its crown, so the
+right-hand tree's trunk lay across the middle tree's leaves (Oj, 2026-11-17: "That some tree
+overthere", a crop of the clump). It now draws all three trunks before any crown, and the three
+stand a little further apart, so no trunk stands in front of another tree's leaves.
+
+**The hedges took the longest.** A band path along the slope read as an embankment; separate
+ellipses read as a line of dots; larger ellipses that overlapped still read as beads. What stands is
+one path per stretch, whose top is grown in humps and whose base follows the ground it stands on, 12
+units clear of the trail: five runs to the strip, 600 to 1300 units long, and a run comes apart in
+stretches of 120 to 360 units with a gap of 70 to 150 units between them (Oj, 2026-11-17: "hedges
+wanted, make more gaps"). The humps take their own widths and heights, and one in eight is a taller
+clump, so the line does not read as a cord. Each end of a stretch is capped with a half-oval over
+the flat cut, so the stretch closes on a rounded shoulder instead of a dropped vertical wall. A
+first pass mixed the hedge only 0.25 of the way from the crown to hillBottom, which left it all but
+the same value as the meadow: the rounded ends read and the length vanished. It is mixed 0.55 of the
+way now, and its humps stand 16 to 24 units up, so the whole stretch reads. They stand lower on the
+slope than the trees and are drawn before them, so a crown hides a run where the two meet. A first
+version drew them after the trees and higher up, and a run that climbed a crest then crossed two
+crowns as a ribbon in the air (Oj: "what is this snake-like ribbon hanging in the middle of the air
+across the tree crowns supposed to depict?").
+
+**The sky's clouds and the far cover were read in the scene**, not in a mock: `MillScene.exe --scene
+Chase --theme "Clear Day" --render ...` at 1920 and 3840 wide, and in Midnight, Paper Sketch and
+Underwater Realm. Forty frames at 1920x1080 render in 2.07 s against the Mill's 3.04 s on the same
+machine, the PNG encoding included in both.
+
+**Refused: buildings.** The proposal that offered a far farm - a windmill, a farmhouse, a church
+spire, sheep and fence lines - was turned down for the natural countryside alone, so the horizon
+holds no roof.

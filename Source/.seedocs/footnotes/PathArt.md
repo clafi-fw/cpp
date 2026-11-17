@@ -1484,9 +1484,12 @@ the cycle after the last one it drew, and the next run starts on it, with the ho
 on from there, so each run opens where the last one stopped instead of on the first cycle. The
 section holds NextCycle.
 
-**The landscape is layers at their own speeds** - clouds, two ranges of mountains, hills, the ground
-and the grass in front, each a share of the camera's speed. Each layer is tiled with a period that
-the cycle's travel divides - see ChaseScene periodNear - so it ends the cycle where it began.
+**The landscape is layers at their own speeds** - clouds, two ranges of mountains, the pale hills
+beyond the meadow's, the meadow's own hills and what stands on them, the ground and the grass in
+front, each a share of the camera's speed. A layer scrolls by the journey, the camera's whole
+travel, so it never jumps when a cycle comes round. A period that the cycle's travel divides still
+brings a layer round with the cycle - see ChaseScene periodNear - and a strip longer than any frame
+carries the sky and the far cover without showing one of its copies beside itself.
 
 **Everything is drawn in the theme the scene is given** - see Scene offersThemes. The sky, the sun
 or the moon, the clouds, the meadow and the tree a branch run ends at are the theme's shared
@@ -1504,6 +1507,11 @@ colours; the rest is the theme's ChaseTheme.
 - The foreground grass grows out of the lawn: a blade's root takes 0.4 of the lawn's colour at the
   bottom of the frame, and its tip is the theme's grass.
 - The far hills and the lawn are one meadow - see ChaseScene meadowGradient.
+- The sky's clouds, the flocks crossing it and the woods on the pale hills each keep a strip longer
+  than any frame, so none of them repeats within a cycle - see ChaseScene drawClouds,
+  ChaseScene drawSkyFlocks and ChaseScene drawFoothills.
+- The trees, coppices and bushes along the meadow's hills, and the hedges on its slope, are placed
+  along a strip of their own - see ChaseScene drawHillside.
 - The icon keeps the wolf and the hare in their daylight coats.
 
 ## ChaseScene drawVergeRow
@@ -1564,6 +1572,11 @@ The theme's fireflies keep to the far hills, and its lightning strikes behind th
 
 ## ChaseScene drawBackdrop
 
+**The backdrop is drawn from the sky down to the ground line**, in the order its layers stand:
+the sky with its stars, the clouds and the flocks, a rainy theme's lightning, the two ranges of
+mountains, the pale hills beyond the meadow's, the meadow's hills with the trees and hedges on
+them, and the theme's fireflies.
+
 **The mountains are hazed by height**, in k_mountainHazeSteps steps from the top of their gradient
 to the ground line, so their feet take their distance's share and their peaks less. In clear air the
 near range, at 0.05 of the camera's speed, runs from 0.39 at its foot to about 0.36 at its peaks,
@@ -1581,6 +1594,55 @@ the far range, taller, reaches nearer to mountainTop, and the near range only it
   mountainTop and mountainFoot.
 - The weather is drawn fainter with the distance instead of hazed - see ChaseScene drawWeatherLayer.
 
+## ChaseScene drawClouds
+
+**The sky's clouds keep three distances.** A low bank of small cloud moves at 0.03 of the camera's
+speed over a 3600-unit strip, six to it, and the mountain peaks stand in front of it. The high wisps
+move at 0.018 over a 4300-unit strip, three to it, and the heaps of cloud at 0.045 over a 3400-unit
+strip, ten to it. Each strip is longer than the widest frame, so one copy of it fills the frame and
+the sky comes round once every few cycles.
+
+**No two clouds are the same shape.** A cloud's silhouette is a run of three to five lobes over a
+flat base; each lobe takes a share of the width and a peak of its own, and the valley after it stays
+above the base, so the lobes read as one mass. A wisp is one long hump and a smaller one beside it.
+A cloud takes 50 to 100 per cent of the theme's cloud colour, a wisp 30 and a low cloud 35 to 65.
+
+## ChaseScene drawSkyFlocks
+
+**The flocks cross the sky at 0.08 of the camera's speed**, three to a 5600-unit strip, in the
+theme's flock colour hazed to that distance and drawn at 80 per cent of its opacity. Each flock is
+three to five birds, each a pair of short strokes a shallow V apart, at its own place in the flock
+and its own size.
+
+## ChaseScene drawFoothills
+
+**A pale ridge stands behind the meadow's hills**, at 0.11 of the camera's speed, and shows through
+the meadow's dips. Its colour is the theme's hillTop hazed at that distance and taken 0.3 of the
+way to skyBottom, so it reads as land farther off than the meadow and not as sky. Its crest is
+k_foothillWaves over a 1400-unit period, and it is filled down to the ground line behind the
+meadow's hills.
+
+**Its crest is wooded.** Sixteen clumps to a 5200-unit strip, one to three crowns each, stand on the
+crest in a colour between the ridge's own and the theme's leaves, hazed with it. The clumps keep a
+strip of their own so a crest's shape and a wood on it do not come round together.
+
+## ChaseScene drawHillside
+
+**The meadow's hills carry five kinds of tree and a bush.** A stand is a round tree, a broadleaf, a
+poplar, a fir, a coppice of three trees or a bush, picked by the stand's own number; the round tree
+and the broadleaf are the common ones. Forty-four stands lie along a 6400-unit strip, each at its
+own place along it. A stand lower down the slope stands nearer and draws larger.
+
+**The hedges run along the slope below the trees.** Five runs to the same strip, each 600 to 1300
+units long, stand lower on the slope than the trees and are drawn before them, so a crown or a trunk
+hides a run where the two meet. A run comes apart in stretches of 120 to 360 units, with a gap of 70
+to 150 units between them where a gate or a break in the hedge would be. Each stretch follows the
+ground it stands on and keeps 12 units clear of the trail. Its colour is the trees' crown mixed 0.55
+of the way to hillBottom, so it stands dark against the meadow along its whole length. Its humps
+rise and fall by about half its 16 to 24 units, with a taller clump now and then, and a stretch
+closes on a rounded shoulder at each end, so no cut edge shows and the length reads as a hedge
+rather than a band.
+
 ## ChaseScene meadowGradient
 
 **The far hills and the lawn are one meadow**, filled with one gradient, so no seam shows where
@@ -1594,6 +1656,12 @@ The layer moving at `parallax` covers `parallax` times the cycle's travel in a c
 returned divides that distance a whole number of times, as near `wanted` as a whole number allows,
 so every tile of the layer has moved on by whole tiles when the cycle comes round.
 
-**The mountain ranges scroll by the camera's whole journey** instead, counted over every cycle
-passed, and repeat over their own period. A range moves less than one period in a cycle, so a period
-fitted to the cycle would squeeze its ridges.
+**A layer is placed by the journey**, the camera's whole travel, which carries every layer on across
+the cycle boundary without a jump. A period that the cycle's travel divides makes the layer come
+round with the cycle too, so the ground, the grass and the weather keep their periods. The sky and
+the far cover take a strip longer than any frame instead - see ChaseScene drawClouds, ChaseScene
+drawFoothills and ChaseScene drawHillside - and come round once every few cycles.
+
+**The mountain ranges scroll by the camera's whole journey** and repeat over their own period. A
+range moves less than one period in a cycle, so a period fitted to the cycle would squeeze its
+ridges.

@@ -664,8 +664,8 @@ namespace ClaFi::PathArt
             return (cameraShare(to, episode) - cameraShare(from, episode)) * k_fullSpeedTravel;
         };
 
-        drawBackdrop(frame, theme, time.cycleTime, travel, journey, groundY);
-        drawGround(frame, theme, travel, groundY);
+        drawBackdrop(frame, theme, time.cycleTime, journey, groundY);
+        drawGround(frame, theme, journey, groundY);
 
         // The obstacle reaches the wolf as the camera starts to stop. His gap to the hare and the
         // branch's reach are held in pixels, so they hold in a narrow frame too.
@@ -1287,11 +1287,11 @@ namespace ClaFi::PathArt
         drawStars(frame, ourWolf, episodeTime);
         if (theyAreShown)
             drawStars(theirWolfFrame, theirWolf, theirWolfTime);
-        drawWeatherLayer(frame, theme, time.cycleTime, travel, k_trailWeatherLayer, groundY,
+        drawWeatherLayer(frame, theme, time.cycleTime, journey, k_trailWeatherLayer, groundY,
             frame.height);
         drawVergeRow(frame, theme, time, groundY, closeness, true);
-        drawFrontGrass(frame, theme, travel);
-        drawWeatherLayer(frame, theme, time.cycleTime, travel, k_frontWeatherLayer, groundY,
+        drawFrontGrass(frame, theme, journey);
+        drawWeatherLayer(frame, theme, time.cycleTime, journey, k_frontWeatherLayer, groundY,
             frame.height);
     }
 
@@ -1380,9 +1380,10 @@ namespace ClaFi::PathArt
     }
 
     void ChaseScene::forEachTile(const SceneFrame& frame, const float parallax, const float period,
-        const float travel, const TileDrawer& drawTile)
+        const double journey, const TileDrawer& drawTile)
     {
-        const float offset = std::fmod(std::fmod(parallax * travel, period) + period, period);
+        const double wrapped = std::fmod(parallax * journey, static_cast<double>(period));
+        const float offset = static_cast<float>(wrapped < 0.0 ? wrapped + period : wrapped);
         const float tileWidth = period * frame.unit;
         const float end = frame.width + tileWidth;
         const float start = -offset * frame.unit - tileWidth;
@@ -1390,9 +1391,525 @@ namespace ClaFi::PathArt
             drawTile(tileLeft, tileWidth);
     }
 
+    namespace
+    {
+        // The sky's clouds and the flocks crossing it keep their own distances. A strip is
+        // longer than any frame and than a cycle's travel, so no cloud comes round twice in a
+        // cycle, and the journey carries them on as it carries the mountains.
+        constexpr float k_cloudParallax{ 0.045f };
+        constexpr float k_cloudStrip{ 3400.0f };
+        constexpr int k_cloudsPerStrip{ 10 };
+        constexpr float k_wispParallax{ 0.018f };
+        constexpr float k_wispStrip{ 4300.0f };
+        constexpr int kWispsPerStrip{ 3 };
+        constexpr float k_flockParallax{ 0.08f };
+        constexpr float k_flockStrip{ 5600.0f };
+        constexpr int k_flocksPerStrip{ 3 };
+        // A low, slow bank of small cloud that the mountain peaks stand in front of.
+        constexpr float k_lowCloudParallax{ 0.03f };
+        constexpr float k_lowCloudStrip{ 3600.0f };
+        constexpr int k_lowCloudsPerStrip{ 6 };
+        // The pale hills behind the meadow's own, and the cover that stands on the meadow's.
+        constexpr float k_foothillParallax{ 0.11f };
+        constexpr float k_foothillRidgePeriod{ 1400.0f };
+        constexpr float k_foothillClumpStrip{ 5200.0f };
+        constexpr float k_foothillBaseShare{ 0.665f };
+        constexpr std::array<Wave, 3> k_foothillWaves{
+            Wave{ 22.0f, 1.0f, 2.3f },
+            Wave{ 10.0f, 2.0f, 0.4f },
+            Wave{ 4.0f, 4.0f, 1.7f }
+        };
+        constexpr int k_foothillClumps{ 16 };
+        constexpr float k_hillsideStrip{ 6400.0f };
+        constexpr int k_hillsideStands{ 44 };
+        constexpr int k_hedgeRuns{ 5 };
+
+        // Where a layer moving at `parallax` stands, `journey` units into the story: its strip's
+        // length wrapped to, as forEachTile wraps it.
+        [[nodiscard]] float stripShift(const float parallax, const double journey,
+            const float period)
+        {
+            const double wrapped = std::fmod(parallax * journey, static_cast<double>(period));
+            return static_cast<float>(wrapped < 0.0 ? wrapped + period : wrapped);
+        }
+
+        // A cloud's top: lobes of their own widths, each a rounded peak, over a flat base. A
+        // valley between two lobes stays above the base, so the lobes read as one mass.
+        [[nodiscard]] PixelPath cloudOutline(const FloatPoint middle, const float width,
+            const float height, const int seed)
+        {
+            const int lobes = 3 + static_cast<int>(pseudoRandom(seed, 201.0f) * 3.0f);
+            std::array<float, 5> lobesWidth{};
+            float widthSum = 0.0f;
+            for (int lobe = 0; lobe != lobes; ++lobe)
+            {
+                lobesWidth[static_cast<std::size_t>(lobe)] = 0.6f
+                    + 0.8f * pseudoRandom(seed * 11 + lobe, 203.0f);
+                widthSum += lobesWidth[static_cast<std::size_t>(lobe)];
+            }
+            const float base = middle.y;
+            float x = middle.x - width * 0.5f;
+            PixelPath cloud;
+            cloud.moveTo(x, base);
+            for (int lobe = 0; lobe != lobes; ++lobe)
+            {
+                const float lobeWidth = width * lobesWidth[static_cast<std::size_t>(lobe)]
+                    / widthSum;
+                const float peak = height
+                    * (0.55f + 0.45f * pseudoRandom(seed * 13 + lobe, 202.0f));
+                const float valley = lobe + 1 == lobes
+                    ? base
+                    : base - height * (0.35f + 0.2f * pseudoRandom(seed * 17 + lobe, 204.0f));
+                cloud.cubicTo({ x + lobeWidth * (0.15f + 0.1f * pseudoRandom(seed * 19 + lobe,
+                    206.0f)), base - peak },
+                    { x + lobeWidth * (0.7f + 0.15f * pseudoRandom(seed * 23 + lobe, 207.0f)),
+                        base - peak }, { x + lobeWidth, valley });
+                x += lobeWidth;
+            }
+            cloud.close();
+            return cloud;
+        }
+
+        // A high, thin cloud: one long hump and a smaller one beside it.
+        [[nodiscard]] PixelPath wispOutline(const FloatPoint middle, const float width,
+            const float height, const int seed)
+        {
+            const float secondPeak = height * (0.45f + 0.4f * pseudoRandom(seed, 205.0f));
+            PixelPath wisp;
+            wisp.moveTo(middle.x - width * 0.5f, middle.y);
+            wisp.cubicTo({ middle.x - width * 0.34f, middle.y - height },
+                { middle.x - width * 0.12f, middle.y - height * 0.5f },
+                { middle.x + width * 0.04f, middle.y - height * 0.25f });
+            wisp.cubicTo({ middle.x + width * 0.18f, middle.y - secondPeak },
+                { middle.x + width * 0.36f, middle.y - height * 0.2f },
+                { middle.x + width * 0.5f, middle.y });
+            wisp.close();
+            return wisp;
+        }
+    }
+
+    void ChaseScene::drawClouds(const SceneFrame& frame, const SceneTheme& theme,
+        const double journey)
+    {
+        const float unit = frame.unit;
+        const float height = frame.height;
+        forEachTile(frame, k_wispParallax, k_wispStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int i = 0; i != kWispsPerStrip; ++i)
+                {
+                    PixelPath wisp = wispOutline({
+                        tileLeft + tileWidth * ((static_cast<float>(i) + 0.2f
+                            + 0.7f * pseudoRandom(i, 212.0f))
+                            / static_cast<float>(kWispsPerStrip)),
+                        height * (0.05f + 0.09f * pseudoRandom(i, 211.0f))
+                    }, (300.0f + 220.0f * pseudoRandom(i, 213.0f)) * unit,
+                        (26.0f + 16.0f * pseudoRandom(i, 214.0f)) * unit, i + 60);
+                    fillShape(frame, wisp, SolidColor{ theme.cloud.faded(0.3f) });
+                }
+            });
+        forEachTile(frame, k_lowCloudParallax, k_lowCloudStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int i = 0; i != k_lowCloudsPerStrip; ++i)
+                {
+                    const float cloudWidth = (50.0f + 60.0f * pseudoRandom(i, 226.0f)) * unit;
+                    const float x = tileLeft + tileWidth * ((static_cast<float>(i) + 0.2f
+                        + 0.7f * pseudoRandom(i, 227.0f))
+                        / static_cast<float>(k_lowCloudsPerStrip));
+                    if (x < -cloudWidth || x > frame.width + cloudWidth)
+                        continue;
+                    PixelPath cloud = cloudOutline({ x,
+                        height * (0.22f + 0.12f * pseudoRandom(i, 228.0f))
+                    }, cloudWidth, cloudWidth * (0.3f + 0.14f * pseudoRandom(i, 229.0f)),
+                        i + 20);
+                    fillShape(frame, cloud, SolidColor{ theme.cloud.faded(
+                        0.35f + 0.3f * pseudoRandom(i, 230.0f)) });
+                }
+            });
+        forEachTile(frame, k_cloudParallax, k_cloudStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int i = 0; i != k_cloudsPerStrip; ++i)
+                {
+                    const float cloudWidth = (90.0f + 110.0f * pseudoRandom(i, 221.0f))
+                        * unit;
+                    const float x = tileLeft + tileWidth
+                        * ((static_cast<float>(i) + 0.1f
+                            + 0.8f * pseudoRandom(i, 222.0f))
+                            / static_cast<float>(k_cloudsPerStrip));
+                    if (x < -cloudWidth || x > frame.width + cloudWidth)
+                        continue;
+                    PixelPath cloud = cloudOutline({ x,
+                        height * (0.05f + 0.24f * pseudoRandom(i, 223.0f))
+                    }, cloudWidth, cloudWidth * (0.26f + 0.16f * pseudoRandom(i, 224.0f)),
+                        i);
+                    fillShape(frame, cloud, SolidColor{ theme.cloud.faded(
+                        0.5f + 0.5f * pseudoRandom(i, 225.0f)) });
+                }
+            });
+    }
+
+    // The flocks crossing the sky: each a few birds, their shallow V's own.
+    void ChaseScene::drawSkyFlocks(const SceneFrame& frame, const SceneTheme& theme,
+        const double journey)
+    {
+        const float unit = frame.unit;
+        const Color ink = hazed(theme, theme.flock, k_flockParallax).faded(0.8f);
+        forEachTile(frame, k_flockParallax, k_flockStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int flock = 0; flock != k_flocksPerStrip; ++flock)
+                {
+                    const FloatPoint middle = {
+                        tileLeft + tileWidth * ((static_cast<float>(flock) + 0.1f
+                            + 0.8f * pseudoRandom(flock, 231.0f))
+                            / static_cast<float>(k_flocksPerStrip)),
+                        frame.height * (0.1f + 0.16f * pseudoRandom(flock, 232.0f))
+                    };
+                    if (middle.x < -60.0f * unit || middle.x > frame.width + 60.0f * unit)
+                        continue;
+                    const int birds = 3 + static_cast<int>(pseudoRandom(flock, 233.0f)
+                        * 3.0f);
+                    for (int bird = 0; bird != birds; ++bird)
+                    {
+                        const int seed = flock * 9 + bird;
+                        const FloatPoint at = {
+                            middle.x + (static_cast<float>(bird) * 20.0f + 12.0f
+                                * pseudoRandom(seed, 234.0f)) * unit,
+                            middle.y + (static_cast<float>(bird % 2) * 10.0f - 8.0f
+                                * pseudoRandom(seed, 235.0f)) * unit
+                        };
+                        const float wing = (4.0f + 3.0f * pseudoRandom(seed, 236.0f))
+                            * unit;
+                        const float rise = (1.5f + 2.0f * pseudoRandom(seed, 237.0f))
+                            * unit;
+                        drawSegment(frame, { at.x - wing, at.y - rise }, at,
+                            SolidColor{ ink }, 0.7f * unit);
+                        drawSegment(frame, at, { at.x + wing, at.y - rise },
+                            SolidColor{ ink }, 0.7f * unit);
+                    }
+                }
+            });
+    }
+
+    // The pale ridge a long way behind the meadow's hills, its crest wooded.
+    void ChaseScene::drawFoothills(const SceneFrame& frame, const SceneTheme& theme,
+        const double journey, const float groundY)
+    {
+        const float unit = frame.unit;
+        const float ridgePeriod = k_foothillRidgePeriod;
+        const float shift = stripShift(k_foothillParallax, journey, ridgePeriod);
+        const float baseY = frame.height * k_foothillBaseShare;
+        const Color band = colorBetween(hazed(theme, theme.hillTop, k_foothillParallax),
+            theme.skyBottom, 0.3f);
+        const auto ridgeAt = [&](const float x) {
+            return baseY - ridgeHeight(ridgePeriod, x / unit + shift, k_foothillWaves) * unit;
+        };
+        PixelPath ridge;
+        ridge.moveTo(0.0f, groundY);
+        for (float x = 0.0f; x <= frame.width + 6.0f * unit; x += 6.0f * unit)
+            ridge.lineTo(x, ridgeAt(x));
+        ridge.lineTo(frame.width + 6.0f * unit, groundY);
+        ridge.close();
+        fillShape(frame, ridge, LinearGradient::Simple({ 0.0f, baseY - 40.0f * unit },
+            { 0.0f, groundY }, band, colorBetween(band, theme.hillBottom, 0.3f)));
+        const Color wood = colorBetween(band,
+            hazed(theme, theme.treeLeavesBase, k_foothillParallax), 0.45f);
+        ScatteredShapes crowns{ frame, SolidColor{ wood } };
+        forEachTile(frame, k_foothillParallax, k_foothillClumpStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int i = 0; i != k_foothillClumps; ++i)
+                {
+                    const float x = tileLeft + tileWidth
+                        * ((static_cast<float>(i) + 0.8f * pseudoRandom(i, 241.0f))
+                            / static_cast<float>(k_foothillClumps));
+                    if (x < -30.0f * unit || x > frame.width + 30.0f * unit)
+                        continue;
+                    const float footY = ridgeAt(x) + 2.0f * unit;
+                    const int crownsHere = 1 + static_cast<int>(pseudoRandom(i, 242.0f)
+                        * 3.0f);
+                    for (int crown = 0; crown != crownsHere; ++crown)
+                    {
+                        const float radius = (4.0f + 3.5f
+                            * pseudoRandom(i * 7 + crown, 243.0f)) * unit;
+                        addEllipse(crowns.next(), {
+                            x + (static_cast<float>(crown - 1) * 7.0f
+                                + 4.0f * pseudoRandom(i * 7 + crown, 244.0f)) * unit,
+                            footY - radius * 0.8f
+                        }, radius, radius * (0.8f + 0.3f * pseudoRandom(i * 7 + crown,
+                            245.0f)));
+                    }
+                }
+            });
+        crowns.draw();
+    }
+
+    namespace
+    {
+        // The colours the hillside's trees take in the theme, hazed as the hills are.
+        struct HillsideColors
+        {
+            Color bark;
+            Color crown;
+            Color crownLight;
+            Color crownMiddle;
+        };
+
+        void drawHillTrunk(const SceneFrame& frame, const HillsideColors& colors,
+            const FloatPoint foot, const float halfWidth, const float height)
+        {
+            PixelPath trunk;
+            trunk.moveTo(foot.x - halfWidth, foot.y);
+            trunk.lineTo(foot.x - halfWidth * 0.6f, foot.y - height);
+            trunk.lineTo(foot.x + halfWidth * 0.6f, foot.y - height);
+            trunk.lineTo(foot.x + halfWidth, foot.y);
+            trunk.close();
+            fillShape(frame, trunk, SolidColor{ colors.bark });
+        }
+
+        // The meadow's round crown: three clumps over a trunk's top.
+        void drawRoundHillCrown(const SceneFrame& frame, const HillsideColors& colors,
+            const FloatPoint foot, const float size)
+        {
+            fillDisc(frame, { foot.x, foot.y - 30.0f * size }, 16.0f * size,
+                SolidColor{ colors.crown });
+            fillDisc(frame, { foot.x - 9.0f * size, foot.y - 24.0f * size }, 10.0f * size,
+                SolidColor{ colors.crownLight });
+            fillDisc(frame, { foot.x + 9.0f * size, foot.y - 25.0f * size }, 11.0f * size,
+                SolidColor{ colors.crownMiddle });
+        }
+
+        // The meadow's round tree: three clumps of crown on a short trunk.
+        void drawRoundHillTree(const SceneFrame& frame, const HillsideColors& colors,
+            const FloatPoint foot, const float size)
+        {
+            drawHillTrunk(frame, colors, foot, 2.4f * size, 14.0f * size);
+            drawRoundHillCrown(frame, colors, foot, size);
+        }
+
+        // A broader crown of four clumps over a stouter trunk.
+        void drawBroadleafHillCrown(const SceneFrame& frame, const HillsideColors& colors,
+            const FloatPoint foot, const float size)
+        {
+            fillDisc(frame, { foot.x - 12.0f * size, foot.y - 28.0f * size }, 13.0f * size,
+                SolidColor{ colors.crownMiddle });
+            fillDisc(frame, { foot.x + 12.0f * size, foot.y - 29.0f * size }, 14.0f * size,
+                SolidColor{ colors.crown });
+            fillDisc(frame, { foot.x, foot.y - 40.0f * size }, 15.0f * size,
+                SolidColor{ colors.crownLight });
+            fillDisc(frame, { foot.x - 2.0f * size, foot.y - 26.0f * size }, 11.0f * size,
+                SolidColor{ colors.crown });
+        }
+
+        // A broader, rounder crown of four clumps on a stouter trunk.
+        void drawBroadleafHillTree(const SceneFrame& frame, const HillsideColors& colors,
+            const FloatPoint foot, const float size)
+        {
+            drawHillTrunk(frame, colors, foot, 3.2f * size, 16.0f * size);
+            drawBroadleafHillCrown(frame, colors, foot, size);
+        }
+
+        // A tall, narrow crown, the tree a field is planted with.
+        void drawPoplarHillTree(const SceneFrame& frame, const HillsideColors& colors,
+            const FloatPoint foot, const float size)
+        {
+            drawHillTrunk(frame, colors, foot, 1.8f * size, 10.0f * size);
+            fillOval(frame, { foot.x, foot.y - 32.0f * size }, 7.0f * size, 24.0f * size,
+                SolidColor{ colors.crownMiddle });
+            fillOval(frame, { foot.x + 1.5f * size, foot.y - 38.0f * size }, 4.5f * size,
+                14.0f * size, SolidColor{ colors.crownLight });
+        }
+
+        // A fir of three tiers, each lighter than the one below it.
+        void drawFirHillTree(const SceneFrame& frame, const HillsideColors& colors,
+            const FloatPoint foot, const float size)
+        {
+            drawHillTrunk(frame, colors, foot, 1.6f * size, 7.0f * size);
+            const auto tier = [&](const float halfWidth, const float bottom, const float top,
+                const Color color) {
+                PixelPath fir;
+                fir.moveTo(foot.x - halfWidth, foot.y - bottom);
+                fir.lineTo(foot.x, foot.y - top);
+                fir.lineTo(foot.x + halfWidth, foot.y - bottom);
+                fir.close();
+                fillShape(frame, fir, SolidColor{ color });
+            };
+            tier(14.0f * size, 7.0f * size, 32.0f * size, colors.crown);
+            tier(11.0f * size, 20.0f * size, 44.0f * size, colors.crownMiddle);
+            tier(7.0f * size, 33.0f * size, 56.0f * size, colors.crownLight);
+        }
+
+        // A low, wide bush, the cover that fills the gaps between the trees.
+        void drawHillBush(const SceneFrame& frame, const HillsideColors& colors,
+            const FloatPoint foot, const float size)
+        {
+            fillOval(frame, { foot.x, foot.y - 5.0f * size }, 10.0f * size, 6.0f * size,
+                SolidColor{ colors.crownMiddle });
+            fillOval(frame, { foot.x + 4.0f * size, foot.y - 8.0f * size }, 6.0f * size,
+                4.0f * size, SolidColor{ colors.crownLight });
+        }
+    }
+
+    // What stands on the meadow's hills: trees of several kinds in loose groups, and hedges
+    // running along the slope below them.
+    void ChaseScene::drawHillside(const SceneFrame& frame, const SceneTheme& theme,
+        const double journey, const float groundY, const float hillPeriod, const float hillShift)
+    {
+        const float unit = frame.unit;
+        const float width = frame.width;
+        const float middleY = frame.height * 0.70f;
+        const HillsideColors colors{
+            .bark = hazed(theme, theme.bark, k_hillParallax),
+            .crown = hazed(theme, theme.treeLeavesBase, k_hillParallax),
+            .crownLight = hazed(theme, theme.crownLight, k_hillParallax),
+            .crownMiddle = hazed(theme, theme.crownMiddle, k_hillParallax)
+        };
+        const auto hillY = [&](const float x) {
+            return middleY - ridgeHeight(hillPeriod, x / unit + hillShift, k_hillWaves)
+                * unit;
+        };
+        const auto standAt = [&](const float x, const int stand) {
+            // the lower down the slope it stands, the nearer it is and the larger it draws
+            const float downSlope = pseudoRandom(stand, 254.0f);
+            const float size = (0.8f + 0.6f * pseudoRandom(stand, 252.0f))
+                * (0.9f + 0.25f * downSlope) * unit;
+            const FloatPoint foot = { x, std::min(hillY(x) + (5.0f + 40.0f * downSlope) * unit,
+                groundY - 2.0f * unit) };
+            // the round tree and the broadleaf are the common ones
+            const float pick = pseudoRandom(stand, 253.0f);
+            const int kind = pick < 0.26f ? 0 : pick < 0.5f ? 1 : pick < 0.64f ? 2
+                : pick < 0.76f ? 3 : pick < 0.88f ? 4 : 5;
+            if (kind == 0)
+            {
+                drawRoundHillTree(frame, colors, foot, size);
+            }
+            else if (kind == 1)
+            {
+                drawBroadleafHillTree(frame, colors, foot, size);
+            }
+            else if (kind == 2)
+            {
+                drawPoplarHillTree(frame, colors, foot, size);
+            }
+            else if (kind == 3)
+            {
+                drawFirHillTree(frame, colors, foot, size);
+            }
+            else if (kind == 4)
+            {
+                // a coppice, three trees standing together: their trunks go down before any of
+                // the crowns, so no trunk stands in front of another tree's leaves
+                const FloatPoint left = { foot.x - 32.0f * size, foot.y };
+                const FloatPoint middle = { foot.x + 2.0f * size, foot.y };
+                const FloatPoint right = { foot.x + 38.0f * size, foot.y };
+                drawHillTrunk(frame, colors, left, 2.4f * 0.8f * size, 14.0f * 0.8f * size);
+                drawHillTrunk(frame, colors, middle, 3.2f * size, 16.0f * size);
+                drawHillTrunk(frame, colors, right, 2.4f * 0.72f * size, 14.0f * 0.72f * size);
+                drawRoundHillCrown(frame, colors, left, size * 0.8f);
+                drawBroadleafHillCrown(frame, colors, middle, size);
+                drawRoundHillCrown(frame, colors, right, size * 0.72f);
+            }
+            else
+            {
+                drawHillBush(frame, colors, foot, size);
+            }
+        };
+        // **The hedges stand behind the trees**, lower on the slope, so a crown or a trunk hides
+        // the run where the two meet and no hedge crosses one in the air.
+        const Color hedgeColor = colorBetween(colors.crown, theme.hillBottom, 0.55f)
+            .fullyOpaque();
+        forEachTile(frame, k_hillParallax, k_hillsideStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int run = 0; run != k_hedgeRuns; ++run)
+                {
+                    const float start = tileLeft + tileWidth * ((static_cast<float>(run)
+                        + 0.1f + 0.6f * pseudoRandom(run, 261.0f))
+                        / static_cast<float>(k_hedgeRuns));
+                    const float length = (600.0f + 700.0f * pseudoRandom(run, 262.0f))
+                        * unit;
+                    if (start + length < -40.0f * unit || start > width + 40.0f * unit)
+                        continue;
+                    const float drop = (16.0f + 34.0f * pseudoRandom(run, 263.0f)) * unit;
+                    const float step = 16.0f * unit;
+                    // The hedge follows the ground it stands on, and keeps clear of the trail.
+                    const auto baseAt = [&](const float x) {
+                        return std::min(hillY(x) + drop, groundY - 12.0f * unit);
+                    };
+                    // A stretch is a bushy band: wide humps rising and falling by half the
+                    // height, with a taller clump now and then, so its length is never smooth.
+                    const float hedgeHeight = (16.0f + 8.0f * pseudoRandom(run, 266.0f))
+                        * unit;
+                    const auto drawStretch = [&](const float from, const float to,
+                        const int seedBase) {
+                        if (to - from < 40.0f * unit)
+                            return;
+                        const float endHeight = hedgeHeight * 0.55f;
+                        PixelPath hedge;
+                        hedge.moveTo(from, baseAt(from));
+                        hedge.lineTo(from, baseAt(from) - endHeight);
+                        float along = 0.0f;
+                        int hump = 0;
+                        while (along < to - from)
+                        {
+                            const int seed = seedBase + hump;
+                            const float humpWidth = std::min(step * (0.8f + 0.8f
+                                * pseudoRandom(seed, 268.0f)), to - from - along);
+                            const float peak = pseudoRandom(seed, 269.0f) < 0.12f
+                                ? hedgeHeight * (1.4f + 0.3f * pseudoRandom(seed, 270.0f))
+                                : hedgeHeight * (0.8f + 0.35f * pseudoRandom(seed, 267.0f));
+                            const float middle = from + along + humpWidth * 0.5f;
+                            const float join = baseAt(from + along + humpWidth) - hedgeHeight
+                                * (0.35f + 0.25f * pseudoRandom(seed, 265.0f));
+                            hedge.quadTo({ middle, baseAt(middle) - peak },
+                                { from + along + humpWidth, join });
+                            along += humpWidth;
+                            ++hump;
+                        }
+                        hedge.lineTo(to, baseAt(to));
+                        for (float back = to; back > from; back -= step * 2.0f)
+                            hedge.lineTo(back, baseAt(back));
+                        hedge.close();
+                        const SolidColor fill{ hedgeColor };
+                        fillShape(frame, hedge, fill);
+                        // **A stretch closes on a rounded shoulder at each end**, a half-oval
+                        // over the flat cut, so it reads as grown rather than chopped.
+                        const float capUp = endHeight * 0.5f;
+                        fillOval(frame, { from, baseAt(from) - capUp }, hedgeHeight * 0.4f,
+                            capUp, fill);
+                        fillOval(frame, { to, baseAt(to) - capUp }, hedgeHeight * 0.4f, capUp,
+                            fill);
+                    };
+                    // A run comes apart in stretches, with a gap of its own between them where a
+                    // gate or a break in the hedge would be.
+                    float along = 0.0f;
+                    int stretch = 0;
+                    while (along < length)
+                    {
+                        const int seed = run * 53 + stretch;
+                        const float stretchLength = std::min((120.0f + 240.0f
+                            * pseudoRandom(seed, 271.0f)) * unit, length - along);
+                        drawStretch(start + along, start + along + stretchLength, seed * 17);
+                        along += stretchLength
+                            + (70.0f + 80.0f * pseudoRandom(seed, 272.0f)) * unit;
+                        ++stretch;
+                    }
+                }
+            });
+        forEachTile(frame, k_hillParallax, k_hillsideStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int stand = 0; stand != k_hillsideStands; ++stand)
+                {
+                    const float x = tileLeft + tileWidth
+                        * ((static_cast<float>(stand) + 0.8f
+                            * pseudoRandom(stand, 251.0f))
+                            / static_cast<float>(k_hillsideStands));
+                    if (x < -90.0f * unit || x > width + 90.0f * unit)
+                        continue;
+                    standAt(x, stand);
+                }
+            });
+    }
+
     // Each layer moves at its own share of the camera's speed: far ones slow, near ones fast.
     void ChaseScene::drawBackdrop(const SceneFrame& frame, const SceneTheme& theme,
-        const float cycleTime, const float travel, const double journey, const float groundY)
+        const float cycleTime, const double journey, const float groundY)
     {
         const float unit = frame.unit;
         const float width = frame.width;
@@ -1413,25 +1930,8 @@ namespace ClaFi::PathArt
         drawCelestial(frame, CelestialPose{ .center = sun, .night = theme.hasStars },
             theme.sunDisk);
 
-        const float cloudPeriod = periodNear(0.05f, 820.0f);
-        forEachTile(frame, 0.05f, cloudPeriod, travel, [&](float tileLeft, float tileWidth) {
-            for (int i = 0; i != 2; ++i)
-            {
-                const float jitter = 0.15f * pseudoRandom(i, 101.0f);
-                const float share = 0.2f + 0.5f * static_cast<float>(i) + jitter;
-                const float x = tileLeft + tileWidth * share;
-                const float y = height * (0.12f + 0.12f * pseudoRandom(i, 102.0f));
-                const float size = (0.7f + 0.5f * pseudoRandom(i, 103.0f)) * unit;
-                PixelPath cloud;
-                cloud.moveTo(x - 60.0f * size, y);
-                cloud.quadTo({ x - 40.0f * size, y - 40.0f * size },
-                    { x - 20.0f * size, y - 20.0f * size });
-                cloud.quadTo({ x, y - 60.0f * size }, { x + 20.0f * size, y - 20.0f * size });
-                cloud.quadTo({ x + 40.0f * size, y - 40.0f * size }, { x + 60.0f * size, y });
-                cloud.close();
-                fillShape(frame, cloud, SolidColor{ theme.cloud });
-            }
-        });
+        drawClouds(frame, theme, journey);
+        drawSkyFlocks(frame, theme, journey);
 
         // A rainy theme's lightning strikes behind the mountains and lights the sky.
         const float effectsTime = fractionalPart(cycleTime * k_lively);
@@ -1485,56 +1985,42 @@ namespace ClaFi::PathArt
         drawMountains(k_farRange);
         drawMountains(k_nearRange);
 
+        drawFoothills(frame, theme, journey, groundY);
+
         const float hillPeriod = periodNear(k_hillParallax, 1150.0f);
+        const float hillShift = stripShift(k_hillParallax, journey, hillPeriod);
         const float hillMiddleY = height * 0.70f;
-        const auto hillY = [&](float x) {
+        const auto hillY = [&](const float x) {
             return hillMiddleY - ridgeHeight(hillPeriod, x, k_hillWaves) * unit;
         };
         PixelPath hills;
         hills.moveTo(0.0f, groundY + 2.0f * unit);
         for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
-            hills.lineTo(x, hillY(x / unit + k_hillParallax * travel));
+            hills.lineTo(x, hillY(x / unit + hillShift));
         hills.lineTo(width + 6.0f * unit, groundY + 2.0f * unit);
         hills.close();
         fillShape(frame, hills, meadowGradient(frame, theme));
-        const Color bark = hazed(theme, theme.bark, k_hillParallax);
-        const Color barkShade = hazed(theme, theme.barkShade, k_hillParallax);
-        const SolidColor crown{ hazed(theme, theme.treeLeavesBase, k_hillParallax) };
-        const SolidColor crownLight{ hazed(theme, theme.crownLight, k_hillParallax) };
-        const SolidColor crownMiddle{ hazed(theme, theme.crownMiddle, k_hillParallax) };
-        forEachTile(frame, k_hillParallax, hillPeriod, travel, [&](float tileLeft, float) {
-            for (int i = 0; i != 4; ++i)
-            {
-                const float jitter = 0.06f * pseudoRandom(i, 111.0f);
-                const float alongTile = hillPeriod
-                    * (0.1f + 0.24f * static_cast<float>(i) + jitter);
-                const float x = tileLeft + alongTile * unit;
-                const float y = hillY(alongTile) + 6.0f * unit;
-                const float size = (0.7f + 0.4f * pseudoRandom(i, 112.0f)) * unit;
-                drawTrunk(frame, { x, y }, 3.0f * size, 22.0f * size, bark, barkShade);
-                fillDisc(frame, { x, y - 32.0f * size }, 16.0f * size, crown);
-                fillDisc(frame, { x - 9.0f * size, y - 25.0f * size }, 11.0f * size, crownLight);
-                fillDisc(frame, { x + 9.0f * size, y - 26.0f * size }, 12.0f * size, crownMiddle);
-            }
-        });
+        drawHillside(frame, theme, journey, groundY, hillPeriod, hillShift);
         // **The theme's fireflies keep to the far hills' layer**, smaller for the distance, hazed
         // as the hills are, and moving with them.
         Fireflies fireflies = firefliesOf(theme);
         fireflies.light = hazed(theme, fireflies.light, k_hillParallax);
         fireflies.glow = hazed(theme, fireflies.glow, k_hillParallax);
-        fireflies.count = 22;
+        fireflies.count = 30;
         fireflies.size = k_hillSize;
-        forEachTile(frame, k_hillParallax, hillPeriod, travel, [&](float left, float tileWidth) {
-            fireflies.area = { left, groundY - 90.0f * unit, left + tileWidth,
-                groundY - 20.0f * unit };
-            drawFireflies(frame, effectsTime, fireflies);
-        });
+        constexpr float k_fireflyStrip{ 2600.0f };
+        forEachTile(frame, k_hillParallax, k_fireflyStrip, journey,
+            [&](const float left, const float tileWidth) {
+                fireflies.area = { left, groundY - 90.0f * unit, left + tileWidth,
+                    groundY - 20.0f * unit };
+                drawFireflies(frame, effectsTime, fireflies);
+            });
         for (std::size_t layerIndex = 0; layerIndex != k_trailWeatherLayer; ++layerIndex)
-            drawWeatherLayer(frame, theme, cycleTime, travel, layerIndex, groundY, groundY);
+            drawWeatherLayer(frame, theme, cycleTime, journey, layerIndex, groundY, groundY);
     }
 
     void ChaseScene::drawWeatherLayer(const SceneFrame& frame, const SceneTheme& theme,
-        const float cycleTime, const float travel, const std::size_t layerIndex,
+        const float cycleTime, const double journey, const std::size_t layerIndex,
         const float groundY, const float bottom)
     {
         const WeatherLayer& layer = k_weatherLayers[layerIndex];
@@ -1550,17 +2036,18 @@ namespace ClaFi::PathArt
         weather.seed = k_weatherSeedStep * static_cast<float>(layerIndex);
         const float layerUnit = frame.unit * std::lerp(k_hillSize, 1.0f, nearness);
         const float effectsTime = fractionalPart(cycleTime * k_lively);
-        forEachTile(frame, layer.parallax, period, travel, [&](float left, float tileWidth) {
-            SceneFrame overLayer = frame.within(Matrix3x2::Translation(left, 0.0f));
-            overLayer.width = tileWidth;
-            overLayer.height = bottom;
-            overLayer.unit = layerUnit;
-            drawWeather(overLayer, effectsTime, weather);
-        });
+        forEachTile(frame, layer.parallax, period, journey,
+            [&](const float left, const float tileWidth) {
+                SceneFrame overLayer = frame.within(Matrix3x2::Translation(left, 0.0f));
+                overLayer.width = tileWidth;
+                overLayer.height = bottom;
+                overLayer.unit = layerUnit;
+                drawWeather(overLayer, effectsTime, weather);
+            });
     }
 
     void ChaseScene::drawGround(const SceneFrame& frame, const SceneTheme& theme,
-        const float travel, const float groundY)
+        const double journey, const float groundY)
     {
         const float unit = frame.unit;
         const float width = frame.width;
@@ -1572,7 +2059,7 @@ namespace ClaFi::PathArt
         // flower stands over a tuft whichever tile either is in.
         const float tilePeriod = periodNear(1.0f, 400.0f);
         ScatteredShapes tufts{ frame, SolidColor{ theme.grassBlade.light }, 2.0f * unit };
-        forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
+        forEachTile(frame, 1.0f, tilePeriod, journey, [&](float tileLeft, float tileWidth) {
             for (int i = 0; i != 6; ++i)
             {
                 const float x = tileLeft + tileWidth * pseudoRandom(i, 121.0f);
@@ -1590,7 +2077,7 @@ namespace ClaFi::PathArt
         });
         tufts.draw();
         ScatteredShapes pebbles{ frame, SolidColor{ theme.chase.pebble } };
-        forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
+        forEachTile(frame, 1.0f, tilePeriod, journey, [&](float tileLeft, float tileWidth) {
             for (int i = 0; i != 4; ++i)
             {
                 const FloatPoint pebble = {
@@ -1624,7 +2111,7 @@ namespace ClaFi::PathArt
             ScatteredShapes{ frame, inLawn(theme.petal2) },
             ScatteredShapes{ frame, inLawn(theme.petal3) }
         };
-        forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
+        forEachTile(frame, 1.0f, tilePeriod, journey, [&](float tileLeft, float tileWidth) {
             const float petalRadius = 1.75f * unit;
             for (int i = 0; i != 3; ++i)
             {
@@ -1642,7 +2129,7 @@ namespace ClaFi::PathArt
         for (ScatteredShapes& shapes : petals)
             shapes.draw();
         ScatteredShapes hearts{ frame, inLawn(theme.flowerHeart) };
-        forEachTile(frame, 1.0f, tilePeriod, travel, [&](float tileLeft, float tileWidth) {
+        forEachTile(frame, 1.0f, tilePeriod, journey, [&](float tileLeft, float tileWidth) {
             for (int i = 0; i != 3; ++i)
             {
                 addEllipse(hearts.next(), flowerAt(tileLeft, tileWidth, i), 1.8f * unit,
@@ -1653,7 +2140,7 @@ namespace ClaFi::PathArt
     }
 
     void ChaseScene::drawFrontGrass(const SceneFrame& frame, const SceneTheme& theme,
-        const float travel)
+        const double journey)
     {
         const float unit = frame.unit;
         const float height = frame.height;
@@ -1667,7 +2154,7 @@ namespace ClaFi::PathArt
             const Color root = colorBetween(shade, theme.hillBottom, 0.4f);
             ScatteredShapes blades{ frame, LinearGradient::Simple(tallestTip, { 0.0f, height },
                 shade, root) };
-            forEachTile(frame, 1.35f, grassPeriod, travel, [&](float tileLeft, float tileWidth) {
+            forEachTile(frame, 1.35f, grassPeriod, journey, [&](float tileLeft, float tileWidth) {
                 for (int i = 0; i != 22; ++i)
                 {
                     if ((i % 3 == 0) != dark)
