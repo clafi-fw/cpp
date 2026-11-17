@@ -4929,9 +4929,39 @@ of its own, and the valley between two of them stays above the base: the first a
 scallops read as combs. A cloud takes 50 to 100 per cent of the theme's cloud colour, a wisp 30,
 and a low cloud 35 to 65.
 
+**Each bank drifts on its own clock too** (Oj: "the clouds could receive their own drift too"), the
+farther slower: 1.5 units a second for the wisps, 2.5 for the low bank, 4 for the heaps, each
+wrapped at its own strip, and each cloud bobs a unit or two as it goes. With the camera stopped at a
+beat the sky still moves, as the flocks do.
+
+**The loop's ends did not meet** (Oj: "The clouds loop ends don't meet"). The drift was counted from
+the cycle's fraction, so at the story's end the clouds and the flocks ran back to where they had
+stood at its start - a jump of sixty seconds of drift. The sky's clock is now the scene's seconds
+counted across cycles: cyclesPassed times k_cycle plus the fraction, so clouds and flocks cross the
+loop's end as they cross any other second. Their own wraps at the strips are invisible, because a
+strip repeats exactly.
+
 **The birds** (drawSkyFlocks) are the Mill's flock colour brought over: three flocks to a 5600-unit
 strip at 0.08 of the camera's speed, each three to five birds, each a pair of short strokes a
 shallow V apart.
+
+**The birds were stiff**, and Oj: "You would have get away with completely immovable flocks of stiff
+birds if the camera had not stopped every now and then". The camera holds still at the story's
+beats, so a bird frozen by the camera's stillness shows at once. The first pass gave each bird its
+own beat and had the flock sway, bob and drift, and Oj: "Have you seen a birds flock? If not, you
+can look at them in the Mill".
+
+**The V was the wrong lesson.** A Mill-style formation was tried, five birds in a V with the beat
+running down it, and Oj: "restore your flock dispositions: it more random and interesting. The only
+wrong part is animations. They are not moving at all. Not yours, not these ones. '2.1-3.2 beats a
+second' - that was never delivered". The loose group is back, each bird at a place of its own with a
+swept pair of curve wings, and the formation went.
+
+**The beats were a cycle's length too slow.** SceneTime::cycleTime is the cycle's 0 to 1, and it
+was handed to the flock as seconds: nine radians over a whole cycle, a bird beating once a minute,
+which is why neither the new flock nor anything else that read it moved. The beat and the flight now
+take cycleTime times k_cycle's seconds, so the birds beat 2.1 to 3.2 times a second and the flock
+flies at k_flockSpeed, wrapping at the strip's end. The camera's stops no longer freeze them.
 
 **The pale ridge behind the meadow** (drawFoothills) is the second hill band, at 0.06. Three
 attempts went before it: at 0.645 its crest stood above the meadow's across the whole frame and
@@ -4954,11 +4984,48 @@ each on a strip: ten hedges to a 5800-unit strip and five trees to a 4900-unit s
 
 **The first far hedges were three long runs**, and Oj: "Segments length should be similar - on the
 second backdrop there are hedges from horizon to horizon now and that's wrong, because they are the
-same bushes". They are ten pieces of 160 to 240 units now, all of a size, and the meadow's own
-stretches narrowed to 140 to 260 to match. Their colour is the theme's leaves shaded toward
-hillBottom, both hazed at the layer's distance: foliage is not land, so it does not wear the band's
-colour. The far trees' trunks were in the wood too, and Oj: "Tree trunks should be tree trunks color
-and not green"; they take the theme's bark, hazed with the layer.
+same bushes". They are fourteen pieces now, all of a size, and the meadow's own stretches narrowed
+to 140 to 260 to match. A piece is 42 to 78 units, three tenths of the meadow's length: the layer
+stands at 0.06 where the meadow stands at 0.2, so a thing of the same real size shows at three
+tenths of it (Oj: "the hedges should have an absolute similar length not projected one"). Their
+colour is the theme's leaves shaded toward hillBottom, both hazed at the layer's distance: foliage
+is not land, so it does not wear the band's colour. The far trees' trunks were in the wood too, and
+Oj: "Tree trunks should be tree trunks color and not green"; they take the theme's bark, hazed with
+the layer.
+
+**The balls on the far crest are trees now** (Oj, 2026-11-17: "Put trees instead of green balls onto
+the far hills"). Each of the sixteen is a tapered trunk in bark under one to three crowns of the
+layer's foliage, the trunks gathered in one ScatteredShapes path and drawn before the crowns' path,
+so no crown floats on a missing trunk. The crowns were mixed 0.45 of the way toward the ridge's own
+colour, which faded them into the land, and Oj: "the far tree crowns are faded more than the far
+hedges"; both now wear the theme's leaves hazed at the layer's distance and shaded toward hillBottom
+hazed the same - the crowns 0.3 of the way, the hedges 0.55. Nothing on the layer is mixed toward
+the band.
+
+**The hedges were tracing the hills' contours** (Oj: "The hedges follow the hills shapes too
+closely, add some deviations", and then "the closer ones are glued to their hills contour"). A hedge
+is planted, not poured along a contour. A far piece lies level or at a slight tilt of its own, at a
+height drawn for it, so it parts from the crest wherever the crest rises. A meadow run is laid as
+its own line too: a start height, a slow sway and a tilt, and only pushed down where the crest falls
+into the line, kept 6 units below the crest and 12 above the trail. Both read as planted on the
+slope rather than painted along the ground line.
+
+**The hedges nearly vanished on most themes** (Oj: "check the hedges contrast on themes"). Measured
+against the ground they stand on, the hedge colour came out at 1.01 to 1.33 of contrast in 22 of the
+24 themes - pastel, night and neon alike, where 1.0 is no contrast at all.
+
+**Contrast is settled in clear air, once for the object** (Oj: "you don't measure contrast on
+layers. You measure contrast and calculate a contrast color one time for objects and not for
+layers, with clear air, and then allow haze to do its job"). The first attempts measured the
+rendered hedge against the hazed ground of each layer and pushed it until that number cleared a
+floor: on the meadow's hills it worked, and on Lunar Eclipse it turned a far hedge near black on the
+pale band - the air overruled by a number. The colour is now decided once per theme, in clear air:
+the leaves mixed 0.55 of the way to hillBottom, turned away from the clear hill - toward black
+wherever the land allows a dark hedge, toward white only where a dark one could not clear the floor,
+in steps of 0.05 - until it stands k_hedgeContrast, 1.45, against that clear ground. Both layers
+then take it as it is and let hazed() veil it at their own distance: the meadow's hedges at 0.2, the
+far pieces at 0.06. The far crowns are made the same way, the leaves shaded 0.3 in clear air and
+hazed after. What the distance does to the contrast is the distance's business, not the colour's.
 
 **The crowns of one clump first shared a ScatteredShapes path**, and since the fill was even-odd,
 Direct2D cut a hole where two crowns overlapped - the CPU backend fills them apart and showed none
@@ -4980,12 +5047,14 @@ stand a little further apart, so no trunk stands in front of another tree's leav
 
 **The hedges took the longest.** A band path along the slope read as an embankment; separate
 ellipses read as a line of dots; larger ellipses that overlapped still read as beads. What stands is
-one path per stretch, whose top is grown in humps and whose base follows the ground it stands on, 12
+one path per stretch, whose top is grown in humps and whose base is the ground it stands on, 12
 units clear of the trail: two runs to the strip, 600 to 1300 units long, and a run comes apart in
 stretches of 140 to 260 units with a gap of 70 to 150 units between them (Oj, 2026-11-17: "hedges
 wanted, make more gaps", and later "Make hedges scarcer", and "Segments length should be similar").
-The humps take their own widths and heights, and one in eight is a taller clump, so the line does
-not read as a cord. Each end of a
+The base does not trace the contour (Oj: "The hedges follow the hills shapes too closely, add some
+deviations"): it wanders up to a dozen units either side of the ground line and drifts along the
+run, so the hedge keeps its own line. The humps take their own widths and heights, and one in eight
+is a taller clump, so the line does not read as a cord. Each end of a
 stretch is capped with a half-oval over the flat cut, so the stretch closes on a rounded shoulder
 instead of a dropped vertical wall. A first pass mixed the hedge only 0.25 of the way from the crown
 to hillBottom, which left it all but the same value as the meadow: the rounded ends read and the

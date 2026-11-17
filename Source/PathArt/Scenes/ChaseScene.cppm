@@ -39,8 +39,10 @@ namespace ClaFi::PathArt
         static void forEachTile(const SceneFrame&, float parallax, float period, double journey,
             const TileDrawer&);
         // The clouds and the flocks crossing the sky, each at its own distance. See PathArt
-        static void drawClouds(const SceneFrame&, const SceneTheme&, double journey);
-        static void drawSkyFlocks(const SceneFrame&, const SceneTheme&, double journey);
+        static void drawClouds(const SceneFrame&, const SceneTheme&, double journey,
+            float seconds);
+        static void drawSkyFlocks(const SceneFrame&, const SceneTheme&, double journey,
+            float seconds);
         // The pale hills behind the meadow's, their crest wooded. See PathArt
         static void drawFoothills(const SceneFrame&, const SceneTheme&, double journey,
             float groundY);
@@ -51,7 +53,7 @@ namespace ClaFi::PathArt
         // beyond the meadow's, the trees and hedges on the meadow's hills, and the theme's
         // fireflies.
         static void drawBackdrop(const SceneFrame&, const SceneTheme&, float cycleTime,
-            double journey, float groundY);
+            double journey, float groundY, float skySeconds);
         // One layer of the theme's weather, from the frame's top down to `bottom`. See PathArt
         static void drawWeatherLayer(const SceneFrame&, const SceneTheme&, float cycleTime,
             double journey, std::size_t layerIndex, float groundY, float bottom);

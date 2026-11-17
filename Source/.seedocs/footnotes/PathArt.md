@@ -1608,12 +1608,28 @@ flat base; each lobe takes a share of the width and a peak of its own, and the v
 above the base, so the lobes read as one mass. A wisp is one long hump and a smaller one beside it.
 A cloud takes 50 to 100 per cent of the theme's cloud colour, a wisp 30 and a low cloud 35 to 65.
 
+**Each bank also drifts on its own clock**, at k_wispDrift, k_lowCloudDrift and k_cloudDrift units a
+second - the farther, the slower - and bobs a unit or two as it goes, so the sky is never a painted
+plate while the camera stands. A bank's drift wraps at its own strip, and the strip repeats, so no
+cloud jumps when it comes round. The clock is the scene's seconds counted across cycles, so the sky
+carries through the loop's end instead of snapping back with the cycle's fraction.
+
 ## ChaseScene drawSkyFlocks
 
 **The flocks cross the sky at 0.08 of the camera's speed**, three to a 5600-unit strip, in the
-theme's flock colour hazed to that distance and drawn at 80 per cent of its opacity. Each flock is
-three to five birds, each a pair of short strokes a shallow V apart, at its own place in the flock
-and its own size.
+theme's flock colour hazed to that distance and drawn at 80 per cent of its opacity. A flock is
+three to five birds at places of their own, each a swept pair of curves for its wings rather than
+two straight strokes. Each bird beats 2.1 to 3.2 times a second on a phase and a rate of its own,
+and drifts a little about its place, so no two in a flock beat together.
+
+**A flock flies on the scene's own clock, not the camera's.** Its place on the strip advances by
+k_flockSpeed and wraps at the strip's end, so the flock crosses the sky even where the camera
+stands; the camera stops at the story's beats, and a flock held still by it would show at once.
+
+**The clock counts across cycles.** The scene's time is the cycle's 0 to 1, so a per-second motion
+takes it multiplied by the cycle's length, k_cycle - and the cycles passed are added, so the beat
+and the flight carry on through the loop's end rather than snapping back with the fraction. Passing
+the fraction straight would run every beat one cycle too slow - a bird beating once a minute.
 
 ## ChaseScene drawFoothills
 
@@ -1623,14 +1639,24 @@ layer stands far enough back that the theme's own air parts it from the meadow's
 at 0.2, so it reads as land farther off than the meadow and not as sky. Its crest is k_foothillWaves
 over a 1400-unit period, and it is filled down to the ground line behind the meadow's hills.
 
-**Its crest carries hedges and woods.** Sixteen clumps of one to three crowns stand along a
-5200-unit strip, in a colour between the ridge's own and the theme's leaves, hazed with it; the
-crowns of a clump overlap and run the same way round, so one path fills them as one wood - see
-ScatteredShapes. Five trees to a 4900-unit strip stand taller, their crowns in the same wood and
-their trunks in the theme's bark, hazed with the layer. Ten short hedges to a 5800-unit strip lie
-just under the crest, each 160 to 240 units long - pieces of one size rather than a run that spans
-the horizon - in the theme's leaves shaded toward hillBottom, both hazed at the layer's distance.
-Each keeps a strip of its own, so no two of the layer's parts come round together.
+**Its crest carries hedges and trees.** Sixteen trees stand along a 5200-unit strip, each a trunk in
+the theme's bark under one to three crowns of the layer's foliage; the crowns of a tree overlap and
+run the same way round, so one path fills them as one - see ScatteredShapes. Five more trees to a
+4900-unit strip stand taller, the same bark and crowns. Fourteen short hedges to a 5800-unit strip
+lie on the slope below the crest, each 42 to 78 units long, each wearing the same hedge colour the
+meadow's do, hazed at this layer's distance - the air alone parts a piece from the band, which is
+why a far hedge is a veiled thing and never a dark band laid on it. A piece lies level, or at a
+slight tilt of its own, so it does not follow the crest's line: its height below the crest changes
+from piece to piece and along each one.
+
+**The layer's foliage is mixed in clear air and then hazed.** The crowns take the theme's
+treeLeavesBase shaded 0.3 of the way to hillBottom, the hedges the theme's hedge colour, already
+stood against the clear hill - see ChaseScene drawHillside - and the air at 0.06 is applied to both
+afterwards, as to the ridge itself. Nothing here is mixed toward the ridge's colour: that would fade
+it into the land it stands on. That length is the meadow's 140 to 260 units brought to this layer's
+distance: it stands at 0.06 where the meadow stands at 0.2, so a thing of the same real length shows
+at three tenths of it, and the hedges are the same size in the world on both layers. Each keeps a
+strip of its own, so no two of the layer's parts come round together.
 
 ## ChaseScene drawHillside
 
@@ -1642,10 +1668,17 @@ own place along it. A stand lower down the slope stands nearer and draws larger.
 **The hedges run along the slope below the trees**, two runs to the same strip, each 600 to 1300
 units long, and stand lower on the slope than the trees and are drawn before them, so a crown or a
 trunk hides a run where the two meet. A run comes apart in stretches of 140 to 260 units, with a gap
-of 70 to 150 units between them where a gate or a break in the hedge would be. Each stretch follows
-the ground it stands on and keeps 12 units clear of the trail. Its colour is the trees' crown mixed
-0.55 of the way to hillBottom, so it stands dark against the meadow along its whole length. Its
-humps rise and fall by about half its 16 to 24 units, with a taller clump now and then, and a
+of 70 to 150 units between them where a gate or a break in the hedge would be. A run is its own line
+down the slope, not the hill's contour: it is laid from its start height with a slow sway and a tilt
+of its own, and pushed down only where the crest falls into it, keeping 6 units below the crest and
+12 above the trail.
+
+**A hedge's colour is settled in clear air, once for the theme.** It starts from the trees' crown
+mixed 0.55 of the way to hillBottom, and is turned away from the clear hill - darker where the land
+is light, lighter only where a dark hedge could not clear the floor - until it stands
+k_hedgeContrast, 1.45, against that clear ground. The layer's air is then applied to it as to
+everything else at that distance, so the haze, not the hedge, decides what the distance makes of it.
+Its humps rise and fall by about half its 16 to 24 units, with a taller clump now and then, and a
 stretch closes on a rounded shoulder at each end, so no cut edge shows and the length reads as a
 hedge rather than a band.
 
