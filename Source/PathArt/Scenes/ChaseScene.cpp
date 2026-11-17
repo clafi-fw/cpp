@@ -3885,8 +3885,8 @@ namespace ClaFi::PathArt
             }
         }
 
-        // Sitting by the path; taking fright, it hops twice back into the grass - from the far
-        // verge away, smaller each time, from the near one toward the viewer, larger.
+        // The far one sits on the trail, takes fright and hops twice onto the far verge, smaller
+        // each time; the near one sits at the near verge and hops toward the viewer, larger.
         void drawFrog(const SceneFrame& onVerge, const SceneTheme& theme,
             const float sinceHareClose, const Verge verge)
         {
@@ -3898,9 +3898,9 @@ namespace ClaFi::PathArt
             };
             using Spots = std::array<Spot, 3>;
             constexpr Spots k_farSpots{
-                Spot{ { 0.0f, 0.0f }, 1.0f },
-                Spot{ { 14.0f, -7.0f }, 0.78f },
-                Spot{ { 24.0f, -13.0f }, 0.6f }
+                Spot{ { 0.0f, 13.0f }, 1.0f },
+                Spot{ { 14.0f, 6.0f }, 0.78f },
+                Spot{ { 24.0f, 0.0f }, 0.6f }
             };
             constexpr Spots k_nearSpots{
                 Spot{ { 0.0f, 0.0f }, 1.0f },

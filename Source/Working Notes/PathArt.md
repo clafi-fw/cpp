@@ -1884,9 +1884,12 @@ frame either way.
 
 The near row stands 38 units below the ground line, on the grass at the trail's near edge, at 1.15
 times the far row's size. It is drawn after the wolf, the daze stars and the dust, before the front
-grass. Its frog hops toward the viewer, growing, where the far one hops away. The place along the
-trail is a double, cyclesPassed times the cycle's travel plus the cycle's own, which holds at
-100,000 cycles.
+grass. Its frog hops toward the viewer, growing, where the far one sits on the trail and hops onto
+the far verge, smaller each time. The far frog first stood on the verge and hopped on up the
+meadow. Oj: "The other side frog hops into the middle of the air. Put him initially close (onto the
+trail), so he ends on the side." It now starts a little past the trail's middle, so the same two
+hops end on the verge. The place along the trail is a double, cyclesPassed times the cycle's travel
+plus the cycle's own, which holds at 100,000 cycles.
 
 Then (Oj) "wolf passing and hare passing animations should have their own trigger moments". The
 wolf's first coming close is a second trigger, found in the same pass back over time with wolfXAt,
