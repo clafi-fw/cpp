@@ -94,10 +94,10 @@ namespace ClaFi::PathArt::Themes
                     .toothEdge = 0xFFC9B9BD
                 },
                 .ourHare = {
-                    .light = 0xFFC185A7,
-                    .fur = 0xFFB27898,
-                    .shade = 0xFFA06888,
-                    .belly = 0xE6ECD3E0,
+                    .light = 0xFFC48D61,
+                    .fur = 0xFFB48055,
+                    .shade = 0xFFA36F47,
+                    .belly = 0xE6E2D3B8,
                     .tail = 0xFFFEFCFF,
                     .earInside = 0xFFF3A1AB,
                     .nose = 0xFFD97385,

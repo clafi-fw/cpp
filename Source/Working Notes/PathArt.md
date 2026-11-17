@@ -3696,6 +3696,16 @@ Shown: the front at 0.1 with the other three kept, 0.7 of the weather, or all fo
 density over the whole count; Oj (18:42) "B". The layers hold 0.4, 0.27, 0.19 and 0.14, each near
 0.194 in share times size squared, 1.4 times as dense as the layers stood before.
 
+Then (Oj, 19:37) "On Lunar Eclipse, Twilight, Magic Forest make the hare more brown": the three
+themes whose hare ran pink. Each takes the daylight family's brown, at the lightness its own
+background asks for. Lunar Eclipse takes Midnight's honey brown, light C48D61, fur B48055, shade
+A36F47, belly E6E2D3B8; Twilight a fawn a step lighter for its lighter land, E3B78E, CFA175, B98A5D,
+belly E6F7E8D4; Magic Forest a light fawn for its sunlit green, E6C49B, D2AD7D, BC9663, belly
+E6F8E9D2. Her ear inside, nose, tail, whiskers, mouth and teeth keep their colours, and the other
+couple's grey hare stays grey. On the frames drawn at 1600 by 900 her light stands 0.30, 0.32 and
+0.26 off the meadow behind her, where it stood 0.31, 0.38 and 0.38; her shade nearest the trail is
+0.158, 0.063 and 0.074 against it, as Clear Day's 0.088 is.
+
 ## MillScene
 
 **Land and water redrawn** (Oj, 2026-11-14: "The Mill scene now is the most boring and cheap"). An
