@@ -255,7 +255,7 @@ has by day.
   urchin.
 - Magic Forest: plum wood and amethyst, with pink, lilac and fairy green.
 - Midnight Fantasy: moonlit blue-grey and indigo, with pale lilac, mint and pale gold.
-- Steampunk Adventure: aged oak, iron and leather, with brass, copper and verdigris.
+- Steampunk Adventure: limewash and aged oak, with brick, brass and verdigris.
 
 ## ThemeBlend
 

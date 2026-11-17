@@ -14,7 +14,7 @@ ClaFi stands for Clarity First, and clarity is the first priority of every rule 
 ## 1. Where the Words Go
 
 - **A comment** stands beside the declaration or the line it is about. Section 3 says when one is written at all.
-- **A footnote** holds what does not fit on a declaration's one line: what a thing is and does, and the rules a caller keeps. There is one note per subsystem, `Source/.seedocs/footnotes/<Stem>.md`, and SeeDocs reads it into the generated reference.
+- **A footnote** holds what does not fit on a declaration's optional single comment line: what a thing is and does, and the rules a caller keeps. There is one note per subsystem, `Source/.seedocs/footnotes/<Stem>.md`, and SeeDocs reads it into the generated reference.
 - **A working note** holds the authors' side under the same stem in `Source/Working Notes/`: why it is so, how it is done inside, what happened. No tool reads it.
 - **A manual** is a self-contained HTML page in `docs/`, one per subsystem, with a lower-case file name and no suffix (`dom.html`, `events.html`, `textengine.html`), listed in `index.html`. Footnotes and working notes are raw material for manuals, not manuals.
 - **Site and guide copy** is what a visitor reads before using the framework or an application. Section 6 covers it.
@@ -48,7 +48,8 @@ These rules hold for every kind of text in section 1.
 ## 3. Comments in Code
 
 - **No comment by default.** A comment earns its line only by carrying what the code cannot say for itself - an invariant, a trap, a constraint imposed from outside, a rejected alternative, a reason. Strike the comment and read what is left. If the code is as clear and nothing true became unrecoverable, leave it struck. A clearer name or a named local retires a comment for good, and a comment that only says what a name means marks a name to fix - see A Name Says What It Holds in cpp-code-style.
-    - The public surface is the exception: a control, its properties and events, and the enums they take each carry one comment line. SeeDocs reads it as the declaration's hint.
+    - This holds for the public surface too: a control, property, event, or enum carries **zero comments by default**, and **at most one line** only when the declaration name itself cannot convey what it does. SeeDocs reads that optional line as the declaration's hint.
+ SeeDocs reads it as the declaration's hint.
 - **For the reader of the code.** A comment serves whoever reads the code later. Nothing that only makes sense in the history of a prompt or a session, such as `// Added`, `// new member` or `// <--- changed`.
 - **Comment the invariant, not the habit.** When a comment justifies why something is safe, state the property that makes it safe and what would break it. A justification that is merely true today misleads the next reader.
 - **One line, one place.** A class, struct, enum, member, property or event carries one comment line at most. Two lines is a violation wherever they sit, and so is a comment both above a declaration and on it.
@@ -64,11 +65,10 @@ These rules hold for every kind of text in section 1.
   // What a drag that starts on an item does. See Selection-Model
   export enum class DragMode
   {
-      EasySelect,   // an item is one more place to start a selection rectangle from
-      EasyDrag      // an item is the selection's handle, and the drag carries what is selected
+      EasySelect,
+      EasyDrag
   };
 
-  // Whether the view holds a selection on top of the current item.
   DECLARE_PROPERTY(SelectionMode, selectionMode, SelectionMode::None)
   ```
 

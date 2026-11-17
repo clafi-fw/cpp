@@ -90,7 +90,7 @@ Converting a tab-indented file is safe only after confirming no tab appears outs
   import ClaFi.Core.Graphics;
   import ClaFi.Core.System.Utils;
 
-  import ClaFi.StdLib; // Houses re-exported standard library
+  import ClaFi.StdLib;
   ```
 
 - **[MUST] Import What You Use:** A module implementation unit does not inherit the non-exported imports of its interface partitions. Where a name is used, import the module that declares it, rather than relying on it arriving transitively.
@@ -230,7 +230,7 @@ Converting a tab-indented file is safe only after confirming no tab appears outs
     - BAD: `k_lineProbe = L"0"; // what a row's line is measured on`
     - GOOD: `k_lineHeightSample = L"0";`
     - The test: cover the comment and the surrounding code, and read the name. If a reader cannot say what it holds, rename it. A comment that says what a name means is the sign.
-    - A comment on a well-named declaration carries only what no name can: when it is set, an invariant, a reason.
+    - A comment on a well-named declaration, if needed at all, carries only what no name can: when it is set, an invariant, a reason.
 
 - **[MUST] Paint, Draw and the Pixel Verbs:** Each word names one level of putting things on screen.
     - **paint** is a step of the paint pass - what a form or a control does for its own part of the frame: `paintSurface`, `paintFrame`, `paintChildren`, `paintOwnText`, a slider's `paintThumb`, a form's `paintWindow`.

@@ -11,9 +11,9 @@ skill (`.agents/skills/comments-and-docs/SKILL.md`) governs every comment, footn
 and manual. Read it alongside the first, and before writing any documentation.
 
 The declaration routine is how a control, its properties and its events are declared so that a
-line scanner can harvest them. A comment on a harvested
-declaration is one line, and the words that do not fit go into the subsystem's footnote under
-`Source/.seedocs/footnotes`, referenced from the line; what only an author of the framework needs
+line scanner can harvest them. A comment on a harvested declaration may take up to one line,
+and the words that do not fit go into the subsystem's footnote under `Source/.seedocs/footnotes`,
+referenced from the line; what only an author of the framework needs
 - why, how inside, what happened - goes into the working note of the same name under
 `Source/Working Notes`. `SeeDocsCli check Source/.seedocs`, built from `Tools/SeeDocs`, reports
 every departure.
