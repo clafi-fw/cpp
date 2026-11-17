@@ -49,8 +49,10 @@ namespace ClaFi::PathArt
             return center + FloatPoint{ std::cos(angle), std::sin(angle) } * distance;
         };
 
-        // The teeth outline with the rim's hole cut out of it: the fill is even-odd.
+        // The teeth outline with the rim's hole cut out of it: the rim runs the same way round,
+        // so the fill rule that cuts it is even-odd.
         PixelPath body;
+        body.setFillRule(FillRule::EvenOdd);
         for (int i = 0; i != gear.teeth; ++i)
         {
             const float toothAngle = gear.phase + static_cast<float>(i) * pitch;

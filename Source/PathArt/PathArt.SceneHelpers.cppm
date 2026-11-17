@@ -50,7 +50,7 @@ namespace ClaFi::PathArt
         FloatPoint end;
     };
 
-    // Shapes that stand apart in one brush, drawn as the backend draws them fastest. See PathArt
+    // Shapes laid in one brush, drawn as the backend draws them fastest. See PathArt
     export class ScatteredShapes
     {
     public:

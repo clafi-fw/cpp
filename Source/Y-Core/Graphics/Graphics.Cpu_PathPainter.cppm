@@ -418,7 +418,7 @@ namespace ClaFi::Graphics::Cpu
                 m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
                 prepareEdges(m_rasterBuffers.m_worldPoints, true);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
-                m_rasterBuffers.rasterizeFill(bounds, 0.0f);
+                m_rasterBuffers.rasterizeFill(bounds, 0.0f, path.fillRule());
             }
             else if (layer.geometry.mode == PathRenderMode::Stroke)
             {
@@ -447,7 +447,7 @@ namespace ClaFi::Graphics::Cpu
                 m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
                 prepareEdges(m_rasterBuffers.m_worldPoints, true);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
-                m_rasterBuffers.rasterizeFill(bounds, 0.0f);
+                m_rasterBuffers.rasterizeFill(bounds, 0.0f, path.fillRule());
                 float radius = layer.geometry.strokeWidth * scaleFactor;
                 m_rasterBuffers.rasterizeGlowOver(bounds, radius, StrokeCap::Round,
                     layer.geometry.falloff);
@@ -483,7 +483,7 @@ namespace ClaFi::Graphics::Cpu
         m_rasterBuffers.clipMask.resize(m_rasterBuffers.mask.size()); // Resize with no-init
         std::swap(m_rasterBuffers.mask, m_rasterBuffers.clipMask);
         m_rasterBuffers.prepareEdgeBuckets(bounds);
-        m_rasterBuffers.rasterizeFill(bounds, 0.0f);
+        m_rasterBuffers.rasterizeFill(bounds, 0.0f, path.fillRule());
         std::swap(m_rasterBuffers.mask, m_rasterBuffers.clipMask);
 
         m_rasterBuffers.hasActiveClip = true;

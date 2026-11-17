@@ -41,6 +41,9 @@ namespace ClaFi::PathArt
                 return center + FloatPoint{ std::cos(angle), std::sin(angle) } * distance;
             };
             PixelPath wheel;
+            // The rim is a hole in the wheel, and runs the same way round as the teeth: the fill
+            // rule that cuts it is even-odd.
+            wheel.setFillRule(FillRule::EvenOdd);
             for (int i = 0; i != k_escapeWheelTeeth; ++i)
             {
                 const float toothAngle = phase + static_cast<float>(i) * pitch;

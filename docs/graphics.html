@@ -600,8 +600,10 @@ one covers an earlier one.</p>
 
 <table>
 <tr><th>Mode</th><th>Draws</th></tr>
-<tr><td><code>PathRenderMode::Fill</code></td><td>The area the figures enclose, even-odd: a figure inside
-    another is a hole.</td></tr>
+<tr><td><code>PathRenderMode::Fill</code></td><td>The area the figures enclose, by the path's
+    <code>FillRule</code>. <code>Nonzero</code>, SVG's initial fill-rule, fills a figure inside
+    another while it runs the same way round; one run the other way cuts a hole.
+    <code>EvenOdd</code> cuts the hole whichever way either runs.</td></tr>
 <tr><td><code>PathRenderMode::Stroke</code></td><td>A line of <code>strokeWidth</code> along every figure,
     straddling it, its open ends finished by <code>strokeCap</code>.</td></tr>
 <tr><td><code>PathRenderMode::OuterGlow</code></td><td>A ramp out from the outline to
@@ -612,19 +614,19 @@ one covers an earlier one.</p>
 </table>
 
 <svg class="grid-fig" viewBox="0 0 700 196" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="Fill is even-odd, so a figure inside another is a hole; a stroke's open ends finish Round, Butt or Square, Round and Square reaching half a stroke past the end point.">
+     aria-label="Fill is nonzero, so a figure inside another is a hole only when it runs the other way round; a stroke's open ends finish Round, Butt or Square, Round and Square reaching half a stroke past the end point.">
   <style>
     .fc-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .fc-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
     .fc-m  { font-family:"Fira Code",Consolas,monospace; font-size:10.5px; fill:#5a6b7d; }
     .fc-l  { stroke:#5a6b7d; stroke-width:0.9; fill:none; }
-    .fc-fill { fill:#0066cc; fill-opacity:0.85; fill-rule:evenodd; stroke:#003d7a; stroke-width:1.2; }
+    .fc-fill { fill:#0066cc; fill-opacity:0.85; fill-rule:nonzero; stroke:#003d7a; stroke-width:1.2; }
     .fc-s { fill:none; stroke:#0066cc; stroke-width:18; stroke-opacity:0.85; }
     .fc-g { stroke:#333; stroke-width:1; stroke-dasharray:3 3; }
   </style>
-  <text class="fc-th" x="20" y="22">PathRenderMode::Fill - even-odd</text>
+  <text class="fc-th" x="20" y="22">PathRenderMode::Fill - nonzero</text>
   <path class="fc-fill" d="M62,36 L228,36 A22,22 0 0 1 250,58 L250,138 A22,22 0 0 1 228,160 L62,160 A22,22 0 0 1 40,138 L40,58 A22,22 0 0 1 62,36 Z M145,63 A35,35 0 1 0 145.01,63 Z"/>
-  <text class="fc-t" x="20" y="186">a figure inside another is a hole</text>
+  <text class="fc-t" x="20" y="186">a figure run the other way is a hole</text>
   <text class="fc-th" x="330" y="22">strokeCap - how an open end finishes</text>
   <path class="fc-s" stroke-linecap="round" d="M400,58 L600,58"/>
   <circle cx="400" cy="58" r="3" fill="#fff" stroke="#111"/><circle cx="600" cy="58" r="3" fill="#fff" stroke="#111"/>
@@ -1451,7 +1453,8 @@ piece halved thirteen times is taken as its chord, flat or not. The tolerance is
 <code>VeryHigh</code> - two pixels, a tenth and a hundredth - are for code that bakes a
 <code>BakedPixelPath</code> of its own, which nothing in the framework does. Each pixel's coverage
 comes from its distance to the nearest segment, and inside or outside from the segments its row
-crosses, which is the even-odd rule. A stroke is the band within half its width of a segment, so its
+crosses, counted by the path's fill rule: their parity for <code>EvenOdd</code>, their net direction
+for <code>Nonzero</code>. A stroke is the band within half its width of a segment, so its
 corners come out round; a glow is the same distance taken as a ramp. The coverage is held as a mask,
 and the brush is composited through it.</p>
 

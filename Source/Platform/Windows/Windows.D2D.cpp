@@ -1510,6 +1510,13 @@ namespace ClaFi::PlatformImplementation::Windows
         ComPtr<ID2D1GeometrySink> sink;
         checkHr(d2dPath->Open(sink.GetAddressOf()));
 
+        // **SVG's fill rule, not Direct2D's default.** A geometry sink starts at alternate, which
+        // is even-odd; SVGs initial fill-rule is nonzero, and only a path that asks for even-odd
+        // takes it. The mode is stated before any figure is begun, as the sink requires.
+        sink->SetFillMode(path.fillRule() == FillRule::EvenOdd
+            ? D2D1_FILL_MODE_ALTERNATE
+            : D2D1_FILL_MODE_WINDING);
+
         bool figureOpen = false;
         bool afterClose = false;
         FloatPoint currentPoint = { 0.0f, 0.0f };

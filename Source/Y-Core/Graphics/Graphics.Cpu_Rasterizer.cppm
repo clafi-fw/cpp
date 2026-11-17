@@ -27,7 +27,7 @@ namespace ClaFi::Graphics::Cpu
     public:
         void prepareForEffect(int width, int height, bool clearMask = true);
         void prepareEdgeBuckets(const FloatRect& bounds, float padding = 1.0f);
-        void rasterizeFill(const FloatRect& bounds, float outset);
+        void rasterizeFill(const FloatRect& bounds, float outset, FillRule rule);
         void rasterizeStrokeSegment(const FloatRect& totalBox, const RenderEdge& edge, float radius, StrokeCap cap);
         // Clears and writes each row of the mask only over the columns the stroke reaches.
         void rasterizeStrokeMask(const FloatRect& bounds, float radius, StrokeCap cap);

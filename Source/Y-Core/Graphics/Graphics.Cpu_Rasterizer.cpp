@@ -297,7 +297,7 @@ namespace ClaFi::Graphics::Cpu
         --nearEdges[static_cast<std::size_t>(std::min(last, lastGroup) + 1)];
     }
 
-    void RasterBuffers::rasterizeFill(const FloatRect& bounds, float outset)
+    void RasterBuffers::rasterizeFill(const FloatRect& bounds, float outset, const FillRule rule)
     {
         SimdEnv env;
         int stride = m_maskStride;
@@ -310,6 +310,7 @@ namespace ClaFi::Graphics::Cpu
 
         // Stack-allocated row invariants, aligned to the AVX 32-byte boundary.
         alignas(32) __m256 crossingXInts[k_maxRowEdges];
+        alignas(32) __m256i crossingDirs[k_maxRowEdges];
         alignas(32) RowSdfEdge preppedEdges[k_maxRowEdges];
 
         // **Only the pixels near an edge need the distance field.** Further than half a pixel
@@ -341,7 +342,9 @@ namespace ClaFi::Graphics::Cpu
                     if (numCrossing < k_maxRowEdges)
                     {
                         float xInt = e.p1.x + (py - e.p1.y) * e.dx * e.invDy;
-                        crossingXInts[numCrossing++] = _mm256_set1_ps(xInt);
+                        crossingXInts[numCrossing] = _mm256_set1_ps(xInt);
+                        crossingDirs[numCrossing] = _mm256_set1_epi32(e.dy > 0.0f ? 1 : -1);
+                        ++numCrossing;
                     }
                 }
 
@@ -365,16 +368,35 @@ namespace ClaFi::Graphics::Cpu
             for (int xOffset = 0; xOffset < width; xOffset += 8)
             {
                 __m256 vPx = _mm256_add_ps(_mm256_set1_ps(static_cast<float>(startX + xOffset)), env.vSteps);
-                __m256i vInsideMask = env.vZeroi;
                 __m256 minEdgeDistSq = _mm256_set1_ps(1e10f);
 
-                // Inside/outside winding rule, using the pre-broadcast xInt values.
-                for (int i = 0; i < numCrossing; ++i)
+                // Inside the path by the rule the fill carries: parity of the crossings either
+                // side of the pixel, or their net direction. SVG's initial rule is the net one.
+                __m256i vInsideMask = env.vZeroi;
+                if (rule == FillRule::EvenOdd)
                 {
+                    for (int i = 0; i < numCrossing; ++i)
+                    {
+                        vInsideMask = _mm256_xor_si256(
+                            vInsideMask,
+                            _mm256_castps_si256(_mm256_cmp_ps(vPx, crossingXInts[i], 30))
+                        );
+                    }
+                }
+                else
+                {
+                    __m256i vWinding = env.vZeroi;
+                    for (int i = 0; i < numCrossing; ++i)
+                    {
+                        const __m256i crossed = _mm256_castps_si256(
+                            _mm256_cmp_ps(vPx, crossingXInts[i], 30));
+                        vWinding = _mm256_add_epi32(vWinding,
+                            _mm256_and_si256(crossed, crossingDirs[i]));
+                    }
+                    // The winding is anything but zero, which is every lane the equality misses.
                     vInsideMask = _mm256_xor_si256(
-                        vInsideMask,
-                        _mm256_castps_si256(_mm256_cmp_ps(vPx, crossingXInts[i], 30))
-                    );
+                        _mm256_cmpeq_epi32(vWinding, env.vZeroi),
+                        _mm256_set1_epi32(-1));
                 }
 
                 nearCount += nearEdges[static_cast<std::size_t>(xOffset / 8)];

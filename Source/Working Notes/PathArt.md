@@ -349,13 +349,17 @@ Every scene was first built as an animated HTML page on a 2D canvas, reviewed, a
 The C++ follows the mockups shape for shape, and the CPU backend's frames were compared against
 them by eye.
 
-**The fill rule is even-odd**, on the CPU rasterizer and in Direct2D's default alike, so shapes
-that overlap inside one path cut holes in each other. Shapes that can overlap are filled one by
-one - the cloud puffs over the Earth, the pines on the lake shore, a gear's spokes. Shapes that
-stand apart go through ScatteredShapes: the stars and the city lights, binned into six opacities,
-the asteroids, the tufts, pebbles and flowers, the blades of grass, the rivets, the fence, the
-floor's planks and seams, the ripples. The rule is also used on purpose, for the hole in a gear's
-rim and in the escape wheel.
+**The fill rule is the path's own, and SVG's is the default** (2026-11-17). A path starts at
+FillRule::Nonzero, SVG's initial fill-rule: figures that run the same way round join where they
+overlap, and a figure run the other way cuts a hole. Where a hole is meant and the inner figure runs
+the same way, the path asks for FillRule::EvenOdd - the gear's rim and the escape wheel are the two
+that do. The rule was even-odd in both backends before this, and the older code kept shapes that
+could overlap in separate fills: the cloud puffs over the Earth, the pines on the lake shore, a
+gear's spokes. Those may share a path now, and a ScatteredShapes batch may hold shapes that lie over
+one another: the stars and the city lights, the asteroids, the tufts, pebbles and flowers, the
+blades of grass, the rivets, the fence, the floor's planks and seams, the ripples. The change
+follows SVG, whose fill-rule is nonzero unless the path states otherwise; Direct2D's sink had to be
+told, its own default being alternate.
 
 **What a fill costs differs between the backends.** The CPU rasterizer builds a coverage mask
 over the path's bounding box, so its cost follows the area the path spans, whatever the shapes in
@@ -377,9 +381,10 @@ times of the cycle (milliseconds, before and after):
 - At 1920 x 1080: Bot Talent 14.6 and 9.3, Ghost 21.4 and 8.3, Clockwork 24.5 and 14.4, Orrery 27.1
   and 6.6, Comet 23.2 and 12.1, Satellite 23.1 and 12.6, Chase 20.9 and 7.0.
 
-Filled one by one, two flowers in every Chase tile and a few asteroids overlap, and the CPU
-backend now draws them whole where the shared path cut holes. Direct2D still shares the path and
-still shows those holes.
+A shared path no longer cuts a hole where two of its shapes overlap, on either backend: the fill is
+nonzero, so shapes wound the same way join. The CPU backend still draws a ScatteredShapes batch one
+shape at a time, for the cost stated below; Direct2D still gathers it into one path, which is now
+safe whatever the shapes do.
 
 **What is left is mostly what does not move.** At 3840 x 2160 the parts of a frame that are the
 same at every time of the cycle - walls, skies, plates, ridges - take about two thirds of the
@@ -785,8 +790,8 @@ outline each, streaks with smaller lumps, a lump with a brighter core; then each
 have to be blurred", the softest of the blurs "the most natural", and "let them be lumpy and some
 randomly overlapping". The edge is four waves of 2, 3, 5 and 9 round an ellipse, their starts drawn
 for each lump; the soft edge is the Shadow layer, the outline 0.8 of the size so the fade keeps the
-cloud about as large. Lumps are filled one by one, so an overlap shows brighter rather than cutting
-a hole under the even-odd fill. 45 percent of the clusters carry a companion, 15 percent two. Each
+cloud about as large. Lumps are filled one by one, so an overlap shows brighter rather than one
+fill covering them all. 45 percent of the clusters carry a companion, 15 percent two. Each
 lump takes 0.35 to 1.45 of the cloud colour's opacity, on Oj's "randomize their opacity too": some
 read as wisps, some as dense. At 3436 x 2051 on the CPU backend the clouds cost about 4 ms a frame
 more than the three ellipses did, after rasterizeGlowMask's rows were narrowed - see Graphics-Types.
@@ -1054,8 +1059,8 @@ warp and grain.
   an edge crosses one up to 120 points on, and found none at this strength; the code does not cut
   them. A stronger grain would need it.
 - The Caspian is cut out wherever the land is: the coverage sums its opposite winding to 0, the flat
-  fallback puts all the land's outlines in one even-odd path, and the towns' grid counts crossings
-  even-odd across all outlines.
+  fallback puts all the land's outlines in one path, whose nonzero rule the opposite-wound Caspian
+  cuts, and the towns' grid counts crossings even-odd across all outlines.
 - Building the coasts takes about 98 million instructions, 12 ms on one core: 84 million in
   landOutlines, most of them in the noise, and the rest in the first towns. In the constructor that
   held the app's start, as MillScene makes every scene at once, so the constructor starts it off the
@@ -4872,8 +4877,8 @@ positions from the same random numbers, a size that follows the twinkle, nothing
 it.
 
 **Sparkles are filled one by one**, where dots are binned by opacity: they all share one opacity,
-so binning would put every star in one path, and two that overlap would cut holes in each other
-under the even-odd rule.
+so binning would put every star in one path. Whether they may share one no longer turns on the hole
+rule - a path fills nonzero now - so the two are kept apart for their colour alone.
 
 ## ChaseTheme
 
@@ -4928,13 +4933,40 @@ and a low cloud 35 to 65.
 strip at 0.08 of the camera's speed, each three to five birds, each a pair of short strokes a
 shallow V apart.
 
-**The pale ridge behind the meadow** (drawFoothills) is the second hill band, at 0.11. Three
+**The pale ridge behind the meadow** (drawFoothills) is the second hill band, at 0.06. Three
 attempts went before it: at 0.645 its crest stood above the meadow's across the whole frame and
 read as a flat pale field; with 5200-unit waves it had no shape to read at all; the shape that
 stands sits at 0.665 over a 1400-unit period, so it shows through the meadow's dips and hides
-behind its crests. Its colour is hillTop hazed and taken 0.3 of the way to skyBottom, which parts
-it from both the mountains and the meadow. Its woods stand on a strip of their own, 5200 units, so
-a crest's shape and the wood on it never come round together.
+behind its crests.
+
+**Its colour is the theme's haze alone** (Oj, 2026-11-17). It stood at 0.11 with hillTop hazed and
+then taken 0.3 of the way to skyBottom by hand, to part it from the meadow's hills; Oj: "That's
+wrong move. Hazing is the haze's job, and if it seems small - move layers or adjust the air
+thickness". The hand blend is gone; the ridge stands at 0.06 instead, far enough back that
+hazed(hillTop) at its own distance parts it from the meadow's hills at 0.2 and from the near
+mountain range at 0.05. Its woods stand on a strip of their own, 5200 units, so a crest's shape
+and the wood on it never come round together.
+
+**The far layer took some of the near one's cover** (Oj, 2026-11-17: "Make hedges scarcer. Instead
+put some onto the second backdrop, along with some trees"). The meadow's hills keep two hedge runs
+to their 6400-unit strip where they had five, and the pale ridge gained hedges and trees of its own,
+each on a strip: ten hedges to a 5800-unit strip and five trees to a 4900-unit strip.
+
+**The first far hedges were three long runs**, and Oj: "Segments length should be similar - on the
+second backdrop there are hedges from horizon to horizon now and that's wrong, because they are the
+same bushes". They are ten pieces of 160 to 240 units now, all of a size, and the meadow's own
+stretches narrowed to 140 to 260 to match. Their colour is the theme's leaves shaded toward
+hillBottom, both hazed at the layer's distance: foliage is not land, so it does not wear the band's
+colour. The far trees' trunks were in the wood too, and Oj: "Tree trunks should be tree trunks color
+and not green"; they take the theme's bark, hazed with the layer.
+
+**The crowns of one clump first shared a ScatteredShapes path**, and since the fill was even-odd,
+Direct2D cut a hole where two crowns overlapped - the CPU backend fills them apart and showed none
+(Oj, 2026-11-17: "This one is rather a path painter gap than your fault. But this 'feature' may be
+actually used in some icon to draw a hole"). The painter's rule is the path's and SVG's nonzero now
+(see Scene draw above), so the crowns are back in one batch and the overlap joins. The even-odd
+rule is still what a hole asks for where the inner figure runs the same way - the gear's rim and
+the escape wheel.
 
 **The meadow's hills carry several kinds of tree** (drawHillside): a round tree, a broadleaf, a
 poplar, a fir, a coppice of three trees and a bush, 44 stands along a 6400-unit strip. A stand
@@ -4949,13 +4981,15 @@ stand a little further apart, so no trunk stands in front of another tree's leav
 **The hedges took the longest.** A band path along the slope read as an embankment; separate
 ellipses read as a line of dots; larger ellipses that overlapped still read as beads. What stands is
 one path per stretch, whose top is grown in humps and whose base follows the ground it stands on, 12
-units clear of the trail: five runs to the strip, 600 to 1300 units long, and a run comes apart in
-stretches of 120 to 360 units with a gap of 70 to 150 units between them (Oj, 2026-11-17: "hedges
-wanted, make more gaps"). The humps take their own widths and heights, and one in eight is a taller
-clump, so the line does not read as a cord. Each end of a stretch is capped with a half-oval over
-the flat cut, so the stretch closes on a rounded shoulder instead of a dropped vertical wall. A
-first pass mixed the hedge only 0.25 of the way from the crown to hillBottom, which left it all but
-the same value as the meadow: the rounded ends read and the length vanished. It is mixed 0.55 of the
+units clear of the trail: two runs to the strip, 600 to 1300 units long, and a run comes apart in
+stretches of 140 to 260 units with a gap of 70 to 150 units between them (Oj, 2026-11-17: "hedges
+wanted, make more gaps", and later "Make hedges scarcer", and "Segments length should be similar").
+The humps take their own widths and heights, and one in eight is a taller clump, so the line does
+not read as a cord. Each end of a
+stretch is capped with a half-oval over the flat cut, so the stretch closes on a rounded shoulder
+instead of a dropped vertical wall. A first pass mixed the hedge only 0.25 of the way from the crown
+to hillBottom, which left it all but the same value as the meadow: the rounded ends read and the
+length vanished. It is mixed 0.55 of the
 way now, and its humps stand 16 to 24 units up, so the whole stretch reads. They stand lower on the
 slope than the trees and are drawn before them, so a crown hides a run where the two meet. A first
 version drew them after the trees and higher up, and a run that climbed a crest then crossed two

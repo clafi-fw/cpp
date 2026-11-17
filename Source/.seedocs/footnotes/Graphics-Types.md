@@ -175,6 +175,19 @@ edge then stands a little under full strength, and the ramp fades out a little p
 **A path holds the endpoint form alone.** arcEllipse works this centre form out each time the arc
 is drawn, by the conversion in SVG's implementation notes.
 
+## FillRule
+
+**What a fill counts to decide a pixel is inside.** SVG's names, and SVG's initial value.
+
+- Nonzero sums the crossings' directions either side of the pixel: a figure inside another fills
+  unless it runs the other way round, and one that does cuts a hole. Every path starts here, as
+  SVG's initial fill-rule does.
+- EvenOdd counts the crossings alone: a figure inside another is a hole whichever way either runs.
+
+**The rule is the path's**, as SVG's fill-rule is a property of the path element: a fill and a clip
+take it, and a stroke and a glow ignore it. Direct2D's geometry sink starts at alternate and is told
+the rule; the CPU rasterizer sums each crossing's direction for Nonzero.
+
 ## PixelPath arcTo
 
 **A path keeps the arc as stated** - the endpoint form of SVG's A, which an SVG writer would write
@@ -188,6 +201,16 @@ back.
 **Under a matrix an arc stays an arc.** transform moves its end with the matrix and the ellipse's
 axes with the matrix's linear part. A mirroring matrix reverses the turn. The choice of the larger
 or smaller arc stays as stated.
+
+## PixelPath fillRule
+
+**The path carries the rule every fill of it follows**, Nonzero until set with setFillRule. clear()
+returns it to Nonzero, a cleared path being a new path.
+
+- A hole made by a figure that runs the same way round as the shape it cuts asks for EvenOdd - the
+  gear's rim and the escape wheel are the framework's two.
+- Figures that only join are left at Nonzero: overlapping shapes in one ScatteredShapes batch, the
+  crowns of a wood.
 
 ## RadialGradient
 

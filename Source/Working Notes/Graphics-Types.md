@@ -190,3 +190,32 @@ goes back through the transform, so it turns, shears and scales with what it fil
 in an implementation unit of this module the way Transfer::Clipboard's is: WIC on Windows,
 through the PNG decoder alone rather than whichever codec claims the bytes, and libpng on
 Linux. A build with no platform has no body and nothing that calls one.
+
+## The fill rule follows SVG
+
+**A fill was even-odd in both backends** (until 2026-11-17): the CPU rasterizer XORed each row's
+crossings, and Direct2D's geometry sink starts at alternate. SVG's initial fill-rule is nonzero, and
+this painter's paths follow SVG's path data throughout, so the two disagreed wherever figures
+overlap. Oj: "Don't you think that rather should be fixed in the path painter? That is not how svg
+draws overlapping figures, and this framework path painter claims to be svg-compliant".
+
+**The rule is the path's**, as SVG's fill-rule is a property of the path element: PixelPath carries
+a FillRule, Nonzero from construction, and clear() returns it to Nonzero, a cleared path being a new
+one. A fill and a clip read it; a stroke and a glow ignore it.
+
+- The CPU rasterizer adds each crossing's direction - +1 one way and -1 the other - and fills
+  wherever the sum is not zero. EvenOdd keeps the XOR route. Both are the same AVX2 row loop: a
+  crossing's direction is broadcast beside its x in the pre-pass.
+- Direct2D's sink is told D2D1_FILL_MODE_WINDING, its own default being alternate.
+- ScatteredShapes needed no change. On Direct2D it gathers its shapes into one path, which now joins
+  them where they overlap instead of cutting holes; the footnote that told callers the shapes must
+  stand apart is rewritten to say they may lie over one another.
+- Two holes are meant and their inner figure runs the same way round as the shape: the gear's rim
+  and the escape wheel. Both set FillRule::EvenOdd on their path. Every other multi-figure fill in
+  the tree either joins - the crowns of a wood, the land outlines with the Caspian wound the other
+  way - or was one figure already.
+
+Rendered with the CPU backend at 1280 x 720: Clockwork's gears and escape wheel keep their rims,
+Earth keeps the Caspian, and the other scenes read as before. The Direct2D route is built and read
+but not seen - no headless Direct2D frame exists here - so its fill mode is a line of code, not a
+rendered check.

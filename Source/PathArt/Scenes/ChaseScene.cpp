@@ -1410,7 +1410,9 @@ namespace ClaFi::PathArt
         constexpr float k_lowCloudStrip{ 3600.0f };
         constexpr int k_lowCloudsPerStrip{ 6 };
         // The pale hills behind the meadow's own, and the cover that stands on the meadow's.
-        constexpr float k_foothillParallax{ 0.11f };
+        // The ridge's distance is what its haze is read from: at 0.06 the theme's air lifts it
+        // clear of the meadow's hills, which stand at 0.2.
+        constexpr float k_foothillParallax{ 0.06f };
         constexpr float k_foothillRidgePeriod{ 1400.0f };
         constexpr float k_foothillClumpStrip{ 5200.0f };
         constexpr float k_foothillBaseShare{ 0.665f };
@@ -1420,9 +1422,14 @@ namespace ClaFi::PathArt
             Wave{ 4.0f, 4.0f, 1.7f }
         };
         constexpr int k_foothillClumps{ 16 };
+        // The far slope's hedges and its standing trees, each on a strip of its own.
+        constexpr float k_foothillHedgeStrip{ 5800.0f };
+        constexpr int k_foothillHedges{ 10 };
+        constexpr float k_foothillTreeStrip{ 4900.0f };
+        constexpr int k_foothillTrees{ 5 };
         constexpr float k_hillsideStrip{ 6400.0f };
         constexpr int k_hillsideStands{ 44 };
-        constexpr int k_hedgeRuns{ 5 };
+        constexpr int k_hedgeRuns{ 2 };
 
         // Where a layer moving at `parallax` stands, `journey` units into the story: its strip's
         // length wrapped to, as forEachTile wraps it.
@@ -1597,8 +1604,9 @@ namespace ClaFi::PathArt
         const float ridgePeriod = k_foothillRidgePeriod;
         const float shift = stripShift(k_foothillParallax, journey, ridgePeriod);
         const float baseY = frame.height * k_foothillBaseShare;
-        const Color band = colorBetween(hazed(theme, theme.hillTop, k_foothillParallax),
-            theme.skyBottom, 0.3f);
+        // The ridge takes the theme's air at its own distance, and nothing else: a second blend
+        // by hand would be a haze the theme does not state. See ChaseScene drawFoothills
+        const Color band = hazed(theme, theme.hillTop, k_foothillParallax);
         const auto ridgeAt = [&](const float x) {
             return baseY - ridgeHeight(ridgePeriod, x / unit + shift, k_foothillWaves) * unit;
         };
@@ -1612,6 +1620,58 @@ namespace ClaFi::PathArt
             { 0.0f, groundY }, band, colorBetween(band, theme.hillBottom, 0.3f)));
         const Color wood = colorBetween(band,
             hazed(theme, theme.treeLeavesBase, k_foothillParallax), 0.45f);
+        const Color farBark = hazed(theme, theme.bark, k_foothillParallax);
+        // **The far slope carries hedges of its own**, short pieces of one size below its crest.
+        // A hedge is foliage, not land: it wears the leaves shaded toward the ground's own dark
+        // colour, both hazed at the layer's distance, as the meadow's hedges do. See drawHillside
+        const Color farHedge = colorBetween(hazed(theme, theme.treeLeavesBase, k_foothillParallax),
+            hazed(theme, theme.hillBottom, k_foothillParallax), 0.55f);
+        const auto drawFarHedge = [&](const float from, const float to, const int seed) {
+            const float drop = (2.0f + 4.0f * pseudoRandom(seed, 246.0f)) * unit;
+            const auto baseAt = [&](const float x) {
+                return ridgeAt(x) + drop;
+            };
+            const float join = 2.5f * unit;
+            const float step = 9.0f * unit;
+            PixelPath hedge;
+            hedge.moveTo(from, baseAt(from));
+            hedge.lineTo(from, baseAt(from) - join);
+            float along = 0.0f;
+            int hump = 0;
+            while (along < to - from)
+            {
+                const float humpWidth = std::min(step * (0.8f + 0.8f
+                    * pseudoRandom(seed * 7 + hump, 247.0f)), to - from - along);
+                const float peak = (5.0f + 3.0f
+                    * pseudoRandom(seed * 11 + hump, 248.0f)) * unit;
+                const float middle = from + along + humpWidth * 0.5f;
+                hedge.quadTo({ middle, baseAt(middle) - peak },
+                    { from + along + humpWidth, baseAt(from + along + humpWidth) - join });
+                along += humpWidth;
+                ++hump;
+            }
+            hedge.lineTo(to, baseAt(to));
+            for (float back = to; back > from; back -= step * 2.0f)
+                hedge.lineTo(back, baseAt(back));
+            hedge.close();
+            fillShape(frame, hedge, SolidColor{ farHedge });
+        };
+        forEachTile(frame, k_foothillParallax, k_foothillHedgeStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int piece = 0; piece != k_foothillHedges; ++piece)
+                {
+                    const float from = tileLeft + tileWidth * ((static_cast<float>(piece)
+                        + 0.15f + 0.7f * pseudoRandom(piece, 249.0f))
+                        / static_cast<float>(k_foothillHedges));
+                    const float length = (160.0f + 80.0f * pseudoRandom(piece, 250.0f))
+                        * unit;
+                    if (from + length < -40.0f * unit || from > frame.width + 40.0f * unit)
+                        continue;
+                    drawFarHedge(from, from + length, piece);
+                }
+            });
+        // **The crowns of a clump gather in one path.** They overlap and run the same way round,
+        // so a nonzero fill unions them. See ScatteredShapes
         ScatteredShapes crowns{ frame, SolidColor{ wood } };
         forEachTile(frame, k_foothillParallax, k_foothillClumpStrip, journey,
             [&](const float tileLeft, const float tileWidth) {
@@ -1639,6 +1699,30 @@ namespace ClaFi::PathArt
                 }
             });
         crowns.draw();
+        // **A few trees stand on the far crest with their trunks showing**, taller than the
+        // clumps, their crowns in the wood and their trunks in the theme's bark.
+        forEachTile(frame, k_foothillParallax, k_foothillTreeStrip, journey,
+            [&](const float tileLeft, const float tileWidth) {
+                for (int i = 0; i != k_foothillTrees; ++i)
+                {
+                    const float x = tileLeft + tileWidth * ((static_cast<float>(i) + 0.8f
+                        * pseudoRandom(i, 251.0f)) / static_cast<float>(k_foothillTrees));
+                    if (x < -30.0f * unit || x > frame.width + 30.0f * unit)
+                        continue;
+                    const int seed = i * 13 + 7;
+                    const float size = (6.0f + 4.0f * pseudoRandom(seed, 252.0f)) * unit;
+                    const float footY = ridgeAt(x) + 2.0f * unit;
+                    const float trunkTop = footY - size * 1.2f;
+                    fillBox(frame, { x - size * 0.13f, trunkTop, x + size * 0.13f, footY },
+                        SolidColor{ farBark });
+                    const SolidColor farWood{ wood };
+                    fillDisc(frame, { x, trunkTop - size * 0.5f }, size * 0.65f, farWood);
+                    fillDisc(frame, { x - size * 0.42f, trunkTop - size * 0.3f },
+                        size * 0.45f, farWood);
+                    fillDisc(frame, { x + size * 0.4f, trunkTop - size * 0.35f },
+                        size * 0.5f, farWood);
+                }
+            });
     }
 
     namespace
@@ -1883,7 +1967,7 @@ namespace ClaFi::PathArt
                     while (along < length)
                     {
                         const int seed = run * 53 + stretch;
-                        const float stretchLength = std::min((120.0f + 240.0f
+                        const float stretchLength = std::min((140.0f + 120.0f
                             * pseudoRandom(seed, 271.0f)) * unit, length - along);
                         drawStretch(start + along, start + along + stretchLength, seed * 17);
                         along += stretchLength
@@ -2089,8 +2173,8 @@ namespace ClaFi::PathArt
             }
         });
         pebbles.draw();
-        // The petals of a flower stand just apart, so one shape holds them all under an even-odd
-        // fill. The three flowers of a tile wear the theme's three petal colours, and every
+        // A flower's petals are placed just apart, so the five make a ring and the heart fills
+        // its middle. The three flowers of a tile wear the theme's three petal colours, and every
         // flower's petals go down before the hearts. They take a fifth of the lawn's colour where
         // they grow, so they lie in the lawn rather than on it.
         const Color lawn = meadowAt(frame, theme, groundY + 63.0f * unit);

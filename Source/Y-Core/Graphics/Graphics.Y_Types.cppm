@@ -159,6 +159,13 @@ namespace ClaFi::Graphics
 
     export using Brush = std::variant<SolidColor, LinearGradient, RadialGradient, PointGlow>;
 
+    // How a fill decides which pixels lie inside a path. See Graphics-Types
+    export enum class FillRule
+    {
+        Nonzero, // a figure inside another fills unless it runs the other way: SVG's initial rule
+        EvenOdd // a figure inside another cuts a hole, whichever way either runs
+    };
+
     // What a path is drawn as.
     export enum class PathRenderMode
     {
@@ -416,7 +423,8 @@ namespace ClaFi::Graphics
         void arcBy(FloatPoint radii, float rotation, ArcSize, ArcSweep, FloatPoint delta);
 
         void close() { m_commands.push_back({ PathCommandType::Close }); }
-        void clear() { m_commands.clear(); m_currentPoint = { 0.0f, 0.0f }; }
+        // A cleared path is a new path: its fill rule returns to Nonzero.
+        void clear() { m_commands.clear(); m_currentPoint = { 0.0f, 0.0f }; m_fillRule = FillRule::Nonzero; }
 
         // Appends a closed polygon with its corners rounded: each corner is cut back along both
         // of its edges and the two cuts joined by a quadratic through the corner. How far back a
@@ -438,10 +446,14 @@ namespace ClaFi::Graphics
         bool isEmpty() const { return m_commands.empty(); }
         const std::vector<PathCommand>& commands() const { return m_commands; }
         FloatPoint currentPoint() const { return m_currentPoint; }
+        // How a fill of this path decides what lies inside it, SVG's fill-rule. See Graphics-Types
+        [[nodiscard]] FillRule fillRule() const { return m_fillRule; }
+        void setFillRule(FillRule rule) { m_fillRule = rule; }
 
     private:
         std::vector<PathCommand> m_commands;
         FloatPoint m_currentPoint{ 0.0f, 0.0f };
+        FillRule m_fillRule{ FillRule::Nonzero };
     };
 
     // What a graphics backend provides, every stroke laid inside its bounds. See Graphics-Types

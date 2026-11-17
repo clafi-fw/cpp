@@ -430,9 +430,10 @@ one. next() draws the shape before the one it begins.
 **On Direct2D the shapes gather in one path and go down in one fill at draw().** Each fill there
 builds a geometry of its own.
 
-**The shapes must stand apart.** A path is filled even-odd, so two shapes that overlap in one path
-cut a hole in each other. On Direct2D they share a path and show the hole; on the CPU backend they
-are filled apart and do not.
+**The shapes may lie over one another.** A fill follows the path's fill rule, which is SVG's
+nonzero unless the path asks otherwise: figures that run the same way round join where they
+overlap, and a figure running the other way cuts a hole. The shapes a batch takes are all wound the
+same way, so overlapping ones read as one. See PixelPath fillRule.
 
 **A kind of shape that lies over another goes down after it.** With two ScatteredShapes open at
 once, the CPU backend draws their shapes interleaved, in the order next() is called. Build the
@@ -1616,15 +1617,20 @@ and its own size.
 
 ## ChaseScene drawFoothills
 
-**A pale ridge stands behind the meadow's hills**, at 0.11 of the camera's speed, and shows through
-the meadow's dips. Its colour is the theme's hillTop hazed at that distance and taken 0.3 of the
-way to skyBottom, so it reads as land farther off than the meadow and not as sky. Its crest is
-k_foothillWaves over a 1400-unit period, and it is filled down to the ground line behind the
-meadow's hills.
+**A pale ridge stands behind the meadow's hills**, at 0.06 of the camera's speed, and shows through
+the meadow's dips. Its colour is the theme's hillTop hazed at that distance, and nothing else: the
+layer stands far enough back that the theme's own air parts it from the meadow's hills, which stand
+at 0.2, so it reads as land farther off than the meadow and not as sky. Its crest is k_foothillWaves
+over a 1400-unit period, and it is filled down to the ground line behind the meadow's hills.
 
-**Its crest is wooded.** Sixteen clumps to a 5200-unit strip, one to three crowns each, stand on the
-crest in a colour between the ridge's own and the theme's leaves, hazed with it. The clumps keep a
-strip of their own so a crest's shape and a wood on it do not come round together.
+**Its crest carries hedges and woods.** Sixteen clumps of one to three crowns stand along a
+5200-unit strip, in a colour between the ridge's own and the theme's leaves, hazed with it; the
+crowns of a clump overlap and run the same way round, so one path fills them as one wood - see
+ScatteredShapes. Five trees to a 4900-unit strip stand taller, their crowns in the same wood and
+their trunks in the theme's bark, hazed with the layer. Ten short hedges to a 5800-unit strip lie
+just under the crest, each 160 to 240 units long - pieces of one size rather than a run that spans
+the horizon - in the theme's leaves shaded toward hillBottom, both hazed at the layer's distance.
+Each keeps a strip of its own, so no two of the layer's parts come round together.
 
 ## ChaseScene drawHillside
 
@@ -1633,15 +1639,15 @@ poplar, a fir, a coppice of three trees or a bush, picked by the stand's own num
 and the broadleaf are the common ones. Forty-four stands lie along a 6400-unit strip, each at its
 own place along it. A stand lower down the slope stands nearer and draws larger.
 
-**The hedges run along the slope below the trees.** Five runs to the same strip, each 600 to 1300
-units long, stand lower on the slope than the trees and are drawn before them, so a crown or a trunk
-hides a run where the two meet. A run comes apart in stretches of 120 to 360 units, with a gap of 70
-to 150 units between them where a gate or a break in the hedge would be. Each stretch follows the
-ground it stands on and keeps 12 units clear of the trail. Its colour is the trees' crown mixed 0.55
-of the way to hillBottom, so it stands dark against the meadow along its whole length. Its humps
-rise and fall by about half its 16 to 24 units, with a taller clump now and then, and a stretch
-closes on a rounded shoulder at each end, so no cut edge shows and the length reads as a hedge
-rather than a band.
+**The hedges run along the slope below the trees**, two runs to the same strip, each 600 to 1300
+units long, and stand lower on the slope than the trees and are drawn before them, so a crown or a
+trunk hides a run where the two meet. A run comes apart in stretches of 140 to 260 units, with a gap
+of 70 to 150 units between them where a gate or a break in the hedge would be. Each stretch follows
+the ground it stands on and keeps 12 units clear of the trail. Its colour is the trees' crown mixed
+0.55 of the way to hillBottom, so it stands dark against the meadow along its whole length. Its
+humps rise and fall by about half its 16 to 24 units, with a taller clump now and then, and a
+stretch closes on a rounded shoulder at each end, so no cut edge shows and the length reads as a
+hedge rather than a band.
 
 ## ChaseScene meadowGradient
 
