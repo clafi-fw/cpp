@@ -1,9 +1,11 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MillScene", "MillScene.vcxproj", "{2F6A1D8B-4C93-4E17-9B5A-7D0C3E81A462}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MillSceneCli", "MillSceneCli.vcxproj", "{734E1DC2-46A4-41F9-814B-9746B9E5B04B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ClaFi", "..\..\Visual Studio Shared Items\ClaFi.vcxitems", "{6954ED2F-785A-436B-90A8-65188080FDB3}"
 EndProject
@@ -23,6 +25,14 @@ Global
 		{2F6A1D8B-4C93-4E17-9B5A-7D0C3E81A462}.Release|x64.Build.0 = Release|x64
 		{2F6A1D8B-4C93-4E17-9B5A-7D0C3E81A462}.Release|x86.ActiveCfg = Release|Win32
 		{2F6A1D8B-4C93-4E17-9B5A-7D0C3E81A462}.Release|x86.Build.0 = Release|Win32
+		{734E1DC2-46A4-41F9-814B-9746B9E5B04B}.Debug|x64.ActiveCfg = Debug|x64
+		{734E1DC2-46A4-41F9-814B-9746B9E5B04B}.Debug|x64.Build.0 = Debug|x64
+		{734E1DC2-46A4-41F9-814B-9746B9E5B04B}.Debug|x86.ActiveCfg = Debug|Win32
+		{734E1DC2-46A4-41F9-814B-9746B9E5B04B}.Debug|x86.Build.0 = Debug|Win32
+		{734E1DC2-46A4-41F9-814B-9746B9E5B04B}.Release|x64.ActiveCfg = Release|x64
+		{734E1DC2-46A4-41F9-814B-9746B9E5B04B}.Release|x64.Build.0 = Release|x64
+		{734E1DC2-46A4-41F9-814B-9746B9E5B04B}.Release|x86.ActiveCfg = Release|Win32
+		{734E1DC2-46A4-41F9-814B-9746B9E5B04B}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -33,5 +43,6 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{6954ed2f-785a-436b-90a8-65188080fdb3}*SharedItemsImports = 9
 		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{2f6a1d8b-4c93-4e17-9b5a-7d0c3e81a462}*SharedItemsImports = 4
+		..\..\Visual Studio Shared Items\ClaFi.vcxitems*{734e1dc2-46a4-41f9-814b-9746b9e5b04b}*SharedItemsImports = 4
 	EndGlobalSection
 EndGlobal

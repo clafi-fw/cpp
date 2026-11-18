@@ -4,7 +4,7 @@ import SeeDocs_App.Ui.Browser;
 
 import ClaFi.Browser.Application;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -26,7 +26,7 @@ namespace SeeDocs_App::Ui
     using namespace ClaFi;
 
     // What the application is called, wherever its name is shown and wherever its config is kept.
-    export [[nodiscard]] AppParams seeDocsParams();
+    export [[nodiscard]] ApplicationProperties seeDocsParams();
 
     // SeeDocs over the platform an entry point names, and the GPU backend it names if that
     // platform has one. The name and the config schemas are supplied here, so an entry point
@@ -52,7 +52,7 @@ namespace SeeDocs_App::Ui
     [[nodiscard]] Dom::Dt::Section tabConfigBlueprint();
     // Runs SeeDocs in the browser's form: the workspace over it, the Open page and the projects'
     // options pages connected, and the project started. Answers what the form answered.
-    [[nodiscard]] int runSeeDocs(ApplicationBase&, Form<SurfaceBrowser>&,
+    [[nodiscard]] int runSeeDocs(WindowApplicationBase&, Form<SurfaceBrowser>&,
         const std::filesystem::path& stated);
 
     constexpr float k_minWidth = 820.0f;

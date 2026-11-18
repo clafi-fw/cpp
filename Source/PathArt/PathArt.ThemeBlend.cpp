@@ -40,6 +40,16 @@ namespace ClaFi::PathArt
         crossFadeToPicked();
     }
 
+    void ThemeBlend::wear(const std::size_t index)
+    {
+        m_animator.stop(this);
+        m_pickedIndex = index;
+        m_worn = picked();
+        m_crossFadeStart = m_worn;
+        m_crossFadeTarget = nullptr;
+        ++m_wornVersion;
+    }
+
     void ThemeBlend::tick()
     {
         m_animator.externalTimerTick();

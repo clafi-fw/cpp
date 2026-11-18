@@ -1649,7 +1649,7 @@ namespace ClaFi
 
         m_windowRole{ windowRole },
 
-        // The backend type belongs to the application - see Application<Platform, Backend>. It
+        // The backend type belongs to the application - see WindowApplication<Platform, Backend>. It
         // reaches here as a factory on the AppContext, so this stays a single non-template
         // construction whatever the application chose. m_window is declared before m_canvas and is
         // built by then; the parameter is used rather than m_appContext, which is declared after.

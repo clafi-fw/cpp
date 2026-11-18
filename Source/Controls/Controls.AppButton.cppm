@@ -26,7 +26,7 @@ namespace ClaFi::Controls
 namespace ClaFi::Controls
 {
     // **Presents** appMenuAction, so every application has its menu under this button with nothing
-    // written: ApplicationBase connects the action to the menu once, and a click here runs it.
+    // written: WindowApplicationBase connects the action to the menu once, and a click here runs it.
     template <typename... Args>
     AppButton::AppButton(const CreateParams& params, Args&&... args)
         :

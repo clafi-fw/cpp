@@ -6,7 +6,7 @@ import PascalScripts_App.Language;
 
 import ClaFi.Documents.Application;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.FormContext;
@@ -24,7 +24,7 @@ namespace PascalScripts_App
     using namespace ClaFi;
 
     // What the application is called, wherever its name is shown and wherever its config is kept.
-    export [[nodiscard]] AppParams scriptsParams();
+    export [[nodiscard]] ApplicationProperties scriptsParams();
     // Where the scripts stand: a folder of the application's name in the user's documents. Empty
     // where the platform names no documents folder.
     export [[nodiscard]] std::filesystem::path scriptsDirectory();

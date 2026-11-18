@@ -23,7 +23,7 @@ import ClaFi.Controls.Divider;
 import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Controls.Base.StackBase;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 import ClaFi.App.Themes;
 
 import ClaFi.StdActions;
@@ -293,7 +293,7 @@ namespace TextEngine_App
         }
     }
 
-    AppParams textEngineAppParams()
+    ApplicationProperties textEngineAppParams()
     {
         return {
             .name = Text{ L"TextEngine" },
@@ -311,7 +311,7 @@ namespace TextEngine_App
         };
     }
 
-    int runTextEngineShowcase(ApplicationBase& application)
+    int runTextEngineShowcase(WindowApplicationBase& application)
     {
         // **The application states its own default, not the user's choice.** Where a config
         // folder stands the mode has just been loaded out of it, and writing over it here

@@ -26,6 +26,8 @@ namespace ClaFi::PathArt
         [[nodiscard]] std::uint64_t wornVersion() const { return m_wornVersion; }
         // Crossfades from what is worn to the theme at `index` of Themes::allThemes.
         void pick(std::size_t index);
+        // Wears the theme at `index` at once, with no crossfade: what a render draws.
+        void wear(std::size_t index);
         // Moves the crossfade on between the timer's ticks.
         void tick();
     private:

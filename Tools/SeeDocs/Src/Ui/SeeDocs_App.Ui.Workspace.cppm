@@ -7,7 +7,7 @@ import SeeDocs_App.Project;
 import SeeDocs_App.SidebarEdits;
 import SeeDocs_App.Surface;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.DomEngine_Dt;
@@ -31,7 +31,7 @@ namespace SeeDocs_App::Ui
     export class Workspace
     {
     public:
-        Workspace(ApplicationBase&, FormBase& form, SurfaceBrowser&);
+        Workspace(WindowApplicationBase&, FormBase& form, SurfaceBrowser&);
         Workspace(const Workspace&) = delete;
         Workspace& operator=(const Workspace&) = delete;
     public:
@@ -138,7 +138,7 @@ namespace SeeDocs_App::Ui
         void writeRecent();   // the projects opened before, for the root to list
         void writeTitle();
     private:
-        ApplicationBase& m_application;
+        WindowApplicationBase& m_application;
         FormBase& m_form;
         SurfaceBrowser& m_browser;
         // What a question or a refusal is dropped under: the browser's app button.

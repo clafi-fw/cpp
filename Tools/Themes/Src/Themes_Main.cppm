@@ -4,7 +4,7 @@ import Themes_App.ThemesBrowser;
 
 import ClaFi.Documents.Application;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.Context.AppContext;
@@ -24,7 +24,7 @@ namespace Themes_App
     using namespace ClaFi;
 
     // What the application is called, wherever its name is shown and wherever its config is kept.
-    export [[nodiscard]] AppParams themesParams();
+    export [[nodiscard]] ApplicationProperties themesParams();
 
     // The theme browser over the platform an entry point names, and the GPU backend it names if
     // that platform has one. The name and both config schemas are supplied here, so an entry

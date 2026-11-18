@@ -405,19 +405,34 @@ if(NOT CLAFI_PLATFORM STREQUAL "none")
 
     # **The executables**, built only with a platform layer because without one there is nothing to
     # link against. The MillScene showcase's sources are excluded from the library glob above -
-    # a showcase is application code that imports ClaFi, not part of it - so the six files are
-    # named here instead. Five of them know nothing of any platform; the sixth is the entry
-    # point, and there is one per platform.
+    # a showcase is application code that imports ClaFi, not part of it - so the files are named
+    # here instead. The option table, the renderer and the console application know nothing of any
+    # platform; the entries are one file per platform.
     set(millscene_dir "${CMAKE_CURRENT_SOURCE_DIR}/Showcase/MillScene")
     add_executable(MillScene
         "${millscene_dir}/MillScene_Icon.cpp"
+        "${millscene_dir}/MillScene_App.Options.cpp"
         "${millscene_dir}/MillScene_Wayland.cpp")
     target_sources(MillScene PRIVATE FILE_SET CXX_MODULES FILES
         "${millscene_dir}/MillScene_Icon.cppm"
-        "${millscene_dir}/MillScene_Main.cppm")
+        "${millscene_dir}/MillScene_Main.cppm"
+        "${millscene_dir}/MillScene_App.Options.cppm")
     target_link_libraries(MillScene PRIVATE ClaFi)
     target_compile_options(MillScene PRIVATE ${clafi_compile_options})
     clafi_app_version(MillScene "${millscene_dir}/version.txt")
+
+    # **The console application**: the same options and the same renderer, no window and no
+    # display-server connection.
+    add_executable(MillSceneCli
+        "${millscene_dir}/MillScene_App.Options.cpp"
+        "${millscene_dir}/MillSceneCli_Linux.cpp")
+    target_sources(MillSceneCli PRIVATE FILE_SET CXX_MODULES FILES
+        "${millscene_dir}/MillScene_App.Options.cppm"
+        "${millscene_dir}/MillScene_App.Render.cppm"
+        "${millscene_dir}/MillScene_App.Cli.cppm")
+    target_link_libraries(MillSceneCli PRIVATE ClaFi)
+    target_compile_options(MillSceneCli PRIVATE ${clafi_compile_options})
+    clafi_app_version(MillSceneCli "${millscene_dir}/version.txt")
 
     # **The text engine showcase**, laid out the same way: six page modules, the Icon module and the
     # Main module know nothing of any platform, and the entry point is one file per platform. It

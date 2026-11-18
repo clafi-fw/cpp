@@ -23,7 +23,7 @@ import ClaFi.StdLib;
 namespace ClaFi
 {
     // The one manager an application makes, so that a page reaches it without being handed it.
-    // Null until connectAppThemes has run, which ApplicationBase does before any window exists.
+    // Null until connectAppThemes has run, which WindowApplicationBase does before any window exists.
     ThemesManager*& mutableAppThemes();
 
     // appThemes

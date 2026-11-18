@@ -82,6 +82,8 @@ namespace ClaFi::PathArt
         [[nodiscard]] virtual bool offersThemes() const { return false; }
         // Crossfades to the theme at an index of Themes::allThemes, where the scene offers themes.
         virtual void setTheme(std::size_t) {}
+        // Wears the theme at an index at once, where the scene offers themes: no crossfade, no timer.
+        virtual void wearTheme(std::size_t) {}
         // Moves a crossfade on between the timer's ticks, where the scene runs one.
         virtual void animationTick() {}
         // The choices the scene offers beside its look, none unless it states them. See PathArt

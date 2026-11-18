@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
     <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
@@ -40,7 +40,12 @@
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.AppMenu.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.AppMenu.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ApplicationProperties.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.CommandLine.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.CommandLine.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ConsoleApplication.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.ConsoleApplication.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.WindowApplication.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Information.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Information.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Application\Application.Settings.cpp" />

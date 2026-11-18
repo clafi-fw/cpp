@@ -5,7 +5,7 @@ import ClaFi.Documents.Folder;
 
 import ClaFi.Browser.Application;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;

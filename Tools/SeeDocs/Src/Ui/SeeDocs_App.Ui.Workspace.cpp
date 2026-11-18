@@ -14,7 +14,7 @@ import SeeDocs_App.Surface;
 import ClaFi.Controls.AppButton;
 import ClaFi.Controls.MessageDialog;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 import ClaFi.App.Notices;
 
 import ClaFi.Core.Foundation;
@@ -123,7 +123,7 @@ namespace SeeDocs_App::Ui
 
     // Workspace
 
-    Workspace::Workspace(ApplicationBase& application, FormBase& form, SurfaceBrowser& browser)
+    Workspace::Workspace(WindowApplicationBase& application, FormBase& form, SurfaceBrowser& browser)
         :
         m_application{ application },
         m_form{ form },

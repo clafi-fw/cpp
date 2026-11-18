@@ -6,7 +6,7 @@ import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.Base.PanelBase;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Types;
@@ -23,8 +23,8 @@ namespace ClaFi::Tools::WhatsClip
     using namespace Controls;
 
     // What the application is called, wherever its name is shown and wherever its config is kept.
-    export [[nodiscard]] AppParams applicationParams();
-    //AppParams whatsClipAppParams2
+    export [[nodiscard]] ApplicationProperties applicationParams();
+    //ApplicationProperties whatsClipAppParams2
     //{
     //    .name = Text{
     //        L"What",
@@ -38,5 +38,5 @@ namespace ClaFi::Tools::WhatsClip
     // answered. The lists are what its text pages pick an encoding and a language from - see
     // defaultEncodings and defaultLanguages for the framework's own, and an application built over
     // this adds what it reads.
-    export int runWhatsClip(ApplicationBase&, const PickLists&);
+    export int runWhatsClip(WindowApplicationBase&, const PickLists&);
 }

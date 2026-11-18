@@ -4,7 +4,7 @@ import ClaFi.Browser.Consts;
 import ClaFi.Browser.Control;
 import ClaFi.Browser.Settings;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 export import ClaFi.Core.Dom_StdSerializers;
 export import ClaFi.Core.DomEngine;
@@ -25,10 +25,10 @@ namespace ClaFi::Browser
         concept IsBrowserControl = std::derived_from<T, BrowserControl>;
 
     export template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend, IsBrowserControl ContentType>
-        class BrowserApplication : public Application<PlatformType, GpuBackend>
+        class BrowserApplication : public WindowApplication<PlatformType, GpuBackend>
     {
     public:
-        using Base = Application<PlatformType, GpuBackend>;
+        using Base = WindowApplication<PlatformType, GpuBackend>;
         using Base::Base;
         using Base::config;
         using Base::name;
@@ -37,7 +37,7 @@ namespace ClaFi::Browser
         // The root config, what an entry keeps of a tab beyond id, title and path, and what a
         // tab's page keeps in the tab's own file.
         template<typename TRootSchema, typename TTabEntrySchema, typename TTabSchema>
-        BrowserApplication(PlatformType::Params&&, const AppParams&, TRootSchema&& rootSchema,
+        BrowserApplication(PlatformType::Params&&, const ApplicationProperties&, TRootSchema&& rootSchema,
             TTabEntrySchema&& tabEntrySchema, TTabSchema&& tabSchema);
         // Finalizes while the settings still stand, so the exit save reaches the tab files.
         ~BrowserApplication() override;
@@ -58,14 +58,14 @@ namespace ClaFi::Browser
     template <typename TRootSchema, typename TTabEntrySchema, typename TTabSchema>
     BrowserApplication<PlatformType, GpuBackend, ContentType>::BrowserApplication(
         typename PlatformType::Params&& platformParams,
-        const AppParams& appParams,
+        const ApplicationProperties& properties,
         TRootSchema&& rootSchema,
         TTabEntrySchema&& tabEntrySchema,
         TTabSchema&& tabSchema)
             :
         Base{
             std::forward<typename PlatformType::Params>(platformParams),
-            appParams,
+            properties,
             {
                 createBrowserSettingsSchema(std::forward<TTabEntrySchema>(tabEntrySchema)),
                 std::forward<TRootSchema>(rootSchema)

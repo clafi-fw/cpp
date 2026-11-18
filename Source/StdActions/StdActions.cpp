@@ -123,7 +123,7 @@ namespace ClaFi::StdActions
     void registerAll()
     {
         // The application's scope is one object for the whole process and outlives any single
-        // ApplicationBase, so a second application starting would otherwise register the same
+        // WindowApplicationBase, so a second application starting would otherwise register the same
         // set behind the first one. One registration is all there is.
         static bool registered = false;
         if (registered)

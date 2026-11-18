@@ -10,7 +10,7 @@ import SeeDocs_App.Ui.Workspace;
 import ClaFi.App.AppMenu;
 import ClaFi.App.Settings;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.Context.UpdateCheck;
@@ -33,7 +33,7 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_newProjectCaption = L"New project";
     }
 
-    AppParams seeDocsParams()
+    ApplicationProperties seeDocsParams()
     {
         return {
             .name = Text{ k_appName },
@@ -70,7 +70,7 @@ namespace SeeDocs_App::Ui
     // A question the workspace asks drops under the browser's app button. The Open page it fills
     // and its New project command stand in the menu that button opens, with the External editors
     // group on its Settings page, and each project's options page in the browser.
-    int runSeeDocs(ApplicationBase& application, Form<SurfaceBrowser>& form,
+    int runSeeDocs(WindowApplicationBase& application, Form<SurfaceBrowser>& form,
         const std::filesystem::path& stated)
     {
         Workspace workspace{ application, form, form.content() };

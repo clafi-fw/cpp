@@ -1,6 +1,6 @@
 import TextEngine_App.Main;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 import ClaFi.Platform.Windows;
 
 import ClaFi.Core.Foundation;

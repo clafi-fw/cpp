@@ -20,7 +20,8 @@ import ClaFi.Core.DomEngine;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
+import ClaFi.App.ConsoleApplication;
 
 export using HINSTANCE = ::HINSTANCE;
 export using Direct2DBackend = ::ClaFi::PlatformImplementation::Windows::Direct2DBackend;
@@ -58,7 +59,20 @@ namespace ClaFi
 
     // Direct2D is the GPU backend offered here; the CPU backend stands beside it, and which of
     // them the windows draw through is the user's answer - see AppContext::gpuAcceleration.
-    export using Win32Application = Application<Win32Platform, Direct2DBackend>;
+    export using Win32Application = WindowApplication<Win32Platform, Direct2DBackend>;
+
+    // **A console process answers on the console and needs no window machinery.** COM is opened
+    // for the platform's PNG encoder, which WIC serves.
+    export class Win32ConsoleApplication : public ConsoleApplication
+    {
+    public:
+        Win32ConsoleApplication(const ApplicationProperties&, std::span<const CommandLine::Option>,
+            std::vector<std::wstring>);
+        ~Win32ConsoleApplication() override;
+        Win32ConsoleApplication(const Win32ConsoleApplication&) = delete;
+    private:
+        bool m_comInitialized{ false };
+    };
 
     //-------------------------------------------------------------------------
 
@@ -109,6 +123,23 @@ namespace ClaFi
         Platform{ m_clipboard },
         m_params{ params }
     {
+    }
+
+    // Win32ConsoleApplication
+
+    Win32ConsoleApplication::Win32ConsoleApplication(const ApplicationProperties& properties,
+        const std::span<const CommandLine::Option> options, std::vector<std::wstring> arguments)
+        :
+        ConsoleApplication{ properties, options, std::move(arguments) },
+        m_comInitialized{ SUCCEEDED(::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)) }
+    {
+        ::SetConsoleOutputCP(CP_UTF8);
+    }
+
+    Win32ConsoleApplication::~Win32ConsoleApplication()
+    {
+        if (m_comInitialized)
+            ::CoUninitialize();
     }
 
     std::unique_ptr<IPlatformWindow> Win32Platform::createWindow(IForm& form, WindowRole role,

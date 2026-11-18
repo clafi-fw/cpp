@@ -4,7 +4,7 @@ import ClaFi.Controls.TabbedBox;
 import ClaFi.Controls.Panel;
 import ClaFi.Controls.Base.PanelBase;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.StdLib;
 
@@ -24,9 +24,9 @@ namespace TextEngine_App
     };
 
     // What the application is called, wherever its name is shown and wherever its config is kept.
-    export [[nodiscard]] AppParams textEngineAppParams();
+    export [[nodiscard]] ApplicationProperties textEngineAppParams();
 
     // Builds the showcase into a form of the given application, runs it, and answers what the form
     // answered.
-    export int runTextEngineShowcase(ApplicationBase&);
+    export int runTextEngineShowcase(WindowApplicationBase&);
 }

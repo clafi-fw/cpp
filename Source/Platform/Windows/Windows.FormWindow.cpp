@@ -3,7 +3,7 @@ module;
 module ClaFi.Platform.Windows.FormWindow;
 
 import ClaFi.Platform.Windows.Diagnostic;
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;

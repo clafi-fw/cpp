@@ -21,7 +21,7 @@ import ClaFi.Controls.TabStrip;
 import ClaFi.Controls.Base.PanelBase;
 import ClaFi.Controls.Base.StackBase;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
@@ -634,7 +634,7 @@ namespace ClaFi::Tools::WhatsClip
         }
     }
 
-    AppParams applicationParams()
+    ApplicationProperties applicationParams()
     {
         return {
             .name = Text{
@@ -702,7 +702,7 @@ namespace ClaFi::Tools::WhatsClip
         }
     }
 
-    int runWhatsClip(ApplicationBase& application, const PickLists& picks)
+    int runWhatsClip(WindowApplicationBase& application, const PickLists& picks)
     {
         const std::unique_ptr<Form<MainForm>> form = application.createDialog<MainForm>();
         form->setConfigName(AppContext::k_mainFormName);

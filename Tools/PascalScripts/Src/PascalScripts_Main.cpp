@@ -2,7 +2,7 @@ module PascalScripts_App.Main;
 
 import PascalScripts_App.Consts;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Context.UpdateCheck;
@@ -15,7 +15,7 @@ namespace PascalScripts_App
 {
     using namespace ClaFi;
 
-    AppParams scriptsParams()
+    ApplicationProperties scriptsParams()
     {
         return {
             .name = Text{ k_appName },

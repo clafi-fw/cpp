@@ -70,7 +70,7 @@ namespace ClaFi::Transfer
 namespace ClaFi::StdActions
 {
     // Puts the framework's own formats and the conversions between them in the Transfer tables,
-    // and has the paste action follow the clipboard given. ApplicationBase::initialize calls it,
+    // and has the paste action follow the clipboard given. WindowApplicationBase::initialize calls it,
     // so an application has rich text on the clipboard without writing anything.
     export void registerTransferFormats(Transfer::Clipboard&);
 }

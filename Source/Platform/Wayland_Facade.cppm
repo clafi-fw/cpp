@@ -5,7 +5,7 @@ import ClaFi.Platform.Wayland.Display;
 import ClaFi.Platform.Linux.Timer;
 import ClaFi.Platform.Linux.DirWatch;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Transfer.Clipboard;
 import ClaFi.Core.System.UiTypes;
@@ -62,7 +62,7 @@ namespace ClaFi
     // **No GPU backend on this platform**, so an application here draws on the CPU and is offered
     // nothing to turn on. A wl_shm buffer is memory the compositor can read, which is exactly
     // what a CPU backend already produces.
-    export using WaylandApplication = Application<WaylandPlatform>;
+    export using WaylandApplication = WindowApplication<WaylandPlatform>;
 }
 
 

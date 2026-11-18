@@ -10,7 +10,7 @@
 
 import TextEngine_App.Main;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 import ClaFi.Platform.Wayland;
 
 import ClaFi.Core.Foundation;

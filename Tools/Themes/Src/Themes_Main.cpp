@@ -4,7 +4,7 @@ import Themes_App.ThemeToCppCode;
 import Themes_App.Consts;
 
 import ClaFi.Application.ThemesManager;
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 import ClaFi.App.ThemeIcon;
 
 import ClaFi.Core.AppTheme_Theme;
@@ -21,7 +21,7 @@ namespace Themes_App
 {
     using namespace ClaFi;
 
-    AppParams themesParams()
+    ApplicationProperties themesParams()
     {
         return {
             .name = Text{ L"Themes" },

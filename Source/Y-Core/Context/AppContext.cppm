@@ -112,7 +112,7 @@ namespace ClaFi
         [[nodiscard]] std::wstring_view version() const { return m_version; }
         // The application's own web address - empty where it states none.
         [[nodiscard]] std::wstring_view site() const { return m_site; }
-        // The application's own elements, by name, each worn as appElement(i) - see AppParams.
+        // The application's own elements, by name, each worn as appElement(i) - see ApplicationProperties.
         [[nodiscard]] AppElementNames appElements() const { return m_appElements; }
         // The paragraphs the Information page shows after the description, in the order added.
         [[nodiscard]] const InformationParagraphs& information() const { return m_information; }

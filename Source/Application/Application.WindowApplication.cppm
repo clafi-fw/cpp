@@ -1,6 +1,8 @@
-export module ClaFi.App.Application;
+export module ClaFi.App.WindowApplication;
 
 export import ClaFi.Dom;
+export import ClaFi.App.ApplicationProperties;
+export import ClaFi.App.CommandLine;
 
 import ClaFi.App.AppMenu;
 import ClaFi.App.Notices;
@@ -30,39 +32,19 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // Which themes an application is offered. See Application#appparams
-    export enum class ThemesOffered
-    {
-        StatingEveryElement, // those stating a set for every element the application names
-        Every                // every theme, whatever it states - what a theme editor takes
-    };
-
-    export struct AppParams
-    {
-        Text name;
-        std::wstring_view publisher;
-        Text description{}; // what the application does, shown on its Information page
-        std::wstring_view version{}; // major.minor.patch, shown on its Information page
-        std::wstring_view site{}; // its own web address, shown as a link on its Information page
-        UpdateSource updates{}; // where its Information page looks for a newer release
-        // The sheet a text is built over where none is given; none is the framework's.
-        const StyleSheet* styleSheet{ nullptr };
-        // Its own elements, by name - the i-th worn as appElement(i). See Application#appparams
-        AppElementNames elements{};
-        // A theme file's text stating its own styles, which join the built-in theme at start.
-        std::wstring_view builtInTheme{};
-        ThemesOffered themesOffered{ ThemesOffered::StatingEveryElement };
-    };
-
-    export class ApplicationBase
+    export class WindowApplicationBase
     {
     public:
-        ApplicationBase(Platform& platform, const AppParams&, BackendFactory, Dom::Dt::Section&&);
-        virtual ~ApplicationBase();
-        ApplicationBase(const ApplicationBase&) = delete;
+        WindowApplicationBase(Platform& platform, const ApplicationProperties&, BackendFactory,
+            Dom::Dt::Section&&, std::span<const CommandLine::Option> = {},
+            std::vector<std::wstring> arguments = {});
+        virtual ~WindowApplicationBase();
+        WindowApplicationBase(const WindowApplicationBase&) = delete;
     public:
         AppContext& context() { return m_context; }
         [[nodiscard]] const Text& name() const { return m_context.appName(); }
+        // What the command line asked for, read where this application was constructed.
+        [[nodiscard]] const CommandLine& commandLine() const { return m_commandLine; }
         [[nodiscard]] AppTheme& theme() { return m_context.theme(); };
         [[nodiscard]] const AppTheme& theme() const { return m_context.theme(); };
         [[nodiscard]] ThemeColors& themeColors() { return m_context.themeColors(); }
@@ -91,19 +73,19 @@ namespace ClaFi
         template<ClassOfFormControl ControlClass, typename... Args>
         std::unique_ptr<Form<ControlClass>> createDialog(Args&&... args);
     protected:
-        // initialize and finalize are called from derived Application<Platform, Backend>
+        // initialize and finalize are called from derived WindowApplication<Platform, Backend>
         // constructor and destructor, to make sure the Platform is in valid state
         // during that calls
         void initialize();
         // Runs once. An application whose own members the exit save reaches - a BrowserApplication
         // and its settings - calls it from its destructor, while they stand; the call from
-        // ~Application then finds it done.
+        // ~WindowApplication then finds it done.
         void finalize();
     private:
-        std::filesystem::path& initializeConfigPath(const AppParams&);
+        std::filesystem::path& initializeConfigPath(const ApplicationProperties&);
         // The elements a theme has to state to be offered - none, for an application taking every
         // theme.
-        [[nodiscard]] static AppElementNames requiredElementsOf(const AppParams&);
+        [[nodiscard]] static AppElementNames requiredElementsOf(const ApplicationProperties&);
         // Tells of a newer release at start, where Check automatically is on.
         void connectUpdateNotice();
         void postUpdateNotice(); // puts the newer release up as a notice, where there is one
@@ -118,6 +100,8 @@ namespace ClaFi
         std::wstring m_configFileName;
         std::filesystem::path m_configFilePath;
         std::wstring m_themesPath{};
+        // What the arguments asked for, read before anything else this application builds.
+        CommandLine m_commandLine;
         //
         AppContext m_context;
         // Built over the path above, which initializeConfigPath has filled in by the time the
@@ -133,11 +117,11 @@ namespace ClaFi
     };
 
     template<typename T>
-        concept IsApplication = std::derived_from<T, ApplicationBase>;
+        concept IsWindowApplication = std::derived_from<T, WindowApplicationBase>;
 
-    // **The platform stands first and falls last.** Held in a base ahead of ApplicationBase rather
-    // than as a member behind it, so the context, the themes manager and every window are built
-    // on a standing platform and go down on one. See Application
+    // **The platform stands first and falls last.** Held in a base ahead of WindowApplicationBase
+    // rather than as a member behind it, so the context, the themes manager and every window are
+    // built on a standing platform and go down on one. See Application
     template <IsPlatform PlatformType>
     class PlatformHolder
     {
@@ -149,11 +133,13 @@ namespace ClaFi
 
     // The GPU backend is the application's to name, and naming none is an answer. See Application
     export template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend = void>
-    class Application : private PlatformHolder<PlatformType>, public ApplicationBase
+    class WindowApplication : private PlatformHolder<PlatformType>, public WindowApplicationBase
     {
     public:
-        Application(PlatformType::Params&& platformParams, const AppParams&, Dom::Dt::Section&&);
-        ~Application() override;
+        WindowApplication(PlatformType::Params&& platformParams, const ApplicationProperties&,
+            Dom::Dt::Section&&, std::span<const CommandLine::Option> = {},
+            std::vector<std::wstring> arguments = {});
+        ~WindowApplication() override;
     };
 
 //-----------------------------------------------------------------------------
@@ -164,20 +150,24 @@ namespace ClaFi
     // adds under it. The file system reads the result back, so the separator is its own.
     constexpr wchar_t k_pathSeparator{ std::filesystem::path::preferred_separator };
 
-    // ApplicationBase
+    // WindowApplicationBase
 
-    ApplicationBase::ApplicationBase(Platform& platform, const AppParams& appParams, BackendFactory createBackend, Section&& schema)
+    WindowApplicationBase::WindowApplicationBase(Platform& platform,
+        const ApplicationProperties& properties, BackendFactory createBackend, Section&& schema,
+        const std::span<const CommandLine::Option> options, std::vector<std::wstring> arguments)
         :
+        m_commandLine{ std::move(arguments), properties.name.plainText(), properties.version,
+            properties.description.plainText(), options },
         m_context{
             platform,
-            appParams.name,
-            appParams.publisher,
-            appParams.description,
-            appParams.version,
-            appParams.site,
-            appParams.updates,
-            appParams.elements,
-            initializeConfigPath(appParams),
+            properties.name,
+            properties.publisher,
+            properties.description,
+            properties.version,
+            properties.site,
+            properties.updates,
+            properties.elements,
+            initializeConfigPath(properties),
             createBackend,
             Section{
                 Section{
@@ -192,28 +182,28 @@ namespace ClaFi
                 std::forward<Section>(schema)
             }
         },
-        m_themesManager{ m_themesPath, requiredElementsOf(appParams) }
+        m_themesManager{ m_themesPath, requiredElementsOf(properties) }
     {
         // Ahead of the config, which may hold a text naming one of them.
-        StyleSheet::setApplicationSheet(appParams.styleSheet);
+        StyleSheet::setApplicationSheet(properties.styleSheet);
         // Ahead of the first bake, which initialize makes.
-        addBuiltInStyles(appParams.builtInTheme);
+        addBuiltInStyles(properties.builtInTheme);
     }
 
     // The sheet the application stated may be gone already, and nothing reads through it now.
-    ApplicationBase::~ApplicationBase()
+    WindowApplicationBase::~WindowApplicationBase()
     {
         StyleSheet::setApplicationSheet(nullptr);
     }
 
-    AppElementNames ApplicationBase::requiredElementsOf(const AppParams& appParams)
+    AppElementNames WindowApplicationBase::requiredElementsOf(const ApplicationProperties& properties)
     {
-        if (appParams.themesOffered == ThemesOffered::Every)
+        if (properties.themesOffered == ThemesOffered::Every)
             return {};
-        return appParams.elements;
+        return properties.elements;
     }
 
-    void ApplicationBase::saveConfig(bool evenIfNotExists)
+    void WindowApplicationBase::saveConfig(bool evenIfNotExists)
     {
         if (!(configFolderExists() || evenIfNotExists))
             return;
@@ -224,7 +214,7 @@ namespace ClaFi
         config().save();
     }
 
-    void ApplicationBase::initialize()
+    void WindowApplicationBase::initialize()
     {
         // **First**, before any window exists: the identity a toplevel is made under.
         Platform::setApplicationId(publisher(), name().plainText());
@@ -281,7 +271,7 @@ namespace ClaFi
     //
     // Ahead of the diagnostic window going, because saveConfig reads the state that window is
     // standing in.
-    void ApplicationBase::finalize()
+    void WindowApplicationBase::finalize()
     {
         if (m_finalized)
             return;
@@ -290,23 +280,23 @@ namespace ClaFi
         finalizeDiagnosticLog();
     }
 
-    std::filesystem::path& ApplicationBase::initializeConfigPath(const AppParams& appParams)
+    std::filesystem::path& WindowApplicationBase::initializeConfigPath(const ApplicationProperties& properties)
     {
         std::wstring sysPath = Platform::appDataPath();
         if (!sysPath.empty())
         {
-            std::wstring subPath{ appParams.publisher };
+            std::wstring subPath{ properties.publisher };
             if (!subPath.empty())
                 subPath.push_back(k_pathSeparator);
-            subPath.append(appParams.name.plainText());
+            subPath.append(properties.name.plainText());
 
             m_configSysPath = sysPath;
             m_configSubPath = subPath;
-            m_configPublisherPath.reserve(sysPath.size() + appParams.publisher.size() + 1ull);
+            m_configPublisherPath.reserve(sysPath.size() + properties.publisher.size() + 1ull);
             m_configPublisherPath = sysPath;
-            if (!appParams.publisher.empty())
+            if (!properties.publisher.empty())
             {
-                m_configPublisherPath.append(appParams.publisher);
+                m_configPublisherPath.append(properties.publisher);
                 m_configPublisherPath.push_back(k_pathSeparator);
             }
             m_configFolder.reserve(m_configSysPath.size() + m_configSubPath.size());
@@ -336,7 +326,7 @@ namespace ClaFi
     // due, and a check that is due is told when it answers. A later answer is the Information
     // page's to show. The connection stays for the application's life: a handler that dropped it
     // would take down the listener it is running in.
-    void ApplicationBase::connectUpdateNotice()
+    void WindowApplicationBase::connectUpdateNotice()
     {
         UpdateCheck& updates = m_context.updateCheck();
         if (!updates.automatic())
@@ -357,7 +347,7 @@ namespace ClaFi
             }) };
     }
 
-    void ApplicationBase::postUpdateNotice()
+    void WindowApplicationBase::postUpdateNotice()
     {
         const UpdateCheck& updates = m_context.updateCheck();
         if (updates.state() != UpdateState::Newer)
@@ -385,10 +375,10 @@ namespace ClaFi
         });
     }
 
-    // ApplicationBase
+    // WindowApplicationBase
 
     template <ClassOfFormControl ControlClass, typename ... Args>
-    std::unique_ptr<Form<ControlClass>> ApplicationBase::createDialog(Args&&... args)
+    std::unique_ptr<Form<ControlClass>> WindowApplicationBase::createDialog(Args&&... args)
     {
         // **The root answers for its own focus**, and nothing is offered to it here. The window is
         // a dialog - that is FormBase's answer. A root that wants Home, End and the page keys,
@@ -407,20 +397,24 @@ namespace ClaFi
     {
     }
 
-    // Application
+    // WindowApplication
 
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
-    Application<PlatformType, GpuBackend>::Application(
+    WindowApplication<PlatformType, GpuBackend>::WindowApplication(
         typename PlatformType::Params&& platform,
-        const AppParams& appParams,
-        Dom::Dt::Section&& configSchema)
+        const ApplicationProperties& properties,
+        Dom::Dt::Section&& configSchema,
+        const std::span<const CommandLine::Option> options,
+        std::vector<std::wstring> arguments)
         :
         PlatformHolder<PlatformType>{ platform },
-        ApplicationBase{
+        WindowApplicationBase{
             this->m_platform,
-            appParams,
+            properties,
             gpuBackendFactory<GpuBackend>(),
-            std::forward<Dom::Dt::Section>(configSchema)
+            std::forward<Dom::Dt::Section>(configSchema),
+            options,
+            std::move(arguments)
         }
     {
         //m_platform.initialize(context());
@@ -428,7 +422,7 @@ namespace ClaFi
     }
 
     template <IsPlatform PlatformType, IsOptionalGpuBackend GpuBackend>
-    Application<PlatformType, GpuBackend>::~Application()
+    WindowApplication<PlatformType, GpuBackend>::~WindowApplication()
     {
         finalize();
     }

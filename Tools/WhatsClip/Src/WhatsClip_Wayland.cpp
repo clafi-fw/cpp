@@ -13,7 +13,7 @@ import ClaFi.Tools.WhatsClip.Languages;
 import ClaFi.Tools.WhatsClip.Main;
 import ClaFi.Tools.WhatsClip.Page;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 import ClaFi.Platform.Wayland;
 
 import ClaFi.Core.Foundation;

@@ -110,6 +110,9 @@ namespace ClaFi
         [[nodiscard]] bool isActive(const AnimationSlot&) const;
         [[nodiscard]] bool ticking() const { return m_ticking; }
         void externalTimerTick();
+        // Whether the platform has a loop that drives timers. A console application has none, and
+        // its animations are not armed.
+        static void usePlatformTimer(bool available) { s_platformTimerAvailable = available; }
         // Work more than one animation asks for, done once when the tick has stepped them all.
         void setTickEndListener(const void* owner, const OnTickEnd&);
         void clearTickEndListener(const void* owner);
@@ -120,6 +123,7 @@ namespace ClaFi
         void restartTimer();
         void notifyTickEnd();
     private:
+        inline static bool s_platformTimerAvailable{ true };
         AnimationCollection m_animations{};
         std::vector<TickEndListener> m_tickEndListeners{};
         UiTimer m_timer;
@@ -435,6 +439,8 @@ namespace ClaFi
 
     void AnimationController::restartTimer()
     {
+        if (!s_platformTimerAvailable)
+            return;
         m_timer.start(MilliSeconds{ static_cast<std::uint32_t>(k_animationTimerInterval.count()) });
     }
 

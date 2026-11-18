@@ -3,8 +3,9 @@ module;
 export module MillScene_App.Main;
 
 import MillScene_App.Icon;
+import MillScene_App.Options;
 
-import ClaFi.App.Application;
+import ClaFi.App.WindowApplication;
 import ClaFi.App.AppMenu;
 import ClaFi.App.Settings;
 
@@ -39,13 +40,11 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.Context.AppContext;
-import ClaFi.Core.Context.UpdateCheck;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.DomEngine;
 
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Cpu.Canvas;
-import ClaFi.Core.Graphics.Png;
 import ClaFi.Core.Graphics.Types;
 
 import ClaFi.Core.TextEngine.Text;
@@ -54,7 +53,6 @@ import ClaFi.Core.Foundation;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.System.Events;
-import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -127,43 +125,6 @@ namespace MillScene_App
     // What the scenes keep their views and choices under, a section for each by its name.
     export constexpr std::wstring_view k_sceneViewsNodeName{ L"SceneViews" };
 
-    // **What the command line asks for.** An empty name leaves that choice where the stored pick
-    // left it, and a render path opens no window at all: the frames are drawn straight into their
-    // files, so a scene can be read without a desktop.
-    export struct LaunchOptions
-    {
-        std::wstring scene; // the scene to open on, by the name it is offered under
-        std::wstring theme; // the theme to open on, by its name in allThemes
-        std::wstring render; // the PNG to write, in place of opening the window
-        float at{ 0.0f }; // the story's second the first frame falls on
-        int frames{ 1 }; // how many frames are written
-        float every{ 0.1f }; // the story's seconds between them
-        IntSize size{ 1280, 720 }; // the pixels each frame is written at
-        bool help{ false }; // the arguments asked how they are written
-    };
-
-    namespace
-    {
-        // **The command line's pick waits here**, because the form is built by the framework and
-        // takes the arguments it is given, not a launch: the showcase hands the pick over through
-        // this instead of through the form's constructor.
-        std::optional<LaunchOptions> s_launch{};
-    }
-
-    // The arguments after the program's name, read into what they ask for. `error` says what the
-    // first one that cannot be read should have said, and is left alone where every one reads.
-    export [[nodiscard]] std::optional<LaunchOptions> parseLaunchOptions(
-        std::span<const std::wstring_view> arguments, std::wstring& error);
-    // How the arguments are written, for --help and for one that cannot be read.
-    export [[nodiscard]] std::wstring_view launchUsage();
-    // Writes what could not be read of the arguments, and how they are written, on the error
-    // stream: whoever ran the process reads it beside the files a render writes.
-    export void reportLaunchError(const std::wstring& error);
-    // Writes how the arguments are written, where --help asked for them.
-    export void reportLaunchUsage();
-    // Draws the frames the options name, each into its own PNG; answers the process's exit code.
-    export int renderLaunchFrames(const LaunchOptions&);
-
     // Enters fullscreen from a window, and leaves it for the placement the window had.
     void toggleFullscreen(FormBase&);
     // The swatch of the theme at `themeIndex` of allThemes, drawn into the icon's rect.
@@ -223,7 +184,7 @@ namespace MillScene_App
     {
     public:
         template<typename... Args>
-        explicit MillSceneForm(const CreateParams&, Args...);
+        MillSceneForm(const CreateParams&, const LaunchOptions&, Args...);
     private:
         // Draw time and frame rate over the span the chart shows
         struct WindowReadings
@@ -328,6 +289,8 @@ namespace MillScene_App
         void showSceneMenu(ContextPopupEvent&, Action& fullscreenToggle);
 
     private:
+        // What the command line asked the form to open on; empty leaves the stored pick.
+        LaunchOptions m_launch{};
         DialogTitle& m_titleBar{ createTopBar<DialogTitle>(
             appContext().appName())
         };
@@ -425,9 +388,11 @@ namespace MillScene_App
     };
 
     template <typename ... Args>
-    MillSceneForm::MillSceneForm(const CreateParams& params, Args... args)
+    MillSceneForm::MillSceneForm(const CreateParams& params, const LaunchOptions& launch,
+        Args... args)
         :
-        Panel{ params, std::forward<Args>(args)... }
+        Panel{ params, std::forward<Args>(args)... },
+        m_launch{ launch }
     {
         // **Before anything reads the scene.** The info bar takes its colours from the theme, so
         // the stored one has to be the scene's by now.
@@ -457,7 +422,7 @@ namespace MillScene_App
     }
 
     // What the application is called, wherever its name is shown and wherever its config is kept.
-    export [[nodiscard]] AppParams millSceneAppParams();
+    export [[nodiscard]] ApplicationProperties millSceneApplicationProperties();
 
     // **What this application keeps of its own**, handed to the application beside the framework's
     // schema and merged with it: the picked scene, the theme picked for the scenes that offer
@@ -468,7 +433,7 @@ namespace MillScene_App
 
     /// @brief Builds the showcase into a form of the given application, runs it, and answers what
     /// the form answered.
-    export int runMillSceneShowcase(ApplicationBase&, const LaunchOptions&);
+    export int runMillSceneShowcase(WindowApplicationBase&);
 
 
 //-----------------------------------------------------------------------------
@@ -1301,8 +1266,8 @@ void MillSceneForm::restoreScene()
     // **A name on the command line wins over the kept pick**, and is not kept itself: the launch
     // is a look at a scene, not a change to where the showcase opens next.
     std::wstring name = (appContext().config() / k_sceneNodeName).get<std::wstring>();
-    if (s_launch && !s_launch->scene.empty())
-        name = s_launch->scene;
+    if (!m_launch.scene.empty())
+        name = m_launch.scene;
     for (std::size_t index = 0; index != sceneCount(); ++index)
     {
         if (sceneAt(index).name() == name)
@@ -1324,8 +1289,8 @@ void MillSceneForm::storeScene()
 void MillSceneForm::restoreSceneTheme()
 {
     std::wstring name = (appContext().config() / k_sceneThemeNodeName).get<std::wstring>();
-    if (s_launch && !s_launch->theme.empty())
-        name = s_launch->theme;
+    if (!m_launch.theme.empty())
+        name = m_launch.theme;
     if (name.empty())
         return;
 
@@ -1615,343 +1580,9 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
 }
 
 
-//-----------------------------------------------------------------------------
-
-
-    namespace
+    ApplicationProperties millSceneApplicationProperties()
     {
-        // The value the option at `at` takes, moving past it; nothing where the list runs out.
-        std::optional<std::wstring_view> valueAfter(
-            const std::span<const std::wstring_view> arguments, std::size_t& at)
-        {
-            if (at + 1 >= arguments.size())
-                return std::nullopt;
-            ++at;
-            return arguments[at];
-        }
-
-        // The whole number `text` holds, or nothing where it holds anything else.
-        std::optional<int> integerOf(const std::wstring_view text)
-        {
-            const std::wstring copy{ text };
-            wchar_t* end = nullptr;
-            const long value = std::wcstol(copy.c_str(), &end, 10);
-            if (end == copy.c_str() || *end != L'\0' || value < 1 || value > 100000)
-                return std::nullopt;
-            return static_cast<int>(value);
-        }
-
-        // The seconds `text` holds, or nothing where it holds anything else.
-        std::optional<float> secondsOf(const std::wstring_view text)
-        {
-            const std::wstring copy{ text };
-            wchar_t* end = nullptr;
-            const float value = std::wcstof(copy.c_str(), &end);
-            if (end == copy.c_str() || *end != L'\0' || !std::isfinite(value) || value < 0.0f)
-                return std::nullopt;
-            return value;
-        }
-
-        // A size written as the pixels across and down: 1280x720.
-        std::optional<IntSize> sizeOf(const std::wstring_view text)
-        {
-            const std::size_t across = text.find(L'x');
-            if (across == std::wstring_view::npos)
-                return std::nullopt;
-            const std::optional<int> width = integerOf(text.substr(0, across));
-            const std::optional<int> height = integerOf(text.substr(across + 1));
-            if (!width || !height)
-                return std::nullopt;
-            return IntSize{ *width, *height };
-        }
-
-        // The scene `name` is offered under, or nothing where no scene goes by it.
-        PathArt::Scene* sceneNamed(const std::wstring& name, PathArt::MillScene& mill,
-            PathArt::SceneList& others)
-        {
-            if (mill.name() == name)
-                return &mill;
-            for (const std::unique_ptr<PathArt::Scene>& scene : others)
-            {
-                if (scene->name() == name)
-                    return scene.get();
-            }
-            return nullptr;
-        }
-
-        // The index in allThemes that `name` is offered under, or nothing where none goes by it.
-        std::optional<std::size_t> themeNamed(const std::wstring& name)
-        {
-            std::size_t index = 0;
-            for (const PathArt::SceneTheme& theme : PathArt::Themes::allThemes)
-            {
-                if (theme.name == name)
-                    return index;
-                ++index;
-            }
-            return std::nullopt;
-        }
-
-        // The file a frame goes to: the path itself where there is one frame, and the frame's
-        // number before its extension where there are more.
-        std::filesystem::path framePath(const std::wstring& render, const int frame,
-            const int frames)
-        {
-            if (frames == 1)
-                return render;
-            const std::filesystem::path given{ render };
-            const std::wstring numbered = given.stem().wstring() + L"-" + std::to_wstring(frame)
-                + given.extension().wstring();
-            return given.parent_path() / numbered;
-        }
-
-        // What went wrong, where whoever reads the files will see it: beside them, on the error
-        // stream, rather than in a window that a render never opens.
-        void report(const std::wstring& text)
-        {
-            std::fprintf(stderr, "%ls\n", text.c_str());
-        }
-
-        // **A render that fails says so beside the files it did not write.** A windowed process is
-        // given no console of its own, so the error stream is not where whoever asked for the
-        // frames is looking.
-        void reportRenderFailure(const LaunchOptions& options, const std::wstring& text)
-        {
-            report(text);
-            std::ofstream failures{
-                std::filesystem::path{ options.render }.wstring() + L".error.txt"
-            };
-            failures << toUtf8(text) << '\n';
-        }
-    }
-
-    std::optional<LaunchOptions> parseLaunchOptions(
-        const std::span<const std::wstring_view> arguments, std::wstring& error)
-    {
-        LaunchOptions options{};
-        for (std::size_t at = 0; at != arguments.size(); ++at)
-        {
-            const std::wstring_view argument = arguments[at];
-            if (argument == L"--help" || argument == L"-h")
-            {
-                options.help = true;
-                continue;
-            }
-            if (argument == L"--scene" || argument == L"--theme")
-            {
-                const std::optional<std::wstring_view> read = valueAfter(arguments, at);
-                if (!read)
-                {
-                    error = std::wstring{ argument } + L" needs a name";
-                    return std::nullopt;
-                }
-                std::wstring& name = argument == L"--scene" ? options.scene : options.theme;
-                name = *read;
-                continue;
-            }
-            if (argument == L"--render")
-            {
-                const std::optional<std::wstring_view> read = valueAfter(arguments, at);
-                if (!read)
-                {
-                    error = L"--render needs a file name";
-                    return std::nullopt;
-                }
-                options.render = *read;
-                continue;
-            }
-            if (argument == L"--at" || argument == L"--every")
-            {
-                const std::optional<std::wstring_view> read = valueAfter(arguments, at);
-                const std::optional<float> seconds = read ? secondsOf(*read) : std::nullopt;
-                if (!seconds)
-                {
-                    error = std::wstring{ argument } + L" needs a number of seconds";
-                    return std::nullopt;
-                }
-                float& target = argument == L"--at" ? options.at : options.every;
-                target = *seconds;
-                continue;
-            }
-            if (argument == L"--frames")
-            {
-                const std::optional<std::wstring_view> read = valueAfter(arguments, at);
-                const std::optional<int> frames = read ? integerOf(*read) : std::nullopt;
-                if (!frames)
-                {
-                    error = L"--frames needs a count";
-                    return std::nullopt;
-                }
-                options.frames = *frames;
-                continue;
-            }
-            if (argument == L"--size")
-            {
-                const std::optional<std::wstring_view> read = valueAfter(arguments, at);
-                const std::optional<IntSize> size = read ? sizeOf(*read) : std::nullopt;
-                if (!size)
-                {
-                    error = L"--size needs the pixels as <width>x<height>";
-                    return std::nullopt;
-                }
-                options.size = *size;
-                continue;
-            }
-            error = L"unknown argument " + std::wstring{ argument };
-            return std::nullopt;
-        }
-        return options;
-    }
-
-    std::wstring_view launchUsage()
-    {
-        return L"MillScene [--scene <name>] [--theme <name>] [--render <file.png>]\n"
-               L"          [--at <seconds>] [--frames <count>] [--every <seconds>]\n"
-               L"          [--size <width>x<height>] [--help]\n"
-               L"\n"
-               L"  --scene   the scene to open on, by the name it is offered under\n"
-               L"  --theme   the theme to open on, by the name it is offered under\n"
-               L"  --render  writes the frames as PNG files instead of opening a window\n"
-               L"  --at      the story's second the first frame falls on, 0 on its own\n"
-               L"  --frames  how many frames are written, 1 on its own\n"
-               L"  --every   the story's seconds between them, 0.1 on its own\n"
-               L"  --size    the pixels each frame is written at, 1280x720 on its own\n";
-    }
-
-    void reportLaunchError(const std::wstring& error)
-    {
-        std::fprintf(stderr, "%ls\n%ls", error.c_str(), std::wstring{ launchUsage() }.c_str());
-    }
-
-    void reportLaunchUsage()
-    {
-        std::fprintf(stdout, "%ls", std::wstring{ launchUsage() }.c_str());
-    }
-
-    // Draws the frames themselves. The exported renderLaunchFrames guards it, so that what a scene
-    // throws lands beside the files rather than ending the process without a word.
-    int renderFrames(const LaunchOptions& options)
-    {
-        PathArt::MillScene mill{};
-        PathArt::SceneList others{ PathArt::createScenes() };
-        // A render that names no scene is the mill, the scene the showcase opens on.
-        PathArt::Scene* scene = options.scene.empty()
-            ? &mill
-            : sceneNamed(options.scene, mill, others);
-        if (!scene)
-        {
-            reportRenderFailure(options, L"no scene is offered under " + options.scene);
-            return 1;
-        }
-        if (scene->offersThemes())
-        {
-            if (!options.theme.empty())
-            {
-                const std::optional<std::size_t> theme = themeNamed(options.theme);
-                if (!theme)
-                {
-                    reportRenderFailure(options, L"no theme is offered under " + options.theme);
-                    return 1;
-                }
-                scene->setTheme(*theme);
-            }
-            // The theme is worn through a crossfade timed on the clock, so the frame waits it out
-            // and lands its last step: what is written is the theme, not a half-worn blend.
-            std::this_thread::sleep_for(k_themeCrossfade);
-            scene->animationTick();
-        }
-        else if (!options.theme.empty())
-        {
-            reportRenderFailure(options, std::wstring{ scene->name() } + L" offers no themes");
-            return 1;
-        }
-
-        Graphics::Canvas canvas{ std::make_unique<Graphics::Cpu::CpuBackend>(options.size) };
-        const FloatRect bounds = {
-            0.0f,
-            0.0f,
-            static_cast<float>(options.size.x),
-            static_cast<float>(options.size.y)
-        };
-        const PathArt::SceneParams params = {
-            .bounds = bounds,
-            .transform = canvas.transform(),
-            .backend = Graphics::BackendType::Cpu
-        };
-        scene->prepare(params);
-
-        const float cycleSeconds = std::chrono::duration<float>(scene->cycleDuration()).count();
-        const IntRect whole = { 0, 0, options.size.x, options.size.y };
-        for (int frame = 0; frame != options.frames; ++frame)
-        {
-            const float seconds = options.at + static_cast<float>(frame) * options.every;
-            const float cycles = std::floor(seconds / cycleSeconds);
-            const PathArt::SceneTime time = {
-                .cycleTime = seconds / cycleSeconds - cycles,
-                .cyclesPassed = static_cast<std::int64_t>(cycles)
-            };
-
-            Graphics::Bitmap* drawn = nullptr;
-            canvas.beginPaint(nullptr, whole);
-            scene->draw(canvas, bounds, time);
-            canvas.endPaint(nullptr, whole, drawn);
-            if (!drawn)
-            {
-                reportRenderFailure(options, L"the scene drew no pixels");
-                return 1;
-            }
-
-            const std::optional<std::string> png = Graphics::encodePng(*drawn);
-            if (!png)
-            {
-                reportRenderFailure(options, L"the pixels could not be written as a PNG");
-                return 1;
-            }
-
-            const std::filesystem::path path = framePath(options.render, frame, options.frames);
-            std::ofstream file{ path, std::ios::binary };
-            file.write(png->data(), static_cast<std::streamsize>(png->size()));
-            if (!file)
-            {
-                reportRenderFailure(options, L"cannot write " + path.wstring());
-                return 1;
-            }
-        }
-        return 0;
-    }
-
-    int renderLaunchFrames(const LaunchOptions& options)
-    {
-        // **What is thrown lands beside the files**, where whoever asked for them is looking: a
-        // render that ended the process without a word would be read as having written nothing.
-        try
-        {
-            return renderFrames(options);
-        }
-        catch (const std::exception& error)
-        {
-            reportRenderFailure(options, L"the render could not go on: " + fromUtf8(error.what()));
-            return 1;
-        }
-    }
-
-    AppParams millSceneAppParams()
-    {
-        return {
-            .name = Text{ L"MillScene" },
-            .publisher = L"ClaFi Framework",
-            .description = Text{
-                L"Shows the ClaFi path painter at work: "
-                L"a watermill landscape in a choice of themes and seven more scenes, "
-                L"animated on a single CPU thread or through the graphics card, "
-                L"with their frame times charted live."
-            },
-            .version = CLAFI_APP_VERSION,
-            .updates = UpdateSource{
-                .repository = L"clafi-fw/cpp",
-                .tagPrefix = L"MillScene-v"
-            }
-        };
+        return millSceneProperties(L"MillScene");
     }
 
     Dom::Dt::Section createMillSceneConfigSchema()
@@ -1975,35 +1606,26 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
         L"Made with Natural Earth. Free vector and raster map data @ https://naturalearthdata.com."
     };
 
-    int runMillSceneShowcase(ApplicationBase& application, const LaunchOptions& options)
+    int runMillSceneShowcase(WindowApplicationBase& application)
     {
-        // **A render draws and returns, with no window made over it.** The application stands for
-        // the platform the scenes are made on, which they cannot be made without.
-        if (!options.render.empty())
-            return renderLaunchFrames(options);
+        const CommandLine& commandLine = application.commandLine();
+        if (const std::optional<int> answer = answerCommandLine(commandLine))
+            return *answer;
 
-        // **A name the command line names is checked before the window opens**, so a scene the
-        // showcase does not have is said so rather than opening where the stored pick left it.
+        std::wstring error{};
+        const std::optional<LaunchOptions> options = launchOptionsOf(commandLine, error);
+        if (!options)
         {
-            PathArt::MillScene mill{};
-            PathArt::SceneList others{ PathArt::createScenes() };
-            if (!options.scene.empty() && !sceneNamed(options.scene, mill, others))
-            {
-                report(L"no scene is offered under " + options.scene);
-                return 1;
-            }
-            if (!options.theme.empty() && !themeNamed(options.theme))
-            {
-                report(L"no theme is offered under " + options.theme);
-                return 1;
-            }
+            writeErrorToConsole(error);
+            writeErrorToConsole(L"\n");
+            writeErrorToConsole(commandLine.usage());
+            return ExitCode::Misused;
         }
-        // Handed to the form as it stands, and never written back to the config.
-        s_launch = options;
 
         application.context().addInformation(k_earthSceneIsArt);
         application.context().addInformation(k_naturalEarthCredit);
         const auto form = application.createDialog<MillSceneForm>(
+            *options,
             UiElement::Dialog,
             MinSize{ k_minWindowWidth / 2.0f, k_minWindowHeight / 2.0f },
             PreferredSize{ k_minWindowWidth, k_minWindowHeight }

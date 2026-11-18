@@ -54,7 +54,7 @@ namespace ClaFi::StdActions
     export extern Action findPrevious;
 
     // Puts all fifteen in the application's scope, which is what a shortcut is looked up in.
-    // ApplicationBase::initialize calls it, so an application has the standard commands without
+    // WindowApplicationBase::initialize calls it, so an application has the standard commands without
     // writing anything. An application that wants a key back clears that action's shortcut.
     export void registerAll();
 }
