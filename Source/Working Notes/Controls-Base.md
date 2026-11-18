@@ -95,6 +95,16 @@ for a bar never resized): `showPage` states it or clears it as the tab's tree co
 The three bars are full bleed because a strip inset further than the window's border reads as a
 card floating on the window rather than as a band of it.
 
+**The width cap is released with the frame.** The 360-pixel text width and the 240-pixel scroll
+height are what keep a long question a dialog rather than a wall of text. Once the user takes the
+frame, both stop being limits: the text takes the room the user gave it and the scroll box shows
+what is taller than the window.
+
+**The title is the window's caption since 2026-11-18.** It is a `Label` whose hit test answers
+`HitTest::Title`, so a press on it starts a window move, and the window states an open range so an
+edge sizes it. The first move or size is the user taking the frame: the dialog stops fitting its
+content and stops following the control it was raised from. See FormBase setUserResizable.
+
 ## WithHeldHeader
 
 Moved out of ExpanderBase on 2026-11-06 and made generic over the header, so that ToolBarBox could

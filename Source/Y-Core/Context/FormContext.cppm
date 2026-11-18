@@ -199,6 +199,10 @@ namespace ClaFi
         //
         // Answers whether the system may go on with it. False keeps the press.
         virtual bool wnd_systemMouseDown() = 0;
+        // The user is moving or sizing the window from its frame. See Context
+        virtual void wnd_userFrameStarted() = 0;
+        // The user's move or size of the window is over. See Context
+        virtual void wnd_userFrameEnded() = 0;
         virtual void wnd_mouseDown(PointInForm, InputStamp, bool& handled) = 0;
         virtual void wnd_mouseUp(PointInForm) = 0;
         virtual void wnd_doubleClick(PointInForm, InputStamp) = 0;

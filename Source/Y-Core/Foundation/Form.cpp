@@ -224,6 +224,9 @@ namespace ClaFi
 
         if (m_popupTargetForm && m_popupTargetForm->m_activePopup == this)
             m_popupTargetForm->m_activePopup = nullptr;
+        // The owner must not be left holding a popup that is going down.
+        if (m_popupTargetForm && m_popupTargetForm->m_frameHeldPopup == this)
+            m_popupTargetForm->m_frameHeldPopup = nullptr;
         // Both directions. A popup normally goes first, but nothing enforces it - a popup is a
         // value the caller holds - and a popup left behind reads its owner on the way down.
         if (m_activePopup)
@@ -531,6 +534,10 @@ namespace ClaFi
 
     void FormBase::closeActivePopup()
     {
+        // **A popup being moved or sized is not taken down by the focus change it caused**, even
+        // when it stands on a popup of this form. See wnd_userFrameStarted.
+        if (holdsFramePopup())
+            return;
         if (!m_activePopup)
             return;
 
@@ -650,6 +657,18 @@ namespace ClaFi
             return;
         m_minWidth = value;
         placementChanged();
+    }
+
+    // **The range opens before the user asks for it.** A platform offers an edge by the range the
+    // window states, so a form that waits for the gesture has nothing to grab: the press that would
+    // have started it goes to the control standing there. The window is still fitted to its content
+    // until then - see stateSizeRange, which reads this.
+    void FormBase::setUserResizable(const bool value)
+    {
+        if (m_userResizable == value)
+            return;
+        m_userResizable = value;
+        stateSizeRange();
     }
 
     bool FormBase::readyToClose()
@@ -867,6 +886,31 @@ namespace ClaFi
         Tooltip::handleUserInput();
         closeActivePopup();
         return !m_activePopup;
+    }
+
+    // **The user has taken the frame.** The window stops following what it was placed on and keeps
+    // the size it has, so the drag can carry it where the user takes it. The range it drags inside
+    // was opened by setUserResizable, before there was an edge to take hold of.
+    //
+    // **The owner holds the popup for the length of the gesture.** A move or size loop takes the
+    // focus and gives it back, and the owner would otherwise take the popup down on the first of
+    // those changes - see wnd_focusChanged.
+    void FormBase::wnd_userFrameStarted()
+    {
+        if (!m_userResizable)
+            return;
+        if (m_popupTargetForm)
+            m_popupTargetForm->m_frameHeldPopup = this;
+        if (!m_followsTarget)
+            return;
+        m_followsTarget = false;
+        setAutoFit(AutoFit::No);
+    }
+
+    void FormBase::wnd_userFrameEnded()
+    {
+        if (m_popupTargetForm && m_popupTargetForm->m_frameHeldPopup == this)
+            m_popupTargetForm->m_frameHeldPopup = nullptr;
     }
 
     void FormBase::wnd_mouseDown(PointInForm pt, InputStamp stamp, bool& /*handled*/)
@@ -1471,9 +1515,11 @@ namespace ClaFi
         FormFocusChangeEvent event{ *this };
         emitEvent(event);
 
-        // it's needed when our app is deactivated,
-        // but that also closes the active menu
-        // when it is resizing by user, which is a bummer
+        // A focus change is not always the user going elsewhere. A popup being moved or sized
+        // takes the focus and gives it back, and the owner held it from the start of that gesture;
+        // taking it down here closed a message box on the very click that began to move it.
+        if (m_frameHeldPopup && m_activePopup != m_frameHeldPopup)
+            m_frameHeldPopup = nullptr;
         closeActivePopup();
     }
 
@@ -2414,11 +2460,11 @@ namespace ClaFi
         // the MinSizes set inside it and by nothing else, so one that states none is held only by
         // whatever default the system keeps for a window nothing was stated for.
         //
-        // **A form its content sizes leaves the user nothing to drag.** It is placed again around
-        // whatever the content comes to, so an edge pulled out would only spring back. Its range
-        // is the one size the content asked for, and a platform answers a range of one size with
-        // a window that has no edge to take hold of and no maximize. See UI-Types#autofit
-        const bool contentSized = m_autoFit == AutoFit::Yes;
+        // **A form its content sizes leaves the user nothing to drag**, unless it says the user may
+        // frame it - see setUserResizable. That form states the floor and the ceiling its content
+        // asks for while AutoFit still places the window around what it measured, so there is an
+        // edge to take hold of and a range the drag is held inside.
+        const bool contentSized = m_autoFit == AutoFit::Yes && !m_userResizable;
         const ScaledSize minSize = contentSized
             ? m_calculatedSize
             : m_content.composedMinSize();
@@ -2480,6 +2526,9 @@ namespace ClaFi
 
     void FormBase::followPopupTarget2()
     {
+        // The user has moved or sized this window: it stands where they left it from now on.
+        if (!m_followsTarget)
+            return;
         const Control* target = placementTarget();
         if (!target)
             return;
@@ -2519,6 +2568,20 @@ namespace ClaFi
     {
         const Control* target = placementTarget();
         m_placementTargetBounds = target ? placementTargetBounds(*target) : FloatRect{};
+    }
+
+    // **A frame gesture holds the whole stack.** The popup being moved or sized is held by the
+    // form it stands on, and that form may stand on another - a message box raised from the
+    // Settings page of the app menu. A focus change reaches the top of the stack, which has to
+    // find the hold before closeActivePopup walks down and takes the message box with the menu.
+    bool FormBase::holdsFramePopup() const
+    {
+        for (const FormBase* form = this; form; form = form->m_activePopup)
+        {
+            if (form->m_frameHeldPopup)
+                return true;
+        }
+        return false;
     }
 
     void FormBase::dropActivePopup()

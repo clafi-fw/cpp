@@ -77,8 +77,24 @@ namespace ClaFi::Controls
         // Drops the question under the control it was raised from and runs it. Returns once the
         // dialog has closed, leaving the derived class to say what the answer was.
         void runDialog();
+        // The user has taken the frame: the text may use the room they give it.
+        void wnd_userFrameStarted() override;
     private:
-        Control& m_title;
+        // The title band, taken by the system as the window's caption: a press on it starts a
+        // window move. See Control-Foundation
+        class Caption : public Label
+        {
+        public:
+            template <typename... Args>
+            Caption(const CreateParams& params, Args&&... args)
+                :
+                Label{ params, std::forward<Args>(args)... }
+            {
+            }
+        protected:
+            void hitTest(HitTestEvent&) const override;
+        };
+        Caption& m_title;
         Panel& m_content;
         Label& m_icon;
         MessageBoxBody& m_box;

@@ -138,8 +138,9 @@ namespace ClaFi::PlatformImplementation::Windows
         void setTitle(const std::wstring_view value) override { setText(value); }
         void update() override { ::UpdateWindow(handle()); }
         void setSizeRange(ScaledSize minSize, ScaledSize maxSize) override;
-        // Whether the user sizes this window: a dialog whose range is more than one size.
-        [[nodiscard]] bool userSized() const { return m_Role == WindowRole::Dialog && m_userSized; }
+        // Whether the user sizes this window: a range more than one size, in a role that offers
+        // edges. A message box is a menu that says so. See setSizeRange
+        [[nodiscard]] bool userSized() const { return m_Role != WindowRole::Tooltip && m_userSized; }
         void setFrame(const WindowFrame& value) override { m_frameDesign = value; }
         [[nodiscard]] const WindowFrame& frameDesign() const { return m_frameDesign; }
         // **The frame this window applies**, in real pixels: the design, less the corners when
@@ -202,8 +203,8 @@ namespace ClaFi::PlatformImplementation::Windows
         // How far an ordinary window's rect reaches past its geometry, before the margins cap it.
         [[nodiscard]] int ringReach() const;
         [[nodiscard]] static FrameMargins ringWithin(const FrameMargins& margins, int reach);
-        // Writes the caption and sizing styles a dialog wears now; answers whether any changed.
-        bool writeDialogStyles();
+        // Writes the caption and sizing styles this window wears now; answers whether any changed.
+        bool writeSystemStyles();
         void stateFrameChange(); // has the system read the styles again, moving and sizing nothing
     private:
         static HWND getFocusedWnd() { return s_focusedWnd; }
@@ -601,14 +602,14 @@ namespace ClaFi::PlatformImplementation::Windows
             maxSize.y >= k_maxFloat ? 0 : static_cast<int>(maxSize.y)
         };
 
-        // **A range of one size is a dialog the user does not size.** It wears neither the sizing
+        // **A range of one size is a window the user does not size.** It wears neither the sizing
         // frame nor the maximize box, which takes its edges, the maximize its caption and its
         // window menu offer, and the system's snapping; its ring goes with them - see ring.
-        const bool rangeOpen = minSize != maxSize;
-        if (m_Role != WindowRole::Dialog || rangeOpen == m_userSized)
-            return;
-        m_userSized = rangeOpen;
-        if (writeDialogStyles())
+        //
+        // **A menu may state an open range too** - a message box that lets the user frame it. It
+        // keeps no caption of its own, so it gains only the sizing frame.
+        m_userSized = minSize != maxSize;
+        if ((m_Role == WindowRole::Dialog || m_Role == WindowRole::Menu) && writeSystemStyles())
             stateFrameChange();
     }
 
@@ -717,19 +718,26 @@ namespace ClaFi::PlatformImplementation::Windows
         };
     }
 
-    // **A fullscreen dialog wears neither the caption nor the sizing frame**, as a borderless
+    // **A fullscreen window wears neither the caption nor the sizing frame**, as a borderless
     // window does, so the system has nothing to move, size or snap it by. In a window the caption
-    // stands, and the sizing frame with it while the user sizes it.
-    bool Window::writeDialogStyles()
+    // stands, and the sizing frame with it while the user sizes it. A menu has no system caption
+    // of its own, so it takes only the sizing frame - what a message box that lets the user frame
+    // it says it wants.
+    bool Window::writeSystemStyles()
     {
         constexpr DWORD k_captionStyles = WS_CAPTION;
         constexpr DWORD k_sizingStyles = WS_SIZEBOX | WS_MAXIMIZEBOX;
         DWORD worn = 0;
         if (!isFullscreen())
         {
-            worn = k_captionStyles;
+            if (m_Role == WindowRole::Dialog)
+                worn = k_captionStyles;
             if (m_userSized)
-                worn |= k_sizingStyles;
+            {
+                worn |= WS_SIZEBOX;
+                if (m_Role == WindowRole::Dialog)
+                    worn |= WS_MAXIMIZEBOX;
+            }
         }
         const DWORD style = ::GetWindowLongW(handle(), GWL_STYLE);
         const DWORD written = (style & ~(k_captionStyles | k_sizingStyles)) | worn;
@@ -1141,7 +1149,7 @@ namespace ClaFi::PlatformImplementation::Windows
             m_fullscreenReturn.reset();
         }
 
-        writeDialogStyles();
+        writeSystemStyles();
         fullscreenChanged(nextBounds);
         // Entering brings the window to the top of the z-order, where a fullscreen one stands.
         const UINT zOrderFlags = value ? 0 : SWP_NOZORDER;

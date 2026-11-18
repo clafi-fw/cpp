@@ -292,6 +292,30 @@ second run.
 **While the folder exists, the window also joins the compositor's session** - see
 Platform::addFormToSession. Ticking Keep settings on this PC needs no restart.
 
+## IForm wnd_userFrameStarted
+
+**The user has taken the window's frame**: its caption is being dragged, or an edge is. The
+platform calls it as the gesture begins - on Win32 from the frame press and from the system's own
+move or size command, on Wayland as the move or size is handed to the compositor. On Wayland the
+call comes for a toplevel alone, a popup having no move or size request to make.
+
+A form that lets the user frame it stops fitting itself to its content here, and stops following
+the control it was placed on - see FormBase setUserResizable. Every other form is told and does
+nothing with it.
+
+**A frame gesture holds the whole popup stack.** The popup being moved or sized is held by the
+form it stands on; a form that owns the stack finds the hold before it takes the chain down.
+`wnd_userFrameEnded` is what lets it go.
+
+## IForm wnd_userFrameEnded
+
+**The form's frame gesture is done as far as it can see.** On Win32 the system's move or size loop
+has ended. On Wayland the compositor holds the pointer to the end, so the form is told as it hands
+the drag over and hears nothing more.
+
+A form that held a popup through the gesture, or was held by its owner, lets it go here - see
+FormBase setUserResizable.
+
 ## IPlatformWindow::showWindowMenu
 
 Maximize, Minimize, Move, Close and whatever else the desktop adds. A window drawing its own title

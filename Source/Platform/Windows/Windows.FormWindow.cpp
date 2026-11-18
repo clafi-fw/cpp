@@ -140,7 +140,8 @@ namespace ClaFi
     {
         LRESULT result = HTCLIENT;
         // A dialog its content sizes has no edges to take, and neither has a fullscreen one: they
-        // belong to the controls there.
+        // belong to the controls there. A menu says it as well, and the user may size one that
+        // states an open range - see Window::userSized.
         if ((userSized() && !isFullscreen()) || WindowRole::Menu == role())
         {
             const int inside = ::GetSystemMetrics(SM_CXFRAME) * 2;
@@ -191,8 +192,9 @@ namespace ClaFi
                     result = HTRIGHT;
             }
         }
-        // A menu is not sized: its edges are non-client and nothing more.
-        if (WindowRole::Menu == role() && result != HTCLIENT)
+        // A menu is not sized unless it states a range the user may move in: its edges are
+        // non-client and nothing more. See Window::userSized
+        if (WindowRole::Menu == role() && result != HTCLIENT && !userSized())
             result = HTBORDER;
         return result;
     }
@@ -263,6 +265,18 @@ namespace ClaFi
             }
             break;
 
+        // **The user has taken the window's frame.** The message comes as the move or size loop
+        // begins, before the first WM_SIZE, so the form is settled on staying where the drag puts
+        // it before it is asked to lay out at a size it has not taken yet.
+        case WM_ENTERSIZEMOVE:
+            m_form.wnd_userFrameStarted();
+            break;
+
+        // The loop is over, and the focus it moved is back where it belongs.
+        case WM_EXITSIZEMOVE:
+            m_form.wnd_userFrameEnded();
+            break;
+
         // **The whole window is the client area**: the frame is the framework's own, drawn in the
         // surface. Maximized included: the system sizes a maximized window to the work area plus
         // its resize borders, so the client hangs off the monitor by that much. The form is told
@@ -287,7 +301,10 @@ namespace ClaFi
                     // sizes while the question standing over it is unanswered.
                     msg.result = 0;
                     msg.handled = true;
+                    break;
                 }
+                // The press is the user taking the frame, before the move or size loop begins.
+                m_form.wnd_userFrameStarted();
                 break;
             }
 

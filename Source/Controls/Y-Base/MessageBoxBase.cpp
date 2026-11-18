@@ -112,8 +112,9 @@ namespace ClaFi::Controls
             Spacing{ 0.0f }
         },
         // The title is the header of this window the way a section header is the header of a
-        // section: the same colours, and the text style that names a section.
-        m_title{ createTopBar<Label>(
+        // section: the same colours, and the text style that names a section. A press on it is a
+        // press on the window's caption rather than on this label - see Caption.
+        m_title{ createTopBar<Caption>(
             UiElement::SectionHeader,
             Radius{ 0.0f },
             Padding{ k_barPaddingX, k_barPaddingY },
@@ -161,6 +162,10 @@ namespace ClaFi::Controls
         // The window is whatever the question and its answers came out as. A dialog is never laid
         // out into a size it was given: it has no size until it has been filled.
         setAutoFit(AutoFit::Yes);
+        // The user may take the frame: a press on the title moves the window, and an edge sizes it.
+        // The first move or size holds the window where they leave it and stops it following the
+        // control it was raised from - see wnd_userFrameStarted.
+        setUserResizable(true);
 
         if (iconPainter)
         {
@@ -184,6 +189,25 @@ namespace ClaFi::Controls
             setPlacement(FormPlacement::BottomLeft, owner->boundsInForm());
         }
         MessageBoxForm::execute();
+    }
+
+    void MessageBoxBase::wnd_userFrameStarted()
+    {
+        // **The width the text was built to stops being its limit.** The cap is what kept a long
+        // question wrapping in a window nobody would want; once the user states the size, the
+        // text takes the room they gave it and the scroll box shows what is taller than that.
+        const bool takingFrame = autoFit() == AutoFit::Yes;
+        MessageBoxForm::wnd_userFrameStarted();
+        if (!takingFrame)
+            return;
+        m_box.body().setMaxSize({ k_maxFloat, k_maxFloat });
+        m_box.setMaxSize({ k_maxFloat, k_maxFloat });
+        invalidateAlign();
+    }
+
+    void MessageBoxBase::Caption::hitTest(HitTestEvent& event) const
+    {
+        event.zone = HitTest::Title;
     }
 
 }

@@ -111,6 +111,14 @@ closed, so nothing outlives the call.
 closes it before that press acts. A dialog window would leave that form live while the question
 stands.
 
+**The title drags the window, and the window may be sized.** A press on the title is a press on the
+window's caption, and an edge sizes it. The first move or size keeps both the size and the place:
+the dialog stops following the control it was raised from - see FormBase setUserResizable.
+
+**The text takes the room the user gives it.** The width that keeps a long question wrapping in a
+readable window stops being a limit once the frame is the user's, and the scroll box shows what is
+taller than the window.
+
 ## DropdownControlBase
 
 The strip is the SplitButtonBase part. **The derived class supplies the popup** in showDropdown.

@@ -434,3 +434,50 @@ sliders as well as scroll bars.
 
 Open: Undo while the arrows hold the position walks back the step before them, and the restore
 that lands there ends the hold with the arrows' steps unrecorded.
+
+## FormBase setUserResizable
+
+2026-11-18. Oj, of the message box: "Make those message boxes use draggable title and be
+resizable - meaning that if the user expressed desire to control the size or position, the popup
+stops following the target".
+
+**The range is opened before there is an edge to take.** Win32 answers `WM_NCHITTEST` from what the
+window has already stated, and Wayland states a toplevel's range to the compositor ahead of the
+press, so a form that opened its range on the press that began the drag would have nothing to grab:
+the press goes to the control standing there. `setUserResizable` therefore states the open range
+while `AutoFit::Yes` still places the window around its content. `stateSizeRange` reads it, and is
+the only place the two answers meet.
+
+**The gesture is what ends the fit.** Win32 tells the window at `WM_NCLBUTTONDOWN` with the caption
+or a frame edge, and at `WM_ENTERSIZEMOVE` for a move or size the system menu issued; Wayland tells
+it as the move or size is handed to the compositor. All of them reach `wnd_userFrameStarted`, which
+turns `AutoFit` off and stops `followPopupTarget2` at once. The form only takes this route when it
+said it may be framed, so a main window and every other menu behave as they did.
+
+**The title is the caption.** A message box's title band is a `Label` whose hit test answers
+`HitTest::Title`, which is what both platforms already read as a window move. The label is not a
+`DialogTitle`: a message box has no minimize or maximize, and its band keeps the section-header
+look it had.
+
+**A Wayland popup is still not moved or sized.** `xdg_popup` has no move or resize request, and the
+only size it takes is the one its positioner is given. A message box there states the open range
+and keeps the caption hit test, but the platform answers no edge and the title press stops at the
+popup. The feature is Win32's until a popup learns a client-side gesture or a message box can be a
+toplevel.
+
+**The press that began the gesture took the box down, fixed the same day.** A synthetic test in the
+Themes tool opened the Delete theme message box, clicked its title, and watched it vanish. The
+system's move loop moves the focus to the popup and back, and `wnd_focusChanged` read every one of
+those changes as the user going elsewhere: `closeActivePopup` ran on the press that started the
+move. The sizing frame had the same fault on release. The form the popup stands on now holds it
+from `wnd_userFrameStarted` to `wnd_userFrameEnded` - `WM_ENTERSIZEMOVE` and `WM_EXITSIZEMOVE` on
+Win32 - and a focus change the loop causes is not a dismissal. The same test then showed a title
+click and drag moving the box, a sizing-frame click and drag resizing it, both surviving, and a
+focus change after the gesture still closing it.
+
+**The Settings page repeated it, and the hold had to cover the stack.** The Delete stored settings
+box stands on the app menu, which stands on the main form. The hold was on the app menu; the focus
+change reached the main form, whose `closeActivePopup` walked down and closed the app menu with the
+box on it. `holdsFramePopup` searches the active popup chain now, so the whole stack is held. A
+temporary two-level message box in the Themes harness, driven with `WM_ENTERSIZEMOVE` and a focus
+change, showed the box surviving the held focus and closing once the gesture ended.

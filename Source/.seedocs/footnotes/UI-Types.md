@@ -192,6 +192,10 @@ Either way the placement is clamped to the monitor.
 Build its DialogTitle with `TitleButtons::Close`. Placed again, the dialog keeps its position and
 takes the new size.
 
+**A dialog that lets the user frame it keeps its content fit until the user takes the frame.**
+`FormBase::setUserResizable` opens the range the platform offers an edge by; the first move or size
+then holds both the size and the place. A message box is built this way.
+
 ## DropdownWidth
 
 **Under a top icon the strip sits below it** and carries the text, as tall as that text. This

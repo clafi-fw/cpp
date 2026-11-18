@@ -473,6 +473,16 @@ namespace ClaFi::PlatformImplementation::Wayland
     {
         m_titlePressed = false;
 
+        // **A popup is placed by its positioner, and has no move or size request to make.** Only a
+        // toplevel is the compositor's to drag or size; a press on a popup's title or edge goes no
+        // further. See WindowRole and IForm::wnd_userFrameStarted
+        if (!isToplevelRole())
+            return;
+
+        // **The form gives up its content fit before the drag begins**, the same way the Win32
+        // window learns it at WM_ENTERSIZEMOVE - see FormBase::wnd_userFrameStarted.
+        m_form.wnd_userFrameStarted();
+
         // **The form is told the button went up, and it did not.**
         //
         // From the moment the compositor takes over it holds the pointer, and every event until
@@ -486,5 +496,9 @@ namespace ClaFi::PlatformImplementation::Wayland
             requestWindowResize(edges, stamp);
         else
             requestWindowMove(stamp);
+
+        // **The compositor holds the pointer to the end**, so no exit message follows and there is
+        // no gesture left for the hold to cover. See IForm::wnd_userFrameEnded
+        m_form.wnd_userFrameEnded();
     }
 }

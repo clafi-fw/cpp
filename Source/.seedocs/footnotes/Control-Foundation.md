@@ -133,6 +133,25 @@ as the MillScene showcase does.
 - A menu or a tooltip of the form takes no window focus, and the hold stands under it.
 - A dialog the form opens takes the focus, and the hold is let go until the focus is back.
 
+## FormBase setUserResizable
+
+**A form the user may frame.** It opens its size range while `AutoFit::Yes` still places the window
+around its content, so the platform has an edge to offer before the user asks for one. The first
+move or size of the window stops the fit and keeps both the size and the place: the form stops
+following the control it was placed on.
+
+**The range is the content's own floor and ceiling** - `composedMinSize` and `maxSize`. A form
+that states a floor of its own keeps it.
+
+**A popup is held through its own frame gesture.** The system's move or size loop takes the focus
+and gives it back, and a focus change is normally read as the user going elsewhere. The form the
+popup stands on holds it from `wnd_userFrameStarted` to `wnd_userFrameEnded`; a form holding a
+whole stack finds the hold before it walks down and closes what stands on it, so a message box
+raised from the app menu's Settings page is held too.
+
+**Called from the form's own constructor**, before the window is shown. A message box is the case
+it was added for.
+
 ## FormControlBase
 
 **The root's style decides how the window looks** - its frame, its radius and the shadow it casts

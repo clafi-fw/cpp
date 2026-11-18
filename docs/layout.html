@@ -1471,6 +1471,10 @@ placement cuts a window down to and no further, and it is composed from the
 of the form becomes a placement: the window's bounds are recomputed from the content instead
 of the content being cut to fit the window. It is what a menu, a tooltip and a dropdown
 are.</li>
+<li><strong>A form that lets the user frame it can still be content-sized.</strong>
+<code>FormBase::setUserResizable</code> opens the range the platform offers an edge by, while
+<code>AutoFit::Yes</code> keeps the window fitted to what it holds. The first move or size fixes
+both the size and the place, and the form stops following the control it was placed on.</li>
 </ul>
 
 <svg class="grid-fig" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg" role="img"

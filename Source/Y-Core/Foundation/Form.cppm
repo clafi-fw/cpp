@@ -410,6 +410,8 @@ namespace ClaFi
         void wnd_mouseMove(PointInForm) override;
         void wnd_ncMouseDown(PointInForm, InputStamp) override;
         bool wnd_systemMouseDown() override;
+        void wnd_userFrameStarted() override;
+        void wnd_userFrameEnded() override;
         void wnd_mouseDown(PointInForm, InputStamp, bool& handled) override;
         void wnd_mouseUp(PointInForm) override;
         void wnd_doubleClick(PointInForm, InputStamp) override;
@@ -453,6 +455,10 @@ namespace ClaFi
         [[nodiscard]] virtual FloatRect placementTargetBounds(const Control& target) const
             { return target.boundsInForm(); }
         void rememberPlacementTarget();
+        // Whether the user may size this window and drag it by its title while it is still sized
+        // by its content. See Control-Foundation
+        [[nodiscard]] bool userResizable() const { return m_userResizable; }
+        void setUserResizable(bool);
     private:
         using ShadowPainters = std::vector<std::unique_ptr<Graphics::ShadowPainter>>;
         // The line a run of arrow presses keeps, as an offset from the stop it was written on.
@@ -543,6 +549,8 @@ namespace ClaFi
         [[nodiscard]] bool holdingScale() const
             { return m_popupTargetForm && m_scaler == &m_ownScaler; }
         void followPopupTarget2();
+        // Whether this form, or a popup nested on it, is being moved or sized by the user.
+        [[nodiscard]] bool holdsFramePopup() const;
         // Takes the active popup down with the control it stood on - see forgetControl.
         void dropActivePopup();
         SearchControlResult controlAt(Control&, PointInControl, FloatRect clipRect);
@@ -620,6 +628,16 @@ namespace ClaFi
         ScaledSize m_statedMinSize{ -1.0f, -1.0f };
         ScaledSize m_statedMaxSize{ -1.0f, -1.0f };
         AutoFit m_autoFit{ AutoFit::No };
+        // **The user may take the frame.** Such a form opens its size range while AutoFit still
+        // keeps the window around its content, and the first frame gesture fixes both the size and
+        // the place. See setUserResizable.
+        bool m_userResizable{};
+        // The form follows the control it was placed on until the user moves or sizes it.
+        bool m_followsTarget{ true };
+        // **The popup this form is holding through a frame gesture.** The system's move or size
+        // loop takes the focus and gives it back, and that is not the user going elsewhere - see
+        // wnd_focusChanged and wnd_userFrameStarted.
+        FormBase* m_frameHeldPopup{};
         bool m_visible{};
         bool m_keepsScreenOn{};
         float m_windowFocusedFactor{ 0.0f };
