@@ -8,6 +8,8 @@ import ClaFi.Documents.Utils;
 import ClaFi.Browser.Actions;
 import ClaFi.Browser.Control;
 
+import ClaFi.Icons.DeleteIcon;
+
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Menu;
 import ClaFi.Controls.MessageDialog;
@@ -281,12 +283,11 @@ namespace ClaFi::Documents
             << L"Are you sure you want to permanently delete "
             << (soleEdited ? L"it?" : L"them?");
 
-        // A warning, not a question: the triangle is what says the answer cannot be taken back.
         MessageDialog dialog{
             initiator,
             std::wstring{ L"Delete " }.append(soleEdited ? kind.noun : kind.nounPlural),
             message,
-            MessageIcon::Warning
+            Icons::DeleteIcon::drawDocumentDelete
         };
         dialog.add(DialogAnswer::Yes);
         dialog.add(DialogAnswer::No);

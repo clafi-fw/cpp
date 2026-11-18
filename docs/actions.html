@@ -663,7 +663,8 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
             <div class="info"><strong>They sit above Core because an action carries an icon.</strong>
             <code>AppActions</code> is the scope and stays in Core, which cannot see <code>Icons</code>. Delete
             carries <code>Icons::DeleteIcon</code>, so a button or a menu item that presents it draws that icon
-            with nothing written.</div>
+            with nothing written. <code>drawDocumentDelete</code> and <code>drawSettingsDelete</code> place a
+            red X over the subject that a permanent-delete confirmation removes.</div>
             <div class="info"><strong>Delete carries the Delete key, and a control whose Delete key means more
             than the command keeps the key.</strong> A text box with nothing selected deletes forward, by a
             character or by a word, so it answers that key itself; the action removes the selection, and that is

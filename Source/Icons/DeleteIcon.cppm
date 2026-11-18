@@ -1,9 +1,13 @@
 export module ClaFi.Icons.DeleteIcon;
 
+import ClaFi.Icons.GearIcon;
+
 import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
+import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.UiTypes;
+
 import ClaFi.StdLib;
 
 namespace ClaFi::Icons::DeleteIcon
@@ -18,43 +22,83 @@ namespace ClaFi::Icons::DeleteIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         size -= strokeWidth;
 
-        const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        const Matrix3x2 transform = Matrix3x2::Translation(
+            iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
         Canvas& canvas = event.canvas();
         PixelPath path;
 
-        const Color bodyColor = event.textRgb(InkGrade::Strong);
-        // The lid and the handle are drawn apart from the body so that they can be told apart, and
-        // they are the part of a bin that moves.
-        //
-        // TODO: should these carry the accent? Accent marks the object being acted on, and what is
-        // acted on here is the thing going in rather than the lid.
-        const Color accentColor = bodyColor;
+        const Color iconColor = event.textRgb(InkGrade::Strong);
 
-        // Bin body, tapered, reaching the bottom edge.
-        path.moveTo(size * 0.15f, size * 0.12f);
-        path.lineTo(size * 0.85f, size * 0.12f);
-        path.lineTo(size * 0.78f, size * 1.00f);
-        path.lineTo(size * 0.22f, size * 1.00f);
+        path.moveTo(size * 0.22f, size * 0.30f);
+        path.lineTo(size * 0.78f, size * 0.30f);
+        path.lineTo(size * 0.71f, size * 0.92f);
+        path.lineTo(size * 0.29f, size * 0.92f);
         path.close();
 
-        // The ribs down the front.
-        path.moveTo(size * 0.40f, size * 0.30f);
-        path.lineTo(size * 0.42f, size * 0.80f);
-        path.moveTo(size * 0.60f, size * 0.30f);
-        path.lineTo(size * 0.58f, size * 0.80f);
-        canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
+        path.moveTo(size * 0.42f, size * 0.43f);
+        path.lineTo(size * 0.43f, size * 0.77f);
+        path.moveTo(size * 0.58f, size * 0.43f);
+        path.lineTo(size * 0.57f, size * 0.77f);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(iconColor, strokeWidth) }, &transform);
 
-        // Handle, on the top edge.
         path.clear();
-        path.moveTo(size * 0.35f, size * 0.12f);
-        path.lineTo(size * 0.35f, 0.0f);
-        path.lineTo(size * 0.65f, 0.0f);
-        path.lineTo(size * 0.65f, size * 0.12f);
+        path.moveTo(size * 0.39f, size * 0.20f);
+        path.lineTo(size * 0.39f, size * 0.10f);
+        path.lineTo(size * 0.61f, size * 0.10f);
+        path.lineTo(size * 0.61f, size * 0.20f);
+        path.moveTo(size * 0.13f, size * 0.24f);
+        path.lineTo(size * 0.87f, size * 0.24f);
+        canvas.drawPath(path, { PathDrawLayer::Stroke(iconColor, strokeWidth) }, &transform);
+    }
 
-        // Lid, wider than the bin it sits on.
-        path.moveTo(size * 0.05f, size * 0.12f);
-        path.lineTo(size * 0.95f, size * 0.12f);
-        canvas.drawPath(path, { PathDrawLayer::Stroke(accentColor, strokeWidth) }, &transform);
+    export void drawDocumentDelete(DrawIconEvent& event)
+    {
+        const FloatRect& iconRect = event.iconRect();
+        const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
+        const float size = std::min(iconRect.width(), iconRect.height()) - strokeWidth;
+        const Matrix3x2 transform = Matrix3x2::Translation(
+            iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        Canvas& canvas = event.canvas();
+        PixelPath path;
+
+        path.moveTo(size * 0.12f, size * 0.08f);
+        path.lineTo(size * 0.61f, size * 0.08f);
+        path.lineTo(size * 0.80f, size * 0.27f);
+        path.lineTo(size * 0.80f, size * 0.81f);
+        path.lineTo(size * 0.12f, size * 0.81f);
+        path.close();
+        canvas.fillPath(path, event.textRgb(InkGrade::Strong), &transform);
+
+        path.clear();
+        path.moveTo(size * 0.48f, size * 0.48f);
+        path.lineTo(size * 0.92f, size * 0.92f);
+        path.moveTo(size * 0.92f, size * 0.48f);
+        path.lineTo(size * 0.48f, size * 0.92f);
+        canvas.drawPath(path,
+            { PathDrawLayer::Stroke(event.surfaceRgb(), strokeWidth * 2.0f) }, &transform);
+        canvas.drawPath(path,
+            { PathDrawLayer::Stroke(event.inkRgb(InkWell::Red), strokeWidth) }, &transform);
+    }
+
+    export void drawSettingsDelete(DrawIconEvent& event)
+    {
+        GearIcon::draw(event);
+
+        const FloatRect& iconRect = event.iconRect();
+        const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
+        const float size = std::min(iconRect.width(), iconRect.height()) - strokeWidth;
+        const Matrix3x2 transform = Matrix3x2::Translation(
+            iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f });
+        PixelPath path;
+
+        path.moveTo(size * 0.48f, size * 0.48f);
+        path.lineTo(size * 0.92f, size * 0.92f);
+        path.moveTo(size * 0.92f, size * 0.48f);
+        path.lineTo(size * 0.48f, size * 0.92f);
+        event.canvas().drawPath(path,
+            { PathDrawLayer::Stroke(event.surfaceRgb(), strokeWidth * 2.0f) }, &transform);
+        event.canvas().drawPath(path,
+            { PathDrawLayer::Stroke(event.inkRgb(InkWell::Red), strokeWidth) }, &transform);
     }
 
 }

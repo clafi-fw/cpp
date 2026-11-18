@@ -6,6 +6,7 @@ module ClaFi.App.Settings;
 import ClaFi.App.ThemePick;
 import ClaFi.App.Themes;
 
+import ClaFi.Icons.DeleteIcon;
 import ClaFi.Icons.MoonIcon;
 import ClaFi.Icons.SunIcon;
 import ClaFi.Icons.SunMoonIcon;
@@ -595,7 +596,7 @@ namespace ClaFi
             m_keepSettings,
             L"Delete stored settings",
             message,
-            MessageIcon::Warning
+            Icons::DeleteIcon::drawSettingsDelete
         };
         dialog.onLinkClick(openLinkedFolder);
         dialog.add(DialogAnswer::Yes);
