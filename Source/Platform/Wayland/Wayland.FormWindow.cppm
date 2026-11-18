@@ -75,6 +75,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         bool m_titlePressed{ false };
         IntPoint m_titlePressPos{};
         InputStamp m_titleStamp{};
+        // Whether this frame gesture began on the title, and so owes the form its press's release.
+        bool m_popupUserFromTitle{ false };
         // The size the form was last told about, which is not the same question as the size the
         // window is. A configure names a size the window takes at once, so comparing the next one
         // against the window would find them equal and report nothing, leaving the form holding a
@@ -118,6 +120,16 @@ namespace ClaFi::PlatformImplementation::Wayland
 
     void FormWindow::pointerMoved(IntPoint pt)
     {
+        // **The client is moving or sizing a popup**, which has no request of its own. The pointer
+        // stays with the gesture and nothing under it is hovered. See Window::placePopupUser
+        if (popupUserGestureActive())
+        {
+            updatePopupUserGesture(pt);
+            if (const std::uint32_t edges = popupUserEdges())
+                display().setResizeCursor(edges);
+            return;
+        }
+
         // **A press on the title that has travelled is a drag.** It is recognised here rather than
         // on the press, and against the press's own position, so the threshold measures the whole
         // gesture rather than the last step of it.
@@ -127,6 +139,15 @@ namespace ClaFi::PlatformImplementation::Wayland
             const int threshold = scaledLength(k_dragThreshold);
             if (std::abs(travel.x) > threshold || std::abs(travel.y) > threshold)
             {
+                if (isPopupRole() && canUserFramePopup())
+                {
+                    m_form.wnd_userFrameStarted();
+                    beginPopupUserMove(m_titlePressPos);
+                    updatePopupUserGesture(pt);
+                    m_popupUserFromTitle = true;
+                    m_titlePressed = false;
+                    return;
+                }
                 handOverToCompositor(m_titlePressPos, m_titleStamp, 0);
                 return;
             }
@@ -147,6 +168,18 @@ namespace ClaFi::PlatformImplementation::Wayland
     {
         if (!down)
         {
+            if (popupUserGestureActive())
+            {
+                endPopupUserGesture();
+                if (m_popupUserFromTitle)
+                    m_form.wnd_mouseUp(pt.toFloat());
+                m_popupUserFromTitle = false;
+                m_form.wnd_userFrameEnded();
+                m_titlePressed = false;
+                return;
+            }
+            if (m_titlePressed)
+                m_form.wnd_frameRelease();
             m_titlePressed = false;
             m_form.wnd_mouseUp(pt.toFloat());
             return;
@@ -155,11 +188,20 @@ namespace ClaFi::PlatformImplementation::Wayland
         // **An edge is the compositor's to drag**, and the form is asked first because a form with
         // something open - a menu standing over the frame - answers that the press is its own.
         if (const std::uint32_t edges = borderResizeEdges(pt))
+        {
             if (m_form.wnd_systemMouseDown())
             {
+                if (isPopupRole() && canUserFramePopup())
+                {
+                    m_form.wnd_userFrameStarted();
+                    beginPopupUserResize(edges, pt);
+                    m_popupUserFromTitle = false;
+                    return;
+                }
                 handOverToCompositor(pt, stamp, edges);
                 return;
             }
+        }
 
         // **A second and a third press are presses.** Each carries the stamp of the press it
         // actually is, because a drag begun from a double click is a real gesture and the
@@ -173,7 +215,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // client's, so the window answers itself. The form is asked as for any press the system
         // takes - see wnd_systemMouseDown - and the press reaches nothing else: it is the
         // window's. A window its content sizes has no other size to toggle to.
-        if (clicks == 2 && m_form.wnd_hitTest(pt.toFloat()) == HitTest::Title)
+        if (clicks == 2 && !isPopupRole() && m_form.wnd_hitTest(pt.toFloat()) == HitTest::Title)
         {
             if (m_form.wnd_systemMouseDown() && userSized())
             {
@@ -196,6 +238,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         // bar; the drag begins only if the pointer then travels - see pointerMoved.
         if (!handled && m_form.wnd_hitTest(pt.toFloat()) == HitTest::Title)
         {
+            m_form.wnd_framePress();
             m_titlePressed = true;
             m_titlePressPos = pt;
             m_titleStamp = stamp;
@@ -475,9 +518,14 @@ namespace ClaFi::PlatformImplementation::Wayland
 
         // **A popup is placed by its positioner, and has no move or size request to make.** Only a
         // toplevel is the compositor's to drag or size; a press on a popup's title or edge goes no
-        // further. See WindowRole and IForm::wnd_userFrameStarted
+        // further, and the form is told the button went up because this client took the press.
+        // See WindowRole and IForm::wnd_userFrameStarted
         if (!isToplevelRole())
+        {
+            m_form.wnd_frameRelease();
+            m_form.wnd_mouseUp(pt.toFloat());
             return;
+        }
 
         // **The form gives up its content fit before the drag begins**, the same way the Win32
         // window learns it at WM_ENTERSIZEMOVE - see FormBase::wnd_userFrameStarted.

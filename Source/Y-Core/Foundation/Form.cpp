@@ -913,6 +913,20 @@ namespace ClaFi
             m_popupTargetForm->m_frameHeldPopup = nullptr;
     }
 
+    // **A press on the frame is held before it is a move.** The focus change it causes otherwise
+    // takes the popup down before the drag has travelled - see wnd_userFrameStarted.
+    void FormBase::wnd_framePress()
+    {
+        if (m_popupTargetForm)
+            m_popupTargetForm->m_frameHeldPopup = this;
+    }
+
+    void FormBase::wnd_frameRelease()
+    {
+        if (m_popupTargetForm && m_popupTargetForm->m_frameHeldPopup == this)
+            m_popupTargetForm->m_frameHeldPopup = nullptr;
+    }
+
     void FormBase::wnd_mouseDown(PointInForm pt, InputStamp stamp, bool& /*handled*/)
     {
         // Tricky: instead of capturing the mouse by ourself we let Windows do it
@@ -2127,18 +2141,6 @@ namespace ClaFi
     void FormBase::paintPass(void* nativeContext, const IntRect& rect, const Graphics::PixelPath* contentClip,
         Graphics::Bitmap*& outData)
     {
-        if (Graphics::IBackend* backend = m_canvas.backend())
-        {
-            const FloatRect root = rootRect();
-            const ScaledPadding padding = m_content.scaledPadding();
-            const IntRect covered = {
-                static_cast<int>(std::ceil(root.left + padding.x)),
-                static_cast<int>(std::ceil(root.top + padding.y)),
-                static_cast<int>(std::floor(root.right - padding.x)),
-                static_cast<int>(std::floor(root.bottom - padding.y))
-            };
-            backend->setCoveredBase(contentClip ? IntRect{} : covered);
-        }
         m_canvas.beginPaint(nativeContext, rect);
         const FloatRect floatRect = rect.toFloat();
         paintShadow(floatRect, contentClip != nullptr);

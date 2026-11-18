@@ -294,10 +294,10 @@ Platform::addFormToSession. Ticking Keep settings on this PC needs no restart.
 
 ## IForm wnd_userFrameStarted
 
-**The user has taken the window's frame**: its caption is being dragged, or an edge is. The
-platform calls it as the gesture begins - on Win32 from the frame press and from the system's own
-move or size command, on Wayland as the move or size is handed to the compositor. On Wayland the
-call comes for a toplevel alone, a popup having no move or size request to make.
+**The user has taken the window's frame**: its caption is being dragged, or an edge is. Theplatform calls it as the gesture begins - on Win32 from the frame press and from the system's own
+move or size command, on Wayland as a toplevel is handed to the compositor or as the client starts
+moving or sizing a popup. A popup has no move or size request of its own, so the client tracks that
+gesture to its release.
 
 A form that lets the user frame it stops fitting itself to its content here, and stops following
 the control it was placed on - see FormBase setUserResizable. Every other form is told and does
@@ -310,11 +310,23 @@ form it stands on; a form that owns the stack finds the hold before it takes the
 ## IForm wnd_userFrameEnded
 
 **The form's frame gesture is done as far as it can see.** On Win32 the system's move or size loop
-has ended. On Wayland the compositor holds the pointer to the end, so the form is told as it hands
-the drag over and hears nothing more.
+has ended. On Wayland a toplevel is told as the gesture is handed over, and a popup the client
+frames is told on the pointer release that ends it.
 
 A form that held a popup through the gesture, or was held by its owner, lets it go here - see
 FormBase setUserResizable.
+
+## IForm wnd_framePress
+
+**A press has landed on the frame before it is a move.** The platform calls it as the press that
+could start a drag or a size is taken, so the form can hold the popup before the focus change that
+press causes reaches its owner. `wnd_userFrameStarted` follows once the press has travelled, or an
+edge is taken.
+
+## IForm wnd_frameRelease
+
+**The frame press ended without a move or a size.** The hold taken by `wnd_framePress` is let go
+here. A gesture's own `wnd_userFrameEnded` is the release it gets instead.
 
 ## IPlatformWindow::showWindowMenu
 

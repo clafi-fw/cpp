@@ -143,11 +143,12 @@ following the control it was placed on.
 **The range is the content's own floor and ceiling** - `composedMinSize` and `maxSize`. A form
 that states a floor of its own keeps it.
 
-**A popup is held through its own frame gesture.** The system's move or size loop takes the focus
-and gives it back, and a focus change is normally read as the user going elsewhere. The form the
-popup stands on holds it from `wnd_userFrameStarted` to `wnd_userFrameEnded`; a form holding a
-whole stack finds the hold before it walks down and closes what stands on it, so a message box
-raised from the app menu's Settings page is held too.
+**A popup is held through its own frame gesture.** On Win32 the system's move or size loop takes the
+focus and gives it back, and a focus change is normally read as the user going elsewhere; on
+Wayland the client moves and sizes the popup itself. The form the popup stands on holds it from
+`wnd_userFrameStarted` to `wnd_userFrameEnded`; a form holding a whole stack finds the hold before
+it walks down and closes what stands on it, so a message box raised from the app menu's Settings
+page is held too.
 
 **Called from the form's own constructor**, before the window is shown. A message box is the case
 it was added for.

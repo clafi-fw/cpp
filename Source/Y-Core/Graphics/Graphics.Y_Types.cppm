@@ -504,12 +504,10 @@ namespace ClaFi::Graphics
 
         // **Whether a frame starts from nothing.** Off by default: a frame otherwise keeps whatever
         // the last one left, which costs nothing and is invisible for as long as the children
-        // cover every pixel. A window whose alpha is read by whoever shows it cannot rely on that
-        // - the pixels outside a rounded corner are exactly the ones nothing covers.
+        // cover every pixel. A window whose alpha is read by whoever shows it cannot rely on that:
+        // a transparent base clears the whole dirty rect, content included, before the pass paints
+        // it.
         virtual void setTransparentBase(bool) {}
-        // The part of the frames to come that their content covers, which a transparent base
-        // leaves as it stands; empty, the whole of each frame starts from nothing.
-        virtual void setCoveredBase(const IntRect&) {}
         virtual void beginPaint(void* nativeContext, const IntRect* dirtyRect) = 0;
         virtual void endPaint(void* nativeContext, const IntRect* dirtyRect, Bitmap*& outData) = 0;
         virtual void* getNativeRenderTarget() const = 0;

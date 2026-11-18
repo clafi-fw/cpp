@@ -337,17 +337,15 @@ and not isWindowFocused, which a popup's form answers for the window it stands o
 
 ## FormBase paintPass
 
-**An ordinary pass clears only outside the root's padded rectangle** (2026-11-08). A window that
-carries alpha - every window on Windows - used to start each paint from nothing over its whole dirty
-rect. On the CPU backend that was a clear of the MillScene's scene panel every frame, under a panel
-and a scene that covered it again: 5.3% of Oj's frame in a Visual Studio profile at 3436 x 2051.
-The children cover the root's rectangle inside its padding, the rule a frame without alpha already
-rests on, so FormBase states that rectangle through IBackend::setCoveredBase and the CPU backend
-leaves it as it stands. The padding ring, the margins under the shadow and each corner square still
-start from nothing. Direct2D clears its whole rect as before, on the GPU.
-
-The rule now carries more: a translucent surface inside an alpha window, with nothing opaque under
-it, would build up over repaints where it used to be laid over a clear base each time.
+**A transparent pass starts from nothing over its whole dirty rect** (2026-11-18). An ordinary
+pass clears only outside the root's padded rectangle (2026-11-08): a window that carries alpha used
+to clear its whole dirty rect on the CPU backend, which was 5.3% of Oj's MillScene frame in a
+Visual Studio profile at 3436 x 2051, and the children were said to cover the padded rectangle
+anyway. The rule did not hold for a translucent surface inside that rectangle: with nothing opaque
+under it, a shadow or a control's own alpha built up over repaints. The Wayland window shadow
+showed it as a frame that thickened with every repaint. The CPU backend clears the whole dirty rect
+again when the frame carries alpha; the clear the optimization avoided is paid, and
+IBackend::setCoveredBase is gone. Direct2D clears its whole rect on the GPU as before.
 
 ## Control::contentAroundText
 

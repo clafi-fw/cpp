@@ -24,6 +24,10 @@ namespace ClaFi::PlatformImplementation::Wayland
     // reach of the input region past the geometry, and the reach of the form window's edge test.
     export constexpr int k_resizeGrab = 8;
 
+    // **The longest side a popup the user frames may hold**, in real pixels - a runaway request is
+    // not worth an allocation the size of a screen.
+    constexpr float k_maxUserPopupLength = 16384.0f;
+
     // A toplevel's ordinary size in surface pixels, and whether it stands maximized. See Platform
     export struct RememberedPlacement
     {
@@ -53,11 +57,11 @@ namespace ClaFi::PlatformImplementation::Wayland
         // placement, since a surface takes one role and keeps it. Nothing above this layer knows
         // the difference; the placement kind is the whole of what the form said.
         [[nodiscard]] bool isLayerRole() const { return m_layerSurface != nullptr; }
-        // **Whether the user sizes this window**: a dialog whose range is more than one size. One a
-        // form's content sizes states its range as that one size - see setSizeRange.
+        // **Whether the user sizes this window**: a dialog, or a popup a form lets the user frame.
         [[nodiscard]] bool userSized() const
         {
-            return m_role == WindowRole::Dialog && m_pendingMinSize != m_pendingMaxSize;
+            return (m_role == WindowRole::Dialog || m_role == WindowRole::Menu)
+                && m_pendingMinSize != m_pendingMaxSize;
         }
         [[nodiscard]] wl_surface* surface() const { return m_surface; }
         // An xdg toplevel, which is what another client can parent a window of its own by.
@@ -211,6 +215,18 @@ namespace ClaFi::PlatformImplementation::Wayland
         // before asking - see FormWindow::handOverToCompositor.
         void requestWindowMove(InputStamp);
         void requestWindowResize(std::uint32_t edges, InputStamp);
+        // **A popup has no move or size request**: the client moves and sizes one the form lets
+        // the user frame. See Wayland.FormWindow
+        [[nodiscard]] bool canUserFramePopup() const;
+        [[nodiscard]] bool popupUserGestureActive() const
+        {
+            return m_popupMoving || m_popupResizing;
+        }
+        [[nodiscard]] std::uint32_t popupUserEdges() const { return m_popupUserEdges; }
+        void beginPopupUserMove(IntPoint pt);
+        void beginPopupUserResize(std::uint32_t edges, IntPoint pt);
+        void updatePopupUserGesture(IntPoint pt);
+        void endPopupUserGesture();
         [[nodiscard]] DisplayManager& display() const { return m_display; }
         wl_surface* m_surface{ nullptr };
         // **The size in real pixels**, which is what the buffer is and what the framework lays out
@@ -230,6 +246,9 @@ namespace ClaFi::PlatformImplementation::Wayland
         }
         void ackConfigure(std::uint32_t serial);
         PlacedWindow placePopup(const WindowPlacement&);
+        [[nodiscard]] FloatRect currentPopupUserRect() const;
+        [[nodiscard]] IntPoint popupParentPoint(IntPoint pt) const;
+        void placePopupUser();
         void createPopup();
         void destroyPopupRole();
         // What the compositor is told to place this window by. The caller owns the result and
@@ -307,6 +326,13 @@ namespace ClaFi::PlatformImplementation::Wayland
         // onPopupRepositioned.
         std::uint32_t m_repositionToken{ 0 };
         bool m_repositionPending{ false };   // the last request is unanswered, so nothing paints
+        bool m_popupMoving{ false };
+        bool m_popupResizing{ false };
+        std::uint32_t m_popupUserEdges{ 0 };
+        FloatRect m_popupUserRect{};
+        IntPoint m_popupGrabOffset{};
+        IntPoint m_popupPosition{};
+        bool m_popupPositionSeen{ false };
         bool m_moveToCommit{ false };   // a request was answered, and its configure wants a commit
         zxdg_toplevel_decoration_v1* m_decoration{ nullptr };
         // **Present together or not at all.** With them the compositor states the real ratio and
@@ -1115,6 +1141,8 @@ namespace ClaFi::PlatformImplementation::Wayland
         m_configured = false;
         m_repositionPending = false;
         m_moveToCommit = false;
+        m_popupPositionSeen = false;
+        endPopupUserGesture();
     }
 
     FrameMargins Window::surfaceMargins() const
@@ -1547,6 +1575,225 @@ namespace ClaFi::PlatformImplementation::Wayland
                 m_configured ? 1 : 0);
 
         return { geometryPixels().toFloat() };
+    }
+
+    // **A popup the user frames is moved and sized here.** xdg_popup has neither request, so the
+    // client repositions it and resizes its surface. The form has already turned its fitting off -
+    // see FormBase::wnd_userFrameStarted.
+    bool Window::canUserFramePopup() const
+    {
+        return m_popup && m_configured && canReposition() && userSized()
+            && m_placement.placement == FormPlacement::BottomLeft;
+    }
+
+    FloatRect Window::currentPopupUserRect() const
+    {
+        FrameMargins parentMargins{};
+        if (m_parent)
+            parentMargins = m_parent->appliedFrame().margins;
+
+        const IntSize size = geometryPixels();
+        if (m_popupPositionSeen)
+        {
+            const IntPoint origin = toBufferPoint(m_popupPosition);
+            return {
+                static_cast<float>(origin.x),
+                static_cast<float>(origin.y),
+                static_cast<float>(origin.x + size.x),
+                static_cast<float>(origin.y + size.y)
+            };
+        }
+
+        const FloatRect& anchor = m_placement.anchorRect;
+        const float left = anchor.left - static_cast<float>(parentMargins.left);
+        const float top = anchor.bottom - static_cast<float>(parentMargins.top)
+            + m_placement.clearance;
+        return {
+            left,
+            top,
+            left + static_cast<float>(size.x),
+            top + static_cast<float>(size.y)
+        };
+    }
+
+    // **The pointer in its parent's geometry coordinates.** A popup's pointer arrives in its own
+    // surface, which stands off its geometry by the shadow margins. The origin is the one the
+    // compositor last named, not the one this client last asked for: a request moves the surface
+    // after its own event, and measuring against the ask turns the delay into a runaway.
+    IntPoint Window::popupParentPoint(IntPoint pt) const
+    {
+        const FrameMargins margins = appliedFrame().margins;
+        const FloatRect actual = currentPopupUserRect();
+        return {
+            static_cast<int>(std::lround(actual.left)) - margins.left + pt.x,
+            static_cast<int>(std::lround(actual.top)) - margins.top + pt.y
+        };
+    }
+
+    void Window::beginPopupUserMove(IntPoint pt)
+    {
+        m_popupUserRect = currentPopupUserRect();
+        const IntPoint parent = popupParentPoint(pt);
+        m_popupGrabOffset = {
+            parent.x - static_cast<int>(std::lround(m_popupUserRect.left)),
+            parent.y - static_cast<int>(std::lround(m_popupUserRect.top))
+        };
+        m_popupMoving = true;
+    }
+
+    void Window::beginPopupUserResize(std::uint32_t edges, IntPoint pt)
+    {
+        m_popupUserRect = currentPopupUserRect();
+        m_popupUserEdges = edges;
+        m_popupResizing = true;
+    }
+
+    void Window::updatePopupUserGesture(IntPoint pt)
+    {
+        if (!popupUserGestureActive())
+            return;
+
+        const FloatRect actual = currentPopupUserRect();
+        const IntPoint parent = popupParentPoint(pt);
+
+        // **The place is the pointer's, not a step added to the last one.** A surface that trails
+        // its request would otherwise be measured again from where it has not arrived yet, and each
+        // event would add the same lag back.
+        if (m_popupMoving)
+        {
+            const float left = static_cast<float>(parent.x - m_popupGrabOffset.x);
+            const float top = static_cast<float>(parent.y - m_popupGrabOffset.y);
+            m_popupUserRect = {
+                left,
+                top,
+                left + actual.width(),
+                top + actual.height()
+            };
+            placePopupUser();
+            return;
+        }
+
+        const bool leftEdge = (m_popupUserEdges & XDG_TOPLEVEL_RESIZE_EDGE_LEFT) != 0;
+        const bool rightEdge = (m_popupUserEdges & XDG_TOPLEVEL_RESIZE_EDGE_RIGHT) != 0;
+        const bool topEdge = (m_popupUserEdges & XDG_TOPLEVEL_RESIZE_EDGE_TOP) != 0;
+        const bool bottomEdge = (m_popupUserEdges & XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM) != 0;
+
+        // **The edge the pointer holds follows it; the opposite edge stays where the press put it.**
+        FloatRect rect = m_popupUserRect;
+        if (leftEdge)
+            rect.left = static_cast<float>(parent.x);
+        if (rightEdge)
+            rect.right = static_cast<float>(parent.x);
+        if (topEdge)
+            rect.top = static_cast<float>(parent.y);
+        if (bottomEdge)
+            rect.bottom = static_cast<float>(parent.y);
+
+        if (leftEdge || rightEdge)
+        {
+            const float maxWidth = std::min(m_pendingMaxSize.x, k_maxUserPopupLength);
+            const float width = rect.width();
+            if (width < m_pendingMinSize.x)
+            {
+                if (leftEdge)
+                    rect.left = rect.right - m_pendingMinSize.x;
+                else
+                    rect.right = rect.left + m_pendingMinSize.x;
+            }
+            else if (width > maxWidth)
+            {
+                if (leftEdge)
+                    rect.left = rect.right - maxWidth;
+                else
+                    rect.right = rect.left + maxWidth;
+            }
+        }
+
+        if (topEdge || bottomEdge)
+        {
+            const float maxHeight = std::min(m_pendingMaxSize.y, k_maxUserPopupLength);
+            const float height = rect.height();
+            if (height < m_pendingMinSize.y)
+            {
+                if (topEdge)
+                    rect.top = rect.bottom - m_pendingMinSize.y;
+                else
+                    rect.bottom = rect.top + m_pendingMinSize.y;
+            }
+            else if (height > maxHeight)
+            {
+                if (topEdge)
+                    rect.top = rect.bottom - maxHeight;
+                else
+                    rect.bottom = rect.top + maxHeight;
+            }
+        }
+
+        m_popupUserRect = rect;
+        placePopupUser();
+    }
+
+    // **The size and the place together**, because a positioner states both and a popup has no
+    // other request that moves or sizes it. A move asks for no size and leaves the form alone.
+    void Window::placePopupUser()
+    {
+        const float width = m_popupUserRect.width();
+        const float height = m_popupUserRect.height();
+        if (!m_popup || !canReposition() || width < 1.0f || height < 1.0f)
+            return;
+
+        const IntSize geometryBefore = m_geometrySize;
+        const IntSize sizeBefore = m_size;
+        m_geometrySize = surfaceSizeFor({ width, height });
+        updateSurfaceSize();
+        if (m_size != sizeBefore)
+            applySize();
+        else if (m_geometrySize != geometryBefore)
+            stateGeometry();
+
+        xdg_positioner* positioner = ::xdg_wm_base_create_positioner(m_display.windowManager());
+        ::xdg_positioner_set_size(positioner,
+            std::max(1, m_geometrySize.x), std::max(1, m_geometrySize.y));
+        // **The anchor stays in the parent and the place is the offset.** A positioner refuses an
+        // anchor outside the parent's window geometry; the offset may stand anywhere.
+        ::xdg_positioner_set_anchor_rect(positioner, 0, 0, 1, 1);
+        ::xdg_positioner_set_offset(positioner,
+            toSurfaceLength(static_cast<int>(std::lround(m_popupUserRect.left)), m_scale120),
+            toSurfaceLength(static_cast<int>(std::lround(m_popupUserRect.top)), m_scale120));
+        ::xdg_positioner_set_anchor(positioner, XDG_POSITIONER_ANCHOR_TOP_LEFT);
+        ::xdg_positioner_set_gravity(positioner, XDG_POSITIONER_GRAVITY_BOTTOM_RIGHT);
+        ::xdg_positioner_set_constraint_adjustment(positioner,
+            XDG_POSITIONER_CONSTRAINT_ADJUSTMENT_NONE);
+        ::xdg_popup_reposition(m_popup, positioner, ++m_repositionToken);
+        ::xdg_positioner_destroy(positioner);
+        m_repositionPending = true;
+
+        FrameMargins parentMargins{};
+        if (m_parent)
+            parentMargins = m_parent->appliedFrame().margins;
+        const float anchorLeft = m_popupUserRect.left + static_cast<float>(parentMargins.left);
+        const float anchorBottom = m_popupUserRect.top - m_placement.clearance
+            + static_cast<float>(parentMargins.top);
+        m_placement.anchorRect = {
+            anchorLeft,
+            anchorBottom - 1.0f,
+            anchorLeft + 1.0f,
+            anchorBottom
+        };
+        m_placement.size = { width, height };
+
+        if (traceEnabled())
+            std::fprintf(stderr,
+                "[wayland] user    %p %-7s at %.0f,%.0f %.0fx%.0f  buffer=%dx%d\n",
+                static_cast<void*>(this), roleName(m_role),
+                m_popupUserRect.left, m_popupUserRect.top, width, height, m_size.x, m_size.y);
+    }
+
+    void Window::endPopupUserGesture()
+    {
+        m_popupMoving = false;
+        m_popupResizing = false;
+        m_popupUserEdges = 0;
     }
 
     void Window::createPopup()
@@ -2002,6 +2249,9 @@ namespace ClaFi::PlatformImplementation::Wayland
             window.m_pendingSize = { width, height };
         else
             window.m_pendingSize = window.m_geometrySize;
+
+        window.m_popupPosition = { x, y };
+        window.m_popupPositionSeen = true;
     }
 
     // **The compositor has taken it away**, and it is gone whether this client agrees or not - the

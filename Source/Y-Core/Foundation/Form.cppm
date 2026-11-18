@@ -412,6 +412,8 @@ namespace ClaFi
         bool wnd_systemMouseDown() override;
         void wnd_userFrameStarted() override;
         void wnd_userFrameEnded() override;
+        void wnd_framePress() override;
+        void wnd_frameRelease() override;
         void wnd_mouseDown(PointInForm, InputStamp, bool& handled) override;
         void wnd_mouseUp(PointInForm) override;
         void wnd_doubleClick(PointInForm, InputStamp) override;

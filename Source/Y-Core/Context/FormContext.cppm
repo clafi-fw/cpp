@@ -203,6 +203,10 @@ namespace ClaFi
         virtual void wnd_userFrameStarted() = 0;
         // The user's move or size of the window is over. See Context
         virtual void wnd_userFrameEnded() = 0;
+        // A press on the frame is held before it has become a move. See Context
+        virtual void wnd_framePress() = 0;
+        // The frame press ended without a move. See Context
+        virtual void wnd_frameRelease() = 0;
         virtual void wnd_mouseDown(PointInForm, InputStamp, bool& handled) = 0;
         virtual void wnd_mouseUp(PointInForm) = 0;
         virtual void wnd_doubleClick(PointInForm, InputStamp) = 0;
