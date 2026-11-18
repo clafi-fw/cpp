@@ -4,6 +4,7 @@ import ClaFi.PathArt.MillScene;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.Scenes;
 import ClaFi.PathArt.Themes;
+import ClaFi.PathArt.Types;
 
 import ClaFi.App.ApplicationProperties;
 import ClaFi.App.CommandLine;
