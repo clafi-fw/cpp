@@ -790,6 +790,10 @@ focus. A form not painted yet takes the value at once.
 popup returns its owner's factor, up to the first Dialog. A Dialog returns its own, owned or not. A
 Wayland layer-shell Dialog, placed `ScreenRight`, gets no activated state and reads 0.
 
+**A window stays focused while the application is working in it**, even when the keyboard focus
+moved to a no-activate popup of it - a menu or a message box. The ring and the focused looks stay
+on. A real activation of another window, or of a dialog of its own, turns them off.
+
 What reads it:
 
 - The colour chain, through `AdjustPaintEvent::setWindowSelectedAmount` - how much of the selected

@@ -481,3 +481,14 @@ change reached the main form, whose `closeActivePopup` walked down and closed th
 box on it. `holdsFramePopup` searches the active popup chain now, so the whole stack is held. A
 temporary two-level message box in the Themes harness, driven with `WM_ENTERSIZEMOVE` and a focus
 change, showed the box surviving the held focus and closing once the gesture ended.
+
+**A moved popup took the owner's blue ring, 2026-11-18.** Moving a message box moves the keyboard
+focus to its no-activate window without moving the foreground, and Win32 sent the main form
+`WM_KILLFOCUS`. `s_focusedWnd` was cleared, the window focus factor animated to 0, and the next
+message box opened unlit - its own outer ring, and the keyboard rings on the buttons. The foreground
+at that moment is not always the form itself: it can be the no-activate popup that took the focus.
+`Window::WM_KILLFOCUS` now keeps the focus when the foreground is the form **or a no-activate window
+of this process**, and `WM_ACTIVATEAPP` clears it when the application really goes elsewhere. Tested
+in the real Settings page from the app menu: the first box was dragged, the second opened, Tab
+turned the keyboard on - the outer blue border and the focused Cancel button's blue ring were both
+still there.

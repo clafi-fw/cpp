@@ -23,6 +23,18 @@ namespace ClaFi::PlatformImplementation::Windows
     export class Window;
     using WindowsMap = std::unordered_map<HWND, Window*>;
 
+    // **A menu or a tooltip of this process**: a window that takes the pointer without taking the
+    // application's foreground. See Window::wndProc WM_KILLFOCUS
+    [[nodiscard]] bool isOwnNoActivateWindow(const HWND window)
+    {
+        if (!window)
+            return false;
+        DWORD process = 0;
+        ::GetWindowThreadProcessId(window, &process);
+        return process == ::GetCurrentProcessId()
+            && (::GetWindowLongW(window, GWL_EXSTYLE) & WS_EX_NOACTIVATE) != 0;
+    }
+
     export class WindowsManager
     {
     public:
@@ -1284,9 +1296,28 @@ namespace ClaFi::PlatformImplementation::Windows
             if (m_Role == WindowRole::Dialog)
                 if (m_createdHandle == Window::s_focusedWnd)
                 {
-                    Window::s_focusedWnd = 0;
-                    focusChanged();
+                    // **A no-activate popup of this window moves the keyboard focus without moving
+                    // the foreground**: the user is still working in this window, and its ring
+                    // stays on. The foreground may be this form or the popup that took the focus;
+                    // any other window clears it.
+                    const HWND foreground = ::GetForegroundWindow();
+                    if (foreground != handle() && !isOwnNoActivateWindow(foreground))
+                    {
+                        Window::s_focusedWnd = 0;
+                        focusChanged();
+                    }
                 }
+            break;
+
+        // **The application has gone elsewhere**, whether or not a focus message got that far. The
+        // ring is off while it is away.
+        case WM_ACTIVATEAPP:
+            if (!msg.wParam && m_Role == WindowRole::Dialog
+                && m_createdHandle == Window::s_focusedWnd)
+            {
+                Window::s_focusedWnd = 0;
+                focusChanged();
+            }
             break;
         }
     }
