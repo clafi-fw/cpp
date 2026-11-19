@@ -435,6 +435,10 @@
                                         <span><span class="choice-title">Application menu</span>
                                         <span class="choice-note">The button at the left of the title bar opens Settings, Information and the theme picker.</span></span>
                                     </label>
+                                    <label class="check"><input type="checkbox" name="element" value="settings">
+                                        <span><span class="choice-title">Custom settings</span>
+                                        <span class="choice-note">A group of the application's own on the Settings page, with one setting kept in its config. Requires the application menu.</span></span>
+                                    </label>
                                     <label class="check"><input type="checkbox" name="element" value="answers" checked>
                                         <span><span class="choice-title">Answers bar</span>
                                         <span class="choice-note">OK and Cancel in a bottom bar; both close the form.</span></span>
@@ -553,6 +557,9 @@
             <p><strong>The window frame.</strong> The framework draws the title bar, the sizing buttons and
             the frame, and applies display scaling. On desktops that support it, the window placement is
             restored when the application starts.</p>
+            <p><strong>Custom settings.</strong> An application adds groups of its own to the Settings page
+            with <code>connectAppSettings</code>. The generated example keeps one check box in the
+            application's config, under a section named after the application.</p>
 
             <h3>Adding a control</h3>
             <p>In a windowed application, each control is a reference member of <code>MainForm</code> and
@@ -655,6 +662,7 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
 
         var ELEMENT_LABELS = {
             menu: 'application menu',
+            settings: 'custom settings',
             answers: 'answers bar',
             status: 'status line',
             search: 'search box',
@@ -761,7 +769,7 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             if (has('field')) {
                 list.push('TextBox');
             }
-            if (has('check')) {
+            if (has('check') || has('settings')) {
                 list.push('CheckBox');
             }
             if (has('slider')) {
@@ -789,6 +797,9 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 );
             } else if (has('status')) {
                 list.push('ClaFi.Core.AppTheme_Colors');
+            }
+            if (has('settings')) {
+                list.push('ClaFi.Core.DomEngine', 'ClaFi.Core.DomEngine_Dt', 'ClaFi.Core.Dom_StdSerializers');
             }
             if (has('search')) {
                 list.push('ClaFi.Core.System.Utils');
@@ -915,6 +926,10 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             var lines = [];
             lines.push('export module ' + moduleNamespace() + '.Main;', '');
             lines.push('import ClaFi.App.ApplicationProperties;', '');
+            if (has('settings')) {
+                lines.push('import ClaFi.App.Settings;');
+                lines.push('');
+            }
             controlImports().forEach(function (name) {
                 lines.push('import ClaFi.Controls.' + name + ';');
             });
@@ -945,12 +960,53 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 lines.push('    }');
                 lines.push('');
             }
+            if (has('settings')) {
+                lines.push('    // The section the application\'s own setting is kept under.');
+                lines.push('    constexpr std::wstring_view k_settingsSection{ L"' + state.name + '" };');
+                lines.push('    constexpr std::wstring_view k_showGreetingKey{ L"showGreeting" };');
+                lines.push('');
+                lines.push('    // The config the application starts with: its own section and the setting it holds.');
+                lines.push('    export Dom::Dt::Section appConfig()');
+                lines.push('    {');
+                lines.push('        return Dom::Dt::Section{');
+                lines.push('            k_settingsSection,');
+                lines.push('            Dom::Dt::Value{ k_showGreetingKey, true }');
+                lines.push('        };');
+                lines.push('    }');
+                lines.push('');
+                lines.push('    // The application\'s own group on the Settings page.');
+                lines.push('    void buildAppSettings(AppMenuPage& page)');
+                lines.push('    {');
+                lines.push('        StackPanel& group = page.addGroup(k_settingsSection);');
+                lines.push('        CheckBox& showGreetingCheck = group.add<CheckBox>(L"Show the greeting");');
+                lines.push('        CheckBox* check = &showGreetingCheck;');
+                lines.push('        showGreetingCheck.onGetState([check](GetStateEvent& event) {');
+                lines.push('            event.state.selected =');
+                lines.push('                (check->appContext().config() / k_settingsSection / k_showGreetingKey).get<bool>();');
+                lines.push('        });');
+                lines.push('        showGreetingCheck.onClick([check](ClickEvent&) {');
+                lines.push('            auto& setting =');
+                lines.push('                check->appContext().config() / k_settingsSection / k_showGreetingKey;');
+                lines.push('            setting.set(!setting.get<bool>());');
+                lines.push('            check->invalidateState();');
+                lines.push('        });');
+                lines.push('    }');
+                lines.push('');
+                lines.push('    export void connectSettings()');
+                lines.push('    {');
+                lines.push('        connectAppSettings(buildAppSettings);');
+                lines.push('    }');
+                lines.push('');
+            }
             lines.push('    // The application\'s window. The controls are members, created in their declarations.');
             lines.push('    export class MainForm : public WithBody<Panel, ' + (pages ? 'TabbedBox' : 'StackPanel') + '>');
             lines.push('    {');
             lines.push('    public:');
             lines.push('        explicit MainForm(const CreateParams& params);');
             lines.push('    private:');
+            if (has('settings')) {
+                lines.push('        void showGreeting(); // shows or hides the greeting from the stored setting');
+            }
 
             var members = [];
             members.push({ group: 'frame', type: 'DialogTitle&', name: 'm_titleBar', init: 'createTopBar<DialogTitle>(appContext().appName())' });
@@ -1011,6 +1067,10 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 }
                 lines.push('        ' + member.type + ' ' + member.name + '{ ' + member.init + ' };');
             });
+            if (has('settings')) {
+                lines.push('        // The setting the user changes on the Settings page.');
+                lines.push('        ScopedEventConnection m_greetingSetting{};');
+            }
             lines.push('    };');
             lines.push('}');
             lines.push('');
@@ -1047,6 +1107,16 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 lines.push('        m_homeTab.select();');
                 lines.push('');
             }
+            if (has('settings')) {
+                lines.push('        showGreeting();');
+                lines.push('        m_greetingSetting = ScopedEventConnection{');
+                lines.push('            (appContext().config() / k_settingsSection / k_showGreetingKey).connectEvent(');
+                lines.push('                [this](Dom::ChangeEvent&) {');
+                lines.push('                    showGreeting();');
+                lines.push('                })');
+                lines.push('        };');
+                lines.push('');
+            }
             lines.push('        m_helloButton.onClick([](ClickEvent& event) {');
             lines.push('            MessageDialog dialog{');
             lines.push('                *event.control,');
@@ -1067,6 +1137,14 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             }
             lines.push('    }');
             lines.push('');
+            if (has('settings')) {
+                lines.push('    void MainForm::showGreeting()');
+                lines.push('    {');
+                lines.push('        m_greetingLabel.setVisible(');
+                lines.push('            (appContext().config() / k_settingsSection / k_showGreetingKey).get<bool>());');
+                lines.push('    }');
+                lines.push('');
+            }
             lines.push('    // What the application is called, wherever its name is shown and wherever its settings are kept.');
             lines.push('    export ApplicationProperties ' + propertiesFunction() + '()');
             lines.push('    {');
@@ -1136,6 +1214,9 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             } else {
                 lines.push('import ClaFi.App.WindowApplication;');
                 lines.push('import ClaFi.Core.Context.AppContext;');
+                if (has('settings')) {
+                    lines.push('import ClaFi.Core.DomEngine_Dt;');
+                }
                 lines.push('import ClaFi.Core.Foundation;');
                 lines.push('import ClaFi.Platform.Windows;', '');
                 lines.push('// The entry point: the platform\'s parameters, the application, and the form it runs.');
@@ -1146,9 +1227,13 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 lines.push('    Win32Application app{');
                 lines.push('        Win32Platform::Params{ hInstance },');
                 lines.push('        ' + moduleNamespace() + '::' + propertiesFunction() + '(),');
-                lines.push('        Dom::Dt::Section{}');
+                lines.push('        ' + (has('settings') ? moduleNamespace() + '::appConfig()' : 'Dom::Dt::Section{}'));
                 lines.push('    };');
                 lines.push('');
+                if (has('settings')) {
+                    lines.push('    ' + moduleNamespace() + '::connectSettings();');
+                    lines.push('');
+                }
                 lines.push('    const auto form = app.createDialog<' + moduleNamespace() + '::MainForm>();');
                 lines.push('    form->setConfigName(AppContext::k_mainFormName);');
                 lines.push('    return form->execute();');
@@ -1181,6 +1266,9 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             } else {
                 lines.push('import ClaFi.App.WindowApplication;');
                 lines.push('import ClaFi.Core.Context.AppContext;');
+                if (has('settings')) {
+                    lines.push('import ClaFi.Core.DomEngine_Dt;');
+                }
                 lines.push('import ClaFi.Core.Foundation;');
                 lines.push('import ClaFi.Platform.Wayland;', '');
                 lines.push('// The entry point: the same application and form over the Wayland platform.');
@@ -1191,9 +1279,13 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 lines.push('    WaylandApplication app{');
                 lines.push('        WaylandPlatform::Params{},');
                 lines.push('        ' + moduleNamespace() + '::' + propertiesFunction() + '(),');
-                lines.push('        Dom::Dt::Section{}');
+                lines.push('        ' + (has('settings') ? moduleNamespace() + '::appConfig()' : 'Dom::Dt::Section{}'));
                 lines.push('    };');
                 lines.push('');
+                if (has('settings')) {
+                    lines.push('    ' + moduleNamespace() + '::connectSettings();');
+                    lines.push('');
+                }
                 lines.push('    const auto form = app.createDialog<' + moduleNamespace() + '::MainForm>();');
                 lines.push('    form->setConfigName(AppContext::k_mainFormName);');
                 lines.push('    return form->execute();');
@@ -1526,6 +1618,7 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 html.push('<p>A window opens with the application name in its title bar. '
                     + (has('menu') ? 'The button at the left opens the application menu. ' : '')
                     + 'The body contains the selected controls, and the Say hello button opens a message dialog. '
+                    + (has('settings') ? 'The Settings page has a group named ' + escapeHtml(state.name) + ' with the Show the greeting check; it hides or shows the greeting. ' : '')
                     + (has('answers') ? 'OK and Cancel close the window.' : 'The close button in the title bar closes the window.')
                     + '</p>');
             }
@@ -1570,6 +1663,11 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 document.querySelectorAll('input[name="element"]:checked'),
                 function (input) { return input.value; }
             );
+            if (state.elements.indexOf('menu') === -1) {
+                state.elements = state.elements.filter(function (element) {
+                    return element !== 'settings';
+                });
+            }
         }
 
         function syncChoiceStyles() {
@@ -1650,10 +1748,28 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             });
         }
 
+        function syncSettingsAvailability() {
+            var menu = document.querySelector('input[name="element"][value="menu"]');
+            var settings = document.querySelector('input[name="element"][value="settings"]');
+            if (!menu || !settings) {
+                return;
+            }
+            if (!menu.checked) {
+                settings.checked = false;
+            }
+            var unavailable = !menu.checked || isConsole();
+            settings.disabled = unavailable;
+            var row = settings.closest('.check');
+            if (row) {
+                row.style.opacity = unavailable ? '0.4' : '1';
+            }
+        }
+
         function syncWizard() {
             syncChoiceStyles();
             syncToolAvailability();
             syncConsoleNote();
+            syncSettingsAvailability();
             syncNameNote();
         }
 
