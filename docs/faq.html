@@ -173,7 +173,7 @@
     <div class="page-content">
         <header>
             <h1>ClaFi FAQ</h1>
-            <p>The question, the answer, and the reasoning folded away</p>
+            <p>Common questions about the framework, with the cause and the fix</p>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
         <main>
@@ -208,22 +208,21 @@
 <div class="faq">
 <h3 id="red-squiggles">Why is the source covered in red squiggles?</h3>
 
-<p class="faq-a">Because MS sucks.</p>
+<p class="faq-a">The marks come from IntelliSense, not from the compiler.</p>
 
 <details class="faq-more">
 <summary>Why</summary>
 <div class="faq-body">
 
 <p>
-Visual Studio's own C++ IntelliSense does not understand C++20 modules - it has called that support
-experimental for years - so it paints the source red however healthy the code is. Nothing in the
-code it marks is wrong, and nothing you write there will make the marks go away.
+Visual Studio's C++ IntelliSense does not process C++20 modules, and the support it provides is
+labeled experimental. It marks correct source red, and no edit to that source removes the marks.
 </p>
 
 <p>
-Two editors read ClaFi properly. ReSharper C++ does, with no setup. So does clangd: configure the
-CMake build once and point your editor at the <code>compile_commands.json</code> it writes into the
-build directory.
+ReSharper C++ reads the modules with no setup. The clangd language server reads them once you
+configure the CMake build and point your editor at the <code>compile_commands.json</code> that build
+writes into the build directory.
 </p>
 
 </div>
@@ -231,8 +230,8 @@ build directory.
 
 <h3 id="not-yet-bound">Why does clang say a member is not yet bound in my constructor?</h3>
 
-<p class="faq-a">Because clang checks a constructor template without the default member initializers.
-Build the member where it is declared, and hand it the argument in the constructor body.</p>
+<p class="faq-a">Clang checks a constructor template without the default member initializers.
+Build the member where it is declared, and pass it the argument in the constructor body.</p>
 
 <details class="faq-more">
 <summary>Why</summary>
@@ -255,7 +254,7 @@ nothing is reported.
 
 <p>
 The child that needs the argument is built where it is declared, like every other child, and the
-argument reaches it in the constructor body:
+argument is passed to it in the constructor body:
 </p>
 
 <pre><code><span class="kw">class</span> <span class="tp">TitledPage</span> : <span class="kw">public</span> <span class="tp">Panel</span>
@@ -292,26 +291,26 @@ argument reaches it in the constructor body:
 <div class="faq-body">
 
 <p>
-The symptom: a control inside a <code>ScrollBox</code> draws its content correctly, is visibly cut
-off at the edge of the box, and neither bar is on screen &mdash; including under
-<code>ScrollBars::Both</code>, where both bars were asked for by name.
+The symptom is a control inside a <code>ScrollBox</code> that draws its content correctly and is
+visibly cut off at the edge of the box, with neither bar on screen &mdash; including under
+<code>ScrollBars::Both</code>, which requests both bars.
 </p>
 
 <p>
-Under <code>Both</code> the bars <em>are</em> up. A bar with nothing to carry reports disabled
-(<code>SliderBase::getControlState</code> answers <code>maxPos() &gt; 0</code>), and a disabled bar
-paints its thumb and its buttons away whatever their own states say. So an empty view is not the
-box refusing to make a bar. It is the box saying the content is no larger than the view, and the
-question is why the content came out that size.
+With <code>Both</code>, both bars are present. A bar whose range has nothing to scroll is
+disabled (<code>SliderBase::getControlState</code> tests <code>maxPos() &gt; 0</code>), and a
+disabled bar draws neither its thumb nor its buttons, whatever their own states say. An empty view
+therefore means the content is no larger than the view. The next question is why the content came
+out that size.
 </p>
 
 <h4>The body wraps</h4>
 
 <p>
-This is the usual answer, and it is silent. <code>Control::wordWrap()</code> is
+The usual cause is the body wrapping, and nothing reports it. <code>Control::wordWrap()</code> is
 <code>!(m_flags2 &amp; cfNoWordWrap)</code> &mdash; <strong>true for every control by
-default</strong>, including one that holds no text at all. <code>Control::alignContent</code> then
-reads it:
+default</strong>, including one that holds no text. <code>Control::alignContent</code>
+then checks it:
 </p>
 
 <pre><code><span class="kw">if</span> (<span class="fn">wordWrap</span>())
@@ -325,24 +324,25 @@ reads it:
 }</code></pre>
 
 <p>
-&quot;A scrolled body keeps what it measured&quot; lives in the second branch only. A wrapping body
-never reaches it: it is measured again against the slot, so it can never come out larger than the
-view. For a control that draws its own content and holds no text the re-measurement answers
-<code>{0, 0}</code>, which is discarded rather than taken, so nothing overrules the slot either and
-the body ends up exactly the viewport. <code>max == page</code>, nothing to carry, both bars paint
-away.
+The rule in &quot;A scrolled body keeps what it measured&quot; applies to the second branch only. A
+wrapping body never reaches that branch: it is measured again against the slot, so it cannot come
+out larger than the view. For a control that draws its own content and holds no text, the
+re-measurement returns <code>{0, 0}</code>, which is discarded rather than taken, so the slot size
+stands and the body ends up exactly the size of the viewport. <code>max == page</code>, so there is
+nothing to scroll and both bars are hidden.
 </p>
 
 <p>
-The flag belongs to the body, and there are three places to state it. As a construction property
-where the body is made, which is how a stock control such as a <code>TextBox</code> takes it:
+The flag is a property of the body, and it can be stated in three places. One is the construction
+property where the body is made, which is how a stock control such as a <code>TextBox</code> takes
+it:
 </p>
 
 <pre><code><span class="tp">BodyProps</span>{ <span class="tp">ReadOnly</span>::Yes, <span class="tp">WordWrap</span>::No, <span class="tp">Padding</span>{ 12.0f } }</code></pre>
 
 <p>
-In the constructor of a control you are writing that can never wrap, ahead of the forwarded
-arguments so that <code>Props</code> still takes a stated one &mdash; it reads the last match:
+Another is in the constructor of a control that can never wrap, ahead of the forwarded arguments so
+that <code>Props</code> still takes a stated one &mdash; it reads the last match:
 </p>
 
 <pre><code><span class="kw">template</span> &lt;<span class="kw">typename</span>... Args&gt;
@@ -357,17 +357,17 @@ HexView::<span class="fn">HexView</span>(<span class="kw">const</span> <span cla
 }</code></pre>
 
 <p>
-Or through <code>setWordWrap(WordWrap::No)</code> on a control already built.
+The third is <code>setWordWrap(WordWrap::No)</code> on a control that is already built.
 </p>
 
 <div class="rules-grid">
     <div class="rule-card dos">
         <h4>Do</h4>
         <ul>
-            <li>State it where the body is made, in the properties that build it. That is the
-                answer for any control whose source you are not editing.</li>
-            <li>A control that can <em>never</em> wrap says so in its own constructor instead, so
-                that no caller has to remember. <code>ComboBox</code> and <code>HexView</code>
+            <li>State it where the body is made, in the properties that build it. This works for
+                any control whose source you are not editing.</li>
+            <li>A control that can <em>never</em> wrap states it in its own constructor instead, so
+                that no caller has to set it. <code>ComboBox</code> and <code>HexView</code>
                 both do.</li>
         </ul>
     </div>
@@ -375,37 +375,37 @@ Or through <code>setWordWrap(WordWrap::No)</code> on a control already built.
         <h4>Don't</h4>
         <ul>
             <li>Assume a control holding no text is unaffected. <code>wordWrap()</code> is true by
-                default for every control, and one that draws its own content is exactly the case
-                where the wrapping branch measures <code>{0, 0}</code> and the slot stands.</li>
-            <li>Reach for <code>MinSize</code> to force the body taller. The size it measured is
-                already right; what is missing is permission to keep it.</li>
+                default for every control, and a control that draws its own content is the case
+                where the wrapping branch measures <code>{0, 0}</code> and the slot size stands.</li>
+            <li>Reach for <code>MinSize</code> to force the body taller. The measured size is
+                already correct; what is missing is the word-wrap flag.</li>
         </ul>
     </div>
 </div>
 
 <div class="info">
-The same flag decides the width. <code>ScrollBox::adjustChildMetrics</code> states the viewport as
-a <em>wrapping</em> body's maximum width, so such a body is never wider than the view and the
-horizontal bar has nothing to carry either. One flag, both bars.
+The same flag also controls the width. <code>ScrollBox::adjustChildMetrics</code> uses the viewport
+as the maximum width of a <em>wrapping</em> body, so such a body is never wider than the view and
+the horizontal bar has nothing to scroll. Both bars are controlled by the same flag.
 </div>
 
 <h4>ScrollBars::Auto on a box that does not measure itself</h4>
 
 <p>
-The other cause, and the one <code>WordWrap::No</code> does not answer. <code>Auto</code> is
-decided in <code>ScrollBox::calculateContent</code>, against the box's own maximum size &mdash;
-that is what lets the measuring pass answer it in one go, with no correction afterwards. So it
-reaches a box that measures itself: one under a <code>MaxSize</code>, or one that is an
-auto-fitting window's whole content. <strong>A box sized by whatever contains it has no maximum of
-its own and never shows an <code>Auto</code> bar.</strong> Such a box states the bars it wants
-instead, with <code>Both</code>, <code>Vertical</code> or <code>Horizontal</code>.
+The other cause is not fixed by <code>WordWrap::No</code>. <code>Auto</code> is decided in
+<code>ScrollBox::calculateContent</code> against the box's own maximum size, which lets the measuring
+pass decide it in one go with no correction afterward. It therefore applies to a box that measures
+itself: one under a <code>MaxSize</code>, or one that is the whole content of an auto-fitting
+window. <strong>A box sized by whatever contains it has no maximum of its own and never shows an
+<code>Auto</code> bar.</strong> Such a box states the bars it wants instead, with <code>Both</code>,
+<code>Vertical</code> or <code>Horizontal</code>.
 </p>
 
 <div class="warning">
-<code>wordWrap</code> is a text property standing in for a question about reflow &mdash; does this
-control's measurement depend on the width it is given? Anything whose answer is no has the trap
-waiting, not just a control that draws its own content: a container of naturally-sized items in a
-scroll box is the other shape it takes.
+<code>wordWrap</code> is a text property about reflow: it records whether the control's measurement
+depends on the width it is given. Any control whose measurement does not depend on width has the same
+problem, not only a control that draws its own content; a container of naturally sized items in a
+scroll box is another case.
 </div>
 
 </div>
@@ -424,17 +424,17 @@ scroll box is the other shape it takes.
 <div class="faq-body">
 
 <p>
-The symptom: the desktop is dark and the application opens light, or the desktop changes mode and
-the application stays on the side it was.
+The symptom is that the desktop is dark and the application opens light, or that the desktop
+changes mode and the application keeps the mode it had.
 </p>
 
 <h4>The config states a mode outright</h4>
 
 <p>
-Auto is the default of a config that states nothing. A config stating <code>ColorMode=Dark</code> or
-<code>ColorMode=Light</code> keeps that side whatever the desktop does: a click on a mode button
-stores one, and an application may state its own first-run default - the TextEngine showcase states
-Light. Stating Auto is the whole of the fix:
+Auto is the default when the config states nothing. A config that states <code>ColorMode=Dark</code>
+or <code>ColorMode=Light</code> keeps that mode whatever the desktop does: a click on a mode button
+stores one, and an application can set its own first-run default - the TextEngine showcase states
+Light. To fix it, set Auto:
 </p>
 
 <pre><code><span class="fn">applyColorMode</span>(<span class="fn">appContext</span>(), <span class="tp">ColorModeSetting</span>::Auto);</code></pre>
@@ -442,9 +442,9 @@ Light. Stating Auto is the whole of the fix:
 <h4>Windows is asked for its app mode</h4>
 
 <p>
-Windows keeps two modes: one for Windows itself - the taskbar and the Start menu - and one for
+Windows has two modes: one for Windows itself - the taskbar and the Start menu - and one for
 applications. Auto follows the second, <em>Choose your default app mode</em> in the color
-settings. A dark taskbar over a Light app mode is a light desktop to every application.
+settings. When the app mode is Light, the application opens light even if the taskbar is dark.
 </p>
 
 <h4>A Linux session without a portal</h4>
@@ -452,35 +452,35 @@ settings. A dark taskbar over a Light app mode is a light desktop to every appli
 <p>
 On Wayland the mode comes from the XDG desktop portal, which GNOME, KDE Plasma and most desktops
 start with the session. A session without a portal, or with a portal whose backend serves no
-<code>org.freedesktop.appearance</code>, states no preference, and no preference reads as Light.
-What the portal says is one call away:
+<code>org.freedesktop.appearance</code>, states no preference, and no preference is read as Light.
+The portal setting can be read with one call:
 </p>
 
 <pre><code>busctl --user call org.freedesktop.portal.Desktop /org/freedesktop/portal/desktop \
     org.freedesktop.portal.Settings ReadOne ss org.freedesktop.appearance color-scheme</code></pre>
 
 <p>
-It answers <code>v u 1</code> for dark and <code>v u 2</code> for light. <code>v u 0</code> is no
-preference, and it is what GNOME answers for its default light look.
+The call returns <code>v u 1</code> for dark and <code>v u 2</code> for light. <code>v u 0</code>
+is no preference, and the GNOME portal returns it when its default light theme is in use.
 </p>
 
 <div class="rules-grid">
     <div class="rule-card dos">
         <h4>Do</h4>
         <ul>
-            <li>Leave the choice to the user. Auto is the default because the desktop already says
-                what the user wants.</li>
-            <li>State a first-run default only where the application needs one side, and only
-                where <code>configFolderExists()</code> is false.</li>
-            <li>Ask <code>wornColorMode</code> for the side the application is drawn on.</li>
+            <li>Leave the choice to the user. Auto is the default because the desktop setting
+                records the user's choice.</li>
+            <li>State a first-run default only where the application needs a particular mode, and
+                only where <code>configFolderExists()</code> is false.</li>
+            <li>Call <code>wornColorMode</code> for the mode the application is drawn in.</li>
         </ul>
     </div>
     <div class="rule-card donts">
         <h4>Don't</h4>
         <ul>
-            <li>Write a mode over a loaded config at start. The user's choice arrives with the load,
-                and a mode written after it undoes the Settings page on every run.</li>
-            <li>Read the setting as a side. Under Auto it names none, and a test for
+            <li>Write a mode over a loaded config at start. The load restores the user's choice, and
+                a mode written after it undoes the Settings page on every run.</li>
+            <li>Treat the setting as a fixed mode. Under Auto it names none, and a test for
                 <code>ColorModeSetting::Dark</code> is false on a dark desktop.</li>
         </ul>
     </div>
@@ -502,22 +502,23 @@ preference, and it is what GNOME answers for its default light look.
 <div class="faq-body">
 
 <p>
-The symptom: a link in a <code>TextBox</code> is drawn in the accent ink, but a click on it puts the
-caret there and nothing opens. The pointer stays an I-beam over it and no underline appears.
+The symptom is a link in a <code>TextBox</code> that is drawn in the accent color, where a click
+places the caret there and nothing opens. The pointer stays an I-beam over it and no underline
+appears.
 </p>
 
 <h4>The box is one the user types into</h4>
 
 <p>
-This is the usual answer. In a box the user can edit, a plain click places the caret, the way it
-does anywhere else in the text - a link is a word the user may want to change. Ctrl+click follows
-it, and with Ctrl held, a link the pointer moves onto is underlined and the pointer becomes a hand.
-The tooltip over the link says so too: in an editable box it ends with a muted <em>Ctrl+click to
-follow</em>.
+In a box the user can edit, a plain click places the caret as it does
+anywhere else in the text, because a link is a word the user may want to change. Ctrl+click follows
+it, and while Ctrl is held, a link the pointer moves onto is underlined and the pointer becomes a
+hand. The tooltip over the link states it as well: in an editable box it ends with a muted
+<em>Ctrl+click to follow</em>.
 </p>
 
 <p>
-A box that is there to be read follows a link on a plain click. That is a property of the box:
+A box meant for reading follows a link on a plain click. That is a property of the box:
 </p>
 
 <pre><code><span class="tp">BodyProps</span>{ text, <span class="tp">ReadOnly</span>::Yes, <span class="tp">Padding</span>{ 16.0f } }</code></pre>
@@ -525,9 +526,9 @@ A box that is there to be read follows a link on a plain click. That is a proper
 <h4>The press became a drag</h4>
 
 <p>
-A press that selects text between going down and coming up was a drag, and follows nothing - even
-when it starts and ends on the same link. A pointer that moves a few pixels while the button is down
-can select a character.
+A press that selects text between going down and coming up is a drag and follows nothing, even when
+it starts and ends on the same link. A pointer that moves a few pixels while the button is down can
+select a character.
 </p>
 
 <h4>The box is disabled</h4>
@@ -538,23 +539,23 @@ its links.
 </p>
 
 <div class="info">
-The underline and the hand are the test: they appear exactly when a click would follow the link. A
-link that shows both and still opens nothing is the next question.
+The underline and the hand appear exactly when a click would follow the link. A link that shows
+both and still opens nothing has a different cause.
 </div>
 
 <div class="rules-grid">
     <div class="rule-card dos">
         <h4>Do</h4>
         <ul>
-            <li>Make a box that is there to be read <code>ReadOnly::Yes</code>. Its links then
-                follow on a plain click, and its caret and selection still work.</li>
+            <li>Make a box meant for reading <code>ReadOnly::Yes</code>. Its links then follow on a
+                plain click, and its caret and selection still work.</li>
         </ul>
     </div>
     <div class="rule-card donts">
         <h4>Don't</h4>
         <ul>
-            <li>Follow a link on a plain click in a box the user types into. Every click that
-                meant to place the caret inside a link would leave the page.</li>
+            <li>Follow a link on a plain click in a box the user types into. Every click that was
+                meant to place the caret inside a link would open the link instead.</li>
         </ul>
     </div>
 </div>
@@ -566,25 +567,26 @@ link that shows both and still opens nothing is the next question.
 <div class="faq">
 <h3 id="file-link">Why does a file: link do nothing?</h3>
 
-<p class="faq-a">Answer it in <code>OnLinkClick</code>.</p>
+<p class="faq-a">Handle it in <code>OnLinkClick</code>.</p>
 
 <details class="faq-more">
 <summary>Why</summary>
 <div class="faq-body">
 
 <p>
-The symptom: the link is underlined under the pointer and the pointer is a hand, so a click follows
-it - and nothing opens.
+The symptom is a link that is underlined under the pointer, with the pointer shown as a hand, so a
+click follows it and nothing opens.
 </p>
 
 <h4>The box opens three schemes</h4>
 
 <p>
-A followed link raises <code>OnLinkClick</code> with its target. What no handler stops, the box
-opens through the shell - but only a target starting with <code>http:</code>, <code>https:</code> or
-<code>mailto:</code>. A text can come out of a file or off the clipboard and name anything, and the
-shell runs a program it is handed, so every other target - <code>file:</code>, a bare path, a scheme
-of the application's own - goes nowhere until the application answers it:
+A followed link raises <code>OnLinkClick</code> with its target. If no handler stops the event, the
+box opens the target through the shell, but only when it starts with <code>http:</code>,
+<code>https:</code> or <code>mailto:</code>. Text can come from a file or from the clipboard and
+name anything, and the shell runs whatever program it is given, so every other target -
+<code>file:</code>, a bare path, a scheme of the application's own - goes nowhere until the
+application handles it:
 </p>
 
 <pre><code>box.<span class="fn">onLinkClick</span>([](<span class="tp">LinkClickEvent</span>&amp; event) {
@@ -598,27 +600,27 @@ of the application's own - goes nowhere until the application answers it:
 <h4>A # link to an anchor the box does not hold</h4>
 
 <p>
-A <code>#name</code> the box's own text holds is followed by the box, with no event raised. A name
-it does not hold is raised to <code>OnLinkClick</code> like any other target, which is how a link
-reaches an anchor on another page: the handler opens that page and calls <code>goToAnchor</code> on
-its box. With no handler, it goes nowhere.
+A <code>#name</code> that the box's own text holds is followed by the box with no event raised. A
+name it does not hold is raised to <code>OnLinkClick</code> like any other target; this is how a
+link reaches an anchor on another page, where the handler opens that page and calls
+<code>goToAnchor</code> on its box. With no handler, it goes nowhere.
 </p>
 
 <div class="rules-grid">
     <div class="rule-card dos">
         <h4>Do</h4>
         <ul>
-            <li>Stop the event once a handler has answered the target, so the box does not act on
+            <li>Stop the event once a handler has processed the target, so the box does not act on
                 it as well.</li>
-            <li>Check a target before opening it. The text it came from may not be the
-                application's own.</li>
+            <li>Check a target before opening it. The text it came from may not belong to the
+                application.</li>
         </ul>
     </div>
     <div class="rule-card donts">
         <h4>Don't</h4>
         <ul>
-            <li>Hand every target to the shell from a handler. That undoes the one guard the box
-                keeps, for every text that ever reaches it.</li>
+            <li>Pass every target to the shell from a handler. That removes the one guard the box
+                applies, for every text that reaches it.</li>
             <li>Leave the event running after opening an <code>https:</code> link yourself. The box
                 opens it a second time.</li>
         </ul>
@@ -626,7 +628,7 @@ its box. With no handler, it goes nowhere.
 </div>
 
 <p>
-The whole of what a followed link does is in the TextEngine manual, under
+What a followed link does is described in the TextEngine manual, under
 <a href="textengine.html#links-following">Following a link in a TextBox</a>.
 </p>
 
@@ -647,8 +649,8 @@ from the module that states the struct's fields.</p>
 <div class="faq-body">
 
 <p>
-The symptom: a struct gains a <code>Color</code> member - or any other type with a
-<code>ScalarSerializer</code> - and the build stops in the Dom engine at
+The symptom is a struct that gains a <code>Color</code> member - or any other type with a
+<code>ScalarSerializer</code> - and a build that stops in the Dom engine at
 <code>static assertion failed: 'Type must define k_serializedFields, serializedFields member, or an ADL serializedFields() function.'</code>
 The serializer exists, and the struct's fields are stated.
 </p>
@@ -657,24 +659,24 @@ The serializer exists, and the struct's fields are stated.
 
 <p>
 The engine decides whether a type is a scalar by looking for its <code>ScalarSerializer</code> in
-the file that reads or writes the value. Where none is in sight, the type is taken for a struct,
-and a struct whose fields are not stated stops the build. The file sees a serializer when it
-imports the serializer's module itself, or imports a module that re-exports it. A plain
-<code>import</code> in a module further up the chain does not carry it.
+the file that reads or writes the value. When none is visible there, the type is treated as a
+struct, and a struct whose fields are not stated stops the build. A serializer is visible to the
+file when the file imports the serializer's module itself or imports a module that re-exports it.
+A plain <code>import</code> in a module further up the chain does not make it visible.
 </p>
 
 <p>
 The instantiation context in the error names the file the import belongs in - the
 <code>get&lt;T&gt;()</code>, <code>set()</code> or <code>Dt::Value</code> that reads or writes the
-struct - and further down, the member type whose serializer it could not see.
+struct - and further down, the member type whose serializer is not visible.
 </p>
 
 <h4>The fields module re-exports what its members need</h4>
 
 <p>
-The module that states <code>serializedFields</code> for a struct is the one that knows which
-serializers its members need. Re-exported from there, they reach every file that can see the
-fields:
+The module that states <code>serializedFields</code> for a struct is the one whose members determine
+which serializers are needed. Re-exported from that module, they are visible to every file that can
+see the fields:
 </p>
 
 <pre><code><span class="kw">export module</span> <span class="tp">MyApp.Swatch</span>;
@@ -714,8 +716,8 @@ fields:
         <ul>
             <li>Import the serializer without <code>export</code> into a module further up the
                 chain. The file that reads or writes the value still does not see it.</li>
-            <li>State fields for a scalar type to silence the error. Wherever its serializer is in
-                sight the type is still a scalar, so one type would be written two ways.</li>
+            <li>State fields for a scalar type to silence the error. Wherever its serializer is
+                visible the type is still a scalar, so one type would be written two ways.</li>
         </ul>
     </div>
 </div>

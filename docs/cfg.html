@@ -214,7 +214,7 @@
     <nav>
         <div class="nav-bracket"><h2>Handbook</h2> = [</div>
         <ul>
-            <li><span class="nav-marker">=</span> <a href="#manifesto">"1. Design Manifesto"</a></li>
+            <li><span class="nav-marker">=</span> <a href="#manifesto">"1. Format overview"</a></li>
             <li><span class="nav-marker">=</span> <a href="#types">"2. Values & Arrays"</a></li>
             <li><span class="nav-marker">=</span> <a href="#hierarchy">"3. Nested Sections"</a></li>
             <li><span class="nav-marker">=</span> <a href="#line-rules">"4. Line-Orientation"</a></li>
@@ -248,31 +248,31 @@
         </header>
 
         <section id="manifesto" class="card">
-            <h2>1. Design Manifesto = <span class="m">[</span></h2>
+            <h2>1. Format overview = <span class="m">[</span></h2>
 
-            <p>This specification describes the configuration file format used in ClaFi. It combines the line-oriented simplicity of flat key-value files with the recursive structure of a tree. It structures configuration trees without losing the clarity of a plain text file.</p>
+            <p>This specification describes the configuration file format used in ClaFi. The format is line-oriented like a flat key-value file, and its sections nest into a tree. A configuration tree is stored as plain text.</p>
 
-            <p>The format is designed to be simple and fast to parse:</p>
+            <p>Four properties of the grammar make parsing simple and fast:</p>
             <ul>
-                <li><strong>Uniform grammar:</strong> Everything is a <code>key=value</code> assignment. No arbitrary headers or confusing scopes.</li>
-                <li><strong>Single-pass parsing:</strong> No backtracking, lookahead, or state machines required.</li>
-                <li><strong>Zero-allocation value extraction:</strong> The Bookend Rule enables string decoding without copying or escaping.</li>
-                <li><strong>Trivial line dispatch:</strong> The first character of each line determines its entire semantic meaning.</li>
+                <li><strong>Uniform grammar:</strong> Everything is a <code>key=value</code> assignment. The format has no header syntax; a section opens with a bracket.</li>
+                <li><strong>Single-pass parsing:</strong> The parser needs no backtracking, lookahead, or state machine.</li>
+                <li><strong>Zero-allocation value extraction:</strong> The Bookend Rule decodes a string without copying it and without escape processing.</li>
+                <li><strong>Line dispatch:</strong> The first character of each line determines how the line is parsed.</li>
             </ul>
 
             <div class="directive info">
                 <div class="directive-header info">Tooling Compatibility = [</div>
-                <p>The format uses comments starting with <code>;</code>, value assignments with <code>=</code>, and square brackets <code>[</code> for divisions. This layout mirrors legacy property files, allowing immediate syntax highlighting in VS Code when using <strong><code>.cfg</code></strong> or <strong><code>.ini</code></strong> extensions.</p>
+                <p>The format uses comments starting with <code>;</code>, value assignments with <code>=</code>, and square brackets <code>[</code> for section boundaries. This is the layout of property files, so VS Code highlights it immediately when the file uses the <strong><code>.cfg</code></strong> or <strong><code>.ini</code></strong> extension.</p>
                 <div class="directive-close info">]</div>
             </div>
 
             <div id="literal" class="directive">
                 <div class="directive-header">The Literal Advantage = [</div>
-                <p>The core philosophy is <strong>No Escaping</strong>. The backslash (<code>\</code>) is treated as a literal character, which provides several advantages:</p>
+                <p>The backslash (<code>\</code>) is a literal character. The format defines no escape sequences, which gives three properties:</p>
                 <ul>
-                    <li><strong>Source-Code Friendly:</strong> You can paste C++, JavaScript, or Regex snippets directly into a value. <span style="font-size: 0.9em; color: #7f8c8d;">*read how to paste multiline text in <a href="#continuations">Continuations</a></span></li>
-                    <li><strong>Path Safe:</strong> File paths are stored exactly as they appear in the file system.</li>
-                    <li><strong>Predictable Round-Trips:</strong> Reading a file and writing it back results in the same data without substitutions.</li>
+                    <li><strong>Source code:</strong> You can paste C++, JavaScript, or regex text directly into a value. <span style="font-size: 0.9em; color: #7f8c8d;">For multiline text, see <a href="#continuations">Continuations</a>.</span></li>
+                    <li><strong>Paths:</strong> A file path is stored exactly as it appears in the file system.</li>
+                    <li><strong>Round trips:</strong> Reading a file and writing it back produces the same data, with no substitutions.</li>
                 </ul>
                 <div class="directive-close">]</div>
             </div>
@@ -283,7 +283,7 @@
         <section id="types" class="card">
             <h2>2. Values & Arrays = <span class="m">[</span></h2>
 
-            <p>Values are either quoted strings or unquoted literals. The format has no built-in type system; interpretation is left to the application.</p>
+            <p>Values are either quoted strings or unquoted literals. The format stores strings only and leaves type interpretation to the application.</p>
 
             <h3>2.1 Scalar Values</h3>
             <p>Content after the <code>=</code> is the value. If it starts and ends with <code>"</code>, the Bookend Rule applies. Otherwise, the value is taken literally after trimming outer whitespace.</p>
@@ -307,7 +307,7 @@
             </div>
 
             <h3>2.2 Arrays</h3>
-            <p>Arrays group multiple values under a key. Each item begins with <code>=</code> on its own line.</p>
+            <p>An array groups multiple values under one key. Each item begins with <code>=</code> on its own line.</p>
 
             <h4>2.2.1 Scalar Array</h4>
             <pre><code><span class="k">Flags</span> = [
@@ -331,11 +331,11 @@
             <div class="directive">
                 <div class="directive-header">Parsing Arrays = [</div>
                 <ol>
-                    <li>When <code>Key = [</code> is encountered, begin collecting items.</li>
-                    <li>Each line starting with <code>=</code> begins a new item.</li>
-                    <li>If <code>=[</code>, parse as an anonymous section until the matching <code>]</code>.</li>
-                    <li>Otherwise, parse as a scalar value (applying Bookend Rule).</li>
-                    <li>Stop at <code>]</code> on its own line.</li>
+                    <li>When <code>Key = [</code> appears, begin collecting items.</li>
+                    <li>Each line that starts with <code>=</code> begins a new item.</li>
+                    <li>If the item starts with <code>=[</code>, parse an anonymous section up to the matching <code>]</code>.</li>
+                    <li>Otherwise, parse a scalar value and apply the Bookend Rule.</li>
+                    <li>Stop at a <code>]</code> on its own line.</li>
                 </ol>
                 <div class="directive-close">]</div>
             </div>
@@ -346,26 +346,26 @@
             <h2>3. Nested Sections = <span class="m">[</span></h2>
 
             <p>
-                The format uses a tree structure where any attribute can branch into a deeper section.
-                The format supports unlimited nesting depth.
+                A configuration is a tree where any attribute can hold a nested section.
+                Nesting depth is unlimited.
             </p>
 
-            <p>Attributes assign nested sections using the <code>[</code> token:</p>
+            <p>An attribute assigns a nested section with the <code>[</code> token:</p>
     <pre><code><span class="k">NestedSection</span> = [
     <span class="k">SubKey</span> = <span class="s">"Value"</span>
 ]</code></pre>
 
             <ul>
-                <li>Every section acts as a standalone sub-file.</li>
-                <li>Nested sections use the full grammar.</li>
-                <li>A matching closing bracket <code>]</code> must occupy its own line.</li>
+                <li>Every section uses the same grammar as the top level.</li>
+                <li>A nested section uses the full grammar.</li>
+                <li>The matching closing bracket <code>]</code> must be on its own line.</li>
             </ul>
             <div class="card-close">]</div>
         </section>
 
         <section id="line-rules" class="card">
             <h2>4. Line-Orientation = <span class="m">[</span></h2>
-            <p>The format is line-oriented. To keep parsers simple and git diffs clean, structural markers cannot be inlined.</p>
+            <p>The format is line-oriented: a structural marker cannot be inlined. This keeps parsers simple and git diffs clean.</p>
             <table>
                 <thead>
                     <tr><th>Marker</th><th>Requirement</th></tr>
@@ -381,10 +381,10 @@
 
         <section id="continuations" class="card">
             <h2>5. Continuations = <span class="m">[</span></h2>
-            <p>If a value spans multiple lines, the format provides two behaviors:</p>
+            <p>A value can span multiple lines in two ways:</p>
             <ul>
-                <li><strong>Newline (<code>|</code>):</strong> Appends the line text and inserts a newline (<code>\n</code>).</li>
-                <li><strong>Concatenation (<code>+</code>):</strong> Appends the line text directly without adding characters. Useful for long paths or keys.</li>
+                <li><strong>Newline (<code>|</code>):</strong> The line text is appended and a newline (<code>\n</code>) is inserted.</li>
+                <li><strong>Concatenation (<code>+</code>):</strong> The line text is appended directly, with no characters added. Use it for long paths or keys.</li>
             </ul>
 
             <pre><code><span class="k">LongText</span> = <span class="s">"First Line"</span>
@@ -398,17 +398,17 @@
            <span class="c">; Value: C:\Program Files\Application</span></code></pre>
 
             <div style="margin-top: 35px; padding-top: 20px; border-top: 1px dashed var(--border-color); font-size: 0.9em; color: #7f8c8d; line-height: 1.6;">
-                <p><strong>* Note on Multiline Snippets:</strong> To paste multiline content, prepend the newline continuation marker (<code>|</code>) at the start of each subsequent line.</p>
+                <p><strong>Note on multiline snippets:</strong> To paste multiline content, put the newline continuation marker (<code>|</code>) at the start of each line after the first.</p>
 
-                <p>Because leading whitespace on continuation lines is stripped up to the | marker, optional indentation allows you to align subsequent lines with the first one - even within deeply nested sections - greatly improving visual readability.</p>
+                <p>Leading whitespace on a continuation line is stripped up to the | marker, so indentation is optional. You can align the following lines with the first one, including inside nested sections.</p>
 
                 <pre style="font-size: 13px; padding: 15px; margin: 15px 0; background-color: #1a1a1a; border-radius: 6px; border: 1px solid #333;"><span class="k">NestedKey</span> = Line one content
           | Line two content
           | Line three content</pre>
 
-                <p><strong>Note:</strong> Double quotes are optional.</p>
+                <p><strong>Note:</strong> Double quotes around a value are optional.</p>
 
-                <p><em>Addressing the "No Escaping" Critique:</em> Some argue that requiring a prepended <code>|</code> on continuation lines acts as an escape sequence. In this format, a multiline string is modeled as an array of independent, single-line strings presented separately. The <code>|</code> is a structural syntax marker indicating how separate lines compile into the tree, not an escape character.</p>
+                <p>The <code>|</code> on a continuation line is a structural marker, not an escape character. A multiline string is an array of independent single-line strings, and the <code>|</code> records how those lines combine into the tree.</p>
             </div>
 
             <div class="card-close">]</div>
@@ -416,27 +416,27 @@
 
         <section id="bookend" class="card">
             <h2>6. The Bookend Rule = <span class="m">[</span></h2>
-            <p>To support quotes and protect whitespace boundaries without escaping, the format uses one rule for boundary detection:</p>
+            <p>The format uses one rule to detect value boundaries, so a value can hold quotes and boundary whitespace without escaping:</p>
 
             <div class="directive">
                 <div class="directive-header">Rule For Parsers = [</div>
-                <p>If a line starts and ends with a double-quote (<code>"</code>), the parser strips the first and last character.</p>
+                <p>If a line starts and ends with a double quote (<code>"</code>), the parser strips the first and last character.</p>
                 <div class="directive-close">]</div>
             </div>
 
             <div class="directive info">
                 <div class="directive-header info">Rule For Builders = [</div>
-                <p>To prevent data loss, a builder must wrap a value in double-quotes (<code>"</code>) if the value:</p>
+                <p>To prevent data loss, a builder must wrap a value in double quotes (<code>"</code>) when the value:</p>
                 <ul>
-                    <li>Starts and ends with double-quotes (e.g. <code>"Error"</code>).</li>
-                    <li>Is exactly an opening square bracket ([) - prevents section hijacking.</li>
-                    <li>Contains leading or trailing whitespace - prevents boundary loss during trimming.</li>
+                    <li>The value starts and ends with double quotes (for example, <code>"Error"</code>).</li>
+                    <li>The value is exactly an opening square bracket ([), which would otherwise open a section.</li>
+                    <li>The value contains leading or trailing whitespace, which trimming would remove.</li>
                 </ul>
                 <p>The parser strips the outer quotes during load, restoring the exact value.</p>
                 <div class="directive-close info">]</div>
             </div>
 
-            <p>This preserves internal quotes and margins:</p>
+            <p>The rule preserves internal quotes and padding:</p>
             <pre><code><span class="c">; 1. Quotes preserved without escaping</span>
 <span class="k">LogMessage</span> = <span class="s">"System returned "Error 404" at runtime"</span>
 <span class="c">; Internal Value: System returned "Error 404" at runtime</span>
@@ -450,27 +450,27 @@
 
         <section id="manual" class="card">
             <h2>7. Parser Guide = <span class="m">[</span></h2>
-            <p>Implementing a parser is simple. Because the format is line-oriented, you do not need to scan back and forth within a line for transitions.</p>
+            <p>The parser handles one line at a time, so it never scans back and forth within a line for transitions.</p>
 
             <div class="directive">
                 <div class="directive-header">The Standard Algorithm = [</div>
                 <ol>
                     <li><strong>Read:</strong> Take a line from the input.</li>
-                    <li><strong>Initial Trim:</strong> Remove leading whitespace.</li>
+                    <li><strong>Initial trim:</strong> Remove leading whitespace.</li>
                     <li>
                         <strong>Dispatch:</strong>
                         <ul>
-                            <li>If <code>@</code>: Handle metadata.</li>
-                            <li>If <code>;</code>: Skip line.</li>
-                            <li>If <code>]</code>: Pop scope from the stack.</li>
+                            <li>If the line starts with <code>@</code>, handle the metadata directive.</li>
+                            <li>If the line starts with <code>;</code>, skip the line.</li>
+                            <li>If the line starts with <code>]</code>, pop the current scope from the stack.</li>
                             <li>
-                                If <code>|</code> or <code>+</code>: Apply Bookend Rule and append to the last processed value.
+                                If the line starts with <code>|</code> or <code>+</code>, apply the Bookend Rule to the rest and append it to the last processed value.
                             </li>
                             <li>
-                                If Key/Alpha: Split at <code>=</code>.
+                                If the line begins with a key, split it at <code>=</code>.
                                 <ul>
-                                    <li>If Value is <code>[</code>: Push a new named section scope.</li>
-                                    <li>Else: Process value.</li>
+                                    <li>If the value is <code>[</code>, push a new named section scope.</li>
+                                    <li>Otherwise, process the value.</li>
                                 </ul>
                             </li>
                         </ul>
@@ -501,7 +501,7 @@
             </table>
             <div class="directive info">
                 <div class="directive-header info">Note = [</div>
-                <p>Values may contain any symbols, including reserved markers. Avoid using them in keys.</p>
+                <p>A value may contain any symbol, including the reserved markers. Avoid those markers in keys.</p>
                 <div class="directive-close info">]</div>
             </div>
             <div class="card-close">]</div>
@@ -557,7 +557,7 @@
 
         <section id="implementation" class="card">
             <h2>10. C++ Examples = <span class="m">[</span></h2>
-            <p>This chapter provides C++ examples for implementing key features. The snippets demonstrate the line-oriented design.</p>
+            <p>The examples in this chapter implement the format's key features in C++. Each snippet follows the line-oriented design.</p>
 
             <h3>10.1 Implementing the Bookend Rule</h3>
             <pre><code><span class="c">// Outer whitespace removed, as from every key and value before it is read</span>
@@ -599,7 +599,7 @@
 }</code></pre>
 
             <h3>10.2 Core Parser Loop Structure</h3>
-            <p>The main dispatch logic showcasing the format's line-oriented simplicity:</p>
+            <p>The main dispatch loop reads one line per iteration:</p>
             <pre><code><span class="k">void</span> ConfigFile::load(<span class="k">std::wifstream</span>&amp; stream)
 {
     <span class="k">std::wstring</span> line;

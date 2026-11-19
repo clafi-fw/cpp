@@ -199,19 +199,19 @@
     <div class="page-content">
         <header>
             <h1>Working with Text in Controls</h1>
-            <p>A layout somebody else already built</p>
+            <p>Text layout, shaping and line breaking</p>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
         <main>
 <h2 id="introduction">Introduction</h2>
 
 <p>A control keeps its text as a <code>ControlText</code>, and the <code>TextEngine</code> lays it
-out: it shapes the text, measures it for the layout pass and draws it in the paint. This manual is
-the control's side of that - the properties a control's text is stated through, how text goes into
-a control and comes out of it, the events a control asks and answers, the anchors that place the
-text inside the control's box, and the cache behind the engine.</p>
+out: it shapes the text, measures it for the layout pass, and draws it in the paint. Applications
+use the text through properties that state it and its format, through the calls that read and write
+it, through events raised around layout, and through anchors that place it inside the control's
+box. The engine caches the layouts it builds.</p>
 
-<p>What a <code>Text</code> says - its runs, styles, colors, paragraphs and links - is written as
+<p>The runs, styles, colors, paragraphs and links of a <code>Text</code> are written as
 the <a href="text.html">Writing ClaFi Text</a> manual describes.</p>
 
 <div class="info">
@@ -224,8 +224,8 @@ measures, <code>ClaFi.Core.TextEngine.Layout</code> for <code>TextLayout</code>,
 
 <h3 id="control-text-props">The properties</h3>
 
-<p>Every control built on <code>RichControl</code> takes its text as properties, and each text has
-a type of its own, so a control tells which one it was handed by the type alone:</p>
+<p>Every control built on <code>RichControl</code> receives its text through properties, and each
+property has a distinct type, so the type alone identifies which text the caller supplied:</p>
 
 <table>
 <tr><th>Property</th><th>Read and written through</th><th>Holds</th></tr>
@@ -245,11 +245,11 @@ a type of its own, so a control tells which one it was handed by the type alone:
 
 <h3 id="control-text-writing">Writing it later</h3>
 
-<p><code>text()</code> hands the control's text out live, as a <code>ControlText</code>: a
-<code>Text</code> that carries a stamp, which every write moves on. A layout or a measurement that
-kept the stamp it was made from tells an unchanged text from a new one by two numbers, without
-reading either. A write changes no pixel and no size by itself; the caller asks for the pass the
-change needs.</p>
+<p><code>text()</code> returns a live <code>ControlText</code>: a <code>Text</code> that carries a
+stamp, and every write advances the stamp. A layout or a measurement stores the stamp it was built
+from, so a comparison of two numbers distinguishes an unchanged text from a new one without reading
+either. A write does not change a pixel or a size by itself; the caller requests the pass the change
+requires.</p>
 
 <pre><code><span class="cm">// A text of another size: the form lays out again.</span>
 m_status.<span class="fn">text</span>() = std::<span class="fn">move</span>(status);
@@ -261,78 +261,80 @@ m_readout.<span class="fn">invalidate</span>();</code></pre>
 
 <div class="warning">
 <strong>Write through <code>text()</code>, never through a <code>Text&amp;</code> taken from it.</strong>
-A <code>ControlText</code> reached as a <code>Text</code> is data like any other, and a write through
-that reference leaves the stamp where it was - a control that recognizes its text by the stamp, one
-that <a href="#own-layout">holds its own layout</a>, goes on drawing the old words.
+A <code>ControlText</code> used as a <code>Text</code> is a value, and a write through that
+reference does not advance the stamp. A control that identifies its text by the stamp, one that
+<a href="#own-layout">holds its own layout</a>, continues to draw the old text.
 </div>
 
 <h2 id="copying">Copying and Moving Text</h2>
 
 <h3 id="copying-values">Values and ranges</h3>
 
-<p>A <code>Text</code> is a value. Assigning one copies it or moves it, its runs and the sheet it is
-over with it, so a text built for a control is moved in rather than copied, and a text taken out of
-a control is a copy that owes the control nothing.</p>
+<p>A <code>Text</code> is a value. Assigning one copies or moves it together with its runs and its
+style sheet, so a text built for a control is moved in rather than copied, and a text read out of a
+control is an independent copy.</p>
 
 <pre><code>m_title.<span class="fn">text</span>() = <span class="tp">Text</span>{ <span class="tp">StyledText</span>{ <span class="tp">TextStyles</span>::Heading, name } };   <span class="cm">// moved in</span>
 <span class="tp">Text</span> kept = m_title.<span class="fn">text</span>();                                               <span class="cm">// a copy</span></code></pre>
 
-<p><code>selectedText(range)</code> answers a range of a text as a text of its own: the runs of the
+<p><code>selectedText(range)</code> returns a range of a text as a text of its own: the runs of the
 range, each in the style it had, and the looks of the paragraphs starting in it, its start and its
-end included, so a copy of whole paragraphs reads as they look. <code>replaceText(range, text)</code>
-puts a text into another over a range. The two are what the edit history is made of, through
-<code>restorableText</code> and <code>restoreText</code>: a step keeps the text it took out, and an
-undo puts it back exactly, every run in the style and every paragraph in the look it had.</p>
+end included, so copied whole paragraphs render as they appear.
+<code>replaceText(range, text)</code> writes a text into another over a range. The edit history uses
+both through <code>restorableText</code> and <code>restoreText</code>: a step keeps the text it
+removed, and an undo restores it exactly, every run in the style and every paragraph in the look it
+had.</p>
 
-<p><strong>Words put in take on the style where they go.</strong> What goes in is laid under that
-style the way a wrapper is laid over its words: what the words state stands, and the surroundings
-fill the rest.</p>
+<p><strong>Inserted words take the style of the position where they go.</strong> The inserted text
+is resolved under that style: any field the inserted text states itself takes precedence, and the style supplies
+the fields it leaves unstated.</p>
 
 <ul>
-<li>Replacing a range: the style, link and anchor of the first character replaced.</li>
-<li>At a caret: the style and anchor of the character before it.</li>
-<li>At a paragraph's start: the style and anchor of the character after it.</li>
-<li>A link at a caret only from inside it, where the characters on both sides carry it.</li>
+<li>When a range is replaced, the inserted text takes the style, link and anchor of the first character replaced.</li>
+<li>At a caret, the inserted text takes the style and anchor of the character before it.</li>
+<li>At the start of a paragraph, the inserted text takes the style and anchor of the character after it.</li>
+<li>At a caret inside a link, the inserted text takes the link, because the characters on both sides have it.</li>
 </ul>
 
 <p><strong>A paragraph keeps its look through every edit made inside it.</strong> A line end typed
-into one splits it, and both halves keep the look. A paragraph joined to the one above takes that
-one's look, and the first line of a text put in joins the paragraph it lands in the same way. A
-paragraph an edit empties takes the first look of the text put in, so a text pasted into an empty
-box, or over every word of a paragraph, starts in the look it was copied in.</p>
+inside a paragraph splits it, and both halves keep the look. A paragraph joined to the one above it
+takes the look of that paragraph, and the first line of inserted text joins the paragraph it is
+inserted into in the same way. A paragraph that an edit empties takes the first look of the inserted
+text, so a text pasted into an empty box, or over every word of a paragraph, starts in the look it
+was copied in.</p>
 
 <h3 id="copying-clipboard">The clipboard</h3>
 
-<p>A <code>TextBox</code> copies its selection as up to three formats, and the clipboard offers
-plain text out of the conversion it keeps from the first, so an application that has never heard of
-ClaFi pastes the characters:</p>
+<p>A <code>TextBox</code> copies its selection in up to three formats, and the clipboard offers
+plain text converted from the first, so an application that does not use ClaFi can paste the
+characters:</p>
 
 <table>
 <tr><th>Format</th><th>Holds</th></tr>
-<tr><td><code>ClaFiText</code></td><td>The selected text, over the framework's sheet: each style it is set in beyond the framework's comes as one of the text's own, so the copy names nothing in the sheet it was copied from.</td></tr>
+<tr><td><code>ClaFiText</code></td><td>The selected text over the framework's sheet: each style it is set in beyond the framework's is stored as a style in the text itself, so the copy refers to no style in the sheet it was copied from.</td></tr>
 <tr><td><code>ClaFiStyleSheet</code></td><td>Those styles as a sheet, with the style the box's format names where it is beyond the framework's too. Left out where there are none.</td></tr>
 <tr><td><code>ClaFiTextFormat</code></td><td>The box's <code>TextFormat</code>. Left out where the box has none.</td></tr>
 </table>
 
-<p><code>Transfer::addText(source, text, format)</code> puts them on a source, and
-<code>Transfer::takeText(offer, sheet)</code> takes the text back over the sheet given, the
-application's where none is: a style of a name that sheet holds is the sheet's, and one it lacks
-comes as one of the text's own, so the words draw as they were copied. A paste takes
-<code>ClaFiText</code> first and plain text after it, which is the whole of what decides whether
+<p><code>Transfer::addText(source, text, format)</code> places those formats on a source, and
+<code>Transfer::takeText(offer, sheet)</code> reads the text back over the given sheet, or over the
+application's sheet when none is given: a style whose name the sheet holds is taken from the sheet,
+and one the sheet lacks is stored as a style in the text, so the text draws as it was copied. A
+paste tries <code>ClaFiText</code> first and plain text after it; this order alone determines whether
 formatting survives a paste.</p>
 
-<p><strong>The format is for a preview.</strong> A viewer of the clipboard, WhatsClip among them,
-draws the copied text in it, as it was drawn where it was copied. A paste leaves it: the box pasted
-into keeps its own format, so a range copied out of a <code>CodeBox</code> pastes in whatever style
-the box it goes into lays its text out in.</p>
+<p><strong>The format is for a preview.</strong> A clipboard viewer, WhatsClip among them, draws the
+copied text with the copied format, as it was drawn where it was copied. A paste ignores it: the box
+pasted into keeps its own format, so a range copied out of a <code>CodeBox</code> pastes in whatever
+style the destination box lays its text out in.</p>
 
 <h2 id="events">Text Events</h2>
 
-<p>A control's words are its <code>text()</code>, written by whoever owns the control when they
-change - a reading on its tick, a count as it moves. Every measurement and every paint lays that
-text out, and raises <code>AdjustTextEvent</code> first, where the control, its host and the handlers
-put things around the words: a mark, a key at the end of a menu line, a parent's words, an answer
-that differs by phase. The words stay the owner's; the event adjusts what is laid out.</p>
+<p>A control's text is its <code>text()</code>, written by whoever owns the control when the content
+changes - a reading on its tick, a count as it moves. Every measurement and every paint lays that
+text out and raises <code>AdjustTextEvent</code> first, where the control, its host and the handlers
+add material around the text: a mark, a key at the end of a menu line, a parent's text, an answer
+that differs by phase. The text remains the owner's; the event adjusts what is laid out.</p>
 
 <table>
 <tr><th>Event</th><th>On</th><th>Raised</th></tr>
@@ -344,16 +346,15 @@ that differs by phase. The words stay the owner's; the event adjusts what is lai
 <tr><td><code>OnLinkClick</code>, <code>OnGetLinkTooltip</code></td><td><code>TextBox</code></td><td>A link was followed, or its tooltip is about to show - see <a href="#links">Links in a TextBox</a>.</td></tr>
 </table>
 
-<p><strong>A tooltip is a caption and a body.</strong> The caption line - the control's name and the
-key that runs it - is stated by the presenter that draws the control, and not by
-<code>AdjustTooltipEvent</code>, which fills the body. The overflown text stands apart: it is a
-window of its own, the control's own cut words repeated over them, with no caption, no body and no
-event to ask.</p>
+<p><strong>A tooltip is a caption and a body.</strong> The presenter that draws the control states
+the caption line - the control's name and the key that runs it - and <code>AdjustTooltipEvent</code>
+fills only the body. The overflow text is separate: it is a window of its own that repeats the
+control's clipped text, and it has no caption, no body and no event.</p>
 
-<p>A gather is asked in one of two phases, and <code>event.phase()</code> says which:
+<p>A gather runs in one of two phases, which <code>event.phase()</code> reports:
 <code>Calculate</code> for a measurement, <code>Paint</code> for what is drawn. A control may be
-measured from a line it never shows - a reading answers the room its widest value needs, and paints
-the value it holds - and a text answered only in the paint takes no room at all:</p>
+measured from a line it never shows - a reading measures the room its widest value needs and paints
+the value it holds - and a text supplied only in the paint takes no room:</p>
 
 <pre><code><span class="tp">OnEvent</span>{ [](<span class="tp">AdjustTextEvent</span>&amp; event) {
     <span class="cm">// Measured as nothing, so the tabs beside the title keep the room.</span>
@@ -361,17 +362,17 @@ the value it holds - and a text answered only in the paint takes no room at all:
         event.text &lt;&lt; event.<span class="fn">control</span>().<span class="fn">appContext</span>().<span class="fn">appName</span>();
 } }</code></pre>
 
-<p>A control's own text is <em>named</em> by the gather rather than copied into it, so asking for a
-text nothing writes to costs a pointer. A handler that writes adds to it, and the answer is then
-built. Words computed inside the handler are built at every measure and every paint, so a value
-that changes on its own clock is written into <code>text()</code> when it changes, and the handlers
-are left to what has to be composed at the moment of asking.</p>
+<p>The gather <em>names</em> a control's own text rather than copying it, so a text that no handler
+modifies costs only a pointer. A handler that writes adds to the text, and the result is then built.
+Values computed inside the handler are built at every measure and every paint, so a value that
+changes independently is written into <code>text()</code> when it changes, and the handlers compose
+only what the moment of the call requires.</p>
 
 <h2 id="format">Text Format</h2>
 
-<p>A <code>TextFormat</code> is what a control's text is laid out over: a style name, an ink, and a
-paragraph look. It holds no characters. The engine reads it under the text's own styles, and it never
-becomes part of the text.</p>
+<p>A <code>TextFormat</code> defines what a control's text is laid out over: a style name, an ink
+and a paragraph look. It contains no characters. The engine applies it beneath the text's own
+styles, and it never becomes part of the text.</p>
 
 <pre><code><span class="cm">// Built like a Text: the stream, or the same sequence as one expression.</span>
 <span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">InkGrade</span>::Muted };
@@ -382,7 +383,7 @@ format &lt;&lt; <span class="tp">TextStyles</span>::SubBody;</code></pre>
 <table>
 <tr><th>Written</th><th>Holds</th></tr>
 <tr><td>A style name - <code>TextStyles::Code</code>, <code>L"Readout"</code></td><td>The style, found where the text is laid out: among the text's own styles and in its sheet, each time the text is laid out.</td></tr>
-<tr><td><code>Ink</code>, <code>InkGrade</code>, <code>InkColor</code>, <code>Color</code></td><td>The ink the text runs in, spelt as <code>ColoredText</code> spells it.</td></tr>
+<tr><td><code>Ink</code>, <code>InkGrade</code>, <code>InkColor</code>, <code>Color</code></td><td>The ink the text runs in, spelled as <code>ColoredText</code> spells it.</td></tr>
 <tr><td><code>TextAlign</code>, <code>TextIndent{ f }</code>, <code>TextLineSpacing{ f }</code></td><td>The paragraph look, for every paragraph of the text.</td></tr>
 <tr><td><code>TextFormat</code></td><td>What the other states, each field over this one's.</td></tr>
 </table>
@@ -397,13 +398,13 @@ the format names it:</p>
 });
 <span class="tp">TextFormat</span>{ <span class="st">L"Readout"</span> };</code></pre>
 
-<p><strong>Values only.</strong> A character, a link or an anchor is refused at compile time, and so
-is a value that only converts to one of the above, so a <code>wchar_t</code> is never taken for a
+<p><strong>Values only.</strong> A character, a link or an anchor is rejected at compile time, and so
+is a value that merely converts to one of those types, so a <code>wchar_t</code> is never accepted as a
 <code>Color</code>.</p>
 
-<p><strong>One of each kind.</strong> A value replaces what the format already holds of its kind, and
-another format replaces every field it states. Two formats that say the same thing are equal, and
-share a layout in the cache, however they were built.</p>
+<p><strong>One of each kind.</strong> A value replaces the value the format already holds of its kind,
+and another format replaces every field it states. Two formats with equal fields compare equal and
+share one layout in the cache, however they were built.</p>
 
 <pre><code><span class="tp">TextFormat</span> format{ <span class="tp">TextAlign</span>::Center, <span class="tp">TextStyles</span>::Code };
 format &lt;&lt; <span class="tp">TextFormat</span>{ <span class="tp">InkColor</span>::Red, <span class="tp">TextAlign</span>::Left };
@@ -411,49 +412,53 @@ format &lt;&lt; <span class="tp">TextFormat</span>{ <span class="tp">InkColor</s
 
 <h3 id="format-under">Under the text</h3>
 
-<p><strong>The text's own styles stand over the format.</strong> A field is drawn from the first that
-states it: the run's style and its bases, then the format's style and its bases. A face, size,
-weight or slant neither states comes from the text's Body, and an ink from the text ink. A link's
-ink stands between the run's and the format's. A paragraph's own look stands over the format's
-the same way, and where neither states a field the paragraph is left-aligned, unindented and singly
-spaced.</p>
+<p><strong>The text's own styles take precedence over the format.</strong> A field is resolved from
+the first source that states it: the run's style and its bases, then the format's style and its
+bases. A face, size, weight or slant that neither states comes from the text's Body, and an ink
+comes from the text ink. A link's ink sits between the run's ink and the format's. A paragraph's own
+look overrides the format's in the same way, and where neither states a field the paragraph is
+left-aligned, unindented and singly spaced.</p>
 
-<p>A style name the text reaches nowhere is reported as a wrapper's is, with
-<code>UnknownStyleEvent</code>, and the text is laid out as it would be without it.</p>
+<p>A style name that the text cannot resolve anywhere is reported with
+<code>UnknownStyleEvent</code>, as a wrapper's is, and the text is laid out as it would be without
+it.</p>
 
-<p><strong>A format is how a control shows its text</strong>, kept apart from what the text says. A
-selection, the edit history and a document see the text alone: a range copied out of a centered box
-pastes uncentered. A copy puts the box's format beside the text, for a preview to draw it in - see
-<a href="#copying-clipboard">The clipboard</a>. A control with a format and no text is blank.</p>
+<p><strong>A format is how a control shows its text</strong>, kept separate from what the text
+contains. A selection, the edit history and a document see the text alone: a range copied out of a
+centered box pastes uncentered. A copy stores the box's format beside the text so that a preview can
+draw it in - see <a href="#copying-clipboard">The clipboard</a>. A control with a format and no text
+is blank.</p>
 
 <h3 id="format-control">On a control</h3>
 
 <p>Every control built on <code>RichControl</code> takes a <code>TextFormat</code> property and
-answers it from <code>textFormat()</code> - or none, while it is empty. Several in one argument list
-compose kind by kind, a later one standing over an earlier one, and <code>setTextFormat</code>
-replaces the whole of it. Stating one invalidates nothing; the caller asks for the pass.</p>
+returns it from <code>textFormat()</code> - or no format, while the property is empty. Several
+formats in one argument list compose kind by kind, and a later one overrides an earlier one;
+<code>setTextFormat</code> replaces the format as a whole. Stating a format invalidates nothing; the
+caller requests the pass.</p>
 
-<p>A class states its format ahead of the arguments it forwards, the way it states any other
-property. Along a chain of constructors the caller's value wins for every kind it states, then the
-most derived class's, and so on down to the base. A <code>CodeBox</code> is laid out in the
-monospace style that way, and the text handed to it states no style of its own:</p>
+<p>A class states its format ahead of the arguments it forwards, as it states any other property.
+Along a chain of constructors the caller's value takes precedence for every kind it states, then the
+most derived class's value, then each base in turn. A <code>CodeBox</code> is laid out in the
+monospace style this way, and the text passed to it states no style of its own:</p>
 
 <pre><code><span class="tp">TextBox</span>{ params, <span class="tp">WordWrap</span>::No, <span class="tp">TextFormat</span>{ <span class="tp">TextStyles</span>::Code }, std::<span class="fn">forward</span>&lt;<span class="tp">Args</span>&gt;(args)... }</code></pre>
 
 <div class="warning">
 <strong>Never call <code>setTextFormat</code> in a constructor body.</strong> The body runs after the
-caller's properties were bound, and the call replaces them.
+caller's properties are bound, so the call replaces them.
 </div>
 
-<p>The format reaches everything that lays the control's text out: the paint and the measurement, a
-<code>TextBox</code>'s placeholder, the tooltip that repeats a cut text over it
-(<code>OverTextAnswer::format</code>), and an in-place editor, which lays its own text out over the
-covered control's (<code>EditTarget::textFormat</code>). A grid column states one for all of its
-cells - see the <a href="grids.html#cells">Grid manual</a>.</p>
+<p>The format applies to everything that lays the control's text out: the paint and the measurement,
+a <code>TextBox</code>'s placeholder, the tooltip that repeats the control's clipped text
+(<code>OverTextAnswer::format</code>), and an in-place editor, which lays out its own text using the
+covered control's format (<code>EditTarget::textFormat</code>). A grid column states one format for
+all of its cells - see the <a href="grids.html#cells">Grid manual</a>.</p>
 
 <h2 id="anchors">Text Anchors</h2>
 
-<p>A control lays its text out in a box, and two anchors say where in that box the text stands.</p>
+<p>A control lays its text out in a box, and two anchors determine where the text sits inside that
+box.</p>
 
 <table>
 <tr><th>Property</th><th>Values</th><th>Default</th></tr>
@@ -461,15 +466,14 @@ cells - see the <a href="grids.html#cells">Grid manual</a>.</p>
 <tr><td><code>HorizontalTextAnchor</code></td><td><code>None</code>, <code>Left</code>, <code>Center</code>, <code>Right</code></td><td><code>None</code></td></tr>
 </table>
 
-<p><code>VerticalTextAnchor</code> moves the text down the box as a whole, by the height it
-measured.</p>
+<p><code>VerticalTextAnchor</code> positions the text block in the box by its measured height.</p>
 
-<p><code>HorizontalTextAnchor::None</code> makes no block. Each line is placed across the whole
-width of the box by its paragraph's <code>TextAlign</code>, and nothing moves it after - which is
-what a page, a grid cell and any text whose lines align to the edges of their box want.
-<code>Left</code>, <code>Center</code> and <code>Right</code> make one: the text measures a block as
-wide as its widest line, each line is aligned inside that block, and the anchor moves the block as a
-whole. A wrapped text's block is never wider than the width it was broken at.</p>
+<p><code>HorizontalTextAnchor::None</code> creates no block. Each line is placed across the whole width
+of the box by its paragraph's <code>TextAlign</code>, and nothing moves it afterward; this suits a
+page, a grid cell and any text whose lines align to the edges of its box. <code>Left</code>,
+<code>Center</code> and <code>Right</code> create one: the text is measured as a block as wide as
+its widest line, each line is aligned inside that block, and the anchor moves the block as a whole.
+A wrapped text's block is never wider than the width it was broken at.</p>
 
 <table>
 <tr><th>The text</th><th><code>None</code></th><th><code>Left</code></th><th><code>Center</code></th><th><code>Right</code></th></tr>
@@ -477,21 +481,21 @@ whole. A wrapped text's block is never wider than the width it was broken at.</p
 <tr><td>Two lines, aligned <code>Center</code></td><td>each centered in the box</td><td>centered on one another, the block at the left</td><td>each centered in the box</td><td>centered on one another, the block at the right</td></tr>
 </table>
 
-<p>The two compose. A document tile centers its block under its mark and every line of a name that
-wraps inside the block:</p>
+<p>The two anchors compose. A document tile centers its block under its mark, and it centers every
+line of a name that wraps inside the block:</p>
 
 <pre><code><span class="tp">HorizontalTextAnchor</span>::Center,
 <span class="tp">TextFormat</span>{ <span class="tp">TextAlign</span>::Center },</code></pre>
 
-<p>A tooltip that repeats an anchored control's cut text repeats the block, starting where the
-control put it. The engine is told the anchor with every <code>drawText</code>, and a control that
-<a href="#own-layout">holds its own layout</a> tells it to the layout with
+<p>A tooltip that repeats an anchored control's clipped text repeats the block, starting where the
+control placed it. The engine receives the anchor with every <code>drawText</code>, and a control
+that <a href="#own-layout">holds its own layout</a> passes it to the layout with
 <code>setHorizontalAnchor</code>.</p>
 
 <h2 id="drawing">Drawing and Measuring</h2>
 
-<p>The engine builds the layout. A control hands it a text, a rectangle, the colors it resolved,
-and where in that rectangle the text block belongs:</p>
+<p>The engine builds the layout. A control passes it a text, a rectangle, the colors it resolved,
+and the position of the text block inside that rectangle:</p>
 
 <pre><code><span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">ControlPaintContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
     <span class="tp">TextAnchor</span>, <span class="kw">const</span> <span class="tp">EditProps</span>* = <span class="kw">nullptr</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
@@ -501,46 +505,44 @@ and where in that rectangle the text block belongs:</p>
     <span class="tp">MaxSize</span> = { k_maxFloat, k_maxFloat }, <span class="kw">bool</span> editable = <span class="kw">false</span>, <span class="kw">bool</span> wrap = <span class="kw">true</span>,
     <span class="kw">const</span> <span class="tp">TextFormat</span>* = <span class="kw">nullptr</span>);</code></pre>
 
-<p>The format is laid out under the text - see <a href="#format">Text Format</a>. None and an empty
-one are the same answer, and <code>isTextTrimmed</code> takes one the same way.</p>
+<p>The format is laid out under the text - see <a href="#format">Text Format</a>. A null format and
+an empty format are equivalent, and <code>isTextTrimmed</code> accepts one in the same way.</p>
 
-<p>Colors arrive with the draw. A run names inks, and the paint context the draw is handed is
-what resolves them - so the same layout draws correctly through whichever backend owns the form it
-appears in.</p>
+<p>Colors arrive with the draw. A run names inks, and the paint context passed to the draw resolves
+them, so the same layout draws correctly through whichever backend owns the form it appears in.</p>
 
 <div class="warning">
 <strong>Always pass the anchor.</strong> A layout is built at the origin of a box of the given
-size, and the anchor is the whole of what says where in the bounds that box was put. A call that
-leaves it out draws against a box the text does not occupy. Where the anchors put the text is
+size, and the anchor states where in the bounds that box is placed. A call that omits it draws
+against a box the text does not occupy. The position each anchor produces is described in
 <a href="#anchors">Text Anchors</a>.
 </div>
 
 <p>With <code>CLAFI_TEXT_MOVING</code> set to 1 in <code>Source/Y-Core/System/Switches.h</code>,
 <code>drawText</code> and <code>TextLayout::draw</code> take a <code>TextRenderMode</code> after the
-<code>EditProps</code>, and the backends rasterize each run the way it asks. The switch is 0, and
-every run is drawn as <code>Static</code>. The mode is a question about movement, not about
-quality:</p>
+<code>EditProps</code>, and the backends rasterize each run in the requested mode. The switch is 0,
+and every run is drawn as <code>Static</code>. The mode describes movement, not quality:</p>
 
 <table>
 <tr><th>Mode</th><th>For</th></tr>
-<tr><td><code>Static</code></td><td>Text that cannot move. Everything that makes a glyph crisp, because nothing will ask it to be anywhere else.</td></tr>
-<tr><td><code>Movable</code></td><td>Text that can move, while it is not moving. It gives up the crispness permanently rather than at the moment movement starts - every setting that buys crispness ties the raster to sub-pixel position, so switching it around a movement makes the text visibly change at both ends, at rest.</td></tr>
-<tr><td><code>Moving</code></td><td>While the position is actually changing: outlines filled as geometry instead of a glyph rasterized afresh each frame. That is the expensive half, so it is not paid by a control that is merely capable of moving.</td></tr>
+<tr><td><code>Static</code></td><td>Text that cannot move. It gets every setting that makes a glyph crisp, because its position never changes.</td></tr>
+<tr><td><code>Movable</code></td><td>Text that can move, while it is not moving. It gives up crispness permanently rather than at the moment movement starts: every setting that improves crispness ties the raster to a sub-pixel position, so switching the setting around a movement makes the text visibly change at both ends, at rest.</td></tr>
+<tr><td><code>Moving</code></td><td>While the position is actually changing: outlines filled as geometry instead of a glyph rasterized afresh each frame. This is the expensive mode, so a control that can move but is not moving does not use it.</td></tr>
 </table>
 
-<p>Passing an <code>EditProps</code> makes the layout editable, which is a property of the text and
-not a convenience: an editable text keeps the empty paragraph a trailing newline opens, because the
-caret has to be able to stand on it. Measured as not editable, that row is missing from the size the
-control is given.</p>
+<p>Passing an <code>EditProps</code> makes the layout editable; editability is a property of the
+text, not a convenience. An editable text keeps the empty paragraph that a trailing newline opens,
+because the caret must be able to sit on it. Measured as not editable, that row is missing from
+the size the control receives.</p>
 
-<p>Positions in a text are answered without a layout at all -
+<p>Some positions in a text are returned without a layout -
 <code>nextWord</code>, <code>prevWord</code>, <code>wordAt</code>, <code>paragraphAt</code>. A
-caret is measured on a <code>TextLayout</code> by whoever holds one, because an edited text is a
-different text on every key, and routing that through the shared cache would store a copy per press.
-A paragraph range includes the newline that ends it: a selection that leaves it behind cuts the text
-and leaves an empty row where it was.</p>
+caret position is measured on a <code>TextLayout</code> by whoever holds one, because an edited text
+is a different text on every key, and routing that through the shared cache would store a copy per
+press. A paragraph range includes the newline that ends it: a selection that excludes that newline
+cuts the text and leaves an empty row where the newline was.</p>
 
-<p>A text box holds the layout it draws from rather than taking one from the cache. Its paint, its
+<p>A text box holds the layout it draws from instead of taking one from the cache. Its paint, its
 caret and every position it measures run on that one layout, so a caret is never read off one build
 and drawn on another.</p>
 
@@ -549,7 +551,7 @@ and drawn on another.</p>
 <h3 id="own-layout-when">When a control needs one</h3>
 
 <p><code>WithTextLayout&lt;HostClass&gt;</code> gives a control a <code>TextLayout</code> of its own
-to shape in, instead of drawing through the engine's cache. It is spelt in the base list and
+to shape in, instead of drawing through the engine's cache. It is written in the base list and
 nowhere else:</p>
 
 <pre><code><span class="kw">class</span> <span class="tp">TextBox</span> : <span class="kw">public</span> <span class="tp">WithTextLayout</span>&lt;<span class="tp">Label</span>&gt;
@@ -558,78 +560,77 @@ nowhere else:</p>
 <span class="kw">using</span> <span class="tp">CaretReadout</span> = <span class="tp">WithTextLayout</span>&lt;<span class="tp">Label</span>&gt;;</code></pre>
 
 <div class="info">
-<strong>Using it is the declaration.</strong> A control whose text changes often derives from it,
-and a control whose text is written once and then stands does not. The base list says it once,
-and nothing else has to be kept in step.
+<strong>Deriving from the base is the declaration.</strong> A control whose text changes often derives
+from it. A control whose text is written once and never changes does not. No other setting has to
+match it.
 </div>
 
-<p>The cache is addressed by what a text <em>says</em>, which is what lets a hundred buttons saying
-one word share a single shaping. It is also what a text rewritten every frame misses on every
-paint - the value under a slider's thumb, a frame rate, a caret position in the corner of a scroll
-box. Each new value takes a fresh entry and pushes out a layout that was being shared, so a drag of
-a few seconds empties the cache and leaves every label on the form to be shaped again.</p>
+<p>The cache is addressed by what a text <em>contains</em>, so a hundred buttons with the
+same word share a single shaping. It is also why a text rewritten every frame misses on every paint:
+the value under a slider's thumb, a frame rate, a caret position in the corner of a scroll box. Each
+new value takes a fresh entry and evicts a layout that was shared, so a drag of a few seconds empties
+the cache and forces every label on the form to be shaped again.</p>
 
-<p>A control here shapes its own text in place: no hash, no comparison against another control's
-words, nothing evicted, and nothing of its own in there to be evicted from. Editing is the second
-reason and the section above states it - an edited text is a different text on every key, and the
-paint and the caret have to read one build.</p>
+<p>A control with its own layout shapes its text in place: there is no hash, no comparison against
+another control's text, and nothing to evict. Editing is the second reason: an edited text is a
+different text on every key, and the paint and the caret have to read one build.</p>
 
 <h3 id="own-layout-seams">The two seams</h3>
 
-<p>Two virtuals on <code>Control</code> decide which layout an answer comes out of, and they are a
+<p>Two virtuals on <code>Control</code> determine which layout provides an answer, and they are a
 <strong>pair</strong>:</p>
 
 <pre><code><span class="kw">virtual</span> <span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">PaintEvent</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds, <span class="kw">const</span> <span class="tp">Text</span>&amp;);
 <span class="kw">virtual</span> <span class="tp">ScaledSize</span> <span class="fn">measureText</span>(<span class="tp">AlignEvent</span>&amp;, <span class="tp">ScaledSize</span> maxDimensions, <span class="kw">const</span> <span class="tp">Text</span>&amp;);</code></pre>
 
-<p>Everything around them stays with the framework. <code>paintOwnText</code> keeps the rect, the
-gather and the flags the result raises; <code>measureOwnText</code> keeps the gather, the rule that a
-run which does not wrap is measured against no width at all, and the clamp to the box.</p>
+<p>The framework handles everything around them. <code>paintOwnText</code> provides the rect, the
+gather and the flags the result raises; <code>measureOwnText</code> provides the gather, the rule
+that a run which does not wrap is measured against no width, and the clamp to the box.</p>
 
 <div class="warning">
-<strong>Override both or neither.</strong> A control that replaces one measures on one layout and
+<strong>Override both or neither.</strong> A control that overrides one measures on one layout and
 draws on another.
 </div>
 
 <h3 id="own-layout-synced">Bringing the layout up to date</h3>
 
-<p>Both seams, and everything else that asks the layout a question, go through one call - which is
-what keeps a position from being read off one build and drawn on another:</p>
+<p>Both seams, and every other call that queries the layout, go through one function, which keeps a
+position from being read off one build and drawn on another:</p>
 
 <pre><code><span class="tp">TextLayout</span>&amp; <span class="fn">syncedLayout</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds) <span class="kw">const</span>;
 <span class="tp">TextLayout</span>&amp; <span class="fn">syncedLayout</span>(<span class="kw">const</span> <span class="tp">FormContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp; textBounds, <span class="kw">const</span> <span class="tp">Text</span>&amp;) <span class="kw">const</span>;
 
 <span class="kw">virtual</span> <span class="kw">void</span> <span class="fn">takeText</span>() <span class="kw">const</span>;</code></pre>
 
-<p>The one-argument overload gathers a text itself, the way a paint does. Asking twice is free: a
-gather <em>names</em> a control's own text rather than copying it, so an answer that is that object
-is recognized by its stamp, and an answer composed around it - a parent's words, a mark - is kept
-in a copy beside the text and compared against the next one. The text stays what its owner wrote,
-and the layout draws whichever of the two the last gather answered. Either way an unchanged text
-rebuilds nothing, and a control measured four times in one pass shapes once.</p>
+<p>The one-argument overload gathers a text itself, as a paint does. A second gather of the same
+text costs no more than the first: a gather <em>names</em> a control's own text rather than copying
+it, so the layout identifies an answer that is that object by its stamp, and an answer composed around it -
+a parent's text, a mark - is stored in a copy beside the text and compared with the next one. The
+text remains what its owner wrote, and the layout draws whichever of the two the last gather
+produced. In either case an unchanged text rebuilds nothing, and a control measured four times in
+one pass shapes once.</p>
 
-<p>Only the <em>size</em> of the rect is taken. Where it sits is the caller's business and the
-anchor's, so a control carried sideways under a viewport does not rebuild for every pixel it
-moves.</p>
+<p>Only the <em>size</em> of the rect is used. Its position belongs to the caller and the anchor, so
+a control moved sideways under a viewport does not rebuild for every pixel of movement.</p>
 
-<p>A layout held here stands outside the cache, so it answers <code>invalidateLayouts()</code>
-for itself: it compares <code>layoutGeneration()</code> against the number it was built at, and
-invalidates when the two have parted.</p>
+<p>A layout held here is outside the cache, so it handles <code>invalidateLayouts()</code> itself:
+it compares <code>layoutGeneration()</code> against the number it was built at, and invalidates when
+the two differ.</p>
 
-<p>The control's format reaches the layout the same way, on every call.
-<code>TextLayout::setFormat</code> keeps a copy and compares the one it is stated next, so an
-unchanged format invalidates nothing, and a measurement kept from an earlier call is answered again
-only while the format matches the one it was made over.</p>
+<p>The control's format is passed to the layout the same way, on every call.
+<code>TextLayout::setFormat</code> stores a copy and compares it with the format passed next time,
+so an unchanged format invalidates nothing, and a measurement from an earlier call is returned again
+only while the format matches the one it was made with.</p>
 
-<p><code>takeText</code> states the <em>whole</em> of a text the layout has not been told about,
-which is what a text rewritten from nothing needs. A host that knows what changed overrides it and
-says so instead - see <a href="#editing">Editing a layout in place</a>.</p>
+<p><code>takeText</code> states the <em>whole</em> of a text that the layout has not been told
+about; this is the call for a text rewritten from nothing. A host that tracks what changed
+overrides it and reports the change instead - see <a href="#editing">Editing a layout in place</a>.</p>
 
 <h3 id="own-layout-positions">Positions on a held layout</h3>
 
-<p>Whoever holds a layout asks it where things are. The word-level questions above need no layout;
-these do, because the answers are about lines, and lines exist only once a text has been broken to
-a width.</p>
+<p>Whoever holds a layout queries it for positions. The word-level functions above need no layout;
+these do, because the results are about lines, and lines exist only once a text has been broken to a
+width.</p>
 
 <table>
 <tr><th>Call</th><th>Answers</th></tr>
@@ -643,57 +644,57 @@ a width.</p>
 <pre><code><span class="kw">struct</span> <span class="tp">TextLineColumn</span> { <span class="tp">size_t</span> line{ 1 }; <span class="tp">size_t</span> column{ 1 }; };</code></pre>
 
 <div class="info">
-<strong>A row is what the breaker made; a line is what the newlines cut.</strong> So a row moves
-with the width the text was broken at, and a paragraph broken across five rows carries one line
-number, the column running along the whole of it. Both are counted from one, which is what a
-reader counts from.
+<strong>A row is produced by the line breaker; a line is the text between newlines.</strong> A row
+changes with the width the text was broken at, and a paragraph broken across five rows has one
+line number, with the column counted across the whole paragraph. Both are counted from one.
 </div>
 
-<p><code>lineColumnAt</code> is a binary search over the paragraphs and reads no text, so a status
-readout can ask it on every key press of a fifty-thousand-line document. The row calls walk the
-paragraphs, which is the cost of an answer that depends on where the lines were broken.</p>
+<p><code>lineColumnAt</code> is a binary search over the paragraphs and does not read the text, so a
+status readout can call it on every key press of a fifty-thousand-line document. The row functions
+visit the paragraphs, which is the cost of a result that depends on where the lines were broken.</p>
 
 <p>All of these are in the layout's own coordinates - the box is built at the origin. A control
-crosses <code>anchoredOrigin</code> in both directions: subtracting it from a point handed in,
-adding it to a rect handed back.</p>
+applies <code>anchoredOrigin</code> in both directions: subtracting it from a point passed in,
+adding it to a rect returned.</p>
 
 <h2 id="editing">Editing a layout in place</h2>
 
-<p>A layout is normally told a whole text. A caller that knows what changed can say so instead, and
-then a paragraph the edit did not reach keeps the shaping it already has:</p>
+<p>A layout is normally given a whole text. A caller that tracks the change can report it
+instead, and then a paragraph the edit did not reach keeps the shaping it already has:</p>
 
 <pre><code><span class="kw">struct</span> <span class="tp">TextEdit</span> { <span class="tp">TextRange</span> replaced; <span class="tp">size_t</span> insertedLength; };
 
 [[nodiscard]] <span class="kw">bool</span> <span class="fn">applyTextEdit</span>(<span class="kw">const</span> <span class="tp">Text</span>&amp;, <span class="tp">TextEdit</span>);
 [[nodiscard]] <span class="tp">TextEdit</span> <span class="fn">mergedEdits</span>(<span class="tp">TextEdit</span> first, <span class="tp">TextEdit</span> second);</code></pre>
 
-<p>The edit is stated in the coordinates of the text <em>before</em> it. What the layout does with it
-is find the paragraphs it reaches, re-shape those, and move the rest: their characters begin later or
-earlier, and their lines stand lower or higher. Typing a newline, deleting one and pasting a
-thousand lines are all the same operation - how many paragraphs the slice became is read off the
-rebuilt text rather than worked out from what the edit was.</p>
+<p>The edit is stated in the coordinates of the text <em>before</em> it. The layout finds the
+paragraphs the edit reaches, re-shapes those, and moves the rest: their characters begin later or
+earlier, and their lines sit lower or higher. Typing a newline, deleting one and pasting a thousand
+lines are all the same operation; the number of paragraphs the slice became is read from the rebuilt
+text rather than worked out from the edit.</p>
 
 <div class="warning">
-<strong>It can decline, and the answer says so.</strong> A layout with nothing shaped yet, or an
-edit that does not fit the text it comes with. A caller that gets
-<code>false</code> states the whole text with <code>setText</code>; the layout is already
-invalidated for it.
+<strong>An edit can fail, and the return value reports it.</strong> <code>applyTextEdit</code> returns
+<code>false</code> when the layout has nothing shaped yet, or when the edit does not fit the text it
+is given. A caller that receives <code>false</code> states the whole text with <code>setText</code>;
+the layout is already invalidated for it.
 </div>
 
-<p>One record carries one edit, and key repeat outruns the paint loop - so several edits can reach
-the text before anything asks the layout about it. <code>mergedEdits</code> folds a second into a
-standing record, answering the hull of the two. A hull can name text neither edit touched, which
-costs a paragraph re-shaped that did not have to be, or a refusal - never a wrong answer.</p>
+<p>One record carries one edit, and key repeat runs faster than the paint loop, so several edits can
+reach the text before anything queries the layout. <code>mergedEdits</code> folds a second edit into
+an existing record and returns the hull of the two. A hull can name text that neither edit touched,
+which may re-shape a paragraph unnecessarily, or cause a refusal; it never produces a wrong
+answer.</p>
 
-<p>A caller must also know that the record describes <em>this</em> text. What makes an edit and a
-text one story is that the lengths agree: the text the layout holds, plus what the edit inserted,
-less what it replaced. A control whose text arrives from its parent edits its own, and the two are
+<p>A caller must also establish that the record describes <em>this</em> text. An edit and a text belong
+together only when their lengths agree: the text the layout holds, plus what the edit inserted, less
+what it replaced. A control whose text arrives from its parent edits its own text, and the two are
 not the same text.</p>
 
 <h2 id="links">Links in a TextBox</h2>
 
 <p>A link and an anchor are written as the <a href="text.html#links">Writing ClaFi Text</a> manual
-describes, and what a link <em>does</em> is up to the control holding the text: a
+describes, and what a link <em>does</em> depends on the control that holds the text: a
 <code>TextBox</code> follows it, and a label draws it and nothing more. The control underlines the
 link under the pointer when a click there would follow it.</p>
 
@@ -705,21 +706,21 @@ link under the pointer when a click there would follow it.</p>
 <tr><td>One the user types into</td><td>Ctrl+click</td><td>Places the caret, as it does anywhere else in the text.</td></tr>
 </table>
 
-<p>The same rule decides when a link is underlined and shows the hand pointer, so what stands under
-the pointer always says what a click there will do. A press that ends in a selection was a drag, and
-follows nothing.</p>
+<p>The same rule controls when a link is underlined and when the hand pointer is shown, so the
+element under the pointer always indicates what a click there will do. A press that ends in a
+selection was a drag, and it follows nothing.</p>
 
-<p>Where a followed link goes, in order:</p>
+<p>A followed link is resolved in this order:</p>
 
 <ol>
-<li><strong><code>#name</code>, and the box's own text holds that anchor</strong> - the box goes to
-it. The anchor's text is selected and its line brought to the top of the view, the way a browser
-lands on a fragment. No event is raised.</li>
-<li><strong>Any other target</strong> - <code>OnLinkClick</code> is raised with it. A handler that
-answers the target stops the event.</li>
-<li><strong>Nothing stopped it</strong> - a target starting with <code>http:</code>,
-<code>https:</code> or <code>mailto:</code> is opened through the shell, whatever the case of its
-letters. Every other target goes nowhere.</li>
+<li><strong>When the box's own text holds the <code>#name</code></strong>, the box goes to that
+anchor. The anchor's text is selected, and its line is brought to the top of the view, as a browser
+does for a fragment. No event is raised.</li>
+<li><strong>Any other target</strong> raises <code>OnLinkClick</code> with that target. A handler
+that acts on the target stops the event.</li>
+<li><strong>A target that no handler stopped</strong> is opened through the shell when it starts with
+<code>http:</code>, <code>https:</code> or <code>mailto:</code>, whatever its letter case. Every
+other target goes nowhere.</li>
 </ol>
 
 <pre><code>box.<span class="fn">onLinkClick</span>([](<span class="tp">LinkClickEvent</span>&amp; event) {
@@ -730,14 +731,14 @@ letters. Every other target goes nowhere.</li>
     });</code></pre>
 
 <p><code>LinkClickEvent</code> carries <code>target</code>, as the text states it, and
-<code>stamp</code>, the press that followed the link. A <code>#name</code> the box's text does not
-hold is raised like any other target, which is how a link reaches an anchor on another page: the
+<code>stamp</code>, the press that followed the link. A <code>#name</code> that the box's text does
+not hold is raised like any other target, which is how a link reaches an anchor on another page: the
 handler opens that page and calls <code>goToAnchor</code> on its box.</p>
 
 <div class="warning">
-<strong>The shell opens three schemes and no more.</strong> A text can come out of a file or off the
-clipboard and name anything, and the shell runs a program it is handed. A <code>file:</code> link, a
-path or a scheme of the application's own does nothing until a handler answers it.
+<strong>The shell opens three schemes only.</strong> A text read from a file or from the clipboard
+can hold any target, and the shell runs any program it is handed. A <code>file:</code> link, a path
+or a scheme of the application's own does nothing until a handler acts on it.
 </div>
 
 <h3 id="links-history">Back and forward</h3>
@@ -749,39 +750,42 @@ path or a scheme of the application's own does nothing until a handler answers i
 <span class="kw">bool</span> <span class="fn">canGoBack</span>() <span class="kw">const</span>;
 <span class="kw">bool</span> <span class="fn">canGoForward</span>() <span class="kw">const</span>;</code></pre>
 
-<p>Every jump is remembered. Before it goes to an anchor the box keeps where it stood - the
-selection, and the position the view showed at its top - and <code>Alt+Left</code> goes back to it,
-<code>Alt+Right</code> forward again, the way a browser's history does. <code>goToAnchor</code> is
-what records a place, whether a link called it or the application did. With nothing to go back or
-forward to, the key is left unhandled and reaches whatever stands above the box.</p>
+<p>Every jump is remembered. Before going to an anchor, the box records its current position - the
+selection, and the position the view showed at its top - and <code>Alt+Left</code> goes back to it
+while <code>Alt+Right</code> goes forward again, as a browser's history does.
+<code>goToAnchor</code> records a position whether a link or the application called it. With nothing
+to go back or forward to, the key is left unhandled and passes to the control above the box.</p>
 
-<p>An edit made through the box moves every remembered place with the text, so going back after
-typing lands where the user was. An undo or a redo drops the history. A text the host writes leaves
-it standing, and a place past the end of that text is held to its end when it is gone to.</p>
+<p>An edit made through the box moves every remembered position with the text, so going back after
+typing returns to where the user was. An undo or a redo clears the history. A text written by the
+host leaves the history intact, and a position past the end of that text is clamped to its end when
+it is restored.</p>
 
 <h3 id="links-tooltips">Link tooltips</h3>
 
-<p>Every link has a tooltip, whether a click would follow it or not: the underline says a click
-would, and the tooltip says where it goes, which a reader wants in a box they type into as much as
-in one they read. It stands over the line the pointer is on, from where the link starts on it, so it
-covers neither the link nor the words around it. Where the screen has no room above the line, it
-stands under it. While the pointer is on a link, its tooltip stands in for the box's own.</p>
+<p>Every link has a tooltip, whether a click would follow it or not: the underline indicates that a
+click would follow it, and the tooltip shows where the link goes, which is as useful in a box the
+user types into as in one the user reads. The tooltip is placed over the line the pointer is on,
+starting where the link starts on that line, so it covers neither the link nor the words around it.
+Where the screen has no room above the line, it is placed under it. While the pointer is on a link,
+its tooltip replaces the box's own.</p>
 
-<p>What the box writes when nothing else does:</p>
+<p>When no handler writes a tooltip, the box supplies it:</p>
 
 <table>
 <tr><th>Target</th><th>Tooltip</th></tr>
-<tr><td><code>#name</code>, held by the box's text</td><td>The paragraph the anchor stands in, with its formatting - in the Ledger, the clue a reference names. A paragraph longer than six lines is cut at the end of the sixth and ends in an ellipsis, in the styles still open where it stands.</td></tr>
+<tr><td><code>#name</code>, held by the box's text</td><td>The paragraph that contains the anchor, with its formatting - in the Ledger, the clue that a reference names. A paragraph longer than six lines is cut at the end of the sixth line and ends in an ellipsis, in the styles still open at that point.</td></tr>
 <tr><td>Any other target</td><td>The target as the text states it.</td></tr>
 </table>
 
-<p>In a box the user types into, a muted line follows: <em>Ctrl+click to follow</em>. A plain click
-there places the caret, and nothing else on screen says the link can be followed at all.</p>
+<p>In a box the user types into, the tooltip also shows a muted line:
+<em>Ctrl+click to follow</em>. A plain click there places the caret, and no other element on screen
+indicates that the link can be followed.</p>
 
 <p><code>OnGetLinkTooltip</code> is raised first. Its event carries <code>target</code>,
 <code>range</code> - the text the link covers - and <code>tooltip</code>, the tooltip itself with
-its placement and anchor already stated. What a handler writes into <code>tooltip.text</code> is the
-whole of the tooltip, and the box then writes nothing.</p>
+its placement and anchor already set. Whatever a handler writes into <code>tooltip.text</code>
+becomes the entire tooltip, and the box then writes nothing.</p>
 
 <pre><code>box.<span class="fn">onGetLinkTooltip</span>([](<span class="tp">GetLinkTooltipEvent</span>&amp; event) {
     <span class="kw">if</span> (event.target.<span class="fn">starts_with</span>(<span class="st">L"clafi:"</span>))
@@ -790,15 +794,15 @@ whole of the tooltip, and the box then writes nothing.</p>
 
 <div class="info">
 <strong>A tooltip breaks its lines at 480 design pixels</strong>, and its window is sized to the
-widest line it came to - so a short tooltip stays short, and a long one wraps rather than running
-out to the edge of the screen. That holds for every tooltip except one standing over a control's own
-text, which repeats the lines that control broke. A preview is cut at six lines of that width.
+widest line in it, so a short tooltip stays short and a long one wraps instead of extending to the
+edge of the screen. This applies to every tooltip except one over a control's own text, which
+repeats the lines that control broke. A preview is cut at six lines of that width.
 </div>
 
 <h3 id="links-layout">Links on a held layout</h3>
 
-<p>A control drawing links of its own - one that <a href="#own-layout">holds its own layout</a> -
-asks the layout which link is under a point, and tells it which one to underline:</p>
+<p>A control that draws links of its own - one that <a href="#own-layout">holds its own layout</a> -
+queries the layout for the link under a point and sets which link is underlined:</p>
 
 <pre><code>[[nodiscard]] <span class="tp">std::optional</span>&lt;<span class="tp">LinkHit</span>&gt; <span class="fn">linkAt</span>(<span class="tp">FloatPoint</span>);
 <span class="kw">void</span> <span class="fn">setHoveredLink</span>(<span class="tp">TextRange</span>);     <span class="cm">// an empty range underlines nothing</span>
@@ -806,19 +810,18 @@ asks the layout which link is under a point, and tells it which one to underline
 
 <span class="kw">struct</span> <span class="tp">LinkHit</span> { <span class="tp">LinkSpan</span> link; <span class="tp">size_t</span> pos; };   <span class="cm">// the link, and the character under the point</span></code></pre>
 
-<p><code>linkAt</code> takes a point in the layout's own coordinates, the ones <code>caretPos</code>
-takes. A hit test names the nearest character even past the end of a line, so the point is held to
-the box that character's glyph stands in: past the end of a line, between two lines or below the
-text, there is no link. <code>pos</code> is the character under the point, which says which line of
-a wrapped link the pointer is on.</p>
+<p><code>linkAt</code> takes a point in the layout's own coordinates, the coordinates that
+<code>caretPos</code> takes. A hit test returns the nearest character even past the end of a line, so
+the point is confined to the box that contains that character's glyph: past the end of a line,
+between two lines or below the text, there is no link. <code>pos</code> is the character under the
+point, which identifies the line of a wrapped link that the pointer is on.</p>
 
-<p>The hovered link is a draw-time question, the way colors are: stating one shapes nothing, and
-the caller repaints. A new text drops it, since the range was stated in the text it was found
-in.</p>
+<p>The hovered link is read at draw time, as colors are: stating one shapes nothing, and the caller
+repaints. A new text clears it, since the range was stated in the text where it was found.</p>
 
 <p><code>LinkSpan</code> is <code>TextSpan&lt;std::wstring_view&gt;</code> - the range a link covers
-and its target - and <code>BakedText::links()</code> answers every one in text order. The target is
-a view into the text the spans were baked from, and holds while that text stands unchanged.</p>
+and its target - and <code>BakedText::links()</code> returns every link in text order. The target is
+a view into the text the spans were baked from, and remains valid while that text is unchanged.</p>
 
 <h2 id="do-dont">Do and Don't</h2>
 
@@ -827,21 +830,21 @@ a view into the text the spans were baked from, and holds while that text stands
         <h4>Do</h4>
         <ul>
             <li><strong>Build a <code>Text</code> per paint.</strong> An identical text hits the layout cache, so rebuilding costs a hash and a compare.</li>
-            <li><strong>Write a control's text through <code>text()</code></strong> and ask for the pass the change needs.</li>
+            <li><strong>Write a control's text through <code>text()</code></strong> and request the pass the change needs.</li>
             <li><strong>Pass the anchor</strong> that matches how the control positions its text.</li>
             <li><strong>Leave the horizontal anchor at <code>None</code></strong> for text whose lines align to the edges of their box.</li>
             <li><strong>State what every text of a control shares as its <code>TextFormat</code></strong>, ahead of the arguments a constructor forwards, rather than writing it into each text.</li>
-            <li><strong>Answer your own link targets in <code>OnLinkClick</code> and stop the event.</strong> Of the rest, the box opens only http, https and mailto.</li>
+            <li><strong>Handle your own link targets in <code>OnLinkClick</code> and stop the event.</strong> For any target the handler does not stop, the box opens only http, https and mailto.</li>
         </ul>
     </div>
     <div class="rule-card donts">
         <h4>Don't</h4>
         <ul>
-            <li><strong>Don't hold a <code>Text</code> to avoid rebuilding it</strong> unless it is expensive to assemble - the cache is behind the engine, not in your control.</li>
+            <li><strong>Don't hold a <code>Text</code> to avoid rebuilding it</strong> unless it is expensive to assemble. The layout cache is part of the engine, not of the control.</li>
             <li><strong>Don't write through a <code>Text&amp;</code> taken from <code>text()</code>.</strong> The stamp stays where it was.</li>
-            <li><strong>Don't measure editable text as static</strong> and then draw it editable. The two answer different heights.</li>
+            <li><strong>Don't measure editable text as static</strong> and then draw it editable. The two produce different heights.</li>
             <li><strong>Don't call <code>setTextFormat</code> in a constructor body.</strong> It replaces what the caller passed.</li>
-            <li><strong>Don't put a text that is rewritten as the user watches through the cache.</strong> A control whose words change often derives from <code>WithTextLayout</code> and shapes them in place.</li>
+            <li><strong>Don't put a text that changes while the user watches through the cache.</strong> A control whose text changes often derives from <code>WithTextLayout</code> and shapes it in place.</li>
         </ul>
     </div>
 </div>
@@ -850,130 +853,129 @@ a view into the text the spans were baked from, and holds while that text stands
 
 <h3 id="hiw-baked">Runs to spans</h3>
 
-<p><code>BakedText::rebuild</code> walks the runs once and resolves each field of each run, from the
-first that states it - the run's style and its bases, then the format's style and its bases, then the
-text's Body for a font field and the text ink for an ink. Equal neighbors merge, and what comes out is absolute ranges: <code>ColorSpan</code>,
+<p><code>BakedText::rebuild</code> iterates over the runs once and resolves each field of each run from
+the first source that states it - the run's style and its bases, then the format's style and its
+bases, then the text's Body for a font field and the text ink for an ink. Equal neighbors merge, and
+the output is absolute ranges: <code>ColorSpan</code>,
 <code>WeightSpan</code>, <code>StyleSpan</code>, <code>SizeSpan</code>, <code>FamilySpan</code>,
 <code>ScriptSpan</code>, a <code>ParagraphStyle</code> per paragraph, a <code>LinkSpan</code> for
-every link, and a <code>BakedInlineObject</code> for every inline object. That is the form the native
-layout is fed.</p>
+every link, and a <code>BakedInlineObject</code> for every inline object. The native layout is fed
+that form.</p>
 
 <p>A color span holds <code>ColorDef</code>, which is
 <code>std::variant&lt;Ink, Color&gt;</code> - the <em>name</em> of a color rather than a color.
-Colors are deliberately absent from what a layout is built from: they reach the native layout when
-it is drawn, so a theme change re-draws the same shaping rather than paying for it again. Alignment
-is absent for the same reason: where finished lines sit inside their box is set on a built layout,
-not shaped from.</p>
+Colors are deliberately absent from the input of a build: they are applied to the native layout when
+it is drawn, so a theme change redraws the same shaping rather than shaping it again. Alignment is
+absent for the same reason: where finished lines sit inside their box is set on a built layout, not
+derived during shaping.</p>
 
 <p><strong>The base font is the format's style over the text's Body</strong>, resolved once per bake.
-A text holding nothing is drawn in it and its caret is measured in it, and a layout takes from it
-whatever a paragraph's spans leave unstated.</p>
+A text holding nothing is drawn in it and its caret is measured in it, and a layout uses it for every
+field that a paragraph's spans leave unstated.</p>
 
 <h3 id="hiw-cache">The layout cache</h3>
 
-<p>The engine keeps its layouts keyed on a text rather than on a box: the text's hash, the
-hash of the format it is laid out over, the scale factor, whether it is editable, and - for a text carrying a flex space - the event phase. A
-flex space is the one thing laid out differently for a measurement and for a paint, filling the box
-it is drawn in and contributing nothing to a size. Floats are held as their bits, because this is an
-identity question and not a numeric one.</p>
+<p>The engine keys its layouts on a text rather than on a box: the text's hash, the
+hash of the format it is laid out over, the scale factor, whether it is editable, and - for a text with a flex space - the event phase. A
+flex space is the one item laid out differently for a measurement and for a paint, filling the box
+it is drawn in and contributing nothing to a size. Floats are keyed by their bits, because this is
+an identity question and not a numeric one.</p>
 
-<p>From 512 layouts on, the engine sweeps: it keeps what the pass under way and the pass before it
-asked for. Past 4096 it keeps the most recently used half.</p>
+<p>From 512 layouts on, the engine sweeps: it keeps the layouts that the current pass and the
+previous pass requested. Past 4096 it keeps the most recently used half.</p>
 
-<p>A key names a bucket, and the bucket holds one layout per width the text has been broken at.
-Lines broken at one width came out no wider than the widest of them, and every width between the two
-breaks them the same way - none has to split, each already fitting, and none can join, because the
-breaker refused the next word at the wider of the two. So a layout is asked whether it accepts the
-width being requested, and the first that does answers it. That is what lets one build serve both
-passes: a control is sized to what it measured, so the paint asks at a width inside the interval of
-the build the measurement just made. A width outside every interval takes a layout of its own, up to
-four to a text, and the least recently used of them goes.</p>
+<p>A key names a bucket, and the bucket holds one layout per width at which the text has been broken.
+Lines broken at one width are no wider than the widest of them, and every width between the two breaks
+them the same way: no line has to split, each already fits, and no two can join, because the breaker
+refused the next word at the wider of the two. The engine queries a layout for the width being
+requested, and the first that accepts it supplies the layout. One build can therefore serve both passes: a
+control is sized to what it measured, so the paint queries a width inside the interval of the build
+that the measurement just made. A width outside every interval takes a layout of its own, up to four
+to a text, and the least recently used one is evicted.</p>
 
-<p>The box a layout stands in is not the width its lines were broken at, and moving lines into
-another width costs no shaping. A paragraph that came out as one line is placed by an offset the
-layout applies as it is drawn or hit; one of several lines is aligned by its native layout once,
-in the width it was broken at, and then moved as a whole. A wrapped text is never placed wider
-than it was broken at nor narrower than its widest line, so every line of it moves by the same
-amount. Justified lines are stretched to the width they stand in, and those alone are told a new
-one.</p>
+<p>The box a layout occupies is not the width its lines were broken at, and moving lines into
+another width requires no shaping. A paragraph that came out as one line is placed by an offset that
+the layout applies as it is drawn or hit; one of several lines is aligned by its native layout once,
+in the width it was broken at, and then moved as a whole. A wrapped text is never placed wider than
+it was broken at nor narrower than its widest line, so every line of it moves by the same amount.
+Justified lines are stretched to the width they occupy, and only those lines receive a new width.</p>
 
-<p>The height is in none of this. It decides which line the text is cut off at and which lines fade,
-and that is read off the finished lines - so a box of another height keeps the shaping and reads the
-fit again.</p>
+<p>The height is not part of a layout's key. It determines which line the text is cut off at and
+which lines fade, and those are read from the finished lines, so a box of another height keeps the
+shaping and recomputes the fit.</p>
 
-<p>A hash is a way to find an entry, not proof it is the right one - two texts landing on one would
-draw the wrong words - so a hit is confirmed by comparing the <code>Text</code> itself, and its
-format against the copy the layout keeps. The cache owns the text's copy, because every caller's text is a temporary built for one paint while the layout keeps
-a pointer to the one it was given.</p>
+<p>A hash locates an entry but does not prove it is the right one - two texts landing on one would
+draw the wrong words - so a hit is confirmed by comparing the <code>Text</code> itself and its format
+against the copy the layout keeps. The cache owns the text's copy, because every caller's text is a
+temporary built for one paint, while the layout keeps a pointer to the one it was given.</p>
 
-<p><code>Text::hash</code> stands in for the whole <code>Text</code>, the inks of its runs and all. A
-color is no part of a build, but it is part of what makes one <code>Text</code> a different
-<code>Text</code>, so two runs naming different inks hold a cache entry each rather than sharing a
-key and evicting one another on every alternation. For anything that changes what a build would
-produce without being part of the key - the font table above all - <code>invalidateLayouts()</code>
-drops the cache and moves <code>layoutGeneration()</code> on, and a layout held outside the cache
-compares that number against the one it was built at. An edit to any style sheet moves it on as
-well.</p>
+<p><code>Text::hash</code> covers the whole <code>Text</code>, including the inks of its runs. A
+color is no part of a build, but it is part of what makes one <code>Text</code> different from
+another <code>Text</code>, so two runs naming different inks hold separate cache entries rather than sharing a key and
+evicting one another on every alternation. For anything that changes what a build would produce
+without being part of the key - the font table above all - <code>invalidateLayouts()</code> clears the
+cache and advances <code>layoutGeneration()</code>, and a layout held outside the cache compares that
+number against the one it was built at. An edit to any style sheet advances it as well.</p>
 
 <h3 id="hiw-cells">Paragraphs on cells</h3>
 
-<p>A paragraph set in one monospace font is not shaped at all. Every glyph of such a font is one
-cell wide, so the x of a column is the column times the cell, a tab reaches the next multiple of
+<p>A paragraph set in one monospace font is not shaped. Every glyph of such a font is one
+cell wide, so the x of a column is the column times the cell, a tab advances to the next multiple of
 four columns, the line is one row of the face's height, and a hit test is a division. The layout
-decides this per paragraph, before building anything: one font over the whole of it - a span of
+applies this rule per paragraph, before building anything: one font over the whole paragraph - a span of
 family, size, weight or style ending inside the paragraph makes a paragraph in two fonts - no inline
 object, no script, not justified, and every character either a tab or one the font has a glyph for
 at exactly the cell advance. A paragraph that qualifies is one row of columns times cell and holds
 no native layout. Anything else is shaped natively, that paragraph alone: one line of Arabic in a
 source file costs that line and no other.</p>
 
-<p>What this buys is the shaping. A document of source is one pass over its characters instead of a
-native layout per line, and what the layout keeps is a paragraph record per line rather than a
-native object each - the lines of every paragraph live in one pool on the layout, so a document of
-a hundred thousand rows allocates once for them. The pixels are the ones the native layout would
-draw: DirectWrite's natural measuring mode already places a monospace run at column times advance,
-the tab stops are the same four cells, and the glyphs reach the same draw primitive -
+<p>The gain is in shaping. A document of source is one pass over its characters instead of a
+native layout per line, and the layout keeps a paragraph record per line rather than a native object
+for each: the lines of every paragraph live in one pool on the layout, so a document of a hundred
+thousand rows allocates space for them once. The pixels are the ones the native layout would draw:
+DirectWrite's natural measuring mode places a monospace run at column times advance, the tab stops are
+the same four cells, and the glyphs use the same draw primitive -
 <code>DrawGlyphRun</code> on Direct2D, the glyph cache and the compositor on the CPU backends. The
-cell and the line height are the platform's own measurement of the font, the same one the tab
-stops are read from.</p>
+cell and the line height are the platform's own measurement of the font, the same one from which the
+tab stops are read.</p>
 
 <div class="info">
-<strong>One glyph per character.</strong> A paragraph on cells draws each character as its own
-glyph, so a font's ligatures are not applied to it. Consolas and DejaVu Sans Mono carry none;
-Cascadia Code and Fira Code do, and a text set in one of those shows its characters unjoined.
+<strong>A paragraph on cells draws one glyph per character.</strong> Ligatures are not applied to it.
+Consolas and DejaVu Sans Mono have no ligatures; Cascadia Code and Fira Code do, and a text set in
+one of those shows its characters unjoined.
 </div>
 
-<p>What a glyph table alone cannot lay out stays native, and the layout refuses it without asking
-the font: the controls and the format characters, combining marks, the right-to-left scripts, the
-scripts that reorder or stack, and anything past the basic plane. A wrapping layout keeps a
-paragraph on cells while its ink fits the width it breaks at - a line that fits is never broken -
-and hands one that does not to the native layout. Left, center and right alignment are an offset
-inside the width the paragraph is placed in, applied as the paragraph is drawn or hit rather than
-told to a layout, so a box that moves costs nothing.</p>
+<p>Text that a glyph table alone cannot lay out stays native, and the layout rejects it without
+querying the font: the controls and the format characters, combining marks, the right-to-left scripts,
+the scripts that reorder or stack, and anything past the basic plane. A wrapping layout keeps a
+paragraph on cells while its ink fits the width it breaks at - a line that fits is never broken - and
+passes one that does not to the native layout. Left, center and right alignment are an offset inside
+the width the paragraph is placed in, applied as the paragraph is drawn or hit rather than passed to a
+layout, so a box that moves requires no rebuild.</p>
 
-<p>Nothing in the API says which paragraphs are on cells. <code>[code]</code> text, a
-<code>CodeBox</code>, a <code>HexView</code> line and a label in a monospace family all take the
+<p>No API reports which paragraphs are on cells. <code>[code]</code> text, a
+<code>CodeBox</code>, a <code>HexView</code> line and a label in a monospace family all use this
 path when they qualify, and a caller reads the same positions and draws the same pixels either
 way.</p>
 
 <h3 id="hiw-underline">The link underline</h3>
 
 <p>The layout draws the underline of the hovered link: one segment per line the link reaches, under
-the glyphs that line shows, in the color the segment's first glyph was drawn in. It stands below
-the baseline by a share of the room the line has there, in the thin stroke; the font's own underline
-metrics are not read. It is drawn over the glyphs, so a selection band does not cover it, and it
-does not fade with the glyphs of a line the box cuts.</p>
+the glyphs that the line shows, in the color of the segment's first glyph. The underline is placed
+below the baseline by a share of the space the line has there, in the thin stroke; the font's own
+underline metrics are not read. It is drawn over the glyphs, so a selection band does not cover it,
+and it does not fade with the glyphs of a line that the box cuts off.</p>
 
-<p>Where it would cross ink, it is cut. The native layout answers where the link's glyphs put ink
-between the line's top and bottom edges - <code>INativeTextLayout::appendInkAcross</code>, and
+<p>Where the underline would cross ink, it is cut. The native layout reports where the link's glyphs
+put ink between the line's top and bottom edges - <code>INativeTextLayout::appendInkAcross</code>, and
 <code>INativeMonoFont::inkAcross</code> for a paragraph on cells - reading the same glyph coverage
-the CPU path draws from, a row at a time, and counting a pixel as ink past a fifth covered. Each
-stretch is widened by the line's thickness on both sides and cut out. A piece left no longer than
-the line is thick is not drawn, since it would read as a dot between two descenders. On Direct2D the
-glyphs of a hovered link are rasterized into the CPU glyph cache for the purpose.</p>
+that the CPU path draws, a row at a time, and counting a pixel as ink past a fifth covered. Each
+stretch is widened by the line's thickness on both sides and removed. A piece no longer than the line
+is thick is not drawn, since it would read as a dot between two descenders. On Direct2D the glyphs of
+a hovered link are rasterized into the CPU glyph cache for this purpose.</p>
 
-<p>Nothing is kept. The ink is asked for on every paint while a link is hovered, and that is a line
-or two of one link.</p>
+<p>The layout stores nothing: the ink is queried on every paint while a link is hovered, and that
+is one or two lines of a single link.</p>
         </main>
         <div class="page-end">
             <a class="manuals-link" href="index.html">All manuals</a>

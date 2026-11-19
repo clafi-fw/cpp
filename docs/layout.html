@@ -207,16 +207,16 @@
     <div class="page-content">
         <header>
             <h1>ClaFi Layout</h1>
-            <p>Where everything ends up, and why</p>
+            <p>Measurement, alignment, sizing and spacing</p>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
         <main>
 <h2 id="introduction">Introduction</h2>
 
-<p>A control in ClaFi is laid out by two things: what it says about itself, and what the
-control above it does with that answer. Everything in this manual is one of those two.</p>
+<p>A control in ClaFi is laid out by two things: the size the control states for itself, and what
+the control above it does with that size.</p>
 
-<p>Both halves are stated where the control is built, as ordinary construction properties:</p>
+<p>Both parts are stated where the control is built, as ordinary construction properties:</p>
 
 <pre><code><span class="tp">Stack</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Horizontal,   <span class="cm">// what this panel does with its children</span>
@@ -224,21 +224,20 @@ control above it does with that answer. Everything in this manual is one of thos
     <span class="tp">Spacing</span>{ <span class="st">4.0f</span> }
 ) };</code></pre>
 
-<p>There is no separate layout object to build, nothing to attach afterwards, and no pass to
-run by hand. A control that is added, hidden, resized or re-aligned asks the form for a pass,
-and the form runs one before the next paint.</p>
+<p>The size and its alignment are properties of the controls themselves. Adding, hiding, resizing
+or re-aligning a control requests a pass from the form, and the form runs the pass before the
+next paint.</p>
 
 <div class="info">
-This manual covers the layout. The other manuals cover what the controls <em>are</em>:
-<a href="grids.html">Grid manual</a> for grids, <a href="text.html">Writing Text</a> and
-<a href="textengine.html">Text in Controls</a> manuals for text, <a href="events.html">Events manual</a> for handlers,
-<a href="color.html">Color manual</a> for how a control is painted.
+This manual covers layout. Related manuals: <a href="grids.html">Grid</a> covers grids, <a href="text.html">Writing Text</a> and
+<a href="textengine.html">Text in Controls</a> cover text, <a href="events.html">Events</a> covers
+handlers, and <a href="color.html">Color</a> covers painting.
 </div>
 
 <h2 id="quickstart">Quick Start</h2>
 
-<p>A window with a toolbar across the top, a scrolling body, and a strip at the foot. It is
-the shape most applications open with, and it is four controls.</p>
+<p>Most applications open with a window shaped like this: a toolbar across the top, a scrolling
+body and a strip at the foot. It is four controls.</p>
 
 <pre><code><span class="kw">class</span> <span class="tp">MainPanel</span> : <span class="kw">public</span> <span class="tp">Panel</span>
 {
@@ -269,15 +268,14 @@ the shape most applications open with, and it is four controls.</p>
     ) };
 };</code></pre>
 
-<p>Three rules account for everything that happens here, and they are the whole of the next
-section:</p>
+<p>Three rules account for everything in this example:</p>
 
 <ul>
 <li>A control is as big as what it holds, unless it states otherwise.</li>
-<li>A container hands each child a box. What the child does inside that box is the child's
-own alignment to say.</li>
-<li>Fill takes the box. Any other alignment keeps the size the control measured and stands
-somewhere in it.</li>
+<li>A container gives each child a box. The child's own alignment decides what it does inside
+that box.</li>
+<li>Fill takes the box. Any other alignment keeps the size the control measured and places the
+control somewhere in the box.</li>
 </ul>
 
 <h2 id="model">The Model</h2>
@@ -331,32 +329,31 @@ somewhere in it.</li>
   <text class="lp-m" x="10" y="292">each control is handed a position and a box, and hands its own children theirs</text>
 </svg>
 
-<p><strong>The measure runs bottom-up.</strong> <code>Control::calculate</code> walks the
-children first, then asks the control what its content came to -
-<code>calculateContent</code> - and writes the answer into <code>scaledSize()</code>. Nothing
-in the tree knows yet how much room it will be given. A stack of buttons measures the widest
+<p><strong>The measurement pass runs bottom-up.</strong> <code>Control::calculate</code> visits the
+children first, then calls <code>calculateContent</code> for the control's own content and
+writes the answer into <code>scaledSize()</code>. At this point no control has been given its
+available space. A stack of buttons measures the widest
 button; a panel measures its bars and its body; a label measures its text.</p>
 
-<p><strong>The align runs top-down.</strong> <code>Control::align</code> hands a control a
-position and a box, the control's <code>alignContent</code> cuts that box up among its
+<p><strong>The alignment pass runs top-down.</strong> <code>Control::align</code> gives a control a
+position and a box, the control's <code>alignContent</code> divides that box among its
 children, and each child is aligned into its part. The root is aligned into the window.</p>
 
-<p>The two answers meet in <code>Control::align</code>. A control handed more room than it
-measured either takes it or gives it back, and that is what the alignment decides. Nothing
-else in the framework makes that choice.</p>
+<p>Both measurements are applied in <code>Control::align</code>. A control given more room than
+it measured either takes it or keeps its own size, and the alignment decides which. No other
+property makes that choice.</p>
 
 <div class="info">
-A control's <code>scaledWidth()</code> and <code>scaledHeight()</code> hold the measure's answer between
-the two passes and the align's answer after them. Reading either from outside a pass is
-reading the last completed layout, which is normally what you want. Reading one while a pass
-is running - from inside a handler the pass raised - may be reading the half of it that has
-not been redone yet.
+A control's <code>scaledWidth()</code> and <code>scaledHeight()</code> contain the result of the measure
+pass between the two passes and the result of the align pass after them. Outside a pass, either
+returns the last completed layout. During a pass - from inside a handler the pass raised - either
+can return a value the pass has not finished updating.
 </div>
 
 <h4>Asking for a pass</h4>
 
-<p>Nothing lays out on the spot. Every change asks the form for a pass, and the form runs a
-pass before the next paint however many things asked:</p>
+<p>A change does not lay out immediately. It requests a pass from the form, and the form runs
+one pass before the next paint however many changes asked for one:</p>
 
 <table>
 <tr><th>Call</th><th>What it asks for</th></tr>
@@ -370,25 +367,25 @@ pass before the next paint however many things asked:</p>
 </table>
 
 <div class="info">
-<code>invalidateAlign()</code> is the route from outside a pass, and it is dropped when it is
-raised inside one: the form marks itself aligned before the walk begins. Inside a pass the
-channel is the event - a control that finds while being laid out that it was measured against
-the wrong width says <code>event.invalidatePass()</code>, and the form walks the tree again
-before the frame goes out. The two cannot be confused, because
-<code>invalidatePass()</code> is reachable only where an <code>AlignEvent</code> is. It must
-converge - see <a href="#t-loop">a layout that never settles</a>.
+<code>invalidateAlign()</code> requests a layout pass when called from outside a pass. When it is
+called during a pass, the request is dropped, because the form marks itself aligned before the
+pass begins. During a pass, use the event: a control that detects during the align that it was
+measured against the wrong width calls <code>event.invalidatePass()</code>, and the form traverses
+the tree again before the frame is drawn. <code>invalidatePass()</code> is reachable only where an
+<code>AlignEvent</code> is. The request must converge - see
+<a href="#t-loop">a layout that never settles</a>.
 </div>
 
 <p>A frame therefore shows a settled layout rather than the first attempt at one. The number of
-passes a single frame may spend is bounded: past it the frame goes out on what the last pass
-produced and the next one carries on, so a request that cannot converge costs frames rather
-than the application.</p>
+passes a single frame may run is bounded: past the limit the frame is drawn from what the last
+pass produced and the next frame continues, so a request that cannot converge costs frames
+rather than the application.</p>
 
 <h3 id="box">The box of a control</h3>
 
 <p><code>Control</code> is the layout node: a box, a place in the tree, and the events that
 reach it. <code>RichControl</code> adds the appearance a control stores - metrics, colors,
-text - and is what nearly everything is built on. The properties below are its.</p>
+text - and is the base of nearly every control. The properties below belong to it.</p>
 
 <svg class="grid-fig" viewBox="0 0 660 230" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="A control's box: the border it paints, the padding inside it, the content, and the spacing between two children.">
@@ -419,20 +416,20 @@ text - and is what nearly everything is built on. The properties below are its.<
 </svg>
 
 <ul>
-<li><code>Padding</code> is kept inside the control, around its content. Children and text
+<li><code>Padding</code> is space inside the control, around its content. Children and text
 both start at it.</li>
-<li><code>Spacing</code> is kept <em>between</em> the parts a control lays out - its children,
-or the icon, indicator and text a button draws. One part spends none of it.</li>
+<li><code>Spacing</code> is space <em>between</em> the parts a control lays out - its children,
+or the icon, indicator and text a button draws. A control with one part uses none of it.</li>
 <li><code>Border</code> and <code>Radius</code> are painted, never measured. The layout pass
-is not given them at all, so changing either moves nothing.</li>
+does not read them, so changing either moves nothing.</li>
 <li><code>MinSize</code>, <code>PreferredSize</code>, <code>MaxSize</code> and
 <code>FixedSize</code> are the whole box, padding included, and not the content inside it.</li>
 </ul>
 
-<p>A button is where the two read most clearly. It draws up to three parts in a row - an
+<p>A button shows both properties clearly. It draws up to three parts in a row - an
 indicator, an icon, its text - and lays them out itself rather than holding them as children:
-<code>Padding</code> is the inset from its edge to that run, <code>Spacing</code> is the gap
-between each part and the next.</p>
+<code>Padding</code> is the inset from its edge to that run, and <code>Spacing</code> is the
+gap between each part and the next.</p>
 
 <svg class="grid-fig" viewBox="0 0 660 180" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="A button: padding insets its edge from the content, and spacing separates the icon area from the text area.">
@@ -460,21 +457,21 @@ between each part and the next.</p>
   <text class="bt-m" x="396" y="91">spends on its children</text>
 </svg>
 
-<p>The measure adds them in one order and it is worth knowing which: the content is measured,
-ceiled to whole pixels, grown by the padding on both sides, then raised to
-<code>minSize</code> and held down to <code>maxSize</code>.</p>
+<p>The measure adds them in a fixed order: the content is measured, ceiled to whole pixels,
+grown by the padding on both sides, then raised to <code>minSize</code> and held down to
+<code>maxSize</code>.</p>
 
 <div class="info">
-Padding is what separates <em>this</em> control's edge from its content. There is no margin
-property: room <em>between</em> two controls is the parent's <code>Spacing</code>, and room
-in one particular place is a <a href="#spacers"><code>Spacer</code></a>. Two ways to say one
-thing would be two ways for them to disagree.
+Padding separates a control's edge from its content. A control has no margin property. Room
+<em>between</em> two controls is the parent's <code>Spacing</code>, and an individual gap is a
+<a href="#spacers"><code>Spacer</code></a>. A margin property would duplicate that spacing, and
+the two values could disagree.
 </div>
 
 <h3 id="align">Alignment</h3>
 
-<p>Two properties, four values each, and they decide one question: what the control does with
-a box larger than the size it measured.</p>
+<p>Two properties, four values each, decide one question: what the control does with a box
+larger than the size it measured.</p>
 
 <table>
 <tr><th>Value</th><th>What the control comes out as</th></tr>
@@ -525,19 +522,18 @@ a box larger than the size it measured.</p>
 ) };</code></pre>
 
 <div class="info">
-<code>HorizontalAlign</code> places the <em>control</em> inside the room its parent gave it.
+<code>HorizontalAlign</code> places the <em>control</em> inside the box its parent gave it.
 <code>TextAlign</code> and <code>HorizontalTextAnchor</code> place the <em>text</em> inside
-the control. A label stretched across a row and a label sitting in the middle of one are
-different arrangements, and a centered text in a stretched label is a third.
+the control. A label stretched across a row, a label centered in a row, and centered text in a
+stretched label are three different arrangements.
 </div>
 
 <h4>The surplus is handed back</h4>
 
-<p>This is the rule to keep in mind whenever something does not move where it was expected
-to. A control that is not aligned Fill on an axis is given <em>back</em> the room it did not
-ask for: it comes out at the size it measured, and the rest of the slot stays empty. That is
-what Left, Center and Right mean, and it is also why two things that look like size
-statements behave differently:</p>
+<p>A control that is not aligned Fill on an axis gives back the room it did not ask for: it
+comes out at the size it measured, and the rest of the slot stays empty. Left, Center and
+Right all mean that, which is why two settings that look like size statements behave
+differently:</p>
 
 <div class="rules-grid">
 <div class="rule-card dos">
@@ -552,41 +548,42 @@ statements behave differently:</p>
 <h4>Left, Center, Right</h4>
 <ul>
 <li>The control is the width its content came to.</li>
-<li>Everything inside it is inside that measurement.</li>
+<li>Everything inside it is laid out within that measurement.</li>
 <li>A wrapping panel inside it wraps at its own natural width, whatever the window is.</li>
 </ul>
 </div>
 </div>
 
 <div class="warning">
-<strong>Fill and MaxSize on the same axis is a caller error.</strong> Fill says take the whole
-slot and a maximum says never be this big. Fill is what stands, and the measure still clamps
-to the maximum - so the control carries a content measured against its cap inside a box that
-ignores the cap. State one or the other.
+<strong>Fill and MaxSize on the same axis is a caller error.</strong> Fill takes the whole
+slot, and a maximum limits the size. Fill determines the final size, and the measure still
+clamps the content to the maximum. The result is content measured against its cap inside a box
+larger than the cap. Set one of the two.
 </div>
 
 <h3 id="minsize">What a control can be cut to</h3>
 
-<p>Beside the size it came to, the measure writes a second number:
+<p>The measure writes a second number beside the size:
 <code>composedMinSize()</code> - the least the control may be made. It is composed the same
-way the size is, out of the <code>MinSize</code> this control was given and the floor its
-content built from its children's.</p>
+way the size is, from the <code>MinSize</code> this control was given and the floor its
+content builds from its children's.</p>
 
-<p><strong>A measurement never raises it.</strong> A control is as wide as it is because of
-what it holds today, and cutting it back is what leaves a strip of tabs or a run of columns
-the room to fit into a narrower box. So the floor is a <code>MinSize</code> somebody set, here
-or below, and a tree nobody set one in can be cut to nothing.</p>
+<p><strong>A measurement never raises the floor.</strong> A control is as wide as it is
+because of what it holds, and cutting it back is what gives a strip of tabs or a run of
+columns room to fit into a narrower box. So the floor is a <code>MinSize</code> set here or
+below, and a tree with none set can be cut to nothing.</p>
 
-<p>What reads it is whoever divides space and has less of it than was asked for. The window
-placement cuts a window to the room its side of the screen has and no further than this. A
-panel with a <a href="#splitter">splitter</a> keeps the body its floor and cuts the bar no
-further than its own.</p>
+<p>The floor is read by any code that divides space and has less of it than was asked for.
+The window placement cuts a window to the room its side of the screen has, and no further
+than this. A panel with a <a href="#splitter">splitter</a> gives the body its floor and cuts
+the bar no further than the bar's own.</p>
 
 <div class="info">
-A <code>ScrollBox</code> states that its scrolled body gives way entirely: a box that scrolls
-can be made as small as the parts of it that do not scroll and still show everything it holds,
-because what falls past the edge is reached by scrolling. That is how a menu says it would
-rather be short than stand over the button it dropped from - nobody asks it, it states it.
+A <code>ScrollBox</code>'s minimum size comes from its non-scrolling parts only: the box can
+be made as small as those parts and still show everything, because content past the edge is
+reached by scrolling. A menu can therefore stay short instead of extending down over the
+button that opened it; its scroll box states its own minimum size rather than deriving one
+from its body.
 </div>
 
 <h3 id="units">Design units and scale</h3>
@@ -597,17 +594,16 @@ and the application's own zoom, and it rounds each one to a whole pixel as it do
 
 <pre><code><span class="tp">Padding</span>{ <span class="st">8.0f</span> }   <span class="cm">// 8 units - 8 pixels at 100%, 10 at 125%, 20 at 200%</span></code></pre>
 
-<p>That is the whole of it. <strong>The way to get a layout that scales is to not think about
-scaling at all.</strong> State the sizes the design should have and every form draws them at
-whatever the screen it landed on asks for. Dragging a window to another monitor, or changing
-the application's zoom while it is open, lays the form out again at the new factor with
-nothing in the application taking part.</p>
+<p><strong>Stating sizes in design units is what makes a layout scale.</strong> State the
+sizes the design should have, and every form draws them at the factor of the screen it is on.
+Dragging a window to another monitor, or changing the application's zoom while it is open,
+lays the form out again at the new factor with no application code involved.</p>
 
 <div class="warning">
-Scaling something by hand is how that stops working, and it does not fail loudly - a number
-scaled at one factor and read back at another leaves a control at a fraction of the size it
-should have, and a form taken to 250% and back keeps it there. There is nothing for an
-application to scale.
+Scaling a number manually conflicts with the form's scale factor. A number scaled at one
+factor and read back at another leaves a control at a fraction of the size it should have, and
+a form taken to 250% and back keeps that fraction. The framework scales every layout value, so
+application code supplies design units.
 </div>
 
 <h3 id="strokes">Stroke thickness</h3>
@@ -640,8 +636,8 @@ line can be.</p>
 
 <p>Three properties state a grade: <code>Border{ Thickness::Thin }</code> on any control,
 a bare <code>Thickness</code> on a <code>Divider</code>, and <code>TabLineThickness</code> on a
-<code>TabbedBox</code> or a <code>TabStrip</code>. A paint handler asks the event for the pixel
-width, and a size stated in design units asks the free function for the design width:</p>
+<code>TabbedBox</code> or a <code>TabStrip</code>. A paint handler gets the pixel width from
+the event, and a size stated in design units gets the design width from the free function:</p>
 
 <pre><code><span class="kw">const float</span> line = event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin);  <span class="cm">// device pixels, rounded as above</span>
 <span class="kw">const float</span> inset = <span class="fn">strokeWidth</span>(<span class="tp">Thickness</span>::Thin);         <span class="cm">// design units - a padding one border wide</span>
@@ -651,8 +647,8 @@ width, and a size stated in design units asks the free function for the design w
 it holds the focus. The growth is the one width that passes through fractions of a pixel.</p>
 
 <div class="warning">
-A stroke written as a float and scaled by hand takes no part in the rounding. Two such lines at
-different weights can come out the same width, and a focus ring built on one does not grow.
+A stroke written as a float and scaled manually is not rounded to whole pixels. Two such lines
+at different weights can have the same width, and a focus ring built on one does not grow.
 </div>
 
 <h2 id="sizing">Sizing a Control</h2>
@@ -689,23 +685,23 @@ are settled by order, and the last one wins:</p>
 
 <p>A control that takes one size from a style it does not wear - a header rounded to its page's
 radius - reads that style's block through <code>styleMetrics(UiElement)</code>, which a control,
-its <code>CreateParams</code> and its form all answer. The block is the style's sizes as the
+its <code>CreateParams</code> and its form all expose. The block is the style's sizes as the
 theme's chain resolves them; the Color manual says how a chain is built.</p>
 
 <div class="info">
-A few controls are built on <code>Control</code> directly rather than on
-<code>RichControl</code>, because they store no appearance of their own, and none of them
-wears a style or takes the metric block. <code>Spacer</code> and <code>FlexSpacer</code> take no properties at
-all - their size is a constructor argument. <code>Divider</code> takes properties, and its own
-<code>Padding</code> means something different there: it shortens the drawn line without
-moving what stands either side of it. Its weight is a bare <code>Thickness</code>,
-<code>Thin</code> unless one is stated.
+Some controls are built on <code>Control</code> directly rather than on
+<code>RichControl</code>, because they store no appearance of their own; none of them takes a
+style or the metric block. <code>Spacer</code> and <code>FlexSpacer</code> take no properties;
+their size is a constructor argument. <code>Divider</code> takes properties, and its own
+<code>Padding</code> has a different meaning: it shortens the drawn line without moving the
+controls on either side. Its weight is a bare <code>Thickness</code>, <code>Thin</code> unless
+stated.
 </div>
 
 <h3 id="which-size">Which size to state</h3>
 
 <p><code>MinSize</code>, <code>PreferredSize</code> and <code>MaxSize</code> are three
-different statements and none of them says what another does.</p>
+separate statements, and each one has a different effect.</p>
 
 <div class="rules-grid">
 <div class="rule-card dos">
@@ -715,11 +711,11 @@ different statements and none of them says what another does.</p>
 that survives a window being cut down.</li>
 <li><code>MaxSize</code> when the control must stop growing - a text column that must stay
 readable, a dropdown that must not cover the screen.</li>
-<li><code>PreferredSize</code> for "this size, unless something with a better claim decides
-otherwise" - a dialog that opens at a stated size and is still resizable, a pane that starts
-at a third of a split.</li>
-<li><code>FixedSize</code> for something whose size is not a question at all: a swatch, an
-icon well, a fixed-height strip.</li>
+<li><code>PreferredSize</code> for a size the control asks for but does not insist on - a
+dialog that opens at a stated size and is still resizable, a pane that starts at a third of a
+split.</li>
+<li><code>FixedSize</code> for a size nothing else should change: a swatch, an icon well, a
+fixed-height strip.</li>
 </ul>
 </div>
 <div class="rule-card donts">
@@ -728,10 +724,10 @@ icon well, a fixed-height strip.</li>
 <li><code>MinSize</code> to make something a size. It is a floor, and a control with more
 content grows past it.</li>
 <li><code>MaxSize</code> together with Fill on the same axis.</li>
-<li><code>PreferredSize</code> where Fill would do. A preference is what a control would
-like; Fill is what its parent gives it.</li>
+<li><code>PreferredSize</code> where Fill would do. A preference is a size the control asks
+for; Fill is the size its parent gives it.</li>
 <li>A stated size to fix a layout that came out wrong. Find which control is not aligned the
-way it needs to be - that is nearly always the real answer.</li>
+way it needs to be, because the alignment is usually the cause.</li>
 </ul>
 </div>
 </div>
@@ -739,21 +735,21 @@ way it needs to be - that is nearly always the real answer.</li>
 <p><code>PreferredSize</code> is read per axis: zero on an axis means the content decides that
 axis, which is the usual case. A stated one stands in place of what the content measured -
 the content is still measured, and the children are still laid out - and it is held between
-<code>minSize</code> and <code>maxSize</code> like any other answer.</p>
+<code>minSize</code> and <code>maxSize</code> like any other size.</p>
 
 <p><code>FixedSize</code> stores nothing of its own. It writes <code>MinSize</code> and
 <code>MaxSize</code> to the same value, and <code>setFixedWidth</code> and
 <code>setFixedHeight</code> do the same on one axis. It is applied after both of them whichever
 order the properties are written in, so a fixed size beside a maximum wins.</p>
 
-<p>Pinning the two together has one more consequence worth knowing: a control whose minimum
-and maximum agree has its own content measured by neither pass, so neither of them shapes its
-text. Its children are still laid out. For a list of a hundred thousand fixed-size items that
-is the difference between a layout and a stall.</p>
+<p>Pinning the two together has one more consequence: a control whose minimum and maximum
+agree has its own content measured by neither pass, so neither of them shapes its text. Its
+children are still laid out. For a list of a hundred thousand fixed-size items, that is the
+difference between a layout and a stall.</p>
 
 <h3 id="spacers">Spacer and FlexSpacer</h3>
 
-<p>Two controls that draw nothing and take room.</p>
+<p>Two controls draw nothing and take room.</p>
 
 <pre><code><span class="cm">// A gap of a stated size.</span>
 m_strip.<span class="fn">add</span>&lt;<span class="tp">Spacer</span>&gt;(<span class="st">12.0f</span>);              <span class="cm">// 12 units both ways</span>
@@ -800,22 +796,23 @@ one end share what is left.</p>
 </svg>
 
 <div class="warning">
-A lane only has something left over when the stack was given more room than it measured. A
-<code>FlexSpacer</code> in a stack nothing stretched has nothing to take, and what you get is
-the minimum size it was built with. If a flex spacer appears to do nothing, the question is
-not about the spacer - it is whether its stack fills the room it stands in. See
+A lane has surplus only when the stack was given more room than it measured. A
+<code>FlexSpacer</code> in a stack that is not stretched has no surplus to take and stays at the
+minimum size it was built with. If a flex spacer appears to do nothing, check whether its stack
+fills the room it stands in. See
 <a href="#t-flex">a FlexSpacer that does nothing</a>.
 </div>
 
 <div class="info">
-The same idea exists one level down, inside text: a menu item's shortcut key rides on a flex
-space in its own line, which is what lands every key on the same edge. See the
+The same arrangement applies inside text: a menu item's shortcut key is placed by a flex space
+in its own line, so every key sits on the same edge. See the
 <em>TextEngine</em> manual.
 </div>
 
 <h2 id="containers">Arranging Children</h2>
 
-<p>Four containers account for nearly every arrangement. Each answers one question:</p>
+<p>Four containers account for nearly every arrangement. Each arranges its children in a
+different way:</p>
 
 <table>
 <tr><th>Container</th><th>Arranges by</th><th>Reach for it when</th></tr>
@@ -827,7 +824,7 @@ space in its own line, which is what lands every key on the same edge. See the
 
 <h3 id="stack">Stack</h3>
 
-<p>A container that places its items in lanes. Three properties say how.</p>
+<p>This container places its items in lanes. Three properties control the arrangement.</p>
 
 <pre><code><span class="tp">Stack</span>&amp; m_column{ <span class="fn">createBody</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Vertical,
@@ -847,28 +844,29 @@ space in its own line, which is what lands every key on the same edge. See the
 however long it gets. <code>HorizontalWrap</code> lays rows and breaks into a new one;
 <code>VerticalWrap</code> lays columns and breaks into a new one.</p>
 
-<p><strong>What a lane hands each item.</strong> Along the lane, the size the item measured.
-Across the lane, the whole thickness of the lane - which is as thick as the largest item in
-it. What the item does with the box it is given is its own alignment's answer, as always: a
-row of buttons aligned Fill are all as tall as the tallest, and the same buttons aligned
+<p><strong>The box a lane gives each item.</strong> Along the lane, the item gets the size it
+measured. Across the lane, it gets the whole thickness of the lane, which is as thick as the
+largest item in it. What the item does with that box is decided by its own alignment: a row of
+buttons aligned Fill are all as tall as the tallest, and the same buttons aligned
 <code>VerticalAlign::Center</code> keep their own heights and sit in the middle of the row.</p>
 
-<p><strong>What is left over.</strong> A stack given more room than it measured shares it out,
-and the sharing has two steps:</p>
+<p><strong>The room left over.</strong> A stack given more room than it measured shares it out
+in two steps:</p>
 
 <ul>
 <li>A flex spacer in the lane takes it, split evenly where there is more than one.</li>
-<li>Where nothing asked, a single lane leaves it at the far end and every item stands at the
-size it measured. A <em>wrapping</em> stack shares it among its items instead - see
-<a href="#wrapping">below</a> - and only where the stack itself was told to fill that way.</li>
+<li>With no flex spacer in the lane, a single lane leaves the surplus at the far end and
+every item stays at the size it measured. A <em>wrapping</em> stack shares the surplus among
+its items instead - see <a href="#wrapping">below</a> - and only where the stack itself was
+told to fill that way.</li>
 </ul>
 
 <p><code>ItemSizing::Equal</code> is the other way to divide a lane: every item is handed the
 same share, whatever it measured, and the lane is as long as the largest item times the count.
-A row of answers reads as one band that way rather than as buttons of three widths. A share is
-a box like any other, so the items in it need <code>HorizontalAlign::Fill</code> to actually
-be the same width - one aligned to an edge keeps its own size and the row goes ragged inside
-a set of equal shares.</p>
+A row of answers then forms one band rather than buttons of three widths. A share is a box
+like any other, so the items in it need <code>HorizontalAlign::Fill</code> to actually be the
+same width - one aligned to an edge keeps its own size, and the row becomes uneven inside a
+set of equal shares.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="One lane three ways: Natural packs items at their measured widths; Equal cuts the lane into shares as wide as the largest item; Equal with items not aligned Fill leaves them ragged inside those shares.">
@@ -919,9 +917,9 @@ a set of equal shares.</p>
 
 <h3 id="wrapping">Wrapping stacks</h3>
 
-<p>A wrapping stack reads everything through two words. <strong>Main is the way a lane runs,
-cross is the way the lanes stack.</strong> One routine serves both orientations, so whatever
-is true of rows is true of columns with the axes swapped.</p>
+<p>A wrapping stack has two axes. <strong>Main is the way a lane runs, cross is the way the
+lanes stack.</strong> One routine serves both orientations, so what holds for rows holds for
+columns with the axes swapped.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="A wrapping stack of rows: items run along the main axis, lanes stack along the cross axis, the surplus along the lane is divided per item and the slack across the lanes is shared between them.">
@@ -962,16 +960,15 @@ is true of rows is true of columns with the axes swapped.</p>
   <text class="wr-m" x="500" y="172">a short last lane stays short</text>
 </svg>
 
-<p>A lane breaks on two things: the <code>LaneSize</code> count, or the length running out.
-Whichever comes first, and never on the lane's own first item, which stands however long it
-is.</p>
+<p>A lane breaks on one of two things: the <code>LaneSize</code> count, or the length running
+out. It breaks on whichever comes first, and never on the lane's own first item, which stays
+however long it is.</p>
 
 <div class="info">
-<strong>A stated <code>LaneSize</code> is a break, not a hint.</strong> Both passes read it,
-so a stack stated four to a lane stands four to a lane in a window of any size, and what a
-larger host gives it is room around the lane rather than a fifth item in it. Hidden items are
-passed over by both passes, so a lane holds the number it was measured to hold whatever has
-been hidden since.
+<strong>A stated <code>LaneSize</code> sets the item count per lane.</strong> Both passes read
+it, so a stack set to four items per lane keeps four items per lane in a window of any size,
+and a larger host adds room around the lane rather than a fifth item. Both passes skip hidden
+items, so only visible items count toward a lane's limit.
 </div>
 
 <p><strong>The surplus across the lanes</strong> - whatever is left once every lane stands at
@@ -982,26 +979,26 @@ the same way.</p>
 <p><strong>The surplus along the lanes</strong> is one number for the whole stack, and it is
 divided <em>per item</em>: what the length has over the longest lane, over the count of items
 on the fullest one. Every item then grows by the same amount, the fullest lane comes out
-exactly at the length, and a short last lane simply stays short rather than being stretched across the
+exactly at the length, and a short last lane stays short rather than being stretched across the
 room for five.</p>
 
 <h4>The width a wrapping panel wraps at</h4>
 
-<p>This is the one place where the two passes have to be told about each other, and it is
-worth understanding because it explains the single most common layout surprise.</p>
+<p>This is the one place where the two passes have to be told about each other. It also explains
+the most common layout surprise.</p>
 
-<p>The measure runs bottom-up, before anyone knows what width the panel will be handed. So a
+<p>The measure runs bottom-up, before the width the panel will be handed is known. So a
 wrapping panel measured on its own reports one lane holding everything, and the align breaks
-that into as many lanes as the width allows. The panel carries the width over: it remembers
-the content width it broke its rows at, the next measure breaks them at that same width, and
-where the width has changed it asks for one more pass. The pass after hands back the same
-number, which is what ends it.</p>
+that into as many lanes as the width allows. The panel carries the width over: it stores the
+content width it broke its rows at, the next measure breaks them at that same width, and
+where the width has changed it requests one more pass. The pass after returns the same
+number, which ends the sequence.</p>
 
 <div class="warning">
-<strong>Every host between it and the window must be aligned Fill.</strong> The remembered
-width is kept only where the panel's width really comes from outside, and a control that is
-not Fill keeps what it measured - so everything inside such a host is inside that measurement,
-and the wrapping panel under it wraps at its own natural width whatever the window is.
+<strong>Every host between the wrapping panel and the window must be aligned Fill.</strong> The
+remembered width is kept only when the panel's width comes from outside. A control that is not
+Fill keeps the size it measured, so everything inside it is laid out within that measurement,
+and a wrapping panel below it wraps at its natural width regardless of the window size.
 </div>
 
 <pre><code><span class="cm">// A section whose body is a wrapping panel of tiles.</span>
@@ -1022,8 +1019,9 @@ and the wrapping panel under it wraps at its own natural width whatever the wind
 ) };</code></pre>
 
 <div class="info">
-Rows alone carry this. The width is the extent the measure runs against; a stack of columns
-takes no such maximum, so it has nothing to carry back and nothing to ask another pass about.
+Only rows have a remembered width. The width is the extent the measure runs against; a stack
+of columns has no such maximum, so there is no width to store and no request for another
+pass.
 </div>
 
 <h3 id="panel">Panel and its five slots</h3>
@@ -1063,26 +1061,25 @@ created in.</p>
 
 <p>The order the slots are settled in is fixed: top, bottom, left, right, body. A top or
 bottom bar spans the content width and is as tall as it measured. A left or right bar is as
-wide as <em>it</em> measured - it is the one place in a panel where a child's width is its own
-answer - and as tall as the middle row. The body gets what is left.</p>
+wide as <em>it</em> measured - the one place in a panel where a child's width is not set by the
+panel - and as tall as the middle row. The body gets what is left.</p>
 
 <p>The panel's <code>Spacing</code> is what stands between a bar and the body. A bar that
-measured nothing takes its gap with it, so an empty or hidden bar leaves no trace. A bar the
-user resizes gets a <a href="#splitter">splitter</a> in that gap.</p>
+measured nothing also gives up its gap, so an empty or hidden bar leaves no space behind. A
+bar the user resizes gets a <a href="#splitter">splitter</a> in that gap.</p>
 
 <div class="info">
-<strong>A child that needs a constructor argument is still built where it is declared.</strong>
-The argument reaches it in the constructor body - <code>m_title.text() &lt;&lt; title;</code> -
+<strong>A child that needs a constructor argument is built where it is declared.</strong>
+The argument is supplied in the constructor body - <code>m_title.text() &lt;&lt; title;</code> -
 rather than through the constructor's initializer list, where clang reports the member it is built
 on as not yet bound. See <a href="faq.html#not-yet-bound">the FAQ</a>.
 </div>
 
 <div class="info">
-<strong>A body may make its panel taller.</strong> If the body comes out taller than the slot
-it was offered, the panel grows to hold it - unless the panel's own height is dictated from
-outside, which is either <code>VerticalAlign::Fill</code> or the panel itself standing in
-somebody else's body slot. That is what lets a column of sections grow as sections are opened
-while the same column inside a window simply fills the window.
+<strong>A body can be taller than the slot it was offered.</strong> The panel grows to hold it
+unless the panel's own height is dictated from outside: <code>VerticalAlign::Fill</code>, or a
+panel placed in another panel's body slot. A column of sections can therefore grow as sections
+are opened, while the same column inside a window fills the window.
 </div>
 
 <h3 id="splitter">Splitter</h3>
@@ -1130,7 +1127,7 @@ is not stored a second time.</p>
 
 <table>
 <tr><th>Member</th><th>Does</th></tr>
-<tr><td><code>createSplitter(slot)</code></td><td>puts a splitter between the bar in that slot and the body, and answers it</td></tr>
+<tr><td><code>createSplitter(slot)</code></td><td>puts a splitter between the bar in that slot and the body, and returns it</td></tr>
 <tr><td><code>barExtent(slot)</code></td><td>what the bar stands at - a side bar's width, a top or bottom bar's height - in design units</td></tr>
 <tr><td><code>setBarExtent(slot, extent)</code></td><td>states the extent the bar is laid out at from the next pass on</td></tr>
 <tr><td><code>resetBarExtent(slot)</code></td><td>drops the stated extent, so the bar is what its own metrics make it</td></tr>
@@ -1142,23 +1139,23 @@ is not stored a second time.</p>
 <code>PanelBase</code> calls them from its own code, and <code>OnBarResize</code> is public on
 every panel.</p>
 
-<p>The splitter answers the mouse only - navigation passes over it and no key moves it. It is
-drawn in the <code>Divider</code> element's colors, and the pointer over it shows the resize
+<p>The splitter responds to the mouse only - navigation passes over it and no key moves it. It
+is drawn in the <code>Divider</code> element's colors, and the pointer over it shows the resize
 arrow for its direction.</p>
 
 <h3 id="withbody">WithBody, HostProps and BodyProps</h3>
 
 <p><code>createBody&lt;T&gt;</code> gives the slot a control but leaves
-<code>body()</code> answering a plain <code>Control*</code>.
+<code>body()</code> returning a plain <code>Control*</code>.
 <code>WithBody&lt;Host, Body&gt;</code> puts a static type over the slot, so
-<code>body()</code> answers the type you named. Two aliases already exist for the common
+<code>body()</code> returns the type you named. Two aliases already exist for the common
 hosts:</p>
 
 <pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;    <span class="cm">// a scroll box whose body is an OptionsPage</span>
 <span class="tp">ExpanderWith</span>&lt;<span class="tp">Stack</span>&gt;           <span class="cm">// a section whose body is a stack</span></code></pre>
 
-<p>Two controls are being built, so the properties arrive in two bags. Each bag routes by
-type, and a bag must not carry the same property type twice.</p>
+<p>Two controls are built, so the properties arrive in two packs. Each pack is routed by type,
+and a pack must not carry the same property type twice.</p>
 
 <pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;&amp; m_optionsBox{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;&gt;(
     <span class="tp">HostProps</span>{                       <span class="cm">// for the box</span>
@@ -1173,14 +1170,14 @@ type, and a bag must not carry the same property type twice.</p>
 
 <p>A <code>ScrollBox</code> is a <code>PanelBase</code> whose right and bottom bars are its
 scroll bars. Its body is laid out to the whole of its content and carried under the slot by the
-scroll position, which is why the body's own rect says where the content has reached rather
-than where it shows.</p>
+scroll position, so the body's own rect gives where the content has reached rather than where
+it shows.</p>
 
 <div class="info">
-<strong>It is the only control in the framework that scrolls.</strong> Nothing else implements
-scrolling of its own, and anything at all can be put in one. That is why a view is written
-without a box - a grid, a text box, a list of tiles are each just as tall as their content -
-and whoever decides how much room it gets is who wraps it.
+<strong>The scroll box is the only control in the framework that scrolls.</strong> Any control
+can be put in one. A view is therefore written without a box: a grid, a text box, or a list of
+tiles is as tall as its content, and the parent that decides how much room it gets wraps it in a
+scroll box.
 </div>
 
 <pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">HexView</span>&gt;&amp; m_box{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">HexView</span>&gt;&gt;(
@@ -1197,11 +1194,10 @@ and whoever decides how much room it gets is who wraps it.
 </table>
 
 <div class="warning">
-<code>Auto</code> is answered during the measure, against the box's <em>own</em> maximum
-size. So it is for a box that measures itself: one under a <code>MaxSize</code>, or one that
-is an auto-fitting window's whole content. A box whose size comes from what contains it has
-no maximum of its own and never puts up an <code>Auto</code> bar - state the bars you want
-there.
+<code>Auto</code> is decided during the measure, against the box's <em>own</em> maximum
+size. That applies to a box that measures itself: one under a <code>MaxSize</code>, or one that
+is the whole content of an auto-fitting window. A box whose size comes from its parent has no
+maximum of its own and does not show an <code>Auto</code> bar; state the bars you want there.
 </div>
 
 <svg class="grid-fig" viewBox="0 0 700 290" xmlns="http://www.w3.org/2000/svg" role="img"
@@ -1245,12 +1241,12 @@ there.
   <text class="sb-n" x="410" y="228">while both bars are up</text>
 </svg>
 
-<p>Two things follow from the body being laid out whole, and both are useful:</p>
+<p>Two things follow from the body being laid out whole:</p>
 
 <ul>
 <li><strong>A scrolled body keeps what it measured.</strong> The align pass normally cuts a
 control to the slot it was given; a body on a scroll box is exempt, which is what gives the
-bars a range to carry the view across.</li>
+bars a range to scroll over.</li>
 <li><strong>A wrapping or word-wrapping body is broken at the viewport.</strong> The box
 states the viewport as that body's maximum width, so the body shapes its text once, at the
 width it will be drawn at, rather than at a width no line reaches.</li>
@@ -1271,8 +1267,8 @@ against the top of the view while what it heads is scrolled under it.
 
 <p><strong><code>PageControl</code></strong> - a stack showing one of its pages at a time.
 Pages are hidden as they are added and the current one is shown, and a hidden control is not
-measured - so under the default sizing a page nobody is looking at costs no layout at all.
-<code>PageSizing</code> says what the control answers for its own size with:</p>
+measured - so under the default sizing a page that is not shown costs no layout at all.
+<code>PageSizing</code> states what the control reports for its own size:</p>
 
 <table>
 <tr><th><code>PageSizing</code></th><th>Means</th></tr>
@@ -1281,17 +1277,17 @@ measured - so under the default sizing a page nobody is looking at costs no layo
 </table>
 
 <p><strong><code>TabbedBox</code></strong> - a strip of tabs over a page control that follows
-the open one. <code>TabsOrientation</code> says which edge the strip runs along:
+the open one. <code>TabsOrientation</code> states which edge the strip runs along:
 <code>HorizontalTop</code>, <code>HorizontalBottom</code>, <code>VerticalLeft</code>,
-<code>VerticalRight</code>. <code>TabLineThickness</code> says how heavy the line along the open
+<code>VerticalRight</code>. <code>TabLineThickness</code> states how heavy the line along the open
 tab is - <code>Thin</code> unless stated, <code>Bold</code> for a strip that is the window's main
-navigation. <code>TabViewMode</code> says what the strip draws: <code>Tab</code>, the default, joins
+navigation. <code>TabViewMode</code> states what the strip draws: <code>Tab</code>, the default, joins
 the open tab to the page with that line; <code>ToolButton</code> draws each tab as a tool button,
 set a tool bar's distance in from the edge, the open one shown selected, with no line and nothing
 joined to the page.</p>
 
 <p><strong><code>StackView</code></strong> - a <code>Stack</code> that holds several
-items selected at once. Every layout property of <code>Stack</code> reads on it
+items selected at once. Every layout property of <code>Stack</code> applies to it
 unchanged; what it adds is selection, which is a different manual.</p>
 
 <p><strong><code>Divider</code></strong> - a line across whatever it stands in. It measures its
@@ -1303,8 +1299,8 @@ vertical one. Its ends are rounded to half its width. A section break is
 
 <h2 id="content">Content That Sizes Itself</h2>
 
-<p>Three things in a layout answer with a size of their own rather than taking one. They are
-where most of the remaining surprises live.</p>
+<p>Three things in a layout measure a size of their own rather than taking one. Most of the
+remaining layout surprises come from them.</p>
 
 <h3 id="text">Text</h3>
 
@@ -1319,11 +1315,11 @@ paragraph and a wider one joins them, so the height is not knowable until the wi
 <tr><td><code>VerticalTextAnchor</code></td><td><code>Top</code>, <code>Center</code>, <code>Bottom</code></td><td><code>Top</code></td></tr>
 </table>
 
-<p><code>WordWrap::No</code> is not only a drawing choice, it changes what the control
-measures. A text that does not wrap is measured against no width at all, so the control is as
-wide as its longest line whatever it is offered - which is exactly what a horizontal scroll
-bar needs to have a range to carry the view across. A text that wraps is measured against the
-box, and a box it cannot fit into shortens it rather than widening the control.</p>
+<p><code>WordWrap::No</code> is not only a drawing choice; it changes what the control
+measures. A text that does not wrap is measured against no width, so the control is as wide as
+its longest line whatever it is offered - which is what a horizontal scroll bar needs to have
+a range to scroll over. A text that wraps is measured against the box, and a box it cannot fit
+into shortens it rather than widening the control.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="The same text in the same slot: WordWrap No measures against no width and stays one long line the bar carries the view across; WordWrap Yes breaks to the slot and the control grows taller.">
@@ -1365,15 +1361,15 @@ box, and a box it cannot fit into shortens it rather than widening the control.<
 
 <div class="info">
 <code>Left</code>, <code>Center</code> and <code>Right</code> place the measured text
-<em>block</em> inside the control's own box, as a whole. <code>TextAlign</code>, written inside a
+<em>block</em> inside the control's box as one unit. <code>TextAlign</code>, written inside a
 <code>Text</code> or stated in the control's <code>TextFormat</code>, places the lines inside that
-block. <code>None</code>, the default, makes no block: the lines are aligned across the whole box.
-A single right-aligned line reaches the right edge under <code>None</code>; anchored
-<code>Left</code>, its block is the line itself, and it stays at the left. See
+block. <code>None</code>, the default, creates no block, so the lines are aligned across the
+whole box. Under <code>None</code>, a single right-aligned line reaches the right edge; with the
+anchor set to <code>Left</code>, the block is the line itself, so the line stays at the left. See
 <a href="textengine.html#anchors">Text Anchors</a>.
 </div>
 
-<p>One measuring rule is worth knowing because it reaches a level away: a button whose
+<p>One measuring rule has an effect one level away: a button whose
 <code>ButtonViewMode</code> puts the picture above the words - <code>TopLeftIcon</code> and
 <code>TopCenterIcon</code> - measures its caption at the
 <em>icon's</em> width, so the caption wraps under the picture rather than making the button as
@@ -1445,25 +1441,25 @@ resolves its own width:</p>
 
 <p>When the grid has less room than its columns asked for, the width is taken off the
 <em>widest</em> column first, then off the widest two together once they are level, and so on
-down - never below a column's own minimum. Narrowing a grid therefore eats the long columns
-and leaves the short ones alone.</p>
+down - never below a column's own minimum. Narrowing a grid therefore shortens the long
+columns and leaves the short ones alone.</p>
 
 <div class="info">
-The grid's own arrangement, its blueprint, its cells and their controls are the
-<a href="grids.html">Grid manual</a>'s subject. What belongs here is the one thing a grid is from the
-outside: a control that measures to the sum of its columns, and that wants a
-<code>ScrollBox</code> around it whenever the rows can outrun the room.
+The grid's arrangement, blueprint, cells, and their controls are covered by the
+<a href="grids.html">Grid manual</a>. This manual covers the grid from the outside: a control
+that measures to the sum of its columns and requires a <code>ScrollBox</code> around it when the
+rows total more than the available height.
 </div>
 
 <h3 id="window">The window</h3>
 
-<p>A form's root control is laid out into the window's geometry, and that is the whole of the
-connection. The root is an ordinary control in every other way - it has padding, it has a
-<code>MinSize</code>, it arranges its children like anything else.</p>
+<p>A form's root control is laid out into the window's geometry. The root is an ordinary
+control in every other way - it has padding, it has a
+<code>MinSize</code>, it arranges its children like any other container.</p>
 
 <ul>
-<li><strong>The window is a ceiling, not a setting.</strong> What the root may grow to is the
-window it has.</li>
+<li><strong>The window bounds the root.</strong> What the root may grow to is the window it
+has.</li>
 <li><strong>The floor is the root's <code>composedMinSize()</code>.</strong> That is what a
 placement cuts a window down to and no further, and it is composed from the
 <code>MinSize</code> values set in the tree - never from what anything measured.</li>
@@ -1517,11 +1513,11 @@ both the size and the place, and the form stops following the control it was pla
 <span class="kw">return</span> form-&gt;<span class="fn">execute</span>();</code></pre>
 
 <div class="warning">
-Under <code>AutoFit::Yes</code> the window is the content's own answer, all the way down. The
-remembered wrap width is not kept in such a form, because there is no outside width for a
-wrapping panel to be measured against - it would be bounding the very thing it is measured
-from. A wrapping panel in an auto-fitting window therefore stands at its
-<code>LaneSize</code>, which is the right answer: there is no width to fill.
+Under <code>AutoFit::Yes</code>, the window size comes from the content. A form with this
+setting does not keep a remembered wrap width, because there is no outside width for a
+wrapping panel to be measured against; a maximum width on the panel would limit the content
+the window is measured from. A wrapping panel in an auto-fitting window therefore is measured
+from its <code>LaneSize</code>.
 </div>
 
 <h2 id="choosing">Choosing an Arrangement</h2>
@@ -1604,17 +1600,17 @@ surplus goes.</li>
 </ul>
 
 <div class="info">
-Nest rather than reach. A row of buttons where two are grouped is a
-<code>Stack</code> inside a <code>Stack</code>, not a special property on either.
-Nesting costs one control, and each level answers one question - which is what keeps a layout
-readable a year later.
+Use a nested container rather than a new property. A row of buttons where two are grouped is a
+<code>Stack</code> inside a <code>Stack</code>, not a special property on either stack.
+Nesting adds one control to the tree.
 </div>
 
 <h2 id="recipes">Recipes</h2>
 
 <h3 id="r-toolbar">Commands at the far end of a strip</h3>
 
-<p>One <code>FlexSpacer</code>. Everything after it is pushed to the end of the lane.</p>
+<p>One <code>FlexSpacer</code> is enough. Everything after it is pushed to the end of the
+lane.</p>
 
 <pre><code><span class="tp">Stack</span>&amp; m_toolBar{ <span class="fn">createTopBar</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Horizontal,
@@ -1625,8 +1621,8 @@ readable a year later.
 <span class="tp">FlexSpacer</span>&amp; m_gap{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;() };
 <span class="tp">Button</span>&amp; m_settings{ m_toolBar.<span class="fn">add</span>&lt;<span class="tp">ToolButton</span>&gt;(<span class="st">L"Settings"</span>) };</code></pre>
 
-<p>This works because the strip is a top bar, which a panel hands the whole content width -
-so the strip has room over what its buttons measured, and the spacer is what asked for it.</p>
+<p>This works because the strip is a top bar, which a panel gives the whole content width. The
+strip therefore has room over what its buttons measured, and the spacer is what takes it.</p>
 
 <h3 id="r-center">One item in the middle</h3>
 
@@ -1648,8 +1644,8 @@ needed:</p>
 
 <h3 id="r-footer">A footer that stays at the foot</h3>
 
-<p>Not a flex spacer - a slot. A bottom bar is laid out against the bottom edge of the panel's
-content, and the body takes what is left between the two.</p>
+<p>This one is a slot rather than a flex spacer. A bottom bar is laid out against the bottom
+edge of the panel's content, and the body takes what is left between the two.</p>
 
 <pre><code><span class="tp">Stack</span>&amp; m_footer{ <span class="fn">createBottomBar</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::Vertical,
@@ -1660,16 +1656,16 @@ content, and the body takes what is left between the two.</p>
 <span class="tp">CheckBox</span>&amp; m_keep{ m_footer.<span class="fn">add</span>&lt;<span class="tp">CheckBox</span>&gt;(<span class="st">L"Keep settings on this PC"</span>) };</code></pre>
 
 <div class="info">
-Use a slot when the thing is structurally a band of the panel, and a flex spacer when it is
-one more item in a lane that happens to want the far end. A footer that must stay put while
-the body scrolls has to be a slot: a flex spacer inside a scrolled body scrolls with it.
+Use a slot when the control is structurally a band of the panel, and a flex spacer when it is
+one more item in a lane and should sit at the far end. A footer that must stay at the foot
+while the body scrolls needs a slot: a flex spacer inside a scrolled body scrolls with it.
 </div>
 
 <h3 id="r-scroll">A page that scrolls</h3>
 
-<p>The box is the page's, not the content's. A view that may be dropped into a window, into a
-dropdown or into a settings panel should not carry a box of its own - whoever places it knows
-how much room it gets.</p>
+<p>The box belongs to the page, not to the view inside it. A view that may be dropped into a
+window, into a dropdown or into a settings panel should not carry a box of its own, because
+whatever places it decides how much room it gets.</p>
 
 <pre><code><span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;&amp; m_optionsBox{ <span class="fn">createBody</span>&lt;<span class="tp">ScrollBoxWith</span>&lt;<span class="tp">OptionsPage</span>&gt;&gt;(
     <span class="tp">HostProps</span>{
@@ -1681,13 +1677,13 @@ how much room it gets.</p>
 ) };
 <span class="tp">OptionsPage</span>&amp; m_options{ m_optionsBox.<span class="fn">body</span>() };</code></pre>
 
-<p><code>ScrollBars::Auto</code> reads here because the box states a maximum height of its
+<p><code>ScrollBars::Auto</code> applies here because the box states a maximum height of its
 own. In a window, where the box simply fills whatever it is given, state
 <code>ScrollBars::Vertical</code> instead.</p>
 
 <h3 id="r-tiles">A wrapping grid of equal tiles</h3>
 
-<p>Three things together, and each of them is doing one job.</p>
+<p>Three properties are needed together, and each does one job.</p>
 
 <pre><code><span class="tp">Stack</span>&amp; m_tiles{ <span class="fn">createBody</span>&lt;<span class="tp">Stack</span>&gt;(
     <span class="tp">Orientation</span>::HorizontalWrap,   <span class="cm">// rows that break when the width runs out</span>
@@ -1698,7 +1694,7 @@ own. In a window, where the box simply fills whatever it is given, state
 
 <p>And the tile itself states <code>HorizontalAlign::Fill</code>, so it takes the whole of the
 share it is handed. Without that the tiles are each as wide as their own caption and the
-tracks go ragged inside a set of equal shares. The tile states it ahead of its caller's
+tracks become uneven inside a set of equal shares. The tile states it ahead of its caller's
 properties, so a caller is free to say otherwise:</p>
 
 <pre><code><span class="kw">template</span>&lt;<span class="kw">typename</span>... <span class="tp">Args</span>&gt;
@@ -1774,13 +1770,13 @@ the body takes what is left.</p>
 
 <h3 id="r-fit">A window sized by its content</h3>
 
-<p>Popups do this by being popups. For a form of your own:</p>
+<p>Popups are auto-fitting already. For a form of your own:</p>
 
 <pre><code>form.<span class="fn">setAutoFit</span>(<span class="tp">AutoFit</span>::Yes);</code></pre>
 
 <p>Every alignment then recomputes the window's bounds from the content rather than cutting
 the content to the window. State a <code>MaxSize</code> on the root, or on whatever inside it
-can grow without limit, or a long enough list will ask for a window taller than the screen.</p>
+can grow without limit, or a long enough list requests a window taller than the screen.</p>
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 
@@ -1799,7 +1795,7 @@ two things dictate it:</p>
 <ul>
 <li><code>VerticalAlign::Fill</code> - a parent stretched the panel to the room it had. Fill
 is the default, so this is what you get by saying nothing.</li>
-<li>The panel is itself somebody's body. Its host handed it exact dimensions and has already
+<li>The panel is itself another panel's body. Its host handed it exact dimensions and has already
 laid the rest of itself out around that height.</li>
 </ul>
 
@@ -1852,16 +1848,16 @@ alignment says.</p>
 </svg>
 
 <div class="info">
-<strong>None of this reaches a body on a <code>ScrollBox</code>.</strong> A scrolled body is
-laid out to the whole of its content and its own alignment is overridden, so a wrapping panel
-dropped straight into a scroll box wraps and grows however it is aligned. If your wrapping
-panel is the thing being scrolled, this is not your problem.
+<strong>A body on a <code>ScrollBox</code> is laid out to its whole content.</strong> Its own
+alignment is overridden, so a wrapping panel inside a scroll box wraps and grows regardless of
+how it is aligned. When the wrapping panel is the control being scrolled, its alignment has no
+effect.
 </div>
 
 <h4 id="t-flex">A FlexSpacer does nothing</h4>
 
 <p>A flex spacer takes what its lane has <em>over</em>, and a lane that measured exactly what
-it was given has nothing over. Work outwards:</p>
+it was given has nothing over. Check each level outward:</p>
 
 <ul>
 <li>Is the stack itself aligned Fill along the lane it runs? A stack aligned Left keeps the
@@ -1893,40 +1889,40 @@ text fits. Align the items Fill.</p>
 
 <h4>Nothing moved after a change</h4>
 
-<p>The change did not ask for a pass. Property setters the framework owns ask for one;
-anything of your own that affects a size has to say <code>invalidateFormAlign()</code>. A
+<p>The change did not request a pass. Property setters the framework owns request one;
+anything of your own that affects a size has to call <code>invalidateFormAlign()</code>. A
 repaint - <code>invalidate()</code> - is not a layout.</p>
 
 <h4>A scroll box will not put up a bar</h4>
 
-<p><code>ScrollBars::Auto</code> is answered against the box's own maximum size. A box whose
+<p><code>ScrollBars::Auto</code> is decided against the box's own maximum size. A box whose
 size comes from its parent has no maximum of its own and therefore no overrun to detect. State
 the bars you want, or give the box a <code>MaxSize</code>.</p>
 
 <h4 id="t-loop">A layout that never settles</h4>
 
 <p>Something is calling <code>invalidatePass()</code> on a condition that never comes true.
-The condition must be one the next pass answers with the same number. Each frame spends a
+The condition must be one the next pass settles to the same value. Each frame spends a
 bounded number of passes, so the symptom is a layout that keeps changing under a still window
 rather than a hang.</p>
 
 <div class="warning">
-Never ask for another pass by comparing what a control <em>came to</em> against what it
-<em>measured</em>. The measure ceils the content it answers and the align does not, so a value
-with a fraction in it disagrees by up to a whole unit for ever - every pass asks for another,
-and the program lays itself out until it is killed. Compare a width against the width the
-previous pass recorded, in design units: that converges in one step, because the pass measured
-against it hands back the same number.
+Do not request another pass by comparing what a control <em>came to</em> against what it
+<em>measured</em>. The measure ceils the content it returns and the align does not, so the two
+values disagree by up to a whole unit on every pass: each pass requests
+another, and the layout never settles. Compare a width against the width the previous pass
+recorded, in design units; that converges in one step, because the pass measured against it
+returns the same number.
 </div>
 
 <h4>A left or right bar is the wrong width</h4>
 
-<p>A left or right bar is as wide as <em>it</em> measured - it is the one place in a panel
-where a child's width is its own answer, and the panel will not stretch it. State the width on
+<p>A left or right bar is as wide as <em>it</em> measured - the one place in a panel where a
+child's width is not set by the panel - and the panel will not stretch it. State the width on
 the bar: <code>MinSize{ w, 0.0f }</code> for a floor, <code>PreferredSize{ w, 0.0f }</code>
 for a starting width, <code>FixedSize</code> to pin it. A bar with a splitter is laid out at
-the extent a drag or <code>setBarExtent</code> stated, and <code>resetBarExtent</code> hands it
-back to its metrics.</p>
+the extent a drag or <code>setBarExtent</code> stated, and <code>resetBarExtent</code> returns
+it to its metrics.</p>
 
 <h4>A splitter will not move its bar</h4>
 
@@ -1954,7 +1950,7 @@ slot it was offered.</li>
 <li>Put the <code>ScrollBox</code> where the room is decided, not inside the view.</li>
 <li>State a <code>MinSize</code> on anything that must survive a window being cut down.</li>
 <li>Nest a second <code>Stack</code> rather than looking for a property.</li>
-<li>Write every number in design units, and forget that scaling exists.</li>
+<li>Write every number in design units and let the framework scale them.</li>
 </ul>
 </div>
 <div class="rule-card donts">
@@ -1962,14 +1958,14 @@ slot it was offered.</li>
 <ul>
 <li>Fill and <code>MaxSize</code> on the same axis.</li>
 <li><code>MinSize</code> used as "the size it should be".</li>
-<li>Scale anything by hand.</li>
-<li>Lay out from inside a layout pass - ask for one.</li>
+<li>Scale any number manually.</li>
+<li>Lay out from inside a layout pass - request one instead.</li>
 <li>Read <code>scaledWidth()</code> of something that has not been laid out yet and expect an
 answer. Use <code>scrollIntoViewOnAlign()</code> and <code>OnAligned</code> for work that
 needs a finished layout.</li>
-<li>Give a scrolled body a maximum that comes from the box scrolling it. That is a ratchet -
-the framework states the one case that is safe, and it states it in design units for a
-reason.</li>
+<li>Give a scrolled body a maximum that comes from the box scrolling it. That maximum and the
+box that scrolls it would each drive the other; the framework states the one case that is
+safe, in design units.</li>
 </ul>
 </div>
 </div>
@@ -1978,7 +1974,7 @@ reason.</li>
 
 <h3>Properties a control takes</h3>
 
-<p>Every control built on <code>RichControl</code>, which is all but the few noted
+<p>Every control built on <code>RichControl</code> takes these, which is all but the few noted
 <a href="#metrics">above</a>.</p>
 
 <table>
@@ -2032,9 +2028,9 @@ reason.</li>
 </table>
 
 <div class="warning">
-Controls are never constructed directly. Every control is built by the
-<code>add-</code> or <code>create-</code> call of the control that will own it, which is what
-gives it its parent and its form.
+Each control is built by the
+<code>add-</code> or <code>create-</code> call of the control that owns it; that call gives it
+its parent and its form. A control is not constructed directly.
 </div>
 
 <h3>Reading a layout</h3>

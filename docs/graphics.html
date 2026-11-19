@@ -187,38 +187,37 @@
     <div class="page-content">
         <header>
             <h1>ClaFi Graphics</h1>
-            <p>One canvas, drawn by the CPU or by the GPU</p>
+            <p>Drawing through the CPU and Direct2D backends</p>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
         <main>
 <h2 id="introduction">Introduction</h2>
 
-<p>Everything a window shows is drawn on its <strong>canvas</strong>: a <code>Graphics::Canvas</code>
+<p>A window's content is drawn on its <strong>canvas</strong>: a <code>Graphics::Canvas</code>
 the form owns and hands to every paint through the event. A caller states shapes, paths and brushes
 in the surface's pixels, and the canvas passes each one to the <strong>backend</strong> behind it -
-the CPU rasterizer that comes with the core, or Direct2D on Windows. Which of the two draws is the
-user's choice, made in Settings while the application runs, so a control does not know which one it
-is drawn by and must not need to.</p>
+the CPU rasterizer that comes with the core, or Direct2D on Windows. The user chooses which of the
+two draws, in Settings while the application runs, so a control draws the same way under either and
+does not depend on which one draws it.</p>
 
-<p><strong>Both backends answer to one contract</strong>: the drawing API promises nothing one of
-them cannot draw. A translucent brush is a color with alpha, on both, and nothing beside a brush
-carries an opacity of its own. What the two still draw differently is listed in
-<a href="#differences">Backend differences</a>, each with what to keep to so that a picture comes out
-the same from either.</p>
+<p><strong>Both backends implement one contract</strong>: the drawing API makes no promise that one
+of them cannot keep. A translucent brush is a color with alpha on both, and opacity otherwise
+belongs to a layer rather than to a shape. What the two still draw differently is listed in
+<a href="#differences">Backend differences</a>, with what to keep to for a picture to come out the
+same from either.</p>
 
-<p>What a caller draws with:</p>
+<p>A caller draws with the following:</p>
 
 <ul>
-    <li><strong>Shapes</strong> - rectangles, rounded rectangles with a radius per corner and a choice
-        of sides, ellipses, circles and lines, each drawn as an outline or filled.</li>
-    <li><strong>Paths</strong> - a <code>PixelPath</code> of lines and curves, drawn as a stack of
+    <li><strong>Shapes</strong> are rectangles, rounded rectangles with a radius per corner and a
+        choice of sides, ellipses, circles and lines, and each is drawn as an outline or filled.</li>
+    <li><strong>Paths</strong> are a <code>PixelPath</code> of lines and curves, drawn as a stack of
         layers: fill, stroke, glow and shadow.</li>
-    <li><strong>Brushes</strong> - a solid color, a linear or a radial gradient, or a point of
+    <li><strong>Brushes</strong> are a solid color, a linear or a radial gradient, or a point of
         light.</li>
-    <li><strong>State</strong> - clips, a transform, opacity layers and kept images, each a push and a
-        pop, with a scoped guard for each.</li>
-    <li><strong>Pixels</strong> - a bitmap drawn as it is, or a buffer the caller writes into
-        itself.</li>
+    <li><strong>State</strong> covers clips, a transform, opacity layers and kept images, each one a
+        push and a pop, with a scoped guard for each.</li>
+    <li><strong>Pixels</strong> are a bitmap drawn as it is, or a buffer the caller writes into.</li>
 </ul>
 
 <div class="info">
@@ -227,17 +226,17 @@ the same from either.</p>
 <code>PathDrawLayer</code>, <code>Matrix3x2</code>, <code>ShadowParams</code>, <code>Bitmap</code>,
 <code>PixelView</code> and <code>IBackend</code> are in
 <code>ClaFi.Core.Graphics.Types</code>. <code>Color</code>, <code>FloatRect</code> and
-<code>RoundedRectangleParts</code> come with
+<code>RoundedRectangleParts</code> are in
 <code>ClaFi.Core.System.UiTypes</code>. The CPU backend is <code>ClaFi.Core.Graphics.Cpu.Canvas</code>
-and the Direct2D one <code>ClaFi.Platform.Windows.D2D</code>; a caller drawing in a paint handler
-imports neither.
+and the Direct2D backend is <code>ClaFi.Platform.Windows.D2D</code>; a caller drawing in a paint
+handler imports neither.
 </div>
 
 <h2 id="quickstart">Quick Start</h2>
 
-<p>A paint handler takes the canvas from its event and draws in the rect the event hands it. An
-icon's <code>DrawIconEvent</code> answers the canvas, the icon's rect, the stroke weights and the
-inks; a control's <code>PaintEvent</code> answers the same.</p>
+<p>A paint handler takes the canvas from its event and draws in the rect the event carries. An
+icon's <code>DrawIconEvent</code> provides the canvas, the icon's rect, the stroke weights and the
+inks; a control's <code>PaintEvent</code> provides the same.</p>
 
 <pre><code><span class="kw">void</span> <span class="fn">paintAddIcon</span>(<span class="tp">DrawIconEvent</span>&amp; event)
 {
@@ -262,54 +261,55 @@ inks; a control's <code>PaintEvent</code> answers the same.</p>
 }</code></pre>
 
 <p>Colors come from the event rather than from the code: an ink is resolved against the surface it
-is drawn on, which is the <a href="color.html">Color</a> manual's subject. Everything below is what
-happens to a color once it is in hand.</p>
+is drawn on, which the <a href="color.html">Color</a> manual covers. The sections below describe
+what happens to a color after it is resolved.</p>
 
 <h2 id="concepts">Core Concepts</h2>
 
 <h3 id="canvas-and-backend">The canvas and its backend</h3>
 
 <p>A canvas is a thin layer over an <code>IBackend</code> it owns. It keeps the clip rectangles and
-the transform it was told, builds out of paths the few shapes a backend may decline - a partial
-rounded rectangle, a shadow - and forwards everything else. The backend is what turns a call into
-pixels, and it is the only part that differs between the CPU and the GPU.</p>
+the transform it was given, builds out of a path the few shapes a backend may decline - a partial
+rounded rectangle, a shadow - and forwards everything else. The backend turns a call into pixels,
+and it is the only part that differs between the CPU and the GPU.</p>
 
-<p>A form's canvas is built by the application and drawn in the form's paint passes, so a paint
-handler never begins or ends a frame. A canvas of one's own - a picture baked once and cut up, say -
-is built over a CPU backend, which <a href="#ref-offscreen">A canvas of your own</a> shows.</p>
+<p>The application builds a form's canvas, and the form's paint passes draw through it, so a paint
+handler never begins or ends a frame. A canvas of one's own - a picture baked once and cut into
+tiles, for example - is built over a CPU backend.
+<a href="#ref-offscreen">A canvas of your own</a> describes it.</p>
 
 <h3 id="coordinates">Coordinates</h3>
 
-<p>The canvas addresses the surface in its device pixels, from the top left corner, y growing
-downwards. The rects a paint event hands out are in those pixels already. A size written at design
-- a radius, a gap, a reach - becomes one through <code>scaleF</code>, and a line's weight through
-<code>scaledStrokeWidth</code>:</p>
+<p>The canvas addresses the surface in its device pixels, from the top left corner, with y growing
+downward. The rects a paint event provides are in those pixels. A size written at design
+- a radius, a gap, a reach - becomes device pixels through <code>scaleF</code>, and a line's weight
+through <code>scaledStrokeWidth</code>:</p>
 
 <pre><code><span class="kw">const float</span> radius = event.<span class="fn">scaleF</span>(<span class="kw">6.0f</span>);                         <span class="cm">// a design size in device pixels</span>
 <span class="kw">const float</span> line = event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin);    <span class="cm">// whole pixels, at least one</span></code></pre>
 
 <p>The weights run <code>Hairline</code>, <code>Thin</code>, <code>Regular</code>, <code>Bold</code>
-and <code>Heavy</code>. <code>scaledStrokeWidth</code> answers whole pixels, at least one, and from
-<code>Thin</code> up each grade is a pixel wider than the one below - so a line keeps its weight
+and <code>Heavy</code>. <code>scaledStrokeWidth</code> returns whole pixels, at least one, and from
+<code>Thin</code> up each grade is a pixel wider than the one below, so a line keeps its weight
 against its neighbors at every scale the application is drawn at.</p>
 
 <h3 id="strokes-inside">Strokes lie inside</h3>
 
-<p><strong>Every outline lays its stroke inside the bounds it is given.</strong> A rectangle, a
+<p><strong>Every outline draws its stroke inside the bounds it is given.</strong> A rectangle, a
 rounded rectangle, an ellipse and a partial rounded rectangle drawn over the same bounds as their
-fill meet it exactly: the outer edge of the stroke is the edge of the shape, and no fill shows past
-the border.</p>
+fill meet those bounds exactly: the stroke's outer edge is the shape's edge, and the fill does not
+show past the border.</p>
 
 <pre><code>canvas.<span class="fn">fillRoundedRectangle</span>(card, radius, radius, surface);
 canvas.<span class="fn">drawRoundedRectangle</span>(card, radius, radius, border, line);   <span class="cm">// the same rect, not an inset one</span></code></pre>
 
 <div class="warning">
-<strong>Do not inset the bounds by half the stroke.</strong> The backend does that itself - Direct2D
-strokes centered on a shape, so it moves the shape in - and a caller doing it as well leaves half a
-pixel of fill outside every border.
+<strong>Do not inset the bounds by half the stroke.</strong> The backend does that itself:
+Direct2D strokes centered on a shape, so it moves the shape inward. A caller that also insets the
+bounds leaves half a pixel of fill outside every border.
 </div>
 
-<p>A line and a path have no inside. Their stroke straddles the line or the path it follows, half on
+<p>A line and a path have no inside. The stroke straddles the line or the path it follows, half on
 each side.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 212" xmlns="http://www.w3.org/2000/svg" role="img"
@@ -403,8 +403,8 @@ takes a brush also takes a <code>Color</code>, which is a solid brush.</p>
   <text class="br-t" x="545" y="156">a light at lightPos,</text><text class="br-t" x="545" y="171">thinning straight to nothing</text>
 </svg>
 
-<p><strong>A brush is stated in the coordinates of the shape it fills.</strong> For a shape that is the
-canvas's coordinates; for a path drawn under a transform it is the path's own, so a gradient across a
+<p><strong>A brush is stated in the coordinates of the shape it fills.</strong> A shape uses the
+canvas's coordinates. A path drawn under a transform uses the path's own, so a gradient across a
 path moves, scales and turns with it.</p>
 
 <p>Stop positions run from 0 to 1 and ascend. A gradient of two colors has a shorthand:</p>
@@ -416,8 +416,8 @@ canvas.<span class="fn">fillTopBottomGradientRectangle</span>(band, top, bottom)
 the ellipse or past it, or a radius of zero, is undefined behavior.</p>
 
 <p>A point of light lights whatever it is painted on. Its spread is the vertical radius, and
-<code>xRatio</code> divides it for the horizontal one, so 0.5 is a light twice as wide as it is tall.
-How strong the light is, is its color's alpha:</p>
+<code>xRatio</code> divides it for the horizontal radius, so 0.5 gives a light twice as wide as it is
+tall. The light's strength is its color's alpha:</p>
 
 <pre><code>canvas.<span class="fn">fillRectangle</span>(bounds, <span class="tp">PointGlow</span>{
     .lightPos = bounds.<span class="fn">center</span>(),
@@ -463,43 +463,43 @@ How strong the light is, is its color's alpha:</p>
 </svg>
 
 <div class="warning">
-<strong>A glow is a circle.</strong> <code>PointGlow::shape</code> also names
-<code>SoftRectangle</code> and <code>SharpRectangle</code>, which only the CPU backend draws; Direct2D
-draws every point of light as the ellipse <code>GlowShape::Circle</code> draws.
+<strong>Direct2D draws every point of light as a circle.</strong> <code>PointGlow::shape</code>
+also names <code>SoftRectangle</code> and <code>SharpRectangle</code>, which only the CPU backend
+draws. The Direct2D backend draws the ellipse that <code>GlowShape::Circle</code> defines.
 </div>
 
 <h3 id="paths">Paths and layers</h3>
 
 <p>A <code>PixelPath</code> is a list of commands - move, line, quadratic and cubic curve,
-elliptical arc, close - each absolute or relative, as SVG's path data has them. A <code>moveTo</code> starts a new figure, and <code>close</code> joins a figure's end
-back to its start; a segment drawn on after a <code>close</code>, with no move between, starts a new
-figure at that same start. A path starts with a move: anything drawn before its first
-<code>moveTo</code> is undefined behavior. An arc is stated as SVG states one: the ellipse's radii
-and its rotation in degrees, <code>ArcSize::Small</code> or <code>Large</code> for which of the two
-arcs joining its ends it takes, and <code>ArcSweep::Clockwise</code> or
-<code>CounterClockwise</code> for the way it turns on the screen. Radii too small to reach its end
-grow together until they do, a radius of zero makes it a line, and an arc ending where it starts
-draws nothing. Three helpers build a whole figure and start a fresh path to do it:
-<code>drawCircle(center, radius)</code>, <code>drawEllipse(center, radiusX, radiusY)</code>, and
+elliptical arc, close - each absolute or relative, as SVG's path data has them. A <code>moveTo</code>
+starts a new figure, and <code>close</code> joins a figure's end back to its start; a segment drawn on
+after a <code>close</code>, with no move between, starts a new figure at that same start. A path
+starts with a move: anything drawn before its first <code>moveTo</code> is undefined behavior. An arc
+is stated as SVG states one: the ellipse's radii and its rotation in degrees,
+<code>ArcSize::Small</code> or <code>Large</code> for which of the two arcs joining its ends it takes,
+and <code>ArcSweep::Clockwise</code> or <code>CounterClockwise</code> for the way it turns on the
+screen. Radii too small to reach its end grow together until they do, a radius of zero makes it a
+line, and an arc ending where it starts draws nothing. Three helpers build a whole figure and clear
+the path first: <code>drawCircle(center, radius)</code>,
+<code>drawEllipse(center, radiusX, radiusY)</code>, and
 <code>drawRoundedRect(width, height, radius)</code>, which is centered on the origin, or
-<code>drawRoundedRect(rect, radiusX, radiusY)</code>, which is SVG's <code>rect</code>, each radius cut to
-half its own side.
-<code>addRoundedPolygon</code> appends a polygon with its corners rounded, keeping what the path
-already holds.</p>
+<code>drawRoundedRect(rect, radiusX, radiusY)</code>, which is SVG's <code>rect</code>, each radius
+cut to half its own side. <code>addRoundedPolygon</code> appends a polygon with its corners rounded
+and keeps what the path already holds.</p>
 
-<p><strong>A path carries the rule every fill of it follows.</strong> It is
-<code>FillRule::Nonzero</code>, SVG's initial rule, until <code>setFillRule</code> changes it;
-<code>fillRule()</code> answers what it holds. <code>clear()</code> returns it to <code>Nonzero</code>,
-a cleared path being a new path.</p>
+<p><strong>A path carries the rule every fill of it follows.</strong> The rule is
+<code>FillRule::Nonzero</code>, SVG's initial rule, until <code>setFillRule</code> changes it, and
+<code>fillRule()</code> returns the rule in force. <code>clear()</code> returns it to
+<code>Nonzero</code>: a cleared path is a new path.</p>
 
 <p><strong>A curve is drawn to within half a pixel of itself.</strong> A path keeps its curves as
 curves, and each backend turns them into what it rasterizes: Direct2D tessellates them itself, and
 the CPU backend cuts each one into straight segments, halving it until every piece lies within half
 a device pixel of its chord. An arc goes to Direct2D as an arc; the CPU backend first makes it
 cubics of at most a quarter turn each, none further from the ellipse than 0.03 percent of its
-radius. The half pixel is measured on the screen, the path's transform and the canvas's included, so
-a curve drawn larger is cut into more segments and none comes out coarser. No call takes a
-precision.</p>
+radius. The half pixel is measured on the screen, with the path's transform and the canvas's
+included, so a curve drawn larger is cut into more segments and no segment comes out coarser. No
+call takes a precision.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 262" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="A rounded corner at four on-screen radii, 10, 40, 160 and 640 pixels, cut by the CPU backend into 4, 8, 16 and 32 segments, each within half a device pixel of the curve.">
@@ -648,9 +648,9 @@ one covers an earlier one.</p>
 </svg>
 
 <p>A glow's ramp thins by its <code>GlowFalloff</code>. <code>Linear</code> runs straight to nothing,
-which is what light wants: a lamp does not thin out, it runs out. <code>Smooth</code> is steep at the
-shape and level by the time it ends, which is what a shadow wants - a far end faint enough not to
-read as a border drawn round the shape.</p>
+which suits a point of light. <code>Smooth</code> is steep at the shape and level by the time it
+ends, which suits a shadow: a far end faint enough that it does not read as a border drawn around
+the shape.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="The two falloffs: Linear falls straight from the shape to nothing at the reach; Smooth, the square of it, is steep at the shape and level by the time it ends.">
@@ -721,15 +721,15 @@ canvas.<span class="fn">drawPath</span>(badge, {
 </svg>
 
 <p>The one-brush calls are a single layer: <code>fillPath(path, brush)</code> is a fill, and
-<code>drawPath(path, brush, strokeWidth)</code> a stroke with round ends. The transform a path is
+<code>drawPath(path, brush, strokeWidth)</code> is a stroke with round ends. The transform a path is
 given places the geometry and the brush together, and scales its stroke widths and reaches with
 them.</p>
 
 <h3 id="clips">Clips</h3>
 
-<p>A clip is a push and a pop. <code>pushClip(rect)</code> keeps what follows inside a rectangle;
-<code>pushClip(path, transform)</code> inside the area a path fills, antialiased at its edge. Clips
-nest, and each one pushed inside another is cut down to it.</p>
+<p>A clip is a push and a pop. <code>pushClip(rect)</code> keeps what follows inside a rectangle, and
+<code>pushClip(path, transform)</code> keeps it inside the area a path fills, antialiased at its
+edge. Clips nest, and a clip pushed inside another is cut down to it.</p>
 
 <pre><code>canvas.<span class="fn">pushClip</span>(viewport);
 <span class="fn">paintRows</span>(canvas);
@@ -765,22 +765,22 @@ canvas.<span class="fn">popClip</span>();</code></pre>
   <text class="cl-m" x="30" y="184">faint: what the caller drew</text>
 </svg>
 
-<p><code>clipBox()</code> answers the rectangle the canvas has recorded for the clip in force - a
-path clip's bounding box, cut by the clips around it - which is what a painter asks to skip what
-cannot show. A frame's own dirty rectangle is the first clip of every frame, and the clips a frame
-leaves pushed are popped when it ends.</p>
+<p><code>clipBox()</code> returns the rectangle the canvas has recorded for the clip in force: a
+path clip's bounding box, cut by the clips around it. A painter uses it to skip what cannot show. A
+frame's own dirty rectangle is the first clip of every frame, and the clips a frame leaves pushed
+are popped when it ends.</p>
 
 <div class="info">
-A path clip is not free. The CPU backend holds it as a coverage mask the size of its bounds, so a
-clip shaped like one corner of a window costs a corner's worth of mask and one shaped like the whole
-window a window's worth. Clip to the part that needs the shape.
+The CPU backend holds a path clip as a coverage mask the size of its bounds: a clip shaped like one
+corner of a window allocates a mask for that corner, and a clip shaped like the whole window
+allocates a mask the size of the window. Clip to the part that needs the shape.
 </div>
 
 <h3 id="transforms">Transforms</h3>
 
 <p>The canvas carries one <code>Matrix3x2</code>, applied to everything drawn. A caller composes onto
-it rather than replacing it, through <code>ScopedCanvasTransform</code>, which puts the previous one
-back when it goes:</p>
+it rather than replacing it, through <code>ScopedCanvasTransform</code>, which restores the previous
+one when it is destroyed:</p>
 
 <pre><code><span class="cm">// Grows what follows about a point. The matrix to the right applies first.</span>
 <span class="kw">const</span> <span class="tp">Matrix3x2</span> grow = <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(origin)
@@ -789,14 +789,15 @@ back when it goes:</p>
 <span class="kw">const</span> <span class="tp">ScopedCanvasTransform</span> scaled{ canvas, grow };</code></pre>
 
 <p>The framework uses the same guard to scale a pressed control about its press origin, so a paint
-handler is already drawing under a transform at times, and draws the same way whether it is or not.
-The local matrix is applied first and the one in force after it, so a scaled control inside another
-lands where both put it.</p>
+handler sometimes draws under a transform and must draw the same way in both cases. The local matrix
+is applied first and the one in force after it, so a scaled control inside another lands where both
+put it.</p>
 
 <p><strong>A uniform scale and a translation draw the same on both backends.</strong> A rotation, a
-shear or a scale that differs between the axes is drawn exactly only by a path: the CPU backend maps
-a rectangle's top-left and bottom-right corners and draws the upright box between them, and
-measures radii and widths on the larger axis. <a href="#differences">Backend differences</a> lists each case.</p>
+shear or a scale that differs between the axes agrees on both backends only as a path: the CPU
+backend maps a rectangle's top-left and bottom-right corners, draws the upright box between them,
+and measures radii and widths on the larger axis. <a href="#differences">Backend differences</a>
+lists each case.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 216" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="A rectangle under a 20 degree rotation: the CPU backend fills the upright box between the mapped top-left and bottom-right corners, Direct2D fills the turned shape, and a path is turned on both.">
@@ -828,9 +829,9 @@ measures radii and widths on the larger axis. <a href="#differences">Backend dif
 
 <p>Everything drawn between <code>pushOpacity</code> and its pop reaches the surface as one image, at
 the layer's opacity. Two shapes overlapping inside a layer do not show each other through where they
-cross, and a shape drawn over another covers it as completely as it would at full strength. That is
-the reason a layer exists rather than an alpha folded into each brush: a group faded through its
-brushes shows its own background through its own text.</p>
+cross, and a shape drawn over another covers it as fully as it would at full strength. A layer
+exists for that reason rather than an alpha value in each brush: a group faded through its brushes
+shows its own background through its own text.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 198" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="Two overlapping shapes faded through their brushes show each other through where they cross; drawn inside one opacity layer, the square covers the circle and the group fades as one image.">
@@ -870,21 +871,20 @@ brushes shows its own background through its own text.</p>
 <span class="fn">drawLeaves</span>(canvas, transform);
 <span class="fn">drawBlot</span>(canvas, transform);</code></pre>
 
-<p><code>ScopedCanvasOpacity</code> opens nothing at full opacity, so a caller with a factor that may
-reach 1 states it there rather than branching round the passage it guards. One shape fading on its
-own needs no layer: its color's alpha is the same thing, at no cost.</p>
+<p><code>ScopedCanvasOpacity</code> opens no layer at full opacity, so a caller with a factor that may
+reach 1 states it there rather than branching around the passage it guards. One shape fading on its
+own needs no layer: its color's alpha gives the same result and costs less.</p>
 
 <div class="info">
-Text inside a layer is antialiased in grayscale under Direct2D, where it is ClearType outside one: the
-layer starts empty, and a glyph drawn into it has no opaque ground to lay its subpixel color
-against.
+Under Direct2D, text inside a layer is antialiased in grayscale; outside a layer it uses ClearType.
+The layer starts empty, so a glyph drawn into it has no opaque background for its subpixel color.
 </div>
 
 <h3 id="shadows">Shadows</h3>
 
-<p><code>castShadow</code> draws the shadow a rounded rectangle casts on what is already drawn, and
-not the rectangle. Whatever casts a shadow covers it, so a caller casts the shadow first and draws
-the shape over it:</p>
+<p><code>castShadow</code> draws the shadow a rounded rectangle casts on what is already drawn, not
+the rectangle. The shape that casts the shadow covers it, so a caller casts the shadow first and
+draws the shape over it:</p>
 
 <pre><code><span class="kw">const</span> <span class="tp">RoundedRectangleParts</span> card{ .bounds = bounds, .radii = <span class="fn">uniformCorners</span>(radius) };
 <span class="kw">const</span> <span class="tp">ShadowParams</span> shadow{
@@ -895,12 +895,12 @@ the shape over it:</p>
 canvas.<span class="fn">castShadow</span>(card, shadow);
 canvas.<span class="fn">fillPartialRoundedRectangle</span>(card, event.<span class="fn">surfaceRgb</span>());</code></pre>
 
-<p>The color is the shadow where it is darkest, against the shape's edge, so its alpha is the whole
-of how heavy the shadow reads. <code>blur</code> is how far the ramp reaches past the shape,
+<p>The color is the shadow where it is darkest, against the shape's edge, so its alpha alone sets
+the shadow's weight. <code>blur</code> is how far the ramp reaches past the shape,
 <code>offset</code> which way the light falls, and <code>spread</code> how much the shape is grown
-before its shadow is taken - which moves the whole ramp out rather than stretching it, so a shadow
-can sit wider without growing softer. A round corner grows with the spread; a square one stays
-square.</p>
+before its shadow is taken. The spread moves the whole ramp out rather than stretching it, so a
+shadow can be wider without growing softer. A round corner grows with the spread; a square one
+stays square.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="A shadow cast before its shape: the silhouette is the shape moved by the offset and grown by the spread, solid in the shadow's color, with the ramp running out from its edge to the blur; the shape drawn after covers what is under it.">
@@ -947,9 +947,10 @@ square.</p>
 </svg>
 
 <div class="warning">
-<strong>Under the shape the shadow is solid.</strong> The silhouette is filled in the shadow's color
-and the ramp runs outward from its edge, so the shape drawn over it is what hides it. A shape with a
-translucent fill shows the shadow through, and wants its shadow clipped to the outside of it.
+<strong>The shadow is solid under the shape.</strong> The silhouette is filled in the shadow's
+color and the ramp runs outward from its edge; the shape drawn over it hides the filled part. A
+shape with a translucent fill shows the shadow through, so a caller clips the shadow to the outside
+of the shape.
 </div>
 
 <h3 id="images">Kept images</h3>
@@ -957,8 +958,8 @@ translucent fill shows the shadow through, and wants its shadow clipped to the o
 <p>A kept image is a picture the size of the surface that outlives the frame it was drawn in, named
 by an index. Everything drawn between <code>pushImage(index)</code> and its pop goes into it rather
 than onto the surface, and <code>drawImage(index, opacity)</code> puts it back at an opacity. A
-caller holding two can build the next picture of a crossfade out of the last one and trade them
-over.</p>
+caller holding two images can build the next picture of a crossfade from the last one and then swap
+them.</p>
 
 <pre><code><span class="kw">if</span> (!canvas.<span class="fn">hasImage</span>(<span class="kw">0</span>))
 {
@@ -967,14 +968,14 @@ over.</p>
 }
 canvas.<span class="fn">drawImage</span>(<span class="kw">0</span>, fade);</code></pre>
 
-<p>An image is drawn into under the canvas's transform and put back on the surface's own pixels,
-whatever transform is in force when it is. A new image is transparent, and a push does not clear it:
-what a caller leaves uncovered keeps what was there before.</p>
+<p>An image is drawn into under the canvas's transform and drawn back on the surface's own pixels,
+whatever transform is in force at that point. A new image is transparent, and a push does not clear
+it: what a caller leaves uncovered keeps what was there before.</p>
 
 <div class="warning">
-<strong>The store belongs to the surface.</strong> A resize empties it, a switch of backend empties
-it, and so does a lost device under Direct2D. <code>hasImage</code> is how a caller finds out that
-what it drew is gone and has to be drawn again.
+<strong>The image store is per surface.</strong> A resize, a switch of backend, and a lost device
+under Direct2D all empty it. <code>hasImage</code> reports whether the stored image exists. A caller
+whose image was discarded draws the content again.
 </div>
 
 <h3 id="pixels">Pixels</h3>
@@ -982,15 +983,14 @@ what it drew is gone and has to be drawn again.
 <p>A <code>Bitmap</code> is a block of pixels the caller owns, and <code>drawBitmap(bitmap,
 position)</code> draws it as it is. <code>decodePng</code> reads one out of a PNG file's bytes and
 <code>encodePng</code> writes one back as bytes, both from <code>ClaFi.Core.Graphics.Png</code>, and
-<code>decodeDib</code> and <code>decodeBmpFile</code> out of a
-bitmap's, from <code>ClaFi.Core.Graphics.Dib</code>. A
-<code>PixelView</code> is a window onto such a block - its bounds, its clip and its scan lines - and
-<code>drawPixelView</code> draws one.</p>
+<code>decodeDib</code> and <code>decodeBmpFile</code> read one out of a bitmap file's bytes, from
+<code>ClaFi.Core.Graphics.Dib</code>. A <code>PixelView</code> is a window onto such a block - its
+bounds, its clip and its scan lines - and <code>drawPixelView</code> draws one.</p>
 
-<p><code>stagingDraw</code> goes the other way: it hands the caller a view to write pixels into
-itself, and draws what was written when the callback returns. Whatever the caller writes there is
-outside the canvas transform by construction, so the transform is handed in beside the view, in the
-coordinates the caller already works in:</p>
+<p><code>stagingDraw</code> goes the other way: it hands the caller a view to write pixels into, and
+draws what was written when the callback returns. Whatever the caller writes there is outside the
+canvas transform by construction, so the transform is handed in beside the view, in the coordinates
+the caller already works in:</p>
 
 <pre><code>canvas.<span class="fn">stagingDraw</span>(rect, [&amp;](<span class="tp">PixelView</span> view, <span class="kw">const</span> <span class="tp">Matrix3x2</span>&amp; canvasTransform) {
     <span class="kw">const</span> <span class="tp">Matrix3x2</span> place = canvasTransform * <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(rect.<span class="fn">topLeft</span>());
@@ -999,9 +999,8 @@ coordinates the caller already works in:</p>
 
 <p>Pixels are where the backends differ most - what a view holds before the caller writes, whether a
 bitmap follows the transform, and how either meets what is already drawn.
-<a href="#differences">Backend differences</a> has each of them, and the rule that keeps both the
-same: write opaque pixels, read none back, and draw a bitmap under no transform and no path
-clip.</p>
+<a href="#differences">Backend differences</a> lists each of them, and the rule that keeps both the
+same: write opaque pixels, read none back, and draw a bitmap under no transform and no path clip.</p>
 
 <h2 id="reference">Reference</h2>
 
@@ -1131,9 +1130,9 @@ is one pixel.</p>
 
 <h3 id="ref-matrix">Matrix3x2</h3>
 
-<p>An affine transform, binary compatible with Direct2D's <code>D2D1_MATRIX_3X2_F</code>. In
-<code>a * b</code>, <code>b</code> applies first - the opposite order to Direct2D's own
-<code>operator*</code>, which matters only to code that mixes the two.</p>
+<p>The type is an affine transform, binary compatible with Direct2D's
+<code>D2D1_MATRIX_3X2_F</code>. In <code>a * b</code>, <code>b</code> applies first - the opposite
+order to Direct2D's own <code>operator*</code>, which matters only to code that mixes the two.</p>
 
 <pre><code><span class="tp">Matrix3x2</span>::<span class="fn">Identity</span>();
 <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(dx, dy);    <span class="tp">Matrix3x2</span>::<span class="fn">Translation</span>(point);
@@ -1158,7 +1157,7 @@ is one pixel.</p>
 shorter side. <code>uniformCorners(r)</code> gives every corner the same radius.</p>
 
 <p><code>sides</code> says which edges an outline draws; a fill covers the whole shape whatever it
-holds. A corner arc is drawn while either side it joins is. An open end runs to the edge of the
+holds. A corner arc is drawn while either side it joins is drawn. An open end runs to the edge of the
 bounds rather than stopping at the outline, so two shapes sharing an edge - the cells of a grid -
 join into one unbroken line.</p>
 
@@ -1230,8 +1229,8 @@ join into one unbroken line.</p>
 <h3 id="ref-offscreen">A canvas of your own</h3>
 
 <p>A picture drawn once and used many times - the window's shadow is baked this way and cut into
-tiles - is drawn on a canvas over a CPU backend, which needs nothing but a size. The frame is begun
-and ended as a form's is, and the end hands back the pixels:</p>
+tiles - is drawn on a canvas over a CPU backend, which needs only a size. The frame is begun and
+ended as a form's is, and the end of the frame returns the pixels:</p>
 
 <pre><code><span class="kw">auto</span> backend = <span class="tp">std</span>::<span class="fn">make_unique</span>&lt;<span class="tp">Graphics</span>::<span class="tp">Cpu</span>::<span class="tp">CpuBackend</span>&gt;(size);
 backend-&gt;<span class="fn">setTransparentBase</span>(<span class="kw">true</span>);   <span class="cm">// start from nothing, not from what the buffer held</span>
@@ -1243,16 +1242,16 @@ canvas.<span class="fn">castShadow</span>(silhouette, shadow);
 <span class="tp">Graphics</span>::<span class="tp">Bitmap</span>* painted = <span class="kw">nullptr</span>;
 canvas.<span class="fn">endPaint</span>(<span class="kw">nullptr</span>, whole, painted);   <span class="cm">// the backend's own buffer, alive as long as the canvas</span></code></pre>
 
-<p>Draw between the two calls. A CPU canvas draws outside a frame as well, but nothing promises that
-of a backend, and Direct2D draws nothing there.</p>
+<p>A caller draws between the two calls. A CPU canvas draws outside a frame as well, but the backend
+interface does not promise it, and Direct2D draws nothing there.</p>
 
 <h2 id="backends">The Backends</h2>
 
 <h3 id="choosing">Which backend draws</h3>
 
-<p><strong>The CPU backend is always there.</strong> It is the core's own, it is the only one on
-Wayland, and it draws everything made off-screen whatever the platform. A GPU backend is the
-application's to name, in its type:</p>
+<p><strong>The CPU backend is always present.</strong> It is the core's own, it is the only one on
+Wayland, and it draws everything made off-screen whatever the platform. The application names a GPU
+backend in its type:</p>
 
 <pre><code><span class="cm">// Win32: Direct2D beside the CPU backend.</span>
 <span class="kw">using</span> <span class="tp">Win32Application</span> = <span class="tp">Application</span>&lt;<span class="tp">Win32Platform</span>, <span class="tp">Direct2DBackend</span>&gt;;
@@ -1261,20 +1260,20 @@ application's to name, in its type:</p>
 <span class="kw">using</span> <span class="tp">WaylandApplication</span> = <span class="tp">Application</span>&lt;<span class="tp">WaylandPlatform</span>&gt;;</code></pre>
 
 <p>An application that names one shows <strong>GPU acceleration</strong> on its Settings page, kept in
-its config and on by default. One that names none shows no such setting and keeps no answer about
+its config and on by default. One that names none shows no such setting and stores no value for
 it. A change of the setting reaches every window at the top of its next frame, so a switch asked for
 from inside a click cannot land between the passes of a frame being painted.</p>
 
-<p><code>canvas.backend()-&gt;type()</code> answers <code>BackendType::Cpu</code> or
-<code>BackendType::Direct2D</code>. Asking is for platform code - the text engine asks, to reach
+<p><code>canvas.backend()-&gt;type()</code> returns <code>BackendType::Cpu</code> or
+<code>BackendType::Direct2D</code>. The value is for platform code: the text engine reads it to reach
 DirectWrite's own glyph drawing. A control that draws one way on one backend and another way on the
 other is a gap in the contract, and belongs in the table below.</p>
 
 <h3 id="differences">Backend differences</h3>
 
 <p>These are the calls the two backends draw differently. Each row is a gap in the contract rather
-than a feature of either backend, and the last column is what to keep to so that a picture comes out
-the same from both.</p>
+than a feature of either backend, and the last column states what to keep to for a picture to come
+out the same from both.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 184" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="Two of the differences drawn: a stroke's corner round on the CPU and mitered on Direct2D; a glow round or square at a sharp corner.">
@@ -1393,10 +1392,10 @@ the same from both.</p>
 </table>
 
 <div class="info">
-<code>castShadow</code> is answered in two ways - built by the canvas as a <code>Shadow</code> layer on
-the CPU, stated in one piece by Direct2D - and draws the same shadow from both. A uniform scale and a
-translation, which is what the framework's own transforms are, add nothing to the table: its
-transform rows are about a rotation, a shear and unequal axes alone.
+<code>castShadow</code> has two implementations: on the CPU the canvas builds it as a
+<code>Shadow</code> layer, and Direct2D states it in one piece. Both draw the same shadow. A uniform
+scale and a translation, which are the framework's own transforms, add nothing to the table; its
+transform rows cover a rotation, a shear and unequal axes only.
 </div>
 
 <h2 id="do-dont">Do and Don't</h2>
@@ -1416,7 +1415,7 @@ transform rows are about a rotation, a shear and unequal axes alone.
     <div class="rule-card donts">
         <h4>Don't</h4>
         <ul>
-            <li><strong>Don't inset an outline by half its stroke.</strong> The backend already has.</li>
+            <li><strong>Don't inset an outline by half its stroke.</strong> The backend does the inset itself.</li>
             <li><strong>Don't draw a glow of any shape but <code>Circle</code>.</strong> Direct2D draws every glow as a circle.</li>
             <li><strong>Don't draw before a path's first <code>moveTo</code>.</strong> What comes before it is undefined behavior.</li>
             <li><strong>Don't put a radial gradient's origin on or past its ellipse.</strong> The gradient there is undefined behavior.</li>
@@ -1432,30 +1431,30 @@ transform rows are about a rotation, a shear and unequal axes alone.
 
 <h3 id="hiw-canvas">The canvas</h3>
 
-<p>The canvas forwards nearly every call as it is. What it keeps is what the backend interface does
-not report: the clip rectangles, for <code>clipBox</code>, and the transform, so a guard can compose
-onto it and put it back.</p>
+<p>The canvas forwards nearly every call unchanged. It keeps the two things the backend interface
+does not report: the clip rectangles, for <code>clipBox</code>, and the transform, so a guard can
+compose onto it and restore it.</p>
 
-<p>Three calls a backend may decline - <code>fillPartialRoundedRectangle</code>,
-<code>drawPartialRoundedRectangle</code> and <code>castShadow</code> - by answering false, and the
-canvas then builds the shape out of a path and draws that. The CPU backend answers the two partial
-rectangles with painters of its own and declines the shadow, since its glow is already a distance
-field; Direct2D declines the partial rectangles and answers the shadow. A backend with no view of
-its own surface to hand a staging callback - Direct2D - is given a cleared buffer by the canvas
-instead.</p>
+<p>A backend may decline three calls - <code>fillPartialRoundedRectangle</code>,
+<code>drawPartialRoundedRectangle</code> and <code>castShadow</code> - by returning false, and the
+canvas then builds the shape out of a path and draws that. The CPU backend implements the two
+partial rectangles with painters of its own and declines the shadow, since its glow is already a
+distance field; Direct2D declines the partial rectangles and implements the shadow. The canvas
+instead gives Direct2D, which has no view of its own surface to hand a staging callback, a cleared
+buffer.</p>
 
 <h3 id="hiw-cpu">The CPU backend</h3>
 
-<p>The CPU backend rasterizes into a pixel buffer with no transform stage, so the canvas transform is
-folded into the geometry where each call arrives: a rect's corners are mapped, and radii and widths
-are scaled by the transform's scale factor. Rectangles, rounded rectangles and circles each have a
+<p>The CPU backend rasterizes into a pixel buffer with no transform stage, so the canvas transform
+is folded into the geometry of each call: a rect's corners are mapped, and radii and widths are
+scaled by the transform's scale factor. Rectangles, rounded rectangles and circles each have a
 painter of their own, written for axis-aligned spans; everything else is a path.</p>
 
 <p>A path is baked into segments first. An arc is turned from SVG's endpoint form into its center,
 radii and angles, and cut into cubics of at most a quarter turn. A curve is halved until each piece
-lies within a tolerance of its chord, and the tolerance is divided by the scale the path is drawn
-at, the larger axis's under a transform that scales the two apart, so it holds on the screen. A
-piece halved thirteen times is taken as its chord, flat or not. The tolerance is a
+lies within a tolerance of its chord, and the tolerance is divided by the scale the path is drawn at
+- the larger axis's under a transform that scales the two apart - so it holds on the screen. A piece
+halved thirteen times is taken as its chord, flat or not. The tolerance is a
 <code>CurveQuality</code>, and everything the canvas draws, a path clip included, is baked at
 <code>Medium</code>: half a device pixel. <code>Low</code>, <code>High</code> and
 <code>VeryHigh</code> - two pixels, a tenth and a hundredth - are for code that bakes a
@@ -1467,7 +1466,7 @@ corners come out round; a glow is the same distance taken as a ramp. The coverag
 and the brush is composited through it.</p>
 
 <p>A gradient is read from a ramp of 257 colors, built from its stops once per draw. A linear
-gradient places a pixel on the ramp by how far along its axis the pixel stands. A radial gradient
+gradient places a pixel on the ramp by how far along its axis the pixel lies. A radial gradient
 takes the pixel back through the transform into the brush, and solves for the stop position at
 which the ellipse, shrunk toward the origin, passes through it.</p>
 
@@ -1475,8 +1474,8 @@ which the ellipse, shrunk toward the origin, passes through it.</p>
 multiplied. An opacity layer is a buffer the size of the surface, kept for reuse, that starts as a
 copy of what is under it - every painter mixes toward its color by coverage, which is the arithmetic
 of drawing on something opaque - and is mixed back when the layer closes. A frame that carries alpha
-clears its dirty rectangle first; any other frame keeps what the last one left, which costs nothing
-while the children cover every pixel.</p>
+clears its dirty rectangle first; any other frame keeps what the last one left, which takes no extra
+work while the children cover every pixel.</p>
 
 <p>Text reaches the backend as glyph coverage, cached once per glyph at a whole pixel origin and
 composited for a whole run through one mask, the fraction of each pen position resolved by sampling.
@@ -1486,13 +1485,13 @@ On Windows the coverage is DirectWrite's, averaged to one value a pixel.</p>
 
 <p>Direct2D carries the canvas transform on its render target, so every primitive and every brush is
 mapped by the device. An outline is moved in by half its stroke, Direct2D stroking centered on a
-shape. Strokes take the cap a layer asks for and miter their corners. A path's arc goes into the
+shape. Strokes take the cap the layer specifies and miter their corners. A path's arc goes into the
 geometry as an arc, its radii grown first by the same conversion the CPU backend makes, so the two
 agree on the ellipse wherever the radii given are too small.</p>
 
 <p>Direct2D has no distance field, so a glow is laid down as rings: one stroke of the outline per
-pixel of reach, the widest first, each given what it has to add to what is already down to leave the
-falloff standing. A <code>Shadow</code> layer is the rings under a layer that masks out the
+pixel of reach, the widest first, each given what it must add to what is already down for the
+falloff to come out right. A <code>Shadow</code> layer is the rings under a layer that masks out the
 silhouette, and then the silhouette filled, both aliased so that the two meet on the same pixels.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 224" xmlns="http://www.w3.org/2000/svg" role="img"
@@ -1556,7 +1555,7 @@ silhouette, and then the silhouette filled, both aliased so that the two meet on
 </svg>
 
 <p><code>castShadow</code> skips the rings. A rounded rectangle's distance field is made of pieces a
-gradient states exactly: beside a straight edge a linear gradient out from it, round a corner a
+gradient states exactly: beside a straight edge a linear gradient out from it, around a corner a
 radial one from the arc's center, and between them the silhouette solid. Each piece is an
 axis-aligned rectangle drawn aliased, so no pixel is painted twice, and the ramp is stated in
 sixteen steps of the falloff.</p>
@@ -1612,19 +1611,19 @@ sixteen steps of the falloff.</p>
 </svg>
 
 <p>Staged pixels are uploaded into one bitmap the size of the surface and drawn back texel for texel,
-untransformed - they were rasterized at the animated size already. Native brushes are cached for a
-frame and let go at its end. A lost device is reported by the frame's end; the backend drops what the
-device owned, builds again on the next frame and asks for a whole repaint.</p>
+untransformed - they were rasterized at the animated size when the callback ran. Native brushes are
+cached for a frame and released at its end. A lost device is reported by the frame's end; the
+backend drops what the device owned, builds again on the next frame and requests a whole
+repaint.</p>
 
 <h3 id="hiw-switch">A switch of backend</h3>
 
-<p>The setting is a config node, and its change is what reaches the application's context. The
-context states the answer once and tells every window. Each form takes it at the top of its next
-frame: it builds a backend through the factory the application named and hands it to its canvas.
-Everything the old backend held goes with it - its brushes, its geometries, its kept images - which
-is what a resize already drops, so nothing above the canvas is told. The whole surface is drawn
-again, and a window opened after the switch is built on what the application wears at that
-moment.</p>
+<p>The setting is a config node, and its change reaches the application's context. The context
+records the choice once and tells every window. Each form takes it at the top of its next frame: it
+builds a backend through the factory the application named and hands it to its canvas. Everything
+the old backend held goes with it - its brushes, its geometries, its kept images - which is what a
+resize drops as well, so nothing above the canvas is notified. The whole surface is drawn again, and
+a window opened after the switch is built on the backend the application names at that moment.</p>
 <svg class="grid-fig" viewBox="0 0 700 158" xmlns="http://www.w3.org/2000/svg" role="img"
      aria-label="A switch of backend: the Settings check changes the GpuAcceleration node, the application context states the answer and tells every window, and each form at the top of its next frame builds a backend through the application's factory and hands it to its canvas.">
   <style>

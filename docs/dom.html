@@ -401,36 +401,36 @@
     <div class="page-content">
         <header>
             <h1>Dom Subsystem</h1>
-            <p>ClaFi Framework Developer Manual</p>
+            <p>The configuration tree, its runtime and serializers</p>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
 
         <main>
             <h2 id="introduction">Introduction</h2>
-            <p>The <code>Dom</code> subsystem is a generic, type-safe, schema-first representation of any hierarchical data. It provides automatic save capabilities, customizable file formats, and transactional changes.</p>
+            <p>The <code>Dom</code> subsystem is a schema-first, type-safe representation of hierarchical data. It saves a document automatically, supports pluggable file formats, and groups changes in transactions.</p>
 
             <div class="info">
-                <strong>Module Imports:</strong> To use the DOM subsystem and its declarative DSL, import the core DOM subsystem module in your C++20 code:
+                <strong>Module Imports:</strong> To use the DOM subsystem and its declarative DSL, import the core DOM subsystem module in C++20 code:
                 <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
 <span class="kw">import</span> <span class="tp">ClaFi.Dom</span>;</pre>
-                If you need built-in file format support, also import the corresponding format module:
+                For built-in file format support, import the corresponding format module:
                 <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
 <span class="kw">import</span> <span class="tp">ClaFi.Dom.Formats.ClaFi</span>; <span class="cm">// or ClaFi.Dom.Formats.Json</span></pre>
             </div>
 
             <div class="info">
-                <strong>Namespace Note:</strong> To keep code examples concise and readable, almost all examples in this manual assume that the main DOM runtime namespace is in scope:
+                <strong>Namespace Note:</strong> Almost all code examples assume that the main DOM runtime namespace is in scope:
                 <pre style="background: transparent; padding: 0.5rem 0 0 0; margin: 0; font-size: 0.95em; color: inherit; line-height: 1.4;">
 <span class="kw">using namespace</span> <span class="tp">ClaFi::Dom</span>;</pre>
-                Blueprint construction nodes are explicitly qualified with the <code style="color: #4ec9b0; background: transparent; padding: 0;">Dt::</code> namespace prefix to clearly differentiate them from active runtime memory nodes.
+                <code>Dt</code> stands for design time and <code>Rt</code> for run time. Blueprint construction nodes are qualified with the <code style="color: #4ec9b0; background: transparent; padding: 0;">Dt::</code> namespace prefix, which distinguishes them from active runtime memory nodes.
             </div>
 
             <div class="info">
-                <strong>The "Document" Conceptual Model:</strong> A <code>Document</code> is simply a <code>Section</code> that can be saved to and loaded from disk. Any <code>Section</code> can be combined and nested with any other section, in any order, whether or not it's a <code>Document</code>'s root. A <code>Document</code> can be stored in any file format &mdash; the format is a separate, pluggable concern.
+                <strong>The "Document" Conceptual Model:</strong> A <code>Document</code> is a <code>Section</code> that can be saved to and loaded from disk. Any <code>Section</code> can be combined and nested with any other section, in any order, whether or not it is a <code>Document</code>'s root. A <code>Document</code> can be stored in any file format; the format is provided by a separate format module.
             </div>
 
             <h2 id="basic-usage">Basic Usage Example</h2>
-            <p>The Dom subsystem utilizes a declarative DSL blueprint pattern. This example shows how to initialize a serialized Document container on disk, bind native class methods as event listeners, load, alter, and save configuration or document settings.</p>
+            <p>The Dom subsystem uses a declarative DSL to describe document blueprints. The example below creates a Document that stores data in a file, binds a class method as a change listener on one value, then loads the file, changes a value, and saves it again.</p>
 
             <pre><code><span class="kw">import</span> <span class="tp">ClaFi.Dom</span>;
 <span class="kw">import</span> <span class="tp">ClaFi.Dom.Formats.ClaFi</span>;
@@ -480,11 +480,11 @@
 };</code></pre>
 
             <h2 id="type-registration">Type Registration</h2>
-            <p>Before using custom types within blueprints, the developer must declare their serialization rules. The system provides mapping architectures for primitives, structs (or classes), and enums.</p>
+            <p>Before a blueprint can use a custom type, the type needs serialization rules. The framework registers primitives, structs or classes, and enums, each through its own mechanism.</p>
 
             <h3 id="primitives">Scalar Values</h3>
             <p>Basic types (<code>int</code>, <code>float</code>, <code>bool</code>, <code>std::wstring</code>) come with serializers, imported as described in <a href="#serializer-imports">Where a Serializer Must Be Imported</a>. Custom scalar types can be registered by specializing the single-parameter template <code>ScalarSerializer</code>.</p>
-            <p>Each custom serializer can optionally expose an internal <code>StorageType</code> alias. Declaring this alias is only required when the type you pass to your serializer differs from the type that should be permanently stored in the DOM. For example, string-like views (such as <code>std::wstring_view</code> or <code>const wchar_t*</code>) use this mechanism to declare <code>using StorageType = std::wstring;</code>, forcing the DOM engine to instantiate an owned <code>std::wstring</code> node and preventing dangling pointer bugs. If no <code>StorageType</code> alias is declared, the engine seamlessly falls back to the decayed type of your template parameter.</p>
+            <p>A custom serializer can expose an internal <code>StorageType</code> alias. The alias is needed when the type passed to the serializer differs from the type the DOM should store. String-like views such as <code>std::wstring_view</code> or <code>const wchar_t*</code> declare <code>using StorageType = std::wstring;</code>, so the DOM engine stores an owned <code>std::wstring</code> node and no pointer dangles. When the <code>StorageType</code> alias is not declared, the engine uses the decayed type of the template parameter.</p>
             <pre><code><span class="kw">template</span> &lt;&gt;
 <span class="kw">struct</span> <span class="tp">ClaFi::Dom::ScalarSerializer</span>&lt;<span class="tp">MyIntType</span>&gt;
 {
@@ -502,7 +502,7 @@
 };</code></pre>
 
             <h3 id="structs">Structs & Classes</h3>
-            <p>To make a C++ struct serializable, define a <code>static constexpr auto serializedFields</code> tuple inside the struct. This maps string keys to class properties.</p>
+            <p>To make a C++ struct serializable, define a <code>static constexpr auto serializedFields</code> tuple inside the struct. The tuple maps string keys to class properties.</p>
             <p>The <code>SerializedField</code> supports both direct member pointers and getter/setter function pairs:</p>
 
             <pre><code><span class="kw">struct</span> <span class="tp">WindowConfig</span>
@@ -524,10 +524,10 @@
     );
 };</code></pre>
 
-            <p>In the ClaFi Dom, both primitive scalars and complex reflected structs are represented by the unified template class <code>Value&lt;T&gt;</code>. When you define a <code>Value</code> with a reflected C++ struct, the DOM engine expands the struct into a sub-tree of nested nodes. This allows you to traverse inside it (e.g., <code>settings / L"Placement" / L"Bounds"</code>) exactly like inside a regular <code>Section</code>. A struct holding a sequence of its own type stores a tree - see <a href="#tree-seq">Trees</a>.</p>
+            <p>In the ClaFi Dom, one template, <code>Value&lt;T&gt;</code>, represents both a primitive scalar and a reflected struct. A <code>Value</code> holding a reflected C++ struct expands into a sub-tree of nested nodes, so its members are reached with the path operator (for example <code>settings / L"Placement" / L"Bounds"</code>), the same way as inside a regular <code>Section</code>. A struct that holds a sequence of its own type stores a tree; see <a href="#tree-seq">Trees</a>.</p>
 
             <h3 id="external-structs">External Structs (Non-Intrusive)</h3>
-            <p>If you need to serialize a C++ struct or class that you cannot modify, define a standalone <code>constexpr auto serializedFields(Type)</code> function in the same namespace.</p>
+            <p>If a C++ struct or class cannot be modified, define a standalone <code>constexpr auto serializedFields(Type)</code> function in the same namespace.</p>
 
             <pre><code><span class="kw">struct</span> <span class="tp">ExternalPoint</span>
 {
@@ -557,17 +557,17 @@
 }</code></pre>
 
             <h3 id="serializer-imports">Where a Serializer Must Be Imported</h3>
-            <p>A serializer serves the file that reads or writes the value - the file holding the <code>Dt::Value</code>, the <code>get&lt;T&gt;()</code>, the <code>set()</code> or the <code>getTo()</code>. That file imports the serializer's module itself, or imports a module that re-exports it. A plain <code>import</code> in a module further up the chain does not carry it.</p>
-            <p>The rule reaches every member of a struct. The engine looks for each member's serializer in that same file, and a member whose serializer is out of sight is taken for a struct of its own. The build then stops in the engine at:</p>
+            <p>The file that reads or writes a value imports that value's serializer: the file holding the <code>Dt::Value</code>, the <code>get&lt;T&gt;()</code>, the <code>set()</code> or the <code>getTo()</code>. The file imports the serializer's module directly, or imports a module that re-exports it. A plain <code>import</code> in a module further up the chain does not provide it.</p>
+            <p>The same rule applies to every member of a struct. The engine looks for each member's serializer in that same file, and it treats a member whose serializer is not visible as a struct of its own. The build then stops in the engine at:</p>
             <pre><code>static assertion failed: 'Type must define k_serializedFields, serializedFields member, or an ADL serializedFields() function.'</code></pre>
-            <p>The instantiation context names the file the import belongs in, and further down, the member type whose serializer it could not see.</p>
+            <p>The instantiation context names the file where the import belongs, and further down, the member type whose serializer was not visible.</p>
             <p>The built-in serializers live in three modules. <code>ClaFi.Dom</code> re-exports the first two.</p>
             <ul>
-                <li><code>ClaFi.Core.Dom_StdSerializers</code> - <code>std::wstring</code> and the string-like types, <code>bool</code>, <code>int</code>, <code>std::size_t</code>, <code>float</code>, and every enum with <code>enumNames</code>.</li>
-                <li><code>ClaFi.Core.Dom_UiSerializers</code> - <code>Color</code>.</li>
-                <li><code>ClaFi.Core.Dom_TextSerializers</code> - <code>Text</code>, <code>StyleSheet</code> and <code>TextFormat</code> - see the <a href="text.html#document">Writing ClaFi Text</a> manual.</li>
+                <li><code>ClaFi.Core.Dom_StdSerializers</code> holds <code>std::wstring</code> and the string-like types, <code>bool</code>, <code>int</code>, <code>std::size_t</code>, <code>float</code>, and every enum with <code>enumNames</code>.</li>
+                <li><code>ClaFi.Core.Dom_UiSerializers</code> holds <code>Color</code>.</li>
+                <li><code>ClaFi.Core.Dom_TextSerializers</code> holds <code>Text</code>, <code>StyleSheet</code> and <code>TextFormat</code>; see the <a href="text.html#document">Writing ClaFi Text</a> manual.</li>
             </ul>
-            <p>The module that states <code>serializedFields</code> for a struct re-exports the serializers its members need. Every file that can see the fields can then read and write the struct, with no import of its own:</p>
+            <p>The module that defines <code>serializedFields</code> for a struct re-exports the serializers its members need. Every file that sees the fields can then read and write the struct without importing the serializers itself:</p>
             <pre><code><span class="kw">export module</span> <span class="tp">MyApp.Swatch</span>;
 
 <span class="kw">export import</span> <span class="tp">ClaFi.Core.Dom_UiSerializers</span>;
@@ -591,11 +591,11 @@
 }</code></pre>
 
             <h2 id="declarative-dsl">Blueprint Declaration</h2>
-            <p>The Dom subsystem features a C++ Domain-Specific Language (DSL) to express document blueprints. To achieve zero allocation overhead, the <code>Dt::Section</code> class and other DSL nodes are strictly <strong>move-only</strong>.</p>
+            <p>The Dom subsystem has a C++ domain-specific language (DSL) for document blueprints. To avoid allocation overhead, the <code>Dt::Section</code> class and the other DSL nodes are <strong>move-only</strong>.</p>
 
             <h3 id="schema-first-evaluation">Schema-First Evaluation</h3>
             <div class="warning">
-                <strong>Critical Architectural Rule:</strong> The engine does not attempt to guess types from text. When a parser reads <code>"Value=42"</code> from a file, it does not know if 42 is an integer, a float, or a string. The only source of truth for types and structure is the defining DSL evaluation stage executed in C++ prior to loading.
+                <strong>Critical Architectural Rule:</strong> The engine applies no type inference to text. When a parser reads <code>"Value=42"</code> from a file, the value 42 can be an integer, a float, or a string. Types and structure come only from the defining DSL evaluation stage, which runs in C++ before loading.
             </div>
 
             <h3 id="dsl-nodes">Blueprint Nodes</h3>
@@ -603,61 +603,60 @@
             <div class="info">
                 <strong>Handlers are properties, not nodes.</strong> <code>OnEvent</code>,
                 <code>OnChange</code> and <code>OnNestedChange</code> do not occupy a position in a
-                section's child list. They attach to whatever node encloses them, and they connect as
-                soon as that node exists &mdash; before its children are applied. Nothing in the Dom
-                raises an event while a blueprint is being applied, so the ordering is not observable,
-                but it is worth knowing when reasoning about a handler's lifetime.
+                section's child list. They attach to the node that encloses them and are connected as
+                soon as that node exists, before its children are applied. No event is raised while a
+                blueprint is applied, so the ordering is not observable.
                 <br><br>
-                <code>OnEvent</code> comes from <code>ClaFi::Dt</code>, the machinery the Dom and
-                Grid declarative layers share, and <code>Dom::Dt</code> re-exports it. It reads the
-                event type off the handler's own parameter, which is why there is no
-                <code>OnColorChange</code>, no <code>OnItemAdded</code>, and no need for one.
-                <code>OnChange</code> and <code>OnNestedChange</code> remain as thin named wrappers so
-                existing blueprints keep compiling.
+                <code>OnEvent</code> comes from <code>ClaFi::Dt</code>, which the Dom and Grid
+                declarative layers share, and <code>Dom::Dt</code> re-exports it. The event type comes
+                from the handler's own parameter, so no <code>OnColorChange</code> or
+                <code>OnItemAdded</code> wrapper is needed. <code>OnChange</code> and
+                <code>OnNestedChange</code> are thin named wrappers that keep existing blueprints
+                compiling.
             </div>
-            <p>The following declarative constructs reside inside the <code>ClaFi::Dom::Dt</code> namespace:</p>
+            <p>The declarative constructs below are in the <code>ClaFi::Dom::Dt</code> namespace:</p>
             <ul>
-                <li><code>Section(child_nodes...)</code>: Declares an <strong>anonymous section (fragment)</strong>. The children are injected into the parent without wrapping them in a new named node. This is used to define document roots or to merge multiple reusable blueprint fragments.</li>
-                <li><code>Section(key, child_nodes...)</code>: Declares a <strong>named section</strong>. Groups values together inside a logical sub-tree wrapper.</li>
-                <li><code>Value(key, defaultValue)</code>: Declares a scalar, composite struct, or enum with a default fallback state.</code>.</li>
-                <li><code>Value(key, defaultValue, handlers...)</code>: Declares a local value and attaches <strong>any number</strong> of event handlers to it. Each handler names the event it wants in its own parameter list, so no per-event wrapper type is needed:
-<code>Value{ L"color", Rgb{}, OnEvent{ [](ChangeEvent&amp; e) { ... } } }</code>. A bare lambda works too &mdash; <code>Value{ L"color", Rgb{}, [](ChangeEvent&amp; e) { ... } }</code> &mdash; because a Dom node's argument list holds nothing a callable could be confused with. Method pointers go through <code>makeOnEvent(this, &amp;MyForm::onColorChanged)</code>.</li>
-                <li><code>OnEvent{ handler }</code> inside a <code>Section</code>: attaches the handler to that section. A <code>NestedChangeEvent&amp;</code> parameter listens to changes bubbling up from anywhere in the sub-tree; a <code>ChangeEvent&amp;</code> parameter listens to the section itself.</li>
-                <li><code>Sequence(key, itemBlueprint)</code>: The array blueprint. It can declare lists of primitives, reflected composites, nested multi-dimensional sequences, or nested sections to build dynamic arrays of customized structural elements.</li>
+                <li><code>Section(child_nodes...)</code>: Declares an <strong>anonymous section (fragment)</strong>. Its children are added to the parent without a new named node around them. Document roots and reusable blueprint fragments are declared this way.</li>
+                <li><code>Section(key, child_nodes...)</code>: Declares a <strong>named section</strong>, which groups values together in a sub-tree under that key.</li>
+                <li><code>Value(key, defaultValue)</code>: Declares a scalar, composite struct, or enum with a default value.</li>
+                <li><code>Value(key, defaultValue, handlers...)</code>: Declares a value and attaches <strong>any number</strong> of event handlers to it. Each handler takes the event type as its own parameter, so no per-event wrapper type is needed:
+<code>Value{ L"color", Rgb{}, OnEvent{ [](ChangeEvent&amp; e) { ... } } }</code>. A bare lambda is accepted as well: <code>Value{ L"color", Rgb{}, [](ChangeEvent&amp; e) { ... } }</code>, because no other argument of a Dom node accepts a callable and the call is unambiguous. A method pointer is passed through <code>makeOnEvent(this, &amp;MyForm::onColorChanged)</code>.</li>
+                <li><code>OnEvent{ handler }</code> inside a <code>Section</code>: attaches the handler to that section. A <code>NestedChangeEvent&amp;</code> parameter receives changes from anywhere in the sub-tree; a <code>ChangeEvent&amp;</code> parameter receives changes on the section itself.</li>
+                <li><code>Sequence(key, itemBlueprint)</code>: Declares an array. The item blueprint can describe primitives, reflected composites, nested multi-dimensional sequences, or nested sections, so the sequence holds dynamic arrays of structured elements.</li>
             </ul>
 
             <h3 id="schema-memory">Blueprint Memory & Lifetime Rules</h3>
-            <p>Because section blueprints are non-copyable, you must manage their lifetimes and composition using C++ standard value categories. Review the rules below to write clean, compile-safe configurations:</p>
+            <p>Section blueprints are non-copyable, so their lifetimes and composition follow the C++ value categories described below:</p>
 
             <div class="rules-grid">
                 <div class="rule-card dos">
                     <h4>Do:</h4>
                     <ul>
-                        <li><strong>Do pass inline temporaries directly (rvalues):</strong> Defining schemas inline inside constructors allows the engine to transfer ownership of the nodes with zero allocation overhead.</li>
-                        <li><strong>Do mix references and moves dynamically:</strong> You can combine existing blueprint variables (lvalues) and temporary blueprints (rvalues) into a single layout in any order.</li>
-                        <li><strong>Do use std::move to migrate variables:</strong> When nesting an existing blueprint variable into a new one, pass it with <code>std::move()</code> to dissolve the source and transfer its memory ownership.</li>
-                        <li><strong>Do pass by reference for shared layouts:</strong> If you want a base blueprint variable to remain intact so you can reuse it across multiple schemas, pass it directly by reference instead of moving it.</li>
+                        <li><strong>Pass temporaries inline (rvalues).</strong> A schema defined inline in a constructor lets the engine transfer ownership of the nodes without allocating.</li>
+                        <li><strong>Mix references and moves.</strong> Existing blueprint variables (lvalues) and temporaries (rvalues) combine into a single layout in any order.</li>
+                        <li><strong>Use std::move to migrate a variable.</strong> When an existing blueprint variable is nested into a new one, pass it with <code>std::move()</code>; the source is dissolved and its memory ownership transfers.</li>
+                        <li><strong>Pass by reference for a shared layout.</strong> When a base blueprint variable must stay intact for reuse in several schemas, pass it by reference instead of moving it.</li>
                     </ul>
                 </div>
                 <div class="rule-card donts">
                     <h4>Don't:</h4>
                     <ul>
-                        <li>Don't do anything that won't compile. If you get an error, inspect it carefully and refer again to the <strong>Do</strong> section to resolve it.</li>
+                        <li>Do not add anything that does not compile. When the compiler reports an error, read it and apply the <strong>Do</strong> rules above to resolve it.</li>
                     </ul>
                 </div>
             </div>
 
             <h3 id="manual-construction">Low-level Manual Construction</h3>
-            <p>If you need to construct or augment the structure dynamically at runtime instead of using the declarative DSL constructor, use the manual builder APIs directly on any <code>Section</code> node:</p>
+            <p>A structure can also be built or extended at runtime instead of through the declarative DSL constructor. The manual builder methods are available on any <code>Section</code> node:</p>
             <ul>
-                <li><code>addSection(key)</code>: Creates and appends a nested section group.</li>
-                <li><code>addValue(key, defaultVal)</code>: Adds a scalar or composite node (returns <code>Value&lt;T&gt;&amp;</code>).</li>
-                <li><code>addSequence(key, defaultItemTemplate)</code>: Adds an array sequence container dynamically for primitives, composites, or arbitrary nesting.</li>
+                <li><code>addSection(key)</code> creates and appends a nested section group.</li>
+                <li><code>addValue(key, defaultVal)</code> adds a scalar or composite node and returns <code>Value&lt;T&gt;&amp;</code>.</li>
+                <li><code>addSequence(key, defaultItemTemplate)</code> adds an array sequence container for primitives, composites, or arbitrary nesting.</li>
             </ul>
 
             <h3 id="full-example">A Complete Example</h3>
-            <p>This example deliberately demonstrates every way of creating, merging, and transferring schemas between scopes. You won't need all of them at once in real code &mdash; a typical application is more likely to have a single const declaration with everything it needs in one place.</p>
-            <p>One rule must be obeyed without exception: the schema must be established before any file is ever read. This is worth spelling out for sequences specifically, since a sequence can look dynamic in a way that invites confusion: its <em>item count</em> changes freely as data comes and goes, but the sequence's own existence, and the shape each item takes, are declared once, up front, exactly like every other node in the schema. What varies at runtime is only which items are actually present &mdash; found by searching the already-declared sequence with <code>childWhere</code>, never by inventing new schema entries after the fact.</p>
+            <p>The example below uses every way of creating, merging, and transferring schemas between scopes. Real code rarely needs all of them at once; a typical application declares one const blueprint holding everything it needs.</p>
+            <p>The schema is established before any file is read. A sequence follows the same rule: its <em>item count</em> changes as data is added and removed, but the sequence itself and the shape of each item are declared once, like every other node in the schema. At runtime only the set of present items varies; an item is found by searching the declared sequence with <code>childWhere</code>.</p>
 
             <pre><code><span class="cm">// AppSchemas.ixx (a small module the rest of the app shares)</span>
 <span class="kw">export module</span> <span class="tp">MyProject.AppSchemas</span>;
@@ -795,9 +794,9 @@
             <h2 id="reading-writing">Reading & Writing Values</h2>
 
             <h3 id="reading-writing-nodes">Reading, Writing & Casting Nodes</h3>
-            <p>Dom provides several mechanisms to traverse and edit your values. For nested structures, the engine supports a directory-style path division operator (<code>/</code>) and index subscripts (<code>[]</code>).</p>
+            <p>Dom provides several ways to traverse and edit a value. For nested structures, the <code>/</code> operator follows a directory-style path and the <code>[]</code> subscript selects an index.</p>
 
-            <p>In C++, the types map to your initial layout definitions. Both scalar primitives and reflected composite structs reside in the unified template class <code>Value&lt;T&gt;</code>. You can retrieve values directly or extract references to the node objects using the <code>.as&lt;T&gt;()</code> helper:</p>
+            <p>The node types follow the layout declared in C++. Scalar primitives and reflected structs both live in <code>Value&lt;T&gt;</code>. A value is read directly, or a reference to the node is obtained with the <code>.as&lt;T&gt;()</code> helper:</p>
 
             <pre><code><span class="cm">// 1. Direct retrieval (using .get&lt;T&gt;())</span>
 <span class="kw">int</span> width = (settings / <span class="st">L"Window"</span> / <span class="st">L"Width"</span>).<span class="fn">get</span>&lt;<span class="kw">int</span>&gt;();
@@ -815,8 +814,8 @@ widthNode.<span class="fn">set</span>(<span class="kw">1920</span>);
 <span class="tp">WindowConfig</span> win = placementNode.<span class="fn">get</span>();</code></pre>
 
             <h3 id="zero-copy">Zero-Copy Extraction (getTo)</h3>
-            <p>When working with large, complex structs or arrays, calling <code>.get&lt;T&gt;()</code> forces the engine to return a fully composed object by value, which incurs copy overhead. To eliminate this, the engine provides the <code>.getTo(T&amp;)</code> method.</p>
-            <p><code>.getTo()</code> recursively deserializes the sub-tree directly into your pre-allocated object. Furthermore, if you use direct member pointers in your <code>serializedFields</code> tuple (no setter), the DOM engine bypasses intermediate assignments and deserializes nested hierarchies directly into the target struct's physical memory footprint in-place. For <code>Sequence</code> nodes, it leverages <code>.resize()</code> on supported containers to pre-allocate capacity and deserialize elements sequentially into the underlying buffer.</p>
+            <p>For a large struct or array, <code>.get&lt;T&gt;()</code> returns a fully composed object by value and copies it. The <code>.getTo(T&amp;)</code> method avoids that copy.</p>
+            <p><code>.getTo()</code> deserializes the sub-tree into an object the caller has already allocated. When the <code>serializedFields</code> tuple uses direct member pointers and no setter, the engine skips the intermediate assignment and deserializes each nested value straight into the target struct's own memory. For a <code>Sequence</code> node, it calls <code>.resize()</code> on a container that supports it and then deserializes the elements in order into the underlying buffer.</p>
 
             <pre><code><span class="cm">// Zero-copy extraction of a complex configuration</span>
 <span class="tp">WindowConfig</span> win;
@@ -828,22 +827,22 @@ widthNode.<span class="fn">set</span>(<span class="kw">1920</span>);
 </code></pre>
 
             <h3 id="eager-evaluation">Eager Type Evaluation & Zero-Overhead Resolution</h3>
-            <p>The ClaFi DOM engine is strictly <strong>Schema-First</strong>. This allows the engine to bypass the severe CPU and memory overhead normally associated with loose text-parsing document trees.</p>
+            <p>The ClaFi DOM engine is <strong>schema-first</strong>. With the schema fixed before any file is read, the engine avoids the CPU and memory cost of a document tree parsed from text without a schema.</p>
 
             <div class="info">
-                <strong>O(1) Fetching:</strong> The engine performs <strong>Eager Evaluation</strong> on leaf nodes. All primitives are parsed into their registered C++ types during document initialization. Structs, however, are purely ephemeral and composed <strong>on-the-fly</strong>. Calling <code>.get&lt;int&gt;()</code> on a leaf node is a direct O(1) memory fetch without string parsing, while calling <code>.get&lt;WindowConfig&gt;()</code> on a composite node instantly aggregates those pre-parsed leaf values into your struct with zero text-parsing overhead.
+                <strong>O(1) Fetching:</strong> The engine performs <strong>Eager Evaluation</strong> on leaf nodes. All primitives are parsed into their registered C++ types during document initialization. Structs are composed <strong>on-the-fly</strong> from their leaf values. Calling <code>.get&lt;int&gt;()</code> on a leaf node is a direct O(1) memory fetch without string parsing, and calling <code>.get&lt;WindowConfig&gt;()</code> on a composite node aggregates those pre-parsed leaf values into the target struct without parsing text.
             </div>
 
             <div class="info">
-                <strong>Zero-Allocation Paths:</strong> The DOM engine leverages C++20 heterogeneous map lookups. The <code>/</code> traversal operator does not allocate strings or copy keys. It compiles down to pure pointer operations passing <code>std::wstring_view</code> boundaries, ensuring your read loops and deep-path resolutions remain allocation-free.
+                <strong>Zero-Allocation Paths:</strong> The DOM engine uses C++20 heterogeneous map lookups. The <code>/</code> traversal operator allocates no strings and copies no keys. It compiles to pointer operations that pass <code>std::wstring_view</code> boundaries, so read loops and deep-path resolutions do not allocate.
             </div>
 
             <h2 id="sequences">Sequences</h2>
-            <p>The Dom subsystem treats every array natively via the universal <code>Sequence&lt;T&gt;</code> component. It natively supports primitives, structured class layouts, and unlimited multidimensional nesting (e.g., arrays of arrays). All of these sequence configurations natively support allocation-free lazy evaluation and dynamic operations.</p>
-            <p>Every <code>Sequence&lt;T&gt;</code> is homogeneous by construction &mdash; every element shares the same type <code>T</code>, whether <code>T</code> is a scalar, a reflected composite, or <code>Dom::Section</code> itself. The two shapes below differ only in what <code>T</code> is and how you round-trip a value of that type.</p>
+            <p>The Dom subsystem represents every array with the <code>Sequence&lt;T&gt;</code> component. A sequence holds primitives, reflected structs, or nested sequences of any depth, such as an array of arrays. Every sequence type supports allocation-free lazy evaluation and dynamic operations.</p>
+            <p>Every <code>Sequence&lt;T&gt;</code> is homogeneous: every element has the same type <code>T</code>, whether <code>T</code> is a scalar, a reflected composite, or <code>Dom::Section</code> itself. The two forms below differ only in <code>T</code> and in how a value of that type is read and written.</p>
 
             <h3 id="homogeneous-seq">Value Sequences</h3>
-            <p>When working with standard scalar primitives or simple composites, you can easily extract or overwrite the entire sequence natively:</p>
+            <p>For a sequence of standard scalars or simple composites, the whole sequence is read or written in one call:</p>
             <pre><code><span class="cm">// 1. Read the entire sequence directly into a standard vector</span>
 <span class="tp">std::vector</span>&lt;<span class="tp">TabConfig</span>&gt; tabs = (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">get</span>&lt;<span class="tp">std::vector</span>&lt;<span class="tp">TabConfig</span>&gt;&gt;();
 
@@ -854,7 +853,7 @@ tabs.<span class="fn">push_back</span>(<span class="tp">TabConfig</span>{ .id = 
 (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">set</span>(tabs);</code></pre>
 
             <h3 id="dynamic-seq">Section Sequences</h3>
-            <p>When you declare a structural array using a unique DSL layout (<code>Dt::Sequence{ L"MyLayouts", Dt::Section{ ... } }</code>), the engine creates a dynamic <code>Sequence&lt;Dom::Section&gt;</code> list node. Fresh elements added dynamically via `.add()` will instantly clone the layout blueprint's underlying runtime structures.</p>
+            <p>A structural array declared with a DSL layout such as <code>Dt::Sequence{ L"MyLayouts", Dt::Section{ ... } }</code> becomes a <code>Sequence&lt;Dom::Section&gt;</code> node. Each element added with `.add()` is initialized from the layout blueprint's runtime structures.</p>
             <pre><code><span class="cm">// 1. Retrieve the typed section sequence reference using the fluent .as() cast</span>
 <span class="kw">auto</span>&amp; dynamicTabs = (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">as</span>&lt;<span class="tp">Dom::Sequence</span>&lt;<span class="tp">Dom::Section</span>&gt;&gt;();
 
@@ -867,7 +866,7 @@ dynamicTabs.<span class="fn">clear</span>();
 (tabNode / <span class="st">L"Title"</span>).<span class="fn">set</span>&lt;<span class="tp">std::wstring</span>&gt;(<span class="st">L"Home"</span>);</code></pre>
 
             <h3 id="tree-seq">Trees</h3>
-            <p>A struct that holds a sequence of its own type stores a tree. Its <code>serializedFields</code> name that sequence like any other member, and the depth comes from the data. A <code>Value&lt;T&gt;</code> builds its schema from its default value as the node is made, so the sequence under it starts with a default item and no children. Every item added to that sequence - by <code>set</code>, or by a file being read - is a <code>Value&lt;T&gt;</code> again, and builds its own sequence the same way. The blueprint declares the root once; the document nests as deep as the value does, on the write and on the read.</p>
+            <p>A struct that holds a sequence of its own type stores a tree. Its <code>serializedFields</code> name that sequence like any other member, and the depth comes from the data. A <code>Value&lt;T&gt;</code> builds its schema from its default value when the node is created, so the sequence under it starts with one default item and no children. Every item added to that sequence, by <code>set</code> or by a file being read, is a <code>Value&lt;T&gt;</code> again and builds its own sequence the same way. The blueprint declares the root once, and the document nests as deep as the value does, on both the write and the read.</p>
 
             <pre><code><span class="kw">struct</span> <span class="tp">TreeNode</span>
 {
@@ -903,7 +902,7 @@ document.<span class="fn">save</span>();
 
 <span class="tp">TreeNode</span> read = (document / <span class="st">L"Root"</span>).<span class="fn">get</span>&lt;<span class="tp">TreeNode</span>&gt;();   <span class="cm">// the whole tree back</span></code></pre>
 
-            <p>The file holds the same shape. Each item is a section of the node's fields, its own <code>Items</code> among them:</p>
+            <p>The file holds the same shape. Each item is written as a section holding the node's fields, including its own <code>Items</code>:</p>
             <pre><code>Root=[
     Items=[
         =[
@@ -930,10 +929,10 @@ document.<span class="fn">save</span>();
     Name=Root
 ]</code></pre>
 
-            <p>The path operator walks into the tree like into any sequence of composites. <code>(document / L"Root" / L"Items")</code> is the root's <code>Sequence&lt;TreeNode&gt;</code>, each of its children a <code>Value&lt;TreeNode&gt;</code> with an <code>Items</code> of its own, so one node can be read or set in place while the rest of the tree stands - see <a href="#iterating-large-values">Iterating Sequences of Large or Complex Values</a> for the live and the detached ways of reaching an item.</p>
+            <p>The path operator reaches into the tree the same way as into any sequence of composites. <code>(document / L"Root" / L"Items")</code> is the root's <code>Sequence&lt;TreeNode&gt;</code>, and each child is a <code>Value&lt;TreeNode&gt;</code> with an <code>Items</code> of its own, so one node can be read or set in place without rebuilding the rest of the tree. See <a href="#iterating-large-values">Iterating Sequences of Large or Complex Values</a> for the live and the detached ways of reaching an item.</p>
 
             <h3 id="multi-type-seq">Multi-Type Sequences</h3>
-            <p>A <code>MultiTypeSequence</code> is a list kept in the order written, its items of several kinds, each under a name. The name picks the item's blueprint, which holds what the item is before anything is stated: a value, or a section's schema. A name may repeat, and one blueprint may be the unnamed one:</p>
+            <p>A <code>MultiTypeSequence</code> is a list kept in the order the items are written, and its items can be of several kinds, each under a name. The name selects the item's blueprint, and the blueprint defines what the item is: a value, or a section's schema. A name may appear more than once, and one blueprint may be the unnamed one:</p>
             <pre><code><span class="tp">MultiTypeSequence</span>&amp; pieces = section.<span class="fn">addMultiTypeSequence</span>(<span class="st">L"Pieces"</span>);
 pieces.<span class="fn">addBlueprint</span>(<span class="st">L""</span>, std::<span class="tp">wstring</span>{});
 pieces.<span class="fn">addBlueprint</span>(<span class="st">L"Run"</span>, runSchema);
@@ -945,18 +944,18 @@ pieces.<span class="fn">add</span>(<span class="st">L""</span>)-&gt;<span class=
     <span class="fn">read</span>(item.name, *item.node);</code></pre>
             <p>Each format keeps the order:</p>
             <ul>
-                <li>ClaFi: a <code>name=value</code> or <code>name=[</code> line per item, and <code>=value</code> for an unnamed one.</li>
-                <li>JSON: an array of one-member objects - <code>[ { "": "Use " }, { "Run": { ... } } ]</code>.</li>
-                <li>XML: an element per item, named as the item is. Unnamed items are the text between the elements, written with nothing added around it, and a reader takes every blank there as words.</li>
+                <li>The ClaFi format writes one <code>name=value</code> or <code>name=[</code> line per item, and <code>=value</code> for an unnamed item.</li>
+                <li>JSON writes an array of one-member objects, for example <code>[ { "": "Use " }, { "Run": { ... } } ]</code>.</li>
+                <li>XML writes one element per item, named as the item is. An unnamed item is the text between the elements, written with nothing added around it, and the reader takes every blank there as words.</li>
             </ul>
-            <p>An item whose name no blueprint has is skipped with a schema error. One whose value is of another kind than its blueprint's is skipped by the ClaFi reader, with a schema error, and kept at its blueprint's value by the JSON and XML readers. A document saved without defaults writes each item as what differs from its name's blueprint, and keeps every item, since the list is read by position. A <code>Text</code> holds its pieces in one - see the <a href="text.html#document">Writing ClaFi Text</a> manual.</p>
+            <p>An item whose name matches no blueprint is skipped with a schema error. An item whose value is of another kind than its blueprint's is skipped by the ClaFi reader with a schema error, and kept at its blueprint's value by the JSON and XML readers. A document saved without defaults writes each item as its difference from the blueprint's value, and keeps every item because the list is read by position. A <code>Text</code> holds its pieces in one; see the <a href="text.html#document">Writing ClaFi Text</a> manual.</p>
 
             <h3 id="search-seq">Search and Removal inside Sequences</h3>
-            <p>The <code>SequenceBase</code> provides safe template search operations to locate elements matching a specific nested value, and <code>NodeBase</code> allows elements to destroy themselves from their parent containers:</p>
+            <p><code>SequenceBase</code> provides template search operations that locate an element by a nested value, and <code>NodeBase</code> lets an element delete itself from its parent container:</p>
             <ul>
-                <li><code>childWhere(path, targetValue)</code>: Searches sequentially through child nodes. It safely traverses down the relative path starting from each direct child, and returns a pointer to the direct sequence child matching the target value. Passing an empty path <code>{}</code> compares the typed value of the direct child itself.</li>
-                <li><code>childWhere(predicate)</code>: The general form, closer to SQL's actual <code>WHERE</code> &mdash; takes any callable returning <code>bool</code> and passes it the whole direct child (typed, e.g. <code>const Section&amp;</code> for a <code>Sequence&lt;Section&gt;</code>), so the predicate can check any condition, not just equality against one nested value.</li>
-                <li><code>deleteSelf()</code>: Instructs the node to locate its parent sequence and erase itself safely, triggering any registered structural changes automatically.</li>
+                <li><code>childWhere(path, targetValue)</code>: Searches the child nodes in order. It follows the relative path from each direct child and returns a pointer to the direct child whose value at that path matches the target value. An empty path <code>{}</code> compares the typed value of the direct child itself.</li>
+                <li><code>childWhere(predicate)</code>: The general form, comparable to SQL's <code>WHERE</code>, takes any callable that returns <code>bool</code> and passes it the whole direct child, typed (for example <code>const Section&amp;</code> for a <code>Sequence&lt;Section&gt;</code>). The predicate can test any condition, not only equality against one nested value.</li>
+                <li><code>deleteSelf()</code>: Erases the node from its parent sequence and triggers the registered structural changes.</li>
             </ul>
 
             <pre><code><span class="cm">// 1. Lookup a dynamic tab section by a nested value ("Id" inside each Section sequence element)</span>
@@ -980,10 +979,10 @@ pieces.<span class="fn">add</span>(<span class="st">L""</span>)-&gt;<span class=
 });</code></pre>
 
             <h3 id="iterating-large-values">Iterating Sequences of Large or Complex Values</h3>
-            <p>For sequences of small scalars this distinction rarely shows up, but for a <code>Sequence&lt;Dom::Section&gt;</code> or a sequence of large composites, it matters which accessor you reach for. There are two genuinely different operations that look similar at the call site:</p>
+            <p>The distinction rarely matters for a sequence of small scalars, but for a <code>Sequence&lt;Dom::Section&gt;</code> or a sequence of large composites, which accessor is used changes the cost. Two different operations look the same at the call site:</p>
             <ul>
-                <li><code>.get&lt;T&gt;()</code>, and range-<code>for</code> over the range returned by <code>.get()</code>, build an <strong>independent, detached snapshot</strong>. Every element is freshly materialized on each call &mdash; for a <code>Section</code> element, that means its entire sub-tree is recursively cloned. This is the right tool when you need a copy that will outlive the current DOM state, or that you intend to hand off elsewhere, but it is expensive if you are only reading.</li>
-                <li><code>operator[]</code>, and range-<code>for</code> directly over the <code>Sequence&lt;T&gt;</code> itself, return a <strong>live reference</strong> to the actual child node &mdash; nothing is cloned. This is the right tool for read-only iteration, and for in-place edits you mean to keep on the tree.</li>
+                <li><code>.get&lt;T&gt;()</code>, and a range-<code>for</code> over the range returned by <code>.get()</code>, produce an <strong>independent, detached copy</strong>. Every element is created on each call, and for a <code>Section</code> element its entire sub-tree is cloned recursively. It is the right choice when the copy must outlive the current DOM state or is handed to another owner, and it costs time when the caller only reads.</li>
+                <li><code>operator[]</code>, and a range-<code>for</code> directly over the <code>Sequence&lt;T&gt;</code> itself, return a <strong>live reference</strong> to the child node in the tree, and clone nothing. It is the right choice for read-only iteration and for in-place edits that stay in the tree.</li>
             </ul>
             <pre><code><span class="cm">// Expensive: clones every element's whole sub-tree, on every single pass</span>
 <span class="kw">for</span> (<span class="kw">const</span> <span class="kw">auto</span>&amp; tab : (settings / <span class="st">L"OpenTabs"</span>).<span class="fn">get</span>&lt;<span class="tp">std::vector</span>&lt;<span class="tp">TabConfig</span>&gt;&gt;())
@@ -998,16 +997,16 @@ pieces.<span class="fn">add</span>(<span class="st">L""</span>)-&gt;<span class=
     <span class="cm">// tab is a reference to the actual child Section in the tree</span>
     <span class="kw">auto</span> title = (tab / <span class="st">L"Title"</span>).<span class="fn">get</span>&lt;<span class="tp">std::wstring</span>&gt;();
 }</code></pre>
-            <p>The same tradeoff applies to a single composite or section field, not just sequences: <code>.get&lt;T&gt;()</code> always returns a detached value, while <code>childSection(key)</code> and the <code>/</code> path operator give you a direct reference to the live node with no copy.</p>
+            <p>The same choice applies to a single composite or section field, not only to sequences: <code>.get&lt;T&gt;()</code> always returns a detached value, while <code>childSection(key)</code> and the <code>/</code> path operator return a direct reference to the live node with no copy.</p>
 
             <h2 id="events-transactions">Events & Transactions</h2>
-            <p>The Dom subsystem dispatches a <code>ChangeEvent</code> synchronously on the node whose value changed, and a <code>NestedChangeEvent</code> that bubbles from that node up through each ancestor in turn. Without batching, each field update in a set of related changes produces its own independent <code>NestedChangeEvent</code> bubble.</p>
+            <p>The Dom subsystem dispatches a <code>ChangeEvent</code> synchronously on the node whose value changed, and a <code>NestedChangeEvent</code> that bubbles from that node up through each ancestor in turn. Without batching, each field update in a group of related changes sends its own <code>NestedChangeEvent</code> up the tree.</p>
 
-            <p>The <strong>Hierarchical Transaction System</strong> batches this bubbling. Wrapping a set of updates in an RAII <code>Transaction</code> targeting any sub-tree separates local state updates from structural tree updates for its duration:</p>
+            <p>The <strong>Hierarchical Transaction System</strong> batches this bubbling. An RAII <code>Transaction</code> on any sub-tree separates local state updates from structural tree updates while it is alive:</p>
             <ul>
-                <li><strong>Immediate Local Updates:</strong> Local <code>ChangeEvent</code>s are dispatched instantly on the leaf nodes. This ensures tightly-bound inputs (like textboxes or toggles) stay synchronized without layout overhead.</li>
-                <li><strong>Suppressed Sub-Tree Notifications:</strong> Bubbling <code>NestedChangeEvent</code>s are held and coalesced on the parents. This prevents heavy layout recalculations or disk-save operations while settings are in an intermediate state. No nested change events ever leak up into non-transactioned parent nodes during the middle of active updates.</li>
-                <li><strong>Coalesced Flush on Commit:</strong> When the <code>Transaction</code> goes out of scope, a <strong>single</strong> <code>NestedChangeEvent</code> bubbles up from the transaction root, triggering exactly one atomic layout update and exactly one disk-saving write (if <code>AutoSave::Yes</code> is enabled on your document).</li>
+                <li><strong>Immediate local updates.</strong> Local <code>ChangeEvent</code>s are dispatched immediately on the leaf nodes, so a bound input such as a text box or a toggle stays synchronized without layout work.</li>
+                <li><strong>Suppressed sub-tree notifications.</strong> Bubbling <code>NestedChangeEvent</code>s are held and coalesced at the parents, which prevents a layout recalculation or a disk write while the settings are in an intermediate state. No nested change event reaches a parent outside the transaction while the updates are in progress.</li>
+                <li><strong>Coalesced flush on commit.</strong> When the <code>Transaction</code> goes out of scope, a <strong>single</strong> <code>NestedChangeEvent</code> bubbles up from the transaction root, which produces one atomic layout update and one write to disk when <code>AutoSave::Yes</code> is enabled on the document.</li>
             </ul>
 
             <pre><code><span class="kw">void</span> <span class="tp">MyForm</span>::<span class="fn">applyCustomLayout</span>()
@@ -1033,18 +1032,18 @@ pieces.<span class="fn">add</span>(<span class="st">L""</span>)-&gt;<span class=
             <p>The <code>Document&lt;FileFormat&gt;</code> template handles parsing, serializing, file lock rules, and stream delegation.</p>
 
             <div class="info">
-                <strong>Blueprint Lifetimes:</strong> Because the document's internal DOM structure is fully allocated within the <code>Document</code> constructor stage (via <code>layout.apply()</code>), the source <code>Dt::Section</code> blueprint does not need to outlive the Document wrapper. It can be safely destroyed immediately after construction completes.
+                <strong>Blueprint Lifetimes:</strong> Because the document's internal DOM structure is fully allocated during the <code>Document</code> constructor (via <code>layout.apply()</code>), the source <code>Dt::Section</code> blueprint does not need to outlive the Document wrapper. It can be destroyed immediately after construction.
             </div>
 
             <ul>
-                <li><strong>AutoSave:</strong> Initializing the document with <code>AutoSave::Yes</code> binds a change listener to the root section. Any modification to a child node triggers an automatic, safe <code>save()</code> operation.</li>
-                <li><strong>Constructor Overloads:</strong> Supports paths, directories, and blueprint configurations directly by const reference:
+                <li><strong>AutoSave.</strong> A document initialized with <code>AutoSave::Yes</code> binds a change listener to the root section, and a change to any child node runs <code>save()</code> automatically.</li>
+                <li><strong>Constructor overloads.</strong> The constructor accepts a path, a directory, and a blueprint configuration by const reference:
                     <pre><code><span class="tp">Document</span>(<span class="kw">const</span> <span class="tp">std::filesystem::path</span>&amp; path, <span class="tp">AutoSave</span> autoSave = <span class="tp">AutoSave</span>::<span class="tp">No</span>, <span class="kw">const</span> <span class="tp">Dt::Section</span>&amp; layout = {});</code></pre>
                 </li>
             </ul>
 
             <h2 id="supported-formats">Supported File Formats</h2>
-            <p>The core DOM engine operates independently of specific file syntaxes. File format modules convert plain text into the DOM node structure. The ClaFi framework ships with three built-in, dependency-free format modules.</p>
+            <p>The core DOM engine is independent of the file syntax. A format module converts a file's text into the DOM node structure. The ClaFi framework ships three built-in format modules, and none of them needs an external dependency.</p>
 
             <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; margin-bottom: 2rem; font-size: 0.95rem;">
                 <thead>
@@ -1058,33 +1057,33 @@ pieces.<span class="fn">add</span>(<span class="st">L""</span>)-&gt;<span class=
                     <tr style="border-bottom: 1px solid var(--border-color);">
                         <td style="padding: 12px; font-weight: bold;"><code>FileFormat::ClaFi</code></td>
                         <td style="padding: 12px;">ClaFi</td>
-                        <td style="padding: 12px;">Extremely fast parsing with highly readable syntax tailored for human-edited config files.</td>
+                        <td style="padding: 12px;">Fast parsing and readable syntax for configuration files that users edit.</td>
                     </tr>
                     <tr style="border-bottom: 1px solid var(--border-color);">
                         <td style="padding: 12px; font-weight: bold;"><code>FileFormat::Json</code></td>
                         <td style="padding: 12px;">JSON</td>
-                        <td style="padding: 12px;">Interoperability with web formats or third-party tools while maintaining a strict zero-dependency C++ architecture.</td>
+                        <td style="padding: 12px;">Exchange with web formats or third-party tools, with no external dependency.</td>
                     </tr>
                     <tr style="border-bottom: 1px solid var(--border-color);">
                         <td style="padding: 12px; font-weight: bold;"><code>FileFormat::Xml</code></td>
                         <td style="padding: 12px;">XML</td>
-                        <td style="padding: 12px;">Interoperability with XML-based tooling or legacy systems. Sequence items are written as repeated <code>&lt;Item&gt;</code> elements under the sequence's own key.</td>
+                        <td style="padding: 12px;">Exchange with XML-based tooling or legacy systems. Each sequence item is written as a repeated <code>&lt;Item&gt;</code> element under the sequence's own key.</td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="warning">
-                <strong>Spec Conformance:</strong> none of these three modules is a general-purpose, standalone parser for its format &mdash; each is schema-bound, resolving every key against the DOM schema already defined in C++ rather than inferring structure from the file itself. An unrecognized key emits a schema-error event and is discarded, not preserved. A few further deviations worth knowing before relying on interop with external tools:
+                <strong>Spec Conformance:</strong> These three modules are schema-bound: each resolves every key against the DOM schema already defined in C++, rather than inferring structure from the file. None is a general-purpose, standalone parser for its format. An unrecognized key emits a schema-error event and is discarded. The following deviations apply to interoperability with external tools:
                 <ul>
                     <li><code>FileFormat::Json</code> does not decode <code>\uXXXX</code> Unicode escapes, and requires the document root to be a JSON object (<code>{...}</code>).</li>
                     <li><code>FileFormat::Xml</code> has no support for CDATA sections, comments, DOCTYPE/DTD, namespaces, or numeric character references, and only recognizes double-quoted attribute values (not single-quoted).</li>
                     <li><code>FileFormat::ClaFi</code> follows the ClaFi 1.0 Handbook closely; malformed input degrades via schema-error events rather than a hard parse failure.</li>
                 </ul>
-                See each module's own header comment for the complete list.
+                See each module's header comment for the complete list.
             </div>
 
             <h2 id="custom-format">Implementing a Custom File Format</h2>
-            <p>To integrate an external parser, implement a custom parser class inheriting from <code>FileFormatBase</code>. This example uses C++20 modules and the <code>nlohmann/json</code> library to parse and serialize configurations.</p>
+            <p>To integrate another parser, define a class that derives from <code>FileFormatBase</code>. The example below uses C++20 modules and the <code>nlohmann/json</code> library to read and write configurations.</p>
 
             <h3 id="json-implementation">Implementation (ThisApp.DomFormats.JsonNlohmann)</h3>
             <pre><code><span class="kw">module;</span>
