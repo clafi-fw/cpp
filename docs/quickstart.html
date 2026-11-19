@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaFi - Quick Start</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Ccircle%20cx=%2216%22%20cy=%2216%22%20r=%229%22%20fill=%22%239cde4c%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2216%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2216%22%20cy=%2248%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2248%22%20r=%229%22%20fill=%22%2373b722%22/%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-color: #f9f9fb; --text-color: #333; --accent-color: #0066cc;
+            --code-bg: #1e1e1e; --code-text: #d4d4d4; --border-color: #e1e4e8;
+            --sidebar-width: 300px;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6; color: var(--text-color); background-color: var(--bg-color);
+            margin: 0; padding: 0; display: flex;
+        }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: var(--sidebar-width); height: 100vh;
+            background-color: #fff; border-right: 1px solid var(--border-color);
+            overflow-y: auto; padding: 2rem 1rem; box-sizing: border-box; z-index: 100;
+        }
+        .sidebar-brand { padding: 0 0.5rem 1.25rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); }
+        .sidebar-brand-text {
+            font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+            font-size: 2.0rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            background: linear-gradient(90deg, #4EC9B0, #A6E22E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 8px rgba(78, 201, 176, 0.25);
+        }
+        .sidebar-brand-text::after {
+            content: "::";
+            margin-left: 0.2em;
+            font-weight: 400;
+        }
+        .brand-link { text-decoration: none; }
+        .sidebar-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; padding-left: 0.5rem; color: #111; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar > ul > li { margin-bottom: 0.8rem; }
+        .nav-item-wrapper {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.25rem 0.5rem; border-radius: 6px; transition: background-color 0.2s ease;
+        }
+        .nav-item-wrapper:hover { background-color: rgba(0, 0, 0, 0.02); }
+        .sidebar > ul > li > .nav-item-wrapper > a { font-size: 1rem; font-weight: 600; color: #111; flex-grow: 1; }
+        .sidebar ul ul {
+            padding-left: 0.8rem; margin-top: 0.3rem; margin-bottom: 0.6rem;
+            border-left: 1.5px solid var(--border-color); margin-left: 1.1rem;
+        }
+        .sidebar ul ul li { margin-bottom: 0.4rem; }
+        .sidebar ul ul a { font-size: 0.9rem; color: #555; display: block; padding: 0.15rem 0; transition: color 0.15s ease; }
+        .sidebar a { text-decoration: none; display: block; transition: color 0.2s ease; }
+        .sidebar a:hover, .sidebar ul ul a:hover { color: var(--accent-color); }
+        .page-content { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        header { background-color: #fff; padding: 2rem; border-bottom: 1px solid var(--border-color); text-align: center; }
+        h1, h2, h3, h4 { color: #111; margin-top: 2rem; }
+        h1 { font-size: 2.5rem; margin: 0; }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; scroll-margin-top: 2rem; }
+        h3 { scroll-margin-top: 2rem; }
+        main {
+            max-width: 900px; margin: 2rem auto; padding: 0 2rem; background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 8px; padding-bottom: 2rem;
+        }
+        p, li { font-size: 1.1rem; }
+        pre {
+            background-color: var(--code-bg); color: var(--code-text); padding: 1.5rem;
+            border-radius: 8px; overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.95rem; line-height: 1.5;
+        }
+        code {
+            background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px;
+            font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9em; color: #d14;
+        }
+        pre code { background-color: transparent; padding: 0; color: inherit; }
+        .kw { color: #569cd6; } .tp { color: #4ec9b0; } .st { color: #ce9178; }
+        .cm { color: #6a9955; font-style: italic; } .fn { color: #dcdcaa; }
+        .warning { background-color: #fff3f3; border-left: 4px solid #cc0000; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info { background-color: #f0f7ff; border-left: 4px solid #0066cc; padding: 1rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; }
+        .info h4 { margin: 0 0 0.4rem; }
+        table { border-collapse: collapse; width: 100%; margin: 1.5rem 0; font-size: 0.98rem; }
+        th, td { border: 1px solid var(--border-color); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        td code { font-size: 0.85em; }
+        @media (max-width: 1200px) { .sidebar { display: none; } .page-content { margin-left: 0; width: 100%; } }
+        .manuals-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .manuals-link:hover { color: var(--accent-color); }
+        .manuals-link::before { content: "\2190\00a0"; }
+        .page-end { display: flex; justify-content: space-between; max-width: 900px; margin: 0 auto 2rem; padding: 0 2rem; }
+        .top-link { font-size: 0.95rem; color: #666; text-decoration: none; }
+        .top-link:hover { color: var(--accent-color); }
+        .top-link::before { content: "\2191\00a0"; }
+        header .manuals-link-line { margin: 0.2rem 0 0; }
+
+        details.packages { margin: 1rem 0; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem 1rem; background: #fff; }
+        details.packages summary { cursor: pointer; font-weight: 600; color: var(--accent-color); }
+        details.packages pre { margin: 0.9rem 0 0.4rem; font-size: 0.9rem; }
+        .small { font-size: 0.95rem; }
+        .hint { color: #666; font-size: 0.95rem; margin: 0.35rem 0 1rem; min-height: 1.2em; }
+
+        .shape { display: grid; gap: 0.35rem; justify-items: center; margin: 1.4rem 0 1.6rem; }
+        .shape-row { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+        .shape-box {
+            border: 1px solid var(--border-color); background: #fff; border-radius: 8px;
+            padding: 0.45rem 0.85rem; font-size: 0.95rem; color: #333; text-align: center;
+        }
+        .shape-box.key { border-color: var(--accent-color); background: #f3f8ff; color: #0b4f9c; }
+        .shape-box small { display: block; color: #777; font-size: 0.8rem; }
+        .shape-arrow { color: #98a2ad; line-height: 1; }
+
+        .wizard { border: 1px solid var(--border-color); border-radius: 10px; margin: 1.5rem 0 2rem; overflow: hidden; background: #fff; }
+        .wizard-rail { display: flex; background: #f6f8fa; border-bottom: 1px solid var(--border-color); }
+        .wizard-tab {
+            flex: 1 1 0; display: flex; gap: 0.6rem; align-items: center; padding: 0.85rem 1rem;
+            background: none; border: none; border-right: 1px solid var(--border-color); cursor: pointer;
+            font: inherit; color: #555; text-align: left; min-width: 0;
+        }
+        .wizard-tab:last-child { border-right: none; }
+        @media (max-width: 760px) {
+            .wizard-rail { flex-wrap: wrap; }
+            .wizard-tab { flex: 1 1 50%; border-bottom: 1px solid var(--border-color); }
+            .wizard-tab:nth-child(2n) { border-right: none; }
+        }
+        .wizard-tab .num {
+            width: 1.65rem; height: 1.65rem; border-radius: 50%; background: #e3e7ec; color: #444;
+            display: grid; place-items: center; font-size: 0.85rem; font-weight: 600; flex: none;
+        }
+        .wizard-tab strong { display: block; font-size: 0.95rem; line-height: 1.2; color: inherit; }
+        .wizard-tab small { display: block; font-size: 0.78rem; color: #7a828c; line-height: 1.25; }
+        .wizard-tab[aria-selected="true"] { background: #fff; color: #111; box-shadow: inset 0 -3px 0 var(--accent-color); }
+        .wizard-tab[aria-selected="true"] .num { background: var(--accent-color); color: #fff; }
+        .wizard-tab:focus-visible { outline: 2px solid var(--accent-color); outline-offset: -2px; }
+        .wizard-body { padding: 1.3rem 1.5rem 0.5rem; }
+        .wizard-panel .step-lead { margin-top: 0; font-size: 1rem; color: #555; }
+        .wizard-foot {
+            display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.5rem;
+            border-top: 1px solid var(--border-color); background: #fcfcfd;
+        }
+        .wizard-count { flex: 1; text-align: center; color: #777; font-size: 0.9rem; }
+
+        .field-label { display: block; font-weight: 600; margin: 0.4rem 0 0.35rem; color: #222; }
+        input[type="text"] {
+            font: inherit; font-size: 0.95rem; padding: 0.45rem 0.6rem; width: 16rem; max-width: 100%;
+            border: 1px solid #c9d0d8; border-radius: 6px; color: #222; background: #fff;
+        }
+        input[type="text"]:focus { outline: 2px solid var(--accent-color); outline-offset: 1px; border-color: var(--accent-color); }
+
+        .choices { display: grid; gap: 0.7rem; margin: 0.8rem 0 1rem; }
+        .choices.two { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 760px) { .choices.two { grid-template-columns: 1fr; } }
+        .choice {
+            display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer;
+            border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 0.9rem;
+            background: #fff; transition: border-color 0.15s ease, background-color 0.15s ease;
+        }
+        .choice:hover { border-color: #b9c6d4; }
+        .choice.selected { border-color: var(--accent-color); background: #f3f8ff; box-shadow: inset 0 0 0 1px var(--accent-color); }
+        .choice input { margin-top: 0.25rem; accent-color: var(--accent-color); flex: none; }
+        .choice-title { display: block; font-weight: 600; color: #1b1b1b; }
+        .choice-note { display: block; font-size: 0.92rem; color: #666; line-height: 1.45; }
+        .choice.disabled { opacity: 0.45; cursor: default; }
+        .tag {
+            display: inline-block; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+            color: #0b4f9c; background: #e3eefb; border-radius: 999px; padding: 0.05rem 0.5rem;
+            vertical-align: 0.15em; margin-left: 0.3rem;
+        }
+        .choice-group { margin: 1.1rem 0 0.2rem; }
+        .choice-group > h4 { margin: 0 0 0.2rem; font-size: 1rem; }
+        .choice-group > p { margin: 0; font-size: 0.9rem; color: #666; }
+        .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 0.6rem 0 0.4rem; }
+        @media (max-width: 760px) { .checks { grid-template-columns: 1fr; } }
+        .check {
+            display: flex; gap: 0.6rem; align-items: flex-start; cursor: pointer;
+            border: 1px solid var(--border-color); border-radius: 8px; padding: 0.6rem 0.8rem; background: #fff;
+        }
+        .check:hover { border-color: #b9c6d4; }
+        .check.selected { border-color: var(--accent-color); background: #f3f8ff; }
+        .check input { margin-top: 0.25rem; accent-color: var(--accent-color); flex: none; }
+
+        .btn {
+            font: inherit; font-size: 0.95rem; font-weight: 600; padding: 0.5rem 1.1rem;
+            border-radius: 7px; border: 1px solid #c9d0d8; background: #fff; color: #333; cursor: pointer;
+        }
+        .btn:hover { border-color: #a9b6c4; background: #f7f9fb; }
+        .btn:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
+        .btn:disabled { opacity: 0.45; cursor: default; }
+        .btn-primary { background: var(--accent-color); border-color: var(--accent-color); color: #fff; }
+        .btn-primary:hover { background: #005bb5; border-color: #005bb5; }
+        .link-button { font: inherit; font-size: 0.92rem; background: none; border: none; color: var(--accent-color); cursor: pointer; padding: 0; text-decoration: underline; }
+
+        #result-box { scroll-margin-top: 1.5rem; }
+        .result-bar {
+            display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; justify-content: space-between;
+            background: #f3f8ff; border: 1px solid #cfe2f8; border-radius: 8px; padding: 0.8rem 1rem; margin: 1.4rem 0 0.4rem;
+        }
+        .result-bar p { margin: 0; font-size: 0.98rem; color: #123; }
+        .result-bar strong { color: #0b4f9c; }
+        .step { margin: 1.6rem 0; }
+        .step-title { display: flex; align-items: center; gap: 0.65rem; margin: 1.8rem 0 0.6rem; font-size: 1.25rem; }
+        .step-num {
+            width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--accent-color); color: #fff;
+            display: grid; place-items: center; font-size: 0.9rem; font-weight: 600; flex: none;
+        }
+        .file { border: 1px solid var(--border-color); border-radius: 8px; margin: 0.9rem 0 1.3rem; overflow: hidden; background: #fff; }
+        .file-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            background: #f6f8fa; border-bottom: 1px solid var(--border-color); padding: 0.45rem 0.7rem 0.45rem 0.9rem;
+        }
+        .file-name { font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.88rem; color: #333; overflow-wrap: anywhere; }
+        .file pre { margin: 0; border-radius: 0; font-size: 0.9rem; }
+        .copy {
+            font: inherit; font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.6rem;
+            border: 1px solid #c9d0d8; border-radius: 5px; background: #fff; color: #444; cursor: pointer;
+        }
+        .copy:hover { border-color: #a9b6c4; }
+        .copy:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 1px; }
+        .run-note { font-size: 1rem; }
+        .uisteps { margin: 0.6rem 0 0.9rem; padding-left: 1.4rem; }
+        .uisteps li { font-size: 1.02rem; margin-bottom: 0.6rem; }
+        table.settings { font-size: 0.95rem; }
+        table.settings th, table.settings td { padding: 0.45rem 0.6rem; }
+        .keys { font-family: "Fira Code", Consolas, Monaco, monospace; font-size: 0.9rem; background: #f1f3f5; border-radius: 4px; padding: 0.05rem 0.35rem; }
+        @media print {
+            .sidebar, .wizard-rail, .wizard-foot, .copy, .page-end { display: none !important; }
+            .page-content { margin: 0; width: 100%; }
+            .file pre { white-space: pre-wrap; }
+        }
+    </style>
+</head>
+<body id="top">
+    <nav class="sidebar">
+        <div class="sidebar-brand"><a class="brand-link" href="index.html"><span class="sidebar-brand-text">ClaFi</span></a></div>
+        <div class="sidebar-header">Quick Start</div>
+        <ul>
+            <li><div class="nav-item-wrapper"><a href="#before">Before you start</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#wizard">Your choices</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#result">Your application</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#shape">Application structure</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#form-gives">What the framework provides</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#builds">The two builds</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#stops">If the build stops</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#next">Where to go next</a></div></li>
+        </ul>
+    </nav>
+    <div class="page-content">
+        <header>
+            <h1>Quick Start</h1>
+            <p>Build a first ClaFi application from four selections</p>
+            <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
+        </header>
+        <main>
+            <p>ClaFi is a C++20 UI framework stored in a git repository. An application can be in any
+            folder on disk and builds against a clone of that repository. The clone also contains the
+            applications included with the framework. The form below generates the source files, build
+            files and run command.</p>
+
+            <p>An application has two parts. A module named after the application contains the code shared
+            by Windows and Linux: the window, the form and its controls. The entry point of each platform
+            constructs the platform and the application. To build for the other platform, use its entry
+            point.</p>
+
+            <h2 id="before">Before you start</h2>
+            <p>Clone <a href="https://github.com/clafi-fw/cpp">github.com/clafi-fw/cpp</a> and install the
+            toolchain for the target platform. The application folder can be anywhere; the build files
+            contain the path to the clone.</p>
+
+            <table>
+                <tr><th>Platform</th><th>What the build needs</th></tr>
+                <tr>
+                    <td>Windows 10 or 11</td>
+                    <td>Visual Studio 2026 with the <em>Desktop development with C++</em> workload. This
+                        installs MSVC, the Windows SDK and the module scanner. The project uses the default
+                        toolset: <code>v145</code> in Visual Studio 2026, <code>v143</code> in 2022.</td>
+                </tr>
+                <tr>
+                    <td>Linux</td>
+                    <td>A Wayland session on x86-64 with AVX2 and FMA. The build requires clang 22 with
+                        libc++ module support, CMake 4.3 or newer, Ninja 1.11 or newer, and the development
+                        packages below. Fedora 43 with KDE is the verified configuration.</td>
+                </tr>
+            </table>
+
+            <details class="packages">
+                <summary>The Linux packages</summary>
+                <p class="small">Fedora:</p>
+<pre>sudo dnf install clang libcxx-devel libcxxabi-devel cmake ninja-build pkg-config git \
+    wayland-devel wayland-protocols-devel wlr-protocols-devel \
+    libxkbcommon-devel freetype-devel harfbuzz-devel fontconfig-devel \
+    libunibreak-devel libpng-devel dbus-devel</pre>
+                <p class="small">Debian and Ubuntu:</p>
+<pre>sudo apt install clang libc++-dev libc++abi-dev cmake ninja-build pkg-config git \
+    libwayland-dev libxkbcommon-dev libfontconfig-dev libfreetype-dev \
+    libharfbuzz-dev libpng-dev libdbus-1-dev libunibreak-dev</pre>
+                <p class="small">wayland-protocols 1.48 or newer is required, and wlr-protocols must
+                provide a pkg-config file. A distribution with older versions requires building both from
+                source. CMake 4.3 and clang 22 are newer than most distributions provide; a distribution's
+                <code>clang</code> package is often older, and clang 22 with libc++ is available from the
+                LLVM repository or the release image.
+                <a href="https://github.com/clafi-fw/cpp/blob/main/.github/release/Containerfile">The
+                release image</a> contains the exact versions used for releases and can serve as a
+                reference.</p>
+            </details>
+
+            <h2 id="wizard">Your choices</h2>
+
+            <div class="wizard" id="wizard-box">
+                <div class="wizard-rail" role="tablist" aria-label="Setup steps">
+                    <button class="wizard-tab" type="button" role="tab" id="wtab-1" aria-controls="wstep-1" aria-selected="true" data-step="1">
+                        <span class="num">1</span><span><strong>Platform</strong><small>Target</small></span>
+                    </button>
+                    <button class="wizard-tab" type="button" role="tab" id="wtab-2" aria-controls="wstep-2" aria-selected="false" data-step="2" tabindex="-1">
+                        <span class="num">2</span><span><strong>IDE and compiler</strong><small>Toolchain</small></span>
+                    </button>
+                    <button class="wizard-tab" type="button" role="tab" id="wtab-3" aria-controls="wstep-3" aria-selected="false" data-step="3" tabindex="-1">
+                        <span class="num">3</span><span><strong>Application type</strong><small>Type</small></span>
+                    </button>
+                    <button class="wizard-tab" type="button" role="tab" id="wtab-4" aria-controls="wstep-4" aria-selected="false" data-step="4" tabindex="-1">
+                        <span class="num">4</span><span><strong>Form elements</strong><small>Contents</small></span>
+                    </button>
+                </div>
+                <div class="wizard-body">
+                    <section class="wizard-panel" id="wstep-1" role="tabpanel" aria-labelledby="wtab-1">
+                        <p class="step-lead">Enter the application name and select the target platform.</p>
+                        <label class="field-label" for="app-name">Application name</label>
+                        <input type="text" id="app-name" value="Hello" autocomplete="off" spellcheck="false" maxlength="48">
+                        <p class="hint" id="name-note">Use letters, digits and underscores. The name is used for the module, the executable and the window title.</p>
+                        <div class="choices">
+                            <label class="choice">
+                                <input type="radio" name="platform" value="windows" checked>
+                                <span class="choice-body">
+                                    <span class="choice-title">Windows</span>
+                                    <span class="choice-note">Win32 with Direct2D and the CPU rasterizer. Built with Visual Studio.</span>
+                                </span>
+                            </label>
+                            <label class="choice">
+                                <input type="radio" name="platform" value="linux">
+                                <span class="choice-body">
+                                    <span class="choice-title">Linux</span>
+                                    <span class="choice-note">A Wayland client using the CPU rasterizer. Built with CMake, Ninja and clang.</span>
+                                </span>
+                            </label>
+                            <label class="choice">
+                                <input type="radio" name="platform" value="both">
+                                <span class="choice-body">
+                                    <span class="choice-title">Both</span>
+                                    <span class="choice-note">One application module, an entry point for each platform, and each platform's own build.</span>
+                                </span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="wizard-panel" id="wstep-2" role="tabpanel" aria-labelledby="wtab-2" hidden>
+                        <p class="step-lead" id="tool-lead">The Windows build is a Visual Studio project.
+                        Select the IDE or the MSBuild command line.</p>
+                        <div id="tool-choices">
+                            <div class="choice-group" data-for="windows">
+                                <h4>Windows</h4>
+                                <div class="choices">
+                                    <label class="choice" data-tool="vs">
+                                        <input type="radio" name="win-tool" value="vs" checked>
+                                        <span class="choice-body">
+                                            <span class="choice-title">Visual Studio</span>
+                                            <span class="choice-note">Create the project in the IDE and build or run it with F5.</span>
+                                        </span>
+                                    </label>
+                                    <label class="choice" data-tool="msbuild">
+                                        <input type="radio" name="win-tool" value="msbuild">
+                                        <span class="choice-body">
+                                            <span class="choice-title">MSBuild on the command line</span>
+                                            <span class="choice-note">Create the project in Visual Studio, then build it from a Developer PowerShell.</span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="choice-group" data-for="linux">
+                                <h4>Linux</h4>
+                                <div class="choices">
+                                    <label class="choice" data-tool="cmake">
+                                        <input type="checkbox" id="use-cmake" checked>
+                                        <span class="choice-body">
+                                            <span class="choice-title">CMake, Ninja and clang</span>
+                                            <span class="choice-note">The Linux build. It writes a compile database for editors that read it.</span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info small" id="tool-note">
+                            <strong>Ninja is required</strong> because it scans C++20 module dependencies.
+                            clang requires <code>-stdlib=libc++</code> to locate the <code>std</code> module
+                            imported by <code>ClaFi.StdLib</code>.
+                        </div>
+                    </section>
+
+                    <section class="wizard-panel" id="wstep-3" role="tabpanel" aria-labelledby="wtab-3" hidden>
+                        <p class="step-lead">Select the application type: a window, a window with pages, or a
+                        console program.</p>
+                        <div class="choices">
+                            <label class="choice">
+                                <input type="radio" name="type" value="window" checked>
+                                <span class="choice-body">
+                                    <span class="choice-title">One window</span>
+                                    <span class="choice-note">A form with a title bar and a body of controls.</span>
+                                </span>
+                            </label>
+                            <label class="choice">
+                                <input type="radio" name="type" value="pages">
+                                <span class="choice-body">
+                                    <span class="choice-title">A window with pages</span>
+                                    <span class="choice-note">A tabbed box down the left, one page open at a time.</span>
+                                </span>
+                            </label>
+                            <label class="choice">
+                                <input type="radio" name="type" value="console">
+                                <span class="choice-body">
+                                    <span class="choice-title">A console program</span>
+                                    <span class="choice-note">Reads arguments, writes to the standard output and returns an exit code.</span>
+                                </span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="wizard-panel" id="wstep-4" role="tabpanel" aria-labelledby="wtab-4" hidden>
+                        <p class="step-lead">Select the controls for the first form. A heading label and a
+                        button are always added. The other choices add more controls.</p>
+                        <div id="element-choices">
+                            <div class="choice-group">
+                                <h4>Window elements</h4>
+                                <div class="checks">
+                                    <label class="check"><input type="checkbox" name="element" value="menu" checked>
+                                        <span><span class="choice-title">Application menu</span>
+                                        <span class="choice-note">The button at the left of the title bar opens Settings, Information and the theme picker.</span></span>
+                                    </label>
+                                    <label class="check"><input type="checkbox" name="element" value="answers" checked>
+                                        <span><span class="choice-title">Answers bar</span>
+                                        <span class="choice-note">OK and Cancel in a bottom bar; both close the form.</span></span>
+                                    </label>
+                                    <label class="check"><input type="checkbox" name="element" value="status">
+                                        <span><span class="choice-title">Status line</span>
+                                        <span class="choice-note">A muted line at the bottom showing application state.</span></span>
+                                    </label>
+                                    <label class="check"><input type="checkbox" name="element" value="search">
+                                        <span><span class="choice-title">Search box</span>
+                                        <span class="choice-note">A search field at the right of the title bar.</span></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="choice-group">
+                                <h4>Content controls</h4>
+                                <div class="checks">
+                                    <label class="check"><input type="checkbox" name="element" value="field">
+                                        <span><span class="choice-title">Text field</span>
+                                        <span class="choice-note">An editable text field across the body.</span></span>
+                                    </label>
+                                    <label class="check"><input type="checkbox" name="element" value="check">
+                                        <span><span class="choice-title">Check box</span>
+                                        <span class="choice-note">A check box that stores its own checked state.</span></span>
+                                    </label>
+                                    <label class="check"><input type="checkbox" name="element" value="slider">
+                                        <span><span class="choice-title">Slider</span>
+                                        <span class="choice-note">A labeled slider across the body.</span></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info small" id="console-note" hidden>
+                            A console program has no form; these choices do not affect its code.
+                        </div>
+                    </section>
+                </div>
+                <div class="wizard-foot">
+                    <button class="btn" type="button" id="w-back" disabled>Back</button>
+                    <span class="wizard-count" id="w-count">Step 1 of 4</span>
+                    <button class="btn btn-primary" type="button" id="w-next">Next</button>
+                </div>
+            </div>
+
+            <h2 id="result">Your application</h2>
+            <noscript>
+                <div class="warning">These instructions are generated from the selections above by a
+                script. Enable JavaScript, or use the sections below to write the files manually.</div>
+            </noscript>
+            <div id="result-box"></div>
+
+            <h2 id="shape">Application structure</h2>
+            <div class="shape" aria-hidden="true">
+                <div class="shape-row">
+                    <div class="shape-box">entry point<small>Windows</small></div>
+                    <div class="shape-box">entry point<small>Linux</small></div>
+                </div>
+                <div class="shape-arrow">&#8595;</div>
+                <div class="shape-row">
+                    <div class="shape-box key">application<small>platform, properties, settings, themes</small></div>
+                </div>
+                <div class="shape-arrow">&#8595;</div>
+                <div class="shape-row">
+                    <div class="shape-box key">form<small>the window, its loop and a root control</small></div>
+                </div>
+                <div class="shape-arrow">&#8595;</div>
+                <div class="shape-row">
+                    <div class="shape-box">controls<small>labels, buttons, fields</small></div>
+                </div>
+            </div>
+
+            <table>
+                <tr><th>Part</th><th>What it is</th><th>What names the platform</th></tr>
+                <tr>
+                    <td>Entry point</td>
+                    <td><code>wWinMain</code> on Windows and <code>main</code> on Linux. It constructs the
+                        platform and the application, creates the main form and runs it.</td>
+                    <td>This file.</td>
+                </tr>
+                <tr>
+                    <td>Application</td>
+                    <td><code>WindowApplication&lt;PlatformType[, GpuBackend]&gt;</code>, or the aliases
+                        <code>Win32Application</code> and <code>WaylandApplication</code>. Owns the
+                        platform, the settings file, the theme list and the application menu.</td>
+                    <td>The platform type parameter in the entry point.</td>
+                </tr>
+                <tr>
+                    <td>Form</td>
+                    <td><code>Form&lt;RootClass&gt;</code> pairs the window and message loop with a root
+                        control. <code>WithBody&lt;Panel, StackPanel&gt;</code> is a root with a panel body
+                        for controls.</td>
+                    <td>No platform code.</td>
+                </tr>
+                <tr>
+                    <td>Controls</td>
+                    <td>Child controls of the root. The <code>add&lt;Control&gt;</code> arguments set layout
+                        and appearance; event handlers set behavior.</td>
+                    <td>No platform code.</td>
+                </tr>
+            </table>
+
+            <p>A console program has no form. It reads its arguments, writes to the standard output and
+            returns an exit code. Its module is the same on both platforms.</p>
+
+            <h2 id="form-gives">What the framework provides</h2>
+            <p>The framework provides the following in a windowed application:</p>
+            <p><strong>The application menu.</strong> The button at the left of the title bar opens it. It
+            contains the Settings page, the Information page and the theme picker on the Settings page.
+            Commands can be added with <code>connectAppCommand</code>.</p>
+            <p><strong>The settings file.</strong> It is stored in the user's application data folder under
+            the publisher and application names. It contains the window placement, the selected theme and
+            the menu settings. Before creating the folder, the Settings page asks the user for
+            permission.</p>
+            <p><strong>Themes.</strong> The Settings page lists the built-in themes and stores the
+            selection in the settings file.</p>
+            <p><strong>The window frame.</strong> The framework draws the title bar, the sizing buttons and
+            the frame, and applies display scaling. On desktops that support it, the window placement is
+            restored when the application starts.</p>
+
+            <h3>Adding a control</h3>
+            <p>In a windowed application, each control is a reference member of <code>MainForm</code> and
+            is created in its declaration. The constructor connects the handlers:</p>
+<pre><span class="cm">// In the class, beside the other controls:</span>
+<span class="tp">Button</span>&amp; m_reloadButton{ body().add&lt;<span class="tp">Button</span>&gt;(<span class="st">L"Reload"</span>) };
+
+<span class="cm">// In the constructor's body:</span>
+m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
+    <span class="tp">MessageDialog</span> dialog{
+        *event.control,
+        <span class="st">L"Reload"</span>,
+        <span class="tp">Text</span>{ <span class="st">L"Nothing to reload yet."</span> }
+    };
+    dialog.add(<span class="tp">DialogAnswer</span>::Ok);
+    dialog.execute();
+});</pre>
+            <p><code>add&lt;Control&gt;</code> returns a reference to the new control. Its arguments set
+            properties such as <code>Padding</code>, <code>Spacing</code>, <code>MinSize</code> and
+            <code>Text</code>. Use <code>body()</code> for a single-window application and
+            <code>m_homeBody</code> for a page.</p>
+
+            <h2 id="builds">The two builds</h2>
+            <p>The framework has two builds, one for each platform.</p>
+            <table>
+                <tr><th></th><th>Visual Studio</th><th>CMake, Ninja and clang</th></tr>
+                <tr>
+                    <td>Platform</td>
+                    <td>Windows 10 and 11: Win32, Direct2D and the CPU rasterizer</td>
+                    <td>Linux: Wayland and the CPU rasterizer</td>
+                </tr>
+                <tr>
+                    <td>Compiler</td>
+                    <td>MSVC at <code>/std:c++20</code>, with module scanning on</td>
+                    <td>clang 22 with libc++, and <code>import std</code></td>
+                </tr>
+                <tr>
+                    <td>Build definition</td>
+                    <td>A Visual Studio project that references <code>ClaFi.vcxitems</code> as a shared
+                        items project</td>
+                    <td>A <code>CMakeLists.txt</code> in the application folder that adds the clone as a
+                        subdirectory</td>
+                </tr>
+                <tr>
+                    <td>Requirements</td>
+                    <td>x64. Add new files to the project; otherwise they are not compiled.</td>
+                    <td>Ninja; <code>-stdlib=libc++</code>; an explicit build type; a new build directory
+                        after changing an import.</td>
+                </tr>
+            </table>
+
+            <h2 id="stops">If the build stops</h2>
+            <ul>
+                <li><strong>Visual Studio reports errors in the framework sources.</strong> IntelliSense
+                    does not process C++20 modules; use ReSharper C++ or clangd for navigation and read
+                    the compiler output. See the <a href="faq.html#red-squiggles">FAQ</a>.</li>
+                <li><strong>clang reports a name that the source does not import.</strong> A stale module
+                    file can still provide it. Delete the build directory and configure again.</li>
+                <li><strong>A new file is not compiled.</strong> Add it to the Visual Studio project, or to
+                    <code>add_executable</code> or <code>target_sources</code> in CMake.</li>
+                <li><strong>The build cannot find the clone.</strong> Check the shared-items reference in
+                    Visual Studio, or <code>CLAFI_ROOT</code> in CMake.</li>
+                <li><strong>The build is for another architecture.</strong> The framework supports x64 on
+                    Windows and x86-64 with AVX2 and FMA on Linux; 32-bit and ARM are not supported.</li>
+            </ul>
+
+            <h2 id="next">Where to go next</h2>
+            <table>
+                <tr><th>Manual</th><th>Read it for</th></tr>
+                <tr><td><a href="platform.html">Platform</a></td><td>The platform object, its ownership,
+                    and the order of construction and destruction.</td></tr>
+                <tr><td><a href="layout.html">Layout</a></td><td>Placement of controls: padding, spacing,
+                    sizes, bars and sections.</td></tr>
+                <tr><td><a href="events.html">Events</a></td><td>How controls report events and how handlers
+                    are connected.</td></tr>
+                <tr><td><a href="actions.html">Actions</a></td><td>Named commands: caption, key, icon and
+                    presentation.</td></tr>
+                <tr><td><a href="grids.html">Grid</a></td><td>Tables of rows and columns over application
+                    data.</td></tr>
+                <tr><td><a href="faq.html">FAQ</a></td><td>Common build and runtime symptoms with their
+                    explanations.</td></tr>
+            </table>
+
+            <p>Three applications in the framework repository use the same structure:
+            <a href="https://github.com/clafi-fw/cpp/tree/main/Showcase/TextEngine">TextEngine</a>
+            (a tabbed window),
+            <a href="https://github.com/clafi-fw/cpp/tree/main/Tools/WhatsClip">WhatsClip</a>
+            (a clipboard viewer) and
+            <a href="https://github.com/clafi-fw/cpp/tree/main/Tools/Themes">Themes</a>
+            (the theme editor). Each has an application module and one entry point per platform.</p>
+        </main>
+        <div class="page-end">
+            <a class="manuals-link" href="index.html">All manuals</a>
+            <a class="top-link" href="#top">Top</a>
+        </div>
+    </div>
+    <script>
+    (function () {
+        'use strict';
+
+        var ELEMENT_LABELS = {
+            menu: 'application menu',
+            answers: 'answers bar',
+            status: 'status line',
+            search: 'search box',
+            field: 'text field',
+            check: 'check box',
+            slider: 'slider'
+        };
+
+        var TYPE_LABELS = {
+            window: 'one window',
+            pages: 'a window with pages',
+            console: 'a console program'
+        };
+
+        // The tree's own targets. An application named for one of them would give CMake two
+        // targets of one name, so the name takes App.
+        var RESERVED_TARGETS = [
+            'ClaFi', 'MillScene', 'MillSceneCli', 'TextEngine', 'WhatsClip', 'SeeDocs', 'SeeDocsCli',
+            'Themes', 'PascalScripts', 'ClaFiWaylandProtocols'
+        ];
+
+        var state = {
+            name: 'Hello',
+            platform: 'windows',
+            winTool: 'vs',
+            cmake: false,
+            type: 'window',
+            elements: ['menu', 'answers']
+        };
+
+        function $(id) {
+            return document.getElementById(id);
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function sanitizeName(raw) {
+            var value = String(raw || '').replace(/[^A-Za-z0-9_]/g, '');
+            if (!value) {
+                return 'Hello';
+            }
+            if (!/^[A-Za-z]/.test(value)) {
+                value = 'App' + value;
+            }
+            value = value.slice(0, 32);
+            value = value.charAt(0).toUpperCase() + value.slice(1);
+            if (RESERVED_TARGETS.indexOf(value) !== -1) {
+                value += 'App';
+            }
+            return value;
+        }
+
+        function moduleNamespace() {
+            return state.name + '_App';
+        }
+
+        function propertiesFunction() {
+            return state.name.charAt(0).toLowerCase() + state.name.slice(1) + 'Properties';
+        }
+
+        function runFunction() {
+            return 'run' + state.name;
+        }
+
+        function has(element) {
+            return state.elements.indexOf(element) !== -1;
+        }
+
+        function windowsBuild() {
+            return state.platform !== 'linux';
+        }
+
+        function linuxBuild() {
+            return state.platform !== 'windows' && state.cmake;
+        }
+
+        function isConsole() {
+            return state.type === 'console';
+        }
+
+        function isPages() {
+            return state.type === 'pages';
+        }
+
+        // ---------------------------------------------------------------------
+        // Code that the instructions show.
+
+        function controlImports() {
+            var list = ['Button', 'DialogTitle', 'Label', 'MessageDialog', 'Panel', 'Stack', 'Base.PanelBase'];
+            if (has('menu')) {
+                list.push('AppButton');
+            }
+            if (isPages()) {
+                list.push('TabbedBox', 'TabStrip');
+            }
+            if (has('search')) {
+                list.push('SearchBox');
+            }
+            if (has('field')) {
+                list.push('TextBox');
+            }
+            if (has('check')) {
+                list.push('CheckBox');
+            }
+            if (has('slider')) {
+                list.push('Slider');
+            }
+            list.sort();
+            return list;
+        }
+
+        function coreImports() {
+            var list = [
+                'ClaFi.Core.Context.AppContext',
+                'ClaFi.Core.Foundation',
+                'ClaFi.Core.System.Events',
+                'ClaFi.Core.System.Props',
+                'ClaFi.Core.System.UiTypes',
+                'ClaFi.Core.TextEngine.Text'
+            ];
+            if (has('menu')) {
+                list.push(
+                    'ClaFi.Core.AppTheme_Colors',
+                    'ClaFi.Core.Context.DrawIconEvent',
+                    'ClaFi.Core.Graphics.Canvas',
+                    'ClaFi.Core.Graphics.Types'
+                );
+            } else if (has('status')) {
+                list.push('ClaFi.Core.AppTheme_Colors');
+            }
+            if (has('search')) {
+                list.push('ClaFi.Core.System.Utils');
+            }
+            list.sort();
+            return list;
+        }
+
+        function contentLines(indent) {
+            var pad = new Array(indent + 1).join(' ');
+            var lines = [];
+            lines.push(pad + 'body.add<Label>(Text{ L"Hello, ClaFi." });');
+            if (has('field')) {
+                lines.push(pad + 'body.add<TextBox>(Text{ L"Type here" }, WordWrap::No, HorizontalAlign::Fill);');
+            }
+            if (has('check')) {
+                lines.push(pad + 'body.add<CheckBox2>(L"Remember me", Checked::Yes);');
+            }
+            if (has('slider')) {
+                lines.push(pad + 'body.add<Label>(Text{ L"Level" });');
+                lines.push(pad + 'body.add<Slider>(ScrollButtons::No, FineAdjust::No, HorizontalAlign::Fill);');
+            }
+            lines.push(pad + 'body.add<Button>(L"Say hello", Button::OnClick{ [](ClickEvent& event) {');
+            lines.push(pad + '    MessageDialog dialog{');
+            lines.push(pad + '        *event.control,');
+            lines.push(pad + '        L"Hello",');
+            lines.push(pad + '        Text{ L"The button works." },');
+            lines.push(pad + '        MessageIcon::Information');
+            lines.push(pad + '    };');
+            lines.push(pad + '    dialog.add(DialogAnswer::Ok);');
+            lines.push(pad + '    dialog.execute();');
+            lines.push(pad + '} });');
+            return lines;
+        }
+
+        function answerLines(indent, container) {
+            var pad = new Array(indent + 1).join(' ');
+            return [
+                pad + container + '.add<Button>(L"OK", Button::OnClick{ [](ClickEvent& event) {',
+                pad + '    event.closeForm();',
+                pad + '} });',
+                pad + container + '.add<Button>(L"Cancel", Button::OnClick{ [](ClickEvent& event) {',
+                pad + '    event.closeForm();',
+                pad + '} });'
+            ];
+        }
+
+        function bottomLines() {
+            var answers = has('answers');
+            var status = has('status');
+            var lines = [];
+            if (!answers && !status) {
+                return lines;
+            }
+            if (answers && status) {
+                lines.push('        // The bottom bar: what the application is doing, and the answers that end it.');
+                lines.push('        StackPanel& bottomBar = form->createBottomBar<StackPanel>(');
+                lines.push('            Orientation::Vertical,');
+                lines.push('            Padding{ 16.0f, 12.0f },');
+                lines.push('            Spacing{ 8.0f }');
+                lines.push('        );');
+                lines.push('        bottomBar.add<Label>(Text{ L"Ready" }, TextFormat{ InkGrade::Muted });');
+                lines.push('        StackPanel& answersBar = bottomBar.add<StackPanel>(');
+                lines.push('            Orientation::Horizontal,');
+                lines.push('            Spacing{ 8.0f },');
+                lines.push('            ItemSizing::Equal');
+                lines.push('        );');
+                lines.push.apply(lines, answerLines(8, 'answersBar'));
+            } else if (answers) {
+                lines.push('        // The bottom bar: the answers that end the application.');
+                lines.push('        StackPanel& answersBar = form->createBottomBar<StackPanel>(');
+                lines.push('            Orientation::Horizontal,');
+                lines.push('            Padding{ 16.0f, 12.0f },');
+                lines.push('            Spacing{ 8.0f },');
+                lines.push('            ItemSizing::Equal');
+                lines.push('        );');
+                lines.push.apply(lines, answerLines(8, 'answersBar'));
+            } else {
+                lines.push('        // The bottom bar: what the application is doing.');
+                lines.push('        StackPanel& bottomBar = form->createBottomBar<StackPanel>(');
+                lines.push('            Orientation::Horizontal,');
+                lines.push('            Padding{ 16.0f, 12.0f }');
+                lines.push('        );');
+                lines.push('        bottomBar.add<Label>(Text{ L"Ready" }, TextFormat{ InkGrade::Muted });');
+            }
+            return lines;
+        }
+
+        function titleLines() {
+            var menu = has('menu');
+            var search = has('search');
+            var lines = [];
+            if (menu || search) {
+                lines.push('        // The bar across the top: the window\'s name, and what it holds.');
+                lines.push('        DialogTitle& title = form->createTopBar<DialogTitle>(application.name());');
+                if (menu) {
+                    lines.push('        title.createLeftBar<AppButton>(');
+                    lines.push('            VerticalAlign::Center,');
+                    lines.push('            AppButton::OnDrawIcon{ drawAppMark }');
+                    lines.push('        );');
+                }
+                if (search) {
+                    lines.push('        // A search field at the right. Its onSearch event is where a search starts.');
+                    lines.push('        title.createBody<SearchBox>(');
+                    lines.push('            HorizontalAlign::Right,');
+                    lines.push('            VerticalAlign::Center,');
+                    lines.push('            MinSize{ 240.0f, 0.0f },');
+                    lines.push('            MaxSize{ 240.0f, k_maxFloat }');
+                    lines.push('        );');
+                }
+            } else {
+                lines.push('        // The bar across the top: the window\'s name.');
+                lines.push('        form->createTopBar<DialogTitle>(application.name());');
+            }
+            return lines;
+        }
+
+        function mainModule() {
+            if (isConsole()) {
+                return consoleModule();
+            }
+            var pages = isPages();
+            var body = pages ? 'm_homeBody' : 'body()';
+            var lines = [];
+            lines.push('export module ' + moduleNamespace() + '.Main;', '');
+            lines.push('import ClaFi.App.ApplicationProperties;', '');
+            controlImports().forEach(function (name) {
+                lines.push('import ClaFi.Controls.' + name + ';');
+            });
+            lines.push('');
+            coreImports().forEach(function (name) {
+                lines.push('import ' + name + ';');
+            });
+            lines.push('', 'import ClaFi.StdLib;', '');
+            lines.push('namespace ' + moduleNamespace());
+            lines.push('{');
+            lines.push('    using namespace ClaFi;');
+            lines.push('    using namespace ClaFi::Controls;');
+            lines.push('');
+            if (has('menu')) {
+                lines.push('    namespace');
+                lines.push('    {');
+                lines.push('        // The mark on the button that opens the application\'s menu.');
+                lines.push('        void drawAppMark(DrawIconEvent& event)');
+                lines.push('        {');
+                lines.push('            const FloatRect& bounds = event.iconRect();');
+                lines.push('            event.canvas().fillRoundedRectangle(');
+                lines.push('                bounds,');
+                lines.push('                bounds.width() * 0.25f,');
+                lines.push('                bounds.height() * 0.25f,');
+                lines.push('                event.spotRgb(InkGrade::Strongest)');
+                lines.push('            );');
+                lines.push('        }');
+                lines.push('    }');
+                lines.push('');
+            }
+            lines.push('    // The application\'s window. The controls are members, created in their declarations.');
+            lines.push('    export class MainForm : public WithBody<Panel, ' + (pages ? 'TabbedBox' : 'StackPanel') + '>');
+            lines.push('    {');
+            lines.push('    public:');
+            lines.push('        explicit MainForm(const CreateParams& params);');
+            lines.push('    private:');
+
+            var members = [];
+            members.push({ group: 'frame', type: 'DialogTitle&', name: 'm_titleBar', init: 'createTopBar<DialogTitle>(appContext().appName())' });
+            if (has('menu')) {
+                members.push({ group: 'frame', type: 'AppButton&', name: 'm_appButton', init: 'm_titleBar.createLeftBar<AppButton>(\n            VerticalAlign::Center,\n            AppButton::OnDrawIcon{ drawAppMark }\n        )' });
+            }
+            if (has('search')) {
+                members.push({ group: 'frame', type: 'SearchBox&', name: 'm_searchBox', init: 'm_titleBar.createBody<SearchBox>(\n            HorizontalAlign::Right,\n            VerticalAlign::Center,\n            MinSize{ 240.0f, 0.0f },\n            MaxSize{ 240.0f, k_maxFloat }\n        )' });
+            }
+            if (pages) {
+                members.push({ group: 'page', type: 'Panel&', name: 'm_homePage', init: 'body().pageControl().add<Panel>(Padding{ 24.0f })' });
+                members.push({ group: 'page', type: 'StackPanel&', name: 'm_homeBody', init: 'm_homePage.createBody<StackPanel>(\n            Orientation::Vertical,\n            Spacing{ 12.0f }\n        )' });
+            }
+            members.push({ group: 'body', type: 'Label&', name: 'm_greetingLabel', init: body + '.add<Label>(Text{ L"Hello, ClaFi." })' });
+            if (has('field')) {
+                members.push({ group: 'body', type: 'TextBox&', name: 'm_field', init: body + '.add<TextBox>(Text{ L"Type here" }, WordWrap::No, HorizontalAlign::Fill)' });
+            }
+            if (has('check')) {
+                members.push({ group: 'body', type: 'CheckBox2&', name: 'm_check', init: body + '.add<CheckBox2>(L"Remember me", Checked::Yes)' });
+            }
+            if (has('slider')) {
+                members.push({ group: 'body', type: 'Label&', name: 'm_levelLabel', init: body + '.add<Label>(Text{ L"Level" })' });
+                members.push({ group: 'body', type: 'Slider&', name: 'm_level', init: body + '.add<Slider>(ScrollButtons::No, FineAdjust::No, HorizontalAlign::Fill)' });
+            }
+            members.push({ group: 'body', type: 'Button&', name: 'm_helloButton', init: body + '.add<Button>(L"Say hello")' });
+            if (pages) {
+                members.push({ group: 'tab', type: 'Tab&', name: 'm_homeTab', init: 'body().strip().addTab(\n            Text{ L"Home" },\n            Padding{ 14.0f, 10.0f },\n            MinSize{ 0.0f, 34.0f },\n            VerticalTextAnchor::Center,\n            Page{ m_homePage }\n        )' });
+            }
+            var answers = has('answers');
+            var status = has('status');
+            if (answers && status) {
+                members.push({ group: 'bottom', type: 'StackPanel&', name: 'm_bottomBar', init: 'createBottomBar<StackPanel>(\n            Orientation::Vertical,\n            Padding{ 16.0f, 12.0f },\n            Spacing{ 8.0f }\n        )' });
+                members.push({ group: 'bottom', type: 'Label&', name: 'm_statusLabel', init: 'm_bottomBar.add<Label>(Text{ L"Ready" }, TextFormat{ InkGrade::Muted })' });
+                members.push({ group: 'bottom', type: 'StackPanel&', name: 'm_answersBar', init: 'm_bottomBar.add<StackPanel>(\n            Orientation::Horizontal,\n            Spacing{ 8.0f },\n            ItemSizing::Equal\n        )' });
+                members.push({ group: 'bottom', type: 'Button&', name: 'm_okButton', init: 'm_answersBar.add<Button>(L"OK")' });
+                members.push({ group: 'bottom', type: 'Button&', name: 'm_cancelButton', init: 'm_answersBar.add<Button>(L"Cancel")' });
+            } else if (answers) {
+                members.push({ group: 'bottom', type: 'StackPanel&', name: 'm_answersBar', init: 'createBottomBar<StackPanel>(\n            Orientation::Horizontal,\n            Padding{ 16.0f, 12.0f },\n            Spacing{ 8.0f },\n            ItemSizing::Equal\n        )' });
+                members.push({ group: 'bottom', type: 'Button&', name: 'm_okButton', init: 'm_answersBar.add<Button>(L"OK")' });
+                members.push({ group: 'bottom', type: 'Button&', name: 'm_cancelButton', init: 'm_answersBar.add<Button>(L"Cancel")' });
+            } else if (status) {
+                members.push({ group: 'bottom', type: 'StackPanel&', name: 'm_bottomBar', init: 'createBottomBar<StackPanel>(\n            Orientation::Horizontal,\n            Padding{ 16.0f, 12.0f }\n        )' });
+                members.push({ group: 'bottom', type: 'Label&', name: 'm_statusLabel', init: 'm_bottomBar.add<Label>(Text{ L"Ready" }, TextFormat{ InkGrade::Muted })' });
+            }
+
+            var groupComment = {
+                frame: 'The window\'s frame.',
+                page: 'The page down the left.',
+                body: pages ? 'The page\'s controls.' : 'The body\'s controls.',
+                tab: 'The tab that opens the page.',
+                bottom: 'The bottom bar.'
+            };
+            var lastGroup = null;
+            members.forEach(function (member) {
+                if (member.group !== lastGroup) {
+                    lines.push('        // ' + groupComment[member.group]);
+                    lastGroup = member.group;
+                }
+                lines.push('        ' + member.type + ' ' + member.name + '{ ' + member.init + ' };');
+            });
+            lines.push('    };');
+            lines.push('}');
+            lines.push('');
+            lines.push('namespace ' + moduleNamespace());
+            lines.push('{');
+            lines.push('    MainForm::MainForm(const CreateParams& params)');
+            lines.push('        :');
+            lines.push('        WithBody{');
+            lines.push('            params,');
+            lines.push('            HostProps{');
+            lines.push('                FormPlacement::Default,');
+            if (pages) {
+                lines.push('                MinSize{ 640.0f, 400.0f },');
+                lines.push('                PreferredSize{ 900.0f, 620.0f }');
+            } else {
+                lines.push('                MinSize{ 480.0f, 320.0f },');
+                lines.push('                PreferredSize{ 720.0f, 520.0f }');
+            }
+            lines.push('            },');
+            if (pages) {
+                lines.push('            BodyProps{');
+                lines.push('                TabsOrientation::VerticalLeft');
+                lines.push('            }');
+            } else {
+                lines.push('            BodyProps{');
+                lines.push('                Orientation::Vertical,');
+                lines.push('                Padding{ 24.0f },');
+                lines.push('                Spacing{ 12.0f }');
+                lines.push('            }');
+            }
+            lines.push('        }');
+            lines.push('    {');
+            if (pages) {
+                lines.push('        m_homeTab.select();');
+                lines.push('');
+            }
+            lines.push('        m_helloButton.onClick([](ClickEvent& event) {');
+            lines.push('            MessageDialog dialog{');
+            lines.push('                *event.control,');
+            lines.push('                L"Hello",');
+            lines.push('                Text{ L"The button works." },');
+            lines.push('                MessageIcon::Information');
+            lines.push('            };');
+            lines.push('            dialog.add(DialogAnswer::Ok);');
+            lines.push('            dialog.execute();');
+            lines.push('        });');
+            if (answers) {
+                lines.push('        m_okButton.onClick([](ClickEvent& event) {');
+                lines.push('            event.closeForm();');
+                lines.push('        });');
+                lines.push('        m_cancelButton.onClick([](ClickEvent& event) {');
+                lines.push('            event.closeForm();');
+                lines.push('        });');
+            }
+            lines.push('    }');
+            lines.push('');
+            lines.push('    // What the application is called, wherever its name is shown and wherever its settings are kept.');
+            lines.push('    export ApplicationProperties ' + propertiesFunction() + '()');
+            lines.push('    {');
+            lines.push('        return {');
+            lines.push('            .name = Text{ L"' + state.name + '" },');
+            lines.push('            .publisher = L"Your Name",');
+            lines.push('            .description = Text{ L"A first ClaFi application." },');
+            lines.push('            .version = L"1.0.0"');
+            lines.push('        };');
+            lines.push('    }');
+            lines.push('}');
+            return lines.join('\n');
+        }
+
+        function consoleModule() {
+            var lines = [];
+            lines.push('export module ' + moduleNamespace() + '.Main;', '');
+            lines.push('import ClaFi.App.ConsoleApplication;', '');
+            lines.push('import ClaFi.Core.TextEngine.Text;', '');
+            lines.push('import ClaFi.StdLib;', '');
+            lines.push('namespace ' + moduleNamespace());
+            lines.push('{');
+            lines.push('    using namespace ClaFi;');
+            lines.push('');
+            lines.push('    // What the application is called, and what --help says it does.');
+            lines.push('    export ApplicationProperties ' + propertiesFunction() + '()');
+            lines.push('    {');
+            lines.push('        return {');
+            lines.push('            .name = Text{ L"' + state.name + '" },');
+            lines.push('            .publisher = L"Your Name",');
+            lines.push('            .description = Text{ L"A first ClaFi console application." },');
+            lines.push('            .version = L"1.0.0"');
+            lines.push('        };');
+            lines.push('    }');
+            lines.push('');
+            lines.push('    // Reads the arguments, answers --help and --version, then does the work.');
+            lines.push('    export int ' + runFunction() + '(ConsoleApplication& application)');
+            lines.push('    {');
+            lines.push('        if (const std::optional<int> answer = answerCommandLine(application.commandLine()))');
+            lines.push('            return *answer;');
+            lines.push('');
+            lines.push('        writeToConsole(L"Hello, ClaFi.\\n");');
+            lines.push('        return ExitCode::Ok;');
+            lines.push('    }');
+            lines.push('}');
+            return lines.join('\n');
+        }
+
+        function win32Entry() {
+            var lines = [];
+            lines.push('import ' + moduleNamespace() + '.Main;', '');
+            if (isConsole()) {
+                lines.push('import ClaFi.App.ConsoleApplication;');
+                lines.push('import ClaFi.Platform.Windows;', '');
+                lines.push('// A console process: no platform object and no window.');
+                lines.push('int main()');
+                lines.push('{');
+                lines.push('    using namespace ClaFi;');
+                lines.push('');
+                lines.push('    Win32ConsoleApplication app{');
+                lines.push('        ' + moduleNamespace() + '::' + propertiesFunction() + '(),');
+                lines.push('        {},');
+                lines.push('        {}');
+                lines.push('    };');
+                lines.push('');
+                lines.push('    return ' + moduleNamespace() + '::' + runFunction() + '(app);');
+            } else {
+                lines.push('import ClaFi.App.WindowApplication;');
+                lines.push('import ClaFi.Core.Context.AppContext;');
+                lines.push('import ClaFi.Core.Foundation;');
+                lines.push('import ClaFi.Platform.Windows;', '');
+                lines.push('// The entry point: the platform\'s parameters, the application, and the form it runs.');
+                lines.push('int __stdcall wWinMain(HINSTANCE hInstance, HINSTANCE, wchar_t*, int)');
+                lines.push('{');
+                lines.push('    using namespace ClaFi;');
+                lines.push('');
+                lines.push('    Win32Application app{');
+                lines.push('        Win32Platform::Params{ hInstance },');
+                lines.push('        ' + moduleNamespace() + '::' + propertiesFunction() + '(),');
+                lines.push('        Dom::Dt::Section{}');
+                lines.push('    };');
+                lines.push('');
+                lines.push('    const auto form = app.createDialog<' + moduleNamespace() + '::MainForm>();');
+                lines.push('    form->setConfigName(AppContext::k_mainFormName);');
+                lines.push('    return form->execute();');
+            }
+            lines.push('}');
+            return lines.join('\n');
+        }
+
+        function waylandEntry() {
+            var lines = [];
+            lines.push('import ' + moduleNamespace() + '.Main;', '');
+            if (isConsole()) {
+                lines.push('import ClaFi.Core.System.Utils;');
+                lines.push('import ClaFi.Platform.Linux.ConsoleApplication;', '');
+                lines.push('import ClaFi.StdLib;', '');
+                lines.push('// The arguments arrive as UTF-8 and are widened once, here.');
+                lines.push('int main(int argumentCount, char** argumentList)');
+                lines.push('{');
+                lines.push('    std::vector<std::wstring> arguments{};');
+                lines.push('    for (int index = 1; index < argumentCount; ++index)');
+                lines.push('        arguments.push_back(ClaFi::fromUtf8(argumentList[index]));');
+                lines.push('');
+                lines.push('    ClaFi::LinuxConsoleApplication app{');
+                lines.push('        ' + moduleNamespace() + '::' + propertiesFunction() + '(),');
+                lines.push('        {},');
+                lines.push('        std::move(arguments)');
+                lines.push('    };');
+                lines.push('');
+                lines.push('    return ' + moduleNamespace() + '::' + runFunction() + '(app);');
+            } else {
+                lines.push('import ClaFi.App.WindowApplication;');
+                lines.push('import ClaFi.Core.Context.AppContext;');
+                lines.push('import ClaFi.Core.Foundation;');
+                lines.push('import ClaFi.Platform.Wayland;', '');
+                lines.push('// The entry point: the same application and form over the Wayland platform.');
+                lines.push('int main()');
+                lines.push('{');
+                lines.push('    using namespace ClaFi;');
+                lines.push('');
+                lines.push('    WaylandApplication app{');
+                lines.push('        WaylandPlatform::Params{},');
+                lines.push('        ' + moduleNamespace() + '::' + propertiesFunction() + '(),');
+                lines.push('        Dom::Dt::Section{}');
+                lines.push('    };');
+                lines.push('');
+                lines.push('    const auto form = app.createDialog<' + moduleNamespace() + '::MainForm>();');
+                lines.push('    form->setConfigName(AppContext::k_mainFormName);');
+                lines.push('    return form->execute();');
+            }
+            lines.push('}');
+            return lines.join('\n');
+        }
+
+        function cmakeLists() {
+            var name = state.name;
+            var lines = [];
+            lines.push('# ' + name + ' - an application built against the ClaFi clone beside this folder.');
+            lines.push('cmake_minimum_required(VERSION 4.3)');
+            lines.push('');
+            lines.push('# libc++, for import std, and the same thread support in every module.');
+            lines.push('set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -pthread")');
+            lines.push('');
+            lines.push('# The gate that turns import std on. The token follows the feature behavior; a newer CMake may need its own here.');
+            lines.push('if(CMAKE_VERSION VERSION_LESS 4.4)');
+            lines.push('    set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "451f2fe2-a8a2-47c3-bc32-94786d8fc91b")');
+            lines.push('else()');
+            lines.push('    set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "f35a9ac6-8463-4d38-8eec-5d6008153e7d")');
+            lines.push('endif()');
+            lines.push('');
+            lines.push('project(' + name + ' CXX)');
+            lines.push('');
+            lines.push('if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")');
+            lines.push('    message(FATAL_ERROR "ClaFi builds with clang++. Configure with -DCMAKE_CXX_COMPILER=clang++.")');
+            lines.push('endif()');
+            lines.push('');
+            lines.push('set(CMAKE_CXX_STANDARD 23)');
+            lines.push('set(CMAKE_CXX_STANDARD_REQUIRED ON)');
+            lines.push('set(CMAKE_CXX_EXTENSIONS OFF)');
+            lines.push('set(CMAKE_CXX_MODULE_STD ON)');
+            lines.push('set(CMAKE_EXPORT_COMPILE_COMMANDS ON)');
+            lines.push('');
+            lines.push('# A build type always: the tree is a software rasterizer, and an unoptimized build is much slower.');
+            lines.push('if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)');
+            lines.push('    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)');
+            lines.push('endif()');
+            lines.push('');
+            lines.push('# The clone. Point this at the ClaFi folder, or pass -DCLAFI_ROOT=...');
+            lines.push('set(CLAFI_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../ClaFi" CACHE PATH "The ClaFi clone")');
+            lines.push('get_filename_component(clafi_root "${CLAFI_ROOT}" ABSOLUTE BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")');
+            lines.push('if(NOT EXISTS "${clafi_root}/CMakeLists.txt")');
+            lines.push('    message(FATAL_ERROR "ClaFi was not found at ${clafi_root}. Set CLAFI_ROOT to the clone.")');
+            lines.push('endif()');
+            lines.push('set(CLAFI_PLATFORM "wayland" CACHE STRING "Display-server backend")');
+            lines.push('add_subdirectory("${clafi_root}" clafi EXCLUDE_FROM_ALL)');
+            lines.push('');
+            lines.push('add_executable(' + name + ' ' + name + '_Wayland.cpp)');
+            lines.push('target_sources(' + name + ' PRIVATE FILE_SET CXX_MODULES FILES');
+            lines.push('    ' + name + '_Main.cppm)');
+            lines.push('target_link_libraries(' + name + ' PRIVATE ClaFi)');
+            lines.push('target_compile_options(' + name + ' PRIVATE -mavx2 -mfma -pthread -Wno-unknown-pragmas)');
+            return lines.join('\n');
+        }
+
+        function fileList() {
+            var files = [];
+            files.push({
+                name: state.name + '_Main.cppm',
+                code: mainModule(),
+                lang: 'cpp',
+                note: isConsole()
+                    ? 'The application name and the console entry logic.'
+                    : 'The application and its form class. The controls are members.'
+            });
+            if (windowsBuild()) {
+                files.push({
+                    name: state.name + '_Win32.cpp',
+                    code: win32Entry(),
+                    lang: 'cpp',
+                    note: 'The Windows entry point.'
+                });
+            }
+            if (linuxBuild()) {
+                files.push({
+                    name: state.name + '_Wayland.cpp',
+                    code: waylandEntry(),
+                    lang: 'cpp',
+                    note: 'The Linux entry point.'
+                });
+            }
+            if (linuxBuild()) {
+                files.push({
+                    name: 'CMakeLists.txt',
+                    code: cmakeLists(),
+                    lang: 'cmake',
+                    note: 'The Linux build. It adds the clone as a subdirectory and links the application to it. CLAFI_ROOT is ../ClaFi here.'
+                });
+            }
+            return files;
+        }
+
+        // ---------------------------------------------------------------------
+        // Syntax coloring and code cards.
+
+        var KEYWORDS = {
+            auto: 1, bool: 1, break: 1, case: 1, catch: 1, class: 1, const: 1, constexpr: 1,
+            continue: 1, default: 1, delete: 1, do: 1, else: 1, enum: 1, explicit: 1, export: 1,
+            extern: 1, false: 1, float: 1, for: 1, if: 1, import: 1, inline: 1, int: 1,
+            module: 1, namespace: 1, new: 1, noexcept: 1, nullptr: 1, operator: 1, private: 1,
+            protected: 1, public: 1, return: 1, sizeof: 1, static: 1, struct: 1, switch: 1,
+            template: 1, this: 1, throw: 1, true: 1, try: 1, typename: 1, using: 1, virtual: 1,
+            void: 1, while: 1
+        };
+
+        var TOKEN = /(\/\/[^\n]*)|(L?"(?:[^"\\]|\\.)*")|([0-9][0-9A-Za-z_.]*)|([A-Za-z_][A-Za-z0-9_]*)|(\s+)|([^A-Za-z0-9_\s]+)/g;
+
+        function highlightCpp(code) {
+            var out = '';
+            var match;
+            TOKEN.lastIndex = 0;
+            while ((match = TOKEN.exec(code)) !== null) {
+                if (match[1]) {
+                    out += '<span class="cm">' + escapeHtml(match[1]) + '</span>';
+                } else if (match[2]) {
+                    out += '<span class="st">' + escapeHtml(match[2]) + '</span>';
+                } else if (match[3]) {
+                    out += escapeHtml(match[3]);
+                } else if (match[4]) {
+                    var word = match[4];
+                    if (KEYWORDS[word]) {
+                        out += '<span class="kw">' + word + '</span>';
+                    } else if (/^[A-Z]/.test(word)) {
+                        out += '<span class="tp">' + word + '</span>';
+                    } else {
+                        out += word;
+                    }
+                } else {
+                    out += escapeHtml(match[0]);
+                }
+            }
+            return out;
+        }
+
+        function codeCard(file) {
+            var body = file.lang === 'cpp' ? highlightCpp(file.code) : escapeHtml(file.code);
+            var shownPath = file.path || file.name;
+            return '<div class="file">' +
+                '<div class="file-head">' +
+                '<span class="file-name">' + escapeHtml(shownPath) + '</span>' +
+                '<button class="copy" type="button">Copy</button>' +
+                '</div>' +
+                '<pre><code>' + body + '</code></pre>' +
+                '</div>';
+        }
+
+        function shellBlock(text) {
+            return '<pre><code>' + escapeHtml(text) + '</code></pre>';
+        }
+
+        // ---------------------------------------------------------------------
+        // The rendered instructions.
+
+        function platformLabel() {
+            if (state.platform === 'both') {
+                return 'Windows and Linux';
+            }
+            return state.platform === 'linux' ? 'Linux' : 'Windows';
+        }
+
+        function buildLabel() {
+            if (windowsBuild() && linuxBuild()) {
+                return (state.winTool === 'msbuild' ? 'MSBuild' : 'Visual Studio')
+                    + ' on Windows, CMake on Linux';
+            }
+            if (windowsBuild()) {
+                return state.winTool === 'msbuild' ? 'MSBuild' : 'Visual Studio';
+            }
+            return 'CMake and clang';
+        }
+
+        function elementLabel() {
+            if (isConsole()) {
+                return 'none';
+            }
+            var chosen = state.elements.filter(function (element) {
+                return ELEMENT_LABELS[element];
+            }).map(function (element) {
+                return ELEMENT_LABELS[element];
+            });
+            if (!chosen.length) {
+                return 'a heading and a button';
+            }
+            return chosen.join(', ');
+        }
+
+        function renderResult(scroll) {
+            var result = $('result-box');
+            if (!result) {
+                return;
+            }
+            var files = fileList();
+            var tree = [];
+            tree.push('workspace/');
+            tree.push('  ClaFi/');
+            tree.push('  ' + state.name + '/');
+            files.forEach(function (file) {
+                tree.push('    ' + file.name);
+            });
+
+            var html = [];
+            var summaryParts = [platformLabel(), buildLabel(), TYPE_LABELS[state.type]];
+            if (!isConsole()) {
+                summaryParts.push(elementLabel());
+            }
+            html.push('<div class="result-bar">');
+            html.push('<p><strong>' + escapeHtml(state.name) + '</strong> for ' +
+                escapeHtml(summaryParts.join(' \u00b7 ')) + '</p>');
+            html.push('<button class="link-button" type="button" id="change-choices">Change the choices</button>');
+            html.push('</div>');
+
+            html.push('<div class="step">');
+            html.push('<h3 class="step-title"><span class="step-num">1</span>Clone the framework</h3>');
+            html.push('<p>Clone the repository into the folder that will contain the clone and the application. The clone can be anywhere; the build files contain its path.</p>');
+            html.push(shellBlock('git clone https://github.com/clafi-fw/cpp.git ClaFi'));
+            html.push('</div>');
+
+            html.push('<div class="step">');
+            html.push('<h3 class="step-title"><span class="step-num">2</span>Make the application</h3>');
+            html.push('<p>Create a folder for the application. The framework\'s own applications are inside the clone. In this example the clone and the application are siblings.</p>');
+            html.push(shellBlock(tree.join('\n')));
+
+            var moduleFile = files.filter(function (file) {
+                return file.name === state.name + '_Main.cppm';
+            })[0];
+
+            if (windowsBuild()) {
+                var winEntryFile = files.filter(function (file) {
+                    return file.name === state.name + '_Win32.cpp';
+                })[0];
+                html.push('<h4>The Visual Studio project</h4>');
+                html.push('<p>Create an empty Visual Studio project in the application folder. The shared items project adds the framework sources to it.</p>');
+                html.push('<ol class="uisteps">');
+                html.push('<li><strong>Create the project.</strong> Select <em>File</em> &gt; <em>New</em> &gt; <em>Project</em> and choose <em>Empty Project</em>. Set the name to <code>' + escapeHtml(state.name) + '</code>, set the location to the application folder, and enable <em>Place solution and project in the same directory</em>. Create the project.</li>');
+                html.push('<li><strong>Add the module.</strong> Right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ Module Interface Unit</em>, name it <code>' + escapeHtml(state.name) + '_Main.cppm</code>, and click Add. Replace its contents with this:' + codeCard(moduleFile) + '</li>');
+                html.push('<li><strong>Add the entry point.</strong> Right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ File (.cpp)</em>, name it <code>' + escapeHtml(state.name) + '_Win32.cpp</code>, and click Add. Replace its contents with this:' + codeCard(winEntryFile) + '</li>');
+                html.push('<li><strong>Add the framework\'s shared items.</strong> Right-click the solution, choose <em>Add</em> &gt; <em>Existing Project...</em>, and select <code>&lt;clone&gt;\\Visual Studio Shared Items\\ClaFi.vcxitems</code>. This adds the framework to the solution; the module imports are available after the reference in the next step.</li>');
+                html.push('<li><strong>Reference the framework.</strong> Right-click the <code>' + escapeHtml(state.name) + '</code> project, choose <em>Add</em> &gt; <em>Reference...</em>, check <code>ClaFi</code> and click OK.</li>');
+                html.push('</ol>');
+                html.push('<p class="small">Set the publisher, description and version in the module properties.</p>');
+            }
+
+            if (linuxBuild()) {
+                var waylandEntryFile = files.filter(function (file) {
+                    return file.name === state.name + '_Wayland.cpp';
+                })[0];
+                var cmakeFile = files.filter(function (file) {
+                    return file.name === 'CMakeLists.txt';
+                })[0];
+                html.push('<h4>The Linux files</h4>');
+                if (windowsBuild()) {
+                    html.push('<p>The Linux build uses the same module. Add <code>' + escapeHtml(state.name) + '_Wayland.cpp</code> in the application folder with this:</p>');
+                    html.push(codeCard(waylandEntryFile));
+                    html.push('<p>Save this <code>CMakeLists.txt</code> beside it:</p>');
+                    html.push(codeCard(cmakeFile));
+                } else {
+                    html.push('<p>Save these files in the application folder:</p>');
+                    html.push('<p class="run-note">' + escapeHtml(moduleFile.note) + '</p>');
+                    html.push(codeCard(moduleFile));
+                    html.push('<p class="run-note">' + escapeHtml(waylandEntryFile.note) + '</p>');
+                    html.push(codeCard(waylandEntryFile));
+                    html.push('<p class="run-note">' + escapeHtml(cmakeFile.note) + '</p>');
+                    html.push(codeCard(cmakeFile));
+                    html.push('<p class="small">Set the publisher, description and version in the module properties.</p>');
+                }
+            }
+            html.push('</div>');
+
+            html.push('<div class="step">');
+            html.push('<h3 class="step-title"><span class="step-num">3</span>Build it</h3>');
+            if (windowsBuild()) {
+                html.push('<h4>The Windows build</h4>');
+                html.push('<p>Open the project properties (right-click the project &gt; <em>Properties</em>) and select <em>All Configurations</em> and <em>All Platforms</em>. Set the following:</p>');
+                html.push('<table class="settings">');
+                html.push('<tr><th>Property page</th><th>Setting</th><th>Value</th></tr>');
+                html.push('<tr><td>Configuration Properties &gt; Advanced</td><td>Character Set</td><td>Use Unicode Character Set</td></tr>');
+                html.push('<tr><td>C/C++ &gt; General</td><td>Scan Sources for Module Dependencies</td><td>Yes</td></tr>');
+                html.push('<tr><td>C/C++ &gt; General</td><td>Translate Includes to Imports</td><td>No</td></tr>');
+                html.push('<tr><td>C/C++ &gt; General</td><td>Multi-processor Compilation</td><td>Yes</td></tr>');
+                html.push('<tr><td>C/C++ &gt; Language</td><td>C++ Language Standard</td><td>ISO C++20 Standard</td></tr>');
+                html.push('<tr><td>C/C++ &gt; Language</td><td>Enable Run-Time Type Information</td><td>No</td></tr>');
+                html.push('<tr><td>C/C++ &gt; Code Generation</td><td>Floating Point Model</td><td>Fast</td></tr>');
+                html.push('<tr><td>C/C++ &gt; Command Line</td><td>Additional Options</td><td><code>/bigobj /utf-8</code></td></tr>');
+                html.push('<tr><td>Linker &gt; System</td><td>SubSystem</td><td>' + (isConsole() ? 'Console' : 'Windows') + '</td></tr>');
+                html.push('<tr><td>Manifest Tool &gt; Input and Output</td><td>DPI Awareness</td><td>Per Monitor High DPI Aware</td></tr>');
+                html.push('</table>');
+                html.push('<p class="small"><em>Scan Sources for Module Dependencies</em> builds the <code>std</code> module automatically. Leave <em>Build ISO C++23 Standard Library Modules</em> off. For a Debug build, set <em>C/C++ &gt; General &gt; Debug Information Format</em> to <em>C7 compatible (/Z7)</em>.</p>');
+                if (state.winTool === 'msbuild') {
+                    html.push('<p>From a <em>Developer PowerShell for Visual Studio</em>, in the application folder:</p>');
+                    html.push(shellBlock('msbuild ' + state.name + '.vcxproj /p:Configuration=Release /p:Platform=x64 /m'));
+                } else {
+                    html.push('<p>Select <em>Release</em> and <em>x64</em> in the toolbar, then <em>Build</em> &gt; <em>Build Solution</em> (<span class="keys">Ctrl+Shift+B</span>).</p>');
+                }
+            }
+            if (linuxBuild()) {
+                html.push('<h4>The Linux build</h4>');
+                html.push('<p>If the clone is not <code>../ClaFi</code>, change <code>CLAFI_ROOT</code> in <code>CMakeLists.txt</code>, or pass <code>-DCLAFI_ROOT=&lt;path to the clone&gt;</code>.</p>');
+                html.push('<p>Configure and build from the application folder:</p>');
+                html.push(shellBlock('cmake -S . -B build -G Ninja -DCLAFI_PLATFORM=wayland \\\n' +
+                    '      -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release\n' +
+                    'cmake --build build --target ' + state.name));
+            }
+            if (state.platform === 'both' && !linuxBuild()) {
+                html.push('<div class="info small">These choices build only the Windows application. The IDE and compiler step can add the Linux build.</div>');
+            }
+            html.push('<p class="small">The first build compiles the entire framework and may take some minutes. Later builds compile only changed files.</p>');
+            html.push('</div>');
+
+            html.push('<div class="step">');
+            html.push('<h3 class="step-title"><span class="step-num">4</span>Run it</h3>');
+            var bothBuilds = windowsBuild() && linuxBuild();
+            if (windowsBuild()) {
+                if (bothBuilds) {
+                    html.push('<p class="run-note">Windows:</p>');
+                }
+                html.push(shellBlock('.\\x64\\Release\\' + state.name + '.exe'));
+            }
+            if (linuxBuild()) {
+                if (bothBuilds) {
+                    html.push('<p class="run-note">Linux:</p>');
+                }
+                html.push(shellBlock('./build/' + state.name));
+            }
+            if (isConsole()) {
+                html.push('<p>The program supports <code>--help</code> and <code>--version</code> and otherwise prints its output.</p>');
+            } else {
+                html.push('<p>A window opens with the application name in its title bar. '
+                    + (has('menu') ? 'The button at the left opens the application menu. ' : '')
+                    + 'The body contains the selected controls, and the Say hello button opens a message dialog. '
+                    + (has('answers') ? 'OK and Cancel close the window.' : 'The close button in the title bar closes the window.')
+                    + '</p>');
+            }
+            html.push('</div>');
+
+            result.innerHTML = html.join('\n');
+            if (scroll) {
+                result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // Reading the form back into the state.
+
+        function readState() {
+            var platform = document.querySelector('input[name="platform"]:checked');
+            var winTool = document.querySelector('input[name="win-tool"]:checked');
+            var type = document.querySelector('input[name="type"]:checked');
+            var cmake = $('use-cmake');
+            var nameInput = $('app-name');
+
+            if (platform) {
+                state.platform = platform.value;
+            }
+            if (winTool) {
+                state.winTool = winTool.value;
+            } else if (windowsBuild() && state.winTool !== 'msbuild') {
+                state.winTool = 'vs';
+            }
+            if (state.platform === 'linux') {
+                state.cmake = true;
+            } else if (state.platform === 'windows') {
+                state.cmake = false;
+            } else if (cmake) {
+                state.cmake = cmake.checked;
+            }
+            if (type) {
+                state.type = type.value;
+            }
+            state.name = sanitizeName(nameInput ? nameInput.value : state.name);
+            state.elements = Array.prototype.map.call(
+                document.querySelectorAll('input[name="element"]:checked'),
+                function (input) { return input.value; }
+            );
+        }
+
+        function syncChoiceStyles() {
+            Array.prototype.forEach.call(document.querySelectorAll('.choice, .check'), function (label) {
+                var input = label.querySelector('input');
+                label.classList.toggle('selected', !!(input && input.checked));
+            });
+        }
+
+        function syncToolAvailability() {
+            var groups = document.querySelectorAll('#tool-choices .choice-group');
+            Array.prototype.forEach.call(groups, function (group) {
+                var forPlatform = group.getAttribute('data-for');
+                var visible = (forPlatform === 'windows') ? windowsBuild() : (state.platform !== 'windows');
+                group.hidden = !visible;
+            });
+            var cmake = $('use-cmake');
+            if (cmake) {
+                if (state.platform === 'linux') {
+                    cmake.checked = true;
+                    cmake.disabled = true;
+                } else {
+                    cmake.disabled = false;
+                }
+            }
+            var note = $('tool-note');
+            var lead = $('tool-lead');
+            if (lead) {
+                if (state.platform === 'both') {
+                    lead.textContent = 'The Windows build uses Visual Studio; the Linux build uses CMake. Select the Windows workflow and uncheck the Linux build if you only need Windows.';
+                } else if (state.platform === 'linux') {
+                    lead.textContent = 'The Linux build uses CMake, Ninja and clang, and writes a compile database for editors that read it.';
+                } else {
+                    lead.textContent = 'The Windows build is a Visual Studio project. Select the IDE or the MSBuild command line.';
+                }
+            }
+            if (state.platform === 'linux') {
+                note.innerHTML = '<strong>Ninja is required</strong> because it scans C++20 module dependencies. clang requires <code>-stdlib=libc++</code> to locate the <code>std</code> module imported by <code>ClaFi.StdLib</code>.';
+            } else if (state.platform === 'both') {
+                note.innerHTML = 'The Windows build is Visual Studio\'s, and the Linux build is CMake\'s. Uncheck the Linux build to exclude it from these instructions.';
+            } else {
+                note.innerHTML = 'The Windows build is a Visual Studio project. MSVC compiles the framework\'s modules directly.';
+            }
+        }
+
+        function syncNameNote() {
+            var input = $('app-name');
+            var note = $('name-note');
+            if (!input || !note) {
+                return;
+            }
+            var typed = input.value;
+            var clean = sanitizeName(typed);
+            if (typed !== clean) {
+                var base = clean.replace(/App$/, '');
+                if (RESERVED_TARGETS.indexOf(base) !== -1 && /App$/.test(clean)) {
+                    note.textContent = 'The name becomes ' + clean + ' because ' + base + ' is one of the framework\'s targets.';
+                } else {
+                    note.textContent = 'The name becomes ' + clean + '. Identifiers allow letters, digits and underscores and start with a capital.';
+                }
+            } else if (!typed) {
+                note.textContent = 'An empty name becomes Hello.';
+            } else {
+                note.textContent = 'Use letters, digits and underscores. The name is used for the module, the executable and the window title.';
+            }
+        }
+
+        function syncConsoleNote() {
+            var note = $('console-note');
+            var choices = $('element-choices');
+            if (!note || !choices) {
+                return;
+            }
+            note.hidden = !isConsole();
+            choices.style.opacity = isConsole() ? '0.4' : '1';
+            Array.prototype.forEach.call(choices.querySelectorAll('input'), function (input) {
+                input.disabled = isConsole();
+            });
+        }
+
+        function syncWizard() {
+            syncChoiceStyles();
+            syncToolAvailability();
+            syncConsoleNote();
+            syncNameNote();
+        }
+
+        function updateHash() {
+            if (!keepHash) {
+                return;
+            }
+            var params = [
+                'name=' + encodeURIComponent(state.name),
+                'platform=' + state.platform,
+                'win=' + state.winTool,
+                'cmake=' + (state.cmake ? '1' : '0'),
+                'type=' + state.type,
+                'elements=' + state.elements.join(',')
+            ];
+            if (window.history && window.history.replaceState) {
+                try {
+                    window.history.replaceState(null, '', '#' + params.join('&'));
+                } catch (error) {
+                    /* A file: page may refuse it. The choices still work. */
+                }
+            }
+        }
+
+        function readHash() {
+            var hash = window.location.hash.replace(/^#/, '');
+            if (!hash || hash.indexOf('=') === -1) {
+                return false;
+            }
+            var safeDecode = function (text) {
+                try {
+                    return decodeURIComponent(text);
+                } catch (error) {
+                    return text;
+                }
+            };
+            var found = {};
+            hash.split('&').forEach(function (pair) {
+                var parts = pair.split('=');
+                if (parts.length === 2) {
+                    found[parts[0]] = safeDecode(parts[1]);
+                }
+            });
+            if (found.name) {
+                state.name = sanitizeName(found.name);
+                var nameInput = $('app-name');
+                if (nameInput) {
+                    nameInput.value = state.name;
+                }
+            }
+            if (found.platform === 'windows' || found.platform === 'linux' || found.platform === 'both') {
+                state.platform = found.platform;
+                var platformInput = document.querySelector('input[name="platform"][value="' + state.platform + '"]');
+                if (platformInput) {
+                    platformInput.checked = true;
+                }
+            }
+            if (found.win === 'vs' || found.win === 'msbuild') {
+                state.winTool = found.win;
+                var winInput = document.querySelector('input[name="win-tool"][value="' + state.winTool + '"]');
+                if (winInput) {
+                    winInput.checked = true;
+                }
+            }
+            if (found.cmake !== undefined) {
+                state.cmake = found.cmake === '1';
+                var cmake = $('use-cmake');
+                if (cmake) {
+                    cmake.checked = state.cmake;
+                }
+            }
+            if (found.type === 'window' || found.type === 'pages' || found.type === 'console') {
+                state.type = found.type;
+                var typeInput = document.querySelector('input[name="type"][value="' + state.type + '"]');
+                if (typeInput) {
+                    typeInput.checked = true;
+                }
+            }
+            if (found.elements !== undefined) {
+                var chosen = found.elements ? found.elements.split(',') : [];
+                state.elements = chosen.filter(function (element) {
+                    return ELEMENT_LABELS[element] !== undefined;
+                });
+                Array.prototype.forEach.call(document.querySelectorAll('input[name="element"]'), function (input) {
+                    input.checked = state.elements.indexOf(input.value) !== -1;
+                });
+            }
+            if (state.platform === 'linux') {
+                state.cmake = true;
+                var linuxCmake = $('use-cmake');
+                if (linuxCmake) {
+                    linuxCmake.checked = true;
+                }
+            }
+            keepHash = true;
+            return true;
+        }
+
+        // ---------------------------------------------------------------------
+        // The wizard's steps.
+
+        var currentStep = 1;
+        var LAST_STEP = 4;
+        // Whether the address bar carries the choices. A link to a section keeps its anchor until
+        // the reader changes a choice.
+        var keepHash = false;
+
+        function showStep(step) {
+            currentStep = Math.min(Math.max(step, 1), LAST_STEP);
+            for (var index = 1; index <= LAST_STEP; ++index) {
+                var panel = $('wstep-' + index);
+                var tab = $('wtab-' + index);
+                if (panel) {
+                    panel.hidden = index !== currentStep;
+                }
+                if (tab) {
+                    tab.setAttribute('aria-selected', index === currentStep ? 'true' : 'false');
+                    tab.tabIndex = index === currentStep ? 0 : -1;
+                }
+            }
+            $('w-back').disabled = currentStep === 1;
+            $('w-next').textContent = currentStep === LAST_STEP ? 'Show the instructions' : 'Next';
+            $('w-count').textContent = 'Step ' + currentStep + ' of ' + LAST_STEP;
+        }
+
+        function refresh() {
+            readState();
+            updateHash();
+            syncWizard();
+            renderResult(false);
+        }
+
+        function init() {
+            readHash();
+            showStep(1);
+            refresh();
+
+            var wizard = $('wizard-box');
+            wizard.addEventListener('change', function (event) {
+                if (event.target && event.target.id === 'app-name') {
+                    return;
+                }
+                keepHash = true;
+                refresh();
+            });
+            wizard.addEventListener('input', function (event) {
+                if (event.target && event.target.id === 'app-name') {
+                    keepHash = true;
+                    refresh();
+                }
+            });
+
+            $('wtab-1').addEventListener('click', function () { showStep(1); });
+            $('wtab-2').addEventListener('click', function () { showStep(2); });
+            $('wtab-3').addEventListener('click', function () { showStep(3); });
+            $('wtab-4').addEventListener('click', function () { showStep(4); });
+            $('w-back').addEventListener('click', function () { showStep(currentStep - 1); });
+            $('w-next').addEventListener('click', function () {
+                if (currentStep === LAST_STEP) {
+                    keepHash = true;
+                    refresh();
+                    renderResult(true);
+                    return;
+                }
+                showStep(currentStep + 1);
+            });
+
+            document.addEventListener('click', function (event) {
+                var target = event.target;
+                if (target && target.classList && target.classList.contains('copy')) {
+                    var file = target.closest('.file');
+                    var code = file ? file.querySelector('code') : null;
+                    if (!code) {
+                        return;
+                    }
+                    var text = code.textContent;
+                    var done = function () {
+                        target.textContent = 'Copied';
+                        window.setTimeout(function () { target.textContent = 'Copy'; }, 1400);
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(done, function () {
+                            fallbackCopy(text);
+                            done();
+                        });
+                    } else {
+                        fallbackCopy(text);
+                        done();
+                    }
+                    return;
+                }
+                if (target && target.id === 'change-choices') {
+                    $('wizard-box').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.target && event.target.classList && event.target.classList.contains('wizard-tab')) {
+                    var step = Number(event.target.getAttribute('data-step'));
+                    if (event.key === 'ArrowRight') {
+                        showStep(step + 1);
+                        $('wtab-' + currentStep).focus();
+                        event.preventDefault();
+                    } else if (event.key === 'ArrowLeft') {
+                        showStep(step - 1);
+                        $('wtab-' + currentStep).focus();
+                        event.preventDefault();
+                    }
+                }
+            });
+        }
+
+        function fallbackCopy(text) {
+            var area = document.createElement('textarea');
+            area.value = text;
+            area.setAttribute('readonly', '');
+            area.style.position = 'fixed';
+            area.style.opacity = '0';
+            document.body.appendChild(area);
+            area.select();
+            try {
+                document.execCommand('copy');
+            } catch (error) {
+                /* Nothing else to try. */
+            }
+            document.body.removeChild(area);
+        }
+
+        // A small surface for a link that states its choices, and for checking the templates
+        // without a browser: the state, and the files it produces.
+        window.ClaFiQuickStart = {
+            state: state,
+            setState: function (patch) {
+                Object.assign(state, patch);
+                state.name = sanitizeName(state.name);
+            },
+            files: function () {
+                return fileList();
+            },
+            render: function () {
+                renderResult(false);
+            }
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
+    </script>
+</body>
+</html>
