@@ -358,6 +358,10 @@ namespace ClaFi
         TooltipForm* tooltip = m_tooltip.m_form.get();
         if (tooltip && movedControl.containsNested(tooltip->control()))
             tooltip->followPopupTarget2();
+        // The overflown text stands on the words, and travels with them.
+        OverTextForm* overText = m_tooltip.m_overTextForm.get();
+        if (overText && movedControl.containsNested(overText->control()))
+            overText->followPopupTarget2();
     }
 
     void FormBase::controlHidden(const Control& control)

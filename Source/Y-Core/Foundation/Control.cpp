@@ -1916,51 +1916,46 @@ namespace ClaFi
 
     void Control::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
+        // **The overflown text is not asked here.** A control's cut text is repeated by a window
+        // of its own, which asks the control through overTextAnswer - see Tooltip.
         emitEvent(event);
-        // A handler that produced text wins over the trimmed-text fallback below.
-        if (!event.text.empty())
-            return;
-        // The fallback stands in for text this control has cut, so it starts where that text
-        // is and nowhere else. A tooltip given to the control is about the control and starts
-        // anywhere inside it, which is why the pointer test guards this branch alone.
-        // isTextHovered names **this** control, so a parent reached by the walk up from the hovered
-        // one answers with a tooltip of its own or with nothing.
+    }
+
+    bool Control::overTextAnswer(OverTextAnswer& answer)
+    {
+        // **The words this control has cut stand in for exactly those words**, so the answer
+        // starts where they are and nowhere else. isTextHovered names **this** control, so a
+        // parent reached by the walk up from the hovered one answers nothing.
         //
-        // A scroll body is left out of it. Its text is reached by scrolling rather than
-        // withheld, and one row cut against the body's width would be answered with the whole
-        // of the text the body holds.
-        if ((cfTextTrimmed & m_flags) && isTextHovered() && !isOnScrollBox())
-        {
-            event.placement = FormPlacement::OverText;
-            event.wordWrap = wordWrap();
-            if (const TextFormat* format = textFormat())
-                event.format = *format;
-            // The rect below starts at the block an anchor moved, and the lines stand in it.
-            if (horizontalTextAnchor() != HorizontalTextAnchor::None)
-                event.textAnchor = HorizontalTextAnchor::Left;
-            // The tooltip reads its own text, so a named answer is put into it. Assigning what
-            // the buffer already holds to itself is the gather having built one, and costs the
-            // comparison in Text::operator= and nothing else.
-            event.text = adjustedText(event.formContext(), event.text, EventPhase::Paint);
-            // **The tooltip stands on the glyphs, not on the box they were given.** An anchor moves
-            // the block inside that box - a line centered in a title bar sits half the band below
-            // its top - and the placement lands the tooltip's own first glyph on this rect's top
-            // left. The width is the box's, which is the width the lines were broken at and what
-            // TooltipForm breaks its own at.
-            const FloatRect textRect = textBounds(event.formContext(), boundsInForm());
-            const ScaledSize drawn = s_textEngine.measureText(
-                event.formContext(),
-                event.text,
-                textRect.dimensions(),
-                editProps() != nullptr,
-                wordWrap(),
-                textFormat()
-            );
-            event.anchorRect = FloatRect::FromDimensions(
-                anchoredOrigin(textRect, drawn, textAnchor()),
-                { textRect.width(), drawn.y }
-            );
-        }
+        // A scroll body is left out of it. Its text is reached by scrolling rather than withheld,
+        // and one row cut against the body's width would be answered with the whole of the text
+        // the body holds.
+        if (!(cfTextTrimmed & m_flags) || !isTextHovered() || isOnScrollBox())
+            return false;
+        const FormContext& context = form().context();
+        answer.text = adjustedText(context, answer.text, EventPhase::Paint);
+        answer.wordWrap = wordWrap();
+        if (const TextFormat* format = textFormat())
+            answer.format = *format;
+        // The rect below starts at the block an anchor moved, and the lines stand in it.
+        if (horizontalTextAnchor() != HorizontalTextAnchor::None)
+            answer.textAnchor = HorizontalTextAnchor::Left;
+        // **The window stands on the glyphs, not on the box they were given.** An anchor moves the
+        // block inside that box - a line centered in a title bar sits half the band below its top -
+        // and the placement lands the window's own first glyph on this rect's top left. The width
+        // is the box's, which is the width the lines were broken at.
+        const FloatRect textRect = textBounds(context, boundsInForm());
+        const ScaledSize drawn = s_textEngine.measureText(
+            context,
+            answer.text,
+            textRect.dimensions(),
+            editProps() != nullptr,
+            wordWrap(),
+            textFormat());
+        answer.anchorRect = FloatRect::FromDimensions(
+            anchoredOrigin(textRect, drawn, textAnchor()),
+            { textRect.width(), drawn.y });
+        return !answer.text.empty();
     }
 
     void Control::adjustText(AdjustTextEvent& event) const

@@ -31,7 +31,7 @@ Control returns none - see TextFormat.
 - WithTextLayout states it to the layout it holds.
 - A TextBox lays its placeholder out over it.
 - An in-place editor lays its text out over the format of the control it covers.
-- An over-text tooltip repeats it - AdjustTooltipEvent::format carries it to the tooltip's label.
+- An over-text tooltip repeats it - OverTextAnswer::format carries it to the window.
 
 ## RichControl textFormat
 
@@ -571,8 +571,15 @@ and with neither there is no tooltip.
 - The two sit in `AdjustTooltipEvent::header`, which the presenter fills while a handler writes the
   body.
 
-**An over-text tooltip is a tooltip of its own.** The control's cut text is repeated in a window
-with no caption, broken where the control broke it, and it never takes the header.
+**The overflown text is a window of its own.** A form builds two tooltip windows: the one that says
+a caption and a body, and one that repeats the text a control cut. The second has no caption, no
+body and no event of its own: the control states what it withholds through `overTextAnswer`, and
+the window repeats that layout, uncut, over the words it covers. It stands and comes down on its
+own timer, apart from the tooltip beside it.
+
+**A control inside a scroll box answers nothing.** Its text is reached by scrolling rather than
+withheld, and one row cut against the body's width would be answered with the whole of the text the
+body holds.
 
 **What a tooltip is about follows the controller:**
 
@@ -596,6 +603,25 @@ again, as a popup does. A control scrolled out of view leaves the tooltip where 
 - A caption and a body stand k_partSpacing apart, 6 design units.
 - A tooltip over text repeats the lines the control broke, at the width the control broke them.
 - At most k_maxLines lines show, 20, and the last fades when the text runs on.
+
+## OverTextAnswer
+
+**What a control withholds under the pointer**: the words it cut, the box they were broken in, the
+look they were broken over, and how the window lays them out.
+
+- `text` - the control's own adjusted text, or a cell's.
+- `anchorRect` - where the first glyph stands, in the form's coordinates.
+- `format`, `textAnchor`, `wordWrap` - what the words were laid out over.
+
+## Control overTextAnswer
+
+**A control answers with its own cut text** where three things hold: the text was trimmed in the
+last paint, the pointer stands on it, and the control is not on a scroll box. The words are set in
+the format the control states, and the rect is the box they were drawn in, moved by whatever anchor
+placed them.
+
+**A control that draws something other than its own text answers for what it draws.** A grid row
+answers for the cell under the pointer - see RowBase.
 
 ## Control invalidateTooltip
 

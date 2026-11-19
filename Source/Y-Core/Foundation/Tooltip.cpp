@@ -31,7 +31,14 @@ namespace ClaFi
                 ? nullptr
                 : std::make_unique<TooltipForm>(ownerForm)
         },
-        m_timer{ OnEvent{ [this](TimerEvent&) { showOrHide(nullptr); } } }
+        // The overflown text has a window of its own, built and taken down with the tooltip.
+        m_overTextForm{
+            ownerForm.windowRole() == WindowRole::Tooltip
+                ? nullptr
+                : std::make_unique<OverTextForm>(ownerForm)
+        },
+        m_timer{ OnEvent{ [this](TimerEvent&) { showOrHide(nullptr); } } },
+        m_overTextTimer{ OnEvent{ [this](TimerEvent&) { showOrHideOverText(); } } }
     {
     }
 
@@ -47,9 +54,13 @@ namespace ClaFi
     void Tooltip::destroyForm()
     {
         m_timer.stop();
+        m_overTextTimer.stop();
         if (s_current == this)
             s_current = nullptr;
+        if (s_overTextCurrent == this)
+            s_overTextCurrent = nullptr;
         m_form.reset();
+        m_overTextForm.reset();
     }
 
     void Tooltip::forgetControl(const Control* value)
@@ -60,12 +71,16 @@ namespace ClaFi
             ContextMessage::forget();
         if (control() == value)
             stopAndHide();
+        if (s_overTextCurrent && s_overTextCurrent->m_overTextControl == value)
+            s_overTextCurrent->stopOverText();
     }
 
     // **Asked again in place**, as a tooltip is when the pointer crosses into another zone of its
     // control: a new answer is measured and placed afresh, and no answer at all takes it down.
     void Tooltip::controlTooltipChanged(Control& value)
     {
+        if (s_overTextCurrent && s_overTextCurrent->m_overTextControl == &value)
+            overTextChanged();
         if (control() != &value)
             return;
         s_current->showOrHide(&value);
@@ -82,6 +97,7 @@ namespace ClaFi
         if (!Input::mouse().active())
             return;
         pointedControlChanged();
+        overTextChanged();
     }
 
     void Tooltip::hoveredZoneChanged()
@@ -98,10 +114,12 @@ namespace ClaFi
             if (it == shown)
             {
                 s_current->showOrHide(hovered);
+                overTextChanged();
                 return;
             }
         }
         pointedControlChanged();
+        overTextChanged();
     }
 
     // **The focus has its say while the keyboard alone drives.** A click lands the focus as well,
@@ -110,6 +128,8 @@ namespace ClaFi
     {
         if (Input::mouse().active())
             return;
+        if (s_overTextCurrent)
+            s_overTextCurrent->stopOverText();
         pointedControlChanged();
     }
 
@@ -119,9 +139,9 @@ namespace ClaFi
     void Tooltip::mouseTookOver()
     {
         Control* delegate = Input::focusDelegate();
-        if (delegate && delegate == Input::hoveredControl())
-            return;
-        pointedControlChanged();
+        if (!(delegate && delegate == Input::hoveredControl()))
+            pointedControlChanged();
+        overTextChanged();
     }
 
     Control* Tooltip::pointedControl()
@@ -232,18 +252,6 @@ namespace ClaFi
         FloatRect restingRect = anchorRect;
         restingRect.offset(-control.viewTravelRemaining());
         form.setPlacementRect(restingRect);
-
-        // TODO: move this OverText height adjustment into form.initPlacement().
-        //if (form.placement() == FormPlacement::OverText)
-        //{
-        //    float d = anchorRect.height() - (form.contentHeight() - form.content().scaledPadding().y * 2.0f);
-        //    if (d > 0.0f)
-        //    {
-        //        IntRect frmBounds = form.window().bounds();
-        //        frmBounds.bottom += static_cast<int>(std::ceil(d));
-        //        form.window().setBounds(frmBounds);
-        //    }
-        //}
     }
 
     void Tooltip::showRightNow(Control& target)
@@ -259,18 +267,29 @@ namespace ClaFi
 
     bool Tooltip::stopAndHide()
     {
-        if (!s_current)
-            return false;
-        Tooltip& tooltip = *s_current;
-        s_current = nullptr;
-        tooltip.m_timer.stop();
-        const bool result = tooltip.m_form->stillVisible();
-        tooltip.m_form->setControl(nullptr);
+        bool result = false;
+        if (s_current)
+        {
+            Tooltip& tooltip = *s_current;
+            s_current = nullptr;
+            tooltip.m_timer.stop();
+            result = tooltip.m_form->stillVisible();
+            tooltip.m_form->setControl(nullptr);
+        }
+        if (s_overTextCurrent)
+        {
+            Tooltip& overText = *s_overTextCurrent;
+            result = overText.m_overTextForm->stillVisible() || result;
+            overText.stopOverText();
+        }
         return result;
     }
 
     void Tooltip::handleUserInput()
     {
+        // The overflown text is a tooltip as any other is: the user doing something takes it down.
+        if (s_overTextCurrent)
+            s_overTextCurrent->stopOverText();
         if (!s_current)
             return;
         if (!s_current->m_form->hideOnUserInput())
@@ -337,6 +356,82 @@ namespace ClaFi
     bool Tooltip::stillVisible() const
     {
         return m_form->stillVisible();
+    }
+
+    // **The overflown text is a window of its own, and an answer of its own.** It is not asked
+    // through the tooltip event: the control states what it withholds through overTextAnswer, and
+    // the window repeats that over the words. See Control-Foundation#tooltip
+    void Tooltip::overTextChanged()
+    {
+        Control* hovered = Input::mouse().active() ? Input::hoveredControl() : nullptr;
+        OverTextAnswer answer{};
+        if (!hovered || !hovered->overTextAnswer(answer))
+        {
+            if (s_overTextCurrent)
+                s_overTextCurrent->stopOverText();
+            return;
+        }
+        Tooltip& tooltip = hovered->form().tooltip();
+        if (!tooltip.m_overTextForm)
+            return;
+        if (s_overTextCurrent && s_overTextCurrent != &tooltip)
+            s_overTextCurrent->stopOverText();
+        // **The same words over the same control stand as they are.** A control asked again while
+        // its lines have not moved leaves the window where it is.
+        if (tooltip.m_overTextForm->control() == hovered
+            && tooltip.m_overTextText == answer.text
+            && tooltip.m_overTextForm->stillVisible())
+            return;
+        tooltip.m_overTextText = std::move(answer.text);
+        tooltip.startOverTextWaiting(*hovered);
+    }
+
+    void Tooltip::startOverTextWaiting(Control& control)
+    {
+        m_overTextControl = &control;
+        // The short wait is for a window still on screen, as the tooltip's own is: crossing a run
+        // of cut words reads as one window following the pointer, not a window per word.
+        m_overTextTimer.start(
+            m_overTextForm->stillVisible() ? MilliSeconds{ 110 } : MilliSeconds{ 1000 });
+        s_overTextCurrent = this;
+    }
+
+    void Tooltip::showOrHideOverText()
+    {
+        Control* control = m_overTextControl;
+        if (!control || !m_overTextForm)
+            return;
+        OverTextAnswer answer{};
+        if (!control->overTextAnswer(answer))
+        {
+            stopOverText();
+            return;
+        }
+        // **The control's own layout, uncut**, broken where the control broke it. A text that has
+        // moved since the wait began is set again; one that has not keeps the window it has.
+        if (m_overTextForm->control() != control || m_overTextText != answer.text)
+        {
+            m_overTextText = answer.text;
+            m_overTextForm->setAnswer(*control, answer.text, answer.anchorRect,
+                answer.format, answer.textAnchor, answer.wordWrap);
+        }
+        // Where the control comes to rest rather than where a glide has carried it so far.
+        FloatRect restingRect = answer.anchorRect;
+        restingRect.offset(-control->viewTravelRemaining());
+        m_overTextForm->setPlacementRect(restingRect);
+        m_overTextForm->show();
+        s_overTextCurrent = this;
+    }
+
+    void Tooltip::stopOverText()
+    {
+        m_overTextTimer.stop();
+        m_overTextControl = nullptr;
+        m_overTextText.clear();
+        if (m_overTextForm)
+            m_overTextForm->setControl(nullptr);
+        if (s_overTextCurrent == this)
+            s_overTextCurrent = nullptr;
     }
 
 }

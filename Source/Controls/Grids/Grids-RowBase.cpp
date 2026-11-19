@@ -613,11 +613,8 @@ namespace ClaFi::Controls::Grids
         scrollCellIntoView(cellRect);
     }
 
-    // **A cell says what its column is too narrow to show**, which is the over-text tooltip
-    // Control::nestedAdjustTooltip offers for a control's own text - see that one for the shape of
-    // the answer. A row draws its cells rather than holding a control per cell, so the question is
-    // asked of the row about one of its cells, and every part of the answer is worked out here
-    // rather than read off what a paint recorded.
+    // **The cell under the pointer says what tooltip it offers**, which is the question the
+    // tooltip's own window asks. The words a column cut are the over-text window's, below.
     void RowBase::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         // **Only the row the hover names answers.** The walk that asks this climbs from the control
@@ -636,52 +633,66 @@ namespace ClaFi::Controls::Grids
         if (cellRect.empty())
             return;
 
-        // **The cell's own tooltip first.** Whoever answers for the cell's text may answer for its
-        // tooltip the same way, and the anchor is set ahead so a placement against the cell needs
-        // nothing more. Only a cell nobody spoke for goes on to repeat the words its column cut.
+        // **The cell's own tooltip**, where whoever answers for its text answers for its tooltip
+        // too. The anchor is set ahead so a placement against the cell needs nothing more.
         event.anchorRect = cellRect;
         const std::wstring_view link = m_hoveredLink.column == hoveredColumn
             ? std::wstring_view{ m_hoveredLink.target }
             : std::wstring_view{};
         GetCellTooltipEvent cellEvent{ *this, *hoveredColumn, event, link };
         getCellTooltip(cellEvent);
-        if (!event.text.empty())
-            return;
+    }
+
+    // **A cell says what its column is too narrow to show**, which is the over-text window's
+    // question for a control's own text - see Control::overTextAnswer for the shape of the answer.
+    // A row draws its cells rather than holding a control per cell, so the question is asked of the
+    // row about one of its cells, and every part of the answer is worked out here rather than read
+    // off what a paint recorded.
+    bool RowBase::overTextAnswer(OverTextAnswer& answer)
+    {
+        if (m_descriptor.hoveredRow() != this)
+            return false;
+        const Column* hoveredColumn = m_descriptor.hoveredColumn();
+        if (!hoveredColumn)
+            return false;
+        const FloatRect cellRect = cellRectInForm(*hoveredColumn);
+        if (cellRect.empty())
+            return false;
 
         // The fit and the placement are both stated over the box the text is drawn in, so the
-        // tooltip stands on the words it repeats and appears exactly when they are cut.
+        // window stands on the words it repeats and appears exactly when they are cut.
         const FloatRect textBounds = cellTextBounds(*hoveredColumn, cellRect);
         if (textBounds.empty())
-            return;
+            return false;
 
         Text cellText;
         doGetCellText(*hoveredColumn, cellText);
         ScaledSize drawn{};
-        const bool trimmed = isCellTextTrimmed(event.formContext(), *hoveredColumn, cellText,
-            textBounds.dimensions(), drawn);
-        if (!trimmed)
-            return;
+        if (!isCellTextTrimmed(form().context(), *hoveredColumn, cellText,
+            textBounds.dimensions(), drawn))
+            return false;
 
-        // Gathered into the tooltip's own buffer rather than copied into it: a Text holding an
-        // lvalue item list shares that list by reference, and this one's would be the local
-        // above. Reached only once a tooltip is going up, so the second gather costs a hover.
-        doGetCellText(*hoveredColumn, event.text);
-        event.format = cellTextFormat(*hoveredColumn);
-        // **The tooltip stands on the glyphs, not on the box they were given.** The column's
+        // Gathered into the answer rather than copied into it: a Text holding an lvalue item list
+        // shares that list by reference, and this one's would be the local above. Reached only once
+        // a window is going up, so the second gather costs a hover.
+        doGetCellText(*hoveredColumn, answer.text);
+        answer.format = cellTextFormat(*hoveredColumn);
+        // A cell's text is broken to its box - see shapeAlone.
+        answer.wordWrap = true;
+        answer.textAnchor = HorizontalTextAnchor::None;
+        // **The window stands on the glyphs, not on the box they were given.** The column's
         // vertical anchor moves the block inside that box - paintCell states the same anchor - and
-        // the placement lands the tooltip's own first glyph on this rect's top left. The width is
+        // the placement lands the window's own first glyph on this rect's top left. The width is
         // the box's, which is the width the lines were broken at.
         const TextAnchor anchor = {
             hoveredColumn->verticalTextAnchor(),
             HorizontalTextAnchor::None,
         };
-        event.anchorRect = FloatRect::FromDimensions(
+        answer.anchorRect = FloatRect::FromDimensions(
             anchoredOrigin(textBounds, drawn, anchor),
             { textBounds.width(), drawn.y }
         );
-        event.placement = FormPlacement::OverText;
-        // A cell's text is broken to its box - see shapeAlone.
-        event.wordWrap = true;
+        return true;
     }
 
     void RowBase::getControlState(GetStateEvent& event) const

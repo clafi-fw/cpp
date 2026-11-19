@@ -23,14 +23,16 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
+    export class TooltipWindow;
     export class TooltipForm;
+    export class OverTextForm;
 
     // Holding its own layout rather than sharing the engine's cache. A tooltip over a slider being
     // dragged says something different on every frame of the drag, and a text nothing says twice
     // is a cache entry nothing will ever hit again - see WithTextLayout.
     class TooltipLabel : public WithTextLayout<FormControlBase>
     {
-        friend TooltipForm;
+        friend TooltipWindow;
     public:
         using WithTextLayout::WithTextLayout;
     protected:
@@ -39,43 +41,64 @@ namespace ClaFi
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         ScaledSize calculateContent(AlignEvent& event) override { return FormControlBase::calculateContent(event); }
     private:
-        Control* m_control{ nullptr };
         // The width the words this tooltip repeats were broken at, and zero for a tooltip repeating
-        // none - see TooltipForm::setControl.
+        // none - see OverTextForm::setAnswer.
         float m_breakWidth{ 0.0f };
     };
 
-    // The window a tooltip is shown in, owned by the window of the form the tooltip belongs to.
-    export class TooltipForm : public Form<TooltipLabel>
+    // The window a tooltip is shown in. A form builds two. See Control-Foundation#tooltip
+    export class TooltipWindow : public Form<TooltipLabel>
     {
         friend Tooltip;
     public:
-        explicit TooltipForm(FormBase& ownerForm);
-        ~TooltipForm() override;
-        Control* control() { return content().m_control; }
-        [[nodiscard]] const TooltipHeader& header() const { return m_header; }
-        [[nodiscard]] const Text& body() const { return m_body; }
+        explicit TooltipWindow(FormBase& ownerForm);
+        ~TooltipWindow() override;
+        [[nodiscard]] Control* control() { return m_control; }
         void setControl(Control* control);
-        void setControl(Control&, const AdjustTooltipEvent&); // the answer becomes the label's text
         void startAlphaAnimation();
-        bool stillVisible() const;
-        bool hideOnUserInput() const { return m_hideOnUserInput; }
+        [[nodiscard]] bool stillVisible() const;
+        [[nodiscard]] bool hideOnUserInput() const { return m_hideOnUserInput; }
     protected:
+        void setBreakWidth(const float value) { content().m_breakWidth = value; }
+        void setHideOnUserInput(const bool value) { m_hideOnUserInput = value; }
         void updateVisibility() override;
         // The control the tooltip is about, which the window goes along with as a popup does.
-        [[nodiscard]] const Control* placementTarget() const override
-            { return TooltipLabel::m_control; }
+        [[nodiscard]] const Control* placementTarget() const override { return m_control; }
         // Where the control comes to rest, which is where a tooltip about it is placed.
         [[nodiscard]] FloatRect placementTargetBounds(const Control&) const override;
-    private:
-        [[nodiscard]] Text composeText(const AdjustTooltipEvent&) const;
-        [[nodiscard]] Padding tooltipPadding() const;
     private:
         static constexpr ColorByte m_alpha = 255; // a bit of transparency looks good only when bg is blurred
     private:
         bool m_hideOnUserInput{ true };
+        Control* m_control{ nullptr };
+    };
+
+    // The window a caption and a body are shown in, and the only one the tooltip event reaches.
+    export class TooltipForm : public TooltipWindow
+    {
+        friend Tooltip;
+    public:
+        explicit TooltipForm(FormBase& ownerForm);
+        using TooltipWindow::setControl;
+        [[nodiscard]] const TooltipHeader& header() const { return m_header; }
+        [[nodiscard]] const Text& body() const { return m_body; }
+        void setControl(Control&, const AdjustTooltipEvent&); // the answer becomes the label's text
+    private:
+        [[nodiscard]] Text composeText(const AdjustTooltipEvent&) const;
+        [[nodiscard]] Padding tooltipPadding() const;
+    private:
         TooltipHeader m_header{};
         Text m_body{};
+    };
+
+    // The window a control's cut text is repeated in, over it. See Control-Foundation#tooltip
+    export class OverTextForm : public TooltipWindow
+    {
+        friend Tooltip;
+    public:
+        explicit OverTextForm(FormBase& ownerForm);
+        void setAnswer(Control&, const Text& text, const FloatRect& anchorRect,
+            const TextFormat& format, HorizontalTextAnchor, bool wordWrap);
     };
 
 
@@ -97,9 +120,9 @@ namespace ClaFi
         return WithTextLayout<FormControlBase>::measureText(event, maxDimensions, text);
     }
 
-    // TooltipForm
+    // TooltipWindow
 
-    TooltipForm::TooltipForm(FormBase& ownerForm)
+    TooltipWindow::TooltipWindow(FormBase& ownerForm)
         :
         Form{
             ownerForm.appContext(),
@@ -126,14 +149,14 @@ namespace ClaFi
         setAutoFit(AutoFit::Yes);
     }
 
-    TooltipForm::~TooltipForm()
+    TooltipWindow::~TooltipWindow()
     {
         appContext().animator().stop(this);
     }
 
-    void TooltipForm::setControl(Control* control)
+    void TooltipWindow::setControl(Control* control)
     {
-        content().m_control = control;
+        m_control = control;
         if (!control)
         {
             // The window is about nothing from here on. The words stay in the label, since the
@@ -144,38 +167,66 @@ namespace ClaFi
         content().invalidate();
     }
 
+    void TooltipWindow::startAlphaAnimation()
+    {
+        const float currentValue = static_cast<float>(window().alpha());
+        const float targetValue = static_cast<float>(visible()) * m_alpha;
+        appContext().animator().start(this, AnimationSlots::FormAlpha, currentValue, targetValue,
+            [this](const AnimateParams& params) {
+                window().setAlpha(static_cast<ColorByte>(params.value));
+            });
+    }
+
+    bool TooltipWindow::stillVisible() const
+    {
+        return window().alpha();
+    }
+
+    void TooltipWindow::updateVisibility()
+    {
+        // nope! Form::updateVisibility();
+        if (visible())
+            updatePlacement();
+        startAlphaAnimation();
+        window().show();
+    }
+
+    FloatRect TooltipWindow::placementTargetBounds(const Control& target) const
+    {
+        // A glide carries the control there without moving the place, so the tooltip stands still.
+        FloatRect bounds = target.boundsInForm();
+        bounds.offset(-target.viewTravelRemaining());
+        return bounds;
+    }
+
+    // TooltipForm
+
+    TooltipForm::TooltipForm(FormBase& ownerForm)
+        :
+        TooltipWindow{ ownerForm }
+    {
+    }
+
     void TooltipForm::setControl(Control& control, const AdjustTooltipEvent& event)
     {
-        setControl(&control);
+        TooltipWindow::setControl(&control);
         // Taken here too - a rect stated equal to the last one records nothing.
         rememberPlacementTarget();
         m_header = event.header;
         m_body = event.text;
         content().text() = composeText(event);
         content().setPadding(tooltipPadding());
-        content().setTextFormat(event.format);
+        content().setWordWrap(WordWrap::Yes);
         setPlacement(event.placement);
-        m_hideOnUserInput = event.hideOnUserInput;
-        // **An over-text tooltip is the control's own layout, uncut.** It stands on the words it
-        // repeats, so it breaks its lines where they were broken - the anchor rect is the box that
-        // text was drawn in - and its window is then sized to the whole of the text instead of to
-        // the part that fitted. Every other placement is a tooltip in its own right and lays itself
-        // out.
-        const bool overText = event.placement == FormPlacement::OverText;
-        content().m_breakWidth = overText ? event.anchorRect.width() : 0.0f;
-        const bool wrap = !overText or event.wordWrap;
-        content().setWordWrap(wrap ? WordWrap::Yes : WordWrap::No);
-        content().setHorizontalTextAnchor(
-            overText ? event.textAnchor : HorizontalTextAnchor::None);
+        setHideOnUserInput(event.hideOnUserInput);
         invalidateAlign();
     }
 
     // **A tooltip says a caption and a body, and either may stand alone.** The caption and its key
-    // are one bold line, the body follows after a short gap, and an over-text tooltip is the
-    // control's own lines with neither - see Control-Foundation#tooltip.
+    // are one bold line, the body follows after a short gap - see Control-Foundation#tooltip.
     Text TooltipForm::composeText(const AdjustTooltipEvent& event) const
     {
-        if (event.placement == FormPlacement::OverText || event.header.empty())
+        if (event.header.empty())
             return event.text;
 
         Text headerLine{ event.header.caption };
@@ -208,36 +259,31 @@ namespace ClaFi
         return ThemeMetrics::TooltipPadding;
     }
 
-    void TooltipForm::startAlphaAnimation()
+    // OverTextForm
+
+    OverTextForm::OverTextForm(FormBase& ownerForm)
+        :
+        TooltipWindow{ ownerForm }
     {
-        const float currentValue = static_cast<float>(window().alpha());
-        const float targetValue = static_cast<float>(visible()) * m_alpha;
-        appContext().animator().start(this, AnimationSlots::FormAlpha, currentValue, targetValue,
-            [this](const AnimateParams& params) {
-                window().setAlpha(static_cast<ColorByte>(params.value));
-            });
     }
 
-    bool TooltipForm::stillVisible() const
+    // **The control's own lines, broken where the control broke them.** The anchor rect is the box
+    // that text was drawn in, so the window is sized to the whole of the text instead of to the part
+    // that fitted, and its first glyph lands where the drawn text's did - see
+    // FormControlBase::textOrigin.
+    void OverTextForm::setAnswer(Control& control, const Text& text, const FloatRect& anchorRect,
+        const TextFormat& format, const HorizontalTextAnchor anchor, const bool wordWrap)
     {
-        return window().alpha();
-    }
-
-    void TooltipForm::updateVisibility()
-    {
-        // nope! Form::updateVisibility();
-        if (visible())
-            updatePlacement();
-        startAlphaAnimation();
-        window().show();
-    }
-
-    FloatRect TooltipForm::placementTargetBounds(const Control& target) const
-    {
-        // A glide carries the control there without moving the place, so the tooltip stands still.
-        FloatRect bounds = target.boundsInForm();
-        bounds.offset(-target.viewTravelRemaining());
-        return bounds;
+        setControl(&control);
+        // Taken here too - a rect stated equal to the last one records nothing.
+        rememberPlacementTarget();
+        content().text() = text;
+        content().setTextFormat(format);
+        setBreakWidth(anchorRect.width());
+        content().setWordWrap(wordWrap ? WordWrap::Yes : WordWrap::No);
+        content().setHorizontalTextAnchor(anchor);
+        setPlacement(FormPlacement::OverText);
+        invalidateAlign();
     }
 
 }

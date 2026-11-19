@@ -121,9 +121,21 @@ already saying its caption, with no key and no body, raises no tooltip at all.
 answers, which is the one place that knows both the face and what it hides. `Action::adjustTooltip`
 now states the body alone - its `TooltipText` - and its channel is connected for every role, so a
 menu line with a stated tooltip shows that text under no caption, and one without shows nothing.
-`TooltipForm::composeText` lays the two out, bold header, body on the line under it; under
-`FormPlacement::OverText` it hands the control's own lines through untouched, which leaves the
-over-text repetition in a window of its own.
+`TooltipForm::composeText` lays the two out, bold header, body on the line under it.
+
+**The overflown text got its own window, 2026-11-19.** Oj, after seeing it share the tooltip's
+window: a second window object per form, working independently, with no slots or events, and always
+laid out over the text. A form now builds two tooltip windows on `TooltipWindow`: `TooltipForm`
+for the caption and body, `OverTextForm` for the text a control cut. The second has no caption, no
+body and no `AdjustTooltipEvent`: the control states what it withholds through `overTextAnswer`, and
+a grid row answers for the cell under the pointer. It waits on a timer of its own, is placed
+`OverText` on the box the words were broken in, and travels with the control like the other one.
+`Control::nestedAdjustTooltip` lost the trimmed-text fallback it used to end with.
+
+Nothing in the app was cut where a label could answer for it, so the window's show and placement
+were read with the trimmed-text test briefly lifted: the palette row under the pointer came back
+whole, icon and all, standing over the row. See `Agent/UiFrameTest/overtext-focus.ps1` and
+`captures/overtext-window.png`.
 
 **The room is the style's, the air between the parts is not, 2026-11-19.** Oj, seeing the first
 captures: "Add Padding, take off Spacing." The tooltip had inherited AnyWindow's 4-unit padding and

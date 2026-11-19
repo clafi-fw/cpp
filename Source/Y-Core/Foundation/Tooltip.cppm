@@ -6,18 +6,20 @@ import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.Events;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
+import ClaFi.Core.TextEngine.Text;
 
 import ClaFi.StdLib;
 
 namespace ClaFi
 {
     export class TooltipForm;
+    export class OverTextForm;
 
     // TODO: remove Tooltip from the facade.
-    // One per form, built with it: the window a tooltip shows in. See Control-Foundation
+    // One per form, built with it: the windows tooltips are shown in. See Control-Foundation
     export class Tooltip
     {
-        // Builds this with itself, and takes its window down at the top of ~FormBase.
+        // Builds this with itself, and takes its windows down at the top of ~FormBase.
         friend FormBase;
     public:
         explicit Tooltip(FormBase& ownerForm);
@@ -69,17 +71,31 @@ namespace ClaFi
         void updatePosition(Control&, const FloatRect& anchorRect);
         [[nodiscard]] bool stillVisible() const;
         void destroyForm();
+        // **The overflown text is a window of its own.** It is asked of the control the pointer is
+        // on, shown over the words it repeats, and takes no part in the event the other window is
+        // asked through. See Control-Foundation#tooltip
+        static void overTextChanged();
+        void startOverTextWaiting(Control&);
+        void showOrHideOverText();
+        void stopOverText();
     private:
         // The tooltip waiting or showing, and nothing while neither is happening.
         inline static Tooltip* s_current{ nullptr };
+        // The over-text window waiting or showing, in the same way and apart from the tooltip.
+        inline static Tooltip* s_overTextCurrent{ nullptr };
         FormBase& m_ownerForm;
-        // **A tooltip has no tooltip of its own**: this is null on the one form whose role is
-        // Tooltip, and that is where the recursion of every form building one ends. Nothing asks
-        // for it there - a tooltip window takes no pointer and holds nothing that can be hovered.
+        // **Two windows, and a tooltip has none of its own**: both are null on the one form whose
+        // role is Tooltip, and that is where the recursion of every form building one ends. Nothing
+        // asks for them there - a tooltip window takes no pointer and holds nothing that can be
+        // hovered.
         std::unique_ptr<TooltipForm> m_form;
+        std::unique_ptr<OverTextForm> m_overTextForm;
         // The handler is given in the constructor rather than here: MSVC will not deduce OnEvent
         // from a lambda written in a default member initializer.
         UiTimer m_timer;
+        UiTimer m_overTextTimer;
+        Control* m_overTextControl{ nullptr };
+        Text m_overTextText{};
     };
 
 }

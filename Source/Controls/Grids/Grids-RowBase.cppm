@@ -154,6 +154,7 @@ namespace ClaFi::Controls::Grids
         // Selects the cell the match stands in and scrolls it into view.
         void showFound(std::size_t part, TextRange) override;
         void nestedAdjustTooltip(AdjustTooltipEvent&) override;
+        [[nodiscard]] bool overTextAnswer(OverTextAnswer&) override;
         //
         void getControlState(GetStateEvent&) const override;
         void adjustPaint(AdjustPaintEvent&) override;

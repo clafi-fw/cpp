@@ -440,6 +440,16 @@ namespace ClaFi
         bool operator==(const TooltipHeader&) const = default;
     };
 
+    // What a control withholds under the pointer: its cut words and the box they were broken in.
+    export struct OverTextAnswer
+    {
+        Text text{};
+        FloatRect anchorRect{};
+        TextFormat format{};
+        HorizontalTextAnchor textAnchor{ HorizontalTextAnchor::None };
+        bool wordWrap{ false };
+    };
+
     // TODO: derive AdjustTooltipEvent from AdjustTextEventBase, as the text events are.
     // The tooltip about to stand over the control: its own tooltip text, adjusted the same way.
     export class AdjustTooltipEvent : public ControlEventBaseC
@@ -451,19 +461,10 @@ namespace ClaFi
         Text& text;
         // The caption and the key the presenter states over it. See Control-Foundation#tooltip
         TooltipHeader header{};
-        // if the placement is overText, set the anchorRect to the item's textRect,
-        // otherwise it should hold the item's bounds (initialized in the constructor).
-        // anchorRect is in the coordinates of the form the control stands in
+        // Where the tooltip stands: the control's bounds in the form it stands in, or a rect a
+        // handler states for a tooltip of its own.
         FloatRect anchorRect{};
         TooltipPlacement placement{ TooltipPlacement::Mouse };
-        // Whether the words this tooltip repeats were broken to the box they were drawn in. Read
-        // under OverText alone, where the tooltip is that same layout uncut - see
-        // TooltipForm::setControl.
-        bool wordWrap{ false };
-        // What the words this tooltip repeats were laid out over. Read under OverText alone.
-        TextFormat format{};
-        // How the tooltip places the words it repeats. Read under OverText alone.
-        HorizontalTextAnchor textAnchor{ HorizontalTextAnchor::None };
         const EventPhase phase;
         bool hideOnUserInput{ true };
     public:
@@ -1348,6 +1349,8 @@ namespace ClaFi
         //
         // Text routine (protected)
         virtual void nestedAdjustTooltip(AdjustTooltipEvent&);
+        // What this control withholds under the pointer: its own cut text, or a cell's.
+        [[nodiscard]] virtual bool overTextAnswer(OverTextAnswer&);
         virtual void adjustText(AdjustTextEvent&) const;
         // Moves where the children begin. The event arrives holding the content padding and
         // carries the scaler with it, so an override states its inset in design units.
