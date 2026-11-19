@@ -1302,8 +1302,8 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             lines.push('# ' + name + ' - an application built against the ClaFi clone beside this folder.');
             lines.push('cmake_minimum_required(VERSION 4.3)');
             lines.push('');
-            lines.push('# libc++, for import std; no RTTI; and the same thread support in every module.');
-            lines.push('set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -fno-rtti -pthread")');
+            lines.push('# libc++ for import std, and the same thread support in every module.');
+            lines.push('set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -pthread")');
             lines.push('');
             lines.push('# The gate that turns import std on. The token follows the feature behavior; a newer CMake may need its own here.');
             lines.push('if(CMAKE_VERSION VERSION_LESS 4.4)');
@@ -1510,7 +1510,10 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
 
             html.push('<div class="step">');
             html.push('<h3 class="step-title"><span class="step-num">2</span>Make the application</h3>');
-            html.push('<p>Create a folder for the application. The framework\'s own applications are inside the clone. In this example the clone and the application are siblings.</p>');
+            var folderLine = windowsBuild()
+                ? 'Visual Studio creates the application folder.'
+                : 'Create a folder for the application.';
+            html.push('<p>' + folderLine + ' In this example the clone and the application are siblings.</p>');
             html.push(shellBlock(tree.join('\n')));
 
             var moduleFile = files.filter(function (file) {
@@ -1522,9 +1525,9 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                     return file.name === state.name + '_Win32.cpp';
                 })[0];
                 html.push('<h4>The Visual Studio project</h4>');
-                html.push('<p>Create an empty Visual Studio project in the application folder. The shared items project adds the framework sources to it.</p>');
+                html.push('<p>Create an empty Visual Studio project.</p>');
                 html.push('<ol class="uisteps">');
-                html.push('<li><strong>Create the project.</strong> Select <em>File</em> &gt; <em>New</em> &gt; <em>Project</em> and choose <em>Empty Project</em>. Set the name to <code>' + escapeHtml(state.name) + '</code>, set the location to the application folder, and enable <em>Place solution and project in the same directory</em>. Create the project.</li>');
+                html.push('<li><strong>Create the project.</strong> Select <em>File</em> &gt; <em>New</em> &gt; <em>Project</em> and choose <em>Empty Project</em>. Set the name to <code>' + escapeHtml(state.name) + '</code>, set the location to the folder you cloned into, and enable <em>Place solution and project in the same directory</em>. Create the project.</li>');
                 html.push('<li><strong>Add the module.</strong> In <em>Solution Explorer</em>, right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ Module Interface Unit</em>, name it <code>' + escapeHtml(state.name) + '_Main.cppm</code>, and click Add. Replace its contents with this:' + codeCard(moduleFile) + '</li>');
                 html.push('<li><strong>Add the entry point.</strong> In <em>Solution Explorer</em>, right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ File (.cpp)</em>, name it <code>' + escapeHtml(state.name) + '_Win32.cpp</code>, and click Add. Replace its contents with this:' + codeCard(winEntryFile) + '</li>');
                 html.push('<li><strong>Add the framework\'s shared items.</strong> In <em>Solution Explorer</em>, right-click the solution, choose <em>Add</em> &gt; <em>Existing Project...</em>, and select <code>&lt;clone&gt;\\Visual Studio Shared Items\\ClaFi.vcxitems</code>. This adds the framework to the solution; the module imports are available after the reference in the next step.</li>');
@@ -1570,13 +1573,14 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 html.push('<tr><td>C/C++ &gt; General</td><td>Scan Sources for Module Dependencies</td><td>Yes</td></tr>');
                 html.push('<tr><td>C/C++ &gt; General</td><td>Multi-processor Compilation</td><td>Yes</td></tr>');
                 html.push('<tr><td>C/C++ &gt; Language</td><td>C++ Language Standard</td><td>ISO C++20 Standard</td></tr>');
-                html.push('<tr><td>C/C++ &gt; Language</td><td>Enable Run-Time Type Information</td><td>No</td></tr>');
                 html.push('<tr><td>C/C++ &gt; Command Line</td><td>Additional Options</td><td><code>/bigobj /utf-8</code></td></tr>');
                 html.push('<tr><td>Linker &gt; System</td><td>SubSystem</td><td>' + (isConsole() ? 'Console' : 'Windows') + '</td></tr>');
                 html.push('<tr><td>Manifest Tool &gt; Input and Output</td><td>DPI Awareness</td><td>Per Monitor High DPI Aware</td></tr>');
                 html.push('</table>');
-                html.push('<p class="small"><em>Scan Sources for Module Dependencies</em> builds the <code>std</code> module automatically. For a Debug build, set <em>C/C++ &gt; General &gt; Debug Information Format</em> to <em>C7 compatible (/Z7)</em>.</p>');
-                html.push('<p class="small">RTTI is off in both builds; the framework does not use it, and the binary is smaller. The framework\'s own projects also set <em>Floating Point Model</em> to <em>Fast</em>; that is a performance choice, not a requirement.</p>');
+                html.push('<p class="small"><em>Scan Sources for Module Dependencies</em> builds the <code>std</code> module automatically.</p>');
+                html.push('<p class="small">Two settings are optional. In the Debug configuration, setting <em>Debug Information Format</em> under <em>C/C++ &gt; General</em> to <em>C7 compatible (/Z7)</em> makes the build faster. The default, <em>Program Database for Edit And Continue</em> (<code>/ZI</code>), writes the debug information of every compile into one program database, so the compiles cannot run fully in parallel; <code>/Z7</code> writes it into the object files instead. Edit and Continue stops working, and the object files grow.</p>');
+                html.push('<p class="small">Setting <em>Enable Run-Time Type Information</em> under <em>C/C++ &gt; Language</em> to <em>No</em> makes the binary smaller. The framework does not use RTTI. An application that uses <code>dynamic_cast</code> or <code>typeid</code> must leave it at <em>Yes</em>.</p>');
+                html.push('<p>Click OK to close the project properties window.</p>');
                 if (state.winTool === 'msbuild') {
                     html.push('<p>From a <em>Developer PowerShell for Visual Studio</em>, in the application folder:</p>');
                     html.push(shellBlock('msbuild ' + state.name + '.vcxproj /p:Configuration=Release /p:Platform=x64 /m'));
