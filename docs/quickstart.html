@@ -943,6 +943,17 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             lines.push('    using namespace ClaFi;');
             lines.push('    using namespace ClaFi::Controls;');
             lines.push('');
+            lines.push('    // What the application is called, wherever its name is shown and wherever its settings are kept.');
+            lines.push('    export ApplicationProperties ' + propertiesFunction() + '()');
+            lines.push('    {');
+            lines.push('        return {');
+            lines.push('            .name = Text{ L"' + state.name + '" },');
+            lines.push('            .publisher = L"Your Name",');
+            lines.push('            .description = Text{ L"A first ClaFi application." },');
+            lines.push('            .version = L"1.0.0"');
+            lines.push('        };');
+            lines.push('    }');
+            lines.push('');
             if (has('menu')) {
                 lines.push('    namespace');
                 lines.push('    {');
@@ -1081,6 +1092,7 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             lines.push('        WithBody{');
             lines.push('            params,');
             lines.push('            HostProps{');
+            lines.push('                UiElement::Dialog,');
             lines.push('                FormPlacement::Default,');
             if (pages) {
                 lines.push('                MinSize{ 640.0f, 400.0f },');
@@ -1145,16 +1157,6 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 lines.push('    }');
                 lines.push('');
             }
-            lines.push('    // What the application is called, wherever its name is shown and wherever its settings are kept.');
-            lines.push('    export ApplicationProperties ' + propertiesFunction() + '()');
-            lines.push('    {');
-            lines.push('        return {');
-            lines.push('            .name = Text{ L"' + state.name + '" },');
-            lines.push('            .publisher = L"Your Name",');
-            lines.push('            .description = Text{ L"A first ClaFi application." },');
-            lines.push('            .version = L"1.0.0"');
-            lines.push('        };');
-            lines.push('    }');
             lines.push('}');
             return lines.join('\n');
         }
@@ -1300,8 +1302,8 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             lines.push('# ' + name + ' - an application built against the ClaFi clone beside this folder.');
             lines.push('cmake_minimum_required(VERSION 4.3)');
             lines.push('');
-            lines.push('# libc++, for import std, and the same thread support in every module.');
-            lines.push('set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -pthread")');
+            lines.push('# libc++, for import std; no RTTI; and the same thread support in every module.');
+            lines.push('set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -fno-rtti -pthread")');
             lines.push('');
             lines.push('# The gate that turns import std on. The token follows the feature behavior; a newer CMake may need its own here.');
             lines.push('if(CMAKE_VERSION VERSION_LESS 4.4)');
@@ -1523,10 +1525,10 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
                 html.push('<p>Create an empty Visual Studio project in the application folder. The shared items project adds the framework sources to it.</p>');
                 html.push('<ol class="uisteps">');
                 html.push('<li><strong>Create the project.</strong> Select <em>File</em> &gt; <em>New</em> &gt; <em>Project</em> and choose <em>Empty Project</em>. Set the name to <code>' + escapeHtml(state.name) + '</code>, set the location to the application folder, and enable <em>Place solution and project in the same directory</em>. Create the project.</li>');
-                html.push('<li><strong>Add the module.</strong> Right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ Module Interface Unit</em>, name it <code>' + escapeHtml(state.name) + '_Main.cppm</code>, and click Add. Replace its contents with this:' + codeCard(moduleFile) + '</li>');
-                html.push('<li><strong>Add the entry point.</strong> Right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ File (.cpp)</em>, name it <code>' + escapeHtml(state.name) + '_Win32.cpp</code>, and click Add. Replace its contents with this:' + codeCard(winEntryFile) + '</li>');
-                html.push('<li><strong>Add the framework\'s shared items.</strong> Right-click the solution, choose <em>Add</em> &gt; <em>Existing Project...</em>, and select <code>&lt;clone&gt;\\Visual Studio Shared Items\\ClaFi.vcxitems</code>. This adds the framework to the solution; the module imports are available after the reference in the next step.</li>');
-                html.push('<li><strong>Reference the framework.</strong> Right-click the <code>' + escapeHtml(state.name) + '</code> project, choose <em>Add</em> &gt; <em>Reference...</em>, check <code>ClaFi</code> and click OK.</li>');
+                html.push('<li><strong>Add the module.</strong> In <em>Solution Explorer</em>, right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ Module Interface Unit</em>, name it <code>' + escapeHtml(state.name) + '_Main.cppm</code>, and click Add. Replace its contents with this:' + codeCard(moduleFile) + '</li>');
+                html.push('<li><strong>Add the entry point.</strong> In <em>Solution Explorer</em>, right-click the project, choose <em>Add</em> &gt; <em>New Item...</em> &gt; <em>C++ File (.cpp)</em>, name it <code>' + escapeHtml(state.name) + '_Win32.cpp</code>, and click Add. Replace its contents with this:' + codeCard(winEntryFile) + '</li>');
+                html.push('<li><strong>Add the framework\'s shared items.</strong> In <em>Solution Explorer</em>, right-click the solution, choose <em>Add</em> &gt; <em>Existing Project...</em>, and select <code>&lt;clone&gt;\\Visual Studio Shared Items\\ClaFi.vcxitems</code>. This adds the framework to the solution; the module imports are available after the reference in the next step.</li>');
+                html.push('<li><strong>Reference the framework.</strong> In <em>Solution Explorer</em>, right-click the <code>' + escapeHtml(state.name) + '</code> project, choose <em>Add</em> &gt; <em>Reference...</em>, check <code>ClaFi</code> and click OK.</li>');
                 html.push('</ol>');
                 html.push('<p class="small">Set the publisher, description and version in the module properties.</p>');
             }
@@ -1561,21 +1563,20 @@ m_reloadButton.onClick([](<span class="tp">ClickEvent</span>&amp; event) {
             html.push('<h3 class="step-title"><span class="step-num">3</span>Build it</h3>');
             if (windowsBuild()) {
                 html.push('<h4>The Windows build</h4>');
-                html.push('<p>Open the project properties (right-click the project &gt; <em>Properties</em>) and select <em>All Configurations</em> and <em>All Platforms</em>. Set the following:</p>');
+                html.push('<p>Open the project properties (in <em>Solution Explorer</em>, right-click the project &gt; <em>Properties</em>) and select <em>All Configurations</em> and <em>All Platforms</em>. Set the following:</p>');
                 html.push('<table class="settings">');
                 html.push('<tr><th>Property page</th><th>Setting</th><th>Value</th></tr>');
                 html.push('<tr><td>Configuration Properties &gt; Advanced</td><td>Character Set</td><td>Use Unicode Character Set</td></tr>');
                 html.push('<tr><td>C/C++ &gt; General</td><td>Scan Sources for Module Dependencies</td><td>Yes</td></tr>');
-                html.push('<tr><td>C/C++ &gt; General</td><td>Translate Includes to Imports</td><td>No</td></tr>');
                 html.push('<tr><td>C/C++ &gt; General</td><td>Multi-processor Compilation</td><td>Yes</td></tr>');
                 html.push('<tr><td>C/C++ &gt; Language</td><td>C++ Language Standard</td><td>ISO C++20 Standard</td></tr>');
                 html.push('<tr><td>C/C++ &gt; Language</td><td>Enable Run-Time Type Information</td><td>No</td></tr>');
-                html.push('<tr><td>C/C++ &gt; Code Generation</td><td>Floating Point Model</td><td>Fast</td></tr>');
                 html.push('<tr><td>C/C++ &gt; Command Line</td><td>Additional Options</td><td><code>/bigobj /utf-8</code></td></tr>');
                 html.push('<tr><td>Linker &gt; System</td><td>SubSystem</td><td>' + (isConsole() ? 'Console' : 'Windows') + '</td></tr>');
                 html.push('<tr><td>Manifest Tool &gt; Input and Output</td><td>DPI Awareness</td><td>Per Monitor High DPI Aware</td></tr>');
                 html.push('</table>');
-                html.push('<p class="small"><em>Scan Sources for Module Dependencies</em> builds the <code>std</code> module automatically. Leave <em>Build ISO C++23 Standard Library Modules</em> off. For a Debug build, set <em>C/C++ &gt; General &gt; Debug Information Format</em> to <em>C7 compatible (/Z7)</em>.</p>');
+                html.push('<p class="small"><em>Scan Sources for Module Dependencies</em> builds the <code>std</code> module automatically. For a Debug build, set <em>C/C++ &gt; General &gt; Debug Information Format</em> to <em>C7 compatible (/Z7)</em>.</p>');
+                html.push('<p class="small">RTTI is off in both builds; the framework does not use it, and the binary is smaller. The framework\'s own projects also set <em>Floating Point Model</em> to <em>Fast</em>; that is a performance choice, not a requirement.</p>');
                 if (state.winTool === 'msbuild') {
                     html.push('<p>From a <em>Developer PowerShell for Visual Studio</em>, in the application folder:</p>');
                     html.push(shellBlock('msbuild ' + state.name + '.vcxproj /p:Configuration=Release /p:Platform=x64 /m'));
