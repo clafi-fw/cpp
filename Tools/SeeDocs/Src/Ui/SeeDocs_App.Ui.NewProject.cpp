@@ -255,7 +255,7 @@ namespace SeeDocs_App::Ui
         m_folder.invalidateFormAlign();
     }
 
-    // Return asks no more of a dialog with no name typed than the greyed Create does.
+    // Return asks no more of a dialog with no name typed than the grayed Create does.
     void NewProjectDialog::create()
     {
         const std::wstring name = typedName();

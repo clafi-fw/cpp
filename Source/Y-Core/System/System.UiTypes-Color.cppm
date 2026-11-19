@@ -115,7 +115,7 @@ namespace ClaFi
             result.alpha = static_cast<ColorByte>(255 * opacity);
             return result;
         }
-        [[nodiscard]] Color faded(float share) const; // this colour at a share of its own alpha
+        [[nodiscard]] Color faded(float share) const; // this color at a share of its own alpha
         //ColorAsUint toGdiColor() const {
         //  return static_cast<ColorAsUint>((red | (static_cast<uint16_t>(green) << 8)) | (static_cast<uint16_t>(blue) << 16));
         //}
@@ -183,7 +183,7 @@ namespace ClaFi
     export constexpr float hueFromDegree(int value) { return static_cast<float>(value) / 360.0f; }
     export [[nodiscard]] constexpr int hueDegreeOf(float hue) { return static_cast<int>(hue * 360.0f); }
 
-    // A colour on three channels, each a fraction of its range, over Oklab. See UI-Types
+    // A color on three channels, each a fraction of its range, over Oklab. See UI-Types
     export struct Hsl
     {
     public:
@@ -208,7 +208,7 @@ namespace ClaFi
         static void clampValue(float& value);
     };
 
-    // A colour per key - a new key takes the next hue round the wheel, a known key the one it has.
+    // A color per key - a new key takes the next hue round the wheel, a known key the one it has.
     export template <typename Key>
     class ColorCodes
     {

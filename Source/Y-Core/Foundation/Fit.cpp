@@ -21,7 +21,7 @@ namespace ClaFi
             return result;
         }
 
-        // The total is linear between neighbouring breaks, so the level is solved for on the one
+        // The total is linear between neighboring breaks, so the level is solved for on the one
         // stretch that crosses the target, with no comparing of widths for equality.
         [[nodiscard]] float levelFor(const FitDataList& fits, const float target)
         {

@@ -18,7 +18,7 @@ namespace ClaFi::PathArt
         ThemeBlend& operator=(const ThemeBlend&) = delete;
     public:
         [[nodiscard]] std::size_t pickedIndex() const { return m_pickedIndex; } // in allThemes
-        // The theme picked, blend or no blend - what a caller taking colours or a name means.
+        // The theme picked, blend or no blend - what a caller taking colors or a name means.
         [[nodiscard]] const SceneTheme& picked() const { return Themes::allThemes[m_pickedIndex]; }
         // What the scene is drawn in, which between two picks is a blend of them.
         [[nodiscard]] const SceneTheme& worn() const { return m_worn; }
@@ -42,6 +42,6 @@ namespace ClaFi::PathArt
         AnimationController m_animator{};
     };
 
-    // The colours a readout over a scene is drawn in, where the scene wears this theme. See PathArt
+    // The colors a readout over a scene is drawn in, where the scene wears this theme. See PathArt
     export [[nodiscard]] SceneReadoutColors readoutColorsOf(const SceneTheme&);
 }

@@ -133,7 +133,7 @@ namespace ClaFi::Browser
         void getControlState(GetStateEvent&) const override;
         void click(ClickEvent&) override;
         // The mark sits on a crumb's face rather than in a field, so it carries the normal text
-        // colour rather than the muted one a combo box uses.
+        // color rather than the muted one a combo box uses.
         [[nodiscard]] Ink dropdownMarkInk() const override { return InkWell::textInk(); }
         // A crumb's mark points the way the path runs while its list is shut, and turns a quarter
         // clockwise to point into that list once it is down.
@@ -386,7 +386,7 @@ namespace ClaFi::Browser
     void BreadCrumbBarItem::adjustPaint(AdjustPaintEvent& event)
     {
         BreadCrumbBarItemBase::adjustPaint(event);
-        // A tool button's colours: a crumb's fill arrives with the pointer.
+        // A tool button's colors: a crumb's fill arrives with the pointer.
         event.setColorRules(UiElement::ToolButton);
     }
 

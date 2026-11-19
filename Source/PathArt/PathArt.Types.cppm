@@ -21,7 +21,7 @@ namespace ClaFi::PathArt
         Color dark{};
     };
 
-    // The Chase's own colours in a theme, beside the scenery it shares with the Mill. See PathArt
+    // The Chase's own colors in a theme, beside the scenery it shares with the Mill. See PathArt
     export struct ChaseTheme
     {
         Color treeCrown{}; // the branch run's tree
@@ -50,10 +50,10 @@ namespace ClaFi::PathArt
         Color spinesLight{};
         Color hedgehogFace{};
         Color hedgehogEar{};
-        Color ballPanel1{}; // the ball's three coloured panels, each followed by one in ballBase
+        Color ballPanel1{}; // the ball's three colored panels, each followed by one in ballBase
         Color ballPanel2{};
         Color ballPanel3{};
-        Color ballBase{}; // the ball between its coloured panels and in its middle
+        Color ballBase{}; // the ball between its colored panels and in its middle
         Color peel{}; // the banana peel
         Color peelShade{};
         Color peelInside{};
@@ -86,11 +86,11 @@ namespace ClaFi::PathArt
         Color dust{}; // kicked up where the wolf lands
         Color dazeStar{}; // the stars circling a dazed wolf's head
     public:
-        // How many colours it holds, in a row with nothing between them.
+        // How many colors it holds, in a row with nothing between them.
         static constexpr std::size_t colorsNum() { return sizeof(ChaseTheme) / sizeof(Color); }
     };
 
-    // The colours of the mill and the parts fixed to it, which nothing else in a theme wears.
+    // The colors of the mill and the parts fixed to it, which nothing else in a theme wears.
     export struct MillTheme
     {
         Color bodyTop{};
@@ -102,7 +102,7 @@ namespace ClaFi::PathArt
         Color wingFabric{};
         Color wheel{};
     public:
-        // How many colours it holds, in a row with nothing between them.
+        // How many colors it holds, in a row with nothing between them.
         static constexpr std::size_t colorsNum() { return sizeof(MillTheme) / sizeof(Color); }
     };
 
@@ -112,7 +112,7 @@ namespace ClaFi::PathArt
         Color skyTop, skyBottom; // 1
         Color sunDisk, sunGlow; // 3
         Color cloud; // 5
-        Color mountainTop, mountainFoot; // 6, the mountains' clear colours, which the scenes haze
+        Color mountainTop, mountainFoot; // 6, the mountains' clear colors, which the scenes haze
         Color hillTop, hillBottom; // 8
         Color riverTop, riverBottom, riverWave, foam; // 10
         Color treeLeavesBase, crownLight, crownMiddle; // 14, the crowns are the far hills' trees

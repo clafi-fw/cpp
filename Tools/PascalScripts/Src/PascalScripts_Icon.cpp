@@ -71,7 +71,7 @@ namespace PascalScripts_App::AppIcon
         constexpr float k_edgeWidth{ 0.020f };      // the light line round the arrow
         constexpr float k_keylineWidth{ 0.020f };   // the dark line inside the arrow's light one
 
-        // Greys on the line from the keyline colour to the edge colour, lightest at the top band.
+        // Grays on the line from the keyline color to the edge color, lightest at the top band.
         constexpr Color k_backUpper{ 0xFFF4F5F8 };
         constexpr Color k_backLower{ 0xFFE1E2E6 };
         constexpr Color k_frontUpper{ 0xFFECEDF0 };
@@ -309,7 +309,7 @@ namespace PascalScripts_App::AppIcon
             return std::min(bounds.width(), bounds.height()) / k_designSize;
         }
 
-        // Scales the sheet's design square onto the rect, centred in it.
+        // Scales the sheet's design square onto the rect, centered in it.
         Matrix3x2 fitSheetTo(const FloatRect& bounds)
         {
             const float scale = scaleFor(bounds);

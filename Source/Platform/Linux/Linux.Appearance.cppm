@@ -4,7 +4,7 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::PlatformImplementation::Linux
 {
-    // Who is told that the desktop's colour mode has moved - one listener, set once. See Platform
+    // Who is told that the desktop's color mode has moved - one listener, set once. See Platform
     export using AppearanceHandler = void (*)();
 
     // The mode the desktop asks applications to be drawn in. See Platform

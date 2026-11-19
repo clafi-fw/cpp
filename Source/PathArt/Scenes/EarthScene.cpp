@@ -33,12 +33,12 @@ namespace ClaFi::PathArt
         constexpr Color SunGlare{ 0xFFFFF1D6 };
         constexpr Color OceanLimb{ 0xFF3F8EE0 };
         constexpr Color Haze{ 0xFF3F8EE0 }; // what the air's haze draws the ground toward
-        constexpr Color OceanDeep{ 0xFF0C3D84 }; // the abyss, 4000 to 6000 metres down
-        constexpr Color SeaShelf{ 0xFF1E6880 }; // over the shelf, less than 200 metres deep
-        constexpr Color SeaSlope{ 0xFF185C8C }; // down the continental slope, 200 to 1000 metres
-        constexpr Color SeaRise{ 0xFF13508F }; // the rise below the slope, 1000 to 2000 metres
-        constexpr Color SeaRidge{ 0xFF0F4689 }; // the ridges, 2000 to 4000 metres down
-        constexpr Color SeaTrench{ 0xFF082C66 }; // the trenches, past 8000 metres
+        constexpr Color OceanDeep{ 0xFF0C3D84 }; // the abyss, 4000 to 6000 meters down
+        constexpr Color SeaShelf{ 0xFF1E6880 }; // over the shelf, less than 200 meters deep
+        constexpr Color SeaSlope{ 0xFF185C8C }; // down the continental slope, 200 to 1000 meters
+        constexpr Color SeaRise{ 0xFF13508F }; // the rise below the slope, 1000 to 2000 meters
+        constexpr Color SeaRidge{ 0xFF0F4689 }; // the ridges, 2000 to 4000 meters down
+        constexpr Color SeaTrench{ 0xFF082C66 }; // the trenches, past 8000 meters
         constexpr Color FlatSeaShelf{ 0xFF4398DE }; // the stylized look's
         constexpr Color FlatSeaSlope{ 0xFF2B78C4 };
         constexpr Color FlatSeaRidge{ 0xFF1A5BA6 };
@@ -127,13 +127,13 @@ namespace ClaFi::PathArt
         static_assert(k_bandRows % k_coarsestPointStep == 0);
         // The shades of the clouds kept from day to deep night.
         constexpr int k_cloudShadeCount{ 1024 };
-        // The points across the Earth the air's colour is worked out at, shaded evenly between.
+        // The points across the Earth the air's color is worked out at, shaded evenly between.
         constexpr int k_airStopCount{ 41 };
         // The shades of the air kept across the Earth, from its dark limb to its sunlit one.
         constexpr int k_airShadeCount{ 257 };
-        // The night's premultiplied colours kept from day to deep night.
+        // The night's premultiplied colors kept from day to deep night.
         constexpr int k_nightShadeCount{ 256 };
-        // The realistic sea's colours kept from the coast to the deepest trench.
+        // The realistic sea's colors kept from the coast to the deepest trench.
         constexpr int k_seaShadeCount{ 256 };
         // The sunlight at which the night starts to fall.
         constexpr float k_duskSunlight{ 0.03f };
@@ -230,7 +230,7 @@ namespace ClaFi::PathArt
             float height; // above the ground, as a share of the Earth's radius
             float axisTilt; // how far its axis leans from the Earth's, in degrees
             float driftPerSecond; // how far it drifts east against the ground, in degrees
-            float opacity; // its share of the cloud colour's opacity
+            float opacity; // its share of the cloud color's opacity
         };
 
         // Low heaps, a middle sheet and high streaks, each drifting faster than the one below.
@@ -325,7 +325,7 @@ namespace ClaFi::PathArt
             int right; // the column past the last in view
             int top; // the first row in view, a whole number of steps down the canvas
             int bottom; // the row past the last in view
-            std::span<const Color> shades; // the clouds' colour from day to deep night
+            std::span<const Color> shades; // the clouds' color from day to deep night
             NightView night;
         };
 
@@ -488,7 +488,7 @@ namespace ClaFi::PathArt
 
         // **How far each cell's middle of the towns' grid stands from a coast**, in degrees of arc.
         // The coasts' points start at 0, and two sweeps, one forward and one back, carry each
-        // cell's distance on to its neighbours, a cell's width shrinking with the latitude.
+        // cell's distance on to its neighbors, a cell's width shrinking with the latitude.
         [[nodiscard]] std::vector<float> coastDistancesOf(
             const std::span<const std::span<const FloatPoint>> outlines)
         {
@@ -637,7 +637,7 @@ namespace ClaFi::PathArt
             frame.canvas.popClip();
         }
 
-        // The atmosphere's colour at a point of the limb, from the sunlight there.
+        // The atmosphere's color at a point of the limb, from the sunlight there.
         [[nodiscard]] Color atmosphereColor(const float sunlight)
         {
             if (sunlight > 0.18f)
@@ -971,7 +971,7 @@ namespace ClaFi::PathArt
                 _mm256_mul_ps(_mm256_set1_ps(1.0f - k_lighterCloudShare), denser));
         }
 
-        // The night's colour from where it starts to fall, clear, to where it has fallen whole.
+        // The night's color from where it starts to fall, clear, to where it has fallen whole.
         [[nodiscard]] std::array<GradientStop, 3> nightStops()
         {
             return { {
@@ -981,7 +981,7 @@ namespace ClaFi::PathArt
             } };
         }
 
-        // The colour between the stops at a position, each stop's colour first passed through.
+        // The color between the stops at a position, each stop's color first passed through.
         template<typename Shading>
         [[nodiscard]] Color colorAlong(const std::array<GradientStop, 3>& stops,
             const float position, const Shading& shaded)
@@ -996,8 +996,8 @@ namespace ClaFi::PathArt
             return colorBetween(shaded(from), shaded(to), share);
         }
 
-        // **The clouds' colour from day to deep night**: the night's colour, drawn toward a
-        // moonlit blue-grey as deep as it falls, mixed into the clouds' at the night's opacity.
+        // **The clouds' color from day to deep night**: the night's color, drawn toward a
+        // moonlit blue-gray as deep as it falls, mixed into the clouds' at the night's opacity.
         [[nodiscard]] std::vector<Color> cloudShades()
         {
             const std::array<GradientStop, 3> stops = nightStops();
@@ -1017,8 +1017,8 @@ namespace ClaFi::PathArt
             return shades;
         }
 
-        // **The night's colours over the land and the sea, from day to deep night**, premultiplied
-        // as a band's pixels are: each stop's colour drawn toward the moonlight, at its own
+        // **The night's colors over the land and the sea, from day to deep night**, premultiplied
+        // as a band's pixels are: each stop's color drawn toward the moonlight, at its own
         // opacity. Deep in the night they hide 0.96 of the ground before nightOverGround weighs
         // them by it, and the moonlight is 0.13 of the view.
         [[nodiscard]] std::vector<Color> nightShades()
@@ -1337,7 +1337,7 @@ namespace ClaFi::PathArt
 
         // **The band's bitmap spans the columns the highest layer covers in its widest row**; a
         // band that misses the sphere is left empty. The points stand on the canvas's columns and
-        // rows a step apart, so neighbouring bands blend from the same points, and the cover is
+        // rows a step apart, so neighboring bands blend from the same points, and the cover is
         // blended before the look cuts it, so the cut's edge stays sharp. Answers where the
         // bitmap stands, in pixels.
         [[nodiscard]] FloatPoint rasterizeCloudBand(const CloudPicture& picture, const int top,
@@ -1605,7 +1605,7 @@ namespace ClaFi::PathArt
             std::vector<float> dryness;
             std::vector<float> forest;
             std::vector<float> tundra;
-            std::vector<float> red; // the colour at the point, or the stylized zone's
+            std::vector<float> red; // the color at the point, or the stylized zone's
             std::vector<float> green;
             std::vector<float> blue;
             std::vector<float> snowEdges; // where the stylized snow begins
@@ -1665,7 +1665,7 @@ namespace ClaFi::PathArt
             __m256 blue;
         };
 
-        // The land's colours, each ready for 8 pixels.
+        // The land's colors, each ready for 8 pixels.
         struct LandPalette
         {
             ColorLanes grass;
@@ -2245,7 +2245,7 @@ namespace ClaFi::PathArt
             };
         }
 
-        // The flat colour of the zones, the taiga left out of the steppe.
+        // The flat color of the zones, the taiga left out of the steppe.
         [[nodiscard]] ColorLanes zoneColor(const ZoneCuts& cuts, const LandPalette& palette)
         {
             ColorLanes color = mixed(palette.flatGrass, palette.flatSteppe, cuts.steppe);
@@ -2331,7 +2331,7 @@ namespace ClaFi::PathArt
             return color;
         }
 
-        // **The colour at each point**, whole in the realistic look; in the stylized one the
+        // **The color at each point**, whole in the realistic look; in the stylized one the
         // zone's, with what its bands are cut by at the pixels.
         void colorPoints(const LandPicture& picture, const LandPalette& palette,
             const std::size_t first, const std::size_t end, GroundPoints& points)
@@ -2495,9 +2495,9 @@ namespace ClaFi::PathArt
         }
 
         // **A row of land pixels, premultiplied by the coastlines' coverage**, in one pass: each
-        // pixel's colour is spread from the four points about it, the stylized bands are cut there,
+        // pixel's color is spread from the four points about it, the stylized bands are cut there,
         // and the air's haze is laid over it. Where the points about 8 pixels lie whole in the same
-        // stylized zones, the pixels take the zones' colour from them; elsewhere the zones are cut
+        // stylized zones, the pixels take the zones' color from them; elsewhere the zones are cut
         // at each pixel, so their edges do not step from point to point. 8 pixels the coastlines do
         // not reach are written clear. The last group of 8 stops at the row's end.
         void writeLandRow(const LandPicture& picture, const LandPalette& palette,
@@ -2571,7 +2571,7 @@ namespace ClaFi::PathArt
 
         // **The band's bitmap spans the columns the ground covers in its widest row**, inside the
         // view; a band that misses the sphere is left empty. The points stand on the canvas's
-        // columns and rows a step apart, so neighbouring bands blend from the same points. `coast`
+        // columns and rows a step apart, so neighboring bands blend from the same points. `coast`
         // holds the edges of the near side's coastlines that reach into the band. Answers where the
         // bitmap stands, in pixels.
         [[nodiscard]] FloatPoint rasterizeLandBand(const LandPicture& picture,
@@ -2678,7 +2678,7 @@ namespace ClaFi::PathArt
             int bottom; // the row past the last in view
         };
 
-        // The realistic sea's colour by its depth from 0 to 1, shading evenly between the levels'.
+        // The realistic sea's color by its depth from 0 to 1, shading evenly between the levels'.
         [[nodiscard]] std::vector<Color> seaShades()
         {
             struct Stop
@@ -2729,7 +2729,7 @@ namespace ClaFi::PathArt
         }
 
         // **A band of the sea, premultiplied and opaque on the sphere**: the depths are read at
-        // points `step` apart and spread over the pixels between, each pixel takes its colour by
+        // points `step` apart and spread over the pixels between, each pixel takes its color by
         // the look, and the air's haze veils it as it veils the land; the pixels on the limb fade
         // out across it. **The sea writes where it lies in `pixels`**, whose canvas corner is
         // `targetAt`, and not into a layer of its own size: it is the band's first layer, over a
@@ -2872,7 +2872,7 @@ namespace ClaFi::PathArt
                 _mm256_set1_ps(1.0f));
         }
 
-        // **A colour laid over 8 premultiplied pixels** of a row from column `x` on, over each by
+        // **A color laid over 8 premultiplied pixels** of a row from column `x` on, over each by
         // its own share; the last group stops at the row's end.
         void layEight(Color* pixels, const int x, const int width, const ColorLanes& color,
             const __m256 shares)
@@ -2895,7 +2895,7 @@ namespace ClaFi::PathArt
                 _mm256_or_si256(byteAt(color.red, 16), byteAt(_mm256_set1_ps(1.0f), 24))));
         }
 
-        // **A colour laid over the pixels of a box that fall in a band**, 8 at a time, each by the
+        // **A color laid over the pixels of a box that fall in a band**, 8 at a time, each by the
         // share `sharesAt` gives it from the pixels' middles across and the row's down the canvas.
         // The band's first row is `top` and its first column `left`.
         template<std::invocable<__m256, float> SharesAt>
@@ -2923,7 +2923,7 @@ namespace ClaFi::PathArt
             }
         }
 
-        // A glow on the globe in the canvas's pixels: its colour whole at the middle, fading
+        // A glow on the globe in the canvas's pixels: its color whole at the middle, fading
         // evenly to nothing at its spread.
         struct SurfaceGlow
         {
@@ -3180,7 +3180,7 @@ namespace ClaFi::PathArt
             float strength; // the share of the air's own opacity the ring has on its circle
         };
 
-        // The air's colour across the Earth from its dark limb to its sunlit one, at one ring's
+        // The air's color across the Earth from its dark limb to its sunlit one, at one ring's
         // strength.
         using AirShades = std::array<Color, k_airShadeCount>;
 
@@ -3194,7 +3194,7 @@ namespace ClaFi::PathArt
         };
 
         // **The sunlight on the limb rises evenly across it toward the Sun**, as the limb stands
-        // square to the view, so shades kept along the Sun's way across the screen colour it at
+        // square to the view, so shades kept along the Sun's way across the screen color it at
         // any altitude - blue by day, orange at dusk, dark at night. Each of the three rings fades
         // from its circle out to both sides, so none of them shows an edge. `unit` is a scene unit
         // in pixels, and `sunAcross` the Sun across and up the screen.
@@ -3443,7 +3443,7 @@ namespace ClaFi::PathArt
             EarthSceneColors::SunGlare.withOpacity(0.16f * sunlit));
         takeBuiltMaps();
         // Until the land's map is built the picture holds neither the sea nor the land, and lies
-        // over an ocean of one gradient and a land of one flat colour.
+        // over an ocean of one gradient and a land of one flat color.
         if (!m_earthMap)
         {
             if (altitude == 0.0f)
@@ -4444,7 +4444,7 @@ namespace ClaFi::PathArt
         layBands(frame, m_globeBands, canvasPixels);
     }
 
-    // **The sea is coloured by its depth**, read from the land's map at points twice as far apart
+    // **The sea is colored by its depth**, read from the land's map at points twice as far apart
     // as the land's. See PathArt#earthscene
     void EarthScene::addSea(GlobePicture& picture, const Globe& globe) const
     {

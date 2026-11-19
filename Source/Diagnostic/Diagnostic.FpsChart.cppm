@@ -25,23 +25,23 @@ namespace ClaFi::Diagnostic
     constexpr float k_plotWidth{ 96.0f };
 
     /// @brief What a chart asks for across, before scale. Whatever stands in the same column
-    /// **states this** as its own width: a neighbour left to be sized by its words re-measures the
+    /// **states this** as its own width: a neighbor left to be sized by its words re-measures the
     /// column every time a reading gains a digit.
     export constexpr float k_fpsChartWidth{ k_axisAreaWidth + k_plotWidth };
 
-    /// @brief The colour the field under the curve is drawn from.
+    /// @brief The color the field under the curve is drawn from.
     export struct ChartFieldColor
     {
         Color value{};
     };
 
-    /// @brief The colour the curve itself is drawn from.
+    /// @brief The color the curve itself is drawn from.
     export struct ChartSeriesColor
     {
         Color value{};
     };
 
-    /// @brief The colour the axis's readings are written in.
+    /// @brief The color the axis's readings are written in.
     export struct ChartAxisColor
     {
         Color value{};
@@ -74,7 +74,7 @@ namespace ClaFi::Diagnostic
         void advanceTopLimit(float maxFps);
         // How far apart the guide lines stand, in frames per second.
         [[nodiscard]] float guideStep() const;
-        // The colours this paint draws in: what was stated, or the theme's - see the class note.
+        // The colors this paint draws in: what was stated, or the theme's - see the class note.
         [[nodiscard]] Color fieldColor(const PaintEvent&) const;
         [[nodiscard]] Color seriesColor(const PaintEvent&) const;
         // Where a rate falls inside the plot.
@@ -102,20 +102,20 @@ namespace ClaFi::Diagnostic
         // is on screen the frame it happens and the scale does not shake once it has passed.
         static constexpr float k_topLimitRiseRate{ 0.1f };
         static constexpr float k_topLimitFallRate{ 0.01f };
-        // What the two stated colours are drawn at.
+        // What the two stated colors are drawn at.
         static constexpr ColorByte k_fieldAlpha{ 100 };
         static constexpr ColorByte k_seriesFillAlpha{ 128 };
         static constexpr ColorByte k_seriesStrokeAlpha{ 230 };
-        // The drawing-rate line, in the guides' white rather than the series colour: it is a
+        // The drawing-rate line, in the guides' white rather than the series color: it is a
         // ceiling over the rate rather than another reading of it.
         static constexpr ColorByte k_drawLineAlpha{ 120 };
-        // The guides are white rather than an ink, because what they lie on is a stated colour and
+        // The guides are white rather than an ink, because what they lie on is a stated color and
         // not a surface the theme knows about.
         static constexpr ColorAsUint k_guideColor{ 0xffffFFff };
         static constexpr ColorByte k_guideAlpha{ 40 };
     private:
         const FpsBenchmark& m_benchmark;
-        // The colours stated, or none - see the class note.
+        // The colors stated, or none - see the class note.
         std::optional<ChartFieldColor> m_fieldColor;
         std::optional<ChartSeriesColor> m_seriesColor;
         std::optional<ChartAxisColor> m_axisColor;
@@ -142,9 +142,9 @@ namespace ClaFi::Diagnostic
         Control{ params, std::forward<Args>(args)... },
         m_benchmark{ benchmark }
     {
-        // The field's colour where a caller states it; the theme's otherwise.
+        // The field's color where a caller states it; the theme's otherwise.
         BIND_PROPERTY_MEMBER(ChartFieldColor, m_fieldColor);
-        BIND_PROPERTY_MEMBER(ChartSeriesColor, m_seriesColor); // the curve's colour, the same way
+        BIND_PROPERTY_MEMBER(ChartSeriesColor, m_seriesColor); // the curve's color, the same way
         BIND_PROPERTY_MEMBER(ChartAxisColor, m_axisColor); // the readings' ink, the same way
     }
 

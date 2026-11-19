@@ -22,7 +22,7 @@ namespace ClaFi::PlatformImplementation::Linux
         [[nodiscard]] bool settled() const { return m_connection == nullptr; }
         [[nodiscard]] int fd() const { return m_fd; }   // the socket the answer comes on
         void dispatch();   // reads what the bus has sent, a hang-up included
-        // The folder picked; nothing where the dialog was cancelled or no chooser answered.
+        // The folder picked; nothing where the dialog was canceled or no chooser answered.
         [[nodiscard]] const Answer& answer() const { return m_answer; }
     private:
         void ask(std::string_view parentWindow, std::string_view title,

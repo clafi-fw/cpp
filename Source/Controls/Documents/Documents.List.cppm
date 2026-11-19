@@ -133,7 +133,7 @@ namespace ClaFi::Documents
 
 
     // A tile is as wide as its picture's slot and a name wraps into that width, so the slot is
-    // wider than the mark it centres - room for a short name on one line.
+    // wider than the mark it centers - room for a short name on one line.
     constexpr float k_documentTileIconHeight{ 64.0f };
     constexpr float k_documentTileIconWidth{ k_documentTileIconHeight * 1.6f };
     constexpr IconSize k_documentTileIconSize{ k_documentTileIconWidth, k_documentTileIconHeight };
@@ -156,7 +156,7 @@ namespace ClaFi::Documents
             ButtonViewMode::TopCenterIcon,
             k_documentTileIconSize,
             HorizontalTextAnchor::Center,
-            // Every line of a name that wraps centred under the mark, not the block alone.
+            // Every line of a name that wraps centered under the mark, not the block alone.
             TextFormat{ TextAlign::Center },
             // A tile takes the share of the lane it is handed, so every tile comes out the same
             // width whatever it is called, and a long name wraps under the mark rather than

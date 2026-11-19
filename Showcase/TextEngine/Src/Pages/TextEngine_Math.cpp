@@ -58,7 +58,7 @@ namespace TextEngine_App
 
         // The sign of a root: the short stroke down, the rise, and the arm it turns into. The arm
         // is laid the way the vinculum after it is laid - a fill hanging off the top of the box,
-        // not a stroke centred on it - so the two are one bar rather than two a half stroke apart.
+        // not a stroke centered on it - so the two are one bar rather than two a half stroke apart.
         // The rise ends at the middle of that bar, where a turn should meet it.
         void drawRadicalSign(DrawIconEvent& event)
         {
@@ -133,7 +133,7 @@ namespace TextEngine_App
         // -----------------------------------------------------------------
 
         // Rows standing on their own: set in the notation's family a step above the prose and
-        // centred, then the blank row that parts every display block from the prose under it.
+        // centered, then the blank row that parts every display block from the prose under it.
         void writeDisplay(Text& out, const Text& rows)
         {
             out << TextAlign::Center;
@@ -142,7 +142,7 @@ namespace TextEngine_App
             out << k_endLine;
         }
 
-        // Rows set as a display is, standing where the page's stops put them rather than centred.
+        // Rows set as a display is, standing where the page's stops put them rather than centered.
         void writeStoppedDisplay(Text& out, const Text& rows)
         {
             out << FamilyText{ std::wstring{ k_mathFamily }, SizedText{ k_displaySize, rows } };
@@ -172,7 +172,7 @@ namespace TextEngine_App
         }
 
         // A fraction takes three rows: what is over the bar, the bar, and what is under it. The
-        // two sides are centred rather than aligned to the bar, so the rule is written as wide as
+        // two sides are centered rather than aligned to the bar, so the rule is written as wide as
         // the wider of them and the narrower one sits in the middle of it.
         void writeFraction(Text& out, const Text& numerator, const Text& denominator, float ruleWidth)
         {
@@ -183,7 +183,7 @@ namespace TextEngine_App
 
         // One row of a bracketed block: a piece of the left bracket, the row, a tab stop, and a
         // piece of the right. Every row is stopped at the same column, so every row comes to the
-        // same width and centring puts the columns of one under the columns of the next.
+        // same width and centering puts the columns of one under the columns of the next.
         void writeBracketedRow(Text& out, const Text& row, BracketPart part, float rightEdge)
         {
             out << InTextIcon{ 7.0f, k_rowHeight, k_rowBaseline, bracketPiece(BracketSide::Left, part) };
@@ -211,10 +211,10 @@ namespace TextEngine_App
         page << TextAlign::Center;
         page << StyledText{ TextStyles::Title, L"Mathematical Notation" } << k_endLine;
         page << StyledText{ TextStyles::SubTitle, L"Formulas written down, not drawn" } << k_endLine;
-        page << k_endLine; // the blank row under the subtitle is centred with it
+        page << k_endLine; // the blank row under the subtitle is centered with it
         page << TextAlign::Left;
         page << L"Every formula below is one Text. A raised run, a lowered run, a rule "
-            L"drawn into the flow, a row centred against the row above it - the engine places all "
+            L"drawn into the flow, a row centered against the row above it - the engine places all "
             L"of it, and none of it is a picture.";
         page << k_endLine << k_endLine;
 
@@ -263,7 +263,7 @@ namespace TextEngine_App
 
         page << StyledText{ TextStyles::Heading, L"2. Fractions" } << k_endLine;
         page << L"Nothing stacks on its own, so a fraction is written as three rows: the "
-            L"numerator, a rule, and the denominator, each centred. The rule is an inline object "
+            L"numerator, a rule, and the denominator, each centered. The rule is an inline object "
             L"and is the only thing in its row, so the row is as tall as the rule and the three "
             L"close up.";
         page << k_endLine << k_endLine;
@@ -302,7 +302,7 @@ namespace TextEngine_App
 
         // The row carrying the rule carries the left hand side as well, so a space as wide as
         // that side is written after the rule: the row is then symmetric about the rule, and
-        // centring the row centres the rule under the numerator above it.
+        // centering the row centers the rule under the numerator above it.
         Text quadratic{};
         Text quadraticTop{ L"−", ItalicText{ L"b" }, L" ± " };
         writeRoot(quadraticTop,
@@ -338,8 +338,8 @@ namespace TextEngine_App
         writeDisplay(page, besideLimits);
 
         page << L"A limit set over and under its operator is three rows again, and these rows "
-            L"carry more than the stack - the operator has its summand beside it. Centring a row "
-            L"would centre the whole of it, so the rows are left aligned and every column is a "
+            L"carry more than the stack - the operator has its summand beside it. Centering a row "
+            L"would center the whole of it, so the rows are left aligned and every column is a "
             L"stop the page names.";
         page << k_endLine << k_endLine;
 

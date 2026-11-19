@@ -28,7 +28,7 @@ namespace Themes_App
     //export BrowserSettings* settings{};
 
     export void writeColorSpot(Text&, Color);
-    // One colour as a round mark the height of a line, where writeColorSpot writes a wider one.
+    // One color as a round mark the height of a line, where writeColorSpot writes a wider one.
     // A hue that stands beside a palette rather than in it is written with this, so the two kinds
     // of mark are told apart by shape before they are read.
     export void writeColorDot(Text&, Color);
@@ -38,8 +38,8 @@ namespace Themes_App
     // the custom hue's empty run leaves it bare. A rounded square, the shape the harmony picker
     // gives its palette map tiles.
     export void paintHueBlob(PaintEvent&, const FloatRect& bounds, Color);
-    // A square of the given side, centred on the run. A face's text anchors have centred the
-    // glyph already, so centring the blob on the same run puts one over the other.
+    // A square of the given side, centered on the run. A face's text anchors have centered the
+    // glyph already, so centering the blob on the same run puts one over the other.
     export [[nodiscard]] FloatRect blobBounds(const FloatRect& textBounds, float side);
 
     export void writeColorCell(Text&, Color, bool extendedMode = false);
@@ -76,7 +76,7 @@ namespace Themes_App
     // A blob's corner radius as a share of its side.
     export constexpr float k_blobCornerShare{ 0.25f };
 
-    // Square. The three parts meet at the centre and leave along their own arms, so a tile wider
+    // Square. The three parts meet at the center and leave along their own arms, so a tile wider
     // than it is tall gives the width to the top part and the height to the other two.
     export constexpr float k_paletteTileSize = k_markW;
 
@@ -235,20 +235,20 @@ namespace Themes_App
         constexpr float k_quarterCircleDeficit = 1.0f - k_2Pi / 8.0f;
 
 
-        // An inner line, as where it crosses the tile's vertical centreline and how steeply it runs.
+        // An inner line, as where it crosses the tile's vertical centerline and how steeply it runs.
         struct Divider
         {
             float centerY;
             float slope;
         };
 
-        // Height at which the upper line crosses the tile's vertical centreline, as a fraction of
+        // Height at which the upper line crosses the tile's vertical centerline, as a fraction of
         // the tile height. The lower line is the mirror of it, the tile being symmetric top to
         // bottom.
         //
         // This does not depend on the lean, which is what lets one pair of crossings serve all six
         // variants: the tile is symmetric left to right, so a leaning line adds exactly as much area
-        // on one side of the centreline as it takes from the other. That cancellation is exact while
+        // on one side of the centerline as it takes from the other. That cancellation is exact while
         // the line stays clear of the corner arcs, which needs |lean| <= 2 * (crossing - radius /
         // height) - about 0.42 at a radius of an eighth, nearly three times the steepest lean used.
         //

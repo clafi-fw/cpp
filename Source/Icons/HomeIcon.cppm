@@ -45,7 +45,7 @@ namespace ClaFi::Icons::HomeIcon
         // building - a tall box with windows in it can only be the one thing.
         constexpr float k_blockRadiusRatio = 0.18f;
 
-        // Two across and three down. More columns and the rows stop reading as storeys; fewer
+        // Two across and three down. More columns and the rows stop reading as stories; fewer
         // rows and the grid stops reading as tiles.
         constexpr int k_windowColumns = 2;
         constexpr int k_windowRows = 3;
@@ -60,7 +60,7 @@ namespace ClaFi::Icons::HomeIcon
         constexpr float k_minStrokeWidth = 1.0f;
 
         // The square the drawing is laid out in: the icon rect's shorter side, less the stroke
-        // that straddles the outline, centred in whatever the caller gave.
+        // that straddles the outline, centered in whatever the caller gave.
         [[nodiscard]] FloatRect drawingBounds(const FloatRect& iconRect, float strokeWidth)
         {
             float size = std::min(iconRect.width(), iconRect.height()) - strokeWidth;

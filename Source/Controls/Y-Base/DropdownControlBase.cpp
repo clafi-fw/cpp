@@ -24,12 +24,12 @@ namespace ClaFi::Controls
             NavigationReach::No,
             MouseFocus::Parent,
             // **The mark is the strip's icon where the strip has nothing else to show.** IconOnly
-            // centres it in the content box, which is the whole of the strip - carried as text it
+            // centers it in the content box, which is the whole of the strip - carried as text it
             // would be placed by the text anchor instead, and a run narrower than the strip leaves
             // all of the slack on one side.
             //
             // A ribbon strip has the owner's text on it, so there the mark goes back into the run
-            // as its last glyph and the two are centred as one line. The owner is complete this
+            // as its last glyph and the two are centered as one line. The owner is complete this
             // far - its own constructor body is what creates the part - so its config answers.
             owner.textOnDropdown() ? ButtonViewMode::TextLabel : ButtonViewMode::IconOnly,
             IconSize{ DropdownControlBase::k_markBox },
@@ -142,7 +142,7 @@ namespace ClaFi::Controls
     {
         // The mark is lit while the popup is up: it is the one part of the control that says so
         // wherever the press landed, and a muted mark over an open popup reads as a control at
-        // rest. A mark already taking the normal colour stays as it is.
+        // rest. A mark already taking the normal color stays as it is.
         Color color = Color::blend(
             event.inkRgb(dropdownMarkInk()),
             event.textRgb(InkGrade::Strongest),
@@ -318,9 +318,9 @@ namespace ClaFi::Controls
         if (!m_config.textOnDropdown)
             return;
 
-        // The mark is the last glyph of the run, so the label and the mark are centred together as
-        // one line rather than the label being centred and the mark hung off its end. TextAlign
-        // centres the line inside the layout; centring the layout inside the strip is the part's
+        // The mark is the last glyph of the run, so the label and the mark are centered together as
+        // one line rather than the label being centered and the mark hung off its end. TextAlign
+        // centers the line inside the layout; centering the layout inside the strip is the part's
         // horizontal text anchor, which is the other half of it.
         adjustMainText(event);
         Text line = event.text;

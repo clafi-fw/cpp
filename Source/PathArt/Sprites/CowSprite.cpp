@@ -13,7 +13,7 @@ namespace ClaFi::PathArt
 
     namespace
     {
-        // The detail colour, or the body's a shade darker where that has three tenths more contrast
+        // The detail color, or the body's a shade darker where that has three tenths more contrast
         // against `backdrop`. From a tenth more the two blend, so a theme crossfade carries it.
         [[nodiscard]] Color limbColorOn(const CowColors& colors, const Color backdrop)
         {

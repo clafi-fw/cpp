@@ -88,7 +88,7 @@ namespace ClaFi::Graphics::Cpu
         };
 
         // The bodies: a band across the middle, one between the two corners of the top edge and
-        // one of the bottom edge, and under the shorter corner of an edge the strip its neighbour
+        // one of the bottom edge, and under the shorter corner of an edge the strip its neighbor
         // stands taller by.
         const float topBand = std::max(joints.topLeft.y, joints.topRight.y);
         const float bottomBand = std::min(joints.bottomRight.y, joints.bottomLeft.y);

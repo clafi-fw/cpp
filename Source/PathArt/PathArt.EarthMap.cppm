@@ -20,7 +20,7 @@ namespace ClaFi::PathArt
         std::span<float> heights; // 1 at the highest peaks
         std::span<float> slopesEast; // the rise eastward, in heights per radian of arc
         std::span<float> slopesNorth; // the rise northward, in heights per radian of arc
-        std::span<float> variation; // -1 to 1, which way the colour of the patch leans
+        std::span<float> variation; // -1 to 1, which way the color of the patch leans
         std::span<float> dryness; // 0 where it is green, 1 in the deepest desert
         std::span<float> forest; // the share of northern forest
         std::span<float> tundra; // the share of tundra
@@ -51,7 +51,7 @@ namespace ClaFi::PathArt
     // Natural Earth's contours of the sea's depth: at each level, the sea deeper than it.
     struct NaturalEarthDepths
     {
-        std::span<const std::uint16_t> levels; // in metres, from the shallowest
+        std::span<const std::uint16_t> levels; // in meters, from the shallowest
         std::span<const std::uint16_t> ringCounts; // the outlines at each level
         std::span<const std::uint16_t> pointCounts; // one for each outline, level by level
         // Each point's longitude, then its latitude, in tenths of a degree.

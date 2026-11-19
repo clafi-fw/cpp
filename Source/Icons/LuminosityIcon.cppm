@@ -30,14 +30,14 @@ namespace ClaFi::Icons::LuminosityIcon
     void draw(DrawIconEvent& event)
     {
         // The ramp runs where the elevation slider runs - from the form surface up to the text
-        // colour - so the icon shows the range the control actually moves through. It follows the
-        // colour mode for free, both ends being the theme's own, and reverses on a light theme
+        // color - so the icon shows the range the control actually moves through. It follows the
+        // color mode for free, both ends being the theme's own, and reverses on a light theme
         // because that is the direction the slider reverses too.
         Color startColor = event.textRgb(InkGrade::Faint);
         Color endColor = event.textRgb(InkGrade::Strongest);
 
         // Nothing to fade by hand: both ends come off textColor(), which already carries it, and
-        // a blend of two faded colours is faded.
+        // a blend of two faded colors is faded.
         Sweep::BoundaryColors colors{};
 
         for (int i = 0; i <= Sweep::k_segmentCount; ++i)

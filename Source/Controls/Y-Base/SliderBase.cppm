@@ -63,7 +63,7 @@ namespace ClaFi::Controls
             // A host scrolling its own content while the pointer drags near an edge drives the
             // button, so the button shows the movement it is making. This is not a click: the
             // pointer is already where the content has to arrive, and it arrives in the same
-            // frame rather than travelling there. The speed multiplies a fixed rate, and the
+            // frame rather than traveling there. The speed multiplies a fixed rate, and the
             // ground covered is measured in time rather than in repeats, so it is the same rate
             // on a machine that keeps up with the timer and on one that does not.
             void startAutoScroll(float speed);
@@ -268,11 +268,11 @@ namespace ClaFi::Controls
         float m_positionTarget{ 0.0f };
         // A press that landed on the slot rather than on the thumb or a button. It is what the
         // drag steers by: the press sends the position to the point under the pointer, and the
-        // thumb is still travelling there, so it is not under the pointer to take the drag over.
+        // thumb is still traveling there, so it is not under the pointer to take the drag over.
         bool m_slotPressed{ false };
         // A pointer is holding the thumb. Set where the press lands, and cleared on the
         // press-up, which is dispatched from the down item and so reaches this control however
-        // far the pointer has travelled off the bar in between.
+        // far the pointer has traveled off the bar in between.
         bool m_thumbPressed{ false };
         bool m_heldByProxy{ false }; // another slider is holding the position for this one
         float m_pressPosition{ 0.0f }; // where the pointer last took hold of the position

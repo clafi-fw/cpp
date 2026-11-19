@@ -290,7 +290,7 @@ namespace SeeDocs_App::Ui
         void connectCommand(Button&, const Command&);
         // Raises PageOrderEvent with the rows' first links, in the order the rows stand in now.
         void reportOrder(Grids::Grid&);
-        // The button opens the fact's source, greyed with a tooltip while no editor is set for it.
+        // The button opens the fact's source, grayed with a tooltip while no editor is set for it.
         void connectSource(Button&, const Fact&);
         void connectFolder(Button&, const Fact&);   // its click opens the fact's folder
         void connectFullValue(Grids::Row&, const Fact&);   // the whole path in hint and editor

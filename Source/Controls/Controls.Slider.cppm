@@ -361,7 +361,7 @@ namespace ClaFi::Controls
         EditableSlider::adjustPaint(event);
         // The slot's border and nothing else. A slider paints a slot and its parts, never a
         // surface of its own, so it carries no rule that would describe one: a surface rule
-        // left here moves m_surfaceHsl, and every colour downstream then answers to a
+        // left here moves m_surfaceHsl, and every color downstream then answers to a
         // surface that is on screen nowhere - the thumb raised twice over the cell it sits in,
         // and everything fading toward a phantom.
         //
@@ -533,7 +533,7 @@ namespace ClaFi::Controls
         paintSlotBorder(event, slotRect, radius);
     }
 
-    // A tenth of the range centred on the value, moved inward where it would run past an end.
+    // A tenth of the range centered on the value, moved inward where it would run past an end.
     void Slider::showFineSlider()
     {
         const float begin = std::clamp(relativePosition() - k_fineShare / 2.0f, 0.0f, 1.0f - k_fineShare);

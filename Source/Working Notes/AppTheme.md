@@ -5,11 +5,11 @@ The author's side of the footnote of the same name.
 ## WindowShadow
 
 The form restates its frame on every tick, and the painter bakes its tiles again on each tick the
-colour has moved.
+color has moved.
 
 ## ThemeColors
 
-**The built-in theme is written, not edited.** `AppTheme()` states it, colours and styles, and its
+**The built-in theme is written, not edited.** `AppTheme()` states it, colors and styles, and its
 definition stands alone in `AppTheme_BuiltIn.cpp`, which the Themes app's Write to source rewrites
 whole from the theme it has open. The declarations say what each member is and carry no values, so
 a theme change rebuilds that one file rather than everything that imports the module.
@@ -61,8 +61,8 @@ than the whole of it.
 
 ## BakedColors pigmentHsl
 
-The two tones an ink states are one colour written once for each side of the theme rather than one
-elevation the mode would orient. That pair has a real colour half way, which the elevation axis
+The two tones an ink states are one color written once for each side of the theme rather than one
+elevation the mode would orient. That pair has a real color half way, which the elevation axis
 does not: the tones are chosen for each side rather than mirrored.
 
 ## MetricsSet
@@ -71,8 +71,8 @@ does not: the tones are chosen for each side rather than mirrored.
 theme fact, and the looks that differ by size come out of a set's sizes. Three choices were made
 with it:
 
-- Sizes are a list of their own beside the colour elements. A control names its sizes and its
-  colours apart, as it did, so the places that read a size stayed as they were.
+- Sizes are a list of their own beside the color elements. A control names its sizes and its
+  colors apart, as it did, so the places that read a size stayed as they were.
 - A switch reaches open windows through the set a control names and the sizes it stated. A
   control copying its set when built would have kept the old sizes until it was built again.
 - A band width stands beside the border rather than a border weight per side, so the focus ring
@@ -91,27 +91,27 @@ stating its size again in themeMetricsChanged.
 holding a CodeBox that shows the code (Oj, 2026-11-04: "a child CodeBox on a themed block to show
 its content"; a CodeBox wearing the block's element and set was the first build, and a code()
 accessor the second, before "should be WithBody::body()"). The rule they keep is that a block's
-shape is a control property - a SeeDocs project picks it - and its colours and sizes are the
+shape is a control property - a SeeDocs project picks it - and its colors and sizes are the
 theme's. A theme made for an export states the frames and bands; the built-in one gives tints
 alone.
 
-- The colours start from pigments through seedPigmentOf, which PaintEvent applies to any control
+- The colors start from pigments through seedPigmentOf, which PaintEvent applies to any control
   wearing a seeded element. A rule could not name a pigment: a hue operation names a palette slot
   or a value.
 - The marks - the message badges, the check and the cross - are drawn in pigment inks rather than
   the element's stroke, the way MessageBar's badge is.
 - **The band is the edge indicator the framework already drew** (Oj, 2026-11-04, showing an open
   vertical tab, an open tab, a text box and a slider in edit mode: "these are examples of a band
-  use"). Each control draws it at its own edge, in its own colour, when its state says; the
+  use"). Each control draws it at its own edge, in its own color, when its state says; the
   theme states the width per set, and TextBox and Slider gained sets for it. Drawing it for
   every control on the left in defaultPaintFrame was the first build, and could not hold once
   a tab's set stated one.
-- **The band's colour is the theme's** (Oj, 2026-11-04: "Band is new item beside surface and
+- **The band's color is the theme's** (Oj, 2026-11-04: "Band is new item beside surface and
   stroke, and Edit is a new input - virtual in control, not in StateFactors. Tab already has all
   inputs needed"). Band is a PaintChannel seeded like the stroke, and Edit a RuleInput read from
   Control::editFactor, which WithEditMode answers with its animated factor. The tab's and the
   edit mode's bands were drawn in indicatorRgb - the accent over SelectedText's resting surface -
-  and the blocks' in their stroke. The built-in rules keep those colours: the Tab element reads
+  and the blocks' in their stroke. The built-in rules keep those colors: the Tab element reads
   Selected and Any Non-Window reads Edit, both in the accent's values, and the callouts' and the
   code block's stroke rules became their band rules. The tab's band ran from half opacity to full
   as the tab opened; its opacity is now the rule's level, from none to full, and its length still
@@ -120,7 +120,7 @@ alone.
   Callout"). It wears the Callout set and the element of its icon, one for each of the five
   icons, and its stripe became the set's band. The built-in callouts are that card: a surface
   near the tooltip's, tinted by the kind's pigment, and a 4 point band in it. A surface rule can
-  not keep the tooltip's own hue - the band's colour starts from the surface, so the kind's hue
+  not keep the tooltip's own hue - the band's color starts from the surface, so the kind's hue
   has to be there.
 - Figure waits on a question about SVG: every figure in the manuals is SVG, and the framework
   decodes PNG alone.
@@ -135,10 +135,10 @@ alone.
   two steps. Related sets got a shared base holding what they state alike - Any Button, Any
   Indicator, Any Callout, Do and Don't - rather than one deriving from the other, since a child
   cannot take a rule away by restating it. Dropping an inherited rule is its own list, so the
-  editor can move a greyed inherited row there and restore it.
+  editor can move a grayed inherited row there and restore it.
 - **Resting rules first, then state rules, each base to element.** Pure base-first order would
   run Any Button's Hot before Button's resting surface, and Pressed is a Scale, so the two orders
-  differ. The chosen order reproduces every colour the four keyed lists produced, except where an
+  differ. The chosen order reproduces every color the four keyed lists produced, except where an
   element's own state rule meets a base's on one channel - a tab's or a tool button's stroke now
   adjusts the ring instead of being wiped by it.
 - **Any Window is a base, not a position.** A root wearing nothing takes no rules and paints
@@ -177,7 +177,7 @@ settled on a tick: the click or the in-place editor that asked stands on rows th
 
 ## ControlStyle
 
-**Sizes joined the colour rules on 2026-11-06.** Oj: "The reason why they were separated in the
+**Sizes joined the color rules on 2026-11-06.** Oj: "The reason why they were separated in the
 first place was to have one place when you can state a shared metrics for example for a secondary
 window. But with color rules cascading now that reason is not valid anymore. To say more, lack of
 metrics cascading is causing some copy-pasting there." The decisions (Oj: "1. a; Page's sizes were
@@ -188,7 +188,7 @@ a nearest set. Combobox dropdowns, scroll bars are getting their own styles. 2. 
   `resolvedMetrics` walks the chain root first with each stated size replacing the one below.
   Rules add up along the chain and sizes override, because a size is a value and a rule is a step.
 - **A control wears one style**, through `UiElement`, and takes its rules in paint and its sizes
-  in layout. Where a control had named a colour element and a metrics set that did not pair, it got
+  in layout. Where a control had named a color element and a metrics set that did not pair, it got
   a style of its own: Dropdown over Any Window with Section's surface rule, Expander and Field over
   Section with the frame sizes a page carried, Scroll Bar, List Item, Grid Cell, Slider. Field is
   the one style beyond Oj's list: the Themes app's framed facts wore Section with sizes of their

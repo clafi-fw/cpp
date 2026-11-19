@@ -216,7 +216,7 @@ namespace ClaFi::PlatformImplementation::Linux
     }
 
     // **The answer**: a response code, then the results. Any code but success is the dialog
-    // cancelled or failed, and settles the request with nothing.
+    // canceled or failed, and settles the request with nothing.
     void FolderRequest::takeResponse(DBusMessage* message)
     {
         const char* interfaceName = dbus_message_get_interface(message);

@@ -45,7 +45,7 @@ Do not silently reformat the whole file - that buries the real change in whitesp
 
 Converting a tab-indented file is safe only after confirming no tab appears outside leading whitespace. A tab inside a string literal must survive. Expand using the tab width the file was written for. Do not assume the width - the right one makes the indent columns line up with brace nesting depth.
 
-**[MUST] This caveat is scoped to leading whitespace only.** It is not a general licence to leave style violations in place. It does not exempt bracing, statement layout, or any rule in section 4. It does not apply to a file being newly authored, or to code being relocated into a new file. In both of those cases every line is a line being written, so every rule in this document applies to every line. When moving existing bodies into a new implementation unit, apply section 4 to the moved code as it lands.
+**[MUST] This caveat is scoped to leading whitespace only.** It is not a general license to leave style violations in place. It does not exempt bracing, statement layout, or any rule in section 4. It does not apply to a file being newly authored, or to code being relocated into a new file. In both of those cases every line is a line being written, so every rule in this document applies to every line. When moving existing bodies into a new implementation unit, apply section 4 to the moved code as it lands.
 
 ## 3. Structural Organization
 

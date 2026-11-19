@@ -46,7 +46,7 @@ chain gave, and a second Return with nothing typed stated that size as the style
 ending but Escape offered the box's text, and the sizes' sink takes any value typed as the style's
 own statement, which is right for a value typed and wrong for one never touched. Decided here, in
 the editor rather than in that sink: an untouched box offers nothing, and the edit ends as Escape
-ends it, Cancelled and the sink never asked. Untouched is the box's undo depth at zero, which the
+ends it, Canceled and the sink never asked. Untouched is the box's undo depth at zero, which the
 keys that opened the editor already leave behind them, and which undoing every edit comes back to -
 chosen over comparing the text against the one handed in, which would have read a value retyped
 as the same as one never typed. A sink that wants a retyped value to count still gets it.

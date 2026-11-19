@@ -9,7 +9,7 @@ namespace ClaFi::PathArt
     export struct BlowingDust
     {
         float opacity{ 1.0f };
-        Color color1{ 0xFFFFFFFF }; // one end of the range a streak's colour is picked from
+        Color color1{ 0xFFFFFFFF }; // one end of the range a streak's color is picked from
         Color color2{ 0xFFFFFFFF }; // the other end
         int count{ 200 };
         float pace{ 1.0f }; // times the usual speed, rounded to whole widths a cycle

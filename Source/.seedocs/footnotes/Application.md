@@ -76,7 +76,7 @@ menu opens, so every option is read where it lives.
 
 **The bar is always shown**, so a section opening or closing moves nothing across the page.
 
-- **Theme** - a ThemePick, and a button for each colour mode setting - see applyColorMode. A theme
+- **Theme** - a ThemePick, and a button for each color mode setting - see applyColorMode. A theme
   tried on goes when the menu closes.
 - **Scale** - a ScaleSlider, a percent per unit, writing AppContext::scale, and every window takes
   it. The readout shows the percent that was taken.
@@ -339,7 +339,7 @@ connectAppThemes has run is a precondition failure, not an empty list.
 ## connectAppThemes
 
 ApplicationBase calls it, before the config is read. From then on a change of the config's theme
-path or colour mode, or under Auto of the desktop's mode, puts on the stored theme.
+path or color mode, or under Auto of the desktop's mode, puts on the stored theme.
 
 ## storedTheme
 
@@ -381,7 +381,7 @@ theme is put on**, so it keeps up with the desktop.
 
 A DocumentsFolder of theme files: the base keeps the directory, the watch and the listeners. The
 manager adds a parsed theme for each file, read again with the directory, and the built-in,
-answered from the compiled-in colours whatever is on the disk. A file lacking a set for an element
+answered from the compiled-in colors whatever is on the disk. A file lacking a set for an element
 the application names is passed over: what wears that element would paint nothing under it.
 
 ## ThemesList

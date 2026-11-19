@@ -13,7 +13,7 @@ namespace Themes_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // The colour a floor ramp takes its hue and saturation from, asked at paint time.
+    // The color a floor ramp takes its hue and saturation from, asked at paint time.
     export using OnGetFloorBase = std::function<Hsl()>;
 
     // A dark mode floor slider whose slot shows a surface at elevation 0 lifted to each floor.

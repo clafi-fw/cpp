@@ -169,7 +169,7 @@ namespace Themes_App
         CppCodeGenerator& controlStyle(const ControlStyle&, std::size_t level);
         //
         // The member a statement writes to, carrying the object name an outside block goes
-        // through, and the palette member an AppTheme's colours stand in.
+        // through, and the palette member an AppTheme's colors stand in.
         CppCodeGenerator& memberName(std::wstring_view name);
         CppCodeGenerator& colorsMemberName(std::wstring_view name);
         // The head of one member statement, up to where its braced value begins.

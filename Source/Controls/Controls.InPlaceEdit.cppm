@@ -24,7 +24,7 @@ namespace ClaFi::Controls
     {
         Accepted,   // the sink was offered the text and did not refuse it
         Refused,    // the sink was offered the text and would not have it
-        Cancelled   // Escape, or nothing edited; the sink was never asked
+        Canceled   // Escape, or nothing edited; the sink was never asked
     };
 
     // The text the user is committing, and the sink's answer to it. See Controls
@@ -193,9 +193,9 @@ namespace ClaFi::Controls
         void takeSuggestion(std::size_t line);
     private:
         AcceptEditFunc m_accept{};
-        // Cancelled until something says otherwise: an edit nobody took is an edit that did not
+        // Canceled until something says otherwise: an edit nobody took is an edit that did not
         // happen.
-        EditResult m_result{ EditResult::Cancelled };
+        EditResult m_result{ EditResult::Canceled };
         // Two separate facts. Settled means the edit is over - taken, or abandoned on Escape.
         // Asked means the sink has answered at least once, either way, which is what stops the
         // tidy-up offer running a sink that has already refused.
@@ -564,7 +564,7 @@ namespace ClaFi::Controls
         // property of the control rather than a state it is in - so it says nothing and the walk
         // carries on up, and something above it may answer the same command for something else.
         // A host that has a sink and may not be renamed right now claims and reports disabled,
-        // because the command is still about it: the line is greyed rather than dropped.
+        // because the command is still about it: the line is grayed rather than dropped.
         this->onGetActionState([this](GetActionStateEvent& event){
             if (&event.action != &StdActions::rename)
                 return;

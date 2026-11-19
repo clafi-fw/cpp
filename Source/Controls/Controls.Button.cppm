@@ -17,7 +17,7 @@ namespace ClaFi::Controls
         template <typename... Args>
         explicit Button(const CreateParams&, Args&&...);
         // A button is the thing a press is about, so it is one of the few controls that takes the
-        // depth. Inherited by PrimaryButton and ToolButton below, which are a button's colours
+        // depth. Inherited by PrimaryButton and ToolButton below, which are a button's colors
         // rather than a different kind of thing.
         [[nodiscard]] bool allowZAnimation() const override { return true; }
     };

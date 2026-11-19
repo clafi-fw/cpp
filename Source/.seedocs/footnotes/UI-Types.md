@@ -274,13 +274,13 @@ ColorMode** - see wornColorMode - so nothing that paints holds Auto.
 
 **Each pigment stands on the theme's grid** - twelve hues 30 degrees apart, the first at the
 anchor - at the grid hue nearest the middle of its name. It is never more than 15 degrees from
-that colour, and every harmony colour is on the same grid. It sets the hue only. The tone comes
+that color, and every harmony color is on the same grid. It sets the hue only. The tone comes
 from `InkWell::pigmentTones` for an ink, or from the painter for a pigment it draws directly.
 
 ## InkTone
 
-**Saturation and luminosity travel together.** A hue needs a different amount of colour to read at
-each luminosity, so either alone is half a colour.
+**Saturation and luminosity travel together.** A hue needs a different amount of color to read at
+each luminosity, so either alone is half a color.
 
 ## PigmentTones
 
@@ -299,11 +299,11 @@ a muted run does.
 
 ## Ink
 
-**An Ink becomes a colour where it lands**, by the control it is drawn in and the theme in effect.
+**An Ink becomes a color where it lands**, by the control it is drawn in and the theme in effect.
 A Color stays as it is.
 
-**Take one from InkWell** - one accessor per colour, each taking the grade alone, and the named
-colours built from them. A constructor taking a grade could not say which colour was meant.
+**Take one from InkWell** - one accessor per color, each taking the grade alone, and the named
+colors built from them. A constructor taking a grade could not say which color was meant.
 
 ## DirWatchChangeEvent
 
@@ -345,7 +345,7 @@ The connection may take ten seconds and the transfer thirty. A cancel takes effe
 
 ## WebFetch ~WebFetch
 
-**The wait is short** - cancelling ends the request before the thread is joined.
+**The wait is short** - canceling ends the request before the thread is joined.
 
 ## CommandOutcome
 
@@ -424,13 +424,13 @@ its mirror is from the ink - Faint mirrors Strong, Subtle mirrors Muted:
 - Strongest at 1, the ink itself;
 - a share between two steps lands between theirs.
 
-**The floor puts both sides in one set of greys.** Each step below Strongest stops short of the ink
+**The floor puts both sides in one set of grays.** Each step below Strongest stops short of the ink
 as far as the dark side's surface is above black.
 
 ## InkColor::Text
 
 **An Ink starts with Text.** Both ends of the mix come from the paint chain, so a text ink has no
-colour, hue or tone of its own.
+color, hue or tone of its own.
 
 ## InkColor::Accent
 
@@ -439,7 +439,7 @@ text. **Use it for what belongs with the controls around it.**
 
 ## InkColor::Spot
 
-**Spot is for what stands apart from the interface** - a brand mark, emphasised text, a tooltip's
+**Spot is for what stands apart from the interface** - a brand mark, emphasized text, a tooltip's
 tint. The theme decides how sparingly it shows.
 
 ## InkColor::Yellow, Green, Blue, Red, Purple, Orange
@@ -462,10 +462,10 @@ Saturation 0, at luminosity 0 and 1. A lower grade fades it toward the surface.
 
 ## ColorCodes
 
-**A key's colour is the one it was first given.** The first key takes the colour the codes were
+**A key's color is the one it was first given.** The first key takes the color the codes were
 made with, each new key the hue a step further round the wheel, and asking for a key again answers
-the same colour. Six steps of the default go round the wheel once, so the seventh key wears the
-first key's colour again. `clear` forgets every key and starts from the first colour.
+the same color. Six steps of the default go round the wheel once, so the seventh key wears the
+first key's color again. `clear` forgets every key and starts from the first color.
 
 ## UiTimer
 

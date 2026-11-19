@@ -22,11 +22,11 @@ namespace ClaFi::Syntax
         LineState state{};
 
         // Where the plain run waiting to be written begins. Held rather than written per token,
-        // so the plain text between two coloured runs costs one append instead of one per
+        // so the plain text between two colored runs costs one append instead of one per
         // character.
         std::size_t plainStart = 0;
 
-        // The coloured run still open, waiting for the token after it to say whether it goes on:
+        // The colored run still open, waiting for the token after it to say whether it goes on:
         // two tokens in one ink standing side by side are one run.
         std::size_t runStart = 0;
         std::size_t runEnd = 0;

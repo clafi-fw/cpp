@@ -258,7 +258,7 @@ It holds a head, and a body that is a SubGrid of rows. Closed, it shows its head
 expander's header stacks above the body. A group's span lies over it, on different columns, so the
 span's cells run down the whole group.
 
-**It paints nothing.** Its colour shows through the cells of the rows inside it, so a group is
+**It paints nothing.** Its color shows through the cells of the rows inside it, so a group is
 selected whenever one of them holds the selected cell - see UiElement::GridRow.
 
 ## RowExpander
@@ -300,7 +300,7 @@ own element's stroke:
 - Grid - the grid itself, and the frame around it
 
 **A row paints through its cells**, with no rect of its own. The rows inside a group or a section
-paint its colour for it, so rules apply once per level of nesting. Selected stops short of a
+paint its color for it, so rules apply once per level of nesting. Selected stops short of a
 section, and Hovered and Pressed reach the rows alone.
 
 A stroke that reaches nothing is transparent, and the line's gap stays open.

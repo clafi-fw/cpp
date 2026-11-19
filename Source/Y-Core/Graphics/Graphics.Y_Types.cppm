@@ -33,7 +33,7 @@ namespace ClaFi::Graphics
         Outline
     };
 
-    // Whether coverage is computed per colour channel or once for the pixel.
+    // Whether coverage is computed per color channel or once for the pixel.
     export enum class TextAntialiasingMode
     {
         Subpixel,
@@ -74,7 +74,7 @@ namespace ClaFi::Graphics
     public:
         // Stays in the interface deliberately: a painter is constructed once per primitive, so
         // this runs thousands of times a frame. A body in the BMI can be inlined by importers;
-        // a body in the implementation unit cannot, and there is no whole-program optimisation
+        // a body in the implementation unit cannot, and there is no whole-program optimization
         // to recover it.
         PainterBase(const PixelView& pixelView)
             :
@@ -363,7 +363,7 @@ namespace ClaFi::Graphics
         ArcSweep arcSweep{ ArcSweep::CounterClockwise };
     };
 
-    // An arc in centre form, as SVG converts its endpoint form. See Graphics-Types#arcellipse
+    // An arc in center form, as SVG converts its endpoint form. See Graphics-Types#arcellipse
     export struct ArcEllipse
     {
         FloatPoint center{ 0.0f, 0.0f };

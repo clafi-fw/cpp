@@ -21,7 +21,7 @@ namespace ClaFi::Controls
 {
     export class ColorEditDialog;
 
-    // The colour moved under one of the sliders. See Controls
+    // The color moved under one of the sliders. See Controls
     export struct ColorEditEvent : public EventOf<ColorEditDialog>
     {
         using EventOf<ColorEditDialog>::EventOf;
@@ -29,13 +29,13 @@ namespace ClaFi::Controls
 
     using ColorEditForm = Form<PanelBase>;
 
-    // A colour under three sliders, with a preview, Copy and Close. See Controls
+    // A color under three sliders, with a preview, Copy and Close. See Controls
     export class ColorEditDialog : public ColorEditForm
     {
     public:
         ColorEditDialog(Control& owner, std::wstring_view title, Color original, ColorSpelling);
     public:
-        // The colour moved under one of the sliders. See Controls
+        // The color moved under one of the sliders. See Controls
         DECLARE_EVENT(ColorEditEvent, OnEdit, onEdit)
         [[nodiscard]] Color color() const { return m_color.toColor(); }
         [[nodiscard]] Color original() const { return m_original; }
@@ -48,7 +48,7 @@ namespace ClaFi::Controls
             return L"ColorEditDialog";
         }
     private:
-        // Where the colour is seen: over a run from black to white, as a ring and as a bar, so
+        // Where the color is seen: over a run from black to white, as a ring and as a bar, so
         // it is read against both ends and against itself.
         class Preview : public Panel
         {

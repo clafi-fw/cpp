@@ -31,7 +31,7 @@ namespace ClaFi
     // the distance the header has to be carried before the shadow is at full strength, so one
     // number says how deep it is and how long it takes to arrive.
     static constexpr float k_heldShadowReach = 8.0f;
-    // The shadow's opacity at full strength. Its colour is the muted ink of the control holding
+    // The shadow's opacity at full strength. Its color is the muted ink of the control holding
     // the header - dark on a light surface, light on a dark one, where a black shadow is lost
     // and a backlight is what sets the header apart.
     static constexpr float k_heldShadowOpacity = 0.28f;
@@ -164,7 +164,7 @@ namespace ClaFi
             // them done to it. Selected is what the data says, and goes on being true of a
             // control that cannot be acted on - which is how the check and the dot have always read
             // it, so the fill reads it the same way. What disabled still takes off it is the blend
-            // towards the surface behind, which every colour here goes through.
+            // towards the surface behind, which every color here goes through.
             auto stateEnabledFactor = [](const VisualStateIndex index, const float enabledFactor){
                 return index == VisualStateIndex::Selected ? 1.0f : enabledFactor;
             };
@@ -199,11 +199,11 @@ namespace ClaFi
 
             // **What the control stands on.** The host's answer where it gave one, because the
             // parent chain cannot: a grid cell is filled by the row, so a control hosted in a
-            // coloured cell stands on the cell and not on the row - see
+            // colored cell stands on the cell and not on the row - see
             // AdjustPaintEvent::setSurfaceHsl.
             //
             // Kept, because it is needed twice and stops being available in between: it is where
-            // this control's own surface starts, and it is what a disabled colour fades toward.
+            // this control's own surface starts, and it is what a disabled color fades toward.
             // Neither the parent's surface nor m_controlContext.surfaceHsl can be read for the
             // second - the parent's is the row rather than the cell, and the context's is written
             // over with this control's own surface before the border is resolved.
@@ -235,7 +235,7 @@ namespace ClaFi
             };
             const float surfaceChanged = applyColorRules(PaintChannel::Surface, surface);
 
-            // Kept from the same three numbers the colours were mixed from, so a surface cannot
+            // Kept from the same three numbers the colors were mixed from, so a surface cannot
             // be at full opacity while still at rest size, whatever combination of its own state
             // and its parent's put it there.
             m_surfaceVisibility = StateFactors::compose(
@@ -246,7 +246,7 @@ namespace ClaFi
 
             m_surfaceRgb = surface.toColor();
             m_surfaceRgb = disabledFormOf(m_surfaceRgb, standsOn, disabledAmount());
-            // Taken before the alpha is applied, so it is the colour that actually shows here -
+            // Taken before the alpha is applied, so it is the color that actually shows here -
             // the surface has already accumulated down the parent chain, and a control with no
             // surface at rest contributes nothing to it at rest.
             m_controlContext.surface = m_surfaceRgb;
@@ -306,7 +306,7 @@ namespace ClaFi
             // surface, so an ink asked for while painting matches one that was ready.
             m_controlContext.disabledAmount = disabledAmount();
 
-            // The border thickens toward focusedBorder by the ring's weight, whatever colour the
+            // The border thickens toward focusedBorder by the ring's weight, whatever color the
             // rules gave the stroke.
             if (m_focusRingFactor > 0.0f)
             {
@@ -425,7 +425,7 @@ namespace ClaFi
         return disabledFormOf(color, surfaceHsl(), disabledAmount());
     }
 
-    // The same, at an amount the caller states. For a colour that is not being painted now:
+    // The same, at an amount the caller states. For a color that is not being painted now:
     // a cached bitmap is written once and kept until it is dropped, so it takes the settled
     // answer rather than whatever the fade is passing through this frame.
     Color PaintEvent::disabledFormOf(Color color, float amount) const
@@ -433,14 +433,14 @@ namespace ClaFi
         return disabledFormOf(color, surfaceHsl(), amount);
     }
 
-    // What a colour becomes on a control that cannot be used: itself, moved toward the surface
+    // What a color becomes on a control that cannot be used: itself, moved toward the surface
     // it is drawn on by the amount given. Which surface that is, is the whole of it - a control's
     // own surface answers to what is behind it, and its inks to the surface. Measured
-    // against itself a colour has nowhere to go, and the fade comes out as a change of nothing.
+    // against itself a color has nowhere to go, and the fade comes out as a change of nothing.
     //
     // The alpha is the caller's and is put back untouched. Color::blend carries alpha with it,
     // and the surface is opaque, so left to itself the blend would drag a faint ink up toward
-    // solid - and a fade is a colour, never an opacity.
+    // solid - and a fade is a color, never an opacity.
     Color PaintEvent::disabledFormOf(Color color, const Hsl& surface, float amount) const
     {
         if (!amount)
@@ -548,7 +548,7 @@ namespace ClaFi
     }
 
     // Blended against the parent's own factors, not against the amounts adjustChildPaint weights
-    // colour by. Those are chosen to keep a child legible against a parent that is merely lit, which
+    // color by. Those are chosen to keep a child legible against a parent that is merely lit, which
     // is a different question from how far it should travel.
     float PaintEvent::zAnimationFactor(VisualStateIndex index) const
     {
@@ -626,7 +626,7 @@ namespace ClaFi
     }
 
     // **The overlay stage paints what its host lists**, and reaches it through the controls that
-    // hold it. Any other child would be walked for nothing: its event built and its colours
+    // hold it. Any other child would be walked for nothing: its event built and its colors
     // resolved, and a paintChildren override drawing content of its own run over what it drew.
     bool PaintEvent::stagePaintsIn(const Control& child) const
     {
@@ -752,8 +752,8 @@ namespace ClaFi
 
             // This corner's arc runs between (insetX, insetY + own) and (insetX + own, insetY),
             // bulging toward the container's corner point. Its farthest point from the
-            // container's arc centre lies along the line through the two centres while this
-            // centre is nearer the corner on both axes, and at one of the two ends otherwise.
+            // container's arc center lies along the line through the two centers while this
+            // center is nearer the corner on both axes, and at one of the two ends otherwise.
             const float own = m_cornerRadii.get(i);
             const float centerX = insetX + own - containerRadius;
             const float centerY = insetY + own - containerRadius;

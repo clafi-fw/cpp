@@ -22,7 +22,7 @@ namespace ClaFi::Icons::PasteIcon
         Canvas& canvas = event.canvas();
         PixelPath path;
 
-        // A strong grey holds the object, the accent marks what names the command. Here that is
+        // A strong gray holds the object, the accent marks what names the command. Here that is
         // the content on the board: the board is where it lands, the lines are what arrived.
         const Color bodyColor = event.textRgb(InkGrade::Strong);
         const Color accentColor = event.accentRgb(InkGrade::Strongest);

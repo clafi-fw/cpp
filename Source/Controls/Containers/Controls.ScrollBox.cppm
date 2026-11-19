@@ -134,11 +134,11 @@ namespace ClaFi::Controls
         // Under this past the slot is the measure's rounding, not content out of sight.
         static constexpr float k_overrunTolerance{ 1.0f };
     private:
-        // The colour the body's surface resolved to. What paints across the gap between the body
-        // and something standing beside it needs the colour and not the rule: a vertical tab strip
+        // The color the body's surface resolved to. What paints across the gap between the body
+        // and something standing beside it needs the color and not the rule: a vertical tab strip
         // is the body of a ScrollBox, and its open tab meets the page **through** the strip's
         // scroll bar, which is outside the body. The body's own paint is the only place the rules
-        // are settled into a colour.
+        // are settled into a color.
         Color m_actualBodyColor{};
         Hsl m_bodySurfaceHsl{}; // what the bars stand on, inside the body's frame
         CornerRadii m_bodyCornerRadii{}; // the frame's corners, which the bars turn with
@@ -946,7 +946,7 @@ namespace ClaFi::Controls
             button.stopAutoScroll();
     }
 
-    // The mouse-down anchor and the hover follow the content whenever the content travelled
+    // The mouse-down anchor and the hover follow the content whenever the content traveled
     // without the pointer carrying it there - a wheel glide, a drag autoscroll. A bar held by
     // the pointer is the one case they do not: the content is moving because the pointer is
     // moving, so an anchor following it would add the content's travel to the pointer's own and

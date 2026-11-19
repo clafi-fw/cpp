@@ -65,7 +65,7 @@ namespace ClaFi::Graphics::Cpu
         void* getNativeBrush(const Brush&) override { return nullptr; }
 
 #if CLAFI_TEXT_MOVING
-        // Only snapOrigins is honoured. This path averages DirectWrite's 3x1 ClearType texture down
+        // Only snapOrigins is honored. This path averages DirectWrite's 3x1 ClearType texture down
         // to a single coverage value per pixel whatever is asked of it, so it is grayscale already
         // and an antialias of Subpixel costs it nothing to ignore - drawing subpixel here would mean
         // keeping the three channels apart and compositing them separately, which the rasterizer's

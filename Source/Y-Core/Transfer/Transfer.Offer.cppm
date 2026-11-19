@@ -32,7 +32,7 @@ namespace ClaFi::Transfer
         // it; a format with a byte spelling as that; anything else as its bytes.
         [[nodiscard]] virtual Payload read(const Format&) = 0;
         // **The bytes behind a format, with no spelling applied.** `read` decodes: a format this
-        // application knows comes back as its Content and the bytes it travelled as are gone. A
+        // application knows comes back as its Content and the bytes it traveled as are gone. A
         // reader that wants to show what actually arrived asks here instead.
         //
         // What comes back is the **content's** bytes and not the envelope around them: a platform
@@ -41,7 +41,7 @@ namespace ClaFi::Transfer
         //
         // **A framework format's bytes are those of the platform format serving it - UTF-16** and
         // CRLF on one side, UTF-8 and LF on the other, a PNG file where that is what the picture
-        // came as. Nothing normalises them, because what they are is the thing being looked at.
+        // came as. Nothing normalizes them, because what they are is the thing being looked at.
         //
         // Empty where the read failed, which is what a null Payload says on the other call, **and
         // empty where the format carries no bytes** - a handle format has none, and this call will

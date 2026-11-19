@@ -68,7 +68,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] LinearGradient roundShading(float left, float right, Color lit, Color dark);
         // The round wall, the plinth under it, and the door framed as the windows are.
         void drawHouseFront(const SceneFrame& house, const TimberMillColors&);
-        // The glass is the lamp's colour as far as its opacity goes, and the lamp glows around.
+        // The glass is the lamp's color as far as its opacity goes, and the lamp glows around.
         void drawHouseWindows(const SceneFrame& house, const TimberMillColors&);
         // The chimney behind the cone, its tile rows, its eave, and the eave's shadow on the wall.
         void drawRoof(const SceneFrame& house, const TimberMillColors&);

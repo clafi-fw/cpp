@@ -173,7 +173,7 @@ namespace ClaFi::Controls
         // The crosshair's pixel at a device point: the contrast of the picture or the square there.
         [[nodiscard]] Color crosshairPixelAt(IntPoint devicePoint, IntPoint pictureAt,
             const IntRect& covered) const;
-        // A colour turned against itself channel by channel, so a hairline of it reads on
+        // A color turned against itself channel by channel, so a hairline of it reads on
         // whatever it crosses.
         [[nodiscard]] static Color contrasted(Color);
         // The square under a translucent pixel this far from the picture's top left pixel.

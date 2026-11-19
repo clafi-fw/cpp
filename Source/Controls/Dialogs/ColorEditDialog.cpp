@@ -50,7 +50,7 @@ namespace ClaFi::Controls
                 && first.luminosity == second.luminosity;
         }
 
-        // The word with a swatch before it, both in the colour: a solid shape reads truer than
+        // The word with a swatch before it, both in the color: a solid shape reads truer than
         // the strokes of the letters.
         [[nodiscard]] Text sampleCaption(const Color original)
         {
@@ -104,7 +104,7 @@ namespace ClaFi::Controls
             MaxSize{ k_maxFloat, k_previewHeight },
             Padding{ k_barInset }
         ) },
-        // On the bar, in the middle of it, once the colour has moved off it - see colorChanged.
+        // On the bar, in the middle of it, once the color has moved off it - see colorChanged.
         m_originalSample{ m_preview.createBody<Label>(
             sampleCaption(original),
             HorizontalAlign::Center,
@@ -157,7 +157,7 @@ namespace ClaFi::Controls
 
     void ColorEditDialog::execute()
     {
-        // Under the control the colour was raised from. The target is tested rather than
+        // Under the control the color was raised from. The target is tested rather than
         // assumed: FormBase accepts a popup with no target at all.
         if (const Control* owner = popupTarget())
         {
@@ -232,7 +232,7 @@ namespace ClaFi::Controls
         emitEvent(event);
     }
 
-    // **One format out**: the colour as the caller spells it, which is what an application that has
+    // **One format out**: the color as the caller spells it, which is what an application that has
     // never heard of this dialog can take.
     void ColorEditDialog::copy(const InputStamp stamp)
     {

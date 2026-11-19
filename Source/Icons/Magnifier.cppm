@@ -55,13 +55,13 @@ namespace ClaFi::Icons::Magnifier
         constexpr float k_strokeRatio = 0.287f;
         constexpr float k_tailWidthShare = 0.9f; // of the ring's band
         constexpr float k_tailCornerShare = 0.23f; // of the tail's width, rounding its flat end
-        // On the ring's centre line, so the near end stays under the band however the two round.
+        // On the ring's center line, so the near end stays under the band however the two round.
         constexpr float k_tailFrom = 1.0f;
         constexpr float k_tailTo = 1.85f;
         // Down and to the right, 22.6 degrees off vertical.
         constexpr FloatPoint k_tailDirection{ 0.3836f, 0.9235f };
 
-        // The outline's box in lens radii, measured from the lens centre.
+        // The outline's box in lens radii, measured from the lens center.
         struct Extent
         {
             float left{ 0.0f };
@@ -93,9 +93,9 @@ namespace ClaFi::Icons::Magnifier
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         const float haloWidth = withHalo ? strokeWidth : 0.0f;
 
-        // With a tail the whole outline is centred, which lifts the lens to leave the tail room
+        // With a tail the whole outline is centered, which lifts the lens to leave the tail room
         // below. The lens is sized for the tail either way, so turning tails off does not hand
-        // back a bigger circle - only a centred one.
+        // back a bigger circle - only a centered one.
         const FloatPoint middle = bounds.center();
         const FloatPoint center = tail == Tail::Yes
             ? FloatPoint{
@@ -106,8 +106,8 @@ namespace ClaFi::Icons::Magnifier
         Canvas& canvas = event.canvas();
         const Color ink = event.textRgb(InkGrade::Strongest);
         // The glass is the form's surface rather than this control's, so the lens reads as a
-        // hole through whatever it is lying on - and it is the same colour the separating band is
-        // painted in, which is why one fill does both jobs below. That makes it a colour of the
+        // hole through whatever it is lying on - and it is the same color the separating band is
+        // painted in, which is why one fill does both jobs below. That makes it a color of the
         // icon's own as far as the event is concerned - no theme faded it on the way in - so it
         // goes through the fade by hand, and so does the mark derived from it.
         const Color rootSurface = event.bakedColors().rootSurface().toColor();
@@ -116,7 +116,7 @@ namespace ClaFi::Icons::Magnifier
         const PixelPath tailPath = tailOutline(center, radius, strokeWidth);
 
         // The band first, as one silhouette: the tail's outline stroked twice the halo wide, then
-        // the disc over it. Both are the same colour, so the disc doubles as the glass and the
+        // the disc over it. Both are the same color, so the disc doubles as the glass and the
         // whole outline comes out as one shape rather than two overlapping halos.
         if (tail == Tail::Yes && withHalo)
             canvas.drawPath(tailPath, surface, haloWidth * 2.0f);

@@ -698,7 +698,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // Passing the fractional bounds for both - which is what this did - keeps the 1:1 mapping
         // but puts the sampling window half a texel off the grid. m_d2dBitmap is shared and holds
         // whatever earlier elements uploaded into it, so the filter then reaches past the upload
-        // and blends in a neighbour belonging to something else: a stray fringe that appears and
+        // and blends in a neighbor belonging to something else: a stray fringe that appears and
         // disappears with whatever happened to be staged nearby.
         //
         // Scaling a caller asks for still happens, through the render target transform.
@@ -745,7 +745,7 @@ namespace ClaFi::PlatformImplementation::Windows
             return;
         }
 
-        // Direct2D strokes centred on the geometry, so the rect handed to it is the centreline
+        // Direct2D strokes centered on the geometry, so the rect handed to it is the centerline
         // of a stroke whose outer edge has to land on the bounds we were given.
         FloatRect centerline = rect;
         centerline.inflate(-strokeWidth * 0.5f);
@@ -781,7 +781,7 @@ namespace ClaFi::PlatformImplementation::Windows
             return;
         }
 
-        // As drawRectangle: the centreline sits half a stroke inside the bounds, and its radii
+        // As drawRectangle: the centerline sits half a stroke inside the bounds, and its radii
         // shrink by the same amount so the outer corner keeps the radius that was asked for.
         FloatRect centerline = rect;
         centerline.inflate(-strokeWidth * 0.5f);
@@ -855,7 +855,7 @@ namespace ClaFi::PlatformImplementation::Windows
     // falloff of the distance to the outline, out to the reach. A rounded rectangle's distance
     // field is made of pieces a gradient states exactly. Beside a straight edge the distance grows
     // straight out, so the band of the reach's width along the edge is a linear gradient. Round
-    // a corner it grows out from the arc's centre, so the square from that centre to the reach
+    // a corner it grows out from the arc's center, so the square from that center to the reach
     // past the arc is a radial gradient: full to the arc, the falloff beyond it, and the arc
     // itself drawn by the brush with no edge at all. Between them the silhouette is solid, cut
     // into rectangles the way the CPU painter cuts a rounded rectangle.
@@ -950,7 +950,7 @@ namespace ClaFi::PlatformImplementation::Windows
 
         // The solid: a band across the middle, a strip between the two corners of the top edge
         // and one of the bottom edge, and under the shorter corner of an edge the strip its
-        // neighbour stands taller by.
+        // neighbor stands taller by.
         const float topBand = top + (std::max)(topLeft, topRight);
         const float bottomBand = bottom - (std::max)(bottomRight, bottomLeft);
         fill({ left, topBand, right, bottomBand }, solid);
@@ -971,7 +971,7 @@ namespace ClaFi::PlatformImplementation::Windows
         fill({ right, top + topRight, right + reach, bottom - bottomRight },
             linearBrush({ right, top }, { right + reach, top }).Get());
 
-        // The corners, each the square from its arc's centre out to the reach past the arc.
+        // The corners, each the square from its arc's center out to the reach past the arc.
         fill({ left - reach, top - reach, left + topLeft, top + topLeft },
             radialBrush({ left + topLeft, top + topLeft }, topLeft).Get());
         fill({ right - topRight, top - reach, right + reach, top + topRight },

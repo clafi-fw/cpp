@@ -186,7 +186,7 @@ namespace SeeDocs_App::Ui
             return group.add<StackPanel>(Orientation::Vertical, Padding{ k_choiceIndent, 0.0f });
         }
 
-        // One answer of a set, chosen while chosen() says so and greyed while enabled() says
+        // One answer of a set, chosen while chosen() says so and grayed while enabled() says
         // not; a click runs choose() and redraws every answer of the set. The mark stands where
         // a label's text stands, as on the Settings page.
         void addChoice(StackPanel& set, const std::wstring_view caption, const std::wstring_view tooltip,

@@ -13,9 +13,9 @@ namespace ClaFi::Icons::Eye
     // An eye - two lids meeting at the corners, an iris and a pupil.
     //
     // It was the last thing in here still staging into a PixelView, and it staged because it read
-    // the pixel underneath itself. That sample was only ever used twice: to mix the iris grey, and
+    // the pixel underneath itself. That sample was only ever used twice: to mix the iris gray, and
     // to paint the corners back out where the two lids, swept as separately clipped circles,
-    // crossed and overshot each other. A grey is asked for by grade, and the lids are one
+    // crossed and overshot each other. A gray is asked for by grade, and the lids are one
     // closed path that meets at the corners by construction, so neither reason is left - and with
     // the sample goes the scratch buffer, the CPU rasterization and the texture upload a GPU
     // backend was paying for every frame the icon was on screen.
@@ -27,8 +27,8 @@ namespace ClaFi::Icons::Eye
 
     namespace
     {
-        // In half-widths. The lid is the arc the pixel painter swept: a circle centred this far the
-        // other side of the eye's own centre, which is what gives the lid its curve.
+        // In half-widths. The lid is the arc the pixel painter swept: a circle centered this far the
+        // other side of the eye's own center, which is what gives the lid its curve.
         constexpr float k_lidOffset = 0.72f;
         constexpr float k_irisRatio = 0.5f;
         constexpr float k_pupilRatio = 0.44f;
@@ -56,7 +56,7 @@ namespace ClaFi::Icons::Eye
         Canvas& canvas = event.canvas();
         const Color ink = event.textRgb(InkGrade::Strongest);
 
-        // The iris was the backdrop mixed two thirds of the way toward the ink, which is a grey
+        // The iris was the backdrop mixed two thirds of the way toward the ink, which is a gray
         // arrived at the long way round. The subtle tone lands where that mix did.
         canvas.fillCircle(center, halfWidth * k_irisRatio, event.textRgb(InkGrade::Subtle));
         canvas.fillCircle(center, halfWidth * k_irisRatio * k_pupilRatio, ink);

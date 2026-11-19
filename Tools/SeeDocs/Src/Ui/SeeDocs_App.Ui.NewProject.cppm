@@ -90,6 +90,6 @@ namespace SeeDocs_App::Ui
         Label& m_refusal;
         Panel& m_answerBar;
         StackPanel& m_answers;
-        Button& m_create;   // greyed while no name is typed
+        Button& m_create;   // grayed while no name is typed
     };
 }

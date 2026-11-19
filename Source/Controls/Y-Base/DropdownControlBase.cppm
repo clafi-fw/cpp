@@ -23,13 +23,13 @@ namespace ClaFi::Controls
 
     // DropdownPart
 
-    /// The dropdown strip. It is a button in its own right for its colours, its states and its
+    /// The dropdown strip. It is a button in its own right for its colors, its states and its
     /// press.
     ///
     /// @note **What it carries depends on whether the owner sent its text down.** A strip on its
-    /// own is icon-only and the mark **is** that icon, centred in the strip by the view mode. A
+    /// own is icon-only and the mark **is** that icon, centered in the strip by the view mode. A
     /// ribbon strip - the owner's text moved onto it, see textOnDropdown - is a text label instead,
-    /// and there the mark is the last glyph of the run so that the label and the mark centre
+    /// and there the mark is the last glyph of the run so that the label and the mark center
     /// together as one line.
     ///
     /// @note **Whose availability the strip reads is the owner's call.** Where the owner says the
@@ -126,7 +126,7 @@ namespace ClaFi::Controls
         [[nodiscard]] virtual DropdownMarkTurn dropdownMarkTurn() const { return {}; }
         // Draws the mark in whatever slot it was given - the strip's icon, or the box that ends a
         // ribbon strip's text. The two differ in where the slot comes from and in nothing else, so
-        // the colour and the turn are settled here for both.
+        // the color and the turn are settled here for both.
         void drawDropdownMark(DrawIconEvent&) const;
 
         // Drops a popup under this control and runs it.

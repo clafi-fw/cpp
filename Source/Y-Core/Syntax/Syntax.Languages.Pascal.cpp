@@ -337,7 +337,7 @@ namespace ClaFi::Syntax
             appendNames(line, lineStart, at, line.size(), words);
         }
 
-        // The whole text as words, lexed line by line the way the box colours it.
+        // The whole text as words, lexed line by line the way the box colors it.
         [[nodiscard]] PascalWords pascalWords(const std::wstring_view text)
         {
             PascalWords words;

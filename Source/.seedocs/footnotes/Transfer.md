@@ -28,7 +28,7 @@ what it loses.
 Read outward, it says what a Source advertises beyond what it holds. Read inward, it says what an
 Offer can satisfy.
 
-**Fill it by calling registerConversion**, never at static initialisation. A static library drops
+**Fill it by calling registerConversion**, never at static initialization. A static library drops
 a translation unit nothing references, so the table would be full in some builds and empty in
 others.
 

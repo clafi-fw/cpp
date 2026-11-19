@@ -288,7 +288,7 @@ namespace ClaFi::Graphics
                 over(_mm256_unpacklo_epi8(pixels, zero), _mm256_unpacklo_epi8(under, zero)),
                 over(_mm256_unpackhi_epi8(pixels, zero), _mm256_unpackhi_epi8(under, zero)));
 
-            // A pixel whose alpha fades to nothing is left as it was, whatever its colour holds.
+            // A pixel whose alpha fades to nothing is left as it was, whatever its color holds.
             const __m256i scale32 = _mm256_set1_epi32(static_cast<int>(scale));
             const __m256i fadedAlpha = _mm256_srli_epi32(
                 _mm256_mullo_epi32(_mm256_srli_epi32(pixels, 24), scale32), 8);

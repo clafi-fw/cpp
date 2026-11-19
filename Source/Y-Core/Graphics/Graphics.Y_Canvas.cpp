@@ -995,7 +995,7 @@ namespace ClaFi::Graphics
         const float startArcRadius = std::max(startCornerRadius, thickness);
         const float endArcRadius = std::max(endCornerRadius, thickness);
 
-        // From the tip on the neighbouring side at the start, along the outline to the tip at the
+        // From the tip on the neighboring side at the start, along the outline to the tip at the
         // end, and back along the inner edge.
         PixelPath band;
         band.moveTo(onSide(0.0f, thickness + startArcRadius));

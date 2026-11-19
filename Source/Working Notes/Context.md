@@ -123,7 +123,7 @@ nothing; the popup stays as placed.
 
 **A press on a Wayland popup title took the popup down, 2026-11-18.** The hold that keeps the owner
 from closing what stands on it was taken in `wnd_userFrameStarted`, which the client calls only once
-the press has travelled. The focus change the press itself causes reached the owner first, so a
+the press has traveled. The focus change the press itself causes reached the owner first, so a
 message box raised from the app menu's Settings page vanished on the press that meant to drag it.
 `wnd_framePress` takes the hold on the press and `wnd_frameRelease` lets it go when the press ends
 without a move; `wnd_userFrameStarted` still takes it for a real gesture. Tested on fedya: the Setup

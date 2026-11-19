@@ -209,7 +209,7 @@ namespace ClaFi::PlatformImplementation::Windows
         NativeParagraphMetrics m_metrics{ 0.0f, 0.0f };
         // What the run effects last applied to m_layout came to. Setting a drawing effect throws
         // away the layout analysis, which a retained layout has already paid for - so a run whose
-        // colours and scripts have not moved since the last draw must not touch it.
+        // colors and scripts have not moved since the last draw must not touch it.
         std::size_t m_appliedRuns{ 0 };
         bool m_runsWereApplied{ false };
         // The factor the layout was built at. A script shift arrives in design units, the way a
@@ -385,7 +385,7 @@ namespace ClaFi::PlatformImplementation::Windows
             // No state factors: a run has no way to reach the control it is inside, so an in text icon
             // sees none - which is what it saw before the merge too. Full opacity for the same reason:
             // there was nothing here to fade it with.
-            // A text run has no control behind it to be disabled, and the colours it hands over
+            // A text run has no control behind it to be disabled, and the colors it hands over
             // are the ones the layout resolved, so nothing is faded on the way in.
             DrawIconEvent evt{ *controlContext, rect, m_icon.tag, 0.0f };
             m_icon.paintLambda(evt);
@@ -824,8 +824,8 @@ namespace ClaFi::PlatformImplementation::Windows
             // difference from whatever it held before.
             checkHr(m_layout->SetDrawingEffect(nullptr, DWRITE_TEXT_RANGE{ 0, m_textLength }));
 
-            // The scripts are cut **into** the colour spans rather than laid over them: one run
-            // carries one drawing effect, so a range that is both coloured and raised has to be
+            // The scripts are cut **into** the color spans rather than laid over them: one run
+            // carries one drawing effect, so a range that is both colored and raised has to be
             // stated as a single effect saying both.
             std::size_t scriptCursor = 0;
             for (const auto& colorSpan : colors)
@@ -834,7 +834,7 @@ namespace ClaFi::PlatformImplementation::Windows
                     ? controlContext.inkRgb(std::get<0>(colorSpan.value))
                     : std::get<1>(colorSpan.value);
 
-                // A piece in the default colour standing on the baseline asks for exactly what the
+                // A piece in the default color standing on the baseline asks for exactly what the
                 // renderer falls back to when a run carries no effect, so applying one changes
                 // nothing on screen. It is not free though - setting a drawing effect discards the
                 // layout analysis that build() has already paid for, and Draw() then repeats it.
@@ -844,7 +844,7 @@ namespace ClaFi::PlatformImplementation::Windows
                 while (scriptCursor != scripts.size() && scripts[scriptCursor].range.end() <= colorSpan.range.start)
                     ++scriptCursor;
 
-                // A script can reach past this colour span into the next one, so the walk inside
+                // A script can reach past this color span into the next one, so the walk inside
                 // one span keeps a cursor of its own and leaves the shared one where it stands.
                 std::size_t cursor = scriptCursor;
                 std::size_t pieceStart = colorSpan.range.start;
@@ -872,7 +872,7 @@ namespace ClaFi::PlatformImplementation::Windows
                         // layout is drawn through whichever backend owns the form it appears in,
                         // and a dropdown owns its own render target and so its own ID2D1Device. A
                         // native brush carries that device with it, so what the effect holds is
-                        // the colour, resolved against the drawing backend in
+                        // the color, resolved against the drawing backend in
                         // FadeTextRenderer::DrawGlyphRun. That keeps one effect type across both
                         // paths.
                         ComPtr<IdWriteRunEffect> drawingEffect;

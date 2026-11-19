@@ -8,7 +8,7 @@ namespace ClaFi::AnimationSlots
 {
     using namespace std::chrono_literals;
 
-    // The rise has to outlast the movement it carries, not just the colour change. A control's text
+    // The rise has to outlast the movement it carries, not just the color change. A control's text
     // travels a whole device pixel under the press scale, and one pixel spread over 55ms is two
     // frames at 30Hz - a step, whatever the easing says. At 175ms it is ten, which is enough for
     // the intermediate coverage to read as a glide.
@@ -103,8 +103,8 @@ namespace ClaFi::AnimationSlots
 
     // **A theme's lightness crosses on a slot of its own**, because it is the one axis with no half
     // way: contrast closes as it crosses and is gone in the middle, so the window passes through
-    // a flat mid-tone whatever the colours are doing. How long that lasts is its own question,
-    // and the answer is shorter than the colours take - the palette settles at leisure once the
+    // a flat mid-tone whatever the colors are doing. How long that lasts is its own question,
+    // and the answer is shorter than the colors take - the palette settles at leisure once the
     // window is on the side it is going to. A crossing between two themes of one mode never runs
     // this slot at all.
     export constexpr AnimationSlot ThemeLightness{
@@ -113,7 +113,7 @@ namespace ClaFi::AnimationSlots
     };
 
     // A scroll answers an input directly, so it leaves at once and settles at the end. The same
-    // numbers both ways: travelling towards the top of a list and travelling towards the bottom
+    // numbers both ways: traveling towards the top of a list and traveling towards the bottom
     // are one movement, and a scroll bar that hurried one way would read as two controls. Long
     // enough that the eye follows the content across the gap instead of finding it in a new
     // place, short enough that a held key still pages at reading speed.

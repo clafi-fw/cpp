@@ -599,7 +599,7 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
     <span class="kw">else</span> <span class="kw">if</span> (&amp;event.action == &amp;<span class="tp">StdActions</span>::del)
         <span class="fn">deleteSelectedText</span>();
 });</pre>
-            <p>An action is recognised by <strong>its address</strong>. There are no ids, no tags and no type tests
+            <p>An action is recognized by <strong>its address</strong>. There are no ids, no tags and no type tests
             anywhere in the subsystem, which is why the actions a framework control answers have to be objects the
             framework owns - see <a href="#framework-actions">below</a>.</p>
 
@@ -611,7 +611,7 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
 <span class="tp">Shortcut</span>{ vkDelete, { .shift = <span class="kw">true</span> } }   <span class="cm">// Shift+Delete</span></pre>
             <p>The virtual key code of a letter is its own uppercase character, so <code>L'S'</code> is the key
             marked S. <code>Shortcut::text()</code> spells the whole thing the way the keyboard in front of the
-            user is labelled - modifiers included - so a German layout reads <code>Strg+S</code> and nothing in
+            user is labeled - modifiers included - so a German layout reads <code>Strg+S</code> and nothing in
             your code has to know.</p>
 
             <h3 id="several-keys">More Than One Key</h3>
@@ -721,7 +721,7 @@ view.<span class="fn">onActionClick</span>([&amp;](<span class="tp">ActionClickE
             list beside it: the list opens when the pointer rests on the line, on its press and on Right, and
             closes when the pointer rests on another line, on Left and on Escape. A command run in the list closes
             every menu it stands beside, and a list holds lines of its own the same way. The holding command's
-            own click is never run - its line presents it in the <code>Opener</code> role - and its state greys the
+            own click is never run - its line presents it in the <code>Opener</code> role - and its state grays the
             line as any other's does.</p>
 <pre><span class="tp">Action</span> kind{ <span class="tp">Text</span>{ L<span class="st">"Kind"</span> } };
 <span class="tp">Action</span> asFolder{ <span class="tp">Text</span>{ L<span class="st">"Folder"</span> } };

@@ -22,7 +22,7 @@ namespace ClaFi::Icons::CopyIcon
         Canvas& canvas = event.canvas();
         PixelPath path;
 
-        // A strong grey holds the object, the accent marks what names the command. Here that is
+        // A strong gray holds the object, the accent marks what names the command. Here that is
         // the front sheet: it is the copy, and the sheet behind it is what was copied.
         Color bodyColor = event.textRgb(InkGrade::Strong);
         Color accentColor = event.accentRgb(InkGrade::Strongest);

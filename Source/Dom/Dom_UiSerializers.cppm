@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Dom
 {
-    // A colour as ClaFi writes it for ClaFi to read back. See Dom#scalarserializer-color
+    // A color as ClaFi writes it for ClaFi to read back. See Dom#scalarserializer-color
     template <>
     struct ScalarSerializer<Color>
     {

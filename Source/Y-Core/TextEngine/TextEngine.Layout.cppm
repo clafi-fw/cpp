@@ -57,7 +57,7 @@ namespace ClaFi
     public:
         virtual void build(const BuildParams& params) = 0;
         // Where finished lines sit inside the box, which is not what they are shaped from - so it
-        // is set on a built layout the way a colour is, and a rebuild states it again.
+        // is set on a built layout the way a color is, and a rebuild states it again.
         virtual void setAlignment(TextAlign) = 0;
         // The width the finished lines are aligned in. See TextEngine-Types#paragraph-placement
         virtual void setMaxWidth(float availableWidth) = 0;
@@ -91,13 +91,13 @@ namespace ClaFi
 
     export std::unique_ptr<INativeTextLayout> createNativeTextLayout();
 
-    // Colours drawn over a text's own, asked for by paragraph at draw time. See TextEngine-Types
+    // Colors drawn over a text's own, asked for by paragraph at draw time. See TextEngine-Types
     export class ColorOverlay
     {
     public:
         virtual ~ColorOverlay() = default;
         // The spans over one paragraph, in the paragraph's own coordinates, in order and not
-        // overlapping. What the spans leave uncovered keeps the colour the text states.
+        // overlapping. What the spans leave uncovered keeps the color the text states.
         virtual void paragraphColors(std::size_t paragraph, std::wstring_view paragraphText,
             std::vector<ColorSpan>& out) const = 0;
     };
@@ -119,7 +119,7 @@ namespace ClaFi
     // renderer reading it, so an icon paints shapes.
     //
     // colors, overlayColors, mergedColors and inkedColors are a chain because each step is stated
-    // over what the step before it produced - the overlay is merged over the text's own colours,
+    // over what the step before it produced - the overlay is merged over the text's own colors,
     // and a selection is inked over whichever of those the paragraph is drawn from. Every sweep
     // reads one and writes the next, so none of them can be another.
     struct TextDrawBuffers
@@ -230,9 +230,9 @@ namespace ClaFi
         // breaking the text somewhere else. See TooltipLabel, which an over-text tooltip is drawn
         // from.
         void setBreakWidth(float);
-        // Colours drawn over the text's own, or nothing. A draw-time question alone: the overlay
+        // Colors drawn over the text's own, or nothing. A draw-time question alone: the overlay
         // is asked about a paragraph as that paragraph is drawn, and the shaping knows nothing of
-        // it - so stating one invalidates nothing, and a caller whose colours moved repaints.
+        // it - so stating one invalidates nothing, and a caller whose colors moved repaints.
         void setColorOverlay(const ColorOverlay*);
         // The link drawn underlined, or an empty range for none - the control holding the layout
         // says which, usually the one under the pointer. A draw-time question alone, the way the
@@ -323,7 +323,7 @@ namespace ClaFi
         [[nodiscard]] FloatRect charRect(const ParagraphLayoutState&, std::size_t localPos,
             bool trailing);
         // The hovered link's underline over one paragraph: a segment per line it reaches, under
-        // the glyphs that line shows of it, in the colour its first one was drawn in. origin is
+        // the glyphs that line shows of it, in the color its first one was drawn in. origin is
         // where the paragraph's top left was drawn.
         void drawLinkUnderline(ControlPaintContext&, const ParagraphLayoutState&, FloatPoint origin,
             std::span<const ColorSpan> colors);

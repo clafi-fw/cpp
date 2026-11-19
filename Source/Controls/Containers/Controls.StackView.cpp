@@ -398,7 +398,7 @@ namespace ClaFi::Controls
                 if (containsNested(control, CheckSelf::Yes))
                     if (canSelectItem(&control))
                     {
-                        // Taken where an item is recognised rather than where one is selected:
+                        // Taken where an item is recognized rather than where one is selected:
                         // the band paints over an item Ctrl takes back out of the set as much as
                         // over one it puts in, so both have to be repainted.
                         m_selectionOverlayItemsRect.unionWith(context.controlBounds());
@@ -561,7 +561,7 @@ namespace ClaFi::Controls
             return;
 
         // **Whole items, never a strip across one.** An item is painted through its Z scale, about
-        // its own centre, so what it puts on the screen is not the rect it occupies: a child
+        // its own center, so what it puts on the screen is not the rect it occupies: a child
         // sitting near a corner is drawn a pixel or so in from where it was laid out. A strip
         // crossing part of an item repaints content the strip was not measured against, and the
         // rows that content vacated keep whatever the last frame left in them - which accumulates,

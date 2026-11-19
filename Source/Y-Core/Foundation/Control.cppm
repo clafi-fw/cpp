@@ -405,7 +405,7 @@ namespace ClaFi
         // calls it; a caller holding the buffer itself asks for result() instead.
         void materialise();
     private:
-        // The name forgotten rather than honoured, for a route that replaces the buffer outright.
+        // The name forgotten rather than honored, for a route that replaces the buffer outright.
         void discardName() { m_source = nullptr; }
     private:
         Text& m_buffer;
@@ -1507,7 +1507,7 @@ namespace ClaFi
         [[nodiscard]] const Text& adjustedText(const FormContext&, Text&, EventPhase) const;
     private:
         // The point the press animation scales about, in form coordinates. Everything the control
-        // draws converges on it, so it is the one thing that does not move. The centre of the
+        // draws converges on it, so it is the one thing that does not move. The center of the
         // control is the neutral answer; a control with a fixed landmark in it should name that
         // landmark instead, because a ratio of a wide control moves its far edge a long way, and
         // the eye reads whatever sits still as the anchor.

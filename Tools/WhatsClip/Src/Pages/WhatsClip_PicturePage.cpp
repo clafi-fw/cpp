@@ -176,7 +176,7 @@ namespace ClaFi::Tools::WhatsClip
         body().setZoom(zoomOf(position));
     }
 
-    // Every spelling of the colour on the readout, the one in use marked and opened on; a line
+    // Every spelling of the color on the readout, the one in use marked and opened on; a line
     // picked writes the readout again in it.
     void PicturePage::dropSpellings(DropdownEvent& event)
     {
@@ -208,7 +208,7 @@ namespace ClaFi::Tools::WhatsClip
         menu.executeUnder(m_colorReadout);
     }
 
-    // **What a copy takes is the colour**, spelled the way the readout spells it now. The picture
+    // **What a copy takes is the color**, spelled the way the readout spells it now. The picture
     // came off the clipboard and putting it back says nothing; the digits are what a pixel is worth
     // taking away. The page claims the command rather than the view, so the key answers wherever
     // the focus rests on the page - the picture, the readout, the zoom slider.
@@ -268,7 +268,7 @@ namespace ClaFi::Tools::WhatsClip
         menu.execute();
     }
 
-    // **The editor's colour stands in the readout while it is open**, so the digits follow the
+    // **The editor's color stands in the readout while it is open**, so the digits follow the
     // sliders, and the pixel's own comes back once it closes. A copy out of the editor takes
     // the clipboard, and this viewer then shows what it took - the picture goes with its tab,
     // and the editor with the picture.

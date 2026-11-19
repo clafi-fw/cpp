@@ -21,7 +21,7 @@ namespace ClaFi::Icons::ResetIcon
         size -= strokeWidth;
 
         // Reset is the restart ring run back the other way, so this icon reflects that ring across
-        // the vertical centre of its own square. The reflection is the right operand: a point
+        // the vertical center of its own square. The reflection is the right operand: a point
         // meets that one first, and the placement second.
         const Matrix3x2 mirror = { -1.0f, 0.0f, 0.0f, 1.0f, size, 0.0f };
         const Matrix3x2 transform = Matrix3x2::Translation(iconRect.topLeft() + FloatPoint{ strokeWidth * 0.5f }) * mirror;

@@ -47,7 +47,7 @@ and `Tools/` are applications that import the library, not part of it.
   at C++20; CMake will not. `CMAKE_CXX_STANDARD 23` exists for that reason alone - the code is
   C++20.
 - **A build type.** A single-config generator with none passes no `-O` and no `NDEBUG`, and the
-  compile line still looks complete. The tree is a software rasterizer; unoptimised it measures
+  compile line still looks complete. The tree is a software rasterizer; unoptimized it measures
   about ten times slower than MSVC.
 - **A fresh build directory after any import change.** A stale BMI keeps a name reachable that
   the source no longer asks for, and hides the error.

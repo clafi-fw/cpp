@@ -47,7 +47,7 @@ namespace ClaFi::PathArt
         virtual void draw(const SceneFrame&) const = 0;
     };
 
-    // The colours the magic in the acts sparkles in.
+    // The colors the magic in the acts sparkles in.
     export namespace MagicColors
     {
         constexpr Color Gold{ 0xFFFFD34D };

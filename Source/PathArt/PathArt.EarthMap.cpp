@@ -456,7 +456,7 @@ namespace ClaFi::PathArt
             __m256 downShare;
         };
 
-        // The texels about 8 points at two neighbouring levels, and how far toward the coarser
+        // The texels about 8 points at two neighboring levels, and how far toward the coarser
         // each point reads.
         struct TexelBlend
         {
@@ -1023,9 +1023,9 @@ namespace ClaFi::PathArt
             return cover;
         }
 
-        // **Each texel takes the deepest level whose outlines hold its centre**, found by where the
-        // outlines' edges cross each row of centres, which pair up from the west. The levels count
-        // evenly from 0 to 1 whatever their metres, and are blurred into slopes about a degree
+        // **Each texel takes the deepest level whose outlines hold its center**, found by where the
+        // outlines' edges cross each row of centers, which pair up from the west. The levels count
+        // evenly from 0 to 1 whatever their meters, and are blurred into slopes about a degree
         // across, so the depth rises toward the coasts and no contour shows as a step. The cover's
         // columns start at longitude 0 and the contours' at 180 west, half a turn round.
         std::vector<float> seaDepths()
@@ -1058,7 +1058,7 @@ namespace ClaFi::PathArt
                         const FloatPoint to = at(index + 1);
                         const float lower = std::min(from.y, to.y);
                         const float upper = std::max(from.y, to.y);
-                        // The rows whose centres lie at or above the lower end and below the upper.
+                        // The rows whose centers lie at or above the lower end and below the upper.
                         const int firstRow = std::max(0, static_cast<int>(std::ceil(
                             (90.0f - upper) * static_cast<float>(height) / 180.0f - 0.5f)));
                         const int lastRow = std::min(height - 1, static_cast<int>(std::ceil(

@@ -91,7 +91,7 @@ namespace ClaFi::Graphics::Cpu
                 __m256 perpDist = _mm256_sqrt_ps(perpDistSq);
                 __m256 longDist = _mm256_mul_ps(_mm256_sub_ps(vZero, dot), _mm256_set1_ps(e.invLen));
                 // A butt end is its own cap line: the distance past it counts from the stroke's
-                // edge, so the ramp is centred on that line as it is on the sides.
+                // edge, so the ramp is centered on that line as it is on the sides.
                 if (cap == StrokeCap::Butt)
                 {
                     longDist = _mm256_add_ps(longDist, _mm256_set1_ps(radius));
@@ -208,7 +208,7 @@ namespace ClaFi::Graphics::Cpu
         std::size_t needed = static_cast<std::size_t>(m_maskStride) * height + 8;
         if (mask.size() < needed)
         {
-            // NoAllocFloatVector skips value-initialisation, so the grown tail is indeterminate
+            // NoAllocFloatVector skips value-initialization, so the grown tail is indeterminate
             // until either the clearMask fill below or a full-coverage rasterize pass writes it.
             mask.resize(needed);
         }
@@ -888,10 +888,10 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
-    // Walks the stop list once into a colour ramp that the gradient loop then indexes with the
-    // position it already computes. Stop positions are honoured, which the two-colour interpolation
+    // Walks the stop list once into a color ramp that the gradient loop then indexes with the
+    // position it already computes. Stop positions are honored, which the two-color interpolation
     // this replaces could not do - it took the first and last stop and spread them evenly, so a
-    // three stop gradient lost its middle colour entirely.
+    // three stop gradient lost its middle color entirely.
     //
     // Positions are taken to ascend. Direct2D's own stop collection requires the same, so a brush
     // that renders correctly on the GPU backend renders the same way here.
@@ -922,7 +922,7 @@ namespace ClaFi::Graphics::Cpu
                 continue;
             }
 
-            // Before the first stop and after the last one the clamp holds that stop's colour,
+            // Before the first stop and after the last one the clamp holds that stop's color,
             // which is how a gradient extends past its own axis.
             const GradientStop& to = stops[segment + 1];
             float span = to.position - from.position;
@@ -948,7 +948,7 @@ namespace ClaFi::Graphics::Cpu
         const __m256i vOpaqueMask = _mm256_set1_epi32(0xFF000000);
 
         // A kilobyte on the stack, built once per call. The inner loop reads it with a single
-        // gather, so it blends no stop colours per pixel.
+        // gather, so it blends no stop colors per pixel.
         ColorAsUint ramp[k_gradientRampLast + 1];
         buildGradientRamp(stops, ramp);
 

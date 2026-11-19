@@ -5,7 +5,7 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::PathArt
 {
-    // The colour of the roses in a bouquet.
+    // The color of the roses in a bouquet.
     export enum class BouquetRoses
     {
         Red,

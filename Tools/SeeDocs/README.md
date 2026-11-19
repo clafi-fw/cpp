@@ -365,7 +365,7 @@ Constants = [ =[ Name, Namespace, Type, Value, Constant, Declaration, Module, Fi
   the order the project names them.
 - **`Header`** marks a module that is a header, as a read of any C++ takes one. Its `Name` is its
   path under its source folder.
-- **`Language`** is `pascal` for a Delphi unit, whose code a page reads and colours as Pascal. A C++
+- **`Language`** is `pascal` for a Delphi unit, whose code a page reads and colors as Pascal. A C++
   module states none.
 
 ### Hints in the file
@@ -476,7 +476,7 @@ An article is a list of blocks, each of one kind:
 - **Heading** - a heading at level 1 to 3 under the title, with the anchor a link reaches it by.
   The anchor is made from the words once and kept when they change.
 - **ListItem** - an item of a bullet or a numbered list. A list is a run of items standing together.
-- **Code** - code as written, and the name of the Syntax language it is coloured in: `C++`,
+- **Code** - code as written, and the name of the Syntax language it is colored in: `C++`,
   `Pascal`, `JSON`, `XML`, `ClaFi`, or none for plain text.
 - **Table** - the header's cells, one to a column, and the rows. A row is a cell under each column,
   or one group cell across the table.
@@ -865,7 +865,7 @@ then the folders under the source's folder, wherever a page or the search box wr
 rows, the lists, the search page and the search box's tooltips.
 
 - **Open in editor**, at the row's end, runs the command line Settings keeps for the file's
-  language. While there is none, it stands greyed, its tooltip naming Settings.
+  language. While there is none, it stands grayed, its tooltip naming Settings.
 - **What goes wrong** is said in a notice over the window's bottom right, headed with Open in editor
   and the file's name - a page may be gone by the time the answer comes.
 - **A file gone.** A file the last scan read that is missing from disk, or that stands in a folder
@@ -928,12 +928,12 @@ its name's cell, as a tree row does.
 - **A function's row** carries its name alone, one row per name, every overload's signature in the
   name's tooltip. The name links to the function's page.
 - **A function's page** carries the hint under its title - the first commented overload's, as the
-  row does. It holds every overload of the name, coloured, with its note and, where it differs, its
+  row does. It holds every overload of the name, colored, with its note and, where it differs, its
   own hint.
 - **A constant's name** links to the constant's page. The grid's value cell shows the first lines of
   the folded initializer.
 - **A constant's page** carries the hint under its title and holds the declaration as written,
-  coloured and whole, with its note.
+  colored and whole, with its note.
 
 #### Type pages
 
@@ -948,7 +948,7 @@ scroll with the page; the title stays.
   mixin's host is reached through the argument it was given.
 - A base reached by several ways has its bases drawn once, under its crumb nearest the type. Its
   other crumbs stand alone, a muted ellipsis after one whose bases are left out, and every crumb of
-  the base wears one colour.
+  the base wears one color.
 - A crumb opens its base's page. Its mark drops the types standing directly on that base, the one
   the way up came through marked. For a base the surface does not have, it drops the types whose
   bases spell it the same way, template arguments aside.
@@ -1000,7 +1000,7 @@ one.
 - The page is built as a function's page is, the type and the access labels being what a method
   adds. The hint stands under the title - the first commented overload's. Then every overload of the
   name stands under its access label, written the C++ way - `public:` - with:
-  - the declaration as code, coloured as the framework's code boxes colour C++
+  - the declaration as code, colored as the framework's code boxes color C++
   - its own hint, where the title's is another overload's
   - the note the comment references
 
@@ -1026,7 +1026,7 @@ one.
 
 A Delphi type's page is spelled as a C++ type's is - its title, its bases as crumbs under it, the
 access labels written `public:`. Its code is Delphi's own: a routine's signature and a constant's or
-a variable's declaration stand as written, coloured as Pascal. A generic's title carries its
+a variable's declaration stand as written, colored as Pascal. A generic's title carries its
 parameters, `TList<T>`, and no template badge; its constraints show in the preview of a link to it.
 
 - Its properties and its events stand in a grid per access - published, public, protected.
@@ -1102,11 +1102,11 @@ writes them into the sources, in either hints format, in C++ and in Delphi alike
 hint, in a note's prose or code, or in a signature - bare or qualified, as `Control` or
 `Grids::Row` - links wherever the surface has a page for it, read where it is written as Names says.
 
-**A link in a declaration keeps the declaration's colours** - a type is coloured as a type, and
+**A link in a declaration keeps the declaration's colors** - a type is colored as a type, and
 underlined while the pointer is over it. Everywhere else a link is drawn in the accent.
 
 **A link to an alias, a struct, a union or an enum previews its declaration** in its tooltip,
-coloured.
+colored.
 
 - In C++: an alias's `using` line; a struct's or a union's head and bases over its public instance
   fields, a line each in braces; an enum's head over its members the same way.

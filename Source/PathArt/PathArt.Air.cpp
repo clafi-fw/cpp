@@ -12,7 +12,7 @@ namespace ClaFi::PathArt
     {
         // Frame heights, as seen at parallax 1, over which the air thins to 1/e.
         constexpr float k_airScaleHeight{ 24.0f };
-        // skyBottom's share in the air's colour, which the haze takes a layer toward.
+        // skyBottom's share in the air's color, which the haze takes a layer toward.
         constexpr float k_hazeSkyBottomShare{ 0.33f };
     }
 

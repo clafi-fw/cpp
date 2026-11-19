@@ -181,7 +181,7 @@ namespace SeeDocs_App::Ui
         m_kinds.setVisible(false);
     }
 
-    // An answer of the set, chosen while the selected item is of its kind and greyed while the
+    // An answer of the set, chosen while the selected item is of its kind and grayed while the
     // item cannot be; a click makes the item so and redraws the set.
     void SidebarEditor::addKind(const SidebarKind kind, const std::wstring_view caption)
     {

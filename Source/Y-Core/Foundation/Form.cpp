@@ -914,7 +914,7 @@ namespace ClaFi
     }
 
     // **A press on the frame is held before it is a move.** The focus change it causes otherwise
-    // takes the popup down before the drag has travelled - see wnd_userFrameStarted.
+    // takes the popup down before the drag has traveled - see wnd_userFrameStarted.
     void FormBase::wnd_framePress()
     {
         if (m_popupTargetForm)
@@ -1305,7 +1305,7 @@ namespace ClaFi
         // what Escape means when nothing else wants it, and the same test below says so once the
         // walk has passed. Answering it here as well took Escape away from any control with a
         // meaning of its own for it, but only while a tooltip happened to be up - an in-place
-        // editor showing why a value was refused is exactly that state, and cancelling took two
+        // editor showing why a value was refused is exactly that state, and canceling took two
         // presses.
 
         // **A key pressed during a drag goes along the pressed control's chain first.** The
@@ -1964,7 +1964,7 @@ namespace ClaFi
         return static_cast<int>(scaler().scaledStrokeWidth(m_content.metrics().border));
     }
 
-    // **Coloured as the rule set colours a window's shadow**, at the focus it is given: the root's
+    // **Colored as the rule set colors a window's shadow**, at the focus it is given: the root's
     // rule set at its window's focus for the window's own, a card's own for a card over it.
     Graphics::ShadowPainter::Design FormBase::shadowDesign(const OptionalUiElement colorRules,
         const WindowShadow& shadow, const float radius, const float windowFocusedFactor) const
@@ -2182,7 +2182,7 @@ namespace ClaFi
     }
 
     // **The border stands around the root, in the margins**, so a window that has none - one
-    // filling the screen - shows no border. It is coloured as the root's rule set colours a
+    // filling the screen - shows no border. It is colored as the root's rule set colors a
     // window's stroke at its focus, and drawn over the shadow, which is cast around its outer edge.
     void FormBase::paintBorder()
     {
@@ -2334,8 +2334,8 @@ namespace ClaFi
     }
 #endif
 
-    // A theme change is one set of colours coming over another rather than replacing it, and the
-    // coming over is made in the colours themselves: every control resolves its own once per theme
+    // A theme change is one set of colors coming over another rather than replacing it, and the
+    // coming over is made in the colors themselves: every control resolves its own once per theme
     // still on the screen and mixes what each comes to - see ControlPaintContext. So the tree is
     // laid out and painted **once** a frame, in whatever the crossing has reached by then, and what
     // the window shows part way through is live rather than a still of the frame before it.

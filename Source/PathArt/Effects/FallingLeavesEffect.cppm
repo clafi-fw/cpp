@@ -5,7 +5,7 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::PathArt
 {
-    // Leaves or petals tumbling down across the whole frame, in two colours by turns.
+    // Leaves or petals tumbling down across the whole frame, in two colors by turns.
     export struct FallingLeaves
     {
         float opacity{ 1.0f };

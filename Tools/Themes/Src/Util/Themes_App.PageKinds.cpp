@@ -37,7 +37,7 @@ namespace Themes_App
             path.close();
         }
 
-        // The palette filled with the hues swept round its centre, its outline muted over them.
+        // The palette filled with the hues swept round its center, its outline muted over them.
         // The hues take the event's fade by hand, being none of the theme's inks.
         void drawPalette(const DrawIconEvent& event, const Drawing& drawing)
         {

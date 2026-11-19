@@ -1011,12 +1011,12 @@ namespace SeeDocs_App::Ui
             Padding{ 0.0f },
             Spacing{ k_signatureGap }
         );
-        const bool labelled = !section.heading.empty();
+        const bool labeled = !section.heading.empty();
         // Every box of the block is anchored by the label, numbered down the block.
-        const std::wstring name = labelled
+        const std::wstring name = labeled
             ? labelNameOf(section.heading)
             : std::wstring{ k_signatureAnchor };
-        if (labelled)
+        if (labeled)
         {
             TextBox& label = addItemBox<TextBox>(block, ReadOnly::Yes, EditModeSwitching::Yes);
             anchorItem(name, {}, label);
@@ -1026,7 +1026,7 @@ namespace SeeDocs_App::Ui
                 label.text() = text;
             });
         }
-        const float indentWidth = labelled ? k_signatureIndent : 0.0f;
+        const float indentWidth = labeled ? k_signatureIndent : 0.0f;
         const Padding indent{ indentWidth, 0.0f };
         for (const Signature& signature : section.signatures)
         {
@@ -1074,7 +1074,7 @@ namespace SeeDocs_App::Ui
         }
     }
 
-    // A labelled group stands beside its label in the group column, folding under it, or under
+    // A labeled group stands beside its label in the group column, folding under it, or under
     // a held expander row of the label, where its links are followed as a cell's are; the groups
     // it holds follow its rows inside it, each under a label of its own. A row with a command is
     // one that holds a control, its button, in the column at the end.
@@ -1389,7 +1389,7 @@ namespace SeeDocs_App::Ui
     }
 
     // **The setting is read whenever the button is asked**, and a change to it asks again, so a
-    // command line typed on the Settings page takes the grey off a page standing behind it.
+    // command line typed on the Settings page takes the gray off a page standing behind it.
     void PageView::connectSource(Button& button, const Fact& fact)
     {
         button.text() = Text{ k_openInEditorCaption };
@@ -1710,7 +1710,7 @@ namespace SeeDocs_App::Ui
 
     // **The menu names two commands and settles neither**: Open and Open in new tab are the
     // browser's, answered against the path this page names - the link the menu is up for, held for
-    // exactly that long, so a target the surface does not carry arrives greyed. An anchor of the
+    // exactly that long, so a target the surface does not carry arrives grayed. An anchor of the
     // page is a move on the page standing, and no menu is made for one. Stopped before the menu
     // runs, so nothing above raises a second menu behind it. See Browser
     void PageView::showLinkMenu(Control& owner, std::wstring_view target, ContextPopupEvent& event)

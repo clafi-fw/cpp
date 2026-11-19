@@ -279,7 +279,7 @@ namespace ClaFi::Transfer
         // has no alpha to speak of, and BI_RGB says so.
         //
         // **This is a reading of the object and not the format's bytes.** CF_BITMAP carries a
-        // handle; these bytes were made here, never travelled, and are only ever handed out as a
+        // handle; these bytes were made here, never traveled, and are only ever handed out as a
         // decoded picture - see ClipboardOffer::read.
         [[nodiscard]] std::string dibOf(const HBITMAP bitmap)
         {

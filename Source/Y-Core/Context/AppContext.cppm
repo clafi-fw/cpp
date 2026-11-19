@@ -34,14 +34,14 @@ namespace ClaFi
         B(p);
     };
 
-    // How the application's colours moved: a set taken outright, or a crossing's frame. See Context
+    // How the application's colors moved: a set taken outright, or a crossing's frame. See Context
     export enum class ThemeSwitchKind
     {
         Taken,          // worn at once, from inside whatever took it
         CrossingFrame   // one frame of a running crossing, stated by the animation controller
     };
 
-    // The colours every window is painted from have moved. See Context
+    // The colors every window is painted from have moved. See Context
     export class ThemeSwitchEvent : public Event
     {
     public:
@@ -150,10 +150,10 @@ namespace ClaFi
         // --- Switching themes ---:
         // **The application puts this theme on**, crossing to it over AnimationSlots::ThemeSwitch.
         // Baking and resolving are answered above the core - see connectAppThemes - so the sets
-        // arrive already made, every colour of which has a half way, which is what the crossing
+        // arrive already made, every color of which has a half way, which is what the crossing
         // rests on.
         //
-        // **The sizes land at once** - see StyleMetricsSwitchEvent - and the colours cross.
+        // **The sizes land at once** - see StyleMetricsSwitchEvent - and the colors cross.
         //
         // The sets are copied, because what they were taken from is free to be edited from under
         // them: a theme editor previewing its own work in the application states the same set on
@@ -739,7 +739,7 @@ namespace ClaFi
         m_incomingColors = colors;
         // **An axis two sets agree on has nothing to cross**, so its slot is left alone and its
         // factor states the answer outright. Two themes worn in one mode agree on the lightness;
-        // one theme worn in the two modes agrees on every colour - and a slot run over an axis
+        // one theme worn in the two modes agrees on every color - and a slot run over an axis
         // that does not move paints every form for a picture that has already stopped.
         const bool crossesColors = !sameColors(m_outgoingColors, m_incomingColors);
         const bool crossesLightness = m_outgoingColors.lightness != m_incomingColors.lightness;
@@ -750,7 +750,7 @@ namespace ClaFi
         m_animator.stop(this, AnimationSlots::ThemeLightness);
 
         // Neither axis moves, so there is no crossing to make and the set is worn at once. Two
-        // themes stating the same colours at the same lightness are the same picture, whatever
+        // themes stating the same colors at the same lightness are the same picture, whatever
         // else tells them apart.
         if (!crossesColors and !crossesLightness)
         {

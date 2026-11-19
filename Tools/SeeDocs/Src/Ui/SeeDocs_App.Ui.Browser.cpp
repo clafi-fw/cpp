@@ -365,7 +365,7 @@ namespace SeeDocs_App::Ui
     }
 
     // The link a menu is up for on the page, as the path it names - so Open and Open in new tab
-    // are about that link, and greyed for one no project open carries.
+    // are about that link, and grayed for one no project open carries.
     std::wstring SurfacePage::pathToOpen()
     {
         const std::wstring_view target = m_view.menuLink();
@@ -2144,7 +2144,7 @@ namespace SeeDocs_App::Ui
         return text;
     }
 
-    // The folders read are facts, the first one labelled, so that each path has a row of its own.
+    // The folders read are facts, the first one labeled, so that each path has a row of its own.
     void SurfaceBrowser::explainEmpty(Page& page, const Project& project)
     {
         if (project.sources.empty())

@@ -186,7 +186,7 @@ namespace ClaFi::Controls
             setSelection(pixel);
     }
 
-    // The second press on a pixel asks for it to be acted on - the colour editor, where this
+    // The second press on a pixel asks for it to be acted on - the color editor, where this
     // viewer hangs one. A double click on the squares beside the picture names no pixel and asks
     // for nothing.
     void PictureView::doubleClick(DoubleClickEvent& event)
@@ -701,7 +701,7 @@ namespace ClaFi::Controls
             if (color.alpha != 255)
             {
                 // **A translucent pixel is laid over squares**, and what leaves here is opaque: the
-                // staging view the cache is copied into is premultiplied, and a straight colour
+                // staging view the cache is copied into is premultiplied, and a straight color
                 // at partial alpha would be added to the surface rather than blended into it.
                 Color square = squareAt({ at.x + i, at.y });
                 square.paint_over_opaque(color);
@@ -720,7 +720,7 @@ namespace ClaFi::Controls
             return { at, at, 0 };
         }
 
-        // between the centres of the two pixels around the sample
+        // between the centers of the two pixels around the sample
         const float offset = center - 0.5f;
         const int first = static_cast<int>(std::floor(offset));
         const int blend = static_cast<int>((offset - static_cast<float>(first)) * 256.0f);

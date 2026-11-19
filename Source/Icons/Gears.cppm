@@ -11,7 +11,7 @@ namespace ClaFi::Icons
     using namespace Graphics;
 
     // Canvas::drawPath has no whole-path opacity the way PixelPathPainter did, so the half
-    // opacity these two were drawn at is carried by the layer colours instead. That double
+    // opacity these two were drawn at is carried by the layer colors instead. That double
     // blends where the stroke overlaps the fill, which is what a single composite avoided.
     export void drawSettingsGear(Canvas& canvas, FloatPoint center, float rotation, int numTeeth = 8)
     {
@@ -45,7 +45,7 @@ namespace ClaFi::Icons
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::Fill(Color{ 0xFF445566 }.withOpacity(0.5f)), // Sleek blue-grey
+                PathDrawLayer::Fill(Color{ 0xFF445566 }.withOpacity(0.5f)), // Sleek blue-gray
                 PathDrawLayer::Stroke(Color{ 0xFFAABBCC }.withOpacity(0.5f), 3.5f) // Steel highlight
             },
             &transform
@@ -109,7 +109,7 @@ namespace ClaFi::Icons
         canvas.drawPath(
             path,
             {
-                PathDrawLayer::Fill(Color{ 0xFF445566 }.withOpacity(0.5f)), // Sleek blue-grey
+                PathDrawLayer::Fill(Color{ 0xFF445566 }.withOpacity(0.5f)), // Sleek blue-gray
                 PathDrawLayer::Stroke(Color{ 0xFFAABBCC }.withOpacity(0.5f), 3.5f) // Steel highlight
             },
             &transform);

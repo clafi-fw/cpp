@@ -9,7 +9,7 @@ namespace ClaFi
     // nothing else reaches them.
     namespace Okhsl
     {
-        // A colour in Oklab: one perceptual lightness and two opponent axes. Lightness is
+        // A color in Oklab: one perceptual lightness and two opponent axes. Lightness is
         // named apart from Hsl::luminosity throughout, the two being different numbers - the
         // toe below is what carries one to the other.
         struct Oklab
@@ -19,7 +19,7 @@ namespace ClaFi
             float b;
         };
 
-        // A colour in sRGB's primaries with the transfer function undone, which is the space
+        // A color in sRGB's primaries with the transfer function undone, which is the space
         // the cone response below is a linear map of.
         struct LinearRgb
         {
@@ -28,15 +28,15 @@ namespace ClaFi
             float blue;
         };
 
-        // The most colourful point of a hue: the lightness at which the gamut reaches
-        // furthest from grey, and how far it reaches there.
+        // The most colorful point of a hue: the lightness at which the gamut reaches
+        // furthest from gray, and how far it reaches there.
         struct HueCusp
         {
             float lightness;
             float chroma;
         };
 
-        // How fast chroma may grow as a colour leaves black, and as it leaves white. A gamut
+        // How fast chroma may grow as a color leaves black, and as it leaves white. A gamut
         // slice at one hue is close to the triangle these two slopes describe.
         struct ChromaSlopes
         {
@@ -55,7 +55,7 @@ namespace ClaFi
         };
 
         // Where the knee sits on the saturation axis. Below it saturation runs out to the
-        // knee chroma, above it to the gamut boundary, so most of the axis describes colours
+        // knee chroma, above it to the gamut boundary, so most of the axis describes colors
         // the boundary's shape is not steering.
         constexpr float k_kneeSaturation = 0.8f;
 
@@ -67,7 +67,7 @@ namespace ClaFi
         // values have to stay apart and above zero however the fits come out.
         constexpr float k_leastChroma = 1e-5f;
 
-        // The toe carries Oklab's lightness to a lightness matching CIE L* for greys, so half
+        // The toe carries Oklab's lightness to a lightness matching CIE L* for grays, so half
         // way up the channel is half way up to the eye. The offset and the softening are the
         // published fit; the slope follows from them, and is what holds 0 and 1 in place.
         constexpr float k_toeOffset = 0.206f;
@@ -248,7 +248,7 @@ namespace ClaFi
         {
             const float saturation = maxSaturationOf(a, b);
 
-            // Scaling a linear RGB colour scales its Oklab lightness and chroma together, so
+            // Scaling a linear RGB color scales its Oklab lightness and chroma together, so
             // the ray out of black is straight and can be read at any lightness. Read at one,
             // the channel standing highest says how far the ray has to be brought back.
             const LinearRgb atOne = linearRgbFromOklab({ 1.0f, saturation * a, saturation * b });
@@ -257,7 +257,7 @@ namespace ClaFi
             return { lightness, lightness * saturation };
         }
 
-        // How far along the line from a point on the grey axis toward a chroma the gamut is
+        // How far along the line from a point on the gray axis toward a chroma the gamut is
         // left. Below the cusp the boundary is the straight ray out of black, which the
         // triangle answers exactly; above it the boundary curves, so the triangle's answer
         // starts one Halley step per channel.
@@ -444,19 +444,19 @@ namespace ClaFi
     {
     }
 
-    // Mixes two colours with a factor of color2. Luminosity is a plain interpolation, and means
+    // Mixes two colors with a factor of color2. Luminosity is a plain interpolation, and means
     // the same visible amount wherever the two stand, the channel being perceptual.
     //
     // Hue and saturation are not independent, so they cannot be interpolated separately: read the
-    // pair as a point on a disc, with hue the angle and saturation the distance from the centre.
+    // pair as a point on a disc, with hue the angle and saturation the distance from the center.
     // The result is the point that fraction of the way along the straight line between them - a
-    // Cartesian interpolation - which is why mixing two opposite hues correctly passes through grey
+    // Cartesian interpolation - which is why mixing two opposite hues correctly passes through gray
     // rather than sweeping around the rim.
     //
-    // The disc is one of saturation rather than of chroma, so where the two colours differ in
+    // The disc is one of saturation rather than of chroma, so where the two colors differ in
     // luminosity the path is not quite the straight line through Oklab that mixing light would
-    // take. What it holds instead is the property the callers want: a mix of two colours the
-    // gamut holds is a colour the gamut holds.
+    // take. What it holds instead is the property the callers want: a mix of two colors the
+    // gamut holds is a color the gamut holds.
     Hsl::Hsl(Hsl color1, Hsl color2, float factor)
     {
         luminosity = std::lerp(color1.luminosity, color2.luminosity, factor);
@@ -477,7 +477,7 @@ namespace ClaFi
 
         saturation = std::sqrt(resultX * resultX + resultY * resultY);
 
-        // At the exact centre of the disc there is no angle to recover, so atan2 cannot preserve the
+        // At the exact center of the disc there is no angle to recover, so atan2 cannot preserve the
         // hue and it has to be interpolated directly.
         if (saturation <= 0.00001f)
         {
@@ -547,7 +547,7 @@ namespace ClaFi
         const float bend = 1.0f - scale / (curve.gamut - curve.knee);
         const float beyondKnee = chroma - curve.knee;
 
-        // A colour standing outside the boundary the curve found reads as fully saturated.
+        // A color standing outside the boundary the curve found reads as fully saturated.
         // The one place that happens is the sRGB gamut's black to blue edge, which stands
         // proud of the body the fits describe; leaving the value above 1 would send toColor
         // past the pole the second segment is built around.
@@ -571,7 +571,7 @@ namespace ClaFi
 
         if (saturation <= 0.0f)
         {
-            // A grey drives all three cones equally, so the one value they share is its
+            // A gray drives all three cones equally, so the one value they share is its
             // lightness cubed.
             const ColorByte gray = static_cast<ColorByte>(std::round(
                 Okhsl::srgbEncode(lightness * lightness * lightness) * 255.0f));
@@ -603,7 +603,7 @@ namespace ClaFi
 
         const Okhsl::LinearRgb rgb = Okhsl::linearRgbFromOklab({ lightness, chroma * a, chroma * b });
 
-        // The cusp and the boundary through it are both fits, so a colour asked for at the
+        // The cusp and the boundary through it are both fits, so a color asked for at the
         // very edge of the gamut can land a fraction of a byte outside it.
         return {
             static_cast<ColorByte>(std::round(Okhsl::srgbEncode(std::clamp(rgb.red, 0.0f, 1.0f)) * 255.0f)),

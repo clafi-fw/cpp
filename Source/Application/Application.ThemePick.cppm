@@ -23,7 +23,7 @@ namespace ClaFi
 {
     using namespace Controls;
 
-    // A theme the picker lists: the colours its item is drawn from, and the path it is stated by.
+    // A theme the picker lists: the colors its item is drawn from, and the path it is stated by.
     export struct ThemeEntry
     {
         const AppTheme* theme;

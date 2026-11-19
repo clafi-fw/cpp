@@ -80,8 +80,8 @@ namespace ClaFi
     private:
         // Which Text, at what scale, in what state. Not the box: the width the lines are broken
         // at picks a layout inside the bucket this names rather than a bucket, and the height is
-        // read off finished lines and shapes nothing. Colours are absent for a similar reason, but
-        // a colour still makes one Text a different Text and textHash carries it. Floats are held
+        // read off finished lines and shapes nothing. Colors are absent for a similar reason, but
+        // a color still makes one Text a different Text and textHash carries it. Floats are held
         // as their bits, because this is an identity question and not a numeric one.
         struct LayoutKey
         {

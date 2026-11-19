@@ -14,7 +14,7 @@ namespace ClaFi::Icons::SunIcon
     namespace
     {
         constexpr int k_rayCount = 8;
-        // Fractions of the icon size. The outermost ray end sits at half the size from the centre,
+        // Fractions of the icon size. The outermost ray end sits at half the size from the center,
         // so the mark fills the rect the caller reserved for it and no more.
         constexpr float k_rayStartRatio = 0.37f;
         constexpr float k_rayEndRatio = 0.50f;

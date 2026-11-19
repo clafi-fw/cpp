@@ -30,7 +30,7 @@ namespace ClaFi::Icons::HueIcon
     void draw(DrawIconEvent& event)
     {
         // The wheel is the icon's own - it is the same hues whatever the theme is - so every
-        // colour it produces goes through the event's fade, which is the one thing it would
+        // color it produces goes through the event's fade, which is the one thing it would
         // otherwise miss by not taking its ink from textColor().
         Sweep::BoundaryColors colors{};
 
@@ -40,7 +40,7 @@ namespace ClaFi::Icons::HueIcon
             colors[i] = event.applyDisabledFactor(Hsl{ hue, k_saturation, k_luminosity }.toColor());
         }
 
-        // Cyclic: the hue at the seam is the same colour from both sides, so the sweep runs across
+        // Cyclic: the hue at the seam is the same color from both sides, so the sweep runs across
         // it and the join disappears. The other two channels have two distinct ends and keep theirs.
         Sweep::drawChannelSweep(event.canvas(), event.iconRect(), colors, Sweep::SweepEnds::Cyclic);
     }

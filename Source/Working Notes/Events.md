@@ -11,7 +11,7 @@ the module wherever the primary is used.
 ## OnEventTag
 
 A tag base rather than a template-id match, so that a caller can keep a thin named subclass for
-compatibility and still have it recognised as a handler by the routing.
+compatibility and still have it recognized as a handler by the routing.
 
 ## OnEvent
 

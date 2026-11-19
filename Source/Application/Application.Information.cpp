@@ -119,7 +119,7 @@ namespace ClaFi
             VerticalAlign::Center
         );
         add<Divider>();
-        // Greyed while the question is out, so a second press cannot ask it twice.
+        // Grayed while the question is out, so a second press cannot ask it twice.
         m_checkButton->onGetState([this](GetStateEvent& event) {
             event.state.enabled = appContext().updateCheck().state() != UpdateState::Checking;
         });

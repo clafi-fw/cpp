@@ -59,7 +59,7 @@ namespace TextEngine_App::AppIcon
         constexpr float k_outlineWidth{ 0.020f };   // the line round each leaf
         constexpr float k_edgeWidth{ 0.020f };      // the light line round the letter
 
-        // Greys on the line from the keyline colour to the edge colour, lightest at the top band.
+        // Grays on the line from the keyline color to the edge color, lightest at the top band.
         constexpr Color k_backUpper{ 0xFFF4F5F8 };
         constexpr Color k_backLower{ 0xFFE1E2E6 };
         constexpr Color k_frontUpper{ 0xFFECEDF0 };

@@ -146,7 +146,7 @@ namespace ClaFi::Controls
             return;
         }
         // The base is given the box left over above the part, so that the selection indicator
-        // centres in the half it belongs to instead of straddling the seam. Only the part's own
+        // centers in the half it belongs to instead of straddling the seam. Only the part's own
         // axis is taken away: measureText takes a part at the side off the width already, and
         // taking it off here as well would break the text narrower than it is drawn.
         ScaledSize offered = dimensions;
@@ -191,7 +191,7 @@ namespace ClaFi::Controls
         FloatRect result = ButtonBase::iconRect(event);
         ScaledSize extent = secondaryExtent(event.formContext(), event.padding(), event.spacing());
         // The base anchored the icon against the whole content box, which still includes the part.
-        // A part on the left pushes every icon along by what it took, and a centred one by half.
+        // A part on the left pushes every icon along by what it took, and a centered one by half.
         if (secondaryPartPlacement() == SecondaryPartPlacement::Left)
         {
             const bool centered = viewMode() == ButtonViewMode::IconOnly

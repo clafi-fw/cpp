@@ -21,7 +21,7 @@ namespace ClaFi::PathArt
         };
     }
 
-    // **Always a fade in, never a cut.** The scene stands on a null theme - every colour zero and
+    // **Always a fade in, never a cut.** The scene stands on a null theme - every color zero and
     // every effect off - until this, so the first theme rises out of nothing the way every later
     // one crossfades out of the one before it. A scene restored from a config fades into the
     // stored theme rather than into the first of the list: the pick lands before the first paint,
@@ -63,7 +63,7 @@ namespace ClaFi::PathArt
         m_crossFadeStart = m_worn;
         m_crossFadeTarget = &picked();
         // The name is the destination's at once, like the index: what crossfades below is the
-        // colours, and a blend answering the name it came from tells its caller the wrong theme.
+        // colors, and a blend answering the name it came from tells its caller the wrong theme.
         m_worn.name = m_crossFadeTarget->name;
         m_animator.start(this, g_crossFadeSlot, 0.0f, 1.0f, [this](AnimateParams& params) {
             for (std::size_t i = 0; i != SceneTheme::colorsNum(); ++i)

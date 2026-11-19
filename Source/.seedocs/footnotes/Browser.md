@@ -125,7 +125,7 @@ of several steps moves the urls passed over to the other stack, in visiting orde
 - A mouse side button travels from anywhere inside the browser.
 - A right mouse click on Back or Forward lists its stack, nearest first.
 
-**Entries are visits**, a url each, so travelling to a page a fetch dropped builds it again. A
+**Entries are visits**, a url each, so traveling to a page a fetch dropped builds it again. A
 rename rewrites the entries at or under the page, in every tab. The stacks live in the tab's own
 file, read when the tab is first selected.
 

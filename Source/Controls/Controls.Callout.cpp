@@ -54,7 +54,7 @@ namespace ClaFi::Controls
             event.metrics.spacing.y = spacing().y;
     }
 
-    // The band runs down the left edge and round the corners there in its own colour, which the
+    // The band runs down the left edge and round the corners there in its own color, which the
     // kind's element states.
     void Callout::paintFrame(PaintEvent& event)
     {

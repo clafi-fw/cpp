@@ -84,9 +84,9 @@ namespace ClaFi::Transfer
         // **Tested against the standing source** rather than assumed to be it. A cancel for a
         // source a later copy already replaced would otherwise drop the package behind the current
         // one, and what that looks like is a copy that works and then stops a moment later with
-        // nothing to see. A source cancelled is a source finished, so one that is not the
+        // nothing to see. A source canceled is a source finished, so one that is not the
         // standing one is destroyed here and nowhere else.
-        void cancelled(wl_data_source*);
+        void canceled(wl_data_source*);
         void destroyDataSource();
         // **The display behind the name** the clipboard holds the platform by - the Wayland one,
         // the only platform of this build, which derives from IDisplayAccess. See Transfer
@@ -277,7 +277,7 @@ namespace ClaFi::Transfer
 
         void onSourceCancelled(void* data, wl_data_source* source)
         {
-            static_cast<NativeClipboard*>(data)->cancelled(source);
+            static_cast<NativeClipboard*>(data)->canceled(source);
         }
 
         // **Reads the clipboard through the compositor.** Built for one wl_data_offer and replaced
@@ -498,6 +498,7 @@ namespace ClaFi::Transfer
         static const wl_data_source_listener k_sourceListener = {
             .target = &onSourceTarget,
             .send = &onSourceSend,
+            // The designator is the protocol's own field name, which keeps its spelling.
             .cancelled = &onSourceCancelled
         };
         wl_data_source* previous = m_native->dataSource;
@@ -607,7 +608,7 @@ namespace ClaFi::Transfer
         ::close(fd);
     }
 
-    void NativeClipboard::cancelled(wl_data_source* source)
+    void NativeClipboard::canceled(wl_data_source* source)
     {
         if (source != dataSource)
         {

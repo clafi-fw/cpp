@@ -227,7 +227,7 @@ namespace ClaFi::Tools::WhatsClip
         // picture, a text in its looks - is not one format's representation but a reading of
         // the whole clipboard, and stands on a tab of its own above the divider; see k_previews.
         //
-        // **A format whose entry is a handle has neither of the two.** Nothing travelled for it, so
+        // **A format whose entry is a handle has neither of the two.** Nothing traveled for it, so
         // a hex dump would be of bytes this viewer made and a reading as text would be of the same;
         // what it has is one number, and the Handle representation is the only one it is offered.
         //

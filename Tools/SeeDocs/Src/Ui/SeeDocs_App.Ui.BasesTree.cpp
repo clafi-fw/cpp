@@ -53,7 +53,7 @@ namespace SeeDocs_App::Ui
             return {};
         }
 
-        // A line's centre where a stroke that wide covers whole pixels.
+        // A line's center where a stroke that wide covers whole pixels.
         [[nodiscard]] float pixelCenter(const float value, const float strokeWidth)
         {
             const bool oddWidth = static_cast<int>(strokeWidth) % 2 == 1;
@@ -347,7 +347,7 @@ namespace SeeDocs_App::Ui
         };
     }
 
-    // The direct bases hang from the title's icon: their trunk runs under its centre, in the
+    // The direct bases hang from the title's icon: their trunk runs under its center, in the
     // padding the head gives the tree, from the tree's top edge.
     void BasesTree::placeDirectBases(AlignEvent& event, Placing& placing)
     {

@@ -278,7 +278,7 @@ namespace ClaFi::Controls::Grids
         // Records the line across the move and keeps the one along it: a run of Down holds its
         // column even where a row carries no cell at that x, which is what a pair of lines is
         // for. The written line enters the stop at the edge the move crossed, clamped into it
-        // rather than centred on it - a cell spanning several rows would otherwise take the line
+        // rather than centered on it - a cell spanning several rows would otherwise take the line
         // halfway down the group, and the step back out would land in the middle of it.
         void rememberCellLine(const FloatRect& targetRect, float band, bool horizontal);
         // Gives a stop the focus and records it as the selected cell. Showing it is the caller's

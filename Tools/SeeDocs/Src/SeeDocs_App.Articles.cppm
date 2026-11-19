@@ -58,7 +58,7 @@ namespace SeeDocs_App::Articles
         bool operator==(const ListItem&) const = default;
     };
 
-    // Code as it is written, coloured and linked in the language it names when shown.
+    // Code as it is written, colored and linked in the language it names when shown.
     export struct CodeBlock
     {
         std::wstring language;   // a Syntax language's name, such as C++; plain text when empty

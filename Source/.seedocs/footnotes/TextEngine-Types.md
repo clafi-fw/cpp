@@ -51,7 +51,7 @@ lineFadeSpan turns `overrun` into the width of the fade.
 
 ## lineFadeSpan
 
-**The fade takes the line's colour to nothing at the edge.** It covers as much of the line as runs
+**The fade takes the line's color to nothing at the edge.** It covers as much of the line as runs
 past the edge, up to `fadeWidth` - the draw passes k_lineFadeWidth, scaled.
 
 ## TextRenderMode
@@ -464,7 +464,7 @@ break, 2 tabs.
 
 ## ColorOverlay
 
-**Colour only, asked at draw time.** The shaping never sees the overlay, so a layout takes a new
+**Color only, asked at draw time.** The shaping never sees the overlay, so a layout takes a new
 one without shaping again - a repaint is the cost. A weight or a face would change the shaping, so
 an overlay cannot state one.
 
@@ -501,15 +501,15 @@ word of a link replaces part of it, and the new word belongs to the link.
 **Two links that meet and name one target are one** - pointed at and underlined whole, and typing
 where they meet goes inside.
 
-**A link is drawn in the accent ink** where no colour is written inside it, by itself or through
-its style. A colour around the link gives way to that ink, and one inside it wins.
+**A link is drawn in the accent ink** where no color is written inside it, by itself or through
+its style. A color around the link gives way to that ink, and one inside it wins.
 
 **A link inside another is the inner's.**
 
 **The underline shows on hover.** The control holding the layout names the hovered link with
 TextLayout::setHoveredLink, and the layout underlines it:
 
-- one segment per line, under the glyphs that line shows, in the colour of its first glyph
+- one segment per line, under the glyphs that line shows, in the color of its first glyph
 - over the glyphs and any selection band
 - with a gap wherever it would cross ink
 - unfaded on a line the box cuts
@@ -542,7 +542,7 @@ families included, resolved as for a native layout - so a paragraph on cells get
 ## INativeMonoFont
 
 **The platform's part of a monospace font.** Which characters have a cell, the columns, the tab
-stops, the colours, the bands and the fade are MonoFont's, written once for both platforms.
+stops, the colors, the bands and the fade are MonoFont's, written once for both platforms.
 
 **The cell is the space's advance**, the number the tab stops are measured from. glyphOf answers
 a glyph only when its advance equals the cell exactly - on DirectWrite in the face's design units,

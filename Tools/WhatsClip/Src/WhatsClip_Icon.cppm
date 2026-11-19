@@ -11,7 +11,7 @@ namespace ClaFi::Tools::WhatsClip::AppIcon
     using namespace ::ClaFi::Graphics;
 
     // The application's own mark, stretched onto the rect it is given so it touches all four
-    // sides. It takes no colour from the theme: this icon stands on a task bar and a title bar
+    // sides. It takes no color from the theme: this icon stands on a task bar and a title bar
     // the framework does not paint, so it carries its own palette and has to hold on a light
     // ground and a dark one alike.
     export void draw(Canvas&, const FloatRect& bounds);

@@ -38,7 +38,7 @@ namespace ClaFi
         return lightness < 0.5f ? ColorMode::Dark : ColorMode::Light;
     }
 
-    // What a colour rule does to the value it is given.
+    // What a color rule does to the value it is given.
     export enum class ColorRuleOp
     {
         NoChange,
@@ -120,7 +120,7 @@ namespace ClaFi
         // side of the theme names its places and its moves from that side.
         // See PaintEvent::contrastSign.
         float applyTo(Hsl&, float factor, const ThemeColors&, ColorMode mode) const;
-        // Whether applying this rule to anything can come out as the colour it was handed. A
+        // Whether applying this rule to anything can come out as the color it was handed. A
         // caller that would pay for the application - a per span pass over a text run - asks
         // first, so a rule left at its default costs nothing.
         [[nodiscard]] bool changesNothing() const;
@@ -249,7 +249,7 @@ namespace ClaFi
         return UiElement::InfoCallout;
     }
 
-    // What a colour rule reads.
+    // What a color rule reads.
     export enum class RuleInput
     {
         Hot,            // the mouse over the control, or the keys on it in a focused form
@@ -299,7 +299,7 @@ namespace ClaFi
         std::uint32_t m_bits{ 0u };
     };
 
-    // Where a rule writes, each channel starting from a colour of its own. See AppTheme
+    // Where a rule writes, each channel starting from a color of its own. See AppTheme
     export enum class PaintChannel
     {
         Surface,
@@ -312,7 +312,7 @@ namespace ClaFi
 
     export using OptionalPaintChannel = std::optional<PaintChannel>;
 
-    // A colour rule: it reads its inputs and writes to its output.
+    // A color rule: it reads its inputs and writes to its output.
     export struct ColorRule
     {
         RuleInputs inputs{};                            // when the rule applies, at rest if empty
@@ -360,16 +360,16 @@ namespace ClaFi
         float darkModeFloor{}; // the luminosity elevation 0 is lifted to at the dark end
 
         // **The theme's own emphasis, and what says a thing is on** - one effect for both, because
-        // the two are one colour. It is the ink anything asking for emphasis is drawn in, over the
+        // the two are one color. It is the ink anything asking for emphasis is drawn in, over the
         // palette's accent hue - the same one a button under the pointer moves toward, so an icon
         // drawn in it belongs to the family of the controls around it - and it is equally the
         // active state of every mark: a text caret, a hot link, the band a StackView draws behind a
         // selected item, and the focus ring while the user is on the control. A check and a radio
-        // dot state their own on colour - see SelectionIndicator.
+        // dot state their own on color - see SelectionIndicator.
         ColorEffect accent{};
 
         // The second accent, over the palette's third hue: what stands apart from the interface
-        // rather than answers to it - a brand mark, a run of emphasised text, and the tint a
+        // rather than answers to it - a brand mark, a run of emphasized text, and the tint a
         // tooltip carries. Stated apart from the accent so that a theme can spend one sparingly
         // while the other runs through every control.
         ColorEffect spot{};
@@ -402,7 +402,7 @@ namespace ClaFi
         return weightBelow / (weightBelow + weightAbove);
     }
 
-    // Where a colour stands on the luminosity axis, oriented so that higher is always further from
+    // Where a color stands on the luminosity axis, oriented so that higher is always further from
     // the page and closer to the eye: 0 is the mode's floor and 1 its ceiling. A coordinate rather
     // than a relation - two elements at 0.6 stand at the same luminosity whatever each is drawn on.
     //
@@ -413,7 +413,7 @@ namespace ClaFi
     // Between its ends the axis bends toward white - elevation 0.5 lands
     // k_luminosityShareAtHalfElevation of the way up the luminosity range.
     //
-    // At the dark end a surface's axis starts at its floor rather than at black, so a colour below
+    // At the dark end a surface's axis starts at its floor rather than at black, so a color below
     // the floor has no elevation and clamps to the end it lies past. See AppTheme
     export [[nodiscard]] constexpr float elevationOf(float luminosity, Lightness lightness,
         float luminosityFloor)
@@ -546,9 +546,9 @@ namespace ClaFi
         case ColorRuleOp::Set:
         {
             // Set states a place on the axis outright, so the crossing back runs whatever the
-            // field reads as here. An elevation read from a colour below the floor is the
+            // field reads as here. An elevation read from a color below the floor is the
             // end it lies past rather than a place it sits, so taking a clamped 0 that meets
-            // the target for a colour already at it would leave that colour at the pole.
+            // the target for a color already at it would leave that color at the pole.
             const float targetValue = value();
             newValue = axisValue + (targetValue - axisValue) * factor;
             break;
@@ -728,7 +728,7 @@ namespace ClaFi
         hue.setOperation(ColorRuleHueOp::ExactValue);
         hue.setExactValue(value.hue);
         saturation.setOperationAndValue(ColorRuleOp::Set, value.saturation);
-        // The rule states an elevation, so the colour's luminosity crosses to that axis.
+        // The rule states an elevation, so the color's luminosity crosses to that axis.
         const float exactElevation = elevationOf(value.luminosity, mode);
         elevation.setOperationAndValue(ColorRuleOp::Set, exactElevation);
     }

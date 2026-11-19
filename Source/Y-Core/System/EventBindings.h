@@ -114,7 +114,7 @@
 //
 // The default is everything after the name, so a value with commas in it needs no
 // protection. It is always spelled - what a control starts as is part of the
-// surface a designer tool reads - and it is spelled once: the member initialiser
+// surface a designer tool reads - and it is spelled once: the member initializer
 // and INIT_PROPERTY below both read the constant.
 //
 // The type has to be a literal type, which is what makes the default a constant

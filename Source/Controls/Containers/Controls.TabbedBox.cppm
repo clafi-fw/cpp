@@ -207,7 +207,7 @@ namespace ClaFi::Controls
         PanelBase::paintChildSurface(event);
     }
 
-    // The page goes first, so the run beside it is filled with the colour the page has just
+    // The page goes first, so the run beside it is filled with the color the page has just
     // settled on rather than with the frame before's. Nothing is covered by taking it out of
     // order: the run ends where the page begins, and the strip's box has no surface of its own.
     void TabbedBox::paintChildren(PaintEvent& event)

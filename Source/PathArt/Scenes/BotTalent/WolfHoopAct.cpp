@@ -212,7 +212,7 @@ namespace ClaFi::PathArt
             ? frame.within(Matrix3x2::Translation(2.0f * m_wolf.center.x, 0.0f)
                 * Matrix3x2::Scale(-1.0f, 1.0f))
             : frame;
-        drawWolf(wolfFrame, m_wolf, WolfCoats::Grey);
+        drawWolf(wolfFrame, m_wolf, WolfCoats::Gray);
         drawHoopHalf(frame, m_hoop, true);
         drawAndroidForearm(frame, m_android, AudienceSide::Left);
         if (m_dazeTurns < 0.0f)

@@ -70,7 +70,7 @@ namespace Themes_App
             // cell's is the room its blob takes, which paintHue fills.
             [[nodiscard]] Lines ruleLines(const Grids::Column&) const;
             [[nodiscard]] bool namesHue() const; // whether the rule's hue cell shows a blob
-            // The blob and its mark, as an editor's face draws them - centred in the room a face
+            // The blob and its mark, as an editor's face draws them - centered in the room a face
             // leaves beside its dropdown strip, so the blobs of a column stand in one line.
             void paintHue(PaintEvent&, const FloatRect& textBounds);
             // A line through the middle of a struck run, on whole pixels.
@@ -593,7 +593,7 @@ namespace Themes_App
             m_grid.selectCell(*row, &column(RuleColumn::ApplyTo));
     }
 
-    // A rule here is a change to a colour, so No change and every operation are offered on every
+    // A rule here is a change to a color, so No change and every operation are offered on every
     // row.
     void ElementPage::bindEditors(Grids::RowContainer& row)
     {

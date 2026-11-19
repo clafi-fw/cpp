@@ -51,8 +51,8 @@ namespace ClaFi::PathArt
             bool upward, std::span<const Tooth> teeth, float growth);
         // The head and snout as one outline, the snout lifted `snoutAngle` about `hinge`.
         [[nodiscard]] PixelPath headOutline(FloatPoint hinge, float snoutAngle);
-        // `colour` scaled channel by channel by the ratio that takes `from` to `to`.
-        [[nodiscard]] Color relit(Color colour, Color from, Color to);
+        // `color` scaled channel by channel by the ratio that takes `from` to `to`.
+        [[nodiscard]] Color relit(Color color, Color from, Color to);
     }
 
     // Drawn about the middle of his body, facing right; a leg's angles are measured from straight
@@ -62,7 +62,7 @@ namespace ClaFi::PathArt
         const SceneFrame wolf = frame.within(Matrix3x2::Translation(pose.center)
             * Matrix3x2::Rotation(pose.turn) * Matrix3x2::Scale(pose.size));
         const Color unlit = colorBetween(coat.shade, Color{ 0xFF000000 }, k_unlitShare);
-        // The near legs are drawn in it too, so a leg leaves the body in the body's own colour.
+        // The near legs are drawn in it too, so a leg leaves the body in the body's own color.
         const Brush bodyGradient = LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
             coat.light, unlit);
         // The far legs stand a step below the near ones, the step that takes coat to far.
@@ -290,7 +290,7 @@ namespace ClaFi::PathArt
             return outline;
         }
 
-        Color relit(const Color colour, const Color from, const Color to)
+        Color relit(const Color color, const Color from, const Color to)
         {
             const auto channel = [](const ColorByte value, const ColorByte fromValue,
                 const ColorByte toValue) {
@@ -300,10 +300,10 @@ namespace ClaFi::PathArt
                 return static_cast<ColorByte>(std::min(scaled, 255));
             };
             return Color{
-                channel(colour.red, from.red, to.red),
-                channel(colour.green, from.green, to.green),
-                channel(colour.blue, from.blue, to.blue),
-                colour.alpha
+                channel(color.red, from.red, to.red),
+                channel(color.green, from.green, to.green),
+                channel(color.blue, from.blue, to.blue),
+                color.alpha
             };
         }
     }

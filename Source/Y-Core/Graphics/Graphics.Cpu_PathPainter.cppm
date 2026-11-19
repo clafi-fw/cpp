@@ -412,7 +412,7 @@ namespace ClaFi::Graphics::Cpu
 
         for (const auto& layer : layers)
         {
-            // A fill whose colour is settled before its rows are walked blends as it goes, and
+            // A fill whose color is settled before its rows are walked blends as it goes, and
             // never builds the mask; the composite below is then passed over.
             bool drawn = false;
             if (layer.geometry.mode == PathRenderMode::Fill)

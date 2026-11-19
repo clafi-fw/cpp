@@ -536,7 +536,7 @@ namespace SeeDocs_App::Ui
             &drawing.transform);
     }
 
-    // The spark crosses the folder's corner, so a band in the surface's colour is cleared round
+    // The spark crosses the folder's corner, so a band in the surface's color is cleared round
     // it first, the way the framework's Open in Explorer arrow crosses its folder.
     void drawNewProjectIcon(DrawIconEvent& event)
     {

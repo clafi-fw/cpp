@@ -185,13 +185,13 @@ namespace ClaFi::PathArt
             std::span<const Coastline>);
         static void drawSpace(const SceneFrame&);
         static void drawOcean(const SceneFrame&);
-        // The land in one flat colour inside each coastline, until the land's map is built.
+        // The land in one flat color inside each coastline, until the land's map is built.
         void drawFlatLand(const SceneFrame&, const Globe&) const;
         // Starts the land's map and the clouds' maps building, and takes each once it is built.
         void takeBuiltMaps();
         // The globe from its sea up to its air, as one picture a frame. See PathArt#earthscene
         void drawGlobe(const SceneFrame&, const Globe&, double sceneSeconds);
-        // The sea coloured by its depth, once the land's map is built.
+        // The sea colored by its depth, once the land's map is built.
         void addSea(GlobePicture&, const Globe&) const;
         // The land inside the coastlines, once its map is built. See PathArt#earthscene
         void addLand(GlobePicture&, const Globe&) const;

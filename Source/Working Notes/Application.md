@@ -128,7 +128,7 @@ page is free to be a list where the Settings page is a column of small answers.
 
 ## UiElementDescriptor
 
-Changing `token` changes the file format: an unrecognised key is discarded with a SchemaErrorEvent,
+Changing `token` changes the file format: an unrecognized key is discarded with a SchemaErrorEvent,
 so a theme saved under the old spelling loses those rules rather than failing to load.
 
 ## connectAppThemes

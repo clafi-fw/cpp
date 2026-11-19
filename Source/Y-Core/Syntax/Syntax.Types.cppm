@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Syntax
 {
-    // What a run of source is, as far as colouring it goes. See Syntax
+    // What a run of source is, as far as coloring it goes. See Syntax
     export enum class TokenKind : std::uint8_t
     {
         Plain,       // what no rule claims - an identifier, a space, a stray character

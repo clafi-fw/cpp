@@ -225,7 +225,7 @@ namespace ClaFi
     }
 
     // One slot of one control. A control that runs several animations at once - a scroll bar
-    // glides its position while its own hover and press factors run - needs one of them cancelled
+    // glides its position while its own hover and press factors run - needs one of them canceled
     // without touching the rest.
     void AnimationController::stop(const void* control, const AnimationSlot& slot)
     {

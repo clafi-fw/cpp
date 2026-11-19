@@ -68,7 +68,7 @@ namespace MillScene_App
 
     // The scenes stand as tiles in rows of four, the mill first.
     constexpr std::size_t k_sceneTilesPerRow{ 4 };
-    // A tile's picture slot is wider than the figure it centres, room for a name on one line.
+    // A tile's picture slot is wider than the figure it centers, room for a name on one line.
     constexpr IconSize k_sceneIconSize{ 96.0f, 64.0f };
     constexpr float k_sceneTilePadding{ 6.0f };
     constexpr float k_sceneTileSpacing{ 8.0f };
@@ -220,7 +220,7 @@ namespace MillScene_App
         [[nodiscard]] std::size_t sceneCount() const;
         void previewScene(std::size_t index);
         void pickScene(std::size_t index);
-        // The readout's colours and the chart's, as the shown scene states them.
+        // The readout's colors and the chart's, as the shown scene states them.
         void applySceneColors();
         [[nodiscard]] Color mutedReadoutInk() const;
         // Every scene that offers themes crossfades to the theme at `index` of allThemes.
@@ -326,7 +326,7 @@ namespace MillScene_App
         SingleSelectionStackView* m_lookLanes{ nullptr };
         std::vector<Control*> m_lookButtons{};
         std::vector<ChoicePicker> m_choicePickers{};
-        // The chart draws the benchmark above; it wears the scene's own colours, which is why it
+        // The chart draws the benchmark above; it wears the scene's own colors, which is why it
         // is held rather than added and forgotten.
         // When the readings last went to stderr. See traceMetrics.
         Diagnostic::TimePoint m_prevTrace{ Diagnostic::Clock::now() };
@@ -408,7 +408,7 @@ namespace MillScene_App
         Panel{ params, std::forward<Args>(args)... },
         m_launch{ launch }
     {
-        // **Before anything reads the scene.** The info bar takes its colours from the theme, so
+        // **Before anything reads the scene.** The info bar takes its colors from the theme, so
         // the stored one has to be the scene's by now.
         restoreSceneTheme();
         restoreScene();

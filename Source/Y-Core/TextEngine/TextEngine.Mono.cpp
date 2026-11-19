@@ -146,7 +146,7 @@ namespace ClaFi
                 : std::get<1>(value);
         }
 
-        // The colour standing at pos, the cursor advanced past the spans ending before it, so a
+        // The color standing at pos, the cursor advanced past the spans ending before it, so a
         // walk in text order pays one pass over the spans.
         Color colorAt(std::span<const ColorSpan> colors, std::size_t pos, std::size_t& cursor,
             Color fallback, const ControlPaintContext& context)
@@ -385,7 +385,7 @@ namespace ClaFi
             });
         std::size_t colorCursor = static_cast<std::size_t>(shownColors - params.colors.begin());
 
-        // Glyphs are gathered into one run for as long as their colour holds and no tab breaks
+        // Glyphs are gathered into one run for as long as their color holds and no tab breaks
         // the cells, and drawn when either changes. A run standing past the box or ending before
         // what is on screen is dropped whole.
         MonoGlyphs& glyphs = g_runGlyphs;

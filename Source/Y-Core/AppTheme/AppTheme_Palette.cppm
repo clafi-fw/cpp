@@ -72,7 +72,7 @@ namespace ClaFi
     };
 
     // Where each pigment's name sits, in Pigment order: the hue that still reads as that name at
-    // the luminosities pigments are painted at. It is the middle of the colour, not the sRGB corner
+    // the luminosities pigments are painted at. It is the middle of the color, not the sRGB corner
     // of it - sRGB's blue carries hue 264, which paints a periwinkle.
     constexpr std::array<int, k_pigmentsCount> k_pigmentReferenceDegrees{
         90,
@@ -83,7 +83,7 @@ namespace ClaFi
         57
     };
 
-    // The theme's grid: twelve hues this far apart, the first at the anchor. Every harmony colour
+    // The theme's grid: twelve hues this far apart, the first at the anchor. Every harmony color
     // stands on it, and each pigment is drawn at the grid hue nearest its reference.
     constexpr int k_pigmentGridDegrees = 30;
 
@@ -113,13 +113,13 @@ namespace ClaFi
     // positive above.
     [[nodiscard]] float hueOffset(float hue, float reference);
 
-    // A palette entry shown as a colour. An entry is a hue and nothing else, so anything that
+    // A palette entry shown as a color. An entry is a hue and nothing else, so anything that
     // draws one has to be given the other two from somewhere, and this is that somewhere. The pair
     // is the same in every theme, so a swatch shows the hue itself rather than how that hue
     // happens to land in the theme being looked at.
     //
     // Nothing resolved is drawn from these: BakedColors::pigmentHsl takes the hue of a palette
-    // colour and states the other two itself.
+    // color and states the other two itself.
     export constexpr float k_paletteDisplaySaturation = 0.75f;
     export constexpr float k_paletteDisplayLuminosity = 0.66f;
 
@@ -153,7 +153,7 @@ namespace ClaFi
     protected:
         PaletteColor m_gray{ { 0.0f, 0.0f, 0.5f } };
     protected:
-        // The hue every colour here is turned from. Held by reference so that a drag moving it
+        // The hue every color here is turned from. Held by reference so that a drag moving it
         // reaches this without anything having to be handed back in.
         float& m_anchor;
         ColorHarmonyKind m_kind;

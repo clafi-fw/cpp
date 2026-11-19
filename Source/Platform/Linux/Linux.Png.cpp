@@ -108,8 +108,8 @@ namespace ClaFi::Graphics
         }
 
         // Everything to eight bits per channel, BGRA, straight alpha: a palette expanded, a
-        // low-depth grey widened, a transparency chunk turned into alpha, sixteen bits cut to
-        // eight, grey spread to three channels, an alpha of 255 filled in where the file has
+        // low-depth gray widened, a transparency chunk turned into alpha, sixteen bits cut to
+        // eight, gray spread to three channels, an alpha of 255 filled in where the file has
         // none, and the channels swapped into the order Bitmap holds.
         if (colorType == PNG_COLOR_TYPE_PALETTE)
             ::png_set_palette_to_rgb(png);

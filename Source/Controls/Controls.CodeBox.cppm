@@ -99,7 +99,7 @@ namespace ClaFi::Controls
 
     using ParameterTooltipForm = Form<ParameterTooltip>;
 
-    // A text box that colours its text as source in a language. See Controls
+    // A text box that colors its text as source in a language. See Controls
     export class CodeBox : public TextBox, private ColorOverlay
     {
     public:

@@ -30,7 +30,7 @@ namespace Themes_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // The colour a rule of a style is applied to, the style named as the theme names it.
+    // The color a rule of a style is applied to, the style named as the theme names it.
     export using OnGetElementRuleBase =
         std::function<RuleBase(std::wstring_view style, const ColorRule&, RuleChannel)>;
 
@@ -198,7 +198,7 @@ namespace Themes_App
         TreeEntries m_entries{}; // an item's tag is its place here
         std::size_t m_staticCount{}; // the entries the tree starts with; the theme's own follow
         std::size_t m_ownStylesIndex{}; // the entry of the category the theme's own styles stand in
-        ThemeColors* m_colors{}; // the theme's colours, from bind on
+        ThemeColors* m_colors{}; // the theme's colors, from bind on
         ThemeStyles* m_styles{}; // the theme's styles, from bind on
         OnGetElementRuleBase m_ruleBase{}; // what every page's ramps read, from bind on
         OnRulesChanged m_onRulesChanged{}; // what every page calls after an edit, from bind on

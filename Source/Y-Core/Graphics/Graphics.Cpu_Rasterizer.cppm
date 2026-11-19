@@ -46,7 +46,7 @@ namespace ClaFi::Graphics::Cpu
         // PixelPathPainter carries a separate one.
         //
         // useOwnMask chooses between compositing through this instance's coverage mask and
-        // writing every pixel of the target. A solid colour has no mask-free form, because
+        // writing every pixel of the target. A solid color has no mask-free form, because
         // compositeSolid reads the mask directly, so a solid brush with useOwnMask false paints
         // nothing - which is what RectPainter's mask-free route did by carrying no solid branch.
         void composite(

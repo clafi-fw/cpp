@@ -1645,7 +1645,7 @@ namespace ClaFi
 
     // No `if (!this)` here. Calling a member function through a null pointer is undefined before
     // the body starts, so a compiler is entitled to assume the test cannot fail - and clang does
-    // exactly that, deleting the branch at any optimisation level above none. The check was not
+    // exactly that, deleting the branch at any optimization level above none. The check was not
     // protecting anything; it was hiding whichever caller passes a null pointer, and it would
     // have stopped hiding it in a release build. No caller needs it today: every one of them
     // either calls this on itself or holds a pointer it has already checked. One that cannot
@@ -1943,7 +1943,7 @@ namespace ClaFi
             // comparison in Text::operator= and nothing else.
             event.text = adjustedText(event.formContext(), event.text, EventPhase::Paint);
             // **The tooltip stands on the glyphs, not on the box they were given.** An anchor moves
-            // the block inside that box - a line centred in a title bar sits half the band below
+            // the block inside that box - a line centered in a title bar sits half the band below
             // its top - and the placement lands the tooltip's own first glyph on this rect's top
             // left. The width is the box's, which is the width the lines were broken at and what
             // TooltipForm breaks its own at.
@@ -1979,7 +1979,7 @@ namespace ClaFi
             return TextRenderMode::Static;
 
         // Movable at rest rather than Static, so the antialiasing mode is a property of the control
-        // and not of the moment. Text that fell back to subpixel while still would show its colour
+        // and not of the moment. Text that fell back to subpixel while still would show its color
         // fringes appear and vanish as the pointer crossed it - a change with no meaning behind it,
         // at rest, where no movement covers it.
         //

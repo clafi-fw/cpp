@@ -47,7 +47,7 @@ namespace ClaFi::PlatformImplementation::Windows
         void dwmDisableFrame();
         // Whether this press is the third of one run of clicks. Windows counts to two: it reports
         // the second press as WM_LBUTTONDBLCLK and every press after it as another
-        // WM_LBUTTONDOWN, so the third is recognised here or nowhere. Answering ends the run
+        // WM_LBUTTONDOWN, so the third is recognized here or nowhere. Answering ends the run
         // either way, so a fourth press starts a new one and the count never runs past three.
         [[nodiscard]] bool takeTripleClick(IntPoint mousePos);
         // A point in the client area, in the form's surface.

@@ -63,7 +63,7 @@ namespace SeeDocs_App::Ui::AppIcon
             FloatPoint end{};
         };
 
-        // A point on a strand's centre line, the normal there, and how far along the strand it is.
+        // A point on a strand's center line, the normal there, and how far along the strand it is.
         struct Sample
         {
             FloatPoint point{};
@@ -486,7 +486,7 @@ namespace SeeDocs_App::Ui::AppIcon
         {
             const FloatPoint start = points[index];
             const FloatPoint end = points[index + 1];
-            // An end has no neighbour beyond it, so it takes the next point mirrored through it.
+            // An end has no neighbor beyond it, so it takes the next point mirrored through it.
             const FloatPoint before = index > 0 ? points[index - 1] : start * 2.0f - end;
             const FloatPoint after = index + 2 < points.size() ? points[index + 2] : end * 2.0f - start;
             const float spacing = knotSpacing(start, end);
@@ -538,7 +538,7 @@ namespace SeeDocs_App::Ui::AppIcon
             }
             samples.push_back(Sample{ .point = strand.points.back() });
 
-            // A normal is taken across the sample's two neighbours.
+            // A normal is taken across the sample's two neighbors.
             for (std::size_t index = 0; index < samples.size(); ++index)
             {
                 const FloatPoint before = samples[index > 0 ? index - 1 : index].point;

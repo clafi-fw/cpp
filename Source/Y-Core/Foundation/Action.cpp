@@ -37,7 +37,7 @@ namespace ClaFi
     std::wstring Shortcut::text() const
     {
         // Every part is asked of the layout, modifiers included, so the whole line reads the way
-        // the keyboard in front of the user is labelled rather than the way this one is.
+        // the keyboard in front of the user is labeled rather than the way this one is.
         const std::wstring name = Platform::keyName(key);
         if (name.empty())
             return {};

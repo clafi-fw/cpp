@@ -290,7 +290,7 @@ namespace ClaFi::PlatformImplementation::Windows
         ::SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
         // **The apartment the clipboard lives in.** OleSetClipboard and OleGetClipboard work on an
-        // OLE-initialised thread and nowhere else, and this is the thread that runs the message
+        // OLE-initialized thread and nowhere else, and this is the thread that runs the message
         // loop. Failure is not fatal: everything except the clipboard carries on without it.
         ::OleInitialize(nullptr);
 
@@ -349,7 +349,7 @@ namespace ClaFi::PlatformImplementation::Windows
     }
 
     // **The app mode**, the half of the setting that speaks to applications - the system mode
-    // beside it colours the taskbar and the Start menu. A value that cannot be read is a desktop
+    // beside it colors the taskbar and the Start menu. A value that cannot be read is a desktop
     // stating no preference, and that reads as Light, the mode Windows starts in.
     ColorMode WindowsManager::appsColorMode()
     {
@@ -392,7 +392,7 @@ namespace ClaFi::PlatformImplementation::Windows
     }
 
     // **One broadcast reaches every top-level window**, so the mode is announced where it has moved
-    // and not once for each window told. ImmersiveColorSet names a change of the accent colours
+    // and not once for each window told. ImmersiveColorSet names a change of the accent colors
     // as well as of the mode, and the accent alone announces nothing.
     void WindowsManager::settingChanged(const LPARAM area)
     {

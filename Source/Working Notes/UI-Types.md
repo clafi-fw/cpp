@@ -23,7 +23,7 @@ from 0 put every reference within 5 degrees of its name, but the widest-gap fill
 unclaimed pigments to their window edges - the built-in theme's red to 0 and green to 172.
 
 Oj's rule replaced the claim and the fill: the grid starts at the theme's anchor, and a pigment
-takes the grid hue nearest its reference. Every harmony colour is a multiple of 30 degrees from
+takes the grid hue nearest its reference. Every harmony color is a multiple of 30 degrees from
 the anchor, so it stands on the grid, and a pigment takes one wherever it is the nearest point.
 The references are the middles of the names - 25, 57, 90, 148, 245 and 305 - and stand more
 than a grid step apart, so no two pigments share a hue. The three fills it retired (reference,
@@ -99,7 +99,7 @@ Open: whether createDialog should offer FocusScope::Yes after all.
 
 ## Color faded
 
-The colour at a share of its own alpha, where withOpacity replaces the alpha outright. It was a
+The color at a share of its own alpha, where withOpacity replaces the alpha outright. It was a
 free function in PathArt's SceneHelpers until Oj had it moved here (2026-11-16, "Move faded to
-the Color"), its calls rewritten as colour.faded(share). The Mill's river fog takes the cloud's
-colour at withOpacity(0.33f) instead, so its strength no longer rides on the cloud's own alpha.
+the Color"), its calls rewritten as color.faded(share). The Mill's river fog takes the cloud's
+color at withOpacity(0.33f) instead, so its strength no longer rides on the cloud's own alpha.

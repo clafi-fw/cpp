@@ -18,7 +18,7 @@ namespace ClaFi::Icons::BrowseUpIcon
         Right
     };
 
-    // The turn from pointing up to the heading, about the centre of a square of `size`.
+    // The turn from pointing up to the heading, about the center of a square of `size`.
     [[nodiscard]] Matrix3x2 turnTo(const ArrowHeading heading, const float size)
     {
         switch (heading)
@@ -33,7 +33,7 @@ namespace ClaFi::Icons::BrowseUpIcon
         return Matrix3x2::Identity();
     }
 
-    // The arrow centred in the icon's square, pointing the way the heading says.
+    // The arrow centered in the icon's square, pointing the way the heading says.
     export void drawHeading(DrawIconEvent& event, const ArrowHeading heading)
     {
         const FloatRect iconRect = event.iconRect();

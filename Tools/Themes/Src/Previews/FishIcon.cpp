@@ -13,7 +13,7 @@ namespace Themes_App::FishIcon
 
     namespace
     {
-        // In shares of the icon's size, measured from its centre.
+        // In shares of the icon's size, measured from its center.
         constexpr float k_noseX = 0.44f;
         constexpr float k_tailJointX = -0.2f;
         constexpr float k_tailEndX = -0.46f;

@@ -6,12 +6,12 @@ import ClaFi.StdLib;
 
 namespace ClaFi
 {
-    // The colour rules and the sizes one element wears, stated over its base's. See AppTheme
+    // The color rules and the sizes one element wears, stated over its base's. See AppTheme
     export struct ControlStyle
     {
         std::wstring name{};        // what a theme file and an application know the style by
         std::wstring base{};        // the style its chain continues from, none when empty
-        std::wstring standsOn{};    // what it is painted on, the mode's bare colour when empty
+        std::wstring standsOn{};    // what it is painted on, the mode's bare color when empty
         OptionalPigment seed{};     // where its surface's hue starts, if not at its standsOn's
         ColorRules rules{};
         RuleSelectors dropped{};    // the inherited rules it leaves out

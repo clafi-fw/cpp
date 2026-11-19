@@ -49,7 +49,7 @@ namespace ClaFi::Icons::SelectAllIcon
         Canvas& canvas = event.canvas();
         PixelPath path;
 
-        // A strong grey holds the object, the accent marks what names the command. Here that is
+        // A strong gray holds the object, the accent marks what names the command. Here that is
         // the content: the marquee reaches round every line of it, which is the whole of what
         // this command says.
         const Color bodyColor = event.textRgb(InkGrade::Strong);

@@ -232,7 +232,7 @@ and the form runs one before the next paint.</p>
 This manual covers the layout. The other manuals cover what the controls <em>are</em>:
 <a href="grids.html">Grid manual</a> for grids, <a href="text.html">Writing Text</a> and
 <a href="textengine.html">Text in Controls</a> manuals for text, <a href="events.html">Events manual</a> for handlers,
-<a href="color.html">Colour manual</a> for how a control is painted.
+<a href="color.html">Color manual</a> for how a control is painted.
 </div>
 
 <h2 id="quickstart">Quick Start</h2>
@@ -387,7 +387,7 @@ than the application.</p>
 <h3 id="box">The box of a control</h3>
 
 <p><code>Control</code> is the layout node: a box, a place in the tree, and the events that
-reach it. <code>RichControl</code> adds the appearance a control stores - metrics, colours,
+reach it. <code>RichControl</code> adds the appearance a control stores - metrics, colors,
 text - and is what nearly everything is built on. The properties below are its.</p>
 
 <svg class="grid-fig" viewBox="0 0 660 230" xmlns="http://www.w3.org/2000/svg" role="img"
@@ -528,7 +528,7 @@ a box larger than the size it measured.</p>
 <code>HorizontalAlign</code> places the <em>control</em> inside the room its parent gave it.
 <code>TextAlign</code> and <code>HorizontalTextAnchor</code> place the <em>text</em> inside
 the control. A label stretched across a row and a label sitting in the middle of one are
-different arrangements, and a centred text in a stretched label is a third.
+different arrangements, and a centered text in a stretched label is a third.
 </div>
 
 <h4>The surplus is handed back</h4>
@@ -673,7 +673,7 @@ different weights can come out the same width, and a focus ring built on one doe
 <tr><td><code>Border{ Thickness }</code></td><td>how heavy the control's border is, as a <a href="#strokes">grade</a> - no effect on layout</td><td><code>setBorder</code></td></tr>
 <tr><td><code>Radius{ r }</code></td><td>its corner radius - no effect on layout</td><td><code>setRadius</code></td></tr>
 <tr><td><code>ControlMetrics</code></td><td>the whole block at once, every size stated</td><td><code>setMetrics</code></td></tr>
-<tr><td><code>UiElement</code></td><td>the style the control wears: its sizes from the theme, and its colour rules in paint - see the <a href="color.html#rule-lists">Colour manual</a></td><td><code>setStyle</code></td></tr>
+<tr><td><code>UiElement</code></td><td>the style the control wears: its sizes from the theme, and its color rules in paint - see the <a href="color.html#rule-lists">Color manual</a></td><td><code>setStyle</code></td></tr>
 </table>
 
 <p>A single float fills both axes, so <code>Padding{ 8.0f }</code> is
@@ -690,7 +690,7 @@ are settled by order, and the last one wins:</p>
 <p>A control that takes one size from a style it does not wear - a header rounded to its page's
 radius - reads that style's block through <code>styleMetrics(UiElement)</code>, which a control,
 its <code>CreateParams</code> and its form all answer. The block is the style's sizes as the
-theme's chain resolves them; the Colour manual says how a chain is built.</p>
+theme's chain resolves them; the Color manual says how a chain is built.</p>
 
 <div class="info">
 A few controls are built on <code>Control</code> directly rather than on
@@ -765,7 +765,7 @@ m_strip.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;(<s
 
 <p><code>Spacer</code> keeps the size it was given. <code>FlexSpacer</code> takes whatever
 the lane has left over, split evenly where there is more than one of them. So one puts
-everything after it at the far end, two either side of an item centre that item, and two at
+everything after it at the far end, two either side of an item center that item, and two at
 one end share what is left.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" role="img"
@@ -1143,7 +1143,7 @@ is not stored a second time.</p>
 every panel.</p>
 
 <p>The splitter answers the mouse only - navigation passes over it and no key moves it. It is
-drawn in the <code>Divider</code> element's colours, and the pointer over it shows the resize
+drawn in the <code>Divider</code> element's colors, and the pointer over it shows the resize
 arrow for its direction.</p>
 
 <h3 id="withbody">WithBody, HostProps and BodyProps</h3>
@@ -1631,7 +1631,7 @@ so the strip has room over what its buttons measured, and the spacer is what ask
 <h3 id="r-center">One item in the middle</h3>
 
 <p>Two flex spacers, one either side. They share the surplus evenly, so what stands between
-them is centred whatever else is in the lane.</p>
+them is centered whatever else is in the lane.</p>
 
 <pre><code>m_strip.<span class="fn">add</span>&lt;<span class="tp">FlexSpacer</span>&gt;();
 <span class="tp">Label</span>&amp; m_title{ m_strip.<span class="fn">add</span>&lt;<span class="tp">Label</span>&gt;(<span class="st">L"Untitled"</span>) };
@@ -1997,7 +1997,7 @@ reason.</li>
 <tr><td><code>Border</code></td><td><code>{ Thickness }</code></td><td><code>None</code>, or the style's where one is worn</td></tr>
 <tr><td><code>Radius</code></td><td><code>{ value }</code></td><td>zero, or the style's where one is worn</td></tr>
 <tr><td><code>ControlMetrics</code></td><td>the whole block, every size stated</td><td>zero on every field but <code>maxSize</code></td></tr>
-<tr><td><code>UiElement</code></td><td>the style worn - its sizes, then its colour rules</td><td>none</td></tr>
+<tr><td><code>UiElement</code></td><td>the style worn - its sizes, then its color rules</td><td>none</td></tr>
 </table>
 
 <h3>Container properties</h3>

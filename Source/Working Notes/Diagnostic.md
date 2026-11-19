@@ -18,7 +18,7 @@ linkers decide that differently, and the module is laid out for both.
 - MSVC links every object of the project and drops only the functions nothing references. An
   object's dynamic initializers always run, so a namespace-scope object keeps whatever its
   constructor and destructor reach. The window is held in a function-local static,
-  `diagnosticWindow()`, and what it keeps - the copy action, the colours of the controls a line
+  `diagnosticWindow()`, and what it keeps - the copy action, the colors of the controls a line
   names - are members of its classes. Nothing in `Diagnostic.Log.cpp` stands at namespace scope
   with a constructor or destructor that does work.
 

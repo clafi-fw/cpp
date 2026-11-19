@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Graphics::Cpu
 {
-    // Whether a span is filled with one colour or one asked for per pixel.
+    // Whether a span is filled with one color or one asked for per pixel.
     export enum class FillMode {
         solidColor,
         dynamicColor

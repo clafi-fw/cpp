@@ -49,7 +49,7 @@ namespace SeeDocs_App
         std::chrono::steady_clock::time_point m_last;
     };
 
-    // The language a module is written in, which its code on a page is read and coloured as.
+    // The language a module is written in, which its code on a page is read and colored as.
     export enum class SourceLanguage
     {
         Cpp,
@@ -119,7 +119,7 @@ namespace SeeDocs_App
         Required       // REQUIRE_PROPERTY - the pack has to carry it, so there is no default
     };
 
-    // Whether a form declares storage of its own, which the constructor then has to initialise.
+    // Whether a form declares storage of its own, which the constructor then has to initialize.
     export [[nodiscard]] constexpr bool declaresStorage(const PropertyForm form)
     {
         return form == PropertyForm::Declared || form == PropertyForm::Writable

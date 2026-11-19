@@ -13,7 +13,7 @@ namespace Themes_App
     using namespace ::ClaFi;
     using namespace ::ClaFi::Controls;
 
-    // A short block of C++, coloured as the language is.
+    // A short block of C++, colored as the language is.
     export class CodeBlockPreview : public PreviewPageBase
     {
     public:

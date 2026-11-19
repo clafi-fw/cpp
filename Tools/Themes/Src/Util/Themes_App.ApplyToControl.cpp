@@ -222,7 +222,7 @@ namespace Themes_App
         const PaintChannel channel)
         :
         RadioButton{ params,
-            Text{ capitalised(channelLabel(channel)) }
+            Text{ capitalized(channelLabel(channel)) }
         },
         m_popup{ popup },
         m_channel{ channel }
@@ -250,7 +250,7 @@ namespace Themes_App
         const RuleInput input)
         :
         CheckBox{ params,
-            Text{ capitalised(inputLabel(input)) }
+            Text{ capitalized(inputLabel(input)) }
         },
         m_popup{ popup },
         m_clause{ clause },

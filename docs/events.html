@@ -371,7 +371,7 @@
             <h2 id="introduction">Introduction</h2>
             <p>The <code>Events</code> subsystem is how one object tells others that something happened. A type
             emits a strongly typed event; any number of listeners connect to it, each can disconnect, and any
-            listener can stop the event travelling further.</p>
+            listener can stop the event traveling further.</p>
 
             <div class="info">
                 <strong>Module Import:</strong>
@@ -491,7 +491,7 @@ conn.<span class="fn">disconnect</span>();</pre>
                         <li>Don't let a <code>ScopedEventConnection</code> outlive the emitter it points at. Its
                         destructor calls <code>disconnect()</code> through a raw pointer to the dispatcher, and
                         nothing clears that pointer when the emitter is destroyed. It compiles, it usually appears
-                        to work, and it is undefined behaviour.</li>
+                        to work, and it is undefined behavior.</li>
                         <li>Don't connect a lambda capturing something shorter-lived than the emitter and then
                         drop the connection. The handler stays live and the capture does not.</li>
                     </ul>
@@ -573,7 +573,7 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
             returns immediately if it holds no listeners at all.</p>
             <p>A handler can call <code>event.stopPropagation()</code>. The emit loop stops at that handler, and the
             emitter can test <code>event.propagationStopped()</code> to decide whether to run its own default
-            behaviour - this is how a control lets a caller override it:</p>
+            behavior - this is how a control lets a caller override it:</p>
 <pre><span class="kw">void</span> <span class="tp">TextBox</span>::<span class="fn">nestedContextPopup</span>(<span class="tp">ContextPopupEvent</span>&amp; event)
 {
     <span class="fn">setCaretPosFromMouse</span>();
@@ -585,7 +585,7 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
             <div class="warning"><strong>Don't emit from a constructor.</strong> Handlers passed as
             construction properties are connected by <code>EventComponent</code>'s constructor, which runs before
             any derived constructor body. An event raised while the object is still being built reaches handlers
-            that will see a half-initialised object.</div>
+            that will see a half-initialized object.</div>
 
             <div class="info">A control needs no constructor code to accept handlers for the events it declares -
             not even for events its base classes know nothing about. <code>Control</code>'s constructor connects a
@@ -716,7 +716,7 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
                 <tr><td><code>BIND_CALL_VALUE(Type, func)</code></td><td>Same, for property wrappers carrying their payload in <code>value</code>.</td></tr>
                 <tr><td><code>BIND_ACTION(Type, action)</code></td><td>Runs arbitrary code with the property named <code>p</code>.</td></tr>
             </table>
-            <div class="info">The <code>BIND_</code> macros are for plain construction properties - padding, colours,
+            <div class="info">The <code>BIND_</code> macros are for plain construction properties - padding, colors,
             text. Handlers never go through them: they arrive as <code>OnEvent</code> and
             <code>EventComponent</code>'s constructor connects them.</div>
         </main>

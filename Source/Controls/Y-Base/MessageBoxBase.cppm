@@ -64,7 +64,7 @@ namespace ClaFi::Controls
                 // The word sits in the middle of the answer. The row divides itself evenly, so an
                 // answer is wider than its own caption and a Left anchored one reads as a word
                 // resting against the edge of a box rather than as the answer that box is. Both
-                // axes, so a caption that takes two lines stays centred in a row the other
+                // axes, so a caption that takes two lines stays centered in a row the other
                 // answers have been stretched to.
                 VerticalTextAnchor::Center,
                 HorizontalTextAnchor::Center,

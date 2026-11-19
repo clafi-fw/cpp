@@ -611,7 +611,7 @@ namespace ClaFi::Controls
         return std::max(spacing, line);
     }
 
-    // The line stands in the middle of the gap, and the band the pointer takes it by is centred
+    // The line stands in the middle of the gap, and the band the pointer takes it by is centered
     // on the line, reaching over the bar on one side and the body on the other. The splitter is
     // read before it is laid out, so its box is still the line it measured.
     void PanelBase::placeSplitter(const PanelSlot slotId, AlignEvent& event, const float gapStart,

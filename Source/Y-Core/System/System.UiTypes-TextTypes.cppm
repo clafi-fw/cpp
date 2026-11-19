@@ -38,7 +38,7 @@ namespace ClaFi{
 
     export constexpr std::size_t k_pigmentsCount = static_cast<std::size_t>(Pigment::Count);
 
-    // How colourful a colour is and where it sits. See UI-Types
+    // How colorful a color is and where it sits. See UI-Types
     export struct InkTone
     {
         float saturation{ 1.0f };
@@ -46,7 +46,7 @@ namespace ClaFi{
         bool operator==(const InkTone&) const = default;
     };
 
-    // One colour stated once for each side of the theme. See UI-Types
+    // One color stated once for each side of the theme. See UI-Types
     export struct PigmentTones
     {
         InkTone dark{};
@@ -104,7 +104,7 @@ namespace ClaFi{
         return from + (to - from) * along;
     }
 
-    // How an ink's grade becomes a colour. See UI-Types
+    // How an ink's grade becomes a color. See UI-Types
     export enum class InkColor : std::size_t
     {
         Text,   // a shade of the ink the paint chain arrived at. See UI-Types
@@ -121,7 +121,7 @@ namespace ClaFi{
         Count
     };
 
-    // The pigment one of the semantic colours is drawn from, and none for the others.
+    // The pigment one of the semantic colors is drawn from, and none for the others.
     export [[nodiscard]] constexpr std::optional<Pigment> pigmentOf(InkColor color)
     {
         switch (color)
@@ -149,7 +149,7 @@ namespace ClaFi{
         return std::nullopt;
     }
 
-    // A colour named rather than stated. See UI-Types
+    // A color named rather than stated. See UI-Types
     export struct Ink
     {
     public:

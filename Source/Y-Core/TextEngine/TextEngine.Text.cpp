@@ -21,7 +21,7 @@ namespace ClaFi
         constexpr std::size_t k_fnvOffset = 14695981039346656037ull;
         constexpr std::size_t k_fnvPrime = 1099511628211ull;
 
-        // The ink an InkColor stands for: that colour at Strongest.
+        // The ink an InkColor stands for: that color at Strongest.
         [[nodiscard]] Ink inkOf(InkColor color)
         {
             Ink ink;
@@ -192,7 +192,7 @@ namespace ClaFi
         }
 
         // Every field an Ink carries. A hit is confirmed against the whole Text, so a field left
-        // out here costs a rebuild rather than a wrong colour: the two inks land on one key, and
+        // out here costs a rebuild rather than a wrong color: the two inks land on one key, and
         // each paint evicts the other. Named apart from combine, whose size_t calls would
         // otherwise be offered ColorDef's converting constructor.
         void combineInk(std::size_t& hash, const ColorDef& ink)

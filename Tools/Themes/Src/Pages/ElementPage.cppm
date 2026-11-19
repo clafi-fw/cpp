@@ -79,7 +79,7 @@ namespace Themes_App
     // name, and what the grid held as it was made.
     export using OnRulesChanged =
         std::function<void(EditPhase, const Text& what, const RuleSelection& at)>;
-    // The colour a rule of the list is applied to, which its value ramps are drawn from.
+    // The color a rule of the list is applied to, which its value ramps are drawn from.
     export using OnGetListRuleBase = std::function<RuleBase(const ColorRule&, RuleChannel)>;
     // The theme's styles as the tree lists them, asked for as a page's rows are built.
     export using OnGetStyleNames = std::function<SetNames()>;

@@ -40,7 +40,7 @@ namespace ClaFi::Icons::RenameIcon
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
         Canvas& canvas = event.canvas();
 
-        // A strong grey holds the object, the accent marks what names the command. Here that is
+        // A strong gray holds the object, the accent marks what names the command. Here that is
         // the caret: the field is the place a name sits, and the caret is the name being changed.
         const Color bodyColor = event.textRgb(InkGrade::Strong);
         const Color accentColor = event.accentRgb(InkGrade::Strongest);
@@ -54,7 +54,7 @@ namespace ClaFi::Icons::RenameIcon
         const float radius = box.width() * k_fieldRadius;
         canvas.drawRoundedRectangle(field, radius, radius, bodyColor, strokeWidth);
 
-        // **A path's stroke is centred on the line**, which is the other convention: these points
+        // **A path's stroke is centered on the line**, which is the other convention: these points
         // are where the middle of each stroke goes, and that is why the caret is not built the way
         // the field above is.
         PixelPath path;

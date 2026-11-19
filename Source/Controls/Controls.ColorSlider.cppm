@@ -26,13 +26,13 @@ namespace ClaFi::Controls
         Luminosity
     };
 
-    // The colour a slider moves one channel of, owned by the caller.
+    // The color a slider moves one channel of, owned by the caller.
     export struct EditedColor
     {
         Hsl& value;
     };
 
-    // A slider that moves one channel of a colour and paints its range.
+    // A slider that moves one channel of a color and paints its range.
     export class ColorSlider : public Slider
     {
     public:
@@ -45,7 +45,7 @@ namespace ClaFi::Controls
         void writeValue(Text&, EventPhase) const;
         void setChannel(HslChannel);
         void setEditedColor(Hsl& value);
-        // A slider over a bare hue rather than over a colour. What it edits is one number, so the
+        // A slider over a bare hue rather than over a color. What it edits is one number, so the
         // saturation and luminosity its ramp and its thumb are drawn at are the palette's display
         // pair - the same pair a palette swatch carries, so a ramp and a swatch beside it agree.
         void setEditedHue(float& value);
@@ -78,9 +78,9 @@ namespace ClaFi::Controls
         SlotSpectrum m_slot{};       // the slider's own slot, over the whole range
         SlotSpectrum m_spanSlot{};   // a slot over part of the range, drawn for a finer slider
         Hsl* m_editedColor{ &s_nullColor };
-        // Set by setEditedHue: the number the caller owns, and the colour this shows it as. The
+        // Set by setEditedHue: the number the caller owns, and the color this shows it as. The
         // pair below is what m_editedColor points at while a hue is bound, so everything the
-        // slider draws goes on working from a whole colour.
+        // slider draws goes on working from a whole color.
         float* m_boundHue{ nullptr };
         Hsl m_displayColor{};
         HslChannel m_channel{};
@@ -108,9 +108,9 @@ namespace ClaFi::Controls
         :
         Slider{ params, std::forward<Args>(args)... }
     {
-        // Which channel of the colour the slider moves.
+        // Which channel of the color the slider moves.
         setChannel(READ_PROPERTY(HslChannel, HslChannel::Hue));
-        // The colour the slider moves a channel of, owned by the caller.
+        // The color the slider moves a channel of, owned by the caller.
         BIND_PROPERTY_VALUE(EditedColor, setEditedColor);
     }
 
@@ -248,7 +248,7 @@ namespace ClaFi::Controls
     void ColorSlider::changed(SliderChangeEvent& event)
     {
         *m_trackingValue = event.newPosition / maxPosition();
-        // The display colour is what the slider edits; the number the caller owns is what that
+        // The display color is what the slider edits; the number the caller owns is what that
         // edit means, so it is written through here rather than left to be collected.
         if (m_boundHue)
             *m_boundHue = m_displayColor.hue;
@@ -304,9 +304,9 @@ namespace ClaFi::Controls
             if (onAdjustSlotColor)
                 onAdjustSlotColor(tmp);
             Color colColor = tmp.toColor();
-            // The fade takes the colour and leaves the alpha at the 255 the spectrum was built
+            // The fade takes the color and leaves the alpha at the 255 the spectrum was built
             // with, which is what the staging bitmap requires: it is premultiplied, so a pixel
-            // holding straight colour at partial alpha is added over the surface rather than
+            // holding straight color at partial alpha is added over the surface rather than
             // replacing it - a plausible dim spectrum on a dark form, and every channel clipped
             // to white on a light one.
             //

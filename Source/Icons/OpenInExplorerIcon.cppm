@@ -14,7 +14,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
 
     // A folder with an arrow leaving it. The folder is drawn in the framework's yellow and the
     // arrow in the theme's accent, so what is being opened and the opening of it are told apart by
-    // colour as well as by shape.
+    // color as well as by shape.
     export void draw(DrawIconEvent&);
 
 
@@ -22,7 +22,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
 
 
     // The folder is what is being opened, so it carries the framework's yellow. The arrow is the
-    // opening of it, and takes the accent, which is the colour every other mark that means the
+    // opening of it, and takes the accent, which is the color every other mark that means the
     // user is acting on something is drawn in.
     constexpr Ink k_folderInk = InkWell::Yellow;
 
@@ -59,7 +59,7 @@ namespace ClaFi::Icons::OpenInExplorerIcon
         path.lineTo(size * 1.00f, size * 0.05f);
         path.lineTo(size * 1.00f, size * 0.30f);
 
-        // It crosses the folder's corner, so it is stroked once wide in the surface colour and
+        // It crosses the folder's corner, so it is stroked once wide in the surface color and
         // then again properly: without that band the two outlines meet and neither is legible.
         // Magnifier's Halo is the same trick carried all the way round a shape.
         canvas.drawPath(

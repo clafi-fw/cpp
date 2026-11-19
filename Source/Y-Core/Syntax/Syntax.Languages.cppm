@@ -159,7 +159,7 @@ namespace ClaFi::Syntax
         });
     }
 
-    // The languages the framework colours. Each is a constant: a caller passes one by value and
+    // The languages the framework colors. Each is a constant: a caller passes one by value and
     // keeps nothing alive for it.
     export namespace Languages
     {

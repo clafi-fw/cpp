@@ -25,7 +25,7 @@ namespace ClaFi::PathArt
         float wag{ 0.0f }; // 0 still to 1 held high and wagging fast, as a happy dog's tail
     };
 
-    // The colours of a wolf: its fur, and its mouth with its tongue and teeth.
+    // The colors of a wolf: its fur, and its mouth with its tongue and teeth.
     export struct WolfCoat
     {
         Color light; // its head, back and tail where the light falls on them
@@ -43,7 +43,7 @@ namespace ClaFi::PathArt
     // Coats a wolf is drawn in, wherever it appears.
     export namespace WolfCoats
     {
-        constexpr WolfCoat Grey{
+        constexpr WolfCoat Gray{
             .light = Color{ 0xFF7D8592 },
             .shade = Color{ 0xFF59606B },
             .coat = Color{ 0xFF6C7480 },

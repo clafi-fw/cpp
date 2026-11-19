@@ -229,11 +229,11 @@ namespace ClaFi::Graphics::Cpu
     }
 
     // The layer starts as a copy of the surface it will be composited back onto, not as empty
-    // pixels. Every painter here mixes toward its own colour by coverage, which is the arithmetic
-    // of drawing on something opaque: on empty pixels the same arithmetic leaves colours already
+    // pixels. Every painter here mixes toward its own color by coverage, which is the arithmetic
+    // of drawing on something opaque: on empty pixels the same arithmetic leaves colors already
     // multiplied by their coverage, and mixing those back in as ordinary pixels darkens every
     // antialiased edge in the layer. Starting from what is underneath keeps the surface under the
-    // painters opaque, so a colour written inside a layer means what it means outside one, and the
+    // painters opaque, so a color written inside a layer means what it means outside one, and the
     // composite in popOpacity is a plain mix of two opaque images.
     //
     // A layer buffer spans the whole surface rather than the clip it will be used within, so a
@@ -468,7 +468,7 @@ namespace ClaFi::Graphics::Cpu
     {
         if (rx != ry)
         {
-            // As Direct2D: the centreline sits half a stroke inside, its radii shrunk by as much.
+            // As Direct2D: the centerline sits half a stroke inside, its radii shrunk by as much.
             const float halfStroke = strokeWidth * 0.5f;
             FloatRect centerline = rect;
             centerline.inflate(-halfStroke);

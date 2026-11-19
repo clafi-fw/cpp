@@ -43,7 +43,7 @@ namespace ClaFi::PathArt
     // The two who run the chase in daylight, as the icon draws them in every theme.
     namespace ChaseCoats
     {
-        constexpr WolfCoat GreyWolf = WolfCoats::Grey;
+        constexpr WolfCoat GrayWolf = WolfCoats::Gray;
         constexpr HareCoat BrownHare{
             .light = Color{ 0xFFC9935E },
             .fur = Color{ 0xFFB98552 },
@@ -513,7 +513,7 @@ namespace ClaFi::PathArt
         // The wind behind each of them as they pass bends it after them, the wolf's more; `x` is
         // where it stands, in units from the middle of the frame like the two.
         [[nodiscard]] float wakeGust(float x, float hareX, float wolfX);
-        // The theme's three petal colours by turns, for the flowers along a row.
+        // The theme's three petal colors by turns, for the flowers along a row.
         [[nodiscard]] Color petalOf(const SceneTheme&, std::int64_t index);
         // `x` is its middle on that edge of the trail, `petal` a daisy's or the butterfly's spots.
         void drawRoadside(const SceneFrame&, const SceneTheme&, Roadside, Verge, float x,
@@ -1335,10 +1335,10 @@ namespace ClaFi::PathArt
             .jawOpen = 0.6f,
             .glance = 0.0f,
             .cycleTime = 0.0f
-        }, ChaseCoats::GreyWolf);
+        }, ChaseCoats::GrayWolf);
     }
 
-    // **The picked theme's colours, not the blend's** - see readoutColorsOf.
+    // **The picked theme's colors, not the blend's** - see readoutColorsOf.
     SceneReadoutColors ChaseScene::readoutColors() const
     {
         return readoutColorsOf(m_themes.picked());
@@ -1454,7 +1454,7 @@ namespace ClaFi::PathArt
             return static_cast<float>(wrapped < 0.0 ? wrapped + period : wrapped);
         }
 
-        // **A hedge's colour is the theme's own**, as art direction and not a formula: each theme
+        // **A hedge's color is the theme's own**, as art direction and not a formula: each theme
         // states it, and the scenes only haze it at the layer's distance. A formula cannot know
         // that one theme is a wash and another a high-contrast picture. See PathArt
 
@@ -1661,7 +1661,7 @@ namespace ClaFi::PathArt
             { 0.0f, groundY }, band, colorBetween(band, theme.hillBottom, 0.3f)));
         // **The far layer's foliage is mixed in clear air and then hazed**, like everything else
         // at its distance: the crowns take the leaves shaded 0.3 toward hillBottom, the hedges
-        // the theme's hedge colour - already stood against the clear hill - and both are veiled
+        // the theme's hedge color - already stood against the clear hill - and both are veiled
         // by the air at 0.06. See PathArt
         const Color wood = hazed(theme,
             colorBetween(theme.treeLeavesBase, theme.hillBottom, 0.3f), k_foothillParallax);
@@ -1792,7 +1792,7 @@ namespace ClaFi::PathArt
 
     namespace
     {
-        // The colours the hillside's trees take in the theme, hazed as the hills are.
+        // The colors the hillside's trees take in the theme, hazed as the hills are.
         struct HillsideColors
         {
             Color bark;
@@ -1962,7 +1962,7 @@ namespace ClaFi::PathArt
         };
         // **The hedges stand behind the trees**, lower on the slope, so a crown or a trunk hides
         // the run where the two meet and no hedge crosses one in the air. The theme states the
-        // hedge's colour; the air of this layer veils it. See PathArt
+        // hedge's color; the air of this layer veils it. See PathArt
         const Color hedgeColor = hazed(theme, theme.hedge, k_hillParallax).fullyOpaque();
         forEachTile(frame, k_hillParallax, k_hillsideStrip, journey,
             [&](const float tileLeft, const float tileWidth) {
@@ -2256,8 +2256,8 @@ namespace ClaFi::PathArt
         });
         pebbles.draw();
         // A flower's petals are placed just apart, so the five make a ring and the heart fills
-        // its middle. The three flowers of a tile wear the theme's three petal colours, and every
-        // flower's petals go down before the hearts. They take a fifth of the lawn's colour where
+        // its middle. The three flowers of a tile wear the theme's three petal colors, and every
+        // flower's petals go down before the hearts. They take a fifth of the lawn's color where
         // they grow, so they lie in the lawn rather than on it.
         const Color lawn = meadowAt(frame, theme, groundY + 63.0f * unit);
         const auto inLawn = [&](Color color) {
@@ -2313,7 +2313,7 @@ namespace ClaFi::PathArt
         const float grassPeriod = periodNear(1.35f, 520.0f);
         const FloatPoint tallestTip = { 0.0f, height - (24.0f + 34.0f) * unit };
         // Every third blade is dark, and the dark ones go down first. A blade's root takes 0.4 of
-        // the lawn's colour at the frame's bottom, so it grows out of the lawn.
+        // the lawn's color at the frame's bottom, so it grows out of the lawn.
         for (const bool dark : { true, false })
         {
             const Color shade = dark ? theme.grassBlade.dark : theme.grassBlade.light;
@@ -3119,7 +3119,7 @@ namespace ClaFi::PathArt
             const float steps)
         {
             constexpr int k_spineCount{ 18 };
-            // the share of the way to black its colours go where the light reaches it least
+            // the share of the way to black its colors go where the light reaches it least
             constexpr float k_unlitShare{ 0.25f };
             const SceneFrame hedgehog = onTrail.within(Matrix3x2::Translation(0.0f,
                 -0.8f * std::abs(std::sin(steps))));
@@ -3787,7 +3787,7 @@ namespace ClaFi::PathArt
         }
 
         // A crow sitting on the stump, pecking at it now and then; taking fright as the hare comes,
-        // it springs up and labours off ahead of them, its legs hanging a moment.
+        // it springs up and labors off ahead of them, its legs hanging a moment.
         void drawStumpCrow(const SceneFrame& onVerge, const ChaseTheme& chase, const float seconds,
             const float sinceHareClose)
         {

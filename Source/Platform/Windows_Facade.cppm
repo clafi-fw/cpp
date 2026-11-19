@@ -390,7 +390,7 @@ namespace ClaFi
     }
 
     // The common item dialog in its folder mode, over the OLE apartment the window opened. A
-    // cancelled dialog fails Show with ERROR_CANCELLED, and is nothing like any other failure.
+    // canceled dialog fails Show with ERROR_CANCELLED, and is nothing like any other failure.
     std::optional<std::filesystem::path> Platform::pickFolder(const IForm* form,
         const std::wstring_view title, const std::filesystem::path& startFolder)
     {

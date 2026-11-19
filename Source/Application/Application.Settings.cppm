@@ -121,7 +121,7 @@ namespace ClaFi
         RadioButton& m_gpuBackend;
         RadioButton& m_cpuBackend;
         // The foot of the page, outside the box: the answer here is about the page as a whole,
-        // so it stands where it can be seen rather than travelling with the options.
+        // so it stands where it can be seen rather than traveling with the options.
         StackPanel& m_footer;
         Controls::Divider& m_footerDivider;
         CheckBox& m_keepSettings;

@@ -52,7 +52,7 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"SplitButton"; }
         /// Puts a command behind the strip. The strip takes the action's tooltip, its key and
-        /// its availability - an unavailable command greys its own half of the button - and
+        /// its availability - an unavailable command grays its own half of the button - and
         /// pressing the strip runs it, by mouse and by the dropdown keys alike.
         ///
         /// The strip is a **display** presenter: what routes its press is this button, so the
@@ -62,7 +62,7 @@ namespace ClaFi::Controls
     protected:
         // The strip is a command of its own where one stands behind it, and then it stands whether
         // or not the face's can be run. A strip handed to OnDropdown drops a list **about** the
-        // face's command - the steps behind Undo - so it is half of that command and greys with it.
+        // face's command - the steps behind Undo - so it is half of that command and grays with it.
         [[nodiscard]] bool dropdownActsAlone() const override
         {
             return m_dropdownAction != nullptr;
@@ -71,7 +71,7 @@ namespace ClaFi::Controls
         void showDropdown(Control& initiator) override;
         void adjustPaint(AdjustPaintEvent&) override;
         // The mark sits on a button face rather than in a field, so it carries the normal text
-        // colour rather than the muted one a combo box uses.
+        // color rather than the muted one a combo box uses.
         [[nodiscard]] Ink dropdownMarkInk() const override { return InkWell::textInk(); }
     private:
         Action* m_dropdownAction{ nullptr };

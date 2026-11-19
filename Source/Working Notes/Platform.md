@@ -133,8 +133,8 @@ painted into meanwhile, and they change places.
 While the window is off the screen the multiplier waits in the surface's pending state for the
 commit that maps it, since a bare commit on an unmapped surface asks for it to be mapped.
 
-Premultiplied colour scales with its own alpha, so all four channels take one factor and the result
-is still premultiplied colour - no destination is read, and a rounded corner keeps the coverage it
+Premultiplied color scales with its own alpha, so all four channels take one factor and the result
+is still premultiplied color - no destination is read, and a rounded corner keeps the coverage it
 was drawn with.
 
 **Two channels share each multiply.** The pixel is read as one 32-bit word, blue with red in its
@@ -292,7 +292,7 @@ that ends the wait.
 ## DisplayManager::activate
 
 **The surface holding the keyboard asks.** KWin grants a token only to the surface of the window it
-holds active, and answers any other surface with a token it will not honour; the keyboard is on
+holds active, and answers any other surface with a token it will not honor; the keyboard is on
 that window. The surface the input landed on can be another one: a menu line is clicked in a
 popup, which is never the active window and is unmapped before its command runs. The raise is
 granted while the asker is still active, and the window only demands attention otherwise.
@@ -324,7 +324,7 @@ the loop.
 
 Measured 2026-10-10 against a stand-in portal on a private dbus-daemon: the options arrive as
 sent (`current_folder` as the path's bytes with its null), an escaped URI comes back decoded -
-spaces and Cyrillic included - and a cancelled dialog, no portal, a portal answering on a path
+spaces and Cyrillic included - and a canceled dialog, no portal, a portal answering on a path
 of its own and a bus killed mid-wait each settle in one or two passes.
 
 ## WindowsManager::settingChanged
@@ -333,12 +333,12 @@ WM_SETTINGCHANGE **is a broadcast**, sent to every top-level window - a form, a 
 and to no message-only window at all, which is why it is read in the manager's window procedure
 rather than by a listener window of its own. The mode is read again on `ImmersiveColorSet` and
 announced only where it differs from the last one read, so one change of mode raises one
-SystemColorModeEvent however many windows were told, and a change of the accent colour, which
+SystemColorModeEvent however many windows were told, and a change of the accent color, which
 names the same area, raises none.
 
 ## WebFetch on Windows
 
-Cancelling closes the request handle from the UI thread, which fails the call blocked on it. The
+Canceling closes the request handle from the UI thread, which fails the call blocked on it. The
 thread registers the request under a mutex, and whichever side closes it first clears it there,
 so it is never closed twice. The thread reads the cancel flag after every call and makes no
 further call on a closed handle.
@@ -351,5 +351,5 @@ The library is never closed. A transfer aborted while a name resolves leaves lib
 thread detached and running libcurl's code until the lookup returns, so unloading the library
 would take that code from under the thread.
 
-CURLOPT_NOSIGNAL is set because the fetch is not on the main thread. libcurl initialises itself on
+CURLOPT_NOSIGNAL is set because the fetch is not on the main thread. libcurl initializes itself on
 the first curl_easy_init; before 7.84 that is unsafe when two fetches start at the same moment.

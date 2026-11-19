@@ -333,6 +333,6 @@ Opens the portal's FileChooser for a folder, over a private session bus connecti
 request settles.
 
 **Poll fd() and call dispatch() after every wake** until settled(). answer() then holds the
-Response's first URI as a local path. It holds nothing where the dialog was cancelled, the session
+Response's first URI as a local path. It holds nothing where the dialog was canceled, the session
 has no bus or no file chooser, or the bus hung up.
 

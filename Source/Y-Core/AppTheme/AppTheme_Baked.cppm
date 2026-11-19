@@ -111,14 +111,14 @@ namespace ClaFi
         // A pigment's hue, at InkWell's tone for the side of the theme the painter stands on.
         [[nodiscard]] Hsl pigmentHsl(Pigment, Lightness) const;
         [[nodiscard]] Hsl pigmentHsl(Pigment, InkTone) const;
-        // Where a form root starts: the bare colour and ink of the lightness, at the anchor hue.
+        // Where a form root starts: the bare color and ink of the lightness, at the anchor hue.
         [[nodiscard]] Hsl rootSurface() const;
         [[nodiscard]] Hsl rootText() const;
         // Black at the anchor hue, where the shadow channel starts at a form root.
         [[nodiscard]] Hsl bareShadow() const;
-        // The colour a window root's border is drawn in, its alpha how far the stroke rules reach.
+        // The color a window root's border is drawn in, its alpha how far the stroke rules reach.
         [[nodiscard]] Color windowStroke(OptionalUiElement root, float windowFocusedFactor) const;
-        // The colour a window root casts its shadow in, before any opacity.
+        // The color a window root casts its shadow in, before any opacity.
         [[nodiscard]] Hsl windowShadow(OptionalUiElement root, float windowFocusedFactor) const;
     public:
         Lightness lightness{ k_darkLightness };
@@ -134,8 +134,8 @@ namespace ClaFi
         BakedRules rules{};
     };
 
-    // **Whether two sets state the same colours**, lightness aside - which is the whole of what the
-    // colour factor has to cross. One theme worn in the two modes is one design read at the two
+    // **Whether two sets state the same colors**, lightness aside - which is the whole of what the
+    // color factor has to cross. One theme worn in the two modes is one design read at the two
     // lightnesses, so a switch of mode moves nothing at all on this axis.
     export [[nodiscard]] bool sameColors(const BakedColors&, const BakedColors&);
 
@@ -277,7 +277,7 @@ namespace ClaFi
         saturation.clear();
         saturation.setTarget = value.saturation;
         saturation.setPull = 1.0f;
-        // The rule states an elevation, so the colour's luminosity crosses to that axis.
+        // The rule states an elevation, so the color's luminosity crosses to that axis.
         elevation.clear();
         elevation.setTarget = elevationOf(value.luminosity, lightness, elevation.luminosityFloor);
         elevation.setPull = 1.0f;
@@ -574,7 +574,7 @@ namespace ClaFi
         noReach("an ink names a rule this theme does not hold");
     }
 
-    // The two tones are one colour stated once for each side of the theme rather than one the
+    // The two tones are one color stated once for each side of the theme rather than one the
     // mode would orient, so a theme standing between the sides is drawn between the tones.
     Hsl BakedColors::pigmentHsl(Pigment pigment, Lightness aLightness) const
     {
@@ -612,7 +612,7 @@ namespace ClaFi
     }
 
     // **A window root's rules on one channel**, as PaintEvent applies them, answering how far they
-    // moved the colour. A window has no state but its focus, so a rule reading only other inputs
+    // moved the color. A window has no state but its focus, so a rule reading only other inputs
     // does not reach it, and a root wearing no element is left as it is. A shadow is read at the
     // dark end whatever the lightness - it is the absence of light on both sides.
     static float applyWindowRules(const BakedColors& colors, const OptionalUiElement root,

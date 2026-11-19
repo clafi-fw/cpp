@@ -22,7 +22,7 @@ namespace ClaFi::Controls::Grids
         // The shape the header's cells fill: the row's rect with the corners a grid's first row
         // turns. Everything laid behind a held header is put on this rather than on the plain
         // rect - a square backdrop would fill the notch outside a rounded corner with the grid's
-        // own colour and cut the shadow off there. See PaintEvent::paintHeldBackdrop.
+        // own color and cut the shadow off there. See PaintEvent::paintHeldBackdrop.
         [[nodiscard]] RoundedRectangleParts silhouette(const PaintEvent& gridEvent, const FloatRect& headerRect) const;
     protected:
         bool hasContent(const Column& column) const override { return column.showInHeader() == ShowInHeader::Yes; }

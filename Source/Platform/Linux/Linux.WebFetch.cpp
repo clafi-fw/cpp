@@ -25,7 +25,7 @@ namespace ClaFi
         [[nodiscard]] int fetch(std::string& body) const;
     private:
         WebFetch& m_owner;
-        std::atomic<bool> m_cancelled{ false };
+        std::atomic<bool> m_canceled{ false };
         std::thread m_thread{};
     };
 }
@@ -59,7 +59,7 @@ namespace ClaFi
         struct Download
         {
             std::string& body;
-            const std::atomic<bool>& cancelled;
+            const std::atomic<bool>& canceled;
             std::size_t limit;
         };
 
@@ -104,7 +104,7 @@ namespace ClaFi
 
     WebFetch::Impl::~Impl()
     {
-        m_cancelled = true;
+        m_canceled = true;
         if (m_thread.joinable())
             m_thread.join();
     }
@@ -113,7 +113,7 @@ namespace ClaFi
     {
         std::string body{};
         const int status = fetch(body);
-        if (m_cancelled)
+        if (m_canceled)
             return;
         if (status == 0)
             body.clear();
@@ -132,7 +132,7 @@ namespace ClaFi
             return 0;
         const std::string url = toUtf8(m_owner.url());
         const std::string userAgent = toUtf8(k_userAgent);
-        Download download{ body, m_cancelled, k_maxBodySize };
+        Download download{ body, m_canceled, k_maxBodySize };
         curl->easySetopt(handle, CurlOption::Url, url.c_str());
         curl->easySetopt(handle, CurlOption::UserAgent, userAgent.c_str());
         // The fetch is not on the main thread, so libcurl must not time a lookup out with SIGALRM.
@@ -212,7 +212,7 @@ namespace ClaFi
         int reportProgress(void* download, std::int64_t, std::int64_t, std::int64_t, std::int64_t)
         {
             const Download& source = *static_cast<const Download*>(download);
-            return source.cancelled ? 1 : 0;
+            return source.canceled ? 1 : 0;
         }
     }
 }

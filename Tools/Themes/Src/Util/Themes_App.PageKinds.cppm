@@ -15,7 +15,7 @@ namespace Themes_App
     {
         Palette, // the theme-wide settings
         Folder,  // a root or a category, its page listing what it holds
-        Style    // a control style: its colour rules and its sizes
+        Style    // a control style: its color rules and its sizes
     };
 
     export constexpr float k_titleIconSize = 20.0f; // beside a title's SubTitle words

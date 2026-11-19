@@ -480,7 +480,7 @@ namespace ClaFi::Controls
 
     void ComboBox::adjustPaint(AdjustPaintEvent& event)
     {
-        // **A combo box wears a tool button's colours**, and it has to say so itself: the chain
+        // **A combo box wears a tool button's colors**, and it has to say so itself: the chain
         // above it names no rule set, so a combo box that states none paints against an empty one.
         // An element passed in is read here or not at all - SplitButtonBase stops short of
         // RichControl.

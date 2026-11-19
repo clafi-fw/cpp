@@ -33,7 +33,7 @@ namespace Themes_App
     // What a value operation does, as its tooltip names it.
     export [[nodiscard]] std::wstring_view operationName(ColorRuleOp);
     // A label that starts what it is shown in, with a capital.
-    export [[nodiscard]] std::wstring capitalised(std::wstring_view label);
+    export [[nodiscard]] std::wstring capitalized(std::wstring_view label);
     // The channel a rule writes and, under it, the states it reads. A rule at rest keeps a blank
     // second line where asked, so every row of a grid stands at one height.
     export void writeApplyTo(Text&, const ColorRule&, RuleFace, bool secondLineAtRest);
@@ -46,7 +46,7 @@ namespace Themes_App
     // The character a hue operation is marked with: a palette entry's digit, or the mark the
     // value operations give Set for an exact hue.
     export [[nodiscard]] std::wstring_view hueMark(ColorRuleHueOp);
-    // The colour a hue rule's blob is filled with: its hue, at the saturation and luminosity
+    // The color a hue rule's blob is filled with: its hue, at the saturation and luminosity
     // every blob is drawn at.
     export [[nodiscard]] Color hueBlobColor(const ColorRuleHue&, const ThemeColors&);
     // A value rule as the mark of its operation and its number, or No change in words.

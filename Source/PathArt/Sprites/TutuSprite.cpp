@@ -34,7 +34,7 @@ namespace ClaFi::PathArt
         constexpr int k_frillCount{ 36 };
         constexpr int k_pleatCount{ 20 };
 
-        // A colour of the tutu leaned toward its look's tint, keeping its own alpha.
+        // A color of the tutu leaned toward its look's tint, keeping its own alpha.
         [[nodiscard]] Color tinted(const Color color, const TutuLook& look)
         {
             if (look.tintShare <= 0.0f)
@@ -56,7 +56,7 @@ namespace ClaFi::PathArt
             return SolidColor{ tinted(color, look) };
         };
         fillOval(tutu, { 0.0f, k_topY + 7.0f }, 76.0f, 16.0f, solid(TutuColors::Shade));
-        // Neighbouring frills overlap, so each is filled on its own.
+        // Neighboring frills overlap, so each is filled on its own.
         for (int i = 0; i != k_frillCount; ++i)
         {
             const float angle = k_2Pi * static_cast<float>(i) / k_frillCount + turn;

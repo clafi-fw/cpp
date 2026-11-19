@@ -1081,7 +1081,7 @@ namespace ClaFi::Browser
 
         if (tab.selected())
         {
-            // **The neighbour is selected before this one goes**, so a focus in the closing page is
+            // **The neighbor is selected before this one goes**, so a focus in the closing page is
             // still in the page control when the switch carries it to the page that shows.
             auto prevIterator = std::ranges::find_if(
                 tabControls,
@@ -1161,7 +1161,7 @@ namespace ClaFi::Browser
 
     // **Nothing a tab stood on is there afterwards**, and that is what lets the pages go: a tab
     // holds its page data by pointer, so the tabs go first and the sub-items of home after them.
-    // The selection is let go of ahead of the tabs, so no tab is selected as its neighbour goes
+    // The selection is let go of ahead of the tabs, so no tab is selected as its neighbor goes
     // down.
     void BrowserControl::resetToHome()
     {

@@ -670,7 +670,7 @@ namespace ClaFi::Controls::Grids::Dt
     {
         // ctorPropsOf moves the constructor arguments out of the pack.
         // postCreateOf only copies the handlers, and the two see a disjoint set
-        // of arguments, so the order the captures are initialised in does not
+        // of arguments, so the order the captures are initialized in does not
         // matter.
         create = [props = Tree::ctorPropsOf<ControlClass>(std::forward<Args>(args)...),
             post = Tree::postCreateOf<ControlClass>(args...)]

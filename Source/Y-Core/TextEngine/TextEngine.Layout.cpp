@@ -124,11 +124,11 @@ namespace ClaFi
         }
     }
 
-    // Selected text carries its own colour through the selection instead of being repainted in
-    // one ink: the rule is applied to whatever each span already holds, so a grey run stays grey
+    // Selected text carries its own color through the selection instead of being repainted in
+    // one ink: the rule is applied to whatever each span already holds, so a gray run stays gray
     // under the band and an accent run stays accent. The part of the selection no span covers is
     // the default ink, and it is given a span of its own here - the renderer falls back to the
-    // default colour for an uncovered range and knows nothing about the rule.
+    // default color for an uncovered range and knows nothing about the rule.
     //
     // Spans arrive in order and do not overlap, which is what lets one sweep both split them and
     // fill the gaps between them.
@@ -179,7 +179,7 @@ namespace ClaFi
             result.push_back({ { filledTo, selectionEnd - filledTo }, defaultInk });
     }
 
-    // The overlay's spans laid over the paragraph's own: where an overlay span stands its colour
+    // The overlay's spans laid over the paragraph's own: where an overlay span stands its color
     // is drawn, and everywhere else the paragraph keeps what it states. Both arrive in order and
     // without overlap, so one sweep carries both, and a base span is cut wherever an overlay span
     // begins or ends inside it.
@@ -580,7 +580,7 @@ namespace ClaFi
         const float top = m_paragraphs[firstIndex].bounds.top;
         const float oldBottom = m_paragraphs[lastIndex].bounds.bottom;
 
-        // Broken at the width their neighbours were broken at, not at the box the layout holds
+        // Broken at the width their neighbors were broken at, not at the box the layout holds
         // now - otherwise these are the only paragraphs in the document that wrap differently.
         // The slice's lines are shaped into a pool of their own and spliced into the layout's
         // below, where the old paragraphs' lines stood.
@@ -1627,7 +1627,7 @@ namespace ClaFi
         return m_breakWidth > 0.0f ? m_breakWidth : m_bounds.x;
     }
 
-    // **A stated break width is where an unanchored text is placed** as well as broken: a centred
+    // **A stated break width is where an unanchored text is placed** as well as broken: a centered
     // paragraph stands where the text it repeats stands. See UI-Types#horizontaltextanchor
     float TextLayout::placementWidth() const
     {
@@ -2126,7 +2126,7 @@ namespace ClaFi
         // The size the paragraph came to, read **before** anything places its lines. Alignment says
         // where a line sits inside the box, not how much room the text needs, so the two must not
         // be read off one another - and reading them the other way round is not merely untidy. A
-        // centred layout reports its width relative to a centred origin, and a measuring pass asks
+        // centered layout reports its width relative to a centered origin, and a measuring pass asks
         // at an effectively infinite width: at 2^31 a float's ULP is 256, so those widths come back
         // rounded to multiples of 64 and the paragraph measures **narrower** than its text.
         // Measured before alignment the origin is zero and there is no such loss.

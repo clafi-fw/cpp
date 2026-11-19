@@ -11,8 +11,8 @@ namespace ClaFi::Icons::MessageBadge
 {
     using namespace ::ClaFi::Graphics;
 
-    // What the five message icons are made of: a container filled in the colour its pigment names,
-    // with the glyph drawn over it in the colour of the surface the icon stands on. The five
+    // What the five message icons are made of: a container filled in the color its pigment names,
+    // with the glyph drawn over it in the color of the surface the icon stands on. The five
     // differ in their glyph and their pigment and in nothing else, so the container is stated here
     // once and each icon is left holding only what makes it that icon.
     //
@@ -27,7 +27,7 @@ namespace ClaFi::Icons::MessageBadge
         // A dot's radius, wider than a stroke - an exclamation mark's point, the tittle of an i.
         [[nodiscard]] float dotRadius() const;
     public:
-        FloatRect box{}; // the badge's square - the largest the icon rect holds, centred in it
+        FloatRect box{}; // the badge's square - the largest the icon rect holds, centered in it
         float strokeWidth{ 1.0f }; // grows with the badge, never thinner than the Thin stroke
         Color color{}; // the surface under the badge, so the glyph reads as cut through the fill
     };
@@ -69,7 +69,7 @@ namespace ClaFi::Icons::MessageBadge
 
     // MessageBadge
 
-    // The square a badge is drawn in: the largest the icon rect holds, centred in it.
+    // The square a badge is drawn in: the largest the icon rect holds, centered in it.
     static FloatRect badgeBox(const DrawIconEvent& event)
     {
         const FloatRect& iconRect = event.iconRect();

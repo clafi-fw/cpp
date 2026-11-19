@@ -15,9 +15,9 @@ per pixel range checks disappear.
 
 ## ShadowPainter
 
-A form's own design follows the focus its window holds - the colour is the window's shadow colour
+A form's own design follows the focus its window holds - the color is the window's shadow color
 at that focus - so each step of a focus change bakes its painter again, and so does each step for
-the shadows its content casts in that colour.
+the shadows its content casts in that color.
 
 A form holds its own painter around its window, which the platform reads. Its margins are
 painted a strip at a time with the strip as the clip - by the form around its rectangle, or by a
@@ -40,7 +40,7 @@ distance: a negative one draws the silhouette in, and the arc ends that much fur
 
 ## GlyphCompositor
 
-Accumulating every glyph into one mask before compositing is not an optimisation: N
+Accumulating every glyph into one mask before compositing is not an optimization: N
 separate blends over one pixel do not equal one blend at the combined coverage - two at 50%
 give 75%, not 100% - and glyphs do overlap under italics, tight kerning and diacritics, so
 per glyph blending would leave seams.
@@ -57,15 +57,15 @@ A rect filled through RectPainter and the same rect filled as a path came out di
 three ways, until PathArt's fillBox began filling rects to keep scene frames off the path
 rasterizer and showed them:
 
-- **A solid colour ignored a path clip.** Both solid routes write pixels straight, and the clip
+- **A solid color ignored a path clip.** Both solid routes write pixels straight, and the clip
   reaches a pixel only through a coverage mask, so Jupiter's bands spilled past the planet. Under
   a path clip a solid rect goes through fillCovered, which builds the mask.
-- **A brush other than a solid colour filled its rim pixels whole**, so a gradient rect whose edge
+- **A brush other than a solid color filled its rim pixels whole**, so a gradient rect whose edge
   fell between pixels grew by up to a pixel on that side - a tree trunk in the Chase. The inner
   pixels still take the brush without a mask, and the rim, at most a pixel wide on each side, goes
   through fillCovered.
 - **A point glow composited without a mask skipped the path clip**, which the gradients already
-  honoured without one, so the city glows spilled past the Earth's limb.
+  honored without one, so the city glows spilled past the Earth's limb.
 
 After the three, the scenes match the path-filled frames to within an antialiasing step on a few
 corner pixels: RectPainter's exact area coverage against the rasterizer's.
@@ -235,7 +235,7 @@ unit circle shrunk toward f by its position t:
 
     |f + d / t| = 1,  so  t = (f.d + sqrt((f.d)^2 + (1 - |f|^2) |d|^2)) / (1 - |f|^2)
 
-With the origin at the centre, t is |d|, the distance in radii. The map back from a pixel is
+With the origin at the center, t is |d|, the distance in radii. The map back from a pixel is
 affine, so each pixel costs a multiply and an add per axis, then the root. The whole gradient
 goes back through the transform, so it turns, shears and scales with what it fills.
 

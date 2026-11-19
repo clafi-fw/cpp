@@ -75,10 +75,10 @@ pace.
 
 **The chart reads its benchmark and never runs it.** Whoever runs the benchmark repaints the chart.
 
-**Colours** are the theme's accent for the curve and spot for the field, read at each paint, and the
+**Colors** are the theme's accent for the curve and spot for the field, read at each paint, and the
 readings are in the theme's ink. A chart over something with a palette of its own states them at
 full strength - ChartFieldColor, ChartSeriesColor and ChartAxisColor, or setColors. The chart sets
-the alpha of the field and the curve either way; the readings take the axis colour as it is stated.
+the alpha of the field and the curve either way; the readings take the axis color as it is stated.
 
 ## BenchmarkValue
 

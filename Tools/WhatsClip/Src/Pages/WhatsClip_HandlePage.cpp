@@ -24,7 +24,7 @@ namespace ClaFi::Tools::WhatsClip
 
         // **What the number is worth**, on the page rather than left for a reader to assume.
         constexpr std::wstring_view k_handleNote = L"";
-            //L"A handle names an object rather than an address, and no bytes travelled for this "
+            //L"A handle names an object rather than an address, and no bytes traveled for this "
             //L"format. The value is the one this read was handed - the clipboard hands each reader "
             //L"its own, and it was void again the moment the read was done with it.";
 

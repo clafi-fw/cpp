@@ -42,7 +42,7 @@ namespace ClaFi::Tools::WhatsClip
     };
 
     // **What the text pages pick from**: the encodings a format's bytes are read in, and the
-    // languages the text is coloured in. Built by the entry point, which is where an application
+    // languages the text is colored in. Built by the entry point, which is where an application
     // over this viewer adds its own.
     export struct PickLists
     {
@@ -274,7 +274,7 @@ namespace ClaFi::Tools::WhatsClip
             WordWrap::No,
             Padding{ k_readoutPaddingX, 0.0f },
             TextFormat{ k_readoutStyle },
-            // Anchored Left, which is what holds a reading still. Centred, a number gaining a
+            // Anchored Left, which is what holds a reading still. Centered, a number gaining a
             // digit moves every character of it half a digit sideways.
             HorizontalTextAnchor::Left,
             VerticalTextAnchor::Center

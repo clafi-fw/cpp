@@ -76,7 +76,7 @@ The line sits in the spacing gap, and widens it only where the spacing is thinne
 ## Splitter
 
 Made by PanelBase::createSplitter. **It answers the mouse only** - the focus skips it and no key
-moves it. It is drawn in the Divider colours, and the pointer over it shows the resize arrow for
+moves it. It is drawn in the Divider colors, and the pointer over it shows the resize arrow for
 its direction.
 
 ## SplitButtonBase
@@ -99,7 +99,7 @@ dialog adds the answers and what it does with the text.
 another calls makeCurrentItem on it once its answers are in - an answer, or the box where the
 answer is the text it holds.
 
-**The bars are full bleed** - each states its own colours and padding.
+**The bars are full bleed** - each states its own colors and padding.
 
 **The text is a `Text`**, so it can mark the words it is about - a theme, a file. With nothing to
 mark, write `Text{ L"..." }`.
@@ -178,7 +178,7 @@ press drags the thumb, and the drag settles as one step when the button comes up
 the mode on for the keys.
 
 **The mode is shown by an indicator along the control's bottom edge**, in place of its ring. It
-is the band the control's size set states, in the colour of the rules reading Edit - see
+is the band the control's size set states, in the color of the rules reading Edit - see
 ControlMetrics band. It thickens and fades in as the mode turns on, drawn over the frame, and the
 ring gives way by as much - see AdjustPaintEvent replaceRing. Its tips run out into the frame's
 stroke, and fade out on a slider, which draws no frame. A control under EditModeSwitching::No is

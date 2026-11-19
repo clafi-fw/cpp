@@ -59,7 +59,7 @@ once, here.
 **A clear border one pixel wide surrounds the ink.** allocate sizes and clears it, and row()
 addresses the ink inside it.
 
-**A glyph with no ink** - a space - is still worth caching, so it is analysed once.
+**A glyph with no ink** - a space - is still worth caching, so it is analyzed once.
 
 ## PlacedGlyph
 
@@ -81,7 +81,7 @@ painting one corner square pays for one tile.
 - One bake serves every opacity, so a shadow fading in costs one bake.
 - A rectangle too short or too narrow for two corner tiles to stand apart takes a strip of three
   tiles baked at that length - the ends and the piece between - and the strip is kept for the next
-  rectangle of that length. One too small on both axes is cast directly, its colour's alpha scaled
+  rectangle of that length. One too small on both axes is cast directly, its color's alpha scaled
   by the opacity.
 - A bake leaves the CPU rasterizer's clip as it found it, so setDesign is safe in the middle of a
   paint.
@@ -113,7 +113,7 @@ time.
 
 **The band follows the outline along one side and round its two corners.** It is thickness deep
 along the side and only thins from there. Round each corner its inner edge is one arc. The arc
-leaves the inner line along it and meets the neighbouring side along it, where the band ends in a
+leaves the inner line along it and meets the neighboring side along it, where the band ends in a
 point.
 
 **The arc's radius is the corner's, or the thickness where that is larger.** With the corner's
@@ -124,18 +124,18 @@ corner. A square corner takes the thickness, so the band still wraps it.
 **Draw it after the outline.** The band starts at the shape's outer edge, so drawn last it covers
 the outline along that side, as a tab's indicator covers the tab line.
 
-**Round each corner the colour turns to tipColor.** Each corner grades from where the band leaves
-the side to its tip, and the tip stands in tipColor. Passed the outline's own colour, the band runs
-out into the outline; passed its own colour at no opacity, it fades out. Both corners take their
+**Round each corner the color turns to tipColor.** Each corner grades from where the band leaves
+the side to its tip, and the tip stands in tipColor. Passed the outline's own color, the band runs
+out into the outline; passed its own color at no opacity, it fades out. Both corners take their
 gradient's length from the larger arc, so a corner tighter than the other stops a little short of
 tipColor at its tip.
 
 **As the thickness falls the arcs close in on the corners**, so a band whose thickness is
 animated thins away whole.
 
-- lengthFactor is the share of the side the band covers, centred on it, its ends cut square
+- lengthFactor is the share of the side the band covers, centered on it, its ends cut square
   across the side.
-- At 1 the band runs from one neighbouring side to the other.
+- At 1 the band runs from one neighboring side to the other.
 - A lengthFactor or a thickness of 0 draws nothing.
 
 ## GlyphCompositor
@@ -155,7 +155,7 @@ is given.
 
 - snapOrigins puts the origin on a whole pixel.
 - gridFit pulls the glyph's stems and baseline onto pixel edges.
-- Subpixel antialias colours an edge by the third of a pixel it covers.
+- Subpixel antialias colors an edge by the third of a pixel it covers.
 
 **A run that can move turns all three off** for as long as it can move. Changing any of them
 between two draws of an unmoved run changes how it looks.
@@ -172,7 +172,7 @@ edge then stands a little under full strength, and the ramp fades out a little p
 
 ## ArcEllipse
 
-**A path holds the endpoint form alone.** arcEllipse works this centre form out each time the arc
+**A path holds the endpoint form alone.** arcEllipse works this center form out each time the arc
 is drawn, by the conversion in SVG's implementation notes.
 
 ## FillRule
@@ -222,7 +222,7 @@ round `center`.
 
 This is Direct2D's definition, and the CPU backend computes the same.
 
-**Keep the origin inside the ellipse and the radii above zero.** Outside that the colour is
+**Keep the origin inside the ellipse and the radii above zero.** Outside that the color is
 undefined on both backends, though the CPU keeps every pixel on the ramp.
 
 ## IBackend
@@ -230,7 +230,7 @@ undefined on both backends, though the CPU keeps every pixel on the ramp.
 **Every `draw*` lays its stroke inside the bounds it is given**, so a fill and a stroke over the
 same bounds meet exactly.
 
-**The backend insets, the caller does not.** Direct2D and any stroked path centre the stroke on
+**The backend insets, the caller does not.** Direct2D and any stroked path center the stroke on
 the geometry, so a backend built on one insets by half the stroke width. A caller that insets as
 well leaves half a pixel of surface outside the border.
 
@@ -298,7 +298,7 @@ to the geometry as well, it would move every circle twice.
 **What is read:**
 
 - An info header of 40 bytes or more, V4 and V5 included, or the 12-byte core header.
-- 1, 4 and 8 bits a pixel through the colour table.
+- 1, 4 and 8 bits a pixel through the color table.
 - 16 and 32 bits through masks - the block's own under BI_BITFIELDS or BI_ALPHABITFIELDS,
   5-5-5 and 8-8-8 under BI_RGB.
 - 24 bits as the bytes they are.
@@ -312,7 +312,7 @@ past the size a bitmap can be. A reader that wants to show something shows the b
 
 ## decodePng
 
-Reads any depth, colour type and interlace. A picture larger than decodeDib accepts answers
+Reads any depth, color type and interlace. A picture larger than decodeDib accepts answers
 nothing as well.
 
 ## encodePng

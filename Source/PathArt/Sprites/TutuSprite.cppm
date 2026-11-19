@@ -5,10 +5,10 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::PathArt
 {
-    // How one tutu differs from another of the same cut: its colour, its size, its set.
+    // How one tutu differs from another of the same cut: its color, its size, its set.
     export struct TutuLook
     {
-        Color tint{ 0xFFFFFFFF }; // the colour every part of it leans toward, by `tintShare`
+        Color tint{ 0xFFFFFFFF }; // the color every part of it leans toward, by `tintShare`
         float tintShare{ 0.0f };
         float size{ 1.0f };
         float tilt{ 0.0f }; // in radians, about the middle of the hips

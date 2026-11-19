@@ -25,13 +25,13 @@ namespace ClaFi::Icons::WipeIcon
         Canvas& canvas = event.canvas();
         PixelPath path;
 
-        // A strong grey holds the object, the accent marks what names the command - the division
+        // A strong gray holds the object, the accent marks what names the command - the division
         // DeleteIcon makes. Here the object is the eraser and the command is the trail it leaves:
         // an eraser standing still is a shape, an eraser with a trail is a wipe.
         const Color bodyColor = event.textRgb(InkGrade::Strong);
         const Color accentColor = event.accentRgb(InkGrade::Strongest);
 
-        // The eraser, tilted so it reads as travelling rather than resting, and the band across it
+        // The eraser, tilted so it reads as traveling rather than resting, and the band across it
         // that separates the rubber from the holder.
         path.moveTo(size * 0.62f, size * 0.02f);
         path.lineTo(size * 1.00f, size * 0.18f);
@@ -43,7 +43,7 @@ namespace ClaFi::Icons::WipeIcon
         canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
 
         // The trail, running off the leading edge of the box and shortening away from the eraser,
-        // which is what says the block has been travelling rather than merely standing there.
+        // which is what says the block has been traveling rather than merely standing there.
         path.clear();
         path.moveTo(0.0f, size * 0.30f);
         path.lineTo(size * 0.32f, size * 0.30f);

@@ -410,7 +410,7 @@ namespace ClaFi::Controls::Grids
         // whatever holds it, with the row's own rules over that - GridRow's Selected rule among
         // them.
         //
-        // Unconditional because the colour a row inherits is as much a colour it has to paint as
+        // Unconditional because the color a row inherits is as much a color it has to paint as
         // one it states itself. A row standing in a group that holds the selection states nothing
         // of its own, and a fill made conditional on the **row** having moved the surface would
         // drop exactly that case.
@@ -427,7 +427,7 @@ namespace ClaFi::Controls::Grids
             ownFrame.bounds.right -= shared;
         // Each side drawn is half a line, inside the bounds, and the cell across the edge draws
         // the other half. Each half is raised off its own cell's surface, which is what lets a
-        // line between two differently coloured cells follow both colours.
+        // line between two differently colored cells follow both colors.
         const Color lineColor = event.strokeRgbOn(bgHsl);
         const float halfWidth = (cellLt.border - shared) / 2.0f;
         if (halfWidth > 0.0f && cellFrame.sides != RectSides::None())

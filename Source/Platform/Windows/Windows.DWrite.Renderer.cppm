@@ -266,7 +266,7 @@ namespace ClaFi::PlatformImplementation::Windows
         // Snapping puts each run's baseline origin on a whole device pixel, which is what keeps
         // still text crisp. Under a scale it quantizes: DirectWrite rounds every run's transformed
         // origin independently, so as the scale animates a run holds still and then jumps a whole
-        // pixel, at a different moment from its neighbours.
+        // pixel, at a different moment from its neighbors.
 #if CLAFI_TEXT_MOVING
         //
         // Whether that trade is worth making is not decided here. The params in force say, and this
@@ -311,7 +311,7 @@ namespace ClaFi::PlatformImplementation::Windows
         if (FAILED(hr) || FAILED(analysis->GetAlphaTextureBounds(DWRITE_TEXTURE_CLEARTYPE_3x1, &textureBounds)))
             return result;
 
-        // The texture bounds are relative to the origin the run was analysed at, so they are the
+        // The texture bounds are relative to the origin the run was analyzed at, so they are the
         // bearings.
         result.left = textureBounds.left;
         result.top = textureBounds.top;
@@ -329,7 +329,7 @@ namespace ClaFi::PlatformImplementation::Windows
         }
 
         // DirectWrite's ClearType triples averaged to one coverage. Averaging the three channels is
-        // not reversible and this path draws grey, so it is done once per glyph here rather than
+        // not reversible and this path draws gray, so it is done once per glyph here rather than
         // once per pixel per draw.
         result.allocate(width, height);
         constexpr float k_toCoverage = 1.0f / (3.0f * 255.0f);

@@ -14,13 +14,13 @@ namespace ClaFi::PathArt::Themes
             .cloud = 0xCCCCCCCC,            // Clouds — gray, industrial
             .mountainTop = 0xFF7D7774,
             .mountainFoot = 0xFF55504D,
-            .hillTop = 0xFF64514A,          // Hilltops - grey-brown (soil, coal)
-            .hillBottom = 0xFF574642,       // Lower parts of hills - dark grey-brown (mines)
+            .hillTop = 0xFF64514A,          // Hilltops - gray-brown (soil, coal)
+            .hillBottom = 0xFF574642,       // Lower parts of hills - dark gray-brown (mines)
             .riverTop = 0xFF666666,         // Top part of water — gray (polluted river)
             .riverBottom = 0xFF333333,      // River depths — black (murky water)
             .riverWave = 0xFF8B4513,        // Waves — brown (mud, silt)
             .foam = 0xBBCCCCCC,             // Foam — gray (soapy, from industrial waste)
-            .treeLeavesBase = 0xFF618479,   // Leaves base - grey verdigris
+            .treeLeavesBase = 0xFF618479,   // Leaves base - gray verdigris
             .crownLight = 0xFF6E9488,
             .crownMiddle = 0xFF668A7E,
             .bark = 0xFF483013,
@@ -57,7 +57,7 @@ namespace ClaFi::PathArt::Themes
             .wing = 0xFFD4A84E,
             .wingEdge = 0xFF7A4A1E,
             .flock = 0xFF2C2C32,
-            .motherDuckBody = 0xFFB5834F, // warm tan, clear of the river's grey
+            .motherDuckBody = 0xFFB5834F, // warm tan, clear of the river's gray
             .motherDuckWing = 0xFF82542C,
             .motherDuckEye = 0xFF2A1C10,
             .duckLight = 0xFFDAC890,

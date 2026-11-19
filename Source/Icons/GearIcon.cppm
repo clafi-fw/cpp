@@ -56,7 +56,7 @@ namespace ClaFi::Icons::GearIcon
     {
         const FloatRect& iconRect = event.iconRect();
         const float strokeWidth = event.scaledStrokeWidth(Thickness::Thin);
-        // The stroke is centred on the path, so half of it stands outside the tips.
+        // The stroke is centered on the path, so half of it stands outside the tips.
         const float size = std::min(iconRect.width(), iconRect.height()) - strokeWidth;
         const float halfSize = size * 0.5f;
         const FloatPoint center = event.iconCenter();

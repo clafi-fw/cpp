@@ -797,7 +797,7 @@ on. A real activation of another window, or of a dialog of its own, turns them o
 
 What reads it:
 
-- The colour chain, through `AdjustPaintEvent::setWindowSelectedAmount` - how much of the selected
+- The color chain, through `AdjustPaintEvent::setWindowSelectedAmount` - how much of the selected
   factor is the window's focus. `DialogTitle` states 1, so its `Selected` rules follow its window.
 - `RuleInput::WindowFocused`, alone or joined to another input in a rule's `andInputs`. `Focused`
   is the control's own focus alone. The band's focus rule reads "when focused and window focused",
@@ -850,7 +850,7 @@ reaches one.
 **A mockup of a window states the focus that window holds**, so it paints focused or not whatever
 the focus of the window it stands in. Everything inside it takes the same factor.
 
-What follows it is what reads the factor off the paint: the colour chain and
+What follows it is what reads the factor off the paint: the color chain and
 `RuleInput::WindowFocused`, the keys' share of a grid cell's hot state, and TextBox's caret. A
 shadow drawn for the mockup follows it when it is designed at the same factor - see
 FormBase::shadowDesign.
@@ -867,7 +867,7 @@ at one pace, and no ring shows between them.
 
 ## FormBase::shadowDesign
 
-**Scaled to the form, and coloured as the rule set colours a window's shadow** at the focus it is
+**Scaled to the form, and colored as the rule set colors a window's shadow** at the focus it is
 given.
 
 The window's own shadow uses its root's rule set and its window's focus, and is cast around the

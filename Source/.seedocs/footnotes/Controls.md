@@ -16,7 +16,7 @@ dropdownAction runs that action instead, and raises no event.
 
 - **Given a dropdownAction**, the strip runs that command, and OnDropdown is not raised. The strip
   stays available whether or not the face's command can run.
-- **Given none**, the strip raises OnDropdown and greys with the face, so a list about a command
+- **Given none**, the strip raises OnDropdown and grays with the face, so a list about a command
   that cannot run - the steps behind an empty Undo - is never offered.
 
 ## ComboBox
@@ -118,7 +118,7 @@ opens the list the builder makes.
 ## HistoryButton
 
 The strip drops a StepsMenu of the IEditHistory the face's click would act on, and walks the run
-picked in one go. It greys with the face, and drops nothing where no history answers.
+picked in one go. It grays with the face, and drops nothing where no history answers.
 
 ## TextBox history
 
@@ -357,7 +357,7 @@ nothing jumps as it opens. `textRect` is in the coordinates of the form the cont
 - **The whole rect is a minimum**, height included. The editor hides the old text, so a box that
   shrank to what is typed would let a wrapped caption show from under it.
 - **The window grows right and down** from its top left. Text that outgrows the rect moves a
-  centred or right-anchored run away from the covered one.
+  centered or right-anchored run away from the covered one.
 - **`typed` replaces the value**, which opens selected whole. A combo box opened by typing a
   character starts its value with it, and the old value stays in the undo history.
 - **`suggestions` points into the caller's list**, which is safe because the editor runs its loop
@@ -465,7 +465,7 @@ taken back with setBytes of an empty span.
 
 ## CodeBox
 
-**The text stays what was typed.** The colours are an overlay drawn paragraph by paragraph, so a key
+**The text stays what was typed.** The colors are an overlay drawn paragraph by paragraph, so a key
 press re-shapes one paragraph, and a copy carries the user's own formatting.
 
 - `language` is a Syntax::Language by value - one of Syntax::Languages, or a caller's own.
@@ -686,7 +686,7 @@ Raised on the second press of a double click on a pixel - a double click on the 
 picture raises nothing. The pixel is the one that press selected, and PictureView::selection and
 selectedColor answer for it.
 
-**The application decides what acting on a pixel means.** WhatsClip opens the colour editor on it.
+**The application decides what acting on a pixel means.** WhatsClip opens the color editor on it.
 
 ## ZoomChangeEvent
 
@@ -702,7 +702,7 @@ opens in the middle, at the zoom that shows all of it, never above one for one.
 
 **The picture stays where it is put.** The zooms and the drags move it, and a margin of it always
 stays in the window. A picture larger than the window is not pulled in to cover it, nor a small one
-held to the middle. The bare part of the view shows grey squares at half brightness, lined up with
+held to the middle. The bare part of the view shows gray squares at half brightness, lined up with
 those under the picture.
 
 - **A mouse press** selects the pixel under it. A press that goes on to travel pans, and that pixel
@@ -713,7 +713,7 @@ those under the picture.
   application builds its own from ContextPopupEvent.
 
 Below 400% a device pixel blends the four picture pixels around it; from 400% each picture pixel is
-drawn as a block. A translucent pixel is laid over grey squares.
+drawn as a block. A translucent pixel is laid over gray squares.
 
 **The crosshair** is one row and one column of device pixels through the selected pixel, reaching
 24 design units each way. Each of its pixels is the contrast of what it crosses, so it reads on any
@@ -770,7 +770,7 @@ again. A release past the reach keeps the position the drag began on, and raises
 **The user's choice**, made in a presenter. A readout offers every spelling and writes the one
 picked, and a copy takes the one in use. spell, nameOf and appendSpelling write it.
 
-**It is for people.** A colour passed from one ClaFi consumer to another is written by its
+**It is for people.** A color passed from one ClaFi consumer to another is written by its
 serializer - see ScalarSerializer<Color>.
 
 ## ColorEditEvent
@@ -779,19 +779,19 @@ serializer - see ScalarSerializer<Color>.
 
 ## ColorEditDialog
 
-- **The sliders edit one colour.** The three ColorSliders share one Hsl through a
+- **The sliders edit one color.** The three ColorSliders share one Hsl through a
   ColorSlidersLinker, so a move on any of them redraws the others' ramps. A notch above each slot
   marks the value it was given.
-- **The preview** shows the colour as a ring and as a bar over a run from black to white, so it
+- **The preview** shows the color as a ring and as a bar over a run from black to white, so it
   reads against both ends.
-- **Original** and a swatch of the given colour appear on the bar once the colour has moved, and
+- **Original** and a swatch of the given color appear on the bar once the color has moved, and
   go when it is back.
-- **Copy** puts the colour on the clipboard as plain text, in the ColorSpelling the dialog was
+- **Copy** puts the color on the clipboard as plain text, in the ColorSpelling the dialog was
   handed.
 
 ## FlexSpacer
 
-It takes what its lane has over. Two either side of an item centre it, and two at one end share
+It takes what its lane has over. Two either side of an item center it, and two at one end share
 what is left.
 
 **A lane is as long as its stack was granted.** In a stack that wraps, or one nothing stretched,
@@ -848,17 +848,17 @@ it wears - see calloutElementOf - and its mark: the badge a message of that kind
 answers in place of blocks.
 
 **The theme states the rest.** A tint is the element's surface, a frame its border, and a band
-the set's band in the colour of the element's Band rules - see ControlMetrics band. The set's
+the set's band in the color of the element's Band rules - see ControlMetrics band. The set's
 spacing across stands between the mark and the blocks.
 
 ## CalloutShape
 
 - `Marked` - the mark in a bar of its own at the left, at the top beside the first line.
 - `Banner` - a line naming the kind, its mark first, over the blocks.
-- `Plain` - the blocks alone, the kind told by the colours.
+- `Plain` - the blocks alone, the kind told by the colors.
 
 **The shape is the caller's, the look the theme's** - a document picks one shape for all its
-callouts, and a theme the colours and sizes every shape is drawn in.
+callouts, and a theme the colors and sizes every shape is drawn in.
 
 ## CodeBlock
 

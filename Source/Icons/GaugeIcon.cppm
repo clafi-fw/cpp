@@ -18,7 +18,7 @@ namespace ClaFi::Icons::GaugeIcon
     // Where the needle stands. High, and short of the end: a reading, not a fault.
     constexpr float k_needleDegrees{ 317.0f };
     // The dial as a share of the icon's half size, and the pivot's drop below the icon's own
-    // centre as a share of its size - which is what leaves the dial the top of the box and the
+    // center as a share of its size - which is what leaves the dial the top of the box and the
     // needle the middle.
     constexpr float k_radiusShare{ 0.75f };
     constexpr float k_pivotDropShare{ 0.15f };

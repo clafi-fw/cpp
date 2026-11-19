@@ -260,7 +260,7 @@ namespace ClaFi::PathArt
             drawAndroidForearm(frame, m_android, AudienceSide::Left);
         const SceneFrame wolfFrame = frame.within(
             Matrix3x2::Translation(2.0f * m_wolf.center.x, 0.0f) * Matrix3x2::Scale(-1.0f, 1.0f));
-        drawWolf(wolfFrame, m_wolf, WolfCoats::Grey);
+        drawWolf(wolfFrame, m_wolf, WolfCoats::Gray);
 
         // Each thrown bouquet flies over an arc from below the front of the stage, lands, bounces
         // once and lies where it fell.

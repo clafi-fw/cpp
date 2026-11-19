@@ -23,7 +23,7 @@ namespace ClaFi::Icons::SaturationIcon
     namespace
     {
         // Luminosity is pinned near mid so the two ends differ in the channel the icon is about. It
-        // still has to move a little: a fully desaturated grey and a saturated colour at one
+        // still has to move a little: a fully desaturated gray and a saturated color at one
         // luminosity carry different apparent weight, and the drift compensates. The pair flips on a
         // light theme, where the same reading needs the ramp to run the other way.
         constexpr float k_endLum = 0.7f;
@@ -49,7 +49,7 @@ namespace ClaFi::Icons::SaturationIcon
             float saturation = static_cast<float>(i) / Sweep::k_segmentCount;
             float currLum = startLum * (1.0f - saturation) + endLum * saturation;
             // Squared, because saturation reads faster than it climbs: a linear ramp spends most of
-            // the sweep looking saturated, and the grey end is what the icon is contrasting against.
+            // the sweep looking saturated, and the gray end is what the icon is contrasting against.
             saturation *= saturation;
             // Mixed here rather than taken from textColor(), so the fade has to be applied by
             // hand - the accent hue is the theme's, but this luminosity ramp is the icon's own.

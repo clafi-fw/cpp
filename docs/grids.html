@@ -160,7 +160,7 @@
                     <li><a href="#r-group">Grouping rows beside a span</a></li>
                     <li><a href="#r-controls">Live controls in cells</a></li>
                     <li><a href="#r-share">Sharing cells between rows</a></li>
-                    <li><a href="#r-vary">Rows that differ from their neighbours</a></li>
+                    <li><a href="#r-vary">Rows that differ from their neighbors</a></li>
                     <li><a href="#r-update">Reaching a control later</a></li>
                     <li><a href="#r-newitem">Adding items from the grid</a></li>
                 </ul>
@@ -471,7 +471,7 @@ The useful ones:</p>
 <tr><td><code>ColumnWidthMode::Fixed</code></td><td>As wide as the <code>float</code> you also pass.</td></tr>
 <tr><td><code>ColumnWidthMode::Fill</code></td><td>Takes a share of the leftover width. With several <code>Fill</code> siblings the <code>float</code> acts as a ratio.</td></tr>
 <tr><td><code>TextAlign::...</code></td><td>Alignment for every cell in the column, the header's included.</td></tr>
-<tr><td><code>TextFormat{ ... }</code></td><td>What every data cell of the column is laid out over - a style, a colour, an alignment. The header takes the alignment alone. See <a href="#cells">Cells and content</a>.</td></tr>
+<tr><td><code>TextFormat{ ... }</code></td><td>What every data cell of the column is laid out over - a style, a color, an alignment. The header takes the alignment alone. See <a href="#cells">Cells and content</a>.</td></tr>
 <tr><td><code>Tag{ ... }</code></td><td>Names the column, so a cell can refer to it and <code>columnByTag</code> can find it afterwards. Unique within the grid. Reaches the column like any other property.</td></tr>
 </table>
 
@@ -531,7 +531,7 @@ grid-wide <code>OnGetCellText</code> handler takes, so one method serves at eith
 
 <div class="info">
 <strong>Not declaring a cell is different from declaring an empty one.</strong> A column you
-skip has no cell in that row: nothing is drawn, and either a neighbouring cell covers the
+skip has no cell in that row: nothing is drawn, and either a neighboring cell covers the
 space or it stays blank. A bare <code>Cell{ Tag{ ... } }</code> gives you a real, bordered,
 hoverable cell that happens to be empty. Both are useful; pick deliberately.
 </div>
@@ -555,7 +555,7 @@ so a value accepted from the editor holds what was typed and nothing else.</p>
 
 <h3 id="merging">Merging</h3>
 
-<p>Cells grow to cover their neighbours in two ways. Neither is configured &mdash; both
+<p>Cells grow to cover their neighbors in two ways. Neither is configured &mdash; both
 follow from which cells you declared.</p>
 
 <h4>A column whose cell covers its sub-columns</h4>
@@ -595,7 +595,7 @@ follow from which cells you declared.</p>
 over them. The result is always a plain rectangle, because sub-columns exactly cover their
 parent's width.</p>
 
-<p>This is how one row shows a single wide label while its neighbour shows two separate
+<p>This is how one row shows a single wide label while its neighbor shows two separate
 values under the same parent column.</p>
 
 <h4>A group's span row, whose cell covers all of its rows</h4>
@@ -1053,7 +1053,7 @@ leaves the click alone - the click goes on to the row, which picks the cell.</p>
 </table>
 
 <p>Ctrl+click and Shift+click in a <code>SelectionMode::Multi</code> grid refuse both. A swatch
-that opens a colour picker when clicked is given that meaning, so it asks the first question:</p>
+that opens a color picker when clicked is given that meaning, so it asks the first question:</p>
 
 <pre><code><span class="kw">void</span> <span class="tp">SwatchControl</span>::<span class="fn">nestedClick</span>(<span class="tp">ClickEvent</span>&amp; event)
 {
@@ -1070,7 +1070,7 @@ the control up to the root, and the row holding the cell answers them for the co
 <code>DropPopupEvent::implicit</code> to tell them apart.
 </div>
 
-<h3 id="r-vary">Rows that differ from their neighbours</h3>
+<h3 id="r-vary">Rows that differ from their neighbors</h3>
 
 <p>Build rows with a function and let it choose:</p>
 
@@ -1084,7 +1084,7 @@ the control up to the root, and the row holding the cell answers them for the co
     };
 }</code></pre>
 
-<p>A row that should leave a slot visibly blank rather than let a neighbour cover it
+<p>A row that should leave a slot visibly blank rather than let a neighbor cover it
 declares the cell with no content:</p>
 
 <pre><code><span class="kw">const</span> <span class="tp">CellSet</span> m_readOnlyCells{

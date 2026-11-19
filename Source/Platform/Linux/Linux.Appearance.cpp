@@ -30,7 +30,7 @@ namespace ClaFi::PlatformImplementation::Linux
             constexpr dbus_uint32_t PreferDark = 1;
         }
 
-        // **The bus filters the signals**, so a change of the colour scheme is the one delivered.
+        // **The bus filters the signals**, so a change of the color scheme is the one delivered.
         constexpr const char* k_changeRule =
             "type='signal',"
             "interface='org.freedesktop.portal.Settings',"
@@ -193,7 +193,7 @@ namespace ClaFi::PlatformImplementation::Linux
             m_readSerial = 0;
         }
 
-        // Asks for the colour scheme through this method of the Settings interface, noting the
+        // Asks for the color scheme through this method of the Settings interface, noting the
         // serial its answer will carry.
         void Portal::requestScheme(const char* method)
         {

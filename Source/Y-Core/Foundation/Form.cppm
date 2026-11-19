@@ -242,7 +242,7 @@ namespace ClaFi
         [[nodiscard]] float windowFocusedFactor() const;
         // Whether it holds the focus now, which the factor is on its way to.
         [[nodiscard]] bool isWindowFocused() const;
-        // A shadow as the rule set colours a window's at that focus. See Control-Foundation
+        // A shadow as the rule set colors a window's at that focus. See Control-Foundation
         [[nodiscard]] Graphics::ShadowPainter::Design shadowDesign(OptionalUiElement colorRules,
             const WindowShadow& shadow, float radius, float windowFocusedFactor) const;
         // A painter baked for the design, kept among the last few asked for. See Control-Foundation

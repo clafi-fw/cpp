@@ -177,7 +177,7 @@ namespace ClaFi::Controls
         // The strip is built when something is put in it. A menu with no commands in the strip
         // has no top bar at all, and measures exactly as it did before there was one.
         StackPanel* m_commandBar{ nullptr };
-        // Held by address, which is how an action is recognised everywhere else.
+        // Held by address, which is how an action is recognized everywhere else.
         std::vector<const Action*> m_commandBarActions;
         std::vector<MenuGroupItem*> m_groups;
         std::size_t m_itemCount{ 0 };
@@ -615,8 +615,8 @@ namespace ClaFi::Controls
             // The icon over the name rather than beside it, which is what stands a row of
             // commands in the width one of them would take as a line.
             ButtonViewMode::TopCenterIcon,
-            // The name sits under the middle of its own icon. TopCenterIcon centres the picture
-            // and this centres the word: an item's Left anchor is for a column of lines sharing
+            // The name sits under the middle of its own icon. TopCenterIcon centers the picture
+            // and this centers the word: an item's Left anchor is for a column of lines sharing
             // one left edge, which a strip is not.
             HorizontalTextAnchor::Center,
             // Larger than the 16 an item's line carries: up here the picture is read first and

@@ -72,7 +72,7 @@ namespace ClaFi::Controls::Grids
         m_gridLines{ gridLines },
         m_designCellMetrics{ m_owner.styleMetrics(UiElement::GridCell) },
         m_scaledCellMetrics{ m_designCellMetrics, m_owner.scaler() },
-        // Cannot be a default member initialiser: capturing `this` there does not compile.
+        // Cannot be a default member initializer: capturing `this` there does not compile.
         m_onCellAnimate{ [this](AnimateParams& params) { onCellAnimated(params); } }
     {
     }

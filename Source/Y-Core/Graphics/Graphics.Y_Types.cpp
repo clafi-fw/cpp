@@ -13,7 +13,7 @@ namespace ClaFi::Graphics
     static constexpr float k_radiansPerDegree = std::numbers::pi_v<float> / 180.0f;
     static constexpr float k_quarterTurn = std::numbers::pi_v<float> * 0.5f;
 
-    // In double: near radii that just span the ends, float rounding moves the centre visibly.
+    // In double: near radii that just span the ends, float rounding moves the center visibly.
     std::optional<ArcEllipse> arcEllipse(FloatPoint start, FloatPoint end,
         FloatPoint radii, float rotation, ArcSize arcSize, ArcSweep arcSweep)
     {

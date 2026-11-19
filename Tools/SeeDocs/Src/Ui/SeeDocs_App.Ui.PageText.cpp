@@ -190,7 +190,7 @@ namespace SeeDocs_App::Ui
             }
         }
 
-        // The runs as styled, each linked run inside its link, a colour given inside the link.
+        // The runs as styled, each linked run inside its link, a color given inside the link.
         void writeStyledRuns(Text& text, const Runs& runs, const std::optional<Color> color)
         {
             for (const Run& run : runs)
@@ -352,7 +352,7 @@ namespace SeeDocs_App::Ui
 
     // The runs are the one declaration cut round its links, and the tokens are lexed over the
     // whole of it, so a token is clipped to the run it is written in and one reaching past the
-    // run's end goes on in the next. A linked token keeps its ink, since a colour given inside a
+    // run's end goes on in the next. A linked token keeps its ink, since a color given inside a
     // link wins over the link's accent.
     void writeSignature(Text& text, const Runs& runs, const bool links,
         const SourceLanguage language)

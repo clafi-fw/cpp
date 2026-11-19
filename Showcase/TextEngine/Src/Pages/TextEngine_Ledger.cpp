@@ -91,7 +91,7 @@ namespace TextEngine_App
         constexpr std::wstring_view k_proseFamily = L"Georgia";
 
         // The size the prose is set in. A clue is set one size below the body so that its bold
-        // number, its italic object and its coloured state read as marks inside a sentence rather
+        // number, its italic object and its colored state read as marks inside a sentence rather
         // than as a heading each.
         constexpr float k_proseSize = 13.5f;
 
@@ -129,7 +129,7 @@ namespace TextEngine_App
         // happens to have.
         //
         // Every measure is taken off the box the engine placed, so the ornament finds the middle of
-        // the page the way the line it stands on does - the icon is written into a centred
+        // the page the way the line it stands on does - the icon is written into a centered
         // paragraph, and the box arrives where that paragraph put it. The box is taller than the
         // drawing, so the air above and below the rule is the icon's own and costs no blank line.
         void drawOrnament(DrawIconEvent& event)
@@ -430,7 +430,7 @@ namespace TextEngine_App
             out << ColoredText{ InkWell::accentInk(), carried };
             out << L'\n';
 
-            // The rule stands on a line of its own, and that line is centred: an icon states a
+            // The rule stands on a line of its own, and that line is centered: an icon states a
             // design width, and the alignment of the line it stands on states where that width
             // sits in the box.
             out << L'\n';

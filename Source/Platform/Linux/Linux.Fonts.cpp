@@ -330,7 +330,7 @@ namespace ClaFi::Platform::Linux
         FcPatternAddInteger(pattern, FC_WEIGHT, fontconfigWeight(request.weight));
         FcPatternAddInteger(pattern, FC_SLANT, fontconfigSlant(request.style));
         // Outlines only. A bitmap face has its sizes and no others, and the rasterizer refuses
-        // embedded bitmaps for the same reason. Colour faces are bitmaps too, so they stand last.
+        // embedded bitmaps for the same reason. Color faces are bitmaps too, so they stand last.
         FcPatternAddBool(pattern, FC_SCALABLE, FcTrue);
         FcPatternAddBool(pattern, FC_COLOR, FcFalse);
         FcConfigSubstitute(m_config, pattern, FcMatchPattern);

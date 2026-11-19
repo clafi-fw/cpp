@@ -172,7 +172,7 @@ Win32 tells the window manager nothing, and the call does nothing there.
 ## Platform systemColorMode
 
 - Windows - the app mode of the personalisation settings.
-- Wayland - the XDG desktop portal's colour scheme. A desktop stating no preference - GNOME's
+- Wayland - the XDG desktop portal's color scheme. A desktop stating no preference - GNOME's
   default look, or a session without a portal - reads as Light.
 
 **On Wayland the first call waits up to a second for the portal**, so the first window opens in the
@@ -186,7 +186,7 @@ gone. It raises SystemColorModeEvent.
 ## Platform::pickFolder
 
 **The dialog is the desktop's own**, with the places and shortcuts the user expects. It runs to its
-close, and returns nothing when cancelled or when the platform has none.
+close, and returns nothing when canceled or when the platform has none.
 
 - Windows - the form's window is disabled under it.
 - Wayland - the XDG portal's dialog, modal to the form's window as far as the desktop allows.
@@ -243,7 +243,7 @@ ZAnimationSwitchEvent.
 The amount scales `ControlMetrics::zDepthFactor` at paint, the resting and the held depth together.
 
 **It exists only where CLAFI_TEXT_MOVING is 1.** Where the switch is 0, every control takes the
-theme's full depth, and a `ZAnimation` key in a config is discarded as unrecognised.
+theme's full depth, and a `ZAnimation` key in a config is discarded as unrecognized.
 
 ## AppContext::configFolderExists
 
@@ -320,7 +320,7 @@ FormBase setUserResizable.
 
 **A press has landed on the frame before it is a move.** The platform calls it as the press that
 could start a drag or a size is taken, so the form can hold the popup before the focus change that
-press causes reaches its owner. `wnd_userFrameStarted` follows once the press has travelled, or an
+press causes reaches its owner. `wnd_userFrameStarted` follows once the press has traveled, or an
 edge is taken.
 
 ## IForm wnd_frameRelease
@@ -368,7 +368,7 @@ with no rule of its own - FormBase setKeepsScreenOn turns it with the window's f
 
 - Win32 - a power request the window owns, asking for the display. `powercfg /requests` lists it
   while it is set.
-- Wayland - an idle inhibitor on the window's surface. The compositor honours it while it counts
+- Wayland - an idle inhibitor on the window's surface. The compositor honors it while it counts
   the surface as seen, and a compositor without the idle-inhibit global holds nothing.
 
 **The hold goes with the window**, whatever the switch said last.

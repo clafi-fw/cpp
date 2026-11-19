@@ -134,7 +134,7 @@ namespace ClaFi::PathArt
     // **Eight points at a time**, each read between the two levels nearest the ground it stands
     // for. Each level wraps round the longitudes and stops at the poles, and between texel
     // centers the cover is blended from the four nearest: one 4-byte read per row of texels holds
-    // the texel and its right neighbour side by side, the last column's included. A last group
+    // the texel and its right neighbor side by side, the last column's included. A last group
     // short of eight is read from copies padded with its last point. See PathArt#cloudmap
     void CloudMap::readCover(const MapQuery& query, const std::span<float> covers) const
     {

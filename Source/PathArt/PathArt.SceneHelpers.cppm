@@ -87,7 +87,7 @@ namespace ClaFi::PathArt
     export [[nodiscard]] FloatPoint pointBetween(FloatPoint from, FloatPoint to, float share);
     // Color::blend with the share held to 0..1.
     export [[nodiscard]] Color colorBetween(Color from, Color to, float share);
-    // The WCAG contrast ratio of two colours, 1 for two alike to 21 for black on white.
+    // The WCAG contrast ratio of two colors, 1 for two alike to 21 for black on white.
     export [[nodiscard]] float contrastBetween(Color one, Color other);
     // MillScene's spin in turns, which comes round with a shape's symmetry each cycle. See PathArt
     export [[nodiscard]] float calculateSyncRotation(float cycleTime, int index,

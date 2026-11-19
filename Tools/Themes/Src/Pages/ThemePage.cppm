@@ -203,7 +203,7 @@ namespace Themes_App
         // Asks whether the user is the one this button is for, and answers whether they said so.
         [[nodiscard]] bool confirmWritingToSource(Control& initiator) const;
         // Whether this page stands for one of the built-ins. They are answered from the
-        // compiled-in colours rather than from a file, so Save has nothing to write over and
+        // compiled-in colors rather than from a file, so Save has nothing to write over and
         // falls back to Save as.
         [[nodiscard]] bool isBuiltIn() const;
         //

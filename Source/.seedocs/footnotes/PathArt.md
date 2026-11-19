@@ -29,19 +29,19 @@ on, and comes round when that time runs a whole number of units a cycle.
 
 ## Scene drawIcon
 
-**The figure fills bounds.** Its extent is framed to the shorter side and centred, so an icon of
+**The figure fills bounds.** Its extent is framed to the shorter side and centered, so an icon of
 any size shows the figure with no margin. A part the square cuts - a wing tip, a glow, the android
 below its waist - is clipped at bounds.
 
-**One picture in every theme and look.** The figure is one of the scene's sprites in the colours the
-scene draws it in. MillScene's mill wears Clear Day's colours whatever theme is picked, and
+**One picture in every theme and look.** The figure is one of the scene's sprites in the colors the
+scene draws it in. MillScene's mill wears Clear Day's colors whatever theme is picked, and
 ChaseScene's wolf and hare their own daylight coats.
 
 ## SceneReadoutColors
 
 **What a host's readout over the scene is drawn in**: the field and the series of its chart, and the
 ink its text is written in - light unless the scene states a darker one for a light sky. The host
-draws the field faint and the series near full, whatever alpha the colours carry, and writes the
+draws the field faint and the series near full, whatever alpha the colors carry, and writes the
 units and the chart's readings in the ink at a lesser opacity.
 
 ## Scene readoutColors
@@ -117,18 +117,18 @@ the pointer over it, through animationTick().
 
 ## SceneTheme
 
-**One table of colours for every scene that offers themes**, and the effects that come with them.
+**One table of colors for every scene that offers themes**, and the effects that come with them.
 Its own fields hold the scenery both scenes share - the sky, the sun, the mountains, the meadow and
 its grass, the trees, the reeds, the stones, the flowers - and what else the Mill draws: its river,
 its cow, its wolf, its birds, its ducks and its fish. MillTheme holds what only the mill wears, and
 ChaseTheme what only the Chase draws. Every theme fills every field.
 
-**effectColor1 and effectColor2 colour the weather, and their alpha is a strength.** Rain and snow
+**effectColor1 and effectColor2 color the weather, and their alpha is a strength.** Rain and snow
 wear effectColor1; leaves wear the two by turns, and petals petal1 and petal2; a streak of dust
-takes a colour at random between the two; a firefly is effectColor1 in a glow of effectColor2. Each
-is drawn at its colour's alpha times the opacity the scene gives it.
+takes a color at random between the two; a firefly is effectColor1 in a glow of effectColor2. Each
+is drawn at its color's alpha times the opacity the scene gives it.
 
-**flock is the birds flying across the mill's sky**, a colour of their own beside the Chase's crow.
+**flock is the birds flying across the mill's sky**, a color of their own beside the Chase's crow.
 
 **motherDuckBody, motherDuckWing and motherDuckEye dress the duck leading the ducklings**, who wear
 duckLight, duckShade and duckBeak, as the Chase's rubber duck does.
@@ -139,14 +139,14 @@ duckLight, duckShade and duckBeak, as the Chase's rubber duck does.
 in a rim of its own light, and a glow twice as wide as it is tall; the moon shows three craters as
 the night falls by hasStars.
 
-**The mountains' clear colours are rock in the theme's light, before any haze.** mountainTop is the
+**The mountains' clear colors are rock in the theme's light, before any haze.** mountainTop is the
 rock where the most sunlight falls, at the top of the highest range, and mountainFoot the rock at
 the ground line - see hazed. Every theme starts them from one neutral rock, 8E8E8E at the
 top and 616161 at the foot, darkened and tinted as its sky lights it. It then lightens both alike by
 day, or darkens them at night, to set the near range, hazed, apart from the runners' heads. Clear
 Day's, High Noon's, Summer Sunset's, Vintage Noir's, Toxic Waste's and Magic Forest's are set by
 hand: Clear Day's darker and bluer, High Noon's and Summer Sunset's with their tops kept over a dark
-grey foot, Magic Forest's over a dark grey-violet one, Vintage Noir's near black under its dark air,
+gray foot, Magic Forest's over a dark gray-violet one, Vintage Noir's near black under its dark air,
 Toxic Waste's a dark yellow-green top over a near black foot. Where the two ranges meet, rock darker
 than the air leaves the near range the darker one. The haze gives them the theme's air.
 
@@ -156,33 +156,33 @@ too. Each is drawn as a stump without its slice - see drawTrunk. The Mill's
 footbridge is bough, as the Chase's signpost is; the mill's own timber is in MillTheme.
 
 **petal1 to petal3 are the flowers' petals**, shared by every flower the Chase draws - each wears
-one, by turns - and by the falling petals, which wear the first two in place of the effect colours.
+one, by turns - and by the falling petals, which wear the first two in place of the effect colors.
 
-**Figures and props stand apart from what is behind them by colour, not only by brightness.** In
-OKLab their colour difference from the background is at least 0.15 for the runners, the cow and the
+**Figures and props stand apart from what is behind them by color, not only by brightness.** In
+OKLab their color difference from the background is at least 0.15 for the runners, the cow and the
 mill, and 0.10 for every prop, where the theme leaves room for it - about as far apart as the
 daylight scenes already draw them. Golden Hour's and Winter Frost's cows keep their white.
 Summer Sunset's wolf and hare are drawn lighter and stand about 0.10 from its meadow.
 
-**A crossfade blends every colour field one by one** - see ThemeBlend. They stand in a row from
+**A crossfade blends every color field one by one** - see ThemeBlend. They stand in a row from
 skyTop to the end of `chase`, and colorsNum() counts them.
 
 ## SceneTheme airHaze
 
-**How thick the theme's air is, from 0 to 1.** It is the share of the air's colour a layer takes at
+**How thick the theme's air is, from 0 to 1.** It is the share of the air's color a layer takes at
 the ground line at the scene's reference distance - in ChaseScene, the far hills'; see hazed for
-the air's colour. Nearer layers take less of it, farther ones more.
+the air's color. Nearer layers take less of it, farther ones more.
 
-- 0 is no air: every layer keeps its own colours.
+- 0 is no air: every layer keeps its own colors.
 - 0.10, the default, is clear weather.
 - Rain, snow, dust and fog take more.
-- 1 turns every layer the scene hazes into the air's colour.
+- 1 turns every layer the scene hazes into the air's color.
 
 A crossfade blends it with the effects.
 
 ## MillTheme
 
-**The colours only the mill wears**: its walls, its roof, its timber, the lamp behind its windows,
+**The colors only the mill wears**: its walls, its roof, its timber, the lamp behind its windows,
 its wings' cloth and the water wheel. Its plinth, its chimney and its door take SceneTheme's stone
 and bark, which the Chase's boulder and trunks wear too. Every theme fills every field but
 windowLight.
@@ -200,15 +200,15 @@ rings and the ducks' wakes are foam too.
 
 ## ChaseTheme
 
-The Chase's own colours in a theme: the tree a branch run ends at, the pebbles, the four runners'
+The Chase's own colors in a theme: the tree a branch run ends at, the pebbles, the four runners'
 coats, most of its props and the stars circling a dazed wolf's head. The scenery it shares with the
 Mill is SceneTheme's.
 
-**Figures and props are well lit, at night as by day.** They start from Clear Day's colours, tinted
-a little toward the theme's sky, and keep their colour - except in Paper Sketch, whose look is a
+**Figures and props are well lit, at night as by day.** They start from Clear Day's colors, tinted
+a little toward the theme's sky, and keep their color - except in Paper Sketch, whose look is a
 lack of it. Each object then moves lighter, or at most 0.10 darker, only as far as its contrast
 needs. Midnight Fantasy, Toxic Waste and Steampunk keep their objects in the theme's own light, with
-the ones that read too dark or dull lifted one by one. Vintage Noir's greys are set by hand, with
+the ones that read too dark or dull lifted one by one. Vintage Noir's grays are set by hand, with
 one deep red for its apple, its toadstool's cap and the wolves' tongues.
 
 **The tree a branch run ends at has a crown of its own** - treeCrown, treeCrownLight and
@@ -217,32 +217,32 @@ they are drawn from treeLeavesBase, crownLight and crownMiddle.
 
 - A wolf's head and ears stand against the mountains; a hare stays below the far hills' top. Both
   are measured as they are drawn, hazed.
-- A mountain's clear colours keep the tint of the theme's light; only their lightness moves.
+- A mountain's clear colors keep the tint of the theme's light; only their lightness moves.
 - theirWolf stays darker than ourWolf.
 - A coat's tongue, mouth, teeth, tail, inner ears and nose rise with the fur where it is lifted and
   never darken with it, so a white tail stays white by day.
 - Yellow things - the banana peel, the rubber duck, the ball's yellow, the flowers' hearts, the daze
-  stars - keep their colour at night and stay light, as a dark yellow reads as olive. The ball, the
+  stars - keep their color at night and stay light, as a dark yellow reads as olive. The ball, the
   flowers' petals and the whole apple stay lighter at night too.
-- Every theme's petals come in three colours. A white petal is joined by a blushed pink and a
-  lilac, or by cream or pale blue where one of those is lost on the meadow; a coloured petal by its
+- Every theme's petals come in three colors. A white petal is joined by a blushed pink and a
+  lilac, or by cream or pale blue where one of those is lost on the meadow; a colored petal by its
   hue turned a little either way. Some themes choose their own: Twilight's run from a light rose to
   lavender, Magic Forest's lighter still, Cherry Blossom's are its falling petals' pinks, Lunar
   Eclipse's dull purples, Cyberpunk Night's magenta, neon green and acid yellow, and Midnight's
   are darker. On snow - Winter Frost, Winter Night and Arctic Dawn - every flower is white, the
-  butterfly white with an icy blue edge, and the trail an icy grey.
+  butterfly white with an icy blue edge, and the trail an icy gray.
 - The toxic and neon themes and Underwater Realm give the toadstool caps and the apples toxic reds:
   a lava red in Toxic Waste, a hot crimson in Cyberpunk Night and Underwater Realm, a neon red in
   Neon City Night. Vintage Noir's apples, its toadstool's cap and its wolves' tongues share the one
-  deep red in its grey.
+  deep red in its gray.
 - One green, grassBlade's light, serves the flowers' stems, the big daisy's leaves, the tufts on
   the lawn and the grass blades; every third blade, and every third tuft in the Mill's meadow,
   wears its dark, a shade darker. Midnight's, Toxic Waste's and Neon
   City Night's are lighter, to show against their dark meadows; Toxic Waste's is a dim toxic green,
   and Neon City Night's the green of its trees, muted. Cherry Blossom's plants are a dark sage, on a
-  grey-green meadow by a rose-grey trail. Vintage Noir's plants are grey, as the rest of it is.
+  gray-green meadow by a rose-gray trail. Vintage Noir's plants are gray, as the rest of it is.
 
-**The themes not of this world dress the plain things in their own colours** instead of daylight's:
+**The themes not of this world dress the plain things in their own colors** instead of daylight's:
 the stump, the signpost, the crow, the butterfly, the bird, the frog, the snail, the boulder, the
 reeds, the boot, the hedgehog, the rake and the leaves. Each keeps the steps of light and shade it
 has by day.
@@ -254,19 +254,19 @@ has by day.
 - Underwater Realm: driftwood and deep blue, with coral, gold and cyan; the hedgehog is a sea
   urchin.
 - Magic Forest: plum wood and amethyst, with pink, lilac and fairy green.
-- Midnight Fantasy: moonlit blue-grey and indigo, with pale lilac, mint and pale gold.
+- Midnight Fantasy: moonlit blue-gray and indigo, with pale lilac, mint and pale gold.
 - Steampunk Adventure: limewash and aged oak, with brick, brass and verdigris.
 
 ## ThemeBlend
 
 **What a scene that offers themes is drawn in.** pick() names a theme by its index in
-Themes::allThemes, and worn() crossfades to it over 555 milliseconds, eased in and out, colours and
+Themes::allThemes, and worn() crossfades to it over 555 milliseconds, eased in and out, colors and
 effects alike. A pick made during a crossfade starts the next one from where the blend stands.
 
-**worn() is for drawing, picked() for the rest** - the theme's name, and colours that are read once
+**worn() is for drawing, picked() for the rest** - the theme's name, and colors that are read once
 rather than every frame. worn() takes the picked theme's name at the pick.
 
-**Always a fade in.** worn() starts as a null theme - every colour zero and every effect off - and
+**Always a fade in.** worn() starts as a null theme - every color zero and every effect off - and
 the first theme fades in out of it. A pick made before the first frame, as a host restoring a config
 makes, fades in that theme instead.
 
@@ -478,22 +478,22 @@ by a whole number of pixels across and down - on the same CPU canvas or another,
 WaterReflection's own. Where it does not, the part is drawn live.
 
 **A shifted layer uncovers a strip** at each edge it moves away from. The caller fills the strip,
-as Bot Talent fills it in the wall's and the floor's colours when the stage shakes.
+as Bot Talent fills it in the wall's and the floor's colors when the stage shakes.
 
 ## hazed
 
-**Distance is haze.** A layer's clear colours are taken toward the air's colour, as far as its
+**Distance is haze.** A layer's clear colors are taken toward the air's color, as far as its
 distance goes. The distance is read off the layer's parallax - its share of a passing camera's
 speed: a layer at a third of it stands three times as far as one at 1. ChaseScene's trail moves at
 1; MillScene gives each of its layers the parallax it would have, the mill's foot being 1.
 
-**The air's colour is the sky's top, a third of the way to its bottom.** Haze takes a layer's own
-colour away and puts the air's in its place: by day mostly the sky's blue with some of the horizon's
+**The air's color is the sky's top, a third of the way to its bottom.** Haze takes a layer's own
+color away and puts the air's in its place: by day mostly the sky's blue with some of the horizon's
 light, at night near black.
 
 **A layer at k_hazeReferenceParallax, 0.2, takes the theme's airHaze.** Every stretch of air as long
 as the one from parallax 1 to that layer takes airHaze of what is left, so a layer x such stretches
-beyond parallax 1 takes 1 - (1 - a)^x of the air's colour, where a is airHaze. In clear air, 0.10, a
+beyond parallax 1 takes 1 - (1 - a)^x of the air's color, where a is airHaze. In clear air, 0.10, a
 layer twice as far beyond as the reference takes 0.19. ChaseScene's far hills stand at the
 reference.
 
@@ -587,9 +587,9 @@ is.
   Australian deserts with noise along their edges, and the shares of northern forest and of tundra,
   which end along wandering lines of latitude.
 - **The sea's depth** comes from Natural Earth's bathymetry at 1:10m - see landOutlines: its
-  contours at 200, 1000, 2000, 4000, 6000 and 8000 metres, made coarser to the grain of the cover.
+  contours at 200, 1000, 2000, 4000, 6000 and 8000 meters, made coarser to the grain of the cover.
   Each point takes the deepest contour that holds it, counted evenly from 0 at the coast to 1 past
-  8000 metres, and the levels are blurred into slopes about a degree across, so the depth rises
+  8000 meters, and the levels are blurred into slopes about a degree across, so the depth rises
   toward the coasts without steps.
 
 The relief keeps 4096 points round each circle of latitude and 2048 from pole to pole, and the
@@ -607,7 +607,7 @@ hold fades out, so it does not shimmer as the view moves.
 
 **readDepths() reads the sea's depth as readLand() reads the land**, as fine as the ground each
 point stands for, from 0 at the coast to 1 in the deepest trenches. Away from the coasts the land
-reads 0, so the depth is for colouring the sea, with the land drawn over it.
+reads 0, so the depth is for coloring the sea, with the land drawn over it.
 
 The reads wrap round the longitudes any number of turns either way and stop at the poles. readLand()
 and readDepths() work through eight points at a time with AVX2, and several threads may call them at
@@ -786,7 +786,7 @@ how the stand stands - see StandPose.
 on it shake by up to 7 units, dying away in about half a second. The drapes and the hanging
 marionette swing on for about two seconds. The curtain and the valance hang from above and keep
 still. The strips the shaken stage uncovers at the top and the bottom are filled in the wall's and
-the floor's colours.
+the floor's colors.
 
 ## BotTalentScene drawCurtain
 
@@ -883,7 +883,7 @@ In seconds:
 
 - **To 0.9** it stands in a star, feet apart and arms in a V.
 - **To 2.4** a side somersault: a crouch, a tucked turn high in the air, a landing in a crouch.
-- **To 3.9** the star again, then over onto its head, travelling 70 units to the left.
+- **To 3.9** the star again, then over onto its head, traveling 70 units to the left.
 - **To 7.0** a headspin on the antenna, three turns with the hands off the floor, sparks flying.
 - **To 7.9** down onto its feet, 70 units further left, then the ta-da.
 
@@ -959,7 +959,7 @@ flies out either side, and the android is thrown off its feet, looks at the bell
 
 ## WolfHoopAct
 
-The wolf is the Chase's, in WolfCoats Grey. In seconds: he waits by the stand panting to 1.4,
+The wolf is the Chase's, in WolfCoats Gray. In seconds: he waits by the stand panting to 1.4,
 then runs, leaps clean through the hoop and runs off past the android. At 4.2 he comes back in from
 the right, hops too low, catches the rim and goes over onto his back. He lies dazed under circling
 stars and is up again by 8.6. The android holds the hoop out at its side, sends him, cheers,
@@ -1132,7 +1132,7 @@ trembles as it goes.
 A watermill on a pond, in a valley under two ranges of mountains.
 
 **Depth is drawn through hazed.** Each layer takes the parallax it would have: the mountains the
-Chase's 0.02 and 0.05, so a theme's mountain colours read alike in both scenes, the far hills 0.07,
+Chase's 0.02 and 0.05, so a theme's mountain colors read alike in both scenes, the far hills 0.07,
 and the valley floor row by row, from the far hills' parallax at their foot to 1 at the mill's foot
 and more toward the viewer. A knoll keeps 0.4 at its top. What stands on the land is drawn at the
 size its row's parallax gives. The near bank lies in shade, and everything on it but the fireflies'
@@ -1144,7 +1144,7 @@ hides their lower part. The reflection, the bridge, the light on the water, the 
 grazes, the predator and the fir he peeks from behind, the cattails across the pond, the mill, the
 lily, the near bank's grass, cattails and daisies, the fireflies and the weather are drawn every
 frame. The sun's glow lies over the land as over the sky, so the mountains it reaches are lit, and
-each cloud takes as much of it as falls on its middle; the sun's disc keeps its own colour.
+each cloud takes as much of it as falls on its middle; the sun's disc keeps its own color.
 
 **The pond mirrors what stands by it** - see WaterReflection. The mountains, the far hills, the
 bridge, the firs by the shore and the mill's house are kept; the wheel, the wings, the cow, the
@@ -1304,7 +1304,7 @@ The stars drift a fifth of the frame's width each orbit - see StarField drift.
 is whole at -0.13, so the terminator curves as it does at any altitude, and the land, the sea and
 the clouds darken by the same depth, toward a dim moonlit blue. The night lies thicker over darker
 ground and thinner over lighter, by the ground's luma: deep in it, black ground is hidden whole and
-white ground keeps a fifth of its colour, so ice shows through as the moonlit clouds do. The
+white ground keeps a fifth of its color, so ice shows through as the moonlit clouds do. The
 moonlight is 0.13 of the view. The towns' lights switch on one by one as the sunlight falls from
 -0.01 to -0.08, the densest first. The atmosphere along the limb is blue by day, orange at dusk and
 dark at night, by the sunlight on the limb, which rises evenly across it toward the Sun: three
@@ -1327,7 +1327,7 @@ are the same on every run.
 CloudKind. Each is a map on a sphere of its own, 1.0, 1.4 and 1.8 hundredths of the Earth's radius
 up, turning about an axis that leans up to 6 degrees off the Earth's. Each drifts steadily east
 against the ground, 0.4, 0.6 and 0.9 degrees a second from the lowest up. The clouds fade into the
-haze as they near the limb, turn a moonlit blue-grey on the night side, and pass over the towns'
+haze as they near the limb, turn a moonlit blue-gray on the night side, and pass over the towns'
 lights.
 
 **The land is worked out pixel by pixel inside the coastlines**, from the land's map - see EarthMap.
@@ -1339,9 +1339,9 @@ Sun lower than about 14 degrees lights the slopes as one at 14 degrees would, so
 toward dusk without turning black, and it fades out across the terminator. Snow lies above a height
 that falls from the tropics toward the poles, and past 66 degrees south it covers all the land.
 
-**The sea is coloured by its depth**, from the land's map - see EarthMap: greenish over the shelves,
+**The sea is colored by its depth**, from the land's map - see EarthMap: greenish over the shelves,
 deepening to blue down the slopes and over the ridges to the abyss, darkest in the trenches.
-Realistic shades evenly between the depths' colours, its shelves about as light as the land beside
+Realistic shades evenly between the depths' colors, its shelves about as light as the land beside
 them; stylized cuts five flat tones, its shelves light as on a map. Until the map is built, the sea
 is one gradient from the haze at the limb to the deep blue.
 
@@ -1349,12 +1349,12 @@ is one gradient from the haze at the limb to the deep blue.
 down: none looking straight down, more as the ground turns away toward the horizon and the limb. The
 air thins with height - over the Himalaya's crest a third of it is left - so the ranges stand out of
 the haze, and the sea, at height 0, hazes as the low land beside it does. Where the view looks
-through 8 times the air straight down, half the ground's colour is veiled.
+through 8 times the air straight down, half the ground's color is veiled.
 
 **The looks part at the clouds' edges and in the land.** Stylized cuts each layer's cover into two
 flat tones, and the land into flat zones of green, steppe, sand, taiga and tundra with flat bands of
 height and one tone of slope each way, from the broad relief. Realistic shows the cover as it is,
-and the land in the detailed relief, its colours blended - see SceneLook.
+and the land in the detailed relief, its colors blended - see SceneLook.
 
 **The maps are built off the paint** the first time the scene is drawn: a fraction of a second on a
 processor with many cores. The clouds show from the first frame after, and the land is drawn flat,
@@ -1393,7 +1393,7 @@ Earth turns.
 
 ## drawSatellite
 
-**In the Earth's shadow the craft keeps 35 percent of its colour**, by `sunlit`. Its panels turn
+**In the Earth's shadow the craft keeps 35 percent of its color**, by `sunlit`. Its panels turn
 about their booms once a round of `orbitTime`, so past edge-on they show their ribbed backs, and
 the craft rocks once a round. The navigation lights blink 16 times a unit of `blinkTime`, the
 strobe 20 times, and the panels' glints sweep twice.
@@ -1432,7 +1432,7 @@ hops back to a fallen apple and eats it at him, teeth bared.
   off shaken, its eyes settling as the shaking ends and its feathers drifting down round him; one
   time it flies at him, the next it sits on a stump by the trail until the hare's arrival frightens
   it up into his leap
-- another couple, a black wolf and a grey hare, runs the other way, doing as the two do; the hares
+- another couple, a black wolf and a gray hare, runs the other way, doing as the two do; the hares
   cross just before the wolves' leaps end, one bounding over the other - ours one time, theirs the
   next - and the wolves meet face to face in the air and drop side by side onto their backs, each
   hare taunting from her side. From then on the other couple keeps a time of its own: their hare a
@@ -1494,7 +1494,7 @@ carries the sky and the far cover without showing one of its copies beside itsel
 
 **Everything is drawn in the theme the scene is given** - see Scene offersThemes. The sky, the sun
 or the moon, the clouds, the meadow and the tree a branch run ends at are the theme's shared
-colours; the rest is the theme's ChaseTheme.
+colors; the rest is the theme's ChaseTheme.
 
 - The theme's fireflies keep to the far hills' layer: behind the trail and the runners, smaller,
   moving with the hills, and hazed as the hills are.
@@ -1503,9 +1503,9 @@ colours; the rest is the theme's ChaseTheme.
 - A rainy theme's lightning strikes behind the mountains, three times each time the weather comes
   round, and its flash lights the sky above the ground line.
 - The theme's stars come out over the sky. Stars, fireflies and weather come round twice a cycle.
-- The little flowers in the lawn take a fifth of the lawn's colour, so they lie in it rather than
+- The little flowers in the lawn take a fifth of the lawn's color, so they lie in it rather than
   on it.
-- The foreground grass grows out of the lawn: a blade's root takes 0.4 of the lawn's colour at the
+- The foreground grass grows out of the lawn: a blade's root takes 0.4 of the lawn's color at the
   bottom of the frame, and its tip is the theme's grass.
 - The far hills and the lawn are one meadow - see ChaseScene meadowGradient.
 - The sky's clouds, the flocks crossing it and the woods on the pale hills each keep a strip longer
@@ -1586,12 +1586,12 @@ taller and the near one lower, each shifted in phase.
 
 **Both ranges share one gradient.** mountainTop sits at k_mountainTopShare of the frame's height,
 above every range's peaks, and mountainFoot at the ground line. Sunlight grows with a slope's height
-above the ground, wherever its range's top is, so each range takes the colours at its own heights:
+above the ground, wherever its range's top is, so each range takes the colors at its own heights:
 the far range, taller, reaches nearer to mountainTop, and the near range only its own share.
 
-- The far hills are part of the meadow, whose top colour alone is hazed - see ChaseScene
-  meadowGradient. Their trees are the tree's own colours and the fireflies over them the theme's
-  effect colours, both hazed as at the ground line. Both mountain ranges are ChaseTheme's
+- The far hills are part of the meadow, whose top color alone is hazed - see ChaseScene
+  meadowGradient. Their trees are the tree's own colors and the fireflies over them the theme's
+  effect colors, both hazed as at the ground line. Both mountain ranges are ChaseTheme's
   mountainTop and mountainFoot.
 - The weather is drawn fainter with the distance instead of hazed - see ChaseScene drawWeatherLayer.
 
@@ -1606,7 +1606,7 @@ the sky comes round once every few cycles.
 **No two clouds are the same shape.** A cloud's silhouette is a run of three to five lobes over a
 flat base; each lobe takes a share of the width and a peak of its own, and the valley after it stays
 above the base, so the lobes read as one mass. A wisp is one long hump and a smaller one beside it.
-A cloud takes 50 to 100 per cent of the theme's cloud colour, a wisp 30 and a low cloud 35 to 65.
+A cloud takes 50 to 100 per cent of the theme's cloud color, a wisp 30 and a low cloud 35 to 65.
 
 **Each bank also drifts on its own clock**, at k_wispDrift, k_lowCloudDrift and k_cloudDrift units a
 second - the farther, the slower - and bobs a unit or two as it goes, so the sky is never a painted
@@ -1617,7 +1617,7 @@ carries through the loop's end instead of snapping back with the cycle's fractio
 ## ChaseScene drawSkyFlocks
 
 **The flocks cross the sky at 0.08 of the camera's speed**, three to a 5600-unit strip, in the
-theme's flock colour hazed to that distance and drawn at 80 per cent of its opacity. A flock is
+theme's flock color hazed to that distance and drawn at 80 per cent of its opacity. A flock is
 three to five birds at places of their own, each a swept pair of curves for its wings rather than
 two straight strokes. Each bird beats 2.1 to 3.2 times a second on a phase and a rate of its own,
 and drifts a little about its place, so no two in a flock beat together.
@@ -1634,7 +1634,7 @@ the fraction straight would run every beat one cycle too slow - a bird beating o
 ## ChaseScene drawFoothills
 
 **A pale ridge stands behind the meadow's hills**, at 0.06 of the camera's speed, and shows through
-the meadow's dips. Its colour is the theme's hillTop hazed at that distance, and nothing else: the
+the meadow's dips. Its color is the theme's hillTop hazed at that distance, and nothing else: the
 layer stands far enough back that the theme's own air parts it from the meadow's hills, which stand
 at 0.2, so it reads as land farther off than the meadow and not as sky. Its crest is k_foothillWaves
 over a 1400-unit period, and it is filled down to the ground line behind the meadow's hills.
@@ -1643,16 +1643,16 @@ over a 1400-unit period, and it is filled down to the ground line behind the mea
 the theme's bark under one to three crowns of the layer's foliage; the crowns of a tree overlap and
 run the same way round, so one path fills them as one - see ScatteredShapes. Five more trees to a
 4900-unit strip stand taller, the same bark and crowns. Fourteen short hedges to a 5800-unit strip
-lie on the slope below the crest, each 42 to 78 units long, each wearing the theme's hedge colour,
+lie on the slope below the crest, each 42 to 78 units long, each wearing the theme's hedge color,
 hazed at this layer's distance - the air alone parts a piece from the band, which is why a far hedge
 is a veiled thing and never a dark band laid on it. A piece lies level, or at a slight tilt of its
 own, so it does not follow the crest's line: its height below the crest changes from piece to piece
 and along each one.
 
 **The layer's foliage is mixed in clear air and then hazed.** The crowns take the theme's
-treeLeavesBase shaded 0.3 of the way to hillBottom, the hedges the theme's hedge colour, already
+treeLeavesBase shaded 0.3 of the way to hillBottom, the hedges the theme's hedge color, already
 stood against the clear hill - see ChaseScene drawHillside - and the air at 0.06 is applied to both
-afterwards, as to the ridge itself. Nothing here is mixed toward the ridge's colour: that would fade
+afterwards, as to the ridge itself. Nothing here is mixed toward the ridge's color: that would fade
 it into the land it stands on. That length is the meadow's 140 to 260 units brought to this layer's
 distance: it stands at 0.06 where the meadow stands at 0.2, so a thing of the same real length shows
 at three tenths of it, and the hedges are the same size in the world on both layers. Each keeps a
@@ -1673,9 +1673,9 @@ down the slope, not the hill's contour: it is laid from its start height with a 
 of its own, and pushed down only where the crest falls into it, keeping 6 units below the crest and
 12 above the trail.
 
-**A hedge wears the theme's own hedge colour**, not one worked out from its hills: a colour that has
+**A hedge wears the theme's own hedge color**, not one worked out from its hills: a color that has
 to read on a high-contrast theme and vanish into a washed-out one cannot be derived, so each theme
-states it, as it states every other colour. The layer's air is then applied to it as to everything
+states it, as it states every other color. The layer's air is then applied to it as to everything
 else at that distance, so the haze, not the hedge, decides what the distance makes of it. Its humps
 rise and fall by about half its 16 to 24 units, with a taller clump now and then, and a stretch
 closes on a rounded shoulder at each end, so no cut edge shows and the length reads as a hedge rather
@@ -1686,7 +1686,7 @@ than a band.
 **The far hills and the lawn are one meadow**, filled with one gradient, so no seam shows where
 the hills meet the lawn. It runs from the theme's hillTop, hazed as the far hills are, at
 k_meadowTopShare of the frame's height - above the hills' highest tops - to its clear hillBottom at
-the frame's bottom. Only the top colour is hazed.
+the frame's bottom. Only the top color is hazed.
 
 ## ChaseScene periodNear
 

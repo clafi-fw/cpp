@@ -23,7 +23,7 @@ namespace Themes_App
     // What a value rule control calls after a change: where the edit stands, and what it is called.
     export using OnValueRuleChanged = std::function<void(EditPhase, const Text& what)>;
 
-    // Which operations a value rule may take. A pigment is a colour of its own rather than a
+    // Which operations a value rule may take. A pigment is a color of its own rather than a
     // change to one, so its saturation and elevation are stated values and nothing else.
     export enum class ValueRuleOperations
     {

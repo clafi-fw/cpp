@@ -23,8 +23,8 @@ namespace ClaFi::Tools::WhatsClip
     using namespace Controls;
 
     // **The pixels a format decodes to.** The strip says how many; the corner reads the selected
-    // pixel's place, then its colour as a swatch and a value whose digits wear their channel's
-    // colour, with the spelling behind the strip of that button and the editor behind its face;
+    // pixel's place, then its color as a swatch and a value whose digits wear their channel's
+    // color, with the spelling behind the strip of that button and the editor behind its face;
     // the zoom stands at the right end of the strip above. The pixel itself carries those same two
     // commands - a menu with Copy and Edit color, and a double click that opens the editor.
     using PicturePageBase = WithBody<RepresentationPage, PictureView>;
@@ -72,7 +72,7 @@ namespace ClaFi::Tools::WhatsClip
         // Held here because the view borrows.
         Graphics::Bitmap m_picture{};
         ColorSpelling m_spelling{ ColorSpelling::HexRgb };
-        // What the readout shows in place of the pixel's colour: the editor's, while it is open.
+        // What the readout shows in place of the pixel's color: the editor's, while it is open.
         std::optional<Color> m_editedColor{};
         ColorReadout& m_colorReadout;
         ZoomReadout& m_zoomReadout;

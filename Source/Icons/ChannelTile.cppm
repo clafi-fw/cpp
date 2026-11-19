@@ -10,7 +10,7 @@ namespace ClaFi::Icons::ChannelTile
 {
     using namespace ::ClaFi::Graphics;
 
-    // A rounded square split three ways by a Y, each part one flat colour. Three regions hold up at
+    // A rounded square split three ways by a Y, each part one flat color. Three regions hold up at
     // 16px, where a segmented gradient sweep has nothing left to say - that legibility is what this
     // form buys.
     export constexpr int k_partCount = 3;
@@ -41,7 +41,7 @@ namespace ClaFi::Icons::ChannelTile
     // the cut makes drawn into a curve. The inset shape's arcs are concentric with the icon's, so what
     // is left showing around the parts is the margin the whole way round, corners included - which is
     // what lets the parts sit on a ground rather than cover it. The arms are given rather than taken
-    // from a joint: this tile carries no offset, the arms meeting at the centre.
+    // from a joint: this tile carries no offset, the arms meeting at the center.
     export void drawBlobTile(Canvas&, const FloatRect& iconRect, const TileColors&, const ArmAngles&,
         float marginRatio, float dividerRatio, const CutSoftening&);
 

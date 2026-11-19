@@ -523,7 +523,7 @@ namespace ClaFi
 
         // **The answer is written, not acted on here.** The node carries it to the context, which
         // states the backend and tells every window - see AppContext::stateBackend - the same
-        // path a colour mode travels.
+        // path a color mode travels.
         m_gpuBackend.onGetState([this](GetStateEvent& event) {
             event.state.selected = appContext().usingGpu();
         });

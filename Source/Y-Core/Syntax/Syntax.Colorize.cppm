@@ -7,10 +7,10 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Syntax
 {
-    // Writes the source into the text with every token that has an ink of its own coloured in
+    // Writes the source into the text with every token that has an ink of its own colored in
     // it, as a run of that ink. For a text that is built once and then stands - a sample in
-    // a manual, a page of a showcase. A text that is edited is coloured by a CodeBox instead,
-    // which draws the colours over the text rather than writing them into it.
+    // a manual, a page of a showcase. A text that is edited is colored by a CodeBox instead,
+    // which draws the colors over the text rather than writing them into it.
     export void appendColorized(Text&, std::wstring_view source, const Language&,
         const Inks& = defaultInks());
 

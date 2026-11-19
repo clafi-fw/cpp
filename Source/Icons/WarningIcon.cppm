@@ -25,7 +25,7 @@ namespace ClaFi::Icons::WarningIcon
         const MessageBadge::GlyphSlot glyph = MessageBadge::drawTriangle(event, InkWell::Yellow);
 
         // The bar sits below the middle of the badge rather than on it: a triangle's room is at
-        // the bottom, and a mark centred in the box would stand with its point in the apex.
+        // the bottom, and a mark centered in the box would stand with its point in the apex.
         PixelPath path;
         path.moveTo(glyph.at(0.5f, 0.400f));
         path.lineTo(glyph.at(0.5f, 0.635f));

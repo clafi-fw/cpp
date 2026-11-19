@@ -15,12 +15,12 @@ The fields follow Graphics::ShadowParams:
 - `blur` - how far the shadow reaches past the window
 - `offset` - which way the light falls
 - `spread` - how much wider than the window the shadow starts
-- `opacity` - how strong the shadow's colour is
+- `opacity` - how strong the shadow's color is
 
 **Zero opacity or zero blur is no shadow**, and the window keeps no margins for one.
 
 **The shadow is one of a control's sizes** - `ControlMetrics::shadow` - so a window casts the
-shadow its root's style resolves to, in the colour BakedColors::windowShadow answers. The built-in
+shadow its root's style resolves to, in the color BakedColors::windowShadow answers. The built-in
 theme states one on Any Window and a larger one on Dialog. A root given a WindowShadow property
 keeps it through a theme switch, as it keeps any size it was given.
 
@@ -40,7 +40,7 @@ all, which is what a ControlMetrics given whole states.
 
 **The width of the band a control draws along one of its edges**, over the frame and round the
 corners there - see PaintEvent paintBand. It is apart from the border, which the focus ring
-thickens. The edge and when the band shows are the control's, the colour its Band rules' - see
+thickens. The edge and when the band shows are the control's, the color its Band rules' - see
 PaintChannel:
 
 - an open tab - the edge away from its page, as the tab opens
@@ -48,7 +48,7 @@ PaintChannel:
 - a callout, a message bar, a code block - the left edge, always
 
 **The built-in theme draws a tab's band and the edit mode's in the accent's values**, read as the
-tab is selected and as the control is in edit mode, and a block's in its element's own colour.
+tab is selected and as the control is in edit mode, and a block's in its element's own color.
 
 **The Tab, Text Box and Slider styles state twice the border's width**, Any Callout 4, and every
 other style none.
@@ -75,7 +75,7 @@ focus ring thickens it to, and the depths of the press animation.
 
 ## ControlStyle
 
-**The colour rules and the sizes one element wears, named, standing over its base's.** A theme
+**The color rules and the sizes one element wears, named, standing over its base's.** A theme
 holds one for every element its controls wear, and as many more as it likes: a base the styles
 of a kind stand over, or an application's own.
 
@@ -84,7 +84,7 @@ of a kind stand over, or an application's own.
   standing over none. The framework's styles stand over AnyElement, AnyWindow and AnyNonWindow,
   and over AnyButton, AnyIndicator, AnyCallout and DoDont - see BaseElements.
 - `standsOn` - what the element is painted on, for the editor's preview. Empty for a window root,
-  which stands on the bare colour of the mode.
+  which stands on the bare color of the mode.
 - `seed` - the pigment the surface starts its hue from, where the hue of what it stands on is not
   wanted: the callouts and the found-text band. A rule naming a hue overrides the seed.
 - `rules` - its own, applied over the base's as ThemeStyles resolvedRules says.
@@ -93,7 +93,7 @@ of a kind stand over, or an application's own.
 - `metrics` - the sizes it states, each over the base's - see ThemeStyles resolvedMetrics.
 
 **One chain carries both.** A control wears one style, by its UiElement, and takes its rules in
-paint and its sizes in layout from the same chain. A control whose colours and sizes would come
+paint and its sizes in layout from the same chain. A control whose colors and sizes would come
 from two styles wears a style of its own: a dropdown is a window surfaced as a section, so
 Dropdown stands over Any Window and states a section's surface.
 
@@ -149,12 +149,12 @@ defaults.
   and write the Stroke. So does the edit mode's band: its rule reads Edit and writes the Band.
 - AnyButton - what Button and ToolButton share: the Selected, Hot and Pressed surfaces, and a
   button's sizes.
-- AnyIndicator - what the selection and hover indicators share, their on colour and the mark's
+- AnyIndicator - what the selection and hover indicators share, their on color and the mark's
   sizes included.
 - AnyCallout - the five callouts' surface, band and sizes; each callout states its seed alone.
 - DoDont - the two sides of a Do and Don't block.
 
-**The ring's weight is the control's current**, whatever colour the rules gave the stroke. That
+**The ring's weight is the control's current**, whatever color the rules gave the stroke. That
 factor thickens the border toward ThemeMetrics::FocusedBorder, in paint only, and holds the frame
 out of the surface grow-in. A control drawing an indicator in the ring's place takes that share
 off - see AdjustPaintEvent replaceRing.
@@ -167,7 +167,7 @@ too.
 
 ## BakedColors windowShadow
 
-The colour comes from the root's Shadow rules, in this order:
+The color comes from the root's Shadow rules, in this order:
 
 - the rules of the element the root wears, if it wears one
 - Any Window's
@@ -193,7 +193,7 @@ behind the window.
 - `User` names a file in the themes directory the publisher's applications share, by its stem. A
   change of extension keeps the path.
 
-The path names the colours only, and the config states the mode beside it. The application layer
+The path names the colors only, and the config states the mode beside it. The application layer
 resolves a path - see ThemesManager::themeByPath and connectAppThemes.
 
 ## k_defaultThemePath
@@ -259,7 +259,7 @@ accented text rise with the surfaces around them.
 - Over a light surface the floor stops the ink ladder short - see lightGradeOf.
 
 **A window root sets its surface's elevation outright**, and a Set lands on the lifted axis. The
-bare colour a form starts from is at the pole, so an Offset there would start from black.
+bare color a form starts from is at the pole, so an Offset there would start from black.
 
 **The floor lies below 1.** At 1 `elevationOf` divides by zero. The Themes app's slider
 stops at 0.5.
@@ -292,7 +292,7 @@ axis once and back around it, and `applyToSaturation` runs it on the saturation 
 
 ## PaintChannel
 
-**Each channel starts from a colour of its own**, which the rules writing it then move:
+**Each channel starts from a color of its own**, which the rules writing it then move:
 
 - Surface - the surface the control stands on, in its element's seed hue where its style
   states one - see ControlStyle

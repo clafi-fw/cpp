@@ -15,7 +15,7 @@ namespace ClaFi::Icons::QuestionIcon
 
     // A question mark on a disc, in the theme's blueish hue - the hue InformationIcon also
     // carries, the two being a question and a notice rather than two degrees of the same thing.
-    // The glyph is the whole of what tells them apart, so neither may be reduced to its colour.
+    // The glyph is the whole of what tells them apart, so neither may be reduced to its color.
     export void draw(DrawIconEvent&);
 
 

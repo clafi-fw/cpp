@@ -126,7 +126,7 @@ namespace ClaFi::Documents
         // The name that is already taken may be this file's own: the stem comparison above is
         // case sensitive and the file system is not, so `unit1` renamed to `Unit1` reaches here
         // and finds itself. equivalent() asks whether the two paths name one file, which lets a
-        // change of capitalisation through.
+        // change of capitalization through.
         if (std::filesystem::exists(newPath, errorCode)
             && !std::filesystem::equivalent(oldPath, newPath, errorCode))
         {

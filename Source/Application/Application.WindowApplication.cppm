@@ -222,7 +222,7 @@ namespace ClaFi
         // them from here; one that wants a key for itself clears that action's shortcut.
         StdActions::registerAll();
         // The framework's own clipboard formats, in the Transfer tables. Registered by a call
-        // rather than at static initialisation: a static library drops a translation unit nothing
+        // rather than at static initialization: a static library drops a translation unit nothing
         // references, and the tables would be filled in some builds and empty in others.
         StdActions::registerTransferFormats(m_context.platform().clipboard());
         // The application menu under every AppButton.
@@ -265,7 +265,7 @@ namespace ClaFi
     }
 
     // **What the user allowed to be kept is kept**, whether or not the application saves for
-    // itself. Keep settings on this PC is the framework's offer, so honouring it is the framework's
+    // itself. Keep settings on this PC is the framework's offer, so honoring it is the framework's
     // work; an application that wants its config written earlier still saves it itself. Nothing is
     // written where no folder was allowed - that is what saveConfig(false) answers.
     //

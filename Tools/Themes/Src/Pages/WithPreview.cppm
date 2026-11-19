@@ -185,7 +185,7 @@ namespace Themes_App
 
         // The panel stands in for the application's window: what it shows is painted on a
         // dialog's resting surface, as the application paints its own pages. A mockup of a
-        // window inside states the bare colour for itself - see standOnBareColor. The ink is
+        // window inside states the bare color for itself - see standOnBareColor. The ink is
         // stated only where the dialog's chain has a text rule at rest to move it: a stated ink
         // names its hue, and one left alone follows the surfaces under it, as in the application.
         m_previewPanel.onAdjustPaint([this](AdjustPaintEvent& event) {

@@ -15,7 +15,7 @@ namespace ClaFi::Icons::InformationIcon
 
     // A lower case i on a disc, in the theme's blueish hue - the hue QuestionIcon also carries,
     // the two being a notice and a question rather than two degrees of the same thing. The glyph
-    // is the whole of what tells them apart, so neither may be reduced to its colour.
+    // is the whole of what tells them apart, so neither may be reduced to its color.
     export void draw(DrawIconEvent&);
 
 

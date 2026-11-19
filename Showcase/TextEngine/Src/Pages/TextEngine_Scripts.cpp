@@ -142,7 +142,7 @@ namespace TextEngine_App
         page << StyledText{ TextStyles::Title, L"Writing Systems" } << k_endLine;
         page << StyledText{ TextStyles::SubTitle, L"Fifty-six of them, three characters each" };
         page << k_endLine;
-        page << k_endLine; // the blank row under the subtitle is centred with it
+        page << k_endLine; // the blank row under the subtitle is centered with it
         page << TextAlign::Left;
         page << L"No family is named anywhere on this page. Every row is set in the same "
             L"style as the prose around it, so what draws each character is the platform's own "

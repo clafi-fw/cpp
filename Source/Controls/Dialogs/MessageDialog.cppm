@@ -19,7 +19,7 @@ import ClaFi.StdLib;
 namespace ClaFi::Controls
 {
     /// @brief Which answer was given, or nothing where the dialog was dismissed without one -
-    /// Escape, or a press outside it. A caller reads nothing as its cancelling answer, which is
+    /// Escape, or a press outside it. A caller reads nothing as its canceling answer, which is
     /// what makes dismissing it the safe way out.
     export using OptionalDialogAnswer = std::optional<DialogAnswer>;
 

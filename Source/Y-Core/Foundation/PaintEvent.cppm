@@ -82,7 +82,7 @@ namespace ClaFi
         FloatPoint contentPosition() const { return m_context.contentPosition(); }
         ScaledSpacing spacing() const { return m_spacing; }
         // The single factor everything this control draws is scaled by, about the control's own
-        // centre. Surface, text, icon, indicator and any child all inherit it from one
+        // center. Surface, text, icon, indicator and any child all inherit it from one
         // transform, so no element animates its size on its own account.
         [[nodiscard]] float pressScale() const;
         // The hot and press that drive the depth, this control's own blended with its parent's by
@@ -116,18 +116,18 @@ namespace ClaFi
         Color textRgb(InkGrade grade) const { return inkRgb(InkWell::textInk(grade)); }
         Color accentRgb(InkGrade grade) const { return inkRgb(InkWell::accentInk(grade)); }
         Color spotRgb(InkGrade grade) const { return inkRgb(InkWell::spotInk(grade)); }
-        // The colour a pigment names at an elevation, on this control's surface. Every ink this
+        // The color a pigment names at an elevation, on this control's surface. Every ink this
         // control draws text or an icon in comes from here: a pigment says which of the theme's
-        // colours, an elevation says how far it stands from the surface it is drawn on.
+        // colors, an elevation says how far it stands from the surface it is drawn on.
         [[nodiscard]] Color inkRgb(const Ink& ink) const { return m_controlContext.inkRgb(ink); }
         [[nodiscard]] Color inkRgb(Pigment pigment, InkTone tone) const { return m_controlContext.inkRgb(pigment, tone); }
         [[nodiscard]] Color inkRgb(Pigment pigment, float saturation, float elevation) const { return m_controlContext.inkRgb(pigment, saturation, elevation); }
         // How far every ink is blended toward the backdrop because the control is not fully
-        // enabled. Exposed because a DrawIconEvent has to be given it: the colours it carries
-        // have already had it applied, so an icon drawing in colours of its own cannot work it
+        // enabled. Exposed because a DrawIconEvent has to be given it: the colors it carries
+        // have already had it applied, so an icon drawing in colors of its own cannot work it
         // out from them.
         [[nodiscard]] float disabledAmount() const;
-        // What a colour becomes on a control that cannot be used: see the definition.
+        // What a color becomes on a control that cannot be used: see the definition.
         [[nodiscard]] Color disabledFormOf(Color) const;
         [[nodiscard]] Color disabledFormOf(Color, float amount) const;
         [[nodiscard]] Color disabledFormOf(Color, const Hsl& surface, float amount) const;
@@ -168,7 +168,7 @@ namespace ClaFi
         // passing underneath.
         //
         // `travel` is how far the header has been carried past where it was laid out, and sets
-        // the shadow's strength the way the distance a bar has travelled sets a scroll box's
+        // the shadow's strength the way the distance a bar has traveled sets a scroll box's
         // edge fade: the shadow arrives over the first stretch of the lift rather than switching
         // on the moment the header leaves its place. See Control::heldHeader.
         void paintHeldBackdrop(const RoundedRectangleParts& silhouette, float travel);
@@ -186,7 +186,7 @@ namespace ClaFi
         [[nodiscard]] const Control* lendingParent() const;
         // The surface this control stands on before anything of its own is applied to it: what a
         // host has stated for it, or what the chain hands down. The layer carries only what a
-        // host stated, and the colour calculation is what puts the finished surface in it - so
+        // host stated, and the color calculation is what puts the finished surface in it - so
         // this is the one answer for both the adjustment, which runs before that calculation, and
         // the calculation itself.
         [[nodiscard]] Hsl inheritedSurfaceHsl() const;
@@ -248,7 +248,7 @@ namespace ClaFi
         float m_surfaceVisibility{ 0.0f };
         float m_surfaceGrowInScale{ 1.0f }; // the size the surface arrives from
         // Set for the control that owns the press animation, and inherited by everything it
-        // contains, so a child does not scale a second time about its own centre.
+        // contains, so a child does not scale a second time about its own center.
         bool m_pressScaleApplied{ false };
 #if !CLAFI_TEXT_MOVING
         // The canvas transform outside the press animation, which text is drawn under.
@@ -279,7 +279,7 @@ namespace ClaFi
         // that adjustment is answered with what it inherited.
         Lightness m_lightness{ k_darkLightness };
         // Whether the host named the surface this control stands on. What it named is held in
-        // the layer's surfaceHsl until the colours are calculated, which is where the parent
+        // the layer's surfaceHsl until the colors are calculated, which is where the parent
         // chain would otherwise seed it from.
         bool m_surfaceHslStated{ false };
         // Whether the host named the ink this control starts from. Held the way the surface is,
@@ -319,7 +319,7 @@ namespace ClaFi
         void setParentSelectedAmount(float value) { m_target.m_parentSelectedAmount = value; }
         void setParentPressedAmount(float value) { m_target.m_parentPressedAmount = value; }
         // How much of the parent's hot and press drive this child's depth. Separate from the three
-        // above, which weight colour: a mark can be lit partly on its parent's account and still
+        // above, which weight color: a mark can be lit partly on its parent's account and still
         // have to move entirely on its own, or the other way about.
         //
         // 1 is a child that stands for its parent - a check box mark, where the pointer is over the
@@ -339,12 +339,12 @@ namespace ClaFi
         // ink has to follow its own state, which no rule can say: a rule is applied at full
         // strength so that what a panel states reaches everything inside it. A tab taking on its
         // page's ink as it is selected is the case this exists for, and it does the blend itself,
-        // by the same factor its surface takes the page's colour.
+        // by the same factor its surface takes the page's color.
         [[nodiscard]] Hsl textHsl() const { return m_target.inheritedTextHsl(); }
         void setTextHsl(Hsl value);
         // The lightness inherited from the control above, before this control has said anything
         // about it. Read by a control that has to state its rules in the direction they will be
-        // applied in - see Tab::adjustPaint, which spells an exact colour into a rule of its own.
+        // applied in - see Tab::adjustPaint, which spells an exact color into a rule of its own.
         [[nodiscard]] Lightness lightness() const { return m_target.m_lightness; }
         // The lightness this control stands at, where the control knows it and the parent chain
         // does not. A selected tab wears the page it opens, so it takes the page's lightness
@@ -356,12 +356,12 @@ namespace ClaFi
         [[nodiscard]] Hsl surfaceHsl() const { return m_target.inheritedSurfaceHsl(); }
         // The surface this control stands on, where its host knows better than the parent
         // chain does. A grid cell is filled by the row rather than by a control of its own,
-        // so a control hosted in a coloured cell would otherwise stand on the row's colour -
+        // so a control hosted in a colored cell would otherwise stand on the row's color -
         // see RowBase::adjustChildPaint. Everything downstream answers to this: the ink is
         // read against it, the border is drawn on it, and every fade converges on it.
         void setSurfaceHsl(Hsl value);
         // The event being adjusted, for a caller that has to hand it on to something taking a
-        // finished one - a Column naming its colour rule. Const on purpose: the colours have
+        // finished one - a Column naming its color rule. Const on purpose: the colors have
         // not been calculated yet, and what is adjusted here is adjusted through the setters.
         [[nodiscard]] const PaintEvent& paintEvent() const { return m_target; }
         // The radii of the corners the control paints, in Corner order. A corner a parent's arc

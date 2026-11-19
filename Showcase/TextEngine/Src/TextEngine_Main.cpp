@@ -101,7 +101,7 @@ namespace TextEngine_App
                 MaxSize{ k_caretReadoutWidth, k_maxFloat },
                 WordWrap::No,
                 Padding{ 8.0f, 0.0f },
-                // Anchored Left, which is what holds the reading still. Centred, a line number
+                // Anchored Left, which is what holds the reading still. Centered, a line number
                 // gaining or losing a digit moves every character of both readings half a digit
                 // sideways, and the caret crossing back and forth over ten shakes the whole of it.
                 HorizontalTextAnchor::Left,
@@ -327,7 +327,7 @@ namespace TextEngine_App
                 FormPlacement::Default,
                 MinSize{ k_windowWidth, k_windowHeight },
                 PreferredSize{ k_windowWidth * 1.2, k_windowHeight * 1.5 },
-                // A section coloured root in the primary window's frame.
+                // A section colored root in the primary window's frame.
                 UiElement::Section,
                 Radius{ application.styleMetrics(UiElement::Dialog).radius },
                 application.styleMetrics(UiElement::Dialog).shadow,
@@ -440,7 +440,7 @@ namespace TextEngine_App
 
         // The emoji stands **inside** the word, so the label is one run broken into three by a face
         // change and closed up again. A tab measures and draws through the same path a page does,
-        // over a MinSize of 32 and a centred anchor - so a label taller than the strip allows for,
+        // over a MinSize of 32 and a centered anchor - so a label taller than the strip allows for,
         // or a gap where the faces meet, shows here and nowhere else on the form.
         tabs.strip().addTab(
             Text{ L"Em😮ji" },

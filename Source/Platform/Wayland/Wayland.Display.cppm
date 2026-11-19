@@ -1305,7 +1305,7 @@ namespace ClaFi::PlatformImplementation::Wayland
     }
 
     // The compositor asks whether the client is still answering. One that does not reply is
-    // declared unresponsive - the window greys and the desktop offers to kill it - so the absence
+    // declared unresponsive - the window grays and the desktop offers to kill it - so the absence
     // of this looks like a hang rather than like a missing handler.
     void DisplayManager::onPing(void*, xdg_wm_base* windowManager, std::uint32_t serial)
     {

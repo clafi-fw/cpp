@@ -13,7 +13,7 @@ namespace TextEngine_App
     // it differently on each. A family named for its emoji holds glyphs no text family has, so what
     // draws is whatever the platform reached for rather than the family the run states. A picture
     // that is one emoji can be seven code points joined by zero-width joiners, which the shaper
-    // either ligates or draws as its parts. And an emoji face carries its colour in layers or in
+    // either ligates or draws as its parts. And an emoji face carries its color in layers or in
     // bitmap strikes, neither of which a run drawn with one brush can put on the screen.
     //
     // **What the page answers with is the state of the machine.** Families for both platforms are

@@ -151,7 +151,7 @@ namespace ClaFi::Syntax
             scan.index = end;
         }
 
-        // A run of operator characters is one token: -> and <<= read as one and colouring them
+        // A run of operator characters is one token: -> and <<= read as one and coloring them
         // apart from each other changes nothing on screen.
         void takeOperators(Scan& scan)
         {

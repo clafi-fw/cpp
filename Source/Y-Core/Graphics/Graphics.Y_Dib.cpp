@@ -362,7 +362,7 @@ namespace ClaFi::Graphics
             return result;
         }
 
-        // The header, its masks and its colour table, in that order: where the rows start when
+        // The header, its masks and its color table, in that order: where the rows start when
         // nothing states otherwise.
         [[nodiscard]] std::optional<Bitmap> decodeBlock(const std::string_view bytes,
             const std::size_t rowsAtStated)

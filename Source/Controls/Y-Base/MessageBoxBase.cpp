@@ -107,12 +107,12 @@ namespace ClaFi::Controls
             MouseFocus::Keep,
             // The bars run up to the border, which the window draws around this root.
             Padding{ 0.0f },
-            // The bars meet. A gap between them would be the window's colour showing through in
+            // The bars meet. A gap between them would be the window's color showing through in
             // two lines across a face that is meant to read as three bands of one thing.
             Spacing{ 0.0f }
         },
         // The title is the header of this window the way a section header is the header of a
-        // section: the same colours, and the text style that names a section. A press on it is a
+        // section: the same colors, and the text style that names a section. A press on it is a
         // press on the window's caption rather than on this label - see Caption.
         m_title{ createTopBar<Caption>(
             UiElement::SectionHeader,

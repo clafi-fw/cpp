@@ -140,7 +140,7 @@ namespace ClaFi::PathArt
                 fading * 7.0f * unit * std::sin(k_2Pi * joltAge * 9.0f)
             };
             swing = std::exp(-joltAge / 0.9f) * std::sin(k_2Pi * joltAge * 1.3f);
-            // The stage moved off an edge leaves a strip there, filled in the stage's own colours.
+            // The stage moved off an edge leaves a strip there, filled in the stage's own colors.
             fillBox(frame, { 0.0f, 0.0f, frame.width, 10.0f * unit },
                 SolidColor{ BotTalentColors::WallTop });
             fillBox(frame, { 0.0f, frame.height - 10.0f * unit, frame.width, frame.height },

@@ -44,7 +44,7 @@ namespace ClaFi::Icons::CutIcon
         Canvas& canvas = event.canvas();
         PixelPath path;
 
-        // A strong grey holds the object, the accent marks what names the command. Here that is
+        // A strong gray holds the object, the accent marks what names the command. Here that is
         // the blades: the handles are what any pair of scissors has, the crossing edges are the cut.
         const Color bodyColor = event.textRgb(InkGrade::Strong);
         const Color accentColor = event.accentRgb(InkGrade::Strongest);
@@ -55,7 +55,7 @@ namespace ClaFi::Icons::CutIcon
         canvas.drawPath(path, { PathDrawLayer::Stroke(bodyColor, strokeWidth) }, &transform);
 
         // The two blades. Each runs from a tip at the top into the ring diagonally opposite it,
-        // so they cross on the icon's centre line at 0.46 of its height.
+        // so they cross on the icon's center line at 0.46 of its height.
         path.clear();
         path.moveTo(size * 0.28f, size * 0.02f);
         path.lineTo(size * 0.62f, size * 0.70f);

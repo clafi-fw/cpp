@@ -157,7 +157,7 @@ namespace ClaFi::Controls
         // The whole of the parent's, unlike the hover amount above. On a check box or radio button
         // the mark is pressed as part of the row - the pointer is over the row and nestedClick
         // raises the click on the host - so its own factors barely move, and a share of them
-        // would leave the depth almost never seen. Colour is half inherited because a mark has to
+        // would leave the depth almost never seen. Color is half inherited because a mark has to
         // stay legible against a row that is only lit; movement has no such reason to hold back.
         //
         // A host whose indicator is separately clickable - a list item, where the mark toggles
@@ -201,7 +201,7 @@ namespace ClaFi::Controls
                 //
                 // The factors handed over are this button's, not the ones on the event. The
                 // event belongs to the indicator child, which carries none of the selection,
-                // and the mark is drawn by how far pressed and selected have travelled.
+                // and the mark is drawn by how far pressed and selected have traveled.
                 DrawIconEvent iconEvent{
                     event.controlContext(),
                     event.controlBounds(),
@@ -241,7 +241,7 @@ namespace ClaFi::Controls
     void ButtonBase::adjustPaint(AdjustPaintEvent& event)
     {
         RichControl::adjustPaint(event);
-        // Told to the event rather than taken out of the colour rules: Button assigns its whole
+        // Told to the event rather than taken out of the color rules: Button assigns its whole
         // rule set after this runs, and a cleared rule would come straight back with it.
         if (m_showSelectionOnSurface == ShowSelectionOnSurface::No)
             event.dropSelectedSurface();

@@ -27,9 +27,9 @@ its id.
 
 ## Inks
 
-**An ink names a colour rather than stating one**, so one table holds in light and dark themes.
+**An ink names a color rather than stating one**, so one table holds in light and dark themes.
 
-**A kind left at `Ink{}` is drawn as plain text** and states no colour span. A new table leaves
+**A kind left at `Ink{}` is drawn as plain text** and states no color span. A new table leaves
 every kind there.
 
 defaultInks, the framework's table, inks every kind but Plain. Operators and punctuation stand a

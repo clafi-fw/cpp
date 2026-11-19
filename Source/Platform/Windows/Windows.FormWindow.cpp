@@ -776,7 +776,7 @@ namespace ClaFi
 
         // The user's own settings, so a run of clicks is as fast and as steady as the one the
         // system already required of the second press. The drag box is stated as its whole width
-        // and is centred on the press it is measured from, so half of it reaches each way.
+        // and is centered on the press it is measured from, so half of it reaches each way.
         const LONG elapsed = ::GetMessageTime() - m_doubleClickTime;
         if (elapsed < 0 || static_cast<DWORD>(elapsed) > ::GetDoubleClickTime())
             return false;

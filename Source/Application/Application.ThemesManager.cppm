@@ -67,7 +67,7 @@ namespace ClaFi
         // asks for userThemes ahead of it.
         [[nodiscard]] const AppTheme* themeByName(std::wstring_view) const;
         // The theme a path names - see AppTheme - and nullptr where nothing stands under it. A
-        // built-in is answered from the compiled-in colours; a User path reads the directory, so
+        // built-in is answered from the compiled-in colors; a User path reads the directory, so
         // a path names its theme on the first ask.
         [[nodiscard]] const AppTheme* themeByPath(std::wstring_view);
         // The path a user theme is known by: the User root over its file's stem.

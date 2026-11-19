@@ -26,7 +26,7 @@ namespace ClaFi::StdActions
     // Spelt short because `delete` is a keyword.
     export extern Action del;
     export extern Action selectAll;
-    // Puts a value back to having none - a rule that names no colour, a field with nothing typed
+    // Puts a value back to having none - a rule that names no color, a field with nothing typed
     // in it. Distinct from del, which removes what is selected: there is nothing selected here,
     // and what is cleared is the whole of what the subject holds.
     export extern Action clear;

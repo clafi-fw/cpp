@@ -150,7 +150,7 @@ namespace ClaFi::Controls
         [[nodiscard]] FloatPoint overlayChildOffset(const Control&) const override;
     private:
         // A carry under way: what the pointer holds, the run of siblings it may land among, and
-        // the order to put back if it is cancelled. See Item-Containers
+        // the order to put back if it is canceled. See Item-Containers
         struct Carry
         {
             std::vector<Control*> items;      // in their order; one block once gathered
@@ -160,9 +160,9 @@ namespace ClaFi::Controls
             std::size_t first;                // the run's first child index
             std::size_t last;                 // the run's last child index
             float grab;                       // the pointer past the anchor's leading edge
-            float spacing;                    // between two neighbours along the lane
+            float spacing;                    // between two neighbors along the lane
             FloatPoint pointer;               // where the pointer last was, in form space
-            bool cancelled;                   // Escape put the run back; ends with the press
+            bool canceled;                   // Escape put the run back; ends with the press
         };
     private:
         void beginCarry(Control& item, DragEvent&);
@@ -1253,7 +1253,7 @@ namespace ClaFi::Controls
         StackBase::nestedDrag(event);
         if (m_carry)
         {
-            if (!m_carry->cancelled)
+            if (!m_carry->canceled)
                 continueCarry(event);
             return;
         }
@@ -1281,7 +1281,7 @@ namespace ClaFi::Controls
 
     void StackPanelBase::nestedKeyDown(KeyDownEvent& event)
     {
-        if (m_carry && !m_carry->cancelled && event.key == Keys::Escape)
+        if (m_carry && !m_carry->canceled && event.key == Keys::Escape)
         {
             // The run goes back as it stood, and the press still down starts nothing more.
             Carry& carry = *m_carry;
@@ -1289,7 +1289,7 @@ namespace ClaFi::Controls
             for (Control* lifted : carry.lifted)
                 removeOverlayControl(*lifted);
             carry.lifted.clear();
-            carry.cancelled = true;
+            carry.canceled = true;
             event.handled = true;
             invalidate();
             return;
@@ -1306,7 +1306,7 @@ namespace ClaFi::Controls
 
     FloatPoint StackPanelBase::overlayChildOffset(const Control& child) const
     {
-        if (!m_carry || m_carry->cancelled || !isCarried(child))
+        if (!m_carry || m_carry->canceled || !isCarried(child))
             return StackBase::overlayChildOffset(child);
         return lanePoint(carriedBlockOffset(), 0.0f);
     }
@@ -1390,7 +1390,7 @@ namespace ClaFi::Controls
         for (Control* lifted : carry.lifted)
             removeOverlayControl(*lifted);
         invalidate();
-        if (carry.cancelled)
+        if (carry.canceled)
             return;
         ControlSpan children = controls();
         bool moved = false;
@@ -1575,7 +1575,7 @@ namespace ClaFi::Controls
 
     void StackViewBase::onPreviewTimer()
     {
-        // **A glide is not the user looking at anything.** Content travelling under a pointer that
+        // **A glide is not the user looking at anything.** Content traveling under a pointer that
         // is holding still hands the hover a new item on every frame - see ScrollBox's wheel glide,
         // which repeats the mouse move for exactly that reason - and what passes under the pointer
         // on the way is not what is being looked at. So the wait starts again, and the item that

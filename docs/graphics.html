@@ -201,7 +201,7 @@ user's choice, made in Settings while the application runs, so a control does no
 is drawn by and must not need to.</p>
 
 <p><strong>Both backends answer to one contract</strong>: the drawing API promises nothing one of
-them cannot draw. A translucent brush is a colour with alpha, on both, and nothing beside a brush
+them cannot draw. A translucent brush is a color with alpha, on both, and nothing beside a brush
 carries an opacity of its own. What the two still draw differently is listed in
 <a href="#differences">Backend differences</a>, each with what to keep to so that a picture comes out
 the same from either.</p>
@@ -213,7 +213,7 @@ the same from either.</p>
         of sides, ellipses, circles and lines, each drawn as an outline or filled.</li>
     <li><strong>Paths</strong> - a <code>PixelPath</code> of lines and curves, drawn as a stack of
         layers: fill, stroke, glow and shadow.</li>
-    <li><strong>Brushes</strong> - a solid colour, a linear or a radial gradient, or a point of
+    <li><strong>Brushes</strong> - a solid color, a linear or a radial gradient, or a point of
         light.</li>
     <li><strong>State</strong> - clips, a transform, opacity layers and kept images, each a push and a
         pop, with a scoped guard for each.</li>
@@ -261,9 +261,9 @@ inks; a control's <code>PaintEvent</code> answers the same.</p>
     canvas.<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">Stroke</span>(mark, stroke) }, &amp;place);
 }</code></pre>
 
-<p>Colours come from the event rather than from the code: an ink is resolved against the surface it
-is drawn on, which is the <a href="color.html">Colour</a> manual's subject. Everything below is what
-happens to a colour once it is in hand.</p>
+<p>Colors come from the event rather than from the code: an ink is resolved against the surface it
+is drawn on, which is the <a href="color.html">Color</a> manual's subject. Everything below is what
+happens to a color once it is in hand.</p>
 
 <h2 id="concepts">Core Concepts</h2>
 
@@ -291,7 +291,7 @@ downwards. The rects a paint event hands out are in those pixels already. A size
 <p>The weights run <code>Hairline</code>, <code>Thin</code>, <code>Regular</code>, <code>Bold</code>
 and <code>Heavy</code>. <code>scaledStrokeWidth</code> answers whole pixels, at least one, and from
 <code>Thin</code> up each grade is a pixel wider than the one below - so a line keeps its weight
-against its neighbours at every scale the application is drawn at.</p>
+against its neighbors at every scale the application is drawn at.</p>
 
 <h3 id="strokes-inside">Strokes lie inside</h3>
 
@@ -305,7 +305,7 @@ canvas.<span class="fn">drawRoundedRectangle</span>(card, radius, radius, border
 
 <div class="warning">
 <strong>Do not inset the bounds by half the stroke.</strong> The backend does that itself - Direct2D
-strokes centred on a shape, so it moves the shape in - and a caller doing it as well leaves half a
+strokes centered on a shape, so it moves the shape in - and a caller doing it as well leaves half a
 pixel of fill outside every border.
 </div>
 
@@ -313,7 +313,7 @@ pixel of fill outside every border.
 each side.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 212" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="An outline's stroke lies inside its bounds with its outer edge on them; Direct2D is handed the centreline half a stroke in; a line or a path is straddled by its stroke.">
+     aria-label="An outline's stroke lies inside its bounds with its outer edge on them; Direct2D is handed the centerline half a stroke in; a line or a path is straddled by its stroke.">
   <style>
     .si-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .si-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
@@ -336,7 +336,7 @@ each side.</p>
   <rect class="si-gh" x="276" y="46" width="158" height="108" rx="12"/>
   <rect class="si-bnd" x="270" y="40" width="170" height="120" rx="18"/>
   <rect class="si-mid" x="276" y="46" width="158" height="108" rx="12"/>
-  <text class="si-t" x="250" y="186">the centreline, half a stroke in,</text>
+  <text class="si-t" x="250" y="186">the centerline, half a stroke in,</text>
   <text class="si-t" x="250" y="202">its radii shrunk by as much</text>
   <text class="si-th" x="480" y="22">drawLine, drawPath</text>
   <path class="si-ln" d="M505,145 L665,60"/>
@@ -354,20 +354,20 @@ takes a brush also takes a <code>Color</code>, which is a solid brush.</p>
 
 <table>
 <tr><th>Brush</th><th>Paints</th></tr>
-<tr><td><code>SolidColor</code></td><td>One colour. Its alpha is how much of what is underneath shows
+<tr><td><code>SolidColor</code></td><td>One color. Its alpha is how much of what is underneath shows
     through.</td></tr>
-<tr><td><code>LinearGradient</code></td><td>Colour stops along a line from <code>startPoint</code> to
-    <code>endPoint</code>, the same across it. Before the first stop and past the last the end colour
+<tr><td><code>LinearGradient</code></td><td>Color stops along a line from <code>startPoint</code> to
+    <code>endPoint</code>, the same across it. Before the first stop and past the last the end color
     holds.</td></tr>
-<tr><td><code>RadialGradient</code></td><td>Colour stops from the origin, <code>center</code> moved by
+<tr><td><code>RadialGradient</code></td><td>Color stops from the origin, <code>center</code> moved by
     <code>offset</code>, out to the ellipse of <code>radiusX</code> and <code>radiusY</code> round
-    <code>center</code>. Past the ellipse the last colour holds.</td></tr>
-<tr><td><code>PointGlow</code></td><td>A point of light: its colour at <code>lightPos</code>, thinning
+    <code>center</code>. Past the ellipse the last color holds.</td></tr>
+<tr><td><code>PointGlow</code></td><td>A point of light: its color at <code>lightPos</code>, thinning
     straight to nothing at <code>lightSpread</code>.</td></tr>
 </table>
 
 <svg class="grid-fig" viewBox="0 0 700 182" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="The four brushes: a solid colour, a linear gradient between a start and an end point, a radial gradient from an origin out to an ellipse round its centre, and a point of light.">
+     aria-label="The four brushes: a solid color, a linear gradient between a start and an end point, a radial gradient from an origin out to an ellipse round its center, and a point of light.">
   <style>
     .br-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .br-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
@@ -397,8 +397,8 @@ takes a brush also takes a <code>Color</code>, which is a solid brush.</p>
   <rect x="545" y="36" width="140" height="100" rx="4" fill="#24303c"/>
   <rect x="545" y="36" width="140" height="100" rx="4" fill="url(#br-glow)"/>
   <circle cx="615" cy="86" r="2.5" fill="#fff"/>
-  <text class="br-t" x="20" y="156">one colour, its alpha</text><text class="br-t" x="20" y="171">letting the ground through</text>
-  <text class="br-t" x="195" y="156">stops from start to end,</text><text class="br-t" x="195" y="171">the end colours past them</text>
+  <text class="br-t" x="20" y="156">one color, its alpha</text><text class="br-t" x="20" y="171">letting the ground through</text>
+  <text class="br-t" x="195" y="156">stops from start to end,</text><text class="br-t" x="195" y="171">the end colors past them</text>
   <text class="br-t" x="370" y="156">stops from the origin</text><text class="br-t" x="370" y="171">out to the ellipse</text>
   <text class="br-t" x="545" y="156">a light at lightPos,</text><text class="br-t" x="545" y="171">thinning straight to nothing</text>
 </svg>
@@ -407,17 +407,17 @@ takes a brush also takes a <code>Color</code>, which is a solid brush.</p>
 canvas's coordinates; for a path drawn under a transform it is the path's own, so a gradient across a
 path moves, scales and turns with it.</p>
 
-<p>Stop positions run from 0 to 1 and ascend. A gradient of two colours has a shorthand:</p>
+<p>Stop positions run from 0 to 1 and ascend. A gradient of two colors has a shorthand:</p>
 
 <pre><code>canvas.<span class="fn">fillRectangle</span>(band, <span class="tp">LinearGradient</span>::<span class="fn">Simple</span>(band.<span class="fn">topLeft</span>(), band.<span class="fn">bottomLeft</span>(), top, bottom));
 canvas.<span class="fn">fillTopBottomGradientRectangle</span>(band, top, bottom);   <span class="cm">// the same thing</span></code></pre>
 
 <p>A radial gradient's origin lies inside its ellipse, and both radii are above zero. An origin on
-the ellipse or past it, or a radius of zero, is undefined behaviour.</p>
+the ellipse or past it, or a radius of zero, is undefined behavior.</p>
 
 <p>A point of light lights whatever it is painted on. Its spread is the vertical radius, and
 <code>xRatio</code> divides it for the horizontal one, so 0.5 is a light twice as wide as it is tall.
-How strong the light is, is its colour's alpha:</p>
+How strong the light is, is its color's alpha:</p>
 
 <pre><code>canvas.<span class="fn">fillRectangle</span>(bounds, <span class="tp">PointGlow</span>{
     .lightPos = bounds.<span class="fn">center</span>(),
@@ -427,7 +427,7 @@ How strong the light is, is its colour's alpha:</p>
 });</code></pre>
 
 <svg class="grid-fig" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="A point of light: its colour at lightPos, its vertical radius lightSpread and its horizontal one lightSpread divided by xRatio, its alpha falling straight to nothing at the spread.">
+     aria-label="A point of light: its color at lightPos, its vertical radius lightSpread and its horizontal one lightSpread divided by xRatio, its alpha falling straight to nothing at the spread.">
   <style>
     .pg-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .pg-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
@@ -474,14 +474,14 @@ draws every point of light as the ellipse <code>GlowShape::Circle</code> draws.
 elliptical arc, close - each absolute or relative, as SVG's path data has them. A <code>moveTo</code> starts a new figure, and <code>close</code> joins a figure's end
 back to its start; a segment drawn on after a <code>close</code>, with no move between, starts a new
 figure at that same start. A path starts with a move: anything drawn before its first
-<code>moveTo</code> is undefined behaviour. An arc is stated as SVG states one: the ellipse's radii
+<code>moveTo</code> is undefined behavior. An arc is stated as SVG states one: the ellipse's radii
 and its rotation in degrees, <code>ArcSize::Small</code> or <code>Large</code> for which of the two
 arcs joining its ends it takes, and <code>ArcSweep::Clockwise</code> or
 <code>CounterClockwise</code> for the way it turns on the screen. Radii too small to reach its end
 grow together until they do, a radius of zero makes it a line, and an arc ending where it starts
 draws nothing. Three helpers build a whole figure and start a fresh path to do it:
 <code>drawCircle(center, radius)</code>, <code>drawEllipse(center, radiusX, radiusY)</code>, and
-<code>drawRoundedRect(width, height, radius)</code>, which is centred on the origin, or
+<code>drawRoundedRect(width, height, radius)</code>, which is centered on the origin, or
 <code>drawRoundedRect(rect, radiusX, radiusY)</code>, which is SVG's <code>rect</code>, each radius cut to
 half its own side.
 <code>addRoundedPolygon</code> appends a polygon with its corners rounded, keeping what the path
@@ -872,11 +872,11 @@ brushes shows its own background through its own text.</p>
 
 <p><code>ScopedCanvasOpacity</code> opens nothing at full opacity, so a caller with a factor that may
 reach 1 states it there rather than branching round the passage it guards. One shape fading on its
-own needs no layer: its colour's alpha is the same thing, at no cost.</p>
+own needs no layer: its color's alpha is the same thing, at no cost.</p>
 
 <div class="info">
 Text inside a layer is antialiased in grayscale under Direct2D, where it is ClearType outside one: the
-layer starts empty, and a glyph drawn into it has no opaque ground to lay its subpixel colour
+layer starts empty, and a glyph drawn into it has no opaque ground to lay its subpixel color
 against.
 </div>
 
@@ -895,7 +895,7 @@ the shape over it:</p>
 canvas.<span class="fn">castShadow</span>(card, shadow);
 canvas.<span class="fn">fillPartialRoundedRectangle</span>(card, event.<span class="fn">surfaceRgb</span>());</code></pre>
 
-<p>The colour is the shadow where it is darkest, against the shape's edge, so its alpha is the whole
+<p>The color is the shadow where it is darkest, against the shape's edge, so its alpha is the whole
 of how heavy the shadow reads. <code>blur</code> is how far the ramp reaches past the shape,
 <code>offset</code> which way the light falls, and <code>spread</code> how much the shape is grown
 before its shadow is taken - which moves the whole ramp out rather than stretching it, so a shadow
@@ -903,7 +903,7 @@ can sit wider without growing softer. A round corner grows with the spread; a sq
 square.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="A shadow cast before its shape: the silhouette is the shape moved by the offset and grown by the spread, solid in the shadow's colour, with the ramp running out from its edge to the blur; the shape drawn after covers what is under it.">
+     aria-label="A shadow cast before its shape: the silhouette is the shape moved by the offset and grown by the spread, solid in the shadow's color, with the ramp running out from its edge to the blur; the shape drawn after covers what is under it.">
   <style>
     .sh-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .sh-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
@@ -939,7 +939,7 @@ square.</p>
   <text class="sh-th" x="456" y="52">castShadow(parts, shadow)</text>
   <text class="sh-t" x="456" y="76">the silhouette: the shape carried by</text>
   <text class="sh-t" x="456" y="92">offset and grown by spread, solid in</text>
-  <text class="sh-t" x="456" y="108">the shadow&#39;s colour</text>
+  <text class="sh-t" x="456" y="108">the shadow&#39;s color</text>
   <text class="sh-t" x="456" y="154" style="fill:#c62828">the silhouette&#39;s edge</text>
   <text class="sh-t" x="456" y="190">blur: the ramp, out to here</text>
   <text class="sh-t" x="456" y="226">the shape covers what is under it;</text>
@@ -947,7 +947,7 @@ square.</p>
 </svg>
 
 <div class="warning">
-<strong>Under the shape the shadow is solid.</strong> The silhouette is filled in the shadow's colour
+<strong>Under the shape the shadow is solid.</strong> The silhouette is filled in the shadow's color
 and the ramp runs outward from its edge, so the shape drawn over it is what hides it. A shape with a
 translucent fill shows the shadow through, and wants its shadow clipped to the outside of it.
 </div>
@@ -1034,7 +1034,7 @@ is one pixel.</p>
 <tr><td><code>fillRadialGradientRectangle(rect, center, offset, radiusX, radiusY, stops)</code></td>
     <td>A rectangle under a radial gradient.</td></tr>
 <tr><td><code>fadeEdge(rect, radii, side, size, color)</code></td>
-    <td>A band along one side, the colour at the edge and clear <code>size</code> in. Its two corners
+    <td>A band along one side, the color at the edge and clear <code>size</code> in. Its two corners
     on that edge take the rect's radii there, so a fade over a rounded view ends on its arc.</td></tr>
 <tr><td><code>castShadow(parts, shadow)</code></td>
     <td>The shadow a rounded rectangle casts, and not the rectangle.</td></tr>
@@ -1075,7 +1075,7 @@ is one pixel.</p>
 <span class="kw">struct</span> <span class="tp">RadialGradient</span>
 {
     <span class="tp">FloatPoint</span> center;
-    <span class="tp">FloatPoint</span> offset;     <span class="cm">// where the stops start from, relative to the centre</span>
+    <span class="tp">FloatPoint</span> offset;     <span class="cm">// where the stops start from, relative to the center</span>
     <span class="kw">float</span> radiusX;
     <span class="kw">float</span> radiusY;
     <span class="tp">std</span>::<span class="tp">vector</span>&lt;<span class="tp">GradientStop</span>&gt; stops;
@@ -1104,7 +1104,7 @@ is one pixel.</p>
 
 <table>
 <tr><th>Shorthand</th><th>Layer</th></tr>
-<tr><td><code>PathDrawLayer::Fill(color)</code></td><td>A fill in a colour.</td></tr>
+<tr><td><code>PathDrawLayer::Fill(color)</code></td><td>A fill in a color.</td></tr>
 <tr><td><code>PathDrawLayer::Stroke(color, width)</code></td><td>A stroke with round ends.</td></tr>
 <tr><td><code>PathDrawLayer::LinearGradient(start, end, startColor, endColor)</code></td><td>A fill under a two-stop gradient.</td></tr>
 <tr><td><code>PathDrawLayer::PointGlow(glow)</code></td><td>A fill under a point of light.</td></tr>
@@ -1116,14 +1116,14 @@ is one pixel.</p>
 
 <table>
 <tr><th>Call</th><th>Adds</th></tr>
-<tr><td><code>moveTo(p)</code>, <code>moveBy(d)</code></td><td>The start of a new figure. A path's first command; anything before it is undefined behaviour.</td></tr>
+<tr><td><code>moveTo(p)</code>, <code>moveBy(d)</code></td><td>The start of a new figure. A path's first command; anything before it is undefined behavior.</td></tr>
 <tr><td><code>lineTo(p)</code>, <code>lineBy(d)</code>, <code>hLineTo(x)</code>, <code>hLineBy(dx)</code>, <code>vLineTo(y)</code>, <code>vLineBy(dy)</code></td><td>A straight segment.</td></tr>
 <tr><td><code>quadTo(control, end)</code>, <code>bezierBy(dControl, dEnd)</code></td><td>A quadratic curve, absolute or relative.</td></tr>
 <tr><td><code>cubicTo(c1, c2, end)</code>, <code>cubicBy(d1, d2, dEnd)</code></td><td>A cubic curve.</td></tr>
 <tr><td><code>arcTo(radii, rotation, size, sweep, end)</code>, <code>arcBy(radii, rotation, size, sweep, delta)</code></td><td>An elliptical arc, as SVG's <code>A</code> and <code>a</code>: the rotation in degrees, an <code>ArcSize</code> and an <code>ArcSweep</code>.</td></tr>
 <tr><td><code>close()</code></td><td>The segment back to the figure's start. A segment after it starts a new figure there.</td></tr>
 <tr><td><code>addRoundedPolygon(points, radius)</code></td><td>A closed polygon with its corners rounded, each cut back by the radius or half its shorter edge.</td></tr>
-<tr><td><code>drawRoundedRect(w, h, r)</code>, <code>drawRoundedRect(rect, rx, ry)</code>, <code>drawCircle(center, r)</code>, <code>drawEllipse(center, rx, ry)</code></td><td>A whole figure of lines and arcs, in a path cleared first. The first rectangle is centred on the origin; the second is SVG's <code>rect</code>, each radius cut to half its own side.</td></tr>
+<tr><td><code>drawRoundedRect(w, h, r)</code>, <code>drawRoundedRect(rect, rx, ry)</code>, <code>drawCircle(center, r)</code>, <code>drawEllipse(center, rx, ry)</code></td><td>A whole figure of lines and arcs, in a path cleared first. The first rectangle is centered on the origin; the second is SVG's <code>rect</code>, each radius cut to half its own side.</td></tr>
 <tr><td><code>transform(m)</code></td><td>Every point moved through a matrix.</td></tr>
 <tr><td><code>clear()</code></td><td>Empties the path and returns its fill rule to <code>Nonzero</code>.</td></tr>
 <tr><td><code>setFillRule(rule)</code>, <code>fillRule()</code></td><td>The rule every fill of the path follows, <code>Nonzero</code> or <code>EvenOdd</code>. A new path is <code>Nonzero</code>.</td></tr>
@@ -1163,7 +1163,7 @@ bounds rather than stopping at the outline, so two shapes sharing an edge - the 
 join into one unbroken line.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="RoundedRectangleParts: four radii in top left, top right, bottom right, bottom left order and four sides in top, right, bottom, left order; a cell drawing no left side runs its open ends to its bounds edge and meets its neighbour's border in one line.">
+     aria-label="RoundedRectangleParts: four radii in top left, top right, bottom right, bottom left order and four sides in top, right, bottom, left order; a cell drawing no left side runs its open ends to its bounds edge and meets its neighbor's border in one line.">
   <style>
     .rp-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .rp-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
@@ -1407,7 +1407,7 @@ transform rows are about a rotation, a shear and unequal axes alone.
         <ul>
             <li><strong>Hand an outline the bounds of its fill.</strong> The stroke lies inside them.</li>
             <li><strong>Cast a shadow before the shape it belongs to.</strong> The shape covers the solid part under it.</li>
-            <li><strong>Fade one shape through its colour's alpha</strong>, and a group through <code>ScopedCanvasOpacity</code>.</li>
+            <li><strong>Fade one shape through its color's alpha</strong>, and a group through <code>ScopedCanvasOpacity</code>.</li>
             <li><strong>Draw anything that turns as a path.</strong> A path is the one shape both backends turn exactly.</li>
             <li><strong>Ask <code>hasImage</code> before drawing a kept image</strong>, and draw it again when the answer is no.</li>
             <li><strong>Look at the picture on both backends.</strong> GPU acceleration in Settings switches while the application runs.</li>
@@ -1418,8 +1418,8 @@ transform rows are about a rotation, a shear and unequal axes alone.
         <ul>
             <li><strong>Don't inset an outline by half its stroke.</strong> The backend already has.</li>
             <li><strong>Don't draw a glow of any shape but <code>Circle</code>.</strong> Direct2D draws every glow as a circle.</li>
-            <li><strong>Don't draw before a path's first <code>moveTo</code>.</strong> What comes before it is undefined behaviour.</li>
-            <li><strong>Don't put a radial gradient's origin on or past its ellipse.</strong> The gradient there is undefined behaviour.</li>
+            <li><strong>Don't draw before a path's first <code>moveTo</code>.</strong> What comes before it is undefined behavior.</li>
+            <li><strong>Don't put a radial gradient's origin on or past its ellipse.</strong> The gradient there is undefined behavior.</li>
             <li><strong>Don't rely on a stroke's corner</strong> where the corner is sharp.</li>
             <li><strong>Don't read pixels back from a staging view.</strong> Under Direct2D it holds nothing that was drawn.</li>
             <li><strong>Don't draw a bitmap under a transform or a path clip</strong> and expect the backends to agree.</li>
@@ -1451,7 +1451,7 @@ folded into the geometry where each call arrives: a rect's corners are mapped, a
 are scaled by the transform's scale factor. Rectangles, rounded rectangles and circles each have a
 painter of their own, written for axis-aligned spans; everything else is a path.</p>
 
-<p>A path is baked into segments first. An arc is turned from SVG's endpoint form into its centre,
+<p>A path is baked into segments first. An arc is turned from SVG's endpoint form into its center,
 radii and angles, and cut into cubics of at most a quarter turn. A curve is halved until each piece
 lies within a tolerance of its chord, and the tolerance is divided by the scale the path is drawn
 at, the larger axis's under a transform that scales the two apart, so it holds on the screen. A
@@ -1466,14 +1466,14 @@ for <code>Nonzero</code>. A stroke is the band within half its width of a segmen
 corners come out round; a glow is the same distance taken as a ramp. The coverage is held as a mask,
 and the brush is composited through it.</p>
 
-<p>A gradient is read from a ramp of 257 colours, built from its stops once per draw. A linear
+<p>A gradient is read from a ramp of 257 colors, built from its stops once per draw. A linear
 gradient places a pixel on the ramp by how far along its axis the pixel stands. A radial gradient
 takes the pixel back through the transform into the brush, and solves for the stop position at
 which the ellipse, shrunk toward the origin, passes through it.</p>
 
 <p>A path clip is such a mask the size of its bounds, and a clip inside another is the two masks
 multiplied. An opacity layer is a buffer the size of the surface, kept for reuse, that starts as a
-copy of what is under it - every painter mixes toward its colour by coverage, which is the arithmetic
+copy of what is under it - every painter mixes toward its color by coverage, which is the arithmetic
 of drawing on something opaque - and is mixed back when the layer closes. A frame that carries alpha
 clears its dirty rectangle first; any other frame keeps what the last one left, which costs nothing
 while the children cover every pixel.</p>
@@ -1485,7 +1485,7 @@ On Windows the coverage is DirectWrite's, averaged to one value a pixel.</p>
 <h3 id="hiw-d2d">The Direct2D backend</h3>
 
 <p>Direct2D carries the canvas transform on its render target, so every primitive and every brush is
-mapped by the device. An outline is moved in by half its stroke, Direct2D stroking centred on a
+mapped by the device. An outline is moved in by half its stroke, Direct2D stroking centered on a
 shape. Strokes take the cap a layer asks for and miter their corners. A path's arc goes into the
 geometry as an arc, its radii grown first by the same conversion the CPU backend makes, so the two
 agree on the ellipse wherever the radii given are too small.</p>
@@ -1557,12 +1557,12 @@ silhouette, and then the silhouette filled, both aliased so that the two meet on
 
 <p><code>castShadow</code> skips the rings. A rounded rectangle's distance field is made of pieces a
 gradient states exactly: beside a straight edge a linear gradient out from it, round a corner a
-radial one from the arc's centre, and between them the silhouette solid. Each piece is an
+radial one from the arc's center, and between them the silhouette solid. Each piece is an
 axis-aligned rectangle drawn aliased, so no pixel is painted twice, and the ramp is stated in
 sixteen steps of the falloff.</p>
 
 <svg class="grid-fig" viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg" role="img"
-     aria-label="Direct2D's castShadow: the silhouette cut into solid rectangles, a linear gradient band beside each straight edge, and a radial gradient square round each corner from the arc's centre, every piece axis-aligned and drawn aliased.">
+     aria-label="Direct2D's castShadow: the silhouette cut into solid rectangles, a linear gradient band beside each straight edge, and a radial gradient square round each corner from the arc's center, every piece axis-aligned and drawn aliased.">
   <style>
     .cs-th { font-family:"Fira Code",Consolas,monospace; font-size:11px; fill:#111; }
     .cs-t  { font-family:-apple-system,"Segoe UI",sans-serif; font-size:11px; fill:#333; }
@@ -1605,7 +1605,7 @@ sixteen steps of the falloff.</p>
   <text class="cs-t" x="520" y="120">beside a straight edge,</text>
   <text class="cs-t" x="520" y="135">out to the reach</text>
   <text class="cs-th" x="520" y="168">radial corner</text>
-  <text class="cs-t" x="520" y="184">from the arc&#39;s centre: full</text>
+  <text class="cs-t" x="520" y="184">from the arc&#39;s center: full</text>
   <text class="cs-t" x="520" y="199">to the arc, the falloff past it</text>
   <text class="cs-t" x="520" y="232">every piece axis-aligned,</text>
   <text class="cs-t" x="520" y="247">drawn aliased, none overlapping</text>

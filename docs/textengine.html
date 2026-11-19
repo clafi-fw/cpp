@@ -211,7 +211,7 @@ the control's side of that - the properties a control's text is stated through, 
 a control and comes out of it, the events a control asks and answers, the anchors that place the
 text inside the control's box, and the cache behind the engine.</p>
 
-<p>What a <code>Text</code> says - its runs, styles, colours, paragraphs and links - is written as
+<p>What a <code>Text</code> says - its runs, styles, colors, paragraphs and links - is written as
 the <a href="text.html">Writing ClaFi Text</a> manual describes.</p>
 
 <div class="info">
@@ -262,7 +262,7 @@ m_readout.<span class="fn">invalidate</span>();</code></pre>
 <div class="warning">
 <strong>Write through <code>text()</code>, never through a <code>Text&amp;</code> taken from it.</strong>
 A <code>ControlText</code> reached as a <code>Text</code> is data like any other, and a write through
-that reference leaves the stamp where it was - a control that recognises its text by the stamp, one
+that reference leaves the stamp where it was - a control that recognizes its text by the stamp, one
 that <a href="#own-layout">holds its own layout</a>, goes on drawing the old words.
 </div>
 
@@ -416,8 +416,8 @@ spaced.</p>
 <code>UnknownStyleEvent</code>, and the text is laid out as it would be without it.</p>
 
 <p><strong>A format is how a control shows its text</strong>, kept apart from what the text says. A
-selection, the edit history and a document see the text alone: a range copied out of a centred box
-pastes uncentred. A copy puts the box's format beside the text, for a preview to draw it in - see
+selection, the edit history and a document see the text alone: a range copied out of a centered box
+pastes uncentered. A copy puts the box's format beside the text, for a preview to draw it in - see
 <a href="#copying-clipboard">The clipboard</a>. A control with a format and no text is blank.</p>
 
 <h3 id="format-control">On a control</h3>
@@ -467,11 +467,11 @@ whole. A wrapped text's block is never wider than the width it was broken at.</p
 
 <table>
 <tr><th>The text</th><th><code>None</code></th><th><code>Left</code></th><th><code>Center</code></th><th><code>Right</code></th></tr>
-<tr><td>One line, aligned <code>Right</code></td><td>at the right edge</td><td>at the left edge - the block is the line</td><td>centred</td><td>at the right edge</td></tr>
-<tr><td>Two lines, aligned <code>Center</code></td><td>each centred in the box</td><td>centred on one another, the block at the left</td><td>each centred in the box</td><td>centred on one another, the block at the right</td></tr>
+<tr><td>One line, aligned <code>Right</code></td><td>at the right edge</td><td>at the left edge - the block is the line</td><td>centered</td><td>at the right edge</td></tr>
+<tr><td>Two lines, aligned <code>Center</code></td><td>each centered in the box</td><td>centered on one another, the block at the left</td><td>each centered in the box</td><td>centered on one another, the block at the right</td></tr>
 </table>
 
-<p>The two compose. A document tile centres its block under its mark and every line of a name that
+<p>The two compose. A document tile centers its block under its mark and every line of a name that
 wraps inside the block:</p>
 
 <pre><code><span class="tp">HorizontalTextAnchor</span>::Center,
@@ -484,7 +484,7 @@ control put it. The engine is told the anchor with every <code>drawText</code>, 
 
 <h2 id="drawing">Drawing and Measuring</h2>
 
-<p>The engine builds the layout. A control hands it a text, a rectangle, the colours it resolved,
+<p>The engine builds the layout. A control hands it a text, a rectangle, the colors it resolved,
 and where in that rectangle the text block belongs:</p>
 
 <pre><code><span class="tp">DrawTextResult</span> <span class="fn">drawText</span>(<span class="tp">ControlPaintContext</span>&amp;, <span class="kw">const</span> <span class="tp">FloatRect</span>&amp;, <span class="kw">const</span> <span class="tp">Text</span>&amp;,
@@ -498,7 +498,7 @@ and where in that rectangle the text block belongs:</p>
 <p>The format is laid out under the text - see <a href="#format">Text Format</a>. None and an empty
 one are the same answer, and <code>isTextTrimmed</code> takes one the same way.</p>
 
-<p>Colours arrive with the draw. A run names inks, and the paint context the draw is handed is
+<p>Colors arrive with the draw. A run names inks, and the paint context the draw is handed is
 what resolves them - so the same layout draws correctly through whichever backend owns the form it
 appears in.</p>
 
@@ -597,7 +597,7 @@ what keeps a position from being read off one build and drawn on another:</p>
 
 <p>The one-argument overload gathers a text itself, the way a paint does. Asking twice is free: a
 gather <em>names</em> a control's own text rather than copying it, so an answer that is that object
-is recognised by its stamp, and an answer composed around it - a parent's words, a mark - is kept
+is recognized by its stamp, and an answer composed around it - a parent's words, a mark - is kept
 in a copy beside the text and compared against the next one. The text stays what its owner wrote,
 and the layout draws whichever of the two the last gather answered. Either way an unchanged text
 rebuilds nothing, and a control measured four times in one pass shapes once.</p>
@@ -806,7 +806,7 @@ the box that character's glyph stands in: past the end of a line, between two li
 text, there is no link. <code>pos</code> is the character under the point, which says which line of
 a wrapped link the pointer is on.</p>
 
-<p>The hovered link is a draw-time question, the way colours are: stating one shapes nothing, and
+<p>The hovered link is a draw-time question, the way colors are: stating one shapes nothing, and
 the caller repaints. A new text drops it, since the range was stated in the text it was found
 in.</p>
 
@@ -846,15 +846,15 @@ a view into the text the spans were baked from, and holds while that text stands
 
 <p><code>BakedText::rebuild</code> walks the runs once and resolves each field of each run, from the
 first that states it - the run's style and its bases, then the format's style and its bases, then the
-text's Body for a font field and the text ink for an ink. Equal neighbours merge, and what comes out is absolute ranges: <code>ColorSpan</code>,
+text's Body for a font field and the text ink for an ink. Equal neighbors merge, and what comes out is absolute ranges: <code>ColorSpan</code>,
 <code>WeightSpan</code>, <code>StyleSpan</code>, <code>SizeSpan</code>, <code>FamilySpan</code>,
 <code>ScriptSpan</code>, a <code>ParagraphStyle</code> per paragraph, a <code>LinkSpan</code> for
 every link, and a <code>BakedInlineObject</code> for every inline object. That is the form the native
 layout is fed.</p>
 
-<p>A colour span holds <code>ColorDef</code>, which is
-<code>std::variant&lt;Ink, Color&gt;</code> - the <em>name</em> of a colour rather than a colour.
-Colours are deliberately absent from what a layout is built from: they reach the native layout when
+<p>A color span holds <code>ColorDef</code>, which is
+<code>std::variant&lt;Ink, Color&gt;</code> - the <em>name</em> of a color rather than a color.
+Colors are deliberately absent from what a layout is built from: they reach the native layout when
 it is drawn, so a theme change re-draws the same shaping rather than paying for it again. Alignment
 is absent for the same reason: where finished lines sit inside their box is set on a built layout,
 not shaped from.</p>
@@ -901,7 +901,7 @@ format against the copy the layout keeps. The cache owns the text's copy, becaus
 a pointer to the one it was given.</p>
 
 <p><code>Text::hash</code> stands in for the whole <code>Text</code>, the inks of its runs and all. A
-colour is no part of a build, but it is part of what makes one <code>Text</code> a different
+color is no part of a build, but it is part of what makes one <code>Text</code> a different
 <code>Text</code>, so two runs naming different inks hold a cache entry each rather than sharing a
 key and evicting one another on every alternation. For anything that changes what a build would
 produce without being part of the key - the font table above all - <code>invalidateLayouts()</code>
@@ -941,7 +941,7 @@ Cascadia Code and Fira Code do, and a text set in one of those shows its charact
 the font: the controls and the format characters, combining marks, the right-to-left scripts, the
 scripts that reorder or stack, and anything past the basic plane. A wrapping layout keeps a
 paragraph on cells while its ink fits the width it breaks at - a line that fits is never broken -
-and hands one that does not to the native layout. Left, centre and right alignment are an offset
+and hands one that does not to the native layout. Left, center and right alignment are an offset
 inside the width the paragraph is placed in, applied as the paragraph is drawn or hit rather than
 told to a layout, so a box that moves costs nothing.</p>
 
@@ -953,7 +953,7 @@ way.</p>
 <h3 id="hiw-underline">The link underline</h3>
 
 <p>The layout draws the underline of the hovered link: one segment per line the link reaches, under
-the glyphs that line shows, in the colour the segment's first glyph was drawn in. It stands below
+the glyphs that line shows, in the color the segment's first glyph was drawn in. It stands below
 the baseline by a share of the room the line has there, in the thin stroke; the font's own underline
 metrics are not read. It is drawn over the glyphs, so a selection band does not cover it, and it
 does not fade with the glyphs of a line the box cuts.</p>

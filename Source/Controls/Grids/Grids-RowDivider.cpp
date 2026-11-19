@@ -34,7 +34,7 @@ namespace ClaFi::Controls::Grids
             return;
 
         // A stroke that reaches nothing is transparent, and the slot is then left as it is.
-        // Filling it with the divider's own colour instead would state a line the theme did not
+        // Filling it with the divider's own color instead would state a line the theme did not
         // ask for, and the gap is what a divider carrying no line looks like. Raised off the
         // surface rather than read from strokeRgb(), which carries the focus ring.
         const Color lineColor = event.strokeRgbOn(event.surfaceHsl());

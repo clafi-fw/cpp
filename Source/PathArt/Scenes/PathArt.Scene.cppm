@@ -65,7 +65,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] virtual std::wstring_view name() const = 0;
         // The scene's own figure, filling bounds, where it is offered to pick. See PathArt
         virtual void drawIcon(Graphics::Canvas&, const FloatRect& bounds) const = 0;
-        // The colours a readout over the scene is drawn in. See PathArt
+        // The colors a readout over the scene is drawn in. See PathArt
         [[nodiscard]] virtual SceneReadoutColors readoutColors() const = 0;
         // How long one cycle lasts at speed 1.
         [[nodiscard]] virtual std::chrono::seconds cycleDuration() const { return k_cycle; }

@@ -14,8 +14,8 @@ namespace ClaFi::PathArt::Themes
             .cloud = 0xCCFAFAFA,         // Off-white clouds
             .mountainTop = 0xFFCDCACB,
             .mountainFoot = 0xFF9E9B9C,
-            .hillTop = 0xFFA3AFA0,       // Grey green (hill top)
-            .hillBottom = 0xFF7E8A7C,    // Darker grey green (hill base)
+            .hillTop = 0xFFA3AFA0,       // Gray green (hill top)
+            .hillBottom = 0xFF7E8A7C,    // Darker gray green (hill base)
             .riverTop = 0xFF2E559E,      // Deep blue (river top)
             .riverBottom = 0xFF64A1D5,   // Lighter blue (river bottom)
             .riverWave = 0xFFFFC8DC,     // Same as Effect1
@@ -46,7 +46,7 @@ namespace ClaFi::PathArt::Themes
             .cowSpots = 0xFF000000,      // Black spots
             .cowSnout = 0xFFCD853F,      // Light brown snout
             .cowDetail = 0xFF8B4513,     // Brown detail (hooves, etc.)
-            .wolfBody = 0xFF362717,      // Dark grey-brown wolf body
+            .wolfBody = 0xFF362717,      // Dark gray-brown wolf body
             .wolfEye = 0xFFFF0000,       // Red glowing eyes
             .effectColor1 = 0xFFFFC8DC,
             .effectColor2 = 0xFFFF96B4,
@@ -68,12 +68,12 @@ namespace ClaFi::PathArt::Themes
             .hedge = 0xFF909188,
             .mill = {
                 .bodyTop = 0xFFD8CABD,   // pale stone (top mill body)
-                .bodyBottom = 0xFFA0928A, // grey stone (bottom mill body)
+                .bodyBottom = 0xFFA0928A, // gray stone (bottom mill body)
                 .roofTop = 0xFFC08A88,   // dusty rose (lit roof side)
                 .roofBottom = 0xFF845655, // deep dusty rose (shaded roof side)
                 .timber = 0xFF603C22,
                 .wingFabric = 0xCCF3F1F4, // white canvas (fabric of wing)
-                .wheel = 0xFF7A6E66      // grey weathered wood (mill wheel)
+                .wheel = 0xFF7A6E66      // gray weathered wood (mill wheel)
             },
             .chase = {
                 .treeCrown = 0xFFF8BBD0,

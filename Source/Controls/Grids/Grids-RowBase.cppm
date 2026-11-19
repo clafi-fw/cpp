@@ -131,13 +131,13 @@ namespace ClaFi::Controls::Grids
         virtual void paintCell(PaintEvent&, const FloatRect& cellRect, const Column&);
         // **No row paints its own rect.** A row's surface reaches the screen through its cells,
         // which paintOneCell fills from it unconditionally - so a rect fill on top of that is the
-        // same colour drawn twice, and drawn worse: the base fills controlBounds() with the
+        // same color drawn twice, and drawn worse: the base fills controlBounds() with the
         // **row's** corner radius and rounded corners, where a cell frame snaps to the grid's
         // edges, subtracts the border bands its lines stand in, and rounds only the corners a first
         // or last cell actually turns.
         //
         // A row with no cells - a group, an expander - therefore paints nothing at all, and its
-        // surface is a colour the rows inside it inherit and paint for it. See
+        // surface is a color the rows inside it inherit and paint for it. See
         // RowGroupBase, and RowDivider, which is the one row that draws a fill of its own because
         // it has to stop short of the band its closing grid line stands in.
         void paintSurface(PaintEvent&) override {}

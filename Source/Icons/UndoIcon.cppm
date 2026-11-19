@@ -23,7 +23,7 @@ namespace ClaFi::Icons::UndoIcon
     }
 
     // The head, an open chevron on the tip the shaft arrives at. Separate from the shaft because
-    // it carries the accent colour: which way the arrow points is what tells undo from redo.
+    // it carries the accent color: which way the arrow points is what tells undo from redo.
     export void buildHeadPath(PixelPath& path, float size)
     {
         path.moveTo(size * 0.40f, size * 0.12f);

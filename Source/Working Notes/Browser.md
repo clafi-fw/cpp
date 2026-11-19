@@ -4,7 +4,7 @@ The author's side of the footnote of the same name.
 
 ## BreadCrumbBar
 
-The bar fits its crumbs itself, in alignContent, through IFittableList::shrinkBy - the levelling
+The bar fits its crumbs itself, in alignContent, through IFittableList::shrinkBy - the leveling
 the tab strip and the grid's columns use. A single lane of Stack hands every item its measured
 width whatever room it was given, so a bar left to Stack ran its last crumbs under the search box.
 Taking the shortfall in Stack would reach every Horizontal and Vertical stack in the tree, and rows
@@ -24,7 +24,7 @@ standing.
 ## BrowserControl
 
 A mouse close holds the sum of the tabs' widths in m_heldTabsWidth. alignContent takes what the
-tabs stand past it by through fitTabs, the levelling the title's own shortfall uses, and the larger
+tabs stand past it by through fitTabs, the leveling the title's own shortfall uses, and the larger
 of the two is taken. This is Chrome's tab closing mode in the strip's terms. Chrome freezes the
 width its tabs may take, less the closed tab's for any tab but the last, and lays them out again
 when the pointer moves out of the strip and 40px of slop below it

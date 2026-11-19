@@ -96,7 +96,7 @@ namespace ClaFi::Dt
     //
     // Only for a DSL with a closed vocabulary, where every argument is either a
     // child node or a handler - Dom. A DSL that forwards whatever it does not
-    // recognise as a property to an imperative add() must not do this. There, a
+    // recognize as a property to an imperative add() must not do this. There, a
     // bare callable is ambiguous between a property and a handler, and the
     // OnEvent wrapper is what resolves it.
     export template <typename T>
@@ -228,7 +228,7 @@ namespace ClaFi::Dt
     //
     // ctorPropsOf moves out of the pack, postCreateOf only copies. The two see a
     // disjoint set of arguments, so calling both on one pack is safe whatever
-    // order the captures are initialised in.
+    // order the captures are initialized in.
     export template <typename Target, typename... Args>
     [[nodiscard]] auto ctorPropsOf(Args&&... args);
 
@@ -397,7 +397,7 @@ namespace ClaFi::Dt
                 "connect handlers. Put OnEvent on a node that creates an emitter of its own.");
             static_assert(!IsAnyInit<T>,
                 "Dt: this node forwards its properties to the imperative API and does not "
-                "run initialisers. Put Init on a node that creates an object of its own.");
+                "run initializers. Put Init on a node that creates an object of its own.");
             return std::tuple<std::decay_t<T>>{ std::forward<T>(arg) };
         }
     }

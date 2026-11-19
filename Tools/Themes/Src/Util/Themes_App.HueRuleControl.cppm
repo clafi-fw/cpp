@@ -68,10 +68,10 @@ namespace Themes_App
     // What an operation puts on the control, written the same way wherever it appears - the
     // cell's face and the popup's item are one statement about one rule.
     //
-    // No change says so in words, there being no colour to show, and says it in the subdued
+    // No change says so in words, there being no color to show, and says it in the subdued
     // style the operation combo boxes give their own No change item - which is what makes the
     // two dropdowns read alike. Everything else writes its one character, which the control's
-    // text anchors centre for it. Every descriptive name is the tooltip's.
+    // text anchors center for it. Every descriptive name is the tooltip's.
     void writeHueOpContent(Text& text, ColorRuleHueOp value, bool onBlob)
     {
         if (value == ColorRuleHueOp::NoChange)
@@ -114,8 +114,8 @@ namespace Themes_App
     }
 
     // How an operation shows itself in the popup. Both views carry the radio mark and the glyph
-    // that names the operation; a Tile also carries the blob of its own colour, and a Glyph leaves
-    // that out because whatever stands beside it already states the colour.
+    // that names the operation; a Tile also carries the blob of its own color, and a Glyph leaves
+    // that out because whatever stands beside it already states the color.
     enum class HueItemView
     {
         Tile,
@@ -141,7 +141,7 @@ namespace Themes_App
         HueRuleControl(const CreateParams&, Args&&...);
     public:
         // canClear says whether No change is a hue this rule may take. A window root's surface
-        // states an absolute colour, so its hue has to be named and Clear is refused on it.
+        // states an absolute color, so its hue has to be named and Clear is refused on it.
         // Takes the rule by address, the palette, what to call and what to call the edit by.
         void bind(ColorRuleHue&, const ThemeColors&, const OnHueRuleChanged&, bool canClear,
             Text what);
@@ -150,10 +150,10 @@ namespace Themes_App
         [[nodiscard]] ColorRuleHueOp operation() const { return m_rule->operation(); }
         /// The hue an operation stands for. Palette operations read the theme's palette, the exact
         /// one reads what the slider is holding, and No change has no hue at all - which is what
-        /// the blob is omitted on rather than filled with some neutral colour.
+        /// the blob is omitted on rather than filled with some neutral color.
         [[nodiscard]] float hueOf(ColorRuleHueOp) const;
         [[nodiscard]] bool hasHue(ColorRuleHueOp value) const { return value != ColorRuleHueOp::NoChange; }
-        // The colour an operation's blob is filled with.
+        // The color an operation's blob is filled with.
         [[nodiscard]] Color blobColor(ColorRuleHueOp) const;
     protected:
         // Every part of the control opens the same popup, so there is no separate primary action.
@@ -173,14 +173,14 @@ namespace Themes_App
         const OnHueRuleChanged* m_onChanged{};
         Text m_what{}; // what an edit here is called, as the page records it
         // What the popup's slider edits. ColorSlider tracks an Hsl and a hue rule holds a bare
-        // float, so the colour lives here and its hue is written back to the rule on every change.
+        // float, so the color lives here and its hue is written back to the rule on every change.
         Hsl m_exactColor{ 0.0f, k_blobSaturation, k_blobLuminosity };
     };
 
     // HueRuleItem
 
     /// One operation in the popup. Picking settles the rule and leaves the popup up: every choice
-    /// here is one the eye wants to compare against its neighbours, and a popup shutting on the
+    /// here is one the eye wants to compare against its neighbors, and a popup shutting on the
     /// first pick would have to be reopened to see the second. The close button is the way out.
     class HueRuleItem : public Button
     {
@@ -297,7 +297,7 @@ namespace Themes_App
     {
         if (!bound())
             return;
-        // The slider edits this colour in place, so it starts from what the rule holds rather than
+        // The slider edits this color in place, so it starts from what the rule holds rather than
         // from wherever the last popup left it.
         m_exactColor.hue = m_rule->exactValue();
         dropPopup<HueRulePopup>(form(), *this);
@@ -489,7 +489,7 @@ namespace Themes_App
         );
 
         // The custom hue stands beside the slider rather than in the tile row above it: the slider
-        // is what states the colour, so the item that says it is the chosen one belongs next to it.
+        // is what states the color, so the item that says it is the chosen one belongs next to it.
         // It is an item like the other three - the same mark, the same glyph, picked and given its
         // tooltip by the same code - and drops only the blob, which would say what the slider a few
         // pixels away is already saying.

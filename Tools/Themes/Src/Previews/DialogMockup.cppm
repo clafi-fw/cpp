@@ -27,7 +27,7 @@ namespace Themes_App
         Unfocused
     };
 
-    // States the bare colour of the mode as what a control stands on and the ink it starts
+    // States the bare color of the mode as what a control stands on and the ink it starts
     // from: a window stands on nothing, wherever a mockup of one is placed.
     export void standOnBareColor(AdjustPaintEvent&);
 

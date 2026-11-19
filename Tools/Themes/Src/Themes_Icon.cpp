@@ -50,7 +50,7 @@ namespace Themes_App::AppIcon
             float height{};
         };
 
-        // A colour as a lightness and two opponent axes, over which a straight mix looks even.
+        // A color as a lightness and two opponent axes, over which a straight mix looks even.
         struct Oklab
         {
             float lightness{};
@@ -67,7 +67,7 @@ namespace Themes_App::AppIcon
         constexpr float k_edgeWidth{ 0.020f };      // the light line round the blot
         constexpr float k_keylineWidth{ 0.020f };   // the dark line inside the blot's light one
 
-        // Greys on the line from the keyline colour to the edge colour, lightest at the top band.
+        // Grays on the line from the keyline color to the edge color, lightest at the top band.
         constexpr Color k_backUpper{ 0xFFF4F5F8 };
         constexpr Color k_backLower{ 0xFFE1E2E6 };
         constexpr Color k_frontUpper{ 0xFFECEDF0 };
@@ -147,7 +147,7 @@ namespace Themes_App::AppIcon
         constexpr std::size_t k_sweepSteps{ 72 };
         constexpr std::size_t k_stepsPerAnchor{ k_sweepSteps / k_rainbow.size() };
         constexpr float k_wedgeAngle{ k_2Pi / static_cast<float>(k_sweepSteps) };
-        // The first wedge, red, centred straight up.
+        // The first wedge, red, centered straight up.
         constexpr float k_sweepStart{ -k_2Pi * 0.25f - k_wedgeAngle * 0.5f };
         constexpr FloatPoint k_sweepCenter{ 0.4775f, 0.4851f };   // the outline's centroid
         // Each wedge reaches under the next one, so no seam of the leaves shows between two fills.
@@ -358,7 +358,7 @@ namespace Themes_App::AppIcon
 
         const SweepColors& sweepColors()
         {
-            // Mixed once: the anchors are constants, so the colours are the same for every paint.
+            // Mixed once: the anchors are constants, so the colors are the same for every paint.
             static const SweepColors s_colors = mixSweep();
             return s_colors;
         }

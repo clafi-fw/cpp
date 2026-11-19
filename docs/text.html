@@ -144,7 +144,7 @@
                     <li><a href="#styles-own">A text's own styles</a></li>
                 </ul>
             </li>
-            <li><div class="nav-item-wrapper"><a href="#colour">Colour</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#color">Color</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#paragraphs">Paragraphs</a></div></li>
             <li class="has-children">
                 <div class="nav-item-wrapper">
@@ -228,7 +228,7 @@ keeps its meaning through a theme change.</p>
 to use it: the shaping is cached behind the engine, and a rebuilt <code>Text</code> that says the
 same thing hits that cache.</p>
 
-<p>This manual is about what a text says: its runs, styles, colours, paragraphs and links. How a
+<p>This manual is about what a text says: its runs, styles, colors, paragraphs and links. How a
 control holds its text, draws it and answers for it is the
 <a href="textengine.html">Working with Text in Controls</a> manual.</p>
 
@@ -239,7 +239,7 @@ wrappers and <code>TextFormat</code>, <code>ClaFi.Core.TextEngine.StyleSheet</co
 <code>TextStyles</code>, the paragraph tags and the inline objects. <code>Ink</code>,
 <code>InkGrade</code>, <code>InkColor</code> and <code>Color</code> are declared in
 <code>ClaFi.Core.System.UiTypes</code>, and <code>ClaFi.Core.System.InkWell</code> names the inks -
-see the <a href="color.html">Colour</a> manual.
+see the <a href="color.html">Color</a> manual.
 </div>
 
 <h2 id="quickstart">Quick Start</h2>
@@ -317,7 +317,7 @@ texts were written.</p>
 <table>
 <tr><th>Wrapper</th><th>Lays over its words</th></tr>
 <tr><td><code>StyledText{ name, ... }</code></td><td>The style of that name, found in the text's sheet - see <a href="#styles">Styles</a>.</td></tr>
-<tr><td><code>ColoredText{ ink, ... }</code></td><td>An ink: an <code>Ink</code>, an <code>InkGrade</code>, an <code>InkColor</code>, or a <code>Color</code> stated outright - see <a href="#colour">Colour</a>.</td></tr>
+<tr><td><code>ColoredText{ ink, ... }</code></td><td>An ink: an <code>Ink</code>, an <code>InkGrade</code>, an <code>InkColor</code>, or a <code>Color</code> stated outright - see <a href="#color">Color</a>.</td></tr>
 <tr><td><code>BoldText{ ... }</code>, <code>ItalicText{ ... }</code></td><td>Weight and slant.</td></tr>
 <tr><td><code>SizedText{ size, ... }</code></td><td>A size in design pixels.</td></tr>
 <tr><td><code>FamilyText{ family, ... }</code></td><td>A font family by name.</td></tr>
@@ -481,14 +481,14 @@ its base as found the same way</li>
 <p>So a range copied out of a document set in its own styles pastes into another document in that
 document's styles of the same names, and in the copied ones where it has none.</p>
 
-<h2 id="colour">Colour</h2>
+<h2 id="color">Color</h2>
 
 <p><code>ColoredText</code> names an ink - an <code>InkColor</code> at an <code>InkGrade</code> - and
 states no tone of its own; the tones are <code>InkWell</code>'s. An ink is written as the one part
 that differs from the text ink at <code>Strongest</code>:</p>
 
 <pre><code>text &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ping "</span> }                       <span class="cm">// the text ink at a step</span>
-     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, <span class="st">L"24 ms"</span> }                      <span class="cm">// a colour at Strongest</span>
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, <span class="st">L"24 ms"</span> }                      <span class="cm">// a color at Strongest</span>
      &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkWell</span>::<span class="fn">redInk</span>(<span class="tp">InkGrade</span>::Muted), <span class="st">L" late"</span> };   <span class="cm">// anything else, as the Ink it is</span></code></pre>
 
 <p>A <code>Color</code> stated outright is drawn as it is, and the theme leaves it alone. It is right
@@ -499,7 +499,7 @@ run set in it.</p>
 
 <div class="warning">
 <strong>Yellow is drawn, not read.</strong> At the 4.5:1 reading threshold on a light page the whole
-warm arc collapses to brown, so no yellow is both legible and recognisable. Use
+warm arc collapses to brown, so no yellow is both legible and recognizable. Use
 <code>InkWell::Yellow</code> on an icon and let the text say it in words. A document still reads
 <code>yellow</code>, so that a text built from code can be written out and read back.
 </div>
@@ -532,7 +532,7 @@ out &lt;&lt; <span class="tp">InTextIcon</span>{ <span class="kw">220.0f</span>,
 out &lt;&lt; k_endLine;
 out &lt;&lt; <span class="tp">TextAlign</span>::Left;</code></pre>
 
-<p>Written before the line end, the <code>TextAlign::Left</code> would take the centring off the
+<p>Written before the line end, the <code>TextAlign::Left</code> would take the centering off the
 very line it was meant for. A field is ended by stating its value again - <code>TextAlign::Left</code>,
 <code>TextIndent{ 0.0f }</code>.</p>
 
@@ -542,7 +542,7 @@ the look in effect where it lands. A paragraph of it that states nothing takes t
 
 <pre><code><span class="tp">Text</span> list{ <span class="tp">TextIndent</span>{ <span class="kw">34.0f</span> }, <span class="st">L"one"</span>, k_endLine, <span class="st">L"two"</span> };
 page &lt;&lt; <span class="tp">TextAlign</span>::Center &lt;&lt; <span class="st">L"Lists"</span> &lt;&lt; k_endLine &lt;&lt; list;
-<span class="cm">// "one" and "two" stand centred and indented by 34.</span></code></pre>
+<span class="cm">// "one" and "two" stand centered and indented by 34.</span></code></pre>
 
 <p>Edits keep a paragraph's look: a line end typed into one splits it and both halves keep the look,
 and a paragraph joined to the one above takes that one's - see
@@ -583,7 +583,7 @@ the end of the next line when they wrap.</p>
 <tr><td><code>InTextIcon{ ..., painter, tag }</code></td><td>Any of the above with a <code>Tag</code> the painter can read back.</td></tr>
 </table>
 
-<p>The painter is handed an event that answers the colours a control's paint event does -
+<p>The painter is handed an event that answers the colors a control's paint event does -
 <code>inkRgb(ink)</code>, <code>textRgb(grade)</code>, <code>accentRgb(grade)</code>,
 <code>spotRgb(grade)</code> - with <code>iconRect()</code>, <code>scaleF(...)</code> and
 <code>canvas()</code>. An icon of width 0 draws outside the flow without occupying it, which is how
@@ -612,8 +612,8 @@ formatting does. What a link <em>does</em> is up to the control holding the text
 application answers for itself, such as <code>clafi:ledger</code>. The engine never reads it, and a
 document and the clipboard carry it whole.</p>
 
-<p><strong>A link is drawn in the accent ink</strong> where no colour is written inside it, by itself
-or through its style. A colour around the link gives way to that ink, and one inside it wins, which
+<p><strong>A link is drawn in the accent ink</strong> where no color is written inside it, by itself
+or through its style. A color around the link gives way to that ink, and one inside it wins, which
 is how a link that should not look like one is written:</p>
 
 <pre><code><span class="tp">LinkText</span>{ <span class="st">L"clafi:ledger"</span>, <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Strongest, <span class="st">L"the ledger"</span> } }</code></pre>
@@ -735,10 +735,10 @@ text's code in the spot ink.</li>
 <li><strong>A look follows them</strong>: an entry for each run style stating more than its base,
 named <code>#</code> and a number. A look is no style, and reads back as the style of the runs
 naming it.</li>
-<li><strong>An ink is an ink colour and a grade</strong>: the colour is left out where it is
-<code>text</code>, and the grade where it is <code>strongest</code> and the colour is not text -
+<li><strong>An ink is an ink color and a grade</strong>: the color is left out where it is
+<code>text</code>, and the grade where it is <code>strongest</code> and the color is not text -
 <code>spot</code>, <code>accent muted</code>, <code>muted</code>, <code>strongest</code>. A grade
-between the steps is written as its share, and a colour stated outright as
+between the steps is written as its share, and a color stated outright as
 <code>#FF8800</code>.</li>
 <li><strong>An icon is <code>w,h,baseline</code></strong>. Its painter is a callable and is not
 written, so it reads back at its extent and draws nothing.</li>
@@ -817,7 +817,7 @@ spaces of the font the paragraph starts in, so in a monospace font a tab is four
 
 <pre><code><span class="kw">const</span> <span class="tp">DrawIconFunc</span> drawBullet = [](<span class="tp">DrawIconEvent</span>&amp; event) {
     <span class="tp">FloatPoint</span> center = event.<span class="fn">iconRect</span>().<span class="fn">center</span>();
-    <span class="cm">// The icon has no width, so the centre sits on the indent - shift it into the margin.</span>
+    <span class="cm">// The icon has no width, so the center sits on the indent - shift it into the margin.</span>
     center.x -= event.<span class="fn">scaleF</span>(<span class="kw">16.0f</span>);
     event.<span class="fn">canvas</span>().<span class="fn">fillCircle</span>(center, event.<span class="fn">scaleF</span>(<span class="kw">3.0f</span>),
         event.<span class="fn">accentRgb</span>(<span class="tp">InkGrade</span>::Strongest));
@@ -843,7 +843,7 @@ painter written twice draws twice, so a list of any length costs one lambda.</p>
     <div class="rule-card dos">
         <h4>Do</h4>
         <ul>
-            <li><strong>Name inks, not colours</strong>, so a run keeps its meaning through a theme change.</li>
+            <li><strong>Name inks, not colors</strong>, so a run keeps its meaning through a theme change.</li>
             <li><strong>State a look the application uses in more than one place as a style</strong> in its sheet, and name it.</li>
             <li><strong>Use <code>TabTo</code> for columns and <code>FlexSpace</code> for two ends of a line.</strong> They answer different questions.</li>
             <li><strong>Give a paragraph tag back after the line end</strong> of the line it was written for.</li>
@@ -856,7 +856,7 @@ painter written twice draws twice, so a list of any length costs one lambda.</p>
             <li><strong>Don't build a text over a sheet that goes before it.</strong> A temporary is refused at compile time; a local of the function that returns the text is not.</li>
             <li><strong>Don't wrap a style in <code>FamilyText</code> or <code>SizedText</code> to change its face.</strong> The style's own fields win; state a style based on it instead.</li>
             <li><strong>Don't keep a wrapper in a variable</strong> past the named values it holds.</li>
-            <li><strong>Don't reach for a <code>Color</code> in a control.</strong> A literal colour is right for art and wrong for interface.</li>
+            <li><strong>Don't reach for a <code>Color</code> in a control.</strong> A literal color is right for art and wrong for interface.</li>
         </ul>
     </div>
 </div>

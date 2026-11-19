@@ -80,7 +80,7 @@ A stack of rows told to fill a wider box was laid out at the width it measured a
 stood at its right, so it accepted the width and left a strip of it empty; a stack of columns told
 to fill a taller box did the same downwards.
 
-Neither of the two easier readings survives a short last lane. Normalising each lane to the length
+Neither of the two easier readings survives a short last lane. Normalizing each lane to the length
 - handing it the difference between itself and the limit - stretches a last row of two across the
 room for five. Handing every lane the same **total** is not much better: two items sharing what four
 shared above them come out half again as wide as the tracks they stand under. The per-item share
@@ -136,7 +136,7 @@ a width its text was never broken at is not a width its text fits. A theme tile 
 lost its last letter that way while the tile beside it, called "1", left half its share empty.
 
 Filling is what makes the shares show. A `ThemeTile` told to Center came out as wide as its
-**name**, and the picture inside it, drawn at a stated size and centred, was then clipped to a tile
+**name**, and the picture inside it, drawn at a stated size and centered, was then clipped to a tile
 narrower than itself: a theme called "1" showed a third of its picture and one called "123456789"
 showed all of it. Filling the share is what makes every tile the same width, and a name too long
 for it wraps under the picture instead of widening the tile.
@@ -234,7 +234,7 @@ Decided with Oj:
   FocusNavigator::enterReading does the entering, which took :Navigation into the facade's exports.
 - SeeDocs shows the new page before it deletes the old one, so the old page is hidden with the focus
   still inside it when the page control reads isFocused().
-- closeTab needed nothing: it selects the neighbour before the closing tab goes, so the switch runs
+- closeTab needed nothing: it selects the neighbor before the closing tab goes, so the switch runs
   while the closing page still holds the focus.
 
 Left as it was: BrowserControl::rebuildPage deletes the page first and builds it again through goTo,

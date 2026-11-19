@@ -11,7 +11,7 @@ namespace TextEngine_App
     // Nothing here is an image and nothing here is a control: a formula is one Text, and every
     // part of it is something the engine already does - a run raised or lowered by [sup] and
     // [sub], a family carrying the symbols, a rule or a bracket drawn into the flow as an inline
-    // object, rows lined up on tab stops, a paragraph centred.
+    // object, rows lined up on tab stops, a paragraph centered.
     //
     // **What the page has to state for itself** is the arrangement. The engine breaks lines and
     // places runs; it does not stack a numerator over a denominator, and it does not grow a

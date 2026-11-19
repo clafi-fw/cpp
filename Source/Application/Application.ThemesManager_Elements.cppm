@@ -8,7 +8,7 @@
 // Four readers share it and none keeps a list of its own: the serializers
 // build their field tuples from this table, the Themes app names its pages
 // from it, the C++ code generator names members and elements from it, and bake below
-// turns a theme into the colours the paint path reads. An element added here
+// turns a theme into the colors the paint path reads. An element added here
 // reaches all four; one added anywhere else reaches none.
 // =========================================================================
 export module ClaFi.Application.ThemesManager_Elements;
@@ -177,7 +177,7 @@ namespace ClaFi
             .codeName = L"foundText",
             .token = L"FoundText"
         },
-        // The box of a check and the ring of a radio button, with the colour each takes when on.
+        // The box of a check and the ring of a radio button, with the color each takes when on.
         UiElementDescriptor{
             .name = L"Selection Indicator",
             .codeName = L"selectionIndicator",
@@ -190,7 +190,7 @@ namespace ClaFi
             .token = L"HoverIndicator"
         },
         // **Two things in one effect**: the theme's own emphasis and the ring on the control the
-        // user is on. They are one colour on purpose - the interface says "this one" in a single
+        // user is on. They are one color on purpose - the interface says "this one" in a single
         // ink - so they are edited as one row.
         UiElementDescriptor{
             .name = L"Accent",
@@ -222,7 +222,7 @@ namespace ClaFi
         },
         // **A note set apart, one element for each kind of message** - a message bar, a notice, a
         // callout in a page of prose - each started from its kind's pigment, as the sides of a Do
-        // and Don't block are - see ControlStyle seed. Its band is drawn in its stroke colour.
+        // and Don't block are - see ControlStyle seed. Its band is drawn in its stroke color.
         UiElementDescriptor{
             .name = L"Info Callout",
             .codeName = L"infoCallout",
@@ -280,7 +280,7 @@ namespace ClaFi
     // application's.
     export [[nodiscard]] std::vector<std::wstring_view> elementNamesOf(AppElementNames);
 
-    // A style's surface at rest, walked down from the bare colour of the mode along standsOn.
+    // A style's surface at rest, walked down from the bare color of the mode along standsOn.
     export [[nodiscard]] Hsl restingSurface(const AppTheme&, std::wstring_view style, ColorMode);
     // The ink a style's text starts from, walked down the same nesting through text rules.
     export [[nodiscard]] Hsl restingInk(const AppTheme&, std::wstring_view style, ColorMode);
@@ -313,7 +313,7 @@ namespace ClaFi
             return namesHue;
         }
 
-        // The ink of the colour mode before any rule: white at the dark end, black at the light
+        // The ink of the color mode before any rule: white at the dark end, black at the light
         // one, in the hue of the bare surface - the theme's anchor.
         [[nodiscard]] Hsl bareInk(const AppTheme& theme, const ColorMode mode)
         {
@@ -325,7 +325,7 @@ namespace ClaFi
         }
 
         // Only text rules are applied on the way: what a style is painted on is a separate chain
-        // and does not reach the ink. No style is the bare ink of the colour mode, with nothing
+        // and does not reach the ink. No style is the bare ink of the color mode, with nothing
         // applied - a window root's own text rule is the first thing on the chain, exactly as its
         // surface rule is the first thing on the other one. The one thing the surface lends the
         // ink is its hue, until a text rule on the way names one - the seed PaintEvent takes.
@@ -424,7 +424,7 @@ namespace ClaFi
     }
 
     // Only resting rules are applied: nothing below the style is in a state. A style stated
-    // nowhere stands on the bare colour of the mode, as a window root does.
+    // nowhere stands on the bare color of the mode, as a window root does.
     Hsl restingSurface(const AppTheme& theme, const std::wstring_view style, const ColorMode mode)
     {
         const ControlStyle* stated = theme.styles.of(style);

@@ -485,7 +485,7 @@ namespace ClaFi::Platform::Linux
                     continue;
                 }
 
-                // Glyphs are gathered into one mask for as long as their colour and script shift
+                // Glyphs are gathered into one mask for as long as their color and script shift
                 // hold, and composited when either changes. A script stands off the baseline the
                 // line placed it on, and only where it is drawn: which line this is and whether it
                 // fades are questions about the line.

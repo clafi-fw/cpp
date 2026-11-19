@@ -70,7 +70,7 @@ and asked it where a step from below lands; Control::navigationEntry's default a
 stop in reading order whichever way the step comes, which is the header. The override states
 the layout alignContent makes: header over body. PageDown then stopped on every section header:
 the steps of a page press walk navigationNeighbor, and the default leaves the expander from its
-header. The neighbour override states the same layout for a step inside.
+header. The neighbor override states the same layout for a step inside.
 
 ## GridBase collectFieldIn
 
@@ -95,8 +95,8 @@ row is the first of the grid - is the consumer's to carry.
 ## RowBase paintSharedLinePixels
 
 **A line of odd width has a middle pixel that neither half owns.** Each cell draws its half of a
-line inside its own bounds, which is what lets a line between two differently coloured cells follow
-both colours. At an even width each half is whole pixels. At an odd one - 1 px at 100% and 125%, 3
+line inside its own bounds, which is what lets a line between two differently colored cells follow
+both colors. At an even width each half is whole pixels. At an odd one - 1 px at 100% and 125%, 3
 px at 250% - the middle pixel would be covered half by each cell, and two half coverages laid on one
 pixel come out at 75%, not 100%.
 
@@ -109,9 +109,9 @@ and its fill stands for its half.
 **Every cell gives up one pixel at its bottom and right.** The frame takes the bottom pixel of the
 last row and the right pixel of the last column inside their layout boxes, and a line takes it
 everywhere else. So GridDescriptor::cellInnerRect insets the bottom and right by the shared pixel on
-top of the halves, and the text, a hosted control and the in-place editor all centre between the
+top of the halves, and the text, a hosted control and the in-place editor all center between the
 lines a cell actually shows. The cell's own half and its highlight stop short of that pixel too, so
-the pixel a neighbour paints over afterwards is never part of a highlight.
+the pixel a neighbor paints over afterwards is never part of a highlight.
 
 **A row reaches one pixel past its edges for it.** RowBase::adjustViewPort widens the row's viewport
 by the shared pixel at the top, except on the grid's first row, which has the frame above it, and at

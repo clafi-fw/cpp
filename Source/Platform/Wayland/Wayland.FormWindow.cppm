@@ -45,7 +45,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         void paint() override;
     private:
         // **Which press of a run this is.** No display server counts them: Wayland says a button
-        // went down and nothing more, so a double and a triple click are recognised here or
+        // went down and nothing more, so a double and a triple click are recognized here or
         // nowhere. Two limits, the same two every platform uses - a time since the last press and a
         // box around it.
         [[nodiscard]] int takeClickCount(IntPoint, std::uint32_t time);
@@ -130,7 +130,7 @@ namespace ClaFi::PlatformImplementation::Wayland
             return;
         }
 
-        // **A press on the title that has travelled is a drag.** It is recognised here rather than
+        // **A press on the title that has traveled is a drag.** It is recognized here rather than
         // on the press, and against the press's own position, so the threshold measures the whole
         // gesture rather than the last step of it.
         if (m_titlePressed)
@@ -376,7 +376,7 @@ namespace ClaFi::PlatformImplementation::Wayland
         Color* target = static_cast<Color*>(frame->pixels);
 
         // **The bitmap is already premultiplied**, which is what wl_shm's ARGB means, and it is so
-        // for free: an opaque colour drawn at coverage c over a **cleared** frame leaves its colour
+        // for free: an opaque color drawn at coverage c over a **cleared** frame leaves its color
         // scaled by c and an alpha equal to c, which is the same number. So a full-strength frame
         // needs no conversion at all, whichever format it is in - what XRGB8888 and ARGB8888 name
         // on a little-endian machine is the order Graphics::Color already holds.

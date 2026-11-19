@@ -32,8 +32,8 @@ in one scene, stays in its scene: the stage, the graveyard, the plate, the lake,
 landscapes. Module names keep the kind as a suffix and leave the folder out, as Icons does:
 `ClaFi.PathArt.WolfSprite` in `Sprites/WolfSprite.cppm`.
 
-**A sprite keeps its colours in a palette of its own**, except the mill's: the mill's figures and
-weather take their colours from the theme, passed in as a struct beside the pose, since the theme
+**A sprite keeps its colors in a palette of its own**, except the mill's: the mill's figures and
+weather take their colors from the theme, passed in as a struct beside the pose, since the theme
 crossfades them. Three scenes whose palette would share a sprite's name took a `Scene` in theirs -
 `GhostSceneColors`, `CometSceneColors`, `EarthSceneColors`.
 
@@ -44,7 +44,7 @@ number of units a cycle. The satellite takes two: `orbitTime` turns its panels o
 
 The split was checked against renders taken before it: the seven scenes at 800 x 600 and 500 x
 700, eight times each, and the mill in every theme at four times. Nothing moved by more than two
-levels of a colour channel, except the pendulum in ClockworkScene - seven levels along its edge,
+levels of a color channel, except the pendulum in ClockworkScene - seven levels along its edge,
 where its swing's sum now comes out in another order.
 
 **Each scene states its own cycle.** All of them run at 40 seconds except OrreryScene and
@@ -92,7 +92,7 @@ Earth's coastlines as it went), Oj picked the static. storeView and restoreView 
 showcase restores in its constructor and stores on the form's close, as BrowserControl does.
 
 **A scene states its own choices** (Oj, 2026-11-09, "Add a direction selector to the options"; the
-Earth's turn, labelled Eastward and Westward). Of choices on Scene kept by the scene in its view's
+Earth's turn, labeled Eastward and Westward). Of choices on Scene kept by the scene in its view's
 section, the same choices kept by the showcase under a section of its own, and a turn property on
 EarthScene alone that the showcase would name, Oj picked the first. SceneChoice is a name and a span
 of option names; the host builds a picker per choice the way it builds the look's, previews an
@@ -235,21 +235,21 @@ line the click's form is the menu's. requestClose leaves the window up where rea
 **Every scene draws its own icon** (Oj, 2026-11-09, "Make the scene buttons big tiles with top
 icons, in rows"). Of a still of each scene, the scene's own sprite and eight new line pictograms,
 mocked up from the scene code, Oj picked the sprite. drawIcon is a pure virtual on Scene rather
-than a painter table in the showcase, because the colours a figure is drawn in - the Chase coats,
+than a painter table in the showcase, because the colors a figure is drawn in - the Chase coats,
 the clockwork's metals - belong to the scene.
 
 - **Framing.** Each figure was posed in the mockup harness and its extent measured where alpha
-  passes 10 of 255. The pose is written about the centre of that extent, and SceneFrame::Spanning
+  passes 10 of 255. The pose is written about the center of that extent, and SceneFrame::Spanning
   is given its longer side, so the figure fills the shorter side of any bounds. At 48 pixels most
   figures read as specks, so the showcase draws them in a 64-high slot.
 - **Clips.** Where the mockup's square cut a part, the code clips at bounds: the mill's reflection
   and wing tips, Bot Talent's android below its waist, the Earth's glow. The ghost's and the
   comet's glows spill a few levels of alpha past bounds (3 to 9 of 255), unclipped.
 - **The mill wears Clear Day.** In the theme it is picked in - Calm Night with no pick stored -
-  the house is a dark grey that reads as nothing on a tile, and a tile is not repainted while a
+  the house is a dark gray that reads as nothing on a tile, and a tile is not repainted while a
   theme is previewed. millColorsOf builds MillColors for draw and drawIcon alike.
-- **Shared colours.** The clockwork's four metals moved out of draw into the file's anonymous
-  namespace, and Saturn's colour into OrreryColors, so the icons draw with the scenes' own.
+- **Shared colors.** The clockwork's four metals moved out of draw into the file's anonymous
+  namespace, and Saturn's color into OrreryColors, so the icons draw with the scenes' own.
 - **Checked.** The icons match the mockup's; every scene's frames are bit-identical to before (the
   eight scenes at eight times each, 256 x 160).
 
@@ -327,7 +327,7 @@ box has no hover preview: a click turns the switch, and the readings start again
 its one switch in a view section of its own under OrbitsShown - a name without the space, unchecked
 whether the config's names may hold one - and draws its orbit layers only while it is on.
 
-**Each scene states its readout colours** (Oj, 2026-11-10, "Each scene states its own redout
+**Each scene states its readout colors** (Oj, 2026-11-10, "Each scene states its own redout
 colors"). Mockups first: each scene with its readout over the top right, against Calm Night's river
 pair that every scene wore, and two pairs from its own palette - a dark field and a light series,
 after the mill's pattern - with a second sheet asking whether the text belongs with them, the app's
@@ -637,7 +637,7 @@ and juggles on into the curtain. The wild throw must leave the left hand, since 
 restart on schedule only after an even throw.
 
 **The other two balls are held through the lunge.** The cascade places a ball in flight about the
-upper body, so a ball thrown while the body moved 62 units would have travelled with it. Which ball
+upper body, so a ball thrown while the body moved 62 units would have traveled with it. Which ball
 each hand holds is chosen so the restart keeps the schedule: the kick stands for the wild ball's
 throw 24, the right hand throws its ball as throw 25 and the left as throw 26. The wild ball itself
 is placed in the frame, each of its flights at the cascade's gravity between the poses at its two
@@ -792,7 +792,7 @@ randomly overlapping". The edge is four waves of 2, 3, 5 and 9 round an ellipse,
 for each lump; the soft edge is the Shadow layer, the outline 0.8 of the size so the fade keeps the
 cloud about as large. Lumps are filled one by one, so an overlap shows brighter rather than one
 fill covering them all. 45 percent of the clusters carry a companion, 15 percent two. Each
-lump takes 0.35 to 1.45 of the cloud colour's opacity, on Oj's "randomize their opacity too": some
+lump takes 0.35 to 1.45 of the cloud color's opacity, on Oj's "randomize their opacity too": some
 read as wisps, some as dense. At 3436 x 2051 on the CPU backend the clouds cost about 4 ms a frame
 more than the three ellipses did, after rasterizeGlowMask's rows were narrowed - see Graphics-Types.
 
@@ -800,7 +800,7 @@ more than the three ellipses did, after rasterizeGlowMask's rows were narrowed -
 edges: "There are visible sharp atmosphere edges". Rendered against them were the three rings soft,
 one wide haze with a soft line, and soft hazes with the line kept sharp; Oj picked the three soft.
 Each ring is an OuterGlow with the limb's gradient as its brush, reaching 0.02, 0.005 and 0.016 of
-the radius at 0.3, 1 and 0.34 of the colour's opacity. The line is centred at 1.001 of the radius;
+the radius at 0.3, 1 and 0.34 of the color's opacity. The line is centered at 1.001 of the radius;
 at the strokes' 1.003 its glow left a dark gap between it and the ocean. With the glow's mask kept
 in runs - see Graphics-Types - the rings cost what the strokes did, about 3 ms at 3436 x 2051.
 
@@ -821,9 +821,9 @@ against it, as 20 seconds of the limb: no far side, where a lump narrows into th
 and a fade toward the limb, light and strong. Oj picked the light fade, and the far side went with
 it, being behind the rim and so faded out whole.
 
-Each lump's colour was mixed with the night's stop by that stop's opacity, at the lump's own
+Each lump's color was mixed with the night's stop by that stop's opacity, at the lump's own
 opacity, which leaves the pixels the night laid over the lump would; a lump wholly on one side of
-the night's gradient takes that side's colour solid, the rest a gradient. With the clouds raised and
+the night's gradient takes that side's color solid, the rest a gradient. With the clouds raised and
 the atmosphere soft, a frame at 3436 x 2051 on the CPU backend went from 22.8 to 23.6 ms, measured
 in one run against the frame before either.
 
@@ -832,7 +832,7 @@ and more widespread and translucent, with layers rotation slightly differ by ang
 them all on top of each other", each worked "in a separate thread", and for mockups first. The
 mockups drew maps of value noise sampled on the sphere, in Python; Oj picked variant A: puffy heaps
 at 0.6 percent of the radius, a patchy sheet at 1.1 on an axis leaning 5 degrees, streaks at 1.8
-leaning -6, at 0.9, 0.55 and 0.45 of the cloud colour's opacity, with that opacity raised 2.2 times
+leaning -6, at 0.9, 0.55 and 0.45 of the cloud color's opacity, with that opacity raised 2.2 times
 (0x5C to 0xCA). The recipes in CloudMap are the mockups' own, seeds 11, 21 and 31, covers 0.32,
 0.45 and 0.30, each cut at the quantile of its noise.
 
@@ -865,7 +865,7 @@ carries a unique_ptr.
 from the radius, the layer's axis tip undone, then longitude and latitude by two arctangents. The
 plain C++ cost 78 ns a pixel for the three layers - 34 ms of a 1600 x 900 frame on the container's
 2 cores, against 5.6 for the rest of the scene. Written for AVX2, eight pixels at a time, with the
-map's texel and its right neighbour read in one 4-byte gather (each row keeps its first texel again
+map's texel and its right neighbor read in one 4-byte gather (each row keeps its first texel again
 at its end), it came out within one level of the plain version. At 3436 x 2051 under a scale of 2.5
 it still took 18.7 ms on 2 cores, so from a scale of 2 the layers are worked out at every other
 pixel and row. Blending the finished alpha between those points cost 6.7 ms but left the two-tone
@@ -933,7 +933,7 @@ Scene says so yet.
 
 **The land is worked out per pixel** (2026-11-08). Oj: "Make land more detailed. Like mountain
 ranges". Four looks were rendered from the scene ("Satellite land - four looks.png" and two more
-sheets in Claude Output\MillScene Scenes): relief over the flat colours, relief with land cover,
+sheets in Claude Output\MillScene Scenes): relief over the flat colors, relief with land cover,
 stylized terraces, and terraces with flat zones. Oj picked "B+D": the second for Realistic, the
 fourth for Stylized.
 
@@ -942,10 +942,10 @@ fourth for Stylized.
   2048 by 512. A slope is kept as the square root of its share of the steepest, 200 per radian -
   the steepest built is 149 - so a gentle slope keeps its grain. On the container's 2 cores the
   maps build in 1.9 s, and readLand takes 7.3 ns a point on one core.
-- The colour is worked out at the points and spread between them. The stylized bands and tones of
+- The color is worked out at the points and spread between them. The stylized bands and tones of
   slope are cut at each pixel from the spread height and light, so their edges stay sharp; 8 pixels
   no band or tone reaches pass them over, and points no covered pixel reads are not worked out.
-  Working the colour out at every pixel had cost 12 ms of processor time a frame at 1600 x 900.
+  Working the color out at every pixel had cost 12 ms of processor time a frame at 1600 x 900.
 - The coasts went first through a pushClip of the coastlines, the CPU clip mask read back into the
   pixels. That took 4.5 to 5 ms of the paint thread at 3436 x 2051 - about what the flat fill it
   replaced took - and left Direct2D to cut the bands itself. Each band now works out the
@@ -1004,7 +1004,7 @@ whole step - 4 pixels there - as the Earth turned.
   toward the limb.
 - The zones are cut at the pixel only where the points about 8 pixels do not all lie whole in the
   same zones. Each point keeps a key of the zones it lies in, -1 on an edge; comparing the three
-  colour channels instead cost 2 ms at 3436 x 2051.
+  color channels instead cost 2 ms at 3436 x 2051.
 - A pixel reads the point after its own across and the row of points below, so a point is marked
   needed from a whole step before it. At a step of 1 the row below gives the change down, and a
   band works out one more row of points there.
@@ -1112,7 +1112,7 @@ of a coast; with 1200 towns a view of Europe holds about 60, too few to trace a 
   0.60 to 0.65 ms; 3436 x 2051, 0.41 and 0.94 to 1.02. Turning each town from its longitude and
   latitude, as the mockup did, cost 0.3 ms more; the rest is drawing the lights in view.
 
-**In the shadow the craft keeps 35 percent of its daylight colour**, and the panels' backs carry
+**In the shadow the craft keeps 35 percent of its daylight color**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the
 Sun, so through the shadow they show their backs, which were one flat gray (Oj, 2026-11-07, "one
 solid gray"). The stars keep 65 percent of their night brightness by day; at 15, as a camera
@@ -1131,7 +1131,7 @@ before.
   held at no less than 0.1, as that outline reaches the pole. The towns are tried from 56 south, on
   a grid to 58 south. Map: 53.4 MB against 26.7, 3.8 s against 1.9 on the container's 2 cores, about
   7 s of processor time. Outlines: 16.5 ms against 13.
-- The orbit is modelled among the stars: the satellite at (0, sin u, cos u), the orbit's axis along
+- The orbit is modeled among the stars: the satellite at (0, sin u, cos u), the orbit's axis along
   x, the frame's across, up and toward worked out from u and the 36 degrees the view looks back,
   then turned into the spin, tip and tilt the per-pixel code already took. The Sun stands at 35
   degrees round from the equator crossing and 10 north. Its direction is handed over in the untilted
@@ -1182,9 +1182,9 @@ and move".
   gradient, and the city lights the sunlight on each town. At the lowest view a dusk with the Sun
   behind the Earth turned darker toward the frame's sides, where the straight line had lit the land:
   shown to Oj side by side, "It's alright".
-- The atmosphere was coloured by the limb point above each x across the frame. On the limb the
+- The atmosphere was colored by the limb point above each x across the frame. On the limb the
   sunlight is linear in the screen's position - the limb faces square to the view - so one gradient
-  along the Sun's way across the screen colours the whole ring exactly, 41 stops from one side to
+  along the Sun's way across the screen colors the whole ring exactly, 41 stops from one side to
   the other.
 - The stylized snow edge was held at no less than 0.12 and the bands passed over below 0.08. The
   floor never mattered in the north, where the snowline stays above 0.19, but it left Antarctica's
@@ -1200,9 +1200,9 @@ and move".
   live. With the whole globe in view, 7.4 and 26.
 
 **The clouds at night are moonlit** (Oj, 2026-11-08, "Make the clouds at night brighter"). Deep in
-the night they kept a tenth of their colour, the rest the night's near black, so they all but
-vanished. Of the options rendered at five views - a third of their colour (A), half (B), and A's
-brightness drawn toward a blue-grey (C) - Oj picked C: each night stop's colour is drawn toward
+the night they kept a tenth of their color, the rest the night's near black, so they all but
+vanished. Of the options rendered at five views - a third of their color (A), half (B), and A's
+brightness drawn toward a blue-gray (C) - Oj picked C: each night stop's color is drawn toward
 MoonlitCloud by the night's own opacity before it is mixed into the clouds', so deep in the night a
 cloud stands at about (88, 100, 124). The picked renders and the code's match pixel for pixel.
 
@@ -1211,12 +1211,12 @@ from real bathymetry. The sea had been one gradient from the haze at the limb to
 which stays until the map is built.
 
 - The data is Natural Earth's 1:10m bathymetry: of its twelve layers, the contours at 200, 1000,
-  2000, 4000, 6000 and 8000 metres. Each layer is unioned, simplified by 0.12 to 0.3 degrees, rid of
+  2000, 4000, 6000 and 8000 meters. Each layer is unioned, simplified by 0.12 to 0.3 degrees, rid of
   rings under 0.05 to 0.5 square degrees and rounded to tenths of a degree as int16: 1003 rings and
   25,668 points. The data file grows from 76 KB of source to 413 KB, and the binary by about 140 KB
   with the code. Oj kept that detail over a coarser half.
 - The levels are rasterized into the cover's 2048 by 1024 by where the rings' edges cross each row
-  of texel centres, each texel taking the deepest level that holds it, counted evenly from 0 to 1,
+  of texel centers, each texel taking the deepest level that holds it, counted evenly from 0 to 1,
   and blurred by three box passes of 5 texels. The depth rides in the cover's fourth byte, which was
   unused, so the map's memory stays at 53.4 MB; the build takes 3.77 to 3.85 s against 3.73 to 3.83
   on the container's 2 cores.
@@ -1226,7 +1226,7 @@ which stays until the map is built.
   as far over the ground as up - 2 texels over the cosine of the latitude, up to half the row -
   sliding along the row; there it varies by 3 percent, and the spokes are gone.
 - The sea pass reads the depths at points twice as far apart as the land's and spreads them per
-  pixel. Realistic looks the colour up in 256 shades between six colours; the haze toward the limb
+  pixel. Realistic looks the color up in 256 shades between six colors; the haze toward the limb
   repeats the old gradient's, from 0.55 of the radius out. The stylized look cut its five tones in a
   table as well, each edge 0.01 wide; after the mockup, the edges took the land's rule, softened by
   k_edgeSoftening of what the depth changes over the pixel, so they do not step from pixel to pixel
@@ -1242,24 +1242,24 @@ getting washed out as you zoom in?" The sea alone paled toward the limb's blue f
 globe's radius out, the old gradient ocean's haze carried over into the sea's depth. Low down the
 frame shows only the globe's outer ring - the bottom of a 16:9 frame at the lowest view lies at 0.73
 of the radius, of his 2354 x 1898 frame at 0.61 - so the whole sea was about half veiled, beside
-land with no haze. At the lowest view the sea's mean colour measured (62, 126, 195) at a saturation
+land with no haze. At the lowest view the sea's mean color measured (62, 126, 195) at a saturation
 of 0.68, and (34, 84, 147) at 0.78 with the haze off. Shown a haze by the air looked through on the
 sea alone, and no haze on the sea, Oj: "What I don't like is the "sea alone" part. Any applied hazes
 should base on Relief number not on a name".
 
 - The haze is one function of the air looked through past the air straight down, 1 over the facing
   less 1, times the air left above the height, e to the minus 1.1 times it, taken as 1 / (1 + x +
-  x^2/2 + x^3/6). It veils a share x / (x + 7) toward the haze's colour, the old limb blue. The land
-  takes it per point, from the facing and the height its look draws, and spreads it with the colour;
+  x^2/2 + x^3/6). It veils a share x / (x + 7) toward the haze's color, the old limb blue. The land
+  takes it per point, from the facing and the height its look draws, and spreads it with the color;
   the sea per pixel, at height 0. Air thinning as at a scale height of 8 km puts a third of it over
   the Himalaya's crest at 8.8 km.
 - The clouds keep their fade at the limb by how far they face the viewer, which hides the shells'
-  rim; they take no haze colour. The gradient drawn before the map is built keeps its own haze from
+  rim; they take no haze color. The gradient drawn before the map is built keeps its own haze from
   the limb.
 - Frames at 2560 x 1440 on the container, before against now: 27.8 and 28.4 ms against 29.5 and 28.3
   at the lowest view, 30.5 and 34.0 against 34.0 and 31.3 halfway, 35.5 and 32.5 against 31.2 and
   31.9 with the whole globe - within the noise.
-- Greener shelf colours were rendered the same evening, from a touch of green to teal; no pick, and
+- Greener shelf colors were rendered the same evening, from a touch of green to teal; no pick, and
   the shelf keeps its blue.
 
 **The realistic shelves are as light as the land** (2026-11-08). With the haze no longer paling the
@@ -1274,7 +1274,7 @@ shelf's luma is about 90. The stylized look keeps its light, map-like shelves.
 screenshot of a coast where forest gives way to grassland: "Here's the opposite, at the right half
 of the coastline the land is glowing". Measured on it, the grass by the coast stood at a luma of
 about 135 against about 85 for the sea beside it and 88 for the forest; there was no light fringe at
-the coast, only the colour. Grass was luma 128 and GrassLight 141, about as light as the old shelf
+the coast, only the color. Grass was luma 128 and GrassLight 141, about as light as the old shelf
 blue. Of a step darker and darker still, near the forest, Oj picked the step: Grass 0x507B38 (luma
 109), GrassLight 0x61853F (121), Steppe 0x929355. The forest, the tundra, the sand, the rock and the
 snow are as they were.
@@ -1282,19 +1282,19 @@ snow are as they were.
 **The realistic desert is a step darker** (2026-11-09). Oj, with a screenshot of Baja California and
 its gulf: "Calm down that land". Measured on it, the desert stood at a luma of 157 to 170 against 93
 for the gulf's shallow water and about 107 for the green land; Sand was luma 169 and SandLight 194.
-Of a step darker, two steps, and two steps greyer, Oj picked the step: Sand 0xAB8D5C (luma 144),
-SandLight 0xBBA377 (165). The steppe keeps the colour it took with the grassland.
+Of a step darker, two steps, and two steps grayer, Oj picked the step: Sand 0xAB8D5C (luma 144),
+SandLight 0xBBA377 (165). The steppe keeps the color it took with the grassland.
 
 **The land and the sea are moonlit at night** (2026-11-09). Oj: "brighter water and land colors at
-night". Deep in the night the ground kept a tenth of its colour under the night's near black. Shown
+night". Deep in the night the ground kept a tenth of its color under the night's near black. Shown
 a quarter of it, two fifths, and a quarter drawn toward a moonlit blue, Oj: "mock moonlight with and
-without a shares of a quarter - a quarter", read as a quarter of the ground's colour without
+without a shares of a quarter - a quarter", read as a quarter of the ground's color without
 moonlight and with a quarter of moonlight; then "with moonlight but darker that with a quarter", a
 sixth and an eighth of moonlight; "Darker still", the ground and the moonlight lowered together;
 "less ground", the moonlight held at an eighth and the ground at a sixth, an eighth or a tenth. Oj
 picked a tenth: the ground's share is as it was, and each stop of the night over the ground is drawn
 toward the moonlight by 0.125 / 0.9, so deep in the night, at 0.9 of opacity, the moonlight is an
-eighth of the view. The moonlight is the colour the night clouds already take, renamed from
+eighth of the view. The moonlight is the color the night clouds already take, renamed from
 MoonlitCloud to Moonlight; the clouds are unchanged, and the stylized look takes the same night.
 
 **The globe holds still while the viewer has it** (2026-11-09). Oj picked 5 seconds after the last
@@ -1316,7 +1316,7 @@ hold" and calls holdView on its drags as the panel does.
 
 **The scene is the Earth** (Oj, 2026-11-09, "Rename Satellite to Earth, make realistic by default,
 swap settings buttons to radiobuttons"). Oj picked the rename everywhere - the shown name, the
-class, the files, the module, the project's items, the colours' namespace and the footnote's section
+class, the files, the module, the project's items, the colors' namespace and the footnote's section
 - with the craft still the satellite: SatelliteSprite, drawSatellite and the satellite in the scene
 keep their names. The showcase picks Realistic when no pick is kept. Of the pickers on the Scene
 page, only the look became radio buttons; Oj: "Only Look - Scenes will turn into tiles later".
@@ -1324,7 +1324,7 @@ page, only the look became radio buttons; Oj: "Only Look - Scenes will turn into
 **The lower two layers of cloud stand higher** (Oj, 2026-11-09, "there are 3 layers of clouds -
 elevate the lowest two"). They stood 0.6 and 1.1 hundredths of the radius up, under the drawn
 Himalaya's 1.4. The globe is drawn as from far away, so a layer's height only moves it out from the
-centre by its height times the distance: raised to 1.3 and 1.55, the clouds moved about 5 pixels at
+center by its height times the distance: raised to 1.3 and 1.55, the clouds moved about 5 pixels at
 the lowest view in 960 x 540, and fewer than a tenth of the pixels changed. Of evenly spaced (1.0,
 1.4, 1.8) and both above the ranges (1.3, 1.55), Oj picked the evenly spaced, worried that the
 artifacts the rim fade answers might come back. They do not: each layer fades by how far its own
@@ -1363,7 +1363,7 @@ the same, and the frames are bit for bit B's.
 
 **The view starts four notches up, and is kept across runs** (Oj, 2026-11-09, with a screenshot at
 3836 x 1971: "Make this zoom default. Remember zoom, position and orbit"). The screenshot's limb,
-fitted as a circle through 29 points, stands at centre 1700, 2850 with radius 2261, against 1688,
+fitted as a circle through 29 points, stands at center 1700, 2850 with radius 2261, against 1688,
 2814 and 2215 at altitude 0.4 - the atmosphere's glow widens the fitted one - and the satellite's
 place, 0.73 and 0.21 of the frame, is 0.4's within its hover; View::altitude starts there.
 
@@ -1600,7 +1600,7 @@ lights in both looks in place of the towns' dots.
   Europe at noon 47.0 became 51.8. At 2560 x 1440 the same views went from 24.7 to 39.5, 18.9 to
   33.9, 27.6 to 32.8 and 24.0 to 28.4.
 - Of the 33 ms more over Europe at 3436 x 2051, the tiny lights take about 24, working out the
-  ground under each pixel and laying the colours about 6, and the glow about 2. By day each row is
+  ground under each pixel and laying the colors about 6, and the glow about 2. By day each row is
   still worked out to find where the night falls, which is the 5 ms at noon.
 - **The first build in the tree took 97 ms over that view of Europe.** It came down to 80 by reading
   the glow at every 4th pixel and row from its own query, reading the lights only where the land
@@ -1632,11 +1632,11 @@ weaker for lighter tones: "btw there's the same issue in Earth with the night An
 whether the clouds should follow, "they should - but they already have their own routine, and the
 overall strength may increase - the previous value was chosen so to not dark antarctica so much").
 The night's shades were laid over the ground as they were, so Antarctica's ice kept a tenth of its
-white, as dark land did, and went grey. rasterizeNightBand reads the band's ground under each pixel,
+white, as dark land did, and went gray. rasterizeNightBand reads the band's ground under each pixel,
 the sea and the land as laid so far, and nightOverGround weighs the night's opacity by the ground's
 luma, from k_nightOverBlack, 1.16, of its own over black to k_nightOverWhite, 0.82, over white,
 never past whole. Deep in the night, at 0.9, black ground is hidden whole, the realistic sea at a
-luma of about 0.2 keeps 2 percent of its colour, the green land at 0.34 keeps 6, and the ice at 0.97
+luma of about 0.2 keeps 2 percent of its color, the green land at 0.34 keeps 6, and the ice at 0.97
 about a quarter, as light as the moonlit clouds over it. Over a pixel the ground covers in part, the
 night keeps that much more of its own opacity. The clouds keep cloudShades, and the towns' lights,
 which give light, are laid after the night as before.
@@ -1650,8 +1650,8 @@ Then (Oj, 15:41) "Make the Earth night darker". Shown, in both looks, the moonli
 0.55 and 0.4 of its Okhsl lightness with the deep night at 0.92, 0.94 and 0.96 of opacity; Oj picked
 the darkest. Moonlight is 1A202E, where it was 46536E, and the night's last stop 0.96, where it was
 0.9. k_moonlitShareOfNight keeps 0.125 / 0.9, so deep in the night the moonlight is 0.13 of the
-view, of a dimmer colour; the clouds, drawn toward the moonlight by the night's opacity, go to a
-dark blue-grey; ice, under k_nightOverWhite's 0.82 of 0.96, keeps a fifth of its white, where it
+view, of a dimmer color; the clouds, drawn toward the moonlight by the night's opacity, go to a
+dark blue-gray; ice, under k_nightOverWhite's 0.82 of 0.96, keeps a fifth of its white, where it
 kept a quarter. The towns' lights are laid after the night and keep their strength.
 
 ## ChaseScene
@@ -1704,8 +1704,8 @@ The snap at his closest opens the same jaws (Oj, "The snap too"): from 0.286 of 
 part on her tail, and shut from 0.297 to 0.2995, as the lunge ends.
 
 **The hills stand back** (Oj, 2026-11-09, "Make the layer before mountains duller", then C of
-three renders - greyed, hazed a third of the way, hazed past halfway): the hills and their trees
-are their greens taken 0.55 of the way to MountainFoot. Their trees have colours of their own, so
+three renders - grayed, hazed a third of the way, hazed past halfway): the hills and their trees
+are their greens taken 0.55 of the way to MountainFoot. Their trees have colors of their own, so
 the big tree of the second episode keeps its greens.
 
 **The first episode's obstacle** (Oj, 2026-11-09: "Cycle between a few first run obstacles - a
@@ -1723,7 +1723,7 @@ to the left at 160 units a second (k_hedgehogWalk), its feet pattering every 9 u
 Then (Oj, "a rubber duck which deflates on the wolf's impact, a ball that only rolls off a little
 after the collision") two more turns. The duck deflates from just before the trip to 0.02 after
 it: it is drawn scaled 1.2 wide and 0.38 high at the end, about where it meets the trail, its head
-drooping 0.5 rad, and three streaks of air behind it at 4 d (1 - d) of their colour. A first try
+drooping 0.5 rad, and three streaks of air behind it at 4 d (1 - d) of their color. A first try
 took the streaks' strength from a bell, which never reaches 0 and left them showing at rest. The
 ball rolls k_ballRoll (40 units) in 0.05 of the episode, easing out, turned through the distance
 over its radius; the roll is folded into its place on the trail as the hedgehog's walk is.
@@ -1741,7 +1741,7 @@ confirmed as three runs a cycle). The cycle is 60 seconds (k_cycle, cycleDuratio
 episodes; k_branchEpisode is the last. The camera stops are k_tripStop and k_branchStop, chosen by
 the episode; travelAt adds the earlier episodes' shares and periodNear the whole cycle's, so every
 layer's period moved a little and the landscape is no longer the 40-second one. The runs before the
-tree take k_trailObstacles in turn by cyclesPassed x 2 + episode. The log, its colours and drawLog
+tree take k_trailObstacles in turn by cyclesPassed x 2 + episode. The log, its colors and drawLog
 are gone; its dark brown stays as Bough, for the branch.
 
 The banana peel flies 70 units ahead over 0.045 of the episode, easing out, up a parabola of 60
@@ -1985,10 +1985,10 @@ the bit as before. The two couples close at twice the running speed, so at 1920 
 hare is in view 0.8 s before the wolves meet and her wolf 0.6 s; offered to slow them, Oj kept it.
 What stands by the path stirs only for our two.
 
-Then (Oj) "Give them different coats": of a black wolf with a grey hare, a brown wolf with a white
-hare and a rust wolf with a dark brown hare, he took the black and the grey. WolfSprite and
+Then (Oj) "Give them different coats": of a black wolf with a gray hare, a brown wolf with a white
+hare and a rust wolf with a dark brown hare, he took the black and the gray. WolfSprite and
 HareSprite take their fur as a WolfCoat and a HareCoat, as ReedsSprite takes ReedColors, and
-ChaseCoats holds the grey wolf and brown hare that were the sprites' own colours beside the two new
+ChaseCoats holds the gray wolf and brown hare that were the sprites' own colors beside the two new
 coats.
 
 Then (Oj, 20:29) "slightly shift other couple timings after the collide". Their poses are worked out
@@ -2079,25 +2079,25 @@ place it is still within reach of. Over the first 1,000 cycles no near place sta
 of a far one or within 700 of a stand. Frame time at 1920 x 1080 is the same within noise.
 
 Then (Oj, 22:22) "the side objects shadows are black". The shadow helper in drawRoadside and the
-toadstool cap's shadow called withOpacity on ChaseColors::Shadow, which sets a colour's alpha rather
+toadstool cap's shadow called withOpacity on ChaseColors::Shadow, which sets a color's alpha rather
 than scaling it, so the shadow's own 0x47 became 0xFF and the shadows of the apple, the banana peel,
 the signpost, the toadstool, the tree stump, the bird, the snail and the crow's stump were the
-shadow colour at full strength. They take faded, which scales the colour's own alpha, and match the
+shadow color at full strength. They take faded, which scales the color's own alpha, and match the
 shadows the hare and the wolf cast. ChaseColors::Puff, 0xB3, goes through withOpacity the same way
 for the duck's air streaks.
 
 **The mill's themes** (Oj, 2026-11-10 01:18: "I can easily see how Chase and Mill can share themes",
 01:26: "1. shared" - one pick for both). Whether the figures should take the theme's light was left
-to mockups: Chase in five themes, its world from the theme, the figures once in daylight colours and
+to mockups: Chase in five themes, its world from the theme, the figures once in daylight colors and
 once darkened as far as the meadow is darker than in daylight. Oj: "They both seem OK to me".
 Daylight was recommended and taken: in the theme's light Cyberpunk Night turned the hare red and the
 wolf purple, and Calm Night made both dark silhouettes.
 
-ChaseColors' world colours became ChaseWorldColors, rebuilt every frame from the worn theme by
+ChaseColors' world colors became ChaseWorldColors, rebuilt every frame from the worn theme by
 worldColorsOf, with k_daylightWorld the old values. The trail by a per-channel ratio came out purple
 at night and pink on snow, so it is scaled by brightness instead: the square root of the meadow's
 brightness over daylight's grassTop, held between 0.25 and 1.15, then 0.35 toward the meadow. The
-mockup measured against Fresh Spring's hillTop. Several themes' shadow colour is opaque black, so
+mockup measured against Fresh Spring's hillTop. Several themes' shadow color is opaque black, so
 the Chase keeps its own 0x47.
 
 Bark, leaves and stems are the world's on the tree a run ends at, on the meadow and on the daisy,
@@ -2120,64 +2120,64 @@ the hills do, keeping their own alpha.
 
 **Theme tables** (Oj, 2026-11-10 14:48: "themes should be merged into a simple color tables, with
 all lacking colors added, and primary and secondary objects color carefully chosen to match the
-theme and have enough contrast"). Picked: figures and props, each with its own colours per theme;
+theme and have enough contrast"). Picked: figures and props, each with its own colors per theme;
 named fields. Contrast was picked as 3:1 and 2:1 luminance ratios, then (15:03) "use color
 difference": the daylight Chase separates by hue - the brown hare stood 1.07:1 against the far
-hills, the grey wolf 1.48:1 - and the ratios turned the daylight wolf charcoal and the daisies grey.
+hills, the gray wolf 1.48:1 - and the ratios turned the daylight wolf charcoal and the daisies gray.
 The thresholds, 0.15 and 0.10 in OKLab, sit just above the daylight wolf's 0.117 and hare's 0.123.
 
 The tables were written by a generator (Claude Output\MillScene Scenes\Chase Themes\generator): the
 world as worldColorsOf derived it, with the trail and pebbles washed out as far as the theme lacks
-colour (Vintage Noir's trail was brown); each object lit by the theme (linear light times the root
+color (Vintage Noir's trail was brown); each object lit by the theme (linear light times the root
 of the theme sky's luminance against daylight's, at least 0.3), its chroma scaled by the theme's own
-colourfulness and by the light, tinted 0.3 of the sky's shift from daylight, capped at 0.08; then
+colorfulness and by the light, tinted 0.3 of the sky's shift from daylight, capped at 0.08; then
 one lightness shift for the whole object, the smallest that reaches its threshold against its
-backgrounds, each key colour kept between 0.55 of its daylight lightness and 0.3 above it. Without
-the lower bound the grey wolf went black in Winter Night and Twilight. Backgrounds: the meadow and
+backgrounds, each key color kept between 0.55 of its daylight lightness and 0.3 above it. Without
+the lower bound the gray wolf went black in Winter Night and Twilight. Backgrounds: the meadow and
 the far hills for the runners, the mountains for the wolves too (Oj, 15:18: "in Cyberpunk Night the
 wolf's ears are lost against the mountains"); the trail for what lies on it; the meadow, grass and
 far hills for the verge; hills, mountains and sky for what flies. The trail behind the runners
 forced near-white figures at night and was left out.
 
 Short where the theme leaves no room: Winter Night's black wolf at 0.07, between dark mountains and
-lighter hills; Underwater Realm's grey wolf at 0.149; Desert Dusk's hares at 0.11.
+lighter hills; Underwater Realm's gray wolf at 0.149; Desert Dusk's hares at 0.11.
 
 The mill's cow, mill and peeking wolf were measured on renders: each drawn once in magenta for its
 outline, every pixel just outside it paired with the nearest one inside, and the 15th percentile of
-their colour difference taken. 37 of them moved, among them a grey cow in Winter Frost, Golden Hour
+their color difference taken. 37 of them moved, among them a gray cow in Winter Frost, Golden Hour
 and Paper Sketch where the white one stood on light ground, a lighter mill in the night themes, and
-Lunar Eclipse's peeking wolf, which was the tree's own colour. Vintage Noir's mill stays at 0.055,
-grey on grey.
+Lunar Eclipse's peeking wolf, which was the tree's own color. Vintage Noir's mill stays at 0.055,
+gray on gray.
 
 Then (Oj, 15:57) "Yellow objects, like banana and rubber duck should keep read as yellow, the apple
 core and beach ball be lighter at night". At night the peel and the duck had gone olive and brown,
-the ball and the apple's flesh dull grey. The peel, the duck, the ball's yellow and the flowers'
+the ball and the apple's flesh dull gray. The peel, the duck, the ball's yellow and the flowers'
 hearts take at least 0.8 of the light, keep their chroma whatever the light and take half the sky's
-tint; the ball takes at least 0.65 and the apple's flesh 0.7. Vintage Noir has no colour to keep, so
-its yellows are light greys.
+tint; the ball takes at least 0.65 and the apple's flesh 0.7. Vintage Noir has no color to keep, so
+its yellows are light grays.
 
 Then (Oj, 16:04) "move other effects onto the hills layer". The rain, snow, leaves or petals and
 dust fell over the whole frame, in front of the runners. They are drawn now with the fireflies, in
 each tile of the far hills, at 0.6 size, falling from the top of the frame to the ground line, which
 the meadow then covers. Faded toward the mountains like the fireflies, the snow and rain vanished
-against the sky, so they keep the theme's effect colours. drawWeather takes a Weather - the five
-strengths and two colours - which weatherOf reads from a theme; the mill draws weatherOf(theme()) as
+against the sky, so they keep the theme's effect colors. drawWeather takes a Weather - the five
+strengths and two colors - which weatherOf reads from a theme; the mill draws weatherOf(theme()) as
 before, the same to the byte.
 
 Then (Oj, 16:13) "fade too". Weather gained an opacity over its five strengths, 1 unless set; the
-Chase sets 0.45, the share of their colour the hills keep, so the weather fades against the sky and
-the hills alike. Its colour difference from what is behind it now runs from 0.05 (Arctic Dawn's
+Chase sets 0.45, the share of their color the hills keep, so the weather fades against the sky and
+the hills alike. Its color difference from what is behind it now runs from 0.05 (Arctic Dawn's
 snow) to 0.28 (Vintage Noir's dust); 0.6 was tried as well. The mill is the same to the byte.
 Then (Oj, 16:23) "go" on 0.6, which puts the difference at 0.067 (Arctic Dawn's snow) to 0.37
 (Vintage Noir's dust).
 
 Then (Oj, 16:28) "the big flower petals and the apples should stay brighter at night". At night the
-daisy's petals had gone mid grey and the apples maroon. The petals take at least 0.8 of the light,
+daisy's petals had gone mid gray and the apples maroon. The petals take at least 0.8 of the light,
 as their hearts do, and the whole apple - skin, seeds and leaf - 0.7, as its flesh does. The petal
-colour is shared with the meadow's little flowers and the butterfly's wing spots, and the leaf with
+color is shared with the meadow's little flowers and the butterfly's wing spots, and the leaf with
 the stump's sprout, so those rise too. In the night themes the petals go from 0.67 to 0.93
 lightness and the apple's skin from 0.41 to 0.56; themes in full daylight are unchanged. Vintage
-Noir's apple lifts to 0.63 to stand off its grey trail.
+Noir's apple lifts to 0.63 to stand off its gray trail.
 
 Then (Oj, 16:39) "On toxic waste make petals green, and on Cyberpunk and neon make them some toxic
 colors". From mockups of three or four options each (Oj, 16:58: "C C A"): Toxic Waste's petals are
@@ -2188,7 +2188,7 @@ butterfly's wing spots wear them too. Each stands at least 0.34 from its meadow.
 
 Then (Oj, 17:07) "On Cyberpunk Night make them magenta, and on Underwater Realm cyan". Cyberpunk
 Night's petals are FF00FF, its sun's magenta, and its hearts the lit yellow again; Underwater
-Realm's are 00FFFF, the colour of its bubbles, 0.22 from its teal meadow.
+Realm's are 00FFFF, the color of its bubbles, 0.22 from its teal meadow.
 
 Then (Oj, 17:10) "Are the two flowers on the lawn supposed to grow together?" They were not: of the
 three flowers in each meadow tile, the first two fell 6 units apart, under a flower's 9.5 across,
@@ -2201,54 +2201,54 @@ red but more toxic". From mockups of a neon red, a hot crimson and a lava red (O
 B"): Toxic Waste's caps and apples are lava red, FF3D14 shaded B4290C; Cyberpunk Night's and
 Underwater Realm's hot crimson, FF1460 shaded B30B41; Neon City Night's neon red, FF1F3D shaded
 B31228. Each shade is its red 0.15 darker with 0.85 of the chroma, as daylight's apple is. The
-spots, stalks, flesh, seeds and leaf keep their lit colours. The apples stand at least 0.31 from
+spots, stalks, flesh, seeds and leaf keep their lit colors. The apples stand at least 0.31 from
 the trail, the toadstools 0.36 from the verge.
 
 Then (Oj, 17:28) "In the magic forest, twilight, lunar eclipse and cherry blossom rose to purple
 petals", and from mockups (Oj, 17:38) "Lunar Eclipce C, others lighter tones", then (17:47)
 "Twilight D, then make the other themes vary them too in the next step - and they are can be merged
 with effect petals; Magic forest D, lighter; Cherry Blossom - take the effect petals". A theme now
-has three petal colours, petal1 to petal3, beside effectColor2 rather than in ChaseTheme, shared
+has three petal colors, petal1 to petal3, beside effectColor2 rather than in ChaseTheme, shared
 by the Chase's flowers and the falling petals; ChaseTheme lost its petal. The flowers wear them by
 turns - the meadow's three in a tile one each, the daisies and the butterfly's spots by their
-place along the verge or their run (petalOf). The falling petals blend from the effect colours to
-petal1 and petal2 as far as the theme has petals, so Cherry Blossom's are its old effect colours
+place along the verge or their run (petalOf). The falling petals blend from the effect colors to
+petal1 and petal2 as far as the theme has petals, so Cherry Blossom's are its old effect colors
 and the mill draws the same to the byte. The meadow's petals now all go down before the hearts:
 with three shapes a flower's petals waited for the next tile and covered its heart's edge.
 
 Twilight: FCABC4, E69EE8, BC9AFA. Magic Forest: FDC4D5, EDB6EE, C8B0F9 (0.05 lighter, 0.75 of
-the chroma). Cherry Blossom: its effect colours FFC8DC and FF96B4 and FFAFC8 between them. Lunar
-Eclipse: A15CFF in all three. Every other theme wears one colour three times until the next step.
+the chroma). Cherry Blossom: its effect colors FFC8DC and FF96B4 and FFAFC8 between them. Lunar
+Eclipse: A15CFF in all three. Every other theme wears one color three times until the next step.
 
 Then the next step, from a proposal for the other 21 themes (Oj, 18:06: "lunar eclipse - duller;
 cyberpank - different vivid colors; winter frost - lighter; others are OK"; 18:09: "Midnight -
-darker petals, lighter stems"). A theme left with one petal colour now wears it and two neighbours:
-a coloured petal (chroma at least 0.06) its hue turned 25 degrees either way; a white one a blushed
-pink and a lilac, 0.05 of chroma as far as the theme has colour, no lighter than 0.91, and where
+darker petals, lighter stems"). A theme left with one petal color now wears it and two neighbors:
+a colored petal (chroma at least 0.06) its hue turned 25 degrees either way; a white one a blushed
+pink and a lilac, 0.05 of chroma as far as the theme has color, no lighter than 0.91, and where
 either is lost on the meadow (under 0.10) the first of cream and pale blue that stands off it -
-Winter Night takes cream for the lilac, Arctic Dawn pale blue for the pink; Vintage Noir two greys,
+Winter Night takes cream for the lilac, Arctic Dawn pale blue for the pink; Vintage Noir two grays,
 0.10 and 0.05 darker. Lunar Eclipse's are the proposal's at 0.6 of the chroma, 0.03 lighter: A07EDC,
 7E8DD8, BC73C3. Cyberpunk Night: FF00FF, 39FF14, E6FF1A. Winter Frost: FED1AD, E9DBA6, B0ECBC -
-lighter only with warmth, as a light grey, pink or lilac sinks into its snow (0.03 to 0.07 from it).
+lighter only with warmth, as a light gray, pink or lilac sinks into its snow (0.03 to 0.07 from it).
 Midnight: its proposal 0.18 darker with 1.3 of the chroma, B4ABAF, C993A1, AB96C6; its stem and
 daisy leaf 0.18 lighter, 2C422B and 2E462F, 0.15 from its meadow, where they stood at 0.04 and 0.02.
 
 Then (Oj, 18:16) "share the stems with the bushes and foreground grass, in midnight even darker
 petals", and (18:17) "by bushes i mean the ones on the lawn" - the tufts. ChaseTheme's tuft,
-flowerStem and frontGrass are now one field, grass. The stems and tufts already wore the same colour
+flowerStem and frontGrass are now one field, grass. The stems and tufts already wore the same color
 in every theme but Midnight, whose lighter stems had left its tufts and front grass near black; the
 front grass was 0.05 darker, and now takes the stems' green, its dark third blade lifted by as much
 to keep its step. Midnight's grass is the stems' 2C422B, and its petals 0.15 darker again with 1.15
 of the chroma: 877D81, 9D6374, 7F679C.
 
 Then (Oj, 18:26) "On the vintage noire make the apples red". Its apple skin is daylight's, E24F41
-shaded 9E2924, the one colour in the theme - on the tree, on the verges and on the trail, and the
-crumbs the hare bites off. The flesh, seeds and leaf stay grey. 0.21 and 0.17 from its grey trail.
+shaded 9E2924, the one color in the theme - on the tree, on the verges and on the trail, and the
+crumbs the hare bites off. The flesh, seeds and leaf stay gray. 0.21 and 0.17 from its gray trail.
 
 Then (Oj, 18:30) "Make the small flowers blend into the lawn". The lawn's little flowers, petals and
-hearts, are mixed half way to the lawn's colour at the middle of the band they grow in (63 units
+hearts, are mixed half way to the lawn's color at the middle of the band they grow in (63 units
 below the ground line, on the hillTop to hillBottom gradient the lawn is filled with), and stay
-opaque, so a heart over its petals shows no ring; the batching by colour stays. 0.7 was tried as
+opaque, so a heart over its petals shows no ring; the batching by color stays. 0.7 was tried as
 well: at night it all but hid them.
 
 Then (Oj, 18:43) "Let's experiment - a theme states clear colors - hills, trees, mountains. The haze
@@ -2257,25 +2257,25 @@ distance to that layer - less to the hills, more to the mountains." Rendered in 
 exponential haze by distance (1 - e^(-kd), d = 1/parallax - 1) at two strengths; Oj took the
 stronger for the hills (0.43) and less for the mountains; d / (d + 2.46) gives 0.43 and 0.75 on one
 curve, and Oj took 0.75. Taking 0.75 of haze back out of today's mountains asks for black or clipped
-blues - their feet are darker than that much haze allows - so each theme's clear mountain colour is
+blues - their feet are darker than that much haze allows - so each theme's clear mountain color is
 a rock (8C8CA0 over 5C5F78) in the theme's light, in the hue of its old mountains at 1.5 times their
 chroma up to 0.12; Oj picked that ("B") over the haze taken out in OKLab ("A").
 
 ChaseTheme lost farHillTop, farHillFoot, farTreeTrunk, farTreeCrown, farTreeCrownLight,
 farTreeCrownMiddle, farFireflyLight and farFireflyGlow; mountainTop and mountainFoot are the clear
-colours. ChaseScene hazed(theme, clear, parallax) draws the mountains (0.12), the far hills from the
+colors. ChaseScene hazed(theme, clear, parallax) draws the mountains (0.12), the far hills from the
 meadow's hillTop and hillBottom, their trees from treeTrunk, treeLeavesBase, crownLight and
-crownMiddle, and the fireflies from the effect colours (0.35). The generator measures the runners
+crownMiddle, and the fireflies from the effect colors (0.35). The generator measures the runners
 and props against the hills and mountains as they are now drawn: the hazed hills are lighter than
 the old ones, which stood toward the dark mountain foot, so where a runner had been lifted to stand
 off dark hills it now goes the smaller way, darker - Twilight's, Underwater Realm's, Steampunk's and
-Cherry Blossom's grey wolf and hare, as they are by day; keeping them light instead would have paled
+Cherry Blossom's gray wolf and hare, as they are by day; keeping them light instead would have paled
 Fresh Spring's brown hare. Winter Night's runners fall short of 0.15 (0.12, 0.13, 0.15) against its
-pale hazed snow; Steampunk's grey wolf stands at 0.10.
+pale hazed snow; Steampunk's gray wolf stands at 0.10.
 
 Then (Oj, 19:27) "blend the foreground grass into the bottom lawn". Three ways rendered: every blade
-at half the lawn's colour (A), the roots in the lawn (B), and the roots in the lawn with the tips at
-half (C). Oj took B (19:33). Each blade is filled with one vertical gradient, from its own colour at
+at half the lawn's color (A), the roots in the lawn (B), and the roots in the lawn with the tips at
+half (C). Oj took B (19:33). Each blade is filled with one vertical gradient, from its own color at
 the height of the tallest tip (58 units above the frame's bottom) to the lawn's hillBottom at the
 bottom, so a shorter blade starts part way down it. drawFrontGrass takes the SceneTheme for
 hillBottom. A 3840 x 2160 frame on the CPU path costs the same as with solid blades (1.72 against
@@ -2287,7 +2287,7 @@ Three greens rendered near the hue of its lime fireflies, each with its daisy le
 daylight's is: a dim toxic green 26541C, a toxic green 367C14 and an acid lime 5AA925. Oj took the
 dim one ("A", 19:39): 26541C, 0.12 to 0.20 from the lawn, with leaves 386D35. The dark third blade
 is 214F17, the same green at the theme's own step, 0.017 darker. The generator's lift would have
-kept the old blade's low chroma and turned it grey at that lightness, so it leaves a dark blade
+kept the old blade's low chroma and turned it gray at that lightness, so it leaves a dark blade
 alone where the theme sets it.
 
 Then (Oj, 19:46) "On unrealistic themes, the objects like stump, signpost, crow, butterfly should
@@ -2297,9 +2297,9 @@ Eclipse, Vintage Noir and Paper Sketch were offered and left as they are (20:08)
 out of allThemes were not asked about. The generator's vibes.py gives each of the seven a palette
 of slots - wood, woodTop, board, life, stone, crack, crow, beak, wing, bird, shell, reed, spines,
 boot, metal and the rest - and maps each plain prop's field to one, with the field whose daylight
-colour stands for the slot. A field takes its slot's hue and chroma, its own daylight step of
+color stands for the slot. A field takes its slot's hue and chroma, its own daylight step of
 lightness from that key, and chroma in proportion to its daylight chroma against the key's (0.6 to
-1.3). The contrast solve then runs on these colours instead of the lit daylight ones, bounded 0.25
+1.3). The contrast solve then runs on these colors instead of the lit daylight ones, bounded 0.25
 below and 0.3 above them. The yellows, the ball, the toadstools, the apples' skins and the petals
 keep their own rules.
 
@@ -2322,13 +2322,13 @@ is 478D53, 0.08 lighter as daylight's is, and its dark third blade 306E34, the t
 Then (Oj, 20:36) "replace the Cherry Blossom acid green with light gray, make the path light rose
 grayish pink, calm the vivid blue sky". The sky and the meadow are the theme's shared fields, so the
 Mill's sky and hills change with the Chase's. skyTop 1E90FF and skyBottom 6495ED became a calm
-88AED9 and C8DEF1 (chroma 0.19 down to 0.075); hillTop 7CFC00 and hillBottom 556B2F a light grey
-D8D9DE and B3B4BB. The trail is E6D3B5BB, a light rose grey, and the pebbles A99196. Grey plants
+88AED9 and C8DEF1 (chroma 0.19 down to 0.075); hillTop 7CFC00 and hillBottom 556B2F a light gray
+D8D9DE and B3B4BB. The trail is E6D3B5BB, a light rose gray, and the pebbles A99196. Gray plants
 (A) and sage plants (B) were rendered; Oj took B (20:43): the stems, tufts and foreground grass
 718F76, the dark third blade 638068, the grass patch 5D7A62, 718F76 and 89A88E, the daisy leaf
 88A88E, the reed stems 718F76, and the Mill's lily pad 89A88E. The calmer, lighter sky raises the
-theme's light from 0.65 to 0.90, so the runners and props stand nearer their daylight colours.
-Two fall short against the grey: the palest petal, FFC8DC, stands 0.07 from the meadow, and the
+theme's light from 0.65 to 0.90, so the runners and props stand nearer their daylight colors.
+Two fall short against the gray: the palest petal, FFC8DC, stands 0.07 from the meadow, and the
 Mill's white cow 0.11 from the hills, against 0.10 and 0.15; the cow had stood at 0.29.
 
 Then (Oj, 20:47) "Make the lawn-hills darker, add just a bit of green". hillTop is A3AFA0 and
@@ -2341,10 +2341,10 @@ neither falls short.
 
 Then (Oj, 21:02) "remove color from vintage noire stems". The world's greens come from the world
 dump and were never washed out by the theme's saturation as the trail is, so Vintage Noir's plants
-kept a faint green (chroma about 0.02 to 0.03). They are now the grey of the same lightness: the
+kept a faint green (chroma about 0.02 to 0.03). They are now the gray of the same lightness: the
 grass 353535, the dark third blade 2E2E2E, the daisy leaf 404040 and the grass patch 2D2D2D,
 373737 and 444444. Its mountains (0.026) and crown (0.012) keep their faint tint, as nothing asked
-about them; the props were already grey.
+about them; the props were already gray.
 
 Then (Oj, 21:07) "make trees foliage darker on vintage noire". Its foliage stood near its meadow
 (5A5A5A, L 0.47, against hillTop 505050, L 0.43). treeLeavesBase, the shared field the Mill's trees
@@ -2360,7 +2360,7 @@ it was 1E1E1E and 141414. The wolf now stands 0.17 from the foliage, the trees 0
 top and the cow 0.27. The hills' top is lighter than the sky's foot (787878), so the ridge reads
 against it; 8A8A8A would have stood 0.06 from it. The mill's roof, lifted for the dark hills,
 stands 0.09 from the light ones. The same two fields are the Chase's meadow, so its lawn is light
-too, and the generator's smallest shift turns its grey wolf dark (3E3E3E) and its hares light
+too, and the generator's smallest shift turns its gray wolf dark (3E3E3E) and its hares light
 (E1E1E1, E7E7E7) to stand off it; the other couple's black wolf stays darker than ours.
 
 Then (Oj, 21:37) "flowers are invisible on snow - make tham all white. Also white-icy butterfly".
@@ -2372,20 +2372,20 @@ is what carries it, as the wing stands 0.03 to 0.05 from Winter Frost's and Arct
 sky. Winter Frost's flowers measure 0.03 from its meadow; the daisy shows against the sky and by
 its heart and stem.
 
-Then (Oj, 21:41) "also grey icy path". The three snow themes' trails are a cool grey (chroma 0.02,
+Then (Oj, 21:41) "also gray icy path". The three snow themes' trails are a cool gray (chroma 0.02,
 hue 245) in WORLD_EDITS, set before the props are measured against them, about 0.10 from the snow
 where the trail is drawn: Winter Frost E6C6D2DD, Arctic Dawn E6A1ACB7 and Winter Night E695A0AA,
 with pebbles 0.15 darker (97A2AD, 747F89, 68737D). The beige trails they replace stood 0.03 to
 0.09 from the snow. The rubber duck and the banana peel moved a little to keep their contrast with
-the grey.
+the gray.
 
 Then (Oj, 21:45) "swap the primary hare with the secondary one", and (21:48) "I mean on the winter
-theme". Swapping them in every theme was built first - ChaseScene drawing greyHare for our couple,
-the icon in daylight's grey coat, the coats reordered couple by couple - and dropped at the second
+theme". Swapping them in every theme was built first - ChaseScene drawing grayHare for our couple,
+the icon in daylight's gray coat, the coats reordered couple by couple - and dropped at the second
 message. In Winter Frost alone the generator trades the two solved hare coats (SWAP_HARES): our
-hare runs grey (A8A39E) and theirs brown (BE936E), each with the contrast it was solved to, as both
+hare runs gray (A8A39E) and theirs brown (BE936E), each with the contrast it was solved to, as both
 are measured against the same backgrounds. The fields keep their names, so in that theme brownHare
-holds the grey coat; the alternative, naming the coats by couple, would have changed ChaseTheme
+holds the gray coat; the alternative, naming the coats by couple, would have changed ChaseTheme
 for one theme's sake.
 
 Then (Oj, 21:58) "Make the wind blow the opposite way, and check the dust visibility". The rain
@@ -2436,7 +2436,7 @@ still tumbling. It fills over 0.015, the air rushing in at first and swelling it
 Its legs pop out from 0.668 over 0.008, a back ease out that takes them a tenth past their length.
 From 0.678 it walks off to the left at 240 units a second (k_duckWalk), up to speed in a tenth of a
 second - faster than the hedgehog's 160. Each leg is a stroke from a hip under the body to a webbed
-foot, in the beak's colours, the far one in the shade and behind the body. A foot swings 6.5 units
+foot, in the beak's colors, the far one in the shade and behind the body. A foot swings 6.5 units
 either way and is lifted 3.5 as it comes forward, which matches a stride of 26 units (k_duckStride)
 in a frame wide enough for closeness 1. The body dips 1.4 units as the feet change over and rocks
 0.08 rad. The air streaks come from DuckMotion airOut, which the flattening alone sets, so the
@@ -2444,10 +2444,10 @@ refill shows none. Frames before the refill are unchanged.
 
 **Summer Sunset's figures lighter** (Oj, 2026-11-11: "Make the wolf, hare, butterfly, tree lighter,
 apple, ball more vibrant"). Two readings were shown. In A the four were 0.08 L lighter and the apple
-and ball went halfway to daylight's colours. In B they were 0.14 lighter and the apple and ball took
-daylight's colours. Oj took B for the wolf, the tree and the apples, and A for the ball and the
+and ball went halfway to daylight's colors. In B they were 0.14 lighter and the apple and ball took
+daylight's colors. Oj took B for the wolf, the tree and the apples, and A for the ball and the
 butterfly. His pick left the hare out, and it took B with the wolf. Chroma follows L, so the browns
-and greens keep their colour. The coat details rise with the fur; the near-white teeth and tail stay
+and greens keep their color. The coat details rise with the fur; the near-white teeth and tail stay
 as they were. The solver had set the wolf and hare exactly 0.15 from the meadow, which is why they
 were dark. Lifted, they stand 0.10 and 0.11 from it, and only a near-white wolf would stand 0.15 off
 it again on the light side. The apples stand 0.19 from the trail and the ball 0.145, where both
@@ -2457,7 +2457,7 @@ and THEME_EDITS for the two shared fields.
 
 **Midnight Fantasy's boot, toadstool and crow** (Oj, 2026-11-11). Oj asked to check every theme for
 figures and props that read dark or dull: "Even on the night themes - they are well lit always". A
-proposal relit every theme's objects from Fresh Spring's colours. Oj took three objects from it, all
+proposal relit every theme's objects from Fresh Spring's colors. Oj took three objects from it, all
 in Midnight Fantasy: "boot, mushroom and crow - and the crow not all the way, just to reveal
 details". The boot keeps its palette's blue at daylight's lightness (646795, 404266, 24253D). The
 crow went first to L 0.34 from its 0.15, which showed its wings but left it as dark as the hills;
@@ -2467,11 +2467,11 @@ then (Oj, "Make the crow lighter so it's visible on the hills and sky") to 0.49 
 as OVERRIDES 'MidnightFantasy'. Nothing else of the proposal is applied.
 
 Then (Oj, 15:19) "Midnight Fantasy: darker purpleish wolf, calmer frog". Our wolf's coat is 0.15
-darker and a purple of chroma 0.06 at hue 300 (light 807399, coat 74678D), where it was a near grey
+darker and a purple of chroma 0.06 at hue 300 (light 807399, coat 74678D), where it was a near gray
 at 0.025; its belly is A197B5. It stands 0.12 from the meadow and 0.19 to 0.23 from the hills and
 mountains, where it stood 0.25 and more. The other couple's black wolf is 0.15 darker too (light
 5A5462), to stay 0.12 below ours; it stands 0.05 from the meadow and 0.10 to 0.15 from the hills and
-mountains. The frog keeps its mint at about half the colour (light 93C8B8, dark 689285, belly
+mountains. The frog keeps its mint at about half the color (light 93C8B8, dark 689285, belly
 E4F4F0), chroma 0.06 where it was 0.12.
 
 Then (Oj, 15:30) "calmer mushroom - mushroom shouldn't be more vivid than the apple". The toadstool
@@ -2481,15 +2481,15 @@ Fantasy's own apple (BF4648, L 0.56, chroma 0.156). Its cap is B14E4D (L 0.55, c
 (DED6D6, D5CAC3, B5A692), so the cap does not glow.
 
 **Gaps fixed in the other themes** (Oj, 2026-11-11: "Now regen others, with not 'as by day' but to
-fix gaps"). A second proposal keeps every colour as its theme has it, except an object with a gap. A
-key colour below L 0.40 and 0.10 under Fresh Spring's reads as black; it is lifted toward Fresh
-Spring's lightness, no further than its background allows. An object whose colour is what it is -
+fix gaps"). A second proposal keeps every color as its theme has it, except an object with a gap. A
+key color below L 0.40 and 0.10 under Fresh Spring's reads as black; it is lifted toward Fresh
+Spring's lightness, no further than its background allows. An object whose color is what it is -
 toadstool, ball, duck, peel, butterfly, frog, apple - is brought from under 60 % of Fresh Spring's
 chroma to 70 %. Anything short of its contrast target is lifted until it reaches it. A toadstool's
 cap or a ball's red is never more vivid than the theme's apple. Oj takes the proposal theme by
 theme.
 
-Toxic Waste ("+tuft obstacle (toxic green)"): the ball's colours are back, and the crow is lifted
+Toxic Waste ("+tuft obstacle (toxic green)"): the ball's colors are back, and the crow is lifted
 from L 0.22 to 0.48 (56624F, wings 465140 and 3C4835), where it stood 0.01 from the sky. The tuft on
 the trail wears the theme's toxic green (blades 3B9119, 4CB325, 5ED731); its blades were near black.
 Steampunk ("+mushroom +apples"): the boot is a step lighter (6E4736). The apples are at 70 % of
@@ -2499,12 +2499,12 @@ both were at under half the red. The generator holds these as OVERRIDES 'ToxicWa
 
 **Everything else well lit** (Oj, 2026-11-11: "Everything else as in Chase well lit, go!"). Every
 theme but Fresh Spring, Vintage Noir, Midnight Fantasy, Toxic Waste and Steampunk takes the first
-proposal, as its sheets showed it. A figure or prop starts from Fresh Spring's colour, tinted toward
-the theme's sky, at full colour except in Paper Sketch. It then takes the smallest shift that
+proposal, as its sheets showed it. A figure or prop starts from Fresh Spring's color, tinted toward
+the theme's sky, at full color except in Paper Sketch. It then takes the smallest shift that
 reaches its contrast target, never more than 0.10 darker; the black wolf stays 0.12 below ours, and
-the coat details rise with the fur. The vibe themes' colours keep their hue at no less than
+the coat details rise with the fur. The vibe themes' colors keep their hue at no less than
 daylight's lightness. The OVERRIDES stay as they are - the snow, the toxic reds, Summer Sunset's
-picks - and so do the petals. 19 themes and 1,872 colours change.
+picks - and so do the petals. 19 themes and 1,872 colors change.
 
 The tree a branch run ends at was drawn from the shared treeLeavesBase and treeTrunk, which are also
 the Mill's trees, and from crownLight and crownMiddle, which are also the far hills' trees. Lighting
@@ -2517,12 +2517,12 @@ grass on the trail is lit the same way.
 
 Short of the targets afterwards: the black wolves at night (0.08 to 0.14), Summer Sunset's wolf,
 High Noon's brown hare (0.13) and frog (0.10). Where a mid-tone meadow left only a lift, figures
-went very light: Underwater Realm's wolf and grey hare near white, Twilight's wolf, High Noon's frog
-a pale lime. At night the black wolves are a mid grey.
+went very light: Underwater Realm's wolf and gray hare near white, Twilight's wolf, High Noon's frog
+a pale lime. At night the black wolves are a mid gray.
 
-Then (Oj, 16:32) "calm the fresh spring green". Three shares of the colour were shown: 80 %, 65 %
+Then (Oj, 16:32) "calm the fresh spring green". Three shares of the color were shown: 80 %, 65 %
 and half. Oj asked for a pick and took 80 % ("apply A"). It takes the acid edge off and still reads
-as spring; 65 % turned sage, and half came close to Cherry Blossom's grey-green. Every green of
+as spring; 65 % turned sage, and half came close to Cherry Blossom's gray-green. Every green of
 Fresh Spring keeps its lightness and hue at 80 % of its chroma: the meadow (hillTop 8AD77A,
 hillBottom 519C4F), the trees (treeLeavesBase 448C47, with the far hills' and the branch run's
 crowns), the reeds and lily pads, the grass, the tufts' blades, the daisy and apple leaves and the
@@ -2540,7 +2540,7 @@ blades, leaves and sprout. The runners and the frog stand within 0.02 of where t
 **The theme is ClearDay, named "Clear Day".** The struct, its `.name`, the allThemes entry and the
 mill icon's k_iconTheme carry the new name. A pick stored as "Fresh Spring" is not found by name,
 so the showcase opens in the first theme, which is this one: the stored pick lands where it was
-without a shim. The icon reads only the mill's own colours, which the calmer greens leave alone.
+without a shim. The icon reads only the mill's own colors, which the calmer greens leave alone.
 The generator holds it as THEME_EDITS and OVERRIDES 'ClearDay', and its theme orders name ClearDay.
 
 **Steampunk's stump in dark walnut** (Oj, 2026-11-11: "Make the stump bark in steampunk darker
@@ -2558,35 +2558,35 @@ way from the shade to the bark as its red one stood. The Mill's trunks stand 0.1
 top, where the red stood at 0.09. The generator holds treeTrunk in THEME_EDITS and the branch run's
 tree in OVERRIDES 'SteampunkAdventure'.
 
-**The daze stars wear a thin grey outline** (Oj, 2026-11-11: "the yellow stars when the wolf is
+**The daze stars wear a thin gray outline** (Oj, 2026-11-11: "the yellow stars when the wolf is
 unconscious are not enough pronounced against the far mountains"). By day the hazed mountains and
 hills behind the stars stand at L 0.69 to 0.80, close to the stars' own 0.88, and Sahara Heat's sky
 is yellow as well. Each star is stroked in DazeStarEdge (83868C, L 0.62), 1.4 units wide under its
 fill, so 0.7 units show. The outline takes the fill's opacity and fades with the daze. Oj took the
 thin outline ("thin") over one at 2.4 units, an amber one, and larger stars in a deeper gold, which
-were still lost on Sahara Heat. Its first colour was Ink (1B1D22), the X eyes' near black; asked
-for lighter twice, Oj took D, the lightest grey that still parts the stars from Sahara Heat's sky.
-A paler grey (9C9EA5) was mostly lost by day, and the palest (B4B7BE) left the stars nearly as
+were still lost on Sahara Heat. Its first color was Ink (1B1D22), the X eyes' near black; asked
+for lighter twice, Oj took D, the lightest gray that still parts the stars from Sahara Heat's sky.
+A paler gray (9C9EA5) was mostly lost by day, and the palest (B4B7BE) left the stars nearly as
 they were without an outline.
 
 **Lunar Eclipse's stumps and tuft** (Oj, 2026-11-11: "Give the stumps in lunar eclipse the trunks
 color, make the obstacle grass tuft gray", then "grayer, darker trunks and stump"). The stump's bark
-is the branch run tree's trunk, and both are a grey brown: 493B34 over 291F1B, with the branch
+is the branch run tree's trunk, and both are a gray brown: 493B34 over 291F1B, with the branch
 342823. The trunk stood at 7D4B33 over 542F23 and the stump at a redder 8B5641 over 5C372D. The
-grey brown is 0.10 darker with 30 % of the colour, the middle of three steps shown. The signpost's
+gray brown is 0.10 darker with 30 % of the color, the middle of three steps shown. The signpost's
 post and the apples' stems share bark and barkShade and move with it.
 
-The patch of grass on the trail is a grey with a hint of green (Oj: "give the tuft a hint of green,
+The patch of grass on the trail is a gray with a hint of green (Oj: "give the tuft a hint of green,
 and use the same color for the tree foliage"): its blades keep their lightness at chroma 0.035 and
-the greens' hue (144), 697A68, 80927F and 9DAF9B. The branch run tree's crown wears the same grey
+the greens' hue (144), 697A68, 80927F and 9DAF9B. The branch run tree's crown wears the same gray
 green at its own three lightnesses: treeCrown 6D7F6C, treeCrownLight 7F917E, treeCrownMiddle
 748673. The generator writes well_lit.json after OVERRIDES, so these picks are in Lunar Eclipse's
 entry there.
 
 **Twilight's tuft and foliage** (Oj, 2026-11-11: "On twilight the tuft and foliage
 grayish-purpleish-greenish"). A green and a purple lie nearly opposite each other, so a mix of the
-two passes through grey toward teal. Four grey tints were shown instead, each at chroma 0.04 and
-each tone's own lightness: hue 160, 200, 240 and 280. Oj took the first, a grey green that the
+two passes through gray toward teal. Four gray tints were shown instead, each at chroma 0.04 and
+each tone's own lightness: hue 160, 200, 240 and 280. Oj took the first, a gray green that the
 purple light around it tints: the tuft's blades 617C6D, 789484 and 94B1A1, the branch run tree's
 crown 658171, 769382 and 6C8878. They are in Twilight's entry of well_lit.json.
 
@@ -2599,17 +2599,17 @@ steps were shown beside it, lighter (5F482E) and darker (2E2113). The generator 
 OVERRIDES 'SteampunkAdventure'.
 
 **Winter Night's stump and tuft** (Oj, 2026-11-11: "Winter night grayer stump, icy white tuft").
-The whole stump keeps its lightness at 30 % of its colour: bark 716259 over 4A3F39, the sawn top
-C5BBAF, the rings 998D82. The middle of three steps shown, half and a tenth of the colour beside
-it. The signpost's post and the apples' stems take bark and barkShade, so they grey too. The patch
+The whole stump keeps its lightness at 30 % of its color: bark 716259 over 4A3F39, the sawn top
+C5BBAF, the rings 998D82. The middle of three steps shown, half and a tenth of the color beside
+it. The signpost's post and the apples' stems take bark and barkShade, so they gray too. The patch
 of grass on the trail is icy white with a hint of green ("a hint of green to the tuft"), at the
 greens' hue (144) and chroma 0.035 to 0.016 from its darkest blade to its lightest: B7CAB6, D3E3D3
-and EFF8EE, 0.12 to 0.27 lighter than the grey trail. Its first white took the butterfly's blue
+and EFF8EE, 0.12 to 0.27 lighter than the gray trail. Its first white took the butterfly's blue
 (B1C8D9, D0E1ED, EEF6FD). Both picks are in Winter Night's entry of well_lit.json.
 
 **Midnight's tree and stumps darker** (Oj, 2026-11-11: "In midnight darker trunks, stumps and
 foliage"). The branch run tree and the stump had been lit as by day, and stood out of the near
-black night. Each of their colours is 0.18 darker, with its colour shrinking with its lightness:
+black night. Each of their colors is 0.18 darker, with its color shrinking with its lightness:
 the trunk 3D2310 over 190B04, the branch 251307, the crown 1F541E, 296627 and 235B20, the stump's
 bark 492D1B over 211209, its top 998064 and rings 70563B. The middle of three steps shown, 0.10
 and 0.26 beside it. The signpost's post and the apples' stems take the stump's bark and go dark
@@ -2617,31 +2617,31 @@ with it. The far trees were near black already. The picks are in Midnight's entr
 well_lit.json.
 
 Then (Oj, 23:04) "On stormy and calm nights darker stumps, trunks and foliage". The two themes held
-the same tree and stump colours, and both take Midnight's step, 0.18 darker: the trunk 3D240F over
+the same tree and stump colors, and both take Midnight's step, 0.18 darker: the trunk 3D240F over
 190B04, the branch 241306, the crown 1F541D, 276725 and 225C1E, the stump's bark 492E1A over
-201208, its top 988163 and rings 70563A. Their far trees, a dark grey and teal, are unchanged. The
+201208, its top 988163 and rings 70563A. Their far trees, a dark gray and teal, are unchanged. The
 picks are in both themes' entries of well_lit.json.
 
 **Every trunk is the stumps' bark** (Oj, 2026-11-11: "Now all the trunks can reuse the stumps
 colors, the trunk color retires"; asked which, all of them, with the branch in the darker tone).
 SceneTheme loses treeTrunk, and ChaseTheme loses treeBark, treeBarkShade and treeBough. The branch
 run's tree is drawn in bark over barkShade, with its branch in barkShade. The far hills' trees take
-bark, hazed, and the Mill's pines read chase.bark. SceneTheme holds 42 colours before `chase`. The
-bark stays in ChaseTheme beside the stump, so the Mill takes its trunks from the Chase's colours.
+bark, hazed, and the Mill's pines read chase.bark. SceneTheme holds 42 colors before `chase`. The
+bark stays in ChaseTheme beside the stump, so the Mill takes its trunks from the Chase's colors.
 Where a theme dresses its stumps in its vibe, its trees follow: Magic Forest's trunks are purple,
 Neon City's slate, Cyberpunk's violet, Underwater's teal and Midnight Fantasy's blue. High Noon and
 Arctic Dawn lose their red trunks, and Midnight's and Lunar Eclipse's near black far trees show
 their bark. The generator no longer names the four fields - chase_fields, OVERRIDES, THEME_EDITS and
 well_lit.json - and write_themes.py drops the treeTrunk lines of the base it starts from.
 
-Calm and Stormy Night then took back their old trunk colour (Oj: "on calm and stormy nights take
-before colors", then "the one from before trunk"): their bark is the grey 3C3232 that treeTrunk
+Calm and Stormy Night then took back their old trunk color (Oj: "on calm and stormy nights take
+before colors", then "the one from before trunk"): their bark is the gray 3C3232 that treeTrunk
 held, over 1C1616, a step as far down as their tree's shade stood. Their far trees and the Mill's
-pines look as before, and their apple tree, stumps and signpost post are a dark grey. One bark can
-hold only one of their two old colours; the other was the tree's brown, 3D240F over 190B04.
+pines look as before, and their apple tree, stumps and signpost post are a dark gray. One bark can
+hold only one of their two old colors; the other was the tree's brown, 3D240F over 190B04.
 
 Twilight and Midnight took theirs back the same way ("take these two too"). Twilight's bark is the
-mauve grey 503C46 over 2D2027, Midnight's the near black 140F1E over 010102, each over a shade a
+mauve gray 503C46 over 2D2027, Midnight's the near black 140F1E over 010102, each over a shade a
 step as far down as its tree's stood. In Midnight the stump is a silhouette whose pale top reads.
 
 **Trunks are drawn as stumps** (Oj, 2026-11-11: "reuse stump drawing code for trunks - a stump is a
@@ -2661,7 +2661,7 @@ them by lane and segment, never by place, so a trunk's grooves hold still as it 
 
 **Clear Day's land darker** (Oj, 2026-11-12: "Clear Day: overall darker land"). The meadow and hills
 (hillTop 76B36A, hillBottom 407B3F), the trail (9FA957), the pebbles (8A9241) and the grass (41773F,
-its dark blades 396637) are each 0.10 darker in lightness, their colour kept; the middle of three
+its dark blades 396637) are each 0.10 darker in lightness, their color kept; the middle of three
 steps shown, 0.05 and 0.15 beside it. hillTop and hillBottom are the Mill's hills as well, and the
 far hills are hazed from them. The runners stand closer to the meadow: the wolf 0.16 and 0.26 where
 it stood at 0.24 and 0.35, the hare 0.13 and 0.14 where it stood at 0.17 and 0.21. The tuft on the
@@ -2670,19 +2670,19 @@ the meadow in THEME_EDITS, the trail and pebbles in WORLD_EDITS and the grass in
 'ClearDay'.
 
 Then (Oj, 00:09) "darker sky": skyBottom 94CFDE and, after "darker skytop" (00:12), skyTop 3789BC,
-each the middle of three steps with its colour kept - the foot 0.10 darker in lightness, the top
+each the middle of three steps with its color kept - the foot 0.10 darker in lightness, the top
 0.20, so the sky deepens toward the zenith. The sky is the Mill's as well, and the Chase hazes its
 mountains, far hills and their trees toward it, so they darken with it. THEME_EDITS 'ClearDay' holds
 both.
 
 Then (Oj, 00:14) "lighter bottom sky, darker mountains". The mountains were hazed 0.75 toward
-skyBottom, so a lighter skyBottom lightened them more than darker clear colours could darken them:
+skyBottom, so a lighter skyBottom lightened them more than darker clear colors could darken them:
 at the middle step the drawn mountains came out lighter than before, and even near black ones only
 0.03 darker. Two drawing changes were shown - the mountain tops hazed toward the sky at their own
 height, or a weaker haze - and Oj took the weaker ("+weaker haze"). The mountains take
 k_mountainHaze, 0.6 of skyBottom, in every theme, where their distance would give 0.75; the far
 hills keep the haze of their distance. Clear Day's skyBottom is AAE6F5, 0.07 lighter, and its
-mountains 34779D and 00487C, 0.10 darker. With the weaker haze the mountains stand nearer the grey
+mountains 34779D and 00487C, 0.10 darker. With the weaker haze the mountains stand nearer the gray
 wolves in a few themes: measured against the middle of the mountains, our wolf is 0.13 in Clear Day,
 0.12 in High Noon and 0.14 in Vintage Noir, and the black wolf 0.14 in Underwater Realm and 0.10 in
 Winter Night. The generator hazes the mountains it measures at MOUNTAIN_HAZE, 0.6, and holds Clear
@@ -2695,14 +2695,14 @@ tints shown, 0.02 and 0.05 beside it. WORLD_EDITS 'ClearDay' holds them.
 Then (Oj, 00:35) "Darker lawn and hills in High Noon": High Noon's hillTop is 4F7000 and its
 hillBottom 70CD71, each 0.10 darker in lightness with its chroma and hue kept, the middle of three
 steps. They are the meadow the runners cross, the Chase's far hills under their haze and the Mill's
-hills. The grass, dark already at 386516, stays. Against the darker meadow the grey wolf's light and
+hills. The grass, dark already at 386516, stays. Against the darker meadow the gray wolf's light and
 shade are 0.19 and 0.16 off it, where they were 0.17 and 0.21, and the brown hare's 0.19 and 0.16,
 where they were 0.13 and 0.12. THEME_EDITS 'HighNoon' holds both.
 
 Then (Oj, 00:42) "Darker paper sketch lawn": Paper Sketch's hillTop is 829582 and its hillBottom
 6E826E, each 0.10 darker in lightness with its chroma and hue kept, the middle of three steps. The
-far hills are hazed from the same two colours and the Mill's hills are drawn with them, so both
-darken with the lawn. The runners stand against the far hills: measured on the drawn frame, the grey
+far hills are hazed from the same two colors and the Mill's hills are drawn with them, so both
+darken with the lawn. The runners stand against the far hills: measured on the drawn frame, the gray
 wolf's light and shade are 0.15 and 0.27 off them, where they were 0.20 and 0.33, and the brown
 hare's light and fur 0.14 and 0.19, where they were 0.20 and 0.24. THEME_EDITS 'PaperSketch' holds
 both.
@@ -2711,7 +2711,7 @@ Then (Oj, 00:53) "Paper sketch: darker sky top, a bit more vivid apples, duck an
 "a bit darker wolf", shown together in three steps, the middle one put in. The sky top is D4CFC1,
 0.10 darker in lightness and darker than the sky's foot, so the sky deepens toward the zenith. The
 apples, the duck and the ball's red, blue and yellow keep their lightness and hue at 1.4 times their
-chroma; the ball's white stays. The grey wolf's light, shade, coat, far side, dark and belly are
+chroma; the ball's white stays. The gray wolf's light, shade, coat, far side, dark and belly are
 each 0.08 darker - its light 69696A - which sets it 0.22 off the far hills, where it was 0.15.
 THEME_EDITS 'PaperSketch' holds the sky top, well_lit.json the props and the wolf.
 
@@ -2726,7 +2726,7 @@ Then (Oj, 01:07) "Darker land in magic forest", read as Clear Day's land was: th
 5F702D, the pebbles 4F5F1B, the grass 004600 and its dark blades 003B00, each 0.10 darker in
 lightness with its chroma and hue kept as far as the gamut allows, the middle of three steps.
 Measured on the drawn frame, the brown hare's light is 0.15 off the far hills, where it was 0.19,
-and on the darker trail the hare's light is 0.21 off it, where it was 0.14, and the grey wolf's
+and on the darker trail the hare's light is 0.21 off it, where it was 0.14, and the gray wolf's
 shade 0.14, where it was 0.19. THEME_EDITS, WORLD_EDITS and OVERRIDES 'MagicForest' hold them.
 
 Then (Oj, 01:14) "darker bottom hills, lighter (than the lawn) path": Magic Forest's hillBottom is
@@ -2734,7 +2734,7 @@ Then (Oj, 01:14) "darker bottom hills, lighter (than the lawn) path": Magic Fore
 and the trail is A4B873, at L 0.75 with its chroma and hue kept, lighter than any of the lawn; the
 pebbles 92A562 keep their step below it. The middle of three pairs (the foot 0.05, 0.10 or 0.15
 darker with the trail at 0.72, 0.75 or 0.78). On the light trail the brown hare is 0.12 off it and
-0.14 off the far hills, short of 0.15; the grey wolf is 0.18 off the trail.
+0.14 off the far hills, short of 0.15; the gray wolf is 0.18 off the trail.
 
 Then (Oj, 01:21) "Magic forest: darker rake": its handle 915FAA, the handle's shade 6E4184 and its
 metal A891D7, each 0.10 darker in lightness with its chroma and hue kept, the middle of three steps.
@@ -2742,7 +2742,7 @@ well_lit.json holds them. Then (01:25) "Darker metal": the metal is 6C5697, 0.20
 0.50 between the handle (0.57) and its shade (0.46); the middle of 0.10, 0.20 and 0.30.
 
 Then (Oj, 01:28) "Tuft with colors of hedgehog": Magic Forest's trail tuft takes the hedgehog's own
-colours - its dark blades the dark spines 7B6CAD, its middle blades the light spines 9A88D8 and its
+colors - its dark blades the dark spines 7B6CAD, its middle blades the light spines 9A88D8 and its
 light blades the ear D0B9C9. Shown beside the spines alone (a tone between them for the middle
 blades) and the spines with the face F2D8EA. Against the light trail the blades stand 0.25, 0.22 and
 0.16 off it. well_lit.json holds them.
@@ -2755,7 +2755,7 @@ whiskers and tail stay. The pink stands 0.19 off the far hills and the trail, wh
 
 Then (Oj, 01:38) "For the mill wings frame use the stump and its groove color - mill wings frame may
 go": SceneTheme's millWingWood and millWingWoodStroke are retired, and the Mill draws its wing
-frames in the stumps' bark, outlined in barkShade - the colour the grooves are drawn in, at full
+frames in the stumps' bark, outlined in barkShade - the color the grooves are drawn in, at full
 strength. Every theme's Mill changes; the Chase does not. The SceneTheme position comments move down
 two from millWingFabric on, and colorsNum() is 40 + ChaseTheme::colorsNum(). The most visible
 changes: Steampunk's white frames turn its dark brown, Vintage Noir's and Midnight's turn near
@@ -2769,38 +2769,38 @@ trunk, the signpost's post and the Mill's pines and wing frames with them. well_
 Then (Oj, 01:56), with a painting of a golden autumn afternoon - a white cow by a river, a wooden
 windmill and water wheel, golden hills and amber trees under a blue sky with golden clouds: "That's
 a true warm orange fall". Warm Orange Fall was a dusk theme - a brown sky over near-black green
-hills and a near-black mill - and is repainted after the picture, from colours sampled off it. The
+hills and a near-black mill - and is repainted after the picture, from colors sampled off it. The
 sky runs from a soft blue AFC4CE to gold F0C484, with peach clouds and a pale sun. The lawn and
-hills are golden, D59631 over A86A1E; the mountains are drawn the picture's lavender grey (clear
-colours 3C74FC and 2860E8, hazed); the trees are amber, BB7A26 with D99B30 and A5651F; the river a
-pale blue grey; the mill weathered wood, a grey brown house under a brown roof, with canvas sails;
-the bark a grey brown 7A6450; the reeds and the foreground grass golden brown; the falling leaves
+hills are golden, D59631 over A86A1E; the mountains are drawn the picture's lavender gray (clear
+colors 3C74FC and 2860E8, hazed); the trees are amber, BB7A26 with D99B30 and A5651F; the river a
+pale blue gray; the mill weathered wood, a gray brown house under a brown roof, with canvas sails;
+the bark a gray brown 7A6450; the reeds and the foreground grass golden brown; the falling leaves
 amber.
 
 The figures and props were lit for the dark land, so they take Golden Hour's, which are lit for a
-golden day, with three changes measured on the drawn frame: the grey wolf 0.08 darker (light
+golden day, with three changes measured on the drawn frame: the gray wolf 0.08 darker (light
 6C6C6E), off the lavender mountains by 0.17; the brown hare a deeper red brown (light 915E40), off
-the golden far hills by 0.17; the grey hare 0.10 darker. The trail is Golden Hour's sandy D2C272,
+the golden far hills by 0.17; the gray hare 0.10 darker. The trail is Golden Hour's sandy D2C272,
 which its props were measured on. A bluer sky (88AAC4 over EECC94) was tried and set aside for the
 warmer one; it is on the sheet. THEME_EDITS 'WarmOrangeFall' holds the SceneTheme fields and
-well_lit.json every Chase colour.
+well_lit.json every Chase color.
 
 Then (Oj, 02:13) "For the blades outline use the groove. If after that there are no other uses, drop
 the field": the Mill's sails are outlined in barkShade, and millWingFabricStroke, read nowhere else,
 is retired. The position comments after millWingFabric move down one more, and colorsNum() is 39 +
 ChaseTheme::colorsNum(). Every theme's Mill changes a little; the Chase does not.
 
-Then (Oj, 02:21) "On Cherry Blossom make the path light gray": the trail is CDCED0, a neutral grey
+Then (Oj, 02:21) "On Cherry Blossom make the path light gray": the trail is CDCED0, a neutral gray
 at L 0.85, where it was a pink D3B5BB at 0.80, and the pebbles A6A7AA keep their step below it; the
-middle of 0.80, 0.85 and 0.90. The runners stand further off it (the grey wolf 0.25, the hare 0.24,
+middle of 0.80, 0.85 and 0.90. The runners stand further off it (the gray wolf 0.25, the hare 0.24,
 from 0.20 and 0.19). WORLD_EDITS 'CherryBlossom' holds them.
 
-Then (Oj, 02:35) "In Clear Day, make mountains warmer": the mountains' clear colours turn from blue
+Then (Oj, 02:35) "In Clear Day, make mountains warmer": the mountains' clear colors turn from blue
 to mauve, 895C93 over 612C6C - each at its own lightness, hue 320, chroma 1.1 times - and the haze
 toward the pale cyan skyBottom draws them a lavender. Shown beside a lavender (hue 290) and a rose
-(hue 20), which the haze greys out. The grey wolf stays about 0.10 from them, as it was; the hare
+(hue 20), which the haze grays out. The gray wolf stays about 0.10 from them, as it was; the hare
 0.14. Then (02:42) "C, less color": the rose at half its chroma, 886565 over 603A3A, which the haze
-draws a soft grey (90A4AD); the middle of 0.75, 0.5 and 0.25 of it. The grey wolf stays 0.10 from
+draws a soft gray (90A4AD); the middle of 0.75, 0.5 and 0.25 of it. The gray wolf stays 0.10 from
 the mountains, the hare's light 0.11. OVERRIDES 'ClearDay' holds them.
 
 Then (Oj, 02:48) "On Clear Day make the sun glow white": sunGlow is white FFFFFF at its alpha 64,
@@ -2819,8 +2819,8 @@ round its sun, the even ones in sunCorona1 and the odd ones in sunCorona2, and i
 set all but vanished - Golden Hour's second set stood 0.014 off the sky (OKLab dE, median over the
 ray as drawn) against the first's 0.055, Winter Night's and Midnight's 0.034 against 0.17 and 0.19,
 Sahara Heat's the other way round. Measured with each set drawn alone over the sky drawn without
-rays, each theme's pair now meets at the mean of the two, mostly by alpha with the colour kept;
-where full alpha fell short, the colour moved away from the sky in lightness - one set in each of
+rays, each theme's pair now meets at the mean of the two, mostly by alpha with the color kept;
+where full alpha fell short, the color moved away from the sky in lightness - one set in each of
 High Noon, Cherry Blossom, Sahara Heat, Arctic Dawn, Steampunk, Magic Forest, Neon City (its deep
 pink FF1493 now a light pink FFC3FF), Cyberpunk Night, Underwater Realm, Lunar Eclipse, Twilight and
 Midnight Fantasy. Arctic Dawn's second and Underwater Realm's second could not reach the mean, so
@@ -2838,7 +2838,7 @@ Orange Fall and Paper Sketch at about 0.035, Winter Frost 0.04, Summer Sunset 0.
 every theme under 0.11 are lifted to it, alpha first; a ray already at full alpha moves its
 lightness whichever way reaches 0.11 sooner - lighter where the sky allows, darker where a light ray
 over a light sky cannot get lighter (Golden Hour's second set an amber D7A139, Warm Orange Fall's
-D59F57, Steampunk's and Magic Forest's a khaki grey). Shown beside floors of 0.08 and 0.14. Twelve
+D59F57, Steampunk's and Magic Forest's a khaki gray). Shown beside floors of 0.08 and 0.14. Twelve
 themes change; every pair stays within 10 % of each other. The footnote states the floor.
 
 Then (Oj, 03:46) "make the stump thump as they pass", and of three mockups "C": the roadside tree
@@ -2856,7 +2856,7 @@ the camera's speed, hazed 0.6, is two MountainRange: k_farRange at 0.07, period 
 1.15 times as tall and 1.0 on in phase, its middle line 70 units above 0.6 of the height, hazed 0.7;
 k_nearRange at 0.18, period near 1500, 0.7 as tall and 2.3 on in phase, its middle line at 0.625 of
 the height, hazed 0.55. The near range is drawn over the far one. A near haze under 0.55 lets Warm
-Orange Fall's blue clear colours through. A wolf's head stands against the near range, a little
+Orange Fall's blue clear colors through. A wolf's head stands against the near range, a little
 closer to it by day: Clear Day 0.11 to 0.09, High Noon 0.13 to 0.11, Vintage Noir 0.14 to 0.13. The
 generator measures against 0.55.
 
@@ -2883,19 +2883,19 @@ big and flat look the two ranges were made against, and was not offered.
 Then (Oj, 05:20) "Warm clear day sky bottom": skyBottom AAE6F5, a cyan at L 0.89, turned to hue 75
 at the same lightness - B of chroma 0.025, 0.045 and 0.065, ECD7BA, a warm cream. Everything hazed
 toward it follows: the mountains go a pinkish beige, the far hills a yellower green, and the sky's
-middle a greyer blue where the gradient crosses from skyTop. A wolf's head stands 0.12 off the near
+middle a grayer blue where the gradient crosses from skyTop. A wolf's head stands 0.12 off the near
 range, where it stood 0.10. The hare comes nearer the warmer far hills, 0.09 where it was 0.12. The
 Mill's rays barely move, being high in the sky, and stay about 0.18 off it.
 
 Then (Oj, 05:26) "In High Noon too": skyBottom ADD8E6, a light blue at L 0.86, turned to hue 75 at
 the same lightness - B of chroma 0.025, 0.045 and 0.065, E2CCB0. High Noon's mountains are blue, so
-hazed toward the cream they go a grey; the far hills go a yellower green. A wolf's head stands 0.10
+hazed toward the cream they go a gray; the far hills go a yellower green. A wolf's head stands 0.10
 off the near range, where it stood 0.11, and the hare 0.08 off the far hills, where it stood 0.10.
 The Mill's rays stay about 0.39 off the sky.
 
 Then (Oj, 05:38) "take for lunar eclipse bark and groove colors from its water wheel": bark is the
 wheel's spokes, millWheel 5E807F, and barkShade its rim, millWheel taken 0.2 toward black as
-drawWaterWheel blends it - 4B6665. A teal grey where a dark brown stood (493B34 over 291F1B). With
+drawWaterWheel blends it - 4B6665. A teal gray where a dark brown stood (493B34 over 291F1B). With
 them go the stumps, the branch run's tree and its branch, the far hills' trunks, the signpost's
 post, the apples' stems, the Mill's pines and its wing frames. The signpost's board keeps bough.
 well_lit.json holds them.
@@ -2903,7 +2903,7 @@ well_lit.json holds them.
 Then (Oj, 05:47) "use that color for the frog, butterfly, bird, mushroom leg, reeds heads": the
 roadside's frog, butterfly, bird, toadstool stalk and reed heads take the bark, 5E807F, where each
 was lit, and the groove, 4B6665, where each was shaded - frogLight and frogDark, wing and wingEdge,
-birdBody and birdWing, stalk and stalkShade; reedHead, one colour, the bark. The frog's and the
+birdBody and birdWing, stalk and stalkShade; reedHead, one color, the bark. The frog's and the
 bird's bellies, the bird's beak and the toadstool's cap keep theirs. The bird and the frog stand
 0.15 off the hills behind them, the reed heads 0.24. The Mill's reeds keep the theme's own reedHead.
 well_lit.json holds them.
@@ -2918,9 +2918,9 @@ the lawn's color". The far hills ran from hazed hillTop at 0.62 of the height to
 the ground line, where the lawn starts in its own hillTop, so a seam ran along the strip above the
 trail - strongest in Winter Night, Cyberpunk Night, Magic Forest and High Noon (OKLab 0.39, 0.38,
 0.32 and 0.30 apart). The hills' foot now wears the lawn's hillTop, clear. Three reaches were shown
-on all 24 themes, and B went in: the lawn's colour climbs to hazed hillTop at 0.62 of the height (A,
+on all 24 themes, and B went in: the lawn's color climbs to hazed hillTop at 0.62 of the height (A,
 the whole hill), to hazed hillBottom at the hills' middle line, 0.70 (B), or to hazed hillBottom 20
-units above the ground (C). A turns the hills into the lawn's colour - Winter Night's snow,
+units above the ground (C). A turns the hills into the lawn's color - Winter Night's snow,
 Cyberpunk Night's cyan - and leaves Winter Night's wolf 0.04 off them; C reads as a band along the
 foot. Against the hills at a wolf's head (50 units up) and a hare's (35), B takes Clear Day's wolf
 from 0.15 to 0.12, Paper Sketch's hare from 0.15 to 0.11 and Summer Sunset's from 0.13 to 0.10, and
@@ -2936,10 +2936,10 @@ Then (Oj, 13:46) "Make the clear day's mountains and path less red": mountainTop
 trail and the pebbles keep their OKLab lightness and hue, with 2/3, 1/3 or none of their chroma
 left - B put in: the mountains 886565 / 603A3A -> 786C6C / 4F4242, the trail E6B69A93 -> E6A89F9C,
 the pebbles 9F847D -> 928986. The mountains are hazed toward skyBottom ECD7BA, a warm cream, so
-even grey clear colours are drawn a beige; that warmth is the sky's. A wolf's head stands 0.15 off
+even gray clear colors are drawn a beige; that warmth is the sky's. A wolf's head stands 0.15 off
 the mountains, a hare's ears 0.08, where they stood 0.07.
 
-Then (Oj, 13:52) "Make the wolf darker": the grey wolf's light, shade, coat, far, dark and belly
+Then (Oj, 13:52) "Make the wolf darker": the gray wolf's light, shade, coat, far, dark and belly
 keep their OKLab chroma and hue, 0.05, 0.10 or 0.15 darker - B put in: light 778593 -> 5A6875,
 shade 54606D -> 394551, coat 667481 -> 4A5864, far 4A5661 -> 303B45, dark 38434E -> 1F2934, belly
 E6ADB9C3 -> E68E9AA4. The tongue, the mouth and the teeth keep theirs. The wolf stands 0.24 off
@@ -2952,8 +2952,8 @@ skyBottom": the mountains, the far hills, their trees and the fireflies are take
 the shares they had - k_halfHaze and the two ranges' 0.7 and 0.63 stay. By day the mountains turn
 the blue of the sky overhead, High Noon's a vivid one, and stand off the paler horizon; at night
 they darken into the sky's top and show as faint outlines against its lower part. The runners were
-solved against the skyBottom haze and keep their colours, so some now stand close to the layers
-behind them (OKLab, analytic: the grey wolf against the near range's middle and against the far
+solved against the skyBottom haze and keep their colors, so some now stand close to the layers
+behind them (OKLab, analytic: the gray wolf against the near range's middle and against the far
 hills' middle line, the brown hare against the hills). The night themes all gain.
 - Clear Day's wolf 0.24 -> 0.06 and 0.15 -> 0.07.
 - Vintage Noir's wolf 0.15 -> 0.01 and 0.18 -> 0.06.
@@ -2967,14 +2967,14 @@ hills' middle line, the brown hare against the hills). The night themes all gain
 
 The generator hazes toward skyTop too; its runners are not re-solved.
 
-Then (Oj, 20:28) the haze stays a blend toward skyTop: air takes away an object's colour, all of it
+Then (Oj, 20:28) the haze stays a blend toward skyTop: air takes away an object's color, all of it
 and the blue the most, and adds its own blue, so a lit object turns bluer and a glowing one
 redder; skyTop is mostly blue by day and near black at night, and a theme that is not of this world
 states its own air with it. (20:52) Every number set by hand for the haze was judged against
 skyBottom and is to be picked again: the hills' strength, the two ranges' shares and every theme's
-clear mountain colours. The order taken: the hills' strength first, with the mountains in one
+clear mountain colors. The order taken: the hills' strength first, with the mountains in one
 neutral rock; then the mountains by a rule, the air thinning with height; then the clear mountain
-colours; then the figures measured again. Haze mockups show whole frames with the lawn and a near
+colors; then the figures measured again. Haze mockups show whole frames with the lawn and a near
 tree (Oj, 21:22).
 
 Then (Oj, 21:50) "0.25 is a most realistic match for a clear weather. Larger values may fit better
@@ -2995,7 +2995,7 @@ points) for the lawn and the hills both." The hills ran from hazed hillTop down 
 at their middle line and back to the clear hillTop at the ground line, where the lawn started its
 own hillTop to hillBottom: the dark middle was the stripe. meadowGradient now fills both, from
 hillTop hazed as the far hills are at 0.62 of the height - the hills' old gradient top - to the
-clear hillBottom at the frame's bottom - the lawn's old one; meadowAt gives the flowers' lawn colour
+clear hillBottom at the frame's bottom - the lawn's old one; meadowAt gives the flowers' lawn color
 on it. The foreground grass's roots keep hillBottom, the gradient's own bottom. The lawn at the
 ground line now stands 0.42 of the way down that gradient where it was the clear hillTop, so it
 moves by 0.01 to 0.20 (OKLab; Winter Night and Cyberpunk Night 0.20, High Noon and Underwater Realm
@@ -3013,13 +3013,13 @@ one neutral rock: by distance alone, and H 4, 2 and 1 frame heights; Oj took 4 (
 In clear air the near range runs 0.57 to about 0.49 from foot to peaks and the far range 0.70 to
 about 0.52; at H 2 and below the far range's peaks, being drawn taller, came out clearer than the
 near range's. The ranges' hand-set 0.7 and 0.63 are gone; each range is a 13-stop gradient, every
-stop its clear colour at that height hazed at that height. The hills, their trees and the fireflies
+stop its clear color at that height hazed at that height. The hills, their trees and the fireflies
 stay hazed as at the ground line - their tops would only move from 0.25 to about 0.24.
 
-Then (Oj, 23:58, from two defaults at 23:23) every theme's clear mountain colours are one neutral
+Then (Oj, 23:58, from two defaults at 23:23) every theme's clear mountain colors are one neutral
 rock in the theme's light: 8E8E8E and 616161 - the old rock's lightness without its blue - through
 the generator's light rule, darker and tinted as the sky lights them, so night themes sit at its
-floor, a dark grey. The other default shown took each theme's mountains from before the haze
+floor, a dark gray. The other default shown took each theme's mountains from before the haze
 experiment back out through the new haze; it ran out of range where those were lighter than today's
 skyTop (Clear Day, Paper Sketch), brought Warm Orange Fall back rust against its painting, and sank
 the night ranges into the sky. Clear Day's own picks and Warm Orange Fall's painted blue are
@@ -3077,7 +3077,7 @@ more sun light, so they are supposed to be lighter. There are no means in the co
 other than putting lighter precomputed values in the theme's tops. That's the main reason why there
 are two fields in the first place." B defeats that, and the far range with darkened tops looks flat.
 So A, moved only as far as brings the near range at a head to the lightness B reached. And the top
-colour stands for sunlight, which grows with absolute height: "the theme's top is the top of the
+color stands for sunlight, which grows with absolute height: "the theme's top is the top of the
 highest range and not of the each one, and a nearer range (which is not so tall) should take only
 its own share of that color gradient". Each range had its gradient start at its own line, 0.25 and
 0.38 of the frame's height; both now start at k_mountainTopShare, 0.25.
@@ -3105,9 +3105,9 @@ Then (Oj, 08:06) "We are still tuning mountains. Now the themes with issues will
 achieve more overall balanced look. Make the Clear Day mountains darker and bluer". Shown darker by
 0.05 to 0.20 in L and bluer by 0.02 to 0.06 of chroma toward skyTop's hue; Claude picked L -0.15,
 blue 0.06. Oj (08:25): "but the layers are indistinguishable?" Where the near ridge stands against
-the far range both points are at one height, so with one gradient they share their clear colour and
-only the haze parts them - by as much as the rock differs from the air's colour, Clear Day's 73A3BB
-(L 0.69). Darker and bluer took the rock onto that colour: the ranges stood 0.003 apart, 0.048
+the far range both points are at one height, so with one gradient they share their clear color and
+only the haze parts them - by as much as the rock differs from the air's color, Clear Day's 73A3BB
+(L 0.69). Darker and bluer took the rock onto that color: the ranges stood 0.003 apart, 0.048
 before. Turning the hue toward green at L -0.15 parted them only from a clearly green rock (hue 140,
 chroma 0.08 for 0.031); Oj (08:44): "Not great. Let's stay on L -0.40 with blue 0.04" - 5F7583 at
 the top, 384C59 at the foot, past the air on the dark side. The ranges stand 0.061 apart; our wolf
@@ -3115,7 +3115,7 @@ stands 0.03 from the near range behind his head and the hares 0.14 and 0.05, for
 
 Then (Oj, 08:47) "make the tops lighter": mountainTop shown lighter by 0.05 to 0.25, the foot kept.
 Claude held +0.15 so the far peaks would stay off the sky; Oj (08:51): "Nothing is wrong with tops
-disappearing into the sky". A lighter top brings the upper slopes nearer the air's colour, so the
+disappearing into the sky". A lighter top brings the upper slopes nearer the air's color, so the
 limit is the near range's tallest ridges against the far range behind them: 0.030 at +0.25, 0.024 at
 +0.30. Clear Day's top is AAC2D1, +0.25.
 
@@ -3129,11 +3129,11 @@ tallest ridges; our wolf 0.08 from the near range behind his head, the hares 0.1
 and skyBottom are the theme's own, so Clear Day's Mill scene takes the new sky too.
 
 Then (Oj, 09:36) "Increase the lawn flowers and foreground grass opacity". The flowers took half the
-lawn's colour and a front blade's root all of hillBottom; shown at 35 and 70 per cent, 20 and 40,
+lawn's color and a front blade's root all of hillBottom; shown at 35 and 70 per cent, 20 and 40,
 and none. The flowers answer at once; the blades hardly do, their own greens being near the lawn's
 bottom - Clear Day's grass stands 0.04 off it in lightness even fully opaque, so a blade that is to
 read needs a darker green, not more opacity. Oj (09:39): "B, for both; for all themes": the flowers
-take a fifth of the lawn's colour, a blade's root 0.4 of hillBottom.
+take a fifth of the lawn's color, a blade's root 0.4 of hillBottom.
 
 Then (Oj, 09:39 to 10:41) Clear Day's figures. Every prop stood clear; our wolf stood 0.084 from the
 near range behind his head (light 0.51 against 0.56), the hares 0.131 and 0.102, and the black wolf
@@ -3147,7 +3147,7 @@ that lightness somewhere, and there stands only by hue, about 0.07; on the head 
 the eye. Oj (10:32): "I think the head can be made of one piece" - the head's oval and the snout as
 one outline under one gradient, the snout still lifting about the hinge. Oj (10:41) took D2: head
 and tail light to coat, top to bottom; ears and lower jaw dark. The sprite change is every wolf's in
-every theme; the lighter light and the hares (brown 0.05 and grey 0.155 lighter, details only
+every theme; the lighter light and the hares (brown 0.05 and gray 0.155 lighter, details only
 rising) are Clear Day's.
 
 Then (Oj, 10:54) "That wolf requires the other animals to match, at least the hare and hedgehog. BTW
@@ -3156,7 +3156,7 @@ the hare's and the hedgehog's heads a gradient only; Oj (11:02): "I see only the
 by 'requires to match' I mean than now a 3D wolf is chasing a flat paper hare". So every part is lit
 from above: the hare's body, haunch and hind foot, forelegs and ears darken downward, at most to her
 shade a quarter of the way to black; her head and muzzle take one gradient, light to shade, and her
-white tail greys toward its underside. The hedgehog's spines and back darken from the top of its
+white tail grays toward its underside. The hedgehog's spines and back darken from the top of its
 spines to the ground, and its face and snout take one gradient, each a quarter of the way to black
 at the bottom. Shown soft (25 per cent) and strong (45); Oj (11:07) "Soft, soft". fillOval reads its
 brush about the oval's own middle, so the hare's muzzle and the hedgehog's face are paths, filled in
@@ -3179,7 +3179,7 @@ Let's try to reverse that". Its land ran from hillTop 4F7000 (L 0.50) at the hil
 do. Shown: A, the two swapped; B, the lightnesses mirrored with each end's hue kept; C, one green
 over a gentler range. Oj (11:58) "B it is, and darker grass": hillTop 9EC365, a sunlit yellow-green
 at 0.77, over hillBottom 0E781B, a deep green at 0.50. The two are SceneTheme's, so the Mill's High
-Noon turns with them. The runners stand as they did, the grey wolf's light 0.16 to 0.17 off the land
+Noon turns with them. The runners stand as they did, the gray wolf's light 0.16 to 0.17 off the land
 and the brown hare's 0.13 to 0.17.
 
 The lawn's bottom then fell to 0.50, near the foreground blades' own 0.46, and they vanished. Shown
@@ -3192,19 +3192,19 @@ Then (Oj, 12:35) "Now to fix the mountains flip": High Noon's rock, F1F1F6 over 
 0.82), is lighter than its air, 5FA4E5 (0.70). The far range takes about twice the near one's share
 of the air, so it came out the darker one, the near range 0.04 to 0.05 lighter where they meet.
 Shown three rocks darker than the air: A, Clear Day's slate blue; B, the sunlit top kept over a dark
-grey foot; C, a warm stone. Oj (12:41) took B: mountainFoot 3A3A3D, mountainTop F1F1F6 kept. The
+gray foot; C, a warm stone. Oj (12:41) took B: mountainFoot 3A3A3D, mountainTop F1F1F6 kept. The
 near range is now 0.04 to 0.07 the darker one. Where it shows behind the runners it stands at 0.52,
-and the grey wolf stands 0.08 and 0.05 off it (light and shade), the grey hare 0.14 and 0.04, the
+and the gray wolf stands 0.08 and 0.05 off it (light and shade), the gray hare 0.14 and 0.04, the
 black wolf 0.10 and 0.19, the brown hare 0.18 and 0.12 - the figures' step to come.
 
 Then (Oj, 12:48) "First rename these fields. The theme should not use color names for the fields."
-ChaseTheme's coats are ourWolf, ourHare, theirWolf and theirHare, where they were greyWolf,
-brownHare, blackWolf and greyHare - Oj's pick, matching ChaseScene's theirWolf and theirHare. The
+ChaseTheme's coats are ourWolf, ourHare, theirWolf and theirHare, where they were grayWolf,
+brownHare, blackWolf and grayHare - Oj's pick, matching ChaseScene's theirWolf and theirHare. The
 ball's ballRed, ballBlue and ballYellow are ballPanel1 to ballPanel3, numbered as SceneTheme's
 petals are, and ballWhite is ballBase, declared after the panels. The footnote's Winter Frost bullet
-no longer needs to warn that brownHare holds a grey coat. Every theme renders the same bytes as
+no longer needs to warn that brownHare holds a gray coat. Every theme renders the same bytes as
 before at four times of the cycle, and undoing the renames gives back the old files exactly.
-ChaseCoats::GreyWolf and ChaseCoats::BrownHare in ChaseScene are the icon's fixed coats, not theme
+ChaseCoats::GrayWolf and ChaseCoats::BrownHare in ChaseScene are the icon's fixed coats, not theme
 fields, and keep their names. The generator's keys follow the fields.
 
 Then (Oj, 13:02) "mock the figures": against High Noon's dark near range ourWolf stood 0.07 and 0.06
@@ -3220,7 +3220,7 @@ the land. ourWolf's light is 0.30 above theirWolf's.
 
 Then (Oj, 13:34) "Summer Sunset: mountains separation, washed out grass, the wolf's low contrast".
 Its rock, C3BDBD over 95908F (L 0.80 and 0.66), stood close to its air, A4B4D4 (0.77), so the ranges
-met only 0.02 to 0.03 apart. Shown A, grey with the foot darker; B, rock in the sunset's rose; C,
+met only 0.02 to 0.03 apart. Shown A, gray with the foot darker; B, rock in the sunset's rose; C,
 dusk violet. Its land, 497E55 over 3B6645, had chroma 0.086 and 0.072, about two thirds of Clear
 Day's; shown 1.4 and 1.7 times as vivid, and 1.5 times and 15 degrees warmer (G3). Oj (13:38):
 "Mountains: A; I like G3, but by grass I meant stems". mountainFoot 585453, mountainTop C3BDBD kept,
@@ -3228,7 +3228,7 @@ the ranges now 0.05 to 0.08 apart; hillTop 4D802B and hillBottom 3E6824, which t
 Sunset shares.
 
 The stems are the one green - grass, with frontGrassDark and the reed stems. The old blue-green,
-205331, turned teal-grey on the warmer lawn. Shown in G3's green, 235502, and 0.06 and 0.12 darker;
+205331, turned teal-gray on the warmer lawn. Shown in G3's green, 235502, and 0.06 and 0.12 darker;
 Oj (13:41) took 0.12: grass 113100 (L 0.28), frontGrassDark 0F2800, reedStem 30593A to 183800.
 
 Against the new land and range, behind ourWolf at 0.52 to 0.60, his light (0.56) stood 0.04 off them
@@ -3248,7 +3248,7 @@ frontGrassDark 304113, reedStem 8A8051 to 594F21.
 
 Then (Oj, 14:02) "the figures are fine, the next is Winter Frost: increase air thickness" - Sahara
 Heat's runners and props, which the model put a little short, stay. Winter Frost's air is a pale
-frosty blue, B0CBE9 (L 0.83), its rock a slightly warm grey, DBD7D7 over ABA6A6 (0.88 and 0.73). Its
+frosty blue, B0CBE9 (L 0.83), its rock a slightly warm gray, DBD7D7 over ABA6A6 (0.88 and 0.73). Its
 ranges met 0.02 to 0.03 apart at 0.10 and 0.20, 0.01 to 0.02 at 0.30 and almost none at 0.45, where
 they are one blue wall. Oj (14:05) took 0.30: the mountains take the frosty blue, and the two ranges
 nearly merge.
@@ -3263,7 +3263,7 @@ shoot of stumpSprout 3E8936. The apple's leaf is the same field. Shown A, ice as
 frosted mint; C, a withered brown leaf, which stands 0.30 off the snow where the icy ones stand
 0.11. Oj (14:16) took C: leaf 97724D, stumpSprout 614731 - the apple's leaf is brown too.
 
-Then (Oj, 14:18) "whiter hare" - Winter Frost's ourHare, a grey hare there (light 8B8B85, L 0.63).
+Then (Oj, 14:18) "whiter hare" - Winter Frost's ourHare, a gray hare there (light 8B8B85, L 0.63).
 Lifting the details with the fur, by the generator's rule, turned the inner ears and the nose white,
 so the mocks lift the light, fur, shade and belly alone. Shown 0.12, 0.20 and 0.30 lighter, her
 light 0.15, 0.07 and 0.04 off the snow. Oj (14:20) took 0.30: light EAEAE3, fur D6D6CF, shade
@@ -3271,11 +3271,11 @@ C2C2BB, belly E6FFFFFF, a cream-white winter hare whose underside, darkening tow
 warm white on the blue-white snow hold her together. The footnote's Winter Frost bullet says so.
 
 Then (Oj, 14:22) "lighter their hare" - Winter Frost's theirHare, the brown one, light C38E5D (L
-0.69). Her fur alone shown 0.07, 0.13 and 0.19 lighter; her warm colour keeps her light 0.11 to 0.12
+0.69). Her fur alone shown 0.07, 0.13 and 0.19 lighter; her warm color keeps her light 0.11 to 0.12
 off the snow in all three, her shade 0.16, 0.12 and 0.11. Oj (14:23) took 0.13: light EEB785, fur
 DDA978, shade CC976A, belly E6FFFFFE, a light winter tan.
 
-Then (Oj, 14:25) "swap hares" - Winter Frost's couples had traded hares, ours grey and theirs brown,
+Then (Oj, 14:25) "swap hares" - Winter Frost's couples had traded hares, ours gray and theirs brown,
 since the generator's SWAP_HARES. They trade back: ourHare is the light tan, EEB785, and theirHare
 the white winter hare, EAEAE3, all eleven fields exchanged (the details were the same in both).
 SWAP_HARES is empty, well_lit.json holds the coats as they stand, and the footnote bullet about
@@ -3291,17 +3291,17 @@ Day's ourWolf, whose light alone was lifted, 0.38. Every wolf drawWolf draws tak
 in every theme, the icon's and Bot Talent's.
 
 Then (Oj, 14:38) "Vintage Noire: remove color from the daze stars, thicken the air and if that
-didn't flip the mountains darken them". Its sky runs from near black to mid grey, so its air is a
-dark grey, 424242 (L 0.38), and its rock, 9E9E9E over 7D7D7D, lighter than it: the near range stood
+didn't flip the mountains darken them". Its sky runs from near black to mid gray, so its air is a
+dark gray, 424242 (L 0.38), and its rock, 9E9E9E over 7D7D7D, lighter than it: the near range stood
 0.07 lighter than the far one. Thicker air only shrinks that (0.015 at 0.45); the rock has to go
 darker than the air. Shown A, air 0.20 and rock 383838 over 1B1B1B; B, air 0.20 and rock 292929 over
 0D0D0D; C, air 0.30 with B's rock - the near range 0.03, 0.05 and 0.03 the darker one. Oj (14:44)
 "C; a new field": airHaze 0.30, mountainTop 292929, mountainFoot 0D0D0D.
 
 The daze stars were ChaseScene's constant DazeStar, FFD34D, in every theme. Shown: a new ChaseTheme
-field, or the rubber duck's colour, which is grey in Vintage Noir. Oj took the field:
+field, or the rubber duck's color, which is gray in Vintage Noir. Oj took the field:
 ChaseTheme.dazeStar, after dust, FFFFD34D in every theme and C9C9C9 in Vintage Noir; ChaseColors
-keeps DazeStarEdge, a grey. The footnote names the stars among ChaseTheme's colours and among the
+keeps DazeStarEdge, a gray. The footnote names the stars among ChaseTheme's colors and among the
 yellow things. Vintage Noir's dark wolves now stand against near black mountains: ourWolf, light
 3E3E3E, about 0.02 to 0.06 off the near range.
 
@@ -3312,7 +3312,7 @@ both and theirWolf darkened with ourWolf to stay below him; Oj (14:52) "1 throug
 dark 3E3E3E / 282828 / 343434 / 222222 / 161616 to 2F2F2F / 1A1A1A / 252525 / 141414 / 090909, his
 tongue 606060 to 454545; theirWolf 202020 / 121212 / 191919 / 0C0C0C / 060606 to 171717 / 090909 /
 101010 / 050505 / 020202; the rake 525252 / 3D3D3D / 454545 to 3D3D3D / 292929 / 303030; the apple
-E24F41 / 9E2924 and the cap 515151 / 373737 to 980002 / 4E0002, the cap's spots kept light grey. The
+E24F41 / 9E2924 and the cap 515151 / 373737 to 980002 / 4E0002, the cap's spots kept light gray. The
 wolves' lights stand 0.11 apart, a step under the 0.12 the scene keeps elsewhere.
 
 Then (Oj, 14:56) "Red tongue". Shown both tongues in the apple's red 980002, both in its dark red
@@ -3337,7 +3337,7 @@ meet high, right of the middle. Shown top 203500 (near 0.03-0.04 darker), 294300
 Then (Oj, 15:20) "Steampunk: grayer hills, rusty foliage, brighter toadstool and apples red", and
 (15:22) "and thicker air". The rock 7D7774 / 55504D already sat below the air, so the ranges stand
 0.05-0.06 apart at air 0.10 and 0.20, 0.035 at 0.30 and 0.01 at 0.45. Shown each on its own sheet:
-air 0.20 / 0.30 / 0.45; the hills 7B4630 / 6B3B31 at 0.6, 0.35 and 0.15 of their colour, lightness
+air 0.20 / 0.30 / 0.45; the hills 7B4630 / 6B3B31 at 0.6, 0.35 and 0.15 of their color, lightness
 and hue kept; the crowns rust brown, red rust and a lighter orange rust; the cap C06556 / 874134
 three steps lighter and more vivid; the apples C86553 / 8E4133 as a tomato red, a crimson and a pure
 red. Oj (15:28) "air 0.20, G2, R3, T2 and A1": `.airHaze = 0.20f` after `.isAfrica = false`, hillTop
@@ -3353,12 +3353,12 @@ stump's and the apples' leaf. Shown V1 the leaf as the crowns' base with the sam
 before, V2 the leaf as their middle tone, and the other reading, the leaves in the crowns' rust; Oj
 (15:34) "yes, that one, less saturated" - V1 at 0.75, 0.55 and 0.35 of its chroma; Oj (15:35) "S2":
 treeLeavesBase and treeCrown 618479, crownMiddle and treeCrownMiddle 668A7E, crownLight and
-treeCrownLight 6E9488. The leaf itself stays 458A77, a little more coloured than the crowns.
+treeCrownLight 6E9488. The leaf itself stays 458A77, a little more colored than the crowns.
 
 Then (Oj, 15:38) "Take the brown ground color for dust": the blown dust, effectColor1, a warm steam
 white FFF2DC. Shown the brown the hills had, 7B4630, the ground now 64514A, and the trail 7D6D5D; Oj
 (15:42) took 7B4630, its line comment "Rust brown (the blown dust)". Any brown draws the specks
-darker than the grey sky, fainter than the white ones. effectColor1 is a SceneTheme field, so the
+darker than the gray sky, fainter than the white ones. effectColor1 is a SceneTheme field, so the
 Mill's Steampunk dust turns brown too; chase.dust, the puffs where the wolf lands, stays CCC0AF.
 
 Then (Oj, 15:44) "Magic Forest: the same treatment as High Noon". Its land ran 006D00 (L 0.46) at
@@ -3372,11 +3372,11 @@ SceneTheme's, so the Mill's Magic Forest turns too. Line comments "Hilltops - li
 canopy)" and "Lower parts of hills - dark green (dense forest)".
 
 Then (Oj, 15:51) "Less saturated green", with the figures still to pick. Shown the land, the trees
-and the stems together at 0.75, 0.55 and 0.40 of their colour, lightness and hue kept, as Clear
+and the stems together at 0.75, 0.55 and 0.40 of their color, lightness and hue kept, as Clear
 Day's were; the trail, the leaves and the frog keep theirs. Oj (15:56) "G2": hillTop 76A372,
 hillBottom 3B653A, treeLeavesBase 52824F, crownLight 5F945B, crownMiddle 568853, treeCrown 5E855E,
 treeCrownLight 6C986C, treeCrownMiddle 638C62, grass 234121, frontGrassDark 1D361B, chase.reedStem
-395C37. The Mill's lily pad, 32CD32, keeps its colour.
+395C37. The Mill's lily pad, 32CD32, keeps its color.
 
 Then the figures, measured again on the duller land: ourWolf's light 0.08 off, theirWolf's 0.12,
 theirHare's 0.09, ourHare clear. Shown A each light alone lighter with theirWolf a step darker, B
@@ -3391,7 +3391,7 @@ can get the exact match". Since 14:27 the body runs from the light to `unlit`, b
 kept the flat `coat`, which sits between the light and the shade, so in every theme they stood 0.06
 to 0.18 lighter than the body where they leave it (Underwater Realm 0.18, Twilight 0.16, Vintage
 Noir 0.06). drawWolf now draws the near legs in the body's own gradient, `bodyGradient`, in the same
-coordinates: where a leg crosses the body's edge the two are one colour, and below the body's foot
+coordinates: where a leg crosses the body's edge the two are one color, and below the body's foot
 the leg holds `unlit`. The far legs and every pad keep their steps from `coat` - `relit` scales
 `far` and `dark` channel by channel by the ratio that takes `coat` to `unlit`. `coat` still draws
 the head and tail underneath. Every wolf drawWolf draws takes it - the Chase's in every theme, the
@@ -3422,13 +3422,13 @@ air thins with height over 24 frame heights, so even a top of L 0.66 lifted the 
 lighter rock top still shows little - L 0.79 lifts the near peaks 0.05.
 
 Then (Oj, 00:25) "leave the tops as they are, slightly enlight the top water", and (00:28) "U2":
-skyTop 000080 to 03279A, 0.08 lighter, its hue and colour kept. The water's haze is two parts skyTop
+skyTop 000080 to 03279A, 0.08 lighter, its hue and color kept. The water's haze is two parts skyTop
 to one of skyBottom, so the ranges lighten with it, to 0.35 and 0.39, 0.05 apart. The Mill's sky is
 the same field and lightens too.
 
 Then (Oj, 00:33) "Lunar Eclipse: darker wolf's legs, daze stars matching the sky ones". Its sky
 stars are drawn in its sunDisk, the eclipsed moon's light pink FF99CC, so its dazeStar is FF99CC in
-place of the yellow FFD34D; the grey outline stays, and parts them from the dark hills.
+place of the yellow FFD34D; the gray outline stays, and parts them from the dark hills.
 
 Its legs: since the near legs take the body's own gradient, they go darker only with the body's
 underside. Shown the flank 0.08 and 0.15 darker (this theme), and the legs darkening on past the
@@ -3436,21 +3436,21 @@ body's foot to the paws (every wolf); Oj (00:40) "A1 with purpleish coat" - the 
 and the fur, a faint blue-violet (hue 284, chroma 0.04), turned to the theme's purple, hue 304 like
 its horizon, moon rim and glow, at its own lightness. Oj (00:42) "P2", chroma 0.075: light B7A1D4,
 shade 786493, coat A58FC1, far 84709F, dark 705C8A, belly E6EADCFF. The legs end at L 0.44 where
-they were 0.50. theirWolf stays grey.
+they were 0.50. theirWolf stays gray.
 
 Then (Oj, 00:45) "Move the hare to the purple-ish zone": ourHare's brown (hue about 50) turned to
-the purple range at its own lightness and colour, light, fur, shade and belly; its ear inside, nose,
+the purple range at its own lightness and color, light, fur, shade and belly; its ear inside, nose,
 tail and whiskers kept. Shown hue 304 (the wolf's), 325 and 345; Oj (00:47) "H3", the plum-rose
 furthest from the wolf: light C185A7, fur B27898, shade A06888, belly E6ECD3E0. theirHare stays
-grey.
+gray.
 
 Then (Oj, 00:56) "Put those characters into Twilight": Twilight's ourWolf and ourHare take Lunar
-Eclipse's whole coats, the purple wolf and the plum-rose hare, every field. On Twilight's blue-grey
+Eclipse's whole coats, the purple wolf and the plum-rose hare, every field. On Twilight's blue-gray
 land his light stands 0.22 to 0.25 off what is behind him and hers 0.18 to 0.21; his flank is 0.07
 from the lawn by lightness and parts from it by hue.
 
 Then (Oj, 01:25) "Darker the wolf's tips, purple hint to the ball and the frog": shown the tips
-(dark) 0.10, 0.20 and 0.30 darker, and the ball's and frog's colours moved 0.20, 0.35 and 0.50 of
+(dark) 0.10, 0.20 and 0.30 darker, and the ball's and frog's colors moved 0.20, 0.35 and 0.50 of
 the way toward the theme's purple (chroma 0.12 at hue 304) at their own lightness. Oj (01:27, 01:28)
 "2", "1" - the tips at the second step, the hint at the first: dark 39264F; ballPanel1 D85669,
 ballPanel2 5876D9, ballPanel3 F8D085, ballBase FCEDFF; frogLight 76975A, frogDark 415D3F, frogBelly
@@ -3464,7 +3464,7 @@ the signpost's post and the apples' stems lighten with it, and in the Mill its p
 frames.
 
 Then (Oj, 01:43) "the far paws are far too darker", after asking where the paws and far legs come
-from: the far paws were `dark`, the tips' colour, re-lit, so Twilight's darker tips took them near
+from: the far paws were `dark`, the tips' color, re-lit, so Twilight's darker tips took them near
 black. Oj (01:48) "take the tip color for the near paw. for the far leg and paw take a step below of
 the corresponding near leg colors": a near paw is `dark` itself; a far leg is the body's gradient
 and a far paw is `dark`, each scaled by the step that takes `coat` to `far` (relit), the theme's own
@@ -3482,12 +3482,12 @@ Then (Oj, 02:24) "In toxic waste make the wolf greener, his tips a bit darker, h
 shown his fur toward the theme's lime (hue 137) at chroma 0.04, 0.07 and 0.10 at its own lightness,
 his tips 0.05, 0.10 and 0.15 darker, and the hare 0.12, 0.20 and 0.28 lighter in her brown. Oj
 (02:28) "The wolf 2, the hare 3 - fix its tail and add a green hint": the wolf light 89A87D, shade
-708E64, coat 7E9C72, far 68865D, dark 405C35, belly E6B7C6B0. The hare's tail, a grey A6A493 darker
+708E64, coat 7E9C72, far 68865D, dark 405C35, belly E6B7C6B0. The hare's tail, a gray A6A493 darker
 than her new fur, went to a near-white cream, and her fur, belly and tail were moved part of the way
 toward the green; Oj (02:29) "G2", a quarter of the way: light C7BE8B, fur BCB482, shade B1A877,
 belly E6E9EEC2, tail ECF7DA.
 
-Then (Oj, 02:31) "Steampunk: darker hedgehog coat": its spines, a light steel grey 6E6E76 over
+Then (Oj, 02:31) "Steampunk: darker hedgehog coat": its spines, a light steel gray 6E6E76 over
 8C8C96, shown 0.08, 0.15 and 0.22 darker at their own hue; the face and ears kept. Oj (02:34) "H2":
 spinesDark 44444C, spinesLight 60606A. On the trail (7D6D5D) the dark spines stand 0.16 off and the
 light ones 0.07, where they were 0.04 and 0.11.
@@ -3502,7 +3502,7 @@ forest's L3": Twilight's hare at the second step instead, light FFC6E6, fur F4B6
 belly E6FFF0F8, 0.37 to 0.39 off its land.
 
 Then (Oj, 02:45) "Take the midnight reeds stems from the other stems": Midnight's chase.reedStem, a
-near-black 031504 that vanished into its dark hills, takes its grass, 2C422B, the colour of its
+near-black 031504 that vanished into its dark hills, takes its grass, 2C422B, the color of its
 tufts and daisy stems. The Mill's reed stem, SceneTheme.reedStem, keeps its own.
 
 Then (Oj, 04:16, on a Clear Day screenshot) "Don't like this elephant shaped hill": the near
@@ -3521,7 +3521,7 @@ High Noon, Summer Sunset and Magic Forest, their light lifted the same way, stil
 
 Then (Oj, 04:49) "High Noon and Summer Sunset the same". Summer Sunset: light B0ADB5 -> 79777E,
 his body 0.39 deep -> 0.21; his back off the land falls from a median 0.16 to 0.13 over 15 moments
-(least 0.09 -> 0.07, against the grey range). High Noon held: there the same step takes his back
+(least 0.09 -> 0.07, against the gray range). High Noon held: there the same step takes his back
 to 0.03-0.04 off its slate near range at three of the 15 moments, which is what its light was lifted
 for.
 
@@ -3530,7 +3530,7 @@ Then (Oj, 04:57) "keep light and tips, lift rest" for High Noon: shade 4B5F75 ->
 hue kept; light 869CB5 and the tips 304256 stay. His body 0.29 deep -> 0.21; his back off the land a
 median 0.155, least 0.059 (was 0.164, 0.063), his legs 0.28 at the median, least 0.14. And "rename
 dark to tips": WolfCoat::dark is WolfCoat::tips - ears, lower jaw, the tail's tip and the near
-paws - in the sprite, WolfCoats::Grey and every theme.
+paws - in the sprite, WolfCoats::Gray and every theme.
 
 Then (Oj, 05:02) "The same in Magic Forest", as High Noon: shade 5C5C75 -> 8787A2, coat 6E7089 ->
 9B9DB7, far 525269 -> 7D7D96, belly E6B6B4CC -> E6E6E4FD, each 0.15 up in L; light A3A3BF and the
@@ -3542,7 +3542,7 @@ Then (Oj, 05:11) "Darker the wolf's tips" in the five night themes and Neon City
 tips sat level with the body's foot. Shown 0.10, 0.20 and 0.30 darker; the ears stand against a dark
 range or sky, so a darker tip crosses it and the ears vanish on the way (0.03-0.09 at 0.10 and
 0.20). Oj (05:19) "Keep the tips, mock the paws a step darker": the paws leave the tips and take
-their own colour - a near paw the coat-to-far step below the tips, a far paw that step below a near
+their own color - a near paw the coat-to-far step below the tips, a far paw that step below a near
 one. The step is 0.03-0.075 in L; most themes' paws now stand 0.08-0.09 below the leg's foot,
 Midnight Fantasy's 0.03 and Lunar Eclipse's level with it. Oj (05:23) "That works, make a rule".
 Every wolf drawWolf draws.
@@ -3584,7 +3584,7 @@ on the CPU backend a Sahara Heat frame takes about 0.5 ms more in the Mill and 0
 Chase, near the noise of the measurement.
 
 Then (Oj, 13:22) "Make Vintage dust dark, and Sahara's brown", and from sheets of three shades each,
-"B - dark brown" and "A - black". The dust takes its colour from the theme's effectColor1, which
+"B - dark brown" and "A - black". The dust takes its color from the theme's effectColor1, which
 neither theme draws anything else with: Sahara Heat's is 6B4226, where it was white, and Vintage
 Noir's 44000000, where it was 44FFFFFF. The alpha byte does not reach the dust - withOpacity
 replaces it with the scene's dust opacity - so Vintage Noir's 44 is kept as it was.
@@ -3600,7 +3600,7 @@ and 0.2 ms more in the Chase, near the noise of the measurement.
 Then (Oj, 13:37) "Make 2 times longer, keep the count": a drop runs 12.5 units, 400 a set.
 
 Then (Oj, 13:44) "Make the birds dark dark green", of Toxic Waste's flock, and (13:45) "They must
-have their own color". The flock drew in the Chase's crowBody; SceneTheme has a flock colour of its
+have their own color". The flock drew in the Chase's crowBody; SceneTheme has a flock color of its
 own after windowLight, the 41st, so colorsNum() is 41 + ChaseTheme::colorsNum(). Every theme sets
 it, to its crowBody but Toxic Waste, whose flock is 071505, the darkest of three greens shown. The
 other 23 themes draw the same to the byte in both scenes; a crossfade blends flock with the rest.
@@ -3630,11 +3630,11 @@ darker than the sheet's A. The footbridge and the signpost keep bough. The other
 same to the byte in both scenes.
 
 Then (Oj, 14:26) "so, the dust opacity field is redundant because it replaces the color's alpha?" -
-the other way round: withOpacity replaced the colour's alpha with the effect's opacity, so the
+the other way round: withOpacity replaced the color's alpha with the effect's opacity, so the
 theme's alpha was dropped. Five themes carried one that did nothing: Stormy Night's rain 78, Toxic
 Waste's B4, Winter Frost's and Winter Night's snow DC, Vintage Noir's dust 44. Oj (14:29) picked
 making the alpha count: the dust, the rain, the snow, the leaves and petals and the fireflies' light
-are drawn with faded(colour, opacity), the colour's alpha times the opacity, as the fireflies' glow
+are drawn with faded(color, opacity), the color's alpha times the opacity, as the fireflies' glow
 already was, and those five effectColor1 alphas are FF, so nothing fades. faded rounds where
 withOpacity cut, so in the frames checked the ten themes with rain, snow, leaves, petals or dust
 moved by at most 2 levels in a byte; the rest, the fireflies' themes among them, are the same to the
@@ -3664,23 +3664,23 @@ and attached parts into the new struct. Finish moving themes into their files". 
 windowLight and troughWater, worn by nothing but the mill as well, he picked moving them too.
 MillTheme holds bodyTop, bodyBottom, roofTop, roofBottom, timber, windowLight, wingFabric, wheel and
 troughWater, in TimberMillColors' order, and SceneTheme carries it as `mill`, just before `chase`,
-so the colours still stand in one row from skyTop to the end of `chase`: colorsNum() is 38 +
+so the colors still stand in one row from skyTop to the end of `chase`: colorsNum() is 38 +
 MillTheme::colorsNum() + ChaseTheme::colorsNum(), 172 as before. The plinth, the chimney and the
 door stay on the Chase's stone and bark, and the footbridge on bough, which the Chase draws too.
 
 Oj had moved Clear Day and High Noon into partitions of ClaFi.PathArt.Themes, one file each under
-Themes/, PathArt.Themes.<Name>.cppm, and given Clear Day new mill colours on the way. The other 26
+Themes/, PathArt.Themes.<Name>.cppm, and given Clear Day new mill colors on the way. The other 26
 followed, among them the four allThemes leaves out - Pastel Dream, Neon Jungle, Desert Dusk and
 Retro 80s - as every interface partition has to be exported by the primary interface.
 PathArt.Themes.cppm keeps the export imports, in allThemes' order with those four after them, then
-allThemes and getTheme. In every theme the mill's colours moved into a `.mill` block before
+allThemes and getTheme. In every theme the mill's colors moved into a `.mill` block before
 `.chase`, each line keeping its comment; the blank lines Oj had put around them in Clear Day and
 High Noon went with them, and High Noon's file lost a line of four spaces after the namespace's
 brace. In the shared items the 28 files stand together after PathArt\Sprites, Clear Day's and High
 Noon's moved there from where Visual Studio had put them, and the filters have a PathArt\Themes
 folder.
 
-A dump of every colour of all 28 themes by name, with the span from asArray() to colorsEnd(), came
+A dump of every color of all 28 themes by name, with the span from asArray() to colorsEnd(), came
 out the same before and after, and the Mill, the Chase and the Comet the same to the byte in the 24
 listed themes.
 
@@ -3711,8 +3711,8 @@ themes whose hare ran pink. Each takes the daylight family's brown, at the light
 background asks for. Lunar Eclipse takes Midnight's honey brown, light C48D61, fur B48055, shade
 A36F47, belly E6E2D3B8; Twilight a fawn a step lighter for its lighter land, E3B78E, CFA175, B98A5D,
 belly E6F7E8D4; Magic Forest a light fawn for its sunlit green, E6C49B, D2AD7D, BC9663, belly
-E6F8E9D2. Her ear inside, nose, tail, whiskers, mouth and teeth keep their colours, and the other
-couple's grey hare stays grey. On the frames drawn at 1600 by 900 her light stands 0.30, 0.32 and
+E6F8E9D2. Her ear inside, nose, tail, whiskers, mouth and teeth keep their colors, and the other
+couple's gray hare stays gray. On the frames drawn at 1600 by 900 her light stands 0.30, 0.32 and
 0.26 off the meadow behind her, where it stood 0.31, 0.38 and 0.38; her shade nearest the trail is
 0.158, 0.063 and 0.074 against it, as Clear Day's 0.088 is.
 
@@ -3744,7 +3744,7 @@ figures, the life. This is step 1.
 
 Then (Oj, 12:42) "I think this piece of land is not supposed to block the river": a low rise drawn
 over the river's far end to hide its source read as a strip of land lying across it, its one flat
-colour off the floor's hazed rows and the river's tip showing beyond it. The rise is gone, and the
+color off the floor's hazed rows and the river's tip showing beyond it. The rise is gone, and the
 river starts as a point at the far hills' foot.
 
 Then (Oj, 12:50) "The predator with his tree should be further away in the field, where he can
@@ -3787,7 +3787,7 @@ order: drawMillSmoke, drawMillHouse, drawMillWheel, drawMillWater, drawMillWings
 
 - MillPose gains wheelTurns and cycleTime; size is pixels per unit of a mill whose front wall is
   112 units wide, the mockup's. The hub stands at 126.
-- MillColors holds 20 colours, which millColorsOf takes from the theme: the Chase's bough for the
+- MillColors holds 20 colors, which millColorsOf takes from the theme: the Chase's bough for the
   timber, bark and barkShade for the door, the stones for the plinth and chimney, sunDisk for the
   sunlit wall and spokes, skyBottom 0.45 toward black for unlit glass, windowLight for the lamp,
   riverTop and foam mixed for the poured water, cloud toward skyBottom for the smoke.
@@ -3802,7 +3802,7 @@ order: drawMillSmoke, drawMillHouse, drawMillWheel, drawMillWater, drawMillWings
   sways 6, drops fall 64, spray leaps 36, foam bobs 57 and swells 45.
 - The eaves' shadow is the Chase's shadow at 1.4 of its alpha, held to opaque in the sprite; every
   theme's is 0x47 now.
-- SceneTheme::windowLight: a colour after petal3, so colorsNum() is 40 plus the Chase's. Themes
+- SceneTheme::windowLight: a color after petal3, so colorsNum() is 40 plus the Chase's. Themes
   with no lamp leave it out. Oj (13:51) "B everything" from "Mill window light - options.png": each
   theme its own lamp - Midnight and Calm Night FFD68C, Stormy Night FFB45A, Twilight FFDCB4 at 0x99,
   Winter Night FFA65A, Midnight Fantasy E8C8FF, Cyberpunk Night 00FFFF, Lunar Eclipse FF8C66, Neon
@@ -3853,7 +3853,7 @@ PeekingWolfSprite stay as well; MillScene draws with none of the five old module
   stride in turns, chew and tailSwing, so step 5's walk, drink and turn are poses of it. Grazing,
   the head drops 1.15 radians and nods 19 times a cycle, the jaw chews 64 times and the tail
   swishes 15; size 0.74. PosedCowColors has no skyBehind or groundBehind: the mockup's legs are
-  the body's colour, the far pair a shade darker, whatever stands behind them.
+  the body's color, the far pair a shade darker, whatever stands behind them.
 - WolfHeadSprite: the head looking left, its eyes glowing. The scene slides it 20 units out from
   behind his fir from 0.1 to 0.35 and from 0.6 to 0.85 of each cycle, taking 0.0375 of a cycle
   each way, and he blinks 28 times a cycle, his eyes shut for the last 0.15 of each.
@@ -3885,7 +3885,7 @@ through the whole story comes round a whole number of times in it or in a cycle.
 - Frames at 1920 x 1080 in the container: 10 to 14 ms while the ducks, the birds and the walking
   cow are all out.
 
-Then (Oj, 15:36) "remove the river's outline": the river bed's stroke, a line of the land's colour
+Then (Oj, 15:36) "remove the river's outline": the river bed's stroke, a line of the land's color
 0.3 toward black at 0.55 round the whole river, is gone. The near bank keeps its wet edge.
 
 Then (Oj, 15:43) "Spread effects by layers": the weather and the fireflies are shared out over four
@@ -4039,7 +4039,7 @@ hands them to the reflection and to drawWaterLight, and each sparkle moves by it
 Frames before and after differ only on the sparkles' path.
 
 Then (Oj, 01:43) "The sparkles use the sun shine color that's already there and not their own": they
-are drawn in sunGlow, the colour the sky's glow round the sun takes, at its own opacity as
+are drawn in sunGlow, the color the sky's glow round the sun takes, at its own opacity as
 riverReflect's was. Midnight's riverReflect was black at 0.24, so its sparkles hardly showed; in
 sunGlow they are its moonlight blue. Nothing reads riverReflect now.
 
@@ -4129,7 +4129,7 @@ further off and smaller; 0.40 above the cow - it is the nearest that nothing cov
 story at 960 by 494, sampled every half second, the sails, the wheel and the cow never cross it, and
 only a far-shore cattail's head sways over the edge of its shadow.
 
-Then (Oj, 03:28) "add some steam forming where water hits the wheel": eight puffs in the foam colour
+Then (Oj, 03:28) "add some steam forming where water hits the wheel": eight puffs in the foam color
 rise from where the pour lands, (-14, 25.5) from the trough's mouth, which the pour's foot is now
 drawn round. Each rises 16 units over its life, grows from 2 units across to 8 and fades in fast and
 out slowly, at 0.4 at most; it leans by sin(index * 2.4), from 2 units against the wind to 14 with
@@ -4162,7 +4162,7 @@ from hers, 0.018 behind; it keeps its row, 0.70, as a number of its own.
 
 Then (Oj, 03:47) "Increase the sun glow on Clear Day, decrease sparkles opacity for all themes":
 Clear Day's sunGlow is 0xA0FFFFFF, from 0x64FFFFFF - 0.63 of white round the sun where it was 0.39.
-The Chase sets that colour's opacity to 0.65 itself (withOpacity), so its frames stay the same to
+The Chase sets that color's opacity to 0.65 itself (withOpacity), so its frames stay the same to
 the byte; in the Mill the glow on the sky, the glow along the sun's path on the water and the
 glitter all take the theme's opacity, so on Clear Day all three grow by 1.6. A glitter is
 k_glitterOpacity, 0.5, of the sun's glow at its brightest now: half what it was in every theme, and
@@ -4190,13 +4190,13 @@ under PathArt\Sprites. In Calm Night the theme's blades are a bright green again
 as on the Chase's trail.
 
 Then (Oj, 04:07) "Make the Paper sketch glow visible, darken sky top and river for that": Paper
-Sketch's sunGlow was 0x28B4AA96, a pencil grey darker than its paper sky, so the glow only shaded
+Sketch's sunGlow was 0x28B4AA96, a pencil gray darker than its paper sky, so the glow only shaded
 the sky round the sun a little, and the light on the water - its glows and glitter take the same
-colour - was lost on the pale river. Darkening the sky top and the river alone left the glow unseen
-and took the Mill sun's rays with it, their grey being the sky's then; Oj picked the option that
+color - was lost on the pale river. Darkening the sky top and the river alone left the glow unseen
+and took the Mill sun's rays with it, their gray being the sky's then; Oj picked the option that
 also turns the glow paper white. Paper Sketch now has skyTop 0xFFA8A293 (from 0xFFD4CFC1), riverTop
 0xFF8798A2 and riverBottom 0xFF73848E (from 0xFFB4C8D2 and 0xFFA0B4BE), and sunGlow 0x80FFFFFF. The
-theme is shared: the Chase's Paper Sketch sky is darker at the top and its sun's grey halo is a
+theme is shared: the Chase's Paper Sketch sky is darker at the top and its sun's gray halo is a
 white glow; the haze over both scenes' mountains, which mixes skyTop in, is a little darker; the
 readout's field, riverBottom, is darker, and its ink stays the dark one.
 
@@ -4204,7 +4204,7 @@ Then (Oj, 04:15) "and the smaller tufts you may reuse instead of the grass dents
 short strokes, each leaning a quarter of its length to the right, are tufts as the Chase's lawn
 draws them - three blades from one root, the outer two 8 high and 4 out, the middle 11 - scaled so
 the middle blade is as tall as the stroke was, (1.5 + 5 depth) units times 0.6 to 1.2. They keep the
-strokes' places, colours, opacity and width (k_meadowTufts, from k_meadowBlades).
+strokes' places, colors, opacity and width (k_meadowTufts, from k_meadowBlades).
 
 Then (Oj, 04:20, with a shot of Clear Day at 3840 by 1975) "Only vast amount of them is not
 visible": most tufts were too faint to see - 0.35 to 0.7 opaque, down to 0.6 pixels wide and 1.5
@@ -4216,27 +4216,27 @@ Calm Night the theme's greens make them bright against the dark field.
 Then (Oj, 04:32, with a shot of Calm Night at 3840 by 2160) "On calm and stormy nights small tufts
 shouldn't shine": the meadow's tufts take the Chase's grass and its trail patch's bladeMiddle and
 bladeDark, and the night themes keep the day's bright greens in the two blades - lit on the Chase's
-trail, shining on a dark field. By night a tuft is the field's own colour at its band, landAt, a
+trail, shining on a dark field. By night a tuft is the field's own color at its band, landAt, a
 shade darker - 0.2, 0.3 and 0.4 of the way to black for the three kinds - mixed in by hasStars, so
 all nine themes with stars take it: Midnight shone as Calm and Stormy Night did, and Cyberpunk
 Night's meadow tufts, magenta from its trail patch, are its blue field darker. Day themes draw as
-they did, to the byte. The cow's grass patch keeps the blades' colours.
+they did, to the byte. The cow's grass patch keeps the blades' colors.
 
 Then (Oj, 04:36) "and the cat tails should not too. try to use reeds colors from chase for all
 themes": the cattails, on the near bank and across the pond and in the water, take the Chase's reed
-colours, theme.chase.reedStem and reedHead, where they took the scene's reedStem and reedHead; by
+colors, theme.chase.reedStem and reedHead, where they took the scene's reedStem and reedHead; by
 night those are a dark green stem in a dark field and a brown head. The light down a head is the
-head's own colour at 1.25 of its luminosity, at 0.8, as the Chase's reeds light their heads' tops,
+head's own color at 1.25 of its luminosity, at 0.8, as the Chase's reeds light their heads' tops,
 where it was the head a quarter of the way to the sun's disk - by night the moon, which lit it.
 Nothing reads the scene's reedStem and reedHead now.
 
 Then (Oj, 04:41) "for winter use the gray ones there and there": Winter Frost's Chase reeds take the
-grey ones the Mill's cattails wore in it, stem 0xFF64788C and head 0xFF465A6E, where they were a
-light grey stem, 0xFF9EAEAC, and a brown head, 0xFF785132; both scenes read them, so the Chase's
-roadside reeds and the Mill's cattails are grey-blue in it now. The well-lit generator's
+gray ones the Mill's cattails wore in it, stem 0xFF64788C and head 0xFF465A6E, where they were a
+light gray stem, 0xFF9EAEAC, and a brown head, 0xFF785132; both scenes read them, so the Chase's
+roadside reeds and the Mill's cattails are gray-blue in it now. The well-lit generator's
 well_lit.json in Claude Output holds them too - WinterFrost ReedHead and a world.reedStem of its
 own, as Warm Orange Fall has - so a run keeps them; the file before is
-well_lit.before_winter_grey_reeds.json. Winter Night keeps its grey stem and brown head.
+well_lit.before_winter_grey_reeds.json. Winter Night keeps its gray stem and brown head.
 
 Then (Oj, 04:49) "Icier, closer to the other grass, and the other grass closer to them": in OKLab
 the reeds stood at hue 249, a slate blue, and Winter Frost's grass - its tufts, front grass and the
@@ -4247,13 +4247,13 @@ and 0.1 lighter (stem 0xFF769AA8 at L 0.66, head 0xFF537886 at 0.55), the grass 
 holds all seven for Winter Frost, the file before as well_lit.before_winter_icy.json.
 
 Then (Oj, 04:53) "whiter near bank land": the near bank is hillBottom, 0.05 toward black, darkening
-0.18 more to the frame's bottom - in Winter Frost a grey blue under a white field. On snow it is now
+0.18 more to the frame's bottom - in Winter Frost a gray blue under a white field. On snow it is now
 hillBottom 0.7 of the way to hillTop, the snow on the hills, by hasSnow, then darkened as before:
 Winter Frost's bank is nearly white, Winter Night's the moonlit field's blue, and Arctic Dawn's,
-whose hills are sand, is the sand where it was grey. Themes without snow draw as they did.
+whose hills are sand, is the sand where it was gray. Themes without snow draw as they did.
 
 Then (Oj, 04:55) "Night plants too": Winter Night's plants go the way Winter Frost's went. Its reeds
-had a grey-blue stem, hue 233, and a brown head, hue 55; both are hue 224 now with a little more
+had a gray-blue stem, hue 233, and a brown head, hue 55; both are hue 224 now with a little more
 chroma, the stem at its lightness (0xFF70909D) and the head 0.11 below it, as in Winter Frost
 (0xFF537886 there, 0xFF4D6E7B here). Its grass and front grass, already near the frost's hue, move
 up to 207 and 196 with 0.9 of their chroma (0xFF527B81, 0xFF456B6B), and its three frosty blades
@@ -4262,7 +4262,7 @@ scenes read them; well_lit.json holds all seven for Winter Night, the file befor
 well_lit.before_winter_night_icy.json.
 
 Then (Oj, 05:02) "use the other color for lily - one of the outer flowers": the lily's flower took
-petal2, the pink daisy's colour. Of the other two daisies' colours Oj picked petal3, lilac in Clear
+petal2, the pink daisy's color. Of the other two daisies' colors Oj picked petal3, lilac in Clear
 Day and Calm Night, over petal1, the near white (the sheet Mill lily flower options.png). In Cherry
 Blossom the pad is the theme's pink tree leaves, and petal3, a paler pink, shows little on it;
 petal2 was the only one that stood out there.
@@ -4277,7 +4277,7 @@ Chase's reed stems are drawn the size of the Chase's reeds, and the near bank's 
 scene's largest plants, showed them pale - a yellow green in Golden Hour. drawCattail takes a
 darkness, the share of the way to black its stem and its leaves go (the leaf in shade goes 0.25
 further, as before); the near bank's nine are k_nearCattailDarkness, 0.5, of the way, and the
-cattails across the pond and their reflections keep the Chase's colour. Every theme takes it: Winter
+cattails across the pond and their reflections keep the Chase's color. Every theme takes it: Winter
 Frost's and Winter Night's icy stems are a dark slate on the near bank.
 
 Then (Oj, 05:18) "I meant the near grass which invisible but darker near tails are welcome too - it
@@ -4285,7 +4285,7 @@ gives depth, only with lesser strength and the heads should dim along": the near
 the Chase's grass and frontGrassDark as they were, and where they are as light as the bank - Golden
 Hour's grass at Oklab lightness 0.59 on a bank at about 0.6 - the blades could not be told from it.
 Both shades now go down together, in Okhsl lightness, until the lighter is k_nearGrassContrast,
-0.14, below the bank's top colour; where they are darker than that already - Summer Sunset, High
+0.14, below the bank's top color; where they are darker than that already - Summer Sunset, High
 Noon - they are as they were. The near cattails are 0.3 of the way to black, from 0.5, and their
 heads go the same way with them, the light down a head lit from the dimmed head.
 
@@ -4298,7 +4298,7 @@ the line along it.
 
 Then (Oj, 05:30) "Fix the fish contrast, move nearer to the center": a fish was the Chase's light
 stone a third of the way to riverTop, about the water's own lightness in the day themes, so in Clear
-Day it could not be seen on the water. Its colour keeps that hue and takes a lightness
+Day it could not be seen on the water. Its color keeps that hue and takes a lightness
 k_fishContrast, 0.3, below the water's - riverTop and riverBottom halfway - in Okhsl lightness, or
 0.3 above it where the water is darker than 0.5, as by night and in Cherry Blossom. The two jumps
 leave the water at (0.53, 0.88) and (0.46, 0.85), from (0.56, 0.86) and (0.42, 0.81), nearer the
@@ -4306,10 +4306,10 @@ pond's middle.
 
 Then (Oj, 05:37 and 05:40, with a shot of the Chase in Golden Hour) "which color the flower stems
 use?" - the Chase's grass, which the near bank's lowered grass no longer matched - and "On the same
-theme, the chase gras and flower stem looks OK": the Chase's lawn is the hills' top colour giving
+theme, the chase gras and flower stem looks OK": the Chase's lawn is the hills' top color giving
 way to their foot's down to the frame's bottom, so its rows are lighter than the Mill's near bank
-was, which was the foot's colour 0.05 darker, going 0.18 darker still to the bottom; on it the
-Chase's grass was the bank's own lightness. The near bank is coloured as the Chase's lawn is at
+was, which was the foot's color 0.05 darker, going 0.18 darker still to the bottom; on it the
+Chase's grass was the bank's own lightness. The near bank is colored as the Chase's lawn is at
 those rows now: k_nearBankTopShare, 0.63, of the way from hillTop to hillBottom at its top,
 hillBottom at the frame's bottom, and on snow both 0.7 of the way back to hillTop. Its grass and the
 daisies' stems are the Chase's grass and frontGrassDark as they are, and k_nearGrassContrast and
@@ -4323,15 +4323,15 @@ lost its contrast, and the grass and the near cattails were then darkened each b
 own. The near layer has one rule now, nearLayerColor, and everything drawn on it takes it: the
 bank's ground, its grass, its cattails' stems and heads, its daisies' stems, petals and hearts, and
 the butterfly over it. The fireflies give light and are drawn as they were; the weather falling over
-the near bank is left as it is. drawCattail takes the colours it draws in, CattailColors, and
+the near bank is left as it is. drawCattail takes the colors it draws in, CattailColors, and
 k_nearCattailDarkness is gone.
 
 A sheet of one flat share for the layer, 0.15, 0.25 and 0.35 of the way to black, drew Oj's answer
 "I like how the steams getting darker, and don't like how the snow getting gray - the transform
-should be weaker for lighter tones". A colour goes k_nearLayerShade, 0.6, times its darkness - one
+should be weaker for lighter tones". A color goes k_nearLayerShade, 0.6, times its darkness - one
 less its Okhsl lightness - of the way to black: a mid tone at lightness 0.5 goes 0.3, as the near
 cattails did; a snow white at 0.95 goes 0.03 and stays white; a dark tone at 0.25 goes 0.45.
-Darkening toward black keeps a near white's colour as faint as it is, where lowering its Okhsl
+Darkening toward black keeps a near white's color as faint as it is, where lowering its Okhsl
 lightness would grow it, as the front hill showed on 2026-11-10. Asked whether snow should be kept
 out of the rule, Oj did not answer; snow takes the rule like everything else, and the weighting
 keeps it white.
@@ -4339,7 +4339,7 @@ keeps it white.
 Then (Oj, 06:38, with a shot of Summer Sunset) "In this theme the stems are too dark now": Summer
 Sunset's grass and reed stems are near black already, 0xFF113100 and 0xFF183800 at Okhsl lightness
 0.18 and 0.20, so the darkness weighting took them 0.49 and 0.48 of the way to black, the most of
-any tone; the night themes' banks, at about 0.2, went as far. A colour goes k_nearLayerShade, 0.6,
+any tone; the night themes' banks, at about 0.2, went as far. A color goes k_nearLayerShade, 0.6,
 times its lightness or its darkness, whichever is less: mid tones go the most, 0.3 at 0.5, and every
 tone from 0.5 up goes as it did, so Golden Hour's stems and the snow are as they were. Summer
 Sunset's grass goes 0.11 and its stems 0.12, its bank 0.25, Clear Day's grass 0.18, and Calm Night's
@@ -4370,27 +4370,27 @@ Sunset are 0.06 lighter. The generator's OVERRIDES hold them, generate.py's earl
 generate.before_sunset_half_stems.py.
 
 Then (Oj, 10:21) "drop the "lesser light tones darkening" part from the near layer rule": every
-colour on the near layer goes k_nearLayerShade, 0.25, of the way to black, whatever its lightness. A
+color on the near layer goes k_nearLayerShade, 0.25, of the way to black, whatever its lightness. A
 mid tone goes twice as far as it did, 0.25 where it went 0.125, and near whites go as far as
-anything: the snow on the bank and the daisies' petals turn grey. Winter Frost's bank comes down
+anything: the snow on the bank and the daisies' petals turn gray. Winter Frost's bank comes down
 from Oklab L 0.91 to 0.74, darker than the meadow behind it where it was lighter, Winter Night's
 from 0.71 to 0.61, Golden Hour's from 0.58 to 0.52 and Clear Day's from 0.38 to 0.36.
 
 Then (Oj, 10:26) "return back with lesser white tones lessering": a sheet of the darkness rule with
-a floor, a colour going 0.25 times its darkness and never less than 0.0625, 0.125 or 0.19, drew "I
+a floor, a color going 0.25 times its darkness and never less than 0.0625, 0.125 or 0.19, drew "I
 figured out what i don't like with simple darkening - it not just darkens, it reduces saturation.
 Why is that?". Blending toward black scales the red, green and blue alike, so the hue and the HSV
 saturation hold, but in Oklab the chroma falls in step with the lightness, about 0.19 of it at 0.25:
 Clear Day's grass 0.103 to 0.082. Okhsl saturation, which measures chroma against what the hue holds
-at that lightness, holds for dark greens (0.94 to 0.92) and falls for light colours, which find more
+at that lightness, holds for dark greens (0.94 to 0.92) and falls for light colors, which find more
 room as they darken: a daisy's heart 0.92 to 0.75, a pale blue snow 0.48 to 0.11, the snow going
-grey.
+gray.
 
 Sheets of the blend against Okhsl lightness lowered with its saturation kept (pale tints turn
 bright: cyan, violet and pink petals, blue snow), against Oklab lightness lowered with its chroma
 kept (greens deep, whites pale), then of Oj's "Okhsl lightness and saturation both lowered by the
 same factor" and of half the chroma drop, the last over the whole scene, drew "put in okhsl
-saturation with lightness lowering". A colour on the near layer keeps 0.75 of its Okhsl lightness
+saturation with lightness lowering". A color on the near layer keeps 0.75 of its Okhsl lightness
 and 0.75 of its Okhsl saturation, k_nearLayerShade being the share it loses, and its hue and alpha.
 The lightness comes out as the blend's, near enough. Clear Day's bank goes to Okhsl saturation 0.69
 and Oklab chroma 0.068, where the blend left 0.90 and 0.088. Near whites keep much of their tint, as
@@ -4399,15 +4399,15 @@ Okhsl gives a near white's faint tint a high saturation: a petal of 0xFFF9FEFF s
 blend left 0.017. The frame takes no longer to draw.
 
 **High Noon's mill is sun-bleached** (Oj, 2026-11-15, with a shot of High Noon's mill, "Calm the mil
-colors"; from a sheet of its own colours calmed, sun-bleached ones and Clear Day's, "I like B, where
+colors"; from a sheet of its own colors calmed, sun-bleached ones and Clear Day's, "I like B, where
 did the roof strips go?"). Its walls were sienna over saddle brown, its roof dark red and firebrick,
-its sails a slate blue at 0x88 and its wheel a dark slate grey, named web colours. They are a pale
+its sails a slate blue at 0x88 and its wheel a dark slate gray, named web colors. They are a pale
 wood, millBodyTop C39A72 over millBodyBottom 8C6849, a faded terracotta roof, a cream canvas,
 millWingFabric CCEAE3D4, and a weathered wooden wheel, millWheel 6E5A48.
 
 The roof's tile rows are drawn in roofShade, millRoofBottom taken 0.18 darker at 0.45, as drawRoof
 takes millRoofTop for the lit side of its round shading and millRoofBottom for the dark side. High
-Noon had them the other way round, 8B0000 over B22222, so the rows were about the roof's own colour
+Noon had them the other way round, 8B0000 over B22222, so the rows were about the roof's own color
 and vanished, and B on the sheet copied that order. millRoofTop is A45C4B and millRoofBottom 7A3E32
 now, the roof lit on the right as on the other mills, and the rows show. Cherry Blossom's roof
 stands the same way round, 8B0000 over CD5C5C, and its rows are lost too. The fields' names say top
@@ -4424,10 +4424,10 @@ OVERRIDES hold them, generate.py's earlier state kept as generate.before_highnoo
 
 Then (Oj, 11:36, with a shot of Cherry Blossom's mill) "calm the mill": it had sienna over saddle
 brown walls, as High Noon had, under a roof of 8B0000 over CD5C5C, lit on the left and its tile rows
-lost, lavender sails at 0x88 and a dark slate wheel. From a sheet of its own colours calmed, High
+lost, lavender sails at 0x88 and a dark slate wheel. From a sheet of its own colors calmed, High
 Noon's mill and a pale stone one, Oj took the pale stone: millBodyTop D8CABD over millBodyBottom
 A0928A, a dusty rose roof lit on the right, millRoofTop C08A88 and millRoofBottom 845655, so its
-rows show, a white canvas, millWingFabric CCF3F1F4, and a grey weathered wheel, millWheel 7A6E66.
+rows show, a white canvas, millWingFabric CCF3F1F4, and a gray weathered wheel, millWheel 7A6E66.
 THEME_EDITS 'CherryBlossom' holds them, theme_edits.py's earlier state kept as
 theme_edits.before_cherry_mill.py.
 
@@ -4448,7 +4448,7 @@ from a sheet of corners 2, 3.5 and 4.75 round, the tops tucked under the body, "
 too"). A leg is 9.5 units wide from top to sole, where it narrowed from 11 at the hip to 8, and its
 corners are 3.5 round at both ends. Its top stands 5 above the hip, so a near leg, drawn over the
 body, shows its rounded top on the belly, and a far leg's is hidden behind the body. The hoof is the
-leg's foot below 26, the same rounded shape clipped and filled in the hoof's colour, where it was a
+leg's foot below 26, the same rounded shape clipped and filled in the hoof's color, where it was a
 square box.
 
 Then (Oj, 12:00) "C, all caps, and move the body a little up away from the legs"; from a sheet of
@@ -4541,9 +4541,9 @@ the glow out, drawCelestialGlow beside drawCelestial; the Chase calls both, glow
 and stays the same to the byte. The Mill keeps the glow and the disc in the kept sky, lays the glow
 again last over landOutline, all below the higher of the two ridges, so the mountains it reaches are
 lit as the sky behind them is, and lights each cloud by celestialGlowAt its middle, the cloud's
-colour drawn toward sunGlow by that share. A cloud clipped to its own outline and lit by the glow
+color drawn toward sunGlow by that share. A cloud clipped to its own outline and lit by the glow
 over it left its soft rim unlit, a dark edge in Cyberpunk. The ridge shows no seam. drawCloud takes
-its place and its colour; cloudOutline holds the shape. A frame at 1920 x 1080 costs the same within
+its place and its color; cloudOutline holds the shape. A frame at 1920 x 1080 costs the same within
 the container's noise, perhaps half a millisecond more.
 
 Then (Oj, 08:15) "Return the previous predator shape - I can not unsee a pig in the new one. Keep
@@ -4553,7 +4553,7 @@ is. Its pose takes eyesOpen and earTurn from the scene in place of its own sin(c
 sin(cycleTime * 50), so the Mill's blink, 10.5 to 14.5 s of every 20, and its ear flick, 0.2 of a
 turn for the first 0.5 s of every 5, run on as they did, and neither jumps when the cycle wraps; it
 still breathes twice a cycle. Each eye has the glow the new head's had, drawGlow 6.5 units about the
-middle of its triangle at 0.55 of the eye colour. headOut moves the head, ears and eyes left of the
+middle of its triangle at 0.55 of the eye color. headOut moves the head, ears and eyes left of the
 hind leg, so the head slides out from behind the fir, 45 units at the fir's distance, while the leg
 shows past the fir's right side all along. Tucked in, the head stands 52.5 units above the fir's
 foot behind its two lowest tiers, every corner of it covered. WolfHeadSprite is drawn by no scene.
@@ -4617,7 +4617,7 @@ Then (Oj, 09:54) "Only the shadow edge crosses his face", and on the options for
 fir's shade: "That's one time figure, that's designed to be used in only one place - under the fir.
 There's no need to shadow him in code - the colors can be adjusted right in the theme fields". The
 fir's shadow goes under the predator now. SpruceSprite exports drawSpruceShadow, which drawSpruce
-calls first and which draws nothing for a clear colour; the Mill lays the wolf's fir's shadow with
+calls first and which draws nothing for a clear color; the Mill lays the wolf's fir's shadow with
 drawFirShadow before the gator and the wolf, and draws the fir over it with castsShadow false. Every
 theme's wolfBody and wolfEar are what that shadow (chase.shadow) made of them, blended as
 Color::blend does, so all of him looks as the part inside the shadow looked, and his eyes keep their
@@ -4630,7 +4630,7 @@ carries no wolfEar and PeekingWolfColors no ear: both ears are drawn in wolfBody
 Then (Oj, 2026-11-16) "Can you extend the river up to the mountains, with a left turn?" Of three
 courses Oj picked B: k_upstream climbs from 0.39 / 0.572 up the far hills' dip to a bend at 0.414
 and hooks left to 0.393 / 0.5472, on the hills' crest under the mountains. The bend pinches:
-streamEdges sets each edge point square to the chord between its neighbours, and at a bend tighter
+streamEdges sets each edge point square to the chord between its neighbors, and at a bend tighter
 than the river is wide the inner edge's points cross into a sharp corner while the outer edge rounds
 wide. Widening the upper reach, then the bend alone, kept the pinch; a round bend of five points on
 a 9-pixel arc evened it out. Oj (14:15) "Keep B. Mask the sharp protrusion with cat tails and tall
@@ -4720,22 +4720,22 @@ Then (16:15) "mock suns": a calm peach, a pale gold, a rose dawn in a pink-white
 white in a cool glow. Oj (16:19) took B: sunDisk FCE5BB, the pale gold, where it was a salmon
 FFA07A; sunGlow stays FFFFFA. sunDisk also lights the stars, the lightning and the mill's spokes.
 
-Then (16:19) "mock the house": its own colours calmed, weathered pale wood under a slate roof, a
+Then (16:19) "mock the house": its own colors calmed, weathered pale wood under a slate roof, a
 Nordic red under a snowy one, and a whitewash under a dark slate. Its roof stood lit side dark,
 roofTop 808080 under roofBottom C0C0C0, so the tile rows vanished, as High Noon's and Cherry
 Blossom's had; every option had it lit on the right. Oj (16:35) "4", read as D, the whitewash, which
-went in; then (16:37) "4 is C": he counts a sheet's rows with the colours as they stand first, so
+went in; then (16:37) "4 is C": he counts a sheet's rows with the colors as they stand first, so
 his 4 is C, the Nordic red. bodyTop 9A4C40 over bodyBottom 70362D, roofTop E4EAEE over roofBottom
 ACB6BE and timber D4D9DC, a pale trim that the window and door frames and the wings' stocks and hub
 wear too, where they were 8B4513 over 696969, 808080 over C0C0C0 and 674528. The comments on those
-lines and on sunDisk, which named the old colours, are gone.
+lines and on sunDisk, which named the old colors, are gone.
 
 Then (16:35) "mock the sails", shown on the whitewash and again on the red: its blue calmed, a white
 canvas, a pale slate after the roof, and Clear Day's cream canvas at 0xCC. Oj (16:40) took C, the
 slate: wingFabric B9C6D0, where it was a powder blue B0E0E6, and the line's comment with it.
 
 Then (16:41) "twilight: mock the house and the bridge": its plum calmed, a dusk slate and a
-weathered grey wood, the bridge in the mill's timber in each. Oj (16:48) took A, the plum calmed:
+weathered gray wood, the bridge in the mill's timber in each. Oj (16:48) took A, the plum calmed:
 bodyTop 695361 over bodyBottom 43323D, roofTop 432D40 over roofBottom 2A1828, and timber and bough
 5B403B, where they were 664A5C over 3E2B38, 492440 over 2A1125 and 6C4134. bough also draws the
 Chase's signpost.
@@ -4746,7 +4746,7 @@ halfway to the first river, a green pond, and the first river, 46B4DC over 286DA
 Oklab L 0.50 and 0.30 at hues 185 and 200, where they stood at 0.40 and 0.20 at 203 and 219.
 
 Then (16:59) "where the peeking wolf's light make him dark": wolfBody stood light in Arctic Dawn
-9F9F8F, Cyberpunk Night 00B8C1 and Underwater Realm 2EA1A4, and at a mid grey in Lunar Eclipse
+9F9F8F, Cyberpunk Night 00B8C1 and Underwater Realm 2EA1A4, and at a mid gray in Lunar Eclipse
 494949. Oj (17:05) "cyberpunk leave him be; underwater, arctic dawn and eclipse: make him surface
 color just a step darker than the fir shadow". The ground under the wolf's fir, as its shadow
 darkens it, measured from renders: B6B4A5, 0A6979 and 363636. From one and two steps of 0.05 Oklab L
@@ -4770,13 +4770,13 @@ seconds of the crossing as an animation (17:18, "this is right").
 
 Then (17:22) "make their trails distort like other reflections". drawDuckWake draws a wake a pixel
 row at a time, clipped to the row and moved by rippleShiftAt there, as the sun's glitter is, so the
-lines break with the reflections around them at their own colour and strength. drawDucks takes the
+lines break with the reflections around them at their own color and strength. drawDucks takes the
 frame's Ripples for it. That is 10 to 20 clipped strokes a duck each frame: nothing to speak of on
 the CPU backend, and not measured under Direct2D, where each is an axis-aligned clip. Oj saw it
 animated (17:25, "this is right").
 
 Then (17:30) "Make rain droplets more translucent". Of drops at half, 35%, a quarter and 18% of the
-colour's alpha times the rain's opacity, in Stormy Night and Toxic Waste, the two themes with rain,
+color's alpha times the rain's opacity, in Stormy Night and Toxic Waste, the two themes with rain,
 Oj (17:32) took a quarter: drawRain fills them at rain.opacity * 0.25, where it was 0.5. The Chase's
 rain is the same drops.
 
@@ -4794,14 +4794,14 @@ Dusk, Steampunk Adventure and Vintage Noir blow dust, in both scenes.
 
 Then (17:56) "dust effect uses 3 colors: from the very dark (the current one) to the very light".
 A middle tone halfway in Oklab between effectColor1 and a light end was mocked, with the light end
-in cream, near white or sand. It would have needed an effectColor3, which shifts every colour after
+in cream, near white or sand. It would have needed an effectColor3, which shifts every color after
 it, and Oj (18:03) dropped it: "no middle tone then - only dark and light". Of the light ends again
 and effectColor2 as it was, Oj (18:07) took near white in all three - Oklab L 0.97 at 8% of the
 dust's chroma, in its hue: Sahara Heat F9F4F0, Steampunk Adventure F9F4F2, Vintage Noir F5F5F5.
 effectColor2 holds it, which none of the three drew anything with; Steampunk Adventure's comment on
 it, steam puffs, went. BlowingDust takes color1 and color2 as FallingLeaves does, every other streak
-in each, and drawWeather hands it the theme's two effect colours, so the Chase's dust is the same.
-Desert Dusk's two are one gold, and its dust stays one colour.
+in each, and drawWeather hands it the theme's two effect colors, so the Chase's dust is the same.
+Desert Dusk's two are one gold, and its dust stays one color.
 
 Then (18:48) "Let's try randomize color from 1 to 2". Each streak at a random point between the two
 was shown, blended straight or in even steps of Oklab lightness; Oj (19:00) "A". drawBlowingDust
@@ -4862,16 +4862,16 @@ water, and it eases in as she lowers her head at 36.
 ## CowColors
 
 Oj, 2026-11-07: "at night its horns illegible", then, picking light horns at night from renders
-of three ways, "limbs are suffer too". By the theme colours, the horns and the tail stood as low
+of three ways, "limbs are suffer too". By the theme colors, the horns and the tail stood as low
 as 1.0:1 against the night skies and the legs as low as 1.1:1 against the hills. In the 13 themes
 where they turn light, they now stand at 3.5 to 13:1.
 
 **The rule compares two contrasts rather than reading how dark the backdrop is.** The renders Oj
 picked from turned the limbs light below a sky luminance; carried to every limb, that made
 Twilight's legs and Vintage Noir's horns worse, 2.4 to 1.2 and 2.5 to 1.1, where the backdrop is
-middling. Comparing the contrast of either colour never makes a limb worse, and the night themes
+middling. Comparing the contrast of either color never makes a limb worse, and the night themes
 come out as in those renders. Where neither stands out the limbs stay as they were: Lunar Eclipse,
-whose body and detail are one grey, and the legs in Underwater Realm and Cyberpunk Night.
+whose body and detail are one gray, and the legs in Underwater Realm and Cyberpunk Night.
 
 The backdrops are read off the theme in MillScene::draw: the sky's gradient at 0.58 of the height,
 and the front hill's at 0.38 of its own, darkened by a tenth as drawHills does.
@@ -4887,7 +4887,7 @@ colorBetween(color, black, 0.05) in drawHills and in the cow's groundBehind alik
 front hill is now C3D0E1, L 0.85 and chroma 0.028. In the same message, "and the white cow on
 golden hour": mill_fix had darkened both cows to stand 0.15 from the sky and hills (Winter Frost's
 by 0.28 to A4A4A4, Golden Hour's by 0.235 to B2A9A0), and the generator's theme_edits.py now
-restores their own colours after it: FFFFFF with C8C8DC spots, and FFF5EB with 5A3C28 spots.
+restores their own colors after it: FFFFFF with C8C8DC spots, and FFF5EB with 5A3C28 spots.
 
 ## StarStyle
 
@@ -4898,7 +4898,7 @@ it.
 
 **Sparkles are filled one by one**, where dots are binned by opacity: they all share one opacity,
 so binning would put every star in one path. Whether they may share one no longer turns on the hole
-rule - a path fills nonzero now - so the two are kept apart for their colour alone.
+rule - a path fills nonzero now - so the two are kept apart for their color alone.
 
 ## ChaseTheme
 
@@ -4917,12 +4917,12 @@ the nine fields no scene read - sunStroke, sunCorona1, sunCorona2, riverReflect,
 and its own reedStem, reedHead and shadow - and takes from ChaseTheme every field the Mill draws
 with, each beside its kin: the mountains by the hills, the crowns and the bark by the leaves, the
 grass, the reeds, the stones and the shadow together, the flowers' heart by the petals, the
-butterfly's wings after them, and the duck colours after the mother duck. duckBeakShade, which only
-the rubber duck wears, came along so the duck's colours stay together. The Chase's helpers that draw
-with them take the SceneTheme and keep a `chase` reference for the Chase's own colours.
+butterfly's wings after them, and the duck colors after the mother duck. duckBeakShade, which only
+the rubber duck wears, came along so the duck's colors stay together. The Chase's helpers that draw
+with them take the SceneTheme and keep a `chase` reference for the Chase's own colors.
 
 Then (Oj, 13:30) "drop the night swap": by night the Mill's meadow tufts turned into the meadow's
-own colour a shade darker, which left them dim marks where the Chase's lawn tufts shine. They keep
+own color a shade darker, which left them dim marks where the Chase's lawn tufts shine. They keep
 the blades' shades by night too, hazed and faded by depth band, and each theme's grass is already
 set to show on its own meadow.
 
@@ -4946,7 +4946,7 @@ shows two copies of one and none of them comes round within a cycle.
 3600, which the mountain peaks stand in front of and which fills the bare band between the heaps and
 the mountains. A cloud's outline is three to five lobes, each with a share of the width and a peak
 of its own, and the valley between two of them stays above the base: the first attempt's equal
-scallops read as combs. A cloud takes 50 to 100 per cent of the theme's cloud colour, a wisp 30,
+scallops read as combs. A cloud takes 50 to 100 per cent of the theme's cloud color, a wisp 30,
 and a low cloud 35 to 65.
 
 **Each bank drifts on its own clock too** (Oj: "the clouds could receive their own drift too"), the
@@ -4961,7 +4961,7 @@ counted across cycles: cyclesPassed times k_cycle plus the fraction, so clouds a
 loop's end as they cross any other second. Their own wraps at the strips are invisible, because a
 strip repeats exactly.
 
-**The birds** (drawSkyFlocks) are the Mill's flock colour brought over: three flocks to a 5600-unit
+**The birds** (drawSkyFlocks) are the Mill's flock color brought over: three flocks to a 5600-unit
 strip at 0.08 of the camera's speed, each three to five birds, each a pair of short strokes a
 shallow V apart.
 
@@ -4989,7 +4989,7 @@ read as a flat pale field; with 5200-unit waves it had no shape to read at all; 
 stands sits at 0.665 over a 1400-unit period, so it shows through the meadow's dips and hides
 behind its crests.
 
-**Its colour is the theme's haze alone** (Oj, 2026-11-17). It stood at 0.11 with hillTop hazed and
+**Its color is the theme's haze alone** (Oj, 2026-11-17). It stood at 0.11 with hillTop hazed and
 then taken 0.3 of the way to skyBottom by hand, to part it from the meadow's hills; Oj: "That's
 wrong move. Hazing is the haze's job, and if it seems small - move layers or adjust the air
 thickness". The hand blend is gone; the ridge stands at 0.06 instead, far enough back that
@@ -5008,8 +5008,8 @@ same bushes". They are fourteen pieces now, all of a size, and the meadow's own 
 to 140 to 260 to match. A piece is 42 to 78 units, three tenths of the meadow's length: the layer
 stands at 0.06 where the meadow stands at 0.2, so a thing of the same real size shows at three
 tenths of it (Oj: "the hedges should have an absolute similar length not projected one"). Their
-colour is the theme's leaves shaded toward hillBottom, both hazed at the layer's distance: foliage
-is not land, so it does not wear the band's colour. The far trees' trunks were in the wood too, and
+color is the theme's leaves shaded toward hillBottom, both hazed at the layer's distance: foliage
+is not land, so it does not wear the band's color. The far trees' trunks were in the wood too, and
 Oj: "Tree trunks should be tree trunks color and not green"; they take the theme's bark, hazed with
 the layer.
 
@@ -5017,7 +5017,7 @@ the layer.
 the far hills"). Each of the sixteen is a tapered trunk in bark under one to three crowns of the
 layer's foliage, the trunks gathered in one ScatteredShapes path and drawn before the crowns' path,
 so no crown floats on a missing trunk. The crowns were mixed 0.45 of the way toward the ridge's own
-colour, which faded them into the land, and Oj: "the far tree crowns are faded more than the far
+color, which faded them into the land, and Oj: "the far tree crowns are faded more than the far
 hedges"; both now wear the theme's leaves hazed at the layer's distance and shaded toward hillBottom
 hazed the same - the crowns 0.3 of the way, the hedges 0.55. Nothing on the layer is mixed toward
 the band.
@@ -5031,7 +5031,7 @@ into the line, kept 6 units below the crest and 12 above the trail. Both read as
 slope rather than painted along the ground line.
 
 **The hedges nearly vanished on most themes** (Oj: "check the hedges contrast on themes"). Measured
-against the ground they stand on, the hedge colour came out at 1.01 to 1.33 of contrast in 22 of the
+against the ground they stand on, the hedge color came out at 1.01 to 1.33 of contrast in 22 of the
 24 themes - pastel, night and neon alike, where 1.0 is no contrast at all.
 
 **Contrast was settled in clear air, once for the object** (Oj: "you don't measure contrast on
@@ -5045,8 +5045,8 @@ pale band.
 them right on every theme with a simple formula"). Each round of it fixed one theme and broke
 another: the black-and-white pole turned Lunar Eclipse's hedges to the hardest contrast a soft theme
 had, and the gentler pole left other themes flat. A hedge has to read on a high-contrast picture and
-vanish into a washed-out one, which no colour derived from the hills can do. So the hedge is a theme
-colour now, `SceneTheme::hedge`, stated beside the rest in each of the 24 themes; the scenes only
+vanish into a washed-out one, which no color derived from the hills can do. So the hedge is a theme
+color now, `SceneTheme::hedge`, stated beside the rest in each of the 24 themes; the scenes only
 haze it, at 0.2 for the meadow and 0.06 for the far pieces, and the far crowns stay the leaves
 shaded 0.3 in clear air and hazed after. The measuring script and the floor went with the formula.
 

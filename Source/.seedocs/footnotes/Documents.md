@@ -60,7 +60,7 @@ count - "2 scripts".
 ## DocumentTile
 
 **Its caption is the file's stem**, so editing it in place renames the file. Every tile fills its
-share of the lane, so the marks line up. A long name wraps under the mark, each line centred.
+share of the lane, so the marks line up. A long name wraps under the mark, each line centered.
 
 ## IDocumentTiles
 

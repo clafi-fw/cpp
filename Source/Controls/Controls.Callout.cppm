@@ -30,7 +30,7 @@ namespace ClaFi::Controls
         template<typename... Args>
         explicit Callout(const CreateParams&, Args&&...);
     public:
-        // What the callout says it is, which picks its colours and its mark.
+        // What the callout says it is, which picks its colors and its mark.
         DECLARE_PROPERTY(MessageIcon, kind, MessageIcon::Information)
         // What the callout lays out with its blocks.
         DECLARE_PROPERTY(CalloutShape, shape, CalloutShape::Marked)

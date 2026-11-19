@@ -25,7 +25,7 @@ gap at its floor and showed the words at the left.
 ## LineFade
 
 The collapse line's overrun is its own width and everything appended to it, less the room its
-paragraph has, whatever its alignment. A centred or right aligned collapse line moves left by the
+paragraph has, whatever its alignment. A centered or right aligned collapse line moves left by the
 collapse offset to make room for what follows, and no further than the leading edge, so either
 the whole run fits or its start is held at that edge and all of it past the room is overrun. The
 appended width is the layout's own sum - line widths without their trailing whitespace, and a
@@ -77,10 +77,10 @@ paragraph start, and Text's operator<< states a look at 0 there, over the next p
 
 **A copy is another matter**, and selectedText carries the look of a paragraph starting at the
 range's start. Until 2026-11-02 the two were one function, and a Select All copied out of the
-TextEngine showcase lost the title's centring - WhatsClip's preview showed it on the left while the
-subtitle, the second paragraph, stayed centred. Oj, 18:35: "1 a" (selectedText for copies,
+TextEngine showcase lost the title's centering - WhatsClip's preview showed it on the left while the
+subtitle, the second paragraph, stayed centered. Oj, 18:35: "1 a" (selectedText for copies,
 restorableText for undo) and "2 b": a paragraph an edit empties takes the pasted text's first look,
-so the Ledger pasted into an empty box keeps its title centred. Undo puts the old look back through
+so the Ledger pasted into an empty box keeps its title centered. Undo puts the old look back through
 the look TextHistory keeps beside the change (Change::startParagraphLook, handed to restoreText) -
 recorded only where the edit changed it, which only an emptied paragraph does.
 
@@ -101,7 +101,7 @@ replays the step whole.
 ## TextFormat
 
 The layout is handed it beside the text, and BakedText::rebuild reads it under every run - so a
-control's own text stays named in the gather and recognised by its stamp, and nothing the text
+control's own text stays named in the gather and recognized by its stamp, and nothing the text
 says is copied to put the format under it.
 
 The layout compares the format it is stated next against the copy it keeps. The engine's cache keys
@@ -166,7 +166,7 @@ would draw alike.
 **Names in a sheet behave as they do in a file.** A file states a base by name, and a reader finds
 the sheet's style of that name before its parents'. Had the sheet kept a base pointing at the
 framework's Code while it also held a Code of its own, the next read would base it on the sheet's
-instead, and a round trip would change what the style draws. So set normalises a base to the
+instead, and a round trip would change what the style draws. So set normalizes a base to the
 sheet's namesake, and a style restating a parent's name takes over the bases pointing at the
 parent's. The loop check follows from that: a restatement whose own chain reaches its namesake
 would close a loop the moment it stood in for it.
@@ -238,7 +238,7 @@ the purpose. It is asked on every paint while a link is hovered and kept nowhere
 or lowered run inside a link is measured where its line places it, since a layout is told about
 scripts only when it draws.
 
-Two links that meet and name one target carry one name index, and BakedText spans neighbouring
+Two links that meet and name one target carry one name index, and BakedText spans neighboring
 runs of one target as one link. The ink is k_linkInk in TextEngine.Text, and goes into the theme with the other
 text inks.
 
@@ -258,8 +258,8 @@ glyph whose ink hangs past its own. The first of them is found by scanning the r
 the stretch between two of them being a column per character, so a long line costs a scan
 for one character and what is on screen, not a lookup and a glyph per character of its
 length. cellLeft and the bands under the hits and the selection are counted the same way.
-Inside the shown span, glyphs are gathered into a run for as long as the colour holds and no
-tab breaks the cells, and each run is handed to the platform with the colour's brush - a
+Inside the shown span, glyphs are gathered into a run for as long as the color holds and no
+tab breaks the cells, and each run is handed to the platform with the color's brush - a
 gradient to transparent at the box's right edge where the line fades, over the span
 lineFadeSpan answers for the row's overrun.
 

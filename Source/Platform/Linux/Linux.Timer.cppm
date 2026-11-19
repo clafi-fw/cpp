@@ -187,7 +187,7 @@ namespace ClaFi::PlatformImplementation::Linux
         }
     }
 
-    // **What is left stays signalled**, so a loop the next handler runs wakes for it.
+    // **What is left stays signaled**, so a loop the next handler runs wakes for it.
     UiTimer* TimerManager::takeFiredTimer()
     {
         std::lock_guard<std::mutex> lock{ m_firedMutex };

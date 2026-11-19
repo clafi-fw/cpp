@@ -20,15 +20,15 @@ namespace ClaFi::PathArt
         float fallPace{ 1.0f }; // the pace the rain, snow, leaves and petals fall at
         float windPace{ 1.0f }; // the pace the dust is blown at
         float seed{ 0.0f }; // shifts where every effect's pieces are
-        Color color1{}; // the drops, the flakes, half the leaves and one end of the dust's colours
-        Color color2{}; // the other half of the leaves and the other end of the dust's colours
+        Color color1{}; // the drops, the flakes, half the leaves and one end of the dust's colors
+        Color color2{}; // the other half of the leaves and the other end of the dust's colors
         Color petal1{}; // half the petals
         Color petal2{}; // the other half of the petals
     };
 
     // The weather over the frame.
     export void drawWeather(const SceneFrame&, float cycleTime, const Weather&);
-    // A theme's weather in its own effect colours.
+    // A theme's weather in its own effect colors.
     export [[nodiscard]] Weather weatherOf(const SceneTheme&);
     // A theme's fireflies with no area yet, for the scene to place among its scenery.
     export [[nodiscard]] Fireflies firefliesOf(const SceneTheme&);

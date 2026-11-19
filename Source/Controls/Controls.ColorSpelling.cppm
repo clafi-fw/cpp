@@ -6,7 +6,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::Controls
 {
-    // How a colour is written for the user - on screen and in a copy. See Controls
+    // How a color is written for the user - on screen and in a copy. See Controls
     export enum class ColorSpelling
     {
         HexRgb,       // 5F3929
@@ -15,7 +15,7 @@ namespace ClaFi::Controls
         CssHex        // #5F3929
     };
 
-    // The colour as plain text, the way a copy hands it to another application.
+    // The color as plain text, the way a copy hands it to another application.
     export [[nodiscard]] std::wstring spell(Color, ColorSpelling);
     // What a picker lists the spelling as.
     export [[nodiscard]] std::wstring_view nameOf(ColorSpelling);

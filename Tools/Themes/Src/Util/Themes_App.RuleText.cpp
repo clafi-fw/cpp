@@ -189,7 +189,7 @@ namespace Themes_App
         return k_operationNames[static_cast<std::size_t>(operation)];
     }
 
-    std::wstring capitalised(const std::wstring_view label)
+    std::wstring capitalized(const std::wstring_view label)
     {
         std::wstring result{ label };
         if (!result.empty())
@@ -214,7 +214,7 @@ namespace Themes_App
     // The channel in the sub heading style on an editor, and in the muted ink on a row.
     void writeApplyToChannel(Text& text, const ColorRule& rule, const RuleFace face)
     {
-        const std::wstring channel = capitalised(channelLabel(rule.output));
+        const std::wstring channel = capitalized(channelLabel(rule.output));
         if (face == RuleFace::Editor)
             text << StyledText{ TextStyles::SubHeading, channel };
         else

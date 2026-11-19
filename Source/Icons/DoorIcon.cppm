@@ -10,7 +10,7 @@ namespace ClaFi::Icons::DoorIcon
 {
     using namespace ::ClaFi::Graphics;
 
-    // The frame, as shares of the icon's size. It stands left of centre and the arrow takes the
+    // The frame, as shares of the icon's size. It stands left of center and the arrow takes the
     // room that leaves.
     constexpr float k_frameLeftShare{ 0.16f };
     constexpr float k_frameTopShare{ 0.16f };

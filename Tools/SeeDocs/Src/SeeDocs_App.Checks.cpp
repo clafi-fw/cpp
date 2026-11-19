@@ -199,7 +199,7 @@ namespace SeeDocs_App
             }
         }
 
-        // A property with storage of its own is initialised in the constructor; the getter and the
+        // A property with storage of its own is initialized in the constructor; the getter and the
         // setter a form leaves to the class are there; the value is of a kind a designer can show.
         void Checker::checkBindings()
         {

@@ -128,7 +128,7 @@ namespace ClaFi
         // which page the window opens on is the config's answer, and that is not read yet.
         Tab& outputTab{ form.body().strip().addTab(k_outputTabCaption, Page{ output }) };
         Tab& fpsTab{ form.body().strip().addTab(k_fpsTabCaption, Page{ fps }) };
-        ColorCodes<const Control*> controlColors{};   // the colour a line names each control in
+        ColorCodes<const Control*> controlColors{};   // the color a line names each control in
     };
 
     // Not at namespace scope, where its destructor is registered at startup. See Diagnostic#Options
@@ -289,7 +289,7 @@ namespace ClaFi
     }
 
     // Every row, or the one given, as one text with a line to each. A row is copied as its
-    // **plain** text: the colours a pointer line carries say nothing once it is out of this window,
+    // **plain** text: the colors a pointer line carries say nothing once it is out of this window,
     // and a reading pasted somewhere else is read as words.
     void OutputPage::copyRows(const Control* single, const InputStamp stamp)
     {
@@ -322,7 +322,7 @@ namespace ClaFi
             nullptr,
             HostProps{
                 UiElement::Section,
-                // A section coloured root in the primary window's frame.
+                // A section colored root in the primary window's frame.
                 Radius{ appContext.styleMetrics(UiElement::Dialog).radius },
                 appContext.styleMetrics(UiElement::Dialog).shadow,
                 // Wide enough for the FPS page's four reading columns with their units - see FpsPage. The
@@ -379,7 +379,7 @@ namespace ClaFi
 
     // **The tab is opened here and nowhere else**, which is why the constructor selects none: the
     // page the window opens on is the config's answer, and the config is not loaded until now.
-    // An unrecognised name reads as the Output page rather than as no page at all.
+    // An unrecognized name reads as the Output page rather than as no page at all.
     void DiagnosticWindow::restoreState()
     {
         if (tabNode().get<std::wstring>() == k_fpsTabCaption)

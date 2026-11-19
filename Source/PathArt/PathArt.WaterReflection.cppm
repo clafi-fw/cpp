@@ -18,7 +18,7 @@ namespace ClaFi::PathArt
         float farReach; // how far the ripple moves a row at `top`, in units of the frame
         float nearReach; // how far it moves the frame's bottom row
         float cycleTime; // the ripples run a whole number of times a cycle
-        float opacity; // how much of the water's colour the reflection covers
+        float opacity; // how much of the water's color the reflection covers
     };
 
     // How far the ripples move row `y` of the frame sideways, in its pixels. See PathArt

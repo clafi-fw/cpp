@@ -22,7 +22,7 @@ namespace PascalScripts_App
             .publisher = L"ClaFi Framework",
             .description = Text{
                 L"Keeps Pascal scripts in a folder of its own and edits them, "
-                L"with the source coloured as it is typed."
+                L"with the source colored as it is typed."
             },
             .version = CLAFI_APP_VERSION,
             .updates = UpdateSource{

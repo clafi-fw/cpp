@@ -51,10 +51,10 @@ namespace ClaFi
         [[nodiscard]] Color foundTextRgb() const;
         // The selection band raised over the found one, where a match is selected.
         [[nodiscard]] Color selectedFoundRgb() const;
-        // What a colour becomes on a control that cannot be used: itself, moved toward the surface
+        // What a color becomes on a control that cannot be used: itself, moved toward the surface
         // it is drawn on. The alpha is the caller's and is put back untouched - Color::blend
         // carries alpha with it and the surface is opaque, so left to itself the blend would drag
-        // a faint mark up toward solid, and a fade is a colour and never an opacity.
+        // a faint mark up toward solid, and a fade is a color and never an opacity.
         [[nodiscard]] Color disabledRgb(Color color) const
         {
             if (!disabledAmount)
@@ -101,7 +101,7 @@ namespace ClaFi
 
     Hsl ControlPaintContext::inkHsl(const Ink& ink) const
     {
-        // The far end of the mix: a semantic colour's hue, pure black or white, the theme's accent
+        // The far end of the mix: a semantic color's hue, pure black or white, the theme's accent
         // or spot rule over the chain's ink, or the chain's ink itself. The rule goes on before the
         // mix, since one that states where it lands would overwrite the grade.
         Hsl inkEnd = textHsl;
@@ -134,7 +134,7 @@ namespace ClaFi
         else
             result = Hsl{ surfaceHsl, inkEnd, grade };
 
-        // The fade a control that cannot be used calls for, taken in the colour model like every
+        // The fade a control that cannot be used calls for, taken in the color model like every
         // other move here: the ink slides toward the surface it stands on.
         if (disabledAmount)
             return Hsl{ result, surfaceHsl, disabledAmount };
@@ -188,7 +188,7 @@ namespace ClaFi
         return disabledRgb(result.toColor());
     }
 
-    // The rules go over whatever the run already carries, so a grey run stays grey under the band
+    // The rules go over whatever the run already carries, so a gray run stays gray under the band
     // and an accent run stays accent.
     Hsl ControlPaintContext::selectionInkHsl(Hsl runInk) const
     {

@@ -466,7 +466,7 @@ namespace SeeDocs_App
         };
 
         // A file as lines and tokens, lexed line by line with the framework's C++ lexer and cut
-        // once more where that lexer, built for colouring, leaves a plain name without a token.
+        // once more where that lexer, built for coloring, leaves a plain name without a token.
         // Preprocessed, a line in a branch left out stands blank, and a line of code holds its
         // macros expanded; the lines keep their count, so every place is the file's own, and the
         // lines as written stay beside them.
@@ -732,7 +732,7 @@ namespace SeeDocs_App
                         break;
                     }
                     case Syntax::TokenKind::Directive:
-                        // The lexer colours the directive's word alone; the line is the directive.
+                        // The lexer colors the directive's word alone; the line is the directive.
                         push(TokenType::Directive, index, start, line.size());
                         directiveContinues = continues;
                         return;
@@ -2674,7 +2674,7 @@ namespace SeeDocs_App
 
         // A body, from the initializer list or the opening brace to the closing one, read for the
         // binds written in it: the property binds and reads go to the owner, the constructor's
-        // initialisers and hand-written Props::get calls to the surface, and what a constructor
+        // initializers and hand-written Props::get calls to the surface, and what a constructor
         // hands a base to the owner's restatements. In an initializer list a brace after a name is
         // an initializer; the body's brace follows a bracket or a brace.
         void FileReader::skipBody(Type* owner, const Access access, const bool initializers,

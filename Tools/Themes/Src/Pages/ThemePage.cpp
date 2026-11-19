@@ -111,7 +111,7 @@ namespace Themes_App
     }
 
     // **A built-in has no file of its own**, so the disk is the wrong side for one: the path it
-    // would name is never written and never read. The compiled-in colours are what it was opened
+    // would name is never written and never read. The compiled-in colors are what it was opened
     // from, and the manager answers a built-in name with those whatever stands on the disk.
     bool ThemePage::readSavedDocument(Dom::DomNodeBase& into) const
     {
@@ -197,7 +197,7 @@ namespace Themes_App
     {
         // The selector holds every harmony built against the current anchor, so the one the theme
         // names answers for itself. Which map is selected does not reach these hues: a map orders
-        // the colours a palette takes, and a pigment is not one of them.
+        // the colors a palette takes, and a pigment is not one of them.
         const ColorHarmony& harmony = m_harmonySelector.harmony(static_cast<std::size_t>(editColors().harmonyKind));
         Text words{ k_labelPush, L"Other pigments:", m_labelsMargin, k_labelPop };
         for (const PaletteColor& color : harmony.pigmentColors())
@@ -234,7 +234,7 @@ namespace Themes_App
     }
 
     // Bound again after a restore, which writes the theme over in place: the rules keep their
-    // addresses, and a bind is what redraws the faces. A pigment is a colour of its own rather
+    // addresses, and a bind is what redraws the faces. A pigment is a color of its own rather
     // than a change to one, so its hue is never cleared and its values are stated ones only.
     void ThemePage::bindPigmentEditors()
     {
@@ -331,8 +331,8 @@ namespace Themes_App
         // one reads, so the order is the whole of it and anchorChanged() cannot stand in for the
         // pair: it derives the palette, which is the last step, not the first.
         //
-        // The anchor decides every colour a harmony is built from - ColorHarmony::anchorChanged
-        // fills m_colors out of it - and the search below matches on those colours.
+        // The anchor decides every color a harmony is built from - ColorHarmony::anchorChanged
+        // fills m_colors out of it - and the search below matches on those colors.
         m_harmonySelector.anchorChanged();
         m_harmonyStack.invalidate();
         writeOtherPigments();
@@ -378,7 +378,7 @@ namespace Themes_App
     {
         // **A restore is not an edit.** showEditTheme brings the controls up by calling the same
         // handlers a user edit calls, and mapHuesToColors along the way fills the palette hues in
-        // from the harmony rather than reading them. Stored, that normalisation would stand in the
+        // from the harmony rather than reading them. Stored, that normalization would stand in the
         // view state as a change nobody made, and the page would read as edited the moment it was
         // opened - which is exactly what a theme whose file does not carry those hues yet does.
         // Recorded, it would stand in the history as a step the user never took.
@@ -475,7 +475,7 @@ namespace Themes_App
     void ThemePage::rulesChanged(const EditPhase phase, const Text& what,
         const RuleSelection& at)
     {
-        // A pigment's ramps stand on a surface the rules colour.
+        // A pigment's ramps stand on a surface the rules color.
         m_pigmentGrid.invalidate();
         invalidatePreview();
         edited(phase, what, at);

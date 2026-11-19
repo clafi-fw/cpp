@@ -42,9 +42,9 @@ namespace TextEngine_App
         // DirectWrite answers it with the system fallback, so the row shows what that default put
         // on the screen.
         constexpr std::array k_families{
-            FamilyRow{ L"Segoe UI Emoji", L"Windows - colour carried in COLR layers" },
-            FamilyRow{ L"Segoe UI Symbol", L"Windows - outlines, with no colour to lose" },
-            FamilyRow{ L"Noto Color Emoji", L"Linux - colour carried in bitmap strikes" },
+            FamilyRow{ L"Segoe UI Emoji", L"Windows - color carried in COLR layers" },
+            FamilyRow{ L"Segoe UI Symbol", L"Windows - outlines, with no color to lose" },
+            FamilyRow{ L"Noto Color Emoji", L"Linux - color carried in bitmap strikes" },
             FamilyRow{ L"Noto Emoji", L"Linux - outlines, one ink by design" },
             FamilyRow{ L"Twemoji Mozilla", L"COLR layers again, where it is installed" },
             FamilyRow{ L"Apple Color Emoji", L"Named so a miss can be read on both targets" },
@@ -167,7 +167,7 @@ namespace TextEngine_App
         page << StyledText{ TextStyles::Title, L"Emoji" } << k_endLine;
         page << StyledText{ TextStyles::SubTitle, L"One set of characters, one family after another" };
         page << k_endLine;
-        page << k_endLine; // the blank row under the subtitle is centred with it
+        page << k_endLine; // the blank row under the subtitle is centered with it
         page << TextAlign::Left;
         page << L"Nothing on this page is a picture the showcase supplies. Every mark "
             L"below is a character in the text, shaped by whatever face the platform found for it, "
@@ -183,8 +183,8 @@ namespace TextEngine_App
             L"character is drawn all the same, because neither platform stops at the family the run "
             L"states: DirectWrite runs its own fallback over the system list, and the Linux side "
             L"walks the chain fontconfig sorted for that family, taking the first face with a glyph "
-            L"for the character. That sort asks for scalable faces and against colour ones, so an "
-            L"outline emoji face is reached before a colour one and a colour face stands last of "
+            L"for the character. That sort asks for scalable faces and against color ones, so an "
+            L"outline emoji face is reached before a color one and a color face stands last of "
             L"all. The style below is the only thing stated on each line.";
         page << k_endLine << k_endLine;
         page << StyledText{
@@ -248,15 +248,15 @@ namespace TextEngine_App
         page << k_endLine << k_endLine;
 
         // -----------------------------------------------------------------
-        // 3. Colour
+        // 3. Color
         // -----------------------------------------------------------------
 
-        page << StyledText{ TextStyles::Heading, L"3. Colour" } << k_endLine;
-        page << L"A colour emoji face carries its colour one of two ways: as layers of outlines "
+        page << StyledText{ TextStyles::Heading, L"3. Color" } << k_endLine;
+        page << L"A color emoji face carries its color one of two ways: as layers of outlines "
             L"with a palette entry each, or as a bitmap strike per size. Both backends here draw a "
             L"run with a single brush - Direct2D through DrawGlyphRun, the CPU backend by "
             L"accumulating one coverage mask and compositing the brush through it - so a face's "
-            L"colour reaches neither.";
+            L"color reaches neither.";
         page << k_endLine << k_endLine;
         page << TextIndent{ 34.0f } << Text{
             BoldText{ L"Layered faces" },
@@ -266,11 +266,11 @@ namespace TextEngine_App
             L" have no outline behind the bitmap, and the Linux "
             L"rasterizer loads with FT_LOAD_NO_BITMAP, so a strike would be refused and the glyph "
             L"left blank. Reaching one takes more than naming it: the sort carries FC_COLOR "
-            L"FcFalse alongside the family, so a row drawing outlines under a colour family's "
+            L"FcFalse alongside the family, so a row drawing outlines under a color family's "
             L"name is that preference winning over the name.\n",
             BoldText{ L"Outline faces" },
             L" - Noto Emoji, Symbola, Segoe UI Symbol - lose nothing to the "
-            L"brush, because one ink is all they ever had. Grey is still theirs to arrive in: a "
+            L"brush, because one ink is all they ever had. Gray is still theirs to arrive in: a "
             L"face drawing its emoji as hairlines covers no whole pixel at body size, so it peaks "
             L"short of full ink before the coverage curve thins what is left.\n"
         };
@@ -372,9 +372,9 @@ namespace TextEngine_App
             BoldText{ L"Fallback works and is invisible." },
             L" A run states a family and can be drawn by "
             L"another, with nothing in the text saying so.\n",
-            BoldText{ L"Colour does not survive the run." },
+            BoldText{ L"Color does not survive the run." },
             L" One brush per run is a decision both backends "
-            L"make, and it is what a colour face is lost to.\n",
+            L"make, and it is what a color face is lost to.\n",
             BoldText{ L"A cluster is not a unit." },
             L" Every count the engine keeps is a count of wchar_t, "
             L"so a caret, a selection and a column all step through the inside of a picture.\n",

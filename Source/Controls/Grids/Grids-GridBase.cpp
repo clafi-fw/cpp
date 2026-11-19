@@ -713,7 +713,7 @@ namespace ClaFi::Controls::Grids
         arriving.bottom = arriving.top + viewport.height();
 
         // The selection lands at the **far** edge of that view rather than at its start: the press
-        // moves the view by a page and leaves the selection against the edge it travelled to,
+        // moves the view by a page and leaves the selection against the edge it traveled to,
         // which is where the next press measures its own page from.
         std::size_t bestIndex = lastWholeInColumn(table, stops, arriving, column, forward);
         if (bestIndex == k_maxSize)

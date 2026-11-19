@@ -15,11 +15,11 @@ namespace ClaFi::Icons::MoonIcon
     {
         // The crescent is one circle minus another of the same radius. Equal radii keep the horns
         // symmetric and collapse the intersection to a single angle: the two circles cross at
-        // +-acos(biteRatio / 2) from the bite direction, measured from the outer centre. Changing
+        // +-acos(biteRatio / 2) from the bite direction, measured from the outer center. Changing
         // either circle's radius independently breaks that identity and hornAngle stops being the
         // crossing angle.
         constexpr float k_radiusRatio = 0.36f;  // Outer radius, as a fraction of the icon size
-        constexpr float k_biteRatio = 0.55f;    // Offset of the cut-out centre, in outer radii
+        constexpr float k_biteRatio = 0.55f;    // Offset of the cut-out center, in outer radii
         constexpr float k_biteAngle = -0.72f;   // Direction of the cut-out in radians - up and right
 
         // A circular arc as quadratic segments of at most 45 degrees. Each control point sits where
@@ -43,7 +43,7 @@ namespace ClaFi::Icons::MoonIcon
             }
         }
 
-        // The shift that centres the crescent's box, which sits low and left of its circle.
+        // The shift that centers the crescent's box, which sits low and left of its circle.
         [[nodiscard]] FloatPoint boxCentringOffset(float radius)
         {
             const float hornAngle = std::acos(k_biteRatio * 0.5f);
@@ -64,7 +64,7 @@ namespace ClaFi::Icons::MoonIcon
             center.x + std::cos(k_biteAngle) * bite,
             center.y + std::sin(k_biteAngle) * bite,
         };
-        // Half the angle between the horns, as seen from the outer centre.
+        // Half the angle between the horns, as seen from the outer center.
         float hornAngle = std::acos(k_biteRatio * 0.5f);
         float halfTurn = k_2Pi * 0.5f;
 
@@ -73,7 +73,7 @@ namespace ClaFi::Icons::MoonIcon
         path.moveTo(center.x + std::cos(outerStart) * radius, center.y + std::sin(outerStart) * radius);
         addArc(path, center, radius, outerStart, k_2Pi - hornAngle * 2.0f);
 
-        // Inner edge: back to the first horn along the cut-out circle. Seen from its own centre
+        // Inner edge: back to the first horn along the cut-out circle. Seen from its own center
         // the horns sit at the mirrored angles, half a turn away from the outer ones.
         addArc(path, biteCenter, radius, k_biteAngle + halfTurn + hornAngle, -hornAngle * 2.0f);
         path.close();

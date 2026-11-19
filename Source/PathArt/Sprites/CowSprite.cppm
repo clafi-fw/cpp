@@ -13,7 +13,7 @@ namespace ClaFi::PathArt
         float cycleTime; // its tail swishes and its head bobs as it chews by it
     };
 
-    // A cow's colours, and what its limbs stand against so that they stay legible. See PathArt
+    // A cow's colors, and what its limbs stand against so that they stay legible. See PathArt
     export struct CowColors
     {
         Color body;

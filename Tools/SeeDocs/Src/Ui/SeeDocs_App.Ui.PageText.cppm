@@ -18,7 +18,7 @@ namespace SeeDocs_App::Ui
 
     // Writes the runs as they are styled, a linked run inside a link.
     export void writeRuns(Text&, const Runs&);
-    // The same in a colour of their own, inside each link, so the words wear it over the link ink.
+    // The same in a color of their own, inside each link, so the words wear it over the link ink.
     export void writeRuns(Text&, const Runs&, Color);
     export [[nodiscard]] Text textOf(const Runs&, const StyleSheet&);
     // The words of a text as a note writes them: bold between its marks, code between its, a

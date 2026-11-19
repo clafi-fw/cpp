@@ -59,14 +59,14 @@ namespace ClaFi
     template<typename... Content>
     StyledText(std::wstring_view, Content&&...) -> StyledText<Content...>;
 
-    // Words drawn in an ink or a colour of their own.
+    // Words drawn in an ink or a color of their own.
     export template<typename... Content>
     class ColoredText : public ScopedText<Content...>
     {
     public:
         explicit ColoredText(Ink, Content&&...);
         explicit ColoredText(InkGrade grade, Content&&...); // the text ink at that step
-        explicit ColoredText(InkColor color, Content&&...); // that colour at Strongest
+        explicit ColoredText(InkColor color, Content&&...); // that color at Strongest
         explicit ColoredText(Color, Content&&...);
 
     private:
@@ -552,7 +552,7 @@ namespace ClaFi
         TextFormat& operator<<(std::wstring_view style); // a name, found where the text is laid out
         TextFormat& operator<<(Ink);
         TextFormat& operator<<(InkGrade); // the framework's own ink at that step
-        TextFormat& operator<<(InkColor); // that colour at Strongest
+        TextFormat& operator<<(InkColor); // that color at Strongest
         TextFormat& operator<<(Color);
         TextFormat& operator<<(TextAlign);
         TextFormat& operator<<(TextIndent);

@@ -294,14 +294,14 @@ namespace ClaFi::Controls
 
         if (m_actualPageColor.alpha)
         {
-            // A tab becomes the page it opens, and that is both of the page's colours or neither -
+            // A tab becomes the page it opens, and that is both of the page's colors or neither -
             // a tab wearing the page's surface under the strip's ink is the one combination
             // nothing chose. The page rule reads hot and selected joined as "or", which is
             // what hotOrSelected() is, and the ink is taken the same distance so the two
             // arrive together.
             const float pageFactor = factors().hotOrSelected() * factors().enabled();
 
-            // The lightness comes with the colours. Past the half way point the tab is more the
+            // The lightness comes with the colors. Past the half way point the tab is more the
             // page's surface than the strip's, so an ink or a border raised off it has to rise
             // the way that surface leaves room for - the page's answer, not the strip's.
             if (pageFactor > 0.5f)
@@ -309,7 +309,7 @@ namespace ClaFi::Controls
 
             // Spelled in the direction the rule will be read in, so the two agree at the moment
             // the lightness changes hands: a Set states where in that direction the value lands,
-            // and stating it one way while reading it the other would move the colour the tab
+            // and stating it one way while reading it the other would move the color the tab
             // arrives at without the page having moved.
             m_pageRule.effect.setExactHsl(m_actualPageHsl, event.lightness());
             event.setOwnRules({ &m_pageRule, 1 });
@@ -336,7 +336,7 @@ namespace ClaFi::Controls
             tabColors.surface = event.surfaceRgb();
             // The open tab's fill covers the page's border across its mouth - see
             // TabbedBox::alignContent - so it stands at the selected factor even where the page's
-            // colour was already there and its rules moved nothing.
+            // color was already there and its rules moved nothing.
             if (m_actualPageColor.alpha)
             {
                 const float shownOpacity = tabColors.surface.alpha / 255.0f;

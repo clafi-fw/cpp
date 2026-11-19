@@ -334,7 +334,7 @@ namespace ClaFi::Controls
         if (!body().canUndo())
         {
             m_settled = true;
-            m_result = EditResult::Cancelled;
+            m_result = EditResult::Canceled;
             return true;
         }
 
@@ -389,7 +389,7 @@ namespace ClaFi::Controls
     // in the painting, because what is being said is about the **state** - see the ring's two terms
     // in Any Non-Window's default rules.
     //
-    // hot     - what keeps the ring drawn **live** rather than in the inactive grey. That is a
+    // hot     - what keeps the ring drawn **live** rather than in the inactive gray. That is a
     //           question the input device decides for every other control, and here there is
     //           nothing for it to decide.
     // current - what says there is a ring at all. The keys' focus is current and the mouse's is
@@ -442,7 +442,7 @@ namespace ClaFi::Controls
                 // The one ending that does not offer the text. Every other one does, which is
                 // what makes committing the default.
                 m_settled = true;
-                m_result = EditResult::Cancelled;
+                m_result = EditResult::Canceled;
                 form().close();
                 return;
             }

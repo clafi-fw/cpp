@@ -57,13 +57,13 @@ namespace ClaFi::Icons::ColorChannelSweep
     // What happens where the sweep closes on itself.
     export enum class SweepEnds
     {
-        Cyclic, // the channel wraps: the colour at the seam is the same from both sides. See Icons
+        Cyclic, // the channel wraps: the color at the seam is the same from both sides. See Icons
         Stepped // the channel runs from one end to the other. See Icons
     };
 
-    // One colour per segment boundary, so k_segmentCount + 1 of them: entry i is the channel at
+    // One color per segment boundary, so k_segmentCount + 1 of them: entry i is the channel at
     // i / k_segmentCount of the way round, clockwise from the seam. For a Cyclic sweep the first
-    // and last entry are the same colour.
+    // and last entry are the same color.
     export using BoundaryColors = std::array<Color, k_segmentCount + 1>;
 
     export float boundaryAngle(int boundaryIndex);
@@ -86,7 +86,7 @@ namespace ClaFi::Icons::ColorChannelSweep
 
     namespace
     {
-        // The angular span a segment covers. Boundaries are shared between neighbours, so what
+        // The angular span a segment covers. Boundaries are shared between neighbors, so what
         // separates them is how far each one over- or under-shoots.
         struct SegmentSpan
         {
@@ -128,9 +128,9 @@ namespace ClaFi::Icons::ColorChannelSweep
             };
         }
 
-        // Undershoots both boundaries by half a spoke, so the gap is centred on the boundary and
-        // neighbours contribute equally to it. The gap is angular, so it tapers away towards the
-        // centre - which is what makes it read as a spoke rather than a slice, and why the width is
+        // Undershoots both boundaries by half a spoke, so the gap is centered on the boundary and
+        // neighbors contribute equally to it. The gap is angular, so it tapers away towards the
+        // center - which is what makes it read as a spoke rather than a slice, and why the width is
         // given for the rim where it is widest.
         SegmentSpan spokedSpan(int segmentIndex, float radius)
         {
@@ -160,7 +160,7 @@ namespace ClaFi::Icons::ColorChannelSweep
 
         if constexpr (k_channelForm == ChannelForm::Ring)
         {
-            // The band is centred on the radius, so half of it hangs outside: the rect has to give
+            // The band is centered on the radius, so half of it hangs outside: the rect has to give
             // that half back before the radius is taken, and the origin shifts by the same half.
             float bandWidth = std::max(1.0f, size * k_ringBandRatio);
             size -= bandWidth;

@@ -4,13 +4,13 @@ The words that do not fit above a declaration.
 
 ## ScalarSerializer<Color>
 
-- `#RRGGBB` - an opaque colour.
-- `#RRGGBBAA` - any other colour, alpha last.
+- `#RRGGBB` - an opaque color.
+- `#RRGGBBAA` - any other color, alpha last.
 
-Upper case is written and either case is read. Any other string leaves the colour as it was.
+Upper case is written and either case is read. Any other string leaves the color as it was.
 
 **This is the spelling between ClaFi consumers** - an `Ink=#...` among a text's styles.
-How a user sees or copies a colour is a presenter's choice - see ColorSpelling.
+How a user sees or copies a color is a presenter's choice - see ColorSpelling.
 
 ## WriteDefaults
 
@@ -91,9 +91,9 @@ this text's code in the spot ink.
 named # and a number - #1, #2. A look is no style, and reads back as the style of the runs naming
 it, so texts read from two files never share a look by its name.
 
-**An ink is an ink colour and a grade**: the colour is left out where it is text, and the grade
-where it is strongest and the colour is not text - `spot`, `accent muted`, `muted`, `strongest`. A
-grade between the steps is written as its share, and a colour stated outright as `#FF8800`. An icon
+**An ink is an ink color and a grade**: the color is left out where it is text, and the grade
+where it is strongest and the color is not text - `spot`, `accent muted`, `muted`, `strongest`. A
+grade between the steps is written as its share, and a color stated outright as `#FF8800`. An icon
 is `w,h,baseline` and reads back with no painter, drawing nothing.
 
 ## CompositeSerializer<StyleSheet>

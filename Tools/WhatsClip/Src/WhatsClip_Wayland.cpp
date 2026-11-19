@@ -31,7 +31,7 @@ int main()
         Dom::Dt::Section{}
     };
 
-    // What the text pages read bytes in and colour text in. An application built over this
+    // What the text pages read bytes in and color text in. An application built over this
     // viewer appends its own here: an encoding with the claim that tells its bytes apart, a
     // language with its own detector.
     const Tools::WhatsClip::PickLists picks{

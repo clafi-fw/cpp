@@ -56,7 +56,7 @@ namespace SeeDocs_App::Ui
     public:
         std::wstring_view diagnosticText() const override { return L"BaseCrumb"; }
         const BaseNode& node() const { return m_node; }
-        // The mark's centre, from the crumb's left edge: where a line to the bases under it leaves.
+        // The mark's center, from the crumb's left edge: where a line to the bases under it leaves.
         [[nodiscard]] float markCenterX(const FormContext&) const;
     protected:
         void adjustMainText(AdjustTextEvent&) const override;
@@ -111,7 +111,7 @@ namespace SeeDocs_App::Ui
         struct Trunk
         {
             FloatPoint top;
-            float bottomY;   // the last stacked base's row centre
+            float bottomY;   // the last stacked base's row center
             float endX;      // where the turn meets that base
         };
         // The room a crumb or a line takes on a row.
@@ -174,7 +174,7 @@ namespace SeeDocs_App::Ui
         const StyleSheet* m_styles{ &StyleSheet::application() };   // what the crumbs are set in
         CrumbsMap m_crumbsMap{};
         ParentCrumbsMap m_parentCrumbs{};   // each to the crumb it is a base of
-        Lines m_links{};      // between row neighbours
+        Lines m_links{};      // between row neighbors
         Lines m_branches{};   // the stubs a trunk runs on past, each leaving it with a turn
         Trunks m_trunks{};
         Ellipses m_ellipses{};   // after the crumbs whose bases are left out

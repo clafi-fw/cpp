@@ -44,7 +44,7 @@ namespace Themes_App
         paintSlotBorder(event, slotRect, radius);
     }
 
-    // The thumb carries the colour under it, so its hole reads as the slot showing through.
+    // The thumb carries the color under it, so its hole reads as the slot showing through.
     Color FloorSlider::thumbColor(PaintEvent&, FloatPoint&)
     {
         return sampleAt(relativePosition(), m_base());

@@ -408,10 +408,10 @@ namespace ClaFi::PathArt
             Cattail{ 0.93f, 145.0f, 2.6f },
             Cattail{ 0.97f, 118.0f, 1.1f }
         };
-        // The near layer's shade: the share of its Okhsl lightness and saturation a colour loses.
+        // The near layer's shade: the share of its Okhsl lightness and saturation a color loses.
         constexpr float k_nearLayerShade{ 0.25f };
-        // The near bank's top colour, this share of the way from the hills' top to their foot, as
-        // the Chase's lawn is at that row; it reaches the foot's colour at the frame's bottom.
+        // The near bank's top color, this share of the way from the hills' top to their foot, as
+        // the Chase's lawn is at that row; it reaches the foot's color at the frame's bottom.
         constexpr float k_nearBankTopShare{ 0.63f };
         // At the water's edge on the pond's left shore, across from the near bank's.
         constexpr std::array<Cattail, 3> k_leftShoreCattails{
@@ -464,15 +464,15 @@ namespace ClaFi::PathArt
         void drawCowTuft(const SceneFrame&, const SceneTheme&, const PosedCowPose&);
         // A mother duck and three ducklings crossing the pond, while they are out.
         [[nodiscard]] std::optional<DuckFamily> ducksAt(const SceneFrame&, float story);
-        // The mother's colours for index 0, a duckling's for the rest.
+        // The mother's colors for index 0, a duckling's for the rest.
         [[nodiscard]] DuckColors duckColorsOf(const SceneTheme&, std::size_t duckIndex);
         // The parallax of the valley floor at `y`, the mill's foot being 1.
         [[nodiscard]] float parallaxAt(const SceneFrame&, float y);
         // Pixels per unit of the frame for what stands at `y`, at its distance.
         [[nodiscard]] float sizeAt(const SceneFrame&, float y);
-        // A colour as it lies on the near layer, all of which but what gives light is in shade.
+        // A color as it lies on the near layer, all of which but what gives light is in shade.
         [[nodiscard]] Color nearLayerColor(Color);
-        // The land's clear colour at row `y`.
+        // The land's clear color at row `y`.
         [[nodiscard]] Color landAt(const SceneFrame&, const SceneTheme&, float y);
         // The land from `top` down, each row hazed as far as it lies, and at least as `parallax`.
         [[nodiscard]] LinearGradient landGradient(const SceneFrame&, const SceneTheme&, float top,
@@ -632,7 +632,7 @@ namespace ClaFi::PathArt
 
         // The predator behind the fir on the right: a gator in the African themes, a wolf
         // elsewhere, crossfading between them. He lies on the fir's shadow, so its edge stays off
-        // his face, and his theme colours are already shaded.
+        // his face, and his theme colors are already shaded.
         drawFirShadow(frame, theme(), k_wolfFir);
         const FloatPoint wolfFirFoot = pointAt(frame, k_wolfFir.footShare);
         const float wolfFirUnit = sizeAt(frame, wolfFirFoot.y);
@@ -714,13 +714,13 @@ namespace ClaFi::PathArt
 
         drawEffectLayer(frame, theme(), cycleTime, 3);
         // The sun's glow lies over the land as over the sky behind it, which keeps the sun's disc
-        // in its own colour.
+        // in its own color.
         canvas.pushClip(landOutline(frame), &frame.toCanvas);
         drawCelestialGlow(frame, m_sunPos, theme().sunGlow);
         canvas.popClip();
     }
 
-    // In Clear Day's colours whatever theme is worn: an icon is one picture in every theme.
+    // In Clear Day's colors whatever theme is worn: an icon is one picture in every theme.
     void MillScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
     {
         constexpr float k_figureSpan{ 480.0f };
@@ -745,7 +745,7 @@ namespace ClaFi::PathArt
         canvas.popClip();
     }
 
-    // **The picked theme's colours, not the blend's**: a host asks the moment a theme is picked,
+    // **The picked theme's colors, not the blend's**: a host asks the moment a theme is picked,
     // while the blend still wears the one before it.
     SceneReadoutColors MillScene::readoutColors() const
     {
@@ -1506,7 +1506,7 @@ namespace ClaFi::PathArt
             });
         }
 
-        // The water shows the sky's light near the horizon and its own deep colour close by.
+        // The water shows the sky's light near the horizon and its own deep color close by.
         void drawRiverBed(const SceneFrame& frame, const SceneTheme& theme)
         {
             const float groundY = frame.height * k_horizonShare;
@@ -1863,7 +1863,7 @@ namespace ClaFi::PathArt
                 const float along = std::pow(spreadShare(i, k_glitters, 51.0f), 0.7f);
                 const FloatPoint middle = pointBetween(far, near, along);
                 const float spread = (2.0f + 80.0f * along * along) * unit;
-                // Across the path by the golden ratio's turns, so near neighbours along it part.
+                // Across the path by the golden ratio's turns, so near neighbors along it part.
                 const float across = fractionalPart(static_cast<float>(i) * 0.618034f
                     + 0.08f * pseudoRandom(i, 52.0f));
                 const float x = middle.x + (across - 0.5f) * 2.0f * spread;
@@ -1991,7 +1991,7 @@ namespace ClaFi::PathArt
             const Color stem = colors.stem;
             const Color stemShade = colorBetween(stem, Color{ 0xFF000000 }, 0.25f);
             const Color head = colors.head;
-            // The head's own colour lit, as the Chase lights its reeds' heads, never the sun's.
+            // The head's own color lit, as the Chase lights its reeds' heads, never the sun's.
             Hsl litHead{ head };
             litHead.scaleLuminosity(1.25f);
             const Color headLight = litHead.toColor().faded(0.8f);

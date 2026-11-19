@@ -196,8 +196,8 @@ namespace ClaFi::Dom
             return floatToStr(grade);
         }
 
-        // **An ink is an ink colour and a grade**, each left out where it is text or strongest,
-        // and a colour is stated outright. See Dom#compositeserializer-text
+        // **An ink is an ink color and a grade**, each left out where it is text or strongest,
+        // and a color is stated outright. See Dom#compositeserializer-text
         [[nodiscard]] std::wstring inkSpelling(const ColorDef& ink)
         {
             if (const Color* color = std::get_if<Color>(&ink))

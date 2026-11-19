@@ -553,7 +553,7 @@ namespace SeeDocs_App
         }
 
         // A section with rows, a group per project with any where there are several, each
-        // labelled with its project's name.
+        // labeled with its project's name.
         void addGathered(Page& page, Gathered& gatheredSection,
             const SearchedProjects& projects)
         {

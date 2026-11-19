@@ -26,7 +26,7 @@ namespace TextEngine_App
         const DrawIconFunc& myIconPainter = Icons::Eye::draw;
 
         // Yellow is not set as a run of text: at the reading threshold on a light page the warm arc
-        // collapses to brown, so the colour is carried by a shape instead.
+        // collapses to brown, so the color is carried by a shape instead.
         auto paintWarning = [](DrawIconEvent& event){
             event.canvas().fillCircle(event.iconCenter(), event.scaleF(5.0f),
                 event.inkRgb(InkWell::Yellow));
@@ -39,7 +39,7 @@ namespace TextEngine_App
             event.canvas().fillCircle(center, event.scaleF(3.0f), event.accentRgb(InkGrade::Strongest));
             };
 
-        // One row of the ink table: the ink's name and the colour it is drawn from.
+        // One row of the ink table: the ink's name and the color it is drawn from.
         struct InkRow
         {
             std::wstring_view name;
@@ -85,7 +85,7 @@ namespace TextEngine_App
         text << StyledText{ TextStyles::Title, L"ClaFi TextEngine" } << k_endLine;
         text << StyledText{ TextStyles::SubTitle, L"A comprehensive demonstration of all formatting features" };
         text << k_endLine;
-        text << k_endLine; // the blank row under the subtitle is centred with it
+        text << k_endLine; // the blank row under the subtitle is centered with it
         text << TextAlign::Left;
 
         // ==========================================

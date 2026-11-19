@@ -251,7 +251,7 @@ buttons reads as one band.
   the tracks above it and leaves its spare shares empty. The measure is unchanged.
 
 **The share is a box, not a size.** An item that fills takes the whole share; one aligned to an
-edge or centred keeps its own size inside it. Filled items all come out the same width.
+edge or centered keeps its own size inside it. Filled items all come out the same width.
 
 ## PageControl
 

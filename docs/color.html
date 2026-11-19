@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClaFi Colour - Developer Manual</title>
+    <title>ClaFi Color - Developer Manual</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2064%2064%22%3E%3Ccircle%20cx=%2216%22%20cy=%2216%22%20r=%229%22%20fill=%22%239cde4c%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2216%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2216%22%20cy=%2248%22%20r=%229%22%20fill=%22%2389d82a%22/%3E%3Ccircle%20cx=%2248%22%20cy=%2248%22%20r=%229%22%20fill=%22%2373b722%22/%3E%3C/svg%3E">
     <style>
         :root {
@@ -133,7 +133,7 @@
                     <li><a href="#grades">Grades</a></li>
                     <li><a href="#pigments">Pigments</a></li>
                     <li><a href="#accent-and-spot">Accent and spot</a></li>
-                    <li><a href="#elevation">Elevation and colour mode</a></li>
+                    <li><a href="#elevation">Elevation and color mode</a></li>
                     <li><a href="#app-mode">The application's mode</a></li>
                 </ul>
             </li>
@@ -159,8 +159,8 @@
                 </div>
                 <ul>
                     <li><a href="#palette">The palette</a></li>
-                    <li><a href="#color-effects">Colour effects</a></li>
-                    <li><a href="#color-rules">Colour rules</a></li>
+                    <li><a href="#color-effects">Color effects</a></li>
+                    <li><a href="#color-rules">Color rules</a></li>
                     <li><a href="#rule-lists">Styles - where a control's rules come from</a></li>
                     <li><a href="#pointer-and-keys">The pointer and the keys</a></li>
                     <li><a href="#focus-ring">The focus ring</a></li>
@@ -183,25 +183,25 @@
     </nav>
     <div class="page-content">
         <header>
-            <h1>ClaFi Colour</h1>
-            <p>The theme states hues; every colour is decided where it is used</p>
+            <h1>ClaFi Color</h1>
+            <p>The theme states hues; every color is decided where it is used</p>
             <p class="manuals-link-line"><a class="manuals-link" href="index.html">All manuals</a></p>
         </header>
         <main>
 <h2 id="introduction">Introduction</h2>
 
-<p>Nothing in the framework paints in a colour it wrote down. It paints in an <strong>ink</strong>: a
-name for a colour, resolved against the surface the painter stands on, in the colour mode it stands
+<p>Nothing in the framework paints in a color it wrote down. It paints in an <strong>ink</strong>: a
+name for a color, resolved against the surface the painter stands on, in the color mode it stands
 in, under the theme in effect. <code>InkWell::textInk(InkGrade::Muted)</code> is a quiet ink over
-whatever is behind it - grey text on a plain page, and a tinted grey on a tinted card, without the
+whatever is behind it - gray text on a plain page, and a tinted gray on a tinted card, without the
 caller knowing which it landed on.</p>
 
 <p>Every ink is an <code>InkColor</code> at a <strong>grade</strong> - a share of the distance
-between the surface and an ink. The colour says which ink the grade runs toward, and a caller
+between the surface and an ink. The color says which ink the grade runs toward, and a caller
 cannot tell the families apart at the call site:</p>
 
 <ul>
-    <li><strong>Text</strong> - the ink the paint chain arrived at. All text is this colour at one
+    <li><strong>Text</strong> - the ink the paint chain arrived at. All text is this color at one
         grade or another.</li>
     <li><strong>The other pigments</strong> - <code>Yellow</code>, <code>Green</code>,
         <code>Blue</code>, <code>Red</code>, <code>Purple</code> and <code>Orange</code>, the six hues
@@ -209,7 +209,7 @@ cannot tell the families apart at the call site:</p>
         either side of the theme. Warnings and errors are these.</li>
     <li><strong>Black and white</strong> - pure, and the same on either side of the theme.</li>
     <li><strong>Accent and spot</strong> - the two pigments named for their role, each one of the
-        theme's own colour effects laid over the text ink.</li>
+        theme's own color effects laid over the text ink.</li>
 </ul>
 
 <div class="info">
@@ -223,7 +223,7 @@ a control wears, live in <code>ClaFi.Core.AppTheme_Colors</code>. The form the p
 
 <h2 id="quickstart">Quick Start</h2>
 
-<p>An ink becomes a colour where it is used, against the surface the painter stands on. A
+<p>An ink becomes a color where it is used, against the surface the painter stands on. A
 <code>PaintEvent</code> answers <code>textRgb</code>, <code>accentRgb</code> and <code>spotRgb</code>
 for the three families at a named step, and <code>inkRgb</code> for any <code>Ink</code>. An icon's
 <code>DrawIconEvent</code> answers the same four.</p>
@@ -236,7 +236,7 @@ for the three families at a named step, and <code>inkRgb</code> for any <code>In
 
 event.<span class="fn">canvas</span>().<span class="fn">drawPath</span>(path, { <span class="tp">PathDrawLayer</span>::<span class="fn">Stroke</span>(mark, event.<span class="fn">scaledStrokeWidth</span>(<span class="tp">Thickness</span>::Thin)) });</code></pre>
 
-<p>Text takes the ink itself rather than a colour, so a run keeps its meaning until the layout is
+<p>Text takes the ink itself rather than a color, so a run keeps its meaning until the layout is
 drawn:</p>
 
 <pre><code>text &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="tp">InkGrade</span>::Muted), <span class="st">L"Ping "</span> }
@@ -246,7 +246,7 @@ drawn:</p>
 
 <h3 id="surface-and-ink">Surface and ink</h3>
 
-<p>Two colours travel down the control tree with every paint: the <strong>surface</strong>, which is
+<p>Two colors travel down the control tree with every paint: the <strong>surface</strong>, which is
 the background in effect under the brush, and the <strong>ink</strong>, which is what the theme says
 text on that surface is drawn in. A control that fills its own background becomes the surface for
 its children. A control that states a text rule changes the ink for everything inside it.</p>
@@ -254,7 +254,7 @@ its children. A control that states a text rule changes the ink for everything i
 <p>Both are carried as <code>Hsl</code> in the <code>ControlPaintContext</code> the event hands out
 as <code>controlContext()</code>: <code>surfaceHsl</code> is where a grade of 0 lands,
 <code>textHsl</code> where a grade of 1 lands.
-Nothing derives from "the theme's background" - what a colour is measured against is what is
+Nothing derives from "the theme's background" - what a color is measured against is what is
 actually behind it.</p>
 
 <h3 id="grades">Grades</h3>
@@ -272,13 +272,13 @@ rounds a stated grade to the nearest named one.</p>
 <span class="tp">InkWell</span>::<span class="fn">textInk</span>(<span class="kw">0.45f</span>)                <span class="cm">// a share of your own</span>
 <span class="tp">InkWell</span>::<span class="fn">surfaceInk</span>()                  <span class="cm">// 0 - the surface itself</span></code></pre>
 
-<p>The whole colour is mixed, not the luminosity alone, so a grade loses its colour as it loses its
+<p>The whole color is mixed, not the luminosity alone, so a grade loses its color as it loses its
 contrast. A quiet ink over a surface the palette has tinted picks that tint up on the way down.
-That is the mechanism working rather than an allowance made for it: grey text is not grey because
+That is the mechanism working rather than an allowance made for it: gray text is not gray because
 the surface under it is not.</p>
 
 <div class="info">
-<code>surfaceInk()</code> is what something drawn in its own backdrop's colour asks for - a knockout
+<code>surfaceInk()</code> is what something drawn in its own backdrop's color asks for - a knockout
 band under a line that crosses another. It is invisible on the surface it was resolved against, and
 only there.
 </div>
@@ -286,28 +286,28 @@ only there.
 <h3 id="pigments">Pigments</h3>
 
 <p>A pigment is a hue the theme supplies. Two are named for their role - the accent and the spot,
-described next. The other six are named the way colours are named everywhere else:
+described next. The other six are named the way colors are named everywhere else:
 <code>InkColor::Yellow</code>, <code>Green</code>, <code>Blue</code>, <code>Red</code>,
 <code>Purple</code> and <code>Orange</code>. They carry meaning rather than emphasis, and are safe
 to use in small doses - an icon, a badge, a border. Each stands on the theme's grid - twelve hues
 30 degrees apart, the first at the anchor - at the grid hue nearest the middle of its name. It is
-never more than 15 degrees from that colour, and it shares the grid with every harmony colour.</p>
+never more than 15 degrees from that color, and it shares the grid with every harmony color.</p>
 
-<p>The theme supplies their hue and nothing else. How colourful the colour is and where it sits
-are the framework's to state, <strong>once for each colour mode</strong>, as a pair of
+<p>The theme supplies their hue and nothing else. How colorful the color is and where it sits
+are the framework's to state, <strong>once for each color mode</strong>, as a pair of
 <code>InkTone</code> in <code>InkWell::pigmentTones</code>. A semantic ink therefore reads the same
 on every surface in the form - which is the point. A yellow border going brown on a dark theme is a
 border doing its job; a warning icon going brown is one failing at it.</p>
 
-<p>The grade fades a semantic colour toward the surface the way it fades the text ink, so at
-<code>Strongest</code> the colour stands at its own tone.</p>
+<p>The grade fades a semantic color toward the surface the way it fades the text ink, so at
+<code>Strongest</code> the color stands at its own tone.</p>
 
 <pre><code><span class="tp">InkWell</span>::Yellow                          <span class="cm">// a warning, at its own tone</span>
 <span class="tp">InkWell</span>::<span class="fn">redInk</span>(<span class="tp">InkGrade</span>::Muted)         <span class="cm">// a quiet red, part of the way back to the surface</span></code></pre>
 
 <div class="warning">
-<strong>A semantic colour states no elevation.</strong> Elevation is oriented by the colour mode by
-construction, which is right for a control element and wrong for a colour carrying a meaning. If you
+<strong>A semantic color states no elevation.</strong> Elevation is oriented by the color mode by
+construction, which is right for a control element and wrong for a color carrying a meaning. If you
 find yourself reaching for one, what you want is a grade.
 </div>
 
@@ -315,28 +315,28 @@ find yourself reaching for one, what you want is a grade.
 
 <p>The palette carries two accent hues, and the theme states an effect for each. An accent or spot
 ink is a grade of the text ink with that effect applied to it, so what comes out is where the theme
-says such a colour lands rather than a relative of the ink underneath.</p>
+says such a color lands rather than a relative of the ink underneath.</p>
 
 <table>
 <tr><th>Ink</th><th>Effect</th><th>What it is for</th></tr>
 <tr><td><code>InkWell::accentInk()</code></td><td><code>ThemeColors::accent</code></td>
-    <td>The colour the interface answers with. It is the palette hue a selected button, a checked
+    <td>The color the interface answers with. It is the palette hue a selected button, a checked
     mark and the band behind selected text move toward, so an icon or a run drawn in it belongs to
     the controls around it.</td></tr>
 <tr><td><code>InkWell::spotInk()</code></td><td><code>ThemeColors::spot</code></td>
     <td>The second accent, for what stands apart from the interface rather than answers to it: a
-    brand mark, the application's own name, a run of emphasised text. Spent sparingly, which is a
+    brand mark, the application's own name, a run of emphasized text. Spent sparingly, which is a
     decision the theme makes once rather than each caller remaking it.</td></tr>
 </table>
 
 <p>Both take a grade, and the grade names the ink the effect is applied to rather than where the
 result ends up. A theme whose accent effect sets both saturation and elevation outright therefore
-answers the same colour at every grade, which is the usual case.</p>
+answers the same color at every grade, which is the usual case.</p>
 
-<h3 id="elevation">Elevation and colour mode</h3>
+<h3 id="elevation">Elevation and color mode</h3>
 
 <p><strong>Elevation is an absolute coordinate</strong>, not a relation: 0 is the mode's floor, 1 its
-ceiling, and two elements at 0.6 stand at the same luminosity whatever each is drawn on. The colour
+ceiling, and two elements at 0.6 stand at the same luminosity whatever each is drawn on. The color
 mode orients it - up from the dark end on a dark theme, down from the light end on a light one - so
 one number serves both sides of the theme.</p>
 
@@ -344,13 +344,13 @@ one number serves both sides of the theme.</p>
 <code>PaintEvent::lightness()</code> is the side a control stands on - 0 the dark end, 1 the light
 one, anything between a crossing part way through. It is inherited from the control above, and a
 control that knows better states it outright through <code>AdjustPaintEvent::setLightness</code> -
-a tab wearing its page's colour takes the page's side.</p>
+a tab wearing its page's color takes the page's side.</p>
 
 <pre><code><span class="cm">// The two directions of one mapping. The lightness is the element's, the floor the theme's.</span>
 <span class="kw">float</span> <span class="fn">elevationOf</span>(<span class="kw">float</span> luminosity, <span class="tp">Lightness</span> lightness, <span class="kw">float</span> luminosityFloor);
 <span class="kw">float</span> <span class="fn">luminosityOf</span>(<span class="kw">float</span> elevation, <span class="tp">Lightness</span> lightness, <span class="kw">float</span> luminosityFloor);</code></pre>
 
-<p>A grade is not an elevation. A grade is a share of a journey between two colours the chain
+<p>A grade is not an elevation. A grade is a share of a journey between two colors the chain
 supplies; an elevation is a place on the luminosity axis. <code>gradeOf(InkGrade)</code> names the
 first, <code>elevationOf</code> the second.</p>
 
@@ -383,7 +383,7 @@ side the application stands on:</p>
 <p><strong>Auto follows the desktop while the application runs.</strong> A change of the desktop's
 mode crosses every window to the other side of the theme, as a click on a mode button does, with no
 restart and nothing for a control to do. Windows answers with its app mode - <em>Choose your default
-app mode</em> in the colour settings, which is kept apart from the mode the taskbar wears. Wayland
+app mode</em> in the color settings, which is kept apart from the mode the taskbar wears. Wayland
 answers with the <code>color-scheme</code> the XDG desktop portal serves. A desktop stating no
 preference reads as Light: GNOME's default look states none, and so does a session without a
 portal.</p>
@@ -401,7 +401,7 @@ a loaded choice would undo the Settings page on every start:</p>
 <pre><code><span class="kw">if</span> (!application.<span class="fn">configFolderExists</span>())
     <span class="fn">applyColorMode</span>(application.<span class="fn">context</span>(), <span class="tp">ColorModeSetting</span>::Light);</code></pre>
 
-<p>What the theme does not reach - a picture chosen for each side, a scene with colours of its own -
+<p>What the theme does not reach - a picture chosen for each side, a scene with colors of its own -
 listens on <code>Platform::events()</code> for the desktop moving. The event carries nothing: it says
 ask again, and <code>Platform::systemColorMode()</code> answers. It is raised whatever the setting
 holds, so a listener asking which side the application wears asks <code>wornColorMode</code>:</p>
@@ -427,8 +427,8 @@ there, and the node is an incomplete type without them.
 
 <h3 id="ref-inkwell">InkWell</h3>
 
-<p>The one place the framework's colours are written down, and the whole of what a caller names.
-One entry per colour rather than one per icon, so two icons meaning the same thing cannot arrive at
+<p>The one place the framework's colors are written down, and the whole of what a caller names.
+One entry per color rather than one per icon, so two icons meaning the same thing cannot arrive at
 two yellows.</p>
 
 <table>
@@ -438,9 +438,9 @@ two yellows.</p>
 <tr><td><code>surfaceInk()</code></td><td>Grade 0 - flush with the surface, and so invisible on it.</td></tr>
 <tr><td><code>accentInk(InkGrade = Strongest)</code></td><td>The theme's accent effect, at that grade.</td></tr>
 <tr><td><code>spotInk(InkGrade = Strongest)</code></td><td>The theme's spot effect, at that grade.</td></tr>
-<tr><td><code>yellowInk</code>, <code>greenInk</code>, <code>blueInk</code>, <code>redInk</code>, <code>purpleInk</code>, <code>orangeInk</code> <code>(InkGrade = Strongest)</code></td><td>A semantic colour at that grade.</td></tr>
-<tr><td><code>blackInk</code>, <code>whiteInk</code> <code>(InkGrade = Strongest)</code></td><td>Pure black or white at that grade, the same in both colour modes.</td></tr>
-<tr><td><code>pigmentTones(Pigment)</code></td><td>The tone a semantic colour is drawn at on each side of the theme.</td></tr>
+<tr><td><code>yellowInk</code>, <code>greenInk</code>, <code>blueInk</code>, <code>redInk</code>, <code>purpleInk</code>, <code>orangeInk</code> <code>(InkGrade = Strongest)</code></td><td>A semantic color at that grade.</td></tr>
+<tr><td><code>blackInk</code>, <code>whiteInk</code> <code>(InkGrade = Strongest)</code></td><td>Pure black or white at that grade, the same in both color modes.</td></tr>
+<tr><td><code>pigmentTones(Pigment)</code></td><td>The tone a semantic color is drawn at on each side of the theme.</td></tr>
 <tr><td><code>InkWell::Yellow</code></td><td>Warning. Drawn, never read - see below.</td></tr>
 <tr><td><code>InkWell::Green</code></td><td>Success, present, on.</td></tr>
 <tr><td><code>InkWell::Blue</code></td><td>Information, a link, a thing named.</td></tr>
@@ -450,12 +450,12 @@ two yellows.</p>
 </table>
 
 <p>Every accessor that takes an <code>InkGrade</code> also takes a <code>float</code>, for a share of
-your own. The named colours are their accessors at <code>Strongest</code>.</p>
+your own. The named colors are their accessors at <code>Strongest</code>.</p>
 
 <div class="warning">
-<strong>Yellow is not a text colour.</strong> At the 4.5:1 reading threshold on a light page the
-whole warm arc from 40 to 120 degrees collapses to brown, so there is no colour in the yellow family
-that is both legible as text and recognisable as yellow.
+<strong>Yellow is not a text color.</strong> At the 4.5:1 reading threshold on a light page the
+whole warm arc from 40 to 120 degrees collapses to brown, so there is no color in the yellow family
+that is both legible as text and recognizable as yellow.
 A document still reads <code>Ink=yellow</code>, so that a text built from code can be written out
 and read back, and that is not an invitation.
 </div>
@@ -477,9 +477,9 @@ and read back, and that is not an invitation.
 <code>Red</code>, <code>Purple</code>, <code>Orange</code> - the six other pigments, each placed on
 the theme's grid by where its name sits rather than by its place in the order. Accent and spot
 reach the paint through the theme's effects and have no entry here.
-<code>InkTone</code> is the pair that says how colourful and how light: the two travel together
-because a hue needs a different amount of colour to read at one luminosity than at another, so
-stating either without the other names half a colour. <code>PigmentTones</code> states one
+<code>InkTone</code> is the pair that says how colorful and how light: the two travel together
+because a hue needs a different amount of color to read at one luminosity than at another, so
+stating either without the other names half a color. <code>PigmentTones</code> states one
 <code>InkTone</code> for each side of the theme.</p>
 
 <pre><code><span class="kw">struct</span> <span class="tp">InkTone</span> { <span class="kw">float</span> saturation{ <span class="kw">1.0f</span> }; <span class="kw">float</span> luminosity{ <span class="kw">0.5f</span> }; };
@@ -488,13 +488,13 @@ stating either without the other names half a colour. <code>PigmentTones</code> 
 <span class="cm">// Declared once and serving both modes from that one declaration.</span>
 <span class="kw">constexpr</span> <span class="tp">PigmentTones</span> <span class="tp">InkWell</span>::<span class="fn">pigmentTones</span>(<span class="tp">Pigment</span>);
 
-<span class="cm">// The pigment a semantic colour takes its hue from, and none for the other colours.</span>
+<span class="cm">// The pigment a semantic color takes its hue from, and none for the other colors.</span>
 <span class="kw">constexpr</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">Pigment</span>&gt; <span class="fn">pigmentOf</span>(<span class="tp">InkColor</span>);</code></pre>
 
 <p>The tones the six are drawn at, as saturation / luminosity:</p>
 
 <table>
-<tr><th>Colour</th><th>Dark tone</th><th>Light tone</th></tr>
+<tr><th>Color</th><th>Dark tone</th><th>Light tone</th></tr>
 <tr><td><code>Yellow</code></td><td>1.00 / 0.90</td><td>1.00 / 0.51</td></tr>
 <tr><td><code>Green</code></td><td>1.00 / 0.66</td><td>1.00 / 0.49</td></tr>
 <tr><td><code>Blue</code></td><td>1.00 / 0.66</td><td>1.00 / 0.41</td></tr>
@@ -519,29 +519,29 @@ forward to the event's <code>ControlPaintContext</code>, which is where the reso
 <tr><td><code>event.inkRgb(ink)</code></td><td>Any <code>Ink</code> - a pigment, black or white, or a share of your own.</td></tr>
 <tr><td><code>event.inkRgb(pigment, tone)</code></td><td>A pigment's hue at a tone stated outright, with nothing placing it.</td></tr>
 <tr><td><code>event.inkRgb(pigment, saturation, elevation)</code></td><td>A pigment placed by elevation, with the control's lightness doing the orienting.</td></tr>
-<tr><td><code>event.controlContext().inkHsl(ink)</code></td><td>The resolution before it becomes a <code>Color</code>. Take this when a colour effect is applied next.</td></tr>
+<tr><td><code>event.controlContext().inkHsl(ink)</code></td><td>The resolution before it becomes a <code>Color</code>. Take this when a color effect is applied next.</td></tr>
 </table>
 
 <div class="warning">
 <strong>The pipeline runs one way.</strong> <code>Hsl</code> becomes <code>Color</code> where a canvas
 method needs one, and never back. <code>explicit Hsl(const Color&amp;)</code> exists to ingest a
-colour a caller stated, not to read back one the model produced - the backward half of that trip is
+color a caller stated, not to read back one the model produced - the backward half of that trip is
 lossy, and a rule applied to the result is a rule applied to a rounding error.
 </div>
 
 <h3 id="ref-text">Naming an ink in text</h3>
 
-<p>A text run carries the <code>Ink</code> itself, so it is recoloured by the control it lands in
+<p>A text run carries the <code>Ink</code> itself, so it is recolored by the control it lands in
 and by the theme in effect. Streamed in code, an ink can be written as the one part that differs
 from the text ink at <code>Strongest</code>:</p>
 
 <pre><code>text &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkGrade</span>::Muted, <span class="st">L"Ping "</span> }                       <span class="cm">// the text ink at a step</span>
-     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, <span class="st">L"24 ms"</span> }                      <span class="cm">// a colour at Strongest</span>
+     &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkColor</span>::Accent, <span class="st">L"24 ms"</span> }                      <span class="cm">// a color at Strongest</span>
      &lt;&lt; <span class="tp">ColoredText</span>{ <span class="tp">InkWell</span>::<span class="fn">redInk</span>(<span class="tp">InkGrade</span>::Muted), <span class="st">L" late"</span> };   <span class="cm">// anything else, as the Ink it is</span></code></pre>
 
-<p>A document names an ink by its colour and grade and states no tone of its own - the tones are
-<code>InkWell</code>'s. Both are spelt as their members in lower case, the colour first, and either
-is left out where it is the text colour or <code>strongest</code>:</p>
+<p>A document names an ink by its color and grade and states no tone of its own - the tones are
+<code>InkWell</code>'s. Both are spelt as their members in lower case, the color first, and either
+is left out where it is the text color or <code>strongest</code>:</p>
 
 <table>
 <tr><th>Written</th><th>Ink</th></tr>
@@ -550,9 +550,9 @@ is left out where it is the text colour or <code>strongest</code>:</p>
 <tr><td><code>Ink=accent</code></td><td><code>accentInk()</code></td></tr>
 <tr><td><code>Ink=spot</code></td><td><code>spotInk()</code></td></tr>
 <tr><td><code>Ink=green</code>, <code>Ink=blue</code>, <code>Ink=red</code>, <code>Ink=purple</code>, <code>Ink=orange</code></td><td>The semantic inks of those names.</td></tr>
-<tr><td><code>Ink=red muted</code></td><td><code>redInk(InkGrade::Muted)</code> - any colour at any step.</td></tr>
+<tr><td><code>Ink=red muted</code></td><td><code>redInk(InkGrade::Muted)</code> - any color at any step.</td></tr>
 <tr><td><code>Ink=accent 0.45</code></td><td><code>accentInk(0.45f)</code> - a share between the steps.</td></tr>
-<tr><td><code>Ink=#RRGGBB</code></td><td>A colour stated outright, which the theme does not touch.</td></tr>
+<tr><td><code>Ink=#RRGGBB</code></td><td>A color stated outright, which the theme does not touch.</td></tr>
 </table>
 
 <p>See the <a href="text.html#document">Writing ClaFi Text</a> manual for the rest of a text's
@@ -581,7 +581,7 @@ spelling in a document.</p>
 
 <h2 id="icons">Writing an Icon</h2>
 
-<p>An icon states inks, never colours. Which ink depends on what the shape means:</p>
+<p>An icon states inks, never colors. Which ink depends on what the shape means:</p>
 
 <ul>
     <li><strong>The object</strong> an icon draws - the sheet, the bin, the arrow's shaft - is a
@@ -605,7 +605,7 @@ spelling in a document.</p>
 
 <div class="info">
 <strong>Two things stand outside the model.</strong> <em>PathArt</em> is painting rather than
-interface and is free to use any colours it likes. Brand marks are a fixed identity, and answer to
+interface and is free to use any colors it likes. Brand marks are a fixed identity, and answer to
 whoever owns the brand rather than to the theme.
 </div>
 
@@ -614,13 +614,13 @@ whoever owns the brand rather than to the theme.
 <h3 id="palette">The palette</h3>
 
 <p>A palette is strictly a set of hues. No saturation, no luminosity - those belong to whoever knows
-what the colour means. <code>ThemeColors::paletteHues</code> holds three, and all three are
+what the color means. <code>ThemeColors::paletteHues</code> holds three, and all three are
 assigned:</p>
 
 <table>
 <tr><th>Index</th><th>Named by a rule as</th><th>What it is</th></tr>
 <tr><td><code>paletteHues[0]</code></td><td><code>ColorRuleHueOp::PaletteColor1</code></td>
-    <td>The hue that tints surfaces, and so the hue every grey in the form is made of.</td></tr>
+    <td>The hue that tints surfaces, and so the hue every gray in the form is made of.</td></tr>
 <tr><td><code>paletteHues[1]</code></td><td><code>ColorRuleHueOp::PaletteColor2</code></td>
     <td>The accent - the hue the interactive states and the accent ink are drawn from.</td></tr>
 <tr><td><code>paletteHues[2]</code></td><td><code>ColorRuleHueOp::PaletteColor3</code></td>
@@ -631,15 +631,15 @@ assigned:</p>
 <code>anchorHue</code> alone places the six other pigments on its grid. Both are derived rather than
 stored, so a file carries the two inputs and not the result.</p>
 
-<h3 id="color-effects">Colour effects</h3>
+<h3 id="color-effects">Color effects</h3>
 
 <p>A <code>ColorEffect</code> is three channels - hue, saturation, elevation - each stating what
-happens to the colour handed to it. Everything a theme says about a colour is said in these.</p>
+happens to the color handed to it. Everything a theme says about a color is said in these.</p>
 
 <table>
 <tr><th>Operation</th><th>Effect</th></tr>
 <tr><td><code>ColorRuleOp::NoChange</code></td><td>Leaves the channel as it arrived.</td></tr>
-<tr><td><code>ColorRuleOp::Offset</code></td><td>Moves it by a distance. A relation between two colours.</td></tr>
+<tr><td><code>ColorRuleOp::Offset</code></td><td>Moves it by a distance. A relation between two colors.</td></tr>
 <tr><td><code>ColorRuleOp::Scale</code></td><td>Multiplies it.</td></tr>
 <tr><td><code>ColorRuleOp::Set</code></td><td>States where it lands, absolutely, read in the control's own direction.</td></tr>
 </table>
@@ -661,10 +661,10 @@ white on a light one, which is how a mark gets ink that contrasts with it under 
 <p><code>ThemeColors::accent</code> and <code>ThemeColors::spot</code> are bare effects: the two
 inks a theme states itself, applied wherever an ink names them. The accent is also what a mark that
 says a thing is on is drawn in - a text caret, the indicator under an open tab - through
-<code>ControlPaintContext::indicatorRgb</code>. A rule that wants the accent's colour states its
+<code>ControlPaintContext::indicatorRgb</code>. A rule that wants the accent's color states its
 values in its own effect, as the focus ring's rules do.</p>
 
-<h3 id="color-rules">Colour rules</h3>
+<h3 id="color-rules">Color rules</h3>
 
 <p>A <code>ColorRule</code> is what a theme says about an element: the inputs it reads, the channel
 it writes, and the effect it applies there.</p>
@@ -726,7 +726,7 @@ on, up to a style that names none.</p>
 <tr><th>Field</th><th>Holds</th></tr>
 <tr><td><code>name</code></td><td>What a theme file and the application know the style by.</td></tr>
 <tr><td><code>base</code></td><td>The style its chain continues from, or none.</td></tr>
-<tr><td><code>standsOn</code></td><td>The style it is painted on, as the Themes app shows it - its preview starts the surface from that style's resting surface, or from the mode's bare colour when none is named. See <a href="#elements">Elements</a>.</td></tr>
+<tr><td><code>standsOn</code></td><td>The style it is painted on, as the Themes app shows it - its preview starts the surface from that style's resting surface, or from the mode's bare color when none is named. See <a href="#elements">Elements</a>.</td></tr>
 <tr><td><code>seed</code></td><td>The pigment its surface's hue starts at, if not at what it stands on.</td></tr>
 <tr><td><code>rules</code></td><td>Its own rules.</td></tr>
 <tr><td><code>dropped</code></td><td>Selectors naming inherited rules it leaves out: each a channel, an input set and an optional second input set to match.</td></tr>
@@ -773,7 +773,7 @@ application names styles of its own in <code>AppParams::elements</code>, wears t
 <code>AppParams::builtInTheme</code>; a theme stating no style under a name gives the controls
 wearing it nothing.</p>
 
-<p>A control with something to say that no theme can - a tab taking on the colour of the page it
+<p>A control with something to say that no theme can - a tab taking on the color of the page it
 opens - states rules of its own. They are baked rules, <code>BakedColorRule</code>, handed over as
 a span that has to outlive the paint: a member of the control, or a rule of the baked set the pass
 carries.</p>
@@ -811,7 +811,7 @@ nothing of the weight below.</p>
 <p>An active container - a grid, a list - is current only as a fallback, while the focus is on it
 and on no item inside it; with an item to hand the ring to, the item wears it alone.</p>
 
-<p>The ring's weight is the control's <code>Current</code> factor, whatever colour the rules gave the
+<p>The ring's weight is the control's <code>Current</code> factor, whatever color the rules gave the
 stroke. The border thickens toward <code>ThemeMetrics::FocusedBorder</code> by it, and a surface that
 grows in as it arrives is held at full size by it, since a ring marks the control's frame and not its
 surface. Both are paint effects, and neither moves any layout.</p>
@@ -831,7 +831,7 @@ its accent moves the ring by editing them too.</p>
 <h3 id="elements">Elements</h3>
 
 <p>A <code>UiElement</code> names what a control is to the theme, and so the style it wears. Four
-elements open a window of their own, and every other stands on one - the colour a rule changes is
+elements open a window of their own, and every other stands on one - the color a rule changes is
 the one the style it stands on leaves. A window root's surface names its hue and sets its
 saturation and elevation outright, since what stands behind a window is not the theme's to know.
 What a style stands on is what the Themes app paints its preview from; in a form, a control stands
@@ -839,7 +839,7 @@ on whatever its parent painted.</p>
 
 <table>
 <tr><th>Element</th><th>Stands on</th><th>What wears it</th></tr>
-<tr><td><code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code>, <code>Dropdown</code></td><td>The bare colour of the mode</td><td>The root of a window of that kind: its surface, its ink, its frame's stroke and the shadow it casts. A combo box's list and a drop list's open as a <code>Dropdown</code>.</td></tr>
+<tr><td><code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code>, <code>Dropdown</code></td><td>The bare color of the mode</td><td>The root of a window of that kind: its surface, its ink, its frame's stroke and the shadow it casts. A combo box's list and a drop list's open as a <code>Dropdown</code>.</td></tr>
 <tr><td><code>Page</code></td><td><code>Dialog</code></td><td>A page of content.</td></tr>
 <tr><td><code>Tab</code></td><td><code>Page</code></td><td>A tab in a strip. The open tab wears its page's surface, and its line runs the length of the page.</td></tr>
 <tr><td><code>Section</code></td><td><code>Page</code></td><td>A section of a page.</td></tr>
@@ -860,7 +860,7 @@ on whatever its parent painted.</p>
 <tr><td><code>Slider</code></td><td><code>Section</code></td><td>A slider as a whole; its thumb wears <code>ScrollThumb</code>.</td></tr>
 <tr><td><code>SelectedText</code></td><td><code>Section</code></td><td>The band behind selected text, and the ink drawn over it.</td></tr>
 <tr><td><code>FoundText</code></td><td><code>Section</code></td><td>The band behind a found match, seeded yellow.</td></tr>
-<tr><td><code>SelectionIndicator</code></td><td><code>Section</code></td><td>The box of a check and the ring of a radio button, with the colour each takes when on.</td></tr>
+<tr><td><code>SelectionIndicator</code></td><td><code>Section</code></td><td>The box of a check and the ring of a radio button, with the color each takes when on.</td></tr>
 <tr><td><code>HoverIndicator</code></td><td><code>Section</code></td><td>The mark of a button whose <code>IndicatorVisibility</code> is <code>Hover</code>, with nothing at rest.</td></tr>
 <tr><td><code>Accent</code>, <code>Spot</code></td><td><code>Section</code></td><td>The two effects an ink names, <code>ThemeColors::accent</code> and <code>spot</code>.</td></tr>
 <tr><td><code>ScrollBar</code>, <code>ScrollButton</code>, <code>ScrollThumb</code></td><td><code>Section</code></td><td>A scroll bar as a whole, its buttons and its thumb.</td></tr>
@@ -882,8 +882,8 @@ style, and 1 - a surface that fades in at full size - everywhere else.</p>
         <h4>Do</h4>
         <ul>
             <li><strong>Name the ink, resolve where you paint.</strong> The same <code>Ink</code> is right on every surface; a <code>Color</code> is right on one.</li>
-            <li><strong>Use a grade for anything grey.</strong> Grey is the ladder between the surface and the ink, not a colour.</li>
-            <li><strong>Name a meaning with a semantic colour</strong> - <code>InkWell::Red</code>, or <code>redInk(grade)</code> for a quieter one - and leave its tones to <code>InkWell::pigmentTones</code>, the one declaration serving both modes.</li>
+            <li><strong>Use a grade for anything gray.</strong> Gray is the ladder between the surface and the ink, not a color.</li>
+            <li><strong>Name a meaning with a semantic color</strong> - <code>InkWell::Red</code>, or <code>redInk(grade)</code> for a quieter one - and leave its tones to <code>InkWell::pigmentTones</code>, the one declaration serving both modes.</li>
             <li><strong>Take <code>controlContext().inkHsl</code> when an effect comes next</strong>, and let the last step be the one that makes a <code>Color</code>.</li>
             <li><strong>State a look for the user being on a control once, on <code>Hot</code></strong> - it is the mouse over the control or the keys on it, each gated on its device. <code>Focused</code> alone is for what a click keeps while the pointer wanders.</li>
             <li><strong>Reach for the accent for interface emphasis</strong> and the spot for what stands apart from the interface.</li>
@@ -893,8 +893,8 @@ style, and 1 - a surface that fades in at full size - everywhere else.</p>
     <div class="rule-card donts">
         <h4>Don't</h4>
         <ul>
-            <li><strong>Don't convert a produced colour back.</strong> <code>Hsl{ someResolvedColor }</code> is a round trip through the lossy direction.</li>
-            <li><strong>Don't cache a resolved colour</strong> across surfaces or across a theme change. Resolving is cheap; being wrong is not.</li>
+            <li><strong>Don't convert a produced color back.</strong> <code>Hsl{ someResolvedColor }</code> is a round trip through the lossy direction.</li>
+            <li><strong>Don't cache a resolved color</strong> across surfaces or across a theme change. Resolving is cheap; being wrong is not.</li>
             <li><strong>Don't give a semantic ink an elevation.</strong> An icon that means something means it on both sides of the theme.</li>
             <li><strong>Don't write a hex literal in a control or an icon.</strong> If the model cannot say it, that is a gap in the model.</li>
             <li><strong>Don't hand <code>setOwnRules</code> a temporary.</strong> It keeps a span, and the rules it names are read after the adjustment returns.</li>
@@ -908,13 +908,13 @@ style, and 1 - a surface that fades in at full size - everywhere else.</p>
 
 <h3 id="hiw-resolution">The resolver</h3>
 
-<p><code>ControlPaintContext::inkHsl</code> is the one place a name becomes a colour. Every ink is
-read the same way: its colour picks the far end of the mix, and the grade mixes toward that end
+<p><code>ControlPaintContext::inkHsl</code> is the one place a name becomes a color. Every ink is
+read the same way: its color picks the far end of the mix, and the grade mixes toward that end
 from the surface. For the accent and the spot the far end is the theme's effect laid over the chain's
 ink - laid over the mixed ink, an effect that sets its channels outright would answer the same
-colour at every grade.</p>
+color at every grade.</p>
 
-<pre><code><span class="cm">// The far end of the mix: a semantic colour's hue, pure black or white, the theme's accent</span>
+<pre><code><span class="cm">// The far end of the mix: a semantic color's hue, pure black or white, the theme's accent</span>
 <span class="cm">// or spot effect over the chain's ink, or the chain's ink itself.</span>
 <span class="tp">Hsl</span> inkEnd = textHsl;
 <span class="kw">const</span> <span class="tp">std</span>::<span class="tp">optional</span>&lt;<span class="tp">Pigment</span>&gt; pigment = <span class="fn">pigmentOf</span>(ink.color);
@@ -938,11 +938,11 @@ colour at every grade.</p>
 <span class="kw">if</span> (disabledAmount)
     <span class="kw">return</span> <span class="tp">Hsl</span>{ result, surfaceHsl, disabledAmount };</code></pre>
 
-<p>Two properties follow from the shape. A semantic colour, black and white read nothing of the chain
-but the surface they fade toward, so at <code>Strongest</code> each is the same colour under every
+<p>Two properties follow from the shape. A semantic color, black and white read nothing of the chain
+but the surface they fade toward, so at <code>Strongest</code> each is the same color under every
 element in the form.
-And the disabled fade travels in the colour model like every other move here - an ink that cannot be
-used slides toward the surface it stands on, round the hue wheel rather than through grey.</p>
+And the disabled fade travels in the color model like every other move here - an ink that cannot be
+used slides toward the surface it stands on, round the hue wheel rather than through gray.</p>
 
 <h3 id="hiw-transform">The transform</h3>
 
@@ -965,7 +965,7 @@ near the top of the axis, where the lift barely moves it: the ink on a dark page
 white, and only an ink set low, such as the one over a check mark, lands on the floor rather than on
 black. The floor lifts elevations only: saturations and a window's shadow are read without it.</p>
 
-<p>A colour below the floor has no elevation and clamps to the end it lies past. The floor itself
+<p>A color below the floor has no elevation and clamps to the end it lies past. The floor itself
 lies below 1, where the axis would have no room left, and the Themes app's slider stops at 0.5.</p>
 
 <h3 id="hiw-chain">The chain a control carries</h3>

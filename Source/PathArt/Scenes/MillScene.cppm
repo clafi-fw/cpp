@@ -23,7 +23,7 @@ namespace ClaFi::PathArt
         // **What the scene is painting**, which between two picks is a blend of them and not any
         // theme in the list.
         [[nodiscard]] const SceneTheme& theme() const { return m_themes.worn(); }
-        // The theme it was told to wear, blend or no blend - what a caller taking colours or a
+        // The theme it was told to wear, blend or no blend - what a caller taking colors or a
         // name off the scene means.
         [[nodiscard]] const SceneTheme& pickedTheme() const { return m_themes.picked(); }
         [[nodiscard]] bool offersThemes() const override { return true; }

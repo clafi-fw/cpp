@@ -206,7 +206,7 @@ namespace ClaFi::Controls
         void takeText() const override;
         // The text the layout now holds, and the edit that carried it there - or nothing, where
         // the whole text was stated. A box keeping an account of its text beside the layout's -
-        // the line states a CodeBox colours from - brings it into step here, on the same terms.
+        // the line states a CodeBox colors from - brings it into step here, on the same terms.
         virtual void textTaken(const Text&, const TextEdit*) const {}
         void focusChanged() override;
         // Mouse events
@@ -854,7 +854,7 @@ namespace ClaFi::Controls
             { m_editProps.targetX.value_or(sourceRect.left), targetY });
         FloatRect hitRect = caretRect(textBounds, result.hit);
 
-        // **The view travels the distance the caret travelled, which is the screenful settled on a
+        // **The view travels the distance the caret traveled, which is the screenful settled on a
         // row.** A screenful names a point, and the caret can only stand on the row holding that
         // point, so it arrives short of the screenful by however far into that row the point
         // fell. A view given the whole screenful takes that difference out of the caret's place

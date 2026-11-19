@@ -7,14 +7,14 @@ namespace ClaFi
 {
     // Every ink the framework names, and the one place their numbers are written.
     //
-    // Three things live here. The accessors each name one colour and take the grade it is drawn
+    // Three things live here. The accessors each name one color and take the grade it is drawn
     // at and nothing else. The tones are what each semantic hue is drawn at on either side of the
-    // theme. The constants are the colours that carry a meaning, named once so that two icons
+    // theme. The constants are the colors that carry a meaning, named once so that two icons
     // drawing the same warning cannot arrive at two yellows.
     //
-    // Nothing here is a colour yet. A semantic hue is a region of the wheel that every theme's
+    // Nothing here is a color yet. A semantic hue is a region of the wheel that every theme's
     // harmony fills its own way, the accent and the spot are the theme's, and which of a hue's
-    // two tones applies is the mode the painter stands in - so an ink becomes a colour where it
+    // two tones applies is the mode the painter stands in - so an ink becomes a color where it
     // is used, and not before.
     export namespace InkWell
     {
@@ -36,7 +36,7 @@ namespace ClaFi
         }
 
         // Flush with the surface and so invisible on it, which is what something drawn in its own
-        // backdrop's colour asks for - a knockout band under a line that crosses another.
+        // backdrop's color asks for - a knockout band under a line that crosses another.
         [[nodiscard]] constexpr Ink surfaceInk()
         {
             return textInk(0.0f);

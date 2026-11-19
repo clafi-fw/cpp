@@ -149,9 +149,9 @@ namespace ClaFi::Controls
             shift *= 2;
             rect.offset(-shift, shift);
             // Masks the back square where the front one crosses it, so the two read as overlapping
-            // sheets. That wants the colour behind this icon, which is what textColor().surface
+            // sheets. That wants the color behind this icon, which is what textColor().surface
             // is - the effective backdrop, already accumulated down the parent chain. The
-            // control's border colour is not a substitute: it sits close enough to the surface
+            // control's border color is not a substitute: it sits close enough to the surface
             // on the current themes to pass, and would drift apart on a theme where it does not.
             Color bgColor = event.surfaceRgb();
             event.canvas().fillRoundedRectangle(rect, radius, radius, bgColor);

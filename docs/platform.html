@@ -618,8 +618,8 @@
             <h3 id="order">Order Is the Design</h3>
             <p>Two things follow from letting member order carry the lifetime, and both are deliberate.</p>
             <p>First, there is no <code>initialize()</code> or <code>finalize()</code> on a platform. A member's
-            constructor is its initialisation and its destructor its finalisation, and a member declared in the
-            right place needs neither called. A separate finalisation step is for the case where something must
+            constructor is its initialization and its destructor its finalization, and a member declared in the
+            right place needs neither called. A separate finalization step is for the case where something must
             happen while a <em>later</em> member is still standing, and no member of either platform has that
             case: the Win32 clipboard flushes in its own destructor, which runs before the manager's, and that is
             the order it wants.</p>
@@ -735,7 +735,7 @@
             context it already has, and the context knows only <code>Platform</code>.</p>
 
             <h3 id="windows-from-above">Windows</h3>
-            <p>A form asks for its window in its own member initialiser, through the context's platform:</p>
+            <p>A form asks for its window in its own member initializer, through the context's platform:</p>
 <pre><span class="tp">std</span>::<span class="tp">unique_ptr</span>&lt;<span class="tp">IPlatformWindow</span>&gt; m_window{
     m_appContext.<span class="fn">platform</span>().<span class="fn">createWindow</span>(*<span class="kw">this</span>, m_windowRole, <span class="fn">popupTargetForm</span>())
 };</pre>
@@ -761,7 +761,7 @@
                     pending state for the commit that maps it.</td></tr>
                 <tr><td>Wayland, where it offers none</td><td>The frame, where the window's buffer carries an
                     alpha channel. Every pixel is written at the window's opacity, and a change repaints the
-                    window. Premultiplied colour scales with its own alpha, so the four channels take one factor,
+                    window. Premultiplied color scales with its own alpha, so the four channels take one factor,
                     the result is still premultiplied, and a rounded corner keeps the coverage it was drawn
                     with.</td></tr>
             </table>
@@ -846,11 +846,11 @@ source.<span class="fn">add</span>&lt;<span class="tp">Transfer</span>::<span cl
             slots, <code>AnimationSlots::KeyboardActive</code> and <code>mouseActive</code>, mirror each other, so
             a switch from one device to the other is one crossfade. Each step of either fade raises
             <code>InputSwitchEvent</code> on <code>AppContext::events()</code>, and every visible form repaints
-            whole on it: the colour rules read the two factors as <code>RuleInput::Keyboard</code> and
+            whole on it: the color rules read the two factors as <code>RuleInput::Keyboard</code> and
             <code>RuleInput::Mouse</code>, and nothing knows which controls of which windows do. The hovered
             control and the focused one re-read their state as well, up to the root form through any popup
             between, since their <code>Hot</code> and <code>Current</code> carry the device. The
-            <a href="color.html#pointer-and-keys">Colour manual</a> says what the rules do with them.</p>
+            <a href="color.html#pointer-and-keys">Color manual</a> says what the rules do with them.</p>
 
             <h3 id="side-buttons">Side Buttons</h3>
             <p>The two side buttons most mice carry are reported as <code>SideButton::Back</code> and
@@ -1005,7 +1005,7 @@ listener = platform.<span class="fn">createMessageWindow</span>();
             classes; its destructor closes the apartment, posts the quit message and unregisters the classes. Every
             window is handed the manager by whoever makes it - the platform to a <code>FormWindow</code>, the
             platform to the timer's and the clipboard's message windows - and the manager has no static accessor.
-            The one static state it keeps is the desktop's colour mode as last read, which a broadcast is compared
+            The one static state it keeps is the desktop's color mode as last read, which a broadcast is compared
             against.</p>
             <p><strong><code>MessageWindow</code></strong> is a message-only HWND on <code>WindowBase</code> alone -
             no frame, no placement, no alpha, none of what a platform window has. Whoever holds one names itself
@@ -1114,12 +1114,12 @@ listener = platform.<span class="fn">createMessageWindow</span>();
                     the <code>AppContext</code> the form reporting the input hands in - see
                     <a href="#input-controllers">The Input Controllers</a>.</td></tr>
                 <tr><td>The Transfer tables</td><td>Registrations filled by calls from
-                    <code>ApplicationBase::initialize</code>, never at static initialisation - a static library
+                    <code>ApplicationBase::initialize</code>, never at static initialization - a static library
                     drops a translation unit nothing references.</td></tr>
                 <tr><td>The text engine's caches</td><td>Layouts, glyphs, draw buffers, the spare buffers on Linux.
                     They are caches: what they hold is rebuilt on demand and released in no order.</td></tr>
                 <tr><td>The Wayland appearance portal</td><td>A lazily connected session bus, read for the desktop's
-                    colour mode; its descriptor is polled by the display's loop while it is open.</td></tr>
+                    color mode; its descriptor is polled by the display's loop while it is open.</td></tr>
                 <tr><td>libcurl, on Linux</td><td>Nothing a variable holds: the library is opened with
                     <code>dlopen</code> when a fetch runs and never closed. A transfer aborted while a name resolves
                     leaves libcurl's resolver thread running its code, and unloading the library would take that

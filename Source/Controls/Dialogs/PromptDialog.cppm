@@ -34,7 +34,7 @@ namespace ClaFi::Controls
         [[nodiscard]] std::wstring text() const;
         /// Drops the question under the control it was raised from and runs it. Answers whether a
         /// value was accepted; a dialog dismissed any other way answers false, which is the
-        /// cancelling answer.
+        /// canceling answer.
         bool execute();
     protected:
         void nestedKeyDown(KeyDownEvent&) override;

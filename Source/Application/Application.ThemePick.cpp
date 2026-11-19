@@ -77,7 +77,7 @@ namespace ClaFi
         form().invalidateAlign();
     }
 
-    // The themes the list holds now are the manager's own, so the colours the application
+    // The themes the list holds now are the manager's own, so the colors the application
     // wears are taken from them rather than from the ones this change took down.
     void ThemePick::documentsFolderChanged()
     {

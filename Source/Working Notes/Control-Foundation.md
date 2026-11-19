@@ -13,7 +13,7 @@ label inside a plain panel inside a stack is a click on the label, not on the st
 
 **`clickedControl` is never rewritten.** RowContainer and ButtonBase used to set `event.control` to
 themselves on the way up, so the stack above would pick the row or the button. The stack now
-finds its item with itemAt from `clickedControl`. The one behaviour this moved: a mouse click on a
+finds its item with itemAt from `clickedControl`. The one behavior this moved: a mouse click on a
 MouseOnly control inside a stack item picks that item, where it used to read as a click on
 nothing.
 
@@ -88,7 +88,7 @@ query.
 **A command holding commands is available while nothing claims it** (2026-11-11, found by the
 MillScene showcase's Theme line, the first group line in an application). Action::resolve fell
 back to whether the action had an OnClick handler. A group action has none - its line is an
-Opener and opens the list itself - so the line came out disabled: greyed, and opening nothing on a
+Opener and opens the list itself - so the line came out disabled: grayed, and opening nothing on a
 rest of the pointer, a press or Right. opensList() joins the fallback.
 
 ## Tooltip
@@ -125,14 +125,14 @@ under them included.
 ## FocusNavigator
 
 2026-10-17. The arrows and the page keys were a spatial search: every focusable control within a
-screenful of the source scored by the distance between centres, on rects clipped to the
+screenful of the source scored by the distance between centers, on rects clipped to the
 viewport, with a source container shrunk to a point and held headers moved back. Oj called it
-prone to bugs and overengineered, and the way back often differed from the way forward - centres
+prone to bugs and overengineered, and the way back often differed from the way forward - centers
 of rects of different sizes score differently each way. Tab used the same search to pick the next
 sibling.
 
 The framework has two container families and a grid, and each layout already says who its
-neighbours are, so each container answers for its own children - Control navigationNeighbor and
+neighbors are, so each container answers for its own children - Control navigationNeighbor and
 navigationEntry - and the navigator only walks up the parents. Decided with Oj:
 
 - A container with nothing current is entered by the line rule, not at its first or last item:
@@ -142,7 +142,7 @@ navigationEntry - and the navigator only walks up the parents. Decided with Oj:
   field; walking columns and rows by address is a separate step.
 
 The line pair is the grid's desiredCellX/Y made general. Without it, Up from a full-width row
-back into a toolbar picks the button under the row's centre instead of the one the run left.
+back into a toolbar picks the button under the row's center instead of the one the run left.
 
 What changed for a user: a page press counts from the focused item even after the wheel has
 scrolled it away - it used to page from the screen in that case - and a diagonal jump into
