@@ -56,6 +56,14 @@ namespace ClaFi::Graphics::Cpu
             float glowSpreadScale = 1.0f,
             bool useOwnMask = true
         );
+        // Fills what a path covers as its rows are walked, rather than through a mask.
+        [[nodiscard]] bool fillPath(
+            const PixelView& target,
+            const Brush& brush,
+            const Matrix3x2* brushTransform,
+            FillRule rule,
+            const FloatRect& bounds
+        );
     public:
         NoAllocFloatVector mask;
         NoAllocFloatVector clipMask; // Backing allocation for setClipPath rasterization
@@ -73,6 +81,11 @@ namespace ClaFi::Graphics::Cpu
     private:
         void compositeSolid(const PixelView&, Color color);
         static void buildGradientRamp(std::span<const GradientStop> stops, ColorAsUint* ramp);
+
+        // The coverage of a fill row by row, eight pixels at a time, handed to the sink.
+        template<typename CoverageSink>
+        void walkFill(const FloatRect& bounds, float outset, FillRule rule,
+            const CoverageSink& sink);
 
         // The stops' ramp through the mask and the clip, rowPosition(py) placing that row on it.
         template<typename RowPosition>

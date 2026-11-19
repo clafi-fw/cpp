@@ -165,6 +165,25 @@ background, the fill under a scene that covers it, fell from 4.0 to 2.2 at 3840 
 cost worth knowing about: the scene redraws every pixel of it, and nothing reads what the fill
 leaves. The frames of the same matrix came out the same bit for bit.
 
+## RasterBuffers fillPath
+
+**A fill blends what it covers while it walks the rows** (2026-11-19). A fill used to be two passes
+over its box: rasterizeFill wrote a float coverage mask the size of the box, and composite read it
+back and blended through it. On the shapes that cover a frame - two mountain ranges and a meadow,
+each a vertical gradient through a mask - that was the mask written, the mask read and the
+destination written, and the first two were most of what they cost. fillPath hands each row's
+coverage to a sink instead: walkFill states what a pixel is covered by once, rasterizeFill's sink
+stores it and fillPath's blends it as it arrives. The mask is never allocated, written or read.
+
+Only a brush whose colour is settled before the walk takes it - a solid colour, and a linear
+gradient whose axis runs straight down, resolved once a row as compositeRampRows does - and only
+with no path clip, no radial gradient and no glow. Anything else answers false and the painter
+takes the mask route, which is the one decision PixelPathPainter::drawPath makes.
+
+Chase at 3840 x 1984 on the Linux CPU backend, a Release clang build: draw fell from 25.2 to 12.3
+ms a frame and the rate from 18.5 to 30-36 FPS. The eleven-frame matrix came out the same bit for
+bit as the renders the untouched tree gives.
+
 ## PixelView compositeSurface
 
 **Eight pixels at a time** (2026-11-08). Taken one at a time, the pixels of a scene's kept layer

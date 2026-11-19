@@ -297,16 +297,20 @@ namespace ClaFi::Graphics::Cpu
         --nearEdges[static_cast<std::size_t>(std::min(last, lastGroup) + 1)];
     }
 
-    void RasterBuffers::rasterizeFill(const FloatRect& bounds, float outset, const FillRule rule)
+    // **The coverage of a fill, row by row**, handed to the sink eight pixels at a time: a fill
+    // that builds a mask stores it, and a fill that blends as it walks takes it instead, so what a
+    // pixel is covered by is decided in one place for both.
+    template<typename CoverageSink>
+    void RasterBuffers::walkFill(const FloatRect& bounds, const float outset, const FillRule rule,
+        const CoverageSink& sink)
     {
         SimdEnv env;
-        int stride = m_maskStride;
 
-        int startY = static_cast<int>(std::floor(bounds.top));
-        int endY = static_cast<int>(std::ceil(bounds.bottom));
-        int startX = static_cast<int>(std::floor(bounds.left));
-        int endX = static_cast<int>(std::ceil(bounds.right));
-        int width = endX - startX;
+        const int startY = static_cast<int>(std::floor(bounds.top));
+        const int endY = static_cast<int>(std::ceil(bounds.bottom));
+        const int startX = static_cast<int>(std::floor(bounds.left));
+        const int endX = static_cast<int>(std::ceil(bounds.right));
+        const int width = endX - startX;
 
         // Stack-allocated row invariants, aligned to the AVX 32-byte boundary.
         alignas(32) __m256 crossingXInts[k_maxRowEdges];
@@ -323,8 +327,7 @@ namespace ClaFi::Graphics::Cpu
 
         for (int y = startY; y < endY; ++y)
         {
-            float py = static_cast<float>(y) + 0.5f;
-            float* maskRow = &mask[(y - startY) * stride];
+            const float py = static_cast<float>(y) + 0.5f;
             const EdgeIndices& activeEdges = edgeIndices(y, startY);
 
             int numCrossing = 0;
@@ -400,18 +403,11 @@ namespace ClaFi::Graphics::Cpu
                 }
 
                 nearCount += nearEdges[static_cast<std::size_t>(xOffset / 8)];
+                const int remaining = width - xOffset;
                 if (nearCount == 0)
                 {
-                    const __m256 alpha = _mm256_and_ps(_mm256_castsi256_ps(vInsideMask), env.vOne);
-                    const int remaining = width - xOffset;
-                    if (remaining >= 8)
-                    {
-                        _mm256_storeu_ps(maskRow + xOffset, alpha);
-                    }
-                    else
-                    {
-                        _mm256_maskstore_ps(maskRow + xOffset, env.loadMask(remaining), alpha);
-                    }
+                    sink(y - startY, xOffset, remaining,
+                        _mm256_and_ps(_mm256_castsi256_ps(vInsideMask), env.vOne));
                     continue;
                 }
 
@@ -439,7 +435,20 @@ namespace ClaFi::Graphics::Cpu
 
                 __m256 alpha = calcSdfAlpha(minEdgeDistSq, vInsideMask, outset, env);
 
-                int remaining = width - xOffset;
+                sink(y - startY, xOffset, remaining, alpha);
+            }
+        }
+    }
+
+    void RasterBuffers::rasterizeFill(const FloatRect& bounds, const float outset,
+        const FillRule rule)
+    {
+        SimdEnv env;
+        float* const maskStart = mask.data();
+        const int stride = m_maskStride;
+        walkFill(bounds, outset, rule,
+            [&](const int row, const int xOffset, const int remaining, const __m256 alpha) {
+                float* maskRow = maskStart + static_cast<std::ptrdiff_t>(row) * stride;
                 if (remaining >= 8)
                 {
                     _mm256_storeu_ps(maskRow + xOffset, alpha);
@@ -448,8 +457,7 @@ namespace ClaFi::Graphics::Cpu
                 {
                     _mm256_maskstore_ps(maskRow + xOffset, env.loadMask(remaining), alpha);
                 }
-            }
-        }
+            });
     }
 
     void RasterBuffers::rasterizeStrokeSegment(const FloatRect& totalBox, const RenderEdge& edge, float radius, StrokeCap cap)
@@ -668,6 +676,130 @@ namespace ClaFi::Graphics::Cpu
                 }
                 glowParams.lightSpread *= glowSpreadScale;
                 compositePointGlow(target, glowParams, maskBase, maskStride);
+            }
+        }, brush);
+    }
+
+    // **A fill blends what it covers as the rows are walked**, rather than recording the coverage
+    // in the mask and reading it back. A frame-wide shape pays a mask the size of its box twice -
+    // once written and once read - and those two passes are most of what a mountain costs.
+    //
+    // Only the brushes whose colour is settled before the walk take it: a solid colour, and a
+    // linear gradient whose axis runs straight down. A clip, a radial gradient or a glow needs the
+    // mask, and says so by answering false.
+    bool RasterBuffers::fillPath(const PixelView& target, const Brush& brush,
+        const Matrix3x2* brushTransform, const FillRule rule, const FloatRect& bounds)
+    {
+        if (hasActiveClip)
+        {
+            return false;
+        }
+
+        SimdEnv env;
+        const int startX = static_cast<int>(std::floor(bounds.left));
+        const int startY = static_cast<int>(std::floor(bounds.top));
+
+        return std::visit([&](const auto& brushArg) -> bool {
+            using T = std::decay_t<decltype(brushArg)>;
+
+            if constexpr (std::is_same_v<T, SolidColor>)
+            {
+                if (brushArg.color.alpha == 0)
+                {
+                    return true;
+                }
+
+                const __m256i vColour = _mm256_set1_epi32(
+                    static_cast<int>(brushArg.color.fullyOpaque().asUint()));
+                const __m256 vBaseAlpha = _mm256_set1_ps(brushArg.color.alpha / 255.0f);
+                Color* row = nullptr;
+                int cachedRow = -1;
+                walkFill(bounds, 0.0f, rule,
+                    [&](const int rowIndex, const int xOffset, const int remaining,
+                        const __m256 coverage) {
+                        if (rowIndex != cachedRow)
+                        {
+                            cachedRow = rowIndex;
+                            row = target.scanLineAbs(static_cast<float>(startX),
+                                static_cast<float>(startY + rowIndex));
+                        }
+
+                        const __m256i vAlphaI = _mm256_cvtps_epi32(
+                            _mm256_mul_ps(_mm256_mul_ps(coverage, vBaseAlpha), env.v256));
+                        blendAndStoreBlock(row + xOffset, env.loadMask(remaining), vColour,
+                            vAlphaI, env);
+                    });
+                return true;
+            }
+            else if constexpr (std::is_same_v<T, LinearGradient>)
+            {
+                const FloatPoint startPoint = brushTransform
+                    ? brushTransform->transform(brushArg.startPoint)
+                    : brushArg.startPoint;
+                const FloatPoint endPoint = brushTransform
+                    ? brushTransform->transform(brushArg.endPoint)
+                    : brushArg.endPoint;
+                const FloatPoint axis = {
+                    endPoint.x - startPoint.x,
+                    endPoint.y - startPoint.y,
+                };
+                if (axis.x != 0.0f)
+                {
+                    return false;
+                }
+
+                const float lenSq = axis.x * axis.x + axis.y * axis.y;
+                const float invLenSq = (lenSq > 1e-6f) ? (1.0f / lenSq) : 0.0f;
+                ColorAsUint ramp[k_gradientRampLast + 1];
+                buildGradientRamp(brushArg.stops, ramp);
+
+                // The row's stop is compositeRampRows' own arithmetic: the general path's three
+                // products where the pixel's x cancels, then the clamp, the 256 step and the round.
+                const __m256 vStartY = _mm256_set1_ps(startPoint.y);
+                const __m256 vDy = _mm256_set1_ps(axis.y);
+                const __m256 vInvLenSq = _mm256_set1_ps(invLenSq);
+                const __m256 vAlphaNorm = _mm256_set1_ps(256.0f / 255.0f);
+                constexpr std::uint32_t k_opaqueAlpha{ 0xFF000000u };
+
+                Color* row = nullptr;
+                int cachedRow = -1;
+                __m256i vColour = _mm256_setzero_si256();
+                __m256 vColourAlpha = env.vZero;
+                walkFill(bounds, 0.0f, rule,
+                    [&](const int rowIndex, const int xOffset, const int remaining,
+                        const __m256 coverage) {
+                        if (rowIndex != cachedRow)
+                        {
+                            cachedRow = rowIndex;
+                            const float py = static_cast<float>(startY + rowIndex) + 0.5f;
+                            const __m256 vRy = _mm256_sub_ps(_mm256_set1_ps(py), vStartY);
+                            const float position = _mm256_cvtss_f32(
+                                _mm256_mul_ps(_mm256_mul_ps(vRy, vDy), vInvLenSq));
+                            const __m256 vT = _mm256_min_ps(env.vOne,
+                                _mm256_max_ps(env.vZero, _mm256_set1_ps(position)));
+                            const __m256i vTI = _mm256_min_epi32(
+                                _mm256_set1_epi32(k_gradientRampLast),
+                                _mm256_max_epi32(env.vZeroi,
+                                    _mm256_cvtps_epi32(_mm256_mul_ps(vT, env.v256))));
+                            const ColorAsUint colour =
+                                ramp[_mm_cvtsi128_si32(_mm256_castsi256_si128(vTI))];
+                            vColour = _mm256_set1_epi32(
+                                static_cast<int>(colour | k_opaqueAlpha));
+                            vColourAlpha = _mm256_set1_ps(static_cast<float>(colour >> 24));
+                            row = target.scanLineAbs(static_cast<float>(startX),
+                                static_cast<float>(startY + rowIndex));
+                        }
+
+                        const __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vColourAlpha,
+                            _mm256_mul_ps(vAlphaNorm, coverage)));
+                        blendAndStoreBlock(row + xOffset, env.loadMask(remaining), vColour,
+                            vAlphaI, env);
+                    });
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }, brush);
     }

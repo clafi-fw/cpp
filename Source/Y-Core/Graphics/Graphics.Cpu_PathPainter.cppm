@@ -412,13 +412,21 @@ namespace ClaFi::Graphics::Cpu
 
         for (const auto& layer : layers)
         {
+            // A fill whose colour is settled before its rows are walked blends as it goes, and
+            // never builds the mask; the composite below is then passed over.
+            bool drawn = false;
             if (layer.geometry.mode == PathRenderMode::Fill)
             {
-                // Fills completely overwrite the mask. Bypasses standard clearing entirely!
-                m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
                 prepareEdges(m_rasterBuffers.m_worldPoints, true);
                 m_rasterBuffers.prepareEdgeBuckets(bounds, maxPadding);
-                m_rasterBuffers.rasterizeFill(bounds, 0.0f, path.fillRule());
+                drawn = m_rasterBuffers.fillPath(effectSurface, layer.brush, transform,
+                    path.fillRule(), bounds);
+                if (!drawn)
+                {
+                    // Fills completely overwrite the mask. Bypasses standard clearing entirely!
+                    m_rasterBuffers.prepareForEffect(bWidth, bHeight, false);
+                    m_rasterBuffers.rasterizeFill(bounds, 0.0f, path.fillRule());
+                }
             }
             else if (layer.geometry.mode == PathRenderMode::Stroke)
             {
@@ -455,7 +463,10 @@ namespace ClaFi::Graphics::Cpu
 
             // The glow's spread follows this painter's own scale factor rather than the
             // transform's, which is why it is passed separately.
-            m_rasterBuffers.composite(effectSurface, layer.brush, transform, scaleFactor);
+            if (!drawn)
+            {
+                m_rasterBuffers.composite(effectSurface, layer.brush, transform, scaleFactor);
+            }
         }
     }
 
