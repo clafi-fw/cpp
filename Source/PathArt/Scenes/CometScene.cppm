@@ -34,30 +34,50 @@ namespace ClaFi::PathArt
             float afterglow;
         };
         // A band of the fog's clouds: where it lies, which latitude of the map its clouds are read
-        // along, and how much of the fog's colour it takes. See PathArt#cloudkind
+        // along, how much of the map its strip spans, and how slowly it goes round. See
+        // PathArt#cloudkind
         struct FogBand
         {
             float topShare; // where the band starts and ends down the frame
             float bottomShare;
             float latitude; // the map's latitude its clouds are read along
             float longitude; // where along that latitude its strip starts
+            float span; // radians of the map's longitude across the frame
             float strength; // the fog's opacity where it is densest
+            float laps; // how many times the map's longitude passes in a period
+            float period; // the cycles a whole passage takes
         };
-        // The fog's two bands: one in the valley behind the near range, one nearest, drawn over the
-        // lake and its trees, each reading its own strip of the clouds.
+        // The fog's three bands, farthest first: each stretched wider than the one before, fainter,
+        // and going round faster as it comes nearer.
+        static constexpr FogBand k_farFog{
+            .topShare = 0.350f,
+            .bottomShare = 0.590f,
+            .latitude = 0.30f,
+            .longitude = 0.5f,
+            .span = 0.30f,
+            .strength = 0.034f,
+            .laps = 1.0f,
+            .period = 88.0f
+        };
         static constexpr FogBand k_valleyFog{
-            .topShare = 0.400f,
-            .bottomShare = 0.640f,
-            .latitude = 0.0f,
-            .longitude = 0.0f,
-            .strength = 0.55f
+            .topShare = 0.410f,
+            .bottomShare = 0.665f,
+            .latitude = 0.08f,
+            .longitude = 1.6f,
+            .span = 0.375f,
+            .strength = 0.056f,
+            .laps = 1.0f,
+            .period = 60.0f
         };
         static constexpr FogBand k_nearFog{
-            .topShare = 0.545f,
-            .bottomShare = 0.840f,
-            .latitude = 0.13f,
-            .longitude = 0.8f,
-            .strength = 0.45f
+            .topShare = 0.548f,
+            .bottomShare = 0.845f,
+            .latitude = 0.16f,
+            .longitude = 2.4f,
+            .span = 0.45f,
+            .strength = 0.056f,
+            .laps = 1.0f,
+            .period = 40.0f
         };
     private:
         [[nodiscard]] static float farRidgeY(const SceneFrame&, float x);
@@ -66,13 +86,13 @@ namespace ClaFi::PathArt
         // The frame turned over about the lake's edge, as the lake shows what is above it.
         [[nodiscard]] static SceneFrame reflectionOf(const SceneFrame&);
         // Everything above the lake, which the lake shows again upside down.
-        void drawAboveLake(const SceneFrame& upright, float cycleTime, bool reflection) const;
+        void drawAboveLake(const SceneFrame& upright, SceneTime, bool reflection) const;
         // Starts the fog's cloud map building, and takes it once it is built.
         void takeFogMap();
         // One of the fog's bands, cut from a strip of the Earth's clouds into `pixels`.
-        void drawFogBand(const SceneFrame&, float cycleTime, const Pass&, const FogBand&,
+        void drawFogBand(const SceneFrame&, SceneTime, const Pass&, const FogBand&,
             Graphics::Bitmap& pixels) const;
-        void drawLake(const SceneFrame&, float cycleTime);
+        void drawLake(const SceneFrame&, SceneTime);
         // The comet's light on the water: the Mill's sun path, over the lake's own sparkles.
         static void drawGlitterPath(const SceneFrame&, const Pass&, const Ripples&, float cycleTime);
         static void drawSky(const SceneFrame&);
@@ -99,6 +119,7 @@ namespace ClaFi::PathArt
         // Built off the paint from the first frames drawn on, and kept. See PathArt#earthscene
         std::unique_ptr<CloudMap> m_fogMap{};
         // The fog's bands, kept from frame to frame so a frame of the same size allocates nothing.
+        mutable Graphics::Bitmap m_farFogPixels{};
         mutable Graphics::Bitmap m_valleyFogPixels{};
         mutable Graphics::Bitmap m_nearFogPixels{};
     };

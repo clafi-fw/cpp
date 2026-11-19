@@ -116,7 +116,6 @@ namespace ClaFi::PathArt
         // band's pixels read between. See PathArt#cloudkind
         constexpr int k_fogColumns{ 160 };
         constexpr int k_fogRows{ 40 };
-        constexpr float k_fogLongitudeSpan{ 2.2f }; // radians of the map across the frame
         constexpr float k_fogLatitudeSpan{ 0.55f }; // radians down a band
         // The clouds the fog is cut from: the Earth's heaps, seeded once.
         constexpr CloudKind k_fogKind{ CloudKind::Puffy };
@@ -157,11 +156,15 @@ namespace ClaFi::PathArt
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
         takeFogMap();
         drawSky(frame);
-        drawAboveLake(frame, time.cycleTime, false);
-        drawLake(frame, time.cycleTime);
+        drawAboveLake(frame, time, false);
+        drawLake(frame, time);
+        // A constant fog lies over the same ground, in the Mill's river fog geometry: one wide, flat
+        // glow that never drifts, with the bands laid over it.
+        const float hazeSpread = frame.height * 0.2475f;
+        drawGlow(frame, { frame.width * 0.6f, frame.height * 0.66f }, hazeSpread,
+            CometSceneColors::FogTop.withOpacity(0.18f), hazeSpread / (frame.width * 0.6f));
         // The nearest fog lies over the lake and its trees, so it goes on the last layer of all.
-        drawFogBand(frame, time.cycleTime, passAt(frame, time.cycleTime), k_nearFog,
-            m_nearFogPixels);
+        drawFogBand(frame, time, passAt(frame, time.cycleTime), k_nearFog, m_nearFogPixels);
     }
 
     void CometScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
@@ -255,7 +258,7 @@ namespace ClaFi::PathArt
     // **The fog is a band of the Earth's clouds laid over the ranges**: a strip of a cloud map,
     // read as a texture whose cover is the fog's opacity, so the clouds' own bills and gaps show
     // over the ridges. Nothing is lifted out as a shape.
-    void CometScene::drawFogBand(const SceneFrame& frame, const float cycleTime,
+    void CometScene::drawFogBand(const SceneFrame& frame, const SceneTime time,
         const Pass& pass, const FogBand& band, Graphics::Bitmap& pixels) const
     {
         if (!m_fogMap)
@@ -275,8 +278,11 @@ namespace ClaFi::PathArt
             std::fill_n(pixels.data(), static_cast<std::size_t>(size.x)
                 * static_cast<std::size_t>(size.y), Color{});
         }
-        // A slow sway over the map keeps the band from standing like a painted plate.
-        const float drift = 0.02f * std::sin(cycleTime * k_2Pi);
+        // Each band turns the map once in its own number of cycles, a whole turn, so its loop meets
+        // itself and the fog never jumps; a longer period is a slower band.
+        const float turn = fractionalPart((static_cast<float>(time.cyclesPassed) + time.cycleTime)
+            / band.period);
+        const float drift = k_2Pi * band.laps * turn;
         // The map's cover on a grid over the band, which its pixels read between.
         const std::size_t gridNum = static_cast<std::size_t>(k_fogColumns)
             * static_cast<std::size_t>(k_fogRows);
@@ -284,14 +290,14 @@ namespace ClaFi::PathArt
         std::vector<float> latitudes(gridNum);
         std::vector<float> covers(gridNum);
         std::vector<float> longitudeSpans(gridNum,
-            k_fogLongitudeSpan / static_cast<float>(k_fogColumns));
+            band.span / static_cast<float>(k_fogColumns));
         std::vector<float> latitudeSpans(gridNum,
             k_fogLatitudeSpan / static_cast<float>(k_fogRows));
         for (int column = 0; column != k_fogColumns; ++column)
         {
             const float longitude = band.longitude + drift
                 + (static_cast<float>(column) + 0.5f) / static_cast<float>(k_fogColumns)
-                * k_fogLongitudeSpan;
+                * band.span;
             for (int row = 0; row != k_fogRows; ++row)
             {
                 const std::size_t point = static_cast<std::size_t>(column)
@@ -394,18 +400,21 @@ namespace ClaFi::PathArt
                     lower[column] = color;
             }
         });
-        // Lay it over the canvas where the band stands, outside the frame's transform.
+        // Lay it over the canvas where the band stands, outside the frame's transform, its rows
+        // striped over the cores. See Graphics#pixelview
         const Matrix3x2 canvasTransform = frame.canvas.transform();
         frame.canvas.resetTransform();
-        frame.canvas.drawBitmap(pixels, at, 1.0f);
+        const PixelView bandView = pixels.pixelView(at);
+        frame.canvas.drawPixelViews(std::span<const PixelView>{ &bandView, 1 });
         frame.canvas.setTransform(canvasTransform);
     }
 
     // The ridges are kept as layers drawn through the upright frame, the reflection's included:
     // a layer fits a frame moved by whole pixels from the one it was kept for, not one turned over.
-    void CometScene::drawAboveLake(const SceneFrame& upright, const float cycleTime,
+    void CometScene::drawAboveLake(const SceneFrame& upright, const SceneTime time,
         const bool reflection) const
     {
+        const float cycleTime = time.cycleTime;
         const SceneFrame frame = reflection ? reflectionOf(upright) : upright;
         const float unit = frame.unit;
         const float width = frame.width;
@@ -433,6 +442,9 @@ namespace ClaFi::PathArt
             .color = CometSceneColors::ShootingStar
         });
         (reflection ? m_mirroredFarRidge : m_farRidge).draw(upright);
+        // The farthest fog lies over the far range, the comet's light falling on it after.
+        if (!reflection)
+            drawFogBand(frame, time, pass, k_farFog, m_farFogPixels);
 
         // The comet lights the mountains beneath it: a cold pool on the far range's face with a lit
         // crest above it, travelling with the head and giving way to the landing's warm glow.
@@ -494,7 +506,7 @@ namespace ClaFi::PathArt
 
         // The fog lies in the valley, behind the near range, whose crest stands in front of it.
         if (!reflection)
-            drawFogBand(frame, cycleTime, pass, k_valleyFog, m_valleyFogPixels);
+            drawFogBand(frame, time, pass, k_valleyFog, m_valleyFogPixels);
         (reflection ? m_mirroredNearRidge : m_nearRidge).draw(upright);
         if (pass.afterglow > 0.0f)
         {
@@ -545,8 +557,9 @@ namespace ClaFi::PathArt
 
     // The lake shows everything above it upside down and dimmed, with ripples running across.
     // Nothing in the mirror is kept still: the stars twinkle in front of the far ridge.
-    void CometScene::drawLake(const SceneFrame& frame, const float cycleTime)
+    void CometScene::drawLake(const SceneFrame& frame, const SceneTime time)
     {
+        const float cycleTime = time.cycleTime;
         const float width = frame.width;
         const float height = frame.height;
         const float lakeY = height * k_lakeShare;
@@ -567,7 +580,7 @@ namespace ClaFi::PathArt
         };
         // The pines stand nearest, so their reflection is laid in last.
         m_reflection.draw(frame, lakeOutline, {}, [&](const SceneFrame& mirror) {
-            drawAboveLake(mirror, cycleTime, true);
+            drawAboveLake(mirror, time, true);
             m_mirroredShore.draw(mirror);
         }, mirrorRipples);
         m_lakeShade.draw(frame);
