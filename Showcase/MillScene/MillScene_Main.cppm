@@ -282,6 +282,9 @@ namespace MillScene_App
 
         // The ways in and out of full screen, the bars following; answers the full-screen toggle.
         [[nodiscard]] Action& connectFullscreen();
+        // The two backends as radio lines of the scene's menu, with what each says of the text it
+        // draws. See showSceneMenu
+        void addBackendLines(Menu& list);
         // Shows the title bar and the strip under the scene in a window, and neither fullscreen.
         void followFullscreen();
         // The list of the Scene line on the scene's context menu: a scene picker.
@@ -367,20 +370,28 @@ namespace MillScene_App
         StackPanel& m_infoBar{ m_scenePanel.createRightBar<StackPanel>(
             Orientation::Vertical
             ) };
+        // **The readings and the chart are one block, and the block holds the tooltip.** The bar
+        // around them is as tall as the panel, so a tooltip anchored to it would open at the
+        // frame's foot instead of under what it explains.
+        StackPanel& m_readoutBlock{ m_infoBar.add<StackPanel>(
+            Orientation::Vertical,
+            Events{
+                [this](AdjustTooltipEvent& event) {
+                    writeMetricsTooltip(event);
+                }
+            }
+        ) };
         using MetricsReadout = WithTextLayout<Label>;
-        MetricsReadout& m_metricsReadout{ m_infoBar.add<MetricsReadout>(
+        MetricsReadout& m_metricsReadout{ m_readoutBlock.add<MetricsReadout>(
             // **The width is stated**, and it is the chart's. The reading is rewritten every frame,
             // so a readout sized by its own words asks the bar for a new width every time a number
             // gains a digit - and an align pass per frame is paid by the whole form.
             MinSize{Diagnostic::k_fpsChartWidth, 0.0f },
             MaxSize{Diagnostic::k_fpsChartWidth, k_maxFloat },
-            WordWrap::No,
-            OnEvent{ [this](AdjustTooltipEvent& event) {
-                writeMetricsTooltip(event);
-            } }
+            WordWrap::No
         ) };
 
-        Diagnostic::FpsChart& m_fpsChart{ m_infoBar.add<Diagnostic::FpsChart>(m_benchmark) };
+        Diagnostic::FpsChart& m_fpsChart{ m_readoutBlock.add<Diagnostic::FpsChart>(m_benchmark) };
 
         // To move the scene away from the bottom edge, so the window rounded corners remain intact.
         // RichControl rather than Spacer, because Spacer doesn't have color
@@ -1514,6 +1525,47 @@ void MillSceneForm::followFullscreen()
     m_bottomSpacer.setVisible(inWindow);
 }
 
+// **The two backends as radio lines**, each saying what it draws and what that does to text. The
+// answer is written to the same node the Settings page writes, so the two ways of saying it are
+// one, and a window already open moves over on the next paint - see AppContext::stateBackend.
+void MillSceneForm::addBackendLines(Menu& list)
+{
+    const auto addLine = [this, &list](const std::wstring_view caption, const bool useGpu) {
+        list.add(
+            Text{ caption },
+            // The line wears a radio mark, as the Settings page's choice does.
+            IndicatorVisibility::Always,
+            IndicatorStyle::Radio,
+            ShowSelectionOnSurface::Yes,
+            Events{
+                [this, useGpu](GetStateEvent& event) {
+                    event.state.selected = appContext().usingGpu() == useGpu;
+                },
+                [this, useGpu](ClickEvent&) {
+                    appContext().gpuAcceleration()->set(useGpu);
+                },
+                [useGpu](AdjustTooltipEvent& event) {
+                    if (useGpu)
+                    {
+                        event.text << L"The windows are drawn through the graphics card."
+                            << k_endLine;
+                        event.text << L"Text is antialiased in subpixel color, which sharpens "
+                            L"its edges and can fringe them with color over a colored ground.";
+                    }
+                    else
+                    {
+                        event.text << L"The windows are drawn on the CPU." << k_endLine;
+                        event.text << L"Text is antialiased in grayscale, so its edges take no "
+                            L"color, and read a little softer than the card's.";
+                    }
+                }
+            }
+        );
+    };
+    addLine(L"Graphics card", true);
+    addLine(L"CPU", false);
+}
+
 // **A click picks and closes the menus**, as a command run from a line of theirs does.
 void MillSceneForm::buildSceneList(Menu& list)
 {
@@ -1565,6 +1617,16 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
             OnEvent{ [this](DrawIconEvent& iconEvent) {
                 drawThemeIcon(iconEvent, m_pickedTheme);
             } }
+        );
+    }
+    // The same switch the Settings page offers, for a window already open.
+    if (appContext().gpuAvailable())
+    {
+        menu.addGroup(
+            [this](Menu& list) {
+                addBackendLines(list);
+            },
+            Text{ L"Backend" }
         );
     }
     menu.addSeparator();

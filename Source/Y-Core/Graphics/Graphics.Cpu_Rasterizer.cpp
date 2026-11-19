@@ -684,7 +684,7 @@ namespace ClaFi::Graphics::Cpu
     // in the mask and reading it back. A frame-wide shape pays a mask the size of its box twice -
     // once written and once read - and those two passes are most of what a mountain costs.
     //
-    // Only the brushes whose colour is settled before the walk take it: a solid colour, and a
+    // Only the brushes whose color is settled before the walk take it: a solid color, and a
     // linear gradient whose axis runs straight down. A clip, a radial gradient or a glow needs the
     // mask, and says so by answering false.
     bool RasterBuffers::fillPath(const PixelView& target, const Brush& brush,
@@ -709,7 +709,7 @@ namespace ClaFi::Graphics::Cpu
                     return true;
                 }
 
-                const __m256i vColour = _mm256_set1_epi32(
+                const __m256i vColor = _mm256_set1_epi32(
                     static_cast<int>(brushArg.color.fullyOpaque().asUint()));
                 const __m256 vBaseAlpha = _mm256_set1_ps(brushArg.color.alpha / 255.0f);
                 Color* row = nullptr;
@@ -726,7 +726,7 @@ namespace ClaFi::Graphics::Cpu
 
                         const __m256i vAlphaI = _mm256_cvtps_epi32(
                             _mm256_mul_ps(_mm256_mul_ps(coverage, vBaseAlpha), env.v256));
-                        blendAndStoreBlock(row + xOffset, env.loadMask(remaining), vColour,
+                        blendAndStoreBlock(row + xOffset, env.loadMask(remaining), vColor,
                             vAlphaI, env);
                     });
                 return true;
@@ -763,8 +763,8 @@ namespace ClaFi::Graphics::Cpu
 
                 Color* row = nullptr;
                 int cachedRow = -1;
-                __m256i vColour = _mm256_setzero_si256();
-                __m256 vColourAlpha = env.vZero;
+                __m256i vColor = _mm256_setzero_si256();
+                __m256 vColorAlpha = env.vZero;
                 walkFill(bounds, 0.0f, rule,
                     [&](const int rowIndex, const int xOffset, const int remaining,
                         const __m256 coverage) {
@@ -781,18 +781,18 @@ namespace ClaFi::Graphics::Cpu
                                 _mm256_set1_epi32(k_gradientRampLast),
                                 _mm256_max_epi32(env.vZeroi,
                                     _mm256_cvtps_epi32(_mm256_mul_ps(vT, env.v256))));
-                            const ColorAsUint colour =
+                            const ColorAsUint color =
                                 ramp[_mm_cvtsi128_si32(_mm256_castsi256_si128(vTI))];
-                            vColour = _mm256_set1_epi32(
-                                static_cast<int>(colour | k_opaqueAlpha));
-                            vColourAlpha = _mm256_set1_ps(static_cast<float>(colour >> 24));
+                            vColor = _mm256_set1_epi32(
+                                static_cast<int>(color | k_opaqueAlpha));
+                            vColorAlpha = _mm256_set1_ps(static_cast<float>(color >> 24));
                             row = target.scanLineAbs(static_cast<float>(startX),
                                 static_cast<float>(startY + rowIndex));
                         }
 
-                        const __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vColourAlpha,
+                        const __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vColorAlpha,
                             _mm256_mul_ps(vAlphaNorm, coverage)));
-                        blendAndStoreBlock(row + xOffset, env.loadMask(remaining), vColour,
+                        blendAndStoreBlock(row + xOffset, env.loadMask(remaining), vColor,
                             vAlphaI, env);
                     });
                 return true;
@@ -1066,15 +1066,15 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
-    // **A gradient whose colour is one a row is resolved a row at a time.** Its position along the
+    // **A gradient whose color is one a row is resolved a row at a time.** Its position along the
     // axis is the row's alone - a sky, a field, a wall shaded from top to bottom - so the ramp is
-    // read once a scanline and the pixel loop carries a colour in a register. The general loop pays
+    // read once a scanline and the pixel loop carries a color in a register. The general loop pays
     // three multiplications, a conversion and a gather for every eight pixels, and on a frame-wide
     // background that gather is the whole cost of the fill.
     //
     // The row's position and the step it lands on are the ones compositeRamp computes for a pixel:
     // the same clamp to 0..1 and the same round to the ramp's 1/256th, so a gradient drawn through
-    // either path is the same colour.
+    // either path is the same color.
     template<typename RowPosition>
     void RasterBuffers::compositeRampRows(const PixelView& target, std::span<const GradientStop> stops,
         const RowPosition& rowPosition, const float* maskBase, int maskStride)
@@ -1143,7 +1143,7 @@ namespace ClaFi::Graphics::Cpu
             const __m256i vTI = _mm256_min_epi32(_mm256_set1_epi32(k_gradientRampLast),
                 _mm256_max_epi32(env.vZeroi,
                     _mm256_cvtps_epi32(_mm256_mul_ps(vT, env.v256))));
-            const ColorAsUint colour = ramp[_mm_cvtsi128_si32(_mm256_castsi256_si128(vTI))];
+            const ColorAsUint color = ramp[_mm_cvtsi128_si32(_mm256_castsi256_si128(vTI))];
 
             Color* pixelRow = target.scanLineAbs(static_cast<float>(rowLeft),
                 static_cast<float>(y));
@@ -1161,30 +1161,30 @@ namespace ClaFi::Graphics::Cpu
                 }
             }
 
-            // A row neither the mask nor the clip reaches, in a colour already opaque, is the
-            // colour written whole: no destination pixel is read and no blend is done.
-            if (!maskRow && !clipRow && (colour >> 24) == 0xFF)
+            // A row neither the mask nor the clip reaches, in a color already opaque, is the
+            // color written whole: no destination pixel is read and no blend is done.
+            if (!maskRow && !clipRow && (color >> 24) == 0xFF)
             {
                 if (rowWidth >= k_streamingRowPixels)
                 {
-                    streamFillPixels(pixelRow, rowWidth, colour);
+                    streamFillPixels(pixelRow, rowWidth, color);
                     streamed = true;
                 }
                 else
                 {
                     PixelView::fillPixelLine(pixelRow, static_cast<std::size_t>(rowWidth),
-                        Color{ colour });
+                        Color{ color });
                 }
                 continue;
             }
 
-            // **The colour the row mixes toward is opaque whatever the ramp states**, as
+            // **The color the row mixes toward is opaque whatever the ramp states**, as
             // compositeRamp draws it: a gradient's alpha is the strength it mixes at, not a
             // translucency it leaves in the frame.
             constexpr std::uint32_t k_opaqueAlpha{ 0xFF000000u };
-            const __m256i vColour = _mm256_set1_epi32(
-                static_cast<int>(colour | k_opaqueAlpha));
-            const __m256 vColourAlpha = _mm256_set1_ps(static_cast<float>(colour >> 24));
+            const __m256i vColor = _mm256_set1_epi32(
+                static_cast<int>(color | k_opaqueAlpha));
+            const __m256 vColorAlpha = _mm256_set1_ps(static_cast<float>(color >> 24));
 
             for (int xOffset = 0; xOffset < rowWidth; xOffset += 8)
             {
@@ -1204,13 +1204,13 @@ namespace ClaFi::Graphics::Cpu
                     vCoverage = env.vZero;
                 }
 
-                const __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vColourAlpha,
+                const __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vColorAlpha,
                     _mm256_mul_ps(vAlphaNorm, vCoverage)));
 
-                // **Blended, never stored whole.** blendAndStoreBlock's fast path writes a colour
+                // **Blended, never stored whole.** blendAndStoreBlock's fast path writes a color
                 // at 255 as it stands, and compositeRamp blends that one by its weight like any
                 // other, so the fast path is not asked for and the two agree to the bit.
-                blendAndStoreBlock(pixelRow, vLoadMask, vColour, vAlphaI, env);
+                blendAndStoreBlock(pixelRow, vLoadMask, vColor, vAlphaI, env);
 
                 pixelRow += 8;
                 if (maskRow)
@@ -1237,7 +1237,7 @@ namespace ClaFi::Graphics::Cpu
         float lenSq = axis.x * axis.x + axis.y * axis.y;
         float invLenSq = (lenSq > 1e-6f) ? (1.0f / lenSq) : 0.0f;
 
-        // **An axis running straight down is the shape a background takes**, and its colour is the
+        // **An axis running straight down is the shape a background takes**, and its color is the
         // row's alone: it goes to the row path. A brush turned by a transform states the same
         // thing through its mapped endpoints. The position is the general path's own three
         // products, taken where the pixel's x cancels, so both put a row on the same stop.

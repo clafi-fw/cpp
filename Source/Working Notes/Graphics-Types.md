@@ -136,14 +136,14 @@ computes a pixel's place along the axis, clamps it, scales it by 256 and gathers
 every eight pixels. On a background - a sky, a field, a wall shaded from top to bottom - that
 place is the row's alone, so the three products, the conversion and the gather were paid for an
 answer that did not change along the row. compositeRampRows clamps and steps once a scanline and
-carries the colour in a register. A row neither the mask nor the clip reaches, in a colour already
+carries the color in a register. A row neither the mask nor the clip reaches, in a color already
 opaque, is written whole, with no destination read at all.
 
 The two paths agree to the bit. The row's position is the general path's own instructions: with
 the axis's x zero, `(vRx * vDx + vRy * vDy) * vInvLenSq` is `((py - startY) * axis.y) *
-invLenSq`, and the clamp, the 256 step and the round are its own intrinsics. The colour a row
-mixes toward is opaque whatever the ramp states - the colour compositeRamp blends toward - and the
-fast path that stores a colour at 255 whole is not asked for, because compositeRamp blends that
+invLenSq`, and the clamp, the 256 step and the round are its own intrinsics. The color a row
+mixes toward is opaque whatever the ramp states - the color compositeRamp blends toward - and the
+fast path that stores a color at 255 whole is not asked for, because compositeRamp blends that
 one by its weight.
 
 Chase at 3840 x 1984 on the Linux CPU backend, a Release clang build: draw fell from 41.5 to 25.2
@@ -175,7 +175,7 @@ destination written, and the first two were most of what they cost. fillPath han
 coverage to a sink instead: walkFill states what a pixel is covered by once, rasterizeFill's sink
 stores it and fillPath's blends it as it arrives. The mask is never allocated, written or read.
 
-Only a brush whose colour is settled before the walk takes it - a solid colour, and a linear
+Only a brush whose color is settled before the walk takes it - a solid color, and a linear
 gradient whose axis runs straight down, resolved once a row as compositeRampRows does - and only
 with no path clip, no radial gradient and no glow. Anything else answers false and the painter
 takes the mask route, which is the one decision PixelPathPainter::drawPath makes.

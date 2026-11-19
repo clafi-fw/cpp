@@ -26,10 +26,10 @@ namespace ClaFi::Graphics::Cpu
             ++written;
         }
 
-        const __m256i colour = _mm256_set1_epi32(static_cast<int>(value));
+        const __m256i color = _mm256_set1_epi32(static_cast<int>(value));
         for (; written + 8 <= count; written += 8)
         {
-            _mm256_stream_si256(reinterpret_cast<__m256i*>(pixels + written), colour);
+            _mm256_stream_si256(reinterpret_cast<__m256i*>(pixels + written), color);
         }
 
         for (; written < count; ++written)

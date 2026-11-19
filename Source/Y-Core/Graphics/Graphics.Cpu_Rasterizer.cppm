@@ -96,7 +96,7 @@ namespace ClaFi::Graphics::Cpu
             const float* maskBase,
             int maskStride
         );
-        // The same ramp where the colour is one a row, rowPosition(py) placing the row on it.
+        // The same ramp where the color is one a row, rowPosition(py) placing the row on it.
         template<typename RowPosition>
         static void compositeRampRows(
             const PixelView& target,

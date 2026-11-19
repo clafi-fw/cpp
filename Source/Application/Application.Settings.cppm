@@ -10,6 +10,7 @@ import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Stack;
@@ -116,7 +117,9 @@ namespace ClaFi
         // Held whole: all of it goes where the application named no GPU backend.
         AppMenuPage::Section& m_performanceSection;
         StackPanel& m_performanceGroup;
-        CheckBox& m_gpuAcceleration;
+        // The two backends a window may be drawn through, one of them picked. See Application
+        RadioButton& m_gpuBackend;
+        RadioButton& m_cpuBackend;
         // The foot of the page, outside the box: the answer here is about the page as a whole,
         // so it stands where it can be seen rather than travelling with the options.
         StackPanel& m_footer;

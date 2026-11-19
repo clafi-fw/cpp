@@ -19,6 +19,7 @@ import ClaFi.Controls.CheckBox;
 import ClaFi.Controls.Expander;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Panel;
+import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Slider;
 import ClaFi.Controls.Stack;
@@ -440,10 +441,14 @@ namespace ClaFi
             TooltipText{ L"Ring the focused control under the mouse too" },
             Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
         ) },
-        m_performanceSection{ m_options.addSection(L"Performance / Display") },
+        m_performanceSection{ m_options.addSection(L"Performance") },
         m_performanceGroup{ m_performanceSection.body() },
-        m_gpuAcceleration{ m_performanceGroup.add<CheckBox>(
-            L"GPU acceleration",
+        m_gpuBackend{ m_performanceGroup.add<RadioButton>(
+            L"Graphics card",
+            Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
+        ) },
+        m_cpuBackend{ m_performanceGroup.add<RadioButton>(
+            L"CPU",
             Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
         ) },
         m_footer{ createBottomBar<StackPanel>(
@@ -519,21 +524,36 @@ namespace ClaFi
         // **The answer is written, not acted on here.** The node carries it to the context, which
         // states the backend and tells every window - see AppContext::stateBackend - the same
         // path a colour mode travels.
-        m_gpuAcceleration.onGetState([this](GetStateEvent& event) {
+        m_gpuBackend.onGetState([this](GetStateEvent& event) {
             event.state.selected = appContext().usingGpu();
         });
-        m_gpuAcceleration.onClick([this](ClickEvent&) {
-            appContext().gpuAcceleration()->set(!appContext().usingGpu());
-            m_gpuAcceleration.invalidateState();
+        m_gpuBackend.onClick([this](ClickEvent&) {
+            appContext().gpuAcceleration()->set(true);
+            m_gpuBackend.invalidateState();
+            m_cpuBackend.invalidateState();
         });
-        m_gpuAcceleration.onAdjustTooltip([](AdjustTooltipEvent& event) {
-            event.text << BoldText{ L"On" } << TabTo{ 26.0f };
-            event.text << L" The windows are drawn through the graphics card" << k_endLine;
-            event.text << BoldText{ L"Off" } << TabTo{ 26.0f };
-            event.text << L" They are drawn on the CPU instead";
+        m_cpuBackend.onGetState([this](GetStateEvent& event) {
+            event.state.selected = !appContext().usingGpu();
         });
-        // **The section goes, not the check**: an application that named no GPU backend has
-        // nothing to turn on, and the section is what draws the caption and its line.
+        m_cpuBackend.onClick([this](ClickEvent&) {
+            appContext().gpuAcceleration()->set(false);
+            m_gpuBackend.invalidateState();
+            m_cpuBackend.invalidateState();
+        });
+        // **The two draw text differently**, and the choice is visible in it: the card antialiases
+        // a glyph's edge across the color of the pixel, the CPU across its brightness alone.
+        m_gpuBackend.onAdjustTooltip([](AdjustTooltipEvent& event) {
+            event.text << L"The windows are drawn through the graphics card." << k_endLine;
+            event.text << L"Text is antialiased in subpixel color, which sharpens its edges and "
+                L"can fringe them with color over a colored ground.";
+        });
+        m_cpuBackend.onAdjustTooltip([](AdjustTooltipEvent& event) {
+            event.text << L"The windows are drawn on the CPU." << k_endLine;
+            event.text << L"Text is antialiased in grayscale, so its edges take no color, and "
+                L"read a little softer than the card's.";
+        });
+        // **The section goes, not a choice disabled in it**: an application that named no GPU
+        // backend has one way to draw, and the section is what draws the caption and its line.
         if (!appContext().gpuAvailable())
             m_performanceSection.setVisible(false);
 
