@@ -35,7 +35,12 @@ namespace ClaFi::PathArt
         const float unit = frame.unit;
         const float passTime = pose.passTime;
         const float fallShare = pose.fallShare;
-        const float tailFade = 1.0f - smoothStep(fallShare, fallShare + 0.08f, passTime);
+        // After the landing the tail dims on a straight ramp across the afterglow, finishing just
+        // before the pass ends. A straight ramp keeps every step the same size - no curve piling the
+        // last of the brightness into the final frames - so the tail never reads as switched off.
+        const float tailFade = passTime < fallShare
+            ? 1.0f
+            : std::clamp(1.0f - (passTime - fallShare) / (0.97f - fallShare), 0.0f, 1.0f);
         if (tailFade <= 0.0f)
             return;
         const bool falling = passTime < fallShare;
@@ -49,13 +54,17 @@ namespace ClaFi::PathArt
         const float speed = falling
             ? 0.5f + 1.3f * std::sqrt(passTime / fallShare)
             : 1.8f;
-        const float span = 0.05f + 0.1f * speed;
+        // After the landing the tail pulls in toward the head as it dims, so its last of it slides
+        // behind the near ridge and leaves the frame by geometry, not by a brightness step.
+        const float retract = falling ? 1.0f : tailFade;
+        const float span = (0.05f + 0.1f * speed) * retract;
         constexpr float k_nose = 0.1f; // the share of the tail it takes to open
         constexpr int k_noseSamples = 16;
         constexpr int k_bodySamples = 16;
         constexpr int k_samples = k_noseSamples + k_bodySamples;
         std::array<FloatPoint, k_samples + 1> outerEdge{};
         std::array<FloatPoint, k_samples + 1> innerEdge{};
+        std::array<FloatPoint, k_samples + 1> outwardAt{};
         FloatPoint tailEnd = head;
         for (int i = 0; i <= k_samples; ++i)
         {
@@ -77,8 +86,14 @@ namespace ClaFi::PathArt
             const float taper = 15.0f * std::pow(1.0f - share, 1.1f) + 2.0f * share;
             const float halfWidth = taper * unit * (0.7f + 0.3f * speed) * opening;
             const float fan = 1.0f + share * 1.6f;
-            outerEdge[static_cast<std::size_t>(i)] = point + outward * (halfWidth * fan);
-            innerEdge[static_cast<std::size_t>(i)] = point - outward * (halfWidth * 0.5f);
+            // Each sample of the edge shivers as the cycle turns, so the tail's outline wavers.
+            const float shiver = 1.3f * unit * (0.25f + 0.75f * share)
+                * std::sin(k_2Pi * 32.0f * pose.cycleTime + static_cast<float>(i) * 1.1f);
+            outwardAt[static_cast<std::size_t>(i)] = outward;
+            outerEdge[static_cast<std::size_t>(i)] = point
+                + outward * (halfWidth * fan + shiver);
+            innerEdge[static_cast<std::size_t>(i)] = point
+                - outward * (halfWidth * 0.5f + shiver * 0.7f);
             tailEnd = point;
         }
         PixelPath dustTail;
@@ -90,6 +105,36 @@ namespace ClaFi::PathArt
         dustTail.close();
         const Color headDust = CometColors::DustHead.withOpacity(0.85f * tailFade);
         const Color middleDust = CometColors::DustMiddle.withOpacity(0.45f * tailFade);
+        // The edge is soft: a wider, fainter copy of the same outline lies under the tail.
+        PixelPath softTail;
+        for (int i = 0; i <= k_samples; ++i)
+        {
+            const float share = static_cast<float>(i) / static_cast<float>(k_samples);
+            const float soft = 3.0f * unit * (0.3f + 0.9f * share);
+            const FloatPoint outer = outerEdge[static_cast<std::size_t>(i)]
+                + outwardAt[static_cast<std::size_t>(i)] * soft;
+            if (i == 0)
+                softTail.moveTo(outer);
+            else
+                softTail.lineTo(outer);
+        }
+        for (int i = k_samples; i >= 0; --i)
+        {
+            const float share = static_cast<float>(i) / static_cast<float>(k_samples);
+            const float soft = 3.0f * unit * (0.3f + 0.9f * share);
+            softTail.lineTo(innerEdge[static_cast<std::size_t>(i)]
+                - outwardAt[static_cast<std::size_t>(i)] * (soft * 0.6f));
+        }
+        softTail.close();
+        fillShape(frame, softTail, LinearGradient{
+            .startPoint = head,
+            .endPoint = tailEnd,
+            .stops = {
+                { .position = 0.0f, .color = headDust.withOpacity(0.22f) },
+                { .position = 0.35f, .color = middleDust.withOpacity(0.10f) },
+                { .position = 1.0f, .color = CometColors::DustEnd.withOpacity(0.0f) }
+            }
+        });
         fillShape(frame, dustTail, LinearGradient{
             .startPoint = head,
             .endPoint = tailEnd,
@@ -108,7 +153,8 @@ namespace ClaFi::PathArt
         back = backLength > 0.0f
             ? rotated(back * (1.0f / backLength), 0.16f)
             : FloatPoint{ -1.0f, 0.0f };
-        const float ionLength = std::hypot(tailEnd.x - head.x, tailEnd.y - head.y) * 1.25f;
+        const float ionLength = std::hypot(tailEnd.x - head.x, tailEnd.y - head.y) * 1.25f
+            * retract;
         const FloatPoint ionEnd = head + back * ionLength;
         const FloatPoint across = FloatPoint{ -back.y, back.x } * (3.0f * unit);
         PixelPath ionTail;
@@ -135,9 +181,13 @@ namespace ClaFi::PathArt
             };
             const float phase = static_cast<float>(i);
             const float twinkle = 0.6f + 0.4f * std::sin(k_2Pi * 40.0f * pose.cycleTime + phase);
+            // The dust shimmers on its own, slower beat, so the tail glitters unevenly.
+            const float shimmer = 0.55f + 0.45f * std::sin(k_2Pi * 17.0f * pose.cycleTime
+                + phase * 1.7f);
             const Color color = i % 3 == 0 ? CometColors::ColdSpark : CometColors::WarmSpark;
-            drawSparkle(frame, spark, (2.0f + 2.0f * pseudoRandom(i, 43.0f)) * unit * twinkle,
-                color.withOpacity((1.0f - age) * 0.9f * tailFade));
+            drawSparkle(frame, spark, (2.0f + 2.0f * pseudoRandom(i, 43.0f)) * unit * twinkle
+                * (0.8f + 0.4f * shimmer),
+                color.withOpacity((1.0f - age) * 0.9f * tailFade * shimmer));
         }
 
         if (falling)

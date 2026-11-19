@@ -48,6 +48,10 @@ namespace ClaFi::PathArt
         constexpr Color Shore{ 0xFF05070E };
         // The near shore's pines and boulders, the darkest thing in the frame.
         constexpr Color Foreground{ 0xFF05080F };
+        // The rounded boulder's form, borrowed from the Chase: its lit crown, its shine, its crack.
+        constexpr Color BoulderLight{ 0xFF101827 };
+        constexpr Color BoulderShine{ 0xFF1B2639 };
+        constexpr Color BoulderCrack{ 0xFF02040A };
     }
 
     namespace
@@ -58,6 +62,8 @@ namespace ClaFi::PathArt
         // Where the lake begins, as a share of the frame's height.
         constexpr float k_lakeShare{ 0.72f };
         constexpr float k_reflectionOpacity{ 0.42f };
+        // The rounded stone mirrors in the water at full share, in its own colours.
+        constexpr float k_stoneReflectionOpacity{ 1.0f };
         // How far the ripples move the lake's top row and its nearest, in units of the frame.
         constexpr float k_farRippleReach{ 0.4f };
         constexpr float k_nearRippleReach{ 4.0f };
@@ -65,6 +71,10 @@ namespace ClaFi::PathArt
         constexpr int k_glitterFieldCount{ 3200 };
         constexpr int k_pathGlowCount{ 7 };
         constexpr float k_glitterOpacity{ 0.5f };
+        // The rounded stone's place: centred a little right, its base in the water, squashed.
+        constexpr FloatPoint k_stoneAt{ 0.545f, 0.930f };
+        constexpr float k_stoneWidth{ 0.0024f };
+        constexpr float k_stoneSquish{ 0.68f };
 
         // The scene's air, stated the way a theme states it: its own sky's ends and the share a
         // layer at the reference distance takes.
@@ -139,6 +149,14 @@ namespace ClaFi::PathArt
             int below;
             float share;
         };
+
+        // The frame mirrored about the horizontal line at `groundY`, so what is drawn in it sits
+        // below that line as its reflection - how the Mill reflects its ducks, reeds and cow.
+        SceneFrame mirroredAbout(const SceneFrame& frame, const float groundY)
+        {
+            return frame.within(Matrix3x2::Translation(0.0f, 2.0f * groundY)
+                * Matrix3x2::Scale(1.0f, -1.0f));
+        }
 
         // A pine after the concept's: a leaning trunk carrying tiers of fronds that sweep up and
         // out, their needles leaning along each branch toward its tip.
@@ -309,6 +327,33 @@ namespace ClaFi::PathArt
             rock.close();
             fillShape(frame, rock, ink);
         }
+
+        // The Chase's roadside boulder, its rounded stone, shine and crack, laid at `base` and
+        // squashed by `squish` - a smoother, wider stone among the sharp ones. Its reflection is
+        // drawn each frame by `drawStoneReflection`, so the lake's ripples run through it.
+        void drawRoundedBoulder(const SceneFrame& frame, const FloatPoint base, const float scale,
+            const float squish, const Color light = CometSceneColors::BoulderLight,
+            const Color shade = CometSceneColors::Foreground,
+            const Color shine = CometSceneColors::BoulderShine)
+        {
+            const SceneFrame stone = frame.within(
+                Matrix3x2::Translation(base) * Matrix3x2::Scale(scale, scale * squish));
+            PixelPath rock;
+            rock.moveTo(-17.0f, 0.0f);
+            rock.cubicTo({ -20.0f, -9.0f }, { -14.0f, -20.0f }, { -3.0f, -22.0f });
+            rock.cubicTo({ 7.0f, -24.0f }, { 16.0f, -17.0f }, { 18.0f, -9.0f });
+            rock.cubicTo({ 20.0f, -3.0f }, { 18.0f, 0.5f }, { 14.0f, 0.5f });
+            rock.close();
+            PixelPath crack;
+            crack.moveTo(5.0f, -15.0f);
+            crack.lineTo(8.0f, -10.0f);
+            crack.lineTo(6.0f, -6.0f);
+            crack.lineTo(8.5f, -2.5f);
+            fillShape(stone, rock, LinearGradient::Simple({ -8.0f, -21.0f }, { 10.0f, 0.0f },
+                light, shade));
+            fillOval(stone, { -5.0f, -17.0f }, 6.5f, 2.6f, SolidColor{ shine }, -0.25f);
+            strokeShape(stone, crack, SolidColor{ CometSceneColors::BoulderCrack }, 0.6f);
+        }
     }
 
     void CometScene::prepare(const SceneParams& params)
@@ -394,7 +439,7 @@ namespace ClaFi::PathArt
             frame.height * (fromLeft ? 0.06f : 0.12f)
         };
         const float endX = frame.width * (fromLeft ? 0.73f : 0.2f);
-        const FloatPoint end = { endX, nearRidgeY(frame, endX) + 8.0f * frame.unit };
+        const FloatPoint end = { endX, nearRidgeY(frame, endX) + 28.0f * frame.unit };
         // The control sits a little above the start: the comet sets off across the sky, then falls.
         return {
             .course = {
@@ -667,10 +712,13 @@ namespace ClaFi::PathArt
         if (pass.afterglow > 0.0f)
         {
             const float fading = 1.0f - pass.afterglow;
+            // The wash is gone before the pass ends, so the boundary has nothing left to switch off.
+            const float endFade = 1.0f - smoothStep(0.86f, 0.97f, pass.passTime);
             drawGlow(frame, pass.course.end, (70.0f + 240.0f * std::sqrt(pass.afterglow)) * unit,
-                CometSceneColors::Afterglow.withOpacity(0.8f * std::pow(fading, 1.6f)), 0.6f);
+                CometSceneColors::Afterglow.withOpacity(0.8f * std::pow(fading, 1.6f) * endFade),
+                0.6f);
             drawGlow(frame, pass.course.end, 50.0f * unit,
-                CometSceneColors::ImpactCore.withOpacity(std::pow(fading, 4.0f)));
+                CometSceneColors::ImpactCore.withOpacity(std::pow(fading, 4.0f) * endFade));
         }
         drawComet(frame, CometPose{
             .course = pass.course,
@@ -758,7 +806,24 @@ namespace ClaFi::PathArt
             drawAboveLake(mirror, time, true);
             m_mirroredShore.draw(mirror);
         }, mirrorRipples);
+        // The rounded stone mirrors in the water, at its own share. The stone is flipped about the
+        // line it meets the water at, so its image lands below it, in the water.
+        const Ripples stoneRipples = {
+            .top = lakeY,
+            .farReach = k_farRippleReach,
+            .nearReach = k_nearRippleReach,
+            .cycleTime = cycleTime,
+            .opacity = k_stoneReflectionOpacity
+        };
+        m_stoneReflection.draw(frame, lakeOutline, {}, [&](const SceneFrame& mirror) {
+            drawRoundedBoulder(mirroredAbout(mirror, height * k_stoneAt.y),
+                { width * k_stoneAt.x, height * k_stoneAt.y }, width * k_stoneWidth,
+                k_stoneSquish);
+        }, stoneRipples);
         m_lakeShade.draw(frame);
+        // The stone stands in the water before the trail is laid, so the comet's glow lights it.
+        drawRoundedBoulder(frame, { width * k_stoneAt.x, height * k_stoneAt.y },
+            width * k_stoneWidth, k_stoneSquish);
         drawGlitterPath(frame, passAt(frame, cycleTime), mirrorRipples, cycleTime);
         m_shore.draw(frame);
     }
@@ -811,6 +876,16 @@ namespace ClaFi::PathArt
                 + 0.08f * pseudoRandom(i, 52.0f));
             const float x = across * frame.width;
             const float y = lakeY + (nearY - lakeY) * along;
+            // The stone and its shadow: no sparkle in the band they make - a little past the
+            // stone's own width and down to its reflection, so none leaks along the waterline.
+            const float stoneScale = frame.width * k_stoneWidth;
+            const float shadowDepth = 22.0f * stoneScale * k_stoneSquish;
+            const float stoneEdge = 21.0f * stoneScale;
+            const float stoneTop = frame.height * k_stoneAt.y - shadowDepth;
+            const float stoneBottom = frame.height * k_stoneAt.y + shadowDepth * 0.9f;
+            if (std::abs(x - frame.width * k_stoneAt.x) <= stoneEdge && y >= stoneTop
+                && y <= stoneBottom)
+                continue;
             const float trailCoverage = 1.0f - smoothStep(0.60f * spread, spread,
                 std::abs(x - light.x));
             // The lake twinkles either side of the trail too: a share of the field is the water's
@@ -966,6 +1041,7 @@ namespace ClaFi::PathArt
         drawBoulder(frame, { width * 0.270f, height * 1.02f }, width * 0.22f, height * 0.34f, 21);
         drawBoulder(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27);
         drawBoulder(frame, { width * 0.720f, height * 1.02f }, width * 0.22f, height * 0.30f, 31);
+        // The Chase's rounded stone is laid in the lake, before the trail, so the glow lights it.
         // The rocks the near edge of the water breaks on, low across the bottom.
         drawBoulder(frame, { width * 0.100f, height * 1.01f }, width * 0.30f, height * 0.09f, 51);
         drawBoulder(frame, { width * 0.500f, height * 1.01f }, width * 0.16f, height * 0.045f, 57);

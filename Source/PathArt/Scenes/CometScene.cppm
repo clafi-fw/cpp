@@ -117,6 +117,7 @@ namespace ClaFi::PathArt
         SceneLayer m_mirroredShore{ drawMirroredShore };
         SceneLayer m_foreground{ drawForeground };
         WaterReflection m_reflection{}; // what the lake mirrors
+        WaterReflection m_stoneReflection{}; // the rounded stone's own mirror, at its own opacity
         // By pointer, as MSVC's std::future builds what it carries with no arguments first.
         std::future<std::unique_ptr<CloudMap>> m_fogMapBuilt{};
         // Built off the paint from the first frames drawn on, and kept. See PathArt#earthscene
