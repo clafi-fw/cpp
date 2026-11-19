@@ -205,15 +205,17 @@ namespace ClaFi
         // instead, and the tooltip's own control may answer differently from where the pointer is.
         const TooltipForm& form = *s_current->m_form;
         Text text{};
+        TooltipHeader header{};
         for (it = &pointed; it; it = it->parent())
         {
             AdjustTooltipEvent event{ form.context(), *it, text, EventPhase::Paint };
             if (!ContextMessage::answer(*it, event))
                 it->nestedAdjustTooltip(event);
-            if (it == shown || !text.empty())
+            header = event.header;
+            if (it == shown || !event.text.empty() || !header.empty())
                 break;
         }
-        return it == shown && text == form.text();
+        return it == shown && text == form.body() && header == form.header();
     }
 
     void Tooltip::startWaiting(MilliSeconds delay)
@@ -305,20 +307,21 @@ namespace ClaFi
         while (it)
         {
             tmpText.clear();
-            // The words the tooltip shows, which are also what the window is sized to.
+            // What the tooltip says, which is also what the window is sized to.
             AdjustTooltipEvent event{ form.context(), *it, tmpText, EventPhase::Paint };
             // A message raised about this control stands in front of whatever it would say for
             // itself, and is the whole of the answer wherever it stands.
             if (!ContextMessage::answer(*it, event))
                 it->nestedAdjustTooltip(event);
-            if (!tmpText.empty())
+            if (!event.text.empty() || !event.header.empty())
             {
                 // A control is free to answer differently from one hover to the next - a toggle
                 // names what a press would do now, and that changes when it is pressed. The form
                 // holds the layout it was given, not the one it would be given, so a moved answer
                 // has to re-place it exactly as a moved control does: the text is what the size
                 // was measured from.
-                if (form.control() != it or form.text() != tmpText)
+                if (form.control() != it or form.body() != event.text
+                    or form.header() != event.header)
                     form.setControl(*it, event);
                 updatePosition(*it, event.anchorRect);
                 form.show();

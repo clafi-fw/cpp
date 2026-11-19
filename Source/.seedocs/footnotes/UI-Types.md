@@ -112,12 +112,14 @@ with a `FocusScope::Yes` root.
 ## PresenterRole
 
 Action::attach takes it, Button by default. A control built with an Action property reads the
-role from its properties too.
+role from its properties too, and `RichControl::presenterRole` answers the role the control took.
 
-- `Button` - a button or a toolbar item. Its tooltip falls back to the action's name and key.
-- `Line` - a menu line, which writes the name and key itself, so the action adds no tooltip.
+- `Button` - a button or a toolbar item. Its tooltip states its own caption and the key over the
+  body, whether or not the face draws the caption.
+- `Line` - a menu line, which writes the name and key itself, so its tooltip is the body alone.
 - `Display` - a split button's strip. It shows the command, and the button it belongs to delivers
-  the click.
+  the click. Its tooltip is a Button's.
+- `Opener` - a line that opens the command's own list. Its tooltip is a Line's.
 
 ## ActionState
 

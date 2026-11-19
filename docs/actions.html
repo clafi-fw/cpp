@@ -467,12 +467,17 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
             <table>
                 <tr><th>The action's</th><th>Becomes the presenter's</th></tr>
                 <tr><td><code>text()</code></td><td>Text, written into the control as they attach - but only if the control has none of its own.</td></tr>
-                <tr><td><code>tooltipText()</code></td><td>Tooltip, with the shortcut appended to it.</td></tr>
+                <tr><td><code>tooltipText()</code></td><td>The tooltip's body, under the caption and the key the presenter states.</td></tr>
                 <tr><td><code>OnDrawIcon</code></td><td>Icon, wherever that control paints one.</td></tr>
                 <tr><td>state</td><td>Enabled and selected.</td></tr>
                 <tr><td>-</td><td>A click on the presenter runs the action.</td></tr>
-                <tr><td><code>shortcut()</code></td><td>The key it prints beside itself, if it prints one.</td></tr>
+                <tr><td><code>shortcut()</code></td><td>The key the presenter shows in the tooltip's caption line, and a menu line prints at its end.</td></tr>
             </table>
+            <div class="info"><strong>A tooltip has a caption and a body.</strong> The caption and the key
+            stand over the body in one bold line, and the <code>TooltipText</code> is the body under it. The
+            presenter states the caption and the key: a button states its own caption and the key that runs
+            it, and a menu line states neither because the line carries both. Either part shows the tooltip
+            on its own; a button that draws its caption and has no key and no body shows none.</div>
             <div class="info"><strong>A control's own text wins.</strong> The action supplies the words for a
             presenter that has none, which is the ordinary case; a presenter that spells its own text is stating a
             local exception, and gets it. The decision is made as the two attach: a control given the action as a
@@ -484,10 +489,10 @@ m_save.<span class="fn">detach</span>(someButton);</pre>
             <code>Button</code> is the role a control takes when it states none:</p>
             <table>
                 <tr><th>Role</th><th>What the presenter does</th></tr>
-                <tr><td><code>Button</code></td><td>Delivers the click, and shows nothing of the command but its face: the icon, and the name where the control has no text of its own.</td></tr>
-                <tr><td><code>Line</code></td><td>Delivers the click, and writes the name and the key itself - a menu line. The tooltip is left out, since it would say back the line the pointer stands on.</td></tr>
+                <tr><td><code>Button</code></td><td>Delivers the click, and shows nothing of the command but its face: the icon, and the name where the control has no text of its own. Its tooltip states the caption and the key over the body.</td></tr>
+                <tr><td><code>Line</code></td><td>Delivers the click, and writes the name and the key itself - a menu line. Its tooltip carries a stated <code>TooltipText</code> as the body and no caption, since the line already says both.</td></tr>
                 <tr><td><code>Display</code></td><td>Shows the command without delivering it. A split button's face is one: its press belongs to the button that routes it.</td></tr>
-                <tr><td><code>Opener</code></td><td>Writes the name itself and opens the command's own list instead of delivering it - the line a menu shows for a command holding commands, see <a href="#holding">below</a>.</td></tr>
+                <tr><td><code>Opener</code></td><td>Writes the name itself and opens the command's own list instead of delivering it - the line a menu shows for a command holding commands, see <a href="#holding">below</a>. Its tooltip is a Line's.</td></tr>
             </table>
 
             <h3 id="presenter-rules">What a Presenter Has to Be</h3>
@@ -794,8 +799,8 @@ view.<span class="fn">onGetActionState</span>([&amp;](<span class="tp">GetAction
                 <tr><td><code>OnClick</code>, <code>onClick</code></td><td>Run it - the fallback when no subject claims.</td></tr>
                 <tr><td><code>OnGetState</code>, <code>onGetState</code></td><td>Its own answer for its state.</td></tr>
                 <tr><td><code>OnDrawIcon</code>, <code>onDrawIcon</code></td><td>Its icon.</td></tr>
-                <tr><td><code>text()</code>, <code>tooltipText()</code></td><td>Mutable. Follow a change with <code>invalidateText()</code> or <code>invalidate()</code>.</td></tr>
-                <tr><td><code>shortcut()</code>, <code>shortcuts()</code></td><td>The key shown for it, and every key that runs it.</td></tr>
+                <tr><td><code>text()</code>, <code>tooltipText()</code></td><td>Mutable. <code>tooltipText()</code> is the tooltip's body; follow a change with <code>invalidateText()</code> or <code>invalidate()</code>.</td></tr>
+                <tr><td><code>shortcut()</code>, <code>shortcuts()</code></td><td>The key shown for it - in a menu line, and in a button's tooltip caption - and every key that runs it.</td></tr>
                 <tr><td><code>setShortcut()</code>, <code>addShortcut()</code></td><td>Make one key the only one, or put one more after the ones it has.</td></tr>
                 <tr><td><code>items()</code>, <code>setItems()</code>, <code>opensList()</code></td><td>The commands it opens as a list of its own, a null parting two groups; whether it holds any.</td></tr>
                 <tr><td><code>subject(form)</code></td><td>What would answer for it in that form, or null.</td></tr>

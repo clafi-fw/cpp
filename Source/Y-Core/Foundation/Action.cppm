@@ -115,9 +115,7 @@ namespace ClaFi
         [[nodiscard]] const Text& text() const { return m_text; }
         [[nodiscard]] TooltipText& tooltipText() { return m_tooltipText; }
         [[nodiscard]] const TooltipText& tooltipText() const { return m_tooltipText; }
-        // Writes what this action says of itself into a tooltip, and does nothing to one that
-        // already says something. Every presenter is given it; a caller showing the command
-        // somewhere the action is not attached - a line drawn by hand - asks for it here.
+        // The body it states for a presenter with none. See Control-Foundation#action-tooltip
         void adjustTooltip(AdjustTooltipEvent&) const;
         //
         [[nodiscard]] Shortcut shortcut() const; // the key shown on a menu line and in the tooltip

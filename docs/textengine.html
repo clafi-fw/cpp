@@ -230,7 +230,7 @@ a type of its own, so a control tells which one it was handed by the type alone:
 <table>
 <tr><th>Property</th><th>Read and written through</th><th>Holds</th></tr>
 <tr><td><code>Text</code>, a string</td><td><code>text()</code></td><td>The control's own text. Several in one argument list are appended in order.</td></tr>
-<tr><td><code>TooltipText</code></td><td><code>tooltipText()</code></td><td>What the control offers as its tooltip.</td></tr>
+<tr><td><code>TooltipText</code></td><td><code>tooltipText()</code></td><td>The body of the control's tooltip, under the caption and key its presenter states.</td></tr>
 <tr><td><code>PlaceHolderText</code></td><td>-</td><td>On a <code>TextBox</code> and a combo box item: what is drawn, muted, while the text is empty. The box is measured to fit it.</td></tr>
 <tr><td><code>TextFormat</code></td><td><code>textFormat()</code>, <code>setTextFormat</code></td><td>What the text is laid out over - see <a href="#format">Text Format</a>.</td></tr>
 <tr><td><code>WordWrap</code></td><td><code>wordWrap()</code>, <code>setWordWrap</code></td><td>Whether the text is broken to its box - see the <a href="layout.html#text">Layout manual</a>.</td></tr>
@@ -338,11 +338,16 @@ that differs by phase. The words stay the owner's; the event adjusts what is lai
 <tr><th>Event</th><th>On</th><th>Raised</th></tr>
 <tr><td><code>OnAdjustText</code><br><code>AdjustTextEvent</code></td><td>Every control</td><td>The control's text about to be laid out. The text is named first; a handler streams after it into <code>event.text</code>, or starts over with <code>event.text.clear()</code>.</td></tr>
 <tr><td><code>OnAdjustChildText</code><br><code>AdjustChildTextEvent</code></td><td>A parent</td><td>A child's text about to be laid out. The child answers first, and the parent's handlers stream after it into the same text.</td></tr>
-<tr><td><code>OnAdjustTooltip</code><br><code>AdjustTooltipEvent</code></td><td>Every control</td><td>When a tooltip is about to stand over the control. The <code>TooltipText</code> is written first and the handlers after it; where neither wrote anything and the control's own text is cut, the tooltip repeats that text over it.</td></tr>
+<tr><td><code>OnAdjustTooltip</code><br><code>AdjustTooltipEvent</code></td><td>Every control</td><td>When a tooltip is about to stand over the control. The <code>TooltipText</code> is written first as the body and the handlers after it; the caption and key over that body belong to the presenter; where neither part is there and the control's own text is cut, the tooltip repeats that text over it.</td></tr>
 <tr><td><code>OnCaretMove</code><br><code>CaretMoveEvent</code></td><td><code>TextBox</code></td><td>The caret came to rest somewhere new. Where it stands is asked of the box, through <code>caretPos()</code> or <code>caretLineColumn()</code>, and <code>selection()</code> answers what is selected.</td></tr>
 <tr><td><code>OnTextEdit</code><br><code>TextEditEvent</code></td><td><code>TextBox</code></td><td>The text was changed through the box - typed, deleted, pasted, cut, undone or redone. Raised last, once the box is done with the edit.</td></tr>
 <tr><td><code>OnLinkClick</code>, <code>OnGetLinkTooltip</code></td><td><code>TextBox</code></td><td>A link was followed, or its tooltip is about to show - see <a href="#links">Links in a TextBox</a>.</td></tr>
 </table>
+
+<p><strong>A tooltip is a caption and a body.</strong> The caption line - the control's name and the
+key that runs it - is stated by the presenter that draws the control, and not by
+<code>AdjustTooltipEvent</code>, which fills the body. An over-text tooltip, the control's own cut
+words repeated, is the body alone.</p>
 
 <p>A gather is asked in one of two phases, and <code>event.phase()</code> says which:
 <code>Calculate</code> for a measurement, <code>Paint</code> for what is drawn. A control may be

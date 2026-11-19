@@ -51,6 +51,8 @@ namespace ClaFi
         DECLARE_PROPERTY_STORAGE(ClickTarget, clickTarget, ClickTarget::Parent)
         // Whether the control holds the focus for its current item. See UI-Types
         DECLARE_PROPERTY_STORAGE(FocusScope, focusScope, FocusScope::No)
+        // What the control does for an action it presents. See UI-Types
+        DECLARE_PROPERTY(PresenterRole, presenterRole, PresenterRole::Button)
     public:
         // The style the control wears: its rules in paint, its sizes in layout. See Control-Foundation
         [[nodiscard]] OptionalUiElement style() const { return m_style; }
@@ -148,7 +150,8 @@ namespace ClaFi
         INIT_PROPERTY(navigationReach),
         INIT_PROPERTY(mouseFocus),
         INIT_PROPERTY(clickTarget),
-        INIT_PROPERTY(focusScope)
+        INIT_PROPERTY(focusScope),
+        INIT_PROPERTY(presenterRole)
     {
         // A style or none. Bound first, so a plain UiElement anywhere in the pack wins.
         BIND_PROPERTY_MEMBER(OptionalUiElement, m_style);
@@ -189,11 +192,9 @@ namespace ClaFi
         BIND_PROPERTY_ACTION(std::wstring_view, appendText(p));
         // The control's own text, as a literal.
         BIND_PROPERTY_ACTION(const wchar_t*, appendText(p));
-        // What an Action given as a property takes this control for.
-        const PresenterRole presenterRole = READ_PROPERTY(PresenterRole, PresenterRole::Button);
         // An action this control presents, taking it as a presenter. Bound after the text, since
         // the action writes its words only into a text with none. See Control-Foundation
-        BIND_PROPERTY_ACTION(Action, attachAction(p, *this, presenterRole));
+        BIND_PROPERTY_ACTION(Action, attachAction(p, *this, presenterRole()));
 
         // The On... handler properties are bound by Control's constructor.
     }

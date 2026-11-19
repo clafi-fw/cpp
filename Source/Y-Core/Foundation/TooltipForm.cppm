@@ -13,9 +13,11 @@ import ClaFi.Core.Context.AppContext;
 import ClaFi.Core.AppTheme_AnimationSlots;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.System.Animation;
 import ClaFi.Core.TextEngine.Layout;
 import ClaFi.Core.TextEngine.Text;
+import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.StdLib;
 
@@ -51,6 +53,8 @@ namespace ClaFi
         explicit TooltipForm(FormBase& ownerForm);
         ~TooltipForm() override;
         Control* control() { return content().m_control; }
+        [[nodiscard]] const TooltipHeader& header() const { return m_header; }
+        [[nodiscard]] const Text& body() const { return m_body; }
         void setControl(Control* control);
         void setControl(Control&, const AdjustTooltipEvent&); // the answer becomes the label's text
         void startAlphaAnimation();
@@ -64,9 +68,14 @@ namespace ClaFi
         // Where the control comes to rest, which is where a tooltip about it is placed.
         [[nodiscard]] FloatRect placementTargetBounds(const Control&) const override;
     private:
+        [[nodiscard]] Text composeText(const AdjustTooltipEvent&) const;
+        [[nodiscard]] Padding tooltipPadding() const;
+    private:
         static constexpr ColorByte m_alpha = 255; // a bit of transparency looks good only when bg is blurred
     private:
         bool m_hideOnUserInput{ true };
+        TooltipHeader m_header{};
+        Text m_body{};
     };
 
 
@@ -140,7 +149,10 @@ namespace ClaFi
         setControl(&control);
         // Taken here too - a rect stated equal to the last one records nothing.
         rememberPlacementTarget();
-        content().text() = event.text;
+        m_header = event.header;
+        m_body = event.text;
+        content().text() = composeText(event);
+        content().setPadding(tooltipPadding());
         content().setTextFormat(event.format);
         setPlacement(event.placement);
         m_hideOnUserInput = event.hideOnUserInput;
@@ -156,6 +168,44 @@ namespace ClaFi
         content().setHorizontalTextAnchor(
             overText ? event.textAnchor : HorizontalTextAnchor::None);
         invalidateAlign();
+    }
+
+    // **A tooltip says a caption and a body, and either may stand alone.** The caption and its key
+    // are one bold line, the body follows after a short gap, and an over-text tooltip is the
+    // control's own lines with neither - see Control-Foundation#tooltip.
+    Text TooltipForm::composeText(const AdjustTooltipEvent& event) const
+    {
+        if (event.placement == FormPlacement::OverText || event.header.empty())
+            return event.text;
+
+        Text headerLine{ event.header.caption };
+        if (!event.header.shortcut.empty())
+        {
+            if (!event.header.caption.empty())
+                headerLine << L" (";
+            headerLine << event.header.shortcut;
+            if (!event.header.caption.empty())
+                headerLine << L")";
+        }
+
+        Text answer;
+        answer << BoldText{ std::move(headerLine) };
+        if (!event.text.empty())
+        {
+            answer << L"\n" << VSpace{ Tooltip::k_partSpacing } << L"\n" << event.text;
+        }
+        return answer;
+    }
+
+    // **The style's room, or the theme's default where the style states none.** A theme written
+    // before the Tooltip style stated a padding still gets a window with room in it, and one that
+    // states its own keeps it.
+    Padding TooltipForm::tooltipPadding() const
+    {
+        const ControlStyle* style = theme().styles.of(L"Tooltip");
+        if (style && style->metrics.padding)
+            return *style->metrics.padding;
+        return ThemeMetrics::TooltipPadding;
     }
 
     void TooltipForm::startAlphaAnimation()

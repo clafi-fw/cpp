@@ -1,4 +1,4 @@
-﻿export module ClaFi.Core.Foundation :Tooltip;
+export module ClaFi.Core.Foundation :Tooltip;
 
 import :Control;
 
@@ -27,6 +27,8 @@ namespace ClaFi
     public:
         // The widest line a tooltip breaks at, in design units.
         static constexpr float k_lineWidth{ 480.0f };
+        // The air between a tooltip's caption and its body, in design units.
+        static constexpr float k_partSpacing{ 6.0f };
         // The most lines a tooltip shows, its last faded when cut.
         static constexpr std::size_t k_maxLines{ 20 };
     public:

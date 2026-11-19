@@ -109,6 +109,42 @@ standing for it, so neither is taken for the other. A list going down hands the 
 box it was dropped from, which held it all along: that is no landing, and a tooltip that went down
 with the list stays down.
 
+**A tooltip says a caption and a body, 2026-11-19.** Oj set the shape against Word's ribbon
+tooltip: the caption and the key that runs the command in one bold line, the words the control or
+its action states under it, either part enough to raise the window, and the overflown text a
+tooltip of its own. Asked which a button that draws its caption should put in the header, he took
+Word's answer - repeat it, because the line titles the body - with the exception that a face
+already saying its caption, with no key and no body, raises no tooltip at all.
+
+`AdjustTooltipEvent` carries a `TooltipHeader` beside its body text, and the presenter fills it:
+`ButtonBase::nestedAdjustTooltip` writes the control's caption and the key `GetShortcutEvent`
+answers, which is the one place that knows both the face and what it hides. `Action::adjustTooltip`
+now states the body alone - its `TooltipText` - and its channel is connected for every role, so a
+menu line with a stated tooltip shows that text under no caption, and one without shows nothing.
+`TooltipForm::composeText` lays the two out, bold header, body on the line under it; under
+`FormPlacement::OverText` it hands the control's own lines through untouched, which leaves the
+over-text repetition in a window of its own.
+
+**The room is the style's, the air between the parts is not, 2026-11-19.** Oj, seeing the first
+captures: "Add Padding, take off Spacing." The tooltip had inherited AnyWindow's 4-unit padding and
+carried a blank line between the caption and the body, which read as a box drawn tight around two
+lines with a hole in the middle. The room became `ThemeMetrics::TooltipPadding`: the Tooltip style
+states it, and `TooltipForm::tooltipPadding` falls back to it where a theme states none - the theme
+the app was wearing when the change was first tried stated none, which is why the built-in style
+alone left the captures unchanged. Then, on seeing it: "Increase spacing a bit. Decrease padding a
+bit." The room is 8 by 6, and the parts stand `Tooltip::k_partSpacing` apart, 6, as a gap line of
+its own - a `VSpace` between two line ends, which the text engine lays out as a line of exactly that
+height. An over-text tooltip still lands its words on the words it covers: the form's placement
+reads the root's textOrigin, which is its content padding, so the room around the words moves the
+window and not the words.
+
+The reading was taken on the real application with the pointer: `tooltip-capture.ps1` and
+`tooltip-backstage.ps1` in `Agent/UiFrameTest` move the pointer over a button, find the popup the
+tooltip is shown in, and copy its screen rect into `captures/`. "Forward (Alt+Right)", "Save
+(Ctrl+S)" and "Application menu" read as the caption line alone; "Auto" over "Follow system" reads
+as the two parts. A check box with a `TooltipText` takes the caption too, its whole face being the
+caption; that is the rule, not an accident of the capture.
+
 ## FormBase::windowFocusedFactor
 
 The platform reports the change through `wnd_focusChanged`: `WM_SETFOCUS` and `WM_KILLFOCUS` on

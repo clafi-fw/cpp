@@ -74,8 +74,6 @@ namespace ClaFi::Controls
         explicit MenuCommand(const CreateParams&, Args&&...);
     public:
         std::wstring_view diagnosticText() const override { return L"MenuCommand"; }
-    protected:
-        void nestedAdjustTooltip(AdjustTooltipEvent&) override;
     };
 
     export using BaseMenuForm = Form<ScrollBoxWith<StackPanel>>;
@@ -630,29 +628,6 @@ namespace ClaFi::Controls
             std::forward<Args>(args)...
         }
     {
-    }
-
-    void MenuCommand::nestedAdjustTooltip(AdjustTooltipEvent& event)
-    {
-        MenuItemBase::nestedAdjustTooltip(event);
-        // An action says its own name and key - see Action::adjustTooltip - and this is what a
-        // command with none says instead. The strip writes the name under each icon and has
-        // nowhere to put the key beside it, so this is where the two are said together.
-        if (!event.text.empty())
-            return;
-
-        AdjustTextEvent textEvent{ event.formContext(), *this, event.text, EventPhase::Paint };
-        adjustText(textEvent);
-        // The tooltip reads the buffer rather than the answer, so a named text is put in it.
-        textEvent.materialise();
-        if (event.text.empty())
-            return;
-        GetShortcutEvent shortcutEvent{ *this };
-        emitEvent(shortcutEvent);
-        const std::wstring shortcutText = shortcutEvent.shortcut.text();
-        if (shortcutText.empty())
-            return;
-        event.text << L" (" << shortcutText << L")";
     }
 
 }

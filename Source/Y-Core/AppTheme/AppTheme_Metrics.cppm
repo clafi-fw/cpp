@@ -164,6 +164,8 @@ namespace ClaFi
         // Anything laid over a control's edge has to leave at least this much clear, or it covers
         // the focus ring on the side it reaches.
         constexpr Thickness FocusedBorder = Thickness::Regular;
+        // The room a tooltip keeps around its caption and body, where its style states none.
+        constexpr Padding TooltipPadding{ 8.0f, 6.0f };
         // The Z animation stated as depth. A control rests PressRestDepth into the surface, rises
         // flush with it under the pointer or the keyboard's focus and sinks to PressHeldDepth
         // while held - the same distances for every control, so nothing on a surface travels

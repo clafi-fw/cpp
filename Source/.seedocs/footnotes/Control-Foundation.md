@@ -510,11 +510,21 @@ own text is bound, which is what makes that decision answerable.
 null parts two groups - and a menu shows it as a line with the list beside it, by a presenter in
 the `Opener` role: the press opens the list, and the command's own click is never run.
 
+## Action adjustTooltip
+
+**The action states the tooltip's body alone.** Its stated `TooltipText` is written into an event
+that says nothing yet; a body the presenter already stated wins.
+
+**The caption and the key over that body are the presenter's** - see Tooltip. That is what leaves a
+`Line` its own tooltip: the line says the name and the key, so only a `TooltipText` the action was
+given reaches the body.
+
 ## Shortcut
 
-**An empty shortcut matches no key** and adds nothing to a tooltip.
+**An empty shortcut matches no key** and adds nothing to a tooltip's caption.
 
-**An action holds any number, and each one runs it.** A menu line and a tooltip show the first.
+**An action holds any number, and each one runs it.** A menu line and a tooltip's caption show the
+first.
 
 - Each `Shortcut` property adds one, in the order stated.
 - `addShortcut` adds one after those.
@@ -547,6 +557,23 @@ a walk in document order rather than over what is on screen.
 **The framework drives it**, asking a control for its tooltip through nestedAdjustTooltip. A control
 that must show its tooltip at once calls `form().tooltip().showRightNow(control)`.
 
+**A tooltip is a caption and a body.** The caption line holds the control's name and the key that
+runs it, in bold; the body is what the control or its action states. Either part stands on its own,
+and with neither there is no tooltip.
+
+**The presenter states the caption and the key**, for the role it takes and the face it draws:
+
+- A button states its own caption and the key `GetShortcutEvent` answers. The caption is written
+  even where the face draws it, because the line titles the body; a button that draws its caption,
+  has no key and has no body raises no tooltip at all.
+- A `Line` or an `Opener` states neither. The line carries the name and the key, and a tooltip there
+  is the body alone.
+- The two sit in `AdjustTooltipEvent::header`, which the presenter fills while a handler writes the
+  body.
+
+**An over-text tooltip is a tooltip of its own.** The control's cut text is repeated in a window
+with no caption, broken where the control broke it, and it never takes the header.
+
 **What a tooltip is about follows the controller:**
 
 - While the mouse drives, the control under the pointer. A hover move hides the tooltip and starts
@@ -566,6 +593,7 @@ again, as a popup does. A control scrolled out of view leaves the tooltip where 
 **Its size:**
 
 - Lines break at k_lineWidth, 480 design units, and the window is as wide as the widest line.
+- A caption and a body stand k_partSpacing apart, 6 design units.
 - A tooltip over text repeats the lines the control broke, at the width the control broke them.
 - At most k_maxLines lines show, 20, and the last fades when the text runs on.
 

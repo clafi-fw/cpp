@@ -362,16 +362,30 @@ namespace ClaFi::Controls
         event.text << FlexSpace{ k_endIconGap } << mark;
     }
 
+    // **The caption and the key stand over the body, and the button states them.** A face that
+    // hides its caption, or a command carrying a key, says both here; a face that already says the
+    // caption, with no key and no body, raises no tooltip at all.
     void ButtonBase::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         RichControl::nestedAdjustTooltip(event);
-        if (event.text.empty() && m_viewMode == ButtonViewMode::IconOnly)
-        {
-            AdjustTextEvent textEvent(event.formContext(), *this, event.text, EventPhase::Paint);
-            adjustText(textEvent);
-            // The tooltip reads the buffer rather than the answer, so a named text is put in it.
-            textEvent.materialise();
-        }
+
+        // The overflown text is a tooltip of its own: the control's own lines, with no header.
+        if (event.placement == FormPlacement::OverText)
+            return;
+        // A line and a group state their caption and their key in the line itself.
+        const PresenterRole role = presenterRole();
+        if (role == PresenterRole::Line || role == PresenterRole::Opener)
+            return;
+
+        GetShortcutEvent shortcutEvent{ *this };
+        emitEvent(shortcutEvent);
+        const std::wstring shortcut = shortcutEvent.shortcut.text();
+
+        if (m_viewMode != ButtonViewMode::IconOnly && shortcut.empty() && event.text.empty())
+            return;
+
+        event.header.caption = text();
+        event.header.shortcut = shortcut;
     }
 
     // **An icon-only button does not lay its text out.** Its words are what the tooltip says - see

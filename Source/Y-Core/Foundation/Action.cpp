@@ -104,28 +104,15 @@ namespace ClaFi
 
     void Action::adjustTooltip(AdjustTooltipEvent& event) const
     {
-        // Whatever else answered wins. An action supplies the words for a presenter that has
-        // none of its own, and a presenter that spells its own tooltip is stating an exception.
+        // Whatever the presenter said of itself wins: an action supplies the body for a presenter
+        // with none, and one that spells its own is stating an exception.
         if (!event.text.empty())
             return;
 
-        // **Its own name where it says nothing more.** A command with a key has something to tell
-        // even when its tooltip would only repeat its label, because the key is shown nowhere
-        // else on a button. What the action says of itself is preferred where it says anything.
-        if (m_tooltipText.empty())
-            event.text << m_text;
-        else
-            event.text << m_tooltipText;
-        // A nameless action contributes nothing at all, so that the trimmed-text fallback
-        // Control::nestedAdjustTooltip ends with is left the way it was found.
-        if (event.text.empty())
-            return;
-
-        const std::wstring shortcutText = shortcut().text();
-        if (shortcutText.empty())
-            return;
-
-        event.text << L" (" << shortcutText << L")";
+        // **The body alone.** The caption and the key stand over it, stated by the presenter for
+        // the role it takes: a button writes both into the header, and a Line writes them into its
+        // own text and leaves the body to the action - see Control-Foundation#action-tooltip.
+        event.text << m_tooltipText;
     }
 
     Shortcut Action::shortcut() const
@@ -340,12 +327,12 @@ namespace ClaFi
             attachment.holdsWords = true;
         }
 
-        // A Line or an Opener states the command in full by itself, so nothing is composed for
-        // it: a tooltip there would say back the very line the pointer is standing on.
-        if (role != PresenterRole::Line && role != PresenterRole::Opener)
-            connections.push_back(presenter.onAdjustTooltip([this](AdjustTooltipEvent& event) {
-                adjustTooltip(event);
-            }));
+        // **Every presenter is asked, and the role decides what its answer means.** The action
+        // states the body; the caption and key are the presenter's own - see
+        // Action::adjustTooltip and Control-Foundation#action-tooltip.
+        connections.push_back(presenter.onAdjustTooltip([this](AdjustTooltipEvent& event) {
+            adjustTooltip(event);
+        }));
 
         connections.push_back(presenter.onDrawIcon([this](DrawIconEvent& event) {
             emitEvent(event);

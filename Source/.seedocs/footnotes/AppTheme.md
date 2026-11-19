@@ -71,7 +71,8 @@ states 4 resolves to 0; a radius left out resolves to the base's 4.
 ## ThemeMetrics
 
 **The sizes every style shares**, which no theme states: the border a control draws, the width a
-focus ring thickens it to, and the depths of the press animation.
+focus ring thickens it to, the depths of the press animation, and the room a tooltip keeps around
+its words where its style states none.
 
 ## ControlStyle
 

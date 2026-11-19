@@ -337,6 +337,11 @@ namespace ClaFi
                             { ColorRuleOp::Set, 0.053887f }         // E
                         }
                     }
+                },
+                // The caption and the body are two short parts, and the room around them is what
+                // makes the window read as a box rather than as a line of words.
+                .metrics = {
+                    .padding = ThemeMetrics::TooltipPadding
                 }
             },
             ControlStyle{

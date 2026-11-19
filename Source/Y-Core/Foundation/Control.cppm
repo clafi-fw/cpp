@@ -431,7 +431,16 @@ namespace ClaFi
         using AdjustTextEventBase::AdjustTextEventBase;
     };
 
-    // TODO: derive AdjustTooltipEvent from AdjustTextEventBase as AdjustTextEvent and AdjustChildTextEvent are.
+    // The caption and the key a tooltip states over its body. See Control-Foundation#tooltip
+    export struct TooltipHeader
+    {
+        Text caption{};
+        std::wstring shortcut{};
+        [[nodiscard]] bool empty() const { return caption.empty() && shortcut.empty(); }
+        bool operator==(const TooltipHeader&) const = default;
+    };
+
+    // TODO: derive AdjustTooltipEvent from AdjustTextEventBase, as the text events are.
     // The tooltip about to stand over the control: its own tooltip text, adjusted the same way.
     export class AdjustTooltipEvent : public ControlEventBaseC
     {
@@ -440,6 +449,8 @@ namespace ClaFi
     public:
         const Control& control;
         Text& text;
+        // The caption and the key the presenter states over it. See Control-Foundation#tooltip
+        TooltipHeader header{};
         // if the placement is overText, set the anchorRect to the item's textRect,
         // otherwise it should hold the item's bounds (initialized in the constructor).
         // anchorRect is in the coordinates of the form the control stands in
