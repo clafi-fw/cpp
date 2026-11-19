@@ -104,6 +104,8 @@ namespace ClaFi::PathArt
         static void drawLakeShade(const SceneFrame&);
         static void drawShore(const SceneFrame&);
         static void drawMirroredShore(const SceneFrame&);
+        // The near shore in front of everything: pines and boulders, dark against the mist.
+        static void drawForeground(const SceneFrame&);
     private:
         SceneLayer m_farRidge{ drawFarRidge };
         SceneLayer m_nearRidge{ drawNearRidge };
@@ -113,6 +115,7 @@ namespace ClaFi::PathArt
         SceneLayer m_lakeShade{ drawLakeShade };
         SceneLayer m_shore{ drawShore };
         SceneLayer m_mirroredShore{ drawMirroredShore };
+        SceneLayer m_foreground{ drawForeground };
         WaterReflection m_reflection{}; // what the lake mirrors
         // By pointer, as MSVC's std::future builds what it carries with no arguments first.
         std::future<std::unique_ptr<CloudMap>> m_fogMapBuilt{};

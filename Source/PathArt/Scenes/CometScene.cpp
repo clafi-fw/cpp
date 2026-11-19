@@ -46,6 +46,8 @@ namespace ClaFi::PathArt
         constexpr Color Ripple{ 0x26C6D4F4 };
         constexpr Color Glitter{ 0xFFE9EFFF };
         constexpr Color Shore{ 0xFF05070E };
+        // The near shore's pines and boulders, the darkest thing in the frame.
+        constexpr Color Foreground{ 0xFF05080F };
     }
 
     namespace
@@ -137,6 +139,176 @@ namespace ClaFi::PathArt
             int below;
             float share;
         };
+
+        // A pine after the concept's: a leaning trunk carrying tiers of fronds that sweep up and
+        // out, their needles leaning along each branch toward its tip.
+        void drawPine(const SceneFrame& frame, const FloatPoint base, const float height,
+            const int seed)
+        {
+            const SolidColor ink{ CometSceneColors::Foreground };
+            const float lean = 0.05f * (pseudoRandom(seed, 81.0f) - 0.5f);
+            const float spineThickness = std::max(1.0f, height * 0.010f);
+            const float needleThickness = std::max(0.7f, height * 0.005f);
+            // The distance between neighbour needles, as a share of the tree's height.
+            constexpr float k_needleSpacing{ 0.010f };
+            const FloatPoint top{ base.x + lean * height, base.y - height * 0.97f };
+            PixelPath trunk;
+            trunk.moveTo(base);
+            trunk.lineTo(top);
+            strokeShape(frame, trunk, ink, std::max(1.8f, height * 0.026f), StrokeCap::Round);
+            int index = 0;
+            // One frond: a spine that lifts off the trunk then sags, its needles leaning along it
+            // toward the tip. The needles sit one every `k_needleSpacing` of the tree's height,
+            // measured along the spine, so their distance stays even from the foot to the tip.
+            const auto frond = [&](const FloatPoint from, const FloatPoint lift,
+                const FloatPoint sag, const FloatPoint to, const float reach) {
+                const auto spine = [&](const float t) {
+                    const float u = 1.0f - t;
+                    const float a = u * u * u;
+                    const float b = 3.0f * u * u * t;
+                    const float c = 3.0f * u * t * t;
+                    const float d = t * t * t;
+                    return FloatPoint{ a * from.x + b * lift.x + c * sag.x + d * to.x,
+                        a * from.y + b * lift.y + c * sag.y + d * to.y };
+                };
+                // The spine, sampled finely so the needles can be laid by distance along it.
+                constexpr int k_samples{ 16 };
+                FloatPoint spinePoints[k_samples + 1];
+                float spineLengths[k_samples + 1];
+                spinePoints[0] = from;
+                spineLengths[0] = 0.0f;
+                for (int sample = 1; sample <= k_samples; ++sample)
+                {
+                    spinePoints[sample] = spine(static_cast<float>(sample)
+                        / static_cast<float>(k_samples));
+                    const FloatPoint step{ spinePoints[sample].x - spinePoints[sample - 1].x,
+                        spinePoints[sample].y - spinePoints[sample - 1].y };
+                    spineLengths[sample] = spineLengths[sample - 1]
+                        + std::sqrt(step.x * step.x + step.y * step.y);
+                }
+                PixelPath spinePath;
+                spinePath.moveTo(from);
+                for (int sample = 1; sample <= k_samples; ++sample)
+                    spinePath.lineTo(spinePoints[sample]);
+                strokeShape(frame, spinePath, ink, spineThickness, StrokeCap::Round);
+                // Needles, evenly spaced; only the broad fronds take the flake tufts.
+                const float total = spineLengths[k_samples];
+                const int needles = std::max(3, static_cast<int>(
+                    std::lround(total / (height * k_needleSpacing))));
+                for (int needle = 0; needle != needles; ++needle)
+                {
+                    const float target = (static_cast<float>(needle) + 0.5f)
+                        / static_cast<float>(needles) * total;
+                    int sample = 0;
+                    while (sample < k_samples && spineLengths[sample + 1] < target)
+                        ++sample;
+                    const float span = std::max(1.0e-4f,
+                        spineLengths[sample + 1] - spineLengths[sample]);
+                    const float share = (target - spineLengths[sample]) / span;
+                    const FloatPoint at{ spinePoints[sample].x
+                        + (spinePoints[sample + 1].x - spinePoints[sample].x) * share,
+                        spinePoints[sample].y
+                        + (spinePoints[sample + 1].y - spinePoints[sample].y) * share };
+                    const FloatPoint along{
+                        (spinePoints[sample + 1].x - spinePoints[sample].x) / span,
+                        (spinePoints[sample + 1].y - spinePoints[sample].y) / span };
+                    const float length = reach * (0.40f + 0.45f * (target / total))
+                        * (0.8f + 0.4f * pseudoRandom(index++, seed + 13.0f));
+                    for (int side = 0; side != 2; ++side)
+                    {
+                        const float slant = (0.50f + 0.40f
+                            * pseudoRandom(index++, seed + 14.0f))
+                            * (side == 0 ? 1.0f : -1.0f);
+                        const float cosine = std::cos(slant);
+                        const float sine = std::sin(slant);
+                        PixelPath barb;
+                        barb.moveTo(at);
+                        barb.lineTo(at.x + (along.x * cosine - along.y * sine) * length,
+                            at.y + (along.x * sine + along.y * cosine) * length);
+                        strokeShape(frame, barb, ink, needleThickness, StrokeCap::Round);
+                    }
+                }
+            };
+            const int tiers = 16;
+            for (int tier = 0; tier != tiers; ++tier)
+            {
+                const float along = (static_cast<float>(tier) + 0.55f)
+                    / static_cast<float>(tiers);
+                const FloatPoint stem{ base.x + lean * height * along,
+                    base.y - height * 0.97f * along };
+                for (int side = 0; side != 2; ++side)
+                {
+                    const float direction = side == 0 ? -1.0f : 1.0f;
+                    // The pair at the very top is kept short, so the crown comes to a point there
+                    // instead of ending in two long arms.
+                    const float topTaper = tier + 2 >= tiers
+                        ? (tier + 1 >= tiers ? 0.70f : 0.85f)
+                        : 1.0f;
+                    const float length = height * (0.23f - 0.16f * along) * topTaper
+                        * (0.75f + 0.5f * pseudoRandom(index++, seed + 11.0f));
+                    const float rise = 0.12f + 0.62f * pseudoRandom(index++, seed + 12.0f);
+                    const FloatPoint tip{ stem.x + direction * length, stem.y - length * rise };
+                    const FloatPoint lift{ stem.x + direction * length * 0.42f,
+                        stem.y - length * 0.55f };
+                    const FloatPoint sag{ stem.x + direction * length * 0.85f,
+                        stem.y - length * 0.22f };
+                    // The low, long branches are full; the short top ones thin out.
+                    const float fluff = std::clamp(std::pow(length / (0.23f * height), 1.4f),
+                        0.15f, 1.0f);
+                    frond(stem, lift, sag, tip, length * 0.45f);
+                    // A fork off the sag, smaller and steeper, where the branch is broad.
+                    if (fluff > 0.35f)
+                    {
+                        const FloatPoint forkTip{ sag.x + direction * length * 0.35f,
+                            sag.y - length * 0.40f };
+                        frond(sag, { sag.x + direction * length * 0.20f,
+                            sag.y - length * 0.30f },
+                            { sag.x + direction * length * 0.32f, sag.y - length * 0.10f },
+                            forkTip, length * 0.14f);
+                    }
+                }
+            }
+            // The crown's own fronds: one leader pointing at the sky, longer than the two flanking
+            // stubs, so the top comes to a point.
+            frond(top, { top.x, top.y - height * 0.027f }, { top.x + lean * height * 0.027f,
+                top.y - height * 0.049f }, { top.x + lean * height * 0.054f,
+                top.y - height * 0.075f }, height * 0.020f);
+            frond({ top.x, top.y + height * 0.01f }, { top.x - height * 0.015f,
+                top.y - height * 0.005f }, { top.x - height * 0.025f, top.y - height * 0.015f },
+                { top.x - height * 0.04f, top.y - height * 0.03f }, height * 0.018f);
+            frond({ top.x, top.y + height * 0.01f }, { top.x + height * 0.015f,
+                top.y - height * 0.005f }, { top.x + height * 0.025f, top.y - height * 0.015f },
+                { top.x + height * 0.04f, top.y - height * 0.03f }, height * 0.018f);
+        }
+
+        // A boulder: a dark body with sharp points breaking out of it, the far pines' triangles in
+        // stone.
+        void drawBoulder(const SceneFrame& frame, const FloatPoint base, const float width,
+            const float height, const int seed)
+        {
+            const SolidColor ink{ CometSceneColors::Foreground };
+            const float left = base.x - width * 0.5f;
+            const float right = base.x + width * 0.5f;
+            const float peakAt = 0.24f + 0.30f * pseudoRandom(seed, 62.0f);
+            const float peakHigh = height * (0.82f + 0.18f * pseudoRandom(seed, 63.0f));
+            const float secondAt = peakAt + 0.20f + 0.18f * pseudoRandom(seed, 64.0f);
+            const float secondHigh = peakHigh * (0.45f + 0.30f * pseudoRandom(seed, 65.0f));
+            const float shoulder = height * (0.34f + 0.20f * pseudoRandom(seed, 66.0f));
+            PixelPath rock;
+            rock.moveTo(left, base.y);
+            rock.lineTo(left + width * 0.06f, base.y - shoulder * 0.82f);
+            rock.lineTo(left + width * (peakAt - 0.10f), base.y - peakHigh * 0.62f);
+            rock.lineTo(left + width * peakAt, base.y - peakHigh);
+            rock.lineTo(left + width * (peakAt + 0.10f), base.y - peakHigh * 0.55f);
+            rock.lineTo(left + width * (secondAt - 0.07f), base.y - secondHigh * 0.55f);
+            rock.lineTo(left + width * secondAt, base.y - secondHigh);
+            rock.lineTo(left + width * (secondAt + 0.07f), base.y - secondHigh * 0.50f);
+            rock.lineTo(right - width * 0.08f, base.y - shoulder * 0.62f);
+            rock.lineTo(right, base.y - shoulder * 0.16f);
+            rock.lineTo(right + width * 0.05f, base.y);
+            rock.close();
+            fillShape(frame, rock, ink);
+        }
     }
 
     void CometScene::prepare(const SceneParams& params)
@@ -149,6 +321,7 @@ namespace ClaFi::PathArt
         m_lakeShade.prepare(params);
         m_shore.prepare(params);
         m_mirroredShore.prepare(params);
+        m_foreground.prepare(params);
     }
 
     void CometScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
@@ -165,6 +338,8 @@ namespace ClaFi::PathArt
             CometSceneColors::FogTop.withOpacity(0.18f), hazeSpread / (frame.width * 0.6f));
         // The nearest fog lies over the lake and its trees, so it goes on the last layer of all.
         drawFogBand(frame, time, passAt(frame, time.cycleTime), k_nearFog, m_nearFogPixels);
+        // The near shore stands in front of the mist, dark and sharp.
+        m_foreground.draw(frame);
     }
 
     void CometScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
@@ -773,5 +948,27 @@ namespace ClaFi::PathArt
     void CometScene::drawMirroredShore(const SceneFrame& frame)
     {
         drawShore(reflectionOf(frame));
+    }
+
+    // The near shore in front of everything: pines either side and boulders standing in the water,
+    // their points echoing the far pines.
+    void CometScene::drawForeground(const SceneFrame& frame)
+    {
+        const float width = frame.width;
+        const float height = frame.height;
+        drawPine(frame, { width * 0.055f, height * 1.06f }, height * 0.62f, 5);
+        drawPine(frame, { width * 0.125f, height * 1.02f }, height * 0.40f, 9);
+        // One short pine in front, a third of the width in from the left.
+        drawPine(frame, { width * 0.330f, height * 1.01f }, height * 0.24f, 23);
+        drawPine(frame, { width * 0.945f, height * 1.06f }, height * 0.56f, 13);
+        drawPine(frame, { width * 0.885f, height * 1.02f }, height * 0.36f, 17);
+        // The boulders standing in the water.
+        drawBoulder(frame, { width * 0.270f, height * 1.02f }, width * 0.22f, height * 0.34f, 21);
+        drawBoulder(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27);
+        drawBoulder(frame, { width * 0.720f, height * 1.02f }, width * 0.22f, height * 0.30f, 31);
+        // The rocks the near edge of the water breaks on, low across the bottom.
+        drawBoulder(frame, { width * 0.100f, height * 1.01f }, width * 0.30f, height * 0.09f, 51);
+        drawBoulder(frame, { width * 0.500f, height * 1.01f }, width * 0.16f, height * 0.045f, 57);
+        drawBoulder(frame, { width * 0.900f, height * 1.01f }, width * 0.28f, height * 0.08f, 63);
     }
 }
