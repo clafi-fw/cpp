@@ -40,6 +40,8 @@ namespace ClaFi::PathArt
         // Everything above the lake, which the lake shows again upside down.
         void drawAboveLake(const SceneFrame& upright, float cycleTime, bool reflection) const;
         void drawLake(const SceneFrame&, float cycleTime);
+        // The comet's light on the water: the Mill's sun path, over the lake's own sparkles.
+        static void drawGlitterPath(const SceneFrame&, const Pass&, const Ripples&, float cycleTime);
         static void drawSky(const SceneFrame&);
         static void drawFarRidge(const SceneFrame&);
         static void drawNearRidge(const SceneFrame&);
