@@ -82,12 +82,12 @@ namespace SeeDocs_App::Ui
         constexpr std::wstring_view k_sidebarCaption = L"Edit sidebar";   // on a home
         constexpr std::wstring_view k_closeProjectCaption = L"Close project";   // on a home
         constexpr std::wstring_view k_closeCaption = L"Close";   // on a row of the root
-        constexpr std::wstring_view k_closeTooltip = L"Closes the project and every tab on it";
+        constexpr std::wstring_view k_closeTooltip = L"Close the project and every tab on it";
         constexpr std::wstring_view k_createCaption = L"Create";   // on the root
         constexpr std::wstring_view k_createTooltip =
-            L"Makes a new project - a folder of its own, reading the sources it is given";
+            L"Make a new project - a folder of its own, reading the sources it is given";
         constexpr std::wstring_view k_openCaption = L"Open";   // on the root
-        constexpr std::wstring_view k_openTooltip = L"Opens a project's folder";
+        constexpr std::wstring_view k_openTooltip = L"Open a project's folder";
         constexpr std::wstring_view k_projectsHeading = L"Projects";   // the root's open ones
         constexpr std::wstring_view k_recentHeading = L"Recent";   // the root's opened before
         constexpr std::wstring_view k_noProjectLead = L"No project is open.";

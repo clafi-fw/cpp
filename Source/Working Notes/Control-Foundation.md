@@ -137,6 +137,14 @@ were read with the trimmed-text test briefly lifted: the palette row under the p
 whole, icon and all, standing over the row. See `Agent/UiFrameTest/overtext-focus.ps1` and
 `captures/overtext-window.png`.
 
+**A tooltip is the instruction the user issues, 2026-11-19.** Oj: a tooltip of a control the user
+acts on is the instruction that control's press carries, not a description of what the application
+does - "The windows are drawn on the CPU" belongs on a readout label, and the radio button beside it
+says "Draw the windows on the CPU". The sweep went through the framework's own pages: the backend
+radios and the settings sliders, the keep-settings and check-automatically boxes, the search box's
+previous and next, the showcase's backend radios, and the SeeDocs commands. Readout labels, grid
+cells, the metrics and chart tooltips and documentation content keep their descriptions.
+
 **The room is the style's, the air between the parts is not, 2026-11-19.** Oj, seeing the first
 captures: "Add Padding, take off Spacing." The tooltip had inherited AnyWindow's 4-unit padding and
 carried a blank line between the caption and the body, which read as a box drawn tight around two

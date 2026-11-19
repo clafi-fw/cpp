@@ -362,7 +362,7 @@ namespace ClaFi
         ) },
         m_autoButton{ m_themeRow.add<ToolButton>(
             L"Auto",
-            TooltipText{ L"Follow system" },
+            TooltipText{ L"Follow the system's color mode" },
             ButtonViewMode::IconOnly,
             k_themeIconSize,
             OnDrawIcon{ Icons::SunMoonIcon::draw },
@@ -404,7 +404,7 @@ namespace ClaFi
             MinSize{ k_sliderWidth, 0.0f },
             MaxSize{ k_sliderWidth, k_maxFloat },
             ScrollButtons::No,
-            TooltipText{ L"Scales the UI on top of the system scale" }
+            TooltipText{ L"Scale the UI on top of the system scale" }
         ) },
 #if CLAFI_TEXT_MOVING
         m_zAnimationRow{ m_interfaceGroup.add<StackPanel>(
@@ -424,7 +424,7 @@ namespace ClaFi
             MaxSize{ k_sliderWidth, k_maxFloat },
             ScrollButtons::No,
             FineAdjust::No,
-            TooltipText{ L"How far controls move in depth under the pointer" }
+            TooltipText{ L"Set how far controls move in depth under the pointer" }
         ) },
 #endif
         // **No room at the sides**, so the box stands where a label's text stands. A check box is
@@ -438,7 +438,7 @@ namespace ClaFi
         ) },
         m_alwaysShowFocus{ m_interfaceGroup.add<CheckBox>(
             L"Always show focus",
-            TooltipText{ L"Ring the focused control under the mouse too" },
+            TooltipText{ L"Show the focus ring on the control under the mouse too" },
             Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
         ) },
         m_performanceSection{ m_options.addSection(L"Performance") },
@@ -543,12 +543,12 @@ namespace ClaFi
         // **The two draw text differently**, and the choice is visible in it: the card antialiases
         // a glyph's edge across the color of the pixel, the CPU across its brightness alone.
         m_gpuBackend.onAdjustTooltip([](AdjustTooltipEvent& event) {
-            event.text << L"The windows are drawn through the graphics card." << k_endLine;
+            event.text << L"Draw the windows through the graphics card." << k_endLine;
             event.text << L"Text is antialiased in subpixel color, which sharpens its edges and "
                 L"can fringe them with color over a colored ground.";
         });
         m_cpuBackend.onAdjustTooltip([](AdjustTooltipEvent& event) {
-            event.text << L"The windows are drawn on the CPU." << k_endLine;
+            event.text << L"Draw the windows on the CPU." << k_endLine;
             event.text << L"Text is antialiased in grayscale, so its edges take no color, and "
                 L"read a little softer than the card's.";
         });
@@ -577,14 +577,13 @@ namespace ClaFi
         m_keepSettings.onAdjustTooltip([this](AdjustTooltipEvent& event) {
             if (appContext().configFolderExists())
             {
-                event.text << L"Settings are stored in";
+                event.text << L"Keep the settings in";
                 event.text << k_endLine;
                 event.text << folderText(appContext(), FolderDisplayPurpose::ToDisplay);
             }
             else
             {
-                event.text << appContext().appName();
-                event.text << L" will remember windows placement, settings and other";
+                event.text << L"Keep window placement, settings and other";
                 event.text << k_endLine;
                 event.text << L"things between sessions.";
             }

@@ -46,7 +46,7 @@ namespace SeeDocs_App::Ui
                 L"Browse",
                 EndIcon::OpensWindow,
                 HorizontalAlign::Left,
-                TooltipText{ L"Opens a project's folder" },
+                TooltipText{ L"Open a project's folder" },
                 Button::OnClick{ [&workspace](ClickEvent& event) {
                     event.closeForm();
                     workspace.browse();

@@ -108,7 +108,7 @@ namespace ClaFi
         // No padding at the sides, so the box lines up with the status text above it.
         m_checkAutomaticallyBox = &automaticRow.add<CheckBox>(
             L"Check automatically",
-            TooltipText{ L"Checks for updates on start, at most once in 24 hours" },
+            TooltipText{ L"Check for updates on start, at most once in 24 hours" },
             Padding{ 0.0f, styleMetrics(UiElement::ListItem).padding.y },
             VerticalAlign::Center
         );

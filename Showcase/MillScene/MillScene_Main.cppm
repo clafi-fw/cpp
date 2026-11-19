@@ -1547,14 +1547,14 @@ void MillSceneForm::addBackendLines(Menu& list)
                 [useGpu](AdjustTooltipEvent& event) {
                     if (useGpu)
                     {
-                        event.text << L"The windows are drawn through the graphics card."
+                        event.text << L"Draw the windows through the graphics card."
                             << k_endLine;
                         event.text << L"Text is antialiased in subpixel color, which sharpens "
                             L"its edges and can fringe them with color over a colored ground.";
                     }
                     else
                     {
-                        event.text << L"The windows are drawn on the CPU." << k_endLine;
+                        event.text << L"Draw the windows on the CPU." << k_endLine;
                         event.text << L"Text is antialiased in grayscale, so its edges take no "
                             L"color, and read a little softer than the card's.";
                     }

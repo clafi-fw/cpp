@@ -42,9 +42,9 @@ namespace SeeDocs_App::Ui
     {
         constexpr std::wstring_view k_addCaption = L"Add";
         constexpr std::wstring_view k_deleteCaption = L"Delete";
-        constexpr std::wstring_view k_addTooltip = L"Adds an item under the selected category, "
+        constexpr std::wstring_view k_addTooltip = L"Add an item under the selected category, "
             L"or after the selected item";
-        constexpr std::wstring_view k_deleteTooltip = L"Takes the selected item out, with "
+        constexpr std::wstring_view k_deleteTooltip = L"Take the selected item out, with "
             L"everything under it";
         constexpr std::wstring_view k_deleteTitle = L"Delete category";
     }

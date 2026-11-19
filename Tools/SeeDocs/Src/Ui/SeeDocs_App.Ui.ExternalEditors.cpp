@@ -64,7 +64,7 @@ namespace SeeDocs_App::Ui
         constexpr float k_commandColumn = 130.0f;   // where a listed command starts
         constexpr float k_noLineGap = 16.0f;        // the least room before the no line mark
         constexpr std::wstring_view k_noLineTooltip =
-            L"Opens the file without going to the line - the editor has no switch for one";
+            L"Open the file without going to the line - the editor has no switch for one";
 
         // An editor a box suggests: what it is called, and the command that opens a source in it.
         struct Suggestion
@@ -330,10 +330,10 @@ namespace SeeDocs_App::Ui
         StackPanel& group = page.addGroup(L"External editors");
         addEditorRow(group, L"C++:", EditorKey::Cpp,
             onThisDesktop(WindowsSuggestions::Cpp, LinuxSuggestions::Cpp),
-            TooltipText{ L"Opens a C++ source at a line - {file} and {line} are filled in" });
+            TooltipText{ L"Open a C++ source at a line - {file} and {line} are filled in" });
         addEditorRow(group, L"Delphi:", EditorKey::Delphi,
             onThisDesktop(WindowsSuggestions::Delphi, LinuxSuggestions::Delphi),
-            TooltipText{ L"Opens a Delphi source at a line - {file} and {line} are filled in" });
+            TooltipText{ L"Open a Delphi source at a line - {file} and {line} are filled in" });
     }
 
     bool hasEditorCommand(AppContext& context, const SourceLanguage language)

@@ -18,6 +18,13 @@ referenced from the line; what only an author of the framework needs
 `Source/Working Notes`. `SeeDocsCli check Source/.seedocs`, built from `Tools/SeeDocs`, reports
 every departure.
 
+## Tooltip copy
+
+A tooltip on a control the user acts on, in the framework's own interfaces and its first-party apps,
+states the instruction the press carries - "Draw the windows on the CPU", not "The windows are
+drawn on the CPU". A readout that only reports keeps its description. The sweep and the reasoning
+are in `Source/Working Notes/Control-Foundation.md`.
+
 ## Layout
 
 Library code is under `Source/`, with the footnotes the code refers to in

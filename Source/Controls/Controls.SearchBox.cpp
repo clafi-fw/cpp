@@ -245,10 +245,10 @@ namespace ClaFi::Controls
         m_previous.onGetState(foundAny);
         m_next.onGetState(foundAny);
         m_previous.onAdjustTooltip([](AdjustTooltipEvent& event){
-            writeTooltip(event, L"Previous", { Keys::Return, { .shift = true } });
+            writeTooltip(event, L"Go to the previous match", { Keys::Return, { .shift = true } });
         });
         m_next.onAdjustTooltip([](AdjustTooltipEvent& event){
-            writeTooltip(event, L"Next", { Keys::Return });
+            writeTooltip(event, L"Go to the next match", { Keys::Return });
         });
     }
 

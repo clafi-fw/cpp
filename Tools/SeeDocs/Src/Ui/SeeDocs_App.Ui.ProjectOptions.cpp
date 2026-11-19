@@ -374,7 +374,7 @@ namespace SeeDocs_App::Ui
                 WordWrap::No,
                 VerticalTextAnchor::Center,
                 std::move(folderName),
-                TooltipText{ L"Name of the project. If left empty, the folder name is used" }
+                TooltipText{ L"Name the project. An empty name uses the folder name" }
             },
             m_workspace{ workspace },
             m_project{ project }
@@ -531,7 +531,7 @@ namespace SeeDocs_App::Ui
                 m_list.column(SourceList::SourceColumn::Subfolders),
                 L"Include subfolders",
                 VerticalAlign::Center,
-                TooltipText{ L"Scans this folder recursively" },
+                TooltipText{ L"Scan this folder recursively" },
                 styleMetrics(UiElement::ListItem).padding,
                 CheckBox::OnGetState{ [this](GetStateEvent& event) {
                     event.state.selected = m_list.readsSubfolders(m_source);
