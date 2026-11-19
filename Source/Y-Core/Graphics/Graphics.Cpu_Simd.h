@@ -6,9 +6,38 @@
 // =========================================================================
 #pragma once
 #include <immintrin.h>
+#include <cstdint>
 
 namespace ClaFi::Graphics::Cpu
 {
+    // **Writes pixels straight past the cache.** A store that does not read its line first is one
+    // pass over the memory rather than two, and a fill larger than the cache would hold - a
+    // background, a sky - is never read before it is overwritten. The caller states the question
+    // the size answers, and closes the fill with _mm_sfence() before anything reads the pixels back.
+    //
+    // A streaming store needs a 32-byte line, so the head runs up to the first one whole.
+    inline void streamFillPixels(void* dest, const int count, const std::uint32_t value)
+    {
+        auto* pixels = static_cast<std::uint32_t*>(dest);
+        int written = 0;
+        while (written < count && (reinterpret_cast<std::uintptr_t>(pixels + written) & 31u) != 0u)
+        {
+            pixels[written] = value;
+            ++written;
+        }
+
+        const __m256i colour = _mm256_set1_epi32(static_cast<int>(value));
+        for (; written + 8 <= count; written += 8)
+        {
+            _mm256_stream_si256(reinterpret_cast<__m256i*>(pixels + written), colour);
+        }
+
+        for (; written < count; ++written)
+        {
+            pixels[written] = value;
+        }
+    }
+
     // SIMD 8-pixel blend
     inline __m256i blend8(__m256i dest, __m256i src, __m256i alpha)
     {

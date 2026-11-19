@@ -129,6 +129,42 @@ the frame, most of it inside the boxes of the atmosphere's three rings - each th
 some 700 rows, the ring a fraction of that. There the atmosphere fell from 10.5 to 6.4 ms in the
 harness, and every frame of the scenes and the mill came out the same bit for bit.
 
+## RasterBuffers compositeRampRows
+
+**A gradient whose axis runs straight down is resolved once a row** (2026-11-18). compositeRamp
+computes a pixel's place along the axis, clamps it, scales it by 256 and gathers the ramp, for
+every eight pixels. On a background - a sky, a field, a wall shaded from top to bottom - that
+place is the row's alone, so the three products, the conversion and the gather were paid for an
+answer that did not change along the row. compositeRampRows clamps and steps once a scanline and
+carries the colour in a register. A row neither the mask nor the clip reaches, in a colour already
+opaque, is written whole, with no destination read at all.
+
+The two paths agree to the bit. The row's position is the general path's own instructions: with
+the axis's x zero, `(vRx * vDx + vRy * vDy) * vInvLenSq` is `((py - startY) * axis.y) *
+invLenSq`, and the clamp, the 256 step and the round are its own intrinsics. The colour a row
+mixes toward is opaque whatever the ramp states - the colour compositeRamp blends toward - and the
+fast path that stores a colour at 255 whole is not asked for, because compositeRamp blends that
+one by its weight.
+
+Chase at 3840 x 1984 on the Linux CPU backend, a Release clang build: draw fell from 41.5 to 25.2
+ms a frame, the sky alone from 13.7 to 3.9, and the meadow from 3.5 to 0.9. Eleven frames drawn at
+that size - the mill, Chase in Clear Day, Twilight, Stormy Night and Sahara Heat, Bot Talent,
+Ghost, Clockwork, Comet, Earth and Orrery - came out the same bit for bit.
+
+## streamFillPixels
+
+**A fill larger than the cache would hold is written past the cache** (2026-11-18). A store into a
+line the cache does not hold reads the line in first, so a full-surface fill passed over a
+frame's worth of memory twice: once to bring the lines in and once to write them. streamFillPixels
+writes 32 bytes at a time with `_mm256_stream_si256`, so no line is read, and the caller fences
+before anything reads the pixels back. RectPainter's snapped opaque route takes it for a fill of 2
+MB or more; compositeRampRows' covered rows take it over a row of 2048 pixels.
+
+At 3840 x 1984 the sky fell from 3.9 to 1.4 ms and the meadow from 0.9 to 0.7. The form's own
+background, the fill under a scene that covers it, fell from 4.0 to 2.2 at 3840 x 2068 - which is a
+cost worth knowing about: the scene redraws every pixel of it, and nothing reads what the fill
+leaves. The frames of the same matrix came out the same bit for bit.
+
 ## PixelView compositeSurface
 
 **Eight pixels at a time** (2026-11-08). Taken one at a time, the pixels of a scene's kept layer

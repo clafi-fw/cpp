@@ -934,6 +934,166 @@ namespace ClaFi::Graphics::Cpu
         }
     }
 
+    // **A gradient whose colour is one a row is resolved a row at a time.** Its position along the
+    // axis is the row's alone - a sky, a field, a wall shaded from top to bottom - so the ramp is
+    // read once a scanline and the pixel loop carries a colour in a register. The general loop pays
+    // three multiplications, a conversion and a gather for every eight pixels, and on a frame-wide
+    // background that gather is the whole cost of the fill.
+    //
+    // The row's position and the step it lands on are the ones compositeRamp computes for a pixel:
+    // the same clamp to 0..1 and the same round to the ramp's 1/256th, so a gradient drawn through
+    // either path is the same colour.
+    template<typename RowPosition>
+    void RasterBuffers::compositeRampRows(const PixelView& target, std::span<const GradientStop> stops,
+        const RowPosition& rowPosition, const float* maskBase, int maskStride)
+    {
+        const FloatRect activeRect = target.clippedBounds();
+        if (activeRect.empty())
+        {
+            return;
+        }
+
+        SimdEnv env;
+        const __m256 vAlphaNorm = _mm256_set1_ps(256.0f / 255.0f);
+
+        ColorAsUint ramp[k_gradientRampLast + 1];
+        buildGradientRamp(stops, ramp);
+
+        RasterBuffers& buffers = g_rasterBuffers;
+        const bool useClip = buffers.hasActiveClip;
+        const FloatRect& clipBounds = buffers.clipBox;
+        const int clipStride = buffers.m_clipStride;
+
+        const int startY = static_cast<int>(std::floor(activeRect.top));
+        const int endY = static_cast<int>(std::ceil(activeRect.bottom));
+        const int startX = static_cast<int>(std::floor(activeRect.left));
+        const int endX = static_cast<int>(std::ceil(activeRect.right));
+
+        const int geomTop = static_cast<int>(std::floor(target.top()));
+        const int geomLeft = static_cast<int>(std::floor(target.left()));
+
+        // A row as wide as a frame is written past the cache, as RectPainter's large fills are:
+        // the row is a background nobody reads before overwriting it.
+        constexpr int k_streamingRowPixels{ 2048 };
+        bool streamed = false;
+
+        // --- **Hoist loop invariants** --- [CP]
+        const float* clipBaseRow = nullptr;
+        int clipYOffset = 0;
+        int clipMaxHeight = 0;
+        int clipLeft = 0;
+
+        if (useClip && buffers.activeClipMaskPtr)
+        {
+            clipYOffset = -static_cast<int>(std::floor(clipBounds.top));
+            clipMaxHeight = static_cast<int>(std::ceil(clipBounds.bottom)) - static_cast<int>(std::floor(clipBounds.top));
+            clipLeft = static_cast<int>(std::floor(clipBounds.left));
+            clipBaseRow = buffers.activeClipMaskPtr;
+        }
+
+        for (int y = startY; y < endY; ++y)
+        {
+            const MaskRun covered = maskBase
+                ? buffers.coveredRun(y - geomTop, startX, endX)
+                : MaskRun{ startX, endX };
+            const int rowLeft = covered.left;
+            const int rowWidth = covered.right - covered.left;
+            if (rowWidth <= 0)
+            {
+                continue;
+            }
+
+            const float position = rowPosition(static_cast<float>(y) + 0.5f);
+            // The clamp, the step and the round are compositeRamp's own instructions, so a row
+            // lands on the same stop a pixel of the general path would.
+            const __m256 vT = _mm256_min_ps(env.vOne,
+                _mm256_max_ps(env.vZero, _mm256_set1_ps(position)));
+            const __m256i vTI = _mm256_min_epi32(_mm256_set1_epi32(k_gradientRampLast),
+                _mm256_max_epi32(env.vZeroi,
+                    _mm256_cvtps_epi32(_mm256_mul_ps(vT, env.v256))));
+            const ColorAsUint colour = ramp[_mm_cvtsi128_si32(_mm256_castsi256_si128(vTI))];
+
+            Color* pixelRow = target.scanLineAbs(static_cast<float>(rowLeft),
+                static_cast<float>(y));
+            const float* maskRow = maskBase
+                ? &maskBase[(y - geomTop) * maskStride + (rowLeft - geomLeft)]
+                : nullptr;
+            const float* clipRow = nullptr;
+
+            if (clipBaseRow)
+            {
+                const int clipY = y + clipYOffset;
+                if (clipY >= 0 && clipY < clipMaxHeight)
+                {
+                    clipRow = &clipBaseRow[clipY * clipStride];
+                }
+            }
+
+            // A row neither the mask nor the clip reaches, in a colour already opaque, is the
+            // colour written whole: no destination pixel is read and no blend is done.
+            if (!maskRow && !clipRow && (colour >> 24) == 0xFF)
+            {
+                if (rowWidth >= k_streamingRowPixels)
+                {
+                    streamFillPixels(pixelRow, rowWidth, colour);
+                    streamed = true;
+                }
+                else
+                {
+                    PixelView::fillPixelLine(pixelRow, static_cast<std::size_t>(rowWidth),
+                        Color{ colour });
+                }
+                continue;
+            }
+
+            // **The colour the row mixes toward is opaque whatever the ramp states**, as
+            // compositeRamp draws it: a gradient's alpha is the strength it mixes at, not a
+            // translucency it leaves in the frame.
+            constexpr std::uint32_t k_opaqueAlpha{ 0xFF000000u };
+            const __m256i vColour = _mm256_set1_epi32(
+                static_cast<int>(colour | k_opaqueAlpha));
+            const __m256 vColourAlpha = _mm256_set1_ps(static_cast<float>(colour >> 24));
+
+            for (int xOffset = 0; xOffset < rowWidth; xOffset += 8)
+            {
+                const __m256i vLoadMask = env.loadMask(rowWidth - xOffset);
+                __m256 vCoverage = maskRow
+                    ? _mm256_maskload_ps(const_cast<float*>(maskRow), vLoadMask)
+                    : env.vOne;
+
+                if (clipRow)
+                {
+                    const int clipX = (rowLeft + xOffset) - clipLeft;
+                    vCoverage = _mm256_mul_ps(vCoverage,
+                        _mm256_maskload_ps(const_cast<float*>(clipRow + clipX), vLoadMask));
+                }
+                else if (useClip)
+                {
+                    vCoverage = env.vZero;
+                }
+
+                const __m256i vAlphaI = _mm256_cvtps_epi32(_mm256_mul_ps(vColourAlpha,
+                    _mm256_mul_ps(vAlphaNorm, vCoverage)));
+
+                // **Blended, never stored whole.** blendAndStoreBlock's fast path writes a colour
+                // at 255 as it stands, and compositeRamp blends that one by its weight like any
+                // other, so the fast path is not asked for and the two agree to the bit.
+                blendAndStoreBlock(pixelRow, vLoadMask, vColour, vAlphaI, env);
+
+                pixelRow += 8;
+                if (maskRow)
+                {
+                    maskRow += 8;
+                }
+            }
+        }
+
+        if (streamed)
+        {
+            _mm_sfence();
+        }
+    }
+
     void RasterBuffers::compositeLinearGradient(const PixelView& target, FloatPoint startPoint,
         FloatPoint endPoint, std::span<const GradientStop> stops,
         const float* maskBase, int maskStride)
@@ -944,6 +1104,22 @@ namespace ClaFi::Graphics::Cpu
         };
         float lenSq = axis.x * axis.x + axis.y * axis.y;
         float invLenSq = (lenSq > 1e-6f) ? (1.0f / lenSq) : 0.0f;
+
+        // **An axis running straight down is the shape a background takes**, and its colour is the
+        // row's alone: it goes to the row path. A brush turned by a transform states the same
+        // thing through its mapped endpoints. The position is the general path's own three
+        // products, taken where the pixel's x cancels, so both put a row on the same stop.
+        if (axis.x == 0.0f)
+        {
+            const __m256 vStartY = _mm256_set1_ps(startPoint.y);
+            const __m256 vDy = _mm256_set1_ps(axis.y);
+            const __m256 vInvLenSq = _mm256_set1_ps(invLenSq);
+            compositeRampRows(target, stops, [&](const float py) {
+                const __m256 vRy = _mm256_sub_ps(_mm256_set1_ps(py), vStartY);
+                return _mm256_cvtss_f32(_mm256_mul_ps(_mm256_mul_ps(vRy, vDy), vInvLenSq));
+            }, maskBase, maskStride);
+            return;
+        }
 
         const __m256 vP1x = _mm256_set1_ps(startPoint.x);
         const __m256 vP1y = _mm256_set1_ps(startPoint.y);

@@ -67,6 +67,26 @@ namespace ClaFi::Graphics::Cpu
             const float finalAlpha = color.alpha / 255.0f;
             std::intptr_t stride = m_pixelView.stride();
 
+            // **A fill larger than the cache would hold is written past the cache.** The row copy
+            // below reads the destination back into the cache to overwrite half of every line, so a
+            // whole-surface background is two passes over a frame's worth of memory rather than one.
+            constexpr long long k_streamingFillPixels{ 1 << 19 }; // 2 MB of pixels
+            if (finalAlpha >= 0.999f
+                && static_cast<long long>(rowWidth) * (endY - startY) >= k_streamingFillPixels)
+            {
+                const Color solidColor = color.fullyOpaque();
+                const std::uint32_t pixel = solidColor.asUint();
+                Color* row = m_pixelView.pixelAbs(static_cast<float>(startX),
+                    static_cast<float>(startY), false);
+                for (int py = startY; py < endY; ++py)
+                {
+                    streamFillPixels(row, rowWidth, pixel);
+                    row += stride;
+                }
+                _mm_sfence();
+                return;
+            }
+
             if (finalAlpha >= 0.999f)
             {
                 Color solidColor = color.fullyOpaque();
