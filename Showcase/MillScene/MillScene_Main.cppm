@@ -112,9 +112,11 @@ namespace MillScene_App
     constexpr std::wstring_view k_drawnOnGpu{
         L"The scene is drawn through the graphics card - GPU acceleration is on in Settings." };
     constexpr std::wstring_view k_drawnOnCpu{
-        L"The scene is rendered on a single CPU thread - GPU acceleration is off in Settings." };
+        L"The scene is rendered on a single CPU thread, except the Earth scene, whose globe is "
+        L"worked out in bands on several cores. GPU acceleration is off in Settings." };
     constexpr std::wstring_view k_drawnOnCpuOnly{
-        L"The scene is rendered on a single CPU thread with no GPU acceleration." };
+        L"The scene is rendered on a single CPU thread, except the Earth scene, whose globe is "
+        L"worked out in bands on several cores." };
 
     // **What the picked scene theme is kept under**, and it is kept by name: an index moves the
     // moment the list gains a theme, and a name is what a config file read by hand should show.

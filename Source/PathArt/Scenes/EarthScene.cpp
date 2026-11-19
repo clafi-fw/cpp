@@ -2731,10 +2731,11 @@ namespace ClaFi::PathArt
         // **A band of the sea, premultiplied and opaque on the sphere**: the depths are read at
         // points `step` apart and spread over the pixels between, each pixel takes its colour by
         // the look, and the air's haze veils it as it veils the land; the pixels on the limb fade
-        // out across it. The bitmap spans the sphere's widest row in the band; answers where it
-        // stands.
-        [[nodiscard]] FloatPoint rasterizeSeaBand(const SeaPicture& picture, const int top,
-            const int rows, Bitmap& pixels)
+        // out across it. **The sea writes where it lies in `pixels`**, whose canvas corner is
+        // `targetAt`, and not into a layer of its own size: it is the band's first layer, over a
+        // band cleared to nothing, so its own pixels are the band's.
+        void rasterizeSeaBand(const SeaPicture& picture, const int top,
+            const int rows, Bitmap& pixels, const FloatPoint targetAt)
         {
             const FloatPoint radii = picture.sphereRadii;
             const float nearestRow = std::clamp(picture.sphereCenter.y,
@@ -2749,12 +2750,14 @@ namespace ClaFi::PathArt
                 static_cast<int>(std::ceil(picture.sphereCenter.x + halfWidth)));
             if (left >= right)
             {
-                pixels.resize({});
-                return {};
+                return;
             }
             const int width = right - left;
             const float firstPixelX = static_cast<float>(left) + 0.5f;
-            pixels.resize({ width, rows });
+            // The band's corner is where the bitmap's first pixel stands, and the sea's rows and
+            // columns are measured from it.
+            const int columnInPixels = left - static_cast<int>(targetAt.x);
+            const int rowInPixels = top - static_cast<int>(targetAt.y);
             // The last group of 8 pixels reads 8 points from the one under its first pixel.
             const std::size_t pointLength =
                 groupedLength(static_cast<int>(groupedLength(width)) / step + 8);
@@ -2816,7 +2819,7 @@ namespace ClaFi::PathArt
                     static_cast<float>(pastPoints) / static_cast<float>(step));
                 const float pixelY = static_cast<float>(top + y) + 0.5f;
                 const float up = (picture.sphereCenter.y - pixelY) / radii.y;
-                Color* row = pixels.pixel(0, y);
+                Color* row = pixels.pixel(columnInPixels, rowInPixels + y);
                 for (int x = 0; x < width; x += 8)
                 {
                     const std::size_t point = static_cast<std::size_t>(x / step);
@@ -2846,7 +2849,6 @@ namespace ClaFi::PathArt
                         _mm256_or_si256(byteAt(hazed.red, 16), byteAt(one, 24))));
                 }
             }
-            return { static_cast<float>(left), static_cast<float>(top) };
         }
 
         // A circle in the canvas's pixels.
@@ -4726,11 +4728,17 @@ namespace ClaFi::PathArt
             if (!layerPixels.empty())
                 bandView.compositeSurface(layerPixels.pixelView(at), at, 1.0f);
         };
+        // **The sea is the band's first layer, over a band cleared to nothing**, so it writes its
+        // pixels into the band itself: the layer and the second pass over it would carry the same
+        // bytes.
         if (picture.sea)
         {
-            layOver(picture.sea->top, picture.sea->bottom, [&](int firstRow, int rowCount) {
-                return rasterizeSeaBand(*picture.sea, firstRow, rowCount, layerPixels);
-            });
+            const int firstRow = std::max(bandTop, picture.sea->top);
+            const int endRow = std::min(bottom, picture.sea->bottom);
+            if (firstRow < endRow)
+            {
+                rasterizeSeaBand(*picture.sea, firstRow, endRow - firstRow, drawn.pixels, drawn.at);
+            }
         }
         // The lights read 8 pixels past a row's end.
         const int coverStride = static_cast<int>(groupedLength(right - left));

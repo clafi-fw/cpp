@@ -14,6 +14,7 @@ import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Cpu.Canvas;
 import ClaFi.Core.Graphics.Png;
 import ClaFi.Core.Graphics.Types;
+import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
@@ -53,10 +54,11 @@ namespace MillScene_App
         void reportRenderFailure(const RenderOptions& options, const std::wstring& text)
         {
             report(text);
-            std::ofstream failures{
-                std::filesystem::path{ options.render }.wstring() + L".error.txt"
-            };
-            failures << toUtf8(text) << '\n';
+            // A path, and not the wide string the file system will not take from every library.
+            const std::filesystem::path failures{
+                std::filesystem::path{ options.render }.wstring() + L".error.txt" };
+            std::ofstream file{ failures };
+            file << toUtf8(text) << '\n';
         }
     }
 

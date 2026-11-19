@@ -1519,6 +1519,13 @@ backend alone, Oj picked one picture, delivered with a sheet.
   bitmap by the rasterizers as they stood, and laid over the band's by compositeSurface. Clearing
   the band and laying the four layers over it costs 8 of 75 ms of processor time a frame at
   3436 x 2051 on the container, the lights 0.13 and the atmosphere 1.7.
+- **The sea writes into the band itself** (2026-11-19). It is the first layer, over a band cleared
+  to nothing, so a layer of its own carried the same bytes twice: its rows now go where they lie in
+  the band's bitmap, and the pass that laid them over the band is gone. At 3840 x 2160 the globe's
+  26.5 ms a frame headless fell to 25.8, and the frame came out the same bit for bit. The land and
+  the clouds keep a layer of their own: each is laid over what stands below it, which premultiplied
+  rows cannot do where they are written - and the land's rows are also what the lights read their
+  cover from.
 - **The bands start a whole number of 8 pixels down the canvas**, the most any layer's points stand
   apart, so a layer's rows in a band start on its own points' rows. A band keeps the rows from the
   frame's first on and the columns its outline covers within the frame, so nothing is drawn past
