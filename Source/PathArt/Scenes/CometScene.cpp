@@ -1,6 +1,7 @@
 module ClaFi.PathArt.CometScene;
 
 import ClaFi.PathArt.Air;
+import ClaFi.PathArt.CloudMap;
 import ClaFi.PathArt.CometSprite;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
@@ -30,6 +31,9 @@ namespace ClaFi::PathArt
         constexpr Color ShootingStar{ 0xFFFFFFFF };
         // The comet's cold light on the mountains it passes over.
         constexpr Color CometLight{ 0xFFCFE2FF };
+        // The fog lying in the valley: silver-blue, lighter at its tops.
+        constexpr Color FogTop{ 0xFFD6DFF2 };
+        constexpr Color FogFoot{ 0xFF9BA7C6 };
         constexpr Color NearRidgeTop{ 0xFF1C2439 };
         constexpr Color NearRidgeBottom{ 0xFF111726 };
         constexpr Color Afterglow{ 0xFFFFB070 };
@@ -107,6 +111,33 @@ namespace ClaFi::PathArt
             }
             return rock;
         }
+
+        // The fog's strips of the cloud map: a grid of the map's cover over each band, which the
+        // band's pixels read between. See PathArt#cloudkind
+        constexpr int k_fogColumns{ 160 };
+        constexpr int k_fogRows{ 40 };
+        constexpr float k_fogLongitudeSpan{ 2.2f }; // radians of the map across the frame
+        constexpr float k_fogLatitudeSpan{ 0.55f }; // radians down a band
+        // The clouds the fog is cut from: the Earth's heaps, seeded once.
+        constexpr CloudKind k_fogKind{ CloudKind::Puffy };
+        constexpr std::uint32_t k_fogSeed{ 47u };
+        constexpr float k_fogCover{ 0.55f };
+
+        // One row of a fog band's bitmap, worked out once for the row: its fog colour, the light's
+        // channels, its share of the band's vertical profile, and the grid rows it reads between.
+        struct FogRow
+        {
+            float red;
+            float green;
+            float blue;
+            float lightRed;
+            float lightGreen;
+            float lightBlue;
+            float profile;
+            int above;
+            int below;
+            float share;
+        };
     }
 
     void CometScene::prepare(const SceneParams& params)
@@ -124,9 +155,13 @@ namespace ClaFi::PathArt
     void CometScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
     {
         const SceneFrame frame = SceneFrame::FromBounds(canvas, bounds);
+        takeFogMap();
         drawSky(frame);
         drawAboveLake(frame, time.cycleTime, false);
         drawLake(frame, time.cycleTime);
+        // The nearest fog lies over the lake and its trees, so it goes on the last layer of all.
+        drawFogBand(frame, time.cycleTime, passAt(frame, time.cycleTime), k_nearFog,
+            m_nearFogPixels);
     }
 
     void CometScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
@@ -199,6 +234,171 @@ namespace ClaFi::PathArt
         const float lakeY = frame.height * k_lakeShare;
         return frame.within(Matrix3x2::Translation(0.0f, lakeY * 2.0f)
             * Matrix3x2::Scale(1.0f, -1.0f));
+    }
+
+    // The fog's clouds are a CloudMap, built as the Earth's are: started off the paint on the
+    // first frames, taken when it is ready, and kept. See PathArt#earthscene
+    void CometScene::takeFogMap()
+    {
+        if (m_fogMap)
+            return;
+        if (!m_fogMapBuilt.valid())
+        {
+            m_fogMapBuilt = std::async(std::launch::async, []() {
+                return std::make_unique<CloudMap>(k_fogKind, k_fogSeed, k_fogCover);
+            });
+        }
+        if (m_fogMapBuilt.wait_for(std::chrono::seconds{ 0 }) == std::future_status::ready)
+            m_fogMap = m_fogMapBuilt.get();
+    }
+
+    // **The fog is a band of the Earth's clouds laid over the ranges**: a strip of a cloud map,
+    // read as a texture whose cover is the fog's opacity, so the clouds' own bills and gaps show
+    // over the ridges. Nothing is lifted out as a shape.
+    void CometScene::drawFogBand(const SceneFrame& frame, const float cycleTime,
+        const Pass& pass, const FogBand& band, Graphics::Bitmap& pixels) const
+    {
+        if (!m_fogMap)
+            return;
+        const float unit = frame.unit;
+        const float width = frame.width;
+        const float top = frame.height * band.topShare;
+        const float bottom = frame.height * band.bottomShare;
+        // Where the band stands on the canvas, and how many pixels it takes there.
+        const FloatPoint at = frame.toCanvas.transform({ 0.0f, top });
+        const FloatPoint far = frame.toCanvas.transform({ width, bottom });
+        const IntSize size{ std::max(1, static_cast<int>(std::lround(far.x - at.x))),
+            std::max(1, static_cast<int>(std::lround(far.y - at.y))) };
+        if (pixels.width() != size.x || pixels.height() != size.y)
+        {
+            pixels.resize(size);
+            std::fill_n(pixels.data(), static_cast<std::size_t>(size.x)
+                * static_cast<std::size_t>(size.y), Color{});
+        }
+        // A slow sway over the map keeps the band from standing like a painted plate.
+        const float drift = 0.02f * std::sin(cycleTime * k_2Pi);
+        // The map's cover on a grid over the band, which its pixels read between.
+        const std::size_t gridNum = static_cast<std::size_t>(k_fogColumns)
+            * static_cast<std::size_t>(k_fogRows);
+        std::vector<float> longitudes(gridNum);
+        std::vector<float> latitudes(gridNum);
+        std::vector<float> covers(gridNum);
+        std::vector<float> longitudeSpans(gridNum,
+            k_fogLongitudeSpan / static_cast<float>(k_fogColumns));
+        std::vector<float> latitudeSpans(gridNum,
+            k_fogLatitudeSpan / static_cast<float>(k_fogRows));
+        for (int column = 0; column != k_fogColumns; ++column)
+        {
+            const float longitude = band.longitude + drift
+                + (static_cast<float>(column) + 0.5f) / static_cast<float>(k_fogColumns)
+                * k_fogLongitudeSpan;
+            for (int row = 0; row != k_fogRows; ++row)
+            {
+                const std::size_t point = static_cast<std::size_t>(column)
+                    * static_cast<std::size_t>(k_fogRows) + static_cast<std::size_t>(row);
+                longitudes[point] = longitude;
+                latitudes[point] = band.latitude - (static_cast<float>(row) + 0.5f)
+                    / static_cast<float>(k_fogRows) * k_fogLatitudeSpan;
+            }
+        }
+        m_fogMap->readCover({
+            .longitudes = longitudes, .latitudes = latitudes,
+            .longitudeSpans = longitudeSpans, .latitudeSpans = latitudeSpans
+        }, covers);
+        // The comet's light on the band: cold while it falls, warm as it lands.
+        const float lightAlong = pass.afterglow > 0.0f
+            ? 1.0f
+            : std::pow(pass.passTime / k_fallShare, 1.35f);
+        const FloatPoint lightAt = pointOnCourse(pass.course, lightAlong);
+        const float lightFade = pass.afterglow > 0.0f
+            ? std::pow(1.0f - pass.afterglow, 1.4f)
+            : 1.0f - smoothStep(0.52f, k_fallShare, pass.passTime);
+        const Color light = (pass.afterglow > 0.0f ? CometSceneColors::Afterglow
+            : CometSceneColors::CometLight).fullyOpaque();
+        const float lightReach = 600.0f * unit;
+        const std::size_t acrossPixels = static_cast<std::size_t>(size.x);
+        const std::size_t downPixels = static_cast<std::size_t>(size.y);
+        // Each column's grid cells and its share of the comet's light, once for the band.
+        std::vector<int> cellLeft(acrossPixels);
+        std::vector<int> cellRight(acrossPixels);
+        std::vector<float> cellShare(acrossPixels);
+        std::vector<float> lightShares(acrossPixels);
+        for (int column = 0; column != size.x; ++column)
+        {
+            const std::size_t index = static_cast<std::size_t>(column);
+            const float across = (static_cast<float>(column) + 0.5f)
+                / static_cast<float>(size.x) * static_cast<float>(k_fogColumns) - 0.5f;
+            const int left = std::clamp(static_cast<int>(std::floor(across)), 0,
+                k_fogColumns - 1);
+            cellLeft[index] = left * k_fogRows;
+            cellRight[index] = std::min(left + 1, k_fogColumns - 1) * k_fogRows;
+            cellShare[index] = std::clamp(across - static_cast<float>(left), 0.0f, 1.0f);
+            const float sceneX = (static_cast<float>(column) + 0.5f)
+                / static_cast<float>(size.x) * width;
+            lightShares[index] = 0.6f * lightFade * (1.0f - smoothStep(0.0f, lightReach,
+                std::abs(sceneX - lightAt.x)));
+        }
+        // Each row's fog colour, the light's channels, its profile and grid rows, once for the band.
+        std::vector<FogRow> bandRows(downPixels);
+        for (int row = 0; row != size.y; ++row)
+        {
+            const float downShare = (static_cast<float>(row) + 0.5f)
+                / static_cast<float>(size.y);
+            const float gridRow = downShare * static_cast<float>(k_fogRows) - 0.5f;
+            const int above = std::clamp(static_cast<int>(std::floor(gridRow)), 0,
+                k_fogRows - 1);
+            const Color shade = colorBetween(CometSceneColors::FogTop, CometSceneColors::FogFoot,
+                downShare);
+            bandRows[static_cast<std::size_t>(row)] = {
+                .red = static_cast<float>(shade.red),
+                .green = static_cast<float>(shade.green),
+                .blue = static_cast<float>(shade.blue),
+                .lightRed = static_cast<float>(light.red),
+                .lightGreen = static_cast<float>(light.green),
+                .lightBlue = static_cast<float>(light.blue),
+                .profile = band.strength * smoothStep(0.0f, 0.42f, downShare)
+                    * (1.0f - smoothStep(0.88f, 1.0f, downShare)),
+                .above = above,
+                .below = std::min(above + 1, k_fogRows - 1),
+                .share = std::clamp(gridRow - static_cast<float>(above), 0.0f, 1.0f)
+            };
+        }
+        // The fog itself: the cover is its opacity, softer at the band's edges, the comet's light
+        // tinting the columns it stands over. The rows are spread over the cores, two at a time -
+        // the fog is too soft for the difference between neighbours to show.
+        const float* grid = covers.data();
+        spreadOverCores((size.y + 1) / 2, [&](const int pair) {
+            const int row = pair * 2;
+            const FogRow& fog = bandRows[static_cast<std::size_t>(row)];
+            Color* upper = pixels.data() + static_cast<std::ptrdiff_t>(row) * pixels.stride();
+            Color* lower = row + 1 < size.y ? upper + pixels.stride() : nullptr;
+            for (int column = 0; column != size.x; ++column)
+            {
+                const std::size_t index = static_cast<std::size_t>(column);
+                const float* left = grid + cellLeft[index];
+                const float* right = grid + cellRight[index];
+                const float across = cellShare[index];
+                const float top = left[fog.above] + (right[fog.above] - left[fog.above]) * across;
+                const float bottom = left[fog.below] + (right[fog.below] - left[fog.below])
+                    * across;
+                const float alpha = (top + (bottom - top) * fog.share) * fog.profile;
+                const float lit = lightShares[index];
+                const auto channel = [&](const float own, const float fromLight) {
+                    return static_cast<ColorByte>((own + (fromLight - own) * lit) * alpha);
+                };
+                const Color color{ channel(fog.red, fog.lightRed),
+                    channel(fog.green, fog.lightGreen), channel(fog.blue, fog.lightBlue),
+                    static_cast<ColorByte>(alpha * 255.0f) };
+                upper[column] = color;
+                if (lower)
+                    lower[column] = color;
+            }
+        });
+        // Lay it over the canvas where the band stands, outside the frame's transform.
+        const Matrix3x2 canvasTransform = frame.canvas.transform();
+        frame.canvas.resetTransform();
+        frame.canvas.drawBitmap(pixels, at, 1.0f);
+        frame.canvas.setTransform(canvasTransform);
     }
 
     // The ridges are kept as layers drawn through the upright frame, the reflection's included:
@@ -292,6 +492,9 @@ namespace ClaFi::PathArt
             .cycleTime = cycleTime
         });
 
+        // The fog lies in the valley, behind the near range, whose crest stands in front of it.
+        if (!reflection)
+            drawFogBand(frame, cycleTime, pass, k_valleyFog, m_valleyFogPixels);
         (reflection ? m_mirroredNearRidge : m_nearRidge).draw(upright);
         if (pass.afterglow > 0.0f)
         {
