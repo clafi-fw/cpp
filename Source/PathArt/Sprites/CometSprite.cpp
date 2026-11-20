@@ -100,7 +100,10 @@ namespace ClaFi::PathArt
         dustTail.close();
         const Color headDust = CometColors::DustHead.withOpacity(0.85f * tailFade);
         const Color middleDust = CometColors::DustMiddle.withOpacity(0.45f * tailFade);
-        // The edge is soft: a wider, fainter copy of the same outline lies under the tail.
+        // The edge is soft: a wider, fainter copy of the same outline lies under the tail. Its
+        // stops carry the fade too, or the soft edge outlives the tail it belongs to.
+        const Color softHeadDust = CometColors::DustHead.withOpacity(0.22f * tailFade);
+        const Color softMiddleDust = CometColors::DustMiddle.withOpacity(0.10f * tailFade);
         PixelPath softTail;
         for (int i = 0; i <= k_samples; ++i)
         {
@@ -125,8 +128,8 @@ namespace ClaFi::PathArt
             .startPoint = head,
             .endPoint = tailEnd,
             .stops = {
-                { .position = 0.0f, .color = headDust.withOpacity(0.22f) },
-                { .position = 0.35f, .color = middleDust.withOpacity(0.10f) },
+                { .position = 0.0f, .color = softHeadDust },
+                { .position = 0.35f, .color = softMiddleDust },
                 { .position = 1.0f, .color = CometColors::DustEnd.withOpacity(0.0f) }
             }
         });
