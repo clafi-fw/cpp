@@ -127,44 +127,61 @@ namespace ClaFi::PathArt
         const float bottom = top + static_cast<float>(size.y);
         const Color* source = mirrored->data();
         Color* target = m_rippled.data();
-        std::array<std::uint32_t, 256> scaleOfCoverage{}; // in 256ths, worked out once a row
-        for (int row = 0; row != size.y; ++row)
-        {
-            const ColumnSpan span = m_waterSpans[static_cast<std::size_t>(row)];
-            if (span.first > span.last)
-                continue;
-            const RowRipple ripple = rippleAt(ripples, top + static_cast<float>(row), top, bottom,
-                frame.unit);
-            const int shift = static_cast<int>(std::lround(ripple.shift));
-            const std::uint32_t rowOpacity = static_cast<std::uint32_t>(
-                std::clamp(ripple.opacity, 0.0f, 1.0f) * 256.0f);
-            for (std::uint32_t coverage = 0; coverage != scaleOfCoverage.size(); ++coverage)
-                scaleOfCoverage[coverage] = rowOpacity * coverage / 255;
+        // **The rows are the surface's own, and each writes only itself**, so a band wide enough to
+        // be worth the waking is worked in stripes across the cores. A band over little water is
+        // worked through on this thread, where the helpers' waking would cost more than the rows.
+        std::size_t coveredPixels = 0;
+        for (const ColumnSpan& span : m_waterSpans)
+            coveredPixels += static_cast<std::size_t>(std::max(0, span.last - span.first + 1));
+        constexpr std::size_t k_spreadFromPixels{ 1000000 };
+        constexpr int k_stripeRows{ 64 };
+        // One stripe over the whole band runs on this thread alone.
+        const int stripeRows = coveredPixels >= k_spreadFromPixels ? k_stripeRows : size.y;
+        const int stripeCount = (size.y + stripeRows - 1) / stripeRows;
+        spreadOverCores(stripeCount, [&](const int stripe) {
+            const int firstRow = stripe * stripeRows;
+            const int endRow = std::min(firstRow + stripeRows, size.y);
+            std::array<std::uint32_t, 256> scaleOfCoverage{}; // in 256ths, once a row
+            for (int row = firstRow; row != endRow; ++row)
+            {
+                const ColumnSpan span = m_waterSpans[static_cast<std::size_t>(row)];
+                if (span.first > span.last)
+                    continue;
+                const RowRipple ripple = rippleAt(ripples, top + static_cast<float>(row), top,
+                    bottom, frame.unit);
+                const int shift = static_cast<int>(std::lround(ripple.shift));
+                const std::uint32_t rowOpacity = static_cast<std::uint32_t>(
+                    std::clamp(ripple.opacity, 0.0f, 1.0f) * 256.0f);
+                for (std::uint32_t coverage = 0; coverage != scaleOfCoverage.size(); ++coverage)
+                    scaleOfCoverage[coverage] = rowOpacity * coverage / 255;
 
-            const std::size_t rowStart = static_cast<std::size_t>(row)
-                * static_cast<std::size_t>(size.x);
-            const Color* sourceRow = source + rowStart;
-            Color* targetRow = target + rowStart;
-            const std::uint8_t* coverageRow = m_waterCoverage.data() + rowStart;
-            // Premultiplied, so all four channels scale alike: blue with red, green with alpha.
-            const auto scaled = [&](const Color color, const std::uint8_t coverage) {
-                const std::uint32_t pixel = std::bit_cast<std::uint32_t>(color);
-                const std::uint32_t scale = scaleOfCoverage[coverage];
-                const std::uint32_t blueRed = (((pixel & 0x00FF00FFu) * scale) >> 8) & 0x00FF00FFu;
-                const std::uint32_t greenAlpha = (((pixel >> 8) & 0x00FF00FFu) * scale)
-                    & 0xFF00FF00u;
-                return std::bit_cast<Color>(blueRed | greenAlpha);
-            };
-            // A column whose source lies past the band's side repeats that side's pixel.
-            const int firstInside = std::max(span.first, shift);
-            const int lastInside = std::min(span.last, size.x - 1 + shift);
-            for (int x = span.first; x <= span.last && x < firstInside; ++x)
-                targetRow[x] = scaled(sourceRow[0], coverageRow[x]);
-            for (int x = firstInside; x <= lastInside; ++x)
-                targetRow[x] = scaled(sourceRow[x - shift], coverageRow[x]);
-            for (int x = std::max(span.first, lastInside + 1); x <= span.last; ++x)
-                targetRow[x] = scaled(sourceRow[size.x - 1], coverageRow[x]);
-        }
+                const std::size_t rowStart = static_cast<std::size_t>(row)
+                    * static_cast<std::size_t>(size.x);
+                const Color* sourceRow = source + rowStart;
+                Color* targetRow = target + rowStart;
+                const std::uint8_t* coverageRow = m_waterCoverage.data() + rowStart;
+                // Premultiplied, so all four channels scale alike: blue with red, green with
+                // alpha.
+                const auto scaled = [&](const Color color, const std::uint8_t coverage) {
+                    const std::uint32_t pixel = std::bit_cast<std::uint32_t>(color);
+                    const std::uint32_t scale = scaleOfCoverage[coverage];
+                    const std::uint32_t blueRed = (((pixel & 0x00FF00FFu) * scale) >> 8)
+                        & 0x00FF00FFu;
+                    const std::uint32_t greenAlpha = (((pixel >> 8) & 0x00FF00FFu) * scale)
+                        & 0xFF00FF00u;
+                    return std::bit_cast<Color>(blueRed | greenAlpha);
+                };
+                // A column whose source lies past the band's side repeats that side's pixel.
+                const int firstInside = std::max(span.first, shift);
+                const int lastInside = std::min(span.last, size.x - 1 + shift);
+                for (int x = span.first; x <= span.last && x < firstInside; ++x)
+                    targetRow[x] = scaled(sourceRow[0], coverageRow[x]);
+                for (int x = firstInside; x <= lastInside; ++x)
+                    targetRow[x] = scaled(sourceRow[x - shift], coverageRow[x]);
+                for (int x = std::max(span.first, lastInside + 1); x <= span.last; ++x)
+                    targetRow[x] = scaled(sourceRow[size.x - 1], coverageRow[x]);
+            }
+        });
         canvas.drawBitmap(m_rippled, frame.toCanvas.transform({ 0.0f, top }));
     }
 

@@ -158,6 +158,40 @@ namespace ClaFi::PathArt
                 * Matrix3x2::Scale(1.0f, -1.0f));
         }
 
+        // What one glitter of the lake's field is, before a frame asks anything of it: how far down
+        // the path it stands, how far across the water, the share of the water's own light it takes,
+        // and the rate and phase it twinkles at. Worked out once; the light moves over it after.
+        struct Glitter
+        {
+            float along;
+            float across;
+            float waterShare;
+            float twinkleRate;
+            float twinklePhase;
+        };
+
+        // The field's glitters, in their order: each keeps the place the water gave it, so the only
+        // thing a frame decides is how bright the light over it is.
+        const std::array<Glitter, k_glitterFieldCount>& glitterField()
+        {
+            static const std::array<Glitter, k_glitterFieldCount> s_field = [] {
+                std::array<Glitter, k_glitterFieldCount> field{};
+                for (int i = 0; i != k_glitterFieldCount; ++i)
+                {
+                    field[static_cast<std::size_t>(i)] = Glitter{
+                        .along = std::pow(spreadShare(i, k_glitterFieldCount, 51.0f), 0.7f),
+                        .across = fractionalPart(static_cast<float>(i) * 0.618034f
+                            + 0.08f * pseudoRandom(i, 52.0f)),
+                        .waterShare = pseudoRandom(i, 55.0f) < 0.18f ? 0.35f : 0.0f,
+                        .twinkleRate = std::round(14.0f + 12.0f * pseudoRandom(i, 53.0f)),
+                        .twinklePhase = static_cast<float>(i) * 2.1f
+                    };
+                }
+                return field;
+            }();
+            return s_field;
+        }
+
         // A pine after the concept's: a leaning trunk carrying tiers of fronds that sweep up and
         // out, their needles leaning along each branch toward its tip.
         void drawPine(const SceneFrame& frame, const FloatPoint base, const float height,
@@ -807,7 +841,19 @@ namespace ClaFi::PathArt
             m_mirroredShore.draw(mirror);
         }, mirrorRipples);
         // The rounded stone mirrors in the water, at its own share. The stone is flipped about the
-        // line it meets the water at, so its image lands below it, in the water.
+        // line it meets the water at, so its image lands below it, in the water. The water it shows
+        // in is the patch round its base its image can reach rather than the whole lake: the patch
+        // is a little wider than the stone, so the rows' sideways shifts stay inside it, and its top
+        // starts above the waterline so that row is covered whole. The rows still take the lake's
+        // own Ripples, and a column outside the patch mirrors nothing.
+        const FloatPoint stoneBase = { width * k_stoneAt.x, height * k_stoneAt.y };
+        const float stoneReach = 22.0f * width * k_stoneWidth + k_nearRippleReach * frame.unit;
+        PixelPath stoneWater;
+        stoneWater.moveTo(stoneBase.x - stoneReach, stoneBase.y - 2.0f);
+        stoneWater.lineTo(stoneBase.x + stoneReach, stoneBase.y - 2.0f);
+        stoneWater.lineTo(stoneBase.x + stoneReach, height);
+        stoneWater.lineTo(stoneBase.x - stoneReach, height);
+        stoneWater.close();
         const Ripples stoneRipples = {
             .top = lakeY,
             .farReach = k_farRippleReach,
@@ -815,10 +861,9 @@ namespace ClaFi::PathArt
             .cycleTime = cycleTime,
             .opacity = k_stoneReflectionOpacity
         };
-        m_stoneReflection.draw(frame, lakeOutline, {}, [&](const SceneFrame& mirror) {
-            drawRoundedBoulder(mirroredAbout(mirror, height * k_stoneAt.y),
-                { width * k_stoneAt.x, height * k_stoneAt.y }, width * k_stoneWidth,
-                k_stoneSquish);
+        m_stoneReflection.draw(frame, stoneWater, {}, [&](const SceneFrame& mirror) {
+            drawRoundedBoulder(mirroredAbout(mirror, height * k_stoneAt.y), stoneBase,
+                width * k_stoneWidth, k_stoneSquish);
         }, stoneRipples);
         m_lakeShade.draw(frame);
         // The stone stands in the water before the trail is laid, so the comet's glow lights it.
@@ -849,13 +894,13 @@ namespace ClaFi::PathArt
         const FloatPoint far = { light.x, lakeY + 0.008f * frame.height };
         const FloatPoint near = { light.x, nearY };
 
-        PixelPath lake;
-        lake.moveTo(0.0f, lakeY);
-        lake.lineTo(frame.width, lakeY);
-        lake.lineTo(frame.width, frame.height);
-        lake.lineTo(0.0f, frame.height);
-        lake.close();
-        frame.canvas.pushClip(lake, &frame.toCanvas);
+        // The water is a rectangle across the frame's foot, so it is clipped as one: a geometric
+        // clip would rasterize the lake's coverage into a mask on every frame.
+        const FloatPoint lakeTopLeft = frame.toCanvas.transform({ 0.0f, lakeY });
+        const FloatPoint lakeBottomRight = frame.toCanvas.transform({ frame.width,
+            frame.height });
+        frame.canvas.pushClip(FloatRect{ lakeTopLeft.x, lakeTopLeft.y, lakeBottomRight.x,
+            lakeBottomRight.y });
 
         // The moving area: a soft glow along the path, flat on the water and wider as it comes.
         for (int i = 0; i != k_pathGlowCount; ++i)
@@ -866,35 +911,36 @@ namespace ClaFi::PathArt
                 CometSceneColors::Glitter.withOpacity(0.06f * shine), 0.8f);
         }
 
+        // The stone and its shadow: no sparkle in the band they make - a little past the stone's
+        // own width and down to its reflection, so none leaks along the waterline. Worked out once a
+        // frame rather than once a glitter.
+        const float stoneScale = frame.width * k_stoneWidth;
+        const float shadowDepth = 22.0f * stoneScale * k_stoneSquish;
+        const float stoneEdge = 21.0f * stoneScale;
+        const float stoneX = frame.width * k_stoneAt.x;
+        const float stoneTop = frame.height * k_stoneAt.y - shadowDepth;
+        const float stoneBottom = frame.height * k_stoneAt.y + shadowDepth * 0.9f;
         // Each sparkle keeps the place the water gave it. The light over it decides how bright it
         // is, so the area moving is the glitters fading out and new ones fading in.
+        const std::array<Glitter, k_glitterFieldCount>& field = glitterField();
         for (int i = 0; i != k_glitterFieldCount; ++i)
         {
-            const float along = std::pow(spreadShare(i, k_glitterFieldCount, 51.0f), 0.7f);
+            const Glitter& glitter = field[static_cast<std::size_t>(i)];
+            const float along = glitter.along;
             const float spread = (2.0f + 80.0f * along * along) * unit;
-            const float across = fractionalPart(static_cast<float>(i) * 0.618034f
-                + 0.08f * pseudoRandom(i, 52.0f));
-            const float x = across * frame.width;
+            const float x = glitter.across * frame.width;
             const float y = lakeY + (nearY - lakeY) * along;
-            // The stone and its shadow: no sparkle in the band they make - a little past the
-            // stone's own width and down to its reflection, so none leaks along the waterline.
-            const float stoneScale = frame.width * k_stoneWidth;
-            const float shadowDepth = 22.0f * stoneScale * k_stoneSquish;
-            const float stoneEdge = 21.0f * stoneScale;
-            const float stoneTop = frame.height * k_stoneAt.y - shadowDepth;
-            const float stoneBottom = frame.height * k_stoneAt.y + shadowDepth * 0.9f;
-            if (std::abs(x - frame.width * k_stoneAt.x) <= stoneEdge && y >= stoneTop
-                && y <= stoneBottom)
+            if (std::abs(x - stoneX) <= stoneEdge && y >= stoneTop && y <= stoneBottom)
                 continue;
             const float trailCoverage = 1.0f - smoothStep(0.60f * spread, spread,
                 std::abs(x - light.x));
             // The lake twinkles either side of the trail too: a share of the field is the water's
             // own sparkle, which the sky lights rather than the comet.
-            const float waterSparkle = pseudoRandom(i, 55.0f) < 0.18f ? 0.35f : 0.0f;
+            const float waterSparkle = glitter.waterShare;
             if (trailCoverage <= 0.0f && waterSparkle <= 0.0f)
                 continue;
-            const float twinkle = std::sin(cycleTime * k_2Pi * std::round(
-                14.0f + 12.0f * pseudoRandom(i, 53.0f)) + static_cast<float>(i) * 2.1f);
+            const float twinkle = std::sin(cycleTime * k_2Pi * glitter.twinkleRate
+                + glitter.twinklePhase);
             if (twinkle <= 0.0f)
                 continue;
             const bool onTrail = trailCoverage * shine >= waterSparkle;

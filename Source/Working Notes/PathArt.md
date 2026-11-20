@@ -712,6 +712,51 @@ Then (Oj, 15:33) "the forest doesn't reflect": the shore's pines were drawn afte
 in its mirror. They are mirrored as the ridges are, a kept layer drawn upside down - m_mirroredShore
 - laid in last, since they stand nearest. The frame costs no more that the container can tell.
 
+**The 4K frame, measured and shortened** (2026-11-20). Oj sent the Comet at 3840 x 2160 reading
+21.46 ms and 45 FPS on the CPU backend, and asked for optimization. A temporary per-phase trace
+(`CLAFI_COMET_TRACE`, removed after the pass) timed the scene's own parts in the Windows Release x64
+CLI, rendered headless at 3840 x 2160: sixteen frames from `--at 2` for the fall, three at 12.4 for
+the landing and three at 18 for the afterglow. Mid-fall, averaged over the steady frames of the
+fall, the frame was 20.37 ms. Its parts in one frame: the sky 0.48; above the lake 4.13 (the far fog 0.6, the comet's
+light 1.4, the valley fog 0.7, the stars 0.3, the far ridge 0.35, the near ridge 0.2, its rim 0.3,
+the comet 0.25); the lake 12.38 (the main reflection 6.0 - the mirrored scene 2.3, drawRows 1.9, the
+blit 0.4 and the mirror canvas's clear 0.6; the stone's reflection 3.6; the glitter 1.76; the lake's
+water 0.3 and shade 0.4; the shore 0.15); the constant haze 2.0; the near fog 0.97; the foreground
+0.49.
+
+Four changes, each measured on its own:
+
+- **The glitter field is a table built once.** What the field gives a sparkle before the light moves
+  over it - how far down the path it stands, how far across, the water's own share, the twinkle's
+  rate and phase - is worked out once and kept. A frame asks only where the light is. The stone's
+  exclusion band left the loop as well. The field's share of the glitter fell from 0.9 to 0.75 ms.
+- **The stone is mirrored through a patch of water, not the whole lake.** `drawRows` walks only the
+  columns the water it is given covers, and the patch around the stone's base covers 460 of the
+  frame's 3840 columns; the patch is read with the lake's own `Ripples`, so its rows still move with
+  the water's ripples. The pass went from 3.6 to 1.4 ms; what the patch leaves out mirrors nothing,
+  and the frames are the same to the byte.
+- **The row loop is spread over the cores.** `WaterReflection::drawRows` hands its rows out in
+  stripes of 64 when the band covers a million pixels or more, and works a smaller band on the
+  calling thread, where waking the helpers would cost more than the rows. The Comet's main band
+  covers 2.3 M pixels and takes 0.5 ms against 1.9. The Mill takes the same path and is unchanged in
+  every frame.
+- **The glitter's clip is a rectangle.** The lake's outline was a path clip, which builds a coverage
+  mask of 9 MB every frame; the lake is a rectangle, so the clip is the rectangle, and the CPU
+  backend intersects its clip box instead of rasterizing. The clip's 0.6 ms became 0.1.
+
+After: 16.74 ms mid-fall, 3.6 ms less, 18 percent, and 19.4 ms at the afterglow - measured
+before the clip change, which takes 0.45 of that off. The frames of the check - 28 at 3840 x 2160, the
+Comet at the three phases, the Mill in Clear Day and Midnight and the Chase in Clear Day - are bit
+for bit identical to the same renders from the unchanged tree.
+
+What is left, in the order the numbers put it: the main reflection's mirrored scene, 2.3 ms of the
+stars, the comet, the two ridges and the shore drawn a second time into the band's canvas; the
+constant haze, 2.3 ms over an ellipse of 3.9 M pixels, which is memory-bound in the rasterizer's
+glow; the three fog bands, 2.1 ms of build (1.3, in three `spreadOverCores` calls) and blit (0.8);
+the comet's cold pool on the far ridge, 1.4 ms, half of it the clip's mask over the whole ridge; and
+the stone's pass, still 1.4 ms of clearing and blitting 605 rows for an image 150 rows deep. The
+last needs a band the caller states, which is a change to WaterReflection's interface.
+
 ## EarthScene
 
 Called SatelliteScene, and Satellite in the showcase's picker, until 2026-11-09; the notes below
