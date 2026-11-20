@@ -52,7 +52,10 @@ namespace ClaFi::PathArt
         const float speed = falling
             ? 0.5f + 1.3f * std::sqrt(passTime / fallShare)
             : 1.8f;
-        const float span = 0.05f + 0.1f * speed;
+        // After the landing the tail pulls in toward the head as it dims, so the last of it slides
+        // behind the near ridge instead of thinning where it lies.
+        const float retract = falling ? 1.0f : tailFade;
+        const float span = (0.05f + 0.1f * speed) * retract;
         constexpr float k_nose = 0.1f; // the share of the tail it takes to open
         constexpr int k_noseSamples = 16;
         constexpr int k_bodySamples = 16;
@@ -151,7 +154,8 @@ namespace ClaFi::PathArt
         back = backLength > 0.0f
             ? rotated(back * (1.0f / backLength), 0.16f)
             : FloatPoint{ -1.0f, 0.0f };
-        const float ionLength = std::hypot(tailEnd.x - head.x, tailEnd.y - head.y) * 1.25f;
+        const float ionLength = std::hypot(tailEnd.x - head.x, tailEnd.y - head.y) * 1.25f
+            * retract;
         const FloatPoint ionEnd = head + back * ionLength;
         const FloatPoint across = FloatPoint{ -back.y, back.x } * (3.0f * unit);
         PixelPath ionTail;
