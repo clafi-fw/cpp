@@ -57,7 +57,7 @@ namespace ClaFi::PathArt
             .span = 0.30f,
             .strength = 0.034f,
             .laps = 1.0f,
-            .period = 88.0f
+            .period = 26.0f
         };
         static constexpr FogBand k_valleyFog{
             .topShare = 0.410f,
@@ -66,8 +66,8 @@ namespace ClaFi::PathArt
             .longitude = 1.6f,
             .span = 0.375f,
             .strength = 0.056f,
-            .laps = 1.0f,
-            .period = 60.0f
+            .laps = -1.0f,
+            .period = 72.0f
         };
         static constexpr FogBand k_nearFog{
             .topShare = 0.548f,
@@ -77,7 +77,7 @@ namespace ClaFi::PathArt
             .span = 0.45f,
             .strength = 0.056f,
             .laps = 1.0f,
-            .period = 40.0f
+            .period = 9.0f
         };
     private:
         [[nodiscard]] static float farRidgeY(const SceneFrame&, float x);

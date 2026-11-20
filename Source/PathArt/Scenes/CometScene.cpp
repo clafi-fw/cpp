@@ -1040,7 +1040,7 @@ namespace ClaFi::PathArt
         // The boulders standing in the water.
         drawBoulder(frame, { width * 0.270f, height * 1.02f }, width * 0.22f, height * 0.34f, 21);
         drawBoulder(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27);
-        drawBoulder(frame, { width * 0.720f, height * 1.02f }, width * 0.22f, height * 0.30f, 31);
+        drawBoulder(frame, { width * 0.755f, height * 1.02f }, width * 0.22f, height * 0.30f, 31);
         // The Chase's rounded stone is laid in the lake, before the trail, so the glow lights it.
         // The rocks the near edge of the water breaks on, low across the bottom.
         drawBoulder(frame, { width * 0.100f, height * 1.01f }, width * 0.30f, height * 0.09f, 51);
