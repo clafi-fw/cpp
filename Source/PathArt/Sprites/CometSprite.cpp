@@ -35,12 +35,10 @@ namespace ClaFi::PathArt
         const float unit = frame.unit;
         const float passTime = pose.passTime;
         const float fallShare = pose.fallShare;
-        // After the landing the tail dims on a straight ramp across the afterglow, finishing just
-        // before the pass ends. A straight ramp keeps every step the same size - no curve piling the
-        // last of the brightness into the final frames - so the tail never reads as switched off.
-        const float tailFade = passTime < fallShare
-            ? 1.0f
-            : std::clamp(1.0f - (passTime - fallShare) / (0.97f - fallShare), 0.0f, 1.0f);
+        // The tail fades quickly and smoothly to nothing after the landing - a short smoothstep, so
+        // it reaches zero while the eye is still on the comet, and no part of it is left to be
+        // switched off later.
+        const float tailFade = 1.0f - smoothStep(fallShare, fallShare + 0.08f, passTime);
         if (tailFade <= 0.0f)
             return;
         const bool falling = passTime < fallShare;
@@ -54,10 +52,7 @@ namespace ClaFi::PathArt
         const float speed = falling
             ? 0.5f + 1.3f * std::sqrt(passTime / fallShare)
             : 1.8f;
-        // After the landing the tail pulls in toward the head as it dims, so its last of it slides
-        // behind the near ridge and leaves the frame by geometry, not by a brightness step.
-        const float retract = falling ? 1.0f : tailFade;
-        const float span = (0.05f + 0.1f * speed) * retract;
+        const float span = 0.05f + 0.1f * speed;
         constexpr float k_nose = 0.1f; // the share of the tail it takes to open
         constexpr int k_noseSamples = 16;
         constexpr int k_bodySamples = 16;
@@ -153,8 +148,7 @@ namespace ClaFi::PathArt
         back = backLength > 0.0f
             ? rotated(back * (1.0f / backLength), 0.16f)
             : FloatPoint{ -1.0f, 0.0f };
-        const float ionLength = std::hypot(tailEnd.x - head.x, tailEnd.y - head.y) * 1.25f
-            * retract;
+        const float ionLength = std::hypot(tailEnd.x - head.x, tailEnd.y - head.y) * 1.25f;
         const FloatPoint ionEnd = head + back * ionLength;
         const FloatPoint across = FloatPoint{ -back.y, back.x } * (3.0f * unit);
         PixelPath ionTail;
