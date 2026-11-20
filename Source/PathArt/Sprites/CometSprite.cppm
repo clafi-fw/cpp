@@ -20,6 +20,7 @@ namespace ClaFi::PathArt
         float passTime; // 0 to 1 through the pass
         float fallShare; // the share of the pass it falls for; it lands then and its tails fade
         float cycleTime; // the time its sparks twinkle by
+        bool outerGlowShown{ true };
     };
 
     // The point `along` the course, 0 at its start and 1 at its end.

@@ -164,6 +164,13 @@ namespace ClaFi::PathArt
             return rock;
         }
 
+        Color hazedRim(const SceneFrame& frame, const Color clear, const float parallax,
+            const float crestY)
+        {
+            const float aboveLake = k_lakeShare - crestY / frame.height;
+            return k_air.hazed(clear, parallax, aboveLake);
+        }
+
         // The fog's strips of the cloud map: a grid of the map's cover over each band, which the
         // band's pixels read between. See PathArt#cloudkind
         constexpr int k_fogColumns{ 160 };
@@ -471,7 +478,8 @@ namespace ClaFi::PathArt
                 .end = at(-50.0f, 51.0f) },
             .passTime = 0.9f,
             .fallShare = 1.0f,
-            .cycleTime = 0.2f
+            .cycleTime = 0.2f,
+            .outerGlowShown = false
         });
     }
 
@@ -784,6 +792,7 @@ namespace ClaFi::PathArt
         const FloatPoint cometLight = pointOnCourse(pass.course, lightAlong);
         const float lightFade = smoothStep(0.0f, k_ridgeLightFadeInDuration, pass.passTime)
             * (1.0f - smoothStep(0.52f, k_fallDuration, pass.passTime));
+        const float passRimOpacity = 0.40f * lightFade;
         if (lightFade > 0.0f)
         {
             PixelPath farRidge;
@@ -806,8 +815,10 @@ namespace ClaFi::PathArt
                 else
                     rim.lineTo(x, farRidgeY(frame, x));
             }
-            const Color lit = CometSceneColors::CometLight.withOpacity(0.40f * lightFade);
-            const Color dark = CometSceneColors::CometLight.withOpacity(0.0f);
+            const Color rimColor = hazedRim(frame, CometSceneColors::CometLight,
+                k_farRangeParallax, farRidgeY(frame, cometLight.x));
+            const Color lit = rimColor.withOpacity(passRimOpacity);
+            const Color dark = rimColor.withOpacity(0.0f);
             strokeShape(frame, rim, LinearGradient{
                 .startPoint = { cometLight.x - 230.0f * unit, 0.0f },
                 .endPoint = { cometLight.x + 230.0f * unit, 0.0f },
@@ -818,6 +829,35 @@ namespace ClaFi::PathArt
                 }
             }, 1.6f * unit);
         }
+
+        const auto drawLandingRim = [&frame, &pass, unit](
+            float (*ridgeY)(const SceneFrame&, float), const float parallax) {
+            PixelPath rim;
+            rim.moveTo(0.0f, ridgeY(frame, 0.0f));
+            const float step = 6.0f * unit;
+            for (float x = step; x <= frame.width + step; x += step)
+            {
+                rim.lineTo(x, ridgeY(frame, x));
+            }
+
+            const float landingX = pass.course.end.x;
+            const float crestY = ridgeY(frame, landingX);
+            const float opacity = std::pow(1.0f - pass.afterglow, 1.25f);
+            const Color lit = hazedRim(frame, CometSceneColors::RidgeRim, parallax, crestY)
+                .withOpacity(opacity);
+            const Color dark = hazedRim(frame, CometSceneColors::Afterglow, parallax, crestY)
+                .withOpacity(0.0f);
+            const float reach = 220.0f * unit;
+            strokeShape(frame, rim, LinearGradient{
+                .startPoint = { landingX - reach, 0.0f },
+                .endPoint = { landingX + reach, 0.0f },
+                .stops = {
+                    { .position = 0.0f, .color = dark },
+                    { .position = 0.5f, .color = lit },
+                    { .position = 1.0f, .color = dark }
+                }
+            }, 1.8f * unit);
+        };
 
         // The landing lights the sky behind the near ridge, which hides the comet as it lands.
         if (pass.afterglow > 0.0f)
@@ -830,6 +870,7 @@ namespace ClaFi::PathArt
                 0.6f);
             drawGlow(frame, pass.course.end, 50.0f * unit,
                 CometSceneColors::ImpactCore.withOpacity(std::pow(fading, 4.0f) * endFade));
+            drawLandingRim(farRidgeY, k_farRangeParallax);
         }
         drawComet(frame, CometPose{
             .course = pass.course,
@@ -845,29 +886,7 @@ namespace ClaFi::PathArt
         (reflection ? m_mirroredNearRidge : m_nearRidge).draw(upright);
         if (pass.afterglow > 0.0f)
         {
-            PixelPath rim;
-            for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
-            {
-                if (x == 0.0f)
-                    rim.moveTo(x, nearRidgeY(frame, x));
-                else
-                    rim.lineTo(x, nearRidgeY(frame, x));
-            }
-            constexpr float rimStrength = 1.0f;
-            const float rimOpacity = rimStrength * std::pow(1.0f - pass.afterglow, 1.5f);
-            
-            const Color rimLit = CometSceneColors::RidgeRim.withOpacity(rimOpacity);
-            const Color rimDark = CometSceneColors::Afterglow.withOpacity(0.0f);
-
-            strokeShape(frame, rim, LinearGradient{
-                .startPoint = { pass.course.end.x - 220.0f * unit, 0.0f },
-                .endPoint = { pass.course.end.x + 220.0f * unit, 0.0f },
-                .stops = {
-                    { .position = 0.0f, .color = rimDark },
-                    { .position = 0.5f, .color = rimLit },
-                    { .position = 1.0f, .color = rimDark }
-                }
-            }, 1.8f * unit);
+            drawLandingRim(nearRidgeY, k_nearRangeParallax);
         }
         else if (lightFade > 0.0f)
         {
@@ -879,8 +898,10 @@ namespace ClaFi::PathArt
                 else
                     rim.lineTo(x, nearRidgeY(frame, x));
             }
-            const Color lit = CometSceneColors::CometLight.withOpacity(0.20f * lightFade);
-            const Color dark = CometSceneColors::CometLight.withOpacity(0.0f);
+            const Color rimColor = hazedRim(frame, CometSceneColors::CometLight,
+                k_nearRangeParallax, nearRidgeY(frame, cometLight.x));
+            const Color lit = rimColor.withOpacity(passRimOpacity);
+            const Color dark = rimColor.withOpacity(0.0f);
             strokeShape(frame, rim, LinearGradient{
                 .startPoint = { cometLight.x - 200.0f * unit, 0.0f },
                 .endPoint = { cometLight.x + 200.0f * unit, 0.0f },

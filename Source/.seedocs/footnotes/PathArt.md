@@ -1232,6 +1232,11 @@ The head gathers speed as it falls, and the dust tail grows with the speed. The 
 the nucleus with a rounded front over its first tenth. Sparks shed along the way drift down and
 fade over 0.3 of a pass.
 
+## CometPose outerGlowShown
+
+Set `outerGlowShown` to `false` for icons where the wide halo would reach the tile's edges.
+The smaller glow around the head is drawn during the fall.
+
 ## EarthScene
 
 A large Earth turning under a satellite, through day, dusk and night.
