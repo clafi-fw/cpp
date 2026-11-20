@@ -169,7 +169,7 @@ namespace ClaFi::Graphics
             const Color* srcRow = source.scanLineAbs(srcX, static_cast<float>(y - offsetY));
             for (int x = 0; x < width; ++x)
             {
-                destRow[x].blend_fixed(srcRow[x], mix);
+                destRow[x].blend0256(srcRow[x], mix);
             }
         }
     }

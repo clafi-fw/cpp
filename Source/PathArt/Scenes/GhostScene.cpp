@@ -287,7 +287,7 @@ namespace ClaFi::PathArt
             const FloatPoint bow = { std::sin(angle) * length * 0.12f, 0.0f };
             PixelPath& path = depths[static_cast<std::size_t>(depth)];
             path.moveTo(from);
-            path.quadTo(pointBetween(from, to, 0.5f) + bow, to);
+            path.quadTo(FloatPoint::between(from, to, 0.5f) + bow, to);
             if (depth == k_depths - 1)
                 return;
             ++seed;

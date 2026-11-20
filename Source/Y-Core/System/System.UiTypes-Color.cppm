@@ -16,9 +16,26 @@ namespace ClaFi
         ColorByte red;
         ColorByte alpha;
     public:
+        constexpr Color(ColorByte red, ColorByte green, ColorByte blue, ColorByte alpha);
+        constexpr Color(ColorByte red, ColorByte green, ColorByte blue);
+        constexpr Color(ColorAsUint c);
+        Color(Color c1, Color c2, float k2);
+        constexpr Color();
+        ~Color() = default;
+    public:
+        bool operator == (const Color& second) const
+        {
+            // return ((b== second.b) && (g == second.g) && (r == second.r));
+            return asUint() == second.asUint();
+        }
+        bool operator!=(const Color& second) const
+        {
+            return asUint() != second.asUint();
+        }
+    public:
         /// @brief Blends another color **over** this color, assuming this color is already opaque (Alpha = 255).
         /// @note This is extremely fast (zero divisions, zero branches in hot paths, processes channels in parallel).
-        constexpr void paint_over_opaque(const Color& other) noexcept
+        constexpr void paintOverOpaque(const Color& other) noexcept
         {
             const std::uint32_t a = other.alpha;
             if (a == 0) [[unlikely]] return; // Transparent source is a no-op
@@ -57,10 +74,9 @@ namespace ClaFi
 
             *this = std::bit_cast<Color>(result);
         }
-
         /// @brief Blends another color **over** this color, mathematically handling arbitrary alphas for both colors.
         /// @note Slightly slower than paint_over_opaque due to a dynamic integer division, but fully general.
-        constexpr void paint_over_general(const Color& other) noexcept
+        constexpr void paintOverGeneral(const Color& other) noexcept
         {
             const std::uint32_t a_src = other.alpha;
             if (a_src == 0) [[unlikely]] return;
@@ -89,23 +105,6 @@ namespace ClaFi
             this->alpha = static_cast<ColorByte>(a_out);
         }
     public:
-        constexpr Color(ColorByte red, ColorByte green, ColorByte blue, ColorByte alpha);
-        constexpr Color(ColorByte red, ColorByte green, ColorByte blue);
-        constexpr Color(ColorAsUint c);
-        Color(Color c1, Color c2, float k2);
-        constexpr Color();
-        ~Color() = default;
-    public:
-        bool operator == (const Color& second) const
-        {
-            // return ((b== second.b) && (g == second.g) && (r == second.r));
-            return asUint() == second.asUint();
-        }
-        bool operator!=(const Color& second) const
-        {
-            return asUint() != second.asUint();
-        }
-    public:
         void clear() { blue = green = red = alpha = 0; }
         bool isOpaque() const { return alpha != 0; }
         ColorAsUint asUint() const { return std::bit_cast<const ColorAsUint>(*this); }
@@ -116,16 +115,7 @@ namespace ClaFi
             return result;
         }
         [[nodiscard]] Color faded(float share) const; // this color at a share of its own alpha
-        //ColorAsUint toGdiColor() const {
-        //  return static_cast<ColorAsUint>((red | (static_cast<uint16_t>(green) << 8)) | (static_cast<uint16_t>(blue) << 16));
-        //}
-        void blendRgb(Color second, const float k2)
-        {
-            for (int offset = 0; offset < 3; ++offset)
-                mixByte(reinterpret_cast<ColorByte*>(this)[offset], (&reinterpret_cast<const ColorByte&>(second))[offset], k2);
-        }
-
-        inline constexpr void blend_fixed(Color second, int k2_fixed)
+        inline constexpr void blend0256(Color to, int k2_fixed)
         {
             // Assumed k2_fixed is pre-validated (0 <= k2_fixed <= 256) by the caller
             const int k1_fixed = 256 - k2_fixed;
@@ -133,7 +123,7 @@ namespace ClaFi
             // Use integer math and bit shifting (much faster than float operations)
 #define BLEND_CHANNEL(channel) \
             this->channel = static_cast<ColorByte>( \
-                (this->channel * k1_fixed + second.channel * k2_fixed) >> 8 \
+                (this->channel * k1_fixed + to.channel * k2_fixed) >> 8 \
             );
 
             BLEND_CHANNEL(blue);
@@ -143,13 +133,12 @@ namespace ClaFi
 
 #undef BLEND_CHANNEL
         }
-
-        void constexpr blend(Color second, float k2)
+        void constexpr blend(Color to, float share)
         {
-            // upd: it's not actually the float ariphmetics we fighting here,
-            // by using blend_fixed (there's no performance difference between integer and float calculations on modern cpu's).
-            // But integer to float and back conversions required for float calculations, they can be slow
-            return blend_fixed(second, static_cast<int>(k2 * 256.0f));
+            // It's not actually the float arithmetics we're fighting here, by using blend_fixed -
+            // there's no speed difference between integer and float operations on any modern cpu's.
+            // But integer to float and back conversions may be slow - and here we have only one
+            return blend0256(to, static_cast<int>(share * 256.0f));
 
             //ColorByte* p = &b; // blue byte (first)
             //const ColorByte* p2 = &second.b;
@@ -161,17 +150,31 @@ namespace ClaFi
             //  ++p2;
             //} while (p != end);
         }
-
-        static constexpr Color blend(Color c1, Color c2, float k2);
-
+        static constexpr Color between(Color from, Color to, float share);
         void setOpacity(Opacity value) { alpha = static_cast<ColorByte>(255 * value); }
-
-    private:
-        inline static void mixByte(ColorByte& v1, const ColorByte v2, float k2)
-        {
-            v1 += static_cast<ColorByte>(k2 * (v2 - v1));
-        }
+        float luminance() const;
+        // The WCAG contrast ratio of two colors, 1 for two alike to 21 for black on white.
+        static float contrastBetween(Color one, Color other);
     };
+
+    float Color::luminance() const
+    {
+        const auto linear = [](ColorByte channel) {
+            const float value = static_cast<float>(channel) / 255.0f;
+            return value <= 0.03928f
+                ? value / 12.92f
+                : std::pow((value + 0.055f) / 1.055f, 2.4f);
+            };
+        return 0.2126f * linear(red) + 0.7152f * linear(green)
+            + 0.0722f * linear(blue);
+    }
+
+    float Color::contrastBetween(const Color one, const Color other)
+    {
+        const float lighter = std::max(one.luminance(), other.luminance());
+        const float darker = std::min(one.luminance(), other.luminance());
+        return (lighter + 0.05f) / (darker + 0.05f);
+    }
 
     export const Color k_noColor{};
     export const Color k_ColorFuchsia{ 0xFF'662366 };
@@ -263,10 +266,10 @@ namespace ClaFi
     {
     }
 
-    Color constexpr Color::blend(Color c1, Color c2, float k2)
+    Color constexpr Color::between(Color from, Color to, float share)
     {
-        Color result = c1;
-        result.blend(c2, k2);
+        Color result = from;
+        result.blend(to, share);
         return result;
     }
 

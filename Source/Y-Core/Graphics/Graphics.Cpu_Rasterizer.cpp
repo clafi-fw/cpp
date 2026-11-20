@@ -928,7 +928,7 @@ namespace ClaFi::Graphics::Cpu
             float span = to.position - from.position;
             float k = span > 1e-6f ? (position - from.position) / span : 0.0f;
             k = std::min(1.0f, std::max(0.0f, k));
-            ramp[i] = Color::blend(from.color, to.color, k).asUint();
+            ramp[i] = Color::between(from.color, to.color, k).asUint();
         }
     }
 

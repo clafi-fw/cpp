@@ -86,8 +86,8 @@ namespace ClaFi::PathArt
 
             const FloatPoint floorGrip = androidFrameToUpper(frame, android,
                 { x, restY - (k_gripReach + 6.0f * budge) * unit });
-            FloatPoint grip = pointBetween(floorGrip, k_chest, flip);
-            grip = pointBetween(grip, k_overhead, press);
+            FloatPoint grip = FloatPoint::between(floorGrip, k_chest, flip);
+            grip = FloatPoint::between(grip, k_overhead, press);
             grip = grip + FloatPoint{ 1.5f * tremble, 1.2f * tremble };
             const float turn = k_pi * flip;
             FloatPoint bell = androidUpperToFrame(frame, android, grip)
@@ -263,12 +263,12 @@ namespace ClaFi::PathArt
         const float flexing = smoothStep(8.4f, 8.8f, actTime);
         for (const float side : { -1.0f, 1.0f })
         {
-            FloatPoint hand = pointBetween({ side * 8.0f + rubbing, -84.0f },
+            FloatPoint hand = FloatPoint::between({ side * 8.0f + rubbing, -84.0f },
                 held.grip + FloatPoint{ side * 11.0f, 0.0f }, onHandle);
-            hand = pointBetween(hand, { side * 70.0f, -190.0f }, thrownUp);
-            hand = pointBetween(hand, side < 0.0f ? ActHands::LeftOnHip : ActHands::RightOnHip,
+            hand = FloatPoint::between(hand, { side * 70.0f, -190.0f }, thrownUp);
+            hand = FloatPoint::between(hand, side < 0.0f ? ActHands::LeftOnHip : ActHands::RightOnHip,
                 onHips);
-            hand = pointBetween(hand, { side * 104.0f, -152.0f }, flexing);
+            hand = FloatPoint::between(hand, { side * 104.0f, -152.0f }, flexing);
             AndroidSide& armSide = side < 0.0f ? m_android.left : m_android.right;
             armSide.hand = hand;
             const bool gripping = actTime > 1.3f && actTime < k_letGoAt;

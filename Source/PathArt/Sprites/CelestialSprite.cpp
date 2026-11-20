@@ -47,7 +47,7 @@ namespace ClaFi::PathArt
         frame.canvas.drawPath(outline, { rim, PathDrawLayer::Fill(disc) }, &frame.toCanvas);
         if (pose.night <= 0.0f)
             return;
-        const Color crater = colorBetween(disc, Color{ 0xFF000000 }, k_craterShade);
+        const Color crater = Color::between(disc, Color{ 0xFF000000 }, k_craterShade);
         for (const Crater& each : k_craters)
         {
             const FloatPoint middle = {

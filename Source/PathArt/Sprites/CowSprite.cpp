@@ -17,10 +17,9 @@ namespace ClaFi::PathArt
         // against `backdrop`. From a tenth more the two blend, so a theme crossfade carries it.
         [[nodiscard]] Color limbColorOn(const CowColors& colors, const Color backdrop)
         {
-            const Color light = colorBetween(colors.body, colors.detail, 0.2f);
-            const float gain = contrastBetween(light, backdrop)
-                / contrastBetween(colors.detail, backdrop);
-            return colorBetween(colors.detail, light, smoothStep(1.1f, 1.3f, gain));
+            const Color light = Color::between(colors.body, colors.detail, 0.2f);
+            const float gain = Color::contrastBetween(light, backdrop) / Color::contrastBetween(colors.detail, backdrop);
+            return Color::between(colors.detail, light, smoothStep(1.1f, 1.3f, gain));
         }
     }
 

@@ -4,11 +4,12 @@ import ClaFi.PathArt.GrassPatchSprite;
 import ClaFi.PathArt.HareSprite;
 import ClaFi.PathArt.SnowEffect;
 import ClaFi.PathArt.WolfSprite;
+import ClaFi.PathArt.SceneHelpers;
+import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
-import ClaFi.Core.Graphics.Canvas;
 
 namespace ClaFi::PathArt
 {
@@ -108,6 +109,9 @@ namespace ClaFi::PathArt
 
     export struct SceneTheme
     {
+        // The share of a passing camera's speed at which a layer takes the theme's airHaze.
+        static constexpr float HazeReferenceParallax{ 0.2f };
+
         std::wstring_view name;
         Color skyTop, skyBottom; // 1
         Color sunDisk, sunGlow; // 3
@@ -165,6 +169,8 @@ namespace ClaFi::PathArt
         const float* effectsArray() const { return &hasRain; }
         static constexpr std::size_t effectsNum() { return 9; }
         void drawIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const;
+        // A far layer, seen through the theme's air. See PathArt
+        [[nodiscard]] Color hazed(Color clear, float parallax, float aboveGround = 0.0f) const;
     };
 
 
@@ -240,5 +246,24 @@ namespace ClaFi::PathArt
 
         // 6. Pop the clip geometry to clean up the canvas stack [CP]
         canvas.popClip();
+    }
+
+    Color SceneTheme::hazed(Color clear, float parallax, float aboveGround) const
+    {
+        // Frame heights, as seen at parallax 1, over which the air thins to 1/e.
+        constexpr float k_airScaleHeight{ 24.0f };
+        // skyBottom's share in the air's color, which the haze takes a layer toward.
+        constexpr float k_hazeSkyBottomShare{ 0.33f };
+
+        const float distance = 1.0f / parallax;
+        float air = distance - 1.0f;
+        if (aboveGround > 0.0f)
+        {
+            const float thinning = aboveGround / k_airScaleHeight;
+            air = (std::exp(-thinning) - std::exp(-thinning * distance)) / thinning;
+        }
+        const float referenceSpans = air / (1.0f / SceneTheme::HazeReferenceParallax - 1.0f);
+        const Color haze = Color::between(skyTop, skyBottom, k_hazeSkyBottomShare);
+        return Color::between(clear, haze, 1.0f - std::pow(1.0f - airHaze, referenceSpans));
     }
 }

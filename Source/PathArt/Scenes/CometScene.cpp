@@ -1,6 +1,5 @@
 module ClaFi.PathArt.CometScene;
 
-import ClaFi.PathArt.Air;
 import ClaFi.PathArt.CloudMap;
 import ClaFi.PathArt.CometSprite;
 import ClaFi.PathArt.Scene;
@@ -23,26 +22,44 @@ namespace ClaFi::PathArt
 
     namespace CometSceneColors
     {
-        constexpr Color SkyTop{ 0xFF050716 };
-        constexpr Color SkyBottom{ 0xFF1A1842 };
+        namespace
+        {
+            struct TwoColors
+            {
+                Color top;
+                Color bottom;
+            };
+        }
+
+        constexpr TwoColors Sky{
+            0xFF050716,
+            0xFF1A1842
+        };
 
         constexpr Color Flash{ 0xFFFF9A66 };
         constexpr Color Star{ 0xFFEEF0FF };
         constexpr Color ShootingStar{ 0xFFFFFFFF };
         // The comet's cold light on the mountains it passes over.
         constexpr Color CometLight{ 0xFFCFE2FF };
-        // The fog lying in the valley: silver-blue, lighter at its tops.
-        constexpr Color FogTop{ 0xFFD6DFF2 };
-        constexpr Color FogFoot{ 0xFF9BA7C6 };
         
-        constexpr Color RidgeTop{ 0xFF1C2439 };
-        constexpr Color RidgeBottom{ 0xFF080B13 };
+        // The fog lying in the valley: silver-blue.
+        constexpr Color Fog{ 0xFFD6DFF2 };
+
+        constexpr TwoColors FarRidge{
+            0xFF292455,
+            0xFF161228
+        };
+        constexpr TwoColors NearRidge{
+            0xFF1C2439,
+            0xFF090714
+        };
+        constexpr Color Shore = 0xFF020705;
 
         constexpr Color Afterglow{ 0xFFFFB070 };
         constexpr Color ImpactCore{ 0xFFFFF1D0 };
         constexpr Color RidgeRim = { 0xFFFFD8A8 };
 
-        constexpr Color LakeTop = SkyBottom;// { 0xFF1E2B47 };
+        constexpr Color LakeTop = Sky.bottom;// { 0xFF1E2B47 };
         constexpr Color LakeBottom{ 0xFF04070F };
         constexpr Color LakeShadeTop{ 0x26060C1B };
         constexpr Color LakeShadeBottom{ 0xBF03060F };
@@ -50,7 +67,6 @@ namespace ClaFi::PathArt
         constexpr Color Ripple{ 0x26C6D4F4 };
         constexpr Color Glitter{ 0xFFE9EFFF };
         
-        constexpr Color Shore = 0xFF020707;
         
         // The near shore's pines and boulders, the darkest thing in the frame.
         constexpr Color NearRock{ 0xFF060911 };
@@ -65,18 +81,22 @@ namespace ClaFi::PathArt
     namespace
     {
         constexpr float k_passesPerCycle{ 2.0f };
-        // The share of a pass the comet falls for; the rest is the glow behind the ridge.
-        constexpr float k_fallShare{ 0.6f };
+        
+        // The comet fall duration in cycles - strictly < 1.0f
+        constexpr float k_fallDuration{ 0.6f };
+
         // Where the lake begins, as a share of the frame's height.
         constexpr float k_lakeShare{ 0.72f };
-        constexpr float k_reflectionOpacity{ 0.42f };
+        constexpr float k_reflectionOpacity{ 0.666f };
         // The rounded stone mirrors in the water at full share, in its own colours.
         constexpr float k_stoneReflectionOpacity{ 1.0f };
         // How far the ripples move the lake's top row and its nearest, in units of the frame.
         constexpr float k_farRippleReach{ 0.4f };
         constexpr float k_nearRippleReach{ 4.0f };
+        
         // The glitter path: the Mill's sun path, with the comet's light moving over the sparkles.
-        constexpr int k_glitterFieldCount{ 3200 };
+        constexpr int k_glitterFieldCount{ 3000 };
+
         constexpr int k_pathGlowCount{ 7 };
         constexpr float k_glitterOpacity{ 0.5f };
         // The rounded stone's place: centred a little right, its base in the water, squashed.
@@ -87,14 +107,17 @@ namespace ClaFi::PathArt
         // The scene's air, stated the way a theme states it: its own sky's ends and the share a
         // layer at the reference distance takes.
         constexpr SceneTheme k_air{
-            .skyTop = CometSceneColors::SkyTop,
-            .skyBottom = CometSceneColors::SkyBottom,
+            .skyTop = CometSceneColors::Sky.top,
+            .skyBottom = CometSceneColors::Sky.bottom,
             .airHaze = 0.06f
         };
+        
         // The ranges' distances: the far one as far as the Chase's far mountains, the near one at
         // the reference distance, where a layer takes the air's share exactly.
-        constexpr float k_farRangeParallax{ 0.02f };
-        constexpr float k_nearRangeParallax{ k_hazeReferenceParallax };
+        constexpr float k_farRangeParallax = 0.02f;
+        constexpr float k_nearRangeParallax = SceneTheme::HazeReferenceParallax;
+        constexpr float k_shoreParallax = k_nearRangeParallax;
+
         // Where a ridge's haze gradient starts, above every peak, and the steps it is drawn in.
         constexpr float k_ridgeTopShare{ 0.35f };
         constexpr int k_ridgeHazeSteps{ 12 };
@@ -109,7 +132,7 @@ namespace ClaFi::PathArt
 
         // A range's paint, hazed as the standard air hazes a layer at its distance: both ranges
         // start from the same clear colours, thinner with height above the lake.
-        LinearGradient hazedRidge(const SceneFrame& frame, const float parallax)
+        LinearGradient hazedRidge(const SceneFrame& frame, const float parallax, CometSceneColors::TwoColors colors)
         {
             const float lakeY = frame.height * k_lakeShare;
             const float top = frame.height * k_ridgeTopShare;
@@ -124,10 +147,11 @@ namespace ClaFi::PathArt
                 const float position = static_cast<float>(step)
                     / static_cast<float>(k_ridgeHazeSteps);
                 const float aboveGround = (1.0f - position) * (lakeY - top) / frame.height;
-                const Color clear = colorBetween(CometSceneColors::RidgeTop,
-                    CometSceneColors::RidgeBottom, position);
-                rock.stops.push_back({ .position = position,
-                    .color = hazed(k_air, clear, parallax, aboveGround) });
+                const Color clear = Color::between(colors.top, colors.bottom, position);
+                rock.stops.push_back({
+                    .position = position,
+                    .color = k_air.hazed(clear, parallax, aboveGround)
+                });
             }
             return rock;
         }
@@ -188,9 +212,8 @@ namespace ClaFi::PathArt
                 {
                     field[static_cast<std::size_t>(i)] = Glitter{
                         .along = std::pow(spreadShare(i, k_glitterFieldCount, 51.0f), 0.7f),
-                        .across = fractionalPart(static_cast<float>(i) * 0.618034f
-                            + 0.08f * pseudoRandom(i, 52.0f)),
-                        .waterShare = pseudoRandom(i, 55.0f) < 0.18f ? 0.35f : 0.0f,
+                        .across = fractionalPart(static_cast<float>(i) * 0.618034f + 0.08f * pseudoRandom(i, 52.0f)),
+                        .waterShare = pseudoRandom(i, 55.0f) < 0.02f ? 0.35f : 0.0f,
                         .twinkleRate = std::round(14.0f + 12.0f * pseudoRandom(i, 53.0f)),
                         .twinklePhase = static_cast<float>(i) * 2.1f
                     };
@@ -418,13 +441,6 @@ namespace ClaFi::PathArt
         drawSky(frame);
         drawAboveLake(frame, time, false);
         drawLake(frame, time);
-        // A constant fog lies over the same ground, in the Mill's river fog geometry: one wide, flat
-        // glow that never drifts, with the bands laid over it.
-        const float hazeSpread = frame.height * 0.2475f;
-        drawGlow(frame, { frame.width * 0.6f, frame.height * 0.66f }, hazeSpread,
-            CometSceneColors::FogTop.withOpacity(0.18f), hazeSpread / (frame.width * 0.6f));
-        // The nearest fog lies over the lake and its trees, so it goes on the last layer of all.
-        drawFogBand(frame, time, passAt(frame, time.cycleTime), k_nearFog, m_nearFogPixels);
         // The near shore stands in front of the mist, dark and sharp.
         m_foreground.draw(frame);
     }
@@ -449,7 +465,7 @@ namespace ClaFi::PathArt
     SceneReadoutColors CometScene::readoutColors() const
     {
         return {
-            .field = CometSceneColors::RidgeBottom,
+            .field = CometSceneColors::FarRidge.bottom,
             .series = CometSceneColors::Ripple
         };
     }
@@ -475,7 +491,7 @@ namespace ClaFi::PathArt
     {
         const bool fromLeft = std::floor(cycleTime * k_passesPerCycle) == 0.0f;
         const float passTime = fractionalPart(cycleTime * k_passesPerCycle);
-        const bool falling = passTime < k_fallShare;
+        const bool falling = passTime < k_fallDuration;
         const FloatPoint start = {
             frame.width * (fromLeft ? -0.04f : 1.04f),
             frame.height * (fromLeft ? 0.06f : 0.12f)
@@ -490,7 +506,7 @@ namespace ClaFi::PathArt
                 .end = end
             },
             .passTime = passTime,
-            .afterglow = falling ? 0.0f : (passTime - k_fallShare) / (1.0f - k_fallShare)
+            .afterglow = falling ? 0.0f : (passTime - k_fallDuration) / (1.0f - k_fallDuration)
         };
     }
 
@@ -576,11 +592,11 @@ namespace ClaFi::PathArt
         // The comet's light on the band: cold while it falls, warm as it lands.
         const float lightAlong = pass.afterglow > 0.0f
             ? 1.0f
-            : std::pow(pass.passTime / k_fallShare, 1.35f);
+            : std::pow(pass.passTime / k_fallDuration, 1.35f);
         const FloatPoint lightAt = pointOnCourse(pass.course, lightAlong);
         const float lightFade = pass.afterglow > 0.0f
             ? std::pow(1.0f - pass.afterglow, 1.4f)
-            : 1.0f - smoothStep(0.52f, k_fallShare, pass.passTime);
+            : 1.0f - smoothStep(0.52f, k_fallDuration, pass.passTime);
         const Color light = (pass.afterglow > 0.0f ? CometSceneColors::Afterglow
             : CometSceneColors::CometLight).fullyOpaque();
         const float lightReach = 600.0f * unit;
@@ -610,13 +626,10 @@ namespace ClaFi::PathArt
         std::vector<FogRow> bandRows(downPixels);
         for (int row = 0; row != size.y; ++row)
         {
-            const float downShare = (static_cast<float>(row) + 0.5f)
-                / static_cast<float>(size.y);
+            const float downShare = (static_cast<float>(row) + 0.5f) / static_cast<float>(size.y);
             const float gridRow = downShare * static_cast<float>(k_fogRows) - 0.5f;
-            const int above = std::clamp(static_cast<int>(std::floor(gridRow)), 0,
-                k_fogRows - 1);
-            const Color shade = colorBetween(CometSceneColors::FogTop, CometSceneColors::FogFoot,
-                downShare);
+            const int above = std::clamp(static_cast<int>(std::floor(gridRow)), 0, k_fogRows - 1);
+            const Color shade = CometSceneColors::Fog;
             bandRows[static_cast<std::size_t>(row)] = {
                 .red = static_cast<float>(shade.red),
                 .green = static_cast<float>(shade.green),
@@ -712,11 +725,12 @@ namespace ClaFi::PathArt
         // crest above it, travelling with the head and giving way to the landing's warm glow.
         const float lightAlong = pass.afterglow > 0.0f
             ? 1.0f
-            : std::pow(pass.passTime / k_fallShare, 1.35f);
+            : std::pow(pass.passTime / k_fallDuration, 1.35f);
+
         const FloatPoint cometLight = pointOnCourse(pass.course, lightAlong);
         const float lightFade = pass.afterglow > 0.0f
             ? 0.0f
-            : 1.0f - smoothStep(0.52f, k_fallShare, pass.passTime);
+            : 1.0f - smoothStep(0.52f, k_fallDuration, pass.passTime);
         if (lightFade > 0.0f)
         {
             PixelPath farRidge;
@@ -725,10 +739,12 @@ namespace ClaFi::PathArt
                 farRidge.lineTo(x, farRidgeY(frame, x));
             farRidge.lineTo(width + 8.0f * unit, lakeY);
             farRidge.close();
+
             frame.canvas.pushClip(farRidge, &frame.toCanvas);
-            drawGlow(frame, { cometLight.x, farRidgeY(frame, cometLight.x) + 10.0f * unit },
-                80.0f * unit, CometSceneColors::CometLight.withOpacity(0.13f * lightFade), 1.5f);
+            drawGlow(frame, { cometLight.x, cometLight.y },
+                166.0f * unit, CometSceneColors::CometLight.withOpacity(0.13f * lightFade), 0.5f);
             frame.canvas.popClip();
+
             PixelPath rim;
             for (float x = 0.0f; x <= width + 6.0f * unit; x += 6.0f * unit)
             {
@@ -765,13 +781,14 @@ namespace ClaFi::PathArt
         drawComet(frame, CometPose{
             .course = pass.course,
             .passTime = pass.passTime,
-            .fallShare = k_fallShare,
+            .fallShare = k_fallDuration,
             .cycleTime = cycleTime
         });
 
         // The fog lies in the valley, behind the near range, whose crest stands in front of it.
         if (!reflection)
             drawFogBand(frame, time, pass, k_valleyFog, m_valleyFogPixels);
+        
         (reflection ? m_mirroredNearRidge : m_nearRidge).draw(upright);
         if (pass.afterglow > 0.0f)
         {
@@ -783,10 +800,12 @@ namespace ClaFi::PathArt
                 else
                     rim.lineTo(x, nearRidgeY(frame, x));
             }
-            constexpr float rimStrength = 1.0f; // 0.85f
+            constexpr float rimStrength = 1.0f;
             const float rimOpacity = rimStrength * std::pow(1.0f - pass.afterglow, 1.5f);
+            
             const Color rimLit = CometSceneColors::RidgeRim.withOpacity(rimOpacity);
             const Color rimDark = CometSceneColors::Afterglow.withOpacity(0.0f);
+
             strokeShape(frame, rim, LinearGradient{
                 .startPoint = { pass.course.end.x - 220.0f * unit, 0.0f },
                 .endPoint = { pass.course.end.x + 220.0f * unit, 0.0f },
@@ -875,6 +894,7 @@ namespace ClaFi::PathArt
                 width * k_stoneWidth, k_stoneSquish);
         }, stoneRipples);
         m_lakeShade.draw(frame);
+        
         // The stone stands in the water before the trail is laid, so the comet's glow lights it.
         drawRoundedBoulder(frame, { width * k_stoneAt.x, height * k_stoneAt.y },
             width * k_stoneWidth, k_stoneSquish);
@@ -895,7 +915,7 @@ namespace ClaFi::PathArt
         // ridge it fell behind.
         const float headAlong = pass.afterglow > 0.0f
             ? 1.0f
-            : std::pow(pass.passTime / k_fallShare, 1.35f);
+            : std::pow(pass.passTime / k_fallDuration, 1.35f);
         const FloatPoint light = pointOnCourse(pass.course, headAlong);
         const float shine = pass.afterglow > 0.0f
             ? std::pow(1.0f - pass.afterglow, 1.6f)
@@ -916,8 +936,8 @@ namespace ClaFi::PathArt
         {
             const float along = (static_cast<float>(i) + 0.5f)
                 / static_cast<float>(k_pathGlowCount);
-            drawGlow(frame, pointBetween(far, near, along), (6.0f + 40.0f * along) * unit,
-                CometSceneColors::Glitter.withOpacity(0.06f * shine), 0.8f);
+            drawGlow(frame, FloatPoint::between(far, near, along), (6.0f + 40.0f * along) * unit,
+                CometSceneColors::Glitter.withOpacity(0.04f * shine), 0.8f);
         }
 
         // The stone and its shadow: no sparkle in the band they make - a little past the stone's
@@ -985,8 +1005,8 @@ namespace ClaFi::PathArt
             .startPoint = { 0.0f, 0.0f },
             .endPoint = { 0.0f, lakeY },
             .stops = {
-                { .position = 0.0f, .color = CometSceneColors::SkyTop },
-                { .position = 1.0f, .color = CometSceneColors::SkyBottom }
+                { .position = 0.0f, .color = CometSceneColors::Sky.top },
+                { .position = 1.0f, .color = CometSceneColors::Sky.bottom }
             }
         });
     }
@@ -1004,7 +1024,7 @@ namespace ClaFi::PathArt
             farRidge.lineTo(x, farRidgeY(frame, x));
         farRidge.lineTo(width + 8.0f * unit, lakeY);
         farRidge.close();
-        fillShape(frame, farRidge, hazedRidge(frame, k_farRangeParallax));
+        fillShape(frame, farRidge, hazedRidge(frame, k_farRangeParallax, CometSceneColors::FarRidge));
     }
 
     void CometScene::drawNearRidge(const SceneFrame& frame)
@@ -1018,7 +1038,7 @@ namespace ClaFi::PathArt
             nearRidge.lineTo(x, nearRidgeY(frame, x));
         nearRidge.lineTo(width + 6.0f * unit, lakeY);
         nearRidge.close();
-        fillShape(frame, nearRidge, hazedRidge(frame, k_nearRangeParallax));
+        fillShape(frame, nearRidge, hazedRidge(frame, k_nearRangeParallax, CometSceneColors::NearRidge));
     }
 
     void CometScene::drawMirroredFarRidge(const SceneFrame& frame)
@@ -1053,8 +1073,11 @@ namespace ClaFi::PathArt
         const float unit = frame.unit;
         const float width = frame.width;
         const float lakeY = frame.height * k_lakeShare;
-        fillBox(frame, { 0.0f, lakeY - 2.0f * unit, width, lakeY + 3.0f * unit },
-            SolidColor{ CometSceneColors::Shore });
+
+        const Color hazedShore = k_air.hazed(CometSceneColors::Shore, k_shoreParallax);
+
+
+        fillBox(frame, { 0.0f, lakeY - 2.0f * unit, width, lakeY + 3.0f * unit }, SolidColor{ hazedShore });
         const float spacing = 11.0f * unit;
         const int count = static_cast<int>(std::ceil(width / spacing)) + 2;
         for (int i = 0; i != count; ++i)
@@ -1070,7 +1093,7 @@ namespace ClaFi::PathArt
             pine.lineTo(x, lakeY - treeHeight);
             pine.lineTo(x + treeHeight * 0.28f, lakeY + unit);
             pine.close();
-            fillShape(frame, pine, SolidColor{ CometSceneColors::Shore });
+            fillShape(frame, pine, SolidColor{ hazedShore });
         }
     }
 
@@ -1083,16 +1106,21 @@ namespace ClaFi::PathArt
     // their points echoing the far pines.
     void CometScene::drawForeground(const SceneFrame& frame)
     {
+        // Make an option
+        return;
         const float width = frame.width;
         const float height = frame.height;
+        
         drawPine(frame, { width * 0.055f, height * 1.06f }, height * 0.62f, 5);
         drawPine(frame, { width * 0.125f, height * 1.02f }, height * 0.40f, 9);
-        // One short pine in front, a third of the width in from the left.
-        drawPine(frame, { width * 0.330f, height * 1.01f }, height * 0.24f, 23);
-        drawPine(frame, { width * 0.945f, height * 1.06f }, height * 0.56f, 13);
+        drawPine(frame, { width * 0.29f, height * 1.01f }, height * 0.24f, 23);
         drawPine(frame, { width * 0.885f, height * 1.02f }, height * 0.36f, 17);
+        drawPine(frame, { width * 0.945f, height * 1.06f }, height * 0.56f, 13);
+
         // The boulders standing in the water.
-        drawRock(frame, { width * 0.270f, height * 1.02f }, width * 0.22f, height * 0.29f, 21);
+        drawRock(frame, { width * 0.230f, height * 1.02f }, width * 0.12f, height * 0.19f, 20);
+        drawRock(frame, { width * 0.330f, height * 1.02f }, width * 0.12f, height * 0.16f, 24);
+
         drawRock(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27);
         drawRock(frame, { width * 0.755f, height * 1.02f }, width * 0.22f, height * 0.29f, 31);
         // The Chase's rounded stone is laid in the lake, before the trail, so the glow lights it.

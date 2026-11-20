@@ -143,7 +143,7 @@ namespace ClaFi::Controls
         // The mark is lit while the popup is up: it is the one part of the control that says so
         // wherever the press landed, and a muted mark over an open popup reads as a control at
         // rest. A mark already taking the normal color stays as it is.
-        Color color = Color::blend(
+        Color color = Color::between(
             event.inkRgb(dropdownMarkInk()),
             event.textRgb(InkGrade::Strongest),
             m_droppedDownFactor

@@ -51,7 +51,7 @@ namespace ClaFi::PathArt
         const float blinkTime = pose.blinkTime;
         // In the Earth's shadow every part goes dark toward the same deep blue.
         const auto lit = [&](Color color) {
-            return colorBetween(SatelliteColors::InShadow, color, 0.35f + 0.65f * sunlit);
+            return Color::between(SatelliteColors::InShadow, color, 0.35f + 0.65f * sunlit);
         };
         const float sway = -0.16f + 0.05f * std::sin(k_2Pi * orbitTime);
         const SceneFrame craft = frame.within(Matrix3x2::Translation(center)

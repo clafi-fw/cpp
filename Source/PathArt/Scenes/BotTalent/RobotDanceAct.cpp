@@ -108,8 +108,8 @@ namespace ClaFi::PathArt
             const HandsAt pointing = poseOnBeat(7);
             const float into = smoothStep(8.0f, 8.3f, beat);
             hands = {
-                pointBetween(pointing.left, waving.left, into),
-                pointBetween(pointing.right, waving.right, into)
+                FloatPoint::between(pointing.left, waving.left, into),
+                FloatPoint::between(pointing.right, waving.right, into)
             };
             m_android.headTurn = 0.08f * std::sin(wave - 1.0f);
             m_android.look = 4.0f * std::sin(wave - 1.0f);
@@ -120,8 +120,8 @@ namespace ClaFi::PathArt
             const HandsAt now = poseOnBeat(beatIndex);
             const float snap = smoothStep(0.0f, 0.22f, intoBeat);
             hands = {
-                pointBetween(before.left, now.left, snap),
-                pointBetween(before.right, now.right, snap)
+                FloatPoint::between(before.left, now.left, snap),
+                FloatPoint::between(before.right, now.right, snap)
             };
             if (beatIndex < 8)
             {

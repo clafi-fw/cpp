@@ -92,8 +92,8 @@ namespace ClaFi::PathArt
             .field = theme.riverBottom,
             .series = theme.riverWave
         };
-        const Color darkInk = colorBetween(theme.riverBottom, Color{ 0xFF000000 }, 0.5f);
-        if (contrastBetween(darkInk, theme.skyTop) > contrastBetween(colors.ink, theme.skyTop))
+        const Color darkInk = Color::between(theme.riverBottom, Color{ 0xFF000000 }, 0.5f);
+        if (Color::contrastBetween(darkInk, theme.skyTop) > Color::contrastBetween(colors.ink, theme.skyTop))
             colors.ink = darkInk;
         return colors;
     }

@@ -512,7 +512,7 @@ namespace ClaFi::Controls::Grids
         // halves - each the line standing on its own cell's surface. A cell whose line the theme
         // leaves out paints nothing here, and its fill stands for its half.
         const float lineOpacity = lineColor.alpha / 255.0f;
-        const Color pixelColor = Color::blend(surfaceColor, lineColor.fullyOpaque(), lineOpacity)
+        const Color pixelColor = Color::between(surfaceColor, lineColor.fullyOpaque(), lineOpacity)
             .fullyOpaque();
         const Color overColor = pixelColor.withOpacity(0.5f);
         if (sides.right)

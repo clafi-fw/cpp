@@ -104,14 +104,14 @@ namespace ClaFi::PathArt
         };
         plantAndroidFeet(frame, m_android, { m_ball.x - 15.0f * unit, ankleY },
             { m_ball.x + 15.0f * unit, ankleY });
-        m_android.right.foot = pointBetween(m_android.right.foot, { 90.0f, 66.0f }, oneLeg);
+        m_android.right.foot = FloatPoint::between(m_android.right.foot, { 90.0f, 66.0f }, oneLeg);
         m_android.left.footTurn = -lean;
         m_android.right.footTurn = -lean - 0.9f * oneLeg;
 
         const float swing = 28.0f * std::sin(k_2Pi * actTime * 0.9f);
-        m_android.left.hand = pointBetween({ -142.0f, -112.0f + swing }, ActHands::LeftRaised,
+        m_android.left.hand = FloatPoint::between({ -142.0f, -112.0f + swing }, ActHands::LeftRaised,
             oneLeg);
-        m_android.right.hand = pointBetween({ 142.0f, -112.0f - swing }, ActHands::RightRaised,
+        m_android.right.hand = FloatPoint::between({ 142.0f, -112.0f - swing }, ActHands::RightRaised,
             oneLeg);
         m_android.headTurn = -lean * 0.6f;
         m_android.look = std::clamp(-speed / 60.0f, -6.0f, 6.0f);

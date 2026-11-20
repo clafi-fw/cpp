@@ -107,7 +107,7 @@ namespace ClaFi::PathArt
         }
         else
         {
-            const FloatPoint waist = pointBetween(stand.foot, stand.top, k_standWaist);
+            const FloatPoint waist = FloatPoint::between(stand.foot, stand.top, k_standWaist);
             const float radius = (waist.y - stand.top.y) / bend;
             top = waist + FloatPoint{ radius * (1.0f - std::cos(bend)), -radius * std::sin(bend) };
             PixelPath pole;

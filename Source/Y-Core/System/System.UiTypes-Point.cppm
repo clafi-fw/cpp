@@ -67,7 +67,14 @@ namespace ClaFi
                 static_cast<int>(std::ceil(y))
             };
         }
+        static [[nodiscard]] Point<float> between(Point from, Point to, float share);
     };
+
+    template <IsArithmeticType T>
+    Point<float> Point<T>::between(Point from, Point to, float share)
+    {
+        return { std::lerp(from.x, to.x, share), std::lerp(from.y, to.y, share) };
+    }
 
     template<IsArithmeticType T>
     constexpr Point<T>::Point()
@@ -94,7 +101,6 @@ namespace ClaFi
     }
 
     export using FloatPoint = Point<float>;
-    export using DoublePoint = Point<double>;
     export using IntPoint = Point<int>;
 
     export float distanceBetweenPoints(IntPoint pt1, IntPoint pt2)

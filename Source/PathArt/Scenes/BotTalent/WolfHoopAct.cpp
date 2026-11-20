@@ -187,10 +187,10 @@ namespace ClaFi::PathArt
         const float facepalm = smoothStep(5.9f, 6.3f, actTime)
             * (1.0f - smoothStep(7.6f, 8.0f, actTime));
         const float tada = smoothStep(8.6f, 9.0f, actTime);
-        FloatPoint rightHand = pointBetween(ActHands::RightOnHip, { -40.0f, -120.0f }, sending);
-        rightHand = pointBetween(rightHand, { 110.0f, -190.0f }, cheering);
-        rightHand = pointBetween(rightHand, { 8.0f, -158.0f }, facepalm);
-        m_android.right.hand = pointBetween(rightHand, ActHands::RightRaised, tada);
+        FloatPoint rightHand = FloatPoint::between(ActHands::RightOnHip, { -40.0f, -120.0f }, sending);
+        rightHand = FloatPoint::between(rightHand, { 110.0f, -190.0f }, cheering);
+        rightHand = FloatPoint::between(rightHand, { 8.0f, -158.0f }, facepalm);
+        m_android.right.hand = FloatPoint::between(rightHand, ActHands::RightRaised, tada);
         m_android.right.elbow = facepalm > 0.5f ? ElbowBend::Down : ElbowBend::Out;
         m_android.left.hand = k_hoopGrip;
         m_android.left.handShape = HandShape::Fist;

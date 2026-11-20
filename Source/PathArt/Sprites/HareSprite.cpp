@@ -29,7 +29,7 @@ namespace ClaFi::PathArt
             * Matrix3x2::Scale(pose.size * pose.facing, pose.size));
         const float air = pose.air;
         // Lit from above like the wolf, each part darkens downward, at most to `unlit`.
-        const Color unlit = colorBetween(coat.shade, Color{ 0xFF000000 }, k_unlitShare);
+        const Color unlit = Color::between(coat.shade, Color{ 0xFF000000 }, k_unlitShare);
         const auto litFromAbove = [](float top, float bottom, Color upper, Color lower) {
             return LinearGradient::Simple({ 0.0f, top }, { 0.0f, bottom }, upper, lower);
         };
@@ -50,7 +50,7 @@ namespace ClaFi::PathArt
         fillOval(body, { 8.0f, 8.0f }, 14.0f, 6.0f, SolidColor{ coat.belly });
         const FloatPoint tail = { -29.0f + pose.sitting * 8.0f, -26.0f - pose.sitting * 4.0f };
         fillDisc(hare, tail, 7.0f, LinearGradient::Simple(tail + FloatPoint{ 0.0f, -7.0f },
-            tail + FloatPoint{ 0.0f, 7.0f }, coat.tail, colorBetween(coat.tail, coat.shade, 0.5f)));
+            tail + FloatPoint{ 0.0f, 7.0f }, coat.tail, Color::between(coat.tail, coat.shade, 0.5f)));
 
         // The forelegs, the far one first, their angles measured from straight down.
         const float reach = std::lerp(std::lerp(0.2f, -0.9f, air) + 0.4f * pose.sitting, 2.4f,

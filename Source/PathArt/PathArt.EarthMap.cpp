@@ -1508,7 +1508,7 @@ namespace ClaFi::PathArt
                 for (int step = 0; step != steps; ++step)
                 {
                     const float share = static_cast<float>(step) / static_cast<float>(steps);
-                    dense.push_back(pointBetween(from, to, share));
+                    dense.push_back(FloatPoint::between(from, to, share));
                 }
             }
             return dense;

@@ -199,7 +199,7 @@ namespace ClaFi::PathArt
                 hoop);
             fillOval(kit, { 0.0f, middle.y }, 11.0f, 50.0f, hoop);
             fillOval(kit, { 0.0f, middle.y }, 8.0f, 47.0f,
-                SolidColor{ colorBetween(DrumColors::Skin, DrumColors::SkinStruck, kicked) });
+                SolidColor{ Color::between(DrumColors::Skin, DrumColors::SkinStruck, kicked) });
         }
 
         // The footboard's toe end comes down with the press, about its heel.
@@ -318,11 +318,11 @@ namespace ClaFi::PathArt
             kitToFrame(k_cymbal + FloatPoint{ 20.0f, -4.0f }));
         const FloatPoint strikeGrip = struckPoint
             - directionOf(k_stickStrikeAngle) * (k_stickLength - k_stickGrip);
-        FloatPoint hand = pointBetween(onGuitar({ 28.0f, 15.0f * stroke }), takenAt, toEar);
-        hand = pointBetween(hand, takenAt - directionOf(earAngle) * 44.0f, pulled);
-        hand = pointBetween(hand, strikeGrip + FloatPoint{ 4.0f, -20.0f }, raise);
-        hand = pointBetween(hand, strikeGrip, strike);
-        hand = pointBetween(hand, ActHands::LeftRaised, tada);
+        FloatPoint hand = FloatPoint::between(onGuitar({ 28.0f, 15.0f * stroke }), takenAt, toEar);
+        hand = FloatPoint::between(hand, takenAt - directionOf(earAngle) * 44.0f, pulled);
+        hand = FloatPoint::between(hand, strikeGrip + FloatPoint{ 4.0f, -20.0f }, raise);
+        hand = FloatPoint::between(hand, strikeGrip, strike);
+        hand = FloatPoint::between(hand, ActHands::LeftRaised, tada);
         float stickAngle = std::lerp(earAngle, k_stickRaisedAngle, raise);
         stickAngle = std::lerp(stickAngle, k_stickStrikeAngle, strike);
         stickAngle = std::lerp(stickAngle, k_stickTadaAngle, tada);

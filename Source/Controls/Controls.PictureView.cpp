@@ -704,7 +704,7 @@ namespace ClaFi::Controls
                 // staging view the cache is copied into is premultiplied, and a straight color
                 // at partial alpha would be added to the surface rather than blended into it.
                 Color square = squareAt({ at.x + i, at.y });
-                square.paint_over_opaque(color);
+                square.paintOverGeneral(color);
                 color = square;
             }
             line[i] = color;

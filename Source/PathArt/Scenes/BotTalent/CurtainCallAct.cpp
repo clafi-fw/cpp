@@ -110,9 +110,9 @@ namespace ClaFi::PathArt
         m_android = standingAndroid(frame, { androidX, floorY }, time.cycleTime, 6.0f * bow);
         m_android.bow = bow;
         const float sweep = between(1.8f, 2.3f);
-        FloatPoint rightHand = pointBetween(ActHands::RightOnHip, { 40.0f, -176.0f },
+        FloatPoint rightHand = FloatPoint::between(ActHands::RightOnHip, { 40.0f, -176.0f },
             between(1.15f, 1.45f));
-        rightHand = pointBetween(rightHand, { 56.0f, -206.0f }, between(1.5f, 1.8f));
+        rightHand = FloatPoint::between(rightHand, { 56.0f, -206.0f }, between(1.5f, 1.8f));
         if (actTime >= 1.8f)
         {
             const float swing = std::lerp(-1.45f, 0.85f, sweep);
@@ -127,11 +127,11 @@ namespace ClaFi::PathArt
         const float reachingUp = between(6.55f, 7.1f);
         const float toChest = between(7.15f, 7.55f);
         const float holdingUp = between(7.75f, 8.15f);
-        FloatPoint leftHand = pointBetween(ActHands::LeftOnHip,
+        FloatPoint leftHand = FloatPoint::between(ActHands::LeftOnHip,
             { -112.0f + 14.0f * std::sin(k_2Pi * actTime * 1.6f), -178.0f }, waving);
-        leftHand = pointBetween(leftHand, { -96.0f, -214.0f }, reachingUp);
-        leftHand = pointBetween(leftHand, { -34.0f, -78.0f }, toChest);
-        leftHand = pointBetween(leftHand, { -104.0f, -196.0f }, holdingUp);
+        leftHand = FloatPoint::between(leftHand, { -96.0f, -214.0f }, reachingUp);
+        leftHand = FloatPoint::between(leftHand, { -34.0f, -78.0f }, toChest);
+        leftHand = FloatPoint::between(leftHand, { -104.0f, -196.0f }, holdingUp);
         const bool caught = actTime > 7.1f;
         m_android.left.hand = leftHand;
         m_android.left.handShape = caught ? HandShape::Fist : HandShape::Open;

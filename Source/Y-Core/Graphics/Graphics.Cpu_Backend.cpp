@@ -637,7 +637,7 @@ namespace ClaFi::Graphics::Cpu
                 const bool inClip = clipRow && x >= clipLeft && x < clipRight;
                 const float coverage = inClip ? clipRow[x - clipLeft] : 0.0f;
                 const int mix = static_cast<int>(amount * coverage * 256.0f);
-                destRow[x - area.left].blend_fixed(srcRow[x - area.left], mix);
+                destRow[x - area.left].blend0256(srcRow[x - area.left], mix);
             }
         }
     }

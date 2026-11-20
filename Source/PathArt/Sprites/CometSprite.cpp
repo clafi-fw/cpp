@@ -193,6 +193,9 @@ namespace ClaFi::PathArt
 
         if (falling)
         {
+            float k = passTime / fallShare;
+            drawGlow(frame, head, 200.0f * unit, CometColors::Coma.withOpacity(k * 0.13f), 0.5f);
+
             drawGlow(frame, head, 48.0f * unit, CometColors::Coma.withOpacity(0.55f));
             drawGlow(frame, head, 16.0f * unit, CometColors::Nucleus.withOpacity(0.95f));
             fillDisc(frame, head, 4.0f * unit, SolidColor{ CometColors::Nucleus });

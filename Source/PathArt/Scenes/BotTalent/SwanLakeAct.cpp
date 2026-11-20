@@ -93,7 +93,7 @@ namespace ClaFi::PathArt
             dancer.right.footTurn = std::min(pointeTurn, k_pointe);
             AndroidSide& lifting = leftLifts ? dancer.left : dancer.right;
             const float side = leftLifts ? -1.0f : 1.0f;
-            lifting.foot = pointBetween(lifting.foot, { -3.0f * side, 70.0f }, lifted);
+            lifting.foot = FloatPoint::between(lifting.foot, { -3.0f * side, 70.0f }, lifted);
             lifting.footTurn = std::lerp(lifting.footTurn, 2.36f * side, lifted);
 
             // the heads turn sharply every two beats, the right way first
@@ -148,7 +148,7 @@ namespace ClaFi::PathArt
             dancer.left.handShape = HandShape::Fist;
             dancer.right.handShape = HandShape::Fist;
             const auto holdWith = [&](const AndroidPose& neighbor) {
-                const FloatPoint between = pointBetween(dancer.pelvis, neighbor.pelvis, 0.5f);
+                const FloatPoint between = FloatPoint::between(dancer.pelvis, neighbor.pelvis, 0.5f);
                 return androidFrameToUpper(frame, dancer,
                     between - FloatPoint{ 0.0f, k_handsHeight * unit });
             };
@@ -157,7 +157,7 @@ namespace ClaFi::PathArt
                 : ActHands::LeftOnHip;
             dancer.right.hand = i > 0 ? holdWith(m_dancers[i - 1]) : ActHands::RightOnHip;
         }
-        m_spotlightX = pointBetween(m_dancers.front().pelvis, m_dancers.back().pelvis, 0.5f).x;
+        m_spotlightX = FloatPoint::between(m_dancers.front().pelvis, m_dancers.back().pelvis, 0.5f).x;
     }
 
     void SwanLakeAct::draw(const SceneFrame& frame) const

@@ -29,8 +29,7 @@ namespace ClaFi::PathArt
         for (int i = 0; i < dust.count; ++i)
         {
             const float seed = dust.seed;
-            const Color color = colorBetween(dust.color1, dust.color2,
-                pseudoRandom(i, seed + 9.0f));
+            const Color color = Color::between(dust.color1, dust.color2, pseudoRandom(i, seed + 9.0f));
             const float widths = std::max(1.0f,
                 std::round((1.5f + 3.0f * pseudoRandom(i, seed + 1.0f)) * dust.pace));
             const float drift = w * widths; // in pixels a cycle

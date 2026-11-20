@@ -29,8 +29,8 @@ namespace ClaFi::PathArt
     {
         const SceneFrame cow = frame.within(Matrix3x2::Translation(pose.foot)
             * Matrix3x2::Scale(pose.size * pose.facing, pose.size));
-        const Color belly = colorBetween(colors.body, colors.detail.fullyOpaque(), 0.16f);
-        const Color far = colorBetween(colors.body, colors.detail.fullyOpaque(), 0.3f);
+        const Color belly = Color::between(colors.body, colors.detail.fullyOpaque(), 0.16f);
+        const Color far = Color::between(colors.body, colors.detail.fullyOpaque(), 0.3f);
         const float stepAngle = pose.stride ? *pose.stride * k_2Pi : 0.0f;
         const float bob = pose.stride ? std::abs(std::sin(stepAngle)) * 1.5f : 0.0f;
         const float legSwing = pose.stride ? std::sin(stepAngle) * 0.32f : 0.0f;
@@ -105,7 +105,7 @@ namespace ClaFi::PathArt
         horn.moveTo(6.0f, -12.0f);
         horn.quadTo({ 4.0f, -22.0f }, { 10.0f, -24.0f });
         strokeShape(head, horn, SolidColor{
-            colorBetween(colors.body, colors.detail.fullyOpaque(), 0.35f) }, 3.0f);
+            Color::between(colors.body, colors.detail.fullyOpaque(), 0.35f) }, 3.0f);
     }
 
     namespace

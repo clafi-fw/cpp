@@ -54,7 +54,7 @@ namespace ClaFi::PathArt
             const float share)
         {
             return {
-                pointBetween(from.hand, to.hand, share),
+                FloatPoint::between(from.hand, to.hand, share),
                 std::lerp(from.angle, to.angle, share)
             };
         }
@@ -67,7 +67,7 @@ namespace ClaFi::PathArt
             const float raise = smoothStep(start, start + 0.4f, actTime);
             const float circling = k_2Pi * 1.5f * smoothStep(start + 0.4f, start + 1.0f, actTime);
             return {
-                pointBetween(from.hand, k_wandUp, raise)
+                FloatPoint::between(from.hand, k_wandUp, raise)
                     + FloatPoint{ 10.0f * std::sin(circling), -8.0f * (1.0f - std::cos(circling)) },
                 std::lerp(from.angle, k_upAngle, raise) + 0.5f * std::sin(circling)
             };
@@ -113,7 +113,7 @@ namespace ClaFi::PathArt
             for (int i = 0; i != 5; ++i)
             {
                 const float share = std::clamp(flight - static_cast<float>(i) * 0.08f, 0.0f, 1.0f);
-                const FloatPoint at = pointBetween(tip, target, share)
+                const FloatPoint at = FloatPoint::between(tip, target, share)
                     - FloatPoint{ 0.0f, arcHeight * unit * std::sin(k_pi * share) };
                 const Color color = i % 2 == 1 ? MagicColors::Gold : MagicColors::White;
                 drawSparkle(frame, at, 6.0f * unit, color.faded(1.0f - share * 0.3f));
@@ -138,7 +138,7 @@ namespace ClaFi::PathArt
             const float last = static_cast<float>(smoke.clouds) - 0.4f;
             for (int cloud = 0; cloud != smoke.clouds; ++cloud)
             {
-                const FloatPoint middle = pointBetween(smoke.from, smoke.to,
+                const FloatPoint middle = FloatPoint::between(smoke.from, smoke.to,
                     (static_cast<float>(cloud) + 0.4f) / last);
                 for (int i = 0; i != 5; ++i)
                 {
@@ -194,10 +194,10 @@ namespace ClaFi::PathArt
         const float freed = smoothStep(2.7f, 3.2f, actTime);
         const FloatPoint grip = androidFrameToUpper(frame, m_android,
             m_marionette.control.center - FloatPoint{ 0.0f, 9.0f * unit });
-        FloatPoint leftHand = pointBetween(grip,
+        FloatPoint leftHand = FloatPoint::between(grip,
             { -108.0f, -64.0f + 10.0f * std::sin(k_2Pi * actTime / 1.25f) }, freed);
-        leftHand = pointBetween(leftHand, k_leftHandTowardStand, towardStand);
-        leftHand = pointBetween(leftHand, k_leftHandOnChest, still);
+        leftHand = FloatPoint::between(leftHand, k_leftHandTowardStand, towardStand);
+        leftHand = FloatPoint::between(leftHand, k_leftHandOnChest, still);
         AndroidSide& left = m_android.left;
         left.hand = leftHand;
         left.upperArm = std::lerp(87.0f, 57.0f, freed);
@@ -292,7 +292,7 @@ namespace ClaFi::PathArt
                 { control.kneeEndRight, puppet.legRight.joint }
             } };
             for (const std::array<FloatPoint, 2>& string : strings)
-                drawSparkle(frame, pointBetween(string[0], string[1], glint), 6.0f * unit,
+                drawSparkle(frame, FloatPoint::between(string[0], string[1], glint), 6.0f * unit,
                     MagicColors::White.faded(1.0f - 0.4f * glint));
         }
         drawSparkleBurst(frame, SparkleBurst{
@@ -318,7 +318,7 @@ namespace ClaFi::PathArt
                 .seed = 13.0f
             });
         drawSparkleBurst(frame, SparkleBurst{
-            .center = pointBetween(stand.foot, armMiddle, 0.55f),
+            .center = FloatPoint::between(stand.foot, armMiddle, 0.55f),
             .age = (actTime - 5.0f) / 0.8f,
             .count = 12,
             .seed = 83.0f,

@@ -135,7 +135,7 @@ namespace ClaFi::PathArt
             .turns = pose.wheelTurns
         }, BucketWheelColors{
             .wood = colors.wheel,
-            .spokes = colorBetween(colors.wheel, colors.sunlight, 0.1f),
+            .spokes = Color::between(colors.wheel, colors.sunlight, 0.1f),
             .hub = colors.barkShade,
             .axle = colors.timber
         });
@@ -274,7 +274,7 @@ namespace ClaFi::PathArt
 
         Color darker(const Color color, const float share)
         {
-            return colorBetween(color.fullyOpaque(), k_black, share);
+            return Color::between(color.fullyOpaque(), k_black, share);
         }
 
         FloatPoint onRing(const float frontY, const float radius, const float share)
@@ -333,9 +333,9 @@ namespace ClaFi::PathArt
                 .endPoint = { right, 0.0f },
                 .stops = {
                     { .position = 0.0f, .color = dark },
-                    { .position = 0.45f, .color = colorBetween(dark, lit, 0.6f) },
+                    { .position = 0.45f, .color = Color::between(dark, lit, 0.6f) },
                     { .position = 0.75f, .color = lit },
-                    { .position = 1.0f, .color = colorBetween(lit, dark, 0.35f) }
+                    { .position = 1.0f, .color = Color::between(lit, dark, 0.35f) }
                 }
             };
         }
@@ -351,8 +351,8 @@ namespace ClaFi::PathArt
             addRing(plinth, 0.0f, k_plinthReach, 1.0f, -1.0f, true);
             plinth.close();
             fillShape(house, plinth, roundShading(-k_plinthReach, k_plinthReach,
-                colorBetween(colors.stoneLight, colors.stoneDark, 0.35f),
-                colorBetween(colors.stoneLight, colors.stoneDark, 0.75f)));
+                Color::between(colors.stoneLight, colors.stoneDark, 0.35f),
+                Color::between(colors.stoneLight, colors.stoneDark, 0.75f)));
 
             constexpr float k_course{ -8.0f };
             constexpr int k_bricks{ 11 }; // across the front half of a course
@@ -402,7 +402,7 @@ namespace ClaFi::PathArt
             constexpr float k_halfWidth{ 9.0f }; // foreshortened by the tower's turn
             constexpr float k_halfHeight{ 10.0f };
             const float lampShare = static_cast<float>(colors.lamp.alpha) / 255.0f;
-            const SolidColor glass{ colorBetween(colors.glass, colors.lamp.fullyOpaque(),
+            const SolidColor glass{ Color::between(colors.glass, colors.lamp.fullyOpaque(),
                 lampShare) };
             const SolidColor timber{ colors.timber };
             for (const FloatPoint middle : k_windowMiddles)
@@ -436,7 +436,7 @@ namespace ClaFi::PathArt
             const FloatRect stack = { 30.0f, -168.0f, 43.0f, -118.0f };
             const FloatRect cap = { 28.0f, -172.0f, 45.0f, -167.0f };
             fillBox(house, stack,
-                SolidColor{ colorBetween(colors.stoneLight, colors.stoneDark, 0.3f) });
+                SolidColor{ Color::between(colors.stoneLight, colors.stoneDark, 0.3f) });
             fillBox(house, cap, SolidColor{ colors.stoneDark });
             // Half a joint in from each edge, as round the plinth.
             const float edge = k_jointWidth * 0.5f;

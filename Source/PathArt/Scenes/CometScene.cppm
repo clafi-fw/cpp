@@ -49,13 +49,14 @@ namespace ClaFi::PathArt
         };
         // The fog's three bands, farthest first: each stretched wider than the one before, fainter,
         // and going round faster as it comes nearer.
+        static constexpr float k_fogStrength = 0.02;
         static constexpr FogBand k_farFog{
             .topShare = 0.350f,
             .bottomShare = 0.590f,
             .latitude = 0.30f,
             .longitude = 0.5f,
             .span = 0.30f,
-            .strength = 0.034f,
+            .strength = k_fogStrength,
             .laps = 1.0f,
             .period = 26.0f
         };
@@ -65,19 +66,9 @@ namespace ClaFi::PathArt
             .latitude = 0.08f,
             .longitude = 1.6f,
             .span = 0.375f,
-            .strength = 0.056f,
+            .strength = k_fogStrength,
             .laps = -1.0f,
             .period = 72.0f
-        };
-        static constexpr FogBand k_nearFog{
-            .topShare = 0.548f,
-            .bottomShare = 0.845f,
-            .latitude = 0.16f,
-            .longitude = 2.4f,
-            .span = 0.45f,
-            .strength = 0.056f,
-            .laps = 1.0f,
-            .period = 9.0f
         };
     private:
         [[nodiscard]] static float farRidgeY(const SceneFrame&, float x);

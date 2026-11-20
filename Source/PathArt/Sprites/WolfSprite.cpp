@@ -61,7 +61,7 @@ namespace ClaFi::PathArt
     {
         const SceneFrame wolf = frame.within(Matrix3x2::Translation(pose.center)
             * Matrix3x2::Rotation(pose.turn) * Matrix3x2::Scale(pose.size));
-        const Color unlit = colorBetween(coat.shade, Color{ 0xFF000000 }, k_unlitShare);
+        const Color unlit = Color::between(coat.shade, Color{ 0xFF000000 }, k_unlitShare);
         // The near legs are drawn in it too, so a leg leaves the body in the body's own color.
         const Brush bodyGradient = LinearGradient::Simple({ 0.0f, -24.0f }, { 0.0f, 20.0f },
             coat.light, unlit);

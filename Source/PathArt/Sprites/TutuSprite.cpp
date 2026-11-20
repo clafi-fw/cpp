@@ -41,7 +41,7 @@ namespace ClaFi::PathArt
                 return color;
             Color toward = look.tint;
             toward.alpha = color.alpha;
-            return colorBetween(color, toward, look.tintShare);
+            return Color::between(color, toward, look.tintShare);
         }
     }
 

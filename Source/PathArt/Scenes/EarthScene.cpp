@@ -644,14 +644,14 @@ namespace ClaFi::PathArt
                 return EarthSceneColors::Day.withOpacity(0.9f);
             if (sunlight > 0.0f)
             {
-                const Color tint = colorBetween(EarthSceneColors::Dusk,
+                const Color tint = Color::between(EarthSceneColors::Dusk,
                     EarthSceneColors::Day, sunlight / 0.18f);
                 return tint.withOpacity(0.92f);
             }
             if (sunlight > -0.16f)
             {
                 const float share = 1.0f + sunlight / 0.16f;
-                const Color tint = colorBetween(EarthSceneColors::NightAir,
+                const Color tint = Color::between(EarthSceneColors::NightAir,
                     EarthSceneColors::DuskDeep, share);
                 return tint.withOpacity(std::lerp(0.3f, 0.92f, share));
             }
@@ -993,7 +993,7 @@ namespace ClaFi::PathArt
             const GradientStop& to = stops[next];
             const float share = std::clamp(
                 (position - from.position) / (to.position - from.position), 0.0f, 1.0f);
-            return colorBetween(shaded(from), shaded(to), share);
+            return Color::between(shaded(from), shaded(to), share);
         }
 
         // **The clouds' color from day to deep night**: the night's color, drawn toward a
@@ -1003,9 +1003,9 @@ namespace ClaFi::PathArt
             const std::array<GradientStop, 3> stops = nightStops();
             const auto shaded = [](const GradientStop& stop) {
                 const float nightShare = static_cast<float>(stop.color.alpha) / 255.0f;
-                const Color moonlit = colorBetween(stop.color, EarthSceneColors::Moonlight,
+                const Color moonlit = Color::between(stop.color, EarthSceneColors::Moonlight,
                     nightShare);
-                return colorBetween(EarthSceneColors::Cloud, moonlit, nightShare);
+                return Color::between(EarthSceneColors::Cloud, moonlit, nightShare);
             };
             std::vector<Color> shades;
             shades.reserve(k_cloudShadeCount);
@@ -1025,7 +1025,7 @@ namespace ClaFi::PathArt
         {
             const std::array<GradientStop, 3> stops = nightStops();
             const auto moonlit = [](const GradientStop& stop) {
-                const Color moonlitColor = colorBetween(stop.color,
+                const Color moonlitColor = Color::between(stop.color,
                     EarthSceneColors::Moonlight, k_moonlitShareOfNight);
                 return moonlitColor.withOpacity(static_cast<float>(stop.color.alpha) / 255.0f);
             };
@@ -2704,7 +2704,7 @@ namespace ClaFi::PathArt
                     ++next;
                 const Stop& from = stops[next - 1];
                 const Stop& to = stops[next];
-                shades.push_back(colorBetween(from.color, to.color, std::clamp(
+                shades.push_back(Color::between(from.color, to.color, std::clamp(
                     (depth - from.depth) / (to.depth - from.depth), 0.0f, 1.0f)));
             }
             return shades;
@@ -3236,7 +3236,7 @@ namespace ClaFi::PathArt
                         * (k_airStopCount - 1);
                     const int stopBefore = std::min(k_airStopCount - 2,
                         static_cast<int>(stopsAlong));
-                    atmosphere.shades[ring][static_cast<std::size_t>(shade)] = colorBetween(
+                    atmosphere.shades[ring][static_cast<std::size_t>(shade)] = Color::between(
                         ringStop(stopBefore), ringStop(stopBefore + 1),
                         stopsAlong - static_cast<float>(stopBefore));
                 }

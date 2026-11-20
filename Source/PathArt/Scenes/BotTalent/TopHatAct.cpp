@@ -78,7 +78,7 @@ namespace ClaFi::PathArt
         if (actTime >= 1.5f && actTime < k_poof)
         {
             const float into = smoothStep(1.5f, 1.9f, actTime);
-            rightHand = pointBetween(ActHands::RightOnHip, overHat, into);
+            rightHand = FloatPoint::between(ActHands::RightOnHip, overHat, into);
             float lifted = 1.0f;
             for (const float tap : k_taps)
                 lifted = std::min(lifted,
@@ -90,14 +90,14 @@ namespace ClaFi::PathArt
             const float out = smoothStep(k_poof, 3.9f, actTime);
             const float circling = k_2Pi * (actTime - 3.9f) / 1.2f;
             const FloatPoint circle = { std::cos(circling) * 10.0f, std::sin(circling) * 8.0f };
-            rightHand = pointBetween(overHat, FloatPoint{ 66.0f, -118.0f } + circle, out);
+            rightHand = FloatPoint::between(overHat, FloatPoint{ 66.0f, -118.0f } + circle, out);
             wandAngle = std::lerp(k_tapAngle - 0.45f,
                 -k_pi * 0.35f + 0.25f * std::sin(k_2Pi * actTime / 1.2f), out);
         }
         else if (actTime >= 7.6f)
         {
             const float out = smoothStep(7.6f, 8.1f, actTime);
-            rightHand = pointBetween({ 66.0f, -118.0f }, ActHands::RightRaised, out);
+            rightHand = FloatPoint::between({ 66.0f, -118.0f }, ActHands::RightRaised, out);
             wandAngle = std::lerp(-k_pi * 0.35f, -k_pi * 0.42f, out);
             if (actTime > 8.1f)
                 m_android.lights = flashingLights(actTime);

@@ -87,7 +87,7 @@ namespace ClaFi::PathArt
         frame.canvas.pushClip(disc, &toCanvas);
         const FloatPoint corner = { radius, radius };
         fillShape(frame, disc, LinearGradient::Simple(center - corner, center + corner,
-            colorBetween(pose.color, PlanetColors::White, 0.25f), pose.color));
+            Color::between(pose.color, PlanetColors::White, 0.25f), pose.color));
         switch (planet)
         {
             case Planet::Jupiter:

@@ -48,7 +48,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] HandOrFootPair pairBetween(const HandOrFootPair& from,
             const HandOrFootPair& to, const float share)
         {
-            return { pointBetween(from[0], to[0], share), pointBetween(from[1], to[1], share) };
+            return { FloatPoint::between(from[0], to[0], share), FloatPoint::between(from[1], to[1], share) };
         }
 
         void setHands(AndroidPose& pose, const HandOrFootPair& hands)

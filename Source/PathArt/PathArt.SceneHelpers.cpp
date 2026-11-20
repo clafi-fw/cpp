@@ -131,33 +131,6 @@ namespace ClaFi::PathArt
         return { point.x * cosine - point.y * sine, point.x * sine + point.y * cosine };
     }
 
-    FloatPoint pointBetween(const FloatPoint from, const FloatPoint to, const float share)
-    {
-        return { std::lerp(from.x, to.x, share), std::lerp(from.y, to.y, share) };
-    }
-
-    Color colorBetween(const Color from, const Color to, const float share)
-    {
-        return Color::blend(from, to, std::clamp(share, 0.0f, 1.0f));
-    }
-
-    float contrastBetween(const Color one, const Color other)
-    {
-        const auto luminance = [](Color color) {
-            const auto linear = [](ColorByte channel) {
-                const float value = static_cast<float>(channel) / 255.0f;
-                return value <= 0.03928f
-                    ? value / 12.92f
-                    : std::pow((value + 0.055f) / 1.055f, 2.4f);
-            };
-            return 0.2126f * linear(color.red) + 0.7152f * linear(color.green)
-                + 0.0722f * linear(color.blue);
-        };
-        const float lighter = std::max(luminance(one), luminance(other));
-        const float darker = std::min(luminance(one), luminance(other));
-        return (lighter + 0.05f) / (darker + 0.05f);
-    }
-
     float calculateSyncRotation(const float cycleTime, const int index, const float symmetryFactor)
     {
         const float spinDirection = index % 2 == 0 ? 1.0f : -1.0f;

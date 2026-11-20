@@ -156,10 +156,10 @@ namespace ClaFi::PathArt
         const FloatPoint leftHanging = { -3.0f, 36.0f };
         const FloatPoint rightHanging = { 3.0f, 36.0f };
         const FloatPoint waving = { 16.0f + 7.0f * std::sin(k_2Pi * time * 2.2f), -30.0f };
-        const FloatPoint leftReach = pointBetween(
-            pointBetween(leftHanging, { -30.0f, 22.0f }, curtsy), leftHanging, wave);
-        const FloatPoint rightReach = pointBetween(
-            pointBetween(rightHanging, { 30.0f, 22.0f }, curtsy), waving, wave);
+        const FloatPoint leftReach = FloatPoint::between(
+            FloatPoint::between(leftHanging, { -30.0f, 22.0f }, curtsy), leftHanging, wave);
+        const FloatPoint rightReach = FloatPoint::between(
+            FloatPoint::between(rightHanging, { 30.0f, 22.0f }, curtsy), waving, wave);
         puppet.armLeft = reachToward(puppet.shoulderLeft, puppet.shoulderLeft + leftReach * unit,
             19.0f * unit, 19.0f * unit, BendToward::Left);
         puppet.armRight = reachToward(puppet.shoulderRight,

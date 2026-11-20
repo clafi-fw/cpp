@@ -24,7 +24,7 @@ namespace ClaFi::PathArt
 
         PixelPath farRim;
         farRim.drawCircle({ -5.0f, 2.0f }, k_rimRadius);
-        strokeShape(wheel, farRim, SolidColor{ colorBetween(colors.wood, black, 0.45f) }, 4.0f);
+        strokeShape(wheel, farRim, SolidColor{ Color::between(colors.wood, black, 0.45f) }, 4.0f);
 
         const SceneFrame turning = wheel.within(Matrix3x2::Rotation(-pose.turns * k_2Pi));
         PixelPath bucket;
@@ -33,7 +33,7 @@ namespace ClaFi::PathArt
         bucket.lineTo(3.0f, -k_rimRadius + 9.0f);
         bucket.lineTo(-2.0f, -k_rimRadius + 9.0f);
         bucket.close();
-        const SolidColor bucketWood{ colorBetween(colors.wood, black, 0.3f) };
+        const SolidColor bucketWood{ Color::between(colors.wood, black, 0.3f) };
         for (int i = 0; i != k_buckets; ++i)
         {
             const float turns = static_cast<float>(i) / static_cast<float>(k_buckets);

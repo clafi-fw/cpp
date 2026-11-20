@@ -111,16 +111,16 @@ namespace ClaFi::PathArt
             -AndroidBody::RightShoulder.x,
             AndroidBody::RightShoulder.y,
         };
-        FloatPoint leftHand = pointBetween(ActHands::LeftOnHip, { -120.0f, -96.0f }, presenting);
-        leftHand = pointBetween(leftHand, snout, holding);
-        leftHand = pointBetween(leftHand, asSeen(leftShoulder, { 50.0f, -95.0f }), noHands);
-        FloatPoint rightHand = pointBetween(ActHands::RightOnHip,
+        FloatPoint leftHand = FloatPoint::between(ActHands::LeftOnHip, { -120.0f, -96.0f }, presenting);
+        leftHand = FloatPoint::between(leftHand, snout, holding);
+        leftHand = FloatPoint::between(leftHand, asSeen(leftShoulder, { 50.0f, -95.0f }), noHands);
+        FloatPoint rightHand = FloatPoint::between(ActHands::RightOnHip,
             asSeen(AndroidBody::RightShoulder, { 96.0f, -44.0f }), noHands);
-        rightHand = pointBetween(rightHand, { 14.0f, -176.0f }, wipingBrow);
-        m_android.left.hand = pointBetween(leftHand, ActHands::LeftRaised, tada);
+        rightHand = FloatPoint::between(rightHand, { 14.0f, -176.0f }, wipingBrow);
+        m_android.left.hand = FloatPoint::between(leftHand, ActHands::LeftRaised, tada);
         m_android.left.handShape = holding > 0.5f ? HandShape::Fist : HandShape::Open;
         m_android.left.forearmOnTop = holding > 0.05f;
-        m_android.right.hand = pointBetween(rightHand, ActHands::RightRaised, tada);
+        m_android.right.hand = FloatPoint::between(rightHand, ActHands::RightRaised, tada);
         m_android.look = actTime < 2.3f ? -5.0f : (actTime > 6.2f && actTime < 7.9f ? -6.0f : 0.0f);
         if (noHands > 0.5f)
         {

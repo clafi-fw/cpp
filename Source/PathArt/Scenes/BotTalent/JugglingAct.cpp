@@ -109,14 +109,14 @@ namespace ClaFi::PathArt
                 * (1.0f - smoothStep(holdingUntil(hand) - 0.4f, holdingUntil(hand) - 0.06f, tau));
             if (holding <= 0.0f)
                 return handAt(hand, tau);
-            return pointBetween(handAt(hand, tau), balancing, holding);
+            return FloatPoint::between(handAt(hand, tau), balancing, holding);
         }
 
         // A ball `flown` seconds into a flight of `flightSeconds` from `from` to `to`.
         [[nodiscard]] FloatPoint flightAt(const FloatPoint from, const FloatPoint to,
             const float flightSeconds, const float flown, const float gravity)
         {
-            FloatPoint at = pointBetween(from, to, flown / flightSeconds);
+            FloatPoint at = FloatPoint::between(from, to, flown / flightSeconds);
             at.y -= 0.5f * gravity * flown * (flightSeconds - flown);
             return at;
         }
@@ -160,7 +160,7 @@ namespace ClaFi::PathArt
                 * (0.5f + 0.5f * std::sin(k_2Pi * 1.4f * sinceRest - 1.6f));
             const FloatPoint lungingRightFoot = k_lungeAnkle
                 - FloatPoint{ 0.0f, kick + 6.0f * ankleLift };
-            const FloatPoint rightFoot = pointBetween(standingRightFoot, lungingRightFoot, lunge)
+            const FloatPoint rightFoot = FloatPoint::between(standingRightFoot, lungingRightFoot, lunge)
                 - FloatPoint{ 0.0f, 12.0f * std::sin(pi * lunge) };
             // the feet stay where they stand as the body teeters over them
             const FloatPoint rightAnkle = androidBodyToFrame(frame, android, rightFoot);
@@ -201,7 +201,7 @@ namespace ClaFi::PathArt
             {
                 const float rolled = smoothStep(k_landedAt, k_landedAt + k_rollSeconds, tau);
                 return byRightAnkle(frame, android,
-                    pointBetween(k_ballLanding, k_ballOnShin, rolled));
+                    FloatPoint::between(k_ballLanding, k_ballOnShin, rolled));
             }
             const AndroidPose kicker = jugglerAt(stage, k_kickedAt, cycleTime);
             const AndroidPose catcher = jugglerAt(stage, k_backInHandAt, cycleTime);
@@ -237,7 +237,7 @@ namespace ClaFi::PathArt
             const float share = flown / k_flightSeconds;
             const FloatPoint from = handAt(thrower, thrownAt) + overHand;
             const FloatPoint to = handAt(1 - thrower, thrownAt + k_flightSeconds) + overHand;
-            FloatPoint at = pointBetween(from, to, share);
+            FloatPoint at = FloatPoint::between(from, to, share);
             at.y -= 4.0f * k_throwHeight * share * (1.0f - share);
             m_balls[static_cast<std::size_t>(ball)] = at;
         }

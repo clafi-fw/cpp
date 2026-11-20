@@ -35,8 +35,8 @@ namespace ClaFi::PathArt
         drawFallingLeaves(frame, cycleTime, FallingLeaves{
             .opacity = StateFactors::compose(weather.leaves, weather.petals) * weather.opacity,
             .petals = weather.petals,
-            .color1 = colorBetween(weather.color1, weather.petal1, weather.petals),
-            .color2 = colorBetween(weather.color2, weather.petal2, weather.petals),
+            .color1 = Color::between(weather.color1, weather.petal1, weather.petals),
+            .color2 = Color::between(weather.color2, weather.petal2, weather.petals),
             .count = countOf(FallingLeaves{}.count),
             .pace = weather.fallPace,
             .seed = weather.seed
