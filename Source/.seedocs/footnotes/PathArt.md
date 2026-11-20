@@ -1215,6 +1215,9 @@ of the far ridge, so nothing in it can be kept as a still part.
 
 Three shooting stars cross the sky in the quiet between the passes.
 
+**Draw foreground** shows the pines and rocks along the near edge of the lake. The switch starts
+off. The scene keeps it as `ForegroundShown` in its own config section. See Scene switches.
+
 ## CometPose
 
 **A pass is the comet's whole visit.** It falls along its course for `fallShare` of the pass,

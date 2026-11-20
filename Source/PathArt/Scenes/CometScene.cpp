@@ -9,6 +9,9 @@ import ClaFi.PathArt.ShootingStarsEffect;
 import ClaFi.PathArt.StarsEffect;
 import ClaFi.PathArt.Types;
 import ClaFi.PathArt.WaterReflection;
+import ClaFi.Core.Dom_StdSerializers;
+import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -80,10 +83,15 @@ namespace ClaFi::PathArt
 
     namespace
     {
+        constexpr std::array<std::wstring_view, 1> k_switches{ L"Draw foreground" };
+        constexpr std::size_t k_foregroundSwitch{ 0 };
+        constexpr std::wstring_view k_foregroundShownNode{ L"ForegroundShown" };
+
         constexpr float k_passesPerCycle{ 2.0f };
         
         // The comet fall duration in cycles - strictly < 1.0f
         constexpr float k_fallDuration{ 0.6f };
+        constexpr float k_ridgeLightFadeInDuration{ 0.06f };
 
         // Where the lake begins, as a share of the frame's height.
         constexpr float k_lakeShare{ 0.72f };
@@ -431,7 +439,10 @@ namespace ClaFi::PathArt
         m_lakeShade.prepare(params);
         m_shore.prepare(params);
         m_mirroredShore.prepare(params);
-        m_foreground.prepare(params);
+        if (m_foregroundShown)
+        {
+            m_foreground.prepare(params);
+        }
     }
 
     void CometScene::draw(Canvas& canvas, const FloatRect& bounds, const SceneTime time)
@@ -441,8 +452,10 @@ namespace ClaFi::PathArt
         drawSky(frame);
         drawAboveLake(frame, time, false);
         drawLake(frame, time);
-        // The near shore stands in front of the mist, dark and sharp.
-        m_foreground.draw(frame);
+        if (m_foregroundShown)
+        {
+            m_foreground.draw(frame);
+        }
     }
 
     void CometScene::drawIcon(Canvas& canvas, const FloatRect& bounds) const
@@ -467,6 +480,47 @@ namespace ClaFi::PathArt
         return {
             .field = CometSceneColors::FarRidge.bottom,
             .series = CometSceneColors::Ripple
+        };
+    }
+
+    std::span<const std::wstring_view> CometScene::switches() const
+    {
+        return k_switches;
+    }
+
+    bool CometScene::isSwitchOn(const std::size_t index) const
+    {
+        if (index != k_foregroundSwitch)
+        {
+            noReach("CometScene offers no such switch");
+        }
+        return m_foregroundShown;
+    }
+
+    void CometScene::setSwitch(const std::size_t index, const bool on)
+    {
+        if (index != k_foregroundSwitch)
+        {
+            noReach("CometScene offers no such switch");
+        }
+        m_foregroundShown = on;
+    }
+
+    void CometScene::storeView(Dom::Section& view) const
+    {
+        (view / k_foregroundShownNode).set(m_foregroundShown);
+    }
+
+    void CometScene::restoreView(const Dom::Section& view)
+    {
+        m_foregroundShown = (view / k_foregroundShownNode).get<bool>();
+    }
+
+    Dom::Dt::Section CometScene::viewSchema()
+    {
+        return Dom::Dt::Section{
+            k_name,
+            Dom::Dt::Value{ k_foregroundShownNode, false }
         };
     }
 
@@ -728,9 +782,8 @@ namespace ClaFi::PathArt
             : std::pow(pass.passTime / k_fallDuration, 1.35f);
 
         const FloatPoint cometLight = pointOnCourse(pass.course, lightAlong);
-        const float lightFade = pass.afterglow > 0.0f
-            ? 0.0f
-            : 1.0f - smoothStep(0.52f, k_fallDuration, pass.passTime);
+        const float lightFade = smoothStep(0.0f, k_ridgeLightFadeInDuration, pass.passTime)
+            * (1.0f - smoothStep(0.52f, k_fallDuration, pass.passTime));
         if (lightFade > 0.0f)
         {
             PixelPath farRidge;
@@ -1106,8 +1159,6 @@ namespace ClaFi::PathArt
     // their points echoing the far pines.
     void CometScene::drawForeground(const SceneFrame& frame)
     {
-        // Make an option
-        return;
         const float width = frame.width;
         const float height = frame.height;
         
@@ -1123,7 +1174,6 @@ namespace ClaFi::PathArt
 
         drawRock(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27);
         drawRock(frame, { width * 0.755f, height * 1.02f }, width * 0.22f, height * 0.29f, 31);
-        // The Chase's rounded stone is laid in the lake, before the trail, so the glow lights it.
         // The rocks the near edge of the water breaks on, low across the bottom.
         drawRock(frame, { width * 0.100f, height * 1.01f }, width * 0.30f, height * 0.09f, 51);
         drawRock(frame, { width * 0.500f, height * 1.01f }, width * 0.16f, height * 0.045f, 57);

@@ -32,6 +32,7 @@ namespace ClaFi::PathArt
     {
         Dom::Dt::Section views{};
         views.children.push_back(std::make_unique<Dom::Dt::Section>(ChaseScene::viewSchema()));
+        views.children.push_back(std::make_unique<Dom::Dt::Section>(CometScene::viewSchema()));
         views.children.push_back(std::make_unique<Dom::Dt::Section>(EarthScene::viewSchema()));
         views.children.push_back(std::make_unique<Dom::Dt::Section>(OrreryScene::viewSchema()));
         return views;

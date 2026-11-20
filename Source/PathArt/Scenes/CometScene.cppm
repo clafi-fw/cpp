@@ -6,6 +6,8 @@ import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SceneLayer;
 import ClaFi.PathArt.WaterReflection;
+import ClaFi.Core.DomEngine_Dt;
+import ClaFi.Core.DomEngine;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -18,11 +20,17 @@ namespace ClaFi::PathArt
     export class CometScene : public Scene
     {
     public:
-        [[nodiscard]] std::wstring_view name() const override { return L"Comet"; }
+        [[nodiscard]] std::wstring_view name() const override { return k_name; }
         void prepare(const SceneParams&) override;
         void draw(Graphics::Canvas&, const FloatRect& bounds, SceneTime) override;
         void drawIcon(Graphics::Canvas&, const FloatRect& bounds) const override;
         [[nodiscard]] SceneReadoutColors readoutColors() const override;
+        [[nodiscard]] std::span<const std::wstring_view> switches() const override;
+        [[nodiscard]] bool isSwitchOn(std::size_t index) const override;
+        void setSwitch(std::size_t index, bool on) override;
+        void storeView(Dom::Section& view) const override;
+        void restoreView(const Dom::Section& view) override;
+        [[nodiscard]] static Dom::Dt::Section viewSchema();
     private:
         // One pass of the comet: the curve it falls along and how far into the pass it is.
         struct Pass
@@ -98,6 +106,7 @@ namespace ClaFi::PathArt
         // The near shore in front of everything: pines and boulders, dark against the mist.
         static void drawForeground(const SceneFrame&);
     private:
+        static constexpr std::wstring_view k_name{ L"Comet" };
         SceneLayer m_farRidge{ drawFarRidge };
         SceneLayer m_nearRidge{ drawNearRidge };
         SceneLayer m_lakeWater{ drawLakeWater };
@@ -117,5 +126,6 @@ namespace ClaFi::PathArt
         mutable Graphics::Bitmap m_farFogPixels{};
         mutable Graphics::Bitmap m_valleyFogPixels{};
         mutable Graphics::Bitmap m_nearFogPixels{};
+        bool m_foregroundShown{ false };
     };
 }
