@@ -5,17 +5,9 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::PathArt
 {
-    // How the stars of a field look and twinkle.
-    export enum class StarStyle
-    {
-        Dots, // round dots and one in ten a four-point sparkle, twinkling in brightness
-        Sparkles // four-point sparkles that twinkle in size, gone at the low of each twinkle
-    };
-
-    // A field of twinkling stars across a band of the frame.
+    // A band of four-point stars that twinkle in size.
     export struct StarField
     {
-        StarStyle style{ StarStyle::Dots };
         int count{ 100 };
         float top{ 0.0f };
         float bottom{ 0.0f };

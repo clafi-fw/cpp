@@ -757,6 +757,11 @@ moving layer reaches past the frame by that much, or a firefly pops in at the ed
 the same share across its area and wanders and blinks in step with the others' k-th; seeds 10 apart
 keep them apart.
 
+## StarField
+
+**Each star grows and shrinks through its own twinkle.** The star disappears at the low point.
+The field's seed selects the positions and relative twinkle rates.
+
 ## StarField drift
 
 **A star moved out of the band comes round into it at the far side**, so a drift of whole frame

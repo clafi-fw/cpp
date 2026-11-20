@@ -157,6 +157,7 @@
                     <li><a href="#ref-shadow">ShadowParams</a></li>
                     <li><a href="#ref-guards">Scoped guards</a></li>
                     <li><a href="#ref-offscreen">A canvas of your own</a></li>
+                    <li><a href="#ref-starfield">Star fields</a></li>
                 </ul>
             </li>
             <li class="has-children">
@@ -1244,6 +1245,13 @@ canvas.<span class="fn">endPaint</span>(<span class="kw">nullptr</span>, whole, 
 
 <p>A caller draws between the two calls. A CPU canvas draws outside a frame as well, but the backend
 interface does not promise it, and Direct2D draws nothing there.</p>
+
+<h3 id="ref-starfield">Star fields</h3>
+
+<p>Import <code>ClaFi.PathArt.StarsEffect</code> to draw a band of four-point stars with
+<code>PathArt::drawStars(frame, cycleTime, field)</code>. Set the band's vertical bounds, star count and
+color in a <code>PathArt::StarField</code>. Each star grows and shrinks as it twinkles. Set the
+field's <code>drift</code> in frame widths and band heights to move the field.</p>
 
 <h2 id="backends">The Backends</h2>
 

@@ -2077,7 +2077,6 @@ namespace ClaFi::PathArt
         fillBox(frame, { 0.0f, 0.0f, width, groundY }, LinearGradient::Simple({ 0.0f, 0.0f },
             { 0.0f, groundY }, theme.skyTop, theme.skyBottom));
         drawStars(frame, cycleTime, StarField{
-            .style = StarStyle::Sparkles,
             .count = 120,
             .top = 0.0f,
             .bottom = groundY,

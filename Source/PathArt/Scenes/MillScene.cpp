@@ -565,7 +565,6 @@ namespace ClaFi::PathArt
         canvas.drawBitmap(m_sky, m_offset);
         // The stars and the clouds stand behind the land, which hides their foot.
         drawStars(frame, cycleTime, StarField{
-            .style = StarStyle::Sparkles,
             .count = 120,
             .top = 0.0f,
             .bottom = h * k_horizonShare,

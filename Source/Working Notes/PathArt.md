@@ -4934,16 +4934,11 @@ golden hour": mill_fix had darkened both cows to stand 0.15 from the sky and hil
 by 0.28 to A4A4A4, Golden Hour's by 0.235 to B2A9A0), and the generator's theme_edits.py now
 restores their own colors after it: FFFFFF with C8C8DC spots, and FFF5EB with 5A3C28 spots.
 
-## StarStyle
+## StarField
 
-The mill drew its own stars, all sparkles, until Oj asked whether it needed stars of its own
-(2026-11-07) and picked moving them into the shared field. Sparkles keeps their look: the same
-positions from the same random numbers, a size that follows the twinkle, nothing below a fifth of
-it.
-
-**Sparkles are filled one by one**, where dots are binned by opacity: they all share one opacity,
-so binning would put every star in one path. Whether they may share one no longer turns on the hole
-rule - a path fills nonzero now - so the two are kept apart for their color alone.
+Mill's four-point stars moved into the shared field on 2026-11-07. Comet and Earth adopted the
+same stars, then Ghost and Orrery followed when the dot renderer was retired. The stars are
+filled individually so overlapping stars blend together.
 
 ## ChaseTheme
 
