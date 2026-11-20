@@ -24,8 +24,8 @@ namespace ClaFi::PathArt
     namespace CometSceneColors
     {
         constexpr Color SkyTop{ 0xFF050716 };
-        constexpr Color SkyMiddle{ 0xFF1B1542 };
-        constexpr Color SkyHorizon{ 0xFF4A2556 };
+        constexpr Color SkyBottom{ 0xFF1A1842 };
+
         constexpr Color Flash{ 0xFFFF9A66 };
         constexpr Color Star{ 0xFFEEF0FF };
         constexpr Color ShootingStar{ 0xFFFFFFFF };
@@ -34,20 +34,28 @@ namespace ClaFi::PathArt
         // The fog lying in the valley: silver-blue, lighter at its tops.
         constexpr Color FogTop{ 0xFFD6DFF2 };
         constexpr Color FogFoot{ 0xFF9BA7C6 };
-        constexpr Color NearRidgeTop{ 0xFF1C2439 };
-        constexpr Color NearRidgeBottom{ 0xFF111726 };
+        
+        constexpr Color RidgeTop{ 0xFF1C2439 };
+        constexpr Color RidgeBottom{ 0xFF080B13 };
+
         constexpr Color Afterglow{ 0xFFFFB070 };
         constexpr Color ImpactCore{ 0xFFFFF1D0 };
-        constexpr Color RidgeRim{ 0xFFFFD8A8 };
-        constexpr Color LakeTop{ 0xFF1E2B47 };
+        constexpr Color RidgeRim = { 0xFFFFD8A8 };
+
+        constexpr Color LakeTop = SkyBottom;// { 0xFF1E2B47 };
         constexpr Color LakeBottom{ 0xFF04070F };
         constexpr Color LakeShadeTop{ 0x26060C1B };
         constexpr Color LakeShadeBottom{ 0xBF03060F };
+        
         constexpr Color Ripple{ 0x26C6D4F4 };
         constexpr Color Glitter{ 0xFFE9EFFF };
-        constexpr Color Shore{ 0xFF05070E };
+        
+        constexpr Color Shore = 0xFF020707;
+        
         // The near shore's pines and boulders, the darkest thing in the frame.
-        constexpr Color Foreground{ 0xFF05080F };
+        constexpr Color NearRock{ 0xFF060911 };
+        constexpr Color NearPine{ 0xFF030B0A };
+
         // The rounded boulder's form, borrowed from the Chase: its lit crown, its shine, its crack.
         constexpr Color BoulderLight{ 0xFF101827 };
         constexpr Color BoulderShine{ 0xFF1B2639 };
@@ -80,8 +88,8 @@ namespace ClaFi::PathArt
         // layer at the reference distance takes.
         constexpr SceneTheme k_air{
             .skyTop = CometSceneColors::SkyTop,
-            .skyBottom = CometSceneColors::SkyHorizon,
-            .airHaze = 0.10f
+            .skyBottom = CometSceneColors::SkyBottom,
+            .airHaze = 0.06f
         };
         // The ranges' distances: the far one as far as the Chase's far mountains, the near one at
         // the reference distance, where a layer takes the air's share exactly.
@@ -116,8 +124,8 @@ namespace ClaFi::PathArt
                 const float position = static_cast<float>(step)
                     / static_cast<float>(k_ridgeHazeSteps);
                 const float aboveGround = (1.0f - position) * (lakeY - top) / frame.height;
-                const Color clear = colorBetween(CometSceneColors::NearRidgeTop,
-                    CometSceneColors::NearRidgeBottom, position);
+                const Color clear = colorBetween(CometSceneColors::RidgeTop,
+                    CometSceneColors::RidgeBottom, position);
                 rock.stops.push_back({ .position = position,
                     .color = hazed(k_air, clear, parallax, aboveGround) });
             }
@@ -197,7 +205,7 @@ namespace ClaFi::PathArt
         void drawPine(const SceneFrame& frame, const FloatPoint base, const float height,
             const int seed)
         {
-            const SolidColor ink{ CometSceneColors::Foreground };
+            const SolidColor ink{ CometSceneColors::NearPine };
             const float lean = 0.05f * (pseudoRandom(seed, 81.0f) - 0.5f);
             const float spineThickness = std::max(1.0f, height * 0.010f);
             const float needleThickness = std::max(0.7f, height * 0.005f);
@@ -333,12 +341,12 @@ namespace ClaFi::PathArt
                 { top.x + height * 0.04f, top.y - height * 0.03f }, height * 0.018f);
         }
 
-        // A boulder: a dark body with sharp points breaking out of it, the far pines' triangles in
+        // A rock: a dark body with sharp points breaking out of it, the far pines' triangles in
         // stone.
-        void drawBoulder(const SceneFrame& frame, const FloatPoint base, const float width,
+        void drawRock(const SceneFrame& frame, const FloatPoint base, const float width,
             const float height, const int seed)
         {
-            const SolidColor ink{ CometSceneColors::Foreground };
+            const SolidColor ink{ CometSceneColors::NearRock };
             const float left = base.x - width * 0.5f;
             const float right = base.x + width * 0.5f;
             const float peakAt = 0.24f + 0.30f * pseudoRandom(seed, 62.0f);
@@ -367,7 +375,7 @@ namespace ClaFi::PathArt
         // drawn each frame by `drawStoneReflection`, so the lake's ripples run through it.
         void drawRoundedBoulder(const SceneFrame& frame, const FloatPoint base, const float scale,
             const float squish, const Color light = CometSceneColors::BoulderLight,
-            const Color shade = CometSceneColors::Foreground,
+            const Color shade = CometSceneColors::NearRock,
             const Color shine = CometSceneColors::BoulderShine)
         {
             const SceneFrame stone = frame.within(
@@ -441,7 +449,7 @@ namespace ClaFi::PathArt
     SceneReadoutColors CometScene::readoutColors() const
     {
         return {
-            .field = CometSceneColors::NearRidgeBottom,
+            .field = CometSceneColors::RidgeBottom,
             .series = CometSceneColors::Ripple
         };
     }
@@ -775,7 +783,8 @@ namespace ClaFi::PathArt
                 else
                     rim.lineTo(x, nearRidgeY(frame, x));
             }
-            const float rimOpacity = 0.85f * std::pow(1.0f - pass.afterglow, 1.5f);
+            constexpr float rimStrength = 1.0f; // 0.85f
+            const float rimOpacity = rimStrength * std::pow(1.0f - pass.afterglow, 1.5f);
             const Color rimLit = CometSceneColors::RidgeRim.withOpacity(rimOpacity);
             const Color rimDark = CometSceneColors::Afterglow.withOpacity(0.0f);
             strokeShape(frame, rim, LinearGradient{
@@ -977,8 +986,7 @@ namespace ClaFi::PathArt
             .endPoint = { 0.0f, lakeY },
             .stops = {
                 { .position = 0.0f, .color = CometSceneColors::SkyTop },
-                { .position = 0.6f, .color = CometSceneColors::SkyMiddle },
-                { .position = 1.0f, .color = CometSceneColors::SkyHorizon }
+                { .position = 1.0f, .color = CometSceneColors::SkyBottom }
             }
         });
     }
@@ -1084,13 +1092,13 @@ namespace ClaFi::PathArt
         drawPine(frame, { width * 0.945f, height * 1.06f }, height * 0.56f, 13);
         drawPine(frame, { width * 0.885f, height * 1.02f }, height * 0.36f, 17);
         // The boulders standing in the water.
-        drawBoulder(frame, { width * 0.270f, height * 1.02f }, width * 0.22f, height * 0.34f, 21);
-        drawBoulder(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27);
-        drawBoulder(frame, { width * 0.755f, height * 1.02f }, width * 0.22f, height * 0.30f, 31);
+        drawRock(frame, { width * 0.270f, height * 1.02f }, width * 0.22f, height * 0.29f, 21);
+        drawRock(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27);
+        drawRock(frame, { width * 0.755f, height * 1.02f }, width * 0.22f, height * 0.29f, 31);
         // The Chase's rounded stone is laid in the lake, before the trail, so the glow lights it.
         // The rocks the near edge of the water breaks on, low across the bottom.
-        drawBoulder(frame, { width * 0.100f, height * 1.01f }, width * 0.30f, height * 0.09f, 51);
-        drawBoulder(frame, { width * 0.500f, height * 1.01f }, width * 0.16f, height * 0.045f, 57);
-        drawBoulder(frame, { width * 0.900f, height * 1.01f }, width * 0.28f, height * 0.08f, 63);
+        drawRock(frame, { width * 0.100f, height * 1.01f }, width * 0.30f, height * 0.09f, 51);
+        drawRock(frame, { width * 0.500f, height * 1.01f }, width * 0.16f, height * 0.045f, 57);
+        drawRock(frame, { width * 0.900f, height * 1.01f }, width * 0.28f, height * 0.08f, 63);
     }
 }
