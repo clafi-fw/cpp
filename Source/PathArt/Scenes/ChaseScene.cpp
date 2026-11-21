@@ -628,6 +628,9 @@ namespace ClaFi::PathArt
         constexpr float k_weatherWantedPeriod{ 1000.0f };
         // More than the 9 an effect reads past its own seed, so no two layers share a place.
         constexpr float k_weatherSeedStep{ 10.0f };
+        constexpr float k_fallingWeatherSwayReach{ 24.0f };
+        constexpr float k_fallingWeatherSwaysPerCycle{ 16.0f };
+        constexpr float k_fallingWeatherSwayPhaseStep{ 0.8f };
     }
 
     // Three 20-second episodes a cycle: twice the wolf trips over something on the trail, then he
@@ -2192,21 +2195,39 @@ namespace ClaFi::PathArt
         const float period = periodNear(layer.parallax, k_weatherWantedPeriod);
         const float timesFasterThanHills = layer.parallax / k_hillParallax;
         const float nearness = (layer.parallax - k_hillParallax) / (1.0f - k_hillParallax);
-        Weather weather = weatherOf(theme);
-        weather.opacity = std::lerp(k_hillWeatherOpacity, k_trailWeatherOpacity, nearness);
-        weather.density = layer.share * (period / hillLayerPeriod) * (bottom / groundY);
-        weather.fallPace = timesFasterThanHills * groundY / bottom;
-        weather.windPace = timesFasterThanHills * hillLayerPeriod / period;
-        weather.seed = k_weatherSeedStep * static_cast<float>(layerIndex);
+        Weather fallingWeather = weatherOf(theme);
+        fallingWeather.opacity = std::lerp(k_hillWeatherOpacity, k_trailWeatherOpacity, nearness);
+        fallingWeather.density = layer.share * (period / hillLayerPeriod) * (bottom / groundY);
+        fallingWeather.fallPace = timesFasterThanHills * groundY / bottom;
+        fallingWeather.seed = k_weatherSeedStep * static_cast<float>(layerIndex);
+        const Weather dustWeather = {
+            .dust = fallingWeather.dust,
+            .opacity = fallingWeather.opacity,
+            .density = fallingWeather.density,
+            .windPace = timesFasterThanHills * hillLayerPeriod / period,
+            .seed = fallingWeather.seed,
+            .color1 = fallingWeather.color1,
+            .color2 = fallingWeather.color2
+        };
+        fallingWeather.dust = 0.0f;
+
         const float layerUnit = frame.unit * std::lerp(k_hillSize, 1.0f, nearness);
         const float effectsTime = fractionalPart(cycleTime * k_lively);
+        const float swayPhase = k_2Pi * k_fallingWeatherSwaysPerCycle * cycleTime
+            + k_fallingWeatherSwayPhaseStep * static_cast<float>(layerIndex);
+        const float sway = std::sin(swayPhase) * k_fallingWeatherSwayReach * layerUnit;
         forEachTile(frame, layer.parallax, period, journey,
             [&](const float left, const float tileWidth) {
                 SceneFrame overLayer = frame.within(Matrix3x2::Translation(left, 0.0f));
                 overLayer.width = tileWidth;
                 overLayer.height = bottom;
                 overLayer.unit = layerUnit;
-                drawWeather(overLayer, effectsTime, weather);
+                drawWeather(overLayer.within(Matrix3x2::Translation(sway, 0.0f)),
+                    effectsTime, fallingWeather);
+                if (dustWeather.dust > 0.0f)
+                {
+                    drawWeather(overLayer, effectsTime, dustWeather);
+                }
             });
     }
 

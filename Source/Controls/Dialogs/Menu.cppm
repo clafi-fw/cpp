@@ -8,6 +8,7 @@ import ClaFi.Controls.Divider;
 
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 
 import ClaFi.Core.TextEngine.Text;
@@ -17,7 +18,6 @@ import ClaFi.Core.System.Events;
 import ClaFi.Core.System.Props;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
-import ClaFi.Core.System.InkWell;
 
 import ClaFi.Core.System.Utils;
 import ClaFi.StdLib;
@@ -39,9 +39,6 @@ namespace ClaFi::Controls
         // how far the eye carries along a line, the same distance on a small screen and on a large
         // one - the message box states its own reading width for the same reason.
         constexpr float k_maxItemWidth = 360.0f;
-
-        // The least room left between an item's name and the key printed at the end of its line.
-        constexpr float k_keyGap = 4.0f;
     }
 
     export class MenuItemBase: public Button
@@ -56,6 +53,7 @@ namespace ClaFi::Controls
     // One line of a menu.
     export class MenuItem : public MenuItemBase
     {
+        friend class Menu;
     public:
         template<typename ...Args>
         explicit MenuItem(const CreateParams&, Args&&...);
@@ -63,6 +61,31 @@ namespace ClaFi::Controls
         std::wstring_view diagnosticText() const override { return L"MenuItem"; }
     protected:
         void adjustText(AdjustTextEvent&) const override;
+        void adjustTextRect(AdjustTextRectEvent&) const override;
+        void paintOwnText(PaintEvent&) override;
+        DrawTextResult drawText(PaintEvent&, const FloatRect& textBounds, const Text&) override;
+        ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
+        void calculateChildren(FormBase&) override;
+        ScaledSize contentAroundText(AlignEvent&, ScaledSize captionSize) const override;
+    private:
+        struct TrailingColumn
+        {
+            float width{};
+            float rightPadding{};
+        };
+
+        struct GetMenuItemEvent : Event
+        {
+            MenuItem* item{};
+        };
+    private:
+        void measureTrailingContent(const FormContext&);
+        [[nodiscard]] float trailingColumnInset(float rowPadding) const;
+    private:
+        const TrailingColumn* m_menuTrailingColumn{};
+        Text m_shortcutText;
+        ScaledSize m_shortcutSize{};
+        float m_trailingWidth{};
     };
 
     // A menu item in TopIcon mode on the top bar.
@@ -134,6 +157,7 @@ namespace ClaFi::Controls
         // A caller's control ran its command: this menu closes, and every menu it stands beside.
         void closeOnCommand(ClickEvent&);
     protected:
+        void calculateChildren(FormBase&) override;
         void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Nothing in it, and no placeholder to stand in for the nothing.
@@ -176,6 +200,7 @@ namespace ClaFi::Controls
         // Held by address, which is how an action is recognized everywhere else.
         std::vector<const Action*> m_commandBarActions;
         std::vector<MenuGroupItem*> m_groups;
+        MenuItem::TrailingColumn m_trailingColumn{};
         std::size_t m_itemCount{ 0 };
         // A separator waits for an item to follow it, so one asked for at the end never lands.
         bool m_separatorPending{ false };
@@ -486,27 +511,17 @@ namespace ClaFi::Controls
             // item's text on the same left edge.
             ButtonViewMode::LeftIcon,
             HorizontalTextAnchor::Left,
-            // Every item is as wide as the menu, and that is what the key at the end of the line
-            // is measured against.
             HorizontalAlign::Fill,
-            // How wide the line may be. Stated by the **item** rather than by the menu around it,
-            // because an item aligned Fill keeps whatever width it measured when that is the
-            // larger - see Control::align - so a maximum on the list would leave the long item
-            // standing past the view with its key out of sight. Capped here, a long name turns
-            // onto a second line inside its own item and the key stays on the menu's right edge.
-            // TODO: ButtonBase measures its text against the whole maximum and adds the icon
-            // slot to what comes back, so an item that reaches this width overruns it by the
-            // icon and the space beside it. Should a button's text be given the width its own
-            // icon leaves?
             MaxSize{ k_maxItemWidth, k_maxFloat },
-            // An item writes the command's name and its key into its own line - see adjustText -
-            // so an action attached here says nothing further in a tooltip.
             PresenterRole::Line,
             // A selected command's line, and a group's while its list is up, wear the selection.
             ShowSelectionOnSurface::Yes,
             std::forward<Args>(args)...
         }
     {
+        connectEvent<GetMenuItemEvent>([this](GetMenuItemEvent& event) {
+            event.item = this;
+        });
     }
 
     void MenuItemBase::click(ClickEvent& clickEvent)
@@ -514,30 +529,6 @@ namespace ClaFi::Controls
         Button::click(clickEvent);
         closeBehindCommand(clickEvent);
     }
-
-    void MenuItem::adjustText(AdjustTextEvent& event) const
-    {
-        MenuItemBase::adjustText(event);
-
-        // The key goes at the right-hand end of the item's own line. A menu is a column of items
-        // stretched to one width, so a flex space ahead of it lands every key on the same edge
-        // without a column to align them in.
-        GetShortcutEvent shortcutEvent{ *this };
-        emitEvent(shortcutEvent);
-        const std::wstring shortcutText = shortcutEvent.shortcut.text();
-        if (shortcutText.empty())
-            return;
-        // Only one flex space may open the line: a second would split the slack and strand both
-        // of the things on the right in the middle. The mark ButtonBase writes for a command that
-        // opens a window has already taken it, and the key then stands at the very end.
-        if (endIcon() == EndIcon::None)
-            event.text << FlexSpace{ k_keyGap };
-        else
-            event.text << Space{ k_keyGap };
-
-        event.text << ColoredText{ InkGrade::Muted, shortcutText };
-    }
-
 
     //-----------------------------------------------------------------------------
 

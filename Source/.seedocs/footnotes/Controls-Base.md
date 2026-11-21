@@ -133,12 +133,9 @@ dropOnPrimaryPress says whether a click outside the strip opens it too.
 **OpensWindow marks a command that opens a window of its own** - a box with an arrow leaving its
 corner. It replaces a trailing ellipsis, so a caption carrying it drops the three dots.
 
-**The mark rides in the button's text after a flex space**, as a menu item's shortcut key does.
-Buttons stretched to one width line their marks up on the right. A button sized to its caption
-puts the mark after the words.
-
-**One flex space per line** - two would split the slack. Text added after the mark, such as a
-shortcut key, takes a plain space of the same width.
+**A regular button lays out the mark after a flex space in its text.** Buttons stretched to one
+width line their marks up on the right. A button sized to its caption puts the mark after the
+words. A MenuItem puts its mark in the menu's trailing column.
 
 ## WithBody
 

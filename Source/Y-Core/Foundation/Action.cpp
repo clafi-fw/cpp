@@ -124,13 +124,25 @@ namespace ClaFi
 
     void Action::setShortcut(const Shortcut value)
     {
+        const bool hadShortcut = !m_shortcuts.empty();
         m_shortcuts.clear();
-        addShortcut(value);
+        if (!value.empty())
+            m_shortcuts.push_back(value);
+        if (hadShortcut || !value.empty())
+        {
+            for (const Attachment& attachment : m_attachments)
+                attachment.control->invalidateFormAlign();
+        }
     }
 
     void Action::addShortcut(const Shortcut value)
     {
-        if (!value.empty())
+        if (value.empty())
+            return;
+
+        if (m_shortcuts.empty())
+            setShortcut(value);
+        else
             m_shortcuts.push_back(value);
     }
 

@@ -340,10 +340,6 @@ namespace ClaFi::Controls
         RichControl::adjustTextRect(event);
     }
 
-    // **The mark stands at the line's right-hand end**, which is what the flex space ahead of it
-    // buys: a column of buttons stretched to one width lands every mark on the same edge, the
-    // way a menu's keys do. A button measured to its own caption leaves the space nothing to
-    // take, and the mark follows the words. See Controls-Base
     void ButtonBase::adjustText(AdjustTextEvent& event) const
     {
         RichControl::adjustText(event);
@@ -351,15 +347,40 @@ namespace ClaFi::Controls
         if (m_endIcon == EndIcon::None)
             return;
 
-        const float size = m_endIcon == EndIcon::OpensWindow ? k_endIconSize : k_listMarkSize;
         // Tagged by its kind: two marks of one size compare equal without it.
-        const InTextIcon mark{ size, [kind = m_endIcon](DrawIconEvent& iconEvent) {
-            if (kind == EndIcon::OpensWindow)
-                Icons::DialogIcon::draw(iconEvent);
-            else
-                Icons::OpenChevron::drawRight(iconEvent);
+        const InTextIcon mark{ endIconSize(), [kind = m_endIcon](DrawIconEvent& iconEvent) {
+            drawEndIcon(iconEvent, kind);
         }, Tag{ m_endIcon } };
         event.text << FlexSpace{ k_endIconGap } << mark;
+    }
+
+    float ButtonBase::endIconSize() const
+    {
+        switch (m_endIcon)
+        {
+            case EndIcon::None:
+                return 0.0f;
+            case EndIcon::OpensWindow:
+                return k_endIconSize;
+            case EndIcon::OpensList:
+                return k_listMarkSize;
+        }
+        return 0.0f;
+    }
+
+    void ButtonBase::drawEndIcon(DrawIconEvent& event, EndIcon kind)
+    {
+        switch (kind)
+        {
+            case EndIcon::None:
+                break;
+            case EndIcon::OpensWindow:
+                Icons::DialogIcon::draw(event);
+                break;
+            case EndIcon::OpensList:
+                Icons::OpenChevron::drawRight(event);
+                break;
+        }
     }
 
     bool ButtonBase::showsCaption() const

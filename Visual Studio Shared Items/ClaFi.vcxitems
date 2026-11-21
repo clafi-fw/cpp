@@ -117,6 +117,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Controls.TextItems.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\ColorEditDialog.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\ColorEditDialog.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\Menu.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\Menu.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\MessageDialog.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\Controls\Dialogs\MessageDialog.cppm" />

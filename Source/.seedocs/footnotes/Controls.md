@@ -76,6 +76,10 @@ behind it.
 **Build it on the stack**, fill it, then run it - execute returns once the menu has closed. An empty
 menu stays closed, unless setPlaceHolderText gave it a placeholder to show.
 
+**The menu sizes a shared trailing column to its visible items.** Shortcuts align to its right
+edge and end icons sit in the same column. Every caption is laid out in the space to its left,
+including captions on rows with no shortcut.
+
 **A command holding commands is a line with its list beside it** - a MenuGroupItem, which addActions
 adds for an Action whose items are set. The list opens when the pointer rests on the line, on its
 press, and on Right; it closes when the pointer rests on another line, on Escape, and on Left where
