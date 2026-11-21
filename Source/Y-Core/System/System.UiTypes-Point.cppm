@@ -67,7 +67,7 @@ namespace ClaFi
                 static_cast<int>(std::ceil(y))
             };
         }
-        static [[nodiscard]] Point<float> between(Point from, Point to, float share);
+        [[nodiscard]] static Point<float> between(Point from, Point to, float share);
     };
 
     template <IsArithmeticType T>
