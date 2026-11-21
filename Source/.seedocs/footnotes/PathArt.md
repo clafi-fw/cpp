@@ -122,7 +122,7 @@ the pointer over it, through animationTick().
 Its own fields hold the scenery both scenes share - the sky, the sun, the mountains, the meadow and
 its grass, the trees, the reeds, the stones, the flowers - and what else the Mill draws: its river,
 its cow, its wolf, its birds, its ducks and its fish. MillTheme holds what only the mill wears, and
-ChaseTheme what only the Chase draws. Every theme fills every field.
+ChaseTheme what only the Chase draws.
 
 **effectColor1 and effectColor2 color the weather, and their alpha is a strength.** Rain and snow
 wear effectColor1; leaves wear the two by turns, and petals petal1 and petal2; a streak of dust
@@ -166,7 +166,12 @@ daylight scenes already draw them. Golden Hour's and Winter Frost's cows keep th
 Summer Sunset's wolf and hare are drawn lighter and stand about 0.10 from its meadow.
 
 **A crossfade blends every color field one by one** - see ThemeBlend. They stand in a row from
-skyTop to the end of `chase`, and colorsNum() counts them.
+skyTop through cowHorn, and colorsNum() counts them.
+
+## SceneTheme cowHorn
+
+**A tint over both horns.** Its alpha sets the tint's strength over the shading derived from
+cowBody, cowDetail and cowLimbInkShare. The tint is transparent by default.
 
 ## SceneTheme airHaze
 
@@ -180,6 +185,12 @@ the air's color. Nearer layers take less of it, farther ones more.
 - 1 turns every layer the scene hazes into the air's color.
 
 A crossfade blends it with the effects.
+
+## SceneTheme cowLimbInkShare
+
+**How much of cowSpots goes into the cow's far legs, tail and horns**, from 0 to 1. The default of 0
+keeps their shading derived from cowBody and cowDetail. A crossfade blends the share with the
+effects.
 
 ## MillTheme
 
