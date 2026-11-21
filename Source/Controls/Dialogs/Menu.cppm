@@ -9,7 +9,6 @@ import ClaFi.Controls.Divider;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
-import ClaFi.Core.Context.FormContext;
 
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
@@ -135,7 +134,6 @@ namespace ClaFi::Controls
         // A caller's control ran its command: this menu closes, and every menu it stands beside.
         void closeOnCommand(ClickEvent&);
     protected:
-        void nestedClick(NestedClickEvent&) override;
         void nestedKeyDown(KeyDownEvent&) override;
     private:
         // Nothing in it, and no placeholder to stand in for the nothing.
@@ -343,12 +341,6 @@ namespace ClaFi::Controls
         m_commandRan = true;
         close();
         event.stopPropagation();
-    }
-
-    void Menu::nestedClick(NestedClickEvent& nestedClickEvent)
-    {
-        Form<ScrollBoxWith<StackPanel>>::nestedClick(nestedClickEvent);
-        Platform::beep();
     }
 
     // **Left moves inside the list first**, among controls of the caller's that stand side by

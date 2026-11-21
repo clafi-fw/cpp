@@ -269,7 +269,7 @@ namespace MillScene_App
         // A theme picker on the page of each scene that offers themes.
         void buildThemePickers();
         // Theme buttons in `column`, with a preview of the theme under the pointer.
-        void buildThemeLanes(StackPanel& column, PickerLanes&);
+        void buildThemeLanes(StackPanel& column, PickerLanes&, Menu* sceneOptions = nullptr);
         void buildWeatherControls(StackPanel& column);
         void buildLookPicker();
         void buildChoicePickers();
@@ -308,7 +308,7 @@ namespace MillScene_App
         void followFullscreen();
         // The list of the Scene line on the scene's context menu: a scene picker.
         void buildSceneList(Menu& list);
-        void showSceneOptionsMenu(Menu& sceneList, SplitButton& button, std::size_t sceneIndex);
+        void showSceneOptionsMenu(SplitButton& button, std::size_t sceneIndex);
         // The list of the Theme line on the scene's context menu: a theme picker.
         void buildThemeList(Menu& list);
         void buildWeatherList(Menu& list);
@@ -490,6 +490,14 @@ void drawThemeIcon(DrawIconEvent& event, const std::size_t themeIndex)
 }
 
 template<typename Pick>
+void pickAndKeepMenuOpen(Menu& menu, ClickEventBase& event, const Pick& pick)
+{
+    event.stopPropagation();
+    pick();
+    menu.body().invalidateChildrenStates();
+}
+
+template<typename Pick>
 void pickOnRightClick(Menu& menu, Control& item, Pick pick)
 {
     item.onContextPopup([&menu, pick = std::move(pick)](ContextPopupEvent& event) {
@@ -497,9 +505,7 @@ void pickOnRightClick(Menu& menu, Control& item, Pick pick)
         {
             return;
         }
-        event.stopPropagation();
-        pick();
-        menu.body().invalidateChildrenStates();
+        pickAndKeepMenuOpen(menu, event, pick);
     });
 }
 
@@ -921,12 +927,12 @@ void MillSceneForm::previewWeatherEffect(const PathArt::WeatherEffect effect)
 
 void MillSceneForm::pickWeather(const PathArt::SceneWeather& weather)
 {
+    applyWeather(weather);
     if (m_weather == weather)
     {
         return;
     }
     m_weather = weather;
-    applyWeather(m_weather);
     storeWeather();
     refreshWeatherControls();
 }
@@ -1095,8 +1101,8 @@ void MillSceneForm::buildSceneLanes(StackPanel& column, PickerLanes& scenePicker
         if (sceneList && sceneOffersOptions(index))
         {
             SplitButton& button = addTile.operator()<SplitButton>();
-            button.onDropdown([this, sceneList, index](DropdownEvent& event) {
-                showSceneOptionsMenu(*sceneList, event.button(), index);
+            button.onDropdown([this, index](DropdownEvent& event) {
+                showSceneOptionsMenu(event.button(), index);
             });
             item = &button;
         }
@@ -1200,7 +1206,7 @@ void MillSceneForm::buildThemePickers()
         buildThemeLanes(*columns[pickerIndex], m_themePickers[pickerIndex]);
 }
 
-void MillSceneForm::buildThemeLanes(StackPanel& column, PickerLanes& themePicker)
+void MillSceneForm::buildThemeLanes(StackPanel& column, PickerLanes& themePicker, Menu* sceneOptions)
 {
     SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::VerticalWrap,
@@ -1246,13 +1252,27 @@ void MillSceneForm::buildThemeLanes(StackPanel& column, PickerLanes& themePicker
         item.onGetState([this, index](GetStateEvent& event) {
             event.state.selected = m_pickedTheme == index;
             });
-        item.onClick([this, index](ClickEvent&) {
+        const auto pick = [this, &themePicker, index, sceneOptions]() {
+            const std::size_t previous = m_pickedTheme;
             pickSceneTheme(index);
+            if (sceneOptions)
+            {
+                showPick(themePicker, previous, index);
+            }
+        };
+        item.onClick([pick](ClickEvent&) {
+            pick();
+        });
+        if (sceneOptions)
+        {
+            pickOnRightClick(*sceneOptions, item, pick);
+        }
+        else
+        {
+            item.onDoubleClick([](DoubleClickEvent& event) {
+                event.closeForm();
             });
-        // A pick and done, as on a scene tile.
-        item.onDoubleClick([](DoubleClickEvent& event) {
-            event.closeForm();
-            });
+        }
         themePicker.buttons.push_back(&item);
         ++index;
     }
@@ -1757,10 +1777,16 @@ void MillSceneForm::addBackendLines(Menu& list)
                 [this, useGpu](GetStateEvent& event) {
                     event.state.selected = appContext().usingGpu() == useGpu;
                 },
-                [pick](ClickEvent&) {
-                    pick();
+                [&list, pick](ClickEvent& event) {
+                    pickAndKeepMenuOpen(list, event, pick);
                 },
-                [useGpu](AdjustTooltipEvent& event) {
+                [&list, useGpu](AdjustTooltipEvent& event) {
+                    constexpr float k_tooltipGap{ 6.0f };
+                    const FloatRect menuBounds = list.boundsInForm();
+                    const float gap = event.scale(k_tooltipGap);
+                    event.anchorRect.left = menuBounds.left - gap;
+                    event.anchorRect.right = menuBounds.right + gap;
+                    event.placement = TooltipPlacement::Right;
                     if (useGpu)
                     {
                         event.text << L"Render on the GPU." << k_endLine;
@@ -1787,51 +1813,67 @@ void MillSceneForm::buildSceneList(Menu& list)
     buildSceneLanes(column, m_menuScenePicker, &list);
 }
 
-void MillSceneForm::showSceneOptionsMenu(Menu& sceneList, SplitButton& button,
-    const std::size_t sceneIndex)
+void MillSceneForm::showSceneOptionsMenu(SplitButton& button, const std::size_t sceneIndex)
 {
     PickerLanes themePicker = {};
     Menu options{ button };
     PathArt::Scene& scene = sceneAt(sceneIndex);
-    const auto pickSceneAndClose = [this, &sceneList, sceneIndex](ClickEvent& event) {
+    const auto pickSceneInMenu = [this, sceneIndex](ClickEvent& event) {
+        event.stopPropagation();
         pickScene(sceneIndex);
-        event.closeForm();
-        sceneList.closeOnCommand(event);
+    };
+    const auto addOption = [this, &options, sceneIndex](Text text, const IndicatorStyle indicatorStyle,
+        const auto& getState, const auto& pick) -> MenuItem& {
+        MenuItem& item = options.add(
+            std::move(text),
+            IndicatorVisibility::Always,
+            indicatorStyle,
+            MenuItem::OnGetState{ getState },
+            MenuItem::OnClick{ [this, &options, sceneIndex, pick](ClickEvent& event) {
+                pickAndKeepMenuOpen(options, event, [&]() {
+                    pick();
+                    pickScene(sceneIndex);
+                });
+            } }
+        );
+        pickOnRightClick(options, item, pick);
+        return item;
     };
 
     if (scene.offersThemes())
     {
         StackPanel& column = options.addControl<StackPanel>(Orientation::Vertical);
-        buildThemeLanes(column, themePicker);
+        buildThemeLanes(column, themePicker, &options);
         for (Control* themeButton : themePicker.buttons)
         {
-            const std::size_t themeIndex = themeButton->tag().value;
-            themeButton->onClick(pickSceneAndClose);
-            pickOnRightClick(options, *themeButton, [this, &themePicker, themeIndex]() {
-                const std::size_t previous = m_pickedTheme;
-                pickSceneTheme(themeIndex);
-                showPick(themePicker, previous, themeIndex);
-            });
+            themeButton->onClick(pickSceneInMenu);
         }
         buildWeatherControls(addCaptionedColumn(column, L"Weather effects"));
         options.addSeparator();
     }
     if (sceneWithLooks() == sceneIndex)
     {
+        options.onClose([this](FormCloseEvent&) {
+            previewLook(m_pickedLook);
+        });
+        options.body().onHoverLeave([this](HoverLeaveEvent&) {
+            previewLook(m_pickedLook);
+        });
         for (std::size_t lookIndex = 0; lookIndex != k_lookChoices.size(); ++lookIndex)
         {
-            options.add(
+            MenuItem& item = addOption(
                 Text{ k_lookChoices[lookIndex].name },
-                IndicatorVisibility::Always,
                 IndicatorStyle::Radio,
-                MenuItem::OnGetState{ [this, lookIndex](GetStateEvent& event) {
+                [this, lookIndex](GetStateEvent& event) {
                     event.state.selected = m_pickedLook == lookIndex;
-                } },
-                MenuItem::OnClick{ [this, lookIndex, pickSceneAndClose](ClickEvent& event) {
+                },
+                [this, lookIndex]() {
                     pickLook(lookIndex);
-                    pickSceneAndClose(event);
-                } }
+                }
             );
+            item.onHoverEnter([this, lookIndex](HoverEnterEvent&) {
+                previewLook(lookIndex);
+            });
         }
         options.addSeparator();
     }
@@ -1842,18 +1884,15 @@ void MillSceneForm::showSceneOptionsMenu(Menu& sceneList, SplitButton& button,
         options.addControl<Label>(Text{ choice.name }, TextFormat{ InkGrade::Strong });
         for (std::size_t option = 0; option != choice.options.size(); ++option)
         {
-            options.add(
+            addOption(
                 Text{ choice.options[option] },
-                IndicatorVisibility::Always,
                 IndicatorStyle::Radio,
-                MenuItem::OnGetState{ [&scene, choiceIndex, option](GetStateEvent& event) {
+                [&scene, choiceIndex, option](GetStateEvent& event) {
                     event.state.selected = scene.chosenOption(choiceIndex) == option;
-                } },
-                MenuItem::OnClick{ [this, sceneIndex, choiceIndex, option,
-                    pickSceneAndClose](ClickEvent& event) {
+                },
+                [this, sceneIndex, choiceIndex, option]() {
                     pickOption(sceneIndex, choiceIndex, option);
-                    pickSceneAndClose(event);
-                } }
+                }
             );
         }
         options.addSeparator();
@@ -1861,22 +1900,16 @@ void MillSceneForm::showSceneOptionsMenu(Menu& sceneList, SplitButton& button,
     const std::span<const std::wstring_view> switchNames = scene.switches();
     for (std::size_t switchIndex = 0; switchIndex != switchNames.size(); ++switchIndex)
     {
-        const auto toggle = [this, &scene, switchIndex]() {
-            toggleSceneSwitch(scene, switchIndex);
-        };
-        MenuItem& item = options.add(
+        addOption(
             Text{ switchNames[switchIndex] },
-            IndicatorVisibility::Always,
             IndicatorStyle::Check,
-            MenuItem::OnGetState{ [&scene, switchIndex](GetStateEvent& event) {
+            [&scene, switchIndex](GetStateEvent& event) {
                 event.state.selected = scene.isSwitchOn(switchIndex);
-            } },
-            MenuItem::OnClick{ [toggle, pickSceneAndClose](ClickEvent& event) {
-                toggle();
-                pickSceneAndClose(event);
-            } }
+            },
+            [this, &scene, switchIndex]() {
+                toggleSceneSwitch(scene, switchIndex);
+            }
         );
-        pickOnRightClick(options, item, toggle);
     }
 
     m_menuSceneOptionsPreview = sceneIndex;
@@ -1917,8 +1950,8 @@ void MillSceneForm::buildWeatherList(Menu& list)
             IndicatorVisibility::Always,
             indicatorStyle,
             MenuItem::OnGetState{ getState },
-            MenuItem::OnClick{ [pick](ClickEvent&) {
-                pick();
+            MenuItem::OnClick{ [&list, pick](ClickEvent& event) {
+                pickAndKeepMenuOpen(list, event, pick);
             } }
         );
         pickOnRightClick(list, item, pick);
