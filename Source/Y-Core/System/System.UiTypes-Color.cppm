@@ -150,7 +150,10 @@ namespace ClaFi
             //  ++p2;
             //} while (p != end);
         }
+        
+        // this blend performs checks and is slower. In hot loops use blend0256 instead
         static constexpr Color between(Color from, Color to, float share);
+
         void setOpacity(Opacity value) { alpha = static_cast<ColorByte>(255 * value); }
         float luminance() const;
         // The WCAG contrast ratio of two colors, 1 for two alike to 21 for black on white.
@@ -269,7 +272,7 @@ namespace ClaFi
     Color constexpr Color::between(Color from, Color to, float share)
     {
         Color result = from;
-        result.blend(to, share);
+        result.blend(to, std::clamp(share, 0.0f, 1.0f));
         return result;
     }
 
