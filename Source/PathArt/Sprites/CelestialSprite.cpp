@@ -59,17 +59,20 @@ namespace ClaFi::PathArt
         }
     }
 
-    void drawCelestialGlow(const SceneFrame& frame, const FloatPoint center, const Color glow)
+    void drawCelestialGlow(const SceneFrame& frame, const FloatPoint center, const Color glow,
+        const float strength)
     {
-        drawGlow(frame, center, k_glowSpread * frame.unit, glow.withOpacity(k_glowOpacity),
-            1.0f / k_glowWidening);
+        drawGlow(frame, center, k_glowSpread * frame.unit,
+            glow.withOpacity(k_glowOpacity * strength), 1.0f / k_glowWidening);
     }
 
-    float celestialGlowAt(const SceneFrame& frame, const FloatPoint center, const FloatPoint point)
+    float celestialGlowAt(const SceneFrame& frame, const FloatPoint center, const FloatPoint point,
+        const float strength)
     {
         const float spread = k_glowSpread * frame.unit;
         const float across = (point.x - center.x) / (spread * k_glowWidening);
         const float down = (point.y - center.y) / spread;
-        return k_glowOpacity * std::max(0.0f, 1.0f - std::sqrt(across * across + down * down));
+        return k_glowOpacity * strength
+            * std::max(0.0f, 1.0f - std::sqrt(across * across + down * down));
     }
 }

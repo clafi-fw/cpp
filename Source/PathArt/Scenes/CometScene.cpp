@@ -49,14 +49,11 @@ namespace ClaFi::PathArt
         constexpr Color Fog{ 0xFFD6DFF2 };
 
         constexpr TwoColors FarRidge{
-            0xFF292455,
-            0xFF161228
+            0xFF211C42,
+            0xFF110C1D
         };
-        constexpr TwoColors NearRidge{
-            0xFF1C2439,
-            0xFF090714
-        };
-        constexpr Color Shore = 0xFF020705;
+        constexpr Color Greenery{ 0xFF0F1913 };
+        constexpr Color Rock{ 0xFF181C2A };
 
         constexpr Color Afterglow{ 0xFFFFB070 };
         constexpr Color ImpactCore{ 0xFFFFF1D0 };
@@ -69,16 +66,6 @@ namespace ClaFi::PathArt
         
         constexpr Color Ripple{ 0x26C6D4F4 };
         constexpr Color Glitter{ 0xFFE9EFFF };
-        
-        
-        // The near shore's pines and boulders, the darkest thing in the frame.
-        constexpr Color NearRock{ 0xFF060911 };
-        constexpr Color NearPine{ 0xFF030B0A };
-
-        // The rounded boulder's form, borrowed from the Chase: its lit crown, its shine, its crack.
-        constexpr Color BoulderLight{ 0xFF101827 };
-        constexpr Color BoulderShine{ 0xFF1B2639 };
-        constexpr Color BoulderCrack{ 0xFF02040A };
     }
 
     namespace
@@ -112,9 +99,8 @@ namespace ClaFi::PathArt
         constexpr float k_stoneWidth{ 0.0024f };
         constexpr float k_stoneSquish{ 0.68f };
 
-        // The scene's air, stated the way a theme states it: its own sky's ends and the share a
-        // layer at the reference distance takes.
-        constexpr SceneTheme k_air{
+        // The scene's sky and the share of its air a layer takes at the reference distance.
+        constexpr SceneTheme k_sceneTheme{
             .skyTop = CometSceneColors::Sky.top,
             .skyBottom = CometSceneColors::Sky.bottom,
             .airHaze = 0.06f
@@ -126,8 +112,8 @@ namespace ClaFi::PathArt
         constexpr float k_nearRangeParallax = SceneTheme::HazeReferenceParallax;
         constexpr float k_shoreParallax = k_nearRangeParallax;
 
-        // Where a ridge's haze gradient starts, above every peak, and the steps it is drawn in.
-        constexpr float k_ridgeTopShare{ 0.35f };
+        constexpr float k_farRidgeGradientTopShare{ 0.35f };
+        constexpr float k_nearRidgeGradientTopShare{ 0.55f };
         constexpr int k_ridgeHazeSteps{ 12 };
 
         // Where a share sits in its band, nudged so neighbours neither clump nor stand in a row.
@@ -138,12 +124,37 @@ namespace ClaFi::PathArt
             return (static_cast<float>(index) + 0.5f + nudge) / static_cast<float>(count);
         }
 
-        // A range's paint, hazed as the standard air hazes a layer at its distance: both ranges
-        // start from the same clear colours, thinner with height above the lake.
-        LinearGradient hazedRidge(const SceneFrame& frame, const float parallax, CometSceneColors::TwoColors colors)
+        constexpr Color materialBase(const Color top)
+        {
+            return Color::between(top, Color{ 0xFF000000 }, 0.57f);
+        }
+
+        constexpr CometSceneColors::TwoColors k_rockTones{
+            .top = Color::between(CometSceneColors::Rock, Color{ 0xFF000000 }, 0.18f),
+            .bottom = materialBase(CometSceneColors::Rock)
+        };
+
+        constexpr float k_pineGradientSlope{ 1.0f };
+        // The rock gradient runs at 22.5 degrees from vertical.
+        constexpr float k_rockGradientSlope{ std::numbers::sqrt2_v<float> - 1.0f };
+
+        // The gradient spans the full height along the shape's center line.
+        LinearGradient diagonalGradient(const FloatPoint base, const float height, const float slope,
+            const Color top, const Color bottom)
+        {
+            const float halfHeight = height * 0.5f;
+            const float halfRise = halfHeight / (1.0f + slope * slope);
+            const float halfRun = halfRise * slope;
+            return LinearGradient::Simple({ base.x - halfRun, base.y - (halfHeight + halfRise) },
+                { base.x + halfRun, base.y - (halfHeight - halfRise) }, top, bottom);
+        }
+
+        // A ridge's clear colors through air that thins with height above the lake.
+        LinearGradient hazedRidge(const SceneFrame& frame, const float parallax,
+            const float topShare, const CometSceneColors::TwoColors colors)
         {
             const float lakeY = frame.height * k_lakeShare;
-            const float top = frame.height * k_ridgeTopShare;
+            const float top = frame.height * topShare;
             LinearGradient rock{
                 .startPoint = { 0.0f, top },
                 .endPoint = { 0.0f, lakeY },
@@ -158,7 +169,7 @@ namespace ClaFi::PathArt
                 const Color clear = Color::between(colors.top, colors.bottom, position);
                 rock.stops.push_back({
                     .position = position,
-                    .color = k_air.hazed(clear, parallax, aboveGround)
+                    .color = k_sceneTheme.hazed(clear, parallax, aboveGround)
                 });
             }
             return rock;
@@ -168,7 +179,7 @@ namespace ClaFi::PathArt
             const float crestY)
         {
             const float aboveLake = k_lakeShare - crestY / frame.height;
-            return k_air.hazed(clear, parallax, aboveLake);
+            return k_sceneTheme.hazed(clear, parallax, aboveLake);
         }
 
         // The fog's strips of the cloud map: a grid of the map's cover over each band, which the
@@ -243,7 +254,10 @@ namespace ClaFi::PathArt
         void drawPine(const SceneFrame& frame, const FloatPoint base, const float height,
             const int seed)
         {
-            const SolidColor ink{ CometSceneColors::NearPine };
+            const Color greenery = CometSceneColors::Greenery;
+            const Brush ink{ diagonalGradient(base, height, k_pineGradientSlope,
+                k_sceneTheme.shadedForeground(greenery),
+                k_sceneTheme.shadedForeground(materialBase(greenery))) };
             const float lean = 0.05f * (pseudoRandom(seed, 81.0f) - 0.5f);
             const float spineThickness = std::max(1.0f, height * 0.010f);
             const float needleThickness = std::max(0.7f, height * 0.005f);
@@ -379,12 +393,9 @@ namespace ClaFi::PathArt
                 { top.x + height * 0.04f, top.y - height * 0.03f }, height * 0.018f);
         }
 
-        // A rock: a dark body with sharp points breaking out of it, the far pines' triangles in
-        // stone.
         void drawRock(const SceneFrame& frame, const FloatPoint base, const float width,
-            const float height, const int seed)
+            const float height, const int seed, LinearGradient gradient)
         {
-            const SolidColor ink{ CometSceneColors::NearRock };
             const float left = base.x - width * 0.5f;
             const float right = base.x + width * 0.5f;
             const float peakAt = 0.24f + 0.30f * pseudoRandom(seed, 62.0f);
@@ -393,31 +404,59 @@ namespace ClaFi::PathArt
             const float secondHigh = peakHigh * (0.45f + 0.30f * pseudoRandom(seed, 65.0f));
             const float shoulder = height * (0.34f + 0.20f * pseudoRandom(seed, 66.0f));
             PixelPath rock;
+            const float peakRadius = peakHigh * 0.12f;
+            const auto addRoundedPeak = [&rock, peakRadius](const FloatPoint leftSlope,
+                const FloatPoint apex, const FloatPoint rightSlope)
+            {
+                const FloatPoint toLeft = leftSlope - apex;
+                const FloatPoint toRight = rightSlope - apex;
+                const float leftLength = std::hypot(toLeft.x, toLeft.y);
+                const float rightLength = std::hypot(toRight.x, toRight.y);
+                const float cut = std::min({ peakRadius, leftLength * 0.5f, rightLength * 0.5f });
+                rock.lineTo(leftSlope);
+                if (cut > 0.0f)
+                {
+                    rock.lineTo(apex + toLeft * (cut / leftLength));
+                    rock.quadTo(apex, apex + toRight * (cut / rightLength));
+                }
+                else
+                {
+                    rock.lineTo(apex);
+                }
+                rock.lineTo(rightSlope);
+            };
+
             rock.moveTo(left, base.y);
             rock.lineTo(left + width * 0.06f, base.y - shoulder * 0.82f);
-            rock.lineTo(left + width * (peakAt - 0.10f), base.y - peakHigh * 0.62f);
-            rock.lineTo(left + width * peakAt, base.y - peakHigh);
-            rock.lineTo(left + width * (peakAt + 0.10f), base.y - peakHigh * 0.55f);
-            rock.lineTo(left + width * (secondAt - 0.07f), base.y - secondHigh * 0.55f);
-            rock.lineTo(left + width * secondAt, base.y - secondHigh);
-            rock.lineTo(left + width * (secondAt + 0.07f), base.y - secondHigh * 0.50f);
+            addRoundedPeak({ left + width * (peakAt - 0.10f), base.y - peakHigh * 0.62f },
+                { left + width * peakAt, base.y - peakHigh },
+                { left + width * (peakAt + 0.10f), base.y - peakHigh * 0.55f });
+            addRoundedPeak({ left + width * (secondAt - 0.07f), base.y - secondHigh * 0.55f },
+                { left + width * secondAt, base.y - secondHigh },
+                { left + width * (secondAt + 0.07f), base.y - secondHigh * 0.50f });
             rock.lineTo(right - width * 0.08f, base.y - shoulder * 0.62f);
             rock.lineTo(right, base.y - shoulder * 0.16f);
             rock.lineTo(right + width * 0.05f, base.y);
             rock.close();
-            fillShape(frame, rock, ink);
+            gradient.startPoint.x += base.x;
+            gradient.endPoint.x += base.x;
+            fillShape(frame, rock, std::move(gradient));
         }
 
-        // The Chase's roadside boulder, its rounded stone, shine and crack, laid at `base` and
-        // squashed by `squish` - a smoother, wider stone among the sharp ones. Its reflection is
-        // drawn each frame by `drawStoneReflection`, so the lake's ripples run through it.
+        // The Chase's roadside boulder, with the crown lit and a crack in shade.
         void drawRoundedBoulder(const SceneFrame& frame, const FloatPoint base, const float scale,
-            const float squish, const Color light = CometSceneColors::BoulderLight,
-            const Color shade = CometSceneColors::NearRock,
-            const Color shine = CometSceneColors::BoulderShine)
+            const float squish)
         {
+            static const Color light = k_sceneTheme.shadedForeground(Color::between(k_rockTones.top,
+                CometSceneColors::CometLight, 0.02f));
+            static const Color shade = k_sceneTheme.shadedForeground(k_rockTones.bottom);
+            static const Color shine = k_sceneTheme.shadedForeground(Color::between(k_rockTones.top,
+                CometSceneColors::CometLight, 0.045f));
+            static const Color crackColor = Color::between(shade, Color{ 0xFF000000 }, 0.35f);
             const SceneFrame stone = frame.within(
-                Matrix3x2::Translation(base) * Matrix3x2::Scale(scale, scale * squish));
+                Matrix3x2::Translation(base) * Matrix3x2::Scale(scale, scale));
+            const Matrix3x2 flatten = Matrix3x2::Scale(1.0f, squish);
+            const SceneFrame details = stone.within(flatten);
             PixelPath rock;
             rock.moveTo(-17.0f, 0.0f);
             rock.cubicTo({ -20.0f, -9.0f }, { -14.0f, -20.0f }, { -3.0f, -22.0f });
@@ -429,10 +468,11 @@ namespace ClaFi::PathArt
             crack.lineTo(8.0f, -10.0f);
             crack.lineTo(6.0f, -6.0f);
             crack.lineTo(8.5f, -2.5f);
-            fillShape(stone, rock, LinearGradient::Simple({ -8.0f, -21.0f }, { 10.0f, 0.0f },
-                light, shade));
-            fillOval(stone, { -5.0f, -17.0f }, 6.5f, 2.6f, SolidColor{ shine }, -0.25f);
-            strokeShape(stone, crack, SolidColor{ CometSceneColors::BoulderCrack }, 0.6f);
+            rock.transform(flatten); // squash the geometry while preserving the gradient angle
+            fillShape(stone, rock, diagonalGradient({ 0.0f, 0.0f }, 22.0f * squish,
+                k_rockGradientSlope, light, shade));
+            fillOval(details, { -5.0f, -17.0f }, 6.5f, 2.6f, SolidColor{ shine }, -0.25f);
+            strokeShape(details, crack, SolidColor{ crackColor }, 0.6f);
         }
     }
 
@@ -765,12 +805,13 @@ namespace ClaFi::PathArt
                 SolidColor{ CometSceneColors::Flash.withOpacity(flash) });
         }
         drawStars(frame, cycleTime, StarField{
-            .count = 140,
+            .count = 280,
             .top = 0.0f,
             .bottom = frame.height * 0.6f,
             .seed = 70.0f,
             .color = CometSceneColors::Star,
-            .opacity = reflection ? 0.6f : 1.0f
+            .opacity = reflection ? 0.6f : 1.0f,
+            .bottomBrightness = 0.15f
         });
         // Three a cycle, each half a second, in the quiet between passes.
         drawShootingStars(frame, cycleTime, ShootingStars{
@@ -1098,7 +1139,8 @@ namespace ClaFi::PathArt
             farRidge.lineTo(x, farRidgeY(frame, x));
         farRidge.lineTo(width + 8.0f * unit, lakeY);
         farRidge.close();
-        fillShape(frame, farRidge, hazedRidge(frame, k_farRangeParallax, CometSceneColors::FarRidge));
+        fillShape(frame, farRidge, hazedRidge(frame, k_farRangeParallax, k_farRidgeGradientTopShare,
+            CometSceneColors::FarRidge));
     }
 
     void CometScene::drawNearRidge(const SceneFrame& frame)
@@ -1112,7 +1154,8 @@ namespace ClaFi::PathArt
             nearRidge.lineTo(x, nearRidgeY(frame, x));
         nearRidge.lineTo(width + 6.0f * unit, lakeY);
         nearRidge.close();
-        fillShape(frame, nearRidge, hazedRidge(frame, k_nearRangeParallax, CometSceneColors::NearRidge));
+        fillShape(frame, nearRidge, hazedRidge(frame, k_nearRangeParallax, k_nearRidgeGradientTopShare,
+            k_rockTones));
     }
 
     void CometScene::drawMirroredFarRidge(const SceneFrame& frame)
@@ -1148,10 +1191,10 @@ namespace ClaFi::PathArt
         const float width = frame.width;
         const float lakeY = frame.height * k_lakeShare;
 
-        const Color hazedShore = k_air.hazed(CometSceneColors::Shore, k_shoreParallax);
-
-
-        fillBox(frame, { 0.0f, lakeY - 2.0f * unit, width, lakeY + 3.0f * unit }, SolidColor{ hazedShore });
+        const Color shoreTop = k_sceneTheme.hazed(CometSceneColors::Greenery, k_shoreParallax);
+        const Color shoreBase = k_sceneTheme.hazed(materialBase(CometSceneColors::Greenery),
+            k_shoreParallax);
+        fillBox(frame, { 0.0f, lakeY - 2.0f * unit, width, lakeY + 3.0f * unit }, SolidColor{ shoreBase });
         const float spacing = 11.0f * unit;
         const int count = static_cast<int>(std::ceil(width / spacing)) + 2;
         for (int i = 0; i != count; ++i)
@@ -1167,7 +1210,8 @@ namespace ClaFi::PathArt
             pine.lineTo(x, lakeY - treeHeight);
             pine.lineTo(x + treeHeight * 0.28f, lakeY + unit);
             pine.close();
-            fillShape(frame, pine, SolidColor{ hazedShore });
+            fillShape(frame, pine, diagonalGradient({ x, lakeY }, treeHeight, k_pineGradientSlope,
+                shoreTop, shoreBase));
         }
     }
 
@@ -1189,15 +1233,29 @@ namespace ClaFi::PathArt
         drawPine(frame, { width * 0.885f, height * 1.02f }, height * 0.36f, 17);
         drawPine(frame, { width * 0.945f, height * 1.06f }, height * 0.56f, 13);
 
-        // The boulders standing in the water.
-        drawRock(frame, { width * 0.230f, height * 1.02f }, width * 0.12f, height * 0.19f, 20);
-        drawRock(frame, { width * 0.330f, height * 1.02f }, width * 0.12f, height * 0.16f, 24);
+        const float rockGradientTop = height * 0.79f;
+        const float rockGradientBottom = height * 1.02f;
+        const LinearGradient rockGradient = diagonalGradient({ 0.0f, rockGradientBottom },
+            rockGradientBottom - rockGradientTop, k_rockGradientSlope,
+            k_sceneTheme.shadedForeground(k_rockTones.top),
+            k_sceneTheme.shadedForeground(k_rockTones.bottom));
 
-        drawRock(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27);
-        drawRock(frame, { width * 0.755f, height * 1.02f }, width * 0.22f, height * 0.29f, 31);
-        // The rocks the near edge of the water breaks on, low across the bottom.
-        drawRock(frame, { width * 0.100f, height * 1.01f }, width * 0.30f, height * 0.09f, 51);
-        drawRock(frame, { width * 0.500f, height * 1.01f }, width * 0.16f, height * 0.045f, 57);
-        drawRock(frame, { width * 0.900f, height * 1.01f }, width * 0.28f, height * 0.08f, 63);
+        // Low rocks sit behind the taller boulders, with their peaks visible in the gaps.
+        drawRock(frame, { width * 0.105f, height * 1.002f }, width * 0.30f, height * 0.09f, 51,
+            rockGradient);
+        drawRock(frame, { width * 0.522f, height * 1.001f }, width * 0.16f, height * 0.045f, 57,
+            rockGradient);
+        drawRock(frame, { width * 0.928f, height * 1.003f }, width * 0.28f, height * 0.08f, 63,
+            rockGradient);
+
+        drawRock(frame, { width * 0.230f, height * 1.02f }, width * 0.12f, height * 0.19f, 20,
+            rockGradient);
+        drawRock(frame, { width * 0.420f, height * 1.01f }, width * 0.11f, height * 0.13f, 27,
+            rockGradient);
+
+        drawRock(frame, { width * 0.330f, height * 1.02f }, width * 0.12f, height * 0.16f, 24,
+            rockGradient);
+        drawRock(frame, { width * 0.755f, height * 1.02f }, width * 0.22f, height * 0.29f, 31,
+            rockGradient);
     }
 }

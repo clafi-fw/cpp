@@ -14,8 +14,8 @@ namespace ClaFi::PathArt::Themes
             .cloud = 0xCCFAFAFA,         // Off-white clouds
             .mountainTop = 0xFFCDCACB,
             .mountainFoot = 0xFF9E9B9C,
-            .hillTop = 0xFFA3AFA0,       // Gray green (hill top)
-            .hillBottom = 0xFF7E8A7C,    // Darker gray green (hill base)
+            .hillTop = 0xFFADC69A,
+            .hillBottom = 0xFF729269,
             .riverTop = 0xFF2E559E,      // Deep blue (river top)
             .riverBottom = 0xFF64A1D5,   // Lighter blue (river bottom)
             .riverWave = 0xFFFFC8DC,     // Same as Effect1
@@ -50,9 +50,9 @@ namespace ClaFi::PathArt::Themes
             .wolfEye = 0xFFFF0000,       // Red glowing eyes
             .effectColor1 = 0xFFFFC8DC,
             .effectColor2 = 0xFFFF96B4,
-            .petal1 = 0xFFFFC8DC,
+            .petal1 = 0xFFFFAFC8,
             .petal2 = 0xFFFF96B4,
-            .petal3 = 0xFFFFAFC8,
+            .petal3 = 0xFFFFC8DC,
             .flowerHeart = 0xFFF0C960,
             .wing = 0xFFF1A042,
             .wingEdge = 0xFF392A22,
@@ -185,13 +185,15 @@ namespace ClaFi::PathArt::Themes
                 .dazeStar = 0xFFFFD34D
             },
             .cowTips = 0xFF543B33,
+            .lilyFlowerTint = 0xFFFF96B4,
             .hasRain = false,
             .hasFireflies = false,
             .hasLeaves = false,
             .hasSnow = false,
             .hasPetals = true,
             .hasDust = false,
-            .isAfrica = false
+            .isAfrica = false,
+            .celestialGlowStrength = 0.5f
         } {
         }
     };

@@ -144,7 +144,7 @@ namespace ClaFi::PathArt
 
         m_space.draw(frame);
         drawStars(frame, time.cycleTime, StarField{
-            .count = 170,
+            .count = 340,
             .top = 0.0f,
             .bottom = frame.height,
             .seed = 50.0f,

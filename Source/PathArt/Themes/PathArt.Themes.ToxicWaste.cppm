@@ -36,7 +36,7 @@ namespace ClaFi::PathArt::Themes
                 .middle = 0xFF4CB325,
                 .light = 0xFF5ED731
             },
-            .reedStem = 0xFF0D240E,
+            .reedStem = 0xFF698C42,
             .reedHead = 0xFF6B7A2A,
             .stoneLight = 0xFF4C5A3A,
             .stoneDark = 0xFF192506,
@@ -193,7 +193,8 @@ namespace ClaFi::PathArt::Themes
             .hasDust = false,
             .isAfrica = false,
             .hasStars = false,
-            .airHaze = 0.20f
+            .airHaze = 0.20f,
+            .celestialGlowStrength = 0.5f
         } {
         }
     };

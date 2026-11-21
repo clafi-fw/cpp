@@ -15,8 +15,9 @@ namespace ClaFi::PathArt
     // The sun or the moon: a disc 24 units in radius in a rim of its own light.
     export void drawCelestial(const SceneFrame&, const CelestialPose&, Color disc);
     // The light about the sun or the moon, 130 units high and twice as wide, over all it covers.
-    export void drawCelestialGlow(const SceneFrame&, FloatPoint center, Color glow);
+    export void drawCelestialGlow(const SceneFrame&, FloatPoint center, Color glow,
+        float strength = 1.0f);
     // How much of the glow about `center` lies over `point`, as drawCelestialGlow lays it.
-    export [[nodiscard]] float celestialGlowAt(const SceneFrame&, FloatPoint center,
-        FloatPoint point);
+    export [[nodiscard]] float celestialGlowAt(const SceneFrame&, FloatPoint center, FloatPoint point,
+        float strength = 1.0f);
 }

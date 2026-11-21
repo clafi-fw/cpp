@@ -2077,15 +2077,16 @@ namespace ClaFi::PathArt
         fillBox(frame, { 0.0f, 0.0f, width, groundY }, LinearGradient::Simple({ 0.0f, 0.0f },
             { 0.0f, groundY }, theme.skyTop, theme.skyBottom));
         drawStars(frame, cycleTime, StarField{
-            .count = 120,
+            .count = 240,
             .top = 0.0f,
             .bottom = groundY,
             .color = theme.sunDisk,
             .opacity = theme.hasStars,
-            .twinklesPerCycle = k_lively
+            .twinklesPerCycle = k_lively,
+            .bottomBrightness = 0.15f
         });
         const FloatPoint sun = { width * 0.84f, height * 0.14f };
-        drawCelestialGlow(frame, sun, theme.sunGlow);
+        drawCelestialGlow(frame, sun, theme.sunGlow, theme.celestialGlowStrength);
         drawCelestial(frame, CelestialPose{ .center = sun, .night = theme.hasStars },
             theme.sunDisk);
 

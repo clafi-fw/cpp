@@ -136,9 +136,9 @@ duckLight, duckShade and duckBeak, as the Chase's rubber duck does.
 
 **fish is the fish leaping from the pond.**
 
-**The sun and the moon take sunDisk and sunGlow** - see drawCelestial and drawCelestialGlow: a disc
-in a rim of its own light, and a glow twice as wide as it is tall; the moon shows three craters as
-the night falls by hasStars.
+**The sun and the moon take sunDisk and sunGlow.** See drawCelestial for the disc and its rim, and
+drawCelestialGlow for the wide glow. The glow is twice as wide as it is tall and takes its strength
+from celestialGlowStrength. The moon shows three craters as the night falls by hasStars.
 
 **The mountains' clear colors are rock in the theme's light, before any haze.** mountainTop is the
 rock where the most sunlight falls, at the top of the highest range, and mountainFoot the rock at
@@ -166,13 +166,23 @@ daylight scenes already draw them. Golden Hour's and Winter Frost's cows keep th
 Summer Sunset's wolf and hare are drawn lighter and stand about 0.10 from its meadow.
 
 **A crossfade blends every color field one by one** - see ThemeBlend. They stand in a row from
-skyTop through cowTips, and colorsNum() counts them.
+skyTop through lilyFlowerTint, and colorsNum() counts them.
 
 ## SceneTheme cowTips
 
 **The tint shared by the horns, hooves and tail brush.** Its alpha sets the tint's strength over
 the coat shading and the share of cowSpots set by cowLimbInkShare. The tint is transparent by
 default.
+
+## SceneTheme lilyFlowerTint
+
+**The tint over the Mill's water lily flower.** Its alpha sets the strength of the tint over
+petal3. It is transparent by default.
+
+## SceneTheme reedStem
+
+**The color of the reed stalks in Mill and Chase**, tuned for Mill's far bank. It also colors the
+cattails' leaves. Mill shades it in the foreground and hazes it in the small reed beds.
 
 ## SceneTheme airHaze
 
@@ -192,6 +202,12 @@ A crossfade blends it with the effects.
 **How much of cowSpots goes into the cow's far legs, tail shaft and tips**, from 0 to 1. The default
 of 0 keeps their shading derived from cowBody and cowDetail. A crossfade blends the share with the
 effects.
+
+## SceneTheme celestialGlowStrength
+
+**The multiplier for the wide glow around the sun or moon**, from 0 to 1. The default of 1
+draws the glow at full strength. The Mill uses the same multiplier for the glow that lights
+the clouds. A crossfade blends the strength with the other effects.
 
 ## MillTheme
 
@@ -515,6 +531,11 @@ ever thinner air, so it takes the air along that line in place of its distance, 
 point at the ground line as far away. The air thins to 1/e every 24 frame heights, as seen at
 parallax 1.
 
+## shadedForeground
+
+**The foreground shade reduces OKHSL lightness and saturation by a quarter.** The returned color
+keeps its original opacity.
+
 ## WaterReflection
 
 **What a scene shows mirrored in its water**, laid into the water's shape and broken by ripples.
@@ -772,14 +793,19 @@ keep them apart.
 
 ## StarField
 
-**Each star grows and shrinks through its own twinkle.** The star disappears at the low point.
-The field's seed selects the positions and relative twinkle rates.
+**Each star grows and brightens through its own twinkle.** The star disappears at the low point.
+The field's seed selects the positions, relative brightness, and twinkle rates.
 
 ## StarField drift
 
 **A star moved out of the band comes round into it at the far side**, so a drift of whole frame
 widths and band heights draws the field as it stands at none. Keep the drift to its part past the
 whole numbers: a float holds a large drift too coarsely for the stars to move smoothly.
+
+## StarField bottomBrightness
+
+**The bottom brightness is a fraction from 0 to 1.** Set it below 1 to dim stars as they approach
+the bottom of the band. The fade begins one fifth of the way down the band.
 
 ## BotTalentScene
 
@@ -1236,6 +1262,12 @@ Three shooting stars cross the sky in the quiet between the passes.
 **Draw foreground** shows the pines and rocks along the near edge of the lake. The switch starts
 on. The scene keeps it as `DrawForeground` in its own config section. See Scene switches.
 
+**The shore and foreground pines share a greenery color.** The near ridge and foreground boulders
+share a rock color. Pines and foreground rocks darken diagonally from upper left to lower right.
+The angular rocks use the same gradient heights, with the gradient centered on each rock.
+The round boulder has its own gradient. The shore and ridge take haze, and the foreground uses
+shadedForeground.
+
 ## CometPose
 
 **A pass is the comet's whole visit.** It falls along its course for `fallShare` of the pass,
@@ -1319,9 +1351,10 @@ the scene's, so a paused scene holds the count as well.
 
 **The Sun stands still among the stars until a double click moves it**, and so does the orbit's
 plane, so each orbit passes a day and a night: a day of about two minutes as the scene starts, and
-longer or shorter as the Sun moves round. In the Earth's shadow the satellite darkens and the stars
-brighten. Its panels turn once an orbit to face the Sun, so in the shadow they show their backs.
-The stars drift a fifth of the frame's width each orbit - see StarField drift.
+longer or shorter as the Sun moves round. In the Earth's shadow the satellite darkens.
+Its panels turn once an orbit to face the Sun, so in the shadow they show their backs.
+The stars twinkle at the same brightness range throughout the orbit and drift a fifth of the
+frame's width each orbit - see StarField drift.
 
 **The cycle is 240 seconds.** The twinkling and the blinking keep the pace they would have in a
 40-second cycle.

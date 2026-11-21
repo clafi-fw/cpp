@@ -28,15 +28,15 @@ namespace ClaFi::PathArt::Themes
             .bough = 0xFF5B403B,
             .trail = 0xE6978C72,
             .grassBlade = {
-                .light = 0xFF143438,
-                .dark = 0xFF0E2B29
+                .light = 0xFF93AA8B,
+                .dark = 0xFF788F76
             },
             .grassPatch = {
                 .dark = 0xFF617C6D,
                 .middle = 0xFF789484,
                 .light = 0xFF94B1A1
             },
-            .reedStem = 0xFF2D3F49,
+            .reedStem = 0xFF7F9983,
             .reedHead = 0xFF7A4F3E,
             .stoneLight = 0xFFB6ADB5,
             .stoneDark = 0xFF797178,
@@ -192,7 +192,8 @@ namespace ClaFi::PathArt::Themes
             .hasPetals = false,
             .hasDust = false,
             .isAfrica = false,
-            .hasStars = true
+            .hasStars = true,
+            .celestialGlowStrength = 0.5f
         } {
         }
     };

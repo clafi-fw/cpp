@@ -193,7 +193,8 @@ namespace ClaFi::PathArt::Themes
             .hasPetals = false,
             .hasDust = false,
             .isAfrica = false,
-            .airHaze = 0.30f
+            .airHaze = 0.30f,
+            .celestialGlowStrength = 0.5f
         } {
         }
     };

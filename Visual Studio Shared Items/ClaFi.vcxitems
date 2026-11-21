@@ -532,6 +532,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.ThemeBlend.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.ThemeBlend.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Themes.cppm" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Types.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.Types.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.WaterReflection.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\PathArt.WaterReflection.cppm" />

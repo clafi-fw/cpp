@@ -19,6 +19,7 @@ import ClaFi.PathArt.WaterLilySprite;
 import ClaFi.PathArt.WaterReflection;
 import ClaFi.PathArt.WeatherEffect;
 import ClaFi.Core.Graphics.Cpu.Canvas;
+import ClaFi.Core.Graphics.Cpu_PathPainter;
 import ClaFi.Core.Graphics.Cpu_Rasterizer;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
@@ -257,8 +258,8 @@ namespace ClaFi::PathArt
             FloatPoint{ 1.04f, 0.80f },
             FloatPoint{ 0.80f, 0.80f }
         };
-        constexpr int k_meadowTufts{ 1200 };
-        constexpr int k_meadowFlowers{ 150 };
+        constexpr int k_meadowTufts{ 100 };
+        constexpr int k_meadowFlowers{ 50 };
         constexpr int k_meadowDepthBands{ 4 }; // the rows the meadow's specks are hazed in
         constexpr std::array<StreamPoint, 9> k_footpath{
             StreamPoint{ { 0.13f, 0.572f }, 0.002f },
@@ -407,8 +408,6 @@ namespace ClaFi::PathArt
             Cattail{ 0.93f, 145.0f, 2.6f },
             Cattail{ 0.97f, 118.0f, 1.1f }
         };
-        // The near layer's shade: the share of its Okhsl lightness and saturation a color loses.
-        constexpr float k_nearLayerShade{ 0.25f };
         // The near bank's top color, this share of the way from the hills' top to their foot, as
         // the Chase's lawn is at that row; it reaches the foot's color at the frame's bottom.
         constexpr float k_nearBankTopShare{ 0.63f };
@@ -427,11 +426,11 @@ namespace ClaFi::PathArt
         // The cattails across the pond against the near bank's, for being further off.
         constexpr float k_shoreCattailScale{ 0.7f };
         constexpr std::array<ReedBed, 5> k_reedBeds{
-            ReedBed{ { 0.4097f, 0.5552f }, 1.25f, 0.0025f, 34, 0.0f, false }, // the far bend's tip
-            ReedBed{ { 0.251f, 0.6724f }, 0.55f, 0.012f, 40, 1.0f, true }, // the bridge's left end
-            ReedBed{ { 0.3148f, 0.6714f }, 0.55f, 0.012f, 40, 2.0f, false }, // its right end
-            ReedBed{ { 0.337f, 0.5843f }, 1.0f, 0.0065f, 34, 3.0f, true }, // the reach's far bank
-            ReedBed{ { 0.3765f, 0.5985f }, 1.0f, 0.0083f, 34, 4.0f, false } // the reach's near bank
+            ReedBed{ { 0.4097f, 0.5552f }, 1.25f, 0.0025f, 12, 0.0f, false }, // the far bend's tip
+            ReedBed{ { 0.251f, 0.6724f }, 0.55f, 0.012f, 12, 1.0f, true }, // the bridge's left end
+            ReedBed{ { 0.3148f, 0.6714f }, 0.55f, 0.012f, 12, 2.0f, false }, // its right end
+            ReedBed{ { 0.337f, 0.5843f }, 1.0f, 0.0065f, 12, 3.0f, true }, // the reach's far bank
+            ReedBed{ { 0.3765f, 0.5985f }, 1.0f, 0.0083f, 12, 4.0f, false } // the reach's near bank
         };
         constexpr std::array<ReedBedCattail, 3> k_reedBedCattails{
             ReedBedCattail{ -0.44f, 78.0f, 0.0f },
@@ -469,8 +468,6 @@ namespace ClaFi::PathArt
         [[nodiscard]] float parallaxAt(const SceneFrame&, float y);
         // Pixels per unit of the frame for what stands at `y`, at its distance.
         [[nodiscard]] float sizeAt(const SceneFrame&, float y);
-        // A color as it lies on the near layer, all of which but what gives light is in shade.
-        [[nodiscard]] Color nearLayerColor(Color);
         // The land's clear color at row `y`.
         [[nodiscard]] Color landAt(const SceneFrame&, const SceneTheme&, float y);
         // The land from `top` down, each row hazed as far as it lies, and at least as `parallax`.
@@ -501,13 +498,13 @@ namespace ClaFi::PathArt
         void drawMountains(const SceneFrame&, const SceneTheme&, const MountainRange&);
         void drawFarHills(const SceneFrame&, const SceneTheme&);
         void drawValley(const SceneFrame&, const SceneTheme&);
-        void drawMeadow(const SceneFrame&, const SceneTheme&);
+        void drawMeadow(const SceneFrame&, const SceneTheme&, const PixelPath& river);
         void drawFootpath(const SceneFrame&, const SceneTheme&);
         void drawFir(const SceneFrame&, const SceneTheme&, const StandingTree&,
             bool castsShadow = true);
         void drawFirShadow(const SceneFrame&, const SceneTheme&, const StandingTree&);
         void drawBroadleaf(const SceneFrame&, const SceneTheme&, const StandingTree&);
-        void drawRiverBed(const SceneFrame&, const SceneTheme&);
+        void drawRiverBed(const SceneFrame&, const SceneTheme&, const PixelPath& river);
         void drawBridge(const SceneFrame&, const SceneTheme&);
         // What still stands mirrored in the water: the mountains, the far hills, the bridge, the
         // firs by the shore and the mill's house.
@@ -565,11 +562,12 @@ namespace ClaFi::PathArt
         canvas.drawBitmap(m_sky, m_offset);
         // The stars and the clouds stand behind the land, which hides their foot.
         drawStars(frame, cycleTime, StarField{
-            .count = 120,
+            .count = 240,
             .top = 0.0f,
             .bottom = h * k_horizonShare,
             .color = theme().sunDisk,
-            .opacity = theme().hasStars
+            .opacity = theme().hasStars,
+            .bottomBrightness = 0.15f
         });
 
         const float rX = w * 0.35f;
@@ -588,7 +586,7 @@ namespace ClaFi::PathArt
                 m_offset.y + middle.y)
                 * Matrix3x2::Scale((0.8f + (std::sin(turn) + 1.0f) * 0.2f) * m_objectsScale);
             drawCloud(canvas, place, Color::between(cloud, glowOnCloud,
-                celestialGlowAt(frame, m_sunPos, middle)));
+                celestialGlowAt(frame, m_sunPos, middle, theme().celestialGlowStrength)));
         }
         // The bolt comes down behind the land, and the flash lights the sky alone.
         SceneFrame sky = frame;
@@ -699,23 +697,26 @@ namespace ClaFi::PathArt
         const FloatPoint lily = pointAt(frame, k_lilyShare);
         const SceneFrame water = frame.within(Matrix3x2::Translation(lily)
             * Matrix3x2::Scale(1.0f, k_lilyFlatness) * Matrix3x2::Translation(-lily.x, -lily.y));
+        Color lilyFlower = theme().petal3;
+        lilyFlower.paintOverGeneral(theme().lilyFlowerTint);
         drawWaterLily(water, WaterLilyPose{
             .center = lily,
             .size = k_lilySize * sizeAt(frame, lily.y),
             .cycleTime = cycleTime
         }, WaterLilyColors{
             .pad = theme().treeLeavesBase.fullyOpaque(),
-            .flower = theme().petal3
+            .flower = lilyFlower
         });
         drawNearBank(frame, theme(), cycleTime);
         drawButterfly(frame, theme(), story);
 
         drawEffectLayer(frame, theme(), cycleTime, 3);
-        // The sun's glow lies over the land as over the sky behind it, which keeps the sun's disc
-        // in its own color.
-        canvas.pushClip(landOutline(frame), &frame.toCanvas);
-        drawCelestialGlow(frame, m_sunPos, theme().sunGlow);
-        canvas.popClip();
+
+        // A little celestial color change is acceptable rather than wasting time on the same glow
+        // so no clip here and no drawCelestialGlow in drawSky
+        //canvas.pushClip(landOutline(frame), &frame.toCanvas);
+        drawCelestialGlow(frame, m_sunPos, theme().sunGlow, theme().celestialGlowStrength);
+        //canvas.popClip();
     }
 
     // In Clear Day's colors whatever theme is worn: an icon is one picture in every theme.
@@ -783,13 +784,14 @@ namespace ClaFi::PathArt
             drawMountains(frame, theme(), k_nearRange);
             drawFarHills(frame, theme());
             drawValley(frame, theme());
-            drawMeadow(frame, theme());
+            const PixelPath river = riverOutline(frame);
+            drawMeadow(frame, theme(), river);
             drawFootpath(frame, theme());
             for (const StandingTree& tree : k_knollFirs)
                 drawFir(frame, theme(), tree);
             for (const StandingTree& tree : k_broadleaves)
                 drawBroadleaf(frame, theme(), tree);
-            drawRiverBed(frame, theme());
+            drawRiverBed(frame, theme(), river);
             for (const StandingTree& tree : k_shoreFirs)
                 drawFir(frame, theme(), tree);
         });
@@ -1047,16 +1049,6 @@ namespace ClaFi::PathArt
             return frame.unit * parallaxAt(frame, y);
         }
 
-        Color nearLayerColor(const Color color)
-        {
-            Hsl shaded{ color };
-            shaded.luminosity *= 1.0f - k_nearLayerShade;
-            shaded.saturation *= 1.0f - k_nearLayerShade;
-            Color result = shaded.toColor();
-            result.alpha = color.alpha;
-            return result;
-        }
-
         Color landAt(const SceneFrame& frame, const SceneTheme& theme, const float y)
         {
             const float share = std::clamp((y - frame.height * 0.4f) / (frame.height * 0.6f), 0.0f,
@@ -1254,7 +1246,10 @@ namespace ClaFi::PathArt
             fillBox(frame, { 0.0f, 0.0f, frame.width, frame.height },
                 LinearGradient::Simple({ 0.0f, 0.0f }, { 0.0f, frame.height * k_horizonShare },
                 theme.skyTop, theme.skyBottom));
-            drawCelestialGlow(frame, sun, theme.sunGlow);
+            
+            // no glow here - it is drawn in MillScene::draw
+            //drawCelestialGlow(frame, sun, theme.sunGlow);
+
             drawCelestial(frame, CelestialPose{ .center = sun, .night = theme.hasStars },
                 theme.sunDisk);
         }
@@ -1386,9 +1381,59 @@ namespace ClaFi::PathArt
             }
         }
 
-        // Tufts of grass and flowers' specks over the valley, smaller far off.
-        void drawMeadow(const SceneFrame& frame, const SceneTheme& theme)
+        [[nodiscard]] bool clearsRiver(const std::span<const BakedPathPoint> shore,
+            const FloatPoint center, const float radius)
         {
+            int winding = 0;
+            const float radiusSquared = radius * radius;
+            for (std::size_t i = 1; i < shore.size(); ++i)
+            {
+                const FloatPoint from = shore[i - 1].coord;
+                const FloatPoint to = shore[i].coord;
+                if (center.y + radius < std::min(from.y, to.y)
+                    || center.y - radius > std::max(from.y, to.y))
+                    continue;
+
+                const FloatPoint edge = to - from;
+                const FloatPoint offset = center - from;
+                if ((from.y > center.y) != (to.y > center.y)
+                    && from.x + offset.y * edge.x / edge.y > center.x)
+                    winding += edge.y > 0.0f ? 1 : -1;
+
+                const float lengthSquared = edge.x * edge.x + edge.y * edge.y;
+                if (lengthSquared == 0.0f)
+                    continue;
+                const float nearestShare = std::clamp(
+                    (offset.x * edge.x + offset.y * edge.y) / lengthSquared, 0.0f, 1.0f);
+                const FloatPoint delta = offset - edge * nearestShare;
+                if (delta.x * delta.x + delta.y * delta.y <= radiusSquared)
+                    return false;
+            }
+            return winding == 0;
+        }
+
+        // Tufts of grass and flowers' specks over the valley, smaller far off.
+        void drawMeadow(const SceneFrame& frame, const SceneTheme& theme, const PixelPath& river)
+        {
+            struct MeadowBand
+            {
+                float top{};
+                float nearness{};
+                float parallax{};
+            };
+
+            struct TuftBounds
+            {
+                FloatPoint center{};
+                float radius{};
+            };
+
+            // Drawing a shape reuses the rasterizer's baked points.
+            const std::vector<BakedPathPoint> shore = [&river](){
+                BakedPixelPath bakedRiver;
+                bakedRiver.bake(river);
+                return bakedRiver.points();
+            }();
             const float groundY = frame.height * k_horizonShare;
             // One tuft in three wears the blades' dark, as one near-bank blade in three does.
             const std::array<Color, 3> tuftColors{ theme.grassBlade.dark,
@@ -1396,28 +1441,49 @@ namespace ClaFi::PathArt
             const std::array<Color, 3> petals{ theme.petal1, theme.petal2, theme.petal3 };
             const float bandDepth = (frame.height - groundY)
                 / static_cast<float>(k_meadowDepthBands);
-            for (int band = 0; band != k_meadowDepthBands; ++band)
+            std::array<MeadowBand, k_meadowDepthBands> bands{};
+            for (std::size_t i = 0; i != bands.size(); ++i)
             {
-                const float bandTop = groundY + bandDepth * static_cast<float>(band);
+                const float bandTop = groundY + bandDepth * static_cast<float>(i);
                 const float bandMiddle = bandTop + bandDepth * 0.5f;
-                const float nearness = (bandMiddle - groundY) / (frame.height - groundY);
-                const float parallax = parallaxAt(frame, bandMiddle);
+                bands[i] = {
+                    .top = bandTop,
+                    .nearness = (bandMiddle - groundY) / (frame.height - groundY),
+                    .parallax = parallaxAt(frame, bandMiddle)
+                };
+            }
+
+            std::vector<TuftBounds> tuftBounds;
+            tuftBounds.reserve(k_meadowTufts);
+            for (const MeadowBand& band : bands)
+            {
+                const float tuftAlphaShare = 0.85f + 0.15f * band.nearness;
+                const float strokeWidth = std::max(1.0f, 1.8f * band.nearness * frame.unit);
                 for (std::size_t kind = 0; kind != tuftColors.size(); ++kind)
                 {
-                    const Color tuftColor = theme.hazed(tuftColors[kind], parallax);
-                    const float tuftAlphaShare = 0.85f + 0.15f * nearness;
+                    const Color tuftColor = theme.hazed(tuftColors[kind], band.parallax);
                     ScatteredShapes tufts{ frame, SolidColor{ tuftColor.faded(tuftAlphaShare) },
-                        std::max(1.0f, 1.8f * nearness * frame.unit) };
+                        strokeWidth };
                     for (int i = static_cast<int>(kind); i < k_meadowTufts; i += 3)
                     {
                         const float y = groundY + (frame.height - groundY)
                             * std::pow(pseudoRandom(i, 21.0f), 0.8f);
-                        if (y < bandTop || y >= bandTop + bandDepth)
+                        if (y < band.top || y >= band.top + bandDepth)
                             continue;
                         const float x = pseudoRandom(i, 22.0f) * frame.width;
                         const float depth = (y - groundY) / (frame.height - groundY);
                         const float height = (2.5f + 7.5f * depth) * frame.unit
                             * (0.6f + 0.6f * pseudoRandom(i, 23.0f));
+                        // The shorter blades fit inside the circle through the root and tall tip.
+                        const float halfHeight = height * 0.5f;
+                        const FloatPoint center = {
+                            x,
+                            y - halfHeight
+                        };
+                        const float radius = halfHeight + strokeWidth * 0.5f;
+                        if (!clearsRiver(shore, center, radius + 1.0f))
+                            continue;
+                        tuftBounds.push_back({ center, radius });
                         // As the Chase's lawn tufts: three blades from a root, the middle tallest.
                         PixelPath& tuft = tufts.next();
                         for (int blade = -1; blade <= 1; ++blade)
@@ -1430,20 +1496,59 @@ namespace ClaFi::PathArt
                         }
                     }
                     tufts.draw();
+                }
+            }
 
-                    const float speckAlphaShare = 0.35f + 0.5f * nearness;
+            const float flowerGap = std::max(2.0f, 3.0f * frame.unit);
+            const auto clearsTufts = [&](const FloatPoint center, const float radius){
+                return std::ranges::none_of(tuftBounds, [&](const TuftBounds& tuft){
+                    return distanceBetweenPoints(center, tuft.center)
+                        < radius + tuft.radius + flowerGap;
+                });
+            };
+            const auto placeFlower = [&](const FloatPoint center,
+                const float radius) -> std::optional<FloatPoint> {
+                if (!clearsRiver(shore, center, radius + 1.0f))
+                    return {};
+                if (clearsTufts(center, radius))
+                    return center;
+
+                for (int step = 1; step <= 8; ++step)
+                {
+                    const float offset = static_cast<float>(step) * flowerGap;
+                    for (const float shift : { -offset, offset })
+                    {
+                        const FloatPoint candidate = {
+                            center.x + shift,
+                            center.y
+                        };
+                        if (candidate.x >= radius && candidate.x <= frame.width - radius
+                            && clearsTufts(candidate, radius)
+                            && clearsRiver(shore, candidate, radius + 1.0f))
+                            return candidate;
+                    }
+                }
+                return {};
+            };
+
+            for (const MeadowBand& band : bands)
+            {
+                const float speckAlphaShare = 0.35f + 0.5f * band.nearness;
+                for (std::size_t kind = 0; kind != petals.size(); ++kind)
+                {
                     ScatteredShapes specks{ frame,
-                        SolidColor{ theme.hazed(petals[kind], parallax).faded(speckAlphaShare) } };
+                        SolidColor{ theme.hazed(petals[kind], band.parallax).faded(speckAlphaShare) } };
                     for (int i = static_cast<int>(kind); i < k_meadowFlowers; i += 3)
                     {
                         const float y = groundY + 30.0f + (frame.height * 0.8f - groundY - 30.0f)
                             * std::pow(pseudoRandom(i, 31.0f), 0.6f);
-                        if (y < bandTop || y >= bandTop + bandDepth)
+                        if (y < band.top || y >= band.top + bandDepth)
                             continue;
                         const float x = pseudoRandom(i, 32.0f) * frame.width;
                         const float depth = (y - groundY) / (frame.height - groundY);
-                        addEllipse(specks.next(), { x, y }, (0.4f + 2.4f * depth) * frame.unit,
-                            (0.4f + 2.4f * depth) * frame.unit);
+                        const float radius = (0.4f + 2.4f * depth) * frame.unit;
+                        if (const std::optional<FloatPoint> center = placeFlower({ x, y }, radius))
+                            addEllipse(specks.next(), *center, radius, radius * 0.5f);
                     }
                     specks.draw();
                 }
@@ -1507,10 +1612,9 @@ namespace ClaFi::PathArt
         }
 
         // The water shows the sky's light near the horizon and its own deep color close by.
-        void drawRiverBed(const SceneFrame& frame, const SceneTheme& theme)
+        void drawRiverBed(const SceneFrame& frame, const SceneTheme& theme, const PixelPath& river)
         {
             const float groundY = frame.height * k_horizonShare;
-            const PixelPath river = riverOutline(frame);
             const Color farWater = Color::between(theme.riverTop, theme.skyBottom, 0.55f);
             fillShape(frame, river, LinearGradient{
                 .startPoint = { 0.0f, groundY },
@@ -1783,8 +1887,8 @@ namespace ClaFi::PathArt
             const float open = std::abs(std::sin(turn * 178.0f));
             const SceneFrame butterfly = frame.within(Matrix3x2::Translation(at)
                 * Matrix3x2::Scale(1.3f * frame.unit));
-            const SolidColor wing{ nearLayerColor(theme.wing).faded(daylight) };
-            const SolidColor edge{ nearLayerColor(theme.wingEdge).faded(daylight) };
+            const SolidColor wing{ theme.shadedForeground(theme.wing).faded(daylight) };
+            const SolidColor edge{ theme.shadedForeground(theme.wingEdge).faded(daylight) };
             for (const float side : { -1.0f, 1.0f })
             {
                 PixelPath shape;
@@ -1843,7 +1947,9 @@ namespace ClaFi::PathArt
         {
             constexpr int k_glitters{ 150 };
             constexpr int k_glows{ 7 };
-            constexpr float k_glitterOpacity{ 0.5f }; // of the sun's glow, at a glitter's brightest
+            constexpr float k_glitterOpacity{ 0.75f };
+            Color sparkleColor = theme.sunDisk;
+            sparkleColor.alpha = theme.sunGlow.alpha;
             const float unit = frame.unit;
             const FloatPoint bridgeFoot = pointAt(frame, k_bridgeFootShare);
             const FloatPoint far = { bridgeFoot.x, bridgeFoot.y + 0.008f * frame.height };
@@ -1887,7 +1993,7 @@ namespace ClaFi::PathArt
                     sparkle.lineTo(x - reach + shift, sliceBottom);
                     sparkle.close();
                 }
-                fillShape(frame, sparkle, SolidColor{ theme.sunGlow.faded(k_glitterOpacity
+                fillShape(frame, sparkle, SolidColor{ sparkleColor.faded(k_glitterOpacity
                     * std::min(1.0f, twinkle * 1.4f)) });
             }
             frame.canvas.popClip();
@@ -1909,14 +2015,15 @@ namespace ClaFi::PathArt
             // On snow the near bank lies whiter, most of the way to the snow on the hills.
             const float snow = 0.7f * theme.hasSnow;
             const Color lawnTop = Color::between(theme.hillTop, theme.hillBottom, k_nearBankTopShare);
-            const Color bankTop = nearLayerColor(Color::between(lawnTop, theme.hillTop, snow));
-            const Color bankBottom = nearLayerColor(Color::between(theme.hillBottom, theme.hillTop,
+            const Color bankTop = theme.shadedForeground(Color::between(lawnTop, theme.hillTop,
                 snow));
+            const Color bankBottom = theme.shadedForeground(Color::between(theme.hillBottom,
+                theme.hillTop, snow));
             fillShape(frame, bank, LinearGradient::Simple({ 0.0f, h * 0.86f }, { 0.0f, h },
                 bankTop, bankBottom));
 
-            const Color grass = nearLayerColor(theme.grassBlade.light);
-            const Color darkGrass = nearLayerColor(theme.grassBlade.dark);
+            const Color grass = theme.shadedForeground(theme.grassBlade.light);
+            const Color darkGrass = theme.shadedForeground(theme.grassBlade.dark);
             const float swayPhase = cycleTime * k_2Pi * 8.0f;
             for (const BladeRun& run : k_bladeRuns)
             {
@@ -1945,8 +2052,8 @@ namespace ClaFi::PathArt
             }
 
             const CattailColors cattailColors = {
-                nearLayerColor(theme.reedStem),
-                nearLayerColor(theme.reedHead),
+                theme.shadedForeground(theme.reedStem),
+                theme.shadedForeground(theme.reedHead),
             };
             for (const Cattail& cattail : k_cattails)
             {
@@ -1957,11 +2064,11 @@ namespace ClaFi::PathArt
             }
 
             const std::array<Color, 3> petals{
-                nearLayerColor(theme.petal1),
-                nearLayerColor(theme.petal2),
-                nearLayerColor(theme.petal3)
+                theme.shadedForeground(theme.petal1),
+                theme.shadedForeground(theme.petal2),
+                theme.shadedForeground(theme.petal3)
             };
-            const Color flowerHeart = nearLayerColor(theme.flowerHeart);
+            const Color flowerHeart = theme.shadedForeground(theme.flowerHeart);
             for (std::size_t i = 0; i != k_bankFlowers.size(); ++i)
             {
                 const BankFlower& flower = k_bankFlowers[i];

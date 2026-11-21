@@ -1160,9 +1160,8 @@ of a coast; with 1200 towns a view of Europe holds about 60, too few to trace a 
 **In the shadow the craft keeps 35 percent of its daylight color**, and the panels' backs carry
 the ribs between the cells and a spar along the boom. The panels turn about once a cycle with the
 Sun, so through the shadow they show their backs, which were one flat gray (Oj, 2026-11-07, "one
-solid gray"). The stars keep 65 percent of their night brightness by day; at 15, as a camera
-exposed for daylight would show them, they read as dull. Both were picked from renders of the
-options.
+solid gray"). The stars' daylight brightness was set to 65 percent after comparing renders.
+Earth's star field draws at full opacity throughout the orbit as of 2026-11-21.
 
 **The orbit crosses the whole globe and never comes round** (2026-11-08). Oj: "change the orbit so
 it crosses various areas", then "I want antarctica and Australia and New Zeeland and India,

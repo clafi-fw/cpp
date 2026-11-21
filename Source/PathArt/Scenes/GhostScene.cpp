@@ -88,11 +88,12 @@ namespace ClaFi::PathArt
 
         m_sky.draw(frame);
         drawStars(frame, time.cycleTime, StarField{
-            .count = 70,
+            .count = 140,
             .top = 0.0f,
-            .bottom = height * 0.55f,
+            .bottom = height * 0.69f,
             .seed = 30.0f,
-            .color = GhostSceneColors::Star
+            .color = GhostSceneColors::Star,
+            .bottomBrightness = 0.15f
         });
         m_moon.draw(frame);
         drawClouds(frame, time.cycleTime);

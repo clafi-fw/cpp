@@ -144,6 +144,7 @@ namespace ClaFi::PathArt
         MillTheme mill{};
         ChaseTheme chase{};
         Color cowTips{}; // the tint over the cow's horns, hooves and tail brush
+        Color lilyFlowerTint{};
         // make sure to update colorsNum() when adding new colors
 
         // Effect toggles
@@ -158,6 +159,7 @@ namespace ClaFi::PathArt
         float hasStars = false;
         float airHaze = 0.10f; // the air's share at a scene's reference distance, from 0 to 1
         float cowLimbInkShare = 0.0f; // the share of cowSpots in the far legs, tail shaft and tips
+        float celestialGlowStrength = 1.0f;
         // make sure to update effectsNum() when adding new effects
     public:
         Color* asArray() { return &skyTop; }
@@ -165,14 +167,16 @@ namespace ClaFi::PathArt
         const void* colorsEnd() const { return &hasRain; }
         static constexpr std::size_t colorsNum()
         {
-            return 56 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
+            return 57 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
         }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
-        static constexpr std::size_t effectsNum() { return 10; }
+        static constexpr std::size_t effectsNum() { return 11; }
         void drawIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const;
         // A far layer, seen through the theme's air. See PathArt
         [[nodiscard]] Color hazed(Color clear, float parallax, float aboveGround = 0.0f) const;
+        // A foreground color in shade. See PathArt
+        [[nodiscard]] Color shadedForeground(Color clear) const;
     };
 
 
@@ -248,24 +252,5 @@ namespace ClaFi::PathArt
 
         // 6. Pop the clip geometry to clean up the canvas stack [CP]
         canvas.popClip();
-    }
-
-    Color SceneTheme::hazed(Color clear, float parallax, float aboveGround) const
-    {
-        // Frame heights, as seen at parallax 1, over which the air thins to 1/e.
-        constexpr float k_airScaleHeight{ 24.0f };
-        // skyBottom's share in the air's color, which the haze takes a layer toward.
-        constexpr float k_hazeSkyBottomShare{ 0.33f };
-
-        const float distance = 1.0f / parallax;
-        float air = distance - 1.0f;
-        if (aboveGround > 0.0f)
-        {
-            const float thinning = aboveGround / k_airScaleHeight;
-            air = (std::exp(-thinning) - std::exp(-thinning * distance)) / thinning;
-        }
-        const float referenceSpans = air / (1.0f / SceneTheme::HazeReferenceParallax - 1.0f);
-        const Color haze = Color::between(skyTop, skyBottom, k_hazeSkyBottomShare);
-        return Color::between(clear, haze, 1.0f - std::pow(1.0f - airHaze, referenceSpans));
     }
 }

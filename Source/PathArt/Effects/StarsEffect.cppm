@@ -5,7 +5,7 @@ import ClaFi.Core.System.UiTypes;
 
 namespace ClaFi::PathArt
 {
-    // A band of four-point stars that twinkle in size.
+    // A band of four-point stars that twinkle in size and brightness.
     export struct StarField
     {
         int count{ 100 };
@@ -18,6 +18,7 @@ namespace ClaFi::PathArt
         float twinklesPerCycle{ 1.0f };
         // How far the field has moved, in frame widths right and band heights down. See PathArt
         FloatPoint drift{};
+        float bottomBrightness{ 1.0f };
     };
 
     export void drawStars(const SceneFrame&, float cycleTime, const StarField&);

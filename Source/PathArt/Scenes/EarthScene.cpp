@@ -3445,14 +3445,12 @@ namespace ClaFi::PathArt
             m_space.draw(frame);
         else
             fillSpace(frame, globeDisc);
-        // The stars dim a little by day and shine fully in the Earth's shadow.
         drawStars(frame, time.cycleTime, StarField{
-            .count = 200,
+            .count = 400,
             .top = 0.0f,
             .bottom = height,
             .seed = 90.0f,
             .color = EarthSceneColors::Star,
-            .opacity = 0.65f + 0.35f * (1.0f - sunlit),
             .twinklesPerCycle = k_lively,
             .drift = { fractionOf(orbits * k_skyWidthsPerOrbit), 0.0f }
         });
