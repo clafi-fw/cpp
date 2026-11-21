@@ -543,14 +543,12 @@ namespace ClaFi
         // **The two draw text differently**, and the choice is visible in it: the card antialiases
         // a glyph's edge across the color of the pixel, the CPU across its brightness alone.
         m_gpuBackend.onAdjustTooltip([](AdjustTooltipEvent& event) {
-            event.text << L"Draw the windows through the graphics card." << k_endLine;
-            event.text << L"Text is antialiased in subpixel color, which sharpens its edges and "
-                L"can fringe them with color over a colored ground.";
+            event.text << L"Render on the GPU." << k_endLine;
+            event.text << L"Subpixel text antialiasing is available.";
         });
         m_cpuBackend.onAdjustTooltip([](AdjustTooltipEvent& event) {
-            event.text << L"Draw the windows on the CPU." << k_endLine;
-            event.text << L"Text is antialiased in grayscale, so its edges take no color, and "
-                L"read a little softer than the card's.";
+            event.text << L"Render on the CPU." << k_endLine;
+            event.text << L"Subpixel text antialiasing is not supported.";
         });
         // **The section goes, not a choice disabled in it**: an application that named no GPU
         // backend has one way to draw, and the section is what draws the caption and its line.
