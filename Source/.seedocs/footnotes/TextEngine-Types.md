@@ -27,6 +27,12 @@ redo it is a step of its own.
 **A line is a paragraph** - what the newlines cut the text into. A line wrapped across several rows
 has one number, and the column counts along the whole of it. For the row, see TextLayout::rowStart.
 
+## LineWrapMode
+
+**Balanced wrapping keeps the paragraph's line count.** When normal wrapping leaves a short last
+line, a narrower width can spread the text more evenly. Each explicit newline ends a paragraph.
+Justified paragraphs and paragraphs with tabs or flex spaces use normal wrapping.
+
 ## FlexSpace
 
 **minWidth is the gap's width on a full line**, one with no room to spare. To hold the two sides

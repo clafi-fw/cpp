@@ -197,6 +197,14 @@ namespace ClaFi
         bool m_drawing{ false };
     };
 
+    // How a layout chooses its automatic line breaks. See TextEngine-Types
+    export enum class LineWrapMode
+    {
+        None,
+        Normal,
+        Balanced
+    };
+
     export class TextLayout
     {
     public:
@@ -219,6 +227,7 @@ namespace ClaFi
         void setBoundsAndScale(MaxSize bounds, ScaleFactor);
         void setEditable(bool editable);
         void setWrap(bool wrap);
+        void setWrapMode(LineWrapMode, std::size_t firstBalancedPosition = 0);
         void setCellFallback(CellFallback);
         // Lines across the box for None, inside the measured block for any other anchor.
         void setHorizontalAnchor(HorizontalTextAnchor);
@@ -360,7 +369,8 @@ namespace ClaFi
         MaxSize m_bounds{ 0.0f, 0.0f };
         ScaleFactor m_scaleFactor{ 1.0f };
         bool m_editable{ false };
-        bool m_wrap{ true };
+        LineWrapMode m_wrapMode{ LineWrapMode::Normal };
+        std::size_t m_firstBalancedPosition{ 0 };
         CellFallback m_cellFallback{ CellFallback::Native };
         HorizontalTextAnchor m_anchor{ HorizontalTextAnchor::None }; // see setHorizontalAnchor
         // Zero while the box the lines stand in is the width they are broken at - see

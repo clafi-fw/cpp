@@ -60,6 +60,7 @@ namespace ClaFi
         [[nodiscard]] bool hideOnUserInput() const { return m_hideOnUserInput; }
     protected:
         void setBreakWidth(const float value) { content().m_breakWidth = value; }
+        void setBalancedWrapStart(std::size_t position) { content().setBalancedWrapStart(position); }
         void setHideOnUserInput(const bool value) { m_hideOnUserInput = value; }
         void updateVisibility() override;
         // The control the tooltip is about, which the window goes along with as a popup does.
@@ -214,7 +215,10 @@ namespace ClaFi
         rememberPlacementTarget();
         m_header = event.header;
         m_body = event.text;
-        content().text() = composeText(event);
+        Text text = composeText(event);
+        const std::size_t bodyStart = text.plainText().size() - m_body.plainText().size();
+        setBalancedWrapStart(bodyStart);
+        content().text() = std::move(text);
         content().setPadding(tooltipPadding());
         content().setWordWrap(WordWrap::Yes);
         setPlacement(event.placement);

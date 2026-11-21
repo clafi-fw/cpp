@@ -257,6 +257,70 @@ namespace ClaFi
     // the native layouts apply, kept here for the lines this layout places itself.
     constexpr float k_alignTolerance = 0.1f;
 
+    [[nodiscard]] static float balancedParagraphWidth(const INativeTextLayout::BuildParams& normal,
+        std::span<const NativeLineMetrics> lines)
+    {
+        constexpr float k_shortLineRatio = 0.5f;
+        constexpr int k_widthProbes = 8;
+        if (lines.size() < 2)
+            return normal.availableWidth;
+
+        const auto [shortest, widest] = std::ranges::minmax_element(lines, {},
+            &NativeLineMetrics::width);
+        const float lastLineWidth = lines.back().width;
+        if (lastLineWidth >= widest->width * k_shortLineRatio
+            || widest->width > normal.availableWidth + k_fitTolerance
+            || std::ranges::any_of(lines, &NativeLineMetrics::isTrimmed))
+        {
+            return normal.availableWidth;
+        }
+
+        std::unique_ptr<INativeTextLayout> probe = createNativeTextLayout();
+        INativeTextLayout::BuildParams candidate = normal;
+        std::vector<NativeLineMetrics> candidateLines;
+        candidateLines.reserve(lines.size() + 1);
+        float narrowWidth = 1.0f;
+        float wideWidth = normal.availableWidth;
+        float bestWidth = wideWidth;
+        float bestSpread = widest->width - shortest->width;
+        for (int attempt = 0; attempt < k_widthProbes; ++attempt)
+        {
+            candidate.availableWidth = (narrowWidth + wideWidth) * 0.5f;
+            probe->build(candidate);
+            candidateLines.clear();
+            probe->appendLineMetrics(candidateLines);
+            if (candidateLines.size() > lines.size())
+            {
+                narrowWidth = candidate.availableWidth;
+                continue;
+            }
+
+            const auto [candidateShortest, candidateWidest] = std::ranges::minmax_element(
+                candidateLines, {}, &NativeLineMetrics::width);
+            if (candidateWidest != candidateLines.end()
+                && candidateWidest->width > candidate.availableWidth + k_fitTolerance)
+            {
+                narrowWidth = candidate.availableWidth;
+                continue;
+            }
+
+            wideWidth = candidate.availableWidth;
+            if (candidateLines.size() != lines.size() || candidateLines.back().width <= lastLineWidth
+                || std::ranges::any_of(candidateLines, &NativeLineMetrics::isTrimmed))
+            {
+                continue;
+            }
+
+            const float spread = candidateWidest->width - candidateShortest->width;
+            if (spread + k_fitTolerance < bestSpread)
+            {
+                bestSpread = spread;
+                bestWidth = candidate.availableWidth;
+            }
+        }
+        return bestWidth;
+    }
+
     // Shaped as nothing: an empty paragraph is built from it, and it stands in for a line end.
     constexpr wchar_t k_zeroWidthSpace = 0x200B;
 
@@ -535,6 +599,9 @@ namespace ClaFi
         // Nothing shaped is nothing to keep, and a first build is what setText is for.
         if (!m_layoutValid || m_paragraphs.empty() || edit.replacedRange.start == k_maxSize)
             return false;
+        // An edit before the boundary can move an untouched paragraph across it.
+        if (m_wrapMode == LineWrapMode::Balanced && edit.replacedRange.start < m_firstBalancedPosition)
+            return false;
 
         // The paragraphs the edit reaches, looked for in the list as it still stands - which is
         // stated in the coordinates of the text **before** the edit, the same ones the edit is. A
@@ -734,11 +801,19 @@ namespace ClaFi
 
     void TextLayout::setWrap(bool wrap)
     {
-        if (m_wrap != wrap)
-        {
-            m_wrap = wrap;
-            invalidate();
-        }
+        setWrapMode(wrap ? LineWrapMode::Normal : LineWrapMode::None);
+    }
+
+    void TextLayout::setWrapMode(LineWrapMode mode, std::size_t firstBalancedPosition)
+    {
+        if (mode != LineWrapMode::Balanced)
+            firstBalancedPosition = 0;
+        if (m_wrapMode == mode && m_firstBalancedPosition == firstBalancedPosition)
+            return;
+
+        m_wrapMode = mode;
+        m_firstBalancedPosition = firstBalancedPosition;
+        invalidate();
     }
 
     void TextLayout::setCellFallback(const CellFallback value)
@@ -1349,7 +1424,8 @@ namespace ClaFi
             return true;
         // A text that is not broken to its box is not shaped from a width at all - unless it
         // carries flex space, which the paint fills to the box.
-        if (!m_wrap && !(m_eventPhase == EventPhase::Paint && m_text->hasFlexSpace()))
+        if (m_wrapMode == LineWrapMode::None
+            && !(m_eventPhase == EventPhase::Paint && m_text->hasFlexSpace()))
             return true;
         if (boundsX == m_builtBoundsX)
             return true;
@@ -1414,7 +1490,8 @@ namespace ClaFi
         // in the two phases, or is broken at a stated width, which an over-text tooltip is.
         if constexpr (Diagnostic::Options::logTextLayout())
         {
-            if (m_eventPhase == EventPhase::Paint && m_wrap && breakAt != k_maxFloat
+            if (m_eventPhase == EventPhase::Paint && m_wrapMode != LineWrapMode::None
+                && breakAt != k_maxFloat
                 && m_breakWidth <= 0.0f && !m_text->hasFlexSpace())
             {
                 diagnosticLog(std::format(
@@ -1635,7 +1712,7 @@ namespace ClaFi
             return m_breakWidth > 0.0f ? m_breakWidth : m_bounds.x;
         // A wrapped line wider than the width it was broken at overflowed it, and placing the
         // others in its width would join them.
-        if (m_wrap)
+        if (m_wrapMode != LineWrapMode::None)
             return std::min(m_shapedWidth, m_builtBoundsX);
         return m_shapedWidth;
     }
@@ -1967,7 +2044,7 @@ namespace ClaFi
         if (MonoFont* font = monoFontFor(para, text, cursors))
         {
             const MonoExtent extent = font->extent(text);
-            if (!m_wrap || extent.inkWidth <= availableWidth)
+            if (m_wrapMode == LineWrapMode::None || extent.inkWidth <= availableWidth)
             {
                 lines.push_back({
                     .textStart = 0,
@@ -2017,7 +2094,7 @@ namespace ClaFi
             .availableWidth = availableWidth,
             .scaleFactor = m_scaleFactor,
             .isEmpty = isEmpty,
-            .wrap = m_wrap,
+            .wrap = m_wrapMode != LineWrapMode::None,
             .baseFont = m_bakedText.baseFont(),
             .inlineObjects = {}
         };
@@ -2123,6 +2200,24 @@ namespace ClaFi
             nativeLayout->appendLineMetrics(lines);
         }
 
+        if (m_wrapMode == LineWrapMode::Balanced && pStart >= m_firstBalancedPosition
+            && para.alignment != TextAlign::Justified && slice.find(L'\t') == std::wstring_view::npos
+            && std::ranges::none_of(buildParams.inlineObjects,
+                [](const std::pair<std::size_t, BakedInlineObject>& object) {
+                    return object.second.isTabTo || object.second.isFlexSpace;
+                }))
+        {
+            const float balancedWidth = balancedParagraphWidth(buildParams,
+                std::span<const NativeLineMetrics>{ lines }.subspan(lineStart));
+            if (balancedWidth < availableWidth)
+            {
+                buildParams.availableWidth = balancedWidth;
+                nativeLayout->build(buildParams);
+                lines.resize(lineStart);
+                nativeLayout->appendLineMetrics(lines);
+            }
+        }
+
         // The size the paragraph came to, read **before** anything places its lines. Alignment says
         // where a line sits inside the box, not how much room the text needs, so the two must not
         // be read off one another - and reading them the other way round is not merely untidy. A
@@ -2143,7 +2238,7 @@ namespace ClaFi
         if (para.alignment != TextAlign::Left && lineCount > 1)
         {
             nativeLayout->setAlignment(para.alignment);
-            alignedWidth = availableWidth;
+            alignedWidth = buildParams.availableWidth;
         }
         float inkWidth = 0.0f;
         for (std::size_t line = lineStart; line != lines.size(); ++line)

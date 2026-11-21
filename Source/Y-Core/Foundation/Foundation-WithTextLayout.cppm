@@ -38,6 +38,7 @@ namespace ClaFi
             const Text& answer);
         // The width the lines are broken at; zero, the standing answer, breaks them at the box.
         [[nodiscard]] virtual float lineBreakWidth() const;
+        void setBalancedWrapStart(std::size_t);
         // Tells the layout the control's text at its present revision - the whole of it.
         virtual void takeText() const;
     protected:
@@ -55,6 +56,7 @@ namespace ClaFi
             ScaleFactor scaleFactor{ 0.0f };
             float breakWidth{ 0.0f };
             bool wrap{ false };
+            std::optional<std::size_t> balancedWrapStart{};
             CellFallback cellFallback{ CellFallback::Native };
             bool editable{ false };
             std::uint64_t layoutGeneration{ 0 };
@@ -79,6 +81,7 @@ namespace ClaFi
         // this layout is not in the cache to be dropped.
         mutable std::uint64_t m_layoutGeneration{ 0 };
         CellFallback m_cellFallback{ CellFallback::Native };
+        std::optional<std::size_t> m_balancedWrapStart{};
     };
 
 
@@ -143,6 +146,7 @@ namespace ClaFi
             .scaleFactor = event.scaleFactor(),
             .breakWidth = this->lineBreakWidth(),
             .wrap = this->wordWrap(),
+            .balancedWrapStart = m_balancedWrapStart,
             .cellFallback = m_cellFallback,
             .editable = this->editProps() != nullptr,
             .layoutGeneration = Control::textEngine().layoutGeneration(),
@@ -187,7 +191,10 @@ namespace ClaFi
         m_layout.setFormat(this->textFormat());
         // Set here rather than in the constructor: it is a property, and a control told to stop
         // wrapping after it was built draws the answer to that on the next paint.
-        m_layout.setWrap(this->wordWrap());
+        if (this->wordWrap() && m_balancedWrapStart)
+            m_layout.setWrapMode(LineWrapMode::Balanced, *m_balancedWrapStart);
+        else
+            m_layout.setWrap(this->wordWrap());
         m_layout.setCellFallback(m_cellFallback);
         // Ahead of the bounds, which are accepted or refused against it.
         m_layout.setBreakWidth(this->lineBreakWidth());
@@ -210,6 +217,12 @@ namespace ClaFi
     float WithTextLayout<HostClass>::lineBreakWidth() const
     {
         return 0.0f;
+    }
+
+    template <IsRichControl HostClass>
+    void WithTextLayout<HostClass>::setBalancedWrapStart(std::size_t position)
+    {
+        m_balancedWrapStart = position;
     }
 
     template <IsRichControl HostClass>

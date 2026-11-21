@@ -156,6 +156,7 @@
             </li>
             <li><div class="nav-item-wrapper"><a href="#anchors">Text Anchors</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#drawing">Drawing and Measuring</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#line-wrap">Line Wrap Modes</a></div></li>
             <li class="has-children">
                 <div class="nav-item-wrapper">
                     <a href="#own-layout">A control that holds its own layout</a>
@@ -348,8 +349,8 @@ that differs by phase. The text remains the owner's; the event adjusts what is l
 
 <p><strong>A tooltip is a caption and a body.</strong> The presenter that draws the control states
 the caption line - the control's name and the key that runs it - and <code>AdjustTooltipEvent</code>
-fills only the body. The overflow text is separate: it is a window of its own that repeats the
-control's clipped text, and it has no caption, no body and no event.</p>
+fills only the body. The body uses <a href="#line-wrap">balanced wrapping</a> and keeps explicit
+line breaks. The overflow window repeats the control's clipped text with its original line breaks.</p>
 
 <p>A gather runs in one of two phases, which <code>event.phase()</code> reports:
 <code>Calculate</code> for a measurement, <code>Paint</code> for what is drawn. A control may be
@@ -545,6 +546,19 @@ cuts the text and leaves an empty row where the newline was.</p>
 <p>A text box holds the layout it draws from instead of taking one from the cache. Its paint, its
 caret and every position it measures run on that one layout, so a caret is never read off one build
 and drawn on another.</p>
+
+<h2 id="line-wrap">Line Wrap Modes</h2>
+
+<p><code>TextLayout::setWrapMode</code> controls automatic wrapping. <code>LineWrapMode::None</code>
+lays out each paragraph on one line. <code>Normal</code>, the default, fills each line in order.
+<code>Balanced</code> tries narrower widths when an automatically wrapped paragraph ends in a
+short line. It keeps a narrower layout when it gives more even lines at the same line count.</p>
+
+<p>Each explicit newline ends a paragraph. The optional <code>firstBalancedPosition</code> argument
+applies balancing to paragraphs that start at or after that offset in <code>Text::plainText()</code>.
+Justified paragraphs and paragraphs with tabs or flex spaces use normal wrapping. Calling
+<code>setWrap(true)</code> selects <code>Normal</code> and <code>setWrap(false)</code> selects
+<code>None</code>.</p>
 
 <h2 id="own-layout">A control that holds its own layout</h2>
 
