@@ -592,7 +592,7 @@ namespace ClaFi::PathArt
         SceneFrame sky = frame;
         sky.height = h * k_horizonShare;
         drawLightning(sky, cycleTime, Lightning{
-            .strength = theme().hasRain,
+            .strength = theme().hasLightning,
             .color = theme().sunDisk
         });
 

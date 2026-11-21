@@ -116,6 +116,18 @@ offersView.
 **Between the timer's ticks**, the showcase moves the shown scene's crossfade on at every move of
 the pointer over it, through animationTick().
 
+## WeatherEffect
+
+**One particle effect is active at a time.** ThemeDefault uses the palette's effect. None turns
+the particles off. The other choices are rain, snow, falling petals, blowing dust, fireflies and
+falling leaves.
+
+## Scene setWeather
+
+**Weather overrides stay in effect across theme picks.** MillScene and ChaseScene use them.
+An empty SceneWeather::lightning follows the palette. A boolean sets lightning independently
+of the particle effect. wearTheme() applies both choices immediately for a still render.
+
 ## SceneTheme
 
 **One table of colors for every scene that offers themes**, and the effects that come with them.
@@ -291,6 +303,9 @@ has by day.
 **What a scene that offers themes is drawn in.** pick() names a theme by its index in
 Themes::allThemes, and worn() crossfades to it over 555 milliseconds, eased in and out, colors and
 effects alike. A pick made during a crossfade starts the next one from where the blend stands.
+
+**Different particle effects take turns during the transition.** The first fades out before the
+next fades in. Lightning blends independently of them.
 
 **worn() is for drawing, picked() for the rest** - the theme's name, and colors that are read once
 rather than every frame. worn() takes the picked theme's name at the pick.
@@ -1559,7 +1574,7 @@ colors; the rest is the theme's ChaseTheme.
   moving with the hills, and hazed as the hills are.
 - The theme's rain, snow, falling leaves or petals and dust are shared out over four layers, from
   between the far hills and the trail to the front grass - see ChaseScene drawWeatherLayer.
-- A rainy theme's lightning strikes behind the mountains, three times each time the weather comes
+- Lightning strikes behind the mountains, three times each time the weather comes
   round, and its flash lights the sky above the ground line.
 - The theme's stars come out over the sky. Stars, fireflies and weather come round twice a cycle.
 - The little flowers in the lawn take a fifth of the lawn's color, so they lie in it rather than

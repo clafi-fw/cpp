@@ -160,6 +160,7 @@ namespace ClaFi::PathArt
         float airHaze = 0.10f; // the air's share at a scene's reference distance, from 0 to 1
         float cowLimbInkShare = 0.0f; // the share of cowSpots in the far legs, tail shaft and tips
         float celestialGlowStrength = 1.0f;
+        float hasLightning = false;
         // make sure to update effectsNum() when adding new effects
     public:
         Color* asArray() { return &skyTop; }
@@ -171,7 +172,7 @@ namespace ClaFi::PathArt
         }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
-        static constexpr std::size_t effectsNum() { return 11; }
+        static constexpr std::size_t effectsNum() { return 12; }
         void drawIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const;
         // A far layer, seen through the theme's air. See PathArt
         [[nodiscard]] Color hazed(Color clear, float parallax, float aboveGround = 0.0f) const;

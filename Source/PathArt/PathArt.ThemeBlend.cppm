@@ -28,6 +28,7 @@ namespace ClaFi::PathArt
         void pick(std::size_t index);
         // Wears the theme at `index` at once, with no crossfade: what a render draws.
         void wear(std::size_t index);
+        void setWeather(const SceneWeather&);
         // Moves the crossfade on between the timer's ticks.
         void tick();
     private:
@@ -37,11 +38,14 @@ namespace ClaFi::PathArt
         // **Null until the constructor fades the first theme in** - see ThemeBlend::ThemeBlend.
         SceneTheme m_worn{};
         SceneTheme m_crossFadeStart{}; // what was worn when the crossfade began
-        const SceneTheme* m_crossFadeTarget{ nullptr }; // in allThemes
+        SceneTheme m_crossFadeTarget{};
+        SceneWeather m_weather{};
         std::uint64_t m_wornVersion{ 0 };
         AnimationController m_animator{};
     };
 
+    // The theme's active particle effect, or WeatherEffect::None.
+    export [[nodiscard]] WeatherEffect activeWeatherEffect(const SceneTheme&);
     // The colors a readout over a scene is drawn in, where the scene wears this theme. See PathArt
     export [[nodiscard]] SceneReadoutColors readoutColorsOf(const SceneTheme&);
 }

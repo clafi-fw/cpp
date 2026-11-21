@@ -16,8 +16,8 @@ namespace ClaFi::PathArt::Themes
             .mountainFoot = 0xFF3C313C,
             .hillTop = 0xFF333333,          // Hilltops — almost black
             .hillBottom = 0xFF666666,       // Lower parts of hills — dark gray
-            .riverTop = 0xFF3333FF,         // Top part of water — dark blue with purple
-            .riverBottom = 0xFF000066,      // River depths — very dark blue
+            .riverTop = 0xFF494B84,
+            .riverBottom = 0xFF242443,
             .riverWave = 0xFF6666CC,        // Waves — gray-purple
             .foam = 0xBAFFFFFF,             // Foam — pure white
             .treeLeavesBase = 0xFF333333,   // Leaves base — dark (barely visible at night)
@@ -25,18 +25,18 @@ namespace ClaFi::PathArt::Themes
             .crownMiddle = 0xFF383634,
             .bark = 0xFF5E807F,
             .barkShade = 0xFF4B6665,
-            .bough = 0xFF6C4034,
+            .bough = 0xFF594842,
             .trail = 0xE65E523C,
             .grassBlade = {
-                .light = 0xFF1B2421,
-                .dark = 0xFF17201B
+                .light = 0xFF7F937D,
+                .dark = 0xFF637863
             },
             .grassPatch = {
                 .dark = 0xFF697A68,
                 .middle = 0xFF80927F,
                 .light = 0xFF9DAF9B
             },
-            .reedStem = 0xFF222423,
+            .reedStem = 0xFF6D8073,
             .reedHead = 0xFF5E807F,
             .stoneLight = 0xFFB7ADB5,
             .stoneDark = 0xFF797178,
@@ -69,9 +69,9 @@ namespace ClaFi::PathArt::Themes
             .mill = {
                 .bodyTop = 0xFF616161,      // Top part of mill body — black
                 .bodyBottom = 0xFF989898,   // Lower part of body — dark gray
-                .roofTop = 0xFFD169D0,      // Top part of roof — dark purple
-                .roofBottom = 0xFFF0E5FE,   // Lower part of roof — light purple
-                .timber = 0xFF6C4034,
+                .roofTop = 0xFF865878,
+                .roofBottom = 0xFF513849,
+                .timber = 0xFF594842,
                 .windowLight = 0xFFFF8C66,
                 .wingFabric = 0xFFCC9EFE,   // Fabric on blades — dark purple
                 .wheel = 0xFF5E807F         // Mill wheel — dark gray

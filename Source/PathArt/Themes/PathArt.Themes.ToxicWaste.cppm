@@ -194,7 +194,8 @@ namespace ClaFi::PathArt::Themes
             .isAfrica = false,
             .hasStars = false,
             .airHaze = 0.20f,
-            .celestialGlowStrength = 0.5f
+            .celestialGlowStrength = 0.5f,
+            .hasLightning = true
         } {
         }
     };

@@ -29,6 +29,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] bool offersThemes() const override { return true; }
         void setTheme(std::size_t index) override { m_themes.pick(index); }
         void wearTheme(std::size_t index) override { m_themes.wear(index); }
+        void setWeather(const SceneWeather& weather) override { m_themes.setWeather(weather); }
         void animationTick() override { m_themes.tick(); }
 
         // Exact target bounds passed explicitly to anchor layout geometry

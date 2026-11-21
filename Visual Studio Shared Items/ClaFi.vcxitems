@@ -676,7 +676,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.Retro80s.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.SaharaHeat.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.SteampunkAdventure.cppm" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.StormyNight.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.SummerSunset.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.ToxicWaste.cppm" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.Twilight.cppm" />

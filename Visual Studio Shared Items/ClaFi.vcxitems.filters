@@ -1216,9 +1216,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.SteampunkAdventure.cppm">
       <Filter>PathArt\Themes</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.StormyNight.cppm">
-      <Filter>PathArt\Themes</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\Source\PathArt\Themes\PathArt.Themes.SummerSunset.cppm">
       <Filter>PathArt\Themes</Filter>
     </ClCompile>

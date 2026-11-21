@@ -7,13 +7,13 @@ namespace ClaFi::PathArt::Themes
     export struct Twilight : SceneTheme {
         constexpr Twilight() : SceneTheme{
             .name = L"Twilight",
-            .skyTop = 0xFF50468C,
-            .skyBottom = 0xFF8C78C8,
+            .skyTop = 0xFF4A3F82,
+            .skyBottom = 0xFF7864AE,
             .sunDisk = 0xFFFFC8DC,
             .sunGlow = 0xCC'C8A0DC,
             .cloud = 0xCCC8BEE6,
-            .mountainTop = 0xFF948895,
-            .mountainFoot = 0xFF706471,
+            .mountainTop = 0xFF625482,
+            .mountainFoot = 0xFF493B64,
             .hillTop = 0xFF64788C,
             .hillBottom = 0xFF3C506E,
             .riverTop = 0xFF344677,

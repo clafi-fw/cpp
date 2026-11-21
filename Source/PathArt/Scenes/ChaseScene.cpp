@@ -2097,12 +2097,12 @@ namespace ClaFi::PathArt
         drawClouds(frame, theme, journey, skySeconds);
         drawSkyFlocks(frame, theme, journey, skySeconds);
 
-        // A rainy theme's lightning strikes behind the mountains and lights the sky.
+        // Lightning strikes behind the mountains and lights the sky.
         const float effectsTime = fractionalPart(cycleTime * k_lively);
         SceneFrame aboveGround = frame;
         aboveGround.height = groundY;
         drawLightning(aboveGround, effectsTime, Lightning{
-            .strength = theme.hasRain,
+            .strength = theme.hasLightning,
             .color = theme.sunDisk
         });
 

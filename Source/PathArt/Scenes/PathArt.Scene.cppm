@@ -31,6 +31,27 @@ namespace ClaFi::PathArt
         return std::array{ L"Stylized", L"Realistic" };
     }
 
+    // The particle effect to draw with a scene's theme. See PathArt#weathereffect
+    export enum class WeatherEffect
+    {
+        ThemeDefault,
+        None,
+        Rain,
+        Snow,
+        FallingPetals,
+        BlowingDust,
+        Fireflies,
+        FallingLeaves
+    };
+
+    export struct SceneWeather
+    {
+        WeatherEffect effect{ WeatherEffect::ThemeDefault };
+        std::optional<bool> lightning{}; // empty follows the theme
+
+        bool operator==(const SceneWeather&) const = default;
+    };
+
     // A choice a scene offers beside its look: its name and its options' names. See PathArt
     export struct SceneChoice
     {
@@ -89,6 +110,8 @@ namespace ClaFi::PathArt
         virtual void setTheme(std::size_t) {}
         // Wears the theme at an index at once, where the scene offers themes: no crossfade, no timer.
         virtual void wearTheme(std::size_t) {}
+        // Sets weather overrides for a scene that offers themes. See PathArt#scene-setweather
+        virtual void setWeather(const SceneWeather&) {}
         // Moves a crossfade on between the timer's ticks, where the scene runs one.
         virtual void animationTick() {}
         // The choices the scene offers beside its look, none unless it states them. See PathArt

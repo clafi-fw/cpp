@@ -22,7 +22,6 @@ export import :Twilight;
 export import :WinterNight;
 export import :MidnightFantasy;
 export import :Midnight;
-export import :StormyNight;
 export import :CalmNight;
 
 export import :PastelDream;
@@ -35,7 +34,7 @@ import ClaFi.StdLib;
 
 namespace ClaFi::PathArt::Themes {
 
-    export constexpr std::array<SceneTheme, 24> allThemes = {
+    export constexpr std::array<SceneTheme, 23> allThemes = {
         ClearDay{},
         CherryBlossom{},
         HighNoon{},
@@ -60,7 +59,6 @@ namespace ClaFi::PathArt::Themes {
         WinterNight{},
         MidnightFantasy{},
         Midnight{},
-        StormyNight{},
         CalmNight{},
 
         //PastelDream{},

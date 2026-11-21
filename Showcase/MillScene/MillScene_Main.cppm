@@ -13,6 +13,7 @@ import ClaFi.PathArt.Scenes;
 import ClaFi.PathArt.MillScene;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.ThemeBlend;
 import ClaFi.PathArt.Themes;
 import ClaFi.PathArt.Types;
 
@@ -30,6 +31,8 @@ import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.CheckBox;
+import ClaFi.Controls.ComboBox;
+import ClaFi.Controls.TextItems;
 import ClaFi.Controls.Menu;
 
 import ClaFi.Icons.DoorIcon;
@@ -101,8 +104,13 @@ namespace MillScene_App
     constexpr std::size_t k_defaultLook{ 1 };
     static_assert(k_lookChoices[k_defaultLook].look == PathArt::SceneLook::Realistic);
 
-    // **The lanes the dropdown opened as.** Twenty-four themes in lanes of eight are the three
-    // columns the picker had in the title bar, and the page keeps them.
+    constexpr std::array<std::wstring_view, 8> k_weatherEffectNames{
+        L"Theme default", L"None", L"Rain", L"Snow", L"Falling petals", L"Blowing dust",
+        L"Fireflies", L"Falling leaves"
+    };
+    static_assert(k_weatherEffectNames.size()
+        == static_cast<std::size_t>(PathArt::WeatherEffect::FallingLeaves) + 1);
+
     constexpr std::size_t k_themeLaneSize{ 8 };
     constexpr float k_themeIconSize{ 24.0f };
     // The corner the swatch was drawn with, as a fraction of it rather than the 4 design pixels
@@ -123,6 +131,8 @@ namespace MillScene_App
     // **What the picked scene theme is kept under**, and it is kept by name: an index moves the
     // moment the list gains a theme, and a name is what a config file read by hand should show.
     export constexpr std::wstring_view k_sceneThemeNodeName{ L"SceneTheme" };
+    constexpr std::wstring_view k_weatherEffectNodeName{ L"WeatherEffect" };
+    constexpr std::wstring_view k_lightningNodeName{ L"Lightning" };
     // What the picked scene is kept under, by name for the same reasons as the theme.
     export constexpr std::wstring_view k_sceneNodeName{ L"Scene" };
     // What the scenes keep their views and choices under, a section for each by its name.
@@ -228,6 +238,12 @@ namespace MillScene_App
         void previewSceneTheme(std::size_t index);
         // One pick for every scene that offers themes, which every theme picker shows.
         void pickSceneTheme(std::size_t index);
+        [[nodiscard]] Text weatherEffectText(PathArt::WeatherEffect effect) const;
+        [[nodiscard]] bool lightningEnabled() const;
+        void applyWeather(const PathArt::SceneWeather&);
+        void previewWeatherEffect(PathArt::WeatherEffect);
+        void pickWeather(const PathArt::SceneWeather&);
+        void refreshWeatherControls();
         // A picker's current item and buttons, moved from the item at `previous` to `picked`.
         void showPick(const PickerLanes&, std::size_t previous, std::size_t picked);
         // The scene the look picker serves: the first that offers looks, none where none does.
@@ -252,8 +268,9 @@ namespace MillScene_App
         [[nodiscard]] std::wstring sceneOptionsCaption(std::size_t index);
         // A theme picker on the page of each scene that offers themes.
         void buildThemePickers();
-        // Three lanes of eight theme buttons in `column`, the pointer previewing what it rests on.
+        // Theme buttons in `column`, with a preview of the theme under the pointer.
         void buildThemeLanes(StackPanel& column, PickerLanes&);
+        void buildWeatherControls(StackPanel& column);
         void buildLookPicker();
         void buildChoicePickers();
         void buildChoicePicker(std::size_t pickerIndex);
@@ -269,6 +286,7 @@ namespace MillScene_App
         void storeScene();
         void restoreSceneTheme();
         void storeSceneTheme();
+        void storeWeather();
         void restoreLook();
         // Each scene that keeps its view takes it back from its section of SceneViews.
         void restoreSceneViews();
@@ -293,6 +311,7 @@ namespace MillScene_App
         void showSceneOptionsMenu(Menu& sceneList, SplitButton& button, std::size_t sceneIndex);
         // The list of the Theme line on the scene's context menu: a theme picker.
         void buildThemeList(Menu& list);
+        void buildWeatherList(Menu& list);
         // The scenes, the themes where the scene offers them, and the full-screen toggle.
         void showSceneMenu(ContextPopupEvent&, Action& fullscreenToggle);
 
@@ -312,6 +331,7 @@ namespace MillScene_App
         // The theme the user chose, which is not the theme the scene wears while the pointer
         // walks the picker - see previewSceneTheme.
         std::size_t m_pickedTheme{ 0 };
+        PathArt::SceneWeather m_weather{};
         // The look the user chose, at its index in k_lookChoices.
         std::size_t m_pickedLook{ k_defaultLook };
 
@@ -325,6 +345,7 @@ namespace MillScene_App
         PageControl* m_sceneOptionsControl{ nullptr };
         std::vector<StackPanel*> m_sceneOptionPages{}; // at each scene's index
         std::vector<PickerLanes> m_themePickers{};
+        std::vector<std::pair<ComboBox*, CheckBox*>> m_weatherControls{};
         PickerLanes m_menuThemePicker{}; // the one in the scene's context menu, while it is up
         SingleSelectionStackView* m_lookLanes{ nullptr };
         std::vector<Control*> m_lookButtons{};
@@ -821,7 +842,9 @@ void MillSceneForm::dressScenes(const std::size_t index)
     {
         PathArt::Scene& scene = sceneAt(sceneIndex);
         if (scene.offersThemes())
+        {
             scene.setTheme(index);
+        }
     }
 }
 
@@ -838,10 +861,72 @@ void MillSceneForm::pickSceneTheme(const std::size_t index)
     m_pickedTheme = index;
     previewSceneTheme(index);
     storeSceneTheme();
+    refreshWeatherControls();
 
     for (const PickerLanes& themePicker : m_themePickers)
         showPick(themePicker, previous, index);
     showPick(m_menuThemePicker, previous, index);
+}
+
+Text MillSceneForm::weatherEffectText(const PathArt::WeatherEffect effect) const
+{
+    Text text{ k_weatherEffectNames[static_cast<std::size_t>(effect)] };
+    if (effect == PathArt::WeatherEffect::ThemeDefault)
+    {
+        const PathArt::SceneTheme& theme = PathArt::Themes::allThemes[m_pickedTheme];
+        const PathArt::WeatherEffect themeEffect = PathArt::activeWeatherEffect(theme);
+        text << L" (" << k_weatherEffectNames[static_cast<std::size_t>(themeEffect)] << L")";
+    }
+    return text;
+}
+
+bool MillSceneForm::lightningEnabled() const
+{
+    return m_weather.lightning.value_or(PathArt::Themes::allThemes[m_pickedTheme].hasLightning > 0.0f);
+}
+
+void MillSceneForm::applyWeather(const PathArt::SceneWeather& weather)
+{
+    for (std::size_t index = 0; index != sceneCount(); ++index)
+    {
+        PathArt::Scene& scene = sceneAt(index);
+        if (scene.offersThemes())
+        {
+            scene.setWeather(weather);
+        }
+    }
+    m_benchmark.reset();
+}
+
+void MillSceneForm::previewWeatherEffect(const PathArt::WeatherEffect effect)
+{
+    PathArt::SceneWeather weather = m_weather;
+    weather.effect = effect;
+    applyWeather(weather);
+}
+
+void MillSceneForm::pickWeather(const PathArt::SceneWeather& weather)
+{
+    if (m_weather == weather)
+    {
+        return;
+    }
+    m_weather = weather;
+    applyWeather(m_weather);
+    storeWeather();
+    refreshWeatherControls();
+}
+
+void MillSceneForm::refreshWeatherControls()
+{
+    const std::size_t index = static_cast<std::size_t>(m_weather.effect);
+    for (const auto& [picker, lightning] : m_weatherControls)
+    {
+        picker->setItemIndex(index);
+        picker->invalidateFormAlign();
+        picker->invalidate();
+        lightning->invalidateState();
+    }
 }
 
 void MillSceneForm::showPick(const PickerLanes& picker, const std::size_t previous,
@@ -1063,6 +1148,10 @@ void MillSceneForm::buildSceneOptions(AppMenuPage& page)
     buildChoicePickers();
     for (std::size_t index = 0; index != sceneCount(); ++index)
     {
+        if (sceneAt(index).offersThemes())
+        {
+            buildWeatherControls(addCaptionedColumn(*m_sceneOptionPages[index], L"Weather effects"));
+        }
         buildSwitchBoxes(index);
         if (!sceneOffersOptions(index))
         {
@@ -1156,6 +1245,51 @@ void MillSceneForm::buildThemeLanes(StackPanel& column, PickerLanes& themePicker
     // What a stack stands on is its current item, and that is where a preview returns.
     lanes.setCurrentItem(*themePicker.buttons[m_pickedTheme]);
 
+}
+
+void MillSceneForm::buildWeatherControls(StackPanel& column)
+{
+    StackPanel& row = column.add<StackPanel>(
+        Orientation::Horizontal,
+        HorizontalAlign::Left,
+        Spacing{ k_pickerSpacing }
+    );
+    TextItems items{};
+    for (const std::wstring_view name : k_weatherEffectNames)
+    {
+        items.emplace_back(Text{ name });
+    }
+    ComboBox& picker = row.add<ComboBox>(std::move(items));
+    picker.setItemIndex(static_cast<std::size_t>(m_weather.effect));
+    picker.onAdjustItemText([this](AdjustItemTextEvent& event) {
+        if (&event.item() == &event.comboBox().items().front())
+        {
+            event.text() = weatherEffectText(PathArt::WeatherEffect::ThemeDefault);
+        }
+    });
+    picker.onPreviewItem([this](PreviewItemEvent& event) {
+        previewWeatherEffect(static_cast<PathArt::WeatherEffect>(event.itemIndex()));
+    });
+    picker.onChange([this](ComboBoxChangeEvent& event) {
+        PathArt::SceneWeather weather = m_weather;
+        weather.effect = static_cast<PathArt::WeatherEffect>(event.comboBox().itemIndex().value());
+        pickWeather(weather);
+    });
+    CheckBox& lightning = row.add<CheckBox>(Text{ L"Lightning" });
+    lightning.onGetState([this](GetStateEvent& event) {
+        event.state.selected = lightningEnabled();
+    });
+    lightning.onClick([this](ClickEvent&) {
+        PathArt::SceneWeather weather = m_weather;
+        weather.lightning = !lightningEnabled();
+        pickWeather(weather);
+    });
+    m_weatherControls.emplace_back(&picker, &lightning);
+    row.onDestroy([this, picker = &picker](DestroyEvent&) {
+        std::erase_if(m_weatherControls, [picker](const auto& controls) {
+            return controls.first == picker;
+        });
+    });
 }
 
 // Built the way the theme picker is.
@@ -1350,29 +1484,40 @@ void MillSceneForm::storeScene()
 
 void MillSceneForm::restoreSceneTheme()
 {
-    std::wstring name = (appContext().config() / k_sceneThemeNodeName).get<std::wstring>();
-    if (!m_launch.theme.empty())
-        name = m_launch.theme;
-    if (name.empty())
-        return;
-
-    std::size_t index = 0;
-    for (const PathArt::SceneTheme& theme : PathArt::Themes::allThemes)
+    const std::wstring effect = (appContext().config() / k_weatherEffectNodeName).get<std::wstring>();
+    const std::wstring lightning = (appContext().config() / k_lightningNodeName).get<std::wstring>();
+    const auto effectName = std::ranges::find(k_weatherEffectNames, effect);
+    if (effectName != k_weatherEffectNames.end())
     {
-        if (theme.name == name)
-        {
-            dressScenes(index);
-            m_pickedTheme = index;
-            return;
-        }
-        ++index;
+        m_weather.effect = static_cast<PathArt::WeatherEffect>(effectName - k_weatherEffectNames.begin());
     }
+    if (lightning == L"On" || lightning == L"Off")
+    {
+        m_weather.lightning = lightning == L"On";
+    }
+
+    const std::wstring name = m_launch.theme.empty()
+        ? (appContext().config() / k_sceneThemeNodeName).get<std::wstring>() : m_launch.theme;
+    if (const std::optional<std::size_t> theme = themeNamed(name))
+    {
+        m_pickedTheme = *theme;
+    }
+    dressScenes(m_pickedTheme);
+    applyWeather(m_weather);
 }
 
 void MillSceneForm::storeSceneTheme()
 {
     (appContext().config() / k_sceneThemeNodeName).set(
         std::wstring{ PathArt::Themes::allThemes[m_pickedTheme].name });
+}
+
+void MillSceneForm::storeWeather()
+{
+    const std::size_t index = static_cast<std::size_t>(m_weather.effect);
+    (appContext().config() / k_weatherEffectNodeName).set(std::wstring{ k_weatherEffectNames[index] });
+    const wchar_t* lightning = !m_weather.lightning ? L"" : *m_weather.lightning ? L"On" : L"Off";
+    (appContext().config() / k_lightningNodeName).set(std::wstring{ lightning });
 }
 
 void MillSceneForm::restoreLook()
@@ -1644,6 +1789,7 @@ void MillSceneForm::showSceneOptionsMenu(Menu& sceneList, SplitButton& button,
         {
             themeButton->onClick(pickSceneAndClose);
         }
+        buildWeatherControls(addCaptionedColumn(column, L"Weather effects"));
         options.addSeparator();
     }
     if (sceneWithLooks() == sceneIndex)
@@ -1725,6 +1871,53 @@ void MillSceneForm::buildThemeList(Menu& list)
     }
 }
 
+void MillSceneForm::buildWeatherList(Menu& list)
+{
+    list.onClose([this](FormCloseEvent&) {
+        applyWeather(m_weather);
+    });
+    list.body().onHoverLeave([this](HoverLeaveEvent&) {
+        applyWeather(m_weather);
+    });
+    for (std::size_t index = 0; index != k_weatherEffectNames.size(); ++index)
+    {
+        const PathArt::WeatherEffect effect = static_cast<PathArt::WeatherEffect>(index);
+        MenuItem& item = list.add(
+            weatherEffectText(effect),
+            IndicatorVisibility::Always,
+            IndicatorStyle::Radio,
+            MenuItem::OnGetState{ [this, effect](GetStateEvent& event) {
+                event.state.selected = m_weather.effect == effect;
+            } },
+            MenuItem::OnClick{ [this, effect](ClickEvent&) {
+                PathArt::SceneWeather weather = m_weather;
+                weather.effect = effect;
+                pickWeather(weather);
+            } }
+        );
+        item.onHoverEnter([this, effect](HoverEnterEvent&) {
+            previewWeatherEffect(effect);
+        });
+    }
+    list.addSeparator();
+    MenuItem& lightning = list.add(
+        Text{ L"Lightning" },
+        IndicatorVisibility::Always,
+        IndicatorStyle::Check,
+        MenuItem::OnGetState{ [this](GetStateEvent& event) {
+            event.state.selected = lightningEnabled();
+        } },
+        MenuItem::OnClick{ [this](ClickEvent&) {
+            PathArt::SceneWeather weather = m_weather;
+            weather.lightning = !lightningEnabled();
+            pickWeather(weather);
+        } }
+    );
+    lightning.onHoverEnter([this](HoverEnterEvent&) {
+        applyWeather(m_weather);
+    });
+}
+
 // **A fullscreen window shows no bar to leave it by**, so the menu holds the full-screen toggle
 // and the application's Exit. It holds both in a window too, where the toggle shows the way in.
 void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenToggle)
@@ -1750,6 +1943,12 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
             OnEvent{ [this](DrawIconEvent& iconEvent) {
                 drawThemeIcon(iconEvent, m_pickedTheme);
             } }
+        );
+        menu.addGroup(
+            [this](Menu& list) {
+                buildWeatherList(list);
+            },
+            Text{ L"Weather effects" }
         );
     }
     // The same switch the Settings page offers, for a window already open.
@@ -1788,6 +1987,8 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
         return Dom::Dt::Section{
             Dom::Dt::Value{ k_sceneNodeName, L"" },
             Dom::Dt::Value{ k_sceneThemeNodeName, L"" },
+            Dom::Dt::Value{ k_weatherEffectNodeName, L"" },
+            Dom::Dt::Value{ k_lightningNodeName, L"" },
             Dom::Dt::Section{ k_sceneViewsNodeName, PathArt::createSceneViewsSchema() }
         };
     }
