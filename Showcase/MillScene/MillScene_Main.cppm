@@ -489,6 +489,20 @@ void drawThemeIcon(DrawIconEvent& event, const std::size_t themeIndex)
     theme.drawIcon(event.canvas(), event.iconRect(), radius, 1.0f);
 }
 
+template<typename Pick>
+void pickOnRightClick(Menu& menu, Control& item, Pick pick)
+{
+    item.onContextPopup([&menu, pick = std::move(pick)](ContextPopupEvent& event) {
+        if (!event.mousePos)
+        {
+            return;
+        }
+        event.stopPropagation();
+        pick();
+        menu.body().invalidateChildrenStates();
+    });
+}
+
 void ScenePanel::showScene(PathArt::Scene& scene, const FloatRect& bounds)
 {
     if (m_scene != &scene)
@@ -1730,7 +1744,10 @@ void MillSceneForm::followFullscreen()
 void MillSceneForm::addBackendLines(Menu& list)
 {
     const auto addLine = [this, &list](const std::wstring_view caption, const bool useGpu) {
-        list.add(
+        const auto pick = [this, useGpu]() {
+            appContext().backendChoice()->set(useGpu ? BackendChoice::Gpu : BackendChoice::Cpu);
+        };
+        MenuItem& item = list.add(
             Text{ caption },
             // The line wears a radio mark, as the Settings page's choice does.
             IndicatorVisibility::Always,
@@ -1740,8 +1757,8 @@ void MillSceneForm::addBackendLines(Menu& list)
                 [this, useGpu](GetStateEvent& event) {
                     event.state.selected = appContext().usingGpu() == useGpu;
                 },
-                [this, useGpu](ClickEvent&) {
-                    appContext().backendChoice()->set(useGpu ? BackendChoice::Gpu : BackendChoice::Cpu);
+                [pick](ClickEvent&) {
+                    pick();
                 },
                 [useGpu](AdjustTooltipEvent& event) {
                     if (useGpu)
@@ -1757,6 +1774,7 @@ void MillSceneForm::addBackendLines(Menu& list)
                 }
             }
         );
+        pickOnRightClick(list, item, pick);
     };
     addLine(L"GPU", true);
     addLine(L"CPU", false);
@@ -1787,7 +1805,13 @@ void MillSceneForm::showSceneOptionsMenu(Menu& sceneList, SplitButton& button,
         buildThemeLanes(column, themePicker);
         for (Control* themeButton : themePicker.buttons)
         {
+            const std::size_t themeIndex = themeButton->tag().value;
             themeButton->onClick(pickSceneAndClose);
+            pickOnRightClick(options, *themeButton, [this, &themePicker, themeIndex]() {
+                const std::size_t previous = m_pickedTheme;
+                pickSceneTheme(themeIndex);
+                showPick(themePicker, previous, themeIndex);
+            });
         }
         buildWeatherControls(addCaptionedColumn(column, L"Weather effects"));
         options.addSeparator();
@@ -1837,18 +1861,22 @@ void MillSceneForm::showSceneOptionsMenu(Menu& sceneList, SplitButton& button,
     const std::span<const std::wstring_view> switchNames = scene.switches();
     for (std::size_t switchIndex = 0; switchIndex != switchNames.size(); ++switchIndex)
     {
-        options.add(
+        const auto toggle = [this, &scene, switchIndex]() {
+            toggleSceneSwitch(scene, switchIndex);
+        };
+        MenuItem& item = options.add(
             Text{ switchNames[switchIndex] },
             IndicatorVisibility::Always,
             IndicatorStyle::Check,
             MenuItem::OnGetState{ [&scene, switchIndex](GetStateEvent& event) {
                 event.state.selected = scene.isSwitchOn(switchIndex);
             } },
-            MenuItem::OnClick{ [this, &scene, switchIndex, pickSceneAndClose](ClickEvent& event) {
-                toggleSceneSwitch(scene, switchIndex);
+            MenuItem::OnClick{ [toggle, pickSceneAndClose](ClickEvent& event) {
+                toggle();
                 pickSceneAndClose(event);
             } }
         );
+        pickOnRightClick(options, item, toggle);
     }
 
     m_menuSceneOptionsPreview = sceneIndex;
@@ -1868,6 +1896,9 @@ void MillSceneForm::buildThemeList(Menu& list)
         button->onClick([&list](ClickEvent& event) {
             list.closeOnCommand(event);
         });
+        pickOnRightClick(list, *button, [this, index = button->tag().value]() {
+            pickSceneTheme(index);
+        });
     }
 }
 
@@ -1879,39 +1910,51 @@ void MillSceneForm::buildWeatherList(Menu& list)
     list.body().onHoverLeave([this](HoverLeaveEvent&) {
         applyWeather(m_weather);
     });
+    const auto addChoice = [&list](Text text, const IndicatorStyle indicatorStyle,
+        const auto& getState, const auto& pick) -> MenuItem& {
+        MenuItem& item = list.add(
+            std::move(text),
+            IndicatorVisibility::Always,
+            indicatorStyle,
+            MenuItem::OnGetState{ getState },
+            MenuItem::OnClick{ [pick](ClickEvent&) {
+                pick();
+            } }
+        );
+        pickOnRightClick(list, item, pick);
+        return item;
+    };
     for (std::size_t index = 0; index != k_weatherEffectNames.size(); ++index)
     {
         const PathArt::WeatherEffect effect = static_cast<PathArt::WeatherEffect>(index);
-        MenuItem& item = list.add(
+        MenuItem& item = addChoice(
             weatherEffectText(effect),
-            IndicatorVisibility::Always,
             IndicatorStyle::Radio,
-            MenuItem::OnGetState{ [this, effect](GetStateEvent& event) {
+            [this, effect](GetStateEvent& event) {
                 event.state.selected = m_weather.effect == effect;
-            } },
-            MenuItem::OnClick{ [this, effect](ClickEvent&) {
+            },
+            [this, effect]() {
                 PathArt::SceneWeather weather = m_weather;
                 weather.effect = effect;
                 pickWeather(weather);
-            } }
+            }
         );
         item.onHoverEnter([this, effect](HoverEnterEvent&) {
             previewWeatherEffect(effect);
         });
     }
     list.addSeparator();
-    MenuItem& lightning = list.add(
+    MenuItem& lightning = addChoice(
         Text{ L"Lightning" },
-        IndicatorVisibility::Always,
         IndicatorStyle::Check,
-        MenuItem::OnGetState{ [this](GetStateEvent& event) {
+        [this](GetStateEvent& event) {
             event.state.selected = lightningEnabled();
-        } },
-        MenuItem::OnClick{ [this](ClickEvent&) {
+        },
+        [this]() {
             PathArt::SceneWeather weather = m_weather;
             weather.lightning = !lightningEnabled();
             pickWeather(weather);
-        } }
+        }
     );
     lightning.onHoverEnter([this](HoverEnterEvent&) {
         applyWeather(m_weather);
