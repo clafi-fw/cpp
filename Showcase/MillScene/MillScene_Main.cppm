@@ -112,10 +112,10 @@ namespace MillScene_App
 
     // What the metrics tooltip says draws the scene. See writeMetricsTooltip
     constexpr std::wstring_view k_drawnOnGpu{
-        L"The scene is drawn through the graphics card - GPU acceleration is on in Settings." };
+        L"The scene is rendered on the GPU." };
     constexpr std::wstring_view k_drawnOnCpu{
         L"The scene is rendered on a single CPU thread, except the Earth scene, whose globe is "
-        L"worked out in bands on several cores. GPU acceleration is off in Settings." };
+        L"worked out in bands on several cores. CPU is selected under Graphics backend in Settings." };
     constexpr std::wstring_view k_drawnOnCpuOnly{
         L"The scene is rendered on a single CPU thread, except the Earth scene, whose globe is "
         L"worked out in bands on several cores." };
@@ -1613,7 +1613,7 @@ void MillSceneForm::addBackendLines(Menu& list)
             }
         );
     };
-    addLine(L"Graphics card", true);
+    addLine(L"GPU", true);
     addLine(L"CPU", false);
 }
 
@@ -1759,7 +1759,7 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
             [this](Menu& list) {
                 addBackendLines(list);
             },
-            Text{ L"Backend" }
+            Text{ L"Graphics backend" }
         );
     }
     menu.addSeparator();

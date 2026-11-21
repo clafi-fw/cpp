@@ -441,10 +441,10 @@ namespace ClaFi
             TooltipText{ L"Show the focus ring on the control under the mouse too" },
             Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
         ) },
-        m_performanceSection{ m_options.addSection(L"Performance") },
+        m_performanceSection{ m_options.addSection(L"Graphics backend") },
         m_performanceGroup{ m_performanceSection.body() },
         m_gpuBackend{ m_performanceGroup.add<RadioButton>(
-            L"Graphics card",
+            L"GPU",
             Padding{ 0.0f, params.styleMetrics(UiElement::ListItem).padding.y }
         ) },
         m_cpuBackend{ m_performanceGroup.add<RadioButton>(

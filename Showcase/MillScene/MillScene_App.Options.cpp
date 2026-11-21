@@ -63,7 +63,7 @@ namespace MillScene_App
             .description = Text{
                 L"Shows the ClaFi path painter at work: "
                 L"a watermill landscape in a choice of themes and seven more scenes, "
-                L"animated on a single CPU thread or through the graphics card, "
+                L"animated on a single CPU thread or on the GPU, "
                 L"with their frame times charted live."
             },
             .version = CLAFI_APP_VERSION,

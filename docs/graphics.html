@@ -1259,8 +1259,8 @@ backend in its type:</p>
 <span class="cm">// Wayland: no GPU backend.</span>
 <span class="kw">using</span> <span class="tp">WaylandApplication</span> = <span class="tp">Application</span>&lt;<span class="tp">WaylandPlatform</span>&gt;;</code></pre>
 
-<p>An application with a GPU backend offers <strong>Graphics card</strong> and <strong>CPU</strong>
-under Performance in Settings. The config stores the choice as <code>BackEnd</code>, with
+<p>An application with a GPU backend offers <strong>GPU</strong> and <strong>CPU</strong>
+under <strong>Graphics backend</strong> in Settings. The config stores the choice as <code>BackEnd</code>, with
 <code>GPU</code> as the default. Each window switches at the top of its next frame.</p>
 
 <p><code>canvas.backend()-&gt;type()</code> returns <code>BackendType::Cpu</code> or
@@ -1638,8 +1638,8 @@ a window opened after the switch is built on the backend the application names a
     <marker id="sw-m" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#5a6b7d"/></marker>
   </defs>
   <rect class="sw-box" x="20" y="20" width="196" height="44" rx="5"/>
-  <text class="sw-th" x="30" y="38">Settings: Performance</text>
-  <text class="sw-t" x="30" y="55">a backend is selected</text>
+  <text class="sw-th" x="30" y="38">Graphics backend</text>
+  <text class="sw-t" x="30" y="55">selected in Settings</text>
   <rect class="sw-box" x="252" y="20" width="196" height="44" rx="5"/>
   <text class="sw-th" x="262" y="38">the BackEnd node</text>
   <text class="sw-t" x="262" y="55">the config value changes</text>
