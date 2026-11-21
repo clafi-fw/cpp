@@ -143,6 +143,7 @@ namespace ClaFi::PathArt
         Color hedge; // 55, the hedge rows, hazed by each layer's distance
         MillTheme mill{};
         ChaseTheme chase{};
+        Color cowHorn{}; // the tint over the cow's horns
         // make sure to update colorsNum() when adding new colors
 
         // Effect toggles
@@ -156,6 +157,7 @@ namespace ClaFi::PathArt
         float isAfrica = false;
         float hasStars = false;
         float airHaze = 0.10f; // the air's share at a scene's reference distance, from 0 to 1
+        float cowLimbInkShare = 0.0f; // the share of cowSpots in the far legs, tail and horns
         // make sure to update effectsNum() when adding new effects
     public:
         Color* asArray() { return &skyTop; }
@@ -163,11 +165,11 @@ namespace ClaFi::PathArt
         const void* colorsEnd() const { return &hasRain; }
         static constexpr std::size_t colorsNum()
         {
-            return 55 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
+            return 56 + MillTheme::colorsNum() + ChaseTheme::colorsNum();
         }
         float* effectsArray() { return &hasRain; }
         const float* effectsArray() const { return &hasRain; }
-        static constexpr std::size_t effectsNum() { return 9; }
+        static constexpr std::size_t effectsNum() { return 10; }
         void drawIcon(Canvas& canvas, const FloatRect& bounds, float cornersRadius, Opacity opacity) const;
         // A far layer, seen through the theme's air. See PathArt
         [[nodiscard]] Color hazed(Color clear, float parallax, float aboveGround = 0.0f) const;

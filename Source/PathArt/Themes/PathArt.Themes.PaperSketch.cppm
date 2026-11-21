@@ -190,7 +190,8 @@ namespace ClaFi::PathArt::Themes
             .hasSnow = false,
             .hasPetals = false,
             .hasDust = false,
-            .isAfrica = false
+            .isAfrica = false,
+            .cowLimbInkShare = 0.8f
         } {
         }
     };

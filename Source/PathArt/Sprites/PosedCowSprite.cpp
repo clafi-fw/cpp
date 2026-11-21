@@ -31,14 +31,15 @@ namespace ClaFi::PathArt
             * Matrix3x2::Scale(pose.size * pose.facing, pose.size));
         const Color belly = Color::between(colors.body, colors.detail.fullyOpaque(), 0.16f);
         const Color far = Color::between(colors.body, colors.detail.fullyOpaque(), 0.3f);
+        const Color farLimb = Color::between(far, colors.spots, colors.limbInkShare);
         const float stepAngle = pose.stride ? *pose.stride * k_2Pi : 0.0f;
         const float bob = pose.stride ? std::abs(std::sin(stepAngle)) * 1.5f : 0.0f;
         const float legSwing = pose.stride ? std::sin(stepAngle) * 0.32f : 0.0f;
         const float hipY = -30.0f - bob;
 
         fillOval(cow, { -2.0f, 1.0f }, 52.0f, 6.0f, SolidColor{ colors.shadow.faded(0.9f) });
-        drawLeg(cow, { -34.0f, hipY }, -legSwing, far, colors.detail);
-        drawLeg(cow, { 26.0f, hipY }, legSwing, far, colors.detail);
+        drawLeg(cow, { -34.0f, hipY }, -legSwing, farLimb, colors.detail);
+        drawLeg(cow, { 26.0f, hipY }, legSwing, farLimb, colors.detail);
 
         const float bodyRise = bob + k_bodyLift;
         const float tailTip = -55.0f + pose.tailSwing * 24.0f;
@@ -46,7 +47,7 @@ namespace ClaFi::PathArt
         tail.moveTo(-48.0f, -58.0f - bodyRise);
         tail.quadTo({ -58.0f + pose.tailSwing * 10.0f, -44.0f - k_bodyLift },
             { tailTip, -24.0f - k_bodyLift });
-        strokeShape(cow, tail, SolidColor{ far }, 2.6f);
+        strokeShape(cow, tail, SolidColor{ farLimb }, 2.6f);
         fillOval(cow, { tailTip, -22.0f - k_bodyLift }, 3.0f, 6.0f, SolidColor{ colors.detail },
             pose.tailSwing);
 
@@ -87,6 +88,18 @@ namespace ClaFi::PathArt
         const SceneFrame hinge = cow.within(Matrix3x2::Translation(40.0f, -52.0f - bob - hingeLift)
             * Matrix3x2::Rotation(pose.headDrop));
         const SceneFrame head = hinge.within(Matrix3x2::Translation(k_headReach, 0.0f));
+        const Color hornShade = Color::between(colors.body, colors.detail.fullyOpaque(), 0.35f);
+        Color hornColor = Color::between(hornShade, colors.spots, colors.limbInkShare);
+        hornColor.paintOverGeneral(colors.horn);
+        const SolidColor hornInk{ hornColor };
+        PixelPath horn;
+        horn.moveTo(13.5f, -10.0f);
+        horn.quadTo({ 13.0f, -15.5f }, { 17.5f, -18.0f });
+        horn.quadTo({ 18.5f, -18.4f }, { 18.0f, -17.4f });
+        horn.quadTo({ 16.0f, -14.4f }, { 16.5f, -10.0f });
+        horn.close();
+        fillShape(head, horn, hornInk);
+
         PixelPath shape;
         shape.moveTo(-2.0f, -12.0f);
         shape.cubicTo({ 14.0f, -14.0f }, { 26.0f, -8.0f }, { 30.0f, 2.0f });
@@ -101,11 +114,13 @@ namespace ClaFi::PathArt
         fillDisc(head, { 12.0f, -4.0f }, 2.2f, SolidColor{ colors.detail });
         fillOval(head, { 4.0f, -6.0f }, 6.0f, 5.0f, spots);
         fillOval(head, { 0.0f, -10.0f }, 8.0f, 3.5f, SolidColor{ far }, -0.6f);
-        PixelPath horn;
-        horn.moveTo(6.0f, -12.0f);
-        horn.quadTo({ 4.0f, -22.0f }, { 10.0f, -24.0f });
-        strokeShape(head, horn, SolidColor{
-            Color::between(colors.body, colors.detail.fullyOpaque(), 0.35f) }, 3.0f);
+        horn.clear();
+        horn.moveTo(4.0f, -12.0f);
+        horn.quadTo({ 3.5f, -17.0f }, { 8.0f, -19.5f });
+        horn.quadTo({ 9.0f, -20.0f }, { 8.5f, -18.9f });
+        horn.quadTo({ 6.8f, -15.9f }, { 7.5f, -12.0f });
+        horn.close();
+        fillShape(head, horn, hornInk);
     }
 
     namespace
