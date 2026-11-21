@@ -141,6 +141,7 @@ namespace ClaFi::Controls
         void secondaryClicked(NestedClickEvent&) override;
 
         void adjustChildInset(AdjustChildInsetEvent&) const override;
+        [[nodiscard]] bool showsCaption() const override;
         void adjustText(AdjustTextEvent&) const override;
         void calculateChildren(FormBase&) override;
         void adjustChildMetrics(AdjustMetricsEvent&) const override;

@@ -201,6 +201,11 @@ namespace ClaFi::Controls
         event.inset = { border, border };
     }
 
+    bool DropdownControlBase::showsCaption() const
+    {
+        return SplitButtonBase::showsCaption() || (textOnDropdown() && shownSecondaryPart());
+    }
+
     void DropdownControlBase::adjustText(AdjustTextEvent& event) const
     {
         adjustMainText(event);

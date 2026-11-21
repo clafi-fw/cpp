@@ -352,6 +352,9 @@ the caption line - the control's name and the key that runs it - and <code>Adjus
 fills only the body. The body uses <a href="#line-wrap">balanced wrapping</a> and keeps explicit
 line breaks. The overflow window repeats the control's clipped text with its original line breaks.</p>
 
+<p><code>ButtonBase::showsCaption()</code> reports whether the button lays out its caption.
+A caption on a visible dropdown strip counts. A hidden caption can supply a caption-only tooltip.</p>
+
 <p>A gather runs in one of two phases, which <code>event.phase()</code> reports:
 <code>Calculate</code> for a measurement, <code>Paint</code> for what is drawn. A control may be
 measured from a line it never shows - a reading measures the room its widest value needs and paints

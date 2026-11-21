@@ -362,9 +362,11 @@ namespace ClaFi::Controls
         event.text << FlexSpace{ k_endIconGap } << mark;
     }
 
-    // **The caption and the key stand over the body, and the button states them.** A face that
-    // hides its caption, or a command carrying a key, says both here; a face that already says the
-    // caption, with no key and no body, raises no tooltip at all.
+    bool ButtonBase::showsCaption() const
+    {
+        return m_viewMode != ButtonViewMode::IconOnly;
+    }
+
     void ButtonBase::nestedAdjustTooltip(AdjustTooltipEvent& event)
     {
         RichControl::nestedAdjustTooltip(event);
@@ -381,7 +383,7 @@ namespace ClaFi::Controls
         emitEvent(shortcutEvent);
         const std::wstring shortcut = shortcutEvent.shortcut.text();
 
-        if (m_viewMode != ButtonViewMode::IconOnly && shortcut.empty() && event.text.empty())
+        if (showsCaption() && shortcut.empty() && event.text.empty())
             return;
 
         event.header.caption = text();
