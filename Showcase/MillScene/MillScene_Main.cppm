@@ -26,6 +26,7 @@ import ClaFi.Controls.PageControl;
 import ClaFi.Controls.AppButton;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.Slider;
+import ClaFi.Controls.SplitButton;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.RadioButton;
 import ClaFi.Controls.CheckBox;
@@ -236,14 +237,15 @@ namespace MillScene_App
         void pickLook(std::size_t index);
         // Takes an option in the choice a picker of m_choicePickers shows, while it is hovered.
         void previewOption(std::size_t pickerIndex, std::size_t option);
-        void pickOption(std::size_t pickerIndex, std::size_t option);
+        void pickOption(std::size_t sceneIndex, std::size_t choiceIndex, std::size_t option);
+        void toggleSceneSwitch(PathArt::Scene&, std::size_t switchIndex);
         // Whether a scene's page holds an option: themes, a look, a choice, a switch.
         [[nodiscard]] bool sceneOffersOptions(std::size_t index);
 
         void buildScenePage(AppMenuPage&);
         void buildScenePicker(AppMenuPage&);
         // The scene tiles in `column`, the pointer previewing the scene it rests on.
-        void buildSceneLanes(StackPanel& column, PickerLanes&);
+        void buildSceneLanes(StackPanel& column, PickerLanes&, Menu* sceneList = nullptr);
         // A page of options for every scene in one section, the picked scene's page showing.
         void buildSceneOptions(AppMenuPage&);
         // What that section is captioned with while the scene at `index` is the picked one.
@@ -288,6 +290,7 @@ namespace MillScene_App
         void followFullscreen();
         // The list of the Scene line on the scene's context menu: a scene picker.
         void buildSceneList(Menu& list);
+        void showSceneOptionsMenu(Menu& sceneList, SplitButton& button, std::size_t sceneIndex);
         // The list of the Theme line on the scene's context menu: a theme picker.
         void buildThemeList(Menu& list);
         // The scenes, the themes where the scene offers them, and the full-screen toggle.
@@ -316,6 +319,7 @@ namespace MillScene_App
         // button it left as well as the one it took, and the stack is what the preview returns to.
         PickerLanes m_pageScenePicker{};
         PickerLanes m_menuScenePicker{}; // the one in the scene's context menu, while it is up
+        std::optional<std::size_t> m_menuSceneOptionsPreview{};
         AppMenuPage::Section* m_sceneOptionsSection{ nullptr }; // named after the picked scene
         // Holds a page of options for each scene and shows the picked scene's.
         PageControl* m_sceneOptionsControl{ nullptr };
@@ -887,9 +891,11 @@ void MillSceneForm::pickLook(const std::size_t index)
     storeSceneView(scene);
 
     if (m_lookLanes)
+    {
         m_lookLanes->setCurrentItem(*m_lookButtons[index]);
-    m_lookButtons[previous]->invalidateState();
-    m_lookButtons[index]->invalidateState();
+        m_lookButtons[previous]->invalidateState();
+        m_lookButtons[index]->invalidateState();
+    }
 }
 
 void MillSceneForm::previewOption(const std::size_t pickerIndex, const std::size_t option)
@@ -898,17 +904,32 @@ void MillSceneForm::previewOption(const std::size_t pickerIndex, const std::size
     sceneAt(choicePicker.sceneIndex).chooseOption(choicePicker.choiceIndex, option);
 }
 
-void MillSceneForm::pickOption(const std::size_t pickerIndex, const std::size_t option)
+void MillSceneForm::pickOption(const std::size_t sceneIndex, const std::size_t choiceIndex,
+    const std::size_t option)
 {
-    ChoicePicker& choicePicker = m_choicePickers[pickerIndex];
-    const std::size_t previous = choicePicker.pickedOption;
-    choicePicker.pickedOption = option;
-    previewOption(pickerIndex, option);
+    sceneAt(sceneIndex).chooseOption(choiceIndex, option);
+    for (ChoicePicker& picker : m_choicePickers)
+    {
+        if (picker.sceneIndex != sceneIndex || picker.choiceIndex != choiceIndex)
+        {
+            continue;
+        }
+        const std::size_t previous = picker.pickedOption;
+        picker.pickedOption = option;
+        if (picker.lanes)
+        {
+            picker.lanes->setCurrentItem(*picker.buttons[option]);
+            picker.buttons[previous]->invalidateState();
+            picker.buttons[option]->invalidateState();
+        }
+        break;
+    }
+}
 
-    if (choicePicker.lanes)
-        choicePicker.lanes->setCurrentItem(*choicePicker.buttons[option]);
-    choicePicker.buttons[previous]->invalidateState();
-    choicePicker.buttons[option]->invalidateState();
+void MillSceneForm::toggleSceneSwitch(PathArt::Scene& scene, const std::size_t switchIndex)
+{
+    scene.setSwitch(switchIndex, !scene.isSwitchOn(switchIndex));
+    m_benchmark.reset();
 }
 
 bool MillSceneForm::sceneOffersOptions(const std::size_t index)
@@ -932,7 +953,7 @@ void MillSceneForm::buildScenePicker(AppMenuPage& page)
 }
 
 // Built the way the theme picker is: the pointer previews, a pick is the current item.
-void MillSceneForm::buildSceneLanes(StackPanel& column, PickerLanes& scenePicker)
+void MillSceneForm::buildSceneLanes(StackPanel& column, PickerLanes& scenePicker, Menu* sceneList)
 {
     SingleSelectionStackView& lanes = column.add<SingleSelectionStackView>(
         Orientation::HorizontalWrap,
@@ -945,7 +966,7 @@ void MillSceneForm::buildSceneLanes(StackPanel& column, PickerLanes& scenePicker
     scenePicker.lanes = &lanes;
     lanes.setPreviewMode(PreviewMode::Hover);
     lanes.onPreview([this](PreviewEvent& event) {
-        previewScene(event.item.tag().value);
+        previewScene(m_menuSceneOptionsPreview.value_or(event.item.tag().value));
         });
     lanes.onDestroy([this, &scenePicker](DestroyEvent&) {
         previewScene(m_pickedScene);
@@ -957,34 +978,55 @@ void MillSceneForm::buildSceneLanes(StackPanel& column, PickerLanes& scenePicker
     scenePicker.buttons.reserve(sceneCount());
     for (std::size_t index = 0; index != sceneCount(); ++index)
     {
-        ToolButton& item = lanes.add<ToolButton>(
-            Text{ sceneAt(index).name() },
-            Tag{ index },
-            MouseFocus::Self, // an item: the press that focuses it makes it current
-            ButtonViewMode::TopCenterIcon,
-            k_sceneIconSize,
-            HorizontalTextAnchor::Center,
-            TextFormat{ TextAlign::Center },
-            Padding{ k_sceneTilePadding },
-            // Every tile takes the whole share of its row, so all come out the same width.
-            HorizontalAlign::Fill,
-            ShowSelectionOnSurface::Yes
-        );
+        const auto addTile = [&]<typename ButtonType>() -> ButtonType& {
+            return lanes.add<ButtonType>(
+                Text{ sceneAt(index).name() },
+                Tag{ index },
+                MouseFocus::Self,
+                ButtonViewMode::TopCenterIcon,
+                k_sceneIconSize,
+                HorizontalTextAnchor::Center,
+                TextFormat{ TextAlign::Center },
+                Padding{ k_sceneTilePadding },
+                HorizontalAlign::Fill,
+                ShowSelectionOnSurface::Yes
+            );
+        };
+        Control* item = nullptr;
+        if (sceneList && sceneOffersOptions(index))
+        {
+            SplitButton& button = addTile.operator()<SplitButton>();
+            button.onDropdown([this, sceneList, index](DropdownEvent& event) {
+                showSceneOptionsMenu(*sceneList, event.button(), index);
+            });
+            item = &button;
+        }
+        else
+        {
+            item = &addTile.operator()<ToolButton>();
+        }
         // The scene is read off the button's own tag, so one painter answers for all of them.
-        item.onDrawIcon([this](DrawIconEvent& event) {
+        item->onDrawIcon([this](DrawIconEvent& event) {
             sceneAt(event.tag().value).drawIcon(event.canvas(), event.iconRect());
-            });
-        item.onGetState([this, index](GetStateEvent& event) {
+        });
+        item->onGetState([this, index](GetStateEvent& event) {
             event.state.selected = m_pickedScene == index;
-            });
-        item.onClick([this, index](ClickEvent&) {
+        });
+        item->onClick([this, sceneList, index](ClickEvent& event) {
             pickScene(index);
+            if (sceneList)
+            {
+                sceneList->closeOnCommand(event);
+            }
+        });
+        if (!sceneList)
+        {
+            // The first click has already picked the scene.
+            item->onDoubleClick([](DoubleClickEvent& event) {
+                event.closeForm();
             });
-        // **A pick and done.** The double click's first click has made the pick.
-        item.onDoubleClick([](DoubleClickEvent& event) {
-            event.closeForm();
-            });
-        scenePicker.buttons.push_back(&item);
+        }
+        scenePicker.buttons.push_back(item);
     }
     lanes.setCurrentItem(*scenePicker.buttons[m_pickedScene]);
 }
@@ -1221,8 +1263,9 @@ void MillSceneForm::buildChoicePicker(const std::size_t pickerIndex)
         item.onGetState([this, pickerIndex, option](GetStateEvent& event) {
             event.state.selected = m_choicePickers[pickerIndex].pickedOption == option;
         });
-        item.onClick([this, pickerIndex, option](ClickEvent&) {
-            pickOption(pickerIndex, option);
+        item.onClick([this, sceneIndex = choicePicker.sceneIndex,
+            choiceIndex = choicePicker.choiceIndex, option](ClickEvent&) {
+            pickOption(sceneIndex, choiceIndex, option);
         });
         choicePicker.buttons.push_back(&item);
     }
@@ -1245,8 +1288,7 @@ void MillSceneForm::buildSwitchBoxes(const std::size_t index)
         });
         // A different picture is a different load, so the readings start again.
         box.onClick([this, &scene, switchIndex](ClickEvent& event) {
-            scene.setSwitch(switchIndex, !scene.isSwitchOn(switchIndex));
-            m_benchmark.reset();
+            toggleSceneSwitch(scene, switchIndex);
             event.control->invalidateState();
         });
     }
@@ -1559,16 +1601,13 @@ void MillSceneForm::addBackendLines(Menu& list)
                 [useGpu](AdjustTooltipEvent& event) {
                     if (useGpu)
                     {
-                        event.text << L"Draw the windows through the graphics card."
-                            << k_endLine;
-                        event.text << L"Text is antialiased in subpixel color, which sharpens "
-                            L"its edges and can fringe them with color over a colored ground.";
+                        event.text << L"Render on the GPU." << k_endLine;
+                        event.text << L"Subpixel text antialiasing is available.";
                     }
                     else
                     {
-                        event.text << L"Draw the windows on the CPU." << k_endLine;
-                        event.text << L"Text is antialiased in grayscale, so its edges take no "
-                            L"color, and read a little softer than the card's.";
+                        event.text << L"Render on the CPU." << k_endLine;
+                        event.text << L"Subpixel text antialiasing is not supported.";
                     }
                 }
             }
@@ -1582,13 +1621,95 @@ void MillSceneForm::addBackendLines(Menu& list)
 void MillSceneForm::buildSceneList(Menu& list)
 {
     StackPanel& column = list.addControl<StackPanel>(Orientation::Vertical);
-    buildSceneLanes(column, m_menuScenePicker);
-    for (Control* button : m_menuScenePicker.buttons)
+    buildSceneLanes(column, m_menuScenePicker, &list);
+}
+
+void MillSceneForm::showSceneOptionsMenu(Menu& sceneList, SplitButton& button,
+    const std::size_t sceneIndex)
+{
+    PickerLanes themePicker = {};
+    Menu options{ button };
+    PathArt::Scene& scene = sceneAt(sceneIndex);
+    const auto pickSceneAndClose = [this, &sceneList, sceneIndex](ClickEvent& event) {
+        pickScene(sceneIndex);
+        event.closeForm();
+        sceneList.closeOnCommand(event);
+    };
+
+    if (scene.offersThemes())
     {
-        button->onClick([&list](ClickEvent& event) {
-            list.closeOnCommand(event);
-        });
+        StackPanel& column = options.addControl<StackPanel>(Orientation::Vertical);
+        buildThemeLanes(column, themePicker);
+        for (Control* themeButton : themePicker.buttons)
+        {
+            themeButton->onClick(pickSceneAndClose);
+        }
+        options.addSeparator();
     }
+    if (sceneWithLooks() == sceneIndex)
+    {
+        for (std::size_t lookIndex = 0; lookIndex != k_lookChoices.size(); ++lookIndex)
+        {
+            options.add(
+                Text{ k_lookChoices[lookIndex].name },
+                IndicatorVisibility::Always,
+                IndicatorStyle::Radio,
+                MenuItem::OnGetState{ [this, lookIndex](GetStateEvent& event) {
+                    event.state.selected = m_pickedLook == lookIndex;
+                } },
+                MenuItem::OnClick{ [this, lookIndex, pickSceneAndClose](ClickEvent& event) {
+                    pickLook(lookIndex);
+                    pickSceneAndClose(event);
+                } }
+            );
+        }
+        options.addSeparator();
+    }
+    const std::span<const PathArt::SceneChoice> choices = scene.choices();
+    for (std::size_t choiceIndex = 0; choiceIndex != choices.size(); ++choiceIndex)
+    {
+        const PathArt::SceneChoice& choice = choices[choiceIndex];
+        options.addControl<Label>(Text{ choice.name }, TextFormat{ InkGrade::Strong });
+        for (std::size_t option = 0; option != choice.options.size(); ++option)
+        {
+            options.add(
+                Text{ choice.options[option] },
+                IndicatorVisibility::Always,
+                IndicatorStyle::Radio,
+                MenuItem::OnGetState{ [&scene, choiceIndex, option](GetStateEvent& event) {
+                    event.state.selected = scene.chosenOption(choiceIndex) == option;
+                } },
+                MenuItem::OnClick{ [this, sceneIndex, choiceIndex, option,
+                    pickSceneAndClose](ClickEvent& event) {
+                    pickOption(sceneIndex, choiceIndex, option);
+                    pickSceneAndClose(event);
+                } }
+            );
+        }
+        options.addSeparator();
+    }
+    const std::span<const std::wstring_view> switchNames = scene.switches();
+    for (std::size_t switchIndex = 0; switchIndex != switchNames.size(); ++switchIndex)
+    {
+        options.add(
+            Text{ switchNames[switchIndex] },
+            IndicatorVisibility::Always,
+            IndicatorStyle::Check,
+            MenuItem::OnGetState{ [&scene, switchIndex](GetStateEvent& event) {
+                event.state.selected = scene.isSwitchOn(switchIndex);
+            } },
+            MenuItem::OnClick{ [this, &scene, switchIndex, pickSceneAndClose](ClickEvent& event) {
+                toggleSceneSwitch(scene, switchIndex);
+                pickSceneAndClose(event);
+            } }
+        );
+    }
+
+    m_menuSceneOptionsPreview = sceneIndex;
+    previewScene(sceneIndex);
+    options.executeUnder(button);
+    m_menuSceneOptionsPreview.reset();
+    previewScene(m_pickedScene);
 }
 
 // Picks and closes the way the scene list does.

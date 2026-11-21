@@ -399,8 +399,12 @@ namespace ClaFi::Controls
         MenuGroupItem* group = groupOf(*hovered);
         if (const FormBase* list = activePopup())
         {
-            if (list->popupTarget() == group)
+            const Control* target = list->popupTarget();
+            // Only openGroup can consume a pending group after its list closes.
+            if (!target || !groupOf(*target) || target == group)
+            {
                 return;
+            }
             // Closed here and opened by openGroup, whose loop this close returns into.
             m_pendingGroup = group;
             closeActivePopup();
