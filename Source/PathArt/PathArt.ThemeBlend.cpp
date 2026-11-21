@@ -36,12 +36,22 @@ namespace ClaFi::PathArt
             WeatherStyle{ WeatherEffect::Fireflies, &SceneTheme::hasFireflies, 0xFFFFFFB4, 0x64FFFF64 },
             WeatherStyle{ WeatherEffect::FallingLeaves, &SceneTheme::hasLeaves, 0xFFD08A30, 0xFFA5561A }
         };
+        constexpr std::wstring_view k_vintageNoirName{ Themes::VintageNoir{}.name };
 
         static_assert(std::ranges::all_of(Themes::allThemes, [](const SceneTheme& theme) {
             return std::ranges::count_if(k_weatherStyles, [&theme](const WeatherStyle& style) {
                 return theme.*style.strength > 0.0f;
             }) <= 1;
         }));
+
+        [[nodiscard]] Color grayscaleColor(const Color color)
+        {
+            Hsl gray{ color };
+            gray.saturation = 0.0f;
+            Color result = gray.toColor();
+            result.alpha = color.alpha;
+            return result;
+        }
 
         void applyWeather(SceneTheme& theme, const SceneWeather& weather)
         {
@@ -64,8 +74,9 @@ namespace ClaFi::PathArt
                     theme.*style.strength = 1.0f;
                     if (style.effect != WeatherEffect::FallingPetals)
                     {
-                        theme.effectColor1 = style.color1;
-                        theme.effectColor2 = style.color2;
+                        const bool grayscale = theme.name == k_vintageNoirName;
+                        theme.effectColor1 = grayscale ? grayscaleColor(style.color1) : style.color1;
+                        theme.effectColor2 = grayscale ? grayscaleColor(style.color2) : style.color2;
                     }
                 }
             }

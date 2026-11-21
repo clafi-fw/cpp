@@ -1621,10 +1621,9 @@ camera's speed: two between the far hills and the trail, the trail's, and the fr
 hold 0.4, 0.27, 0.19 and 0.14 of its drops, flakes, leaves and streaks, each share spread evenly
 over the area its layer covers.
 
-**One wind blows the dust and one speed of falling brings the rest down.** A layer's weather falls
-and blows in step with its share of the camera's speed, so the trail's moves two and a half times as
-fast as the layer's at 0.4. Each layer's pace is rounded so its weather comes round a whole number
-of times a cycle, and the cycle ends where it began.
+**Falling particles follow the Mill's pace.** Larger particles fall faster. Each layer's fall
+pace accounts for its height and the Chase's longer cycle. Dust blows at a rate proportional to
+its layer's parallax. The effects round their pace to whole trips so they loop smoothly.
 
 **A nearer layer is drawn larger and stronger.** Size and strength grow from 0.6 of each at the far
 hills' depth to the whole size and 0.85 of the strength on the trail, and on at the same rate: the

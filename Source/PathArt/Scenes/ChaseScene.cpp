@@ -628,6 +628,7 @@ namespace ClaFi::PathArt
         constexpr float k_weatherWantedPeriod{ 1000.0f };
         // More than the 9 an effect reads past its own seed, so no two layers share a place.
         constexpr float k_weatherSeedStep{ 10.0f };
+        constexpr float k_millWeatherCycleSeconds{ 40.0f };
         constexpr float k_fallingWeatherSwayReach{ 24.0f };
         constexpr float k_fallingWeatherSwaysPerCycle{ 16.0f };
         constexpr float k_fallingWeatherSwayPhaseStep{ 0.8f };
@@ -2195,10 +2196,12 @@ namespace ClaFi::PathArt
         const float period = periodNear(layer.parallax, k_weatherWantedPeriod);
         const float timesFasterThanHills = layer.parallax / k_hillParallax;
         const float nearness = (layer.parallax - k_hillParallax) / (1.0f - k_hillParallax);
+        const float layerSize = std::lerp(k_hillSize, 1.0f, nearness);
+        const float fallCycleRatio = static_cast<float>(k_cycle.count()) / k_millWeatherCycleSeconds;
         Weather fallingWeather = weatherOf(theme);
         fallingWeather.opacity = std::lerp(k_hillWeatherOpacity, k_trailWeatherOpacity, nearness);
         fallingWeather.density = layer.share * (period / hillLayerPeriod) * (bottom / groundY);
-        fallingWeather.fallPace = timesFasterThanHills * groundY / bottom;
+        fallingWeather.fallPace = fallCycleRatio * layerSize * frame.height / bottom;
         fallingWeather.seed = k_weatherSeedStep * static_cast<float>(layerIndex);
         const Weather dustWeather = {
             .dust = fallingWeather.dust,
@@ -2211,7 +2214,7 @@ namespace ClaFi::PathArt
         };
         fallingWeather.dust = 0.0f;
 
-        const float layerUnit = frame.unit * std::lerp(k_hillSize, 1.0f, nearness);
+        const float layerUnit = frame.unit * layerSize;
         const float effectsTime = fractionalPart(cycleTime * k_lively);
         const float swayPhase = k_2Pi * k_fallingWeatherSwaysPerCycle * cycleTime
             + k_fallingWeatherSwayPhaseStep * static_cast<float>(layerIndex);
@@ -2223,7 +2226,7 @@ namespace ClaFi::PathArt
                 overLayer.height = bottom;
                 overLayer.unit = layerUnit;
                 drawWeather(overLayer.within(Matrix3x2::Translation(sway, 0.0f)),
-                    effectsTime, fallingWeather);
+                    cycleTime, fallingWeather);
                 if (dustWeather.dust > 0.0f)
                 {
                     drawWeather(overLayer, effectsTime, dustWeather);
