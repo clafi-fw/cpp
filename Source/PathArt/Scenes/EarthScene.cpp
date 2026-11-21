@@ -2748,19 +2748,21 @@ namespace ClaFi::PathArt
                 static_cast<int>(std::floor(picture.sphereCenter.x - halfWidth))) / step * step;
             const int right = std::min(picture.right,
                 static_cast<int>(std::ceil(picture.sphereCenter.x + halfWidth)));
-            if (left >= right)
+            const int columnInPixels = left - static_cast<int>(targetAt.x);
+            const int rowInPixels = top - static_cast<int>(targetAt.y);
+            // The sample grid can start before the bitmap on either axis.
+            const int firstX = std::max(0, -columnInPixels);
+            const int endX = std::min(right - left, pixels.width() - columnInPixels);
+            const int firstY = std::max(0, -rowInPixels);
+            const int endY = std::min(rows, pixels.height() - rowInPixels);
+            if (firstX >= endX || firstY >= endY)
             {
                 return;
             }
-            const int width = right - left;
             const float firstPixelX = static_cast<float>(left) + 0.5f;
-            // The band's corner is where the bitmap's first pixel stands, and the sea's rows and
-            // columns are measured from it.
-            const int columnInPixels = left - static_cast<int>(targetAt.x);
-            const int rowInPixels = top - static_cast<int>(targetAt.y);
             // The last group of 8 pixels reads 8 points from the one under its first pixel.
             const std::size_t pointLength =
-                groupedLength(static_cast<int>(groupedLength(width)) / step + 8);
+                groupedLength(static_cast<int>(groupedLength(endX)) / step + 8);
             MapPoints onMap = {
                 .longitudes = std::vector<float>(pointLength),
                 .latitudes = std::vector<float>(pointLength),
@@ -2805,12 +2807,15 @@ namespace ClaFi::PathArt
                 };
                 return ColorLanes{ channelOf(16), channelOf(8), channelOf(0) };
             };
-            depthsAt(0, upper);
-            depthsAt(step, lower);
-            for (int y = 0; y != rows; ++y)
+            const int firstSampleY = firstY / step * step;
+            depthsAt(firstSampleY, upper);
+            depthsAt(firstSampleY + step, lower);
+            const int firstGroupX = firstX / 8 * 8;
+            const int endColumn = columnInPixels + endX;
+            for (int y = firstY; y < endY; ++y)
             {
                 const int pastPoints = y % step;
-                if (y != 0 && pastPoints == 0)
+                if (y != firstY && pastPoints == 0)
                 {
                     std::swap(upper, lower);
                     depthsAt(y + step, lower);
@@ -2819,8 +2824,8 @@ namespace ClaFi::PathArt
                     static_cast<float>(pastPoints) / static_cast<float>(step));
                 const float pixelY = static_cast<float>(top + y) + 0.5f;
                 const float up = (picture.sphereCenter.y - pixelY) / radii.y;
-                Color* row = pixels.pixel(columnInPixels, rowInPixels + y);
-                for (int x = 0; x < width; x += 8)
+                Color* row = pixels.pixel(0, rowInPixels + y);
+                for (int x = firstGroupX; x < endX; x += 8)
                 {
                     const std::size_t point = static_cast<std::size_t>(x / step);
                     const ColorLanes color = realistic
@@ -2844,9 +2849,20 @@ namespace ClaFi::PathArt
                         return _mm256_slli_epi32(_mm256_cvttps_epi32(
                             _mm256_fmadd_ps(channel, opacity, half)), shift);
                     };
-                    storeEight(row, x, width, _mm256_or_si256(
+                    const __m256i colors = _mm256_or_si256(
                         _mm256_or_si256(byteAt(hazed.blue, 0), byteAt(hazed.green, 8)),
-                        _mm256_or_si256(byteAt(hazed.red, 16), byteAt(one, 24))));
+                        _mm256_or_si256(byteAt(hazed.red, 16), byteAt(one, 24)));
+                    const int column = columnInPixels + x;
+                    if (column < 0)
+                    {
+                        std::array<Color, 8> lanes;
+                        _mm256_storeu_si256(reinterpret_cast<__m256i*>(lanes.data()), colors);
+                        std::copy_n(lanes.data() - column, std::min(8 + column, endColumn), row);
+                    }
+                    else
+                    {
+                        storeEight(row, column, endColumn, colors);
+                    }
                 }
             }
         }
