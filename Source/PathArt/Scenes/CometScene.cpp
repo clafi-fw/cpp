@@ -85,7 +85,7 @@ namespace ClaFi::PathArt
     {
         constexpr std::array<std::wstring_view, 1> k_switches{ L"Draw foreground" };
         constexpr std::size_t k_foregroundSwitch{ 0 };
-        constexpr std::wstring_view k_foregroundShownNode{ L"ForegroundShown" };
+        constexpr std::wstring_view k_drawForegroundNode{ L"DrawForeground" };
 
         constexpr float k_passesPerCycle{ 2.0f };
         
@@ -446,7 +446,7 @@ namespace ClaFi::PathArt
         m_lakeShade.prepare(params);
         m_shore.prepare(params);
         m_mirroredShore.prepare(params);
-        if (m_foregroundShown)
+        if (m_drawForeground)
         {
             m_foreground.prepare(params);
         }
@@ -459,7 +459,7 @@ namespace ClaFi::PathArt
         drawSky(frame);
         drawAboveLake(frame, time, false);
         drawLake(frame, time);
-        if (m_foregroundShown)
+        if (m_drawForeground)
         {
             m_foreground.draw(frame);
         }
@@ -502,7 +502,7 @@ namespace ClaFi::PathArt
         {
             noReach("CometScene offers no such switch");
         }
-        return m_foregroundShown;
+        return m_drawForeground;
     }
 
     void CometScene::setSwitch(const std::size_t index, const bool on)
@@ -511,24 +511,24 @@ namespace ClaFi::PathArt
         {
             noReach("CometScene offers no such switch");
         }
-        m_foregroundShown = on;
+        m_drawForeground = on;
     }
 
     void CometScene::storeView(Dom::Section& view) const
     {
-        (view / k_foregroundShownNode).set(m_foregroundShown);
+        (view / k_drawForegroundNode).set(m_drawForeground);
     }
 
     void CometScene::restoreView(const Dom::Section& view)
     {
-        m_foregroundShown = (view / k_foregroundShownNode).get<bool>();
+        m_drawForeground = (view / k_drawForegroundNode).get<bool>();
     }
 
     Dom::Dt::Section CometScene::viewSchema()
     {
         return Dom::Dt::Section{
             k_name,
-            Dom::Dt::Value{ k_foregroundShownNode, false }
+            Dom::Dt::Value{ k_drawForegroundNode, true }
         };
     }
 

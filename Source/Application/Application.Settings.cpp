@@ -528,7 +528,7 @@ namespace ClaFi
             event.state.selected = appContext().usingGpu();
         });
         m_gpuBackend.onClick([this](ClickEvent&) {
-            appContext().gpuAcceleration()->set(true);
+            appContext().backendChoice()->set(BackendChoice::Gpu);
             m_gpuBackend.invalidateState();
             m_cpuBackend.invalidateState();
         });
@@ -536,7 +536,7 @@ namespace ClaFi
             event.state.selected = !appContext().usingGpu();
         });
         m_cpuBackend.onClick([this](ClickEvent&) {
-            appContext().gpuAcceleration()->set(false);
+            appContext().backendChoice()->set(BackendChoice::Cpu);
             m_gpuBackend.invalidateState();
             m_cpuBackend.invalidateState();
         });

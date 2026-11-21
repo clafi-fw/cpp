@@ -126,6 +126,6 @@ namespace ClaFi::PathArt
         mutable Graphics::Bitmap m_farFogPixels{};
         mutable Graphics::Bitmap m_valleyFogPixels{};
         mutable Graphics::Bitmap m_nearFogPixels{};
-        bool m_foregroundShown{ false };
+        bool m_drawForeground{ true };
     };
 }

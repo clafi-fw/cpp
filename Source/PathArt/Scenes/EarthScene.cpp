@@ -207,6 +207,7 @@ namespace ClaFi::PathArt
         // The names the view is kept under in the config.
         namespace ViewNodes
         {
+            constexpr std::wstring_view GlobeLook = L"GlobeLook";
             constexpr std::wstring_view Altitude = L"Altitude";
             constexpr std::wstring_view Orbits = L"Orbits";
             constexpr std::wstring_view EarthTurns = L"EarthTurns";
@@ -3618,6 +3619,7 @@ namespace ClaFi::PathArt
     // The orbits and the Earth's turns are those of the last frame, which the viewer last saw.
     void EarthScene::storeView(Dom::Section& view) const
     {
+        (view / ViewNodes::GlobeLook).set(look());
         (view / ViewNodes::Altitude).set(m_view.altitude);
         (view / ViewNodes::Orbits).set(static_cast<float>(m_shownOrbits));
         (view / ViewNodes::EarthTurns).set(static_cast<float>(earthTurnsAt(m_shownTimeInOrbits)));
@@ -3632,6 +3634,7 @@ namespace ClaFi::PathArt
     // from them as the scene's time goes on.
     void EarthScene::restoreView(const Dom::Section& view)
     {
+        setLook((view / ViewNodes::GlobeLook).get<SceneLook>());
         m_view.altitude = std::clamp((view / ViewNodes::Altitude).get<float>(), 0.0f, 1.0f);
         m_view.orbitTurn = restoredRotation(view.childSection(ViewNodes::OrbitTurn),
             m_view.orbitTurn);
@@ -3656,6 +3659,7 @@ namespace ClaFi::PathArt
         const View startingView{};
         return Dom::Dt::Section{
             k_name,
+            Dom::Dt::Value{ ViewNodes::GlobeLook, SceneLook::Realistic },
             Dom::Dt::Value{ ViewNodes::Altitude, startingView.altitude },
             Dom::Dt::Value{ ViewNodes::Orbits, 0.0f },
             Dom::Dt::Value{ ViewNodes::EarthTurns, 0.0f },

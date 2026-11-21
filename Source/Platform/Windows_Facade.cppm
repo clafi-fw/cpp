@@ -58,7 +58,7 @@ namespace ClaFi
     };
 
     // Direct2D is the GPU backend offered here; the CPU backend stands beside it, and which of
-    // them the windows draw through is the user's answer - see AppContext::gpuAcceleration.
+    // them the windows draw through is the user's answer - see AppContext::backendChoice.
     export using Win32Application = WindowApplication<Win32Platform, Direct2DBackend>;
 
     // **A console process answers on the console and needs no window machinery.** COM is opened

@@ -96,7 +96,8 @@ the look setLook() last named from its next frame on. A scene that offers no loo
 and draws as it always does.
 
 The MillScene showcase offers the looks as radio buttons captioned Look on the scene's page of
-options, and keeps the pick under SceneLook. With no pick kept, the scene is drawn Realistic.
+options. The `Earth` section of `SceneViews` keeps the choice under `GlobeLook`. The default is
+`Realistic`.
 
 ## Scene offersThemes
 
@@ -1221,7 +1222,7 @@ of the far ridge, so nothing in it can be kept as a still part.
 Three shooting stars cross the sky in the quiet between the passes.
 
 **Draw foreground** shows the pines and rocks along the near edge of the lake. The switch starts
-off. The scene keeps it as `ForegroundShown` in its own config section. See Scene switches.
+on. The scene keeps it as `DrawForeground` in its own config section. See Scene switches.
 
 ## CometPose
 

@@ -8,7 +8,7 @@ The words that do not fit above a declaration.
 
 - `Application<Win32Platform>` draws on the CPU and offers the user no choice.
 - `Application<Win32Platform, Direct2DBackend>` carries both, and starts on the one the config
-  holds - see AppContext::gpuAcceleration.
+  holds - see AppContext::backendChoice.
 
 ## ApplicationBase finalize
 
@@ -87,7 +87,7 @@ menu opens, so every option is read where it lives.
   keep-above - see IPlatformWindow::canSetAlwaysOnTop.
 - **Always show focus** - writes AppContext::alwaysShowFocus: the focused control wears its ring
   under the mouse too, where by default only the keys put one on.
-- **GPU acceleration** - writes AppContext::gpuAcceleration, and every window switches backend.
+- **Backend** - writes AppContext::backendChoice, and every window switches backend.
   Its section is hidden where the application named no GPU backend.
 
 **Keep settings on this PC is the config folder** - see AppContext::configFolderExists. Ticking

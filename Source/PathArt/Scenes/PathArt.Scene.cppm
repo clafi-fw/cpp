@@ -26,6 +26,11 @@ namespace ClaFi::PathArt
         Realistic   // soft shading, the way a photograph shows it
     };
 
+    export constexpr auto enumNames(SceneLook)
+    {
+        return std::array{ L"Stylized", L"Realistic" };
+    }
+
     // A choice a scene offers beside its look: its name and its options' names. See PathArt
     export struct SceneChoice
     {

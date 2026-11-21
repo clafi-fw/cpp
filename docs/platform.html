@@ -723,10 +723,10 @@
             not, so the choice reaches the context as a function pointer -
             <code>gpuBackendFactory&lt;GpuBackend&gt;()</code>, null where none was named - and
             <code>AppContext::gpuAvailable()</code> reports whether that pointer is set. Where it is set, the
-            config's <code>Performance</code> section holds a <code>GpuAcceleration</code> value, on by default, and
-            the Settings page shows the check that writes it; a change reaches every window at the top of its next
-            frame, and the window's canvas releases everything the old backend held. Where the pointer is null,
-            neither the section nor the check exists.</p>
+            config's <code>Performance</code> section holds <code>BackEnd</code>, with values <code>CPU</code>
+            and <code>GPU</code>. The default is <code>GPU</code>. The backend choice on the Settings page writes
+            this value. Each window switches at the top of its next frame, and its canvas releases the resources
+            held by the previous backend. An application without a GPU backend uses the CPU for every window.</p>
             <p>No other part of the platform depends on which backend draws, and no part of a control does. The
             <a href="graphics.html">Graphics</a> manual describes what the two draw and where they still differ.</p>
             <h2 id="from-above">Reaching the Platform From Above</h2>

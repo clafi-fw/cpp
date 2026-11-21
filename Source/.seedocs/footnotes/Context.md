@@ -211,13 +211,13 @@ switch matches the others.
 The CPU backend is always there. The GPU backend is the one the application names - see
 Application - and `gpuAvailable` says whether it did.
 
-## AppContext gpuAcceleration
+## AppContext backendChoice
 
-The `GpuAcceleration` node of the `Performance` section, true by default. **Writing it switches
-every window** - the context raises BackendSwitchEvent.
+The `BackEnd` node of the `Performance` section holds `CPU` or `GPU` and defaults to `GPU`.
+**Changing it switches every window.** The context raises BackendSwitchEvent.
 
-Null where the application named no GPU backend. `usingGpu` is read from it as the context is
-built, so the first window opens on the stored answer.
+The node is available when the application supplies a GPU backend. The first window opens with
+the backend selected in the config.
 
 ## AppContext scale
 

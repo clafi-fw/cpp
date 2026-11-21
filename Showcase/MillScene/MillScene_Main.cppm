@@ -40,6 +40,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Metrics;
 
 import ClaFi.Core.Context.AppContext;
+import ClaFi.Core.Dom_StdSerializers;
 import ClaFi.Core.DomEngine_Dt;
 import ClaFi.Core.DomEngine;
 
@@ -123,8 +124,6 @@ namespace MillScene_App
     export constexpr std::wstring_view k_sceneThemeNodeName{ L"SceneTheme" };
     // What the picked scene is kept under, by name for the same reasons as the theme.
     export constexpr std::wstring_view k_sceneNodeName{ L"Scene" };
-    // What the look picked for the scene that offers looks is kept under, by name as well.
-    export constexpr std::wstring_view k_sceneLookNodeName{ L"SceneLook" };
     // What the scenes keep their views and choices under, a section for each by its name.
     export constexpr std::wstring_view k_sceneViewsNodeName{ L"SceneViews" };
 
@@ -269,10 +268,10 @@ namespace MillScene_App
         void restoreSceneTheme();
         void storeSceneTheme();
         void restoreLook();
-        void storeLook();
         // Each scene that keeps its view takes it back from its section of SceneViews.
         void restoreSceneViews();
         void storeSceneViews();
+        void storeSceneView(const PathArt::Scene&);
 
         void traceMetrics();
         // The readings, written ahead of every frame. See writeMetricsTooltip
@@ -412,8 +411,8 @@ namespace MillScene_App
         // the stored one has to be the scene's by now.
         restoreSceneTheme();
         restoreScene();
-        restoreLook();
         restoreSceneViews();
+        restoreLook();
         // Written as the window closes, while every scene still stands.
         form().onClose([this](FormCloseEvent&) {
             storeSceneViews();
@@ -875,10 +874,17 @@ void MillSceneForm::previewLook(const std::size_t index)
 
 void MillSceneForm::pickLook(const std::size_t index)
 {
+    const std::optional<std::size_t> sceneIndex = sceneWithLooks();
+    if (!sceneIndex)
+    {
+        return;
+    }
     const std::size_t previous = m_pickedLook;
     m_pickedLook = index;
-    previewLook(index);
-    storeLook();
+    PathArt::Scene& scene = sceneAt(*sceneIndex);
+    scene.setLook(k_lookChoices[index].look);
+    m_benchmark.reset();
+    storeSceneView(scene);
 
     if (m_lookLanes)
         m_lookLanes->setCurrentItem(*m_lookButtons[index]);
@@ -1329,25 +1335,20 @@ void MillSceneForm::storeSceneTheme()
 
 void MillSceneForm::restoreLook()
 {
-    const std::wstring name =
-        (appContext().config() / k_sceneLookNodeName).get<std::wstring>();
+    const std::optional<std::size_t> sceneIndex = sceneWithLooks();
+    if (!sceneIndex)
+    {
+        return;
+    }
+    const PathArt::SceneLook look = sceneAt(*sceneIndex).look();
     for (std::size_t index = 0; index != k_lookChoices.size(); ++index)
     {
-        if (k_lookChoices[index].name == name)
+        if (k_lookChoices[index].look == look)
         {
             m_pickedLook = index;
-            previewLook(index);
             return;
         }
     }
-    // With no pick kept, the scene takes the default look, its own being Stylized.
-    previewLook(m_pickedLook);
-}
-
-void MillSceneForm::storeLook()
-{
-    (appContext().config() / k_sceneLookNodeName).set(
-        std::wstring{ k_lookChoices[m_pickedLook].name });
 }
 
 // A scene with no section under its name keeps no view.
@@ -1364,12 +1365,23 @@ void MillSceneForm::restoreSceneViews()
 
 void MillSceneForm::storeSceneViews()
 {
-    Dom::Section& views = appContext().config().childSection(k_sceneViewsNodeName);
+    // Closing can interrupt a hover preview.
+    if (const std::optional<std::size_t> sceneIndex = sceneWithLooks())
+    {
+        sceneAt(*sceneIndex).setLook(k_lookChoices[m_pickedLook].look);
+    }
     for (std::size_t index = 0; index != sceneCount(); ++index)
     {
-        const PathArt::Scene& scene = sceneAt(index);
-        if (views.child(scene.name()) != nullptr)
-            scene.storeView(views.childSection(scene.name()));
+        storeSceneView(sceneAt(index));
+    }
+}
+
+void MillSceneForm::storeSceneView(const PathArt::Scene& scene)
+{
+    Dom::Section& views = appContext().config().childSection(k_sceneViewsNodeName);
+    if (views.child(scene.name()) != nullptr)
+    {
+        scene.storeView(views.childSection(scene.name()));
     }
 }
 
@@ -1542,7 +1554,7 @@ void MillSceneForm::addBackendLines(Menu& list)
                     event.state.selected = appContext().usingGpu() == useGpu;
                 },
                 [this, useGpu](ClickEvent&) {
-                    appContext().gpuAcceleration()->set(useGpu);
+                    appContext().backendChoice()->set(useGpu ? BackendChoice::Gpu : BackendChoice::Cpu);
                 },
                 [useGpu](AdjustTooltipEvent& event) {
                     if (useGpu)
@@ -1655,13 +1667,10 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
         return Dom::Dt::Section{
             Dom::Dt::Value{ k_sceneNodeName, L"" },
             Dom::Dt::Value{ k_sceneThemeNodeName, L"" },
-            Dom::Dt::Value{ k_sceneLookNodeName, L"" },
             Dom::Dt::Section{ k_sceneViewsNodeName, PathArt::createSceneViewsSchema() }
         };
     }
 
-    constexpr float k_minWindowWidth{ 640.0f };
-    constexpr float k_minWindowHeight{ 480.0f };
     // Said of the Earth scene, so it is not taken for a map.
     constexpr std::wstring_view k_earthSceneIsArt{
         L"The Earth scene is a piece of art and does not claim to be accurate."
@@ -1692,8 +1701,8 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
         const auto form = application.createDialog<MillSceneForm>(
             *options,
             UiElement::Dialog,
-            MinSize{ k_minWindowWidth / 2.0f, k_minWindowHeight / 2.0f },
-            PreferredSize{ k_minWindowWidth, k_minWindowHeight }
+            MinSize{ 320.0f, 240.0f },
+            PreferredSize{ 840.0f, 680.0f }
         );
         form->setConfigName(AppContext::k_mainFormName);
         return form->execute();

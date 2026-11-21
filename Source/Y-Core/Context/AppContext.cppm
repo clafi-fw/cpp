@@ -56,6 +56,18 @@ namespace ClaFi
     {
     };
 
+    // The backend the application uses to draw its windows.
+    export enum class BackendChoice
+    {
+        Cpu,
+        Gpu
+    };
+
+    export constexpr auto enumNames(BackendChoice)
+    {
+        return std::array{ L"CPU", L"GPU" };
+    }
+
     // **The application has changed which backend its windows draw through.** See Context
     export struct BackendSwitchEvent : public Event
     {
@@ -166,7 +178,7 @@ namespace ClaFi
         // --- Configuration ---:
         using ThemePathNode = Dom::Value<std::wstring>;
         using ColorModeNode = Dom::Value<ColorModeSetting>;
-        using GpuAccelerationNode = Dom::Value<bool>;
+        using BackendChoiceNode = Dom::Value<BackendChoice>;
         using ScaleNode = Dom::Value<int>;
         using AlwaysShowFocusNode = Dom::Value<bool>;
 #if CLAFI_TEXT_MOVING
@@ -179,11 +191,8 @@ namespace ClaFi
         [[nodiscard]] ThemePathNode& themePath() const { return m_themePath; }
         // The mode the user chose to wear the theme in, answered where the path is. See Application
         [[nodiscard]] ColorModeNode& colorMode() const { return m_colorMode; }
-        // **Where the user's answer about the GPU is kept**, and what the Settings check writes:
-        // the node's own change is what reaches stateBackend. Null where the application has no GPU
-        // backend, the node not being in the schema then - gpuAvailable is that same answer. The
-        // node is the config's state rather than this context's, so a const context hands it out.
-        [[nodiscard]] GpuAccelerationNode* gpuAcceleration() const { return m_gpuAcceleration; }
+        // The config node for the selected backend, when a GPU backend is available. See Context
+        [[nodiscard]] BackendChoiceNode* backendChoice() const { return m_backendChoice; }
         // **Where the user's answer about the size is kept**, and what the Settings slider writes:
         // the node's own change is what reaches stateScale. The node is the config's state
         // rather than this context's, so a const context hands it out.
@@ -237,12 +246,12 @@ namespace ClaFi
         [[nodiscard]] bool crossing() const;
     private:
         // The core's own section of an application's config - see the definition.
-        [[nodiscard]] static Dom::Dt::Section coreConfigSchema(bool withGpuAcceleration,
+        [[nodiscard]] static Dom::Dt::Section coreConfigSchema(bool withGpuBackend,
             bool withUpdateCheck);
-        // The GPU node in the Performance section, null where the schema has no such section.
-        [[nodiscard]] static GpuAccelerationNode* gpuAccelerationIn(Dom::Section& config);
+        // The backend choice node in the Performance section.
+        [[nodiscard]] static BackendChoiceNode* backendChoiceIn(Dom::Section& config);
         // Takes the wish the config holds and stands on the node for what follows.
-        void connectGpuAcceleration();
+        void connectBackendChoice();
         // The application is on this kind from now on, and every window is told.
         void stateBackend(bool useGpu);
         // Takes the size the config holds and stands on the node for what follows.
@@ -271,7 +280,7 @@ namespace ClaFi
         static constexpr std::wstring_view k_zAnimationNodeName = L"ZAnimation";
 #endif
         static constexpr std::wstring_view k_performanceSectionName = L"Performance";
-        static constexpr std::wstring_view k_gpuAccelerationNodeName = L"GpuAcceleration";
+        static constexpr std::wstring_view k_backendChoiceNodeName = L"BackEnd";
         static constexpr std::wstring_view k_updateCheckSectionName = L"UpdateCheck";
         Platform& m_platform;
         Text m_appName;
@@ -320,12 +329,12 @@ namespace ClaFi
             *(static_cast<ColorModeNode*>(m_interface.child(k_colorModeNodeName))) };
         // Null where the schema carries no such node - see coreConfigSchema, which is the one
         // place the node's presence is decided.
-        GpuAccelerationNode* m_gpuAcceleration{ gpuAccelerationIn(m_config) };
+        BackendChoiceNode* m_backendChoice{ backendChoiceIn(m_config) };
         // **Which backend every window draws through now.** Taken from the node above while the
         // context is built, so a stored answer is what the first window stands on rather than
         // something switched to once it is up.
         bool m_usingGpu{ false };
-        ScopedEventConnection m_gpuConnection{};
+        ScopedEventConnection m_backendChoiceConnection{};
         ScaleNode& m_scale{
             *(static_cast<ScaleNode*>(m_interface.child(k_scaleNodeName))) };
         // **The percent every window is drawn at.** Taken from the node above while the context is
@@ -380,7 +389,7 @@ namespace ClaFi
             Dom::WriteDefaults::No
         }
     {
-        connectGpuAcceleration();
+        connectBackendChoice();
         connectScale();
         connectUpdateCheck();
         connectAlwaysShowFocus();
@@ -413,7 +422,7 @@ namespace ClaFi
             Dom::WriteDefaults::No
         }
     {
-        connectGpuAcceleration();
+        connectBackendChoice();
         connectScale();
         connectUpdateCheck();
         connectAlwaysShowFocus();
@@ -433,11 +442,9 @@ namespace ClaFi
     // as against the one compiled in, and reading a theme file is not the core's work - see
     // connectAppThemes, which is what answers a change of either.
     //
-    // **The Performance section stands only where a GPU backend does**, its GPU node being all it
-    // holds, so an application that has none keeps no answer to a question it cannot ask, and a
-    // file it wrote holds nothing about a backend. The update check's section stands only where
-    // the check is available, for the same reason.
-    Dom::Dt::Section AppContext::coreConfigSchema(const bool withGpuAcceleration,
+    // The Performance section requires a GPU backend. The UpdateCheck section requires an update
+    // source.
+    Dom::Dt::Section AppContext::coreConfigSchema(const bool withGpuBackend,
         const bool withUpdateCheck)
     {
         Dom::Dt::Section section = {};
@@ -452,11 +459,11 @@ namespace ClaFi
             Dom::Dt::Value{ k_zAnimationNodeName, k_defaultZAnimationAmount } });
 #endif
         section.children.push_back(std::move(interfaceSection));
-        if (withGpuAcceleration)
+        if (withGpuBackend)
         {
             section.children.push_back(std::make_unique<Dom::Dt::Section>(
                 k_performanceSectionName,
-                Dom::Dt::Value{ k_gpuAccelerationNodeName, true }));
+                Dom::Dt::Value{ k_backendChoiceNodeName, BackendChoice::Gpu }));
         }
         if (withUpdateCheck)
         {
@@ -467,25 +474,25 @@ namespace ClaFi
     }
 
     // The section stands only where the node does - see coreConfigSchema.
-    AppContext::GpuAccelerationNode* AppContext::gpuAccelerationIn(Dom::Section& config)
+    AppContext::BackendChoiceNode* AppContext::backendChoiceIn(Dom::Section& config)
     {
         if (!config.child(k_performanceSectionName))
             return nullptr;
         Dom::Section& performance = config.childSection(k_performanceSectionName);
-        return static_cast<GpuAccelerationNode*>(performance.child(k_gpuAccelerationNodeName));
+        return static_cast<BackendChoiceNode*>(performance.child(k_backendChoiceNodeName));
     }
 
-    // **The node is what the answer travels on**, the same as the theme's: a Settings check writes
-    // it and the change arrives here. The connection is a member so that it goes before the config
-    // the node stands in.
-    void AppContext::connectGpuAcceleration()
+    // The connection is destroyed before the config node it observes.
+    void AppContext::connectBackendChoice()
     {
-        if (!m_gpuAcceleration)
+        if (!m_backendChoice)
+        {
             return;
-        m_usingGpu = m_gpuAcceleration->get();
-        m_gpuConnection = ScopedEventConnection{ m_gpuAcceleration->connectEvent(
+        }
+        m_usingGpu = m_backendChoice->get() == BackendChoice::Gpu;
+        m_backendChoiceConnection = ScopedEventConnection{ m_backendChoice->connectEvent(
             [this](Dom::ChangeEvent&) {
-                stateBackend(m_gpuAcceleration->get());
+                stateBackend(m_backendChoice->get() == BackendChoice::Gpu);
             }) };
     }
 
