@@ -19,7 +19,8 @@ namespace ClaFi::PathArt
         constexpr float k_headReach{ 16.0f }; // how far ahead of its hinge the head hangs
 
         // A leg hanging from the body at `hip`, swung by `swing` radians, its round foot the hoof.
-        void drawLeg(const SceneFrame& cow, FloatPoint hip, float swing, Color leg, Color hoof);
+        void drawLeg(const SceneFrame& cow, FloatPoint hip, float swing, Color leg,
+            const SolidColor& hoofInk);
     }
 
     // Drawn far to near: the far legs and the tail, the body and its spots, the near legs, and
@@ -32,14 +33,18 @@ namespace ClaFi::PathArt
         const Color belly = Color::between(colors.body, colors.detail.fullyOpaque(), 0.16f);
         const Color far = Color::between(colors.body, colors.detail.fullyOpaque(), 0.3f);
         const Color farLimb = Color::between(far, colors.spots, colors.limbInkShare);
+        const Color tipShade = Color::between(colors.body, colors.detail.fullyOpaque(), 0.35f);
+        Color tipColor = Color::between(tipShade, colors.spots, colors.limbInkShare);
+        tipColor.paintOverGeneral(colors.tips);
+        const SolidColor tipInk{ tipColor };
         const float stepAngle = pose.stride ? *pose.stride * k_2Pi : 0.0f;
         const float bob = pose.stride ? std::abs(std::sin(stepAngle)) * 1.5f : 0.0f;
         const float legSwing = pose.stride ? std::sin(stepAngle) * 0.32f : 0.0f;
         const float hipY = -30.0f - bob;
 
         fillOval(cow, { -2.0f, 1.0f }, 52.0f, 6.0f, SolidColor{ colors.shadow.faded(0.9f) });
-        drawLeg(cow, { -34.0f, hipY }, -legSwing, farLimb, colors.detail);
-        drawLeg(cow, { 26.0f, hipY }, legSwing, farLimb, colors.detail);
+        drawLeg(cow, { -34.0f, hipY }, -legSwing, farLimb, tipInk);
+        drawLeg(cow, { 26.0f, hipY }, legSwing, farLimb, tipInk);
 
         const float bodyRise = bob + k_bodyLift;
         const float tailTip = -55.0f + pose.tailSwing * 24.0f;
@@ -48,8 +53,7 @@ namespace ClaFi::PathArt
         tail.quadTo({ -58.0f + pose.tailSwing * 10.0f, -44.0f - k_bodyLift },
             { tailTip, -24.0f - k_bodyLift });
         strokeShape(cow, tail, SolidColor{ farLimb }, 2.6f);
-        fillOval(cow, { tailTip, -22.0f - k_bodyLift }, 3.0f, 6.0f, SolidColor{ colors.detail },
-            pose.tailSwing);
+        fillOval(cow, { tailTip, -22.0f - k_bodyLift }, 3.0f, 6.0f, tipInk, pose.tailSwing);
 
         const SceneFrame body = cow.within(Matrix3x2::Translation(0.0f, -bodyRise));
         PixelPath outline;
@@ -78,8 +82,8 @@ namespace ClaFi::PathArt
         frame.canvas.popClip();
         fillOval(body, { -16.0f, -28.0f }, 7.0f, 4.0f, SolidColor{ colors.snout });
 
-        drawLeg(cow, { -40.0f, hipY }, legSwing, colors.body, colors.detail);
-        drawLeg(cow, { 32.0f, hipY }, -legSwing, colors.body, colors.detail);
+        drawLeg(cow, { -40.0f, hipY }, legSwing, colors.body, tipInk);
+        drawLeg(cow, { 32.0f, hipY }, -legSwing, colors.body, tipInk);
 
         // The head hangs apart from the body; its hinge rises with the body as the head comes up,
         // and stays down so the muzzle reaches.
@@ -88,17 +92,13 @@ namespace ClaFi::PathArt
         const SceneFrame hinge = cow.within(Matrix3x2::Translation(40.0f, -52.0f - bob - hingeLift)
             * Matrix3x2::Rotation(pose.headDrop));
         const SceneFrame head = hinge.within(Matrix3x2::Translation(k_headReach, 0.0f));
-        const Color hornShade = Color::between(colors.body, colors.detail.fullyOpaque(), 0.35f);
-        Color hornColor = Color::between(hornShade, colors.spots, colors.limbInkShare);
-        hornColor.paintOverGeneral(colors.horn);
-        const SolidColor hornInk{ hornColor };
         PixelPath horn;
         horn.moveTo(13.5f, -10.0f);
         horn.quadTo({ 13.0f, -15.5f }, { 17.5f, -18.0f });
         horn.quadTo({ 18.5f, -18.4f }, { 18.0f, -17.4f });
         horn.quadTo({ 16.0f, -14.4f }, { 16.5f, -10.0f });
         horn.close();
-        fillShape(head, horn, hornInk);
+        fillShape(head, horn, tipInk);
 
         PixelPath shape;
         shape.moveTo(-2.0f, -12.0f);
@@ -120,13 +120,13 @@ namespace ClaFi::PathArt
         horn.quadTo({ 9.0f, -20.0f }, { 8.5f, -18.9f });
         horn.quadTo({ 6.8f, -15.9f }, { 7.5f, -12.0f });
         horn.close();
-        fillShape(head, horn, hornInk);
+        fillShape(head, horn, tipInk);
     }
 
     namespace
     {
         void drawLeg(const SceneFrame& cow, const FloatPoint hip, const float swing,
-            const Color leg, const Color hoof)
+            const Color leg, const SolidColor& hoofInk)
         {
             const SceneFrame hanging = cow.within(Matrix3x2::Translation(hip)
                 * Matrix3x2::Rotation(swing));
@@ -147,7 +147,7 @@ namespace ClaFi::PathArt
             foot.close();
             const Matrix3x2 legToCanvas = hanging.toCanvas;
             hanging.canvas.pushClip(foot, &legToCanvas);
-            fillShape(hanging, shape, SolidColor{ hoof });
+            fillShape(hanging, shape, hoofInk);
             hanging.canvas.popClip();
         }
     }

@@ -45,7 +45,7 @@ namespace ClaFi::PathArt::Themes
             .cowBody = 0xFFFFFFFE,       // White cow body
             .cowSpots = 0xFF000000,      // Black spots
             .cowSnout = 0xFFCD853F,      // Light brown snout
-            .cowDetail = 0xFF8B4513,     // Brown detail (hooves, etc.)
+            .cowDetail = 0xFF8B4513,     // Brown facial detail
             .wolfBody = 0xFF362717,      // Dark gray-brown wolf body
             .wolfEye = 0xFFFF0000,       // Red glowing eyes
             .effectColor1 = 0xFFFFC8DC,
@@ -184,7 +184,7 @@ namespace ClaFi::PathArt::Themes
                 .dust = 0xFFDFD0B5,
                 .dazeStar = 0xFFFFD34D
             },
-            .cowHorn = 0xFF543B33,
+            .cowTips = 0xFF543B33,
             .hasRain = false,
             .hasFireflies = false,
             .hasLeaves = false,

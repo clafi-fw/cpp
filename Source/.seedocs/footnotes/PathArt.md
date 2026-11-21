@@ -166,12 +166,13 @@ daylight scenes already draw them. Golden Hour's and Winter Frost's cows keep th
 Summer Sunset's wolf and hare are drawn lighter and stand about 0.10 from its meadow.
 
 **A crossfade blends every color field one by one** - see ThemeBlend. They stand in a row from
-skyTop through cowHorn, and colorsNum() counts them.
+skyTop through cowTips, and colorsNum() counts them.
 
-## SceneTheme cowHorn
+## SceneTheme cowTips
 
-**A tint over both horns.** Its alpha sets the tint's strength over the shading derived from
-cowBody, cowDetail and cowLimbInkShare. The tint is transparent by default.
+**The tint shared by the horns, hooves and tail brush.** Its alpha sets the tint's strength over
+the coat shading and the share of cowSpots set by cowLimbInkShare. The tint is transparent by
+default.
 
 ## SceneTheme airHaze
 
@@ -188,8 +189,8 @@ A crossfade blends it with the effects.
 
 ## SceneTheme cowLimbInkShare
 
-**How much of cowSpots goes into the cow's far legs, tail and horns**, from 0 to 1. The default of 0
-keeps their shading derived from cowBody and cowDetail. A crossfade blends the share with the
+**How much of cowSpots goes into the cow's far legs, tail shaft and tips**, from 0 to 1. The default
+of 0 keeps their shading derived from cowBody and cowDetail. A crossfade blends the share with the
 effects.
 
 ## MillTheme

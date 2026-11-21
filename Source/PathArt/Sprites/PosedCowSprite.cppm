@@ -24,10 +24,10 @@ namespace ClaFi::PathArt
         Color body;
         Color spots;
         Color snout; // the muzzle and the udder
-        Color detail; // the hooves, the eye, the nostril and the tail's tuft
+        Color detail; // the eye, nostril and coat shading
         Color shadow;
-        float limbInkShare{ 0.0f }; // the share of spots in the far legs, tail and horns
-        Color horn{}; // the tint over the horn color derived from coat and detail
+        float limbInkShare{ 0.0f }; // the share of spots in the far legs, tail shaft and tips
+        Color tips{}; // the tint over the horns, hooves and tail brush
     };
 
     // A spotted cow seen from the side, its far legs and ear a shade darker than the near ones.

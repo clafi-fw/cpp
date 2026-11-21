@@ -184,7 +184,7 @@ namespace ClaFi::PathArt::Themes
                 .dust = 0xFFE9DBB7,
                 .dazeStar = 0xFFFFD34D
             },
-            .cowHorn = 0xFF454341,
+            .cowTips = 0xFF454341,
             .hasRain = false,
             .hasFireflies = false,
             .hasLeaves = false,

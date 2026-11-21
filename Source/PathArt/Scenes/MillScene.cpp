@@ -957,7 +957,7 @@ namespace ClaFi::PathArt
                 .detail = theme.cowDetail,
                 .shadow = theme.shadow,
                 .limbInkShare = theme.cowLimbInkShare,
-                .horn = theme.cowHorn
+                .tips = theme.cowTips
             };
         }
 

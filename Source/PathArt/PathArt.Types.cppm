@@ -143,7 +143,7 @@ namespace ClaFi::PathArt
         Color hedge; // 55, the hedge rows, hazed by each layer's distance
         MillTheme mill{};
         ChaseTheme chase{};
-        Color cowHorn{}; // the tint over the cow's horns
+        Color cowTips{}; // the tint over the cow's horns, hooves and tail brush
         // make sure to update colorsNum() when adding new colors
 
         // Effect toggles
@@ -157,7 +157,7 @@ namespace ClaFi::PathArt
         float isAfrica = false;
         float hasStars = false;
         float airHaze = 0.10f; // the air's share at a scene's reference distance, from 0 to 1
-        float cowLimbInkShare = 0.0f; // the share of cowSpots in the far legs, tail and horns
+        float cowLimbInkShare = 0.0f; // the share of cowSpots in the far legs, tail shaft and tips
         // make sure to update effectsNum() when adding new effects
     public:
         Color* asArray() { return &skyTop; }
