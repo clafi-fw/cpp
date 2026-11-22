@@ -886,6 +886,8 @@ stage, and then draws it into the frame the jolt shakes.
   smoke, SwanLakeAct dances on without it, and CurtainCallAct has it back, bowing - see StandPose.
 - **joltAge** counts the seconds since something landed hard enough to shake the stage, and is
   below 0 before that - see BotTalentScene.
+- **marionetteStringDeflection** gives the sideways motion of the hanging puppet's head string
+  in sprite units. The scene passes it to MarionettePose.
 
 ## danceSway
 
@@ -962,6 +964,8 @@ cymbal on a stand behind. In seconds:
   end shows. It draws the stick out at 8 and raises it over the cymbal.
 - **At 8.44** the stick strikes the cymbal with the last kick.
 - **From 8.6** the ta-da, the stick held up.
+
+Each bass drum kick makes the cymbal wobble and the hanging marionette's strings vibrate.
 
 **The stick stays behind the head until it points away from it**, so it never crosses the face as it
 comes out.

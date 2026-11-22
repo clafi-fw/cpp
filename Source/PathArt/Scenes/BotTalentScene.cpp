@@ -164,7 +164,9 @@ namespace ClaFi::PathArt
         {
             const float hangingSwing = 0.3f * swing
                 + 0.035f * std::sin(k_2Pi * k_hangingSwingsPerCycle * time.cycleTime);
-            drawMarionette(shaken, hangMarionette(unit, stand.hook, hangingSwing));
+            MarionettePose marionette = hangMarionette(unit, stand.hook, hangingSwing);
+            marionette.stringDeflection = act.marionetteStringDeflection();
+            drawMarionette(shaken, marionette);
         }
         act.draw(shaken);
         drawDustMotes(shaken, time.cycleTime, DustMotes{

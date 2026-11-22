@@ -23,6 +23,7 @@ namespace ClaFi::PathArt
         FloatPoint m_wandTip{}; // in units about the pelvis
         float m_rabbitRise{ 0.0f };
         float m_rabbitLook{ 0.0f };
+        FloatPoint m_rightDrapeFoot{};
         float m_spotlightX{ 0.0f };
         float m_actTime{ 0.0f };
     };

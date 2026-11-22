@@ -44,6 +44,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] virtual StandPose standPose() const { return {}; }
         // Seconds since something landed hard enough to jolt the stage, below 0 if nothing has.
         [[nodiscard]] virtual float joltAge() const { return -1.0f; }
+        [[nodiscard]] virtual float marionetteStringDeflection() const { return 0.0f; }
         // Draws the act as it was last posed.
         virtual void draw(const SceneFrame&) const = 0;
     };

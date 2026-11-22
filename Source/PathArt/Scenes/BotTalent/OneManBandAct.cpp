@@ -70,6 +70,7 @@ namespace ClaFi::PathArt
         constexpr float k_beaterLength{ 44.0f };
         // A kick every 0.625 seconds, every 0.3125 in the fill, the last with the crash.
         constexpr float k_kickSeconds{ 0.625f };
+        constexpr float k_kickRingSeconds{ 0.25f };
         constexpr float k_fillFrom{ 7.5f };
         constexpr float k_crashAt{ 8.4375f };
         // A drumstick's length from its tail to its tip, and where a hand grips it to play.
@@ -245,14 +246,22 @@ namespace ClaFi::PathArt
                     ? smoothStep(-0.07f, 0.0f, since)
                     : 1.0f - smoothStep(0.0f, 0.22f, since);
                 pedal.press = std::max(pedal.press, press);
-                if (since >= 0.0f && since < 0.25f)
-                    pedal.kicked = std::max(pedal.kicked, 1.0f - since / 0.25f);
+                if (since >= 0.0f && since < k_kickRingSeconds)
+                {
+                    pedal.kicked = std::max(pedal.kicked, 1.0f - since / k_kickRingSeconds);
+                }
             };
             for (int beat = 0; beat != 12; ++beat)
                 kick(static_cast<float>(beat) * k_kickSeconds);
             for (int beat = 0; beat != 4; ++beat)
                 kick(k_fillFrom + static_cast<float>(beat) * k_kickSeconds * 0.5f);
             return pedal;
+        }
+
+        [[nodiscard]] float kickVibration(const float kicked, const float frequency)
+        {
+            const float since = k_kickRingSeconds * (1.0f - kicked);
+            return kicked * kicked * std::sin(k_2Pi * frequency * since);
         }
     }
 
@@ -346,6 +355,11 @@ namespace ClaFi::PathArt
         m_actTime = actTime;
     }
 
+    float OneManBandAct::marionetteStringDeflection() const
+    {
+        return 7.0f * kickVibration(m_kicked, 11.0f);
+    }
+
     // The drum set stands behind the android's leg, the cymbal's stand behind the bass drum.
     void OneManBandAct::draw(const SceneFrame& frame) const
     {
@@ -354,7 +368,6 @@ namespace ClaFi::PathArt
             * Matrix3x2::Scale(unit));
         const SolidColor metal{ DrumColors::Metal };
 
-        // the cymbal on its stand, shaking after the crash
         drawSegment(kit, { -96.0f, 0.0f }, k_cymbal, metal, 3.0f, StrokeCap::Butt);
         drawSegment(kit, { -112.0f, 0.0f }, { -80.0f, 0.0f }, SolidColor{ DrumColors::MetalDark },
             3.0f);
@@ -362,8 +375,9 @@ namespace ClaFi::PathArt
         const float wobble = m_crashAge >= 0.0f
             ? 0.35f * std::exp(-shaken * 3.0f) * std::sin(k_2Pi * shaken * 4.0f)
             : 0.0f;
+        const float kickWobble = 0.18f * kickVibration(m_kicked, 9.0f);
         const SceneFrame plate = kit.within(Matrix3x2::Translation(k_cymbal)
-            * Matrix3x2::Rotation(0.12f + wobble));
+            * Matrix3x2::Rotation(0.12f + wobble + kickWobble));
         fillOval(plate, { 0.0f, 0.0f }, 34.0f, 5.5f, SolidColor{ DrumColors::Cymbal });
         fillOval(plate, { 0.0f, -1.0f }, 30.0f, 3.4f, SolidColor{ DrumColors::CymbalShine });
         fillDisc(plate, { 0.0f, -2.0f }, 3.0f, SolidColor{ DrumColors::CymbalBell });

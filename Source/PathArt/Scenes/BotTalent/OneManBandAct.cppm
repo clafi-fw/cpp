@@ -14,6 +14,7 @@ namespace ClaFi::PathArt
     public:
         void pose(const ActStage&, float actTime, SceneTime time) override;
         [[nodiscard]] float spotlightX() const override { return m_spotlightX; }
+        [[nodiscard]] float marionetteStringDeflection() const override;
         void draw(const SceneFrame&) const override;
     private:
         AndroidPose m_android{};

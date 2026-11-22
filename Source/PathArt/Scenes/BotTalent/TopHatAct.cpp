@@ -7,6 +7,7 @@ import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
 import ClaFi.PathArt.SparkleBurstEffect;
 import ClaFi.PathArt.TopHatSprite;
+import ClaFi.PathArt.WolfSprite;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
 import ClaFi.Core.System.Utils;
@@ -34,6 +35,15 @@ namespace ClaFi::PathArt
         constexpr float k_tapAngle{ k_pi * 0.84f };
         constexpr std::array<float, 3> k_taps{ 2.0f, 2.5f, 3.0f };
         constexpr float k_poof{ 3.4f };
+        constexpr float k_rabbitEmerges{ 3.55f };
+        constexpr float k_hatLiftStarts{ 4.4f };
+        constexpr float k_hatLiftEnds{ 5.0f };
+        constexpr float k_wolfPeekEntrySeconds{ 0.62f };
+        constexpr float k_wolfPeekHoldSeconds{ 0.48f };
+        constexpr float k_wolfRetreatSeconds{ 0.33f };
+        constexpr float k_wolfRetreatStarts{ k_hatLiftEnds + k_wolfPeekEntrySeconds
+            + k_wolfPeekHoldSeconds };
+        constexpr float k_wolfRetreatEnds{ k_wolfRetreatStarts + k_wolfRetreatSeconds };
 
         // Overshoots its end a little and settles back, as the rabbit pops up.
         [[nodiscard]] float popUp(const float share)
@@ -57,7 +67,7 @@ namespace ClaFi::PathArt
         m_android = standingAndroid(frame, { x, stage.floorY }, time.cycleTime, bob, 20.0f);
 
         // the hat in the left hand: tipped to show it empty, held still for the taps, raised
-        const float raise = smoothStep(4.4f, 5.0f, actTime);
+        const float raise = smoothStep(k_hatLiftStarts, k_hatLiftEnds, actTime);
         const FloatPoint leftHand = {
             std::lerp(-96.0f, -116.0f, raise),
             std::lerp(-30.0f, -98.0f, raise)
@@ -112,13 +122,20 @@ namespace ClaFi::PathArt
         m_wandTip = rightHand
             + FloatPoint{ std::cos(wandAngle), std::sin(wandAngle) } * k_wandLength;
 
-        m_rabbitRise = popUp((actTime - 3.55f) / 0.6f);
+        m_rabbitRise = popUp((actTime - k_rabbitEmerges) / 0.6f);
         m_rabbitLook = 3.0f * std::sin(k_2Pi * (actTime - 4.2f) / 2.4f)
             * smoothStep(4.2f, 4.6f, actTime);
+        m_rightDrapeFoot = { frame.width - stage.drapeWidth, stage.floorY };
         m_android.look = actTime < 1.7f
             ? -6.0f
             : (actTime < 4.2f ? -3.0f : 2.0f * std::sin(k_2Pi * actTime / 3.0f));
         m_android.headTurn = actTime < k_poof ? -0.08f : 0.04f * std::sin(k_2Pi * actTime / 3.0f);
+        const float noticesWolf = smoothStep(k_wolfRetreatStarts - 0.30f,
+            k_wolfRetreatStarts - 0.11f, actTime)
+            * (1.0f - smoothStep(k_wolfRetreatEnds, k_wolfRetreatEnds + 0.25f, actTime));
+        m_android.look = std::lerp(m_android.look, 8.5f, noticesWolf);
+        m_android.headTurn = std::lerp(m_android.headTurn, 0.14f, noticesWolf);
+        m_android.headOffsetX = 4.0f * noticesWolf;
         m_spotlightX = x - 20.0f * unit;
         m_actTime = actTime;
     }
@@ -129,6 +146,30 @@ namespace ClaFi::PathArt
     {
         const float unit = frame.unit;
         const float actTime = m_actTime;
+        const float sinceRabbit = actTime - k_rabbitEmerges;
+        const float peekTime = actTime - k_hatLiftEnds;
+        const float entryProgress = std::clamp(peekTime / k_wolfPeekEntrySeconds, 0.0f, 1.0f);
+        const float peek = entryProgress * (2.0f - entryProgress)
+            * (1.0f - smoothStep(k_wolfRetreatStarts, k_wolfRetreatEnds, actTime));
+        if (peek > 0.0f)
+        {
+            const float wolfSize = 1.2f * unit;
+            const FloatPoint wolfCenter = {
+                m_rightDrapeFoot.x + std::lerp(94.0f, 37.0f, peek) * wolfSize,
+                m_rightDrapeFoot.y + 8.0f * unit - 54.0f * wolfSize
+            };
+            const SceneFrame facingLeft = frame.within(
+                Matrix3x2::Translation(2.0f * wolfCenter.x, 0.0f) * Matrix3x2::Scale(-1.0f, 1.0f));
+            drawWolf(facingLeft, WolfPose{
+                .center = wolfCenter,
+                .size = wolfSize,
+                .headTurn = -0.27f * peek,
+                .tongueTurn = 0.30f * std::sin(k_2Pi * sinceRabbit * 3.0f),
+                .jawOpen = 0.16f,
+                .glance = -1.4f * peek,
+                .cycleTime = m_android.cycleTime
+            }, WolfCoats::Gray);
+        }
         drawAndroid(frame, m_android);
         const FloatPoint brim = androidUpperToFrame(frame, m_android, m_brim);
         const TopHatPose hat{

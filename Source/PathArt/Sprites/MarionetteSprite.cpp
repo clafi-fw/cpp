@@ -184,17 +184,23 @@ namespace ClaFi::PathArt
         const MarionetteControl& control = pose.control;
         const FloatPoint headTop = puppet.head
             + rotated({ 0.0f, -15.0f * frame.unit }, puppet.lean * 1.6f + puppet.headTilt);
+        const float deflection = pose.stringDeflection * frame.unit;
         PixelPath strings;
-        strings.moveTo(control.center);
-        strings.lineTo(headTop);
-        strings.moveTo(control.endLeft);
-        strings.lineTo(puppet.armLeft.end);
-        strings.moveTo(control.endRight);
-        strings.lineTo(puppet.armRight.end);
-        strings.moveTo(control.kneeEndLeft);
-        strings.lineTo(puppet.legLeft.joint);
-        strings.moveTo(control.kneeEndRight);
-        strings.lineTo(puppet.legRight.joint);
+        const auto addString = [&](const FloatPoint from, const FloatPoint to, const float share) {
+            strings.moveTo(from);
+            if (deflection == 0.0f)
+            {
+                strings.lineTo(to);
+                return;
+            }
+            const FloatPoint middle = FloatPoint::between(from, to, 0.5f);
+            strings.quadTo(middle + FloatPoint{ 2.0f * deflection * share, 0.0f }, to);
+        };
+        addString(control.center, headTop, 1.0f);
+        addString(control.endLeft, puppet.armLeft.end, 0.8f);
+        addString(control.endRight, puppet.armRight.end, -0.8f);
+        addString(control.kneeEndLeft, puppet.legLeft.joint, -0.6f);
+        addString(control.kneeEndRight, puppet.legRight.joint, 0.6f);
         strokeShape(frame, strings, SolidColor{ MarionetteColors::String.faded(opacity) },
             frame.unit, StrokeCap::Butt);
     }

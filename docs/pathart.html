@@ -124,6 +124,7 @@
             <li><div class="nav-item-wrapper"><a href="#theme">Scene themes</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#weather">Weather overrides</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#android">Android poses</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#marionette">Marionette strings</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#showcase">MillScene showcase</a></div></li>
         </ul>
     </nav>
@@ -174,6 +175,12 @@ scene.wearTheme(themeIndex);</code></pre>
             <p><code>drawAndroidSilhouette()</code> draws the bare posed android in a solid color.
             Pass a transformed <code>SceneFrame</code> to project the silhouette onto the backdrop.
             <code>ActStage::backdropY</code> marks where the backdrop meets the stage floor.</p>
+
+            <h2 id="marionette">Marionette strings</h2>
+            <p><code>MarionettePose::stringDeflection</code> gives the sideways displacement of
+            the head string at its center in sprite units. The ends of the strings stay attached.
+            In Bot Talent, <code>BotTalentAct::marionetteStringDeflection()</code> supplies this
+            displacement for the puppet hanging from its stand.</p>
 
             <h2 id="showcase">MillScene showcase</h2>
             <p>The weather settings apply to both the Mill and the Chase. The Weather effects

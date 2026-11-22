@@ -39,6 +39,7 @@ namespace ClaFi::PathArt
     {
         MarionetteJoints joints;
         MarionetteControl control;
+        float stringDeflection{ 0.0f }; // sideways at the center of the head string, in sprite units
     };
 
     // The marionette dancing, `sway` radians into the dance, its feet about `feet`. See PathArt
