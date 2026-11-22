@@ -32,10 +32,7 @@ namespace Themes_App
                 .repository = L"clafi-fw/cpp",
                 .tagPrefix = L"Themes-v"
             },
-            .elements = k_appElements,
-            .builtInTheme = k_builtInStyles,
-            // The editor of every theme, whatever a theme states for its test subjects.
-            .themesOffered = ThemesOffered::Every
+            .elements = k_appElements
         };
     }
 

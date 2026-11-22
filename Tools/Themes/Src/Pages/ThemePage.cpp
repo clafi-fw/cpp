@@ -619,11 +619,7 @@ namespace Themes_App
         if (!confirmWritingToSource(button))
             return;
 
-        // The application's own styles are its resource's, not the framework's.
-        AppTheme frameworkTheme = m_editTheme;
-        for (const std::wstring_view name : k_appElements)
-            frameworkTheme.styles.remove(name);
-        switch (writeBuiltInTheme(m_builtInThemeFile, frameworkTheme))
+        switch (writeBuiltInTheme(m_builtInThemeFile, m_editTheme))
         {
         case SourceWrite::Written:
             ContextMessage::show(

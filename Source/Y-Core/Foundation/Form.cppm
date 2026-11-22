@@ -378,6 +378,7 @@ namespace ClaFi
         [[nodiscard]] std::wstring_view configName() const { return m_configName; }
         void setConfigName(std::wstring_view value) { m_configName = value; }
         void update();
+        [[nodiscard]] Control* controlUnderPointer(); // hit-tests the current pointer position
         [[nodiscard]] PointInForm mouseDownPos() const { return m_mouseDownPos; }
         [[nodiscard]] InputStamp mouseDownStamp() const { return m_mouseDownStamp; }
         void setMouseDownPos(PointInForm value) { m_mouseDownPos = value; }

@@ -40,36 +40,6 @@ namespace Themes_App
     export constexpr UiElement k_testee{ appElement(0) };
     export constexpr UiElement k_bestee{ appElement(1) };
 
-    // The two styles the built-in theme states for them, each a button in size with no rules.
-    export constexpr std::wstring_view k_builtInStyles{ LR"(@ClaFi 1.0
-@encoding utf-8
-
-Styles=[
-=[
-Name=Testee
-Base=AnyNonWindow
-StandsOn=Section
-Metrics=[
-Border=Thin
-Radius=4
-Padding=8 4
-MinSize=40 24
-]
-]
-=[
-Name=Bestee
-Base=AnyNonWindow
-StandsOn=Section
-Metrics=[
-Border=Thin
-Radius=4
-Padding=8 4
-MinSize=40 24
-]
-]
-]
-)" };
-
     // What a tab's icon is drawn from, kept in the tab's entry so that an unopened tab reads no
     // file for it - see ThemesBrowser::drawTabIcon.
     export constexpr std::wstring_view k_tabIconAttrName{ L"Icon" };

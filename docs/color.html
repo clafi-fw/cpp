@@ -718,8 +718,15 @@ device brought the user there - see
 with the sizes that go with it, and <code>AppTheme::styles</code> is the theme's list of them, a
 <code>ThemeStyles</code> that finds each by name through <code>of</code>. A framework style is
 named as its element is spelled, for example <code>Button</code> or <code>Section</code>, and a
-style names the style it continues from. The style, its base, that base's base and so on form a
-chain up to a style that names none.</p>
+style names its base. The theme defines the inheritance tree, including its roots and every
+parent link.</p>
+
+<p>The Themes editor shows this tree under <strong>Elements</strong>. Use <strong>Add root
+element</strong> on Elements or <strong>Add child element</strong> on an element. Drag an element
+onto another element to change its base, or onto Elements to make it a root. Deleting an element
+promotes its children to its parent. Undo and Redo cover these edits. The element page shows
+its inheritance parent under <strong>Base</strong>. The <strong>Preview surface</strong> picker
+sets <code>standsOn</code>, the background used to preview the element.</p>
 
 <table>
 <tr><th>Field</th><th>Holds</th></tr>
@@ -744,7 +751,7 @@ bases of its own. A base is a style a control may use like any other.</p>
 
 <table>
 <tr><th>Base</th><th>Reaches</th></tr>
-<tr><td><code>AnyElement</code></td><td>Every style - the root of every chain. The Themes app calls it Any Element.</td></tr>
+<tr><td><code>AnyElement</code></td><td>The root of the framework's default style tree.</td></tr>
 <tr><td><code>AnyWindow</code></td><td>A window's root: <code>Dialog</code>, <code>Menu</code>, <code>Tooltip</code> and <code>Dropdown</code> are based on it, and take its frame, its shadow rules and its shadow's sizes. A form's root that uses no style takes none of it.</td></tr>
 <tr><td><code>AnyNonWindow</code></td><td>Every other framework style. The focus ring's rules live here - see <a href="#focus-ring">The focus ring</a>.</td></tr>
 <tr><td><code>AnyButton</code>, <code>AnyIndicator</code>, <code>AnyCallout</code>, <code>DoDont</code></td><td>The two buttons, the two indicators, the five callouts, and the two sides of a Do and Don't block, each group with the sizes it shares.</td></tr>
@@ -767,10 +774,10 @@ property in paint.</p>
 }</code></pre>
 
 <p>A control that uses no style takes only its own rules, at a form's root as anywhere else. An
-application names its own styles in <code>AppParams::elements</code>, uses the i-th as
-<code>appElement(i)</code>, and ships their built-in rules as a theme file's text in
-<code>AppParams::builtInTheme</code>. A theme that states no style under a name gives the controls
-using it nothing.</p>
+application declares its own element names in <code>ApplicationProperties::elements</code> and
+uses the i-th as <code>appElement(i)</code>. The Settings theme picker offers user themes that
+provide the application's declared elements. Themes opens theme files independently of that
+picker. A control whose element has no style in the theme receives no theme rules for it.</p>
 
 <p>A control with a rule no theme can state, such as a tab taking on the color of the page it opens,
 states rules of its own. These are baked rules, <code>BakedColorRule</code>, passed as a span that

@@ -718,6 +718,11 @@ namespace ClaFi
         m_window->update();
     }
 
+    Control* FormBase::controlUnderPointer()
+    {
+        return controlAt(m_mousePos).control;
+    }
+
     void FormBase::mouseTick(bool allowDrag)
     {
         // to realign stale layout
@@ -981,6 +986,7 @@ namespace ClaFi
 
     void FormBase::wnd_mouseUp(PointInForm pt)
     {
+        m_mousePos = pt;
         PressUpHandled handled{};
         bool scrollIntoView = true;
         Input::setMouseUp(*this, m_downItem, handled, scrollIntoView);

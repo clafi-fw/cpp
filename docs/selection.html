@@ -864,6 +864,9 @@ dialog.<span class="fn">add</span>(<span class="tp">DialogAnswer</span>::No).<sp
                 <tr><td>A drag from an item</td><td>Under <code>DragMode::EasySelect</code>, starts a rectangle. Under <code>EasyDrag</code>, carries the selection when the item is selected and the item alone when it is not.</td></tr>
             </table>
             <p>Ranges and rectangles also apply to items in nested panels.</p>
+            <p>A control that accepts drops can call <code>FormBase::controlUnderPointer()</code>
+            during drag and press-up handling. It returns the control hit at the pointer's current
+            position, or <code>nullptr</code> where the pointer reaches no control in the form.</p>
             <p><strong>A mouse press that may become a drag defers its click.</strong> A press with Ctrl or Shift
             may become a rectangle, and a press inside the selection may become a drag of the selection. A plain
             press outside the selection selects at once.</p>

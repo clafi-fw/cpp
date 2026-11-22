@@ -14,6 +14,7 @@ import ClaFi.Application.ThemesManager_Serializers;
 import ClaFi.Controls.Base.ExpanderBase;
 import ClaFi.Controls.ComboBox;
 import ClaFi.Controls.Grids;
+import ClaFi.Controls.Label;
 import ClaFi.Controls.Stack;
 import ClaFi.Controls.StackView;
 import ClaFi.Controls.TextItems;
@@ -31,6 +32,7 @@ import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
 import ClaFi.Core.System.Timer;
 import ClaFi.Core.System.UiTypes;
+import ClaFi.Core.System.Utils;
 
 import ClaFi.StdLib;
 
@@ -250,7 +252,6 @@ namespace Themes_App
     void ElementPage::bind(PageBinding binding)
     {
         m_binding = std::move(binding);
-        m_deleteStyleButton.setVisible(static_cast<bool>(m_binding.onDeleteStyle));
         if (m_binding.styles)
         {
             m_metricsGrid.bind(*m_binding.styles, m_binding.style,
@@ -385,19 +386,13 @@ namespace Themes_App
         return stated ? &stated->rules : nullptr;
     }
 
-    // Adding a style moves every style, so every page is built again before the edit goes on -
-    // this one too, whose rows then stand on the style as it is now.
     ControlStyle& ElementPage::statedStyle()
     {
         if (ControlStyle* stated = shownStyle())
             return *stated;
-        m_binding.styles->add(ControlStyle{ .name = m_binding.style });
-        if (m_binding.onStylesChanged)
-            m_binding.onStylesChanged();
-        return *shownStyle();
+        noReach("the element page must be bound to a style in the theme");
     }
 
-    // A new rule is appended, so it applies after the rest of the list.
     void ElementPage::addRule()
     {
         const PaintChannel output = m_binding.outputs.empty()
@@ -465,17 +460,15 @@ namespace Themes_App
         rulesChanged(EditPhase::Settled, what, at);
     }
 
-    // The button stands outside the grid, so the rows can go at once - the selection is read
-    // before they do. A style the built-in states goes back to that whole, facts and sizes and
-    // all; a style of the theme's own keeps its facts and loses its rules, what it dropped and
-    // its sizes. The cell keeps its place among the rows that stand after, and nothing is held.
     void ElementPage::resetRules()
     {
         const RuleSelection at = selection();
         ControlStyle& stated = statedStyle();
         if (m_binding.defaults)
         {
-            stated = *m_binding.defaults;
+            stated.rules = m_binding.defaults->rules;
+            stated.dropped = m_binding.defaults->dropped;
+            stated.metrics = m_binding.defaults->metrics;
         }
         else
         {
@@ -752,34 +745,22 @@ namespace Themes_App
         m_rebuildTimer.start(MilliSeconds{ 0u });
     }
 
-    // The base may be any style whose chain does not reach this one, so no chain turns in a
-    // circle; what the style stands on, any style whose standing does not. The picks are put on
-    // with the handlers held off: the lists changing is no edit.
     void ElementPage::showFacts()
     {
         const ControlStyle* stated = shownStyle();
+        const std::wstring_view base = stated ? std::wstring_view{ stated->base } : std::wstring_view{};
+        m_baseName.text() = base.empty()
+            ? Text{ ColoredText{ InkGrade::Muted, L"none" } }
+            : Text{ base };
         m_showingFacts = true;
-        m_baseItems.clear();
-        m_baseTokens.clear();
         m_standsOnItems.clear();
         m_standsOnTokens.clear();
-        m_baseItems.push_back(TextItem{ PlaceHolderText{ L"none" } });
-        m_baseTokens.emplace_back();
         m_standsOnItems.push_back(TextItem{ PlaceHolderText{ L"none" } });
         m_standsOnTokens.emplace_back();
         for (const SetName& name : m_names)
         {
             if (name.token == m_binding.style)
                 continue;
-            bool reachesThis = false;
-            for (const ControlStyle* link : m_binding.styles->chainOf(name.token))
-                if (link->name == m_binding.style)
-                    reachesThis = true;
-            if (!reachesThis)
-            {
-                m_baseItems.push_back(TextItem{ Text{ name.name } });
-                m_baseTokens.push_back(name.token);
-            }
             bool standsOnThis = false;
             std::vector<const ControlStyle*> walked{};
             for (const ControlStyle* step = m_binding.styles->of(name.token); step;
@@ -805,13 +786,8 @@ namespace Themes_App
             for (const std::wstring_view pigment : k_pigmentKeys)
                 m_seedItems.push_back(TextItem{ Text{ pigment } });
         }
-        const std::wstring base = stated ? stated->base : std::wstring{};
         const std::wstring standsOn = stated ? stated->standsOn : std::wstring{};
-        const auto baseItem = std::ranges::find(m_baseTokens, base);
         const auto standsOnItem = std::ranges::find(m_standsOnTokens, standsOn);
-        m_basePick.setItemIndex(baseItem == m_baseTokens.end()
-            ? 0ull
-            : static_cast<std::size_t>(baseItem - m_baseTokens.begin()));
         m_standsOnPick.setItemIndex(standsOnItem == m_standsOnTokens.end()
             ? 0ull
             : static_cast<std::size_t>(standsOnItem - m_standsOnTokens.begin()));
@@ -820,25 +796,11 @@ namespace Themes_App
             : 0ull);
         m_showingFacts = false;
         // A list is measured as its widest face, and the lists have changed under the faces.
-        for (ComboBox* pick : { &m_basePick, &m_standsOnPick, &m_seedPick })
+        for (ComboBox* pick : { &m_standsOnPick, &m_seedPick })
         {
             pick->invalidate();
             pick->invalidateFormAlign();
         }
-    }
-
-    void ElementPage::basePicked()
-    {
-        if (m_showingFacts || !m_basePick.itemIndex())
-            return;
-        const std::wstring& picked = m_baseTokens[*m_basePick.itemIndex()];
-        ControlStyle& stated = statedStyle();
-        if (stated.base == picked)
-            return;
-        stated.base = picked;
-        const RuleSelection at = selection();
-        rebuild();
-        rulesChanged(EditPhase::Settled, changeStepName(L"Base"), at);
     }
 
     void ElementPage::standsOnPicked()
@@ -850,7 +812,7 @@ namespace Themes_App
         if (stated.standsOn == picked)
             return;
         stated.standsOn = picked;
-        rulesChanged(EditPhase::Settled, changeStepName(L"Stands on"), selection());
+        rulesChanged(EditPhase::Settled, changeStepName(L"Preview surface"), selection());
     }
 
     void ElementPage::seedPicked()

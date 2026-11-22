@@ -18,6 +18,40 @@ namespace Themes_App
 {
     using namespace ClaFi;
 
+    namespace
+    {
+        [[nodiscard]] std::wstring wideLiteral(const std::wstring_view value)
+        {
+            std::wstring literal{ L"L\"" };
+            for (const wchar_t character : value)
+            {
+                switch (character)
+                {
+                    case L'\\':
+                        literal.append(L"\\\\");
+                        break;
+                    case L'"':
+                        literal.append(L"\\\"");
+                        break;
+                    case L'\n':
+                        literal.append(L"\\n");
+                        break;
+                    case L'\r':
+                        literal.append(L"\\r");
+                        break;
+                    case L'\t':
+                        literal.append(L"\\t");
+                        break;
+                    default:
+                        literal.push_back(character);
+                        break;
+                }
+            }
+            literal.push_back(L'"');
+            return literal;
+        }
+    }
+
     // themeToCppCode
 
     std::wstring themeToCppCode(const AppTheme& theme, CodeContent content, CodeScope scope)
@@ -563,18 +597,18 @@ namespace Themes_App
             true));
         write(L"ControlStyle{").newLine();
         --fieldsLeft;
-        indent(level + 1ull).write(L".name = L\"").write(style.name).write(L"\"");
+        indent(level + 1ull).write(L".name = ").write(wideLiteral(style.name));
         fieldEnd(fieldsLeft);
         if (statesBase)
         {
             --fieldsLeft;
-            indent(level + 1ull).write(L".base = L\"").write(style.base).write(L"\"");
+            indent(level + 1ull).write(L".base = ").write(wideLiteral(style.base));
             fieldEnd(fieldsLeft);
         }
         if (statesStandsOn)
         {
             --fieldsLeft;
-            indent(level + 1ull).write(L".standsOn = L\"").write(style.standsOn).write(L"\"");
+            indent(level + 1ull).write(L".standsOn = ").write(wideLiteral(style.standsOn));
             fieldEnd(fieldsLeft);
         }
         if (statesSeed)
@@ -618,7 +652,11 @@ namespace Themes_App
         }
         const ControlStyleList& list = m_theme.styles.list;
         if (list.empty())
+        {
+            memberName(L"styles").write(L".list = {}").closeLine();
+            m_statedAnyMember = true;
             return;
+        }
         memberName(L"styles").write(L".list = {").newLine();
         for (std::size_t i = 0ull; i != list.size(); ++i)
         {
@@ -657,7 +695,7 @@ namespace Themes_App
                 continue;
             if (m_statedAnyStyle)
                 newLine();
-            memberName(L"styles").write(L".remove(L\"").write(defaultStyle.name).write(L"\")");
+            memberName(L"styles").write(L".remove(").write(wideLiteral(defaultStyle.name)).write(L")");
             closeLine();
             m_statedAnyStyle = true;
             m_statedAnyMember = true;

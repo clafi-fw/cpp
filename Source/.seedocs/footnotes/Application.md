@@ -312,8 +312,8 @@ Every name a baked set has an entry for, in the order the entries stand.
   through addBuiltInStyles. An application's own styles live here, the framework's in the
   framework.
 - `themesOffered` - which themes the application lists: those stating a style for every element
-  it names, so nothing it wears paints nothing, or every theme. A theme editor takes every one
-  and gives a theme the styles it lacks.
+  it names, or every theme. Themes opens files from the themes folder and uses the element
+  check in its Settings picker.
 
 ## addBuiltInStyles
 

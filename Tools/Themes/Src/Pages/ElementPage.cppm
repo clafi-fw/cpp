@@ -5,6 +5,7 @@ import Themes_App.MetricsGrid;
 import Themes_App.PageKinds;
 import Themes_App.RuleSlider;
 
+import ClaFi.Icons.PlusMark;
 import ClaFi.Icons.HueIcon;
 import ClaFi.Icons.LuminosityIcon;
 import ClaFi.Icons.PlusMark;
@@ -83,11 +84,7 @@ namespace Themes_App
     export using OnGetListRuleBase = std::function<RuleBase(const ColorRule&, RuleChannel)>;
     // The theme's styles as the tree lists them, asked for as a page's rows are built.
     export using OnGetStyleNames = std::function<SetNames()>;
-    // What a page calls to take its style out of the theme - empty for one the framework states.
-    export using OnDeleteStyle = std::function<void()>;
-    // What a page calls once it has put its style into the theme, which moves every style: every
-    // page's editors hold their rules by address, so every page is built again.
-    export using OnStylesChanged = std::function<void()>;
+    export using OnElementCommand = std::function<void()>;
 
     // What a page shows and what it calls, handed over whole.
     export struct PageBinding
@@ -100,8 +97,8 @@ namespace Themes_App
         OnGetListRuleBase ruleBase{};
         OnGetStyleNames styleNames{};
         OnRulesChanged onRulesChanged{};
-        OnDeleteStyle onDeleteStyle{};      // empty for a style the framework states
-        OnStylesChanged onStylesChanged{};
+        OnElementCommand onAddChild{};
+        OnElementCommand onDeleteStyle{};
     };
 
     // The grid's columns, as their tags name them.
@@ -113,10 +110,6 @@ namespace Themes_App
         Elevation
     };
 
-    // One style's page: the three facts it states, then a Rules section - its own rules under
-    // their tool bar, and under them the rules its chain gives it, each base's in a group of its
-    // own - and a Sizes section. The whole page is one focus scope, as a SeeDocs page is, holding
-    // the current item and the rules held for Delete and a drag. See Grids#grid
     export class ElementPage : public Panel
     {
     public:
@@ -157,7 +150,6 @@ namespace Themes_App
         [[nodiscard]] ControlStyle* shownStyle() const;
         // The style's own rules, and nullptr while the theme states no style of that name.
         [[nodiscard]] ColorRules* rules() const;
-        // The style, made with no base where the theme states none - an edit is about to land.
         [[nodiscard]] ControlStyle& statedStyle();
         void addRule();
         void deleteSelectedRules();
@@ -178,9 +170,7 @@ namespace Themes_App
             const ColorRule&) const;
         void dropRule(std::size_t level, std::size_t rule);
         void restoreRule(std::size_t level, std::size_t rule);
-        // Fills the three lists with what the style may state and puts its facts on them.
         void showFacts();
-        void basePicked();
         void standsOnPicked();
         void seedPicked();
         [[nodiscard]] Grids::Column& column(RuleColumn);
@@ -214,10 +204,8 @@ namespace Themes_App
         std::set<std::wstring> m_shutBases{}; // the bases whose groups stay shut through rebuilds
         InheritedRows m_inheritedRows{}; // one per rule of a base, dropped ones too
         SetNames m_names{}; // the styles as the tree names them, read as the rows are built
-        TextItems m_baseItems{}; // none, then the styles the base may be
         TextItems m_standsOnItems{}; // none, then the styles the style may stand on
         TextItems m_seedItems{}; // none, then the pigments
-        std::vector<std::wstring> m_baseTokens{}; // the style each base item stands for
         std::vector<std::wstring> m_standsOnTokens{}; // the style each stands-on item stands for
         bool m_showingFacts{ false }; // set while showFacts puts the picks on, which is no edit
 
@@ -236,17 +224,25 @@ namespace Themes_App
             IconSize{ 18.0f },
             ButtonViewMode::IconOnly,
             OnDrawIcon{ Icons::ResetIcon::draw },
-            L"Reset to defaults",
+            L"Reset rules and sizes",
             NavigationReach::No,
             MouseFocus::Keep
         ) };
 
-        // Shown on a style of the theme's own: a style the framework states stays.
+        ToolButton& m_addChildButton{ m_styleTools.add<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            OnDrawIcon{ Icons::PlusMark::draw },
+            L"Add child element",
+            NavigationReach::No,
+            MouseFocus::Keep
+        ) };
+
         ToolButton& m_deleteStyleButton{ m_styleTools.add<ToolButton>(
             IconSize{ 18.0f },
             ButtonViewMode::IconOnly,
             OnDrawIcon{ Icons::XMark::draw },
-            L"Delete style"
+            L"Delete element"
         ) };
 
         // The scope every item of the page stands in - the facts, the bars' buttons and both
@@ -264,9 +260,6 @@ namespace Themes_App
             }
         ) };
 
-        // The three facts a style states beside its rules, each a framed field with its list. The
-        // fields wrap where the page is narrower than the three, and stand packed: each is
-        // aligned to the start, so the row hands its surplus to none of them.
         StackPanel& m_facts{ m_pageBox.body().add<StackPanel>(
             Orientation::HorizontalWrap,
             Spacing{ 12.0f }
@@ -276,7 +269,9 @@ namespace Themes_App
             Orientation::Horizontal,
             HorizontalAlign::Left,
             UiElement::Field,
-            Spacing{ 6.0f }
+            Padding{ 6.0f, 4.0f },
+            Spacing{ 8.0f },
+            TooltipText{ L"The element this style inherits rules and sizes from" }
         ) };
 
         Label& m_baseLabel{ m_baseFact.add<Label>(
@@ -284,9 +279,7 @@ namespace Themes_App
             VerticalTextAnchor::Center
         ) };
 
-        ComboBox& m_basePick{ m_baseFact.add<ComboBox>(
-            m_baseItems
-        ) };
+        Label& m_baseName{ m_baseFact.add<Label>(VerticalTextAnchor::Center) };
 
         StackPanel& m_standsOnFact{ m_facts.add<StackPanel>(
             Orientation::Horizontal,
@@ -296,12 +289,13 @@ namespace Themes_App
         ) };
 
         Label& m_standsOnLabel{ m_standsOnFact.add<Label>(
-            Text{ ColoredText{ InkGrade::Muted, L"Stands on" } },
+            Text{ ColoredText{ InkGrade::Muted, L"Preview surface" } },
             VerticalTextAnchor::Center
         ) };
 
         ComboBox& m_standsOnPick{ m_standsOnFact.add<ComboBox>(
-            m_standsOnItems
+            m_standsOnItems,
+            TooltipText{ L"Choose the surface to use as the preview background" }
         ) };
 
         StackPanel& m_seedFact{ m_facts.add<StackPanel>(
@@ -467,18 +461,20 @@ namespace Themes_App
         // Offered only where a reset would change something.
         m_resetButton.onGetState([this](GetStateEvent& event) {
             const ControlStyle* stated = shownStyle();
-            event.state.enabled = stated && (m_binding.defaults
-                ? *stated != *m_binding.defaults
-                : !stated->rules.empty() || !stated->dropped.empty()
-                    || !stated->metrics.empty());
+            const ControlStyle* defaults = m_binding.defaults;
+            event.state.enabled = stated && (defaults
+                ? stated->rules != defaults->rules || stated->dropped != defaults->dropped
+                    || stated->metrics != defaults->metrics
+                : !stated->rules.empty() || !stated->dropped.empty() || !stated->metrics.empty());
             event.stopPropagation();
+        });
+        m_addChildButton.onClick([this](ClickEvent&) {
+            if (m_binding.onAddChild)
+                m_binding.onAddChild();
         });
         m_deleteStyleButton.onClick([this](ClickEvent&) {
             if (m_binding.onDeleteStyle)
                 m_binding.onDeleteStyle();
-        });
-        m_basePick.onChange([this](ComboBoxChangeEvent&) {
-            basePicked();
         });
         m_standsOnPick.onChange([this](ComboBoxChangeEvent&) {
             standsOnPicked();

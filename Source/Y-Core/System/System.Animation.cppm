@@ -128,9 +128,7 @@ namespace ClaFi
         std::vector<TickEndListener> m_tickEndListeners{};
         UiTimer m_timer;
         const OnEndAnimation m_onEndAnimation;
-        // The collection is being walked. Whatever would restructure it - trimming to capacity -
-        // waits for the walk to end. Appending and claiming a vacant place are safe at any time,
-        // and are how a tick starts an animation.
+        // The tick owns the collection while it trims and steps its animations.
         bool m_ticking{ false };
     };
 
@@ -240,30 +238,7 @@ namespace ClaFi
     void AnimationController::start(void* control, const AnimationSlot& slot,
                                     float currentValue, float endValue, const OnAnimate& onAnimate)
     {
-        Animation* animation = nullptr;
-        // Trimming erases, which the walk would not survive, so it waits. What it leaves standing
-        // is one tick's worth of animations, and the next start outside a tick takes them.
-        while (!m_ticking && m_animations.size() > k_maxAnimations)
-        {
-            Animation& animationToRemove = *m_animations.begin();
-            if (!animationToRemove.vacant())
-            {
-                if (animationToRemove.control == control && animationToRemove.slot == &slot)
-                {
-                    animation = &animationToRemove;
-                    break;
-                }
-                animateControl(
-                    animationToRemove.control,
-                    *animationToRemove.slot,
-                    animationToRemove.onAnimate,
-                    animationToRemove.endValue
-                );
-            }
-            m_animations.pop_front();
-        }
-        if (!animation)
-            animation = m_animations.find(control, slot);
+        Animation* animation = m_animations.find(control, slot);
         // A request naming the end value a running animation is already heading to is that
         // animation, so it is left alone. Stamping it afresh would restart the whole duration
         // from wherever the value has reached, and a control re-invalidated once per tick - a
@@ -374,6 +349,16 @@ namespace ClaFi
     void AnimationController::timerTick()
     {
         m_ticking = true;
+        // Finishing a removed animation can start more; trim only the entries this tick inherited.
+        const std::size_t initialCount = m_animations.size();
+        for (std::size_t remaining = initialCount; remaining > k_maxAnimations; --remaining)
+        {
+            const Animation completed = std::move(m_animations.front());
+            m_animations.pop_front();
+            if (!completed.vacant())
+                animateControl(completed.control, *completed.slot, completed.onAnimate,
+                    completed.endValue);
+        }
         for (std::size_t i = 0; i < m_animations.size(); ++i)
         {
             Animation& animation = m_animations[i];

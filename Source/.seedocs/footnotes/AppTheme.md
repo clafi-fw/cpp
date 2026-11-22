@@ -82,8 +82,8 @@ of a kind stand over, or an application's own.
 
 - `name` - what a control's handle is matched against, and what a file states the style under.
 - `base` - the style whose rules and sizes this one takes first, by name. Empty for a style
-  standing over none. The framework's styles stand over AnyElement, AnyWindow and AnyNonWindow,
-  and over AnyButton, AnyIndicator, AnyCallout and DoDont - see BaseElements.
+  standing over none. In Themes, the element's parent is its base. Dropping an element on
+  another element changes its base. Dropping it on Elements makes it a root.
 - `standsOn` - what the element is painted on, for the editor's preview. Empty for a window root,
   which stands on the bare color of the mode.
 - `seed` - the pigment the surface starts its hue from, where the hue of what it stands on is not

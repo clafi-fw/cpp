@@ -839,6 +839,28 @@ namespace ClaFi
                     .radius = 6.0f,
                     .padding = Padding{ 12.0f, 10.0f }
                 }
+            },
+            ControlStyle{
+                .name = L"Testee",
+                .base = L"AnyNonWindow",
+                .standsOn = L"Section",
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 4.0f,
+                    .padding = Padding{ 8.0f, 4.0f },
+                    .minSize = MinSize{ 40.0f, 24.0f }
+                }
+            },
+            ControlStyle{
+                .name = L"Bestee",
+                .base = L"AnyNonWindow",
+                .standsOn = L"Section",
+                .metrics = {
+                    .border = Thickness::Thin,
+                    .radius = 4.0f,
+                    .padding = Padding{ 8.0f, 4.0f },
+                    .minSize = MinSize{ 40.0f, 24.0f }
+                }
             }
         };
     }

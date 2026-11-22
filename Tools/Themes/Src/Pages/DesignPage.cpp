@@ -7,9 +7,6 @@ import Themes_App.PageKinds;
 import Themes_App.PreviewPage;
 import Themes_App.RuleSlider;
 
-import ClaFi.Application.ThemesManager_Elements;
-
-import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.Button;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
@@ -26,7 +23,6 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Foundation;
-import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
@@ -41,211 +37,193 @@ namespace Themes_App
 
     namespace
     {
+        constexpr std::wstring_view k_elementsAnchor{ L"Elements" };
+        constexpr std::wstring_view k_stylePrefix{ L"Style/" };
+        constexpr std::wstring_view k_newStyleName{ L"New element" };
         constexpr std::array k_selectedTextOutputs{ PaintChannel::Surface, PaintChannel::Text };
         constexpr std::array k_foundTextOutputs{ PaintChannel::Surface };
 
-        constexpr NamedStyle k_anyElement{
-            .name = L"Any Element",
-            .token = BaseElements::AnyElement
+        struct StylePreview
+        {
+            std::wstring_view name{};
+            PreviewPage page{};
         };
 
-        constexpr NamedStyle k_anyWindow{
-            .name = L"Any Window",
-            .token = BaseElements::AnyWindow,
-            .preview = PreviewPage::Windows
+        constexpr StylePreview k_stylePreviews[]{
+            { L"AnyWindow", PreviewPage::Windows },
+            { L"Dialog", PreviewPage::Windows },
+            { L"DialogTitle", PreviewPage::Windows },
+            { L"Menu", PreviewPage::Windows },
+            { L"Tooltip", PreviewPage::Windows },
+            { L"Dropdown", PreviewPage::Windows },
+            { L"Page", PreviewPage::Surfaces },
+            { L"Section", PreviewPage::Surfaces },
+            { L"SectionHeader", PreviewPage::Surfaces },
+            { L"Expander", PreviewPage::Surfaces },
+            { L"Divider", PreviewPage::Surfaces },
+            { L"ToolBar", PreviewPage::Surfaces },
+            { L"Field", PreviewPage::Inputs },
+            { L"AnyButton", PreviewPage::Inputs },
+            { L"Button", PreviewPage::Inputs },
+            { L"ToolButton", PreviewPage::Inputs },
+            { L"TextBox", PreviewPage::Inputs },
+            { L"Slider", PreviewPage::Inputs },
+            { L"Grid", PreviewPage::Grid },
+            { L"GridHeader", PreviewPage::Grid },
+            { L"GridRow", PreviewPage::Grid },
+            { L"GridCell", PreviewPage::Grid },
+            { L"AnyIndicator", PreviewPage::Selection },
+            { L"SelectionIndicator", PreviewPage::Selection },
+            { L"HoverIndicator", PreviewPage::Selection },
+            { L"ListItem", PreviewPage::Selection },
+            { L"SelectedText", PreviewPage::Selection },
+            { L"FoundText", PreviewPage::Selection },
+            { L"Tab", PreviewPage::Tabs },
+            { L"ScrollBar", PreviewPage::Scrolling },
+            { L"ScrollButton", PreviewPage::Scrolling },
+            { L"ScrollThumb", PreviewPage::Scrolling },
+            { L"AnyCallout", PreviewPage::Callouts },
+            { L"InfoCallout", PreviewPage::Callouts },
+            { L"QuestionCallout", PreviewPage::Callouts },
+            { L"WarningCallout", PreviewPage::Callouts },
+            { L"ErrorCallout", PreviewPage::Callouts },
+            { L"OkCallout", PreviewPage::Callouts },
+            { L"DoDont", PreviewPage::DoDont },
+            { L"Do", PreviewPage::DoDont },
+            { L"Dont", PreviewPage::DoDont },
+            { L"CodeBlock", PreviewPage::CodeBlock },
+            { k_testeeName, PreviewPage::TestSubjects },
+            { k_besteeName, PreviewPage::TestSubjects }
         };
 
-        constexpr NamedStyle k_anyNonWindow{
-            .name = L"Any Non-Window",
-            .token = BaseElements::AnyNonWindow
-        };
-
-        constexpr NamedStyle k_anyButton{
-            .name = L"Any Button",
-            .token = BaseElements::AnyButton,
-            .preview = PreviewPage::Inputs
-        };
-
-        constexpr NamedStyle k_anyIndicator{
-            .name = L"Any Indicator",
-            .token = BaseElements::AnyIndicator,
-            .preview = PreviewPage::Selection
-        };
-
-        constexpr NamedStyle k_anyCallout{
-            .name = L"Any Callout",
-            .token = BaseElements::AnyCallout,
-            .preview = PreviewPage::Callouts
-        };
-
-        constexpr NamedStyle k_doDont{
-            .name = L"Do and Don't",
-            .token = BaseElements::DoDont,
-            .preview = PreviewPage::DoDont
-        };
-
-        constexpr NamedStyle k_testee{
-            .name = k_testeeName,
-            .token = k_testeeName,
-            .preview = PreviewPage::TestSubjects
-        };
-
-        constexpr NamedStyle k_bestee{
-            .name = k_besteeName,
-            .token = k_besteeName,
-            .preview = PreviewPage::TestSubjects
-        };
-
-        constexpr auto k_windowRoots = std::to_array<CategoryEntry>({
-            { UiElement::Dialog, PreviewPage::Windows },
-            { UiElement::Menu, PreviewPage::Windows },
-            { UiElement::Tooltip, PreviewPage::Windows },
-            { UiElement::Dropdown, PreviewPage::Windows }
-        });
-
-        constexpr auto k_surfaces = std::to_array<CategoryEntry>({
-            { UiElement::Page, PreviewPage::Surfaces },
-            { UiElement::Section, PreviewPage::Surfaces },
-            { UiElement::SectionHeader, PreviewPage::Surfaces },
-            { UiElement::Expander, PreviewPage::Surfaces },
-            { UiElement::Field, PreviewPage::Inputs },
-            { UiElement::Divider, PreviewPage::Surfaces },
-            { UiElement::ToolBar, PreviewPage::Surfaces },
-            { UiElement::DialogTitle, PreviewPage::Windows },
-            { UiElement::Grid, PreviewPage::Grid },
-            { UiElement::GridHeader, PreviewPage::Grid },
-            { UiElement::GridRow, PreviewPage::Grid },
-            { UiElement::GridCell, PreviewPage::Grid }
-        });
-
-        constexpr auto k_controls = std::to_array<CategoryEntry>({
-            { k_anyButton },
-            { UiElement::Button, PreviewPage::Inputs },
-            { UiElement::ToolButton, PreviewPage::Inputs },
-            { UiElement::ListItem, PreviewPage::Selection },
-            { UiElement::TextBox, PreviewPage::Inputs },
-            { UiElement::Slider, PreviewPage::Inputs },
-            { UiElement::Tab, PreviewPage::Tabs },
-            { UiElement::ScrollBar, PreviewPage::Scrolling },
-            { UiElement::ScrollButton, PreviewPage::Scrolling },
-            { UiElement::ScrollThumb, PreviewPage::Scrolling }
-        });
-
-        constexpr auto k_focusAndSelection = std::to_array<CategoryEntry>({
-            { k_anyIndicator },
-            { UiElement::SelectionIndicator, PreviewPage::Selection },
-            { UiElement::HoverIndicator, PreviewPage::Selection },
-            { UiElement::SelectedText, PreviewPage::Selection },
-            { UiElement::FoundText, PreviewPage::Selection }
-        });
-
-        constexpr auto k_blocks = std::to_array<CategoryEntry>({
-            { k_anyCallout },
-            { UiElement::InfoCallout, PreviewPage::Callouts },
-            { UiElement::QuestionCallout, PreviewPage::Callouts },
-            { UiElement::WarningCallout, PreviewPage::Callouts },
-            { UiElement::ErrorCallout, PreviewPage::Callouts },
-            { UiElement::OkCallout, PreviewPage::Callouts },
-            { k_doDont },
-            { UiElement::Do, PreviewPage::DoDont },
-            { UiElement::Dont, PreviewPage::DoDont },
-            { UiElement::CodeBlock, PreviewPage::CodeBlock }
-        });
-
-        constexpr auto k_testSubjects = std::to_array<CategoryEntry>({
-            { k_testee },
-            { k_bestee }
-        });
-
-        // The theme's own styles stand under the last category, listed as the theme is read.
-        constexpr std::wstring_view k_ownStylesToken{ L"OwnStyles" };
-
-        constexpr std::array k_colorCategories{
-            Category{ L"Window roots", L"WindowRoots", k_windowRoots },
-            Category{ L"Surfaces", L"Surfaces", k_surfaces },
-            Category{ L"Controls", L"Controls", k_controls },
-            Category{ L"Focus & Selection", L"FocusAndSelection", k_focusAndSelection },
-            Category{ L"Blocks", L"Blocks", k_blocks },
-            Category{ L"Test subjects", L"TestSubjects", k_testSubjects },
-            Category{ L"Own styles", k_ownStylesToken, {} }
-        };
-
-        // What a style of the theme's own is called until it is named, counted up past the first.
-        constexpr std::wstring_view k_newStyleName{ L"New style" };
-
-        constexpr TreeRoot k_colorsRoot{
-            .name = L"Colors",
-            .token = L"Colors",
-            .categories = k_colorCategories
-        };
-
-        constexpr TreeRoot k_textStylesRoot{
-            .name = L"Text Styles",
-            .token = L"TextStyles"
-        };
-
-        // A row for a style of the theme's own, which opens for the style's name.
-        class OwnStyleRow : public WithInPlaceEdit<TreeItem>
+        template<typename Row>
+        class EditableElementRow : public WithInPlaceEdit<Row>
         {
         public:
-            template<typename... Args>
-            OwnStyleRow(const CreateParams&, TreeView& tree, std::size_t level, Args&&...);
+            using WithInPlaceEdit<Row>::WithInPlaceEdit;
         public:
-            void setStyleName(const std::wstring_view value) { m_styleName = value; }
+            void setStyleName(std::wstring_view name) { m_styleName = name; }
         protected:
-            // The name alone: the icon and the kind word around it are the row's, not the style's.
-            void getEditorText(Text& text) const override { text << m_styleName; }
+            void getEditorText(Text&) const override;
         private:
             std::wstring m_styleName{};
         };
 
-        template<typename... Args>
-        OwnStyleRow::OwnStyleRow(const CreateParams& params, TreeView& tree,
-            const std::size_t level, Args&&... args)
-            :
-            WithInPlaceEdit<TreeItem>{ params, tree, level, std::forward<Args>(args)... }
+        template<typename Row>
+        void EditableElementRow<Row>::getEditorText(Text& text) const
         {
+            text << m_styleName;
         }
 
-        [[nodiscard]] std::wstring_view trimmed(std::wstring_view text)
+        using ElementItem = EditableElementRow<TreeItem>;
+        using ElementHeader = EditableElementRow<TreeNodeHeader>;
+
+        [[nodiscard]] std::wstring styleAnchor(const std::wstring_view name)
         {
-            trimLeft(text);
-            trimRight(text);
-            return text;
+            std::wstring anchor{ k_stylePrefix };
+            for (const wchar_t character : name)
+            {
+                if (character == L'%')
+                    anchor.append(L"%25");
+                else
+                    anchor.push_back(character);
+            }
+            return anchor;
         }
+
+        [[nodiscard]] Text rowText(const PageKind kind, const std::wstring_view name)
+        {
+            return Text{
+                pageIcon(kind, RowIcons::Size),
+                Space{ RowIcons::Gap },
+                name
+            };
+        }
+
+        [[nodiscard]] PaintChannels outputsOf(const std::wstring_view style)
+        {
+            if (style == L"SelectedText")
+                return k_selectedTextOutputs;
+            if (style == L"FoundText")
+                return k_foundTextOutputs;
+            return {};
+        }
+    }
+
+    ElementTree::ElementTree(const CreateParams& params, DesignPage& design)
+        :
+        TreeView{ params, Padding{ 4.0f } },
+        m_design{ design }
+    {
+    }
+
+    void ElementTree::nestedDrag(DragEvent& event)
+    {
+        TreeView::nestedDrag(event);
+        m_design.dragElement(event);
+    }
+
+    void ElementTree::nestedPressUp(PressUpEvent& event)
+    {
+        TreeView::nestedPressUp(event);
+        m_design.releaseElement(event);
+    }
+
+    void ElementTree::nestedKeyDown(KeyDownEvent& event)
+    {
+        if (event.key == Keys::Escape && m_design.cancelDrag())
+        {
+            event.handled = true;
+            return;
+        }
+        TreeView::nestedKeyDown(event);
+    }
+
+    void ElementTree::adjustNestedControlVisualState(const Control& control, VisualState& state) const
+    {
+        TreeView::adjustNestedControlVisualState(control, state);
+        if (&control == m_design.m_dropTarget)
+            state.selected = true;
     }
 
     std::wstring_view DesignPage::pickedPage() const
     {
         if (const TreeEntry* entry = pickedEntry())
-            return tokenOf(*entry);
+            return entry->anchor;
         return {};
     }
 
     NodePreview DesignPage::pickedPreview() const
     {
-        if (const TreeEntry* entry = pickedEntry())
-            return entry->preview;
-        return {};
+        const TreeEntry* entry = pickedEntry();
+        if (!entry || !entry->elementPage)
+            return {};
+
+        const auto preview = std::ranges::find(k_stylePreviews, entry->name, &StylePreview::name);
+        return {
+            .page = preview == std::end(k_stylePreviews) ? PreviewPage::Overview : preview->page,
+            .editsSizes = true
+        };
     }
 
-    // A token no page goes by names a style the theme no longer states - undone, or another
-    // theme's - so it lands where that style would be listed. No token at all is the palette.
-    void DesignPage::pickPage(const std::wstring_view token)
+    void DesignPage::pickPage(const std::wstring_view anchor)
     {
-        auto found = std::ranges::find(m_entries, token, &DesignPage::tokenOf);
+        auto found = std::ranges::find(m_entries, anchor, &TreeEntry::anchor);
+        if (found == m_entries.end() && !anchor.empty() && !anchor.starts_with(k_stylePrefix))
+            found = std::ranges::find(m_entries, styleAnchor(anchor), &TreeEntry::anchor);
         if (found == m_entries.end())
+            found = m_entries.begin() + (anchor.empty() ? 0ull : k_rootIndex);
+
+        for (const TreeEntry& entry : m_entries | std::views::drop(k_rootIndex))
         {
-            const std::wstring_view fallback = token.empty() ? k_paletteToken : k_ownStylesToken;
-            found = std::ranges::find(m_entries, fallback, &DesignPage::tokenOf);
+            if (entry.node && entry.node->rows().containsNested(found->row))
+                entry.node->header().setExpanded(true);
         }
-        m_tree.setCurrentItem(found->item);
+        if (m_tree.currentItem() != found->row)
+            m_tree.setCurrentItem(found->row);
         showPickedPage();
     }
 
-    // The keyboard follows only while the design is on screen - with a code page up it stays in
-    // the code. A page change takes it to the tree item, as a click on the item does, and the
-    // page's selection takes it on into the grid.
     void DesignPage::showPlace(const DesignPlace& place)
     {
         const TreeEntry* before = pickedEntry();
@@ -255,13 +233,11 @@ namespace Themes_App
             return;
         const TakeFocus takeFocus = visible() ? TakeFocus::Yes : TakeFocus::No;
         if (entry != before && takeFocus == TakeFocus::Yes)
-            entry->item->setFocus();
-        if (entry->rules)
-            entry->rules->select(place.selection, takeFocus);
+            entry->row->setFocus();
+        if (entry->elementPage)
+            entry->elementPage->select(place.selection, takeFocus);
     }
 
-    // The theme's own styles are listed once the theme is known, their pages bound as they are
-    // made.
     void DesignPage::bind(AppTheme& theme, const OnGetElementRuleBase& ruleBase,
         const OnRulesChanged& onRulesChanged)
     {
@@ -269,22 +245,27 @@ namespace Themes_App
         m_styles = &theme.styles;
         m_ruleBase = ruleBase;
         m_onRulesChanged = onRulesChanged;
-        for (std::size_t i = 0ull; i != m_staticCount; ++i)
-            bindPage(i);
-        syncOwnStyles();
+        rebuildTree();
     }
 
     void DesignPage::rebuildRules()
     {
-        syncOwnStyles();
+        const bool sameTree = std::ranges::equal(m_links, m_styles->list,
+            [](const ElementLink& link, const ControlStyle& style) {
+                return link.name == style.name && link.base == style.base;
+            });
+        if (!sameTree)
+        {
+            rebuildTree();
+            return;
+        }
         for (const TreeEntry& entry : m_entries)
-            if (entry.rules)
-                entry.rules->rebuild();
+        {
+            if (entry.elementPage)
+                entry.elementPage->rebuild();
+        }
     }
 
-    // A hidden page is not laid out, and a scroll asked for a control the pass has not placed is
-    // refused - see Control::scrollIntoView. So the item picked while this page was off screen is
-    // brought into view as the page comes on, by the pass that places it.
     void DesignPage::visibilityChanged()
     {
         if (visible() && m_tree.currentItem())
@@ -293,505 +274,303 @@ namespace Themes_App
 
     void DesignPage::buildTree()
     {
+        constexpr std::wstring_view k_paletteTitle{ L"Palette" };
         writePageTitle(m_paletteTitle.text(), PageKind::Palette, k_paletteTitle);
-        const std::array themeWidePages{
-            TreeEntry{ .page = &m_palettePage },
-            entryOf(k_anyElement),
-            entryOf(k_anyWindow),
-            entryOf(k_anyNonWindow)
-        };
-        addRoot(k_colorsRoot, themeWidePages);
-        m_tree.addDivider(Thickness::Heavy, Padding{ 4.0f, 6.0f });
-        addRoot(k_textStylesRoot, {});
-        m_staticCount = m_entries.size();
+
+        TreeItem& palette = m_tree.addItem(rowText(PageKind::Palette, k_paletteTitle));
+        addEntry({
+            .anchor = std::wstring{ k_paletteToken },
+            .row = &palette,
+            .page = &m_palettePage
+        });
+
+        HeaderText rootText{};
+        rootText << rowText(PageKind::Folder, k_elementsAnchor);
+        TreeNode& root = m_tree.addNode(std::move(rootText));
+        addEntry({
+            .anchor = std::wstring{ k_elementsAnchor },
+            .row = &root.header(),
+            .page = &m_elementsPage,
+            .node = &root
+        });
+
+        Panel& topBar = m_elementsPage.createTopBar<Panel>(Padding{ 12.0f, 8.0f });
+        Label& title = topBar.createBody<Label>(VerticalTextAnchor::Center);
+        writePageTitle(title.text(), PageKind::Folder, k_elementsAnchor);
+        ToolButton& addButton = topBar.createRightBar<ToolButton>(
+            IconSize{ 18.0f },
+            ButtonViewMode::IconOnly,
+            OnDrawIcon{ Icons::PlusMark::draw },
+            L"Add root element"
+        );
+        addButton.onClick([this](ClickEvent&) {
+            addStyle({});
+        });
+        m_elementsPage.createBody<Label>(
+            VerticalAlign::Top,
+            Padding{ 12.0f, 8.0f },
+            Text{ L"Drag an element onto its new base, or onto Elements to make it a root." }
+        );
         pickPage(k_paletteToken);
     }
 
-    // A root's row is a step larger than the rows under it. A root holding nothing is an item: it
-    // has no rows for a node to open.
-    void DesignPage::addRoot(const TreeRoot& root, const std::span<const TreeEntry> pages)
+    void DesignPage::rebuildTree()
     {
-        const TreeEntry rootEntry{ .root = &root };
-        if (pages.empty() && root.categories.empty())
+        const std::wstring anchor{ pickedPage() };
+        m_rebuildingTree = true;
+        if (const TreeEntry* entry = pickedEntry(); entry && entry->elementPage)
+            pickPage(k_elementsAnchor);
+
+        std::set<std::wstring> collapsed{};
+        for (const TreeEntry& entry : m_entries | std::views::drop(k_rootIndex + 1ull))
         {
-            TreeItem& item = m_tree.addItem(TextFormat{ TextStyles::SubHeading });
-            buildIndexPage(addItemEntry(item, rootEntry), {});
+            if (entry.node && !entry.node->header().expanded())
+                collapsed.insert(entry.name);
+            entry.page->deleteSelf();
+        }
+        setDropTarget(nullptr);
+        m_draggedStyle.clear();
+        m_dragCanceled = false;
+        TreeNode& root = *m_entries[k_rootIndex].node;
+        while (!root.rows().controls().empty())
+            root.rows().controls().back()->deleteSelf();
+        m_entries.resize(k_rootIndex + 1ull);
+
+        m_links.clear();
+        Children children{};
+        ShownElements names{};
+        for (const ControlStyle& style : m_styles->list)
+        {
+            m_links.push_back({ .name = style.name, .base = style.base });
+            if (!style.name.empty())
+                names.insert(style.name);
+        }
+        for (const ControlStyle& style : m_styles->list)
+        {
+            if (style.name.empty())
+                continue;
+            const std::wstring_view parent = names.contains(style.base) ? style.base : std::wstring_view{};
+            children[parent].push_back(&style);
+        }
+
+        ShownElements shown{};
+        for (const ControlStyle* style : children[{}])
+            addElementRow(*style, root, children, shown, collapsed);
+        // A cycle in a loaded file has no root. Show it once, starting at its first element.
+        for (const ControlStyle& style : m_styles->list)
+        {
+            if (!style.name.empty())
+                addElementRow(style, root, children, shown, collapsed);
+        }
+
+        for (const TreeEntry& entry : m_entries | std::views::drop(k_rootIndex + 1ull))
+            bindPage(entry);
+        m_rebuildingTree = false;
+        pickPage(anchor);
+        form().invalidateAlign();
+    }
+
+    void DesignPage::addElementRow(const ControlStyle& style, TreeNode& parent,
+        const Children& children, ShownElements& shown, const std::set<std::wstring>& collapsed)
+    {
+        if (!shown.insert(style.name).second)
             return;
-        }
-        HeaderText header{};
-        writeRowText(header, rootEntry);
-        TreeNode& node = m_tree.addNode(std::move(header));
-        node.header().setTextFormat(TextFormat{ TextStyles::SubHeading });
-        const std::size_t rootIndex = addEntry(node.header(), rootEntry);
-        EntryIndexes members{};
-        for (const TreeEntry& page : pages)
-            members.push_back(addItemEntry(node.addItem(), page));
-        if (!pages.empty() && !root.categories.empty())
-            node.addDivider();
-        for (const Category& category : root.categories)
-            members.push_back(addCategory(node, category));
-        m_entries[rootIndex].preview = folderPreview(members);
-        buildIndexPage(rootIndex, members);
-    }
 
-    // The header is a row of its own, and its page lists the pages under it - built once they
-    // stand.
-    std::size_t DesignPage::addCategory(TreeNode& rootNode, const Category& category)
-    {
-        const TreeEntry categoryEntry{ .category = &category };
-        HeaderText header{};
-        writeRowText(header, categoryEntry);
-        TreeNode& node = rootNode.addNode(std::move(header));
-        const std::size_t categoryIndex = addEntry(node.header(), categoryEntry);
-        m_entries[categoryIndex].node = &node;
-        if (category.token == k_ownStylesToken)
-            m_ownStylesIndex = categoryIndex;
-        EntryIndexes members{};
-        for (const CategoryEntry& entry : category.entries)
-            members.push_back(addItemEntry(node.addItem(), entryOf(entry)));
-        m_entries[categoryIndex].preview = folderPreview(members);
-        buildIndexPage(categoryIndex, members);
-        return categoryIndex;
-    }
-
-    std::size_t DesignPage::addItemEntry(TreeItem& item, TreeEntry entry)
-    {
-        writeRowText(item.text(), entry);
-        return addEntry(item, std::move(entry));
-    }
-
-    std::size_t DesignPage::addEntry(RichControl& row, TreeEntry entry)
-    {
-        const std::size_t index = m_entries.size();
-        row.setTag(Tag{ index });
-        entry.item = &row;
-        // A style's page is made here - the palette's page stands already, and a root's or a
-        // category's is built once the pages it lists do.
-        if (entry.element || entry.named || !entry.ownStyle.empty())
-        {
-            entry.rules = &m_pages.add<ElementPage>(nameOf(entry));
-            entry.page = entry.rules;
-        }
-        m_entries.push_back(std::move(entry));
-        return index;
-    }
-
-    // A folder edits sizes where every member does, or where it holds nothing else.
-    NodePreview DesignPage::folderPreview(const EntryIndexes& members) const
-    {
-        if (members.empty())
-            return {};
-        const PreviewPage firstPage = m_entries[members.front()].preview.page;
-        const bool samePage = std::ranges::all_of(members, [this, firstPage](std::size_t member) {
-            return m_entries[member].preview.page == firstPage;
-        });
-        const bool editsSizes = std::ranges::all_of(members, [this](std::size_t member) {
-            return m_entries[member].preview.editsSizes;
-        });
-        return {
-            .page = samePage ? firstPage : PreviewPage::Overview,
-            .editsSizes = editsSizes
-        };
-    }
-
-    // Titled as an element page is, with a row per page or category under it. A row's text is
-    // written when the page is shown, since it carries a count that edits move. The page of the
-    // theme's own styles carries the tool that adds one.
-    void DesignPage::buildIndexPage(const std::size_t entryIndex, const EntryIndexes& members)
-    {
-        TreeEntry& entry = m_entries[entryIndex];
-        Panel& page = m_pages.add<Panel>();
-        Panel& topBar = page.createTopBar<Panel>(
-            Padding{ 12.0f, 8.0f }
-        );
-        Label& title = topBar.createBody<Label>(
-            VerticalTextAnchor::Center
-        );
-        writePageTitle(title.text(), kindOf(entry), nameOf(entry));
-        if (entry.category && entry.category->token == k_ownStylesToken)
-        {
-            ToolButton& addButton = topBar.createRightBar<ToolButton>(
-                IconSize{ 18.0f },
-                ButtonViewMode::IconOnly,
-                OnDrawIcon{ Icons::PlusMark::draw },
-                L"Add style"
-            );
-            addButton.onClick([this](ClickEvent&) {
-                addStyle();
+        const auto descendants = children.find(style.name);
+        const bool hasChildren = descendants != children.end()
+            && !std::ranges::all_of(descendants->second, [&shown](const ControlStyle* child) {
+                return shown.contains(child->name);
             });
+        RichControl* row = nullptr;
+        TreeNode* node = nullptr;
+        const auto rename = [this, name = style.name](AcceptEditEvent& event) {
+            renameStyle(name, event);
+        };
+        if (hasChildren)
+        {
+            HeaderText headerText{};
+            headerText << rowText(PageKind::Style, style.name);
+            node = &parent.addNode(std::type_identity<ElementHeader>{}, std::move(headerText));
+            auto& header = static_cast<ElementHeader&>(node->header());
+            header.setStyleName(style.name);
+            header.onAcceptEdit(rename);
+            row = &header;
         }
-        entry.indexBody = &page.createBody<ScrollBox>(
-            ScrollBars::Vertical
-        ).createBody<StackPanel>(
-            Orientation::Vertical,
-            Padding{ 12.0f }
-        );
-        entry.page = &page;
-        for (const std::size_t member : members)
-            addIndexRow(entry, member);
-    }
-
-    void DesignPage::addIndexRow(TreeEntry& page, const std::size_t index)
-    {
-        ToolButton& row = page.indexBody->add<ToolButton>(HorizontalTextAnchor::Left);
-        row.setTag(Tag{ index });
-        row.onClick([this, index](ClickEvent&) {
-            openEntry(index);
-        });
-        page.indexRows.push_back(&row);
-    }
-
-    // Opened from a category's page: the tree picks the row, and the keyboard goes with it the
-    // way a pick in the tree takes it.
-    void DesignPage::openEntry(const std::size_t index)
-    {
-        const TreeEntry& entry = m_entries[index];
-        pickPage(tokenOf(entry));
-        entry.item->setFocus();
-    }
-
-    void DesignPage::refreshIndex(const TreeEntry& entry)
-    {
-        for (RichControl* row : entry.indexRows)
-            row->text() = indexRowText(m_entries[row->tag<std::size_t>()]);
-    }
-
-    void DesignPage::showPickedPage()
-    {
-        const TreeEntry* entry = pickedEntry();
-        if (!entry)
-            return;
-        if (entry->root || entry->category)
-            refreshIndex(*entry);
-        m_pages.setCurrentItem(entry->page);
-    }
-
-    const DesignPage::TreeEntry* DesignPage::pickedEntry() const
-    {
-        if (const Control* item = m_tree.currentItem())
-            return &m_entries[item->tag<std::size_t>()];
-        return nullptr;
-    }
-
-    DesignPage::TreeEntry DesignPage::entryOf(const CategoryEntry& entry)
-    {
-        return {
-            .element = entry.element,
-            .named = entry.named,
-            .preview = { .page = entry.preview, .editsSizes = true }
-        };
-    }
-
-    // A root's icon is a step larger, as its words are. A category's name is muted, setting it
-    // apart from the pages under it.
-    void DesignPage::writeRowText(Text& text, const TreeEntry& entry)
-    {
-        const float iconSize = entry.root ? k_rootIconSize : RowIcons::Size;
-        text << pageIcon(kindOf(entry), iconSize) << Space{ RowIcons::Gap };
-        if (entry.category)
-            text << ColoredText{ InkGrade::Muted, nameOf(entry) };
         else
-            text << nameOf(entry);
-        const std::wstring_view kindWord = kindWordOf(kindOf(entry));
-        if (!kindWord.empty())
-            RowIcons::writeKindWord(text, kindWord);
+        {
+            ElementItem& item = parent.addItem(std::type_identity<ElementItem>{},
+                rowText(PageKind::Style, style.name));
+            item.setStyleName(style.name);
+            item.onAcceptEdit(rename);
+            row = &item;
+        }
+
+        ElementPage& page = m_pages.add<ElementPage>(style.name);
+        addEntry({
+            .anchor = styleAnchor(style.name),
+            .name = style.name,
+            .row = row,
+            .page = &page,
+            .node = node,
+            .elementPage = &page
+        });
+        if (node)
+        {
+            for (const ControlStyle* child : descendants->second)
+                addElementRow(*child, *node, children, shown, collapsed);
+            if (collapsed.contains(style.name))
+                node->header().setExpanded(false);
+        }
     }
 
-    // The page's icon and name, followed for a style's page by how many rules and sizes it
-    // states, muted.
-    Text DesignPage::indexRowText(const TreeEntry& entry) const
+    void DesignPage::addEntry(TreeEntry entry)
     {
-        Text text{
-            pageIcon(kindOf(entry), RowIcons::Size),
-            Space{ RowIcons::Gap },
-            nameOf(entry)
-        };
-        if (!entry.rules)
-            return text;
-        const ControlStyle* style = m_styles ? m_styles->of(styleOf(entry)) : nullptr;
-        const std::size_t ruleCount = style ? style->rules.size() : 0;
-        const std::size_t sizeCount = style ? style->metrics.count() : 0;
-        Text tally{};
-        if (ruleCount == 0 && sizeCount == 0)
-            tally << L"no rules";
-        if (ruleCount != 0)
-            tally << ruleCount << (ruleCount == 1 ? L" rule" : L" rules");
-        if (ruleCount != 0 && sizeCount != 0)
-            tally << L", ";
-        if (sizeCount != 0)
-            tally << sizeCount << (sizeCount == 1 ? L" size" : L" sizes");
-        text << L"  " << StyledText{ TextStyles::SubBody, ColoredText{ InkGrade::Muted, tally } };
-        return text;
+        m_entries.push_back(std::move(entry));
     }
 
-    PageKind DesignPage::kindOf(const TreeEntry& entry)
+    void DesignPage::bindPage(const TreeEntry& entry)
     {
-        if (entry.root || entry.category)
-            return PageKind::Folder;
-        if (entry.element || entry.named || !entry.ownStyle.empty())
-            return PageKind::Style;
-        return PageKind::Palette;
-    }
-
-    // A style of the theme's own goes by the name the theme states it under.
-    std::wstring_view DesignPage::nameOf(const TreeEntry& entry)
-    {
-        if (entry.element)
-            return uiElementOf(*entry.element).name;
-        if (entry.named)
-            return entry.named->name;
-        if (!entry.ownStyle.empty())
-            return entry.ownStyle;
-        if (entry.root)
-            return entry.root->name;
-        if (entry.category)
-            return entry.category->name;
-        return k_paletteTitle;
-    }
-
-    std::wstring_view DesignPage::tokenOf(const TreeEntry& entry)
-    {
-        if (entry.element)
-            return uiElementOf(*entry.element).token;
-        if (entry.named)
-            return entry.named->token;
-        if (!entry.ownStyle.empty())
-            return entry.ownStyle;
-        if (entry.root)
-            return entry.root->token;
-        if (entry.category)
-            return entry.category->token;
-        return k_paletteToken;
-    }
-
-    std::wstring_view DesignPage::styleOf(const TreeEntry& entry)
-    {
-        if (entry.element)
-            return uiElementOf(*entry.element).token;
-        if (entry.named)
-            return entry.named->token;
-        return entry.ownStyle;
-    }
-
-    // A text band has no stroke and casts no shadow, and only the selection re-inks its text.
-    PaintChannels DesignPage::outputsOf(const TreeEntry& entry)
-    {
-        if (entry.named)
-            return entry.named->outputs;
-        if (entry.element == UiElement::SelectedText)
-            return k_selectedTextOutputs;
-        if (entry.element == UiElement::FoundText)
-            return k_foundTextOutputs;
-        return {};
-    }
-
-    // Only a style of the theme's own can be taken out: a framework style's page offers no
-    // Delete style.
-    void DesignPage::bindPage(const std::size_t index)
-    {
-        TreeEntry& entry = m_entries[index];
-        if (!entry.rules)
-            return;
-        const std::wstring style{ styleOf(entry) };
-        const ControlStyle* defaults = m_defaultStyles.of(style);
-        const OnGetElementRuleBase ruleBase = m_ruleBase;
-        PageBinding binding{
+        const std::wstring& name = entry.name;
+        entry.elementPage->bind(PageBinding{
             .styles = m_styles,
-            .style = style,
-            .defaults = defaults,
-            .outputs = outputsOf(entry),
+            .style = name,
+            .defaults = m_defaultStyles.of(name),
+            .outputs = outputsOf(name),
             .colors = m_colors,
-            .ruleBase = [ruleBase, style](const ColorRule& rule, const RuleChannel channel) {
-                return ruleBase(style, rule, channel);
+            .ruleBase = [this, name](const ColorRule& rule, const RuleChannel channel) {
+                return m_ruleBase(name, rule, channel);
             },
             .styleNames = [this]() {
                 return styleNames();
             },
-            .onRulesChanged = [this, style](const EditPhase phase, const Text& what,
+            .onRulesChanged = [this, name](const EditPhase phase, const Text& what,
                 const RuleSelection& at) {
                 if (phase == EditPhase::Settled)
-                    rebuildPagesBasedOn(style);
+                    rebuildPagesBasedOn(name);
                 if (m_onRulesChanged)
                     m_onRulesChanged(phase, what, at);
             },
-            .onStylesChanged = [this]() {
-                rebuildRules();
+            .onAddChild = [this, name]() {
+                addStyle(name);
+            },
+            .onDeleteStyle = [this, name]() {
+                deleteStyle(name);
             }
-        };
-        if (!entry.ownStyle.empty())
-            binding.onDeleteStyle = [this, index]() {
-                deleteStyle(index);
-            };
-        entry.rules->bind(std::move(binding));
+        });
     }
 
     void DesignPage::rebuildPagesBasedOn(const std::wstring_view style)
     {
         for (const TreeEntry& entry : m_entries)
         {
-            if (!entry.rules)
+            if (!entry.elementPage)
                 continue;
-            const StyleChain chain = m_styles->chainOf(styleOf(entry));
-            const bool basedOnStyle = std::ranges::any_of(chain | std::views::drop(1),
+            const StyleChain chain = m_styles->chainOf(entry.name);
+            const bool inheritsStyle = std::ranges::any_of(chain | std::views::drop(1),
                 [style](const ControlStyle* base) {
                     return base->name == style;
                 });
-            if (!basedOnStyle)
-                continue;
-            const RuleSelection at = entry.rules->selection();
-            entry.rules->rebuild();
-            entry.rules->select(at, TakeFocus::No);
+            if (inheritsStyle)
+            {
+                const RuleSelection selection = entry.elementPage->selection();
+                entry.elementPage->rebuild();
+                entry.elementPage->select(selection, TakeFocus::No);
+            }
         }
-    }
-
-    // **The rows of the theme's own styles are built again whenever the names change.** They stand
-    // at the end of the entries, after the rows the tree starts with, so the rows and the pages
-    // past that count go and the names as they stand now are listed afresh. A page showing one of
-    // them gives way to the category's first, so no page goes from under the view.
-    void DesignPage::syncOwnStyles()
-    {
-        if (!m_styles)
-            return;
-        const std::vector<std::wstring> names = ownStyleNames();
-        std::vector<std::wstring> shown{};
-        for (std::size_t i = m_staticCount; i < m_entries.size(); ++i)
-            shown.push_back(m_entries[i].ownStyle);
-        if (names == shown)
-            return;
-
-        const TreeEntry* picked = pickedEntry();
-        const std::wstring pickedToken{ picked ? tokenOf(*picked) : std::wstring_view{} };
-        if (picked && !picked->ownStyle.empty())
-            pickPage(k_ownStylesToken);
-        for (std::size_t i = m_staticCount; i < m_entries.size(); ++i)
-        {
-            m_entries[i].item->deleteSelf();
-            m_entries[i].page->deleteSelf();
-        }
-        m_entries.resize(m_staticCount);
-        for (RichControl* row : m_entries[m_ownStylesIndex].indexRows)
-            row->deleteSelf();
-        m_entries[m_ownStylesIndex].indexRows.clear();
-
-        // The entries move as rows are added, so the category is reached by its index each time.
-        TreeNode& node = *m_entries[m_ownStylesIndex].node;
-        for (const std::wstring& name : names)
-        {
-            OwnStyleRow& row = node.addItem(std::type_identity<OwnStyleRow>{});
-            row.setStyleName(name);
-            const std::size_t index = addItemEntry(row, TreeEntry{ .ownStyle = name });
-            row.onAcceptEdit([this, index](AcceptEditEvent& event) {
-                renameStyle(index, event);
-            });
-            bindPage(index);
-            addIndexRow(m_entries[m_ownStylesIndex], index);
-        }
-        refreshIndex(m_entries[m_ownStylesIndex]);
-        // The page a renamed style stands on again, under its new name.
-        if (std::ranges::find(names, pickedToken) != names.end())
-            pickPage(pickedToken);
-        form().invalidateAlign();
-    }
-
-    std::vector<std::wstring> DesignPage::ownStyleNames() const
-    {
-        std::vector<std::wstring> result{};
-        for (const ControlStyle& style : m_styles->list)
-        {
-            bool shown = false;
-            for (std::size_t i = 0ull; i != m_staticCount; ++i)
-                if (styleOf(m_entries[i]) == style.name)
-                    shown = true;
-            if (!shown)
-                result.push_back(style.name);
-        }
-        return result;
     }
 
     SetNames DesignPage::styleNames() const
     {
-        SetNames result{};
+        SetNames names{};
         for (const TreeEntry& entry : m_entries)
         {
-            if (entry.rules)
-                result.push_back(SetName{
-                    .token = std::wstring{ styleOf(entry) },
-                    .name = std::wstring{ nameOf(entry) }
-                });
+            if (entry.elementPage)
+                names.push_back({ .token = entry.name, .name = entry.name });
         }
-        return result;
+        return names;
     }
 
-    bool DesignPage::namesStyle(const std::wstring_view typed) const
+    const DesignPage::TreeEntry* DesignPage::pickedEntry() const
     {
-        for (const TreeEntry& entry : m_entries)
+        const auto found = std::ranges::find(m_entries, m_tree.currentItem(), &TreeEntry::row);
+        return found == m_entries.end() ? nullptr : &*found;
+    }
+
+    const DesignPage::TreeEntry* DesignPage::entryAt(const Control* control) const
+    {
+        while (control && control != &m_tree)
         {
-            if (entry.rules && (styleOf(entry) == typed || nameOf(entry) == typed))
-                return true;
+            const auto found = std::ranges::find(m_entries, control, &TreeEntry::row);
+            if (found != m_entries.end())
+                return &*found;
+            control = control->parent();
         }
-        return m_styles->of(typed) != nullptr;
+        return nullptr;
     }
 
-    // Over Any Non-Window and on a section, as most styles of the framework stand. The step is
-    // made on the new style's page, and then its row opens for the name.
-    void DesignPage::addStyle()
+    void DesignPage::showPickedPage()
     {
-        std::wstring name{ k_newStyleName };
-        for (std::size_t count = 2ull; namesStyle(name); ++count)
-            name = std::format(L"{} {}", k_newStyleName, count);
-        m_styles->add(ControlStyle{
-            .name = name,
-            .base = std::wstring{ BaseElements::AnyNonWindow },
-            .standsOn = std::wstring{ uiElementOf(UiElement::Section).token }
-        });
-        rebuildRules();
-        pickPage(name);
-        Text what{};
-        what << L"Add style " << ColoredText{ InkWell::accentInk(), name };
-        setsChanged(what);
-        m_styleToName = name;
+        if (const TreeEntry* entry = pickedEntry())
+            m_pages.setCurrentItem(entry->page);
+    }
+
+    void DesignPage::focusElement(const std::wstring_view name)
+    {
+        pickPage(name.empty() ? k_elementsAnchor : styleAnchor(name));
+        if (const TreeEntry* entry = pickedEntry())
+            entry->row->setFocus();
+    }
+
+    void DesignPage::addStyle(const std::wstring_view base)
+    {
+        m_newStyleBase = base;
         m_nameTimer.start(MilliSeconds{ 0u });
     }
 
-    // **Asked for on a tick**, because the click that added the style is still on the stack and
-    // the editor runs a message loop of its own. The row is found again by its name: a rebuild
-    // may have run in between and taken the row with it.
     void DesignPage::nameAddedStyle()
     {
-        const std::wstring name = std::exchange(m_styleToName, {});
-        const auto found = std::ranges::find(m_entries, name, &DesignPage::tokenOf);
-        if (found == m_entries.end() || found->ownStyle.empty())
+        std::wstring base = std::exchange(m_newStyleBase, {});
+        if (!base.empty() && !m_styles->of(base))
             return;
-        // The focus, not just the current item: it is still on the button that added the style.
-        found->item->setFocus();
-        static_cast<OwnStyleRow*>(found->item)->openEditor();
+
+        std::wstring name{ k_newStyleName };
+        for (std::size_t count = 2ull; m_styles->of(name); ++count)
+            name = std::format(L"{} {}", k_newStyleName, count);
+        m_styles->add(ControlStyle{ .name = name, .base = std::move(base) });
+        rebuildTree();
+        focusElement(name);
+        setsChanged(Text{ L"Add element ", ColoredText{ InkWell::accentInk(), name } });
+        if (const TreeEntry* entry = pickedEntry())
+        {
+            if (entry->node)
+                static_cast<ElementHeader*>(entry->row)->openEditor();
+            else if (entry->elementPage)
+                static_cast<ElementItem*>(entry->row)->openEditor();
+        }
     }
 
-    // A name the theme states already is refused. The editor is still over the row, and the
-    // rename builds the rows again, so it waits for the editor to go.
-    void DesignPage::renameStyle(const std::size_t index, AcceptEditEvent& event)
+    void DesignPage::renameStyle(const std::wstring_view name, AcceptEditEvent& event)
     {
-        const std::wstring typed{ trimmed(event.text.plainText()) };
-        const std::wstring& before = m_entries[index].ownStyle;
-        if (typed == before)
+        std::wstring_view typed = event.text.plainText();
+        trimLeft(typed);
+        trimRight(typed);
+        if (typed == name)
             return;
         if (typed.empty())
         {
-            event.refuse(L"A style needs a name.");
+            event.refuse(L"An element needs a name.");
             return;
         }
-        if (namesStyle(typed))
+        if (m_styles->of(typed))
         {
-            event.refuse(L"The theme states a style of that name already.");
+            event.refuse(L"The theme already has an element with that name.");
             return;
         }
-        m_styleToRename = before;
+        m_styleToRename = name;
         m_newName = typed;
         m_renameTimer.start(MilliSeconds{ 0u });
     }
 
-    // The name is written over wherever another style names this one as its base or what it
-    // stands on, and the step is made on the style's page under its new name.
     void DesignPage::renamePendingStyle()
     {
         if (InPlaceEdit::isRunning())
@@ -801,7 +580,7 @@ namespace Themes_App
         }
         const std::wstring before = std::exchange(m_styleToRename, {});
         const std::wstring after = std::exchange(m_newName, {});
-        if (!m_styles->of(before) || namesStyle(after))
+        if (!m_styles->of(before) || m_styles->of(after))
             return;
         for (ControlStyle& style : m_styles->list)
         {
@@ -812,49 +591,146 @@ namespace Themes_App
             if (style.standsOn == before)
                 style.standsOn = after;
         }
-        rebuildRules();
-        pickPage(after);
-        Text what{};
-        what << L"Rename style " << ColoredText{ InkWell::accentInk(), before };
-        what << L" to " << ColoredText{ InkWell::accentInk(), after };
-        setsChanged(what);
+        rebuildTree();
+        focusElement(after);
+        setsChanged(Text{
+            L"Rename element ", ColoredText{ InkWell::accentInk(), before },
+            L" to ", ColoredText{ InkWell::accentInk(), after }
+        });
     }
 
-    // Asked by the Delete style tool on the style's own page, which goes with the style - on a
-    // tick, outside the click.
-    void DesignPage::deleteStyle(const std::size_t index)
+    void DesignPage::deleteStyle(const std::wstring_view name)
     {
-        m_styleToDelete = m_entries[index].ownStyle;
+        m_styleToDelete = name;
         m_deleteTimer.start(MilliSeconds{ 0u });
     }
 
-    // The styles naming this one as their base or what they stand on name none afterwards. The
-    // step is made on the category's page, where the style stood.
     void DesignPage::deletePendingStyle()
     {
         const std::wstring name = std::exchange(m_styleToDelete, {});
-        if (!m_styles->of(name))
+        const ControlStyle* deleted = m_styles->of(name);
+        if (!deleted)
             return;
-        pickPage(k_ownStylesToken);
+
+        const std::wstring parent = canMoveStyle(name, deleted->base) ? deleted->base : std::wstring{};
         for (ControlStyle& style : m_styles->list)
         {
             if (style.base == name)
-                style.base.clear();
+                style.base = parent;
             if (style.standsOn == name)
                 style.standsOn.clear();
         }
         m_styles->remove(name);
-        rebuildRules();
-        Text what{};
-        what << L"Delete style " << ColoredText{ InkWell::accentInk(), name };
+        rebuildTree();
+        focusElement(parent);
+        setsChanged(Text{ L"Delete element ", ColoredText{ InkWell::accentInk(), name } });
+    }
+
+    void DesignPage::dragElement(DragEvent& event)
+    {
+        if (m_dragCanceled)
+        {
+            event.stopPropagation();
+            return;
+        }
+        if (event.hoveredControlLocked())
+            return;
+        if (m_draggedStyle.empty())
+        {
+            const TreeEntry* source = entryAt(&event.control());
+            if (!event.pastThreshold() || !source || !source->elementPage)
+                return;
+            m_draggedStyle = source->name;
+        }
+
+        event.stopPropagation();
+        const TreeEntry* target = dropEntry(event.form().controlUnderPointer());
+        setDropTarget(target ? target->row : nullptr);
+    }
+
+    void DesignPage::releaseElement(PressUpEvent& event)
+    {
+        if (m_draggedStyle.empty())
+            return;
+        event.handled.preventClick = true;
+        event.scrollIntoView = false;
+        if (const TreeEntry* target = dropEntry(form().controlUnderPointer()))
+        {
+            m_styleToMove = std::move(m_draggedStyle);
+            m_newBase = target->name;
+            m_moveTimer.start(MilliSeconds{ 0u });
+        }
+        setDropTarget(nullptr);
+        m_draggedStyle.clear();
+        m_dragCanceled = false;
+    }
+
+    bool DesignPage::cancelDrag()
+    {
+        if (m_draggedStyle.empty())
+            return false;
+        setDropTarget(nullptr);
+        m_dragCanceled = true;
+        return true;
+    }
+
+    const DesignPage::TreeEntry* DesignPage::dropEntry(const Control* pointedControl) const
+    {
+        if (m_dragCanceled)
+            return nullptr;
+        const TreeEntry* target = entryAt(pointedControl);
+        if (!target || (!target->elementPage && target != &m_entries[k_rootIndex]))
+            return nullptr;
+        const ControlStyle* source = m_styles->of(m_draggedStyle);
+        if (!source || source->base == target->name || !canMoveStyle(source->name, target->name))
+            return nullptr;
+        return target;
+    }
+
+    bool DesignPage::canMoveStyle(const std::wstring_view name, const std::wstring_view base) const
+    {
+        if (base.empty())
+            return true;
+        if (!m_styles->of(base))
+            return false;
+        const StyleChain chain = m_styles->chainOf(base);
+        return std::ranges::none_of(chain, [name](const ControlStyle* style) {
+            return style->name == name;
+        });
+    }
+
+    void DesignPage::setDropTarget(RichControl* target)
+    {
+        if (target == m_dropTarget)
+            return;
+        RichControl* previous = std::exchange(m_dropTarget, target);
+        if (previous)
+            previous->invalidateState(AnimationMode::Off);
+        if (target)
+            target->invalidateState(AnimationMode::Off);
+    }
+
+    void DesignPage::movePendingStyle()
+    {
+        const std::wstring name = std::exchange(m_styleToMove, {});
+        const std::wstring base = std::exchange(m_newBase, {});
+        ControlStyle* style = m_styles->of(name);
+        if (!style || style->base == base || !canMoveStyle(name, base))
+            return;
+
+        style->base = base;
+        rebuildTree();
+        focusElement(name);
+        Text what{ L"Move element ", ColoredText{ InkWell::accentInk(), name } };
+        if (base.empty())
+            what << L" to the root";
+        else
+            what << L" under " << ColoredText{ InkWell::accentInk(), base };
         setsChanged(what);
     }
 
     void DesignPage::setsChanged(const Text& what)
     {
-        if (const TreeEntry* entry = pickedEntry())
-            if (entry->root || entry->category)
-                refreshIndex(*entry);
         if (m_onRulesChanged)
             m_onRulesChanged(EditPhase::Settled, what, RuleSelection{});
     }
