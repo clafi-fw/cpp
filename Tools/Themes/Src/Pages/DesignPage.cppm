@@ -4,6 +4,7 @@ import Themes_App.ElementPage;
 import Themes_App.PreviewPage;
 import Themes_App.RuleSlider;
 
+import ClaFi.Controls.Base.StackBase;
 import ClaFi.Controls.InPlaceEdit;
 import ClaFi.Controls.Label;
 import ClaFi.Controls.PageControl;
@@ -15,6 +16,7 @@ import ClaFi.Controls.Tree;
 import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Theme;
+import ClaFi.Core.Context.FormContext;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.System.Events;
@@ -37,7 +39,7 @@ namespace Themes_App
         RuleSelection selection{};
     };
 
-    class DesignPage;
+    export class DesignPage;
 
     class ElementTree : public TreeView
     {

@@ -23,6 +23,7 @@ import ClaFi.Core.AppTheme_Colors;
 import ClaFi.Core.AppTheme_Styles;
 import ClaFi.Core.AppTheme_Theme;
 import ClaFi.Core.Foundation;
+import ClaFi.Core.Foundation.EditHistory;
 import ClaFi.Core.TextEngine.Text;
 import ClaFi.Core.TextEngine.Types;
 import ClaFi.Core.System.InkWell;
