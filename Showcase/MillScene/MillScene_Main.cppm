@@ -1260,7 +1260,12 @@ void MillSceneForm::buildThemeLanes(StackPanel& column, PickerLanes& themePicker
                 showPick(themePicker, previous, index);
             }
         };
-        item.onClick([pick](ClickEvent&) {
+        item.onClick([this, index, pick](ClickEvent& event) {
+            if (m_pickedTheme == index)
+            {
+                event.closeForm();
+                return;
+            }
             pick();
         });
         if (sceneOptions)
@@ -1363,7 +1368,12 @@ void MillSceneForm::buildLookPicker()
         item.onGetState([this, index](GetStateEvent& event) {
             event.state.selected = m_pickedLook == index;
         });
-        item.onClick([this, index](ClickEvent&) {
+        item.onClick([this, index](ClickEvent& event) {
+            if (m_pickedLook == index)
+            {
+                event.closeForm();
+                return;
+            }
             pickLook(index);
         });
         m_lookButtons.push_back(&item);
@@ -1431,9 +1441,14 @@ void MillSceneForm::buildChoicePicker(const std::size_t pickerIndex)
         item.onGetState([this, pickerIndex, option](GetStateEvent& event) {
             event.state.selected = m_choicePickers[pickerIndex].pickedOption == option;
         });
-        item.onClick([this, sceneIndex = choicePicker.sceneIndex,
-            choiceIndex = choicePicker.choiceIndex, option](ClickEvent&) {
-            pickOption(sceneIndex, choiceIndex, option);
+        item.onClick([this, pickerIndex, option](ClickEvent& event) {
+            const ChoicePicker& picker = m_choicePickers[pickerIndex];
+            if (picker.pickedOption == option)
+            {
+                event.closeForm();
+                return;
+            }
+            pickOption(picker.sceneIndex, picker.choiceIndex, option);
         });
         choicePicker.buttons.push_back(&item);
     }
@@ -1778,7 +1793,12 @@ void MillSceneForm::addBackendLines(Menu& list)
                 [this, useGpu](GetStateEvent& event) {
                     event.state.selected = appContext().usingGpu() == useGpu;
                 },
-                [&list, pick](ClickEvent& event) {
+                [this, &list, useGpu, pick](ClickEvent& event) {
+                    if (appContext().usingGpu() == useGpu)
+                    {
+                        event.closeForm();
+                        return;
+                    }
                     pickAndKeepMenuOpen(list, event, pick);
                 },
                 [&list, useGpu](AdjustTooltipEvent& event) {
@@ -1830,7 +1850,12 @@ void MillSceneForm::showSceneOptionsMenu(SplitButton& button, const std::size_t 
             IndicatorVisibility::Always,
             indicatorStyle,
             MenuItem::OnGetState{ getState },
-            MenuItem::OnClick{ [this, &options, sceneIndex, pick](ClickEvent& event) {
+            MenuItem::OnClick{ [this, &options, sceneIndex, indicatorStyle, pick](ClickEvent& event) {
+                if (indicatorStyle == IndicatorStyle::Radio && event.control->state().selected)
+                {
+                    event.closeForm();
+                    return;
+                }
                 pickAndKeepMenuOpen(options, event, [&]() {
                     pick();
                     pickScene(sceneIndex);
@@ -1920,7 +1945,7 @@ void MillSceneForm::showSceneOptionsMenu(SplitButton& button, const std::size_t 
     previewScene(m_pickedScene);
 }
 
-// Picks and closes the way the scene list does.
+// A new theme pick closes the scene menu stack.
 void MillSceneForm::buildThemeList(Menu& list)
 {
     StackPanel& column = list.addControl<StackPanel>(Orientation::Vertical);
@@ -1951,7 +1976,12 @@ void MillSceneForm::buildWeatherList(Menu& list)
             IndicatorVisibility::Always,
             indicatorStyle,
             MenuItem::OnGetState{ getState },
-            MenuItem::OnClick{ [&list, pick](ClickEvent& event) {
+            MenuItem::OnClick{ [&list, indicatorStyle, pick](ClickEvent& event) {
+                if (indicatorStyle == IndicatorStyle::Radio && event.control->state().selected)
+                {
+                    event.closeForm();
+                    return;
+                }
                 pickAndKeepMenuOpen(list, event, pick);
             } }
         );
