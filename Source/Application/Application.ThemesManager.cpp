@@ -80,6 +80,13 @@ namespace ClaFi
         return m_userThemes;
     }
 
+    bool ThemesManager::acceptsTheme(const AppTheme& theme) const
+    {
+        return std::ranges::all_of(m_requiredElements, [&theme](const std::wstring_view name) {
+            return theme.styles.of(name) != nullptr;
+        });
+    }
+
     const AppTheme* ThemesManager::themeByName(const std::wstring_view themeName) const
     {
         if (k_defaultThemeName == themeName)
@@ -102,7 +109,7 @@ namespace ClaFi
             return nullptr;
 
         for (const UserThemePtr& theme : userThemes())
-            if (name == theme->path().stem().wstring())
+            if (name == theme->path().stem().wstring() && acceptsTheme(theme->theme()))
                 return &theme->theme();
         return nullptr;
     }
@@ -193,23 +200,11 @@ namespace ClaFi
             event.refuse(L"That name belongs to a built-in theme.");
     }
 
-    // A theme lacking an element the application names is left out: what wears that element
-    // would paint nothing under it.
     void ThemesManager::filesRead(const Documents::FilePaths& files)
     {
         m_userThemes.clear();
+        m_userThemes.reserve(files.size());
         for (const std::filesystem::path& file : files)
-        {
-            UserThemePtr theme = std::make_unique<UserTheme>(file);
-            if (statesEveryElement(theme->theme()))
-                m_userThemes.push_back(std::move(theme));
-        }
-    }
-
-    bool ThemesManager::statesEveryElement(const AppTheme& theme) const
-    {
-        return std::ranges::all_of(m_requiredElements, [&theme](const std::wstring_view name) {
-            return theme.styles.of(name) != nullptr;
-        });
+            m_userThemes.push_back(std::make_unique<UserTheme>(file));
     }
 }

@@ -65,8 +65,11 @@ namespace ClaFi
 
         addTheme(defaultTheme(), k_defaultThemePath, BuiltInThemes::DefaultTheme);
 
-        for (const UserThemePtr& theme : appThemes().userThemes())
+        ThemesManager& manager = appThemes();
+        for (const UserThemePtr& theme : manager.userThemes())
         {
+            if (!manager.acceptsTheme(theme->theme()))
+                continue;
             const std::wstring name = theme->path().stem().wstring();
             addTheme(theme->theme(), ThemesManager::pathOf(*theme), name);
         }

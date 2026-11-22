@@ -380,9 +380,10 @@ theme is put on**, so it keeps up with the desktop.
 ## ThemesManager
 
 A DocumentsFolder of theme files: the base keeps the directory, the watch and the listeners. The
-manager adds a parsed theme for each file, read again with the directory, and the built-in,
-answered from the compiled-in colors whatever is on the disk. A file lacking a set for an element
-the application names is passed over: what wears that element would paint nothing under it.
+manager parses every theme file and supplies the built-in theme from the compiled-in colors.
+ThemesList uses the full file list. ThemePick uses acceptsTheme to check whether a user theme
+provides the application's required elements. Resolving a stored theme path uses the same
+compatibility check.
 
 ## ThemesList
 

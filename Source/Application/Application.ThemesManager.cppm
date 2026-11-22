@@ -52,23 +52,19 @@ namespace ClaFi
     // Reads the styles a theme file's text states into the built-in theme. See Application
     export void addBuiltInStyles(std::wstring_view themeText);
 
-    // The themes an application can wear - the built-in, and the user's own files that state
-    // every element the application names. See Application
+    // The theme files in the shared folder and the built-in theme. See Application
     export class ThemesManager : public Documents::DocumentsFolder
     {
     public:
         ThemesManager(const std::filesystem::path& directory, AppElementNames requiredElements);
     public:
-        // The user's themes, parsed, in the folder's order - read on the first ask after the
-        // folder has changed.
-        [[nodiscard]] const UserThemeList& userThemes();
+        [[nodiscard]] const UserThemeList& userThemes(); // all files, parsed in folder order
+        [[nodiscard]] bool acceptsTheme(const AppTheme&) const;
         // The theme a file name stands for - the built-in's, or one of the user's - and nullptr
         // where nothing does. Answered from what was last read, so a caller that may be first
         // asks for userThemes ahead of it.
         [[nodiscard]] const AppTheme* themeByName(std::wstring_view) const;
-        // The theme a path names - see AppTheme - and nullptr where nothing stands under it. A
-        // built-in is answered from the compiled-in colors; a User path reads the directory, so
-        // a path names its theme on the first ask.
+        // Resolves a Settings path to the built-in or a compatible user theme. See Application
         [[nodiscard]] const AppTheme* themeByPath(std::wstring_view);
         // The path a user theme is known by: the User root over its file's stem.
         [[nodiscard]] static std::wstring pathOf(const UserTheme&);
@@ -90,8 +86,6 @@ namespace ClaFi
         void checkNameShape(Controls::AcceptEditEvent&, std::wstring_view stem) const override;
     protected:
         void filesRead(const Documents::FilePaths&) override;
-    private:
-        [[nodiscard]] bool statesEveryElement(const AppTheme&) const;
     private:
         const AppElementNames m_requiredElements;
         UserThemeList m_userThemes{};
