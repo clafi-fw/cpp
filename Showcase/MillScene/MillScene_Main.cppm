@@ -436,6 +436,7 @@ namespace MillScene_App
         // the stored one has to be the scene's by now.
         restoreSceneTheme();
         restoreScene();
+        m_sceneTime = sceneTimeAt(m_launch.at, sceneAt(m_shownScene).cycleDuration());
         restoreSceneViews();
         restoreLook();
         // Written as the window closes, while every scene still stands.

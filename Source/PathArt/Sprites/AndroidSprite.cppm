@@ -72,6 +72,8 @@ namespace ClaFi::PathArt
         FloatPoint elbowPosition{}; // in the same frame as the hand
         float elbowPositionBlend{ 0.0f }; // from 0 solved to 1 placed at elbowPosition
         float kneeOffsetX{ 0.0f }; // sideways from the solved standing knee in pelvis units
+        bool wearsWhiteGlove{ false }; // a white sequin glove on this hand
+        float palmRadius{ 9.0f }; // the radius of an open, ungloved hand in upper-body units
     };
 
     // How the android stands, moves and shows at one moment. See PathArt
@@ -98,6 +100,9 @@ namespace ClaFi::PathArt
         float cycleTime{ 0.0f }; // the time its eyes blink and its lights chase by
         float headOffsetX{ 0.0f }; // sideways from the neck in upper-body units
         float headOffsetY{ 0.0f }; // down from the neck in upper-body units
+        bool wearsFedora{ false }; // a low-brimmed fedora with the antenna through its crown
+        bool wearsSequinJacket{ false }; // a black jacket with reflecting sequins
+        bool highlightFeet{ false }; // black metal with a cool highlight across each foot
 
         [[nodiscard]] AndroidSide& side(AudienceSide);
         [[nodiscard]] const AndroidSide& side(AudienceSide) const;

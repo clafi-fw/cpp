@@ -108,6 +108,17 @@ namespace MillScene_App
         if (const std::optional<std::wstring_view> theme = commandLine.value(L"--theme"))
             options.theme = *theme;
 
+        if (const std::optional<std::wstring_view> at = commandLine.value(L"--at"))
+        {
+            const std::optional<float> seconds = secondsOf(*at);
+            if (!seconds || *seconds >= static_cast<float>(std::numeric_limits<std::int64_t>::max()))
+            {
+                error = L"--at needs a non-negative number of seconds in range";
+                return std::nullopt;
+            }
+            options.at = *seconds;
+        }
+
         if (!options.scene.empty() || !options.theme.empty())
         {
             PathArt::MillScene mill{};
@@ -183,5 +194,15 @@ namespace MillScene_App
             options.size = *pixels;
         }
         return options;
+    }
+
+    PathArt::SceneTime sceneTimeAt(const float seconds, const std::chrono::seconds cycleDuration)
+    {
+        const float totalCycles = seconds / std::chrono::duration<float>(cycleDuration).count();
+        const float wholeCycles = std::floor(totalCycles);
+        return {
+            .cycleTime = totalCycles - wholeCycles,
+            .cyclesPassed = static_cast<std::int64_t>(wholeCycles),
+        };
     }
 }

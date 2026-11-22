@@ -21,6 +21,7 @@ namespace MillScene_App
     {
         std::wstring scene; // the scene to open on, by the name it is offered under
         std::wstring theme; // the theme to open on, by its name in allThemes
+        float at{ 0.0f }; // the story's second the first frame falls on
     };
 
     // What the console application renders.
@@ -35,8 +36,14 @@ namespace MillScene_App
         IntSize size{ 1280, 720 }; // the pixels each frame is written at
     };
 
+    inline constexpr CommandLine::Option k_atOption{
+        .name = L"--at",
+        .valueName = L"<seconds>",
+        .help = L"the story's second the first frame falls on, 0 on its own"
+    };
+
     // The options the window application declares.
-    export inline constexpr std::array<CommandLine::Option, 2> k_windowOptions{
+    export inline constexpr std::array<CommandLine::Option, 3> k_windowOptions{
         CommandLine::Option{
             .name = L"--scene",
             .valueName = L"<name>",
@@ -46,7 +53,8 @@ namespace MillScene_App
             .name = L"--theme",
             .valueName = L"<name>",
             .help = L"the theme to open on, by the name it is offered under"
-        }
+        },
+        k_atOption
     };
 
     // The options the console application declares.
@@ -66,11 +74,7 @@ namespace MillScene_App
             .valueName = L"<name>",
             .help = L"the theme to draw it in, by the name it is offered under"
         },
-        CommandLine::Option{
-            .name = L"--at",
-            .valueName = L"<seconds>",
-            .help = L"the story's second the first frame falls on, 0 on its own"
-        },
+        k_atOption,
         CommandLine::Option{
             .name = L"--frames",
             .valueName = L"<count>",
@@ -96,6 +100,8 @@ namespace MillScene_App
     // Reads what the console application renders, and names what it did not find.
     export [[nodiscard]] std::optional<RenderOptions> renderOptionsOf(const CommandLine&,
         std::wstring& error);
+    export [[nodiscard]] PathArt::SceneTime sceneTimeAt(float seconds,
+        std::chrono::seconds cycleDuration);
     // The scene `name` is offered under, or nothing where no scene goes by it.
     export [[nodiscard]] PathArt::Scene* sceneNamed(const std::wstring& name,
         PathArt::MillScene& mill, PathArt::SceneList& others);

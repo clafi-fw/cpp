@@ -48,8 +48,11 @@ namespace ClaFi::PathArt
         constexpr float k_moonwalkTurnBeat{ 6.0f };
         constexpr float k_moonwalkEndBeat{ 10.0f };
         constexpr float k_moonwalkStride{ 30.0f };
+        constexpr float k_dancerScale{ 0.84f };
         constexpr float k_shuffleHalfCycleSeconds{ 0.26f };
-        constexpr float k_closingLeanPeakSeconds{ 9.32f };
+        constexpr float k_finalePoseSeconds{ 8.72f };
+        constexpr float k_finaleSwaySeconds{ 1.24f };
+        constexpr float k_finaleLightFadeSeconds{ 9.32f };
         constexpr float k_curtainClosedSeconds{ 9.70f };
 
         void drawSmokeMachine(const SceneFrame& frame, const FloatPoint foot, const float cycleTime,
@@ -138,13 +141,13 @@ namespace ClaFi::PathArt
 
         // The lifted heel turns around the center of the toe's rounded corner.
         [[nodiscard]] FloatPoint ankleOnFloor(const float x, const ActStage& stage,
-            const float facing, const float toeCenterX, const float footTurn)
+            const float toeCenterX, const float footTurn)
         {
             constexpr float k_soleCornerRadius{ 6.0f };
             const FloatPoint toeCenter = { toeCenterX, AndroidBody::AnkleHeight - k_soleCornerRadius };
             const FloatPoint turnedToeCenter = rotated(toeCenter, footTurn);
             return {
-                x + (toeCenter.x - turnedToeCenter.x) * facing * stage.frame.unit,
+                x + (toeCenter.x - turnedToeCenter.x) * stage.frame.unit,
                 stage.floorY - (turnedToeCenter.y + k_soleCornerRadius) * stage.frame.unit
             };
         }
@@ -167,42 +170,48 @@ namespace ClaFi::PathArt
             android.headOffsetY -= 2.0f * (1.0f - std::cos(2.0f * upperPhase));
         }
 
-        void applyClosingLean(AndroidPose& android, const ActStage& stage, const float lean,
+        void applyFinalePose(AndroidPose& android, const ActStage& stage, const float amount,
             const float actTime)
         {
             const SceneFrame& frame = stage.frame;
-            FloatPoint leftAnkle = androidBodyToFrame(frame, android, android.left.foot);
-            FloatPoint rightAnkle = androidBodyToFrame(frame, android, android.right.foot);
-            const FloatPoint floorPivot = { android.pelvis.x, stage.floorY };
-            const float tilt = -0.68f * lean;
-            android.pelvis = floorPivot + rotated(android.pelvis - floorPivot, tilt);
-            android.tilt = tilt;
-
-            // Keep the soles flat in the frame as the body rotates around the floor.
-            const float acrossSlope = android.facing * std::sin(tilt);
-            const float downSlope = std::cos(tilt);
-            const float footTurn = std::atan2(-acrossSlope, downSlope);
-            const float soleHeight = std::hypot(acrossSlope, downSlope) * AndroidBody::AnkleHeight;
-            const float ankleRise = (soleHeight - AndroidBody::AnkleHeight) * frame.unit;
-            leftAnkle.y -= ankleRise;
-            rightAnkle.y -= ankleRise;
+            const float unit = frame.unit;
+            const float phase = k_2Pi * (actTime - k_finalePoseSeconds) / k_finaleSwaySeconds;
+            const float sway = std::sin(phase);
+            const float pulse = std::sin(phase - 0.8f);
+            const float armLift = 5.0f * pulse;
+            const float centerX = android.pelvis.x;
+            const float ankleY = stage.floorY - AndroidBody::AnkleHeight * unit;
+            const FloatPoint leftAnkle = FloatPoint::between(
+                androidBodyToFrame(frame, android, android.left.foot),
+                { centerX - 59.0f * unit, ankleY }, amount);
+            const FloatPoint rightAnkle = FloatPoint::between(
+                androidBodyToFrame(frame, android, android.right.foot),
+                { centerX + 31.0f * unit, ankleY }, amount);
+            const FloatPoint pelvisShift = {
+                8.0f + 2.0f * sway,
+                18.0f + 1.8f * pulse,
+            };
+            android.pelvis += pelvisShift * (amount * unit);
             plantAndroidFeet(frame, android, leftAnkle, rightAnkle);
-            android.left.footTurn = footTurn;
-            android.right.footTurn = footTurn;
+            android.left.kneeOffsetX = std::lerp(android.left.kneeOffsetX, -18.0f, amount);
+            android.right.kneeOffsetX = std::lerp(android.right.kneeOffsetX, -48.0f, amount);
 
-            const float shuffle = 1.0f - lean;
-            android.bend *= shuffle;
-            android.left.kneeOffsetX *= shuffle;
-            android.right.kneeOffsetX *= shuffle;
-            android.left.elbowPositionBlend *= shuffle;
-            android.left.hand = FloatPoint::between(android.left.hand, { -70.0f, -20.0f }, lean);
-            android.right.hand = FloatPoint::between(android.right.hand, { 78.0f, -40.0f }, lean);
-            android.headTurn = std::lerp(android.headTurn, 0.45f, lean);
-            android.headOffsetX *= shuffle;
-            android.headOffsetY *= shuffle;
-            const float closingGaze = std::lerp(-9.0f, 7.0f, smoothStep(9.24f, 9.50f, actTime));
-            android.look = std::lerp(android.look, closingGaze, lean);
-            android.eyeOpening = std::lerp(android.eyeOpening, 0.45f, lean);
+            android.bend = std::lerp(android.bend, 0.36f + 0.045f * sway, amount);
+            android.bow = 0.24f * amount;
+            android.left.hand = FloatPoint::between(android.left.hand, { -9.0f, -3.0f }, amount);
+            android.left.elbowPosition = FloatPoint::between(android.left.elbowPosition,
+                { -54.0f, -33.0f }, amount);
+            const FloatPoint raisedHand = { 118.0f, -184.0f - armLift };
+            android.right.hand = FloatPoint::between(android.right.hand, raisedHand, amount);
+            android.right.elbowPosition = FloatPoint::between(AndroidBody::RightShoulder,
+                raisedHand, 0.5f);
+            android.right.elbowPositionBlend = amount;
+
+            android.headTurn = std::lerp(android.headTurn, -0.14f - 0.05f * pulse, amount);
+            android.headOffsetX = std::lerp(android.headOffsetX, -4.0f, amount);
+            android.headOffsetY = std::lerp(android.headOffsetY, 12.0f, amount);
+            android.look = std::lerp(android.look, -6.0f, amount);
+            android.eyeOpening = std::lerp(android.eyeOpening, 0.55f, amount);
         }
     }
 
@@ -213,8 +222,10 @@ namespace ClaFi::PathArt
         m_backdropY = stage.backdropY;
         m_blackout = 0.9f * smoothStep(8.62f, k_curtainClosedSeconds, actTime);
         m_closingLight = 0.24f * smoothStep(8.94f, 9.24f, actTime)
-            * (1.0f - smoothStep(k_closingLeanPeakSeconds, k_curtainClosedSeconds, actTime));
-        const SceneFrame& frame = stage.frame;
+            * (1.0f - smoothStep(k_finaleLightFadeSeconds, k_curtainClosedSeconds, actTime));
+        ActStage dancerStage = stage;
+        dancerStage.frame.unit *= k_dancerScale;
+        const SceneFrame& frame = dancerStage.frame;
         const float unit = frame.unit;
         const float beat = std::min(actTime / k_beatSeconds, k_moonwalkEndBeat);
         const int beatIndex = static_cast<int>(std::floor(beat));
@@ -243,8 +254,12 @@ namespace ClaFi::PathArt
                 centerX + sway * unit,
                 stage.floorY - (AndroidBody::StandingHeight - dip) * unit
             },
-            .facing = std::lerp(1.0f, 0.70f, moonwalk),
-            .cycleTime = time.cycleTime
+            .left = { .wearsWhiteGlove = true },
+            .right = { .palmRadius = 13.0f },
+            .cycleTime = time.cycleTime,
+            .wearsFedora = true,
+            .wearsSequinJacket = true,
+            .highlightFeet = true,
         };
         const bool leftSupports = (stepIndex % 2 == 0) != returning;
         const float leftStep = leftSupports ? intoStep : 1.0f - intoStep;
@@ -256,9 +271,9 @@ namespace ClaFi::PathArt
         const float rightTurn = leftSupports ? 0.0f : heelLift;
         const float stance = std::lerp(22.0f, 34.0f, moonwalk);
         FloatPoint leftAnkle = ankleOnFloor(centerX + (footOffset - stance) * unit,
-            stage, m_android.facing, returning ? 7.0f : -13.0f, leftTurn);
+            dancerStage, returning ? 7.0f : -13.0f, leftTurn);
         FloatPoint rightAnkle = ankleOnFloor(centerX + (stance - footOffset) * unit,
-            stage, m_android.facing, returning ? 13.0f : -7.0f, rightTurn);
+            dancerStage, returning ? 13.0f : -7.0f, rightTurn);
         leftAnkle.y -= 9.0f * std::max(0.0f, openingSway) * unit;
         rightAnkle.y -= 9.0f * std::max(0.0f, -openingSway) * unit;
         plantAndroidFeet(frame, m_android, leftAnkle, rightAnkle);
@@ -299,10 +314,10 @@ namespace ClaFi::PathArt
         if (shuffleTime > 0.0f)
         {
             applyShuffle(m_android, shuffleTime);
-            const float lean = smoothStep(8.10f, k_closingLeanPeakSeconds, actTime);
-            if (lean > 0.0f)
+            const float finale = smoothStep(8.10f, k_finalePoseSeconds, actTime);
+            if (finale > 0.0f)
             {
-                applyClosingLean(m_android, stage, lean, actTime);
+                applyFinalePose(m_android, dancerStage, finale, actTime);
             }
         }
     }
@@ -310,6 +325,8 @@ namespace ClaFi::PathArt
     void RobotDanceAct::draw(const SceneFrame& frame) const
     {
         const float unit = frame.unit;
+        SceneFrame dancer = frame;
+        dancer.unit *= k_dancerScale;
         const FloatRect stage = { 0.0f, 0.0f, frame.width, frame.height };
         const float light = 1.0f - m_blackout;
         Color stageWash = RobotDanceLighting::StageWash;
@@ -318,13 +335,13 @@ namespace ClaFi::PathArt
 
         const float shadowX = m_android.pelvis.x + std::min(173.0f * unit, frame.width * 0.18f);
         const float lightX = std::lerp(frame.width * 0.56f, shadowX, 0.48f);
-        drawGlow(frame, { lightX, m_backdropY - 84.0f * unit }, 255.0f * unit,
+        drawGlow(frame, { lightX, m_backdropY - 126.0f * unit }, 255.0f * unit,
             RobotDanceLighting::Backlight.faded(light), 0.76f);
         const FloatRect backdrop = { 0.0f, 0.0f, frame.width, m_backdropY };
         frame.canvas.pushClip(frame.toCanvas.mapRect(backdrop));
-        const SceneFrame projection = frame.within(
-            Matrix3x2::Translation(shadowX, m_backdropY - 44.0f * unit)
-            * Matrix3x2::Scale(1.67f, 1.46f) * Matrix3x2::Translation(m_android.pelvis * -1.0f));
+        const SceneFrame projection = dancer.within(
+            Matrix3x2::Translation(shadowX, m_backdropY - 98.0f * unit)
+            * Matrix3x2::Scale(1.67f, 1.38f) * Matrix3x2::Translation(m_android.pelvis * -1.0f));
         drawAndroidSilhouette(projection, m_android, RobotDanceLighting::Shadow);
         frame.canvas.popClip();
 
@@ -337,20 +354,32 @@ namespace ClaFi::PathArt
             .color = RobotDanceLighting::BackSmoke.faded(light),
             .puffs = 3
         });
-        drawAndroid(frame, m_android);
+        drawAndroid(dancer, m_android);
         Color duskAbove = RobotDanceLighting::DuskAbove;
         Color duskBelow = RobotDanceLighting::DuskBelow;
         duskAbove.blend(duskAbove.fullyOpaque(), m_blackout);
         duskBelow.blend(duskBelow.fullyOpaque(), m_blackout);
         fillBox(frame, stage, LinearGradient::Simple({ 0.0f, m_backdropY - 125.0f * unit },
             { 0.0f, m_floorY }, duskAbove, duskBelow));
-        if (m_closingLight > 0.0f)
+        const float frontLight = 0.55f * (1.0f - smoothStep(0.0f, 0.28f, m_blackout))
+            + m_closingLight;
+        if (frontLight > 0.0f)
         {
-            const ScopedCanvasOpacity closingLight{ frame.canvas, m_closingLight };
-            drawAndroid(frame, m_android);
+            const FloatRect androidBounds = {
+                m_android.pelvis.x - 200.0f * dancer.unit,
+                m_android.pelvis.y - 250.0f * dancer.unit,
+                m_android.pelvis.x + 200.0f * dancer.unit,
+                m_floorY + 20.0f * dancer.unit,
+            };
+            frame.canvas.pushClip(frame.toCanvas.mapRect(androidBounds));
+            {
+                const ScopedCanvasOpacity lighting{ frame.canvas, frontLight };
+                drawAndroid(dancer, m_android);
+            }
+            frame.canvas.popClip();
         }
         drawFog(frame, m_android.cycleTime, FogBank{
-            .y = m_floorY - 14.0f * unit,
+            .y = m_floorY + 32.0f * unit,
             .driftsPerCycle = 1.8f,
             .start = 0.35f,
             .color = RobotDanceLighting::FrontSmoke.faded(light),

@@ -4,6 +4,7 @@ import ClaFi.PathArt.AndroidSprite;
 import ClaFi.PathArt.BotTalentAct;
 import ClaFi.PathArt.Scene;
 import ClaFi.PathArt.SceneHelpers;
+import ClaFi.PathArt.TutuSprite;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.Graphics.Types;
 import ClaFi.Core.System.UiTypes;
@@ -29,6 +30,11 @@ namespace ClaFi::PathArt
     namespace
     {
         constexpr float k_ballRadius{ 54.0f };
+        constexpr float k_tutuScale{ 0.8f };
+        constexpr float k_tutuHalfWidth{ 80.0f };
+        constexpr float k_tutuCenterY{ 3.0f }; // center of the tulle in sprite coordinates
+        constexpr float k_tutuFootOffset{ 4.0f }; // soles sit just in front of the tulle's center
+        constexpr float k_marionetteClearance{ 24.0f }; // room for the marionette beside its hook
         // The ball rolls to and fro once in 6.6 seconds and comes to rest in the middle by 8.4.
         constexpr float k_rollSeconds{ 6.6f };
 
@@ -72,15 +78,13 @@ namespace ClaFi::PathArt
         }
     }
 
-    // The android leans the way the ball rolls and wobbles to keep its balance; standing on the
-    // ball's top, its feet keep flat as it leans.
     void BallBalanceAct::pose(const ActStage& stage, const float actTime, const SceneTime time)
     {
         const SceneFrame& frame = stage.frame;
         const float unit = frame.unit;
-        // The ball rolls no further left than to touch the marionette's stand, inside the drapes.
-        const float standX = stage.drapeWidth / unit + 80.0f;
-        const float reach = std::clamp(stage.centerX / unit - standX - k_ballRadius, 0.0f,
+        const float leftmostBallX = marionetteStandOf(stage).hook.x / unit + k_marionetteClearance
+            + k_tutuHalfWidth * k_tutuScale;
+        const float reach = std::clamp(stage.centerX / unit - leftmostBallX, 0.0f,
             150.0f * stage.closeness);
         const float rolled = rolledAt(actTime, reach);
         constexpr float k_step{ 0.02f };
@@ -94,15 +98,17 @@ namespace ClaFi::PathArt
         const float oneLeg = smoothStep(8.1f, 8.7f, actTime);
         const float wobble = std::sin(k_2Pi * actTime * 1.4f);
         const float lean = 0.13f * speed / topSpeed + 0.05f * wobble * (1.0f - 0.5f * oneLeg);
-        const float crouch = 14.0f + 4.0f * wobble;
-        const float ankleY = m_ball.y - (k_ballRadius + AndroidBody::AnkleHeight) * unit;
+        const float crouch = 24.0f + 4.0f * wobble;
+        const float soleY = m_ball.y - (k_ballRadius - k_tutuFootOffset * k_tutuScale) * unit;
+        const float ankleY = soleY - AndroidBody::AnkleHeight * unit;
         const float legHeight = AndroidBody::StandingHeight - AndroidBody::AnkleHeight - crouch;
         m_android = {
             .pelvis = FloatPoint{ m_ball.x, ankleY } + rotated({ 0.0f, -legHeight * unit }, lean),
             .tilt = lean,
             .cycleTime = time.cycleTime
         };
-        plantAndroidFeet(frame, m_android, { m_ball.x - 15.0f * unit, ankleY },
+        const float leftAnkleX = m_ball.x - 15.0f * (1.0f - oneLeg) * unit;
+        plantAndroidFeet(frame, m_android, { leftAnkleX, ankleY },
             { m_ball.x + 15.0f * unit, ankleY });
         m_android.right.foot = FloatPoint::between(m_android.right.foot, { 90.0f, 66.0f }, oneLeg);
         m_android.left.footTurn = -lean;
@@ -125,6 +131,13 @@ namespace ClaFi::PathArt
         fillOval(frame, { m_ball.x, m_floorY + 2.0f * unit }, 50.0f * unit, 7.0f * unit,
             SolidColor{ BallColors::Shadow });
         drawCircusBall(frame, m_ball, k_ballRadius * unit, m_ballTurn);
+        const FloatPoint tutuOrigin = {
+            m_ball.x,
+            m_ball.y - (k_ballRadius + k_tutuCenterY * k_tutuScale) * unit,
+        };
+        const SceneFrame tutu = frame.within(Matrix3x2::Translation(tutuOrigin)
+            * Matrix3x2::Scale(k_tutuScale * unit));
+        drawTutu(tutu, 0.0f);
         drawAndroid(frame, m_android);
     }
 }

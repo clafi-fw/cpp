@@ -113,16 +113,12 @@ namespace MillScene_App
         };
         scene->prepare(params);
 
-        const float cycleSeconds = std::chrono::duration<float>(scene->cycleDuration()).count();
+        const std::chrono::seconds cycleDuration = scene->cycleDuration();
         const IntRect whole = { 0, 0, options.size.x, options.size.y };
         for (int frame = 0; frame != options.frames; ++frame)
         {
             const float seconds = options.at + static_cast<float>(frame) * options.every;
-            const float cycles = std::floor(seconds / cycleSeconds);
-            const PathArt::SceneTime time = {
-                .cycleTime = seconds / cycleSeconds - cycles,
-                .cyclesPassed = static_cast<std::int64_t>(cycles)
-            };
+            const PathArt::SceneTime time = sceneTimeAt(seconds, cycleDuration);
 
             Graphics::Bitmap* drawn = nullptr;
             canvas.beginPaint(nullptr, whole);

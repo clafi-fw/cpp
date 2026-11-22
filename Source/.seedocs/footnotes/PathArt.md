@@ -911,13 +911,11 @@ arm reaching up and over. It bobs on every step and watches the puppet.
 
 ## RobotDanceAct
 
-A beat is 0.625 seconds, four to a sway, and the android steps from side to side on them.
-
-- **Beats 0 to 8**: robot poses, one a beat - elbows up and down in turn, hands together, a point
-  to each side.
-- **Beats 8 to 12**: a wave runs along its arms from the left hand to the right.
-- **Beats 12 to 14**: it spins, its feet turning with it.
-- **The rest**: the ta-da, its arms in a V.
+The android wears a fedora, a black sequin jacket, and an oversized white glove on the audience's
+left. It opens with two arm poses, then moonwalks across the stage and back from beat 2 to beat 10,
+turning at beat 6. Each beat is 0.625 seconds. A shuffle leads into a wide stance, the fedora
+dipped, the gloved hand at the hip, and the other arm outstretched. The android sways with its feet
+planted as the stage darkens.
 
 ## JugglingAct
 
@@ -972,13 +970,13 @@ comes out.
 
 ## BallBalanceAct
 
-The android stands on a circus ball 54 units in radius, its arms out. The ball rolls 150 units
-either way, times `closeness`, once in 6.6 seconds, and comes to rest in the middle by 8.4; then
-the android lifts one leg. It leans the way the ball rolls and wobbles to keep its balance, its
-feet flat on the ball's top.
+The android uses a tutu as a board atop a circus ball 54 units in radius. The ball rolls 150 units
+either way, times `closeness`, once in 6.6 seconds, and comes to rest in the middle by 8.4. The
+android leans as the ball rolls and finishes on one leg. The tutu's center rests on the ball's
+top, and the android plants its feet on the tulle just in front of that center.
 
-**The roll stops at the marionette's stand.** In a narrow frame its reach shrinks, so that the
-ball at its furthest left comes up to the stand's hook and no further.
+**The tutu clears the hanging marionette.** The ball's reach shrinks in a narrow frame to leave
+room for the marionette at the left end of the roll.
 
 ## GatorAct
 

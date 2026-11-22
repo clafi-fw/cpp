@@ -23,6 +23,8 @@ namespace ClaFi::PathArt
         constexpr Color Limb{ 0xFF8793A0 };
         constexpr Color Joint{ 0xFF4B5563 };
         constexpr Color Foot{ 0xFF5B6573 };
+        constexpr Color FootBlack{ 0xFF101217 };
+        constexpr Color FootHighlight{ 0xFFD9E4F0 };
         constexpr Color Pelvis{ 0xFF7D8995 };
         constexpr Color Panel{ 0xFF1D2430 };
         constexpr Color Neck{ 0xFF6B7684 };
@@ -42,6 +44,32 @@ namespace ClaFi::PathArt
             Color{ 0xFFFF6B8B } };
     }
 
+    namespace FedoraColors
+    {
+        constexpr Color FeltLight{ 0xFF424655 };
+        constexpr Color FeltShade{ 0xFF181B24 };
+        constexpr Color Crease{ 0xFF222632 };
+        constexpr Color Band{ 0xFF11131A };
+        constexpr Color Rim{ 0xFF697486 };
+    }
+
+    namespace JacketColors
+    {
+        constexpr Color Cloth{ 0xFF171920 };
+        constexpr Color Lapel{ 0xFF343945 };
+        constexpr Color Edge{ 0xFF697488 };
+        constexpr Color Sequin{ 0xFF697482 };
+        constexpr Color Glint{ 0xFFF3F5FF };
+    }
+
+    namespace GloveColors
+    {
+        constexpr Color White{ 0xFFFFFFFF };
+        constexpr Color Shade{ 0xFFB8C7DB };
+        constexpr Color Seam{ 0xFF8999B1 };
+        constexpr Color Sequin{ 0xFFA7B8CF };
+    }
+
     namespace
     {
         // The hat sits on the skull at a slant, in the head's units.
@@ -50,6 +78,9 @@ namespace ClaFi::PathArt
             .turn = 0.14f,
             .size = 0.92f
         };
+        constexpr float k_fedoraAntennaFoot{ -79.0f }; // where the stalk emerges from the crown
+        constexpr float k_antennaStalkLength{ 20.0f };
+        constexpr float k_antennaTipRadius{ 5.0f };
 
         // How far a turn may squeeze the figure, so it never folds to nothing.
         constexpr float k_thinnestFacing{ 0.03f };
@@ -78,8 +109,15 @@ namespace ClaFi::PathArt
         void drawLegs(const SceneFrame& body, const AndroidPose&, const SolidColor* silhouette = nullptr);
         void drawPointeRibbons(const SceneFrame& body, const Limb& leg);
         void drawTorso(const SceneFrame& upper, const AndroidPose&);
+        void drawSequinJacket(const SceneFrame& upper, const AndroidPose&,
+            const SolidColor* silhouette = nullptr);
+        void drawJacketSleeve(const SceneFrame& upper, FloatPoint from, FloatPoint to, float width,
+            float shimmer, const SolidColor* silhouette);
+        void drawFedora(const SceneFrame& head, const SolidColor* silhouette = nullptr);
         void drawHead(const SceneFrame& upper, const AndroidPose&);
         void drawArms(const SceneFrame& upper, const AndroidPose&, const SolidColor* silhouette = nullptr);
+        void drawWhiteGlove(const SceneFrame& upper, const Limb& arm, AudienceSide,
+            const SolidColor* silhouette);
         void drawForearm(const SceneFrame& upper, const AndroidPose&, AudienceSide,
             const SolidColor* silhouette = nullptr);
     }
@@ -194,7 +232,8 @@ namespace ClaFi::PathArt
             const float soleY = side->foot.y + AndroidBody::AnkleHeight;
             reachDown({ side->foot.x - k_soleHalf, soleY }, 0.0f);
             reachDown({ side->foot.x + k_soleHalf, soleY }, 0.0f);
-            reachDown(upperToBody(pose, side->hand), k_palmRadius);
+            const bool roundPalm = side->handShape == HandShape::Open && !side->wearsWhiteGlove;
+            reachDown(upperToBody(pose, side->hand), roundPalm ? side->palmRadius : k_palmRadius);
         }
         const FloatPoint headOffset = { pose.headOffsetX, pose.headOffsetY };
         const FloatPoint antennaTip = AndroidBody::AntennaTip + headOffset;
@@ -216,6 +255,10 @@ namespace ClaFi::PathArt
         }
         const SceneFrame upper = androidUpperFrame(frame, pose);
         drawTorso(upper, pose);
+        if (pose.wearsSequinJacket)
+        {
+            drawSequinJacket(upper, pose);
+        }
         drawHead(upper, pose);
         drawArms(upper, pose);
     }
@@ -229,12 +272,22 @@ namespace ClaFi::PathArt
         drawLegs(body, pose, &silhouette);
         fillRoundedBox(body, k_pelvisBox, 8.0f, silhouette);
         fillRoundedBox(upper, k_torsoBox, 18.0f, silhouette);
+        if (pose.wearsSequinJacket)
+        {
+            drawSequinJacket(upper, pose, &silhouette);
+        }
         fillBox(neckFrameOf(upper, pose), k_neckBox, silhouette);
         fillDisc(head, { -38.0f, -28.0f }, 8.0f, silhouette);
         fillDisc(head, { 38.0f, -28.0f }, 8.0f, silhouette);
         fillRoundedBox(head, k_skullBox, 22.0f, silhouette);
-        drawSegment(head, { 0.0f, -58.0f }, { 0.0f, -78.0f }, silhouette, 3.0f);
-        fillDisc(head, { 0.0f, -83.0f }, 5.0f, silhouette);
+        if (pose.wearsFedora)
+        {
+            drawFedora(head, &silhouette);
+        }
+        const float antennaFoot = pose.wearsFedora ? k_fedoraAntennaFoot : -58.0f;
+        const float stalkTop = antennaFoot - k_antennaStalkLength;
+        drawSegment(head, { 0.0f, antennaFoot }, { 0.0f, stalkTop }, silhouette, 3.0f);
+        fillDisc(head, { 0.0f, stalkTop - k_antennaTipRadius }, k_antennaTipRadius, silhouette);
         drawArms(upper, pose, &silhouette);
     }
 
@@ -343,7 +396,8 @@ namespace ClaFi::PathArt
         {
             const SolidColor limb = silhouette ? *silhouette : SolidColor{ AndroidColors::Limb };
             const SolidColor joint = silhouette ? *silhouette : SolidColor{ AndroidColors::Joint };
-            const Color footColor = pose.wearsPointeShoes ? AndroidColors::Satin : AndroidColors::Foot;
+            const Color metalFoot = pose.highlightFeet ? AndroidColors::FootBlack : AndroidColors::Foot;
+            const Color footColor = pose.wearsPointeShoes ? AndroidColors::Satin : metalFoot;
             const SolidColor foot = silhouette ? *silhouette : SolidColor{ footColor };
             for (const AudienceSide which : { AudienceSide::Left, AudienceSide::Right })
             {
@@ -376,6 +430,11 @@ namespace ClaFi::PathArt
                 {
                     drawSegment(sole, { toeSide + 4.0f, 1.0f }, { toeSide + 28.0f, 1.0f },
                         SolidColor{ AndroidColors::SatinShine }, 1.6f);
+                }
+                else if (pose.highlightFeet && !silhouette)
+                {
+                    drawSegment(sole, { toeSide + 6.0f, 1.0f }, { toeSide + 26.0f, 1.0f },
+                        SolidColor{ AndroidColors::FootHighlight }, 2.0f);
                 }
             }
         }
@@ -440,6 +499,135 @@ namespace ClaFi::PathArt
             fillBox(neckFrameOf(upper, pose), k_neckBox, SolidColor{ AndroidColors::Neck });
         }
 
+        void drawSequin(const SceneFrame& frame, const FloatPoint center, const float shimmer)
+        {
+            const float phase = fractionalPart(shimmer);
+            const float highlight = 1.0f - smoothStep(0.0f, 0.22f, std::abs(phase - 0.5f));
+            fillDisc(frame, center, 1.1f + 0.9f * highlight,
+                SolidColor{ Color::between(JacketColors::Sequin, JacketColors::Glint, highlight) });
+        }
+
+        void drawSequinJacket(const SceneFrame& upper, const AndroidPose& pose,
+            const SolidColor* silhouette)
+        {
+            const SolidColor cloth = silhouette ? *silhouette : SolidColor{ JacketColors::Cloth };
+            if (pose.facing < 0.0f)
+            {
+                fillRoundedBox(upper, k_torsoBox, 18.0f, cloth);
+            }
+            for (const float side : { -1.0f, 1.0f })
+            {
+                const SceneFrame panel = upper.within(Matrix3x2::Scale(side, 1.0f));
+                PixelPath front;
+                front.moveTo(13.0f, -117.0f);
+                front.quadTo({ 43.0f, -119.0f }, { 49.0f, -103.0f });
+                front.quadTo({ 34.0f, -62.0f }, { 41.0f, -8.0f });
+                front.quadTo({ 33.0f, 4.0f }, { 7.0f, -1.0f });
+                front.lineTo(12.0f, -41.0f);
+                front.lineTo(22.0f, -80.0f);
+                front.close();
+                fillShape(panel, front, cloth);
+                if (silhouette)
+                {
+                    continue;
+                }
+                strokeShape(panel, front, SolidColor{ JacketColors::Edge }, 1.5f);
+
+                PixelPath lapel;
+                lapel.moveTo(13.0f, -117.0f);
+                lapel.lineTo(23.0f, -111.0f);
+                lapel.lineTo(30.0f, -91.0f);
+                lapel.lineTo(24.0f, -90.0f);
+                lapel.lineTo(28.0f, -83.0f);
+                lapel.lineTo(13.0f, -45.0f);
+                lapel.lineTo(22.0f, -80.0f);
+                lapel.close();
+                fillShape(panel, lapel, SolidColor{ JacketColors::Lapel });
+                for (int row = 0; row < 10; ++row)
+                {
+                    const float y = -106.0f + static_cast<float>(row) * 10.5f;
+                    const float innerX = row < 4 ? 29.0f : 21.0f;
+                    for (int column = 0; column < 3; ++column)
+                    {
+                        const float x = std::lerp(innerX, 34.0f, static_cast<float>(column) * 0.5f);
+                        const float phase = pose.cycleTime * 27.0f + static_cast<float>(row) * 0.27f
+                            + static_cast<float>(column) * 0.38f + side * 0.19f;
+                        drawSequin(panel, { x, y + 2.0f * static_cast<float>(column) }, phase);
+                    }
+                }
+            }
+        }
+
+        void drawJacketSleeve(const SceneFrame& upper, const FloatPoint from, const FloatPoint to,
+            const float width, const float shimmer, const SolidColor* silhouette)
+        {
+            if (silhouette)
+            {
+                drawSegment(upper, from, to, *silhouette, width);
+                return;
+            }
+            drawSegment(upper, from, to, SolidColor{ JacketColors::Edge }, width);
+            drawSegment(upper, from, to, SolidColor{ JacketColors::Cloth }, width - 2.8f);
+            const FloatPoint span = to - from;
+            const float length = std::hypot(span.x, span.y);
+            if (length < 8.0f)
+            {
+                return;
+            }
+            const FloatPoint across = FloatPoint{ -span.y, span.x } * (0.23f * width / length);
+            for (int row = 0; row < 8; ++row)
+            {
+                const float along = (static_cast<float>(row) + 0.5f) / 8.0f;
+                const float side = row % 2 == 0 ? -1.0f : 1.0f;
+                drawSequin(upper, from + span * along + across * side,
+                    shimmer + static_cast<float>(row) * 0.37f);
+            }
+        }
+
+        void drawFedora(const SceneFrame& head, const SolidColor* silhouette)
+        {
+            const SceneFrame hat = head.within(Matrix3x2::Translation(0.0f, -53.0f)
+                * Matrix3x2::Rotation(-0.13f));
+            PixelPath brim;
+            brim.moveTo(-49.0f, 1.0f);
+            brim.cubicTo({ -30.0f, -10.0f }, { 29.0f, -11.0f }, { 51.0f, -2.0f });
+            brim.cubicTo({ 43.0f, 9.0f }, { -19.0f, 11.0f }, { -49.0f, 1.0f });
+            brim.close();
+
+            PixelPath crown;
+            crown.moveTo(-30.0f, 1.0f);
+            crown.quadTo({ -29.0f, -24.0f }, { -22.0f, -30.0f });
+            crown.cubicTo({ -14.0f, -36.0f }, { -8.0f, -22.0f }, { 6.0f, -29.0f });
+            crown.quadTo({ 20.0f, -36.0f }, { 24.0f, -24.0f });
+            crown.lineTo(30.0f, -2.0f);
+            crown.quadTo({ 4.0f, 5.0f }, { -30.0f, 1.0f });
+            crown.close();
+            if (silhouette)
+            {
+                fillShape(hat, brim, *silhouette);
+                fillShape(hat, crown, *silhouette);
+                return;
+            }
+            fillShape(hat, brim, SolidColor{ FedoraColors::FeltShade });
+            strokeShape(hat, brim, SolidColor{ FedoraColors::Rim }, 1.7f);
+            fillShape(hat, crown, LinearGradient::Simple({ -27.0f, -15.0f }, { 29.0f, -9.0f },
+                FedoraColors::FeltLight, FedoraColors::FeltShade));
+            strokeShape(hat, crown, SolidColor{ FedoraColors::Rim }, 1.4f);
+
+            PixelPath band;
+            band.moveTo(-29.0f, -7.0f);
+            band.quadTo({ 3.0f, -3.0f }, { 28.0f, -10.0f });
+            band.lineTo(30.0f, -2.0f);
+            band.quadTo({ 4.0f, 5.0f }, { -30.0f, 1.0f });
+            band.close();
+            fillShape(hat, band, SolidColor{ FedoraColors::Band });
+
+            PixelPath crease;
+            crease.moveTo(-24.0f, -23.0f);
+            crease.quadTo({ -10.0f, -15.0f }, { 1.0f, -24.0f });
+            strokeShape(hat, crease, SolidColor{ FedoraColors::Crease }, 2.6f);
+        }
+
         // From behind, the visor gives way to a plate with two bolts.
         void drawHead(const SceneFrame& upper, const AndroidPose& pose)
         {
@@ -496,15 +684,20 @@ namespace ClaFi::PathArt
                 strokeShape(head, grille, SolidColor{ AndroidColors::Neck }, 2.4f);
             }
 
+            if (pose.wearsFedora)
+            {
+                drawFedora(head);
+            }
             const bool antennaLit = pose.antenna == AntennaLight::On
                 || (pose.antenna == AntennaLight::Blinking
                     && fractionalPart(pose.cycleTime * 16.0f) < 0.5f);
-            // Through the hat, a shorter stalk stands on the crown, in the hat's units.
-            const SceneFrame antennaFrame = pose.wearsHat ? topHatFrame(head, k_wornHat) : head;
-            const float antennaFoot = pose.wearsHat ? -56.0f : -58.0f;
-            const float stalkTop = pose.wearsHat ? -68.0f : -78.0f;
-            const float ballY = stalkTop - 5.0f;
-            if (pose.wearsHat)
+            const bool wearsTopHat = pose.wearsHat && !pose.wearsFedora;
+            const SceneFrame antennaFrame = wearsTopHat ? topHatFrame(head, k_wornHat) : head;
+            const float antennaFoot = wearsTopHat ? -56.0f
+                : (pose.wearsFedora ? k_fedoraAntennaFoot : -58.0f);
+            const float stalkTop = antennaFoot - (wearsTopHat ? 12.0f : k_antennaStalkLength);
+            const float ballY = stalkTop - k_antennaTipRadius;
+            if (wearsTopHat)
             {
                 drawTopHat(head, k_wornHat);
                 drawTopHatBrimLip(head, k_wornHat);
@@ -514,7 +707,7 @@ namespace ClaFi::PathArt
             if (antennaLit)
                 drawGlow(antennaFrame, { 0.0f, ballY }, 14.0f,
                     AndroidColors::AntennaGlow.withOpacity(0.6f));
-            fillDisc(antennaFrame, { 0.0f, ballY }, 5.0f,
+            fillDisc(antennaFrame, { 0.0f, ballY }, k_antennaTipRadius,
                 SolidColor{ antennaLit ? AndroidColors::AntennaOn : AndroidColors::AntennaOff });
         }
 
@@ -529,12 +722,68 @@ namespace ClaFi::PathArt
                     AndroidBody::RightShoulder.y
                 };
                 const Limb arm = armOf(pose, which);
-                drawSegment(upper, shoulder, arm.joint, limb, 13.0f);
+                if (pose.wearsSequinJacket)
+                {
+                    drawJacketSleeve(upper, shoulder, arm.joint, 22.0f,
+                        pose.cycleTime * 27.0f + sideSign(which) * 0.15f, silhouette);
+                }
+                else
+                {
+                    drawSegment(upper, shoulder, arm.joint, limb, 13.0f);
+                }
                 if (silhouette || !pose.side(which).forearmOnTop)
                 {
                     drawForearm(upper, pose, which, silhouette);
                 }
-                fillDisc(upper, shoulder, 11.0f, joint);
+                if (!pose.wearsSequinJacket)
+                {
+                    fillDisc(upper, shoulder, 11.0f, joint);
+                }
+            }
+        }
+
+        void drawWhiteGlove(const SceneFrame& upper, const Limb& arm, const AudienceSide which,
+            const SolidColor* silhouette)
+        {
+            constexpr float k_gloveScale{ 1.8f };
+            constexpr float k_cuffX{ -11.0f };
+            const FloatPoint forearm = arm.end - arm.joint;
+            const float turn = std::atan2(forearm.y, forearm.x);
+            const float cuffOffset = k_cuffX * (1.0f - k_gloveScale);
+            const SceneFrame hand = upper.within(Matrix3x2::Translation(arm.end)
+                * Matrix3x2::Rotation(turn) * Matrix3x2::Translation(cuffOffset, 0.0f)
+                * Matrix3x2::Scale(k_gloveScale, -sideSign(which) * k_gloveScale));
+            PixelPath glove;
+            glove.moveTo(k_cuffX, -6.0f);
+            glove.quadTo({ -3.0f, -6.0f }, { 3.0f, -9.0f });
+            glove.lineTo(11.0f, -9.0f);
+            glove.quadTo({ 16.0f, -9.0f }, { 13.0f, -5.0f });
+            glove.quadTo({ 20.0f, -5.0f }, { 16.0f, -1.0f });
+            glove.quadTo({ 21.0f, 1.0f }, { 15.0f, 3.0f });
+            glove.quadTo({ 17.0f, 7.0f }, { 11.0f, 7.0f });
+            glove.lineTo(2.0f, 7.0f);
+            glove.quadTo({ 6.0f, 12.0f }, { 1.0f, 13.0f });
+            glove.quadTo({ -2.0f, 13.0f }, { -5.0f, 8.0f });
+            glove.lineTo(k_cuffX, 6.0f);
+            glove.close();
+            if (silhouette)
+            {
+                fillShape(hand, glove, *silhouette);
+                return;
+            }
+
+            fillShape(hand, glove, LinearGradient::Simple({ 2.0f, -8.0f }, { 4.0f, 13.0f },
+                GloveColors::White, GloveColors::Shade));
+            strokeShape(hand, glove, SolidColor{ GloveColors::Seam }, 0.9f);
+            drawSegment(hand, { -7.0f, -5.0f }, { -7.0f, 6.0f },
+                SolidColor{ GloveColors::Seam }, 0.8f);
+            constexpr std::array<FloatPoint, 5> k_sequins{
+                FloatPoint{ -2.0f, 1.0f }, { 2.0f, -3.0f }, { 3.0f, 4.0f },
+                { 7.0f, 0.0f }, { 10.0f, -4.0f }
+            };
+            for (const FloatPoint center : k_sequins)
+            {
+                fillDisc(hand, center, 0.85f, SolidColor{ GloveColors::Sequin });
             }
         }
 
@@ -544,10 +793,21 @@ namespace ClaFi::PathArt
             const Limb arm = armOf(pose, which);
             const SolidColor limb = silhouette ? *silhouette : SolidColor{ AndroidColors::Limb };
             const SolidColor joint = silhouette ? *silhouette : SolidColor{ AndroidColors::Joint };
-            const SolidColor hand = silhouette ? *silhouette : SolidColor{ AndroidColors::Hand };
-            drawSegment(upper, arm.joint, arm.end, limb, 12.0f);
-            fillDisc(upper, arm.joint, 7.5f, joint);
-            if (pose.side(which).handShape == HandShape::Fist)
+            const AndroidSide& side = pose.side(which);
+            const Color handColor = side.wearsWhiteGlove ? GloveColors::White : AndroidColors::Hand;
+            const SolidColor hand = silhouette ? *silhouette : SolidColor{ handColor };
+            if (pose.wearsSequinJacket)
+            {
+                const FloatPoint wrist = FloatPoint::between(arm.joint, arm.end, 0.87f);
+                drawJacketSleeve(upper, arm.joint, wrist, 18.0f,
+                    pose.cycleTime * 27.0f + 0.43f + sideSign(which) * 0.15f, silhouette);
+            }
+            else
+            {
+                drawSegment(upper, arm.joint, arm.end, limb, 12.0f);
+                fillDisc(upper, arm.joint, 7.5f, joint);
+            }
+            if (side.handShape == HandShape::Fist)
             {
                 PixelPath fist;
                 fist.drawRoundedRect(FloatRect{ arm.end.x - 10.0f, arm.end.y - 6.0f,
@@ -555,11 +815,20 @@ namespace ClaFi::PathArt
                 fillShape(upper, fist, hand);
                 if (!silhouette)
                 {
-                    strokeShape(upper, fist, SolidColor{ AndroidColors::MetalEdge }, 1.2f);
+                    const Color edge = side.wearsWhiteGlove ? GloveColors::Seam
+                        : AndroidColors::MetalEdge;
+                    strokeShape(upper, fist, SolidColor{ edge }, 1.2f);
                 }
                 return;
             }
-            fillDisc(upper, arm.end, 9.0f, hand);
+            if (side.wearsWhiteGlove)
+            {
+                drawWhiteGlove(upper, arm, which, silhouette);
+            }
+            else
+            {
+                fillDisc(upper, arm.end, side.palmRadius, hand);
+            }
         }
     }
 }

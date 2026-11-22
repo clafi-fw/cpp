@@ -167,6 +167,15 @@ scene.wearTheme(themeIndex);</code></pre>
             <code>AndroidPose::headOffsetX</code> and <code>AndroidPose::headOffsetY</code> move
             the head sideways and down in upper-body units. The neck follows the head.
             <code>AndroidPose::headTurn</code> sets the head angle in radians independently.</p>
+            <p><code>AndroidPose::wearsFedora</code> draws a fedora that follows the head, with the
+            antenna extending through the crown. It takes precedence over <code>wearsHat</code>.
+            <code>AndroidPose::wearsSequinJacket</code> adds a black jacket with sequins that catch
+            the light along the torso and sleeves. The silhouette follows both garments.</p>
+            <p><code>AndroidSide::wearsWhiteGlove</code> dresses one hand in a white sequin glove.
+            Set it on the side as seen by the audience. <code>AndroidSide::palmRadius</code>
+            sizes an open, ungloved hand in upper-body units and defaults to 9.</p>
+            <p><code>AndroidPose::highlightFeet</code> draws black metal feet with a cool highlight
+            that turns with each foot.</p>
             <p><code>AndroidSide::elbowPosition</code> places the elbow in the hand's coordinates.
             Set <code>elbowPositionBlend</code> from 0 for the solved elbow to 1 for the specified
             position. The hand stays at its solved point.</p>
@@ -183,6 +192,9 @@ scene.wearTheme(themeIndex);</code></pre>
             displacement for the puppet hanging from its stand.</p>
 
             <h2 id="showcase">MillScene showcase</h2>
+            <p>Use <code>--at &lt;seconds&gt;</code> to start playback at a time within a scene.
+            <code>MillScene --scene "Bot Talent" --at 130</code> starts at the opening of the
+            moonwalk act.</p>
             <p>The weather settings apply to both the Mill and the Chase. The Weather effects
             dropdown and context submenu show the selected theme's effect in the Theme default
             entry. Choose Calm Night, Rain, and Lightning to draw a thunderstorm at night.</p>
