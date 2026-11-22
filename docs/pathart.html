@@ -123,6 +123,7 @@
         <ul>
             <li><div class="nav-item-wrapper"><a href="#theme">Scene themes</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#weather">Weather overrides</a></div></li>
+            <li><div class="nav-item-wrapper"><a href="#android">Android poses</a></div></li>
             <li><div class="nav-item-wrapper"><a href="#showcase">MillScene showcase</a></div></li>
         </ul>
     </nav>
@@ -159,6 +160,20 @@
     .lightning = true
 });
 scene.wearTheme(themeIndex);</code></pre>
+
+            <h2 id="android">Android poses</h2>
+            <p>Import <code>ClaFi.PathArt.AndroidSprite</code> to pose the android.
+            <code>AndroidPose::headOffsetX</code> and <code>AndroidPose::headOffsetY</code> move
+            the head sideways and down in upper-body units. The neck follows the head.
+            <code>AndroidPose::headTurn</code> sets the head angle in radians independently.</p>
+            <p><code>AndroidSide::elbowPosition</code> places the elbow in the hand's coordinates.
+            Set <code>elbowPositionBlend</code> from 0 for the solved elbow to 1 for the specified
+            position. The hand stays at its solved point.</p>
+            <p><code>AndroidSide::kneeOffsetX</code> shifts a standing knee sideways in pelvis units
+            while its ankle stays fixed.</p>
+            <p><code>drawAndroidSilhouette()</code> draws the bare posed android in a solid color.
+            Pass a transformed <code>SceneFrame</code> to project the silhouette onto the backdrop.
+            <code>ActStage::backdropY</code> marks where the backdrop meets the stage floor.</p>
 
             <h2 id="showcase">MillScene showcase</h2>
             <p>The weather settings apply to both the Mill and the Chase. The Weather effects

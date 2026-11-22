@@ -18,6 +18,7 @@ namespace ClaFi::PathArt
         float floorY; // the line the feet stand on
         float closeness; // 1, or less in a narrow frame, which draws figures closer together
         float drapeWidth; // the side drapes' reach in from each edge
+        float backdropY{}; // where the backdrop meets the floor
     };
 
     // How the marionette's stand stands in an act. See PathArt

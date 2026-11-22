@@ -54,6 +54,10 @@ namespace ClaFi::PathArt
         // How far a turn may squeeze the figure, so it never folds to nothing.
         constexpr float k_thinnestFacing{ 0.03f };
         constexpr int k_pinkLight{ 2 };
+        const FloatRect k_pelvisBox{ -30.0f, -13.0f, 30.0f, 13.0f };
+        const FloatRect k_torsoBox{ -42.0f, -117.0f, 42.0f, -9.0f };
+        const FloatRect k_neckBox{ -8.0f, -133.0f, 8.0f, -115.0f };
+        const FloatRect k_skullBox{ -36.0f, -58.0f, 36.0f, 0.0f };
 
         [[nodiscard]] float sideSign(AudienceSide);
         [[nodiscard]] float drawnFacing(const AndroidPose&);
@@ -61,6 +65,7 @@ namespace ClaFi::PathArt
         [[nodiscard]] float upperHeightShare(const AndroidPose&);
         // The head's place on the upper body: about the neck, turned, its shape kept in a bow.
         [[nodiscard]] Matrix3x2 headToUpper(const AndroidPose&);
+        [[nodiscard]] SceneFrame neckFrameOf(const SceneFrame& upper, const AndroidPose&);
         // The figure's frame in units about the pelvis.
         [[nodiscard]] SceneFrame bodyFrameOf(const SceneFrame&, const AndroidPose&);
         // A two-part limb that stretches rather than stops short of its end.
@@ -70,11 +75,13 @@ namespace ClaFi::PathArt
         [[nodiscard]] FloatPoint bodyToUpper(const AndroidPose&, FloatPoint bodyPoint);
         [[nodiscard]] FloatPoint upperToBody(const AndroidPose&, FloatPoint upperPoint);
 
-        void drawLegs(const SceneFrame& body, const AndroidPose&);
+        void drawLegs(const SceneFrame& body, const AndroidPose&, const SolidColor* silhouette = nullptr);
         void drawPointeRibbons(const SceneFrame& body, const Limb& leg);
         void drawTorso(const SceneFrame& upper, const AndroidPose&);
         void drawHead(const SceneFrame& upper, const AndroidPose&);
-        void drawForearm(const SceneFrame& upper, const AndroidPose&, AudienceSide);
+        void drawArms(const SceneFrame& upper, const AndroidPose&, const SolidColor* silhouette = nullptr);
+        void drawForearm(const SceneFrame& upper, const AndroidPose&, AudienceSide,
+            const SolidColor* silhouette = nullptr);
     }
 
     // AndroidPose
@@ -189,7 +196,9 @@ namespace ClaFi::PathArt
             reachDown({ side->foot.x + k_soleHalf, soleY }, 0.0f);
             reachDown(upperToBody(pose, side->hand), k_palmRadius);
         }
-        reachDown(upperToBody(pose, AndroidBody::AntennaTip), 0.0f);
+        const FloatPoint headOffset = { pose.headOffsetX, pose.headOffsetY };
+        const FloatPoint antennaTip = AndroidBody::AntennaTip + headOffset;
+        reachDown(upperToBody(pose, antennaTip), 0.0f);
         pose.pelvis.y = floorY - lowest * frame.unit;
     }
 
@@ -197,8 +206,7 @@ namespace ClaFi::PathArt
     {
         const SceneFrame body = bodyFrameOf(frame, pose);
         drawLegs(body, pose);
-        fillRoundedBox(body, { -30.0f, -13.0f, 30.0f, 13.0f }, 8.0f,
-            SolidColor{ AndroidColors::Pelvis });
+        fillRoundedBox(body, k_pelvisBox, 8.0f, SolidColor{ AndroidColors::Pelvis });
         // A tutu looks the same from every side, so it keeps its width as the figure turns.
         if (pose.wearsTutu)
         {
@@ -209,18 +217,25 @@ namespace ClaFi::PathArt
         const SceneFrame upper = androidUpperFrame(frame, pose);
         drawTorso(upper, pose);
         drawHead(upper, pose);
-        for (const AudienceSide which : { AudienceSide::Left, AudienceSide::Right })
-        {
-            const FloatPoint shoulder = {
-                sideSign(which) * AndroidBody::RightShoulder.x,
-                AndroidBody::RightShoulder.y
-            };
-            const Limb arm = armOf(pose, which);
-            drawSegment(upper, shoulder, arm.joint, SolidColor{ AndroidColors::Limb }, 13.0f);
-            if (!pose.side(which).forearmOnTop)
-                drawForearm(upper, pose, which);
-            fillDisc(upper, shoulder, 11.0f, SolidColor{ AndroidColors::Joint });
-        }
+        drawArms(upper, pose);
+    }
+
+    void drawAndroidSilhouette(const SceneFrame& frame, const AndroidPose& pose, const Color color)
+    {
+        const SolidColor silhouette{ color };
+        const SceneFrame body = bodyFrameOf(frame, pose);
+        const SceneFrame upper = androidUpperFrame(frame, pose);
+        const SceneFrame head = upper.within(headToUpper(pose));
+        drawLegs(body, pose, &silhouette);
+        fillRoundedBox(body, k_pelvisBox, 8.0f, silhouette);
+        fillRoundedBox(upper, k_torsoBox, 18.0f, silhouette);
+        fillBox(neckFrameOf(upper, pose), k_neckBox, silhouette);
+        fillDisc(head, { -38.0f, -28.0f }, 8.0f, silhouette);
+        fillDisc(head, { 38.0f, -28.0f }, 8.0f, silhouette);
+        fillRoundedBox(head, k_skullBox, 22.0f, silhouette);
+        drawSegment(head, { 0.0f, -58.0f }, { 0.0f, -78.0f }, silhouette, 3.0f);
+        fillDisc(head, { 0.0f, -83.0f }, 5.0f, silhouette);
+        drawArms(upper, pose, &silhouette);
     }
 
     void drawAndroidForearm(const SceneFrame& frame, const AndroidPose& pose,
@@ -249,9 +264,25 @@ namespace ClaFi::PathArt
 
         Matrix3x2 headToUpper(const AndroidPose& pose)
         {
-            return Matrix3x2::Translation(AndroidBody::Neck)
+            const FloatPoint headOffset = { pose.headOffsetX, pose.headOffsetY };
+            const FloatPoint headPivot = AndroidBody::Neck + headOffset;
+            return Matrix3x2::Translation(headPivot)
                 * Matrix3x2::Scale(1.0f, 1.0f / upperHeightShare(pose))
                 * Matrix3x2::Rotation(pose.headTurn);
+        }
+
+        SceneFrame neckFrameOf(const SceneFrame& upper, const AndroidPose& pose)
+        {
+            // The neck follows the head at its top and stays attached at the torso.
+            const float neckSpan = k_neckBox.top - k_neckBox.bottom;
+            const float neckShear = pose.headOffsetX / neckSpan;
+            const float neckStretch = pose.headOffsetY / neckSpan;
+            return upper.within({
+                .c = neckShear,
+                .d = 1.0f + neckStretch,
+                .e = -neckShear * k_neckBox.bottom,
+                .f = -neckStretch * k_neckBox.bottom
+            });
         }
 
         SceneFrame bodyFrameOf(const SceneFrame& frame, const AndroidPose& pose)
@@ -281,7 +312,12 @@ namespace ClaFi::PathArt
             BendToward bend = which == AudienceSide::Left ? BendToward::Left : BendToward::Right;
             if (side.elbow == ElbowBend::Down)
                 bend = BendToward::Down;
-            return stretchToward(shoulder, side.hand, side.upperArm, side.forearm, bend);
+            Limb arm = stretchToward(shoulder, side.hand, side.upperArm, side.forearm, bend);
+            if (side.elbowPositionBlend > 0.0f)
+            {
+                arm.joint = FloatPoint::between(arm.joint, side.elbowPosition, side.elbowPositionBlend);
+            }
+            return arm;
         }
 
         FloatPoint bodyToUpper(const AndroidPose& pose, const FloatPoint bodyPoint)
@@ -303,13 +339,12 @@ namespace ClaFi::PathArt
 
         // Kneeling, a thigh comes down to its knee on the floor and the shin lies behind it,
         // seen end on.
-        void drawLegs(const SceneFrame& body, const AndroidPose& pose)
+        void drawLegs(const SceneFrame& body, const AndroidPose& pose, const SolidColor* silhouette)
         {
-            const SolidColor limb{ AndroidColors::Limb };
-            const SolidColor joint{ AndroidColors::Joint };
-            const SolidColor foot = pose.wearsPointeShoes
-                ? SolidColor{ AndroidColors::Satin }
-                : SolidColor{ AndroidColors::Foot };
+            const SolidColor limb = silhouette ? *silhouette : SolidColor{ AndroidColors::Limb };
+            const SolidColor joint = silhouette ? *silhouette : SolidColor{ AndroidColors::Joint };
+            const Color footColor = pose.wearsPointeShoes ? AndroidColors::Satin : AndroidColors::Foot;
+            const SolidColor foot = silhouette ? *silhouette : SolidColor{ footColor };
             for (const AudienceSide which : { AudienceSide::Left, AudienceSide::Right })
             {
                 const float sign = sideSign(which);
@@ -326,17 +361,18 @@ namespace ClaFi::PathArt
                 const BendToward outward = which == AudienceSide::Left
                     ? BendToward::Left
                     : BendToward::Right;
-                const Limb leg = stretchToward(hip, side.foot, 47.0f, 47.0f, outward);
+                Limb leg = stretchToward(hip, side.foot, 47.0f, 47.0f, outward);
+                leg.joint.x += side.kneeOffsetX;
                 drawSegment(body, hip, leg.joint, limb, 16.0f);
                 drawSegment(body, leg.joint, leg.end, limb, 16.0f);
                 fillDisc(body, leg.joint, 9.0f, joint);
-                if (pose.wearsPointeShoes)
+                if (pose.wearsPointeShoes && !silhouette)
                     drawPointeRibbons(body, leg);
                 const SceneFrame sole = body.within(Matrix3x2::Translation(leg.end)
                     * Matrix3x2::Rotation(side.footTurn));
                 const float toeSide = which == AudienceSide::Left ? -19.0f : -13.0f;
                 fillRoundedBox(sole, { toeSide, -3.0f, toeSide + 32.0f, 14.0f }, 6.0f, foot);
-                if (pose.wearsPointeShoes)
+                if (pose.wearsPointeShoes && !silhouette)
                 {
                     drawSegment(sole, { toeSide + 4.0f, 1.0f }, { toeSide + 28.0f, 1.0f },
                         SolidColor{ AndroidColors::SatinShine }, 1.6f);
@@ -369,7 +405,7 @@ namespace ClaFi::PathArt
         {
             const bool fromBehind = pose.facing < 0.0f;
             PixelPath torso;
-            torso.drawRoundedRect(FloatRect{ -42.0f, -117.0f, 42.0f, -9.0f }, 18.0f, 18.0f);
+            torso.drawRoundedRect(k_torsoBox, 18.0f, 18.0f);
             fillShape(upper, torso, LinearGradient::Simple({ -40.0f, -115.0f }, { 40.0f, -3.0f },
                 fromBehind ? AndroidColors::BackLight : AndroidColors::MetalLight,
                 fromBehind ? AndroidColors::BackShade : AndroidColors::MetalShade));
@@ -401,7 +437,7 @@ namespace ClaFi::PathArt
                         SolidColor{ color.withOpacity(lit ? 1.0f : 0.28f) });
                 }
             }
-            fillBox(upper, { -8.0f, -133.0f, 8.0f, -115.0f }, SolidColor{ AndroidColors::Neck });
+            fillBox(neckFrameOf(upper, pose), k_neckBox, SolidColor{ AndroidColors::Neck });
         }
 
         // From behind, the visor gives way to a plate with two bolts.
@@ -413,7 +449,7 @@ namespace ClaFi::PathArt
             fillDisc(head, { -38.0f, -28.0f }, 8.0f, joint);
             fillDisc(head, { 38.0f, -28.0f }, 8.0f, joint);
             PixelPath skull;
-            skull.drawRoundedRect(FloatRect{ -36.0f, -58.0f, 36.0f, 0.0f }, 22.0f, 22.0f);
+            skull.drawRoundedRect(k_skullBox, 22.0f, 22.0f);
             fillShape(head, skull, LinearGradient::Simple({ -30.0f, -58.0f }, { 30.0f, 0.0f },
                 fromBehind ? AndroidColors::BackLight : AndroidColors::HeadLight,
                 AndroidColors::HeadShade));
@@ -482,22 +518,48 @@ namespace ClaFi::PathArt
                 SolidColor{ antennaLit ? AndroidColors::AntennaOn : AndroidColors::AntennaOff });
         }
 
-        void drawForearm(const SceneFrame& upper, const AndroidPose& pose,
-            const AudienceSide which)
+        void drawArms(const SceneFrame& upper, const AndroidPose& pose, const SolidColor* silhouette)
+        {
+            const SolidColor limb = silhouette ? *silhouette : SolidColor{ AndroidColors::Limb };
+            const SolidColor joint = silhouette ? *silhouette : SolidColor{ AndroidColors::Joint };
+            for (const AudienceSide which : { AudienceSide::Left, AudienceSide::Right })
+            {
+                const FloatPoint shoulder = {
+                    sideSign(which) * AndroidBody::RightShoulder.x,
+                    AndroidBody::RightShoulder.y
+                };
+                const Limb arm = armOf(pose, which);
+                drawSegment(upper, shoulder, arm.joint, limb, 13.0f);
+                if (silhouette || !pose.side(which).forearmOnTop)
+                {
+                    drawForearm(upper, pose, which, silhouette);
+                }
+                fillDisc(upper, shoulder, 11.0f, joint);
+            }
+        }
+
+        void drawForearm(const SceneFrame& upper, const AndroidPose& pose, const AudienceSide which,
+            const SolidColor* silhouette)
         {
             const Limb arm = armOf(pose, which);
-            drawSegment(upper, arm.joint, arm.end, SolidColor{ AndroidColors::Limb }, 12.0f);
-            fillDisc(upper, arm.joint, 7.5f, SolidColor{ AndroidColors::Joint });
+            const SolidColor limb = silhouette ? *silhouette : SolidColor{ AndroidColors::Limb };
+            const SolidColor joint = silhouette ? *silhouette : SolidColor{ AndroidColors::Joint };
+            const SolidColor hand = silhouette ? *silhouette : SolidColor{ AndroidColors::Hand };
+            drawSegment(upper, arm.joint, arm.end, limb, 12.0f);
+            fillDisc(upper, arm.joint, 7.5f, joint);
             if (pose.side(which).handShape == HandShape::Fist)
             {
                 PixelPath fist;
                 fist.drawRoundedRect(FloatRect{ arm.end.x - 10.0f, arm.end.y - 6.0f,
                     arm.end.x + 10.0f, arm.end.y + 10.0f }, 6.0f, 6.0f);
-                fillShape(upper, fist, SolidColor{ AndroidColors::Hand });
-                strokeShape(upper, fist, SolidColor{ AndroidColors::MetalEdge }, 1.2f);
+                fillShape(upper, fist, hand);
+                if (!silhouette)
+                {
+                    strokeShape(upper, fist, SolidColor{ AndroidColors::MetalEdge }, 1.2f);
+                }
                 return;
             }
-            fillDisc(upper, arm.end, 9.0f, SolidColor{ AndroidColors::Hand });
+            fillDisc(upper, arm.end, 9.0f, hand);
         }
     }
 }

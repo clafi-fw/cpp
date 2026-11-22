@@ -1099,6 +1099,9 @@ A pose places the pelvis in the frame and gives everything else relative to it.
   `bend` at AndroidBody Waist, so a hand on the chest goes with the chest as it leans.
 - **A limb stretches to a hand or foot beyond its reach.** Within reach, an elbow or a knee bends
   out to its own side, and an elbow set to ElbowBend Down bends down.
+- **`elbowPosition`** places an elbow in the hand's coordinate frame. Use `elbowPositionBlend`
+  from 0 for the solved elbow to 1 for the specified position. The hand stays at its solved point.
+- **`kneeOffsetX`** shifts a standing knee sideways in pelvis units while its ankle stays fixed.
 - **`facing`** narrows the figure as it turns and shows its back below 0: vents on the chest and a
   plate over the face. At its narrowest it keeps 0.03 of its width, so a turn passes through a
   sliver.
@@ -1112,6 +1115,8 @@ A pose places the pelvis in the frame and gives everything else relative to it.
 - **`wearsPointeShoes`** dresses the feet in pink satin, the ribbons crossed over the shins.
 - **`bow`** bows the android to the audience: the upper body shortens as it tips toward them,
   and the face goes down, the eyes on the floor. The head keeps its shape.
+- **`headOffsetX` and `headOffsetY`** move the head sideways and down in the upper body's
+  coordinates. The neck follows the head, and `headTurn` controls the angle independently.
 - **`cycleTime`** drives the blink and the chest lights' chase; `eyeOpening`, `lights` and
   `antenna` set them by hand.
 
@@ -1126,6 +1131,11 @@ here and draws it itself, with wearsHat false.
 
 **The pose follows the head as it turns and bends.** A figure turning away squeezes the hat it wears
 across, which a pose cannot carry, so the pose is exact for a figure facing the audience.
+
+## drawAndroidSilhouette
+
+The silhouette follows the android's body and limb pose in the supplied frame. It draws the bare
+figure in a solid color. Use an opaque color for an even fill where body parts overlap.
 
 ## danceMarionette
 

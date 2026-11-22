@@ -83,7 +83,6 @@ namespace ClaFi::PathArt
     BotTalentScene::BotTalentScene()
     {
         m_acts.push_back(std::make_unique<PuppetShowAct>());
-        m_acts.push_back(std::make_unique<RobotDanceAct>());
         m_acts.push_back(std::make_unique<JugglingAct>());
         m_acts.push_back(std::make_unique<AccordionAct>());
         m_acts.push_back(std::make_unique<AcrobaticsAct>());
@@ -96,6 +95,7 @@ namespace ClaFi::PathArt
         m_acts.push_back(std::make_unique<WolfHoopAct>());
         m_acts.push_back(std::make_unique<StringsCutAct>());
         m_acts.push_back(std::make_unique<SwanLakeAct>());
+        m_acts.push_back(std::make_unique<RobotDanceAct>());
         m_acts.push_back(std::make_unique<CurtainCallAct>());
     }
 
@@ -117,7 +117,8 @@ namespace ClaFi::PathArt
             .centerX = frame.width * 0.5f,
             .floorY = floorY,
             .closeness = std::min(1.0f, (frame.width / unit) / 640.0f),
-            .drapeWidth = drapeWidthOf(frame)
+            .drapeWidth = drapeWidthOf(frame),
+            .backdropY = frame.height * k_floorTopShare
         };
 
         const float actsIntoCycle = time.cycleTime * k_actsPerCycle;

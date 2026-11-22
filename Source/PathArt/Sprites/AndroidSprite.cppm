@@ -69,6 +69,9 @@ namespace ClaFi::PathArt
         ElbowBend elbow{ ElbowBend::Out };
         HandShape handShape{ HandShape::Open };
         bool forearmOnTop{ false }; // left to drawAndroidForearm, over what the hand holds
+        FloatPoint elbowPosition{}; // in the same frame as the hand
+        float elbowPositionBlend{ 0.0f }; // from 0 solved to 1 placed at elbowPosition
+        float kneeOffsetX{ 0.0f }; // sideways from the solved standing knee in pelvis units
     };
 
     // How the android stands, moves and shows at one moment. See PathArt
@@ -93,6 +96,8 @@ namespace ClaFi::PathArt
         TutuLook tutuLook{}; // how its tutu differs from another of the same cut
         bool wearsPointeShoes{ false }; // pink satin, their ribbons crossed over the shins
         float cycleTime{ 0.0f }; // the time its eyes blink and its lights chase by
+        float headOffsetX{ 0.0f }; // sideways from the neck in upper-body units
+        float headOffsetY{ 0.0f }; // down from the neck in upper-body units
 
         [[nodiscard]] AndroidSide& side(AudienceSide);
         [[nodiscard]] const AndroidSide& side(AudienceSide) const;
@@ -125,6 +130,8 @@ namespace ClaFi::PathArt
 
     // The android and every forearm not left on top for drawAndroidForearm.
     export void drawAndroid(const SceneFrame&, const AndroidPose&);
+    // The android's body outline filled in one color. See PathArt
+    export void drawAndroidSilhouette(const SceneFrame&, const AndroidPose&, Color);
     // A forearm and hand left on top, drawn over what the hand holds.
     export void drawAndroidForearm(const SceneFrame&, const AndroidPose&, AudienceSide);
 }
