@@ -49,6 +49,16 @@ namespace ClaFi::Controls
         using ComboBoxEventBase::ComboBoxEventBase;
     };
 
+    export class ComboBoxPickEvent : public ComboBoxEventBase
+    {
+    public:
+        ComboBoxPickEvent(const ComboBox&, std::size_t itemIndex);
+    public:
+        [[nodiscard]] std::size_t itemIndex() const { return m_itemIndex; }
+    private:
+        std::size_t m_itemIndex;
+    };
+
     // ComboBoxAcceptTextEvent
 
     // The text typed over the face, before it is looked up among the items. See Controls
@@ -185,6 +195,7 @@ namespace ClaFi::Controls
     public:
         // The combo box has settled on a different item.
         DECLARE_EVENT(ComboBoxChangeEvent, OnChange, onChange)
+        DECLARE_EVENT(ComboBoxPickEvent, OnPick, onPick) // an item chosen from the dropdown
         // The text one item is about to be written with.
         DECLARE_EVENT(AdjustItemTextEvent, OnAdjustItemText, onAdjustItemText)
         // The icon one item is drawn with.
@@ -221,6 +232,7 @@ namespace ClaFi::Controls
         // What the face and the list show for an item - its placeholder while its text is empty.
         void itemFaceText(const TextItem&, Text&, EventPhase) const;
         void previewItem(std::size_t itemIndex);
+        void pickItem(std::size_t itemIndex);
         // The picked item's text, in the plain text a user would type over it.
         [[nodiscard]] std::wstring valueText() const;
         [[nodiscard]] ItemIndexValue lookUpItem(std::wstring_view typed) const;
@@ -322,7 +334,7 @@ namespace ClaFi::Controls
 
     void ComboBoxItemControl::click(ClickEvent& event)
     {
-        m_comboBox.setItemIndex(m_itemIndex);
+        m_comboBox.pickItem(m_itemIndex);
         event.closeForm();
     }
 

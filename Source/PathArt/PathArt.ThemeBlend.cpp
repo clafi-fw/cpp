@@ -53,6 +53,17 @@ namespace ClaFi::PathArt
             return result;
         }
 
+        [[nodiscard]] Color rainColorForSky(const SceneTheme& theme, const Color paleRain)
+        {
+            constexpr Color k_darkRain{ 0xFF354F72 };
+            const Color sky = Color::between(theme.skyTop, theme.skyBottom, 0.5f);
+            if (Color::contrastBetween(k_darkRain, sky) > Color::contrastBetween(paleRain, sky))
+            {
+                return k_darkRain;
+            }
+            return paleRain;
+        }
+
         void applyWeather(SceneTheme& theme, const SceneWeather& weather)
         {
             if (weather.lightning)
@@ -75,7 +86,9 @@ namespace ClaFi::PathArt
                     if (style.effect != WeatherEffect::FallingPetals)
                     {
                         const bool grayscale = theme.name == k_vintageNoirName;
-                        theme.effectColor1 = grayscale ? grayscaleColor(style.color1) : style.color1;
+                        const Color color1 = style.effect == WeatherEffect::Rain
+                            ? rainColorForSky(theme, style.color1) : style.color1;
+                        theme.effectColor1 = grayscale ? grayscaleColor(color1) : color1;
                         theme.effectColor2 = grayscale ? grayscaleColor(style.color2) : style.color2;
                     }
                 }

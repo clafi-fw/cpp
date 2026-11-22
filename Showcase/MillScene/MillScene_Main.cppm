@@ -270,7 +270,7 @@ namespace MillScene_App
         void buildThemePickers();
         // Theme buttons in `column`, with a preview of the theme under the pointer.
         void buildThemeLanes(StackPanel& column, PickerLanes&, Menu* sceneOptions = nullptr);
-        void buildWeatherControls(StackPanel& column);
+        void buildWeatherControls(StackPanel& column, std::size_t sceneIndex);
         void buildLookPicker();
         void buildChoicePickers();
         void buildChoicePicker(std::size_t pickerIndex);
@@ -1170,7 +1170,8 @@ void MillSceneForm::buildSceneOptions(AppMenuPage& page)
     {
         if (sceneAt(index).offersThemes())
         {
-            buildWeatherControls(addCaptionedColumn(*m_sceneOptionPages[index], L"Weather effects"));
+            buildWeatherControls(
+                addCaptionedColumn(*m_sceneOptionPages[index], L"Weather effects"), index);
         }
         buildSwitchBoxes(index);
         if (!sceneOffersOptions(index))
@@ -1286,8 +1287,14 @@ void MillSceneForm::buildThemeLanes(StackPanel& column, PickerLanes& themePicker
 
 }
 
-void MillSceneForm::buildWeatherControls(StackPanel& column)
+void MillSceneForm::buildWeatherControls(StackPanel& column, const std::size_t sceneIndex)
 {
+    const auto pickWeatherScene = [this, sceneIndex]() {
+        if (m_pickedScene != sceneIndex)
+        {
+            pickScene(sceneIndex);
+        }
+    };
     StackPanel& row = column.add<StackPanel>(
         Orientation::Horizontal,
         HorizontalAlign::Left,
@@ -1309,19 +1316,21 @@ void MillSceneForm::buildWeatherControls(StackPanel& column)
     picker.onPreviewItem([this](PreviewItemEvent& event) {
         previewWeatherEffect(static_cast<PathArt::WeatherEffect>(event.itemIndex()));
     });
-    picker.onChange([this](ComboBoxChangeEvent& event) {
+    picker.onPick([this, pickWeatherScene](ComboBoxPickEvent& event) {
         PathArt::SceneWeather weather = m_weather;
-        weather.effect = static_cast<PathArt::WeatherEffect>(event.comboBox().itemIndex().value());
+        weather.effect = static_cast<PathArt::WeatherEffect>(event.itemIndex());
         pickWeather(weather);
+        pickWeatherScene();
     });
     CheckBox& lightning = row.add<CheckBox>(Text{ L"Lightning" });
     lightning.onGetState([this](GetStateEvent& event) {
         event.state.selected = lightningEnabled();
     });
-    lightning.onClick([this](ClickEvent&) {
+    lightning.onClick([this, pickWeatherScene](ClickEvent&) {
         PathArt::SceneWeather weather = m_weather;
         weather.lightning = !lightningEnabled();
         pickWeather(weather);
+        pickWeatherScene();
     });
     m_weatherControls.emplace_back(&picker, &lightning);
     row.onDestroy([this, picker = &picker](DestroyEvent&) {
@@ -1874,7 +1883,7 @@ void MillSceneForm::showSceneOptionsMenu(SplitButton& button, const std::size_t 
         {
             themeButton->onClick(pickSceneInMenu);
         }
-        buildWeatherControls(addCaptionedColumn(column, L"Weather effects"));
+        buildWeatherControls(addCaptionedColumn(column, L"Weather effects"), sceneIndex);
         options.addSeparator();
     }
     if (sceneWithLooks() == sceneIndex)

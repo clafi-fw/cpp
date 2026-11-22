@@ -569,6 +569,10 @@ form-&gt;<span class="fn">onClose</span>([](<span class="tp">FormCloseEvent</spa
     <span class="tp">ComboBoxChangeEvent</span> event{ *<span class="kw">this</span> };
     <span class="fn">emitEvent</span>(event);
 }</pre>
+            <p><code>ComboBox::onPick()</code> receives a <code>ComboBoxPickEvent</code> each time
+            the user chooses an item from the dropdown, including the current item.
+            <code>event.itemIndex()</code> gives the chosen index. The event follows any
+            <code>ComboBoxChangeEvent</code> from updating the index.</p>
             <p>A construct-in-place form, <code>emitEvent&lt;TEvent&gt;(args...)</code>, exists for an event
             that does not need to be inspected afterwards. The dispatcher returns immediately when it holds no
             listeners.</p>

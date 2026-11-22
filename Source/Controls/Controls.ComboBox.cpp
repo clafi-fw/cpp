@@ -24,6 +24,13 @@ namespace ClaFi::Controls
         }
     }
 
+    ComboBoxPickEvent::ComboBoxPickEvent(const ComboBox& comboBox, const std::size_t itemIndex)
+        :
+        ComboBoxEventBase{ comboBox },
+        m_itemIndex{ itemIndex }
+    {
+    }
+
     // ComboBoxAcceptTextEvent
 
     ComboBoxAcceptTextEvent::ComboBoxAcceptTextEvent(const ComboBox& comboBox, AcceptEditEvent& accept)
@@ -120,6 +127,12 @@ namespace ClaFi::Controls
         adjustItemText(item, text, phase);
         if (text.empty() && !item.placeHolderText().empty())
             text << ColoredText{ InkGrade::Muted, item.placeHolderText() };
+    }
+
+    void ComboBox::pickItem(const std::size_t itemIndex)
+    {
+        setItemIndex(itemIndex);
+        emitEvent<ComboBoxPickEvent>(*this, itemIndex);
     }
 
     std::wstring ComboBox::valueText() const
