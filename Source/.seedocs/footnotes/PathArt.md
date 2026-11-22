@@ -1636,8 +1636,10 @@ hold 0.4, 0.27, 0.19 and 0.14 of its drops, flakes, leaves and streaks, each sha
 over the area its layer covers.
 
 **Falling particles follow the Mill's pace.** Larger particles fall faster. Each layer's fall
-pace accounts for its height and the Chase's longer cycle. Dust blows at a rate proportional to
-its layer's parallax. The effects round their pace to whole trips so they loop smoothly.
+pace accounts for its height and the Chase's longer cycle. The same effects draw snow, petals, and
+leaves swaying in both scenes. Rain falls straight down within each layer. Dust blows at a rate
+proportional to its layer's parallax. The effects round their pace to whole trips so they loop
+smoothly.
 
 **A nearer layer is drawn larger and stronger.** Size and strength grow from 0.6 of each at the far
 hills' depth to the whole size and 0.85 of the strength on the trail, and on at the same rate: the

@@ -629,9 +629,6 @@ namespace ClaFi::PathArt
         // More than the 9 an effect reads past its own seed, so no two layers share a place.
         constexpr float k_weatherSeedStep{ 10.0f };
         constexpr float k_millWeatherCycleSeconds{ 40.0f };
-        constexpr float k_fallingWeatherSwayReach{ 24.0f };
-        constexpr float k_fallingWeatherSwaysPerCycle{ 16.0f };
-        constexpr float k_fallingWeatherSwayPhaseStep{ 0.8f };
     }
 
     // Three 20-second episodes a cycle: twice the wolf trips over something on the trail, then he
@@ -2216,17 +2213,13 @@ namespace ClaFi::PathArt
 
         const float layerUnit = frame.unit * layerSize;
         const float effectsTime = fractionalPart(cycleTime * k_lively);
-        const float swayPhase = k_2Pi * k_fallingWeatherSwaysPerCycle * cycleTime
-            + k_fallingWeatherSwayPhaseStep * static_cast<float>(layerIndex);
-        const float sway = std::sin(swayPhase) * k_fallingWeatherSwayReach * layerUnit;
         forEachTile(frame, layer.parallax, period, journey,
             [&](const float left, const float tileWidth) {
                 SceneFrame overLayer = frame.within(Matrix3x2::Translation(left, 0.0f));
                 overLayer.width = tileWidth;
                 overLayer.height = bottom;
                 overLayer.unit = layerUnit;
-                drawWeather(overLayer.within(Matrix3x2::Translation(sway, 0.0f)),
-                    cycleTime, fallingWeather);
+                drawWeather(overLayer, cycleTime, fallingWeather);
                 if (dustWeather.dust > 0.0f)
                 {
                     drawWeather(overLayer, effectsTime, dustWeather);
