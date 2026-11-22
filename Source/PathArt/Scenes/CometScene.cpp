@@ -182,6 +182,104 @@ namespace ClaFi::PathArt
             return k_sceneTheme.hazed(clear, parallax, aboveLake);
         }
 
+        void drawImpactStars(const SceneFrame& frame, const FloatPoint origin,
+            const float elapsedPassShare, const float horizontalDirection)
+        {
+            struct ImpactStarFlight
+            {
+                float delayShare{};
+                float flightShare{};
+                FloatPoint unacceleratedDisplacement{};
+            };
+
+            constexpr std::array k_flights = {
+                ImpactStarFlight{ 0.0f, 0.027f, { -225.0f, -153.0f } },
+                ImpactStarFlight{ 0.005f, 0.032f, { -6.0f, -204.0f } },
+                ImpactStarFlight{ 0.011f, 0.029f, { 225.0f, -148.0f } },
+                ImpactStarFlight{ 0.019f, 0.028f, { -122.0f, -169.0f } },
+                ImpactStarFlight{ 0.027f, 0.030f, { 94.0f, -218.0f } },
+                ImpactStarFlight{ 0.034f, 0.030f, { -191.0f, -157.0f } },
+                ImpactStarFlight{ 0.043f, 0.029f, { 171.0f, -184.0f } },
+                ImpactStarFlight{ 0.051f, 0.032f, { -32.0f, -214.0f } },
+                ImpactStarFlight{ 0.059f, 0.030f, { 99.0f, -170.0f } }
+            };
+            constexpr float k_flightTimeScale{ 0.375f };
+            constexpr float k_gravityPerPassSquared{ 115'000.0f };
+            constexpr float k_trailFlightShare{ 0.34f };
+            constexpr float k_trailHalfWidth{ 2.4f };
+            constexpr int k_sparklesPerTrail{ 36 };
+            constexpr Color k_color = CometSceneColors::ImpactCore;
+            const float gravity = k_gravityPerPassSquared * frame.unit;
+            const float trailHalfWidth = k_trailHalfWidth * frame.unit;
+            const float burstBrightness = std::lerp(1.0f, 0.18f,
+                smoothStep(0.016f, 0.079f, elapsedPassShare));
+            for (const ImpactStarFlight& star : k_flights)
+            {
+                const float age = (elapsedPassShare - star.delayShare) * k_flightTimeScale;
+                const float progress = age / star.flightShare;
+                if (progress <= 0.0f || progress >= 1.0f)
+                {
+                    continue;
+                }
+
+                const FloatPoint displacement = {
+                    star.unacceleratedDisplacement.x * horizontalDirection,
+                    star.unacceleratedDisplacement.y
+                };
+                const FloatPoint launchVelocity = displacement * (frame.unit / star.flightShare);
+                const auto positionAt = [origin, launchVelocity, gravity](const float time) {
+                    return origin + launchVelocity * time
+                        + FloatPoint{ 0.0f, 0.5f * gravity * time * time };
+                };
+                const float trailDuration = k_trailFlightShare * star.flightShare;
+                const float tailAge = std::max(0.0f, age - trailDuration);
+                const FloatPoint head = positionAt(age);
+                const FloatPoint tail = positionAt(tailAge);
+                const FloatPoint tailVelocity = launchVelocity + FloatPoint{ 0.0f, gravity * tailAge };
+                const FloatPoint control = tail + tailVelocity * (0.5f * (age - tailAge));
+                PixelPath trail;
+                trail.moveTo(tail);
+                trail.quadTo(control, head);
+
+                const float brightness = burstBrightness * smoothStep(0.0f, 0.16f, progress)
+                    * (1.0f - smoothStep(0.46f, 1.0f, progress));
+                const Color headColor = k_color.withOpacity(brightness);
+                const Color clear = k_color.withOpacity(0.0f);
+                strokeShape(frame, trail, LinearGradient::Simple(
+                    head, tail, k_color.withOpacity(0.30f * brightness), clear),
+                    2.0f * trailHalfWidth);
+
+                const float tailSpeed = std::hypot(tailVelocity.x, tailVelocity.y);
+                const FloatPoint acrossTrail = {
+                    -tailVelocity.y / tailSpeed,
+                    tailVelocity.x / tailSpeed
+                };
+                const float seed = 10'000.0f * star.delayShare;
+                PixelPath sparkles;
+                for (int index = 0; index != k_sparklesPerTrail; ++index)
+                {
+                    const float behindHead = (static_cast<float>(index)
+                        + std::lerp(0.15f, 0.85f, pseudoRandom(index, seed))) / k_sparklesPerTrail;
+                    const float sparkleAge = age - behindHead * trailDuration;
+                    if (sparkleAge <= 0.0f)
+                    {
+                        break;
+                    }
+                    const float rate = std::lerp(105.0f, 220.0f, pseudoRandom(index, seed + 1.0f));
+                    const float phase = pseudoRandom(index, seed + 2.0f);
+                    const float twinkle = 0.5f + 0.5f * std::sin(
+                        k_2Pi * (elapsedPassShare * rate + phase));
+                    const float radius = std::lerp(0.32f, 1.75f, twinkle * twinkle) * frame.unit;
+                    const float offset = (trailHalfWidth - radius)
+                        * std::lerp(-1.0f, 1.0f, pseudoRandom(index, seed + 3.0f));
+                    const FloatPoint center = positionAt(sparkleAge) + acrossTrail * offset;
+                    addSparkle(sparkles, center, radius);
+                }
+                fillShape(frame, sparkles, LinearGradient::Simple(head, tail, headColor, clear));
+                fillDisc(frame, head, 1.25f * frame.unit, SolidColor{ headColor });
+            }
+        }
+
         // The fog's strips of the cloud map: a grid of the map's cover over each band, which the
         // band's pixels read between. See PathArt#cloudkind
         constexpr int k_fogColumns{ 160 };
@@ -923,7 +1021,13 @@ namespace ClaFi::PathArt
         // The fog lies in the valley, behind the near range, whose crest stands in front of it.
         if (!reflection)
             drawFogBand(frame, time, pass, k_valleyFog, m_valleyFogPixels);
-        
+
+        if (pass.afterglow > 0.0f)
+        {
+            const float horizontalDirection = pass.course.end.x > pass.course.start.x ? 1.0f : -1.0f;
+            drawImpactStars(frame, pass.course.end, pass.passTime - k_fallDuration,
+                horizontalDirection);
+        }
         (reflection ? m_mirroredNearRidge : m_nearRidge).draw(upright);
         if (pass.afterglow > 0.0f)
         {

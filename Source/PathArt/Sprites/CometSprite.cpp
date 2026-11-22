@@ -23,6 +23,80 @@ namespace ClaFi::PathArt
         constexpr Color Nucleus{ 0xFFFFFFFF };
     }
 
+    namespace
+    {
+        struct TailCrossSection
+        {
+            FloatPoint inner{};
+            FloatPoint outer{};
+        };
+
+        void addTailSparkle(PixelPath& path, const TailCrossSection& section,
+            const float acrossShare, const float radiusInFrame)
+        {
+            const FloatPoint across = section.outer - section.inner;
+            const float width = std::hypot(across.x, across.y);
+            if (width <= 0.0f)
+            {
+                return;
+            }
+
+            const float radius = std::min(radiusInFrame, 0.38f * width);
+            const float margin = radius / width;
+            const float offset = std::lerp(margin, 1.0f - margin, acrossShare);
+            addSparkle(path, section.inner + across * offset, radius);
+        }
+
+        PixelPath createTailSparkles(const CometPose& pose, const float unit,
+            const float emissionInterval, const int seedOffset, const auto& crossSectionAt)
+        {
+            constexpr float k_minLifetime{ 0.044f };
+            constexpr float k_maxLifetime{ 0.070f };
+            constexpr float k_timeToTip{ 0.076f };
+            const float emissionEnd = std::min(pose.passTime, pose.fallShare);
+            const int first = std::max(0,
+                static_cast<int>((pose.passTime - k_maxLifetime) / emissionInterval));
+            const int last = static_cast<int>(emissionEnd / emissionInterval);
+            PixelPath sparkles;
+            for (int emission = first; emission <= last; ++emission)
+            {
+                const int index = seedOffset + emission;
+                const float birth = (static_cast<float>(emission)
+                    + std::lerp(0.15f, 0.85f, pseudoRandom(index, 70.0f))) * emissionInterval;
+                if (birth >= emissionEnd)
+                {
+                    break;
+                }
+                const float age = pose.passTime - birth;
+                const float lifetime = std::lerp(k_minLifetime, k_maxLifetime,
+                    pseudoRandom(index, 76.0f));
+                if (age >= lifetime)
+                {
+                    continue;
+                }
+
+                const float progress = age / lifetime;
+                const float twinkleRate = std::lerp(26.0f, 55.0f, pseudoRandom(index, 71.0f));
+                const float twinklePhase = k_2Pi * (pose.cycleTime * twinkleRate
+                    + pseudoRandom(index, 72.0f));
+                const float twinkle = 0.78f + 0.22f * std::sin(twinklePhase);
+                const float size = std::lerp(0.65f, 1.85f, pseudoRandom(index, 77.0f));
+                const float envelope = smoothStep(0.0f, 0.12f, progress)
+                    * (1.0f - smoothStep(0.58f, 1.0f, progress));
+                const float radius = size * unit * twinkle * std::sqrt(envelope);
+
+                const float driftPhase = k_2Pi * (pose.cycleTime * 18.0f
+                    + pseudoRandom(index, 75.0f));
+                const float across = std::lerp(0.16f, 0.84f, pseudoRandom(index, 73.0f))
+                    + 0.10f * std::sin(driftPhase);
+                const float spread = smoothStep(0.0f, 0.30f, progress);
+                addTailSparkle(sparkles, crossSectionAt(age / k_timeToTip),
+                    std::lerp(0.5f, across, spread), radius);
+            }
+            return sparkles;
+        }
+    }
+
     FloatPoint pointOnCourse(const CometCourse& course, const float along)
     {
         const float rest = 1.0f - along;
@@ -146,6 +220,24 @@ namespace ClaFi::PathArt
             }
         });
 
+        const auto dustCrossSectionAt = [&innerEdge, &outerEdge](const float along) {
+            const float section = along < k_nose
+                ? std::acos(1.0f - along / k_nose) * (k_noseSamples / (0.25f * k_2Pi))
+                : k_noseSamples + k_bodySamples * (along - k_nose) / (1.0f - k_nose);
+            const std::size_t first = static_cast<std::size_t>(section);
+            const std::size_t next = first + 1;
+            const float share = section - static_cast<float>(first);
+            return TailCrossSection{
+                FloatPoint::between(innerEdge[first], innerEdge[next], share),
+                FloatPoint::between(outerEdge[first], outerEdge[next], share)
+            };
+        };
+        const PixelPath dustSparkles = createTailSparkles(pose, unit, 0.00045f, 0,
+            dustCrossSectionAt);
+        const Color white = CometColors::Nucleus;
+        fillShape(frame, dustSparkles, LinearGradient::Simple(head, tailEnd,
+            white.withOpacity(0.86f * tailFade), white.withOpacity(0.0f)));
+
         // The ion tail runs straight back from the head, a little off the line the comet came
         // along.
         const FloatPoint justBehind = pointOnCourse(pose.course, std::max(0.0f, headAlong - 0.01f));
@@ -166,6 +258,17 @@ namespace ClaFi::PathArt
         const Color ion = CometColors::IonTail;
         fillShape(frame, ionTail, LinearGradient::Simple(head, ionEnd,
             ion.withOpacity(0.7f * tailFade), ion.withOpacity(0.0f)));
+
+        const auto ionCrossSectionAt = [head, ionEnd, across](const float along) {
+            const FloatPoint center = FloatPoint::between(head, ionEnd, along);
+            const FloatPoint halfWidth = across * (1.0f - along);
+            return TailCrossSection{ center - halfWidth, center + halfWidth };
+        };
+        const PixelPath ionSparkles = createTailSparkles(pose, unit, 0.00175f, 4096,
+            ionCrossSectionAt);
+        const Color coldSpark = CometColors::ColdSpark;
+        fillShape(frame, ionSparkles, LinearGradient::Simple(head, ionEnd,
+            coldSpark.withOpacity(0.78f * tailFade), coldSpark.withOpacity(0.0f)));
 
         // Sparks shed along the way drift down and fade.
         for (int i = 0; i != 26; ++i)
