@@ -7,6 +7,34 @@ import ClaFi.Core.System.UiTypes;
 
 import ClaFi.StdLib;
 
+namespace MillScene_App
+{
+    void drawFullscreenIcon(ClaFi::DrawIconEvent& event)
+    {
+        const float halfSize = std::min(event.iconWidth(), event.iconHeight()) * 0.4f;
+        const float cornerLength = halfSize * 0.65f;
+        const ClaFi::FloatPoint center = event.iconCenter();
+        ClaFi::Graphics::PixelPath path;
+
+        for (const float x : { -1.0f, 1.0f })
+        {
+            for (const float y : { -1.0f, 1.0f })
+            {
+                const ClaFi::FloatPoint corner = {
+                    center.x + x * halfSize,
+                    center.y + y * halfSize,
+                };
+                path.moveTo(corner - ClaFi::FloatPoint{ x * cornerLength, 0.0f });
+                path.lineTo(corner);
+                path.lineTo(corner - ClaFi::FloatPoint{ 0.0f, y * cornerLength });
+            }
+        }
+
+        event.canvas().drawPath(path, { ClaFi::Graphics::PathDrawLayer::Stroke(
+            event.textRgb(ClaFi::InkGrade::Strong), event.scaledStrokeWidth(ClaFi::Thickness::Thin)) });
+    }
+}
+
 namespace MillScene_App::AppIcon
 {
     using namespace ::ClaFi;

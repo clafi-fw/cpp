@@ -1715,14 +1715,11 @@ void MillSceneForm::writeMetricsTooltip(AdjustTooltipEvent& event)
 // to whatever else answers it in a window.
 Action& MillSceneForm::connectFullscreen()
 {
-    form().onFullscreenChange([this](FormFullscreenChangeEvent&) {
-        followFullscreen();
-    });
-
     Actions& formActions = form().actions();
     Action& fullscreenToggle = formActions.add(
         Text{ L"Full screen" },
         Shortcut{ Keys::F11 },
+        Action::OnDrawIcon{ drawFullscreenIcon },
         Action::OnGetState{ [this](GetActionStateEvent& event) {
             event.claim({ .selected = form().isFullscreen() });
         } },
@@ -1731,6 +1728,10 @@ Action& MillSceneForm::connectFullscreen()
             toggleFullscreen(form());
         } }
     );
+    form().onFullscreenChange([this, &fullscreenToggle](FormFullscreenChangeEvent&) {
+        followFullscreen();
+        fullscreenToggle.invalidateState();
+    });
     formActions.add(
         Text{ L"Exit full screen" },
         Shortcut{ Keys::Escape },
@@ -2038,7 +2039,12 @@ void MillSceneForm::showSceneMenu(ContextPopupEvent& event, Action& fullscreenTo
         );
     }
     menu.addSeparator();
-    menu.add(fullscreenToggle);
+    menu.add(
+        fullscreenToggle,
+        IndicatorVisibility::Always,
+        IndicatorStyle::Check,
+        ShowSelectionOnSurface::No
+    );
     menu.addSeparator();
     menu.add(
         Text{ L"Exit ", appContext().appName() },

@@ -60,6 +60,7 @@ namespace ClaFi::Controls
     public:
         std::wstring_view diagnosticText() const override { return L"MenuItem"; }
     protected:
+        FloatRect iconRect(const PaintEvent&) const override;
         void adjustText(AdjustTextEvent&) const override;
         void adjustTextRect(AdjustTextRectEvent&) const override;
         void paintOwnText(PaintEvent&) override;
@@ -67,11 +68,18 @@ namespace ClaFi::Controls
         ScaledSize measureText(AlignEvent&, ScaledSize maxDimensions, const Text&) override;
         void calculateChildren(FormBase&) override;
         ScaledSize contentAroundText(AlignEvent&, ScaledSize captionSize) const override;
+        void alignContent(AlignEvent&, ScaledPosition, ScaledSize&) override;
     private:
-        struct TrailingColumn
+        struct Columns
         {
-            float width{};
-            float rightPadding{};
+            float padding{};
+            float spacing{};
+            float indicatorWidth{};
+            float iconWidth{};
+            float trailingWidth{};
+
+            [[nodiscard]] float widthWithSpacing(float width) const;
+            [[nodiscard]] float captionInset(float rowPadding) const;
         };
 
         struct GetMenuItemEvent : Event
@@ -80,9 +88,10 @@ namespace ClaFi::Controls
         };
     private:
         void measureTrailingContent(const FormContext&);
+        [[nodiscard]] const Columns* leadingColumns() const;
         [[nodiscard]] float trailingColumnInset(float rowPadding) const;
     private:
-        const TrailingColumn* m_menuTrailingColumn{};
+        const Columns* m_menuColumns{};
         Text m_shortcutText;
         ScaledSize m_shortcutSize{};
         float m_trailingWidth{};
@@ -200,7 +209,7 @@ namespace ClaFi::Controls
         // Held by address, which is how an action is recognized everywhere else.
         std::vector<const Action*> m_commandBarActions;
         std::vector<MenuGroupItem*> m_groups;
-        MenuItem::TrailingColumn m_trailingColumn{};
+        MenuItem::Columns m_columns{};
         std::size_t m_itemCount{ 0 };
         // A separator waits for an item to follow it, so one asked for at the end never lands.
         bool m_separatorPending{ false };
@@ -507,8 +516,6 @@ namespace ClaFi::Controls
         :
         MenuItemBase{
             params,
-            // The icon slot is kept whether or not this item has one, which is what puts every
-            // item's text on the same left edge.
             ButtonViewMode::LeftIcon,
             HorizontalTextAnchor::Left,
             HorizontalAlign::Fill,

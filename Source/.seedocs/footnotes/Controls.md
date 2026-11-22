@@ -76,9 +76,10 @@ behind it.
 **Build it on the stack**, fill it, then run it - execute returns once the menu has closed. An empty
 menu stays closed, unless setPlaceHolderText gave it a placeholder to show.
 
-**The menu sizes a shared trailing column to its visible items.** Shortcuts align to its right
-edge and end icons sit in the same column. Every caption is laid out in the space to its left,
-including captions on rows with no shortcut.
+**The menu measures its columns across visible items.** Standard rows share indicator, icon, and
+caption columns. The indicator column takes space when a row shows a checkbox or radio indicator.
+Shortcuts align to the right edge of the trailing column, which also holds end icons. Captions
+stay within their column on rows without shortcuts too.
 
 **A command holding commands is a line with its list beside it** - a MenuGroupItem, which addActions
 adds for an Action whose items are set. The list opens when the pointer rests on the line, on its

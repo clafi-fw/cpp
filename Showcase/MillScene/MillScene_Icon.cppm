@@ -4,6 +4,11 @@ import ClaFi.Core.Context.DrawIconEvent;
 import ClaFi.Core.Graphics.Canvas;
 import ClaFi.Core.System.UiTypes;
 
+namespace MillScene_App
+{
+    export void drawFullscreenIcon(ClaFi::DrawIconEvent&);
+}
+
 namespace MillScene_App::AppIcon
 {
     using namespace ::ClaFi;

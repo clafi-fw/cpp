@@ -7,6 +7,8 @@ import ClaFi.Controls.Base.ButtonBase;
 import ClaFi.Controls.ScrollBox;
 import ClaFi.Controls.Stack;
 
+import ClaFi.Core.AppTheme_Colors;
+import ClaFi.Core.AppTheme_Metrics;
 import ClaFi.Core.Foundation;
 import ClaFi.Core.Context.ControlContext;
 import ClaFi.Core.Context.DrawIconEvent;
@@ -28,6 +30,19 @@ namespace ClaFi::Controls
         constexpr float k_shortcutIconGap = 4.0f;
     }
 
+    FloatRect MenuItem::iconRect(const PaintEvent& event) const
+    {
+        FloatRect bounds = MenuItemBase::iconRect(event);
+        if (const Columns* columns = leadingColumns())
+        {
+            const float left = event.left() + columns->padding
+                + columns->widthWithSpacing(columns->indicatorWidth)
+                + (columns->iconWidth - bounds.width()) / 2.0f;
+            bounds.offset(left - bounds.left, 0.0f);
+        }
+        return bounds;
+    }
+
     void MenuItem::adjustText(AdjustTextEvent& event) const
     {
         RichControl::adjustText(event);
@@ -35,7 +50,10 @@ namespace ClaFi::Controls
 
     void MenuItem::adjustTextRect(AdjustTextRectEvent& event) const
     {
+        const float contentLeft = event.textBounds.left;
         MenuItemBase::adjustTextRect(event);
+        if (const Columns* columns = leadingColumns())
+            event.textBounds.left = contentLeft + columns->captionInset(event.padding.x);
         event.textBounds.right -= trailingColumnInset(event.padding.x);
     }
 
@@ -47,8 +65,8 @@ namespace ClaFi::Controls
 
         FloatRect content = event.controlBounds();
         content.inflate(-event.padding());
-        if (m_menuTrailingColumn)
-            content.right = event.right() - m_menuTrailingColumn->rightPadding;
+        if (m_menuColumns)
+            content.right = event.right() - m_menuColumns->padding;
         content.left = std::max(content.left, content.right - m_trailingWidth);
         if (content.empty())
             return;
@@ -106,15 +124,21 @@ namespace ClaFi::Controls
     {
         if (wordWrap())
         {
-            const float inset = trailingColumnInset(event.scaledPaddingX());
-            maxDimensions.x = std::max(maxDimensions.x - inset, 1.0f);
+            const float trailingInset = trailingColumnInset(event.scaledPaddingX());
+            if (const Columns* columns = leadingColumns())
+            {
+                const float leadingInset = columns->captionInset(event.scaledPaddingX());
+                maxDimensions.x = std::max(maxDimensions.x - leadingInset - trailingInset, 1.0f);
+                return RichControl::measureText(event, maxDimensions, text);
+            }
+            maxDimensions.x = std::max(maxDimensions.x - trailingInset, 1.0f);
         }
         return MenuItemBase::measureText(event, maxDimensions, text);
     }
 
     void MenuItem::calculateChildren(FormBase& form)
     {
-        if (!m_menuTrailingColumn)
+        if (!m_menuColumns)
             measureTrailingContent(form.context());
         MenuItemBase::calculateChildren(form);
     }
@@ -122,6 +146,8 @@ namespace ClaFi::Controls
     ScaledSize MenuItem::contentAroundText(AlignEvent& event, ScaledSize captionSize) const
     {
         ScaledSize result = MenuItemBase::contentAroundText(event, captionSize);
+        if (const Columns* columns = leadingColumns())
+            result.x = captionSize.x + columns->captionInset(event.scaledPaddingX());
         if (showsCaption())
         {
             result.x += trailingColumnInset(event.scaledPaddingX());
@@ -129,6 +155,23 @@ namespace ClaFi::Controls
             result.y = std::max({ result.y, m_shortcutSize.y, iconHeight });
         }
         return result;
+    }
+
+    void MenuItem::alignContent(AlignEvent& event, ScaledPosition position, ScaledSize& dimensions)
+    {
+        if (const Columns* columns = leadingColumns())
+            position.x += columns->padding - event.scaledPaddingX();
+        MenuItemBase::alignContent(event, position, dimensions);
+    }
+
+    float MenuItem::Columns::widthWithSpacing(float width) const
+    {
+        return width > 0.0f ? width + spacing : 0.0f;
+    }
+
+    float MenuItem::Columns::captionInset(float rowPadding) const
+    {
+        return padding - rowPadding + widthWithSpacing(indicatorWidth) + widthWithSpacing(iconWidth);
     }
 
     void MenuItem::measureTrailingContent(const FormContext& context)
@@ -156,19 +199,27 @@ namespace ClaFi::Controls
             m_trailingWidth += context.scale(k_shortcutIconGap);
     }
 
+    const MenuItem::Columns* MenuItem::leadingColumns() const
+    {
+        return viewMode() == ButtonViewMode::LeftIcon || viewMode() == ButtonViewMode::TextLabel
+            ? m_menuColumns
+            : nullptr;
+    }
+
     float MenuItem::trailingColumnInset(float rowPadding) const
     {
-        const float width = m_menuTrailingColumn ? m_menuTrailingColumn->width : m_trailingWidth;
-        if (width == 0.0f)
-            return 0.0f;
-
-        const float rightPadding = m_menuTrailingColumn ? m_menuTrailingColumn->rightPadding : rowPadding;
-        return width + formContext().scale(k_trailingColumnGap) + rightPadding - rowPadding;
+        const float width = m_menuColumns ? m_menuColumns->trailingWidth : m_trailingWidth;
+        const float rightPadding = m_menuColumns ? m_menuColumns->padding : rowPadding;
+        const float gap = width > 0.0f ? formContext().scale(k_trailingColumnGap) : 0.0f;
+        return width + gap + rightPadding - rowPadding;
     }
 
     void Menu::calculateChildren(FormBase& form)
     {
-        MenuItem::TrailingColumn trailingColumn;
+        MenuItem::Columns columns;
+        const FormContext& context = form.context();
+        const float indicatorWidth = context.scale(
+            context.styleMetrics(UiElement::SelectionIndicator).minSize.x);
         for (const ControlPtr& control : body().controls())
         {
             if (!control->visible())
@@ -178,13 +229,25 @@ namespace ClaFi::Controls
             control->emitEvent(event);
             if (MenuItem* item = event.item)
             {
-                item->m_menuTrailingColumn = &m_trailingColumn;
-                item->measureTrailingContent(form.context());
-                trailingColumn.width = std::max(trailingColumn.width, item->m_trailingWidth);
-                trailingColumn.rightPadding = std::max(trailingColumn.rightPadding, item->scaledPadding().x);
+                item->m_menuColumns = &m_columns;
+                item->measureTrailingContent(context);
+                const ControlMetrics metrics = item->designMetrics();
+                columns.trailingWidth = std::max(columns.trailingWidth, item->m_trailingWidth);
+                columns.padding = std::max(columns.padding, context.scale(metrics.padding.x));
+                if (item->leadingColumns())
+                {
+                    columns.spacing = std::max(columns.spacing, context.scale(metrics.spacing.x));
+                    if (item->indicatorVisibility() != IndicatorVisibility::None
+                        && item->indicatorPlacement() != IndicatorPlacement::TopLeftIn)
+                    {
+                        columns.indicatorWidth = indicatorWidth;
+                    }
+                    if (item->viewMode() == ButtonViewMode::LeftIcon)
+                        columns.iconWidth = std::max(columns.iconWidth, context.scale(item->iconSize().x));
+                }
             }
         }
-        m_trailingColumn = trailingColumn;
+        m_columns = columns;
         BaseMenuForm::calculateChildren(form);
     }
 }
